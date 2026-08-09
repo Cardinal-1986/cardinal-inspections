@@ -11835,3 +11835,129 @@ is gone.**
 - **`jslex_count.py`**, which separates CODE from comments and strings and would have answered all five correctly on the first run.
 
 Testing *presence* with a substring is fine. It is absence that the comments lie about.
+
+## Build 650 — Money in, commissions out (9 Aug 2026)
+
+**Theo's spec, implemented against what already existed.** The spec asked for a
+new `commissions` table; one has existed since 556 (crews_schema.sql) with a
+Commissions tab already on the client profile — the prime doctrine held again.
+Extended, not duplicated: 0 rows in production made the extension free.
+
+**SQL — `commission_system.sql`, APPLIED to production 9 Aug and verified with
+disposable rows (all cleaned up).** `projects.sales_rep` (backfilled from
+`checklist.lead.assigned[0]` for sales-role people + Theo — 26 of 30 projects
+seeded; curtis's one assignment correctly NOT seeded); `collections` (one row =
+one check: deposit / final / supplemental / pwi / other); `commissions` gains
+`collection_id` (UNIQUE partial index — the trigger cannot double-fire),
+`rate_pct`, `paid_by`, `project_name` (denormalised on purpose: projects RLS
+hides reassigned jobs from a rep, a join would silently drop rows from My
+Earnings); `draws` (`project_id` NULLABLE — job-linked or general advance).
+Five SECURITY DEFINER triggers — definer is load-bearing, production users have
+no commissions write policy and an invoker-rights trigger would fail the whole
+insert: `sales_rep_default` (BEFORE INSERT on projects — covers all six client
+creation paths without touching any), `make_commission` (10%, skips null/Theo),
+`sync_commission` (edit re-syncs a PENDING commission only), `unmake_commission`
+(refuses to delete a collection with a PAID commission; cleans up pending),
+`sales_rep_lock` (rep locked after first collection; admin override). Status
+vocabulary unchanged — `pending` renders as **"Owed"**; no constraint touched.
+
+**The tab (main block).** The 556 section rebuilt in place — same function
+names (`renderCommissions`/`addCommission`/`delCommission`), so showTab and the
+delegation survived untouched. Now renders: the sales rep (admin-only change
+select fed from `teamEmails()`+`tmRoleOf()` — sales + Theo, NEVER a typed
+email), Money In table with per-check commission state, inline Log Collection
+(admin+production) and Log Draw (admin) forms — inline like 556's own form, no
+modal, no scroll lock — draws on the job, totals summed from rendered rows
+(556's rule), Net-to-rep (negative allowed, red), and the manual form collapsed
+behind "Manual entry…". `pdb.list` now selects `sales_rep`. Reassigning on the
+Overview card mirrors into `sales_rep` while unlocked and the assignee is Sales.
+
+**The screen (`cr-pay-styles`+`cr-pay-script`, `window.CardinalPay`,
+`#payView`).** One view, three faces: admins get the Friday board (owed by rep
+minus outstanding draws, Mark Paid with a Pay-net-vs-Pay-full choice — "pay
+net" marks the draws repaid in the same action; amounts are NEVER mutated, the
+repaid draw row IS the deduction record — Mark All Paid, this week's payouts,
+paid history, CSV via `window.CardinalCsv` — zero new CSV machinery); a rep
+gets My Earnings (same queries, RLS trims the rows); production gets a worded
+sentence, not a broken screen. Registered in `hideAllViews()` display list +
+`navRestore` + `__crNav` wrap; menu item 💵 Commissions after Crews. No 14th
+scroll-lock writer (still 13). New `data-jm` "Money In" tile on the job menu.
+
+**Gates.** `check_build.py` green, stamp 649 → 650, 107 inline scripts parse.
+`harness_pay.js` — **53 assertions**, executing the SHIPPED section and module
+in jsdom per role (admin / production / rep / owner-project / negative-net /
+empty), the pay-net write payloads captured off a locked supa mock, and the
+date-only trap proven under `TZ=America/New_York` (the naive parse control
+really says the 8th). Negative control on 649: red, exit 1. CI div balance
+re-checked locally (3,693/3,693). DB triggers proven live with real inserts
+before the UI was written; all test rows deleted.
+
+**Still Theo's to confirm** (recorded in OPEN_ITEMS): Kyle Mantia and Pedro
+Vera need team_profiles rows with real emails before they can be picked;
+clarkie022@gmail.com needs a display name; rep-role rendering is verified by
+RLS + harness, not by signing in as a rep.
+
+## Build 651 — Finance as a source, and Theo's weekly owed email (9 Aug 2026)
+
+Theo answered all five of the commission spec's open questions directly, and
+two needed a build; the other three are settled and recorded in
+`OPEN_ITEMS.md` — no split commissions ever, draw requests stay text/call,
+payment method was already tracked.
+
+**Finance as a collection source.** `commission_finance_source.sql`
+(APPLIED, verified live: a finance collection auto-generated its 10%
+commission correctly, an invalid source was still refused, all test rows
+deleted). `collections.source` gains `'finance'`; a new free-text
+`finance_company` column names which one — deliberately not an enum, since
+Theo said outright he'll add companies beyond Service Finance and a table
+for one row would be premature. The Log Collection form pre-fills "Service
+Finance" as an editable default when Finance is picked. Also fixed in
+passing: the Money In table's Source cell was rendering the raw enum value
+(`insurance`) instead of a label — Type already used `commTypeLabel()`;
+Source now has its `commSourceLabel()` twin, which also appends the
+financing company when present.
+
+**One mistake caught by the gate before it shipped.** The first stamp-bump
+patch for the CHANGELOG entry replaced `"var CHANGELOG = [\n{ b:650,"` with
+new-entry text that started `"{ b:651,"` — dropping the `var CHANGELOG = [`
+array opener entirely, because the replacement text didn't re-include
+everything from the matched span that needed to survive. `check_build.py`
+caught it immediately (`node --check` failed on block 47 with "Unexpected
+token ':'"). Fixed by re-inserting the opener; green on the next run. This
+is the literal-splicing trap the skill's own doctrine names — `.replace()`
+is not smart merging, the replacement must carry forward everything from
+`OLD` that the new text still needs.
+
+**The weekly commissions email.** New `api/commissions-digest.js`, same
+shape as `api/digest.js` (Vercel Cron → Resend → service-role REST calls,
+`CRON_SECRET` bearer auth, same `ADMIN_EMAIL`/`DIGEST_FROM` env vars — needs
+no new secrets if the daily digest already sends). Every Friday 11:00 UTC,
+Theo and Joan each get one email: every rep with money owed, their
+outstanding draws, and the net — computed by `groupOwed()`, exported from
+the module so the harness runs the real function, and using the exact same
+"owed" definition (`pending`/`approved`, never `paid`/`void`) the
+Commissions screen's own `groupOwed()` uses, so the two can never disagree.
+Sends nothing when nothing is owed, matching `/api/digest`'s own silence-on-
+nothing convention. Registered in `vercel.json` beside the existing daily
+cron.
+
+**Gates.** `check_build.py` green, stamp 650 → 651, 107 scripts parse.
+`harness_pay.js` extended to 58 assertions (finance option in the form,
+label rendering for both insurance and finance rows, edit-prefill of the
+company field, a fresh form starting with the company field hidden) —
+negative control on 650: 5 of the new assertions correctly fail, exit 1.
+New `harness_commissions_digest.mjs` — 24 assertions, `fetch` fully mocked
+so **no live email is ever sent by the harness**: the owed/draws math
+(including a rep whose draws exceed their commission, rendering negative in
+red), exactly one email per admin, the nothing-owed silence, `CRON_SECRET`
+accepted/refused, missing-env-var refusals, and `vercel.json` still parses
+with both crons registered and the daily one untouched.
+
+**Cross-rep visibility, proven live (not from this build, but verified
+today after Theo raised the question).** Two fake jobs were created for
+Nick and Joey with real collections/commissions/draws, then queried under
+an actual authenticated session per rep — `set local role authenticated;
+set local request.jwt.claims = '{"email":"..."}'` — real RLS, not the
+service-role bypass. Each rep saw only their own rows on all three tables;
+Theo saw both. This was already correctly enforced by the RLS shipped at
+650; nothing needed to change. All test rows deleted.

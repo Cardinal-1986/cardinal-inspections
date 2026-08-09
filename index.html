@@ -3278,12 +3278,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="pricing">&#127991;&#65039; Pricing Catalog</button>
           <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
           <button class="navopt" data-nav="crews">&#128119; Crews</button>
+          <button class="navopt" data-nav="pay">&#128181; Commissions</button>
 
           <div class="navsec">Account</div>
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 649 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 651 &#8212; Finance as a check source, and Theo gets a weekly owed email</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3748,8 +3749,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
     <div id="tab-commissions" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
-      <h3 class="projsec">&#128176; Commissions</h3>
-      <p class="subnote">What a rep is owed on this job, and what has been paid.
+      <h3 class="projsec">&#128176; Money In &amp; Commissions</h3>
+      <p class="subnote">Every check received on this job &#8212; the rep&#8217;s 10% commission writes itself.
       Reps see their own rows; admins see everyone&#8217;s.</p>
       <div id="commMount"><div class="loading">Loading…</div></div>
     </div>
@@ -9511,7 +9512,7 @@ var pdb = {
   list: async function(){
     if(TEAM){
       var r = await sb.from('projects')
-        .select('id,name,address,phone,email,notes,cover_image,checklist,photos_transferred,stage,created_by,created_at,updated_at')
+        .select('id,name,address,phone,email,notes,cover_image,checklist,photos_transferred,stage,created_by,created_at,updated_at,sales_rep')
         .order('updated_at', {ascending:false});
       if(r.error) throw r.error;
       return r.data || [];
@@ -10314,6 +10315,8 @@ function renderAcxOverview(){
     '</div><div class="jaboxrow">' +
       jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
       jt(dbIc('orders'), 'Orders', '', 'materials') +
+    '</div><div class="jaboxrow">' +
+      jt(dbIc('estimates'), 'Money In', '', 'commissions') +
     '</div>';
   /* ---- contacts: retired to the hero name row (Keeper, build 348). dbSwitchPrimary + add-contact live there now. ---- */
   var extra = ck.contacts || [];
@@ -10452,6 +10455,21 @@ function renderAcxOverview(){
     try{
       await patchProjectCk(pr, { lead: L });
       auditLog('assign', 'Job reassigned to ' + (rptRepName(asg.value) || asg.value) + ' \u2014 ' + (pr.name || ''), pr.id);
+      /* 650: keep the commission rep in step while it is still unlocked —
+         only when the assignee is Sales (or Theo) and no money is logged yet;
+         the DB sales_rep_lock trigger guards regardless. */
+      try{
+        if(asg.value === 'theo@cardinalrenovations.net' || tmRoleOf(asg.value) === 'Sales'){
+          var _cc = await sb.from('collections').select('id', { count:'exact', head:true }).eq('project_id', pr.id);
+          if(!_cc.error && !_cc.count){
+            var _ru = await sb.from('projects').update({ sales_rep: asg.value }).eq('id', pr.id).select('id').single();
+            if(!_ru.error){
+              pr.sales_rep = asg.value;
+              if(currentProject && currentProject.id === pr.id) currentProject.sales_rep = asg.value;
+            }
+          }
+        }
+      }catch(_){}
       renderOverview();
     }catch(err){ showError('Could not reassign: ' + (err.message || err)); }
   });
@@ -15555,7 +15573,7 @@ function hideAllViews(){
      on the second visit. */
   /* 572: cr-coach-mount and cr-adjusters-mount are in the markup and shown by
      display, exactly like the four above, so they belong in the same list. */
-  ['crewsView','cr-estimates-mount','cr-pricing-mount','cr-claims-mount',
+  ['payView','crewsView','cr-estimates-mount','cr-pricing-mount','cr-claims-mount',
    'cr-coach-mount','cr-adjusters-mount']
     .forEach(function(id){
       var el = document.getElementById(id);
@@ -16617,6 +16635,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'profile'){ openMyProfile(); }
   else if(nav === 'clients'){ openClientsDirectory(); }
   else if(nav === 'crews'){ if(window.CardinalCrews) window.CardinalCrews.open(); }
+  else if(nav === 'pay'){ if(window.CardinalPay) window.CardinalPay.open(); }
   else if(nav === 'feed'){ openActivityFeed(); }
   else if(nav === 'reports'){ openReportsView(); }
   else if(nav === 'leads'){ openLeadsView(); }
@@ -17517,19 +17536,40 @@ async function runTotalsBackfill(){
    No email address is written anywhere. The crew contact block prefills from
    the crew record when it has one and shows a blank otherwise, and the whole
    document is editable in the existing editor before it goes out.          */
-/* ══ 556: commissions on this job ══════════════════════════════════════════
-   `commissions` carries the one split policy in the schema: admins do
-   everything, and a rep may SELECT rows where rep_email = auth.email(). So this
-   renders for everyone and a rep simply sees fewer rows — that is the design,
-   not a refusal to explain away. Only admins get the form.
+/* ══ 650: Money In & Commissions (extends 556) ═════════════════════════════
+   Collections drive commissions. One row in `collections` per check received
+   (deposit, final, supplemental, PWI, other); a DB trigger
+   (commission_system.sql, applied) auto-creates the 10% commission row for
+   the job's sales rep. Theo's own jobs create no commission — that is the
+   design, rendered below as "owner project", never as an error.
 
-   The total is summed from the rows actually rendered, so the figure can never
-   disagree with the list above it.                                          */
+   Permissions live in RLS, not here: commissions keep 556's split policy
+   (admins everything, a rep SELECTs their own rows), collections let
+   admin+production write and the job's sales rep read, draws are admin-write
+   and rep-read-own. This renders for everyone and a viewer simply sees fewer
+   rows — that is the design, not a refusal. Only the forms are gated here.
+
+   The sales rep is LOCKED by a DB trigger once a collection exists; the
+   select below is admin-only and asks before moving a rep on a funded job.
+   Existing commission rows keep their rep either way.
+
+   The totals are summed from the rows actually rendered, so the figures can
+   never disagree with the lists above them (the 556 rule, kept).           */
 var COMM_STATUS = ['pending','approved','paid','void'];
 var COMM_METHODS = [['check','Check'],['ach','ACH'],['payroll','Payroll'],['other','Other']];
+var COMM_TYPES = [['deposit','Deposit'],['final','Final'],['supplemental','Supplemental'],['pwi','PWI'],['other','Other']];
+var COMM_SOURCES = [['insurance','Insurance'],['homeowner','Homeowner'],['finance','Finance'],['other','Other']];
+var COMM_OWNER = 'theo@cardinalrenovations.net';
 
 function commAdmin(){
   try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
+}
+/* admin OR production — who may log money in (mirrors collections RLS) */
+function commFullAccess(){
+  try{
+    if(typeof isAdminUser === 'function' && isAdminUser()) return true;
+    return typeof isProductionUser === 'function' ? !!isProductionUser() : false;
+  }catch(_){ return false; }
 }
 function commMoney(n){
   var v = Number(n);
@@ -17537,17 +17577,59 @@ function commMoney(n){
   return (v < 0 ? '-' : '') + '$' + Math.abs(v).toLocaleString('en-US',
     { minimumFractionDigits:2, maximumFractionDigits:2 });
 }
+/* date-only strings ('2026-08-09') must parse as LOCAL midnight — a bare
+   new Date(s) reads them as UTC and shows the previous day in Dayton. */
+function commDate(s){
+  if(!s) return '';
+  try{
+    return new Date(String(s).slice(0, 10) + 'T00:00:00')
+      .toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+  }catch(_){ return String(s); }
+}
+function commToday(){
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+/* the table stores 'pending'; people read "Owed" */
+function commStatusLabel(s){
+  return s === 'pending' ? 'Owed' : (s === 'paid' ? 'Paid' : (s || ''));
+}
+function commTypeLabel(t){
+  for(var i = 0; i < COMM_TYPES.length; i++) if(COMM_TYPES[i][0] === t) return COMM_TYPES[i][1];
+  return t || '';
+}
+function commSourceLabel(c){
+  var s = c && c.source, lbl = '';
+  for(var i = 0; i < COMM_SOURCES.length; i++) if(COMM_SOURCES[i][0] === s) lbl = COMM_SOURCES[i][1];
+  if(!lbl) return '';
+  return (s === 'finance' && c.finance_company) ? lbl + ' \u2014 ' + c.finance_company : lbl;
+}
+/* sales-role teammates + Theo (owner jobs are marked, not paid). teamEmails()
+   and tmRoleOf() are hoisted from the Team page code later in this block.
+   NEVER a typed email: a typo'd rep_email orphans the row against nobody. */
+function commSalesReps(){
+  var out = [];
+  try{
+    teamEmails().forEach(function(em){
+      if((em === COMM_OWNER || tmRoleOf(em) === 'Sales') && out.indexOf(em) === -1) out.push(em);
+    });
+  }catch(_){}
+  if(out.indexOf(COMM_OWNER) === -1) out.push(COMM_OWNER);
+  return out;
+}
+var commUi = { collForm:false, drawForm:false, manual:false, editColl:null, hasColls:false };
+
 function commRowsHtml(rows){
   var paid = 0, open = 0;
   var body = rows.map(function(r){
     var v = Number(r.amount);
     if(isFinite(v)){ if(r.status === 'paid') paid += v; else if(r.status !== 'void') open += v; }
     return '<tr>' +
-      '<td>' + woEsc(r.rep_email || '') + '</td>' +
+      '<td>' + woEsc(rptRepName(r.rep_email) || r.rep_email || '') + '</td>' +
       '<td style="text-align:right">' + commMoney(r.amount) + '</td>' +
       '<td>' + woEsc(r.basis || '') + '</td>' +
-      '<td>' + woEsc(r.status || '') + '</td>' +
-      '<td>' + woEsc(r.paid_on || '') + '</td>' +
+      '<td>' + woEsc(commStatusLabel(r.status)) + '</td>' +
+      '<td>' + commDate(r.paid_on) + '</td>' +
       '<td>' + woEsc(r.reference || '') + '</td>' +
       (commAdmin() ? '<td><button class="chipbtn" data-delcomm="' + woEsc(r.id) + '">Remove</button></td>' : '') +
     '</tr>';
@@ -17557,38 +17639,197 @@ function commRowsHtml(rows){
 async function renderCommissions(){
   var mount = document.getElementById('commMount');
   if(!mount || !currentProject) return;
-  var rows = [];
+  var pid = currentProject.id;
+  var colls = [], rows = [], draws = [];
   try{
-    var r = await sb.from('commissions').select('*').eq('project_id', currentProject.id)
-                    .order('created_at', { ascending:false });
-    if(r.error) throw r.error;
-    rows = r.data || [];
+    var rs = await Promise.all([
+      sb.from('collections').select('*').eq('project_id', pid)
+        .order('collected_at', { ascending:false }).order('created_at', { ascending:false }),
+      sb.from('commissions').select('*').eq('project_id', pid)
+        .order('created_at', { ascending:false }),
+      sb.from('draws').select('*').eq('project_id', pid)
+        .order('paid_at', { ascending:false })
+    ]);
+    if(rs[1].error) throw rs[1].error;
+    /* collections and draws legitimately return nothing for some roles — a
+       correct refusal must not take the whole tab down */
+    colls = (!rs[0].error && rs[0].data) || [];
+    rows = rs[1].data || [];
+    draws = (!rs[2].error && rs[2].data) || [];
   }catch(e){
     mount.innerHTML = '<div class="empty">Could not load commissions: ' + woEsc(e.message || e) + '</div>';
     return;
   }
-  var t = commRowsHtml(rows);
+
+  var admin = commAdmin(), full = commFullAccess();
+  var rep = currentProject.sales_rep || null;
+  var locked = colls.length > 0;
+  commUi.hasColls = locked;
   var inp = 'style="width:100%;box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;' +
             'padding:8px 10px;font:600 13.5px \'Segoe UI\',Arial,sans-serif;"';
-  mount.innerHTML =
-    (rows.length
-      ? '<table class="reports"><thead><tr><th>Rep</th><th style="text-align:right">Amount</th>' +
-        '<th>Basis</th><th>Status</th><th>Paid</th><th>Reference</th>' +
-        (commAdmin() ? '<th></th>' : '') + '</tr></thead><tbody>' + t.body + '</tbody></table>' +
-        '<div style="display:flex;justify-content:flex-end;gap:18px;margin:10px 2px 0">' +
-          '<span><span class="subnote">Outstanding</span> <b>' + commMoney(t.open) + '</b></span>' +
-          '<span><span class="subnote">Paid</span> <b>' + commMoney(t.paid) + '</b></span></div>'
-      : '<div class="empty"><b>No commissions on this job yet.</b>' +
-        (commAdmin() ? '<br>Add one below.' : '<br>You have none recorded here.') + '</div>') +
-    (commAdmin()
-      ? '<div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(128,128,128,.22)">' +
+  var selS = 'style="box-sizing:border-box;border:1px solid #ddd6cf;border-radius:7px;' +
+            'padding:8px 10px;font:600 13.5px \'Segoe UI\',Arial,sans-serif;"';
+
+  /* ---- the sales rep on this job ---- */
+  var html = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;">' +
+    '<span>&#128100; Sales rep: <b>' + (rep ? woEsc(rptRepName(rep) || rep) : 'None assigned') + '</b>' +
+    (locked ? ' <span title="Locked after the first collection">&#128274;</span>' : '') + '</span>' +
+    (rep === COMM_OWNER
+      ? '<span class="subnote">No commission &#8212; owner project.</span>'
+      : (rep ? '<span class="subnote">earns 10% of every dollar collected</span>'
+             : '<span class="subnote">collections create no commission until a rep is set</span>')) +
+    (admin
+      ? '<select id="miRepSel" ' + selS + '>' +
+          '<option value="">' + (rep ? 'change rep…' : 'set rep…') + '</option>' +
+          commSalesReps().map(function(em){
+            return '<option value="' + woEsc(em) + '">' + woEsc(rptRepName(em) || em) + '</option>';
+          }).join('') +
+        '</select>'
+      : '') +
+  '</div>';
+
+  /* ---- money in ---- */
+  var totC = 0;
+  var commByColl = {};
+  rows.forEach(function(r){ if(r.collection_id) commByColl[r.collection_id] = r; });
+  html += '<h4 style="margin:6px 0 8px;">Money in</h4>';
+  if(colls.length){
+    html += '<table class="reports"><thead><tr><th>Date</th><th>Type</th><th>Source</th>' +
+      '<th style="text-align:right">Amount</th><th>Commission</th><th>Notes</th>' +
+      (full ? '<th></th>' : '') + '</tr></thead><tbody>' +
+      colls.map(function(c){
+        var v = Number(c.amount); if(isFinite(v)) totC += v;
+        var cm = commByColl[c.id];
+        return '<tr>' +
+          '<td>' + commDate(c.collected_at) + '</td>' +
+          '<td>' + woEsc(commTypeLabel(c.type)) + '</td>' +
+          '<td>' + woEsc(commSourceLabel(c)) + '</td>' +
+          '<td style="text-align:right">' + commMoney(c.amount) + '</td>' +
+          '<td>' + (cm
+            ? (cm.status === 'paid' ? '<b>&#9679; Paid</b>' : '<b>&#9675; ' + woEsc(commStatusLabel(cm.status)) + '</b>')
+            : '<span class="subnote">&#8212;</span>') + '</td>' +
+          '<td>' + woEsc(c.notes || '') + '</td>' +
+          (full ? '<td style="white-space:nowrap">' +
+              '<button class="chipbtn" data-micedit="' + woEsc(c.id) + '">Edit</button>' +
+              (admin ? ' <button class="chipbtn" data-micdel="' + woEsc(c.id) + '">Remove</button>' : '') +
+            '</td>' : '') +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+  }else{
+    html += '<div class="empty">No collections logged on this job yet.' +
+      (full ? ' Log the first check below.' : '') + '</div>';
+  }
+
+  /* ---- log / edit collection (admin + production) ---- */
+  if(full){
+    var editing = null;
+    if(commUi.editColl){
+      for(var ci = 0; ci < colls.length; ci++) if(colls[ci].id === commUi.editColl) editing = colls[ci];
+    }
+    html += '<div style="margin:10px 0 0;">' +
+      '<button class="btn" id="miCollBtn">' + (commUi.collForm ? 'Close' : '+ Log Collection') + '</button>' +
+      (admin ? ' <button class="btn ghost" id="miDrawBtn">' + (commUi.drawForm ? 'Close' : '+ Log Draw') + '</button>' : '') +
+    '</div>';
+    if(commUi.collForm){
+      html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
+        '<b>' + (editing ? 'Edit collection' : 'Log a collection') + '</b>' +
+        '<div class="ckrow">' +
+          '<label>Date<input type="date" id="miDate" ' + inp + ' value="' + woEsc(editing ? editing.collected_at : commToday()) + '"></label>' +
+          '<label>Amount<input type="text" id="miAmt" ' + inp + ' placeholder="17,025.00" value="' + (editing ? woEsc(String(editing.amount)) : '') + '"></label>' +
+        '</div><div class="ckrow">' +
+          '<label>Type<select id="miType" ' + inp + '>' +
+            COMM_TYPES.map(function(t){ return '<option value="' + t[0] + '"' + (editing && editing.type === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('') +
+          '</select></label>' +
+          '<label>Source<select id="miSrc" ' + inp + '><option value="">&#8212;</option>' +
+            COMM_SOURCES.map(function(t){ return '<option value="' + t[0] + '"' + (editing && editing.source === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('') +
+          '</select></label>' +
+        '</div>' +
+        '<div id="miFinRow" style="display:' + ((editing ? editing.source : '') === 'finance' ? 'block' : 'none') + ';margin-top:8px">' +
+          '<label>Financing company<input type="text" id="miFinCo" ' + inp + ' value="' +
+            woEsc((editing && editing.finance_company) || (editing ? '' : 'Service Finance')) + '"></label>' +
+        '</div>' +
+        '<label style="display:block;margin-top:8px">Notes<input type="text" id="miNotes" ' + inp + ' value="' + woEsc((editing && editing.notes) || '') + '"></label>' +
+        '<button class="btn" style="margin-top:12px" id="miSave">' + (editing ? 'Save changes' : 'Save collection') + '</button>' +
+        '<span class="subnote" id="miMsg" style="margin-left:10px"></span></div>';
+    }
+    if(admin && commUi.drawForm){
+      html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
+        '<b>Log a draw</b> <span class="subnote">a loan against future commission &#8212; deducted at payout</span>' +
+        '<div class="ckrow">' +
+          '<label>Rep<select id="miDrawRep" ' + inp + '>' +
+            commSalesReps().filter(function(em){ return em !== COMM_OWNER; }).map(function(em){
+              return '<option value="' + woEsc(em) + '"' + (em === rep ? ' selected' : '') + '>' + woEsc(rptRepName(em) || em) + '</option>';
+            }).join('') +
+          '</select></label>' +
+          '<label>Amount<input type="text" id="miDrawAmt" ' + inp + ' placeholder="500.00"></label>' +
+        '</div><div class="ckrow">' +
+          '<label>Date paid<input type="date" id="miDrawDate" ' + inp + ' value="' + commToday() + '"></label>' +
+          '<label>Notes<input type="text" id="miDrawNotes" ' + inp + '></label>' +
+        '</div>' +
+        '<button class="btn" style="margin-top:12px" id="miDrawSave">Save draw</button>' +
+        '<span class="subnote" id="miDrawMsg" style="margin-left:10px"></span></div>';
+    }
+  }
+
+  /* ---- draws on this job ---- */
+  var drawOut = 0;
+  if(draws.length){
+    html += '<h4 style="margin:16px 0 8px;">Draws on this job</h4>' +
+      '<table class="reports"><thead><tr><th>Rep</th><th style="text-align:right">Amount</th>' +
+      '<th>Paid</th><th>Status</th><th>Notes</th>' + (admin ? '<th></th>' : '') + '</tr></thead><tbody>' +
+      draws.map(function(d){
+        var v = Number(d.amount);
+        if(isFinite(v) && d.status === 'outstanding') drawOut += v;
+        return '<tr>' +
+          '<td>' + woEsc(rptRepName(d.rep_email) || d.rep_email || '') + '</td>' +
+          '<td style="text-align:right">' + commMoney(d.amount) + '</td>' +
+          '<td>' + commDate(d.paid_at) + '</td>' +
+          '<td>' + (d.status === 'repaid' ? 'Repaid ' + commDate(d.repaid_at) : '<b>Outstanding</b>') + '</td>' +
+          '<td>' + woEsc(d.notes || '') + '</td>' +
+          (admin ? '<td>' + (d.status === 'outstanding'
+            ? '<button class="chipbtn" data-midrawrepaid="' + woEsc(d.id) + '">Mark repaid</button>' : '') + '</td>' : '') +
+        '</tr>';
+      }).join('') + '</tbody></table>';
+  }else{
+    draws.forEach(function(d){ var v = Number(d.amount); if(isFinite(v) && d.status === 'outstanding') drawOut += v; });
+  }
+
+  /* ---- totals — summed from the rendered rows, never a second query ---- */
+  var t = commRowsHtml(rows);
+  var net = t.open - drawOut;
+  html += '<div style="display:flex;justify-content:flex-end;gap:18px;margin:14px 2px 0;flex-wrap:wrap;">' +
+    '<span><span class="subnote">Collected</span> <b>' + commMoney(totC) + '</b></span>' +
+    '<span><span class="subnote">Commission owed</span> <b>' + commMoney(t.open) + '</b></span>' +
+    '<span><span class="subnote">Paid</span> <b>' + commMoney(t.paid) + '</b></span>' +
+    (drawOut ? '<span><span class="subnote">Draws outstanding</span> <b>' + commMoney(drawOut) + '</b></span>' : '') +
+    (rep && rep !== COMM_OWNER
+      ? '<span><span class="subnote">Net to ' + woEsc((rptRepName(rep) || rep).split(' ')[0]) + '</span> ' +
+        '<b' + (net < 0 ? ' style="color:#c8202e"' : '') + '>' + commMoney(net) + '</b></span>'
+      : '') +
+  '</div>';
+
+  /* ---- the commission rows themselves ---- */
+  html += '<h4 style="margin:16px 0 8px;">Commissions</h4>';
+  html += (rows.length
+    ? '<table class="reports"><thead><tr><th>Rep</th><th style="text-align:right">Amount</th>' +
+      '<th>Basis</th><th>Status</th><th>Paid</th><th>Reference</th>' +
+      (admin ? '<th></th>' : '') + '</tr></thead><tbody>' + t.body + '</tbody></table>'
+    : '<div class="empty"><b>No commissions on this job yet.</b>' +
+      (full ? '<br>They appear automatically when a collection is logged.' : '<br>You have none recorded here.') + '</div>');
+
+  /* ---- manual entry, kept from 556 for adjustments and legacy rows ---- */
+  if(admin){
+    html += '<div style="margin-top:14px;"><button class="chipbtn" id="cmToggle">' +
+      (commUi.manual ? 'Hide manual entry' : 'Manual entry…') + '</button></div>';
+    if(commUi.manual){
+      html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
         '<div class="ckrow">' +
           '<label>Rep email<input type="text" id="cmRep" ' + inp + ' placeholder="nick@cardinalrenovations.net"></label>' +
           '<label>Amount<input type="text" id="cmAmt" ' + inp + ' placeholder="1,250.00"></label>' +
         '</div><div class="ckrow">' +
           '<label>Basis<input type="text" id="cmBasis" ' + inp + ' placeholder="5% of contract"></label>' +
           '<label>Status<select id="cmStatus" ' + inp + '>' +
-            COMM_STATUS.map(function(s){ return '<option value="' + s + '">' + s + '</option>'; }).join('') +
+            COMM_STATUS.map(function(s){ return '<option value="' + s + '">' + commStatusLabel(s) + '</option>'; }).join('') +
           '</select></label>' +
         '</div><div class="ckrow">' +
           '<label>Paid on<input type="date" id="cmPaid" ' + inp + '></label>' +
@@ -17598,10 +17839,123 @@ async function renderCommissions(){
         '</div>' +
         '<label style="display:block;margin-top:8px">Reference / memo<input type="text" id="cmRef" ' + inp + '></label>' +
         '<button class="btn" style="margin-top:12px" id="cmAdd">Record commission</button>' +
-        '<span class="subnote" id="cmMsg" style="margin-left:10px"></span></div>'
-      : '');
+        '<span class="subnote" id="cmMsg" style="margin-left:10px"></span></div>';
+    }
+  }
+
+  mount.innerHTML = html;
+
+  /* fresh-element wiring — innerHTML replaced everything above */
+  var el;
+  el = document.getElementById('miRepSel');
+  if(el) el.addEventListener('change', function(){ if(this.value) miChangeRep(this.value); });
+  el = document.getElementById('miCollBtn');
+  if(el) el.addEventListener('click', function(){
+    commUi.collForm = !commUi.collForm; if(!commUi.collForm) commUi.editColl = null;
+    renderCommissions();
+  });
+  el = document.getElementById('miDrawBtn');
+  if(el) el.addEventListener('click', function(){ commUi.drawForm = !commUi.drawForm; renderCommissions(); });
+  el = document.getElementById('miSave');
+  if(el) el.addEventListener('click', miSaveColl);
+  var miSrcSel = document.getElementById('miSrc');
+  if(miSrcSel){
+    miSrcSel.addEventListener('change', function(){
+      var fr = document.getElementById('miFinRow');
+      if(!fr) return;
+      var on = miSrcSel.value === 'finance';
+      fr.style.display = on ? 'block' : 'none';
+      var fc = document.getElementById('miFinCo');
+      if(on && fc && !fc.value) fc.value = 'Service Finance';
+    });
+  }
+  el = document.getElementById('miDrawSave');
+  if(el) el.addEventListener('click', miSaveDraw);
+  el = document.getElementById('cmToggle');
+  if(el) el.addEventListener('click', function(){ commUi.manual = !commUi.manual; renderCommissions(); });
   var add = document.getElementById('cmAdd');
   if(add) add.addEventListener('click', addCommission);
+}
+async function miChangeRep(email){
+  if(!currentProject || !commAdmin()) return;
+  if(commUi.hasColls && !confirm('This job already has money logged. Move the sales rep anyway?\nExisting commissions keep their rep; only future collections follow the new one.')){
+    renderCommissions(); return;
+  }
+  var r = await sb.from('projects').update({ sales_rep: email }).eq('id', currentProject.id).select('id,sales_rep').single();
+  if(r.error){ alert('Could not change the rep: ' + r.error.message); renderCommissions(); return; }
+  currentProject.sales_rep = email;
+  var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
+  if(cp) cp.sales_rep = email;
+  renderCommissions();
+}
+async function miSaveColl(){
+  if(!currentProject || !commFullAccess()) return;
+  var msg = document.getElementById('miMsg');
+  var amt = Number(document.getElementById('miAmt').value.replace(/[$,\s]/g, ''));
+  if(!isFinite(amt) || amt === 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
+  var row = {
+    collected_at: document.getElementById('miDate').value || commToday(),
+    amount: amt,
+    type: document.getElementById('miType').value || 'other',
+    source: document.getElementById('miSrc').value || null,
+    finance_company: document.getElementById('miSrc').value === 'finance'
+      ? (document.getElementById('miFinCo').value.trim() || 'Service Finance') : null,
+    notes: document.getElementById('miNotes').value.trim() || null,
+  };
+  if(msg) msg.textContent = 'Saving…';
+  var r;
+  if(commUi.editColl){
+    r = await sb.from('collections').update(row).eq('id', commUi.editColl).select('id').single();
+  }else{
+    row.project_id = currentProject.id;
+    row.created_by = (currentUser && currentUser.email) || null;
+    r = await sb.from('collections').insert(row).select('id').single();
+  }
+  if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
+  commUi.collForm = false; commUi.editColl = null;
+  await renderCommissions();
+}
+function miEditColl(id){
+  if(!commFullAccess()) return;
+  commUi.editColl = id; commUi.collForm = true;
+  renderCommissions();
+}
+async function miDelColl(id){
+  if(!commAdmin()) return;
+  if(!confirm('Remove this collection? Its unpaid commission goes with it.')) return;
+  var r = await sb.from('collections').delete().eq('id', id);
+  if(r.error){ alert('Could not remove: ' + r.error.message); return; }
+  await renderCommissions();
+}
+async function miSaveDraw(){
+  if(!currentProject || !commAdmin()) return;
+  var msg = document.getElementById('miDrawMsg');
+  var repSel = document.getElementById('miDrawRep');
+  var rep = (repSel && repSel.value || '').toLowerCase();
+  var amt = Number(document.getElementById('miDrawAmt').value.replace(/[$,\s]/g, ''));
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rep)){ if(msg) msg.textContent = 'Pick the rep.'; return; }
+  if(!isFinite(amt) || amt <= 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
+  if(msg) msg.textContent = 'Saving…';
+  var r = await sb.from('draws').insert({
+    rep_email: rep,
+    project_id: currentProject.id,
+    project_name: currentProject.name || null,
+    amount: amt,
+    paid_at: document.getElementById('miDrawDate').value || commToday(),
+    paid_by: (currentUser && currentUser.email) || null,
+    notes: document.getElementById('miDrawNotes').value.trim() || null,
+    created_by: (currentUser && currentUser.email) || null,
+  });
+  if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
+  commUi.drawForm = false;
+  await renderCommissions();
+}
+async function miRepayDraw(id){
+  if(!commAdmin()) return;
+  if(!confirm('Mark this draw repaid?')) return;
+  var r = await sb.from('draws').update({ status:'repaid', repaid_at: commToday() }).eq('id', id);
+  if(r.error){ alert('Could not update: ' + r.error.message); return; }
+  await renderCommissions();
 }
 async function addCommission(){
   if(!currentProject || !commAdmin()) return;
@@ -17612,12 +17966,13 @@ async function addCommission(){
      keyed to a typo silently belongs to nobody — the rep's own SELECT policy
      matches on this exact string. */
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rep)){
-    if(msg) msg.textContent = 'Enter the rep\u2019s full email address.'; return;
+    if(msg) msg.textContent = 'Enter the rep’s full email address.'; return;
   }
   if(!isFinite(amt) || amt === 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
-  if(msg) msg.textContent = 'Saving\u2026';
+  if(msg) msg.textContent = 'Saving…';
   var r = await sb.from('commissions').insert({
     project_id: currentProject.id, rep_email: rep.toLowerCase(), amount: amt,
+    project_name: (currentProject.name || null),
     basis: document.getElementById('cmBasis').value.trim() || null,
     status: document.getElementById('cmStatus').value || 'pending',
     paid_on: document.getElementById('cmPaid').value || null,
@@ -17911,6 +18266,12 @@ var __commMount = document.getElementById('commMount');
 if(__commMount) __commMount.addEventListener('click', function(e){
   var d = e.target.closest('[data-delcomm]');
   if(d) delCommission(d.getAttribute('data-delcomm'));
+  var ce = e.target.closest('[data-micedit]');
+  if(ce) miEditColl(ce.getAttribute('data-micedit'));
+  var cd = e.target.closest('[data-micdel]');
+  if(cd) miDelColl(cd.getAttribute('data-micdel'));
+  var dr = e.target.closest('[data-midrawrepaid]');
+  if(dr) miRepayDraw(dr.getAttribute('data-midrawrepaid'));
 });
 
 async function approveAndContract(prId){
@@ -21440,6 +21801,7 @@ function __histPush(st){
         case 'pricing':         if(typeof window.crOpenPricing === 'function') window.crOpenPricing(); break;
         case 'claims':          if(typeof window.crOpenClaims === 'function') window.crOpenClaims(); break;
         case 'crews':           if(window.CardinalCrews) window.CardinalCrews.open(); break;
+        case 'pay':             if(window.CardinalPay) window.CardinalPay.open(); break;
       }
     }catch(_e){}
     setTimeout(function(){ _navRestoring = false; }, 30);
@@ -21523,6 +21885,19 @@ function __histPush(st){
         var wrappedOpen = function(){
           var out = origOpen.apply(this, arguments);
           try{ window.navSetView('crews'); }catch(_e){}
+          return out;
+        };
+        wrappedOpen.__crNav = true;
+        c.open = wrappedOpen;
+      }
+    })();
+    (function(){
+      var c = window.CardinalPay;
+      if(c && typeof c.open === 'function' && !c.open.__crNav){
+        var origOpen = c.open;
+        var wrappedOpen = function(){
+          var out = origOpen.apply(this, arguments);
+          try{ window.navSetView('pay'); }catch(_e){}
           return out;
         };
         wrappedOpen.__crNav = true;
@@ -35724,6 +36099,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:651, d:'2026-08-09', t:'Finance as a check source, and a weekly owed email', s:'Logging a collection now offers Finance alongside Insurance and Homeowner \u2014 a check that comes in through a financing company (Service Finance today, more later) gets its own source and names which company. Every Friday morning Theo and Joan now get an email of what\u2019s owed to each rep minus their outstanding draws, matching the Commissions screen exactly \u2014 nothing to remember, nothing to check by hand.' },
+{ b:650, d:'2026-08-09', t:'Money in, commissions out', s:'The Commissions tab on every job now starts with the money: log each check as it arrives \u2014 deposit, final, supplemental, PWI \u2014 and the rep\u2019s 10% commission writes itself. Theo\u2019s own jobs create no commission. Draws \u2014 advances against future commission \u2014 can be logged on the job or from the new \ud83d\udcb5 Commissions screen in the menu, where Friday lives: what each rep is owed minus outstanding draws, one tap to pay net or full, this week\u2019s payouts, paid history and a CSV export. Reps open the same screen and see My Earnings \u2014 paid this year, owed now, and what the next check should be. The sales rep is set automatically when a job is created and locks once money is logged.' },
 { b:649, d:'2026-08-09', t:'Reading a filed scope works, and old notes are counted again', s:'Two fixes. \u201cRead the scope already on file\u201d said the document had nothing stored in it \u2014 it did, the app was looking in a list that deliberately leaves the file contents out to stay fast. It now fetches the document itself. And the job menu said Communication 0 on clients that plainly had a note: notes written in the older notes box were shown on the Communications screen but never counted on the tile. Eight clients were affected, including one with a long note about a structural concern. The tile and the screen now count the same thing.' },
 { b:648, d:'2026-08-09', t:'One reader behind all five Scope of Loss screens', s:'Five different screens could read a Scope of Loss, and each one had its own separate copy of the code that talks to the reader. That meant a fix to one never reached the other four \u2014 and one of them would have failed outright rather than asking you to sign in again. They now share a single connection, while each screen keeps its own look and its own handling of what comes back. Nothing changes in how any of them are used; this is groundwork so the next improvement lands everywhere at once.' },
 { b:647, d:'2026-08-09', t:'The landing page is dark again, and a scope already on file can be read', s:'Three fixes. The landing page had gone pale with pale writing on it \u2014 unreadable \u2014 because its background was following the app\u2019s light/dark setting while its text followed the landing\u2019s own. It has its own dark back again. Uploading a document from inside Open Full Claim said \u201cNo client selected\u201d and refused; that was broken the moment those tabs were added two builds ago, and it works now. And a Scope of Loss that was uploaded as a file can finally be READ: the Scope of Loss card offers to read the one already on file, so the scope you uploaded first becomes the baseline everything else is measured from \u2014 no need to upload it a second time.' },
@@ -55933,6 +56310,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #reportsView .rptkpi small.down{color:#f0a3a9;}
 </style>
 <div id="crewsView" style="display:none;position:fixed;inset:0;z-index:156;overflow-y:auto;"></div>
+<div id="payView" style="display:none;position:fixed;inset:0;z-index:156;overflow-y:auto;"></div>
 <style id="cr-crew-styles">
 /* ══ Build 547 · Crews — trade nav, profile, compliance vault, notes ═══════
    Chrome is borrowed, not invented: the trade nav is #cr-lnav's banded
@@ -62047,5 +62425,454 @@ window.CardinalColors = Object.assign(window.CardinalColors || {}, {
 });
 })();</script>
 
+<style id="cr-pay-styles">
+/* ═══ Commissions / My Earnings — v2026-08-09 build 650 ══════════════════════
+   One screen, three faces: Theo and Joan get the Friday payout board, a rep
+   gets My Earnings (the same queries — RLS trims the rows), production gets a
+   plain sentence. Blackout-independent of both app themes on purpose: money
+   reads the same at the kitchen table and the office. Every colour is
+   var(--pay-*,#literal) with the literal doing the work — the Crews pattern,
+   immune to the 448-449 stripped-token class by construction. */
+#payView{background:var(--pay-bg,#101214);color:var(--pay-ink,#e8e5df);
+  font:15px/1.5 'Segoe UI',Arial,sans-serif;padding:0 0 90px;}
+#payView .pay-head{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;
+  padding:14px 18px;background:var(--pay-bg,#101214);border-bottom:1px solid var(--pay-line,#262b30);}
+#payView .pay-head h2{margin:0;font-size:20px;font-weight:800;letter-spacing:.3px;}
+#payView .pay-head .pay-sub{color:var(--pay-mut,#9aa2ab);font-size:12.5px;font-weight:600;}
+#payView .pay-x{margin-left:auto;min-width:44px;min-height:44px;border:1px solid var(--pay-line,#262b30);
+  border-radius:10px;background:transparent;color:var(--pay-ink,#e8e5df);font-size:20px;cursor:pointer;}
+#payView .pay-wrap{max-width:860px;margin:0 auto;padding:16px;}
+#payView .pay-card{background:var(--pay-card,#171a1d);border:1px solid var(--pay-line,#262b30);
+  border-radius:14px;padding:16px;margin:0 0 16px;}
+#payView .pay-card h3{margin:0 0 10px;font-size:13px;font-weight:800;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--pay-mut,#9aa2ab);}
+#payView table{width:100%;border-collapse:collapse;font-size:14px;}
+#payView th{text-align:left;font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--pay-mut,#9aa2ab);padding:6px 8px;border-bottom:1px solid var(--pay-line,#262b30);}
+#payView td{padding:9px 8px;border-bottom:1px solid var(--pay-line,#22262a);vertical-align:middle;}
+#payView tr:last-child td{border-bottom:0;}
+#payView .pay-r{text-align:right;}
+#payView .pay-money{font-variant-numeric:tabular-nums;font-weight:700;}
+#payView .pay-pos{color:var(--pay-ok,#4fc98a);}
+#payView .pay-neg{color:var(--pay-red,#ef6a6a);}
+#payView .pay-btn{min-height:44px;padding:9px 16px;border-radius:10px;border:1px solid var(--pay-line,#262b30);
+  background:var(--pay-acc,#c8202e);color:#fff;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#payView .pay-btn.ghost{background:transparent;color:var(--pay-ink,#e8e5df);}
+#payView .pay-btn[disabled]{opacity:.5;cursor:default;}
+#payView .pay-chip{min-height:34px;padding:5px 12px;border-radius:9px;border:1px solid var(--pay-line,#262b30);
+  background:transparent;color:var(--pay-ink,#e8e5df);font:600 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+#payView .pay-stat{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 16px;}
+#payView .pay-stat .s{flex:1 1 150px;background:var(--pay-card,#171a1d);border:1px solid var(--pay-line,#262b30);
+  border-radius:14px;padding:14px 16px;}
+#payView .pay-stat .k{font-size:11.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--pay-mut,#9aa2ab);}
+#payView .pay-stat .v{font-size:22px;font-weight:800;margin-top:4px;font-variant-numeric:tabular-nums;}
+#payView .pay-note{color:var(--pay-mut,#9aa2ab);font-size:12.5px;}
+#payView .pay-choice{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+#payView .pay-row-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 14px;}
+#payView input[type=date],#payView input[type=text],#payView select{
+  min-height:40px;box-sizing:border-box;border:1px solid var(--pay-line,#262b30);border-radius:9px;
+  background:var(--pay-bg,#101214);color:var(--pay-ink,#e8e5df);
+  padding:7px 10px;font:600 13.5px 'Segoe UI',Arial,sans-serif;}
+#payView .pay-empty{padding:18px 6px;color:var(--pay-mut,#9aa2ab);}
+@media (max-width:560px){
+  #payView .pay-wrap{padding:12px 10px;}
+  #payView th:nth-child(4),#payView td:nth-child(4){display:none;}
+}
+</style>
+<script id="cr-pay-script">
+/* ═══ Commissions / My Earnings — v2026-08-09 build 650 ══════════════════════
+   Reads `commissions` and `draws` and nothing else; RLS decides what each
+   viewer gets (admins everything, a rep their own rows, production nothing).
+   Writes happen only from the admin face: mark paid (status/paid_on/paid_by/
+   method — amounts are NEVER mutated) and draw log/repay. "Pay net" marks the
+   rep's outstanding draws repaid in the same action; the repaid draw row IS
+   the deduction record. CSV goes through window.CardinalCsv — one pipeline.
+   Takes no scroll lock (the fixed view scrolls itself, like Crews). */
+(function(){
+'use strict';
+var OWNER = 'theo@cardinalrenovations.net';
+function view(){ return document.getElementById('payView'); }
+function db(){ return window.supa || null; }
+function me(){ try{ return (window.my_email && window.my_email()) || ''; }catch(_){ return ''; } }
+function isAdmin(){ try{ return !!(window.is_admin && window.is_admin()); }catch(_){ return false; } }
+function isProd(){ try{ return !!(window.is_full_access && window.is_full_access()) && !isAdmin(); }catch(_){ return false; } }
+function esc(s){
+  return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function payMoney(n){
+  var v = Number(n);
+  if(!isFinite(v)) return '';
+  return (v < 0 ? '-' : '') + '$' + Math.abs(v).toLocaleString('en-US',
+    { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+function dToday(){
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+/* date-only strings parse as LOCAL midnight, or Dayton sees yesterday */
+function dFmt(s){
+  if(!s) return '';
+  try{ return new Date(String(s).slice(0, 10) + 'T00:00:00')
+        .toLocaleDateString(undefined, { month:'short', day:'numeric' }); }
+  catch(_){ return String(s); }
+}
+function weekStart(){
+  var d = new Date(); d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function repName(em){
+  try{ if(typeof window.rptRepName === 'function') return window.rptRepName(em); }catch(_){}
+  return em ? String(em).split('@')[0] : 'Unknown';
+}
+function salesReps(){
+  var out = [];
+  try{
+    window.teamEmails().forEach(function(em){
+      if(em !== OWNER && window.tmRoleOf(em) === 'Sales' && out.indexOf(em) === -1) out.push(em);
+    });
+  }catch(_){}
+  /* fallback: anyone already carrying rows */
+  S.comm.concat(S.draws).forEach(function(r){
+    if(r.rep_email && out.indexOf(r.rep_email) === -1) out.push(r.rep_email);
+  });
+  return out;
+}
+function statusLabel(s){ return s === 'pending' ? 'Owed' : (s === 'paid' ? 'Paid' : (s || '')); }
+
+var S = { comm:[], draws:[], history:false, drawForm:false, choice:null, err:null };
+
+async function load(){
+  var d = db();
+  if(!d) throw new Error('backend not configured');
+  var rs = await Promise.all([
+    d.from('commissions').select('*').order('created_at', { ascending:false }).limit(1000),
+    d.from('draws').select('*').order('paid_at', { ascending:false }).limit(500)
+  ]);
+  if(rs[0].error) throw rs[0].error;
+  S.comm = rs[0].data || [];
+  /* draws refuse for non-admin non-rep viewers — that is correct, not fatal */
+  S.draws = (!rs[1].error && rs[1].data) || [];
+}
+
+function groupOwed(){
+  var by = {};
+  S.comm.forEach(function(r){
+    if(r.status !== 'pending' && r.status !== 'approved') return;
+    var g = by[r.rep_email] || (by[r.rep_email] = { owed:0, ids:[], drawSum:0, drawIds:[] });
+    var v = Number(r.amount); if(isFinite(v)) g.owed += v;
+    g.ids.push(r.id);
+  });
+  S.draws.forEach(function(dr){
+    if(dr.status !== 'outstanding') return;
+    var g = by[dr.rep_email] || (by[dr.rep_email] = { owed:0, ids:[], drawSum:0, drawIds:[] });
+    var v = Number(dr.amount); if(isFinite(v)) g.drawSum += v;
+    g.drawIds.push(dr.id);
+  });
+  return by;
+}
+
+function render(){
+  var v = view(); if(!v) return;
+  var role = isAdmin() ? 'admin' : (isProd() ? 'prod' : 'rep');
+  var head = '<div class="pay-head"><h2>&#128181; ' +
+    (role === 'rep' ? 'My Earnings' : 'Commissions') + '</h2>' +
+    '<span class="pay-sub">10% of every dollar collected</span>' +
+    '<button class="pay-x" data-act="close" aria-label="Close">&#10005;</button></div>';
+  if(S.err){
+    v.innerHTML = head + '<div class="pay-wrap"><div class="pay-card"><div class="pay-empty">Could not load: ' +
+      esc(S.err) + '</div></div></div>';
+    wire(v); return;
+  }
+  if(role === 'prod'){
+    /* a correct refusal never renders as a broken screen */
+    v.innerHTML = head + '<div class="pay-wrap"><div class="pay-card"><div class="pay-empty">' +
+      'Commissions are between the reps and the office &#8212; nothing for Production here. ' +
+      'Money in is logged on each job&#8217;s Commissions tab.</div></div></div>';
+    wire(v); return;
+  }
+  v.innerHTML = head + '<div class="pay-wrap">' +
+    (role === 'admin' ? renderAdmin() : renderRep()) + '</div>';
+  wire(v);
+}
+
+function renderAdmin(){
+  var by = groupOwed();
+  var reps = Object.keys(by).filter(function(e){ return by[e].owed > 0 || by[e].drawSum > 0; })
+    .sort(function(a, b){ return (by[b].owed - by[b].drawSum) - (by[a].owed - by[a].drawSum); });
+  var h = '';
+
+  h += '<div class="pay-row-tools"><label class="pay-note">Pay date ' +
+    '<input type="date" id="payDate" value="' + dToday() + '"></label>' +
+    '<label class="pay-note">Method <select id="payMethod">' +
+      [['check','Check'],['ach','ACH'],['payroll','Payroll'],['other','Other']].map(function(m){
+        return '<option value="' + m[0] + '">' + m[1] + '</option>'; }).join('') +
+    '</select></label>' +
+    (reps.length ? '<button class="pay-btn ghost" data-act="payall">Mark All Paid</button>' : '') +
+    '<button class="pay-chip" data-act="csv">Export CSV</button>' +
+    '<button class="pay-chip" data-act="history">' + (S.history ? 'Hide paid history' : 'Paid history') + '</button>' +
+  '</div>';
+
+  h += '<div class="pay-card"><h3>Owed</h3>';
+  if(reps.length){
+    h += '<table><thead><tr><th>Rep</th><th class="pay-r">Owed</th><th class="pay-r">Draws</th>' +
+      '<th class="pay-r">Net</th><th></th></tr></thead><tbody>' +
+      reps.map(function(em){
+        var g = by[em], net = g.owed - g.drawSum;
+        var r = '<tr><td><b>' + esc(repName(em)) + '</b></td>' +
+          '<td class="pay-r pay-money">' + payMoney(g.owed) + '</td>' +
+          '<td class="pay-r pay-money">' + (g.drawSum ? '&#8722;' + payMoney(g.drawSum).slice(1) : '&#8212;') + '</td>' +
+          '<td class="pay-r pay-money ' + (net < 0 ? 'pay-neg' : 'pay-pos') + '">' + payMoney(net) + '</td>' +
+          '<td class="pay-r">' + (g.owed > 0 ? '<button class="pay-chip" data-pay="' + esc(em) + '">Mark Paid</button>' : '<span class="pay-note">draws only</span>') + '</td></tr>';
+        if(S.choice === em){
+          r += '<tr><td colspan="5"><div class="pay-choice">' +
+            (g.drawSum > 0
+              ? '<button class="pay-btn" data-paynet="' + esc(em) + '">Pay net ' + payMoney(net) + ' &#8212; draws repaid</button>' +
+                '<button class="pay-btn ghost" data-payfull="' + esc(em) + '">Pay full ' + payMoney(g.owed) + ' &#8212; draws stay</button>'
+              : '<button class="pay-btn" data-payfull="' + esc(em) + '">Confirm &#8212; pay ' + payMoney(g.owed) + '</button>') +
+            '<button class="pay-chip" data-act="nochoice">Cancel</button>' +
+            (net < 0 ? '<span class="pay-note">Draws exceed commission &#8212; the rep owes the difference; settle outside or leave the draws outstanding.</span>' : '') +
+          '</div></td></tr>';
+        }
+        return r;
+      }).join('') + '</tbody></table>';
+  }else{
+    h += '<div class="pay-empty">Nothing owed. Commissions appear here as collections are logged on jobs.</div>';
+  }
+  h += '</div>';
+
+  var out = S.draws.filter(function(d){ return d.status === 'outstanding'; });
+  h += '<div class="pay-card"><h3>Active draws</h3>';
+  if(out.length){
+    h += '<table><thead><tr><th>Rep</th><th class="pay-r">Amount</th><th>Job</th><th>Paid</th><th></th></tr></thead><tbody>' +
+      out.map(function(d){
+        return '<tr><td>' + esc(repName(d.rep_email)) + '</td>' +
+          '<td class="pay-r pay-money">' + payMoney(d.amount) + '</td>' +
+          '<td>' + esc(d.project_name || 'general advance') + '</td>' +
+          '<td>' + dFmt(d.paid_at) + '</td>' +
+          '<td class="pay-r"><button class="pay-chip" data-repay="' + esc(d.id) + '">Mark repaid</button></td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<div class="pay-note" style="margin-top:8px">&#8594; deducted automatically when you pick &#8220;Pay net&#8221; on a payout.</div>';
+  }else{
+    h += '<div class="pay-empty">No outstanding draws.</div>';
+  }
+  h += '<div style="margin-top:10px"><button class="pay-chip" data-act="drawform">' +
+    (S.drawForm ? 'Close' : '+ New draw') + '</button></div>';
+  if(S.drawForm){
+    h += '<div class="pay-choice" style="margin-top:10px">' +
+      '<select id="pdRep">' + salesReps().map(function(em){
+        return '<option value="' + esc(em) + '">' + esc(repName(em)) + '</option>'; }).join('') + '</select>' +
+      '<input type="text" id="pdAmt" placeholder="500.00" style="width:110px">' +
+      '<input type="date" id="pdDate" value="' + dToday() + '">' +
+      '<input type="text" id="pdNote" placeholder="notes / job (optional)" style="flex:1;min-width:140px">' +
+      '<button class="pay-btn" data-act="drawsave">Save draw</button>' +
+      '<span class="pay-note" id="pdMsg"></span></div>';
+  }
+  h += '</div>';
+
+  var ws = weekStart();
+  var week = S.comm.filter(function(r){ return r.status === 'paid' && r.paid_on && String(r.paid_on) >= ws; });
+  var wby = {}, wtot = 0;
+  week.forEach(function(r){
+    var v = Number(r.amount); if(!isFinite(v)) return;
+    wby[r.rep_email] = (wby[r.rep_email] || 0) + v; wtot += v;
+  });
+  h += '<div class="pay-card"><h3>This week&#8217;s payouts</h3>';
+  var wreps = Object.keys(wby).sort(function(a, b){ return wby[b] - wby[a]; });
+  h += wreps.length
+    ? '<table><tbody>' + wreps.map(function(em){
+        return '<tr><td>' + esc(repName(em)) + '</td><td class="pay-r pay-money">' + payMoney(wby[em]) + '</td></tr>';
+      }).join('') +
+      '<tr><td><b>Total paid this week</b></td><td class="pay-r pay-money pay-pos">' + payMoney(wtot) + '</td></tr></tbody></table>'
+    : '<div class="pay-empty">Nothing paid yet this week.</div>';
+  h += '</div>';
+
+  if(S.history){
+    var paid = S.comm.filter(function(r){ return r.status === 'paid'; });
+    h += '<div class="pay-card"><h3>Paid history</h3>' +
+      (paid.length
+        ? '<table><thead><tr><th>Paid</th><th>Rep</th><th>Job</th><th>Basis</th><th class="pay-r">Amount</th></tr></thead><tbody>' +
+          paid.map(function(r){
+            return '<tr><td>' + dFmt(r.paid_on) + '</td><td>' + esc(repName(r.rep_email)) + '</td>' +
+              '<td>' + esc(r.project_name || '') + '</td><td class="pay-note">' + esc(r.basis || '') + '</td>' +
+              '<td class="pay-r pay-money">' + payMoney(r.amount) + '</td></tr>';
+          }).join('') + '</tbody></table>'
+        : '<div class="pay-empty">Nothing paid yet.</div>') + '</div>';
+  }
+  return h;
+}
+
+function renderRep(){
+  var my = me();
+  var yr = String(new Date().getFullYear());
+  var paidYtd = 0, owed = 0, drawOut = 0;
+  S.comm.forEach(function(r){
+    var v = Number(r.amount); if(!isFinite(v)) return;
+    if(r.status === 'paid'){ if(r.paid_on && String(r.paid_on).slice(0, 4) === yr) paidYtd += v; }
+    else if(r.status !== 'void') owed += v;
+  });
+  S.draws.forEach(function(d){
+    var v = Number(d.amount);
+    if(isFinite(v) && d.status === 'outstanding') drawOut += v;
+  });
+  var net = owed - drawOut;
+  var h = '<div class="pay-stat">' +
+    '<div class="s"><div class="k">Paid this year</div><div class="v pay-money">' + payMoney(paidYtd) + '</div></div>' +
+    '<div class="s"><div class="k">Owed now</div><div class="v pay-money">' + payMoney(owed) + '</div></div>' +
+    '<div class="s"><div class="k">Draws outstanding</div><div class="v pay-money">' + payMoney(drawOut) + '</div></div>' +
+    '<div class="s"><div class="k">Next check &#8776;</div><div class="v pay-money ' + (net < 0 ? 'pay-neg' : 'pay-pos') + '">' + payMoney(net) + '</div></div>' +
+  '</div>';
+  var out = S.draws.filter(function(d){ return d.status === 'outstanding'; });
+  if(out.length){
+    h += '<div class="pay-card"><h3>Active draws</h3><table><tbody>' +
+      out.map(function(d){
+        return '<tr><td>' + esc(d.project_name || 'general advance') + '</td>' +
+          '<td>' + dFmt(d.paid_at) + '</td>' +
+          '<td class="pay-r pay-money">' + payMoney(d.amount) + '</td></tr>';
+      }).join('') + '</tbody></table>' +
+      '<div class="pay-note" style="margin-top:8px">Deducted from your next payout.</div></div>';
+  }
+  var recent = S.comm.slice(0, 25);
+  h += '<div class="pay-card"><h3>Recent commissions</h3>' +
+    (recent.length
+      ? '<table><thead><tr><th>Job</th><th>Basis</th><th class="pay-r">Amount</th><th>Status</th></tr></thead><tbody>' +
+        recent.map(function(r){
+          return '<tr><td>' + esc(r.project_name || '') + '</td>' +
+            '<td class="pay-note">' + esc(r.basis || '') + '</td>' +
+            '<td class="pay-r pay-money">' + payMoney(r.amount) + '</td>' +
+            '<td>' + (r.status === 'paid' ? 'Paid ' + dFmt(r.paid_on) : esc(statusLabel(r.status))) + '</td></tr>';
+        }).join('') + '</tbody></table>'
+      : '<div class="pay-empty">No commissions yet. They appear when money is collected on your jobs.</div>') +
+    '</div>';
+  h += '<div class="pay-note">Questions about a figure belong to Theo &#8212; this screen is read-only.</div>';
+  return h;
+}
+
+async function payRep(em, deductDraws){
+  var by = groupOwed();
+  var g = by[em];
+  if(!g || !g.ids.length) return;
+  var d = db(); if(!d) return;
+  var date = (document.getElementById('payDate') || {}).value || dToday();
+  var method = (document.getElementById('payMethod') || {}).value || null;
+  var r = await d.from('commissions')
+    .update({ status:'paid', paid_on: date, paid_by: me() || null, method: method })
+    .in('id', g.ids);
+  if(r.error){ alert('Could not mark paid: ' + r.error.message); return; }
+  if(deductDraws && g.drawIds.length){
+    var r2 = await d.from('draws')
+      .update({ status:'repaid', repaid_at: date })
+      .in('id', g.drawIds);
+    if(r2.error) alert('Commissions are paid, but the draws did not update: ' + r2.error.message);
+  }
+  S.choice = null;
+  await reload();
+}
+
+async function reload(){
+  try{ S.err = null; await load(); }catch(e){ S.err = e.message || String(e); }
+  render();
+}
+
+function exportCsv(){
+  if(!(window.CardinalCsv && window.CardinalCsv.download)){ alert('CSV export is unavailable.'); return; }
+  var rows = S.comm.map(function(r){
+    return {
+      rep: r.rep_email, rep_name: repName(r.rep_email), job: r.project_name || '',
+      basis: r.basis || '', amount: r.amount, status: statusLabel(r.status),
+      paid_on: r.paid_on || '', paid_by: r.paid_by || '', method: r.method || '',
+      reference: r.reference || '', created: String(r.created_at || '').slice(0, 10)
+    };
+  });
+  if(!rows.length){ alert('Nothing to export yet.'); return; }
+  window.CardinalCsv.download(rows, 'cardinal-commissions-' + dToday() + '.csv');
+}
+
+function wire(v){
+  if(v.__payWired) return;
+  v.__payWired = true;
+  v.addEventListener('click', function(e){
+    var t = e.target.closest('[data-act],[data-pay],[data-paynet],[data-payfull],[data-repay]');
+    if(!t) return;
+    var act = t.getAttribute('data-act');
+    if(act === 'close'){ close(); return; }
+    if(act === 'history'){ S.history = !S.history; render(); return; }
+    if(act === 'drawform'){ S.drawForm = !S.drawForm; render(); return; }
+    if(act === 'nochoice'){ S.choice = null; render(); return; }
+    if(act === 'csv'){ exportCsv(); return; }
+    if(act === 'payall'){
+      var by = groupOwed();
+      var reps = Object.keys(by).filter(function(e2){ return by[e2].owed > 0; });
+      if(!reps.length) return;
+      if(!confirm('Mark every owed commission paid (' + reps.length + ' rep' + (reps.length > 1 ? 's' : '') + ')?\nDraws stay outstanding — use Pay net per rep to deduct them.')) return;
+      (async function(){
+        for(var i = 0; i < reps.length; i++) await payRep(reps[i], false);
+      })();
+      return;
+    }
+    if(act === 'drawsave'){
+      (async function(){
+        var msg = document.getElementById('pdMsg');
+        var rep = (document.getElementById('pdRep') || {}).value || '';
+        var amt = Number(((document.getElementById('pdAmt') || {}).value || '').replace(/[$,\s]/g, ''));
+        if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(rep)){ if(msg) msg.textContent = 'Pick the rep.'; return; }
+        if(!isFinite(amt) || amt <= 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
+        if(msg) msg.textContent = 'Saving…';
+        var d = db();
+        var r = await d.from('draws').insert({
+          rep_email: rep.toLowerCase(), project_id: null,
+          project_name: ((document.getElementById('pdNote') || {}).value || '').trim() || null,
+          amount: amt,
+          paid_at: (document.getElementById('pdDate') || {}).value || dToday(),
+          paid_by: me() || null, created_by: me() || null,
+          notes: ((document.getElementById('pdNote') || {}).value || '').trim() || null
+        });
+        if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
+        S.drawForm = false;
+        await reload();
+      })();
+      return;
+    }
+    var em = t.getAttribute('data-pay');
+    if(em){ S.choice = (S.choice === em ? null : em); render(); return; }
+    em = t.getAttribute('data-paynet');
+    if(em){ payRep(em, true); return; }
+    em = t.getAttribute('data-payfull');
+    if(em){ payRep(em, false); return; }
+    var did = t.getAttribute('data-repay');
+    if(did){
+      if(!confirm('Mark this draw repaid?')) return;
+      (async function(){
+        var d = db();
+        var r = await d.from('draws').update({ status:'repaid', repaid_at: dToday() }).eq('id', did);
+        if(r.error){ alert('Could not update: ' + r.error.message); return; }
+        await reload();
+      })();
+    }
+  });
+}
+
+async function open(){
+  var v = view();
+  if(!v) return;
+  try{ if(typeof hideAllViews === 'function') hideAllViews(); }catch(_){}
+  v.style.display = 'block';
+  v.innerHTML = '<div class="pay-head"><h2>&#128181; Commissions</h2>' +
+    '<button class="pay-x" data-act="close" aria-label="Close">&#10005;</button></div>' +
+    '<div class="pay-wrap"><div class="pay-empty">Loading…</div></div>';
+  wire(v);
+  await reload();
+}
+function close(){
+  var v = view();
+  if(v) v.style.display = 'none';
+  /* no scroll lock was taken, so none is released */
+  try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
+}
+window.CardinalPay = Object.assign(window.CardinalPay || {}, { open: open, reload: reload, close: close });
+})();
+</script>
 </body>
 </html>

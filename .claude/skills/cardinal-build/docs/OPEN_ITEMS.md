@@ -1884,3 +1884,79 @@ insert an empty row in the first place. Both are real, neither was asked for.
    cannot load a Google static map from the sandbox.
 3. **Archive site** (632) · **the colour page after Optimise** (633) · the
    **Feature header** after 626.
+
+---
+
+# Layer: build 650 — 9 Aug 2026 (Money In & Commissions)
+
+## ✅ SETTLED BY THEO, 9 Aug 2026 — do not re-litigate
+
+- **"Pedro Vera" in the spec IS Jerry Vera** — same person, spec used the
+  wrong first name. `jerry@cardinalrenovations.net` was already
+  `role:'sales'` in `team_profiles` and already in `TEAM_ROSTER`, so he was
+  already selectable as a commission rep with no code change needed. Nothing
+  to fix — this closes the "same family?" question outright.
+- **Kyle Mantia: leave him out.** Not a rep in this system. The roster
+  staying silent on him (no `team_profiles` row, no hardcoded email) is
+  correct, not a gap — do not add him speculatively.
+- **Greg Clark's display name is set** (`clarkie022@gmail.com` → "Greg
+  Clark" in `team_profiles`, confirmed live). He now renders by name
+  everywhere `rptRepName()` is used, no longer as "clarkie022".
+
+## ✅ The five spec open questions — ALL ANSWERED BY THEO, 9 Aug 2026
+
+*Do not re-ask any of these; do not build the paths he declined.*
+
+1. **Draws: linked to a project, but general advances are allowed too.**
+   Theo: "Draws are linked to project. But can it be both in case of
+   general?" — Yes, both. Matches what already shipped: `draws.project_id`
+   is nullable. The job's Money In tab creates a job-linked draw; the
+   Commissions screen's **+ New draw** creates a general one (`project_id:
+   null`). No further build needed — already both.
+2. **Draw requests: text/call, not in-app.** Theo: "Text/call." Reps do not
+   request draws through the app; Theo logs them. Matches what shipped —
+   only `isAdminUser()` can log a draw. **Do not build a rep-facing request
+   flow.**
+3. **No split commissions between two reps, ever.** Theo: "No split
+   commissions between 2 reps." `projects.sales_rep` stays a single field;
+   no `commission_splits` table. **This is decided, not deferred — do not
+   build it if asked again without a new instruction from Theo.** (The
+   collapsed "Manual entry…" form on the tab can still add a second
+   commission row by hand for a one-off exception, same as it always could.)
+4. **Weekly owed-reminder email — BUILT, build 651.** Theo: "Weekly
+   reminder once email trigger." `api/commissions-digest.js` (new,
+   mirrors `api/digest.js`'s Resend pattern) emails Theo and Joan every
+   Friday 11:00 UTC with what each rep is owed minus outstanding draws —
+   using the exact same "owed" rule (`pending`/`approved`, never
+   `paid`/`void`) the Commissions screen uses, so the two can never
+   disagree. Sends nothing when nothing is owed (matches `/api/digest`'s
+   own convention). Cron registered in `vercel.json`.
+5. **Payment method: tracked, not just date.** Already shipped at 650 — the
+   Mark Paid flow on the Commissions screen has a Method select
+   (check/ACH/payroll/other) alongside the date.
+
+## ✅ Finance as a collection source — BUILT, build 651
+
+Theo: "Add finance, we use service finance right now but will explore other
+financing." `collections.source` gained `'finance'` (alongside insurance/
+homeowner/other) plus a free-text `finance_company` column —
+`commission_finance_source.sql`, **applied**. Free text, not an enum: one
+financing company exists today and Theo has already said he'll add others,
+so a `financing_companies` table for one row would be the premature
+abstraction this project warns against — adding a second company later
+needs no migration. The Log Collection form pre-fills "Service Finance" as
+an editable default when Finance is picked (today's normal case costs zero
+extra typing); the Money In table shows it as "Finance — Service Finance".
+
+## Needs Theo — commission system (none of it blocks using the feature)
+
+1. **Backfill check:** 26 of 30 projects got a `sales_rep` from the checklist
+   assignment (joey 10 · clarkie022 8 · theo 6 · nick 2); 4 have none. All
+   editable on the job's Commissions tab until the first collection locks them.
+2. **Resend must actually be configured** for the new weekly email to send —
+   it reuses the same `RESEND_API_KEY` / `SUPABASE_SERVICE_ROLE_KEY` env vars
+   `/api/digest` already needs, so if the daily appointment digest is
+   arriving, this needs nothing new.
+3. **Rep-role rendering is verified by RLS + harness, not by signing in as a
+   rep** — the standing sandbox limitation. First Friday run-through is the
+   real gate.

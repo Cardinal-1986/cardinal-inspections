@@ -2504,3 +2504,83 @@ a stored file — a scope is 6.4 MB of base64. Reading the cache is what made
 "Read the scope already on file" claim an intact document was empty (647→649).
 `harness649.js` lifts `db.list()`'s real column list from the artifact and
 asserts `html` is absent from it, so the fixture cannot drift from production.
+
+---
+
+## Money In & Commissions (650)
+
+**What:** cash-collection commission tracking, replacing memory. One row in
+`collections` per check received (deposit / final / supplemental / PWI /
+other); a DB trigger auto-creates the 10% commission row for the project's
+sales rep. Theo's own jobs create no commission. Draws are loans against
+future commission; net payout = owed − outstanding draws. Paid locks.
+
+**Where it lives:**
+- **SQL:** `commission_system.sql` (root, **applied 9 Aug 2026**) — extends the
+  556 `commissions` table (`collection_id` unique, `rate_pct`, `paid_by`,
+  `project_name` denormalised for rep visibility), adds `collections`, `draws`,
+  `projects.sales_rep`, and five SECURITY DEFINER triggers. Status vocabulary
+  is still `pending/approved/paid/void`; the UI shows `pending` as **Owed**.
+  **Do not create a second commissions table, and do not name anything
+  `payments`** (a phantom table of that name already haunts the health check).
+- **The tab:** `#tab-commissions` → `#commMount`, rendered by
+  `renderCommissions()` in the main block (the 556 section, rebuilt in place at
+  650 under the banner `/* ══ 650: Money In & Commissions`). Inline forms, no
+  modals, no scroll lock. Admin+production log collections; admin logs draws,
+  changes the rep (sales-role + Theo only, from `teamEmails()`/`tmRoleOf()`),
+  and has a collapsed manual-entry form. Reps read their own rows (RLS).
+- **The screen:** `<style id="cr-pay-styles">` + `<script id="cr-pay-script">`
+  (last blocks in the file), `#payView` (display-shown, registered in
+  `hideAllViews()` + `navRestore('pay')`), `window.CardinalPay`
+  (`open`/`reload`/`close`). Menu: 💵 Commissions, after Crews. Admins: owed by
+  rep, Pay net / Pay full (pay net marks draws repaid — amounts never mutated),
+  Mark All Paid, week's payouts, paid history, CSV via `window.CardinalCsv`.
+  Reps: the same screen renders **My Earnings**. Production: a worded refusal.
+- **Gate:** `scripts/harness_pay.js` (53 assertions, executes the shipped code
+  per role; run with `TZ=America/New_York` — the date-only-string trap is only
+  visible in a negative-offset zone).
+
+**Invariants:** the rep select is fed from the live roster — NEVER a typed
+email (a typo'd `rep_email` orphans the row against nobody). Commission
+amounts are never mutated after creation; deductions are repaid-draw rows.
+`sales_rep` locks after the first collection (DB trigger; admin override).
+Totals are summed from the rendered rows, never a second query (556's rule).
+
+**Cross-rep visibility — proven live, not just read off the RLS text (9 Aug
+2026).** Two fake jobs (one Nick's, one Joey's) were created with real
+collections/commissions/draws, then queried under an actual authenticated
+session per rep (real JWT claim, `authenticated` role — RLS fully engaged,
+not the service-role bypass): each rep saw only their own rows across all
+three tables; Theo saw both. All test rows deleted afterward. `commissions`
+and `draws` enforce this with `rep_email = auth.email()`; `collections` with
+`projects.sales_rep = my_email()`. This is a database boundary, not a UI
+one — calling the Supabase client directly bypasses nothing.
+
+### 651 — Finance as a collection source, and Theo's weekly owed email
+
+Two small builds from Theo answering the spec's five open questions directly
+(all five are recorded, settled, in `OPEN_ITEMS.md` — do not re-ask):
+
+- **`collections.source` gains `'finance'`**, plus a free-text
+  `finance_company` column (`commission_finance_source.sql`, applied). Not
+  an enum — Theo: "we use service finance right now but will explore other
+  financing," so a `financing_companies` table for one row would be the
+  premature abstraction this project warns against. The Log Collection form
+  pre-fills "Service Finance" as an editable default when Finance is picked;
+  the Money In table shows "Finance — Service Finance". `commSourceLabel()`
+  also fixed a pre-existing gap where Source rendered its raw enum value
+  (`insurance`) instead of a label (`Insurance`) — Type already did this,
+  Source hadn't.
+- **`api/commissions-digest.js`** (new, mirrors `api/digest.js`'s Resend
+  pattern exactly) emails Theo and Joan every Friday 11:00 UTC: what each
+  rep is owed minus outstanding draws. "Owed" is `pending`/`approved`,
+  never `paid`/`void` — the exact rule `groupOwed()` in `cr-pay-script`
+  uses, exported from the API file too so the harness executes the real
+  grouping logic, not a re-implementation. Sends nothing when nothing is
+  owed (matches `/api/digest`'s own convention — no weekly "all clear"
+  noise). Cron in `vercel.json`, alongside the existing daily one.
+- **Gate:** `harness_pay.js` extended (58 assertions total) for the finance
+  form/display; new `harness_commissions_digest.mjs` (24 assertions) mocks
+  `fetch` entirely and executes the shipped `groupOwed()` + `handler()` —
+  no live email is ever sent by the harness. Both negative-controlled
+  against 650.
