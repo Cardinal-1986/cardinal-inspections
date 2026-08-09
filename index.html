@@ -3275,8 +3275,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 642 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
-        </div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 643 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>        </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
     </div>
@@ -35299,6 +35298,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:643, d:'2026-08-09', t:'A Scope of Loss over 3 MB actually uploads now',
+    s:'Uploading an adjuster\u2019s scope failed with \u201cthe extractor doesn\u2019t accept links yet\u201d for any file bigger than about 3 MB. Small files were sent to the reader directly, but larger ones were uploaded to storage first and only a link was sent \u2014 and the reader had never been taught to open a link. It can now. The size limit is also honest: it says 12 MB and means it, and it tells you before the upload rather than after, instead of claiming 20 MB and refusing at the end.' },
 { b:642, d:'2026-08-09', t:'Team alerts: one send, and only from inside the app', s:'Two problems in the alert path, both invisible from the outside. Every team alert was being sent twice \u2014 two pushes and two emails for one event \u2014 because a second sender added long ago was still running alongside the real one. And the server route that sends them never checked who was asking, so anyone who knew the address could have used it to send email that looked like it came from Cardinal. The route now requires you to be signed in, and there is one sender instead of two. Nothing changes in how you use it.' },
   { b:641, d:'2026-08-09', t:'The rest of the insurance cards are back on a client profile',
     s:'Build 639 brought back the Scope of Loss upload. It turns out that was one of four \u2014 the claim panel, the Insurance Documents card (where you upload and list the paperwork) and the iTel card were all being built and then painted out by the same stylesheet rule, on every insurance client. They had never appeared: the iTel card was added in build 406, and the section it sits in was retired back in build 348. All three are back now. They show only on an insurance job, exactly as they were written to \u2014 nothing changes on a retail or community profile.' },
@@ -44099,7 +44100,13 @@ rows : function(){ return rows; },
 (function(){
 'use strict';
 var MAX_INLINE = 3.1 * 1024 * 1024;
-var MAX_STORED = 20 * 1024 * 1024;
+/* 643: 12 MB, matching api/sol.js's MAX_BYTES. This said 20 MB and describe()
+   advertised 20 MB, but the route caps at 12 MB raw \u2014 base64 inflates ~1.33x
+   and Gemini's inline ceiling is 20 MB. Nothing between 12 and 20 ever reached
+   the server before (everything over MAX_INLINE 400'd), so the gap never showed.
+   Now that links work, a 15 MB scope would upload over 5G and THEN be refused.
+   Refuse first, with the reason. */
+var MAX_STORED = 12 * 1024 * 1024;
 var MAX_EDGE   = 2200;
 var JPEG_Q     = 0.82;
 function mb(bytes){ return (bytes / 1024 / 1024).toFixed(1); }
@@ -44255,9 +44262,15 @@ body: JSON.stringify({ url: url }),
 var j = null;
 try{ j = await r.json(); }catch(_){}
 if(!r.ok){
-if(r.status === 400){
-throw new Error('The extractor doesn\u2019t accept links yet \u2014 deploy the updated api/sol.js.');
-}
+/* 643: the 400 branch used to read "the extractor doesn't accept links yet
+   \u2014 deploy the updated api/sol.js." It was true, and api/sol.js now accepts
+   { url }. Keeping it would bury every LATER 400 (a bad storage link) behind a
+   stale instruction to deploy something already deployed.
+   \u26a0 The line below is LEFT ALONE on purpose. `detail || error` looks
+   backwards for a human message, but it is the shape at all 22 fetch-error sites
+   in this file, and every error api/sol.js returns on the URL path carries only
+   `error` \u2014 so it already resolves to the sentence. Flipping it here alone
+   would make this the one site that differs. */
 throw new Error(String((j && (j.detail || j.error)) || ('HTTP ' + r.status)).slice(0, 240));
 }
 return j.extracted || {};

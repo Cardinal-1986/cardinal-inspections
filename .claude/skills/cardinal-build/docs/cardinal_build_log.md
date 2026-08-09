@@ -11323,3 +11323,81 @@ arrays — 275 old-shape entries (to build 600, ~line 35314) and 35 current-shap
 ever appears to add a build, and **branch collision detection has been dead since
 574**. This build took 642; 638, 639 and 641 all landed on main while it was open. *(Also: CLAUDE.md says the old array "now exists only
 in git history" — it does not, it is still in the file.)*
+
+---
+
+## 643 — a Scope of Loss over 3 MB actually uploads
+
+**Theo, on Gunn's profile after 641: "Also scope is still not uploading for
+Gunn."** The alert read:
+
+> Could not read the Scope of Loss: The extractor doesn't accept links yet —
+> deploy the updated `api/sol.js`.
+
+**That message was telling the truth.** `index.html` has always forked on size:
+under `MAX_INLINE` (3.1 MB) it posts base64 inline; over it, `toStorageUrl()`
+uploads to `photos/scopes/…`, makes a **600-second signed URL**, and posts
+`{ url }`. `api/sol.js` only ever read `file`, so it answered **400 "No file"**
+and the client showed a placeholder left for a server half that was never
+written. Gunn's scope is the file that found it.
+
+### The fix — `api/sol.js` accepts `{ url }`
+
+Fetch the object, cap it, base64 it, and hand it to the existing pipeline. The
+inline path is untouched.
+
+⚠️ **Fetching a caller-supplied URL server-side is SSRF unless it is bounded**,
+and a signed-in user is not automatically trusted with the server's network
+position. `storageUrlOrNull()` parses the URL and requires **https**, the
+**exact origin** of this project's Supabase, and the `/storage/v1/` prefix — a
+parsed-origin test, not a substring one, so
+`https://evil.test/?x=<storage prefix>`, a `…supabase.co.evil.test` lookalike and
+`https://…supabase.co@evil.test/` all fail. Eight attack shapes are asserted.
+
+The `photos` bucket is **private** (`public:false`), which is why
+`createSignedUrl` is tried first and `getPublicUrl` is only a fallback that
+would 401. Bucket already allows `application/pdf` at a 25 MB limit — configured
+earlier the same day, no SQL in this build.
+
+### The 20 MB promise was never true
+
+The client refused at `MAX_STORED = 20 MB` and `describe()` advertised 20 MB,
+while `api/sol.js` caps at `MAX_BYTES = 12 MB` raw — base64 inflates ~1.33x
+against Gemini's 20 MB inline ceiling, so **12 MB is the real limit**. Nothing
+between 12 and 20 had ever reached the server (everything over 3.1 MB 400'd), so
+the gap was invisible. The moment links work, a 15 MB scope uploads over 5G and
+*then* gets refused. `MAX_STORED` is now 12 MB, so `prepare()` refuses first,
+with the reason.
+
+### Two things I nearly got wrong
+
+⚠️ **An assertion matched my own comment.** `assert count("doesn't accept links
+yet") == 0` failed — because the replacement *comment* quotes the old sentence to
+explain why it went. The file's own "a naive count finds the value in its own
+explanatory comment" trap, hit while writing the patch for it. Assert on the
+**throw**, not the phrase.
+
+⚠️ **I nearly introduced a 23rd error shape.** The plan included flipping
+`j.detail || j.error` to `error || detail`, since `detail` is a 500-char JSON
+dump and `error` is the human sentence. A file-wide assertion caught that the
+same shape appears at **22 fetch-error sites** — it is the convention, not a
+local slip. And it was unnecessary: every error this route returns on the URL
+path carries only `error`, so `detail || error` already resolves to the
+sentence. Dropped. *A new mechanism beside an existing one is a bug with a
+delay on it.*
+
+### Gates
+
+`check_build.py` green, stamp **641 → 643** (642 is held by PR #161),
+negative-controlled. **14 harnesses, 745 assertions.**
+
+New `harness_sol.js` (22) executes the **shipped** handler with `fetch` stubbed
+at the boundary — auth, storage and Gemini all faked, the module's own control
+flow under test. Against `main@641` it is **RED, 16 failures**, reproducing
+Theo's exact `400 No file`.
+
+⚠️ **Its first version scored the SSRF cases wrong.** "400 and never fetched"
+passes trivially on a build that does not understand `url` at all and refuses
+everything — main@641 scored full marks on all eight. They now require the
+refusal to be **about the link**, so only a build that actually parsed the URL
+can pass. That is what took the negative control from 8 failures to 16.
