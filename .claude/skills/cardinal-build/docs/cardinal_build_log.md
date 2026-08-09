@@ -10899,3 +10899,84 @@ and `insurance_claims` already carries `supplement_status`, `supplement_filed`,
 **Do not "unify the four stage vocabularies" as a side effect of this.** He ruled
 separately that the insurance pipeline differing from retail/community is by
 design.
+
+---
+
+## Build 637 — the address on the Location card, readable in dark mode (9 Aug 2026)
+
+Theo: *"Cannot hardly read address on card in dark mode."* He was being polite.
+
+**Measured in Chromium, not eyeballed:**
+
+| | ink | card | ratio |
+|---|---|---|---:|
+| retail **dark** | `#cfd6df` | `#ffffff` | **1.46:1** |
+| retail light | `#161616` | `#ffffff` | 18.10:1 |
+
+The floor for body text is 4.5:1.
+
+**The cause is one declaration.** `.acxsec{background:#fff}` has **no dark twin
+anywhere**, while `.dbaddr{color:var(--rbe-ink,#cfd6df)}` flips `#161616` →
+`#cfd6df` with the theme. The ink was tokenised against a theme its own
+background does not follow.
+
+⚠️ **It is the only thing on that card that does this.** Every sibling —
+`.acxbody`, `.ackv > span`, `.ackv > div`, `.axnote`, `.dbprim b`, `.dbrep b`,
+`.dbassign`, `.acxtrs label` — pins no colour at all in the base stylesheet;
+they inherit and read correctly on white. Every `--ct-*` rule that turns up in a
+grep for them is scoped to `body.claim-insurance`. So the fix is genuinely local.
+My first instinct was to give `.acxsec` a dark twin, which would have restyled
+every retail card in dark mode off one report.
+
+### ⚠️ A RENDER CAUGHT ME SHIPPING A REGRESSION, and then caught my test too
+
+**First attempt:** change `.dbaddr` globally to a fixed dark ink, plus a
+`body.claim-insurance … .dbaddr{color:var(--ct-ink)}` override. Chromium said
+insurance went to **1.06:1** — worse than before.
+
+**Then the second correction, which matters more than the first.** That number
+was itself an artifact: **`--ct-*` is gated on `[data-rltheme="docket"|"siren"]`
+— a THIRD theme attribute**, alongside `data-theme` (`--rbe-*`) and `data-mode`
+(the landing page). My harness set only `data-theme`, so every `--ct-*` value it
+resolved was a fallback. *The test was wrong, not the app.*
+
+With `data-rltheme` set correctly, insurance was **fine all along**: 13.58:1 in
+siren, 17.09:1 in docket. My "insurance is broken" reading and my "fix" for it
+were both wrong, and only a corrected render showed it.
+
+**So this build touches retail only** — one scoped rule, insurance and community
+left on the exact declaration they had:
+
+```css
+body:not(.claim-insurance):not(.claim-community) .dbaddr{color:#1e2432}
+```
+
+Fixed rather than tokenised because the *ground* is fixed. Same call CLAUDE.md
+already records for the seventeen `color:white` on a coloured ground.
+
+**Rendered, before and after, across every theme × CRM** (`render_dbaddr.js`):
+
+```
+              BEFORE            AFTER
+retail dark    1.46:1  <-- bug  15.51:1
+retail light  18.10:1           15.51:1
+insurance siren  13.58:1        13.58:1   (untouched)
+insurance docket 17.09:1        17.09:1   (untouched)
+```
+
+### 📌 A SECOND, PRE-EXISTING PROBLEM THE RENDER FOUND — not fixed, not verified
+
+With `body.claim-community` on `#projectView`, the address renders
+**`rgb(242,244,243)` on `rgb(255,253,247)` — 1.09:1.** `body.claim-community
+.acxsec:not(.rvsec)` grounds the card in cream `#fffdf7`, while
+`body[data-crm="community"] .dbaddr` inks it near-white from `--ccm-ink`.
+
+⚠️ **I am NOT claiming this is live.** In the real Community client page
+`adoptLocation()` **moves** that `.acxsec` into `#cr-cc-loc`, where
+`#cr-cc .cc-loc .acxsec{background:transparent !important}` sits it on a dark
+ground and near-white ink is right. My harness renders the pre-adoption state.
+It may be a transient flash, a real bug when adoption does not run, or nothing.
+
+**Not touched.** I have now been wrong twice this build about a CRM I cannot
+open, and the correct next step is a screenshot of a Community job in dark mode,
+not a third guess. Recorded so it is not lost.
