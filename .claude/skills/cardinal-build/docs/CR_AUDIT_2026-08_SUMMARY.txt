@@ -1,0 +1,173 @@
+================================================================
+CARDINAL APP — FULL AUDIT, THE SHORT VERSION
+9 August 2026 · audited at build 652 · read-only
+================================================================
+
+Nothing was changed to produce this. No app edits, no database
+writes. Everything below was checked against the real code and the
+live database, and every headline was re-proven by hand before it
+went on the list.
+
+Full report:  .claude/skills/cardinal-build/docs/CR_AUDIT_2026-08.md
+Spreadsheet:  .claude/skills/cardinal-build/docs/CR_AUDIT_2026-08.csv
+Recheck tool: .claude/skills/cardinal-build/scripts/audit_recount.py
+
+23 findings total: 8 serious, 9 medium, 6 minor.
+Plus 6 features already built but unreachable, and 6 things the
+insurance spec asked for that genuinely don't exist yet.
+
+
+================================================================
+THE 8 SERIOUS ONES
+================================================================
+
+1. CONVERT-TO-CONTRACT IS A DEAD BUTTON
+   It calls an address that doesn't exist. The file behind it was
+   renamed at some point (a dash where there used to be an
+   underscore) and the button never followed. The first time
+   anyone converts an AI estimate, it fails. Nobody has hit it yet
+   only because no AI estimates exist.
+   Fix: one word. Minutes.
+
+2. "SEND" TELLS YOUR REP THE CLIENT GOT AN EMAIL. NOBODY DID.
+   The AI-estimate Send button marks it sent and pops "client will
+   receive email/SMS." I checked every file in the app: nothing
+   sends an email or a text when an estimate is marked sent, and
+   nothing ever has. It also ignores errors, so even a refused
+   save still shows the success message.
+   Fix: your call — wire a real sender, or change the words.
+
+3. JOB MONEY IS COMPUTED TWO DIFFERENT WAYS
+   Your client profile counts ONLY signed contracts. Every list,
+   report, and the receivables card counts the best estimate. So a
+   job with a signed estimate and no contract reads $20,525 on one
+   screen and $0 on another. This is exactly what you ran into on
+   the Joeseph job — it isn't one job, it's 4 of your 30 right now.
+   Fix: one story for job value, or a label on each screen saying
+   where the number came from. Product call, not a bug fix.
+
+4. THE RECEIVABLES CARD NEVER SUBTRACTS PAYMENTS
+   A half-paid job shows its FULL value as outstanding on the home
+   dashboard, while the job's own page correctly shows the balance.
+   The card also says its totals come from the worksheet; they
+   don't — they come from estimates.
+   Fix: subtract what's been paid, fix the caption. Small.
+
+5. SUPPLEMENTS HAVE TWO SEPARATE TRACKERS THAT CAN'T SEE EACH OTHER
+   File a supplement on the client profile card and the claims
+   screen shows nothing. File one on the claims screen and the
+   pipeline, the "owed by carriers" figure, and the chase list
+   never move. They don't even use the same words for status —
+   one says "filed," the other says "submitted."
+   Nothing is broken TODAY only because no supplements are filed
+   yet. The first real one splits your numbers.
+   Fix: one tracker. Your three-filings model (partial denial /
+   backend / paid-when-incurred + COC) is already written down in
+   the build log — I'd bring you a shape before building.
+
+6. YOUR ONE CLAIM WITH REAL MONEY IS INVISIBLE
+   $28,727.17 approved. It's in the database, correctly linked to
+   its job — and it appears on NO insurance screen. Two reasons
+   stacked: the job's record is missing the marker that says
+   "insurance," and its stage (On Hold) is one the insurance
+   pipeline silently drops on the floor. Fixing the first still
+   leaves it hidden by the second.
+   Fix: repair that record + three small code fixes. Small.
+
+7. TWO DEVICES CAN ERASE EACH OTHER'S WORK
+   There's no live sync. When anything saves, it writes the job's
+   whole record back from what that device had in memory. So if
+   you're on the phone and Joan is on the desktop on the same job,
+   whoever saves second wipes the other's changes — the whole
+   message thread, payments, tasks, contacts, stage timestamps.
+   You work from a phone AND a desktop, so this is real, not
+   theoretical.
+   Fix: cheapest version is re-read-before-save. Small, and it
+   removes most of the risk.
+
+8. PHOTO ACTIVITY DOWNLOADS ABOUT 12 MB EVERY TIME YOU TAP IT
+   13 old photos are stored as raw data inside the database row
+   instead of as files (11.8 MB of them). Opening Photo Activity
+   pulls all of it before a single picture appears. Separately, 3
+   cover photos add roughly 1 MB to every single app start and
+   every save-refresh. And the photo gallery loads full-size
+   originals into thumbnail-sized tiles.
+   Fix: move those 16 images to file storage, plus a one-line
+   change on the gallery. Biggest speed win in the whole list,
+   smallest risk.
+
+
+================================================================
+BUILT ALREADY, BUT NO WAY TO REACH IT
+================================================================
+
+* A working "invite a teammate" function (creates their sign-in
+  and sets their role) — with no button anywhere.
+* An admin self-test that walks the estimate flow and reports
+  pass/fail — reachable only from a developer console.
+* An undo-toast tool nothing uses.
+* 28 real iTel lab reports sitting in a table nothing reads. The
+  app's iTel card reads a DIFFERENT, empty table. Worth a look
+  before anyone builds anything iTel.
+
+
+================================================================
+INSURANCE: WHAT THE SPEC ASKED FOR THAT DOESN'T EXIST
+================================================================
+
+Each of these needs your shape before I build anything.
+
+* Adjuster MEETINGS — appointments have no adjuster type, no
+  calendar sync, no reminder. (Adjuster contacts and the directory
+  DO exist.)
+* Scope history — only the first scope and the latest survive.
+  Scope 2 of 4 is gone forever, and no line-item detail is kept
+  anywhere. The AI reads the totals off a scope, not the lines.
+* Supplement unification — see item 5 above. This one is the
+  foundation; the three below get easier after it.
+* PWI as an expense ledger — right now "PWI" only exists as a
+  label on a check that came IN. Nothing tracks a PWI line item
+  through unincurred → incurred → billed → paid.
+* Certificate of completion + depreciation release — the dollar
+  figure exists and gets chased, but there's no release-requested
+  or release-received state, and no COC document type.
+* A carrier-facing final invoice — today's invoice is retail-
+  shaped: it needs a signed contract and knows nothing about a
+  claim, RCV, or depreciation.
+
+ONE WARNING ON THE SPEC: it proposed new pipeline stages
+(Adjuster Scheduled, Scope Pending, Depreciation Released...).
+Do NOT add those as stages. Any stage the app doesn't recognize
+silently turns that job into a Lead. Insurance sub-status belongs
+in the claim record, where it already lives.
+
+
+================================================================
+PICK WHAT YOU WANT FIRST
+================================================================
+
+1. BROKEN WIRES — the dead Convert button, the four handlers that
+   never check whether their save worked, the hidden duplicate-
+   claim trap, small dead code.
+   (Send's message needs your answer: real sender, or reword?)
+
+2. MONEY COHERENCE — receivables subtracts payments; one story
+   for job value across every screen.
+
+3. INSURANCE REPAIR — make the $28,727 claim visible, fix the
+   On Hold drop, make the stage names agree.
+
+4. SUPPLEMENT UNIFICATION — one tracker, built to your
+   three-filings model. I'd show you a shape first.
+
+5. MEDIA BACKFILL — kill the 12 MB tap and the boot weight.
+
+6. HEALTH CHECK + DATABASE HYGIENE — the health screen currently
+   watches a dead table and ignores the live one; plus a batch of
+   database tune-ups and one Auth setting to switch on.
+
+7. GAP FEATURES — any of the six insurance items above.
+
+Answer however you like — "5 and 1", "all of it, that order",
+whatever. Each pick becomes its own build, tested and shipped
+one at a time.
