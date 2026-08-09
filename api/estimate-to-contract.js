@@ -1,4 +1,4 @@
-// api/estimate_to_contract.js
+// api/estimate-to-contract.js
 // ─────────────────────────────────────────────────────────────
 // Convert-to-Contract handoff.
 //   Input:  { ai_estimate_id? } OR { project_id }  (exactly one)

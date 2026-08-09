@@ -1987,3 +1987,43 @@ Awaiting Theo's picks from the fix menu (presented in chat, mirrored in the
 report): the broken-wire batch · money coherence · insurance repair · the
 supplement unification shape (his three-filings model) · the media backfill
 · health-check truth-telling · the DB hygiene migration · gap features.
+
+---
+
+# Layer: build 653 — 9 Aug 2026 (five audit fixes, shipped)
+
+## ✅ BUILT — the broken-wire batch Theo picked off the fix menu
+
+Five items, verbatim from his list, each closing the audit finding named:
+
+1. **CR-AUD-001** (dead Convert-to-Contract button) — fixed, hyphenated the
+   endpoint path everywhere it appeared.
+2. **CR-AUD-002** (false Send toast) — fixed, real send through
+   `/api/senddoc`. **Also fixed as a dependency, found only by executing
+   the handler for real:** the pre-existing `.cr-doc` innerHTML wipe that
+   crashed `showOutput()` before Send's handler was ever wired — this one
+   was not on Theo's list and was not a named audit finding; it surfaced
+   while proving item 2 actually works, and had to be fixed for item 2 to
+   be reachable at all. Reproduces on 652; not new in this build.
+3. **CR-AUD B1** (invite endpoint, no caller) — fixed, new button beside
+   "Add teammate."
+4. **CR-AUD-008** (12 MB photo tap) — fixed, `loading="lazy"` +
+   admin-only legacy-media migration tool.
+5. **CR-AUD-006/014** (invisible $28,727 claim) — fixed, `RAIL` gained
+   `OnHold`, the one live record repaired, `linkClaimToProject()` now sets
+   `claim_type` going forward.
+6. **CR-AUD B2/B4** (buried iTel rows and the smoke-test runner) — fixed,
+   both joined the banner `ROUTES` map; a new read-only iTel Lab Results
+   view exposes the 28 real rows and says plainly they're not yet linked
+   to a claim.
+
+**This closes the "broken-wire batch" line item from the CR Audit's fix
+menu.** The remaining fix-menu lines — money coherence (CR-AUD-003/004/
+013), insurance repair beyond the OnHold hole (CR-AUD-007/009/015/017),
+the supplement unification (CR-AUD-005, Theo's three-filings model, still
+unbuilt and still needs his shape first), the media backfill beyond legacy
+base64 (broader than CR-AUD-008), health-check truth-telling (CR-AUD-016),
+the DB hygiene migration (CR-AUD-021/022), and the sized insurance-lifecycle
+gap features (§ the gap analysis in the report) — are all still open and
+still need a pick from Theo. Do not build any of them speculatively; each
+needs the same "which one, in what shape" answer the audit report asks for.

@@ -2601,3 +2601,95 @@ Two small builds from Theo answering the spec's five open questions directly
   shipped function; negative-controlled on 651 — 5 red).
 - Still true, unchanged, by design: **signed contracts set the Job Value**;
   signed estimates never do.
+
+### 653 — five fixes picked straight off the CR Audit's finding list
+
+Theo picked all five from the report's fix menu. Each patch is the exact
+finding it closes; `docs/CR_AUDIT_2026-08.md` has the full evidence trail.
+
+- **CR-AUD-001, Convert-to-Contract 404.** The functional `fetch` called
+  `/api/estimate_to_contract` (underscore); the file on disk is
+  `api/estimate-to-contract.js` (hyphen) — a rename where the caller never
+  followed. One-line fix in `convertToContract()`, plus the setup-comment
+  and the api file's own header, which both still said the old name.
+- **CR-AUD-002, the Send toast that sends nothing.** `showOutput()`'s Send
+  button used to flip `status:'sent'` and toast success with no mailer
+  behind it. Now: resolves a recipient (the linked project's email,
+  editable via prompt), builds a standalone HTML document from what's on
+  screen (its own inlined module styles — the attachment opens outside the
+  app's page context) and hands it to `/api/senddoc`, the same mailer every
+  other document-send in this app already uses. The row is marked `sent`
+  only after the send succeeds; a failed send re-enables the button and
+  toasts the real error instead of a false success.
+  **A second, load-bearing bug surfaced only by executing this for real in
+  jsdom** (not caught reading the code, not caught by `check_build.py`):
+  the pre-existing "Loading…" placeholder replaced `.cr-doc`'s *entire*
+  innerHTML — which is also where `data-facts`/`data-items`/`data-totals`/
+  `data-deposit`/`data-terms`/`data-ai-note`/`data-scope` live. Opening any
+  saved estimate the normal way (`openOne(id)`, no `prefetched`) destroyed
+  those nodes and then crashed on a null `.innerHTML` before the function
+  ever reached the Send button's wiring — reproduces identically on 652,
+  so it predates this build and would have made the new Send handler
+  unreachable if left alone. Fixed by re-mounting the template after the
+  fetch resolves, before the fields that depend on its structure run.
+  Also: `showOutput()`'s select was widened to carry `project_id` — it
+  lives on the row, not inside the `estimate` JSON blob, and was being
+  silently dropped, which is why Send never had anywhere to default a "to"
+  address from.
+- **CR-AUD B1, the invite endpoint with no caller.** `api/invite.js`
+  already created a real sign-in (not just a directory row) and has sat
+  unused. Added as a second, explicit "📧 Invite (creates login)" button
+  beside the existing "Add teammate" on the Team page — deliberately not a
+  replacement, since a directory-only entry (someone whose login exists
+  another way) is still a real case. Admin-gated in the handler itself. A
+  random password is generated client-side and shown once to the admin to
+  relay by text or call — nothing is emailed automatically, matching how
+  this app already hands off draws.
+- **CR-AUD-008, the 12 MB photo tap.** `renderGallery()`'s `<img>` now
+  carries `loading="lazy"`. Separately, a new admin-only "📸 Migrate Legacy
+  Photos" tool (`window.CardinalMediaMigrate`) moves the handful of
+  remaining base64 `project_photos.data` and `projects.cover_image` rows
+  into storage, one row at a time, never touching a row until its own
+  upload succeeds — reuses `photoDb.add()`'s own upload recipe (fetch
+  dataURL → blob → `sb.storage.from('photos').upload()` →
+  `getPublicUrl()`) under the signed-in admin's own session, so it needs no
+  service-role key and no server code.
+- **CR-AUD-006/014, the invisible $28,727 claim.** Two causes, both fixed:
+  `RAIL` (the insurance rail's bucket list, `cr-cth-script`) had no
+  `'OnHold'` entry, so `compute()`'s `byKey[key]` lookup silently dropped
+  any OnHold job from the bucket counts — its money still fed the summary
+  tiles (a different code path), just not this bucket, which is what made
+  it read as *missing* rather than *wrong*. Fixed by adding the RAIL row.
+  Root cause upstream: the specific claim's project had `checklist: NULL`,
+  so `projClaimType()` returned `'unknown'` and `insuranceProjects()`
+  filtered the whole job out before RAIL was ever consulted — repaired
+  live for the one affected record (Maker Space Solutions LLC / Devon,
+  `bc024ad1…`) and closed at the source: `linkClaimToProject()` now sets
+  `checklist.lead.claim_type = 'insurance'` on link if the lead doesn't
+  already carry one (merge, not overwrite — `patchProjectCk()` is a
+  shallow top-level replace, so the full `lead` object is read, mutated,
+  and passed back whole).
+- **CR-AUD B2/B4, two buried tools exposed.** `CardinalWalk` (the admin
+  smoke-test runner, `cr-walk-script`, previously console-only) and a new
+  read-only **iTel Lab Results** view (`window.CardinalItelLab`,
+  admin-gated) both joined the banner `ROUTES` map beside `selfcheck`, per
+  the audit's own suggested wire-up. The 28 real `itel_lab_reports` rows
+  (none linked to a claim yet — the per-claim iTel card reads a different,
+  empty table) are now visible instead of unread; the view says plainly
+  that they're "not yet linked to a claim" rather than pretending a
+  linkage exists. `cr-itellab` is registered in `hideAllViews()` (it is
+  class-shown; unregistered would trap navigation).
+- **Gate:** `scripts/harness_653.js` — P2, P3 and P5 execute the shipped
+  code for real in jsdom (the estimate Send handler driven through
+  `window.CardinalEstimates.openOne()` and a real click dispatch; the
+  invite handler brace-matched and run directly; `compute()` run via
+  `window.CardinalTruthHome.compute()` with a fixture OnHold claim); P1/P4/
+  P6 are structural plus a real render of the new iTel view. 45/45.
+  Negative control on 652: red on P1 (old endpoint name) and crashes
+  identically on the pre-existing `.cr-doc` bug in P2 — confirming that
+  bug predates this build rather than being introduced by it.
+  `harness_approvals.js` re-run clean (15/15, no regressions). `harness_
+  pay.js` re-run 57/58 — the one red is a TZ-dependent self-check inside
+  the harness itself (this container's system TZ is UTC, not a
+  negative-offset zone the control assumes), not a code regression; the
+  actual `commDate()` assertion it sits beside passed.
