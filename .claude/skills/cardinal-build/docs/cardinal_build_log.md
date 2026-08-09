@@ -12032,3 +12032,52 @@ Three cross-agent disputes were settled by reading the code and are
 recorded in the report (§ Disputes) — including one where the audit's own
 earlier inventory was wrong (the Truth-hub rail DOES wipe the hub cards).
 Nothing was changed: no app edits, no DB writes, read-only throughout.
+
+## Build 653 — five fixes off the CR Audit's menu (9 Aug 2026)
+
+Theo picked all five from the report's numbered list. Each is the exact
+audit finding it closes:
+
+- **CR-AUD-001** — `convertToContract()` called `/api/estimate_to_contract`
+  (underscore); the file is `api/estimate-to-contract.js` (hyphen).
+  Hyphenated the call, the setup comment, and the api file's own header.
+- **CR-AUD-002** — the AI-estimate "Send" button now actually sends: a
+  recipient resolved from the linked project (editable), a standalone HTML
+  document built from the on-screen output with its own inlined styles,
+  handed to `/api/senddoc` — the same mailer every other document-send in
+  this app uses. Marked `sent` only after a real success; a failed send
+  re-enables the button and shows the real error.
+  **Executing this for real in jsdom (not just reading it) turned up a
+  second, pre-existing bug in the same function**: the "Loading…"
+  placeholder wiped `.cr-doc`'s entire innerHTML, which is also where
+  every `data-*` field the rest of the function populates lives — opening
+  any saved estimate the normal way (`openOne`, no `prefetched`) crashed
+  on a null `.innerHTML` before Send's handler was ever wired. Reproduces
+  identically on 652, so it predates this session; fixed by re-mounting
+  the template once the fetch resolves.
+- **CR-AUD B1** — `api/invite.js` (creates a real sign-in, admin-gated) had
+  zero callers; the Team page's existing "Add teammate" only ever wrote a
+  directory row. Added a second, explicit "Invite (creates login)" button.
+  A one-time password is generated client-side and shown once to the admin
+  to relay by text or call — nothing auto-emailed.
+- **CR-AUD-008** — `renderGallery()`'s `<img>` gained `loading="lazy"`; a
+  new admin-only in-browser migration tool moves the remaining base64
+  `project_photos`/`projects.cover_image` rows into storage, one row at a
+  time, reusing the existing upload recipe under the admin's own session.
+- **CR-AUD-006/014** — `RAIL` gained an `'OnHold'` entry (the bucket lookup
+  was silently dropping any OnHold job); the one live claim this hid
+  ($28,727.17, Maker Space Solutions LLC / Devon) had `checklist: NULL`,
+  repaired live, and `linkClaimToProject()` now sets `claim_type` on link
+  going forward (merged into the existing `lead` object, not overwritten).
+- **CR-AUD B2/B4** — `CardinalWalk` (admin smoke-test runner) and a new
+  read-only iTel Lab Results view (28 real, unlinked rows) both joined the
+  banner `ROUTES` map. `cr-itellab` registered in `hideAllViews()`.
+
+**Gates.** `check_build.py` green, stamp 652 → 653. New `harness_653.js` —
+45 assertions, three of the six areas (Send, invite, the OnHold rail)
+executed for real in jsdom against the shipped code, not re-implemented.
+Negative control on 652: red on the endpoint-name check and crashes
+identically on the `.cr-doc` bug, confirming that bug isn't new here.
+`harness_approvals.js` re-run clean; `harness_pay.js` re-run 57/58 (the one
+red is the harness's own TZ-dependent control, not a regression — this
+container's system TZ is UTC).

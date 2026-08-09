@@ -3284,7 +3284,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 652 &#8212; Contracts one tap from the job menu, and signed estimates never miss the approval queue</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 653 &#8212; Five audit fixes: real Send, real invites, lighter photos, a visible claim, and two buried tools exposed</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3317,6 +3317,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <small>App</small>
       <span class="cbi" data-go="selfcheck">&#129658; Self Check</span>
       <span class="cbi" data-go="whatsnew">&#10024; What's New</span>
+      <span class="cbi" data-go="walk">&#128694; Field Walkthrough</span>
+      <span class="cbi" data-go="itellab">&#129514; iTel Lab Results</span>
+      <span class="cbi" data-go="medmig">&#128248; Migrate Legacy Photos</span>
       <span class="cbi" data-go="settings">&#9881;&#65039; Settings</span>
     </span>
   </span>
@@ -3641,6 +3644,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
     <div class="tmhd">
       <h2 class="tmttl">Team <b>Directory</b></h2>
       <button class="tmadd" id="tmAddBtn">&#65291; Add teammate</button>
+      <button class="tmadd" id="tmInviteBtn" style="margin-left:8px;">&#128231; Invite (creates login)</button>
     </div>
     <p class="tmsub" id="tmSub"></p>
     <div class="tmsrch">&#128269; <input type="search" id="tmSearch" placeholder="Search name, role or number"></div>
@@ -12047,7 +12051,7 @@ function renderGallery(){
   grid.innerHTML = currentPhotos.map(function(ph){
     var ck = galChecked[ph.id];
     return '<div class="gph' + (ck ? ' checked' : '') + '" data-gid="' + ph.id + '">' +
-      '<img src="' + (ph._src || ph.data) + '" alt="">' +
+      '<img src="' + (ph._src || ph.data) + '" alt="" loading="lazy">' +
       '<div class="gchk">' + (ck ? '\u2713' : '') + '</div>' +
       '<button class="gdel" title="Delete photo">\u2715</button>' +
     '</div>';
@@ -15519,6 +15523,11 @@ function hideAllViews(){
      open, which is the only state closeForm() carries. */
   var _shf = document.getElementById('cr-show-form');
   if(_shf) _shf.classList.remove('open');
+  /* 653: cr-itellab is class-shown (.open) and carries no state of its own
+     between opens (it always re-fetches) — safe to clear directly, same as
+     cr-show-form above. */
+  var _itl = document.getElementById('cr-itellab');
+  if(_itl) _itl.classList.remove('open');
   /* 615: the OC Colors wall is a fixed inset:0 view. It is DISPLAY-shown, so
      display:none is the correct lever here — writing a class instead would
      leave it covering the next screen (the 570-572 class). */
@@ -22182,6 +22191,50 @@ document.getElementById('tmAddBtn').addEventListener('click', async function(){
     renderTeamView();
   }catch(err){ showError('Could not add teammate: ' + (err.message || err)); }
 });
+document.getElementById('tmInviteBtn').addEventListener('click', async function(){
+  /* 653: "Add teammate" above only ever wrote a directory row — no sign-in
+     was ever created (CR-AUD B1). api/invite.js already does that correctly
+     and has sat with zero callers; this wires it in as a second, explicit
+     action rather than changing what Add does, since a directory-only entry
+     (someone whose login already exists another way) is still a real case. */
+  if(!(currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1)){
+    alert('Only Theo or Joan can invite teammates.');
+    return;
+  }
+  var em = (prompt('Work email for the new teammate:', '@cardinalrenovations.net') || '').trim().toLowerCase();
+  if(!em) return;
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ alert('Enter a full email address.'); return; }
+  var nm = (prompt('Full name:', '') || '').trim();
+  var roleAsk = prompt('Role — sales, production, or admin:', 'sales');
+  if(roleAsk === null) return;
+  var rl = roleAsk.trim().toLowerCase();
+  if(['sales','production','admin'].indexOf(rl) === -1){
+    alert('Role must be sales, production, or admin.'); return;
+  }
+  /* a one-time password generated here, never typed by the admin — relayed
+     by text or call, matching how this app already hands off draws etc. */
+  var pw = Array.from(crypto.getRandomValues(new Uint8Array(12)))
+    .map(function(b){ return ('0' + (b % 36).toString(36)).slice(-1); }).join('');
+  try{
+    var session = (await sb.auth.getSession()).data.session;
+    var res = await fetch('/api/invite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (session ? session.access_token : '')
+      },
+      body: JSON.stringify({ email: em, name: nm, role: rl, password: pw })
+    });
+    var data = null; try{ data = await res.json(); }catch(e){}
+    if(!res.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
+    await loadTeamProfiles();
+    renderTeamView();
+    alert((data.existed ? 'Account already existed — role set to ' + rl + '.\n\n'
+                         : 'Account created.\n\n') +
+          'Email: ' + em + '\nTemporary password: ' + pw +
+          '\n\nRelay this to them directly — nothing was emailed automatically.');
+  }catch(err){ showError('Could not invite teammate: ' + (err.message || err)); }
+});
 document.getElementById('tmMount').addEventListener('click', async function(e){
   var card = e.target.closest('.tmcard');
   if(!card) return;
@@ -22760,7 +22813,7 @@ body.claim-insurance #brandLogo{
       • supabase: run ai_estimates_setup.sql
       • supabase: run contracts_setup.sql
       • Add api/estimate.js to your repo
-      • Add api/estimate_to_contract.js to your repo
+      • Add api/estimate-to-contract.js to your repo
       • Deploy → env vars unchanged, no new secrets needed
 
  2. Paste this entire block into index.html ONCE, just before </body>.
@@ -23426,7 +23479,7 @@ body.claim-insurance #brandLogo{
   }
 
   async function convertToContract(estimateId, homeowner, propertyAddress) {
-    return api('/api/estimate_to_contract', {
+    return api('/api/estimate-to-contract', {
       ai_estimate_id: estimateId,
       homeowner,
       property_address: propertyAddress,
@@ -24104,11 +24157,24 @@ function showList() {
       MOUNT.querySelector('.cr-doc').innerHTML = '<div class="cr-loading">Loading…</div>';
       const { data, error } = await window.supa
         .from('ai_estimates')
-        .select('id, created_at, template, estimate, status')
+        .select('id, created_at, template, estimate, status, project_id')
         .eq('id', id)
         .single();
       if (error || !data) { toast('Estimate not found', 'error'); showList(); return; }
-      estimate = data.estimate;
+      /* 653: project_id lives on the ROW, not inside the estimate JSON blob —
+         carry it along so Send can resolve a recipient from the linked
+         project. Was silently dropped here, which is why Send never had
+         anywhere to default a "to" address from. */
+      estimate = { ...data.estimate, project_id: data.project_id };
+      /* 653: the loading line above replaces .cr-doc's ENTIRE innerHTML —
+         which is also where data-facts/data-items/data-totals/data-deposit/
+         data-terms/data-ai-note/data-scope live. Every one of those was
+         being destroyed and never rebuilt, so opening a saved estimate
+         (openOne → showOutput(id), no prefetched — the normal path) always
+         crashed here on a null .innerHTML before Send's handler ever got
+         wired. Pre-existing, reproduces identically on 652; re-mounting the
+         fresh template restores the structure this function assumes below. */
+      mount('cr-tmpl-ai-output');
     }
     state.estimate = { id, ...estimate };
 
@@ -24209,9 +24275,65 @@ function showList() {
       showList();
     };
     MOUNT.querySelector('[data-act="send"]').onclick = async () => {
-      await window.supa.from('ai_estimates').update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', id);
-      toast('Sent — client will receive email/SMS', 'success');
-      showList();
+      /* 653: this used to update status and toast success with no sender
+         behind it — CR-AUD-002. Real send: resolve a recipient (the linked
+         project's email, editable), build a standalone HTML document from
+         what's on screen (its own module styles inlined, since the
+         attachment opens outside this page), and hand it to the same
+         mailer /api/senddoc every other document-send in this app uses. */
+      const sendBtn = MOUNT.querySelector('[data-act="send"]');
+      const pr = estimate.project_id
+        ? (window.cacheProjects || []).find(p => p.id === estimate.project_id)
+        : null;
+      const toDefault = (pr && pr.email) || '';
+      const to = prompt('Send to email address:', toDefault);
+      if (to === null) return;
+      const toTrim = to.trim();
+      if (!toTrim || toTrim.indexOf('@') === -1) {
+        toast('Enter a valid email address.', 'error');
+        return;
+      }
+      sendBtn.disabled = true;
+      const origLabel = sendBtn.textContent;
+      sendBtn.textContent = 'Sending…';
+      try {
+        const docEl = MOUNT.querySelector('.cr-doc');
+        const styleEl = document.getElementById('cr-estimates-styles');
+        const css = styleEl ? styleEl.textContent : '';
+        const docHtml = '<!doctype html><html><head><meta charset="utf-8">' +
+          '<title>' + escape(estimate.client?.name ? 'Estimate for ' + estimate.client.name : 'Estimate') +
+          '</title><style>body{margin:0;padding:24px;background:#fdfcf7;}' + css +
+          '</style></head><body>' + (docEl ? docEl.outerHTML : '') + '</body></html>';
+
+        const session = window.supa ? (await window.supa.auth.getSession()).data.session : null;
+        const res = await fetch('/api/senddoc', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + (session ? session.access_token : '')
+          },
+          body: JSON.stringify({
+            to: toTrim,
+            clientName: estimate.client?.name || '',
+            propertyLine: estimate.client?.address ? ('This covers work at ' + estimate.client.address + '.') : '',
+            title: 'Estimate',
+            html: docHtml
+          })
+        });
+        let data = null; try { data = await res.json(); } catch (e) {}
+        if (!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+
+        const { error } = await window.supa.from('ai_estimates')
+          .update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', id);
+        if (error) throw error;
+
+        toast('Sent to ' + toTrim, 'success');
+        showList();
+      } catch (e) {
+        sendBtn.disabled = false;
+        sendBtn.textContent = origLabel;
+        toast('Could not send: ' + (e.message || e), 'error');
+      }
     };
     MOUNT.querySelector('[data-act="convert"]').onclick = async () => {
       try {
@@ -27485,8 +27607,24 @@ function showList() {
       window.supa.from('projects').update({ insurance_claim_id: claimId }).eq('id', projectId),
       window.supa.from('insurance_claims').update({ project_id: projectId }).eq('id', claimId),
     ]);
+    /* 653 (CR-AUD-006): projClaimType() reads checklist.lead.claim_type, not
+       this link — a project linked here with no checklist type set stays
+       invisible to every insurance screen even though the DB link is right.
+       Set it here too, once, and never overwrite a value someone already
+       chose (retail/community jobs can carry a real claim link too). */
+    try{
+      var pr = (typeof window.cacheProjects !== 'undefined' ? window.cacheProjects : [])
+        .find(function(p){ return p.id === projectId; });
+      if(pr && typeof window.parseCkAll === 'function' && typeof window.patchProjectCk === 'function'){
+        var L = window.parseCkAll(pr).lead || {};
+        if(!L.claim_type){
+          L.claim_type = 'insurance';
+          await window.patchProjectCk(pr, { lead: L });
+        }
+      }
+    }catch(_e){}
     await renderLinkedClaimCard(mountEl, claimId);
-  }
+}
 
   async function linkClaimToEstimate(estimateId, claimId, mountEl) {
     // Link claim → estimate; also link project ↔ claim if estimate has a project
@@ -36109,6 +36247,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:653, d:'2026-08-09', t:'Five audit fixes, picked straight off the CR Audit', s:'Convert-to-Contract works again (the button called a filename that no longer existed). The AI-estimate Send button actually sends now, through the same mailer every other document uses \u2014 it used to just say it did. Inviting a teammate creates a real sign-in, not just a directory entry. Photo Activity and the gallery are lighter (old photos migrate out of the database and into storage, tiles load lazily). A $28,727 claim that had gone invisible on every insurance screen is visible again, and On Hold claims no longer drop off the money summary. Two admin tools that were built and forgotten \u2014 a smoke-test walkthrough and 28 iTel lab results \u2014 are reachable from the menu.' },
 { b:652, d:'2026-08-09', t:'Contracts a tap away, and the approval queue stops missing signed estimates', s:'Two fixes from one screenshot. The job menu now has a Contracts tile \u2014 the tab always existed, but it only lived in the header dropdown and the menu is where fingers go. And the home-page Approvals card used to list a signed estimate only while the job still sat at Lead or Prospect \u2014 advance the stage by hand first and the signature never surfaced for approval. Now any live job with a signed estimate and no contract shows up there; approving still creates the prefilled contract, and the signed contract is still what sets the Job Value.' },
 { b:651, d:'2026-08-09', t:'Finance as a check source, and a weekly owed email', s:'Logging a collection now offers Finance alongside Insurance and Homeowner \u2014 a check that comes in through a financing company (Service Finance today, more later) gets its own source and names which company. Every Friday morning Theo and Joan now get an email of what\u2019s owed to each rep minus their outstanding draws, matching the Commissions screen exactly \u2014 nothing to remember, nothing to check by hand.' },
 { b:650, d:'2026-08-09', t:'Money in, commissions out', s:'The Commissions tab on every job now starts with the money: log each check as it arrives \u2014 deposit, final, supplemental, PWI \u2014 and the rep\u2019s 10% commission writes itself. Theo\u2019s own jobs create no commission. Draws \u2014 advances against future commission \u2014 can be logged on the job or from the new \ud83d\udcb5 Commissions screen in the menu, where Friday lives: what each rep is owed minus outstanding draws, one tap to pay net or full, this week\u2019s payouts, paid history and a CSV export. Reps open the same screen and see My Earnings \u2014 paid this year, owed now, and what the next check should be. The sales rep is set automatically when a job is created and locks once money is logged.' },
@@ -45991,6 +46130,12 @@ hint:'Waiting on the carrier to assign an adjuster', money:false },
 hint:'Inspection scheduled or scope under review',   money:false },
 { key:'Approved',   label:'Scope Approved',
 hint:'Carrier issued the scope \u2014 check it line by line', money:true },
+{ key:'OnHold',     label:'On Hold',
+/* 653 (CR-AUD-006/014): compute()'s byKey[key] lookup silently drops any
+   stage RAIL doesn't list \u2014 the job's money still fed the summary tiles
+   below, just not this bucket. OnHold is a real, reachable insurance stage
+   (grant-funded jobs wait here); it simply had no row to land in. */
+hint:'Paused \u2014 the claim keeps its money while the job waits', money:true },
 { key:'supplement', label:'Supplement Filed',
 hint:'Submitted with photos and code cites \u2014 awaiting a decision',
 money:true, flag:true, tag:'chasing' },
@@ -50404,6 +50549,9 @@ var ROUTES = {
   abc:       'CardinalABC.open',
   selfcheck: 'CardinalSelfCheck.open',
   whatsnew:  'CardinalChangelog.show',
+  walk:      'CardinalWalk.showRunner',
+  itellab:   'CardinalItelLab.open',
+  medmig:    'CardinalMediaMigrate.showRunner',
   settings:  'openSettingsView'
 };
 /* resolve-or-hide: an item only shows if its destination exists.
@@ -62883,6 +63031,206 @@ function close(){
   try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
 }
 window.CardinalPay = Object.assign(window.CardinalPay || {}, { open: open, reload: reload, close: close });
+})();
+</script>
+<style id="cr-medmig-styles">.cr-medmig-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9900;display:flex;align-items:center;justify-content:center;padding:20px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-medmig-box{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.44);max-height:80vh;display:flex;flex-direction:column}.cr-medmig-box h3{margin:0 0 8px;font:800 13px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#2c2c2c}.cr-medmig-box p{margin:0 0 14px;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.5}.cr-medmig-log{overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:44vh;margin:0 0 14px;padding:10px;background:#faf6ef;border-radius:8px;font:600 11.5px 'SF Mono',Menlo,Consolas,monospace;color:#3a3a3a;white-space:pre-wrap}.cr-medmig-acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.cr-medmig-acts button{border:0;border-radius:7px;padding:9px 16px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:inherit}.cr-medmig-acts button.primary{background:#c8202e;color:#fff}.cr-medmig-acts button.ghost{background:transparent;color:#6b6b6b;border:1px solid #d0d0d0}.cr-medmig-acts button[disabled]{opacity:.5;cursor:default}</style>
+<script id="cr-medmig-script">
+/* ═══ 653: legacy base64 media migration (CR-AUD-008) ═══════════════════════
+   openPhotosView selecting `data` on 13 base64 project_photos rows costs
+   ~11.8 MB per tap; 3 base64 cover_image rows cost ~0.9 MB on every boot and
+   every reload(). Both were written before storage upload existed and never
+   got migrated. This is a one-time, admin-triggered, in-browser tool — reuses
+   photoDb.add's own upload recipe and the signed-in admin's own storage
+   write permission, so it needs no service-role key and no server code.
+   Never destructive: each row is left untouched on any failure, one row at
+   a time, and progress is logged live so a partial run is safe to re-run. */
+(function(){
+'use strict';
+function isAdmin(){
+  try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
+}
+function log(box, line){
+  var el = box.querySelector('.cr-medmig-log');
+  el.textContent += (el.textContent ? '\n' : '') + line;
+  el.scrollTop = el.scrollHeight;
+}
+async function uploadDataUrl(dataUrl, pathPrefix){
+  var blob = await (await fetch(dataUrl)).blob();
+  var ext = /image\/png/.test(blob.type) ? '.png' : '.jpg';
+  var spath = pathPrefix + '/' + Date.now() + '-' +
+              Math.random().toString(36).slice(2, 9) + ext;
+  var up = await sb.storage.from('photos').upload(spath, blob,
+           { contentType: blob.type || 'image/jpeg', cacheControl: '31536000' });
+  if(up.error) throw up.error;
+  return { path: spath, url: sb.storage.from('photos').getPublicUrl(spath).data.publicUrl };
+}
+async function migratePhotos(box){
+  var r = await sb.from('project_photos').select('id,project_id,data').like('data', 'data:%');
+  if(r.error){ log(box, 'photos: could not query — ' + r.error.message); return { ok:0, fail:0 }; }
+  var rows = r.data || [];
+  log(box, 'photos: ' + rows.length + ' legacy row(s) found');
+  var ok = 0, fail = 0;
+  for(var i = 0; i < rows.length; i++){
+    var row = rows[i];
+    try{
+      var up = await uploadDataUrl(row.data, 'projects/' + row.project_id);
+      var u = await sb.from('project_photos')
+        .update({ data: up.url, storage_path: up.path }).eq('id', row.id);
+      if(u.error) throw u.error;
+      ok++;
+      log(box, '  ✓ photo ' + row.id.slice(0, 8) + '… → storage');
+    }catch(e){
+      fail++;
+      log(box, '  ✗ photo ' + row.id.slice(0, 8) + '… left as-is: ' + (e.message || e));
+    }
+  }
+  return { ok: ok, fail: fail };
+}
+async function migrateCovers(box){
+  var r = await sb.from('projects').select('id,cover_image').like('cover_image', 'data:%');
+  if(r.error){ log(box, 'covers: could not query — ' + r.error.message); return { ok:0, fail:0 }; }
+  var rows = r.data || [];
+  log(box, 'covers: ' + rows.length + ' legacy row(s) found');
+  var ok = 0, fail = 0;
+  for(var i = 0; i < rows.length; i++){
+    var row = rows[i];
+    try{
+      var up = await uploadDataUrl(row.cover_image, 'covers/' + row.id);
+      var u = await sb.from('projects').update({ cover_image: up.url }).eq('id', row.id);
+      if(u.error) throw u.error;
+      ok++;
+      log(box, '  ✓ cover ' + row.id.slice(0, 8) + '… → storage');
+    }catch(e){
+      fail++;
+      log(box, '  ✗ cover ' + row.id.slice(0, 8) + '… left as-is: ' + (e.message || e));
+    }
+  }
+  return { ok: ok, fail: fail };
+}
+function showRunner(){
+  if(!isAdmin()){ alert('Admin only.'); return; }
+  var bg = document.createElement('div');
+  bg.className = 'cr-medmig-bg';
+  bg.innerHTML =
+    '<div class="cr-medmig-box">' +
+      '<h3>Migrate legacy photos</h3>' +
+      '<p>Moves old inline photo/cover data into storage, in place. Never ' +
+      'deletes anything — a row is only changed once its upload succeeds.</p>' +
+      '<div class="cr-medmig-log"></div>' +
+      '<div class="cr-medmig-acts">' +
+        '<button class="ghost" data-act="close">Close</button>' +
+        '<button class="primary" data-act="run">Run migration</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(bg);
+  var close = function(){ if(bg.parentNode) bg.parentNode.removeChild(bg); };
+  bg.querySelector('[data-act="close"]').onclick = close;
+  bg.querySelector('[data-act="run"]').onclick = async function(){
+    var runBtn = bg.querySelector('[data-act="run"]');
+    runBtn.disabled = true;
+    runBtn.textContent = 'Running…';
+    bg.querySelector('.cr-medmig-log').textContent = '';
+    try{
+      var p = await migratePhotos(bg);
+      var c = await migrateCovers(bg);
+      log(bg, '\nDone. ' + (p.ok + c.ok) + ' migrated, ' + (p.fail + c.fail) + ' left untouched.');
+    }catch(e){
+      log(bg, 'Stopped: ' + (e.message || e));
+    }
+    runBtn.disabled = false;
+    runBtn.textContent = 'Run again';
+  };
+}
+window.CardinalMediaMigrate = { showRunner: showRunner };
+})();
+</script>
+<style id="cr-itellab-styles">#cr-itellab{display:none;position:fixed;inset:0;background:#0f0f10;color:#e8e5df;z-index:9500;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-itellab.open{display:flex}.cr-itellab-hd{padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);display:flex;align-items:center;gap:10px;flex:0 0 auto}.cr-itellab-hd h2{margin:0;flex:1;font:800 15px 'Segoe UI',Arial,sans-serif}.cr-itellab-hd button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;padding:7px 13px;border-radius:7px;font:800 11px 'Segoe UI',Arial,sans-serif;cursor:pointer}.cr-itellab-sub{padding:0 16px 12px;font:600 12px 'Segoe UI',Arial,sans-serif;color:#9a9490}.cr-itellab-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 24px}.cr-itellab-row{border:1px solid #2c2b28;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#171614}.cr-itellab-row .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}.cr-itellab-row .ctrl{font:800 12.5px 'SF Mono',Menlo,Consolas,monospace;color:#e0a83c}.cr-itellab-row .verdict{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:#2c2b28;color:#cfc9c0}.cr-itellab-row .prod{margin-top:4px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#e8e5df}.cr-itellab-row .meta{margin-top:4px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#9a9490}.cr-itellab-row .asb{margin-top:6px;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#ef6a6a}.cr-itellab-row a{color:#e0a83c}.cr-itellab-empty{padding:40px 20px;text-align:center;color:#9a9490;font:600 13px 'Segoe UI',Arial,sans-serif}</style>
+<div id="cr-itellab">
+  <div class="cr-itellab-hd">
+    <h2>&#129514; iTel Lab Results</h2>
+    <button data-act="close">Close</button>
+  </div>
+  <div class="cr-itellab-sub"></div>
+  <div class="cr-itellab-body"></div>
+</div>
+<script id="cr-itellab-script">
+/* ═══ 653: iTel lab results, exposed (CR-AUD B4) ═══════════════════════════
+   28 real rows in itel_lab_reports — verdicts, product matches, asbestos
+   results — sitting in a table nothing in the app reads. The per-claim iTel
+   card reads a DIFFERENT table (itel_reports, the request tracker: sent/
+   received/status) and none of these 28 rows carry a claim_id, so there is
+   no claim to attach them to yet. This is a read-only exposure, not a new
+   workflow: admins can see what's there while the real linkage gets sorted
+   out — building a claim-picker onto orphaned rows is a separate, larger
+   decision this file is deliberately not making on its own. */
+(function(){
+'use strict';
+function isAdmin(){
+  try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; }
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function view(){ return document.getElementById('cr-itellab'); }
+function rowHtml(r){
+  var prod = [r.manufacturer, r.product].filter(Boolean).join(' — ') || 'Product not recorded';
+  var match = r.match_product ? ('Match: ' + esc(r.match_product) +
+    (r.match_warranty ? ' · ' + esc(r.match_warranty) : '')) : '';
+  var asb = r.asbestos_tested
+    ? (r.asbestos_positive ? '⚠ Asbestos: POSITIVE' : 'Asbestos: negative')
+    : '';
+  return '<div class="cr-itellab-row">' +
+    '<div class="top">' +
+      '<span class="ctrl">' + esc(r.control_number || r.id.slice(0, 8)) + '</span>' +
+      (r.verdict ? '<span class="verdict">' + esc(r.verdict) + '</span>' : '') +
+    '</div>' +
+    '<div class="prod">' + esc(prod) + '</div>' +
+    (match ? '<div class="meta">' + match + '</div>' : '') +
+    (r.insured_name || r.loss_location
+      ? '<div class="meta">' + esc(r.insured_name || '') +
+        (r.loss_location ? ' — ' + esc(r.loss_location) : '') + '</div>' : '') +
+    (r.report_date ? '<div class="meta">Report date ' + esc(r.report_date) + '</div>' : '') +
+    (asb ? '<div class="asb">' + asb + '</div>' : '') +
+    (r.report_url ? '<div class="meta"><a href="' + esc(r.report_url) +
+      '" target="_blank" rel="noopener">Open report</a></div>' : '') +
+  '</div>';
+}
+async function open(){
+  if(!isAdmin()){ alert('Admin only.'); return; }
+  var v = view();
+  if(!v) return;
+  try{ if(typeof hideAllViews === 'function') hideAllViews(); }catch(_){}
+  v.classList.add('open');
+  v.querySelector('.cr-itellab-body').innerHTML = '<div class="cr-itellab-empty">Loading…</div>';
+  try{
+    var r = await sb.from('itel_lab_reports').select('*').order('report_date', { ascending:false });
+    if(r.error) throw r.error;
+    var rows = r.data || [];
+    var unlinked = rows.filter(function(x){ return !x.claim_id; }).length;
+    v.querySelector('.cr-itellab-sub').textContent = rows.length +
+      ' lab result' + (rows.length === 1 ? '' : 's') +
+      (unlinked ? ' · ' + unlinked + ' not yet linked to a claim' : '') +
+      ' · read-only';
+    v.querySelector('.cr-itellab-body').innerHTML = rows.length
+      ? rows.map(rowHtml).join('')
+      : '<div class="cr-itellab-empty">No lab results on file.</div>';
+  }catch(e){
+    v.querySelector('.cr-itellab-body').innerHTML =
+      '<div class="cr-itellab-empty">Could not load: ' + esc(e.message || e) + '</div>';
+  }
+}
+function close(){
+  var v = view();
+  if(v) v.classList.remove('open');
+  try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var v = view();
+  if(v) v.querySelector('[data-act="close"]').addEventListener('click', close);
+});
+window.CardinalItelLab = { open: open, close: close };
 })();
 </script>
 </body>
