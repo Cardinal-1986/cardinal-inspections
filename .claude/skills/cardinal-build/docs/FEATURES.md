@@ -2693,3 +2693,26 @@ finding it closes; `docs/CR_AUDIT_2026-08.md` has the full evidence trail.
   the harness itself (this container's system TZ is UTC, not a
   negative-offset zone the control assumes), not a code regression; the
   actual `commDate()` assertion it sits beside passed.
+
+### 654 — money tells one story (CR-AUD-003/004/013)
+
+**`jobFinance()` is now THE value function; `projectValue()` is a view onto
+it** (`return jobFinance(pr).value`). One precedence everywhere: signed
+contract (docs total or contracts-table total, whichever is higher — never
+both) + manual extras; else max(manual value, best SENT estimate across
+the estimates table and estimate docs). The return carries
+`source: 'contract'|'manual'|'estimate'|'none'` — the profile money strip
+(`#jobValueSrc`) and the LJ pane label estimate-sourced numbers "from
+estimate, no contract yet". **Settled and asserted:** a signed contract
+wins outright over any estimate (Theo's recorded order, kept); the invoice
+path (`createInvoiceFor` + the worksheet button) refuses
+`source === 'estimate'` — invoices still require contract money.
+`rptIsSigned` deliberately stays a stage proxy (zero signed contracts live;
+real-signature keying would zero every report — revisit when contracts
+flow). AR aging sums `jobFinance(p).balance` and drops fully-paid jobs.
+The Estimates tile counts docs + sent table rows deduped on `doc_id`
+(`estRows` store beside `estBest`, filled by `indexMoney()`;
+`moneyDb.estimates()` fetches `doc_id`); the estimates tab names
+table-only rows instead of looking empty. Gate: `harness_654.js` (31
+assertions, money core executed over fixtures; negative-controlled on 653
+— 20 red, reproduces the old $0-profile bug live).

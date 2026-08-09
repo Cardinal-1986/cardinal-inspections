@@ -12081,3 +12081,52 @@ identically on the `.cr-doc` bug, confirming that bug isn't new here.
 `harness_approvals.js` re-run clean; `harness_pay.js` re-run 57/58 (the one
 red is the harness's own TZ-dependent control, not a regression — this
 container's system TZ is UTC).
+
+## Build 654 — money tells one story (9 Aug 2026, CR-AUD-003/004/013)
+
+Theo's pick from the audit batch: **"One number + label."** The two value
+functions are now one precedence.
+
+- **CR-AUD-003** — `jobFinance()` is the single computation: signed
+  contract (docs total OR contracts-table total, whichever is higher —
+  never both, that double-counts one signature) + manual extras; when
+  neither exists, max(manual, best SENT estimate across table and docs),
+  exactly the precedence `projectValue()` always used. `projectValue()` is
+  now a view onto it (`return jobFinance(pr).value`). The return gains
+  `source: 'contract'|'manual'|'estimate'|'none'`; the profile money strip
+  and the LJ pane both label an estimate-sourced number ("from estimate,
+  no contract yet"). Theo's recorded order holds: a signed contract wins
+  outright, a stale estimate never overrides it — asserted in the harness.
+  **Two deliberate number changes, stated here:** an estimate-only job's
+  profile now shows the estimate value instead of $0 (the audit's live ×4
+  case), and a contract+manual job's list value now includes the manual
+  extras (the profile's long-standing additive shape, adopted app-wide).
+  **Guard shipped with it:** the invoice path stays contract-conservative —
+  `createInvoiceFor()` and the worksheet's Create-invoice button both
+  refuse `source === 'estimate'`.
+  **Left alone on purpose:** `rptIsSigned` stays a stage proxy. With zero
+  signed contracts in production, keying it on real signatures would zero
+  every revenue report today. Flagged for revisit once contracts flow.
+- **CR-AUD-004** — the AR aging card sums `jobFinance(p).balance` (value −
+  payments) instead of gross value, drops fully-paid jobs, and its caption
+  now reads "Unpaid balance by days since invoice" instead of falsely
+  citing worksheet invoices.
+- **CR-AUD-013** — the job-menu Estimates tile counts both stores:
+  estimate-titled docs + sent-family estimates-table rows, deduped on the
+  row's `doc_id` write-back (`moneyDb.estimates()` select widened to fetch
+  it; new `estRows` per-project store filled beside `estBest` in
+  `indexMoney()`). Drafts stay out — the same `SENT_EST` rule the money
+  uses. The Inspections bucket still derives from doc-estimates only, so
+  it can't go negative. The estimates tab appends a line naming
+  table-only rows ("+N sent estimates from the estimate editor, totaling
+  $X") instead of looking empty beside a priced pane.
+
+**Gates.** `check_build.py` green first run, stamp 653 → 654. New
+`harness_654.js`: 31 assertions, the money core EXECUTED over fixture
+caches — contract-doc, contract-table, additive manual, the live
+divergence case (36654 vs $0), max(manual, est) both ways, Theo's
+contract-beats-stale-estimate order, the overpayment clamp, draft/archived
+exclusion, and the dedupe math. Negative control on 653: 20 red, and it
+reproduces the old bug live (estimate-only → value 0). Regressions:
+`harness_653.js` 45/45, `harness_approvals.js` 15/15, `harness_pay.js`
+58/58 (with its documented `TZ=America/New_York`).

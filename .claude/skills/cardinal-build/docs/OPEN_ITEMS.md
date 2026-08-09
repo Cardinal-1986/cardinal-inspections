@@ -2027,3 +2027,38 @@ the DB hygiene migration (CR-AUD-021/022), and the sized insurance-lifecycle
 gap features (§ the gap analysis in the report) — are all still open and
 still need a pick from Theo. Do not build any of them speculatively; each
 needs the same "which one, in what shape" answer the audit report asks for.
+
+---
+
+# Layer: builds 654–655 — 9 Aug 2026 (the second audit batch)
+
+## ✅ SETTLED BY THEO, 9 Aug 2026 — three picks, do not re-litigate
+
+1. **Job money = "One number + label"** (CR-AUD-003). One precedence
+   everywhere; the profile labels an estimate-sourced value. Built at 654.
+2. **Stage labels = "Closed" + "Awaiting Depreciation / Supplements"**
+   (CR-AUD-014). The rail's wording wins in every insurance map; OnHold
+   gains "On Hold" everywhere. Built at 655.
+3. **Supplement unification (CR-AUD-005) is its own LATER build** — design
+   goes to Theo first, against his recorded three-filings model
+   (partial-denial · backend · PWI/COC). Do not start it without his
+   sign-off on the shape.
+
+## ✅ BUILT at 654 — money coherence (CR-AUD-003 / 004 / 013)
+
+See the build log and FEATURES.md §654. Two deliberate number changes are
+recorded there (estimate-only profiles now priced; contract+manual now
+additive app-wide). `rptIsSigned` left as a stage proxy on purpose — with
+zero signed contracts live, real-signature keying would zero every report.
+**Revisit `rptIsSigned` once contracts actually flow.**
+
+## Still open from the audit after 654–655
+
+CR-AUD-005 (supplements — needs Theo's shape) · 016 (health-check registry)
+· 017 (supplement bucket vs owedOn — folds into 005's design) · 018
+(community draft-estimate fallback) · 019 (inspections tile/tab predicates)
+· 020 (small wiring cleanups) · 021 (dead weight deletions) · 022 (DB
+advisor batch) · 023 (boot weight) · B3 (CardinalUndo) · the seven direct
+checklist writers outside `patchProjectCk` (listed in 655's PR — same
+last-write-wins class, follow-up candidate) · the gap features (each needs
+Theo's shape).

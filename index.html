@@ -3284,7 +3284,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 653 &#8212; Five audit fixes: real Send, real invites, lighter photos, a visible claim, and two buried tools exposed</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 654 &#8212; Money tells one story: one job value everywhere, AR counts what's still owed, estimates counted from both stores</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3677,7 +3677,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <div id="acxMount"></div>
       <div id="stageBanner" class="stagebanner">APPROVED</div>
       <div class="jobvalrow">
-        <span><small>Job Value</small><b id="jobValueLbl">--</b></span>
+        <span><small id="jobValueSrc">Job Value</small><b id="jobValueLbl">--</b></span>
         <span class="payring" id="payRing"><span class="payringinner" id="payRingPct">0%</span></span>
         <span style="text-align:right;"><small>Balance Due</small><b id="balanceLbl" style="color:var(--red);">--</b></span>
       </div>
@@ -9499,7 +9499,7 @@ var moneyDb = {
   estimates: async function(){
     if(!TEAM) return [];
     var r = await sb.from('estimates')
-      .select('id,project_id,total,status,archived');
+      .select('id,project_id,total,status,archived,doc_id');
     if(r.error) throw r.error;
     return r.data || [];
   },
@@ -9691,6 +9691,7 @@ var cacheProjects = [];
    these start empty and an empty map simply means "no contract/estimate money
    known yet" — never an exception. */
 var estBest = {};   /* highest total among SENT/approved estimates */
+var estRows = {};   /* 654: those same rows kept per project — the tile/tab count reads these */
 var ctrSigned = {}; /* total on the signed, un-voided contract */
 /* 493: [] means two different things - the table is empty, or we never got a
    successful read. A denied or failed load leaves cacheProjects at its initial
@@ -10046,7 +10047,11 @@ function renderOps(){
     var ck = parseCkAll(p);
     var inv = ck.t_Invoiced || ck.stage_since || p.updated_at;
     var days = inv ? Math.floor((Date.now() - new Date(inv).getTime())/86400000) : 0;
-    var v = projectValue(p);
+    /* 654 (CR-AUD-004): outstanding is what is still OWED — value minus
+       payments received — not the gross job value. A half-paid job used to
+       read full here and half on its own profile. */
+    var v = jobFinance(p).balance;
+    if(v <= 0) return;
     total += v;
     for(var i=0;i<buckets.length;i++){
       if(days >= buckets[i].min && days <= buckets[i].max){ buckets[i].amt += v; break; }
@@ -10064,7 +10069,7 @@ function renderOps(){
   var wrap = document.getElementById('arWrap');
   if(wrap){
     wrap.innerHTML =
-      '<div class="arhead"><b>$' + (scale >= 1000 ? Math.round(scale/1000) + 'K' : scale) + '</b>Totals from Worksheet Invoices</div>' +
+      '<div class="arhead"><b>$' + (scale >= 1000 ? Math.round(scale/1000) + 'K' : scale) + '</b>Unpaid balance by days since invoice</div>' +
       '<div class="archart">' + buckets.map(function(b){
         var h = Math.round(100 * b.amt / scale);
         return '<div class="arcol"><div class="arplot">' +
@@ -10266,7 +10271,7 @@ function renderAcxOverview(){
   '</div>';
   /* ---- money strip ---- */
   html += '<div class="dbmoney">' +
-    '<span><small>Job Value</small><b>' + (fin.value ? fmtMoney(fin.value) : '$0.00') + '</b></span>' +
+    '<span><small>Job Value' + (fin.source === 'estimate' ? ' — from estimate' : '') + '</small><b>' + (fin.value ? fmtMoney(fin.value) : '$0.00') + '</b></span>' +
     '<span class="dbring" style="background:conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0);"><span class="dbringin">' + fin.pct + '%</span></span>' +
     '<span style="text-align:right;"><small>Balance Due</small><b style="color:' + (fin.balance > 0 ? '#C8202E' : '#7CB342') + ';">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
   '</div>';
@@ -11932,6 +11937,22 @@ function renderProjectDocs(){
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
     : '<div class="empty"><b>No estimates yet.</b><br>Use <b>+ New estimate</b> to pick a template.</div>';
+  /* 654 (CR-AUD-013): sent estimates living only in the estimates TABLE
+     have no doc row to list here — say so instead of looking empty while
+     the money panes price the job from them. */
+  (function(){
+    var _dIds = {};
+    ests.forEach(function(r){ _dIds[r.id] = 1; });
+    var extra = ((typeof estRows !== 'undefined' && estRows[currentProject.id]) || []).filter(function(e){
+      return !(e.doc_id && _dIds[e.doc_id]);
+    });
+    if(extra.length){
+      document.getElementById('estDocsMount').innerHTML +=
+        '<div class="subnote" style="margin-top:8px;">+ ' + extra.length + ' sent estimate' +
+        (extra.length === 1 ? '' : 's') + ' from the estimate editor (\uD83D\uDCB0 Estimates in the menu), totaling ' +
+        fmtMoney(extra.reduce(function(s, e){ return s + (Number(e.total) || 0); }, 0)) + '.</div>';
+    }
+  })();
   var wm = document.getElementById('woDocsMount');
   if(wm) wm.innerHTML = wos.length ? docTable(wos) : '<div class="empty"><b>No work orders yet.</b><br>Use <b>+ New work order</b> to issue one to a crew.</div>';
   var cm = document.getElementById('contractDocsMount');
@@ -13523,17 +13544,43 @@ function jobFinance(pr){
     value += Number(r.total);
     paid += Number((ws[r.id] || {}).paid) || 0;
   });
+  /* 654 (CR-AUD-003): the contracts TABLE is the same concept in a second
+     store. Honor whichever store carries more — never both, that would
+     double-count one signature. */
+  var tbl = Number(ctrSigned[pr.id]) || 0;
+  if(tbl > value) value = tbl;
+  var source = value > 0 ? 'contract' : 'none';
   var mv = Number(all.manual_value) || 0;
-  if(mv > 0){
-    value += mv;
-    paid += Number((ws.manual || {}).paid) || 0;
+  if(mv > 0) paid += Number((ws.manual || {}).paid) || 0;
+  if(value > 0){
+    value += mv;   /* contract + manual extras: the profile's long-standing additive shape */
+  }else{
+    /* 654: one number everywhere. No contract → the highest of manual and
+       the best SENT estimate (table or doc) — exactly the precedence
+       projectValue always used, now computed in one place. Theo's recorded
+       order still holds: a signed contract wins outright; an estimate never
+       overrides one. */
+    var est = Number(estBest[pr.id]) || 0;
+    cacheRows.forEach(function(r){
+      if(r.project_id === pr.id && isEstimateTitle(r.title) && Number(r.total) > est){
+        est = Number(r.total);
+      }
+    });
+    if(mv >= est){
+      value = mv;
+      if(mv > 0) source = 'manual';
+    }else{
+      value = est;
+      source = 'estimate';
+    }
   }
   (all.payments || []).forEach(function(p){
     if(p.dir === 'in') paid += Number(p.amt) || 0;
   });
   if(paid > value) paid = value;
   return { contracts: contracts, value: value, paid: paid,
-           balance: value - paid, pct: value ? Math.round(paid / value * 100) : 0 };
+           balance: value - paid, pct: value ? Math.round(paid / value * 100) : 0,
+           source: source };
 }
 var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', Approved:'#7CB342', Scheduled:'#7CB342',
   Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B', Lost:'#8d8d8d' };
@@ -13582,6 +13629,10 @@ function renderOverview(){
     (si < STAGES.length - 1 ? '<span class="stgarrow" data-dir="1" title="Advance to ' + esc(STAGES[si+1]) + '">&#8250;</span>' : '');
   var fin = jobFinance(pr);
   document.getElementById('jobValueLbl').textContent = fin.value ? fmtMoney(fin.value) : '--';
+  /* 654: say where the number came from when it is not contract money */
+  var _jvs = document.getElementById('jobValueSrc');
+  if(_jvs) _jvs.textContent = fin.source === 'estimate'
+    ? 'Job Value — from estimate, no contract yet' : 'Job Value';
   document.getElementById('balanceLbl').textContent = fin.value ? fmtMoney(fin.balance) : '--';
   var ring = document.getElementById('payRing');
   ring.style.background = 'conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0)';
@@ -13589,9 +13640,19 @@ function renderOverview(){
   renderWorksheet(pr, fin);
   /* activity grid */
   var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
-  var ests = docs.filter(function(r){ return isEstimateTitle(r.title); }).length;
+  var estDocs = docs.filter(function(r){ return isEstimateTitle(r.title); });
+  /* 654 (CR-AUD-013): the money panes price from the estimates TABLE; this
+     tile counted only generated DOCS, so the two disagreed on 7 live jobs.
+     Count both stores, deduped on the row's doc_id write-back. Drafts stay
+     out — the same SENT_EST rule the money uses. */
+  var _dIds = {};
+  estDocs.forEach(function(r){ _dIds[r.id] = 1; });
+  var estExtra = (estRows[pr.id] || []).filter(function(e){
+    return !(e.doc_id && _dIds[e.doc_id]);
+  }).length;
+  var ests = estDocs.length + estExtra;
   var contracts = docs.filter(function(r){ return /^contract/i.test((r.title||'').trim()); }).length;
-  var insp = docs.length - ests - contracts;
+  var insp = docs.length - estDocs.length - contracts;
   var appts = cacheAppts.filter(function(a){ return a.project_id === pr.id; }).length;
   var photos = '\u2026';
   photoDb.listByProject(pr.id).then(function(l){
@@ -13640,7 +13701,9 @@ function renderWorksheet(pr, fin){
     return;
   }
   var ws = parseCkAll(pr).ws || {};
-  var invBtn = fin.value > 0
+  /* 654: estimate-sourced value must never open the invoice path — an
+     invoice claims contract money, and there is no contract yet. */
+  var invBtn = (fin.value > 0 && fin.source !== 'estimate')
     ? '<div style="text-align:right;margin:2px 0 6px;"><button class="chipbtn" data-mkinv="1">&#129534; Create invoice (balance ' + fmtMoney(fin.balance) + ')</button></div>'
     : '';
   mount.innerHTML = invBtn + fin.contracts.map(function(r){
@@ -13659,7 +13722,7 @@ function renderWorksheet(pr, fin){
 }
 async function createInvoiceFor(pr){
   var fin = jobFinance(pr);
-  if(!fin.value){ alert('Create an invoice after a contract is signed \u2014 the totals come from the signed contract.'); return; }
+  if(!fin.value || fin.source === 'estimate'){ alert('Create an invoice after a contract is signed \u2014 the totals come from the signed contract.'); return; }
   var invCount = cacheRows.filter(function(r){
     return r.project_id === pr.id && /^invoice/i.test((r.title || '').trim());
   }).length;
@@ -17449,10 +17512,12 @@ var SENT_EST = { sent:1, approved:1, accepted:1, signed:1 };
 
 function indexMoney(estimates, contracts){
   estBest = {};
+  estRows = {};
   (estimates || []).forEach(function(e){
     if(!e || !e.project_id) return;
     if(e.archived) return;
     if(!SENT_EST[String(e.status || '').toLowerCase()]) return;
+    (estRows[e.project_id] = estRows[e.project_id] || []).push(e);
     var t = Number(e.total) || 0;
     if(t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
   });
@@ -17471,18 +17536,10 @@ function indexMoney(estimates, contracts){
    the contract says $30k and a stale estimate says $36k, the contract is the
    truth. Everything else is the highest of what we know. */
 function projectValue(pr){
+  /* 654 (CR-AUD-003): a view onto jobFinance — ONE precedence, so a job
+     can never again price differently on a list than on its own profile. */
   if(!pr) return 0;
-  var signed = Number(ctrSigned[pr.id]) || 0;
-  if(signed > 0) return signed;
-  var best = Number(parseCkAll(pr).manual_value) || 0;
-  var est = Number(estBest[pr.id]) || 0;
-  if(est > best) best = est;
-  cacheRows.forEach(function(r){
-    if(r.project_id === pr.id && isEstimateTitle(r.title) && Number(r.total) > best){
-      best = Number(r.total);
-    }
-  });
-  return best;
+  return jobFinance(pr).value;
 }
 function fmtMoney(n){
   if(!n) return '--';
@@ -36247,6 +36304,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:654, d:'2026-08-09', t:'Money tells one story',
+s:'A job with a sent estimate but no signed contract used to show its value on every list and $0 on its own profile \u2014 two different value functions. Now every screen shares one precedence (signed contract \u2192 manual value \u2192 best sent estimate) and the profile says where the number came from. The AR aging card subtracts payments received instead of showing gross value, and its caption finally matches its source. The Estimates tile counts estimates from both stores \u2014 generated documents and the estimate editor \u2014 instead of disagreeing with the money beside it. Invoices still require a signed contract; an estimate-priced job can\u2019t open the invoice path.' },
 { b:653, d:'2026-08-09', t:'Five audit fixes, picked straight off the CR Audit', s:'Convert-to-Contract works again (the button called a filename that no longer existed). The AI-estimate Send button actually sends now, through the same mailer every other document uses \u2014 it used to just say it did. Inviting a teammate creates a real sign-in, not just a directory entry. Photo Activity and the gallery are lighter (old photos migrate out of the database and into storage, tiles load lazily). A $28,727 claim that had gone invisible on every insurance screen is visible again, and On Hold claims no longer drop off the money summary. Two admin tools that were built and forgotten \u2014 a smoke-test walkthrough and 28 iTel lab results \u2014 are reachable from the menu.' },
 { b:652, d:'2026-08-09', t:'Contracts a tap away, and the approval queue stops missing signed estimates', s:'Two fixes from one screenshot. The job menu now has a Contracts tile \u2014 the tab always existed, but it only lived in the header dropdown and the menu is where fingers go. And the home-page Approvals card used to list a signed estimate only while the job still sat at Lead or Prospect \u2014 advance the stage by hand first and the signature never surfaced for approval. Now any live job with a signed estimate and no contract shows up there; approving still creates the prefilled contract, and the signed contract is still what sets the Job Value.' },
 { b:651, d:'2026-08-09', t:'Finance as a check source, and a weekly owed email', s:'Logging a collection now offers Finance alongside Insurance and Homeowner \u2014 a check that comes in through a financing company (Service Finance today, more later) gets its own source and names which company. Every Friday morning Theo and Joan now get an email of what\u2019s owed to each rep minus their outstanding draws, matching the Commissions screen exactly \u2014 nothing to remember, nothing to check by hand.' },
