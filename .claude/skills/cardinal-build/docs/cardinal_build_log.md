@@ -12006,3 +12006,29 @@ exit 1** — the old filter really does hide the Approved-stage signature.
 **For Joeseph specifically:** after deploy, the signed estimate appears in
 the home-page Approvals card → Approve & create contract → client signs the
 contract → Job Value shows $20,525.
+
+## CR Audit — full-system QA, data audit & feature inventory (9 Aug 2026, docs-only)
+
+Commissioned by Theo via a pasted QA spec (React/`/api/v1`/native-app
+assumptions mapped onto the real single-file app). Five parallel read-only
+audit passes + a main-session verification pass; every headline claim
+re-proven by direct grep/SQL before CONFIRMED. **The full report is
+`docs/CR_AUDIT_2026-08.md`** (23 findings: 8 High · 9 Medium · 6 Low, plus
+6 buried features and 6 sized insurance-lifecycle gaps), with a findings
+CSV beside it and `scripts/audit_recount.py` re-deriving the artifact-side
+numbers (16/16 at 652 — and the script's own first draft had a wrong regex
+that went falsely GONE on three rows; fixed and noted inside it).
+
+Headlines: Convert-to-Contract calls `/api/estimate_to_contract` while the
+file is hyphenated (404 on first use) · the AI-estimate "Send" toast
+promises a client email/SMS that no code sends · job money computed two
+ways (jobFinance vs projectValue), live-divergent on 4 of 30 projects ·
+two unconnected supplement systems · the one claim carrying money
+($28,727) invisible on every insurance surface (NULL checklist type +
+OnHold rail drop) · no realtime, whole-checklist last-write-wins across
+devices · 13 legacy base64 photos = an 11.8 MB Photo Activity tap.
+
+Three cross-agent disputes were settled by reading the code and are
+recorded in the report (§ Disputes) — including one where the audit's own
+earlier inventory was wrong (the Truth-hub rail DOES wipe the hub cards).
+Nothing was changed: no app edits, no DB writes, read-only throughout.
