@@ -5,12 +5,41 @@
 // Env vars needed:
 //   GEMINI_API_KEY  — the paid Gemini key (same one analyze.js uses)
 //
-// Request body: { file: <base64 payload>, mime: "application/pdf" | "image/..." }
+// Request body, EITHER shape:
+//   { file: <base64 payload>, mime: "application/pdf" | "image/..." }   small files, sent inline
+//   { url:  <Supabase storage URL> }                                     large files (643)
+//
+// 643: the URL shape is what index.html has been sending all along for anything
+// over 3.1 MB. It uploads to photos/scopes/… , makes a 600-second signed URL and
+// POSTs { url }. This route only ever read `file`, so it answered 400 "No file"
+// and the client showed "the extractor doesn't accept links yet — deploy the
+// updated api/sol.js." That message was an honest placeholder for a server half
+// that was never written. Adam Gunn's scope is the file that found it.
 
 const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
 const MODEL = 'gemini-3.5-flash';
 const MAX_BYTES = 12 * 1024 * 1024;   // 12 MB raw cap; base64 is ~16 MB
+
+/* 643 — THE ONLY PLACE A CALLER-SUPPLIED URL MAY POINT.
+   Fetching a URL the caller chose is server-side request forgery unless it is
+   bounded. A signed-in user could otherwise hand this route an internal address
+   and read the response through the error body. This route exists to read a
+   scope the CLIENT JUST UPLOADED, so the bound is exact: this project's Supabase
+   storage, nothing else. Not a substring test — a prefix test on the parsed
+   origin, so "https://evil.test/?x=https://yipslub…supabase.co/storage/v1/"
+   cannot pass. */
+const STORAGE_PREFIX = SUPABASE_URL + '/storage/v1/';
+
+function storageUrlOrNull(raw) {
+  if (typeof raw !== 'string' || !raw) return null;
+  let u;
+  try { u = new URL(raw); } catch (e) { return null; }
+  if (u.protocol !== 'https:') return null;
+  if (u.origin !== new URL(SUPABASE_URL).origin) return null;
+  if (!raw.startsWith(STORAGE_PREFIX)) return null;
+  return raw;
+}
 
 /* 505: the second rung, same as 502 elsewhere. gemini-3.5-flash 503s "high
    demand" in spells - measured at roughly one call in four this afternoon - and
@@ -73,7 +102,47 @@ export default async function handler(req, res) {
     if (!user || !user.email) { res.status(401).json({ error: 'Invalid session' }); return; }
 
     // ---- 2) validate ----
-    const { file, mime } = req.body || {};
+    const body = req.body || {};
+    let { file, mime } = body;
+
+    /* 643: the stored-file path. index.html uploads anything over 3.1 MB to
+       photos/scopes/… and sends the signed URL instead of 16 MB of base64. */
+    if (!file && body.url) {
+      const safeUrl = storageUrlOrNull(body.url);
+      if (!safeUrl) {
+        res.status(400).json({ error: 'That link is not a Cardinal storage URL' });
+        return;
+      }
+      let doc;
+      try {
+        doc = await fetch(safeUrl);
+      } catch (e) {
+        res.status(502).json({ error: 'Could not fetch the uploaded file' });
+        return;
+      }
+      /* A signed URL lasts 600s. If the read took longer than the extraction
+         queue, say so plainly rather than reporting "AI request failed". */
+      if (!doc.ok) {
+        res.status(doc.status === 400 || doc.status === 401 || doc.status === 403 ? 410 : 502)
+           .json({ error: doc.status === 200 ? 'Could not fetch the uploaded file'
+                        : 'The upload link has expired or was refused — try the upload again' });
+        return;
+      }
+      const buf = Buffer.from(await doc.arrayBuffer());
+      if (buf.length > MAX_BYTES) {
+        res.status(413).json({
+          error: 'That file is ' + (buf.length / 1048576).toFixed(1) +
+                 ' MB. The reader handles up to ' + (MAX_BYTES / 1048576) +
+                 ' MB — split it and upload the scope pages only.'
+        });
+        return;
+      }
+      if (!buf.length) { res.status(502).json({ error: 'The uploaded file came back empty' }); return; }
+      file = buf.toString('base64');
+      /* Trust the stored object's own content type over anything in the body. */
+      mime = mime || (doc.headers.get('content-type') || 'application/pdf').split(';')[0].trim();
+    }
+
     if (!file || typeof file !== 'string') { res.status(400).json({ error: 'No file' }); return; }
     if (file.length > MAX_BYTES * 1.4) { res.status(413).json({ error: 'File too large (12 MB cap)' }); return; }
     const mt = (mime || 'application/pdf').toLowerCase();
