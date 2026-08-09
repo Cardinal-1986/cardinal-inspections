@@ -11759,3 +11759,79 @@ for the assertion meant to prove the code is gone. The four:
 name(` signature, an object key with its punctuation. Or route it through
 `jslex_count.py`, which separates CODE from comments and strings and would have
 answered all four correctly the first time.
+
+## Build 649 — the filed scope actually reads, and Greg's notes are counted (9 Aug 2026)
+
+Two defects from Theo's phone, both real, the first one mine.
+
+**1. "That document has no stored file to read."** — my 647 bug.
+`readFiledScope()` looked the row up in `cacheRows`, and `db.list()` names its
+columns and **deliberately omits `html`**:
+
+```
+.select('id,title,project,project_id,status,sent_at,share_token,total,
+         signed_at,created_at,updated_at,created_by')
+```
+
+That is correct of `db.list` — Gunn's scope is **6,418,120 characters** of base64
+and has no business in a list cache. But it means `row.html` is `undefined` for
+**every** row there, so the payload parse yielded `{}` and my own refusal path
+fired on a perfectly intact document. `db.get(id)` already existed and does
+`select('*')`. Now used, with the button showing "Opening the file…" during a
+6.4 MB fetch and a `catch` so an RLS refusal refuses instead of crashing.
+
+⚠️ **The 647 harness passed because I fed it a fixture that had `html`.** This is
+the documented trap — *"test against production data shapes, not convenient
+fixtures"* — whose recorded precedent is the photo-signing change that shipped
+completely inert. **649's harness lifts `db.list()`'s real column list out of the
+artifact, asserts `html` is not in it, and builds its fixture from that list**, so
+the shape can no longer be imagined. If anyone adds `html` to `db.list()`, it
+goes red and says why.
+
+**2. "Communications say 0 but Greg clearly put a note inside there."**
+`renderChat()` promotes the legacy **`projects.notes` column** into a pinned first
+message; `commsCount()` counted only `checklist.comments`. One list, two readers,
+and only one knew about the legacy column.
+
+**Eight clients**, not one — every note Greg left in the old box was invisible
+from the job menu:
+
+| client | legacy note | tile said |
+|---|---|---|
+| Adam Gunn | 62 chars | 0 |
+| **Maker Space Solutions LLC** | **1,810 chars — structural concern** | 0 |
+| Cedar Knolls · Julie Wilson · Momma Mia · Reginald ? · Shari Spearman · Young ? | 12–39 chars | 0 |
+
+Fixed with **one list, `commsMessages()`**, rather than teaching the counter to
+repeat the renderer's rule — repeating it is how they drifted apart.
+
+⚠️ **An assertion expecting 1 found 2, and that is how the THIRD copy turned up.**
+`renderLjPane` had its own private promotion all along. So there were three
+readers: `renderChat` promoted, `renderLjPane` promoted separately, `commsCount`
+promoted nothing. All three now read `commsMessages()`, and `legacy:true` appears
+**once** file-wide — asserted, and that assertion is the thing that found the
+third copy.
+
+**Gates.** `check_build.py` green, stamp 648 → 649. `harness649.js` — **24
+assertions**, including the four-way count matrix (legacy only / comments only /
+both / neither), the no-double-count case, and `db.get` throwing. Negative
+control on 648: red. Suite re-run: 646 · `render_sollift` · 647 · 648 · 649 all
+green. `harness647` needed updating again (it stubbed `cacheRows`, which
+`readFiledScope` no longer reads) — the test was stale, the app was right.
+
+### ⚠️ FIFTH comment-pollution miss — and the practice change that follows
+
+`assert 'cacheRows' not in readFiledScope` went red on correct code because the
+new comment says *"was `cacheRows.filter(...)`"*. That is five in one session
+(647 ×2, 648 ×2, 649 ×1). The pattern is now unmistakable and it is structural,
+not carelessness: **this project's house style is to name the thing being
+replaced, so every comment is a decoy for the assertion meant to prove that thing
+is gone.**
+
+**The rule going forward: never test ABSENCE with a bare substring.** Use one of
+
+- the **old expression verbatim**, punctuation and all (`(cacheRows || []).filter(function(r){ return r.id === docId; })`) — no comment contains that;
+- a **full call or signature shape** (`commsMessages(currentProject)`, `function solRead(`);
+- **`jslex_count.py`**, which separates CODE from comments and strings and would have answered all five correctly on the first run.
+
+Testing *presence* with a substring is fine. It is absence that the comments lie about.

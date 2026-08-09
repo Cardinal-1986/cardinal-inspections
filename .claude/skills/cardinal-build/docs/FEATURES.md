@@ -2479,3 +2479,28 @@ features; converting them is a separate build.
 **Gates:** `harness648.js` — 33 assertions against the shipped functions, with
 `readScope`/`read` wrapped in a closure that redeclares their module vars so the
 real code runs; every payload shape asserted separately; negative-controlled on 647.
+
+---
+
+## One thread list — `commsMessages()` (649)
+
+**Where:** main block, beside `commsCount()`.
+
+The Communications thread is `checklist.comments` **plus the legacy
+`projects.notes` column** promoted to a pinned first message. That promotion used
+to be copied privately inside `renderChat()` and inside `renderLjPane()`, and
+`commsCount()` — which paints the job-menu tile — did not know about it at all.
+So a client whose only note lived in the old box showed the note on screen and
+**"Communication 0"** on the tile. **Eight clients were affected**, including Maker
+Space's 1,810-character structural-concern note.
+
+All three now read `commsMessages(pr)`. ⚠️ `legacy:true` appears **exactly once**
+in the file and there is a gate asserting it — that assertion is what found the
+third copy. Do not re-inline the promotion into a renderer.
+
+⚠️ **`readFiledScope()` must use `db.get(id)`, never `cacheRows`.** `db.list()`
+names its columns and deliberately omits `html`, so no row in that cache carries
+a stored file — a scope is 6.4 MB of base64. Reading the cache is what made
+"Read the scope already on file" claim an intact document was empty (647→649).
+`harness649.js` lifts `db.list()`'s real column list from the artifact and
+asserts `html` is absent from it, so the fixture cannot drift from production.

@@ -3283,7 +3283,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 648 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 649 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11193,10 +11193,9 @@ function renderLjPane(){
   var addr = (p.address || '').trim();
   var tab = ljState.tab;
   var val = projectValue(p);
-  var msgs = (ck.comments || []).slice();
-  if(p.notes && !msgs.some(function(m){ return m.legacy; })){
-    msgs.unshift({ legacy:true, name:'Notes', at:p.created_at, text:p.notes });
-  }
+  /* 649: was a THIRD private copy of the legacy-note promotion. Same list as
+     the Communications screen and the job-menu tile now. */
+  var msgs = commsMessages(p);
   var comms = '<div class="ljcomms">' + (msgs.length ? msgs.map(function(m){
     return '<div class="ljcmsg"><span class="who">' + esc(m.name || m.by || '') + '</span>' +
       '<span class="when">' + (m.at ? timeAgo(m.at) : '') + '</span><br>' + fmtChatText(m.text || '') + '</div>';
@@ -13523,9 +13522,25 @@ var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', Approved:'#7CB342', Sch
 var STAGE_INK = { Lead:'#8A6608', Prospect:'#9A4E06', Approved:'#3F6B23', Scheduled:'#3F6B23',
   Completed:'#15607F', Invoiced:'#5B4080', Closed:'#455A64', Lost:'#5E5E5E' };
 function stageInk(stg){ return STAGE_INK[stg] || '#5E5E5E'; }
+/* 649: THE THREAD AS IT IS ACTUALLY RENDERED — checklist.comments, plus the
+   legacy `projects.notes` COLUMN promoted to a pinned first message.
+   renderChat() has always done that promotion; commsCount() never knew about
+   it, so a client whose only note lives in the legacy column showed the note on
+   screen and "Communication 0" on the job menu. That was EIGHT clients,
+   including Maker Space's 1,810-character structural-concern note.
+   ⚠ One list, two readers. Do not teach the counter to repeat the renderer's
+   rule — repeating it is how they drifted apart. */
+function commsMessages(pr){
+  if(!pr) return [];
+  var msgs = (parseCkAll(pr).comments) || [];
+  if(pr.notes && !msgs.some(function(m){ return m.legacy; })){
+    msgs = [{ legacy:true, name:'Notes', by:'', at:pr.created_at,
+              text: pr.notes }].concat(msgs);
+  }
+  return msgs;
+}
 function commsCount(pr){
-  var all = parseCkAll(pr);
-  return (all.comments || []).length;
+  return commsMessages(pr).length;
 }
 function renderOverview(){
   if(!currentProject) return;
@@ -14712,7 +14727,18 @@ async function readScopeOfLoss(file){
    shape a job file uses — so the bytes have been sitting there the whole time
    with nothing able to reach them. */
 async function readFiledScope(docId){
-  var row = (cacheRows || []).filter(function(r){ return r.id === docId; })[0];
+  /* 649: was `cacheRows.filter(...)`, and that cache CANNOT carry the payload.
+     db.list() names its columns and deliberately leaves out `html` — Gunn's
+     scope is 6.4 MB of base64 and has no business in a list — so `row.html` was
+     undefined for every row and the refusal below fired on an intact document.
+     db.get() does select('*'). ⚠ My 647 harness missed this because its fixture
+     had an `html` field; the real shape does not. */
+  var btn = document.getElementById('solReadBtn');
+  var lbl = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = 'Opening the file\u2026'; }
+  var row = null;
+  try{ row = await db.get(docId); }catch(e){ console.warn('[sol] filed scope:', e); }
+  if(btn){ btn.disabled = false; btn.textContent = lbl; }
   if(!row){ alert('That document is no longer on file.'); return; }
   var pay = null;
   try{ pay = JSON.parse(row.html || '{}'); }catch(e){}
@@ -15129,13 +15155,9 @@ function fmtChatText(t){
 }
 function renderChat(){
   if(!currentProject) return;
-  var all = parseCkAll(currentProject);
-  var msgs = all.comments || [];
-  /* legacy notes field becomes the first pinned message */
-  if(currentProject.notes && !msgs.some(function(m){ return m.legacy; })){
-    msgs = [{ legacy:true, name:'Notes', by:'', at:currentProject.created_at,
-              text: currentProject.notes }].concat(msgs);
-  }
+  /* 649: the promotion of the legacy notes column moved into commsMessages(),
+     so the job-menu tile counts exactly what this thread shows. */
+  var msgs = commsMessages(currentProject);
   var me = TEAM && currentUser ? currentUser.email : '';
   var thread = document.getElementById('chatThread');
   thread.innerHTML = msgs.length ? msgs.map(function(m){
@@ -35702,6 +35724,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:649, d:'2026-08-09', t:'Reading a filed scope works, and old notes are counted again', s:'Two fixes. \u201cRead the scope already on file\u201d said the document had nothing stored in it \u2014 it did, the app was looking in a list that deliberately leaves the file contents out to stay fast. It now fetches the document itself. And the job menu said Communication 0 on clients that plainly had a note: notes written in the older notes box were shown on the Communications screen but never counted on the tile. Eight clients were affected, including one with a long note about a structural concern. The tile and the screen now count the same thing.' },
 { b:648, d:'2026-08-09', t:'One reader behind all five Scope of Loss screens', s:'Five different screens could read a Scope of Loss, and each one had its own separate copy of the code that talks to the reader. That meant a fix to one never reached the other four \u2014 and one of them would have failed outright rather than asking you to sign in again. They now share a single connection, while each screen keeps its own look and its own handling of what comes back. Nothing changes in how any of them are used; this is groundwork so the next improvement lands everywhere at once.' },
 { b:647, d:'2026-08-09', t:'The landing page is dark again, and a scope already on file can be read', s:'Three fixes. The landing page had gone pale with pale writing on it \u2014 unreadable \u2014 because its background was following the app\u2019s light/dark setting while its text followed the landing\u2019s own. It has its own dark back again. Uploading a document from inside Open Full Claim said \u201cNo client selected\u201d and refused; that was broken the moment those tabs were added two builds ago, and it works now. And a Scope of Loss that was uploaded as a file can finally be READ: the Scope of Loss card offers to read the one already on file, so the scope you uploaded first becomes the baseline everything else is measured from \u2014 no need to upload it a second time.' },
 { b:646, d:'2026-08-09', t:'Every scope you read now counts toward the increase', s:'Reading a Scope of Loss used to fill in the client profile and stop there, so the claim screen still showed no money and the increase figures stayed empty. It now writes the claim record too. The first scope with a dollar amount on it becomes the baseline and is never overwritten; every scope after that moves the approved figure, so supplements show up as a real increase. The percentage appears on the Scope of Loss card, on the claim, per carrier, and in the average on Cardinal Truth. The adjuster\u2019s company can also be recorded now \u2014 the claim always had a place to show it and no way to enter it.' },
