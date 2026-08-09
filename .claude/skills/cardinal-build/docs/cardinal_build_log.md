@@ -12409,3 +12409,276 @@ approvals 15/15, pay 58/58.
 **Still unproven:** whether Gemini now returns a complete object for Gunn's
 particular 6.4 MB scope. The truncation is fixed and the failure is legible;
 the next run is the answer.
+
+## Build 660 — Ordinance & Law by the name it actually goes by (9 Aug 2026)
+
+Theo, reading the estimate 658's reader missed: *"Adam Gunns claim estimate
+includes Ordinance and Law coverage. In insurance estimates, Ordinance and Law
+is typically categorized under Building Codes (Coverage BC). Page 5 lists
+BC-Building Codes with an Item Total of $1,887.33 and an ACV Total of
+$1,933.72. Page 7 provides a dedicated Summary for BC-Building Codes."*
+
+**658 taught the reader the PROSE names and not one of them appears on an
+Xactimate scope.** There the coverage is a **COVERAGE CATEGORY CODE** — "BC",
+printed "BC-Building Codes", with its own subtotal and often its own summary
+page. Not a sentence, not an endorsement line. The reader walked past it.
+
+⚠️ **First, the state of the data, because it changes what this build is.**
+The claim's `updated_at` was still the 658 migration and the project's was
+02:32 that morning: **no scope read has ever been applied.** So "Not stated"
+was not the app disagreeing with the document — it was the app knowing nothing.
+The alias gap is real and worth fixing on its own merits; it is not, on this
+evidence, why Gunn's screen is empty.
+
+- **Migration `insurance_claims_ord_law_bc_totals.sql` (APPLIED before the
+  PR):** `ord_law_rcv` + `ord_law_acv`. **Two figures, not one, and Theo's
+  reason is the load-bearing part:** the Item/RCV total is the carrier's full
+  valuation of the code work; the ACV/Net total is what is being paid now —
+  and **on Allstate the ACV EXCEEDS the RCV, because sales tax lands on code
+  items.** A single amount column would have silently discarded one of them,
+  and an ACV above an RCV would have read as corrupt data. `ord_law_limit` is
+  kept and made precise: the **endorsement cap** (commonly 10% of Coverage A),
+  which is not a scope amount. Nothing was ever stored in it, so this is a
+  definition sharpened, not values migrated.
+- **The prompt** now leads with the category: BC / "BC-Building Codes" /
+  "Summary for BC-Building Codes", states that a non-zero BC category **IS**
+  the coverage, asks for both totals, and **warns the model not to assume the
+  ACV is the smaller one**. Code-driven line items (ice & water barrier,
+  upgraded sheathing, EPA Lead-Safe practices on pre-1978 homes) count as
+  evidence when no category prints.
+- **Line items deliberately NOT stored** — Theo's call: the PDF stays the
+  single source for granularity, and a second store would drift on every
+  supplement.
+- `insOrdLawText()` shows "Yes — BC-Building Codes, $1,887.33 RCV /
+  $1,933.72 ACV"; the cap renders labelled "cap".
+
+**Gates.** `check_build.py` green, stamp 659 → 660. New `harness_660.js`
+(27 assertions) executes the formatter **on Gunn's real figures**, including
+an explicit assertion that the larger ACV is rendered as-is rather than
+"corrected". 658's guarantees are re-asserted here so they cannot regress
+(null → "Not stated", false → "No"). Negative control on 659 (artifact **and**
+`api/sol.js`): 20 red.
+
+⚠️ **Two false reds, both the test's fault, both instructive.** One assertion
+matched `ice & water barrier` against the source, where it is split across a
+string-concatenation line break — the "a regex cannot see an expression split
+across lines" trap from this project's own notes; it now matches the prompt
+as the MODEL receives it, concatenated. And `harness_658` went red at 3, all
+660 supersessions (the cap relabel, the review-row split, the widened select)
+— updated and labelled `660 SUPERSEDED`.
+
+Regressions: 659 16/16, 658 38/38, 657 32/32, 655 42/42, 654 31/31,
+653 45/45, approvals 15/15, pay 58/58.
+
+---
+
+## Build 661 — 9 Aug 2026 — a failed scope read says which failure it is
+
+Theo's next screenshot of Adam Gunn's scope was **my own 659 sentence**: *"The
+reader could not turn this document into fields. It may not be a scope of loss,
+or the pages may be images the text did not come through on."*
+
+That sentence is the answer for **four unrelated causes** — the model refused
+the document, answered nothing, answered in prose, or never received the
+document at all — and 659 also stopped `detail` reaching the screen. So the one
+build that made the failure *readable* is the same build that made it
+**undiagnosable**, for Theo and for me alike. That is the defect 661 fixes.
+
+**He also pasted an AI analysis recommending OCR and a layout-aware PDF
+parser. It does not apply to this route**, and it is worth writing down why so
+it is not re-proposed: there is no `pdf-parse`, no `pdfplumber`, no text-layer
+extraction and no regex over plain text anywhere in the path. `api/sol.js`
+hands the PDF **bytes** to a multimodal model as `inline_data` — the model
+looks at the pages. A flat scan is the case that architecture handles *best*,
+not worst. Adding OCR would be building the stack the advice assumes.
+
+- **The failure names itself.** `readerDiag()` appends a short labelled tail to
+  the sentence — `[gemini · finish STOP · in 48210 tok · out 0 tok · reply 0
+  chars]`. It is **not** the 659 raw dump returning: no model text, fixed
+  length, and every number is one a phone screenshot can carry.
+  **`promptTokenCount` is the load-bearing one** — a 4.8 MB scope should ingest
+  as tens of thousands of tokens, and a few hundred would mean the document
+  never reached the model, which no amount of prompt work would fix.
+- **Three sentences instead of one**: refused / answered with nothing / answered
+  in words. Only the third is about the prompt.
+- **The retry.** `responseMimeType: 'application/json'` arrived in 659, and the
+  failure changed shape in the same build — so it is the prime suspect. An
+  unparseable JSON-mode reply is now re-issued **once** without that constraint
+  (the pre-659 request, at 659's token budget, so narration is affordable).
+  `askGemini(jsonMode)` is one function called twice, **not a second pipeline**
+  — the 647 banner's rule applied inside the route.
+  ⚠️ **A truncation is deliberately NOT retried**: without the JSON constraint
+  the model narrates, which is what filled the budget in the first place.
+- **The OpenAI rung can finally open a PDF.** `aiFallback()` has sent PDFs as
+  `image_url` since 505 — an API that reads a PDF only through a `file` content
+  part. For the one route whose whole job is reading a PDF, the fallback has
+  been **decorative since the day it shipped**. ⚠️ I could not exercise the
+  OpenAI shape from the sandbox (no key here); it is guarded exactly as the rest
+  of `aiFallback` is, so a wrong guess costs what today already costs.
+- **The carrier's own error is capped at 150 chars** before the diagnosis is
+  appended. `solRead()` slices the whole message at 250, so an 800-char Google
+  error would have pushed the diagnosis off the end in the one case where it is
+  most wanted. Measured on 660: that string was **800 chars**.
+
+**Gates.** `check_build.py` green, stamp 660 → 661. New `harness_661.js`
+(39 assertions) **imports and executes the real handler**, replaying each
+failure shape through a stubbed fetch that **counts model calls** — the retry is
+the build, so the call count is itself an assertion: one call on the happy path,
+one on a truncation, two on an unparseable reply. It also asserts every error
+sentence the route can produce fits `solRead()`'s 250-char slice. Negative
+control on 660 (artifact **and** `api/sol.js`): **27 red**, including
+`[144,144,144,800]` for the slice check.
+
+⚠️ `harness_659` went red at 1 — a **661 supersession**: it pinned the exact
+sentence 661 split into three. Re-keyed to 659's real guarantee (a 502 carrying
+plain English, not the raw reply) and labelled `661 SUPERSEDED`.
+
+⚠️ **`harness_pay` needs `TZ=America/New_York`** — its own header prints the
+timezone and its control asserts what a *negative-offset* zone does with
+`new Date('2026-08-09')`. On this UTC sandbox it reads 1 red; run it in
+Cardinal's timezone and it is 58/58. Not an app defect and not a 661 change —
+recorded so nobody chases it again.
+
+Regressions: 660 27/27, 659 16/16, 658 38/38, 657 32/32, 655 42/42, 654 31/31,
+653 45/45, approvals 15/15, pay 58/58 (TZ set), render_inscards 9/9,
+render_656 17/17.
+
+**Still not proven.** Nothing here shows Gunn's scope reading correctly — it
+shows the next failure arriving with its cause attached. The Gemini key lives in
+Vercel and the sandbox has no way to call the model, so the read itself is
+Theo's to run. If the retry was the fix, it simply works; if not, the message
+now says which of the four it is.
+
+---
+
+## Build 662 — 9 Aug 2026 — the retry cannot eat the diagnosis it exists to deliver
+
+Theo passed on a second AI analysis of the scope-reader failure. Three of its
+four claims do not hold against this repo, one pointed at something real, and
+chasing it found **a defect I shipped an hour earlier**. Each is recorded here
+because the same advice will be offered again.
+
+| Claim | Verdict |
+|---|---|
+| "Token limit / page truncation" | **Already handled and already excluded.** 659 moved the cap 1024 → 8192, and 661 detects `MAX_TOKENS` by name and answers *"ran out of room"*. Theo did not get that sentence, so truncation was not this failure |
+| "Markdown fences / non-JSON break `JSON.parse`" | **Handled three times over.** The ``` strip predates 659; 659 added the outermost-`{…}` salvage; 661 made the salvage object-only **and** added the no-JSON-mode retry. Their suggested fix is the code that is already there |
+| "Narrow the prompt to summary totals instead of reconstructing line items" | **Factually wrong about this prompt.** Measured: **3,852 characters, 24 response fields, all summary-level, zero line items.** The only occurrence of "line item" tells the model these are *evidence, not the number*. There is nothing to narrow — 660 recorded the no-line-items decision as Theo's |
+| "Inline base64 past Vercel's 4.5 MB body limit" | **Fixed at 657.** Anything over `MAX_INLINE` (3.1 MB) goes to Supabase storage and the route is sent `{url}`; Gunn's 4.8 MB scope has never travelled inline since. **But the platform-limit instinct was right — it was the wrong limit** |
+
+**The right limit was DURATION, and the exposure was mine.** `vercel.json` had
+**no `functions` block at all**, so every `/api` route ran on the platform
+default — 10s on Hobby, 15s on Pro. A multimodal read of a multi-page scope does
+not fit that, and **661's retry made it two of them back to back.** A function
+killed mid-retry answers a platform **504**, and `solRead()` would then show
+`HTTP 504` — 661's retry eating the very message 661 exists to produce.
+
+⚠️ **A timeout is NOT what Theo screenshotted.** He got the handler's own
+sentence, so the handler returned. This is a risk I introduced, found by taking
+a wrong analysis seriously, not the outstanding cause. Do not let it displace
+the evidence.
+
+- **`maxDuration: 60`** on the twelve routes that hand a **document or an image**
+  to a model. 60 is the highest value valid on *every* Vercel plan (Hobby caps
+  there), so it cannot fail a deploy on plan. `ai-status` and `coach` call a
+  model but send no document and were left alone. ⚠️ A `functions` pattern that
+  matches no file fails the **build**, not the request — `harness_662` asserts
+  every key resolves to a file that exists.
+- **The retry will not start a call it cannot finish.** The test is not "is
+  there time left" but *"would a second call as long as the first still land
+  inside the budget"* — `elapsed() + a.ms < TIME_BUDGET_MS` (45s, leaving 15s of
+  the 60 to answer in). When it is skipped the message says so: `no 2nd try
+  (time)`. **This holds even if the `vercel.json` config is ever lost**, which
+  is why it is a code guard and not just configuration.
+- **The diagnosis tells the time** — `… · 47.2s]`. A model that thought for 47
+  seconds and one that refused in 300 ms were previously indistinguishable.
+- **A second channel**: `console.error('[sol] unreadable reply', …)` on the
+  failure path only — via, finishReason, blockReason, usage, ms, and 500
+  characters of the model's reply. **Never the document bytes**, asserted. A
+  successful read logs nothing. Note it can carry a homeowner's name into
+  Vercel's team-only function log; the same 300 characters already travel to the
+  client as `detail`.
+
+**Gates.** `check_build.py` green, stamp 661 → 662. All 26 `api/*.js` parse.
+New `harness_662.js` (33) **fakes the clock** — `Date.now` is stubbed and each
+model call advances it — so "the first attempt took 30 seconds" is an instant
+test rather than a 60-second harness. Negative controls: **18 red on 661**,
+**22 red on 660**.
+
+⚠️ **Two harness defects of my own, both fixed.**
+1. `harness_662` **crashed** on its own negative control — an unguarded
+   `r.body.error` on a run that legitimately returned 200. *A crash is not a red;
+   it is an absence of information.* Every body read now goes through `errOf()` /
+   `exOf()`. Same class as 657's.
+2. `harness_661` asserted `build 661` **exactly**, so it went red on the very
+   next build for no reason — **BUG_CLASSES §15**, the class this project has
+   already named. Both harnesses now assert *at or past* their build. Do not
+   reintroduce the equality.
+
+Regressions: 661 39/39, 660 27/27, 659 16/16, 658 38/38, 657 32/32, 655 42/42,
+654 31/31, 653 45/45, approvals 15/15, pay 58/58 (`TZ=America/New_York`),
+render_inscards 9/9, render_656 17/17.
+
+**One measurement worth keeping.** The prompt is **3,852 characters and 59% of
+it is the ordinance & law block** — 2,254 characters added across 658 and 660,
+for **one field group out of 24**. That is not a proven cause of anything, and
+nothing was changed on the strength of it. It is written down because three
+consecutive builds pushed in the same direction and the next person should know
+the shape before adding a fourth.
+
+---
+
+## Build 663 — 9 Aug 2026 — the diagnosis says how big the document was
+
+661's tail was handed back with a reading guide: *"if `in` reads under 1,000
+tokens the payload was truncated before reaching the multimodal API."*
+**That inference cannot be drawn from `in` alone**, and the gap matters because
+it is the branch we are most likely to land on. A small ingest is **either** a
+document that never arrived (the storage fetch came back short) **or** one that
+arrived whole and was not read. Two different faults in two different pieces of
+code, and 661's tail rendered them identically.
+
+- **`doc N.N MB`** — the bytes this route actually held after fetching, printed
+  **immediately before `in N tok`**, because the pair is meant to read as one
+  sentence: `doc 4.8 MB · in 400 tok` (we had it, the model did not take it) vs
+  `doc 0.0 MB · in 400 tok` (it never got here). Set on **both** doors: the
+  exact buffer length on the storage path, derived from base64 length on the
+  inline one.
+  ⚠️ The field first landed *after* `in`, and `harness_663`'s one red was that
+  ordering. **The test was right and the code was wrong** — the number is
+  useless where it cannot be read against the one it qualifies.
+- **One assembly point.** `readerDiag` had grown to four call sites and seven
+  positional arguments; the handler now builds `diag(attempt, note)` once.
+  Asserted: **one definition, one call.** Threading a new field through four
+  sites by hand is how it reaches three of them.
+- **The client slice went 250 → 400.** The 250 was chosen at 659 when `detail`
+  — the raw model reply — could still land in that string, and cutting it short
+  was the point. Since 661 it cannot: every message is a written sentence plus a
+  bounded tail, with the only unbounded part (the carrier's own error) capped
+  server-side at 150. **The tail had become the part a 250 would cut**, and the
+  tail is the whole reason the message exists.
+
+**Also checked, and it clears one of their branches for free:** if `in` comes
+back small, **Vercel's request-body gateway is not the suspect** — 657 removed
+it from this path entirely (anything over 3.1 MB goes storage → server fetch →
+base64 → Gemini, so the client never posts the bytes). A short `doc` points at
+the Supabase fetch or the signed URL, not at Vercel.
+
+**Gates.** `check_build.py` green, stamp 662 → 663. All 26 `api/*.js` parse.
+New `harness_663.js` (23) drives the **storage door** with a stubbed Supabase
+object so the byte count comes from a real fetched buffer. **The load-bearing
+assertion is not "does `doc` appear"** — it is that two runs with an *identical*
+model reply and an *identical* token count produce **different tails**. If they
+read the same, the field is decoration. Negative controls: **11 red on 662**,
+**13 red on 661**.
+
+Regressions: 662 33/33, 661 39/39, 660 27/27, 659 16/16, 658 38/38, 657 32/32,
+655 42/42, 654 31/31, 653 45/45, approvals 15/15, pay 58/58
+(`TZ=America/New_York`), render_inscards 9/9, render_656 17/17.
+
+**The instrument is finished. Stop building and get evidence.** 657 → 663 is
+seven builds on a failure that has never once been reproduced in this sandbox,
+because the Gemini key lives in Vercel and stays there. `/api/ai-status` is the
+pre-flight — on a preview deployment it says whether `GEMINI_API_KEY` is even
+present in that environment, and whether `OPENAI_API_KEY` is set at all (which
+decides whether 661's fallback repair is reachable). **Nothing further should be
+built on this path until Theo has run the read and produced a tail.**

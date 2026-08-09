@@ -55,8 +55,11 @@ console.log('\n── the formatter, executed against every state ──');
   ok('true + wording → names what the document called it',
     T({ ord_law: true, ord_law_basis: 'Code Upgrade Coverage' }) === 'Yes — Code Upgrade Coverage',
     T({ ord_law: true, ord_law_basis: 'Code Upgrade Coverage' }));
-  ok('true + wording + limit → the full sentence',
-    T({ ord_law: true, ord_law_basis: 'Code Upgrade', ord_law_limit: 10000 }) === 'Yes — Code Upgrade, $10,000',
+  /* 660 SUPERSEDED: ord_law_limit was "any stated limit"; 660 made it precisely
+     the ENDORSEMENT CAP (often % of Coverage A) and gave the scope amounts their
+     own fields, so it now renders labelled "cap". The app is right. */
+  ok('true + wording + cap → the full sentence, cap labelled as a cap',
+    T({ ord_law: true, ord_law_basis: 'Code Upgrade', ord_law_limit: 10000 }) === 'Yes — Code Upgrade, cap $10,000.00',
     T({ ord_law: true, ord_law_basis: 'Code Upgrade', ord_law_limit: 10000 }));
   ok('a zero/blank limit is not printed as $0',
     T({ ord_law: true, ord_law_basis: 'X', ord_law_limit: 0 }) === 'Yes — X',
@@ -126,8 +129,9 @@ console.log('\n── every display site goes through the one formatter ──')
   ok('no hand-rolled ternary survives at any display site',
     !SRC.includes("I.ord_law ? 'Yes' : (I.ord_law === false ? 'No' : '')") &&
     !SRC.includes("c.ord_law === true ? 'Yes' : (c.ord_law === false ? 'No' : '')"));
-  ok('the scope-review modal shows the wording and the limit',
-    SRC.includes("['O&L Called',      'ord_law_basis',") && SRC.includes("['O&L Limit',       'ord_law_limit',"));
+  /* 660 SUPERSEDED: the single "O&L Limit" row became three — RCV, ACV and cap. */
+  ok('the scope-review modal shows the wording and the amounts',
+    SRC.includes("['O&L Called',      'ord_law_basis',") && SRC.includes("['O&L cap',         'ord_law_limit',"));
   ok('the claim modal lets a human correct the wording and limit',
     SRC.includes('data-f="ord_law_basis"') && SRC.includes('data-f="ord_law_limit"'));
   ok('the claim modal payload carries both new fields',
@@ -140,8 +144,9 @@ console.log('\n── the two new columns reach the screen ──');
 {
   const iu = block('cr-iu-script') || '';
   ok('cr-iu shape() carries basis + limit', iu.includes('ord_law_basis: row.ord_law_basis || null,'));
+  /* 660 SUPERSEDED: two more columns joined the named select and the line split. */
   ok('the bounded select fetches them (655 named its columns — keep them in step)',
-    iu.includes("'coverage_type,ord_law,ord_law_basis,ord_law_limit,deductible,deductible_waived,'"));
+    iu.includes("ord_law,ord_law_basis,ord_law_limit,ord_law_rcv,ord_law_acv,"));
 }
 
 console.log('\n── the extractor knows the aliases (api/sol.js) ──');

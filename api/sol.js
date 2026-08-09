@@ -63,7 +63,21 @@ async function aiFallback(parts, geminiRes) {
       const inl = p.inlineData || p.inline_data;
       if (inl) {
         const mime = inl.mimeType || inl.mime_type || 'image/jpeg';
-        content.push({ type: 'image_url', image_url: { url: 'data:' + mime + ';base64,' + inl.data } });
+        const dataUrl = 'data:' + mime + ';base64,' + inl.data;
+        /* 661: A PDF IS NOT AN image_url. Chat Completions reads a PDF only
+           through a `file` content part; handed one as image_url it answers
+           400 and this rung falls straight back to the Gemini error. So for
+           the ONE route whose whole job is reading a PDF, the fallback has
+           never once worked — it has been decorative since 505.
+           ⚠ I could not exercise this shape from the sandbox (no OpenAI key
+           here). It is guarded the same way the rest of aiFallback is: any
+           non-ok answer returns the original Gemini response, so a wrong
+           guess costs exactly what today already costs. */
+        if (mime.indexOf('pdf') >= 0) {
+          content.push({ type: 'file', file: { filename: 'scope.pdf', file_data: dataUrl } });
+        } else {
+          content.push({ type: 'image_url', image_url: { url: dataUrl } });
+        }
       }
     });
     if (!content.length) return geminiRes;
@@ -91,6 +105,61 @@ async function aiFallback(parts, geminiRes) {
   }
 }
 
+/* 661 — WHICH failure, in the sentence the user actually sees.
+
+   659 replaced a raw model dump with a written sentence, which was right, and
+   in the same move made the failure undiagnosable: "could not turn this
+   document into fields" is the answer for a blocked prompt, an empty reply, a
+   refusal in prose and a reply that simply had no JSON in it. Four causes, one
+   sentence, and `detail` no longer reaches the screen.
+
+   So the sentence carries a short labelled tail. It is not the 659 dump coming
+   back: no model text, fixed length, and every number in it is one a screenshot
+   can carry.
+
+     [gemini · finish STOP · in 48210 tok · out 0 tok · reply 0 chars]
+
+   promptTokenCount is the load-bearing one. A 4.8 MB scope should ingest as
+   tens of thousands of tokens; a few hundred means the document never reached
+   the model at all, and no amount of prompt work would have helped. */
+function readerDiag(via, body, cand, text, ms, note, docBytes) {
+  const u = (body && body.usageMetadata) || {};
+  const bits = [via];
+  const blocked = body && body.promptFeedback && body.promptFeedback.blockReason;
+  if (blocked) bits.push('blocked ' + blocked);
+  else bits.push('finish ' + (cand.finishReason || 'none'));
+  /* 663: the number that makes `in N tok` interpretable, and it is deliberately
+     printed IMMEDIATELY BEFORE it — the pair is meant to be read as one
+     sentence. A small ingest alone is ambiguous: EITHER the document never
+     arrived, or it arrived whole and was not read. Different bugs, different
+     code. `doc` is what this route held in its hand after fetching, so
+     `doc 4.8 MB · in 400 tok` (we had it, the model did not take it) and
+     `doc 0.0 MB · in 400 tok` (it never got here) stop looking the same. */
+  if (docBytes) bits.push('doc ' + (docBytes / 1048576).toFixed(1) + ' MB');
+  if (u.promptTokenCount != null) bits.push('in ' + u.promptTokenCount + ' tok');
+  if (u.candidatesTokenCount != null) bits.push('out ' + u.candidatesTokenCount + ' tok');
+  bits.push('reply ' + String(text || '').length + ' chars');
+  /* 662: a slow model that answered and an instant refusal look identical
+     without this. It is also the only number that says whether the platform
+     duration is the ceiling being hit. */
+  if (ms != null) bits.push((ms / 1000).toFixed(1) + 's');
+  if (note) bits.push(note);
+  return ' [' + bits.join(' \u00b7 ') + ']';
+}
+
+/* Only an OBJECT counts as parsed. A model that answers `"unreadable"` produces
+   valid JSON that is not a result, and 659's shape guard caught that AFTER the
+   retry point — too late to try the other way. */
+function parseObj(t) {
+  if (!t) return null;
+  try { const v = JSON.parse(t); if (v && typeof v === 'object') return v; } catch (e) {}
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a !== -1 && b > a) {
+    try { const v = JSON.parse(t.slice(a, b + 1)); if (v && typeof v === 'object') return v; } catch (e2) {}
+  }
+  return null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'POST only' });
@@ -111,6 +180,9 @@ export default async function handler(req, res) {
     // ---- 2) validate ----
     const body = req.body || {};
     let { file, mime } = body;
+    /* 663: how many bytes of document this route ended up holding, whichever
+       door it came through. Set on both paths below; 0 means "never got one". */
+    let docBytes = 0;
 
     /* 643: the stored-file path. index.html uploads anything over 3.1 MB to
        photos/scopes/… and sends the signed URL instead of 16 MB of base64. */
@@ -136,6 +208,7 @@ export default async function handler(req, res) {
         return;
       }
       const buf = Buffer.from(await doc.arrayBuffer());
+      docBytes = buf.length;                    /* 663: the exact fetched size */
       if (buf.length > MAX_BYTES) {
         res.status(413).json({
           error: 'That file is ' + (buf.length / 1048576).toFixed(1) +
@@ -151,6 +224,10 @@ export default async function handler(req, res) {
     }
 
     if (!file || typeof file !== 'string') { res.status(400).json({ error: 'No file' }); return; }
+    /* the inline door never touches a Buffer, so derive it: base64 carries 3
+       bytes in every 4 characters. Close enough to tell 4.8 MB from 0.0 MB,
+       which is the only question this number has to answer. */
+    if (!docBytes) docBytes = Math.floor(file.replace(/=+$/, '').length * 3 / 4);
     if (file.length > MAX_BYTES * 1.4) { res.status(413).json({ error: 'File too large (12 MB cap)' }); return; }
     const mt = (mime || 'application/pdf').toLowerCase();
     const isPdf = mt.indexOf('pdf') >= 0;
@@ -186,9 +263,33 @@ export default async function handler(req, res) {
       'explicitly states there is none \u2014 for example "no ordinance or law coverage ' +
       'applies". If the document simply does not mention it, set it to NULL. Do not ' +
       'guess, and never use false to mean "not mentioned".\n\n' +
+      /* 660, Theo, reading the estimate 658's reader missed: "In insurance
+         estimates, Ordinance and Law is typically categorized under Building
+         Codes (Coverage BC)." 658 taught the PROSE names and none of them
+         appear on an Xactimate scope — the coverage is a CATEGORY CODE with
+         its own subtotal and summary page, not an endorsement line. */
+      'MOST IMPORTANT: on an Xactimate-style estimate this coverage appears as a ' +
+      'COVERAGE CATEGORY, not as a sentence. The category is coded "BC" and reads ' +
+      '"BC-Building Codes" or "Building Codes", with its own line in the coverage ' +
+      'breakdown and often a dedicated "Summary for BC-Building Codes" page. ' +
+      'A BC category with a non-zero total IS ordinance & law coverage \u2014 set ' +
+      'ord_law true and put the category name in ord_law_basis.\n\n' +
+      'That category carries TWO totals and they are different numbers: the ' +
+      'Item Total (replacement cost of the code work) goes in ord_law_rcv, and ' +
+      'the ACV / Net Total goes in ord_law_acv. Report both when both are shown. ' +
+      'Do NOT assume the ACV is the smaller one \u2014 on some carriers sales tax on ' +
+      'code items makes the ACV total exceed the item total. Copy what is printed.\n\n' +
+      'ord_law_limit is a DIFFERENT thing: the policy endorsement cap, often ' +
+      'expressed as a percentage of Coverage A. Only fill it if the document ' +
+      'states such a cap. Never put a scope subtotal there.\n\n' +
+      'Code-driven line items support a yes but are not the number: ice & water ' +
+      'barrier, radiant-barrier or upgraded sheathing, drip edge, and EPA ' +
+      'Lead-Safe Work Practice allowances on homes built before 1978. If you see ' +
+      'these but no BC category, still set ord_law true and say so in ' +
+      'ord_law_basis, leaving the amounts null.\n\n' +
       'Put the document\u2019s OWN wording in ord_law_basis, verbatim and short ' +
-      '(for example "Code Upgrade Coverage" or "Ordinance or Law - Coverage D"), ' +
-      'and any stated dollar limit in ord_law_limit. Leave both null when ord_law ' +
+      '(for example "BC-Building Codes", "Code Upgrade Coverage" or ' +
+      '"Ordinance or Law - Coverage D"). Leave the amounts null when ord_law ' +
       'is not true.\n\n' +
       'For adjuster.company give the adjusting firm or catastrophe team named on ' +
       'the document \u2014 for example a carrier\u2019s national catastrophe team, or an ' +
@@ -209,6 +310,8 @@ export default async function handler(req, res) {
       '  "coverage_type": "RCV" or "ACV" or null,\n' +
       '  "ord_law": true or false or null,\n' +
       '  "ord_law_basis": string or null,\n' +
+      '  "ord_law_rcv": number or null,\n' +
+      '  "ord_law_acv": number or null,\n' +
       '  "ord_law_limit": number or null,\n' +
       '  "insured_name": string or null,\n' +
       '  "property_address": string or null,\n' +
@@ -228,78 +331,145 @@ export default async function handler(req, res) {
       { inline_data: { mime_type: mt, data: file } },
       { text: prompt }
     ];
-    let g = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/' + MODEL + ':generateContent',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify({
-          contents: [{ parts: _parts }],
-          /* 659: Theo's scope came back as "Could not read that scope:" followed
-             by RAW MODEL OUTPUT, cut off mid-word — three different times, three
-             different cut points. The model was reading the document correctly
-             (carrier, policy number, 7,911.67 Deprec, 13,781.46 ACV all appeared
-             in the error text) and then being TRUNCATED at 1024 tokens, because
-             it narrates page by page before emitting the JSON. Two fixes:
-             responseMimeType makes it answer in JSON only — no prose, no fences,
-             nothing to burn the budget on — and the budget is no longer a cliff
-             a five-page scope falls off. */
-          generationConfig: {
-            maxOutputTokens: 8192,
-            temperature: 0.1,
-            responseMimeType: 'application/json'
-          }
-        })
-      }
-    );
-    /* 505: BEFORE the body is read - a Response can only be consumed once, and
-       the fallback returns a different object with its own json(). */
-    if (!g.ok) g = await aiFallback(_parts, g);
-    const j = await g.json();
-    if (!g.ok) {
+
+    /* 661: ONE attempt, written once, so the retry below is the SAME call with
+       one field changed rather than a second pipeline beside the first. The 647
+       banner in index.html forbids a sixth /api/sol caller for exactly this
+       reason; the same discipline applies inside the route. */
+    /* 662: THE FUNCTION HAS A CLOCK ON IT.
+       `vercel.json` carried no `functions` block until this build, so every
+       route ran on the platform default (10s Hobby / 15s Pro). A multimodal
+       read of a multi-page scope does not fit that, and 661's retry made it
+       two of them back to back — so the retry could turn a 502 carrying the
+       diagnosis into a platform 504, and the client would show "HTTP 504"
+       instead of the sentence the retry exists to produce. maxDuration is now
+       60, and this guard holds even if that config is ever lost: the budget is
+       what THIS function may spend, not what the platform allows. */
+    const T0 = Date.now();
+    const TIME_BUDGET_MS = 45000;   /* 60s cap, 15s of headroom to answer in */
+    const elapsed = () => Date.now() - T0;
+
+    /* 663: the diagnosis is assembled in ONE place. It had four call sites and
+       every new field had to be threaded through all four by hand — which is
+       how a field ends up on three of them. */
+    const diag = (att, note) =>
+      readerDiag(att.via, att.body, att.cand, att.text, elapsed(), note, docBytes);
+
+    async function askGemini(jsonMode) {
+      const t = Date.now();
+      let r = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/' + MODEL + ':generateContent',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({
+            contents: [{ parts: _parts }],
+            /* 659: Theo's scope came back as "Could not read that scope:"
+               followed by RAW MODEL OUTPUT, cut off mid-word — three times,
+               three cut points. The model had read the document correctly each
+               time and was being TRUNCATED at 1024 tokens, because it narrates
+               page by page before emitting the JSON. The budget is no longer a
+               cliff a five-page scope falls off.
+               ⚠ 661: responseMimeType is now the FIRST attempt, not the only
+               one. It is what stops the narration — and it arrived in the same
+               build after which the failure changed shape, so it is also the
+               prime suspect. jsonMode false is the pre-659 request with 659's
+               budget: narration is affordable now. */
+            generationConfig: jsonMode
+              ? { maxOutputTokens: 8192, temperature: 0.1, responseMimeType: 'application/json' }
+              : { maxOutputTokens: 8192, temperature: 0.1 }
+          })
+        }
+      );
+      /* 505: BEFORE the body is read - a Response can only be consumed once, and
+         the fallback returns a different object with its own json(). */
+      if (!r.ok) r = await aiFallback(_parts, r);
+      const body = await r.json();
+      const cand = (body && body.candidates ? body.candidates : [])[0] || {};
+      let text = ((cand.content || {}).parts || []).map(p => p.text || '').join('');
+      text = String(text || '').replace(/```json|```/g, '').trim();
+      return { ok: !!r.ok, via: r._via === 'openai' ? 'openai' : 'gemini', body, cand, text,
+               ms: Date.now() - t };
+    }
+
+    let a = await askGemini(true);
+    if (!a.ok) {
       res.status(502).json({
-        error: (j && j.error && j.error.message) || 'AI request failed',
-        detail: JSON.stringify(j).slice(0, 500)
+        /* the carrier's own message is the only unbounded string that reaches
+           this field, and solRead() slices the whole thing at 250 — an 800-char
+           Google error would push the diagnosis straight off the end, in the one
+           case where it is most wanted. Cap the quote, never the diagnosis. */
+        error: String((a.body && a.body.error && a.body.error.message) || 'AI request failed').slice(0, 150) +
+               diag(a),
+        detail: JSON.stringify(a.body).slice(0, 500)
       });
       return;
     }
-    const cand = (j.candidates || [])[0] || {};
-    let text = ((cand.content || {}).parts || []).map(p => p.text || '').join('');
-    text = String(text || '').replace(/```json|```/g, '').trim();
 
-    /* 659: say WHICH failure happened. The old path dumped the raw reply into
-       an alert, so a truncation read as gibberish about page 5 totals and gave
-       no clue that the answer had simply been cut off. */
-    if (cand.finishReason === 'MAX_TOKENS') {
+    let parsed = parseObj(a.text);
+
+    /* 659: a truncation is its own answer and retrying makes it worse — without
+       the JSON constraint the model narrates, which is what filled the budget in
+       the first place. Report it and stop. */
+    if (!parsed && a.cand.finishReason === 'MAX_TOKENS') {
       res.status(502).json({
         error: 'The reader ran out of room before it finished this scope. ' +
-               'It is a long document \u2014 try uploading just the scope and totals pages.'
+               'It is a long document \u2014 try uploading just the scope and totals pages.' +
+               diag(a)
       });
       return;
     }
 
-    let parsed;
-    try { parsed = JSON.parse(text); }
-    catch (e) {
-      /* a model that ignores responseMimeType and wraps the object in prose is
-         still recoverable: take the outermost {...} and try once more. */
-      const a = text.indexOf('{'), b = text.lastIndexOf('}');
-      if (a !== -1 && b > a) {
-        try { parsed = JSON.parse(text.slice(a, b + 1)); } catch (e2) {}
-      }
-      if (!parsed) {
-        res.status(502).json({
-          error: 'The reader could not turn this document into fields. ' +
-                 'It may not be a scope of loss, or the pages may be images the text did not come through on.',
-          detail: text.slice(0, 300)
-        });
-        return;
+    /* 661: THE RETRY. One extra call, only on the failure path.
+       662: and only if it can FINISH. The test is not "is there time left" but
+       "would a second call as long as the first still land inside the budget" —
+       the first attempt's own duration is the best estimate of the second's.
+       Starting one it cannot finish trades a diagnosis for a 504. */
+    let skipped = '';
+    if (!parsed) {
+      if (elapsed() + a.ms < TIME_BUDGET_MS) {
+        const b = await askGemini(false);
+        if (b.ok) {
+          const p2 = parseObj(b.text);
+          if (p2) parsed = p2;
+          /* nothing usable either way: report whichever attempt actually said
+             something, because "it answered in words" and "it answered nothing"
+             are different problems and only one of them is about the prompt. */
+          if (!parsed && !a.text && b.text) a = b;
+        }
+      } else {
+        skipped = 'no 2nd try (time)';
       }
     }
 
-    // Basic shape guard so the caller can trust the object
-    if (!parsed || typeof parsed !== 'object') {
-      res.status(502).json({ error: 'AI returned unexpected shape', detail: text.slice(0, 300) });
+    if (!parsed) {
+      const blocked = a.body && a.body.promptFeedback && a.body.promptFeedback.blockReason;
+      let msg;
+      if (blocked) {
+        msg = 'The reader refused this document \u2014 the AI would not answer on it.';
+      } else if (!a.text) {
+        msg = 'The reader answered with nothing at all. The document may be too large ' +
+              'for one pass \u2014 try the scope and totals pages on their own.';
+      } else {
+        msg = 'The reader answered in words instead of fields. It may not be a scope of ' +
+              'loss, or the pages may be images the text did not come through on.';
+      }
+      /* 662: a second channel that does not depend on a screenshot. The model's
+         reply can name a homeowner and an address, so it is capped and it is the
+         only thing logged — never the document bytes, never a key. Vercel's
+         function log is team-only; this is Cardinal's own data either way, and
+         the same 300 characters already travel to the client as `detail`. */
+      console.error('[sol] unreadable reply', JSON.stringify({
+        via: a.via, finish: a.cand.finishReason || null,
+        blocked: (a.body && a.body.promptFeedback && a.body.promptFeedback.blockReason) || null,
+        usage: (a.body && a.body.usageMetadata) || null,
+        ms: elapsed(), skipped: skipped || null, docBytes: docBytes, chars: a.text.length,
+        head: a.text.slice(0, 500)
+      }));
+      res.status(502).json({
+        error: msg + diag(a, skipped),
+        detail: a.text.slice(0, 300)
+      });
       return;
     }
 

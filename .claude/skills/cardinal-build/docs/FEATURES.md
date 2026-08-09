@@ -2837,3 +2837,145 @@ totals pages"; unparseable → a sentence about the document; prose-wrapped JSON
 salvaged from the outermost `{…}` rather than refused.
 Gate: `harness_659.js` — imports the real handler and drives it through every
 shape; negative control covers `api/sol.js` too, not only `index.html`.
+
+### 660 — Ordinance & Law is "BC — Building Codes" on a real scope
+
+**On an Xactimate estimate this coverage is a CATEGORY CODE, not prose.** It
+prints as `BC-Building Codes` with its own subtotal and often a dedicated
+"Summary for BC-Building Codes" page. 658's prose aliases (ordinance or law,
+code upgrade…) do not appear on these documents at all. If you touch the
+`/api/sol` prompt, **do not drop the BC vocabulary** — it is the one that matches.
+
+**Three amount fields, and they mean different things:**
+- `ord_law_rcv` — the category's Item/RCV total: the carrier's full valuation of
+  the code work.
+- `ord_law_acv` — the same category's ACV/Net total. ⚠ **On Allstate this is
+  LARGER than the RCV** because sales tax applies to code items. Never "fix" an
+  ACV that exceeds an RCV here, and never collapse the two into one column.
+- `ord_law_limit` — the **endorsement cap** (commonly 10% of Coverage A). A cap
+  is not a scope amount; it renders labelled "cap".
+
+**Line items are deliberately not stored** (Theo, 9 Aug): the scope PDF stays the
+single source for granularity — a second store would drift on every supplement.
+Code-driven items (ice & water barrier, upgraded sheathing, EPA Lead-Safe
+practices pre-1978) are *evidence* the prompt uses, not rows the app keeps.
+
+Gate: `harness_660.js` — runs the formatter on Gunn's real figures and asserts
+the larger ACV renders as-is; negative control covers `api/sol.js` too.
+
+### 661 — when the scope reader fails, it says which failure
+
+**`/api/sol` is a MULTIMODAL route, not a text-extraction pipeline.** The PDF
+bytes go to the model as `inline_data` and the model looks at the pages. There
+is no `pdf-parse`, no `pdfplumber`, no text layer and no regex over plain text
+anywhere in it. **Advice to "add OCR" or "use a layout-aware PDF library"
+targets a stack this app does not have** — a flat scan is the case this
+architecture handles best, not worst. Recorded here because it has been
+proposed once already.
+
+**Four causes stopped sharing one sentence.** 659's single "could not turn this
+document into fields" answered for a refused document, an empty reply, a prose
+reply and a document that never arrived. There are now three sentences, plus a
+short labelled tail on every one of them:
+
+```
+[gemini · finish STOP · in 48210 tok · out 0 tok · reply 0 chars]
+```
+
+`readerDiag()` builds it. **It is not the 659 raw dump returning** — no model
+text, fixed length, screenshot-sized. **`in N tok` is the load-bearing number**:
+a 4.8 MB scope should ingest as tens of thousands of tokens, so a few hundred
+means the document never reached the model and no prompt work would have helped.
+
+**The retry.** An unparseable JSON-mode reply is re-issued once **without**
+`responseMimeType`, at 659's token budget. `askGemini(jsonMode)` is one function
+called twice — **do not add a second call site**. ⚠ **A `MAX_TOKENS` reply is
+deliberately not retried**: dropping the JSON constraint makes the model narrate,
+which is what filled the budget in the first place.
+
+⚠ **`aiFallback()` sends a PDF as a `file` content part, not `image_url`.** Chat
+Completions cannot read a PDF handed to it as an image, so from 505 until 661
+this rung was decorative on the one route whose whole job is reading a PDF.
+Images still go as `image_url` — both halves are asserted.
+
+**Every error sentence must fit 250 characters**, because `solRead()` slices
+there; the carrier's own message is capped at 150 before the diagnosis is
+appended, so the diagnosis is never the part that falls off. Asserted in
+`harness_661.js`.
+
+Gate: `harness_661.js` (39) — imports the real handler and **counts model
+calls**: one on success, one on a truncation, two on an unparseable reply.
+
+### 662 — the model-backed routes have a duration, and the retry has a clock
+
+**`vercel.json` now carries a `functions` block.** Before 662 it had none, so
+every `/api` route ran on the Vercel default (10s Hobby / 15s Pro) — which a
+multimodal read of a multi-page scope does not fit. The twelve routes that hand
+a **document or image** to a model get `maxDuration: 60`; `ai-status` and
+`coach` call a model but send no document and were deliberately left at default.
+
+⚠ **60 is not arbitrary — it is the highest value valid on EVERY Vercel plan**
+(Hobby caps there). Raising it further would deploy on Pro and fail on Hobby.
+
+⚠ **A `functions` pattern that matches no file fails the BUILD, not the
+request.** If you rename or delete an `api/*.js`, fix `vercel.json` in the same
+commit. `harness_662.js` asserts every key resolves to a file that exists.
+
+**The retry will not start a call it cannot finish.** 661 added a second model
+call on the failure path; 662 gates it on
+`elapsed() + firstAttemptMs < TIME_BUDGET_MS` (45s of the 60). The test is
+"would a second call as long as the first still land inside the budget", because
+the first attempt's own duration is the best estimate of the second's. Skipping
+is reported in the message as `no 2nd try (time)`.
+
+**This is a code guard, not configuration** — deliberately. If the `vercel.json`
+block is ever lost or the plan caps lower, a retry that overruns turns a 502
+carrying the diagnosis into a bare platform `HTTP 504`: the retry eating the
+message it exists to produce.
+
+**The diagnosis reports elapsed time** (`… · 47.2s]`) — a model that thought for
+47 seconds and one that refused in 300 ms are otherwise identical on screen.
+
+**Failure logging**: `console.error('[sol] unreadable reply', …)` fires on the
+failure path only, carrying via / finishReason / blockReason / usage / ms and
+500 characters of the model's reply. ⚠ **Never the document bytes** — asserted.
+A successful read logs nothing.
+
+**What does NOT apply to this route** (asked twice now, recorded once):
+OCR, layout-aware PDF parsing, "narrow the prompt away from line items" (it has
+never asked for any — 24 summary fields, measured), and Vercel's 4.5 MB request
+body limit (657 routes anything over 3.1 MB through storage as `{url}`).
+
+### 663 — `doc N.N MB`, and one place the diagnosis is built
+
+**The tail's field order is load-bearing, not cosmetic.** `doc` prints
+immediately before `in` because the two are read as one sentence:
+
+| Tail | Means |
+|---|---|
+| `doc 4.8 MB · in 48210 tok` | the document arrived and the model ingested it — the fault is downstream |
+| `doc 4.8 MB · in 400 tok` | we held the whole file; the model did not take it in |
+| `doc 0.0 MB · in 400 tok` | the file never got here — look at the Supabase fetch and the signed URL |
+
+⚠ **If `doc` is small, Vercel's request-body limit is NOT the suspect.** 657
+removed it from this path: anything over 3.1 MB goes storage → server fetch →
+base64 → Gemini, so the client never posts the bytes at all.
+
+`docBytes` is set on **both** doors — the exact buffer length on the storage
+path, derived from base64 length on the inline one.
+
+**`readerDiag` has ONE definition and ONE call site**, through the handler's
+local `diag(attempt, note)`. It reached four call sites and seven positional
+arguments before this; a new field had to be threaded through all four by hand.
+`harness_663` asserts the one-definition-one-call shape — **do not add a second
+call site.**
+
+**`solRead()` slices at 400, not 250.** The 250 was right at 659, when `detail`
+— raw model output — could still land in that string. It cannot since 661:
+every message is a written sentence plus a bounded tail, with the carrier's own
+error capped server-side at 150. At 250 the tail was the part being cut.
+
+**Pre-flight for testing a preview deployment**: `/api/ai-status` (optionally
+`?model=`) reports whether `GEMINI_API_KEY` is present *in that environment* and
+whether `OPENAI_API_KEY` is set at all. A preview without the key fails the read
+for a reason that has nothing to do with the scope.

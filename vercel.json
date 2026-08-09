@@ -30,5 +30,43 @@
       ],
       "destination": "/popup.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/analyze.js": {
+      "maxDuration": 60
+    },
+    "api/caption.js": {
+      "maxDuration": 60
+    },
+    "api/companycam-sync.js": {
+      "maxDuration": 60
+    },
+    "api/detect.js": {
+      "maxDuration": 60
+    },
+    "api/estimate.js": {
+      "maxDuration": 60
+    },
+    "api/hover.js": {
+      "maxDuration": 60
+    },
+    "api/librarian.js": {
+      "maxDuration": 60
+    },
+    "api/organize.js": {
+      "maxDuration": 60
+    },
+    "api/roofr.js": {
+      "maxDuration": 60
+    },
+    "api/sol.js": {
+      "maxDuration": 60
+    },
+    "api/sortphotos.js": {
+      "maxDuration": 60
+    },
+    "api/summarize.js": {
+      "maxDuration": 60
+    }
+  }
 }
