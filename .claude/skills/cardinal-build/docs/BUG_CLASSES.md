@@ -1222,3 +1222,29 @@ drawn and dead: Archive site, Restore site, and the lens switcher.
 5. **When an action reports success but nothing changes, check the row count.**
    `.select('id')` and treat empty as failure — the rule `removeOurs()` and now
    `setArchived()` both follow.
+
+## An ungated API route, and the greps that miss it (638)
+
+`api/notify.js` shipped for months with no session check while every sibling
+route had one. Three things made it invisible, and all three generalise.
+
+1. **The client sent auth the server never read.** `notifyTeam()` fetches the
+   session token and sets `Authorization: Bearer …` on every call. Reading the
+   *caller* tells you nothing about whether the *route* checks it. **Grep the
+   handler for `req.headers`, not the caller for `Authorization`.**
+2. **A sweep for ungated routes cleared it.** `grep -L 'authorization|bearer'`
+   matched notify.js's **outbound** headers — to Supabase and Resend — and
+   reported it gated. Two of three hits were the wrong direction. **Bound the
+   pattern to the direction you mean**; the reliable probe is every `req.`
+   reference in the file, which was exactly two.
+3. **A duplicate sender hid behind a swallowed catch.** A wrapper added at 527
+   fired its own copy of the request with `.catch(function(){})`. Every alert
+   went out twice for over a hundred builds and nothing ever surfaced it.
+   **An empty catch on a network call is a defect that cannot report itself** —
+   and gating a route without deleting such a duplicate just moves the silence.
+
+**Corollary for tooling:** `next_build.py` reported build 637 free while a pushed
+branch was stamped 637, because its changelog regex still matches the pre-574
+`{ build:N, note:'…' }` shape. A checker keyed to a format the file no longer
+uses does not fail — it passes everything. **When a tool exists to prevent one
+specific error, test it against a case that should trip it.**

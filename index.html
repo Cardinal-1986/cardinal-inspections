@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 636 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 638 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21481,22 +21481,14 @@ async function enableNotifications(){
       '\n\nIf this mentions a missing table, run the push_subs SQL in Supabase first.');
   }
 }
-/* every team email event also fires a push */
-(function(){
-  var _nt = notifyTeam;
-  notifyTeam = function(to, subject, bodyHtml){
-    try{
-      var list = Array.isArray(to) ? to : [to];
-      var text = String(bodyHtml || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 240);
-      fetch('/api/notify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emails: list, title: subject, body: text, url: location.origin + '/' + location.hash })
-      }).catch(function(){});
-    }catch(e){}
-    return _nt(to, subject, bodyHtml);
-  };
-})();
+/* 638: a wrapper lived here from build 527 that fired its OWN unauthenticated
+   request to the notify route and then called the real notifyTeam as well — so
+   every team notification went out TWICE, and one of the two carried no
+   session. Its .catch(function(){}) meant neither the duplicate nor any failure
+   was ever visible. Removed: notifyTeam() at the top of this file is the one
+   pipeline, it sends the Authorization header the route now requires, and since
+   612 it returns the route's own report so callers can say what happened.
+   Do not reintroduce a second sender. */
 
 (function(){
   var _op = openProject;
@@ -35263,6 +35255,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:638, d:'2026-08-09', t:'Team alerts: one send, and only from inside the app', s:'Two problems in the alert path, both invisible from the outside. Every team alert was being sent twice \u2014 two pushes and two emails for one event \u2014 because a second sender added long ago was still running alongside the real one. And the server route that sends them never checked who was asking, so anyone who knew the address could have used it to send email that looked like it came from Cardinal. The route now requires you to be signed in, and there is one sender instead of two. Nothing changes in how you use it.' },
   { b:636, d:'2026-08-08', t:'One map on a client profile, and it is the Google one',
     s:'Every client profile was showing two maps: a Google one near the top, and a second Location card lower down that often said \u201cCould not pin this address.\u201d They were built on completely different systems \u2014 the second one looked the address up through a free service that choked on anything unusual. There is now one Location card, and it draws the Google map. Map and Satellite still switch, Directions still opens, the address and the pencil to edit it are still there, and tapping the map still opens Google Maps. Community jobs get a working map here for the first time, because that page only ever had the second kind.' },
   { b:635, d:'2026-08-08', t:'A confidential partner stays confidential on the prospects list too',

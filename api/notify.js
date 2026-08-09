@@ -20,8 +20,35 @@ const VAPID_FROM_ENV = !!(process.env.VAPID_PRIVATE_KEY || process.env.VAPID_PRI
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY || process.env.VAPID_PRIVATE ||
   'vtIkMaIEJxS2yUNI0wgulFiFxze4w3dfcRXFzsG-3qU';
 
+/* 638: this route had NO session check. It touched `req` exactly twice —
+   req.method and req.body — while notifyTeam() in index.html has always sent an
+   Authorization header the route then ignored. Anyone who knew the path could
+   POST to it. That was merely noisy while the route was push-only; 611 added
+   Resend email and passes `to: emails` straight through from the body, which
+   turned it into an open relay able to send mail FROM Cardinal's account to any
+   address. Same gate as organize.js / analyze.js / caption.js / librarian.js.
+   Do not remove it to "make a script work" — give the script a session. */
+async function requireSession(req, res){
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if(!token){ res.status(401).json({ ok:false, error:'Sign in required' }); return null; }
+  try{
+    const who = await fetch(SUPA_URL + '/auth/v1/user', {
+      headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + token }
+    });
+    if(!who.ok){ res.status(401).json({ ok:false, error:'Invalid session' }); return null; }
+    const user = await who.json();
+    if(!user || !user.email){ res.status(401).json({ ok:false, error:'Invalid session' }); return null; }
+    return user;
+  }catch(e){
+    res.status(401).json({ ok:false, error:'Could not verify session' });
+    return null;
+  }
+}
+
 export default async function handler(req, res){
   if(req.method !== 'POST'){ res.status(405).json({ ok:false, error:'POST only' }); return; }
+  if(!(await requireSession(req, res))) return;
   let webpush;
   try{
     webpush = (await import('web-push')).default;
