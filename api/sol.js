@@ -163,6 +163,26 @@ export default async function handler(req, res) {
       /* 646: the claim table has had an adjuster_company column and rendered it
          on screen since the claims module shipped, but nothing ever filled it —
          no input on the form, and this prompt never asked. */
+      /* 658, Theo: "These can be called different things like code upgrades,
+         code coverage, building codes etc." The prompt named the field and
+         nothing else, so a scope plainly carrying code-upgrade coverage could
+         read as nothing at all. Name the aliases, and make the tri-state
+         explicit: an absent mention is null, NEVER false. */
+      'Ordinance & Law coverage pays for work required by current building code ' +
+      'that the original construction did not include. Carriers name it many ways: ' +
+      'ordinance or law, law and ordinance, ordinance and law, code upgrade, ' +
+      'code coverage, code compliance, building code coverage, building ordinance, ' +
+      'and on some forms Coverage D or an endorsement number. Treat any of these ' +
+      'as the same thing.\n\n' +
+      'Set ord_law TRUE only if the document affirmatively shows such coverage ' +
+      '(a line item, a limit, an endorsement). Set it FALSE only if the document ' +
+      'explicitly states there is none \u2014 for example "no ordinance or law coverage ' +
+      'applies". If the document simply does not mention it, set it to NULL. Do not ' +
+      'guess, and never use false to mean "not mentioned".\n\n' +
+      'Put the document\u2019s OWN wording in ord_law_basis, verbatim and short ' +
+      '(for example "Code Upgrade Coverage" or "Ordinance or Law - Coverage D"), ' +
+      'and any stated dollar limit in ord_law_limit. Leave both null when ord_law ' +
+      'is not true.\n\n' +
       'For adjuster.company give the adjusting firm or catastrophe team named on ' +
       'the document \u2014 for example a carrier\u2019s national catastrophe team, or an ' +
       'independent adjusting company. Do not repeat the carrier name on its own.\n\n' +
@@ -181,6 +201,8 @@ export default async function handler(req, res) {
       '  "deductible": number or null,\n' +
       '  "coverage_type": "RCV" or "ACV" or null,\n' +
       '  "ord_law": true or false or null,\n' +
+      '  "ord_law_basis": string or null,\n' +
+      '  "ord_law_limit": number or null,\n' +
       '  "insured_name": string or null,\n' +
       '  "property_address": string or null,\n' +
       '  "totals": {\n' +

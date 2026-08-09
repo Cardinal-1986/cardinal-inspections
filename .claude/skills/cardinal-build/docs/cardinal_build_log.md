@@ -12291,3 +12291,69 @@ it now reports clean reds. Regressions: `render_inscards` 9/9,
 **Unproven until Theo runs it:** a harness proves the routing, not that
 Gemini reads his PDF. Adam Gunn → Scope of Loss card → "Read the scope
 already on file" → apply, then confirm `approved_rcv` is non-null by SQL.
+
+## Build 658 — ordinance & law stops lying (9 Aug 2026)
+
+Theo: *"It says no on ordinance and law. These can be called different things
+like code upgrades, code coverage, building codes etc. this can't simply say
+no. It's deceiving."* He was right, and worse than a wording bug: **nobody
+had ever said no.** Three writers turned an absence into a confident `false`:
+
+| Where | Was |
+|---|---|
+| lead form | `ord_law: getElementById('ldInsOrdLaw').checked` — an **untouched checkbox** |
+| `openInsuranceEditor` | `ord_law: !!ordLaw` — a **cancelled `confirm()`** |
+| scope-review apply | `val = (val === 'true')` — a **null extraction** |
+
+and every display printed that false as a flat "No". This is the
+**defaults-become-data** class, and it is the same shape as 657's `$0`.
+
+- **Migration `insurance_claims_ord_law_basis.sql` (APPLIED before the PR):**
+  `ord_law_basis text` + `ord_law_limit numeric`, and
+  `update … set ord_law = null where ord_law = false` on the claims **and the
+  checklist mirrors**. Justified, not cosmetic: **no interface in the app
+  could express a deliberate "No"**, so every stored false was a default.
+  Verified live — Gunn's is null in both stores, no row still carries false.
+- **Tri-state everywhere.** The checkbox became a three-option select (a
+  checkbox cannot say "unknown" — that is the whole defect); the `confirm()`
+  became a prompt where blank means *leave it alone*; the apply keeps null
+  as null. One shared `insOrdLawFromSelect()` does every `''`/`yes`/`no` →
+  `null`/`true`/`false` conversion, including 657's claim modal, so the lead
+  form and the modal cannot drift.
+  ⚠ The form RESET still wrote `.checked = false` on what is now a `<select>`
+  — inert, so the control would have kept the previous lead's answer. Caught
+  by a grep sweep for surviving writers, not by the patch.
+- **`insOrdLawText()`** is the one formatter: `null` → **"Not stated"**
+  (never "No"), `false` → "No", `true` → "Yes — Code Upgrade, $10,000" when
+  the document's wording and limit are known.
+- **The extractor knows the aliases.** `api/sol.js` named the field and
+  nothing else, so a scope plainly carrying code-upgrade coverage could read
+  as nothing. It now names ordinance or law, law and ordinance, code upgrade,
+  code coverage, code compliance, building code, Coverage D — and states the
+  tri-state rule to the model: true only if affirmatively shown, false only
+  if explicitly denied, **never false for "not mentioned"**. It returns the
+  document's own wording and limit, shown in the review modal before Theo
+  applies, and correctable in the claim modal.
+
+**Gates.** `check_build.py` green, stamp 657 → 658. New `harness_658.js`
+(38 assertions) EXECUTES the formatter and the converter across every state,
+including the load-bearing one: **no absent-state input yields "No" anywhere.**
+Negative control on 657: 33 red.
+
+⚠️ **Two things the gates caught that reading did not.** First, `harness_657`
+went red at 7 — one was a genuine finding: the claims screen's fallback fell
+through to `''`, and `kv()` then printed its "Not stated" placeholder for a
+real `false`, i.e. a NEW way to be deceiving inside the build meant to end
+that. The module now carries a correct local twin (the 655 standalone-module
+shape), and the harness executes it **with the global deliberately absent**.
+The other six were 658 superseding 657's assertions; those were updated in
+`harness_657` and labelled `658 SUPERSEDED` — the app was right, the test was
+stale. Second, an assertion in 658's own harness still named the pre-hardening
+line; also updated.
+
+Regressions: 657 32/32, 655 42/42, 654 31/31, 653 45/45, approvals 15/15,
+pay 58/58, render_inscards 9/9, render_656 17/17.
+
+**Known limit, stated:** `harness_658`'s `api/sol.js` checks read the live
+file rather than a per-build copy, so that one section is not build-relative
+in the negative control. The index.html assertions are.

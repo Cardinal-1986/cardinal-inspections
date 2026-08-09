@@ -136,6 +136,10 @@ console.log('\n── P3: Coverage Type + Ord. & Law on the claims screen ──
       'function fmtDate(d){ return String(d); }\n' +
       'function causeLabel(c){ return String(c); }\n' +
       'function sect(n, t, btn, body){ return body; }\n' +
+      /* 658: paneClient now formats ord_law through the module-local
+         ordLawText(), which leans on fmt(). Slice them in or the pane
+         throws — the function moved, the harness has to follow. */
+      (fnText('fmt', mod) || '') + '\n' + (fnText('ordLawText', mod) || '') + '\n' +
       pane + '\nwindow.__out = paneClient();');
     return w.__out;
   }
@@ -147,7 +151,11 @@ console.log('\n── P3: Coverage Type + Ord. & Law on the claims screen ──
   };
   ok('ord_law false renders "No" (not blank — the 655 trap)', cell({ ord_law: false }, 'Ord\\. &amp; Law') === 'No', cell({ ord_law: false }, 'Ord\\. &amp; Law'));
   ok('ord_law true renders "Yes"', cell({ ord_law: true }, 'Ord\\. &amp; Law') === 'Yes');
-  ok('ord_law null renders "Not set"', cell({ ord_law: null }, 'Ord\\. &amp; Law') === 'Not set');
+  /* 658 SUPERSEDED: null used to print kv()'s "Not set"; the tri-state build
+     renders it as "Not stated" — Theo's complaint was that absence must never
+     read as a finding. The app is right; this assertion was updated to match. */
+  ok('ord_law null renders "Not stated"', cell({ ord_law: null }, 'Ord\\. &amp; Law') === 'Not stated',
+    cell({ ord_law: null }, 'Ord\\. &amp; Law'));
   ok('coverage_type renders its value', render({ coverage_type: 'RCV' }).includes('>RCV<'));
   ok('coverage_type null renders "Not set"', cell({ coverage_type: null }, 'Coverage Type') === 'Not set');
 
@@ -156,16 +164,18 @@ console.log('\n── P3: Coverage Type + Ord. & Law on the claims screen ──
     /<\/div>\s*<\/div>\s*\n\s*<!-- 657:[\s\S]{0,400}?<div class="cr-c-modal-row">\s*\n\s*<div>\s*\n\s*<label>Coverage Type<\/label>/.test(SRC));
   // the payload converts to a real boolean — extracted from the artifact,
   // guarded so a build without it fails clean instead of throwing
-  const convM = SRC.match(/ord_law:\s*\(function\(\)\{[\s\S]*?\}\)\(\)/);
-  ok('the payload builds ord_law from the select', !!convM);
+  /* 658 SUPERSEDED: the modal's inline (function(){...})() converter became
+     the shared insOrdLawFromSelect, so the lead form and the claim modal
+     cannot drift apart. Extract that instead. */
+  const convM = SRC.match(/function insOrdLawFromSelect\(v\)\{[\s\S]*?\n\}/);
+  ok('the payload builds ord_law through the shared converter (658)', !!convM);
   const run = convM
     ? (() => {
         const w2 = new JSDOM('<!doctype html><body><select data-f="ord_law">' +
           '<option value="">a</option><option value="yes">b</option><option value="no">c</option>' +
           '</select></body>', { runScripts: 'outside-only' }).window;
-        const conv = convM[0].replace(/^ord_law:\s*/, '');
-        return (v) => { w2.document.querySelector('[data-f="ord_law"]').value = v;
-          return w2.eval('(function(modal){ return ' + conv + '; })(document)'); };
+        w2.eval(convM[0] + '\nwindow.__c = insOrdLawFromSelect;');
+        return (v) => w2.__c(v);
       })()
     : () => '(no converter)';
   ok('payload sends a real boolean true for Yes', run('yes') === true);
