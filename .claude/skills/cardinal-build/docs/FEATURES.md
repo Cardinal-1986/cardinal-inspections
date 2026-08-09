@@ -2769,3 +2769,29 @@ back into one** — an element that is both a sticky box and its own scroll
 container jumps vertically when scrolled sideways, which is exactly what 656
 fixed. Gate: `scripts/render_656.js` (Chromium, 17 assertions; the mount is
 its own scroll container, so scroll THE MOUNT, not the window).
+
+### 657 — one size router for the Scope of Loss card; claim fields; honest money
+
+**`routeScopeToReader(file, btn)`** (main block) is the single size-aware door
+for the Scope of Loss card. It delegates to `window.CardinalSolUpload.prepare()`
+— under MAX_INLINE (3.1 MB) send bytes, over it upload to storage and read via
+`extractFromUrl`. `readScopeOfLoss` and `readFiledScope` both go through it;
+the latter converts its stored dataURL to a File first. **Anything over ~3.1 MB
+posted inline never reaches the reader** (Vercel caps a serverless request body
+near 4.5 MB) — that is why a 6.4 MB filed scope looked like a dead button.
+⚠️ **There are FIVE `/api/sol` callers and a sixth is forbidden** (647 banner);
+this is reuse, and `solRead` remains the one transport (648). `harness_657.js`
+asserts `fetch('/api/sol'` stays at exactly one site.
+
+**Two controls mention the Scope of Loss and only one reads it.** The
+`#insDocsCard` slot FILES a copy (`uploadInsuranceDoc`); the `#solCard` READS.
+Filing a `scope_of_loss` now offers the read immediately and says filing alone
+does not update the claim; the slot button reads "File a copy".
+
+**The claims screen shows and edits Coverage Type + Ord. & Law.** `ord_law` is
+a **boolean** — `false` must render "No", and the modal select converts
+''/yes/no to null/true/false. Writing the string refuses the whole row.
+
+**`money(v)` beside `fmt()` in `cr-claims-script`**: `—` for null/undefined,
+`$0` for a real zero. The four Financials cells use it. **Do not "simplify"
+`fmt()` into it** — other callers want NULL coerced to 0.

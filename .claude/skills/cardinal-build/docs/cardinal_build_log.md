@@ -12232,3 +12232,62 @@ overflow-y:auto` inline). Fixed in the harness, not the app; a guard
 assertion now proves the mount actually scrolled. Negative controls on 655:
 9 red and 4 red. Regressions: 655 42/42, 654 31/31, 653 45/45, approvals
 15/15, pay 58/58.
+
+## Build 657 — read the scope already on file (9 Aug 2026)
+
+Theo: *"RCV ACV and deductible are still empty and it does not show ord and
+law."* Two causes, established from the live database, not inferred.
+
+**The money was never extracted.** Every money column on Adam Gunn's claim
+(`d9049634`) is NULL, and his checklist has no RCV/ACV either. Theo: *"there
+were 2 upload scope buttons. I think I pushed the one that only put the scope
+in docs."* Confirmed — `Insurance Doc [scope_of_loss]: Adam Gunn Revised
+Estimate.pdf`, filed 02:56 UTC, **6,418,120 chars of base64, never read**.
+
+⚠️ **Build 647 added "Read the scope already on file" for exactly this case
+and it could not read this file.** `readScopeOfLoss()` and `readFiledScope()`
+POSTed inline whatever the size. `api/sol.js` accepts 12 MB, but a Vercel
+serverless *request body* caps near 4.5 MB — which is why 643 built
+`prepare()` (MAX_INLINE 3.1 MB, else storage + `{url}`). `prepare()` had four
+callers (`cr-pb`, `cr-sol`, `cr-ci`, `cr-suf`) and **the Scope of Loss card
+was not one of them**. The rescue button failed on the file it was built for.
+
+- **657 adds `routeScopeToReader(file, btn)`** — one size router for the
+  card's two doors, delegating to the existing `prepare` / `extractFromUrl`.
+  `readFiledScope` converts its stored dataURL to a File (the `photoDb.add`
+  recipe) and goes through the same router. The local 12 MB refusal was
+  dropped in favour of `prepare()`'s single policy.
+  ⚠️ **No sixth `/api/sol` pipeline** — the 647 banner names five and forbids
+  a sixth. Asserted: `fetch('/api/sol'` is still exactly ONE site.
+- **The two buttons.** The doc slot files bytes and reads nothing; the SoL
+  card reads. **656 made the filing-only card visible, so the wrong button
+  got easier to hit than when Theo hit it.** Filing a `scope_of_loss` now
+  offers to read it on the spot and says plainly that filing alone does not
+  update the claim; that slot's control reads "File a copy", not "Upload".
+- **Coverage Type / Ord. & Law on the claims screen** (Theo's pick: view +
+  edit). Both appeared **zero times** in `cr-claims-script` — 655 added the
+  columns, 656 unhid the *profile* panel, this screen was never touched.
+  `paneClient()` renders them (ord_law is a BOOLEAN — `false` reads "No", the
+  same trap `shape()` hit at 655); the edit modal gained both inputs, the
+  select converting ''/yes/no to **null/true/false** — writing the string
+  would refuse the whole row.
+- **Never-entered money stops reading "$0".** `fmt(n)` is `Number(n || 0)`,
+  so NULL rendered `$0` — indistinguishable from a carrier approving nothing,
+  which is how an unread scope looked like data for a day. New `money(v)`
+  beside it renders `—` for null and `$0` for a real zero. **`fmt()` itself
+  is untouched** — other callers legitimately want the zero.
+
+**Gates.** `check_build.py` green, stamp 656 → 657. New `harness_657.js`
+(32 assertions) EXECUTES the router: a 4.8 MB scope takes the storage door
+and never posts inline, a small one is unchanged, a refused `prepare()` sends
+nothing either way, and the filed door converts and routes. Negative control
+on 656: **26 red**. ⚠️ Its first draft *crashed* on the negative control
+instead of failing — three unguarded `match()[1]` / missing-function derefs.
+A harness that dies on the previous build is not a negative control; guarded,
+it now reports clean reds. Regressions: `render_inscards` 9/9,
+`render_656` 17/17, 655 42/42, 654 31/31, 653 45/45, approvals 15/15, pay
+58/58.
+
+**Unproven until Theo runs it:** a harness proves the routing, not that
+Gemini reads his PDF. Adam Gunn → Scope of Loss card → "Read the scope
+already on file" → apply, then confirm `approved_rcv` is non-null by SQL.
