@@ -2403,3 +2403,39 @@ shipped and had **no input and no extractor** — it could only read "Not set". 
 brace-matching, negative-controlled on 645) and `render_sollift.js` (Chromium — `#solLift`
 is a grandchild of `#tab-overview`, whose `:not()` list has claimed five cards; the same
 page proves `#insCard` stays hidden).
+
+---
+
+## Read the scope already on file (647)
+
+**Where:** `sendScopeToReader()` / `readScopeOfLoss()` / `readFiledScope()` in the main
+block; the `#solReadBtn` row in `renderSolCard()`.
+
+A Scope of Loss can reach the extractor **two ways** now: picked fresh from the file
+dialog, or read out of the document slot it was filed into earlier. Both end in
+`sendScopeToReader()` — one core, two doors — and therefore both run through 646's
+bridge and set `first_scope_rcv`. Theo: *"Make it to where the first scope uploaded is
+the baseline and build from that."*
+
+The slot stores `{file:1,name,mime,size,data:<dataURL>}` in `inspection_reports.html`,
+the same shape a job file uses. `readFiledScope()` unwraps the base64 out of the data
+URL and posts it. A row that is a real report rather than a stored file is refused
+without posting; a failed extraction alerts and opens no modal.
+
+⚠️ **There are FIVE independent `/api/sol` callers in this file** — `sendScopeToReader`
+(main), `handleSolUpload` (`cr-claims-fx-script`), `extractFromUrl` (`cr-suf-script`),
+`readScope` (`cr-sol-script`), `read` (`cr-ci-script`). 647 stopped the Scope of Loss
+card from being a sixth; it did **not** unify the other four. Do not add a sixth.
+
+**Also 647:** `insDocsProject()` — the insurance documents card's writers read the same
+`insDocsCtx` its renderer got at 645. Before this, uploading from the claim screen's
+Documents tab threw *"No client selected"*, because 645 moved the card somewhere
+`currentProject` is null and only fixed the read path.
+
+**And:** `#landingView` takes its ground from `data-mode` (the landing theme) instead of
+`var(--bg)` (the app theme). See `BUG_CLASSES.md` class 17 — the two disagreeing put
+cream text on a near-white ground at 1.24:1. `body{background:var(--bg)}` is untouched.
+
+**Gates:** `harness647.js` — 21 assertions, the four-way theme matrix in Chromium plus
+the shipped reader functions against the real stored payload; negative-controlled on 646
+(5 red, including the 1.24:1).

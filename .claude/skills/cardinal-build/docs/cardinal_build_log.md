@@ -11608,3 +11608,66 @@ rule that says ask whether the test or the app is wrong.
 by `.cr-cc-own > *:not(#cr-cc):not(#dangerZone)`; the fix is the **adopt**
 pattern, never a second card), and the insurance-profile address contrast Theo
 has now reported twice.
+
+## Build 647 — the landing gets its own dark back, and a scope on file can be read (9 Aug 2026)
+
+Three things from one message, and one of them was mine.
+
+**1. The landing page.** Theo, 1:42am, with a screenshot: *"Something also
+ruined the landing page dark mode."* `#landingView` painted `var(--bg)` — an
+**app** token — while every `.cr-lr-*` ink keys off `data-mode`, the **landing**
+theme. Put the app in `rb-light`, leave the landing dark, and the ground goes
+`#f7f7f7` under cream `#e8ded4` inks: **1.24:1**, with the `::before` red radial
+over near-white producing the pink. Reproduced in Chromium from the artifact's
+own rules before anything was changed. The landing owns its ground now — a
+literal dark base, with the existing `html[data-mode="light"]` rule handling
+light. **New entry in `BUG_CLASSES.md` — class 17, one surface answering to two
+theme attributes.** ⚠️ `body{background:var(--bg)}` is untouched; that is 429's
+overscroll fix and it is not this bug.
+
+**2. My 645 regression.** 645 moved the insurance documents card onto the claim
+screen and gave the **renderer** `insDocsCtx` — but left the **writers** on
+`currentProject`, which is null there. `uploadInsuranceDoc()` opens with
+`if(!currentProject) throw new Error('No client selected')`, so the Documents tab
+I added has been unable to upload anything from the moment it shipped. Nobody
+had tested it; the 645 notes even say so. `insDocsProject()` now resolves the
+project from the same context the renderer reads.
+
+**3. Theo's ask:** *"Make it to where the first scope uploaded is the baseline
+and build from that."* A scope filed into the document slot is stored as
+`{file:1,name,mime,size,data:<dataURL>}` in `inspection_reports.html` and had
+**no path to the extractor** — filed, never read. Gunn's *Adam Gunn Revised
+Estimate.pdf* (6.4 MB, the only document on his profile) is exactly that, which
+is why 646 could not give him a baseline without re-uploading the same file. The
+Scope of Loss card now offers **"Read the scope already on file"**, which runs
+the stored bytes through the same `/api/sol` call and the same review modal as a
+fresh upload, and therefore through 646's bridge to `first_scope_rcv`.
+
+⚠️ **A COUNT THAT CORRECTED ME, and the comment it fixed.** The refactor pulled
+`readScopeOfLoss`'s fetch-and-review half into `sendScopeToReader()` so both
+doors share one core, and I wrote a comment saying "one core, two callers, do
+not grow a third." **The assertion `count("fetch('/api/sol'") == 1` came back
+5.** This file has **five independent scope-of-loss readers**, in five modules:
+`sendScopeToReader` (main), `handleSolUpload` (`cr-claims-fx-script`),
+`extractFromUrl` (`cr-suf-script`), `readScope` (`cr-sol-script`) and `read`
+(`cr-ci-script`). The comment was rewritten to say so by name, and the assertion
+became self-computing — the total must be *unchanged*, because 647 merges two
+doors inside one module and touches nobody else. **Unifying the five is real
+work for its own build; it is recorded, not done.**
+
+⚠️ **And a second assertion went red on my own prose** — `'currentProject' not
+in uploadInsuranceDoc` failed because my new comment says *"was currentProject"*.
+BUG_CLASS 15, in the same session it is documented in. Rewritten to brace-match
+the function and test the code patterns (`!currentProject`, `currentProject.id`,
+`currentProject.name`) rather than the bare word.
+
+**Gates.** `check_build.py` green, stamp 646 → 647. `harness647.js` — **21
+assertions**: the four-way theme matrix rendered in **Chromium** (all ≥4.5:1),
+plus the shipped `insDocsProject` / `sendScopeToReader` / `readFiledScope`
+extracted by brace-matching and run against the real stored-payload shape.
+Negative control on 646: **5 red, including `1.24:1` on exactly the combination
+Theo hit**. 646's own gates re-run on this tree — `harness646.mjs` 45 green,
+`render_sollift.js` 10 green.
+
+**Still open:** the SOL reader on community; the insurance-profile address
+contrast; and the five duplicate scope readers above.

@@ -1258,3 +1258,47 @@ parse.
 **The durable rule: when a tool exists to prevent one specific error, test it
 against a case that should trip it.** This one passed clean for 67 builds while
 blind.
+
+## 17. One surface, two theme attributes (9 Aug 2026, build 647)
+
+Theo, with a screenshot at 1:42am: *"Something also ruined the landing page dark
+mode."* The landing was near-white with cream writing on it — **1.24:1**,
+measured in Chromium — and pinkish, because `#landingView::before` lays a 13%
+red radial that reads as a dark glow on black and as **pink** on white.
+
+`CLAUDE.md` has warned for many builds that this app has **two theme
+mechanisms** and that they must not be confused:
+
+| | attribute | scope |
+|---|---|---|
+| app theme | `data-theme="rb-light"` on `:root` | the whole CRM, `--rbe-*`/`--bg` |
+| landing theme | `data-mode="light"` on `documentElement` | **the landing page only** |
+
+What it did not say — and what this class is — is that **a single surface can
+straddle both**, and nothing catches it:
+
+```css
+#landingView{background:var(--bg,#09090c) !important}   /* APP token   */
+.cr-lr{ … color:#e8ded4}                                /* landing ink */
+html[data-mode="light"] .cr-lr{color:#1a1614}           /* landing ink */
+```
+
+The ground answered to `data-theme`; every ink answered to `data-mode`. Agree
+and it looks fine. **Disagree — app in light, landing in dark — and the ground
+flips while the inks do not.** No rule is wrong on its own; no gate fires; brace
+balance, duplicate-id, `node --check` and every marker pass. The defect only
+exists in the *combination*, and only two of the four combinations expose it.
+
+**The rule: a surface must take its ground and its inks from the SAME theme
+attribute.** If a token comes from the other system, it is a bug waiting for the
+user to toggle something.
+
+**How to test it: enumerate the matrix, not the happy path.** `harness647.js`
+renders all four combinations in Chromium and requires ≥4.5:1 from every one.
+Run against 646 it reports `1.24:1` on exactly the combination Theo hit — which
+is what makes it a gate rather than a decoration. A harness that had only
+checked "dark app + dark landing" would have been green through the whole bug.
+
+⚠️ **`body{background:var(--bg)}` is correct and was left alone** — that is
+build 429's overscroll fix, and `body` is app chrome. The landing view is not.
+Do not "make it consistent" by pointing the landing back at `--bg`.
