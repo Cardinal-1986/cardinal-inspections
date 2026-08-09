@@ -12469,3 +12469,82 @@ as the MODEL receives it, concatenated. And `harness_658` went red at 3, all
 
 Regressions: 659 16/16, 658 38/38, 657 32/32, 655 42/42, 654 31/31,
 653 45/45, approvals 15/15, pay 58/58.
+
+---
+
+## Build 661 — 9 Aug 2026 — a failed scope read says which failure it is
+
+Theo's next screenshot of Adam Gunn's scope was **my own 659 sentence**: *"The
+reader could not turn this document into fields. It may not be a scope of loss,
+or the pages may be images the text did not come through on."*
+
+That sentence is the answer for **four unrelated causes** — the model refused
+the document, answered nothing, answered in prose, or never received the
+document at all — and 659 also stopped `detail` reaching the screen. So the one
+build that made the failure *readable* is the same build that made it
+**undiagnosable**, for Theo and for me alike. That is the defect 661 fixes.
+
+**He also pasted an AI analysis recommending OCR and a layout-aware PDF
+parser. It does not apply to this route**, and it is worth writing down why so
+it is not re-proposed: there is no `pdf-parse`, no `pdfplumber`, no text-layer
+extraction and no regex over plain text anywhere in the path. `api/sol.js`
+hands the PDF **bytes** to a multimodal model as `inline_data` — the model
+looks at the pages. A flat scan is the case that architecture handles *best*,
+not worst. Adding OCR would be building the stack the advice assumes.
+
+- **The failure names itself.** `readerDiag()` appends a short labelled tail to
+  the sentence — `[gemini · finish STOP · in 48210 tok · out 0 tok · reply 0
+  chars]`. It is **not** the 659 raw dump returning: no model text, fixed
+  length, and every number is one a phone screenshot can carry.
+  **`promptTokenCount` is the load-bearing one** — a 4.8 MB scope should ingest
+  as tens of thousands of tokens, and a few hundred would mean the document
+  never reached the model, which no amount of prompt work would fix.
+- **Three sentences instead of one**: refused / answered with nothing / answered
+  in words. Only the third is about the prompt.
+- **The retry.** `responseMimeType: 'application/json'` arrived in 659, and the
+  failure changed shape in the same build — so it is the prime suspect. An
+  unparseable JSON-mode reply is now re-issued **once** without that constraint
+  (the pre-659 request, at 659's token budget, so narration is affordable).
+  `askGemini(jsonMode)` is one function called twice, **not a second pipeline**
+  — the 647 banner's rule applied inside the route.
+  ⚠️ **A truncation is deliberately NOT retried**: without the JSON constraint
+  the model narrates, which is what filled the budget in the first place.
+- **The OpenAI rung can finally open a PDF.** `aiFallback()` has sent PDFs as
+  `image_url` since 505 — an API that reads a PDF only through a `file` content
+  part. For the one route whose whole job is reading a PDF, the fallback has
+  been **decorative since the day it shipped**. ⚠️ I could not exercise the
+  OpenAI shape from the sandbox (no key here); it is guarded exactly as the rest
+  of `aiFallback` is, so a wrong guess costs what today already costs.
+- **The carrier's own error is capped at 150 chars** before the diagnosis is
+  appended. `solRead()` slices the whole message at 250, so an 800-char Google
+  error would have pushed the diagnosis off the end in the one case where it is
+  most wanted. Measured on 660: that string was **800 chars**.
+
+**Gates.** `check_build.py` green, stamp 660 → 661. New `harness_661.js`
+(39 assertions) **imports and executes the real handler**, replaying each
+failure shape through a stubbed fetch that **counts model calls** — the retry is
+the build, so the call count is itself an assertion: one call on the happy path,
+one on a truncation, two on an unparseable reply. It also asserts every error
+sentence the route can produce fits `solRead()`'s 250-char slice. Negative
+control on 660 (artifact **and** `api/sol.js`): **27 red**, including
+`[144,144,144,800]` for the slice check.
+
+⚠️ `harness_659` went red at 1 — a **661 supersession**: it pinned the exact
+sentence 661 split into three. Re-keyed to 659's real guarantee (a 502 carrying
+plain English, not the raw reply) and labelled `661 SUPERSEDED`.
+
+⚠️ **`harness_pay` needs `TZ=America/New_York`** — its own header prints the
+timezone and its control asserts what a *negative-offset* zone does with
+`new Date('2026-08-09')`. On this UTC sandbox it reads 1 red; run it in
+Cardinal's timezone and it is 58/58. Not an app defect and not a 661 change —
+recorded so nobody chases it again.
+
+Regressions: 660 27/27, 659 16/16, 658 38/38, 657 32/32, 655 42/42, 654 31/31,
+653 45/45, approvals 15/15, pay 58/58 (TZ set), render_inscards 9/9,
+render_656 17/17.
+
+**Still not proven.** Nothing here shows Gunn's scope reading correctly — it
+shows the next failure arriving with its cause attached. The Gemini key lives in
+Vercel and the sandbox has no way to call the model, so the read itself is
+Theo's to run. If the retry was the fix, it simply works; if not, the message
+now says which of the four it is.

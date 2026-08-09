@@ -2862,3 +2862,46 @@ practices pre-1978) are *evidence* the prompt uses, not rows the app keeps.
 
 Gate: `harness_660.js` — runs the formatter on Gunn's real figures and asserts
 the larger ACV renders as-is; negative control covers `api/sol.js` too.
+
+### 661 — when the scope reader fails, it says which failure
+
+**`/api/sol` is a MULTIMODAL route, not a text-extraction pipeline.** The PDF
+bytes go to the model as `inline_data` and the model looks at the pages. There
+is no `pdf-parse`, no `pdfplumber`, no text layer and no regex over plain text
+anywhere in it. **Advice to "add OCR" or "use a layout-aware PDF library"
+targets a stack this app does not have** — a flat scan is the case this
+architecture handles best, not worst. Recorded here because it has been
+proposed once already.
+
+**Four causes stopped sharing one sentence.** 659's single "could not turn this
+document into fields" answered for a refused document, an empty reply, a prose
+reply and a document that never arrived. There are now three sentences, plus a
+short labelled tail on every one of them:
+
+```
+[gemini · finish STOP · in 48210 tok · out 0 tok · reply 0 chars]
+```
+
+`readerDiag()` builds it. **It is not the 659 raw dump returning** — no model
+text, fixed length, screenshot-sized. **`in N tok` is the load-bearing number**:
+a 4.8 MB scope should ingest as tens of thousands of tokens, so a few hundred
+means the document never reached the model and no prompt work would have helped.
+
+**The retry.** An unparseable JSON-mode reply is re-issued once **without**
+`responseMimeType`, at 659's token budget. `askGemini(jsonMode)` is one function
+called twice — **do not add a second call site**. ⚠ **A `MAX_TOKENS` reply is
+deliberately not retried**: dropping the JSON constraint makes the model narrate,
+which is what filled the budget in the first place.
+
+⚠ **`aiFallback()` sends a PDF as a `file` content part, not `image_url`.** Chat
+Completions cannot read a PDF handed to it as an image, so from 505 until 661
+this rung was decorative on the one route whose whole job is reading a PDF.
+Images still go as `image_url` — both halves are asserted.
+
+**Every error sentence must fit 250 characters**, because `solRead()` slices
+there; the carrier's own message is capped at 150 before the diagnosis is
+appended, so the diagnosis is never the part that falls off. Asserted in
+`harness_661.js`.
+
+Gate: `harness_661.js` (39) — imports the real handler and **counts model
+calls**: one on success, one on a truncation, two on an unparseable reply.

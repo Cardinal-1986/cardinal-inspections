@@ -95,8 +95,14 @@ console.log('\n── the server, executed against each failure shape ──');
   {
     const r = await drive({ candidates: [{ finishReason: 'STOP', content: { parts: [{
       text: 'I am sorry, this looks like a photograph of a truck.' }] } }] });
+    /* 661 SUPERSEDED: this pinned the exact sentence "could not turn this
+       document into fields". 661 split that one sentence into three, because it
+       was the answer for four unrelated causes. 659's actual guarantee — a 502
+       carrying plain English rather than the raw model reply — is what is
+       asserted now; harness_661 owns the wording. */
     ok('an unreadable document gets a plain-English sentence', r.code === 502 &&
-      /could not turn this document into fields/i.test(r.body.error), JSON.stringify(r.body).slice(0, 160));
+      /^[A-Z][a-z]/.test(r.body.error) && !/photograph of a truck/.test(r.body.error),
+      JSON.stringify(r.body).slice(0, 160));
   }
 
   // 4. the happy path still works

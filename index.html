@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 660 &#8212; The scope reader knows Ordinance &amp; Law by the name it actually appears under: BC &#8212; Building Codes</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 661 &#8212; When the scope reader fails it now says which reader answered and why it stopped, and tries the other way first</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -36612,6 +36612,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:661, d:'2026-08-09', t:'A failed scope read says what actually went wrong',
+s:'Reading Adam Gunn\u2019s scope kept failing with one sentence \u2014 \u201Cthe reader could not turn this document into fields\u201D \u2014 and that sentence covers four completely different problems: the AI refused the document, the AI answered nothing, the AI answered in words, or the document never reached it. It now names which one, in the message itself, along with how much of the document the AI actually took in. It also tries a second time in the older way before giving up, because the way it asks was changed two builds ago and that is the prime suspect. And the backup reader, which has never once been able to open a PDF, now can.'},
 { b:660, d:'2026-08-09', t:'Ordinance & Law by the name it actually goes by',
 s:'The reader was taught the words for this coverage \u2014 ordinance or law, code upgrade, code coverage \u2014 and none of them appear on an adjuster\u2019s estimate. On an Xactimate scope it is a coverage CATEGORY, coded BC and printed as \u201CBC-Building Codes\u201D, with its own subtotal and often its own summary page. Adam Gunn\u2019s estimate carries exactly that and the reader walked straight past it. It now knows the category by its code, and records BOTH of the totals that category carries: the Item/RCV total, which is the carrier\u2019s full valuation of the code work, and the ACV/Net total, which is what they are paying now. On Allstate the ACV comes out HIGHER than the RCV because sales tax lands on code items \u2014 so both are kept, labelled, rather than one being quietly thrown away. The policy\u2019s endorsement cap is a separate field, because a cap is not a scope amount. Code-driven line items \u2014 ice and water barrier, upgraded sheathing, lead-safe practices on pre-1978 homes \u2014 now count as evidence of the coverage even when no category is printed.' },
 { b:659, d:'2026-08-09', t:'The scope reader finishes its sentence',

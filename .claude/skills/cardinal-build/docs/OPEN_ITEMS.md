@@ -2052,6 +2052,31 @@ additive app-wide). `rptIsSigned` left as a stage proxy on purpose — with
 zero signed contracts live, real-signature keying would zero every report.
 **Revisit `rptIsSigned` once contracts actually flow.**
 
+## ⚠ The Adam Gunn scope read is STILL not proven (661)
+
+657–661 all touched this path and **not one of them has been shown to read
+that document successfully.** What each build actually fixed:
+
+| Build | Fixed | Proven by |
+|---|---|---|
+| 657 | the 6.4 MB file never reached the route (inline over Vercel's body cap) | it now reaches it — the failures since are the model's, not the transport's |
+| 659 | the reply was truncated at 1024 tokens | Theo's error text stopped being cut-off JSON |
+| 660 | the prompt did not know "BC — Building Codes" | not yet exercised on the document |
+| 661 | the failure named no cause; JSON-mode never retried | the next failure carries its own diagnosis |
+
+**The sandbox cannot run this.** `GEMINI_API_KEY` lives in Vercel env vars and
+must stay there — there is no way to call the model from here, so the read is
+Theo's to run and his screenshot is the instrument.
+
+**What to do with the next screenshot**: read the bracketed tail.
+`in <few hundred> tok` means the document never reached the model (transport,
+not prompt). `out 0 tok` with a large `in` means it ingested and declined.
+`blocked X` means a safety stop. `answered in words` is the only one that is
+about the prompt. **Do not start rewriting the extraction stack before that
+tail says which of the four it is** — and note that OCR / layout-aware PDF
+parsing is advice for a text-extraction architecture this route does not use
+(see FEATURES.md §661).
+
 ## Still open from the audit after 654–655
 
 CR-AUD-005 (supplements — needs Theo's shape) · 016 (health-check registry)

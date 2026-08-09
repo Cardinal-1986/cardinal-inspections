@@ -63,7 +63,21 @@ async function aiFallback(parts, geminiRes) {
       const inl = p.inlineData || p.inline_data;
       if (inl) {
         const mime = inl.mimeType || inl.mime_type || 'image/jpeg';
-        content.push({ type: 'image_url', image_url: { url: 'data:' + mime + ';base64,' + inl.data } });
+        const dataUrl = 'data:' + mime + ';base64,' + inl.data;
+        /* 661: A PDF IS NOT AN image_url. Chat Completions reads a PDF only
+           through a `file` content part; handed one as image_url it answers
+           400 and this rung falls straight back to the Gemini error. So for
+           the ONE route whose whole job is reading a PDF, the fallback has
+           never once worked — it has been decorative since 505.
+           ⚠ I could not exercise this shape from the sandbox (no OpenAI key
+           here). It is guarded the same way the rest of aiFallback is: any
+           non-ok answer returns the original Gemini response, so a wrong
+           guess costs exactly what today already costs. */
+        if (mime.indexOf('pdf') >= 0) {
+          content.push({ type: 'file', file: { filename: 'scope.pdf', file_data: dataUrl } });
+        } else {
+          content.push({ type: 'image_url', image_url: { url: dataUrl } });
+        }
       }
     });
     if (!content.length) return geminiRes;
@@ -89,6 +103,48 @@ async function aiFallback(parts, geminiRes) {
   } catch (e) {
     return geminiRes;
   }
+}
+
+/* 661 — WHICH failure, in the sentence the user actually sees.
+
+   659 replaced a raw model dump with a written sentence, which was right, and
+   in the same move made the failure undiagnosable: "could not turn this
+   document into fields" is the answer for a blocked prompt, an empty reply, a
+   refusal in prose and a reply that simply had no JSON in it. Four causes, one
+   sentence, and `detail` no longer reaches the screen.
+
+   So the sentence carries a short labelled tail. It is not the 659 dump coming
+   back: no model text, fixed length, and every number in it is one a screenshot
+   can carry.
+
+     [gemini · finish STOP · in 48210 tok · out 0 tok · reply 0 chars]
+
+   promptTokenCount is the load-bearing one. A 4.8 MB scope should ingest as
+   tens of thousands of tokens; a few hundred means the document never reached
+   the model at all, and no amount of prompt work would have helped. */
+function readerDiag(via, body, cand, text) {
+  const u = (body && body.usageMetadata) || {};
+  const bits = [via];
+  const blocked = body && body.promptFeedback && body.promptFeedback.blockReason;
+  if (blocked) bits.push('blocked ' + blocked);
+  else bits.push('finish ' + (cand.finishReason || 'none'));
+  if (u.promptTokenCount != null) bits.push('in ' + u.promptTokenCount + ' tok');
+  if (u.candidatesTokenCount != null) bits.push('out ' + u.candidatesTokenCount + ' tok');
+  bits.push('reply ' + String(text || '').length + ' chars');
+  return ' [' + bits.join(' \u00b7 ') + ']';
+}
+
+/* Only an OBJECT counts as parsed. A model that answers `"unreadable"` produces
+   valid JSON that is not a result, and 659's shape guard caught that AFTER the
+   retry point — too late to try the other way. */
+function parseObj(t) {
+  if (!t) return null;
+  try { const v = JSON.parse(t); if (v && typeof v === 'object') return v; } catch (e) {}
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a !== -1 && b > a) {
+    try { const v = JSON.parse(t.slice(a, b + 1)); if (v && typeof v === 'object') return v; } catch (e2) {}
+  }
+  return null;
 }
 
 export default async function handler(req, res) {
@@ -254,78 +310,103 @@ export default async function handler(req, res) {
       { inline_data: { mime_type: mt, data: file } },
       { text: prompt }
     ];
-    let g = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/' + MODEL + ':generateContent',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify({
-          contents: [{ parts: _parts }],
-          /* 659: Theo's scope came back as "Could not read that scope:" followed
-             by RAW MODEL OUTPUT, cut off mid-word — three different times, three
-             different cut points. The model was reading the document correctly
-             (carrier, policy number, 7,911.67 Deprec, 13,781.46 ACV all appeared
-             in the error text) and then being TRUNCATED at 1024 tokens, because
-             it narrates page by page before emitting the JSON. Two fixes:
-             responseMimeType makes it answer in JSON only — no prose, no fences,
-             nothing to burn the budget on — and the budget is no longer a cliff
-             a five-page scope falls off. */
-          generationConfig: {
-            maxOutputTokens: 8192,
-            temperature: 0.1,
-            responseMimeType: 'application/json'
-          }
-        })
-      }
-    );
-    /* 505: BEFORE the body is read - a Response can only be consumed once, and
-       the fallback returns a different object with its own json(). */
-    if (!g.ok) g = await aiFallback(_parts, g);
-    const j = await g.json();
-    if (!g.ok) {
+
+    /* 661: ONE attempt, written once, so the retry below is the SAME call with
+       one field changed rather than a second pipeline beside the first. The 647
+       banner in index.html forbids a sixth /api/sol caller for exactly this
+       reason; the same discipline applies inside the route. */
+    async function askGemini(jsonMode) {
+      let r = await fetch(
+        'https://generativelanguage.googleapis.com/v1beta/models/' + MODEL + ':generateContent',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+          body: JSON.stringify({
+            contents: [{ parts: _parts }],
+            /* 659: Theo's scope came back as "Could not read that scope:"
+               followed by RAW MODEL OUTPUT, cut off mid-word — three times,
+               three cut points. The model had read the document correctly each
+               time and was being TRUNCATED at 1024 tokens, because it narrates
+               page by page before emitting the JSON. The budget is no longer a
+               cliff a five-page scope falls off.
+               ⚠ 661: responseMimeType is now the FIRST attempt, not the only
+               one. It is what stops the narration — and it arrived in the same
+               build after which the failure changed shape, so it is also the
+               prime suspect. jsonMode false is the pre-659 request with 659's
+               budget: narration is affordable now. */
+            generationConfig: jsonMode
+              ? { maxOutputTokens: 8192, temperature: 0.1, responseMimeType: 'application/json' }
+              : { maxOutputTokens: 8192, temperature: 0.1 }
+          })
+        }
+      );
+      /* 505: BEFORE the body is read - a Response can only be consumed once, and
+         the fallback returns a different object with its own json(). */
+      if (!r.ok) r = await aiFallback(_parts, r);
+      const body = await r.json();
+      const cand = (body && body.candidates ? body.candidates : [])[0] || {};
+      let text = ((cand.content || {}).parts || []).map(p => p.text || '').join('');
+      text = String(text || '').replace(/```json|```/g, '').trim();
+      return { ok: !!r.ok, via: r._via === 'openai' ? 'openai' : 'gemini', body, cand, text };
+    }
+
+    let a = await askGemini(true);
+    if (!a.ok) {
       res.status(502).json({
-        error: (j && j.error && j.error.message) || 'AI request failed',
-        detail: JSON.stringify(j).slice(0, 500)
+        /* the carrier's own message is the only unbounded string that reaches
+           this field, and solRead() slices the whole thing at 250 — an 800-char
+           Google error would push the diagnosis straight off the end, in the one
+           case where it is most wanted. Cap the quote, never the diagnosis. */
+        error: String((a.body && a.body.error && a.body.error.message) || 'AI request failed').slice(0, 150) +
+               readerDiag(a.via, a.body, a.cand, a.text),
+        detail: JSON.stringify(a.body).slice(0, 500)
       });
       return;
     }
-    const cand = (j.candidates || [])[0] || {};
-    let text = ((cand.content || {}).parts || []).map(p => p.text || '').join('');
-    text = String(text || '').replace(/```json|```/g, '').trim();
 
-    /* 659: say WHICH failure happened. The old path dumped the raw reply into
-       an alert, so a truncation read as gibberish about page 5 totals and gave
-       no clue that the answer had simply been cut off. */
-    if (cand.finishReason === 'MAX_TOKENS') {
+    let parsed = parseObj(a.text);
+
+    /* 659: a truncation is its own answer and retrying makes it worse — without
+       the JSON constraint the model narrates, which is what filled the budget in
+       the first place. Report it and stop. */
+    if (!parsed && a.cand.finishReason === 'MAX_TOKENS') {
       res.status(502).json({
         error: 'The reader ran out of room before it finished this scope. ' +
-               'It is a long document \u2014 try uploading just the scope and totals pages.'
+               'It is a long document \u2014 try uploading just the scope and totals pages.' +
+               readerDiag(a.via, a.body, a.cand, a.text)
       });
       return;
     }
 
-    let parsed;
-    try { parsed = JSON.parse(text); }
-    catch (e) {
-      /* a model that ignores responseMimeType and wraps the object in prose is
-         still recoverable: take the outermost {...} and try once more. */
-      const a = text.indexOf('{'), b = text.lastIndexOf('}');
-      if (a !== -1 && b > a) {
-        try { parsed = JSON.parse(text.slice(a, b + 1)); } catch (e2) {}
-      }
-      if (!parsed) {
-        res.status(502).json({
-          error: 'The reader could not turn this document into fields. ' +
-                 'It may not be a scope of loss, or the pages may be images the text did not come through on.',
-          detail: text.slice(0, 300)
-        });
-        return;
+    /* 661: THE RETRY. One extra call, only on the failure path. */
+    if (!parsed) {
+      const b = await askGemini(false);
+      if (b.ok) {
+        const p2 = parseObj(b.text);
+        if (p2) parsed = p2;
+        /* nothing usable either way: report whichever attempt actually said
+           something, because "it answered in words" and "it answered nothing"
+           are different problems and only one of them is about the prompt. */
+        if (!parsed && !a.text && b.text) a = b;
       }
     }
 
-    // Basic shape guard so the caller can trust the object
-    if (!parsed || typeof parsed !== 'object') {
-      res.status(502).json({ error: 'AI returned unexpected shape', detail: text.slice(0, 300) });
+    if (!parsed) {
+      const blocked = a.body && a.body.promptFeedback && a.body.promptFeedback.blockReason;
+      let msg;
+      if (blocked) {
+        msg = 'The reader refused this document \u2014 the AI would not answer on it.';
+      } else if (!a.text) {
+        msg = 'The reader answered with nothing at all. The document may be too large ' +
+              'for one pass \u2014 try the scope and totals pages on their own.';
+      } else {
+        msg = 'The reader answered in words instead of fields. It may not be a scope of ' +
+              'loss, or the pages may be images the text did not come through on.';
+      }
+      res.status(502).json({
+        error: msg + readerDiag(a.via, a.body, a.cand, a.text),
+        detail: a.text.slice(0, 300)
+      });
       return;
     }
 
