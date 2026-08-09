@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 662 &#8212; The scope reader is given the time a big document actually takes, and never starts a second attempt it cannot finish</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 663 &#8212; A failed scope read now says how big the document it was handed actually was, which is what makes the rest of the numbers mean anything</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14851,7 +14851,13 @@ async function solRead(payload){
        Prefer the server's written sentence; fall back to detail only when there
        is no sentence to show. */
     var _msg = (j && j.error) || (j && j.detail) || ('HTTP ' + r.status);
-    var err = new Error(String(_msg).slice(0, 250));
+    /* 663: 250 was chosen when `detail` — the RAW MODEL REPLY — could still land
+       in this string, and cutting that short was the point. It cannot any more:
+       since 661 every message this route sends is a written sentence plus a
+       bounded diagnostic tail, and the only unbounded part (the carrier's own
+       error) is capped server-side at 150. The tail is now the part a 250 would
+       cut, and the tail is the whole reason the message exists. */
+    var err = new Error(String(_msg).slice(0, 400));
     err.status = r.status;
     throw err;
   }
@@ -36612,6 +36618,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:663, d:'2026-08-09', t:'A failed read says how big the document was',
+s:'When a scope will not read, the message already said how much of it the AI took in. On its own that number cannot be read: a small one means either the file never arrived or it arrived whole and was ignored, and those are two different faults. The message now also says how many megabytes of document the reader was actually holding, so the two stop looking the same. The message was also being cut off at 250 characters \u2014 a length chosen back when it could contain raw AI output \u2014 and the part being cut was the explanation.'},
 { b:662, d:'2026-08-09', t:'The reader is given time to read a long scope',
 s:'Every one of the app\u2019s AI routes was running on the hosting default \u2014 ten or fifteen seconds \u2014 and reading a multi-page adjuster\u2019s scope takes longer than that. They now get a full minute. The second attempt added yesterday is also no longer allowed to start unless it can finish: a retry that runs past the limit hands back a bare \u201CHTTP 504\u201D instead of the explanation it was added to give. Failures now say how long they took, which is the difference between a model that thought about it and one that refused instantly.'},
 { b:661, d:'2026-08-09', t:'A failed scope read says what actually went wrong',

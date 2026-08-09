@@ -12624,3 +12624,61 @@ for **one field group out of 24**. That is not a proven cause of anything, and
 nothing was changed on the strength of it. It is written down because three
 consecutive builds pushed in the same direction and the next person should know
 the shape before adding a fourth.
+
+---
+
+## Build 663 — 9 Aug 2026 — the diagnosis says how big the document was
+
+661's tail was handed back with a reading guide: *"if `in` reads under 1,000
+tokens the payload was truncated before reaching the multimodal API."*
+**That inference cannot be drawn from `in` alone**, and the gap matters because
+it is the branch we are most likely to land on. A small ingest is **either** a
+document that never arrived (the storage fetch came back short) **or** one that
+arrived whole and was not read. Two different faults in two different pieces of
+code, and 661's tail rendered them identically.
+
+- **`doc N.N MB`** — the bytes this route actually held after fetching, printed
+  **immediately before `in N tok`**, because the pair is meant to read as one
+  sentence: `doc 4.8 MB · in 400 tok` (we had it, the model did not take it) vs
+  `doc 0.0 MB · in 400 tok` (it never got here). Set on **both** doors: the
+  exact buffer length on the storage path, derived from base64 length on the
+  inline one.
+  ⚠️ The field first landed *after* `in`, and `harness_663`'s one red was that
+  ordering. **The test was right and the code was wrong** — the number is
+  useless where it cannot be read against the one it qualifies.
+- **One assembly point.** `readerDiag` had grown to four call sites and seven
+  positional arguments; the handler now builds `diag(attempt, note)` once.
+  Asserted: **one definition, one call.** Threading a new field through four
+  sites by hand is how it reaches three of them.
+- **The client slice went 250 → 400.** The 250 was chosen at 659 when `detail`
+  — the raw model reply — could still land in that string, and cutting it short
+  was the point. Since 661 it cannot: every message is a written sentence plus a
+  bounded tail, with the only unbounded part (the carrier's own error) capped
+  server-side at 150. **The tail had become the part a 250 would cut**, and the
+  tail is the whole reason the message exists.
+
+**Also checked, and it clears one of their branches for free:** if `in` comes
+back small, **Vercel's request-body gateway is not the suspect** — 657 removed
+it from this path entirely (anything over 3.1 MB goes storage → server fetch →
+base64 → Gemini, so the client never posts the bytes). A short `doc` points at
+the Supabase fetch or the signed URL, not at Vercel.
+
+**Gates.** `check_build.py` green, stamp 662 → 663. All 26 `api/*.js` parse.
+New `harness_663.js` (23) drives the **storage door** with a stubbed Supabase
+object so the byte count comes from a real fetched buffer. **The load-bearing
+assertion is not "does `doc` appear"** — it is that two runs with an *identical*
+model reply and an *identical* token count produce **different tails**. If they
+read the same, the field is decoration. Negative controls: **11 red on 662**,
+**13 red on 661**.
+
+Regressions: 662 33/33, 661 39/39, 660 27/27, 659 16/16, 658 38/38, 657 32/32,
+655 42/42, 654 31/31, 653 45/45, approvals 15/15, pay 58/58
+(`TZ=America/New_York`), render_inscards 9/9, render_656 17/17.
+
+**The instrument is finished. Stop building and get evidence.** 657 → 663 is
+seven builds on a failure that has never once been reproduced in this sandbox,
+because the Gemini key lives in Vercel and stays there. `/api/ai-status` is the
+pre-flight — on a preview deployment it says whether `GEMINI_API_KEY` is even
+present in that environment, and whether `OPENAI_API_KEY` is set at all (which
+decides whether 661's fallback repair is reachable). **Nothing further should be
+built on this path until Theo has run the read and produced a tail.**

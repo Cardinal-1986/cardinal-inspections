@@ -122,12 +122,20 @@ async function aiFallback(parts, geminiRes) {
    promptTokenCount is the load-bearing one. A 4.8 MB scope should ingest as
    tens of thousands of tokens; a few hundred means the document never reached
    the model at all, and no amount of prompt work would have helped. */
-function readerDiag(via, body, cand, text, ms, note) {
+function readerDiag(via, body, cand, text, ms, note, docBytes) {
   const u = (body && body.usageMetadata) || {};
   const bits = [via];
   const blocked = body && body.promptFeedback && body.promptFeedback.blockReason;
   if (blocked) bits.push('blocked ' + blocked);
   else bits.push('finish ' + (cand.finishReason || 'none'));
+  /* 663: the number that makes `in N tok` interpretable, and it is deliberately
+     printed IMMEDIATELY BEFORE it — the pair is meant to be read as one
+     sentence. A small ingest alone is ambiguous: EITHER the document never
+     arrived, or it arrived whole and was not read. Different bugs, different
+     code. `doc` is what this route held in its hand after fetching, so
+     `doc 4.8 MB · in 400 tok` (we had it, the model did not take it) and
+     `doc 0.0 MB · in 400 tok` (it never got here) stop looking the same. */
+  if (docBytes) bits.push('doc ' + (docBytes / 1048576).toFixed(1) + ' MB');
   if (u.promptTokenCount != null) bits.push('in ' + u.promptTokenCount + ' tok');
   if (u.candidatesTokenCount != null) bits.push('out ' + u.candidatesTokenCount + ' tok');
   bits.push('reply ' + String(text || '').length + ' chars');
@@ -172,6 +180,9 @@ export default async function handler(req, res) {
     // ---- 2) validate ----
     const body = req.body || {};
     let { file, mime } = body;
+    /* 663: how many bytes of document this route ended up holding, whichever
+       door it came through. Set on both paths below; 0 means "never got one". */
+    let docBytes = 0;
 
     /* 643: the stored-file path. index.html uploads anything over 3.1 MB to
        photos/scopes/… and sends the signed URL instead of 16 MB of base64. */
@@ -197,6 +208,7 @@ export default async function handler(req, res) {
         return;
       }
       const buf = Buffer.from(await doc.arrayBuffer());
+      docBytes = buf.length;                    /* 663: the exact fetched size */
       if (buf.length > MAX_BYTES) {
         res.status(413).json({
           error: 'That file is ' + (buf.length / 1048576).toFixed(1) +
@@ -212,6 +224,10 @@ export default async function handler(req, res) {
     }
 
     if (!file || typeof file !== 'string') { res.status(400).json({ error: 'No file' }); return; }
+    /* the inline door never touches a Buffer, so derive it: base64 carries 3
+       bytes in every 4 characters. Close enough to tell 4.8 MB from 0.0 MB,
+       which is the only question this number has to answer. */
+    if (!docBytes) docBytes = Math.floor(file.replace(/=+$/, '').length * 3 / 4);
     if (file.length > MAX_BYTES * 1.4) { res.status(413).json({ error: 'File too large (12 MB cap)' }); return; }
     const mt = (mime || 'application/pdf').toLowerCase();
     const isPdf = mt.indexOf('pdf') >= 0;
@@ -333,6 +349,12 @@ export default async function handler(req, res) {
     const TIME_BUDGET_MS = 45000;   /* 60s cap, 15s of headroom to answer in */
     const elapsed = () => Date.now() - T0;
 
+    /* 663: the diagnosis is assembled in ONE place. It had four call sites and
+       every new field had to be threaded through all four by hand — which is
+       how a field ends up on three of them. */
+    const diag = (att, note) =>
+      readerDiag(att.via, att.body, att.cand, att.text, elapsed(), note, docBytes);
+
     async function askGemini(jsonMode) {
       const t = Date.now();
       let r = await fetch(
@@ -378,7 +400,7 @@ export default async function handler(req, res) {
            Google error would push the diagnosis straight off the end, in the one
            case where it is most wanted. Cap the quote, never the diagnosis. */
         error: String((a.body && a.body.error && a.body.error.message) || 'AI request failed').slice(0, 150) +
-               readerDiag(a.via, a.body, a.cand, a.text, elapsed()),
+               diag(a),
         detail: JSON.stringify(a.body).slice(0, 500)
       });
       return;
@@ -393,7 +415,7 @@ export default async function handler(req, res) {
       res.status(502).json({
         error: 'The reader ran out of room before it finished this scope. ' +
                'It is a long document \u2014 try uploading just the scope and totals pages.' +
-               readerDiag(a.via, a.body, a.cand, a.text, elapsed())
+               diag(a)
       });
       return;
     }
@@ -441,11 +463,11 @@ export default async function handler(req, res) {
         via: a.via, finish: a.cand.finishReason || null,
         blocked: (a.body && a.body.promptFeedback && a.body.promptFeedback.blockReason) || null,
         usage: (a.body && a.body.usageMetadata) || null,
-        ms: elapsed(), skipped: skipped || null, chars: a.text.length,
+        ms: elapsed(), skipped: skipped || null, docBytes: docBytes, chars: a.text.length,
         head: a.text.slice(0, 500)
       }));
       res.status(502).json({
-        error: msg + readerDiag(a.via, a.body, a.cand, a.text, elapsed(), skipped),
+        error: msg + diag(a, skipped),
         detail: a.text.slice(0, 300)
       });
       return;

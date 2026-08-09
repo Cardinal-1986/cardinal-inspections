@@ -2945,3 +2945,37 @@ A successful read logs nothing.
 OCR, layout-aware PDF parsing, "narrow the prompt away from line items" (it has
 never asked for any — 24 summary fields, measured), and Vercel's 4.5 MB request
 body limit (657 routes anything over 3.1 MB through storage as `{url}`).
+
+### 663 — `doc N.N MB`, and one place the diagnosis is built
+
+**The tail's field order is load-bearing, not cosmetic.** `doc` prints
+immediately before `in` because the two are read as one sentence:
+
+| Tail | Means |
+|---|---|
+| `doc 4.8 MB · in 48210 tok` | the document arrived and the model ingested it — the fault is downstream |
+| `doc 4.8 MB · in 400 tok` | we held the whole file; the model did not take it in |
+| `doc 0.0 MB · in 400 tok` | the file never got here — look at the Supabase fetch and the signed URL |
+
+⚠ **If `doc` is small, Vercel's request-body limit is NOT the suspect.** 657
+removed it from this path: anything over 3.1 MB goes storage → server fetch →
+base64 → Gemini, so the client never posts the bytes at all.
+
+`docBytes` is set on **both** doors — the exact buffer length on the storage
+path, derived from base64 length on the inline one.
+
+**`readerDiag` has ONE definition and ONE call site**, through the handler's
+local `diag(attempt, note)`. It reached four call sites and seven positional
+arguments before this; a new field had to be threaded through all four by hand.
+`harness_663` asserts the one-definition-one-call shape — **do not add a second
+call site.**
+
+**`solRead()` slices at 400, not 250.** The 250 was right at 659, when `detail`
+— raw model output — could still land in that string. It cannot since 661:
+every message is a written sentence plus a bounded tail, with the carrier's own
+error capped server-side at 150. At 250 the tail was the part being cut.
+
+**Pre-flight for testing a preview deployment**: `/api/ai-status` (optionally
+`?model=`) reports whether `GEMINI_API_KEY` is present *in that environment* and
+whether `OPENAI_API_KEY` is set at all. A preview without the key fails the read
+for a reason that has nothing to do with the scope.

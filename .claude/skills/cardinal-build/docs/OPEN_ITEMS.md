@@ -2088,6 +2088,13 @@ stripped since before 659, with two further salvage layers since.
 field group out of 24. Not a proven cause of anything. Written down because
 three builds pushed the same direction; know the shape before adding a fourth.
 
+**663 finished the instrument and the building stops here.** 657 → 663 is seven
+builds on a failure never once reproduced in this sandbox. **Do not ship an
+eighth before a tail exists.** Pre-flight a preview with `/api/ai-status`: it
+says whether `GEMINI_API_KEY` is present in *that* environment and whether
+`OPENAI_API_KEY` is set at all (which decides whether 661's fallback repair is
+even reachable).
+
 **What to do with the next screenshot**: read the bracketed tail.
 `in <few hundred> tok` means the document never reached the model (transport,
 not prompt). `out 0 tok` with a large `in` means it ingested and declined.
