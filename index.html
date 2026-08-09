@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 664 &#8212; Ordinance &amp; Law and Coverage Type now reach the claim record when you apply a scope, instead of stopping at the client profile</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 666 &#8212; The scope review only pre-ticks empty fields &#8212; overwriting something already on file now takes a deliberate tap</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14863,9 +14863,48 @@ async function solRead(payload){
   }
   return (j && j.extracted) || {};
 }
+/* 665 — SCOPE HISTORY, one writer. Every applied Scope of Loss read becomes a
+   scope_reads row: the model's full extraction, the subset the human ticked,
+   and the money first-class. This function is THE ONLY place that inserts into
+   scope_reads — harness_665 asserts the single insert site — so when the
+   supplement unification needs the same trail, it calls this, it does not roll
+   another writer (the CLAIM_COL lesson, BUG_CLASSES §18, applied in advance).
+
+   DELIBERATELY NON-BLOCKING: the claim write (bridgeSolToClaim) already alerts
+   on failure; this row is the audit trail behind it, and a trail that can veto
+   the thing it records is wrong way round. Failure logs to console and the
+   apply still succeeds — that is a decision, not an oversight.
+
+   NOT hooked, on purpose, each verified in source before deciding:
+   - readScope (cr-sol-script): renders the extraction, writes nothing.
+   - handleSolUpload (cr-claims-fx-script): pre-fills the claim edit form; the
+     write is the human's normal claim save. A prefill is not an applied scope.
+   - cr-ci-script read(): the AccuLynx CLIENT importer (mode:'client') — claim
+     identity, no scope, no money. Its rows in this table would be noise. */
+async function logScopeRead(claimId, pr, docName, extracted, applied){
+  try{
+    if(!window.supa || !applied || !Object.keys(applied).length) return;
+    var rcv = Number(applied.rcv); if(!(rcv > 0)) rcv = null;
+    var acv = Number(applied.acv); if(!(acv > 0)) acv = null;
+    var dep = (rcv !== null && acv !== null) ? Math.round((rcv - acv) * 100) / 100 : null;
+    var row = {
+      created_by: (typeof window.my_email === 'function' ? window.my_email() : null),
+      claim_id:   claimId || null,   /* a failed bridge still leaves a project-keyed row */
+      project_id: pr && pr.id || null,
+      doc_name:   String(docName || 'Scope of Loss').slice(0, 200),
+      extracted:  extracted || null,
+      applied:    applied,
+      rcv: rcv, acv: acv, depreciation: dep
+    };
+    var r = await window.supa.from('scope_reads').insert(row);
+    if(r.error) console.warn('[sol] history not recorded:', r.error.message);
+  }catch(e){ console.warn('[sol] history not recorded:', e); }
+}
+
 /* Merged, never plainly assigned — cr-suf-script adds prepare/extractFromUrl to
    this same object later in the document. */
-window.CardinalSolUpload = Object.assign(window.CardinalSolUpload || {}, { read: solRead });
+window.CardinalSolUpload = Object.assign(window.CardinalSolUpload || {},
+  { read: solRead, logRead: logScopeRead });
 
 async function sendScopeToReader(b64, mime, name, btn){
   var card  = document.getElementById('solCardEl');
@@ -15037,8 +15076,17 @@ function openSolReviewModal(extracted, fileName){
     var lbl = f[0], path = f[1], newV = f[2], oldV = f[3];
     var hasNew = newV !== null && newV !== undefined && newV !== '';
     if(hasNew) anyExtracted = true;
-    var changed = hasNew && fmt(newV) !== fmt(oldV);
     var oldStr = fmt(oldV);
+    /* 666 — pre-tick ONLY what is empty. The old rule was `hasNew && new !==
+       old`: anything DIFFERENT arrived pre-approved, including an AI
+       misreading of a field a human had already verified — which is exactly
+       how (330) 636-5816 became 663-5816 on a live claim. Now a filled field
+       that disagrees still SHOWS the difference ("was: …") but the overwrite
+       is opt-in: Theo ticks it himself or it does not happen. Identical
+       values stay unticked as before; "(not found)" rows still get no
+       checkbox at all; the notes row below stays always-ticked because it
+       appends and can overwrite nothing. */
+    var tick = hasNew && !oldStr;
     return '<div class="solRow">' +
       '<div class="solLbl">' + esc(lbl) + '</div>' +
       '<div>' +
@@ -15050,7 +15098,7 @@ function openSolReviewModal(extracted, fileName){
       '<div>' + (hasNew
         ? '<input type="checkbox" class="solChk" data-solpath="' + esc(path) + '" data-solval="' +
             esc(typeof newV === 'boolean' ? (newV ? 'true' : 'false') : String(newV)) +
-            '"' + (changed ? ' checked' : '') + '>'
+            '"' + (tick ? ' checked' : '') + '>'
         : '') +
       '</div>' +
     '</div>';
@@ -15138,6 +15186,11 @@ function applySolExtraction(){
        chain keeps the exact shape it had — no new catch swallowing the
        checklist write's own errors. */
     return bridgeSolToClaim(pr, applied);
+  }).then(function(claimId){
+    /* 665: the history row, AFTER the claim write, keyed by the id the bridge
+       just wrote. `extracted` and `fileName` are openSolReviewModal's own
+       parameters — this chain lives inside it. Non-blocking by design. */
+    return logScopeRead(claimId, pr, fileName, extracted, applied);
   });
   document.getElementById('solModal').style.display = 'none';
 }
@@ -15251,7 +15304,9 @@ async function bridgeSolToClaim(pr, applied){
     }
 
     if(claim){
-      if(!Object.keys(patch).length) return;
+      /* 665: even a no-op apply hands back the id — the caller logs history
+         against it, and "nothing changed" is still a read that happened. */
+      if(!Object.keys(patch).length) return claim.id;
       patch.updated_at = new Date().toISOString();
       var up = await window.supa.from('insurance_claims')
         .update(patch).eq('id', claim.id).select('id').single();
@@ -15277,6 +15332,9 @@ async function bridgeSolToClaim(pr, applied){
       if(lk.error) console.warn('[sol] claim created but the project link failed:', lk.error);
     }
     if(currentProject && currentProject.id === pr.id) paintSolLift(pr.id);
+    /* 665: the id is the return value now — the apply chain logs the history
+       row against it. Both branches hold `claim` here (found or inserted). */
+    return claim.id;
   }catch(err){
     /* Deliberately NOT swallowed. The checklist half has already succeeded and
        this half has not, and that split is precisely the state that looks saved
@@ -26512,6 +26570,11 @@ function showList() {
     state.upgrades = await softSelect('claim_upgrades',
       q => q.eq('claim_id', id).order('sort_order', { ascending: true }));
     state.money = (await softSelect('claim_money', q => q.eq('claim_id', id)))[0] || null;
+    /* 665: the scope trail, newest first. softSelect already absorbs a missing
+       table or an RLS refusal into an empty list, which is the right face for
+       an audit trail: quiet, never an error banner. */
+    state.scopeReads = await softSelect('scope_reads',
+      q => q.eq('claim_id', id).order('created_at', { ascending: false }).limit(50));
     return state.claim;
   }
 
@@ -26798,7 +26861,35 @@ function showList() {
     return renderLift() +
       sect(1, 'Payments Received', '<button class="cr-c-h-btn" data-act="add-payment">+ Add Payment</button>', renderPayments()) +
       sect(2, 'Supplements Filed', '<button class="cr-c-h-btn" data-act="add-supplement">+ Add Supplement</button>', renderSupplements()) +
-      sect(3, 'Homeowner Upgrades', '', renderUpgrades());
+      sect(3, 'Homeowner Upgrades', '', renderUpgrades()) +
+      sect(4, 'Scope History', '', renderScopeHistory());
+  }
+
+  /* 665: every scope read that was ever APPLIED, newest first — the trail
+     first_scope_/approved_ cannot hold (write-once + last-write-wins keeps
+     only the ends). Read-only here; rows are written in ONE place,
+     logScopeRead() in the main block. */
+  function renderScopeHistory() {
+    const rows = state.scopeReads || [];
+    if (!rows.length) {
+      return `<div class="cr-c-empty">No scope reads recorded yet.<small>Each Scope of Loss you read and apply is kept here, so a re-read never erases the one before it.</small></div>`;
+    }
+    return `
+      <table class="cr-c-table">
+        <thead><tr><th>Read</th><th>Document</th><th class="amt">RCV</th><th class="amt">ACV</th><th class="amt">Deprec.</th></tr></thead>
+        <tbody>
+          ${rows.map(sr => `
+            <tr>
+              <td>${fmtDateShort(sr.created_at)}${sr.created_by ? `<br><small style="color:#8b949e;">${esc(String(sr.created_by).split('@')[0])}</small>` : ''}</td>
+              <td>${esc(sr.doc_name || '—')}</td>
+              <td class="amt">${money(sr.rcv)}</td>
+              <td class="amt">${money(sr.acv)}</td>
+              <td class="amt">${money(sr.depreciation)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
   }
 
   function paneClient() {
@@ -36649,6 +36740,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:666, d:'2026-08-09', t:'The scope review stops pre-approving overwrites',
+s:'When a scope read disagreed with something already on file, the review screen arrived with that change pre-ticked \u2014 which is how one misread digit in an adjuster\u2019s phone number got applied over the correct number tonight. Now only EMPTY fields come pre-ticked. A field that already holds a value still shows what the document says next to what is stored, but replacing it takes a deliberate tap. Filling in a blank claim stays one Apply, exactly as before.'},
+{ b:665, d:'2026-08-09', t:'Scope history \u2014 no read is ever lost again',
+s:'Until tonight the app kept only the FIRST scope figures and the LATEST \u2014 read four scopes on a claim and numbers two and three were gone for good, because each apply overwrote the one before it. Now every scope you read and apply is recorded: when, which document, who, and the RCV / ACV / depreciation it carried, shown newest-first in a Scope History section on the claim\u2019s Settle tab. The two reads already on record (Adam Gunn\u2019s Allstate scope and the State Farm claim) were seeded in so the history does not start empty. This is also the foundation the supplement work will stand on.'},
 { b:664, d:'2026-08-09', t:'Applying a scope fills the claim, not just the profile',
 s:'Reading Adam Gunn\u2019s scope worked and every field was approved \u2014 and then Ordinance & Law, what the document calls it, both its dollar figures and the coverage type stopped at the client profile and never reached the claim record. The claim screen showed nothing where the numbers should be. The part of the app that copies an approved scope onto the claim was written before those fields existed and had to be told about each one; it never was. It has them now, and a test refuses to pass if a future field is added to the approval screen without being added there too.'},
 { b:663, d:'2026-08-09', t:'A failed read says how big the document was',

@@ -2067,7 +2067,7 @@ distinguished — a successful read logs nothing.
 reached `insurance_claims` (`BUG_CLASSES.md` §18). Gunn's row was repaired by
 hand; the SQL is in the build log.
 
-### Still open, and it is Theo's call, not a defect
+### ✅ SETTLED at 666 (was: Theo's call)
 
 **The review modal pre-ticks any field whose extracted value DIFFERS from what
 is stored — including over human-verified data.** That is how an AI misreading
@@ -2075,10 +2075,19 @@ of the adjuster's phone (`636` → `663`, a digit transposition) arrived
 pre-approved and was applied. The email changed in the same read and was
 CORRECT, so this is one wrong field in seventeen, not an unreliable extractor.
 
-The proposed change: tick automatically only where the field is **empty**; leave
-a disagreement with existing data unticked so overwriting is opt-in. On Gunn's
-read that would have unticked three rows (carrier, phone, email) and left every
-empty field ticked — one save, two extra taps. **Offered and not shipped.**
+**Theo picked "only tick empty" and it SHIPPED at build 666.** A field that
+already holds a value arrives unticked even when the extraction differs; the
+difference still shows, the overwrite is opt-in. Do not re-litigate toward
+differs-means-ticked — the misread phone digit is the recorded reason.
+
+## ✅ BUILT at 665 — scope history (GAP-2)
+
+Theo's pick for the build after 664, his ordering: data-loss risk first, and
+the structural floor for supplements. `scope_reads` (applied, append-only —
+NO update policy, deliberate), ONE writer (`logScopeRead`, exported as
+`CardinalSolUpload.logRead` for the supplement work to reuse), Settle-pane
+history section, backfill seeded 2 rows. GAP-2 is CLOSED. ⚠ For CR-AUD-005:
+build on `scope_reads` + `logScopeRead`; do not invent a second trail.
 
 ## (historic) The Adam Gunn scope read was not proven (661)
 
