@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 663 &#8212; A failed scope read now says how big the document it was handed actually was, which is what makes the rest of the numbers mean anything</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 664 &#8212; Ordinance &amp; Law and Coverage Type now reach the claim record when you apply a scope, instead of stopping at the client profile</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14997,7 +14997,12 @@ function openSolReviewModal(extracted, fileName){
   summ.innerHTML = '<b>' + esc(fileName || 'SOL') + '</b>' +
     (extracted && extracted.summary ? ' &mdash; ' + esc(extracted.summary) : '');
 
-  /* Field definitions: label, path (dotted), extracted value, current value */
+  /* Field definitions: label, path (dotted), extracted value, current value
+     ⚠ 664: ADDING A ROW HERE IS HALF THE JOB. `bridgeSolToClaim()`'s CLAIM_COL
+     decides what reaches the insurance_claims row, and it is an allow-list —
+     a path with no entry there saves to the client profile and silently misses
+     the claim. That is exactly what happened to the five ord_law columns
+     between 658 and 664. Add the row, then add the mapping. */
   var fields = [
     ['Carrier',         'carrier',            extracted.carrier,        currentIns.carrier],
     ['Policy Number',   'policy_number',      extracted.policy_number,  currentIns.policy_number],
@@ -15166,11 +15171,37 @@ function localToday(){
    silently collapses to zero, with no error anywhere. */
 async function bridgeSolToClaim(pr, applied){
   if(!pr || !applied || !window.supa) return;
+  /* ⚠ 664 — THIS MAP AND THE REVIEW MODAL'S `fields` LIST GROW TOGETHER.
+     Same rule this project already applies to STAGES / IC_SKIP / PIPE_SKIP and
+     to WO_TRADES / TRADES / MONEY_TABS: one grows, all grow.
+
+     It shipped at 646 with eight entries. 655 added coverage_type, 658 added
+     ord_law_basis and ord_law_limit, 660 added ord_law_rcv and ord_law_acv —
+     every one of them to the review modal, the claim edit form, the formatter
+     and the bounded select, and NONE of them to this map. So Theo approved
+     "BC-Building Codes, $1,887.33 RCV / $1,933.72 ACV" on Adam Gunn's scope,
+     watched it save, and the claim row kept five NULLs.
+
+     It is silent because it is an ALLOW-LIST: an unknown key is not an error
+     here, it is simply not copied. The checklist half never had this problem
+     because it writes the whole object. `harness_664.js` now fails if a path
+     in the modal has no home here and is not one of the three deliberately
+     special-cased below (date_of_loss, rcv, acv) — so the next person to add a
+     field cannot repeat this. */
   var CLAIM_COL = {
     'carrier':          'carrier',
     'policy_number':    'policy_number',
     'claim_number':     'claim_number',
     'deductible':       'deductible',
+    'coverage_type':    'coverage_type',
+    /* 658's tri-state survives the copy: the skip below drops undefined/null/''
+       but NOT false, so a deliberate "No" is still recordable and an absence
+       still leaves the column alone rather than asserting a negative. */
+    'ord_law':          'ord_law',
+    'ord_law_basis':    'ord_law_basis',
+    'ord_law_rcv':      'ord_law_rcv',
+    'ord_law_acv':      'ord_law_acv',
+    'ord_law_limit':    'ord_law_limit',
     'adjuster.name':    'adjuster_name',
     'adjuster.company': 'adjuster_company',
     'adjuster.phone':   'adjuster_phone',
@@ -36618,6 +36649,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:664, d:'2026-08-09', t:'Applying a scope fills the claim, not just the profile',
+s:'Reading Adam Gunn\u2019s scope worked and every field was approved \u2014 and then Ordinance & Law, what the document calls it, both its dollar figures and the coverage type stopped at the client profile and never reached the claim record. The claim screen showed nothing where the numbers should be. The part of the app that copies an approved scope onto the claim was written before those fields existed and had to be told about each one; it never was. It has them now, and a test refuses to pass if a future field is added to the approval screen without being added there too.'},
 { b:663, d:'2026-08-09', t:'A failed read says how big the document was',
 s:'When a scope will not read, the message already said how much of it the AI took in. On its own that number cannot be read: a small one means either the file never arrived or it arrived whole and was ignored, and those are two different faults. The message now also says how many megabytes of document the reader was actually holding, so the two stop looking the same. The message was also being cut off at 250 characters \u2014 a length chosen back when it could contain raw AI output \u2014 and the part being cut was the explanation.'},
 { b:662, d:'2026-08-09', t:'The reader is given time to read a long scope',

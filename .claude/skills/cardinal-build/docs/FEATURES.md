@@ -2979,3 +2979,34 @@ error capped server-side at 150. At 250 the tail was the part being cut.
 `?model=`) reports whether `GEMINI_API_KEY` is present *in that environment* and
 whether `OPENAI_API_KEY` is set at all. A preview without the key fails the read
 for a reason that has nothing to do with the scope.
+
+### 664 — the applied scope reaches the claim record
+
+⚠ **`bridgeSolToClaim()`'s `CLAIM_COL` and the review modal's `fields` list GROW
+TOGETHER.** Same rule as `STAGES` / `IC_SKIP` / `PIPE_SKIP` and `WO_TRADES` /
+`TRADES` / `MONEY_TABS`: one grows, all grow. The map is an **allow-list** — a
+path with no entry saves to the client profile and **silently** misses the
+claim. That is what happened to `coverage_type` (655) and the five `ord_law`
+columns (658, 660): four builds wired them into the modal, the claim edit form,
+the formatter and the bounded select, and none into the writer.
+
+**`harness_664.js` now fails on drift**, extracting both lists from the source.
+Only three paths may be absent from the map — `date_of_loss`, `rcv`, `acv` — and
+each is special-cased by hand immediately below it (a DATE-format guard and the
+write-once `first_scope_*` baseline).
+
+**658's tri-state survives the copy**: the skip drops `undefined` / `null` / `''`
+but **not** `false`, so a deliberate "No" is recordable and an absence leaves the
+column alone.
+
+**Two stores, and they are written by different mechanisms** — worth knowing
+before debugging this path:
+
+| Store | How it is written | Keyed by |
+|---|---|---|
+| `projects.checklist.lead.insurance` | writes the **whole object**, splitting dotted paths into nesting | `{adjuster:{phone}}` |
+| `insurance_claims` | the explicit `CLAIM_COL` allow-list | `applied['adjuster.phone']` |
+
+⚠ **A fixture copied from the checklist row is the wrong shape for the writer** —
+that nesting is the output. `bridgeSolToClaim` receives dotted paths. This cost
+a false red while writing the harness.

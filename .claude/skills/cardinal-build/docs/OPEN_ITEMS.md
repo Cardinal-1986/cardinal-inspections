@@ -2052,7 +2052,35 @@ additive app-wide). `rptIsSigned` left as a stage proxy on purpose — with
 zero signed contracts live, real-signature keying would zero every report.
 **Revisit `rptIsSigned` once contracts actually flow.**
 
-## ⚠ The Adam Gunn scope read is STILL not proven (661)
+## ✅ CLOSED — the Adam Gunn scope read WORKS (9 Aug, builds 660–664)
+
+It read on the first attempt after 660–663 deployed, and it read **BC-Building
+Codes, $1,887.33 RCV / $1,933.72 ACV** — the figures Theo quoted off page 5, to
+the cent. `O&L cap` came back *(not found)* rather than invented.
+
+⚠ **Which build fixed it is unknown and must not be claimed.** Only the BC
+vocabulary is provably 660's. Whether it parsed because of 661's retry, 662's
+duration, or because Gemini was simply healthy that evening cannot be
+distinguished — a successful read logs nothing.
+
+**664 then fixed what applying it revealed**: five approved columns never
+reached `insurance_claims` (`BUG_CLASSES.md` §18). Gunn's row was repaired by
+hand; the SQL is in the build log.
+
+### Still open, and it is Theo's call, not a defect
+
+**The review modal pre-ticks any field whose extracted value DIFFERS from what
+is stored — including over human-verified data.** That is how an AI misreading
+of the adjuster's phone (`636` → `663`, a digit transposition) arrived
+pre-approved and was applied. The email changed in the same read and was
+CORRECT, so this is one wrong field in seventeen, not an unreliable extractor.
+
+The proposed change: tick automatically only where the field is **empty**; leave
+a disagreement with existing data unticked so overwriting is opt-in. On Gunn's
+read that would have unticked three rows (carrier, phone, email) and left every
+empty field ticked — one save, two extra taps. **Offered and not shipped.**
+
+## (historic) The Adam Gunn scope read was not proven (661)
 
 657–661 all touched this path and **not one of them has been shown to read
 that document successfully.** What each build actually fixed:

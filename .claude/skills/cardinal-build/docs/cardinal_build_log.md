@@ -12682,3 +12682,87 @@ pre-flight — on a preview deployment it says whether `GEMINI_API_KEY` is even
 present in that environment, and whether `OPENAI_API_KEY` is set at all (which
 decides whether 661's fallback repair is reachable). **Nothing further should be
 built on this path until Theo has run the read and produced a tail.**
+
+---
+
+## Build 664 — 9 Aug 2026 — the applied scope reaches the CLAIM
+
+**First, the thing seven builds were for: the scope read WORKED.** Adam Gunn's
+4.8 MB Allstate estimate read on the first attempt after 660–663 went live.
+Carrier, policy, claim number, date of loss, deductible, RCV 22,397.63, ACV
+14,164.81 — and **`BC-Building Codes`, $1,887.33 RCV / $1,933.72 ACV**, the
+category 660 taught it, to the cent. The ACV above the RCV rendered as-is, and
+`O&L cap` came back **(not found)** rather than invented. ⚠️ **Which build fixed
+it is unknown and is not being claimed.** Only the BC vocabulary is provably
+660's; whether it parsed because of 661's retry, 662's duration, or because
+Gemini was healthy (`/api/ai-status` reported 648 ms) cannot be told apart — a
+successful read logs nothing.
+
+**Then Theo applied it, and five approved columns did not arrive.**
+
+`bridgeSolToClaim()` copies an applied scope onto `insurance_claims` through
+`CLAIM_COL`, an explicit map written at 646 with **eight** entries. 655 added
+`coverage_type`; 658 added `ord_law_basis` and `ord_law_limit`; 660 added
+`ord_law_rcv` and `ord_law_acv`. All four builds wired them into the review
+modal, the claim edit form, the formatter and the bounded select. **None wired
+them here.** The map is an ALLOW-LIST — an unknown key is not an error, it is
+silence — and the checklist half kept working because it writes the whole
+object. So the profile looked right and the claim row held `NULL`.
+
+**This is now `BUG_CLASSES.md` §18.** The durable fix is not the six new
+entries; it is `harness_664.js` extracting **both** lists from the shipped
+source and failing on drift. Against 663 it prints the defect as a sentence:
+`orphaned: coverage_type, ord_law, ord_law_basis, ord_law_rcv, ord_law_acv,
+ord_law_limit`. **That assertion would have gone red the day 655 shipped.** The
+coupling is now stated at both ends, the way `STAGES` / `IC_SKIP` / `PIPE_SKIP`
+and `WO_TRADES` / `TRADES` / `MONEY_TABS` already are.
+
+**658's tri-state survives the copy, asserted three ways**: `true` writes true,
+a deliberate `false` writes false, and `null` writes **nothing at all** rather
+than asserting a negative.
+
+### Data repaired by hand on Gunn's claim (`d9049634`), same session
+
+```sql
+update insurance_claims set adjuster_phone='(330) 636-5816',
+  ord_law=true, ord_law_basis='BC-Building Codes',
+  ord_law_rcv=1887.33, ord_law_acv=1933.72, updated_at=now()
+ where id='d9049634-292f-4957-8257-112f1c57d846';
+update projects set checklist = jsonb_set((checklist::jsonb),
+  '{lead,insurance,adjuster,phone}','"(330) 636-5816"')::text
+ where id='232ff50b-2e62-4bcb-82d5-e5bbf50cb0f4';
+```
+
+- **The AI misread the adjuster's phone.** It applied `(330) 663-5816`; the
+  correct number is `(330) 636-5816` — a digit transposition, and **the stored
+  value was the right one.** Theo caught it by eye. Restored in both stores.
+  ⚠️ The email change in the same read was CORRECT (`claims@claims.allstate.com`),
+  so this is not "the extractor is unreliable on contacts" — it is one wrong
+  field out of seventeen, and eyes are the gate.
+- `ord_law_limit` deliberately left `NULL`: the scope states no endorsement cap,
+  and 658's rule is that absence is not a negative.
+
+### ⚠️ The review modal pre-ticks any field whose value DIFFERS — including over
+### verified data. Not changed in this build; it is Theo's call.
+
+That is how the wrong phone number got applied: the tick rule is "extracted
+differs from stored", so an AI misreading of an **already-correct** field
+arrives pre-approved. On Gunn's read it would have unticked exactly three rows
+(carrier, phone, email) and every empty field would still have been ticked —
+one save, two extra taps. **Offered, not shipped.**
+
+**Gates.** `check_build.py` green, stamp 663 → 664. `harness_664.js` (23)
+EXECUTES the shipped `bridgeSolToClaim` against Gunn's real approved object and
+inspects the patch column by column, covering the update path, the insert path
+and the tri-state. Negative control on 663: **12 red**.
+
+⚠️ **One false red, mine, and it is the fixture trap.** The first fixture was
+copied from the checklist row I had just read out of production —
+`{adjuster:{phone:…}}`. That nesting is the **output**; `bridgeSolToClaim`
+receives dotted paths (`applied['adjuster.phone']`). Correct code, red harness.
+Recorded in §18: reading a real row from the *wrong end of the pipeline* is
+still a convenient fixture.
+
+Regressions: 663 23/23, 662 33/33, 661 39/39, 660 27/27, 659 16/16, 658 38/38,
+657 32/32, 655 42/42, 654 31/31, 653 45/45, approvals 15/15, pay 58/58
+(`TZ=America/New_York`), render_inscards 9/9, render_656 17/17.
