@@ -12188,3 +12188,47 @@ One first-draft assertion was itself wrong (matched the new fallback's
 tail) — fixed in the harness, not the app. Negative control on 654: 33
 red. Regressions: `harness_654` 31/31, `harness_653` 45/45,
 `harness_approvals` 15/15, `harness_pay` 58/58.
+
+## Build 656 — Theo's three, off one screenshot pair (9 Aug 2026)
+
+Reported from the phone with two screenshots of the same claim screen, one
+scrolled sideways.
+
+- **The insurance card group was invisible, and had always been.** Theo
+  asked where Coverage Type and Ord. & Law are. They render in
+  `renderInsurancePanel()` → `#insCard`, behind "More details" — but
+  `#tab-overview > *:not(...){display:none !important;}` hid every direct
+  child not on its allow-list, and `insCard` / `insDocsCard` / `insItelCard`
+  were not on it. Each renderer sets `mount.style.display='block'` and always
+  did; **a NORMAL inline style loses to an `!important` stylesheet rule.**
+  All three now on the list. **iTel had never rendered once since 406.**
+  ⚠️ `scripts/render_inscards.js` was written at **641 specifying this exact
+  fix** and has been RED ever since — the fix was specified, gated, and never
+  shipped. It is GREEN now (9/9). A harness nobody runs is a harness that
+  proves nothing; run the render harnesses, not just the jsdom ones.
+- **The claim tab strip jumped vertically when swiped sideways.**
+  `.cr-c-tabs.detail` was BOTH `position:sticky; top:0` **and**
+  `overflow-x:auto`. One element cannot reliably be a sticky-positioned box
+  and its own scroll container — scrolling it sideways re-resolves the sticky
+  offset and the row moves (~33px in Theo's screenshots). Split: a
+  `.cr-c-tabwrap` that sticks and does not scroll, the strip inside it that
+  scrolls and does not stick. Scrollbar hidden so it cannot steal height from
+  a touch row.
+- **The Invoiced chip went short.** 655's one-vocabulary map gave the chips a
+  35-char label; measured in Chromium it is a 250px pill that pushed the
+  stage-filter strip to 4 rows at 375–390px. Theo's call: short on the chips,
+  full on the rail. `INS_STAGE_LABEL_SHORT` + `insStageLabel(s, short)` — one
+  override, read through one function, so this cannot become a fifth
+  vocabulary. Chips now 165px, 3 rows.
+
+**Gates.** `check_build.py` green first run, stamp 655 → 656.
+`render_inscards.js` 9/9 (was 4 red). New `render_656.js` 17/17 — a
+**Chromium** harness, because both remaining items are layout questions jsdom
+cannot answer: it scrolls the strip sideways and asserts 0px vertical drift,
+then scrolls the mount and asserts the wrapper still sticks. ⚠️ Its first
+draft scrolled `window` and read a **false red** — the mount is its own
+scroll container (`styleMounts()` sets `position:fixed; inset:0;
+overflow-y:auto` inline). Fixed in the harness, not the app; a guard
+assertion now proves the mount actually scrolled. Negative controls on 655:
+9 red and 4 red. Regressions: 655 42/42, 654 31/31, 653 45/45, approvals
+15/15, pay 58/58.
