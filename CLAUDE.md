@@ -56,9 +56,17 @@ The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It trigger
 
 **Every doc states the build it was worked forward to.** That stamp stays true forever; the table above says whether it is still current. This file has twice been found making a *stale claim about staleness* — asserting `START_HERE.md` said 427 when it said 467, then calling the whole set two sessions behind after most of it had been updated. **Re-check the table before repeating any claim in it, including this one.**
 
-**⚠ The in-app `CHANGELOG` was REBUILT at build 574 and no longer covers the old spans.** Earlier revisions of this file said the array in `<script id="cr-cl-script">` was "the only complete record" for 428–542. **That record now exists only in git history**: the array was replaced wholesale at 574 with a new entry shape (`{ b, d, t, s }` — build, date, title, long user-facing summary) and now holds **48 entries, builds 574–627** (gaps at 581–583, 599, 600 and 614, which are normal). For anything 166–573, read the old array out of a pre-574 revision — **`git show aeac5e5:index.html` is the last build-573 tree** (re-verified 8 Aug: 104 inline scripts, 114 style blocks, 87 `window.Cardinal*`, 81% bare `var()` — it is 573, not 594, and this file has cited it correctly throughout). A summary of 428–451 is in the section below.
+**✅ CORRECTION (9 Aug, build 639) — the in-app `CHANGELOG` was NOT rebuilt, and nothing was retired to git history.** Every revision of this file until now said the array in `<script id="cr-cl-script">` was "replaced wholesale at 574", that the old record "now exists only in git history", and that it holds "48 entries, builds 574–627". **All three are wrong.** Measured on the working tree:
 
-**For session state — open items, settled decisions, handoffs — the `docs/` folder is authoritative over the skill's `references/` folder.** **And for *what shipped* since 574, the `CHANGELOG` in `index.html` outranks both** — it is the only record that survives work done outside `.claude/`, because it lives inside the file every tool has to edit. When a doc and the `CHANGELOG` disagree about whether something exists, the `CHANGELOG` wins for its span; for anything older, git history holds the retired array. `references/app_map.md` remains a 388-era terrain map that itself defers to `FEATURES.md`. Do not proceed from memory — build numbers, open items and settled decisions change every session. **Check their dates against the current build before trusting them**; docs written a session ago describe a different app.
+- There is **ONE** `CHANGELOG` array, and it holds **335 entries** — **60** in the current shape (`{ b, d, t, s }` — build, date, title, long summary, **574–639**) and **275** in the original shape (`{ build, note }`, **166–600**), **interleaved in one descending list**.
+- **574 ADDED a shape beside the old one; it replaced nothing.** The old shape kept receiving entries until **build 600**, twenty-six builds after it was supposedly retired.
+- The renderer normalises both **on purpose** — `function entryBuild(e){ return e.build != null ? e.build : e.b; }` and `if(e.note != null) return e.note;`. Two shapes is the design, not drift.
+
+So **the full 166–639 record is in the working file.** You do not need `git show aeac5e5:index.html` to read builds 428–542 — grep `index.html`. (That SHA is still the last build-573 tree and is still correct for *measuring* 573: 104 inline scripts, 114 style blocks, 87 `window.Cardinal*`, 81% bare `var()`.) A summary of 428–451 is in the section below.
+
+⚠️ **This error cost a build number.** `next_build.py`'s entry regex matches the **old** shape, so it counts an identical 275 on every branch, no branch ever looks like it added a build, and **branch-collision detection has been dead since 574** — which is how two open PRs both shipped a "build 638" on 9 Aug. Anyone fixing that script should know it is looking at a live array, not a fossil.
+
+**For session state — open items, settled decisions, handoffs — the `docs/` folder is authoritative over the skill's `references/` folder.** **And for *what shipped* since 574, the `CHANGELOG` in `index.html` outranks both** — it is the only record that survives work done outside `.claude/`, because it lives inside the file every tool has to edit. When a doc and the `CHANGELOG` disagree about whether something exists, the `CHANGELOG` wins — and it wins for **every** span back to 166, because nothing was retired out of it (see the correction above). `references/app_map.md` remains a 388-era terrain map that itself defers to `FEATURES.md`. Do not proceed from memory — build numbers, open items and settled decisions change every session. **Check their dates against the current build before trusting them**; docs written a session ago describe a different app.
 
 ---
 
@@ -76,7 +84,7 @@ Before building: grep `FEATURES.md`, then grep the in-app `CHANGELOG` (it covers
 
 ## What happened in 428–451 — the undocumented span
 
-Reconstructed from the in-app `CHANGELOG` as it stood then (147 entries, builds 166–451 — an array retired at 574; see above) and verified against the file. Build **450 is a gap**; gaps are normal here.
+Reconstructed from the in-app `CHANGELOG` as it stood then (147 entries, builds 166–451) and verified against the file. **Those entries are still in `index.html`** — grep the `{ build:N, note:'…' }` shape in `cr-cl-script`; the "retired at 574" claim this file used to carry was wrong (see the correction above). Build **450 is a gap**; gaps are normal here.
 
 | Builds | Theme |
 |---|---|
