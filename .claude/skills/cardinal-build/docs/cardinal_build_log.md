@@ -10980,3 +10980,83 @@ It may be a transient flash, a real bug when adoption does not run, or nothing.
 **Not touched.** I have now been wrong twice this build about a CRM I cannot
 open, and the correct next step is a screenshot of a Community job in dark mode,
 not a third guess. Recorded so it is not lost.
+
+---
+
+## Build 638 — a claim with nothing in it is not a claim (9 Aug 2026)
+
+Theo: *"when starting the claim after profile is made, if you put no info and
+just accept it will take you to this screen instead, with no way to upload
+scope. And not attach to client (unknown)."*
+
+**He reproduced how the junk got in.** `insurance_claims` holds four rows:
+
+| created | homeowner | address | carrier | project |
+|---|---|---|---|---|
+| 23 Jul | `grdgdfg` | `dfgfdg` | — | null |
+| 24 Jul | — | — | — | null |
+| 29 Jul | — | — | — | null |
+| 7 Aug | Maker Space Solutions LLC | 1630 E 5th St | State Farm | **set** |
+
+Every field goes through `get()`, which returns null when empty, and `status`
+falls back to `'filed'` — so an untouched form inserted a row of nulls and the
+detail screen rendered exactly what he photographed.
+
+### ⚠️ The "not attached" half is NOT a bug — all four entry points traced
+
+| path | passes a project id? |
+|---|---|
+| `CardinalClaims.new(projectId)` — the API | yes, optional |
+| `crNewClaimFromHub(projectId)` | passes it through |
+| **"+ Start Claim Record"** on a client profile | **yes, `pid`** |
+| **"+ NEW CLAIM"** on the claims list | **no — no client is selected there** |
+
+The profile paths already attach, and the 7 Aug claim proves it. The list button
+has nothing to attach to; that is inherent to starting from the list, not a
+defect. **So "unknown, and not attached" is one root cause wearing two faces: an
+empty claim created from the list.** Require identity and both symptoms go.
+
+### The fix
+
+Refuse to save unless the claim can be identified by **any one** of homeowner,
+property, carrier, or claim number. One is enough deliberately — a claim really
+does start as *"State Farm, number pending"* or *"the Gunn place, carrier
+unknown"*. Demanding a particular field would be inventing process; demanding
+*something* is just refusing to write a blank row.
+
+Placed before **both** writes, so neither insert nor update can blank a claim.
+
+### Verification
+
+**New `harness_claimguard.js` — 15 assertions.** It lifts the guard's own source
+by paren-matching and **executes it against the real payload shapes**, including
+the three junk rows verbatim:
+
+```
+REFUSED: 24 Jul junk — all null          REFUSED: all blank strings
+REFUSED: 29 Jul junk — all null          allowed: carrier only, number pending
+allowed: 23 Jul junk — typed nonsense    allowed: claim number only
+allowed: 7 Aug real — State Farm         allowed: property only, carrier unknown
+```
+
+⚠️ **23 Jul is allowed on purpose.** `grdgdfg` is nonsense, but it is nonsense a
+person typed. The guard's job is to stop a BLANK row, not to judge what someone
+meant — refusing it would need a rule nobody has agreed.
+
+Negative control on 637: **10 red**, wrapped so it reports FAILs rather than
+throwing. All twelve harnesses green.
+
+⚠️ Extracting the condition by offset (`i - 4`) grabbed the `if (` and made
+`new Function` throw. Paren-match it — same family as the `[^;]` trap.
+
+### Deliberately NOT built — both belong to his insurance write-up
+
+- **No scope upload on the claim screen.** `cr-claims-script` has **zero** file
+  inputs and **zero** storage calls; there has never been one. `scope_pdf_url`
+  exists on the table with **no writer anywhere** in `index.html`. That is a
+  feature to design with him.
+- **No forcing the list's "+ New Claim" to pick a client.** Whether a claim may
+  exist before a client does is a process question and it is his.
+
+⚠️ **The three junk rows are NOT deleted.** Offered twice, no answer. Deleting
+production rows unprompted is not mine to do, and they are harmless.

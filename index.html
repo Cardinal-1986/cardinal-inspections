@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 637 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 638 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25884,6 +25884,27 @@ function showList() {
       const errEl = modal.querySelector('[data-err]');
       errEl.style.display = 'none';
 
+      /* 638, Theo: "if you put no info and just accept it will take you to this
+         screen instead ... And not attach to client (unknown)."
+         Every field above is get(), which is null when empty, and status falls
+         back to 'filed' — so an untouched form wrote a row of nulls and the
+         detail screen rendered "Unknown Homeowner / Unknown / TBD / FILED".
+         Three of the four rows in insurance_claims got there this way.
+         ANY ONE of these four will do. A claim really can begin as "State Farm,
+         number pending" or "the Gunn place, carrier unknown", so demanding a
+         particular field would be inventing process. Demanding SOMETHING is
+         just refusing to write a blank row.
+         ⚠️ This also answers the "not attached" half. The two profile entry
+         points DO pass a project id (see crNewClaimFromHub and "+ Start Claim
+         Record"); the claims-list button cannot, because no client is selected
+         there. An empty claim from the list is what looked like a linking bug. */
+      if (!payload.homeowner_name && !payload.property_address &&
+          !payload.carrier && !payload.claim_number) {
+        errEl.textContent = 'Add at least a homeowner, a property, a carrier or a claim number \u2014 otherwise this saves as an empty claim.';
+        errEl.style.display = 'block';
+        return;
+      }
+
       if (isEdit) {
         const { error } = await window.supa.from('insurance_claims').update(payload).eq('id', c.id);
         if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
@@ -35263,6 +35284,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:638, d:'2026-08-09', t:'A claim can no longer be saved empty',
+    s:'Starting a claim and tapping save without filling anything in used to create a real record with no name on it \u2014 it showed as \u201cUnknown Homeowner\u201d, carrier \u201cUnknown\u201d, property \u201cTBD\u201d, and was not attached to any client. Three of the four claims in the system got there that way. The form now asks for at least one of: a homeowner, a property address, a carrier, or a claim number. Any one is enough, because a claim genuinely can start as \u201cState Farm, number pending\u201d or \u201cthat house on Arlington, carrier unknown\u201d. Starting a claim from a client profile still attaches it to that client, exactly as before \u2014 that part was already working. Starting one from the claims list has no client selected yet, which is why those came out unattached.' },
   { b:637, d:'2026-08-09', t:'The address on the Location card is readable in dark mode',
     s:'On a retail client profile in dark mode the address under the map was pale grey on a white card \u2014 measured at 1.46 to 1, where readable body text needs at least 4.5 to 1. The card itself is white in both light and dark, but the address colour was switching with the theme, so it turned pale on a background that never did. It is now a fixed dark colour that reads on that white card in either mode. Only the retail profile changed. Insurance and Community cards are not white and keep the colours they already had.' },
   { b:636, d:'2026-08-08', t:'One map on a client profile, and it is the Google one',
