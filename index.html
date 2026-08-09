@@ -1784,7 +1784,14 @@ body.restoring #restoreVeil{display:flex;}
    hidden node on a client profile, which is what every other retired card here
    does. solCard STAYS: it is the on-ramp, the way a retail or community job
    becomes an insurance job at all. */
-#tab-overview > *:not(#acxMount):not(#cr-pp-mount):not(#solCard){display:none !important;}
+/* 656: insCard / insDocsCard / insItelCard join the allow-list. Each one's
+   renderer sets mount.style.display='block' and always has - but a NORMAL
+   inline style loses to an !important stylesheet rule, so all three were
+   invisible: the claim panel (the ONLY place Coverage Type and Ord. & Law
+   render), Insurance Documents, and iTel, which had never rendered once
+   since 406. Chromium proves this; jsdom cannot see it. Keep this list and
+   render_inscards.js in step - the harness asserts the exact count. */
+#tab-overview > *:not(#acxMount):not(#cr-pp-mount):not(#solCard):not(#insCard):not(#insDocsCard):not(#insItelCard){display:none !important;}
 .acxsec{background:#fff;border:1px solid #ddd6cf;border-radius:6px;margin-bottom:14px;overflow:visible;}
 /* AccuLynx-style activity tiles (photo album / inspections) */
 .jaboxrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px;}
@@ -3284,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 655 &#8212; Insurance repair: coverage fields readable, the hub keeps its doors, one stage vocabulary, and cross-device edits stop eating each other</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 656 &#8212; The claim panel is visible at last (Coverage Type and Ord. &amp; Law with it), the claim tabs stop jumping, and the Invoiced chip gets shorter</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -16316,6 +16323,18 @@ var INS_STAGE_LABEL = {
   'Invoiced':'Awaiting Depreciation / Supplements',
   'Closed':'Closed', 'Lost':'Denied'
 };
+/* 656: the SHORT twin, for chips and any other narrow furniture. Measured
+   in Chromium: the full Invoiced label is a 250px pill that pushed the
+   stage-filter strip from 3 rows to 4 at 375-390px. Theo's call - short on
+   the chips, full on the rail, which has the room and needs the precision.
+   Same keys, same source: read through insStageLabel(s, short) so the two
+   can never drift into a fifth vocabulary. */
+var INS_STAGE_LABEL_SHORT = { 'Invoiced':'Awaiting Depreciation' };
+function insStageLabel(s, short){
+  if(short && INS_STAGE_LABEL_SHORT[s]) return INS_STAGE_LABEL_SHORT[s];
+  return INS_STAGE_LABEL[s] || s;
+}
+window.insStageLabel = insStageLabel;
 var CD_STAGE_LABEL = {
   retail:    { 'Closed':'Archived' },
   insurance: INS_STAGE_LABEL,
@@ -21184,7 +21203,7 @@ function renderInsuranceClientsList(){
     stgWrap.innerHTML = '<span class="ins-hstat' + (icStageFilter === '' ? ' on' : '') + '" data-stg="">All stages</span>' +
       STAGES_ALL.map(function(s){
         var n = insClients.filter(function(pr){ return normStage(pr.stage) === s; }).length;
-        var lbl = IC_LABEL[s] || s;
+        var lbl = insStageLabel(s, true);   /* 656: short form on the chips */
         return '<span class="ins-hstat' + (icStageFilter === s ? ' on' : '') + '" data-stg="' + s + '">' +
           lbl + ' <b>' + n + '</b></span>';
       }).join('');
@@ -26045,7 +26064,15 @@ function showList() {
   #cr-claims-mount .cr-c-tab { padding: 12px 16px; font-size: 11px; font-weight: 700; color: var(--cr-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; letter-spacing: 1.4px; text-transform: uppercase; white-space: nowrap; }
   #cr-claims-mount .cr-c-tab.active { color: var(--cr-red); border-bottom-color: var(--cr-red); }
   /* --- 403: detail tab strip + panes. All scoped to #cr-claims-mount. --- */
-  #cr-claims-mount .cr-c-tabs.detail { position: sticky; top: 0; z-index: 4; background: var(--cr-bg, #16161B); }
+  /* 656: sticky and overflow-x were on the SAME element, so scrolling the
+   strip sideways re-resolved its sticky offset and the whole row jumped
+   vertically. The wrapper sticks; the strip inside it scrolls. */
+#cr-claims-mount .cr-c-tabwrap { position: sticky; top: 0; z-index: 4; background: var(--cr-bg, #16161B); }
+#cr-claims-mount .cr-c-tabs.detail { position: static; margin-bottom: 0; }
+#cr-claims-mount .cr-c-tabwrap { margin-bottom: 16px; }
+/* the scrollbar must not steal height from a 44px-tall touch row either */
+#cr-claims-mount .cr-c-tabs.detail { scrollbar-width: none; }
+#cr-claims-mount .cr-c-tabs.detail::-webkit-scrollbar { display: none; }
   #cr-claims-mount .cr-c-pane { min-height: 120px; }
   #cr-claims-mount .cr-c-upg { width: 100%; border-collapse: collapse; font-size: 13px; }
   #cr-claims-mount .cr-c-upg td { padding: 8px 0; border-bottom: 1px solid rgba(128,128,140,.18); }
@@ -26531,9 +26558,11 @@ function showList() {
                    ['record','Record']];
 
   function renderTabStrip() {
-    return '<div class="cr-c-tabs detail">' + CR_TABS.map(t =>
+    /* 656: the sticky wrapper is a separate element from the scrolling
+       strip - see the CSS note. Do not collapse these back into one. */
+    return '<div class="cr-c-tabwrap"><div class="cr-c-tabs detail">' + CR_TABS.map(t =>
       `<div class="cr-c-tab${state.tab === t[0] ? ' active' : ''}" data-ctab="${t[0]}">${t[1]}</div>`
-    ).join('') + '</div>';
+    ).join('') + '</div></div>';
   }
 
   function renderUpgrades() {
@@ -36355,6 +36384,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:656, d:'2026-08-09', t:'The claim panel comes out of hiding',
+s:'Coverage Type and Ord. & Law had nowhere to show. The Insurance Information panel that holds them \u2014 along with Insurance Documents and iTel \u2014 was being hidden by a stylesheet rule that outranked the code trying to show it, so all three had been invisible on every client profile (iTel since the day it was built, in 2026). All three are back. The claim screen\u2019s tabs no longer jump up and down when you swipe them sideways: the row that sticks to the top and the row that scrolls were the same element, and now they aren\u2019t. And the Invoiced chip on the insurance client filter reads \u201CAwaiting Depreciation\u201D so the filter row stays three lines on a phone instead of four \u2014 the pipeline rail still says the full \u201CAwaiting Depreciation / Supplements\u201D.' },
 { b:655, d:'2026-08-09', t:'Insurance repair and write safety',
 s:'Coverage Type and Ord. & Law finally render \u2014 the app read them from columns that didn\u2019t exist, so they came up blank even when filled in (they\u2019re real columns now, backfilled). The insurance hub\u2019s pipeline view stopped destroying its own navigation: Supplement Templates, Insurance Resources, the Adjuster Directory and the Claims Tracker are back beside the other tools. The per-client claim card works again AND stops offering to create a duplicate claim for a job that already has one. Four money-adjacent buttons (payment delete, supplement delete, discard draft, claim save) now say so when a write fails instead of pretending it worked. One insurance stage vocabulary everywhere \u2014 \u201CClosed\u201D is Closed, invoiced jobs read \u201CAwaiting Depreciation / Supplements\u201D, and On Hold jobs finally have a label. And editing the same job from your phone and the desktop no longer silently overwrites the other device\u2019s changes in most cases.' },
 { b:654, d:'2026-08-09', t:'Money tells one story',

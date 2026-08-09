@@ -2741,3 +2741,31 @@ merging** — per-top-level-key last-write-wins now; the seven direct
 checklist writers outside it are recorded follow-up. Gate:
 `harness_655.js` (42 assertions, three areas executed; negative-controlled
 on 654 — 33 red).
+
+### 656 — the claim panel comes out of hiding; the tab strip stops jumping
+
+**`#tab-overview`'s allow-list now has SIX exemptions**: `acxMount`,
+`cr-pp-mount`, `solCard`, **`insCard`, `insDocsCard`, `insItelCard`**. The
+last three had never been visible — each renderer sets a NORMAL inline
+`display:block`, which loses to the rule's `!important`. **`#insCard` is the
+only place Coverage Type and Ord. & Law render** (in `renderInsurancePanel()`,
+behind the "More details" toggle), which is why they looked missing. iTel had
+never rendered once since 406. **Keep this list and
+`scripts/render_inscards.js` in step — the harness asserts the exact count,
+and it sat RED from 641 to 656 because the fix it specified never shipped.**
+
+**Insurance stage labels have a short twin.** `INS_STAGE_LABEL` is still the
+vocabulary; `INS_STAGE_LABEL_SHORT` overrides *only* Invoiced
+("Awaiting Depreciation") and both are read through
+**`insStageLabel(s, short)`** — a fifth vocabulary cannot appear without going
+through that function. Narrow furniture (the insurance client stage-filter
+chips) passes `true`; the rail and everything else keep the full wording.
+Measured in Chromium: 250px → 165px, strip back to 3 rows at 375–390px.
+
+**The claims detail tab strip is two elements, deliberately.**
+`.cr-c-tabwrap` sticks (`position:sticky; top:0`); `.cr-c-tabs.detail` inside
+it scrolls (`overflow-x:auto`, `position:static`). **Do not collapse them
+back into one** — an element that is both a sticky box and its own scroll
+container jumps vertically when scrolled sideways, which is exactly what 656
+fixed. Gate: `scripts/render_656.js` (Chromium, 17 assertions; the mount is
+its own scroll container, so scroll THE MOUNT, not the window).
