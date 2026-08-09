@@ -11671,3 +11671,91 @@ Theo hit**. 646's own gates re-run on this tree — `harness646.mjs` 45 green,
 
 **Still open:** the SOL reader on community; the insurance-profile address
 contrast; and the five duplicate scope readers above.
+
+## Build 648 — one transport for the scope reader, five callers (9 Aug 2026)
+
+Theo: *"Start with five duplicate api sol readers."*
+
+**Audited before touching anything, and they are NOT five copies of one thing.**
+
+| caller | payload | UI | success |
+|---|---|---|---|
+| `sendScopeToReader` (main) | `{file,mime}` | alert + button label | `openSolReviewModal` |
+| `handleSolUpload` (`cr-claims-fx-script`) | `{file,mime}` | rich button innerHTML | `populateFromSol` |
+| `extractFromUrl` (`cr-suf-script`) | **`{url}`** | none | returns |
+| `readScope` (`cr-sol-script`) | `{file,mime}` | `shell()` panel | `review()` |
+| `read` (`cr-ci-script`) | **`{mode:'client', file\|url}`** | `shell()` panel | `review()` |
+
+**Three payload shapes, four presentation systems, five success handlers.**
+Merging those would have been the wrong refactor. What was actually duplicated
+is the **transport** — token, POST, parse, normalise the error — about fifteen
+lines, five times. That is all that moved.
+
+**The prime doctrine, again, and this one stings a little: half of it already
+existed.** `window.aiHeaders()` was added specifically to *"attach the caller's
+session to model-backed /api routes"* and is used at **15** other call sites. All
+five SOL readers hand-rolled the same `getSession`/`access_token` dance beside
+it. `solRead()` uses the existing helper rather than inventing a second one.
+
+⚠️ **Why the main block and not `CardinalSolUpload`.** That object is the natural
+home, but it is declared at 44673 — **after three of the five callers** — and with
+a **plain assignment**, so anything merged onto it earlier was silently
+discarded. `solRead()` therefore lives in the main block (first, and already an
+unguarded dependency of every later block via `esc`/`auditLog`), and **44673
+became `Object.assign`**, which is this project's stated rule for every
+`window.Cardinal*` export. It had been the exception.
+
+**Behaviour changes, all deliberate:**
+
+- Error truncation unified at 250 (was 250/240/240/220) — cosmetic.
+- `handleSolUpload`'s `j.extracted || j || {}` loses the `|| j` arm: `api/sol.js`
+  answers `{extracted, model}` on every success path, so it was unreachable.
+- **`sendScopeToReader` stops calling `sb.auth` directly.** `sb` is
+  `TEAM ? createClient(...) : null`, so that one site would have thrown a
+  `TypeError` with no session where the other four degraded to a 401. (`window.supa`
+  is a getter for `window.sb` — the file says so at 13838 — so it is the same client.)
+- No-session requests now send **no** Authorization header instead of `Bearer `.
+  `api/sol.js:94-96` answers 401 to both.
+
+**Not done, on purpose:** there are **11** hand-rolled `session.access_token`
+blocks in this file. Five were the SOL readers; the other six belong to other
+features and are their own build.
+
+**Gates.** `check_build.py` green, stamp 647 → 648. `harness648.js` — **33
+assertions** running the *shipped* functions, including `readScope` and `read`
+wrapped in a closure that redeclares their module-level vars so `extracted = …`
+still lands somewhere observable. All three payload shapes asserted separately,
+and `readScope`'s 413 sentence proved to survive *and* proved not to fire on a
+401. Negative control on 647: red. The whole suite re-run on this tree —
+`harness646` 45, `render_sollift` 10, `harness647` 21, `harness648` 33.
+
+⚠️ **`harness647` went red on correct 648 code** and was updated, not worked
+around: `sendScopeToReader` no longer owns the transport, so the harness had to
+extract `solRead` too. **A stale harness failing a good build is the test being
+wrong**, which this log has now recorded four times; the fix is the harness.
+
+### ⚠️ FOUR assertions in one session were fooled by my own comments
+
+BUG_CLASS 15 is "an assertion that matches your own comment about the code." It
+happened **four times in this session alone** — 647 twice, 648 twice — and the
+existing wording does not go far enough. The sharper rule:
+
+> **If your comment quotes the code you removed, every search for that code
+> finds your comment.**
+
+That is *why* it keeps happening here: the house style is dense explanatory
+comments that name the thing being replaced (`was currentProject`,
+`j.extracted || j || {}`, `solRead()`), so the comment is a near-perfect decoy
+for the assertion meant to prove the code is gone. The four:
+
+| assertion | what it actually matched |
+|---|---|
+| `'currentProject' not in uploadInsuranceDoc` | the comment *"was currentProject"* |
+| `count("fetch('/api/sol'") == 1` | four other real modules (a wrong count, not prose) |
+| `!/extracted \|\| j \|\|/` | the comment quoting the deleted line |
+| `count('solRead(') == 4` | 4 comments — and `solRead` alone also matches **`solReadBtn`**, 647's button id |
+
+**Anchor on a shape that cannot be prose**: a full call expression, a `function
+name(` signature, an object key with its punctuation. Or route it through
+`jslex_count.py`, which separates CODE from comments and strings and would have
+answered all four correctly the first time.
