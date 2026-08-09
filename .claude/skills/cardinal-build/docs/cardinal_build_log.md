@@ -10682,3 +10682,98 @@ A row labelled "Confidential GC Partner", one tap, the full record. 10 red on
 
 It also asserts the **admin** path still works — that a privileged user taps Edit
 and *is* handed the real row — so a fix that simply broke editing could not pass.
+
+---
+
+## Build 636 — one location card, and it is the Google one (8 Aug 2026)
+
+Theo, from an Insurance client profile: *"in all client profiles there's 2
+locations, can you get rid of the one that's not the google one."*
+
+He was right — there were two, built on entirely different stacks:
+
+| | what it was |
+|---|---|
+| `.cr-gmap-block` | a Google **static** map + Directions / View on Maps, injected into `#projectView` by `maybeInsertProfileMap()` on every `scan()` |
+| the **Location** card | `#dbMap`, a **Leaflet** map geocoded through **Nominatim**, Map/Satellite tabs (satellite via **Esri**), plus the address and the pencil |
+
+Three map providers on one screen. The Leaflet one is the one that said
+*"Could not pin this address."*
+
+### ⚠️ Why the obvious fix was wrong — and why he was asked first
+
+Deleting the Location card was the literal request and would have broken two
+things nobody would have noticed until later:
+
+1. **It carries the only rendered address text and the only `#acxEdit2` pencil.**
+   `#acxEdit1` appears solely in the click handler — it is never rendered — so
+   that pencil is the address editor on this screen.
+2. **Community has no Google card.** `maybeInsertProfileMap()` only runs on
+   `#projectView`; the Community client page calls `adoptLocation()`, which
+   **moves** the `.acxsec` containing `#dbMap` into `#cr-cc-loc`. Remove `#dbMap`
+   and it finds nothing and prints *"No location on file yet."*
+
+Offered three shapes. He picked **one card, Google map**, which is the only one
+that loses nothing.
+
+### What shipped
+
+`dbInitMiniMap` now paints an `<img>` from `CardinalMaps.staticMapUrl()` —
+no map library, no tile server, **no geocode round trip**, because Google
+resolves the address inside the URL. The Map/Satellite tabs still work: they set
+`maptype` and repaint through one exported setter (`window.dbSetMapType`), since
+the tab handler lives in its own `cr-keeper2-script` block and cannot see that
+closure. Directions, the address and the pencil are untouched.
+
+`maybeInsertProfileMap()` is gone — definition and call. It ran on **every**
+scan, and `scan()` is driven by a MutationObserver on `document.body`, one of the
+fifty this file carries.
+
+**Community gets a working map here for the first time**, because it adopts this
+same node and its Leaflet copy failed identically — same geocoder.
+
+Measured rather than asserted: **30 projects, all with an address, 17 with a
+cached pin** — so the Leaflet map had failed or never been opened on 13. Two
+addresses carry a doubled `, USA,` (the screenshot's 9222 Arlington is one),
+which is what Nominatim choked on.
+
+⚠️ **`qiLoadLeaflet()` is NOT removed** — it has a second caller with its own
+forward *and* reverse Nominatim lookups, and there is a batch geocoder in a
+`step()` loop besides. Only this screen stopped using Leaflet. The cached
+`ck.geo` values are left in place too; nothing reads them now, but deleting data
+to tidy up is how a rollback becomes lossy.
+
+### ⚠️ THREE assertion failures, all mine, all class 15 — in the session that documented it
+
+1. **`nominatim… == 0` file-wide.** Wrong, and right to fail: a second Leaflet
+   map elsewhere has its own lookups. Replaced with a `drops(needle, 1)` helper
+   that requires the count to fall by **exactly one**. Guessing zero would have
+   demanded deleting a feature I never looked at.
+2. **`maybeInsertProfileMap() == 0`.** Matched **my own replacement comments**,
+   which name the function in prose. Rule 1 of the class. Fixed by asserting on
+   syntax — `function maybeInsertProfileMap(` and `maybeInsertProfileMap();`.
+3. **A literal script tag inside a code comment** turned the gate red at
+   **110 open / 109 close**. `check_build.py` counts tags across the whole file,
+   comments included. Reworded, and `src.count('<script') == orig.count('<script')`
+   is now asserted so it cannot recur.
+
+Plus one in the harness: extracting the setter with `[^;]+;` **truncated it at
+the first semicolon inside its own body** — CLAUDE.md's "a pattern using `[^;]`
+cannot see a whole expression", hit while writing the test for it. Extracted by
+line instead.
+
+### Verification
+
+`check_build.py` green, negative-controlled. **New `harness_location.js` — 24
+assertions**; the executed half runs the shipped `dbPaintMap` against a stubbed
+`CardinalMaps` and asks the DOM what was drawn, then **switches the tab and asks
+again** — a regex cannot see that a tab repaints. It also runs the no-key case
+and requires the card to *say* the key is missing rather than leave an empty box,
+which would read exactly like the failure this build removed.
+
+Negative control on 635: **16 red, 8 green**, and the executed section is wrapped
+so it reports clean FAILs instead of throwing. All eleven harnesses green.
+
+⚠️ **Theo's eyes are the gate.** I cannot load a Google static map from this
+sandbox, so "the image renders" is proven only as far as the correct URL being
+built and painted.

@@ -2326,3 +2326,29 @@ once. Admins are untouched.
 renders the real `renderProspects`, clicks Edit on the confidential row, and reads what
 `openEditor` got. Negative control on 634 prints the leaked record. It also asserts the
 admin still gets the real row, so breaking editing cannot pass.
+
+---
+
+## Build 636 — one location card on a client profile (8 Aug 2026)
+
+There were **two** maps on every profile, on different stacks: a Google static block
+injected by `maybeInsertProfileMap()` into `#projectView`, and the Location card's
+**Leaflet** map geocoded through **Nominatim** with Esri satellite tiles — the one that
+said *"Could not pin this address."*
+
+The Location card now paints the **Google static map** itself (`dbPaintMap` →
+`CardinalMaps.staticMapUrl`), and the floating block is gone. No map library, no tile
+server, no geocode round trip. Map/Satellite still switch, via one exported setter
+(`window.dbSetMapType`) because the tab handler lives in a separate script block.
+
+⚠️ **Why the card was not simply deleted** — it carries the **only** rendered address
+text and the **only** `#acxEdit2` pencil (`#acxEdit1` is never rendered), and
+**Community has no Google card**: `adoptLocation()` *moves* this `.acxsec` into
+`#cr-cc-loc`. Community therefore gets a working map here for the first time.
+
+⚠️ `qiLoadLeaflet()` survives — a second Leaflet map elsewhere still uses it, with its
+own forward and reverse Nominatim lookups. Only this screen stopped.
+
+`harness_location.js` — **24 assertions**; the executed half runs the shipped painter,
+reads the DOM, switches the tab and reads again, and covers the no-key case. Negative
+control on 635: 16 red.

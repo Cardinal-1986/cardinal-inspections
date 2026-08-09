@@ -3252,7 +3252,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 635 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-08 build 636 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10243,6 +10243,13 @@ function renderAcxOverview(){
       '<b class="jan' + (zero ? ' zero' : '') + '"' + (idn ? ' id="' + idn + '"' : '') + '>' + n + '</b></div>';
   }
   /* ---- location (Keeper: above the Job Menu, live Map/Satellite) ---- */
+  /* 636: an old build may have left a floating .cr-gmap-block in this view.
+     renderOverview replaces the view's HTML, so this only matters for a block
+     inserted OUTSIDE it — clear it once rather than leave two maps on a device
+     that has not reloaded. */
+  try{
+    document.querySelectorAll('#projectView .cr-gmap-block').forEach(function(b){ b.remove(); });
+  }catch(_){}
   html += '<h3 class="projsec" style="margin:20px 0 10px;">Location' +
     '<span class="rt2"><span class="acxpencil" id="acxEdit2">&#9998;</span></span></h3>' +
   '<div class="acxsec"><div class="acxbody">' +
@@ -12177,38 +12184,55 @@ function dbCloseTo(){
 }
 /* ---------- mini map ---------- */
 var dbMiniMap = null;
+/* 636: ONE map on this screen, and it is Google's. This was a Leaflet map
+   geocoded through Nominatim, sitting directly under a Google static map that
+   already worked — two stacks doing one job, and the Leaflet one is the one that
+   said "Could not pin this address."
+   It paints an <img>, so there is no map library, no tile server and no geocode
+   round trip; Google resolves the address inside the URL. That also means the
+   Community client page gets a working map for the first time — adoptLocation()
+   MOVES this same .acxsec into #cr-cc-loc, and Community has no Google card of
+   its own. */
+var dbMapType = 'roadmap';
+function dbPaintMap(el, address){
+  var M = window.CardinalMaps;
+  var url = (M && M.staticMapUrl) ? M.staticMapUrl(address, {
+    maptype: dbMapType, zoom: 18, size: '640x344'
+  }) : '';
+  if(!url){
+    /* staticMapUrl returns '' with no key configured. Say which, rather than
+       leaving an empty grey box that reads as a failure to load. */
+    el.innerHTML = '<div class="axnote" style="padding:20px;">Map unavailable \u2014 no Google key configured.</div>';
+    return;
+  }
+  el.innerHTML = '<img src="' + esc(url) + '" alt="Property map" loading="lazy" ' +
+    'style="width:100%;height:100%;object-fit:cover;display:block;">';
+  el.style.cursor = 'pointer';
+  el.onclick = function(){ window.open(mapsUrl(address), '_blank'); };
+}
+/* Exported because the Map/Satellite tabs live in their own cr-keeper2-script
+   block and cannot see this closure. One setter, one painter.
+   ⚠ Do NOT write a literal script tag in a comment here — check_build.py
+   counts tags across the whole file and read one, failing 636 on 110/109. */
+window.dbSetMapType = function(t, el, address){ dbMapType = t; dbPaintMap(el, address); };
 async function dbInitMiniMap(pr){
   var el = document.getElementById('dbMap');
   if(!el) return;
   if(!pr.address){ el.innerHTML = '<div class="axnote" style="padding:20px;">Add an address to see the map.</div>'; return; }
-  try{ await qiLoadLeaflet(); }
-  catch(e){ el.innerHTML = '<div class="axnote" style="padding:20px;">Map unavailable (offline?).</div>'; return; }
-  var ck = parseCkAll(pr);
-  var geo = ck.geo && ck.geo.addr === pr.address ? ck.geo : null;
-  if(!geo){
-    try{
-      var r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(pr.address));
-      var j = await r.json();
-      if(j && j[0]){
-        geo = { lat: parseFloat(j[0].lat), lon: parseFloat(j[0].lon), addr: pr.address };
-        try{ await patchProjectCk(pr, { geo: geo }); }catch(e2){}
-      }
-    }catch(e3){}
+  dbMapType = 'roadmap';                    /* the Map tab renders pressed */
+  var M = window.CardinalMaps;
+  if(!M || !M.staticMapUrl){
+    el.innerHTML = '<div class="axnote" style="padding:20px;">Map unavailable \u2014 reload the app.</div>';
+    return;
   }
+  /* The key arrives from /api/config. Awaiting it opens a window in which the
+     user can leave the job, so revalidate before touching the DOM — the same
+     rule the old body followed, kept deliberately. */
+  try{ await M.loadConfig(); }catch(_){}
   if(!currentProject || currentProject.id !== pr.id) return;
   var el2 = document.getElementById('dbMap');
   if(!el2) return;
-  if(!geo){ el2.innerHTML = '<div class="axnote" style="padding:20px;">Could not pin this address.</div>'; return; }
-  el2.innerHTML = '';
-  if(dbMiniMap){ try{ dbMiniMap.remove(); }catch(e4){} dbMiniMap = null; }
-  dbMiniMap = L.map(el2, { zoomControl:false, dragging:false, scrollWheelZoom:false, doubleClickZoom:false,
-                           boxZoom:false, keyboard:false, touchZoom:false, attributionControl:false })
-    .setView([geo.lat, geo.lon], 16);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(dbMiniMap);
-  L.marker([geo.lat, geo.lon]).addTo(dbMiniMap);
-  el2.style.cursor = 'pointer';
-  el2.onclick = function(){ window.open(mapsUrl(pr.address), '_blank'); };
-  setTimeout(function(){ try{ dbMiniMap.invalidateSize(); }catch(e5){} }, 200);
+  dbPaintMap(el2, pr.address);
 }
 /* ---------- contacts ---------- */
 async function dbAddContact(pr){
@@ -35239,6 +35263,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:636, d:'2026-08-08', t:'One map on a client profile, and it is the Google one',
+    s:'Every client profile was showing two maps: a Google one near the top, and a second Location card lower down that often said \u201cCould not pin this address.\u201d They were built on completely different systems \u2014 the second one looked the address up through a free service that choked on anything unusual. There is now one Location card, and it draws the Google map. Map and Satellite still switch, Directions still opens, the address and the pencil to edit it are still there, and tapping the map still opens Google Maps. Community jobs get a working map here for the first time, because that page only ever had the second kind.' },
   { b:635, d:'2026-08-08', t:'A confidential partner stays confidential on the prospects list too',
     s:'Partners marked confidential already show as \u201cConfidential Partner\u201d with no contact details to anyone outside Theo, Joan, Curtis and Scottie \u2014 and that was true on the Prospective Partners list as well. But that list still showed an Edit button on those rows, and opening it filled the form with the real name, contact, email, phone and notes. No prospect is marked confidential today, so nothing was actually exposed, but ticking that box would have opened it. The Edit button is now hidden on a confidential row, exactly as it already was on the main partner list, and those rows carry the same red CONFIDENTIAL tag so it is clear why. Underneath, the editor itself now refuses to open a confidential partner for anyone not allowed to see it, and says so rather than doing nothing. Nothing changes for Theo or Joan.' },
   { b:634, d:'2026-08-08', t:'Community Partners stopped breaking, and error reports stay out of job threads',
@@ -37705,35 +37731,17 @@ document.querySelectorAll('input').forEach(function(input){
 if(input.dataset.crAutocomplete === '1') return;
 if(isAddressInput(input)) attachAutocomplete(input);
 });
-maybeInsertProfileMap();
+/* 636: maybeInsertProfileMap() removed. It injected a SECOND Google map into
+   #projectView on every scan — and scan runs off a MutationObserver on
+   document.body, one of the fifty this file already carries. The Location card
+   now paints the Google map itself, so this was pure duplication. Autocomplete,
+   which is what this scan is really for, is untouched. */
 }catch(e){ console.warn('[gmap] scan error:', e); }
 });
 }
-function maybeInsertProfileMap(){
-var view = document.getElementById('projectView');
-if(!view || getComputedStyle(view).display === 'none') return;
-var proj = window.currentProject;
-var address = proj && proj.address;
-if(!address) return;
-if(view.querySelector('.cr-gmap-block[data-cr-addr="' + CSS.escape(address) + '"]')) return;
-var anchor = view.querySelector('.projsec, .projform, .clientcard');
-if(!anchor) return;
-view.querySelectorAll('.cr-gmap-block').forEach(function(b){ b.remove(); });
-var url = staticMapUrl(address);
-if(!url) return;
-var block = document.createElement('div');
-block.className = 'cr-gmap-block';
-block.setAttribute('data-cr-addr', address);
-block.innerHTML =
-'<a class="cr-gmap-imgwrap" href="' + viewMapUrl(address) + '" target="_blank" rel="noopener">' +
-'<img src="' + url + '" alt="Property map" loading="lazy" />' +
-'</a>' +
-'<div class="cr-gmap-actions">' +
-'<a class="cr-gmap-btn" href="' + directionsUrl(address) + '" target="_blank" rel="noopener">\uD83D\uDE97 Directions</a>' +
-'<a class="cr-gmap-btn ghost" href="' + viewMapUrl(address) + '" target="_blank" rel="noopener">\uD83C\uDF0E View on Maps</a>' +
-'</div>';
-anchor.parentNode.insertBefore(block, anchor);
-}
+/* 636: maybeInsertProfileMap() lived here. See the note in scan().
+   insertMap() below is UNTOUCHED and still exported — it is the general helper
+   other modules call, and it never had anything to do with the duplicate. */
 function start(){
 loadConfig().then(scan);
 scan();
@@ -49760,7 +49768,10 @@ body.claim-insurance .hmanage a{color:var(--ct-ink-2);}
 <script id="cr-keeper2-script">
 (function(){
 'use strict';
-var satLayer = null;
+/* 636: the tabs still work, they just switch Google's maptype and repaint the
+   image. Was: an Esri satellite tile layer added over Leaflet — a THIRD map
+   provider on a screen that now has one. The pressed state is toggled before the
+   repaint so the tab responds even if the map cannot draw. */
 document.addEventListener('click', function(e){
   var b = e.target.closest('.dbmtabs button[data-dbm]');
   if(!b) return;
@@ -49768,17 +49779,12 @@ document.addEventListener('click', function(e){
   Array.prototype.forEach.call(wrap.querySelectorAll('button'), function(x){
     x.classList.toggle('on', x === b);
   });
-  if(typeof L === 'undefined' || !window.dbMiniMap) return;
   try{
-    if(b.getAttribute('data-dbm') === 'sat'){
-      if(!satLayer){
-        satLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-          { maxZoom: 19, attribution: 'Esri' });
-      }
-      satLayer.addTo(window.dbMiniMap);
-    } else if(satLayer){
-      window.dbMiniMap.removeLayer(satLayer);
-    }
+    var el = document.getElementById('dbMap');
+    var pr = window.currentProject;
+    if(!el || !pr || !pr.address) return;
+    if(typeof window.dbSetMapType !== 'function') return;
+    window.dbSetMapType(b.getAttribute('data-dbm') === 'sat' ? 'satellite' : 'roadmap', el, pr.address);
   }catch(err){}
 });
 })();
