@@ -2439,3 +2439,43 @@ cream text on a near-white ground at 1.24:1. `body{background:var(--bg)}` is unt
 **Gates:** `harness647.js` — 21 assertions, the four-way theme matrix in Chromium plus
 the shipped reader functions against the real stored payload; negative-controlled on 646
 (5 red, including the 1.24:1).
+
+---
+
+## One transport for /api/sol (648)
+
+**Where:** `solRead(payload)` in the main block, exported as
+`window.CardinalSolUpload.read`.
+
+Five screens can read a Scope of Loss and each had its own copy of the wire code.
+They now share one. **What differs between them is real and was deliberately kept:**
+
+| caller | payload | UI | success |
+|---|---|---|---|
+| `sendScopeToReader` (main) | `{file,mime}` | alert + button | `openSolReviewModal` |
+| `handleSolUpload` (`cr-claims-fx-script`) | `{file,mime}` | rich button | `populateFromSol` |
+| `extractFromUrl` (`cr-suf-script`) | `{url}` | none | returns |
+| `readScope` (`cr-sol-script`) | `{file,mime}` | `shell()` panel | `review()` |
+| `read` (`cr-ci-script`) | `{mode:'client', file\|url}` | `shell()` panel | `review()` |
+
+`solRead()` sends whatever payload it is handed and does not inspect it — three
+shapes over one wire. It uses **`window.aiHeaders()`**, the helper that already
+existed for signing model-backed `/api` calls (15 other sites), rather than a
+second token mechanism.
+
+It throws an `Error` carrying **`.status`**, so a caller can branch without
+re-reading the message — `cr-sol-script` uses that to keep its own 413 sentence
+("photograph the pages instead"), which only makes sense on that screen.
+
+⚠️ **`window.CardinalSolUpload` is merged, never plainly assigned.** It was a
+plain `=` at 44673, *after* three of its callers, so anything added earlier was
+discarded silently. Adding to it from an earlier block only works because that
+line is now `Object.assign`.
+
+⚠️ **Six hand-rolled `session.access_token` blocks remain** elsewhere in the file
+(11 before this build, five of them the SOL readers). They belong to other
+features; converting them is a separate build.
+
+**Gates:** `harness648.js` — 33 assertions against the shipped functions, with
+`readScope`/`read` wrapped in a closure that redeclares their module vars so the
+real code runs; every payload shape asserted separately; negative-controlled on 647.

@@ -3283,7 +3283,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 647 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 648 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14627,6 +14627,44 @@ function renderSolCard(){
    build, and 647 did not fix it — it only stopped the Scope of Loss card from
    being a sixth. Do not add a sixth either; and if you unify them, do it as its
    own build with its own harness. */
+/* 648: THE ONE TRANSPORT for /api/sol. Five modules each hand-rolled the same
+   token-fetch, POST, parse and error-normalise — about fifteen lines, five
+   times. Their UI, their payload shape and what they do with the answer all
+   genuinely differ and are left alone; only the wire is shared.
+
+   Uses window.aiHeaders(), which already existed for exactly this ("attach the
+   caller's session to model-backed /api routes") and is used at 15 other sites.
+   With no session it sends no Authorization header rather than "Bearer " —
+   api/sol.js:94-96 answers 401 to both, and no-header is the documented-correct
+   behaviour.
+
+   ⚠ The error line reads `detail || error`, which looks backwards for a human
+   message. It is the shape at all 22 fetch-error sites in this file, and every
+   error api/sol.js returns carries only `error`, so it already resolves to the
+   sentence. This comment moved here from extractFromUrl at 648 along with the
+   line itself — do not flip it here alone.
+
+   ⚠ .status is attached to the thrown Error so a caller can special-case a
+   413 without re-reading the prose. cr-sol-script does exactly that. */
+async function solRead(payload){
+  var r = await fetch('/api/sol', {
+    method: 'POST',
+    headers: await window.aiHeaders(),
+    body: JSON.stringify(payload)
+  });
+  var j = null;
+  try{ j = await r.json(); }catch(_){}
+  if(!r.ok){
+    var err = new Error(String((j && (j.detail || j.error)) || ('HTTP ' + r.status)).slice(0, 250));
+    err.status = r.status;
+    throw err;
+  }
+  return (j && j.extracted) || {};
+}
+/* Merged, never plainly assigned — cr-suf-script adds prepare/extractFromUrl to
+   this same object later in the document. */
+window.CardinalSolUpload = Object.assign(window.CardinalSolUpload || {}, { read: solRead });
+
 async function sendScopeToReader(b64, mime, name, btn){
   var card  = document.getElementById('solCardEl');
   var label = btn ? btn.textContent : '';
@@ -14634,20 +14672,10 @@ async function sendScopeToReader(b64, mime, name, btn){
   if(btn){ btn.disabled = true; btn.textContent = 'Reading\u2026'; }
   try{
     if(!b64) throw new Error('that file has no readable content stored');
-    var sess = await sb.auth.getSession();
-    var tok = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
-    var r = await fetch('/api/sol', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
-      body: JSON.stringify({ file: b64, mime: mime || 'application/pdf' })
-    });
-    var j = null;
-    try{ j = await r.json(); }catch(pe){}
-    if(!r.ok){
-      var detail = (j && (j.detail || j.error)) ? (j.detail || j.error) : ('HTTP ' + r.status);
-      throw new Error(String(detail).slice(0, 250));
-    }
-    openSolReviewModal(j.extracted || {}, name);
+    /* 648: was a hand-rolled `await sb.auth.getSession()` — and `sb` is
+       `TEAM ? createClient(...) : null`, so this was the one of the five that
+       threw a TypeError with no session instead of degrading to a 401. */
+    openSolReviewModal(await solRead({ file: b64, mime: mime || 'application/pdf' }), name);
     if(currentProject) auditLog('doc', 'SOL read (' + name + ')', currentProject.id);
   }catch(err){
     alert('Could not read the Scope of Loss: ' + (err.message || err) +
@@ -30998,20 +31026,10 @@ fr.readAsDataURL(file);
 });
 var b64  = (dataUrl || '').split(',')[1] || '';
 var mime = file.type || 'application/pdf';
-var sess = window.supa ? await window.supa.auth.getSession() : null;
-var tok  = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
-var r = await fetch('/api/sol', {
-method:'POST',
-headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
-body: JSON.stringify({ file: b64, mime: mime })
-});
-var j = null;
-try{ j = await r.json(); }catch(_){ }
-if(!r.ok){
-var detail = (j && (j.detail || j.error)) ? (j.detail || j.error) : ('HTTP ' + r.status);
-throw new Error(String(detail).slice(0, 250));
-}
-var count = populateFromSol(inner, j.extracted || j || {});
+/* 648: one transport. The old line read `j.extracted || j || {}`; the `|| j`
+   arm is gone because api/sol.js answers {extracted, model} on every success
+   path, so it was unreachable. */
+var count = populateFromSol(inner, await window.CardinalSolUpload.read({ file: b64, mime: mime }));
 btn.disabled = false;
 btn.className = 'cr-c-solbtn success';
 btn.innerHTML =
@@ -35684,6 +35702,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:648, d:'2026-08-09', t:'One reader behind all five Scope of Loss screens', s:'Five different screens could read a Scope of Loss, and each one had its own separate copy of the code that talks to the reader. That meant a fix to one never reached the other four \u2014 and one of them would have failed outright rather than asking you to sign in again. They now share a single connection, while each screen keeps its own look and its own handling of what comes back. Nothing changes in how any of them are used; this is groundwork so the next improvement lands everywhere at once.' },
 { b:647, d:'2026-08-09', t:'The landing page is dark again, and a scope already on file can be read', s:'Three fixes. The landing page had gone pale with pale writing on it \u2014 unreadable \u2014 because its background was following the app\u2019s light/dark setting while its text followed the landing\u2019s own. It has its own dark back again. Uploading a document from inside Open Full Claim said \u201cNo client selected\u201d and refused; that was broken the moment those tabs were added two builds ago, and it works now. And a Scope of Loss that was uploaded as a file can finally be READ: the Scope of Loss card offers to read the one already on file, so the scope you uploaded first becomes the baseline everything else is measured from \u2014 no need to upload it a second time.' },
 { b:646, d:'2026-08-09', t:'Every scope you read now counts toward the increase', s:'Reading a Scope of Loss used to fill in the client profile and stop there, so the claim screen still showed no money and the increase figures stayed empty. It now writes the claim record too. The first scope with a dollar amount on it becomes the baseline and is never overwritten; every scope after that moves the approved figure, so supplements show up as a real increase. The percentage appears on the Scope of Loss card, on the claim, per carrier, and in the average on Cardinal Truth. The adjuster\u2019s company can also be recorded now \u2014 the claim always had a place to show it and no way to enter it.' },
 { b:645, d:'2026-08-09', t:'Insurance details live on the claim, not in two places', s:'A client profile was showing the claim details, the insurance paperwork and the iTel card, and Open Full Claim was showing the claim details again \u2014 the same information in two places, which is how it ends up disagreeing with itself. Open Full Claim now has all of it: Documents and iTel are new tabs there, alongside the claim details that were always there. The client profile keeps the Scope of Loss reader, because that is how a job becomes an insurance job in the first place.' },
@@ -44638,39 +44657,25 @@ wrapped.__crFixed = true;
 window.readScopeOfLoss = wrapped;
 return true;
 }
+/* 648: kept as a NAMED entry point, because readScope() calls it by name and the
+   name carries the meaning — a scope that is already in storage, addressed by
+   URL rather than uploaded inline. Only the transport moved out, to solRead() in
+   the main block; 643's note about `detail || error` moved with the line it
+   describes. */
 async function extractFromUrl(url){
-var tok = '';
-try{
-var sess = await window.supa.auth.getSession();
-tok = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
-}catch(_){}
-var r = await fetch('/api/sol', {
-method:'POST',
-headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
-body: JSON.stringify({ url: url }),
-});
-var j = null;
-try{ j = await r.json(); }catch(_){}
-if(!r.ok){
-/* 643: the 400 branch used to read "the extractor doesn't accept links yet
-   \u2014 deploy the updated api/sol.js." It was true, and api/sol.js now accepts
-   { url }. Keeping it would bury every LATER 400 (a bad storage link) behind a
-   stale instruction to deploy something already deployed.
-   \u26a0 The line below is LEFT ALONE on purpose. `detail || error` looks
-   backwards for a human message, but it is the shape at all 22 fetch-error sites
-   in this file, and every error api/sol.js returns on the URL path carries only
-   `error` \u2014 so it already resolves to the sentence. Flipping it here alone
-   would make this the one site that differs. */
-throw new Error(String((j && (j.detail || j.error)) || ('HTTP ' + r.status)).slice(0, 240));
-}
-return j.extracted || {};
+return window.CardinalSolUpload.read({ url: url });
 }
 if(!wrap()){
 var n = 0, iv = setInterval(function(){
 if(wrap() || ++n > 60) clearInterval(iv);
 }, 250);
 }
-window.CardinalSolUpload = {
+/* 648: was a PLAIN assignment, which silently discarded anything merged onto
+   this object earlier in the document \u2014 including solRead(), which the main
+   block adds as .read and which three callers ABOVE this line depend on.
+   Object.assign is this project's stated rule for every window.Cardinal* export;
+   this one had been the exception. */
+window.CardinalSolUpload = Object.assign(window.CardinalSolUpload || {}, {
 prepare        : prepare,
 extractFromUrl : extractFromUrl,
 maxInline      : MAX_INLINE,
@@ -44679,7 +44684,7 @@ describe : function(){
 return 'Images are compressed automatically. Files over ' + mb(MAX_INLINE) +
 ' MB upload to storage first; the limit is ' + mb(MAX_STORED) + ' MB.';
 },
-};
+});
 })();
 </script>
 
@@ -44802,26 +44807,18 @@ fr.readAsDataURL(file);
 });
 var b64  = String(dataUrl).split(',')[1];
 var mime = String(dataUrl).slice(5).split(';')[0];
-var tok = '';
+/* 648: one transport. The 413 sentence is THIS screen's own \u2014 it tells the
+   user to photograph the pages, which only makes sense here \u2014 so it stays,
+   told apart by the .status solRead() attaches rather than by re-reading prose. */
 try{
-var sess = await window.supa.auth.getSession();
-tok = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
-}catch(_){}
-var r = await fetch('/api/sol', {
-method:'POST',
-headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
-body: JSON.stringify({ file:b64, mime:mime }),
-});
-var j = null;
-try{ j = await r.json(); }catch(_){}
-if(!r.ok){
-if(r.status === 413){
+extracted = await window.CardinalSolUpload.read({ file:b64, mime:mime });
+}catch(pe){
+if(pe && pe.status === 413){
 throw new Error('The file was still too large once encoded for upload. ' +
 'Photograph the pages instead \u2014 photos are compressed automatically.');
 }
-throw new Error(String((j && (j.detail || j.error)) || ('HTTP ' + r.status)).slice(0, 240));
+throw pe;
 }
-extracted = j.extracted || {};
 review();
 }catch(err){
 shell('\uD83D\uDCC4 Scope of Loss',
@@ -45108,22 +45105,9 @@ fr.readAsDataURL(file);
 payload.file = String(dataUrl).split(',')[1];
 payload.mime = String(dataUrl).slice(5).split(';')[0];
 }
-var tok = '';
-try{
-var sess = await window.supa.auth.getSession();
-tok = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
-}catch(_){}
-var r = await fetch('/api/sol', {
-method:'POST',
-headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer ' + tok },
-body: JSON.stringify(payload),
-});
-var j = null;
-try{ j = await r.json(); }catch(_){}
-if(!r.ok){
-throw new Error(String((j && (j.detail || j.error)) || ('HTTP ' + r.status)).slice(0, 220));
-}
-extracted = j.extracted || {};
+/* 648: one transport. payload carries mode:'client' and either file+mime or
+   url \u2014 solRead() sends whatever it is given and does not inspect it. */
+extracted = await window.CardinalSolUpload.read(payload);
 review();
 }catch(e){
 shell('\uD83D\uDCF7 Import a client',
