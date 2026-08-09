@@ -12357,3 +12357,55 @@ pay 58/58, render_inscards 9/9, render_656 17/17.
 **Known limit, stated:** `harness_658`'s `api/sol.js` checks read the live
 file rather than a per-build copy, so that one section is not build-relative
 in the negative control. The index.html assertions are.
+
+## Build 659 — the scope reader finishes its sentence (9 Aug 2026)
+
+Theo ran the read at last and it failed three times, each with a different
+pile of gibberish: *"Could not read that scope: ), 7,911.67 (Deprec),
+13,781.46 (ACV)\" * Page 5: \"Total:"*, and *"{ \"carrier\": \"Allstate
+Vehicle and Property Insurance Company\", \"policy_number\":
+\"000826751113\", \""*.
+
+**Read those errors: the AI had read the document correctly every time.** The
+carrier, the policy number and his actual figures are IN the error text. Every
+one is cut off mid-word.
+
+- **Root cause: `maxOutputTokens: 1024`.** The model narrates its way through a
+  five-page scope ("Page 5: Total:", "**Totals**: Let…") before emitting the
+  JSON, and ran out of budget mid-object. `JSON.parse` then failed and the
+  route returned the raw truncated reply as `detail`.
+  Fixes: **8192 tokens**, and **`responseMimeType: 'application/json'`** so the
+  model answers in fields only and stops spending the budget on narration.
+  **The OpenAI fallback had the identical bug** — `max_tokens: 1200`, no JSON
+  discipline — now 4096 + `response_format: json_object`. One rung fixed and
+  not the other would have made this intermittent and much harder to see.
+- **The error text was the model's own reply.** `solRead()` read
+  `detail || error`, and `detail` is the raw dump. Flipped to `error || detail`
+  **for this route only** — it is the one route that returns a detail. The
+  other ~19 fetch sites keep the convention; their routes send no detail.
+  ⚠ The 648 comment justified `detail || error` with "every error api/sol.js
+  returns carries only `error`" — true when written, false the moment the
+  parse-failure path started returning `detail`. The comment is now the
+  correction, not the claim.
+- **Failures say what happened.** `finishReason === 'MAX_TOKENS'` now answers
+  "the reader ran out of room… try uploading just the scope and totals pages".
+  Unparseable output gets a sentence about the document, not a dump. And
+  prose-wrapped JSON is salvaged (outermost `{…}`) rather than refused.
+
+**Gates.** `check_build.py` green, stamp 658 → 659. New `harness_659.js`
+(16 assertions) **imports the real `api/sol.js` handler and drives it** with a
+stubbed fetch replaying each shape: truncated (asserts the words, and that the
+half-finished JSON never reaches the user), prose-wrapped (asserts salvage),
+unreadable (asserts a sentence), clean (asserts the fields). Negative control
+against the 658 artifact **and** 658's `api/sol.js`: 12 red — the api half is
+build-relative this time, unlike 658's.
+⚠️ The harness first reported 6 false failures because its auth stub returned
+`{id}` without an `email`, which the handler reads as an invalid session. The
+stub was wrong, not the route.
+
+Regressions: 658 38/38, 657 32/32, 655 42/42, 654 31/31, 653 45/45,
+approvals 15/15, pay 58/58.
+
+**Still unproven:** whether Gemini now returns a complete object for Gunn's
+particular 6.4 MB scope. The truncation is fixed and the failure is legible;
+the next run is the answer.

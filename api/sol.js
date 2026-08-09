@@ -70,7 +70,14 @@ async function aiFallback(parts, geminiRes) {
     const r = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + oaKey },
-      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1200, messages: [{ role: 'user', content }] })
+      /* 659: 1200 truncated the same way Gemini's 1024 did, and this rung had no
+         JSON discipline at all. Both rungs now answer in JSON and have room. */
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        max_tokens: 4096,
+        response_format: { type: 'json_object' },
+        messages: [{ role: 'user', content }]
+      })
     });
     if (!r || !r.ok) return geminiRes;
     const d = await r.json();
@@ -228,7 +235,20 @@ export default async function handler(req, res) {
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
         body: JSON.stringify({
           contents: [{ parts: _parts }],
-          generationConfig: { maxOutputTokens: 1024, temperature: 0.1 }
+          /* 659: Theo's scope came back as "Could not read that scope:" followed
+             by RAW MODEL OUTPUT, cut off mid-word — three different times, three
+             different cut points. The model was reading the document correctly
+             (carrier, policy number, 7,911.67 Deprec, 13,781.46 ACV all appeared
+             in the error text) and then being TRUNCATED at 1024 tokens, because
+             it narrates page by page before emitting the JSON. Two fixes:
+             responseMimeType makes it answer in JSON only — no prose, no fences,
+             nothing to burn the budget on — and the budget is no longer a cliff
+             a five-page scope falls off. */
+          generationConfig: {
+            maxOutputTokens: 8192,
+            temperature: 0.1,
+            responseMimeType: 'application/json'
+          }
         })
       }
     );
@@ -243,18 +263,38 @@ export default async function handler(req, res) {
       });
       return;
     }
-    let text = ((((j.candidates || [])[0] || {}).content || {}).parts || [])
-      .map(p => p.text || '').join('');
+    const cand = (j.candidates || [])[0] || {};
+    let text = ((cand.content || {}).parts || []).map(p => p.text || '').join('');
     text = String(text || '').replace(/```json|```/g, '').trim();
+
+    /* 659: say WHICH failure happened. The old path dumped the raw reply into
+       an alert, so a truncation read as gibberish about page 5 totals and gave
+       no clue that the answer had simply been cut off. */
+    if (cand.finishReason === 'MAX_TOKENS') {
+      res.status(502).json({
+        error: 'The reader ran out of room before it finished this scope. ' +
+               'It is a long document \u2014 try uploading just the scope and totals pages.'
+      });
+      return;
+    }
 
     let parsed;
     try { parsed = JSON.parse(text); }
     catch (e) {
-      res.status(502).json({
-        error: 'Could not parse AI response as JSON',
-        detail: text.slice(0, 500)
-      });
-      return;
+      /* a model that ignores responseMimeType and wraps the object in prose is
+         still recoverable: take the outermost {...} and try once more. */
+      const a = text.indexOf('{'), b = text.lastIndexOf('}');
+      if (a !== -1 && b > a) {
+        try { parsed = JSON.parse(text.slice(a, b + 1)); } catch (e2) {}
+      }
+      if (!parsed) {
+        res.status(502).json({
+          error: 'The reader could not turn this document into fields. ' +
+                 'It may not be a scope of loss, or the pages may be images the text did not come through on.',
+          detail: text.slice(0, 300)
+        });
+        return;
+      }
     }
 
     // Basic shape guard so the caller can trust the object
