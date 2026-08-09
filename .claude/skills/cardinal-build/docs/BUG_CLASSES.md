@@ -1302,3 +1302,71 @@ checked "dark app + dark landing" would have been green through the whole bug.
 ⚠️ **`body{background:var(--bg)}` is correct and was left alone** — that is
 build 429's overscroll fix, and `body` is app chrome. The landing view is not.
 Do not "make it consistent" by pointing the landing back at `--bg`.
+
+---
+
+## 18. A silent allow-list that later builds do not know to extend (9 Aug 2026, build 664)
+
+**The first successful Scope of Loss read in this app's history was applied by
+Theo, field by field, and five of the columns he approved never reached the
+claim.** `ord_law`, `ord_law_basis`, `ord_law_rcv`, `ord_law_acv`,
+`ord_law_limit` — the entire product of builds 658 and 660 — plus
+`coverage_type` from 655. The client profile had all of them. The claim row was
+`NULL`.
+
+```js
+var CLAIM_COL = {                    // bridgeSolToClaim(), written at build 646
+  'carrier': 'carrier', 'policy_number': 'policy_number', …   // EIGHT entries
+};
+Object.keys(CLAIM_COL).forEach(function(k){
+  var v = applied[k];
+  if (v === undefined || v === null || v === '') return;
+  patch[CLAIM_COL[k]] = v;           // anything not in the map is not an error
+});                                  // it is simply not copied
+```
+
+**The shape of the class:** two structures must agree, and one of them fails
+*open*. The review modal's `fields` list grew four times. The writer's map is an
+**allow-list**, so an unmapped key is not a crash, not a warning, not a log line
+— it is silence. Three separate builds added a field to one and not the other,
+and every gate stayed green through all three, because the write *succeeded*.
+It just wrote less than the user approved.
+
+**Why nothing caught it:**
+- `check_build.py` sees syntax and structure, not semantics.
+- The harnesses for 655, 658 and 660 asserted the field reached **the review
+  modal**, **the claim edit form**, **the formatter** and **the bounded
+  select** — four places, all correct. Nobody asserted it reached *the row*.
+- The **checklist half kept working**, because it writes the whole object
+  (`L.insurance[parts[0]] = val`). So the profile looked right, which is
+  precisely the screen you check.
+
+**The tell to look for:** a hand-maintained map, list or `switch` that
+translates between two representations, where the consumer of one side is
+generated from a *different* list. Grep this repo and the pattern already has
+names — `STAGES`, `IC_SKIP`, `PIPE_SKIP`, `LEGACY_STAGE`, `WO_TRADES` /
+`TRADES` / `MONEY_TABS`. All of those carry a written "one grows, all grow"
+rule. `CLAIM_COL` did not, and it is the one that drifted.
+
+**The fix is not "remember" — it is an assertion that fails on drift.**
+`harness_664.js` extracts BOTH lists from the shipped source and requires every
+modal path to have a mapping or be one of three named special cases. Run
+against 663 it prints the bug as a sentence:
+
+```
+FAIL NO field in the modal is missing from the claim writer
+  → orphaned: coverage_type, ord_law, ord_law_basis, ord_law_rcv, ord_law_acv, ord_law_limit
+```
+
+**That assertion would have gone red the day 655 shipped.** When you add a
+translation map, add its coverage check in the same commit, and state the
+coupling at BOTH ends so it is found from whichever side the next person opens.
+
+⚠️ **The related fixture trap, hit while writing this harness.** The first
+version built its fixture from the checklist row read straight out of
+production — `{adjuster:{phone:…}}`. But that nesting is the **output**;
+`bridgeSolToClaim` receives `applied`, keyed by the modal's **dotted paths**
+(`applied['adjuster.phone']`). The harness reported a false red on correct
+code. *"Test against production data shapes"* means the shape at **that**
+boundary — reading a real row from the wrong end of the pipeline is still a
+convenient fixture.
