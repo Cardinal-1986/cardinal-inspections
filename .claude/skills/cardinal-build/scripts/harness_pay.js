@@ -161,6 +161,31 @@ console.log('\n── the tab: a rep reads and touches nothing ──');
   ok('the money still reads: rows and totals render', html.includes('$17,025.00') && html.includes('$1,202.50'));
 }
 
+console.log('\n── the tab: Finance source, and which financing company ──');
+{
+  const fx = {
+    collections: TABFX.collections.concat([
+      { id: 'c3', project_id: 'p1', collected_at: '2026-08-09', amount: 2100, type: 'supplemental', source: 'finance', finance_company: 'Service Finance', notes: '' },
+    ]),
+    commissions: TABFX.commissions,
+    draws: TABFX.draws,
+  };
+  const { w, html } = await runTab('admin', fx, NICK);
+  ok('an insurance collection shows its pretty label, not the raw enum value', /<td>Insurance<\/td>/.test(html) && !html.includes('<td>insurance</td>'));
+  ok('a finance collection names its company in the Money In table', html.includes('Finance — Service Finance'));
+
+  w.eval("commUi.editColl = 'c3'; commUi.collForm = true;");
+  await w.__render();
+  const html2 = w.document.getElementById('commMount').innerHTML;
+  ok('COMM_SOURCES offers Finance as a form option', html2.includes('>Finance<'));
+  ok('editing a finance collection shows the company field, open and prefilled', html2.includes('id="miFinRow" style="display:block') && html2.includes('value="Service Finance"'));
+
+  w.eval("commUi.editColl = null; commUi.collForm = true;");
+  await w.__render();
+  const html3 = w.document.getElementById('commMount').innerHTML;
+  ok('a fresh Log Collection form (no source picked) starts with the company field hidden', html3.includes('id="miFinRow" style="display:none'));
+}
+
 console.log('\n── the tab: edge cases ──');
 {
   const { html } = await runTab('admin', TABFX, THEO);

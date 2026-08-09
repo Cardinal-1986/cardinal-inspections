@@ -11896,3 +11896,68 @@ before the UI was written; all test rows deleted.
 Vera need team_profiles rows with real emails before they can be picked;
 clarkie022@gmail.com needs a display name; rep-role rendering is verified by
 RLS + harness, not by signing in as a rep.
+
+## Build 651 — Finance as a source, and Theo's weekly owed email (9 Aug 2026)
+
+Theo answered all five of the commission spec's open questions directly, and
+two needed a build; the other three are settled and recorded in
+`OPEN_ITEMS.md` — no split commissions ever, draw requests stay text/call,
+payment method was already tracked.
+
+**Finance as a collection source.** `commission_finance_source.sql`
+(APPLIED, verified live: a finance collection auto-generated its 10%
+commission correctly, an invalid source was still refused, all test rows
+deleted). `collections.source` gains `'finance'`; a new free-text
+`finance_company` column names which one — deliberately not an enum, since
+Theo said outright he'll add companies beyond Service Finance and a table
+for one row would be premature. The Log Collection form pre-fills "Service
+Finance" as an editable default when Finance is picked. Also fixed in
+passing: the Money In table's Source cell was rendering the raw enum value
+(`insurance`) instead of a label — Type already used `commTypeLabel()`;
+Source now has its `commSourceLabel()` twin, which also appends the
+financing company when present.
+
+**One mistake caught by the gate before it shipped.** The first stamp-bump
+patch for the CHANGELOG entry replaced `"var CHANGELOG = [\n{ b:650,"` with
+new-entry text that started `"{ b:651,"` — dropping the `var CHANGELOG = [`
+array opener entirely, because the replacement text didn't re-include
+everything from the matched span that needed to survive. `check_build.py`
+caught it immediately (`node --check` failed on block 47 with "Unexpected
+token ':'"). Fixed by re-inserting the opener; green on the next run. This
+is the literal-splicing trap the skill's own doctrine names — `.replace()`
+is not smart merging, the replacement must carry forward everything from
+`OLD` that the new text still needs.
+
+**The weekly commissions email.** New `api/commissions-digest.js`, same
+shape as `api/digest.js` (Vercel Cron → Resend → service-role REST calls,
+`CRON_SECRET` bearer auth, same `ADMIN_EMAIL`/`DIGEST_FROM` env vars — needs
+no new secrets if the daily digest already sends). Every Friday 11:00 UTC,
+Theo and Joan each get one email: every rep with money owed, their
+outstanding draws, and the net — computed by `groupOwed()`, exported from
+the module so the harness runs the real function, and using the exact same
+"owed" definition (`pending`/`approved`, never `paid`/`void`) the
+Commissions screen's own `groupOwed()` uses, so the two can never disagree.
+Sends nothing when nothing is owed, matching `/api/digest`'s own silence-on-
+nothing convention. Registered in `vercel.json` beside the existing daily
+cron.
+
+**Gates.** `check_build.py` green, stamp 650 → 651, 107 scripts parse.
+`harness_pay.js` extended to 58 assertions (finance option in the form,
+label rendering for both insurance and finance rows, edit-prefill of the
+company field, a fresh form starting with the company field hidden) —
+negative control on 650: 5 of the new assertions correctly fail, exit 1.
+New `harness_commissions_digest.mjs` — 24 assertions, `fetch` fully mocked
+so **no live email is ever sent by the harness**: the owed/draws math
+(including a rep whose draws exceed their commission, rendering negative in
+red), exactly one email per admin, the nothing-owed silence, `CRON_SECRET`
+accepted/refused, missing-env-var refusals, and `vercel.json` still parses
+with both crons registered and the daily one untouched.
+
+**Cross-rep visibility, proven live (not from this build, but verified
+today after Theo raised the question).** Two fake jobs were created for
+Nick and Joey with real collections/commissions/draws, then queried under
+an actual authenticated session per rep — `set local role authenticated;
+set local request.jwt.claims = '{"email":"..."}'` — real RLS, not the
+service-role bypass. Each rep saw only their own rows on all three tables;
+Theo saw both. This was already correctly enforced by the RLS shipped at
+650; nothing needed to change. All test rows deleted.

@@ -3284,7 +3284,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 650 &#8212; Money in, commissions out &#8212; log each check and the rep&#8217;s 10% writes itself</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 651 &#8212; Finance as a check source, and Theo gets a weekly owed email</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17558,7 +17558,7 @@ async function runTotalsBackfill(){
 var COMM_STATUS = ['pending','approved','paid','void'];
 var COMM_METHODS = [['check','Check'],['ach','ACH'],['payroll','Payroll'],['other','Other']];
 var COMM_TYPES = [['deposit','Deposit'],['final','Final'],['supplemental','Supplemental'],['pwi','PWI'],['other','Other']];
-var COMM_SOURCES = [['insurance','Insurance'],['homeowner','Homeowner'],['other','Other']];
+var COMM_SOURCES = [['insurance','Insurance'],['homeowner','Homeowner'],['finance','Finance'],['other','Other']];
 var COMM_OWNER = 'theo@cardinalrenovations.net';
 
 function commAdmin(){
@@ -17597,6 +17597,12 @@ function commStatusLabel(s){
 function commTypeLabel(t){
   for(var i = 0; i < COMM_TYPES.length; i++) if(COMM_TYPES[i][0] === t) return COMM_TYPES[i][1];
   return t || '';
+}
+function commSourceLabel(c){
+  var s = c && c.source, lbl = '';
+  for(var i = 0; i < COMM_SOURCES.length; i++) if(COMM_SOURCES[i][0] === s) lbl = COMM_SOURCES[i][1];
+  if(!lbl) return '';
+  return (s === 'finance' && c.finance_company) ? lbl + ' \u2014 ' + c.finance_company : lbl;
 }
 /* sales-role teammates + Theo (owner jobs are marked, not paid). teamEmails()
    and tmRoleOf() are hoisted from the Team page code later in this block.
@@ -17697,7 +17703,7 @@ async function renderCommissions(){
         return '<tr>' +
           '<td>' + commDate(c.collected_at) + '</td>' +
           '<td>' + woEsc(commTypeLabel(c.type)) + '</td>' +
-          '<td>' + woEsc(c.source || '') + '</td>' +
+          '<td>' + woEsc(commSourceLabel(c)) + '</td>' +
           '<td style="text-align:right">' + commMoney(c.amount) + '</td>' +
           '<td>' + (cm
             ? (cm.status === 'paid' ? '<b>&#9679; Paid</b>' : '<b>&#9675; ' + woEsc(commStatusLabel(cm.status)) + '</b>')
@@ -17737,6 +17743,10 @@ async function renderCommissions(){
           '<label>Source<select id="miSrc" ' + inp + '><option value="">&#8212;</option>' +
             COMM_SOURCES.map(function(t){ return '<option value="' + t[0] + '"' + (editing && editing.source === t[0] ? ' selected' : '') + '>' + t[1] + '</option>'; }).join('') +
           '</select></label>' +
+        '</div>' +
+        '<div id="miFinRow" style="display:' + ((editing ? editing.source : '') === 'finance' ? 'block' : 'none') + ';margin-top:8px">' +
+          '<label>Financing company<input type="text" id="miFinCo" ' + inp + ' value="' +
+            woEsc((editing && editing.finance_company) || (editing ? '' : 'Service Finance')) + '"></label>' +
         '</div>' +
         '<label style="display:block;margin-top:8px">Notes<input type="text" id="miNotes" ' + inp + ' value="' + woEsc((editing && editing.notes) || '') + '"></label>' +
         '<button class="btn" style="margin-top:12px" id="miSave">' + (editing ? 'Save changes' : 'Save collection') + '</button>' +
@@ -17848,6 +17858,17 @@ async function renderCommissions(){
   if(el) el.addEventListener('click', function(){ commUi.drawForm = !commUi.drawForm; renderCommissions(); });
   el = document.getElementById('miSave');
   if(el) el.addEventListener('click', miSaveColl);
+  var miSrcSel = document.getElementById('miSrc');
+  if(miSrcSel){
+    miSrcSel.addEventListener('change', function(){
+      var fr = document.getElementById('miFinRow');
+      if(!fr) return;
+      var on = miSrcSel.value === 'finance';
+      fr.style.display = on ? 'block' : 'none';
+      var fc = document.getElementById('miFinCo');
+      if(on && fc && !fc.value) fc.value = 'Service Finance';
+    });
+  }
   el = document.getElementById('miDrawSave');
   if(el) el.addEventListener('click', miSaveDraw);
   el = document.getElementById('cmToggle');
@@ -17877,6 +17898,8 @@ async function miSaveColl(){
     amount: amt,
     type: document.getElementById('miType').value || 'other',
     source: document.getElementById('miSrc').value || null,
+    finance_company: document.getElementById('miSrc').value === 'finance'
+      ? (document.getElementById('miFinCo').value.trim() || 'Service Finance') : null,
     notes: document.getElementById('miNotes').value.trim() || null,
   };
   if(msg) msg.textContent = 'Saving…';
@@ -36076,6 +36099,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:651, d:'2026-08-09', t:'Finance as a check source, and a weekly owed email', s:'Logging a collection now offers Finance alongside Insurance and Homeowner \u2014 a check that comes in through a financing company (Service Finance today, more later) gets its own source and names which company. Every Friday morning Theo and Joan now get an email of what\u2019s owed to each rep minus their outstanding draws, matching the Commissions screen exactly \u2014 nothing to remember, nothing to check by hand.' },
 { b:650, d:'2026-08-09', t:'Money in, commissions out', s:'The Commissions tab on every job now starts with the money: log each check as it arrives \u2014 deposit, final, supplemental, PWI \u2014 and the rep\u2019s 10% commission writes itself. Theo\u2019s own jobs create no commission. Draws \u2014 advances against future commission \u2014 can be logged on the job or from the new \ud83d\udcb5 Commissions screen in the menu, where Friday lives: what each rep is owed minus outstanding draws, one tap to pay net or full, this week\u2019s payouts, paid history and a CSV export. Reps open the same screen and see My Earnings \u2014 paid this year, owed now, and what the next check should be. The sales rep is set automatically when a job is created and locks once money is logged.' },
 { b:649, d:'2026-08-09', t:'Reading a filed scope works, and old notes are counted again', s:'Two fixes. \u201cRead the scope already on file\u201d said the document had nothing stored in it \u2014 it did, the app was looking in a list that deliberately leaves the file contents out to stay fast. It now fetches the document itself. And the job menu said Communication 0 on clients that plainly had a note: notes written in the older notes box were shown on the Communications screen but never counted on the tile. Eight clients were affected, including one with a long note about a structural concern. The tile and the screen now count the same thing.' },
 { b:648, d:'2026-08-09', t:'One reader behind all five Scope of Loss screens', s:'Five different screens could read a Scope of Loss, and each one had its own separate copy of the code that talks to the reader. That meant a fix to one never reached the other four \u2014 and one of them would have failed outright rather than asking you to sign in again. They now share a single connection, while each screen keeps its own look and its own handling of what comes back. Nothing changes in how any of them are used; this is groundwork so the next improvement lands everywhere at once.' },

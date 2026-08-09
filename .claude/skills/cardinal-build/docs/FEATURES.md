@@ -2545,3 +2545,42 @@ email (a typo'd `rep_email` orphans the row against nobody). Commission
 amounts are never mutated after creation; deductions are repaid-draw rows.
 `sales_rep` locks after the first collection (DB trigger; admin override).
 Totals are summed from the rendered rows, never a second query (556's rule).
+
+**Cross-rep visibility — proven live, not just read off the RLS text (9 Aug
+2026).** Two fake jobs (one Nick's, one Joey's) were created with real
+collections/commissions/draws, then queried under an actual authenticated
+session per rep (real JWT claim, `authenticated` role — RLS fully engaged,
+not the service-role bypass): each rep saw only their own rows across all
+three tables; Theo saw both. All test rows deleted afterward. `commissions`
+and `draws` enforce this with `rep_email = auth.email()`; `collections` with
+`projects.sales_rep = my_email()`. This is a database boundary, not a UI
+one — calling the Supabase client directly bypasses nothing.
+
+### 651 — Finance as a collection source, and Theo's weekly owed email
+
+Two small builds from Theo answering the spec's five open questions directly
+(all five are recorded, settled, in `OPEN_ITEMS.md` — do not re-ask):
+
+- **`collections.source` gains `'finance'`**, plus a free-text
+  `finance_company` column (`commission_finance_source.sql`, applied). Not
+  an enum — Theo: "we use service finance right now but will explore other
+  financing," so a `financing_companies` table for one row would be the
+  premature abstraction this project warns against. The Log Collection form
+  pre-fills "Service Finance" as an editable default when Finance is picked;
+  the Money In table shows "Finance — Service Finance". `commSourceLabel()`
+  also fixed a pre-existing gap where Source rendered its raw enum value
+  (`insurance`) instead of a label (`Insurance`) — Type already did this,
+  Source hadn't.
+- **`api/commissions-digest.js`** (new, mirrors `api/digest.js`'s Resend
+  pattern exactly) emails Theo and Joan every Friday 11:00 UTC: what each
+  rep is owed minus outstanding draws. "Owed" is `pending`/`approved`,
+  never `paid`/`void` — the exact rule `groupOwed()` in `cr-pay-script`
+  uses, exported from the API file too so the harness executes the real
+  grouping logic, not a re-implementation. Sends nothing when nothing is
+  owed (matches `/api/digest`'s own convention — no weekly "all clear"
+  noise). Cron in `vercel.json`, alongside the existing daily one.
+- **Gate:** `harness_pay.js` extended (58 assertions total) for the finance
+  form/display; new `harness_commissions_digest.mjs` (24 assertions) mocks
+  `fetch` entirely and executes the shipped `groupOwed()` + `handler()` —
+  no live email is ever sent by the harness. Both negative-controlled
+  against 650.
