@@ -194,8 +194,12 @@ console.log('\n── the diagnosis a screenshot can carry ──');
   cases.push((await drive([{ httpOk: false, payload: { error: { message: 'x'.repeat(800) } } }])).r.body.error);
   ok('every error sentence fits the client\'s 250-char slice',
     cases.every(s => s.length <= CLIENT_SLICE), JSON.stringify(cases.map(s => s.length)));
+  /* 662 SUPERSEDED: this pinned the tail's LAST field, and 662 appended the
+     elapsed time after it. The guarantee is that the diagnosis survives the cap,
+     not which field ends it — key on the bracket, and on the field that was
+     being protected. */
   ok('…including an 800-char carrier error, whose diagnosis survives the cap',
-    /reply 0 chars\]$/.test(cases[3].trim()), cases[3].slice(-60));
+    /\]$/.test(cases[3].trim()) && /reply 0 chars/.test(cases[3]), cases[3].slice(-60));
 }
 
 console.log('\n── the fallback rung can finally open a PDF ──');
@@ -232,7 +236,13 @@ if (oaWas !== undefined) process.env.OPENAI_API_KEY = oaWas;
 
 console.log('\n── what shipped is what the artifact says shipped ──');
 {
-  ok('the app stamp is at 661', /v2026-08-09 build 661/.test(SRC));
+  /* 662 SUPERSEDED: this pinned the stamp to 661 and so went red on the very
+     next build — the "assertion matching a hardcoded count" class in
+     BUG_CLASSES.md §15. What 661 needs is that the artifact is AT OR PAST the
+     build that carries its fix, which stays true forever. */
+  ok('the app stamp is at 661 or later',
+    (function(){ var m = SRC.match(/data-cr-footer[^>]*>v[\d-]+ build (\d+)/); return m && +m[1] >= 661; })(),
+    (SRC.match(/data-cr-footer[^>]*>v[\d-]+ build (\d+)/) || [])[1]);
   ok('the changelog records it', /\{ b:661,/.test(SRC));
   ok('659\'s one-sentence-for-everything is gone from the route',
     !/could not turn this document into fields/i.test(API));

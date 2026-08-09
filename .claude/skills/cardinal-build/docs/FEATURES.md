@@ -2905,3 +2905,43 @@ appended, so the diagnosis is never the part that falls off. Asserted in
 
 Gate: `harness_661.js` (39) — imports the real handler and **counts model
 calls**: one on success, one on a truncation, two on an unparseable reply.
+
+### 662 — the model-backed routes have a duration, and the retry has a clock
+
+**`vercel.json` now carries a `functions` block.** Before 662 it had none, so
+every `/api` route ran on the Vercel default (10s Hobby / 15s Pro) — which a
+multimodal read of a multi-page scope does not fit. The twelve routes that hand
+a **document or image** to a model get `maxDuration: 60`; `ai-status` and
+`coach` call a model but send no document and were deliberately left at default.
+
+⚠ **60 is not arbitrary — it is the highest value valid on EVERY Vercel plan**
+(Hobby caps there). Raising it further would deploy on Pro and fail on Hobby.
+
+⚠ **A `functions` pattern that matches no file fails the BUILD, not the
+request.** If you rename or delete an `api/*.js`, fix `vercel.json` in the same
+commit. `harness_662.js` asserts every key resolves to a file that exists.
+
+**The retry will not start a call it cannot finish.** 661 added a second model
+call on the failure path; 662 gates it on
+`elapsed() + firstAttemptMs < TIME_BUDGET_MS` (45s of the 60). The test is
+"would a second call as long as the first still land inside the budget", because
+the first attempt's own duration is the best estimate of the second's. Skipping
+is reported in the message as `no 2nd try (time)`.
+
+**This is a code guard, not configuration** — deliberately. If the `vercel.json`
+block is ever lost or the plan caps lower, a retry that overruns turns a 502
+carrying the diagnosis into a bare platform `HTTP 504`: the retry eating the
+message it exists to produce.
+
+**The diagnosis reports elapsed time** (`… · 47.2s]`) — a model that thought for
+47 seconds and one that refused in 300 ms are otherwise identical on screen.
+
+**Failure logging**: `console.error('[sol] unreadable reply', …)` fires on the
+failure path only, carrying via / finishReason / blockReason / usage / ms and
+500 characters of the model's reply. ⚠ **Never the document bytes** — asserted.
+A successful read logs nothing.
+
+**What does NOT apply to this route** (asked twice now, recorded once):
+OCR, layout-aware PDF parsing, "narrow the prompt away from line items" (it has
+never asked for any — 24 summary fields, measured), and Vercel's 4.5 MB request
+body limit (657 routes anything over 3.1 MB through storage as `{url}`).

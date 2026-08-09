@@ -2068,6 +2068,26 @@ that document successfully.** What each build actually fixed:
 must stay there — there is no way to call the model from here, so the read is
 Theo's to run and his screenshot is the instrument.
 
+**662 added a row to that table**: every AI route was running on the hosting
+default duration (10–15s), and 661's retry made the scope read two sequential
+model calls. That is now `maxDuration: 60` plus a code guard that refuses a
+retry it cannot finish. ⚠ **It is not the outstanding cause** — Theo's
+screenshot carried the handler's own sentence, so the handler returned; a
+timeout would have shown `HTTP 504`. It was a risk 661 created, found by
+checking a claim that was otherwise wrong.
+
+**Ruled out, so nobody re-proposes them** (each has now been suggested at least
+once): OCR and layout-aware PDF parsing — `/api/sol` is multimodal, there is no
+text-extraction stage to improve · "narrow the prompt off line items" — it has
+never asked for line items, 24 summary fields measured · Vercel's 4.5 MB body
+limit — 657 routes anything over 3.1 MB through storage · markdown fences —
+stripped since before 659, with two further salvage layers since.
+
+**Unmeasured and deliberately untouched**: the prompt is 3,852 characters and
+**59% of it is ordinance & law** (2,254 chars added across 658 and 660) for one
+field group out of 24. Not a proven cause of anything. Written down because
+three builds pushed the same direction; know the shape before adding a fourth.
+
 **What to do with the next screenshot**: read the bracketed tail.
 `in <few hundred> tok` means the document never reached the model (transport,
 not prompt). `out 0 tok` with a large `in` means it ingested and declined.

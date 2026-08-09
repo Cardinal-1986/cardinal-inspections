@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 661 &#8212; When the scope reader fails it now says which reader answered and why it stopped, and tries the other way first</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 662 &#8212; The scope reader is given the time a big document actually takes, and never starts a second attempt it cannot finish</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -36612,6 +36612,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:662, d:'2026-08-09', t:'The reader is given time to read a long scope',
+s:'Every one of the app\u2019s AI routes was running on the hosting default \u2014 ten or fifteen seconds \u2014 and reading a multi-page adjuster\u2019s scope takes longer than that. They now get a full minute. The second attempt added yesterday is also no longer allowed to start unless it can finish: a retry that runs past the limit hands back a bare \u201CHTTP 504\u201D instead of the explanation it was added to give. Failures now say how long they took, which is the difference between a model that thought about it and one that refused instantly.'},
 { b:661, d:'2026-08-09', t:'A failed scope read says what actually went wrong',
 s:'Reading Adam Gunn\u2019s scope kept failing with one sentence \u2014 \u201Cthe reader could not turn this document into fields\u201D \u2014 and that sentence covers four completely different problems: the AI refused the document, the AI answered nothing, the AI answered in words, or the document never reached it. It now names which one, in the message itself, along with how much of the document the AI actually took in. It also tries a second time in the older way before giving up, because the way it asks was changed two builds ago and that is the prime suspect. And the backup reader, which has never once been able to open a PDF, now can.'},
 { b:660, d:'2026-08-09', t:'Ordinance & Law by the name it actually goes by',

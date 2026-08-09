@@ -122,7 +122,7 @@ async function aiFallback(parts, geminiRes) {
    promptTokenCount is the load-bearing one. A 4.8 MB scope should ingest as
    tens of thousands of tokens; a few hundred means the document never reached
    the model at all, and no amount of prompt work would have helped. */
-function readerDiag(via, body, cand, text) {
+function readerDiag(via, body, cand, text, ms, note) {
   const u = (body && body.usageMetadata) || {};
   const bits = [via];
   const blocked = body && body.promptFeedback && body.promptFeedback.blockReason;
@@ -131,6 +131,11 @@ function readerDiag(via, body, cand, text) {
   if (u.promptTokenCount != null) bits.push('in ' + u.promptTokenCount + ' tok');
   if (u.candidatesTokenCount != null) bits.push('out ' + u.candidatesTokenCount + ' tok');
   bits.push('reply ' + String(text || '').length + ' chars');
+  /* 662: a slow model that answered and an instant refusal look identical
+     without this. It is also the only number that says whether the platform
+     duration is the ceiling being hit. */
+  if (ms != null) bits.push((ms / 1000).toFixed(1) + 's');
+  if (note) bits.push(note);
   return ' [' + bits.join(' \u00b7 ') + ']';
 }
 
@@ -315,7 +320,21 @@ export default async function handler(req, res) {
        one field changed rather than a second pipeline beside the first. The 647
        banner in index.html forbids a sixth /api/sol caller for exactly this
        reason; the same discipline applies inside the route. */
+    /* 662: THE FUNCTION HAS A CLOCK ON IT.
+       `vercel.json` carried no `functions` block until this build, so every
+       route ran on the platform default (10s Hobby / 15s Pro). A multimodal
+       read of a multi-page scope does not fit that, and 661's retry made it
+       two of them back to back — so the retry could turn a 502 carrying the
+       diagnosis into a platform 504, and the client would show "HTTP 504"
+       instead of the sentence the retry exists to produce. maxDuration is now
+       60, and this guard holds even if that config is ever lost: the budget is
+       what THIS function may spend, not what the platform allows. */
+    const T0 = Date.now();
+    const TIME_BUDGET_MS = 45000;   /* 60s cap, 15s of headroom to answer in */
+    const elapsed = () => Date.now() - T0;
+
     async function askGemini(jsonMode) {
+      const t = Date.now();
       let r = await fetch(
         'https://generativelanguage.googleapis.com/v1beta/models/' + MODEL + ':generateContent',
         {
@@ -347,7 +366,8 @@ export default async function handler(req, res) {
       const cand = (body && body.candidates ? body.candidates : [])[0] || {};
       let text = ((cand.content || {}).parts || []).map(p => p.text || '').join('');
       text = String(text || '').replace(/```json|```/g, '').trim();
-      return { ok: !!r.ok, via: r._via === 'openai' ? 'openai' : 'gemini', body, cand, text };
+      return { ok: !!r.ok, via: r._via === 'openai' ? 'openai' : 'gemini', body, cand, text,
+               ms: Date.now() - t };
     }
 
     let a = await askGemini(true);
@@ -358,7 +378,7 @@ export default async function handler(req, res) {
            Google error would push the diagnosis straight off the end, in the one
            case where it is most wanted. Cap the quote, never the diagnosis. */
         error: String((a.body && a.body.error && a.body.error.message) || 'AI request failed').slice(0, 150) +
-               readerDiag(a.via, a.body, a.cand, a.text),
+               readerDiag(a.via, a.body, a.cand, a.text, elapsed()),
         detail: JSON.stringify(a.body).slice(0, 500)
       });
       return;
@@ -373,21 +393,30 @@ export default async function handler(req, res) {
       res.status(502).json({
         error: 'The reader ran out of room before it finished this scope. ' +
                'It is a long document \u2014 try uploading just the scope and totals pages.' +
-               readerDiag(a.via, a.body, a.cand, a.text)
+               readerDiag(a.via, a.body, a.cand, a.text, elapsed())
       });
       return;
     }
 
-    /* 661: THE RETRY. One extra call, only on the failure path. */
+    /* 661: THE RETRY. One extra call, only on the failure path.
+       662: and only if it can FINISH. The test is not "is there time left" but
+       "would a second call as long as the first still land inside the budget" —
+       the first attempt's own duration is the best estimate of the second's.
+       Starting one it cannot finish trades a diagnosis for a 504. */
+    let skipped = '';
     if (!parsed) {
-      const b = await askGemini(false);
-      if (b.ok) {
-        const p2 = parseObj(b.text);
-        if (p2) parsed = p2;
-        /* nothing usable either way: report whichever attempt actually said
-           something, because "it answered in words" and "it answered nothing"
-           are different problems and only one of them is about the prompt. */
-        if (!parsed && !a.text && b.text) a = b;
+      if (elapsed() + a.ms < TIME_BUDGET_MS) {
+        const b = await askGemini(false);
+        if (b.ok) {
+          const p2 = parseObj(b.text);
+          if (p2) parsed = p2;
+          /* nothing usable either way: report whichever attempt actually said
+             something, because "it answered in words" and "it answered nothing"
+             are different problems and only one of them is about the prompt. */
+          if (!parsed && !a.text && b.text) a = b;
+        }
+      } else {
+        skipped = 'no 2nd try (time)';
       }
     }
 
@@ -403,8 +432,20 @@ export default async function handler(req, res) {
         msg = 'The reader answered in words instead of fields. It may not be a scope of ' +
               'loss, or the pages may be images the text did not come through on.';
       }
+      /* 662: a second channel that does not depend on a screenshot. The model's
+         reply can name a homeowner and an address, so it is capped and it is the
+         only thing logged — never the document bytes, never a key. Vercel's
+         function log is team-only; this is Cardinal's own data either way, and
+         the same 300 characters already travel to the client as `detail`. */
+      console.error('[sol] unreadable reply', JSON.stringify({
+        via: a.via, finish: a.cand.finishReason || null,
+        blocked: (a.body && a.body.promptFeedback && a.body.promptFeedback.blockReason) || null,
+        usage: (a.body && a.body.usageMetadata) || null,
+        ms: elapsed(), skipped: skipped || null, chars: a.text.length,
+        head: a.text.slice(0, 500)
+      }));
       res.status(502).json({
-        error: msg + readerDiag(a.via, a.body, a.cand, a.text),
+        error: msg + readerDiag(a.via, a.body, a.cand, a.text, elapsed(), skipped),
         detail: a.text.slice(0, 300)
       });
       return;

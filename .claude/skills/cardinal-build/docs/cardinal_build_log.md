@@ -12548,3 +12548,79 @@ shows the next failure arriving with its cause attached. The Gemini key lives in
 Vercel and the sandbox has no way to call the model, so the read itself is
 Theo's to run. If the retry was the fix, it simply works; if not, the message
 now says which of the four it is.
+
+---
+
+## Build 662 — 9 Aug 2026 — the retry cannot eat the diagnosis it exists to deliver
+
+Theo passed on a second AI analysis of the scope-reader failure. Three of its
+four claims do not hold against this repo, one pointed at something real, and
+chasing it found **a defect I shipped an hour earlier**. Each is recorded here
+because the same advice will be offered again.
+
+| Claim | Verdict |
+|---|---|
+| "Token limit / page truncation" | **Already handled and already excluded.** 659 moved the cap 1024 → 8192, and 661 detects `MAX_TOKENS` by name and answers *"ran out of room"*. Theo did not get that sentence, so truncation was not this failure |
+| "Markdown fences / non-JSON break `JSON.parse`" | **Handled three times over.** The ``` strip predates 659; 659 added the outermost-`{…}` salvage; 661 made the salvage object-only **and** added the no-JSON-mode retry. Their suggested fix is the code that is already there |
+| "Narrow the prompt to summary totals instead of reconstructing line items" | **Factually wrong about this prompt.** Measured: **3,852 characters, 24 response fields, all summary-level, zero line items.** The only occurrence of "line item" tells the model these are *evidence, not the number*. There is nothing to narrow — 660 recorded the no-line-items decision as Theo's |
+| "Inline base64 past Vercel's 4.5 MB body limit" | **Fixed at 657.** Anything over `MAX_INLINE` (3.1 MB) goes to Supabase storage and the route is sent `{url}`; Gunn's 4.8 MB scope has never travelled inline since. **But the platform-limit instinct was right — it was the wrong limit** |
+
+**The right limit was DURATION, and the exposure was mine.** `vercel.json` had
+**no `functions` block at all**, so every `/api` route ran on the platform
+default — 10s on Hobby, 15s on Pro. A multimodal read of a multi-page scope does
+not fit that, and **661's retry made it two of them back to back.** A function
+killed mid-retry answers a platform **504**, and `solRead()` would then show
+`HTTP 504` — 661's retry eating the very message 661 exists to produce.
+
+⚠️ **A timeout is NOT what Theo screenshotted.** He got the handler's own
+sentence, so the handler returned. This is a risk I introduced, found by taking
+a wrong analysis seriously, not the outstanding cause. Do not let it displace
+the evidence.
+
+- **`maxDuration: 60`** on the twelve routes that hand a **document or an image**
+  to a model. 60 is the highest value valid on *every* Vercel plan (Hobby caps
+  there), so it cannot fail a deploy on plan. `ai-status` and `coach` call a
+  model but send no document and were left alone. ⚠️ A `functions` pattern that
+  matches no file fails the **build**, not the request — `harness_662` asserts
+  every key resolves to a file that exists.
+- **The retry will not start a call it cannot finish.** The test is not "is
+  there time left" but *"would a second call as long as the first still land
+  inside the budget"* — `elapsed() + a.ms < TIME_BUDGET_MS` (45s, leaving 15s of
+  the 60 to answer in). When it is skipped the message says so: `no 2nd try
+  (time)`. **This holds even if the `vercel.json` config is ever lost**, which
+  is why it is a code guard and not just configuration.
+- **The diagnosis tells the time** — `… · 47.2s]`. A model that thought for 47
+  seconds and one that refused in 300 ms were previously indistinguishable.
+- **A second channel**: `console.error('[sol] unreadable reply', …)` on the
+  failure path only — via, finishReason, blockReason, usage, ms, and 500
+  characters of the model's reply. **Never the document bytes**, asserted. A
+  successful read logs nothing. Note it can carry a homeowner's name into
+  Vercel's team-only function log; the same 300 characters already travel to the
+  client as `detail`.
+
+**Gates.** `check_build.py` green, stamp 661 → 662. All 26 `api/*.js` parse.
+New `harness_662.js` (33) **fakes the clock** — `Date.now` is stubbed and each
+model call advances it — so "the first attempt took 30 seconds" is an instant
+test rather than a 60-second harness. Negative controls: **18 red on 661**,
+**22 red on 660**.
+
+⚠️ **Two harness defects of my own, both fixed.**
+1. `harness_662` **crashed** on its own negative control — an unguarded
+   `r.body.error` on a run that legitimately returned 200. *A crash is not a red;
+   it is an absence of information.* Every body read now goes through `errOf()` /
+   `exOf()`. Same class as 657's.
+2. `harness_661` asserted `build 661` **exactly**, so it went red on the very
+   next build for no reason — **BUG_CLASSES §15**, the class this project has
+   already named. Both harnesses now assert *at or past* their build. Do not
+   reintroduce the equality.
+
+Regressions: 661 39/39, 660 27/27, 659 16/16, 658 38/38, 657 32/32, 655 42/42,
+654 31/31, 653 45/45, approvals 15/15, pay 58/58 (`TZ=America/New_York`),
+render_inscards 9/9, render_656 17/17.
+
+**One measurement worth keeping.** The prompt is **3,852 characters and 59% of
+it is the ordinance & law block** — 2,254 characters added across 658 and 660,
+for **one field group out of 24**. That is not a proven cause of anything, and
+nothing was changed on the strength of it. It is written down because three
+consecutive builds pushed in the same direction and the next person should know
+the shape before adding a fourth.
