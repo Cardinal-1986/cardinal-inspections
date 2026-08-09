@@ -10682,3 +10682,220 @@ A row labelled "Confidential GC Partner", one tap, the full record. 10 red on
 
 It also asserts the **admin** path still works — that a privileged user taps Edit
 and *is* handed the real row — so a fix that simply broke editing could not pass.
+
+---
+
+## Build 636 — one location card, and it is the Google one (8 Aug 2026)
+
+Theo, from an Insurance client profile: *"in all client profiles there's 2
+locations, can you get rid of the one that's not the google one."*
+
+He was right — there were two, built on entirely different stacks:
+
+| | what it was |
+|---|---|
+| `.cr-gmap-block` | a Google **static** map + Directions / View on Maps, injected into `#projectView` by `maybeInsertProfileMap()` on every `scan()` |
+| the **Location** card | `#dbMap`, a **Leaflet** map geocoded through **Nominatim**, Map/Satellite tabs (satellite via **Esri**), plus the address and the pencil |
+
+Three map providers on one screen. The Leaflet one is the one that said
+*"Could not pin this address."*
+
+### ⚠️ Why the obvious fix was wrong — and why he was asked first
+
+Deleting the Location card was the literal request and would have broken two
+things nobody would have noticed until later:
+
+1. **It carries the only rendered address text and the only `#acxEdit2` pencil.**
+   `#acxEdit1` appears solely in the click handler — it is never rendered — so
+   that pencil is the address editor on this screen.
+2. **Community has no Google card.** `maybeInsertProfileMap()` only runs on
+   `#projectView`; the Community client page calls `adoptLocation()`, which
+   **moves** the `.acxsec` containing `#dbMap` into `#cr-cc-loc`. Remove `#dbMap`
+   and it finds nothing and prints *"No location on file yet."*
+
+Offered three shapes. He picked **one card, Google map**, which is the only one
+that loses nothing.
+
+### What shipped
+
+`dbInitMiniMap` now paints an `<img>` from `CardinalMaps.staticMapUrl()` —
+no map library, no tile server, **no geocode round trip**, because Google
+resolves the address inside the URL. The Map/Satellite tabs still work: they set
+`maptype` and repaint through one exported setter (`window.dbSetMapType`), since
+the tab handler lives in its own `cr-keeper2-script` block and cannot see that
+closure. Directions, the address and the pencil are untouched.
+
+`maybeInsertProfileMap()` is gone — definition and call. It ran on **every**
+scan, and `scan()` is driven by a MutationObserver on `document.body`, one of the
+fifty this file carries.
+
+**Community gets a working map here for the first time**, because it adopts this
+same node and its Leaflet copy failed identically — same geocoder.
+
+Measured rather than asserted: **30 projects, all with an address, 17 with a
+cached pin** — so the Leaflet map had failed or never been opened on 13. Two
+addresses carry a doubled `, USA,` (the screenshot's 9222 Arlington is one),
+which is what Nominatim choked on.
+
+⚠️ **`qiLoadLeaflet()` is NOT removed** — it has a second caller with its own
+forward *and* reverse Nominatim lookups, and there is a batch geocoder in a
+`step()` loop besides. Only this screen stopped using Leaflet. The cached
+`ck.geo` values are left in place too; nothing reads them now, but deleting data
+to tidy up is how a rollback becomes lossy.
+
+### ⚠️ THREE assertion failures, all mine, all class 15 — in the session that documented it
+
+1. **`nominatim… == 0` file-wide.** Wrong, and right to fail: a second Leaflet
+   map elsewhere has its own lookups. Replaced with a `drops(needle, 1)` helper
+   that requires the count to fall by **exactly one**. Guessing zero would have
+   demanded deleting a feature I never looked at.
+2. **`maybeInsertProfileMap() == 0`.** Matched **my own replacement comments**,
+   which name the function in prose. Rule 1 of the class. Fixed by asserting on
+   syntax — `function maybeInsertProfileMap(` and `maybeInsertProfileMap();`.
+3. **A literal script tag inside a code comment** turned the gate red at
+   **110 open / 109 close**. `check_build.py` counts tags across the whole file,
+   comments included. Reworded, and `src.count('<script') == orig.count('<script')`
+   is now asserted so it cannot recur.
+
+Plus one in the harness: extracting the setter with `[^;]+;` **truncated it at
+the first semicolon inside its own body** — CLAUDE.md's "a pattern using `[^;]`
+cannot see a whole expression", hit while writing the test for it. Extracted by
+line instead.
+
+### Verification
+
+`check_build.py` green, negative-controlled. **New `harness_location.js` — 24
+assertions**; the executed half runs the shipped `dbPaintMap` against a stubbed
+`CardinalMaps` and asks the DOM what was drawn, then **switches the tab and asks
+again** — a regex cannot see that a tab repaints. It also runs the no-key case
+and requires the card to *say* the key is missing rather than leave an empty box,
+which would read exactly like the failure this build removed.
+
+Negative control on 635: **16 red, 8 green**, and the executed section is wrapped
+so it reports clean FAILs instead of throwing. All eleven harnesses green.
+
+⚠️ **Theo's eyes are the gate.** I cannot load a Google static map from this
+sandbox, so "the image renders" is proven only as far as the correct URL being
+built and painted.
+
+---
+
+## Storage config — PDF scopes could never upload (9 Aug 2026, no build number)
+
+Theo: *"when trying to upload Adam Gunn's scope there was an error."*
+
+**Not an app bug, and no build of the app could have fixed it.** The scope
+uploader (`toStorageUrl`) writes to `photos` under `scopes/…` and *defaults the
+content type to `application/pdf`* — it knows a carrier scope is a PDF. But the
+bucket's `allowed_mime_types` was images only, so Storage refused it before it
+landed. It failed on **every** PDF, at any size.
+
+`photos` now also accepts `application/pdf`, and the cap went **10 MB → 25 MB**
+(a scope with photographs in it routinely passes 10 MB). Applied to production
+on his explicit yes; recorded as `photos_bucket_pdf.sql`, idempotent.
+
+⚠️ **The same bucket takes `work_orders/…` and `nachi/…`**, both of which pass a
+real filename through — so PDFs failed there too. One change covered all three.
+
+**How it was found, which is the reusable part:** no `client_error` row existed
+for it — the uploader throws a plain `Error` that nothing reports — so there was
+nothing to read. Instead: list every `storage.from(...).upload(` site and its
+bucket, then read the bucket's own config. The mismatch was visible in one query.
+
+⚠️ **`scope_pdf_url` on `insurance_claims` has no writer anywhere in
+`index.html`.** The scope upload does not populate it. Not touched — worth
+knowing before someone assumes that column means something.
+
+### Also found, NOT fixed, and Theo has ruled on it
+
+The insurance stage vocabulary exists in **four copies** that have drifted:
+Cardinal Truth's `RAIL` calls `Invoiced` *"Awaiting Depreciation / Supplements"*
+and `Closed` *"Closed"*, while the three `LABEL` maps say *"Awaiting RCV"* and
+*"Archived"*. `RAIL` also carries a **`supplement` row that is not a stage** —
+synthetic, driven by supplement data, so no job can ever sit in it.
+
+Asked him whether that was what he meant by *"the pipeline for insurance is
+completely different."* **He answered: different from retail/community — i.e.
+working as designed.** So the drift is recorded, not repaired. Do not "unify" the
+four maps without asking; the pipeline is deliberate.
+
+---
+
+## Pencil audit — all 13 render AND wire (9 Aug 2026, no build)
+
+Theo: *"Check all edit pencils and make sure they work as intended."* Reasonable
+ask after **BUG_CLASSES class 16** (a control that renders but is never wired —
+the Studio Archive button did nothing from 614 to 632).
+
+**Every rendered pencil has a live handler.** Swept by glyph (`&#9998;`,
+`✏`, `✎`), by class (`acxpencil`, `editpencil`), and by
+`data-act="edit"` / `data-cc-edit*`, then each was traced to what it opens:
+
+| control | opens |
+|---|---|
+| `#msValEdit` "Edit values" | `openMeasModal(pr)` — delegated `closest()` |
+| `#acxEdit2` Location card | `openProjModal(pr)` |
+| `#projEditBtn` client info | `openProjModal(currentProject)` |
+| `#insEditBtn` insurance panel | `openInsuranceEditor(currentProject)`, guarded |
+| `.tmib.tmed[data-edit]` team | toggles `.editing` inline — no modal, by design |
+| Claim Info `[data-act=edit]` | `openNewClaimModal(c)`, guarded `if (e)` |
+| partners directory | `openEditor(get(id))` — guarded at **634** |
+| prospects | `openEditor` — button hidden when masked at **635** |
+| properties directory | `openEditor(partnerId, get(id))` |
+| `[data-cc-editbid]` bid | `showBidModal(pr)`, guarded `if(pr)` |
+| homeowner `data-act="edithome"` | `CardinalNewBid.edit(pr.id)` |
+| caption `[data-act=edit]` | the caption editor |
+| `.lb-cce[data-cc-edit]` | `ccEdit()` — draw on a CompanyCam photo |
+
+### ⚠️ One false alarm, reported as a false alarm
+
+`#insEditBtn` calls `addEventListener('click', …)` on every render with **no
+wired-once guard**, which looks like classic listener stacking. **It is not.**
+The button lives inside the `innerHTML` string that is reassigned to `mount`
+each render, so the old element is destroyed and a **fresh** button receives
+exactly one listener. Correct as written — do not "fix" it with a guard.
+
+### The one dead thing, and it is cosmetic
+
+**`#acxEdit1` is referenced but never rendered.** The handler reads
+`if(hit('#acxEdit1') || hit('#acxEdit2'))`, and nothing in the file emits an
+element with that id. Harmless — it is one side of an `||` — but it makes the
+Location pencil look like it has a twin somewhere. Noted at 636; left alone
+rather than swept up mid-audit.
+
+---
+
+## Domain: what a supplement actually is at Cardinal — Theo, 9 Aug 2026
+
+Recorded verbatim because domain detail from him is load-bearing, and because
+**this changes what the Cardinal Truth rail should model.**
+
+> *"we usually file a supplement because of a partial denial and then there's the
+> backend supplement and paid when incurred filing at end of job with
+> certificate of completion with photos sent for release of depreciation"*
+
+That is **three distinct filings**, not one:
+
+1. **The partial-denial supplement.** Filed *because the carrier approved part of
+   the scope and denied part*. Happens around Scope Approved, before the build.
+2. **The backend supplement.** A later one, after the first is settled.
+3. **The "paid when incurred" filing at end of job** — a **certificate of
+   completion** plus **photographs**, sent to release **depreciation**.
+
+⚠️ **The rail models one of these, badly.** `RAIL` in `cr-cth-script` has a
+single synthetic `supplement` row that no job can occupy, and folds everything
+after the build into `Invoiced → "Awaiting Depreciation / Supplements"`. By his
+description, supplements happen at **two different points** and the depreciation
+release is **its own filing with its own artifacts**, not a waiting state.
+
+He said *"Supplement filed probably should be somewhere tho"* — so the row
+belongs; the question is where and how many. **Not built. Put a shape to him
+before touching the rail** — this is a data-model question (does a supplement
+become a row with a filed date, an amount and a decision?), not a relabelling,
+and `insurance_claims` already carries `supplement_status`, `supplement_filed`,
+`supplement_approved`, `supplement_filed_at`, `supplement_decided_at` and
+`supplement_notes` that nothing on the rail reads.
+
+**Do not "unify the four stage vocabularies" as a side effect of this.** He ruled
+separately that the insurance pipeline differing from retail/community is by
+design.

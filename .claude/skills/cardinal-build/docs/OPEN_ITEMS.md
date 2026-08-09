@@ -1842,3 +1842,45 @@ an id into unmasked data.
 2. **Archive site** (632) — `select count(*) from studio_photos where archived_at is not null`.
 3. **The colour page after Optimise** (633) — the button reappears with all 63 to do.
 4. The **Feature header** after 626.
+
+---
+
+## Worked forward to build 636 — 8 Aug 2026
+
+### ✅ Closed by 636
+
+~~Two maps on every client profile~~ — one Location card, Google map.
+⚠️ **Do not "tidy" the card away.** It holds the only rendered address text and
+the only `#acxEdit2` pencil, and **Community adopts this exact node** — it has no
+Google card of its own.
+⚠️ **`qiLoadLeaflet()` and the other Nominatim callers must stay.** A second
+Leaflet map elsewhere uses them; a file-wide "remove OSM" sweep would delete a
+feature nobody has looked at.
+
+### 📌 Junk claims — Theo's call, not mine
+
+`insurance_claims` holds **4 rows, all created by theo@**. Three are test rows
+from July, none attached to a project:
+
+| created | homeowner | address | carrier |
+|---|---|---|---|
+| 23 Jul | `grdgdfg` | `dfgfdg` | — |
+| 24 Jul | *(null)* | *(null)* | — |
+| 29 Jul | *(null)* | *(null)* | — |
+
+The fourth (7 Aug, State Farm, Maker Space Solutions, $28,727.17) is the real
+one. They render as "Unknown carrier / Unknown homeowner" because the list falls
+back when `carrier` and `homeowner_name` are null.
+
+**Offered deletion; awaiting his word.** Do not delete production rows
+unprompted. Two separate questions are open behind it: should the claim list
+*hide* rows with no carrier and no homeowner, and should New Claim refuse to
+insert an empty row in the first place. Both are real, neither was asked for.
+
+### ⚠️ Still Theo's to confirm
+
+1. **A rep opening Community Partners and Prospective Partners** (634, 635).
+2. **The Location card** on both an Insurance and a Community job (636) — I
+   cannot load a Google static map from the sandbox.
+3. **Archive site** (632) · **the colour page after Optimise** (633) · the
+   **Feature header** after 626.
