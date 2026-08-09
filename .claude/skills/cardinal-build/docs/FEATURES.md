@@ -2504,3 +2504,44 @@ a stored file — a scope is 6.4 MB of base64. Reading the cache is what made
 "Read the scope already on file" claim an intact document was empty (647→649).
 `harness649.js` lifts `db.list()`'s real column list from the artifact and
 asserts `html` is absent from it, so the fixture cannot drift from production.
+
+---
+
+## Money In & Commissions (650)
+
+**What:** cash-collection commission tracking, replacing memory. One row in
+`collections` per check received (deposit / final / supplemental / PWI /
+other); a DB trigger auto-creates the 10% commission row for the project's
+sales rep. Theo's own jobs create no commission. Draws are loans against
+future commission; net payout = owed − outstanding draws. Paid locks.
+
+**Where it lives:**
+- **SQL:** `commission_system.sql` (root, **applied 9 Aug 2026**) — extends the
+  556 `commissions` table (`collection_id` unique, `rate_pct`, `paid_by`,
+  `project_name` denormalised for rep visibility), adds `collections`, `draws`,
+  `projects.sales_rep`, and five SECURITY DEFINER triggers. Status vocabulary
+  is still `pending/approved/paid/void`; the UI shows `pending` as **Owed**.
+  **Do not create a second commissions table, and do not name anything
+  `payments`** (a phantom table of that name already haunts the health check).
+- **The tab:** `#tab-commissions` → `#commMount`, rendered by
+  `renderCommissions()` in the main block (the 556 section, rebuilt in place at
+  650 under the banner `/* ══ 650: Money In & Commissions`). Inline forms, no
+  modals, no scroll lock. Admin+production log collections; admin logs draws,
+  changes the rep (sales-role + Theo only, from `teamEmails()`/`tmRoleOf()`),
+  and has a collapsed manual-entry form. Reps read their own rows (RLS).
+- **The screen:** `<style id="cr-pay-styles">` + `<script id="cr-pay-script">`
+  (last blocks in the file), `#payView` (display-shown, registered in
+  `hideAllViews()` + `navRestore('pay')`), `window.CardinalPay`
+  (`open`/`reload`/`close`). Menu: 💵 Commissions, after Crews. Admins: owed by
+  rep, Pay net / Pay full (pay net marks draws repaid — amounts never mutated),
+  Mark All Paid, week's payouts, paid history, CSV via `window.CardinalCsv`.
+  Reps: the same screen renders **My Earnings**. Production: a worded refusal.
+- **Gate:** `scripts/harness_pay.js` (53 assertions, executes the shipped code
+  per role; run with `TZ=America/New_York` — the date-only-string trap is only
+  visible in a negative-offset zone).
+
+**Invariants:** the rep select is fed from the live roster — NEVER a typed
+email (a typo'd `rep_email` orphans the row against nobody). Commission
+amounts are never mutated after creation; deductions are repaid-draw rows.
+`sales_rep` locks after the first collection (DB trigger; admin override).
+Totals are summed from the rendered rows, never a second query (556's rule).

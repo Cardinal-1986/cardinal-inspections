@@ -11835,3 +11835,64 @@ is gone.**
 - **`jslex_count.py`**, which separates CODE from comments and strings and would have answered all five correctly on the first run.
 
 Testing *presence* with a substring is fine. It is absence that the comments lie about.
+
+## Build 650 — Money in, commissions out (9 Aug 2026)
+
+**Theo's spec, implemented against what already existed.** The spec asked for a
+new `commissions` table; one has existed since 556 (crews_schema.sql) with a
+Commissions tab already on the client profile — the prime doctrine held again.
+Extended, not duplicated: 0 rows in production made the extension free.
+
+**SQL — `commission_system.sql`, APPLIED to production 9 Aug and verified with
+disposable rows (all cleaned up).** `projects.sales_rep` (backfilled from
+`checklist.lead.assigned[0]` for sales-role people + Theo — 26 of 30 projects
+seeded; curtis's one assignment correctly NOT seeded); `collections` (one row =
+one check: deposit / final / supplemental / pwi / other); `commissions` gains
+`collection_id` (UNIQUE partial index — the trigger cannot double-fire),
+`rate_pct`, `paid_by`, `project_name` (denormalised on purpose: projects RLS
+hides reassigned jobs from a rep, a join would silently drop rows from My
+Earnings); `draws` (`project_id` NULLABLE — job-linked or general advance).
+Five SECURITY DEFINER triggers — definer is load-bearing, production users have
+no commissions write policy and an invoker-rights trigger would fail the whole
+insert: `sales_rep_default` (BEFORE INSERT on projects — covers all six client
+creation paths without touching any), `make_commission` (10%, skips null/Theo),
+`sync_commission` (edit re-syncs a PENDING commission only), `unmake_commission`
+(refuses to delete a collection with a PAID commission; cleans up pending),
+`sales_rep_lock` (rep locked after first collection; admin override). Status
+vocabulary unchanged — `pending` renders as **"Owed"**; no constraint touched.
+
+**The tab (main block).** The 556 section rebuilt in place — same function
+names (`renderCommissions`/`addCommission`/`delCommission`), so showTab and the
+delegation survived untouched. Now renders: the sales rep (admin-only change
+select fed from `teamEmails()`+`tmRoleOf()` — sales + Theo, NEVER a typed
+email), Money In table with per-check commission state, inline Log Collection
+(admin+production) and Log Draw (admin) forms — inline like 556's own form, no
+modal, no scroll lock — draws on the job, totals summed from rendered rows
+(556's rule), Net-to-rep (negative allowed, red), and the manual form collapsed
+behind "Manual entry…". `pdb.list` now selects `sales_rep`. Reassigning on the
+Overview card mirrors into `sales_rep` while unlocked and the assignee is Sales.
+
+**The screen (`cr-pay-styles`+`cr-pay-script`, `window.CardinalPay`,
+`#payView`).** One view, three faces: admins get the Friday board (owed by rep
+minus outstanding draws, Mark Paid with a Pay-net-vs-Pay-full choice — "pay
+net" marks the draws repaid in the same action; amounts are NEVER mutated, the
+repaid draw row IS the deduction record — Mark All Paid, this week's payouts,
+paid history, CSV via `window.CardinalCsv` — zero new CSV machinery); a rep
+gets My Earnings (same queries, RLS trims the rows); production gets a worded
+sentence, not a broken screen. Registered in `hideAllViews()` display list +
+`navRestore` + `__crNav` wrap; menu item 💵 Commissions after Crews. No 14th
+scroll-lock writer (still 13). New `data-jm` "Money In" tile on the job menu.
+
+**Gates.** `check_build.py` green, stamp 649 → 650, 107 inline scripts parse.
+`harness_pay.js` — **53 assertions**, executing the SHIPPED section and module
+in jsdom per role (admin / production / rep / owner-project / negative-net /
+empty), the pay-net write payloads captured off a locked supa mock, and the
+date-only trap proven under `TZ=America/New_York` (the naive parse control
+really says the 8th). Negative control on 649: red, exit 1. CI div balance
+re-checked locally (3,693/3,693). DB triggers proven live with real inserts
+before the UI was written; all test rows deleted.
+
+**Still Theo's to confirm** (recorded in OPEN_ITEMS): Kyle Mantia and Pedro
+Vera need team_profiles rows with real emails before they can be picked;
+clarkie022@gmail.com needs a display name; rep-role rendering is verified by
+RLS + harness, not by signing in as a rep.

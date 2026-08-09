@@ -1884,3 +1884,28 @@ insert an empty row in the first place. Both are real, neither was asked for.
    cannot load a Google static map from the sandbox.
 3. **Archive site** (632) · **the colour page after Optimise** (633) · the
    **Feature header** after 626.
+
+---
+
+# Layer: build 650 — 9 Aug 2026 (Money In & Commissions)
+
+## Needs Theo — commission system (none of it blocks using the feature)
+
+1. **Kyle Mantia and Pedro Vera** are in the spec's rep list but have NO
+   `team_profiles` row and no known email. They cannot be picked as sales reps
+   until Theo adds them on the Team page with their real addresses. **Never
+   guess an email** — a typo'd `rep_email` silently orphans commission rows.
+   (Also: the spec says *Pedro* Vera; the DB has *Jerry* Vera — same family?
+   Theo to confirm which is right.)
+2. **clarkie022@gmail.com** (Greg Clark, sales — seeded by
+   `is_staff_policies.sql`) has no display name in `team_profiles`, so he shows
+   as "clarkie022" everywhere. One edit on the Team page fixes it.
+3. **Backfill check:** 26 of 30 projects got a `sales_rep` from the checklist
+   assignment (joey 10 · clarkie022 8 · theo 6 · nick 2); 4 have none. All
+   editable on the job's Commissions tab until the first collection locks them.
+4. **Deferred from the spec, by design** (manual paths exist today):
+   in-app draw *requests* (Theo logs draws himself), split commissions
+   (use the manual-entry form for the second rep), and a weekly owed-email.
+5. **Rep-role rendering is verified by RLS + harness, not by signing in as a
+   rep** — the standing sandbox limitation. First Friday run-through is the
+   real gate.
