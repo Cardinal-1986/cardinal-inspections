@@ -3010,3 +3010,47 @@ before debugging this path:
 ⚠ **A fixture copied from the checklist row is the wrong shape for the writer** —
 that nesting is the output. `bridgeSolToClaim` receives dotted paths. This cost
 a false red while writing the harness.
+
+### 665 — scope history (`scope_reads`)
+
+**Every APPLIED Scope of Loss read is a row** — `extracted` (the model's
+summary fields), `applied` (the ticked subset), money first-class, keyed to
+claim + project. Shown newest-first as **section 4 of the claim screen's
+Settle pane** (`renderScopeHistory()`).
+
+⚠ **ONE writer: `logScopeRead()`** (main block, beside `bridgeSolToClaim`),
+exported as `CardinalSolUpload.logRead`. Do not add a second insert site —
+call the helper; `harness_665` asserts exactly one `from('scope_reads').insert`
+in the artifact. It is **deliberately non-blocking** (warn, never throw): the
+claim write already alerts on failure, and a trail that can veto the thing it
+records is the wrong way round.
+
+⚠ **Append-only at the schema: `scope_reads` has NO update policy.** That is
+the point of an audit trail — do not "complete" the RLS by adding one.
+
+**Deliberately NOT hooked** (each verified in source; a decision, not an
+omission): `readScope` (cr-sol-script — renders, writes nothing),
+`handleSolUpload` (cr-claims-fx — form prefill; the write is the human's
+claim save), and `cr-ci-script read()` — the **AccuLynx CLIENT importer**
+(`mode:'client'`, claim identity, no scope, no money; its rows here would be
+noise).
+
+`bridgeSolToClaim` **returns the claim id it wrote** — including on the
+no-op path — so the apply chain logs history with no second lookup. Rows
+carry no line items, ever: the 660 decision (the PDF is the single source of
+granularity) stands.
+
+`scope_reads.sql` is **applied** (9 Aug 2026); backfill seeded one row per
+claim with a first scope on record.
+
+### 666 — the scope review pre-ticks only EMPTY fields
+
+`var tick = hasNew && !oldStr;` in `openSolReviewModal`'s row-builder.
+**A field that already holds a value arrives UNTICKED even when the
+extraction differs** — the difference still shows (`was: …`), the overwrite
+is opt-in. This is Theo's settled pick (9 Aug) after an AI-transposed phone
+digit arrived pre-approved and got applied over the correct stored number.
+Empty fields stay pre-ticked (filling a blank claim is one Apply); identical
+values stay unticked; `(not found)` rows get no checkbox; a stored `false`
+is a **value**, not an empty; the notes row stays always-ticked because it
+appends. Do not restore differs-means-ticked.

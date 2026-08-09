@@ -12766,3 +12766,86 @@ still a convenient fixture.
 Regressions: 663 23/23, 662 33/33, 661 39/39, 660 27/27, 659 16/16, 658 38/38,
 657 32/32, 655 42/42, 654 31/31, 653 45/45, approvals 15/15, pay 58/58
 (`TZ=America/New_York`), render_inscards 9/9, render_656 17/17.
+
+---
+
+## Build 665 — 9 Aug 2026 — scope history: no applied read is ever lost
+
+CR Audit **GAP-2**, picked by Theo as the next build with his own ordering:
+it is a live data-loss risk now that the reader works (a re-read silently
+overwrites the previous approved figures — `first_scope_*` is write-once,
+`approved_*` is last-write-wins, scope #2-of-4 was unrecoverable), and it is
+the structural floor for the supplement unification (CR-AUD-005).
+
+- **`scope_reads`** (`scope_reads.sql`, **applied via MCP before the PR**):
+  extracted (the model's summary fields — NOT line items, the 660 decision
+  stands), applied (the ticked subset), money first-class, claim + project
+  keys. **Append-only by design: NO update policy exists**, because an audit
+  trail that can be rewritten is not one. RLS otherwise mirrors
+  `insurance_claims` exactly (read live from pg_policies first). Backfill
+  seeded **2 rows** (Gunn's Allstate, the State Farm claim) — verified live.
+- **ONE writer**: `logScopeRead()` beside `bridgeSolToClaim`, exported as
+  `CardinalSolUpload.logRead` for the supplement work to reuse — the
+  BUG_CLASSES §18 lesson applied in advance. **Deliberately non-blocking**: a
+  trail that can veto the thing it records is the wrong way round.
+- `bridgeSolToClaim` now **returns the claim id it wrote** (both branches, and
+  the no-op path — "nothing changed" is still a read that happened), so the
+  apply chain logs against it with no second lookup.
+- **The claim screen's Settle pane gains section 4, Scope History** — newest
+  first: date · who · document · RCV / ACV / Deprec. Loaded through
+  `softSelect` (quiet on RLS refusal or missing table), bounded `.limit(50)`.
+
+**⚠ A plan assumption died on contact with the source, and that is why the
+hook count is ONE, not two.** The plan had the Claim Importer
+(`cr-ci-script`) as a second caller because it inserts `insurance_claims`
+rows after a `/api/sol` read. Reading it first: it is the **AccuLynx CLIENT
+importer** — `mode:'client'`, "Reading the record", claim *identity* only, no
+scope, no money. Its rows in a scope-history table would be noise. It joins
+`readScope` (display-only) and `handleSolUpload` (form prefill; the write is
+the human's claim save) on the deliberately-NOT-hooked list, named in the
+source and in FEATURES.md so the next person sees a decision, not an
+omission.
+
+**Gates.** `check_build.py` green, stamp 664 → 665. `harness_665.js` (35)
+EXECUTES the shipped `bridgeSolToClaim` + `logScopeRead` against a recording
+supa with the applied object keyed by **dotted paths** (the §18 fixture trap,
+not repeated). Negative control on 664: **24 red**.
+
+⚠ Two harness defects of mine during the build, both fixed before it counts:
+the touchpoint count missed that the reader goes through
+`softSelect('scope_reads', …)` — the table name is a VARIABLE into `.from()`,
+so a bare `from('scope_reads')` count sees only the insert (the
+print-what-you-captured rule, again); and the negative control **crashed**
+instead of going red (`log: (null)` on 664 — the 662 crash-is-not-a-red
+class), now stubbed to fail cleanly.
+
+## Build 666 — 9 Aug 2026 — the review modal stops pre-approving overwrites
+
+Theo's pick on the standing question, same session as the misread phone:
+**pre-tick only EMPTY fields.** The old rule was `hasNew && new !== old` —
+anything *different* arrived pre-approved, including an AI misreading of a
+field a human had already verified, which is exactly how `(330) 636-5816`
+became `663-5816` on a live claim tonight.
+
+- `var tick = hasNew && !oldStr;` — one expression, renamed so it reads as
+  what it means, comment naming the phone number that caused it.
+- A filled field that disagrees still **shows** the difference (`was: …`);
+  replacing it takes a deliberate tap. Filling a blank claim stays one Apply.
+- Unchanged and asserted so they cannot drift: identical values stay
+  unticked; `(not found)` rows get no checkbox; a stored **false** is a value,
+  not an empty; the notes row stays always-ticked (it appends).
+
+**Gates.** stamp 665 → 666. `harness_666.js` (16) extracts and EXECUTES the
+shipped row-builder lambda with Gunn's exact rows. Negative control on 665:
+**8 red, the first of them printing the misread phone row coming back
+`checked`** — the defect, verbatim.
+
+Regressions across both: 665 35/35 · 664 23/23 · 663 23/23 · 662 33/33 ·
+661 39/39 · 660 27/27 · 659 16/16 · 658 38/38 · 657 32/32 · 655 42/42 ·
+654 31/31 · 653 45/45 · approvals 15/15 · pay 58/58 (`TZ=America/New_York`) ·
+render_inscards 9/9 · render_656 17/17.
+
+**What no gate proves, plainly**: the end-to-end capture on a real apply
+needs Theo to read a scope after deploy — Gunn's Settle tab should then show
+the backfill row plus the new read, and the review modal should arrive with
+his stored fields unticked.
