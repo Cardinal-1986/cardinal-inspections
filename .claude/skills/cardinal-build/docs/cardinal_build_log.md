@@ -12130,3 +12130,61 @@ exclusion, and the dedupe math. Negative control on 653: 20 red, and it
 reproduces the old bug live (estimate-only → value 0). Regressions:
 `harness_653.js` 45/45, `harness_approvals.js` 15/15, `harness_pay.js`
 58/58 (with its documented `TZ=America/New_York`).
+
+## Build 655 — insurance repair + write safety (9 Aug 2026, CR-AUD-007/009/010/011/012/014/015)
+
+Second half of the audit batch. **`insurance_claims_coverage_cols.sql`
+APPLIED to production before this shipped** (columns added, backfilled —
+Adam Gunn's claim now carries `RCV` / `ord_law:false` at the table).
+
+- **CR-AUD-009** — `insurance_claims` gains `coverage_type` (text) and
+  `ord_law` (**boolean** — the checklist stores a checkbox and the renderer
+  distinguishes false "No" from null blank). `shape()` stops eating a real
+  `false` (`|| null` did), and `unified()` overlays checklist values when
+  the table's are NULL — a NULL row value never masks a filled-in checklist
+  again. `save()`'s payload (which always sent both fields) is now valid
+  instead of armed to fail the whole write.
+- **CR-AUD-015** — the boot-path claims load names its 21 columns (the 19
+  `shape()` consumes + `supplement_notes` for `cr-sp` + `supplement_filed_at`
+  for `cr-ic` — **every raw-cache consumer inventoried before narrowing**),
+  and `start()` waits for a session (`getSession`, else one-shot
+  `onAuthStateChange`) instead of loading RLS-empty on a fresh login.
+- **CR-AUD-010** — the Truth hub's rail re-renders the four destinations
+  its `render()` wiped: Supplement Templates, Insurance Resources, Adjuster
+  Directory, Claims Tracker joined the Tools box (`data-go`), dispatched in
+  `wire()` to the same functions the static `data-ctnav` cards used
+  (`_rlShowPage('rlPageSup'/'rlPageInsHub')`, `CardinalAdjusters.open(true)`,
+  `crOpenClaimsFromHub()`). The static grid stays for pre-render display.
+- **CR-AUD-011** — `forProject()` selects `name` (the `client_name` 400 was
+  silently swallowed — class 16 — and the card never rendered), and
+  claim-existence now also keys on `insurance_claims.project_id`, so a claim
+  linked the correct way is found instead of the card offering Create →
+  duplicate. Both fixed together, as the audit warned they must be.
+- **CR-AUD-012** — payment delete, supplement delete, and AI-draft Discard
+  check their write results (error toast + stop); the claim modal save
+  wraps in try/catch so an offline tap reports instead of doing nothing.
+- **CR-AUD-014** — `INS_STAGE_LABEL`, one shared insurance vocabulary
+  (Theo's picks: **Closed**, **Awaiting Depreciation / Supplements**, and
+  OnHold finally labeled **On Hold**). `CD_STAGE_LABEL.insurance` and
+  `IC_LABEL` reference it directly; `cr-insstage` and `cr-ic` fall back
+  through `window.INS_STAGE_LABEL` with same-wording literals so each
+  module still stands alone. The claims-module STATUS vocabulary
+  (`awaiting_rcv` etc.) is a different enum and was left alone. Retail's
+  "Archived" is retail's own word — untouched.
+- **CR-AUD-007** — `patchProjectCk()` refetches the row's checklist and
+  merges the patch onto the FRESH copy (fetch failure degrades to the old
+  local merge — never worse). Whole-JSON last-write-wins becomes
+  per-top-level-key; two devices editing different areas of one job no
+  longer destroy each other's work. The seven direct checklist writers
+  outside the chokepoint are the same class — listed in the PR as
+  follow-up, deliberately not churned here.
+
+**Gates.** `check_build.py` green first run, stamp 654 → 655. New
+`harness_655.js`: 42 assertions — the cr-iu overlay, `forProject`'s rekeyed
+existence, and `patchProjectCk`'s refetch-merge all EXECUTED (the last with
+a "concurrent" fresh row differing from the local cache: the other
+device's payments survive, the patch lands, untouched keys ride along).
+One first-draft assertion was itself wrong (matched the new fallback's
+tail) — fixed in the harness, not the app. Negative control on 654: 33
+red. Regressions: `harness_654` 31/31, `harness_653` 45/45,
+`harness_approvals` 15/15, `harness_pay` 58/58.
