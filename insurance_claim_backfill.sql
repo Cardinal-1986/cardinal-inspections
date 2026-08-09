@@ -1,6 +1,17 @@
--- Build 646 — backfill insurance_claims from the checklist, and fix the one-way link.
+-- Backfill insurance_claims from the checklist, and fix the one-way link.
 --
--- RUN THIS BEFORE DEPLOYING index.html.
+-- ✅ APPLIED to production 9 Aug 2026, immediately after build 645 deployed, and
+-- VERIFIED. Both statements ran; the result on the two claims that exist:
+--
+--   Adam Gunn        Allstate   | 0802889162 | 000826751113 | Shawn Feistamel | linked
+--   Maker Space LLC  State Farm | 3584R158W  | 95G7U6807    | Andrew Perkins  | linked
+--
+-- Adam Gunn's row was entirely NULL before this; Maker Space already carried its
+-- own data and was not touched by statement 1 (it has no checklist blob). Both
+-- projects now point at their claim, which neither did before.
+--
+-- DO NOT re-run this as pending work. It is idempotent, so a re-run is harmless,
+-- but it is done.
 --
 -- WHY IT EXISTS. Insurance details have been written in two places that never
 -- met: the SOL reader and the client card wrote
