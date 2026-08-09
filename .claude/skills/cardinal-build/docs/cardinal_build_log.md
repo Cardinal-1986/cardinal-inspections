@@ -11401,3 +11401,109 @@ passes trivially on a build that does not understand `url` at all and refuses
 everything — main@641 scored full marks on all eight. They now require the
 refusal to be **about the link**, so only a build that actually parsed the URL
 can pass. That is what took the negative control from 8 failures to 16.
+---
+
+## Build 644 — insurance documents belong under Documents, not Inspections (9 Aug 2026)
+
+`index.html` only. **No SQL, no new table, no bucket, no migration.** Found from
+Theo's screenshots of Adam Gunn's profile, not from reasoning.
+
+**Nothing about the storage was wrong.** An insurance document is already saved
+exactly the way a job document is — an `inspection_reports` row whose body is
+`{file:1,name,mime,size,data}`, the identical shape at 12726 and 14381. The only
+difference is the title prefix:
+
+```
+job document        file: survey.pdf
+insurance document  Insurance Doc [scope_of_loss]: survey.pdf
+```
+
+**Eight places sort "stored file" from "report", and every one tested `^file:`
+only.** So an insurance document appeared under Inspections (the exclusions did
+not know it), never appeared under Documents (the inclusion did not know it),
+and **threw on open** — the router sent it to the report renderer, which cannot
+parse a base64 payload as report markup. That was Theo's *"when I go to
+inspections and click on the scope document it errors."*
+
+One predicate, `isFileDoc()`, now serves all seven live call sites, with
+`fileDocName()` rendering the slot label instead of leaking the raw prefix.
+**Every document already uploaded is repaired retroactively** — including the
+"Adam Gunn Revised Estimate.pdf" on his profile — because the rows were always
+correct and only the sorting was wrong.
+
+⚠ **Add a third kind of stored file to the predicate, never to a call site.**
+Eight copies of one test is what caused this.
+
+Verified: `check_build.py` green (stamp 642→644, marker `ONE predicate for`
+present and **absent from prev**) · **22-assertion** harness executing the
+**shipped** `isFileDoc`/`fileDocName` text plus each call site's filter
+expression · **negative control reproduces the bug rather than merely noting the
+helper is missing** — against 642 it stands in the old `^file:` predicate and
+returns **12 behavioural failures**, printing the Scope of Loss and the policy
+sitting in the Inspections list, which is Theo's screenshot in test form.
+
+**Still open on this feature, deliberately not in this build:** the SOL reader
+writes `projects.checklist.lead.insurance` while "Open Full Claim" reads the
+`insurance_claims` table, so extraction never reaches the claim screen — the
+next build, agreed with Theo. Six child tables FK to `insurance_claims.id`
+(`claim_notes`, `claim_upgrades`, `insurance_payments`, `insurance_supplements`,
+`itel_reports`, `itel_lab_reports`) plus `projects.insurance_claim_id`, and all
+six are **empty today** — one claim carries a carrier, one checklist does. The
+migration is about one row now and grows weekly, which is why the claim table
+wins rather than the checklist.
+---
+
+## Build 645 — the insurance info lives on the claim, and only there (9 Aug 2026)
+
+`index.html` only. **No SQL.** Theo: *"The info should go into the screen that
+says open full claim not both."*
+
+641 restored `insCard`/`insDocsCard`/`insItelCard` onto the client card by
+exempting them from `#tab-overview`'s hide rule. But **measured inside the claims
+module: zero references to `INS_DOC_TYPES`, `Insurance Doc [`, `itel_reports` or
+`iTel`** — so Claim Details was a genuine duplicate while Documents and iTel
+existed on the client card ALONE. Deleting all three would have removed two
+features rather than de-duplicating them. The claim screen gains the two it
+lacked; then all three leave the client card.
+
+**Why this is a refactor and not a move.** The claims module has **zero**
+references to `currentProject` — it is reached from the Claims list keyed on
+`claim_id`. Both renderers were written against `currentProject` and have
+**nine** re-paint call sites between them (three docs, six iTel) firing after
+every upload, add, edit and delete. Threading a mount argument through nine
+sites guarantees one gets missed, so each renderer instead reads *where it
+lives* from module state — `insDocsCtx {pid, mountId, gate}` and
+`itelState.mountId`. **The nine existing call sites are untouched**, which is the
+whole point; this build adds exactly one to each.
+
+iTel got *simpler*: inside the claim screen the claim id is already known, so
+`renderInsuranceItelCard(claimId)` skips the project→claim lookup and the
+claim-type gate — both only answer questions that screen has already answered.
+
+`solCard` **stays** on the client card. It is the on-ramp — how a retail or
+community job becomes an insurance job at all. Theo, on the community case:
+*"in case it converts, which has happened with a habitat client that didn't get
+funding."*
+
+Verified: `check_build.py` green (stamp 644→645, marker present and **absent
+from prev**) · **26-assertion** harness, structural plus **CHROMIUM** — jsdom
+cannot answer whether an `!important` rule beats a renderer's inline
+`display:block`, which is how three cards sat invisible from 406 to 641 ·
+negative control **20 failures** against 644, including the three cards
+computing `block`, which is the state Theo screenshotted.
+
+⚠ **Two of my own assertions went red against correct code first.** The
+re-paint counts were hardcoded 6 and 3 — but this build legitimately adds one to
+each, so the numbers were wrong, not the code. Rewritten to compare against the
+previous build and require exactly +1. That is the "hardcoded number read off
+the wrong tree" trap, reproduced faithfully.
+
+**Still open on this feature:** the SOL reader on community — blocked by a
+SECOND `:not()` allow-list, `.cr-cc-own > *:not(#cr-cc):not(#dangerZone)`, which
+hides every direct child of `#projectView`. `#solCard` is a grandchild, so an
+exemption cannot reach it; the fix is the **adopt** pattern (636's
+`adoptLocation()` MOVES the node), never a second card. And the claim bridge:
+extraction still writes `projects.checklist.lead.insurance` while the claim
+screen reads `insurance_claims`. **Upsert on `project_id`** — Gunn already has a
+claim row whose `project_id` points at him while `projects.insurance_claim_id`
+is NULL, so keying on the latter inserts a second claim and orphans the money.
