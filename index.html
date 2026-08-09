@@ -1776,7 +1776,15 @@ body.restoring #restoreVeil{display:flex;}
    leadCard is deliberately NOT exempt — it is the real pre-Keeper card acxMount
    replaced, and it still runs (that is how these four renderers get called) while
    painting into a hidden element, exactly as the markup comment describes. */
-#tab-overview > *:not(#acxMount):not(#cr-pp-mount):not(#solCard):not(#insCard):not(#insDocsCard):not(#insItelCard){display:none !important;}
+/* 645: insCard / insDocsCard / insItelCard were exempted here at 641 to bring
+   them back after ~406. Theo: "The info should go into the screen that says
+   open full claim not both." Claim Details was already on the claim screen's
+   Client tab; Documents and iTel are there now too, so all three leave. The
+   divs stay in the markup and their renderers still run — they simply paint a
+   hidden node on a client profile, which is what every other retired card here
+   does. solCard STAYS: it is the on-ramp, the way a retail or community job
+   becomes an insurance job at all. */
+#tab-overview > *:not(#acxMount):not(#cr-pp-mount):not(#solCard){display:none !important;}
 .acxsec{background:#fff;border:1px solid #ddd6cf;border-radius:6px;margin-bottom:14px;overflow:visible;}
 /* AccuLynx-style activity tiles (photo album / inspections) */
 .jaboxrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-bottom:12px;}
@@ -3275,7 +3283,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 644 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 645 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -13998,11 +14006,25 @@ function renderLeadCard(){
   card.style.display = 'block';
   renderSolCard();
   renderInsurancePanel();
+  /* 645: the claim screen borrows both renderers by pointing their state at its
+     own mounts. Coming back to a client profile has to point them home again,
+     or the profile would repaint into a mount that no longer exists. */
+  insDocsCtx = { pid: null, mountId: 'insDocsCard', gate: true };
+  itelState.mountId = 'insItelCard';
   renderInsuranceDocsCard();
   renderInsuranceItelCard();
 }
 
 /* ---------- Insurance Documents (upload + list) ---------- */
+/* 645: WHERE this card is currently mounted, and whose project it is showing.
+   The claim screen has no currentProject — it is reached from the Claims list
+   keyed on claim_id — so the renderer takes both from here instead of from a
+   global. Set it before you render; reset it when you leave.
+   ⚠ This exists so the THREE re-paint call sites (after upload, after delete,
+   after the supplement hook) need no argument threaded through them. Do not
+   "simplify" it back into a parameter — a re-paint that forgets the argument
+   silently repaints the wrong mount. */
+var insDocsCtx = { pid: null, mountId: 'insDocsCard', gate: true };
 var INS_DOC_TYPES = [
   { key: 'authorization',     icon: '\u270D\uFE0F',       label: 'Authorization Form' },
   { key: 'service_agreement', icon: '\uD83D\uDCC4',       label: 'Insurance Service Agreement' },
@@ -14019,12 +14041,17 @@ function findInsuranceDoc(projectId, typeKey){
   return hits[0] || null;
 }
 function renderInsuranceDocsCard(){
-  var mount = document.getElementById('insDocsCard');
-  if(!mount || !currentProject){ if(mount){ mount.style.display = 'none'; mount.innerHTML = ''; } return; }
-  var ct = (typeof projClaimType === 'function') ? projClaimType(currentProject) : 'unknown';
-  if(ct !== 'insurance'){ mount.style.display = 'none'; mount.innerHTML = ''; return; }
+  var mount = document.getElementById(insDocsCtx.mountId || 'insDocsCard');
+  var pid = insDocsCtx.pid || (currentProject && currentProject.id) || null;
+  if(!mount || !pid){ if(mount){ mount.style.display = 'none'; mount.innerHTML = ''; } return; }
+  /* 645: the claim-type gate belongs to the CLIENT CARD, where a retail job
+     must not sprout insurance slots. On the claim screen you are looking at a
+     claim by definition, and there is no currentProject to ask. */
+  if(insDocsCtx.gate){
+    var ct = (typeof projClaimType === 'function') ? projClaimType(currentProject) : 'unknown';
+    if(ct !== 'insurance'){ mount.style.display = 'none'; mount.innerHTML = ''; return; }
+  }
 
-  var pid = currentProject.id;
   var rowsHtml = INS_DOC_TYPES.map(function(dt){
     var doc = findInsuranceDoc(pid, dt.key);
     if(doc){
@@ -14112,13 +14139,32 @@ function itelDate(d){
 }
 function itelToday(){ return new Date().toISOString().slice(0, 10); }
 
-async function renderInsuranceItelCard(){
-  var mount = document.getElementById('insItelCard');
+async function renderInsuranceItelCard(claimIdArg){
+  /* 645: called with a claim id from the claim screen, which already knows it
+     and has no currentProject. That path SKIPS the project -> claim lookup and
+     the claim-type gate below — both exist only to answer questions the claim
+     screen has already answered. */
+  var mount = document.getElementById(itelState.mountId || 'insItelCard');
   var hide = function(){ if(mount){ mount.style.display = 'none'; mount.innerHTML = ''; } };
-  if(!mount || !currentProject) return hide();
+  if(!mount || !window.supa) return hide();
+  if(claimIdArg){
+    itelState.pid = null;
+    itelState.claimId = claimIdArg;
+    var rowsD = [];
+    try{
+      var rd = await window.supa.from('itel_reports').select('*')
+        .eq('claim_id', claimIdArg).order('created_at', { ascending: true });
+      if(rd.error) throw rd.error;
+      rowsD = rd.data || [];
+    }catch(e){ console.warn('[itel] claim-screen load:', e); return hide(); }
+    itelState.rows = rowsD;
+    mount.style.display = 'block';
+    paintInsuranceItelCard();
+    return;
+  }
+  if(!currentProject) return hide();
   var ct = (typeof projClaimType === 'function') ? projClaimType(currentProject) : 'unknown';
   if(ct !== 'insurance') return hide();
-  if(!window.supa) return hide();
 
   var pid = currentProject.id;
   itelState.pid = pid;
@@ -14157,7 +14203,10 @@ async function renderInsuranceItelCard(){
 }
 
 function paintInsuranceItelCard(){
-  var mount = document.getElementById('insItelCard');
+  /* 645: six call sites re-paint this after add / cancel / save / edit /
+     delete. They stay argument-free; the mount is read from state so a
+     re-paint always lands where the card actually is. */
+  var mount = document.getElementById(itelState.mountId || 'insItelCard');
   if(!mount) return;
   var rows = itelState.rows || [];
 
@@ -25572,8 +25621,12 @@ function showList() {
     } catch (e) { console.warn('[claims] ' + table + ':', e); return []; }
   }
 
+  /* 645: Documents and iTel moved here off the client card, where they were
+     the only copy. Claim Details was already on the Client tab, so that one was
+     a genuine duplicate and simply went. */
   const CR_TABS = [['settle','Settle'],['client','Client'],['job','Job'],
-                   ['contract','Contract'],['record','Record']];
+                   ['contract','Contract'],['docs','Documents'],['itel','iTel'],
+                   ['record','Record']];
 
   function renderTabStrip() {
     return '<div class="cr-c-tabs detail">' + CR_TABS.map(t =>
@@ -25659,14 +25712,45 @@ function showList() {
     if (state.tab === 'client')   return paneClient();
     if (state.tab === 'job')      return paneJob();
     if (state.tab === 'contract') return paneContract();
+    if (state.tab === 'docs')     return paneDocs();
+    if (state.tab === 'itel')     return paneItel();
     if (state.tab === 'record')   return paneRecord();
     return paneSettle();
+  }
+
+  /* 645: both panes emit only a mount. The renderers live in the main block
+     with their upload handlers, storage calls and nine re-paint paths — copying
+     them in here would be the duplicate pipeline this build exists to remove.
+     wirePane() points them at these mounts and calls them. */
+  function paneDocs() {
+    if (!state.claim || !state.claim.project_id) {
+      return '<div class="cr-c-empty">This claim is not linked to a client yet, so there is nowhere to file its paperwork.</div>';
+    }
+    return sect(1, 'Insurance Documents', '', '<div id="cr-c-docs-mount"></div>');
+  }
+  function paneItel() {
+    return sect(1, 'iTel', '', '<div id="cr-c-itel-mount"></div>');
   }
 
   // Every [data-act]/[data-link] this emits MUST get an .onclick or the health
   // check at cr-health-script will hide it permanently.
   function wirePane() {
     const c = state.claim;
+    /* 645: hand the two borrowed renderers their mount before calling them.
+       Guarded individually — a failure in either must not take down the pane,
+       which is the rule the rest of this module already follows. */
+    if (state.tab === 'docs' && c && c.project_id) {
+      try {
+        insDocsCtx = { pid: c.project_id, mountId: 'cr-c-docs-mount', gate: false };
+        renderInsuranceDocsCard();
+      } catch (err) { console.warn('[claim] docs pane:', err); }
+    }
+    if (state.tab === 'itel' && c && c.id) {
+      try {
+        itelState.mountId = 'cr-c-itel-mount';
+        renderInsuranceItelCard(c.id);
+      } catch (err) { console.warn('[claim] itel pane:', err); }
+    }
     const q  = s => MOUNT.querySelector(s);
     const qa = s => MOUNT.querySelectorAll(s);
     const e = q('[data-act="edit"]');           if (e) e.onclick = () => openNewClaimModal(c);
@@ -35328,6 +35412,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:645, d:'2026-08-09', t:'Insurance details live on the claim, not in two places', s:'A client profile was showing the claim details, the insurance paperwork and the iTel card, and Open Full Claim was showing the claim details again \u2014 the same information in two places, which is how it ends up disagreeing with itself. Open Full Claim now has all of it: Documents and iTel are new tabs there, alongside the claim details that were always there. The client profile keeps the Scope of Loss reader, because that is how a job becomes an insurance job in the first place.' },
 { b:644, d:'2026-08-09', t:'Insurance paperwork files under Documents, and opens', s:'An insurance document \u2014 a Scope of Loss, a policy, a signed authorization \u2014 was landing in the Inspections list instead of Documents, and tapping it there said it could not be opened. Both are fixed, and every file already uploaded is repaired too: they were stored correctly the whole time, the app just sorted them into the wrong pile. Insurance paperwork now appears under Documents, labelled with which slot it came from, and opens on tap like any other file.' },
   { b:643, d:'2026-08-09', t:'A Scope of Loss over 3 MB actually uploads now',
     s:'Uploading an adjuster\u2019s scope failed with \u201cthe extractor doesn\u2019t accept links yet\u201d for any file bigger than about 3 MB. Small files were sent to the reader directly, but larger ones were uploaded to storage first and only a link was sent \u2014 and the reader had never been taught to open a link. It can now. The size limit is also honest: it says 12 MB and means it, and it tells you before the upload rather than after, instead of claiming 20 MB and refusing at the end.' },

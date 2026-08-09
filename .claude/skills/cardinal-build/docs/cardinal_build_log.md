@@ -11451,3 +11451,59 @@ next build, agreed with Theo. Six child tables FK to `insurance_claims.id`
 six are **empty today** — one claim carries a carrier, one checklist does. The
 migration is about one row now and grows weekly, which is why the claim table
 wins rather than the checklist.
+---
+
+## Build 645 — the insurance info lives on the claim, and only there (9 Aug 2026)
+
+`index.html` only. **No SQL.** Theo: *"The info should go into the screen that
+says open full claim not both."*
+
+641 restored `insCard`/`insDocsCard`/`insItelCard` onto the client card by
+exempting them from `#tab-overview`'s hide rule. But **measured inside the claims
+module: zero references to `INS_DOC_TYPES`, `Insurance Doc [`, `itel_reports` or
+`iTel`** — so Claim Details was a genuine duplicate while Documents and iTel
+existed on the client card ALONE. Deleting all three would have removed two
+features rather than de-duplicating them. The claim screen gains the two it
+lacked; then all three leave the client card.
+
+**Why this is a refactor and not a move.** The claims module has **zero**
+references to `currentProject` — it is reached from the Claims list keyed on
+`claim_id`. Both renderers were written against `currentProject` and have
+**nine** re-paint call sites between them (three docs, six iTel) firing after
+every upload, add, edit and delete. Threading a mount argument through nine
+sites guarantees one gets missed, so each renderer instead reads *where it
+lives* from module state — `insDocsCtx {pid, mountId, gate}` and
+`itelState.mountId`. **The nine existing call sites are untouched**, which is the
+whole point; this build adds exactly one to each.
+
+iTel got *simpler*: inside the claim screen the claim id is already known, so
+`renderInsuranceItelCard(claimId)` skips the project→claim lookup and the
+claim-type gate — both only answer questions that screen has already answered.
+
+`solCard` **stays** on the client card. It is the on-ramp — how a retail or
+community job becomes an insurance job at all. Theo, on the community case:
+*"in case it converts, which has happened with a habitat client that didn't get
+funding."*
+
+Verified: `check_build.py` green (stamp 644→645, marker present and **absent
+from prev**) · **26-assertion** harness, structural plus **CHROMIUM** — jsdom
+cannot answer whether an `!important` rule beats a renderer's inline
+`display:block`, which is how three cards sat invisible from 406 to 641 ·
+negative control **20 failures** against 644, including the three cards
+computing `block`, which is the state Theo screenshotted.
+
+⚠ **Two of my own assertions went red against correct code first.** The
+re-paint counts were hardcoded 6 and 3 — but this build legitimately adds one to
+each, so the numbers were wrong, not the code. Rewritten to compare against the
+previous build and require exactly +1. That is the "hardcoded number read off
+the wrong tree" trap, reproduced faithfully.
+
+**Still open on this feature:** the SOL reader on community — blocked by a
+SECOND `:not()` allow-list, `.cr-cc-own > *:not(#cr-cc):not(#dangerZone)`, which
+hides every direct child of `#projectView`. `#solCard` is a grandchild, so an
+exemption cannot reach it; the fix is the **adopt** pattern (636's
+`adoptLocation()` MOVES the node), never a second card. And the claim bridge:
+extraction still writes `projects.checklist.lead.insurance` while the claim
+screen reads `insurance_claims`. **Upsert on `project_id`** — Gunn already has a
+claim row whose `project_id` points at him while `projects.insurance_claim_id`
+is NULL, so keying on the latter inserts a second claim and orphans the money.
