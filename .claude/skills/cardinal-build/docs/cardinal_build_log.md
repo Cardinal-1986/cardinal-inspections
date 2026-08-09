@@ -10818,3 +10818,84 @@ Asked him whether that was what he meant by *"the pipeline for insurance is
 completely different."* **He answered: different from retail/community — i.e.
 working as designed.** So the drift is recorded, not repaired. Do not "unify" the
 four maps without asking; the pipeline is deliberate.
+
+---
+
+## Pencil audit — all 13 render AND wire (9 Aug 2026, no build)
+
+Theo: *"Check all edit pencils and make sure they work as intended."* Reasonable
+ask after **BUG_CLASSES class 16** (a control that renders but is never wired —
+the Studio Archive button did nothing from 614 to 632).
+
+**Every rendered pencil has a live handler.** Swept by glyph (`&#9998;`,
+`✏`, `✎`), by class (`acxpencil`, `editpencil`), and by
+`data-act="edit"` / `data-cc-edit*`, then each was traced to what it opens:
+
+| control | opens |
+|---|---|
+| `#msValEdit` "Edit values" | `openMeasModal(pr)` — delegated `closest()` |
+| `#acxEdit2` Location card | `openProjModal(pr)` |
+| `#projEditBtn` client info | `openProjModal(currentProject)` |
+| `#insEditBtn` insurance panel | `openInsuranceEditor(currentProject)`, guarded |
+| `.tmib.tmed[data-edit]` team | toggles `.editing` inline — no modal, by design |
+| Claim Info `[data-act=edit]` | `openNewClaimModal(c)`, guarded `if (e)` |
+| partners directory | `openEditor(get(id))` — guarded at **634** |
+| prospects | `openEditor` — button hidden when masked at **635** |
+| properties directory | `openEditor(partnerId, get(id))` |
+| `[data-cc-editbid]` bid | `showBidModal(pr)`, guarded `if(pr)` |
+| homeowner `data-act="edithome"` | `CardinalNewBid.edit(pr.id)` |
+| caption `[data-act=edit]` | the caption editor |
+| `.lb-cce[data-cc-edit]` | `ccEdit()` — draw on a CompanyCam photo |
+
+### ⚠️ One false alarm, reported as a false alarm
+
+`#insEditBtn` calls `addEventListener('click', …)` on every render with **no
+wired-once guard**, which looks like classic listener stacking. **It is not.**
+The button lives inside the `innerHTML` string that is reassigned to `mount`
+each render, so the old element is destroyed and a **fresh** button receives
+exactly one listener. Correct as written — do not "fix" it with a guard.
+
+### The one dead thing, and it is cosmetic
+
+**`#acxEdit1` is referenced but never rendered.** The handler reads
+`if(hit('#acxEdit1') || hit('#acxEdit2'))`, and nothing in the file emits an
+element with that id. Harmless — it is one side of an `||` — but it makes the
+Location pencil look like it has a twin somewhere. Noted at 636; left alone
+rather than swept up mid-audit.
+
+---
+
+## Domain: what a supplement actually is at Cardinal — Theo, 9 Aug 2026
+
+Recorded verbatim because domain detail from him is load-bearing, and because
+**this changes what the Cardinal Truth rail should model.**
+
+> *"we usually file a supplement because of a partial denial and then there's the
+> backend supplement and paid when incurred filing at end of job with
+> certificate of completion with photos sent for release of depreciation"*
+
+That is **three distinct filings**, not one:
+
+1. **The partial-denial supplement.** Filed *because the carrier approved part of
+   the scope and denied part*. Happens around Scope Approved, before the build.
+2. **The backend supplement.** A later one, after the first is settled.
+3. **The "paid when incurred" filing at end of job** — a **certificate of
+   completion** plus **photographs**, sent to release **depreciation**.
+
+⚠️ **The rail models one of these, badly.** `RAIL` in `cr-cth-script` has a
+single synthetic `supplement` row that no job can occupy, and folds everything
+after the build into `Invoiced → "Awaiting Depreciation / Supplements"`. By his
+description, supplements happen at **two different points** and the depreciation
+release is **its own filing with its own artifacts**, not a waiting state.
+
+He said *"Supplement filed probably should be somewhere tho"* — so the row
+belongs; the question is where and how many. **Not built. Put a shape to him
+before touching the rail** — this is a data-model question (does a supplement
+become a row with a filed date, an amount and a decision?), not a relabelling,
+and `insurance_claims` already carries `supplement_status`, `supplement_filed`,
+`supplement_approved`, `supplement_filed_at`, `supplement_decided_at` and
+`supplement_notes` that nothing on the rail reads.
+
+**Do not "unify the four stage vocabularies" as a side effect of this.** He ruled
+separately that the insurance pipeline differing from retail/community is by
+design.
