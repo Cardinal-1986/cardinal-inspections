@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 658 &#8212; Ordinance &amp; Law stops saying &#8220;No&#8221; when nobody said no, and records what the policy actually calls it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 659 &#8212; The scope reader stops running out of room mid-answer, and says what went wrong in words instead of dumping its own half-finished reply</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14811,11 +14811,16 @@ function renderSolCard(){
    api/sol.js:94-96 answers 401 to both, and no-header is the documented-correct
    behaviour.
 
-   ⚠ The error line reads `detail || error`, which looks backwards for a human
-   message. It is the shape at all 22 fetch-error sites in this file, and every
-   error api/sol.js returns carries only `error`, so it already resolves to the
-   sentence. This comment moved here from extractFromUrl at 648 along with the
-   line itself — do not flip it here alone.
+   ⚠ 659 FLIPPED THIS LINE, and only this one. It used to read
+   `detail || error` — the shape at the other ~19 fetch-error sites in this
+   file — on the reasoning that "every error api/sol.js returns carries only
+   `error`, so it already resolves to the sentence". That stopped being true
+   the moment the parse-failure path started returning `detail`: the RAW MODEL
+   REPLY. Theo got "Could not read that scope: ), 7,911.67 (Deprec), 13,781.46
+   (ACV)" — his own figures, cut off mid-word, presented as an error. This
+   route is the ONE that returns a detail, so it is the one that prefers
+   `error`. Do NOT propagate the flip to the other sites; their routes send no
+   detail and the convention there is fine.
 
    ⚠ .status is attached to the thrown Error so a caller can special-case a
    413 without re-reading the prose. cr-sol-script does exactly that. */
@@ -14828,7 +14833,13 @@ async function solRead(payload){
   var j = null;
   try{ j = await r.json(); }catch(_){}
   if(!r.ok){
-    var err = new Error(String((j && (j.detail || j.error)) || ('HTTP ' + r.status)).slice(0, 250));
+    /* 659: `detail` is the RAW MODEL REPLY on a parse failure, and this line put
+       it straight into an alert() — that is why a failed read showed Theo
+       'Could not read that scope: ), 7,911.67 (Deprec)...' cut off mid-word.
+       Prefer the server's written sentence; fall back to detail only when there
+       is no sentence to show. */
+    var _msg = (j && j.error) || (j && j.detail) || ('HTTP ' + r.status);
+    var err = new Error(String(_msg).slice(0, 250));
     err.status = r.status;
     throw err;
   }
@@ -36567,6 +36578,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:659, d:'2026-08-09', t:'The scope reader finishes its sentence',
+s:'Reading Adam Gunn\u2019s scope failed three times with three different piles of gibberish \u2014 \u201CCould not read that scope:\u201D followed by half a sentence about page 5 totals. The AI had actually read the document correctly every time: the carrier, the policy number and the figures were all sitting there in the error. It was being cut off mid-answer, because it narrates its way through a long PDF before writing the fields and there was only room for about a page of that. It now answers in fields only, with eight times the room, and both AI services got the same treatment. If it ever does run out of room it says so in a sentence \u2014 and suggests uploading just the scope and totals pages \u2014 instead of showing you its own unfinished reply.' },
 { b:658, d:'2026-08-09', t:'Ordinance & Law stops saying no when nobody said no',
 s:'A claim was reading \u201COrd. & Law: No\u201D on jobs where nobody had ever answered the question. Three different places in the app turned an untouched control into a confident \u201Cno\u201D \u2014 a tick box left alone, a prompt you cancelled, and the scope reader applying a blank as a negative. All three now leave it alone, and the screen reads \u201CNot stated\u201D until somebody actually says otherwise. Every claim carrying one of those false \u201Cno\u201D answers has been reset, because no screen in the app could have produced a real one. And because this coverage goes by a different name on nearly every policy \u2014 code upgrade, code coverage, building code, ordinance or law \u2014 the scope reader now knows all of them, and records what YOUR document called it and the limit it carried, so a \u201CYes\u201D shows its evidence instead of asking to be trusted.' },
 { b:657, d:'2026-08-09', t:'The scope you already filed can be read',
@@ -45584,7 +45597,7 @@ return true;
    name carries the meaning — a scope that is already in storage, addressed by
    URL rather than uploaded inline. Only the transport moved out, to solRead() in
    the main block; 643's note about `detail || error` moved with the line it
-   describes. */
+   describes — and 659 flipped that line to prefer `error`, see solRead. */
 async function extractFromUrl(url){
 return window.CardinalSolUpload.read({ url: url });
 }

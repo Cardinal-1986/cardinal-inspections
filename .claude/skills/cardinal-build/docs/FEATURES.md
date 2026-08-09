@@ -2820,3 +2820,20 @@ extraction applied); all three now preserve null.
 - **A `<select>`, never a checkbox** — a checkbox cannot express "unknown", and
   that is exactly how the false answers got written. If you add an ord_law
   control anywhere, it needs three states.
+
+### 659 — /api/sol answers in JSON, with room
+
+**`maxOutputTokens: 8192` + `responseMimeType: 'application/json'`** on Gemini,
+**`max_tokens: 4096` + `response_format: json_object`** on the OpenAI fallback.
+⚠ **Keep both rungs in step** — 1024/1200 truncated a five-page scope mid-object
+and the failure looked like gibberish, not like a limit.
+
+**`/api/sol` is the ONE route that returns a `detail`** (the raw model reply on
+a parse failure), so `solRead()` reads **`error || detail`** — the reverse of the
+other ~19 fetch sites, deliberately. Do not "harmonise" it.
+
+Failure modes now speak: `MAX_TOKENS` → "ran out of room, try just the scope and
+totals pages"; unparseable → a sentence about the document; prose-wrapped JSON →
+salvaged from the outermost `{…}` rather than refused.
+Gate: `harness_659.js` — imports the real handler and drives it through every
+shape; negative control covers `api/sol.js` too, not only `index.html`.
