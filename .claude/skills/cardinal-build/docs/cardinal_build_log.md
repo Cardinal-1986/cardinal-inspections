@@ -11126,3 +11126,69 @@ Not a regression and not class 16 — they are honestly labelled placeholders.
 absolutely make you pick a client first."* Do not build those buttons without
 it. It also settles the open question from 638 — the claims-list "+ New Claim"
 should require a client rather than creating an unattached claim.
+
+---
+
+## Tooling — `next_build.py` repaired (9 Aug 2026, no build number)
+
+**Not a build. `index.html` is untouched, the app stamp stays 639.**
+
+`next_build.py` is the script that exists specifically to stop two sessions
+claiming the same build number. **It had been blind since 574**, and on 9 Aug it
+told a parallel session that 637 was free while `claude/cardinal-roofing-letterhead-o5hl17`
+was already stamped 637. That session took 638 — which by then was *also* mine.
+Two PRs, one number.
+
+### Why it was blind
+
+```python
+ENTRY = re.compile(r"\{ build:(\d+), note:'([^']{0,60})")   # old shape ONLY
+```
+
+Build 574 **added** the `{ b, d, t, s }` entry shape **beside** `{ build, note }`
+rather than replacing it — both are live, interleaved in one `CHANGELOG` array,
+and the app's renderer normalises them on purpose. So every branch parsed to an
+identical 275 old-shape entries, `new`/`bad`/`edited` were always empty, and
+
+```python
+if new or bad or edited:      # <- every branch failed this, so every branch
+```
+
+skipped the branch **entirely** — it was never printed and its number never
+reached `highest`. A branch that had claimed a build was *invisible*, not merely
+under-counted.
+
+### The fix, both halves
+
+1. `ENTRY_OLD` + `ENTRY_NEW`, merged in `index_at()`.
+2. `highest` now folds in **every branch's stamp**, before and independent of the
+   print guard. Deliberate belt-and-braces: the entry regex is one assumption
+   about a shape that has already changed once, and the stamp is what
+   `check_build.py` actually gates on. If the shape changes again the safe-number
+   answer stays correct while the parse goes quietly blind.
+
+Plus a "stamped at or below main — must be re-stamped to merge" note, since a
+branch behind main's stamp cannot pass the label gate.
+
+### Proof, and one self-inflicted misstep
+
+Run against the live remote it now surfaces the **real** clash the broken version
+called "No collisions":
+
+```
+build 638 on claude/production-handoff-taxonomy-g3fg09
+    main says   : A claim can no longer be saved empty
+    branch says : Team alerts: one send, and only from inside the app
+```
+
+Exit 0 -> exit 1 on the same repo state. It also catches the known 584 clash.
+
+⚠️ **My first version printed the stale-stamp warning for every branch — 55
+lines, burying the two collisions that mattered.** An abandoned 427-era branch
+being behind main is not news. Now only branches doing current work are listed
+individually and the rest collapse to one summary line. `highest` is computed
+before that filter, so the safe number never depended on the display choice.
+
+`--self-test` gained a dual-shape parse case, **negative-controlled**: it fails
+against the old single-shape regex, so it is not an assertion that matches its
+own prose (BUG_CLASSES 15).
