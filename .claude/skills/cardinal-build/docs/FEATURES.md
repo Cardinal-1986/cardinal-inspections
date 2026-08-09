@@ -2352,3 +2352,54 @@ own forward and reverse Nominatim lookups. Only this screen stopped.
 `harness_location.js` — **24 assertions**; the executed half runs the shipped painter,
 reads the DOM, switches the tab and reads again, and covers the no-key case. Negative
 control on 635: 16 red.
+
+---
+
+## Increase tracking — the claim bridge (646)
+
+**Where:** `bridgeSolToClaim()`, `paintSolLift()`, `localToday()` in the main block,
+beside `applySolExtraction()`; `adjuster.company` in `api/sol.js`; an Adjuster Company
+input in the claims module's edit modal.
+
+Reading a Scope of Loss now writes the **claim record**, not just the checklist — which
+is what makes every increase figure in the app light up. Before 646 the whole stack
+existed and computed NULL because **nothing had ever written `first_scope_rcv`**:
+`claim_money` (view) → `lift_pct` / `recovered`, `supplement_stats()` (RPC) →
+`avg_increase_pct`, `renderLift()` on the claim, the per-carrier league table, and the
+"Avg supplement" tile were all built and all gated on `first_scope_rcv > 0`.
+
+**The model, which is Theo's:** claim number, carrier and adjuster do not change across
+supplements; the dollar amount does.
+
+| | set when | overwritten? |
+|---|---|---|
+| `first_scope_rcv/_acv/_depreciation/_at` | first scope carrying a dollar figure | **never — write-once** |
+| `approved_rcv/_acv/_depreciation` | every scope | yes, each time |
+
+So the first scope reads `+0.0%`, and each approved supplement moves the top figure
+while the baseline holds. ⚠️ **Make `first_scope_*` writable and every percentage in the
+app silently becomes 0, with no error.**
+
+⚠️ **The claim is found by `project_id`, never by `projects.insurance_claim_id`** — that
+link is NULL on rows predating `insurance_claim_backfill.sql`, so keying on it inserts a
+second claim and strands the payments, supplements and iTels on the empty one.
+
+The bridge writes only the fields the user **ticked** in the review modal — it does not
+re-interpret the extraction. It creates the claim when there isn't one (identity from the
+project, not the document). It regex-guards `date_of_loss` before a DATE column. It
+**surfaces** its own failure rather than swallowing it, because "profile saved, claim
+didn't" is exactly the state that then reads $0.
+
+**The % on the job card** is `paintSolLift()`, on the Scope of Loss card. Async, and
+deliberately not by making `renderSolCard` async; it carries a stale-paint guard because
+the user can change client mid-request. Reads `claim_money`, which is
+`security_invoker=on` — a rep sees a lift only for a claim they could already open. Three
+states, each pinning **both** colours so it is theme-independent (8.61 / 11.06 / 8.10:1).
+
+**`adjuster_company`** has been rendered by `paneClient()` since the claims module
+shipped and had **no input and no extractor** — it could only read "Not set". Both added.
+
+**Gates:** `harness646.mjs` (45 assertions, shipped functions extracted by
+brace-matching, negative-controlled on 645) and `render_sollift.js` (Chromium — `#solLift`
+is a grandchild of `#tab-overview`, whose `:not()` list has claimed five cards; the same
+page proves `#insCard` stays hidden).
