@@ -3275,7 +3275,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 642 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 644 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10208,10 +10208,10 @@ function renderAcxOverview(){
   var nx = acxNext(stg);
   var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
   var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
-  var fileDocs = docs.filter(function(r){ return /^file:/i.test((r.title || '').trim()); });
+  var fileDocs = docs.filter(function(r){ return isFileDoc(r.title); });
   var inspN = docs.filter(function(r){
     var tt = (r.title || '').trim();
-    return !isEstimateTitle(tt) && !/^invoice|^contract|^file:/i.test(tt);
+    return !isEstimateTitle(tt) && !/^invoice|^contract/i.test(tt) && !isFileDoc(tt);
   }).length;
   var appts = cacheAppts.filter(function(a){ return a.project_id === pr.id; }).length;
   var fin = jobFinance(pr);
@@ -11895,7 +11895,7 @@ function renderProjectDocs(){
   var ctrs = docs.filter(function(r){ return isContractTitle(r.title); });
   var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
   var wos  = docs.filter(function(r){ return isWorkOrderTitle(r.title); });
-  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title) && !isWorkOrderTitle(r.title) && !/^file:/i.test((r.title || '').trim()); });
+  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title) && !isWorkOrderTitle(r.title) && !isFileDoc(r.title); });
   document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
@@ -12664,9 +12664,35 @@ document.getElementById('tskMount').addEventListener('click', async function(e){
   }
 });
 /* ---------- job documents ---------- */
+/* 644: ONE predicate for "this row is a stored FILE, not a report".
+   Insurance documents have always been saved as inspection_reports rows titled
+   `Insurance Doc [type]: name`, with the SAME payload as a job file —
+   {file:1,name,mime,size,data}, identical at 12726 and 14381. But only `^file:`
+   was ever taught to the eight places that sort files from reports, so an
+   insurance document showed up under Inspections, never showed up under
+   Documents, and threw when opened because the router at openDoc() sent it to
+   the report renderer. The storage was never wrong; this test was.
+   ⚠ If you add a third kind of stored file, add it HERE, not at the call
+   sites — that is the mistake this build is undoing. */
+function isFileDoc(title){
+  var t = String(title || '').trim();
+  return /^file:/i.test(t) || /^Insurance Doc \[/i.test(t);
+}
+/* The name to show a human. An insurance document carries its slot in the
+   title, so render that as a label rather than leaking the raw prefix. */
+function fileDocName(title){
+  var t = String(title || '').trim();
+  var m = t.match(/^Insurance Doc \[([a-z_]+)\]:\s*([\s\S]*)$/i);
+  if(!m) return t.replace(/^file:\s*/i, '');
+  var slot = null;
+  for(var i = 0; i < INS_DOC_TYPES.length; i++){
+    if(INS_DOC_TYPES[i].key === m[1]){ slot = INS_DOC_TYPES[i]; break; }
+  }
+  return (slot ? slot.icon + ' ' + slot.label : 'Insurance document') + ' \u2014 ' + m[2];
+}
 function jobFileDocs(){
   return cacheRows.filter(function(r){
-    return currentProject && r.project_id === currentProject.id && /^file:/i.test((r.title || '').trim());
+    return currentProject && r.project_id === currentProject.id && isFileDoc(r.title);
   });
 }
 function jdIcon(name){
@@ -12682,7 +12708,7 @@ function renderDocsPage(){
   var files = jobFileDocs().sort(function(a, b){ return String(b.created_at || '').localeCompare(String(a.created_at || '')); });
   if(!files.length){ mount.innerHTML = '<div class="axnote">Nothing here yet \u2014 scan or upload the first document.</div>'; return; }
   mount.innerHTML = files.map(function(r){
-    var nm = String(r.title || '').replace(/^file:\s*/i, '');
+    var nm = fileDocName(r.title);   /* 644: was a bare ^file: strip */
     return '<div class="tskrow" style="display:flex;align-items:center;gap:10px;">' +
       '<span style="font-size:21px;">' + jdIcon(nm) + '</span>' +
       '<span style="flex:1;cursor:pointer;font-weight:700;" data-jdopen="' + r.id + '">' + esc(nm) +
@@ -12865,7 +12891,7 @@ document.getElementById('galXferBtn').addEventListener('click', function(e){
     return;
   }
   var reports = cacheRows.filter(function(r){
-    return currentProject && r.project_id === currentProject.id && !isEstimateTitle(r.title) && !/^file:/i.test((r.title || '').trim());
+    return currentProject && r.project_id === currentProject.id && !isEstimateTitle(r.title) && !isFileDoc(r.title);
   });
   galXferMenu.innerHTML =
     reports.map(function(r){
@@ -16250,7 +16276,7 @@ var LIST_DEFS = {
   recents: { title:'\uD83D\uDD52 Recents', note:'Your most recently updated documents across every client.',
     filter:function(r){ return true; }, sort:function(a,b){ return String(b.updated_at||b.created_at).localeCompare(String(a.updated_at||a.created_at)); }, limit:25 },
   inspections: { title:'\uD83D\uDD0D Inspections', note:'Every inspection report you can see, newest first.',
-    filter:function(r){ return !isEstimateTitle(r.title) && !/^file:/i.test((r.title || '').trim()); }, sort:function(a,b){ return String(b.created_at).localeCompare(String(a.created_at)); } },
+    filter:function(r){ return !isEstimateTitle(r.title) && !isFileDoc(r.title); }, sort:function(a,b){ return String(b.created_at).localeCompare(String(a.created_at)); } },
   estimates: { title:'\uD83D\uDCB0 Estimates', note:'Every estimate you can see, newest first.',
     filter:function(r){ return isEstimateTitle(r.title); }, sort:function(a,b){ return String(b.created_at).localeCompare(String(a.created_at)); } }
 };
@@ -19443,7 +19469,10 @@ function lockTemplate(doc){
 
 async function openEditor(id){
   var __fmeta = cacheRows.find(function(r){ return String(r.id) === String(id); });
-  if(__fmeta && /^file:/i.test((__fmeta.title || '').trim())){ openJobFile(id); return; }
+  /* 644: this tested ^file: only, so an `Insurance Doc [...]` row fell through
+     to the report renderer and threw "could not open" — the error on tapping a
+     Scope of Loss. Its payload is a job-file payload; openJobFile handles it. */
+  if(__fmeta && isFileDoc(__fmeta.title)){ openJobFile(id); return; }
   var r;
   try{ r = await db.get(id); }
   catch(err){ showError('Could not open report: ' + (err.message || err)); return; }
@@ -35299,6 +35328,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:644, d:'2026-08-09', t:'Insurance paperwork files under Documents, and opens', s:'An insurance document \u2014 a Scope of Loss, a policy, a signed authorization \u2014 was landing in the Inspections list instead of Documents, and tapping it there said it could not be opened. Both are fixed, and every file already uploaded is repaired too: they were stored correctly the whole time, the app just sorted them into the wrong pile. Insurance paperwork now appears under Documents, labelled with which slot it came from, and opens on tap like any other file.' },
 { b:642, d:'2026-08-09', t:'Team alerts: one send, and only from inside the app', s:'Two problems in the alert path, both invisible from the outside. Every team alert was being sent twice \u2014 two pushes and two emails for one event \u2014 because a second sender added long ago was still running alongside the real one. And the server route that sends them never checked who was asking, so anyone who knew the address could have used it to send email that looked like it came from Cardinal. The route now requires you to be signed in, and there is one sender instead of two. Nothing changes in how you use it.' },
   { b:641, d:'2026-08-09', t:'The rest of the insurance cards are back on a client profile',
     s:'Build 639 brought back the Scope of Loss upload. It turns out that was one of four \u2014 the claim panel, the Insurance Documents card (where you upload and list the paperwork) and the iTel card were all being built and then painted out by the same stylesheet rule, on every insurance client. They had never appeared: the iTel card was added in build 406, and the section it sits in was retired back in build 348. All three are back now. They show only on an insurance job, exactly as they were written to \u2014 nothing changes on a retail or community profile.' },

@@ -11323,3 +11323,53 @@ arrays — 275 old-shape entries (to build 600, ~line 35314) and 35 current-shap
 ever appears to add a build, and **branch collision detection has been dead since
 574**. This build took 642; 638, 639 and 641 all landed on main while it was open. *(Also: CLAUDE.md says the old array "now exists only
 in git history" — it does not, it is still in the file.)*
+---
+
+## Build 644 — insurance documents belong under Documents, not Inspections (9 Aug 2026)
+
+`index.html` only. **No SQL, no new table, no bucket, no migration.** Found from
+Theo's screenshots of Adam Gunn's profile, not from reasoning.
+
+**Nothing about the storage was wrong.** An insurance document is already saved
+exactly the way a job document is — an `inspection_reports` row whose body is
+`{file:1,name,mime,size,data}`, the identical shape at 12726 and 14381. The only
+difference is the title prefix:
+
+```
+job document        file: survey.pdf
+insurance document  Insurance Doc [scope_of_loss]: survey.pdf
+```
+
+**Eight places sort "stored file" from "report", and every one tested `^file:`
+only.** So an insurance document appeared under Inspections (the exclusions did
+not know it), never appeared under Documents (the inclusion did not know it),
+and **threw on open** — the router sent it to the report renderer, which cannot
+parse a base64 payload as report markup. That was Theo's *"when I go to
+inspections and click on the scope document it errors."*
+
+One predicate, `isFileDoc()`, now serves all seven live call sites, with
+`fileDocName()` rendering the slot label instead of leaking the raw prefix.
+**Every document already uploaded is repaired retroactively** — including the
+"Adam Gunn Revised Estimate.pdf" on his profile — because the rows were always
+correct and only the sorting was wrong.
+
+⚠ **Add a third kind of stored file to the predicate, never to a call site.**
+Eight copies of one test is what caused this.
+
+Verified: `check_build.py` green (stamp 642→644, marker `ONE predicate for`
+present and **absent from prev**) · **22-assertion** harness executing the
+**shipped** `isFileDoc`/`fileDocName` text plus each call site's filter
+expression · **negative control reproduces the bug rather than merely noting the
+helper is missing** — against 642 it stands in the old `^file:` predicate and
+returns **12 behavioural failures**, printing the Scope of Loss and the policy
+sitting in the Inspections list, which is Theo's screenshot in test form.
+
+**Still open on this feature, deliberately not in this build:** the SOL reader
+writes `projects.checklist.lead.insurance` while "Open Full Claim" reads the
+`insurance_claims` table, so extraction never reaches the claim screen — the
+next build, agreed with Theo. Six child tables FK to `insurance_claims.id`
+(`claim_notes`, `claim_upgrades`, `insurance_payments`, `insurance_supplements`,
+`itel_reports`, `itel_lab_reports`) plus `projects.insurance_claim_id`, and all
+six are **empty today** — one claim carries a carrier, one checklist does. The
+migration is about one row now and grows weekly, which is why the claim table
+wins rather than the checklist.
