@@ -1,0 +1,34 @@
+id,severity,status,category,module,title,live_impact,fix_size,location
+CR-AUD-001,High,Confirmed-latent,Functional Wiring,AI Estimates,Convert-to-Contract calls /api/estimate_to_contract but file is estimate-to-contract.js (404),Fires on first conversion attempt,XS,index.html:23429 + api/estimate-to-contract.js
+CR-AUD-002,High,Confirmed,Functional Wiring,AI Estimates,Send button promises client email/SMS that no code sends; write errors ignored,Rep misinformed on every send,S (reword) / M (real sender),index.html ~L24211
+CR-AUD-003,High,Confirmed-live,Data/Workflow Conflict,Money core,jobFinance (profile) vs projectValue (all dashboards) compute job money from different tables,4 of 30 projects divergent today,M (product call),jobFinance ~L13510 / projectValue ~L17464
+CR-AUD-004,Medium-High,Confirmed,Data/Workflow Conflict,Home dashboard,AR Outstanding never subtracts payments; caption cites Worksheet but uses projectValue,Live on the one Invoiced job,S,~L10040
+CR-AUD-005,High-latent,Confirmed-structural,Insurance Logic Conflict,Supplements,Two supplement systems (insurance_supplements CRUD vs claim single-slot) with no crosstalk,First real filing diverges the app,M-L (needs Theo's 3-filings shape),~L26841 vs ~L45708
+CR-AUD-006,High,Confirmed-live,Insurance Logic Conflict,Claims,The only money-carrying claim ($28727) invisible on every insurance surface (NULL checklist type + OnHold rail drop),Live now,S (data fix + 3 small code fixes),claim 3664a5bd / project bc024ad1
+CR-AUD-007,High,Confirmed-by-construction,Data/Workflow Conflict,Core,No realtime; whole-checklist read-modify-write is last-write-wins across devices,Realistic phone+desktop data loss,S (refetch-merge) to L (realtime),patchProjectCk ~L16091
+CR-AUD-008,High,Confirmed-measured,Performance,Photos,13 base64 photo rows = 11.8MB Photo Activity tap; 3 base64 covers = 0.9MB per boot x53 reloads; gallery eager originals,Every field session,S (backfill + lazy attr),openPhotosView ~L50585 / pdb.list ~L9514 / renderGallery ~L12050
+CR-AUD-009,Medium,Confirmed-live,Insurance Logic Conflict,cr-iu-script,coverage_type/ord_law read from nonexistent columns; table row masks checklist values,Blank fields on live project 232ff50b,S,~L42918
+CR-AUD-010,Medium,Confirmed,Functional Wiring,Cardinal Truth hub,Rail render() innerHTML-wipes the hub's navigation cards (incl Adjuster Directory stub + injected claims card),Hub cards lost whenever rail paints,S-M,cr-cth-script render()
+CR-AUD-011,Medium,Confirmed,Functional Wiring,cr-xlinks-script,Dead claim card (client_name typo) hiding a duplicate-claim trap (keys on insurance_claim_id); must fix both together,Card never renders today,S (both fixes together),forProject ~L27162
+CR-AUD-012,Medium,Confirmed,Functional Wiring,Claims + Estimates,4 money-adjacent handlers never check write results (payment delete / supplement delete / discard / claim save no try-catch),Silent false success,S (copy in-module neighbours),~L26805 ~L26896 ~L24205 ~L26692
+CR-AUD-013,Medium,Confirmed-live,Data/Workflow Conflict,Estimates,Tile/tab count estimate DOCS while all money reads the estimates TABLE,7 projects divergent today,S,tile ~L10219 / estBest ~L17441
+CR-AUD-014,Medium,Confirmed,Insurance Logic Conflict,Stage labels,Closed=Archived on one list; Invoiced named two ways; OnHold missing from all four maps,Cosmetic + feeds 006,S,4 label maps
+CR-AUD-015,Medium,Confirmed,Performance,cr-iu-script,Unbounded select(*) of insurance_claims at every page load before session resolves,Grows with claims table,XS,load() ~L42949
+CR-AUD-016,Medium,Confirmed,Dormant/Registry,Admin Health,Registry monitors phantom payments/supplements + dead push_subscriptions; head:true hides real errors,Health screen cries wolf,S,cr-ahc-script ~L33878
+CR-AUD-017,Medium-latent,Confirmed-structural,Insurance Logic Conflict,Rail/owed,Supplement bucket stage-gated while owedOn substitutes filed amount for RCV; tile adds regardless,Diverges on first filing,S,railKeyFor ~L46060 / owedOn ~L46464
+CR-AUD-018,Low-Medium,Confirmed-live,Data/Workflow Conflict,Community,bidAmt estimate fallback includes drafts and prefers newest not max,Draft $6180 prices Kitty Hawk job now,S,loadEst ~L47277
+CR-AUD-019,Low,Confirmed-latent,Data/Workflow Conflict,Inspections,Tile excludes estimates/invoices/files but not work orders; tab the reverse,Fires on first WO/invoice doc,XS,~L10221 vs ~L11926
+CR-AUD-020,Low,Confirmed,Functional Wiring,Various,"Small cleanups: data-ctnav=library orphan, cr-nav-healthcheck id, refreshMeasSummary dead, logSubmitted never assigned, 2 dead export hooks, placebo Save",None user-visible,XS batch,various
+CR-AUD-021,Low,Confirmed,Dormant,DB + modules,"Dead: cr-ih-script stub, claim_notes, estimate_templates, push_subscriptions (after 016). NOT dead: claim_upgrades (view-summed), cr-ih-styles (load-bearing), studio_events/findings (Spark future)",None,XS-S,various
+CR-AUD-022,Low-Medium,Confirmed-advisors,Performance/Security,Database,"37 RLS per-row auth re-evals, 30 stacked permissive policies, 12 unindexed FKs, 18 unpinned search_path, definer-RPC hygiene (verified non-exploitable), leaked-password protection off",Future-proofing,S-M (one migration + console toggle),Supabase advisors
+CR-AUD-023,Low,Confirmed,Performance,Boot,Team portraits ~0.5MB every boot; NACHI preloaded regardless of use; full-document re-download per open is BY DESIGN (recorded not proposed),Minor today,S,loadTeamProfiles ~L20815
+B1,Buried,Confirmed,Dormant Feature,api/invite.js,Working admin team-invite endpoint with zero call sites,Feature available for wiring,S,api/invite.js
+B2,Buried,Confirmed,Dormant Feature,cr-walk-script,CardinalWalk admin smoke-test runner reachable only from console (NOT the client-facing Walk),Feature available,XS,~L35466
+B3,Buried,Confirmed,Dormant Feature,cr-undo-script,CardinalUndo undo-toast utility with zero users,Feature available,S,cr-undo-script
+B4,Buried,Confirmed,Dormant Feature,iTel,28 real itel_lab_reports rows nothing reads; app card reads itel_reports (0 rows),Data black hole,check first,itel_register.sql
+GAP-1,Gap,Sized,Insurance Feature,Adjuster meetings,No adjuster appointment kind / calendar / push,Per spec,S,appointments KIND_META
+GAP-2,Gap,Sized,Insurance Feature,Scope history,Only first+latest scope survive; no history table,Per spec,S-M,bridgeSolToClaim
+GAP-3,Gap,Sized,Insurance Feature,Supplements,Unification per Theo's three-filings model (prereq for 4-6),Per spec,M,build log ~L10868
+GAP-4,Gap,Sized,Insurance Feature,PWI ledger,No expense-side Unincurred-Incurred-Billed-Paid tracking,Per spec,M,absent
+GAP-5,Gap,Sized,Insurance Feature,COC/Depreciation,No COC doc type or release-request workflow,Per spec,M,INS_DOC_TYPES
+GAP-6,Gap,Sized,Insurance Feature,Carrier invoice,Final invoice is retail-shaped and claim-blind,Per spec,M,createInvoiceFor

@@ -1960,3 +1960,30 @@ extra typing); the Money In table shows it as "Finance — Service Finance".
 3. **Rep-role rendering is verified by RLS + harness, not by signing in as a
    rep** — the standing sandbox limitation. First Friday run-through is the
    real gate.
+
+---
+
+# Layer: CR Audit — 9 Aug 2026 (docs-only; the report is the source of truth)
+
+**`docs/CR_AUDIT_2026-08.md` supersedes this note** — 23 findings, 6 buried
+features, 6 sized insurance gaps, all severity-ranked with evidence and a
+per-finding fix sketch. Re-derive its numbers with
+`scripts/audit_recount.py` before quoting them at a later build.
+
+Standing corrections this audit adds to the doc set:
+- `cr-ih-styles` is **load-bearing** (3.4 KB, styles the live Truth hub) —
+  only the `cr-ih-script` stub is deletable. Earlier "8 KB dead styles"
+  notes are wrong on both counts.
+- `claim_upgrades` is empty but **summed by the `claim_money` view** — not
+  droppable on a client-code grep.
+- The Truth-hub rail's `render()` **does** wipe the hub's navigation cards
+  (verified byte-level) — destinations survive via banner/nav/⌘K only.
+- The Admin Health registry monitors `push_subscriptions`, the table build
+  611 recorded as never-read — while the real `push_subs` is unmonitored.
+  Same registry-repair pass as the documented phantom `payments`/
+  `supplements` rows.
+
+Awaiting Theo's picks from the fix menu (presented in chat, mirrored in the
+report): the broken-wire batch · money coherence · insurance repair · the
+supplement unification shape (his three-filings model) · the media backfill
+· health-check truth-telling · the DB hygiene migration · gap features.
