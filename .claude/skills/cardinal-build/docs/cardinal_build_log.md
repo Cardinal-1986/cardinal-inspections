@@ -11126,3 +11126,152 @@ Not a regression and not class 16 — they are honestly labelled placeholders.
 absolutely make you pick a client first."* Do not build those buttons without
 it. It also settles the open question from 638 — the claims-list "+ New Claim"
 should require a client rather than creating an unattached claim.
+
+---
+
+## Tooling — `next_build.py` repaired (9 Aug 2026, no build number)
+
+**Not a build. `index.html` is untouched, the app stamp stays 639.**
+
+`next_build.py` is the script that exists specifically to stop two sessions
+claiming the same build number. **It had been blind since 574**, and on 9 Aug it
+told a parallel session that 637 was free while `claude/cardinal-roofing-letterhead-o5hl17`
+was already stamped 637. That session took 638 — which by then was *also* mine.
+Two PRs, one number.
+
+### Why it was blind
+
+```python
+ENTRY = re.compile(r"\{ build:(\d+), note:'([^']{0,60})")   # old shape ONLY
+```
+
+Build 574 **added** the `{ b, d, t, s }` entry shape **beside** `{ build, note }`
+rather than replacing it — both are live, interleaved in one `CHANGELOG` array,
+and the app's renderer normalises them on purpose. So every branch parsed to an
+identical 275 old-shape entries, `new`/`bad`/`edited` were always empty, and
+
+```python
+if new or bad or edited:      # <- every branch failed this, so every branch
+```
+
+skipped the branch **entirely** — it was never printed and its number never
+reached `highest`. A branch that had claimed a build was *invisible*, not merely
+under-counted.
+
+### The fix, both halves
+
+1. `ENTRY_OLD` + `ENTRY_NEW`, merged in `index_at()`.
+2. `highest` now folds in **every branch's stamp**, before and independent of the
+   print guard. Deliberate belt-and-braces: the entry regex is one assumption
+   about a shape that has already changed once, and the stamp is what
+   `check_build.py` actually gates on. If the shape changes again the safe-number
+   answer stays correct while the parse goes quietly blind.
+
+Plus a "stamped at or below main — must be re-stamped to merge" note, since a
+branch behind main's stamp cannot pass the label gate.
+
+### Proof, and one self-inflicted misstep
+
+Run against the live remote it now surfaces the **real** clash the broken version
+called "No collisions":
+
+```
+build 638 on claude/production-handoff-taxonomy-g3fg09
+    main says   : A claim can no longer be saved empty
+    branch says : Team alerts: one send, and only from inside the app
+```
+
+Exit 0 -> exit 1 on the same repo state. It also catches the known 584 clash.
+
+⚠️ **My first version printed the stale-stamp warning for every branch — 55
+lines, burying the two collisions that mattered.** An abandoned 427-era branch
+being behind main is not news. Now only branches doing current work are listed
+individually and the rest collapse to one summary line. `highest` is computed
+before that filter, so the safe number never depended on the display choice.
+
+`--self-test` gained a dual-shape parse case, **negative-controlled**: it fails
+against the old single-shape regex, so it is not an assertion that matches its
+own prose (BUG_CLASSES 15).
+
+---
+
+## 641 — the rest of the insurance cards, which 639 left behind
+
+**Theo, after asking for a safety check on 639: "1"** — unhide the three, leave
+the Scope of Loss card showing everywhere.
+
+### 639's own comment was wrong, and that is why it was partial
+
+It claimed *"every OTHER child here is genuinely retired legacy and carries its
+own inline display:none as well."* **False.** Four children of `#tab-overview`
+are LIVE, and their renderers set display at runtime:
+
+| child | renderer | what it does |
+|---|---|---|
+| `insCard` | `renderInsurancePanel` | `mount.style.display='block'` |
+| `insDocsCard` | `renderInsuranceDocsCard` | `mount.style.display='block'` |
+| `insItelCard` | `paintInsuranceItelCard` | `mount.style.display='block'` |
+| `leadCard` | `renderLeadCard` | `card.style.display='block'` |
+
+**Not one of those assignments can work.** An `!important` stylesheet
+declaration outranks a **normal** inline style — only an inline `!important`
+would beat it. Confirmed in Chromium, because this is a cascade question that
+neither jsdom nor reading the code can answer:
+
+```
+insCard   as-shipped none (0px)  ->  after its renderer sets 'block':  STILL none (0px)
+```
+
+iTel shipped at **406**; Keeper retired this container at **348**. They were
+built into a container that was already dead and have **never once rendered**.
+
+### The impact was not theoretical
+
+Of **30** projects exactly **one** has `lead.claim_type = 'insurance'` — **Adam
+Gunn**, the client Theo could not work. All three cards self-gate on
+`projClaimType === 'insurance'`, so his profile is the only place the absence
+was ever visible. *"There is no way to attach a scope upload to Adam Gunn"* was
+one symptom of the whole group being invisible.
+
+⚠️ **A wrong query nearly sent this the other way.** A first pass read
+`checklist->>'claim_type'` and reported **null for every project including
+Gunn**, which would have made "gate the SOL card to insurance" look like it
+broke his case. `projClaimType()` reads `parseCkAll(pr).lead` — the value lives
+at `checklist.lead.claim_type`. Correct path: community 14, retail 12,
+**insurance 1**, unset 3. Read the accessor before trusting the query.
+
+### Why exempting them decides nothing
+
+Each renderer opens with the same guard:
+
+```js
+if(ct !== 'insurance'){ mount.style.display = 'none'; mount.innerHTML = ''; return; }
+```
+
+So on the 26 retail/community profiles they hide themselves. The exemption hands
+control back to the renderers.
+
+`leadCard` is **deliberately not exempt** — it is the real pre-Keeper card
+`acxMount` replaced at 348. It still **runs** (that is how these four renderers
+get called at all) while painting into a hidden element, exactly as the markup
+comment describes. Unhiding it would put the old profile under the new one.
+
+`renderSolCard()` keeps **no** claim-type gate, so SOL still shows on every
+profile. Theo's pick; whether a scope belongs on a pre-claim profile is part of
+the insurance write-up.
+
+### Gates
+
+`check_build.py` green, stamp **639 → 641** (640 was taken by a parallel branch —
+the repaired `next_build.py` saw it, which the broken one could not).
+**13 harnesses, 723 assertions**, all green.
+
+New `render_inscards.js` — lifts the rule and the child list **out of the
+artifact** so it is a real negative control: against 639 it goes **RED on
+exactly the three cards** plus the exemption count.
+
+⚠️ **It first reported a false RED on a correct build.** `#cr-pp-mount` is not
+in the markup — the punch card creates it at runtime and inserts it as a sibling
+of `insCard`. The harness asserted on an element that did not exist. It now
+injects it the way the app does, same anchor order. Half of all reds are the
+test's fault; this was one.

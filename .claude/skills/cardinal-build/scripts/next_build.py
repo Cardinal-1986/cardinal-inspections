@@ -23,7 +23,21 @@ import subprocess
 import sys
 
 STAMP = re.compile(r"v\d{4}-\d{2}-\d{2} build (\d+)")
-ENTRY = re.compile(r"\{ build:(\d+), note:'([^']{0,60})")
+
+# THE CHANGELOG HAS TWO ENTRY SHAPES, AND BOTH ARE LIVE. Build 574 added
+# `{ b, d, t, s }` BESIDE the original `{ build, note }` — it did not replace it.
+# The old shape kept receiving entries until build 600, and both are interleaved
+# in one descending array that the app's own renderer normalises on purpose
+# (`entryBuild(e){ return e.build != null ? e.build : e.b; }`).
+#
+# Matching only the old shape is what broke this script. Every branch parses to
+# an identical set of old-shape entries, so `new`/`bad`/`edited` are always empty,
+# every branch is skipped by the `if new or bad or edited` guard, and a branch
+# that has claimed a number becomes INVISIBLE. Collision detection was dead from
+# 574 until this fix — on 9 Aug it reported "637 free" while a pushed branch was
+# stamped 637, and two PRs shipped a build 638.
+ENTRY_OLD = re.compile(r"\{\s*build:\s*(\d+),\s*note:'([^']{0,60})")
+ENTRY_NEW = re.compile(r"\{\s*b:\s*(\d+),\s*d:'[^']*',\s*t:'([^']{0,60})")
 
 
 # 4 OR 5 hex: the broken five-hex form is exactly what build 511 repaired, and
@@ -60,9 +74,11 @@ def index_at(ref):
     if code != 0:
         return None
     stamps = [int(n) for n in STAMP.findall(out)]
+    entries = dict((int(n), t) for n, t in ENTRY_OLD.findall(out))
+    entries.update(dict((int(n), t) for n, t in ENTRY_NEW.findall(out)))
     return {
         "stamp": max(stamps) if stamps else None,
-        "entries": dict((int(n), t) for n, t in ENTRY.findall(out)),
+        "entries": entries,
     }
 
 
@@ -89,6 +105,28 @@ def self_test():
         ok = False
     else:
         print("ok: two different features are recognised as a COLLISION")
+
+    # THE REGRESSION THAT KILLED THIS SCRIPT FOR 65 BUILDS. Matching only the
+    # pre-574 shape made every branch parse identically, so no branch ever looked
+    # like it had claimed a number. Verbatim samples of both live shapes, taken
+    # from index.html's single interleaved CHANGELOG array.
+    mixed = (
+        "var CHANGELOG = [\n"
+        "  { b:639, d:'2026-08-09', t:'The Scope of Loss upload is visible again',\n"
+        "    s:'long user-facing summary' },\n"
+        "{ build:600, note:'\\uD83D\\uDD12 What\\u2019s New no longer opens for the team.' },\n"
+        "];\n"
+    )
+    got = dict((int(n), t) for n, t in ENTRY_OLD.findall(mixed))
+    got.update(dict((int(n), t) for n, t in ENTRY_NEW.findall(mixed)))
+    if sorted(got.keys()) != [600, 639]:
+        print("FAIL: both changelog shapes must parse — got %s, expected [600, 639]"
+              % sorted(got.keys()))
+        print("      (matching only one shape is what broke collision detection)")
+        ok = False
+    else:
+        print("ok: BOTH changelog entry shapes parse — { build, note } and { b, d, t, s }")
+
     return 0 if ok else 1
 
 
@@ -116,6 +154,7 @@ def main():
 
     claimed = {}      # build number -> [branch, ...]  (not on main at all)
     collisions = []   # (branch, number, main_note, branch_note)
+    stale_only = []   # (branch, stamp) — behind main, nothing else to say
 
     for b in branches:
         code, ahead, _ = git("rev-list", "--count", "origin/main.." + b)
@@ -134,6 +173,26 @@ def main():
                 collisions.append((b, n, base["entries"][n], note))
             elif note != base["entries"][n]:
                 edited.append(n)     # same feature, note text repaired — fine
+        # A branch's STAMP counts even when its entries tell us nothing. Belt and
+        # braces on purpose: the entry regex is one assumption about a changelog
+        # shape that has already changed once, and the stamp is what
+        # check_build.py actually gates on. If the shape changes again, this
+        # keeps the number safe while the parse goes quietly blind.
+        highest = max([highest, info["stamp"] or 0] + new + bad)
+
+        # Ahead of main but stamped no higher than main => it CANNOT merge as it
+        # stands: check_build.py requires the app stamp to strictly increase.
+        stale = (info["stamp"] or 0) <= (base["stamp"] or 0)
+
+        # ⚠ Only say so for a branch doing CURRENT work. Reporting every stale
+        # branch printed 55 lines on the first run of this fix and buried the one
+        # collision that mattered — this tool is worthless if its headline
+        # scrolls off. An abandoned 427-era branch being behind is not news;
+        # `highest` above already accounts for it either way, so the safe-number
+        # answer never depends on whether we print this.
+        if stale and not (new or bad or edited):
+            stale_only.append((b, info["stamp"]))
+
         if new or bad or edited:
             label = b.replace("origin/", "")
             print("  %-46s stamp %s" % (label[:46], info["stamp"]))
@@ -145,7 +204,10 @@ def main():
             if bad:
                 print("      *** REUSES %s — already on main for different work ***"
                       % ", ".join(str(x) for x in sorted(bad)))
-            highest = max([highest] + new + bad)
+            if stale:
+                print("      !!! stamp %s is not above main's %s — must be re-stamped"
+                      " (>= %d) before it can merge"
+                      % (info["stamp"], base["stamp"], (base["stamp"] or 0) + 1))
 
     nxt = highest + 1
     print("\n" + "=" * 62)
@@ -156,6 +218,12 @@ def main():
         pending = sorted(claimed.keys())
         print("  unmerged but already claimed: %s"
               % ", ".join("%d (%s)" % (n, claimed[n][0].replace("origin/", "")) for n in pending))
+    if stale_only:
+        top = sorted(stale_only, key=lambda x: -(x[1] or 0))[:3]
+        print("  %d other pushed branch(es) are stamped at or below main's %s and"
+              " would need re-stamping to merge (newest: %s)"
+              % (len(stale_only), base["stamp"],
+                 ", ".join("%s %s" % (b.replace("origin/", ""), s) for b, s in top)))
 
     if collisions:
         print("\n*** %d COLLISION(S) — these must be renumbered before merging ***\n"
