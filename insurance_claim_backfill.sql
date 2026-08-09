@@ -6,6 +6,18 @@
 --   Adam Gunn        Allstate   | 0802889162 | 000826751113 | Shawn Feistamel | linked
 --   Maker Space LLC  State Farm | 3584R158W  | 95G7U6807    | Andrew Perkins  | linked
 --
+-- and after 1b, both claims carry their property address:
+--   Adam Gunn        9222 Arlington Rd, Brookville, OH 45309
+--   Maker Space LLC  1630 E 5th St, Dayton, OH 45403-2304
+--
+-- ⚠ WHAT THIS CANNOT FILL, so nobody hunts for a bug in it. The checklist held
+-- empty strings for adjuster phone/email and date_of_loss, has no field at all
+-- for adjuster company, cause of loss or filed date, and its coverage_type
+-- ("RCV" on Gunn) has NO COLUMN on insurance_claims to go to. Those screens read
+-- blank because the source is blank, not because the copy failed. The FINANCIALS
+-- block is a different thing again: nothing in the app has ever written
+-- first_scope_rcv or approved_rcv, which is the next build.
+--
 -- Adam Gunn's row was entirely NULL before this; Maker Space already carried its
 -- own data and was not touched by statement 1 (it has no checklist blob). Both
 -- projects now point at their claim, which neither did before.
@@ -70,6 +82,21 @@ set
   updated_at      = now()
 from src s
 where c.project_id = s.project_id;      -- keyed on project_id, never on insurance_claim_id
+
+-- ── 1b. the property address ────────────────────────────────────────────────
+-- MISSED IN THE FIRST PASS, added and applied 9 Aug 2026. insurance_claims has
+-- a property_address column and the project has always had the address, but the
+-- first version of this file mapped seven fields and not this one — so the claim
+-- header read "PROPERTY: TBD" for a job whose address is on the profile two taps
+-- away. It comes from the project, not the checklist, which is why it was not in
+-- the blob the rest of statement 1 reads.
+update insurance_claims c
+set property_address = nullif(trim(p.address), ''),
+    updated_at       = now()
+from projects p
+where c.project_id = p.id
+  and c.property_address is null
+  and nullif(trim(p.address), '') is not null;
 
 -- ── 2. repair the one-way link ──────────────────────────────────────────────
 -- projects.insurance_claim_id was never set even where a claim exists and

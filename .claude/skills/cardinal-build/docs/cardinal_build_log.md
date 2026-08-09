@@ -11507,3 +11507,167 @@ extraction still writes `projects.checklist.lead.insurance` while the claim
 screen reads `insurance_claims`. **Upsert on `project_id`** — Gunn already has a
 claim row whose `project_id` points at him while `projects.insurance_claim_id`
 is NULL, so keying on the latter inserts a second claim and orphans the money.
+
+## Build 646 — the claim bridge: a scope that is read becomes a number you can track (9 Aug 2026)
+
+**This closes the claim bridge that 645's entry named as still open.** The other
+half of that note — the SOL reader on community — is still open and untouched.
+
+Theo, on the shape of the problem: *"there may be multiple scope of losses after
+supplements are sent. Claim number carrier ins company etc won't change but the
+dollar amount will. I'd like to keep track of our increases."* And: *"There
+should be something that says %increased in the job card and in the insurance
+section."*
+
+**The prime doctrine, for the third time in this feature.** Every piece of the
+increase machinery already existed and had been computing NULL for want of one
+writer:
+
+| Layer | State before 646 |
+|---|---|
+| `insurance_claims.first_scope_rcv / _acv / _depreciation / _at` | columns exist |
+| `claim_money` (VIEW, `security_invoker=on`) | computes `lift_pct`, `recovered`, `contract_value` |
+| `supplement_stats()` (RPC) | computes `avg_increase_pct`, `total_recovered` |
+| `renderLift()` — the claim screen | built, gated on `first_scope_rcv > 0` |
+| the per-carrier league table in Cardinal Truth | built, gated the same way |
+| the "Avg supplement" tile | built, gated the same way |
+| **anything that writes `first_scope_rcv`** | **nothing, anywhere** |
+
+`first_scope_rcv` had **no writer in the app, in any migration, or in any
+trigger** — the claim edit form carries exactly three money inputs (Approved
+RCV, Approved ACV, Deductible) and no first-scope field at all. Maker Space's
+`28,727.17` was typed straight into the database, which is why its lift reads
+`0.0%`: first equals approved.
+
+Meanwhile the SOL reader **does** extract `totals.rcv` and `totals.acv`, shows
+them in the review modal, and writes them to
+`projects.checklist.lead.insurance` — a different store from the one all six
+readers above look at. Two stores, no bridge.
+
+**What shipped.** `bridgeSolToClaim()` runs after the checklist write and copies
+the **same fields the user ticked** into `insurance_claims`. It interprets
+nothing the user did not approve; an unticked field stays unwritten in both
+stores.
+
+- ⚠️ **Keyed on `project_id`, never `projects.insurance_claim_id`.** That link is
+  NULL on every claim predating the backfill, so a "does a claim exist?" test
+  routed through it answers no, inserts a SECOND claim, and strands the
+  payments, supplements and iTels on the empty one.
+- ⚠️ **`first_scope_*` is write-once.** The first scope carrying a dollar figure
+  sets the baseline and nothing overwrites it; every later scope moves
+  `approved_*` alone. Make it writable and every percentage in the app silently
+  collapses to zero **with no error anywhere** — which is why the harness
+  asserts it from both directions.
+- Creates the claim when none exists (Theo, asked directly). Identity comes from
+  the **project**, not the document, matching the backfill's rule; `created_by`
+  must equal `my_email()` or the insert policy refuses it.
+- `date_of_loss` is regex-guarded before it reaches a DATE column — the same
+  guard `insurance_claim_backfill.sql` uses, for the same reason.
+- Failure is **surfaced, not swallowed**: the checklist half succeeding while the
+  claim half fails is precisely the state that looks saved and then reads $0.
+
+**`paintSolLift()` — the one genuinely new display.** The % on the job card,
+landing on the Scope of Loss card because that is the card scopes arrive
+through. Async on purpose and deliberately *not* by making `renderSolCard`
+async. `claim_money` carries `security_invoker=on`, so it answers under the
+caller's own RLS — a rep sees a lift only for a claim they could already open.
+Three states, each pinning **both** its colours so it does not depend on the
+surrounding theme: green `+40.0%`, neutral `First scope $X · no increase yet`,
+red for a carrier reduction. Measured 8.61 / 11.06 / 8.10:1 against a 4.5 floor.
+
+**`adjuster_company` — rendered since the claims module shipped, never fillable.**
+`paneClient()` has always drawn `kv('Company', …)` and the column has always
+existed, but there was no input on the form and `/api/sol` never asked for it,
+so it could only ever read "Not set". Both added. This is BUG_CLASS 16's twin —
+not a control that renders and is never wired, but a **field that renders and
+can never be filled**.
+
+**`localToday()`.** `first_scope_at` is a date Theo reads back, and he works
+late; after 8pm in Dayton `new Date().toISOString()` has already rolled to
+tomorrow. ⚠️ `itelToday()` (14140) still uses the bare UTC form and carries the
+same one-day error on evening entries — left alone deliberately, because
+changing it would move `sent_at`/`received_at` on iTels already filed.
+
+**Gates.** `check_build.py` green (106 inline scripts, 118 style blocks, stamp
+645 → 646, marker + negative control). `harness646.mjs` — **45 assertions**
+running the *shipped* functions extracted by brace-matching, negative-controlled
+against 645 (all three functions ABSENT → red). `render_sollift.js` — a
+**Chromium** run, because the question is a cascade question: `#solLift` is a
+grandchild of `#tab-overview`, whose `:not()` allow-list has already claimed five
+cards. It renders; `#insCard` is hidden in the same page, which is what makes
+that a real pass rather than a vacuous one.
+
+⚠️ **One harness assertion went red and it was the test, not the app** —
+`((28000/20000)-1)*100 === 40` is **false** in float64 (`39.99999999999999`), and
+the real division is `numeric` inside Postgres, so the assertion was not
+exercising the app's arithmetic at all. Rewritten to the view's 1dp and
+cross-checked in the database: `40.0 / 0.0 / -10.0`. BUG_CLASS 15, caught by the
+rule that says ask whether the test or the app is wrong.
+
+**Still open on this feature:** the SOL reader on community (unchanged — blocked
+by `.cr-cc-own > *:not(#cr-cc):not(#dangerZone)`; the fix is the **adopt**
+pattern, never a second card), and the insurance-profile address contrast Theo
+has now reported twice.
+
+## Build 647 — the landing gets its own dark back, and a scope on file can be read (9 Aug 2026)
+
+Three things from one message, and one of them was mine.
+
+**1. The landing page.** Theo, 1:42am, with a screenshot: *"Something also
+ruined the landing page dark mode."* `#landingView` painted `var(--bg)` — an
+**app** token — while every `.cr-lr-*` ink keys off `data-mode`, the **landing**
+theme. Put the app in `rb-light`, leave the landing dark, and the ground goes
+`#f7f7f7` under cream `#e8ded4` inks: **1.24:1**, with the `::before` red radial
+over near-white producing the pink. Reproduced in Chromium from the artifact's
+own rules before anything was changed. The landing owns its ground now — a
+literal dark base, with the existing `html[data-mode="light"]` rule handling
+light. **New entry in `BUG_CLASSES.md` — class 17, one surface answering to two
+theme attributes.** ⚠️ `body{background:var(--bg)}` is untouched; that is 429's
+overscroll fix and it is not this bug.
+
+**2. My 645 regression.** 645 moved the insurance documents card onto the claim
+screen and gave the **renderer** `insDocsCtx` — but left the **writers** on
+`currentProject`, which is null there. `uploadInsuranceDoc()` opens with
+`if(!currentProject) throw new Error('No client selected')`, so the Documents tab
+I added has been unable to upload anything from the moment it shipped. Nobody
+had tested it; the 645 notes even say so. `insDocsProject()` now resolves the
+project from the same context the renderer reads.
+
+**3. Theo's ask:** *"Make it to where the first scope uploaded is the baseline
+and build from that."* A scope filed into the document slot is stored as
+`{file:1,name,mime,size,data:<dataURL>}` in `inspection_reports.html` and had
+**no path to the extractor** — filed, never read. Gunn's *Adam Gunn Revised
+Estimate.pdf* (6.4 MB, the only document on his profile) is exactly that, which
+is why 646 could not give him a baseline without re-uploading the same file. The
+Scope of Loss card now offers **"Read the scope already on file"**, which runs
+the stored bytes through the same `/api/sol` call and the same review modal as a
+fresh upload, and therefore through 646's bridge to `first_scope_rcv`.
+
+⚠️ **A COUNT THAT CORRECTED ME, and the comment it fixed.** The refactor pulled
+`readScopeOfLoss`'s fetch-and-review half into `sendScopeToReader()` so both
+doors share one core, and I wrote a comment saying "one core, two callers, do
+not grow a third." **The assertion `count("fetch('/api/sol'") == 1` came back
+5.** This file has **five independent scope-of-loss readers**, in five modules:
+`sendScopeToReader` (main), `handleSolUpload` (`cr-claims-fx-script`),
+`extractFromUrl` (`cr-suf-script`), `readScope` (`cr-sol-script`) and `read`
+(`cr-ci-script`). The comment was rewritten to say so by name, and the assertion
+became self-computing — the total must be *unchanged*, because 647 merges two
+doors inside one module and touches nobody else. **Unifying the five is real
+work for its own build; it is recorded, not done.**
+
+⚠️ **And a second assertion went red on my own prose** — `'currentProject' not
+in uploadInsuranceDoc` failed because my new comment says *"was currentProject"*.
+BUG_CLASS 15, in the same session it is documented in. Rewritten to brace-match
+the function and test the code patterns (`!currentProject`, `currentProject.id`,
+`currentProject.name`) rather than the bare word.
+
+**Gates.** `check_build.py` green, stamp 646 → 647. `harness647.js` — **21
+assertions**: the four-way theme matrix rendered in **Chromium** (all ≥4.5:1),
+plus the shipped `insDocsProject` / `sendScopeToReader` / `readFiledScope`
+extracted by brace-matching and run against the real stored-payload shape.
+Negative control on 646: **5 red, including `1.24:1` on exactly the combination
+Theo hit**. 646's own gates re-run on this tree — `harness646.mjs` 45 green,
+`render_sollift.js` 10 green.
+
+**Still open:** the SOL reader on community; the insurance-profile address
+contrast; and the five duplicate scope readers above.

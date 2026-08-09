@@ -160,6 +160,12 @@ export default async function handler(req, res) {
       'The document may be a PDF or scanned image. Read carefully. Extract only ' +
       'values that are clearly present. Do not invent values. Use null for ' +
       'missing fields.\n\n' +
+      /* 646: the claim table has had an adjuster_company column and rendered it
+         on screen since the claims module shipped, but nothing ever filled it —
+         no input on the form, and this prompt never asked. */
+      'For adjuster.company give the adjusting firm or catastrophe team named on ' +
+      'the document \u2014 for example a carrier\u2019s national catastrophe team, or an ' +
+      'independent adjusting company. Do not repeat the carrier name on its own.\n\n' +
       'Respond with ONLY raw JSON, no markdown fences, no preamble, in exactly this shape:\n' +
       '{\n' +
       '  "carrier": string or null,\n' +
@@ -168,6 +174,7 @@ export default async function handler(req, res) {
       '  "date_of_loss": "YYYY-MM-DD" or null,\n' +
       '  "adjuster": {\n' +
       '    "name": string or null,\n' +
+      '    "company": string or null,\n' +
       '    "phone": string or null,\n' +
       '    "email": string or null\n' +
       '  },\n' +

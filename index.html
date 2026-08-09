@@ -3283,7 +3283,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 645 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 647 &#8212; Colors now wears Owens Corning’s own pink, white and black</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14040,6 +14040,17 @@ function findInsuranceDoc(projectId, typeKey){
   hits.sort(function(a, b){ return String(b.created_at || '').localeCompare(String(a.created_at || '')); });
   return hits[0] || null;
 }
+/* 647: the project this card is showing — which is NOT always the open one.
+   645 moved this card onto the claim screen and gave the RENDERER insDocsCtx,
+   but left the writers on currentProject, which is null there. So every upload
+   from the claim screen's Documents tab threw "No client selected" from the
+   moment that tab shipped. Renderer and writers read the same context now. */
+function insDocsProject(){
+  var pid = insDocsCtx.pid || (currentProject && currentProject.id) || null;
+  if(!pid) return null;
+  if(currentProject && currentProject.id === pid) return currentProject;
+  return (cacheProjects || []).find(function(x){ return x.id === pid; }) || null;
+}
 function renderInsuranceDocsCard(){
   var mount = document.getElementById(insDocsCtx.mountId || 'insDocsCard');
   var pid = insDocsCtx.pid || (currentProject && currentProject.id) || null;
@@ -14445,7 +14456,8 @@ function pickAndUploadInsDoc(typeKey){
   input.click();
 }
 async function uploadInsuranceDoc(typeKey, file){
-  if(!currentProject) throw new Error('No client selected');
+  var pr = insDocsProject();   /* 647: was currentProject — null on the claim screen */
+  if(!pr) throw new Error('No client selected');
   if(file.size > 10 * 1024 * 1024) throw new Error('File is over the 10 MB limit');
   var dataUrl = await new Promise(function(res, rej){
     var rd = new FileReader();
@@ -14455,9 +14467,9 @@ async function uploadInsuranceDoc(typeKey, file){
   });
   var payload = JSON.stringify({ file: 1, name: file.name, mime: file.type || '', size: file.size, data: dataUrl });
   var title = 'Insurance Doc [' + typeKey + ']: ' + file.name;
-  await db.create(title, payload, currentProject.name || '', currentProject.id);
+  await db.create(title, payload, pr.name || '', pr.id);
   try{ await reload(); }catch(_e){}
-  try{ auditLog('doc', 'Insurance document uploaded: ' + typeKey + ' (' + file.name + ')', currentProject.id); }catch(_e){}
+  try{ auditLog('doc', 'Insurance document uploaded: ' + typeKey + ' (' + file.name + ')', pr.id); }catch(_e){}
 }
 
 function renderInsurancePanel(){
@@ -14556,6 +14568,8 @@ function renderSolCard(){
   var mount = document.getElementById('solCard');
   if(!mount || !currentProject){ if(mount) mount.innerHTML = ''; return; }
   var hasIns = !!projInsurance(currentProject);
+  /* 647: is there a scope sitting in the document slot that nothing has read? */
+  var filed = findInsuranceDoc(currentProject.id, 'scope_of_loss');
   mount.innerHTML =
     '<div class="solCard" id="solCardEl">' +
       '<div class="solIcon">&#128194;</div>' +
@@ -14569,7 +14583,22 @@ function renderSolCard(){
       '</div>' +
       '<button class="solBtn" id="solBtn">&#128228; Upload SOL</button>' +
       '<input type="file" id="solFileInput" accept="application/pdf,image/*" style="display:none;">' +
-    '</div>';
+    '</div>' +
+    '<div id="solLift"></div>' +
+    /* 647: the scope already on file. Its own row rather than a second button
+       inside .solCard, which is a flex line that would crowd on a phone. */
+    (filed
+      ? '<div style="margin-top:9px;">' +
+          '<button id="solReadBtn" style="min-height:44px;padding:12px 16px;border-radius:10px;' +
+            'background:#1c2126;color:#cfd6dd;border:1px solid #39424a;cursor:pointer;' +
+            'font:600 13.5px -apple-system,BlinkMacSystemFont,\'Segoe UI\',Arial,sans-serif;">' +
+            '\uD83D\uDCD6 Read the scope already on file' +
+          '</button>' +
+          '<div style="margin-top:5px;font-size:11.5px;color:#8d8378;">' +
+            esc(String(filed.title || '').replace(/^Insurance Doc \[\w+\]:\s*/, '')) +
+          '</div>' +
+        '</div>'
+      : '');   /* 646: #solLift is filled in async by paintSolLift */
   document.getElementById('solBtn').addEventListener('click', function(){
     document.getElementById('solFileInput').click();
   });
@@ -14578,35 +14607,39 @@ function renderSolCard(){
     this.value = '';
     if(f) readScopeOfLoss(f);
   });
+  var _rb = document.getElementById('solReadBtn');   /* 647 */
+  if(_rb && filed) _rb.addEventListener('click', function(){ readFiledScope(filed.id); });
+  paintSolLift(currentProject.id);   /* 646 */
 }
 
-async function readScopeOfLoss(file){
-  var card = document.getElementById('solCardEl');
-  var btn  = document.getElementById('solBtn');
-  if(!currentProject) return;
-  if(file.size > 12 * 1024 * 1024){
-    alert('That file is bigger than 12 MB. Try compressing the PDF or splitting it.');
-    return;
-  }
+/* 647: THE SHARED CORE. Both doors into the reader end here — a file the user
+   just picked, and a scope that was filed into the document slot weeks ago.
+   Theo: "Make it to where the first scope uploaded is the baseline and build
+   from that." His scope for Adam Gunn was uploaded into the slot, which stores
+   the bytes and reads nothing, so no baseline was ever captured and the only
+   way to get one was to upload the same PDF a second time.
+   ⚠ ONE CORE FOR THIS CARD'S TWO DOORS — and read the next sentence before you
+   believe that is the whole story. This file contains FIVE independent callers
+   of /api/sol, measured: sendScopeToReader (here), handleSolUpload
+   (cr-claims-fx-script), extractFromUrl (cr-suf-script), readScope
+   (cr-sol-script) and read (cr-ci-script). Five modules each rolled their own
+   scope reader. That is a real duplicate-pipeline problem, it PREDATES this
+   build, and 647 did not fix it — it only stopped the Scope of Loss card from
+   being a sixth. Do not add a sixth either; and if you unify them, do it as its
+   own build with its own harness. */
+async function sendScopeToReader(b64, mime, name, btn){
+  var card  = document.getElementById('solCardEl');
+  var label = btn ? btn.textContent : '';
   if(card) card.classList.add('solLoading');
   if(btn){ btn.disabled = true; btn.textContent = 'Reading\u2026'; }
   try{
-    /* file → base64 */
-    var dataUrl = await new Promise(function(resolve, reject){
-      var fr = new FileReader();
-      fr.onload = function(){ resolve(fr.result); };
-      fr.onerror = function(){ reject(new Error('Could not read file')); };
-      fr.readAsDataURL(file);
-    });
-    var b64 = (dataUrl || '').split(',')[1] || '';
-    var mime = file.type || 'application/pdf';
-
+    if(!b64) throw new Error('that file has no readable content stored');
     var sess = await sb.auth.getSession();
     var tok = sess && sess.data && sess.data.session ? sess.data.session.access_token : '';
     var r = await fetch('/api/sol', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
-      body: JSON.stringify({ file: b64, mime: mime })
+      body: JSON.stringify({ file: b64, mime: mime || 'application/pdf' })
     });
     var j = null;
     try{ j = await r.json(); }catch(pe){}
@@ -14614,14 +14647,55 @@ async function readScopeOfLoss(file){
       var detail = (j && (j.detail || j.error)) ? (j.detail || j.error) : ('HTTP ' + r.status);
       throw new Error(String(detail).slice(0, 250));
     }
-    openSolReviewModal(j.extracted || {}, file.name);
-    auditLog('doc', 'SOL uploaded and read (' + file.name + ')', currentProject.id);
+    openSolReviewModal(j.extracted || {}, name);
+    if(currentProject) auditLog('doc', 'SOL read (' + name + ')', currentProject.id);
   }catch(err){
     alert('Could not read the Scope of Loss: ' + (err.message || err) +
       '\n\nTry a different file, or add insurance info by hand.');
   }
+  /* restore whatever the button said, because two different buttons call this */
   if(card) card.classList.remove('solLoading');
-  if(btn){ btn.disabled = false; btn.textContent = '\uD83D\uDCE4 Upload SOL'; }
+  if(btn){ btn.disabled = false; btn.textContent = label; }
+}
+
+async function readScopeOfLoss(file){
+  if(!currentProject) return;
+  if(file.size > 12 * 1024 * 1024){
+    alert('That file is bigger than 12 MB. Try compressing the PDF or splitting it.');
+    return;
+  }
+  var dataUrl;
+  try{
+    dataUrl = await new Promise(function(resolve, reject){
+      var fr = new FileReader();
+      fr.onload = function(){ resolve(fr.result); };
+      fr.onerror = function(){ reject(new Error('Could not read file')); };
+      fr.readAsDataURL(file);
+    });
+  }catch(e){ alert('Could not read that file.'); return; }
+  await sendScopeToReader(String(dataUrl || '').split(',')[1] || '',
+                          file.type || 'application/pdf',
+                          file.name,
+                          document.getElementById('solBtn'));
+}
+
+/* 647: read the scope that is ALREADY on file. The document slot stores
+   {file:1,name,mime,size,data:<dataURL>} in inspection_reports.html — the same
+   shape a job file uses — so the bytes have been sitting there the whole time
+   with nothing able to reach them. */
+async function readFiledScope(docId){
+  var row = (cacheRows || []).filter(function(r){ return r.id === docId; })[0];
+  if(!row){ alert('That document is no longer on file.'); return; }
+  var pay = null;
+  try{ pay = JSON.parse(row.html || '{}'); }catch(e){}
+  if(!pay || !pay.file || !pay.data){
+    alert('That document has no stored file to read.');
+    return;
+  }
+  await sendScopeToReader(String(pay.data).split(',')[1] || '',
+                          pay.mime || 'application/pdf',
+                          pay.name || 'Scope of Loss',
+                          document.getElementById('solReadBtn'));
 }
 
 function openSolReviewModal(extracted, fileName){
@@ -14650,6 +14724,7 @@ function openSolReviewModal(extracted, fileName){
     ['Coverage Type',   'coverage_type',      extracted.coverage_type,  currentIns.coverage_type],
     ['Ord. & Law',      'ord_law',            extracted.ord_law,        currentIns.ord_law],
     ['Adjuster Name',   'adjuster.name',      eAdj.name,                curAdj.name],
+    ['Adjuster Company','adjuster.company',   eAdj.company,             curAdj.company],
     ['Adjuster Phone',  'adjuster.phone',     eAdj.phone,               curAdj.phone],
     ['Adjuster Email',  'adjuster.email',     eAdj.email,               curAdj.email]
   ];
@@ -14715,6 +14790,8 @@ function applySolExtraction(){
   var boxes = document.querySelectorAll('#solRows .solChk:checked');
   if(!boxes.length){ document.getElementById('solModal').style.display = 'none'; return; }
 
+  var applied = {};   /* 646: path -> coerced value, filled in the loop below */
+
   updateProjectLead(pr, function(L){
     if(!L.insurance || typeof L.insurance !== 'object'){
       L.insurance = { adjuster: {} };
@@ -14739,6 +14816,10 @@ function applySolExtraction(){
           : (stamp + val);
         return;
       }
+      /* 646: remember the coerced value so the claim bridge below writes
+         EXACTLY what the user ticked — no second interpretation of the
+         extraction, and an unticked field stays unwritten in both stores. */
+      applied[path] = val;
       var parts = path.split('.');
       if(parts.length === 1){
         L.insurance[parts[0]] = val;
@@ -14752,8 +14833,192 @@ function applySolExtraction(){
     L.retail = false;
   }).then(function(){
     auditLog('lead', 'Insurance fields applied from SOL extraction (' + boxes.length + ' field(s))', pr.id);
+    /* 646: and across to insurance_claims, which is where every reader of these
+       numbers actually looks. bridgeSolToClaim handles its own failures, so this
+       chain keeps the exact shape it had — no new catch swallowing the
+       checklist write's own errors. */
+    return bridgeSolToClaim(pr, applied);
   });
   document.getElementById('solModal').style.display = 'none';
+}
+
+/* 646: the LOCAL calendar date. first_scope_at is a date Theo reads back
+   ("the first scope came in on the 9th") and he works late — after 8pm in
+   Dayton, new Date().toISOString() has already rolled over to tomorrow.
+   ⚠ itelToday() still uses the bare UTC form and carries the same one-day
+   error on evening entries. Left alone deliberately: changing it would move
+   sent_at / received_at on iTels that are already filed. */
+function localToday(){
+  var d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+}
+
+/* 646: THE CLAIM BRIDGE.
+   The SOL reader has always written to projects.checklist.lead.insurance and
+   stopped there, while the claim screen, the per-carrier league table and the
+   "Avg supplement" tile all read insurance_claims. Two stores, no bridge —
+   which is why a job whose scope had been uploaded AND read still showed $0.
+
+   ⚠ KEYED ON project_id, NEVER on projects.insurance_claim_id. That link is
+   NULL on every claim created before the backfill, so a "does a claim exist?"
+   test that goes through it answers no, inserts a SECOND claim, and strands the
+   payments, supplements and iTels on the empty one.
+
+   ⚠ first_scope_* IS WRITE-ONCE. It is the baseline every increase is measured
+   against. The first scope carrying a dollar figure sets it and nothing
+   overwrites it afterwards; every later scope moves approved_* alone. That is
+   the entire mechanism behind "+40%" — make it writable and every percentage
+   silently collapses to zero, with no error anywhere. */
+async function bridgeSolToClaim(pr, applied){
+  if(!pr || !applied || !window.supa) return;
+  var CLAIM_COL = {
+    'carrier':          'carrier',
+    'policy_number':    'policy_number',
+    'claim_number':     'claim_number',
+    'deductible':       'deductible',
+    'adjuster.name':    'adjuster_name',
+    'adjuster.company': 'adjuster_company',
+    'adjuster.phone':   'adjuster_phone',
+    'adjuster.email':   'adjuster_email'
+  };
+  try{
+    var found = await window.supa.from('insurance_claims')
+      .select('id, first_scope_rcv, first_scope_acv, first_scope_depreciation')
+      .eq('project_id', pr.id).limit(1);
+    if(found.error) throw found.error;
+    var claim = (found.data || [])[0] || null;
+
+    var patch = {};
+    Object.keys(CLAIM_COL).forEach(function(k){
+      var v = applied[k];
+      if(v === undefined || v === null || v === '') return;
+      patch[CLAIM_COL[k]] = v;
+    });
+
+    /* date_of_loss is a DATE column. The extractor is ASKED for YYYY-MM-DD but a
+       model can answer with prose, and one bad string rejects the whole write —
+       the same guard insurance_claim_backfill.sql uses for the same reason. */
+    var dol = String(applied.date_of_loss === undefined || applied.date_of_loss === null
+                     ? '' : applied.date_of_loss).trim();
+    if(/^\d{4}-\d{2}-\d{2}$/.test(dol)) patch.date_of_loss = dol;
+
+    var rcv = Number(applied.rcv); if(!(rcv > 0)) rcv = null;
+    var acv = Number(applied.acv); if(!(acv > 0)) acv = null;
+    /* depreciation by the same rule the claim edit form already uses, so there
+       is one definition of it rather than two */
+    var dep = (rcv !== null && acv !== null) ? Math.round((rcv - acv) * 100) / 100 : null;
+
+    if(rcv !== null){
+      patch.approved_rcv = rcv;
+      if(!claim || !(Number(claim.first_scope_rcv) > 0)){
+        patch.first_scope_rcv = rcv;
+        patch.first_scope_at  = localToday();
+      }
+    }
+    if(acv !== null){
+      patch.approved_acv = acv;
+      if(!claim || !(Number(claim.first_scope_acv) > 0)) patch.first_scope_acv = acv;
+    }
+    if(dep !== null){
+      patch.approved_depreciation = dep;
+      if(!claim || !(Number(claim.first_scope_depreciation) > 0)) patch.first_scope_depreciation = dep;
+    }
+
+    if(claim){
+      if(!Object.keys(patch).length) return;
+      patch.updated_at = new Date().toISOString();
+      var up = await window.supa.from('insurance_claims')
+        .update(patch).eq('id', claim.id).select('id').single();
+      if(up.error) throw up.error;
+    } else {
+      /* Theo, asked directly, said to create the claim when there isn't one.
+         Identity comes from the PROJECT, not the document — the profile is the
+         better source for who and where, and the backfill migration uses the
+         same rule. created_by must equal my_email() or the insert policy
+         refuses it. */
+      patch.project_id       = pr.id;
+      patch.homeowner_name   = String(pr.name || '').trim() || null;
+      patch.property_address = String(pr.address || '').trim() || null;
+      patch.created_by       = (typeof window.my_email === 'function' ? window.my_email() : null);
+      var ins = await window.supa.from('insurance_claims')
+        .insert(patch).select('id').single();
+      if(ins.error) throw ins.error;
+      claim = ins.data;
+      /* repair the link in the same breath, so the next reader is not left
+         guessing the way the pre-backfill rows did */
+      var lk = await window.supa.from('projects')
+        .update({ insurance_claim_id: claim.id }).eq('id', pr.id);
+      if(lk.error) console.warn('[sol] claim created but the project link failed:', lk.error);
+    }
+    if(currentProject && currentProject.id === pr.id) paintSolLift(pr.id);
+  }catch(err){
+    /* Deliberately NOT swallowed. The checklist half has already succeeded and
+       this half has not, and that split is precisely the state that looks saved
+       on the profile and then reads $0 on the claim screen. */
+    alert('Saved to the client profile, but the insurance claim record could not be updated:\n\n' +
+      (err && err.message ? err.message : err) +
+      '\n\nThe claim screen may still show the previous figures.');
+  }
+}
+
+/* 646: the increase, on the job card.
+   Theo: "There should be something that says %increased in the job card and in
+   the insurance section." The insurance section already had it — renderLift()
+   on the claim screen — so this is the profile half, and it lands on the Scope
+   of Loss card because that is the card scopes arrive through.
+
+   Async on purpose, and deliberately NOT by making renderSolCard async: the
+   card paints at once and this fills in behind it. claim_money carries
+   security_invoker=on, so it answers under the caller's own RLS — a rep sees a
+   lift only for a claim they could already open. */
+async function paintSolLift(pid){
+  if(!pid || !window.supa) return;
+  if(!document.getElementById('solLift')) return;
+  try{
+    var r = await window.supa.from('claim_money')
+      .select('first_scope_rcv, approved_rcv, lift_pct, recovered')
+      .eq('project_id', pid).limit(1);
+    if(r.error) throw r.error;
+    var m = (r.data || [])[0];
+    if(!m || !(Number(m.first_scope_rcv) > 0)) return;   /* no baseline, nothing honest to say */
+    /* the user can leave during the round trip — never paint into a profile
+       that has been replaced since the request went out */
+    if(!currentProject || currentProject.id !== pid) return;
+    var host = document.getElementById('solLift');
+    if(!host) return;
+
+    var first = Number(m.first_scope_rcv) || 0;
+    var appr  = Number(m.approved_rcv) || 0;
+    var pct   = (m.lift_pct === null || m.lift_pct === undefined) ? 0 : Number(m.lift_pct);
+    var usd   = function(n){ return '$' + Math.round(n).toLocaleString('en-US'); };
+
+    /* Each pill carries BOTH its colours, so it reads on the dark profile and
+       on a light one without depending on either theme — the Crews/Showcase
+       habit. Measured: 8.61:1, 11.06:1 and 8.10:1 against a 4.5:1 floor. */
+    var fg = '#cfd6dd', bg = '#1c2126', lead, sub;
+    if(pct > 0){
+      fg = '#8fe0ae'; bg = '#123524';
+      lead = '+' + pct.toFixed(1) + '%';
+      sub  = usd(first) + ' \u2192 ' + usd(appr);
+    } else if(pct < 0){
+      fg = '#f2a08a'; bg = '#33150f';
+      lead = pct.toFixed(1) + '%';
+      sub  = usd(first) + ' \u2192 ' + usd(appr);
+    } else {
+      lead = 'First scope ' + usd(first);
+      sub  = 'no increase yet';
+    }
+    host.innerHTML =
+      '<span style="display:inline-flex;align-items:baseline;gap:8px;margin-top:9px;' +
+        'padding:7px 13px;border-radius:999px;background:' + bg + ';color:' + fg + ';' +
+        'font:700 13px ui-monospace,\'SF Mono\',Menlo,monospace;letter-spacing:-.01em;">' +
+        '<b>' + lead + '</b>' +
+        '<small style="font-weight:600;font-size:11.5px;opacity:.85;">' + sub + '</small>' +
+      '</span>';
+  }catch(e){
+    /* a missing lift is not worth interrupting anyone over */
+    console.warn('[sol] lift:', e);
+  }
 }
 
 (function(){
@@ -25934,6 +26199,12 @@ function showList() {
 
         <label>Adjuster Name</label>
         <input data-f="adjuster_name" value="${esc(c.adjuster_name || '')}">
+        <!-- 646: the Company box. paneClient() has rendered kv('Company', ...)
+             since this module shipped and the column has always existed, but
+             there was no input anywhere — so it could only ever read "Not set"
+             unless somebody wrote it straight into the database. -->
+        <label>Adjuster Company</label>
+        <input data-f="adjuster_company" value="${esc(c.adjuster_company || '')}">
         <div class="cr-c-modal-row">
           <div>
             <label>Adjuster Phone</label>
@@ -25998,6 +26269,7 @@ function showList() {
         adjuster_name:     get('adjuster_name'),
         adjuster_phone:    get('adjuster_phone'),
         adjuster_email:    get('adjuster_email'),
+        adjuster_company:  get('adjuster_company'),
         approved_rcv:      num('approved_rcv'),
         approved_acv:      num('approved_acv'),
         deductible:        num('deductible'),
@@ -35412,6 +35684,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:647, d:'2026-08-09', t:'The landing page is dark again, and a scope already on file can be read', s:'Three fixes. The landing page had gone pale with pale writing on it \u2014 unreadable \u2014 because its background was following the app\u2019s light/dark setting while its text followed the landing\u2019s own. It has its own dark back again. Uploading a document from inside Open Full Claim said \u201cNo client selected\u201d and refused; that was broken the moment those tabs were added two builds ago, and it works now. And a Scope of Loss that was uploaded as a file can finally be READ: the Scope of Loss card offers to read the one already on file, so the scope you uploaded first becomes the baseline everything else is measured from \u2014 no need to upload it a second time.' },
+{ b:646, d:'2026-08-09', t:'Every scope you read now counts toward the increase', s:'Reading a Scope of Loss used to fill in the client profile and stop there, so the claim screen still showed no money and the increase figures stayed empty. It now writes the claim record too. The first scope with a dollar amount on it becomes the baseline and is never overwritten; every scope after that moves the approved figure, so supplements show up as a real increase. The percentage appears on the Scope of Loss card, on the claim, per carrier, and in the average on Cardinal Truth. The adjuster\u2019s company can also be recorded now \u2014 the claim always had a place to show it and no way to enter it.' },
 { b:645, d:'2026-08-09', t:'Insurance details live on the claim, not in two places', s:'A client profile was showing the claim details, the insurance paperwork and the iTel card, and Open Full Claim was showing the claim details again \u2014 the same information in two places, which is how it ends up disagreeing with itself. Open Full Claim now has all of it: Documents and iTel are new tabs there, alongside the claim details that were always there. The client profile keeps the Scope of Loss reader, because that is how a job becomes an insurance job in the first place.' },
 { b:644, d:'2026-08-09', t:'Insurance paperwork files under Documents, and opens', s:'An insurance document \u2014 a Scope of Loss, a policy, a signed authorization \u2014 was landing in the Inspections list instead of Documents, and tapping it there said it could not be opened. Both are fixed, and every file already uploaded is repaired too: they were stored correctly the whole time, the app just sorted them into the wrong pile. Insurance paperwork now appears under Documents, labelled with which slot it came from, and opens on tap like any other file.' },
   { b:643, d:'2026-08-09', t:'A Scope of Loss over 3 MB actually uploads now',
@@ -41527,7 +41801,7 @@ apply : apply,
 })();
 </script>
 
-<style id="cr-lr-styles">#landingView>*{display:none}#landingView>.cr-lr{display:block}#landingView{background:var(--bg,#09090c) !important}#landingView::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 420px at 50% -8%,rgba(200,32,46,.13) 0%,transparent 62%),radial-gradient(700px 340px at 82% 8%,rgba(200,32,46,.07) 0%,transparent 60%);pointer-events:none}.cr-lr{position:relative;max-width:560px;margin:0 auto;padding:max(30px,env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e8ded4}.cr-lr-eyebrow{display:flex;align-items:center;gap:10px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.22em;text-transform:uppercase;color:#9c8b7e;margin-bottom:26px}.cr-lr-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex:0 0 auto}.cr-lr-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}.cr-lr-mark{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(38px,12vw,58px);line-height:.92;letter-spacing:-.025em;margin:0;color:#e8ded4}.cr-lr-mark em{font-style:normal;color:var(--red)}.cr-lr-sub{font:600 10.5px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.3em;text-transform:uppercase;color:#c8202e;margin:9px 0 0}.cr-lr-greet{margin:34px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(21px,5.6vw,27px);font-weight:400;line-height:1.25;color:#e8ded4}.cr-lr-greet strong{font-weight:700;color:#c8202e}.cr-lr-stamp{margin:7px 0 0;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9c8b7e}.cr-lr-quote{position:relative;margin:28px 0 34px;padding:20px 20px 20px 24px;background:linear-gradient(180deg,rgba(200,32,46,.055),transparent 70%);border-left:2px solid #c8202e}.cr-lr-quote p{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(16px,4.4vw,19px);line-height:1.5;color:#f0e6da}.cr-lr-quote cite{display:block;margin-top:11px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9c8b7e;font-style:normal}.cr-lr-roof{border-radius:12px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.5)}.cr-lr-course .wm-c{color:#d9282a}.cr-lr-course .wm-t{color:#9a9a9a}.cr-lr-course{position:relative;display:flex;align-items:center;gap:15px;width:100%;padding:19px 18px;border:0;text-align:left;cursor:pointer;font-family:inherit;background:linear-gradient(180deg,#241b17 0%,#1d1613 88%);color:#e8ded4;transition:background .16s ease,transform .16s ease}.cr-lr-course + .cr-lr-course{border-top:1px solid rgba(255,255,255,.055);box-shadow:inset 0 3px 7px -4px rgba(0,0,0,.75)}.cr-lr-course::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,#c8202e)}.cr-lr-course:hover{background:linear-gradient(180deg,#2b211c 0%,#221a16 88%)}.cr-lr-course:active{transform:translateY(1px)}.cr-lr-course:focus-visible{outline:2px solid #c8202e;outline-offset:-2px}.cr-lr-course .ic{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.045)}.cr-lr-course .tx{flex:1;min-width:0}.cr-lr-course .tt{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--acc,#c8202e);line-height:1.2}.cr-lr-course .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}.cr-lr-course .n{margin-top:5px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7d6f63}.cr-lr-course .go{flex:0 0 auto;font-size:15px;color:#5f5248;transition:color .16s,transform .16s}.cr-lr-course:hover .go{color:var(--acc,#c8202e);transform:translateX(2px)}.cr-lr-course.lead{padding:22px 18px;background:linear-gradient(180deg,#2e2119 0%,#241a14 88%)}.cr-lr-course.lead .tt{font-size:19px}.cr-lr-pair{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.cr-lr-pair button{display:flex;flex-direction:column;gap:5px;padding:15px 14px;background:#1d1613;border:1px solid rgba(255,255,255,.07);border-top:2px solid var(--racc,#c8202e);border-radius:10px;cursor:pointer;font-family:inherit;color:#e8ded4;text-align:left;transition:background .16s,border-color .16s}.cr-lr-pair button:hover{background:#251c17}.cr-lr-pair .ic{font-size:19px}.cr-lr-pair b{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15px;color:var(--racc,#c8202e);line-height:1.15}.cr-lr-pair small{font-size:11.5px;line-height:1.4;color:#a89a8d}.cr-lr-minor{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}.cr-lr-minor button{flex:1 1 auto;min-width:96px;padding:13px 12px;background:transparent;border:1px solid rgba(200,32,46,.24);border-radius:9px;color:#9c8b7e;font:600 11.5px -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;cursor:pointer;transition:border-color .16s,color .16s,background .16s}.cr-lr-minor button:hover{border-color:rgba(200,32,46,.55);color:#e8ded4;background:rgba(200,32,46,.05)}.cr-lr-foot{margin-top:34px;padding-top:18px;border-top:1px solid rgba(200,32,46,.16);display:flex;align-items:baseline;justify-content:space-between;gap:12px}.cr-lr-foot .pp{font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.55;color:#8d7f73}.cr-lr-foot .pp b{color:#c8202e;font-weight:700}.cr-lr-foot .sk{flex:0 0 auto;background:none;border:0;cursor:pointer;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#6b5d52;padding:4px}.cr-lr-foot .sk:hover{color:#e8ded4}@media (prefers-reduced-motion:no-preference){.cr-lr-course,.cr-lr-quote,.cr-lr-minor,.cr-lr-foot{opacity:0;animation:crLrLay .42s cubic-bezier(.22,.9,.3,1) forwards}.cr-lr-quote{animation-delay:.06s}.cr-lr-course:nth-child(1){animation-delay:.30s}.cr-lr-course:nth-child(2){animation-delay:.24s}.cr-lr-course:nth-child(3){animation-delay:.18s}.cr-lr-course:nth-child(4){animation-delay:.12s}.cr-lr-minor{animation-delay:.36s}.cr-lr-foot{animation-delay:.42s}@keyframes crLrLay{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}}#landingView:not([data-cr-portal-built])>*{display:none}/* ---- theme icon ---- */.cr-lr-theme{appearance:none;background:transparent;border:1px solid #3a322c;border-radius:50%;width:30px;height:30px;padding:0;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#9c8b7e;transition:border-color .18s,color .18s,background .18s}.cr-lr-theme:hover{border-color:#c8202e;color:#e8ded4;background:rgba(200,32,46,.10)}.cr-lr-theme svg{width:15px;height:15px;display:block;transition:transform .34s cubic-bezier(.4,0,.2,1)}html[data-mode="light"] .cr-lr-theme svg{transform:rotate(180deg)}html[data-mode="light"] .cr-lr-theme{border-color:#c8bfb5;color:#6b6058}html[data-mode="light"] .cr-lr-theme:hover{border-color:#c8202e;color:#12100e;background:rgba(200,32,46,.07)}/* ---- landing light mode: only the neutrals invert, reds hold ---- */html[data-mode="light"] #landingView{background:#f7f5f2 !important}html[data-mode="light"] .cr-lr{color:#1a1614}html[data-mode="light"] .cr-lr-mark,html[data-mode="light"] .cr-lr-greet{color:#12100e}html[data-mode="light"] .cr-lr-sub{color:#3a332e}html[data-mode="light"] .cr-lr-eyebrow{color:#6b6058}html[data-mode="light"] .cr-lr-stamp,html[data-mode="light"] .cr-lr-quote,html[data-mode="light"] .cr-lr-minor,html[data-mode="light"] .cr-lr-foot{color:#5f564f}html[data-mode="light"] .cr-lr-course{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-course .tt{color:#12100e}html[data-mode="light"] .cr-lr-course .sb,html[data-mode="light"] .cr-lr-course .n{color:#6b6058}html[data-mode="light"] .cr-lr-course .go{color:#b8ada2}html[data-mode="light"] .cr-lr-pair button{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-pair button small{color:#6b6058}html[data-mode="light"] .cr-lr-roof{box-shadow:0 14px 34px rgba(40,30,22,.14)}html[data-mode="light"] .cr-lr-course .wm-t{color:#6b6b6b}
+<style id="cr-lr-styles">#landingView>*{display:none}#landingView>.cr-lr{display:block}#landingView{background:#09090c !important}/* 647: was var(--bg), an APP-theme token, while every .cr-lr-* ink below keys off data-mode — the LANDING theme. Two mechanisms, one surface: put the app in rb-light, leave the landing dark, and the ground went #f7f7f7 under cream #e8ded4 inks. 1.24:1, measured in Chromium, and the red ::before radial over near-white is what made it pink. The landing owns its ground now; html[data-mode="light"] #landingView below still handles light. body{background:var(--bg)} is deliberately untouched — that is 429's overscroll fix and it is not this bug. */#landingView::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 420px at 50% -8%,rgba(200,32,46,.13) 0%,transparent 62%),radial-gradient(700px 340px at 82% 8%,rgba(200,32,46,.07) 0%,transparent 60%);pointer-events:none}.cr-lr{position:relative;max-width:560px;margin:0 auto;padding:max(30px,env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e8ded4}.cr-lr-eyebrow{display:flex;align-items:center;gap:10px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.22em;text-transform:uppercase;color:#9c8b7e;margin-bottom:26px}.cr-lr-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex:0 0 auto}.cr-lr-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}.cr-lr-mark{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(38px,12vw,58px);line-height:.92;letter-spacing:-.025em;margin:0;color:#e8ded4}.cr-lr-mark em{font-style:normal;color:var(--red)}.cr-lr-sub{font:600 10.5px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.3em;text-transform:uppercase;color:#c8202e;margin:9px 0 0}.cr-lr-greet{margin:34px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(21px,5.6vw,27px);font-weight:400;line-height:1.25;color:#e8ded4}.cr-lr-greet strong{font-weight:700;color:#c8202e}.cr-lr-stamp{margin:7px 0 0;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9c8b7e}.cr-lr-quote{position:relative;margin:28px 0 34px;padding:20px 20px 20px 24px;background:linear-gradient(180deg,rgba(200,32,46,.055),transparent 70%);border-left:2px solid #c8202e}.cr-lr-quote p{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(16px,4.4vw,19px);line-height:1.5;color:#f0e6da}.cr-lr-quote cite{display:block;margin-top:11px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9c8b7e;font-style:normal}.cr-lr-roof{border-radius:12px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.5)}.cr-lr-course .wm-c{color:#d9282a}.cr-lr-course .wm-t{color:#9a9a9a}.cr-lr-course{position:relative;display:flex;align-items:center;gap:15px;width:100%;padding:19px 18px;border:0;text-align:left;cursor:pointer;font-family:inherit;background:linear-gradient(180deg,#241b17 0%,#1d1613 88%);color:#e8ded4;transition:background .16s ease,transform .16s ease}.cr-lr-course + .cr-lr-course{border-top:1px solid rgba(255,255,255,.055);box-shadow:inset 0 3px 7px -4px rgba(0,0,0,.75)}.cr-lr-course::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,#c8202e)}.cr-lr-course:hover{background:linear-gradient(180deg,#2b211c 0%,#221a16 88%)}.cr-lr-course:active{transform:translateY(1px)}.cr-lr-course:focus-visible{outline:2px solid #c8202e;outline-offset:-2px}.cr-lr-course .ic{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.045)}.cr-lr-course .tx{flex:1;min-width:0}.cr-lr-course .tt{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--acc,#c8202e);line-height:1.2}.cr-lr-course .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}.cr-lr-course .n{margin-top:5px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7d6f63}.cr-lr-course .go{flex:0 0 auto;font-size:15px;color:#5f5248;transition:color .16s,transform .16s}.cr-lr-course:hover .go{color:var(--acc,#c8202e);transform:translateX(2px)}.cr-lr-course.lead{padding:22px 18px;background:linear-gradient(180deg,#2e2119 0%,#241a14 88%)}.cr-lr-course.lead .tt{font-size:19px}.cr-lr-pair{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.cr-lr-pair button{display:flex;flex-direction:column;gap:5px;padding:15px 14px;background:#1d1613;border:1px solid rgba(255,255,255,.07);border-top:2px solid var(--racc,#c8202e);border-radius:10px;cursor:pointer;font-family:inherit;color:#e8ded4;text-align:left;transition:background .16s,border-color .16s}.cr-lr-pair button:hover{background:#251c17}.cr-lr-pair .ic{font-size:19px}.cr-lr-pair b{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15px;color:var(--racc,#c8202e);line-height:1.15}.cr-lr-pair small{font-size:11.5px;line-height:1.4;color:#a89a8d}.cr-lr-minor{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}.cr-lr-minor button{flex:1 1 auto;min-width:96px;padding:13px 12px;background:transparent;border:1px solid rgba(200,32,46,.24);border-radius:9px;color:#9c8b7e;font:600 11.5px -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;cursor:pointer;transition:border-color .16s,color .16s,background .16s}.cr-lr-minor button:hover{border-color:rgba(200,32,46,.55);color:#e8ded4;background:rgba(200,32,46,.05)}.cr-lr-foot{margin-top:34px;padding-top:18px;border-top:1px solid rgba(200,32,46,.16);display:flex;align-items:baseline;justify-content:space-between;gap:12px}.cr-lr-foot .pp{font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.55;color:#8d7f73}.cr-lr-foot .pp b{color:#c8202e;font-weight:700}.cr-lr-foot .sk{flex:0 0 auto;background:none;border:0;cursor:pointer;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#6b5d52;padding:4px}.cr-lr-foot .sk:hover{color:#e8ded4}@media (prefers-reduced-motion:no-preference){.cr-lr-course,.cr-lr-quote,.cr-lr-minor,.cr-lr-foot{opacity:0;animation:crLrLay .42s cubic-bezier(.22,.9,.3,1) forwards}.cr-lr-quote{animation-delay:.06s}.cr-lr-course:nth-child(1){animation-delay:.30s}.cr-lr-course:nth-child(2){animation-delay:.24s}.cr-lr-course:nth-child(3){animation-delay:.18s}.cr-lr-course:nth-child(4){animation-delay:.12s}.cr-lr-minor{animation-delay:.36s}.cr-lr-foot{animation-delay:.42s}@keyframes crLrLay{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}}#landingView:not([data-cr-portal-built])>*{display:none}/* ---- theme icon ---- */.cr-lr-theme{appearance:none;background:transparent;border:1px solid #3a322c;border-radius:50%;width:30px;height:30px;padding:0;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#9c8b7e;transition:border-color .18s,color .18s,background .18s}.cr-lr-theme:hover{border-color:#c8202e;color:#e8ded4;background:rgba(200,32,46,.10)}.cr-lr-theme svg{width:15px;height:15px;display:block;transition:transform .34s cubic-bezier(.4,0,.2,1)}html[data-mode="light"] .cr-lr-theme svg{transform:rotate(180deg)}html[data-mode="light"] .cr-lr-theme{border-color:#c8bfb5;color:#6b6058}html[data-mode="light"] .cr-lr-theme:hover{border-color:#c8202e;color:#12100e;background:rgba(200,32,46,.07)}/* ---- landing light mode: only the neutrals invert, reds hold ---- */html[data-mode="light"] #landingView{background:#f7f5f2 !important}html[data-mode="light"] .cr-lr{color:#1a1614}html[data-mode="light"] .cr-lr-mark,html[data-mode="light"] .cr-lr-greet{color:#12100e}html[data-mode="light"] .cr-lr-sub{color:#3a332e}html[data-mode="light"] .cr-lr-eyebrow{color:#6b6058}html[data-mode="light"] .cr-lr-stamp,html[data-mode="light"] .cr-lr-quote,html[data-mode="light"] .cr-lr-minor,html[data-mode="light"] .cr-lr-foot{color:#5f564f}html[data-mode="light"] .cr-lr-course{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-course .tt{color:#12100e}html[data-mode="light"] .cr-lr-course .sb,html[data-mode="light"] .cr-lr-course .n{color:#6b6058}html[data-mode="light"] .cr-lr-course .go{color:#b8ada2}html[data-mode="light"] .cr-lr-pair button{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-pair button small{color:#6b6058}html[data-mode="light"] .cr-lr-roof{box-shadow:0 14px 34px rgba(40,30,22,.14)}html[data-mode="light"] .cr-lr-course .wm-t{color:#6b6b6b}
 /* ── 525 ──────────────────────────────────────────────────────────────────
    (a) RAISED, the 522 recipe: the bevel follows the card, the drop shadow
        follows the page. .cr-lr-minor stays flat on purpose - those are ghost
