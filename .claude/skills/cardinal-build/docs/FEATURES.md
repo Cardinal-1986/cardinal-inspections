@@ -2584,3 +2584,20 @@ Two small builds from Theo answering the spec's five open questions directly
   `fetch` entirely and executes the shipped `groupOwed()` + `handler()` —
   no live email is ever sent by the harness. Both negative-controlled
   against 650.
+
+### 652 — the job menu learns Contracts, and the Approvals queue stops losing signatures
+
+- **Contracts tile** on the Keeper job menu (fills the Punch Outs row;
+  `data-jm="contracts"` rides the router's else-branch to `showTab`, the 607
+  mechanism). The tab itself is unchanged.
+- **`renderApprovals()` filter widened**: was Lead/Prospect-only, which
+  permanently hid a signed estimate on any job whose stage had been advanced
+  by hand first (the Joeseph case). Now any live stage qualifies; exclusions
+  are Lost/Closed, `wf_approved`, `manual_value`, and — new — a job already
+  carrying a contract document (`isContractTitle`). `approveAndContract()`
+  is stage-safe (never writes stage) and prices from `estBest` (the
+  estimates table), so a NULL doc total cannot zero the prefill.
+- **Gate:** `scripts/harness_approvals.js` (15 assertions, executes the
+  shipped function; negative-controlled on 651 — 5 red).
+- Still true, unchanged, by design: **signed contracts set the Job Value**;
+  signed estimates never do.

@@ -3284,7 +3284,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 651 &#8212; Finance as a check source, and Theo gets a weekly owed email</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 652 &#8212; Contracts one tap from the job menu, and signed estimates never miss the approval queue</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10312,6 +10312,9 @@ function renderAcxOverview(){
          punch had no reachable entry point at all. data-jm="punch" falls through
          the router's else branch to showTab('punch'), which 607 already wired. */
       jt(dbIc('tasks'), 'Punch Outs', punchOpenCount(pr), 'punch') +
+      /* 652: the tab always existed; the menu is where fingers go.
+         'contracts' rides the router's else-branch to showTab, like punch. */
+      jt(dbIc('docs'), 'Contracts', '', 'contracts') +
     '</div><div class="jaboxrow">' +
       jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
       jt(dbIc('orders'), 'Orders', '', 'materials') +
@@ -17482,9 +17485,16 @@ function renderApprovals(){
   if(!isAdminUser()){ card.style.display = 'none'; return; }
   var pend = cacheProjects.filter(function(pr){
     var s = normStage(pr.stage);
-    if(s !== 'Lead' && s !== 'Prospect') return false;
+    /* 652: any live stage can owe a contract — a job whose stage was
+       advanced by hand BEFORE the client signed used to vanish from this
+       queue forever. Lost/Closed are out, and a job already carrying a
+       contract document needs no reminder here. */
+    if(s === 'Lost' || s === 'Closed') return false;
     if(parseCkAll(pr).wf_approved) return false;
     if(Number(parseCkAll(pr).manual_value) > 0) return false;
+    if(cacheRows.some(function(r){
+      return r.project_id === pr.id && isContractTitle(r.title);
+    })) return false;
     return cacheRows.some(function(r){
       return r.project_id === pr.id && isEstimateTitle(r.title) && r.signed_at;
     });
@@ -36099,6 +36109,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:652, d:'2026-08-09', t:'Contracts a tap away, and the approval queue stops missing signed estimates', s:'Two fixes from one screenshot. The job menu now has a Contracts tile \u2014 the tab always existed, but it only lived in the header dropdown and the menu is where fingers go. And the home-page Approvals card used to list a signed estimate only while the job still sat at Lead or Prospect \u2014 advance the stage by hand first and the signature never surfaced for approval. Now any live job with a signed estimate and no contract shows up there; approving still creates the prefilled contract, and the signed contract is still what sets the Job Value.' },
 { b:651, d:'2026-08-09', t:'Finance as a check source, and a weekly owed email', s:'Logging a collection now offers Finance alongside Insurance and Homeowner \u2014 a check that comes in through a financing company (Service Finance today, more later) gets its own source and names which company. Every Friday morning Theo and Joan now get an email of what\u2019s owed to each rep minus their outstanding draws, matching the Commissions screen exactly \u2014 nothing to remember, nothing to check by hand.' },
 { b:650, d:'2026-08-09', t:'Money in, commissions out', s:'The Commissions tab on every job now starts with the money: log each check as it arrives \u2014 deposit, final, supplemental, PWI \u2014 and the rep\u2019s 10% commission writes itself. Theo\u2019s own jobs create no commission. Draws \u2014 advances against future commission \u2014 can be logged on the job or from the new \ud83d\udcb5 Commissions screen in the menu, where Friday lives: what each rep is owed minus outstanding draws, one tap to pay net or full, this week\u2019s payouts, paid history and a CSV export. Reps open the same screen and see My Earnings \u2014 paid this year, owed now, and what the next check should be. The sales rep is set automatically when a job is created and locks once money is logged.' },
 { b:649, d:'2026-08-09', t:'Reading a filed scope works, and old notes are counted again', s:'Two fixes. \u201cRead the scope already on file\u201d said the document had nothing stored in it \u2014 it did, the app was looking in a list that deliberately leaves the file contents out to stay fast. It now fetches the document itself. And the job menu said Communication 0 on clients that plainly had a note: notes written in the older notes box were shown on the Communications screen but never counted on the tile. Eight clients were affected, including one with a long note about a structural concern. The tile and the screen now count the same thing.' },
