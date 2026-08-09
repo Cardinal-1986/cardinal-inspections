@@ -2716,3 +2716,28 @@ The Estimates tile counts docs + sent table rows deduped on `doc_id`
 table-only rows instead of looking empty. Gate: `harness_654.js` (31
 assertions, money core executed over fixtures; negative-controlled on 653
 — 20 red, reproduces the old $0-profile bug live).
+
+### 655 — insurance repair + write safety (CR-AUD-007/009/010/011/012/014/015)
+
+**`insurance_claims` now really has `coverage_type` (text) and `ord_law`
+(boolean)** — `insurance_claims_coverage_cols.sql`, applied + backfilled
+from checklists. `cr-iu-script`'s `unified()` overlays checklist values
+over NULL table values; `shape()` preserves `ord_law === false` ("No").
+The boot-path claims load selects **21 named columns** (every raw-cache
+consumer inventoried: `shape()`'s 19 + `cr-sp`'s `supplement_notes` +
+`cr-ic`'s `supplement_filed_at`) and waits for a session before its first
+query — **widen the select if a new consumer reads a new column off
+`CardinalInsurance.claim()`**. The Truth-hub rail's Tools box carries all
+eight destinations (clients/sol/library/board + supplements/insresources/
+adjusters/claims) — the static `data-ctnav` grid is pre-render display
+only. `forProject()` keys claim-existence on `insurance_claims.project_id`
+(as well as the projects-side pointer). **`INS_STAGE_LABEL` (main block)
+is THE insurance stage vocabulary** — `CD_STAGE_LABEL.insurance` and
+`IC_LABEL` are references to it; `cr-insstage`/`cr-ic` fall back through
+`window.INS_STAGE_LABEL`; change wording in ONE place. Settled by Theo:
+Closed = "Closed", Invoiced = "Awaiting Depreciation / Supplements",
+OnHold = "On Hold". **`patchProjectCk()` refetches the checklist before
+merging** — per-top-level-key last-write-wins now; the seven direct
+checklist writers outside it are recorded follow-up. Gate:
+`harness_655.js` (42 assertions, three areas executed; negative-controlled
+on 654 — 33 red).

@@ -3284,7 +3284,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 654 &#8212; Money tells one story: one job value everywhere, AR counts what's still owed, estimates counted from both stores</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 655 &#8212; Insurance repair: coverage fields readable, the hub keeps its doors, one stage vocabulary, and cross-device edits stop eating each other</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -16161,8 +16161,23 @@ function notifyOutcomeText(res, to){
 }
 window.notifyOutcomeText = notifyOutcomeText;
 async function patchProjectCk(pr, patch){
+  /* 655 (CR-AUD-007): merge onto the FRESHEST copy of the row, not the
+     local cache — two devices editing different areas of the same job
+     used to last-write-wins the entire JSON (comms thread, payments,
+     worksheet, tasks, all of it). Refetch narrows the race to same-KEY
+     edits; closing it entirely needs realtime, which is a build of its
+     own. Any fetch failure falls back to the local copy — never worse
+     than the old behavior. */
   var all = {};
   try{ all = JSON.parse(pr.checklist || '{}') || {}; }catch(e){}
+  if(TEAM){
+    try{
+      var fresh = await sb.from('projects').select('checklist').eq('id', pr.id).single();
+      if(!fresh.error && fresh.data && fresh.data.checklist){
+        try{ all = JSON.parse(fresh.data.checklist) || all; }catch(_e2){}
+      }
+    }catch(_e){}
+  }
   Object.keys(patch).forEach(function(k){ all[k] = patch[k]; });
   var s = JSON.stringify(all);
   await pdb.update(pr.id, { checklist: s });
@@ -16287,11 +16302,23 @@ var CD_CRMS = [
   { key:'community', label:'Community', color:'#8fb4d8', colorLight:'#2f6491' }
 ];
 /* Render-time label maps mirror cr-insstage / cr-comstage — stored values never change. */
+/* 655 (CR-AUD-014): ONE insurance stage vocabulary. Four maps used to
+   relabel the same stages independently — Closed was "Archived" on the
+   Insurance Clients list and "Closed" everywhere else; Invoiced was
+   "Awaiting RCV" x3 against the rail's "Awaiting Depreciation /
+   Supplements"; OnHold was missing from all four and rendered raw.
+   Theo's picks, settled 9 Aug 2026: "Closed", and the rail's wording for
+   Invoiced — after invoicing, what's owed IS depreciation + supplements. */
+var INS_STAGE_LABEL = {
+  'Lead':'Claim Filed', 'Prospect':'Adjuster Pending',
+  'Approved':'Scope Approved', 'OnHold':'On Hold', 'Scheduled':'Scheduled',
+  'Completed':'Build Complete',
+  'Invoiced':'Awaiting Depreciation / Supplements',
+  'Closed':'Closed', 'Lost':'Denied'
+};
 var CD_STAGE_LABEL = {
   retail:    { 'Closed':'Archived' },
-  insurance: { 'Lead':'Claim Filed', 'Prospect':'Adjuster Pending', 'Approved':'Scope Approved',
-               'Scheduled':'Scheduled', 'Completed':'Build Complete', 'Invoiced':'Awaiting RCV',
-               'Closed':'Closed', 'Lost':'Denied' },
+  insurance: INS_STAGE_LABEL,
   community: { 'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'Approved':'Awarded',
                'Scheduled':'Scheduled', 'Completed':'Build Complete', 'Invoiced':'Invoiced',
                'Closed':'Closed', 'Lost':'Not Awarded' }
@@ -21147,14 +21174,9 @@ function renderInsuranceClientsList(){
     /* Lead and Prospect are pre-claim stages — a record that far back
        isn't a claim yet, so filtering the claims list by them is noise. */
     var IC_SKIP = { 'Lead':1, 'Prospect':1, 'OnHold':1 };
-    /* And the chips were printing raw stage names while the rest of this
-       CRM says Scope Approved / Awaiting RCV / Denied. Use the same map
-       the stage overlay uses so the vocabulary matches. */
-    var IC_LABEL = {
-      'Approved':'Scope Approved', 'Scheduled':'Scheduled',
-      'Completed':'Build Complete', 'Invoiced':'Awaiting RCV',
-      'Closed':'Archived', 'Lost':'Denied'
-    };
+    /* And the chips were printing raw stage names. 655: the vocabulary now
+       IS the shared map — one source, no drift. */
+    var IC_LABEL = INS_STAGE_LABEL;
     var STAGES_ALL = ((typeof STAGES !== 'undefined' && STAGES && STAGES.length)
       ? STAGES
       : ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed','Lost'])
@@ -24327,7 +24349,8 @@ function showList() {
     MOUNT.querySelector('[data-act="save"]').onclick = () => toast('Saved as draft', 'success');
     MOUNT.querySelector('[data-act="discard"]').onclick = async () => {
       if (!confirm('Discard this AI draft?')) return;
-      await window.supa.from('ai_estimates').update({ status: 'discarded' }).eq('id', id);
+      const r = await window.supa.from('ai_estimates').update({ status: 'discarded' }).eq('id', id);
+      if (r.error) { toast('Could not discard: ' + r.error.message, 'error'); return; }
       toast('Discarded');
       showList();
     };
@@ -26919,21 +26942,28 @@ function showList() {
         return;
       }
 
-      if (isEdit) {
-        const { error } = await window.supa.from('insurance_claims').update(payload).eq('id', c.id);
-        if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
-        toast('Saved', 'success');
-        modal.remove();
-        await loadClaim(c.id);
-        renderDetail();
-      } else {
-        payload.created_by = window.my_email?.() || 'unknown';
-        if (seedProjectId) payload.project_id = seedProjectId;
-        const { data, error } = await window.supa.from('insurance_claims').insert(payload).select('id').single();
-        if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
-        toast('Claim created', 'success');
-        modal.remove();
-        showDetail(data.id);
+      /* 655 (CR-AUD-012): the SQL error was checked, but a THROWN failure —
+         offline, timeout — escaped silently and the tap did nothing at all. */
+      try {
+        if (isEdit) {
+          const { error } = await window.supa.from('insurance_claims').update(payload).eq('id', c.id);
+          if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
+          toast('Saved', 'success');
+          modal.remove();
+          await loadClaim(c.id);
+          renderDetail();
+        } else {
+          payload.created_by = window.my_email?.() || 'unknown';
+          if (seedProjectId) payload.project_id = seedProjectId;
+          const { data, error } = await window.supa.from('insurance_claims').insert(payload).select('id').single();
+          if (error) { errEl.textContent = error.message; errEl.style.display = 'block'; return; }
+          toast('Claim created', 'success');
+          modal.remove();
+          showDetail(data.id);
+        }
+      } catch (e) {
+        errEl.textContent = 'Could not save: ' + (e.message || e);
+        errEl.style.display = 'block';
       }
     };
   }
@@ -26983,7 +27013,8 @@ function showList() {
     if (isEdit) {
       modal.querySelector('[data-act="delete"]').onclick = async () => {
         if (!confirm('Delete this payment?')) return;
-        await window.supa.from('insurance_payments').delete().eq('id', p.id);
+        const r = await window.supa.from('insurance_payments').delete().eq('id', p.id);
+        if (r.error) { toast('Could not delete: ' + r.error.message, 'error'); return; }
         modal.remove(); toast('Deleted');
         await loadClaim(state.claim.id); renderDetail();
       };
@@ -27074,7 +27105,8 @@ function showList() {
     if (isEdit) {
       modal.querySelector('[data-act="delete"]').onclick = async () => {
         if (!confirm('Delete this supplement?')) return;
-        await window.supa.from('insurance_supplements').delete().eq('id', s.id);
+        const r = await window.supa.from('insurance_supplements').delete().eq('id', s.id);
+        if (r.error) { toast('Could not delete: ' + r.error.message, 'error'); return; }
         modal.remove(); toast('Deleted');
         await loadClaim(state.claim.id); renderDetail();
       };
@@ -27341,15 +27373,31 @@ function showList() {
   async function forProject(projectId, mountEl) {
     if (!projectId || !mountEl) return;
 
+    /* 655 (CR-AUD-011): `client_name` is not a column (it's `name`) — the
+       400 was silently swallowed and this card never rendered (class 16).
+       Behind that dead wire sat a duplicate-claim trap: existence keyed on
+       projects.insurance_claim_id, so a claim linked the correct way
+       (insurance_claims.project_id) was invisible and the card offered
+       Create. Both fixed together — fixing the typo alone re-arms the trap. */
     const { data: proj, error } = await window.supa
       .from('projects')
-      .select('id, insurance_claim_id, client_name, address, checklist')
+      .select('id, insurance_claim_id, name, address, checklist')
       .eq('id', projectId)
       .single();
     if (error || !proj) return;
 
-    if (proj.insurance_claim_id) {
-      await renderLinkedClaimCard(mountEl, proj.insurance_claim_id);
+    let linkedId = proj.insurance_claim_id;
+    if (!linkedId) {
+      const { data: own } = await window.supa
+        .from('insurance_claims')
+        .select('id')
+        .eq('project_id', projectId)
+        .limit(1);
+      if (own && own.length) linkedId = own[0].id;
+    }
+
+    if (linkedId) {
+      await renderLinkedClaimCard(mountEl, linkedId);
     } else {
       // Look for a claim that matches this project by homeowner/address (fuzzy)
       // — if found, offer to link; else offer to create
@@ -27357,14 +27405,14 @@ function showList() {
         .from('insurance_claims')
         .select('id, carrier, claim_number, homeowner_name, property_address, status, approved_rcv')
         .is('project_id', null)
-        .or(`homeowner_name.ilike.%${(proj.client_name || '').split(' ')[0] || 'zzz'}%,property_address.ilike.%${(proj.address || '').split(',')[0] || 'zzz'}%`)
+        .or(`homeowner_name.ilike.%${(proj.name || '').split(' ')[0] || 'zzz'}%,property_address.ilike.%${(proj.address || '').split(',')[0] || 'zzz'}%`)
         .limit(3);
 
       renderCreateOrLinkCard(mountEl, {
         seedFor: 'project',
         seed: {
           project_id:       proj.id,
-          homeowner_name:   proj.client_name,
+          homeowner_name:   proj.name,
           property_address: proj.address,
         },
         possibleMatches: possibles || [],
@@ -29778,13 +29826,16 @@ function showList() {
   'use strict';
 
   // Stored value -> what an insurance client should read as
-  var INS_LABEL = {
+  /* 655 (CR-AUD-014): the shared map is the source; the literal is only a
+     standalone fallback and must carry the same wording. */
+  var INS_LABEL = window.INS_STAGE_LABEL || {
     'Lead':      'Claim Filed',
     'Prospect':  'Adjuster Pending',
     'Approved':  'Scope Approved',
+    'OnHold':    'On Hold',
     'Scheduled': 'Scheduled',
     'Completed': 'Build Complete',
-    'Invoiced':  'Awaiting RCV',
+    'Invoiced':  'Awaiting Depreciation / Supplements',
     'Closed':    'Closed',
     'Lost':      'Denied',
   };
@@ -36304,6 +36355,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:655, d:'2026-08-09', t:'Insurance repair and write safety',
+s:'Coverage Type and Ord. & Law finally render \u2014 the app read them from columns that didn\u2019t exist, so they came up blank even when filled in (they\u2019re real columns now, backfilled). The insurance hub\u2019s pipeline view stopped destroying its own navigation: Supplement Templates, Insurance Resources, the Adjuster Directory and the Claims Tracker are back beside the other tools. The per-client claim card works again AND stops offering to create a duplicate claim for a job that already has one. Four money-adjacent buttons (payment delete, supplement delete, discard draft, claim save) now say so when a write fails instead of pretending it worked. One insurance stage vocabulary everywhere \u2014 \u201CClosed\u201D is Closed, invoiced jobs read \u201CAwaiting Depreciation / Supplements\u201D, and On Hold jobs finally have a label. And editing the same job from your phone and the desktop no longer silently overwrites the other device\u2019s changes in most cases.' },
 { b:654, d:'2026-08-09', t:'Money tells one story',
 s:'A job with a sent estimate but no signed contract used to show its value on every list and $0 on its own profile \u2014 two different value functions. Now every screen shares one precedence (signed contract \u2192 manual value \u2192 best sent estimate) and the profile says where the number came from. The AR aging card subtracts payments received instead of showing gross value, and its caption finally matches its source. The Estimates tile counts estimates from both stores \u2014 generated documents and the estimate editor \u2014 instead of disagreeing with the money beside it. Invoices still require a signed contract; an estimate-priced job can\u2019t open the invoice path.' },
 { b:653, d:'2026-08-09', t:'Five audit fixes, picked straight off the CR Audit', s:'Convert-to-Contract works again (the button called a filename that no longer existed). The AI-estimate Send button actually sends now, through the same mailer every other document uses \u2014 it used to just say it did. Inviting a teammate creates a real sign-in, not just a directory entry. Photo Activity and the gallery are lighter (old photos migrate out of the database and into storage, tiles load lazily). A $28,727 claim that had gone invisible on every insurance screen is visible again, and On Hold claims no longer drop off the money summary. Two admin tools that were built and forgotten \u2014 a smoke-test walkthrough and 28 iTel lab results \u2014 are reachable from the menu.' },
@@ -43121,7 +43174,7 @@ policy_number: row.policy_number || null,
 claim_number:  row.claim_number  || null,
 date_of_loss:  row.date_of_loss  || null,
 coverage_type: row.coverage_type || null,
-ord_law:       row.ord_law       || null,
+ord_law:       row.ord_law != null ? row.ord_law : null,
 deductible:    n(row.deductible),
 deductible_waived: !!row.deductible_waived,
 rcv:           n(row.approved_rcv),
@@ -43144,7 +43197,16 @@ _source:  'table',
 async function load(){
 if(!window.supa) return;
 try{
-var r = await window.supa.from('insurance_claims').select('*');
+/* 655 (CR-AUD-015): the columns this cache's consumers actually read —
+   shape() plus cr-sp's supplement_notes and cr-ic's supplement_filed_at.
+   select('*') grew with the table and shipped every byte to every boot. */
+var r = await window.supa.from('insurance_claims').select(
+'id,project_id,carrier,policy_number,claim_number,date_of_loss,' +
+'coverage_type,ord_law,deductible,deductible_waived,' +
+'approved_rcv,approved_acv,approved_depreciation,' +
+'adjuster_name,adjuster_phone,adjuster_email,' +
+'supplement_status,supplement_filed,supplement_approved,' +
+'supplement_notes,supplement_filed_at');
 if(r.error){ console.warn('[ins] load:', r.error.message); return; }
 cache = {};
 (r.data || []).forEach(function(row){
@@ -43157,7 +43219,20 @@ var origProjInsurance = null;
 function unified(pr){
 if(!pr) return null;
 var row = cache[pr.id];
-if(row) return shape(row);
+if(row){
+var s = shape(row);
+/* 655 (CR-AUD-009): the two columns only just arrived on the table — a
+   NULL there must never mask a value the checklist has carried all along. */
+if(s && (s.coverage_type == null || s.ord_law == null)){
+try{
+var L0 = (window.parseCkAll ? window.parseCkAll(pr).lead : (pr.checklist || {}).lead) || {};
+var I0 = (L0.insurance && typeof L0.insurance === 'object') ? L0.insurance : {};
+if(s.coverage_type == null && I0.coverage_type != null) s.coverage_type = I0.coverage_type;
+if(s.ord_law == null && I0.ord_law != null) s.ord_law = I0.ord_law;
+}catch(_){}
+}
+return s;
+}
 if(typeof origProjInsurance === 'function'){
 try{ return origProjInsurance(pr); }catch(_){}
 }
@@ -43234,18 +43309,37 @@ await window.patchProjectCk(project, { lead: L });
 }catch(me){ console.warn('[ins] mirror:', me.message || me); }
 return row;
 }
+function afterLoad(){
+try{
+if(window.CardinalTruthHome && typeof window.CardinalTruthHome.refresh === 'function'){
+window.CardinalTruthHome.refresh();
+}
+}catch(_){}
+}
 async function start(){
 if(!wrap()){
 var n1 = 0, iv = setInterval(function(){
 if(wrap() || ++n1 > 40) clearInterval(iv);
 }, 250);
 }
-await load();
-try{
-if(window.CardinalTruthHome && typeof window.CardinalTruthHome.refresh === 'function'){
-window.CardinalTruthHome.refresh();
+/* 655 (CR-AUD-015): on a fresh login this fired before the session
+   existed — RLS answered empty and `loaded` lied until a later refresh.
+   Wait for the session instead of loading nothing. */
+var sess = null;
+try{ sess = window.supa ? (await window.supa.auth.getSession()).data.session : null; }catch(_){}
+if(!sess && window.supa && window.supa.auth &&
+typeof window.supa.auth.onAuthStateChange === 'function'){
+var fired = false;
+var sub = window.supa.auth.onAuthStateChange(function(_ev, s2){
+if(!s2 || fired) return;
+fired = true;
+try{ sub.data.subscription.unsubscribe(); }catch(_){}
+load().then(afterLoad);
+});
+return;
 }
-}catch(_){}
+await load();
+afterLoad();
 }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
@@ -46505,6 +46599,17 @@ host.innerHTML =
 '<span class="x"><b>Resource Library</b><small>Ohio code &amp; carrier rules</small></span></button>' +
 '<button data-go="board" type="button"><span class="i">\uD83D\uDCC5</span>' +
 '<span class="x"><b>Schedule Board</b><small>Crews and material drops</small></span></button>' +
+/* 655 (CR-AUD-010): render() replaces the hub's static grid, which held
+   these four destinations — re-render them here so the rail stops eating
+   its own navigation. */
+'<button data-go="supplements" type="button"><span class="i">\uD83D\uDCCE</span>' +
+'<span class="x"><b>Supplement Templates</b><small>Letters that get supplements paid</small></span></button>' +
+'<button data-go="insresources" type="button"><span class="i">\uD83E\uDDED</span>' +
+'<span class="x"><b>Insurance Resources</b><small>Playbooks, code cites, carrier rules</small></span></button>' +
+'<button data-go="adjusters" type="button"><span class="i">\uD83D\uDC64</span>' +
+'<span class="x"><b>Adjuster Directory</b><small>Everyone who has adjusted a Cardinal claim</small></span></button>' +
+'<button data-go="claims" type="button"><span class="i">\uD83D\uDCCB</span>' +
+'<span class="x"><b>Claims Tracker</b><small>Payments, supplements, timelines</small></span></button>' +
 '</div>' +
 '</div>' +
 '</div></div>';
@@ -46547,6 +46652,26 @@ window.CardinalSolIntake.open();
 window.icStageFilter = '';
 window.showInsuranceClients();
 }
+return;
+}
+/* 655 (CR-AUD-010): the four destinations the rail used to wipe */
+if(d === 'supplements' && typeof window.showResourceLibrary === 'function'){
+window.showResourceLibrary();
+if(window._rlShowPage) window._rlShowPage('rlPageSup');
+return;
+}
+if(d === 'insresources' && typeof window.showResourceLibrary === 'function'){
+window.showResourceLibrary();
+if(window._rlShowPage) window._rlShowPage('rlPageInsHub');
+return;
+}
+if(d === 'adjusters' && window.CardinalAdjusters &&
+typeof window.CardinalAdjusters.open === 'function'){
+window.CardinalAdjusters.open(true);
+return;
+}
+if(d === 'claims' && typeof window.crOpenClaimsFromHub === 'function'){
+window.crOpenClaimsFromHub();
 return;
 }
 if(d === 'board'){
@@ -46651,11 +46776,13 @@ var d = new Date(iso);
 if(isNaN(d)) return null;
 return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
 }
-var LABEL = {
+/* 655 (CR-AUD-014): shared map first; same-wording fallback keeps the
+   module standalone. "Archived" is retail's word, not insurance's. */
+var LABEL = window.INS_STAGE_LABEL || {
 'Lead':'Claim Filed', 'Prospect':'Adjuster Pending',
-'Approved':'Scope Approved', 'Scheduled':'Scheduled',
-'Completed':'Build Complete', 'Invoiced':'Awaiting RCV',
-'Closed':'Archived', 'Lost':'Denied',
+'Approved':'Scope Approved', 'OnHold':'On Hold', 'Scheduled':'Scheduled',
+'Completed':'Build Complete', 'Invoiced':'Awaiting Depreciation / Supplements',
+'Closed':'Closed', 'Lost':'Denied',
 };
 var CHIPS = ['Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
 function clients(){
