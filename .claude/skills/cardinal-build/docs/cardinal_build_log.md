@@ -14493,6 +14493,101 @@ as the retirement comment — asserted by grep, count 1.
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
 
+- **703** · **The insurance claim screen holds still.** Theo, on two screenshots
+  of the Adam Gunn claim: *"Is there a fix for this insurance claim screen? Why
+  can't be static instead of bouncy?"*
+
+  **Cause: an overflow value nobody wrote.** `styleMounts()` sets
+  `display:none; position:fixed; inset:0; z-index:200; overflow-y:auto` INLINE
+  on the mount. It sets **overflow-Y only** — and CSS does not allow `visible`
+  beside a non-visible value, so the used value of **overflow-x is coerced to
+  `auto`**. The entire claim screen became a horizontal scroller for free, and
+  slid and rubber-banded whenever any child was a pixel too wide.
+
+  Something always was. Measured in Chromium with Adam Gunn's real row shapes:
+
+  | element | client | scroll |
+  |---|---:|---:|
+  | `.cr-c-table` (Scope History) | 349 | **386** |
+  | `.cr-c-section` | 349 | 386 |
+  | `.cr-c-pane` | 349 | 386 |
+  | `.cr-c-app` | 393 | 408 |
+  | **`#cr-claims-mount`** | 393 | **408** ← the bounce |
+  | `.portal-retail` | 393 | 393 (`overflow:hidden`) |
+
+  ⚠️ **That last row is why this looked like nothing.** An ancestor clips, so
+  `document.scrollWidth` reads a clean **393** and the page appears innocent —
+  the sliding is confined to the claim screen itself. A page-level overflow
+  check would have reported no problem at all.
+
+  **The fix is two halves and one without the other is worse than neither.**
+  `#cr-claims-mount{overflow-x:hidden}` pins the screen — alone it would CLIP
+  the Scope History table and silently eat a column of real money. So the four
+  tables each gained a `.cr-c-xscroll` wrapper and scroll in their own box.
+  The gate asserts **both** directions: mount `scrollWidth === clientWidth`,
+  AND at least one wrapper with `scrollWidth > clientWidth`.
+
+  **Not done as CSS alone.** `display:block;overflow-x:auto` on the `<table>` is
+  the usual one-liner, but it makes the inner anonymous table box shrink-to-fit,
+  so every table that currently FITS would stop filling its width. A wrapper
+  keeps table layout untouched.
+
+  ⚠️ **`.cr-c-table` appears 14 times in the file and `pl.sub()` splices
+  file-wide** — the 634 trap. Every markup edit was applied to a SLICE of
+  `cr-claims-script` and re-joined, with the file-wide count asserted unchanged.
+
+  **The class is app-wide and is NOT swept.** 13 other full-screen views carry
+  the same coercion today (`landingView`, `cr-estimates-mount`,
+  `cr-pricing-mount`, `payView`, `puDetail` and eight modals);
+  `#cr-claims-mount` is now the only one explicitly pinned. `overflow-x:hidden`
+  **clips**, so each one needs the same two-part treatment rather than a blind
+  find-and-replace. Recorded as bug class 33 and put to Theo.
+
+- **702** · **The address under the map is readable again.** Theo: *"The letters
+  in the map section went illegible again."*
+
+  **637 fixed this for retail and excluded insurance and community**, reasoning
+  in its own comment that *"both already have inks that suit those grounds"*.
+  Measured across all twelve combinations, that reasoning does not hold —
+  because **`.dbaddr` was reading from a different theme switch than its own
+  card**:
+
+      ink     .dbaddr -> var(--rbe-ink)      <html data-theme="rb-light">
+      ground  .acxsec -> var(--ct-surface)   <body data-rltheme="siren|docket">
+
+  Two switches that move independently. `--ct-*` is declared **only** under
+  `[data-rltheme]`, which is the **Resource Library's** theme — a third
+  mechanism beside the two `CLAUDE.md` documents.
+
+  | crm | app | rltheme | ink | ground | before |
+  |---|---|---|---|---|---:|
+  | insurance | dark | siren | `#cfd6df` | `#16161B` | 12.31:1 |
+  | insurance | dark | docket | `#cfd6df` | `#FFFFFF` | **1.38:1** |
+  | insurance | **light** | **siren** | `#161616` | `#16161B` | **1.00:1** |
+  | insurance | light | docket | `#161616` | `#FFFFFF` | 17.09:1 |
+  | community | dark | * | `#cfd6df` | `#FFFDF7` | **1.44:1** |
+  | retail | * | * | `#1e2432` | `#FFFFFF` | 15.51:1 |
+
+  **1.00:1 is not "hard to read" — it is the same colour twice**, and it is the
+  cell Theo photographed. The fix is not another combination-specific literal:
+  each CRM now takes its ink from **the palette that paints its own ground**, so
+  the two cannot drift apart again. Insurance uses `var(--ct-ink)` — the token
+  `.acxsec .acxbody` already used — and community takes a fixed dark ink because
+  its card is `#fffdf7` in both themes. Retail is untouched. **Worst cell after:
+  14.81:1, all twelve passing.**
+
+  ⚠️ **Three rig errors on the way, all of which produced a confident wrong
+  answer.** (1) `getComputedStyle` returns a **LIVE** object — reading `.color`
+  after `holder.remove()` reported every ink as an empty string. (2) Scoring
+  against the *worst of all ancestor grounds* rather than the **nearest opaque**
+  one blamed a near-white page for a dark card. (3) The first probe mounted the
+  card outside the real ancestor chain and resolved `--ct-*` to its light
+  defaults, which said the card was white when the screenshot plainly showed it
+  dark. **The screenshot was right and the instrument was wrong, three times.**
+
+  Gate `render_claimfit703.js`, 25 assertions covering both builds, **RED on 701
+  with 11 failures** — reproducing 1.00:1 and 408-vs-393 exactly.
+
 - **701** · **The weather panel is gone from the home screen.** Theo: *"Get rid
   of the weather table altogether. It's not needed."* Out of `cr-lr-script`:
   `wx()`, `wxPaint()`, `wxCached()`, `WX_LL`/`WX_TTL`/`WX_KEY`, `WX_CODES`, the
