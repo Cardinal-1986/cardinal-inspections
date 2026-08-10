@@ -14493,6 +14493,38 @@ as the retirement comment — asserted by grep, count 1.
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
 
+- **692** · **The emoji sweep reaches four more screens.** Sales Floor, the
+  insurance hub, the community hub and Import-from-AccuLynx: 37 sites, drawn
+  glyphs instead of emoji. `CardinalIcons` 28 → 43; fifteen new (page, books,
+  pencil, scales, bulb, factory, trophy, cards, camera, image, paperclip,
+  compass, calculator, houses, funnel) and nine existing ones reused.
+  **These call `get()` at render time, NOT `data-cri`** — `hydrate()` runs once
+  at load and these four build their panels as strings on user action, so an
+  attribute written then would never be swapped and the row would show nothing.
+  Seven of the fifteen were redrawn after the first contact sheet: books
+  blobbed at 13px, scales collapsed, cards was indistinguishable from page, and
+  houses had lost its walls. Gate `render_icons692.js`, 38 assertions across
+  both themes, RED with 26 failures on 691. Also repaired `render_gradtext.js`,
+  which hard-coded `__dirname/node_modules` and could not run outside the
+  scratchpad it was written in — 687 fixed that in the other harnesses and
+  missed this one; it now runs GREEN 94/0 on 692 and RED 90 on 684.
+  New instrument `emoji_census.py`: **the sweep has 606 sites left, not 533** —
+  see the correction below.
+
+  ⚠️ **CORRECTION — "533 remain" was wrong, and so was the method behind it.**
+  The figure is now produced by `scripts/emoji_census.py`, which prints its
+  exclusions instead of one bare number. At 691 the honest split was:
+  1,838 candidates · 60 in comments · 409 in the CHANGELOG (kept, historical) ·
+  516 functional UI glyphs · **46 ®/™ brand marks** · 210 unclassified ·
+  **643 in scope.** After 692: **606.**
+  Two things the old count got wrong. It missed the **JS `\uD83D\uDD28`
+  surrogate-escape form entirely** — 644 of 957 raw hits are that form, and a
+  literal-UTF-8 grep finds only 91 of them. And it had no bucket for **®**,
+  which appears 46 times on Owens Corning brand names: a sweep that treats it
+  as a sticker strips a trademark symbol `OC_BRAND_RULES.md` requires. The
+  census now refuses to touch ®/™/© by name.
+
+
 - **691** · **Assigned To joins Milestone as a second strip.** Theo, on 690:
   *"How would I filter by rep? Etc"* — a fair hit. 690 solved **one of seven**
   groups (`LJ_GROUPS`: Milestone, Assigned To, Job Priority, Job Category, Work

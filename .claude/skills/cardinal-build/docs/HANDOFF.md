@@ -4,11 +4,11 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–691
+# Session of 10 August 2026 (later) — builds 685–692
 
-**685 through 691 all shipped, merged and verified deployed** (PRs #198–#207,
+**685 through 692 all shipped, merged and verified deployed** (PRs #198–#209,
 each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
-must confirm it again rather than inherit it). `main` at 691. Working tree
+must confirm it again rather than inherit it). `main` at 692. Working tree
 clean, branch synced to main, no open PRs.
 
 | Build | What | PR |
@@ -20,6 +20,7 @@ clean, branch synced to main, no open PRs.
 | 689 | calendar titles were **1.06:1** (unscoped light-era ink) · client cards → obsidian · the initial/Call/Text become raised keys | #203 |
 | 690 | pipeline-stage **chips** on All Leads & Jobs — surfacing a filter that already existed | #205 |
 | 691 | **Assigned To** joins Milestone as a second strip — 690's stage-only code generalised to any group | #207 |
+| 692 | the emoji sweep reaches four more screens — 37 sites, `CardinalIcons` 28 → 43 | #209 |
 
 **One thing is waiting on Theo, asked and unanswered:** the `.pcpo` lavender in
 LIGHT mode. It was already failing at 1.99:1 and 689's darker card took it to
@@ -39,7 +40,10 @@ not a pass count.** Same finding as 628's amber bar and 633's white boxes.
 
 - **I said 550 emoji remained. It was 562.** My census never covered
   0x2300–0x23FF (Miscellaneous Technical), so ⏰ — and the whole Reminder row —
-  was invisible to it and survived the first pass. 533 remain after 686.
+  was invisible to it and survived the first pass. **And 533 was wrong too** —
+  it missed the JS surrogate-escape form, which is 644 of 957 raw hits. The
+  real figure was **643**, now **606** after 692. `scripts/emoji_census.py`
+  is the instrument and it prints its exclusions rather than one bare number.
 - **I shipped a harness that could not fail.** In modern Chromium every
   `CSSStyleRule` exposes an empty `.cssRules` for CSS nesting, so
   `if (r.cssRules) { walk(); continue; }` skipped every rule and reported a
@@ -99,7 +103,7 @@ for an inline `color` before calling such a sweep done. Only 1 of the 37 had it.
 
 ## Queue
 
-1. **The emoji sweep — STARTED at 686, not finished. 533 remain.** Measured with
+1. **The emoji sweep — STARTED at 686, continued at 692. 606 remain.** Measured with
    comments excluded (module banners' box-drawing swamps a naive count) and with
    the 0x2300–0x23FF block included. Dingbats (156), arrows (154) and geometric
    marks (66) are counted SEPARATELY and are **not** part of this sweep — ✓ ✕ →

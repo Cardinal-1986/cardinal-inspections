@@ -3540,7 +3540,7 @@ hit that is a comment.
 ### 686 — the navigation is drawn, not emoji (`CardinalIcons` + `hydrate`)
 
 The burger menu, the New menu and the Settings rows: 28 rows, each now a line
-icon that inherits the row's colour and size. `CardinalIcons` grows 4 → 27
+icon that inherits the row's colour and size. `CardinalIcons` grows 4 → 27 (and to 43 at 692)
 glyphs and gains **`hydrate(root)`**, which swaps a `data-cri` attribute for the
 drawn glyph once and removes the attribute, so re-running is free. Static markup
 therefore uses the same registry as JS-built markup — one icon set, not two.
@@ -3650,3 +3650,33 @@ behind the funnel **by decision**.
 
 Gate: `scripts/render_stagechips.js`, 54 assertions, expectations self-computed
 from the seed. RED 20/54 on 690.
+
+
+### 692 — drawn icons on the sales, insurance, community and import screens
+
+37 emoji become drawn glyphs across `cr-sf-script` (Sales Floor), `cr-cth-script`
+(the insurance hub), `cr-ch2-script` (the community hub) and `cr-ci-script`
+(Import from AccuLynx). `CardinalIcons` grows **28 → 43**.
+
+**The fifteen new glyphs:** page, books, pencil, scales, bulb, factory, trophy,
+cards, camera, image, paperclip, compass, calculator, houses, funnel. Nine
+existing ones are reused (target, home, shield, calendar, person, clipboard,
+people, chart, bolt) rather than redrawn.
+
+⚠️ **These call `CardinalIcons.get()` at render time. They do NOT use
+`data-cri`.** 686's attribute is swapped by `hydrate()`, which runs once at load
+and again on DOMContentLoaded — and these four modules build their panels as
+strings when the user opens them, long after that. A `data-cri` written at
+render time is never hydrated and the row shows nothing at all. Each module
+carries a local `ICO(n)` that wraps `get()` in a try/catch.
+
+**The gate is `render_icons692.js`** (38 assertions, both themes). It opens all
+four surfaces through their real exports and checks the glyphs have a non-zero
+box and a resolved stroke — structure alone cannot see this, because `ICO()`
+swallows its own error and returns `''`, which renders as nothing. It also
+asserts no swept emoji survived. Negative control on 691: 26 failures.
+
+⚠️ **Scope the survivor check to the container the module owns.** Checking
+`cardinalTruthView` wholesale reports four survivors (📝🏠📎📋) that are
+provably absent from `cr-cth-script` — that view also hosts panels from
+`cr-cct`, `cr-ctfx` and the static markup, which keep their own emoji.
