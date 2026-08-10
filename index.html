@@ -3361,7 +3361,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 694 &#8212; The light/dark switch is back on the screens that had lost it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 695 &#8212; The Tools menu is drawn, not emoji</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3377,27 +3377,27 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
   <span class="cbn" data-go="contacts">Contacts</span>
   <span class="cbn" data-go="leads">Leads</span>
   <span class="cbn" data-go="photos">Photos</span>
-  <span class="cbn" data-go="track">Track</span>
-  <span class="cbn" data-go="reports">Reports</span>
+  <span class="cbn" data-go="track" data-cri="calculator lg">Track</span>
+  <span class="cbn" data-go="reports" data-cri="chart lg">Reports</span>
   <span class="cbn cbdd" data-dd="prod">Production <b class="car">&#9660;</b>
-    <span class="cbmenu"><span class="cbi" data-go="prodboard">&#127959; Production Board</span><span class="cbi" data-go="punch">&#128296; Punch &amp; Repairs</span><span class="cbi" data-go="schedule">&#128197; Schedule Board</span></span>
+    <span class="cbmenu"><span class="cbi" data-go="prodboard" data-cri="hardhat lg">Production Board</span><span class="cbi" data-go="punch" data-cri="ladder lg">Punch &amp; Repairs</span><span class="cbi" data-go="schedule" data-cri="calendar lg">Schedule Board</span></span>
   </span>
   <span class="cbn cbdd" data-dd="tools">Tools <b class="car">&#9660;</b>
     <span class="cbmenu">
       <small>Selling</small>
-      <span class="cbi" data-go="aiest">&#9889; AI Estimates</span>
-      <span class="cbi" data-go="pricing">&#128178; Pricing Catalog</span>
-      <span class="cbi" data-go="coach">&#127919; Objection Coach</span>
-      <span class="cbi" data-go="adjusters">&#127963; Adjuster Directory</span>
+      <span class="cbi" data-go="aiest" data-cri="bolt lg">AI Estimates</span>
+      <span class="cbi" data-go="pricing" data-cri="money lg">Pricing Catalog</span>
+      <span class="cbi" data-go="coach" data-cri="target lg">Objection Coach</span>
+      <span class="cbi" data-go="adjusters" data-cri="group lg">Adjuster Directory</span>
       <small>Supply</small>
       <span class="cbi" data-go="abc" data-cri="warehouse lg">Suppliers</span>
       <small>App</small>
-      <span class="cbi" data-go="selfcheck">&#129658; Self Check</span>
-      <span class="cbi" data-go="whatsnew">&#10024; What's New</span>
-      <span class="cbi" data-go="walk">&#128694; Field Walkthrough</span>
-      <span class="cbi" data-go="itellab">&#129514; iTel Lab Results</span>
-      <span class="cbi" data-go="medmig">&#128248; Migrate Legacy Photos</span>
-      <span class="cbi" data-go="settings">&#9881;&#65039; Settings</span>
+      <span class="cbi" data-go="selfcheck" data-cri="pulse lg">Self Check</span>
+      <span class="cbi" data-go="whatsnew" data-cri="sparkle lg">What's New</span>
+      <span class="cbi" data-go="walk" data-cri="pin lg">Field Walkthrough</span>
+      <span class="cbi" data-go="itellab" data-cri="flask lg">iTel Lab Results</span>
+      <span class="cbi" data-go="medmig" data-cri="camera lg">Migrate Legacy Photos</span>
+      <span class="cbi" data-go="settings" data-cri="gear lg">Settings</span>
     </span>
   </span>
   <span class="cbcrm" id="cbCrm" aria-label="Switch CRM">
@@ -19161,7 +19161,11 @@ var CardinalIcons = (function(){
     compass:    "<circle cx='12' cy='12' r='8.9'/><path d='M16.8 7.2 13.7 13.7 7.2 16.8l3.1-6.5z'/>",
     calculator: "<rect x='4.6' y='2.8' width='14.8' height='18.4' rx='2.2'/><path d='M8 7.3h8'/><path d='M8.4 11.7h.01M12 11.7h.01M15.6 11.7h.01M8.4 15.1h.01M12 15.1h.01M15.6 15.1h.01M8.4 18.3h.01M12 18.3h.01M15.6 18.3h.01'/>",
     houses:     "<path d='M3 20.5v-5.2l3.6-2.9 3.6 2.9v5.2z'/><path d='M12 20.5v-7.8l4.6-3.7 4.6 3.7v7.8z'/>",
-    funnel:     "<path d='M3.4 5.2h17.2l-6.8 8v6.1l-3.6 1.8v-7.9z'/>"
+    funnel:     "<path d='M3.4 5.2h17.2l-6.8 8v6.1l-3.6 1.8v-7.9z'/>",
+    pulse:      "<path d='M2.4 12h4.1l2.3-5.6 3.7 11.3 2.2-5.7h6.9'/>",
+    sparkle:    "<path d='M12 3.2 13.7 9l5.8 1.7-5.8 1.7L12 18.2 10.3 12.4 4.5 10.7 10.3 9z'/><path d='M18.6 3.4v3.2M17 5h3.2'/>",
+    pin:        "<path d='M12 21.4s7-5.9 7-11a7 7 0 1 0-14 0c0 5.1 7 11 7 11z'/><circle cx='12' cy='10.2' r='2.7'/>",
+    flask:      "<path d='M9.4 2.9v6.2L4.3 18a2.2 2.2 0 0 0 1.9 3.3h11.6a2.2 2.2 0 0 0 1.9-3.3l-5.1-8.9V2.9z'/><path d='M8.4 2.9h7.2'/><path d='M7.2 14.6h9.6'/>"
   };
   function get(name, cls){ return P[name] ? svg(P[name], cls) : ''; }
   /* 686: static markup cannot call get(), and a second pipeline of raw
@@ -37413,6 +37417,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:695, d:'2026-08-10', t:'The Tools menu is drawn, not emoji',
+s:'All fourteen rows of the Tools dropdown now use drawn icons instead of emoji. Four new ones were drawn for it: a pulse line for Self Check, a sparkle for What\u2019s New, a map pin for Field Walkthrough and a flask for iTel Lab Results. The rest reuse icons the app already had.' },
 { b:694, d:'2026-08-10', t:'The light/dark switch is back where it went missing',
 s:'On Sales Floor, and on every insurance screen, the light/dark button had disappeared. It lives in the header row, and those screens either cover that row or give the slot to another control. It now steps out to the bottom-right corner whenever the header slot is not usable, so the switch is reachable from everywhere it can actually do something. The Showcase and the colour wall are left out on purpose \u2014 those two are built dark for showing clients, and the switch would do nothing there.' },
 { b:693, d:'2026-08-10', t:'Sales Floor follows the light switch',

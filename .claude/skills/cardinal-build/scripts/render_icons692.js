@@ -122,7 +122,12 @@ const GONE = [0x1F3AF, 0x1F4C7, 0x1F3C6, 0x1F4DD, 0x1F3E0, 0x2696, 0x1F4A1, 0x1F
     console.log(`\n── ${tname} ──`);
     if (R.fatal) { fail++; console.log('  FAIL fatal: ' + R.fatal); await p.close(); continue; }
 
-    ok(R.total === 43, `CardinalIcons carries 43 glyphs, 28 + the 15 new (got ${R.total})`);
+    /* A FLOOR, not an equality. This said `=== 43` and went red the moment 695
+       added four more — the app was right and the gate was wrong, which is the
+       hardcoded-count class that produced ten false reds in one session at 630.
+       What 692 actually cares about is that its own fifteen exist and resolve,
+       and the two assertions below check exactly that. */
+    ok(R.total >= 43, `CardinalIcons carries at least the 43 present at 692 (got ${R.total})`);
     ok(R.missing.length === 0, `every name these screens ask for exists (missing: ${R.missing.join(',') || 'none'})`);
     ok(R.empty.length === 0, `every one of them returns real path data (empty: ${R.empty.join(',') || 'none'})`);
 

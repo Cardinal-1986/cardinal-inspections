@@ -14493,6 +14493,28 @@ as the retirement comment — asserted by grep, count 1.
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
 
+- **695** · **The Tools dropdown is drawn, not emoji.** All sixteen rows.
+  Thirteen carried an emoji entity; four new glyphs were drawn for them
+  (`pulse` Self Check, `sparkle` What's New, `pin` Field Walkthrough, `flask`
+  iTel Lab Results) and nine existing ones reused. `CardinalIcons` 43 → 47.
+  **`data-cri` is correct here** — this is static markup and `hydrate()` runs
+  at load, before the menu can be opened. 692's four modules needed `get()`
+  only because they build their panels as strings on user action.
+  ⚠️ **The DOM has SIXTEEN rows, the source shows fourteen.** `Track` and
+  `Reports` are written as `class="cbn"` top-level nav and a runtime routine
+  moves them into the dropdown, rewriting className to `'cbi'`. They never had
+  an emoji, so the sweep skipped them — leaving fourteen iconed rows and two
+  bare, which reads as unfinished rather than as scope. Both were given icons
+  from the existing set; their targets were read off the app's own `data-go`
+  map (`track` → `CardinalEstimates.open`, `reports` → `openReportsView`)
+  rather than guessed from the label. The mover only sets className, so an
+  icon hydrated at load survives it.
+  ⚠️ **`render_icons692.js` went red on this build and the app was right.**
+  It asserted `CardinalIcons` `=== 43`; 695 made it 47. Changed to a floor —
+  what 692 cares about is that its own fifteen resolve, and it checks that
+  separately. BUG_CLASSES 15, caught by the routine regression sweep.
+  Sweep total **606 → 594.**
+
 - **694** · **The light/dark switch is back on the screens that lost it.**
   Theo: "make sure every page has a light dark switcher. Seems some have
   disappeared." Two causes, neither the one the stylesheet suggests:
