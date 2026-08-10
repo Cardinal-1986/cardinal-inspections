@@ -1925,3 +1925,68 @@ Nothing lands in between, so the threshold cannot be satisfied by accident.
 
 ⚠️ **Scope a fix on `.tt` / `.sb` / `.n`.** Three of the most generic class
 names in a 3.9 MB file; unscoped, that declaration reaches the whole app.
+
+## 33 — `overflow-y:auto` alone silently makes a box scroll SIDEWAYS
+
+**Struck at 703; 13 more views still carry it.**
+
+CSS does not allow `overflow-x: visible` beside a non-visible `overflow-y`. Set
+only `overflow-y:auto` and the used value of `overflow-x` becomes **`auto`** —
+a horizontal scroller nobody wrote and nobody wants. The box then slides and
+rubber-bands the instant any descendant is one pixel too wide. Theo's words for
+it were *"why can't be static instead of bouncy?"*
+
+`styleMounts()` sets `position:fixed; inset:0; overflow-y:auto` INLINE on the
+full-screen mounts, so every one of them is a latent sideways scroller.
+
+⚠️ **A page-level overflow check will not see it.** On the claim screen an
+ancestor (`.portal-retail`) has `overflow:hidden`, so
+`document.documentElement.scrollWidth` reads a clean 393 while the view inside
+is at 408. **Measure the view, not the document.**
+
+**The fix is a PAIR, and half of it is a regression on its own:**
+
+1. `overflow-x: hidden` on the container — it can never slide again. Alone,
+   this CLIPS whatever was too wide, which on a money screen means quietly
+   losing a column of figures.
+2. Give the genuinely-wide child its own scroller, so nothing is lost.
+
+Gate both: container `scrollWidth === clientWidth`, **and** the inner wrapper
+`scrollWidth > clientWidth`. Assert only the first and a clipping build passes.
+
+⚠️ **This is why it cannot be swept blind.** `overscroll-behavior-x:contain`
+(class 30) is inert where there is no overflow, so 697 could apply it to all 33
+scrollers safely. `overflow-x:hidden` is **not** inert — it destroys content.
+Each view needs its own wide child found first.
+
+⚠️ **`display:block;overflow-x:auto` on a `<table>` is not the free fix it
+looks like.** It makes the inner anonymous table box shrink-to-fit, so every
+table that already fitted stops filling its width. Wrap the table instead.
+
+## 34 — ink from one theme switch, ground from another
+
+**Struck at 702, after 637 fixed one third of it.**
+
+This app has **three** independent theme switches:
+
+| switch | attribute | tokens |
+|---|---|---|
+| retail app theme | `<html data-theme="rb-light">` | `--rbe-*` |
+| landing | `<html data-mode="light">` | landing only |
+| **Resource Library / Cardinal Truth** | `<body data-rltheme="docket\|siren">` | **`--ct-*`** |
+
+An element whose **ink** follows one and whose **ground** follows another is
+not merely fragile — it is wrong in some combination *by construction*, and it
+will look fine to whoever tests it in the combination they happen to be in.
+`.dbaddr` took `var(--rbe-ink)` while `.acxsec` was painted from
+`var(--ct-surface)`: readable at 12.31:1 in one pairing and **1.00:1** in
+another, which is the same colour twice.
+
+**The rule: an element's ink must come from the palette that paints its own
+ground.** Not a literal chosen for the combination in front of you — 637 chose
+correctly for retail and then *reasoned* about the other two without measuring,
+and both were failing.
+
+**Test the MATRIX, not the screen you are looking at.** Twelve cells here
+(3 CRMs × 2 app themes × 2 RL themes). Four were failing and eight passing, so
+any single-combination check had a two-in-three chance of reporting green.

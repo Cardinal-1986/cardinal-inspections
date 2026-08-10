@@ -3837,3 +3837,38 @@ There is no weather code left in `cr-lr-script`.
   `.sb` and `.n`, which does nothing on an inline box, and the `.cr-lr-pair`
   tiles directly below use `<b>`/`<small>` and stack correctly. Fixed with one
   scoped declaration — `.tt`/`.sb`/`.n` are about as generic as class names get.
+
+
+### 702 — the address under the map takes its ink from its own card
+
+`.dbaddr` had been reading `var(--rbe-ink)` (the retail app theme, `<html
+data-theme>`) while the card behind it, `.acxsec`, is painted from
+`var(--ct-surface)` (`<body data-rltheme>`). Two switches that move
+independently, so the pair went wrong in both directions — **1.38:1** with the
+app dark and the card light, **1.00:1** the other way, which is the same colour
+twice.
+
+Each CRM now takes its ink from the palette that paints its own ground:
+insurance `var(--ct-ink)`, community a fixed dark ink (its card is `#fffdf7`
+in both themes), retail unchanged from 637. Worst of twelve cells: **14.81:1**.
+
+⚠️ **`--ct-*` is declared ONLY under `[data-rltheme]`** — the Resource
+Library's theme, a third switch beside the two in `CLAUDE.md`. Anything reading
+`--ct-*` follows the RL toggle, not the app one.
+
+
+### 703 — the insurance claim screen holds still
+
+`styleMounts()` sets `overflow-y:auto` INLINE on the full-screen mounts and
+nothing else. CSS forbids `overflow-x:visible` beside a non-visible `overflow-y`,
+so **overflow-x is coerced to `auto`** and the whole screen became a sideways
+scroller. The Scope History table (386px in a 349px box) then dragged it.
+
+`#cr-claims-mount{overflow-x:hidden}` pins the screen; the four claim tables
+each gained a `.cr-c-xscroll` wrapper so the wide one scrolls in its own box.
+**Both halves are required** — pinning alone would clip a column of money.
+
+⚠️ **13 other full-screen views still carry the coercion** (`landingView`,
+`cr-estimates-mount`, `cr-pricing-mount`, `payView`, `puDetail`, eight modals).
+Not swept: `overflow-x:hidden` clips, so each needs its wide child found first.
+See bug class 33.

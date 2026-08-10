@@ -4,9 +4,9 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–701
+# Session of 10 August 2026 (later) — builds 685–703
 
-**685 through 701 all shipped, merged and verified deployed** (PRs #198–#217,
+**685 through 703 all shipped, merged and verified deployed** (PRs #198–#218,
 each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
 must confirm it again rather than inherit it). `main` at 699. Working tree
 clean, branch synced to main, no open PRs.
@@ -30,6 +30,8 @@ clean, branch synced to main, no open PRs.
 | 699 | the 15 page headings are drawn · **`ICO` was declared six times, one dead — now once** | #215 |
 | 700 | the lavender PO reads in light mode (1.79:1 → a token pair) · **On Hold** gets a colour of its own in all five stage maps | #217 |
 | 701 | **the weather panel is gone** · the wordmark is back to full size · the four course rows stack instead of running together | #217 |
+| 702 | the map address took its ink from one theme switch and its card from another — **1.00:1**, the same colour twice | #218 |
+| 703 | the claim screen slid sideways because `overflow-y:auto` alone **coerces overflow-x to auto** | #218 |
 
 **✅ The lavender question is CLOSED.** It had been the one thing waiting on
 Theo — failing at 1.99:1, and 689's darker card took it to **1.79:1**, a

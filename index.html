@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 701 &#8212; The weather panel is gone from the home screen</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 703 &#8212; The claim screen holds still, and the address under the map is readable again</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -27063,6 +27063,19 @@ function showList() {
   #cr-claims-mount .cr-c-link-card:hover .cr-c-link-cta { color: var(--cr-red); }
   #cr-claims-mount .cr-c-loading { text-align: center; padding: 60px 20px; color: var(--cr-muted); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
 
+  /* 703, Theo: "Why can't be static instead of bouncy?"
+     styleMounts() sets `overflow-y:auto` INLINE on this mount and nothing else.
+     CSS forbids `visible` beside a non-visible value, so overflow-x is coerced to
+     AUTO and the entire claim screen became a horizontal scroller by accident. It
+     then slid and rubber-banded whenever any child was a pixel too wide - the
+     Scope History table measured 386px inside a 349px box, which put .cr-c-app at
+     scrollWidth 408 against clientWidth 393.
+     Pinning it needs BOTH of these. hidden alone would clip a column of real
+     money off the wide table; the wrapper alone would leave the screen sliding. */
+  #cr-claims-mount { overflow-x: hidden; }
+  #cr-claims-mount .cr-c-xscroll { overflow-x: auto; overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch; max-width: 100%; }
+
   /* Modal (shared with pattern) */
   #cr-claims-mount .cr-c-modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
   #cr-claims-mount .cr-c-modal { background:var(--cr-bg,#fff); border-radius: 8px; padding: 24px; max-width: 480px; width: 100%; box-shadow: 0 8px 40px rgba(0,0,0,0.15); max-height: 90vh; overflow-y: auto; }
@@ -27462,10 +27475,10 @@ function showList() {
       return '<div class="cr-c-empty">No homeowner upgrades on this claim.</div>';
     }
     const tot = state.upgrades.reduce((s, u) => s + Number(u.amount || 0), 0);
-    return '<table class="cr-c-upg">' + state.upgrades.map(u =>
+    return '<div class="cr-c-xscroll"><table class="cr-c-upg">' + state.upgrades.map(u =>
       `<tr><td>${esc(u.name)}${u.detail ? ` <span style="opacity:.6">${esc(u.detail)}</span>` : ''}</td>` +
       `<td class="amt">$${fmt(u.amount)}</td></tr>`
-    ).join('') + `<tr class="total"><td>Out of pocket</td><td class="amt">$${fmt(tot)}</td></tr></table>` +
+    ).join('') + `<tr class="total"><td>Out of pocket</td><td class="amt">$${fmt(tot)}</td></tr></table></div>` +
     '<div class="cr-c-empty" style="padding-top:8px">Billed direct to the homeowner. Never submitted to the carrier.</div>';
   }
 
@@ -27507,7 +27520,7 @@ function showList() {
       return `<div class="cr-c-empty">No scope reads recorded yet.<small>Each Scope of Loss you read and apply is kept here, so a re-read never erases the one before it.</small></div>`;
     }
     return `
-      <table class="cr-c-table">
+      <div class="cr-c-xscroll"><table class="cr-c-table">
         <thead><tr><th>Read</th><th>Document</th><th class="amt">RCV</th><th class="amt">ACV</th><th class="amt">Deprec.</th></tr></thead>
         <tbody>
           ${rows.map(sr => `
@@ -27520,7 +27533,7 @@ function showList() {
             </tr>
           `).join('')}
         </tbody>
-      </table>
+      </table></div>
     `;
   }
 
@@ -27714,7 +27727,7 @@ function showList() {
     }
     const total = state.payments.reduce((s, p) => s + Number(p.amount), 0);
     return `
-      <table class="cr-c-table">
+      <div class="cr-c-xscroll"><table class="cr-c-table">
         <thead><tr><th>Kind</th><th>Received</th><th>Check #</th><th class="amt">Amount</th></tr></thead>
         <tbody>
           ${state.payments.map(p => `
@@ -27727,7 +27740,7 @@ function showList() {
           `).join('')}
           <tr class="total"><td colspan="3">Total Received</td><td class="amt">$${fmt(total)}</td></tr>
         </tbody>
-      </table>
+      </table></div>
     `;
   }
 
@@ -27739,7 +27752,7 @@ function showList() {
     const apprTotal = state.supplements.reduce((s, sp) => s + Number(sp.amount_approved || 0), 0);
     const statusColor = { draft: '#666', submitted: 'var(--cr-blue)', approved: 'var(--cr-green)', partial: 'var(--cr-amber)', denied: 'var(--cr-red)', withdrawn: '#666' };
     return `
-      <table class="cr-c-table">
+      <div class="cr-c-xscroll"><table class="cr-c-table">
         <thead><tr><th>Reason</th><th>Filed</th><th>Status</th><th class="amt">Requested</th><th class="amt">Approved</th></tr></thead>
         <tbody>
           ${state.supplements.map(sp => `
@@ -27753,7 +27766,7 @@ function showList() {
           `).join('')}
           <tr class="total"><td colspan="3">Totals</td><td class="amt">$${fmt(reqTotal)}</td><td class="amt">$${fmt(apprTotal)}</td></tr>
         </tbody>
-      </table>
+      </table></div>
     `;
   }
 
@@ -37448,6 +37461,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:703, d:'2026-08-10', t:'The insurance claim screen holds still',
+s:'You asked why it was bouncy instead of static. The screen had been sliding sideways \u2014 not by design: it was told to scroll up and down, and the browser quietly makes a box scroll sideways too unless you say otherwise. Anything a shade too wide then dragged the whole screen with it. The screen is now pinned, and the one thing that really is too wide for a phone \u2014 the scope history table \u2014 scrolls on its own inside its box, so no figures are lost.' },
+{ b:702, d:'2026-08-10', t:'The address under the map is readable again',
+s:'On an insurance job the address under the map could come out almost invisible. The text was following the app\u2019s light/dark switch while the card behind it followed a different one, so the two could end up the same colour \u2014 measured at 1.00:1, which is to say identical. Each screen now takes its text colour from the same palette that paints its own card, so they cannot drift apart again. Checked in every combination of the two switches.' },
 { b:701, d:'2026-08-10', t:'The weather panel is gone from the home screen',
 s:'You said it was not needed, so it is out \u2014 and with it the only outside service the home screen was calling for data. Two things came with it. The Cardinal wordmark had been shrunk to sit beside the panel; it is back to full size. And the four shortcut rows had their title running straight into their description \u2014 \u201CQuick InspectionWalk the roof\u201D \u2014 which was an old fault, not a new one. Title, description and client count now sit on their own lines.' },
 { b:700, d:'2026-08-10', t:'The PO number reads in light mode, and On Hold has its own colour',
@@ -45713,7 +45730,22 @@ openCount : function(){ return items.filter(function(i){ return i.status === 'op
    that suit those grounds. An unscoped rule here would move the bug rather than
    fix it — a first attempt did exactly that and a render caught it. */
 body:not(.claim-insurance):not(.claim-community) .dbaddr{color:#1e2432}
-body[data-crm="community"] .dbaddr{color:var(--ccm-ink,#f2f4f3)}.cr-pp-item{display:flex;align-items:flex-start;gap:11px;padding:10px 4px;border-bottom:1px solid #f2ece1}.cr-pp-item:last-child{border-bottom:0}.cr-pp-item .box{flex:0 0 auto;width:20px;height:20px;margin-top:1px;border-radius:5px;border:2px solid #d0c6b4;background:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}.cr-pp-item .box:hover{border-color:#4a8c5a}.cr-pp-item.done .box{background:#4a8c5a;border-color:#4a8c5a}.cr-pp-item .tx{flex:1;min-width:0}.cr-pp-item .t{font:600 13.5px 'Segoe UI',Arial,sans-serif;line-height:1.4;color:#1e2432}.cr-pp-item.done .t{color:#8a8578;text-decoration:line-through}.cr-pp-item .m{font-size:11px;color:#6b6b6b;margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}.cr-pp-item .kind{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fdf1dd;color:#8f1620}.cr-pp-item .kind.callback{background:#fbe9e8;color:var(--red-dk)}.cr-pp-item .kind.ticket{background:#e9f0f9;color:#2d4468}.cr-pp-item .hi{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fbe9e8;color:var(--red-dk)}.cr-pp-item img{width:34px;height:34px;object-fit:cover;border-radius:6px;flex:0 0 auto;cursor:zoom-in}.cr-pp-fold{width:100%;margin-top:10px;padding:9px 12px;background:#faf7f0;border:1px dashed #ddd6cf;border-radius:8px;cursor:pointer;text-align:left;font-family:inherit;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-pp-fold:hover{background:#f5efe4;border-color:#c8202e;color:#5a4a1a}.cr-pp-fold .chev{float:right;color:#a89e88}.cr-pp-hist[hidden]{display:none}.cr-pp-hist{margin-top:8px;padding-top:4px;border-top:1px solid #f2ece1}/* community blue, round 2 */
+body[data-crm="community"] .dbaddr{color:var(--ccm-ink,#f2f4f3)}
+/* 702, Theo: "The letters in the map section went illegible again." 637 fixed
+   retail and excluded these two on the reasoning that their inks already suited
+   their grounds. Measured, they did not: this app has THREE theme switches, and
+   .dbaddr read var(--rbe-ink) (<html data-theme>) while .acxsec is painted from
+   var(--ct-surface) (<body data-rltheme>). Two switches that move independently,
+   so the pair goes wrong in BOTH directions - insurance measured 1.38:1 with the
+   app dark and the card light, and 1.00:1 the other way round, which is the same
+   colour twice and is what the screenshot showed.
+   Each CRM now takes its ink from the palette that paints its OWN ground, so the
+   two cannot drift apart again. --ct-ink is the token .acxsec .acxbody already
+   uses: #17181B on white (docket), #F4F1F1 on #16161B (siren).
+   Community's card is #fffdf7 in both themes - no dark twin - so a fixed ink is
+   right there for the same reason 637's retail literal is right. */
+body.claim-insurance .dbaddr{color:var(--ct-ink,#F4F1F1)}
+body.claim-community .dbaddr,body[data-crm="community"] .dbaddr{color:#1a2a1e}.cr-pp-item{display:flex;align-items:flex-start;gap:11px;padding:10px 4px;border-bottom:1px solid #f2ece1}.cr-pp-item:last-child{border-bottom:0}.cr-pp-item .box{flex:0 0 auto;width:20px;height:20px;margin-top:1px;border-radius:5px;border:2px solid #d0c6b4;background:#fff;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff}.cr-pp-item .box:hover{border-color:#4a8c5a}.cr-pp-item.done .box{background:#4a8c5a;border-color:#4a8c5a}.cr-pp-item .tx{flex:1;min-width:0}.cr-pp-item .t{font:600 13.5px 'Segoe UI',Arial,sans-serif;line-height:1.4;color:#1e2432}.cr-pp-item.done .t{color:#8a8578;text-decoration:line-through}.cr-pp-item .m{font-size:11px;color:#6b6b6b;margin-top:3px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}.cr-pp-item .kind{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fdf1dd;color:#8f1620}.cr-pp-item .kind.callback{background:#fbe9e8;color:var(--red-dk)}.cr-pp-item .kind.ticket{background:#e9f0f9;color:#2d4468}.cr-pp-item .hi{font:800 8px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:#fbe9e8;color:var(--red-dk)}.cr-pp-item img{width:34px;height:34px;object-fit:cover;border-radius:6px;flex:0 0 auto;cursor:zoom-in}.cr-pp-fold{width:100%;margin-top:10px;padding:9px 12px;background:#faf7f0;border:1px dashed #ddd6cf;border-radius:8px;cursor:pointer;text-align:left;font-family:inherit;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-pp-fold:hover{background:#f5efe4;border-color:#c8202e;color:#5a4a1a}.cr-pp-fold .chev{float:right;color:#a89e88}.cr-pp-hist[hidden]{display:none}.cr-pp-hist{margin-top:8px;padding-top:4px;border-top:1px solid #f2ece1}/* community blue, round 2 */
 body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba(4,120,87,.35)}body.cr-cc-open .cr-pp-hd{background:linear-gradient(180deg,var(--ccm-raise,#1e2220),var(--ccm-card,#161918));border-bottom-color:rgba(4,120,87,.2)}body.cr-cc-open .cr-pp-hd .t{color:var(--ccm-ink,#f2f4f3)}body.cr-cc-open .cr-pp-hd .add{background:transparent;border:1px solid var(--ccm-ac,#34D399);color:var(--ccm-ac,#34D399)}body.cr-cc-open .cr-pp-item{border-bottom-color:rgba(4,120,87,.12)}body.cr-cc-open .cr-pp-item .t{color:var(--ccm-ink,#f2f4f3)}body.cr-cc-open .cr-pp-item.done .t{color:var(--ccm-dim,#7d8781)}body.cr-cc-open .cr-pp-item .m{color:var(--ccm-dim,#7d8781)}body.cr-cc-open .cr-pp-item .box{background:var(--ccm-ground,#0e100f);border-color:var(--ccm-washln,#047857)}body.cr-cc-open .cr-pp-none{color:var(--ccm-mute,#b6c0ba)}body.cr-cc-open .cr-pp-fold{color:var(--ccm-ac,#34D399)}body.claim-insurance .cr-pp-card{background:linear-gradient(160deg,var(--ct-surface) 0%,var(--ct-bg) 100%);border-color:var(--ct-line)}body.claim-insurance .cr-pp-hd{background:linear-gradient(180deg,var(--ct-surface-3),var(--ct-surface-2));border-bottom-color:var(--ct-line)}body.claim-insurance .cr-pp-hd .t{color:var(--ct-ink)}body.claim-insurance .cr-pp-item .t{color:var(--ct-ink)}body.claim-insurance .cr-pp-item.done .t{color:var(--ct-ink-2)}body.claim-insurance .cr-pp-item .m{color:var(--ct-ink-2)}body.claim-insurance .cr-pp-item{border-bottom-color:var(--ct-line)}body.claim-insurance .cr-pp-item .box{background:var(--ct-surface-2);border-color:var(--ct-red)}body.claim-insurance .cr-pp-none{color:var(--ct-ink-2)}body.claim-insurance .cr-pp-fold{color:var(--ct-red-deep)}</style>
 <style id="cr-ppg-styles">/* 607: Punch Outs tab. Lives in its own block so the
    card's stylesheet stays the card's. Dark values first — this app's default

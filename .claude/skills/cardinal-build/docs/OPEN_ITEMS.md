@@ -2401,7 +2401,7 @@ collision), gradient names gone from the cards (39 gradient-text sites → 38).
 
 ---
 
-## Builds 685–701 — what closed, and the live queue (10 Aug 2026)
+## Builds 685–703 — what closed, and the live queue (10 Aug 2026)
 
 **Closed this span**, all merged and verified deployed (PRs #198–#207):
 gradient text (685), the nav icons (686) and the three Theo rejected (687),
@@ -2414,7 +2414,25 @@ that lost it (694), the Tools dropdown (695), **my 690 regression on the chip
 strips (696)**, the sideways-swipe escape on All Leads & Jobs (697), the 27
 client-page `.projsec` headings (698), the 15 `.viewhead` page headings and the
 `ICO` consolidation (699), **the lavender PO and On Hold colours (700)** and
-**the weather panel removal (701)**.
+**the weather panel removal (701)**, **the map address ink (702)** and
+**the claim screen's sideways bounce (703)**.
+
+**⚠ OPEN, measured, and put to Theo — the sideways-bounce class is app-wide.**
+703 fixed the insurance claim screen. **13 other full-screen views carry the
+same coercion**: `landingView`, `cr-estimates-mount`, `cr-pricing-mount`,
+`payView`, `puDetail`, `tskModal`, `solModal`, `projModal`, `ckModal`,
+`gcModal`, `leadModal`, `leadFormModal`, `apptModal`. Each will slide and
+rubber-band whenever a child is a pixel too wide.
+**This must NOT be swept blind.** Unlike 697's `overscroll-behavior-x:contain`,
+which is inert where there is no overflow, `overflow-x:hidden` **clips** — so
+every view needs its genuinely-wide child found and given its own scroller
+first. Bug class 33 has the drill.
+
+**Also seen while measuring, not fixed, not reported as a bug yet:** the HOME
+view has small pre-existing overflows — `.wrap` +10px, `.homecols` / `.homemain`
+/ `#kpPunchStrip` / `.pu-strip` / `.sh` +18px each at 393px. They are contained
+by `#mainView{overflow:clip}` so nothing slides today, but they are real and
+they are what class 33 needs as fuel if that clip is ever relaxed.
 
 **The queue, in Theo's priority order:**
 
