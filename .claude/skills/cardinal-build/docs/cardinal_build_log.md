@@ -14318,3 +14318,45 @@ as the retirement comment — asserted by grep, count 1.
   also appear inside `querySelector()` calls, so the key alone is not a unique
   anchor — the markup site is the one whose tag closes onto an entity, and the
   patch asserts exactly one candidate qualifies.
+
+- **687** · **the three icons Theo rejected, redrawn.** He flagged `hammer`,
+  `hardhat` and `building` off the 686 contact sheet. All three were right, and
+  two of them were 681's, carried forward at 686 without a hard look.
+
+  **`hammer` → `ladder`.** Six attempts at a claw hammer — head-on, diagonal,
+  V-notch, deeper claw side, sledge, hammer-striking-a-board — every one read as
+  a screwdriver or a signpost at 13px. **The claw is the entire tell and it does
+  not survive a single stroke weight at that size.** Rendered five side by side
+  and said so rather than present a bad option as a choice; the only legible one
+  was a wrench. Theo picked the ladder from the widened set: two rails, three
+  rungs, and on a roof it says the same thing a hammer was trying to say.
+
+  **`building` → `group`.** Theo, verbatim: *"the icon for team even as a
+  building doesn't seem right."* That is a MEANING problem, not a drawing one —
+  a building will not read as a team however well it is drawn. Three figures,
+  deliberately not the two-figure `people` mark, so a team event and a client
+  cannot be confused on the board. Both renders shown side by side to prove the
+  silhouettes differ.
+
+  **`hardhat` redrawn.** The 686 shell put a box on the crown and read as a bag
+  handle. Two ribs over the dome are the tell of a real hard hat.
+
+  Both renames are renames, not aliases — one name per glyph. `hammer` and
+  `building` had exactly one `get()` caller each (`KIND_META`), checked before
+  renaming; `hardhat` has none, because the markup reaches it through the
+  `data-cri` attribute, which is why its name could stay.
+
+  **The lesson this build is worth: assertions cannot see meaning.** 686 was
+  195/195 green and shipped three icons that were wrong — one drawn badly, one
+  drawing the wrong thing entirely. Only a rendered sheet in front of Theo
+  caught it, which is the same finding as 628's amber bar and 633's white boxes.
+  **A contact sheet is now part of shipping an icon, not a courtesy.**
+
+  Also fixed: the committed `render_navicons.js` hard-coded `./node_modules`
+  next to itself, so it only ran from the scratchpad it was written in. Plain
+  `require('playwright-core')` now, matching every other harness in that folder.
+
+  Gates: `check_build` green (686 prev, marker + negative control).
+  `render_navicons` 195/195 and RED (141) on 685. Sweep green: schedule 27/27
+  (it covers `KIND_META`, so the two renames are proven there), pcard 12/12,
+  679 31/31, 680 35/35, colors 110/110.
