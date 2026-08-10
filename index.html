@@ -3361,7 +3361,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 692 &#8212; The sales, insurance, community and import screens are drawn, not emoji</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 693 &#8212; Sales Floor follows the light switch, which it never did before</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37373,6 +37373,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:693, d:'2026-08-10', t:'Sales Floor follows the light switch',
+s:'Sales Floor was built dark and stayed dark \u2014 flipping the app to light mode did nothing to it, which is why it looked wrong beside every other screen. It now has a proper light theme. The red and the navy still mean what they meant: red is the objection, navy is your answer, in both themes. The one thing that swaps is which of the two reds carries the quote, because the brighter one stops being readable on a pale page.' },
 { b:692, d:'2026-08-10', t:'Drawn icons on four more screens',
 s:'Sales Floor, the insurance hub, the community hub and Import from AccuLynx now use drawn icons instead of emoji \u2014 37 in all. Fifteen new ones were drawn for this: a page, books, a pencil, scales, a bulb, a factory, a trophy, a card stack, a camera, a picture, a paperclip, a compass, a calculator, two houses and a filter funnel. Emoji change shape depending on the phone; these do not, and they take the colour of the text beside them.' },
 { b:691, d:'2026-08-10', t:'Filter by rep from the same place as the stages',
@@ -44522,69 +44524,86 @@ figureHtml : figureHtml,
    Red as TEXT is #e8505c (5.30:1), not Cardinal #C8202E — the brand red
    computes to 3.28:1 as type on this ground and always failed here, including
    before this redesign. #C8202E is kept for FILLS and rails, where white sits
-   on it at 5.67:1. Every text colour in this block clears 4.5:1. ── */
-#cr-sf{display:none;position:fixed;inset:0;background:#0d0d0e;z-index:9500;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#f0ede7}
+   on it at 5.67:1. Every text colour in this block clears 4.5:1.
+
+   693: there is now a LIGHT twin at the foot of this block. Until then this
+   screen was hardcoded dark and the app-wide light switch did nothing to it —
+   the two themes rendered byte-identical. The dark values above are unchanged;
+   light overrides only the neutral surfaces and their inks. ── */
+#cr-sf{--sf-bg:#0d0d0e;--sf-card:#151517;--sf-card2:#191a1d;--sf-block:#131315;--sf-ink:#f0ede7;--sf-mute:#8b8781;--sf-mute2:#a5a19a;--sf-mute3:#8f8b84;--sf-red-tx:#e8505c;--sf-red-dim:#c98a86;--sf-navy-tx:#8FB8E6;--sf-hair:rgba(255,255,255,.10);--sf-hair2:rgba(255,255,255,.07);--sf-hair3:rgba(255,255,255,.22);--sf-hair4:rgba(255,255,255,.18);--sf-hair5:rgba(255,255,255,.4);display:none;position:fixed;inset:0;background:var(--sf-bg,#0d0d0e);z-index:9500;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--sf-ink,#f0ede7)}
 #cr-sf.open{display:block}
 .cr-sf-wrap{max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 18px calc(60px + env(safe-area-inset-bottom,0px))}
 .cr-sf-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:8px}
-.cr-sf-back{flex:0 0 auto;background:transparent;border:1px solid rgba(255,255,255,.22);color:#a5a19a;width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:17px;line-height:1;margin-top:4px}
-.cr-sf-back:hover{border-color:#4A7FC1;color:#f0ede7}
+.cr-sf-back{flex:0 0 auto;background:transparent;border:1px solid var(--sf-hair3,rgba(255,255,255,.22));color:var(--sf-mute2,#a5a19a);width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:17px;line-height:1;margin-top:4px}
+.cr-sf-back:hover{border-color:#4A7FC1;color:var(--sf-ink,#f0ede7)}
 .cr-sf-ttl{flex:1;min-width:0}
-.cr-sf-ttl h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(27px,7.5vw,38px);letter-spacing:-.02em;line-height:1;color:#f0ede7}
-.cr-sf-ttl h1 span{color:#e8505c}
-.cr-sf-ttl p{margin:7px 0 0;font:600 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.26em;text-transform:uppercase;color:#8b8781}
+.cr-sf-ttl h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(27px,7.5vw,38px);letter-spacing:-.02em;line-height:1;color:var(--sf-ink,#f0ede7)}
+.cr-sf-ttl h1 span{color:var(--sf-red-tx,#e8505c)}
+.cr-sf-ttl p{margin:7px 0 0;font:600 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.26em;text-transform:uppercase;color:var(--sf-mute,#8b8781)}
 /* the daily line — navy spine, because it is something you say */
-.cr-sf-today{position:relative;margin:22px 0 26px;background:#151517;border:1px solid rgba(255,255,255,.10);border-radius:13px;padding:20px 20px 18px;overflow:hidden}
+.cr-sf-today{position:relative;margin:22px 0 26px;background:var(--sf-card,#151517);border:1px solid var(--sf-hair,rgba(255,255,255,.10));border-radius:13px;padding:20px 20px 18px;overflow:hidden}
 .cr-sf-today::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#2C5FA8}
-.cr-sf-today .k{font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#8f8b84}
-.cr-sf-today .q{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:clamp(17px,4.6vw,20px);line-height:1.45;color:#f0ede7;margin:11px 0 13px}
-.cr-sf-today .a{font-size:13.5px;line-height:1.6;color:#a5a19a;padding-top:13px;border-top:1px solid rgba(255,255,255,.07)}
-.cr-sf-today .a b{color:#f0ede7}
+.cr-sf-today .k{font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--sf-mute3,#8f8b84)}
+.cr-sf-today .q{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:clamp(17px,4.6vw,20px);line-height:1.45;color:var(--sf-ink,#f0ede7);margin:11px 0 13px}
+.cr-sf-today .a{font-size:13.5px;line-height:1.6;color:var(--sf-mute2,#a5a19a);padding-top:13px;border-top:1px solid var(--sf-hair2,rgba(255,255,255,.07))}
+.cr-sf-today .a b{color:var(--sf-ink,#f0ede7)}
 .cr-sf-coach{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-bottom:8px}
-.cr-sf-coach button{display:flex;align-items:center;gap:10px;background:#151517;border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:14px 14px;cursor:pointer;font-family:inherit;color:#f0ede7;text-align:left;transition:border-color .15s,background .15s}
-.cr-sf-coach button:hover{border-color:#4A7FC1;background:#191a1d}
+.cr-sf-coach button{display:flex;align-items:center;gap:10px;background:var(--sf-card,#151517);border:1px solid var(--sf-hair,rgba(255,255,255,.10));border-radius:10px;padding:14px 14px;cursor:pointer;font-family:inherit;color:var(--sf-ink,#f0ede7);text-align:left;transition:border-color .15s,background .15s}
+.cr-sf-coach button:hover{border-color:#4A7FC1;background:var(--sf-card2,#191a1d)}
 .cr-sf-coach button.hero{background:#1F3A6E;border-color:#2C5FA8;color:#eaf1fb;grid-column:1 / -1}
 .cr-sf-coach button.hero:hover{background:#254680}
 .cr-sf-coach button .i{font-size:17px;flex:0 0 auto}
 .cr-sf-coach button .x{flex:1;min-width:0}
 .cr-sf-coach button .x b{display:block;font:700 13.5px inherit}
-.cr-sf-coach button .x small{display:block;font-size:11.5px;margin-top:2px;color:#8b8781;line-height:1.4}
+.cr-sf-coach button .x small{display:block;font-size:11.5px;margin-top:2px;color:var(--sf-mute,#8b8781);line-height:1.4}
 .cr-sf-coach button.hero .x small{color:rgba(234,241,251,.78)}
-.cr-sf-rule{display:flex;align-items:baseline;gap:12px;margin:34px 0 6px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#8b8781}
+.cr-sf-rule{display:flex;align-items:baseline;gap:12px;margin:34px 0 6px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--sf-mute,#8b8781)}
 .cr-sf-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(44,95,168,.45),transparent)}
-.cr-sf-lede{font-size:13px;line-height:1.6;color:#8b8781;margin:0 0 4px}
+.cr-sf-lede{font-size:13px;line-height:1.6;color:var(--sf-mute,#8b8781);margin:0 0 4px}
 .cr-sf-tabs{display:flex;gap:6px;margin:16px 0 4px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
 .cr-sf-tabs::-webkit-scrollbar{display:none}
-.cr-sf-tabs button{flex:0 0 auto;padding:9px 15px;border-radius:20px;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,.18);color:#8b8781;font:700 11.5px inherit;white-space:nowrap;font-family:inherit;transition:all .15s}
-.cr-sf-tabs button:hover{color:#f0ede7;border-color:rgba(255,255,255,.4)}
+.cr-sf-tabs button{flex:0 0 auto;padding:9px 15px;border-radius:20px;cursor:pointer;background:transparent;border:1px solid var(--sf-hair4,rgba(255,255,255,.18));color:var(--sf-mute,#8b8781);font:700 11.5px inherit;white-space:nowrap;font-family:inherit;transition:all .15s}
+.cr-sf-tabs button:hover{color:var(--sf-ink,#f0ede7);border-color:var(--sf-hair5,rgba(255,255,255,.4))}
 .cr-sf-tabs button.on{background:#1F3A6E;border-color:#2C5FA8;color:#eaf1fb}
-.cr-sf-cr{margin:14px 0 0;padding:0 0 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+.cr-sf-cr{margin:14px 0 0;padding:0 0 16px;border-bottom:1px solid var(--sf-hair2,rgba(255,255,255,.07))}
 .cr-sf-cr:last-child{border-bottom:0}
 /* THEM — the objection. Red rail, warm-tinted type. */
-.cr-sf-cr .them{display:block;position:relative;margin-left:0;padding:0 0 0 18px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:15.5px;line-height:1.5;color:#c98a86}
+.cr-sf-cr .them{display:block;position:relative;margin-left:0;padding:0 0 0 18px;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:15.5px;line-height:1.5;color:var(--sf-red-dim,#c98a86)}
 .cr-sf-cr .them::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:2px;background:#C8202E}
 /* YOU — the answer. A navy card, not a rail: this is the one place true navy lives. */
-.cr-sf-cr .you{display:block;position:relative;margin:12px 0 0 18px;padding:12px 14px 12px 18px;background:#16233b;border:1px solid rgba(44,95,168,.45);border-radius:9px;font-size:14.5px;line-height:1.6;color:#f0ede7}
+.cr-sf-cr .you{display:block;position:relative;margin:12px 0 0 18px;padding:12px 14px 12px 18px;background:#16233b;border:1px solid rgba(44,95,168,.45);border-radius:9px;font-size:14.5px;line-height:1.6;color:#f0ede7}/* 693: the navy card and its ink are BOTH literal in both themes. This is
+   the one #f0ede7 of twelve that sits on a coloured ground, so it is not
+   --sf-ink: flipping it would paint #17181a on #16233b in light mode. */
 .cr-sf-cr .you::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;border-radius:2px;background:#4A7FC1}
-.cr-sf-cr .why{display:block;margin:9px 0 0 36px;font:600 11.5px inherit;line-height:1.5;color:#8b8781}
-.cr-sf-cr .why b{color:#8FB8E6;font-weight:800}
-.cr-sf-block{background:#131315;border:1px solid rgba(255,255,255,.10);border-radius:11px;padding:16px 17px;margin-top:11px}
-.cr-sf-block h4{margin:0 0 8px;font-family:Georgia,serif;font-weight:700;font-size:15px;color:#f0ede7}
-.cr-sf-block p{margin:0 0 9px;font-size:13.5px;line-height:1.62;color:#a5a19a}
+.cr-sf-cr .why{display:block;margin:9px 0 0 36px;font:600 11.5px inherit;line-height:1.5;color:var(--sf-mute,#8b8781)}
+.cr-sf-cr .why b{color:var(--sf-navy-tx,#8FB8E6);font-weight:800}
+.cr-sf-block{background:var(--sf-block,#131315);border:1px solid var(--sf-hair,rgba(255,255,255,.10));border-radius:11px;padding:16px 17px;margin-top:11px}
+.cr-sf-block h4{margin:0 0 8px;font-family:Georgia,serif;font-weight:700;font-size:15px;color:var(--sf-ink,#f0ede7)}
+.cr-sf-block p{margin:0 0 9px;font-size:13.5px;line-height:1.62;color:var(--sf-mute2,#a5a19a)}
 .cr-sf-block p:last-child{margin-bottom:0}
-.cr-sf-block b{color:#f0ede7}
+.cr-sf-block b{color:var(--sf-ink,#f0ede7)}
 /* a line to say out loud is your words, so it reads navy */
-.cr-sf-block .say{font-family:Georgia,serif;font-size:14.5px;line-height:1.55;color:#f0ede7;padding-left:16px;border-left:2px solid #4A7FC1;margin:10px 0}
+.cr-sf-block .say{font-family:Georgia,serif;font-size:14.5px;line-height:1.55;color:var(--sf-ink,#f0ede7);padding-left:16px;border-left:2px solid #4A7FC1;margin:10px 0}
 .cr-sf-block ul{margin:8px 0 0;padding-left:19px}
-.cr-sf-block li{font-size:13.5px;line-height:1.6;color:#a5a19a;margin-bottom:5px}
+.cr-sf-block li{font-size:13.5px;line-height:1.6;color:var(--sf-mute2,#a5a19a);margin-bottom:5px}
 .cr-sf-links{display:grid;gap:8px;margin-top:11px}
-.cr-sf-links button{display:flex;align-items:center;gap:11px;background:transparent;border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:13px 15px;cursor:pointer;font-family:inherit;color:#a5a19a;text-align:left;transition:border-color .15s,color .15s}
-.cr-sf-links button:hover{border-color:#4A7FC1;color:#f0ede7}
+.cr-sf-links button{display:flex;align-items:center;gap:11px;background:transparent;border:1px solid var(--sf-hair,rgba(255,255,255,.10));border-radius:10px;padding:13px 15px;cursor:pointer;font-family:inherit;color:var(--sf-mute2,#a5a19a);text-align:left;transition:border-color .15s,color .15s}
+.cr-sf-links button:hover{border-color:#4A7FC1;color:var(--sf-ink,#f0ede7)}
 .cr-sf-links button .i{font-size:15px;flex:0 0 auto}
 .cr-sf-links button b{flex:1;font:700 13px inherit}
-.cr-sf-links button .go{color:#8b8781;font-size:14px}
-.cr-sf-foot{margin-top:36px;padding-top:16px;border-top:1px solid rgba(255,255,255,.10);font:600 10px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#8b8781;text-align:center}
+.cr-sf-links button .go{color:var(--sf-mute,#8b8781);font-size:14px}
+.cr-sf-foot{margin-top:36px;padding-top:16px;border-top:1px solid var(--sf-hair,rgba(255,255,255,.10));font:600 10px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--sf-mute,#8b8781);text-align:center}
 @media (prefers-reduced-motion:no-preference){#cr-sf.open .cr-sf-today,#cr-sf.open .cr-sf-coach{animation:crSfIn .4s cubic-bezier(.22,.9,.3,1) backwards}#cr-sf.open .cr-sf-coach{animation-delay:.07s}@keyframes crSfIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}}
+
+/* 693: the light twin. Same geometry, same semantics — only the neutral
+   surfaces and the inks that sit on them move. The navy fills and the
+   cardinal rail are absent from this block on purpose: colour carries
+   meaning on this screen and a hue change would make the two themes read
+   as two different components. --sf-red-tx swaps between the two reds the
+   module already owns, because which one can carry type inverts with the
+   ground: #e8505c is 5.30:1 on the dark page and 3.26:1 on the light one,
+   #C8202E is 3.28:1 dark and 5.15:1 light. Measured, not chosen. */
+:root[data-theme="rb-light"] #cr-sf{--sf-bg:#f4f4f2;--sf-card:#ffffff;--sf-card2:#eef0ef;--sf-block:#fbfbfa;--sf-ink:#17181a;--sf-mute:#5c5f63;--sf-mute2:#4e5155;--sf-mute3:#5c5f63;--sf-red-tx:#C8202E;--sf-red-dim:#9d2b25;--sf-navy-tx:#2C5FA8;--sf-hair:rgba(0,0,0,.12);--sf-hair2:rgba(0,0,0,.09);--sf-hair3:rgba(0,0,0,.24);--sf-hair4:rgba(0,0,0,.20);--sf-hair5:rgba(0,0,0,.42);}
 </style>
 <script id="cr-sf-script">
 /* 692: these panels are built as strings on user action, long after
