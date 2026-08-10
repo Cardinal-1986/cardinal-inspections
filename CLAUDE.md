@@ -87,6 +87,79 @@ Before building: grep `FEATURES.md`, then grep the in-app `CHANGELOG` (it covers
 
 ---
 
+## ⚠ THE RECURRING ONE: light ink on the dark ground — read before any colour work
+
+**This is the single most repeated defect on this project.** Theo has reported
+it, in his own words, at 448–449, 487, 527, 557, 573, 630 and **681**. Every
+time it is the same shape and every time it looks like a new bug.
+
+**The shape.** The app's default theme is **dark** (`--bg:#09090C`). Large parts
+of it were authored years earlier against a **white** page. Any rule still
+carrying a light-mode ink renders somewhere between hard and impossible to read,
+and *nothing in the build gates can see it* — the CSS parses, the braces
+balance, the marker is present, the negative control is clean, and the screen is
+unreadable.
+
+**Why it survives so long: the partial theming pass.** Build 527 tokenised the
+Schedule Board's *cards* — seven selectors, each with a computed replacement ink
+— and never touched the heading above them. Thirteen of fourteen elements were
+right, so the page reads as "done" and the one wrong element reads as a
+stylistic choice. **A partial pass is more dangerous than none, because it
+removes the tell.** `.viewhead` then sat at **1.10:1** for 54 builds.
+
+**And check the blast radius before you celebrate.** `.viewhead` is an app-wide
+class with **15** users. One un-themed base rule was failing on fifteen pages.
+Ask who else uses the class *before* deciding the fix is small.
+
+### The drill, every time
+
+1. **Compute, don't look.** `scripts/contrast.py`, or a render. Floors: **4.5:1**
+   body text, **3.0:1** large text. Theo's word for a failure is "can't read
+   this" — your word for it must be a number.
+2. **Prefer an existing token PAIR to a computed literal.** 527 chose `#f08a90`
+   by arithmetic: correct for dark, then applied unconditionally, so it broke
+   *light* at 2.30:1. `--rbe-head` (`#ffffff` / `#161616`) flips by itself and
+   cannot drift. Scoping by CRM is **not** scoping by theme.
+3. **Measure BOTH themes.** Half of these bugs are a dark fix that broke light.
+4. **Render the real thing.** See the two rig traps below — a bad instrument
+   will hand you a confident, wrong number.
+
+### ⚠ Two traps in the MEASURING RIG itself (both cost a build)
+
+- **Concatenating the `<style>` blocks is not "the app's CSS."** Several of the
+  122 are generated **print/report stylesheets living inside template strings**,
+  setting `:root{--ink:#1b1b1b}` and `body{}` for an 11pt document. Glue them
+  together and a contract template restyles the app: the rig reported the page
+  ground as **cream in every render** and scored an invisible heading at
+  **17.61:1**. **Load the real document in Chromium and let the browser decide
+  what is a stylesheet.**
+- **`background-color` is not the background.** Cards here paint
+  `linear-gradient`s, which are background-*images*, so an ancestor walk reading
+  only `backgroundColor` sails past the card and reports the page behind it.
+  Collect every ground an ancestor actually paints — colour **and every gradient
+  stop** — and score against the **worst**. The naive version hid a real
+  light-mode failure completely.
+
+> **When a measurement disagrees with Theo's screenshot, the measurement is what
+> you fix first.**
+
+### ✅ SETTLED, 10 Aug (Theo, verbatim): *"I don't need to have gradient colors anywhere."*
+
+Measured at build 681: **276** gradient calls, **39** of them
+**gradient-clipped TEXT** (`-webkit-background-clip:text` +
+`-webkit-text-fill-color:transparent`) across ~37 selectors, **14** gradient
+borders, and **58** whose two stops are *identical* — already flat, pure
+overhead.
+
+**Gradient text is the one that causes the harm above**: it defeats a plain
+`color:` read, it cannot be measured by eye, and a red→darker-red ramp that
+reads on a light card vanishes on a near-black one. **Do not add another.**
+Removing the existing 39 is a build in its own right; the ~165 genuine
+background gradients are a separate, more visual call and want a preview before
+they go. **Never re-introduce gradient text to "match the old look."**
+
+---
+
 ## What happened in 428–451 — the undocumented span
 
 Reconstructed from the in-app `CHANGELOG` as it stood then (147 entries, builds 166–451) and verified against the file. **Those entries are still in `index.html`** — grep the `{ build:N, note:'…' }` shape in `cr-cl-script`; the "retired at 574" claim this file used to carry was wrong (see the correction above). Build **450 is a gap**; gaps are normal here.
