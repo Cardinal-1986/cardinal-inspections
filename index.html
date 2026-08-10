@@ -3367,7 +3367,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 698 &#8212; The client page section headings are drawn, not emoji</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 699 &#8212; The page headings are drawn, not emoji</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3533,7 +3533,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
   </div>
 
   <section class="history wrap">
-    <h2 class="viewhead">&#9776; Client Projects</h2>
+    <h2 class="viewhead" data-cri="people lg">Client Projects</h2>
     <p class="subnote" id="storageNote"></p>
     <div class="controls">
       <input type="search" id="searchBox" placeholder="Search clients by name, address, phone, email…" aria-label="Search projects">
@@ -3803,7 +3803,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
       <div class="jabox" id="inspGalBox" style="max-width:430px;margin:0 0 8px;"><svg class="dbic2" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9.4 4h5.2l1.3 2h3.6A1.5 1.5 0 0 1 21 7.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5v-11A1.5 1.5 0 0 1 4.5 6h3.6l1.3-2zm2.6 5.2a4.3 4.3 0 1 0 0 8.6 4.3 4.3 0 0 0 0-8.6zm0 2a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6z"/></svg> Photo Gallery <b class="jan zero" id="inspGalN">0</b></div>
       <p class="subnote">Photos transferred for this client&#8217;s inspections (max 30). The full album lives in
-      <b>&#128247; Photo Album</b> on the Overview.</p>
+      <b>Photo Album</b> on the Overview.</p>
 
       <h3 class="projsec" data-cri="page lg">Inspection Reports</h3>
       <div style="margin:6px 0 12px;">
@@ -3996,7 +3996,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <div id="galleryView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
     <button class="btn dark" id="galBackBtn">&larr; Back to client profile</button>
-    <h2 class="viewhead"><span id="galTitle">&#128247; Photo Album</span>
+    <h2 class="viewhead" data-cri="camera lg"><span id="galTitle">Photo Album</span>
       <span id="galClient" style="color:#fff;font-size:17px;"></span>
       <span id="galCount" class="projcount" style="vertical-align:middle;">0</span></h2>
       <p class="subnote" id="galHint">Every photo for this client.</p>
@@ -4023,7 +4023,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <div id="paymentsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
     <button class="btn dark" id="payBackBtn">&larr; Back to client profile</button>
-    <h2 class="viewhead">&#128178; Payments <span id="payClient" style="color:#8a6f66;font-size:17px;"></span></h2>
+    <h2 class="viewhead" data-cri="cash lg">Payments <span id="payClient" style="color:#8a6f66;font-size:17px;"></span></h2>
     <div id="paySummary"></div>
     <h3 class="projsec" style="margin-top:22px;" data-cri="chart lg">Contract Worksheet</h3>
     <p class="subnote">Contract totals and payments received against them. Signed contracts set the Job Value.</p>
@@ -4048,7 +4048,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <div id="tasksView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
     <button class="btn dark" id="tskBackBtn">&larr; Back to client profile</button>
-    <h2 class="viewhead">&#128204; Tasks <span id="tskClient" style="color:#8a6f66;font-size:17px;"></span></h2>
+    <h2 class="viewhead" data-cri="clipboard lg">Tasks <span id="tskClient" style="color:#8a6f66;font-size:17px;"></span></h2>
     <div style="margin:6px 0 12px;">
       <button class="btn" id="tskNewBtn">+ New task</button>
     </div>
@@ -4060,7 +4060,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <div id="docsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
     <button class="btn dark" id="jdBackBtn">&larr; Back to client profile</button>
-    <h2 class="viewhead">&#128193; Job Documents <span id="jdClient" style="color:#8a6f66;font-size:17px;"></span></h2>
+    <h2 class="viewhead" data-cri="folder lg">Job Documents <span id="jdClient" style="color:#8a6f66;font-size:17px;"></span></h2>
     <p class="subnote">Receipts, delivery tickets, signed paperwork, voice memos &#8212; anything for this job.
     Scans and uploads are visible to the whole team.</p>
     <div style="margin:6px 0 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
@@ -4078,7 +4078,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <div id="apptsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
     <button class="btn dark" id="apBackBtn">&larr; Back to client profile</button>
-    <h2 class="viewhead">&#128197; Appointments <span id="apClient" style="color:#8a6f66;font-size:17px;"></span></h2>
+    <h2 class="viewhead" data-cri="calendar lg">Appointments <span id="apClient" style="color:#8a6f66;font-size:17px;"></span></h2>
     <p class="subnote">Everything scheduled for this job &#8212; these also show on the team calendar.</p>
     <div class="acxsec"><div class="acxbody" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
       <label style="font:700 12px 'Segoe UI',Arial,sans-serif;color:#6b5f58;">Type<br>
@@ -7135,7 +7135,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <!-- ============ QUICK INSPECTION ============ -->
 <div id="qiStartView" style="display:none;">
   <div class="wrap" style="padding-top:12px;">
-    <h2 class="viewhead">&#9889; Quick Inspection</h2>
+    <h2 class="viewhead" data-cri="bolt lg">Quick Inspection</h2>
     <p class="subnote">First, pin the property. Drag the pin or type the address, then choose the client.</p>
     <div style="max-width:680px;margin:0 auto;">
       <div style="display:flex;gap:8px;margin-bottom:10px;">
@@ -7152,7 +7152,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 </div>
 <div id="quickInspView" style="display:none;">
   <div class="wrap" style="padding-top:12px;">
-    <h2 class="viewhead">&#9889; Quick Inspection</h2>
+    <h2 class="viewhead" data-cri="bolt lg">Quick Inspection</h2>
     <p class="subnote" id="qiForLine"></p>
     <div class="qichips" id="qiChips"></div>
     <div id="qiStream"></div>
@@ -7195,7 +7195,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <!-- ============ COMPANY DOCUMENTS ============ -->
 <div id="companyDocsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <h2 class="viewhead">&#128193; Company Documents</h2>
+    <h2 class="viewhead" data-cri="folder lg">Company Documents</h2>
     <p class="subnote">Official Cardinal forms and paperwork, organized by category. View or download on any device.<br><b>These are blank master copies for print.</b> For a client contract, open the client's profile and use the approval workflow &#8212; it prefills their info, pulls the job price, and routes for signature.</p>
     <div class="cdocscats" id="cdCats">
       <button class="cdoccat active" data-cat="trade">&#128736;&#65039; Trade Documents
@@ -7218,7 +7218,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <!-- ============ MY PROFILE PAGE ============ -->
 <div id="profileView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
-    <h2 class="viewhead">&#128100; My Profile</h2>
+    <h2 class="viewhead" data-cri="person lg">My Profile</h2>
     <p class="subnote">Your name and contact info appear as &#8220;Prepared By / Inspector&#8221; on every
     estimate and inspection report you create.</p>
     <div class="projform" style="margin:10px 0;max-width:430px;box-shadow:none;border:1px solid var(--line);">
@@ -7302,7 +7302,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <!-- ============ ACTIVITY FEED PAGE ============ -->
 <div id="activityView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:1500px;">
-    <h2 class="viewhead">&#9889; Activity Feed</h2>
+    <h2 class="viewhead" data-cri="bolt lg">Activity Feed</h2>
     <p class="subnote">Everything happening across the team, newest first.</p>
     <div id="actFeedFull"></div>
   </div>
@@ -7312,7 +7312,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <div id="commsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:900px;">
     <button class="btn dark" id="commsBackBtn">&larr; Back</button>
-    <h2 class="viewhead">&#128172; Communications <span id="commsCli" style="color:#9c1822;"></span></h2>
+    <h2 class="viewhead" data-cri="chat lg">Communications <span id="commsCli" style="color:#9c1822;"></span></h2>
     <p class="subnote">Notes, call logs, and document activity for this client. Tag a teammate with @name.</p>
     <div class="chatbox">
       <div class="chatthread" id="chatThread"></div>
@@ -7328,7 +7328,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <!-- ============ SCHEDULE BOARD ============ -->
 <div id="auditView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:980px;">
-    <h2 class="viewhead">&#128373; Audit Log</h2>
+    <h2 class="viewhead" data-cri="eye lg">Audit Log</h2>
     <p class="subnote">Sign-ins across the team and how long each session stayed active. Sessions ping every minute while the app is open; &#8220;online&#8221; means activity in the last 2 minutes.</p>
     <div id="auditMount"></div>
   </div>
@@ -7866,6 +7866,16 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
    Leave both blank and the app runs in single-browser (local) mode.
    ========================================================================= */
+/* 699: ICO is declared ONCE, here, and this is the earliest block that uses
+   it. Modules that build their panels as strings call it at render time,
+   because hydrate() only swaps data-cri at load and has long since run.
+   It used to be declared six times \u2014 five of those leaked to global scope
+   from non-IIFE module blocks and one, added to cr-hd2-script at 698, was
+   private to that IIFE and dead. Block 2's callers were resolving against
+   another module's copy by luck; wrapping that module later would have
+   broken nine headings. One declaration, deliberately global. */
+function ICO(n){ try{ return window.CardinalIcons.get(n); }catch(_){ return ''; } }
+
 var SUPABASE_URL      = "https://yipslubcptjoarblzbpl.supabase.co";
 var SUPABASE_ANON_KEY = "sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ";
 /* ========================================================================= */
@@ -12453,8 +12463,11 @@ function openGalleryMode(mode){
   if(!currentProject) return;
   galMode = (mode === 'insp') ? 'insp' : 'all';
   document.getElementById('galClient').textContent = '\u2014 ' + (currentProject.name || '');
-  document.getElementById('galTitle').innerHTML =
-    galMode === 'insp' ? '&#128247; Inspection Photos' : '&#128247; Photo Album';
+  /* 699: the icon lives on the <h2>, not in here. This writer replaces the
+     inner span only \u2014 putting the emoji back on every gallery open is
+     exactly what would have undone the markup change. */
+  document.getElementById('galTitle').textContent =
+    galMode === 'insp' ? 'Inspection Photos' : 'Photo Album';
   document.getElementById('galHint').textContent = galMode === 'insp'
     ? 'The curated set for this client\u2019s inspections (max ' + INSP_MAX + '). Check photos to transfer into a report, or remove them from the set \u2014 removing never deletes from the album.'
     : 'Every photo for this client. Check photos, then send them to Inspection Photos or straight into a report \u2014 the album always keeps the originals.';
@@ -17389,11 +17402,11 @@ navMenu.addEventListener('click', function(e){
 });
 
 var LIST_DEFS = {
-  recents: { title:'\uD83D\uDD52 Recents', note:'Your most recently updated documents across every client.',
+  recents: { title: ICO('clock') + ' Recents', note:'Your most recently updated documents across every client.',
     filter:function(r){ return true; }, sort:function(a,b){ return String(b.updated_at||b.created_at).localeCompare(String(a.updated_at||a.created_at)); }, limit:25 },
-  inspections: { title:'\uD83D\uDD0D Inspections', note:'Every inspection report you can see, newest first.',
+  inspections: { title: ICO('search') + ' Inspections', note:'Every inspection report you can see, newest first.',
     filter:function(r){ return !isEstimateTitle(r.title) && !isFileDoc(r.title); }, sort:function(a,b){ return String(b.created_at).localeCompare(String(a.created_at)); } },
-  estimates: { title:'\uD83D\uDCB0 Estimates', note:'Every estimate you can see, newest first.',
+  estimates: { title: ICO('money') + ' Estimates', note:'Every estimate you can see, newest first.',
     filter:function(r){ return isEstimateTitle(r.title); }, sort:function(a,b){ return String(b.created_at).localeCompare(String(a.created_at)); } }
 };
 document.addEventListener('click', function(e){
@@ -19175,7 +19188,8 @@ var CardinalIcons = (function(){
     contract:   "<path d='M13.4 2.9H6.8A1.9 1.9 0 0 0 4.9 4.8v14.4a1.9 1.9 0 0 0 1.9 1.9h10.4a1.9 1.9 0 0 0 1.9-1.9V8.1z'/><path d='M13.4 2.9v5.2h5.7'/><path d='M8.2 16.6c1.3-1.8 2.3-1.7 3 -.3.6 1.2 1.5 1.3 2.6-.3'/>",
     ruler:      "<rect x='2.6' y='8.4' width='18.8' height='7.2' rx='1.4'/><path d='M7 8.4v3.1M12 8.4v4.2M17 8.4v3.1'/>",
     box:        "<path d='M20.6 7.9v8.2a1.9 1.9 0 0 1-.95 1.65l-6.7 3.9a1.9 1.9 0 0 1-1.9 0l-6.7-3.9A1.9 1.9 0 0 1 3.4 16.1V7.9a1.9 1.9 0 0 1 .95-1.65l6.7-3.9a1.9 1.9 0 0 1 1.9 0l6.7 3.9A1.9 1.9 0 0 1 20.6 7.9z'/><path d='M3.7 6.9 12 11.7l8.3-4.8M12 21.3V11.7'/>",
-    lock:       "<rect x='4.2' y='10.4' width='15.6' height='10.4' rx='2.2'/><path d='M7.9 10.4V7.3a4.1 4.1 0 0 1 8.2 0v3.1'/>"
+    lock:       "<rect x='4.2' y='10.4' width='15.6' height='10.4' rx='2.2'/><path d='M7.9 10.4V7.3a4.1 4.1 0 0 1 8.2 0v3.1'/>",
+    chat:       "<path d='M20.9 12.1a7.8 7.8 0 0 1-8.4 7.8 8.9 8.9 0 0 1-2.5-.4L4.3 21.2l1.6-5.2a7.5 7.5 0 0 1-1.4-4.3 7.8 7.8 0 0 1 8.4-7.5 7.8 7.8 0 0 1 8 7.5z'/>"
   };
   function get(name, cls){ return P[name] ? svg(P[name], cls) : ''; }
   /* 686: static markup cannot call get(), and a second pipeline of raw
@@ -37427,6 +37441,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:699, d:'2026-08-10', t:'The page headings are drawn, not emoji',
+s:'Payments, Tasks, Job Documents, Appointments, Quick Inspection, Company Documents, My Profile, Activity Feed, Communications, Audit Log, Client Projects and the Photo Album all use drawn icons now. One new one was drawn, a speech bubble for Communications.' },
 { b:698, d:'2026-08-10', t:'The client page headings are drawn, not emoji',
 s:'Every section heading on a client page \u2014 Lead Details, Estimates, Contracts, Work Orders, Measurements, Payment Log and the rest \u2014 now uses a drawn icon. Eight of them had no icon at all before and now match the others. Four new ones were drawn: a signed contract, a ruler, a box and a padlock.' },
 { b:697, d:'2026-08-10', t:'Swiping a row of chips no longer backs out of the screen',
@@ -44670,10 +44686,6 @@ figureHtml : figureHtml,
 :root[data-theme="rb-light"] #cr-sf{--sf-bg:#f4f4f2;--sf-card:#ffffff;--sf-card2:#eef0ef;--sf-block:#fbfbfa;--sf-ink:#17181a;--sf-mute:#5c5f63;--sf-mute2:#4e5155;--sf-mute3:#5c5f63;--sf-red-tx:#C8202E;--sf-red-dim:#9d2b25;--sf-navy-tx:#2C5FA8;--sf-hair:rgba(0,0,0,.12);--sf-hair2:rgba(0,0,0,.09);--sf-hair3:rgba(0,0,0,.24);--sf-hair4:rgba(0,0,0,.20);--sf-hair5:rgba(0,0,0,.42);}
 </style>
 <script id="cr-sf-script">
-/* 692: these panels are built as strings on user action, long after
-   CardinalIcons.hydrate() has run, so a data-cri attribute written here
-   would never be swapped. Call get() directly, the way cr-hd2 does. */
-function ICO(n){ try{ return window.CardinalIcons.get(n); }catch(_){ return ''; } }
 
 (function(){
 'use strict';
@@ -45886,10 +45898,6 @@ body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba
 :root[data-theme="rb-light"] #ppPage .pp-msg.mine .pp-bub{background:#8a5a08;border-color:#8a5a08;color:#ffffff}
 </style>
 <script id="cr-pp-script">
-/* 698: these headings are built as strings at render time, long after
-   CardinalIcons.hydrate() has run, so a data-cri written here would never
-   be swapped. Call get() directly \u2014 same split as 692 vs 695. */
-function ICO(n){ try{ return window.CardinalIcons.get(n); }catch(_){ return ''; } }
 
 (function(){
 'use strict';
@@ -46865,10 +46873,6 @@ window.CardinalSolIntake = { open: open, close: close };
 
 <style id="cr-ci-styles">#cr-ci{display:none;position:fixed;inset:0;background:rgba(18,14,12,.82);z-index:9560;justify-content:center;align-items:center;padding:18px;padding-bottom:max(18px,env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-ci.open{display:flex}#cr-ci .box{background:#202329;color:#e8ebef;border-radius:14px;width:min(500px,100%);max-height:100%;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.4)}#cr-ci .hd{padding:15px 18px 13px;border-bottom:1px solid #3a2f22;display:flex;align-items:center;gap:12px;flex:0 0 auto;background:linear-gradient(180deg,#2a2e35,#22262c)}#cr-ci .hd h3{margin:0;flex:1;font:800 16px Georgia,'Times New Roman',serif;color:#f08a90}#cr-ci .hd .count{font:800 10px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;color:#f08a90;background:rgba(200,32,46,.15);padding:4px 9px;border-radius:12px}#cr-ci .hd .x{background:transparent;border:0;cursor:pointer;color:#a89e88;font-size:21px;line-height:1;padding:2px 4px}#cr-ci .hd .x:hover{color:#e35c63}#cr-ci .bd{padding:18px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}#cr-ci .lede{font-size:13px;line-height:1.55;color:#e6c46a;margin:0 0 16px}#cr-ci .shoot{display:flex;align-items:center;gap:14px;width:100%;background:#fff;color:#2c2c2c;border:1px solid #c8202e;border-radius:12px;padding:18px 18px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:10px}#cr-ci .shoot:hover{background:#f6f0e3}#cr-ci .shoot .i{font-size:24px;flex:0 0 auto}#cr-ci .shoot b{display:block;font:800 15px inherit}#cr-ci .shoot small{display:block;font-size:12px;margin-top:3px;color:#6b6357;line-height:1.45}#cr-ci .pick2{background:#fff;color:#2c2c2c;border:1px dashed #c8202e}#cr-ci .pick2:hover{background:#f6f0e3}#cr-ci .pick2 small{color:#6b6357}#cr-ci label{display:block;margin:13px 0 5px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#f08a90}#cr-ci label:first-child{margin-top:0}#cr-ci input,#cr-ci select,#cr-ci textarea{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid rgba(200,32,46,.45);border-radius:8px;background:#fff;font:400 14px inherit;font-family:inherit;color:#2c2c2c;outline:none}#cr-ci input:focus,#cr-ci select:focus,#cr-ci textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.2)}#cr-ci textarea{min-height:74px;resize:vertical}#cr-ci .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 11px}#cr-ci .req{color:#f08a90}#cr-ci .found{background:#f4f8f4;border:1px solid #cfe0d3;border-left:3px solid #4a8c5a;border-radius:8px;padding:11px 13px;margin:4px 0 6px;font-size:12.5px;line-height:1.6;color:#5a6b5e}#cr-ci .found b{color:#2c2c2c}#cr-ci .found .miss{color:#6f6f6f;font-style:italic}#cr-ci .dupe{background:#fdf1dd;border:1px solid #e8c88a;border-left:3px solid #c8202e;border-radius:8px;padding:12px 14px;margin:10px 0 0;font-size:12.5px;line-height:1.55;color:#6b5a2a}#cr-ci .dupe b{color:#2c2c2c}#cr-ci .dupe button{margin-top:8px;background:#c8202e;color:#fff;border:0;border-radius:7px;padding:7px 13px;cursor:pointer;font:700 12px inherit;font-family:inherit}#cr-ci .busy{text-align:center;padding:34px 20px;color:#b0a89c;font-size:13.5px}#cr-ci .busy .sp{width:26px;height:26px;margin:0 auto 14px;border:2px solid #e6ddcb;border-top-color:#c8202e;border-radius:50%;animation:crCiSpin .8s linear infinite}@keyframes crCiSpin{to{transform:rotate(360deg)}}#cr-ci .ft{padding:13px 18px;padding-bottom:calc(13px + env(safe-area-inset-bottom,0px));border-top:1px solid #ece4d6;display:flex;gap:8px;justify-content:flex-end;flex:0 0 auto;background:#faf7f0}#cr-ci .ft button{padding:10px 16px;border-radius:8px;cursor:pointer;font:700 12.5px inherit;font-family:inherit;border:0}#cr-ci .ft .cancel{background:transparent;color:#6b6357;border:1px solid #ddd6cf}#cr-ci .ft .save{background:var(--red);color:#fff}#cr-ci .ft .save:disabled{opacity:.5;cursor:wait}</style>
 <script id="cr-ci-script">
-/* 692: these panels are built as strings on user action, long after
-   CardinalIcons.hydrate() has run, so a data-cri attribute written here
-   would never be swapped. Call get() directly, the way cr-hd2 does. */
-function ICO(n){ try{ return window.CardinalIcons.get(n); }catch(_){ return ''; } }
 
 (function(){
 'use strict';
@@ -47467,10 +47471,6 @@ window.CardinalSupplement = { render: render, open: openModal };
 #cardinalTruthView .cr-cth-calrow .w b{display:block;font-size:14.5px;font-weight:600}
 #cardinalTruthView .cr-cth-calrow .w small{font-size:11px;font-family:ui-monospace,monospace;opacity:.65}#cardinalTruthView .ins-body.cr-cth{background:var(--ct-bg,#FAF8F7);padding:0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}.cr-cth-rail{contain:paint}.cr-cth-wrap{position:relative;max-width:580px;margin:0 auto;padding:22px 18px calc(56px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}.cr-cth-wrap{position:relative}.cr-cth-owed{position:relative;background:linear-gradient(160deg,var(--ct-surface-2),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;box-shadow:0 0 0 1px var(--ct-focus),0 0 22px var(--ct-focus);padding:22px 22px 20px;overflow:hidden}.cr-cth-owed::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ct-warn)}.cr-cth-owed .lbl{font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-warn)}.cr-cth-owed .fig{font:700 clamp(36px,10.5vw,50px)/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.03em;color:var(--ct-ink);margin:10px 0 8px}.cr-cth-owed .note{font-size:13px;line-height:1.5;color:var(--ct-ink-2)}.cr-cth-owed .note b{color:var(--ct-ink);font-weight:700}.cr-cth-owed .split{display:flex;gap:18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--ct-warn-bg)}.cr-cth-owed .split div{flex:1;min-width:0}.cr-cth-owed .split .k{font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-owed .split .v{font:700 16px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn);margin-top:4px}.cr-cth-stats{display:grid;gap:9px;margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.cr-cth-stat{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:14px 15px;min-width:0}.cr-cth-stat .l{font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-stat .v{font:700 21px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.02em;margin-top:6px;color:var(--ct-ink)}.cr-cth-stat.up .v{color:var(--ct-red-deep)}.cr-cth-stat .s{font-size:11px;color:var(--ct-ink-2);margin-top:3px;line-height:1.35}.cr-cth-rule{display:flex;align-items:center;gap:12px;margin:28px 0 4px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ct-line-strong),transparent)}.cr-cth-rail{position:relative;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 6px 12px;box-shadow:0 2px 10px rgba(0,0,0,.28)}.cr-cth-stage{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:15px 14px 15px 30px;background:transparent;border:0;text-align:left;cursor:pointer;font-family:inherit;color:var(--ct-ink);border-radius:10px;transition:background .15s}.cr-cth-stage:hover{background:var(--ct-surface-2)}.cr-cth-stage:focus-visible{outline:2px solid var(--ct-red);outline-offset:-2px}.cr-cth-stage::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--ct-bg);border:2px solid var(--ct-red);z-index:1}.cr-cth-stage::after{content:'';position:absolute;left:10px;top:50%;bottom:-50%;width:1px;background:linear-gradient(180deg,var(--ct-red),var(--ct-red-deep));opacity:.45}.cr-cth-stage:last-of-type::after{display:none}.cr-cth-stage .nm{flex:1;min-width:0}.cr-cth-stage .nm b{display:block;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15.5px;letter-spacing:.01em;line-height:1.25}.cr-cth-stage .nm small{display:block;font-size:11.5px;color:var(--ct-ink-2);margin-top:2px;line-height:1.4}.cr-cth-stage .ct{flex:0 0 auto;min-width:26px;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-cth-stage .amt{flex:0 0 auto;min-width:88px;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);letter-spacing:-.01em}.cr-cth-stage .amt.zero{color:var(--ct-ink-2)}.cr-cth-stage.flag::before{background:var(--ct-warn);border-color:var(--ct-warn);box-shadow:0 0 0 4px var(--ct-line)}.cr-cth-stage.flag{background:var(--ct-surface-3)}.cr-cth-stage.flag .nm b{color:var(--ct-ink)}.cr-cth-stage.flag .amt{color:var(--ct-warn)}.cr-cth-stage.flag.recovered .amt{color:var(--ct-red-deep)}.cr-cth-stage .tag{position:absolute;right:14px;top:8px;font:800 7.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-warn);opacity:.8}.cr-cth-term{display:flex;gap:9px;margin-top:14px;padding-left:6px}.cr-cth-term button{flex:1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink-2);transition:border-color .15s,color .15s}.cr-cth-term button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink)}.cr-cth-term button b{font:700 12px inherit;letter-spacing:.02em}.cr-cth-term button span{font:700 15px ui-monospace,'SF Mono',Menlo,monospace}.cr-cth-term button.denied b,.cr-cth-term button.denied span{color:var(--ct-red-deep)}.cr-cth-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}/* 675: the lead button under the stats. Same grid, same button styling — one cell spanning both columns, and its entrance pulled forward because it now sits above the fold instead of at the end of the page. */.cr-cth-tools.lead{margin-top:14px}.cr-cth-tools.lead{animation-delay:.14s}.cr-cth-tools button.wide{grid-column:1/-1}.cr-cth-tools button{display:flex;align-items:center;gap:10px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:15px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:border-color .15s,background .15s}.cr-cth-tools button:hover{border-color:var(--ct-line-strong);background:var(--ct-surface-2)}.cr-cth-tools button.primary{border-color:var(--ct-red);background:var(--ct-surface-2)}.cr-cth-tools button .i{font-size:17px;flex:0 0 auto}.cr-cth-tools button .x{flex:1;min-width:0}.cr-cth-tools button .x b{display:block;font:700 13px inherit}.cr-cth-tools button .x small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px}@media (prefers-reduced-motion:no-preference){.cr-cth-owed,.cr-cth-stats,.cr-cth-stage,.cr-cth-term,.cr-cth-tools{opacity:0;animation:crCthRise .44s cubic-bezier(.22,.9,.3,1) forwards}.cr-cth-owed{animation-delay:.04s}.cr-cth-stats{animation-delay:.10s}.cr-cth-stage:nth-of-type(1){animation-delay:.20s}.cr-cth-stage:nth-of-type(2){animation-delay:.25s}.cr-cth-stage:nth-of-type(3){animation-delay:.30s}.cr-cth-stage:nth-of-type(4){animation-delay:.35s}.cr-cth-stage:nth-of-type(5){animation-delay:.40s}.cr-cth-stage:nth-of-type(6){animation-delay:.45s}.cr-cth-stage:nth-of-type(7){animation-delay:.50s}.cr-cth-stage:nth-of-type(8){animation-delay:.55s}.cr-cth-term{animation-delay:.62s}.cr-cth-tools{animation-delay:.68s}@keyframes crCthRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}#insClientsView{background:var(--ct-bg) !important;color:var(--ct-ink)}#insClientsView .ins-body{background:var(--ct-bg,#FAF8F7) !important}#insClientsView .ins-search input,#insClientsView input[type="search"],#insClientsView input[type="text"]{background:var(--ct-surface) !important;color:var(--ct-ink) !important;border:1px solid var(--ct-line) !important}#insClientsView input::placeholder{color:var(--ct-ink-2) !important}#insClientsView .ins-count{color:var(--ct-ink-2) !important}#insClientsView .card,#insClientsView .ins-card{background:var(--ct-surface) !important;border-color:var(--ct-line) !important;color:var(--ct-ink) !important}#insClientsView .card small,#insClientsView .ins-cardsub{color:var(--ct-ink-2) !important}@media (min-width:900px){.cr-cth-wrap{max-width:1180px;padding-left:26px;padding-right:26px}.cr-cth-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:26px;align-items:start}.cr-cth-b1{grid-column:1;grid-row:1}.cr-cth-b2{grid-column:2;grid-row:1 / span 2}.cr-cth-b3{grid-column:1;grid-row:2}.cr-cth-tools{grid-template-columns:1fr 1fr}}@media (min-width:1240px){.cr-cth-stats{grid-template-columns:repeat(3,1fr)}}.cr-cth-chase{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 10px;margin-top:10px}.cr-cth-chaserow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:transparent;border:0;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:background .15s}.cr-cth-chaserow:hover{background:var(--ct-surface-2)}.cr-cth-chaserow .days{flex:0 0 auto;min-width:52px;text-align:center;border-radius:8px;padding:6px 4px;background:var(--ct-surface-3)}.cr-cth-chaserow .days b{display:block;font:700 17px ui-monospace,'SF Mono',Menlo,monospace;line-height:1;color:var(--ct-warn)}.cr-cth-chaserow .days small{display:block;font:700 7.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink-2);margin-top:3px}.cr-cth-chaserow.stale .days{background:var(--ct-red-wash)}.cr-cth-chaserow.stale .days b{color:var(--ct-red-deep)}.cr-cth-chaserow .who{flex:1;min-width:0}.cr-cth-chaserow .who b{display:block;font:700 14px inherit;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .who small{display:block;font-size:11.5px;color:var(--ct-ink-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .amt{flex:0 0 auto;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn)}.cr-cth-chaseempty{padding:20px 16px;text-align:center;font-size:13px;line-height:1.55;color:var(--ct-ink-2)}</style>
 <script id="cr-cth-script">
-/* 692: these panels are built as strings on user action, long after
-   CardinalIcons.hydrate() has run, so a data-cri attribute written here
-   would never be swapped. Call get() directly, the way cr-hd2 does. */
-function ICO(n){ try{ return window.CardinalIcons.get(n); }catch(_){ return ''; } }
 
 (function(){
 'use strict';
@@ -48429,10 +48429,6 @@ box-shadow:var(--ccm-sh-xs)}
 @media print{#cr-ch2{color:#000}}
 </style>
 <script id="cr-ch2-script">
-/* 692: these panels are built as strings on user action, long after
-   CardinalIcons.hydrate() has run, so a data-cri attribute written here
-   would never be swapped. Call get() directly, the way cr-hd2 does. */
-function ICO(n){ try{ return window.CardinalIcons.get(n); }catch(_){ return ''; } }
 
 (function(){
 'use strict';
@@ -50660,10 +50656,6 @@ if(typeof ck === 'string') ck = JSON.parse(ck);
 return (((ck || {}).lead) || {}).claim_type || '';
 }catch(e){ return ''; }
 }
-/* 698: these headings are built as strings at render time, long after
-   CardinalIcons.hydrate() has run, so a data-cri written here would never
-   be swapped. Call get() directly \u2014 same split as 692 vs 695. */
-function ICO(n){ try{ return window.CardinalIcons.get(n); }catch(_){ return ''; } }
 function crmNow(){
 var v = document.getElementById('cardinalTruthView');
 if(v && v.style.display !== 'none') return 'insurance';

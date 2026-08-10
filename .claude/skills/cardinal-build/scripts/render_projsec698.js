@@ -45,7 +45,7 @@ const SRC = fs.readFileSync(FILE, 'utf8');
   await p.waitForTimeout(900);
 
   const R = await p.evaluate(({ used, new4 }) => {
-    const out = { heads: [], missingGlyph: [], emptyGlyph: [], total: 0 };
+    const out = { heads: [], missingGlyph: [], emptyGlyph: [], total: 0, icoType: typeof ICO };
     out.total = window.CardinalIcons ? window.CardinalIcons.names().length : 0;
     const names = window.CardinalIcons ? window.CardinalIcons.names() : [];
     out.missingGlyph = used.filter(n => names.indexOf(n) === -1);
@@ -97,9 +97,13 @@ const SRC = fs.readFileSync(FILE, 'utf8');
   }
   ok(sited === 10, `all ten runtime headings call ICO() at their site (missing: ${missing.join(' | ') || 'none'})`);
 
-  // ICO must be declared exactly once in each block that calls it
-  const icoDecls = (SRC.match(/function ICO\(n\)\{/g) || []).length;
-  ok(icoDecls >= 6, `the ICO helper is declared in every block that uses it (${icoDecls})`);
+  /* What matters is that ICO is REACHABLE from the call sites, not how many
+     copies exist. This asserted `>= 6` and so encoded a defect as a
+     requirement: at 698 there were six declarations, five global by accident
+     and one dead inside cr-hd2-script's IIFE. 699 consolidated them to one and
+     this gate went red on a strictly better file. Ask the page, not the text. */
+  ok(R.icoType === 'function',
+    `ICO is reachable from the call sites (typeof ICO === '${R.icoType}')`);
 
   ok(errors.length === 0,
     `the page loads without throwing — an out-of-scope ICO would be a ReferenceError, not a blank (${errors.slice(0, 2).join(' | ') || 'none'})`);
