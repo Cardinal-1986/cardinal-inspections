@@ -14493,6 +14493,54 @@ as the retirement comment — asserted by grep, count 1.
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
 
+- **694** · **The light/dark switch is back on the screens that lost it.**
+  Theo: "make sure every page has a light dark switcher. Seems some have
+  disappeared." Two causes, neither the one the stylesheet suggests:
+  `crmNow()` returns `'sales'` on Sales Floor and `'production'` on the punch
+  board, but `refreshVisibility()` only added `.show` for retail/community; and
+  `ensureSearchRow()` adopts the button into the header row, which every
+  z-index 9500 view paints over. Insurance is a third case — 417 gave that slot
+  to the Docket/Siren control. The control now steps out to `document.body`
+  whenever the header slot is unusable. Gate `render_toggle694.js`, 22
+  assertions, RED on 693 for Sales Floor and insurance.
+  **Three things had to be measured, not reasoned.** Floating it IN PLACE fails
+  — at `z-index:2147483000` inside the header it still measured "covered by
+  .why", because z-index only competes inside the nearest stacking context.
+  Moving it is not enough either: the view is appended to body AFTER the button
+  moves (button at child index 276, `#cr-sf` at 280), so an equal 9500 loses on
+  DOM order — hence `.afloat{z-index:9550}`, above the views and deliberately
+  below `#cr-ci`'s 9560 so a modal still covers it. And `ensureSearchRow()`
+  re-adopts from a body observer, reversing the move within a frame; `.afloat`
+  is the handshake that stops it.
+  ⚠️ **`needsFloat()` never inspects the button.** The first version spotted
+  insurance by reading the button's own computed display — true only while it
+  is still in the row. Once moved, the reason to stay out vanished and it
+  oscillated back in every second. A placement predicate must depend on the
+  page, not on the thing being placed.
+  **The Showcase and OC Colors are excluded by name**, not silently: both are
+  single-theme client-facing Blackout by settled decision, and a switch that
+  does nothing is worse than no switch.
+
+- **693** · **Sales Floor follows the light switch.** Theo: "the light mode for
+  sales floor doesn't seem right." It was not wrong, it was ABSENT —
+  `cr-sf-styles` was 6,555 characters of hardcoded dark with zero `var()` refs
+  and zero `rb-light` rules, so the two themes rendered byte-identical. Sixteen
+  `--sf-*` tokens, dark on `#cr-sf` and light under `:root[data-theme="rb-light"]`,
+  every reference carrying a literal fallback. Had it ever gone light the body
+  ink would have read **1.04:1**.
+  **What does not move:** the navy fills and the cardinal rail are the same
+  bytes in both themes, because the module's banner says colour carries meaning
+  here — red is the objection, navy is your answer. ⚠️ **`.cr-sf-cr .you` keeps
+  `color:#f0ede7` as a LITERAL** — the one ink of twelve that sits on a coloured
+  ground; tokenising it would have painted `#17181a` on `#16233b`. Same trap 573
+  recorded.
+  **What inverts on purpose:** which red carries type. `#e8505c` is 5.30:1 dark
+  and 3.26:1 light; `#C8202E` is 3.28:1 dark and 5.15:1 light. `--sf-red-tx`
+  swaps between two reds the module already owned — no new colour was invented.
+  ⚠️ **The gate's first two assertions are the ones contrast cannot make**: that
+  the themes DIFFER at all. On 692 `render_sflight.js` reports "light: every ink
+  clears its floor" — green, and meaningless, because the page never went light.
+
 - **692** · **The emoji sweep reaches four more screens.** Sales Floor, the
   insurance hub, the community hub and Import-from-AccuLynx: 37 sites, drawn
   glyphs instead of emoji. `CardinalIcons` 28 → 43; fifteen new (page, books,

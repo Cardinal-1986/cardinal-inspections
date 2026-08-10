@@ -4,11 +4,11 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–692
+# Session of 10 August 2026 (later) — builds 685–694
 
-**685 through 692 all shipped, merged and verified deployed** (PRs #198–#209,
+**685 through 694 all shipped, merged and verified deployed** (PRs #198–#210,
 each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
-must confirm it again rather than inherit it). `main` at 692. Working tree
+must confirm it again rather than inherit it). `main` at 694. Working tree
 clean, branch synced to main, no open PRs.
 
 | Build | What | PR |
@@ -21,6 +21,8 @@ clean, branch synced to main, no open PRs.
 | 690 | pipeline-stage **chips** on All Leads & Jobs — surfacing a filter that already existed | #205 |
 | 691 | **Assigned To** joins Milestone as a second strip — 690's stage-only code generalised to any group | #207 |
 | 692 | the emoji sweep reaches four more screens — 37 sites, `CardinalIcons` 28 → 43 | #209 |
+| 693 | **Sales Floor had no light theme at all** — 16 `--sf-*` tokens; the switch had been doing nothing to it | #210 |
+| 694 | the light/dark switch is reachable again on Sales Floor, every full-screen view and insurance | #210 |
 
 **One thing is waiting on Theo, asked and unanswered:** the `.pcpo` lavender in
 LIGHT mode. It was already failing at 1.99:1 and 689's darker card took it to
@@ -56,6 +58,10 @@ not a pass count.** Same finding as 628's amber bar and 633's white boxes.
   threw `getComputedStyle(null)` against the 690 artifact, which reads at a
   glance like the red you wanted. Guard the probe so the control *reports* —
   34 pass / 20 fail is evidence; a stack trace is an absence of evidence.
+- **A placement predicate must not inspect the thing being placed.** 694's
+  first `needsFloat()` spotted insurance by reading the button's own computed
+  display — true only while it was still in the header row. Once it moved,
+  the reason to stay out vanished and it oscillated back every second.
 - **I solved one filter group out of seven and called it the answer.** 690
   shipped a stage strip; Theo's next message was "How would I filter by rep?
   Etc". The engine had SEVEN groups the whole time. Ask what else the mechanism

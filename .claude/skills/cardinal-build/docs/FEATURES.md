@@ -3680,3 +3680,62 @@ asserts no swept emoji survived. Negative control on 691: 26 failures.
 `cardinalTruthView` wholesale reports four survivors (📝🏠📎📋) that are
 provably absent from `cr-cth-script` — that view also hosts panels from
 `cr-cct`, `cr-ctfx` and the static markup, which keep their own emoji.
+
+
+### 693 — Sales Floor has a light theme (it never did)
+
+`cr-sf-styles` was hardcoded dark: zero `var()` references, zero `rb-light`
+rules, so the app-wide switch did nothing to it and both themes rendered
+byte-identical. Sixteen `--sf-*` tokens now carry it, dark declared on `#cr-sf`
+and light under `:root[data-theme="rb-light"] #cr-sf`, every reference with a
+literal fallback.
+
+**Semantics are frozen across both themes** — the module's banner is law here:
+red is the objection, navy is your answer. The navy fills (`#1F3A6E` hero,
+`#16233b` .you card, `#2C5FA8` spine) and the cardinal rail (`#C8202E`) are the
+same bytes in light and dark.
+
+⚠️ **`.cr-sf-cr .you` keeps `color:#f0ede7` as a literal, on purpose.** It is
+the one ink of twelve sitting on a coloured ground. Tokenising it puts
+`#17181a` on `#16233b`.
+
+**The one inversion:** `--sf-red-tx`. Which red can carry type depends on the
+ground — `#e8505c` is 5.30:1 dark / 3.26:1 light, `#C8202E` is 3.28:1 dark /
+5.15:1 light. Both reds already belonged to the module.
+
+Gate `render_sflight.js` (11 assertions). Its first two check the themes
+DIFFER, which a contrast harness cannot: a module that ignores the switch
+passes every contrast check because it is only measured against the ground it
+was designed for.
+
+### 694 — the light/dark switch is reachable again
+
+`#cr-dark-toggle` is ONE button with two placements: adopted into the header
+search row by `ensureSearchRow()`, or floating bottom-right. It had gone
+missing on Sales Floor (and every full-screen view) and on insurance.
+
+| Cause | Detail |
+|---|---|
+| `crmNow()` | returns `'sales'` / `'production'` on those screens, and `refreshVisibility()` only added `.show` for retail/community |
+| the header row | is painted over by every `z-index:9500` full-screen view |
+| insurance | 417 gave that row slot to the Docket/Siren control, so the row rule hides the toggle |
+
+`needsFloat()` decides placement **from the page only, never from the button**
+— a version that read the button's own computed display oscillated once the
+button moved. When it floats, `.afloat` is added and it moves to
+`document.body`.
+
+⚠️ **Three facts that only a render establishes:**
+- Floating it *in place* does not work. At `z-index:2147483000` inside the
+  header it still measures covered — z-index competes only inside the nearest
+  stacking context.
+- Moving it is not enough. The view is appended to body **after** the button
+  moves, so an equal 9500 loses on DOM order. `.afloat{z-index:9550}` — above
+  the views, below `#cr-ci`'s 9560 so a modal still covers it.
+- `ensureSearchRow()` re-adopts from a body observer and reverses the move
+  within a frame. It now skips a button carrying `.afloat`.
+
+**Excluded by name:** `#cr-show` and `#cr-occ`. Both are single-theme
+client-facing Blackout by settled decision; a switch that does nothing there
+would be a control that lies. Gate `render_toggle694.js` asserts their absence
+as firmly as it asserts the others' presence.
