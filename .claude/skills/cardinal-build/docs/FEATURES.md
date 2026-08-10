@@ -3120,3 +3120,30 @@ The addresses misspell their own city (a live row reads `Brookville, OH 45309,
 USA, Brookeville, OH 45309`) and a neighbouring official is persuasive where he
 is not binding. Statewide letters always mark, and read **"applies here"**, not
 "this jurisdiction" — a render caught that overclaim; the assertions could not.
+
+**671 — the Supplement Desk, repaired.** Nine defects in 667–670, found by a
+13-agent audit and each re-verified by hand. Behaviour that changed:
+`fileSupplement` keeps its button disabled after a successful file and retains
+the row id (`S.filedId`); `created_by` is `null`, never `'desk'`;
+`substitutePhotoTokens()` is the **single** photo-token substitution, shared by
+print and copy, and emits **nothing** for a gap with no photographs;
+`codeAppendix()` prints the ticked building-official letters verbatim so the
+letter's enclosure claim is true; `pwi_coc` is a **disabled** option until it
+has its own build; `explainEmpty()` distinguishes an empty database from a
+record refusing.
+
+⚠ **`.pill` is shared by TWO renderers with TWO vocabularies** — `loadClaims`
+renders `insurance_claims.supplement_status` (filed/approved/partial/denied),
+`loadFilings` renders `insurance_supplements.status`
+(submitted/draft/withdrawn/approved/partial/denied). Both sets are now defined.
+Do not "unify" them; they are different columns.
+
+⚠ **`supp_mirror_to_claim` orders by `responded_at, filed_at, updated_at, id`.**
+The first two are `date`, so they tie on same-day decisions — the last two are
+what make the result deterministic. **Do not drop them as redundant.**
+
+⚠ **`is_cardinal_admin()` (the Desk's door) and `is_full_access()` (the claims'
+door) are different sets** — `audit@` passes the first and fails the second, and
+sees 0 of 5 claims. That is correct behaviour, explained in the page. It is NOT
+a reason to make the mirror `SECURITY DEFINER`: `insurance_claims`' SELECT and
+UPDATE policies are byte-identical, so anyone who can load a claim can mirror it.

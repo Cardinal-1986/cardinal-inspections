@@ -1370,3 +1370,45 @@ production — `{adjuster:{phone:…}}`. But that nesting is the **output**;
 code. *"Test against production data shapes"* means the shape at **that**
 boundary — reading a real row from the wrong end of the pipeline is still a
 convenient fixture.
+
+
+## 17 — Two renderers, one CSS class, two vocabularies (build 671)
+
+`.pill` in `supplement.html` was written for `insurance_claims.supplement_status`
+(filed / approved / partial / denied) and then reused by a second renderer for
+`insurance_supplements.status` (submitted / draft / withdrawn / …). Three of the
+second set had no rule, so every Desk filing drew the bare base pill — present,
+legible, and *silently* carrying no state colour.
+
+Nothing catches this: brace balance passes, the class is applied, jsdom sees the
+attribute, and the base rule means it never looks broken enough to notice. **When
+a class name comes from data, enumerate the data's whole vocabulary and check
+every value has a rule.** And when two columns feed one class, say so in a
+comment — the next person will otherwise "unify" them.
+
+An audit reported this as "`.pill.filed` is a class the renderer can never
+produce". That was wrong — a *different* renderer produces it. **Two vocabularies
+sharing a selector is not the same defect as a dead selector**, and the fix is
+opposite: complete the second set, don't delete the first.
+
+## 18 — A claim in prose that no code makes true (build 671)
+
+Build 670 taught the model to write, of a building-official letter, that "a copy
+is enclosed". Nothing in the system ever enclosed one. Every gate was green: the
+prompt was correct English, the letter rendered, the harness asserted the letter
+named its exhibits.
+
+The same build shipped its twin: the Copy button rewrote every photo token to
+"[photographs attached]" with no lookup, while the print path checked and emitted
+nothing. On the first real claim — zero photographs on file — the copied letter
+told an insurance carrier photographs were attached.
+
+**A document that asserts a fact about the world is code with a runtime
+dependency.** When you add a sentence like this, name the function that makes it
+true and assert THAT. Two fixes are available and they are not equal: weaken the
+sentence, or make the claim true. 671 did the second — the appendix now prints.
+
+Related and worth repeating: **prose in the artifact defeats a text assertion in
+both directions.** 671's own harness asserted the old copy regex was gone and
+found the string inside the comment explaining its removal — a correct fix
+reported as broken. Scope the assertion to the call shape, not the file.

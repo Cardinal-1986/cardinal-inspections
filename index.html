@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 670 &#8212; Building-official letters, kept by jurisdiction: filed once, they answer every job in that town from then on</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 671 &#8212; The Supplement Desk, made honest: no double filing, no letter claiming photographs it does not have, and a supplement chase that can actually go stale</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -36784,6 +36784,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:671, d:'2026-08-10', t:'The Supplement Desk, made honest \u2014 nine repairs before the next feature',
+s:'Before building send-from-the-desk, the whole Desk was audited against its own record and nine faults came back \u2014 all of them mine, from the last four builds. Fixed: filing twice no longer files twice (the button re-enabled before it checked whether the save worked); a letter copied to the clipboard no longer tells the carrier photographs are attached when the job has none; the building-official letters a filing cites are now actually PRINTED as an appendix, so the letter\u2019s claim that a copy accompanies it is true; PWI / depreciation-release is switched off until it has its own build, because it was one tap away and would have drafted an ordinary supplement letter; a filing now shows the right status colour instead of plain grey; signing in without access to a job says so instead of claiming there are no claims; and the supplement chase list can finally tell how long a supplement has been sitting. Underneath, one real money bug: when two carrier decisions landed on the same day, which one the claim showed was down to luck \u2014 the same two records could read approved or denied depending on read order. The most recently recorded decision now always wins.'},
 { b:670, d:'2026-08-10', t:'Code authority \u2014 building-official letters, filed by jurisdiction',
 s:'When an adjuster answers a code argument with \u201Cwe don\u2019t owe to bring undamaged property up to code,\u201D the letter that ends it comes from the building official \u2014 the office that issues the permit. Those letters are now kept: the Supplement Desk has a Code authority card where you file one with the official\u2019s own sentence verbatim, the sections it enforces and a scan. It is filed against the JURISDICTION, not the claim, so the letter you get for one Brookville job answers every Brookville job after it. Letters for the property\u2019s own town sort to the top and are marked, but nothing attaches itself \u2014 you tick what rides along. The analysis reads the ticked letters and names them in its reasoning, and the drafted letter lists them as enclosed exhibits. On the second half of the question: Ohio has ONE residential code, adopted statewide and administered locally, so a city or county letter is never a second citation \u2014 it is proof of how the RCO section will be enforced at that address, which is why each letter records the state sections it stands behind.'},
 { b:669, d:'2026-08-10', t:'Repairability joins the supplement playbook, with iTel as its evidence',
@@ -46793,7 +46795,7 @@ try{
 var r = await window.supa.from('insurance_claims')
 .select('id, project_id, carrier, approved_rcv, approved_acv, approved_depreciation, ' +
 'first_scope_rcv, deductible, deductible_waived, supplement_status, ' +
-'supplement_filed, supplement_approved');
+'supplement_filed, supplement_approved, supplement_filed_at');
 if(!r.error && r.data){
 claimsByProject = {};
 r.data.forEach(function(c){

@@ -102,12 +102,37 @@ for d, n in sorted(set(labels), key=lambda x: int(x[1])):
     print(f'    v{d} build {n}  x{labels.count((d,n))}')
 
 print('\n── CHANGELOG ' + '─' * 45)
+# FIXED (670) — this row was wrong in TWO ways, and both are the traps
+# CLAUDE.md warns about, in the one script CLAUDE.md tells you to trust.
+#
+#   1. `seg = s[i:i+60000]` truncated a block that is now ~137,000 characters.
+#      It read less than half the array and reported the low end of the span as
+#      585 when the real one is 574.
+#   2. It matched ONLY the new `{ b:N,` shape, so all 275 `{ build:N, note:… }`
+#      entries were invisible. That is precisely the mistake CLAUDE.md spends a
+#      whole correction paragraph undoing ("574 ADDED a shape beside the old
+#      one; it replaced nothing").
+#
+# Consequence of (2) beyond the count: 599 and 600 were reported as GAPS in the
+# span. They are not gaps — they are old-shape entries. A false gap reads as
+# lost history.
+#
+# Now: bound the block by its own <script> tag, and parse BOTH shapes.
 i = s.find('var CHANGELOG = [')
-seg = s[i:i+60000]
-bs = sorted(set(int(x) for x in re.findall(r'\{ b:(\d+),', seg)))
-row('entries', len(re.findall(r'\{ b:\d+,', seg)))
+_end = s.find('</script>', i)
+seg = s[i:_end if _end != -1 else len(s)]
+new_b = [int(x) for x in re.findall(r'\{\s*b:\s*(\d+)\s*,', seg)]
+old_b = [int(x) for x in re.findall(r'\{\s*build:\s*(\d+)\s*,', seg)]
+bs = sorted(set(new_b) | set(old_b))
+row('block chars parsed', len(seg))
+row('entries total', len(new_b) + len(old_b))
+row("  new shape { b, d, t, s }", f'{len(new_b)}  ({min(new_b)}-{max(new_b)})' if new_b else '0')
+row("  old shape { build, note }", f'{len(old_b)}  ({min(old_b)}-{max(old_b)})' if old_b else '0')
 row('span', f'{bs[0]}-{bs[-1]}')
 row('gaps in span', [n for n in range(bs[0], bs[-1]+1) if n not in bs])
+if new_b and old_b:
+    both = sorted(set(new_b) & set(old_b))
+    row('numbers in BOTH shapes', both if both else 'none')
 
 print('\n── repo ' + '─' * 50)
 root = os.path.dirname(os.path.abspath(SRC))

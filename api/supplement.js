@@ -429,7 +429,10 @@ export default async function handler(req, res) {
           '- Cite ONLY the [cite: ...] strings provided, verbatim. No other section numbers.\n' +
           '- Firm, factual, courteous. No filler.\n' +
           (exhibitLines ? '- Building-official letters accompany this request as exhibits. Refer to ' +
-            'each by the exact phrase given below and state that a copy is enclosed. They are ' +
+            'each by the exact phrase given below and say it is reproduced in the appendix to ' +
+            'this letter, with the signed original following. (671: the Desk prints that ' +
+            'appendix from the same ticked letters, so this is a true statement — do not ' +
+            'upgrade it to a claim that a scan is attached.) They are ' +
             'evidence of how the code will be ENFORCED at this address \u2014 do not quote a code ' +
             'section out of one, and do not present one as a citation of its own.\n' +
             exhibitLines + '\n' : '') + '\n' +
