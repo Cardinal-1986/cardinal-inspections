@@ -3361,7 +3361,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 693 &#8212; Sales Floor follows the light switch, which it never did before</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 694 &#8212; The light/dark switch is back on the screens that had lost it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37311,7 +37311,12 @@ window.CardinalCsv = { download: download, toCsv: toCsv, exportClients: exportCl
 })();
 </script>
 
-<style id="cr-rbtheme-toggle-styles">#cr-dark-toggle{position:fixed;bottom:24px;right:24px;z-index:9500;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.82);color:#f0f0f0;border:1px solid #c8202e;cursor:pointer;font-size:20px;display:none;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.4);transition:transform .12s,background .12s}#cr-dark-toggle.show{display:flex}#cr-dark-toggle:hover{transform:scale(1.06)}#cr-dark-toggle:active{transform:scale(.94)}:root[data-theme="rb-light"] #cr-dark-toggle{background:rgba(255,255,255,.94);color:#161616;border-color:#c8202e}@media print{#cr-dark-toggle{display:none !important}}</style>
+<style id="cr-rbtheme-toggle-styles">#cr-dark-toggle{position:fixed;bottom:24px;right:24px;z-index:9500;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.82);color:#f0f0f0;border:1px solid #c8202e;cursor:pointer;font-size:20px;display:none;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.4);transition:transform .12s,background .12s}#cr-dark-toggle.show{display:flex}
+/* 694: above the z-index 9500 full-screen views, and deliberately BELOW
+   #cr-ci's 9560 \u2014 a modal dialog covering the page controls is correct.
+   Needed because the view is appended to body AFTER the button moves, so an
+   equal z-index loses on DOM order. */
+#cr-dark-toggle.afloat{z-index:9550}#cr-dark-toggle:hover{transform:scale(1.06)}#cr-dark-toggle:active{transform:scale(.94)}:root[data-theme="rb-light"] #cr-dark-toggle{background:rgba(255,255,255,.94);color:#161616;border-color:#c8202e}@media print{#cr-dark-toggle{display:none !important}}</style>
 <script id="cr-rbtheme-toggle-script">
 (function(){
 'use strict';
@@ -37341,18 +37346,53 @@ btn.textContent = isLight() ? '\u2600' : '\uD83C\uDF19';
 btn.onclick = toggle;
 document.body.appendChild(btn);
 }
+/* 694: surfaces that are single-theme BY DECISION. The switch does nothing on
+   them, so offering it would be a control that lies. The Showcase and OC
+   Colors are client-facing Blackout and CLAUDE.md records both as settled.
+   Named here rather than silently skipped, so the choice is visible. */
+var BLACKOUT = ['cr-show', 'cr-occ'];
+function blackoutUp(){
+for(var i = 0; i < BLACKOUT.length; i++){
+var v = document.getElementById(BLACKOUT[i]);
+if(v && v.getClientRects().length) return true;
+}
+return false;
+}
+/* Does the control need to step out of the header row? Decided ONLY from the
+   page \u2014 never from the button's own state. An earlier version read the
+   button's computed display to spot insurance, which is only true while it is
+   still in the row; once it moved, the reason to stay out vanished and it
+   oscillated back in every second. */
+function needsFloat(){
+if(blackoutUp()) return false;
+if((document.body.dataset.crm || '') === 'insurance') return true;
+var row = document.getElementById('cr-hd2-srch');
+if(!row) return true;
+var r = row.getBoundingClientRect();
+if(!r.width || !r.height) return true;
+var el = document.elementFromPoint(r.left + r.width - 14, r.top + r.height / 2);
+return !(el && (el === row || row.contains(el)));
+}
 function refreshVisibility(){
 var btn = document.getElementById('cr-dark-toggle');
 if(!btn) return;
 /* 459: Community gets the light/dark control too \u2014 Theo's call.
-   This gate only governs the bottom-right FAB state, before ensureSearchRow()
-   adopts the button into the header row, where build 417's
-   `#cr-hd2-srch #cr-dark-toggle{display:flex !important}` takes over. Until now
-   the control was visible on Community only because that !important rule
-   outranked this line, and hidden in the FAB window. Naming both CRMs makes the
-   shipped behaviour deliberate. Insurance stays out: it mounts its own
-   Docket/Siren control in that row and must never show both. */
+   ensureSearchRow() adopts the button into the header row, where build 417's
+   `#cr-hd2-srch #cr-dark-toggle{display:flex !important}` takes over; this
+   line governs the floating state. Insurance stays out of the ROW \u2014 it
+   mounts its own Docket/Siren control there and must never show both \u2014 but
+   since 694 it still gets the switch, floating. */
 var crm = document.body.dataset.crm;
+var row = document.getElementById('cr-hd2-srch');
+if(needsFloat()){
+if(btn.parentNode !== document.body) document.body.appendChild(btn);
+btn.classList.add('show', 'afloat');
+return;
+}
+if(btn.classList.contains('afloat')){
+btn.classList.remove('afloat');
+if(row) row.appendChild(btn);
+}
 btn.classList.toggle('show', crm === 'retail' || crm === 'community');
 }
 function start(){
@@ -37373,6 +37413,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:694, d:'2026-08-10', t:'The light/dark switch is back where it went missing',
+s:'On Sales Floor, and on every insurance screen, the light/dark button had disappeared. It lives in the header row, and those screens either cover that row or give the slot to another control. It now steps out to the bottom-right corner whenever the header slot is not usable, so the switch is reachable from everywhere it can actually do something. The Showcase and the colour wall are left out on purpose \u2014 those two are built dark for showing clients, and the switch would do nothing there.' },
 { b:693, d:'2026-08-10', t:'Sales Floor follows the light switch',
 s:'Sales Floor was built dark and stayed dark \u2014 flipping the app to light mode did nothing to it, which is why it looked wrong beside every other screen. It now has a proper light theme. The red and the navy still mean what they meant: red is the objection, navy is your answer, in both themes. The one thing that swaps is which of the two reds carries the quote, because the brighter one stops being readable on a pale page.' },
 { b:692, d:'2026-08-10', t:'Drawn icons on four more screens',
@@ -50572,7 +50614,11 @@ if(search && search.parentNode !== row) row.insertBefore(search, row.firstChild)
    already-wired retail toggle — it was floating bottom-right over the calendar.
    Adopted, not rebuilt. Insurance mounts its own .cr-ins-theme here instead. */
 var dark = document.getElementById('cr-dark-toggle');
-if(dark && dark.parentNode !== row) row.appendChild(dark);
+/* 694: .afloat means the toggle has stepped out to the corner because this row
+   is covered or spoken for on the current screen. Re-adopting it here undoes
+   that within the frame \u2014 this row is rebuilt from a document.body observer,
+   so it wins every race. Leave it until refreshVisibility() hands it back. */
+if(dark && dark.parentNode !== row && !dark.classList.contains('afloat')) row.appendChild(dark);
 return row;
 }
 function claimTypeOf(pr){
