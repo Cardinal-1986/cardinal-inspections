@@ -4,12 +4,42 @@
 
 ---
 
-# Session of 10 August 2026 (later) — build 685, the gradient-text sweep
+# Session of 10 August 2026 (later) — builds 685–688
 
-**Build 685 shipped as PR #198 from `claude/session-handoff-notes-eb6vy6` and
-was merged to `main` on green under this session's standing authorization**
-(Theo re-confirmed the hands-off flow at the start of the session; a NEW
-session should confirm it again rather than inherit it). Working tree clean.
+**685, 686, 687 and 688 all shipped, merged and verified deployed** (PRs
+#198–#201, each squash-merged on green under this session's standing
+authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
+must confirm it again rather than inherit it). `main` at 688. Working tree
+clean, branch synced to main, no open PRs.
+
+| Build | What | PR |
+|---|---|---|
+| 685 | every gradient-clipped text site removed — 37, not the 38 on record | #198 |
+| 686 | the nav is drawn, not emoji — 28 rows, `CardinalIcons` 4 → 27, `hydrate()` | #199 |
+| 687 | the three icons Theo rejected off the 686 sheet, redrawn | #200 |
+| 688 | ABC Supply → **Suppliers**, with ABC as a card inside | #201 |
+
+## The through-line of this session, if you read nothing else
+
+**Green assertions do not see meaning.** 686 was 195/195 green and shipped three
+icons that were wrong — a hammer that read as a T, a hard hat that read as a
+bag, and a *building* standing for "Team". Theo caught all three off a rendered
+contact sheet in about a minute. 687 fixed them. **Ship an icon with a picture,
+not a pass count.** Same finding as 628's amber bar and 633's white boxes.
+
+## Corrections I owe, in my own words
+
+- **I said 550 emoji remained. It was 562.** My census never covered
+  0x2300–0x23FF (Miscellaneous Technical), so ⏰ — and the whole Reminder row —
+  was invisible to it and survived the first pass. 533 remain after 686.
+- **I shipped a harness that could not fail.** In modern Chromium every
+  `CSSStyleRule` exposes an empty `.cssRules` for CSS nesting, so
+  `if (r.cssRules) { walk(); continue; }` skipped every rule and reported a
+  clean zero. Only the negative control — which had to say 37 and said 0 —
+  caught it.
+- **The same JS mistake twice in one session**: an icon's paths written as two
+  adjacent string literals with no `+`. JS has no implicit concatenation. Icon
+  entries in `P` are ONE string on ONE line.
 
 ## What shipped
 
@@ -51,17 +81,37 @@ on the dark card. Removed at source (5.06:1). **Generalise it: removing
 gradient text can unmask an inline light-era ink** — scan the affected elements
 for an inline `color` before calling such a sweep done. Only 1 of the 37 had it.
 
-## Queue, unchanged otherwise
+## Queue
 
-1. **The emoji sweep** — still Theo's #1, approved, untouched. Sized this
-   session: ~236 literal pictographic chars (41 distinct), 214 HTML entities
-   (76 distinct), 405 JS surrogate escapes. CHANGELOG keeps its emoji.
+1. **The emoji sweep — STARTED at 686, not finished. 533 remain.** Measured with
+   comments excluded (module banners' box-drawing swamps a naive count) and with
+   the 0x2300–0x23FF block included. Dingbats (156), arrows (154) and geometric
+   marks (66) are counted SEPARATELY and are **not** part of this sweep — ✓ ✕ →
+   ☐ are functional UI glyphs, not stickers. Next cleanest tranche: the card and
+   hero button rows in `cr-sf` / `cr-ch2` / `cr-cth` / `cr-ci`, which already
+   wrap their emoji in `<span class="i">`. The weather table in `cr-lr-script` is
+   a DATA map keyed by WMO code — an icon per condition, a design task, wants
+   Theo's eye first.
 2. ~~gradient text~~ — **done at 685**.
 3. **The insurance loop** — needs Theo, the live key and Gunn's document.
 4. **VAPID rotation** — still waiting on `VAPID_PRIVATE_KEY` in Vercel.
 5. **`.pcpo` lavender 1.99:1 in light** — still needs Theo's pick. Note the
    `.ljpo` PO is now settled on `#d8a94f`/`#8f1620` everywhere, which is a
    ready precedent if he wants the same treatment.
+
+## Two couplings found this session — check them before ANY nav change
+
+- **The desktop left nav (`cr-lnav-script`) has its OWN 26-icon set**, unrelated
+  to `CardinalIcons`. Desktop and burger menu draw from different sets. Theo's
+  call: **not now** — finish the emoji sweep first. Folding them into one is its
+  own build and changes what his ultrawide looks like, so it wants a preview.
+- **`iconKey()` derives the left-nav icon key from the button's TEXT** — it
+  lowercases and strips non-alphanumerics. Renaming a nav label therefore
+  silently changes which icon it looks up. 688 hit this ("ABC Supply" →
+  `abcsupply` → `suppliers`) and had to move the key in both of `cr-lnav`'s maps.
+- **A feature can have two doors.** `Suppliers` is reachable from the main menu
+  AND from the Tools dropdown (`.cbi[data-go="abc"]`). The second is invisible
+  from the menu; it was found by grepping the brick emoji.
 
 ## Notes
 
