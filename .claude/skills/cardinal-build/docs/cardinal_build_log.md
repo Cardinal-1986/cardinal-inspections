@@ -14493,6 +14493,38 @@ as the retirement comment — asserted by grep, count 1.
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
 
+- **697** · **A sideways swipe on a scrolling strip no longer backs out of
+  the screen.** Theo, on All Leads & Jobs: *"moving through prospects to click
+  filter and swiping back toward leads exits the screen."*
+  **Cause: scroll chaining.** A horizontal scroller with no
+  `overscroll-behavior-x` hands the leftover gesture to the page the moment it
+  reaches `scrollLeft` 0, and the browser reads that as a back navigation.
+  Nothing on the leads view was broken — the gesture escaped it. The app
+  already had the cure in exactly one place, used nowhere else:
+  `.cr-est-head{overflow-x:auto;overscroll-behavior-x:contain}`.
+  **Scope: he reported one strip, the file had 33.** Every tab rail, chip row
+  and card grid now carries the same property. `contain` stops CHAINING only —
+  it does not change how the element scrolls, does not block touch handlers,
+  and leaves the Y axis alone, which the gate proves by scrolling the strip
+  and reading `scrollLeft` back.
+  ⚠️ **The `overflow:auto` SHORTHAND also sets `overflow-x`.** The first pass
+  matched the longhand and guarded 23; Chromium's parsed-rule walk then said
+  **33**. Ten more rules scroll sideways without saying the words — including
+  `.ljsheet .panel`, the leads filter sheet, directly in the path Theo
+  described. **The gate caught what the source regex could not.**
+  ⚠️ **Three counting traps in one build.** (1) A `<style>` tag inside a JS
+  template string makes a naive span scan treat generated print CSS as a
+  stylesheet. (2) `overflow:auto` appears as PROSE in the `cr-pm-scroll`
+  banner — "…all carry overflow:auto" — and a scan that ignores comments then
+  walks backwards past the comment into the preceding script, which is how
+  `reload: function()` turned up in a list of CSS selectors. (3) Six more sit
+  in inline `style=` attributes on modal overlays; those are vertical, are not
+  the reported defect, and were **left alone deliberately** rather than swept
+  in silently. Gate `render_swipe697.js`, 10 assertions, RED on 696.
+  ⚠️ **CSS cannot fix the iOS system EDGE gesture** — a swipe beginning on the
+  very left of the glass is handled before the page sees it. This fixes a
+  swipe that starts ON the strip, which is what was described.
+
 - **696** · **The chip strips were pushing the results column off the screen.**
   **My regression, shipped at 690, worse at 691, reported by Theo.** Measured
   at a 393px viewport: 689 has nothing wider than the screen, 690 has

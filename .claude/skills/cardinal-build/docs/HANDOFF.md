@@ -4,11 +4,11 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–696
+# Session of 10 August 2026 (later) — builds 685–697
 
-**685 through 696 all shipped, merged and verified deployed** (PRs #198–#212,
+**685 through 697 all shipped, merged and verified deployed** (PRs #198–#213,
 each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
-must confirm it again rather than inherit it). `main` at 696. Working tree
+must confirm it again rather than inherit it). `main` at 697. Working tree
 clean, branch synced to main, no open PRs.
 
 | Build | What | PR |
@@ -25,6 +25,7 @@ clean, branch synced to main, no open PRs.
 | 694 | the light/dark switch is reachable again on Sales Floor, every full-screen view and insurance | #210 |
 | 695 | the Tools dropdown is drawn — all 16 rows, `CardinalIcons` 43 → 47 | #211 |
 | 696 | **my 690 regression**: the chip strips pushed the results column 869px wide on a 393px screen | #212 |
+| 697 | swiping a chip strip past its start chained to the page and exited the screen — 33 scrollers guarded | #213 |
 
 **One thing is waiting on Theo, asked and unanswered:** the `.pcpo` lavender in
 LIGHT mode. It was already failing at 1.99:1 and 689's darker card took it to
