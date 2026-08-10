@@ -13140,3 +13140,84 @@ string inside **the comment explaining the fix** — comment pollution, in the
 direction that makes a correct repair look broken. And a pattern for a sentence
 that wraps across two comment lines reported a present claim as absent. Half of
 all reds on this project are the test's fault; today it was three for three.
+
+---
+
+## Build 672 — send from the desk
+*10 Aug 2026 · `api/senddoc.js` + `supplement.html` + stamp/changelog.
+**NO MIGRATION** — `sent_at` and `sent_to` were cut at 667 and have never been
+written.*
+
+Theo's pick, recorded before 667 was written: *"send from the desk."* The Desk
+could analyse, review, draft, file, print and copy. It could not put the letter
+in front of the adjuster.
+
+**His rule held, and is now enforced in four places rather than asserted once.**
+Send is dark until the supplement is filed (the writeback needs a row). It is
+dark if the claim has no `adjuster_email`, and says so rather than guessing —
+Gunn's is `claims@claims.allstate.com`, a shared carrier intake address, and the
+standing rule is never to invent one. The recipient is named on the control
+*before* the tap and again on the confirm. Nothing is scheduled, nothing fires
+on file.
+
+**The confirm states what is actually going, not what was ticked.**
+`renderForSend()` returns the count of photographs that genuinely *resolved to a
+signed URL*, and a photograph that failed to sign is not embedded and not
+counted — the same rule 671 applied to a gap with no photographs. On a job with
+none, the confirm says so in as many words before anything leaves.
+
+**`api/senddoc.js` is extended, never rewritten.** Three optional names —
+`subject`, `variant`, `replyTo`. The carrier body is a **branch**; the homeowner
+body is byte-for-byte what shipped. The `is_cardinal_admin` gate fires **only**
+for `variant:'carrier'` — a rep legitimately emails a homeowner an estimate, and
+that path keeps its session-only gate. Two guards came along: `to` must be a
+non-empty **string** (a non-empty array is truthy, slips `!to`, and reaches
+Resend as `[[a,b]]`), and the auth round-trip moved **inside** the try so a
+network blip returns JSON instead of a bodyless platform 500.
+
+⚠ **`subject` must NOT fold into `title`.** `title` also drives `safeName` (the
+attachment filename) and the homeowner body sentence. Caller 2 sends the literal
+title `'Estimate'`, so folding would silently rename its attachment. Asserted.
+
+**The archive is what was MAILED.** `letter_html` is captured in `recordSend()`,
+at send time — not at file time. The letter stays editable after filing, so a
+file-time capture can differ from what the carrier received. It stores **tokens**,
+never the live signed URLs, so nothing at rest expires.
+
+**Exhibit TTL is one year, deliberately not the 10-year document TTL.** A
+supplement is argued over weeks to months; the recipient is a shared carrier
+intake address rather than a homeowner's own report; and the archive re-renders
+from tokens for anything later. One named constant.
+
+**The one honest limit, stated rather than hidden:** mail leaves before the row
+is written. There is no transaction across Resend and Postgres. A writeback
+failure after a successful send is **loud** — it names the address the mail went
+to, carries the real error, and offers a retry that **re-writes and never
+re-sends**. Never a swallowed catch; that class already cost this project three
+silent write-backs on the estimate publish path.
+
+**Gates.** `harness_672` (54). The back-compat test is **differential, not
+asserted**: the two payloads `index.html` sends today are driven through **both**
+the 671 handler and the 672 handler and the JSON reaching Resend is compared
+field by field — byte-identical for both callers, and caller 2's attachment is
+still `Estimate.html`. Then the carrier variant (admin gate consulted, refused
+at 403 for a non-admin with nothing sent, carrier body not homeowner body), the
+guards, `syncSend()` executed through all four states, `renderForSend()` with
+signing that works and signing that fails, and `recordSend()` through success
+and a failed writeback asserting the retry is a save. Control on the 671
+artifacts: 21 red. Full sweep 672→653 green.
+
+⚠️ **Two older harnesses went red, and both were the TEST.**
+
+- `harness_671` crashed: `fileSupplement` now calls `syncSend()`, which its
+  sandbox did not provide. Stubbed to a **recording** sentinel, not a no-op, so
+  it would notice if the wiring were removed.
+- `harness_668` failed on `'Send-from-desk arrives in the next build'` — it had
+  pinned a **temporary copy string** as though it were the invariant, so it went
+  red the moment send shipped exactly as planned. **BUG_CLASSES §15 again.**
+  Re-keyed to the durable rule (*nothing sends itself*) and then
+  **mutation-tested**: a timer-driven send and a `sendLetter` without its click
+  wiring both go red. The first version of that re-key used `setTimeout\([^)]*`
+  and the auto-send mutant **passed** — `[^)]*` cannot cross the `)` in
+  `function(){`. Bounded `[\s\S]{0,200}?` instead. A re-key that has never been
+  run red is not a gate.

@@ -142,12 +142,17 @@ console.log('\n── filing twice no longer files twice (EXECUTED) ──');
         codeLetters: [], clPicked: {} };
       const sb = { from: () => ({ insert: () => { calls.inserts++; return {
         select: () => ({ single: async () => insertResult }) }; } }) };
+      /* syncSend was added to fileSupplement at 672 (a successful file is what
+         makes send available). Stubbed to a sentinel that RECORDS the call
+         rather than to a no-op, so this harness would notice if the wiring
+         were removed. */
       const sandbox = new Function('S', 'sb', 'el', 'alert', 'step', 'loadFilings',
-        'letterRaw', 'clSelected', 'esc', 'calls',
+        'letterRaw', 'clSelected', 'esc', 'syncSend', 'calls',
         fn + '\nreturn fileSupplement;')(
           S, sb, id => els[id], m => calls.alerts.push(m),
           n => calls.steps.push(n), () => { calls.loads++; },
-          () => '<p>letter</p>', () => [], ESC, calls);
+          () => '<p>letter</p>', () => [], ESC,
+          () => { calls.syncSend = (calls.syncSend || 0) + 1; }, calls);
       await sandbox();
       return { btn, calls, S };
     }

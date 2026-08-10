@@ -3147,3 +3147,31 @@ door) are different sets** — `audit@` passes the first and fails the second, a
 sees 0 of 5 claims. That is correct behaviour, explained in the page. It is NOT
 a reason to make the mirror `SECURITY DEFINER`: `insurance_claims`' SELECT and
 UPDATE policies are byte-identical, so anyone who can load a claim can mirror it.
+
+**672 — send from the desk.** The Supplement Desk emails the letter to the
+carrier. **No migration** — `sent_at`/`sent_to` existed since 667, unwritten.
+
+`api/senddoc.js` gained three OPTIONAL names — `subject`, `variant`, `replyTo`.
+⚠ **Both pre-existing callers must stay byte-identical**, and `harness_672`
+proves it *differentially*: their exact payloads run through the old and new
+handler and the Resend JSON is compared field by field. ⚠ **Never fold `subject`
+into `title`** — `title` also drives the attachment filename (`safeName`) and
+the homeowner body sentence, and caller 2 sends the literal `'Estimate'`.
+The `is_cardinal_admin` gate fires **only** for `variant:'carrier'`; the two
+client-facing callers keep the session-only gate on purpose.
+
+Desk side: `syncSend()` (four states — sent / not filed / no address / ready),
+`renderForSend()` (signs exhibits, returns the count that actually **resolved**),
+`recordSend()` (separate, so a failed writeback retries **without re-sending**).
+
+⚠ **`EXHIBIT_TTL` is one year, not `PHOTO_DOC_URL_TTL`'s ten.** Deliberate: a
+carrier intake address is not a homeowner's own report, and the archive
+re-renders from tokens. One constant.
+
+⚠ **The archive is captured at SEND time, not file time** — the letter stays
+editable after filing, so file-time capture can differ from what was mailed. It
+stores `[[PHOTOS:id]]` tokens, never live signed URLs.
+
+⚠ **Mail leaves before the row is written** — no transaction spans Resend and
+Postgres. A writeback failure is loud, names the address, and its retry is a
+save. Do not "tidy" it into a catch.

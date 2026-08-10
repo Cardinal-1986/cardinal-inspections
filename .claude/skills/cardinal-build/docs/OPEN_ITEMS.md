@@ -2229,12 +2229,32 @@ both now complete).
 insert against an invisible claim and the mirror would no-op. Not reachable
 from any shipped UI.
 
-**Next:** 672 send-from-the-desk (recipient shown, one explicit tap, `senddoc`
-extended with optional `subject`/`variant`/`replyTo` only — both existing
-callers untouched, back-compat asserted by executing their payloads). Then 673,
+**672 SHIPPED** — send from the desk, back-compat proved differentially against
+the 671 handler. **Next: 673,
 the carrier response: reopen the filing, record decisions per item into
 `items[].carrier` (**not** `responses` — the items COMMENT already names that
 home), rebut through the existing `mode:'draft'` with an explicit
 `letter_kind`. A reduced-quantity approval — the commonest adjuster move — has
 nowhere to land today; 673 is the cheap moment to add `approved_qty` beside
 `decision`.
+
+
+## After 672
+
+**Still open, unchanged:** the three questions above (PWI/COC vs
+quantities-only; the $0 supplement rail; who may rewrite a filed letter). None
+blocked 672; all three still want an answer.
+
+**New, from building the send:**
+- **Nothing verifies the letter arrived.** Resend accepting it is not the
+  carrier receiving it. No bounce handling, no delivery webhook. `sent_at` means
+  *we handed it to the mailer*, and the Desk says exactly that.
+- **`EXHIBIT_TTL` is one year.** If a dispute outlives it the photographs in the
+  carrier's copy stop resolving. One constant; the archive still re-renders.
+  Revisit if a real supplement ever runs that long.
+- **673 is next**: reopen the filing, record the carrier's decision per item
+  into `items[].carrier` (NOT `responses` — the items COMMENT already names that
+  home), and rebut through the existing `mode:'draft'` with an explicit
+  `letter_kind`. Add `approved_qty` beside `decision` while the slot is being
+  written for the first time — a reduced-quantity approval is the commonest
+  adjuster move and today has nowhere to land.

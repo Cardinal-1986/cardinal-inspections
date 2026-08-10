@@ -118,6 +118,7 @@
   .pill.submitted{ color:var(--sd-warn); border-color:var(--sd-warn); }
   .pill.draft{ color:var(--sd-ink3); border-color:var(--sd-line); }
   .pill.withdrawn{ color:var(--sd-ink3); border-color:var(--sd-line); text-decoration:line-through; }
+  .pill.sent{ color:var(--sd-ok); border-color:var(--sd-ok); }   /* 672 */
 
   .steps{ display:flex; gap:6px; margin:0 0 14px; flex-wrap:wrap; }
   .steps .st{ font-size:11.5px; padding:5px 11px; border-radius:99px; border:1px solid var(--sd-line); color:var(--sd-ink3); }
@@ -324,16 +325,17 @@
       <div class="sd-card" id="letterCard" style="display:none;">
         <h2>The letter</h2>
         <p class="sub">Edit anything. Quantities only — the letter asks the carrier to price per their own Xactimate
-          list. Photo markers become the actual photographs when printed or (next build) sent.</p>
+          list. Photo markers become the actual photographs when printed or sent.</p>
         <div class="warnbar" id="dollarWarn">This draft contains a dollar amount. House rule is quantities-only — take the number out or own it deliberately.</div>
         <input id="subjEdit" placeholder="Subject">
         <div id="letterEdit" contenteditable="true"></div>
         <div class="btnrow">
           <button class="btn" id="fileBtn">File this supplement</button>
+          <button class="btn" id="sendBtn" disabled>Send to the carrier</button>
           <button class="btn ghost" id="printBtn">Print / PDF</button>
           <button class="btn ghost" id="copyBtn">Copy letter</button>
-          <span class="note">Send-from-desk arrives in the next build; nothing sends itself.</span>
         </div>
+        <div class="note" id="sendNote">File the supplement first &mdash; the send is recorded against the filing.</div>
       </div>
 
       <div class="sd-card" id="filingsCard">
@@ -382,6 +384,8 @@ var S = {
   gaps: [],                              /* the reviewed items */
   letter: null,                          /* {subject, letter_html, dollar_flag} */
   filings: [],
+  filedId: null,                         /* 671: the row a send is recorded against */
+  sent: false,                           /* 672: this letter has left the building */
   phTarget: null                         /* gap id the photo modal edits */
 };
 
@@ -514,6 +518,11 @@ async function openDesk(claimId){
   loadPhotos(c.project_id);
   loadItel(c.id);
   loadCodeLetters();
+  /* 672: a fresh claim is a fresh letter — nothing filed, nothing sent */
+  S.filedId = null; S.sent = false;
+  el('fileBtn').disabled = false; el('fileBtn').textContent = 'File this supplement';
+  el('sendBtn').onclick = null; el('sendBtn').textContent = 'Send to the carrier';
+  syncSend();
 }
 function kv(label, val){ return '<div class="cell"><b>' + esc(label) + '</b><span>' + val + '</span></div>'; }
 
@@ -694,7 +703,7 @@ async function loadScopeDocs(pid){
 
 async function loadFilings(claimId){
   var r = await sb.from('insurance_supplements')
-    .select('id, filing_type, reason, filed_at, status, amount_requested, amount_approved, responded_at, created_at')
+    .select('id, filing_type, reason, filed_at, status, amount_requested, amount_approved, responded_at, created_at, sent_at, sent_to')
     .eq('claim_id', claimId).order('created_at', { ascending: false }).limit(30);
   S.filings = r.data || [];
   el('filingList').innerHTML = S.filings.length ? S.filings.map(function(f){
@@ -702,6 +711,10 @@ async function loadFilings(claimId){
     return '<div class="filing"><span>' + esc(ft) + '</span>' +
       '<span style="color:var(--sd-ink2);">' + esc(f.reason || '') + '</span><span class="sp"></span>' +
       (f.amount_approved ? '<span>' + money(f.amount_approved) + ' appr.</span>' : '') +
+      /* 672: filed and SENT are different facts, and only one of them reaches
+         the carrier. A filing with no sent_at is an ask nobody has made yet. */
+      (f.sent_at ? '<span class="pill sent" title="' + esc(f.sent_to || '') + '">sent ' +
+         esc(fmtDate(f.sent_at)) + '</span>' : '<span class="pill">not sent</span>') +
       '<span class="pill ' + esc(f.status) + '">' + esc(f.status) + '</span></div>';
   }).join('') : '<div class="sd-empty">None yet.</div>';
 }
@@ -946,6 +959,7 @@ async function fileSupplement(){
   }
   S.filedId = (r.data && r.data.id) || null;
   el('fileBtn').textContent = 'Filed ✓';
+  syncSend();
   step(4);
   loadFilings(S.claim.id);
   alert('Filed. The claim’s supplement figures update themselves — the AR math sees this immediately.');
@@ -1018,6 +1032,178 @@ el('printBtn').addEventListener('click', async function(){
   window.print();
   el('printArea').style.display = 'none';
 });
+/* ── 672: send ────────────────────────────────────────────────────────────
+   Theo's pick, and his rule: nothing sends itself. The recipient is named
+   before the tap and the tap is the only thing that sends.
+
+   The exhibit TTL is deliberately NOT the 10-year document TTL index.html uses
+   for a homeowner's own report. A supplement is argued over weeks to months,
+   the recipient here is a shared carrier intake address, and the archived
+   letter re-renders from its tokens for anything later. One year, in one
+   constant, easy to change if a dispute ever outlives it. */
+var EXHIBIT_TTL = 31536000;   /* 1 year, in seconds */
+
+function syncSend(){
+  var to = (S.claim && (S.claim.adjuster_email || '').trim()) || '';
+  var btn = el('sendBtn'), note = el('sendNote');
+  if(S.sent){
+    btn.disabled = true; btn.textContent = 'Sent ✓';
+    note.textContent = 'Sent to ' + to + '. A letter that left the building is a record, not a draft.';
+    return;
+  }
+  if(!S.filedId){
+    btn.disabled = true;
+    note.textContent = 'File the supplement first — the send is recorded against the filing.';
+    return;
+  }
+  if(!to){
+    /* never invent an address, and never guess a better one than the record
+       holds. A refusal that explains itself is not a broken screen. */
+    btn.disabled = true;
+    note.textContent = 'No adjuster email is on this claim, so there is nobody to send to. ' +
+      'Add the address you actually have on the claim record — the Desk will not guess one.';
+    return;
+  }
+  btn.disabled = false;
+  note.textContent = 'Goes to ' + to + ' — you will see it again on the confirm.';
+}
+
+/* the letter as it will actually be MAILED: photo tokens resolved to signed
+   URLs, the code-authority appendix attached. Returns the count of photographs
+   that genuinely resolved, so the confirm can state a true number rather than
+   counting tokens. */
+async function renderForSend(){
+  var html = letterRaw();
+  var allPaths = [];
+  S.gaps.forEach(function(g){
+    (g.photos || []).forEach(function(p){ if(p.path && p.path.indexOf('row:') !== 0) allPaths.push(p.path); });
+  });
+  var byPath = {};
+  if(allPaths.length){
+    var su = await sb.storage.from('photos').createSignedUrls(allPaths, EXHIBIT_TTL);
+    (su.data || []).forEach(function(d, i){ if(d && d.signedUrl) byPath[allPaths[i]] = d.signedUrl; });
+  }
+  var resolved = 0;
+  html = substitutePhotoTokens(html, function(g){
+    var imgs = g.photos.map(function(p){
+      var src = byPath[p.path] || '';
+      if(!src) return '';
+      resolved++;
+      return '<img src="' + esc(src) + '" style="max-width:46%;margin:4px 2%;border:1px solid #ccc;">';
+    }).join('');
+    /* a photograph that would not sign is NOT claimed — same rule as a gap
+       with none at all (671). */
+    return imgs ? '<div>' + imgs + '</div>' : '';
+  });
+  return { html: html + codeAppendix(''), resolved: resolved };
+}
+
+el('sendBtn').addEventListener('click', sendLetter);
+async function sendLetter(){
+  if(!S.claim || !S.letter || S.sent) return;
+  if(!S.filedId){ syncSend(); return; }
+  var to = (S.claim.adjuster_email || '').trim();
+  if(!to){ syncSend(); return; }
+
+  el('sendBtn').disabled = true;
+  el('sendNote').textContent = 'Preparing the exhibits…';
+  var packet;
+  try{ packet = await renderForSend(); }
+  catch(err){
+    el('sendNote').textContent = 'Could not prepare the letter: ' + (err.message || err);
+    el('sendBtn').disabled = false; return;
+  }
+
+  var letters = clSelected().length;
+  var subject = (el('subjEdit').value || '').trim() ||
+    ('Supplement request — ' + (S.claim.homeowner_name || 'claim') +
+     (S.claim.claim_number ? ' — claim ' + S.claim.claim_number : ''));
+  var confirmed = window.confirm(
+    'Send this supplement to:\n\n    ' + to + '\n\n' +
+    'Subject: ' + subject + '\n\n' +
+    (packet.resolved
+      ? packet.resolved + ' photograph' + (packet.resolved === 1 ? '' : 's') + ' will be included.\n'
+      : 'NO photographs will be included — and the letter does not claim any.\n') +
+    (letters ? letters + ' building-official letter' + (letters === 1 ? '' : 's') +
+       ' reproduced in the appendix.\n' : '') +
+    '\nThis leaves immediately. Nothing sends itself — this tap is the send.');
+  if(!confirmed){ el('sendBtn').disabled = false; syncSend(); return; }
+
+  el('sendNote').textContent = 'Sending…';
+  var sess = null;
+  try{ sess = (await sb.auth.getSession()).data.session; }catch(_){}
+  var r, j = null;
+  try{
+    r = await fetch('/api/senddoc', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'Authorization': 'Bearer ' + (sess ? sess.access_token : '') },
+      body: JSON.stringify({
+        to: to,
+        variant: 'carrier',                    /* 672: explicit, never sniffed */
+        subject: subject,
+        title: 'Supplement request',           /* drives the attachment filename */
+        clientName: S.claim.adjuster_name || '',
+        propertyLine: (S.claim.homeowner_name ? S.claim.homeowner_name + ' — ' : '') +
+                      (S.claim.property_address || '') +
+                      (S.claim.claim_number ? '  ·  Claim ' + S.claim.claim_number : ''),
+        html: packet.html
+      })
+    });
+    try{ j = await r.json(); }catch(_){}
+  }catch(err){
+    el('sendNote').textContent = 'Could not reach the mailer: ' + (err.message || err) +
+      ' — nothing was sent. Try again.';
+    el('sendBtn').disabled = false; return;
+  }
+  if(!r.ok){
+    el('sendNote').textContent = 'Not sent: ' + ((j && (j.detail || j.error)) || ('HTTP ' + r.status));
+    el('sendBtn').disabled = false; return;
+  }
+
+  /* THE MAIL HAS LEFT. There is no transaction across Resend and Postgres, so
+     from here the only honest failure mode is a loud one — never a swallowed
+     catch, which is the class this project already paid for three times over
+     on the estimate publish path. */
+  S.sent = true;
+  await recordSend(to, subject, packet.html);
+}
+
+/* the writeback, separated so a failure can be RETRIED without re-sending.
+   letter_html is captured HERE, at send time, not at file time: the letter
+   stays editable after filing, so a file-time archive can differ from what the
+   carrier actually received. The archive is what was mailed. */
+async function recordSend(to, subject, sentHtml){
+  var w = await sb.from('insurance_supplements').update({
+    sent_at: new Date().toISOString(),
+    sent_to: to,
+    letter_subject: subject,
+    letter_html: letterRaw()               /* tokens at rest, never live URLs */
+  }).eq('id', S.filedId).select('id').single();
+
+  if(w.error){
+    el('sendBtn').disabled = false;
+    el('sendBtn').textContent = 'Retry saving the record';
+    el('sendNote').innerHTML =
+      '<b style="color:var(--sd-crit);">The email WAS SENT to ' + esc(to) +
+      ', but the record did not save.</b> ' + esc(w.error.message) +
+      ' &mdash; the claim will not show this supplement as sent until it does. ' +
+      'Tap again to save the record; it will not send a second email.';
+    /* the retry re-writes only */
+    el('sendBtn').onclick = function(){
+      el('sendBtn').disabled = true;
+      el('sendNote').textContent = 'Saving the record…';
+      recordSend(to, subject, sentHtml);
+    };
+    return;
+  }
+  el('sendBtn').onclick = null;
+  el('sendBtn').textContent = 'Sent ✓';
+  el('sendBtn').disabled = true;
+  syncSend();
+  loadFilings(S.claim.id);
+}
+
 el('copyBtn').addEventListener('click', function(){
   var tmp = document.createElement('div');
   /* 671: the same conditional substitution the print path uses. A gap with no

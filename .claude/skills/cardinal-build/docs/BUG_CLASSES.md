@@ -1412,3 +1412,27 @@ Related and worth repeating: **prose in the artifact defeats a text assertion in
 both directions.** 671's own harness asserted the old copy regex was gone and
 found the string inside the comment explaining its removal — a correct fix
 reported as broken. Scope the assertion to the call shape, not the file.
+
+
+## 19 — A re-keyed assertion is a NEW assertion, and needs its own red (build 672)
+
+`harness_668` pinned the literal copy `'Send-from-desk arrives in the next
+build'`. That is a **temporary fact wearing an invariant's clothes** (§15), and
+it went red the moment send shipped exactly as designed. Correct response: don't
+delete it, re-key it to what Theo actually cares about — *nothing sends itself*.
+
+**The trap is what happened next.** The re-key looked right and passed on the
+real page. Mutation-testing it — a `setTimeout(function(){ sendLetter(); })`
+spliced into a copy of the artifact — showed it **still passed**, because
+`setTimeout\([^)]*sendLetter` cannot cross the `)` in `function(){`. A bounded
+`[\s\S]{0,200}?` fixes it, and both mutants (timer-driven send; `sendLetter`
+present but unwired from its click) then go red.
+
+**Rule: when you re-key an assertion, mutation-test the new one.** Its green run
+on the current tree proves nothing — the old assertion was green for four builds
+too. Build the failure you claim to be catching and watch it catch it.
+
+Second, smaller lesson from the same run: a harness whose sandbox executes
+shipped code gets a **new free variable** every time the shipped function gains
+a call. Stub it to a **recording sentinel**, never a no-op — a no-op silently
+tolerates the wiring being deleted.
