@@ -1,7 +1,15 @@
 // /api/hover.js
 // Vercel serverless function — receives the raw text of a Hover measurement
-// report PDF and returns structured siding/exterior measurements for the
-// material order list. Uses the same GEMINI_API_KEY as the other functions.
+// report PDF and returns structured exterior measurements. Uses the same
+// GEMINI_API_KEY as the other functions.
+//
+// 674: it now returns the ROOF block as well as siding. It was siding-only
+// because its only caller was the siding material order — so a 31-page Hover
+// "Complete Measurements" report could sit on a job while the app insisted it
+// had no squares, pitch or eave length. The roof keys deliberately match
+// /api/roofr's, so one merge in the app serves both sources. The siding keys
+// are unchanged and in the same order: the material-order caller reads exactly
+// what it read before.
 
 /* 505: the second rung, same as 502 elsewhere. gemini-3.5-flash 503s "high
    demand" in spells - measured at roughly one call in four this afternoon - and
@@ -66,10 +74,25 @@ export default async function handler(req, res) {
     }
 
     const prompt =
-      'You are parsing the text of a Hover exterior measurement report for a siding material order. ' +
+      'You are parsing the text of a Hover exterior measurement report. Hover reports ' +
+      'cover the ROOF, the SIDING, or both ("Complete Measurements"). Extract whichever ' +
+      'are present. ' +
       'The text below was extracted page by page (pages are marked "--- PAGE N ---").\n\n' +
       'Extract the following values. Use numbers only (no units). ' +
       'If a value is not present in the text, use null. Do NOT guess or invent numbers.\n' +
+      /* 674: the ROOF block. Key names match what the app already consumes from
+         /api/roofr, so one merge serves both sources — a second vocabulary for
+         the same seven measurements would be the "new mechanism beside an
+         existing one" this project keeps paying for. */
+      '- squares: total roof area in SQUARES (1 square = 100 sqft). If the report gives ' +
+      'only square feet, divide by 100 and give squares.\n' +
+      '- area_sqft: total roof area in square feet, if stated\n' +
+      '- pitch: the predominant roof pitch as written, e.g. "6/12". Text, not a number.\n' +
+      '- ridge_lf: total ridge length in lineal feet\n' +
+      '- hip_lf: total hip length in lineal feet\n' +
+      '- valley_lf: total valley length in lineal feet\n' +
+      '- eave_lf: total eave length in lineal feet\n' +
+      '- rake_lf: total rake length in lineal feet\n' +
       '- siding_area_sqft: total siding/facade area in square feet (siding only, not roof/openings)\n' +
       '- openings_count: total number of window and door openings\n' +
       '- opening_perimeter_lf: total perimeter of window/door openings in lineal feet (may be listed as "openings trim" or window/door perimeter)\n' +
@@ -79,6 +102,9 @@ export default async function handler(req, res) {
       '- soffit_area_sqft: total soffit area in square feet\n' +
       '- fascia_lf: total fascia length in lineal feet\n' +
       '- stories: number of stories as an integer if stated\n\n' +
+      'A roof-only report has null for every siding field, and a siding-only report ' +
+      'has null for every roof field. That is expected — report what is there and ' +
+      'null for the rest. Never carry a siding number into a roof field.\n\n' +
       'Respond with ONLY raw JSON, no markdown fences, exactly these keys.\n\n' +
       'REPORT TEXT:\n' + text.slice(0, 50000);
 

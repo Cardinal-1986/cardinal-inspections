@@ -13356,3 +13356,84 @@ successfully for job files. **Theo's iPhone is the gate.**
 the PDF and does nothing else — `/api/hover` is wired only to the siding
 material-order flow (`index.html:16247`), so nothing populates `checklist.meas`.
 Gunn still has no measurements on file. That is its own build.
+
+---
+
+## Build 674 — a Hover report fills the measurements
+*10 Aug 2026 · `api/hover.js` + `index.html`. No migration.*
+
+Theo put Hover's 31-page report on the Gunn job and the app kept the PDF and
+none of the numbers. Two separate reasons, and neither was the upload:
+
+1. **Uploading under Measurements filed the document and stopped.** `msFileInput`
+   called `measDb.add()` and nothing else.
+2. **`/api/hover` had never been asked for roof measurements.** Its only caller
+   was the siding material order, so its prompt requested siding area, openings,
+   corners, soffit and fascia — no squares, no pitch, no eave length. A
+   "Complete Measurements" report could sit on a job while the app insisted it
+   had none.
+
+**Roofr has done this properly since 554.** `roofrMerge(all, d)` lands the seven
+roof numbers in `checklist.meas` — where the Measurements panel, the
+Construction Agreement's pitch line and now the Supplement Desk all read. So
+this is not a new mechanism; it is the existing one taught a second source.
+
+- **`api/hover.js`** gained the roof block, **additive**, using the key names
+  `/api/roofr` already returns (`squares` / `area_sqft` / `pitch` / `ridge_lf` /
+  `hip_lf` / `valley_lf` / `eave_lf` / `rake_lf`) — a second vocabulary for the
+  same seven measurements would be the mechanism-beside-a-mechanism this project
+  keeps paying for. Siding keys unchanged, and the model is told that an
+  all-null half is **expected**, not a failure, and never to carry a siding
+  number into a roof field.
+- **`roofrMerge` generalised to `aerialMerge(all, d, source)`**, with
+  `roofrMerge` kept as a one-line wrapper so its 554 caller reads unchanged.
+- **The Measurements upload reads the report** — `importMeasFrom(pr, source, file)`.
+- **The material-order import merges too**, now that its route returns roof
+  numbers, so the siding door stops leaving them in a raw key nothing reads.
+
+⚠️ **This build exposed a latent lie in 554's code, and that is why the label
+handling changed here rather than later.** The merge read:
+
+```js
+next.source = ours ? 'Roofr' : 'Field + Roofr';
+```
+
+which assumes the only other writer is a human. True while Roofr was the sole
+importer. **The moment Hover can write, a Roofr-then-Hover job would be stamped
+`Field + Hover`** — claiming somebody stood on that roof when nobody did, on
+numbers that go to a carrier in a supplement. It now names the mixture it
+actually found (`Roofr + Hover`, `Field + Hover`, …). `harness_674` runs that
+case against **673's merge too, and it goes red there** — the lie is
+demonstrated, not asserted.
+
+**Filing and reading are separate steps, in that order.** The PDF is saved
+first; the read is best-effort after it. A failed read says *"the report is
+filed, but its numbers could not be read … you can still enter them by hand"* —
+never "upload failed". The whole complaint was a report sitting on a job with
+none of its numbers in the app; a filing that depended on an AI call would have
+been a worse version of the same problem.
+
+**Precedence, unchanged from 554:** fills blanks, refreshes its own earlier
+numbers so a corrected re-upload works, never overwrites a field measurement.
+A report that adds nothing writes nothing and **says so as a fact rather than an
+error** — the Crews rule that a correct refusal must not render as a failure.
+
+**Gates.** `harness_674` (52). The merge is EXECUTED against real checklist
+shapes across seven scenarios; `/api/hover` is driven **differentially** against
+the 673 handler with the same stubbed model reply, proving the siding caller's
+response is identical and that 673's prompt genuinely did not ask for the roof;
+`importMeasFrom` is executed through good read / route failure / unreadable PDF
+/ nothing-to-add. Control on the 673 artifacts: clean red with its reason
+stated. Full sweep 674→653 green.
+
+⚠️ **A harness bug of mine, the same class as 672's:** the ordering assertion
+bounded the gap between `measDb.add()` and `importMeasFrom()` at 400 characters
+and went red because *the comment explaining the ordering is itself ~300*. Fixed
+by asserting the ORDERING with string positions instead of a magic distance — an
+invariant that cannot drift.
+
+**What no gate proves:** whether Gemini reads Hover's particular table layout
+correctly. The route is told to report null rather than guess, and the merge
+refuses to overwrite a field measurement, so a bad read costs a re-entry rather
+than a wrong number on a carrier letter. **Gunn's report is on file — running it
+is the real test.**

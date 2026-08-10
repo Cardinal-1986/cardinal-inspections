@@ -1520,3 +1520,32 @@ them:**
 `URL.createObjectURL` nor `Blob` faithfully, so a jsdom test of a
 file-opening path proves nothing. Use Chromium when the subject IS the browser
 API.
+
+
+## 23 — A label that was true only because there was one writer (build 674)
+
+554's Roofr merge stamped the measurement record:
+
+    next.source = ours ? 'Roofr' : 'Field + Roofr';
+
+Correct, and provably so, for as long as Roofr was the only importer: the only
+other thing that could have written those numbers was a person. **Build 674 made
+a second importer exist, and in that instant the else-branch became a lie** — a
+Roofr-then-Hover job would report `Field + Hover`, asserting that somebody stood
+on the roof. These numbers go to an insurance carrier.
+
+**The shape to recognise:** a two-way label, a boolean, or an `else` that is
+correct only because the world currently has exactly one alternative. It does
+not fail when it is written. It fails when someone adds the second case — and it
+fails *silently*, because the label still looks plausible.
+
+**When you add the Nth source to something that had one, go and read what the
+existing code says about "the other one".** Grep the else-branches and the
+default strings, not just the logic. Then derive the label from what is actually
+there (`prevSrc + ' + ' + src`) rather than from an assumption about who else
+could have been involved.
+
+**And prove it against the old code.** `harness_674` runs the offending case
+through 673's merge and asserts the wrong label comes out. A fix for a latent
+lie should demonstrate the lie, or you are only asserting your own new code is
+self-consistent.

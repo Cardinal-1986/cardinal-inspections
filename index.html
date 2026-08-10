@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 673 &#8212; A measurement report opens as the whole report on the phone, not just its cover page</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 674 &#8212; A Hover report you upload now fills the job&#8217;s measurements, instead of sitting there as a PDF</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3830,6 +3830,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </div>
         <div class="matmount" id="msListHover"></div></div>
       </div>
+      <div class="note" id="msImpNote" style="display:none;margin:0 0 10px;"></div>
 
       <div class="matcard">
         <div class="mathead collhead matcoll"><b>&#128208; Field / Other</b><span class="projcount" id="msCntField">No reports</span><span class="collchev">&#9656;</span></div>
@@ -11026,15 +11027,77 @@ document.getElementById('msFileInput').addEventListener('change', function(){
   this.value = '';
   if(!f || !pr) return;
   if(f.size > 8*1024*1024){ alert('File is over 8MB \u2014 export a smaller PDF.'); return; }
+  var src = __msUpSrc;
   var fr = new FileReader();
   fr.onload = async function(){
     try{
-      await measDb.add(pr.id, __msUpSrc + ' \u2014 ' + f.name, fr.result);
+      await measDb.add(pr.id, src + ' \u2014 ' + f.name, fr.result);
       renderMeasureTab(); refreshMeasSummary(pr);
-    }catch(err){ showError('Upload failed: ' + (err.message || err) + ' \u2014 if this mentions a missing table, run the meas_docs SQL.'); }
+    }catch(err){
+      showError('Upload failed: ' + (err.message || err) + ' \u2014 if this mentions a missing table, run the meas_docs SQL.');
+      return;
+    }
+    /* 674: FILING IS DONE AND SAVED. Reading the numbers out is a separate,
+       best-effort step that runs after it and can fail without costing the
+       document — the whole complaint was that a report could sit on a job with
+       none of its numbers in the app, and a filing that depended on an AI call
+       would have been a worse version of the same problem. */
+    if(src === 'Hover' || src === 'Roofr') importMeasFrom(pr, src, f);
   };
   fr.readAsDataURL(f);
 });
+
+/* 674: a Hover or Roofr report uploaded under Measurements now lands its
+   numbers in checklist.meas, which is where the Measurements panel, the
+   Construction Agreement's pitch line and the Supplement Desk all read from.
+   Before this, the PDF was filed and nothing else happened — Theo put a
+   31-page Hover report on the Gunn job and the app still said it had no
+   measurements.
+
+   The route is picked by SOURCE, not by trade: /api/hover reads a Hover
+   report, /api/roofr reads a Roofr one. Both return the same seven roof keys,
+   which is why one merge serves both. */
+async function importMeasFrom(pr, source, file){
+  var note = document.getElementById('msImpNote');
+  function say(t){ if(note){ note.style.display = 'block'; note.textContent = t; } }
+  try{
+    var text = await extractPdfText(file, say);
+    say('Reading the ' + source + ' measurements\u2026 usually 10\u201330 seconds.');
+    var res = await fetch(source === 'Hover' ? '/api/hover' : '/api/roofr', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: String(text || '').slice(0, 60000) })
+    });
+    var data = null; try{ data = await res.json(); }catch(pe){}
+    if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+    data.imported_at = new Date().toISOString();
+
+    var all = {};
+    try{ all = JSON.parse(pr.checklist || '{}') || {}; }catch(pe2){ all = {}; }
+    var before = JSON.stringify(all.meas || {});
+    var wrote = aerialMerge(all, data, source);
+    if(!wrote){
+      /* a correct refusal, not a failure: the report gave nothing new, or a
+         field measurement already holds those numbers and outranks this. */
+      say(JSON.stringify(all.meas || {}) === before
+        ? source + ' report filed. No new measurements to add \u2014 what is on file already came from somewhere that outranks it.'
+        : source + ' report filed.');
+      return;
+    }
+    await patchProjectCk(pr, { meas: all.meas, pitch: all.pitch, roofr: all.roofr, hover: all.hover });
+    var m = all.meas || {};
+    say(source + ' measurements filed: ' +
+      [m.sq ? m.sq + ' SQ' : null, m.pitch ? 'pitch ' + m.pitch : null,
+       m.eave ? m.eave + ' LF eave' : null, m.rake ? m.rake + ' LF rake' : null,
+       m.ridge ? m.ridge + ' LF ridge' : null].filter(Boolean).join(' \u00b7 ') +
+      '  (source: ' + (m.source || source) + ')');
+    renderMeasureTab(); refreshMeasSummary(pr);
+  }catch(err){
+    /* the document is already filed — say what did not happen, not that the
+       upload failed */
+    say('The ' + source + ' report is filed, but its numbers could not be read: ' +
+      String(err.message || err).slice(0, 140) + ' \u2014 you can still enter them by hand.');
+  }
+}
 /* tap anywhere on a document row to open it */
 document.addEventListener('click', function(e){
   if(e.target.closest('button, a, input, select')) return;
@@ -16305,6 +16368,17 @@ function matListText(trade){
       data.imported_at = new Date().toISOString();
       var patch = {};
       patch[trade === 'siding' ? 'hover' : 'roofr'] = data;
+      /* 674: the siding door reads a Hover report too, and that report now
+         carries the roof block. Land it in checklist.meas by the same rule as
+         the Measurements door rather than leaving the numbers in a raw key
+         nothing reads — 554 fixed exactly that for Roofr. */
+      try{
+        var mAll = parseCkAll(currentProject) || {};
+        if(aerialMerge(mAll, data, trade === 'siding' ? 'Hover' : 'Roofr')){
+          patch.meas = mAll.meas;
+          if(mAll.pitch) patch.pitch = mAll.pitch;
+        }
+      }catch(me3){}
       await saveCkPatch(patch);
       /* auto-generate on successful import */
       var all = parseCkAll(currentProject);
@@ -20522,23 +20596,39 @@ function wireRoofrUpload(doc){
    ck_layers / ck_decking on the inspection checklist are their only source.
 
    Kept as a pure (all, data) function so the gate can run THIS code against
-   real checklist rows instead of a re-implementation of it. */
-function roofrMerge(all, d){
+   real checklist rows instead of a re-implementation of it.
+
+   674: generalised from roofrMerge to take the SOURCE, because Hover can now
+   write these numbers too. One merge, two importers — a second near-identical
+   merge is the mechanism-beside-a-mechanism this file keeps paying for.
+
+   ⚠ THE LABEL WAS A LIE WAITING TO HAPPEN. It read:
+       next.source = ours ? 'Roofr' : 'Field + Roofr';
+   which assumes the only other writer is a human. True while Roofr was the
+   sole importer; false the moment Hover can write. A Roofr-then-Hover job
+   would have been stamped 'Field + Hover' — claiming somebody stood on that
+   roof when nobody did, on numbers that go to a carrier. It now names the
+   mixture it actually found ('Roofr + Hover', 'Field + Hover', …). */
+function aerialMerge(all, d, source){
   if(!all || !d) return;
-  all.roofr = d;
+  var src = String(source || 'Roofr');
+  var key = src.toLowerCase();                     /* checklist.roofr | .hover */
+  all[key] = d;
   var sq = (d.squares != null) ? Number(d.squares)
          : (d.area_sqft != null ? Number(d.area_sqft) / 100 : null);
   var prev = (all.meas && typeof all.meas === 'object') ? all.meas : {};
-  /* no source recorded means nothing has claimed these numbers yet */
-  var ours = !prev.source || String(prev.source).toLowerCase().indexOf('roofr') === 0;
+  var prevSrc = prev.source ? String(prev.source) : '';
+  /* no source recorded means nothing has claimed these numbers yet; otherwise
+     these are OURS only if this same importer wrote them */
+  var ours = !prevSrc || prevSrc.toLowerCase().indexOf(key) === 0;
   var next = {}, wrote = 0;
   Object.keys(prev).forEach(function(k){ next[k] = prev[k]; });
-  function put(key, val){
+  function put(k, val){
     if(val == null || val === '') return;
-    if(!ours && next[key]) return;                 /* a human measured this */
+    if(!ours && next[k]) return;      /* someone else measured this — fill only blanks */
     var s = String(val);
-    if(String(next[key] == null ? '' : next[key]) === s) return;
-    next[key] = s; wrote++;
+    if(String(next[k] == null ? '' : next[k]) === s) return;
+    next[k] = s; wrote++;
   }
   put('sq', (sq != null && isFinite(sq)) ? sq.toFixed(1) : null);
   put('pitch',  d.pitch);
@@ -20548,13 +20638,18 @@ function roofrMerge(all, d){
   put('eave',   d.eave_lf);
   put('rake',   d.rake_lf);
   if(wrote){
-    next.source = ours ? 'Roofr' : 'Field + Roofr';
+    /* name the mixture, never invent a measurer */
+    next.source = ours ? src
+      : (prevSrc.toLowerCase().indexOf(key) > -1 ? prevSrc : (prevSrc + ' + ' + src));
     next.updated_at = d.imported_at || new Date().toISOString();
     all.meas = next;
   }
   /* the inspector's pitch, taken on the roof, wins over a derived one */
   if(!all.pitch && d.pitch) all.pitch = String(d.pitch);
+  return wrote;
 }
+/* the 554 name, kept so its caller and its gate read unchanged */
+function roofrMerge(all, d){ return aerialMerge(all, d, 'Roofr'); }
 function fillRoofrFields(doc, d){
   function setPh(key, val){
     var el = doc.querySelector('[data-roofr="' + key + '"]');
@@ -36834,6 +36929,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:674, d:'2026-08-10', t:'A Hover report fills the measurements',
+s:'You put Hover\u2019s 31-page report on the Gunn job and the app kept the PDF and none of the numbers. Uploading under Measurements filed the document and stopped, and the Hover reader had only ever been asked for siding \u2014 no squares, no pitch, no eaves \u2014 because its only user was the siding material order. Now: upload a Hover or Roofr report under Measurements and it reads it, and the squares, pitch, ridge, hip, valley, eave and rake land where the app actually looks \u2014 the Measurements panel, the Construction Agreement\u2019s pitch line, and the Supplement Desk. It tells you what it filled and where the numbers came from. Filing the PDF and reading it are separate steps in that order, so if the read fails you still have the document and a note saying so, not a failed upload. The rules from the Roofr import carry over unchanged: it fills blanks, refreshes its own earlier numbers so a corrected re-upload works, and never overwrites a measurement taken by hand. One fix underneath \u2014 a job measured by two different reports used to get stamped as though someone had measured it in the field. It now names what actually went into it.'},
 { b:673, d:'2026-08-10', t:'A measurement report opens as the whole report, not page one',
 s:'Theo uploaded Hover\u2019s report for the Gunn job on his phone and got back the cover page and nothing else. The upload was never the problem \u2014 the file on record is the complete 31-page report, checked in the database before anything was changed. The VIEWER was showing one page: it was putting the PDF inside a frame, and on iPhone a PDF inside a frame renders as a single page that will not scroll. On a desktop browser the same code scrolls all 31, which is why it went unnoticed \u2014 it only broke on the device the work actually happens on. Reports now open the way job files already did, as the file itself, so you get the phone\u2019s own PDF viewer: every page, pinch to zoom, and the share button to save or send it. The same fix removes a second iPhone-only fault in both places \u2014 the new tab was being opened a moment too late for iOS to accept it, which is what made a tap sometimes do nothing at all.'},
 { b:672, d:'2026-08-10', t:'Send from the desk \u2014 the supplement finally reaches the carrier',
