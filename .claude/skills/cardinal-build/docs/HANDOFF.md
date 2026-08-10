@@ -4,6 +4,77 @@
 
 ---
 
+# Session of 10 August 2026 (later) — build 685, the gradient-text sweep
+
+**Build 685 shipped as PR #198 from `claude/session-handoff-notes-eb6vy6` and
+was merged to `main` on green under this session's standing authorization**
+(Theo re-confirmed the hands-off flow at the start of the session; a NEW
+session should confirm it again rather than inherit it). Working tree clean.
+
+## What shipped
+
+**685 — every gradient-clipped text site removed.** Queue item 2 of the
+10 Aug list is done; item 1 (the emoji sweep) is untouched and still first in
+Theo's order.
+
+## Three things a new session must not re-derive
+
+1. **The count is 37, not 38.** The recorded 38 includes one PROSE hit — a
+   comment in `cr-nvl-styles` whose `-webkit-text-fill-color` and `:transparent`
+   sit either side of a newline, so every `\s*` pattern matches it. 36
+   stylesheet rules + 1 inline `style=` attribute. `CLAUDE.md` now says so.
+2. **`scripts/render_gradtext.js` is the standing instrument.** It walks
+   Chromium's own parsed rules, and it goes **RED with 90 failures on the 684
+   artifact** — a gate that has been seen to fail. Do not re-check this surface
+   with a text regex; the regex finds the comment.
+3. **The replacement rule is recorded and was followed for all 37**, so no
+   colour in this build is anyone's taste: identical stops → that colour · an
+   approved precedent → it · else the rule's declared `color:` if it clears its
+   floor · else that rule's own best gradient stop · else a theme-flipping
+   token. Zero floor failures; worst 4.83:1.
+
+## Two harness bugs worth carrying forward — both now in `CLAUDE.md`
+
+- **Modern Chromium gives every `CSSStyleRule` an empty `.cssRules`** (CSS
+  nesting). `if (r.cssRules) { walk(); continue; }` therefore skips every style
+  rule and reports a clean zero. **This shipped as a false green** and only the
+  negative control caught it.
+- **Within one element the background-image composites over that element's own
+  `background-color`**, not the ancestor's. Getting it wrong reads a dark card's
+  wash as near-white — it failed a passing ink at 1.05:1.
+
+## One regression I introduced, caught before merge
+
+The login tagline carried an inline `color:#7a4a3e`. The stylesheet's
+transparent fill had been masking it; with the gradient gone it painted 2.43:1
+on the dark card. Removed at source (5.06:1). **Generalise it: removing
+gradient text can unmask an inline light-era ink** — scan the affected elements
+for an inline `color` before calling such a sweep done. Only 1 of the 37 had it.
+
+## Queue, unchanged otherwise
+
+1. **The emoji sweep** — still Theo's #1, approved, untouched. Sized this
+   session: ~236 literal pictographic chars (41 distinct), 214 HTML entities
+   (76 distinct), 405 JS surrogate escapes. CHANGELOG keeps its emoji.
+2. ~~gradient text~~ — **done at 685**.
+3. **The insurance loop** — needs Theo, the live key and Gunn's document.
+4. **VAPID rotation** — still waiting on `VAPID_PRIVATE_KEY` in Vercel.
+5. **`.pcpo` lavender 1.99:1 in light** — still needs Theo's pick. Note the
+   `.ljpo` PO is now settled on `#d8a94f`/`#8f1620` everywhere, which is a
+   ready precedent if he wants the same treatment.
+
+## Notes
+
+- `--rbe-po1` is **gone** (0 references after the sweep); `--rbe-po2` was
+  retargeted to Theo's approved pick C. Five PO surfaces now share one pair.
+- `.mic`'s `@supports` block is deleted — 682 handed it to this build by name.
+- **`harness_677` crashes on any index.html** — it wants `sw.js`. Pre-existing,
+  reproduced on 684. Not a regression; don't chase it.
+- The scratchpad rig (`measure_grounds.js`, `layers.js`, `decide.py`,
+  `apply_all.py`) is session-local; only `render_gradtext.js` was committed.
+
+---
+
 # Session of 10 August 2026 — five builds live, three settled rules, and the readability class named
 
 **`main` carries build 684 (679–684 all shipped THIS session, all merged, all verified
