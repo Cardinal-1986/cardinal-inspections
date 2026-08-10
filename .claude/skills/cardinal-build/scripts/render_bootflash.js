@@ -1,4 +1,11 @@
-/* Build 676 — the app must not open on a screen of scattered emoji.
+/* Builds 676 + 678 — the app must not open on a screen it retired.
+
+   TWO surfaces, ONE class: markup near the top of a 3.86 MB file whose hiding
+   rule sits near the bottom. Between those two points the browser paints it.
+     676  #crBanner        markup ~3305,  hidden by a rule ~48,000 lines later
+     678  #landingView>*   markup ~4040,  hidden by cr-lr-styles ~39,000 later,
+          while a script at ~13277 calls showLanding() and shows the container.
+
 
    TWO experiments, because one alone would prove the wrong thing.
 
@@ -132,6 +139,60 @@ const server = http.createServer((req, res) => {
   ok('the fix is CASCADE — hidden during parse, and never hidden once loaded',
     midParse.display === 'none' && loaded.display !== 'none',
     midParse.display + ' → ' + loaded.display);
+
+  /* ── A2. the retired landing (678) ───────────────────────────────────── */
+  console.log('\n── A2. the retired welcome screen, mid-parse vs loaded ──');
+  {
+    const CUT = SRC.indexOf('<style id="cr-lr-styles">');
+    const stylesUpTo = limit => {
+      const o = []; let i = 0;
+      while ((i = SRC.indexOf('<style', i)) !== -1 && i < limit) {
+        const st = SRC.indexOf('>', i) + 1, e = SRC.indexOf('</style>', st);
+        if (e === -1) break; o.push(SRC.slice(st, e)); i = e;
+      }
+      return o.join('\n');
+    };
+    /* the real #landingView element, sliced by tag depth */
+    const a = SRC.indexOf('<div id="landingView"');
+    let d = 0, i = a, end = a;
+    for (; i < SRC.length; i++) {
+      if (SRC.startsWith('<div', i)) d++;
+      else if (SRC.startsWith('</div>', i)) { d--; if (d === 0) { end = i + 6; break; } }
+    }
+    ok('the retired landing markup and cr-lr-styles were both found', CUT > 0 && a > 0 && end > a);
+
+    if (CUT > 0 && a > 0) {
+      /* shown the way showLanding() shows it — the inline display:none removed */
+      const LV = SRC.slice(a, end).replace('style="display:none;', 'style="');
+      const look = async (css, shot) => {
+        const p = await br.newPage({ viewport: { width: 390, height: 844 } });
+        await p.setContent('<!doctype html><html><head><style>' + css +
+          '</style></head><body style="margin:0">' + LV + '</body></html>',
+          { waitUntil: 'domcontentloaded' });
+        const r = await p.evaluate(() => {
+          const lv = document.getElementById('landingView');
+          const kids = [...(lv ? lv.children : [])]
+            .filter(el => getComputedStyle(el).display !== 'none');
+          return { shown: kids.length,
+                   text: (lv ? lv.innerText : '').replace(/\s+/g, ' ').trim().slice(0, 70) };
+        });
+        await p.screenshot({ path: SHOT + shot });
+        await p.close();
+        return r;
+      };
+      const mid = await look(stylesUpTo(CUT), 'bootflash-landing-midparse.png');
+      const done = await look(stylesUpTo(SRC.length), 'bootflash-landing-loaded.png');
+      console.log('  mid-parse (before cr-lr-styles): ' + mid.shown + ' children shown  "' + mid.text + '"');
+      console.log('  fully loaded (all styles)      : ' + done.shown + ' children shown  "' + done.text + '"');
+
+      ok('MID-PARSE the retired welcome screen shows nothing',
+        mid.shown === 0, mid.shown + ' children shown: "' + mid.text + '"');
+      ok('…specifically, no "Welcome back" hero with the lightning-bolt cardinal',
+        !/Welcome back/i.test(mid.text), mid.text);
+      ok('LOADED it is still retired — the fix changed the flash, not the design',
+        done.shown === 0, done.shown + ' shown');
+    }
+  }
 
   /* ── B. the real first paint ──────────────────────────────────────────── */
   console.log('\n── B. the first frame a phone actually paints ──');

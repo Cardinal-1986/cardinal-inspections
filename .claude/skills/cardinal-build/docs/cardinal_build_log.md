@@ -13810,3 +13810,73 @@ The page-side assertions sliced `indexOf('cr-shell-updated') + 3000` characters 
 and went red the moment the block grew by four fixes. **A fixed window over a
 block that grows is a trap this file already documents.** It now brace-matches
 the listener.
+
+---
+
+## Build 678 — the retired welcome screen stops flashing up
+
+Theo, straight after 677 shipped: *"There is also a flash of a Cardinal logo that
+I thought was gotten rid of with lightning bolt."*
+
+He is describing `cardinal-transparent.png` — the cardinal perched on a lightning
+bolt — at 340px, above **"Welcome back"** and four large cards (Quick Inspection,
+The Source of Truth, Insurance Claims, Resource Library). That is the **retired
+post-login landing**, replaced long ago by `.cr-lr`.
+
+### It is BUG_CLASSES §25 again, one screen over
+
+| | markup | hiding rule | gap |
+|---|---|---|---|
+| 676 | `#crBanner` ~3305 | `cr-banner-styles` ~51368 | ~48,000 lines |
+| **678** | `#landingView` children ~4040 | `cr-lr-styles` ~43270 | **~39,000 lines** |
+
+`#landingView` itself carries an inline `display:none`, so it does not paint
+during the initial parse — which is why the cold-load filmstrip showed nothing
+and the first two searches came up empty. What shows it is
+**`showLanding()`, called from a script at line 13277 — thirty thousand lines
+before the rule that retires its contents.** Between those two points the old
+screen *is* the app.
+
+**Reproduced in Chromium before anything was changed**, by building the mid-parse
+state exactly (every `<style>` before `cr-lr-styles`, plus the real `#landingView`
+markup shown the way `showLanding()` shows it, with the real logo bytes inlined so
+the picture is the app's):
+
+```
+mid-parse (before cr-lr-styles): 1 children shown  "Welcome back ⚡ Quick Inspection Walk the roof…"
+fully loaded (all styles)      : 0 children shown  ""
+```
+
+### The fix, and why not deletion
+
+One rule in the head block, beside 676's: `#landingView>*{display:none}`. Same
+specificity as the rule in `cr-lr-styles` that supersedes it and earlier in
+document order, so it only ever wins while that stylesheet has not arrived.
+
+⚠ **The dead markup is NOT deleted, deliberately.** "Deletion at source beats
+out-specificity" is this project's rule, but **six of its ids are read at about
+thirty sites** — `landName`, `landDate`, `landQuick`, `landDash`, `landClaims`,
+`landLibrary`, several of them inside `showLanding()` itself. Removing the markup
+would turn a cosmetic flash into a boot-time `TypeError`. Recorded as a candidate
+cleanup, not done here.
+
+`render_bootflash.js` now covers **both** surfaces — 15 assertions, and the 677
+artifact goes red on exactly the two landing ones.
+
+### ⚠ Two gate failures, both mine, and one of them was written down three lines above where I made it
+
+1. **The marker `#landingView>*{display:none}` was not unique** — that exact rule
+   already exists in `cr-lr-styles`, so `check_build.py` correctly refused: the
+   negative control found it in the *previous* artifact too. A marker has to name
+   what the build ADDED, not what it references.
+2. **My explanatory comment contained a literal style tag**, and the tag-balance
+   gate counts one even inside a comment — 123 open / 122 close, plus a phantom
+   duplicate `<style id=>`. The 424 note **a few lines above the line I was
+   editing** says exactly this: *"Never write a literal style tag in a CSS
+   comment — the tag-balance gate counts it, and a CLOSING one would genuinely
+   end the block early."* I read that note earlier in the same session and then
+   did the thing it forbids. The comment now names the block without the tag.
+
+Both were caught by the gates before anything was staged, which is the system
+working — but the second is a reminder that reading a warning is not the same as
+applying it.

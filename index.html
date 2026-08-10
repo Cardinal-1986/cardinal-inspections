@@ -3113,6 +3113,20 @@ body[data-crm="retail"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{
    #crBanner rule in cr-banner-styles, which comes later and restores flex, so
    this needs no script and cannot strand the nav hidden. */
 #crBanner{display:none;padding-top:6px;padding-bottom:6px}
+/* 678: the SAME trap as 676, one screen over. The retired post-login landing
+   — the cardinal-on-a-lightning-bolt hero, "Welcome back", and four cards —
+   is still in the markup at ~4040 because a dozen JS sites read its ids
+   (landName, landDate, landQuick, landDash, landClaims, landLibrary), so it
+   cannot simply be deleted. What retires it is #landingView>*{display:none}
+   in the cr-lr-styles block at ~43270 — no literal tag is written here, because
+   the tag-balance gate counts one even inside a comment, which is exactly the
+   warning the 424 note a few lines above gives and which this comment tripped
+   on its first draft. And a script at ~13277 calls
+   showLanding() THIRTY THOUSAND LINES EARLIER. Between those two points the
+   old screen is what the app shows. Reproduced in Chromium before the fix.
+   Same specificity as the rule that supersedes it, and earlier in document
+   order, so this only ever wins while that stylesheet has not arrived. */
+#landingView>*{display:none}
 #crBanner .cbn{flex:0 0 auto}
 #crBanner .cbn.cbdd:nth-last-of-type(2){margin-left:auto}
 #crBanner .cbmenu .cr-navhd{display:block}
@@ -3298,7 +3312,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 677 &#8212; The app opens from your phone instead of re-downloading itself every time</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 678 &#8212; The old welcome screen no longer flashes up while the app is still loading</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37095,6 +37109,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:678, d:'2026-08-10', t:'The old welcome screen stops flashing up while the app loads',
+s:'For a moment while the app was starting you would see the old welcome screen \u2014 the cardinal on the lightning bolt, \u201CWelcome back\u201D, and the four big cards \u2014 before the real one appeared. That screen was replaced a long time ago, but its layout is still in the file because a dozen other pieces of the app read parts of it. The instruction that hides it sits near the end of a very large file, while the app asks for the welcome screen near the beginning, so for a second there was nothing telling it to stay hidden. It is now hidden from the start. Same cause as the scattered emoji fixed in the last build, one screen over.'},
 { b:677, d:'2026-08-10', t:'The app opens from your phone instead of downloading itself every time',
 s:'Every launch used to re-download the whole app before anything appeared \u2014 about thirty seconds on a weak signal, staring at a blank screen. It now opens from the copy already on your phone, which is close to instant, and fetches any update quietly in the background. The trade: right after a new version is deployed, the first launch still shows the previous one. So when a newer version has finished downloading, a small bar appears at the bottom \u2014 tap Reload and it switches over in about a second, because it is already on the phone by then. Nothing reloads on its own; if you are in the middle of something, ignore it and it will be there next time you open the app.'},
 { b:676, d:'2026-08-10', t:'The app stops opening on a screen of scattered emoji',
