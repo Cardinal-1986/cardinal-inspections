@@ -2069,6 +2069,21 @@ body.restoring #restoreVeil{display:flex;}
 .ljctl .right{margin-left:auto;display:flex;gap:8px;}
 .ljcols{display:grid;grid-template-columns:1fr;gap:14px;align-items:start;}
 .ljrail{display:none;}
+/* 690: the stage strip. One scrolling row, so it costs a single line of height;
+   the dot carries the stage's own settled colour (LJ_SOLID) rather than tinting the
+   whole chip, which would have put nine saturated blocks across the top. */
+.ljchips{display:flex;gap:7px;overflow-x:auto;padding:0 0 9px;margin-bottom:2px;
+  -webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.ljchips::-webkit-scrollbar{display:none;}
+.ljchip{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:18px;
+  background:#16181d;border:1px solid #2f333b;color:#cfd6df;cursor:pointer;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;white-space:nowrap;}
+.ljchip i{width:8px;height:8px;border-radius:50%;display:block;flex:0 0 auto;}
+.ljchip b{font-weight:800;opacity:.75;}
+.ljchip.on{background:#233043;border-color:#4d7fb8;color:#ffffff;}
+.ljchip.on b{opacity:.95;}
+:root[data-theme="rb-light"] .ljchip{background:#ffffff;border-color:#d5d8dd;color:#3c4652;}
+:root[data-theme="rb-light"] .ljchip.on{background:#e8f0fb;border-color:#1d4f91;color:#14243a;}
 .ljrhead{font:800 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-acclt);margin-bottom:8px;}
 .ljcard{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);
   border-radius:13px;margin-bottom:12px;display:flex;align-items:stretch;cursor:pointer;position:relative;
@@ -3341,7 +3356,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 689 &#8212; The calendar titles are readable and the client cards go obsidian</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 690 &#8212; Tap a pipeline stage straight from All Leads &amp; Jobs</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3603,6 +3618,14 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div id="ljRailMount"></div>
       </aside>
       <section class="ljresults">
+        <!-- 690: the pipeline-stage strip. Theo: "add somewhere where you can click
+             on the different pipeline stages". THE FILTER ALREADY EXISTED —
+             ljState.sets.stage, honoured by ljMatches() and counted by
+             ljGroupCounts() — it was just only reachable through the funnel sheet
+             on a phone and the rail on a desktop. This surfaces it; it does not add
+             a second filter. All three write the same array and re-render through
+             renderLeadsView(), so they cannot disagree. -->
+        <div class="ljchips" id="ljStageChips"></div>
         <div class="ljrhead">Results (<span id="ljCount">0</span>)</div>
         <div id="ljList"></div>
       </section>
@@ -11378,6 +11401,17 @@ function renderLeadsView(){
   badge.classList.toggle('show', n > 0);
   document.getElementById('ljFTitle').textContent = 'Filters (' + n + ')';
   document.getElementById('ljSortChip').textContent = ljSortLabel();
+  /* 690: the stage strip, from the SAME counts the rail and the sheet use. */
+  var ljSg = LJ_GROUPS.filter(function(x){ return x.key === 'stage'; })[0];
+  var ljSc = ljGroupCounts(ljSg), ljSk = ljGroupKeys(ljSg, ljSc);
+  var ljSs = ljState.sets.stage || [];
+  document.getElementById('ljStageChips').innerHTML =
+    '<button type="button" class="ljchip' + (ljSs.length ? '' : ' on') + '" data-all="1">All <b>' + all + '</b></button>' +
+    ljSk.map(function(k){
+      return '<button type="button" class="ljchip' + (ljSs.indexOf(k) !== -1 ? ' on' : '') + '" data-v="' + esc(k) + '">' +
+        '<i style="background:' + (LJ_SOLID[k] || '#8a93a1') + '"></i>' + esc(k) +
+        ' <b>' + ljSc[k] + '</b></button>';
+    }).join('');
 
   /* desktop rail */
   var sel = document.getElementById('ljSortSel');
@@ -11567,6 +11601,20 @@ document.getElementById('ljRailMount').addEventListener('change', function(e){
   if(cb.checked && i === -1) set.push(v);
   if(!cb.checked && i !== -1) set.splice(i, 1);
   if(!set.length) delete ljState.sets[g];
+  renderLeadsView();
+});
+document.getElementById('ljStageChips').addEventListener('click', function(e){
+  /* 690: the identical toggle to the rail checkbox above — push/splice the same
+     ljState.sets.stage array, drop the key when it empties so ljActiveCount()
+     stops counting it, then the one render. No second source of truth. */
+  var b = e.target.closest('.ljchip');
+  if(!b) return;
+  if(b.getAttribute('data-all')){ delete ljState.sets.stage; renderLeadsView(); return; }
+  var v = b.getAttribute('data-v');
+  var set = ljState.sets.stage = ljState.sets.stage || [];
+  var i = set.indexOf(v);
+  if(i === -1) set.push(v); else set.splice(i, 1);
+  if(!set.length) delete ljState.sets.stage;
   renderLeadsView();
 });
 document.getElementById('ljList').addEventListener('click', function(e){
@@ -37281,6 +37329,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:690, d:'2026-08-10', t:'Tap a pipeline stage straight from All Leads and Jobs',
+s:'All Leads and Jobs now has a row of stage buttons across the top \u2014 All, Lead, Prospect, On Hold and the rest \u2014 each with a count and a dot in that stage\u2019s own colour. Tap one to see only those jobs, tap a second to see both, tap All to clear. This is not a new filter: the app could already filter by stage, it was just buried behind the funnel icon on a phone and the checkbox list on a desktop. All three now drive the same setting, so whichever you use, the other two show it. The funnel is untouched and still holds Assigned To, Job Priority and Job Category.'},
 { b:689, d:'2026-08-10', t:'The calendar titles are readable, and the client cards go obsidian',
 s:'Cardinal Team Calendar and Production Calendar had their titles painted a near-black left over from when this app was a white page \u2014 measured at 1.06 to 1 against the dark card, which is why you could not read them. Every other card title on that page was 15.6 to 1. The light-mode version of that rule had been written years ago and the dark one never was. Both titles now match their neighbours. The calendars themselves were always working \u2014 only the heading was invisible. The client cards at the bottom now use the same obsidian finish as the Activity Count tiles, and the initial box and the Call and Text buttons sit on top of it as raised keys instead of the faint red wash they had, which had almost no edge at all. Every piece of text on those cards was measured again on the new darker card: all of them improved.'},
 { b:688, d:'2026-08-10', t:'ABC Supply becomes Suppliers, with room for the other yards',
