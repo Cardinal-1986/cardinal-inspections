@@ -14398,3 +14398,61 @@ as the retirement comment — asserted by grep, count 1.
   `render_suppliers.js` (new) 12/12 and **RED 9 on 687**; `render_navicons`
   201/201 and RED 141 on 685. Sweep green: schedule 27/27, pcard 12/12, 679
   31/31, 680 35/35, colors 110/110.
+
+- **689** · **the calendar titles were 1.06:1, and the client cards go obsidian.**
+  Three things off one screenshot from Theo.
+
+  **THE RECURRING CLASS, AGAIN — and it is the exact shape CLAUDE.md describes.**
+  `.pipecard.teamcal .pipetitle span:first-child` pinned both calendar titles to
+  **`#1c1416`** with **no theme gate**: 1.06:1 on the dark card, while every
+  other `.pipetitle` on that page sat at **15.60:1**. The
+  `:root[data-theme="rb-light"]` twin beside it was written and the base was
+  left behind — a partial theming pass, and the `.callegend` one line away got
+  BOTH halves, which is what makes the omission obvious in hindsight. Only the
+  **colour** was dropped; the rule also carries the title's font and
+  letter-spacing, so deleting it wholesale would have resized the heading.
+  Dark now inherits `.pipetitle{color:var(--rbe-head)}` → 15.60:1.
+  **The calendars themselves were always working** — `renderTeamCal()`, the
+  `teamAddBtn` handler and the `appointments` source are all wired; the heading
+  was simply invisible.
+
+  ⚠️ **`#calCard` is DEAD** (`display:none !important`), so the `.calhead b`
+  rules 685 re-inked are on hidden markup. The live calendars are
+  `.pipecard.teamcal` / `.prodcal`. Do not confuse the two again.
+
+  **The cards take the obsidian recipe by NAME**, not by a third copy of the
+  literals: `.pcard` was added to the `--obs-face` / `--obs-bd` / `--obs-lift`
+  selector list. ⚠️ Obsidian has **two** behaviours and they are not
+  interchangeable — `#cr-est-view` / `#reportsView` are **black in both modes**
+  (545, settled), while `.actbox` has a **light twin** (557). Theo said "like
+  the activity count is", so the cards flip with the theme.
+
+  **The initial box and the Call/Text buttons** were on `--rbe-monobg`, a **7%
+  red wash** with almost no edge — Theo: *"can you make those pop out more it
+  seems muted."* They are controls, so they read as raised keys in the card's
+  own language: one step lighter than the ground, a defined border, a white
+  hairline on the top bevel in dark; shadow-led in light.
+
+  **Every ink re-measured on the new, darker card. All of them improved in
+  dark:** name 12.71→13.67, po 6.11→6.57, address 4.82→5.19, rep 7.39→7.95,
+  meta 4.82→5.19, chip 5.47→5.84, Call/Text 8.00→9.30.
+  ⚠️ **In LIGHT the card's darkest corner went #fafafa → #eceef2, so everything
+  there lost a little**: name 17.34→15.58, address 5.11→4.59, rep 5.43→4.88,
+  meta 5.11→4.59 — all still above 4.5, but thinner. **And the known `.pcpo`
+  lavender went 1.99 → 1.79.** It was already failing and is on the queue for
+  Theo's pick; this build made it marginally worse and that is stated rather
+  than buried.
+
+  ⚠️ **A rig error of mine, worth keeping.** My first screenshot of the card
+  wiped `document.body` before injecting it. That removes the ancestor chain the
+  card lives under, a different rule then wins, and the **light-mode name
+  rendered white** in the picture while the live app has it at `rgb(22,22,22)`.
+  I nearly "fixed" a bug that did not exist. **Inject into the card's real host
+  and float the wrapper; never rebuild the page around the thing you are
+  photographing.**
+
+  Gates: `check_build` green (688 prev, marker + negative control).
+  `render_calhead.js` (new) GREEN and **RED with 2 under-floor elements on 688**
+  — it prints the WINNING RULE beside each ratio, which is the part that made
+  this diagnosable. Sweep green: pcard 12/12, navicons 201/201, suppliers 12/12,
+  schedule 27/27, 679 31/31, 680 35/35, colors 110/110.
