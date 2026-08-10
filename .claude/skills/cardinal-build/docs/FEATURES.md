@@ -3259,3 +3259,38 @@ div.** 21 of the hub's rules are scoped to that id, the ground among them. And
 wait ~1.4s before screenshotting: the cards enter at `opacity:0` under
 `crCthRise` with up to `.68s` of stagger, so an immediate shot is blank and looks
 like a rendering fault.
+
+---
+
+### 676 — the app no longer opens on a screen of scattered emoji
+
+Not a feature; a first-paint fix, recorded here because the trap it names will
+recur in a 3.86 MB single-file app.
+
+⚠ **Markup near the top + its stylesheet near the bottom = it paints raw for the
+whole download.** `#crBanner`'s markup is at line 3305; the stylesheet that lays
+it out is at 51368. Anything you add high in the document with styling low in it
+is visible, unstyled, for as long as the file takes to arrive.
+
+⚠ **Unstyled emoji show; unstyled text does not.** Emoji are colour glyphs and
+paint in their own colours whatever `color` says. That is why the flash was a
+scatter of pictures with no words — and why "no text is visible" does not mean
+"nothing is visible."
+
+⚠ **Hide it with the CASCADE, not a script.** The head rule sets
+`#crBanner{display:none}`; the later `cr-banner-styles` rule has identical
+specificity, comes later, and restores `display:flex`. No boot flag, nothing that
+can strand the element hidden if boot fails. If you add a hiding rule, put it in
+the head block that already exists and let the module's own sheet undo it.
+
+⚠ **Startup speed is a SEPARATE question and was not changed.** `sw.js` serves
+navigations network-first, so every launch re-downloads the full document. That
+is deliberate (a fresh deploy lands on the very next load). Do not switch it to
+stale-while-revalidate as a "performance fix" without Theo — the cost is that the
+first launch after a deploy shows the previous build.
+
+**Tools:** `render_bootflash.js` (11 assertions — mid-parse vs loaded cascade,
+plus the real throttled first paint; red on 675). `filmstrip.js` /
+`filmstrip2.js` in the session scratchpad are the reproduction: serve the
+artifact over HTTP, throttle, screenshot from navigation start, hash frames to
+find the distinct painted states.
