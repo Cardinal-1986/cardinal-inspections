@@ -38,6 +38,28 @@ function fnText(src, name) {
   return null;
 }
 
+/* THE REAL GUNN REPORT, transcribed from Hover's ROOF SUMMARY page — feet and
+   inches exactly as printed, ridges and hips combined exactly as Hover
+   combines them, and the whole pitch table. Fixtures invented from memory are
+   what made the first version of this build wrong. */
+const GUNN = {
+  area_sqft: 1675, facet_count: 10,
+  pitch: '9/12',
+  pitch_breakdown: [
+    { pitch: '9/12', area_sqft: 1360, percent: 81.19 },
+    { pitch: '5/12', area_sqft: 257, percent: 15.34 },
+    { pitch: '2/12', area_sqft: 58, percent: 3.46 }
+  ],
+  ridge_hip_lf: "69' 5\"", ridge_lf: null, hip_lf: null,
+  valley_lf: "43' 4\"", rake_lf: "118' 9\"", eave_lf: "118' 9\"",
+  drip_edge_lf: "237' 6\"", flashing_lf: "40'", step_flashing_lf: "15' 6\"",
+  siding_area_sqft: 1681, openings_count: 23, opening_perimeter_lf: "305' 4\"",
+  outside_corner_lf: "78'", inside_corner_lf: "12' 11\"",
+  base_length_lf: "146' 5\"", soffit_area_sqft: 220, fascia_lf: 237.5,
+  shutter_qty: 24, vent_qty: 2,
+  imported_at: '2026-08-10T04:00:00.000Z'
+};
+
 /* the roof numbers a Hover "Complete Measurements" report yields */
 const HOVER = { squares: 32.4, pitch: '6/12', ridge_lf: 64, hip_lf: 48,
   valley_lf: 36, eave_lf: 172, rake_lf: 96, siding_area_sqft: 2210,
@@ -46,6 +68,36 @@ const ROOFR = { squares: 30.0, pitch: '5/12', ridge_lf: 60, eave_lf: 160,
   imported_at: '2026-08-09T04:00:00.000Z' };
 
 (async function () {
+
+console.log('\n── feet-and-inches, converted in CODE not by the model (EXECUTED) ──');
+{
+  const ftSrc = fnText(SRC, 'ftIn');
+  ok('ftIn() exists — the conversion is ours', !!ftSrc);
+  if (ftSrc) {
+    const ftIn = new Function(ftSrc + '\nreturn ftIn;')();
+    /* every one of these is printed on Gunn's report */
+    const real = [["118' 9\"", 118.75], ["69' 5\"", 69.42], ["237' 6\"", 237.5],
+      ["43' 4\"", 43.33], ["78'", 78], ["12' 11\"", 12.92], ["15' 6\"", 15.5],
+      ["146' 5\"", 146.42], ["305' 4\"", 305.33], ["40'", 40]];
+    const wrong = real.filter(([s, w]) => Math.abs(ftIn(s) - w) > 0.005)
+      .map(([s, w]) => s + ' → ' + ftIn(s) + ' want ' + w);
+    ok('every length printed on the Gunn report converts exactly (10 cases)',
+      wrong.length === 0, wrong.join(' | '));
+    ok('THE TRAP: 118\' 9" is 118.75, NOT 118.9 — two inches, on a carrier letter',
+      ftIn("118' 9\"") === 118.75 && ftIn("118' 9\"") !== 118.9);
+    ok('no space between feet and inches still works', ftIn("118'9\"") === 118.75);
+    ok('typographic quotes from a PDF extract still work',
+      ftIn('118′ 9″') === 118.75, ftIn('118′ 9″'));
+    ok('a plain number passes through', ftIn(118.75) === 118.75 && ftIn('220') === 220);
+    ok('nonsense returns null rather than a guess',
+      ftIn('about 120 feet') === null && ftIn('') === null && ftIn(null) === null);
+
+    /* Hover's own arithmetic is the only external cross-check available */
+    ok('CROSS-CHECK: eaves + rakes equals the printed Drip Edge/Perimeter',
+      Math.abs(ftIn("118' 9\"") * 2 - ftIn("237' 6\"")) < 0.005,
+      ftIn("118' 9\"") * 2 + ' vs ' + ftIn("237' 6\""));
+  }
+}
 
 console.log('\n── one merge, two sources (EXECUTED) ──');
 const mergeSrc = fnText(SRC, 'aerialMerge');
@@ -60,10 +112,13 @@ ok('aerialMerge() exists — the 554 merge, generalised', !!mergeSrc);
 ok('…and roofrMerge is kept as a thin wrapper, so its caller reads unchanged',
   /function roofrMerge\(all, d\)\{ return aerialMerge\(all, d, 'Roofr'\); \}/.test(SRC));
 ok('…there is exactly ONE merge body, not two',
-  (SRC.match(/put\('valley', d\.valley_lf\);/g) || []).length === 1,
-  (SRC.match(/put\('valley', d\.valley_lf\);/g) || []).length);
+  (SRC.match(/putLen\('valley',\s*d\.valley_lf\);/g) || []).length === 1,
+  (SRC.match(/putLen\('valley',\s*d\.valley_lf\);/g) || []).length);
+ok('…and every length goes through ftIn, none straight into meas',
+  !/put\('(ridge|hip|valley|eave|rake|drip|stepflash|ridgehip)',\s*d\./.test(SRC));
 
-const mk = () => new Function(mergeSrc + '\nreturn aerialMerge;')();
+const ftSrcForMerge = fnText(SRC, 'ftIn') || '';
+const mk = () => new Function(ftSrcForMerge + '\n' + mergeSrc + '\nreturn aerialMerge;')();
 
 if (mergeSrc) {
   const merge = mk();
@@ -120,6 +175,34 @@ if (mergeSrc) {
     merge(all, { area_sqft: 3240, imported_at: 'q' }, 'Hover');
     ok('square feet convert to squares when the report gives only sqft',
       all.meas.sq === '32.4', all.meas && all.meas.sq);
+  }
+
+  console.log('\n  ── THE REAL GUNN REPORT, run through the shipped merge ──');
+  {
+    const all = {};
+    merge(all, GUNN, 'Hover');
+    const m = all.meas;
+    ok('  1675 ft² of roof facets becomes 16.8 squares', m.sq === '16.8', m.sq);
+    ok('  the predominant pitch is 9/12', m.pitch === '9/12', m.pitch);
+    ok('  eaves 118\' 9" land as 118.75, not 118.9', m.eave === '118.75', m.eave);
+    ok('  rakes the same', m.rake === '118.75', m.rake);
+    ok('  valleys 43\' 4" land as 43.33', m.valley === '43.33', m.valley);
+    ok('  ridges+hips stay COMBINED at 69.42 — Hover reports one row',
+      m.ridgehip === '69.42', m.ridgehip);
+    ok('  …and ridge / hip are NOT invented by splitting it',
+      !m.ridge && !m.hip, JSON.stringify([m.ridge, m.hip]));
+    ok('  drip edge / perimeter is carried', m.drip === '237.5', m.drip);
+    ok('  step flashing is carried — it is a supplement line', m.stepflash === '15.5', m.stepflash);
+    ok('  the WHOLE pitch table survives, not just the main pitch',
+      Array.isArray(m.pitches) && m.pitches.length === 3, JSON.stringify(m.pitches));
+    ok('  …including the 58 ft² at 2/12 that makes this roof partly LOW-SLOPE',
+      m.pitches.some(p => p.pitch === '2/12' && p.area_sqft === 58));
+    ok('  …and the 1360 ft² at 9/12, which is steep',
+      m.pitches.some(p => p.pitch === '9/12' && p.area_sqft === 1360));
+    ok('  the pitch areas still sum to the roof area — the report agrees with itself',
+      m.pitches.reduce((a, p) => a + p.area_sqft, 0) === GUNN.area_sqft);
+    ok('  eave + rake equals the drip edge Hover printed',
+      Math.abs(Number(m.eave) + Number(m.rake) - Number(m.drip)) < 0.005);
   }
 
   {
@@ -227,9 +310,12 @@ console.log('\n── the upload: filing first, reading second (EXECUTED) ──
       global.fetch = async () => opts.routeFails
         ? { ok: false, status: 502, json: async () => ({ error: 'AI request failed' }) }
         : { ok: true, status: 200, json: async () => opts.reply };
+      /* ftIn is a SIBLING of aerialMerge in the page; the sandbox has to carry
+         it too or the merge throws inside importMeasFrom and the test blames
+         the app for the harness's missing scope. */
       const sandbox = new Function('document', 'fetch', 'extractPdfText', 'patchProjectCk',
         'renderMeasureTab', 'refreshMeasSummary', 'aerialMerge', 'notes', 'patches',
-        mergeSrc + '\n' + fn +
+        ftSrcForMerge + '\n' + mergeSrc + '\n' + fn +
         '\nreturn importMeasFrom;')(
           doc, global.fetch,
           async (f, say) => { say('Reading PDF…'); if (opts.extractFails) throw new Error('bad pdf'); return 'TEXT'; },

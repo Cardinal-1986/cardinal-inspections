@@ -13437,3 +13437,47 @@ correctly. The route is told to report null rather than guess, and the merge
 refuses to overwrite a field measurement, so a bad read costs a re-entry rather
 than a wrong number on a carrier letter. **Gunn's report is on file — running it
 is the real test.**
+
+### 674, amended — the extractor now matches the report it has to read
+
+I wrote the Hover prompt without ever having seen a Hover report. Theo sent
+pages 2–3 of the Gunn one and it broke three assumptions in it. **This is the
+file's own "test against production data shapes, not convenient fixtures" rule,
+collected in person.**
+
+1. **Lengths are FEET AND INCHES.** Hover prints `118' 9"`, `69' 5"`,
+   `237' 6"`. A model told "numbers only" hands back **118.9** — wrong by two
+   inches on one eave run, and wrong in the shape that looks entirely
+   reasonable on a carrier letter. **The fix is not a better instruction.** The
+   conversion is now `ftIn()` **in code**, and the model is asked for the string
+   exactly as printed. The Supplement Desk already refuses AI arithmetic for
+   this reason; the same rule now covers the measurement import.
+2. **Hover combines ridges and hips into ONE row** — *Ridges / Hips — 7 —
+   69' 5"*. The prompt asked for them separately, so the model had to split
+   them (a guess with no basis in the document) or drop one. It now returns
+   `ridge_hip_lf`, the app carries the combined figure as what it is, and the
+   Measurements panel shows a single **Ridges + Hips** row labelled
+   *(combined, as reported)*.
+3. **Pitch is a TABLE.** Gunn's roof is 9/12 over 81.19%, 5/12 over 15.34% and
+   2/12 over 3.46%. Collapsing to the predominant pitch throws away two facts
+   that are **supplement line items**: 58 ft² at 2/12 is low-slope and needs a
+   different underlayment (RCO R905.1.1, already in the Desk's pack), and 1360
+   ft² at 9/12 is steep. The whole table is kept in `meas.pitches` and the panel
+   calls out both.
+
+**The siding keys were re-pointed at Hover's actual labels too.** The old
+wording described the fields in the abstract, which on the real report leaves a
+model choosing between four plausible "siding area" totals that differ by
+~500 ft² (Facades-Siding 1681, Facades-Total 2175, zero-waste Siding & Trim
+1746, +openings 2123). It now names the table and column.
+
+**Cross-checked against Hover's own arithmetic**, the only external check
+available: eaves 118' 9" + rakes 118' 9" = **237.50**, exactly the printed Drip
+Edge/Perimeter of 237' 6"; and the three pitch areas 1360 + 257 + 58 sum to
+exactly the 1675 ft² roof-facet area. Both are harness assertions, not comments.
+
+`harness_674` grew 52 → **75**, including the real Gunn report transcribed from
+the ROOF SUMMARY page and run through the shipped merge. Two harness bugs were
+mine: an assertion counting a call I had just renamed, and a sandbox missing
+`ftIn` — which surfaced as *"the report is filed, but its numbers could not be
+read"*, i.e. the app degrading exactly as designed while the test blamed it.
