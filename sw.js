@@ -2,12 +2,24 @@
  *
  * Push notifications + an offline shell.
  *
- * DESIGN NOTE — deploys stay instant.
- * The previous version deliberately skipped caching so a new deploy was live
- * immediately. That property is preserved here: navigation requests go to the
- * network FIRST and the cache is only used when the network fails. A fresh
- * deploy is therefore picked up on the very next load, exactly as before.
- * The cache exists solely so the app still opens when a rep has no signal.
+ * DESIGN NOTE — the app opens from the phone (build 677).
+ * It used to be network-first for navigations, so every launch re-downloaded
+ * the whole 3.86 MB document before anything appeared: ~30s on a weak signal,
+ * measured. The shell is now served from the cache and refreshed behind the
+ * response — the same stale-while-revalidate this worker already used for
+ * every other same-origin asset. The document stops being the exception.
+ *
+ * The cost, accepted knowingly: the launch after a deploy shows the PREVIOUS
+ * build. The worker therefore watches the revalidation, and when it brings
+ * back a different build it messages the page ('cr-shell-updated'), which
+ * offers one tap to load it. The new shell is already on disk by then, so
+ * that tap is about a second, not another download. If you remove that
+ * message, put something else in its place — a silently stale app is how
+ * "the fix didn't work" gets misdiagnosed, twice, per CLAUDE.md.
+ *
+ * ONLY '/' is served from cache. Every other navigation stays network-first,
+ * and that is load-bearing: an iframe load IS a navigation (build 562), so
+ * without the guard /ai-field-manual.html would be answered WITH the app.
  *
  * Never cached: Supabase (auth + data) and /api/* (serverless functions).
  * Those must always hit the network so a stale session or stale claim data
@@ -61,24 +73,113 @@ self.addEventListener('fetch', function(e){
   if(url.hostname.indexOf('.supabase.co') !== -1) return;
   if(url.pathname.indexOf('/api/') === 0) return;
 
-  /* Navigations: network first, cached shell as the offline fallback. */
+  /* ---- how the app opens ------------------------------------------------
+     ONLY '/' is the app shell, and only '/' is served from cache. Build 562:
+     an iframe load IS a navigation, so /ai-field-manual.html once overwrote
+     the shell. Answering that path FROM the shell would be the same bug
+     pointed the other way, so every other navigation keeps the old
+     network-first path below, unchanged. */
+  if(req.mode === 'navigate' && url.pathname === '/'){
+    e.respondWith(
+      /* This read is now on the critical path of every launch, where before it
+         was only reached when already offline. If CacheStorage rejects — quota,
+         eviction mid-read, a corrupt profile — the chain below would reject
+         into respondWith, and the user gets a BROKEN front door instead of a
+         slow one. Degrade to "no cache" and take the network. */
+      caches.match('/').catch(function(){ return undefined; }).then(function(hit){
+
+        /* Revalidate whatever we answer with. When this lands a DIFFERENT
+           build than the one on disk, tell the page so it can offer a reload
+           — the new shell is already cached by then, so that reload is fast.
+           Comparing 3.86 MB of text on every launch to answer that question
+           would not be worth it, so it is decided on headers alone.
+
+           Is the fresh copy a DIFFERENT build from the one on disk?
+           Compare the first header PRESENT ON BOTH sides. Applying a
+           ladder to each side independently was a real bug: a cached
+           response carrying only an ETag would be compared against a fresh
+           one carrying only Content-Length — two different kinds of value,
+           never equal, so every launch would claim an update. When there is
+           nothing comparable this returns null and we say NOTHING, because
+           "cannot tell" is the honest answer and a false update prompt
+           trains the user to ignore the real one. */
+        var changed = function(a, b){
+          if(!a || !b) return false;
+          var keys = ['etag', 'last-modified', 'content-length'];
+          for(var i = 0; i < keys.length; i++){
+            var x = a.headers.get(keys[i]), y = b.headers.get(keys[i]);
+            if(x && y) return x !== y;
+          }
+          return false;
+        };
+
+        /* One promise for the PAGE (resolves at headers, which is when the
+           document can start streaming) and one for the WORKER's lifetime.
+           They are not the same promise and that distinction is the whole
+           bug this replaced: fetch() resolves when the headers arrive, the
+           3.86 MB body streams afterwards, and cache.put() is what reads it.
+           Handing waitUntil a promise that settled at headers let the browser
+           kill the worker mid-write — on exactly the weak connections this
+           build is for. `settled` resolves only after the put AND the
+           message, so waitUntil protects the thing that matters. */
+        var netRes = fetch(req);
+        var settled = netRes.then(function(res){
+          if(!(res && res.ok)) return;
+          var copy = res.clone();
+          var isNew = changed(hit, res);
+          return caches.open(CACHE).then(function(c){
+            return c.put('/', copy);
+          }).then(function(){
+            /* Only worth saying when there WAS something to compare against
+               and it genuinely changed — a first install must not announce an
+               update to a build the user is already looking at. */
+            if(!hit || !isNew) return;
+            return self.clients.matchAll({ type:'window', includeUncontrolled:true })
+              .then(function(list){
+                for(var i = 0; i < list.length; i++){
+                  try{ list[i].postMessage({ type:'cr-shell-updated' }); }catch(_){}
+                }
+              });
+          });
+        });
+        e.waitUntil(settled.catch(function(){}));
+
+        /* Cached shell instantly when we have one; the network only when we
+           do not. The refill is already under waitUntil above, and its catch
+           matters because an offline revalidation must not reject into an
+           unhandled rejection — the user already has their answer. */
+        if(hit) return hit;
+        return netRes.catch(function(){
+          return new Response(
+            '<!doctype html><meta charset="utf-8">' +
+            '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+            '<title>Cardinal — offline</title>' +
+            '<body style="margin:0;background:#170f11;color:#f0e9ea;' +
+            'font:16px/1.6 system-ui,sans-serif;display:grid;place-items:center;' +
+            'height:100vh;text-align:center;padding:0 8%">' +
+            '<div><p style="font-size:1.3rem;font-weight:600;margin:0 0 .4em">No signal</p>' +
+            '<p style="opacity:.75;margin:0">Cardinal will load as soon as you' +
+            ' have a connection. Nothing you entered has been lost.</p></div>',
+            { headers: { 'Content-Type': 'text/html; charset=utf-8' }, status: 503 }
+          );
+        });
+      }).catch(function(){
+        /* Belt and braces. The .catch on caches.match above covers a REJECTED
+           read; this covers anything else that could throw synchronously in the
+           branch. respondWith must never be handed a rejected promise — that is
+           a broken front door, not a slow one. */
+        return fetch(req);
+      })
+    );
+    return;
+  }
+
+  /* Every OTHER navigation: network first, cached shell as the offline
+     fallback. Unchanged from build 562 — see the note above for why this is
+     not merged with the branch above. */
   if(req.mode === 'navigate'){
     e.respondWith(
       fetch(req)
-        .then(function(res){
-          /* Cache ONLY the app shell under '/'. This used to run for every
-             successful navigation, which was harmless while '/' was the only
-             navigable URL on the origin. Build 562 added the AI Field Manual
-             at /ai-field-manual.html, loaded in an iframe — and an iframe load
-             IS a navigation — so opening the book overwrote the offline shell
-             with the book, and going offline afterwards served the book where
-             the app should be. Reproduced against this worker before fixing. */
-          if(res && res.ok && url.pathname === '/'){
-            var copy = res.clone();
-            caches.open(CACHE).then(function(c){ c.put('/', copy); });
-          }
-          return res;
-        })
         .catch(function(){
           return caches.match('/').then(function(hit){
             return hit || new Response(

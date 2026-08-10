@@ -3294,3 +3294,43 @@ plus the real throttled first paint; red on 675). `filmstrip.js` /
 `filmstrip2.js` in the session scratchpad are the reproduction: serve the
 artifact over HTTP, throttle, screenshot from navigation start, hash frames to
 find the distinct painted states.
+
+---
+
+### 677 — the app opens from the phone (`sw.js` + the update bar)
+
+Navigations to `/` are **cache-first with a background revalidate**. Measured on
+one throttled wire: second launch **4,302 ms → 424 ms**.
+
+⚠ **ONLY `/` is served from cache. Never widen this.** An iframe load IS a
+navigation (build 562 learned it the hard way, with `/ai-field-manual.html`
+overwriting the shell). The cache key is the literal string `'/'`, so serving any
+other path from `caches.match('/')` hands back the app in place of what was
+asked for. Every other navigation stays network-first, in its own branch.
+
+⚠ **The staleness is real and must never be silent.** The launch after a deploy
+shows the previous build. The worker compares the revalidated copy's
+**ETag → Last-Modified → Content-Length** against the cached one and posts
+`cr-shell-updated` when it differs; the page shows a bar with one tap to reload.
+If you ever remove that message, put something in its place — `CLAUDE.md` records
+that a stale app has **twice** been misdiagnosed as "the fix didn't work."
+
+⚠ **Nothing reloads automatically, by decision.** Theo may be mid-estimate.
+
+⚠ **The update bar carries its own inline styling** — it must not depend on a
+stylesheet (that is build 676's bug) and must not route through `toast()`, which
+is defined six times here with three signatures.
+
+Unchanged and load-bearing: Supabase and `/api/*` never intercepted · CDN
+libraries cache-first forever (no lockfile, no test runner) · the offline "No
+signal" page · `CACHE` still `cardinal-shell-v1`.
+
+**Tools:** `harness_677.js` (33 — executes the real fetch handler against mocked
+caches; red on 676 across 11). `render_launch.js` (5 — installs the worker in
+Chromium and times a real second launch).
+
+⚠ **`render_launch.js` throttles at the SERVER, and must keep doing so.** CDP
+`Network.emulateNetworkConditions` does **not** throttle fetches issued inside a
+service worker, so a CDP-throttled comparison passes on a network-first worker
+and proves nothing. It also stamps the outgoing document before navigating,
+because an un-awaited `goto()` lets the first sample read the *previous* page.

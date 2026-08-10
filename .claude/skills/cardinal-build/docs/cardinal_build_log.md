@@ -13648,3 +13648,165 @@ loading. 675: `🏗🔨📅⚡💲🎯🏛` at 5/122 style blocks. 676: nothing.
    arrived, and reported no emoji because there was no nav yet. Now it samples at
    the deterministic moment. **A test that goes green on the broken artifact is
    worse than one that goes red**, and only running the control found both.
+
+---
+
+## Build 677 — the app opens from the phone instead of downloading itself
+
+Theo's pick, asked with the cost stated up front: **"Make it near-instant."**
+
+676 stopped the app *looking* broken while it loaded. It still loaded the same
+way: `sw.js` served navigations **network-first**, so every launch re-downloaded
+the whole 3.86 MB document before anything appeared.
+
+**Measured, in a real browser, with the real worker installed, over a throttled
+wire — the same wire for both:**
+
+| | second launch |
+|---|---:|
+| 676, network-first | **4,302 ms** |
+| 677, shell from the phone | **424 ms** |
+
+The app shell is now served from the cache and refreshed behind the response —
+the same **stale-while-revalidate this worker already used for every other
+same-origin asset**. The document simply stops being the exception.
+
+### The cost, and what pays it back
+
+The launch after a deploy shows the **previous** build. That was the entire
+reason for network-first and the file's own header said so. Two things make it
+acceptable, and the second is new:
+
+1. `CLAUDE.md` already tells Theo to fully close and reopen **twice** after a
+   deploy, so a two-launch settle is what he already does.
+2. **It no longer needs a second launch.** The worker notices when its
+   revalidation brought back a different build and messages the page
+   (`cr-shell-updated`), which offers one tap. The new shell is already on disk
+   by then, so that tap is about a second, not another download. Sameness is
+   judged on **ETag → Last-Modified → Content-Length**, all O(1) header reads;
+   comparing 3.86 MB of text on every launch to answer the same question is not
+   worth it.
+
+**Nothing reloads by itself.** Theo may be mid-estimate; throwing the page away
+under him to save a tap is not a trade anyone asked for.
+
+### Deliberately unchanged
+
+- **Only `/` is served from cache.** Every other navigation stays network-first.
+  This is not tidiness: build 562 learned that an **iframe load IS a
+  navigation**, so `/ai-field-manual.html` once overwrote the shell. Serving
+  that path *from* the shell would be the same bug pointed the other way, and
+  worse — the book answered with the app.
+- Supabase and `/api/*` still never touched · CDN libraries still cache-first
+  forever (the no-lockfile decision) · the offline "No signal" page byte-identical
+  · **`CACHE` not bumped** — every cached `/` entry is a valid shell, nothing
+  poisoned to evict.
+
+### The update bar carries its own styling, on purpose
+
+Built in JS with inline styles. **676 was markup near the top of the file whose
+stylesheet is near the bottom**; a chip that depended on a stylesheet could
+repeat it. It is also not routed through `toast()` — that name is defined **six
+times** in this file with three signatures and none is reliably global at that
+point, the same trap `CLAUDE.md` records for `money(`.
+
+### `harness_677.js` — 33 assertions, executing the real worker
+
+`sw.js` is read and run in a sandbox supplying a fake `self`/`caches`/`fetch`/
+`Response`, and the **real fetch handler it registers** is driven through the
+scenarios. Weighted toward the ways this could serve the WRONG thing, not the
+ways it could be fast: the 562 guard (the manual must not be answered with the
+shell, and must not overwrite it), both offline exits, a first install that must
+NOT announce an update, an unchanged build that must not nag, Supabase and
+`/api/*` untouched, CDN pinning intact. Red on the 676 worker across 11.
+
+### ⚠ The launch harness measured nothing, and its own control caught it
+
+`render_launch.js` first used CDP `Network.emulateNetworkConditions` and reported
+a **42× speedup** — then **passed against the 676 network-first worker**, which
+cannot possibly be fast. **CDP network emulation applies to the page's network
+session; a `fetch()` issued from inside the SERVICE WORKER is not throttled by
+it.** Both artifacts were measuring an unthrottled document and the comparison
+meant nothing. It now rate-limits the response stream **at the server**, which
+throttles every consumer equally because it is the wire that is slow — and the
+control now goes red (676: 1.0×, 4,302 ms).
+
+A second fault in the same file: the first version reported **4 ms**, which is
+not a believable time to parse 3.86 MB. `goto()` was not awaited, so the first
+sample ran against the **previous document**, which of course already had the app
+on it. It now stamps the outgoing document and refuses any sample still carrying
+the stamp.
+
+**Both were false greens, and only running the negative control found either.**
+That is now three builds in a row (675, 676, 677) where the control caught a test
+that agreed with me for the wrong reason.
+
+### 677 amended before it shipped — six defects, all mine, found by review
+
+`sw.js` is the highest-blast-radius file in the repo: a bad one serves the wrong
+document to every user until it is replaced, and users cannot easily clear it.
+So a 14-agent adversarial review was run against the **unmerged** worker. Three
+of its four lenses converged independently on the same critical defect, and I
+confirmed it with a standalone probe rather than taking their word:
+
+```
+waitUntil promise settled.  cache written yet? false
+80ms later.                 cache written yet? true
+```
+
+1. **CRITICAL — `waitUntil` was protecting nothing.** `fetch()` resolves when the
+   **headers** arrive; the 3.86 MB body streams afterwards, and `cache.put()` is
+   what reads it. The write was started inside a `.then()` whose promise was
+   never returned into `net`, so `net` settled at headers and `waitUntil`
+   released the worker while the write was still in flight — **on exactly the
+   weak connections this build is for.** Nothing else refreshes the shell, so a
+   user could sit on an old build indefinitely and never be told.
+   ⚠ **The fix keeps TWO promises on purpose.** The reviewer's own warning:
+   handing `respondWith` the write-chain would withhold the document on a COLD
+   install until all 3.86 MB had downloaded *and* been written. `netRes` (headers)
+   answers the page; `settled` (after the put and the message) is what
+   `waitUntil` gets. **`harness_677` now asserts both directions** — that
+   `waitUntil` waited for the write, and that the cold path did *not*.
+2. **SERIOUS — `respondWith` could reject.** `caches.match('/')` is now on the
+   critical path of every launch, where before it was reached only when already
+   offline. A CacheStorage failure rejected the whole chain — a **broken** front
+   door rather than a slow one. Now `.catch` → no-cache → network, plus an outer
+   `.catch(fetch)` for anything that throws synchronously.
+3. **MINOR — the freshness ladder was applied to each side independently**, so a
+   cached response carrying only an ETag could be compared against a fresh one
+   carrying only Content-Length: two different kinds of value, never equal, an
+   update announced on **every** launch. It now picks the first header present on
+   **both** sides and says nothing when there is nothing comparable. A false
+   update prompt trains the user to ignore the real one.
+4. **SERIOUS (page) — the bar covered the installed app's bottom nav.** `#pwaNav`
+   is `position:fixed;bottom:0`, so a bar at `bottom:12px` sat on it and put
+   Reload under the thumb that reaches for Back. It now **measures** the nav and
+   sits above it — measured, not hardcoded, because the height is padding plus a
+   safe-area inset and differs per device.
+5. **SERIOUS (page) — `shown` was never reset**, so one dismissal muted the only
+   update signal for the life of the document. A tab open for days can outlive
+   several builds.
+6. **MINOR (page) — `z-index:2147483000`** put a staff update prompt above every
+   modal *and* above the client-facing Showroom. Now **170** — above `#pwaNav`
+   (160), below every dialog (9800–100000) — and it does not render at all on a
+   vision host. Nobody interrupts a kitchen-table presentation to discuss builds.
+
+**Refuted and deliberately NOT changed:** *"offline, every non-`/` navigation is
+answered with the app shell"* is real but **pre-existing** — build 562's code did
+exactly this in its `catch`, and `harness_677` asserts the behaviour is
+preserved. Changing it is a separate decision, not a side effect of this build.
+**Nine of twelve** verified claims were refuted; three were real and all three are fixed. (An earlier revision of this entry said *seven of ten* — I wrote that from a partial read of the journal while the review was still running, and it was wrong. The final tally is 12 candidates, 3 confirmed.)
+
+⚠ **And the review caught a defect in the HARNESS, not just the worker.** The
+assertion *"kept alive with waitUntil so the refill cannot be killed mid-write"*
+counted the **call** and claimed the **guarantee** — and passed on code that did
+not provide it, because the mock `put` resolved synchronously. That is
+`BUG_CLASSES` §15 exactly: an assertion matching its own prose. The mock `put` is
+now slow and records when it *finishes*, the ordering is asserted separately, and
+that label now says only what it checks.
+
+⚠ **A window-bound bug in my own harness, same class as `measure_counts.py`.**
+The page-side assertions sliced `indexOf('cr-shell-updated') + 3000` characters —
+and went red the moment the block grew by four fixes. **A fixed window over a
+block that grows is a trap this file already documents.** It now brace-matches
+the listener.
