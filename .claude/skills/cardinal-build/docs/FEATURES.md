@@ -3591,3 +3591,20 @@ of its maps at the same time. This bit 688 and will bite the next rename.
 Gate: `scripts/render_suppliers.js` — opens the real sheet and checks the title,
 the card, the moved env chip and that all three account fields plus the
 catalogue search survived inside the card. Goes RED on 687.
+
+### 689 — readable calendar titles, obsidian client cards
+
+`.pipecard.teamcal .pipetitle span:first-child` had **no theme gate** and pinned
+both big calendar titles to `#1c1416`: **1.06:1** on the dark card. Fixed by
+dropping only the colour (the rule also carries the title's font).
+
+The client cards (`.pcard`, all of which are also `.pcbadge` — one creator) now
+use the **named** obsidian recipe. ⚠️ Obsidian has two behaviours: `#cr-est-view`
+/ `#reportsView` are black in both modes (545); `.actbox` has a light twin (557).
+The cards follow `.actbox`, per Theo. `.pcini` and `.pcacts a` are raised keys.
+
+⚠️ **`#calCard` is dead markup** (`display:none !important`). The live calendars
+are `.pipecard.teamcal` and `.prodcal`.
+
+Gate: `scripts/render_calhead.js` — prints ink, composited ground, ratio **and
+the winning rule** for every heading and legend in both themes. RED on 688.

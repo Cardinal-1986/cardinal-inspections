@@ -319,8 +319,13 @@ footer.site{
 }
 .pcard{
   position:relative;border-radius:13px;overflow:hidden;cursor:pointer;
-  background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-top-color:var(--rbe-line3);
-  box-shadow:0 5px 14px rgba(0,0,0,.4);
+  /* 689: the obsidian recipe, named once above rather than copied a third
+     time. Theo: "make them the obsidian style, like the activity count is"
+     — .actbox is the variant WITH a light twin (557), not the #cr-est-view /
+     #reportsView variant that 545 settled as black in both modes. So these
+     flip with the theme; the light half sits with the key styles below. */
+  background:var(--obs-face);border:1px solid var(--obs-bd);
+  box-shadow:var(--obs-lift);
   transition:box-shadow .15s, transform .15s;
 }
 /* Badge card (build 370) \u2014 monogram + aligned text column, no cover image */
@@ -347,6 +352,29 @@ footer.site{
 .pcbadge .pcacts a{flex:1;border:1px solid var(--rbe-monobd);border-radius:9px;background:var(--rbe-monobg);
   color:var(--rbe-acclt);text-decoration:none;padding:7px;font:700 11.5px 'Segoe UI',Arial,sans-serif;
   display:flex;align-items:center;justify-content:center;gap:6px;}
+/* 689: the initial box and the two action buttons sat on --rbe-monobg — a 7%
+   red wash that was already faint and vanishes on the darker obsidian face.
+   Theo: "can you make those pop out more it seems muted." They are controls,
+   so they read as raised KEYS in the same highlight-led language as the card:
+   one step lighter than the ground, a defined edge, a hairline of white on
+   the top bevel. Light mode is shadow-led, per the 545/557 split. */
+.pcbadge .pcini,
+.pcbadge .pcacts a{
+  background:linear-gradient(180deg,#262a33,#1a1d24);
+  border:1px solid #3c404b;
+  box-shadow:0 1px 0 rgba(255,255,255,.07) inset, 0 2px 5px rgba(0,0,0,.45);
+}
+:root[data-theme="rb-light"] .pcard{
+  background:radial-gradient(120% 90% at 22% -10%,#ffffff 0%,#f7f7f9 45%,#eceef2 100%);
+  border:1px solid #e2e2e2;
+  box-shadow:0 6px 14px rgba(16,18,24,.10), 0 1px 2px rgba(16,18,24,.06), 0 1px 0 rgba(255,255,255,.9) inset;
+}
+:root[data-theme="rb-light"] .pcbadge .pcini,
+:root[data-theme="rb-light"] .pcbadge .pcacts a{
+  background:linear-gradient(180deg,#ffffff,#f2f3f6);
+  border:1px solid #d5d8dd;
+  box-shadow:0 1px 2px rgba(16,18,24,.10), 0 1px 0 rgba(255,255,255,.9) inset;
+}
 .pcbadge .pcacts a svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;}
 /* 683: in light the label was --rbe-acclt (#4f7396) over the pink wash on a
    white card — 4.26:1, just under the 4.5 floor. The darker accent of the
@@ -1375,8 +1403,15 @@ html, body{overflow-x:hidden;max-width:100%;}
   -webkit-mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
   mask:url(/cardinal-prod.png) center 60% / 74% no-repeat;
   opacity:.24;pointer-events:none;z-index:5;}
+/* 689: this rule pinned both calendar titles to #1c1416 — a light-era
+   near-black — with NO theme gate, so it painted 1.06:1 on the dark card
+   while every other .pipetitle sat at 15.60:1. The light twin below was
+   written and the base was left behind: the partial-theming pass. Only the
+   COLOUR is dropped; the font and letter-spacing are the title's own and
+   deleting the whole rule would have resized it. Dark now falls back to
+   .pipetitle{color:var(--rbe-head)} and matches its neighbours. */
 .pipecard.teamcal .pipetitle span:first-child{
-  font:800 15.5px Georgia,'Times New Roman',serif;letter-spacing:.03em;color:#1c1416;}
+  font:800 15.5px Georgia,'Times New Roman',serif;letter-spacing:.03em;}
 .teamcal .minical .calhead b{
   font:800 15.5px Georgia,'Times New Roman',serif;letter-spacing:.05em;color:#b8860b;/* 685: was gradient-clipped text */}
 .teamcal .minical .calnav{background:var(--red);border:1px solid var(--red-dk);color:#fff;border-radius:8px;
@@ -3306,7 +3341,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 688 &#8212; ABC Supply becomes Suppliers, with room for more yards</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 689 &#8212; The calendar titles are readable and the client cards go obsidian</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37246,6 +37281,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:689, d:'2026-08-10', t:'The calendar titles are readable, and the client cards go obsidian',
+s:'Cardinal Team Calendar and Production Calendar had their titles painted a near-black left over from when this app was a white page \u2014 measured at 1.06 to 1 against the dark card, which is why you could not read them. Every other card title on that page was 15.6 to 1. The light-mode version of that rule had been written years ago and the dark one never was. Both titles now match their neighbours. The calendars themselves were always working \u2014 only the heading was invisible. The client cards at the bottom now use the same obsidian finish as the Activity Count tiles, and the initial box and the Call and Text buttons sit on top of it as raised keys instead of the faint red wash they had, which had almost no edge at all. Every piece of text on those cards was measured again on the new darker card: all of them improved.'},
 { b:688, d:'2026-08-10', t:'ABC Supply becomes Suppliers, with room for the other yards',
 s:'The menu row said ABC Supply, which meant every other yard you buy from would have needed its own row. It now says Suppliers, and ABC Supply sits inside it as a card \u2014 so the next yard is a second card on that screen rather than another line in the menu. Nothing about the ABC connection changed: same account fields, same catalogue search, same setup. It is still switched off until the two ABC keys are added in Vercel, and the screen says so. Two doors led here, the main menu and the Tools list, and both were renamed \u2014 a screen with two names is how it ends up feeling like two features.'},
 { b:687, d:'2026-08-10', t:'Three icons you flagged, redrawn',
@@ -57209,7 +57246,8 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 /* ── shared: the obsidian recipe, named once ─────────────────────────────── */
 #cr-est-view,
 #reportsView .pipecard,
-#reportsView .rptkpi{
+#reportsView .rptkpi,
+.pcard{
   --obs-face:radial-gradient(120% 90% at 22% -10%,#2c2d36 0%,#15161c 45%,#08080b 100%);
   --obs-bd:#24242c;
   --obs-lift:0 10px 24px rgba(0,0,0,.62), 0 2px 0 rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.10) inset;
