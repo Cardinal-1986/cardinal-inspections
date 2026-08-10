@@ -3312,7 +3312,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 678 &#8212; The old welcome screen no longer flashes up while the app is still loading</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 679 &#8212; The Supplement Desk is reachable, the job name stops following you, and the map stops crashing</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12462,10 +12462,42 @@ function dbPaintMap(el, address){
     el.innerHTML = '<div class="axnote" style="padding:20px;">Map unavailable \u2014 no Google key configured.</div>';
     return;
   }
-  el.innerHTML = '<img src="' + esc(url) + '" alt="Property map" loading="lazy" ' +
-    'style="width:100%;height:100%;object-fit:cover;display:block;">';
-  el.style.cursor = 'pointer';
-  el.onclick = function(){ window.open(mapsUrl(address), '_blank'); };
+  /* 679: an ANCHOR, not a click handler. This used to assign an onclick that
+     called the window-opening API with a _blank target, and inside an INSTALLED
+     PWA there is no tab to open into — iOS blanks the web view, which is the
+     white screen Theo hit and read as a crash. A real anchor with target=_blank
+     and rel=noopener is what iOS honours from a user gesture, and it costs no
+     JavaScript at all.
+     ⚠ The old line is described here rather than quoted: a verbatim copy of it
+     in this comment makes every "is the handler gone?" grep — including this
+     build's own harness — go red on the comment that says it left. */
+  el.innerHTML = '<a href="' + esc(mapsUrl(address)) + '" target="_blank" rel="noopener"' +
+    ' style="display:block;width:100%;height:100%;">' +
+    '<img src="' + esc(url) + '" alt="Property map" loading="lazy" ' +
+    'style="width:100%;height:100%;object-fit:cover;display:block;">' +
+    '</a>' + addrWarnHtml(address);
+  el.style.cursor = '';
+  el.onclick = null;
+}
+/* 679: Google Static Maps answers an address it cannot geocode with OCEAN, not
+   with an error — which is why "1049 Cicillion Ave" (no city, no state, no zip)
+   rendered as a flat blue rectangle and the app said nothing. We cannot see
+   Google's failure from here, but we CAN see that the address is missing the
+   parts it needs, and say so. Deliberately a note beside the map rather than
+   instead of it: the map may still be right, and hiding it would remove the
+   evidence that it is not. */
+function addrLooksIncomplete(a){
+  var s = String(a || '').trim();
+  if(!s) return true;
+  if(/\b\d{5}(-\d{4})?\b/.test(s)) return false;      /* has a ZIP */
+  if(/,/.test(s)) return false;                        /* has a city/state part */
+  return true;
+}
+function addrWarnHtml(address){
+  if(!addrLooksIncomplete(address)) return '';
+  return '<div class="axnote" style="padding:8px 10px;line-height:1.45;">' +
+    'This address has no city, state or ZIP, so the pin may be wrong. ' +
+    'Add them and the map will find it.</div>';
 }
 /* Exported because the Map/Satellite tabs live in their own cr-keeper2-script
    block and cannot see this closure. One setter, one painter.
@@ -16012,6 +16044,18 @@ function setHeaderJobMenu(on){
   var nb = document.getElementById('navBtn');
   if(jm) jm.style.display = on ? 'inline-block' : 'none';
   document.body.classList.toggle('projopen', !!on);
+  /* 679: this function already owns `projopen`, which is the ONLY thing gating
+     the job name in the ribbon — so it owns clearing the name too. openProject()
+     writes the same "1042: Name" into #headCtx AND #cbCtx; showHome() cleared
+     only #headCtx, and the header module had since relocated #cbCtx into
+     #cr-hd2-ribbon where it is far more visible. The result was a job name that
+     followed you onto every screen after. Clearing both here means every caller
+     — hideAllViews() included — is fixed at once, instead of one screen at a
+     time. */
+  if(!on){
+    var _hc = document.getElementById('headCtx'); if(_hc) _hc.innerHTML = '';
+    var _cc = document.getElementById('cbCtx');   if(_cc) _cc.innerHTML = '';
+  }
   /* Menu button and + stay in the masthead the whole time; only the brand
      center swaps between the CARDINAL title and the client PO/name. */
   if(nb) nb.style.display = on ? 'none' : 'inline-block';
@@ -21669,6 +21713,12 @@ document.getElementById('landQuick').addEventListener('click', function(){
    the main app never leaves us with a hidden header. */
 function showCardinalTruth(){
   document.body.classList.remove('viewing-community-hub'); /* the + belongs to Claims here (build 355) */
+  /* 679: this is a hub, not a job. It hid sibling views by hand and never went
+     through hideAllViews(), so `projopen` survived and the job name stayed in
+     the ribbon — measured on the Insurance hub with a Community job open.
+     Every one of the 13 call sites is a leave-the-job navigation, including the
+     profile home chip, so this is safe at all of them. */
+  if(typeof setHeaderJobMenu === 'function') setHeaderJobMenu(false);
   /* 410: dropping the class was not enough — crmNow() reads the VIEW's display. */
   var ch = document.getElementById('communityHubView'); if(ch) ch.style.display = 'none';
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
@@ -21678,6 +21728,8 @@ function showCardinalTruth(){
   window.scrollTo(0, 0);
 }
 function showResourceLibrary(){
+  /* 679: the third of the three hub navigations that skipped the teardown. */
+  if(typeof setHeaderJobMenu === 'function') setHeaderJobMenu(false);
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
   var ct = document.getElementById('cardinalTruthView'); if(ct) ct.style.display = 'none';
   var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
@@ -21690,6 +21742,9 @@ function showInsuranceClients(){
      the header skinned and titled itself 'Community' over an Insurance screen.
      This mirrors the hub's own hide() at 40696-40700. */
   document.body.classList.remove('viewing-community-hub');
+  /* 679: same gap as showCardinalTruth — Theo's screenshot of this list still
+     read "1009: Adam Gunn" after leaving his card. */
+  if(typeof setHeaderJobMenu === 'function') setHeaderJobMenu(false);
   var ch = document.getElementById('communityHubView'); if(ch) ch.style.display = 'none';
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
   var ct = document.getElementById('cardinalTruthView'); if(ct) ct.style.display = 'none';
@@ -37109,6 +37164,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:679, d:'2026-08-10', t:'The Supplement Desk is reachable, the job name stops following you, and the map stops crashing',
+s:'Four things. THE SUPPLEMENT DESK: its card was being wiped off the insurance page the instant that page drew itself, so there has never been a way in from the app \u2014 it is now in the Tools grid with everything else. THE JOB NAME: opening a job put its number and name in the strip under the menu, and nothing ever took it away, so it followed you onto the insurance page, the client list and the library. Leaving a job now clears it, everywhere, in one place. THE MAP: tapping it tried to open a new browser tab, and an installed app has no tab to open \u2014 that is the white screen. It is an ordinary link now. And when an address is missing its city, state and ZIP, Google cannot find it and quietly returns open water; the map now says so instead of showing you the sea. A WAY BACK: a community job card had no route back to the Community screen. It has one now.'},
 { b:678, d:'2026-08-10', t:'The old welcome screen stops flashing up while the app loads',
 s:'For a moment while the app was starting you would see the old welcome screen \u2014 the cardinal on the lightning bolt, \u201CWelcome back\u201D, and the four big cards \u2014 before the real one appeared. That screen was replaced a long time ago, but its layout is still in the file because a dozen other pieces of the app read parts of it. The instruction that hides it sits near the end of a very large file, while the app asks for the welcome screen near the beginning, so for a second there was nothing telling it to stay hidden. It is now hidden from the start. Same cause as the scattered emoji fixed in the last build, one screen over.'},
 { b:677, d:'2026-08-10', t:'The app opens from your phone instead of downloading itself every time',
@@ -47425,6 +47482,14 @@ host.innerHTML =
 '<span class="x"><b>Adjuster Directory</b><small>Everyone who has adjusted a Cardinal claim</small></span></button>' +
 '<button data-go="claims" type="button"><span class="i">\uD83D\uDCCB</span>' +
 '<span class="x"><b>Claims Tracker</b><small>Payments, supplements, timelines</small></span></button>' +
+/* 679: the Supplement Desk. It was added at 668 to the STATIC .ins-grid in
+   #cardinalTruthView — which render() overwrites, because host IS .ins-body
+   and the grid is inside it. So the card has never once been on screen.
+   655 fixed exactly this for four other destinations and left a note; the
+   Desk still went in the wrong grid. It lives here now, through the same
+   data-go mechanism as its neighbours rather than a second one. */
+'<button data-go="desk" type="button"><span class="i">\uD83E\uDDEE</span>' +
+'<span class="x"><b>Supplement Desk</b><small>Read the carrier&#39;s scope, draft the response</small></span></button>' +
 '</div>' +
 '</div>' +
 '</div></div>';
@@ -47489,6 +47554,11 @@ if(d === 'claims' && typeof window.crOpenClaimsFromHub === 'function'){
 window.crOpenClaimsFromHub();
 return;
 }
+/* 679: the Desk is a STANDALONE page with its own origin rules and its own
+   sign-in (the studio.html precedent), so this is a navigation, not a view
+   swap. location.href, not window.open — inside an installed PWA there is no
+   tab to open into and iOS blanks the web view instead. */
+if(d === 'desk'){ window.location.href = '/supplement.html'; return; }
 if(d === 'board'){
 if(typeof window.showHome === 'function') window.showHome();
 var nav = document.querySelector('.navopt[data-nav="board"]');
@@ -49050,7 +49120,7 @@ background:linear-gradient(var(--ccm-wash,rgba(4,120,87,.18)),var(--ccm-wash,rgb
   #cr-cc .cts{grid-template-columns:1fr 1fr;gap:12px}
   #cr-cc .tabbar button{font-size:14px}
 }
-#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}#cr-cc .cc-jmb .l{font:700 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}#cr-cc .cc-jmb .n.z{color:var(--ccm-dim);opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:var(--ccm-dim)}#cr-cc-return{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:9995;background:var(--ccm-card);border:1px solid var(--ccm-ac);color:var(--ccm-ink);font:700 13px -apple-system,'Segoe UI',Arial,sans-serif;padding:11px 18px;border-radius:999px;box-shadow:var(--ccm-sh-lg);cursor:pointer}body[data-crm="community"] #commsView .viewhead{background:linear-gradient(100deg,#047857,#34D399 60%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#34D399}body[data-crm="community"] #commsView #commsCli{color:#34D399 !important;-webkit-text-fill-color:#34D399}body[data-crm="community"] #commsView .subnote{color:#fff}body[data-crm="community"] footer.site,body[data-crm="insurance"] footer.site{display:none}#cr-cc .cc-oc{background:var(--raise,#1e2220);border:1px solid var(--line,#2a2f2c);border-radius:12px;padding:14px}#cr-cc .cc-oc .hd{font:800 16px inherit;margin:0 0 3px}#cr-cc .cc-oc .sub{font:400 12px inherit;color:var(--mute,#9aa39e);margin:0 0 13px}#cr-cc .cc-oc .step{font:700 9.5px var(--mono,ui-monospace,Menlo,monospace);letter-spacing:.14em;text-transform:uppercase;color:var(--mute,#9aa39e);margin-bottom:10px}#cr-cc .cc-oc .big{display:flex;flex-direction:column;gap:9px}#cr-cc .cc-oc .big button{display:flex;align-items:flex-start;gap:12px;text-align:left;padding:15px;border-radius:11px;border:1px solid var(--line,#2a2f2c);background:var(--card,#161918);color:var(--ink,#f2f4f3);font:700 15px inherit;cursor:pointer;width:100%}#cr-cc .cc-oc .big button .ic{font-size:20px;width:26px;flex:0 0 26px;text-align:center;line-height:1.2}#cr-cc .cc-oc .big button small{display:block;font:400 11.5px/1.45 inherit;color:var(--mute,#9aa39e);margin-top:3px}#cr-cc .cc-oc .big button.go{border-color:var(--a1,#34D399);background:var(--ccm-wash,rgba(4,120,87,.18))}#cr-cc .cc-oc .big button.wait{border-color:var(--warn,#ffcf6b)}#cr-cc .cc-oc .f{margin-top:12px}#cr-cc .cc-oc .f label{display:block;font:800 8.5px var(--mono,ui-monospace,Menlo,monospace);letter-spacing:.15em;text-transform:uppercase;color:var(--mute,#9aa39e);margin-bottom:5px}#cr-cc .cc-oc .f input,#cr-cc .cc-oc .f select{width:100%;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c);border-radius:9px;padding:12px;color:var(--ink,#f2f4f3);font:600 14.5px inherit}#cr-cc .cc-oc .row{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-oc .row .f{margin-top:0}#cr-cc .cc-oc .seg{display:flex;border:1px solid var(--line,#2a2f2c);border-radius:9px;overflow:hidden;margin-top:6px}#cr-cc .cc-oc .seg button{flex:1;background:var(--card,#161918);border:0;border-right:1px solid var(--line,#2a2f2c);padding:12px 4px;color:var(--mute,#9aa39e);font:700 12px inherit;cursor:pointer}#cr-cc .cc-oc .seg button:last-child{border-right:0}#cr-cc .cc-oc .seg button.on{background:var(--ccm-wash,rgba(4,120,87,.18));color:var(--a1,#34D399)}#cr-cc .cc-oc .gap{margin-top:11px;padding:11px 12px;border-radius:9px;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c);font:400 12px/1.5 inherit;color:var(--mute,#9aa39e)}#cr-cc .cc-oc .gap b{color:var(--ink,#f2f4f3);font-weight:700}#cr-cc .cc-oc .tar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:12px;border-radius:9px;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c)}#cr-cc .cc-oc .tar .ic{font-size:18px}#cr-cc .cc-oc .tar b{font:700 13px inherit;display:block;color:var(--ink,#f2f4f3)}#cr-cc .cc-oc .tar small{display:block;font:400 11px inherit;color:var(--mute,#9aa39e);margin-top:1px}#cr-cc .cc-oc .tar input{margin-left:auto;width:132px;background:var(--raise,#1e2220);border:1px solid var(--line,#2a2f2c);border-radius:7px;padding:9px;color:var(--ink,#f2f4f3);font:600 12.5px inherit}#cr-cc .cc-oc .ft{display:flex;gap:9px;margin-top:15px}#cr-cc .cc-oc .ft button{flex:1;padding:14px;border-radius:10px;border:0;font:800 13.5px inherit;cursor:pointer}#cr-cc .cc-oc .ft .save{background:var(--a1,#34D399);color:var(--ccm-onac,#08240f)}#cr-cc .cc-oc .ft .save[disabled]{opacity:.55;cursor:default}#cr-cc .cc-oc .ft .back{background:none;border:1px solid var(--line,#2a2f2c);color:var(--mute,#9aa39e)}#cr-cc .cc-oc .note{font:400 11.5px/1.55 inherit;color:var(--mute,#9aa39e);margin-top:11px}#cr-cc .cc-oc .dots{display:flex;gap:5px;justify-content:center;margin-top:14px}#cr-cc .cc-oc .dots i{width:6px;height:6px;border-radius:99px;background:var(--line,#2a2f2c)}#cr-cc .cc-oc .dots i.on{background:var(--a1,#34D399);width:17px}@media (max-width:420px){#cr-cc .cc-oc .row{grid-template-columns:1fr}#cr-cc .cc-oc .row .f+.f{margin-top:9px}}</style> <script id="cr-cc-script">
+#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}#cr-cc .cc-jmb .l{font:700 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}#cr-cc .cc-jmb .n.z{color:var(--ccm-dim);opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:var(--ccm-dim)}#cr-cc .cc-out{display:inline-flex;align-items:center;min-height:44px;padding:0 15px;margin:0 0 12px;border-radius:10px;background:transparent;border:1px solid var(--ccm-line);color:var(--ccm-dim);font:700 12.5px -apple-system,'Segoe UI',Arial,sans-serif;cursor:pointer}#cr-cc .cc-out:hover{border-color:var(--ccm-ac);color:var(--ccm-ink)}#cr-cc-return{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:9995;background:var(--ccm-card);border:1px solid var(--ccm-ac);color:var(--ccm-ink);font:700 13px -apple-system,'Segoe UI',Arial,sans-serif;padding:11px 18px;border-radius:999px;box-shadow:var(--ccm-sh-lg);cursor:pointer}body[data-crm="community"] #commsView .viewhead{background:linear-gradient(100deg,#047857,#34D399 60%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#34D399}body[data-crm="community"] #commsView #commsCli{color:#34D399 !important;-webkit-text-fill-color:#34D399}body[data-crm="community"] #commsView .subnote{color:#fff}body[data-crm="community"] footer.site,body[data-crm="insurance"] footer.site{display:none}#cr-cc .cc-oc{background:var(--raise,#1e2220);border:1px solid var(--line,#2a2f2c);border-radius:12px;padding:14px}#cr-cc .cc-oc .hd{font:800 16px inherit;margin:0 0 3px}#cr-cc .cc-oc .sub{font:400 12px inherit;color:var(--mute,#9aa39e);margin:0 0 13px}#cr-cc .cc-oc .step{font:700 9.5px var(--mono,ui-monospace,Menlo,monospace);letter-spacing:.14em;text-transform:uppercase;color:var(--mute,#9aa39e);margin-bottom:10px}#cr-cc .cc-oc .big{display:flex;flex-direction:column;gap:9px}#cr-cc .cc-oc .big button{display:flex;align-items:flex-start;gap:12px;text-align:left;padding:15px;border-radius:11px;border:1px solid var(--line,#2a2f2c);background:var(--card,#161918);color:var(--ink,#f2f4f3);font:700 15px inherit;cursor:pointer;width:100%}#cr-cc .cc-oc .big button .ic{font-size:20px;width:26px;flex:0 0 26px;text-align:center;line-height:1.2}#cr-cc .cc-oc .big button small{display:block;font:400 11.5px/1.45 inherit;color:var(--mute,#9aa39e);margin-top:3px}#cr-cc .cc-oc .big button.go{border-color:var(--a1,#34D399);background:var(--ccm-wash,rgba(4,120,87,.18))}#cr-cc .cc-oc .big button.wait{border-color:var(--warn,#ffcf6b)}#cr-cc .cc-oc .f{margin-top:12px}#cr-cc .cc-oc .f label{display:block;font:800 8.5px var(--mono,ui-monospace,Menlo,monospace);letter-spacing:.15em;text-transform:uppercase;color:var(--mute,#9aa39e);margin-bottom:5px}#cr-cc .cc-oc .f input,#cr-cc .cc-oc .f select{width:100%;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c);border-radius:9px;padding:12px;color:var(--ink,#f2f4f3);font:600 14.5px inherit}#cr-cc .cc-oc .row{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-oc .row .f{margin-top:0}#cr-cc .cc-oc .seg{display:flex;border:1px solid var(--line,#2a2f2c);border-radius:9px;overflow:hidden;margin-top:6px}#cr-cc .cc-oc .seg button{flex:1;background:var(--card,#161918);border:0;border-right:1px solid var(--line,#2a2f2c);padding:12px 4px;color:var(--mute,#9aa39e);font:700 12px inherit;cursor:pointer}#cr-cc .cc-oc .seg button:last-child{border-right:0}#cr-cc .cc-oc .seg button.on{background:var(--ccm-wash,rgba(4,120,87,.18));color:var(--a1,#34D399)}#cr-cc .cc-oc .gap{margin-top:11px;padding:11px 12px;border-radius:9px;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c);font:400 12px/1.5 inherit;color:var(--mute,#9aa39e)}#cr-cc .cc-oc .gap b{color:var(--ink,#f2f4f3);font-weight:700}#cr-cc .cc-oc .tar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:12px;border-radius:9px;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c)}#cr-cc .cc-oc .tar .ic{font-size:18px}#cr-cc .cc-oc .tar b{font:700 13px inherit;display:block;color:var(--ink,#f2f4f3)}#cr-cc .cc-oc .tar small{display:block;font:400 11px inherit;color:var(--mute,#9aa39e);margin-top:1px}#cr-cc .cc-oc .tar input{margin-left:auto;width:132px;background:var(--raise,#1e2220);border:1px solid var(--line,#2a2f2c);border-radius:7px;padding:9px;color:var(--ink,#f2f4f3);font:600 12.5px inherit}#cr-cc .cc-oc .ft{display:flex;gap:9px;margin-top:15px}#cr-cc .cc-oc .ft button{flex:1;padding:14px;border-radius:10px;border:0;font:800 13.5px inherit;cursor:pointer}#cr-cc .cc-oc .ft .save{background:var(--a1,#34D399);color:var(--ccm-onac,#08240f)}#cr-cc .cc-oc .ft .save[disabled]{opacity:.55;cursor:default}#cr-cc .cc-oc .ft .back{background:none;border:1px solid var(--line,#2a2f2c);color:var(--mute,#9aa39e)}#cr-cc .cc-oc .note{font:400 11.5px/1.55 inherit;color:var(--mute,#9aa39e);margin-top:11px}#cr-cc .cc-oc .dots{display:flex;gap:5px;justify-content:center;margin-top:14px}#cr-cc .cc-oc .dots i{width:6px;height:6px;border-radius:99px;background:var(--line,#2a2f2c)}#cr-cc .cc-oc .dots i.on{background:var(--a1,#34D399);width:17px}@media (max-width:420px){#cr-cc .cc-oc .row{grid-template-columns:1fr}#cr-cc .cc-oc .row .f+.f{margin-top:9px}}</style> <script id="cr-cc-script">
 (function(){
 'use strict';
 var tab = 'thread';
@@ -49872,6 +49942,15 @@ b.click();
 };
 });
 }
+function wireOut(){
+  var b = document.querySelector('#cr-cc [data-cc-out]');
+  if(!b) return;
+  b.onclick = function(){
+    var hub = window.CardinalCommunityHub;
+    if(hub && typeof hub.show === 'function'){ hub.show(); return; }
+    if(typeof window.showHome === 'function') window.showHome();
+  };
+}
 function takeOver(on){
 var v = document.getElementById('projectView');
 if(v) v.classList.toggle('cr-cc-own', !!on);
@@ -49934,6 +50013,11 @@ var st  = normStage(pr.stage);
 var held = (st === 'OnHold' && !!l.check_back_at);
 var due = daysTo(held ? l.check_back_at : l.bid_due_at);
 mount.innerHTML =
+/* 679: a way OUT. #cr-cc-return exists but only appears after a sub-tab tap and
+   returns you TO this card — nothing led back to the Community hub, so the card
+   was a one-way door. CardinalCommunityHub.show() is exported and already
+   wrapped for the back button, so this is the existing route, not a new one. */
+'<button class="cc-out" data-cc-out="1" type="button">\u2039 Community</button>' +
 '<div class="pin">' +
 '<div class="t"><span class="nm"><span class="rl">Serving</span>' +
 '<b>' + (hoNm ? esc(hoNm) : 'No homeowner recorded') + '</b>' +
@@ -49968,6 +50052,10 @@ bidHtml(pr) + contactsHtml(pr) +
 '<h3 class="cc-sect">Location</h3><div class="cc-loc" id="cr-cc-loc"></div>' +
 '<h3 class="cc-sect">Reviews</h3><div class="cc-loc cc-rev" id="cr-cc-rev"></div>';
 wire(mount, pr);
+/* 679: BUG_CLASSES 16 — a control that renders and is never wired. The Studio
+   Archive button was drawn and dead from 614 to 632 for exactly this reason,
+   so the call goes in beside the others the moment the markup does. */
+wireOut();
 syncJobMenu();
 adoptLocation();
 adoptReviews();

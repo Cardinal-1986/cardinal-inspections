@@ -3360,3 +3360,43 @@ counts it and reports a phantom duplicate block. This is written at ~3105 alread
 
 **Tools:** `render_bootflash.js` now covers both flash surfaces (15 assertions,
 red on 677 for the landing pair).
+
+---
+
+### 679 — the Desk gets a door, the job name stops following you, the map stops crashing
+
+⚠ **`#cardinalTruthView`'s STATIC `.ins-grid` is dead markup.** The hub's
+`render()` does `host.innerHTML` on `#cardinalTruthView .ins-body`, which
+contains it. **Anything you add to that grid is destroyed on first paint.** New
+insurance destinations go in the DYNAMIC Tools grid in `cr-cth-script`, with a
+`data-go` and a case in `wire()`. 655 learned this; 668 forgot it and the
+Supplement Desk was unreachable for six builds.
+
+⚠ **`setHeaderJobMenu(on)` owns the job identity in the header** — the
+`projopen` class AND both `#headCtx` / `#cbCtx`. `openProject()` writes the same
+string into both; only this function clears them. If you add a third place the
+job name is shown, clear it here too.
+
+⚠ **`showCardinalTruth()`, `showInsuranceClients()` and `showResourceLibrary()`
+do NOT call `hideAllViews()`** — they hide siblings by hand. Any teardown that
+must happen when leaving a job has to be added to all three explicitly. They now
+call `setHeaderJobMenu(false)`.
+
+⚠ **Google Static Maps returns OCEAN for an address it cannot geocode**, not an
+error — so a blank blue map means the address is incomplete, not that the map is
+broken. `addrLooksIncomplete()` flags an address with no comma and no ZIP; the
+note sits BESIDE the map, never instead of it.
+
+⚠ **Never open an external URL with `window.open(…, '_blank')`** — an installed
+PWA has no tab to open into and iOS blanks the web view. Use a real
+`<a target="_blank" rel="noopener">`, or `location.href` for a same-origin page.
+
+⚠ **A community client card can reach the Community hub** via `.cc-out` →
+`CardinalCommunityHub.show()`. `#cr-cc-return` is a DIFFERENT control — it
+returns you TO the card after a sub-tab, and is not a way out.
+
+**Tools:** `harness_679.js` (31 — executes `setHeaderJobMenu`, `wireOut` and
+`addrLooksIncomplete` against the two real addresses; red on 678 across 17).
+`harness_location.js` now carries the map helpers in its sandbox and asserts the
+anchor contract. `render_inshub.js` asserts the Tools grid kept every
+destination rather than pinning a count.
