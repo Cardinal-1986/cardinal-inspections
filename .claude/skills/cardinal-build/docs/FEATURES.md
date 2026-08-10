@@ -3175,3 +3175,20 @@ stores `[[PHOTOS:id]]` tokens, never live signed URLs.
 ⚠ **Mail leaves before the row is written** — no transaction spans Resend and
 Postgres. A writeback failure is loud, names the address, and its retry is a
 save. Do not "tidy" it into a catch.
+
+**673 — `openStoredFile(dataUrl, mime, tab, label)`.** The single way to put a
+stored file on screen. Decodes to a Blob, `createObjectURL`, navigates a tab.
+Consumers: `openJobFile()` and the Measurements report viewer.
+
+⚠ **NEVER put a `data:` PDF in an `<iframe>`** — iOS Safari renders it as one
+non-scrolling page. A 31-page Hover report arrived as its cover sheet, and
+desktop Chrome scrolled it fine, so it only failed on the device Theo uses.
+
+⚠ **Open the tab INSIDE the tap.** `window.open()` after an `await` is a
+non-gesture popup on iOS and is blocked. Callers open the tab synchronously and
+pass it in; the helper only navigates it, and closes it on failure. The same
+rule is documented at `index.html:31673` (work orders) and `:54780` (library).
+
+⚠ **Uploading a Hover report under Measurements FILES THE PDF AND NOTHING
+ELSE.** `/api/hover` is called only from the siding material-order import
+(`index.html:16247`). Nothing writes `checklist.meas` from a Hover upload.

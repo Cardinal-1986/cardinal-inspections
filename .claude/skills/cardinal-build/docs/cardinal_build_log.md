@@ -13295,3 +13295,64 @@ through both handlers, `quantitiesOnly` both ways, `hasMoney` on a clean and a
 priced letter, `scrubForMail` against script / `on*` / `javascript:` / iframe
 while keeping `<b>` and inline images, and `recordSend` driven with `S` pointed
 at a **different** claim to prove the writeback follows the captured ids.
+
+---
+
+## Build 673 — a stored PDF opens as a PDF, not as page one
+*10 Aug 2026 · `index.html` only. No migration, no API change.*
+
+Theo uploaded Hover's report for the Gunn job from his phone and got the cover
+page back.
+
+**The upload was never the problem, and that was established before a line was
+changed.** The stored row decodes to **3,054,656 bytes**, contains **31
+`/Type /Page` objects**, its page tree says **`/Count 31`**, and it ends
+`%%EOF`. The whole report is on file.
+
+**The viewer was the fault, and it had two of them:**
+
+```js
+measDb.get(id).then(function(d){
+  var w = window.open('', '_blank');
+  w.document.write('<iframe src="' + d.data + '" ...></iframe>');
+})
+```
+
+1. **A `data:` PDF inside an `<iframe>`.** iOS Safari renders an embedded PDF as
+   one non-scrolling page. Desktop Chrome scrolls all 31 — **which is exactly
+   why this survived: it only fails on the device the work happens on.**
+2. **`window.open()` after an `await`.** iOS treats that as a non-gesture popup
+   and blocks it, so the tap sometimes did nothing at all.
+
+**Neither is a new lesson on this project — both were already written down.**
+`index.html:31673` (work-order URLs) and `:54780` (the library opener) each
+carry a comment explaining the iOS popup rule. And `openJobFile()` already did
+the *right* thing for job files: decode to a Blob, `createObjectURL`, open
+**that**. The measurement viewer was the one place still embedding a data URL.
+
+So this is the prime doctrine again, in its second form: **the mechanism
+existed and was simply not used here.** 673 does not invent one — it extracts
+`openStoredFile(dataUrl, mime, tab, label)` and routes **both** consumers
+through it, so there is now one decoder instead of two-and-a-broken-iframe.
+The tab is opened synchronously inside the tap at both call sites and merely
+*navigated* by the helper; on failure it is closed rather than left blank.
+
+**Gates.** `harness_673` (19) runs in **Chromium, not jsdom** — the thing under
+test is `URL.createObjectURL` + `Blob` + `atob`, which jsdom does not implement,
+so a jsdom pass here would have been meaningless. It builds a **real 31-page
+PDF**, runs the shipped helper on it, and asserts the blob is
+`application/pdf`, is **byte-for-byte the whole document** (not the first page),
+that the tab is pointed at a `blob:` URL and never a `data:` one, that an
+explicit mime beats the prefix, and that an undecodable payload returns false
+and **closes** the tab. Control on the 672 artifact: red, with the reason
+stated rather than a stack trace. Full sweep 673→653 green.
+
+⚠️ **What no gate here proves.** I cannot run iOS Safari from this environment.
+What is proved: the file on record is complete, the viewer no longer uses the
+shape that renders one page, and it now uses the shape this app already uses
+successfully for job files. **Theo's iPhone is the gate.**
+
+**Recorded, not built:** uploading a Hover report through *Measurements* files
+the PDF and does nothing else — `/api/hover` is wired only to the siding
+material-order flow (`index.html:16247`), so nothing populates `checklist.meas`.
+Gunn still has no measurements on file. That is its own build.
