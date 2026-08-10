@@ -1549,3 +1549,57 @@ could have been involved.
 through 673's merge and asserts the wrong label comes out. A fix for a latent
 lie should demonstrate the lie, or you are only asserting your own new code is
 self-consistent.
+
+---
+
+## 24 — A test that hardcodes its own session's scratchpad (build 675)
+
+**`harness_occhead.js` and `audit_contrast.js` had not run since the day they
+were written.** Both opened with:
+
+```js
+const { chromium } = require('/tmp/claude-0/…/f4548c15-…/scratchpad/node_modules/playwright-core');
+```
+
+That directory belongs to the session that wrote the file. In every later
+session it does not exist, so the script dies at line 18 with
+`MODULE_NOT_FOUND` — **before a single assertion runs**. `harness_occhead` is
+42 assertions covering the shingle-name wrap at 5 widths × 3 styles, i.e. the
+exact regression build 626 was written to prevent. That coverage was gone and
+nothing said so.
+
+**Why it survives:** the failure looks like an environment problem, not a
+coverage problem. A sweep prints one line per harness; a stack trace in that
+column reads as *"my machine is set up wrong"* and gets skipped, whereas
+`RESULT: FAIL` gets investigated. **A harness that cannot start is more
+dangerous than one that fails**, because failure is loud and absence is not.
+
+**The rules**
+
+1. **Never `require()` an absolute path.** Resolve through `NODE_PATH` — nine
+   of the eleven Chromium scripts already do, so the correct shape was sitting
+   next door.
+2. **Fixtures a test needs must be committed, or the test must refuse in one
+   sentence.** `audit_contrast` also wants `rows616.json` and `final/*.jpg`,
+   which were never committed and cannot be reconstructed. It now prints what
+   it needs, names the two harnesses that cover the surface from the shipped
+   artifact, and exits 2 — instead of throwing.
+3. **A sweep must distinguish "failed" from "did not run."** Exit codes alone
+   do not: both are non-zero. Print the last RESULT/GREEN line per harness and
+   treat a blank one as unrun.
+
+### The neighbouring trap: a red that is the sweep's fault, not the app's
+
+The same sweep produced **three more reds, all of them mine**, and none a defect:
+
+| harness | why it was red | the actual rule |
+|---|---|---|
+| `harness_pay` | run without `TZ=America/New_York` | its **header says to**. The red assertion is the *control* proving a naive date parse misreads the day in a negative-offset zone — in UTC it cannot, by construction |
+| `harness_672` | no previous `senddoc.js` as argv[5] | it **refuses to skip** its differential test silently. The refusal is the feature (§19) |
+| `harness_674` | no previous `index.html`/`hover.js` | same |
+
+**Read the failing line before believing it.** Half of all reds on this project
+are the test's fault, and a growing share are the *invocation's* fault — a
+harness that demands its arguments is behaving correctly, and a harness that
+demands an environment says so in its own header. Check both before touching
+the artifact.
