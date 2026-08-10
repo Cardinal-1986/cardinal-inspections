@@ -2286,3 +2286,16 @@ blocked 672; all three still want an answer.
 - *"A legacy base64 photograph is silently excluded from the mailed letter."*
   Pre-existing at 668, and 672 is the build that added the only mitigation it
   has ever had (an unresolvable photo is no longer claimed).
+
+
+## From 673 — the Hover upload files a PDF and nothing else
+
+Uploading a Hover report under **Measurements** stores the PDF as a document.
+It does **not** extract anything: `/api/hover` is called only from the siding
+material-order import (`index.html:16247`), so nothing writes `checklist.meas`.
+
+**Gunn now has the 31-page Hover report on file and still has no measurements**,
+which means a supplement for that job argues code without quantities. Wiring
+Hover → `checklist.meas` is its own build and was already recorded at 669; the
+report now sitting on the job is the reason to do it. Roofr's path
+(`roofrMerge`) already fills `meas` and is the shape to copy.

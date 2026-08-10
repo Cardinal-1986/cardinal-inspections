@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 672 &#8212; Send from the desk &#8212; one tap, the adjuster&#8217;s address on screen before you take it, and the letter that left is the letter on file</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 673 &#8212; A measurement report opens as the whole report on the phone, not just its cover page</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11007,10 +11007,17 @@ document.getElementById('tab-measure').addEventListener('click', function(e){
   }
   var row = e.target.closest('[data-msopen]');
   if(row){
+    /* 673: the tab opens INSIDE the tap (measDb.get is an await), and the file
+       is handed over as a blob rather than embedded in an iframe. The iframe
+       is why a 31-page Hover report showed only its cover page on iOS. */
+    var tab = null;
+    try{ tab = window.open('', '_blank'); }catch(_){}
     measDb.get(row.getAttribute('data-msopen')).then(function(d){
-      var w = window.open('', '_blank');
-      if(w) w.document.write('<iframe src="' + d.data + '" style="border:0;width:100%;height:100vh;"></iframe>');
-    }).catch(function(err){ showError('Could not open: ' + (err.message || err)); });
+      openStoredFile(d.data, null, tab, 'that report');
+    }).catch(function(err){
+      if(tab && !tab.closed) tab.close();
+      showError('Could not open: ' + (err.message || err));
+    });
   }
 });
 document.getElementById('msFileInput').addEventListener('change', function(){
@@ -12829,19 +12836,62 @@ function renderDocsPage(){
       '<button class="chipbtn" data-jddel="' + r.id + '">&#10005;</button></div>';
   }).join('');
 }
-async function openJobFile(id){
+/* 673 — ONE way to put a stored file on screen, because there were three and
+   one of them was broken.
+
+   Two rules, both already learned elsewhere in this file and both violated by
+   the measurement viewer:
+
+   (a) NEVER put a data: PDF in an <iframe>. iOS Safari renders an embedded PDF
+       as a single non-scrolling page — a 31-page Hover report arrives as its
+       cover sheet. A blob URL opened as the DOCUMENT gets the native viewer,
+       all pages, and the share sheet. Desktop Chrome scrolls the iframe fine,
+       which is exactly why this survived: it only failed on the device Theo
+       works from.
+
+   (b) OPEN THE TAB INSIDE THE TAP. window.open() after an await is a
+       non-gesture popup on iOS and is blocked — see the same warning at the
+       work-order URLs and the library opener. Callers pass the tab they
+       opened synchronously; this function only navigates it.
+
+   `tab` is optional: pass null and it opens its own (fine on desktop, and the
+   right behaviour when there was no await to survive). */
+function openStoredFile(dataUrl, mime, tab, label){
   try{
-    var row = await db.get(id);
-    var meta = JSON.parse(row.html);
-    var b64 = String(meta.data).split(',')[1] || '';
+    var s = String(dataUrl || '');
+    var b64 = s.indexOf(',') > -1 ? s.slice(s.indexOf(',') + 1) : s;
     var bin = atob(b64);
     var arr = new Uint8Array(bin.length);
     for(var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-    var blob = new Blob([arr], { type: meta.mime || 'application/octet-stream' });
+    /* the mime in the data: prefix wins when the caller did not name one —
+       an octet-stream PDF downloads instead of opening */
+    var pre = /^data:([^;,]+)/.exec(s);
+    var blob = new Blob([arr], { type: mime || (pre && pre[1]) || 'application/octet-stream' });
     var url = URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
-  }catch(err){ showError('Could not open file: ' + (err.message || err)); }
+    if(tab && !tab.closed) tab.location = url;
+    else window.open(url, '_blank');
+    /* long enough for iOS to finish loading a multi-megabyte PDF */
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 120000);
+    return true;
+  }catch(err){
+    if(tab && !tab.closed) tab.close();
+    showError('Could not open ' + (label || 'that file') + ': ' + (err.message || err));
+    return false;
+  }
+}
+async function openJobFile(id){
+  /* opened inside the tap: db.get() is an await, and iOS blocks a popup that
+     opens after one */
+  var tab = null;
+  try{ tab = window.open('', '_blank'); }catch(_){}
+  try{
+    var row = await db.get(id);
+    var meta = JSON.parse(row.html);
+    openStoredFile(meta.data, meta.mime, tab, 'file');
+  }catch(err){
+    if(tab && !tab.closed) tab.close();
+    showError('Could not open file: ' + (err.message || err));
+  }
 }
 async function addJobFiles(files){
   if(!currentProject || !files || !files.length) return;
@@ -36784,6 +36834,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:673, d:'2026-08-10', t:'A measurement report opens as the whole report, not page one',
+s:'Theo uploaded Hover\u2019s report for the Gunn job on his phone and got back the cover page and nothing else. The upload was never the problem \u2014 the file on record is the complete 31-page report, checked in the database before anything was changed. The VIEWER was showing one page: it was putting the PDF inside a frame, and on iPhone a PDF inside a frame renders as a single page that will not scroll. On a desktop browser the same code scrolls all 31, which is why it went unnoticed \u2014 it only broke on the device the work actually happens on. Reports now open the way job files already did, as the file itself, so you get the phone\u2019s own PDF viewer: every page, pinch to zoom, and the share button to save or send it. The same fix removes a second iPhone-only fault in both places \u2014 the new tab was being opened a moment too late for iOS to accept it, which is what made a tap sometimes do nothing at all.'},
 { b:672, d:'2026-08-10', t:'Send from the desk \u2014 the supplement finally reaches the carrier',
 s:'The Supplement Desk can now email the letter. Your rule held: nothing sends itself. Send only lights up once the supplement is filed, the adjuster\u2019s address is on screen before you press it and again on the confirm, and if no address is on the claim it refuses and says so rather than guessing one. The confirm tells you exactly what is going \u2014 how many photographs actually resolved (not how many were ticked) and how many building-official letters ride in the appendix \u2014 so a letter with nothing attached says so before it leaves. Photographs go as links that stay good for a year. What gets archived is what was MAILED, captured at send rather than at filing, because the letter stays editable in between. And the filings list now separates two facts that were one: filed, and actually sent, with the date and the address it went to. One honest limit, stated rather than hidden: the email leaves before the record saves, so if the save fails you get a loud red line saying the mail went and the record did not, and the retry only saves \u2014 it never sends twice.'},
 { b:671, d:'2026-08-10', t:'The Supplement Desk, made honest \u2014 nine repairs before the next feature',

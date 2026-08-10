@@ -1489,3 +1489,34 @@ Partial capture is the trap. Capturing `to` but not the header fields looks
 careful and is worse than capturing nothing — the letter goes to the right
 person under the wrong name, which is far harder to spot than an obvious
 misdelivery.
+
+
+## 22 — Broken only on the device the work happens on (build 673)
+
+A 31-page Hover report opened as its cover page. The upload was perfect — the
+stored file decodes to 31 pages and ends `%%EOF`. The viewer wrapped the PDF in
+an `<iframe>`, and **iOS Safari renders an embedded PDF as a single
+non-scrolling page.**
+
+**Desktop Chrome scrolls that same iframe correctly.** So every developer check,
+every headless render, and every gate this project owns would have called it
+fine. It failed only on the phone — which is where the actual job is done.
+
+**The tell:** a feature that works when you test it and is reported broken by
+the person using it. Before doubting the report, ask *what is different about
+their device*, and check the data first — here the database proved in one query
+that the file was complete, which turned a vague "it returned the wrong thing"
+into a one-line viewer fix.
+
+**Two iOS rules this file has now learned three times, so stop re-learning
+them:**
+1. **A `data:` PDF must not be embedded.** Hand over a `blob:` URL as the
+   document. Then you get the native viewer, all pages, and the share sheet.
+2. **`window.open()` after an `await` is blocked.** Open the tab inside the tap
+   and navigate it when the data arrives. Comments saying exactly this already
+   existed at two other sites while a third violated it.
+
+**And the harness rule that follows:** jsdom implements neither
+`URL.createObjectURL` nor `Blob` faithfully, so a jsdom test of a
+file-opening path proves nothing. Use Chromium when the subject IS the browser
+API.
