@@ -103,8 +103,23 @@ console.log('\n── the filing row speaks the schema ──');
     /scope_ref: S\.scopeDoc \? \{ report_row_id/.test(SRC));
   ok('the scope doc LIST omits the html payload column (the 649 lesson)',
     /select\('id, title, created_at'\)\s*\n?\s*\.eq\('project_id', pid\)\.ilike\('title', 'Insurance Doc%'\)/.test(SRC));
-  ok('nothing sends itself — send is named as the next build',
-    /Send-from-desk arrives in the next build; nothing sends itself\./.test(SRC));
+  /* RE-KEYED AT 672 (BUG_CLASSES §15). This asserted the literal copy
+     "Send-from-desk arrives in the next build" — a TEMPORARY fact, pinned as
+     if it were the invariant, so it went red the moment send shipped exactly
+     as planned. The durable rule is Theo's: NOTHING SENDS ITSELF. Assert that
+     instead — send exists only behind an explicit click, and no code path
+     calls sendLetter() on its own. This now survives 672 and still fails if
+     anyone ever wires an automatic send. */
+  /* [^)]* cannot cross the ')' in `setTimeout(function(){ sendLetter(); })`,
+     so the obvious auto-send slipped straight through the first version of
+     this check — mutation-tested, not assumed. Bounded [\s\S] instead.
+     Both mutants are proven red: a timer-driven send, and a sendLetter that
+     exists without the click wiring. */
+  ok('nothing sends itself — no auto-send, no send-on-file, no scheduled send',
+    !/setTimeout\([\s\S]{0,200}?sendLetter/.test(SRC) &&
+    !/setInterval\([\s\S]{0,200}?sendLetter/.test(SRC) &&
+    (!/sendLetter/.test(SRC) ||
+      /el\('sendBtn'\)\.addEventListener\('click', sendLetter\)/.test(SRC)));
 }
 
 console.log('\n── the app side (index.html) ──');

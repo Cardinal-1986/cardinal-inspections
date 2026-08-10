@@ -2229,12 +2229,60 @@ both now complete).
 insert against an invisible claim and the mirror would no-op. Not reachable
 from any shipped UI.
 
-**Next:** 672 send-from-the-desk (recipient shown, one explicit tap, `senddoc`
-extended with optional `subject`/`variant`/`replyTo` only — both existing
-callers untouched, back-compat asserted by executing their payloads). Then 673,
+**672 SHIPPED** — send from the desk, back-compat proved differentially against
+the 671 handler. **Next: 673,
 the carrier response: reopen the filing, record decisions per item into
 `items[].carrier` (**not** `responses` — the items COMMENT already names that
 home), rebut through the existing `mode:'draft'` with an explicit
 `letter_kind`. A reduced-quantity approval — the commonest adjuster move — has
 nowhere to land today; 673 is the cheap moment to add `approved_qty` beside
 `decision`.
+
+
+## After 672
+
+**Still open, unchanged:** the three questions above (PWI/COC vs
+quantities-only; the $0 supplement rail; who may rewrite a filed letter). None
+blocked 672; all three still want an answer.
+
+**New, from building the send:**
+- **Nothing verifies the letter arrived.** Resend accepting it is not the
+  carrier receiving it. No bounce handling, no delivery webhook. `sent_at` means
+  *we handed it to the mailer*, and the Desk says exactly that.
+- **`EXHIBIT_TTL` is one year.** If a dispute outlives it the photographs in the
+  carrier's copy stop resolving. One constant; the archive still re-renders.
+  Revisit if a real supplement ever runs that long.
+- **673 is next**: reopen the filing, record the carrier's decision per item
+  into `items[].carrier` (NOT `responses` — the items COMMENT already names that
+  home), and rebut through the existing `mode:'draft'` with an explicit
+  `letter_kind`. Add `approved_qty` beside `decision` while the slot is being
+  written for the first time — a reduced-quantity approval is the commonest
+  adjuster move and today has nowhere to land.
+
+
+## From the 672 adversarial review — confirmed, deliberately NOT built
+
+- **No recovery if the page dies between send and writeback.** The retry lives
+  in a closure on the Send button; a reload or a crash destroys it, and the only
+  route back is to file a second supplement — which mails the carrier a second
+  letter. The fix is to derive send state from the filings already fetched: let
+  an unsent filing be selected to set `S.filedId`, and hard-refuse Send on any
+  filing whose `sent_at` is non-null. **673 work** — it needs the filings list
+  to become interactive, which 673 is doing anyway for the carrier response.
+- **Nothing verifies delivery.** Resend accepting is not the carrier receiving.
+  No bounce handling, no delivery webhook. `sent_at` means *handed to the
+  mailer*, and the Desk says exactly that.
+
+### Refuted findings — do NOT re-file these
+
+- *"`renderForSend` keys signed URLs by array position, re-introducing the
+  build-633 bug."* The code reading is correct; the conclusion is not.
+  `createSignedUrls` is contractually 1:1 with its input, so position-keying and
+  path-keying are provably equivalent **here**. 633's bug required asking for a
+  path the API might not answer for.
+- *"The quantities-only rule is never re-checked at the new exit."* True as
+  written but mis-scoped — the defect was the mail body's *claim*, not the flag,
+  and that is fixed. The flag itself is a draft-time warning by design.
+- *"A legacy base64 photograph is silently excluded from the mailed letter."*
+  Pre-existing at 668, and 672 is the build that added the only mitigation it
+  has ever had (an unresolvable photo is no longer claimed).

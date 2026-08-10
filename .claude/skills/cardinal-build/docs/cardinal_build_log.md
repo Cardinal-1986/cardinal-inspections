@@ -13140,3 +13140,158 @@ string inside **the comment explaining the fix** — comment pollution, in the
 direction that makes a correct repair look broken. And a pattern for a sentence
 that wraps across two comment lines reported a present claim as absent. Half of
 all reds on this project are the test's fault; today it was three for three.
+
+---
+
+## Build 672 — send from the desk
+*10 Aug 2026 · `api/senddoc.js` + `supplement.html` + stamp/changelog.
+**NO MIGRATION** — `sent_at` and `sent_to` were cut at 667 and have never been
+written.*
+
+Theo's pick, recorded before 667 was written: *"send from the desk."* The Desk
+could analyse, review, draft, file, print and copy. It could not put the letter
+in front of the adjuster.
+
+**His rule held, and is now enforced in four places rather than asserted once.**
+Send is dark until the supplement is filed (the writeback needs a row). It is
+dark if the claim has no `adjuster_email`, and says so rather than guessing —
+Gunn's is `claims@claims.allstate.com`, a shared carrier intake address, and the
+standing rule is never to invent one. The recipient is named on the control
+*before* the tap and again on the confirm. Nothing is scheduled, nothing fires
+on file.
+
+**The confirm states what is actually going, not what was ticked.**
+`renderForSend()` returns the count of photographs that genuinely *resolved to a
+signed URL*, and a photograph that failed to sign is not embedded and not
+counted — the same rule 671 applied to a gap with no photographs. On a job with
+none, the confirm says so in as many words before anything leaves.
+
+**`api/senddoc.js` is extended, never rewritten.** Three optional names —
+`subject`, `variant`, `replyTo`. The carrier body is a **branch**; the homeowner
+body is byte-for-byte what shipped. The `is_cardinal_admin` gate fires **only**
+for `variant:'carrier'` — a rep legitimately emails a homeowner an estimate, and
+that path keeps its session-only gate. Two guards came along: `to` must be a
+non-empty **string** (a non-empty array is truthy, slips `!to`, and reaches
+Resend as `[[a,b]]`), and the auth round-trip moved **inside** the try so a
+network blip returns JSON instead of a bodyless platform 500.
+
+⚠ **`subject` must NOT fold into `title`.** `title` also drives `safeName` (the
+attachment filename) and the homeowner body sentence. Caller 2 sends the literal
+title `'Estimate'`, so folding would silently rename its attachment. Asserted.
+
+**The archive is what was MAILED.** `letter_html` is captured in `recordSend()`,
+at send time — not at file time. The letter stays editable after filing, so a
+file-time capture can differ from what the carrier received. It stores **tokens**,
+never the live signed URLs, so nothing at rest expires.
+
+**Exhibit TTL is one year, deliberately not the 10-year document TTL.** A
+supplement is argued over weeks to months; the recipient is a shared carrier
+intake address rather than a homeowner's own report; and the archive re-renders
+from tokens for anything later. One named constant.
+
+**The one honest limit, stated rather than hidden:** mail leaves before the row
+is written. There is no transaction across Resend and Postgres. A writeback
+failure after a successful send is **loud** — it names the address the mail went
+to, carries the real error, and offers a retry that **re-writes and never
+re-sends**. Never a swallowed catch; that class already cost this project three
+silent write-backs on the estimate publish path.
+
+**Gates.** `harness_672` (54). The back-compat test is **differential, not
+asserted**: the two payloads `index.html` sends today are driven through **both**
+the 671 handler and the 672 handler and the JSON reaching Resend is compared
+field by field — byte-identical for both callers, and caller 2's attachment is
+still `Estimate.html`. Then the carrier variant (admin gate consulted, refused
+at 403 for a non-admin with nothing sent, carrier body not homeowner body), the
+guards, `syncSend()` executed through all four states, `renderForSend()` with
+signing that works and signing that fails, and `recordSend()` through success
+and a failed writeback asserting the retry is a save. Control on the 671
+artifacts: 21 red. Full sweep 672→653 green.
+
+⚠️ **Two older harnesses went red, and both were the TEST.**
+
+- `harness_671` crashed: `fileSupplement` now calls `syncSend()`, which its
+  sandbox did not provide. Stubbed to a **recording** sentinel, not a no-op, so
+  it would notice if the wiring were removed.
+- `harness_668` failed on `'Send-from-desk arrives in the next build'` — it had
+  pinned a **temporary copy string** as though it were the invariant, so it went
+  red the moment send shipped exactly as planned. **BUG_CLASSES §15 again.**
+  Re-keyed to the durable rule (*nothing sends itself*) and then
+  **mutation-tested**: a timer-driven send and a `sendLetter` without its click
+  wiring both go red. The first version of that re-key used `setTimeout\([^)]*`
+  and the auto-send mutant **passed** — `[^)]*` cannot cross the `)` in
+  `function(){`. Bounded `[\s\S]{0,200}?` instead. A re-key that has never been
+  run red is not a gate.
+
+### 672, amended — what a 23-agent adversarial review found in my own send
+
+Before opening the PR for review I attacked the diff: four lenses (back-compat,
+security, does-the-letter-tell-the-truth, failure modes), then **every
+candidate handed to an independent skeptic told to kill it**. 19 candidates,
+**8 refuted, 11 confirmed**. Two were serious and both were mine. The PR was a
+draft, so they are fixed in 672 rather than shipped and patched.
+
+**The one that matters: I committed the 671 class again, in the build straight
+after it.** The carrier email asserts in bold *"Quantities are stated; pricing
+is not"* — and **nothing on the send path checked whether the attached letter
+contains a dollar figure.** `dollar_flag` is computed **once**, server-side, on
+the AI's draft (`api/supplement.js:502`), and the letter has been editable ever
+since. Type a price in, and the covering note tells the carrier there isn't one.
+
+Fixed by re-running the test on **what is actually going**: `renderForSend()`
+now returns `hasMoney`, computed on the assembled packet. The confirm warns the
+sender; the mail body's claim is **conditional** on `quantitiesOnly`, so when
+the letter does carry a figure the sentence simply is not asserted. The claim
+about documentation "named against each item" was dropped outright — nothing
+guarantees it.
+
+**The second serious one: the payload read `S.claim` LIVE, after two awaits.**
+`to` and the packet were locals; `clientName` and `propertyLine` were not.
+Opening another claim mid-send mailed claim A's letter to A's adjuster under
+**B's homeowner, address and claim number**. Now the whole context is captured
+once (`var claim = S.claim, filedId = S.filedId`), the payload reads only the
+captured values, and dispatch is refused outright if `S` moved while the
+confirm was open.
+
+**Seven more, all confirmed:**
+
+- **`subject` and `replyTo` sat BELOW the carrier gate.** Any signed-in
+  non-admin could point Reply-To off-domain from Cardinal's own From address on
+  the *homeowner* path, where 671 always pinned it to the sender. Both are now
+  gated on `isCarrier`; `replyTo` had zero callers outside the Desk, so it cost
+  nothing. (The verifier correctly trimmed the severity: `title` already reached
+  the subject pre-672, so that half was a smaller delta than reported.)
+- **Nothing sanitised the letter**, which ships as an `.html` attachment the
+  adjuster opens *in a browser*, where script runs. `scrubForMail()` filters
+  **once**, at the single point it leaves Cardinal — not in the editor, where
+  rich-text editing is legitimate.
+- **`recordSend`'s `sentHtml` parameter was dead** — it re-read the live editor,
+  so the retry path could archive an *edited* letter as the record of what the
+  carrier received, contradicting its own comment. Captured once now, before the
+  fetch.
+- **`recordSend` targeted `S.filedId` at write time**, so a claim switch during
+  the fetch could stamp `sent_at` onto a different claim's filing. Ids are
+  passed in.
+- **"nothing was sent" on a rejected fetch was a claim the code cannot make** —
+  a rejected promise cannot distinguish *never left* from *sent, reply lost*.
+  Reworded to what is knowable.
+- **`S.clPicked` was never reset between claims**, so a Brookville letter ticked
+  on one job could ride along on the next. Reset in `openDesk`.
+- **No recovery if the page dies between send and writeback** — the retry lives
+  in a button closure. Recorded in `OPEN_ITEMS` rather than half-built; the fix
+  is to derive send state from the filings list, which is 673 work.
+
+**The 8 refutations are as valuable as the confirmations** and are recorded so
+nobody re-files them. The sharpest: *"`renderForSend` keys signed URLs by array
+position, re-introducing the build-633 bug."* The code reading was correct — and
+the verifier killed it anyway, because `createSignedUrls` is contractually 1:1
+with its input, so position-keying and path-keying are provably equivalent here.
+633's bug needed a request for a path the API might not answer for. Also
+refuted: the dollar_flag "not re-checked" finding as filed (the real defect was
+narrower — the mail body's *claim*, not the flag), and a legacy-base64 photo
+exclusion that turned out pre-existing at 668.
+
+`harness_672` grew 54 → **75**, all executing: the ungated-field attack driven
+through both handlers, `quantitiesOnly` both ways, `hasMoney` on a clean and a
+priced letter, `scrubForMail` against script / `on*` / `javascript:` / iframe
+while keeping `<b>` and inline images, and `recordSend` driven with `S` pointed
+at a **different** claim to prove the writeback follows the captured ids.
