@@ -3536,3 +3536,21 @@ removed so the card's rule governs; it had been masked by the gradient.
 **Do not re-introduce gradient text.** Chromium's parsed-rule count is the
 instrument (`render_gradtext.js`); a text regex over the file finds one extra
 hit that is a comment.
+
+### 686 — the navigation is drawn, not emoji (`CardinalIcons` + `hydrate`)
+
+The burger menu, the New menu and the Settings rows: 28 rows, each now a line
+icon that inherits the row's colour and size. `CardinalIcons` grows 4 → 27
+glyphs and gains **`hydrate(root)`**, which swaps a `data-cri` attribute for the
+drawn glyph once and removes the attribute, so re-running is free. Static markup
+therefore uses the same registry as JS-built markup — one icon set, not two.
+
+⚠️ `cr-hd2-script`'s `build()` **rebuilds `#navBtn`** and overwrites its
+innerHTML on every load. It now calls `CardinalIcons.get('menu')`. If you
+convert a header control and it still shows an emoji, that function is why.
+
+**Scope is deliberate.** Emoji in PROSE are deleted, never converted (the 681
+rule); none was touched here. Emails, push, letters, `popup.html`,
+`drivewaytest.html`, the Showcase and the CHANGELOG remain out of scope. 533
+pictographic emoji remain elsewhere in the app — `scripts/render_navicons.js`
+covers this slice and goes RED on 685.

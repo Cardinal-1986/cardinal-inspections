@@ -3254,10 +3254,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <span id="newWrap" style="position:relative;display:inline-block;">
         <button class="btn" id="addProjectBtn" style="display:none;">&#65291; New</button>
         <div id="newMenu" style="display:none;">
-          <button class="navopt" data-new="task">&#128203; Task</button>
-          <button class="navopt" data-new="contact">&#128100; Contact</button>
-          <button class="navopt" data-new="lead">&#128681; Lead</button>
-          <button class="navopt" data-new="reminder">&#9200; Reminder</button>
+          <button class="navopt" data-new="task" data-cri="clipboard lg">Task</button>
+          <button class="navopt" data-new="contact" data-cri="person lg">Contact</button>
+          <button class="navopt" data-new="lead" data-cri="flag lg">Lead</button>
+          <button class="navopt" data-new="reminder" data-cri="alarm lg">Reminder</button>
         </div>
       </span>
       <div class="titlecard" id="brandTitle"><h1>CARDINAL <span>RESOURCE</span></h1></div>
@@ -3275,38 +3275,38 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <option value="materials">Materials</option>
           <option value="measure">Measurements</option>
         </select>
-        <button class="btn ghost" id="navBtn">&#9776; Menu</button>
+        <button class="btn ghost" id="navBtn" data-cri="menu lg">Menu</button>
         <div id="navMenu" style="display:none;">
           <div class="navsec">Daily</div>
-          <button class="navopt" data-nav="landing">&#127968; Landing</button>
-          <button class="navopt" data-nav="clients">&#128101; Clients</button>
-          <button class="navopt" data-nav="leads">&#128203; Leads &amp; Jobs</button>
-          <button class="navopt" data-nav="board">&#128197; Schedule Board</button>
+          <button class="navopt" data-nav="landing" data-cri="home lg">Landing</button>
+          <button class="navopt" data-nav="clients" data-cri="people lg">Clients</button>
+          <button class="navopt" data-nav="leads" data-cri="clipboard lg">Leads &amp; Jobs</button>
+          <button class="navopt" data-nav="board" data-cri="calendar lg">Schedule Board</button>
 
           <div class="navsec">Sell</div>
-          <button class="navopt" data-nav="quickinsp">&#9889; Quick Inspection</button>
-          <button class="navopt" data-nav="inspections">&#128269; Inspections</button>
-          <button class="navopt" data-nav="estimates">&#128176; Estimates</button>
-          <button class="navopt" data-nav="abcsupply">&#129521; ABC Supply</button>
-          <button class="navopt" data-nav="coach">&#127919; Objection Coach</button>
+          <button class="navopt" data-nav="quickinsp" data-cri="bolt lg">Quick Inspection</button>
+          <button class="navopt" data-nav="inspections" data-cri="search lg">Inspections</button>
+          <button class="navopt" data-nav="estimates" data-cri="money lg">Estimates</button>
+          <button class="navopt" data-nav="abcsupply" data-cri="brick lg">ABC Supply</button>
+          <button class="navopt" data-nav="coach" data-cri="target lg">Objection Coach</button>
 
           <div class="navsec">Insurance</div>
-          <button class="navopt" data-nav="cardinaltruth">&#128737;&#65039; Cardinal Truth</button>
+          <button class="navopt" data-nav="cardinaltruth" data-cri="shield lg">Cardinal Truth</button>
 
           <div class="navsec">Office</div>
-          <button class="navopt" data-nav="reports">&#128200; Graphs &amp; Reports</button>
-          <button class="navopt" data-nav="feed">&#9889; Activity Feed</button>
-          <button class="navopt" data-nav="recents">&#128337; Recents</button>
-          <button class="navopt" data-nav="pricing">&#127991;&#65039; Pricing Catalog</button>
-          <button class="navopt" data-nav="companydocs">&#128193; Company Documents</button>
-          <button class="navopt" data-nav="crews">&#128119; Crews</button>
-          <button class="navopt" data-nav="pay">&#128181; Commissions</button>
+          <button class="navopt" data-nav="reports" data-cri="chart lg">Graphs &amp; Reports</button>
+          <button class="navopt" data-nav="feed" data-cri="bolt lg">Activity Feed</button>
+          <button class="navopt" data-nav="recents" data-cri="clock lg">Recents</button>
+          <button class="navopt" data-nav="pricing" data-cri="tag lg">Pricing Catalog</button>
+          <button class="navopt" data-nav="companydocs" data-cri="folder lg">Company Documents</button>
+          <button class="navopt" data-nav="crews" data-cri="hardhat lg">Crews</button>
+          <button class="navopt" data-nav="pay" data-cri="cash lg">Commissions</button>
 
           <div class="navsec">Account</div>
-          <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
+          <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 685 &#8212; The two-tone lettering is gone — every heading and name is one solid colour</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 686 &#8212; The menus get drawn icons instead of emoji</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3643,11 +3643,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 <div id="settingsView" style="display:none;">
   <div class="wrap" style="padding-top:18px;max-width:640px;">
     <h2 class="ljtitle" style="margin:0 0 16px;">&#9881;&#65039; Settings</h2>
-    <button class="setrow" data-set="profile">&#128100; My Profile <span class="chev">&#8250;</span></button>
-    <button class="setrow" data-set="team" id="teamNav" style="display:none;">&#128101; Team <span class="chev">&#8250;</span></button>
-    <button class="setrow" data-set="notify">&#128276; Enable Notifications <span class="chev">&#8250;</span></button>
-    <button class="setrow" data-set="audit" id="auditNav" style="display:none;">&#128373; Audit Log <span class="chev">&#8250;</span></button>
-    <button class="setrow" data-set="backup" id="backupNav" style="display:none;">&#128190; Backup all data <span class="chev">&#8250;</span></button>
+    <button class="setrow" data-set="profile" data-cri="person lg">My Profile <span class="chev">&#8250;</span></button>
+    <button class="setrow" data-set="team" id="teamNav" style="display:none;" data-cri="people lg">Team <span class="chev">&#8250;</span></button>
+    <button class="setrow" data-set="notify" data-cri="bell lg">Enable Notifications <span class="chev">&#8250;</span></button>
+    <button class="setrow" data-set="audit" id="auditNav" style="display:none;" data-cri="eye lg">Audit Log <span class="chev">&#8250;</span></button>
+    <button class="setrow" data-set="backup" id="backupNav" style="display:none;" data-cri="save lg">Backup all data <span class="chev">&#8250;</span></button>
   </div>
 </div>
 
@@ -18997,12 +18997,61 @@ var CardinalIcons = (function(){
               '<circle cx="7" cy="18.2" r="1.9"/><circle cx="16.9" cy="18.2" r="1.9"/>',
     building: '<path d="M4.4 20.9V5.3a1.6 1.6 0 0 1 1.6-1.6h7a1.6 1.6 0 0 1 1.6 1.6v15.6"/>' +
               '<path d="M14.6 10.5h3.4a1.6 1.6 0 0 1 1.6 1.6v8.8"/><path d="M2.8 20.9h18.4"/>' +
-              '<path d="M7.7 7.7h1.1M10.9 7.7H12M7.7 11.5h1.1M10.9 11.5H12"/>'
+              '<path d="M7.7 7.7h1.1M10.9 7.7H12M7.7 11.5h1.1M10.9 11.5H12"/>',
+    /* 686 */ menu:      "<path d='M3.6 6.6h16.8M3.6 12h16.8M3.6 17.4h16.8'/>",
+    /* 686 */ home:      "<path d='M3.6 10.6 12 3.9l8.4 6.7'/><path d='M5.9 12.4v7.7h12.2v-7.7'/><path d='M9.9 20.1v-4.6h4.2v4.6'/>",
+    /* 686 */ people:    "<circle cx='9.2' cy='8.4' r='3.1'/><path d='M3.4 19.8a5.8 5.8 0 0 1 11.6 0'/><path d='M16.4 6.2a3.1 3.1 0 0 1 0 5.8'/><path d='M17.6 14.8a5.8 5.8 0 0 1 3 5'/>",
+    /* 686 */ person:    "<circle cx='12' cy='8.1' r='3.4'/><path d='M5.4 19.9a6.6 6.6 0 0 1 13.2 0'/>",
+    /* 686 */ clipboard: "<rect x='5.2' y='4.8' width='13.6' height='15.8' rx='2'/><path d='M9 4.8V3.6h6v1.2'/><path d='M8.8 10.6h6.4M8.8 14.4h4.6'/>",
+    /* 686 */ flag:      "<path d='M6 21.2V3.4'/><path d='M6 4.6h11.8l-2.4 3.9 2.4 3.9H6'/>",
+    /* 686 */ bolt:      "<path d='M13.4 2.6 5.2 13.6h5.6l-.8 7.8 8.2-11h-5.6z'/>",
+    /* 686 */ search:    "<circle cx='10.8' cy='10.8' r='6.4'/><path d='M15.5 15.5 20.6 20.6'/>",
+    /* 686 */ money:     "<circle cx='12' cy='12' r='8.6'/><path d='M12 6.6v10.8'/><path d='M14.7 9.4a2.6 2.6 0 0 0-2.3-1.2h-.8a2.1 2.1 0 0 0 0 4.2h1.4a2.1 2.1 0 0 1 0 4.2h-.8a2.6 2.6 0 0 1-2.3-1.2'/>",
+    /* 686 */ cash:      "<rect x='2.6' y='6.4' width='18.8' height='11.2' rx='1.8'/><circle cx='12' cy='12' r='2.6'/><path d='M6.1 12h.1M17.8 12h.1'/>",
+    /* 686 */ brick:     "<rect x='3' y='5.6' width='18' height='12.8' rx='1.4'/><path d='M3 9.9h18M3 14.1h18M9 5.6v4.3M15 9.9v4.2M9 14.1v4.3'/>",
+    /* 686 */ target:    "<circle cx='12' cy='12' r='8.4'/><circle cx='12' cy='12' r='4.6'/><circle cx='12' cy='12' r='1'/>",
+    /* 686 */ shield:    "<path d='M12 2.9 4.8 6v5.5c0 4.4 3 8.2 7.2 9.6 4.2-1.4 7.2-5.2 7.2-9.6V6z'/>",
+    /* 686 */ chart:     "<path d='M3.6 3.6v16.8h16.8'/><path d='m7 15.8 3.6-4.2 3 2.6 4.6-5.8'/><path d='M15.6 8.4h2.8v2.8'/>",
+    /* 686 */ clock:     "<circle cx='12' cy='12' r='8.6'/><path d='M12 6.9V12l3.4 2.1'/>",
+    /* 686 */ tag:       "<path d='M11.4 3.4H5a1.6 1.6 0 0 0-1.6 1.6v6.4a1.6 1.6 0 0 0 .5 1.2l7.5 7.5a1.6 1.6 0 0 0 2.3 0l6.2-6.2a1.6 1.6 0 0 0 0-2.3l-7.5-7.5a1.6 1.6 0 0 0-1-.7z'/><circle cx='7.8' cy='7.8' r='1.3'/>",
+    /* 686 */ folder:    "<path d='M3.4 6.6a1.8 1.8 0 0 1 1.8-1.8H9l2.2 2.6h7.6a1.8 1.8 0 0 1 1.8 1.8v8.2a1.8 1.8 0 0 1-1.8 1.8H5.2a1.8 1.8 0 0 1-1.8-1.8z'/>",
+    /* 686 */ hardhat:   "<path d='M3.8 16.4a8.2 8.2 0 0 1 16.4 0z'/><path d='M9.4 16.4V7.9a1.6 1.6 0 0 1 1.6-1.6h2a1.6 1.6 0 0 1 1.6 1.6v8.5'/><path d='M2.8 19.3h18.4'/>",
+    /* 686 */ gear:      "<circle cx='12' cy='12' r='2.7'/><circle cx='12' cy='12' r='6.9'/><path d='M12 2.6v2.4M12 19v2.4M2.6 12H5M19 12h2.4M5.4 5.4l1.7 1.7M16.9 16.9l1.7 1.7M18.6 5.4l-1.7 1.7M7.1 16.9l-1.7 1.7'/>",
+    /* 686 */ bell:      "<path d='M18 9.6a6 6 0 0 0-12 0c0 5.2-2 6.8-2 6.8h16s-2-1.6-2-6.8z'/><path d='M13.8 19.7a2 2 0 0 1-3.6 0'/>",
+    /* 686 */ eye:       "<path d='M2.4 12S6 5.7 12 5.7 21.6 12 21.6 12 18 18.3 12 18.3 2.4 12 2.4 12z'/><circle cx='12' cy='12' r='2.9'/>",
+    /* 686 */ alarm:     "<circle cx='12' cy='13.2' r='7.6'/><path d='M12 9.2v4l2.6 1.6'/><path d='M4.6 4.4 7.9 2M19.4 4.4 16.1 2'/>",
+    /* 686 */ save:      "<path d='M12 3.6v10.6'/><path d='m7.7 10.2 4.3 4.3 4.3-4.3'/><path d='M4.4 17.2v1.6a1.8 1.8 0 0 0 1.8 1.8h11.6a1.8 1.8 0 0 0 1.8-1.8v-1.6'/>"
   };
   function get(name, cls){ return P[name] ? svg(P[name], cls) : ''; }
-  return { get: get, names: function(){ return Object.keys(P); } };
+  /* 686: static markup cannot call get(), and a second pipeline of raw
+     inline SVG in the HTML would be two sources for one glyph. So the nav
+     carries a data-cri attribute (icon name, then any extra classes)
+     and this swaps it in ONCE. The attribute is deliberately not spelled
+     out here with its quote and equals sign — a comment that does so is
+     what makes a later count of these sites come back one too high.
+     It removes the attribute as it goes, so re-running is a no-op — which
+     matters in an app that re-renders as much as this one. Not an
+     observer: a one-shot pass, called below and again on DOMContentLoaded
+     only if the document has not finished parsing. */
+  function hydrate(root){
+    var list = (root || document).querySelectorAll('[data-cri]'), n = 0;
+    for (var i = 0; i < list.length; i++){
+      var el = list[i], spec = (el.getAttribute('data-cri') || '').split(/\s+/);
+      el.removeAttribute('data-cri');
+      var g = get(spec[0], spec.slice(1).join(' '));
+      if (g){ el.insertAdjacentHTML('afterbegin', g); n++; }
+    }
+    return n;
+  }
+  return { get: get, hydrate: hydrate, names: function(){ return Object.keys(P); } };
 })();
 window.CardinalIcons = Object.assign(window.CardinalIcons || {}, CardinalIcons);
+try{ CardinalIcons.hydrate(document); }catch(_){}
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', function(){
+    try{ CardinalIcons.hydrate(document); }catch(_){}
+  });
+}
 /* 681: the four kinds now name an icon instead of carrying an emoji.
    `nm` is untouched — it is the accessible label and the fallback title. */
 var KIND_META = { job:{ic:CardinalIcons.get('hammer'),nm:'Job'},
@@ -37183,6 +37232,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:686, d:'2026-08-10', t:'The menus get drawn icons instead of emoji',
+s:'The main menu, the New menu and the Settings list were labelled with emoji \u2014 a little picture per row. They came from the phone\u2019s own emoji font, so they never matched each other, they ignored the light and dark themes, and they looked different on your iPad than on the desktop. Every one of those 27 rows now has a drawn icon instead: line art on the same grid, taking the exact colour and size of the words next to it, so a menu reads as one thing. Same icons as the Schedule Board got last build. Nothing moved and nothing was renamed \u2014 only the picture changed. The rest of the app still has its emoji; this is the first slice.'},
 { b:685, d:'2026-08-10', t:'The two-tone lettering is gone \u2014 headings and names are one solid colour',
 s:'A lot of the writing in the app was painted with a colour fade rather than a plain colour \u2014 a heading that started deep red and finished gold, a client name that ran red into grey. It looked fine on the screen it was designed for years ago and poor on the near-black one you actually use, and because the letters were filled with a picture instead of a colour there was no way to check whether they were readable. All 37 of them are now one solid colour, and every one was measured against the exact background it sits on, in both light and dark. Nothing was invented: each is either the colour the rule already named as its fallback, one of the shades that was in its own fade, or the heading colour the rest of the app already uses. The client name and the PO now match the ones you picked on the leads screen. Eight of them were already a fade between two identical shades, so those look exactly as they did. The purchase-order gold is the pick you approved, everywhere it appears.'},
 { b:684, d:'2026-08-10', t:'What\u2019s New opens for the whole team again',
@@ -50247,7 +50298,13 @@ bar.id = 'cr-hd2-bar';
 var navBtn = document.getElementById('navBtn');
 if(navBtn){
 navBtn.className = 'cr-ib menu';
-navBtn.innerHTML = '\u2630';
+/* 686: this REBUILDS the button the static markup already carries, so the
+   markup's own icon was being overwritten with a hamburger every load —
+   the patched thing was not the rendered thing. Same registry, so the
+   menu mark matches the rest of the nav. CardinalIcons is defined ~19k
+   lines above this block, so it is always present by the time build()
+   runs; render_navicons.js asserts the drawn result, not the intent. */
+navBtn.innerHTML = window.CardinalIcons.get('menu');
 navBtn.title = 'Menu';
 bar.appendChild(navBtn);
 }
