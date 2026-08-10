@@ -3628,3 +3628,25 @@ stage palette is on the semantic frozen list.
 
 Gate: `scripts/render_stagechips.js` — seeds real project shapes, calls the
 shipped render, then clicks the chips and counts cards. RED on 689.
+
+### 691 — Assigned To beside Milestone on All Leads & Jobs
+
+Two labelled chip strips. `ljChipStrip(gkey, mountId, wrapId)` renders either;
+one `ljChipClick` serves both and reads its group from the container's `data-g`.
+**Adding a third group is two lines of markup and one call** — do not copy the
+renderer.
+
+Groups **AND** across each other (Lead + Joan = Joan's leads) and **OR** within
+one (Lead + Prospect = both). That is `ljMatches()`'s existing behaviour, not
+new logic.
+
+⚠️ A strip with **fewer than two values hides itself**, heading included.
+⚠️ Only `stage` carries colour dots — no other group has a palette, and the
+stage colours are on the semantic frozen list.
+
+Theo's scope call: Assigned To is the only other group he filters by. The
+remaining five (Job Priority, Job Category, Work Type, Trade, Lead Source) stay
+behind the funnel **by decision**.
+
+Gate: `scripts/render_stagechips.js`, 54 assertions, expectations self-computed
+from the seed. RED 20/54 on 690.

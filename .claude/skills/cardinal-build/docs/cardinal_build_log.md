@@ -14492,3 +14492,42 @@ as the retirement comment — asserted by grep, count 1.
   not have shown the filter works. **RED 32/32 on 689.** Sweep green: calhead,
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
+
+- **691** · **Assigned To joins Milestone as a second strip.** Theo, on 690:
+  *"How would I filter by rep? Etc"* — a fair hit. 690 solved **one of seven**
+  groups (`LJ_GROUPS`: Milestone, Assigned To, Job Priority, Job Category, Work
+  Type, Trade, Lead Source) and rep was still four taps behind the funnel.
+
+  Shown two layouts — a switchable strip covering all seven, or two fixed strips
+  — Theo picked **two fixed strips**, and said **Assigned To is the only other
+  group he filters by**. The remaining five stay in the funnel on his say-so.
+  That is a scope *decision*, not an omission.
+
+  **Generalised, not copied.** 690's stage-only block became
+  `ljChipStrip(gkey, mountId, wrapId)` and one `ljChipClick` that reads its group
+  off the **container's** `data-g`. A second copy would have been exactly the
+  second source of truth 690's own comment warns about. Both strips, the desktop
+  rail and the funnel sheet still write one `ljState.sets` and re-render through
+  one `renderLeadsView()`.
+
+  **A group with fewer than two values hides itself** — heading and all. A lone
+  "All" chip under a heading is furniture, and on a one-rep account the second
+  row would otherwise be permanent dead height.
+
+  Only stage gets colour dots. No other group has a palette, and inventing five
+  rep colours would put five new semantic colours on screen against the frozen
+  list. The headings use `var(--rbe-mute)`, which flips by itself and needs no
+  light twin.
+
+  Gates: `check_build` green (690 prev, marker + negative control).
+  `render_stagechips.js` extended to **54 assertions, both themes** — the ones
+  that matter are **stage AND rep combining rather than replacing** (Lead + one
+  rep = the measured intersection, and `Object.keys(ljState.sets)` holds both),
+  and the strip hiding and returning as the rep count crosses two. **Its
+  expectations are now self-computed from the seed** rather than hardcoded, per
+  the counting rules. Control on 690: **34 pass / 20 fail** — it isolates exactly
+  what is new instead of collapsing. ⚠️ It first CRASHED on that control
+  (`getComputedStyle(null)`); a control that dies on line one says far less than
+  one that reports, so the new reads are guarded. Sweep green: calhead, pcard
+  12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31, 680 35/35,
+  colors 110/110.
