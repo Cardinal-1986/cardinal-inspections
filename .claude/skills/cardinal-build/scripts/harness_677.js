@@ -146,7 +146,12 @@ const ORIGIN = 'https://app.cardinalroster.com';
       res && res.__tag === 'cached', res ? res.__tag : 'no response');
     ok('…and the network is still asked, in the background',
       env.log.fetched.length === 1, JSON.stringify(env.log.fetched));
-    ok('…kept alive with waitUntil so the refill cannot be killed mid-write',
+    /* Says only what it checks. The first wording was "kept alive with
+       waitUntil so the refill cannot be killed mid-write" — which counts the
+       CALL and claims the GUARANTEE, and passed on code that did not provide
+       it. That is BUG_CLASSES 15, an assertion matching its own prose. The
+       guarantee is the ordering assertion below; this one is bookkeeping. */
+    ok('…and waitUntil is called exactly once for the launch',
       env.log.waitUntil === 1, env.log.waitUntil);
     ok('…and the fresh copy really was written to the cache',
       env.log.put.includes('/'), JSON.stringify(env.log.put));

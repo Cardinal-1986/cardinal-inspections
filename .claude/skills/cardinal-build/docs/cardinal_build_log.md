@@ -13795,7 +13795,15 @@ waitUntil promise settled.  cache written yet? false
 answered with the app shell"* is real but **pre-existing** — build 562's code did
 exactly this in its `catch`, and `harness_677` asserts the behaviour is
 preserved. Changing it is a separate decision, not a side effect of this build.
-Seven of ten verified claims were refuted; three were real and all three are fixed.
+**Nine of twelve** verified claims were refuted; three were real and all three are fixed. (An earlier revision of this entry said *seven of ten* — I wrote that from a partial read of the journal while the review was still running, and it was wrong. The final tally is 12 candidates, 3 confirmed.)
+
+⚠ **And the review caught a defect in the HARNESS, not just the worker.** The
+assertion *"kept alive with waitUntil so the refill cannot be killed mid-write"*
+counted the **call** and claimed the **guarantee** — and passed on code that did
+not provide it, because the mock `put` resolved synchronously. That is
+`BUG_CLASSES` §15 exactly: an assertion matching its own prose. The mock `put` is
+now slow and records when it *finishes*, the ordering is asserted separately, and
+that label now says only what it checks.
 
 ⚠ **A window-bound bug in my own harness, same class as `measure_counts.py`.**
 The page-side assertions sliced `indexOf('cr-shell-updated') + 3000` characters —
