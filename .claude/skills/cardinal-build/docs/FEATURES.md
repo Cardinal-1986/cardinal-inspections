@@ -3739,3 +3739,20 @@ button moved. When it floats, `.afloat` is added and it moves to
 client-facing Blackout by settled decision; a switch that does nothing there
 would be a control that lies. Gate `render_toggle694.js` asserts their absence
 as firmly as it asserts the others' presence.
+
+
+### 695 — the Tools dropdown is drawn
+
+All sixteen rows carry a drawn glyph. Thirteen had an emoji entity; four new
+glyphs were drawn (`pulse`, `sparkle`, `pin`, `flask`) and nine existing ones
+reused. `CardinalIcons` 43 → 47.
+
+`data-cri` is the right mechanism here — static markup, and `hydrate()` runs at
+load, before the menu can open.
+
+⚠️ **The DOM has sixteen `.cbi` rows; the source shows fourteen.** `Track` and
+`Reports` are written as `class="cbn"` top-level nav and moved into the
+dropdown at runtime, with className rewritten to `cbi`. A source-only count
+misses them. Their icons were chosen from the app's own `data-go` map
+(`track` → `CardinalEstimates.open` → `calculator`, `reports` →
+`openReportsView` → `chart`), not from the labels.

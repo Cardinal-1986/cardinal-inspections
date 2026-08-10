@@ -2410,10 +2410,12 @@ pipeline-stage chips (690) and the Assigned To strip beside them (691).
 
 **The queue, in Theo's priority order:**
 
-1. **The emoji sweep — 606 remain.** Still first. The nav went at 686 and the
-   four card/hero surfaces (`cr-sf` / `cr-ch2` / `cr-cth` / `cr-ci`) at 692;
-   all four are now at zero. The two biggest left are the static `(markup)`
-   at 309 and the anonymous block-1 script at 124.
+1. **The emoji sweep — 594 remain.** Still first. The nav went at 686, the four
+   card/hero surfaces (`cr-sf` / `cr-ch2` / `cr-cth` / `cr-ci`) at 692, and the
+   Tools dropdown at 695. The two biggest left are the rest of the static
+   `(markup)` (~296) and the anonymous block-1 script (124). ⚠️ **90 distinct
+   characters remain in the markup** — that is 90 glyph decisions, so it wants
+   splitting into coherent menus/screens rather than one sweep.
    ⚠️ **Count with `scripts/emoji_census.py`, never a grep.** The old "533"
    missed the JS `\uD83D\uDD28` surrogate-escape form, which is two thirds of
    all hits, and had no bucket for the **46 ® marks on Owens Corning names** —
