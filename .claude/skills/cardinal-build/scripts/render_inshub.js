@@ -110,6 +110,7 @@ async function measure(br, art, w, theme, shot) {
       wrapWidth: Math.round(box(q('.cr-cth-wrap')).width),
       clientsButtons: document.querySelectorAll('[data-go="clients"]').length,
       toolButtons: tools ? tools.querySelectorAll('button').length : 0,
+      toolGos: tools ? [...tools.querySelectorAll('[data-go]')].map(b => b.dataset.go) : [],
       chaseInTools: !!(tools && tools.querySelector('.cr-cth-chase')),
       overflowsX: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       docHeight: document.documentElement.scrollHeight
@@ -222,7 +223,17 @@ async function measure(br, art, w, theme, shot) {
     /5 claims, searchable/.test(phone.leadText), phone.leadText);
   ok('there are exactly TWO clients doors — the tool tile MOVED, it was not copied',
     phone.clientsButtons === 2, phone.clientsButtons + ' (1 lead + 1 "All claims" in the rail terminal)');
-  ok('the Tools grid kept its other seven destinations', phone.toolButtons === 7, phone.toolButtons);
+  /* 679 added the Supplement Desk here, so a pinned count of 7 goes red on a
+     correct build. Assert what actually matters — that every destination the
+     grid had BEFORE is still in it — which survives the next addition too. */
+  {
+    const WAS = ['sol', 'library', 'board', 'supplements', 'insresources', 'adjusters', 'claims'];
+    const missing = WAS.filter(g => !phone.toolGos.includes(g));
+    ok('the Tools grid kept every destination it had', missing.length === 0,
+      'missing: ' + missing.join(', '));
+    ok('…and the tile count matches what is in it', phone.toolButtons === phone.toolGos.length,
+      phone.toolButtons + ' buttons vs ' + phone.toolGos.length + ' data-go');
+  }
   ok('the chase list did not land inside the Tools grid', phone.chaseInTools === false);
 
   console.log('\nRENDER: ' + (fail ? 'PROBLEMS (' + fail + ')' : 'OK') + '  (' + pass + ' passed, ' + fail + ' failed)');

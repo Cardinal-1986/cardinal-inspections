@@ -13880,3 +13880,93 @@ artifact goes red on exactly the two landing ones.
 Both were caught by the gates before anything was staged, which is the system
 working — but the second is a reminder that reading a warning is not the same as
 applying it.
+
+---
+
+## Build 679 — four things Theo hit in one sitting
+
+### P1 · The Supplement Desk has never been reachable, and that is my bug
+
+*"I still don't know how to get into the desk."* There is no way in. The card
+was added at **668** to `#cardinalTruthView`'s **static** `.ins-grid` — and the
+hub's `render()` does `host.innerHTML = …` where `host` is
+`#cardinalTruthView .ins-body`, **which contains that grid**. The card is
+destroyed the instant the hub paints.
+
+⚠ **Build 655 had already learned this exact lesson** and re-added four
+destinations to the DYNAMIC Tools grid, with a comment saying why. Six builds
+later I put a fifth in the static one anyway. Measured, not assumed: the
+`cr-cth-script` block contained **zero** references to `supplement.html`.
+
+Fixed where the others live, through the **same `data-go` mechanism** rather
+than a second one — and as `location.href`, not `window.open`, because the Desk
+is a standalone page and an installed PWA has no tab to open into.
+
+### P2 · The job name follows you out of the job
+
+`openProject()` writes `"1042: Willie Parson"` into **two** elements — `#headCtx`
+(12079) and `#cbCtx` (12081). `showHome()` clears `#headCtx` and **not** `#cbCtx`.
+The header module later relocated `#cbCtx` into `#cr-hd2-ribbon`, giving it a far
+more visible home directly under the section-nav, and nobody updated the teardown.
+
+Its only visibility gate is `body.projopen`, cleared in exactly two places —
+`hideAllViews()` and the ribbon's own home button. **The three hub navigations go
+through neither**: `showCardinalTruth()`, `showInsuranceClients()` and
+`showResourceLibrary()` each hide sibling views by hand. Theo saw it on the
+Insurance hub *and* on the Insurance Clients list; both are in that list.
+Community's own hub *does* call `hideAllViews()`, which is why the bug reads as
+"the community name sticks to Insurance" and never the reverse.
+
+**Fixed at the owner of the concern.** `setHeaderJobMenu(on)` already toggles
+`projopen`, so it now clears both context elements when off — every existing
+caller, `hideAllViews()` included, is fixed at once instead of one screen at a
+time. Then the three hub navigations call it, which is what they should always
+have done. All 13 `showCardinalTruth()` call sites are leave-the-job navigations
+(including the profile home chip at 12069), checked individually.
+
+### P3 · The map: a blank blue rectangle, and tapping it kills the app
+
+Two faults arriving together.
+
+**(a)** Kimberly Lawson's address is `1049 Cicillion Ave` — no city, no state, no
+ZIP. **Google Static Maps answers an address it cannot geocode with OCEAN, not
+with an error**, so the card rendered a flat blue rectangle and the app said
+nothing. Willie Parson's `2408 Lakeview Ave, Dayton, OH 45417, USA` renders fine.
+Confirmed against the live DB, not inferred from the screenshot. There is now a
+note *beside* the map — deliberately not instead of it, because the map may still
+be right and hiding it removes the evidence that it is not.
+
+**(b)** The tap handler called the window-opening API with a `_blank` target.
+**Inside an installed PWA there is no tab to open into and iOS blanks the web
+view** — that is the white screen. It is a real `<a target="_blank"
+rel="noopener">` now: deletion at source rather than a guard on top.
+
+### P4 · A community card was a one-way door
+
+`#cr-cc-return` exists, but only appears after a sub-tab tap and returns you **to**
+the card. Nothing led out to the Community hub. `CardinalCommunityHub.show()` is
+exported and already wrapped for the back button, so this uses the existing route.
+
+⚠ **I wrote the button and did not wire it** — `wireOut()` was defined and never
+called. That is `BUG_CLASSES` §16 exactly, the class the Studio Archive button
+spent eighteen builds in. Caught by writing the harness before believing the
+patch; the call now sits beside `wire()` and `syncJobMenu()`.
+
+### Three test failures, all mine, and two of them are the same trap twice
+
+1. **`harness_679` went red on my own comment.** The assertion "the map no longer
+   calls window.open" found the string inside the comment explaining its removal —
+   the comment-pollution trap this file documents. Fixed **at the source**: the
+   comment now *describes* the old line instead of quoting it, because a verbatim
+   copy makes every future "is it gone?" grep red on the note saying it left.
+   Then re-keyed to assert the behaviour — no `onclick` handler, and the old one
+   explicitly nulled.
+2. **`harness_location` failed with `addrWarnHtml is not defined`** — it executes
+   the shipped `dbPaintMap`, which gained a helper. Same shape as 674's missing
+   `ftIn`: the harness blamed the app for its own sandbox. Both helpers are now
+   sliced from the artifact, with a fallback so an older build still runs.
+   Its "the map is tappable" assertion tested the OLD mechanism (`cursor:pointer`
+   + `el.onclick`) and is re-keyed to the anchor contract — red on 678.
+3. **`render_inshub` pinned the Tools grid at seven tiles**, so adding the Desk
+   turned a correct build red. Re-keyed to assert every destination it had before
+   is still there, which survives the next addition too.

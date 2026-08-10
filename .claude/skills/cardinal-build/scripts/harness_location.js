@@ -113,6 +113,14 @@ function run(hasKey) {
       }
     };
     ${body(H, 'function dbPaintMap(el, address){')}
+    /* 679: dbPaintMap gained two helpers (addrWarnHtml -> addrLooksIncomplete,
+       the "this address has no city/state/ZIP" note). This sandbox executes the
+       SHIPPED function, so it needs them in scope or every assertion fails with
+       "addrWarnHtml is not defined" and blames the app for the harness. Same
+       shape as 674's missing ftIn. Sliced from the artifact, never retyped —
+       and tolerant of an older build that has neither. */
+    ${body(H, 'function addrLooksIncomplete(a){') || 'function addrLooksIncomplete(){ return false; }'}
+    ${body(H, 'function addrWarnHtml(address){') || "function addrWarnHtml(){ return ''; }"}
     ${(H.match(/var dbMapType = '[a-z]+';/) || [''])[0]}
     ${setterLine}
     return { paint: dbPaintMap, setType: window.dbSetMapType,
@@ -132,7 +140,7 @@ const EXEC_LABELS = [
   'it opens on the ROAD map, matching the tab that renders pressed',
   'the tile is asked for at a size that fits the 172px card, not the default',
   'the image fills the box rather than letterboxing',
-  'the map is tappable',
+  'the map is tappable — and it is a real link, not a click handler',
   'Satellite repaints the image, it does not just change a variable',
   'and Map switches back',
   'with no Google key it SAYS so instead of leaving an empty box',
@@ -153,7 +161,18 @@ try {
     /size=640x344/.test(img.src) && /zoom=18/.test(img.src));
   ok('the image fills the box rather than letterboxing',
     /object-fit:cover/.test(el.innerHTML) && /width:100%/.test(el.innerHTML));
-  ok('the map is tappable', el.style.cursor === 'pointer' && typeof el.onclick === 'function');
+  /* 679: the map is an ANCHOR now, not a div with an onclick. The old shape
+     (cursor:pointer + el.onclick) is exactly what blanked the installed app —
+     window.open with a _blank target has no tab to open into on iOS. So this
+     asserts the NEW contract: a real link, to the maps URL, that opens out. */
+  {
+    const a = el.querySelector('a[href]');
+    ok('the map is tappable — and it is a real link, not a click handler',
+      !!a && /maps\.(apple|google)\.com/.test(a.getAttribute('href')) &&
+      a.getAttribute('target') === '_blank' && /noopener/.test(a.getAttribute('rel') || '') &&
+      typeof el.onclick !== 'function',
+      a ? 'href=' + a.getAttribute('href') + ' target=' + a.getAttribute('target') : 'no anchor');
+  }
 
   /* THE TAB. A regex cannot see that this repaints. */
   api.setType('satellite', el, '9222 Arlington Rd, Brookville, OH 45309');
