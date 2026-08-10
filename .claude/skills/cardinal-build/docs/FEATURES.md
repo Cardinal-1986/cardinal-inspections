@@ -3608,3 +3608,23 @@ are `.pipecard.teamcal` and `.prodcal`.
 
 Gate: `scripts/render_calhead.js` — prints ink, composited ground, ratio **and
 the winning rule** for every heading and legend in both themes. RED on 688.
+
+### 690 — pipeline stage chips on All Leads & Jobs
+
+A scrolling chip strip above `Results (n)`: **All** plus one chip per stage that
+has rows, each with a count and a dot in that stage's `LJ_SOLID` colour.
+Multi-select; **All** clears.
+
+⚠️ **This is NOT a new filter.** It writes `ljState.sets.stage` — the same array
+the desktop rail checkboxes and the funnel sheet write, honoured by
+`ljMatches()`. Three controls, one source of truth, one `renderLeadsView()`.
+**Do not give the strip its own state.**
+
+The funnel icon stays and still owns Assigned To / Job Priority / Job Category.
+
+⚠️ `OnHold` is in `STAGES` but absent from `LJ_SOLID` / `LJ_INK` / `LJ_SPINE`;
+everything falls back to `#8a93a1`. Don't "fix" it by inventing a colour — the
+stage palette is on the semantic frozen list.
+
+Gate: `scripts/render_stagechips.js` — seeds real project shapes, calls the
+shipped render, then clicks the chips and counts cards. RED on 689.

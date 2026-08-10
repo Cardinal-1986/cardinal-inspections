@@ -14456,3 +14456,39 @@ as the retirement comment — asserted by grep, count 1.
   — it prints the WINNING RULE beside each ratio, which is the part that made
   this diagnosable. Sweep green: pcard 12/12, navicons 201/201, suppliers 12/12,
   schedule 27/27, 679 31/31, 680 35/35, colors 110/110.
+
+- **690** · **the pipeline stages are tappable on All Leads & Jobs.** Theo, on a
+  screenshot of that screen: *"This is more complicated than it should be. Can
+  you add somewhere where you can click on the different pipeline stages?"*
+
+  **THE PRIME DOCTRINE, EIGHTH TIME. The filter already existed.**
+  `ljState.sets.stage` is honoured by `ljMatches()`, counted by
+  `ljGroupCounts()`, and ordered by `ljGroupKeys()` — which already special-cases
+  `stage` to return `STAGES` filtered to those with rows. It was reachable only
+  through the funnel SHEET on a phone and the checkbox RAIL on a desktop. **This
+  build surfaces it. It does not add a filter, and it must never become a second
+  one.** The chip handler is a copy of the rail checkbox's toggle — same array,
+  same `delete` when it empties, same single `renderLeadsView()` — so the strip,
+  the rail and the sheet cannot disagree. The harness asserts that directly: tap
+  a chip, then read the rail's checkbox.
+
+  Theo picked chips over tabs and over a button grid, from a rendered sheet of
+  all three, and asked for the funnel to stay (it still owns Assigned To, Job
+  Priority, Job Category). **Chips because they are MULTI-select** — tabs would
+  have been single-select and quietly removed the ability to see Lead and
+  Prospect together, which the filter can do today.
+
+  The dot carries the stage's own `LJ_SOLID` colour rather than tinting the whole
+  chip — nine saturated blocks across the top of a list is noise, and those
+  colours are on the semantic frozen list. ⚠️ **`OnHold` is in `STAGES` but has
+  no `LJ_SOLID` entry**; the app's existing fallback is `|| '#8a93a1'` and the
+  strip uses the same one rather than inventing a tenth colour.
+
+  Gates: `check_build` green (689 prev, marker + negative control).
+  `render_stagechips.js` (new) **32/32 across both themes** — it seeds
+  `cacheProjects` with real project shapes, calls the SHIPPED `renderLeadsView()`,
+  then CLICKS the chips and counts the cards: 17 → 5 on Lead, → 8 on
+  Lead+Prospect, → 3 when Lead is untoggled, → 17 on All. Structure alone would
+  not have shown the filter works. **RED 32/32 on 689.** Sweep green: calhead,
+  pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
+  680 35/35, colors 110/110.
