@@ -43,6 +43,19 @@ bag, and a *building* standing for "Team". Theo caught all three off a rendered
 contact sheet in about a minute. 687 fixed them. **Ship an icon with a picture,
 not a pass count.** Same finding as 628's amber bar and 633's white boxes.
 
+## Theo's decisions this session — settled, do not re-litigate
+
+1. **"Keep them as emoji."** (10 Aug) Asked about the four condition dots
+   🟢🟡🟠🔴 in `ck_ventcond`. An `<option>` cannot hold markup, so the choice was
+   keep or delete. **All 17 `<option>` emoji** (`ck_ventcond`, `apKind`,
+   `apptKind`) are therefore permanently out of the sweep. The exclusion is
+   coded into `scripts/emoji_census.py`, which is where a sweeper looks — not
+   only written down here.
+2. **The Showcase and OC Colors get NO light/dark switch** (694). They are
+   single-theme client-facing Blackout; a switch that does nothing is worse
+   than no switch. Raised with him and not overruled — making them switchable
+   means giving them light themes, which is a separate job.
+
 ## Corrections I owe, in my own words
 
 - **698 put its `ICO` helper in the wrong block and worked anyway.** The
@@ -140,7 +153,8 @@ for an inline `color` before calling such a sweep done. Only 1 of the 37 had it.
 
 ## Queue
 
-1. **The emoji sweep — 686, 692, 695, 698, 699. 547 remain.** Measured with
+1. **The emoji sweep — 686, 692, 695, 698, 699. 532 remain**, after the 17
+   `<option>` emoji were fenced out by Theo's decision. Measured with
    comments excluded (module banners' box-drawing swamps a naive count) and with
    the 0x2300–0x23FF block included. Dingbats (156), arrows (154) and geometric
    marks (66) are counted SEPARATELY and are **not** part of this sweep — ✓ ✕ →
