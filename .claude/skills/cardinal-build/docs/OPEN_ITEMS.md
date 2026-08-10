@@ -2313,3 +2313,34 @@ rows is a small follow-up if more than one job needs it.
 - With measurements on the Gunn job, the Desk's quantities stop being blank —
   the remaining gaps there are **photographs (zero on that job)** and **a
   Brookville building-official letter (none filed)**.
+
+---
+
+## Build 680 — closed, and what it left open
+
+**Closed.** Theo's four questions on the claims screen: the giant white boxes
+(`.empty` was two classes wearing one name — **six** surfaces, not one), "Filed"
+and "Approved" now say they are dates, `approved_at` has a writer for the first
+time (it had **none, ever** — display-only since the module shipped), Cause of
+Loss is read off the Scope of Loss, and the Job tab stopped rendering the
+Contract tab.
+
+**STILL OPEN — the horizontal pan.** Theo: *"please fix where the screen goes
+left to right when scrolling. On all 3 pictures."* **Measured twice and NOT
+reproduced in the claim pane:** `render_claimpane.js` reports
+`scrollWidth == clientWidth` at both 390 and 430px, and the tab strip scrolls
+inside its own `overflow-x:auto` as designed. So the offender is **outside that
+mount** and the next attempt must instrument the whole app rather than one
+screen — mount the real document, walk every element, and report anything whose
+`right` exceeds `documentElement.clientWidth`. Do not re-open this by re-testing
+the claim pane; that answer is already in.
+
+**Worth a look while nearby, not yet asked for:**
+- `filed_at` is **null on all 5 claims** in the database even though the form has
+  always had the input. Now that the label says "Date Filed", it will be
+  obvious when it is blank — see whether Theo wants it required at file time.
+- The `cause_of_loss` extraction is **unverified against a real scope** — it
+  needs one run through Gunn's document with the live key. Expect `hail`; the
+  prompt is told to return null rather than guess, so a blank is a safe failure.
+- `#cr-ce-view .ce-kv .v.novalue` still has **no emitter**. It was renamed with
+  the rest so the trap cannot be walked into, not because anything uses it.

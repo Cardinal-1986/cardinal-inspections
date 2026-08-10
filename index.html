@@ -910,7 +910,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .insPanel .insGrid .lbl{color:var(--ct-ink-2);font-weight:600;font-size:11px;letter-spacing:.05em;
   text-transform:uppercase;margin-top:4px;}
 .insPanel .insGrid .val{font-weight:600;color:var(--ct-ink);margin-bottom:2px;word-break:break-word;}
-.insPanel .insGrid .val.empty{color:var(--ct-ink-2);font-weight:400;font-style:italic;}
+.insPanel .insGrid .val.novalue{color:var(--ct-ink-2);font-weight:400;font-style:italic;}
 .insPanel .insEdit{padding:4px 12px;border:1px solid var(--ct-red);background:var(--ct-surface);color:var(--ct-red-deep);
   border-radius:14px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
 .insPanel .insEdit:hover{background:var(--ct-red);color:var(--ct-red-ink);}
@@ -3312,7 +3312,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 679 &#8212; The Supplement Desk is reachable, the job name stops following you, and the map stops crashing</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 680 &#8212; The claims screen stops shouting and starts answering</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14906,7 +14906,7 @@ function renderInsurancePanel(){
   var I = projInsurance(currentProject) || {};
   function cell(lbl, val){
     var isEmpty = (val === null || val === undefined || val === '');
-    return '<div><div class="lbl">' + esc(lbl) + '</div><div class="val' + (isEmpty ? ' empty' : '') + '">' +
+    return '<div><div class="lbl">' + esc(lbl) + '</div><div class="val' + (isEmpty ? ' novalue' : '') + '">' +
       (isEmpty ? '&mdash;' : esc(String(val))) + '</div></div>';
   }
   var adj = I.adjuster || {};
@@ -26804,7 +26804,7 @@ function showList() {
   #cr-claims-mount .cr-c-info-item .val { font-size: 14px; color: var(--cr-text); font-weight: 500; }
   #cr-claims-mount .cr-c-info-item .val a { color: var(--cr-blue); text-decoration: none; }
   #cr-claims-mount .cr-c-info-item .val a:hover { text-decoration: underline; }
-  #cr-claims-mount .cr-c-info-item .val.empty { color: var(--cr-muted-2); font-style: italic; }
+  #cr-claims-mount .cr-c-info-item .val.novalue { color: var(--cr-muted-2); font-style: italic; }
 
   /* Tables */
   #cr-claims-mount .cr-c-table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -27318,12 +27318,16 @@ function showList() {
 
   function paneClient() {
     const c = state.claim;
-    const kv = (l, v, empty) => `<div class="cr-c-info-item"><div class="lbl">${l}</div><div class="val ${v ? '' : 'empty'}">${v || empty}</div></div>`;
+    const kv = (l, v, empty) => `<div class="cr-c-info-item"><div class="lbl">${l}</div><div class="val ${v ? '' : 'novalue'}">${v || empty}</div></div>`;
     return sect(1, 'Claim Info', '<button class="cr-c-h-btn" data-act="edit">&#9998; Edit</button>',
       '<div class="cr-c-info">' +
         kv('Policy Number', esc(c.policy_number || ''), 'Not set') +
-        kv('Filed', c.filed_at ? fmtDate(c.filed_at) : '', 'Not set') +
-        kv('Approved', c.approved_at ? fmtDate(c.approved_at) : '', 'Not yet') +
+        /* 680: both labels name a DATE. They used to read "Filed" and
+           "Approved", which are also two of the nine STATUSES rendered as a
+           chip at the top of this same screen — so the screen said FILED twice
+           and meant two different things. */
+        kv('Date Filed', c.filed_at ? fmtDate(c.filed_at) : '', 'Not filed yet') +
+        kv('Date Approved', c.approved_at ? fmtDate(c.approved_at) : '', 'Not approved yet') +
         kv('Cause of Loss', c.cause_of_loss ? causeLabel(c.cause_of_loss) : '', 'Not set') +
         /* 657: both columns arrived at 655 and this screen never showed them.
            ord_law is a BOOLEAN — false must read "No", not blank. */
@@ -27345,8 +27349,20 @@ function showList() {
       '</div>');
   }
 
-  function paneJob()      { return renderLinkedStrip(); }
-  function paneContract() { return renderLinkedStrip(); }
+  /* 680: these were the SAME renderer behind two tabs, so Job and Contract
+     showed an identical set of cards and both went blank together. Job is the
+     client's project record; Contract is the paperwork. Each now says so when
+     it has nothing, instead of rendering an empty pane. */
+  function paneJob() {
+    return sect(1, 'Job', '', renderLinkedStrip(['project']) ||
+      '<div class="cr-c-empty">This claim is not linked to a client project yet.' +
+      '<small>Link one and the job record opens from here.</small></div>');
+  }
+  function paneContract() {
+    return sect(1, 'Estimate &amp; Contract', '', renderLinkedStrip(['estimate', 'contract']) ||
+      '<div class="cr-c-empty">No estimate or contract is linked to this claim yet.' +
+      '<small>Build one from the client\'s project and it appears here.</small></div>');
+  }
 
   function paneRecord() {
     const c = state.claim;
@@ -27432,11 +27448,15 @@ function showList() {
     });
   }
 
-  function renderLinkedStrip() {
+  /* 680: `only` is OPTIONAL. The header strip calls renderLinkedStrip()
+     with no argument and must keep showing all three cards; the two panes
+     pass the subset they own. */
+  function renderLinkedStrip(only) {
     const L = state.linked || {};
+    const want = k => !only || only.indexOf(k) !== -1;
     const cards = [];
 
-    if (L.estimate) {
+    if (want('estimate') && L.estimate) {
       const e = L.estimate;
       const num = `EST-${(e.id || '').replace(/-/g, '').slice(0, 4).toUpperCase()}`;
       const total = e.estimate?.total;
@@ -27450,7 +27470,7 @@ function showList() {
       `);
     }
 
-    if (L.contract) {
+    if (want('contract') && L.contract) {
       const c = L.contract;
       cards.push(`
         <div class="cr-c-link-card contract" data-link="contract" data-id="${c.id}">
@@ -27462,7 +27482,7 @@ function showList() {
       `);
     }
 
-    if (L.project) {
+    if (want('project') && L.project) {
       const p = L.project;
       cards.push(`
         <div class="cr-c-link-card project" data-link="project" data-id="${p.id}">
@@ -27585,6 +27605,14 @@ function showList() {
           </div>
         </div>
 
+        <!-- 680: approved_at is a real date column and paneClient() has
+             rendered it since this module shipped, but there was no input and
+             no line in the save payload — so the field could never hold a
+             value and read "Not yet" on every claim forever. Exactly the 646
+             adjuster_company defect, one field over. -->
+        <label>Approved Date</label>
+        <input type="date" data-f="approved_at" value="${c.approved_at || ''}">
+
         <label>Adjuster Name</label>
         <input data-f="adjuster_name" value="${esc(c.adjuster_name || '')}">
         <!-- 646: the Company box. paneClient() has rendered kv('Company', ...)
@@ -27701,6 +27729,7 @@ function showList() {
         cause_of_loss:     get('cause_of_loss'),
         date_of_loss:      get('date_of_loss'),
         filed_at:          get('filed_at'),
+        approved_at:       get('approved_at'),
         adjuster_name:     get('adjuster_name'),
         adjuster_phone:    get('adjuster_phone'),
         adjuster_email:    get('adjuster_email'),
@@ -29044,7 +29073,7 @@ function showList() {
   #cr-adjusters-mount .cr-a-info-item .val{ font-size:14px; font-weight:500; }
   #cr-adjusters-mount .cr-a-info-item .val a{ color:var(--cr-blue); text-decoration:none; }
   #cr-adjusters-mount .cr-a-info-item .val a:hover{ text-decoration:underline; }
-  #cr-adjusters-mount .cr-a-info-item .val.empty{ color:var(--cr-muted-2); font-style:italic; }
+  #cr-adjusters-mount .cr-a-info-item .val.novalue{ color:var(--cr-muted-2); font-style:italic; }
 
   #cr-adjusters-mount .cr-a-table{ width:100%; border-collapse:collapse; font-size:13px; }
   #cr-adjusters-mount .cr-a-table th{ text-align:left; padding:8px 10px; font-size:10px; font-weight:700; color:var(--cr-muted); letter-spacing:1px; text-transform:uppercase; border-bottom:1px solid var(--cr-border); }
@@ -29340,11 +29369,11 @@ function showList() {
           '<div class="cr-a-section-h"><span class="num">1</span><span>Contact</span></div>' +
           '<div class="cr-a-section-rule"></div>' +
           '<div class="cr-a-info">' +
-            '<div class="cr-a-info-item"><div class="lbl">Firm</div><div class="val '+(a.company?'':'empty')+'">'+esc(a.company||'Direct carrier')+'</div></div>' +
-            '<div class="cr-a-info-item"><div class="lbl">Primary Carrier</div><div class="val '+(a.topCarrier?'':'empty')+'">'+esc(a.topCarrier||'Not set')+'</div></div>' +
-            '<div class="cr-a-info-item"><div class="lbl">Phone</div><div class="val '+(a.phone?'':'empty')+'">'+
+            '<div class="cr-a-info-item"><div class="lbl">Firm</div><div class="val '+(a.company?'':'novalue')+'">'+esc(a.company||'Direct carrier')+'</div></div>' +
+            '<div class="cr-a-info-item"><div class="lbl">Primary Carrier</div><div class="val '+(a.topCarrier?'':'novalue')+'">'+esc(a.topCarrier||'Not set')+'</div></div>' +
+            '<div class="cr-a-info-item"><div class="lbl">Phone</div><div class="val '+(a.phone?'':'novalue')+'">'+
               (a.phone? '<a href="tel:'+esc(a.phone)+'">'+esc(a.phone)+'</a>':'Not set')+'</div></div>' +
-            '<div class="cr-a-info-item"><div class="lbl">Email</div><div class="val '+(a.email?'':'empty')+'">'+
+            '<div class="cr-a-info-item"><div class="lbl">Email</div><div class="val '+(a.email?'':'novalue')+'">'+
               (a.email? '<a href="mailto:'+esc(a.email)+'">'+esc(a.email)+'</a>':'Not set')+'</div></div>' +
           '</div>' +
         '</div>' +
@@ -30858,7 +30887,7 @@ function showList() {
 })();
 </script>
 
-<style id="cr-cpartners-styles">.cr-cp-shell{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9500;display:flex;align-items:flex-start;justify-content:center;padding:32px 12px;overflow-y:auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cp-box{width:100%;max-width:520px;background:#fffdf7;border:1px solid #ded3bf;border-radius:14px;box-shadow:0 12px 44px rgba(0,0,0,.35);overflow:hidden}.cr-cp-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #ede3ce;background:linear-gradient(180deg,#f5efdf,#efe6cd)}.cr-cp-hd h3{margin:0;font:800 15px Georgia,'Times New Roman',serif;color:#3d7a4c;letter-spacing:.02em}.cr-cp-hd .cr-cp-x{background:none;border:0;font-size:22px;color:#7a6a4a;cursor:pointer;line-height:1;padding:0 4px}.cr-cp-bd{padding:14px 18px 18px}.cr-cp-group{margin-bottom:14px}.cr-cp-group h4{margin:0 0 8px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#6b7a55}.cr-cp-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid #e2d7bf;border-radius:9px;background:#fff;margin-bottom:7px}.cr-cp-row .n{font:700 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-cp-row .m{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-cp-row .btns{display:flex;gap:6px;flex-shrink:0}.cr-cp-row .btns button{background:#f0ebe0;border:1px solid #ded3bf;color:#5a4d33;border-radius:6px;padding:5px 10px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}.cr-cp-row .btns button:hover{background:#e5dfd0}.cr-cp-row .btns button.dang{color:#8a3d3d}.cr-cp-addbtn{display:block;width:100%;margin-top:6px;background:#3d7a4c;color:#fff;border:0;border-radius:8px;padding:11px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.cr-cp-addbtn:hover{background:#316340}.cr-cp-empty{padding:22px 12px;text-align:center;color:#6b6b6b;font:600 12.5px 'Segoe UI',Arial,sans-serif}.cr-cp-form label{display:block;margin-bottom:11px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b7a55}.cr-cp-form label input,.cr-cp-form label select,.cr-cp-form label textarea{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 11px;border:1px solid #d6c9ab;border-radius:7px;background:#fff;color:#2c2c2c;font:600 13.5px 'Segoe UI',Arial,sans-serif}.cr-cp-form textarea{min-height:64px;resize:vertical}.cr-cp-form .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}@media(max-width:420px){.cr-cp-form .row2{grid-template-columns:1fr}}.cr-cp-form .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}.cr-cp-form .actions button{padding:9px 15px;border-radius:7px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.cr-cp-form .actions .primary{background:#3d7a4c;color:#fff;border:0}.cr-cp-form .actions .primary:hover{background:#316340}.cr-cp-form .actions .ghost{background:transparent;color:#6b5a3a;border:1px solid #d6c9ab}.cr-cp-form .err{color:#a04040;font:700 11px 'Segoe UI',Arial,sans-serif;margin:6px 0 10px}.cr-cp-attach{display:flex;align-items:center;justify-content:space-between;gap:11px;padding:9px 12px;margin:9px 0 11px;background:rgba(74,140,90,.08);border:1px solid rgba(61,122,76,.35);border-radius:9px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cp-attach .lbl{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#3d7a4c}.cr-cp-attach .val{font:700 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-cp-attach .val.empty{color:#6b6b6b;font-style:italic;font-weight:600}.cr-cp-attach .badge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;background:#e2f2e6;color:#2e6b3f}.cr-cp-attach .badge.pm{background:#eaf0f8;color:#3a5f96}.cr-cp-attach .acts button{background:transparent;border:1px solid #a6c1ad;color:#3d7a4c;border-radius:6px;padding:4px 9px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;margin-left:6px}.cr-cp-attach .acts button:hover{background:rgba(61,122,76,.1)}</style>
+<style id="cr-cpartners-styles">.cr-cp-shell{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9500;display:flex;align-items:flex-start;justify-content:center;padding:32px 12px;overflow-y:auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cp-box{width:100%;max-width:520px;background:#fffdf7;border:1px solid #ded3bf;border-radius:14px;box-shadow:0 12px 44px rgba(0,0,0,.35);overflow:hidden}.cr-cp-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #ede3ce;background:linear-gradient(180deg,#f5efdf,#efe6cd)}.cr-cp-hd h3{margin:0;font:800 15px Georgia,'Times New Roman',serif;color:#3d7a4c;letter-spacing:.02em}.cr-cp-hd .cr-cp-x{background:none;border:0;font-size:22px;color:#7a6a4a;cursor:pointer;line-height:1;padding:0 4px}.cr-cp-bd{padding:14px 18px 18px}.cr-cp-group{margin-bottom:14px}.cr-cp-group h4{margin:0 0 8px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#6b7a55}.cr-cp-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid #e2d7bf;border-radius:9px;background:#fff;margin-bottom:7px}.cr-cp-row .n{font:700 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-cp-row .m{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-cp-row .btns{display:flex;gap:6px;flex-shrink:0}.cr-cp-row .btns button{background:#f0ebe0;border:1px solid #ded3bf;color:#5a4d33;border-radius:6px;padding:5px 10px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}.cr-cp-row .btns button:hover{background:#e5dfd0}.cr-cp-row .btns button.dang{color:#8a3d3d}.cr-cp-addbtn{display:block;width:100%;margin-top:6px;background:#3d7a4c;color:#fff;border:0;border-radius:8px;padding:11px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.cr-cp-addbtn:hover{background:#316340}.cr-cp-empty{padding:22px 12px;text-align:center;color:#6b6b6b;font:600 12.5px 'Segoe UI',Arial,sans-serif}.cr-cp-form label{display:block;margin-bottom:11px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b7a55}.cr-cp-form label input,.cr-cp-form label select,.cr-cp-form label textarea{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 11px;border:1px solid #d6c9ab;border-radius:7px;background:#fff;color:#2c2c2c;font:600 13.5px 'Segoe UI',Arial,sans-serif}.cr-cp-form textarea{min-height:64px;resize:vertical}.cr-cp-form .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}@media(max-width:420px){.cr-cp-form .row2{grid-template-columns:1fr}}.cr-cp-form .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}.cr-cp-form .actions button{padding:9px 15px;border-radius:7px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.cr-cp-form .actions .primary{background:#3d7a4c;color:#fff;border:0}.cr-cp-form .actions .primary:hover{background:#316340}.cr-cp-form .actions .ghost{background:transparent;color:#6b5a3a;border:1px solid #d6c9ab}.cr-cp-form .err{color:#a04040;font:700 11px 'Segoe UI',Arial,sans-serif;margin:6px 0 10px}.cr-cp-attach{display:flex;align-items:center;justify-content:space-between;gap:11px;padding:9px 12px;margin:9px 0 11px;background:rgba(74,140,90,.08);border:1px solid rgba(61,122,76,.35);border-radius:9px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cp-attach .lbl{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#3d7a4c}.cr-cp-attach .val{font:700 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-cp-attach .val.novalue{color:#6b6b6b;font-style:italic;font-weight:600}.cr-cp-attach .badge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:8px;font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;background:#e2f2e6;color:#2e6b3f}.cr-cp-attach .badge.pm{background:#eaf0f8;color:#3a5f96}.cr-cp-attach .acts button{background:transparent;border:1px solid #a6c1ad;color:#3d7a4c;border-radius:6px;padding:4px 9px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;margin-left:6px}.cr-cp-attach .acts button:hover{background:rgba(61,122,76,.1)}</style>
 <script id="cr-cpartners-script">
 (function () {
 'use strict';
@@ -31372,7 +31401,7 @@ esc(typeLabel(p.partner_type)) +
 row.innerHTML =
 '<div>' +
 '<div class="lbl">Partner</div>' +
-'<div class="val empty">' + (pid ? 'Unknown partner id' : 'No partner attached') + '</div>' +
+'<div class="val novalue">' + (pid ? 'Unknown partner id' : 'No partner attached') + '</div>' +
 '</div>' +
 '<div class="acts">' +
 '<button data-act="change">' + (pid ? 'Change' : 'Attach') + '</button>' +
@@ -33253,7 +33282,7 @@ window.CardinalSearch = { open: open, close: close, search: search };
 })();
 </script>
 
-<style id="cr-cprop-styles">.cr-cprop-attach{display:flex;align-items:center;justify-content:space-between;gap:11px;padding:9px 12px;margin:0 0 9px;background:rgba(200,32,46,.08);border:1px solid rgba(200,32,46,.35);border-radius:9px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cprop-attach .lbl{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8f1620}.cr-cprop-attach .val{font:700 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-cprop-attach .val.empty{color:#6b6b6b;font-style:italic;font-weight:600}.cr-cprop-attach .val small{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;font-style:normal;margin-top:1px}.cr-cprop-attach .acts button{background:transparent;border:1px solid #c8202e;color:#8f1620;border-radius:6px;padding:4px 9px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;margin-left:6px}.cr-cprop-attach .acts button:hover{background:rgba(200,32,46,.14)}</style>
+<style id="cr-cprop-styles">.cr-cprop-attach{display:flex;align-items:center;justify-content:space-between;gap:11px;padding:9px 12px;margin:0 0 9px;background:rgba(200,32,46,.08);border:1px solid rgba(200,32,46,.35);border-radius:9px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cprop-attach .lbl{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8f1620}.cr-cprop-attach .val{font:700 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-cprop-attach .val.novalue{color:#6b6b6b;font-style:italic;font-weight:600}.cr-cprop-attach .val small{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;font-style:normal;margin-top:1px}.cr-cprop-attach .acts button{background:transparent;border:1px solid #c8202e;color:#8f1620;border-radius:6px;padding:4px 9px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;margin-left:6px}.cr-cprop-attach .acts button:hover{background:rgba(200,32,46,.14)}</style>
 <script id="cr-cprop-script">
 (function () {
 'use strict';
@@ -33580,7 +33609,7 @@ row.innerHTML =
 row.innerHTML =
 '<div>' +
 '<div class="lbl">Property</div>' +
-'<div class="val empty">' + (propertyId ? 'Unknown property id' : 'No property attached') + '</div>' +
+'<div class="val novalue">' + (propertyId ? 'Unknown property id' : 'No property attached') + '</div>' +
 '</div>' +
 '<div class="acts">' +
 '<button data-act="change">' + (propertyId ? 'Change' : 'Attach') + '</button>' +
@@ -34331,7 +34360,7 @@ setTimeout(function(){ window.openProject(pid); }, 60);
 })();
 </script>
 
-<style id="cr-ce-styles">#cr-ce-view{display:none;position:fixed;inset:0;z-index:210;background:#f7f2ea;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-ce-view.open{display:block}#cr-ce-view .ce-header{background:linear-gradient(135deg,#1a0f0c,#241512 55%,#1a0f0c);color:#f7f2ea;padding:16px 20px;border-bottom:4px solid #c8202e;position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,.35)}#cr-ce-view .ce-header .ce-back{background:transparent;color:#f7f2ea;border:1px solid rgba(200,32,46,.6);border-radius:8px;padding:6px 10px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto}#cr-ce-view .ce-header .ce-back:hover{background:rgba(200,32,46,.15)}#cr-ce-view .ce-header .ce-titlebox{flex:1;min-width:0}#cr-ce-view .ce-header .ce-eyebrow{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#c8202e;opacity:.9}#cr-ce-view .ce-header h1{margin:2px 0 0;font:700 20px Georgia,'Times New Roman',serif;background:linear-gradient(160deg,#b8860b,#c8202e 45%,#e35c63 60%,#c8901c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#c8202e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cr-ce-view .ce-header h1 small{font:600 12px 'Segoe UI',Arial,sans-serif;color:#a89a8a;-webkit-text-fill-color:#a89a8a;margin-left:8px;letter-spacing:.02em}#cr-ce-view .ce-status{display:inline-block;padding:3px 9px;border-radius:5px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;flex:0 0 auto}#cr-ce-view .ce-status.draft{background:rgba(200,32,46,.18);color:#e35c63;border:1px solid #c8202e}#cr-ce-view .ce-status.sent{background:rgba(74,111,165,.2);color:#7fa6d6;border:1px solid #4a6fa5}#cr-ce-view .ce-status.signed{background:rgba(46,125,50,.24);color:#8bc38e;border:1px solid #2e7d32}#cr-ce-view .ce-status.other{background:rgba(255,255,255,.08);color:#c8c0b0;border:1px solid #56463a}#cr-ce-view .ce-wrap{max-width:760px;margin:0 auto;padding:20px 18px 120px}#cr-ce-view .ce-card{background:#fffdf7;border:1px solid #ded3bf;border-radius:10px;padding:16px 18px;margin:0 0 14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}#cr-ce-view .ce-card h2{margin:0 0 12px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8f1620;border-bottom:1px solid #ded3bf;padding-bottom:8px}#cr-ce-view .ce-kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font:600 13px 'Segoe UI',Arial,sans-serif;align-items:baseline}@media (max-width:520px){#cr-ce-view .ce-kv{grid-template-columns:110px 1fr;gap:6px 10px;font-size:12.5px}}#cr-ce-view .ce-kv .k{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}#cr-ce-view .ce-kv .v{color:#2c2c2c;overflow-wrap:break-word;min-width:0}#cr-ce-view .ce-kv .v.num{font-variant-numeric:tabular-nums;font-weight:700;color:#8f1620}#cr-ce-view .ce-kv .v.empty{color:#a89a8a;font-style:italic}#cr-ce-view .ce-prose{font:600 13px Georgia,'Times New Roman',serif;color:#2c2c2c;line-height:1.6;white-space:pre-wrap}#cr-ce-view .ce-list{margin:0;padding-left:20px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;line-height:1.6}#cr-ce-view .ce-list li{margin-bottom:4px}#cr-ce-view .ce-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:2px solid #c8202e;font:800 15px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-ce-view .ce-total .amt{color:#8f1620;font-variant-numeric:tabular-nums}#cr-ce-view .ce-actions{position:fixed;left:0;right:0;bottom:0;z-index:3;background:rgba(26,15,12,.96);backdrop-filter:blur(8px);border-top:2px solid #c8202e;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;justify-content:center;flex-wrap:wrap;box-shadow:0 -4px 18px rgba(0,0,0,.35)}#cr-ce-view .ce-actions button{background:transparent;color:#c8202e;border:1px solid #c8202e;border-radius:8px;padding:8px 13px;cursor:pointer;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;gap:5px;font-family:inherit;transition:background .12s,transform .1s}#cr-ce-view .ce-actions button:hover{background:rgba(200,32,46,.15)}#cr-ce-view .ce-actions button:active{transform:scale(.96)}#cr-ce-view .ce-actions button.primary{background:#c8202e;color:#fff;border-color:#c8202e}#cr-ce-view .ce-actions button.primary:hover{background:#e35c63;border-color:#e35c63}#cr-ce-view .ce-actions button:disabled{opacity:.4;cursor:not-allowed}@media print{body>*:not(#cr-ce-view){display:none !important}#cr-ce-view{position:static !important}#cr-ce-view .ce-header,#cr-ce-view .ce-actions{display:none !important}#cr-ce-view .ce-wrap{max-width:100%;padding:0}#cr-ce-view .ce-card{box-shadow:none;border-color:#ccc;page-break-inside:avoid}}</style>
+<style id="cr-ce-styles">#cr-ce-view{display:none;position:fixed;inset:0;z-index:210;background:#f7f2ea;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-ce-view.open{display:block}#cr-ce-view .ce-header{background:linear-gradient(135deg,#1a0f0c,#241512 55%,#1a0f0c);color:#f7f2ea;padding:16px 20px;border-bottom:4px solid #c8202e;position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:12px;box-shadow:0 4px 18px rgba(0,0,0,.35)}#cr-ce-view .ce-header .ce-back{background:transparent;color:#f7f2ea;border:1px solid rgba(200,32,46,.6);border-radius:8px;padding:6px 10px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;gap:4px;flex:0 0 auto}#cr-ce-view .ce-header .ce-back:hover{background:rgba(200,32,46,.15)}#cr-ce-view .ce-header .ce-titlebox{flex:1;min-width:0}#cr-ce-view .ce-header .ce-eyebrow{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#c8202e;opacity:.9}#cr-ce-view .ce-header h1{margin:2px 0 0;font:700 20px Georgia,'Times New Roman',serif;background:linear-gradient(160deg,#b8860b,#c8202e 45%,#e35c63 60%,#c8901c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#c8202e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#cr-ce-view .ce-header h1 small{font:600 12px 'Segoe UI',Arial,sans-serif;color:#a89a8a;-webkit-text-fill-color:#a89a8a;margin-left:8px;letter-spacing:.02em}#cr-ce-view .ce-status{display:inline-block;padding:3px 9px;border-radius:5px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;flex:0 0 auto}#cr-ce-view .ce-status.draft{background:rgba(200,32,46,.18);color:#e35c63;border:1px solid #c8202e}#cr-ce-view .ce-status.sent{background:rgba(74,111,165,.2);color:#7fa6d6;border:1px solid #4a6fa5}#cr-ce-view .ce-status.signed{background:rgba(46,125,50,.24);color:#8bc38e;border:1px solid #2e7d32}#cr-ce-view .ce-status.other{background:rgba(255,255,255,.08);color:#c8c0b0;border:1px solid #56463a}#cr-ce-view .ce-wrap{max-width:760px;margin:0 auto;padding:20px 18px 120px}#cr-ce-view .ce-card{background:#fffdf7;border:1px solid #ded3bf;border-radius:10px;padding:16px 18px;margin:0 0 14px;box-shadow:0 2px 8px rgba(0,0,0,.05)}#cr-ce-view .ce-card h2{margin:0 0 12px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8f1620;border-bottom:1px solid #ded3bf;padding-bottom:8px}#cr-ce-view .ce-kv{display:grid;grid-template-columns:140px 1fr;gap:8px 14px;font:600 13px 'Segoe UI',Arial,sans-serif;align-items:baseline}@media (max-width:520px){#cr-ce-view .ce-kv{grid-template-columns:110px 1fr;gap:6px 10px;font-size:12.5px}}#cr-ce-view .ce-kv .k{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}#cr-ce-view .ce-kv .v{color:#2c2c2c;overflow-wrap:break-word;min-width:0}#cr-ce-view .ce-kv .v.num{font-variant-numeric:tabular-nums;font-weight:700;color:#8f1620}#cr-ce-view .ce-kv .v.novalue{color:#a89a8a;font-style:italic}#cr-ce-view .ce-prose{font:600 13px Georgia,'Times New Roman',serif;color:#2c2c2c;line-height:1.6;white-space:pre-wrap}#cr-ce-view .ce-list{margin:0;padding-left:20px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;line-height:1.6}#cr-ce-view .ce-list li{margin-bottom:4px}#cr-ce-view .ce-total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:12px;border-top:2px solid #c8202e;font:800 15px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-ce-view .ce-total .amt{color:#8f1620;font-variant-numeric:tabular-nums}#cr-ce-view .ce-actions{position:fixed;left:0;right:0;bottom:0;z-index:3;background:rgba(26,15,12,.96);backdrop-filter:blur(8px);border-top:2px solid #c8202e;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;justify-content:center;flex-wrap:wrap;box-shadow:0 -4px 18px rgba(0,0,0,.35)}#cr-ce-view .ce-actions button{background:transparent;color:#c8202e;border:1px solid #c8202e;border-radius:8px;padding:8px 13px;cursor:pointer;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;display:inline-flex;align-items:center;gap:5px;font-family:inherit;transition:background .12s,transform .1s}#cr-ce-view .ce-actions button:hover{background:rgba(200,32,46,.15)}#cr-ce-view .ce-actions button:active{transform:scale(.96)}#cr-ce-view .ce-actions button.primary{background:#c8202e;color:#fff;border-color:#c8202e}#cr-ce-view .ce-actions button.primary:hover{background:#e35c63;border-color:#e35c63}#cr-ce-view .ce-actions button:disabled{opacity:.4;cursor:not-allowed}@media print{body>*:not(#cr-ce-view){display:none !important}#cr-ce-view{position:static !important}#cr-ce-view .ce-header,#cr-ce-view .ce-actions{display:none !important}#cr-ce-view .ce-wrap{max-width:100%;padding:0}#cr-ce-view .ce-card{box-shadow:none;border-color:#ccc;page-break-inside:avoid}}</style>
 <script id="cr-ce-script">
 (function () {
 'use strict';
@@ -37164,6 +37193,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:680, d:'2026-08-10', t:'The claims screen stops shouting and starts answering',
+s:'Four things you asked about on the claim screen. THE GIANT WHITE BOXES: an empty field was borrowing the look of an empty-state panel \u2014 the same class name meant two different things \u2014 and it was doing it on six screens, not just this one. THE LABELS: "Filed" and "Approved" now read "Date Filed" and "Date Approved", so they stop colliding with the status chip at the top of the same screen that also says FILED. THE APPROVED DATE: nobody could ever fill it \u2014 there was no box for it in the edit form and no line for it in the save \u2014 so it now has both. CAUSE OF LOSS: it is read off the Scope of Loss when you upload one, instead of waiting for you to type it. THE JOB TAB: it was drawing the Contract tab. Job is now the client\u2019s project, Contract is the estimate and the signed contract, and each one tells you when it has nothing to show.'},
 { b:679, d:'2026-08-10', t:'The Supplement Desk is reachable, the job name stops following you, and the map stops crashing',
 s:'Four things. THE SUPPLEMENT DESK: its card was being wiped off the insurance page the instant that page drew itself, so there has never been a way in from the app \u2014 it is now in the Tools grid with everything else. THE JOB NAME: opening a job put its number and name in the strip under the menu, and nothing ever took it away, so it followed you onto the insurance page, the client list and the library. Leaving a job now clears it, everywhere, in one place. THE MAP: tapping it tried to open a new browser tab, and an installed app has no tab to open \u2014 that is the white screen. It is an ordinary link now. And when an address is missing its city, state and ZIP, Google cannot find it and quietly returns open water; the map now says so instead of showing you the sea. A WAY BACK: a community job card had no route back to the Community screen. It has one now.'},
 { b:678, d:'2026-08-10', t:'The old welcome screen stops flashing up while the app loads',

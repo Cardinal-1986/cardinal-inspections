@@ -13970,3 +13970,85 @@ patch; the call now sits beside `wire()` and `syncJobMenu()`.
 3. **`render_inshub` pinned the Tools grid at seven tiles**, so adding the Desk
    turned a correct build red. Re-keyed to assert every destination it had before
    is still there, which survives the next addition too.
+
+## Build 680 — the claims screen answers the four questions Theo asked of it
+
+Four screenshots, four questions: *"what are the purpose of the very large white
+boxes"*, *"what does filed actually mean"*, *"why is cause of loss here"*, *"what
+is the purpose of the job tab"*. All four were real defects, and one of them was
+on six screens rather than one.
+
+**P1 — `.empty` is TWO classes wearing one name.** The unscoped rule in the first
+`<head>` block (`background:var(--paper); border:2px dashed; padding:44px 24px;
+text-align:center`) belongs to the standalone empty-state *panel* — 16 legitimate
+users, `<div class="empty">No estimates yet.</div>`. But six surfaces use `empty`
+as a *modifier* on a field value, and the module rules written for those only ever
+set `color` and `font-style`, so they never reset the panel's geometry. **This is
+not a specificity fight — the two rules do not mention the same properties.**
+Measured in Chromium, not reasoned about: `render_emptyclass.js` finds every
+selector where `.empty` sits on a compound, rebuilds the ancestor chain as real
+elements, and reads the computed style. Six of sixteen came back `pad=44/24
+border=dashed-2px`: the Claim Details card on a client profile, the claims screen,
+the adjuster directory, both community attach bars, and one latent rule in the
+contract viewer with no emitter today. Renamed to `novalue` **at source** — the
+global rule is untouched and its 16 users still work, asserted.
+
+⚠️ **The first draft of the detector reported 16 of 16 and was wrong.** It keyed
+on "padding ≥ 40 **or** `text-align:center`", which flags `.cr-claimstrip`,
+`.cr-bidstrip`, `.payrow` and `.poPfx` — all of which centre their own text on
+purpose. Re-keyed to the global rule's literal fingerprint. *When a count
+contradicts you, suspect the regex — including your own.*
+
+**P2 — one word, two meanings, one screen.** `kv('Filed', …)` labelled the
+`filed_at` DATE, while `Filed` is also one of the nine `STATUSES` rendered as a
+chip at the top of the same pane. Same for `Approved`. Now `Date Filed` /
+`Date Approved`, with placeholders that say which thing is missing.
+
+**P3 — the Approved box could never be filled by anyone.** `approved_at` occurred
+**exactly once** in the whole artifact: at the line that displays it. No input in
+the edit form, no line in the save payload. It is a real `date` column and it read
+"Not yet" on every claim, permanently. **Identical to the 646 `adjuster_company`
+defect, one field over, and the comment left there says so.** Both halves added.
+
+**P4 — Cause of Loss had no source.** `api/sol.js` never asked for it, so
+`index.html`'s mapping (`first(ex.cause_of_loss, ex.cause, ex.peril)`, which has
+always been there) read a key that never arrived. The schema now asks for it,
+constrained to the **seven tokens the claim form's `<select>` actually offers** —
+`harness_680` asserts the prompt against `CAUSES` *itself* rather than against a
+list typed into the test, so the two cannot drift. Same whitelist discipline as
+`STAGES`: a value outside the list silently fills nothing.
+
+**P5 — Job was rendering the Contract tab.** `paneJob()` and `paneContract()` were
+both `return renderLinkedStrip();` — one renderer, two tabs, every card under
+both, and both blank together on a claim with nothing linked. That is why the Job
+tab looked purposeless. `renderLinkedStrip(only)` takes an **optional** filter (the
+header strip still calls it bare and still shows all three); Job is the project,
+Contract is the estimate and the signed contract, and each now explains itself
+when empty.
+
+**Gates.** `check_build.py` green. `harness_680.js` — 35 assertions, all
+executing shipped code, **18 red on 679**. `render_emptyclass.js` — 3 assertions
+in Chromium, red on 679 naming all six surfaces. Full regression sweep green
+(653–674, 679, sol, partners, claimguard, approvals, location, 667–671,
+`render_inscards`, `render_claimpane`, `render_inshub`).
+
+⚠️ **Three sweep reds were my invocation, not regressions, and all three are the
+same class:** `harness_672`, `harness_674` and `render_inshub` refuse to skip a
+differential silently, and each is pinned to a *specific* historical baseline —
+674's to **673** (679's `roofrMerge` is a thin wrapper over `aerialMerge`, so
+extracting it alone throws), `render_inshub`'s to **674** (679 already carries
+675's swap). Given their real baselines: 75, 75 and 19 passed, 0 failed. **Read
+the usage line for the baseline; "the previous build" is not always the right
+one.**
+
+⚠️ **`render_claimpane.js` — the rig I committed RED last session — was testing
+its own stale copy.** It re-implemented `kv()` by hand *and* probed for
+`.val.empty`, so after the rename it reported `bg=null` and called the null a
+failure. Both fixed at source: it now lifts the real `kv()` out of the artifact
+and finds the value element carrying *any* modifier without naming it. Green on
+680 (113px → 21px, white → transparent), red on 679. **BUG_CLASSES 15 again — an
+assertion agreeing with its own prose.**
+
+**Not fixed, and not for want of looking: the horizontal pan.** Measured again at
+390 and 430px — `scrollWidth == clientWidth` on the claim pane, so the offender is
+outside that mount. Next attempt has to measure the whole app, not this screen.

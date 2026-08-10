@@ -3400,3 +3400,63 @@ returns you TO the card after a sub-tab, and is not a way out.
 `harness_location.js` now carries the map helpers in its sandbox and asserts the
 anchor contract. `render_inshub.js` asserts the Tools grid kept every
 destination rather than pinning a count.
+
+### 680 — the claims screen answers its own screen (`cr-claims-script` + `api/sol.js`)
+
+**`.empty` is two classes wearing one name, and it always was.** The unscoped
+rule in the first `<head>` block is the standalone empty-state **panel**
+(`background:var(--paper); border:2px dashed; padding:44px 24px; text-align:
+center`) and has **16 legitimate users** — `<div class="empty">No estimates
+yet.</div>`. Six other surfaces use `empty` as a **modifier meaning "this field
+has no value"**, and the module rules for those only ever set `color` and
+`font-style`, so the panel's geometry came through untouched. Renamed to
+**`novalue`** at source on all six; the global rule is byte-identical and its 16
+users are asserted still working.
+
+| Surface | Selector (now) |
+|---|---|
+| Claim Details card on a client profile | `.insPanel .insGrid .val.novalue` |
+| The claims screen — the one Theo photographed | `#cr-claims-mount .cr-c-info-item .val.novalue` |
+| Adjuster directory | `#cr-adjusters-mount .cr-a-info-item .val.novalue` |
+| Community partner attach bar | `.cr-cp-attach .val.novalue` |
+| Community property attach bar | `.cr-cprop-attach .val.novalue` |
+| Contract/estimate viewer — **no emitter today**, renamed so the trap cannot be walked into | `#cr-ce-view .ce-kv .v.novalue` |
+
+⚠️ **`.cr-photo.empty` is NOT one of these and must stay a panel** — an empty
+photo slot legitimately wants the dashed box and declares `border-style:dashed`
+leaning on the global rule for the rest. `render_emptyclass.js` asserts it
+survives, so a "fix" that deleted the global rule goes red.
+
+**Two date labels stopped colliding with the status chip.** `Filed` and
+`Approved` are two of the nine `STATUSES` rendered as a chip at the top of the
+same pane; they were also the labels on `filed_at` and `approved_at`. Now
+**`Date Filed`** and **`Date Approved`**, with placeholders naming what is
+absent.
+
+**`approved_at` had no writer, at all, ever.** It occurred **exactly once** in
+the artifact — at its display line. No input, no line in the save payload, so a
+real `date` column read "Not yet" on every claim permanently. **The same defect
+as 646's `adjuster_company`**, one field over. Both halves shipped.
+
+**Cause of Loss now comes off the scope.** `api/sol.js` never asked for it, so
+`populateFromSol`'s mapping (`first(ex.cause_of_loss, ex.cause, ex.peril)`,
+present since the module shipped) read a key that never arrived. The prompt now
+requests it **constrained to the seven tokens `CAUSES` offers** and is told to
+return null rather than guess. Whitelist discipline, same as `STAGES`: a value
+outside the list matches no option and fills nothing.
+
+**Job and Contract are no longer the same function.** Both panes were
+`return renderLinkedStrip();` — every card under both tabs, both blank together.
+`renderLinkedStrip(only)` now takes an **optional** filter; the header strip
+still calls it bare and still shows all three. Job = the project, Contract = the
+estimate and the signed contract, each with its own empty-state sentence.
+
+**Tools:** `render_emptyclass.js` (3 assertions, **Chromium** — finds every
+compound `.empty`/`.novalue` selector, rebuilds its ancestor chain and reads the
+computed style; scans **both** names so a rename cannot hide a surface from its
+own test; red on 679 naming all six). `harness_680.js` (35, all executing shipped
+code — `paneClient`, the save-payload builder against a stand-in modal,
+`renderLinkedStrip`, `paneJob`/`paneContract`; asserts the sol.js prompt against
+`CAUSES` *itself*; red on 679 across 18). `render_claimpane.js` repaired — it
+re-implemented `kv()` and probed a hardcoded class, so it reported `null` after
+the rename; it now lifts the real `kv()` from the artifact.

@@ -33,10 +33,20 @@ const CSS = (() => {
   return out.join('\n');
 })();
 
-/* the shape the module's own kv() emits, and the wrapper renderDetail() uses */
-const kv = (l, v, empty) =>
-  `<div class="cr-c-info-item"><div class="lbl">${l}</div>` +
-  `<div class="val ${v ? '' : 'empty'}">${v || empty}</div></div>`;
+/* THE MODULE'S OWN kv(), lifted out of the artifact — not a copy of it.
+
+   This used to be a hand-written re-implementation, and build 680 renamed the
+   empty-value modifier at source. The copy here kept emitting the old class, so
+   the script went on reporting a bug that had already been fixed — an assertion
+   agreeing with its own prose rather than with the app (BUG_CLASSES 15). Read
+   the real one, and a future rename cannot make this script lie again. */
+const kv = (() => {
+  const at = SRC.indexOf('const kv = (l, v, empty) =>');
+  if (at < 0) throw new Error('kv() not found in ' + FILE + ' — has it been renamed?');
+  const line = SRC.slice(at, SRC.indexOf('\n', at));
+  const body = line.replace(/^const kv = /, '').replace(/;\s*$/, '');
+  return new Function('return (' + body + ');')();
+})();
 
 const MARKUP = `
 <div id="cr-claims-mount">
@@ -83,7 +93,12 @@ const MARKUP = `
 
     const r = await p.evaluate(() => {
       const de = document.documentElement;
-      const emptyEl = document.querySelector('.cr-c-info-item .val.empty');
+      /* the value element carrying a MODIFIER — do not name the modifier here.
+         Naming it is what made this script report null after 680 renamed the
+         class: it read `.val.empty`, found nothing, and called a null a
+         failure. Whatever kv() marks an absent value with, this finds it. */
+      const emptyEl = [...document.querySelectorAll('.cr-c-info-item .val')]
+        .find(el => el.classList.length > 1) || null;
       const cs = emptyEl ? getComputedStyle(emptyEl) : null;
       const b = emptyEl ? emptyEl.getBoundingClientRect() : null;
       /* what is actually wider than the viewport? */
