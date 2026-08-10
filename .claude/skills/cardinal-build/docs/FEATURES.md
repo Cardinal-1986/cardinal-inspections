@@ -3509,3 +3509,12 @@ Call/Text → `--rbe-accdk` scoped (6.72:1). **Tools:** `render_pcard.js`
 (12 assertions, Chromium, alpha-compositing grounds; red ×10 on 682).
 ⚠ Its grounds() COMPOSITES translucent layers — copy that, not the naive
 opaque-rgba version, which false-reds 544's chips at 1.54:1.
+
+### 684 — What's New is everyone's again (`cr-cl-script`)
+
+Build 600's owner-gate reversed at all three sites (menu item, `show()`,
+`autoShow()`) — its reason (a stale changelog) has been false since 585.
+`show()`/`autoShow()` now require only a signed-in `window.currentUser`. The
+box header: gradient + dark-on-red + 🎉 → solid red, white text, no emoji
+(both settled rules). The once-per-build popup mechanism (localStorage
+last-seen) is unchanged.
