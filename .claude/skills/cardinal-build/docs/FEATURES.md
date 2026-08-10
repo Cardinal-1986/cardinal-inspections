@@ -3518,3 +3518,21 @@ Build 600's owner-gate reversed at all three sites (menu item, `show()`,
 box header: gradient + dark-on-red + 🎉 → solid red, white text, no emoji
 (both settled rules). The once-per-build popup mechanism (localStorage
 last-seen) is unchanged.
+
+### 685 — no gradient-clipped text anywhere (app-wide)
+
+37 sites removed, each to a single solid colour measured against the exact
+ground it sits on, in both themes. Families: 8 were already a fade between two
+identical stops (`--rbe-head` → `--rbe-head`) and are a provable no-op; 6 client
+names follow 683's `.pcnm` precedent to `var(--rbe-head,#ffffff)` (12.71:1 dark
+/ 17.34:1 light); 4 PO labels take Theo's approved pick C via a retargeted
+`--rbe-po2` (`#d8a94f` dark / `#8f1620` light, 5.87 / 8.73). The rest use their
+own declared fallback or their own gradient's best stop.
+
+`.mic`'s `@supports` rule is deleted (inert since 682). `--rbe-po1` is gone —
+it had no references left. The login tagline's inline `color:#7a4a3e` was
+removed so the card's rule governs; it had been masked by the gradient.
+
+**Do not re-introduce gradient text.** Chromium's parsed-rule count is the
+instrument (`render_gradtext.js`); a text regex over the file finds one extra
+hit that is a comment.
