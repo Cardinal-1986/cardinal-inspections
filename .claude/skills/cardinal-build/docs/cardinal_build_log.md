@@ -14149,3 +14149,53 @@ screen (checked over RENDERED text, which catches the entity form), the icons
 drawn, each one's stroke equal to its parent's `color`, and each sized to its
 type. **8 red on 680.** Full regression sweep green, including the three
 baseline-pinned harnesses run against their real controls (673, 673, 674).
+
+## Build 683 — the home client cards go dark, like the rest of the app
+
+Theo, with a screenshot of the home screen: *"Unreadable and unlike your
+design."* Asked whether the white cards were deliberate: *"make the client
+cards dark like the rest."*
+
+**The cause is BUG_CLASSES 27's shape, second occurrence in three builds.**
+`projCardHtml()` puts `stageClass(stg)` on the CARD (`pcard pcbadge stg-Lead`)
+so the spine can read `var(--stgc)`. The eight bare `.stg-*` rules (~L738)
+were written for the stage CHIP — light pastels, `background:#e8f0fb` — and a
+bare class selector cannot tell a chip from a card. Equal specificity to
+`.pcard` (0,1,0), later in the file: the pastel's `background` SHORTHAND wins
+and resets the card's dark gradient to `none`. Measured in Chromium:
+`rgb(232,240,251)` in **both themes**, gradient stripped.
+
+**Build 544's own banner names this exact trap** — *"a bare rule would paint a
+chip background across the entire card"* — then scoped only its new DARK chip
+set and left the base pastels bare. The gun stayed loaded for 139 builds.
+
+**The fix is deletion at source:** the eight pastels are now
+`.stagechip.stg-*`. The card never wanted a background from a stage class.
+Verified the only `stg-` writers are `stageClass()` and one literal fallback,
+both landing on chips or the card. Claims' `#insClientsView` set (1,3,0)
+still out-specifies.
+
+**With the card dark, measured and fixed on it:**
+- `.pcnm` was **gradient-clipped text** (name1→acc→acclt — the red-to-grey
+  names in the screenshot). Now `var(--rbe-head)` per Theo's no-gradients
+  rule: **12.71:1** dark / 17.34:1 light. Gradient-text sites: 39 → 38.
+- `.pcad`/`.pcmeta` were `--rbe-mute2` — **2.69:1** on the dark card. Now
+  `--rbe-mute`: 4.82:1 dark, and light improves too (3.31 → 5.11).
+- Light-only: Call/Text label 4.26 → **6.72:1** via a scoped `rb-light` rule.
+- 544's dark chips now sit on the dark card they were computed for: 5.47:1.
+
+**⚠ A third fault in my measuring rig, and the most instructive yet:** the
+first pass scored 544's chips at **1.54:1** by treating
+`rgba(93,161,243,.18)` as an opaque ground. **An 18% wash is not a ground —
+it is a tint on the ground beneath it.** The rig now composites translucent
+layers over what is actually below before computing; the chips came back at
+the ~6:1 the 544 banner had computed all along. A false red against correct
+shipped code, from the instrument.
+
+**Left alone, recorded:** `.pcpo` lavender `#c9a2ff` reads 1.99:1 in LIGHT
+mode — pre-existing, and the lavender PO is on the semantic frozen list, so
+changing it is Theo's call, not a drive-by.
+
+**Gates:** `check_build` green · `render_pcard.js` 12 assertions both themes,
+**10 red on 682** · regression sweep green (harnesses + schedule/emptyclass/
+inscards renders).

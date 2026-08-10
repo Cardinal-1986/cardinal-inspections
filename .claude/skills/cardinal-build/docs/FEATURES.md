@@ -3496,3 +3496,16 @@ document rather than concatenating `<style>` blocks, walks ancestors for the
 true ground **including gradient stops**, and asserts contrast, zero surviving
 emoji over rendered text, icons drawn, stroke == parent `color`, em-sizing;
 **8 red on 680**).
+
+### 683 — the home client cards go dark (`projCardHtml` / `.pcbadge`)
+
+The eight stage pastels are **`.stagechip.stg-*`** now, never bare `.stg-*` —
+the bare form painted every home client card pastel in both themes, because
+the card wears the same class for its `--stgc` spine (BUG_CLASSES 27 shape;
+544's banner predicted it verbatim). Card ground restored to the
+`--rbe-bg1/bg2` gradient. `.pcnm` gradient text → `var(--rbe-head)`
+(12.71:1). `.pcad`/`.pcmeta` → `--rbe-mute` (2.69 → 4.82:1 dark). Light
+Call/Text → `--rbe-accdk` scoped (6.72:1). **Tools:** `render_pcard.js`
+(12 assertions, Chromium, alpha-compositing grounds; red ×10 on 682).
+⚠ Its grounds() COMPOSITES translucent layers — copy that, not the naive
+opaque-rgba version, which false-reds 544's chips at 1.54:1.

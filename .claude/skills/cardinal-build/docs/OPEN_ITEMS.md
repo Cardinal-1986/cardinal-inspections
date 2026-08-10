@@ -2371,3 +2371,16 @@ keeps its emoji — historical record.
 **Still queued behind this:** the insurance loop (builds 683–684 —
 `read_response` is still a 501, `insurance_supplements` still has zero rows),
 and the VAPID key rotation, which is waiting on Theo setting the env var.
+
+---
+
+## Build 683 — closed, and two notes
+
+**Closed.** Home client cards dark in both themes (the bare `.stg-*` pastel
+collision), gradient names gone from the cards (39 gradient-text sites → 38).
+
+- **`.pcpo` lavender `#c9a2ff` reads 1.99:1 in LIGHT mode** — pre-existing;
+  lavender PO is on the semantic frozen list. Needs Theo's pick of a light
+  variant (the `.ljpo` precedent uses `--rbe-po1/po2` pairs).
+- **Remaining gradient-text sites: 38** — next sweep targets per the settled
+  no-gradients rule; list is in the CLAUDE.md standing note.

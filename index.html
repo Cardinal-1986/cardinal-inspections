@@ -334,19 +334,26 @@ footer.site{
 .pcbadge .pcbd{flex:1;min-width:0;}
 .pcbadge .pcr1{display:flex;align-items:center;gap:8px;}
 .pcbadge .pcnm{flex:1;min-width:0;font:800 15.5px 'Segoe UI',Arial,sans-serif;
-  background:linear-gradient(100deg,var(--rbe-name1),var(--rbe-acc) 55%,var(--rbe-acclt));-webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;color:var(--rbe-acc);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  /* 683: was gradient-clipped text (name1 fading through acc to acclt) — the
+     red-to-grey names in Theo's screenshot, and the class of treatment he has
+     ruled out ("I don't need to have gradient colors anywhere"). The heading
+     token pair flips with the theme by itself. */
+  color:var(--rbe-head,#ffffff);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pcbadge .pcpo{font:800 12px ui-monospace,Menlo,monospace;color:#c9a2ff;opacity:.95;flex:0 0 auto;}
-.pcbadge .pcad{font-size:12px;color:var(--rbe-mute2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
+.pcbadge .pcad{font-size:12px;color:var(--rbe-mute); /* 683: mute2 read 2.69:1 on the dark card — measured */overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
 .pcbadge .pcchips{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;}
 .pcbadge .pcdot{width:3px;height:3px;border-radius:50%;background:var(--rbe-mute2);flex:0 0 auto;}
 .pcbadge .pcrep{font:800 11px 'Segoe UI',Arial,sans-serif;color:var(--rbe-rep);}
-.pcbadge .pcmeta{font-size:10.5px;color:var(--rbe-mute2);}
+.pcbadge .pcmeta{font-size:10.5px;color:var(--rbe-mute);} /* 683: same as .pcad */
 .pcbadge .pcacts{display:flex;gap:7px;margin-top:9px;}
 .pcbadge .pcacts a{flex:1;border:1px solid var(--rbe-monobd);border-radius:9px;background:var(--rbe-monobg);
   color:var(--rbe-acclt);text-decoration:none;padding:7px;font:700 11.5px 'Segoe UI',Arial,sans-serif;
   display:flex;align-items:center;justify-content:center;gap:6px;}
 .pcbadge .pcacts a svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;}
+/* 683: in light the label was --rbe-acclt (#4f7396) over the pink wash on a
+   white card — 4.26:1, just under the 4.5 floor. The darker accent of the
+   same family measures ~7:1 there. Dark is untouched. */
+:root[data-theme="rb-light"] .pcbadge .pcacts a{color:var(--rbe-accdk);}
 .pcard.pcbadge .favstar{position:static;top:auto;right:auto;flex:0 0 auto;color:var(--rbe-mute);text-shadow:none;font-size:15px;line-height:1;}
 .pcbadge .favstar.on{color:#e8a900;text-shadow:none;}
 .pcard.pcbadge .stagechip{position:static;top:auto;left:auto;box-shadow:none;}
@@ -735,14 +742,20 @@ body.claim-insurance #leadCard .llrow b{color:var(--ct-ink);}
 
 .stagechip{display:inline-block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;
   padding:3px 9px;border-radius:9px;text-transform:uppercase;}
-.stg-Lead{background:#e8f0fb;color:#1d4f91;}
-.stg-Prospect{background:#fdf3e2;color:#b26a00;}
-.stg-Approved{background:#e9f5ec;color:#1d6b34;}
-.stg-Scheduled{background:#fff0f0;color:var(--red-dk);}
-.stg-Completed{background:#ececec;color:#4a6572;}
-.stg-Invoiced{background:#f3e8fb;color:#5b2d91;}
-.stg-Closed{background:#e6ecef;color:#3d5560;}
-.stg-Lost{background:#efe9e9;color:#7a6a6a;}
+/* 683: scoped to the CHIP. These pastels were bare `.stg-*` for years, and
+   projCardHtml() puts the same class on the CARD (for the --stgc spine) — so
+   the chip's background SHORTHAND painted every home client card pastel and
+   wiped its dark gradient, in both themes. 544's banner below names this
+   exact trap and scoped only its dark set; this closes the base. Deletion at
+   source, not out-specificity: the card never wanted a background from stg-*. */
+.stagechip.stg-Lead{background:#e8f0fb;color:#1d4f91;}
+.stagechip.stg-Prospect{background:#fdf3e2;color:#b26a00;}
+.stagechip.stg-Approved{background:#e9f5ec;color:#1d6b34;}
+.stagechip.stg-Scheduled{background:#fff0f0;color:var(--red-dk);}
+.stagechip.stg-Completed{background:#ececec;color:#4a6572;}
+.stagechip.stg-Invoiced{background:#f3e8fb;color:#5b2d91;}
+.stagechip.stg-Closed{background:#e6ecef;color:#3d5560;}
+.stagechip.stg-Lost{background:#efe9e9;color:#7a6a6a;}
 .pcard .stagechip{position:absolute;top:10px;left:10px;box-shadow:0 1px 4px rgba(0,0,0,.25);}
 .stgfilter{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;}
 .stgfilter .hstat.on{background:var(--red-dk);color:#fff;border-color:var(--red-dk);}
@@ -3319,7 +3332,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 682 &#8212; The metallic emoji wrapper is gone</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 683 &#8212; The home client cards go dark like the rest of the app</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37197,6 +37210,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:683, d:'2026-08-10', t:'The home client cards go dark, like the rest of the app',
+s:'The white cards on your home screen were never designed white \u2014 they were painted by accident. The little coloured stage chip (LEAD, PROSPECT...) shares its colour class with the card that carries it, so the chip\u2019s pale blue was flooding the whole card and erasing the dark finish the card actually asked for \u2014 in dark AND light mode. The chip colours now apply only to chips. The card gets its dark steel back, the client\u2019s name is plain bright text instead of red fading into grey (your no-gradients rule, applied), and every colour on the card was measured against the floor rather than eyeballed: name 12.7 to 1, chips 5.5, Call and Text 8. The greys on the address line were nudged one step brighter because the old ones measured 2.7 to 1 on the dark card. Light mode got the same measuring pass and two small fixes of its own.'},
 { b:682, d:'2026-08-10', t:'The metallic emoji wrapper is gone',
 s:'You said we do not need the metallic look on emoji any more, so it is gone \u2014 all of it. There was a piece of the app that walked every page when it loaded, found every emoji, and wrapped it to make it look metallic and slightly larger; then it watched the whole page and did it again every time anything changed, for as long as the app was open. Two reasons to remove it rather than just switch it off: the emoji themselves are being replaced by drawn icons, so it was polishing something on its way out \u2014 and it was one of about fifty watchers on this page, this one rewriting the page from inside its own watch, which is the exact shape of the slowdowns fixed at 567 and 569. Nothing you can see changes except that emoji are now their normal size until the drawn icons reach them.'},
 { b:681, d:'2026-08-10', t:'The Schedule Board is readable, and emoji start becoming drawn icons',
