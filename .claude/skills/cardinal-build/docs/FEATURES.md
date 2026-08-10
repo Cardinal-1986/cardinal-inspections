@@ -3334,3 +3334,29 @@ Chromium and times a real second launch).
 service worker, so a CDP-throttled comparison passes on a network-first worker
 and proves nothing. It also stamps the outgoing document before navigating,
 because an un-awaited `goto()` lets the first sample read the *previous* page.
+
+---
+
+### 678 — the retired welcome screen stops flashing up
+
+The old post-login landing (lightning-bolt cardinal, "Welcome back", four cards)
+is still in the markup at ~4040 and is retired by `#landingView>*{display:none}`
+in `cr-lr-styles` at ~43270. `showLanding()` is called from a script at ~13277,
+so between those two points the retired screen is what the app shows. One rule in
+the head block fixes it, exactly as 676 did for the banner nav.
+
+⚠ **Do not delete the dead markup.** Six ids — `landName`, `landDate`,
+`landQuick`, `landDash`, `landClaims`, `landLibrary` — are read at ~30 sites,
+several inside `showLanding()` itself. Deleting turns a cosmetic flash into a
+boot-time `TypeError`. If you ever do remove it, remove the readers first.
+
+⚠ **A marker must name what the build ADDED.** `#landingView>*{display:none}`
+already existed in `cr-lr-styles`, so `check_build.py`'s negative control found it
+in the previous artifact and refused. Use something unique to the new lines.
+
+⚠ **Never write a literal style tag inside a CSS comment** — the tag-balance gate
+counts it and reports a phantom duplicate block. This is written at ~3105 already;
+678 tripped it anyway.
+
+**Tools:** `render_bootflash.js` now covers both flash surfaces (15 assertions,
+red on 677 for the landing pair).
