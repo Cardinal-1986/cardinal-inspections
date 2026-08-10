@@ -1,7 +1,15 @@
 // /api/hover.js
 // Vercel serverless function — receives the raw text of a Hover measurement
-// report PDF and returns structured siding/exterior measurements for the
-// material order list. Uses the same GEMINI_API_KEY as the other functions.
+// report PDF and returns structured exterior measurements. Uses the same
+// GEMINI_API_KEY as the other functions.
+//
+// 674: it now returns the ROOF block as well as siding. It was siding-only
+// because its only caller was the siding material order — so a 31-page Hover
+// "Complete Measurements" report could sit on a job while the app insisted it
+// had no squares, pitch or eave length. The roof keys deliberately match
+// /api/roofr's, so one merge in the app serves both sources. The siding keys
+// are unchanged and in the same order: the material-order caller reads exactly
+// what it read before.
 
 /* 505: the second rung, same as 502 elsewhere. gemini-3.5-flash 503s "high
    demand" in spells - measured at roughly one call in four this afternoon - and
@@ -66,19 +74,71 @@ export default async function handler(req, res) {
     }
 
     const prompt =
-      'You are parsing the text of a Hover exterior measurement report for a siding material order. ' +
+      'You are parsing the text of a Hover exterior measurement report. Hover reports ' +
+      'cover the ROOF, the SIDING, or both ("Complete Measurements"). Extract whichever ' +
+      'are present. ' +
       'The text below was extracted page by page (pages are marked "--- PAGE N ---").\n\n' +
       'Extract the following values. Use numbers only (no units). ' +
       'If a value is not present in the text, use null. Do NOT guess or invent numbers.\n' +
-      '- siding_area_sqft: total siding/facade area in square feet (siding only, not roof/openings)\n' +
-      '- openings_count: total number of window and door openings\n' +
-      '- opening_perimeter_lf: total perimeter of window/door openings in lineal feet (may be listed as "openings trim" or window/door perimeter)\n' +
-      '- outside_corner_lf: total outside corner length in lineal feet\n' +
-      '- inside_corner_lf: total inside corner length in lineal feet\n' +
-      '- base_length_lf: total level base/starter length in lineal feet (bottom of siding walls)\n' +
-      '- soffit_area_sqft: total soffit area in square feet\n' +
-      '- fascia_lf: total fascia length in lineal feet\n' +
+      /* 674: the ROOF block, written against a REAL Hover "Complete
+         Measurements" report rather than from memory. Key names match what the
+         app already consumes from /api/roofr so one merge serves both sources.
+
+         ⚠ LENGTHS COME BACK AS PRINTED, NOT AS DECIMALS. Hover writes
+         118' 9". Asked to "use numbers only", a model returns 118.9 — which is
+         wrong by 0.15 ft and looks entirely reasonable on a carrier letter.
+         The app converts feet-and-inches itself (ftIn), deterministically. Do
+         not ask the model to do arithmetic; this project refuses AI arithmetic
+         in the Supplement Desk for exactly this reason. */
+      'LENGTHS: copy the value EXACTLY as printed, including the foot and inch ' +
+      'marks — "118\' 9\"", not 118.9 and not 118.75. The app converts them. ' +
+      'AREAS and COUNTS: plain numbers, no units.\n' +
+      '- area_sqft: total roof area in square feet. On a Hover report this is the ' +
+      '"Roof Facets" Area on the ROOF SUMMARY page (zero-waste). Number.\n' +
+      '- squares: that area divided by 100, if you are confident; otherwise null — ' +
+      'the app derives it from area_sqft.\n' +
+      '- facet_count: the "Roof Facets" Total (a count of planes). Number.\n' +
+      '- pitch: the PREDOMINANT pitch as written, e.g. "9/12" — the row of the ' +
+      '"Roof Pitch" table with the largest Area or Percentage. Text.\n' +
+      '- pitch_breakdown: EVERY row of the "Roof Pitch" table, as ' +
+      '[{"pitch":"9/12","area_sqft":1360,"percent":81.19}, ...]. Low-slope and ' +
+      'steep sections are priced differently, so do not collapse this to one pitch.\n' +
+      '- ridge_hip_lf: the "Ridges / Hips" Length. Hover reports these COMBINED. ' +
+      'Return the combined value here and leave ridge_lf and hip_lf null — do NOT ' +
+      'split them, there is no basis in the report for a split.\n' +
+      '- ridge_lf: ridge length ONLY if the report states ridges separately from hips\n' +
+      '- hip_lf: hip length ONLY if stated separately\n' +
+      '- valley_lf: the "Valleys" Length\n' +
+      '- eave_lf: the "Eaves" Length\n' +
+      '- rake_lf: the "Rakes" Length\n' +
+      '- drip_edge_lf: the "Drip Edge/Perimeter" Length (usually eaves + rakes)\n' +
+      '- flashing_lf: the "Flashing" Length\n' +
+      '- step_flashing_lf: the "Step Flashing" Length\n' +
+      /* the SIDING block, pointed at Hover's actual SUMMARY-page labels. The
+         old wording described the fields in the abstract, which on a real
+         report leaves the model choosing between four plausible "siding area"
+         totals that differ by 500 sqft. */
+      '- siding_area_sqft: the "Facades" row, Siding column, from the Areas table. ' +
+      'NOT the Total row (which adds openings and trim) and NOT a waste-adjusted figure.\n' +
+      '- siding_waste_zero_sqft: "SIDING WASTE TOTALS" -> "Siding & Trim Only" -> Zero Waste area\n' +
+      '- openings_count: the Openings Quantity, Siding column\n' +
+      '- opening_perimeter_lf: the Openings "Total Perimeter", Siding column\n' +
+      '- outside_corner_lf: Corners -> "Outside Length", Siding column\n' +
+      '- inside_corner_lf: Corners -> "Inside Length", Siding column\n' +
+      '- base_length_lf: Trim -> "Level Starter", Siding column\n' +
+      '- soffit_area_sqft: the Roofline table Soffit Area column, ALL rows added ' +
+      'together (level frieze board + sloped frieze board). Number.\n' +
+      '- fascia_lf: the Roofline table, "Eaves Fascia" plus "Rakes Fascia" Length. ' +
+      'If both are present give them added together, as printed feet-and-inches ' +
+      'is not possible here — so give this one as a decimal number of feet.\n' +
+      '- shutter_qty: Accessories -> "Shutter Qty", Siding column\n' +
+      '- vent_qty: Accessories -> "Vents Qty", Siding column\n' +
       '- stories: number of stories as an integer if stated\n\n' +
+      'A roof-only report has null for every siding field, and a siding-only report ' +
+      'has null for every roof field. That is expected — report what is there and ' +
+      'null for the rest. Never carry a siding number into a roof field: the ' +
+      'SUMMARY page and the ROOF SUMMARY page both have an "Eaves" figure and ' +
+      'they mean different things.\n\n' +
       'Respond with ONLY raw JSON, no markdown fences, exactly these keys.\n\n' +
       'REPORT TEXT:\n' + text.slice(0, 50000);
 

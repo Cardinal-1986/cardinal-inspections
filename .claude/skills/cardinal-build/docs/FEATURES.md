@@ -3192,3 +3192,34 @@ rule is documented at `index.html:31673` (work orders) and `:54780` (library).
 ⚠ **Uploading a Hover report under Measurements FILES THE PDF AND NOTHING
 ELSE.** `/api/hover` is called only from the siding material-order import
 (`index.html:16247`). Nothing writes `checklist.meas` from a Hover upload.
+
+**674 — Hover fills the measurements.** `aerialMerge(all, d, source)` is THE
+merge for aerial/photo reports into `checklist.meas`; `roofrMerge(all,d)` is a
+wrapper for the 554 caller. Doors: the Measurements upload
+(`importMeasFrom(pr, source, file)`) and the material-order import.
+
+⚠ **`/api/hover` returns roof AND siding.** Roof keys deliberately match
+`/api/roofr`'s so one merge serves both. Siding keys unchanged — the material
+order reads exactly what it read before (differentially asserted).
+
+⚠ **The source label names the MIXTURE.** 554 hardcoded `'Field + Roofr'`,
+which was a lie as soon as a second importer existed. Never restore that shape:
+if the previous source is not ours, the label is `prevSrc + ' + ' + src`.
+
+⚠ **Filing the PDF and reading it are separate, in that order.** A failed read
+must never present as a failed upload — the document is already saved.
+
+
+**674 amended — read against the real Hover report.**
+⚠ **`ftIn()` converts feet-and-inches IN CODE.** Hover prints `118' 9"`; a model
+asked to convert returns `118.9`, wrong by two inches. Never ask the model for a
+converted number — ask for the string as printed. Verified against Hover's own
+arithmetic (eaves + rakes = the printed Drip Edge/Perimeter, to the inch).
+⚠ **Hover reports Ridges / Hips COMBINED.** `meas.ridgehip` carries it; ridge and
+hip stay null. Do not split it — the report gives no basis. The panel shows one
+row labelled *(combined, as reported)*.
+⚠ **`meas.pitches` keeps the whole pitch table.** On Gunn: 9/12 81.19%, 5/12
+15.34%, 2/12 3.46%. The 2/12 area is LOW-SLOPE (RCO R905.1.1, a pack entry) and
+the 9/12 area is steep — both are supplement lines the predominant pitch hides.
+⚠ **The siding keys name Hover's actual table and column.** A real report offers
+four "siding area" totals differing by ~500 ft²; the prompt must say which.

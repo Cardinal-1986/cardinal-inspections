@@ -2294,8 +2294,22 @@ Uploading a Hover report under **Measurements** stores the PDF as a document.
 It does **not** extract anything: `/api/hover` is called only from the siding
 material-order import (`index.html:16247`), so nothing writes `checklist.meas`.
 
-**Gunn now has the 31-page Hover report on file and still has no measurements**,
-which means a supplement for that job argues code without quantities. Wiring
-Hover → `checklist.meas` is its own build and was already recorded at 669; the
-report now sitting on the job is the reason to do it. Roofr's path
-(`roofrMerge`) already fills `meas` and is the shape to copy.
+**DONE at 674.** Uploading a Hover or Roofr report under Measurements now reads
+it and fills `checklist.meas`. Gunn's report is on file — **re-upload it once to
+run the extraction over it**, since 674 only reads on upload and does not
+backfill documents already filed. A backfill pass over existing `meas_docs`
+rows is a small follow-up if more than one job needs it.
+
+
+## After 674
+
+- **674 reads on UPLOAD only.** Reports already filed (Gunn's Hover, and the
+  Bob DeBuilder mockup) are not backfilled. Re-uploading is the one-job answer;
+  a sweep over `meas_docs` is a small build if it is ever more than that.
+- **Nothing verifies Gemini read Hover's table layout correctly.** The route is
+  told to null rather than guess and the merge will not overwrite a field
+  measurement, so a bad read costs a re-entry, not a wrong number on a carrier
+  letter. Still: check the numbers against the report the first time.
+- With measurements on the Gunn job, the Desk's quantities stop being blank —
+  the remaining gaps there are **photographs (zero on that job)** and **a
+  Brookville building-official letter (none filed)**.
