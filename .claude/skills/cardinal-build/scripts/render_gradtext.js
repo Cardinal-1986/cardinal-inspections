@@ -6,8 +6,11 @@
    Usage: node render_gradtext.js [path/to/index.html]
    Point it at the 684 artifact as the NEGATIVE CONTROL — it must go red there.  */
 const path = require('path');
-const SP = __dirname;
-const { chromium } = require(path.join(SP, 'node_modules', 'playwright-core'));
+/* 692: was require(__dirname + '/node_modules/playwright-core'), which only
+   resolved when the harness sat in the scratchpad it was written in — the
+   same portability bug 687 fixed in the other committed harnesses and missed
+   on this one. Plain require + NODE_PATH, like its neighbours. */
+const { chromium } = require('playwright-core');
 const FILE = path.resolve(process.argv[2] || '/home/user/cardinal-inspections/index.html');
 const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 
