@@ -4,11 +4,11 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–690
+# Session of 10 August 2026 (later) — builds 685–691
 
-**685 through 690 all shipped, merged and verified deployed** (PRs #198–#205,
+**685 through 691 all shipped, merged and verified deployed** (PRs #198–#207,
 each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
-must confirm it again rather than inherit it). `main` at 688. Working tree
+must confirm it again rather than inherit it). `main` at 691. Working tree
 clean, branch synced to main, no open PRs.
 
 | Build | What | PR |
@@ -19,6 +19,7 @@ clean, branch synced to main, no open PRs.
 | 688 | ABC Supply → **Suppliers**, with ABC as a card inside | #201 |
 | 689 | calendar titles were **1.06:1** (unscoped light-era ink) · client cards → obsidian · the initial/Call/Text become raised keys | #203 |
 | 690 | pipeline-stage **chips** on All Leads & Jobs — surfacing a filter that already existed | #205 |
+| 691 | **Assigned To** joins Milestone as a second strip — 690's stage-only code generalised to any group | #207 |
 
 **One thing is waiting on Theo, asked and unanswered:** the `.pcpo` lavender in
 LIGHT mode. It was already failing at 1.99:1 and 689's darker card took it to
@@ -47,6 +48,14 @@ not a pass count.** Same finding as 628's amber bar and 633's white boxes.
 - **The same JS mistake twice in one session**: an icon's paths written as two
   adjacent string literals with no `+`. JS has no implicit concatenation. Icon
   entries in `P` are ONE string on ONE line.
+- **A negative control that CRASHES is not a negative control.** 691's gate
+  threw `getComputedStyle(null)` against the 690 artifact, which reads at a
+  glance like the red you wanted. Guard the probe so the control *reports* —
+  34 pass / 20 fail is evidence; a stack trace is an absence of evidence.
+- **I solved one filter group out of seven and called it the answer.** 690
+  shipped a stage strip; Theo's next message was "How would I filter by rep?
+  Etc". The engine had SEVEN groups the whole time. Ask what else the mechanism
+  covers before shipping a special case of it.
 
 ## What shipped
 
@@ -106,13 +115,38 @@ for an inline `color` before calling such a sweep done. Only 1 of the 37 had it.
    `.ljpo` PO is now settled on `#d8a94f`/`#8f1620` everywhere, which is a
    ready precedent if he wants the same treatment.
 
-## 690: the filter was already there — and there are now THREE ways to set it
+## 690–691: the filter was already there — and there are now THREE ways to set it
 
-`ljState.sets.stage` is the one source of truth. The chip strip, the desktop
+`ljState.sets[group]` is the one source of truth. The chip strips, the desktop
 checkbox rail (`#ljRailMount`) and the funnel sheet all push/splice the SAME
-array and all re-render through `renderLeadsView()`. **Do not give any of them
+arrays and all re-render through `renderLeadsView()`. **Do not give any of them
 its own state.** `render_stagechips.js` asserts the sync directly — it clicks a
 chip and then reads the rail's checkbox.
+
+**691 generalised 690 rather than copying it.** 690 shipped stage-only code;
+Theo's very next question was *"How would I filter by rep? Etc"* — one of seven
+groups solved. So the renderer became `ljChipStrip(gkey, mountId, wrapId)` and
+the handler `ljChipClick` now reads its group off the container's `data-g`.
+**Adding a third strip is two lines of markup and one call** — do not write a
+second handler. Theo's pick was **C, two fixed strips** (Milestone + Assigned
+To); the other five groups stay behind the funnel, and Option A (one switchable
+strip over all seven) was rendered, shown and NOT chosen — don't re-propose it
+without a reason.
+
+Three behaviours worth knowing before you touch it:
+
+- **A strip hides itself when it has fewer than two values.** A solo rep is not
+  a filter, it is a label. `wrap.style.display='none'` on the labelled `.ljgrp`,
+  not on the mount, so the heading goes with it.
+- **Only `stage` draws colour dots** (`dots = gkey === 'stage'`). Reps have no
+  palette and inventing one would collide with the semantic frozen list.
+- **Stage and rep COMBINE.** The gate asserts this explicitly, because the
+  obvious wrong implementation — one strip replacing the other's selection —
+  looks identical until you pick from both.
+
+`render_stagechips.js` is now **54 assertions across both themes**, expectations
+self-computed from the seed rather than typed in (BUG_CLASSES 15). Negative
+control on 690 reports 34 pass / 20 fail, so it has been seen red.
 
 ⚠️ **`OnHold` is in `STAGES` but absent from `LJ_SOLID` / `LJ_INK` / `LJ_SPINE`.**
 Everything falls back to `#8a93a1`, which is also Lead's colour, so the two dots
