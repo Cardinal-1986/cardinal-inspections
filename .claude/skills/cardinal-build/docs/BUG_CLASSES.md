@@ -1685,3 +1685,83 @@ Two independent faults, both producing a **green that agreed with me**:
 4. **Timing harnesses need the negative control MORE than functional ones**, not
    less: a functional assertion usually fails loudly on the wrong artifact,
    whereas a mis-scoped stopwatch happily reports a plausible improvement.
+
+---
+
+## 27 — One class name, two meanings, and one of them inherits the other's box (build 680)
+
+`.empty` in `index.html` means two unrelated things:
+
+- a standalone **empty-state panel** — `<div class="empty">No estimates yet.</div>`
+  — styled by an **unscoped** rule in the first `<head>` block:
+  `background:var(--paper); border:2px dashed var(--line); border-radius:8px;
+  padding:44px 24px; text-align:center;`. **16 legitimate users.**
+- a **modifier on a field value** — `<div class="val empty">Not set</div>`,
+  meaning "this field has no value". **Six surfaces.**
+
+The six modifier surfaces each had a module rule written for them
+(`#cr-claims-mount .cr-c-info-item .val.empty { color: …; font-style: italic; }`).
+Those rules are *more specific* and they *win* — but they only ever declare
+`color` and `font-style`. **The panel's background, 2px dashed border, 44px
+padding and centred text are not contested by anything, so they simply apply.**
+
+> **This is the part that hides it: it is not a specificity fight.** Reading the
+> module rule tells you the value should be muted italic text, and it *is* muted
+> italic text — inside a 113px white dashed box. Every instinct says "find the
+> rule that's beating mine"; there isn't one. Nothing is beating anything.
+
+An empty "Approved" field on the claims screen therefore rendered as a
+113px-tall centred white panel with a dashed border. Theo photographed it and
+asked what the very large white boxes were for.
+
+**How to find it:** you cannot, by reading. `render_emptyclass.js` extracts every
+CSS selector where the class sits on a **compound** (`.val.empty`, not `.empty`
+or `#x .empty`), rebuilds that selector's ancestor chain as real elements, and
+reads the computed style in Chromium. Six of sixteen came back with the global
+rule's literal fingerprint.
+
+**The fix is a rename at source, not an override.** Six CSS rules and eight
+emitters moved to `novalue`; the global rule is untouched and its 16 panel users
+still work — **asserted**, because "delete the shared rule" is the tempting fix
+and it breaks a screen you were not looking at. `.cr-photo.empty` is a genuine
+empty photo slot that *wants* the panel and leans on the global rule for its
+border-width and background; it stayed.
+
+**Rules:**
+
+1. **A shared, unscoped utility class is a namespace.** Before using an existing
+   class name as a modifier, ask what it already styles *globally* — not what the
+   rule you are about to write styles.
+2. **Overriding `color` does not override `padding`.** A more-specific rule only
+   wins the properties it names. Two rules can both apply in full.
+3. **Fix by renaming the newer meaning**, so the shared rule keeps its original
+   users. Deletion at source, not out-specificity — and assert the survivors.
+4. **Detect by fingerprint, not by vibe.** The first draft of the detector keyed
+   on "padding ≥ 40 **or** `text-align:center`" and reported **16 of 16 broken** —
+   a false red, because four surfaces centre their own text on purpose. Keyed to
+   the global rule's literal `padding:44px 24px`, the real answer is six.
+   *When a count contradicts you, suspect the regex — including your own.*
+5. **Scan both names after the rename.** The first green run said "0 of 10"
+   because the renamed selectors had dropped *out* of the detector's own scan —
+   a fix that passes by hiding from its test. Scanning `.empty` **and**
+   `.novalue` keeps all 16 measured and asserts the six are still seen.
+
+### The neighbouring trap: a diagnostic rig that re-implements what it tests
+
+`render_claimpane.js` had a hand-written copy of the module's `kv()` and probed
+for a hardcoded `.val.empty`. After the rename it emitted the old class, found no
+element, read `null`, and reported the bug as still present. **It agreed with its
+own prose rather than with the app** — BUG_CLASSES 15, in a rig rather than an
+assertion. It now lifts the real `kv()` out of the artifact and finds the value
+element carrying *any* modifier without naming it.
+
+### And the other one: "the previous build" is not always the right baseline
+
+Three sweep reds this build were the invocation, not the app. `harness_672`,
+`harness_674` and `render_inshub` all refuse to skip a differential silently
+(correct, per class 24) — but each is pinned to a **specific** historical
+artifact, not to "whatever shipped last". `harness_674`'s differential extracts
+`roofrMerge` and executes it standalone; at 679 that is a thin wrapper over
+`aerialMerge`, so it throws `aerialMerge is not defined` — a **crash**, which
+reads like a regression and is not one. `render_inshub`'s control must be 674,
+because 679 already carries 675's swap. **Read the usage line for the baseline.**

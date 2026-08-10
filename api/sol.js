@@ -291,6 +291,22 @@ export default async function handler(req, res) {
       '(for example "BC-Building Codes", "Code Upgrade Coverage" or ' +
       '"Ordinance or Law - Coverage D"). Leave the amounts null when ord_law ' +
       'is not true.\n\n' +
+      /* 680: this route never asked for the cause, so the claim screen's
+         "Cause of Loss" sat empty on every claim unless somebody typed it, and
+         index.html's mapping for it (which has always existed) was reading a
+         key that never arrived. The vocabulary below is NOT free text — it
+         mirrors the seven options in the claim form's select, and a value
+         outside that list simply fails to match and fills nothing. Returning
+         the wrong one of the seven is worse than returning null, hence the
+         instruction to leave it null when the document does not say. */
+      'cause_of_loss must be exactly ONE of these seven tokens and nothing ' +
+      'else: hail, wind, wind_hail, fire, water, tree_impact, other. Use ' +
+      'wind_hail only when the document names BOTH wind and hail as the peril. ' +
+      'Scope line items are evidence: a scope full of shingle replacement with ' +
+      'test squares and hits-per-square is hail; one full of tarping, blown-off ' +
+      'shingles and ridge cap is wind. If the document does not state a peril ' +
+      'and the line items do not clearly show one, return null — do not ' +
+      'guess, and never invent an eighth token.\n\n' +
       'For adjuster.company give the adjusting firm or catastrophe team named on ' +
       'the document \u2014 for example a carrier\u2019s national catastrophe team, or an ' +
       'independent adjusting company. Do not repeat the carrier name on its own.\n\n' +
@@ -300,6 +316,7 @@ export default async function handler(req, res) {
       '  "policy_number": string or null,\n' +
       '  "claim_number": string or null,\n' +
       '  "date_of_loss": "YYYY-MM-DD" or null,\n' +
+      '  "cause_of_loss": one of "hail" "wind" "wind_hail" "fire" "water" "tree_impact" "other", or null,\n' +
       '  "adjuster": {\n' +
       '    "name": string or null,\n' +
       '    "company": string or null,\n' +
