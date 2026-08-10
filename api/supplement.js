@@ -100,6 +100,10 @@ const PACK = [
     title: 'Discontinued siding colour — full elevation', qty: null, unit: 'SQ',
     when: 'Damage confined to part of an elevation, partial repair scoped, and the panel profile/gauge/colour is discontinued (supplier confirmation in writing). Ask only for elevations you can defend by line of sight.',
     sample: 'The damaged siding is discontinued per the supplier’s written confirmation (attached); a partial repair cannot produce a reasonably comparable appearance as required by OAC 3901-1-54(I)(1)(b), because no available panel matches the existing profile and weathered colour.' },
+  { id: 'repairability', group: 'matching', citation: 'OAC 3901-1-54(I)(1)(b)', basis: 'code',
+    title: 'Repairability — brittle shingles / repair not feasible', qty: null, unit: 'SQ',
+    when: 'A repair is approved but surrounding shingles fail a brittle test, manufacturer guidance does not support repair, or an ITEL report shows no matching product — the repair cannot restore pre-loss condition or a reasonably comparable appearance.',
+    sample: 'The approved repair cannot be completed without damaging the surrounding shingles — a brittle test shows adjacent shingles fracturing when lifted (documentation attached), and the ITEL report confirms no matching product is available. Per OAC 3901-1-54(I)(1)(b) the replacement must produce a reasonably comparable appearance; please revise the scope from repair to replacement.' },
   { id: 'step_counter_flashing', group: 'flashing', citation: 'RCO R905.2.8', extra: 'RCO R903.2', basis: 'code',
     title: 'Step & counter flashing (no reuse)', qty: null, unit: 'LF',
     when: 'Scope excludes new step/counter flashing or specifies reusing existing.',
@@ -312,6 +316,12 @@ export default async function handler(req, res) {
 
     const meas = body.meas || {};
     const claim = body.claim || {};
+    /* 669: the claim's iTel lab report, when one is on file. FACTS the desk
+       read from itel_lab_reports — verdict, matching product, mismatch notes,
+       control number — so a repairability or no-match gap arrives with its
+       evidence already named. The model receives a one-line summary, never
+       the report itself. */
+    const itel = body.itel && typeof body.itel === 'object' ? body.itel : null;
     const filingType = ['partial_denial', 'backend', 'pwi_coc'].indexOf(body.filing_type) >= 0
       ? body.filing_type : 'partial_denial';
 
@@ -340,6 +350,11 @@ export default async function handler(req, res) {
           'Checklist of recognized supplement grounds:\n' + packMenu + '\n\n' +
           DISCIPLINE + '\n\n' +
           'Property measurements (linear feet / squares; ? = unknown): ' + measLine + '. ' +
+          (itel ? 'An ITEL lab report is ON FILE for this claim: control #' +
+            String(itel.control_number || '?') + ', verdict: ' + String(itel.verdict || '?') +
+            (itel.match_product ? ', closest match: ' + String(itel.match_product) : ', no matching product listed') +
+            (itel.mismatch_notes ? ', notes: ' + String(itel.mismatch_notes).slice(0, 200) : '') +
+            '. Where repairability or matching applies, reference this report in the why field. ' : '') +
           'Claim: carrier ' + String(claim.carrier || '?') + ', claim # ' + String(claim.claim_number || '?') + '. ' +
           'Filing type: ' + filingType + '.\n\n' +
           'Read every line item and total in the document. For each ground that genuinely ' +

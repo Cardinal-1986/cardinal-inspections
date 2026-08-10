@@ -3085,3 +3085,10 @@ print/send only. The Desk is standalone (studio precedent), linked from the
 insurance hub. `filing_type` ∈ partial_denial | backend | pwi_coc, NO
 default (NULL = legacy/manual). `insurance_supplements.created_by` is NOT
 NULL. `read_response` mode answers 501 until build 670.
+
+**669**: the pack gained `repairability` (brittle test / repair-not-feasible,
+OAC appearance rule) — the library card grew FIRST, then the pack entry, per
+the pin. The Desk loads the claim's latest `itel_lab_reports` row and passes
+a one-line summary to analyze; the model references the control number, never
+re-derives the report. Hover note: `/api/hover` is the SIDING order flow; its
+numbers do NOT reach `checklist.meas` (Roofr's do).

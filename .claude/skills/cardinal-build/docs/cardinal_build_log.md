@@ -12935,3 +12935,38 @@ Theo's gate, not a harness's.
 optional-fields extension, recipient shown, 10-yr signed exhibit URLs) and
 **670 — carrier-response reading** (mode `read_response`, per-item
 decisions onto the row, rebuttal draft, PWI/COC completion path).
+
+---
+
+## Build 669 — 10 Aug 2026 — repairability joins the pack; the Desk reads iTel
+
+Theo, while reviewing the Desk walkthrough: *"We supplement a lot based on
+repair ability, discontinued shingle or siding, reasonable appearance as
+well. ITEL is also used when needed."* Discontinued (shingle AND siding) and
+reasonable appearance were already in the pack; **repairability was the
+gap**, and iTel is its evidence — `itel_lab_reports` has 28 real rows keyed
+by claim_id with verdict / match_product / mismatch_notes.
+
+- **The library grew FIRST** (the honesty core's order of operations): a new
+  Supplement Templates card — *Repairability — Brittle Shingles / Repair Not
+  Feasible* — citing `OAC 3901-1-54(I)(1)(b)`, with the brittle-test
+  documentation list and ITEL named as evidence. THEN the pack entry
+  (`repairability`, group matching) citing what the card cites. The
+  pack↔library pin re-verified: 22 entries, 12 distinct citations, none
+  missing.
+- **The Desk loads the claim's latest iTel report** (bounded, named columns,
+  quiet on absence), shows verdict + control number on the claim card, and
+  hands a one-line summary to the analyst — which is told to REFERENCE the
+  report in a gap's `why`, never to re-derive it.
+- **Roofr question answered in passing**: measurements added later flow in
+  automatically — `roofrMerge` fills `checklist.meas` and the Desk re-reads
+  it on every open. **Hover**: `/api/hover` reads Hover reports for the
+  SIDING material-order flow only; its numbers do not land in
+  `checklist.meas`. Hand-entry with source 'Hover' works today; wiring
+  hover→meas is its own small build if wanted (recorded, not started).
+
+**Gates.** `check_build.py` green, stamp 668 → 669. `harness_669` (18)
+drives the real route and asserts the iTel line reaches the prompt with its
+control number — and that NO iTel mention appears when none is on file.
+Negative control on the 668 artifacts: 15 red. 667 (27) and 668 (29) re-run
+green.

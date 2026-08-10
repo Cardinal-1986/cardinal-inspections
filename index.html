@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 668 &#8212; The Supplement Desk: AI reads the scope, finds what is missing, cites our own Ohio templates, and drafts the letter</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 669 &#8212; The Desk learns repairability &#8212; brittle test, ITEL and the appearance rule &#8212; and reads the claim&#8217;s iTel report itself</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -6086,6 +6086,23 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </div>
         <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The damaged siding on the [elevation] is [manufacturer/profile/gauge/colour], which the supplier has confirmed in writing is discontinued and no longer available. Attached is that confirmation. A partial repair cannot produce a reasonably comparable appearance as required by OAC 3901-1-54(I)(1)(b), because no currently available panel matches the existing profile and weathered colour. Please approve replacement of the full [elevation(s)] &mdash; [X squares] &mdash; together with the associated house wrap, starter strip, J-channel, corner posts and utility trim.&rdquo;</i></div>
         <div class="rl-warn"><b>Ask for the elevation you can defend.</b> If only one wall is damaged and the walls do not share a line of sight, ask for that wall. Asking for all four when three are undamaged and not visible together invites a denial that also costs you the one you were entitled to.</div>
+      </div>
+
+      <div class="rl-card" data-rltags="repairability brittle shingle repair not feasible itel supplement">
+        <h3>Repairability &mdash; Brittle Shingles / Repair Not Feasible</h3>
+        <span class="rl-cite">OAC 3901-1-54(I)(1)(b)</span>
+        <span class="rl-cite rl-gold">ITEL Report</span>
+        <p>Adjuster approved a repair (individual shingle replacement) but the surrounding shingles are too brittle to lift without fracturing, the manufacturer's guidance does not support repair, or an ITEL report shows no matching product &mdash; so a repair cannot restore the roof to pre-loss condition or a reasonably comparable appearance.</p>
+        <div class="rl-doc"><b>Documentation required:</b>
+          <ul>
+            <li>Brittle-test photos or video: an adjacent shingle lifted gently and fracturing, with date stamp.</li>
+            <li>ITEL report (control number) showing the product discontinued or no available match, where pulled.</li>
+            <li>Manufacturer repair guidance for the installed product, if published.</li>
+            <li>Close-ups of the granule loss / mat exposure across the repair area.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;The approved repair cannot be completed without damaging the surrounding shingles: a brittle test performed on [date] shows adjacent shingles fracturing when lifted (documentation attached). [ITEL report #[control number] further confirms no matching product is available.] A repair that damages surrounding material cannot restore pre-loss condition, and per OAC 3901-1-54(I)(1)(b) the replacement must produce a reasonably comparable appearance. Please revise the approved scope from repair to replacement of [the affected slope(s) / X squares].&rdquo;</i></div>
+        <div class="rl-tags"><span>repairability</span><span>brittle test</span><span>ITEL</span></div>
       </div>
 
       <div class="rl-groupsep">Flashings</div>
@@ -36749,6 +36766,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:669, d:'2026-08-10', t:'Repairability joins the supplement playbook, with iTel as its evidence',
+s:'Theo: we supplement a lot on repairability, discontinued shingle or siding, and reasonable appearance \u2014 with ITEL when needed. Discontinued and appearance were already in the Desk\u2019s playbook; repairability now is too: a new Supplement Template (brittle test, manufacturer guidance, the Ohio appearance rule) that the Desk\u2019s analyst can cite. And the Desk now reads the claim\u2019s own iTel lab report \u2014 verdict, matching product, mismatch notes \u2014 shows it on the claim card, and hands it to the analysis so a no-match finding arrives with its control number already attached.'},
 { b:668, d:'2026-08-10', t:'The Supplement Desk \u2014 the letter writes itself, the code citations are ours',
 s:'A new standalone page (linked from the insurance hub, admin sign-in): pick a claim, and the AI reads the carrier\u2019s scope PDF against Cardinal\u2019s own 21 Ohio supplement templates \u2014 ice barrier to the wall line, drip edge at eaves AND rakes, ventilation to code, matching under the Ohio regulation \u2014 and lists what the scope is missing. Quantities come from the job\u2019s real measurements, not the AI\u2019s arithmetic. You tick what belongs, attach job photos per item, and it drafts the carrier letter \u2014 quantities only, never a dollar amount, and it cannot cite a code section that isn\u2019t in our own library. Filing it updates the claim\u2019s supplement figures automatically.'},
 { b:667, d:'2026-08-10', t:'The supplement engine \u2014 one system, and the books stay honest',

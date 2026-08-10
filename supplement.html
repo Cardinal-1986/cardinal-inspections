@@ -419,8 +419,28 @@ async function openDesk(claimId){
   loadScopeDocs(c.project_id);
   loadFilings(c.id);
   loadPhotos(c.project_id);
+  loadItel(c.id);
 }
 function kv(label, val){ return '<div class="cell"><b>' + esc(label) + '</b><span>' + val + '</span></div>'; }
+
+/* 669: the claim's iTel lab report — repairability and no-match supplements
+   stand on it, so the analyst gets it and the claim card shows it. Bounded,
+   newest first; quiet when absent or refused. */
+async function loadItel(claimId){
+  S.itel = null;
+  try{
+    var r = await sb.from('itel_lab_reports')
+      .select('control_number, verdict, match_product, mismatch_notes, report_date')
+      .eq('claim_id', claimId).order('report_date', { ascending: false }).limit(1);
+    if(!r.error && r.data && r.data.length){
+      S.itel = r.data[0];
+      el('deskKv').innerHTML += kv('iTel on file',
+        esc(S.itel.verdict || 'report') +
+        (S.itel.match_product ? ' — match: ' + esc(S.itel.match_product) : ' — no match listed') +
+        ' <span style="color:var(--sd-ink3);">#' + esc(S.itel.control_number || '') + '</span>');
+    }
+  }catch(_){}
+}
 
 /* the scope documents — LIST without html (the 649 lesson: the payload column
    is megabytes; fetch it only for the one chosen) */
@@ -509,6 +529,7 @@ async function analyze(){
       body: JSON.stringify({
         mode: 'analyze', scope: scope,
         meas: S.meas || {},
+        itel: S.itel || null,
         claim: { carrier: S.claim.carrier, claim_number: S.claim.claim_number },
         filing_type: el('filingType').value
       })
