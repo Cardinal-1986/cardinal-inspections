@@ -3054,3 +3054,34 @@ Empty fields stay pre-ticked (filling a blank claim is one Apply); identical
 values stay unticked; `(not found)` rows get no checkbox; a stored `false`
 is a **value**, not an empty; the notes row stays always-ticked because it
 appends. Do not restore differs-means-ticked.
+
+### 667–668 — The Supplement Desk (`supplement.html` + `api/supplement.js`)
+
+**The one supplement system (CR-AUD-005 closed at the data layer).** Filings
+are `insurance_supplements` rows; the claim's single-slot columns are a
+**trigger mirror** (`supp_mirror_to_claim`, `supplement_desk.sql`) that
+recomputes from the rows on every insert/update/delete, whoever wrote. ⚠ Do
+not write the single-slot columns directly in new code — write rows. The
+old cr-sp modal still writes slots directly; its values are overwritten by
+the next row change, and that is the intent (rows are the source of truth).
+
+⚠ **THE HONESTY CORE — do not weaken it.** In `api/supplement.js` the model
+proposes gaps by `pack_id` ONLY; the citation string is copied server-side
+from the PACK (21 entries extracted from the Supplement Templates page). An
+invented citation is structurally impossible. `harness_667` pins every pack
+citation to the library's own `rl-cite` spans. If you add a pack entry, its
+citation must exist on that page first.
+
+⚠ Quantities from measurements are computed **server-side** (`measQty`):
+drip edge = eave+rake, ice barrier = eave, ridge vent = ridge, per-square
+items = sq. Never let the model do this arithmetic.
+
+⚠ **Quantities-only letters** (Theo): no dollar amounts; `dollar_flag`
+warns, never silently edits. **Admin-only** at the ROUTE (403), not just UI.
+**Nothing sends itself** — send is build 669's explicit-tap flow.
+
+Letters at rest carry `[[PHOTOS:id]]` tokens; URLs are signed at
+print/send only. The Desk is standalone (studio precedent), linked from the
+insurance hub. `filing_type` ∈ partial_denial | backend | pwi_coc, NO
+default (NULL = legacy/manual). `insurance_supplements.created_by` is NOT
+NULL. `read_response` mode answers 501 until build 670.

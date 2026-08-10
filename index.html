@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-09 build 666 &#8212; The scope review only pre-ticks empty fields &#8212; overwriting something already on file now takes a deliberate tap</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 668 &#8212; The Supplement Desk: AI reads the scope, finds what is missing, cites our own Ohio templates, and drafts the letter</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4141,6 +4141,15 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="ins-cardsub">Carriers and adjusters you've worked with, what they'll fight over, and their inspection habits.</div>
         <div class="ins-cardgo ins-soon">Coming soon</div>
       </div>
+      <!-- 668: the Supplement Desk — a STANDALONE page (studio.html precedent),
+           admin-only twice over (its own rpc gate + api/supplement.js enforces
+           the same). An <a>, not a data-ctnav: different origin rules, its own
+           sign-in, deliberately not part of this file. -->
+      <a class="ins-card" href="/supplement.html" style="text-decoration:none;">
+        <div class="ins-cardtitle">&#129518; Supplement Desk</div>
+        <div class="ins-cardsub">AI reads the carrier's scope, finds what's missing, cites Cardinal's own Ohio templates, and drafts the response letter with your photos and measurements. Admin only.</div>
+        <div class="ins-cardgo">Open &rsaquo;</div>
+      </a>
       <button class="ins-card" data-ctnav="supplements">
         <div class="ins-cardtitle">&#128206; Supplement Templates</div>
         <div class="ins-cardsub">Pre-formatted supplements for the most common denials: ice barrier, decking, ventilation, matching, flashings, related property damage.</div>
@@ -36740,6 +36749,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:668, d:'2026-08-10', t:'The Supplement Desk \u2014 the letter writes itself, the code citations are ours',
+s:'A new standalone page (linked from the insurance hub, admin sign-in): pick a claim, and the AI reads the carrier\u2019s scope PDF against Cardinal\u2019s own 21 Ohio supplement templates \u2014 ice barrier to the wall line, drip edge at eaves AND rakes, ventilation to code, matching under the Ohio regulation \u2014 and lists what the scope is missing. Quantities come from the job\u2019s real measurements, not the AI\u2019s arithmetic. You tick what belongs, attach job photos per item, and it drafts the carrier letter \u2014 quantities only, never a dollar amount, and it cannot cite a code section that isn\u2019t in our own library. Filing it updates the claim\u2019s supplement figures automatically.'},
+{ b:667, d:'2026-08-10', t:'The supplement engine \u2014 one system, and the books stay honest',
+s:'Under the hood for the Desk: supplements now live in one place, and the claim\u2019s summary numbers \u2014 what the AR aging and owed math read \u2014 update THEMSELVES whenever a filing changes, whoever changed it. The reader that finds missing items can only cite building code from Cardinal\u2019s own template library; an invented section number is structurally impossible, because the citation text never comes from the AI at all.'},
 { b:666, d:'2026-08-09', t:'The scope review stops pre-approving overwrites',
 s:'When a scope read disagreed with something already on file, the review screen arrived with that change pre-ticked \u2014 which is how one misread digit in an adjuster\u2019s phone number got applied over the correct number tonight. Now only EMPTY fields come pre-ticked. A field that already holds a value still shows what the document says next to what is stored, but replacing it takes a deliberate tap. Filling in a blank claim stays one Apply, exactly as before.'},
 { b:665, d:'2026-08-09', t:'Scope history \u2014 no read is ever lost again',

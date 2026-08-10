@@ -2039,10 +2039,14 @@ needs the same "which one, in what shape" answer the audit report asks for.
 2. **Stage labels = "Closed" + "Awaiting Depreciation / Supplements"**
    (CR-AUD-014). The rail's wording wins in every insurance map; OnHold
    gains "On Hold" everywhere. Built at 655.
-3. **Supplement unification (CR-AUD-005) is its own LATER build** — design
-   goes to Theo first, against his recorded three-filings model
-   (partial-denial · backend · PWI/COC). Do not start it without his
-   sign-off on the shape.
+3. **✅ Supplement unification (CR-AUD-005): the data layer SHIPPED at
+   667-668** — the Supplement Desk. Design went to Theo first (9-10 Aug,
+   his picks recorded: admin-only, send-on-tap, quantities-only), built on
+   his three-filings model. Rows in `insurance_supplements`, trigger mirror
+   to the single-slot columns, AI gap analysis citation-locked to Cardinal's
+   own templates. **Still open: build 669 (send from the desk) and 670
+   (carrier-response reading + PWI/COC completion path).** CR-AUD-017 folds
+   into the mirror and is closed with it.
 
 ## ✅ BUILT at 654 — money coherence (CR-AUD-003 / 004 / 013)
 

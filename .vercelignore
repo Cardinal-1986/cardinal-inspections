@@ -57,3 +57,8 @@ brand/
 # --- Operational tooling for the DGX Spark. Runs on Theo's own hardware,
 #     never fetched by the app. Nothing here should be on a public domain. ---
 spark/
+
+# supplement.html DELIBERATELY SHIPS (build 668) — the Supplement Desk,
+# the studio.html pattern: served publicly, gated by its own Supabase
+# sign-in + an is_cardinal_admin() check, and api/supplement.js enforces
+# admin server-side. supplement_desk.sql is covered by the *.sql blanket.

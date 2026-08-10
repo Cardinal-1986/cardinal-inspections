@@ -12849,3 +12849,89 @@ render_inscards 9/9 · render_656 17/17.
 needs Theo to read a scope after deploy — Gunn's Settle tab should then show
 the backfill row plus the new read, and the review modal should arrive with
 his stored fields unticked.
+
+---
+
+## Builds 667–668 — 10 Aug 2026 — The Supplement Desk
+
+Theo's ask, near-verbatim: *an AI supplement response email, by reading the
+scope — find out what's missing, know all of Ohio's code, suggest a response
+to carrier, adding real photos and responses from carrier when needed with
+measurements. A standalone page. Kind of what XBuild does without Xactimate
+access.* His picks, recorded before a line was written: **admin-only** ·
+**send from the desk on explicit tap** (send itself is the NEXT build) ·
+**quantities-only letters** — the carrier prices per their own Xactimate list.
+
+**This IS the CR-AUD-005 supplement unification**, not a third system:
+filings live in `insurance_supplements` (0 rows before tonight), and the
+claim's single-slot columns — what the AR aging and owed math read — are now
+a **database trigger mirror** that recomputes from the rows on every change,
+whoever the writer was. The old claims-screen CRUD keeps working and keeps
+the books honest through the same trigger.
+
+### 667 — the engine
+
+- **`supplement_desk.sql`** (applied via MCP before the PR): `filing_type`
+  (Theo's three filings — partial_denial · backend · pwi_coc — **NO
+  default**: a default would stamp CRUD rows with a type nobody chose, the
+  defaults-become-data class), letter columns (tokens at rest, never URLs),
+  `responses jsonb`, `scope_ref`, and the mirror trigger.
+  ⚠️ **The live trigger test caught a real defect before it shipped**: the
+  single-slot contract is NOT NULL (`status default 'none'`, filed/approved
+  `0`) and the first draft wrote NULLs — 23502 on the spot. The mirror now
+  speaks the slot's own vocabulary. Three-act test on an orphan claim:
+  file → `filed/1234.56`, decide → `partial/800`, delete → `none/0/0`.
+  Also learned live: `insurance_supplements.created_by` is NOT NULL.
+- **`api/supplement.js`** — THE HONESTY CORE. The model may only point at
+  entries in the PACK by id; **the citation string the caller sees is copied
+  server-side from the pack, never taken from model text.** An invented
+  pack_id survives only as an uncited scope-consistency observation at low
+  confidence. The PACK is **21 entries extracted from Cardinal's own
+  Supplement Templates page** (12 distinct RCO/OAC citations), and
+  `harness_667` PINS every citation to that page's `rl-cite` spans — the
+  pack cannot drift from the library. Quantities the measurements can answer
+  (drip edge = eave+rake, ice barrier = eave, ridge vent = ridge, squares)
+  are **computed server-side**, never model arithmetic. Admin enforced AT THE
+  ROUTE (rpc `is_cardinal_admin` → 403), not just in the UI. Dual intake with
+  the sol.js SSRF bound; model ladder 3.6-flash → 3.5-flash with the
+  no-JSON-mode retry; `dollar_flag` scans drafts for `$` — flagged for the
+  human, never silently edited. `read_response` answers 501 until the next
+  build. `vercel.json` gained the maxDuration 60 entry in the same commit.
+
+### 668 — the Desk (`supplement.html`)
+
+Standalone, the studio.html precedent: own sign-in, own `--sd-*` tokens,
+noindex, shares only the Supabase project. A non-admin who signs in is
+signed back OUT. Flow: pick claim → scope docs listed **without** the html
+payload column (the 649 lesson), measurements from `checklist.meas`, job
+photos signed in batch → Analyze (>3 MB scopes stage through
+`photos/scopes/` and POST `{url}`, the 643 path) → Review (**nothing
+pre-ticked** — the 666 philosophy; qty editable, `measured` / `model —
+check it` / `enter yours` provenance shown; photos ticked per item) →
+Draft (editable letter; `[[PHOTOS:id]]` tokens render as pills and
+round-trip back to raw tokens for storage — EXECUTED in the harness) →
+File (`status:'submitted'`, full item set stored, trigger mirrors, the
+claim list and AR see it immediately) → Print/Copy (print signs 1-hour
+URLs for display; the stored letter keeps tokens). index.html's only
+change: the hub card `<a href="/supplement.html">` + stamp + changelog;
+`.vercelignore` declares the page SHIPS.
+
+**Gates.** 667: `harness_667` 27/27 (negative control: 4 red with the route
+absent — the handler-driven blocks skip, honestly counted). 668:
+`harness_668` 29/29, every inline script `node --check`ed (check_build
+cannot see a standalone page); negative control on the 666 artifact +
+missing page: 22 red. `check_build.py` green, stamp 666 → 668 (667 has no
+index.html artifact of its own; both changelog entries ship at 668). Full
+sweep green: 666→653, approvals, pay (TZ), render_inscards, render_656.
+All 27 `api/*.js` parse.
+
+**What no gate proves, said plainly**: a real analyze against Gunn's scope
+needs the deployed key — the expected first result is gaps in the
+ice-barrier / drip-edge / ventilation family with RCO citations and
+quantities from his eave/rake figures. And the letter's persuasiveness is
+Theo's gate, not a harness's.
+
+**NEXT (recorded, not started): build 669 — send from the desk** (senddoc
+optional-fields extension, recipient shown, 10-yr signed exhibit URLs) and
+**670 — carrier-response reading** (mode `read_response`, per-item
+decisions onto the row, rebuttal draft, PWI/COC completion path).

@@ -67,6 +67,9 @@
     },
     "api/summarize.js": {
       "maxDuration": 60
+    },
+    "api/supplement.js": {
+      "maxDuration": 60
     }
   }
 }
