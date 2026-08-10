@@ -153,7 +153,8 @@ for an inline `color` before calling such a sweep done. Only 1 of the 37 had it.
 
 ## Queue
 
-1. **The emoji sweep — 686, 692, 695, 698, 699. 547 remain.** Measured with
+1. **The emoji sweep — 686, 692, 695, 698, 699. 532 remain**, after the 17
+   `<option>` emoji were fenced out by Theo's decision. Measured with
    comments excluded (module banners' box-drawing swamps a naive count) and with
    the 0x2300–0x23FF block included. Dingbats (156), arrows (154) and geometric
    marks (66) are counted SEPARATELY and are **not** part of this sweep — ✓ ✕ →
