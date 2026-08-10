@@ -14493,6 +14493,75 @@ as the retirement comment — asserted by grep, count 1.
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
 
+- **701** · **The weather panel is gone from the home screen.** Theo: *"Get rid
+  of the weather table altogether. It's not needed."* Out of `cr-lr-script`:
+  `wx()`, `wxPaint()`, `wxCached()`, `WX_LL`/`WX_TTL`/`WX_KEY`, `WX_CODES`, the
+  load-time call and the markup slot — 23,983 → 19,410 chars. 18 CSS rules
+  removed, 3 trimmed (grouped rules that also carry `.cr-lr-sub`/`.cr-lr-stamp`).
+  It also removes the only third-party data call the home screen made
+  (Open-Meteo, keyless).
+
+  ⚠️ **The rule remover cut a COMMENT in half and shipped a red gate.** It
+  walked out from each `.cr-lr-wx` match to the nearest brace; for the last rule
+  in the phone media query the nearest boundary going backwards was inside a
+  `/* … */`. The resulting unclosed comment-opener then swallowed **1,411
+  characters of live CSS** as far as the next closing delimiter, leaving a
+  duplicated comment head, an orphaned `{padding:7px 9px…}` with no selector,
+  and an otherwise-empty `@media (max-width:560px)`. `check_build` caught it —
+  `style block 68: 101 open / 100 close` — because it strips comments BEFORE
+  counting braces, which is exactly the case a raw brace count reads as
+  balanced (105/105). **A remover that walks to a brace must first prove it is
+  not standing inside a comment.**
+
+  ⚠️ **And the same fault, in the note about the fault.** `render_wx701.js`'s
+  banner described the bug and wrote the closing delimiter literally, which
+  ended the banner early and made the prose below it parse as code. `node`
+  caught it. The wording in that file is deliberately indirect.
+
+  **Two things came with the removal, both stated rather than folded in.**
+  (a) `.cr-lr-head .cr-lr-mark{font-size:clamp(28px,8.2vw,58px)}` existed only
+  to make room for the panel — its own comment said so — so the wordmark is
+  back to its full `clamp(38px,12vw,58px)`. Measured at four widths first:
+  182px of text in a 353px box at 393px, no overflow anywhere.
+  ⚠️ The first attempt to measure that appended the override to `<head>` and
+  read **no change** — a body `<style>` wins on document order at equal
+  specificity, so the probe's own rule lost. `!important` is what made it
+  honest, and without it the build would have concluded the restore was a no-op.
+  (b) **A pre-existing defect, found while photographing the before/after and
+  reproduced unchanged on 684:** the four course rows read *"Quick
+  InspectionWalk the roof"*. `.tt`, `.sb` and `.n` are `<span>`s at
+  `display:inline`. Two things prove it was never intentional — `margin-top` is
+  set on `.sb` and `.n`, which does nothing at all on an inline box, and the
+  `.cr-lr-pair` tiles directly below use `<b>`/`<small>` and stack correctly.
+  One scoped declaration; subtitle offset 4–6px → 23–26px.
+
+  Gates: `check_build` green (700 prev, marker + negative control).
+  `render_wx701.js` (new) **31 assertions, RED on 700 with 14 failures.** It
+  asserts the landing is ALIVE before asserting the panel is absent — on a
+  removal, "the element is not there" is also what a page that failed to render
+  says. ⚠️ Its `typeof window.wxPaint === 'undefined'` check **passed on the
+  negative control**, because `cr-lr-script` is an IIFE and the helpers were
+  never globals; replaced with a source check that goes red. Sweep green:
+  colors700 11/11, viewhead699 15/15, projsec698 10/10, swipe697 10/10,
+  ljfit696 28/28, tools695 5/5, toggle694 22/22, sflight 11/11, icons692 38/38,
+  gradtext 94/94, inscards 9/9.
+
+- **700** · **The PO number reads in light mode, and On Hold has a colour of its
+  own.** Theo: *"Do whatever you recommend for the lavender in light mode, for
+  the on hold maybe make it a different color of your choice."*
+  `.pcpo` was `#c9a2ff` in both themes — **1.79:1** on the light client card,
+  and 689 had made it marginally worse (1.99 → 1.79), which that entry recorded
+  at the time. Now a token pair: `--pc-po` `#c9a2ff` dark / `#6d3fbf` light.
+  **A pair, not a computed literal**, per the rule 527 established by breaking
+  it the other way.
+  **On Hold had no entry in any of the five stage maps and fell through to
+  Lead's grey**, so the two stages looked identical in a list. It now has one in
+  each: `LJ_SOLID` `#c8862b`, `LJ_INK` `#15171b`, `LJ_SPINE` `#ff9f43`,
+  `STAGE_COLORS` `#0F9B8E`, `STAGE_INK` `#0B5F57`. **Amber on the leads list,
+  teal on the job banner** — deliberately not one colour, because those two
+  screens use different palettes and amber was already spoken for on the banner.
+  Gate `render_colors700.js`, 11 assertions, RED on 699 with 8 failures.
+
 - **699** · **The page headings are drawn, and `ICO` is declared once.**
   All 15 `h2.viewhead`. `CardinalIcons` 51 → 52 (`chat`). Sweep **570 → 547**.
   ⚠️ **CORRECTION TO 698, in my own words.** 698 meant to add the `ICO` helper

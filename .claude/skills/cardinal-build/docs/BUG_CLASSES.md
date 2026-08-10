@@ -1868,3 +1868,60 @@ stylesheet); `overflow:auto` written as PROSE inside a CSS comment; and inline
 ⚠️ **No CSS reaches the iOS system edge-swipe.** A gesture starting on the very
 edge of the glass is handled before the page sees it. This class covers swipes
 that begin on the element.
+
+---
+
+## 31 — a rule remover that walks to a brace can cut a COMMENT in half
+
+**Struck at 701, and again inside the gate written to prove 701.**
+
+Removing a feature's CSS means deleting whole rules, so a remover finds the
+selector and walks outward to the enclosing braces. When the last rule in a
+block is preceded by a comment, **the nearest boundary going backwards is
+inside that comment**. The cut lands mid-sentence, and what is left is a
+comment-opener with no closer. Everything after it — up to the next closing
+delimiter, wherever that happens to be — becomes comment. At 701 that was
+**1,411 characters of live CSS**, a whole media query's contents, silently.
+
+**Why a brace count alone will not catch it.** The mangled block counted
+**105 open / 105 close** raw and looked perfectly balanced. It is only after
+comments are stripped that the swallowed `}` goes missing — 101/100.
+`check_build.py` strips comments *before* counting, which is exactly why it
+went red. **A remover must prove it is not standing inside a comment before it
+walks to a brace**, and the post-condition to assert is per-`<style>`-block
+brace balance *after* stripping comments and quoted strings.
+
+⚠️ **A file-wide `/*` vs `*/` count is not that check.** On a clean
+`index.html` it reads **1,928 vs 1,903** — `/*` lives in JS strings and regex
+literals all over the file. The check has to be scoped to the stylesheets.
+
+⚠️ **The same fault, in the note about the fault.** `render_wx701.js`'s banner
+described this bug and wrote the closing delimiter literally inside its own
+`/* … */` header. The banner ended early, the prose below it parsed as code,
+and node refused the file. **Never write a comment-closing delimiter inside a
+block comment, not even when quoting one.**
+
+## 32 — a `margin-top` on an inline element is a rule written for a block
+
+**Found at 701, present since at least 684.** The landing page's four course
+rows read *"Quick InspectionWalk the roof, shoot the photos…"* — title running
+straight into subtitle. `.tt`, `.sb` and `.n` are `<span>`s at
+`display:inline`, so all three sat on one line.
+
+**The tell is in the stylesheet, not the screenshot.**
+`.cr-lr-course .sb{margin-top:3px}` and `.cr-lr-course .n{margin-top:5px}` —
+a vertical margin does **nothing at all** on an inline box. Somebody wrote
+those rules expecting blocks. A declaration that cannot possibly apply is
+evidence of intent, and it dates the defect to whenever the display was lost.
+
+**Corroborate with the neighbours.** The `.cr-lr-pair` tiles directly below use
+`<b>` and `<small>` — block by UA default — and stack correctly. Same component
+family, one got the display and one did not.
+
+**Measure the gap, not the `display`.** `display:block` with a zero gap is
+still wrong. The gate asserts the subtitle sits ≥15px below the title: the bug
+put it at +4–6px (a baseline offset on one shared line), the fix at +23–26px.
+Nothing lands in between, so the threshold cannot be satisfied by accident.
+
+⚠️ **Scope a fix on `.tt` / `.sb` / `.n`.** Three of the most generic class
+names in a 3.9 MB file; unscoped, that declaration reaches the whole app.

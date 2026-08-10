@@ -342,7 +342,14 @@ footer.site{
      ruled out ("I don't need to have gradient colors anywhere"). The heading
      token pair flips with the theme by itself. */
   color:var(--rbe-head,#ffffff);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.pcbadge .pcpo{font:800 12px ui-monospace,Menlo,monospace;color:#c9a2ff;opacity:.95;flex:0 0 auto;}
+.pcbadge .pcpo{font:800 12px ui-monospace,Menlo,monospace;color:var(--pc-po,#c9a2ff);opacity:.95;flex:0 0 auto;}
+/* 700: the PO lavender is a PAIR, not one value. #c9a2ff is 6.57:1 on the
+   dark card and 1.79:1 on the light one \u2014 it was already failing at 1.99
+   before 689 darkened the card. Same hue deepened for the pale ground, the
+   557 precedent: a hue change would make the two themes read as two
+   different components. Measured, not chosen. */
+:root{--pc-po:#c9a2ff;}
+:root[data-theme="rb-light"]{--pc-po:#6d3fbf;}
 .pcbadge .pcad{font-size:12px;color:var(--rbe-mute); /* 683: mute2 read 2.69:1 on the dark card — measured */overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
 .pcbadge .pcchips{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap;}
 .pcbadge .pcdot{width:3px;height:3px;border-radius:50%;background:var(--rbe-mute2);flex:0 0 auto;}
@@ -3367,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 699 &#8212; The page headings are drawn, not emoji</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 701 &#8212; The weather panel is gone from the home screen</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11272,9 +11279,9 @@ var LJ_GROUPS = [
   { key:'trade',    label:'Trade',        multi:true, get:function(p){ return ljTrades(p); } },
   { key:'source',   label:'Lead Source',  get:function(p){ return parseCkAll(p).lead_source || ''; } }
 ];
-var LJ_SPINE = { Lead:'#dbe7f7', Prospect:'#ffd84d', Approved:'#3dff9a', Scheduled:'#3dff9a',
+var LJ_SPINE = { Lead:'#dbe7f7', Prospect:'#ffd84d', OnHold:'#ff9f43', Approved:'#3dff9a', Scheduled:'#3dff9a',
   Completed:'#6fc3ff', Invoiced:'#c9a2ff', Closed:'#9aa4af', Lost:'#ff8a7a' };
-var LJ_SOLID = { Lead:'#8a93a1', Prospect:'#c8202e', Approved:'#3fae6a', Scheduled:'#3fae6a',
+var LJ_SOLID = { Lead:'#8a93a1', Prospect:'#c8202e', OnHold:'#c8862b', Approved:'#3fae6a', Scheduled:'#3fae6a',
   Completed:'#29A3DC', Invoiced:'#9170c3', Closed:'#5e7b88', Lost:'#8d6e63' };
 /* 475: Invoiced 3.5% lighter and Closed 1.6% darker. Those two sit mid-luminance
    and fail against BOTH inks; every other stage is fixed by ink alone. The same
@@ -11283,7 +11290,7 @@ var LJ_SOLID = { Lead:'#8a93a1', Prospect:'#c8202e', Approved:'#3fae6a', Schedul
 /* Per-stage label ink: whichever of the two wins on that colour, same in both
    themes because the pill's ground is the stage colour, not the page. Ratios
    against the colour above: 5.78 / 5.67 / 6.39 / 6.39 / 6.29 / 4.54 / 4.50 / 4.62. */
-var LJ_INK = { Lead:'#15171b', Prospect:'#ffffff', Approved:'#15171b', Scheduled:'#15171b',
+var LJ_INK = { Lead:'#15171b', Prospect:'#ffffff', OnHold:'#15171b', Approved:'#15171b', Scheduled:'#15171b',
   Completed:'#15171b', Invoiced:'#15171b', Closed:'#ffffff', Lost:'#ffffff' };
 function ljTrades(p){
   var ck = parseCkAll(p);
@@ -13976,7 +13983,7 @@ function jobFinance(pr){
            balance: value - paid, pct: value ? Math.round(paid / value * 100) : 0,
            source: source };
 }
-var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', Approved:'#7CB342', Scheduled:'#7CB342',
+var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', OnHold:'#0F9B8E', Approved:'#7CB342', Scheduled:'#7CB342',
   Completed:'#29A3DC', Invoiced:'#8E6BC1', Closed:'#607D8B', Lost:'#8d8d8d' };
 /* STAGE_INK — the same stages, darkened for a light ground.
    Stage colours are chosen to sit on iron (#202329) or matte black (#141517) and
@@ -13985,7 +13992,7 @@ var STAGE_COLORS = { Lead:'#E8B10F', Prospect:'#F08A24', Approved:'#7CB342', Sch
    4.5:1 floor for body text. Anything drawing a stage colour as text in rb-light
    reads from here; bars, spines and dots keep the bright originals, because a
    3px glowing rule is not text and the glow is the point. */
-var STAGE_INK = { Lead:'#8A6608', Prospect:'#9A4E06', Approved:'#3F6B23', Scheduled:'#3F6B23',
+var STAGE_INK = { Lead:'#8A6608', Prospect:'#9A4E06', OnHold:'#0B5F57', Approved:'#3F6B23', Scheduled:'#3F6B23',
   Completed:'#15607F', Invoiced:'#5B4080', Closed:'#455A64', Lost:'#5E5E5E' };
 function stageInk(stg){ return STAGE_INK[stg] || '#5E5E5E'; }
 /* 649: THE THREAD AS IT IS ACTUALLY RENDERED — checklist.comments, plus the
@@ -17850,9 +17857,9 @@ document.getElementById('qiFinishBtn').addEventListener('click', async function(
    The three surviving `.mic` CSS rules are now inert (no element ever gets the
    class). They are left in place deliberately — deleting scoped rules is a
    separate, wider change, and one of them is gradient text that the no-gradient
-   pass will remove properly. wxPaint's comments still MENTION metallicize; its
-   stored-signature guard was written to stop fighting this wrapper and remains
-   correct without it. */
+   pass will remove properly. The landing weather panel, whose
+   wxPaint carried a stored-signature guard written to stop fighting this
+   wrapper, was removed entirely at 701 — so that guard is gone too. */
 
 /* ---------- company documents ---------- */
 /* Add documents here. Put the file in a /docs folder in the GitHub repo
@@ -37441,6 +37448,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:701, d:'2026-08-10', t:'The weather panel is gone from the home screen',
+s:'You said it was not needed, so it is out \u2014 and with it the only outside service the home screen was calling for data. Two things came with it. The Cardinal wordmark had been shrunk to sit beside the panel; it is back to full size. And the four shortcut rows had their title running straight into their description \u2014 \u201CQuick InspectionWalk the roof\u201D \u2014 which was an old fault, not a new one. Title, description and client count now sit on their own lines.' },
+{ b:700, d:'2026-08-10', t:'The PO number reads in light mode, and On Hold has its own colour',
+s:'The purple PO number on a client card was almost invisible in light mode \u2014 it now darkens to suit the pale card and stays as it was in dark. And On Hold finally has a colour of its own instead of borrowing Lead\u2019s grey, so the two no longer look the same in a list: amber on the leads list, teal on the job banner, because those two screens use different palettes and amber was already taken on one of them.' },
 { b:699, d:'2026-08-10', t:'The page headings are drawn, not emoji',
 s:'Payments, Tasks, Job Documents, Appointments, Quick Inspection, Company Documents, My Profile, Activity Feed, Communications, Audit Log, Client Projects and the Photo Album all use drawn icons now. One new one was drawn, a speech bubble for Communications.' },
 { b:698, d:'2026-08-10', t:'The client page headings are drawn, not emoji',
@@ -43654,7 +43665,15 @@ apply : apply,
 })();
 </script>
 
-<style id="cr-lr-styles">#landingView>*{display:none}#landingView>.cr-lr{display:block}#landingView{background:#09090c !important}/* 647: was var(--bg), an APP-theme token, while every .cr-lr-* ink below keys off data-mode — the LANDING theme. Two mechanisms, one surface: put the app in rb-light, leave the landing dark, and the ground went #f7f7f7 under cream #e8ded4 inks. 1.24:1, measured in Chromium, and the red ::before radial over near-white is what made it pink. The landing owns its ground now; html[data-mode="light"] #landingView below still handles light. body{background:var(--bg)} is deliberately untouched — that is 429's overscroll fix and it is not this bug. */#landingView::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 420px at 50% -8%,rgba(200,32,46,.13) 0%,transparent 62%),radial-gradient(700px 340px at 82% 8%,rgba(200,32,46,.07) 0%,transparent 60%);pointer-events:none}.cr-lr{position:relative;max-width:560px;margin:0 auto;padding:max(30px,env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e8ded4}.cr-lr-eyebrow{display:flex;align-items:center;gap:10px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.22em;text-transform:uppercase;color:#9c8b7e;margin-bottom:26px}.cr-lr-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex:0 0 auto}.cr-lr-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}.cr-lr-mark{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(38px,12vw,58px);line-height:.92;letter-spacing:-.025em;margin:0;color:#e8ded4}.cr-lr-mark em{font-style:normal;color:var(--red)}.cr-lr-sub{font:600 10.5px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.3em;text-transform:uppercase;color:#c8202e;margin:9px 0 0}.cr-lr-greet{margin:34px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(21px,5.6vw,27px);font-weight:400;line-height:1.25;color:#e8ded4}.cr-lr-greet strong{font-weight:700;color:#c8202e}.cr-lr-stamp{margin:7px 0 0;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9c8b7e}.cr-lr-quote{position:relative;margin:28px 0 34px;padding:20px 20px 20px 24px;background:linear-gradient(180deg,rgba(200,32,46,.055),transparent 70%);border-left:2px solid #c8202e}.cr-lr-quote p{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(16px,4.4vw,19px);line-height:1.5;color:#f0e6da}.cr-lr-quote cite{display:block;margin-top:11px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9c8b7e;font-style:normal}.cr-lr-roof{border-radius:12px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.5)}.cr-lr-course .wm-c{color:#d9282a}.cr-lr-course .wm-t{color:#9a9a9a}.cr-lr-course{position:relative;display:flex;align-items:center;gap:15px;width:100%;padding:19px 18px;border:0;text-align:left;cursor:pointer;font-family:inherit;background:linear-gradient(180deg,#241b17 0%,#1d1613 88%);color:#e8ded4;transition:background .16s ease,transform .16s ease}.cr-lr-course + .cr-lr-course{border-top:1px solid rgba(255,255,255,.055);box-shadow:inset 0 3px 7px -4px rgba(0,0,0,.75)}.cr-lr-course::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,#c8202e)}.cr-lr-course:hover{background:linear-gradient(180deg,#2b211c 0%,#221a16 88%)}.cr-lr-course:active{transform:translateY(1px)}.cr-lr-course:focus-visible{outline:2px solid #c8202e;outline-offset:-2px}.cr-lr-course .ic{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.045)}.cr-lr-course .tx{flex:1;min-width:0}.cr-lr-course .tt{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--acc,#c8202e);line-height:1.2}.cr-lr-course .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}.cr-lr-course .n{margin-top:5px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7d6f63}.cr-lr-course .go{flex:0 0 auto;font-size:15px;color:#5f5248;transition:color .16s,transform .16s}.cr-lr-course:hover .go{color:var(--acc,#c8202e);transform:translateX(2px)}.cr-lr-course.lead{padding:22px 18px;background:linear-gradient(180deg,#2e2119 0%,#241a14 88%)}.cr-lr-course.lead .tt{font-size:19px}.cr-lr-pair{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.cr-lr-pair button{display:flex;flex-direction:column;gap:5px;padding:15px 14px;background:#1d1613;border:1px solid rgba(255,255,255,.07);border-top:2px solid var(--racc,#c8202e);border-radius:10px;cursor:pointer;font-family:inherit;color:#e8ded4;text-align:left;transition:background .16s,border-color .16s}.cr-lr-pair button:hover{background:#251c17}.cr-lr-pair .ic{font-size:19px}.cr-lr-pair b{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15px;color:var(--racc,#c8202e);line-height:1.15}.cr-lr-pair small{font-size:11.5px;line-height:1.4;color:#a89a8d}.cr-lr-minor{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}.cr-lr-minor button{flex:1 1 auto;min-width:96px;padding:13px 12px;background:transparent;border:1px solid rgba(200,32,46,.24);border-radius:9px;color:#9c8b7e;font:600 11.5px -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;cursor:pointer;transition:border-color .16s,color .16s,background .16s}.cr-lr-minor button:hover{border-color:rgba(200,32,46,.55);color:#e8ded4;background:rgba(200,32,46,.05)}.cr-lr-foot{margin-top:34px;padding-top:18px;border-top:1px solid rgba(200,32,46,.16);display:flex;align-items:baseline;justify-content:space-between;gap:12px}.cr-lr-foot .pp{font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.55;color:#8d7f73}.cr-lr-foot .pp b{color:#c8202e;font-weight:700}.cr-lr-foot .sk{flex:0 0 auto;background:none;border:0;cursor:pointer;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#6b5d52;padding:4px}.cr-lr-foot .sk:hover{color:#e8ded4}@media (prefers-reduced-motion:no-preference){.cr-lr-course,.cr-lr-quote,.cr-lr-minor,.cr-lr-foot{opacity:0;animation:crLrLay .42s cubic-bezier(.22,.9,.3,1) forwards}.cr-lr-quote{animation-delay:.06s}.cr-lr-course:nth-child(1){animation-delay:.30s}.cr-lr-course:nth-child(2){animation-delay:.24s}.cr-lr-course:nth-child(3){animation-delay:.18s}.cr-lr-course:nth-child(4){animation-delay:.12s}.cr-lr-minor{animation-delay:.36s}.cr-lr-foot{animation-delay:.42s}@keyframes crLrLay{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}}#landingView:not([data-cr-portal-built])>*{display:none}/* ---- theme icon ---- */.cr-lr-theme{appearance:none;background:transparent;border:1px solid #3a322c;border-radius:50%;width:30px;height:30px;padding:0;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#9c8b7e;transition:border-color .18s,color .18s,background .18s}.cr-lr-theme:hover{border-color:#c8202e;color:#e8ded4;background:rgba(200,32,46,.10)}.cr-lr-theme svg{width:15px;height:15px;display:block;transition:transform .34s cubic-bezier(.4,0,.2,1)}html[data-mode="light"] .cr-lr-theme svg{transform:rotate(180deg)}html[data-mode="light"] .cr-lr-theme{border-color:#c8bfb5;color:#6b6058}html[data-mode="light"] .cr-lr-theme:hover{border-color:#c8202e;color:#12100e;background:rgba(200,32,46,.07)}/* ---- landing light mode: only the neutrals invert, reds hold ---- */html[data-mode="light"] #landingView{background:#f7f5f2 !important}html[data-mode="light"] .cr-lr{color:#1a1614}html[data-mode="light"] .cr-lr-mark,html[data-mode="light"] .cr-lr-greet{color:#12100e}html[data-mode="light"] .cr-lr-sub{color:#3a332e}html[data-mode="light"] .cr-lr-eyebrow{color:#6b6058}html[data-mode="light"] .cr-lr-stamp,html[data-mode="light"] .cr-lr-quote,html[data-mode="light"] .cr-lr-minor,html[data-mode="light"] .cr-lr-foot{color:#5f564f}html[data-mode="light"] .cr-lr-course{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-course .tt{color:#12100e}html[data-mode="light"] .cr-lr-course .sb,html[data-mode="light"] .cr-lr-course .n{color:#6b6058}html[data-mode="light"] .cr-lr-course .go{color:#b8ada2}html[data-mode="light"] .cr-lr-pair button{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-pair button small{color:#6b6058}html[data-mode="light"] .cr-lr-roof{box-shadow:0 14px 34px rgba(40,30,22,.14)}html[data-mode="light"] .cr-lr-course .wm-t{color:#6b6b6b}
+<style id="cr-lr-styles">#landingView>*{display:none}#landingView>.cr-lr{display:block}#landingView{background:#09090c !important}/* 647: was var(--bg), an APP-theme token, while every .cr-lr-* ink below keys off data-mode — the LANDING theme. Two mechanisms, one surface: put the app in rb-light, leave the landing dark, and the ground went #f7f7f7 under cream #e8ded4 inks. 1.24:1, measured in Chromium, and the red ::before radial over near-white is what made it pink. The landing owns its ground now; html[data-mode="light"] #landingView below still handles light. body{background:var(--bg)} is deliberately untouched — that is 429's overscroll fix and it is not this bug. */#landingView::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 420px at 50% -8%,rgba(200,32,46,.13) 0%,transparent 62%),radial-gradient(700px 340px at 82% 8%,rgba(200,32,46,.07) 0%,transparent 60%);pointer-events:none}.cr-lr{position:relative;max-width:560px;margin:0 auto;padding:max(30px,env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e8ded4}.cr-lr-eyebrow{display:flex;align-items:center;gap:10px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.22em;text-transform:uppercase;color:#9c8b7e;margin-bottom:26px}.cr-lr-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex:0 0 auto}.cr-lr-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}.cr-lr-mark{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(38px,12vw,58px);line-height:.92;letter-spacing:-.025em;margin:0;color:#e8ded4}.cr-lr-mark em{font-style:normal;color:var(--red)}.cr-lr-sub{font:600 10.5px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.3em;text-transform:uppercase;color:#c8202e;margin:9px 0 0}.cr-lr-greet{margin:34px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(21px,5.6vw,27px);font-weight:400;line-height:1.25;color:#e8ded4}.cr-lr-greet strong{font-weight:700;color:#c8202e}.cr-lr-stamp{margin:7px 0 0;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9c8b7e}.cr-lr-quote{position:relative;margin:28px 0 34px;padding:20px 20px 20px 24px;background:linear-gradient(180deg,rgba(200,32,46,.055),transparent 70%);border-left:2px solid #c8202e}.cr-lr-quote p{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(16px,4.4vw,19px);line-height:1.5;color:#f0e6da}.cr-lr-quote cite{display:block;margin-top:11px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9c8b7e;font-style:normal}.cr-lr-roof{border-radius:12px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.5)}.cr-lr-course .wm-c{color:#d9282a}.cr-lr-course .wm-t{color:#9a9a9a}.cr-lr-course{position:relative;display:flex;align-items:center;gap:15px;width:100%;padding:19px 18px;border:0;text-align:left;cursor:pointer;font-family:inherit;background:linear-gradient(180deg,#241b17 0%,#1d1613 88%);color:#e8ded4;transition:background .16s ease,transform .16s ease}.cr-lr-course + .cr-lr-course{border-top:1px solid rgba(255,255,255,.055);box-shadow:inset 0 3px 7px -4px rgba(0,0,0,.75)}.cr-lr-course::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,#c8202e)}.cr-lr-course:hover{background:linear-gradient(180deg,#2b211c 0%,#221a16 88%)}.cr-lr-course:active{transform:translateY(1px)}.cr-lr-course:focus-visible{outline:2px solid #c8202e;outline-offset:-2px}.cr-lr-course .ic{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.045)}.cr-lr-course .tx{flex:1;min-width:0}.cr-lr-course .tt{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--acc,#c8202e);line-height:1.2}.cr-lr-course .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}
+/* 701: these three are <span>s, so they sat on one line and the title ran
+   straight into the subtitle - 'Quick InspectionWalk the roof'. The
+   margin-top above (and on .n) is the tell: it does nothing on an inline
+   box, so the rule was written for a block. The .cr-lr-pair tiles below use
+   <b>/<small> and stack correctly, which is the shape these were meant to
+   have. Pre-existing - reproduced on 684. Scoped, because .tt/.sb/.n are
+   about as generic as a class name gets. */
+.cr-lr-course .tt,.cr-lr-course .sb,.cr-lr-course .n{display:block}.cr-lr-course .n{margin-top:5px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#7d6f63}.cr-lr-course .go{flex:0 0 auto;font-size:15px;color:#5f5248;transition:color .16s,transform .16s}.cr-lr-course:hover .go{color:var(--acc,#c8202e);transform:translateX(2px)}.cr-lr-course.lead{padding:22px 18px;background:linear-gradient(180deg,#2e2119 0%,#241a14 88%)}.cr-lr-course.lead .tt{font-size:19px}.cr-lr-pair{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.cr-lr-pair button{display:flex;flex-direction:column;gap:5px;padding:15px 14px;background:#1d1613;border:1px solid rgba(255,255,255,.07);border-top:2px solid var(--racc,#c8202e);border-radius:10px;cursor:pointer;font-family:inherit;color:#e8ded4;text-align:left;transition:background .16s,border-color .16s}.cr-lr-pair button:hover{background:#251c17}.cr-lr-pair .ic{font-size:19px}.cr-lr-pair b{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15px;color:var(--racc,#c8202e);line-height:1.15}.cr-lr-pair small{font-size:11.5px;line-height:1.4;color:#a89a8d}.cr-lr-minor{display:flex;gap:9px;margin-top:14px;flex-wrap:wrap}.cr-lr-minor button{flex:1 1 auto;min-width:96px;padding:13px 12px;background:transparent;border:1px solid rgba(200,32,46,.24);border-radius:9px;color:#9c8b7e;font:600 11.5px -apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;cursor:pointer;transition:border-color .16s,color .16s,background .16s}.cr-lr-minor button:hover{border-color:rgba(200,32,46,.55);color:#e8ded4;background:rgba(200,32,46,.05)}.cr-lr-foot{margin-top:34px;padding-top:18px;border-top:1px solid rgba(200,32,46,.16);display:flex;align-items:baseline;justify-content:space-between;gap:12px}.cr-lr-foot .pp{font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.55;color:#8d7f73}.cr-lr-foot .pp b{color:#c8202e;font-weight:700}.cr-lr-foot .sk{flex:0 0 auto;background:none;border:0;cursor:pointer;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#6b5d52;padding:4px}.cr-lr-foot .sk:hover{color:#e8ded4}@media (prefers-reduced-motion:no-preference){.cr-lr-course,.cr-lr-quote,.cr-lr-minor,.cr-lr-foot{opacity:0;animation:crLrLay .42s cubic-bezier(.22,.9,.3,1) forwards}.cr-lr-quote{animation-delay:.06s}.cr-lr-course:nth-child(1){animation-delay:.30s}.cr-lr-course:nth-child(2){animation-delay:.24s}.cr-lr-course:nth-child(3){animation-delay:.18s}.cr-lr-course:nth-child(4){animation-delay:.12s}.cr-lr-minor{animation-delay:.36s}.cr-lr-foot{animation-delay:.42s}@keyframes crLrLay{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}}#landingView:not([data-cr-portal-built])>*{display:none}/* ---- theme icon ---- */.cr-lr-theme{appearance:none;background:transparent;border:1px solid #3a322c;border-radius:50%;width:30px;height:30px;padding:0;cursor:pointer;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#9c8b7e;transition:border-color .18s,color .18s,background .18s}.cr-lr-theme:hover{border-color:#c8202e;color:#e8ded4;background:rgba(200,32,46,.10)}.cr-lr-theme svg{width:15px;height:15px;display:block;transition:transform .34s cubic-bezier(.4,0,.2,1)}html[data-mode="light"] .cr-lr-theme svg{transform:rotate(180deg)}html[data-mode="light"] .cr-lr-theme{border-color:#c8bfb5;color:#6b6058}html[data-mode="light"] .cr-lr-theme:hover{border-color:#c8202e;color:#12100e;background:rgba(200,32,46,.07)}/* ---- landing light mode: only the neutrals invert, reds hold ---- */html[data-mode="light"] #landingView{background:#f7f5f2 !important}html[data-mode="light"] .cr-lr{color:#1a1614}html[data-mode="light"] .cr-lr-mark,html[data-mode="light"] .cr-lr-greet{color:#12100e}html[data-mode="light"] .cr-lr-sub{color:#3a332e}html[data-mode="light"] .cr-lr-eyebrow{color:#6b6058}html[data-mode="light"] .cr-lr-stamp,html[data-mode="light"] .cr-lr-quote,html[data-mode="light"] .cr-lr-minor,html[data-mode="light"] .cr-lr-foot{color:#5f564f}html[data-mode="light"] .cr-lr-course{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-course .tt{color:#12100e}html[data-mode="light"] .cr-lr-course .sb,html[data-mode="light"] .cr-lr-course .n{color:#6b6058}html[data-mode="light"] .cr-lr-course .go{color:#b8ada2}html[data-mode="light"] .cr-lr-pair button{background:#ffffff;border-color:#ded7cf;color:#1a1614}html[data-mode="light"] .cr-lr-pair button small{color:#6b6058}html[data-mode="light"] .cr-lr-roof{box-shadow:0 14px 34px rgba(40,30,22,.14)}html[data-mode="light"] .cr-lr-course .wm-t{color:#6b6b6b}
 /* ── 525 ──────────────────────────────────────────────────────────────────
    (a) RAISED, the 522 recipe: the bevel follows the card, the drop shadow
        follows the page. .cr-lr-minor stays flat on purpose - those are ghost
@@ -43683,30 +43702,10 @@ html[data-mode="light"] .cr-lr-roof{border-top:2px solid #ffffff}
 
 .cr-lr-head{display:flex;align-items:flex-start;gap:12px}
 .cr-lr-id{flex:1 1 auto;min-width:0}
-/* The wordmark is clamp(38px,12vw,58px) and does not wrap, so at phone width it
-   ran straight under the weather panel - measured, not guessed. It gives up a
-   little size when it has company; the panel gives up its second line. */
-.cr-lr-head .cr-lr-mark{font-size:clamp(28px,8.2vw,58px)}
-.cr-lr-wx{flex:0 0 auto;display:flex;align-items:center;gap:9px;margin-top:6px;padding:9px 12px;border:1px solid rgba(200,32,46,.22);border-top:2px solid rgba(255,255,255,.10);border-bottom:2px solid rgba(0,0,0,.55);border-radius:11px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(0,0,0,.14));box-shadow:0 10px 24px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.07);max-width:56%}
-.cr-lr-wx .ic{font-size:20px;line-height:1;flex:0 0 auto}
-.cr-lr-wx .tm{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:21px;line-height:1;color:#e8ded4;flex:0 0 auto}
-.cr-lr-wx .tx{display:flex;flex-direction:column;gap:2px;min-width:0}
-.cr-lr-wx .cd{font:700 10.5px 'Segoe UI',Arial,sans-serif;color:#c9b8ad;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cr-lr-wx .lo{font:600 9.5px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.06em;color:#9c8b7e;white-space:nowrap}
-.cr-lr-wx .rn{font:800 9px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#7fa6d6;white-space:nowrap}
-@media (max-width:560px){
-/* Phone: keep what decides the day - condition and rain chance - and drop the
-   high/low/wind line, which is the part you can live without on a ladder. */
-.cr-lr-wx{padding:7px 9px;gap:7px;max-width:52%}
-.cr-lr-wx .ic{font-size:17px}
-.cr-lr-wx .tm{font-size:18px}
-.cr-lr-wx .lo{display:none}
-}
-html[data-mode="light"] .cr-lr-wx{border-color:#ded7cf;border-top:2px solid #ffffff;border-bottom:2px solid #d9d9d9;background:#ffffff;box-shadow:0 4px 12px rgba(40,30,22,.13),inset 0 1px 0 rgba(255,255,255,.9)}
-html[data-mode="light"] .cr-lr-wx .tm{color:#12100e}
-html[data-mode="light"] .cr-lr-wx .cd{color:#3a332e}
-html[data-mode="light"] .cr-lr-wx .lo{color:#5f564f}
-html[data-mode="light"] .cr-lr-wx .rn{color:#2f5f8c}
+/* 701: the wordmark had given up size to sit beside the weather panel
+   (clamp(28px,8.2vw,58px) against its own clamp(38px,12vw,58px)). The panel
+   is gone, so the accommodation is too. Measured at 360/393/430/560 before
+   removing it: 182px of text in a 353px box at phone width, no overflow. */
 
 html[data-mode="light"] .cr-lr-quote p{color:#2a241f}
 html[data-mode="light"] .cr-lr-quote cite,
@@ -43750,126 +43749,16 @@ box-shadow:0 4px 12px rgba(40,30,22,.13),inset 0 1px 0 rgba(255,255,255,.9);
 
 /* — raised type — */
 .cr-lr-mark,.cr-lr-greet{text-shadow:0 1px 0 rgba(0,0,0,.75),0 3px 8px rgba(0,0,0,.6)}
-.cr-lr-sub,.cr-lr-stamp,.cr-lr-wx .cd,.cr-lr-wx .lo,.cr-lr-wx .rn{text-shadow:0 1px 2px rgba(0,0,0,.65)}
-.cr-lr-wx .tm{text-shadow:0 1px 0 rgba(0,0,0,.7),0 2px 6px rgba(0,0,0,.55)}
-.cr-lr-wx .ic{filter:drop-shadow(0 2px 3px rgba(0,0,0,.55))}
+.cr-lr-sub, .cr-lr-stamp{text-shadow:0 1px 2px rgba(0,0,0,.65)}
+
+
 html[data-mode="light"] .cr-lr-mark,
 html[data-mode="light"] .cr-lr-greet{text-shadow:0 1px 0 rgba(255,255,255,.95),0 2px 4px rgba(40,30,22,.16)}
-html[data-mode="light"] .cr-lr-sub,
-html[data-mode="light"] .cr-lr-stamp,
-html[data-mode="light"] .cr-lr-wx .cd,
-html[data-mode="light"] .cr-lr-wx .lo,
-html[data-mode="light"] .cr-lr-wx .rn,
-html[data-mode="light"] .cr-lr-wx .tm{text-shadow:0 1px 0 rgba(255,255,255,.9)}
-html[data-mode="light"] .cr-lr-wx .ic{filter:drop-shadow(0 1px 2px rgba(40,30,22,.22))}</style>
+html[data-mode="light"] .cr-lr-sub, html[data-mode="light"] .cr-lr-stamp{text-shadow:0 1px 0 rgba(255,255,255,.9)}
+</style>
 <script id="cr-lr-script">
 (function(){
 'use strict';
-/* ---- today's weather (525) -------------------------------------------------
-   Dayton, Ohio. Open-Meteo needs no API key, which is the whole reason it was
-   chosen: nothing secret goes into this file. Calling a keyless third-party
-   host straight from the browser is already how this app does address lookup
-   (photon.komoot.io, nominatim.openstreetmap.org), so this is that convention,
-   not a new one.
-
-   Every failure path ends in "leave the panel hidden". */
-var WX_LL = { lat: 39.7589, lon: -84.1916 };
-var WX_TTL = 20 * 60 * 1000;
-var WX_KEY = 'cr-wx-dayton';
-/* WMO weather codes, grouped the way a roofer would group them */
-var WX_CODES = {
-0:['☀️','Clear'], 1:['🌤️','Mostly clear'],
-2:['⛅','Partly cloudy'], 3:['☁️','Overcast'],
-45:['🌫️','Fog'], 48:['🌫️','Freezing fog'],
-51:['🌦️','Light drizzle'], 53:['🌦️','Drizzle'],
-55:['🌦️','Heavy drizzle'], 56:['🌧️','Freezing drizzle'],
-57:['🌧️','Freezing drizzle'],
-61:['🌧️','Light rain'], 63:['🌧️','Rain'],
-65:['🌧️','Heavy rain'], 66:['🌧️','Freezing rain'],
-67:['🌧️','Freezing rain'],
-71:['🌨️','Light snow'], 73:['🌨️','Snow'],
-75:['🌨️','Heavy snow'], 77:['🌨️','Snow grains'],
-80:['🌦️','Showers'], 81:['🌦️','Showers'],
-82:['⛈️','Heavy showers'], 85:['🌨️','Snow showers'],
-86:['🌨️','Snow showers'], 95:['⛈️','Thunderstorms'],
-96:['⛈️','Thunderstorms'], 99:['⛈️','Thunderstorms']
-};
-function wxCached(){
-try{
-var c = JSON.parse(localStorage.getItem(WX_KEY) || 'null');
-if(c && c.t && c.d && (Date.now() - c.t) < WX_TTL) return c.d;
-}catch(e){}
-return null;
-}
-function wxPaint(d){
-var lv = document.getElementById('landingView');
-if(!lv || !d) return;
-var el = lv.querySelector('[data-slot="wx"]');
-/* a reading with no temperature is not a reading */
-if(!el || typeof d.now !== 'number') return;
-var code = WX_CODES[d.code] || ['🌡️',''];
-/* 569: this assignment used to be unconditional, and paint() calls wx() on every
-   animation frame — so with a cached reading (the normal case) it rewrote this
-   element ~65 times a second, forever. Third instance of the same mistake in this
-   chain after paintChip and paint's seven text slots.
-
-   A SIGNATURE, not `el.innerHTML !== html`, and the difference matters. The weather
-   icon is an emoji, so metallicize() legitimately re-wraps it in <span class="mic">
-   — measured at 4.3 replaceChild/sec on this exact element. Comparing against the
-   live content could therefore NEVER succeed, and the two would fight forever: the
-   same "guard that can never succeed" as the chip at 567, caused by a neighbouring
-   module instead of by SVG serialization. Comparing intent to intent lets
-   metallicize's version stand.
-
-   The signature is the six numbers the markup is a pure function of, not the markup
-   — it is the identity of the READING, and it stays small in the attribute. */
-var wxSig = [d.now, d.code, d.wind, d.hi, d.lo, d.rain].join('|');
-if(el.dataset.wxSig === wxSig) return;
-el.dataset.wxSig = wxSig;
-el.innerHTML =
-'<span class="ic" aria-hidden="true">' + code[0] + '</span>' +
-'<span class="tm">' + Math.round(d.now) + '°</span>' +
-'<span class="tx">' +
-'<span class="cd">' + esc(code[1]) + '</span>' +
-'<span class="lo">' +
-(typeof d.hi === 'number' ? 'H ' + Math.round(d.hi) + '°' : '') +
-(typeof d.lo === 'number' ? ' · L ' + Math.round(d.lo) + '°' : '') +
-(typeof d.wind === 'number' ? ' · ' + Math.round(d.wind) + ' mph' : '') +
-'</span>' +
-(typeof d.rain === 'number' && d.rain >= 20
-? '<span class="rn">' + Math.round(d.rain) + '% rain</span>' : '') +
-'</span>';
-el.hidden = false;
-}
-function wx(){
-var c = wxCached();
-if(c){ wxPaint(c); return; }
-var url = 'https://api.open-meteo.com/v1/forecast' +
-'?latitude=' + WX_LL.lat + '&longitude=' + WX_LL.lon +
-'&current=temperature_2m,weather_code,wind_speed_10m' +
-'&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max' +
-'&temperature_unit=fahrenheit&wind_speed_unit=mph' +
-'&timezone=America%2FNew_York&forecast_days=1';
-fetch(url).then(function(r){
-if(!r.ok) throw new Error('wx ' + r.status);
-return r.json();
-}).then(function(j){
-var cur = (j && j.current) || {};
-var day = (j && j.daily) || {};
-var pick = function(a){ return (Array.isArray(a) && typeof a[0] === 'number') ? a[0] : null; };
-var d = {
-now : typeof cur.temperature_2m === 'number' ? cur.temperature_2m : null,
-code: typeof cur.weather_code === 'number' ? cur.weather_code : null,
-wind: typeof cur.wind_speed_10m === 'number' ? cur.wind_speed_10m : null,
-hi  : pick(day.temperature_2m_max),
-lo  : pick(day.temperature_2m_min),
-rain: pick(day.precipitation_probability_max),
-};
-if(typeof d.now !== 'number') return;
-try{ localStorage.setItem(WX_KEY, JSON.stringify({ t: Date.now(), d: d })); }catch(e){}
-wxPaint(d);
-}).catch(function(){ /* no weather is not an error worth showing */ });
-}
 var QUOTES = [
 { t:'Measure twice. Tear off once.', c:'House rule' },
 { t:"The roof doesn't care how tired you are. Neither does the rain.", c:'House rule' },
@@ -44064,10 +43953,6 @@ lv.innerHTML =
 '<h1 class="cr-lr-mark">Cardinal<em>.</em></h1>' +
 '<p class="cr-lr-sub">Roofing &amp; Renovations</p>' +
 '</div>' +
-/* 525: the band right of the wordmark was the one unused area on this
-   page. Starts hidden and stays hidden unless a reading actually
-   parses - a weather panel is never worth breaking the landing for. */
-'<div class="cr-lr-wx" data-slot="wx" hidden></div>' +
 '</div>' +
 '<p class="cr-lr-greet"><span data-slot="hello">Good morning</span>' +
 '<span data-slot="comma"></span><strong data-slot="who"></strong>.</p>' +
@@ -44286,7 +44171,6 @@ now.toLocaleDateString('en-US', { weekday:'long' }) + ' \u00b7 ' +
 now.toLocaleDateString('en-US', { month:'long', day:'numeric' }));
 var r = qiResume();
 if(r) lrSetText(lv.querySelector('[data-slot="qisub"]'), r);
-try{ wx(); }catch(_){ }
 }
 try{ build(); }catch(e){ console.warn('[landing] initial build:', e); }
 var scheduled = false;

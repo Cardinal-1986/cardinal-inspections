@@ -3774,3 +3774,66 @@ where nineteen headings carry one and eight do not reads as unfinished.
 ⚠️ **A source count of `.projsec` disagrees with itself.** `[^<]*` finds 26,
 `.*?` finds 27 — the Location heading has a nested `<span>` and a
 character-class scan stops short. That same heading is the runtime one.
+
+
+### 699 — the page headings are drawn, and `ICO` is declared once
+
+All 15 `h2.viewhead`. `CardinalIcons` 51 → 52 (`chat`).
+
+⚠️ **The DOM has fifteen; a source regex finds fourteen.**
+`<h2 id="listTitle" class="viewhead">` puts the id before the class. It is
+empty in markup and filled from `LIST_DEFS`.
+
+⚠️ **`ICO(n)` is now declared exactly once, at the top of the main block.** It
+had six declarations — five leaked to global scope from non-IIFE module blocks,
+and the one 698 added to `cr-hd2-script` was private to that IIFE and dead. Nine
+runtime `.projsec` headings had been resolving against another module's copy by
+accident. Wrap any of those modules in an IIFE and they would start throwing.
+Ordering is asserted: `LIST_DEFS` calls `ICO()` at parse time.
+
+**Three mechanisms place an icon in this app**, and a name is not a contract:
+`data-cri` in static markup (swapped by `hydrate()` at load), `ICO()` /
+`CardinalIcons.get()` in strings built at render time, and one **raw inline
+`<svg>`** on the Schedule Board heading, predating `hydrate()` and left alone.
+
+
+### 700 — the PO number reads in light mode, and On Hold has its own colour
+
+`.pcpo` was `#c9a2ff` in both themes — **1.79:1** on the light client card.
+Now a token pair: `--pc-po` `#c9a2ff` dark / `#6d3fbf` light. **A pair, not a
+computed literal**, which is the rule 527 established by breaking it.
+
+`OnHold` was in `STAGES` but in none of the five stage colour maps, so it fell
+through to Lead's grey and the two were indistinguishable in a list. It now has
+an entry in each: `LJ_SOLID` `#c8862b`, `LJ_INK` `#15171b`, `LJ_SPINE`
+`#ff9f43`, `STAGE_COLORS` `#0F9B8E`, `STAGE_INK` `#0B5F57`.
+
+⚠️ **Amber on the leads list, teal on the job banner — deliberately two
+colours.** Those screens use different palettes and amber was already spoken
+for on the banner. Do not "unify" them.
+
+
+### 701 — the weather panel is gone from the home screen
+
+Theo: *"Get rid of the weather table altogether. It's not needed."* Gone from
+`cr-lr-script`: `wx()`, `wxPaint()`, `wxCached()`, the `WX_*` constants, the
+`WX_CODES` map, the load-time call and the markup slot (23,983 → 19,410 chars),
+plus 18 CSS rules. **It was the home screen's only third-party data call**
+(Open-Meteo, keyless) — the landing now fetches nothing.
+
+⚠️ **Any doc that lists the weather table as an emoji-sweep target is stale.**
+There is no weather code left in `cr-lr-script`.
+
+**Two things shipped with it, both consequences rather than additions:**
+
+- **The wordmark is back to full size.** `.cr-lr-head .cr-lr-mark` had shrunk it
+  to `clamp(28px,8.2vw,58px)` purely to sit beside the panel — its own comment
+  said so. Restored to `clamp(38px,12vw,58px)`; measured at 360/393/430/560
+  first (182px of text in a 353px box at phone width).
+- **The four course rows stack.** `.tt`, `.sb` and `.n` were `<span>`s at
+  `display:inline`, so the first screen read *"Quick InspectionWalk the roof"*.
+  **Pre-existing — reproduced unchanged on 684**, found while photographing the
+  before/after. Two tells that it was never intentional: `margin-top` is set on
+  `.sb` and `.n`, which does nothing on an inline box, and the `.cr-lr-pair`
+  tiles directly below use `<b>`/`<small>` and stack correctly. Fixed with one
+  scoped declaration — `.tt`/`.sb`/`.n` are about as generic as class names get.

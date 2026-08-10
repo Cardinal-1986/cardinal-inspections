@@ -4,9 +4,9 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–699
+# Session of 10 August 2026 (later) — builds 685–701
 
-**685 through 699 all shipped, merged and verified deployed** (PRs #198–#215,
+**685 through 701 all shipped, merged and verified deployed** (PRs #198–#217,
 each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
 must confirm it again rather than inherit it). `main` at 699. Working tree
 clean, branch synced to main, no open PRs.
@@ -28,12 +28,17 @@ clean, branch synced to main, no open PRs.
 | 697 | swiping a chip strip past its start chained to the page and exited the screen — 33 scrollers guarded | #213 |
 | 698 | the client-page section headings are drawn — all 27 `.projsec`, `CardinalIcons` 47 → 51 | #214 |
 | 699 | the 15 page headings are drawn · **`ICO` was declared six times, one dead — now once** | #215 |
+| 700 | the lavender PO reads in light mode (1.79:1 → a token pair) · **On Hold** gets a colour of its own in all five stage maps | #217 |
+| 701 | **the weather panel is gone** · the wordmark is back to full size · the four course rows stack instead of running together | #217 |
 
-**One thing is waiting on Theo, asked and unanswered:** the `.pcpo` lavender in
-LIGHT mode. It was already failing at 1.99:1 and 689's darker card took it to
-**1.79:1** — I made a known-bad number slightly worse and said so. It is a
-semantic frozen colour, so the pick is his. Everything else on that card clears
-its floor, though `address`/`meta` are now thin at 4.59 against 4.5.
+**✅ The lavender question is CLOSED.** It had been the one thing waiting on
+Theo — failing at 1.99:1, and 689's darker card took it to **1.79:1**, a
+known-bad number I made slightly worse and said so. He answered on 10 Aug:
+*"Do whatever you recommend for the lavender in light mode, for the on hold
+maybe make it a different color of your choice."* Both shipped at 700.
+`address`/`meta` on that card are still thin at 4.59 against a 4.5 floor —
+passing, but with nothing spare. Do not darken that card again without
+re-measuring them.
 
 ## The through-line of this session, if you read nothing else
 
@@ -55,6 +60,15 @@ not a pass count.** Same finding as 628's amber bar and 633's white boxes.
    single-theme client-facing Blackout; a switch that does nothing is worse
    than no switch. Raised with him and not overruled — making them switchable
    means giving them light themes, which is a separate job.
+3. **"Get rid of the weather table altogether. It's not needed."** (10 Aug)
+   Removed entirely at 701 — code, CSS, markup and the Open-Meteo call. The
+   landing page now fetches nothing from outside. **Any doc still listing the
+   `WX_CODES` table as an emoji-sweep target is stale.**
+4. **"Do whatever you recommend for the lavender in light mode, for the on hold
+   maybe make it a different color of your choice."** (10 Aug) He delegated both
+   picks. `--pc-po` is a token pair; `OnHold` is **amber on the leads list and
+   teal on the job banner** — two colours on purpose, because those screens use
+   different palettes. Do not unify them without asking.
 
 ## Corrections I owe, in my own words
 
@@ -110,6 +124,29 @@ not a pass count.** Same finding as 628's amber bar and 633's white boxes.
   shipped a stage strip; Theo's next message was "How would I filter by rep?
   Etc". The engine had SEVEN groups the whole time. Ask what else the mechanism
   covers before shipping a special case of it.
+
+- **701's rule remover cut a CSS comment in half and I shipped it to the gate.**
+  Walking outward from `.cr-lr-wx` to the nearest brace landed inside a
+  `/* … */` for the last rule in a media query. The unclosed opener then
+  swallowed **1,411 characters of live CSS**. `check_build` caught it —
+  `style block 68: 101 open / 100 close` — and only because it strips comments
+  *before* counting braces; the raw count was a clean 105/105. Now class 31 in
+  `BUG_CLASSES.md`.
+- **Then I wrote the same fault into the note about the fault.** The banner of
+  `render_wx701.js` described the bug and wrote a comment-closing delimiter
+  literally inside its own block comment, ending it early. Node refused the
+  file. The wording there is deliberately indirect — leave it.
+- **My first probe of the wordmark restore reported "no change" and was wrong.**
+  I appended the override to `<head>`; a body `<style>` wins on document order
+  at equal specificity, so my own rule lost the cascade. Without `!important`
+  the build would have concluded the restore was a no-op and skipped it. Same
+  family as 689's screenshot rig: **do not trust an instrument that has never
+  been made to move the number.**
+- **A gate assertion that passed on the negative control.** `render_wx701`
+  first checked `typeof window.wxPaint === 'undefined'` — true on BOTH files,
+  because `cr-lr-script` is an IIFE and the helpers were never globals. It
+  passed on the control, which is the tell. Replaced with a source check that
+  actually goes red.
 
 ## What shipped
 
