@@ -14493,6 +14493,38 @@ as the retirement comment — asserted by grep, count 1.
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
 
+- **698** · **The client-page section headings are drawn, not emoji.** All 27
+  `.projsec` headings. `CardinalIcons` 47 → 51: four new (`contract` — a page
+  with a signature squiggle, deliberately unlike `page`'s text lines — plus
+  `ruler`, `box`, `lock`), twenty existing ones reused. Sweep **594 → 570**.
+  ⚠️ **The family divides by MECHANISM and the two halves are not
+  interchangeable.** 17 are static markup and take `data-cri`, swapped by
+  `hydrate()` at load. **10 are built as strings at render time** (9 in the
+  main block, 1 in `cr-pp-script`) and must call `get()`, because `hydrate()`
+  ran long before and an attribute written then is never swapped. Same split
+  as 692 vs 695, now inside one build.
+  ⚠️ **8 of the 27 had no icon at all.** Converting only the emoji ones would
+  have left eight bare headings beside nineteen iconed — the half-finished look
+  695 had to go back and fix, and the partial pass CLAUDE.md warns removes the
+  tell. All 27 were done.
+  ⚠️ **`<h3 class="projsec"...>` finds 26 with `[^<]*` and 27 with `.*?`** —
+  the Location heading contains a nested `<span>`, so a character-class scan
+  stops short of it. That heading is also the runtime one, so a source-only
+  count misses it twice over.
+  **An anchor that stops at `>` does not strip what follows it.** The Approvals
+  entry was written as the opening tag alone, so its emoji sat outside the
+  matched string and survived; the gate caught it before the write.
+  Gate `render_projsec698.js`, 10 assertions, RED on 697. The runtime ten are
+  proved three ways — call site in source, glyph resolves, page throws nothing
+  — because **the try/catch is INSIDE `ICO` and cannot catch its own absence**,
+  so an out-of-scope helper is a loud ReferenceError, not a silent blank.
+  ⚠️ **A hardcoded glyph total broke a gate for the THIRD time this session.**
+  `render_tools695.js` asserted `=== 47`; 698 made it 51 and the app was right.
+  Worse, the same mistake was written into `render_projsec698.js` (`=== 51`) in
+  the same sitting. Both are now floors, and `render_icons692.js` was already
+  converted at 695. **A glyph-count equality is guaranteed to break on the next
+  icon build — assert the names you need, not the size of the map.**
+
 - **697** · **A sideways swipe on a scrolling strip no longer backs out of
   the screen.** Theo, on All Leads & Jobs: *"moving through prospects to click
   filter and swiping back toward leads exits the screen."*

@@ -2410,9 +2410,10 @@ pipeline-stage chips (690) and the Assigned To strip beside them (691).
 
 **The queue, in Theo's priority order:**
 
-1. **The emoji sweep — 594 remain.** Still first. The nav went at 686, the four
+1. **The emoji sweep — 570 remain.** Still first. The nav went at 686, the four
    card/hero surfaces (`cr-sf` / `cr-ch2` / `cr-cth` / `cr-ci`) at 692, and the
-   Tools dropdown at 695. The two biggest left are the rest of the static
+   Tools dropdown at 695 and the 27 client-page `.projsec` headings at 698.
+   The two biggest left are the rest of the static
    `(markup)` (~296) and the anonymous block-1 script (124). ⚠️ **90 distinct
    characters remain in the markup** — that is 90 glyph decisions, so it wants
    splitting into coherent menus/screens rather than one sweep.

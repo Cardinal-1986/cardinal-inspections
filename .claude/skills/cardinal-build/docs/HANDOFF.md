@@ -4,11 +4,11 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–697
+# Session of 10 August 2026 (later) — builds 685–698
 
-**685 through 697 all shipped, merged and verified deployed** (PRs #198–#213,
+**685 through 698 all shipped, merged and verified deployed** (PRs #198–#214,
 each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
-must confirm it again rather than inherit it). `main` at 697. Working tree
+must confirm it again rather than inherit it). `main` at 698. Working tree
 clean, branch synced to main, no open PRs.
 
 | Build | What | PR |
@@ -26,6 +26,7 @@ clean, branch synced to main, no open PRs.
 | 695 | the Tools dropdown is drawn — all 16 rows, `CardinalIcons` 43 → 47 | #211 |
 | 696 | **my 690 regression**: the chip strips pushed the results column 869px wide on a 393px screen | #212 |
 | 697 | swiping a chip strip past its start chained to the page and exited the screen — 33 scrollers guarded | #213 |
+| 698 | the client-page section headings are drawn — all 27 `.projsec`, `CardinalIcons` 47 → 51 | #214 |
 
 **One thing is waiting on Theo, asked and unanswered:** the `.pcpo` lavender in
 LIGHT mode. It was already failing at 1.99:1 and 689's darker card took it to
@@ -42,6 +43,13 @@ contact sheet in about a minute. 687 fixed them. **Ship an icon with a picture,
 not a pass count.** Same finding as 628's amber bar and 633's white boxes.
 
 ## Corrections I owe, in my own words
+
+- **A hardcoded glyph total broke a gate three times in one session.**
+  `render_icons692` asserted `=== 43`, `render_tools695` `=== 47`, and I then
+  wrote `=== 51` into `render_projsec698` in the same sitting. Every icon
+  build makes the previous total wrong, and each time the APP was right.
+  All three are floors now. **Assert the names you need, never the size of
+  the map.**
 
 - **I shipped a horizontal overflow at 690 and did not measure for it.**
   The stage strip made `.ljcols`' `1fr` track resolve to its max-content —
@@ -120,7 +128,7 @@ for an inline `color` before calling such a sweep done. Only 1 of the 37 had it.
 
 ## Queue
 
-1. **The emoji sweep — 686, 692, 695. 594 remain.** Measured with
+1. **The emoji sweep — 686, 692, 695, 698. 570 remain.** Measured with
    comments excluded (module banners' box-drawing swamps a naive count) and with
    the 0x2300–0x23FF block included. Dingbats (156), arrows (154) and geometric
    marks (66) are counted SEPARATELY and are **not** part of this sweep — ✓ ✕ →
