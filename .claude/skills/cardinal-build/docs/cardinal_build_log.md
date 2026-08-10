@@ -13559,3 +13559,92 @@ run without the documented environment. Same for `harness_672`/`harness_674`,
 which correctly **refuse to skip** their differential tests when the previous
 artifact is not passed as argv — that refusal is by design and reads as a failure
 only if you forget to supply it.
+
+---
+
+## Build 676 — the app stops opening on a screen of scattered emoji
+
+Theo, with a screen recording from his phone at 11:51pm on 5G with one bar:
+*"Any way to stop this from happening every time the app starts up?"* The frame
+is a dark band about 630px tall holding fourteen emoji at irregular positions —
+hammer, calendar, stethoscope, gear, crane, brick, test tube — with **no other
+visible content**, then a cardinal-red rule, then black.
+
+### Reproduced before it was theorised, which is what made it a two-word fix
+
+`filmstrip.js` serves the real `index.html` over HTTP at 1.2 Mbps with 4× CPU
+throttling and screenshots from navigation start. **The very first frame, at
+t=1ms, is Theo's screenshot**:
+
+```
+t=1ms   emoji painted: 🏗🔨📅⚡💲🎯🏛🧱🩺✨🚶🧪📸⚙
+        visible boxes: .site[0..272] .wrap[0..58] #crBanner[58..268]
+        styles parsed: 5 of 122
+```
+
+A second pass (`filmstrip2.js`, distinct-frame hashing) found **only TWO
+distinct painted states across the whole load** — that screen, and the finished
+app **32 seconds later**. It is not a flicker. On a poor connection it *is* the
+app's startup screen.
+
+### Why — document order, in a 3.86 MB single file
+
+`#crBanner` is the universal banner nav (build 344). Its **markup is at line
+3305**. `<style id="cr-banner-styles">`, which sets `display:flex`, is at
+**line 51368** — ~48,000 lines and 3 MB later. The browser paints what it has
+parsed, so for the entire download the nav renders as raw inline text.
+
+**Why emoji and no words.** The nav's dropdown items are
+`&#127959; Production Board`, `&#128296; Punch &amp; Repairs` and so on. At
+that point no colour rule has arrived, so the labels are invisible against the
+ground — while the emoji are **colour glyphs and paint in their own colours
+regardless of `color`**. Inline wrapping scatters them. Hence: emoji, scattered,
+no text.
+
+### The fix is the cascade — no script, no new mechanism
+
+The `<head>` already carries a `#crBanner` rule, and build 424 already left a
+comment there saying flex-wrap had to move to the body block *for this exact
+document-order reason*. Adding `display:none` to the head rule hides the nav
+during parse; the `#crBanner` rule in `cr-banner-styles` has **identical
+specificity** and comes later, so it wins and restores `display:flex` the moment
+the banner's own stylesheet arrives.
+
+```
+head  ~3108:  #crBanner{display:none;padding-top:6px;padding-bottom:6px}
+body ~51368:  #crBanner{…display:flex;…}          ← wins, later in document order
+```
+
+It cannot strand the nav hidden: if `cr-banner-styles` never arrives the page has
+no styling at all. Verified nothing writes `crBanner.style.display` — the two JS
+references only read and relocate it.
+
+⚠️ **Scope, stated plainly. This removes the broken-looking screen; it does NOT
+make the app start faster.** Startup is slow because `sw.js` serves navigations
+**network-first**, so every launch re-downloads the whole 3.86 MB document —
+that is a deliberate recorded decision (a fresh deploy is picked up on the very
+next load) and changing it is Theo's call, not a side effect of this fix. Put to
+him as a numbered pick; **not** shipped here.
+
+### `render_bootflash.js` — two experiments, because one proves the wrong thing
+
+**A. The cascade, deterministically.** Builds the mid-parse state exactly — only
+the `<style>` blocks before `</head>`, plus the real banner markup — and asks
+Chromium what `display` resolves to; then again with all 122 blocks. The fix is
+correct only if the answer is `none` then `flex`. Measured: **675 = `block`,
+210px tall; 676 = `none`, 0px; both load to `flex`, 75px.**
+
+**B. The real first paint.** Serves the artifact throttled and reads what is
+painted at the first tick where `#crBanner` exists and the document is still
+loading. 675: `🏗🔨📅⚡💲🎯🏛` at 5/122 style blocks. 676: nothing.
+
+**Two harness faults of mine, both caught by running the control:**
+
+1. An assertion reading *"the two states differ"* **passed on the buggy 675**,
+   because `block !== flex`. Re-keyed to say what it means — hidden during parse
+   AND not hidden once loaded — which is red on 675. (BUG_CLASSES §19 again.)
+2. Experiment B first sampled on *"any style block has parsed"* and **also
+   passed on 675** — it caught the page at `styles=1`, before the nav markup had
+   arrived, and reported no emoji because there was no nav yet. Now it samples at
+   the deterministic moment. **A test that goes green on the broken artifact is
+   worse than one that goes red**, and only running the control found both.

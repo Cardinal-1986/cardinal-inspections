@@ -3105,7 +3105,14 @@ body[data-crm="retail"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{
    #crBanner's base rule is in the body, so document order meant flex-wrap never
    applied. Never write a literal style tag in a CSS comment — the tag-balance
    gate counts it, and a CLOSING one would genuinely end the block early. */
-#crBanner{padding-top:6px;padding-bottom:6px}
+/* 676: display:none until cr-banner-styles arrives. The markup is at ~3305 and
+   the stylesheet that lays it out is ~48,000 lines later, so on a slow link the
+   nav painted as raw inline text for the whole download — invisible labels (no
+   colour rule yet) beside emoji, which are colour glyphs and paint regardless.
+   That scatter of emoji WAS the app's startup screen. Same specificity as the
+   #crBanner rule in cr-banner-styles, which comes later and restores flex, so
+   this needs no script and cannot strand the nav hidden. */
+#crBanner{display:none;padding-top:6px;padding-bottom:6px}
 #crBanner .cbn{flex:0 0 auto}
 #crBanner .cbn.cbdd:nth-last-of-type(2){margin-left:auto}
 #crBanner .cbmenu .cr-navhd{display:block}
@@ -3291,7 +3298,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 675 &#8212; Insurance Clients sits at the top of the insurance page, where you actually reach for it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 676 &#8212; The app no longer opens on a screen of scattered emoji while it loads</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37004,6 +37011,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:676, d:'2026-08-10', t:'The app stops opening on a screen of scattered emoji',
+s:'On a weak signal the app opened on a dark screen with a dozen emoji scattered across it \u2014 a hammer, a calendar, a stethoscope, a gear \u2014 and nothing else, until it finally loaded. That was the section nav (Home, Contacts, Leads, Production, Tools) showing before its styling had arrived: the app is one very large file, and the part that tells that strip how to look sits near the end of it. So the strip appeared as plain text, the words were invisible because no colour had loaded yet, and the little pictures showed through because emoji always draw in their own colours. It is now hidden until its styling arrives, so it either looks right or is not there at all. This does not make the app load faster \u2014 it stops it looking broken while it does.'},
 { b:675, d:'2026-08-10', t:'Insurance Clients moves to the top of the insurance page',
 s:'The insurance page opened with the chase list \u2014 the best slot on the screen, directly under the figures \u2014 and most days it read \u201CNothing waiting on a carrier right now.\u201D Meanwhile Insurance Clients, the button you actually reach for, sat eight cards down past the pipeline, the carriers and the week. They have swapped. Insurance Clients is now a full-width button right under the figures, and it tells you how many claims are in there. The chase list moved down between This week and Tools \u2014 still easy to find when something IS waiting on a carrier, just no longer spending the top of the page saying nothing is.'},
 { b:674, d:'2026-08-10', t:'A Hover report fills the measurements',

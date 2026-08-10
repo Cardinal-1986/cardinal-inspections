@@ -1603,3 +1603,48 @@ are the test's fault, and a growing share are the *invocation's* fault — a
 harness that demands its arguments is behaving correctly, and a harness that
 demands an environment says so in its own header. Check both before touching
 the artifact.
+
+---
+
+## 25 — Markup at the top, its stylesheet at the bottom (build 676)
+
+**The app's startup screen was fourteen scattered emoji, and it had been for as
+long as the banner nav has existed.** `#crBanner`'s markup is at line 3305; the
+`<style id="cr-banner-styles">` that gives it `display:flex` is at line 51368 —
+roughly 48,000 lines and 3 MB later in a 3.86 MB single-file app.
+
+A browser paints what it has parsed. Between those two points the nav rendered as
+raw inline text for the **entire** download — measured at 32 seconds on 1.2 Mbps
+with 4× CPU throttling, and a distinct-frame pass found only TWO painted states
+in that whole window: the emoji screen, and the finished app.
+
+**Two things make this class hard to see:**
+
+1. **It is invisible on a fast connection.** Locally, and on wifi, the gap is a
+   few milliseconds. It only becomes the user's experience on a weak signal —
+   i.e. exactly where the owner works. Same shape as §22 (broken only on the
+   device the work happens on), from the other direction.
+2. **Unstyled emoji paint; unstyled text does not.** Emoji are colour glyphs and
+   render in their own colours regardless of `color`, so an element whose labels
+   are invisible for want of a colour rule still shows its icons. "No text is
+   visible" is not "nothing is visible" — and a screen of pictures with no words
+   reads as a crash, not as a page loading.
+
+**The rules**
+
+1. **Anything you add high in the document must be styled from the head, or
+   hidden from the head.** Ask where the module's stylesheet sits relative to its
+   markup before adding either.
+2. **Hide with the cascade, not a boot flag.** `#crBanner{display:none}` in the
+   head is undone by the same-specificity `#crBanner{display:flex}` later in the
+   file. No script runs, nothing can strand the element hidden if boot throws,
+   and there is no new mechanism beside the existing one.
+3. **Reproduce first-paint bugs by serving and throttling, never by reading.**
+   `filmstrip.js` turned a vague "this happens every time" into a one-line cause
+   in a single frame. Reading the code would not have found it; the markup and
+   the stylesheet are both individually correct.
+4. **Note that build 424 had already met this exact trap** in the same element —
+   its comment says flex-wrap had to move to the body block because "this rule is
+   in the document head and #crBanner's base rule is in the body, so document
+   order meant flex-wrap never applied." The ordering hazard was known and
+   written down; nobody asked what the user sees *in between*.
