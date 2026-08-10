@@ -1841,3 +1841,30 @@ the two halves of the same fix."* Same fix, second site.
 element wider than the viewport. ⚠️ Exclude descendants of a scrollable row —
 chips scrolled out of view legitimately sit beyond the right edge, and counting
 them turns a passing layout into a false red.
+
+
+## 30 — a horizontal scroller with no `overscroll-behavior-x` navigates back
+
+**Reported at 697.** Swipe a sideways-scrolling row (tab rail, chip strip,
+card grid) back toward its start; the instant it reaches `scrollLeft` 0 the
+remaining gesture **chains to the page**, and the browser treats that as a
+back navigation. The screen exits. It reads as "the view crashed" and is
+nothing of the sort — the gesture left the element.
+
+**Fix:** `overscroll-behavior-x:contain` on every `overflow-x:auto|scroll`
+element. It stops chaining only; the element scrolls exactly as before, touch
+handlers are untouched, and the Y axis is unaffected.
+
+⚠️ **`overflow:auto` sets `overflow-x` too.** A source grep for `overflow-x:`
+found 24 sites; walking Chromium's parsed rules found **33**. Count with the
+browser, not a regex.
+
+⚠️ **Three things a naive scan miscounts here**, all hit in one build:
+a `<style>` tag inside a JS template string (generated print CSS read as a
+stylesheet); `overflow:auto` written as PROSE inside a CSS comment; and inline
+`style=` attributes, which are real elements but never appear in
+`document.styleSheets`.
+
+⚠️ **No CSS reaches the iOS system edge-swipe.** A gesture starting on the very
+edge of the glass is handled before the page sees it. This class covers swipes
+that begin on the element.
