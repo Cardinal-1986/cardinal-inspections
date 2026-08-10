@@ -14229,3 +14229,44 @@ brought to 684; `BUG_CLASSES` to 683.
 Gates: `check_build` green (679-era prev, marker + negative control), sweep
 green (653/671/679/680 + pcard + schedule renders). `isOwner` survives only
 as the retirement comment — asserted by grep, count 1.
+
+- **685** · **every gradient-clipped text site removed — 37 of them, not the 38
+  on record.** Theo, 10 Aug: *"I don't need to have gradient colors anywhere."*
+  The 38th is PROSE: a comment in `cr-nvl-styles` explains a previous fix and
+  its declaration is split across a newline, so `\s*` matches it. Lexer-aware
+  count says 36 stylesheet rules + 1 inline attribute = 37, and Chromium's own
+  parsed-rule walk agrees exactly.
+
+  Every ink came from one rule, applied in order, so nothing is invented:
+  identical stops → that colour (8 sites, provable no-op) · an approved
+  precedent → it (683's `--rbe-head` for the client name ×6; Theo's pick C
+  `#d8a94f`/`#8f1620` for the PO ×4) · else the rule's own declared `color:`
+  fallback if it clears its floor · else the highest-contrast stop from that
+  rule's own gradient · else a theme-flipping token where no single ink serves
+  both. Zero floor failures; worst is 4.83:1 (`#cr-ih-title`, 4.5 floor).
+
+  `--rbe-po1`/`--rbe-po2` were referenced ONLY by the four PO gradients, so
+  po2 is retargeted to the pair Theo already approved on `#leadsView` and po1
+  is gone. `.mic`'s `@supports` block is DELETED — 682 named it for this pass;
+  both surviving `class="mic"` strings are prose.
+
+  **A regression I introduced and caught:** the login tagline carries an inline
+  `color:#7a4a3e`. At 684 the stylesheet's transparent fill still won, so it
+  rendered as the gradient; with the gradient gone the inline light-era brown
+  won at 2.43:1 on the dark card. Removed at source — now 5.06:1. Only element
+  of the 37 with that trap; scanned, not assumed.
+
+  Gates: `check_build` green (684 prev, marker + negative control — the first
+  marker chosen collided with a comment 683 wrote, which is what the negative
+  control is for). `render_gradtext.js` 94/94 green, and RED with 90 failures
+  on 684. Replay onto a fresh 684 reproduces the artifact byte-for-byte
+  (`9e4b2ce`). Sweep green: schedule 27/27, pcard 12/12, 679 31/31, 680 35/35,
+  colors 110/110. `harness_677` crashes identically on 684 — pre-existing.
+
+  **Two bugs in the harness itself, both worth keeping:** (1) in modern
+  Chromium every `CSSStyleRule` exposes an empty `.cssRules` for CSS nesting,
+  so `if (r.cssRules) { walk(); continue; }` skips every style rule and reports
+  a clean zero — a FALSE GREEN, caught only because the negative control had to
+  report 37. (2) within one element the background-image composites over that
+  element's OWN background-color, not the ancestor's; getting that wrong read a
+  dark card's wash as near-white and failed a passing ink at 1.05:1.

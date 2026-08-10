@@ -145,18 +145,49 @@ Ask who else uses the class *before* deciding the fix is small.
 
 ### ✅ SETTLED, 10 Aug (Theo, verbatim): *"I don't need to have gradient colors anywhere."*
 
-Measured at build 681: **276** gradient calls, **39** of them
-**gradient-clipped TEXT** (`-webkit-background-clip:text` +
-`-webkit-text-fill-color:transparent`) across ~37 selectors, **14** gradient
-borders, and **58** whose two stops are *identical* — already flat, pure
-overhead.
+**✅ GRADIENT TEXT IS GONE — all of it, at build 685. Do not re-introduce it,
+and do not "find" it again from a text regex.** Gradient calls **274 → 237**;
+clip-to-text declarations **38 → 0**.
 
-**Gradient text is the one that causes the harm above**: it defeats a plain
-`color:` read, it cannot be measured by eye, and a red→darker-red ramp that
-reads on a light card vanishes on a near-black one. **Do not add another.**
-Removing the existing 39 is a build in its own right; the ~165 genuine
-background gradients are a separate, more visual call and want a preview before
-they go. **Never re-introduce gradient text to "match the old look."**
+⚠️ **The recorded count of 38 was one too many, and the extra is this file's own
+counting trap.** The 38th hit is **PROSE** — a comment in `cr-nvl-styles`
+explaining an earlier fix, whose `-webkit-text-fill-color` and `:transparent`
+sit on either side of a newline, so any `\s*` pattern matches it. The honest
+figure was **37**: 36 stylesheet rules + 1 inline `style=` attribute, confirmed
+by walking **Chromium's own parsed rules**, which is the only instrument that
+cannot be fooled by a comment.
+
+**The instrument is `scripts/render_gradtext.js`** — it walks
+`document.styleSheets`, scores every formerly-clipped element against its
+composited ground in both themes, and **goes RED (90 failures) on the 684
+artifact**, so it is a gate that has been seen to fail.
+
+⚠️ **Two traps inside that harness, both of which produced a confident wrong
+answer before the negative control caught them:**
+- **In modern Chromium every `CSSStyleRule` exposes an empty `.cssRules`** for
+  CSS nesting. The obvious `if (r.cssRules) { walk(r.cssRules); continue; }`
+  therefore **skips every style rule without examining it** and reports a clean
+  zero. Examine the rule, *then* descend.
+- **Within one element the background-image composites over that element's own
+  `background-color`, not the ancestor's.** Getting that wrong reads a dark
+  card's semi-transparent wash as near-white and fails a passing ink at 1.05:1.
+  This is trap 3 above, applied at the wrong level.
+
+**The replacement rule, if you ever need it again** (it is what 685 used, and
+it means no colour was invented): identical stops → that colour · an approved
+precedent → it · else the rule's own declared `color:` fallback if it clears
+its floor · else the best-contrast stop from that rule's own gradient · else a
+theme-flipping token pair. 685 landed 37 sites with **zero floor failures**.
+
+⚠️ **Removing gradient text can UNMASK an inline light-era ink.** The login
+tagline carried `style="…color:#7a4a3e…"`; the stylesheet's transparent fill
+had been hiding it, and with the gradient gone it painted 2.43:1 on the dark
+card. Scan the affected elements for an inline `color` before declaring a
+gradient-text removal finished.
+
+The **~165 genuine background gradients are a separate, more visual call** and
+want a preview before they go. **58 of them have two identical stops** — already
+flat, pure overhead. **14** are gradient borders.
 
 ---
 

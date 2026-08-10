@@ -2382,5 +2382,7 @@ collision), gradient names gone from the cards (39 gradient-text sites → 38).
 - **`.pcpo` lavender `#c9a2ff` reads 1.99:1 in LIGHT mode** — pre-existing;
   lavender PO is on the semantic frozen list. Needs Theo's pick of a light
   variant (the `.ljpo` precedent uses `--rbe-po1/po2` pairs).
-- **Remaining gradient-text sites: 38** — next sweep targets per the settled
-  no-gradients rule; list is in the CLAUDE.md standing note.
+- ~~**Remaining gradient-text sites: 38**~~ — **DONE at 685.** All removed;
+  the real count was **37** (the 38th is a comment whose declaration is split
+  across a newline). Chromium's parsed-rule walk now reports 0, and
+  `render_gradtext.js` is the standing instrument — it goes RED on 684.
