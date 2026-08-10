@@ -110,6 +110,14 @@
   .pill.approved{ color:var(--sd-ok); border-color:var(--sd-ok); }
   .pill.partial{ color:var(--sd-warn); border-color:var(--sd-warn); }
   .pill.denied{ color:var(--sd-crit); border-color:var(--sd-crit); }
+  /* 671: the ROW-level vocabulary (insurance_supplements.status), rendered by
+     loadFilings. The four above are the CLAIM-level one (insurance_claims
+     .supplement_status), rendered by loadClaims. One .pill, two vocabularies —
+     both are now complete. 'submitted' reads as live-and-waiting, the same
+     amber as a filed claim, because that is what it means. */
+  .pill.submitted{ color:var(--sd-warn); border-color:var(--sd-warn); }
+  .pill.draft{ color:var(--sd-ink3); border-color:var(--sd-line); }
+  .pill.withdrawn{ color:var(--sd-ink3); border-color:var(--sd-line); text-decoration:line-through; }
 
   .steps{ display:flex; gap:6px; margin:0 0 14px; flex-wrap:wrap; }
   .steps .st{ font-size:11.5px; padding:5px 11px; border-radius:99px; border:1px solid var(--sd-line); color:var(--sd-ink3); }
@@ -257,7 +265,7 @@
           <select id="filingType" style="background:var(--sd-sunk);border:1px solid var(--sd-line);color:var(--sd-ink);border-radius:6px;padding:9px 11px;font-size:13px;">
             <option value="partial_denial">Partial-denial supplement (before build)</option>
             <option value="backend">Backend supplement</option>
-            <option value="pwi_coc">PWI / COC — depreciation release</option>
+            <option value="pwi_coc" disabled>PWI / COC — depreciation release (needs its own build)</option>
           </select>
           <button class="btn" id="analyzeBtn" disabled>Analyze the scope</button>
         </div>
@@ -422,7 +430,7 @@ async function loadClaims(){
     .order('created_at', { ascending: false }).limit(100);
   if(r.error){ el('claimList').innerHTML = '<div class="sd-empty">Could not load claims: ' + esc(r.error.message) + '</div>'; return; }
   S.claims = (r.data || []).filter(function(c){ return c.project_id; });
-  if(!S.claims.length){ el('claimList').innerHTML = '<div class="sd-empty">No claims with a linked job yet.</div>'; return; }
+  if(!S.claims.length){ await explainEmpty(); return; }
   el('claimList').innerHTML = S.claims.map(function(c){
     var st = c.supplement_status || 'none';
     return '<div class="claimrow" data-id="' + c.id + '">' +
@@ -436,6 +444,28 @@ async function loadClaims(){
   el('claimList').querySelectorAll('.claimrow').forEach(function(row){
     row.addEventListener('click', function(){ openDesk(row.getAttribute('data-id')); });
   });
+}
+
+/* 671: an empty list has two different causes and they need different words.
+   The Desk's door is is_cardinal_admin(); the claims' door is is_full_access()
+   OR you created it OR you are the assigned rep. Those are not the same set —
+   audit@cardinalrenovations.net passes the first and fails the second, and saw
+   "No claims with a linked job yet." That sentence was false: there were five.
+   Ask which case this is; if the question itself fails, fall back to the
+   generic wording rather than guessing. */
+async function explainEmpty(){
+  var full = null;
+  try{
+    var r = await sb.rpc('is_full_access');
+    if(!r.error) full = r.data === true;
+  }catch(_){}
+  el('claimList').innerHTML = (full === false)
+    ? '<div class="sd-empty"><b>No claims are visible to this sign-in.</b><br>' +
+      'You have Supplement Desk access, but claim records are limited to the ' +
+      'people on a job — the person who created the claim, the assigned rep, ' +
+      'or Theo, Joan, Curtis and Scottie. This is the record refusing, not an ' +
+      'empty database. Sign in as the rep on the job, or ask Theo.</div>'
+    : '<div class="sd-empty">No claims with a linked job yet.</div>';
 }
 
 /* ── the desk ─────────────────────────────────────────────────────────────── */
@@ -625,7 +655,10 @@ el('clSaveBtn').addEventListener('click', async function(){
       /* the person filing it is the person vouching for it */
       verified_by: (S.user && S.user.email) || null,
       verified_at: new Date().toISOString(),
-      created_by: (S.user && S.user.email) || 'desk'
+      /* 671: null, not 'desk'. The INSERT policy is
+         (created_by = my_email()) OR (created_by IS NULL) — a sentinel string
+         satisfies neither, so the literal guaranteed a refusal. */
+      created_by: (S.user && S.user.email) || null
     }).select('id').single();
     if(r.error) throw new Error(r.error.message);
     ['clJuris','clOfficial','clTitle','clDept','clContact','clApplies','clTopic','clHolding',
@@ -896,22 +929,74 @@ async function fileSupplement(){
     scope_ref: S.scopeDoc ? { report_row_id: S.scopeDoc.id, name: S.scopeDoc.name, size: S.scopeDoc.size } : null,
     notes: null,
     code_letter_ids: clSelected().map(function(l){ return l.id; }),
-    created_by: (S.user && S.user.email) || 'desk'
+    created_by: (S.user && S.user.email) || null   /* 671 — see the note above */
   };
   var r = await sb.from('insurance_supplements').insert(row).select('id').single();
-  el('fileBtn').disabled = false;
-  if(r.error){ alert('Could not file: ' + r.error.message); return; }
+  /* 671: re-enable ONLY on failure. This ran unconditionally, and before the
+     error check, so a second tap inserted a second identical filing — and the
+     id 672's send writeback follows would be the last insert, not the one the
+     carrier was told about. A filed letter is not a button you press twice. */
+  if(r.error){
+    el('fileBtn').disabled = false;
+    alert('Could not file: ' + r.error.message +
+      (/row-level security|policy/i.test(r.error.message || '')
+        ? '\n\nThat is the record refusing, not a bug: filing is limited to the people on the job.'
+        : ''));
+    return;
+  }
+  S.filedId = (r.data && r.data.id) || null;
+  el('fileBtn').textContent = 'Filed ✓';
   step(4);
   loadFilings(S.claim.id);
   alert('Filed. The claim’s supplement figures update themselves — the AR math sees this immediately.');
 }
 
 /* ── print / copy ─────────────────────────────────────────────────────────── */
+/* 671: the enclosure the letter promises. api/supplement.js instructs the
+   model to say a copy of each building-official letter accompanies the
+   request — so the printed packet has to carry them. The holding is reproduced
+   VERBATIM (the code_letters rule), and the signed original is named as
+   following behind, because a scan is not inlined here. Returns '' when no
+   letter is ticked, so a letter with no exhibits prints with no appendix and
+   claims none. */
+function codeAppendix(html){
+  var picked = clSelected();
+  if(!picked.length) return '';
+  return '<hr style="margin:26px 0 14px;border:0;border-top:1px solid #999;">' +
+    '<h3 style="font-size:14px;margin:0 0 10px;">Appendix &mdash; code authority</h3>' +
+    picked.map(function(l){
+      var who = [l.official_name, l.official_title].filter(Boolean).join(', ');
+      return '<div style="margin:0 0 14px;">' +
+        '<div style="font-weight:bold;">' + esc(l.topic) + '</div>' +
+        '<div style="font-size:13px;">' + esc(l.jurisdiction) +
+          (who ? ' &mdash; ' + esc(who) : '') +
+          (l.department ? ', ' + esc(l.department) : '') +
+          (l.letter_date ? ', ' + esc(fmtDate(l.letter_date)) : '') + '</div>' +
+        '<div style="margin:6px 0 0;">&ldquo;' + esc(l.holding) + '&rdquo;</div>' +
+        ((l.rco_sections || []).length
+          ? '<div style="font-size:12px;">Enforcing ' + esc(l.rco_sections.join(', ')) + '.</div>' : '') +
+        (l.storage_path || l.source_url
+          ? '<div style="font-size:12px;font-style:italic;">Signed original follows.</div>' : '') +
+      '</div>';
+    }).join('');
+}
+/* 671: ONE photo-token substitution, used by both print and copy. Copy had its
+   own unconditional regex that rewrote every token to '[photographs attached]'
+   without ever looking the gap up — so on a job with no photographs the copied
+   letter told the carrier there were some. resolve() decides what a token with
+   photos becomes; a token WITHOUT photos becomes nothing, in both paths. */
+function substitutePhotoTokens(html, resolve){
+  var itemsById = {};
+  S.gaps.forEach(function(g){ itemsById[g.id] = g; });
+  return html.replace(/\[\[PHOTOS:([a-z0-9_]+)\]\]/gi, function(_, id){
+    var g = itemsById[id];
+    if(!g || !(g.photos || []).length) return '';
+    return resolve(g);
+  });
+}
 el('printBtn').addEventListener('click', async function(){
   /* print substitutes 1-hour signed URLs for display; the stored letter keeps tokens */
   var html = letterRaw();
-  var itemsById = {};
-  S.gaps.forEach(function(g){ itemsById[g.id] = g; });
   var allPaths = [];
   S.gaps.forEach(function(g){ (g.photos || []).forEach(function(p){ if(p.path && p.path.indexOf('row:') !== 0) allPaths.push(p.path); }); });
   var byPath = {};
@@ -919,9 +1004,7 @@ el('printBtn').addEventListener('click', async function(){
     var su = await sb.storage.from('photos').createSignedUrls(allPaths, 3600);
     (su.data || []).forEach(function(d, i){ if(d && d.signedUrl) byPath[allPaths[i]] = d.signedUrl; });
   }
-  html = html.replace(/\[\[PHOTOS:([a-z0-9_]+)\]\]/gi, function(_, id){
-    var g = itemsById[id];
-    if(!g || !(g.photos || []).length) return '';
+  html = substitutePhotoTokens(html, function(g){
     return '<div>' + g.photos.map(function(p){
       var src = byPath[p.path] || '';
       return src ? '<img src="' + esc(src) + '" style="max-width:46%;margin:4px 2%;border:1px solid #ccc;">' : '';
@@ -929,14 +1012,19 @@ el('printBtn').addEventListener('click', async function(){
   });
   el('printArea').innerHTML =
     '<div style="font:14px/1.6 Georgia,serif;max-width:7.5in;margin:0 auto;padding:24px;">' +
-    '<h2 style="font-size:16px;">' + esc(el('subjEdit').value) + '</h2>' + html + '</div>';
+    '<h2 style="font-size:16px;">' + esc(el('subjEdit').value) + '</h2>' + html +
+    codeAppendix(html) + '</div>';
   el('printArea').style.display = 'block';
   window.print();
   el('printArea').style.display = 'none';
 });
 el('copyBtn').addEventListener('click', function(){
   var tmp = document.createElement('div');
-  tmp.innerHTML = letterRaw().replace(/\[\[PHOTOS:[^\]]+\]\]/g, '[photographs attached]');
+  /* 671: the same conditional substitution the print path uses. A gap with no
+     photographs contributes nothing — it used to say they were attached. */
+  tmp.innerHTML = substitutePhotoTokens(letterRaw(), function(g){
+    return '<div>[' + g.photos.length + ' photograph' + (g.photos.length === 1 ? '' : 's') + ' attached]</div>';
+  }) + codeAppendix('');
   navigator.clipboard.writeText(tmp.innerText).then(function(){
     el('copyBtn').textContent = 'Copied ✓';
     setTimeout(function(){ el('copyBtn').textContent = 'Copy letter'; }, 1600);

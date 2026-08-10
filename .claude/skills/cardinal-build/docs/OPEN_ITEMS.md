@@ -2188,3 +2188,53 @@ official is persuasive where he is not binding.
   and all-staff readable by RLS, but only the Desk renders them. If production
   should carry the jurisdiction's position into the field, that is a read-only
   view in `index.html` — not started, not decided.
+
+
+## After 671 — what the audit left on the table
+
+**Answered by 671, do not re-open:** the SECURITY DEFINER proposal (rejected as
+a false positive, with the test recorded in `supplement_mirror_tiebreak.sql`);
+the `.pill.filed` "can never be produced" claim (overstated — two vocabularies,
+both now complete).
+
+**Three questions that genuinely need Theo, none of them blocking 672:**
+1. **PWI / COC vs quantities-only.** A depreciation-release filing must carry
+   the final invoice figure; the Desk's rule is quantities-only, settled three
+   times. (1) pwi_coc is exempt, `dollar_flag` suppressed for that type only.
+   (2) The amount rides on an attached invoice; the letter stays
+   quantities-only. (3) The letter states it and `dollar_flag` still fires so a
+   human confirms every time. **Recommend 3** — one rule with one visible
+   exception beats two rules. The option is disabled until this is answered,
+   and it needs its own build regardless: the Desk is hard-gated on a filed
+   carrier scope, which is the wrong precondition for an end-of-job filing.
+2. **The supplement rail will read $0 on every Desk filing.** The Desk writes
+   no `amount_requested`, so the mirror computes 0 while flipping the status to
+   filed. There is no honest source for a number — Gunn's `our_estimate_total`
+   and `cost_incurred` are both NULL and `scope_reads.extracted` is NULL.
+   (1) Show the ITEM COUNT instead of money wherever a Desk filing appears.
+   (2) Add an optional amount field filled by hand. (3) Leave the $0.
+   **Recommend 1** — inventing a figure to fill a rail is the confident-wrong-
+   number class this project keeps removing.
+3. **Who may rewrite a FILED letter?** `insurance_supplements`' update policy is
+   full-access-or-own, so Curtis and Scottie — who cannot open the admin-only
+   Desk — can update `letter_html` on a filed row, and the mirror fires on
+   update. No shipped UI does this. (1) Leave it. (2) Freeze
+   `letter_html`/`letter_subject`/`filing_type` once `sent_at` is set, leaving
+   status/items free. (3) Narrow the RLS to admin-only. **Recommend 1 now, 2
+   the moment a reopen-and-edit path ships.** Not 3 — it would break the
+   claims-screen CRUD they legitimately use.
+
+**Recorded, not built:** `insurance_supplements_insert` checks only
+`created_by`, not that the claim is visible — a caller outside the Desk could
+insert against an invisible claim and the mirror would no-op. Not reachable
+from any shipped UI.
+
+**Next:** 672 send-from-the-desk (recipient shown, one explicit tap, `senddoc`
+extended with optional `subject`/`variant`/`replyTo` only — both existing
+callers untouched, back-compat asserted by executing their payloads). Then 673,
+the carrier response: reopen the filing, record decisions per item into
+`items[].carrier` (**not** `responses` — the items COMMENT already names that
+home), rebut through the existing `mode:'draft'` with an explicit
+`letter_kind`. A reduced-quantity approval — the commonest adjuster move — has
+nowhere to land today; 673 is the cheap moment to add `approved_qty` beside
+`decision`.

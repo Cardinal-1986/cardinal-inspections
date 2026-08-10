@@ -13055,3 +13055,88 @@ both policies (`select` = any authenticated, `for all` = `is_cardinal_admin()`),
 the `level` CHECK proven to fire, and the table left at 0 rows. Plus
 `insurance_supplements.code_letter_ids uuid[]` — filing-level, because an
 official's position on re-cover backs every item that turns on the tear-off.
+
+---
+
+## Build 671 — the Desk, made honest: nine repairs before the next feature
+*10 Aug 2026 · `supplement_mirror_tiebreak.sql` (applied via MCP first) +
+`supplement.html` + `api/supplement.js` + one line in `index.html`*
+
+Theo asked for the next section. Before writing it, a 13-agent audit ran over
+667–670 — six readers (senddoc + its callers, the letter/token pipeline, the
+supplement row and its mirror, the route patterns, the PWI/COC ground truth,
+and the live Gunn record), three independent designs, three adversarial passes.
+It came back with 24 findings. **Nine were real defects in the code I had just
+shipped.** They are fixed here; send-from-the-desk is 672.
+
+**Two of the audit's own "blockers" did not survive verification, and saying so
+is the point of the exercise.** Reported as false positives, with the tests:
+
+- *"The mirror is invoker-rights and `is_cardinal_admin()` ⊄ `is_full_access()`,
+  so a Desk admin's filing silently fails to mirror."* The premise is true —
+  `audit@cardinalrenovations.net` is a real `team_profiles` admin outside
+  `is_full_access()`. The conclusion is false, twice over: `insurance_claims`'
+  SELECT and UPDATE policies have **byte-identical** `USING` expressions
+  (compared in the catalog), so anyone who can read a claim can write it; and
+  run as that user, **0 of 5 claims are visible**, so they cannot reach a filing
+  at all. `SECURITY DEFINER` would have been a real privilege widening applied
+  to a defect that does not exist. What it *did* expose is smaller and real —
+  see the empty-Desk fix below.
+- *"`.pill.filed` is a class `loadFilings` can never produce, so the first
+  filing renders unstyled."* Overstated on both halves. `.pill` is **shared by
+  two renderers with two vocabularies** — `loadClaims:433` renders the CLAIM
+  vocabulary, `loadFilings:672` the ROW one. The base rule applies, so it drew
+  *neutral*, not unstyled. The real gap was three missing row-level classes.
+
+**The nine, each verified by hand before it was touched:**
+
+1. **The mirror's status was decided by read order.** `array_agg(status order
+   by responded_at desc, filed_at desc)` over two columns that are `date`, not
+   `timestamptz`. Two decisions the same day tie, and the claim shows whichever
+   row the plan read first. **Proven, not argued** — the same two rows replayed
+   in both physical orders returned `approved` one way and `denied` the other.
+   Fixed with a total tiebreak (`, updated_at desc, id desc`); both orders now
+   return the later-written decision. SQL applied before the page.
+2. **Filing twice filed twice.** `fileSupplement` re-enabled its button *before*
+   checking the insert error. The button now stays disabled on success, reads
+   `Filed ✓`, and retains the row id 672's send writeback will need.
+3. **`created_by` fell back to the literal `'desk'`**, which satisfies neither
+   arm of `(created_by = my_email()) OR (created_by IS NULL)`. Now `null`.
+4. **The copied letter told carriers photographs were attached when there were
+   none.** Copy used an unconditional regex; print used a conditional lookup.
+   One `substitutePhotoTokens()` now serves both — a photo-less gap contributes
+   nothing to either. Gunn has **zero** `project_photos` rows, so this fires on
+   the first real use.
+5. **My 670 regression: the letter claimed an enclosure that did not exist.**
+   The draft prompt told the model to state a copy of each building-official
+   letter "is enclosed", and nothing ever enclosed one. Fixed by making the
+   enclosure **real** rather than weakening the sentence — the print packet now
+   carries a Code Authority appendix reproducing each ticked letter's holding
+   verbatim, with the signed original named as following.
+6. **PWI/COC was one tap from a carrier and drafted the wrong document.** The
+   option shipped at 668; both prompts open hardcoded as a supplement *request*.
+   Disabled, visibly, until it has its own build.
+7. **The row-level pill vocabulary was missing** (`submitted`/`draft`/
+   `withdrawn`).
+8. **An admin who can open the Desk but see no claims was told there were
+   none.** Now told the record is refusing, and who does have access.
+9. **The supplement chase list could never go stale.** `cr-cth`'s own select
+   omitted `supplement_filed_at` while its own `chaseList` read it. (`cr-ic`
+   reads the same field but is fed by `cr-iu`'s select, which carries it —
+   checked per block, not file-wide.)
+
+**Gates.** `check_build` green, stamp 670 → 671. `harness_671` (48) EXECUTES
+the repairs — the photo substitution against three gap shapes, `codeAppendix`
+verbatim-and-escaped, `fileSupplement` driven through success / failure / RLS
+refusal asserting button and id state, `explainEmpty` through all three rpc
+outcomes. Control on the 670 artifacts: 17 red, no crash. Full sweep 671→653
+green; `render_codeletters` OK in 4 views.
+
+⚠️ **Three harness bugs of my own, all of them traps this file already names.**
+`fnText` sliced from `function NAME(` and dropped the `async` on
+`fileSupplement`, compiling a body with `await` in it — a SyntaxError that
+reads as an app fault. An assertion that the old copy regex was gone found the
+string inside **the comment explaining the fix** — comment pollution, in the
+direction that makes a correct repair look broken. And a pattern for a sentence
+that wraps across two comment lines reported a present claim as absent. Half of
+all reds on this project are the test's fault; today it was three for three.
