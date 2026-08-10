@@ -2258,3 +2258,31 @@ blocked 672; all three still want an answer.
   `letter_kind`. Add `approved_qty` beside `decision` while the slot is being
   written for the first time — a reduced-quantity approval is the commonest
   adjuster move and today has nowhere to land.
+
+
+## From the 672 adversarial review — confirmed, deliberately NOT built
+
+- **No recovery if the page dies between send and writeback.** The retry lives
+  in a closure on the Send button; a reload or a crash destroys it, and the only
+  route back is to file a second supplement — which mails the carrier a second
+  letter. The fix is to derive send state from the filings already fetched: let
+  an unsent filing be selected to set `S.filedId`, and hard-refuse Send on any
+  filing whose `sent_at` is non-null. **673 work** — it needs the filings list
+  to become interactive, which 673 is doing anyway for the carrier response.
+- **Nothing verifies delivery.** Resend accepting is not the carrier receiving.
+  No bounce handling, no delivery webhook. `sent_at` means *handed to the
+  mailer*, and the Desk says exactly that.
+
+### Refuted findings — do NOT re-file these
+
+- *"`renderForSend` keys signed URLs by array position, re-introducing the
+  build-633 bug."* The code reading is correct; the conclusion is not.
+  `createSignedUrls` is contractually 1:1 with its input, so position-keying and
+  path-keying are provably equivalent **here**. 633's bug required asking for a
+  path the API might not answer for.
+- *"The quantities-only rule is never re-checked at the new exit."* True as
+  written but mis-scoped — the defect was the mail body's *claim*, not the flag,
+  and that is fixed. The flag itself is a draft-time warning by design.
+- *"A legacy base64 photograph is silently excluded from the mailed letter."*
+  Pre-existing at 668, and 672 is the build that added the only mitigation it
+  has ever had (an unresolvable photo is no longer claimed).

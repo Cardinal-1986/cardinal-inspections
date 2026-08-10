@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     // 672: subject / variant / replyTo are ADDITIVE. Both shipped callers send
     // none of them, so each falls back to the exact behaviour that shipped.
     const { to, clientName, title, html, shareUrl, propertyLine,
-            subject, variant, replyTo } = req.body || {};
+            subject, variant, replyTo, quantitiesOnly } = req.body || {};
     // 672: `to` must be a non-empty STRING. `!to` passes a non-empty ARRAY,
     // which then reaches `to: [to]` below as [[a,b]] — Resend 422s and the
     // caller sees a truncated vendor string instead of its own mistake.
@@ -62,10 +62,9 @@ export default async function handler(req, res) {
     // depend on that wording and neither sends `variant`.
     const carrierBody = `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:640px;margin:0 auto;">
       <p>${esc(propertyLine || '')}</p>
-      <p>Please find our supplement request attached. It is itemised by scope
-      line with the supporting documentation named against each item.</p>
-      <p><b>Quantities are stated; pricing is not.</b> We ask that each item be
-      priced per your own current line list for this ZIP.</p>
+      <p>Please find our supplement request attached, itemised by scope line.</p>
+      ${quantitiesOnly === false ? '' : `<p><b>Quantities are stated; pricing is not.</b> We ask that each item be
+      priced per your own current line list for this ZIP.</p>`}
       <p>Reply to this email and it reaches the writer directly.</p>
       <p style="color:#555;">— ${esc(user.user_metadata?.full_name || user.email)}<br>
       Cardinal Roofing and Renovations, LLC · 5735 Webster Street, Dayton, OH 45414</p>
@@ -90,12 +89,19 @@ export default async function handler(req, res) {
         from, to: [to],
         // 672: replyTo lets a carrier reply reach a monitored claims mailbox
         // rather than whoever happened to be signed in. Defaults to the sender.
-        reply_to: replyTo || user.email,
+        // GATED on the carrier variant: on the homeowner path reply_to has
+        // always been the signed-in sender, and that is an accountability
+        // anchor, not an accident. A non-admin must not be able to point a
+        // reply off-domain from Cardinal's own From address.
+        reply_to: (isCarrier && replyTo) || user.email,
         // 672: subject must NOT fold into `title` — title also drives safeName
         // (the attachment filename) and the homeowner body sentence. Caller 2
         // sends the literal title 'Estimate', so folding would silently rename
         // its attachment.
-        subject: subject || `${title} — Cardinal Roofing & Renovations`,
+        // Gated for the same reason. (`title` already reached the subject
+        // pre-672, so this half is a smaller delta than it looks — but there
+        // is no caller that needs it ungated, so it is not left open.)
+        subject: (isCarrier && subject) || `${title} — Cardinal Roofing & Renovations`,
         html: isCarrier ? carrierBody : body,
         attachments: [{ filename: safeName + '.html',
                         content: Buffer.from(html, 'utf8').toString('base64') }]

@@ -1436,3 +1436,56 @@ Second, smaller lesson from the same run: a harness whose sandbox executes
 shipped code gets a **new free variable** every time the shipped function gains
 a call. Stub it to a **recording sentinel**, never a no-op — a no-op silently
 tolerates the wiring being deleted.
+
+
+## 20 — A stale flag asserting a live fact (build 672, the 671 class repeated)
+
+671 was an entire build about the letter not claiming things that are not true.
+672 — the very next build — put this in the carrier email, unconditionally:
+
+> **Quantities are stated; pricing is not.**
+
+Nothing on the send path checked. `dollar_flag` is computed **once**, server-side,
+on the AI's draft output, and the letter is editable for as long as the operator
+wants afterwards. Type a price in and the covering note tells the carrier there
+isn't one.
+
+**The shape to recognise:** a validation computed at moment A, and a *claim about
+that validation* asserted at moment B, with an editable surface in between. The
+flag is not wrong — it is simply answering an older question. Nothing goes red,
+because the flag did its job at the time.
+
+**The fix is never to trust the flag at B.** Re-run the test on the artifact that
+is actually leaving, and make the claim conditional on the result:
+
+    var out = assemble();
+    return { html: out, hasMoney: /\$\s*\d/.test(out) };   // tested at the exit
+
+Then the sentence is asserted only when it is true, and the operator is told
+either way. Same medicine as 671's photo tokens: a claim that can be false must
+be computed where it is made.
+
+## 21 — `S.x` read after an await is a different `S.x` (build 672)
+
+`sendLetter()` captured `to` and the rendered packet as locals, then built the
+outbound payload reading `S.claim.homeowner_name`, `S.claim.property_address`
+and `S.claim.claim_number` **live** — after two awaits and a modal confirm. Open
+another claim in that window and the mail goes to claim A's adjuster carrying
+**claim B's homeowner, address and claim number**.
+
+The same defect had a second head: `recordSend` targeted `S.filedId` at write
+time, so a switch during the send could stamp `sent_at` onto a different claim's
+filing.
+
+**Rule: an async handler on a shared `S` must capture its whole context in
+locals at entry, read only those locals afterwards, and re-check identity before
+any irreversible step.**
+
+    var claim = S.claim, filedId = S.filedId;
+    ...
+    if (S.claim !== claim || S.filedId !== filedId) { /* refuse */ return; }
+
+Partial capture is the trap. Capturing `to` but not the header fields looks
+careful and is worse than capturing nothing — the letter goes to the right
+person under the wrong name, which is far harder to spot than an obvious
+misdelivery.

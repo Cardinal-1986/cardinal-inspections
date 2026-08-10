@@ -108,12 +108,28 @@ console.log('\n── back-compat, proved DIFFERENTIALLY against the previous ha
       }
     }
     /* the specific trap: folding subject into title would rename caller 2's
-       attachment, whose title is the literal 'Estimate' */
-    const c2 = (await driveSend(SENDF, CALLER2)).seen.resend;
-    ok('caller 2\'s attachment is still Estimate.html — subject did NOT fold into title',
+       attachment, whose title is the literal 'Estimate'. Proved by SENDING a
+       subject and asserting the filename is unmoved — the earlier version
+       drove a payload with no subject at all and could not have detected it. */
+    const c2 = (await driveSend(SENDF, Object.assign({}, CALLER2,
+      { subject: 'a completely different subject' }))).seen.resend;
+    ok('caller 2\'s attachment is still Estimate.html even when a subject IS sent',
       c2 && c2.attachments && c2.attachments[0].filename === 'Estimate.html',
       c2 && c2.attachments && c2.attachments[0].filename);
     ok('…and neither existing caller is asked for admin', (await driveSend(SENDF, CALLER1)).seen.adminAsked === false);
+
+    /* the adversarial review's finding: subject and replyTo sat BELOW the
+       carrier gate, so any signed-in non-admin could point Reply-To
+       off-domain from Cardinal's own From address on the homeowner path. */
+    const hostile = (await driveSend(SENDF, Object.assign({}, CALLER2, {
+      subject: 'Your supplement has been approved — action required',
+      replyTo: 'attacker@not-cardinal.example' }))).seen.resend;
+    ok('a NON-carrier payload cannot set Reply-To — it stays the signed-in sender',
+      hostile.reply_to === 'theo@cardinalrenovations.net', hostile.reply_to);
+    ok('…and cannot set the Subject either; the Cardinal suffix is still applied',
+      / — Cardinal Roofing & Renovations$/.test(hostile.subject), hostile.subject);
+    ok('…and the homeowner body is still what shipped',
+      /Hi Adam Gunn/.test(hostile.html) && !/supplement request attached/.test(hostile.html));
   }
 }
 
@@ -150,6 +166,19 @@ console.log('\n── the carrier variant ──');
   const noRt = await driveSend(SENDF, CARRIER);
   ok('…and defaults to the sender when absent',
     noRt.seen.resend.reply_to === 'theo@cardinalrenovations.net');
+
+  /* the quantities-only sentence is a CLAIM about the attachment, so it is
+     asserted only when the Desk confirms the outgoing letter carries no
+     figure. Asserting it unconditionally is the 671 class. */
+  ok('quantities-only is stated when the Desk confirms the letter has no dollar figure',
+    /Quantities are stated; pricing is not/.test(good.seen.resend.html));
+  const withMoney = await driveSend(SENDF, Object.assign({}, CARRIER, { quantitiesOnly: false }));
+  ok('…and is NOT stated when the letter does contain one',
+    !/Quantities are stated; pricing is not/.test(withMoney.seen.resend.html));
+  ok('…while the rest of the carrier note is unchanged either way',
+    /supplement request attached/.test(withMoney.seen.resend.html));
+  ok('the mail no longer claims documentation is named against EACH item',
+    !/named against each item/.test(good.seen.resend.html));
 }
 
 console.log('\n── the guards ──');
@@ -209,18 +238,23 @@ console.log('\n── the mailed packet: only what actually resolved is claimed 
   const app = fnText(DESK, 'codeAppendix');
   const sel = fnText(DESK, 'clSelected');
   ok('renderForSend() exists', !!fn);
-  if (fn && sub && app && sel) {
-    const build = (signed) => {
+  const scrub = fnText(DESK, 'scrubForMail');
+  ok('scrubForMail() exists — one filter, at the point the letter leaves', !!scrub);
+  if (fn && sub && app && sel && scrub) {
+    /* renderForSend now scrubs, which needs a real DOM */
+    const { JSDOM } = require('jsdom');
+    const dom = new JSDOM('<!doctype html><body></body>');
+    const build = (signed, letter) => {
       const S = { gaps: [
           { id: 'g1', item: 'Drip edge', photos: [{ path: 'a.jpg' }, { path: 'b.jpg' }] },
           { id: 'g2', item: 'Ice barrier', photos: [] }
         ], codeLetters: [], clPicked: {} };
       const sb = { storage: { from: () => ({ createSignedUrls: async (paths) => ({
         data: paths.map(p => signed ? { signedUrl: 'https://s/' + p + '?token=x' } : {}) }) }) } };
-      return new Function('S', 'sb', 'esc', 'fmtDate', 'letterRaw', 'EXHIBIT_TTL',
-        sub + '\n' + sel + '\n' + app + '\n' + fn + '\nreturn renderForSend;')(
+      return new Function('S', 'sb', 'esc', 'fmtDate', 'letterRaw', 'EXHIBIT_TTL', 'document',
+        scrub + '\n' + sub + '\n' + sel + '\n' + app + '\n' + fn + '\nreturn renderForSend;')(
           S, sb, ESC, d => String(d || ''),
-          () => '<p>A [[PHOTOS:g1]]</p><p>B [[PHOTOS:g2]]</p>', 31536000);
+          () => letter || '<p>A [[PHOTOS:g1]]</p><p>B [[PHOTOS:g2]]</p>', 31536000, dom.window.document);
     };
     const okPacket = await build(true)();
     ok('photographs that signed are embedded, and counted',
@@ -238,6 +272,28 @@ console.log('\n── the mailed packet: only what actually resolved is claimed 
       /var EXHIBIT_TTL = 31536000;/.test(DESK) && /1 year, in seconds/.test(DESK));
     ok('…and is deliberately NOT the 10-year document TTL',
       DESK.indexOf('315360000') === -1);
+
+    /* the quantities-only claim is re-tested on what is ACTUALLY GOING */
+    const clean = await build(true, '<p>Replace 32 SQ of shingle. [[PHOTOS:g1]]</p>')();
+    ok('a letter with no dollar figure reports hasMoney false', clean.hasMoney === false);
+    const dirty = await build(true, '<p>Replace 32 SQ at $412.50 per square.</p>')();
+    ok('a letter WITH a dollar figure is caught at SEND time, not at draft time',
+      dirty.hasMoney === true);
+    ok('…and the test runs on the assembled packet, not the raw editor text',
+      /hasMoney: \/\\\$\\s\*\\d\/\.test\(out\)/.test(DESK) || /hasMoney: .*test\(out\)/.test(DESK));
+
+    /* the scrubber, executed */
+    const scrubbed = await build(true,
+      '<p onclick="steal()">x<script>bad()<\/script>' +
+      '<a href="javascript:bad()">c</a><iframe src="//evil"></iframe>' +
+      '<img src="data:image/png;base64,AAA"><b>keep me</b></p>')();
+    ok('script is stripped from the letter before it leaves the building',
+      !/<script/i.test(scrubbed.html) && !/bad\(\)/.test(scrubbed.html), scrubbed.html.slice(0, 120));
+    ok('…so are on* handlers and javascript: URLs',
+      !/onclick/i.test(scrubbed.html) && !/javascript:/i.test(scrubbed.html));
+    ok('…and iframes', !/<iframe/i.test(scrubbed.html));
+    ok('…while legitimate rich text and inline images survive',
+      /<b>keep me<\/b>/.test(scrubbed.html) && /data:image\/png/.test(scrubbed.html));
   }
 }
 
@@ -250,13 +306,18 @@ console.log('\n── the honest ordering: mail leaves before the row is written
       const els = { sendBtn: { disabled: true, textContent: '', onclick: 'X' },
                     sendNote: { textContent: '', innerHTML: '' } };
       const calls = { updates: [], loads: 0 };
+      calls.eqIds = [];
       const sb = { from: () => ({ update: (patch) => { calls.updates.push(patch); return {
-        eq: () => ({ select: () => ({ single: async () => updateResult }) }) }; } }) };
+        eq: (_col, id) => { calls.eqIds.push(id);
+          return { select: () => ({ single: async () => updateResult }) }; } }; } }) };
+      /* S is deliberately POINTED AT A DIFFERENT CLAIM than the one being
+         recorded — the send captured its ids, so a claim switch mid-flight
+         must not redirect the writeback. */
       await new Function('S', 'sb', 'el', 'esc', 'letterRaw', 'syncSend', 'loadFilings', 'calls',
         fn + '\nreturn recordSend;')(
-          { filedId: 'r1', claim: { id: 'c1' } }, sb, id => els[id], ESC,
-          () => '<p>tokens [[PHOTOS:g1]]</p>', () => {}, () => { calls.loads++; }, calls)(
-            'claims@claims.allstate.com', 'Subj', '<p>with urls</p>');
+          { filedId: 'SOMEONE-ELSE', claim: { id: 'OTHER-CLAIM' } }, sb, id => els[id], ESC,
+          () => '<p>EDITED AFTER SENDING</p>', () => {}, (cid) => { calls.loads++; calls.loadedClaim = cid; }, calls)(
+            'r1', 'c1', 'claims@claims.allstate.com', 'Subj', '<p>tokens [[PHOTOS:g1]]</p>');
       return { els, calls };
     };
 
@@ -267,11 +328,17 @@ console.log('\n── the honest ordering: mail leaves before the row is written
       Object.prototype.hasOwnProperty.call(good.calls.updates[0], 'letter_html'));
     ok('…and it stores TOKENS, never the live signed URLs (they expire)',
       /\[\[PHOTOS:/.test(good.calls.updates[0].letter_html) &&
-      !/https:\/\/s\//.test(good.calls.updates[0].letter_html) &&
-      !/with urls/.test(good.calls.updates[0].letter_html));
+      !/https:\/\/s\//.test(good.calls.updates[0].letter_html));
+    ok('…the archive is the text HANDED IN, not a fresh read of the editor — ' +
+       'an edit after sending cannot rewrite the record of what the carrier got',
+      !/EDITED AFTER SENDING/.test(good.calls.updates[0].letter_html),
+      good.calls.updates[0].letter_html);
+    ok('…the writeback targets the CAPTURED filing, not whatever S points at now',
+      good.calls.eqIds && good.calls.eqIds[0] === 'r1', JSON.stringify(good.calls.eqIds));
     ok('…the control ends disabled and reading Sent', good.els.sendBtn.disabled === true &&
       /Sent/.test(good.els.sendBtn.textContent));
-    ok('…and the filings list is refreshed', good.calls.loads === 1);
+    ok('…and the filings list refreshes the CAPTURED claim', good.calls.loads === 1 &&
+      good.calls.loadedClaim === 'c1', good.calls.loadedClaim);
 
     const bad = await drive({ data: null, error: { message: 'connection reset' } });
     ok('a FAILED writeback after a successful send is LOUD, never a swallowed catch',
@@ -302,6 +369,26 @@ console.log('\n── filed and SENT are two different facts ──');
   ok('nothing sends itself — send is wired to an explicit click and nothing else',
     /el\('sendBtn'\)\.addEventListener\('click', sendLetter\)/.test(DESK) &&
     !/sendLetter\(\)\s*;?\s*$/m.test(DESK.replace(/async function sendLetter[\s\S]*/, '')));
+
+  /* the send captures its context, because two awaits sit between the tap and
+     the dispatch and S.claim can be swapped underneath by opening another
+     claim — which mailed one claim's letter under another's header. */
+  ok('sendLetter captures the claim and the filing id in locals',
+    /var claim = S\.claim, filedId = S\.filedId;/.test(DESK));
+  ok('…and refuses to dispatch if the ground moved while the confirm was open',
+    /if\(S\.claim !== claim \|\| S\.filedId !== filedId\)/.test(DESK) &&
+    /nothing was sent/.test(DESK));
+  ok('…and the outgoing payload reads the captured claim, never S.claim',
+    (function () {
+      const i = DESK.indexOf('async function sendLetter');
+      const j = DESK.indexOf('async function recordSend');
+      const blk = DESK.slice(i, j);
+      /* S.claim may appear only in the guard, never in the payload */
+      return !/clientName: S\.claim/.test(blk) && !/propertyLine:[\s\S]{0,120}S\.claim/.test(blk);
+    })());
+  ok('the code-letter ticks reset with the claim, so one job\'s letter cannot ride on the next',
+    /S\.clPicked = \{\};/.test(DESK.slice(DESK.indexOf('async function openDesk'),
+      DESK.indexOf('function kv('))));
 }
 
 console.log('\n── what shipped is what the artifact says shipped ──');

@@ -13221,3 +13221,77 @@ artifacts: 21 red. Full sweep 672→653 green.
   and the auto-send mutant **passed** — `[^)]*` cannot cross the `)` in
   `function(){`. Bounded `[\s\S]{0,200}?` instead. A re-key that has never been
   run red is not a gate.
+
+### 672, amended — what a 23-agent adversarial review found in my own send
+
+Before opening the PR for review I attacked the diff: four lenses (back-compat,
+security, does-the-letter-tell-the-truth, failure modes), then **every
+candidate handed to an independent skeptic told to kill it**. 19 candidates,
+**8 refuted, 11 confirmed**. Two were serious and both were mine. The PR was a
+draft, so they are fixed in 672 rather than shipped and patched.
+
+**The one that matters: I committed the 671 class again, in the build straight
+after it.** The carrier email asserts in bold *"Quantities are stated; pricing
+is not"* — and **nothing on the send path checked whether the attached letter
+contains a dollar figure.** `dollar_flag` is computed **once**, server-side, on
+the AI's draft (`api/supplement.js:502`), and the letter has been editable ever
+since. Type a price in, and the covering note tells the carrier there isn't one.
+
+Fixed by re-running the test on **what is actually going**: `renderForSend()`
+now returns `hasMoney`, computed on the assembled packet. The confirm warns the
+sender; the mail body's claim is **conditional** on `quantitiesOnly`, so when
+the letter does carry a figure the sentence simply is not asserted. The claim
+about documentation "named against each item" was dropped outright — nothing
+guarantees it.
+
+**The second serious one: the payload read `S.claim` LIVE, after two awaits.**
+`to` and the packet were locals; `clientName` and `propertyLine` were not.
+Opening another claim mid-send mailed claim A's letter to A's adjuster under
+**B's homeowner, address and claim number**. Now the whole context is captured
+once (`var claim = S.claim, filedId = S.filedId`), the payload reads only the
+captured values, and dispatch is refused outright if `S` moved while the
+confirm was open.
+
+**Seven more, all confirmed:**
+
+- **`subject` and `replyTo` sat BELOW the carrier gate.** Any signed-in
+  non-admin could point Reply-To off-domain from Cardinal's own From address on
+  the *homeowner* path, where 671 always pinned it to the sender. Both are now
+  gated on `isCarrier`; `replyTo` had zero callers outside the Desk, so it cost
+  nothing. (The verifier correctly trimmed the severity: `title` already reached
+  the subject pre-672, so that half was a smaller delta than reported.)
+- **Nothing sanitised the letter**, which ships as an `.html` attachment the
+  adjuster opens *in a browser*, where script runs. `scrubForMail()` filters
+  **once**, at the single point it leaves Cardinal — not in the editor, where
+  rich-text editing is legitimate.
+- **`recordSend`'s `sentHtml` parameter was dead** — it re-read the live editor,
+  so the retry path could archive an *edited* letter as the record of what the
+  carrier received, contradicting its own comment. Captured once now, before the
+  fetch.
+- **`recordSend` targeted `S.filedId` at write time**, so a claim switch during
+  the fetch could stamp `sent_at` onto a different claim's filing. Ids are
+  passed in.
+- **"nothing was sent" on a rejected fetch was a claim the code cannot make** —
+  a rejected promise cannot distinguish *never left* from *sent, reply lost*.
+  Reworded to what is knowable.
+- **`S.clPicked` was never reset between claims**, so a Brookville letter ticked
+  on one job could ride along on the next. Reset in `openDesk`.
+- **No recovery if the page dies between send and writeback** — the retry lives
+  in a button closure. Recorded in `OPEN_ITEMS` rather than half-built; the fix
+  is to derive send state from the filings list, which is 673 work.
+
+**The 8 refutations are as valuable as the confirmations** and are recorded so
+nobody re-files them. The sharpest: *"`renderForSend` keys signed URLs by array
+position, re-introducing the build-633 bug."* The code reading was correct — and
+the verifier killed it anyway, because `createSignedUrls` is contractually 1:1
+with its input, so position-keying and path-keying are provably equivalent here.
+633's bug needed a request for a path the API might not answer for. Also
+refuted: the dollar_flag "not re-checked" finding as filed (the real defect was
+narrower — the mail body's *claim*, not the flag), and a legacy-base64 photo
+exclusion that turned out pre-existing at 668.
+
+`harness_672` grew 54 → **75**, all executing: the ungated-field attack driven
+through both handlers, `quantitiesOnly` both ways, `hasMoney` on a clean and a
+priced letter, `scrubForMail` against script / `on*` / `javascript:` / iframe
+while keeping `<b>` and inline images, and `recordSend` driven with `S` pointed
+at a **different** claim to prove the writeback follows the captured ids.

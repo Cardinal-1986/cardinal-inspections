@@ -520,6 +520,9 @@ async function openDesk(claimId){
   loadCodeLetters();
   /* 672: a fresh claim is a fresh letter — nothing filed, nothing sent */
   S.filedId = null; S.sent = false;
+  /* the code-letter ticks are per CLAIM, not per session — a Brookville letter
+     ticked on one job must not silently ride along on the next one */
+  S.clPicked = {};
   el('fileBtn').disabled = false; el('fileBtn').textContent = 'File this supplement';
   el('sendBtn').onclick = null; el('sendBtn').textContent = 'Send to the carrier';
   syncSend();
@@ -1072,6 +1075,31 @@ function syncSend(){
    URLs, the code-authority appendix attached. Returns the count of photographs
    that genuinely resolved, so the confirm can state a true number rather than
    counting tokens. */
+/* The letter is model output plus operator edits in a contenteditable, and it
+   ships as an .html ATTACHMENT the adjuster opens in a browser — where script
+   runs. Nothing upstream filters it: api/supplement.js takes the model's
+   letter_html as a bare string, and the editor assigns it via innerHTML.
+   Filter ONCE, here, at the only point it leaves Cardinal — not in the editor,
+   where rich-text editing is legitimate. Conservative allow-by-removal: drop
+   the executable elements, every on* handler, and javascript: URLs. */
+function scrubForMail(html){
+  var box = document.createElement('div');
+  box.innerHTML = html;
+  box.querySelectorAll('script,style,iframe,object,embed,link,meta,base,form,input,button')
+     .forEach(function(n){ n.remove(); });
+  box.querySelectorAll('*').forEach(function(n){
+    [].slice.call(n.attributes).forEach(function(a){
+      var name = a.name.toLowerCase(), val = String(a.value || '');
+      if(name.indexOf('on') === 0) n.removeAttribute(a.name);
+      else if((name === 'href' || name === 'src' || name === 'xlink:href') &&
+              /^\s*(javascript|data|vbscript):/i.test(val) &&
+              !/^\s*data:image\//i.test(val)) n.removeAttribute(a.name);
+      else if(name === 'srcdoc') n.removeAttribute(a.name);
+    });
+  });
+  return box.innerHTML;
+}
+
 async function renderForSend(){
   var html = letterRaw();
   var allPaths = [];
@@ -1095,14 +1123,24 @@ async function renderForSend(){
        with none at all (671). */
     return imgs ? '<div>' + imgs + '</div>' : '';
   });
-  return { html: html + codeAppendix(''), resolved: resolved };
+  /* the money test runs on what is ACTUALLY GOING, not on the AI's draft.
+     dollar_flag was computed once server-side when the letter was written and
+     the letter has been editable ever since — asserting quantities-only to a
+     carrier on the strength of a stale flag is the 671 class exactly. */
+  var out = scrubForMail(html + codeAppendix(''));
+  return { html: out, resolved: resolved, hasMoney: /\$\s*\d/.test(out) };
 }
 
 el('sendBtn').addEventListener('click', sendLetter);
 async function sendLetter(){
   if(!S.claim || !S.letter || S.sent) return;
   if(!S.filedId){ syncSend(); return; }
-  var to = (S.claim.adjuster_email || '').trim();
+  /* CAPTURE the whole context in locals. Everything below awaits twice, and
+     S.claim / S.filedId can be swapped underneath by opening another claim —
+     which mailed claim A's letter to A's adjuster under B's homeowner name,
+     address and claim number. Identity is re-checked before dispatch. */
+  var claim = S.claim, filedId = S.filedId;
+  var to = (claim.adjuster_email || '').trim();
   if(!to){ syncSend(); return; }
 
   el('sendBtn').disabled = true;
@@ -1116,8 +1154,12 @@ async function sendLetter(){
 
   var letters = clSelected().length;
   var subject = (el('subjEdit').value || '').trim() ||
-    ('Supplement request — ' + (S.claim.homeowner_name || 'claim') +
-     (S.claim.claim_number ? ' — claim ' + S.claim.claim_number : ''));
+    ('Supplement request — ' + (claim.homeowner_name || 'claim') +
+     (claim.claim_number ? ' — claim ' + claim.claim_number : ''));
+  /* the archive, captured ONCE, in token form, at the moment of sending. Both
+     the first write and any retry store this exact text — re-reading the live
+     editor later is how an archive stops being what was mailed. */
+  var archived = letterRaw();
   var confirmed = window.confirm(
     'Send this supplement to:\n\n    ' + to + '\n\n' +
     'Subject: ' + subject + '\n\n' +
@@ -1126,8 +1168,18 @@ async function sendLetter(){
       : 'NO photographs will be included — and the letter does not claim any.\n') +
     (letters ? letters + ' building-official letter' + (letters === 1 ? '' : 's') +
        ' reproduced in the appendix.\n' : '') +
+    (packet.hasMoney
+      ? '\n!! THIS LETTER CONTAINS A DOLLAR AMOUNT. House rule is quantities-only —\n' +
+        '   the covering email will NOT claim otherwise, but the figure still goes.\n'
+      : '') +
     '\nThis leaves immediately. Nothing sends itself — this tap is the send.');
   if(!confirmed){ el('sendBtn').disabled = false; syncSend(); return; }
+
+  /* did the ground move while the confirm was open? */
+  if(S.claim !== claim || S.filedId !== filedId){
+    el('sendNote').textContent = 'The claim changed while that was open — nothing was sent.';
+    el('sendBtn').disabled = false; syncSend(); return;
+  }
 
   el('sendNote').textContent = 'Sending…';
   var sess = null;
@@ -1143,17 +1195,22 @@ async function sendLetter(){
         variant: 'carrier',                    /* 672: explicit, never sniffed */
         subject: subject,
         title: 'Supplement request',           /* drives the attachment filename */
-        clientName: S.claim.adjuster_name || '',
-        propertyLine: (S.claim.homeowner_name ? S.claim.homeowner_name + ' — ' : '') +
-                      (S.claim.property_address || '') +
-                      (S.claim.claim_number ? '  ·  Claim ' + S.claim.claim_number : ''),
+        clientName: claim.adjuster_name || '',
+        propertyLine: (claim.homeowner_name ? claim.homeowner_name + ' — ' : '') +
+                      (claim.property_address || '') +
+                      (claim.claim_number ? '  ·  Claim ' + claim.claim_number : ''),
+        /* the covering email asserts quantities-only ONLY when the outgoing
+           letter actually is. The sender has already been told either way. */
+        quantitiesOnly: !packet.hasMoney,
         html: packet.html
       })
     });
     try{ j = await r.json(); }catch(_){}
   }catch(err){
+    /* a rejected fetch cannot tell "never left" from "sent, and the reply was
+       lost on the way back". Say what is known, not what is convenient. */
     el('sendNote').textContent = 'Could not reach the mailer: ' + (err.message || err) +
-      ' — nothing was sent. Try again.';
+      ' — it may or may not have gone out. Check the carrier thread before tapping again.';
     el('sendBtn').disabled = false; return;
   }
   if(!r.ok){
@@ -1166,20 +1223,29 @@ async function sendLetter(){
      catch, which is the class this project already paid for three times over
      on the estimate publish path. */
   S.sent = true;
-  await recordSend(to, subject, packet.html);
+  await recordSend(filedId, claim.id, to, subject, archived);
 }
 
 /* the writeback, separated so a failure can be RETRIED without re-sending.
    letter_html is captured HERE, at send time, not at file time: the letter
    stays editable after filing, so a file-time archive can differ from what the
    carrier actually received. The archive is what was mailed. */
-async function recordSend(to, subject, sentHtml){
+async function recordSend(filedId, claimId, to, subject, sentHtml){
+  if(!filedId){
+    el('sendNote').innerHTML = '<b style="color:var(--sd-crit);">The email WAS SENT to ' +
+      esc(to) + ', but no filing id was held to record it against.</b> Open the claim and ' +
+      'check the filing before sending anything else.';
+    return;
+  }
   var w = await sb.from('insurance_supplements').update({
     sent_at: new Date().toISOString(),
     sent_to: to,
     letter_subject: subject,
-    letter_html: letterRaw()               /* tokens at rest, never live URLs */
-  }).eq('id', S.filedId).select('id').single();
+    /* the text captured at SEND time — tokens, never live URLs. Re-reading the
+       editor here is how the retry path came to archive an edited letter as
+       the record of what the carrier received. */
+    letter_html: sentHtml
+  }).eq('id', filedId).select('id').single();
 
   if(w.error){
     el('sendBtn').disabled = false;
@@ -1193,7 +1259,7 @@ async function recordSend(to, subject, sentHtml){
     el('sendBtn').onclick = function(){
       el('sendBtn').disabled = true;
       el('sendNote').textContent = 'Saving the record…';
-      recordSend(to, subject, sentHtml);
+      recordSend(filedId, claimId, to, subject, sentHtml);
     };
     return;
   }
@@ -1201,7 +1267,7 @@ async function recordSend(to, subject, sentHtml){
   el('sendBtn').textContent = 'Sent ✓';
   el('sendBtn').disabled = true;
   syncSend();
-  loadFilings(S.claim.id);
+  loadFilings(claimId);
 }
 
 el('copyBtn').addEventListener('click', function(){
