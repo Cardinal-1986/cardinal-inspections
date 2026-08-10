@@ -14493,6 +14493,45 @@ as the retirement comment — asserted by grep, count 1.
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
 
+- **699** · **The page headings are drawn, and `ICO` is declared once.**
+  All 15 `h2.viewhead`. `CardinalIcons` 51 → 52 (`chat`). Sweep **570 → 547**.
+  ⚠️ **CORRECTION TO 698, in my own words.** 698 meant to add the `ICO` helper
+  to the main block, where nine runtime `.projsec` headings call it. It
+  anchored on `function crmNow(){`, which lives in **`cr-hd2-script`** — an
+  IIFE — so that copy was private and unused: dead code. **698 still worked,
+  and not for the reason it was written**: measured in Chromium,
+  `typeof ICO === 'function'` at global scope, because five of the six
+  declarations sit at their block's TOP level and a non-IIFE `<script>`'s top
+  level IS global. The main block was resolving against another module's copy
+  by luck. Wrap any one of those modules in an IIFE later and nine headings
+  start throwing. Now declared **once**, deliberately, at the top of the main
+  block, with the ordering asserted because `LIST_DEFS` calls it at parse time.
+  ⚠️ **The DOM has FIFTEEN `h2.viewhead`; a source regex finds fourteen.**
+  `<h2 id="listTitle" class="viewhead">` puts the id BEFORE the class, so
+  `<h2 class="viewhead"` never matches it. It is empty in markup and filled
+  from `LIST_DEFS`, whose three titles each began with an emoji escape. **Count
+  headings from the DOM, not the file.**
+  ⚠️ **The gallery heading needed BOTH halves.** `galTitle.innerHTML` is
+  rewritten on every open (`'📷 Inspection Photos'` / `'📷 Photo Album'`), so
+  converting only the markup would have put the emoji back the moment the
+  gallery opened. The icon now lives on the `<h2>` and the writer sets
+  `textContent` on the inner span alone. The gate drives that rewrite.
+  **A third mechanism exists and was left alone:** Schedule Board carries a RAW
+  inline `<svg>` from 681, predating `hydrate()`. Three ways to place an icon
+  in one class.
+  **The prose site was deleted, not converted** — "The full album lives in
+  **📷 Photo Album**" is a sentence, and `CardinalIcons`' own banner says prose
+  loses its emoji rather than gaining a glyph.
+  ⚠️ **An anchor matched INSIDE a comment and shipped a red gate.** The
+  insertion point for `ICO` was written as the main block's banner *first
+  line*, so the helper landed inside `/* … */` and the rest of the banner
+  became live code. `node --check` caught it. Anchor after the comment CLOSES.
+  ⚠️ **`render_projsec698.js` asserted `ICO declared >= 6` — it encoded the
+  defect as a requirement**, and went red on a strictly better file. Replaced
+  with a reachability check (`typeof ICO === 'function'` in the page). Fourth
+  count-shaped assertion to bite in this session; ask the page, not the text.
+  Gate `render_viewhead699.js`, 15 assertions, RED on 698 with 10 failures.
+
 - **698** · **The client-page section headings are drawn, not emoji.** All 27
   `.projsec` headings. `CardinalIcons` 47 → 51: four new (`contract` — a page
   with a signature squiggle, deliberately unlike `page`'s text lines — plus

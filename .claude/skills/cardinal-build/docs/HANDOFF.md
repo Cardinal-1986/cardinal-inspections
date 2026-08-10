@@ -4,11 +4,11 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–698
+# Session of 10 August 2026 (later) — builds 685–699
 
-**685 through 698 all shipped, merged and verified deployed** (PRs #198–#214,
+**685 through 699 all shipped, merged and verified deployed** (PRs #198–#215,
 each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
-must confirm it again rather than inherit it). `main` at 698. Working tree
+must confirm it again rather than inherit it). `main` at 699. Working tree
 clean, branch synced to main, no open PRs.
 
 | Build | What | PR |
@@ -27,6 +27,7 @@ clean, branch synced to main, no open PRs.
 | 696 | **my 690 regression**: the chip strips pushed the results column 869px wide on a 393px screen | #212 |
 | 697 | swiping a chip strip past its start chained to the page and exited the screen — 33 scrollers guarded | #213 |
 | 698 | the client-page section headings are drawn — all 27 `.projsec`, `CardinalIcons` 47 → 51 | #214 |
+| 699 | the 15 page headings are drawn · **`ICO` was declared six times, one dead — now once** | #215 |
 
 **One thing is waiting on Theo, asked and unanswered:** the `.pcpo` lavender in
 LIGHT mode. It was already failing at 1.99:1 and 689's darker card took it to
@@ -43,6 +44,17 @@ contact sheet in about a minute. 687 fixed them. **Ship an icon with a picture,
 not a pass count.** Same finding as 628's amber bar and 633's white boxes.
 
 ## Corrections I owe, in my own words
+
+- **698 put its `ICO` helper in the wrong block and worked anyway.** The
+  anchor `function crmNow(){` is in `cr-hd2-script`, not the main block, and
+  that block is an IIFE — so the copy was dead. The main block's callers were
+  resolving against a helper that had leaked to global scope from an
+  unrelated module. Right outcome, wrong reason, one refactor away from nine
+  broken headings. 699 declares it once.
+- **A count-shaped assertion has now bitten four times in one session** —
+  `=== 43`, `=== 47`, `=== 51`, and `ICO >= 6`, which encoded a defect as a
+  requirement and went red on a better file. Assert what you need to be
+  TRUE, not how many of something there happen to be.
 
 - **A hardcoded glyph total broke a gate three times in one session.**
   `render_icons692` asserted `=== 43`, `render_tools695` `=== 47`, and I then
@@ -128,7 +140,7 @@ for an inline `color` before calling such a sweep done. Only 1 of the 37 had it.
 
 ## Queue
 
-1. **The emoji sweep — 686, 692, 695, 698. 570 remain.** Measured with
+1. **The emoji sweep — 686, 692, 695, 698, 699. 547 remain.** Measured with
    comments excluded (module banners' box-drawing swamps a naive count) and with
    the 0x2300–0x23FF block included. Dingbats (156), arrows (154) and geometric
    marks (66) are counted SEPARATELY and are **not** part of this sweep — ✓ ✕ →
