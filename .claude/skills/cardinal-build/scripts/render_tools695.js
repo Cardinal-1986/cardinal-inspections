@@ -34,7 +34,11 @@ let pass=0,fail=0; const ok=(c,m)=>{c?(pass++,console.log('  PASS '+m)):(fail++,
  /* SIXTEEN, not the fourteen in source: Track and Reports are written as
     class="cbn" top-level nav and moved into the dropdown at runtime. */
  ok(R.n===16,`all sixteen Tools rows present (${R.n})`);
- ok(R.total===47,`CardinalIcons carries 47 glyphs, 43 + the 4 new (${R.total})`);
+ /* A FLOOR. This said ===47 and 698 made it 51: the app was right and the
+    gate was wrong. Third time this exact hardcoded-count mistake has been
+    written into a gate in one session (icons692, here, projsec698). What
+    695 cares about is that its own rows resolve, checked below. */
+ ok(R.total>=47,`CardinalIcons carries at least the 47 present at 695 (${R.total})`);
  ok(R.noIcon.length===0,`every row has a drawn icon (missing: ${R.noIcon.join(', ')||'none'})`);
  ok(R.leftover.length===0,`no emoji and no unhydrated attribute left (${R.leftover.join(', ')||'none'})`);
  ok(R.unsized.length===0,`every on-screen icon has a real box (${R.unsized.join(', ')||'none'})`);

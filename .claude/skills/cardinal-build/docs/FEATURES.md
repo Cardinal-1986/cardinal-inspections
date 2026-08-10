@@ -3756,3 +3756,21 @@ dropdown at runtime, with className rewritten to `cbi`. A source-only count
 misses them. Their icons were chosen from the app's own `data-go` map
 (`track` → `CardinalEstimates.open` → `calculator`, `reports` →
 `openReportsView` → `chart`), not from the labels.
+
+
+### 698 — the client-page section headings are drawn
+
+All 27 `.projsec` headings. `CardinalIcons` 47 → 51 (`contract`, `ruler`,
+`box`, `lock` are new; twenty existing glyphs are reused).
+
+⚠️ **Two mechanisms, not interchangeable.** 17 are static markup and use
+`data-cri`; **10 are built as strings at render time** — 9 in the main block,
+1 in `cr-pp-script` — and must call `CardinalIcons.get()`, because `hydrate()`
+runs at load and never sees them.
+
+⚠️ **8 of the 27 never had an emoji.** They were given icons anyway: a family
+where nineteen headings carry one and eight do not reads as unfinished.
+
+⚠️ **A source count of `.projsec` disagrees with itself.** `[^<]*` finds 26,
+`.*?` finds 27 — the Location heading has a nested `<span>` and a
+character-class scan stops short. That same heading is the runtime one.

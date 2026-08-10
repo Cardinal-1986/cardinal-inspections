@@ -3367,7 +3367,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 697 &#8212; Swiping a row of tabs or chips no longer backs out of the screen</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 698 &#8212; The client page section headings are drawn, not emoji</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3464,7 +3464,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <div class="piperow" id="pipeRow"></div>
         </div>
         <div class="pipecard" id="approvalsCard" style="display:none;margin-top:14px;border-left:5px solid #C8202E;">
-          <h3 class="projsec" style="margin:0 0 8px;">&#128276; Approvals &#8212; signed estimates awaiting contract</h3>
+          <h3 class="projsec" style="margin:0 0 8px;" data-cri="bell lg">Approvals &#8212; signed estimates awaiting contract</h3>
           <div id="approvalsList"></div>
         </div>
         <div class="rowfil"></div>
@@ -3776,19 +3776,19 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <span style="text-align:right;"><small>Balance Due</small><b id="balanceLbl" style="color:var(--red);">--</b></span>
       </div>
 
-      <h3 class="projsec" style="margin-top:20px;">Job Activity</h3>
+      <h3 class="projsec" style="margin-top:20px;" data-cri="bolt lg">Job Activity</h3>
       <div class="jagrid" id="jaGrid"></div>
 
       <!-- Legacy static rows: retired by Keeper (build 348) but kept in the DOM
            because boot-time listeners attach to them unguarded. -->
-      <h3 class="projsec" style="margin-top:20px;display:none;">Contacts</h3>
+      <h3 class="projsec" style="margin-top:20px;display:none;" data-cri="people lg">Contacts</h3>
       <div class="contactrow" id="contactRow" style="display:none;"></div>
 
-      <h3 class="projsec" style="margin-top:20px;display:none;">Location</h3>
+      <h3 class="projsec" style="margin-top:20px;display:none;" data-cri="pin lg">Location</h3>
       <div class="locrow" id="locRow" style="display:none;"></div>
 
       <div id="leadCard" style="display:none;margin-top:20px;">
-        <h3 class="projsec">&#128681; Lead Details</h3>
+        <h3 class="projsec" data-cri="flag lg">Lead Details</h3>
         <div class="ldbox" id="leadCardBody" style="background:#fff;"></div>
       </div>
 
@@ -3805,7 +3805,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <p class="subnote">Photos transferred for this client&#8217;s inspections (max 30). The full album lives in
       <b>&#128247; Photo Album</b> on the Overview.</p>
 
-      <h3 class="projsec">&#128196; Inspection Reports</h3>
+      <h3 class="projsec" data-cri="page lg">Inspection Reports</h3>
       <div style="margin:6px 0 12px;">
         <button class="btn" id="pNewReportBtn">+ New inspection report</button>
         <button class="btn" id="pNewExteriorBtn">+ New exterior report</button>
@@ -3815,7 +3815,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
     <div id="tab-estimates" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
-      <h3 class="projsec">&#128196; Estimates</h3>
+      <h3 class="projsec" data-cri="calculator lg">Estimates</h3>
       <div style="margin:6px 0 12px;">
         <span id="pEstWrap" style="position:relative;">
           <button class="btn" id="pNewEstimateBtn">+ New estimate &#9662;</button>
@@ -3836,7 +3836,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
     <div id="tab-contracts" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
-      <h3 class="projsec">&#128209; Contracts</h3>
+      <h3 class="projsec" data-cri="contract lg">Contracts</h3>
       <p class="subnote">Client contracts &#8212; prefilled from this profile. Blank print masters live in
       <b>&#9776; Menu &#8594; Company Documents</b>.</p>
       <div style="margin:6px 0 12px;">
@@ -3847,7 +3847,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
     <div id="tab-commissions" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
-      <h3 class="projsec">&#128176; Money In &amp; Commissions</h3>
+      <h3 class="projsec" data-cri="money lg">Money In &amp; Commissions</h3>
       <p class="subnote">Every check received on this job &#8212; the rep&#8217;s 10% commission writes itself.
       Reps see their own rows; admins see everyone&#8217;s.</p>
       <div id="commMount"><div class="loading">Loading…</div></div>
@@ -3855,7 +3855,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
     <div id="tab-workorders" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
-      <h3 class="projsec">&#128296; Work Orders</h3>
+      <h3 class="projsec" data-cri="ladder lg">Work Orders</h3>
       <p class="subnote">Cardinal&#8217;s own work order, issued <b>to a crew</b> &#8212; one per trade.
       Filled from the inspection and the measurements on this job. Open it to correct anything,
       then print it or send it.</p>
@@ -3867,7 +3867,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
     <div id="tab-checklists" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
-      <h3 class="projsec">&#128203; Checklists</h3>
+      <h3 class="projsec" data-cri="clipboard lg">Checklists</h3>
       <p class="subnote">Job checklists for this client. The Roofing Inspection Checklist must be completed
       before an inspection report can be created &#8212; its core specs feed the report automatically.</p>
       <div class="cklist">
@@ -3890,7 +3890,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
     <div id="tab-measure" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
-      <h3 class="projsec">&#128207; Measurements</h3>
+      <h3 class="projsec" data-cri="ruler lg">Measurements</h3>
       <p class="subnote">Order aerial measurements, keep every report with the client, and record the numbers your estimates run on.</p>
 
       <div class="matcard">
@@ -3934,7 +3934,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
     </div>
     <div id="tab-materials" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
-      <h3 class="projsec">&#128230; Material Order Lists</h3>
+      <h3 class="projsec" data-cri="box lg">Material Order Lists</h3>
       <p class="subnote">Import measurements once and auto-generate a material order with quantities and units.
       Quantities include standard waste and are fully editable &#8212; always verify against the scope before ordering.</p>
 
@@ -4025,10 +4025,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
     <button class="btn dark" id="payBackBtn">&larr; Back to client profile</button>
     <h2 class="viewhead">&#128178; Payments <span id="payClient" style="color:#8a6f66;font-size:17px;"></span></h2>
     <div id="paySummary"></div>
-    <h3 class="projsec" style="margin-top:22px;">&#128200; Contract Worksheet</h3>
+    <h3 class="projsec" style="margin-top:22px;" data-cri="chart lg">Contract Worksheet</h3>
     <p class="subnote">Contract totals and payments received against them. Signed contracts set the Job Value.</p>
     <div id="wsMount"></div>
-    <h3 class="projsec" style="margin-top:22px;">&#128203; Payment Log</h3>
+    <h3 class="projsec" style="margin-top:22px;" data-cri="cash lg">Payment Log</h3>
     <div style="margin:6px 0 10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
       <select id="payKind" class="acxsel">
         <option value="in">Received (money in)</option>
@@ -7171,7 +7171,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 </div>
 <div id="qiWhoModal" style="display:none;position:fixed;inset:0;background:rgba(20,10,8,.55);z-index:6000;">
   <div style="background:#fff;border-radius:14px;max-width:430px;margin:8vh auto 0;padding:20px 18px;max-height:80vh;overflow-y:auto;">
-    <h3 class="projsec" style="margin:0 0 4px;border:none;padding:0;">Who is this inspection for?</h3>
+    <h3 class="projsec" style="margin:0 0 4px;border:none;padding:0;" data-cri="person lg">Who is this inspection for?</h3>
     <p class="subnote" id="qiWhoAddr" style="margin:0 0 12px;"></p>
     <div style="display:flex;gap:8px;margin-bottom:12px;">
       <button class="chipbtn" id="qiTabExist">&#128101; Existing client</button>
@@ -7233,7 +7233,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <div id="upError" style="color:var(--red);font:12.5px 'Segoe UI',Arial,sans-serif;margin-top:8px;"></div>
     </div>
 
-    <h3 class="projsec" style="margin-top:26px;">&#128276; Phone Notifications</h3>
+    <h3 class="projsec" style="margin-top:26px;" data-cri="bell lg">Phone Notifications</h3>
     <div class="projform" style="margin:10px 0;max-width:430px;box-shadow:none;border:1px solid var(--line);">
       <p class="subnote" style="margin:0 0 10px;">Get lock-screen alerts on this device when contracts are signed,
       jobs are approved, and jobs complete.</p>
@@ -10096,7 +10096,7 @@ function renderHome(){
     return true;
   });
   if(loose.length){
-    out += '<h3 class="projsec">&#128451; Unassigned documents</h3>' +
+    out += '<h3 class="projsec">' + ICO('cards') + 'Unassigned documents</h3>' +
       '<p class="subnote">Created before client profiles existed, or their project was deleted.</p>' +
       docTable(loose);
   }
@@ -10439,7 +10439,7 @@ function renderAcxOverview(){
   try{
     document.querySelectorAll('#projectView .cr-gmap-block').forEach(function(b){ b.remove(); });
   }catch(_){}
-  html += '<h3 class="projsec" style="margin:20px 0 10px;">Location' +
+  html += '<h3 class="projsec" style="margin:20px 0 10px;">' + ICO('pin') + 'Location' +
     '<span class="rt2"><span class="acxpencil" id="acxEdit2">&#9998;</span></span></h3>' +
   '<div class="acxsec"><div class="acxbody">' +
     '<div class="dbmtabs"><button type="button" class="on" data-dbm="map">Map</button><button type="button" data-dbm="sat">Satellite</button>' +
@@ -10449,7 +10449,7 @@ function renderAcxOverview(){
       ? '<span class="dbaddr">&#128205; ' + esc(pr.address) + '</span>'
       : '<span class="axnote">No address on file \u2014 tap the pencil to add one.</span>') + '</div>' +
   '</div></div>';
-  html += '<h3 class="projsec" style="margin:18px 0 10px;">Job Menu</h3>' +
+  html += '<h3 class="projsec" style="margin:18px 0 10px;">' + ICO('menu') + 'Job Menu</h3>' +
     '<div class="jaboxrow">' +
       jt(dbIc('comms'), 'Communication', commsCount(pr), 'comms') +
       jt(dbIc('bell'), 'Notifications', mentions, 'notifs') +
@@ -10510,7 +10510,7 @@ function renderAcxOverview(){
       '</div></div></div>';
   }
   /* ---- job details ---- */
-  html += '<h3 class="projsec" style="margin:20px 0 10px;">Job Details</h3>' +
+  html += '<h3 class="projsec" style="margin:20px 0 10px;">' + ICO('tag') + 'Job Details</h3>' +
   '<div class="acxsec"><div class="acxbody"><div class="ackv">' +
     '<span>Category:</span><div><select class="acxsel" id="acxCat">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
     '<span>Work Type:</span><div><select class="acxsel" id="acxWt">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service'], ck.work_type) + '</select></div>' +
@@ -10543,7 +10543,7 @@ function renderAcxOverview(){
   '</div>';
   /* ---- assigned to ---- */
   var rep = assignedRepOf(pr);
-  html += '<h3 class="projsec" style="margin:20px 0 10px;">Assigned To</h3>' +
+  html += '<h3 class="projsec" style="margin:20px 0 10px;">' + ICO('person') + 'Assigned To</h3>' +
   '<div class="acxsec"><div class="acxbody dbassign">' +
     '<span class="dbrep">&#128100; <b>' + esc(rptRepName(rep) || rep || 'Unassigned') + '</b></span>' +
     (isAdminUser() ? '<select id="dbAssignSel" class="acxsel" style="margin-left:auto;">' +
@@ -14614,7 +14614,7 @@ function renderInsuranceDocsCard(){
     '</div>';
   }).join('');
   mount.innerHTML =
-    '<h3 class="projsec" style="margin-top:20px;">&#128193; Insurance Documents</h3>' +
+    '<h3 class="projsec" style="margin-top:20px;">' + ICO('folder') + 'Insurance Documents</h3>' +
     '<div class="insDocsBox">' + rowsHtml + '</div>';
   mount.style.display = 'block';
 
@@ -14773,7 +14773,7 @@ function paintInsuranceItelCard(){
   }).join(' · ');
 
   mount.innerHTML =
-    '<h3 class="projsec" style="margin-top:20px;">📋 iTel Reports</h3>' +
+    '<h3 class="projsec" style="margin-top:20px;">' + ICO('flask') + 'iTel Reports</h3>' +
     '<div class="cr-itel-box' + (collapsed ? ' collapsed' : '') + '" id="crItelBox">' +
       '<div class="cr-itel-head" role="button" tabindex="0" aria-label="Toggle iTel reports">' +
         '<span class="cr-itel-title">' + rows.length + ' report' + (rows.length === 1 ? '' : 's') + '</span>' +
@@ -15029,7 +15029,7 @@ function renderInsurancePanel(){
   var moreOpen = false;
   try{ moreOpen = sessionStorage.getItem('insPanelMoreOpen') === '1'; }catch(_e){}
   mount.innerHTML =
-    '<h3 class="projsec" style="margin-top:20px;">&#128737;&#65039; Insurance Information</h3>' +
+    '<h3 class="projsec" style="margin-top:20px;">' + ICO('shield') + 'Insurance Information</h3>' +
     '<div class="insPanel' + (storedCollapsed ? ' collapsed' : '') + '" id="insPanelEl">' +
       '<div class="insHead" id="insHeadRow" role="button" tabindex="0" aria-label="Toggle insurance details">' +
         '<span class="insTitle">Claim Details</span>' +
@@ -19171,7 +19171,11 @@ var CardinalIcons = (function(){
     pulse:      "<path d='M2.4 12h4.1l2.3-5.6 3.7 11.3 2.2-5.7h6.9'/>",
     sparkle:    "<path d='M12 3.2 13.7 9l5.8 1.7-5.8 1.7L12 18.2 10.3 12.4 4.5 10.7 10.3 9z'/><path d='M18.6 3.4v3.2M17 5h3.2'/>",
     pin:        "<path d='M12 21.4s7-5.9 7-11a7 7 0 1 0-14 0c0 5.1 7 11 7 11z'/><circle cx='12' cy='10.2' r='2.7'/>",
-    flask:      "<path d='M9.4 2.9v6.2L4.3 18a2.2 2.2 0 0 0 1.9 3.3h11.6a2.2 2.2 0 0 0 1.9-3.3l-5.1-8.9V2.9z'/><path d='M8.4 2.9h7.2'/><path d='M7.2 14.6h9.6'/>"
+    flask:      "<path d='M9.4 2.9v6.2L4.3 18a2.2 2.2 0 0 0 1.9 3.3h11.6a2.2 2.2 0 0 0 1.9-3.3l-5.1-8.9V2.9z'/><path d='M8.4 2.9h7.2'/><path d='M7.2 14.6h9.6'/>",
+    contract:   "<path d='M13.4 2.9H6.8A1.9 1.9 0 0 0 4.9 4.8v14.4a1.9 1.9 0 0 0 1.9 1.9h10.4a1.9 1.9 0 0 0 1.9-1.9V8.1z'/><path d='M13.4 2.9v5.2h5.7'/><path d='M8.2 16.6c1.3-1.8 2.3-1.7 3 -.3.6 1.2 1.5 1.3 2.6-.3'/>",
+    ruler:      "<rect x='2.6' y='8.4' width='18.8' height='7.2' rx='1.4'/><path d='M7 8.4v3.1M12 8.4v4.2M17 8.4v3.1'/>",
+    box:        "<path d='M20.6 7.9v8.2a1.9 1.9 0 0 1-.95 1.65l-6.7 3.9a1.9 1.9 0 0 1-1.9 0l-6.7-3.9A1.9 1.9 0 0 1 3.4 16.1V7.9a1.9 1.9 0 0 1 .95-1.65l6.7-3.9a1.9 1.9 0 0 1 1.9 0l6.7 3.9A1.9 1.9 0 0 1 20.6 7.9z'/><path d='M3.7 6.9 12 11.7l8.3-4.8M12 21.3V11.7'/>",
+    lock:       "<rect x='4.2' y='10.4' width='15.6' height='10.4' rx='2.2'/><path d='M7.9 10.4V7.3a4.1 4.1 0 0 1 8.2 0v3.1'/>"
   };
   function get(name, cls){ return P[name] ? svg(P[name], cls) : ''; }
   /* 686: static markup cannot call get(), and a second pipeline of raw
@@ -21819,7 +21823,7 @@ async function renderAuditLog(){
         '<span class="hstat audf audreset" data-audreset="1">&#129529; Reset audit</span></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px;">' + cks + '</div>' +
       evHtml +
-      '<h3 class="projsec" style="margin-top:22px;">&#128274; Sign-in sessions</h3>' + ssHtml;
+      '<h3 class="projsec" style="margin-top:22px;">' + ICO('lock') + 'Sign-in sessions</h3>' + ssHtml;
 
     var psl = mount.querySelector('#audPersonSel');
     if(psl) psl.addEventListener('change', function(){ auditPerson = this.value; renderAuditLog(); });
@@ -37423,6 +37427,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:698, d:'2026-08-10', t:'The client page headings are drawn, not emoji',
+s:'Every section heading on a client page \u2014 Lead Details, Estimates, Contracts, Work Orders, Measurements, Payment Log and the rest \u2014 now uses a drawn icon. Eight of them had no icon at all before and now match the others. Four new ones were drawn: a signed contract, a ruler, a box and a padlock.' },
 { b:697, d:'2026-08-10', t:'Swiping a row of chips no longer backs out of the screen',
 s:'On All Leads &amp; Jobs, swiping the filter chips back toward the start would carry on past the end of the row and the phone treated it as a back gesture, dropping you out of the screen. The chip rows now keep the swipe to themselves. The same guard went on every other sideways-scrolling row in the app \u2014 tab strips, card rails, the lot \u2014 since all of them had it.' },
 { b:696, d:'2026-08-10', t:'The leads list fits the screen again',
@@ -45880,6 +45886,11 @@ body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba
 :root[data-theme="rb-light"] #ppPage .pp-msg.mine .pp-bub{background:#8a5a08;border-color:#8a5a08;color:#ffffff}
 </style>
 <script id="cr-pp-script">
+/* 698: these headings are built as strings at render time, long after
+   CardinalIcons.hydrate() has run, so a data-cri written here would never
+   be swapped. Call get() directly \u2014 same split as 692 vs 695. */
+function ICO(n){ try{ return window.CardinalIcons.get(n); }catch(_){ return ''; } }
+
 (function(){
 'use strict';
 var rows = [];
@@ -46157,7 +46168,7 @@ return '<button class="pp-row' + (i.status === 'done' ? ' done' : '') +
 '</button>';
 }
 return '<div class="pp-page">' +
-'<h3 class="projsec">🔨 Punch Outs</h3>' +
+'<h3 class="projsec">' + ICO('hardhat') + 'Punch Outs</h3>' +
 '<div class="pp-actions"><button class="pp-add" data-act="add" type="button">+ Add a punch out</button></div>' +
 '<div class="pp-rule">Open <span>' + open.length + '</span></div>' +
 (open.length ? open.map(row).join('')
@@ -50649,6 +50660,10 @@ if(typeof ck === 'string') ck = JSON.parse(ck);
 return (((ck || {}).lead) || {}).claim_type || '';
 }catch(e){ return ''; }
 }
+/* 698: these headings are built as strings at render time, long after
+   CardinalIcons.hydrate() has run, so a data-cri written here would never
+   be swapped. Call get() directly \u2014 same split as 692 vs 695. */
+function ICO(n){ try{ return window.CardinalIcons.get(n); }catch(_){ return ''; } }
 function crmNow(){
 var v = document.getElementById('cardinalTruthView');
 if(v && v.style.display !== 'none') return 'insurance';
