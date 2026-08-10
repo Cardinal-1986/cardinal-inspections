@@ -2410,7 +2410,7 @@ pipeline-stage chips (690) and the Assigned To strip beside them (691).
 
 **The queue, in Theo's priority order:**
 
-1. **The emoji sweep — 547 remain.** Still first. The nav went at 686, the four
+1. **The emoji sweep — 532 remain.** Still first. The nav went at 686, the four
    card/hero surfaces (`cr-sf` / `cr-ch2` / `cr-cth` / `cr-ci`) at 692, and the
    Tools dropdown at 695, the 27 client-page `.projsec` headings at 698 and
    the 15 `.viewhead` page headings at 699.
