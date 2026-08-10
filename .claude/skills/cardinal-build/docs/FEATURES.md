@@ -3460,3 +3460,39 @@ code — `paneClient`, the save-payload builder against a stand-in modal,
 `CAUSES` *itself*; red on 679 across 18). `render_claimpane.js` repaired — it
 re-implemented `kv()` and probed a hardcoded class, so it reported `null` after
 the rename; it now lifts the real `kv()` from the artifact.
+
+### 681 — the Schedule Board reads, and `CardinalIcons` is born
+
+**`.viewhead` is an app-wide class with 15 users**, and its base ink was
+`#1c1416` — a near-black for a white page — on this app's near-black default
+ground. **1.10:1 in dark.** Build 527 themed this board's *cards* and never
+touched the heading. Now `var(--rbe-head,#ffffff)`, the app's own heading token
+(`#ffffff` dark / `#161616` light), already used by `.hero-hi` and `.acthead`.
+**19.89:1**, and all fifteen pages benefit. Every CRM override still
+out-specifies the base rule — verified, not assumed.
+
+Second defect, found only because the rig was fixed to see gradients: 527's
+`.bhead` pink `#f08a90` was scoped **by CRM but not by theme**, so it landed on
+light mode's white card at **2.30:1**. Dark is byte-identical; light restored.
+
+**`window.CardinalIcons` — `get(name, cls)` → an inline SVG string.** NOT a new
+mechanism: the CRM-switcher marks have used `viewBox 0 0 24 24` + `fill:none` +
+`stroke="currentColor"` + `stroke-width 1.75` since they shipped. Same
+attributes, shared `.cri` class sized in **`em`** (vs `.cr-pmark`'s fixed 14px)
+so one class serves a 23px heading and a 12.5px row. Four glyphs so far:
+`calendar`, `hammer`, `truck`, `building`.
+
+**The rule for the sweep:** icons where the eye SCANS (headings, list rows,
+nav, eyebrows); in **prose** the emoji is **deleted**, not converted.
+
+⚠️ **`metallicize()` (17725) is the inventory instrument for 682**, discovered
+here: it walks the DOM at load, wraps every emoji text node in
+`<span class="mic">`, and re-runs on mutation. A runtime census beats a static
+grep — and it is the only thing that reliably catches the **HTML-entity** form
+(`&#128197;`), which is what all 15 `.viewhead` headings actually use.
+
+**Tools:** `render_schedule.js` (27 assertions, Chromium — loads the REAL
+document rather than concatenating `<style>` blocks, walks ancestors for the
+true ground **including gradient stops**, and asserts contrast, zero surviving
+emoji over rendered text, icons drawn, stroke == parent `color`, em-sizing;
+**8 red on 680**).

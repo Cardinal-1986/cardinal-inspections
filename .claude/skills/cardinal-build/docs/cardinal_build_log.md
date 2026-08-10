@@ -14052,3 +14052,100 @@ assertion agreeing with its own prose.**
 **Not fixed, and not for want of looking: the horizontal pan.** Measured again at
 390 and 430px — `scrollWidth == clientWidth` on the claim pane, so the offender is
 outside that mount. Next attempt has to measure the whole app, not this screen.
+
+## Build 681 — the Schedule Board reads, and the first drawn icons land
+
+Theo, twice, with a screenshot: *"can't read this page for scheduling."* And
+separately: *"not a fan of emojis, please check everywhere there is an emoji
+and plan to use something different."* This build answers the first completely
+and puts the answer to the second on one screen for approval.
+
+**The tell was in his own photograph:** the calendar emoji beside the title was
+more legible than the title. When the decoration out-reads the words, the words
+are wrong.
+
+### The measurement came before the fix — and the first rig was wrong
+
+`render_schedule.js` mounts the board and, for each text element, walks UP the
+ancestor chain to the ground it is actually sitting on, then computes WCAG.
+
+⚠️ **Its first draft reported the page ground as `rgb(253,252,247)` — cream —
+in every render, including the dark ones, and scored the invisible heading at
+17.61:1.** The cause is this file's own documented trap: it scraped all 122
+`<style>` blocks and concatenated them, and **several of those blocks are
+generated PRINT/REPORT stylesheets living inside template strings** which set
+`:root{--ink:#1b1b1b}` and `body{...}` for an 11pt Georgia document. A naive
+`<style>` scan over 3.86 MB cannot tell a live tag from markup inside a string
+literal. **The measurement contradicted the photograph, so the measurement was
+what got fixed.** It now loads the REAL document in Chromium with the network
+blocked and lets the browser decide what is a stylesheet.
+
+⚠️ **A second rig fault, caught the same way:** the ancestor walk read
+`background-color` only, so it sailed straight past `.bday` — which paints a
+**linear-gradient**, a background-*image* — and reported the page behind the
+card. It now collects every ground an ancestor actually paints, colour **and**
+every gradient stop, and scores against the **worst**. That is what surfaced
+the light-mode defect below; the naive version hid it.
+
+### What the numbers said, and what shipped
+
+| | before | after |
+|---|---:|---:|
+| `.viewhead` in **dark** | **1.10:1** | **19.89:1** |
+| `.bhead` in **light** | **2.30:1** | **8.73:1** |
+| everything build 527 themed | 5.29–8.67:1 | unchanged |
+
+**P1 — the heading, on FIFTEEN pages not one.** `.viewhead` is an app-wide
+class with 15 users and its base ink was `#1c1416`, a near-black for a white
+page, on this app's near-black default ground. Build 527 themed this board's
+*cards* and never touched the heading. Fixed by pointing it at **`--rbe-head`**
+— the app's own heading token, `#ffffff` dark / `#161616` light, already used
+by `.hero-hi` and `.acthead`. A token pair, so it flips by itself. Safe at the
+base rule because every CRM override out-specifies it (community `#commsView`,
+the six `body.claim-insurance` rules, `section.history >`, `#qiStartView`) —
+checked, not assumed.
+
+**P2 — the day line, in light.** 527 replaced `.bhead`'s `var(--red-dk)` with
+a computed dark-ground pink `#f08a90` and scoped the rule **by CRM but not by
+theme**, so the same pink landed on light mode's white card at 2.30:1. The dark
+rule is byte-identical; light is restored to its pre-527 ink.
+
+### The icon system — the convention already existed
+
+`CardinalIcons` is **not a new mechanism**. The CRM-switcher marks have been
+inline SVG since ~30262: `viewBox 0 0 24 24`, `fill:none`,
+`stroke="currentColor"`, `stroke-width 1.75`, round caps. Same attributes,
+lifted into a shared `.cri` class sized in **`em`** rather than `.cr-pmark`'s
+fixed 14px, so one class serves a 23px heading and a 12.5px row. Because the
+stroke is `currentColor`, an icon **takes the colour of the text beside it in
+both themes with no second rule** — which is the entire argument against emoji.
+
+Four glyphs (calendar, hammer, truck, building); `KIND_META` names them instead
+of carrying emoji; `nm` is untouched as the accessible label.
+
+**Icons only where the eye SCANS.** The heading and the list rows keep one; the
+sentence underneath had its three deleted, not converted — an icon mid-prose is
+just a smaller sticker.
+
+### ⚠️ The find that changes build 682: `metallicize()`
+
+Chasing an odd `mic:` label in the negative control turned up
+**`metallicize(root)` at 17725** — it walks the DOM at load, finds **every**
+emoji text node and wraps it in `<span class="mic">`, then re-runs on changed
+subtrees via a MutationObserver.
+
+**The app has a runtime emoji census.** That is a far better inventory
+instrument than any static grep: it catches the HTML-entity forms
+(`&#128197;` — and every `.viewhead` on all 15 pages uses those), strings built
+at runtime, and anything a source sweep would miss. **682 should drive the
+inventory through `metallicize`'s own walker in a real browser, not a regex.**
+Note also that once app chrome has no emoji, this observer is doing nothing on
+most pages — worth revisiting against the repaint-loop history.
+
+### Gates
+`check_build.py` green. `render_schedule.js` — **27 assertions** across
+phone/desktop × dark/light: every contrast ratio, no emoji surviving on the
+screen (checked over RENDERED text, which catches the entity form), the icons
+drawn, each one's stroke equal to its parent's `color`, and each sized to its
+type. **8 red on 680.** Full regression sweep green, including the three
+baseline-pinned harnesses run against their real controls (673, 673, 674).

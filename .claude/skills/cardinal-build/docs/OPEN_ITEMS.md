@@ -2344,3 +2344,30 @@ the claim pane; that answer is already in.
   prompt is told to return null rather than guess, so a blank is a safe failure.
 - `#cr-ce-view .ce-kv .v.novalue` still has **no emitter**. It was renamed with
   the rest so the trap cannot be walked into, not because anything uses it.
+
+---
+
+## Build 681 — closed, and what it sets up
+
+**Closed.** The Schedule Board reads (heading 1.10 → 19.89:1 dark; day line
+2.30 → 8.73:1 light), and the same heading fix carries all **15** `.viewhead`
+pages. `CardinalIcons` exists and is proven on one screen.
+
+**AWAITING THEO — the icon set is a sample, not a sweep.** He asked to see it
+before it goes app-wide. Build 682 does not start until he has looked at the
+Schedule Board.
+
+**For 682, the inventory instrument is `metallicize()`, not a regex.** It walks
+the DOM at load and wraps every emoji in `<span class="mic">`. Drive that in a
+real browser across every view for a runtime census. **A source grep for
+literal UTF-8 emoji will under-report badly** — all 15 `.viewhead` headings use
+the HTML-entity form (`&#128197;`), and more is built at runtime.
+
+**Scope Theo settled:** app screens only. Icons where the eye SCANS; in prose,
+**delete**. Out of scope until he says otherwise: emails, push notifications,
+printed letters, `popup.html`, `drivewaytest.html`, the Showcase. The CHANGELOG
+keeps its emoji — historical record.
+
+**Still queued behind this:** the insurance loop (builds 683–684 —
+`read_response` is still a 501, `insurance_supplements` still has zero rows),
+and the VAPID key rotation, which is waiting on Theo setting the env var.

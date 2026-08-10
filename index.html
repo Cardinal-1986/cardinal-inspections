@@ -1563,7 +1563,14 @@ html, body{overflow-x:hidden;max-width:100%;}
 .viewhead{
   text-align:center;
   font:800 23px Georgia,'Times New Roman',serif;
-  letter-spacing:.02em;color:#1c1416;
+  letter-spacing:.02em;
+  /* 681: was #1c1416 — a near-black ink for a white page, printed on this
+     app's near-black default ground at 1.10:1. Theo: "can't read this page."
+     --rbe-head is the app's own heading token (#ffffff dark / #161616 light),
+     already used by .hero-hi and .acthead, so this flips with the theme
+     instead of needing a second rule. Fixes all FIFTEEN .viewhead pages, not
+     just the Schedule Board. */
+  color:var(--rbe-head,#ffffff);
   margin:18px 0 4px;
 }
 .viewhead::after{
@@ -3312,7 +3319,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 680 &#8212; The claims screen stops shouting and starts answering</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 681 &#8212; The Schedule Board is readable, and the first drawn icons replace emoji</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7275,8 +7282,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
        with dead space either side. Dropped so the board sizes like the
        rest of the app. -->
   <div class="wrap" style="padding-top:18px;">
-    <h2 class="viewhead">&#128197; Schedule Board</h2>
-    <p class="subnote">Jobs &#128296;, material drops &#128666;, and appointments &#128197; for the next 14 days. Tap a day to add or edit.</p>
+    <!-- 681: the emoji calendar is now a drawn one, inheriting the heading's
+         colour. The three in the sentence below are DELETED, not converted —
+         an icon mid-prose is just a smaller sticker. -->
+    <h2 class="viewhead"><svg class="cri lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.4" y="5" width="17.2" height="15.6" rx="2.2"/><path d="M3.4 9.9h17.2M8.3 2.9v4.1M15.7 2.9v4.1"/></svg> Schedule Board</h2>
+    <p class="subnote">Jobs, material drops and appointments for the next 14 days. Tap a day to add or edit.</p>
     <div id="boardMount"></div>
   </div>
 </div>
@@ -19026,7 +19036,42 @@ function openActivityFeed(){
   window.scrollTo(0,0);
 }
 var boardView = document.getElementById('boardView');
-var KIND_META = { job:{ic:'\uD83D\uDD28',nm:'Job'}, drop:{ic:'\uD83D\uDE9A',nm:'Material Drop'}, appt:{ic:'\uD83D\uDCC5',nm:'Appointment'}, team:{ic:'\uD83C\uDFE2',nm:'Team'} };
+/* ── 681 · CardinalIcons — the one icon set ────────────────────────────────
+   Replaces emoji in app chrome. Every glyph is drawn on the same 24x24 grid
+   with fill:none + stroke:currentColor, so it takes the colour and size of
+   whatever text it sits beside — including when that text is themed.
+
+   ⚠ Icons earn their place where the eye SCANS: list rows, nav, headings,
+   card eyebrows. In PROSE they are just smaller stickers, so a sentence gets
+   its emoji deleted rather than converted. See .subnote below. */
+var CardinalIcons = (function(){
+  function svg(paths, cls){
+    return '<svg class="cri' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" ' +
+      'fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true" focusable="false">' + paths + '</svg>';
+  }
+  var P = {
+    calendar: '<rect x="3.4" y="5" width="17.2" height="15.6" rx="2.2"/>' +
+              '<path d="M3.4 9.9h17.2M8.3 2.9v4.1M15.7 2.9v4.1"/>',
+    hammer:   '<path d="M4.6 7.4a2 2 0 0 1 2-2h9.2a2 2 0 0 1 2 2v1.8a2 2 0 0 1-2 2H6.6' +
+              'a2 2 0 0 1-2-2z"/><path d="M11.1 11.2v8.4a1.7 1.7 0 0 0 3.4 0v-8.4"/>',
+    truck:    '<rect x="2.8" y="6.2" width="10.6" height="9.4" rx="1.4"/>' +
+              '<path d="M13.4 9.6h3.5l3.3 3.2v2.8h-6.8z"/>' +
+              '<circle cx="7" cy="18.2" r="1.9"/><circle cx="16.9" cy="18.2" r="1.9"/>',
+    building: '<path d="M4.4 20.9V5.3a1.6 1.6 0 0 1 1.6-1.6h7a1.6 1.6 0 0 1 1.6 1.6v15.6"/>' +
+              '<path d="M14.6 10.5h3.4a1.6 1.6 0 0 1 1.6 1.6v8.8"/><path d="M2.8 20.9h18.4"/>' +
+              '<path d="M7.7 7.7h1.1M10.9 7.7H12M7.7 11.5h1.1M10.9 11.5H12"/>'
+  };
+  function get(name, cls){ return P[name] ? svg(P[name], cls) : ''; }
+  return { get: get, names: function(){ return Object.keys(P); } };
+})();
+window.CardinalIcons = Object.assign(window.CardinalIcons || {}, CardinalIcons);
+/* 681: the four kinds now name an icon instead of carrying an emoji.
+   `nm` is untouched — it is the accessible label and the fallback title. */
+var KIND_META = { job:{ic:CardinalIcons.get('hammer'),nm:'Job'},
+                  drop:{ic:CardinalIcons.get('truck'),nm:'Material Drop'},
+                  appt:{ic:CardinalIcons.get('calendar'),nm:'Appointment'},
+                  team:{ic:CardinalIcons.get('building'),nm:'Team'} };
 function openScheduleBoard(){
   hideAllViews();
   boardView.style.display = 'block';
@@ -30105,6 +30150,13 @@ function showList() {
    render differently per device. Same reasoning that banned them in the Resource
    Library. currentColor means each chip's mark inherits its own CRM colour. */
 .cr-pmark{width:14px;height:14px;flex:0 0 auto;vertical-align:-2px;margin-right:1px}
+/* 681: THE icon class. Same drawing convention as .cr-pmark above —
+   viewBox 0 0 24 24, fill:none, stroke:currentColor — but sized in `em`
+   so one class serves a 23px heading and a 12.5px list row. Because the
+   stroke is currentColor it inherits the text's colour in BOTH themes,
+   which is the whole reason to prefer this over an emoji. */
+.cri{width:1em;height:1em;flex:0 0 auto;vertical-align:-.13em;stroke-width:1.75}
+.cri.lg{width:.92em;height:.92em;vertical-align:-.09em;margin-right:.12em}
 .cr-portal-chip{
     display:inline-flex; align-items:center; gap:6px;
     padding:4px 11px; border-radius:12px; cursor:pointer;
@@ -37193,6 +37245,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:681, d:'2026-08-10', t:'The Schedule Board is readable, and emoji start becoming drawn icons',
+s:'You said you could not read the scheduling page. The heading was dark ink on the near-black page \u2014 measured at 1.1 to 1, where 3 to 1 is the floor for text that size, which is why the little calendar sticker beside it was easier to read than the words. It is now 19.9 to 1. That same heading style is used on FIFTEEN pages, so all of them got clearer, not just this one. In light mode the day line (Monday, Tuesday...) had the opposite problem \u2014 a colour picked for the dark card was landing on a white one at 2.3 to 1; it now reads 8.7 to 1. AND THE FIRST ICONS: the calendar in the title and the marks beside each appointment are drawn now, not emoji, so they take the colour and size of the text next to them instead of arriving as a glossy sticker your phone chose. The three in the sentence under the title were simply deleted \u2014 an icon in the middle of a sentence is just a smaller sticker. This one page is the sample: say whether you like it and the same set goes across the rest of the app.'},
 { b:680, d:'2026-08-10', t:'The claims screen stops shouting and starts answering',
 s:'Four things you asked about on the claim screen. THE GIANT WHITE BOXES: an empty field was borrowing the look of an empty-state panel \u2014 the same class name meant two different things \u2014 and it was doing it on six screens, not just this one. THE LABELS: "Filed" and "Approved" now read "Date Filed" and "Date Approved", so they stop colliding with the status chip at the top of the same screen that also says FILED. THE APPROVED DATE: nobody could ever fill it \u2014 there was no box for it in the edit form and no line for it in the save \u2014 so it now has both. CAUSE OF LOSS: it is read off the Scope of Loss when you upload one, instead of waiting for you to type it. THE JOB TAB: it was drawing the Contract tab. Job is now the client\u2019s project, Contract is the estimate and the signed contract, and each one tells you when it has nothing to show.'},
 { b:679, d:'2026-08-10', t:'The Supplement Desk is reachable, the job name stops following you, and the map stops crashing',
@@ -56763,6 +56817,13 @@ background:linear-gradient(180deg,var(--rbe-bg2,#262a31),var(--rbe-panel,#16161B
 /* the date line - 1.39:1 before */
 body:not(.claim-insurance):not(.claim-community) #boardView .bhead{
 color:#f08a90;border-bottom:1px solid var(--rbe-line2,#2b2b33);
+}
+/* 681: …and #f08a90 is a DARK-ground ink. 527 scoped this by CRM but not by
+   THEME, so the same pink was landing on light mode's white card at 2.30:1 —
+   measured. The dark rule above is untouched; this restores the pre-527 ink
+   for light only, which reads ~7:1 on #fafafa. */
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #boardView .bhead{
+color:var(--red-dk,#9c1822);
 }
 /* "Nothing scheduled", which is thirteen of the fourteen cards */
 body:not(.claim-insurance):not(.claim-community) #boardView .bnone{
