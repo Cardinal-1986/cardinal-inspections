@@ -1,8 +1,9 @@
 # Cardinal Resource App — Open Items
 
-*⚠️ **This file is layered, and each layer carries its own date.** The newest material —
-the bundle-splitting verdict, the deferred `showroom.html`, and what build 627 left open — is at the
-**bottom**, worked **8 Aug 2026 at build 627**. The decisions section was worked **5 Aug 2026**. The
+*⚠️ **This file is layered, and each layer carries its own date.** The newest material — the live
+queue and the two questions standing with Theo — is the **last section**, worked **10 Aug 2026 at
+build 691**; the bundle-splitting verdict and the deferred `showroom.html` sit above it at build 627
+(8 Aug). The decisions section was worked **5 Aug 2026**. The
 long middle of the file was last worked at build **573** · 2 Aug 2026 and knows nothing of 574–627;
 everything under "Illustrations in the Resource Library" and beyond is 467–557 era. Read the date on
 the section you are in, not the top of the file. For anything not covered here, read the `CHANGELOG`
@@ -2397,3 +2398,52 @@ collision), gradient names gone from the cards (39 gradient-text sites → 38).
   the real count was **37** (the 38th is a comment whose declaration is split
   across a newline). Chromium's parsed-rule walk now reports 0, and
   `render_gradtext.js` is the standing instrument — it goes RED on 684.
+
+---
+
+## Builds 685–691 — what closed, and the live queue (10 Aug 2026)
+
+**Closed this span**, all merged and verified deployed (PRs #198–#207):
+gradient text (685), the nav icons (686) and the three Theo rejected (687),
+Suppliers (688), the calendar headings + obsidian client cards (689), the
+pipeline-stage chips (690) and the Assigned To strip beside them (691).
+
+**The queue, in Theo's priority order:**
+
+1. **The emoji sweep — 533 remain.** Still first. The nav is done; the next
+   cleanest tranche is the card/hero button rows in `cr-sf` / `cr-ch2` /
+   `cr-cth` / `cr-ci`, which already wrap their emoji in `<span class="i">`.
+   **The weather table in `cr-lr-script` is a DATA map keyed by WMO code** — an
+   icon per condition is a design task and wants Theo's eye before any patch.
+   **Ship icons with a rendered contact sheet, never a pass count**: 686 was
+   195/195 green and shipped three wrong glyphs.
+2. ~~**gradient text**~~ — **DONE at 685**, 37 sites, zero floor failures.
+3. **The insurance loop** — unchanged. `read_response` is still a 501,
+   `insurance_supplements` still has zero rows. Needs Theo, the live key and
+   Gunn's document.
+4. **VAPID rotation** — still waiting on `VAPID_PRIVATE_KEY` in Vercel. **Do
+   not remove the committed literal in `api/notify.js` before the env var is
+   live; this repo is public and push breaks silently without a key match.**
+
+**Two questions put to Theo and still unanswered — neither blocks anything:**
+
+- **`.pcpo` lavender in LIGHT mode.** It was already failing at **1.99:1**, and
+  689's darker obsidian card took it to **1.79:1** — a known-bad number made
+  slightly worse, reported rather than buried. Lavender PO is on the semantic
+  frozen list, so the pick is his. **The `.ljpo` precedent is ready if he wants
+  it**: `--rbe-po2` is now `#d8a94f` / `#8f1620` and five PO surfaces share it.
+- **`OnHold` has no colour of its own.** It is in `STAGES` but absent from
+  `LJ_SOLID` / `LJ_INK` / `LJ_SPINE`, so it falls back to `#8a93a1` — which is
+  also Lead's. The two dots on the 690 strip are identical. The strip matched
+  the existing fallback rather than inventing a tenth colour; he was told and
+  has not asked for one.
+
+**Parked by Theo, with his words:** the desktop left nav (`cr-lnav-script`)
+keeps its OWN 26-icon set, unrelated to `CardinalIcons` — folding them into one
+is its own build and changes what his ultrawide looks like, so it wants a
+preview. His call on doing it now was **"not now"**; finish the emoji sweep.
+
+**Not chosen, do not re-propose without a reason:** Option A for the filter
+strips — one switchable strip covering all seven groups. It was rendered and
+shown beside Option C; he picked **C, two fixed strips** (Milestone + Assigned
+To), with the other five groups staying behind the funnel.
