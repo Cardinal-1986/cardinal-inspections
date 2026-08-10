@@ -14199,3 +14199,33 @@ changing it is Theo's call, not a drive-by.
 **Gates:** `check_build` green · `render_pcard.js` 12 assertions both themes,
 **10 red on 682** · regression sweep green (harnesses + schedule/emptyclass/
 inscards renders).
+
+## Build 684 — What's New opens for the whole team again, and the session hands off
+
+Theo: *"Make the what's new readable to everyone again."* Build **600** gated
+What's New to Theo at BOTH entry points (`show()` + `autoShow()` + the menu
+item) because the CHANGELOG had gone stale — the team was getting a popup with
+nothing new in it. The changelog has carried a plain-English entry **every
+build since**, so the gate's reason is gone and the gate went with it:
+`isOwner()` retired, any signed-in user opens it from the menu, and the
+once-per-new-build popup returns for everyone (the localStorage last-seen
+mechanism was never gated and needed no change).
+
+The box itself also violated two settled rules and was fixed in passing: the
+header was a red **gradient** with near-black text (≈3.5:1) and a 🎉 — now
+solid `#c8202e` with white text (5.9:1), no emoji.
+
+**The observer census** (Theo asked what the 46 are): enumerated per-module in
+`CLAUDE.md`'s invariants, with the standing **no-47th-without-written-cause**
+rule and the honest counting pattern (`\)\s*\.observe\(` — a bare grep counts
+comments that mention the pattern; that error shipped in 682's first commit
+message and is corrected in its PR).
+
+**The handoff**: `HANDOFF.md` carries the 10 Aug session (679–684, Theo's six
+settled decisions, the queue in his priority order, the three measuring-rig
+traps, the squash-then-rebase drill). `CLAUDE.md`'s staleness table is
+brought to 684; `BUG_CLASSES` to 683.
+
+Gates: `check_build` green (679-era prev, marker + negative control), sweep
+green (653/671/679/680 + pcard + schedule renders). `isOwner` survives only
+as the retirement comment — asserted by grep, count 1.

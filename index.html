@@ -3332,7 +3332,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 683 &#8212; The home client cards go dark like the rest of the app</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 684 &#8212; What's New opens for the whole team again</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22265,10 +22265,11 @@ var hd = document.querySelector('header.site');
   document.getElementById('auditNav').style.display =
     (!_vision && userEmail === 'theo@cardinalrenovations.net') ? 'block' : 'none';
   document.getElementById('teamNav').style.display = document.getElementById('auditNav').style.display;
-  /* 600: What's New is Theo's build log. show() refuses for anyone else, but
-     hide the entry too so nobody taps a control that does nothing. */
+  /* 684: What's New is everyone's again — Theo's call. 600 gated it because
+     the CHANGELOG had gone stale and the team was getting a dead popup; it has
+     had an entry every build since, so the gate's reason is gone. */
   var wnItem = document.querySelector('.cbi[data-go="whatsnew"]');
-  if(wnItem) wnItem.style.display = (userEmail === 'theo@cardinalrenovations.net') ? '' : 'none';
+  if(wnItem) wnItem.style.display = '';
   var leadOpt = document.querySelector('#newMenu [data-new="lead"]');
   if(leadOpt) leadOpt.style.display = (PRODUCTION_EMAILS.indexOf(userEmail) !== -1) ? 'none' : 'block';
   hideAllViews();
@@ -37204,12 +37205,14 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 })();
 </script>
 
-<style id="cr-cl-styles">.cr-cl-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9700;display:flex;align-items:center;justify-content:center;padding:20px}.cr-cl-box{background:#fff;border-radius:14px;max-width:480px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cl-head{padding:16px 20px;background:linear-gradient(120deg,#c8202e,#e35c63 60%,#c8202e);color:#1a1a1a;border-radius:14px 14px 0 0}.cr-cl-head h3{margin:0;font:800 14px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase}.cr-cl-body{padding:16px 20px;overflow-y:auto;flex:1}.cr-cl-entry{padding:10px 0;border-bottom:1px solid #eee}.cr-cl-entry:last-child{border-bottom:0}.cr-cl-build{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;color:#8f1620;margin-bottom:3px}.cr-cl-desc{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;line-height:1.45}.cr-cl-acts{padding:12px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end}.cr-cl-acts button{background:#c8202e;color:#fff;border:0;padding:8px 16px;border-radius:6px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit}.cr-cl-acts button:hover{background:#b8860b}</style>
+<style id="cr-cl-styles">.cr-cl-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9700;display:flex;align-items:center;justify-content:center;padding:20px}.cr-cl-box{background:#fff;border-radius:14px;max-width:480px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.4);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}.cr-cl-head{padding:16px 20px;background:#c8202e;color:#fff;border-radius:14px 14px 0 0}/* 684: was a gradient with near-black text on red - both against the settled rules; solid red + white measures 5.9:1 */.cr-cl-head h3{margin:0;font:800 14px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase}.cr-cl-body{padding:16px 20px;overflow-y:auto;flex:1}.cr-cl-entry{padding:10px 0;border-bottom:1px solid #eee}.cr-cl-entry:last-child{border-bottom:0}.cr-cl-build{font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.16em;color:#8f1620;margin-bottom:3px}.cr-cl-desc{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;line-height:1.45}.cr-cl-acts{padding:12px 20px;border-top:1px solid #eee;display:flex;justify-content:flex-end}.cr-cl-acts button{background:#c8202e;color:#fff;border:0;padding:8px 16px;border-radius:6px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit}.cr-cl-acts button:hover{background:#b8860b}</style>
 <script id="cr-cl-script">
 (function(){
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:684, d:'2026-08-10', t:'What\u2019s New opens for the whole team again',
+s:'This box, the one you are reading, was locked to Theo at build 600 \u2014 back then the release notes had gone stale and the team was getting a popup with nothing new in it. The notes have been written for every single build since, in plain language, so the lock is off: everyone signed in can open What\u2019s New from the menu, and it will pop up once per new build the way it used to. The banner also went from a red-fade with dark text to solid red with white text you can actually read, and the party-popper emoji is gone \u2014 same rules as the rest of the app. Behind the scenes this build also ships the session hand-off: the notebooks the next work session reads were brought fully up to date, including a complete map of the forty-six page-watchers and the standing rule that no build may add one without written cause.'},
 { b:683, d:'2026-08-10', t:'The home client cards go dark, like the rest of the app',
 s:'The white cards on your home screen were never designed white \u2014 they were painted by accident. The little coloured stage chip (LEAD, PROSPECT...) shares its colour class with the card that carries it, so the chip\u2019s pale blue was flooding the whole card and erasing the dark finish the card actually asked for \u2014 in dark AND light mode. The chip colours now apply only to chips. The card gets its dark steel back, the client\u2019s name is plain bright text instead of red fading into grey (your no-gradients rule, applied), and every colour on the card was measured against the floor rather than eyeballed: name 12.7 to 1, chips 5.5, Call and Text 8. The greys on the address line were nudged one step brighter because the old ones measured 2.7 to 1 on the dark card. Light mode got the same measuring pass and two small fixes of its own.'},
 { b:682, d:'2026-08-10', t:'The metallic emoji wrapper is gone',
@@ -37670,12 +37673,10 @@ try{ localStorage.setItem(KEY, String(build)); }catch(e){}
    window.currentUser is the top-level `var currentUser` (19916). userEmail is
    NOT a global — it is a parameter of showMain()/showLanding() and cannot be
    read from in here, which is why this reads the user object instead. */
-function isOwner(){
-var u = window.currentUser;
-return !!(u && String(u.email || '').toLowerCase() === 'theo@cardinalrenovations.net');
-}
+/* 684: isOwner() retired with the 600 gate — the changelog has been written
+   for a team audience since 585 (plain-English summaries, no code talk). */
 function show(){
-if(!isOwner()) return;
+if(!window.currentUser) return;   /* signed in, any role */
 var cur = currentBuild();
 var lastSeen = getLastSeen();
 var newBuilds = CHANGELOG.filter(function(e){ return entryBuild(e) > lastSeen; });
@@ -37684,7 +37685,7 @@ var bg = document.createElement('div');
 bg.className = 'cr-cl-bg';
 bg.innerHTML =
 '<div class="cr-cl-box">' +
-'<div class="cr-cl-head"><h3>\uD83C\uDF89 What\'s New</h3></div>' +
+'<div class="cr-cl-head"><h3>What\'s New</h3></div>' +
 '<div class="cr-cl-body">' +
 newBuilds.map(function(e){
 return '<div class="cr-cl-entry">' +
@@ -37715,7 +37716,7 @@ setTimeout(function(){
 var waited = 0;
 (function tick(){
 if(!window.currentUser && (waited += 500) <= 10000) return setTimeout(tick, 500);
-if(!isOwner()) return;
+if(!window.currentUser) return;   /* 684: any signed-in user, as before 600 */
 var cur = currentBuild();
 var lastSeen = getLastSeen();
 if(!cur) return;

@@ -4,6 +4,104 @@
 
 ---
 
+# Session of 10 August 2026 — five builds live, three settled rules, and the readability class named
+
+**`main` carries build 684 (679–684 all shipped THIS session, all merged, all verified
+deployed to production via the GitHub deployments API — this session cannot reach
+app.cardinalroster.com directly, its network policy 403s the CONNECT; use the
+deployments API, never curl the site). Working tree clean. NO open PRs, NO held branches.**
+
+## What shipped, in order
+
+| Build | What | PR |
+|---|---|---|
+| 679 | Supplement Desk reachable · job name stops following you · map is an anchor + incomplete-address warning · community card way out | #191 |
+| 680 | Claims screen: the `.empty` two-meanings collision (SIX surfaces) · Date Filed / Date Approved labels · `approved_at` writer (had NONE, ever) · cause_of_loss from the scope · Job/Contract tabs split | #192 |
+| 681 | Schedule Board readable (`.viewhead` 1.10→19.89:1, **fifteen pages**) · `CardinalIcons` born, Schedule Board is the approved sample | #193 |
+| — | Docs-only: the standing readability note at the TOP of CLAUDE.md | #194 |
+| 682 | `metallicize()` removed entirely (Theo: "we don't need metallic anymore") — observers 47→46 | #195 |
+| 683 | Home client cards dark (the bare `.stg-*` pastel collision, loaded since 544) · `.pcnm` gradient text → solid (39 sites → 38) | #196 |
+| 684 | What's New un-gated for the whole team (600's gate reversed — its staleness reason is gone) · this handoff | (this PR) |
+
+## Theo's decisions THIS session — settled, do not re-litigate
+
+1. **"I don't need to have gradient colors anywhere."** Measured at 681: 276 gradient
+   calls, **38 gradient-clipped TEXT sites remain** (was 39; 683 removed `.pcnm`).
+   No new ones, ever. Removing the rest is a queued build. Full list: grep
+   `-webkit-text-fill-color:transparent`.
+2. **Icons: inline SVG, approved on the Schedule Board.** `CardinalIcons.get(name)`,
+   `.cri` class, `stroke:currentColor`, em-sized. Icons ONLY where the eye scans;
+   emoji in prose are DELETED, not converted. Scope: app screens only — emails,
+   push, letters, popup.html, drivewaytest.html, Showcase are OUT until Theo says.
+   CHANGELOG keeps its emoji (history).
+3. **"We don't need to use metallic anymore"** — done, removed at 682.
+4. **Client cards: dark, like the rest** — done at 683.
+5. **What's New: everyone again** — done at 684.
+6. **"Merge and deploy when anything becomes available if practical"** — standing
+   authorization given 10 Aug for this session's PRs; a NEW session should confirm
+   it still stands rather than inherit it.
+
+## The queue, in Theo's priority order
+
+1. **The emoji sweep (approved, ready).** Inventory instrument: `metallicize()` is
+   GONE (682) — do NOT look for it. Its regex survives in git history
+   (`git show <682-parent>:index.html`, MIC_CLUSTER at ~L17721) if you want the
+   cluster pattern. Sweep must catch BOTH literal UTF-8 AND HTML entities
+   (`&#128197;` — all 15 `.viewhead` headings use entities) AND JS escapes
+   (`\uD83D...`). Check each site for: lookup key, DB-persisted, regex, filename,
+   CSS content: — those are data changes, not cosmetic.
+2. **The 38 remaining gradient-text sites** (list via grep; the CLAUDE.md standing
+   note has the count table).
+3. **The insurance loop** (approved plan §C in
+   /root/.claude/plans/mellow-toasting-walrus.md — but that file is SESSION-LOCAL;
+   the plan's substance: `read_response` is a 501 stub at api/supplement.js:274,
+   `insurance_supplements` has ZERO rows, `responses jsonb` + per-item
+   `carrier:{decision,note,decided_at}` slots already exist — fill them, don't add
+   a second structure. enforceDecisions() mirrors enforceGaps(): unknown id
+   dropped, silence = `unaddressed` never approved, model dollar figures are
+   PROPOSED and Theo confirms before write. Front half has never run against a
+   real scope — prove it on Gunn's document first, with Theo + the live key.)
+4. **VAPID key rotation** — waiting on Theo setting `VAPID_PRIVATE_KEY` in Vercel
+   (steps in OPEN_ITEMS / the 682-era conversation; committed literal in
+   api/notify.js:20-21, repo is PUBLIC). Never remove the literal before the env
+   var is live.
+5. `.pcpo` lavender 1.99:1 in light — semantic frozen colour, needs Theo's pick.
+
+## What a new session must know that the older docs don't say
+
+- **The measuring-rig traps cost three builds this session; all three are in
+  BUG_CLASSES and the CLAUDE.md standing note.** Short form: (1) never
+  concatenate the `<style>` blocks — print templates inside strings restyle the
+  page; load the REAL document in Chromium; (2) `background-color` is not the
+  background — collect gradient stops; (3) an rgba wash is not a ground —
+  COMPOSITE it over what is beneath (render_pcard.js `grounds()` is the good
+  copy).
+- **The class-collision shape struck twice in three builds** (`.empty` at 680,
+  bare `.stg-*` at 683 — both BUG_CLASSES 27). Before using any short utility
+  class, ask what else wears it.
+- **Three harnesses are pinned to SPECIFIC baselines**: harness_672 (671-era
+  senddoc), harness_674 (build 673), render_inshub (build 674). "The previous
+  build" is the wrong control — read each Usage line. harness_674 with a newer
+  baseline CRASHES with `aerialMerge is not defined`; that is the wrong-baseline
+  symptom, not a bug.
+- **The observer census and the standing rule are in CLAUDE.md** (46 calls, 45
+  modules, enumerated). No new `document.body` observer without written cause.
+- **next_build.py before the first patch and before every PR.** This session it
+  was right every time (679…684 sequentially). The 584 collision on
+  `claude/ai-can-build-584` is still outstanding and still must not merge unstamped.
+
+## Session hygiene notes
+
+- Squash-merges: after one, a stacked branch must be REBASED ONTO the squashed
+  main (`git rebase --onto origin/main <old-base> <branch>`); hash-compare the
+  artifacts before/after to prove the tree is unchanged (680 did this, byte-identical).
+- The scratchpad node_modules (jsdom + playwright-core) lives at the session
+  scratchpad; a NEW session gets a fresh scratchpad and must reinstall or
+  re-point NODE_PATH.
+- Chromium: /opt/pw-browsers/chromium-1194/chrome-linux/chrome via playwright-core.
+
+---
+
 # Session of 5 August 2026 (later) — the archive landed, and a taxonomy that was fighting itself
 
 **`main` at `5cbb888`, app stamp `build 601`, working tree clean. PR #129 merged.
