@@ -2072,6 +2072,11 @@ body.restoring #restoreVeil{display:flex;}
 /* 690: the stage strip. One scrolling row, so it costs a single line of height;
    the dot carries the stage's own settled colour (LJ_SOLID) rather than tinting the
    whole chip, which would have put nine saturated blocks across the top. */
+/* 691: the strip heading. --rbe-mute is the app's own label grey and flips
+   with the theme, so this does not need a light twin of its own. */
+.ljglbl{font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--rbe-mute,#9aa0a8);margin:8px 0 5px;}
+.ljgrp:first-of-type .ljglbl{margin-top:0;}
 .ljchips{display:flex;gap:7px;overflow-x:auto;padding:0 0 9px;margin-bottom:2px;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .ljchips::-webkit-scrollbar{display:none;}
@@ -3356,7 +3361,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 690 &#8212; Tap a pipeline stage straight from All Leads &amp; Jobs</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 691 &#8212; Filter by rep from the same row as the stages</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3625,7 +3630,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
              on a phone and the rail on a desktop. This surfaces it; it does not add
              a second filter. All three write the same array and re-render through
              renderLeadsView(), so they cannot disagree. -->
-        <div class="ljchips" id="ljStageChips"></div>
+        <div class="ljgrp" id="ljGrpStage"><div class="ljglbl">Milestone</div>
+          <div class="ljchips" id="ljStageChips" data-g="stage"></div></div>
+        <div class="ljgrp" id="ljGrpRep"><div class="ljglbl">Assigned To</div>
+          <div class="ljchips" id="ljRepChips" data-g="rep"></div></div>
         <div class="ljrhead">Results (<span id="ljCount">0</span>)</div>
         <div id="ljList"></div>
       </section>
@@ -11401,17 +11409,13 @@ function renderLeadsView(){
   badge.classList.toggle('show', n > 0);
   document.getElementById('ljFTitle').textContent = 'Filters (' + n + ')';
   document.getElementById('ljSortChip').textContent = ljSortLabel();
-  /* 690: the stage strip, from the SAME counts the rail and the sheet use. */
-  var ljSg = LJ_GROUPS.filter(function(x){ return x.key === 'stage'; })[0];
-  var ljSc = ljGroupCounts(ljSg), ljSk = ljGroupKeys(ljSg, ljSc);
-  var ljSs = ljState.sets.stage || [];
-  document.getElementById('ljStageChips').innerHTML =
-    '<button type="button" class="ljchip' + (ljSs.length ? '' : ' on') + '" data-all="1">All <b>' + all + '</b></button>' +
-    ljSk.map(function(k){
-      return '<button type="button" class="ljchip' + (ljSs.indexOf(k) !== -1 ? ' on' : '') + '" data-v="' + esc(k) + '">' +
-        '<i style="background:' + (LJ_SOLID[k] || '#8a93a1') + '"></i>' + esc(k) +
-        ' <b>' + ljSc[k] + '</b></button>';
-    }).join('');
+  /* 691: ONE strip renderer, two mounts. Theo asked for Assigned To beside
+     Milestone and said the other five can stay behind the funnel. Generalised
+     rather than copied: a second copy of this would be the second source of
+     truth 690's comment warns about. A group with fewer than two values is
+     hidden outright — a lone "All" chip under a heading is furniture. */
+  ljChipStrip('stage', 'ljStageChips', 'ljGrpStage');
+  ljChipStrip('rep', 'ljRepChips', 'ljGrpRep');
 
   /* desktop rail */
   var sel = document.getElementById('ljSortSel');
@@ -11603,20 +11607,45 @@ document.getElementById('ljRailMount').addEventListener('change', function(e){
   if(!set.length) delete ljState.sets[g];
   renderLeadsView();
 });
-document.getElementById('ljStageChips').addEventListener('click', function(e){
-  /* 690: the identical toggle to the rail checkbox above — push/splice the same
-     ljState.sets.stage array, drop the key when it empties so ljActiveCount()
-     stops counting it, then the one render. No second source of truth. */
+function ljChipStrip(gkey, mountId, wrapId){
+  var g = LJ_GROUPS.filter(function(x){ return x.key === gkey; })[0];
+  var wrap = document.getElementById(wrapId), mount = document.getElementById(mountId);
+  if(!g || !wrap || !mount) return;
+  var counts = ljGroupCounts(g), keys = ljGroupKeys(g, counts);
+  /* nothing to choose between: one value, or none */
+  if(keys.length < 2){ wrap.style.display = 'none'; mount.innerHTML = ''; return; }
+  wrap.style.display = '';
+  var set = ljState.sets[gkey] || [];
+  /* the dot is the stage's own settled colour; no other group has a palette,
+     and inventing one for reps would put five new semantic colours on screen. */
+  var dots = gkey === 'stage';
+  mount.innerHTML =
+    '<button type="button" class="ljchip' + (set.length ? '' : ' on') + '" data-all="1">All <b>' +
+      cacheProjects.length + '</b></button>' +
+    keys.map(function(k){
+      return '<button type="button" class="ljchip' + (set.indexOf(k) !== -1 ? ' on' : '') +
+        '" data-v="' + esc(k) + '">' +
+        (dots ? '<i style="background:' + (LJ_SOLID[k] || '#8a93a1') + '"></i>' : '') +
+        esc(k) + ' <b>' + counts[k] + '</b></button>';
+    }).join('');
+}
+function ljChipClick(e){
+  /* 691: the group comes off the CONTAINER, so this one handler serves both
+     strips and any future one. Same push/splice as the rail checkbox. */
   var b = e.target.closest('.ljchip');
   if(!b) return;
-  if(b.getAttribute('data-all')){ delete ljState.sets.stage; renderLeadsView(); return; }
+  var gkey = e.currentTarget.getAttribute('data-g');
+  if(!gkey) return;
+  if(b.getAttribute('data-all')){ delete ljState.sets[gkey]; renderLeadsView(); return; }
   var v = b.getAttribute('data-v');
-  var set = ljState.sets.stage = ljState.sets.stage || [];
+  var set = ljState.sets[gkey] = ljState.sets[gkey] || [];
   var i = set.indexOf(v);
   if(i === -1) set.push(v); else set.splice(i, 1);
-  if(!set.length) delete ljState.sets.stage;
+  if(!set.length) delete ljState.sets[gkey];
   renderLeadsView();
-});
+}
+document.getElementById('ljStageChips').addEventListener('click', ljChipClick);
+document.getElementById('ljRepChips').addEventListener('click', ljChipClick);
 document.getElementById('ljList').addEventListener('click', function(e){
   if(e.target.closest('.ljcta')){ e.stopPropagation(); return; }
   var card = e.target.closest('.ljcard');
@@ -37329,6 +37358,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:691, d:'2026-08-10', t:'Filter by rep from the same place as the stages',
+s:'Yesterday\u2019s stage buttons only solved one of the seven things that screen can filter by \u2014 rep was still four taps behind the funnel. There is now a second row, Assigned To, sitting under the Milestone row: tap a name to see only their jobs, tap two names to see both, tap All to clear. The two rows work together, so Lead plus Joan Hunt shows you Joan\u2019s leads. The other five filters stay behind the funnel because you said those are the two you use. If only one person is assigned to everything the second row hides itself rather than showing a heading with nothing to pick.'},
 { b:690, d:'2026-08-10', t:'Tap a pipeline stage straight from All Leads and Jobs',
 s:'All Leads and Jobs now has a row of stage buttons across the top \u2014 All, Lead, Prospect, On Hold and the rest \u2014 each with a count and a dot in that stage\u2019s own colour. Tap one to see only those jobs, tap a second to see both, tap All to clear. This is not a new filter: the app could already filter by stage, it was just buried behind the funnel icon on a phone and the checkbox list on a desktop. All three now drive the same setting, so whichever you use, the other two show it. The funnel is untouched and still holds Assigned To, Job Priority and Job Category.'},
 { b:689, d:'2026-08-10', t:'The calendar titles are readable, and the client cards go obsidian',
