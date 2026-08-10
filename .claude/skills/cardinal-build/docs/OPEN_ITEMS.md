@@ -2039,10 +2039,14 @@ needs the same "which one, in what shape" answer the audit report asks for.
 2. **Stage labels = "Closed" + "Awaiting Depreciation / Supplements"**
    (CR-AUD-014). The rail's wording wins in every insurance map; OnHold
    gains "On Hold" everywhere. Built at 655.
-3. **Supplement unification (CR-AUD-005) is its own LATER build** — design
-   goes to Theo first, against his recorded three-filings model
-   (partial-denial · backend · PWI/COC). Do not start it without his
-   sign-off on the shape.
+3. **✅ Supplement unification (CR-AUD-005): the data layer SHIPPED at
+   667-668** — the Supplement Desk. Design went to Theo first (9-10 Aug,
+   his picks recorded: admin-only, send-on-tap, quantities-only), built on
+   his three-filings model. Rows in `insurance_supplements`, trigger mirror
+   to the single-slot columns, AI gap analysis citation-locked to Cardinal's
+   own templates. **Still open: build 669 (send from the desk) and 670
+   (carrier-response reading + PWI/COC completion path).** CR-AUD-017 folds
+   into the mirror and is closed with it.
 
 ## ✅ BUILT at 654 — money coherence (CR-AUD-003 / 004 / 013)
 
@@ -2143,7 +2147,12 @@ parsing is advice for a text-extraction architecture this route does not use
 
 ## Still open from the audit after 654–655
 
-CR-AUD-005 (supplements — needs Theo's shape) · 016 (health-check registry)
+**CR-AUD-005 is now CLOSED** — the Supplement Desk (667–670) is the one
+supplement system: filings live in `insurance_supplements` rows and the claim's
+slot columns are a DB trigger recomputing from them, whoever wrote. 017
+(supplement bucket vs owedOn) folded into it. Still open:
+
+CR-AUD-016 (health-check registry)
 · 017 (supplement bucket vs owedOn — folds into 005's design) · 018
 (community draft-estimate fallback) · 019 (inspections tile/tab predicates)
 · 020 (small wiring cleanups) · 021 (dead weight deletions) · 022 (DB
@@ -2151,3 +2160,31 @@ advisor batch) · 023 (boot weight) · B3 (CardinalUndo) · the seven direct
 checklist writers outside `patchProjectCk` (listed in 655's PR — same
 last-write-wins class, follow-up candidate) · the gap features (each needs
 Theo's shape).
+
+## The Supplement Desk — what 670 left standing
+
+**Settled, do not re-litigate.** A building-official letter is filed by
+JURISDICTION, not by claim (it is reusable — that is the whole point). It is
+**evidence beside an RCO citation, never a citation of its own**, because Ohio
+has one statewide residential code and the local department administers it. The
+jurisdiction match is a **sort hint**: it never filters the list and never ticks
+a letter, because the addresses misspell their own city and a neighbouring
+official is persuasive where he is not binding.
+
+**Open, in the order they were offered:**
+- **Carrier-response reading (the `read_response` mode, still 501).** Upload
+  the denial → per-item approve/deny mapped onto the filed row's `items` →
+  rebuttal draft → the thread lives on the row. Also the PWI/COC completion
+  path (certificate + photos → depreciation release).
+- **Send from the desk.** Recipient shown, one explicit tap, exhibits as
+  long-lived signed URLs (the `PHOTO_DOC_URL_TTL` shape). Theo's pick was
+  "send from the desk"; the Desk currently files, prints and copies.
+- **A metal-over-cedar-shake substrate template** for the pack, if the Gunn
+  argument recurs. `tear_off` covers it today; a dedicated card would carry the
+  attic/skip-sheathing documentation list.
+- **Hover → `checklist.meas`.** `/api/hover` is the SIDING order flow only;
+  Roofr's numbers reach `meas`, Hover's do not. Small build if wanted.
+- **The register has no browser outside the Desk.** Letters are admin-authored
+  and all-staff readable by RLS, but only the Desk renders them. If production
+  should carry the jurisdiction's position into the field, that is a read-only
+  view in `index.html` — not started, not decided.

@@ -1,0 +1,947 @@
+<!--
+  ═══════════════════════════════════════════════════════════════════════════
+  THE SUPPLEMENT DESK · supplement.html · build 668 (10 Aug 2026)
+  ═══════════════════════════════════════════════════════════════════════════
+
+  Theo's ask, verbatim in spirit: read the scope, find what's missing, know
+  Ohio's code, suggest a response to the carrier, with real photos and
+  measurements — "what XBuild does without Xactimate access."
+
+  STANDALONE on purpose, the studio.html precedent: shares NOTHING with the
+  CRM but the Supabase project. Own sign-in (different origin = different
+  localStorage; the app session never carries over), own tokens (--sd-*),
+  noindex. ADMIN-ONLY twice: rpc is_cardinal_admin() gates this UI, and
+  api/supplement.js enforces the same check server-side — the UI gate is
+  courtesy, the route and RLS are the fence.
+
+  THE HONESTY CORE lives in api/supplement.js, not here: the model may only
+  point at Cardinal's own 21 Supplement Templates by id, and citation strings
+  are copied server-side from that pack. This page never lets a model-written
+  section number reach a letter.
+
+  WRITES: insurance_supplements (one row per filing; the mirror TRIGGER keeps
+  the claim's single-slot columns and the AR math honest — supplement_desk.sql)
+  and photos/scopes/* uploads for oversized PDFs. Letters at rest carry
+  [[PHOTOS:id]] tokens, never live URLs.
+
+  Theo's rules (recorded 9-10 Aug): admin-only · nothing sends itself (send
+  arrives next build; this build files, prints, copies) · QUANTITIES-ONLY
+  letters — a dollar in a draft raises a visible flag and a human fixes it.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Cardinal Supplement Desk</title>
+<script>
+/* resolve theme BEFORE first paint — the studio.html shape, same reason */
+(function(){
+  try{
+    var m = localStorage.getItem('cr-desk-theme');
+    if(m !== 'light' && m !== 'dark'){
+      m = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches)
+        ? 'light' : 'dark';
+    }
+    document.documentElement.setAttribute('data-theme', m);
+  }catch(_){ document.documentElement.setAttribute('data-theme','dark'); }
+})();
+</script>
+<style>
+  :root{
+    --sd-bg:#0C0D0F; --sd-panel:#15171A; --sd-panel2:#1B1E22; --sd-line:#2A2E33;
+    --sd-ink:#F2F3F5; --sd-ink2:#9AA3AB; --sd-ink3:#6C757D;
+    --sd-red:#C8202E; --sd-red-ink:#fff;
+    --sd-ok:#46A758; --sd-warn:#E8A33D; --sd-crit:#E5484D;
+    --sd-code:#7FB5D6; --sd-mfg:#C9A227; --sd-scope:#9AA3AB;
+    --sd-sunk:#0E1013;
+  }
+  /* light twin: same hues deepened past 4.5:1 on paper, not swapped */
+  :root[data-theme="light"]{
+    --sd-bg:#F6F5F2; --sd-panel:#FFFFFF; --sd-panel2:#EFEDE8; --sd-line:#E1DED7;
+    --sd-ink:#191C1E; --sd-ink2:#5D666D; --sd-ink3:#747D84;
+    --sd-code:#2A6485; --sd-mfg:#7A5E0D; --sd-scope:#5D666D;
+    --sd-sunk:#ECEAE4;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{ background:var(--sd-bg); color:var(--sd-ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; min-height:100vh; }
+  button{ font-family:inherit; cursor:pointer; }
+  input, select, textarea{ font-family:inherit; }
+
+  #loginView{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  #loginView .card{ width:100%; max-width:340px; background:var(--sd-panel);
+    border:1px solid var(--sd-line); border-radius:10px; padding:28px 26px; }
+  #loginView .wordmark{ font:700 11px/1 inherit; letter-spacing:3px; text-transform:uppercase; color:var(--sd-red); margin-bottom:6px; }
+  #loginView h1{ font-size:20px; margin:0 0 6px; }
+  #loginView .sub{ color:var(--sd-ink2); font-size:12.5px; margin:0 0 18px; }
+  #loginView label{ display:block; font-size:11px; color:var(--sd-ink2); margin:0 0 5px; text-transform:uppercase; letter-spacing:1px; }
+  #loginView input{ width:100%; background:var(--sd-bg); border:1px solid var(--sd-line); color:var(--sd-ink);
+    border-radius:6px; padding:10px 12px; font-size:14px; margin-bottom:14px; }
+  #loginView input:focus{ outline:none; border-color:var(--sd-red); }
+  #loginView button{ width:100%; background:var(--sd-red); color:var(--sd-red-ink); border:0; border-radius:6px; padding:11px; font-weight:700; }
+  #loginView .err{ color:var(--sd-crit); font-size:12.5px; margin:-6px 0 14px; min-height:1em; }
+
+  #appView{ display:none; min-height:100vh; }
+  header.sd-hd{ display:flex; align-items:center; gap:12px; padding:10px 16px;
+    border-bottom:1px solid var(--sd-line); background:var(--sd-panel); position:sticky; top:0; z-index:5; }
+  header.sd-hd .wordmark{ font:700 11px/1 inherit; letter-spacing:3px; text-transform:uppercase; color:var(--sd-red); }
+  header.sd-hd .ttl{ font-weight:700; }
+  header.sd-hd .sp{ flex:1; }
+  header.sd-hd button{ background:none; border:1px solid var(--sd-line); color:var(--sd-ink2);
+    border-radius:6px; padding:6px 10px; font-size:12px; }
+  main{ max-width:1060px; margin:0 auto; padding:18px 16px 80px; }
+
+  .sd-card{ background:var(--sd-panel); border:1px solid var(--sd-line); border-radius:10px; padding:16px; margin:0 0 14px; }
+  .sd-card h2{ margin:0 0 4px; font-size:15px; }
+  .sd-card .sub{ color:var(--sd-ink2); font-size:12.5px; margin:0 0 12px; }
+  .sd-empty{ color:var(--sd-ink3); font-size:13px; padding:14px 4px; }
+
+  .claimrow{ display:flex; gap:12px; align-items:center; padding:12px; border:1px solid var(--sd-line);
+    border-radius:8px; margin-bottom:8px; cursor:pointer; background:var(--sd-panel2); }
+  .claimrow:hover{ border-color:var(--sd-ink3); }
+  .claimrow .who{ font-weight:700; }
+  .claimrow .meta{ color:var(--sd-ink2); font-size:12px; }
+  .claimrow .sp{ flex:1; }
+  .pill{ font-size:11px; padding:3px 9px; border-radius:99px; border:1px solid var(--sd-line); color:var(--sd-ink2); white-space:nowrap; }
+  .pill.filed{ color:var(--sd-warn); border-color:var(--sd-warn); }
+  .pill.approved{ color:var(--sd-ok); border-color:var(--sd-ok); }
+  .pill.partial{ color:var(--sd-warn); border-color:var(--sd-warn); }
+  .pill.denied{ color:var(--sd-crit); border-color:var(--sd-crit); }
+
+  .steps{ display:flex; gap:6px; margin:0 0 14px; flex-wrap:wrap; }
+  .steps .st{ font-size:11.5px; padding:5px 11px; border-radius:99px; border:1px solid var(--sd-line); color:var(--sd-ink3); }
+  .steps .st.on{ color:var(--sd-ink); border-color:var(--sd-red); }
+
+  .kv{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+  .kv .cell b{ display:block; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--sd-ink3); }
+  .kv .cell span{ font-size:13.5px; }
+
+  .gap{ border:1px solid var(--sd-line); border-radius:8px; padding:12px; margin-bottom:10px; background:var(--sd-panel2); }
+  .gap .top{ display:flex; gap:10px; align-items:flex-start; }
+  .gap input[type=checkbox]{ width:19px; height:19px; margin-top:2px; accent-color:var(--sd-red); }
+  .gap .ttl{ font-weight:700; }
+  .gap .why{ color:var(--sd-ink2); font-size:12.5px; margin:4px 0 8px; }
+  .chip{ display:inline-block; font-size:10.5px; padding:2px 8px; border-radius:99px; margin-right:6px; border:1px solid; }
+  .chip.code{ color:var(--sd-code); border-color:var(--sd-code); }
+  .chip.manufacturer{ color:var(--sd-mfg); border-color:var(--sd-mfg); }
+  .chip.scope-consistency{ color:var(--sd-scope); border-color:var(--sd-scope); }
+  .chip.lowconf{ color:var(--sd-warn); border-color:var(--sd-warn); }
+  .gap .qtyrow{ display:flex; gap:8px; align-items:center; font-size:12.5px; color:var(--sd-ink2); flex-wrap:wrap; }
+  .gap .qtyrow input{ width:90px; background:var(--sd-sunk); border:1px solid var(--sd-line); color:var(--sd-ink);
+    border-radius:6px; padding:6px 8px; font-size:13px; }
+  .gap .phbtn{ background:none; border:1px dashed var(--sd-line); color:var(--sd-ink2); border-radius:6px; padding:5px 10px; font-size:12px; }
+  .gap .phcount{ color:var(--sd-ok); font-size:12px; }
+
+  .btn{ background:var(--sd-red); color:var(--sd-red-ink); border:0; border-radius:7px; padding:11px 18px; font-weight:700; font-size:13.5px; }
+  .btn[disabled]{ opacity:.5; cursor:default; }
+  .btn.ghost{ background:none; border:1px solid var(--sd-line); color:var(--sd-ink); font-weight:600; }
+  .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .note{ font-size:12px; color:var(--sd-ink3); margin-top:8px; }
+  .cl{ display:flex; gap:10px; align-items:flex-start; border:1px solid var(--sd-line);
+       border-radius:8px; padding:11px; margin-bottom:8px; background:var(--sd-panel2); }
+  .cl input[type=checkbox]{ width:19px; height:19px; margin-top:2px; accent-color:var(--sd-red); }
+  .cl .body{ flex:1; min-width:0; }
+  .cl .ttl{ font-weight:700; font-size:13.5px; }
+  .cl .hold{ color:var(--sd-ink2); font-size:12.5px; margin:5px 0 6px; }
+  /* ink2, not ink3: this line is 11.5px and carries the official's name, the
+     department and the sections. ink3 computes 3.57:1 dark / 3.58:1 light,
+     under the 4.5 floor for text that size. ink2 is 6.53 / 5.00. */
+  .cl .meta{ color:var(--sd-ink2); font-size:11.5px; }
+  .cl.here{ border-color:var(--sd-ok); }
+  /* --sd-ok has no light twin, and the dark green computes 2.59:1 on paper —
+     under the 3.0 floor for a non-text indicator. Same green DEEPENED (4.15:1),
+     not a hue swap: a different colour would read as a different state. The
+     row also says "this jurisdiction" in words, so the border is never the
+     only carrier. */
+  :root[data-theme="light"] .cl.here{ border-color:#358045; }
+  .clf{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;
+        border-top:1px solid var(--sd-line); padding-top:14px; }
+  .clf label{ display:block; font-size:10.5px; letter-spacing:1px; text-transform:uppercase;
+        color:var(--sd-ink3); margin-bottom:4px; }
+  .clf input, .clf select, .clf textarea{ width:100%; background:var(--sd-sunk);
+        border:1px solid var(--sd-line); color:var(--sd-ink); border-radius:6px; padding:8px 10px;
+        font:inherit; font-size:13px; }
+  .clf input:focus, .clf select:focus, .clf textarea:focus{ outline:none; border-color:var(--sd-red); }
+  .clf .wide{ grid-column:1/-1; }
+  .warnbar{ background:rgba(232,163,61,.12); border:1px solid var(--sd-warn); color:var(--sd-warn);
+    border-radius:8px; padding:10px 12px; font-size:12.5px; margin:0 0 10px; display:none; }
+
+  #letterEdit{ background:#fff; color:#16181a; border:1px solid var(--sd-line); border-radius:8px;
+    padding:26px 30px; min-height:280px; font:14px/1.65 Georgia,'Times New Roman',serif; }
+  #letterEdit:focus{ outline:2px solid var(--sd-red); }
+  #letterEdit p{ margin:0 0 12px; }
+  #subjEdit{ width:100%; background:var(--sd-sunk); border:1px solid var(--sd-line); color:var(--sd-ink);
+    border-radius:6px; padding:9px 11px; font-size:13.5px; margin-bottom:10px; }
+  .ph-token{ background:#f3f0e9; border:1px dashed #b8a; color:#7a6a4a; padding:2px 8px; border-radius:5px; font-size:12px; }
+
+  #photoModal{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:40;
+    align-items:center; justify-content:center; padding:18px; }
+  #photoModal .box{ background:var(--sd-panel); border:1px solid var(--sd-line); border-radius:10px;
+    max-width:760px; width:100%; max-height:84vh; overflow:auto; padding:16px; }
+  #photoGrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin:12px 0; }
+  #photoGrid .ph{ position:relative; border-radius:7px; overflow:hidden; border:2px solid transparent; cursor:pointer; aspect-ratio:1; }
+  #photoGrid .ph img{ width:100%; height:100%; object-fit:cover; display:block; }
+  #photoGrid .ph.on{ border-color:var(--sd-ok); }
+  #photoGrid .ph .tick{ position:absolute; top:5px; right:5px; width:20px; height:20px; border-radius:50%;
+    background:var(--sd-ok); color:#fff; display:none; align-items:center; justify-content:center; font-size:12px; }
+  #photoGrid .ph.on .tick{ display:flex; }
+
+  .filing{ border:1px solid var(--sd-line); border-radius:8px; padding:10px 12px; margin-bottom:8px;
+    display:flex; gap:10px; align-items:center; background:var(--sd-panel2); font-size:13px; }
+  .filing .sp{ flex:1; }
+
+  @media print{
+    body *{ visibility:hidden; }
+    #printArea, #printArea *{ visibility:visible; }
+    #printArea{ position:absolute; left:0; top:0; width:100%; background:#fff; color:#000; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loginView">
+  <div class="card">
+    <div class="wordmark">Cardinal</div>
+    <h1>Supplement Desk</h1>
+    <p class="sub">Admin sign-in. This desk reads carrier scopes, finds what is missing, and drafts the response.</p>
+    <label>Email</label>
+    <input id="liEmail" type="email" autocomplete="username">
+    <label>Password</label>
+    <input id="liPass" type="password" autocomplete="current-password">
+    <div class="err" id="loginErr"></div>
+    <button id="liBtn">Sign in</button>
+  </div>
+</div>
+
+<div id="appView">
+  <header class="sd-hd">
+    <span class="wordmark">Cardinal</span>
+    <span class="ttl">Supplement Desk</span>
+    <span class="sp"></span>
+    <button id="themeBtn" type="button">Theme</button>
+    <button id="backBtn" type="button" style="display:none;">&larr; Claims</button>
+    <button id="outBtn" type="button">Sign out</button>
+  </header>
+  <main>
+    <div id="claimsView">
+      <div class="sd-card">
+        <h2>Pick a claim</h2>
+        <p class="sub">Every claim the app knows. The Desk reads the scope on file and builds the supplement from there.</p>
+        <div id="claimList"><div class="sd-empty">Loading claims&hellip;</div></div>
+      </div>
+    </div>
+
+    <div id="deskView" style="display:none;">
+      <div class="steps">
+        <span class="st on" id="stp1">1 · Scope</span>
+        <span class="st" id="stp2">2 · Gaps</span>
+        <span class="st" id="stp3">3 · Letter</span>
+        <span class="st" id="stp4">4 · File</span>
+      </div>
+
+      <div class="sd-card">
+        <h2 id="deskWho"></h2>
+        <p class="sub" id="deskMeta"></p>
+        <div class="kv" id="deskKv"></div>
+      </div>
+
+      <div class="sd-card" id="scopeCard">
+        <h2>The scope on file</h2>
+        <p class="sub">The Desk re-reads the full PDF each time — line items live in the document, never in the database.</p>
+        <div id="scopeList"><div class="sd-empty">Looking for filed scopes&hellip;</div></div>
+        <div class="kv" id="measKv" style="margin-top:10px;"></div>
+        <div class="btnrow">
+          <select id="filingType" style="background:var(--sd-sunk);border:1px solid var(--sd-line);color:var(--sd-ink);border-radius:6px;padding:9px 11px;font-size:13px;">
+            <option value="partial_denial">Partial-denial supplement (before build)</option>
+            <option value="backend">Backend supplement</option>
+            <option value="pwi_coc">PWI / COC — depreciation release</option>
+          </select>
+          <button class="btn" id="analyzeBtn" disabled>Analyze the scope</button>
+        </div>
+        <div class="note" id="analyzeNote"></div>
+      </div>
+
+      <div class="sd-card" id="codeCard">
+        <h2>Code authority</h2>
+        <p class="sub">Building-official letters, kept by jurisdiction. Ohio has <b>one</b> residential code &mdash; a city or county does not write its own, it runs the office that issues the permit. So a letter is not a second citation; it is proof of how the RCO section lands at this address, and a carrier cannot fund an installation the jurisdiction will not permit. A letter filed here answers every future job in that jurisdiction.</p>
+        <div id="codeList"><div class="sd-empty">Looking for letters&hellip;</div></div>
+        <div class="note" id="codeNote"></div>
+        <div class="btnrow">
+          <button class="btn ghost" id="clAddBtn">+ File a letter</button>
+        </div>
+        <div id="clForm" style="display:none;">
+          <div class="clf">
+            <div><label for="clJuris">Jurisdiction</label><input id="clJuris" placeholder="Brookville"></div>
+            <div><label for="clLevel">Level</label><select id="clLevel">
+              <option value="city">City / village / township</option>
+              <option value="county">County</option>
+              <option value="state">State of Ohio</option>
+            </select></div>
+            <div><label for="clDate">Letter date</label><input id="clDate" type="date"></div>
+            <div><label for="clOfficial">Official</label><input id="clOfficial" placeholder="Full name"></div>
+            <div><label for="clTitle">Title</label><input id="clTitle" placeholder="Chief Building Official"></div>
+            <div><label for="clDept">Department</label><input id="clDept" placeholder="Division of Building Inspection"></div>
+            <div><label for="clContact">Phone / email</label><input id="clContact" placeholder="As printed on the letter"></div>
+            <div><label for="clApplies">Also covers (comma-separated)</label><input id="clApplies" placeholder="Brookeville, Perry Twp"></div>
+            <div class="wide"><label for="clTopic">Topic</label><input id="clTopic" placeholder="Re-cover over cedar shake will not be permitted"></div>
+            <div class="wide"><label for="clHolding">The letter&rsquo;s own sentence &mdash; verbatim, never a paraphrase</label><textarea id="clHolding" rows="3" placeholder="Paste the sentence the official actually wrote. It is what the adjuster reads."></textarea></div>
+            <div><label for="clSections">RCO sections it enforces (comma-separated)</label><input id="clSections" placeholder="RCO R908.3, RCO R905.1"></div>
+            <div><label for="clAmend">Local amendment, if any</label><input id="clAmend" placeholder="Usually blank &mdash; Ohio is one code"></div>
+            <div><label for="clUrl">Source URL</label><input id="clUrl" placeholder="If it lives on the city&rsquo;s site"></div>
+            <div><label for="clFile">Scan of the letter</label><input id="clFile" type="file" accept="application/pdf,image/*"></div>
+          </div>
+          <div class="btnrow">
+            <button class="btn" id="clSaveBtn">File this letter</button>
+            <button class="btn ghost" id="clCancelBtn">Cancel</button>
+          </div>
+          <div class="note" id="clNote">Filing it records you as the person vouching that this is a real letter from that office.</div>
+        </div>
+      </div>
+
+      <div class="sd-card" id="gapsCard" style="display:none;">
+        <h2>What the scope is missing</h2>
+        <p class="sub">Nothing is pre-ticked — every item on the letter is your call. Citations come from Cardinal's own
+          Supplement Templates; the AI cannot invent one. Quantities marked "measured" were computed from this job's
+          measurements, not by the model.</p>
+        <div id="gapList"></div>
+        <div class="btnrow">
+          <button class="btn" id="draftBtn" disabled>Draft the letter</button>
+          <span class="note" id="draftNote"></span>
+        </div>
+      </div>
+
+      <div class="sd-card" id="letterCard" style="display:none;">
+        <h2>The letter</h2>
+        <p class="sub">Edit anything. Quantities only — the letter asks the carrier to price per their own Xactimate
+          list. Photo markers become the actual photographs when printed or (next build) sent.</p>
+        <div class="warnbar" id="dollarWarn">This draft contains a dollar amount. House rule is quantities-only — take the number out or own it deliberately.</div>
+        <input id="subjEdit" placeholder="Subject">
+        <div id="letterEdit" contenteditable="true"></div>
+        <div class="btnrow">
+          <button class="btn" id="fileBtn">File this supplement</button>
+          <button class="btn ghost" id="printBtn">Print / PDF</button>
+          <button class="btn ghost" id="copyBtn">Copy letter</button>
+          <span class="note">Send-from-desk arrives in the next build; nothing sends itself.</span>
+        </div>
+      </div>
+
+      <div class="sd-card" id="filingsCard">
+        <h2>Filings on this claim</h2>
+        <div id="filingList"><div class="sd-empty">None yet.</div></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="photoModal">
+  <div class="box">
+    <h2 style="margin:0 0 4px;">Photos for: <span id="phFor"></span></h2>
+    <p class="sub" style="color:var(--sd-ink2);font-size:12.5px;">Tick the job photos that prove this item. They ride
+      with the letter as exhibits.</p>
+    <div id="photoGrid"></div>
+    <div class="btnrow">
+      <button class="btn" id="phDone">Done</button>
+    </div>
+  </div>
+</div>
+
+<div id="printArea" style="display:none;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+'use strict';
+/* Same publishable anon key api/*.js falls back to — public by design. */
+var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
+var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+function esc(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+  return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function money(v){ return (v == null || v === '') ? '—'
+  : '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function fmtDate(d){ return d ? new Date(d).toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '—'; }
+function el(id){ return document.getElementById(id); }
+
+/* ── state ── */
+var S = {
+  user: null, claims: [],
+  claim: null, project: null, meas: null,
+  scopeDocs: [], scopeDoc: null,        /* chosen inspection_reports row (id/title only until read) */
+  photos: [],                            /* project_photos + _src thumbs */
+  gaps: [],                              /* the reviewed items */
+  letter: null,                          /* {subject, letter_html, dollar_flag} */
+  filings: [],
+  phTarget: null                         /* gap id the photo modal edits */
+};
+
+/* ── auth ─────────────────────────────────────────────────────────────────── */
+function showLogin(){ el('loginView').style.display = 'flex'; el('appView').style.display = 'none'; }
+async function showApp(){
+  /* the UI gate; api/supplement.js re-checks server-side, RLS is the fence */
+  var adm = await sb.rpc('is_cardinal_admin');
+  if(adm.error || adm.data !== true){
+    el('loginErr').textContent = 'The Supplement Desk is admin-only.';
+    await sb.auth.signOut();
+    showLogin();
+    return;
+  }
+  el('loginView').style.display = 'none'; el('appView').style.display = 'block';
+  loadClaims();
+}
+el('liBtn').addEventListener('click', doLogin);
+el('liPass').addEventListener('keydown', function(e){ if(e.key === 'Enter') doLogin(); });
+async function doLogin(){
+  el('liBtn').disabled = true; el('loginErr').textContent = '';
+  var r = await sb.auth.signInWithPassword({ email: el('liEmail').value.trim(), password: el('liPass').value });
+  el('liBtn').disabled = false;
+  if(r.error){ el('loginErr').textContent = r.error.message; return; }
+  S.user = r.data.user; showApp();
+}
+el('outBtn').addEventListener('click', async function(){ await sb.auth.signOut(); location.reload(); });
+el('themeBtn').addEventListener('click', function(){
+  var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', cur);
+  try{ localStorage.setItem('cr-desk-theme', cur); }catch(_){}
+});
+sb.auth.getSession().then(function(r){
+  if(r.data && r.data.session){ S.user = r.data.session.user; showApp(); } else { showLogin(); }
+});
+async function authHeader(){
+  var s = await sb.auth.getSession();
+  var t = s.data && s.data.session && s.data.session.access_token;
+  return t ? { 'Authorization': 'Bearer ' + t, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+}
+
+/* ── claims list ──────────────────────────────────────────────────────────── */
+async function loadClaims(){
+  var r = await sb.from('insurance_claims')
+    .select('id, project_id, homeowner_name, property_address, carrier, claim_number, adjuster_name, adjuster_email, approved_rcv, approved_acv, deductible, coverage_type, ord_law, ord_law_basis, supplement_status, created_at')
+    .order('created_at', { ascending: false }).limit(100);
+  if(r.error){ el('claimList').innerHTML = '<div class="sd-empty">Could not load claims: ' + esc(r.error.message) + '</div>'; return; }
+  S.claims = (r.data || []).filter(function(c){ return c.project_id; });
+  if(!S.claims.length){ el('claimList').innerHTML = '<div class="sd-empty">No claims with a linked job yet.</div>'; return; }
+  el('claimList').innerHTML = S.claims.map(function(c){
+    var st = c.supplement_status || 'none';
+    return '<div class="claimrow" data-id="' + c.id + '">' +
+      '<div><div class="who">' + esc(c.homeowner_name || 'Unnamed') + '</div>' +
+      '<div class="meta">' + esc(c.carrier || 'no carrier') + (c.claim_number ? ' · #' + esc(c.claim_number) : '') +
+      ' · RCV ' + money(c.approved_rcv) + '</div></div>' +
+      '<span class="sp"></span>' +
+      (st !== 'none' ? '<span class="pill ' + esc(st) + '">suppl: ' + esc(st) + '</span>' : '') +
+    '</div>';
+  }).join('');
+  el('claimList').querySelectorAll('.claimrow').forEach(function(row){
+    row.addEventListener('click', function(){ openDesk(row.getAttribute('data-id')); });
+  });
+}
+
+/* ── the desk ─────────────────────────────────────────────────────────────── */
+el('backBtn').addEventListener('click', function(){
+  el('deskView').style.display = 'none'; el('claimsView').style.display = 'block';
+  el('backBtn').style.display = 'none';
+  S.claim = null; S.gaps = []; S.letter = null; S.scopeDoc = null;
+  el('gapsCard').style.display = 'none'; el('letterCard').style.display = 'none';
+  step(1);
+  loadClaims();
+});
+function step(n){
+  [1,2,3,4].forEach(function(i){ el('stp' + i).classList.toggle('on', i <= n); });
+}
+async function openDesk(claimId){
+  var c = S.claims.find(function(x){ return x.id === claimId; });
+  if(!c) return;
+  S.claim = c; S.gaps = []; S.letter = null; S.scopeDoc = null;
+  el('claimsView').style.display = 'none'; el('deskView').style.display = 'block';
+  el('backBtn').style.display = 'inline-block';
+  el('gapsCard').style.display = 'none'; el('letterCard').style.display = 'none';
+  step(1);
+  el('deskWho').textContent = c.homeowner_name || 'Claim';
+  el('deskMeta').textContent = (c.carrier || '') + (c.claim_number ? ' · #' + c.claim_number : '') +
+    (c.adjuster_name ? ' · Adjuster: ' + c.adjuster_name : '');
+  el('deskKv').innerHTML =
+    kv('RCV', money(c.approved_rcv)) + kv('ACV', money(c.approved_acv)) +
+    kv('Deductible', money(c.deductible)) + kv('Coverage', c.coverage_type || '—') +
+    kv('Ord. & Law', c.ord_law === true ? ('Yes' + (c.ord_law_basis ? ' — ' + esc(c.ord_law_basis) : ''))
+       : (c.ord_law === false ? 'No' : 'Not stated'));
+
+  /* project: measurements live on the checklist */
+  var pr = await sb.from('projects').select('id, name, address, checklist').eq('id', c.project_id).single();
+  S.project = pr.data || null;
+  var ck = {};
+  try{ ck = typeof pr.data.checklist === 'string' ? JSON.parse(pr.data.checklist) : (pr.data.checklist || {}); }catch(_){}
+  S.meas = (ck && ck.meas) || null;
+  el('measKv').innerHTML = S.meas
+    ? kv('Squares', S.meas.sq || '?') + kv('Pitch', S.meas.pitch || '?') + kv('Eaves LF', S.meas.eave || '?') +
+      kv('Rakes LF', S.meas.rake || '?') + kv('Ridge LF', S.meas.ridge || '?') + kv('Hip LF', S.meas.hip || '?') +
+      kv('Valley LF', S.meas.valley || '?') + kv('Source', (S.meas.source || '?'))
+    : '<div class="cell"><b>Measurements</b><span>None on file — quantities will need your numbers.</span></div>';
+
+  loadScopeDocs(c.project_id);
+  loadFilings(c.id);
+  loadPhotos(c.project_id);
+  loadItel(c.id);
+  loadCodeLetters();
+}
+function kv(label, val){ return '<div class="cell"><b>' + esc(label) + '</b><span>' + val + '</span></div>'; }
+
+/* 669: the claim's iTel lab report — repairability and no-match supplements
+   stand on it, so the analyst gets it and the claim card shows it. Bounded,
+   newest first; quiet when absent or refused. */
+async function loadItel(claimId){
+  S.itel = null;
+  try{
+    var r = await sb.from('itel_lab_reports')
+      .select('control_number, verdict, match_product, mismatch_notes, report_date')
+      .eq('claim_id', claimId).order('report_date', { ascending: false }).limit(1);
+    if(!r.error && r.data && r.data.length){
+      S.itel = r.data[0];
+      el('deskKv').innerHTML += kv('iTel on file',
+        esc(S.itel.verdict || 'report') +
+        (S.itel.match_product ? ' — match: ' + esc(S.itel.match_product) : ' — no match listed') +
+        ' <span style="color:var(--sd-ink3);">#' + esc(S.itel.control_number || '') + '</span>');
+    }
+  }catch(_){}
+}
+
+/* ── 670: the Code Authority register ─────────────────────────────────────
+   Building-official letters, keyed by JURISDICTION rather than by claim,
+   because the Brookville letter that wins the Brookville job wins every
+   Brookville job after it.
+
+   The address parse below only SORTS this list. It never filters and never
+   ticks anything, for two reasons that are both real: these addresses misspell
+   their own city (one reads "Brookville, OH 45309, USA, Brookeville, OH
+   45309"), and a neighbouring county's building official is persuasive exactly
+   where he is not binding. What rides along with a filing is a person's
+   choice — the 666 rule, nothing pre-approved over judgment. */
+function placeOf(addr){
+  var m = String(addr || '').match(/,\s*([A-Za-z][A-Za-z .'-]*[A-Za-z])\s*,\s*(?:OH|Ohio)\b/i);
+  return m ? m[1].trim() : '';
+}
+function normPlace(s){ return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
+function clHere(l){
+  if(l.level === 'state') return true;
+  var p = normPlace(S.place);
+  if(!p) return false;
+  return [l.jurisdiction].concat(l.applies_to || []).map(normPlace).indexOf(p) !== -1;
+}
+async function loadCodeLetters(){
+  S.codeLetters = []; S.clPicked = S.clPicked || {};
+  S.place = placeOf((S.claim && S.claim.property_address) || (S.project && S.project.address) || '');
+  try{
+    var r = await sb.from('code_letters')
+      .select('id, jurisdiction, level, applies_to, official_name, official_title, department, contact, letter_date, topic, holding, rco_sections, local_amendment, storage_path, source_url')
+      .order('letter_date', { ascending: false, nullsFirst: false }).limit(200);
+    if(!r.error) S.codeLetters = r.data || [];
+  }catch(_){}
+  renderCodeLetters();
+}
+function renderCodeLetters(){
+  var rows = S.codeLetters.slice().sort(function(a, b){
+    return (clHere(b) ? 1 : 0) - (clHere(a) ? 1 : 0) ||
+      String(b.letter_date || '').localeCompare(String(a.letter_date || ''));
+  });
+  el('codeList').innerHTML = rows.length ? rows.map(function(l){
+    var who = [l.official_name, l.official_title].filter(Boolean).join(', ');
+    var meta = [l.jurisdiction + (l.level === 'county' ? ' County' : l.level === 'state' ? ' (statewide)' : ''),
+                who, l.department, l.letter_date ? fmtDate(l.letter_date) : ''].filter(Boolean).join(' · ');
+    return '<label class="cl' + (clHere(l) ? ' here' : '') + '" data-cl="' + esc(l.id) + '">' +
+      '<input type="checkbox"' + (S.clPicked[l.id] ? ' checked' : '') + '>' +
+      '<span class="body"><span class="ttl">' + esc(l.topic) + '</span>' +
+      '<div class="hold">&ldquo;' + esc(l.holding) + '&rdquo;</div>' +
+      '<div class="meta">' + esc(meta) +
+      ((l.rco_sections || []).length ? ' &middot; enforcing ' + esc(l.rco_sections.join(', ')) : '') +
+      (l.local_amendment ? ' &middot; local amendment: ' + esc(l.local_amendment) : '') +
+      /* a statewide letter applies here too, but calling it "this
+         jurisdiction" reads as if it were written FOR this town. A render
+         caught that; the assertions could not. */
+      (clHere(l) ? ' &middot; <b>' + (l.level === 'state' ? 'applies here' : 'this jurisdiction') +
+        '</b>' : '') + '</div></span></label>';
+  }).join('') : '<div class="sd-empty">No letters on file yet. The first one a building official gives you goes here &mdash; and from then on it answers every job in that jurisdiction.</div>';
+  el('codeList').querySelectorAll('.cl').forEach(function(row){
+    row.querySelector('input').addEventListener('change', function(e){
+      S.clPicked[row.getAttribute('data-cl')] = e.target.checked; clNote();
+    });
+  });
+  clNote();
+}
+function clSelected(){
+  return S.codeLetters.filter(function(l){ return S.clPicked[l.id]; });
+}
+function clNote(){
+  var n = clSelected().length;
+  var here = S.codeLetters.filter(clHere).length;
+  el('codeNote').textContent =
+    (S.place ? 'Property reads as ' + S.place + '. ' : 'No city could be read from the address. ') +
+    (here ? here + ' letter' + (here === 1 ? '' : 's') + ' on file for this jurisdiction. ' : '') +
+    (n ? n + ' ticked to ride along with this filing.' : 'None ticked \u2014 nothing is attached unless you tick it.');
+}
+function splitList(s){
+  return String(s || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+}
+el('clAddBtn').addEventListener('click', function(){
+  var f = el('clForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if(f.style.display === 'block' && !el('clJuris').value && S.place) el('clJuris').value = S.place;
+});
+el('clCancelBtn').addEventListener('click', function(){ el('clForm').style.display = 'none'; });
+el('clSaveBtn').addEventListener('click', async function(){
+  var v = function(id){ return (el(id).value || '').trim(); };
+  var juris = v('clJuris'), topic = v('clTopic'), holding = v('clHolding');
+  if(!juris || !topic || !holding){
+    el('clNote').textContent = 'Jurisdiction, topic and the letter\u2019s own sentence are all required \u2014 a paraphrase is not evidence.';
+    return;
+  }
+  el('clSaveBtn').disabled = true;
+  el('clNote').textContent = 'Filing\u2026';
+  try{
+    var path = null, file = el('clFile').files[0];
+    if(file){
+      path = 'code-letters/' + Date.now() + '-' + file.name.replace(/[^\w.-]+/g, '_');
+      var up = await sb.storage.from('photos').upload(path, file,
+        { contentType: file.type || 'application/octet-stream' });
+      if(up.error) throw new Error('Could not upload the scan: ' + up.error.message);
+    }
+    var applies = splitList(v('clApplies')).concat([juris])
+      .map(function(x){ return x.toLowerCase(); });
+    var r = await sb.from('code_letters').insert({
+      jurisdiction: juris,
+      level: el('clLevel').value,
+      applies_to: applies.filter(function(x, i){ return applies.indexOf(x) === i; }),
+      official_name: v('clOfficial') || null,
+      official_title: v('clTitle') || null,
+      department: v('clDept') || null,
+      contact: v('clContact') || null,
+      letter_date: v('clDate') || null,
+      topic: topic,
+      holding: holding,
+      rco_sections: splitList(v('clSections')),
+      local_amendment: v('clAmend') || null,
+      storage_path: path,
+      source_url: v('clUrl') || null,
+      /* the person filing it is the person vouching for it */
+      verified_by: (S.user && S.user.email) || null,
+      verified_at: new Date().toISOString(),
+      created_by: (S.user && S.user.email) || 'desk'
+    }).select('id').single();
+    if(r.error) throw new Error(r.error.message);
+    ['clJuris','clOfficial','clTitle','clDept','clContact','clApplies','clTopic','clHolding',
+     'clSections','clAmend','clUrl','clDate','clFile'].forEach(function(id){ el(id).value = ''; });
+    el('clForm').style.display = 'none';
+    el('clNote').textContent = 'Filing it records you as the person vouching that this is a real letter from that office.';
+    await loadCodeLetters();
+  }catch(err){
+    el('clNote').textContent = 'Could not file it: ' + (err.message || err);
+  }
+  el('clSaveBtn').disabled = false;
+});
+
+/* the scope documents — LIST without html (the 649 lesson: the payload column
+   is megabytes; fetch it only for the one chosen) */
+async function loadScopeDocs(pid){
+  var r = await sb.from('inspection_reports').select('id, title, created_at')
+    .eq('project_id', pid).ilike('title', 'Insurance Doc%').order('created_at', { ascending: false }).limit(20);
+  S.scopeDocs = r.data || [];
+  if(r.error || !S.scopeDocs.length){
+    el('scopeList').innerHTML = '<div class="sd-empty">No insurance documents filed on this job. File the scope from the client profile first.</div>';
+    el('analyzeBtn').disabled = true;
+    return;
+  }
+  el('scopeList').innerHTML = S.scopeDocs.map(function(d, i){
+    return '<label style="display:flex;gap:8px;align-items:center;padding:6px 2px;cursor:pointer;font-size:13px;">' +
+      '<input type="radio" name="scopeDoc" value="' + d.id + '"' + (i === 0 ? ' checked' : '') + '>' +
+      esc(String(d.title).replace(/^Insurance Doc \[\w+\]:\s*/, '')) +
+      '<span style="color:var(--sd-ink3);font-size:11.5px;">' + fmtDate(d.created_at) + '</span></label>';
+  }).join('');
+  el('analyzeBtn').disabled = false;
+}
+
+async function loadFilings(claimId){
+  var r = await sb.from('insurance_supplements')
+    .select('id, filing_type, reason, filed_at, status, amount_requested, amount_approved, responded_at, created_at')
+    .eq('claim_id', claimId).order('created_at', { ascending: false }).limit(30);
+  S.filings = r.data || [];
+  el('filingList').innerHTML = S.filings.length ? S.filings.map(function(f){
+    var ft = { partial_denial: 'Partial denial', backend: 'Backend', pwi_coc: 'PWI / COC' }[f.filing_type] || 'Manual';
+    return '<div class="filing"><span>' + esc(ft) + '</span>' +
+      '<span style="color:var(--sd-ink2);">' + esc(f.reason || '') + '</span><span class="sp"></span>' +
+      (f.amount_approved ? '<span>' + money(f.amount_approved) + ' appr.</span>' : '') +
+      '<span class="pill ' + esc(f.status) + '">' + esc(f.status) + '</span></div>';
+  }).join('') : '<div class="sd-empty">None yet.</div>';
+}
+
+async function loadPhotos(pid){
+  var r = await sb.from('project_photos').select('id, storage_path, data, created_at')
+    .eq('project_id', pid).order('created_at', { ascending: true }).limit(200);
+  S.photos = r.data || [];
+  var paths = S.photos.filter(function(p){ return p.storage_path; }).map(function(p){ return p.storage_path; });
+  if(paths.length){
+    var su = await sb.storage.from('photos').createSignedUrls(paths, 3600);
+    var byPath = {};
+    (su.data || []).forEach(function(d, i){ if(d && d.signedUrl) byPath[paths[i]] = d.signedUrl; });
+    S.photos.forEach(function(p){ p._src = p.storage_path ? byPath[p.storage_path] : (String(p.data || '').indexOf('data:') === 0 ? p.data : null); });
+  } else {
+    S.photos.forEach(function(p){ p._src = String(p.data || '').indexOf('data:') === 0 ? p.data : null; });
+  }
+}
+
+/* ── analyze ──────────────────────────────────────────────────────────────── */
+el('analyzeBtn').addEventListener('click', analyze);
+async function analyze(){
+  var pick = document.querySelector('input[name=scopeDoc]:checked');
+  if(!pick){ return; }
+  el('analyzeBtn').disabled = true;
+  el('analyzeNote').textContent = 'Opening the scope…';
+  try{
+    var row = await sb.from('inspection_reports').select('id, title, html').eq('id', pick.value).single();
+    if(row.error || !row.data) throw new Error('Could not open that document.');
+    var pay = null;
+    try{ pay = JSON.parse(row.data.html || '{}'); }catch(_){}
+    if(!pay || !pay.file || !pay.data) throw new Error('That document has no stored file.');
+    S.scopeDoc = { id: row.data.id, name: pay.name || 'Scope of Loss', size: pay.size || 0 };
+
+    var scope;
+    var b64 = String(pay.data).split(',')[1] || '';
+    var rawBytes = Math.floor(b64.replace(/=+$/, '').length * 3 / 4);
+    if(rawBytes > 3 * 1024 * 1024){
+      /* the 643 path: storage first, send the bounded URL */
+      el('analyzeNote').textContent = 'Large scope — staging it (' + (rawBytes / 1048576).toFixed(1) + ' MB)…';
+      var blob = await (await fetch(pay.data)).blob();
+      var spath = 'scopes/desk-' + S.claim.id.slice(0, 8) + '-' + Date.now() + '.pdf';
+      var up = await sb.storage.from('photos').upload(spath, blob, { contentType: pay.mime || 'application/pdf' });
+      if(up.error) throw new Error('Could not stage the scope: ' + up.error.message);
+      var surl = await sb.storage.from('photos').createSignedUrl(spath, 600);
+      if(surl.error || !surl.data) throw new Error('Could not sign the staged scope.');
+      scope = { url: surl.data.signedUrl };
+    } else {
+      scope = { file: b64, mime: pay.mime || 'application/pdf' };
+    }
+
+    el('analyzeNote').textContent = 'Reading the scope against the Ohio pack… usually 20–40 seconds.';
+    var r = await fetch('/api/supplement', {
+      method: 'POST', headers: await authHeader(),
+      body: JSON.stringify({
+        mode: 'analyze', scope: scope,
+        meas: S.meas || {},
+        itel: S.itel || null,
+        code_letters: clSelected(),
+        claim: { carrier: S.claim.carrier, claim_number: S.claim.claim_number },
+        filing_type: el('filingType').value
+      })
+    });
+    var j = null; try{ j = await r.json(); }catch(_){}
+    if(!r.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
+    S.gaps = j.gaps || [];
+    renderGaps(j.scope_summary || '');
+    step(2);
+  }catch(err){
+    el('analyzeNote').textContent = 'Could not analyze: ' + (err.message || err);
+  }
+  el('analyzeBtn').disabled = false;
+}
+
+function renderGaps(summary){
+  el('gapsCard').style.display = 'block';
+  if(!S.gaps.length){
+    el('gapList').innerHTML = '<div class="sd-empty">The analyst found nothing missing it could stand behind.' +
+      (summary ? '<br><br><i>' + esc(summary) + '</i>' : '') + '</div>';
+    el('draftBtn').disabled = true;
+    return;
+  }
+  el('gapList').innerHTML = S.gaps.map(function(g){
+    return '<div class="gap" data-id="' + g.id + '">' +
+      '<div class="top">' +
+        '<input type="checkbox" class="inc">' +
+        '<div style="flex:1;">' +
+          '<div class="ttl">' + esc(g.item) + '</div>' +
+          '<div style="margin:3px 0 0;">' +
+            '<span class="chip ' + esc(g.basis) + '">' + (g.citation ? esc(g.citation) : esc(g.basis)) + '</span>' +
+            (g.confidence === 'low' ? '<span class="chip lowconf">low confidence</span>' : '') +
+          '</div>' +
+          '<div class="why">' + esc(g.why) + '</div>' +
+          '<div class="qtyrow">Qty <input type="number" step="0.1" class="qty" value="' + (g.qty == null ? '' : g.qty) + '">' +
+            '<span>' + esc(g.unit || '') + '</span>' +
+            (g.qty_src === 'meas' ? '<span style="color:var(--sd-ok);">measured</span>'
+              : (g.qty_src === 'model' ? '<span style="color:var(--sd-warn);">model — check it</span>' : '<span>enter yours</span>')) +
+            '<button type="button" class="phbtn">+ Photos</button>' +
+            '<span class="phcount"></span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  el('gapList').querySelectorAll('.gap').forEach(function(card){
+    var g = S.gaps.find(function(x){ return x.id === card.getAttribute('data-id'); });
+    card.querySelector('.inc').addEventListener('change', function(){
+      g.included = this.checked; syncDraftBtn();
+    });
+    card.querySelector('.qty').addEventListener('input', function(){
+      var v = parseFloat(this.value);
+      g.qty = isNaN(v) ? null : v;
+      if(g.qty_src !== 'manual' && !isNaN(v)) g.qty_src = 'manual';
+    });
+    card.querySelector('.phbtn').addEventListener('click', function(){ openPhotoModal(g); });
+  });
+  syncDraftBtn();
+}
+function syncDraftBtn(){
+  var n = S.gaps.filter(function(g){ return g.included; }).length;
+  el('draftBtn').disabled = n === 0;
+  el('draftNote').textContent = n ? (n + ' item' + (n === 1 ? '' : 's') + ' on the letter') : 'Tick the items that belong on the letter.';
+}
+
+/* ── photos per item ──────────────────────────────────────────────────────── */
+function openPhotoModal(g){
+  S.phTarget = g;
+  el('phFor').textContent = g.item;
+  var chosen = {};
+  (g.photos || []).forEach(function(p){ chosen[p.path] = true; });
+  el('photoGrid').innerHTML = S.photos.filter(function(p){ return p._src; }).map(function(p){
+    var key = p.storage_path || ('row:' + p.id);
+    return '<div class="ph' + (chosen[key] ? ' on' : '') + '" data-key="' + esc(key) + '">' +
+      '<img src="' + esc(p._src) + '" loading="lazy"><span class="tick">✓</span></div>';
+  }).join('') || '<div class="sd-empty">No photos on this job yet.</div>';
+  el('photoGrid').querySelectorAll('.ph').forEach(function(ph){
+    ph.addEventListener('click', function(){ ph.classList.toggle('on'); });
+  });
+  el('photoModal').style.display = 'flex';
+}
+el('phDone').addEventListener('click', function(){
+  var g = S.phTarget;
+  if(g){
+    g.photos = [];
+    el('photoGrid').querySelectorAll('.ph.on').forEach(function(ph){
+      g.photos.push({ path: ph.getAttribute('data-key'), caption: '' });
+    });
+    var card = el('gapList').querySelector('.gap[data-id="' + g.id + '"]');
+    if(card) card.querySelector('.phcount').textContent = g.photos.length ? g.photos.length + ' photo' + (g.photos.length === 1 ? '' : 's') : '';
+  }
+  el('photoModal').style.display = 'none';
+  S.phTarget = null;
+});
+
+/* ── draft ────────────────────────────────────────────────────────────────── */
+el('draftBtn').addEventListener('click', draft);
+async function draft(){
+  var items = S.gaps.filter(function(g){ return g.included; });
+  if(!items.length) return;
+  el('draftBtn').disabled = true;
+  el('draftNote').textContent = 'Drafting…';
+  try{
+    var r = await fetch('/api/supplement', {
+      method: 'POST', headers: await authHeader(),
+      body: JSON.stringify({
+        mode: 'draft',
+        filing_type: el('filingType').value,
+        claim: {
+          carrier: S.claim.carrier, claim_number: S.claim.claim_number,
+          adjuster_name: S.claim.adjuster_name,
+          homeowner: S.claim.homeowner_name,
+          address: S.claim.property_address || (S.project && S.project.address) || ''
+        },
+        code_letters: clSelected(),
+        items: items.map(function(g){ return { id: g.id, item: g.item, why: g.why, pack_id: g.pack_id, qty: g.qty, unit: g.unit }; })
+      })
+    });
+    var j = null; try{ j = await r.json(); }catch(_){}
+    if(!r.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
+    S.letter = j;
+    el('letterCard').style.display = 'block';
+    el('subjEdit').value = j.subject || '';
+    el('letterEdit').innerHTML = decorateTokens(j.letter_html || '');
+    el('dollarWarn').style.display = j.dollar_flag ? 'block' : 'none';
+    step(3);
+    el('letterCard').scrollIntoView({ behavior: 'smooth' });
+    el('draftNote').textContent = '';
+  }catch(err){
+    el('draftNote').textContent = 'Could not draft: ' + (err.message || err);
+  }
+  syncDraftBtn();
+}
+/* show tokens as visible pills while editing; the STORED letter keeps the raw
+   tokens (letterRaw strips the decoration back off) */
+function decorateTokens(html){
+  return html.replace(/\[\[PHOTOS:([a-z0-9_]+)\]\]/gi, function(_, id){
+    return '<span class="ph-token" data-phtoken="' + esc(id) + '" contenteditable="false">📷 photos: ' + esc(id) + '</span>';
+  });
+}
+function letterRaw(){
+  var clone = el('letterEdit').cloneNode(true);
+  clone.querySelectorAll('[data-phtoken]').forEach(function(t){
+    t.replaceWith('[[PHOTOS:' + t.getAttribute('data-phtoken') + ']]');
+  });
+  return clone.innerHTML;
+}
+
+/* ── file it ──────────────────────────────────────────────────────────────── */
+el('fileBtn').addEventListener('click', fileSupplement);
+async function fileSupplement(){
+  if(!S.claim || !S.letter) return;
+  el('fileBtn').disabled = true;
+  var items = S.gaps.filter(function(g){ return g.included; });
+  var reason = items.slice(0, 2).map(function(g){ return g.item; }).join('; ') +
+    (items.length > 2 ? ' +' + (items.length - 2) + ' more' : '');
+  var row = {
+    claim_id: S.claim.id,
+    filing_type: el('filingType').value,
+    reason: reason.slice(0, 200),
+    filed_at: new Date().toISOString().slice(0, 10),
+    status: 'submitted',                    /* filed = the ask is live; the trigger mirrors it */
+    items: S.gaps,                          /* the full review, ticks and all */
+    letter_subject: el('subjEdit').value,
+    letter_html: letterRaw(),               /* tokens, never URLs */
+    scope_ref: S.scopeDoc ? { report_row_id: S.scopeDoc.id, name: S.scopeDoc.name, size: S.scopeDoc.size } : null,
+    notes: null,
+    code_letter_ids: clSelected().map(function(l){ return l.id; }),
+    created_by: (S.user && S.user.email) || 'desk'
+  };
+  var r = await sb.from('insurance_supplements').insert(row).select('id').single();
+  el('fileBtn').disabled = false;
+  if(r.error){ alert('Could not file: ' + r.error.message); return; }
+  step(4);
+  loadFilings(S.claim.id);
+  alert('Filed. The claim’s supplement figures update themselves — the AR math sees this immediately.');
+}
+
+/* ── print / copy ─────────────────────────────────────────────────────────── */
+el('printBtn').addEventListener('click', async function(){
+  /* print substitutes 1-hour signed URLs for display; the stored letter keeps tokens */
+  var html = letterRaw();
+  var itemsById = {};
+  S.gaps.forEach(function(g){ itemsById[g.id] = g; });
+  var allPaths = [];
+  S.gaps.forEach(function(g){ (g.photos || []).forEach(function(p){ if(p.path && p.path.indexOf('row:') !== 0) allPaths.push(p.path); }); });
+  var byPath = {};
+  if(allPaths.length){
+    var su = await sb.storage.from('photos').createSignedUrls(allPaths, 3600);
+    (su.data || []).forEach(function(d, i){ if(d && d.signedUrl) byPath[allPaths[i]] = d.signedUrl; });
+  }
+  html = html.replace(/\[\[PHOTOS:([a-z0-9_]+)\]\]/gi, function(_, id){
+    var g = itemsById[id];
+    if(!g || !(g.photos || []).length) return '';
+    return '<div>' + g.photos.map(function(p){
+      var src = byPath[p.path] || '';
+      return src ? '<img src="' + esc(src) + '" style="max-width:46%;margin:4px 2%;border:1px solid #ccc;">' : '';
+    }).join('') + '</div>';
+  });
+  el('printArea').innerHTML =
+    '<div style="font:14px/1.6 Georgia,serif;max-width:7.5in;margin:0 auto;padding:24px;">' +
+    '<h2 style="font-size:16px;">' + esc(el('subjEdit').value) + '</h2>' + html + '</div>';
+  el('printArea').style.display = 'block';
+  window.print();
+  el('printArea').style.display = 'none';
+});
+el('copyBtn').addEventListener('click', function(){
+  var tmp = document.createElement('div');
+  tmp.innerHTML = letterRaw().replace(/\[\[PHOTOS:[^\]]+\]\]/g, '[photographs attached]');
+  navigator.clipboard.writeText(tmp.innerText).then(function(){
+    el('copyBtn').textContent = 'Copied ✓';
+    setTimeout(function(){ el('copyBtn').textContent = 'Copy letter'; }, 1600);
+  });
+});
+</script>
+</body>
+</html>

@@ -3054,3 +3054,69 @@ Empty fields stay pre-ticked (filling a blank claim is one Apply); identical
 values stay unticked; `(not found)` rows get no checkbox; a stored `false`
 is a **value**, not an empty; the notes row stays always-ticked because it
 appends. Do not restore differs-means-ticked.
+
+### 667–668 — The Supplement Desk (`supplement.html` + `api/supplement.js`)
+
+**The one supplement system (CR-AUD-005 closed at the data layer).** Filings
+are `insurance_supplements` rows; the claim's single-slot columns are a
+**trigger mirror** (`supp_mirror_to_claim`, `supplement_desk.sql`) that
+recomputes from the rows on every insert/update/delete, whoever wrote. ⚠ Do
+not write the single-slot columns directly in new code — write rows. The
+old cr-sp modal still writes slots directly; its values are overwritten by
+the next row change, and that is the intent (rows are the source of truth).
+
+⚠ **THE HONESTY CORE — do not weaken it.** In `api/supplement.js` the model
+proposes gaps by `pack_id` ONLY; the citation string is copied server-side
+from the PACK (21 entries extracted from the Supplement Templates page). An
+invented citation is structurally impossible. `harness_667` pins every pack
+citation to the library's own `rl-cite` spans. If you add a pack entry, its
+citation must exist on that page first.
+
+⚠ Quantities from measurements are computed **server-side** (`measQty`):
+drip edge = eave+rake, ice barrier = eave, ridge vent = ridge, per-square
+items = sq. Never let the model do this arithmetic.
+
+⚠ **Quantities-only letters** (Theo): no dollar amounts; `dollar_flag`
+warns, never silently edits. **Admin-only** at the ROUTE (403), not just UI.
+**Nothing sends itself** — send is build 669's explicit-tap flow.
+
+Letters at rest carry `[[PHOTOS:id]]` tokens; URLs are signed at
+print/send only. The Desk is standalone (studio precedent), linked from the
+insurance hub. `filing_type` ∈ partial_denial | backend | pwi_coc, NO
+default (NULL = legacy/manual). `insurance_supplements.created_by` is NOT
+NULL. `read_response` mode answers 501 until build 670.
+
+**669**: the pack gained `repairability` (brittle test / repair-not-feasible,
+OAC appearance rule) — the library card grew FIRST, then the pack entry, per
+the pin. The Desk loads the claim's latest `itel_lab_reports` row and passes
+a one-line summary to analyze; the model references the control number, never
+re-derives the report. Hover note: `/api/hover` is the SIDING order flow; its
+numbers do NOT reach `checklist.meas` (Roofr's do).
+
+**670 — Code authority (`code_letters`, the Supplement Desk).** Building-official
+letters, filed by **jurisdiction rather than claim**, so one letter answers
+every future job in that town. Answering Theo's second question is what shaped
+it: **Ohio has ONE residential code** — the RCO is adopted statewide and
+administered by local departments, so a city/county letter is *never a second
+citation*; it is proof of how the state section will be **enforced** at that
+address. Hence `rco_sections` on every row (the state sections the letter
+stands behind) and `local_amendment` expected NULL.
+
+`holding` is the official's own sentence **verbatim** — the form refuses to
+file without it, same reason `itel_lab_reports.status_sentence` is kept whole.
+RLS mirrors iTel: any signed-in user reads, `is_cardinal_admin()` writes. Scans
+go to `photos/code-letters/`. `insurance_supplements.code_letter_ids uuid[]`
+records which letters rode along with a filing (filing-level, not per item).
+
+**No new pack entry** — `tear_off` (RCO R908.3) already IS the cedar-shake
+ground; a letter is evidence *beside* a ground. The seam copied is iTel's:
+load, show on the card, hand a bounded summary (6 letters max, holdings sliced
+to 400) to the analyst. The model may NAME a letter, never quote code from one;
+the exhibit phrase is composed server-side and copied verbatim, like the 667
+citations.
+
+⚠ **`placeOf()`/`clHere()` SORT the list — they never filter and never tick.**
+The addresses misspell their own city (a live row reads `Brookville, OH 45309,
+USA, Brookeville, OH 45309`) and a neighbouring official is persuasive where he
+is not binding. Statewide letters always mark, and read **"applies here"**, not
+"this jurisdiction" — a render caught that overclaim; the assertions could not.
