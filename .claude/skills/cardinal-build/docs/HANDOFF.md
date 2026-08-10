@@ -4,9 +4,9 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–689
+# Session of 10 August 2026 (later) — builds 685–690
 
-**685 through 689 all shipped, merged and verified deployed** (PRs #198–#203,
+**685 through 690 all shipped, merged and verified deployed** (PRs #198–#205,
 each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
 must confirm it again rather than inherit it). `main` at 688. Working tree
 clean, branch synced to main, no open PRs.
@@ -18,6 +18,7 @@ clean, branch synced to main, no open PRs.
 | 687 | the three icons Theo rejected off the 686 sheet, redrawn | #200 |
 | 688 | ABC Supply → **Suppliers**, with ABC as a card inside | #201 |
 | 689 | calendar titles were **1.06:1** (unscoped light-era ink) · client cards → obsidian · the initial/Call/Text become raised keys | #203 |
+| 690 | pipeline-stage **chips** on All Leads & Jobs — surfacing a filter that already existed | #205 |
 
 **One thing is waiting on Theo, asked and unanswered:** the `.pcpo` lavender in
 LIGHT mode. It was already failing at 1.99:1 and 689's darker card took it to
@@ -104,6 +105,20 @@ for an inline `color` before calling such a sweep done. Only 1 of the 37 had it.
 5. **`.pcpo` lavender 1.99:1 in light** — still needs Theo's pick. Note the
    `.ljpo` PO is now settled on `#d8a94f`/`#8f1620` everywhere, which is a
    ready precedent if he wants the same treatment.
+
+## 690: the filter was already there — and there are now THREE ways to set it
+
+`ljState.sets.stage` is the one source of truth. The chip strip, the desktop
+checkbox rail (`#ljRailMount`) and the funnel sheet all push/splice the SAME
+array and all re-render through `renderLeadsView()`. **Do not give any of them
+its own state.** `render_stagechips.js` asserts the sync directly — it clicks a
+chip and then reads the rail's checkbox.
+
+⚠️ **`OnHold` is in `STAGES` but absent from `LJ_SOLID` / `LJ_INK` / `LJ_SPINE`.**
+Everything falls back to `#8a93a1`, which is also Lead's colour, so the two dots
+are identical. The strip matches the existing fallback rather than inventing a
+tenth colour — the stage palette is on the semantic frozen list. Theo was told;
+he has not asked for a distinct OnHold colour.
 
 ## Two couplings found this session — check them before ANY nav change
 
