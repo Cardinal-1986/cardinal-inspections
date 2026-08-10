@@ -2379,6 +2379,17 @@ and the VAPID key rotation, which is waiting on Theo setting the env var.
 **Closed.** Home client cards dark in both themes (the bare `.stg-*` pastel
 collision), gradient names gone from the cards (39 gradient-text sites → 38).
 
+- **The emoji sweep is STARTED, not finished.** 686 did the nav (28 rows,
+  `CardinalIcons` 4 → 27 glyphs + `hydrate()`). **533 pictographic emoji
+  remain** — measured with comments excluded and with the 0x2300–0x23FF block
+  included, which the first inventory missed. Dingbats (156), arrows (154) and
+  geometric marks (66) are counted separately and are NOT part of this sweep:
+  ✓ ✕ → ☐ are functional UI glyphs. Next largest surfaces: the card/hero button
+  rows in `cr-sf` / `cr-ch2` / `cr-cth` / `cr-ci` (they already wrap their emoji
+  in `<span class="i">`, so they are the cleanest remaining tranche), the
+  weather table in `cr-lr-script` (a DATA map — an icon per WMO code, a design
+  task not a swap), the command palette's `icon:` field, and the file-type
+  ternaries in `cr-lib-script`.
 - **`.pcpo` lavender `#c9a2ff` reads 1.99:1 in LIGHT mode** — pre-existing;
   lavender PO is on the semantic frozen list. Needs Theo's pick of a light
   variant (the `.ljpo` precedent uses `--rbe-po1/po2` pairs).

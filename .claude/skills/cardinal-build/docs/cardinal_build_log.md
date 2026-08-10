@@ -14270,3 +14270,51 @@ as the retirement comment — asserted by grep, count 1.
   report 37. (2) within one element the background-image composites over that
   element's OWN background-color, not the ancestor's; getting that wrong read a
   dark card's wash as near-white and failed a passing ink at 1.05:1.
+
+- **686** · **the nav loses its emoji and gains drawn icons — 28 rows.** First
+  slice of the approved emoji sweep. Scope is the burger menu, the New menu and
+  the Settings rows: all static markup, all pure scan targets, so per the 681
+  rule they CONVERT rather than get deleted (prose emoji still get deleted, and
+  none was touched here).
+
+  681 left `CardinalIcons` with four glyphs. This adds **23** on the same 24×24
+  grid — 27 total. Static markup cannot call `get()`, and a second pipeline of
+  raw inline SVG in the HTML would be two sources for one glyph, so the module
+  gained **`hydrate()`**: the nav carries a `data-cri` attribute and one pass
+  swaps it in, removing the attribute as it goes so re-running is a no-op. Not
+  an observer — a one-shot call, with a DOMContentLoaded retry only if parsing
+  has not finished.
+
+  **The prime doctrine, again: the button I patched was not the button that
+  renders.** `cr-hd2-script`'s `build()` moves `#navBtn` into its own bar and
+  overwrites `innerHTML = '☰'` on every load, so the static conversion was
+  wiped and the hamburger came back. Found by a real render, not by reading —
+  the source said one thing and Chromium showed another. That writer now calls
+  the same registry.
+
+  ⚠️ **A gap in my own census, worth keeping:** ⏰ is U+23F0, in Miscellaneous
+  Technical (0x2300–0x23FF), a block the first sweep never covered — so the
+  Reminder row was invisible to the inventory and survived the first pass. With
+  that range closed the honest figures are **562 in-scope pictographic emoji
+  before, 533 after** (−29: 28 markup rows + the runtime hamburger). An earlier
+  note in this session said 550; that was low by 12 for the same reason.
+
+  Also measured properly for the first time: the census must EXCLUDE comments
+  (the module banners' box-drawing and prose swamp a naive count) and must keep
+  dingbats/arrows/geometric marks SEPARATE from emoji — ✓ ✕ → ← ☐ are
+  functional UI glyphs, not stickers, and must not be swept with them. Counts
+  at 686: 533 emoji · 156 dingbats · 154 arrows · 66 geometric.
+
+  **The gear was redrawn after looking at it.** The first version put eight
+  teeth around a small inner circle with nothing between, and it read as a SUN,
+  not a gear — wrong object entirely for Settings. Teeth now attach to an outer
+  ring. Every assertion was green both times; a rendered contact sheet caught
+  it. Same lesson as 628's amber bar.
+
+  Gates: `check_build` green (685 prev, marker + negative control).
+  `render_navicons.js` **195/195 green**, and **RED with 141 failures on 685**.
+  Sweep green: schedule 27/27, pcard 12/12, 679 31/31, 680 35/35, colors
+  110/110. One aborted patch on the way: `data-new="lead"` and six other keys
+  also appear inside `querySelector()` calls, so the key alone is not a unique
+  anchor — the markup site is the one whose tag closes onto an entity, and the
+  patch asserts exactly one candidate qualifies.
