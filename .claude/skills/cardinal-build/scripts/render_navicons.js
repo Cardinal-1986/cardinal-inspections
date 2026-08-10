@@ -18,7 +18,7 @@ const NAV = [
   ['[data-nav="landing"]','home'], ['[data-nav="clients"]','people'],
   ['[data-nav="leads"]','clipboard'], ['[data-nav="board"]','calendar'],
   ['[data-nav="quickinsp"]','bolt'], ['[data-nav="inspections"]','search'],
-  ['[data-nav="estimates"]','money'], ['[data-nav="abcsupply"]','brick'],
+  ['[data-nav="estimates"]','money'], ['[data-nav="suppliers"]','warehouse'],
   ['[data-nav="coach"]','target'], ['[data-nav="cardinaltruth"]','shield'],
   ['[data-nav="reports"]','chart'], ['[data-nav="feed"]','bolt'],
   ['[data-nav="recents"]','clock'], ['[data-nav="pricing"]','tag'],
@@ -27,6 +27,9 @@ const NAV = [
   ['[data-set="profile"]','person'], ['[data-set="team"]','people'],
   ['[data-set="notify"]','bell'], ['[data-set="audit"]','eye'],
   ['[data-set="backup"]','save'],
+  // 688: the Tools dropdown is a second door to the same screen; it was renamed
+  // with the menu row, so it is watched here too.
+  ['.cbi[data-go="abc"]','warehouse'],
 ];
 
 let pass = 0, fail = 0;
@@ -95,7 +98,7 @@ const ok = (c, m) => { if (c) { pass++; } else { fail++; console.log('  FAIL ' +
   console.log(`\nrender_navicons — ${FILE}\n`);
   console.log('1. the registry and the hydrator');
   ok(R.hydrateIsFn, 'CardinalIcons.hydrate is a function');
-  ok(R.registry && R.registry.length >= 27, `registry has >=27 glyphs (got ${R.registry ? R.registry.length : 'null'})`);
+  ok(R.registry && R.registry.length >= 28, `registry has >=28 glyphs (got ${R.registry ? R.registry.length : 'null'})`);
   ok(R.leftover === 0, `no un-hydrated placeholders remain (found ${R.leftover})`);
 
   console.log('2. each nav row: icon drawn, inherits colour, em-sized, emoji gone');

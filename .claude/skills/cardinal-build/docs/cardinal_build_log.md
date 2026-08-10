@@ -14360,3 +14360,41 @@ as the retirement comment — asserted by grep, count 1.
   `render_navicons` 195/195 and RED (141) on 685. Sweep green: schedule 27/27
   (it covers `KIND_META`, so the two renames are proven there), pcard 12/12,
   679 31/31, 680 35/35, colors 110/110.
+
+- **688** · **ABC Supply becomes Suppliers, with ABC as a card inside.** Theo's
+  call: the menu row was a single vendor, so every other yard would have needed
+  its own row. It is a category now, and the next yard is a second card on that
+  screen.
+
+  **Two doors led to this screen and both were renamed** — the main menu row and
+  a "Supply" entry in the Tools dropdown (`data-go="abc"`, found only by
+  grepping the brick emoji, not by looking at the menu). Renaming one and not
+  the other is how a feature ends up with two names.
+
+  ⚠️ **The desktop left nav keys its icons off the button's TEXT.** `iconKey()`
+  lowercases and strips non-alphanumerics, so "ABC Supply" resolved to
+  `abcsupply`; relabelling to "Suppliers" changes the key to `suppliers`, and
+  **both** of `cr-lnav`'s icon maps had to move with it or the row would have
+  fallen back to the generic glyph. Found by reading `iconKey()`. This is the
+  coupling to remember before renaming ANY nav label.
+
+  New `warehouse` glyph (a yard, not a wall — the brick belonged to ABC as a
+  materials brand). ABC's env chip moved off the sheet header onto its card,
+  because sandbox/production is a property of ABC, not of "suppliers";
+  `refreshStatus()` finds it with `querySelector`, so no code change was needed.
+  `apidocs.abcsupply.com` is asserted untouched — that is ABC's real API host,
+  not a name of ours.
+
+  Nothing about the integration changed. It is still **not connected** —
+  `ABC_CLIENT_ID` / `ABC_CLIENT_SECRET` were never set in Vercel, and the screen
+  says so. `api/abc.js` exists and is complete.
+
+  ⚠️ **My own repeat error, twice in one session:** the new glyph went in as two
+  adjacent string literals with no `+`. JS has no implicit concatenation, so
+  block 1 stopped parsing. Identical to the `alarm` glyph at 686. **Icon entries
+  in `P` are ONE string on one line.**
+
+  Gates: `check_build` green (687 prev, marker + negative control).
+  `render_suppliers.js` (new) 12/12 and **RED 9 on 687**; `render_navicons`
+  201/201 and RED 141 on 685. Sweep green: schedule 27/27, pcard 12/12, 679
+  31/31, 680 35/35, colors 110/110.
