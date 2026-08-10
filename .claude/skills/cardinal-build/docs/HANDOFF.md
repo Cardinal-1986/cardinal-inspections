@@ -4,11 +4,10 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–688
+# Session of 10 August 2026 (later) — builds 685–689
 
-**685, 686, 687 and 688 all shipped, merged and verified deployed** (PRs
-#198–#201, each squash-merged on green under this session's standing
-authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
+**685 through 689 all shipped, merged and verified deployed** (PRs #198–#203,
+each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
 must confirm it again rather than inherit it). `main` at 688. Working tree
 clean, branch synced to main, no open PRs.
 
@@ -18,6 +17,13 @@ clean, branch synced to main, no open PRs.
 | 686 | the nav is drawn, not emoji — 28 rows, `CardinalIcons` 4 → 27, `hydrate()` | #199 |
 | 687 | the three icons Theo rejected off the 686 sheet, redrawn | #200 |
 | 688 | ABC Supply → **Suppliers**, with ABC as a card inside | #201 |
+| 689 | calendar titles were **1.06:1** (unscoped light-era ink) · client cards → obsidian · the initial/Call/Text become raised keys | #203 |
+
+**One thing is waiting on Theo, asked and unanswered:** the `.pcpo` lavender in
+LIGHT mode. It was already failing at 1.99:1 and 689's darker card took it to
+**1.79:1** — I made a known-bad number slightly worse and said so. It is a
+semantic frozen colour, so the pick is his. Everything else on that card clears
+its floor, though `address`/`meta` are now thin at 4.59 against 4.5.
 
 ## The through-line of this session, if you read nothing else
 
