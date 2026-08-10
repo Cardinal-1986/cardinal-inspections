@@ -1588,7 +1588,7 @@ html, body{overflow-x:hidden;max-width:100%;}
 .ljsummary h3{font:800 16px Georgia,'Times New Roman',serif;color:#1c1416;margin:0 0 8px;}
 
 /* ---- icons: native colors everywhere; quick inspection keeps the gradient ---- */
-.mic{font-size:1.15em;line-height:1;display:inline-block;}
+/* 682: .mic removed with metallicize — nothing sets the class any more. */
 @supports (-webkit-background-clip:text){
   #quickInspView .mic, #qiStartView .mic, #qiWhoModal .mic,
   [data-nav="quickinsp"] .mic, #landQuick .mic{
@@ -3319,7 +3319,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 681 &#8212; The Schedule Board is readable, and the first drawn icons replace emoji</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 682 &#8212; The metallic emoji wrapper is gone</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17717,74 +17717,26 @@ document.getElementById('qiFinishBtn').addEventListener('click', async function(
   }catch(err){ qiBubble('ai', 'Upload failed: ' + esc(err.message || err) + ' \u2014 your photos are still here; try Finish again.'); }
 });
 
-/* ---------- metallic icon wrapper: every emoji icon, every page ---------- */
-var MIC_CLUSTER = '(?:[\\u{1F000}-\\u{1FAFF}\\u{2600}-\\u{27BF}\\u{2B00}-\\u{2BFF}\\u{2190}-\\u{21FF}\\u{2700}-\\u{27BF}\\u{FE0F}\\u{200D}\\u{20E3}\\u{2934}\\u{2935}\\u{3030}\\u{303D}\\u{3297}\\u{3299}\\u{00A9}\\u{00AE}\\u{2122}]|[\\u{1F1E6}-\\u{1F1FF}])+';
-var MIC_TEST = new RegExp(MIC_CLUSTER, 'u');
-var MIC_SPLIT = new RegExp('(' + MIC_CLUSTER + ')', 'gu');
-var MIC_SKIP_TAGS = { SCRIPT:1, STYLE:1, NOSCRIPT:1, TEXTAREA:1, SELECT:1, OPTION:1, TITLE:1, IFRAME:1 };
-function metallicize(root){
-  try{
-    var host = root || document.body;
-    if(!host) return;
-    var walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, {
-      acceptNode: function(n){
-        var p = n.parentNode;
-        if(!p || MIC_SKIP_TAGS[p.nodeName]) return NodeFilter.FILTER_REJECT;
-        if(p.classList && p.classList.contains('mic')) return NodeFilter.FILTER_REJECT;
-        if(p.closest && p.closest('[contenteditable], .mic')) return NodeFilter.FILTER_REJECT;
-        return MIC_TEST.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-      }
-    });
-    var nodes = [];
-    while(walker.nextNode()) nodes.push(walker.currentNode);
-    nodes.forEach(function(tn){
-      var parts = tn.nodeValue.split(MIC_SPLIT);
-      if(parts.length < 2) return;
-      var frag = document.createDocumentFragment();
-      parts.forEach(function(part){
-        if(!part) return;
-        if(MIC_TEST.test(part) && part.replace(new RegExp(MIC_CLUSTER, 'gu'), '') === ''){
-          var sp = document.createElement('span');
-          sp.className = 'mic';
-          sp.textContent = part;
-          frag.appendChild(sp);
-        }else{
-          frag.appendChild(document.createTextNode(part));
-        }
-      });
-      tn.parentNode.replaceChild(frag, tn);
-    });
-  }catch(e){}
-}
-metallicize(document.body);
-/* perf: re-metallicize only the subtrees that actually changed, never the whole page */
-var __micQueue = [];
-var __micPending = false;
-new MutationObserver(function(records){
-  for(var i = 0; i < records.length; i++){
-    var added = records[i].addedNodes;
-    for(var j = 0; j < added.length; j++){
-      var n = added[j];
-      if(n.nodeType === 1) __micQueue.push(n);
-      else if(n.nodeType === 3 && n.parentNode && n.parentNode.nodeType === 1) __micQueue.push(n.parentNode);
-    }
-  }
-  if(__micPending || !__micQueue.length) return;
-  __micPending = true;
-  setTimeout(function(){
-    __micPending = false;
-    var roots = __micQueue.splice(0, __micQueue.length);
-    var kept = [];
-    for(var a = 0; a < roots.length; a++){
-      var r = roots[a];
-      if(!r.isConnected || (r.classList && r.classList.contains('mic'))) continue;
-      var covered = false;
-      for(var b = 0; b < kept.length; b++){ if(kept[b].contains(r)){ covered = true; break; } }
-      if(!covered) kept.push(r);
-    }
-    for(var c = 0; c < kept.length; c++) metallicize(kept[c]);
-  }, 250);
-}).observe(document.body, { childList:true, subtree:true });
+/* ---------- 682: the metallic emoji wrapper is GONE ----------------------
+   Theo: "We don't need to use metallic anymore." It walked the whole document
+   at load, wrapped every emoji text node in <span class="mic"> (font-size
+   1.15em), and kept a MutationObserver on document.body re-running itself on
+   every subtree that changed, forever.
+
+   Two reasons it goes rather than being disabled:
+     · emoji are being replaced by drawn icons (CardinalIcons, 681), so it is
+       decorating something that is on its way out;
+     · it was one of the ~50 `.observe(document.body …)` observers this file
+       warns about — a guaranteed mutation each frame wakes ALL of them. This
+       one also RE-WROTE the DOM from inside that wake, which is the exact
+       shape of the 567/569 repaint loops.
+
+   The three surviving `.mic` CSS rules are now inert (no element ever gets the
+   class). They are left in place deliberately — deleting scoped rules is a
+   separate, wider change, and one of them is gradient text that the no-gradient
+   pass will remove properly. wxPaint's comments still MENTION metallicize; its
+   stored-signature guard was written to stop fighting this wrapper and remains
+   correct without it. */
 
 /* ---------- company documents ---------- */
 /* Add documents here. Put the file in a /docs folder in the GitHub repo
@@ -37245,6 +37197,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:682, d:'2026-08-10', t:'The metallic emoji wrapper is gone',
+s:'You said we do not need the metallic look on emoji any more, so it is gone \u2014 all of it. There was a piece of the app that walked every page when it loaded, found every emoji, and wrapped it to make it look metallic and slightly larger; then it watched the whole page and did it again every time anything changed, for as long as the app was open. Two reasons to remove it rather than just switch it off: the emoji themselves are being replaced by drawn icons, so it was polishing something on its way out \u2014 and it was one of about fifty watchers on this page, this one rewriting the page from inside its own watch, which is the exact shape of the slowdowns fixed at 567 and 569. Nothing you can see changes except that emoji are now their normal size until the drawn icons reach them.'},
 { b:681, d:'2026-08-10', t:'The Schedule Board is readable, and emoji start becoming drawn icons',
 s:'You said you could not read the scheduling page. The heading was dark ink on the near-black page \u2014 measured at 1.1 to 1, where 3 to 1 is the floor for text that size, which is why the little calendar sticker beside it was easier to read than the words. It is now 19.9 to 1. That same heading style is used on FIFTEEN pages, so all of them got clearer, not just this one. In light mode the day line (Monday, Tuesday...) had the opposite problem \u2014 a colour picked for the dark card was landing on a white one at 2.3 to 1; it now reads 8.7 to 1. AND THE FIRST ICONS: the calendar in the title and the marks beside each appointment are drawn now, not emoji, so they take the colour and size of the text next to them instead of arriving as a glossy sticker your phone chose. The three in the sentence under the title were simply deleted \u2014 an icon in the middle of a sentence is just a smaller sticker. This one page is the sample: say whether you like it and the same set goes across the rest of the app.'},
 { b:680, d:'2026-08-10', t:'The claims screen stops shouting and starts answering',
