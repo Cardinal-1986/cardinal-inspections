@@ -1648,3 +1648,40 @@ in that whole window: the emoji screen, and the finished app.
    in the document head and #crBanner's base rule is in the body, so document
    order meant flex-wrap never applied." The ordering hazard was known and
    written down; nobody asked what the user sees *in between*.
+
+---
+
+## 26 — A stopwatch pointed at the wrong thing (build 677)
+
+`render_launch.js` was written to prove one number: that the app opens
+near-instantly on the second launch. Its first version reported a **42×
+speedup** and then **passed against the previous, network-first worker** — which
+re-downloads 3.86 MB on every launch and cannot be fast by construction.
+
+Two independent faults, both producing a **green that agreed with me**:
+
+1. **CDP network throttling does not reach a service worker.**
+   `Network.emulateNetworkConditions` applies to the page's network session. A
+   `fetch()` issued from inside the worker is not throttled by it. So the
+   "throttled" measurement was of an unthrottled document, in both artifacts.
+   **Fix: throttle the wire itself** — rate-limit the response stream in the test
+   server, which every consumer shares.
+2. **An un-awaited `goto()` leaves the previous document on screen.** The first
+   sample ran against the page still displayed — which already had the app on it
+   — and reported **4 ms** to parse 3.86 MB. **Fix: stamp the outgoing document
+   and refuse any sample that still carries the stamp.** A new document cannot.
+
+**The rules**
+
+1. **A performance claim needs a control that is SLOW.** If your harness cannot
+   produce the bad number on the artifact that has the bad behaviour, it is not
+   measuring the thing you named.
+2. **Know which layer your instrument applies to.** Browser-level throttling,
+   CPU throttling, HTTP caching and service-worker caching are four different
+   layers; an instrument at one says nothing about the others. When the subject
+   IS the service worker, the instrument must sit below it.
+3. **A time that is physically implausible is a bug in the clock, not a win.**
+   4 ms to parse 3.86 MB should have stopped the run before it was believed.
+4. **Timing harnesses need the negative control MORE than functional ones**, not
+   less: a functional assertion usually fails loudly on the wrong artifact,
+   whereas a mis-scoped stopwatch happily reports a plausible improvement.

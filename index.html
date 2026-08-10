@@ -3298,7 +3298,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 676 &#8212; The app no longer opens on a screen of scattered emoji while it loads</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 677 &#8212; The app opens from your phone instead of re-downloading itself every time</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22907,6 +22907,90 @@ function __b64ToU8(s){
 }
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/sw.js').catch(function(){});
+
+  /* 677: the worker serves the app shell from the phone now, so a launch
+     straight after a deploy shows the PREVIOUS build. That is the price of
+     near-instant startup and it is paid knowingly — but it must not be silent.
+     When the worker's background refresh brings back a different build it
+     messages us, and we offer one tap. The new shell is already cached by
+     then, so that reload is about a second, not another download.
+
+     Built in JS with inline styles ON PURPOSE: build 676 was markup near the
+     top of this file whose stylesheet is near the bottom, painting unstyled
+     for the whole load. A chip that carries its own styling cannot repeat it.
+     Not routed through toast() either — that name is defined six times here
+     with three signatures and none is reliably global at this point. */
+  (function(){
+    var shown = false;
+    navigator.serviceWorker.addEventListener('message', function(ev){
+      if(!ev || !ev.data || ev.data.type !== 'cr-shell-updated') return;
+      if(shown) return;
+      /* Never on the client-facing door. showroom.* / ?vision=1 is what Theo
+         hands across the kitchen table; nobody is interrupting a presentation
+         to talk about builds. Tested inline rather than through
+         isVisionHost(), which is defined far later in this file. */
+      try{
+        if(location.search.indexOf('vision=1') !== -1) return;
+        if(location.hostname.indexOf('showroom.') === 0) return;
+      }catch(_){}
+      shown = true;
+
+      /* Sit ABOVE the installed app's bottom nav, not on top of it. #pwaNav is
+         position:fixed;bottom:0 and about 62px tall in standalone, so a bar at
+         bottom:12px covered it and put Reload exactly where the thumb reaches
+         for Back. Measured rather than hardcoded — the nav's height is padding
+         plus a safe-area inset and differs per device. */
+      var nv = document.getElementById('pwaNav');
+      var lift = 0;
+      try{
+        if(nv && getComputedStyle(nv).display !== 'none')
+          lift = Math.round(nv.getBoundingClientRect().height);
+      }catch(_){}
+
+      var bar = document.createElement('div');
+      bar.id = 'crUpdateBar';
+      bar.setAttribute('role', 'status');
+      /* z-index 170: above #pwaNav (160), BELOW every dialog in this app
+         (9800-100000). A staff update prompt has no business covering a modal
+         — it is information, not an interruption. */
+      bar.style.cssText = 'position:fixed;left:12px;right:12px;z-index:170;' +
+        'bottom:calc(12px + ' + lift + 'px + env(safe-area-inset-bottom,0px));' +
+        'display:flex;align-items:center;gap:10px;padding:12px 12px 12px 15px;' +
+        'border-radius:14px;background:#15171b;border:1px solid #c8202e;' +
+        'box-shadow:0 8px 28px rgba(0,0,0,.45);' +
+        "font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#e9edf2;" +
+        'max-width:520px;margin:0 auto;';
+
+      var txt = document.createElement('span');
+      txt.style.cssText = 'flex:1;min-width:0;line-height:1.35';
+      txt.textContent = 'A newer version of Cardinal is ready.';
+
+      var go = document.createElement('button');
+      go.type = 'button';
+      go.textContent = 'Reload';
+      go.style.cssText = 'flex:0 0 auto;min-height:44px;padding:0 16px;border:0;' +
+        'border-radius:10px;background:#c8202e;color:#fff;cursor:pointer;' +
+        "font:700 13.5px 'Segoe UI',Arial,sans-serif;";
+      /* never automatic — Theo may be mid-estimate */
+      go.onclick = function(){ location.reload(); };
+
+      var no = document.createElement('button');
+      no.type = 'button';
+      no.setAttribute('aria-label', 'Dismiss');
+      no.textContent = '\u2715';
+      no.style.cssText = 'flex:0 0 auto;width:44px;height:44px;border:0;' +
+        'border-radius:10px;background:transparent;color:#9aa3ad;cursor:pointer;' +
+        'font-size:15px;';
+      /* Dismiss THIS notice, not every future one. `shown` stayed true
+         forever in the first draft, so one tap muted the only update signal
+         for the life of the document — and a tab left open for days can
+         outlive several builds. */
+      no.onclick = function(){ bar.remove(); shown = false; };
+
+      bar.appendChild(txt); bar.appendChild(go); bar.appendChild(no);
+      (document.body || document.documentElement).appendChild(bar);
+    });
+  })();
 }
 async function enableNotifications(){
   try{
@@ -37011,6 +37095,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:677, d:'2026-08-10', t:'The app opens from your phone instead of downloading itself every time',
+s:'Every launch used to re-download the whole app before anything appeared \u2014 about thirty seconds on a weak signal, staring at a blank screen. It now opens from the copy already on your phone, which is close to instant, and fetches any update quietly in the background. The trade: right after a new version is deployed, the first launch still shows the previous one. So when a newer version has finished downloading, a small bar appears at the bottom \u2014 tap Reload and it switches over in about a second, because it is already on the phone by then. Nothing reloads on its own; if you are in the middle of something, ignore it and it will be there next time you open the app.'},
 { b:676, d:'2026-08-10', t:'The app stops opening on a screen of scattered emoji',
 s:'On a weak signal the app opened on a dark screen with a dozen emoji scattered across it \u2014 a hammer, a calendar, a stethoscope, a gear \u2014 and nothing else, until it finally loaded. That was the section nav (Home, Contacts, Leads, Production, Tools) showing before its styling had arrived: the app is one very large file, and the part that tells that strip how to look sits near the end of it. So the strip appeared as plain text, the words were invisible because no colour had loaded yet, and the little pictures showed through because emoji always draw in their own colours. It is now hidden until its styling arrives, so it either looks right or is not there at all. This does not make the app load faster \u2014 it stops it looking broken while it does.'},
 { b:675, d:'2026-08-10', t:'Insurance Clients moves to the top of the insurance page',
