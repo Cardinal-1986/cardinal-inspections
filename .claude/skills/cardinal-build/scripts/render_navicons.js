@@ -6,8 +6,9 @@
    Usage: node render_navicons.js [index.html]
    Point it at the 685 artifact as the negative control — it must go red.   */
 const path = require('path');
-const SP = __dirname;
-const { chromium } = require(path.join(SP, 'node_modules', 'playwright-core'));
+// plain require, so NODE_PATH resolves it the way every other committed harness
+// in this folder does. A hard-coded ./node_modules only works from a scratchpad.
+const { chromium } = require('playwright-core');
 const FILE = path.resolve(process.argv[2] || '/home/user/cardinal-inspections/index.html');
 const EXE = '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 

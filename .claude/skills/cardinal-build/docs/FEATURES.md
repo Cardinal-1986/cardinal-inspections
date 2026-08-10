@@ -3554,3 +3554,20 @@ rule); none was touched here. Emails, push, letters, `popup.html`,
 `drivewaytest.html`, the Showcase and the CHANGELOG remain out of scope. 533
 pictographic emoji remain elsewhere in the app — `scripts/render_navicons.js`
 covers this slice and goes RED on 685.
+
+### 687 — the three rejected icons
+
+`hammer` → **`ladder`** (a claw hammer is illegible at 13px — the claw is the
+tell and it does not survive one stroke weight; six attempts all read as a
+screwdriver or signpost). `building` → **`group`**, three figures, because a
+building never reads as a *team* however well drawn — and deliberately distinct
+from the two-figure `people` used for Clients. `hardhat` redrawn with two ribs
+over the crown; the 686 version's crown box read as a bag handle.
+
+Both are renames, not aliases — one name per glyph. `KIND_META` was the only
+caller of each. `hardhat` keeps its name because markup reaches it through the
+`data-cri` attribute rather than `get()`.
+
+⚠️ **Ship an icon with a rendered contact sheet.** 686 was 195/195 green and
+still shipped three wrong icons. Assertions prove an icon is *drawn, coloured
+and sized*; they cannot tell you it is a picture of the wrong object.

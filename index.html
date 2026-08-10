@@ -3306,7 +3306,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 686 &#8212; The menus get drawn icons instead of emoji</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 687 &#8212; Three icons you flagged, redrawn</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18990,14 +18990,24 @@ var CardinalIcons = (function(){
   var P = {
     calendar: '<rect x="3.4" y="5" width="17.2" height="15.6" rx="2.2"/>' +
               '<path d="M3.4 9.9h17.2M8.3 2.9v4.1M15.7 2.9v4.1"/>',
-    hammer:   '<path d="M4.6 7.4a2 2 0 0 1 2-2h9.2a2 2 0 0 1 2 2v1.8a2 2 0 0 1-2 2H6.6' +
-              'a2 2 0 0 1-2-2z"/><path d="M11.1 11.2v8.4a1.7 1.7 0 0 0 3.4 0v-8.4"/>',
+    /* 687: was `hammer`. Six attempts at a claw hammer all read as a
+       screwdriver or a signpost at 13px — the claw is the whole tell and it
+       does not survive one stroke weight. Theo picked the ladder: two rails
+       and three rungs, nothing to lose at small size, and on a roof it says
+       a crew is on site. Renamed rather than aliased — one name per glyph. */
+    ladder:   '<path d="M7.8 3.2v17.6M16.2 3.2v17.6"/>' +
+              '<path d="M7.8 7.6h8.4M7.8 12h8.4M7.8 16.4h8.4"/>',
     truck:    '<rect x="2.8" y="6.2" width="10.6" height="9.4" rx="1.4"/>' +
               '<path d="M13.4 9.6h3.5l3.3 3.2v2.8h-6.8z"/>' +
               '<circle cx="7" cy="18.2" r="1.9"/><circle cx="16.9" cy="18.2" r="1.9"/>',
-    building: '<path d="M4.4 20.9V5.3a1.6 1.6 0 0 1 1.6-1.6h7a1.6 1.6 0 0 1 1.6 1.6v15.6"/>' +
-              '<path d="M14.6 10.5h3.4a1.6 1.6 0 0 1 1.6 1.6v8.8"/><path d="M2.8 20.9h18.4"/>' +
-              '<path d="M7.7 7.7h1.1M10.9 7.7H12M7.7 11.5h1.1M10.9 11.5H12"/>',
+    /* 687: was `building`. Theo, on the 686 sheet: a building does not read
+       as a TEAM however well it is drawn — a meaning problem, not a drawing
+       one. Three figures, deliberately not the two-figure `people` mark, so a
+       team event and a client cannot be confused on the board. */
+    group:    '<circle cx="12" cy="7.2" r="2.8"/>' +
+              '<path d="M6.8 18.2a5.2 5.2 0 0 1 10.4 0"/>' +
+              '<circle cx="4.7" cy="10.6" r="1.9"/><path d="M1.5 17.6a3.4 3.4 0 0 1 3.2-3"/>' +
+              '<circle cx="19.3" cy="10.6" r="1.9"/><path d="M22.5 17.6a3.4 3.4 0 0 0-3.2-3"/>',
     /* 686 */ menu:      "<path d='M3.6 6.6h16.8M3.6 12h16.8M3.6 17.4h16.8'/>",
     /* 686 */ home:      "<path d='M3.6 10.6 12 3.9l8.4 6.7'/><path d='M5.9 12.4v7.7h12.2v-7.7'/><path d='M9.9 20.1v-4.6h4.2v4.6'/>",
     /* 686 */ people:    "<circle cx='9.2' cy='8.4' r='3.1'/><path d='M3.4 19.8a5.8 5.8 0 0 1 11.6 0'/><path d='M16.4 6.2a3.1 3.1 0 0 1 0 5.8'/><path d='M17.6 14.8a5.8 5.8 0 0 1 3 5'/>",
@@ -19015,7 +19025,8 @@ var CardinalIcons = (function(){
     /* 686 */ clock:     "<circle cx='12' cy='12' r='8.6'/><path d='M12 6.9V12l3.4 2.1'/>",
     /* 686 */ tag:       "<path d='M11.4 3.4H5a1.6 1.6 0 0 0-1.6 1.6v6.4a1.6 1.6 0 0 0 .5 1.2l7.5 7.5a1.6 1.6 0 0 0 2.3 0l6.2-6.2a1.6 1.6 0 0 0 0-2.3l-7.5-7.5a1.6 1.6 0 0 0-1-.7z'/><circle cx='7.8' cy='7.8' r='1.3'/>",
     /* 686 */ folder:    "<path d='M3.4 6.6a1.8 1.8 0 0 1 1.8-1.8H9l2.2 2.6h7.6a1.8 1.8 0 0 1 1.8 1.8v8.2a1.8 1.8 0 0 1-1.8 1.8H5.2a1.8 1.8 0 0 1-1.8-1.8z'/>",
-    /* 686 */ hardhat:   "<path d='M3.8 16.4a8.2 8.2 0 0 1 16.4 0z'/><path d='M9.4 16.4V7.9a1.6 1.6 0 0 1 1.6-1.6h2a1.6 1.6 0 0 1 1.6 1.6v8.5'/><path d='M2.8 19.3h18.4'/>",
+    /* 687: the 686 shell put a box on the crown and read as a bag handle. Two ribs over the dome are the tell of a real hard hat. */
+    hardhat:   "<path d='M4.6 16.6a7.4 7.4 0 0 1 14.8 0'/><path d='M2.8 16.6h18.4'/><path d='M12 9.2c-1.5 1.7-2.2 4.5-2.2 7.4M12 9.2c1.5 1.7 2.2 4.5 2.2 7.4'/>",
     /* 686 */ gear:      "<circle cx='12' cy='12' r='2.7'/><circle cx='12' cy='12' r='6.9'/><path d='M12 2.6v2.4M12 19v2.4M2.6 12H5M19 12h2.4M5.4 5.4l1.7 1.7M16.9 16.9l1.7 1.7M18.6 5.4l-1.7 1.7M7.1 16.9l-1.7 1.7'/>",
     /* 686 */ bell:      "<path d='M18 9.6a6 6 0 0 0-12 0c0 5.2-2 6.8-2 6.8h16s-2-1.6-2-6.8z'/><path d='M13.8 19.7a2 2 0 0 1-3.6 0'/>",
     /* 686 */ eye:       "<path d='M2.4 12S6 5.7 12 5.7 21.6 12 21.6 12 18 18.3 12 18.3 2.4 12 2.4 12z'/><circle cx='12' cy='12' r='2.9'/>",
@@ -19054,10 +19065,10 @@ if(document.readyState === 'loading'){
 }
 /* 681: the four kinds now name an icon instead of carrying an emoji.
    `nm` is untouched — it is the accessible label and the fallback title. */
-var KIND_META = { job:{ic:CardinalIcons.get('hammer'),nm:'Job'},
+var KIND_META = { job:{ic:CardinalIcons.get('ladder'),nm:'Job'},
                   drop:{ic:CardinalIcons.get('truck'),nm:'Material Drop'},
                   appt:{ic:CardinalIcons.get('calendar'),nm:'Appointment'},
-                  team:{ic:CardinalIcons.get('building'),nm:'Team'} };
+                  team:{ic:CardinalIcons.get('group'),nm:'Team'} };
 function openScheduleBoard(){
   hideAllViews();
   boardView.style.display = 'block';
@@ -37232,6 +37243,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:687, d:'2026-08-10', t:'Three icons you flagged, redrawn',
+s:'You said the hammer, the hard hat and the building for Team all looked wrong, and you were right about each. The hammer is now a LADDER \u2014 six attempts at a claw hammer all came out looking like a screwdriver or a signpost at the size it actually appears, because the claw is the whole point of a hammer and it disappears. A ladder survives being small and, on a roof, says the same thing: a crew is on site. The hard hat had a box on top that made it look like a bag; it now has two ribs over the crown, which is what makes a hard hat look like a hard hat. And Team was a picture of a BUILDING, which was never going to read as a team no matter how well it was drawn \u2014 it is three people now, deliberately different from the two-person mark used for Clients so the two do not get mixed up on the board.'},
 { b:686, d:'2026-08-10', t:'The menus get drawn icons instead of emoji',
 s:'The main menu, the New menu and the Settings list were labelled with emoji \u2014 a little picture per row. They came from the phone\u2019s own emoji font, so they never matched each other, they ignored the light and dark themes, and they looked different on your iPad than on the desktop. Every one of those 27 rows now has a drawn icon instead: line art on the same grid, taking the exact colour and size of the words next to it, so a menu reads as one thing. Same icons as the Schedule Board got last build. Nothing moved and nothing was renamed \u2014 only the picture changed. The rest of the app still has its emoji; this is the first slice.'},
 { b:685, d:'2026-08-10', t:'The two-tone lettering is gone \u2014 headings and names are one solid colour',
