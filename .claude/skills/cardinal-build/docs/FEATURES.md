@@ -3571,3 +3571,23 @@ caller of each. `hardhat` keeps its name because markup reaches it through the
 ⚠️ **Ship an icon with a rendered contact sheet.** 686 was 195/195 green and
 still shipped three wrong icons. Assertions prove an icon is *drawn, coloured
 and sized*; they cannot tell you it is a picture of the wrong object.
+
+### 688 — Suppliers (was ABC Supply)
+
+The menu row is a **category** now: `data-nav="suppliers"`, warehouse icon, and
+the sheet is titled Suppliers with **ABC Supply as a card inside it**. A second
+yard is a second card, not a second menu row. The ABC integration itself is
+unchanged and still switched off until its two keys are set in Vercel.
+
+⚠️ **Two doors lead here** — the main menu row and the Tools dropdown's "Supply"
+entry (`.cbi[data-go="abc"]`). Both carry the name; rename both or the feature
+grows a second identity.
+
+⚠️ **`cr-lnav` derives its icon key from the button's TEXT** (`iconKey()`
+lowercases and strips non-alphanumerics). Renaming a nav label therefore
+silently changes which icon the desktop left nav looks up. Move the key in both
+of its maps at the same time. This bit 688 and will bite the next rename.
+
+Gate: `scripts/render_suppliers.js` — opens the real sheet and checks the title,
+the card, the moved env chip and that all three account fields plus the
+catalogue search survived inside the card. Goes RED on 687.

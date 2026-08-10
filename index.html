@@ -3287,7 +3287,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="quickinsp" data-cri="bolt lg">Quick Inspection</button>
           <button class="navopt" data-nav="inspections" data-cri="search lg">Inspections</button>
           <button class="navopt" data-nav="estimates" data-cri="money lg">Estimates</button>
-          <button class="navopt" data-nav="abcsupply" data-cri="brick lg">ABC Supply</button>
+          <button class="navopt" data-nav="suppliers" data-cri="warehouse lg">Suppliers</button>
           <button class="navopt" data-nav="coach" data-cri="target lg">Objection Coach</button>
 
           <div class="navsec">Insurance</div>
@@ -3306,7 +3306,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 687 &#8212; Three icons you flagged, redrawn</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 688 &#8212; ABC Supply becomes Suppliers, with room for more yards</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3335,7 +3335,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <span class="cbi" data-go="coach">&#127919; Objection Coach</span>
       <span class="cbi" data-go="adjusters">&#127963; Adjuster Directory</span>
       <small>Supply</small>
-      <span class="cbi" data-go="abc">&#129521; ABC Supply</span>
+      <span class="cbi" data-go="abc" data-cri="warehouse lg">Suppliers</span>
       <small>App</small>
       <span class="cbi" data-go="selfcheck">&#129658; Self Check</span>
       <span class="cbi" data-go="whatsnew">&#10024; What's New</span>
@@ -17261,7 +17261,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'companydocs'){ openCompanyDocs(); }
   else if(nav === 'quickinsp'){ qiFreshStart(); }
-  else if(nav === 'estimates' || nav === 'aiestimates'){ if(window.crOpenEstimates) window.crOpenEstimates(); } else if(nav === 'abcsupply'){ if(window.CardinalABC) window.CardinalABC.open(); }
+  else if(nav === 'estimates' || nav === 'aiestimates'){ if(window.crOpenEstimates) window.crOpenEstimates(); } else if(nav === 'suppliers'){ if(window.CardinalABC) window.CardinalABC.open(); }
   else if(nav === 'claims'){ if(window.crOpenClaims) window.crOpenClaims(); }
   else if(nav === 'pricing'){ if(window.crOpenPricing) window.crOpenPricing('roofing'); }
   else if(nav === 'coach'){ if(window.CardinalCoach) window.CardinalCoach.open(); }
@@ -19018,6 +19018,9 @@ var CardinalIcons = (function(){
     /* 686 */ search:    "<circle cx='10.8' cy='10.8' r='6.4'/><path d='M15.5 15.5 20.6 20.6'/>",
     /* 686 */ money:     "<circle cx='12' cy='12' r='8.6'/><path d='M12 6.6v10.8'/><path d='M14.7 9.4a2.6 2.6 0 0 0-2.3-1.2h-.8a2.1 2.1 0 0 0 0 4.2h1.4a2.1 2.1 0 0 1 0 4.2h-.8a2.6 2.6 0 0 1-2.3-1.2'/>",
     /* 686 */ cash:      "<rect x='2.6' y='6.4' width='18.8' height='11.2' rx='1.8'/><circle cx='12' cy='12' r='2.6'/><path d='M6.1 12h.1M17.8 12h.1'/>",
+    /* 688: the Suppliers row. A yard, not a wall — the brick belonged to
+       "ABC Supply" as a materials brand; the row is now the category. */
+    warehouse: "<path d='M3 20.4V9.6L12 5.4l9 4.2v10.8'/><path d='M1.8 20.4h20.4'/><path d='M8.4 20.4v-6.2h7.2v6.2'/><path d='M8.4 17.3h7.2'/>",
     /* 686 */ brick:     "<rect x='3' y='5.6' width='18' height='12.8' rx='1.4'/><path d='M3 9.9h18M3 14.1h18M9 5.6v4.3M15 9.9v4.2M9 14.1v4.3'/>",
     /* 686 */ target:    "<circle cx='12' cy='12' r='8.4'/><circle cx='12' cy='12' r='4.6'/><circle cx='12' cy='12' r='1'/>",
     /* 686 */ shield:    "<path d='M12 2.9 4.8 6v5.5c0 4.4 3 8.2 7.2 9.6 4.2-1.4 7.2-5.2 7.2-9.6V6z'/>",
@@ -37243,6 +37246,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:688, d:'2026-08-10', t:'ABC Supply becomes Suppliers, with room for the other yards',
+s:'The menu row said ABC Supply, which meant every other yard you buy from would have needed its own row. It now says Suppliers, and ABC Supply sits inside it as a card \u2014 so the next yard is a second card on that screen rather than another line in the menu. Nothing about the ABC connection changed: same account fields, same catalogue search, same setup. It is still switched off until the two ABC keys are added in Vercel, and the screen says so. Two doors led here, the main menu and the Tools list, and both were renamed \u2014 a screen with two names is how it ends up feeling like two features.'},
 { b:687, d:'2026-08-10', t:'Three icons you flagged, redrawn',
 s:'You said the hammer, the hard hat and the building for Team all looked wrong, and you were right about each. The hammer is now a LADDER \u2014 six attempts at a claw hammer all came out looking like a screwdriver or a signpost at the size it actually appears, because the claw is the whole point of a hammer and it disappears. A ladder survives being small and, on a roof, says the same thing: a crew is on site. The hard hat had a box on top that made it look like a bag; it now has two ribs over the crown, which is what makes a hard hat look like a hard hat. And Team was a picture of a BUILDING, which was never going to read as a team no matter how well it was drawn \u2014 it is three people now, deliberately different from the two-person mark used for Clients so the two do not get mixed up on the board.'},
 { b:686, d:'2026-08-10', t:'The menus get drawn icons instead of emoji',
@@ -38193,7 +38198,7 @@ hideOpt('coach');
       only for an admin - a rep keeps it where it has always been rather than
       silently losing the tool. Flagged for Theo rather than decided here. */
 var adminSec = document.getElementById('cr-nav-sec-admin');
-if(adminSec) moveAfter(adminSec, menu.querySelector('.navopt[data-nav="abcsupply"]'));
+if(adminSec) moveAfter(adminSec, menu.querySelector('.navopt[data-nav="suppliers"]'));
 /* 4. Not asked for, but it is on screen today: Community Partners is in the
       menu TWICE - cr-menu-script puts one under CRMs and cr-cpartners-script
       appends its own at the end. Keep the one that sits in a section. */
@@ -51159,6 +51164,10 @@ placeChip  : placeChip,
 #cr-abc .hd .env{font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#e35c63;background:rgba(200,32,46,.15);padding:4px 9px;border-radius:10px}
 #cr-abc .hd .x{background:none;border:0;color:#d8c9a8;font-size:21px;cursor:pointer;padding:2px 6px}
 #cr-abc .bd{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px 16px calc(120px + env(safe-area-inset-bottom,0px))}
+#cr-abc .supp{border:1px solid #3a3f47;border-radius:13px;padding:12px 13px 14px;margin-bottom:12px;background:#1b1e23}
+#cr-abc .supphd{display:flex;align-items:center;gap:9px;font:800 15px Georgia,'Times New Roman',serif;color:#e35c63;margin-bottom:10px}
+#cr-abc .supphd .env{margin-left:auto}
+#cr-abc .more{color:#9aa4b0;font-size:12.5px;line-height:1.5;padding:2px 2px 6px}
 #cr-abc .note{background:#fff;color:#2c2c2c;border:1px solid #c8202e;border-radius:11px;padding:12px 13px;font-size:13px;line-height:1.5;margin-bottom:12px}
 #cr-abc .note b{color:#8f1620}
 #cr-abc label{display:block;margin:10px 0 4px;font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#c8202e}
@@ -51196,9 +51205,16 @@ el = document.createElement('div');
 el.id = 'cr-abc';
 el.innerHTML =
 '<div class="sheet">' +
-'<div class="hd"><h3>&#129521; ABC Supply</h3><span class="env" data-env>&hellip;</span>' +
+'<div class="hd"><h3>Suppliers</h3>' +
 '<button class="x" data-act="close" type="button">&times;</button></div>' +
 '<div class="bd">' +
+/* 688: one card per supplier. Today there is exactly one, and it is a CARD
+   rather than the whole sheet so a second yard is a card beside it instead of
+   another menu row. The env chip moved off the sheet header onto this card —
+   it is ABC's sandbox/production flag, not a property of "suppliers".
+   refreshStatus() finds it with querySelector, so no code change was needed. */
+'<div class="supp">' +
+'<div class="supphd">ABC Supply<span class="env" data-env>&hellip;</span></div>' +
 '<div data-status></div>' +
 '<div class="sect">Account</div>' +
 '<div class="row2">' +
@@ -51212,6 +51228,9 @@ el.innerHTML =
 '<input data-q placeholder="Search ABC catalog\u2026 e.g. Duration shingles">' +
 '<button class="btn2" data-act="search" type="button">Search my branch</button>' +
 '<div data-results></div>' +
+'</div>' +
+'<div class="more">ABC Supply is the only yard wired up so far. Another can be added ' +
+'here as a second card \u2014 it does not need its own menu row.</div>' +
 '</div></div>';
 document.body.appendChild(el);
 var c = cfg();
@@ -56401,7 +56420,7 @@ salesfloor:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.4" fill=
 quickinspection:'<path d="M13.5 2 4 14.5h6.2L9 22l9.5-12.5H12z"/>',
 inspections:'<circle cx="11" cy="11" r="6.6"/><rect x="15.2" y="16.6" width="7" height="2.6" rx="1.3" transform="rotate(45 15.2 16.6)"/>',
 estimates:'<path d="M6 2h9l4 4v16H6z"/><rect x="8.6" y="8" width="8" height="1.7" fill="#0d0d10"/><rect x="8.6" y="12" width="8" height="1.7" fill="#0d0d10"/><rect x="8.6" y="16" width="5" height="1.7" fill="#0d0d10"/>',
-abcsupply:'<rect x="2.5" y="6" width="8.6" height="5.2" rx="1"/><rect x="12.9" y="6" width="8.6" height="5.2" rx="1"/><rect x="2.5" y="12.8" width="8.6" height="5.2" rx="1"/><rect x="12.9" y="12.8" width="8.6" height="5.2" rx="1"/>',
+suppliers:'<rect x="2.5" y="6" width="8.6" height="5.2" rx="1"/><rect x="12.9" y="6" width="8.6" height="5.2" rx="1"/><rect x="2.5" y="12.8" width="8.6" height="5.2" rx="1"/><rect x="12.9" y="12.8" width="8.6" height="5.2" rx="1"/>',
 cardinaltruth:'<path d="M12 2 4 5v6.5c0 5 3.4 9.2 8 10.5 4.6-1.3 8-5.5 8-10.5V5z"/>',
 communityhub:'<path d="M12 3 3 10h2.5v11h5v-6h3v6h5V10H21z"/>',
 communitypartners:'<circle cx="7.5" cy="9" r="3.2"/><circle cx="16.5" cy="9" r="3.2"/><path d="M1.6 20a6 6 0 0 1 11.8 0zM10.6 20a6 6 0 0 1 11.8 0z"/>',
@@ -56429,7 +56448,7 @@ salesfloor:'<circle cx="12" cy="12" r="7" class="m"/><path d="M12 5v14"/>',
 quickinspection:'<path d="M13 4 6 13h5l-1 7 8-10h-5z"/>',
 inspections:'<circle cx="11" cy="11" r="5.5" class="m"/><path d="M15 15l5 5"/>',
 estimates:'<path d="M6 4h12" class="m"/><path d="M6 9h12"/><path d="M6 14h12" class="m"/><path d="M6 19h7" class="m"/>',
-abcsupply:'<path d="M4 8h16" class="m"/><path d="M4 16h16" class="m"/><path d="M12 4v16"/>',
+suppliers:'<path d="M4 8h16" class="m"/><path d="M4 16h16" class="m"/><path d="M12 4v16"/>',
 cardinaltruth:'<path d="M12 4v16"/><path d="M6 8h12" class="m"/>',
 communityhub:'<path d="M4 18h16" class="m"/><path d="M7 18V9l5-4 5 4v9"/>',
 communitypartners:'<path d="M5 8h6" class="m"/><path d="M13 8h6" class="m"/><path d="M5 16h14"/>',
