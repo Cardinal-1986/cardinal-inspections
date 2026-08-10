@@ -14493,6 +14493,32 @@ as the retirement comment — asserted by grep, count 1.
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
 
+- **696** · **The chip strips were pushing the results column off the screen.**
+  **My regression, shipped at 690, worse at 691, reported by Theo.** Measured
+  at a 393px viewport: 689 has nothing wider than the screen, 690 has
+  `.ljresults` at **869px**, 691 the same with two strips doing it. He saw it
+  as "the cards gigantic and cut off" — nothing was resized; the column they
+  sit in was 869px wide inside a 393px screen, so the names had room not to
+  wrap and ran off the right edge.
+  **Cause:** `.ljcols{grid-template-columns:1fr}`. `1fr` is `minmax(auto,1fr)`
+  and that AUTO minimum resolves to the item's max-content — every chip laid
+  out unwrapped. The track grew to fit and took the card list with it.
+  ⚠️ **`overflow-x:auto` on the chip row could never have saved it**: the
+  parent grew to max-content instead of the child scrolling inside a clamped
+  parent. The scroll only engages once the parent is bounded.
+  **Fix:** `minmax(0,1fr)` on the track plus `min-width:0` on `.ljresults` —
+  the exact pair `#crewsView .crw-wrap` already documents in this file, in the
+  same words. Second place it has been needed. The desktop rule is untouched:
+  its tracks are `230px minmax(300px,1.05fr) minmax(320px,1fr)`, whose minimums
+  are explicit lengths, so they were never exposed.
+  Gate `render_ljfit696.js`, 28 assertions across 360/393/430/768/1194 — the
+  page must not scroll sideways, no container may exceed the viewport, the
+  strips must scroll INTERNALLY, and a long job name must wrap rather than
+  clip. Negative control on 695 is RED with the name at 556px on a 393px
+  screen. ⚠️ **Chips scrolled out of view to the right are not overflow** — a
+  naive `right > viewport` sweep flags them and reads as failure, so the gate
+  excludes descendants of a scrollable row by design.
+
 - **695** · **The Tools dropdown is drawn, not emoji.** All sixteen rows.
   Thirteen carried an emoji entity; four new glyphs were drawn for them
   (`pulse` Self Check, `sparkle` What's New, `pin` Field Walkthrough, `flask`

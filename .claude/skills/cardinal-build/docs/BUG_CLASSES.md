@@ -1815,3 +1815,29 @@ contradicted a photograph:
   against the worst. The naive version hid a real light-mode failure.
 
 **When a measurement disagrees with a screenshot, fix the measurement first.**
+
+
+## 29 — `1fr` has an automatic minimum, and one unwrappable child blows out the grid
+
+**Struck at 690, found at 696.** A horizontal chip row was added inside
+`.ljcols{grid-template-columns:1fr}`. `1fr` means `minmax(auto,1fr)`, and that
+auto minimum resolves to the item's **max-content** — every chip laid out
+unwrapped, 869px of it. The track grew to fit, the results column went with it,
+and job names ran off the right edge of a 393px phone instead of wrapping.
+
+**The tell is misleading.** It looks like the cards were made bigger. They were
+not touched; the column around them was.
+
+**`overflow-x:auto` on the wide child does not prevent this.** The parent grows
+to max-content rather than the child scrolling inside a clamped parent. The
+scroll only engages once something above it is bounded.
+
+**The fix is a PAIR, and this file already had it written down** for
+`#crewsView .crw-wrap`: *"minmax(0,1fr) on the track and min-width:0 here are
+the two halves of the same fix."* Same fix, second site.
+
+**How to catch it:** render at 360/393/430 and compare
+`document.documentElement.scrollWidth` with `clientWidth`, then list every
+element wider than the viewport. ⚠️ Exclude descendants of a scrollable row —
+chips scrolled out of view legitimately sit beyond the right edge, and counting
+them turns a passing layout into a false red.

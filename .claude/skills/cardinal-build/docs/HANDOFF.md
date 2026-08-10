@@ -4,11 +4,11 @@
 
 ---
 
-# Session of 10 August 2026 (later) — builds 685–695
+# Session of 10 August 2026 (later) — builds 685–696
 
-**685 through 695 all shipped, merged and verified deployed** (PRs #198–#211,
+**685 through 696 all shipped, merged and verified deployed** (PRs #198–#212,
 each squash-merged on green under this session's standing authorization — Theo re-confirmed the hands-off flow at the start; a NEW session
-must confirm it again rather than inherit it). `main` at 695. Working tree
+must confirm it again rather than inherit it). `main` at 696. Working tree
 clean, branch synced to main, no open PRs.
 
 | Build | What | PR |
@@ -24,6 +24,7 @@ clean, branch synced to main, no open PRs.
 | 693 | **Sales Floor had no light theme at all** — 16 `--sf-*` tokens; the switch had been doing nothing to it | #210 |
 | 694 | the light/dark switch is reachable again on Sales Floor, every full-screen view and insurance | #210 |
 | 695 | the Tools dropdown is drawn — all 16 rows, `CardinalIcons` 43 → 47 | #211 |
+| 696 | **my 690 regression**: the chip strips pushed the results column 869px wide on a 393px screen | #212 |
 
 **One thing is waiting on Theo, asked and unanswered:** the `.pcpo` lavender in
 LIGHT mode. It was already failing at 1.99:1 and 689's darker card took it to
@@ -40,6 +41,14 @@ contact sheet in about a minute. 687 fixed them. **Ship an icon with a picture,
 not a pass count.** Same finding as 628's amber bar and 633's white boxes.
 
 ## Corrections I owe, in my own words
+
+- **I shipped a horizontal overflow at 690 and did not measure for it.**
+  The stage strip made `.ljcols`' `1fr` track resolve to its max-content —
+  869px inside a 393px phone — so every job name ran off the right edge.
+  691 added a second strip and doubled it. Two builds live, and Theo found
+  it, not me. **`render_stagechips.js` was 54 green assertions and none of
+  them looked at width.** A new row inside a grid needs a width check at
+  360/393/430, every time.
 
 - **I said 550 emoji remained. It was 562.** My census never covered
   0x2300–0x23FF (Miscellaneous Technical), so ⏰ — and the whole Reminder row —
