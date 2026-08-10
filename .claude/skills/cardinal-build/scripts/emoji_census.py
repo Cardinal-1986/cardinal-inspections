@@ -61,6 +61,28 @@ SKIP_BLOCKS = {
     'cr-cl-script',      # the CHANGELOG — historical record, Theo settled it
 }
 
+
+def in_option(src, i):
+    """True if offset i sits inside an <option> element.
+
+    An <option> CANNOT contain markup, so an SVG icon is impossible there —
+    the only alternatives are keeping the emoji or deleting it outright.
+    Theo settled that on 10 Aug 2026, asked about the four condition dots in
+    ck_ventcond: **"Keep them as emoji."**  The same physics covers the other
+    eleven (apKind, apptKind), so every <option> emoji is out of scope for the
+    sweep and must be left exactly as it is.
+
+    This lives in the instrument, not only in a doc, because the instrument is
+    what a later sweep actually reads to pick targets.
+    """
+    o = src.rfind('<option', 0, i)
+    if o == -1:
+        return False
+    if src.rfind('</option>', 0, i) > o:
+        return False
+    nxt = src.find('</option>', i)
+    return nxt != -1 and nxt - i < 400
+
 # NEVER TOUCH.  Not emoji at all — legal marks on brand names.  A sweep that
 # treats ® as a sticker strips the registered-trademark symbol off "Owens
 # Corning®" and "Duration®", which OC_BRAND_RULES.md governs and which Cardinal
@@ -221,7 +243,9 @@ def census(path):
         mask = comment_mask(text) if kind == 'script' else None
         for off, ln, o, enc in find_all(text):
             in_comment = bool(mask[off]) if mask is not None else False
-            if o in BRAND:
+            if in_option(src, st + off):
+                bucket = 'option'
+            elif o in BRAND:
                 bucket = 'brand'
             elif o in FUNCTIONAL:
                 bucket = 'functional'
@@ -278,6 +302,8 @@ def main():
                  and not r['comment'] and not r['skip'])
     n_brand = sum(1 for r in rows if r['bucket'] == 'brand'
                   and not r['comment'] and not r['skip'])
+    n_opt = sum(1 for r in rows if r['bucket'] == 'option'
+                and not r['comment'] and not r['skip'])
     n_rev = sum(1 for r in rows if r['bucket'] == 'review'
                 and not r['comment'] and not r['skip'])
 
@@ -287,6 +313,7 @@ def main():
     print(f"  - inside {'/'.join(SKIP_BLOCKS)} .................. {n_skip:>5}  excluded (historical record)")
     print(f"  - functional UI glyphs (checkbox/arrow/…) .. {n_func:>5}  counted apart")
     print(f"  - ®/™/© brand marks ........................ {n_brand:>5}  NEVER TOUCH (OC_BRAND_RULES)")
+    print(f"  - inside <option> .......................... {n_opt:>5}  KEEP (Theo, 10 Aug: \"Keep them as emoji\")")
     print(f"  - unclassified, NEEDS A HUMAN CALL ......... {n_rev:>5}  see --char")
     print(f"  {'=' * 52}")
     print(f"  IN SCOPE FOR THE SWEEP ..................... {len(scope):>5}")

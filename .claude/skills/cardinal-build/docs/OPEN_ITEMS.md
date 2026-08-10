@@ -2418,10 +2418,15 @@ pipeline-stage chips (690) and the Assigned To strip beside them (691).
    `(markup)` (~296) and the anonymous block-1 script (124). ⚠️ **90 distinct
    characters remain in the markup** — that is 90 glyph decisions, so it wants
    splitting into coherent menus/screens rather than one sweep.
-   ⚠️ **Four `<option>` dots (🟢🟡🟠🔴 in `ck_ventcond`) CANNOT be converted** —
-   an `<option>` cannot contain markup, so an SVG is impossible there. They
-   either stay as emoji or the colour moves out of the option text entirely.
-   That is a design decision for Theo, not a sweep item.
+   ✅ **SETTLED 10 Aug, Theo, verbatim: "Keep them as emoji."** Asked about the
+   four condition dots (🟢🟡🟠🔴) in `ck_ventcond`. An `<option>` cannot contain
+   markup, so an SVG is impossible there — the only choices were keep or
+   delete, and he chose keep. **The same physics covers all 17 `<option>`
+   emoji** (`ck_ventcond`, `apKind`, `apptKind`), so every one of them is
+   permanently out of scope and must be left exactly as it is.
+   **The exclusion lives in `scripts/emoji_census.py`, not only here**, because
+   the instrument is what a later sweep actually reads to pick targets. Do not
+   re-open this.
    ⚠️ **Count with `scripts/emoji_census.py`, never a grep.** The old "533"
    missed the JS `\uD83D\uDD28` surrogate-escape form, which is two thirds of
    all hits, and had no bucket for the **46 ® marks on Owens Corning names** —
