@@ -17,11 +17,28 @@
    1. prove the three styles actually lay out differently above 820px, and
    2. prove the PHONE IS UNTOUCHED — pixel-identical across all three styles
       and against the build-617 baseline. */
-const { chromium } = require('/tmp/claude-0/-home-user-cardinal-inspections/f4548c15-472d-5932-800a-11c798b9e589/scratchpad/node_modules/playwright-core');
+/* FIXED 675 — was a hardcoded absolute path into the writing session's own
+   scratchpad, which made this script unrunnable in every later session.
+   Resolve through NODE_PATH like the other nine Chromium scripts.        */
+const { chromium } = require('playwright-core');
 const fs = require('fs'), path = require('path'), crypto = require('crypto');
 
-const SP   = '/tmp/claude-0/-home-user-cardinal-inspections/f4548c15-472d-5932-800a-11c798b9e589/scratchpad';
+/* 675: this was a bare path into the writing session's scratchpad, so the
+   script died on a readFileSync stack trace in every later session. It needs
+   TWO fixtures that were never committed — rows616.json (the colour rows as
+   they stood at 616) and final/*.jpg (the cover images). Point CR_OCC_FIXTURES
+   at a directory holding both, or accept that this 618 audit cannot be re-run
+   as-is. Saying that out loud beats a stack trace that reads like a crash. */
+const SP   = process.env.CR_OCC_FIXTURES || '';
 const html = fs.readFileSync('/home/user/cardinal-inspections/index.html', 'utf8');
+if (!SP || !fs.existsSync(SP + '/rows616.json') || !fs.existsSync(SP + '/final')) {
+  console.log('audit_contrast: NOT RUN — the 616 colour fixtures are missing.');
+  console.log('  needs  $CR_OCC_FIXTURES/rows616.json  and  $CR_OCC_FIXTURES/final/*.jpg');
+  console.log('  (they lived in the scratchpad of the session that wrote this and were');
+  console.log('   never committed. harness_colors.js and harness_occhead.js cover this');
+  console.log('   surface from the shipped artifact and both run today.)');
+  process.exit(2);
+}
 const slice = (tag, id) => {
   const i = html.indexOf(`<${tag} id="${id}">`);
   return html.slice(html.indexOf('>', i) + 1, html.indexOf(`</${tag}>`, i));

@@ -3223,3 +3223,39 @@ row labelled *(combined, as reported)*.
 the 9/12 area is steep — both are supplement lines the predominant pitch hides.
 ⚠ **The siding keys name Hover's actual table and column.** A real report offers
 four "siding area" totals differing by ~500 ft²; the prompt must say which.
+
+---
+
+### 675 — the insurance hub leads with Insurance Clients
+
+`render()` in the Cardinal Claims hub (`#cardinalTruthView`). Theo's ask,
+verbatim: *"The insurance client list is down at the bottom and should be at the
+top. Can we swap the chase list for the insurance client button?"*
+
+| | before (674) | after (675) |
+|---|---|---|
+| directly under the figures | the **chase list**, usually empty | **Insurance Clients**, full width, with the claim count |
+| between *This week* and *Tools* | — | the **chase list** |
+| in the Tools grid | Insurance Clients (8 tiles) | 7 tiles — the tile MOVED, it was not copied |
+
+⚠ **It is not "the top of the screen" and the PR says so.** The owed figure and
+the stat cards still come first; the button is the first thing after them, at
+606px on a 390px phone. That is what "swap the chase list for the button" means
+geometrically, and overstating it would be a claim no measurement supports.
+
+⚠ **No new component — reuse `.cr-cth-tools`.** Three declarations only:
+`.cr-cth-tools.lead{margin-top:14px}`, `.cr-cth-tools.lead{animation-delay:.14s}`
+(its entrance is pulled forward now that it sits near the top), and
+`.cr-cth-tools button.wide{grid-column:1/-1}`. `wire(host)` binds `[data-go]`
+across the whole host, so a moved button needs no rewiring.
+
+⚠ **The page is 87px taller and that is expected.** Seven tiles in a two-column
+grid still needs four rows, so removing one freed no height in Tools while the
+new full-width row added one. `render_inshub.js` bounds the growth to about one
+button row — the assertion that it "did not grow" was mine and was wrong.
+
+⚠ **Render the hub into `#cardinalTruthView > .ins-body.cr-cth`, never a bare
+div.** 21 of the hub's rules are scoped to that id, the ground among them. And
+wait ~1.4s before screenshotting: the cards enter at `opacity:0` under
+`crCthRise` with up to `.68s` of stagger, so an immediate shot is blank and looks
+like a rendering fault.

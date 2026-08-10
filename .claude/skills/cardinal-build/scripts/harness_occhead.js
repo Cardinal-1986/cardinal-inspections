@@ -14,8 +14,13 @@
    This catches a real regression: at 820px, build 625 rendered the title at
    26px in a 373px box — 2 lines, 62px tall. Build 626 renders it on one.
 
-   Usage: node harness_occhead.js [path-to-index.html] */
-const { chromium } = require('/tmp/claude-0/-home-user-cardinal-inspections/f4548c15-472d-5932-800a-11c798b9e589/scratchpad/node_modules/playwright-core');
+   Usage: NODE_PATH=<scratchpad>/node_modules node harness_occhead.js [index.html]
+
+   FIXED 675 — this line used to hardcode an absolute path into the scratchpad
+   of the session that wrote it, so the harness could never run again in any
+   other session (MODULE_NOT_FOUND). Resolve through NODE_PATH like the other
+   nine Chromium scripts. A harness that cannot run proves nothing.        */
+const { chromium } = require('playwright-core');
 const fs = require('fs');
 
 const FILE = process.argv[2] || '/home/user/cardinal-inspections/index.html';

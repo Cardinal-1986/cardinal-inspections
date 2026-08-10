@@ -13481,3 +13481,81 @@ the ROOF SUMMARY page and run through the shipped merge. Two harness bugs were
 mine: an assertion counting a call I had just renamed, and a sandbox missing
 `ftIn` — which surfaced as *"the report is filed, but its numbers could not be
 read"*, i.e. the app degrading exactly as designed while the test blamed it.
+
+---
+
+## Build 675 — Insurance Clients moves to the top of the insurance hub
+
+Theo, from his phone, with two screenshots: *"The insurance client list is down
+at the bottom and should be at the top. Can we swap the chase list for the
+insurance client button?"*
+
+He is right, and the screenshots make the case better than the code does. The
+**chase list held the best slot on the page** — directly under the figures — and
+on most days it read *"Nothing waiting on a carrier right now."* Meanwhile
+**Insurance Clients**, the button he actually reaches for, sat in the Tools grid
+eight cards down, past the pipeline, the carriers and the week.
+
+A literal swap, exactly as asked:
+
+- **Insurance Clients** is now a full-width button in `b1`, directly under the
+  stats, and it says how many claims are in there (`d.total`) instead of the
+  generic *"Every claim, searchable"*.
+- **The chase list** moved to `b3`, between *This week* and *Tools* — still above
+  the Tools grid, so a claim genuinely waiting on a carrier is not buried at the
+  end of the page; it just no longer spends the top of the screen saying nothing
+  is.
+- The old Insurance Clients tile was **removed** from the Tools grid, not
+  duplicated. Two `[data-go="clients"]` doors remain, which is what shipped
+  before: the lead button and *All claims* in the rail terminal.
+
+**No new component.** The button reuses `.cr-cth-tools`' existing grid and button
+styling — three CSS declarations in total (`.lead{margin-top}`,
+`.lead{animation-delay:.14s}` to pull its entrance forward now that it is near
+the top, and `button.wide{grid-column:1/-1}`). `wire(host)` already binds
+`[data-go]` across the whole host, so the button works wherever it sits with no
+rewiring. index.html only; no migration, no API change.
+
+**One honest cost, measured rather than hidden: the page is 87px taller.** Seven
+tiles in a two-column grid still needs four rows, so moving one tile out of Tools
+freed no height there, while the new full-width row adds one. The harness asserts
+the growth is bounded to roughly one button row — proof nothing was duplicated.
+
+### `render_inshub.js` — a positional differential, not a claim
+
+New Chromium render, 18 assertions across four viewports, with the **previous
+artifact rendered by the same code path at the same width** so "it moved up" is a
+measurement: 674 put the chase list at **641px**; 675 puts the button at
+**606px** and the chase list at **1577px**, with the stats above the swap
+unmoved. The template is sliced out of the artifact rather than retyped, so
+pointing it at 674 genuinely tests 674 — and it does go red there.
+
+**Three of my own harness bugs, worth recording because two are new shapes:**
+
+1. An assertion that the page **did not grow**. The premise was wrong (see the
+   87px above), not the app. Replaced with a bounded, named measurement.
+2. The render mounted into a bare `<div id="host">` — but **21 of the hub's rules
+   are scoped `#cardinalTruthView .cr-cth-…`**, including the one that paints the
+   ground. The picture was not the app's. It now renders into the real
+   `#cardinalTruthView > .ins-body.cr-cth` shape.
+3. The first screenshots were **blank above the pipeline**, which read as a
+   rendering fault. The hub's cards enter at `opacity:0` under `crCthRise` with
+   up to `.68s` of stagger; the shot was taken before it settled. It now waits.
+
+Also fixed here, both pre-existing and neither caused by 675: **`harness_occhead.js`
+and `audit_contrast.js` each hardcoded an absolute `require()` path into the
+scratchpad of the session that wrote them**, so both died with `MODULE_NOT_FOUND`
+in every later session. Resolved through `NODE_PATH` like the other nine Chromium
+scripts; `harness_occhead` is green again at 42 assertions. `audit_contrast` also
+needs two fixtures (`rows616.json`, `final/*.jpg`) that were never committed — it
+now says so in one sentence and exits 2 instead of throwing a stack trace.
+
+⚠ **A false red of mine, recorded so the next sweep does not repeat it:**
+`harness_pay.js` came back red across the whole sweep. Its own header says *"Run
+with `TZ=America/New_York`"* — the container is UTC, and the assertion in question
+is the **control** proving the naive date parse really would misread the day in a
+negative-offset zone. Nothing was wrong with the app or the harness; the sweep was
+run without the documented environment. Same for `harness_672`/`harness_674`,
+which correctly **refuse to skip** their differential tests when the previous
+artifact is not passed as argv — that refusal is by design and reads as a failure
+only if you forget to supply it.
