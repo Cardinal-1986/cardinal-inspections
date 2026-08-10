@@ -2067,7 +2067,13 @@ body.restoring #restoreVeil{display:flex;}
   font:800 9.5px ui-monospace,Menlo,monospace;border-radius:999px;padding:1px 5px;display:none;}
 .ljico .bdg.show{display:block;}
 .ljctl .right{margin-left:auto;display:flex;gap:8px;}
-.ljcols{display:grid;grid-template-columns:1fr;gap:14px;align-items:start;}
+/* 696: minmax(0,1fr), NOT 1fr. `1fr` is `minmax(auto,1fr)` and that auto
+   minimum is the item's max-content — which since 690 includes a horizontal
+   chip row laid out unwrapped, 869px of it. The track grew to fit and took
+   the whole card list off the side of a 393px screen. Pairs with min-width:0
+   on .ljresults below; same two-part fix as #crewsView .crw-wrap. */
+.ljcols{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start;}
+.ljresults{min-width:0;}
 .ljrail{display:none;}
 /* 690: the stage strip. One scrolling row, so it costs a single line of height;
    the dot carries the stage's own settled colour (LJ_SOLID) rather than tinting the
@@ -2077,7 +2083,7 @@ body.restoring #restoreVeil{display:flex;}
 .ljglbl{font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
   color:var(--rbe-mute,#9aa0a8);margin:8px 0 5px;}
 .ljgrp:first-of-type .ljglbl{margin-top:0;}
-.ljchips{display:flex;gap:7px;overflow-x:auto;padding:0 0 9px;margin-bottom:2px;
+.ljchips{display:flex;min-width:0;max-width:100%;gap:7px;overflow-x:auto;padding:0 0 9px;margin-bottom:2px;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .ljchips::-webkit-scrollbar{display:none;}
 .ljchip{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:18px;
@@ -3361,7 +3367,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 695 &#8212; The Tools menu is drawn, not emoji</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 696 &#8212; The leads list fits the screen again</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37417,6 +37423,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:696, d:'2026-08-10', t:'The leads list fits the screen again',
+s:'The filter chips added a few builds ago were making the whole results column wider than the phone, so the job names ran off the right edge instead of wrapping onto a second line. The column now stays inside the screen and the chip rows scroll sideways on their own. My fault, introduced with the chips.' },
 { b:695, d:'2026-08-10', t:'The Tools menu is drawn, not emoji',
 s:'All fourteen rows of the Tools dropdown now use drawn icons instead of emoji. Four new ones were drawn for it: a pulse line for Self Check, a sparkle for What\u2019s New, a map pin for Field Walkthrough and a flask for iTel Lab Results. The rest reuse icons the app already had.' },
 { b:694, d:'2026-08-10', t:'The light/dark switch is back where it went missing',
