@@ -3092,3 +3092,31 @@ the pin. The Desk loads the claim's latest `itel_lab_reports` row and passes
 a one-line summary to analyze; the model references the control number, never
 re-derives the report. Hover note: `/api/hover` is the SIDING order flow; its
 numbers do NOT reach `checklist.meas` (Roofr's do).
+
+**670 — Code authority (`code_letters`, the Supplement Desk).** Building-official
+letters, filed by **jurisdiction rather than claim**, so one letter answers
+every future job in that town. Answering Theo's second question is what shaped
+it: **Ohio has ONE residential code** — the RCO is adopted statewide and
+administered by local departments, so a city/county letter is *never a second
+citation*; it is proof of how the state section will be **enforced** at that
+address. Hence `rco_sections` on every row (the state sections the letter
+stands behind) and `local_amendment` expected NULL.
+
+`holding` is the official's own sentence **verbatim** — the form refuses to
+file without it, same reason `itel_lab_reports.status_sentence` is kept whole.
+RLS mirrors iTel: any signed-in user reads, `is_cardinal_admin()` writes. Scans
+go to `photos/code-letters/`. `insurance_supplements.code_letter_ids uuid[]`
+records which letters rode along with a filing (filing-level, not per item).
+
+**No new pack entry** — `tear_off` (RCO R908.3) already IS the cedar-shake
+ground; a letter is evidence *beside* a ground. The seam copied is iTel's:
+load, show on the card, hand a bounded summary (6 letters max, holdings sliced
+to 400) to the analyst. The model may NAME a letter, never quote code from one;
+the exhibit phrase is composed server-side and copied verbatim, like the 667
+citations.
+
+⚠ **`placeOf()`/`clHere()` SORT the list — they never filter and never tick.**
+The addresses misspell their own city (a live row reads `Brookville, OH 45309,
+USA, Brookeville, OH 45309`) and a neighbouring official is persuasive where he
+is not binding. Statewide letters always mark, and read **"applies here"**, not
+"this jurisdiction" — a render caught that overclaim; the assertions could not.

@@ -12970,3 +12970,88 @@ drives the real route and asserts the iTel line reaches the prompt with its
 control number — and that NO iTel mention appears when none is on file.
 Negative control on the 668 artifacts: 15 red. 667 (27) and 668 (29) re-run
 green.
+
+---
+
+## Build 670 — Code authority: building-official letters, kept by jurisdiction
+*10 Aug 2026 · `code_letters.sql` (applied via MCP first) + `api/supplement.js`
++ `supplement.html` + one library card in `index.html`*
+
+Theo, after the Gunn denial: *"Can you add building official letters as they
+come? Also, would city/county codes do the same?"*
+
+**The second question decided the shape of the first, and that is the whole
+build.** Ohio's Residential Code is adopted statewide by the Board of Building
+Standards; a city or county does **not** write a competing roofing code — it
+runs the department that issues the permit and inspects the work. So a
+building official's letter is **never a second citation**. It is evidence of
+how the RCO section will be *enforced at this address*, which is the thing an
+adjuster cannot argue with, because a carrier cannot fund an installation the
+county will red-tag.
+
+Three consequences fell straight out of that, and each is written into the
+schema rather than left as a convention:
+
+1. **`rco_sections` on every row.** A letter is indexed to the STATE sections
+   it stands behind. `local_amendment` exists for the genuine exception and is
+   expected NULL.
+2. **A register keyed by JURISDICTION, not by claim.** The Brookville letter
+   that wins the Brookville job wins every Brookville job after it. Same
+   posture as `itel_lab_reports`: evidence of record, reusable, outliving the
+   claim that paid for it. **This is the answer to "as they come"** — they
+   accumulate into an asset.
+3. **`holding` is the official's own sentence, verbatim.** Same reason
+   `itel_lab_reports.status_sentence` is kept whole: it is what the adjuster
+   reads, and a paraphrase is worth nothing. The form refuses to file without
+   it.
+
+**No new pack entry, deliberately.** `tear_off` (RCO R908.3 — recover is not
+permitted over two applications or a water-soaked/deteriorated covering)
+already IS the cedar-shake ground. A letter is *evidence beside* a ground, not
+a ground of its own; adding `code_letter` to the pack would have been a new
+mechanism beside an existing one. The seam copied instead is **iTel's** (669):
+load it, show it on the card, hand a bounded summary to the analyst.
+
+**Matching is a sort hint and nothing else.** `placeOf()` reads the city out of
+the free-text address; `clHere()` marks the row. It never filters and never
+ticks. Two real reasons, both in the code comment: the addresses misspell their
+own city (one live row reads `Brookville, OH 45309, USA, Brookeville, OH
+45309`), and a neighbouring county's official is persuasive exactly where he is
+not binding. What rides along with a filing is a person's choice — the 666 rule.
+
+**Prompt discipline held.** The model may NAME a letter; it may not quote code
+out of one. The exhibit phrase is composed server-side (`exhibitLabel`) and
+copied verbatim, the same structural move as the 667 citations. Bounded at 6
+letters, holdings sliced to 400 chars.
+
+**Gates.** `check_build.py` green, stamp 669 → 670. `harness_670` (55) —
+`placeOf()` executed against seven real production address shapes; the
+register **rendered in jsdom** to prove it sorts without filtering and arrives
+un-ticked; the real route driven for analyze and draft, with and without
+letters, plus hostile-payload bounds. Negative control on the 669 artifacts:
+26 red, no crash. Full sweep 669→661 green; 27 `api/*.js` parse; all three
+standalone pages' inline scripts parse.
+
+**`render_codeletters.js` (new, Chromium, 4 views) earned its place twice.**
+It first went red on **my own harness bug** — the Desk themes on `data-theme`,
+not `data-mode`, so both "light" runs were dark runs; and I compared two rows
+that were *both* legitimately marked. Test wrong, app right. Then, once fixed,
+the picture caught something 55 green assertions could not: a **statewide**
+letter was labelled *"this jurisdiction"*, which reads as though it were
+written for that town. Now `applies here` for state-level, `this jurisdiction`
+for city/county — and the render asserts the overclaim, proven red against the
+old wording. Same class as the 628 amber bar.
+
+**Two contrast fixes, computed not eyeballed.** `.cl .meta` moved from
+`--sd-ink3` (3.57:1 dark / 3.58:1 light — under the 4.5 floor for 11.5px text)
+to `--sd-ink2` (6.53 / 5.00). And `--sd-ok` has no light twin, so the match
+border computed **2.59:1 on paper**, under the 3.0 non-text floor; the light
+rule uses **#358045 (4.15:1)** — *the same green deepened*, not a hue swap, the
+557 obsidian-tile principle. The row also carries the match in words, so colour
+is never the only signal.
+
+**SQL ran BEFORE the code**, applied via MCP and verified live: columns,
+both policies (`select` = any authenticated, `for all` = `is_cardinal_admin()`),
+the `level` CHECK proven to fire, and the table left at 0 rows. Plus
+`insurance_supplements.code_letter_ids uuid[]` — filing-level, because an
+official's position on re-cover backs every item that turns on the tear-off.

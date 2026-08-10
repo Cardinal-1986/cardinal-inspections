@@ -3291,7 +3291,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings">&#9881;&#65039; Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 669 &#8212; The Desk learns repairability &#8212; brittle test, ITEL and the appearance rule &#8212; and reads the claim&#8217;s iTel report itself</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 670 &#8212; Building-official letters, kept by jurisdiction: filed once, they answer every job in that town from then on</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -6015,6 +6015,24 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </div>
         <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Per RCO R908.3, roof recover (overlay) is not permitted where the existing roof has two or more applications of roof covering, or where the existing covering is water-soaked or deteriorated. This property currently has [X existing layers / a deteriorated first layer, documented in attached photos]. A recover is not code-compliant on this roof. Please update the approved scope from recover to full tear-off, adding [$X for tear-off labor and disposal].&rdquo;</i></div>
         <div class="rl-tags"><span>2+ layers</span><span>overlay prohibited</span></div>
+      </div>
+
+      <div class="rl-card" data-rltags="building official letter jurisdiction permit code enforcement red tag ahj">
+        <h3>Building Official Letter &mdash; the Jurisdiction&rsquo;s Own Position</h3>
+        <span class="rl-cite">RCO R908.3</span>
+        <span class="rl-cite rl-gold">Building Official</span>
+        <p>The adjuster answers a code argument with &ldquo;insurance does not owe to bring undamaged property up to code.&rdquo; A letter from the building official moves the question off what the code <i>requires</i> and onto what the jurisdiction <i>will permit</i> &mdash; and a carrier cannot fund an installation the county will red-tag.</p>
+        <p><b>Ohio has one residential code.</b> The RCO is adopted statewide by the Board of Building Standards; a city or county does not write a competing roofing code, it runs the department that issues the permit and inspects the work. So the letter is <b>not a second citation</b> &mdash; keep citing the RCO section, and attach the letter as evidence of how that section lands at this address. Ask about a genuine local amendment or added administrative requirement, but expect none.</p>
+        <div class="rl-doc"><b>How to get one:</b>
+          <ul>
+            <li>Call the department that would issue the permit &mdash; city first, county building regulations if the address is unincorporated.</li>
+            <li>Describe the assembly, not the claim: layers, substrate condition, what is proposed. Send the attic and substrate photos.</li>
+            <li>Ask for it in writing on letterhead, signed, with the official&rsquo;s title. An email from a named official at a .gov address also holds.</li>
+            <li>File it in the Supplement Desk under Code authority. Keyed to the jurisdiction, it answers every future job there &mdash; you only get it once.</li>
+          </ul>
+        </div>
+        <div class="rl-use"><b>Sample wording:</b><br><i>&ldquo;Enclosed is the letter of the [jurisdiction] building official, [name, title], dated [date], confirming that a permit will not issue for [the proposed installation] at this address. This is not a request to upgrade undamaged property: the [approved line item] your estimate already includes cannot lawfully be installed as scoped. Per RCO R908.3 the existing covering must be removed. Please revise the approved scope accordingly.&rdquo;</i></div>
+        <div class="rl-tags"><span>building official</span><span>permit</span><span>enforcement</span></div>
       </div>
 
       <div class="rl-groupsep">Matching / Slope Replacement</div>
@@ -36766,6 +36784,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:670, d:'2026-08-10', t:'Code authority \u2014 building-official letters, filed by jurisdiction',
+s:'When an adjuster answers a code argument with \u201Cwe don\u2019t owe to bring undamaged property up to code,\u201D the letter that ends it comes from the building official \u2014 the office that issues the permit. Those letters are now kept: the Supplement Desk has a Code authority card where you file one with the official\u2019s own sentence verbatim, the sections it enforces and a scan. It is filed against the JURISDICTION, not the claim, so the letter you get for one Brookville job answers every Brookville job after it. Letters for the property\u2019s own town sort to the top and are marked, but nothing attaches itself \u2014 you tick what rides along. The analysis reads the ticked letters and names them in its reasoning, and the drafted letter lists them as enclosed exhibits. On the second half of the question: Ohio has ONE residential code, adopted statewide and administered locally, so a city or county letter is never a second citation \u2014 it is proof of how the RCO section will be enforced at that address, which is why each letter records the state sections it stands behind.'},
 { b:669, d:'2026-08-10', t:'Repairability joins the supplement playbook, with iTel as its evidence',
 s:'Theo: we supplement a lot on repairability, discontinued shingle or siding, and reasonable appearance \u2014 with ITEL when needed. Discontinued and appearance were already in the Desk\u2019s playbook; repairability now is too: a new Supplement Template (brittle test, manufacturer guidance, the Ohio appearance rule) that the Desk\u2019s analyst can cite. And the Desk now reads the claim\u2019s own iTel lab report \u2014 verdict, matching product, mismatch notes \u2014 shows it on the claim card, and hands it to the analysis so a no-match finding arrives with its control number already attached.'},
 { b:668, d:'2026-08-10', t:'The Supplement Desk \u2014 the letter writes itself, the code citations are ours',

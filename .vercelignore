@@ -61,4 +61,5 @@ spark/
 # supplement.html DELIBERATELY SHIPS (build 668) — the Supplement Desk,
 # the studio.html pattern: served publicly, gated by its own Supabase
 # sign-in + an is_cardinal_admin() check, and api/supplement.js enforces
-# admin server-side. supplement_desk.sql is covered by the *.sql blanket.
+# admin server-side. supplement_desk.sql and code_letters.sql (670) are both
+# covered by the *.sql blanket — neither is ever served.

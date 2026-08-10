@@ -140,6 +140,32 @@
   .btn.ghost{ background:none; border:1px solid var(--sd-line); color:var(--sd-ink); font-weight:600; }
   .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
   .note{ font-size:12px; color:var(--sd-ink3); margin-top:8px; }
+  .cl{ display:flex; gap:10px; align-items:flex-start; border:1px solid var(--sd-line);
+       border-radius:8px; padding:11px; margin-bottom:8px; background:var(--sd-panel2); }
+  .cl input[type=checkbox]{ width:19px; height:19px; margin-top:2px; accent-color:var(--sd-red); }
+  .cl .body{ flex:1; min-width:0; }
+  .cl .ttl{ font-weight:700; font-size:13.5px; }
+  .cl .hold{ color:var(--sd-ink2); font-size:12.5px; margin:5px 0 6px; }
+  /* ink2, not ink3: this line is 11.5px and carries the official's name, the
+     department and the sections. ink3 computes 3.57:1 dark / 3.58:1 light,
+     under the 4.5 floor for text that size. ink2 is 6.53 / 5.00. */
+  .cl .meta{ color:var(--sd-ink2); font-size:11.5px; }
+  .cl.here{ border-color:var(--sd-ok); }
+  /* --sd-ok has no light twin, and the dark green computes 2.59:1 on paper —
+     under the 3.0 floor for a non-text indicator. Same green DEEPENED (4.15:1),
+     not a hue swap: a different colour would read as a different state. The
+     row also says "this jurisdiction" in words, so the border is never the
+     only carrier. */
+  :root[data-theme="light"] .cl.here{ border-color:#358045; }
+  .clf{ display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-top:14px;
+        border-top:1px solid var(--sd-line); padding-top:14px; }
+  .clf label{ display:block; font-size:10.5px; letter-spacing:1px; text-transform:uppercase;
+        color:var(--sd-ink3); margin-bottom:4px; }
+  .clf input, .clf select, .clf textarea{ width:100%; background:var(--sd-sunk);
+        border:1px solid var(--sd-line); color:var(--sd-ink); border-radius:6px; padding:8px 10px;
+        font:inherit; font-size:13px; }
+  .clf input:focus, .clf select:focus, .clf textarea:focus{ outline:none; border-color:var(--sd-red); }
+  .clf .wide{ grid-column:1/-1; }
   .warnbar{ background:rgba(232,163,61,.12); border:1px solid var(--sd-warn); color:var(--sd-warn);
     border-radius:8px; padding:10px 12px; font-size:12.5px; margin:0 0 10px; display:none; }
 
@@ -236,6 +262,43 @@
           <button class="btn" id="analyzeBtn" disabled>Analyze the scope</button>
         </div>
         <div class="note" id="analyzeNote"></div>
+      </div>
+
+      <div class="sd-card" id="codeCard">
+        <h2>Code authority</h2>
+        <p class="sub">Building-official letters, kept by jurisdiction. Ohio has <b>one</b> residential code &mdash; a city or county does not write its own, it runs the office that issues the permit. So a letter is not a second citation; it is proof of how the RCO section lands at this address, and a carrier cannot fund an installation the jurisdiction will not permit. A letter filed here answers every future job in that jurisdiction.</p>
+        <div id="codeList"><div class="sd-empty">Looking for letters&hellip;</div></div>
+        <div class="note" id="codeNote"></div>
+        <div class="btnrow">
+          <button class="btn ghost" id="clAddBtn">+ File a letter</button>
+        </div>
+        <div id="clForm" style="display:none;">
+          <div class="clf">
+            <div><label for="clJuris">Jurisdiction</label><input id="clJuris" placeholder="Brookville"></div>
+            <div><label for="clLevel">Level</label><select id="clLevel">
+              <option value="city">City / village / township</option>
+              <option value="county">County</option>
+              <option value="state">State of Ohio</option>
+            </select></div>
+            <div><label for="clDate">Letter date</label><input id="clDate" type="date"></div>
+            <div><label for="clOfficial">Official</label><input id="clOfficial" placeholder="Full name"></div>
+            <div><label for="clTitle">Title</label><input id="clTitle" placeholder="Chief Building Official"></div>
+            <div><label for="clDept">Department</label><input id="clDept" placeholder="Division of Building Inspection"></div>
+            <div><label for="clContact">Phone / email</label><input id="clContact" placeholder="As printed on the letter"></div>
+            <div><label for="clApplies">Also covers (comma-separated)</label><input id="clApplies" placeholder="Brookeville, Perry Twp"></div>
+            <div class="wide"><label for="clTopic">Topic</label><input id="clTopic" placeholder="Re-cover over cedar shake will not be permitted"></div>
+            <div class="wide"><label for="clHolding">The letter&rsquo;s own sentence &mdash; verbatim, never a paraphrase</label><textarea id="clHolding" rows="3" placeholder="Paste the sentence the official actually wrote. It is what the adjuster reads."></textarea></div>
+            <div><label for="clSections">RCO sections it enforces (comma-separated)</label><input id="clSections" placeholder="RCO R908.3, RCO R905.1"></div>
+            <div><label for="clAmend">Local amendment, if any</label><input id="clAmend" placeholder="Usually blank &mdash; Ohio is one code"></div>
+            <div><label for="clUrl">Source URL</label><input id="clUrl" placeholder="If it lives on the city&rsquo;s site"></div>
+            <div><label for="clFile">Scan of the letter</label><input id="clFile" type="file" accept="application/pdf,image/*"></div>
+          </div>
+          <div class="btnrow">
+            <button class="btn" id="clSaveBtn">File this letter</button>
+            <button class="btn ghost" id="clCancelBtn">Cancel</button>
+          </div>
+          <div class="note" id="clNote">Filing it records you as the person vouching that this is a real letter from that office.</div>
+        </div>
       </div>
 
       <div class="sd-card" id="gapsCard" style="display:none;">
@@ -420,6 +483,7 @@ async function openDesk(claimId){
   loadFilings(c.id);
   loadPhotos(c.project_id);
   loadItel(c.id);
+  loadCodeLetters();
 }
 function kv(label, val){ return '<div class="cell"><b>' + esc(label) + '</b><span>' + val + '</span></div>'; }
 
@@ -441,6 +505,139 @@ async function loadItel(claimId){
     }
   }catch(_){}
 }
+
+/* ── 670: the Code Authority register ─────────────────────────────────────
+   Building-official letters, keyed by JURISDICTION rather than by claim,
+   because the Brookville letter that wins the Brookville job wins every
+   Brookville job after it.
+
+   The address parse below only SORTS this list. It never filters and never
+   ticks anything, for two reasons that are both real: these addresses misspell
+   their own city (one reads "Brookville, OH 45309, USA, Brookeville, OH
+   45309"), and a neighbouring county's building official is persuasive exactly
+   where he is not binding. What rides along with a filing is a person's
+   choice — the 666 rule, nothing pre-approved over judgment. */
+function placeOf(addr){
+  var m = String(addr || '').match(/,\s*([A-Za-z][A-Za-z .'-]*[A-Za-z])\s*,\s*(?:OH|Ohio)\b/i);
+  return m ? m[1].trim() : '';
+}
+function normPlace(s){ return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
+function clHere(l){
+  if(l.level === 'state') return true;
+  var p = normPlace(S.place);
+  if(!p) return false;
+  return [l.jurisdiction].concat(l.applies_to || []).map(normPlace).indexOf(p) !== -1;
+}
+async function loadCodeLetters(){
+  S.codeLetters = []; S.clPicked = S.clPicked || {};
+  S.place = placeOf((S.claim && S.claim.property_address) || (S.project && S.project.address) || '');
+  try{
+    var r = await sb.from('code_letters')
+      .select('id, jurisdiction, level, applies_to, official_name, official_title, department, contact, letter_date, topic, holding, rco_sections, local_amendment, storage_path, source_url')
+      .order('letter_date', { ascending: false, nullsFirst: false }).limit(200);
+    if(!r.error) S.codeLetters = r.data || [];
+  }catch(_){}
+  renderCodeLetters();
+}
+function renderCodeLetters(){
+  var rows = S.codeLetters.slice().sort(function(a, b){
+    return (clHere(b) ? 1 : 0) - (clHere(a) ? 1 : 0) ||
+      String(b.letter_date || '').localeCompare(String(a.letter_date || ''));
+  });
+  el('codeList').innerHTML = rows.length ? rows.map(function(l){
+    var who = [l.official_name, l.official_title].filter(Boolean).join(', ');
+    var meta = [l.jurisdiction + (l.level === 'county' ? ' County' : l.level === 'state' ? ' (statewide)' : ''),
+                who, l.department, l.letter_date ? fmtDate(l.letter_date) : ''].filter(Boolean).join(' · ');
+    return '<label class="cl' + (clHere(l) ? ' here' : '') + '" data-cl="' + esc(l.id) + '">' +
+      '<input type="checkbox"' + (S.clPicked[l.id] ? ' checked' : '') + '>' +
+      '<span class="body"><span class="ttl">' + esc(l.topic) + '</span>' +
+      '<div class="hold">&ldquo;' + esc(l.holding) + '&rdquo;</div>' +
+      '<div class="meta">' + esc(meta) +
+      ((l.rco_sections || []).length ? ' &middot; enforcing ' + esc(l.rco_sections.join(', ')) : '') +
+      (l.local_amendment ? ' &middot; local amendment: ' + esc(l.local_amendment) : '') +
+      /* a statewide letter applies here too, but calling it "this
+         jurisdiction" reads as if it were written FOR this town. A render
+         caught that; the assertions could not. */
+      (clHere(l) ? ' &middot; <b>' + (l.level === 'state' ? 'applies here' : 'this jurisdiction') +
+        '</b>' : '') + '</div></span></label>';
+  }).join('') : '<div class="sd-empty">No letters on file yet. The first one a building official gives you goes here &mdash; and from then on it answers every job in that jurisdiction.</div>';
+  el('codeList').querySelectorAll('.cl').forEach(function(row){
+    row.querySelector('input').addEventListener('change', function(e){
+      S.clPicked[row.getAttribute('data-cl')] = e.target.checked; clNote();
+    });
+  });
+  clNote();
+}
+function clSelected(){
+  return S.codeLetters.filter(function(l){ return S.clPicked[l.id]; });
+}
+function clNote(){
+  var n = clSelected().length;
+  var here = S.codeLetters.filter(clHere).length;
+  el('codeNote').textContent =
+    (S.place ? 'Property reads as ' + S.place + '. ' : 'No city could be read from the address. ') +
+    (here ? here + ' letter' + (here === 1 ? '' : 's') + ' on file for this jurisdiction. ' : '') +
+    (n ? n + ' ticked to ride along with this filing.' : 'None ticked \u2014 nothing is attached unless you tick it.');
+}
+function splitList(s){
+  return String(s || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+}
+el('clAddBtn').addEventListener('click', function(){
+  var f = el('clForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if(f.style.display === 'block' && !el('clJuris').value && S.place) el('clJuris').value = S.place;
+});
+el('clCancelBtn').addEventListener('click', function(){ el('clForm').style.display = 'none'; });
+el('clSaveBtn').addEventListener('click', async function(){
+  var v = function(id){ return (el(id).value || '').trim(); };
+  var juris = v('clJuris'), topic = v('clTopic'), holding = v('clHolding');
+  if(!juris || !topic || !holding){
+    el('clNote').textContent = 'Jurisdiction, topic and the letter\u2019s own sentence are all required \u2014 a paraphrase is not evidence.';
+    return;
+  }
+  el('clSaveBtn').disabled = true;
+  el('clNote').textContent = 'Filing\u2026';
+  try{
+    var path = null, file = el('clFile').files[0];
+    if(file){
+      path = 'code-letters/' + Date.now() + '-' + file.name.replace(/[^\w.-]+/g, '_');
+      var up = await sb.storage.from('photos').upload(path, file,
+        { contentType: file.type || 'application/octet-stream' });
+      if(up.error) throw new Error('Could not upload the scan: ' + up.error.message);
+    }
+    var applies = splitList(v('clApplies')).concat([juris])
+      .map(function(x){ return x.toLowerCase(); });
+    var r = await sb.from('code_letters').insert({
+      jurisdiction: juris,
+      level: el('clLevel').value,
+      applies_to: applies.filter(function(x, i){ return applies.indexOf(x) === i; }),
+      official_name: v('clOfficial') || null,
+      official_title: v('clTitle') || null,
+      department: v('clDept') || null,
+      contact: v('clContact') || null,
+      letter_date: v('clDate') || null,
+      topic: topic,
+      holding: holding,
+      rco_sections: splitList(v('clSections')),
+      local_amendment: v('clAmend') || null,
+      storage_path: path,
+      source_url: v('clUrl') || null,
+      /* the person filing it is the person vouching for it */
+      verified_by: (S.user && S.user.email) || null,
+      verified_at: new Date().toISOString(),
+      created_by: (S.user && S.user.email) || 'desk'
+    }).select('id').single();
+    if(r.error) throw new Error(r.error.message);
+    ['clJuris','clOfficial','clTitle','clDept','clContact','clApplies','clTopic','clHolding',
+     'clSections','clAmend','clUrl','clDate','clFile'].forEach(function(id){ el(id).value = ''; });
+    el('clForm').style.display = 'none';
+    el('clNote').textContent = 'Filing it records you as the person vouching that this is a real letter from that office.';
+    await loadCodeLetters();
+  }catch(err){
+    el('clNote').textContent = 'Could not file it: ' + (err.message || err);
+  }
+  el('clSaveBtn').disabled = false;
+});
 
 /* the scope documents — LIST without html (the 649 lesson: the payload column
    is megabytes; fetch it only for the one chosen) */
@@ -530,6 +727,7 @@ async function analyze(){
         mode: 'analyze', scope: scope,
         meas: S.meas || {},
         itel: S.itel || null,
+        code_letters: clSelected(),
         claim: { carrier: S.claim.carrier, claim_number: S.claim.claim_number },
         filing_type: el('filingType').value
       })
@@ -644,6 +842,7 @@ async function draft(){
           homeowner: S.claim.homeowner_name,
           address: S.claim.property_address || (S.project && S.project.address) || ''
         },
+        code_letters: clSelected(),
         items: items.map(function(g){ return { id: g.id, item: g.item, why: g.why, pack_id: g.pack_id, qty: g.qty, unit: g.unit }; })
       })
     });
@@ -696,6 +895,7 @@ async function fileSupplement(){
     letter_html: letterRaw(),               /* tokens, never URLs */
     scope_ref: S.scopeDoc ? { report_row_id: S.scopeDoc.id, name: S.scopeDoc.name, size: S.scopeDoc.size } : null,
     notes: null,
+    code_letter_ids: clSelected().map(function(l){ return l.id; }),
     created_by: (S.user && S.user.email) || 'desk'
   };
   var r = await sb.from('insurance_supplements').insert(row).select('id').single();

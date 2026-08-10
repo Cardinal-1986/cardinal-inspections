@@ -322,6 +322,29 @@ export default async function handler(req, res) {
        evidence already named. The model receives a one-line summary, never
        the report itself. */
     const itel = body.itel && typeof body.itel === 'object' ? body.itel : null;
+    /* 670: building-official letters from the code_letters register — the
+       jurisdiction's own written position on what it will permit.
+
+       Ohio's RCO is adopted statewide and enforced locally, so a letter is not
+       a competing code section: it is proof of how the state section lands at
+       this address. The model may NAME a letter; it may not quote code out of
+       one. Citations stay server-copied from the PACK, exactly as at 667. */
+    const codeLetters = (Array.isArray(body.code_letters) ? body.code_letters : [])
+      .filter(l => l && typeof l === 'object' && l.holding && l.jurisdiction)
+      .slice(0, 6)
+      .map(l => ({
+        jurisdiction: String(l.jurisdiction).slice(0, 80),
+        level: ['city', 'county', 'state'].indexOf(l.level) >= 0 ? l.level : 'city',
+        official: [l.official_name, l.official_title].filter(Boolean).join(', ').slice(0, 120),
+        date: String(l.letter_date || '').slice(0, 10),
+        topic: String(l.topic || '').slice(0, 140),
+        holding: String(l.holding).slice(0, 400),
+        sections: (Array.isArray(l.rco_sections) ? l.rco_sections : []).slice(0, 6).map(String)
+      }));
+    /* the exhibit label is composed HERE and copied verbatim by the model —
+       the same structural move as the citations. */
+    const exhibitLabel = l => 'the letter of the ' + l.jurisdiction + ' building official' +
+      (l.official ? ' (' + l.official + ')' : '') + (l.date ? ', dated ' + l.date : '');
     const filingType = ['partial_denial', 'backend', 'pwi_coc'].indexOf(body.filing_type) >= 0
       ? body.filing_type : 'partial_denial';
 
@@ -355,6 +378,15 @@ export default async function handler(req, res) {
             (itel.match_product ? ', closest match: ' + String(itel.match_product) : ', no matching product listed') +
             (itel.mismatch_notes ? ', notes: ' + String(itel.mismatch_notes).slice(0, 200) : '') +
             '. Where repairability or matching applies, reference this report in the why field. ' : '') +
+          (codeLetters.length ? 'Building-official letters are ON FILE covering this work \u2014 ' +
+            'the jurisdiction\u2019s own written position on what it will permit:\n' +
+            codeLetters.map(l => '  * ' + exhibitLabel(l) + ' \u2014 ' + l.topic + ': "' +
+              l.holding + '"' + (l.sections.length ? ' (enforcing ' + l.sections.join(', ') + ')' : ''))
+              .join('\n') +
+            '\nWhere a ground is backed by one of these, say so in the why field and name the ' +
+            'jurisdiction and the official \u2014 a carrier cannot fund an installation the ' +
+            'jurisdiction will not permit. Never quote a code section out of a letter; name the ' +
+            'letter, and the system attaches the citation. ' : '') +
           'Claim: carrier ' + String(claim.carrier || '?') + ', claim # ' + String(claim.claim_number || '?') + '. ' +
           'Filing type: ' + filingType + '.\n\n' +
           'Read every line item and total in the document. For each ground that genuinely ' +
@@ -370,6 +402,8 @@ export default async function handler(req, res) {
       /* draft: no PDF, no photos — items in, letter out */
       const items = Array.isArray(body.items) ? body.items.filter(i => i && i.item) : [];
       if (!items.length) { res.status(400).json({ error: 'draft needs at least one included item' }); return; }
+      const exhibitLines = codeLetters.map(l => '- ' + exhibitLabel(l) + ' \u2014 ' + l.topic +
+        (l.sections.length ? ' (the jurisdiction enforcing ' + l.sections.join(', ') + ')' : '')).join('\n');
       const itemLines = items.map(i => {
         const entry = i.pack_id ? PACK_BY_ID[i.pack_id] : null;
         return '- ' + i.item +
@@ -393,7 +427,12 @@ export default async function handler(req, res) {
           '- Where a photo token is given, place it on its own line after that item’s ' +
           'paragraph, exactly as written — the system replaces it with the photographs.\n' +
           '- Cite ONLY the [cite: ...] strings provided, verbatim. No other section numbers.\n' +
-          '- Firm, factual, courteous. No filler.\n\n' +
+          '- Firm, factual, courteous. No filler.\n' +
+          (exhibitLines ? '- Building-official letters accompany this request as exhibits. Refer to ' +
+            'each by the exact phrase given below and state that a copy is enclosed. They are ' +
+            'evidence of how the code will be ENFORCED at this address \u2014 do not quote a code ' +
+            'section out of one, and do not present one as a citation of its own.\n' +
+            exhibitLines + '\n' : '') + '\n' +
           'Respond with ONLY raw JSON: {"subject": string, "letter_html": string}' }
       ];
       wantShape = 'letter';
