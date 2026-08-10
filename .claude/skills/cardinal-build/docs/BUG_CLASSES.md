@@ -1765,3 +1765,53 @@ artifact, not to "whatever shipped last". `harness_674`'s differential extracts
 `aerialMerge`, so it throws `aerialMerge is not defined` — a **crash**, which
 reads like a regression and is not one. `render_inshub`'s control must be 674,
 because 679 already carries 675's swap. **Read the usage line for the baseline.**
+
+---
+
+## 28 — A theming pass that fixed the cards and forgot the heading (build 681)
+
+Build 527 tokenised the Schedule Board for dark: `.bday`, `.bhead`, `.bnone`,
+`.btime`, `.bcli`, `.brow`, `.subnote` — seven selectors, each with a computed
+replacement ink, and its own comment records the ratios it was repairing. It
+did not touch `.viewhead`, which kept the base `#1c1416` and rendered at
+**1.10:1** on the near-black ground for fifty-four builds.
+
+**Why it survived so long:** the page *looked* themed. Thirteen of fourteen
+cards were correct, so the eye reads the screen as "done" and the missing
+heading as a stylistic choice. A partial theming pass is more dangerous than
+none, because it removes the obvious tell.
+
+**And the blast radius was 15×, not 1×.** `.viewhead` is app-wide. One
+un-themed base rule was failing on every page that uses it.
+
+**Rules:**
+
+1. **When theming a screen, enumerate every text-bearing selector on it and
+   tick them off.** 527 fixed what was inside the cards and never looked above
+   them.
+2. **Prefer an existing token pair to a computed literal.** 527 chose
+   `#f08a90` by arithmetic — correct for dark, and then unconditional, so it
+   broke light. `--rbe-head` flips by itself and cannot drift.
+3. **A base rule with many users is a 15× fix or a 15× regression.** Check who
+   else uses the class, and confirm every scoped override still out-specifies
+   the base before touching it.
+
+### The neighbouring trap: the rig that agreed with nothing
+
+Two faults in the measuring instrument, both caught only because the numbers
+contradicted a photograph:
+
+- **Concatenating all 122 `<style>` blocks is not "the app's CSS."** Several of
+  them are generated PRINT/REPORT stylesheets living inside **template
+  strings**, setting `:root{--ink:#1b1b1b}` and `body{}` for an 11pt document.
+  Concatenated, a contract template restyles the app: the rig reported the page
+  ground as cream in *every* render and scored the invisible heading at
+  **17.61:1**. **Load the real document and let the browser decide what is a
+  stylesheet.**
+- **`background-color` is not the background.** `.bday` paints a
+  `linear-gradient` — a background-*image* — so an ancestor walk that reads only
+  `backgroundColor` skips the card and reports the page behind it. Collect every
+  ground an ancestor actually paints, colour **and gradient stops**, and score
+  against the worst. The naive version hid a real light-mode failure.
+
+**When a measurement disagrees with a screenshot, fix the measurement first.**
