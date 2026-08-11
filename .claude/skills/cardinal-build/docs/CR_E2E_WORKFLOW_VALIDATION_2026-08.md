@@ -214,10 +214,10 @@ pending" is impossible until permit tracking (#8) exists.
 
 Everything else the audit flagged is already built. These survived validation as genuine work:
 
-1. **Reconcile the two money ledgers** (#3 residue) — `jobFinance()` reads worksheet `paid` from checklist
-   JSON while collections/commissions read the `collections` table, so AR aging and commissions can
-   disagree. One shared value function or an on-screen provenance label. *(Highest value — it's live money
-   math that can diverge today.)*
+1. ~~**Reconcile the two money ledgers** (#3 residue)~~ — **DONE, build 721.** `jobFinance().paid` now
+   reads the `collections` table (collections-first, legacy fallback), so logging a check moves Balance
+   Due and the aging report and books the commission from one action. index.html only, no SQL. See the
+   build-721 entry in `cardinal_build_log.md`.
 2. **The new-contracts lifecycle** (#1) — write `contracts.status`/`sent_at`/`*_signed_at`, wire the
    contract editor's own Sign button, or fold the new tables back onto the proven `inspection_reports`
    signing path. Decide which of the two contract systems is the future before investing.
