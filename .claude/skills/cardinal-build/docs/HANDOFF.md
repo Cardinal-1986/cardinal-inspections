@@ -352,8 +352,13 @@ and OPEN_ITEMS, with the four-phase roadmap). **Phase 1 shipped at build 705** (
 (Work Orders repaired + host-moded — 007 closed), **Phase 4 at 709** (parity
 ported — Recorded bid line, 010 fixed — then the cream surfaces DELETED; 001
 resolved; two observers retired, census 42). **The (a) port is complete.**
-Still open as their own items: 004/005 stages+OnHold, 008 identity, 011/012
-money, 003 job-menu doors, 020's teardown half, 022 hub numbers. Recon notes for Phase 2 are
+**Build 710 then closed 004 + 005** — the stage flow moves, a parked job is
+no longer scored as a win, the estimate sync can no longer silently un-park
+one, and "Open bid" stopped opening a blank draft. Still open as their own
+items: 008 identity, 011/012 money, 003 job-menu doors, 020's teardown half,
+022 hub numbers — plus eight new findings from the 710 recon listed in
+OPEN_ITEMS (worst: a retail `#contactedBtn` live on community jobs, and
+Completed/Closed unreachable from the card). Recon notes for Phase 2 are
 in the session scratchpad's `phase2_recon.md`; two follow-ups it surfaced are
 in OPEN_ITEMS (the setters' whole-checklist write, the nbid property dropdown).
 Theo's weighting, verbatim: "This is the most important CRM because jobs could

@@ -98,8 +98,11 @@ re-litigate.)
   REMAINS for the six tiles whose destinations are shared `#tab-*` chrome —
   it cannot be deleted; what ended is the cream *community* face, and the
   suspended overview now wears the app's standard skin.
-- **Not unlocked by (a), still their own items:** 004/005 (stages, OnHold),
-  011/012 (money), 008 (partner identity), 022 (hub numbers).
+- **004 + 005 SHIPPED at build 710** (they were never about the port): the
+  card's Lead action does what it says, a parked job stops being scored as a
+  win, and the estimate sync can no longer silently un-park one. See their
+  entries below. **Still their own items:** 011/012 (money), 008 (partner
+  identity), 022 (hub numbers), 003 (job-menu doors).
 
 ---
 
@@ -150,6 +153,20 @@ to the funding partner. "Contracts" routes to the Estimates tab because build
 652's routing fix landed only on the live grid. Chromium-confirmed.
 
 ### CR-COM-004 — "Submit the bid" does not submit, and Bid Submitted is unreachable
+**✅ FIXED at build 710 (11 Aug).** Measured before the fix: **16/16 community
+jobs at Lead, 3 already past their bid due date, none ever advanced** — while
+retail moves jobs daily (6 Lead / 4 Prospect / 1 Approved / 2 Invoiced) on the
+same machinery. The Lead state now offers **"Mark it submitted"** (stamps
+`bid.submitted_at`, carries the estimate total into `submitted_amount`, then
+`setStage → Prospect`, which stamps `stage_since` so the hub's chase clock
+starts by itself), with **"Open the bid"** beside it. Two further defects found
+on the way and fixed here: `openEditor(pr.id)` was called with ONE argument
+against a documented `(project, existing)` contract, so **"Open bid" had been
+opening a BLANK draft, not the priced bid it quotes**; and cr-ess's `ORDER`
+array omitted `OnHold`, so `rank()` returned −1 and the anti-backslide guard
+could never fire for a parked job — **marking an estimate Sent silently
+un-parked it**, killing the check-back clock (`chDueIso()` only reads
+`check_back_at` while the stage is OnHold).
 *(merges L0F5 + L2F2)*
 The green button routes to `CardinalEstimates.openEditor` — the same screen as
 "Price it", "Build the bid" and "Open bid" (four labels, one action). Nothing on
@@ -158,6 +175,21 @@ setter lives on the **hidden** bid strip (001). Consistent with the DB: **all 16
 community jobs sit at `Lead`.**
 
 ### CR-COM-005 — OnHold is invisible to Community's money, stages and vocabulary
+**✅ FIXED at build 710 (11 Aug) — and the audit had the right symptom in the
+wrong function.** The hub asks "is this decided?" in THREE places, THREE ways:
+the headline `compute()` uses an allow-list (OnHold in no bucket at all — it
+vanished); **`partners()` used a deny-list — `st !== 'Lead' && st !== 'Prospect'`
+— so OnHold fell through every money branch and INTO `decided++` and `won++`.
+That is the "scored as a win", and it is the figure that actually renders**
+(the correct `compute().win` is read only by the re-render cache key). The bids
+analytics had OnHold in neither its `WON` nor `OPEN` map, so open+won+lost
+never summed to total. Now: parked money is its own `parked` figure on both the
+partner card and the hub headline (rendered only when it exists), a parked job
+gets a `parked` row instead of no row, it is **not** decided and **not** a win,
+and `OPEN` includes it. Of the four community label maps, the two outside the
+community-native screens (Client Directory, and the exported `COM_LABEL` the
+pipeline toast uses) had no OnHold row and rendered raw "OnHold" — both now say
+"Awaiting Funding".
 *(merges L2F0 + L2F6 + L4F5 — Theo's "jobs sit for a while" case)*
 Three symptoms, one hole:
 - **Money:** the hub's `compute()` and `partners()` branch on
