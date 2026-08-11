@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 709 &#8212; The old hidden Community screen is gone; the dark card is the only Community client page</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 710 &#8212; Community bids can be marked submitted, and a job parked on funding stops counting as a win</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -16970,7 +16970,12 @@ window.insStageLabel = insStageLabel;
 var CD_STAGE_LABEL = {
   retail:    { 'Closed':'Archived' },
   insurance: INS_STAGE_LABEL,
-  community: { 'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'Approved':'Awarded',
+  /* 710: 'OnHold' was missing here and in COM_LABEL, so a parked job read
+     "Awaiting Funding" on the hub and card and raw "OnHold" in the Client
+     Directory and the pipeline toast. Four copies of this map exist; making
+     them one is its own item (recorded in OPEN_ITEMS). */
+  community: { 'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'OnHold':'Awaiting Funding',
+               'Approved':'Awarded',
                'Scheduled':'Scheduled', 'Completed':'Build Complete', 'Invoiced':'Invoiced',
                'Closed':'Closed', 'Lost':'Not Awarded' }
 };
@@ -31655,6 +31660,8 @@ onChange: function(fn){ if(typeof fn === 'function') LISTENERS.push(fn); },
 var COM_LABEL = {
 'Lead':      'Bid Requested',
 'Prospect':  'Bid Submitted',
+'OnHold':    'Awaiting Funding',   /* 710: was missing — the pipeline toast
+                                      and Client Directory said raw OnHold */
 'Approved':  'Awarded',
 'Scheduled': 'Scheduled',
 'Completed': 'Build Complete',
@@ -37132,6 +37139,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:710, d:'2026-08-11', t:'Community bids move, and a parked job tells the truth',
+s:'Every community job in the app was still sitting at Bid Requested \u2014 three of them past their due date \u2014 because the button that said \u201CSubmit the bid\u201D only opened the pricing screen; the job only moved if you then marked the estimate Sent in there, which nothing told you. Marking it submitted is now its own button, and Open the bid sits beside it. Second: a job parked waiting on funding used to vanish from the partner\u2019s money and quietly count as a WIN on their win rate \u2014 a grant that takes two years was scoring as a job you won. Parked jobs now show their own figure and are counted as undecided, which is what they are. The bid stages also stop both showing as just \u201CBid\u201D, and a parked job no longer reads \u201COnHold\u201D in the client directory.' },
 { b:709, d:'2026-08-11', t:'Community: one client page, not two',
 s:'Since the dark client card arrived, an older Community page kept being built invisibly underneath it \u2014 a bid strip, partner and property rows and a work-orders box that could not be reached, plus the flash of an old cream screen when hopping between sections. That hidden page is now gone for good. Before deleting it, its one unique ability moved to the dark card: the Bid tab now shows the recorded Submitted and Awarded amounts and can log or edit the submitted figure \u2014 awarded still comes from Record the outcome, same as before. The back pill also swaps its snowflake for the same chevron every other back control uses.' },
 { b:708, d:'2026-08-11', t:'The Photo Album loads its pictures again',
@@ -42976,7 +42985,11 @@ buildScopeHtml: buildScopeHtml,
 <script id="cr-ess-script">
 (function(){
 'use strict';
-var ORDER = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
+/* 710: 'OnHold' was missing, so rank() returned -1 for a parked job and the
+   anti-backslide guard below (rank(current) >= rank(target)) could never
+   fire for it — marking an estimate Sent silently UN-PARKED the job to
+   Prospect and killed its check-back clock. Its position matches STAGES. */
+var ORDER = ['Lead','Prospect','OnHold','Approved','Scheduled','Completed','Invoiced','Closed'];
 var STATUS_STAGE = {
 sent     : 'Prospect',
 accepted : 'Approved',
@@ -48398,7 +48411,7 @@ el.onclick = function(e){ if(e.target === el) el.classList.remove('open'); };
 }
 function compute(){
 var all = projects();
-var out = 0, owed = 0, won = 0, lost = 0;
+var out = 0, owed = 0, won = 0, lost = 0, parked = 0;
 var due = [], chase = [], sched = [], inv = [];
 all.forEach(function(pr){
 var st = normStage(pr.stage), l = lead(pr), amt = bidAmt(pr);
@@ -48413,6 +48426,9 @@ chase.push({ pr:pr, d:since(ck(pr).stage_since), amt:amt });
 if(st === 'Approved') sched.push({ pr:pr, d:since(ck(pr).stage_since), amt:amt });
 if(st === 'Completed') inv.push({ pr:pr, d:since(ck(pr).stage_since), amt:amt });
 if(st === 'Invoiced') owed += amt;
+/* 710: parked money was in no figure at all. It is not "out for decision"
+   — nobody is deciding — so it gets its own, shown only when it exists. */
+if(st === 'OnHold') parked += amt;
 if(st === 'Approved' || st === 'Scheduled' || st === 'Completed' ||
 st === 'Invoiced' || st === 'Closed') won++;
 if(st === 'Lost') lost++;
@@ -48427,7 +48443,7 @@ sched.sort(function(a,b){ return (b.d||0) - (a.d||0); });
 inv.sort(function(a,b){ return (b.d||0) - (a.d||0); });
 var decided = won + lost;
 return {
-all:all, out:out, owed:owed,
+all:all, out:out, owed:owed, parked:parked,
 win: decided ? Math.round(won / decided * 100) : null,
 won:won, decided:decided,
 due:due, chase:chase, sched:sched, inv:inv,
@@ -48500,7 +48516,7 @@ var byName = {};
 projects().forEach(function(pr){
 var n = partnerOf(pr), st = normStage(pr.stage), l = lead(pr), amt = bidAmt(pr);
 var p = byName[n] || (byName[n] = {
-name:n, out:0, awarded:0, owed:0, won:0, decided:0, jobs:[], dueCount:0,
+name:n, out:0, awarded:0, owed:0, parked:0, won:0, decided:0, jobs:[], dueCount:0,
 });
 if(st === 'Lead'){
 p.out += amt; p.dueCount++;
@@ -48520,7 +48536,16 @@ p.awarded += amt; p.owed += amt;
 p.jobs.push({ pr:pr, tag:'invoiced', amt:amt, d:null });
 }
 if(st === 'Closed') p.awarded += amt;
-if(st !== 'Lead' && st !== 'Prospect'){
+/* 710 (CR-COM-005): a parked grant job used to hit NO amount branch — no
+   row, no money, invisible on this card — and then fall through the test
+   below (which asked "not Lead and not Prospect") into decided++ AND won++.
+   Two years of waiting scored as a win. It is neither decided nor money in
+   hand: it is parked, and it says so. */
+if(st === 'OnHold'){
+p.parked += amt;
+p.jobs.push({ pr:pr, tag:'parked', amt:amt, d:days(chDueIso(pr)) });
+}
+if(st !== 'Lead' && st !== 'Prospect' && st !== 'OnHold'){
 p.decided++;
 if(st !== 'Lost') p.won++;
 }
@@ -48557,7 +48582,7 @@ return list;
 function signature(){
 var d = compute();
 return [pane, query, closedStamp, metaStamp, roleOf(),
-d.out, d.owed, d.win, d.due.length, d.chase.length,
+d.out, d.owed, d.parked, d.win, d.due.length, d.chase.length,
 d.sched.length, d.inv.length, d.all.length,
 (window.cacheProjects || []).length].join('|');
 }
@@ -48661,6 +48686,7 @@ var kpi = (role === 'prod') ? '' :
 '<div class="cc-kpi">' +
 '<div><div class="k">Open bids</div><div class="v">' + d.all.length + '</div></div>' +
 '<div><div class="k">Out for decision</div><div class="v">' + usd(d.out) + '</div></div>' +
+(d.parked ? '<div><div class="k">Parked</div><div class="v">' + usd(d.parked) + '</div></div>' : '') +
 '<div><div class="k">Awarded</div><div class="v">' + usd(awarded) + '</div></div>' +
 '<div><div class="k">Due &le; 7 days</div><div class="v">' +
 d.due.filter(function(x){ return x.d != null && x.d <= 7; }).length + '</div></div>' +
@@ -49548,6 +49574,14 @@ var LABEL = {
 'Scheduled':'Scheduled', 'Completed':'Build Complete',
 'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not Awarded',
 };
+/* 710 (CR-COM-024): the pin's Stage cell is one line wide, so it used to take
+   the first word — and "Bid Requested" and "Bid Submitted" BOTH rendered as
+   "Bid". One distinct word each, rather than a truncation that lies. */
+var SHORT = {
+'Lead':'Requested', 'Prospect':'Submitted', 'OnHold':'Parked',
+'Approved':'Awarded', 'Scheduled':'Scheduled', 'Completed':'Complete',
+'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not awarded',
+};
 /* 634: the thread is the record of the JOB. capture() stamps a client error
    with whatever project happened to be open when it fired, so a stack trace was
    rendering as a thread entry beside real job notes — Theo photographed one on
@@ -49618,7 +49652,14 @@ if(a === 'edithome'){
 }
 if(a === 'estimate' || a === 'newbid' || a === 'open'){
 if(window.CardinalEstimates && window.CardinalEstimates.openEditor){
-window.CardinalEstimates.openEditor(pr.id);
+/* 710: openEditor's contract is (project, existing) — called with the id
+   alone it builds a BLANK draft, so "Open bid" has been opening an empty
+   estimate rather than the priced one it quotes. loadForProject selects '*',
+   so liveEstimate() is the full row creOpenSaved would have re-read. Only
+   'open' passes it: 'newbid' MEANS a fresh one. */
+var eOpen = (a === 'open') ? liveEstimate() : null;
+if(eOpen) window.CardinalEstimates.openEditor(pr.id, eOpen);
+else window.CardinalEstimates.openEditor(pr.id);
 }else{
 alert('Estimate builder not loaded \u2014 reload the app and retry.');
 }
@@ -49630,6 +49671,29 @@ return;
 }
 /* setStage() stamps stage_since and t_<stage>, and for 'Lost' it prompts for
    a reason from LOSS_REASONS - so the outcome is recorded, not just the flag. */
+if(a === 'submitted'){
+/* 710: the missing first step of the community flow. Reuses the SAME
+   checklist.bid.submitted_* fields the Recorded line writes (709), and
+   setStage stamps stage_since + t_Prospect, so the hub's chase clock
+   starts by itself. */
+var l710 = lead(pr);
+if(!confirm('Mark this bid SUBMITTED to ' + (l710.partner_name || 'the partner') + '?')) return;
+var b710 = bidOf(pr), e710 = liveEstimate();
+var amt710 = (b710.submitted_amount != null && b710.submitted_amount !== '')
+? b710.submitted_amount
+: (e710 && e710.total ? e710.total : '');
+var patch710 = mergeCk(pr, 'bid', {
+submitted_at     : b710.submitted_at || todayIso(),
+submitted_amount : amt710,
+});
+if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { bid: patch710 });
+await window.setStage(pr.id, 'Prospect');
+if(typeof window.auditLog === 'function'){
+try{ window.auditLog('lead', 'Bid marked submitted', pr.id); }catch(_){ }
+}
+render();
+return;
+}
 if(a === 'logsub'){
 /* 709: ported from the deleted cream bid strip — blank clears both fields
    (the strip's semantics, and mergeCk deletes empty keys by design). */
@@ -49686,7 +49750,14 @@ txt: est
 (due != null ? ' Due in ' + due + ' days.' : '')
 : 'Invited to bid' + (due != null ? ', due in ' + due + ' days' : '') +
 '. Nothing priced yet.',
-acts:[{ label: est ? 'Submit the bid' : 'Price it', how:'estimate' }] });
+/* 710 (CR-COM-004): "Submit the bid" only ever OPENED the estimate editor —
+   the stage moved solely if you then marked the estimate Sent in there, which
+   nothing said. 16 of 16 jobs sat at Lead, 3 past due. The act now does what
+   it says; the editor keeps its own door beside it. */
+acts: est
+? [{ label:'Mark it submitted', how:'submitted' },
+{ label:'Open the bid', how:'open', alt:true }]
+: [{ label:'Price it', how:'estimate' }] });
 }else if(st === 'Prospect'){
 out.push({ now:true, title:'Waiting on a decision', when:'now',
 txt:'Submitted' + (est ? ' at ' + usd(est.total) : '') +
@@ -50194,7 +50265,7 @@ mount.innerHTML =
 (!held && due != null && due <= 3 ? ' hot' : '') + '">' +
 (due == null ? '\u2014' : due + 'd') + '</div></div>' +
 '<div><div class="k">Stage</div><div class="v">' +
-esc((LABEL[st] || st || '').split(' ')[0]) + '</div></div>' +
+esc(SHORT[st] || LABEL[st] || st || '') + '</div></div>' +
 '<div><div class="k">Work</div><div class="v">' +
 esc(l.work_type || l.worktype || '\u2014') + '</div></div>' +
 '<div><div class="k b">Bill to</div><div class="v" title="' + esc(l.partner_name || '') + '">' +
@@ -51431,7 +51502,10 @@ var em = (window.currentUser && window.currentUser.email) || '';
 return (window.ADMIN_EMAILS || []).indexOf(em) !== -1;
 }
 var WON = { Approved:1, Scheduled:1, Completed:1, Invoiced:1, Closed:1 };
-var OPEN = { Lead:1, Prospect:1 };
+/* 710: OnHold was in NEITHER map, so a parked job counted toward `total`
+   and landed in no bucket — open + won + lost never summed. Parked is
+   undecided, which is what OPEN means here. */
+var OPEN = { Lead:1, Prospect:1, OnHold:1 };
 function compute(){
 var rows = (window.cacheProjects || []).filter(isComm);
 var open = [], won = [], lost = [], partners = {}, amts = [];

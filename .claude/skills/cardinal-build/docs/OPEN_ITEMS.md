@@ -2542,9 +2542,37 @@ the six shared-tab suspends remain by necessity, the snowflake is gone; two
 body observers retired, census 42). The black card is the only Community
 client page.
 
-**Still open regardless of the port:** Bid Submitted unreachable, 16 jobs at Lead
-(004) · OnHold invisible to hub money (005 — the "jobs sit" case) · Job Menu
-missing Documents (003) · money precedence (011/012) · partner identity (008).
+**004 and 005 shipped at build 710** — the stage flow moves and a parked job
+stops lying (measured before/after in the audit doc). **Still open:** Job Menu
+missing Documents (003) · money precedence (011/012) · partner identity (008) ·
+hub numbers (022).
+
+**Found by the 710 recon, NOT fixed — each its own item, worst first:**
+1. **`#contactedBtn` is a retail button live on community jobs.** It sits in
+   `.projhead` (outside `#tab-overview`), so the moment a Job-Menu tile calls
+   `suspendForTab()` it is on screen, writing `Prospect` with retail wording,
+   no confirm, no relabelling.
+2. **The card cannot reach `Completed` or `Closed` at all.** `acxAdvance`
+   (10325) is their only producer app-wide and lives on the suspended page;
+   `Scheduled` has no `threadHtml` branch, so a job put on the calendar can
+   never be taken off it from the card. Same for Reopen.
+3. **`isClosed()` marks a partner dormant when their only job is parked**
+   (`p.dueCount === 0 && !p.owed`) — and `.pc.closed` has **zero** CSS rules
+   anywhere, so the state computes, persists and renders nothing.
+4. **The second clock is behind a tap.** `chDueIso()`/`chOnHold()` are correct
+   but feed only the All-bids table, which ships collapsed; the KPI tiles and
+   every fold read `bid_due_at` directly. Neither hub nor card ever turns an
+   **overdue** check-back hot — 30 days past renders like 300 days away.
+5. **`award_cycle` is displayed on exactly one surface** (the job's own thread
+   event) — not a facet, not a sort, not a column.
+6. **"Open bids" is not open bids** — `d.all.length` counts everything
+   `projects()` returns, Lost and Closed included (022's core).
+7. **Four copies of the community label map** remain (two now complete). The
+   insurance precedent (`INS_STAGE_LABEL`, CR-AUD-014 at 655) shares one by
+   reference; doing that for community is a small build of its own.
+8. `#stageBanner`'s arrows and `#stageSel` are **dead on every CRM** (struck by
+   `#tab-overview`'s allow-list / `display:none` in markup) — the prime
+   doctrine's trap, two more victims nobody had recorded.
 
 **Photo pipeline residue (708, 11 Aug), small and not scheduled:** `photoDb.add`
 still writes the now-meaningless public URL into `data` for new photos (display
