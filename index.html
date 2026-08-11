@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 711 &#8212; The Community Clients tab opens first and can be filtered by rep, stage and partner</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 712 &#8212; Community partner contact details are yours alone; everyone else sees the partner, not the person</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21310,6 +21310,22 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
           var _pd = (_pq && _pq.data) || null;
           var _pe = _pd ? String(_pd.contact_email || '').trim() : '';
           if(_pd && _pd.name) _pnm = _pd.name;
+          /* 712: this path queries community_partners DIRECTLY, so the module's
+             contact mask never touched it — the address was pre-filled into the
+             prompt below in plain sight. Under Theo's rule the partner address
+             is his alone, and he is the one who sends bids. Refusing here is
+             deliberate: the old fallback was pr.email, i.e. the HOMEOWNER, and
+             mailing a partner's bid to the homeowner is the one thing the
+             community rules say must never happen. */
+          var _own = false;
+          try{ _own = window.CardinalCommunityPartners &&
+                      typeof window.CardinalCommunityPartners.isOwner === 'function' &&
+                      window.CardinalCommunityPartners.isOwner(); }catch(_o){}
+          if(_pe && !_own){
+            alert('Bids to ' + _pnm + ' are sent by Theo \u2014 their address is not shared.\n\n' +
+                  'Save the bid and let him know it is ready.');
+            return;
+          }
           if(_pe){ toDflt = _pe; toAsk = 'Send to ' + _pnm + ' for approval:'; }
           else{ toAsk = 'No contact email on file for ' + _pnm +
                         ' \u2014 add one under Partners. Send to:'; }
@@ -31186,6 +31202,15 @@ function isPrivileged(){
 var e = currentEmailLower();
 return ADMIN_EMAILS.indexOf(e) !== -1 || PROD_EMAILS.indexOf(e) !== -1;
 }
+/* 712: Theo, verbatim — "Only I should have the main contact info. Sales reps
+   just put bids on jobs and only have contacts for homeowners." This is a
+   NARROWER list than ADMIN_EMAILS on purpose: Joan and production keep every
+   other partner field and lose the contact ones. If Theo ever signs in with a
+   second address it goes here, or he hides his own contacts from himself. */
+var OWNER_EMAILS = ['theo@cardinalrenovations.net'];
+function isOwner(){
+return OWNER_EMAILS.indexOf(currentEmailLower()) !== -1;
+}
 var MASK_NAMES = {
 general_contractor: 'Confidential GC Partner',
 nonprofit         : 'Confidential Partner',
@@ -31209,15 +31234,32 @@ confidential  : true,
 __masked      : true,
 };
 }
-function list(){ return (CACHE || []).map(maskIfConfidential); }
+/* 712: the contact layer sits OUTSIDE the confidential mask rather than inside
+   it, because the two hide different things. Confidential hides WHO the partner
+   is (the two GCs). This hides how to REACH them — on every partner, for
+   everyone but the owner — while the name, type and program notes stay, since a
+   rep still has to know they are bidding for Habitat and what its rules are. */
+function maskPartner(p){
+var m = maskIfConfidential(p);
+if(!m || m.__masked) return m;   /* already stripped, name and all */
+if(isOwner()) return m;
+var out = Object.assign({}, m);
+out.contact_name  = null;
+out.contact_email = null;
+out.contact_phone = null;
+out.address       = null;
+out.__contactHidden = true;
+return out;
+}
+function list(){ return (CACHE || []).map(maskPartner); }
 function get(id){
 var p = (CACHE || []).filter(function(x){ return x.id === id; })[0] || null;
-return maskIfConfidential(p);
+return maskPartner(p);
 }
 function byType(t){
 return (CACHE || [])
 .filter(function(p){ return p.partner_type === t; })
-.map(maskIfConfidential);
+.map(maskPartner);
 }
 function getRaw(id){
 return (CACHE || []).filter(function(x){ return x.id === id; })[0] || null;
@@ -31229,12 +31271,16 @@ var row = {
 name          : (partner.name || '').trim(),
 partner_type  : partner.partner_type,
 confidential  : !!partner.confidential,
-contact_name  : (partner.contact_name  || '').trim() || null,
-contact_email : (partner.contact_email || '').trim() || null,
-contact_phone : (partner.contact_phone || '').trim() || null,
-address       : (partner.address       || '').trim() || null,
 notes         : (partner.notes         || '').trim() || null,
 };
+/* 712: a contact column is written ONLY when the caller actually supplied it.
+   The editor omits these keys for a non-owner, so a rep saving a notes change
+   leaves the stored contacts untouched instead of blanking them. */
+['contact_name', 'contact_email', 'contact_phone', 'address'].forEach(function(k){
+if(Object.prototype.hasOwnProperty.call(partner, k)){
+row[k] = (partner[k] || '').trim() || null;
+}
+});
 try{
 var r;
 if(partner.id){
@@ -31313,7 +31359,7 @@ if(s) s.parentNode.removeChild(s);
    CACHE directly and are deliberately untouched, so a prospect can still be
    attached to a job the moment one arrives.                                  */
 function prospects(){
-return (CACHE || []).filter(function(p){ return !!p.prospective; }).map(maskIfConfidential);
+return (CACHE || []).filter(function(p){ return !!p.prospective; }).map(maskPartner);
 }
 function renderProspects(host){
 var rows = prospects();
@@ -31327,9 +31373,14 @@ var who = [p.contact_name, p.contact_phone].filter(Boolean).join(' \u00b7 ');
 var lockChip = p.confidential
 ? ' <span style="font:800 8.5px \'Segoe UI\',Arial,sans-serif;letter-spacing:.14em;background:#8f1620;color:#fff;padding:1px 6px;border-radius:8px;vertical-align:middle;margin-left:6px;">\uD83D\uDD12 CONFIDENTIAL</span>'
 : '';
-var mail = p.contact_email
+/* 712: "no public email — call them" would be a LIE on a hidden row (there IS
+   one, it is just not yours), and the rule in this module is that a correct
+   refusal must never render as a failure. Say which it is. */
+var mail = p.__contactHidden
+? '<span style="opacity:.7;font-style:italic">Contact details are held by Theo</span>'
+: (p.contact_email
 ? '<a href="mailto:' + esc(p.contact_email) + '">' + esc(p.contact_email) + '</a>'
-: '<span style="opacity:.6;font-style:italic">no public email \u2014 call them</span>';
+: '<span style="opacity:.6;font-style:italic">no public email \u2014 call them</span>');
 return '<div class="cr-cp-row" data-id="' + esc(p.id) + '" style="align-items:flex-start">' +
 '<div style="min-width:0">' +
 '<div class="n">' + esc(p.name) + lockChip + '</div>' +
@@ -31383,9 +31434,14 @@ var gc  = listRows.filter(function(p){ return p.partner_type === 'general_contra
 function grp(title, arr){
 if(!arr.length) return '';
 var rows = arr.map(function(p){
+/* 712: with the contacts owner-only, a rep's row used to fall to '' and the
+   partner name sat alone with nothing under it — which reads as a row that
+   failed to load, not as a rule. Same sentence renderProspects() uses. */
 var meta = (p.contact_name || p.contact_phone)
 ? '<div class="m">' + esc([p.contact_name, p.contact_phone].filter(Boolean).join(' · ')) + '</div>'
-: '';
+: (p.__contactHidden
+? '<div class="m"><span style="opacity:.7;font-style:italic">Contact details are held by Theo</span></div>'
+: '');
 var lockChip = p.confidential
 ? ' <span style="font:800 8.5px \'Segoe UI\',Arial,sans-serif;letter-spacing:.14em;background:#8f1620;color:#fff;padding:1px 6px;border-radius:8px;vertical-align:middle;margin-left:6px;">\uD83D\uDD12 CONFIDENTIAL</span>'
 : '';
@@ -31455,7 +31511,12 @@ if(raw && raw.confidential && !isPrivileged()){
 alert('That partner is confidential \u2014 ask Theo or Joan to make the change.');
 return;
 }
-partner = raw || partner;
+/* 712: this line is why the read mask was not enough — getRaw() is the
+   UNMASKED row and the editor took it for every non-confidential partner, so
+   a rep opening Habitat saw Galen's email in full. The owner still gets raw;
+   everyone else edits the masked copy, and the contact inputs below are not
+   rendered for them at all. */
+partner = (raw ? (isOwner() ? raw : maskPartner(raw)) : partner);
 }
 var p = partner || { partner_type:'nonprofit' };
 var title = partner ? 'Edit Partner' : 'Add Partner';
@@ -31481,7 +31542,8 @@ var html =
 '<span>🔒 Confidential — hide name &amp; contact info from sales reps</span>' +
 '</label>'
 : '') +
-'<div class="row2">' +
+(isOwner()
+? '<div class="row2">' +
 '<label>Contact Name' +
 '<input name="contact_name" value="' + esc(p.contact_name || '') + '" />' +
 '</label>' +
@@ -31494,7 +31556,14 @@ var html =
 '</label>' +
 '<label>Address' +
 '<input name="address" value="' + esc(p.address || '') + '" />' +
-'</label>' +
+'</label>'
+/* 712: not rendered at all for a non-owner — and because they are absent from
+   the form, the submit handler below omits those keys and save() leaves the
+   stored values alone. An empty input would have blanked Galen's email the
+   first time anyone edited a note. */
+: '<div class="m" style="margin:2px 0 12px;opacity:.75;font-style:italic">' +
+'Contact details are held by Theo and are not shown here. Everything else on ' +
+'this partner is yours to edit.</div>') +
 '<label>Notes' +
 '<textarea name="notes">' + esc(p.notes || '') + '</textarea>' +
 '</label>' +
@@ -31517,12 +31586,16 @@ id           : p.id,
 name         : fd.get('name'),
 partner_type : fd.get('partner_type'),
 confidential : canFlagConfidential ? !!fd.get('confidential') : !!p.confidential,
-contact_name : fd.get('contact_name'),
-contact_email: fd.get('contact_email'),
-contact_phone: fd.get('contact_phone'),
-address      : fd.get('address'),
 notes        : fd.get('notes'),
 };
+/* 712: only carried when the inputs existed — see save(), which now writes a
+   contact column ONLY when the key is present. */
+if(isOwner()){
+next.contact_name  = fd.get('contact_name');
+next.contact_email = fd.get('contact_email');
+next.contact_phone = fd.get('contact_phone');
+next.address       = fd.get('address');
+}
 if(!next.name || !String(next.name).trim()){
 err.style.display = 'block';
 err.textContent   = 'Name is required.';
@@ -31646,6 +31719,7 @@ save: save, archive: archive,
 openDirectory: openDirectory,
 openProspects: openProspects,
 openEditor: openEditor,
+isOwner: isOwner,
 pickPartner: pickPartner,
 partnerIdForProject: partnerIdForProject,
 setPartnerForProject: setPartnerForProject,
@@ -37139,6 +37213,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:712, d:'2026-08-11', t:'Partner contact details are yours alone',
+s:'Contact name, email, phone and address on every community partner are now visible only to you. Everyone else \u2014 Joan, production and the sales reps \u2014 still sees the partner, its type, its terms and its program notes, so they can price a bid for Habitat and know Habitat\u2019s rules; they just do not get the person to call. Three places had to change, not one: the screens that list partners, the partner editor (which was quietly showing the real details even when the list hid them, and would have wiped them the first time a rep saved a note), and the bid email \u2014 which used to pre-fill the partner\u2019s address into the send box for anyone. A rep sending a community bid is now told it goes through you, rather than quietly falling back to the homeowner\u2019s address. This hides the details in the app; locking the database itself so the information never reaches their device is the next build.' },
 { b:711, d:'2026-08-11', t:'Community: Clients opens first, and filters by rep, stage and partner',
 s:'The Clients tab is now the first thing the Community screen opens on, and it has a filter and sort bar above the list \u2014 by who it bills to, partner type, stage, due date, whether a homeowner is recorded, and who it is assigned to. Those filters already existed but were attached only to the All bids table at the bottom of the Bids tab, which opens collapsed, so nobody had seen them; they now drive both lists from one funnel that shows how many filters are on and how many clients you are looking at. Also: the dash on every partner row was that partner\u2019s awarded money \u2014 with nothing awarded yet it was a dash next to a job count, reading like a number it was not. It now shows nothing until there is money to show.' },
 { b:710, d:'2026-08-11', t:'Community bids move, and a parked job tells the truth',
