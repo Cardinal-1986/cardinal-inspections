@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 714 &#8212; Client profiles stop redrawing themselves in the background \u2014 the PO badge was rebuilding about 120 times a second on every open profile</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 715 &#8212; AI Estimate is on the client\u2019s own page now, and the estimate it writes stays attached to their job</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3837,6 +3837,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
             <button class="estopt" data-tpl="general">&#128295; General repair estimate</button>
           </div>
         </span>
+        <button class="btn" id="pAiEstimateBtn" style="margin-left:6px;" title="Build this client's estimate from photos with AI">&#9889; AI Estimate</button>
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
     </div>
@@ -19863,6 +19864,20 @@ document.getElementById('pNewExteriorBtn').addEventListener('click', function(){
   createReportFrom(EXTERIOR_TEMPLATE, 'Exterior report', false);
 });
 
+/* 715: AI Estimate, for the client whose profile this is. Goes through
+   crOpenEstimates() rather than CardinalEstimates.openAI() directly, because the
+   global opener is what runs styleMounts() and hides the sibling mounts — calling
+   the module method alone leaves the mount unstyled and the profile underneath
+   it (the same lesson 571 recorded for history restore). */
+var pAiEstimateBtn = document.getElementById('pAiEstimateBtn');
+if(pAiEstimateBtn){
+  pAiEstimateBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(!currentProject) return;
+    if(typeof window.crOpenEstimates === 'function') window.crOpenEstimates(currentProject);
+    else showError('Estimates are not loaded yet — give it a moment and try again.');
+  });
+}
 var pEstMenu = document.getElementById('pEstMenu');
 document.getElementById('pNewEstimateBtn').addEventListener('click', function(e){
   e.stopPropagation();
@@ -23749,12 +23764,19 @@ body.claim-insurance #brandLogo{
   };
 
   // ── Public entry points that also close the main app views ──
-  window.crOpenEstimates = function () {
+  /* 715: an optional project opens the AI builder bound to that client.
+     wrapNav forwards arguments (orig.apply(this, arguments)), so the history
+     restore case still calls this with none and lands on the list. */
+  window.crOpenEstimates = function (project) {
     styleMounts();
     try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (e) {}
     window.crHideOtherMounts('cr-estimates-mount');
-    if (window.CardinalEstimates) window.CardinalEstimates.open();
-    else alert('Estimates module not loaded');
+    if (!window.CardinalEstimates) { alert('Estimates module not loaded'); return; }
+    if (project && project.id && typeof window.CardinalEstimates.openAI === 'function') {
+      window.CardinalEstimates.openAI(project);
+    } else {
+      window.CardinalEstimates.open();
+    }
   };
 
   window.crOpenClaims = function () {
@@ -23975,6 +23997,10 @@ body.claim-insurance #brandLogo{
 
   /* Help block */
   .cr-help { font-size: 13.5px; color: var(--cr-muted); line-height: 1.55; margin: 0 0 32px; padding: 14px 16px; background: var(--cr-bg-subtle); border-left: 3px solid var(--cr-red); border-radius: 0 4px 4px 0; }
+  .cr-forclient { display: none; margin: 0 0 22px; padding: 11px 14px; border-radius: 0 4px 4px 0; border-left: 3px solid var(--cr-red,#D9282A); background: var(--cr-red-tint,#3a2226); color: var(--cr-text,#dfe3e8); font: 700 13px 'Segoe UI', Arial, sans-serif; }
+  .cr-forclient.on { display: block; }
+  .cr-forclient .who { font-weight: 800; }
+  .cr-forclient small { display: block; margin-top: 3px; font-weight: 600; opacity: .78; }
   .cr-help strong { color: var(--cr-text); font-weight: 700; }
 
   /* Chat / textarea */
@@ -24232,6 +24258,7 @@ body.claim-insurance #brandLogo{
     <div class="cr-eyebrow">CARDINAL ROOFING &amp; RENOVATIONS · NEW ESTIMATE</div>
     <h1 class="cr-title"><span class="zap">⚡</span>AI Estimate</h1>
     <div class="cr-title-rule"></div>
+    <div class="cr-forclient" data-cr-forclient></div>
 
     <div class="cr-help">
       <strong>Describe the job. Add 4–8 photos.</strong> The AI drafts a fresh estimate from your chosen template — never modifies an existing one.
@@ -24365,9 +24392,21 @@ body.claim-insurance #brandLogo{
   }
 
   // ── Photo session ─────────────────────────────────────────
-  function createSession() {
+  /* 715: `project` is set when the builder is opened from a client profile.
+     /api/estimate has always accepted project_id + client and stores project_id
+     on the row; nothing ever sent them, so every AI estimate was orphaned. */
+  function createSession(project) {
     const id = (crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
     const s = { id, createdAt: new Date().toISOString(), template: 'roofing', description: '', photos: [] };
+    if (project && project.id) {
+      s.project_id = project.id;
+      s.client = {
+        name:    project.name    || '',
+        address: project.address || '',
+        phone:   project.phone   || '',
+        email:   project.email   || '',
+      };
+    }
     saveSession(s);
     return s;
   }
@@ -24459,6 +24498,9 @@ body.claim-insurance #brandLogo{
       template: state.session.template,
       photo_urls: uploaded.map(p => p.url),
       description: state.session.description.trim(),
+      /* 715: the API has always stored these; nothing ever sent them. */
+      project_id: state.session.project_id || null,
+      client:     state.session.client     || null,
     });
     clearSessionFromLS(state.session.id);
     return result;
@@ -25001,14 +25043,44 @@ function showList() {
   }
 
   // ── AI Create view ────────────────────────────────────────
-  function showAICreate(sessionId) {
+  function showAICreate(sessionId, project) {
     state.view = 'ai-create';
-    state.session = sessionId ? loadSessionFromLS(sessionId) : createSession();
-    if (!state.session) state.session = createSession();
+    /* 715: showList assigns this straight to .onclick, so argument 1 can
+       arrive as a MouseEvent. Only a real string is a session id — the old
+       code fell through to a fresh session by luck, via a lookup on the key
+       "[object MouseEvent]". */
+    const sid = (typeof sessionId === 'string' && sessionId) ? sessionId : null;
+    state.session = sid ? loadSessionFromLS(sid) : createSession(project);
+    if (!state.session) state.session = createSession(project);
 
     mount('cr-tmpl-ai-create');
 
     MOUNT.querySelector('[data-act="back"]').onclick = showList;
+
+    /* 715: name the client this estimate is being built for, so a rep can
+       see at a glance that it is bound to the job they came from. */
+    const forClient = MOUNT.querySelector('[data-cr-forclient]');
+    if (forClient) {
+      const c = state.session.client;
+      forClient.textContent = '';
+      if (c && (c.name || c.address)) {
+        /* textContent, not innerHTML: this module has no esc() of its own,
+           and a client name out of the database is the last string that
+           should be pasted into markup. */
+        const who = document.createElement('span');
+        who.className = 'who';
+        who.textContent = 'For ' + (c.name || 'this client');
+        forClient.appendChild(who);
+        if (c.address) {
+          const where = document.createElement('small');
+          where.textContent = c.address;
+          forClient.appendChild(where);
+        }
+        forClient.classList.add('on');
+      } else {
+        forClient.classList.remove('on');
+      }
+    }
 
     MOUNT.querySelectorAll('[data-tmpl]').forEach(tile => {
       tile.classList.toggle('selected', tile.dataset.tmpl === state.session.template);
@@ -25357,7 +25429,7 @@ function showList() {
   // ── Public API ────────────────────────────────────────────
   window.CardinalEstimates = Object.assign(window.CardinalEstimates || {}, {
     open:     showList,
-    openAI:   () => showAICreate(),
+    openAI:   (project) => showAICreate(null, project),
     openOne:  (id) => showOutput(id),
     close:    () => { MOUNT.style.display = 'none'; MOUNT.innerHTML = ''; state = { view: null, sessionId: null, session: null, estimate: null, filter: 'all' }; },
   });
@@ -37213,6 +37285,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:715, d:'2026-08-11', t:'AI Estimate, from the client\u2019s own page \u2014 and it stays with the job',
+s:'Two halves of the same gap. \u2666 The Estimates tab on a client\u2019s page could start a template estimate or a blank one, but there was no way to reach the AI builder from there \u2014 it lived only on the main Estimates screen, so you had to leave the client and start something that did not know whose roof it was. There is now an \u26A1 AI Estimate button beside + New estimate, and the builder opens with the client\u2019s name and address across the top. \u2666 Underneath, an AI estimate was never being tied to the job at all. The server has always recorded which client an estimate belongs to; the app simply never told it, so every AI estimate came out unattached \u2014 which is why sending one had no address to start from. It now carries the client through, so the estimate belongs to the job the way a template estimate always has.' },
 { b:714, d:'2026-08-11', t:'Client profiles stop redrawing themselves in the background',
 s:'Every open client profile was quietly rebuilding its PO badge about 120 times a second, forever, writing exactly the same thing each time. The check meant to stop that compared \u201CPO 1002\u201D against the number 1002, which can never match, so it never stopped. Nothing looked wrong on screen \u2014 it just burned battery and CPU the whole time a profile was open, and could make taps feel slow because the page was rebuilding underneath your finger. Found by walking the retail CRM on the live site; the app\u2019s own performance watchdog had been reporting it.' },
 { b:713, d:'2026-08-11', t:'The job card explains the missing partner contact',
