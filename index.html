@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 717 &#8212; The sign-in log records every user \u2014 it had only ever recorded Theo and Joan</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 718 &#8212; The two estimate buttons on a client\u2019s page say which one starts from a template and which one starts blank</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3825,7 +3825,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <h3 class="projsec" data-cri="calculator lg">Estimates</h3>
       <div style="margin:6px 0 12px;">
         <span id="pEstWrap" style="position:relative;">
-          <button class="btn" id="pNewEstimateBtn">+ New estimate &#9662;</button>
+          <button class="btn" id="pNewEstimateBtn" title="Start from a trade template &#8212; roofing, siding, windows, gutters or repair">&#65291; From a template &#9662;</button>
           <div id="pEstMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
                background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:250px;
                box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
@@ -12248,7 +12248,7 @@ function renderProjectDocs(){
   document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
-    : '<div class="empty"><b>No estimates yet.</b><br>Use <b>+ New estimate</b> to pick a template.</div>';
+    : '<div class="empty"><b>No estimates yet.</b><br>Use <b>\uFF0B From a template</b> to start from a trade template, or <b>Blank estimate</b> to write your own.</div>';
   /* 654 (CR-AUD-013): sent estimates living only in the estimates TABLE
      have no doc row to list here — say so instead of looking empty while
      the money panes price the job from them. */
@@ -37374,6 +37374,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:718, d:'2026-08-11', t:'The two estimate buttons say which is which',
+s:'A client\u2019s Estimates tab has two buttons that read almost identically \u2014 \u201C+ New estimate\u201D and \u201CNew Estimate\u201D \u2014 and they do different things. One opens the six trade templates (roofing, siding, windows, Andersen, gutters, repair); the other opens an empty estimate you fill in yourself. They now say so: \uFF0B From a template, and Blank estimate. Nothing about how either one works has changed.' },
 { b:717, d:'2026-08-11', t:'The sign-in log records everyone, not just the admins',
 s:'Who signed in and when is recorded on every load \u2014 except it never was, for anybody but Theo and Joan. On 11 Aug the table held 239 sessions: 228 of Theo\u2019s, 11 of Joan\u2019s, and not one from Nick, Joey, Jacob, Curtis, Scottie or Jerry. The app asked the database to hand the new row back after writing it, and only admins are allowed to READ that table \u2014 so for everyone else the write was refused outright and the session vanished. It failed quietly by design (the log is meant never to interrupt anyone), and an admin looking at the screen saw their own history and no reason to doubt it. The app now labels the session itself instead of asking for it back, so nothing needs reading. Nobody gained access to the log \u2014 it is still admins only; the difference is that the other six people\u2019s sessions now appear in it.' },
 { b:716, d:'2026-08-11', t:'The Templates button opens the templates',
@@ -42487,8 +42489,8 @@ if(!document.getElementById('cr-est-new-btn')){
 var btn = document.createElement('button');
 btn.id = 'cr-est-new-btn';
 btn.type = 'button';
-btn.innerHTML = '\uD83D\uDCC4 New Estimate';
-btn.title = 'Unified estimate (v2 flow)';
+btn.innerHTML = '\uD83D\uDCC4 Blank estimate';
+btn.title = 'Start an empty estimate and add the lines yourself';
 btn.onclick = function(e){
 e.preventDefault(); e.stopPropagation();
 openEditor(window.currentProject, null);
