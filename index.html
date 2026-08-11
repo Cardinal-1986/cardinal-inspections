@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 716 &#8212; The Templates button on the Estimates screen opens the templates instead of the AI builder</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 717 &#8212; The sign-in log records every user \u2014 it had only ever recorded Theo and Joan</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21771,6 +21771,24 @@ var currentUser = null;
 var auditSid = null;
 function ssGet(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }
 function ssSet(k, v){ try{ sessionStorage.setItem(k, v); }catch(e){} }
+/* 717: the id is generated here rather than read back from the database.
+   `id` is uuid NOT NULL DEFAULT gen_random_uuid(), so supplying our own is
+   allowed — and it means the INSERT needs no RETURNING, which is what the
+   SELECT policy was refusing. crypto.randomUUID needs a secure context and
+   iOS 15.4+; the fallback builds the same v4 shape from getRandomValues so an
+   older device still records a session instead of silently recording none. */
+function auditNewSid(){
+  try{
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    var b = new Uint8Array(16);
+    crypto.getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    var h = Array.prototype.map.call(b, function(x){ return ('0' + x.toString(16)).slice(-2); }).join('');
+    return h.slice(0,8) + '-' + h.slice(8,12) + '-' + h.slice(12,16) + '-' +
+           h.slice(16,20) + '-' + h.slice(20);
+  }catch(_){ return null; }
+}
 async function auditStart(){
   if(!TEAM || !currentUser || auditSid) return;
   try{
@@ -21779,8 +21797,15 @@ async function auditStart(){
       auditSid = existing;
       await sb.from('audit_sessions').update({ last_seen: new Date().toISOString() }).eq('id', auditSid);
     }else{
-      var r = await sb.from('audit_sessions').insert({ email: currentUser.email }).select('id').single();
-      if(r && r.data && r.data.id){ auditSid = r.data.id; ssSet('auditSid', auditSid); }
+      /* 717: no .select() — see auditNewSid above. `.select('id')` made this
+         need SELECT on the new row, and that policy is is_admin(), so every
+         non-admin INSERT was refused and no session was ever recorded for
+         them. 239 rows on 11 Aug, all of them theo@ or joan@. */
+      var newSid = auditNewSid();
+      if(newSid){
+        var r = await sb.from('audit_sessions').insert({ id: newSid, email: currentUser.email });
+        if(r && !r.error){ auditSid = newSid; ssSet('auditSid', auditSid); }
+      }
     }
   }catch(e){ /* audit is best-effort; never block the app */ }
 }
@@ -37349,6 +37374,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:717, d:'2026-08-11', t:'The sign-in log records everyone, not just the admins',
+s:'Who signed in and when is recorded on every load \u2014 except it never was, for anybody but Theo and Joan. On 11 Aug the table held 239 sessions: 228 of Theo\u2019s, 11 of Joan\u2019s, and not one from Nick, Joey, Jacob, Curtis, Scottie or Jerry. The app asked the database to hand the new row back after writing it, and only admins are allowed to READ that table \u2014 so for everyone else the write was refused outright and the session vanished. It failed quietly by design (the log is meant never to interrupt anyone), and an admin looking at the screen saw their own history and no reason to doubt it. The app now labels the session itself instead of asking for it back, so nothing needs reading. Nobody gained access to the log \u2014 it is still admins only; the difference is that the other six people\u2019s sessions now appear in it.' },
 { b:716, d:'2026-08-11', t:'The Templates button opens the templates',
 s:'On the Estimates screen the three buttons are AI Estimate, + New and Templates \u2014 but Templates was wired to the AI builder, so it was a second AI button wearing another name, and the six trade templates (Roofing, Siding, Windows, Andersen, Gutters, Repair) could not be reached from that screen at all. Tap it now and it asks which client, then opens their page on Estimates with the template list already showing \u2014 the same list that has always worked from a client\u2019s page, rather than a second one built beside it. Also: the empty Client Projects panel told you to click \u201C+ Add project\u201D, which is not a button anywhere in the app; it now points at the \uFF0B at the top and says to pick Lead.' },
 { b:715, d:'2026-08-11', t:'AI Estimate, from the client\u2019s own page \u2014 and it stays with the job',
