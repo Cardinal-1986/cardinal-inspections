@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 723 &#8212; A crew work order now shows where it stands: dispatched to the crew, then marked completed when the job is done, right on the Work Orders tab</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 724 &#8212; Tapping a card in the Punch &amp; Repairs list on the home page opens it — the detail sheet was opening inside a hidden panel, so nothing showed</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3692,7 +3692,6 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <div><div id="puList"></div></div>
     </div>
   </div>
-  <div class="pu-detail" id="puDetail"></div>
   <div class="pu-sheet" id="puShSort"><div class="panel">
     <div class="ph"><span class="t">Sort by</span><button id="puSortClose">Close</button></div>
     <div id="puSortList"></div>
@@ -3707,6 +3706,14 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
     <div id="puSubList"></div>
   </div></div>
 </div>
+<!-- 724: the punch DETAIL sheet lives OUTSIDE #punchView on purpose.
+     It used to be a child of it, and #punchView is display:none unless you are
+     on the punch page — so tapping a card in the home/insurance/community
+     Punch & Repairs strip ran openDetail(), filled this element and added
+     .open, all inside a hidden parent. The tap worked; nothing ever appeared.
+     It is position:fixed/inset:0/z-index:9998 (above #pwaNav's 9990), so it
+     does not care who its parent is — but it must not be a hidden one. -->
+<div class="pu-detail" id="puDetail"></div>
 
 <!-- ============ GLOBAL PHOTO ACTIVITY (build 345) ============ -->
 <div id="photosView" style="display:none;">
@@ -37650,6 +37657,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:724, d:'2026-08-11', t:'Punch & Repairs cards on the home page open when you tap them',
+s:'On the home page the Punch \u0026 Repairs list showed your open items, but tapping one did nothing \u2014 you had to go through \u201CSee all\u201D to open anything. The tap was actually working the whole time: the detail sheet was being built inside the full Punch page, which is hidden while you are on the home screen, so it opened where you could not see it. The sheet now lives on its own, so tapping a card from the home page \u2014 or from the insurance or community versions of the same list \u2014 opens that item straight away, with its photos, notes, assignment and the close/reopen control. Nothing about the full Punch page changed, and the tick box on each card works as before.' },
 { b:723, d:'2026-08-11', t:'A crew work order shows dispatched, then completed',
 s:'A work order you issue to a crew is both a document and a record. The document part always worked \u2014 you could open, send and print it \u2014 but the record never moved: it said \u201Cdraft\u201D forever, so nothing showed whether a crew had actually been dispatched or had finished the job. Now the Work Orders tab shows a DISPATCHED tag once the order is marked sent, and a Mark completed button that stamps the finish date and shows a green COMPLETED tag; Reopen undoes it. Marking the document sent now also updates the work-order record, so the two stay in step. Admin and Production only, as before \u2014 sales reps don\u2019t issue crew work orders.' },
 { b:722, d:'2026-08-11', t:'A contract now has a life after it is created',
