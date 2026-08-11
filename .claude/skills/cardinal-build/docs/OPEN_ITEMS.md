@@ -2613,13 +2613,40 @@ have contacts for homeowners."* Two picks, both settled, **do not re-litigate**:
 
 **⏭️ 713 — the RLS lock, the agreed follow-up and the next build.** Today the
 columns still travel to a rep's browser and are stripped in JavaScript; anyone
-reading the network tab sees them. The fix is a column-level rule (or an owner-
-only view plus a narrowed grant) on `community_partners` so `contact_name`,
-`contact_email`, `contact_phone` and `address` never leave Postgres for a
-non-owner. **SQL runs BEFORE any dependent app change**, per the house rule, and
-the app must keep working unchanged when the columns simply arrive as null —
-which is exactly the shape `maskPartner()` already produces, so 712 is the
-compatible client for it.
+reading the network tab sees them. The columns must stop leaving Postgres for a
+non-owner. **SQL runs BEFORE any dependent app change**, per the house rule.
+
+⚠️ **Three things measured against the live database on 11 Aug, before anyone
+designs this. The first revision of this very note got the third one wrong.**
+
+1. **`community_partners_read` is `USING (true)`** — every signed-in user reads
+   every row. And **RLS is row-level: it cannot hide a column.** "Column-level
+   RLS" does not exist; the tool is a `GRANT`.
+2. **A column-level `REVOKE` is silently inert on its own.** Supabase has already
+   granted table-wide `SELECT` to `authenticated`, and a column revoke cannot
+   subtract from a table-level grant — `information_schema.column_privileges`
+   still showed `SELECT` on the revoked column. You must `REVOKE SELECT ON <table>`
+   first, **then** `GRANT SELECT (cols)`. Measured on a scratch table, since
+   getting this wrong ships a lock that locks nothing.
+3. **A revoke does not make the columns arrive as null — it makes the query
+   ERROR.** Under a per-column grant, `select *` came back
+   `permission denied for table`, while an explicit column list succeeded.
+   `load()` uses `.select('*')`, so a revoke alone would **break the partner
+   roster outright, for everyone including Theo** (he shares the `authenticated`
+   role — a grant cannot single one person out). *An earlier revision of this
+   note claimed the app would keep working because the columns would simply be
+   null. That was an assumption, and it was wrong.*
+
+**So the shape that actually works is a VIEW**, not a revoke: a view over the
+table that returns the four contact columns as `CASE WHEN auth.email() = <owner>
+THEN … ELSE NULL END`, with the table's direct grant to `authenticated` removed.
+Then `select('*')` keeps working, and a non-owner receives exactly the row shape
+`maskPartner()` already produces — which is what makes 712 the compatible client
+for it. Two things to settle when building it: the writes (a simple view is
+auto-updatable, but not through the computed columns, so Theo's contact edit
+needs an INSTEAD OF trigger or a separate grant), and whether the view takes the
+name `community_partners` (table renamed beneath it) so no query in the app
+changes at all.
 
 **Left standing on purpose, recorded so nobody reads them as oversights:**
 1. **A rep can still edit a partner's name and notes, and archive it.**
