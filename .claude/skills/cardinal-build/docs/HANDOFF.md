@@ -349,7 +349,9 @@ first build (takeover rule `#projectView.cr-cc-own>*…{display:none !important}
 and billing a partner has no reachable screen.** **11 Aug: Theo picked (a) — the black card wins** (recorded in the audit doc
 and OPEN_ITEMS, with the four-phase roadmap). **Phase 1 shipped at build 705** (the payments door, CR-COM-002 closed) and
 **Phase 2 at build 706** (Partner & Property on the card — 006 closed, 001/016
-partial). Phases 3–4 pending, one build at a time. Recon notes for Phase 2 are
+partial), **Phase 3 at build 707** (Work Orders fixed in both directions +
+host-moded onto the card — 007 closed). Phase 4 (parity, then delete the cream
+build) is the remaining one. Recon notes for Phase 2 are
 in the session scratchpad's `phase2_recon.md`; two follow-ups it surfaced are
 in OPEN_ITEMS (the setters' whole-checklist write, the nbid property dropdown).
 Theo's weighting, verbatim: "This is the most important CRM because jobs could

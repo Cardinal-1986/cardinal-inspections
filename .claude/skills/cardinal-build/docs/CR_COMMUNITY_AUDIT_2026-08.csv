@@ -5,7 +5,7 @@ CR-COM-003,Blocker,Confirmed-rendered,Job Menu,Job Menu mirrors the retired #jaG
 CR-COM-004,Blocker,Confirmed,Stages,Submit-the-bid opens the editor; Bid Submitted unreachable; all 16 jobs at Lead,L0F5+L2F2,"label: est ? 'Submit the bid' : 'Price it'"
 CR-COM-005,Blocker,Confirmed,OnHold,Parked grant jobs invisible to hub money and scored as wins; retail face offers only Mark Lost; five label maps disagree,L2F0+L2F6+L4F5,compute() stage branches — no OnHold
 CR-COM-006,Blocker,Fixed-706,Properties,Module unreachable — only caller passes no partnerId and alerts,L0F6+L4F1,"alert('Open a partner first to see its properties.')"
-CR-COM-007,Blocker,Confirmed-684-executed,Work Orders,Hub tile alerts toward a section hidden by 001; list renders empty silently but uploadFile THROWS on the string checklist AFTER storage upload — every attempt orphans a file,L4F2,Work orders live on each community job
+CR-COM-007,Blocker,Fixed-707,Work Orders,Hub tile alerts toward a section hidden by 001; list renders empty silently but uploadFile THROWS on the string checklist AFTER storage upload — every attempt orphans a file,L4F2,Work orders live on each community job
 CR-COM-008,Serious,Confirmed-live-DB,Partner identity,"Three storage shapes (partner_id, partner_name, bare partner); screens each read one; bid-email guardrail keys on id and skips the broken jobs",L0F3+L1F1+L4F3+L4F10+L1F5,ck.lead.partner_id = partnerId
 CR-COM-009,Serious,Confirmed,Award,Recording an award changes funded_by but never billing partner,L4F8,lp.funded_by = String(oc.funded_by
 CR-COM-010,Serious,Confirmed,Award,awarded_amount recorded and never displayed anywhere,L2F5,awarded_amount: n

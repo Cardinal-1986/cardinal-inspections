@@ -3915,5 +3915,9 @@ with masked roster detail + Attach/Change/Clear, the Properties door
 (`openDirectory(pid)`, finally called WITH an id), the attached property, and
 the renter line on property-manager jobs. Writes go through the existing
 `setPartnerForProject`/`setPropertyForProject` pipeline with a stale-write
-guard at these call sites. Until Phase 4 the remaining cream surfaces are
+guard at these call sites. **Phase 3, build 707:** the Work Orders section
+lives on the card too — `CardinalWorkOrders.render(host)` host mode, one
+pipeline; the module's string-checklist read/write/delete defects are fixed
+(parse via `parseCkAll`, persist via `patchProjectCk`, delete record-first by
+path). Until Phase 4 the remaining cream surfaces (bid strip, stage row) are
 still hidden-but-live underneath.
