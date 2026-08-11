@@ -2517,22 +2517,25 @@ To), with the other five groups staying behind the funnel.
 
 ---
 
-## The Community CRM — audited 10 Aug, awaiting Theo's structural pick
+## The Community CRM — ✅ SETTLED 11 Aug: (a), the black card wins
 
-Theo: *"Check the entire community workflow… it just feels messy and somewhat
-confusing"* → the full audit is **`CR_COMMUNITY_AUDIT_2026-08.md`** (24 deduped
-items, CR-COM-001…024, anchors verified at 684). And: *"This is the most
-important CRM because jobs could sit for a while."*
+Theo picked **(a)** on 11 Aug 2026: `#cr-cc` is THE Community client page; the
+five hidden first-build surfaces get ported onto it, then the old build and its
+~13 KB of CSS get deleted. Full audit: **`CR_COMMUNITY_AUDIT_2026-08.md`** (24
+items; the phase roadmap is at its top). His weighting stands: *"This is the
+most important CRM because jobs could sit for a while."*
 
-**The root cause is one decision, and it is Theo's:** Community was built twice
-and the black card hides the first build. Pick **(a)** the black card wins (port
-the five hidden surfaces onto it, delete the old) or **(b)** the project page
-wins (drop the takeover rule). **Do not fix CR-COM items piecemeal before this
-pick** — most of them change shape with it.
+**Phase 1 shipped at build 705** — the payments door (CR-COM-002 closed): the
+black card's Job Menu ends with a Payment Information tile straight into
+`openPaymentsPage()`, no suspend, no cream flash.
 
-**The blockers, so nobody under-weighs this:** billing a partner has NO screen
-(CR-COM-002) · Bid Submitted is unreachable, all 16 jobs sit at Lead
-(CR-COM-004) · a parked grant job vanishes from the money and is scored as a win
-(CR-COM-005 — the "jobs sit for a while" case) · Properties and Work Orders are
-unreachable (006/007) · the Job Menu is missing Documents, the screen that
-emails the bid (003).
+**Next, in order, each its own build with its own recon:**
+- **Phase 2** — Partner & Property on the black card (CR-COM-006, parts of 008).
+- **Phase 3** — Work Orders on the black card + the `uploadFile` string-checklist
+  throw (CR-COM-007).
+- **Phase 4** — parity check, then DELETE the cream surfaces + CSS and retire the
+  `suspendForTab` detours (CR-COM-001, 020, parts of 003).
+
+**Still open regardless of the port:** Bid Submitted unreachable, 16 jobs at Lead
+(004) · OnHold invisible to hub money (005 — the "jobs sit" case) · Job Menu
+missing Documents (003) · money precedence (011/012) · partner identity (008).

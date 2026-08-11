@@ -53,18 +53,29 @@ math (CR-COM-005) is worst exactly where this CRM lives.
 
 ---
 
-## The decision that gates every fix — DO NOT BUILD PAST IT
+## ✅ THE DECISION IS MADE — Theo picked (a), 11 Aug 2026
 
-**Which Community survives?**
+**The black card wins.** `#cr-cc` is THE Community client page. The five hidden
+surfaces get ported onto it, then the first build and its ~13 KB of CSS get
+deleted. (The (b) option — dropping the takeover rule — is closed; do not
+re-litigate.)
 
-- **(a) The black card wins** — port the five hidden surfaces onto `#cr-cc`,
-  then delete the old ones and their CSS.
-- **(b) The project page wins** — drop the takeover rule; Community becomes a
-  skin on the ordinary profile again.
+**The phase roadmap, one build at a time:**
 
-Either is a real build. Choosing without Theo is how the app gets built a third
-time. Most items below get *simpler* once (a)/(b) is picked; a session tempted
-to fix them piecemeal first should re-read this paragraph.
+- **Phase 1 — SHIPPED at build 705:** the payments door. The Job Menu on the
+  black card ends with a "Payment Information" tile calling `openPaymentsPage()`
+  directly — no `suspendForTab()`, no cream flash (the view swaps wholesale and
+  `dbCloseTo()` restores the black card). Closes CR-COM-002's "no direct door".
+- **Phase 2:** Partner & Property on the black card (reuse the `cr-cp` picker;
+  makes Properties reachable — CR-COM-006, parts of 008).
+- **Phase 3:** Work Orders on the black card + the `uploadFile` string-checklist
+  throw fixed on the way (CR-COM-007).
+- **Phase 4:** bid-strip/stage parity proven against the black card's Bid tab,
+  THEN delete the five cream surfaces + CSS and retire the `suspendForTab`
+  detours that now have black-card homes (CR-COM-001, 020, parts of 003). This
+  is the build that ends the black↔cream flip.
+- **Not unlocked by (a), still their own items:** 004/005 (stages, OnHold),
+  011/012 (money), 008 (partner identity), 022 (hub numbers).
 
 ---
 
@@ -90,6 +101,14 @@ last step of the community journey (partner invites → priced → won → runs 
 **billed**) has **no direct door** — see the verdict for the one undiscoverable
 detour.
 **684 verdict:** CONFIRMED WITH CORRECTION — the mechanics hold, the absolute is softened. At 684: exactly one caller; `paymentsView.style.display='block'` occurs once, inside `openPaymentsPage()`; invoice creation (`createInvoiceFor`) lives inside that same screen and additionally requires a signed contract. Every other conceivable door was checked and is dead: the header `#jobMenuSel` is CSS-killed, the Keeper payments proxy targets selectors that match nothing, the command bar and hash router have no payments entry, CardinalPay is commissions-out only, and the card's own "Invoice the partner" is a bare stage flip — no document, no money row. **BUT a working detour exists**: any of six Job-Menu tiles → `suspendForTab()` (drops the takeover, lands on the cream first-build face) → the "‹ Overview" chip → `#tab-overview`, where `renderAcxOverview()` draws the Payment row with no claim-type gate. So the honest statement is: **no direct door — payments are reachable only via a three-tap detour through the suspended legacy face that nothing in the UI hints at.** The black↔cream flip (CR-COM-020) is that detour's disorienting face.
+**✅ FIXED at build 705 (11 Aug):** the black card's Job Menu now ends with a
+"Payment Information" tile (`data-jm="pay"`, same label as the cream row) that
+calls `openPaymentsPage()` directly — no suspend, no cream flash. Verified by
+`harness_705.js` (shipped `syncJobMenu` executed; red on 704) and
+`render_ccpay.js` (Chromium: 16.02:1 ink on the real `--ccm-card` ground; full
+round trip project→payments→back with the module re-raising the black card and
+one `#dbMap` throughout). The three-tap detour still exists until Phase 4
+retires it.
 
 ### CR-COM-003 — The Job Menu mirrors a grid the app retired
 *(merges L0F2 + L3F1 + L4F6 — three lenses)*

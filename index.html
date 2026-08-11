@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 704 &#8212; A Supplement Desk card that never once appeared is gone from the markup</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 705 &#8212; Community jobs get a direct door to Payment Information on the dark client card</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37461,6 +37461,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:705, d:'2026-08-11', t:'Community: Payment Information is one tap away',
+s:'On a Community job the dark client card had no way into Payment Information \u2014 the only button that opened it lived on the older screen hidden underneath, so partner payments could not be recorded at all. The Job Menu now ends with a Payment Information tile that opens the ledger directly, with no flash of the old cream screen on the way there, and Back returns to the dark card exactly as you left it.' },
 { b:704, d:'2026-08-11', t:'A dead Supplement Desk card is gone',
 s:'There were two Supplement Desk cards in the insurance hub and only one of them ever worked. The older one sat in a block of the page that gets rebuilt every time the hub loads, so it was wiped before it could be drawn \u2014 it had not appeared on screen once since it was added. The working tile, in the Tools row, is untouched. Nothing you could see has changed; this just stops the next person concluding the Desk is linked somewhere it is not.' },
 { b:703, d:'2026-08-10', t:'The insurance claim screen holds still',
@@ -50184,9 +50186,21 @@ return '<button class="cc-jmb" data-jm="' + i + '" type="button">' +
 '<span class="l">' + esc(lb ? lb.textContent.trim() : 'Item') + '</span>' +
 (n !== '' ? '<span class="n' + (z ? ' z' : '') + '">' + esc(n) + '</span>' : '') +
 '</button>';
-}).join('');
+}).join('') +
+/* 705: the payments door (CR-COM-002). The cream page's #dbPayRow was the ONLY
+   caller of openPaymentsPage() and the takeover rule hides it, so a Community
+   job had no reachable Payment Information at all. Same label as that row on
+   purpose, so the vocabulary doesn't fork. */
+'<button class="cc-jmb" data-jm="pay" type="button"><span class="l">Payment Information</span></button>';
 jm.querySelectorAll('[data-jm]').forEach(function(t){
 t.onclick = function(){
+if(t.dataset.jm === 'pay'){
+/* 705: deliberately NOT suspendForTab() — openPaymentsPage() swaps the whole
+   #projectView for #paymentsView, and dbCloseTo() brings the black card back
+   with the takeover intact. Suspending here would flash the cream page. */
+if(typeof window.openPaymentsPage === 'function') window.openPaymentsPage();
+return;
+}
 var b = boxes[Number(t.dataset.jm)];
 if(!b) return;
 var act = b.getAttribute('data-ja') || '';

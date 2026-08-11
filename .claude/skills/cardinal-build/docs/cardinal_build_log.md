@@ -14999,3 +14999,6 @@ Five surfaces still render invisibly underneath — including the ONLY caller of
 `openPaymentsPage()`, so billing a partner has no screen. The (a)/(b) pick —
 which Community survives — is Theo's and gates every fix; recorded in
 OPEN_ITEMS, HANDOFF and FEATURES.
+
+## Community goes to the black card (705–) — Theo's (a), picked 11 Aug
+- **705** · the payments door · Theo settled the Community decision: (a), the black card wins. Phase 1 ports the sharpest hidden surface: the Job Menu on `#cr-cc` now ends with a Payment Information tile calling `openPaymentsPage()` directly — no `suspendForTab()`, no cream flash; `dbCloseTo()` restores the black card. CR-COM-002 closed. `harness_705.js` (shipped `syncJobMenu`, red on 704) + `render_ccpay.js` (Chromium: 16.02:1, round trip clean, one `#dbMap` — the 021 shape did not appear on this path). Observers 44→44, scroll-lock writers 13→13.
