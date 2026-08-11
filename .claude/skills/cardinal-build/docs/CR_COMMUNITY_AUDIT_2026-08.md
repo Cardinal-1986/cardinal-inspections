@@ -137,7 +137,7 @@ able to add one).
 The hub tile alerts "Work orders live on each community job — open a client,
 then the Work Orders section." That section is inside the takeover-hidden
 subtree (001), so the instruction cannot be followed.
-**684 verdict on the upload-throw claim:** {{VERDICT_WO}}
+**684 verdict on the upload-throw claim:** CONFIRMED WITH CORRECTION. The hub tile still only alerts; the section is hidden by the takeover rule (001) — notably NOT by `#tab-overview`'s allow-list, which `#acxMount` is on — and is reachable only through the "Back to bid view" suspend detour. **The audit's "upload would throw" was wrong**: `projects.checklist` is a text column, so `(pr.checklist && pr.checklist.work_orders) || []` silently yields `[]` — the section always renders an empty list rather than crashing. Silent-empty, not a throw; the reachability defect stands.
 
 ---
 
@@ -188,7 +188,7 @@ exist** (`46538`, `46824` era), so the split is wider than the audit measured.
 *(L1F4; post-635 status re-verified — see verdict)* The directory masks
 confidential GCs correctly; the audit found the **New Bid payer picker** reads
 the raw cache.
-**684 verdict:** {{VERDICT_CONFIDENTIAL}}
+**684 verdict:** CONFIRMED WITH CORRECTION, narrower than reported. At 684 the mask holds in the directory, prospects, global search, the Select-a-Partner dialog (`pickPartner` reads `list()`/`get()`, both masked) and the outcome pickers. **The one unmasked door is the New Bid modal**: `cr-nbid`'s `loadPartners()` consumes the raw return of `CardinalCommunityPartners.load()` (the unmasked CACHE), so a rep sees every confidential partner's real **name and partner_type** in the payer select — no contact fields render there, which bounds the exposure. Build 635's `openEditor` fence does not sit on this path.
 
 ---
 
@@ -244,7 +244,7 @@ black↔cream flip Theo can feel but not name.
 that mount's innerHTML; `releaseLoc()` then appends the borrowed card beside the
 fresh copy — two Location sections, two `id="dbMap"`, the lower card's buttons
 driving the wrong map. Everyday trigger: attaching/changing the partner.
-**684 verdict:** {{VERDICT_LOCATION}}
+**684 verdict:** CONFIRMED at 684 — by executing the shipped functions in jsdom, not by reading. While the card has Location adopted, any save that re-runs `renderOverview()` → `renderAcxOverview()` (e.g. `setPartnerForProject()`) wipes `#acxMount.innerHTML` and orphans `releaseLoc()`'s recorded next-sibling; the next release appends the stale borrowed card beside the fresh one — two `.acxsec`, two `id="dbMap"` — and the re-adopt then steals the fresh card and strands the dead duplicate. Survived the 636/679 map work intact.
 
 ---
 
@@ -263,7 +263,7 @@ census was re-run at 684, see verdict)* The rule ("Habitat sorts first in every
 partner list" — CLAUDE.md, load-bearing, the annual TV-commercial partner) is
 implemented once, in `ocPartners()` — the *last* picker of the journey. The New
 Bid picker — the required first field — sorts Habitat 7th of 10.
-**684 census:** {{VERDICT_CENSUS}}
+**684 census:** The definitive count at 684 is **3 of 12** community-partner lists (the lenses' 3/4/5 disagreements were all under-counts of the denominator): Habitat is guaranteed first only in the outcome flow's 'Funded by' and 'Now with' selects (both via `ocPartners()`, the file's single `/habitat/i` pin) and the legacy hardcoded `#ldPartner` lead-form select (first by authored markup order). The New Bid/Edit Bid select (plain `localeCompare`), the Select-a-Partner dialog, the Partners directory, Prospects (DB order), the hub's Partners fold/pane (money sort), the By-partner tally and Community Analytics do not honour the rule.
 
 ### CR-COM-024 — Small display batch
 - Bill-to truncates to "City of" / "Community" (`shortOrg()` word-count rule).
