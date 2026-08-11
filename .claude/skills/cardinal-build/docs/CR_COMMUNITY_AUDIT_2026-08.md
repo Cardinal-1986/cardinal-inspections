@@ -87,8 +87,9 @@ Anchors: the takeover rule · `.dbstage` / `.cr-bidstrip` / `.cr-cp-attach` /
 feature. `openPaymentsPage()` has **exactly one caller** in 3.87 MB — the
 `#dbPayRow` click listener — and that row lives inside the hidden subtree. The
 last step of the community journey (partner invites → priced → won → runs →
-**billed**) has no screen.
-**684 verdict:** {{VERDICT_BILLING}}
+**billed**) has **no direct door** — see the verdict for the one undiscoverable
+detour.
+**684 verdict:** CONFIRMED WITH CORRECTION — the mechanics hold, the absolute is softened. At 684: exactly one caller; `paymentsView.style.display='block'` occurs once, inside `openPaymentsPage()`; invoice creation (`createInvoiceFor`) lives inside that same screen and additionally requires a signed contract. Every other conceivable door was checked and is dead: the header `#jobMenuSel` is CSS-killed, the Keeper payments proxy targets selectors that match nothing, the command bar and hash router have no payments entry, CardinalPay is commissions-out only, and the card's own "Invoice the partner" is a bare stage flip — no document, no money row. **BUT a working detour exists**: any of six Job-Menu tiles → `suspendForTab()` (drops the takeover, lands on the cream first-build face) → the "‹ Overview" chip → `#tab-overview`, where `renderAcxOverview()` draws the Payment row with no claim-type gate. So the honest statement is: **no direct door — payments are reachable only via a three-tap detour through the suspended legacy face that nothing in the UI hints at.** The black↔cream flip (CR-COM-020) is that detour's disorienting face.
 
 ### CR-COM-003 — The Job Menu mirrors a grid the app retired
 *(merges L0F2 + L3F1 + L4F6 — three lenses)*
@@ -137,7 +138,7 @@ able to add one).
 The hub tile alerts "Work orders live on each community job — open a client,
 then the Work Orders section." That section is inside the takeover-hidden
 subtree (001), so the instruction cannot be followed.
-**684 verdict on the upload-throw claim:** CONFIRMED WITH CORRECTION. The hub tile still only alerts; the section is hidden by the takeover rule (001) — notably NOT by `#tab-overview`'s allow-list, which `#acxMount` is on — and is reachable only through the "Back to bid view" suspend detour. **The audit's "upload would throw" was wrong**: `projects.checklist` is a text column, so `(pr.checklist && pr.checklist.work_orders) || []` silently yields `[]` — the section always renders an empty list rather than crashing. Silent-empty, not a throw; the reachability defect stands.
+**684 verdict on the upload-throw claim:** CONFIRMED WITH CORRECTION — and the correction cuts both ways. The hub tile still only alerts; the section is hidden by the takeover rule (001) — notably NOT by `#tab-overview`'s allow-list, which `#acxMount` is on — reachable only via the suspend detour. The audit's throw claim was at the WRONG LINE but the throw is REAL, executed at 684: the *list* line silently yields `[]` (checklist is a text column), but `uploadFile()` runs `ck.work_orders = ck.work_orders || []` on that string under `'use strict'` → `TypeError: Cannot create property 'work_orders' on string` — **after the storage upload has already succeeded**, so every attempt would orphan a file in `photos/work_orders/` and surface "Upload failed". Zero checklist rows and zero storage objects confirm the feature has never once persisted a work order.
 
 ---
 
