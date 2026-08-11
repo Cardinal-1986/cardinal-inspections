@@ -2529,8 +2529,10 @@ most important CRM because jobs could sit for a while."*
 black card's Job Menu ends with a Payment Information tile straight into
 `openPaymentsPage()`, no suspend, no cream flash.
 
+**Phase 2 shipped at build 706** — the Partner & Property section (CR-COM-006
+closed, 001/016 partial, stale-write guard at the new call sites).
+
 **Next, in order, each its own build with its own recon:**
-- **Phase 2** — Partner & Property on the black card (CR-COM-006, parts of 008).
 - **Phase 3** — Work Orders on the black card + the `uploadFile` string-checklist
   throw (CR-COM-007).
 - **Phase 4** — parity check, then DELETE the cream surfaces + CSS and retire the
@@ -2539,3 +2541,12 @@ black card's Job Menu ends with a Payment Information tile straight into
 **Still open regardless of the port:** Bid Submitted unreachable, 16 jobs at Lead
 (004) · OnHold invisible to hub money (005 — the "jobs sit" case) · Job Menu
 missing Documents (003) · money precedence (011/012) · partner identity (008).
+
+**Two follow-ups surfaced by the Phase-2 recon (11 Aug), not yet scheduled:**
+- `setPartnerForProject`/`setPropertyForProject` persist by whole-checklist
+  read-modify-write from the captured row (`index.html` ~31261/~33611),
+  bypassing `patchProjectCk`'s build-655 refetch-merge — a stale capture can
+  resurrect old checklist state. Migrating them touches the cream rows too.
+- The New Bid property dropdown never renders: `loadPropertiesFor` prefers two
+  methods that have never existed on the export and falls to a cold cache, so
+  even partners WITH properties get the free-text address input.

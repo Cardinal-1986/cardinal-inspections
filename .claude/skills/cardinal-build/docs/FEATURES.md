@@ -3909,4 +3909,11 @@ edit any of those and see nothing change on a community job, this rule is why.**
 ported onto `#cr-cc` phase by phase, then deleted (roadmap at the top of the
 audit doc). **Phase 1, build 705:** the black card's Job Menu now ends with a
 direct "Payment Information" tile into `openPaymentsPage()` — the first ported
-surface. Until Phase 4 the other four are still hidden-but-live underneath.
+surface. **Phase 2, build 706:** a Partner & Property section (`#cr-cc-pp`,
+`ppSync()` in `cr-cc-script`) between Job Menu and Location — funding partner
+with masked roster detail + Attach/Change/Clear, the Properties door
+(`openDirectory(pid)`, finally called WITH an id), the attached property, and
+the renter line on property-manager jobs. Writes go through the existing
+`setPartnerForProject`/`setPropertyForProject` pipeline with a stale-write
+guard at these call sites. Until Phase 4 the remaining cream surfaces are
+still hidden-but-live underneath.

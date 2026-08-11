@@ -66,8 +66,13 @@ re-litigate.)
   black card ends with a "Payment Information" tile calling `openPaymentsPage()`
   directly — no `suspendForTab()`, no cream flash (the view swaps wholesale and
   `dbCloseTo()` restores the black card). Closes CR-COM-002's "no direct door".
-- **Phase 2:** Partner & Property on the black card (reuse the `cr-cp` picker;
-  makes Properties reachable — CR-COM-006, parts of 008).
+- **Phase 2 — SHIPPED at build 706:** a Partner & Property section on the black
+  card (between Job Menu and Location). Reuses `pickPartner` /
+  `setPartnerForProject` / `pickProperty` / `setPropertyForProject` /
+  `openDirectory` — all already exported. Closes CR-COM-006's reachability,
+  ports the attach/change/clear actions (part of 001), displays the renter
+  (016's display half), and adds a stale-write guard at ITS call sites (the
+  cream rows' 019 capture is unchanged until Phase 4).
 - **Phase 3:** Work Orders on the black card + the `uploadFile` string-checklist
   throw fixed on the way (CR-COM-007).
 - **Phase 4:** bid-strip/stage parity proven against the black card's Bid tab,
@@ -148,7 +153,11 @@ Related closed history: the *insurance* OnHold rail hole was CR-AUD-006/014
 Its only caller — the hub tile — passes no argument, and
 `openDirectory(partnerId)` alerts `"Open a partner first to see its
 properties."` on a missing argument. Every time. No partner row anywhere offers
-a properties button, so the advice cannot be followed. The New Bid property
+a properties button, so the advice cannot be followed.
+**✅ FIXED at build 706 (11 Aug):** the black card's Partner & Property section
+has a Properties button that calls `openDirectory(pid)` with the job's real
+partner id — the directory (list/add/edit/archive) is reachable as designed.
+The hub tile still passes no argument (it dies with the cream face in Phase 4). The New Bid property
 picker is empty on 14 of 16 jobs (0 properties in the DB — nobody has ever been
 able to add one).
 
@@ -227,6 +236,9 @@ legible thing on the card.
 *(merges L1F3 + L4F7)* The New Bid form correctly demands tenant details for
 property-manager partners (Kitty Hawk), saves them — and no screen ever displays
 them. The card calls the occupant "Homeowner" on a rental anyway.
+**◐ PARTIAL at build 706:** the black card's Property row now shows
+"Renter · name · phone" when `lead.renter_name` exists. The vocabulary half
+(the occupant labelled "Homeowner" on a rental) is still open.
 
 ### CR-COM-017 — "Site contact — Held by admin." is the only state that can exist
 *(L1F2 + the site-contact half of L4F11)* `community_contacts` appears exactly
