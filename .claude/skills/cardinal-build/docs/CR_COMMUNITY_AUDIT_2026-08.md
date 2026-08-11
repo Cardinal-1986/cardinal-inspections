@@ -286,6 +286,14 @@ confidential GCs correctly; the audit found the **New Bid payer picker** reads
 the raw cache.
 **684 verdict:** CONFIRMED WITH CORRECTION, narrower than reported. At 684 the mask holds in the directory, prospects, global search, the Select-a-Partner dialog (`pickPartner` reads `list()`/`get()`, both masked) and the outcome pickers. **The one unmasked door is the New Bid modal**: `cr-nbid`'s `loadPartners()` consumes the raw return of `CardinalCommunityPartners.load()` (the unmasked CACHE), so a rep sees every confidential partner's real **name and partner_type** in the payer select — no contact fields render there, which bounds the exposure. Build 635's `openEditor` fence does not sit on this path.
 
+**Re-verified at build 712** (the build that made contact details owner-only):
+`cr-nbid` renders `p.name` and nothing else into the payer select — the only
+`address` it touches is the *property* address, not the partner's — so the
+contact-hiding pass leaves no hole here and the bound above still holds. The
+item stays open on its own terms: a confidential partner's real **name** is
+still visible in that select, because `loadPartners()` consumes the raw
+`load()` return rather than `list()`.
+
 ---
 
 ## Serious — the people on the job

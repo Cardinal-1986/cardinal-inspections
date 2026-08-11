@@ -2597,3 +2597,41 @@ photos render dead links again — there is no retry.
 - The New Bid property dropdown never renders: `loadPropertiesFor` prefers two
   methods that have never existed on the export and falls to a cold cache, so
   even partners WITH properties get the free-text address input.
+
+---
+
+## Build 712 — partner contacts are Theo's, and what it left for 713 (11 Aug 2026)
+
+**Theo, verbatim:** *"Hide all main contacts for all community partners. Only I
+should have the main contact info. Sales reps just put bids on jobs and only
+have contacts for homeowners."* Two picks, both settled, **do not re-litigate**:
+
+| Question | **Theo's answer** |
+|---|---|
+| Who keeps the contacts — the admin pair, or you alone? | **theo@ only.** Joan is treated as everyone else on this screen (`OWNER_EMAILS`, deliberately not `ADMIN_EMAILS`) |
+| Hide first, or lock the database first? | **Hide now, lock the database next** — 712 is the hiding, 713 is the RLS |
+
+**⏭️ 713 — the RLS lock, the agreed follow-up and the next build.** Today the
+columns still travel to a rep's browser and are stripped in JavaScript; anyone
+reading the network tab sees them. The fix is a column-level rule (or an owner-
+only view plus a narrowed grant) on `community_partners` so `contact_name`,
+`contact_email`, `contact_phone` and `address` never leave Postgres for a
+non-owner. **SQL runs BEFORE any dependent app change**, per the house rule, and
+the app must keep working unchanged when the columns simply arrive as null —
+which is exactly the shape `maskPartner()` already produces, so 712 is the
+compatible client for it.
+
+**Left standing on purpose, recorded so nobody reads them as oversights:**
+1. **A rep can still edit a partner's name and notes, and archive it.**
+   Pre-existing, unchanged by 712, and not what Theo asked to close.
+2. **`notes` is free text and everyone sees it.** Habitat's note legitimately
+   reads "Galen is the bid contact" — the app cannot police prose, and reps need
+   the programme rules. If a phone number is typed there it is visible.
+3. **`pickPartner`'s rows show the name only** for a non-owner and are left
+   without a "held by Theo" line — a chooser row is *supposed* to be a name, and
+   a note on every row would be noise. The directory got the line because a
+   directory with no contact reads as broken.
+4. **CR-COM-014 is untouched and still open**: `cr-nbid`'s `loadPartners()`
+   consumes the raw `load()` return, so a *confidential* partner's real name
+   still appears in the New Bid payer select. Re-verified at 712 that it renders
+   no contact field, so the hiding pass leaves no hole there.
