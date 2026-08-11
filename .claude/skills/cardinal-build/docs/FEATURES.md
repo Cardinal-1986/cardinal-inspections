@@ -3894,3 +3894,15 @@ Do not add a link there again.
 ⚠️ **The whole static `.ins-grid` is dead** — 0 `.ins-card` reach the DOM. It is
 kept as an accidental fallback for a total `cr-cth-script` failure, and its
 content is already stale.
+### The Community client card (`cr-cc`) REPLACES the project page — it does not extend it
+
+Recorded 10 Aug from the Community audit (`CR_COMMUNITY_AUDIT_2026-08.md`): the
+takeover rule `#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none
+!important}` hides the entire `.wrap` subtree. **Five community surfaces of the
+FIRST build are still rendered, wired and invisible underneath it on every
+community job**: the bid strip (`.cr-bidstrip`, the only Bid-Submitted setter),
+the Partner attach row (`.cr-cp-attach`), the Property row (`.cr-cprop-attach`),
+the Work Orders section (`.cr-wo-section`) and the Payment Information row
+(`#dbPayRow` — the only caller of `openPaymentsPage()` in the file). **If you
+edit any of those and see nothing change on a community job, this rule is why.**
+Their fate awaits Theo's (a)/(b) pick — see OPEN_ITEMS.

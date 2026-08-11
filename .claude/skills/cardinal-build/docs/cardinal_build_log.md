@@ -14971,3 +14971,31 @@ as the retirement comment — asserted by grep, count 1.
   one that reports, so the new reads are guarded. Sweep green: calhead, pcard
   12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31, 680 35/35,
   colors 110/110.
+## Docs — the Community CRM audit, recovered and captured (10 Aug, no build number)
+
+Theo asked for the whole community workflow audited on 10 Aug; a five-lens
+audit ran to completion inside a session-local workflow and was **never
+delivered** — an admitted miss, caught only when he asked "did we forget about
+the community CRM?". Recovered from the workflow journal before the session
+died, **deduplicated 51 raw findings → 24 items** (three lenses independently
+finding one defect is confirmation, not three defects; every merge is recorded),
+and captured as **`CR_COMMUNITY_AUDIT_2026-08.md`** + machine-readable CSV, in
+the CR_AUDIT house format, numbered CR-COM-001…024.
+
+**Verification before capture, per Theo's "if something doesn't make sense come
+up with a plan to review":** all 30 anchor strings re-greped against build 684
+(one had drifted only in whitespace — and turned up TWO additional writers of
+the `assigned[]` array shape the audit hadn't counted). Five shaky claims —
+the work-order "would throw", the post-635 confidential-picker status, the
+location-card duplication vs the 636/679 map work, the partner-list census the
+lenses counted 3/4/5 ways, and the billing-unreachable headline — went through
+a dedicated adversarial verification pass against 684; verdicts inline in the
+doc.
+
+**The one-line answer to "what feels off":** Community was built twice, and the
+black card hides the first build instead of replacing it
+(`#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none !important}`).
+Five surfaces still render invisibly underneath — including the ONLY caller of
+`openPaymentsPage()`, so billing a partner has no screen. The (a)/(b) pick —
+which Community survives — is Theo's and gates every fix; recorded in
+OPEN_ITEMS, HANDOFF and FEATURES.

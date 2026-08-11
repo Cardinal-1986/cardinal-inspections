@@ -338,6 +338,20 @@ deployments API, never curl the site). Working tree clean. NO open PRs, NO held 
    var is live.
 5. `.pcpo` lavender 1.99:1 in light — semantic frozen colour, needs Theo's pick.
 
+## ⚠ Added late on 10 Aug: the Community audit was recovered and captured
+
+The five-lens Community audit Theo asked for on 10 Aug had completed inside a
+session-local workflow and was never delivered. Recovered, deduplicated (51 raw
+findings → 24 items) and written to **`CR_COMMUNITY_AUDIT_2026-08.md`** with
+anchors re-verified at 684 and five shaky claims re-verified adversarially.
+**The one-line diagnosis: Community was built twice; the black card hides the
+first build (takeover rule `#projectView.cr-cc-own>*…{display:none !important}`),
+and billing a partner has no reachable screen.** Theo owes the (a)/(b) pick
+recorded there and in OPEN_ITEMS — do not fix CR-COM items piecemeal first.
+Theo's weighting, verbatim: "This is the most important CRM because jobs could
+sit for a while" — CR-COM-005 (OnHold invisible to the hub's money) is the
+finding that sentence points at.
+
 ## What a new session must know that the older docs don't say
 
 - **The measuring-rig traps cost three builds this session; all three are in
