@@ -2780,3 +2780,18 @@ defects found and fixed; the rest is recorded here rather than quietly patched.*
   the app and is not.
 - **`page.setContent` runs on `about:blank`**, whose opaque origin denies `localStorage`. Any module
   that stores a session (the AI builder does) needs a real origin — route a fake URL and `goto` it.
+
+---
+
+## ✅ SETTLED BY THEO, 11 Aug 2026 (build 727) — the punch tick box stays a ONE-TAP CLOSE
+
+Raised at 725, after the five-photo refusal on the punch DETAIL sheet was made visible (it had been
+writing its reason into `#puMsg` at the bottom of the sheet, off-screen on a phone). That surfaced an
+inconsistency worth a decision: **the tick box on a punch CARD (`data-putoggle`, on the home/insurance/
+community strips and the punch list) closes an item with no photo check at all — only the sheet
+enforces `PHOTO_MIN`.** Asked whether the tick box should enforce the five too.
+
+**Theo: "One tap close."** The tick box stays as it is. **Do not add the photo gate to
+`data-putoggle`**, and do not "fix" the asymmetry as a bug — it is the intended shape: the sheet is
+the considered close (it shows you the photo count as you do it), the tick box is the quick one.
+`PHOTO_MIN` on the sheet is unchanged and still enforced.

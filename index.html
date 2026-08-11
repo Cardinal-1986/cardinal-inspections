@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 726 &#8212; The Money In &amp; Commissions tab is readable: its labels, headings and totals were dark grey on the black page, measured at 1.15 to 1</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 727 &#8212; On the money tab the two form buttons now say which form they close, instead of both reading &#8220;Close&#8221;</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18537,8 +18537,11 @@ async function renderCommissions(){
       for(var ci = 0; ci < colls.length; ci++) if(colls[ci].id === commUi.editColl) editing = colls[ci];
     }
     html += '<div style="margin:10px 0 0;">' +
-      '<button class="btn" id="miCollBtn">' + (commUi.collForm ? 'Close' : '+ Log Collection') + '</button>' +
-      (admin ? ' <button class="btn ghost" id="miDrawBtn">' + (commUi.drawForm ? 'Close' : '+ Log Draw') + '</button>' : '') +
+      /* 727: both toggles said just "Close", so with the collection and draw
+         forms open at once the pane showed two identical buttons and neither
+         said what it would close. Each now names its own form. */
+      '<button class="btn" id="miCollBtn">' + (commUi.collForm ? 'Close collection' : '+ Log Collection') + '</button>' +
+      (admin ? ' <button class="btn ghost" id="miDrawBtn">' + (commUi.drawForm ? 'Close draw' : '+ Log Draw') + '</button>' : '') +
     '</div>';
     if(commUi.collForm){
       html += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(128,128,128,.22)">' +
@@ -37657,6 +37660,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:727, d:'2026-08-11', t:'The money tab\u2019s two buttons say which one they close',
+s:'Small one. On a job\u2019s Money In & Commissions tab, opening both the collection form and the draw form left two buttons side by side both reading \u201CClose\u201D, with nothing to say which was which. They now read Close collection and Close draw. Nothing else changed.' },
 { b:726, d:'2026-08-11', t:'The Money In & Commissions tab is readable again',
 s:'On a job\u2019s Money In & Commissions tab the labels, headings and the money totals were almost invisible \u2014 dark grey text on the black page. Measured, it was 1.15 to 1, where readable text needs at least 4.5 to 1. The panel had been built back when the app was white and was never re-coloured. Everything on it now uses the app\u2019s own light/dark colours: labels, headings, the totals, the boxes you type in, and the empty-state panels. It was checked in both light and dark \u2014 the small grey notes (\u201Cearns 10% of every dollar collected\u201D, \u201CCollected\u201D, \u201CCommission owed\u201D) had the opposite problem and were white on white in light mode. Both are fixed.' },
 { b:725, d:'2026-08-11', t:'The punch sheet scrolls on its own, and it tells you why it will not close',
