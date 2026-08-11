@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 724 &#8212; Tapping a card in the Punch &amp; Repairs list on the home page opens it — the detail sheet was opening inside a hidden panel, so nothing showed</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 725 &#8212; The punch sheet stops dragging the page behind it, and closing an item without enough photos now says so in a pop-up instead of a line you could not see</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37657,6 +37657,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:725, d:'2026-08-11', t:'The punch sheet scrolls on its own, and it tells you why it will not close',
+s:'Two things on the punch item sheet. First, scrolling it used to drag the page underneath along with it once you reached the end of the sheet \u2014 more noticeable since the sheet started opening over the home page. The sheet now keeps its scrolling to itself. Second, and this is the one that looked like a dead button: tapping Open to close an item out when it does not have five photos yet printed a small line of text at the very BOTTOM of the sheet, under the photos and the notes, while the control you tapped is at the top \u2014 on a phone you could not see it, so it looked like nothing happened. That refusal is now a pop-up that says how many photos the item has and how many more it needs. Nothing about the five-photo rule itself changed.' },
 { b:724, d:'2026-08-11', t:'Punch & Repairs cards on the home page open when you tap them',
 s:'On the home page the Punch \u0026 Repairs list showed your open items, but tapping one did nothing \u2014 you had to go through \u201CSee all\u201D to open anything. The tap was actually working the whole time: the detail sheet was being built inside the full Punch page, which is hidden while you are on the home screen, so it opened where you could not see it. The sheet now lives on its own, so tapping a card from the home page \u2014 or from the insurance or community versions of the same list \u2014 opens that item straight away, with its photos, notes, assignment and the close/reopen control. Nothing about the full Punch page changed, and the tick box on each card works as before.' },
 { b:723, d:'2026-08-11', t:'A crew work order shows dispatched, then completed',
@@ -53159,7 +53161,8 @@ if(typeof _origOLF === 'function'){
 .pu-grp{font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--rbe-acc);
   margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--rbe-line);display:flex;align-items:center;gap:8px;}
 .pu-grp .n{background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;padding:1px 8px;font-size:9.5px;}
-.pu-sheet{position:fixed;inset:0;background:rgba(8,9,11,.7);display:none;z-index:9997;}
+.pu-sheet{position:fixed;inset:0;background:rgba(8,9,11,.7);display:none;z-index:9997;
+  overscroll-behavior:contain;}   /* 725: same guard as .pu-detail */
 .pu-sheet.open{display:flex;align-items:flex-start;justify-content:center;}
 .pu-sheet .panel{background:var(--rbe-panel);border:1px solid var(--rbe-line);border-top:0;border-radius:0 0 16px 16px;width:100%;
   max-width:560px;max-height:86%;overflow:auto;overscroll-behavior-x:contain;}
@@ -53244,7 +53247,13 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pud-f select.prio-low{color:#e35c63;border-color:#6b5a1e;}
 /* item detail sheet */
 .pu-detail{position:fixed;inset:0;background:rgba(8,9,11,.72);display:none;z-index:9998;
-  align-items:flex-start;justify-content:center;padding:5vh 14px;overflow-y:auto;}
+  align-items:flex-start;justify-content:center;padding:5vh 14px;overflow-y:auto;
+  /* 725: the sheet IS the scroller, and without this a drag that reaches its
+     end chains into whatever is mounted underneath — which since 724 is the
+     home page, so the page crept about under the open sheet. Deliberately NOT
+     document.body.style.overflow: that global has 13 writers, no reconciler,
+     and the leak class has recurred three times (see the cr-sf banner). */
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
 .pu-detail.open{display:flex;}
 .pud-box{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-radius:14px;
   width:100%;max-width:600px;box-shadow:0 18px 44px rgba(0,0,0,.55);overflow:hidden;}
@@ -53759,9 +53768,16 @@ document.addEventListener('click', function(e){
         e.preventDefault();
         var cur = rows().filter(function(x){ return String(x.id) === String(id); })[0];
         if(cur && cur.status !== 'done' && photosOf(cur).length < PHOTO_MIN){
-          document.getElementById('puMsg').textContent =
-            'Add at least ' + PHOTO_MIN + ' photos before closing this out \u2014 ' +
-            photosOf(cur).length + ' so far.';
+          /* 725: this refusal used to be written into #puMsg, which sits at the
+             BOTTOM of the sheet, below Photos and Notes — while the control you
+             tap is at the TOP. On a phone the message was off-screen, so closing
+             an item with too few photos looked like nothing happened at all.
+             Theo reported exactly that. Same shape as the module's other
+             refusal (mayClose), which has always used a popup. */
+          var _have = photosOf(cur).length;
+          alert('Add at least ' + PHOTO_MIN + ' photos before closing this out.\n\n' +
+                'This item has ' + _have + '. Tap \uFF0B Add under Photos to attach ' +
+                (PHOTO_MIN - _have) + ' more.');
           return;
         }
         if(window.CardinalPunch && window.CardinalPunch.toggle){
