@@ -2384,3 +2384,25 @@ collision), gradient names gone from the cards (39 gradient-text sites → 38).
   variant (the `.ljpo` precedent uses `--rbe-po1/po2` pairs).
 - **Remaining gradient-text sites: 38** — next sweep targets per the settled
   no-gradients rule; list is in the CLAUDE.md standing note.
+
+---
+
+## The Community CRM — audited 10 Aug, awaiting Theo's structural pick
+
+Theo: *"Check the entire community workflow… it just feels messy and somewhat
+confusing"* → the full audit is **`CR_COMMUNITY_AUDIT_2026-08.md`** (24 deduped
+items, CR-COM-001…024, anchors verified at 684). And: *"This is the most
+important CRM because jobs could sit for a while."*
+
+**The root cause is one decision, and it is Theo's:** Community was built twice
+and the black card hides the first build. Pick **(a)** the black card wins (port
+the five hidden surfaces onto it, delete the old) or **(b)** the project page
+wins (drop the takeover rule). **Do not fix CR-COM items piecemeal before this
+pick** — most of them change shape with it.
+
+**The blockers, so nobody under-weighs this:** billing a partner has NO screen
+(CR-COM-002) · Bid Submitted is unreachable, all 16 jobs sit at Lead
+(CR-COM-004) · a parked grant job vanishes from the money and is scored as a win
+(CR-COM-005 — the "jobs sit for a while" case) · Properties and Work Orders are
+unreachable (006/007) · the Job Menu is missing Documents, the screen that
+emails the bid (003).
