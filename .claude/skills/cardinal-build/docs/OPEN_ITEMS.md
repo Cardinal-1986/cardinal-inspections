@@ -2544,6 +2544,12 @@ the build that ends the black↔cream flip.
 (004) · OnHold invisible to hub money (005 — the "jobs sit" case) · Job Menu
 missing Documents (003) · money precedence (011/012) · partner identity (008).
 
+**Photo pipeline residue (708, 11 Aug), small and not scheduled:** `photoDb.add`
+still writes the now-meaningless public URL into `data` for new photos (display
+prefers `_src`, so it is inert — but it is a dead value shaped like a live
+one); and if `attachSignedPhotoUrls` fails wholesale (offline load), storage
+photos render dead links again — there is no retry.
+
 **Two follow-ups surfaced by the Phase-2 recon (11 Aug), not yet scheduled:**
 - `setPartnerForProject`/`setPropertyForProject` persist by whole-checklist
   read-modify-write from the captured row (`index.html` ~31261/~33611),
