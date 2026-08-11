@@ -22,21 +22,39 @@ policies.
 
 ---
 
-## The one-line diagnosis: the audit is a stale snapshot, not a wrong reading
+## The one-line diagnosis: backend-only inference, read empty tables as missing features
 
-Most of the "critical gaps" are features that **shipped after the audit's data was captured.** The audit
-saw **10 crews** (an 11th was added 1 Aug) and **0 punch_items** (the first landed 1 Aug), so its DB
-snapshot predates ~1 Aug 2026 — roughly 40+ builds behind build 720. In that window:
+The audit is **current** (run ~1 hour before this validation, against the live DB) — it is **not** a stale
+snapshot. Its core mistake is a method limitation it disclosed itself: it was **backend-only** ("the
+authenticated UI could not be fully navigated"), so it **read empty tables as missing features.** On this
+app that inference is backwards — the empty tables are empty because **no one has logged the first real
+check or dispatched the first crew yet**, not because the software is absent. Every empty table in the
+audit is BUILT + WIRED + reachable, verified below by clicking each one in the live UI.
 
-- **The whole money system** (`collections` → auto-commission trigger → `draws` → payout board → weekly
-  owed email) shipped **9 Aug, builds 650–651**.
-- **AI Estimate + the `contracts` / `ai_estimates` tables** shipped **10–11 Aug, builds 715–720**.
-- **The Supplement Desk, scope-read history, and code-letters** shipped **9–10 Aug, builds 646–672**.
+On the genuinely-empty tables the audit is **accurate right now**: `contracts`, `crew_work_orders`,
+`collections`, `commissions` are all still 0 this minute. Several of them are also simply **new** — the
+money pipeline (`collections` → auto-commission trigger → `draws` → payout board) shipped 9 Aug (builds
+650–651), and the AI-estimate/`contracts` tables shipped 10–11 Aug (715–720) — which is *why* they're
+unused, but the audit reading them as 0 is not a timing error.
 
-And because the audit was **backend-only** ("the authenticated UI could not be fully navigated"), it read
-empty tables as missing features. On this app that inference is backwards: the tables are empty because
-**no one has logged the first real check / dispatched the first crew yet**, not because the software is
-absent. Every empty table in the audit is BUILT + WIRED + reachable, verified below by clicking it.
+### Two of the audit's numbers are wrong against the live DB this minute — and it isn't timing
+
+The audit reported **`punch_items` = 0 rows** (live DB has **5**) and **10 crews** (live DB has **11**).
+These are not staleness and not an archived-row filter:
+
+- All 5 punch_items are dated **1–10 Aug**; the 11th crew was created **1 Aug** — all days old, so an
+  audit run an hour ago should have seen them.
+- **Zero crews are archived**, so "10 active" has no filter that produces it.
+- **No coherent access path reproduces the audit's numbers.** An anonymous (no-session) caller sees **0 of
+  everything** under RLS (crews/punch/appointments/estimates/projects all 0) — but the audit clearly saw
+  crews, appointments ("Hair cut", "Chase") and estimates, so it was **not** anon; and any privileged path
+  (service-role or an admin session) that *can* see those also sees all 5 punch_items and 11 crews. There
+  is no identity that sees appointments+estimates yet 0 punch + 10 crews.
+
+So those two counts are **errors in the audit itself** — consistent with its own caveat ("Some inferences
+about UI behavior may be wrong"). The practical lesson: treat the audit's raw "N rows" claims as
+**unverified**, and check each against the DB (done throughout this document) rather than acting on them
+directly.
 
 ---
 
@@ -88,9 +106,10 @@ broken. Production **scheduling is not missing**: the 14-day Schedule Board is f
 table (kinds job/drop/appt/team), reachable from the menu, and the Approved-stage flow notifies Curtis
 to schedule. **The genuine gap**: the WO *dispatch* lifecycle — nothing writes `sent_via`/`sent_at`/
 `completed_on` or moves status past `draft`; "sending" a WO goes through the shared print/editor pipeline
-without updating the record. (Also: crews = **11**, not 10.)
+without updating the record. (Also: crews = **11**, not the audited 10 — and none are archived, so this is
+an audit miscount, not a filter; see the diagnosis section.)
 
-**3. Invoicing/collections empty, commissions = 0, no payment tracking — ❌ stale, now wrong.**
+**3. Invoicing/collections empty, commissions = 0, no payment tracking — ⚠️ empty is accurate; "no tracking" is wrong.**
 A complete money pipeline shipped **9 Aug (650–651)** and is wired end-to-end: the per-job "Money In &
 Commissions" tab's **Log Collection** form inserts `collections` (confirmed in the click-through — it
 wrote a `$5,000 deposit` row), and the DB trigger `make_commission` then auto-creates the 10% commission
@@ -102,11 +121,12 @@ anywhere.** **The one genuine residue**: the app has *two* payment ledgers — `
 reads worksheet `paid` amounts from the project's checklist JSON, **not** the `collections` table, so AR
 aging and commissions can draw from different stores. That reconciliation is worth a build.
 
-**4. punch_items = 0, no final-walk/callback tracking — ❌ wrong (stale).**
+**4. punch_items = 0, no final-walk/callback tracking — ❌ wrong (audit miscount).**
 `punch_items` is built and wired (insert/update/delete/comments across three modules; reachable from the
 job menu, the profile's Punch Outs tab, and the Production board) and the **DB currently holds 5 live
-rows** created 1–10 Aug. Callback tracking is a first-class `kind` value; a "final walk-around" is an
-appointment type. The audit's "0 rows" is the pre-1-Aug snapshot.
+rows** created 1–10 Aug — all days old. Callback tracking is a first-class `kind` value; a "final
+walk-around" is an appointment type. The audit's "0 rows" does not match the live DB and can't be
+explained by timing or RLS (see the diagnosis section) — it's an error in the audit.
 
 ### MEDIUM
 
