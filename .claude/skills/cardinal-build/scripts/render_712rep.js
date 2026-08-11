@@ -104,9 +104,9 @@ const JOB = {
         'the renter': has('Rita Renter'),
         'who the partner is': has('Habitat for Humanity'),
       },
-      /* NOT an assertion: the homeowner EMAIL has never been painted on this
-         card — red on the 711 artifact too, so it is a pre-existing gap and
-         not something 712 took away. Reported, not failed. */
+      /* 714 put it on the card. Until then this was reported-not-asserted,
+         because it was red on the 711 artifact too — a pre-existing gap rather
+         than something 712 took away. */
       homeownerEmailOnCard: has('karrie.johnson@example.com') || links.indexOf('karrie.johnson') !== -1,
       mustNotSee: {
         "Galen Curry's name": has('Galen Curry'),
@@ -130,9 +130,44 @@ const JOB = {
   /* 713: the line that used to carry "Galen Curry · (937) 586-0860" must now
      say where it went rather than rendering as an empty gap under the name */
   ok('the card explains where the partner contact went (713)', seen.explains === true);
-  console.log('\n  reported, not asserted:');
-  console.log('    homeowner email painted on the card: ' + seen.homeownerEmailOnCard +
-    '   (false on 711 too — a pre-existing gap, not something 712 removed)');
+  ok('the homeowner email is on the card when there is one (714)',
+    seen.homeownerEmailOnCard === true);
+
+  /* ── 714 P3b · the two live name shapes ──────────────────────────────────
+     contactsHtml used to read lead.homeowner_name directly while homeownerOf()
+     — the shared resolver — sat ten lines away. These are the two real shapes
+     that disagreed. */
+  const shapes = await p.evaluate(async () => {
+    const out = {};
+    async function show(name, ck) {
+      window.currentProject = { id: 'x-' + name, name: name, stage: 'Lead',
+        address: '1 Test St', created_by: 'nick@cardinalrenovations.net',
+        created_at: '2026-08-01T00:00:00Z', checklist: JSON.stringify({ lead: ck }) };
+      document.getElementById('cr-cc') && document.getElementById('cr-cc').remove();
+      await new Promise(r => setTimeout(r, 1600));
+      const c = document.getElementById('cr-cc');
+      const t = c ? c.textContent.replace(/\s+/g, ' ') : '';
+      /* the label reads "Homeowner" in the DOM — the capitals on screen are
+         CSS text-transform, which does not change textContent. Searching for
+         HOMEOWNER found nothing and looked like a card that never rebuilt. */
+      const i = t.indexOf('Homeowner');
+      return i === -1 ? '(no homeowner row; card=' + (c ? c.textContent.length : 'absent') + ')'
+                      : t.slice(i, i + 70);
+    }
+    /* no homeowner_name, no partner_name — the resolver recovers it from the
+       project name (live: "Reginald ?", "Shari Spearman") */
+    out.noPartner = await show('Shari Spearman', { claim_type: 'community' });
+    /* "{Partner} — {Address}": a property with no homeowner on file, where the
+       resolver correctly yields empty (live: the two Kitty Hawk rows) */
+    out.propertyShape = await show('Kitty Hawk Realty — 2420 Brookline',
+      { claim_type: 'community', partner_name: 'Kitty Hawk Realty' });
+    return out;
+  });
+  console.log('  shapes:', JSON.stringify(shapes));
+  ok('a job with no partner shows the homeowner name the hub already showed',
+    /Shari Spearman/.test(shapes.noPartner), shapes.noPartner);
+  ok('…while a "{Partner} — {Address}" job still correctly says Not recorded',
+    /Not recorded/.test(shapes.propertyShape), shapes.propertyShape);
 
   /* screenshot the ELEMENTS, not a clip: Playwright's clip is in PAGE
      coordinates, so {x:0,y:0} always captures the top of the document however

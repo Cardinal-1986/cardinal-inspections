@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 713 &#8212; The job card says where a partner\u2019s contact went, instead of showing a blank line</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 714 &#8212; Partner contacts are no longer fetched for anyone but Theo, a bid can no longer be mailed to the homeowner by mistake, and the job card shows the homeowner&#8217;s email</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21304,34 +21304,55 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
         var _lead = parseCkAll(pr).lead || {};
         var _pid  = _lead.partner_id || null;
         var _pnm  = _lead.partner_name || 'the partner';
+        /* 712 put a refusal here; 714 moves it ABOVE the lookup and off the
+           field it is refusing to fetch. Two reasons, and the second is a live
+           bug, not a consequence of this build:
+             1. the address was still being FETCHED for a non-owner and only
+                then refused, so it reached the browser for no reason;
+             2. the test was `if(_pe && !_own)`, so on the FIVE live partners
+                with no contact_email it never fired at all — control fell
+                through to the prompt below, whose default is pr.email, THE
+                HOMEOWNER. Mailing a partner's bid to the homeowner is the one
+                thing the community rules say must never happen, and it was one
+                tap away today.
+           The refusal now depends only on there being a partner, and the name
+           comes from the checklist, so no query runs at all. Theo, verbatim:
+           "Reps don't send bids I do. Reps just write the bid." */
+        var _own = false;
+        try{ _own = window.CardinalCommunityPartners &&
+                    typeof window.CardinalCommunityPartners.isOwner === 'function' &&
+                    window.CardinalCommunityPartners.isOwner(); }catch(_o){}
+        if(_pid && !_own){
+          alert('Bids to ' + _pnm + ' are sent by Theo \u2014 their address is not shared.\n\n' +
+                'Save the bid and let him know it is ready.');
+          return;
+        }
         if(_pid && sb){
           var _pq = await sb.from('community_partners')
                              .select('name,contact_email').eq('id', _pid).single();
           var _pd = (_pq && _pq.data) || null;
           var _pe = _pd ? String(_pd.contact_email || '').trim() : '';
           if(_pd && _pd.name) _pnm = _pd.name;
-          /* 712: this path queries community_partners DIRECTLY, so the module's
-             contact mask never touched it — the address was pre-filled into the
-             prompt below in plain sight. Under Theo's rule the partner address
-             is his alone, and he is the one who sends bids. Refusing here is
-             deliberate: the old fallback was pr.email, i.e. the HOMEOWNER, and
-             mailing a partner's bid to the homeowner is the one thing the
-             community rules say must never happen. */
-          var _own = false;
-          try{ _own = window.CardinalCommunityPartners &&
-                      typeof window.CardinalCommunityPartners.isOwner === 'function' &&
-                      window.CardinalCommunityPartners.isOwner(); }catch(_o){}
-          if(_pe && !_own){
-            alert('Bids to ' + _pnm + ' are sent by Theo \u2014 their address is not shared.\n\n' +
-                  'Save the bid and let him know it is ready.');
-            return;
-          }
           if(_pe){ toDflt = _pe; toAsk = 'Send to ' + _pnm + ' for approval:'; }
           else{ toAsk = 'No contact email on file for ' + _pnm +
                         ' \u2014 add one under Partners. Send to:'; }
         }
       }
-    }catch(_e){ try{ if(window.report) window.report(_e, 'Documents', 'partner email lookup'); }catch(__e){} }
+    }catch(_e){
+      try{ if(window.report) window.report(_e, 'Documents', 'partner email lookup'); }catch(__e){}
+      /* 714: this catch used to swallow and fall through to the prompt below,
+         whose default is pr.email — the HOMEOWNER. On a community job that
+         bills a partner, a failed lookup must not become an offer to mail the
+         homeowner instead. Fail closed and say nothing was sent. */
+      try{
+        if(pr && typeof projClaimType === 'function' && projClaimType(pr) === 'community' &&
+           ((parseCkAll(pr).lead || {}).partner_id)){
+          alert('Could not look up who this bid goes to \u2014 nothing was sent.\n\n' +
+                'Try again in a moment.');
+          return;
+        }
+      }catch(__x){}
+    }
     var to = prompt(toAsk, toDflt);
     if(to === null) return;
     to = to.trim();
@@ -31146,6 +31167,7 @@ var CACHE = null;
 var LOADED = false;
 var LOAD_PROMISE = null;
 var LISTENERS = [];
+var CACHE_FOR = null;   /* 714: the lower-cased email CACHE was loaded for */
 function sb(){ return window.supa || window.sb || null; }
 function esc(s){
 return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
@@ -31156,22 +31178,58 @@ function typeLabel(t){
 return t === 'property_manager' ? 'Property Manager' : t === 'nonprofit' ? 'Non-profit' : t;
 }
 function typeBadgeClass(t){ return t === 'property_manager' ? 'pm' : ''; }
+/* 714: the columns this module asks Postgres for.
+   FULL is every column on community_partners; CONTACT is the four Theo keeps
+   to himself (712); NARROW is FULL minus CONTACT, DERIVED rather than written
+   out, so a column added to the table later cannot be silently dropped for
+   reps only while the owner's screen keeps working.
+   ⚠️ confidential and prospective must never leave NARROW. maskIfConfidential
+   reads `p.confidential` and returns the row untouched when it is falsy, so
+   omitting that column would fail the confidential mask OPEN and un-mask the
+   two confidential GCs for every rep — a narrowing that widens exposure.
+   ⚠️ This is HYGIENE, not a fence. window.supa is a live authenticated client
+   and community_partners_read is USING(true), so a determined signed-in user
+   can still query the table directly. Theo accepted that residual when he
+   chose this over a database view. Do not describe it as a lock. */
+var COLS_FULL = ['id','name','partner_type','contact_name','contact_email',
+'contact_phone','address','notes','archived','created_at','created_by',
+'updated_at','confidential','prospective'];
+var COLS_CONTACT = ['contact_name','contact_email','contact_phone','address'];
+var COLS_NARROW = COLS_FULL.filter(function(c){ return COLS_CONTACT.indexOf(c) === -1; });
+function colsFor(){ return (isOwner() ? COLS_FULL : COLS_NARROW).join(','); }
 async function load(force){
-if(LOADED && !force && CACHE) return CACHE;
-if(LOAD_PROMISE && !force) return LOAD_PROMISE;
+/* 714: the cache is bound to the person it was loaded for. Signing out does
+   NOT reload this app — showLogin() only swaps views — and nothing else clears
+   this module, so on a shared tablet the next person used to inherit the
+   previous person's rows. That was harmless while every row had the same
+   shape; now that the shape depends on who asked, a stale cache is how an
+   owner ends up looking at a rep's contact-less rows. */
+var who = currentEmailLower();
+if(LOADED && !force && CACHE && CACHE_FOR === who) return CACHE;
+if(LOAD_PROMISE && !force && CACHE_FOR === who) return LOAD_PROMISE;
 var client = sb();
 if(!client){ CACHE = []; return CACHE; }
 if(!window.currentUser){ CACHE = CACHE || []; return CACHE; }
 LOAD_PROMISE = (async function(){
 try{
 var r = await client.from(TABLE)
-.select('*')
+.select(colsFor())
 .eq('archived', false)
 .order('partner_type', { ascending:true })
 .order('name',        { ascending:true });
-if(r.error){ console.warn('[cpartners] load', r.error.message); }
+/* 714: a failed load used to set LOADED = true and overwrite CACHE with [],
+   so ONE bad column name would empty the roster for the rest of the session,
+   silently and without retry — no directory, no picker, and no community bid
+   could be created at all, because cr-nbid's partner select reads this cache.
+   Unreachable with select('*'); one typo away with a hand-written list. */
+if(r.error){
+console.warn('[cpartners] load', r.error.message);
+CACHE = CACHE || [];
+}else{
 CACHE = r.data || [];
+CACHE_FOR = who;
 LOADED = true;
+}
 }catch(e){
 console.warn('[cpartners] load ex', e);
 CACHE = CACHE || [];
@@ -31284,9 +31342,15 @@ row[k] = (partner[k] || '').trim() || null;
 try{
 var r;
 if(partner.id){
-r = await client.from(TABLE).update(row).eq('id', partner.id).select().single();
+/* 714: a bare .select() is select=*, so this handed the full row — contacts
+   included — back to whoever called save(). The UPDATE policy lets Joan,
+   Curtis and Scottie update every row and all three are non-owners under
+   OWNER_EMAILS, so one save() call returned Galen's details in the response
+   body without writing to a contact column at all. Both callers only test the
+   result for truthiness. */
+r = await client.from(TABLE).update(row).eq('id', partner.id).select('id').single();
 }else{
-r = await client.from(TABLE).insert(row).select().single();
+r = await client.from(TABLE).insert(row).select('id').single();
 }
 if(r.error){ console.warn('[cpartners] save', r.error.message); return null; }
 await load(true);
@@ -31519,6 +31583,16 @@ return;
 partner = (raw ? (isOwner() ? raw : maskPartner(raw)) : partner);
 }
 var p = partner || { partner_type:'nonprofit' };
+/* 714: 712 gated the contact inputs on isOwner(). Now that a row can be
+   contact-less for a reason OTHER than who is looking (the narrowed select
+   above), the gate has to be the ROW: a row that never carried the columns
+   cannot write them, whoever is looking at it. Without this, an owner reading
+   a rep-shaped cache would be shown four empty inputs and would NULL the
+   stored contacts on save, silently and with no undo. A brand-new partner has
+   no row yet, so the owner still gets the inputs when adding one. */
+var rowCarriesContacts = !p.id ||
+Object.prototype.hasOwnProperty.call(p, 'contact_email');
+var canEditContacts = isOwner() && rowCarriesContacts;
 var title = partner ? 'Edit Partner' : 'Add Partner';
 var canFlagConfidential = isPrivileged();
 var html =
@@ -31542,7 +31616,7 @@ var html =
 '<span>🔒 Confidential — hide name &amp; contact info from sales reps</span>' +
 '</label>'
 : '') +
-(isOwner()
+(canEditContacts
 ? '<div class="row2">' +
 '<label>Contact Name' +
 '<input name="contact_name" value="' + esc(p.contact_name || '') + '" />' +
@@ -31590,7 +31664,7 @@ notes        : fd.get('notes'),
 };
 /* 712: only carried when the inputs existed — see save(), which now writes a
    contact column ONLY when the key is present. */
-if(isOwner()){
+if(canEditContacts){
 next.contact_name  = fd.get('contact_name');
 next.contact_email = fd.get('contact_email');
 next.contact_phone = fd.get('contact_phone');
@@ -37213,6 +37287,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:714, d:'2026-08-11', t:'Partner contacts stop travelling, and a bid can no longer go to the homeowner by mistake',
+s:'Three things. First, the app no longer even asks the database for a partner\u2019s contact details unless you are the one signed in \u2014 before, they were fetched on every load and merely hidden on screen. That is tidiness rather than a lock: anyone determined enough to open the browser\u2019s developer tools can still query the database directly, which is the trade you chose over changing the database itself. Second, and this one was a real bug you could have hit today: sending a bid refused to share a partner\u2019s address only when that partner HAD one on file. For the five partners with no email recorded, the refusal never fired and the send box opened pre-filled with the HOMEOWNER\u2019s address instead. It now refuses on every partner, before it looks anything up, and a failed lookup stops rather than offering the homeowner. Third, the job card now shows the homeowner\u2019s email beside their phone when there is one, and it recovers the homeowner\u2019s name the same way every other screen does \u2014 two jobs that read \u201cNot recorded\u201d here while the hub showed a name now agree. Also fixed quietly: the partner list is now tied to whoever is signed in, so on a shared tablet one person can no longer inherit the previous person\u2019s view.' },
 { b:713, d:'2026-08-11', t:'The job card explains the missing partner contact',
 s:'Build 712 made community partner contact details yours alone, and on the partner directory it says so. On the job card itself the line just went blank \u2014 the partner name with nothing underneath, which reads like something failed to load rather than a rule. It now carries the same note the directory does. A partner with no contact recorded still shows nothing at all, because saying the details are held by you would be untrue when there are none. Nothing about who can see what changed in this build: homeowner names, phone numbers and the job address were never touched and are still there for everyone on the job.' },
 { b:712, d:'2026-08-11', t:'Partner contact details are yours alone',
@@ -50006,13 +50082,31 @@ var billTo = l.partner_name
 var held = !contacts.length;
 var hoEdit = '<button class="ct-edit" data-act="edithome" type="button" ' +
 'title="Edit who this job serves" aria-label="Edit homeowner">&#9998;</button>';
+/* 714: the homeowner's email, on the card at last. Rendered only when there
+   IS one — it is blank on all 16 live community jobs today, and an empty row
+   on every card is noise. It appears the moment one is typed into the bid
+   form, which the pencil beside this label already opens. Falls back to
+   pr.email so a community job carrying the retail-shaped column shows it too.
+   No CSS: '#cr-cc .ct .v a' already stacks links in this row. */
+var hoMail = String(l.homeowner_email || (pr && pr.email) || '').trim();
+/* 714: this line read l.homeowner_name directly while homeownerOf() — which
+   delegates to the shared global projHomeowner, and whose comment says it
+   exists "so the hub, the client page and the estimate document cannot drift
+   apart" — sits ten lines above. The client page had drifted. Measured on live
+   data: of the 4 community jobs with no homeowner_name, two ("Reginald ?" and
+   "Shari Spearman") carry no partner_name either, so the resolver recovers the
+   name from pr.name and the hub shows it while this card said "Not recorded".
+   The other two are Kitty Hawk rows shaped "{Partner} — {Address}", where the
+   resolver correctly yields empty and "Not recorded" is the right answer. */
 var homeowner = l.no_homeowner
 ? '<div class="ct none"><div class="k">Homeowner' + hoEdit + '</div>' +
 '<div class="v">None on this job</div></div>'
 : '<div class="ct"><div class="k">Homeowner' + hoEdit + '</div>' +
-'<div class="v">' + esc(l.homeowner_name || 'Not recorded') +
+'<div class="v">' + esc(homeownerOf(pr) || 'Not recorded') +
 (l.homeowner_phone ? '<a href="tel:' + esc(l.homeowner_phone) + '">' +
-esc(l.homeowner_phone) + '</a>' : '') + '</div></div>';
+esc(l.homeowner_phone) + '</a>' : '') +
+(hoMail ? '<a href="mailto:' + esc(hoMail) + '">' + esc(hoMail) + '</a>' : '') +
+'</div></div>';
 return '<div class="cts">' + billTo + homeowner +
 (site
 ? '<div class="ct"><div class="k">Site contact</div>' +
