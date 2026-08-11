@@ -82,10 +82,22 @@ re-litigate.)
   `patchProjectCk`; delete is record-first, matched by path. Emoji stripped
   per the settled rule; `.doc/.docx` dropped from the accept list (the photos
   bucket's mime policy refuses Word anyway).
-- **Phase 4:** bid-strip/stage parity proven against the black card's Bid tab,
-  THEN delete the five cream surfaces + CSS and retire the `suspendForTab`
-  detours that now have black-card homes (CR-COM-001, 020, parts of 003). This
-  is the build that ends the black↔cream flip.
+- **Phase 4 — SHIPPED at build 709. THE PORT IS COMPLETE.** Parity was proven
+  first (the recon's table): awarded amounts were already covered by design
+  (the outcome step writes the same `checklist.bid.awarded_amount`); the ONE
+  gap — `bid.submitted_amount`'s only display and only writer — moved to the
+  Bid pane (Recorded line + Log/Edit submitted via `mergeCk`+`patchProjectCk`)
+  BEFORE deletion. Then: `cr-comclient` deleted wholesale (bid strip, cream
+  skin, badge — export had zero callers), both attach rows deleted
+  (pickers/writers/directories all survive — the card uses them), the WO
+  cream anchor branch deleted (host mode only), print/health lists pruned,
+  and the snowflake pill joined the house chevron. **Two body observers
+  retired (census 44 → 42).** Conscious accepts, recorded: Received/
+  Outstanding at-a-glance (payments is one tap away) and the cream header
+  badge (invisible under the takeover anyway). The `suspendForTab` flip
+  REMAINS for the six tiles whose destinations are shared `#tab-*` chrome —
+  it cannot be deleted; what ended is the cream *community* face, and the
+  suspended overview now wears the app's standard skin.
 - **Not unlocked by (a), still their own items:** 004/005 (stages, OnHold),
   011/012 (money), 008 (partner identity), 022 (hub numbers).
 
@@ -96,7 +108,12 @@ re-litigate.)
 ### CR-COM-001 — The takeover rule hides five live community features
 *(merges L0F1 + L3F0 + L4F0 — three lenses independently)*
 The bid strip, Partner row, Property row, Work Orders section and Payment row are
-built, wired and invisible on every community job (see headline). The black card
+built, wired and invisible on every community job (see headline).
+**✅ RESOLVED at build 709 (the Phase 4 deletion — see the roadmap at top):**
+every capability was ported (705 payments, 706 partner/property, 707 work
+orders, 709 recorded-bid amounts) and the hidden surfaces themselves are
+deleted. The takeover rule now hides only the ordinary shared page, which is
+what it was always supposed to do. The black card
 re-offers **none** of them: its complete action set is
 {edithome, live, newbid, open} + {estimate, outcome, schedule, invoice};
 `setPartnerForProject` is referenced nowhere in the `cr-cc` block — **you can
@@ -210,6 +227,9 @@ never `partner_id`/`partner_name` — so changing the funder at award time leave
 billing pointed at the old partner. Adjacent, **CR-COM-010** *(L2F5)*: the
 `awarded_amount` it records is **never displayed again** on any screen; win-rate
 math reads it, no human can.
+**✅ CR-COM-010 FIXED at build 709:** the Bid pane's Recorded line shows
+Submitted (with date) and Awarded passively — the strip's display parity port.
+(009's funded-vs-billed split is still open.)
 
 ### CR-COM-011 — The same job shows four different dollar figures
 *(merges L0F4 + L2F4)* Four modules define "the amount" four ways — hub
@@ -284,6 +304,11 @@ navigation contract (ground/footer snap back a beat late); the Photos route
 skips `hideAllViews()`; and 6 of the 9 Job-Menu tiles call `suspendForTab()`,
 dropping you onto the **cream first-build face** with different labels — the
 black↔cream flip Theo can feel but not name.
+**◐ PARTIAL at build 709:** the cream *community* surfaces are deleted, so the
+flip now lands on the app's standard page, not a differently-labelled cream
+face. The suspend itself stays — the six tiles open shared `#tab-*` chrome
+that retail/insurance use too (measured; there is no view-swap opener for
+them). Polling teardown and the Photos `hideAllViews` skip are still open.
 
 ### CR-COM-021 — After a save, the Location card duplicates
 *(L3F2; re-verified at 684 against the 636/679 map work — see verdict)*
@@ -317,8 +342,9 @@ Bid picker — the required first field — sorts Habitat 7th of 10.
 - The Stage cell truncates to the first word: "Bid Requested" and "Bid
   Submitted" both read **"Bid"** (`.split(' ')[0]` against the module's own
   two-word labels).
-- The back pill is labelled with a **snowflake** ("❄ Back to bid view",
-  U+2744) — also an emoji-sweep site.
+- ~~The back pill is labelled with a **snowflake**~~ — **fixed at 709**: it
+  wears the house chevron ("‹ Back to bid view") like every other back
+  control.
 - The Reviews section on every community card can only ever say "No reviews
   card on this job."
 - The adopted Location card keeps cream-face greens on the black card —

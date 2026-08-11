@@ -3898,13 +3898,14 @@ content is already stale.
 
 Recorded 10 Aug from the Community audit (`CR_COMMUNITY_AUDIT_2026-08.md`): the
 takeover rule `#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none
-!important}` hides the entire `.wrap` subtree. **Five community surfaces of the
-FIRST build are still rendered, wired and invisible underneath it on every
-community job**: the bid strip (`.cr-bidstrip`, the only Bid-Submitted setter),
-the Partner attach row (`.cr-cp-attach`), the Property row (`.cr-cprop-attach`),
-the Work Orders section (`.cr-wo-section`) and the Payment Information row
-(`#dbPayRow` — the only caller of `openPaymentsPage()` in the file). **If you
-edit any of those and see nothing change on a community job, this rule is why.**
+!important}` hides the entire `.wrap` subtree. **RESOLVED at build 709 (Phase 4):** the first-build community surfaces are
+DELETED — `cr-comclient` (bid strip + cream skin) wholesale, both attach rows,
+the WO cream anchor path. Their capabilities live on the card (705–709). The
+shared `.dbstage`/`#dbPayRow` remain for the other CRMs; `cr-comstage`
+survives (its label export feeds the estimate-status toast). A 709 measured
+correction: the bid strip was never a stage setter — its buttons only wrote
+`checklist.bid` amounts; the one card-reachable Bid-Submitted setter is the
+estimate-status sync (Sent → Prospect).
 **SETTLED 11 Aug: Theo picked (a) — the black card wins.** The surfaces get
 ported onto `#cr-cc` phase by phase, then deleted (roadmap at the top of the
 audit doc). **Phase 1, build 705:** the black card's Job Menu now ends with a

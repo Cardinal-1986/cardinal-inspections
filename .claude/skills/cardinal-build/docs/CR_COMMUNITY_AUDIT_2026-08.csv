@@ -1,5 +1,5 @@
 id,severity,status,area,title,merged_from,anchor
-CR-COM-001,Blocker,Partial-705-706,Takeover,Five community features built wired and invisible under the black card,L0F1+L3F0+L4F0,"#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none !important}"
+CR-COM-001,Blocker,Fixed-709,Takeover,Five community features built wired and invisible under the black card,L0F1+L3F0+L4F0,"#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none !important}"
 CR-COM-002,Blocker,Fixed-705,Billing,Partner billing/payment has no DIRECT door — reachable only via a 3-tap suspend detour nothing hints at,L0F0,"pRow.addEventListener('click', openPaymentsPage)"
 CR-COM-003,Blocker,Confirmed-rendered,Job Menu,Job Menu mirrors the retired #jaGrid — 9 tiles vs 13; Documents missing; Contracts opens Estimates,L0F2+L3F1+L4F6,"querySelectorAll('#jaGrid .jatile')"
 CR-COM-004,Blocker,Confirmed,Stages,Submit-the-bid opens the editor; Bid Submitted unreachable; all 16 jobs at Lead,L0F5+L2F2,"label: est ? 'Submit the bid' : 'Price it'"
@@ -8,7 +8,7 @@ CR-COM-006,Blocker,Fixed-706,Properties,Module unreachable — only caller passe
 CR-COM-007,Blocker,Fixed-707,Work Orders,Hub tile alerts toward a section hidden by 001; list renders empty silently but uploadFile THROWS on the string checklist AFTER storage upload — every attempt orphans a file,L4F2,Work orders live on each community job
 CR-COM-008,Serious,Confirmed-live-DB,Partner identity,"Three storage shapes (partner_id, partner_name, bare partner); screens each read one; bid-email guardrail keys on id and skips the broken jobs",L0F3+L1F1+L4F3+L4F10+L1F5,ck.lead.partner_id = partnerId
 CR-COM-009,Serious,Confirmed,Award,Recording an award changes funded_by but never billing partner,L4F8,lp.funded_by = String(oc.funded_by
-CR-COM-010,Serious,Confirmed,Award,awarded_amount recorded and never displayed anywhere,L2F5,awarded_amount: n
+CR-COM-010,Serious,Fixed-709,Award,awarded_amount recorded and never displayed anywhere,L2F5,awarded_amount: n
 CR-COM-011,Serious,Confirmed,Money,Same job shows four dollar figures across four modules with opposite precedence,L0F4+L2F4,Number(l.bid_amount) || Number(estTot[pr.id])
 CR-COM-012,Serious,Confirmed,Bid tab,Every line prices $0 — reads .price where lines carry unit_price/amount,L2F1,(it.qty || 1) * (it.price || 0)
 CR-COM-013,Serious,Confirmed-684,Assignment,Create writes assigned[] and Edit writes assigned_to; hub column shows created_by; two more array writers found at 684,L0F7,assigned_to     : assignedTo
@@ -18,8 +18,8 @@ CR-COM-016,Serious,Partial-706,People,Renter/Tenant captured on property-manager
 CR-COM-017,Serious,Confirmed-live-DB,People,community_contacts has a reader and no writer — Held by admin is the only possible state,L1F2+L4F11a,from('community_contacts')
 CR-COM-018,Serious,Confirmed,Flow,Scheduled is a dead end; Get-on-the-calendar makes no appointment,L0F11+L2F3,Mark this job SCHEDULED?
 CR-COM-019,Serious,Confirmed,Picker,Partner picker survives navigation; Select writes onto the job you left; nav paints above it,L3F3,.cr-cp-shell
-CR-COM-020,Serious,Confirmed-executed,Teardown,Polling teardown; Photos route skips hideAllViews; 6 of 9 tiles flip black→cream,L3F4+L4F13,function suspendForTab()
+CR-COM-020,Serious,Partial-709,Teardown,Polling teardown; Photos route skips hideAllViews; 6 of 9 tiles flip black→cream,L3F4+L4F13,function suspendForTab()
 CR-COM-021,Serious,Confirmed-684-executed,Location,adoptLocation vs renderAcxOverview duplication after save (survived the 636/679 map work),L3F2,function adoptLocation(
 CR-COM-022,Confusing,Confirmed,Hub,Open bids counts everything forever; three headline numbers identical; Due soon = all; Waiting-on-you rows not tappable,L0F9+L2F8+L4F12+L0F8,"<div class=""k"">Open bids</div>"
 CR-COM-023,Confusing,Confirmed-684-census,Partners,Habitat-first holds in 3 of 12 partner lists (census at 684 in the doc),L0F10+L1F7+L4F9,/habitat/i.test(a.name) ? 0 : 1
-CR-COM-024,Polish,Confirmed,Display,"Bill-to truncates to 'City of'; Stage cell reads 'Bid' for both bid stages; snowflake back-pill; Reviews always empty; adopted Location greens 3.44:1",L1F6+L2F7+L3F5+L4F11b+L4F14,function shortOrg(n)
+CR-COM-024,Polish,Partial-709,Display,"Bill-to truncates to 'City of'; Stage cell reads 'Bid' for both bid stages; snowflake back-pill; Reviews always empty; adopted Location greens 3.44:1",L1F6+L2F7+L3F5+L4F11b+L4F14,function shortOrg(n)
