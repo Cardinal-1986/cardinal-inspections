@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 718 &#8212; The two estimate buttons on a client\u2019s page say which one starts from a template and which one starts blank</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 719 &#8212; Address auto-complete moved onto Google\u2019s current service, off the one they closed to new customers</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37374,6 +37374,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:719, d:'2026-08-11', t:'Address auto-complete moved to Google\u2019s current service',
+s:'Typing an address on the lead form was still using the version of Google\u2019s auto-complete that they closed to new customers in March 2025 \u2014 it worked, but it logged a deprecation warning every time the form opened and it is the older service. It now uses the current one. What you see is a little different and a little better: the list of matches is Cardinal\u2019s own, so it reads in the app\u2019s colours in both light and dark, rows are big enough to hit on a phone, arrow keys and Enter work, and it opens upward when the keyboard leaves no room below. The address box itself is unchanged, which matters \u2014 Google\u2019s drop-in replacement would have swapped the box out from under every screen that reads it. If the new service is ever unavailable the old one is still wired underneath, so the field falls back to what it did before rather than to nothing.' },
 { b:718, d:'2026-08-11', t:'The two estimate buttons say which is which',
 s:'A client\u2019s Estimates tab has two buttons that read almost identically \u2014 \u201C+ New estimate\u201D and \u201CNew Estimate\u201D \u2014 and they do different things. One opens the six trade templates (roofing, siding, windows, Andersen, gutters, repair); the other opens an empty estimate you fill in yourself. They now say so: \uFF0B From a template, and Blank estimate. Nothing about how either one works has changed.' },
 { b:717, d:'2026-08-11', t:'The sign-in log records everyone, not just the admins',
@@ -39817,6 +39819,10 @@ migrateBaseline: migrateBaseline,
 </script>
 
 <style id="cr-gmap-styles">.pac-container{background:#fdfcf7 !important;border:1px solid #d9cfaf !important;box-shadow:0 8px 24px rgba(0,0,0,.18) !important;border-radius:8px !important;z-index:100000 !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif !important;margin-top:4px}.pac-item{padding:9px 12px !important;cursor:pointer !important;border-top:1px solid #f0e8c9 !important;font-size:13.5px !important;color:#5a4a1a !important}.pac-item:first-child{border-top:0 !important}.pac-item:hover,.pac-item-selected{background:#f4f2f1 !important}.pac-item-query{color:#2c2c2c !important;font-weight:800 !important}.pac-icon{display:none !important}.pac-logo::after{opacity:.4}.cr-gmap-block{background:#fdfcf7;border:1px solid #d9cfaf;border-radius:12px;overflow:hidden;margin:8px 0 14px;box-shadow:0 3px 10px rgba(0,0,0,.06)}.cr-gmap-imgwrap{display:block;background:#f0e8d0;line-height:0}.cr-gmap-imgwrap img{width:100%;height:auto;max-height:240px;object-fit:cover;display:block}.cr-gmap-actions{display:flex;gap:8px;padding:10px 12px;background:#f4f2f1;border-top:1px solid #e8d9a8}.cr-gmap-btn{flex:1;padding:9px 14px;border-radius:6px;background:#c8202e;color:#fff;text-decoration:none;text-align:center;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit}.cr-gmap-btn:hover{background:#e8ba15}.cr-gmap-btn.ghost{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-gmap-btn.ghost:hover{background:rgba(200,32,46,.1)}.cr-gmap-hint{background:#fef7d6;border:1px dashed #c8202e;color:#5a4a1a;padding:10px 14px;border-radius:8px;font:600 12px 'Segoe UI',Arial,sans-serif;margin:8px 0}.cr-gmap-hint b{color:#2c2c2c}</style>
+<style id="cr-ac-styles">/* v2026-08-11 build 719 · address suggestions. position:fixed so a modal's
+   overflow cannot clip it and #pwaNav (z-index 9990) cannot trap it; rows are
+   44px minimum, the touch floor 592 set for the showroom. Colours are --rbe-*
+   pairs so they flip with the theme, each with a literal fallback. */.cr-acbox{display:none;position:fixed;z-index:10700;max-height:274px;overflow-y:auto;background:var(--rbe-panel,#16161B);color:var(--rbe-ink,#cfd6df);border:1px solid var(--rbe-line,#232329);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.42);font:600 13.5px 'Segoe UI',Arial,sans-serif;-webkit-overflow-scrolling:touch}.cr-acrow{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--rbe-line,#232329);display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:44px;box-sizing:border-box}.cr-acrow:last-child{border-bottom:0}.cr-acrow:hover,.cr-acrow.on{background:var(--rbe-redtint,#3a2226)}.cr-acrow .m{color:var(--rbe-ink,#cfd6df);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-acrow .s{font-weight:600;font-size:11.5px;color:var(--rbe-mute,#9aa0a8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}</style>
 <script id="cr-gmap-script">
 (function(){
 'use strict';
@@ -39898,11 +39904,145 @@ return true;
 }
 return false;
 }
-async function attachAutocomplete(input){
-if(!input || input.dataset.crAutocomplete === '1') return;
-input.dataset.crAutocomplete = '1';
+/* ---- 719: suggestions without the deprecated widget -------------------
+   ONE dropdown for the whole app. It is position:fixed and anchored to the
+   input's rect on paint, which sidesteps both traps this file has paid for
+   before: a modal's overflow clipping an absolutely-positioned child, and
+   #pwaNav's z-index stranding it. No MutationObserver here on purpose —
+   plain listeners are enough and the census does not need a 43rd module. */
+var acBox = null, acItems = [], acIdx = -1, acInput = null, acToken = null, acTimer = null;
+/* set while acChoose writes the field: the input/change events below are the
+   app's contract with seven .value readers, but this module now listens to
+   that same field, and without this it reads its own write as typing and
+   re-opens the list on the address just chosen. */
+var acSilent = false;
+function acEnsureBox(){
+if(acBox) return acBox;
+acBox = document.createElement('div');
+acBox.className = 'cr-acbox';
+acBox.setAttribute('role', 'listbox');
+/* mousedown, not click: preventDefault here stops the input blurring before
+   the click lands, which is what makes a pointer selection work at all. */
+acBox.addEventListener('mousedown', function(e){ e.preventDefault(); });
+acBox.addEventListener('click', function(e){
+var row = e.target.closest('[data-aci]');
+if(row) acChoose(parseInt(row.getAttribute('data-aci'), 10));
+});
+document.body.appendChild(acBox);
+return acBox;
+}
+function acClose(){ if(acBox) acBox.style.display = 'none'; acItems = []; acIdx = -1; }
+function acPosition(){
+if(!acBox || !acInput) return;
+var r = acInput.getBoundingClientRect();
+var below = window.innerHeight - r.bottom;
+acBox.style.left  = Math.round(r.left) + 'px';
+acBox.style.width = Math.round(r.width) + 'px';
+/* flip above the field when the keyboard leaves no room under it */
+if(below < 150 && r.top > below){
+acBox.style.top = '';
+acBox.style.bottom = Math.round(window.innerHeight - r.top + 4) + 'px';
+}else{
+acBox.style.bottom = '';
+acBox.style.top = Math.round(r.bottom + 4) + 'px';
+}
+}
+function acPaint(){
+var box = acEnsureBox();
+if(!acItems.length){ acClose(); return; }
+box.innerHTML = acItems.map(function(s, i){
+return '<div class="cr-acrow' + (i === acIdx ? ' on' : '') + '" role="option" data-aci="' + i +
+'"><span class="m"></span><span class="s"></span></div>';
+}).join('');
+/* textContent, never innerHTML: these strings come back from Google and are
+   not ours to trust into markup. */
+Array.prototype.forEach.call(box.querySelectorAll('[data-aci]'), function(row, i){
+row.querySelector('.m').textContent = acItems[i].__main || '';
+row.querySelector('.s').textContent = acItems[i].__sub  || '';
+});
+box.style.display = 'block';
+acPosition();
+}
+async function acFetch(P, input){
+var q = (input.value || '').trim();
+if(q.length < 3){ acClose(); return; }
 try{
-await loadMaps();
+if(!acToken) acToken = new P.AutocompleteSessionToken();
+var res = await P.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+input: q, includedRegionCodes: ['us'], sessionToken: acToken
+});
+/* the answer is stale if focus moved or they kept typing while it flew */
+if(acInput !== input) return;
+if((input.value || '').trim() !== q) return;
+acItems = (res && res.suggestions ? res.suggestions : [])
+.filter(function(s){ return s && s.placePrediction; }).slice(0, 6);
+acItems.forEach(function(s){
+var p = s.placePrediction;
+s.__main = (p.mainText && p.mainText.text) || (p.text && p.text.text) || '';
+s.__sub  = (p.secondaryText && p.secondaryText.text) || '';
+});
+acIdx = -1;
+acPaint();
+}catch(e){ acClose(); }
+}
+async function acChoose(i){
+var s = acItems[i], input = acInput;
+if(!s || !input) return;
+acClose();
+clearTimeout(acTimer);   /* a keystroke's debounce would re-open the list */
+try{
+var place = s.placePrediction.toPlace();
+await place.fetchFields({ fields: ['formattedAddress', 'location', 'displayName'] });
+var addr = place.formattedAddress || place.displayName || input.value;
+acSilent = true;
+input.value = addr;
+input.dispatchEvent(new Event('input',  { bubbles:true }));
+input.dispatchEvent(new Event('change', { bubbles:true }));
+acSilent = false;
+var loc = place.location;
+input.dispatchEvent(new CustomEvent('cr-place-selected', {
+detail: {
+address: addr,
+lat: loc ? (typeof loc.lat === 'function' ? loc.lat() : loc.lat) : null,
+lng: loc ? (typeof loc.lng === 'function' ? loc.lng() : loc.lng) : null,
+place: place,
+},
+bubbles: true,
+}));
+}catch(e){ /* keep whatever they typed — never blank the field */ }
+acToken = null; /* a session token ends at selection */
+}
+function attachSuggestions(input, P){
+input.setAttribute('autocomplete', 'off');
+input.addEventListener('focus', function(){ acInput = input; });
+input.addEventListener('input', function(){
+if(acSilent) return;
+acInput = input;
+clearTimeout(acTimer);
+acTimer = setTimeout(function(){ acFetch(P, input); }, 220);
+});
+input.addEventListener('blur', function(){
+setTimeout(function(){ if(acInput === input) acClose(); }, 150);
+});
+input.addEventListener('keydown', function(e){
+if(!acItems.length || !acBox || acBox.style.display === 'none') return;
+if(e.key === 'ArrowDown'){ e.preventDefault(); acIdx = Math.min(acIdx + 1, acItems.length - 1); acPaint(); }
+else if(e.key === 'ArrowUp'){ e.preventDefault(); acIdx = Math.max(acIdx - 1, 0); acPaint(); }
+else if(e.key === 'Enter' && acIdx >= 0){ e.preventDefault(); acChoose(acIdx); }
+else if(e.key === 'Escape'){ acClose(); }
+});
+}
+/* capture phase: the lead form scrolls inside its own modal, not the window */
+window.addEventListener('scroll', function(){
+if(acBox && acBox.style.display === 'block') acPosition();
+}, true);
+window.addEventListener('resize', function(){
+if(acBox && acBox.style.display === 'block') acPosition();
+});
+/* The legacy widget, kept whole. Reached only when the new Places library is
+   absent — then the field behaves exactly as it did before 719 instead of
+   losing autocomplete altogether. */
+function attachLegacyAutocomplete(input){
 var ac = new google.maps.places.Autocomplete(input, {
 types: ['address'],
 componentRestrictions: { country: 'us' },
@@ -39925,6 +40065,18 @@ place: place,
 bubbles: true,
 }));
 });
+}
+async function attachAutocomplete(input){
+if(!input || input.dataset.crAutocomplete === '1') return;
+input.dataset.crAutocomplete = '1';
+try{
+await loadMaps();
+var P = google.maps.places;
+if(P && P.AutocompleteSuggestion && P.AutocompleteSessionToken){
+attachSuggestions(input, P);
+}else{
+attachLegacyAutocomplete(input);
+}
 }catch(e){
 /* 565: DO NOT clear the guard here. It used to be reset to '', which put the field
    straight back in front of the requestAnimationFrame scanner — so with no Maps key
