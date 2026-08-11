@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 715 &#8212; AI Estimate is on the client\u2019s own page now, and the estimate it writes stays attached to their job</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 716 &#8212; The Templates button on the Estimates screen opens the templates instead of the AI builder</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10072,7 +10072,7 @@ function renderHome(){
       '<button class="btn" data-reload-clients style="margin-top:10px;">Try again</button></div>';
   }else if(!cacheProjects.length){
     out += '<div class="empty"><b>No client projects yet.</b><br>' +
-      'Click <b>+ Add project</b> to create your first client profile.</div>';
+      'Use the <b>\uFF0B</b> button at the top and pick <b>Lead</b> to create your first client profile.</div>';
   }else if(!projs.length){
     out += '<div class="empty"><b>No projects match your search.</b></div>';
   }else{
@@ -34254,10 +34254,74 @@ if(!btn || btn.dataset.crEafFixed === '1') return;
 btn.dataset.crEafFixed = '1';
 btn.onclick = function(e){
 e.stopPropagation();
-if(window.CardinalEstimates && typeof window.CardinalEstimates.openAI === 'function'){
-window.CardinalEstimates.openAI();
-}
+openTemplatePicker();
 };
+}
+/* 716: "Templates" used to call openAI(), which made it a second AI Estimate
+   button under a name that promised something else — and left the six trade
+   templates (Roofing, Siding, Windows, Andersen, Gutters, Repair) unreachable
+   from this screen entirely. They already work on a client profile, so pick the
+   client here and hand off to that flow rather than building a second one. */
+function openTemplatePicker(){
+var m = mount();
+if(!m) return;
+var esc = function(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+  return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); };
+var rows = (window.cacheProjects || []).slice().sort(function(a, b){
+return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+});
+m.innerHTML = '<div class="cr-app" data-cr-eaf-tplpick="1" style="padding:18px;max-width:640px;margin:0 auto;">' +
+'<div class="cr-back" data-tplback>\u2190 Back to Estimates</div>' +
+'<h3 style="font:800 18px Georgia,serif;margin:14px 0 6px;">Estimate from a template</h3>' +
+'<p style="opacity:.75;font-size:13px;margin:0 0 12px;">Pick the client. Their page opens on Estimates with the template list showing \u2014 Roofing, Siding, Windows, Andersen, Gutters or Repair.</p>' +
+'<input data-tplq placeholder="Search clients\u2026" style="width:100%;box-sizing:border-box;padding:11px 13px;border-radius:9px;border:1px solid rgba(200,32,46,.35);background:rgba(255,255,255,.04);color:inherit;font:inherit;margin-bottom:10px;">' +
+'<div data-tplrows></div></div>';
+var back = m.querySelector('[data-tplback]');
+if(back) back.onclick = function(){
+  if(window.CardinalEstimates && typeof window.CardinalEstimates.open === 'function') window.CardinalEstimates.open();
+};
+var q = '';
+function paint(){
+var list = rows.filter(function(p){
+return !q || String((p.name || '') + ' ' + (p.address || '')).toLowerCase().indexOf(q) !== -1;
+}).slice(0, 40);
+m.querySelector('[data-tplrows]').innerHTML = list.length ? list.map(function(p){
+return '<button data-tplpick="' + esc(p.id) + '" style="display:block;width:100%;box-sizing:border-box;text-align:left;padding:12px 13px;margin-bottom:7px;border:1px solid rgba(200,32,46,.35);border-radius:10px;background:rgba(255,255,255,.03);color:inherit;cursor:pointer;font:inherit;">' +
+'<b>' + esc(p.name || 'Unnamed') + '</b><br><small style="opacity:.65;">' + esc(p.address || 'No address') + '</small></button>';
+}).join('') : '<p style="opacity:.6;">No clients match.</p>';
+Array.prototype.forEach.call(m.querySelectorAll('[data-tplpick]'), function(b){
+b.onclick = function(){ goToTemplates(b.getAttribute('data-tplpick')); };
+});
+}
+var inp = m.querySelector('[data-tplq]');
+if(inp) inp.oninput = function(){ q = inp.value.trim().toLowerCase(); paint(); };
+paint();
+}
+/* openProject() swaps the view but the profile finishes rendering on its own
+   schedule, so poll for THIS project rather than firing into a half-built page
+   \u2014 the shape CardinalPunchProfile.openItem settled on at 610. Gives up
+   quietly and leaves the user on the client page, which is still the right place. */
+function goToTemplates(pid){
+if(!pid || typeof window.openProject !== 'function') return;
+var m = mount();
+if(m){ m.style.display = 'none'; m.innerHTML = ''; }
+try{ window.openProject(pid); }catch(_){ return; }
+var tries = 0;
+(function go(){
+tries++;
+var ready = window.currentProject && String(window.currentProject.id) === String(pid);
+if(ready){
+try{ if(typeof window.showTab === 'function') window.showTab('estimates'); }catch(_){}
+var menu = document.getElementById('pEstMenu');
+if(menu){
+/* the document-level handler that closes this menu runs on the click that
+   is still propagating, so open it on the next turn instead. */
+setTimeout(function(){ menu.style.display = 'block'; }, 0);
+}
+return;
+}
+if(tries < 40) setTimeout(go, 75);
+})();
 }
 function wireStats(){
 if(!mountVisible()) return;
@@ -37285,6 +37349,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:716, d:'2026-08-11', t:'The Templates button opens the templates',
+s:'On the Estimates screen the three buttons are AI Estimate, + New and Templates \u2014 but Templates was wired to the AI builder, so it was a second AI button wearing another name, and the six trade templates (Roofing, Siding, Windows, Andersen, Gutters, Repair) could not be reached from that screen at all. Tap it now and it asks which client, then opens their page on Estimates with the template list already showing \u2014 the same list that has always worked from a client\u2019s page, rather than a second one built beside it. Also: the empty Client Projects panel told you to click \u201C+ Add project\u201D, which is not a button anywhere in the app; it now points at the \uFF0B at the top and says to pick Lead.' },
 { b:715, d:'2026-08-11', t:'AI Estimate, from the client\u2019s own page \u2014 and it stays with the job',
 s:'Two halves of the same gap. \u2666 The Estimates tab on a client\u2019s page could start a template estimate or a blank one, but there was no way to reach the AI builder from there \u2014 it lived only on the main Estimates screen, so you had to leave the client and start something that did not know whose roof it was. There is now an \u26A1 AI Estimate button beside + New estimate, and the builder opens with the client\u2019s name and address across the top. \u2666 Underneath, an AI estimate was never being tied to the job at all. The server has always recorded which client an estimate belongs to; the app simply never told it, so every AI estimate came out unattached \u2014 which is why sending one had no address to start from. It now carries the client through, so the estimate belongs to the job the way a template estimate always has.' },
 { b:714, d:'2026-08-11', t:'Client profiles stop redrawing themselves in the background',
