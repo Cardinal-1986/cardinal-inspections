@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 722 &#8212; A contract now tracks itself: mark it sent, sign it on the same pad you use for reports, or void it, and the status is recorded on the job</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 723 &#8212; A crew work order now shows where it stands: dispatched to the crew, then marked completed when the job is done, right on the Work Orders tab</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9869,6 +9869,7 @@ var estBest = {};   /* highest total among SENT/approved estimates */
 var estRows = {};   /* 654: those same rows kept per project — the tile/tab count reads these */
 var ctrSigned = {}; /* total on the signed, un-voided contract */
 var collPaid = {};  /* 721: money-in from the collections table, per project — the single source for Balance Due when a job has any collections */
+var woByReport = {};  /* 723: crew_work_orders row keyed by report_id (its WO document) */
 /* 493: [] means two different things - the table is empty, or we never got a
    successful read. A denied or failed load leaves cacheProjects at its initial
    [], and the home empty-state then tells the user they have no clients. The
@@ -9898,13 +9899,22 @@ async function reload(){
          reload(), and with it the entire client profile. */
       moneyDb.estimates().catch(function(){ return []; }),
       moneyDb.contracts().catch(function(){ return []; }),
-      moneyDb.collections().catch(function(){ return []; })
+      moneyDb.collections().catch(function(){ return []; }),
+      /* 723: crew work-order dispatch/completion, keyed to its document by
+         report_id. is_full_access RLS, so a rep reads [] — which is exactly
+         who never issues one. Catches to [] like the money tables. */
+      (TEAM ? sb.from('crew_work_orders')
+                .select('report_id,status,sent_at,sent_via,sent_to,completed_on')
+                .then(function(r){ return (!r.error && r.data) || []; })
+                .catch(function(){ return []; })
+            : Promise.resolve([]))
     ]);
     cacheProjects = res[0];
     cacheRows = res[1];
     cacheAppts = res[2];
     indexMoney(res[3], res[4]);
     indexCollections(res[5]);
+    indexWorkOrders(res[6]);
     cacheLoaded = true;   /* 493: only here, and only after the awaits resolved */
     if(currentProject){
       var fresh = cacheProjects.find(function(x){ return x.id === currentProject.id; });
@@ -9942,6 +9952,19 @@ function docRowHtml(r){
     ? '<span class="chip sent">SENT</span>' +
       (r.sent_at ? '<small>Sent ' + fmtDay(r.sent_at) + '</small>' : '')
     : '<span class="chip unsent">UNSENT</span>';
+  /* 723: a crew work order also carries a dispatch/completion state on its
+     crew_work_orders row — surfaced here so a dispatched or finished job reads
+     as such, not just "sent". */
+  var isWO = isWorkOrderTitle(r.title);
+  var wo = isWO ? woByReport[r.id] : null;
+  if(isWO){
+    if(wo && wo.completed_on){
+      statusCell += '<span class="chip sent" style="background:#2e7d32;border-color:#2e7d32">COMPLETED</span>' +
+                    '<small>Done ' + fmtDay(wo.completed_on) + '</small>';
+    }else if((wo && (wo.status === 'sent' || wo.sent_at)) || r.status === 'sent'){
+      statusCell += '<span class="chip sent" style="background:#1565c0;border-color:#1565c0">DISPATCHED</span>';
+    }
+  }
   var toggleLabel = r.status === 'sent' ? 'Mark unsent' : 'Mark sent';
   var by = r.created_by ? ' · by ' + esc(r.created_by) : '';
   var pr0 = r.project_id ? cacheProjects.find(function(x){ return x.id === r.project_id; }) : null;
@@ -9957,6 +9980,8 @@ function docRowHtml(r){
     '<td>' +
       '<button class="chipbtn" data-act="open" data-id="'+r.id+'">Open / Edit</button>' +
       '<button class="chipbtn" data-act="toggle" data-id="'+r.id+'">'+toggleLabel+'</button>' +
+      (isWO ? '<button class="chipbtn" data-act="wodone" data-id="'+r.id+'">' +
+        (wo && wo.completed_on ? 'Reopen' : 'Mark completed') + '</button>' : '') +
       '<button class="chipbtn" data-act="download" data-id="'+r.id+'">Download</button>' +
       '<button class="chipbtn" data-act="dup" data-id="'+r.id+'">Duplicate</button>' +
       '<button class="chipbtn danger" data-act="del" data-id="'+r.id+'">Delete</button>' +
@@ -12325,8 +12350,32 @@ async function handleDocAction(e){
       var row = cacheRows.find(function(x){ return String(x.id) === String(id); });
       if(!row) return;
       var toSent = row.status !== 'sent';
-      await db.update(id, { status: toSent ? 'sent' : 'unsent',
-                            sent_at: toSent ? new Date().toISOString() : null });
+      var sAt = toSent ? new Date().toISOString() : null;
+      await db.update(id, { status: toSent ? 'sent' : 'unsent', sent_at: sAt });
+      /* 723: a work order's dispatch lives on its crew_work_orders row too.
+         Keep it in step — but never un-complete a finished one from the doc toggle. */
+      if(isWorkOrderTitle(row.title)){
+        var wr = woByReport[id];
+        if(!(wr && wr.completed_on)){
+          try{ await sb.from('crew_work_orders')
+            .update({ status: toSent ? 'sent' : 'draft', sent_at: sAt, sent_via: toSent ? 'link' : null })
+            .eq('report_id', id); }catch(_){}
+        }
+      }
+      await reload(); return;
+    }
+    if(act === 'wodone'){
+      var w = woByReport[id];
+      var toDone = !(w && w.completed_on);
+      var patch = toDone
+        ? { status:'completed', completed_on: new Date().toISOString().slice(0,10) }
+        : { status:'sent', completed_on: null };
+      var rr = await sb.from('crew_work_orders').update(patch).eq('report_id', id).select('report_id');
+      if(rr && rr.error){ showError('Could not update work order: ' + rr.error.message); return; }
+      if(rr && rr.data && !rr.data.length){
+        showError('This work order has no dispatch record yet — re-issue it from + New work order.');
+        return;
+      }
       await reload(); return;
     }
     if(act === 'download'){
@@ -18196,6 +18245,16 @@ function indexCollections(collections){
   (collections || []).forEach(function(c){
     if(!c || !c.project_id) return;
     collPaid[c.project_id] = (collPaid[c.project_id] || 0) + (Number(c.amount) || 0);
+  });
+}
+
+/* 723: the crew work order is a document AND a row. The document (inspection_reports)
+   is what a crew is handed; the crew_work_orders row is the dispatch record, linked
+   by report_id. Keyed here so a WO tile can show DISPATCHED / COMPLETED. */
+function indexWorkOrders(rows){
+  woByReport = {};
+  (rows || []).forEach(function(w){
+    if(w && w.report_id) woByReport[w.report_id] = w;
   });
 }
 
@@ -37591,6 +37650,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:723, d:'2026-08-11', t:'A crew work order shows dispatched, then completed',
+s:'A work order you issue to a crew is both a document and a record. The document part always worked \u2014 you could open, send and print it \u2014 but the record never moved: it said \u201Cdraft\u201D forever, so nothing showed whether a crew had actually been dispatched or had finished the job. Now the Work Orders tab shows a DISPATCHED tag once the order is marked sent, and a Mark completed button that stamps the finish date and shows a green COMPLETED tag; Reopen undoes it. Marking the document sent now also updates the work-order record, so the two stay in step. Admin and Production only, as before \u2014 sales reps don\u2019t issue crew work orders.' },
 { b:722, d:'2026-08-11', t:'A contract now has a life after it is created',
 s:'When you turn an AI estimate into a contract, the contract used to open in a read-only card \u2014 no way to mark it sent, sign it, or void it, and its status never moved off \u201Cdraft.\u201D Now the contract screen has real buttons: Mark sent, Sign, and Void, and it shows the date it was sent or signed. Signing uses the exact same signature pad you already use on inspection reports and estimates \u2014 the client signs once, and the contract is recorded as signed and the job moves to Approved, the same as before. Nothing about signing a report or estimate changed. This is only for the newer AI-estimate contracts; the classic \u201C+ New contract\u201D document on a client profile is unchanged.' },
 { b:721, d:'2026-08-11', t:'Money received now shows up in one place',

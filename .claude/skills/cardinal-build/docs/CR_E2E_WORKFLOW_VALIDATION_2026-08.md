@@ -224,8 +224,10 @@ Everything else the audit flagged is already built. These survived validation as
    `contracts_update` RLS was split (USING/WITH CHECK) so a rep can record the transitions. Deferred:
    the public `/?share=` remote-sign link (inspection_reports already has `/api/share`). See the
    build-722 entry in `cardinal_build_log.md`.
-3. **The crew-WO dispatch lifecycle** (#2) — `sent_via`/`sent_at`/`completed_on` + a status past `draft`,
-   so a dispatched crew is visible as dispatched.
+3. ~~**The crew-WO dispatch lifecycle** (#2)~~ — **DONE, build 723.** The `crew_work_orders` row (linked
+   to its document by `report_id`) now shows **DISPATCHED** and **COMPLETED** on the Work Orders tab, with
+   a Mark completed / Reopen control; marking the document sent mirrors onto the row. Client-side only, no
+   SQL (RLS already allows admin/production writes). See the build-723 entry in `cardinal_build_log.md`.
 4. **Permit / municipal-inspection tracker** (#8) — genuinely absent; a real feature if jobs stall on
    municipal approval.
 5. **Forward-looking "needs doing" dashboard** (#12) — a rollup of per-job pending states for Theo.
