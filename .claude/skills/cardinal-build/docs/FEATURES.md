@@ -3905,4 +3905,8 @@ the Partner attach row (`.cr-cp-attach`), the Property row (`.cr-cprop-attach`),
 the Work Orders section (`.cr-wo-section`) and the Payment Information row
 (`#dbPayRow` — the only caller of `openPaymentsPage()` in the file). **If you
 edit any of those and see nothing change on a community job, this rule is why.**
-Their fate awaits Theo's (a)/(b) pick — see OPEN_ITEMS.
+**SETTLED 11 Aug: Theo picked (a) — the black card wins.** The surfaces get
+ported onto `#cr-cc` phase by phase, then deleted (roadmap at the top of the
+audit doc). **Phase 1, build 705:** the black card's Job Menu now ends with a
+direct "Payment Information" tile into `openPaymentsPage()` — the first ported
+surface. Until Phase 4 the other four are still hidden-but-live underneath.

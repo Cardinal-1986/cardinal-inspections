@@ -346,8 +346,10 @@ findings → 24 items) and written to **`CR_COMMUNITY_AUDIT_2026-08.md`** with
 anchors re-verified at 684 and five shaky claims re-verified adversarially.
 **The one-line diagnosis: Community was built twice; the black card hides the
 first build (takeover rule `#projectView.cr-cc-own>*…{display:none !important}`),
-and billing a partner has no reachable screen.** Theo owes the (a)/(b) pick
-recorded there and in OPEN_ITEMS — do not fix CR-COM items piecemeal first.
+and billing a partner has no reachable screen.** **11 Aug: Theo picked (a) — the black card wins** (recorded in the audit doc
+and OPEN_ITEMS, with the four-phase roadmap). **Phase 1 shipped at build 705**:
+the payments door on the black card (CR-COM-002 closed). Phases 2–4 pending,
+one build at a time.
 Theo's weighting, verbatim: "This is the most important CRM because jobs could
 sit for a while" — CR-COM-005 (OnHold invisible to the hub's money) is the
 finding that sentence points at.
