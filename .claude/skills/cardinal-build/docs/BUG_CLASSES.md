@@ -1815,3 +1815,178 @@ contradicted a photograph:
   against the worst. The naive version hid a real light-mode failure.
 
 **When a measurement disagrees with a screenshot, fix the measurement first.**
+
+
+## 29 — `1fr` has an automatic minimum, and one unwrappable child blows out the grid
+
+**Struck at 690, found at 696.** A horizontal chip row was added inside
+`.ljcols{grid-template-columns:1fr}`. `1fr` means `minmax(auto,1fr)`, and that
+auto minimum resolves to the item's **max-content** — every chip laid out
+unwrapped, 869px of it. The track grew to fit, the results column went with it,
+and job names ran off the right edge of a 393px phone instead of wrapping.
+
+**The tell is misleading.** It looks like the cards were made bigger. They were
+not touched; the column around them was.
+
+**`overflow-x:auto` on the wide child does not prevent this.** The parent grows
+to max-content rather than the child scrolling inside a clamped parent. The
+scroll only engages once something above it is bounded.
+
+**The fix is a PAIR, and this file already had it written down** for
+`#crewsView .crw-wrap`: *"minmax(0,1fr) on the track and min-width:0 here are
+the two halves of the same fix."* Same fix, second site.
+
+**How to catch it:** render at 360/393/430 and compare
+`document.documentElement.scrollWidth` with `clientWidth`, then list every
+element wider than the viewport. ⚠️ Exclude descendants of a scrollable row —
+chips scrolled out of view legitimately sit beyond the right edge, and counting
+them turns a passing layout into a false red.
+
+
+## 30 — a horizontal scroller with no `overscroll-behavior-x` navigates back
+
+**Reported at 697.** Swipe a sideways-scrolling row (tab rail, chip strip,
+card grid) back toward its start; the instant it reaches `scrollLeft` 0 the
+remaining gesture **chains to the page**, and the browser treats that as a
+back navigation. The screen exits. It reads as "the view crashed" and is
+nothing of the sort — the gesture left the element.
+
+**Fix:** `overscroll-behavior-x:contain` on every `overflow-x:auto|scroll`
+element. It stops chaining only; the element scrolls exactly as before, touch
+handlers are untouched, and the Y axis is unaffected.
+
+⚠️ **`overflow:auto` sets `overflow-x` too.** A source grep for `overflow-x:`
+found 24 sites; walking Chromium's parsed rules found **33**. Count with the
+browser, not a regex.
+
+⚠️ **Three things a naive scan miscounts here**, all hit in one build:
+a `<style>` tag inside a JS template string (generated print CSS read as a
+stylesheet); `overflow:auto` written as PROSE inside a CSS comment; and inline
+`style=` attributes, which are real elements but never appear in
+`document.styleSheets`.
+
+⚠️ **No CSS reaches the iOS system edge-swipe.** A gesture starting on the very
+edge of the glass is handled before the page sees it. This class covers swipes
+that begin on the element.
+
+---
+
+## 31 — a rule remover that walks to a brace can cut a COMMENT in half
+
+**Struck at 701, and again inside the gate written to prove 701.**
+
+Removing a feature's CSS means deleting whole rules, so a remover finds the
+selector and walks outward to the enclosing braces. When the last rule in a
+block is preceded by a comment, **the nearest boundary going backwards is
+inside that comment**. The cut lands mid-sentence, and what is left is a
+comment-opener with no closer. Everything after it — up to the next closing
+delimiter, wherever that happens to be — becomes comment. At 701 that was
+**1,411 characters of live CSS**, a whole media query's contents, silently.
+
+**Why a brace count alone will not catch it.** The mangled block counted
+**105 open / 105 close** raw and looked perfectly balanced. It is only after
+comments are stripped that the swallowed `}` goes missing — 101/100.
+`check_build.py` strips comments *before* counting, which is exactly why it
+went red. **A remover must prove it is not standing inside a comment before it
+walks to a brace**, and the post-condition to assert is per-`<style>`-block
+brace balance *after* stripping comments and quoted strings.
+
+⚠️ **A file-wide `/*` vs `*/` count is not that check.** On a clean
+`index.html` it reads **1,928 vs 1,903** — `/*` lives in JS strings and regex
+literals all over the file. The check has to be scoped to the stylesheets.
+
+⚠️ **The same fault, in the note about the fault.** `render_wx701.js`'s banner
+described this bug and wrote the closing delimiter literally inside its own
+`/* … */` header. The banner ended early, the prose below it parsed as code,
+and node refused the file. **Never write a comment-closing delimiter inside a
+block comment, not even when quoting one.**
+
+## 32 — a `margin-top` on an inline element is a rule written for a block
+
+**Found at 701, present since at least 684.** The landing page's four course
+rows read *"Quick InspectionWalk the roof, shoot the photos…"* — title running
+straight into subtitle. `.tt`, `.sb` and `.n` are `<span>`s at
+`display:inline`, so all three sat on one line.
+
+**The tell is in the stylesheet, not the screenshot.**
+`.cr-lr-course .sb{margin-top:3px}` and `.cr-lr-course .n{margin-top:5px}` —
+a vertical margin does **nothing at all** on an inline box. Somebody wrote
+those rules expecting blocks. A declaration that cannot possibly apply is
+evidence of intent, and it dates the defect to whenever the display was lost.
+
+**Corroborate with the neighbours.** The `.cr-lr-pair` tiles directly below use
+`<b>` and `<small>` — block by UA default — and stack correctly. Same component
+family, one got the display and one did not.
+
+**Measure the gap, not the `display`.** `display:block` with a zero gap is
+still wrong. The gate asserts the subtitle sits ≥15px below the title: the bug
+put it at +4–6px (a baseline offset on one shared line), the fix at +23–26px.
+Nothing lands in between, so the threshold cannot be satisfied by accident.
+
+⚠️ **Scope a fix on `.tt` / `.sb` / `.n`.** Three of the most generic class
+names in a 3.9 MB file; unscoped, that declaration reaches the whole app.
+
+## 33 — `overflow-y:auto` alone silently makes a box scroll SIDEWAYS
+
+**Struck at 703; 13 more views still carry it.**
+
+CSS does not allow `overflow-x: visible` beside a non-visible `overflow-y`. Set
+only `overflow-y:auto` and the used value of `overflow-x` becomes **`auto`** —
+a horizontal scroller nobody wrote and nobody wants. The box then slides and
+rubber-bands the instant any descendant is one pixel too wide. Theo's words for
+it were *"why can't be static instead of bouncy?"*
+
+`styleMounts()` sets `position:fixed; inset:0; overflow-y:auto` INLINE on the
+full-screen mounts, so every one of them is a latent sideways scroller.
+
+⚠️ **A page-level overflow check will not see it.** On the claim screen an
+ancestor (`.portal-retail`) has `overflow:hidden`, so
+`document.documentElement.scrollWidth` reads a clean 393 while the view inside
+is at 408. **Measure the view, not the document.**
+
+**The fix is a PAIR, and half of it is a regression on its own:**
+
+1. `overflow-x: hidden` on the container — it can never slide again. Alone,
+   this CLIPS whatever was too wide, which on a money screen means quietly
+   losing a column of figures.
+2. Give the genuinely-wide child its own scroller, so nothing is lost.
+
+Gate both: container `scrollWidth === clientWidth`, **and** the inner wrapper
+`scrollWidth > clientWidth`. Assert only the first and a clipping build passes.
+
+⚠️ **This is why it cannot be swept blind.** `overscroll-behavior-x:contain`
+(class 30) is inert where there is no overflow, so 697 could apply it to all 33
+scrollers safely. `overflow-x:hidden` is **not** inert — it destroys content.
+Each view needs its own wide child found first.
+
+⚠️ **`display:block;overflow-x:auto` on a `<table>` is not the free fix it
+looks like.** It makes the inner anonymous table box shrink-to-fit, so every
+table that already fitted stops filling its width. Wrap the table instead.
+
+## 34 — ink from one theme switch, ground from another
+
+**Struck at 702, after 637 fixed one third of it.**
+
+This app has **three** independent theme switches:
+
+| switch | attribute | tokens |
+|---|---|---|
+| retail app theme | `<html data-theme="rb-light">` | `--rbe-*` |
+| landing | `<html data-mode="light">` | landing only |
+| **Resource Library / Cardinal Truth** | `<body data-rltheme="docket\|siren">` | **`--ct-*`** |
+
+An element whose **ink** follows one and whose **ground** follows another is
+not merely fragile — it is wrong in some combination *by construction*, and it
+will look fine to whoever tests it in the combination they happen to be in.
+`.dbaddr` took `var(--rbe-ink)` while `.acxsec` was painted from
+`var(--ct-surface)`: readable at 12.31:1 in one pairing and **1.00:1** in
+another, which is the same colour twice.
+
+**The rule: an element's ink must come from the palette that paints its own
+ground.** Not a literal chosen for the combination in front of you — 637 chose
+correctly for retail and then *reasoned* about the other two without measuring,
+and both were failing.
+
+**Test the MATRIX, not the screen you are looking at.** Twelve cells here
+(3 CRMs × 2 app themes × 2 RL themes). Four were failing and eight passing, so
+any single-combination check had a two-in-three chance of reporting green.

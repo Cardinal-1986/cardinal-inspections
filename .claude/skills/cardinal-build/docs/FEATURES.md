@@ -3519,6 +3519,381 @@ box header: gradient + dark-on-red + 🎉 → solid red, white text, no emoji
 (both settled rules). The once-per-build popup mechanism (localStorage
 last-seen) is unchanged.
 
+### 685 — no gradient-clipped text anywhere (app-wide)
+
+37 sites removed, each to a single solid colour measured against the exact
+ground it sits on, in both themes. Families: 8 were already a fade between two
+identical stops (`--rbe-head` → `--rbe-head`) and are a provable no-op; 6 client
+names follow 683's `.pcnm` precedent to `var(--rbe-head,#ffffff)` (12.71:1 dark
+/ 17.34:1 light); 4 PO labels take Theo's approved pick C via a retargeted
+`--rbe-po2` (`#d8a94f` dark / `#8f1620` light, 5.87 / 8.73). The rest use their
+own declared fallback or their own gradient's best stop.
+
+`.mic`'s `@supports` rule is deleted (inert since 682). `--rbe-po1` is gone —
+it had no references left. The login tagline's inline `color:#7a4a3e` was
+removed so the card's rule governs; it had been masked by the gradient.
+
+**Do not re-introduce gradient text.** Chromium's parsed-rule count is the
+instrument (`render_gradtext.js`); a text regex over the file finds one extra
+hit that is a comment.
+
+### 686 — the navigation is drawn, not emoji (`CardinalIcons` + `hydrate`)
+
+The burger menu, the New menu and the Settings rows: 28 rows, each now a line
+icon that inherits the row's colour and size. `CardinalIcons` grows 4 → 27 (and to 43 at 692)
+glyphs and gains **`hydrate(root)`**, which swaps a `data-cri` attribute for the
+drawn glyph once and removes the attribute, so re-running is free. Static markup
+therefore uses the same registry as JS-built markup — one icon set, not two.
+
+⚠️ `cr-hd2-script`'s `build()` **rebuilds `#navBtn`** and overwrites its
+innerHTML on every load. It now calls `CardinalIcons.get('menu')`. If you
+convert a header control and it still shows an emoji, that function is why.
+
+**Scope is deliberate.** Emoji in PROSE are deleted, never converted (the 681
+rule); none was touched here. Emails, push, letters, `popup.html`,
+`drivewaytest.html`, the Showcase and the CHANGELOG remain out of scope. 533
+pictographic emoji remain elsewhere in the app — `scripts/render_navicons.js`
+covers this slice and goes RED on 685.
+
+### 687 — the three rejected icons
+
+`hammer` → **`ladder`** (a claw hammer is illegible at 13px — the claw is the
+tell and it does not survive one stroke weight; six attempts all read as a
+screwdriver or signpost). `building` → **`group`**, three figures, because a
+building never reads as a *team* however well drawn — and deliberately distinct
+from the two-figure `people` used for Clients. `hardhat` redrawn with two ribs
+over the crown; the 686 version's crown box read as a bag handle.
+
+Both are renames, not aliases — one name per glyph. `KIND_META` was the only
+caller of each. `hardhat` keeps its name because markup reaches it through the
+`data-cri` attribute rather than `get()`.
+
+⚠️ **Ship an icon with a rendered contact sheet.** 686 was 195/195 green and
+still shipped three wrong icons. Assertions prove an icon is *drawn, coloured
+and sized*; they cannot tell you it is a picture of the wrong object.
+
+### 688 — Suppliers (was ABC Supply)
+
+The menu row is a **category** now: `data-nav="suppliers"`, warehouse icon, and
+the sheet is titled Suppliers with **ABC Supply as a card inside it**. A second
+yard is a second card, not a second menu row. The ABC integration itself is
+unchanged and still switched off until its two keys are set in Vercel.
+
+⚠️ **Two doors lead here** — the main menu row and the Tools dropdown's "Supply"
+entry (`.cbi[data-go="abc"]`). Both carry the name; rename both or the feature
+grows a second identity.
+
+⚠️ **`cr-lnav` derives its icon key from the button's TEXT** (`iconKey()`
+lowercases and strips non-alphanumerics). Renaming a nav label therefore
+silently changes which icon the desktop left nav looks up. Move the key in both
+of its maps at the same time. This bit 688 and will bite the next rename.
+
+Gate: `scripts/render_suppliers.js` — opens the real sheet and checks the title,
+the card, the moved env chip and that all three account fields plus the
+catalogue search survived inside the card. Goes RED on 687.
+
+### 689 — readable calendar titles, obsidian client cards
+
+`.pipecard.teamcal .pipetitle span:first-child` had **no theme gate** and pinned
+both big calendar titles to `#1c1416`: **1.06:1** on the dark card. Fixed by
+dropping only the colour (the rule also carries the title's font).
+
+The client cards (`.pcard`, all of which are also `.pcbadge` — one creator) now
+use the **named** obsidian recipe. ⚠️ Obsidian has two behaviours: `#cr-est-view`
+/ `#reportsView` are black in both modes (545); `.actbox` has a light twin (557).
+The cards follow `.actbox`, per Theo. `.pcini` and `.pcacts a` are raised keys.
+
+⚠️ **`#calCard` is dead markup** (`display:none !important`). The live calendars
+are `.pipecard.teamcal` and `.prodcal`.
+
+Gate: `scripts/render_calhead.js` — prints ink, composited ground, ratio **and
+the winning rule** for every heading and legend in both themes. RED on 688.
+
+### 690 — pipeline stage chips on All Leads & Jobs
+
+A scrolling chip strip above `Results (n)`: **All** plus one chip per stage that
+has rows, each with a count and a dot in that stage's `LJ_SOLID` colour.
+Multi-select; **All** clears.
+
+⚠️ **This is NOT a new filter.** It writes `ljState.sets.stage` — the same array
+the desktop rail checkboxes and the funnel sheet write, honoured by
+`ljMatches()`. Three controls, one source of truth, one `renderLeadsView()`.
+**Do not give the strip its own state.**
+
+The funnel icon stays and still owns Assigned To / Job Priority / Job Category.
+
+⚠️ `OnHold` is in `STAGES` but absent from `LJ_SOLID` / `LJ_INK` / `LJ_SPINE`;
+everything falls back to `#8a93a1`. Don't "fix" it by inventing a colour — the
+stage palette is on the semantic frozen list.
+
+Gate: `scripts/render_stagechips.js` — seeds real project shapes, calls the
+shipped render, then clicks the chips and counts cards. RED on 689.
+
+### 691 — Assigned To beside Milestone on All Leads & Jobs
+
+Two labelled chip strips. `ljChipStrip(gkey, mountId, wrapId)` renders either;
+one `ljChipClick` serves both and reads its group from the container's `data-g`.
+**Adding a third group is two lines of markup and one call** — do not copy the
+renderer.
+
+Groups **AND** across each other (Lead + Joan = Joan's leads) and **OR** within
+one (Lead + Prospect = both). That is `ljMatches()`'s existing behaviour, not
+new logic.
+
+⚠️ A strip with **fewer than two values hides itself**, heading included.
+⚠️ Only `stage` carries colour dots — no other group has a palette, and the
+stage colours are on the semantic frozen list.
+
+Theo's scope call: Assigned To is the only other group he filters by. The
+remaining five (Job Priority, Job Category, Work Type, Trade, Lead Source) stay
+behind the funnel **by decision**.
+
+Gate: `scripts/render_stagechips.js`, 54 assertions, expectations self-computed
+from the seed. RED 20/54 on 690.
+
+
+### 692 — drawn icons on the sales, insurance, community and import screens
+
+37 emoji become drawn glyphs across `cr-sf-script` (Sales Floor), `cr-cth-script`
+(the insurance hub), `cr-ch2-script` (the community hub) and `cr-ci-script`
+(Import from AccuLynx). `CardinalIcons` grows **28 → 43**.
+
+**The fifteen new glyphs:** page, books, pencil, scales, bulb, factory, trophy,
+cards, camera, image, paperclip, compass, calculator, houses, funnel. Nine
+existing ones are reused (target, home, shield, calendar, person, clipboard,
+people, chart, bolt) rather than redrawn.
+
+⚠️ **These call `CardinalIcons.get()` at render time. They do NOT use
+`data-cri`.** 686's attribute is swapped by `hydrate()`, which runs once at load
+and again on DOMContentLoaded — and these four modules build their panels as
+strings when the user opens them, long after that. A `data-cri` written at
+render time is never hydrated and the row shows nothing at all. Each module
+carries a local `ICO(n)` that wraps `get()` in a try/catch.
+
+**The gate is `render_icons692.js`** (38 assertions, both themes). It opens all
+four surfaces through their real exports and checks the glyphs have a non-zero
+box and a resolved stroke — structure alone cannot see this, because `ICO()`
+swallows its own error and returns `''`, which renders as nothing. It also
+asserts no swept emoji survived. Negative control on 691: 26 failures.
+
+⚠️ **Scope the survivor check to the container the module owns.** Checking
+`cardinalTruthView` wholesale reports four survivors (📝🏠📎📋) that are
+provably absent from `cr-cth-script` — that view also hosts panels from
+`cr-cct`, `cr-ctfx` and the static markup, which keep their own emoji.
+
+
+### 693 — Sales Floor has a light theme (it never did)
+
+`cr-sf-styles` was hardcoded dark: zero `var()` references, zero `rb-light`
+rules, so the app-wide switch did nothing to it and both themes rendered
+byte-identical. Sixteen `--sf-*` tokens now carry it, dark declared on `#cr-sf`
+and light under `:root[data-theme="rb-light"] #cr-sf`, every reference with a
+literal fallback.
+
+**Semantics are frozen across both themes** — the module's banner is law here:
+red is the objection, navy is your answer. The navy fills (`#1F3A6E` hero,
+`#16233b` .you card, `#2C5FA8` spine) and the cardinal rail (`#C8202E`) are the
+same bytes in light and dark.
+
+⚠️ **`.cr-sf-cr .you` keeps `color:#f0ede7` as a literal, on purpose.** It is
+the one ink of twelve sitting on a coloured ground. Tokenising it puts
+`#17181a` on `#16233b`.
+
+**The one inversion:** `--sf-red-tx`. Which red can carry type depends on the
+ground — `#e8505c` is 5.30:1 dark / 3.26:1 light, `#C8202E` is 3.28:1 dark /
+5.15:1 light. Both reds already belonged to the module.
+
+Gate `render_sflight.js` (11 assertions). Its first two check the themes
+DIFFER, which a contrast harness cannot: a module that ignores the switch
+passes every contrast check because it is only measured against the ground it
+was designed for.
+
+### 694 — the light/dark switch is reachable again
+
+`#cr-dark-toggle` is ONE button with two placements: adopted into the header
+search row by `ensureSearchRow()`, or floating bottom-right. It had gone
+missing on Sales Floor (and every full-screen view) and on insurance.
+
+| Cause | Detail |
+|---|---|
+| `crmNow()` | returns `'sales'` / `'production'` on those screens, and `refreshVisibility()` only added `.show` for retail/community |
+| the header row | is painted over by every `z-index:9500` full-screen view |
+| insurance | 417 gave that row slot to the Docket/Siren control, so the row rule hides the toggle |
+
+`needsFloat()` decides placement **from the page only, never from the button**
+— a version that read the button's own computed display oscillated once the
+button moved. When it floats, `.afloat` is added and it moves to
+`document.body`.
+
+⚠️ **Three facts that only a render establishes:**
+- Floating it *in place* does not work. At `z-index:2147483000` inside the
+  header it still measures covered — z-index competes only inside the nearest
+  stacking context.
+- Moving it is not enough. The view is appended to body **after** the button
+  moves, so an equal 9500 loses on DOM order. `.afloat{z-index:9550}` — above
+  the views, below `#cr-ci`'s 9560 so a modal still covers it.
+- `ensureSearchRow()` re-adopts from a body observer and reverses the move
+  within a frame. It now skips a button carrying `.afloat`.
+
+**Excluded by name:** `#cr-show` and `#cr-occ`. Both are single-theme
+client-facing Blackout by settled decision; a switch that does nothing there
+would be a control that lies. Gate `render_toggle694.js` asserts their absence
+as firmly as it asserts the others' presence.
+
+
+### 695 — the Tools dropdown is drawn
+
+All sixteen rows carry a drawn glyph. Thirteen had an emoji entity; four new
+glyphs were drawn (`pulse`, `sparkle`, `pin`, `flask`) and nine existing ones
+reused. `CardinalIcons` 43 → 47.
+
+`data-cri` is the right mechanism here — static markup, and `hydrate()` runs at
+load, before the menu can open.
+
+⚠️ **The DOM has sixteen `.cbi` rows; the source shows fourteen.** `Track` and
+`Reports` are written as `class="cbn"` top-level nav and moved into the
+dropdown at runtime, with className rewritten to `cbi`. A source-only count
+misses them. Their icons were chosen from the app's own `data-go` map
+(`track` → `CardinalEstimates.open` → `calculator`, `reports` →
+`openReportsView` → `chart`), not from the labels.
+
+
+### 698 — the client-page section headings are drawn
+
+All 27 `.projsec` headings. `CardinalIcons` 47 → 51 (`contract`, `ruler`,
+`box`, `lock` are new; twenty existing glyphs are reused).
+
+⚠️ **Two mechanisms, not interchangeable.** 17 are static markup and use
+`data-cri`; **10 are built as strings at render time** — 9 in the main block,
+1 in `cr-pp-script` — and must call `CardinalIcons.get()`, because `hydrate()`
+runs at load and never sees them.
+
+⚠️ **8 of the 27 never had an emoji.** They were given icons anyway: a family
+where nineteen headings carry one and eight do not reads as unfinished.
+
+⚠️ **A source count of `.projsec` disagrees with itself.** `[^<]*` finds 26,
+`.*?` finds 27 — the Location heading has a nested `<span>` and a
+character-class scan stops short. That same heading is the runtime one.
+
+
+### 699 — the page headings are drawn, and `ICO` is declared once
+
+All 15 `h2.viewhead`. `CardinalIcons` 51 → 52 (`chat`).
+
+⚠️ **The DOM has fifteen; a source regex finds fourteen.**
+`<h2 id="listTitle" class="viewhead">` puts the id before the class. It is
+empty in markup and filled from `LIST_DEFS`.
+
+⚠️ **`ICO(n)` is now declared exactly once, at the top of the main block.** It
+had six declarations — five leaked to global scope from non-IIFE module blocks,
+and the one 698 added to `cr-hd2-script` was private to that IIFE and dead. Nine
+runtime `.projsec` headings had been resolving against another module's copy by
+accident. Wrap any of those modules in an IIFE and they would start throwing.
+Ordering is asserted: `LIST_DEFS` calls `ICO()` at parse time.
+
+**Three mechanisms place an icon in this app**, and a name is not a contract:
+`data-cri` in static markup (swapped by `hydrate()` at load), `ICO()` /
+`CardinalIcons.get()` in strings built at render time, and one **raw inline
+`<svg>`** on the Schedule Board heading, predating `hydrate()` and left alone.
+
+
+### 700 — the PO number reads in light mode, and On Hold has its own colour
+
+`.pcpo` was `#c9a2ff` in both themes — **1.79:1** on the light client card.
+Now a token pair: `--pc-po` `#c9a2ff` dark / `#6d3fbf` light. **A pair, not a
+computed literal**, which is the rule 527 established by breaking it.
+
+`OnHold` was in `STAGES` but in none of the five stage colour maps, so it fell
+through to Lead's grey and the two were indistinguishable in a list. It now has
+an entry in each: `LJ_SOLID` `#c8862b`, `LJ_INK` `#15171b`, `LJ_SPINE`
+`#ff9f43`, `STAGE_COLORS` `#0F9B8E`, `STAGE_INK` `#0B5F57`.
+
+⚠️ **Amber on the leads list, teal on the job banner — deliberately two
+colours.** Those screens use different palettes and amber was already spoken
+for on the banner. Do not "unify" them.
+
+
+### 701 — the weather panel is gone from the home screen
+
+Theo: *"Get rid of the weather table altogether. It's not needed."* Gone from
+`cr-lr-script`: `wx()`, `wxPaint()`, `wxCached()`, the `WX_*` constants, the
+`WX_CODES` map, the load-time call and the markup slot (23,983 → 19,410 chars),
+plus 18 CSS rules. **It was the home screen's only third-party data call**
+(Open-Meteo, keyless) — the landing now fetches nothing.
+
+⚠️ **Any doc that lists the weather table as an emoji-sweep target is stale.**
+There is no weather code left in `cr-lr-script`.
+
+**Two things shipped with it, both consequences rather than additions:**
+
+- **The wordmark is back to full size.** `.cr-lr-head .cr-lr-mark` had shrunk it
+  to `clamp(28px,8.2vw,58px)` purely to sit beside the panel — its own comment
+  said so. Restored to `clamp(38px,12vw,58px)`; measured at 360/393/430/560
+  first (182px of text in a 353px box at phone width).
+- **The four course rows stack.** `.tt`, `.sb` and `.n` were `<span>`s at
+  `display:inline`, so the first screen read *"Quick InspectionWalk the roof"*.
+  **Pre-existing — reproduced unchanged on 684**, found while photographing the
+  before/after. Two tells that it was never intentional: `margin-top` is set on
+  `.sb` and `.n`, which does nothing on an inline box, and the `.cr-lr-pair`
+  tiles directly below use `<b>`/`<small>` and stack correctly. Fixed with one
+  scoped declaration — `.tt`/`.sb`/`.n` are about as generic as class names get.
+
+
+### 702 — the address under the map takes its ink from its own card
+
+`.dbaddr` had been reading `var(--rbe-ink)` (the retail app theme, `<html
+data-theme>`) while the card behind it, `.acxsec`, is painted from
+`var(--ct-surface)` (`<body data-rltheme>`). Two switches that move
+independently, so the pair went wrong in both directions — **1.38:1** with the
+app dark and the card light, **1.00:1** the other way, which is the same colour
+twice.
+
+Each CRM now takes its ink from the palette that paints its own ground:
+insurance `var(--ct-ink)`, community a fixed dark ink (its card is `#fffdf7`
+in both themes), retail unchanged from 637. Worst of twelve cells: **14.81:1**.
+
+⚠️ **`--ct-*` is declared ONLY under `[data-rltheme]`** — the Resource
+Library's theme, a third switch beside the two in `CLAUDE.md`. Anything reading
+`--ct-*` follows the RL toggle, not the app one.
+
+
+### 703 — the insurance claim screen holds still
+
+`styleMounts()` sets `overflow-y:auto` INLINE on the full-screen mounts and
+nothing else. CSS forbids `overflow-x:visible` beside a non-visible `overflow-y`,
+so **overflow-x is coerced to `auto`** and the whole screen became a sideways
+scroller. The Scope History table (386px in a 349px box) then dragged it.
+
+`#cr-claims-mount{overflow-x:hidden}` pins the screen; the four claim tables
+each gained a `.cr-c-xscroll` wrapper so the wide one scrolls in its own box.
+**Both halves are required** — pinning alone would clip a column of money.
+
+⚠️ **13 other full-screen views still carry the coercion** (`landingView`,
+`cr-estimates-mount`, `cr-pricing-mount`, `payView`, `puDetail`, eight modals).
+Not swept: `overflow-x:hidden` clips, so each needs its wide child found first.
+See bug class 33.
+
+
+### 704 — the Supplement Desk has exactly one door
+
+**Insurance hub → TOOLS → Supplement Desk**, emitted by `cr-cth-script`'s tools
+rail as `data-go="desk"` and handled by `window.location.href =
+'/supplement.html'`. It is a standalone page on the SAME origin as the app, so
+the Supabase session carries over (unlike `studio.html`, which has its own
+subdomain and its own sign-in). Admin-gated three ways: the UI checks
+`is_cardinal_admin`, `api/supplement.js` re-checks server-side, and RLS is the
+fence.
+
+⚠️ **There used to be a second card and it never worked.** 668 added an
+`<a href="/supplement.html">` to the static `.ins-grid` in
+`#cardinalTruthView` — which `render()` overwrites, because it writes
+`host.innerHTML` and `host` is `.ins-body`, the grid's own parent. The card was
+never on screen once. 679 added the working tile; **704 removed the dead one**.
+Do not add a link there again.
+
+⚠️ **The whole static `.ins-grid` is dead** — 0 `.ins-card` reach the DOM. It is
+kept as an accidental fallback for a total `cr-cth-script` failure, and its
+content is already stale.
 ### The Community client card (`cr-cc`) REPLACES the project page — it does not extend it
 
 Recorded 10 Aug from the Community audit (`CR_COMMUNITY_AUDIT_2026-08.md`): the

@@ -14230,6 +14230,747 @@ Gates: `check_build` green (679-era prev, marker + negative control), sweep
 green (653/671/679/680 + pcard + schedule renders). `isOwner` survives only
 as the retirement comment — asserted by grep, count 1.
 
+- **685** · **every gradient-clipped text site removed — 37 of them, not the 38
+  on record.** Theo, 10 Aug: *"I don't need to have gradient colors anywhere."*
+  The 38th is PROSE: a comment in `cr-nvl-styles` explains a previous fix and
+  its declaration is split across a newline, so `\s*` matches it. Lexer-aware
+  count says 36 stylesheet rules + 1 inline attribute = 37, and Chromium's own
+  parsed-rule walk agrees exactly.
+
+  Every ink came from one rule, applied in order, so nothing is invented:
+  identical stops → that colour (8 sites, provable no-op) · an approved
+  precedent → it (683's `--rbe-head` for the client name ×6; Theo's pick C
+  `#d8a94f`/`#8f1620` for the PO ×4) · else the rule's own declared `color:`
+  fallback if it clears its floor · else the highest-contrast stop from that
+  rule's own gradient · else a theme-flipping token where no single ink serves
+  both. Zero floor failures; worst is 4.83:1 (`#cr-ih-title`, 4.5 floor).
+
+  `--rbe-po1`/`--rbe-po2` were referenced ONLY by the four PO gradients, so
+  po2 is retargeted to the pair Theo already approved on `#leadsView` and po1
+  is gone. `.mic`'s `@supports` block is DELETED — 682 named it for this pass;
+  both surviving `class="mic"` strings are prose.
+
+  **A regression I introduced and caught:** the login tagline carries an inline
+  `color:#7a4a3e`. At 684 the stylesheet's transparent fill still won, so it
+  rendered as the gradient; with the gradient gone the inline light-era brown
+  won at 2.43:1 on the dark card. Removed at source — now 5.06:1. Only element
+  of the 37 with that trap; scanned, not assumed.
+
+  Gates: `check_build` green (684 prev, marker + negative control — the first
+  marker chosen collided with a comment 683 wrote, which is what the negative
+  control is for). `render_gradtext.js` 94/94 green, and RED with 90 failures
+  on 684. Replay onto a fresh 684 reproduces the artifact byte-for-byte
+  (`9e4b2ce`). Sweep green: schedule 27/27, pcard 12/12, 679 31/31, 680 35/35,
+  colors 110/110. `harness_677` crashes identically on 684 — pre-existing.
+
+  **Two bugs in the harness itself, both worth keeping:** (1) in modern
+  Chromium every `CSSStyleRule` exposes an empty `.cssRules` for CSS nesting,
+  so `if (r.cssRules) { walk(); continue; }` skips every style rule and reports
+  a clean zero — a FALSE GREEN, caught only because the negative control had to
+  report 37. (2) within one element the background-image composites over that
+  element's OWN background-color, not the ancestor's; getting that wrong read a
+  dark card's wash as near-white and failed a passing ink at 1.05:1.
+
+- **686** · **the nav loses its emoji and gains drawn icons — 28 rows.** First
+  slice of the approved emoji sweep. Scope is the burger menu, the New menu and
+  the Settings rows: all static markup, all pure scan targets, so per the 681
+  rule they CONVERT rather than get deleted (prose emoji still get deleted, and
+  none was touched here).
+
+  681 left `CardinalIcons` with four glyphs. This adds **23** on the same 24×24
+  grid — 27 total. Static markup cannot call `get()`, and a second pipeline of
+  raw inline SVG in the HTML would be two sources for one glyph, so the module
+  gained **`hydrate()`**: the nav carries a `data-cri` attribute and one pass
+  swaps it in, removing the attribute as it goes so re-running is a no-op. Not
+  an observer — a one-shot call, with a DOMContentLoaded retry only if parsing
+  has not finished.
+
+  **The prime doctrine, again: the button I patched was not the button that
+  renders.** `cr-hd2-script`'s `build()` moves `#navBtn` into its own bar and
+  overwrites `innerHTML = '☰'` on every load, so the static conversion was
+  wiped and the hamburger came back. Found by a real render, not by reading —
+  the source said one thing and Chromium showed another. That writer now calls
+  the same registry.
+
+  ⚠️ **A gap in my own census, worth keeping:** ⏰ is U+23F0, in Miscellaneous
+  Technical (0x2300–0x23FF), a block the first sweep never covered — so the
+  Reminder row was invisible to the inventory and survived the first pass. With
+  that range closed the honest figures are **562 in-scope pictographic emoji
+  before, 533 after** (−29: 28 markup rows + the runtime hamburger). An earlier
+  note in this session said 550; that was low by 12 for the same reason.
+
+  Also measured properly for the first time: the census must EXCLUDE comments
+  (the module banners' box-drawing and prose swamp a naive count) and must keep
+  dingbats/arrows/geometric marks SEPARATE from emoji — ✓ ✕ → ← ☐ are
+  functional UI glyphs, not stickers, and must not be swept with them. Counts
+  at 686: 533 emoji · 156 dingbats · 154 arrows · 66 geometric.
+
+  **The gear was redrawn after looking at it.** The first version put eight
+  teeth around a small inner circle with nothing between, and it read as a SUN,
+  not a gear — wrong object entirely for Settings. Teeth now attach to an outer
+  ring. Every assertion was green both times; a rendered contact sheet caught
+  it. Same lesson as 628's amber bar.
+
+  Gates: `check_build` green (685 prev, marker + negative control).
+  `render_navicons.js` **195/195 green**, and **RED with 141 failures on 685**.
+  Sweep green: schedule 27/27, pcard 12/12, 679 31/31, 680 35/35, colors
+  110/110. One aborted patch on the way: `data-new="lead"` and six other keys
+  also appear inside `querySelector()` calls, so the key alone is not a unique
+  anchor — the markup site is the one whose tag closes onto an entity, and the
+  patch asserts exactly one candidate qualifies.
+
+- **687** · **the three icons Theo rejected, redrawn.** He flagged `hammer`,
+  `hardhat` and `building` off the 686 contact sheet. All three were right, and
+  two of them were 681's, carried forward at 686 without a hard look.
+
+  **`hammer` → `ladder`.** Six attempts at a claw hammer — head-on, diagonal,
+  V-notch, deeper claw side, sledge, hammer-striking-a-board — every one read as
+  a screwdriver or a signpost at 13px. **The claw is the entire tell and it does
+  not survive a single stroke weight at that size.** Rendered five side by side
+  and said so rather than present a bad option as a choice; the only legible one
+  was a wrench. Theo picked the ladder from the widened set: two rails, three
+  rungs, and on a roof it says the same thing a hammer was trying to say.
+
+  **`building` → `group`.** Theo, verbatim: *"the icon for team even as a
+  building doesn't seem right."* That is a MEANING problem, not a drawing one —
+  a building will not read as a team however well it is drawn. Three figures,
+  deliberately not the two-figure `people` mark, so a team event and a client
+  cannot be confused on the board. Both renders shown side by side to prove the
+  silhouettes differ.
+
+  **`hardhat` redrawn.** The 686 shell put a box on the crown and read as a bag
+  handle. Two ribs over the dome are the tell of a real hard hat.
+
+  Both renames are renames, not aliases — one name per glyph. `hammer` and
+  `building` had exactly one `get()` caller each (`KIND_META`), checked before
+  renaming; `hardhat` has none, because the markup reaches it through the
+  `data-cri` attribute, which is why its name could stay.
+
+  **The lesson this build is worth: assertions cannot see meaning.** 686 was
+  195/195 green and shipped three icons that were wrong — one drawn badly, one
+  drawing the wrong thing entirely. Only a rendered sheet in front of Theo
+  caught it, which is the same finding as 628's amber bar and 633's white boxes.
+  **A contact sheet is now part of shipping an icon, not a courtesy.**
+
+  Also fixed: the committed `render_navicons.js` hard-coded `./node_modules`
+  next to itself, so it only ran from the scratchpad it was written in. Plain
+  `require('playwright-core')` now, matching every other harness in that folder.
+
+  Gates: `check_build` green (686 prev, marker + negative control).
+  `render_navicons` 195/195 and RED (141) on 685. Sweep green: schedule 27/27
+  (it covers `KIND_META`, so the two renames are proven there), pcard 12/12,
+  679 31/31, 680 35/35, colors 110/110.
+
+- **688** · **ABC Supply becomes Suppliers, with ABC as a card inside.** Theo's
+  call: the menu row was a single vendor, so every other yard would have needed
+  its own row. It is a category now, and the next yard is a second card on that
+  screen.
+
+  **Two doors led to this screen and both were renamed** — the main menu row and
+  a "Supply" entry in the Tools dropdown (`data-go="abc"`, found only by
+  grepping the brick emoji, not by looking at the menu). Renaming one and not
+  the other is how a feature ends up with two names.
+
+  ⚠️ **The desktop left nav keys its icons off the button's TEXT.** `iconKey()`
+  lowercases and strips non-alphanumerics, so "ABC Supply" resolved to
+  `abcsupply`; relabelling to "Suppliers" changes the key to `suppliers`, and
+  **both** of `cr-lnav`'s icon maps had to move with it or the row would have
+  fallen back to the generic glyph. Found by reading `iconKey()`. This is the
+  coupling to remember before renaming ANY nav label.
+
+  New `warehouse` glyph (a yard, not a wall — the brick belonged to ABC as a
+  materials brand). ABC's env chip moved off the sheet header onto its card,
+  because sandbox/production is a property of ABC, not of "suppliers";
+  `refreshStatus()` finds it with `querySelector`, so no code change was needed.
+  `apidocs.abcsupply.com` is asserted untouched — that is ABC's real API host,
+  not a name of ours.
+
+  Nothing about the integration changed. It is still **not connected** —
+  `ABC_CLIENT_ID` / `ABC_CLIENT_SECRET` were never set in Vercel, and the screen
+  says so. `api/abc.js` exists and is complete.
+
+  ⚠️ **My own repeat error, twice in one session:** the new glyph went in as two
+  adjacent string literals with no `+`. JS has no implicit concatenation, so
+  block 1 stopped parsing. Identical to the `alarm` glyph at 686. **Icon entries
+  in `P` are ONE string on one line.**
+
+  Gates: `check_build` green (687 prev, marker + negative control).
+  `render_suppliers.js` (new) 12/12 and **RED 9 on 687**; `render_navicons`
+  201/201 and RED 141 on 685. Sweep green: schedule 27/27, pcard 12/12, 679
+  31/31, 680 35/35, colors 110/110.
+
+- **689** · **the calendar titles were 1.06:1, and the client cards go obsidian.**
+  Three things off one screenshot from Theo.
+
+  **THE RECURRING CLASS, AGAIN — and it is the exact shape CLAUDE.md describes.**
+  `.pipecard.teamcal .pipetitle span:first-child` pinned both calendar titles to
+  **`#1c1416`** with **no theme gate**: 1.06:1 on the dark card, while every
+  other `.pipetitle` on that page sat at **15.60:1**. The
+  `:root[data-theme="rb-light"]` twin beside it was written and the base was
+  left behind — a partial theming pass, and the `.callegend` one line away got
+  BOTH halves, which is what makes the omission obvious in hindsight. Only the
+  **colour** was dropped; the rule also carries the title's font and
+  letter-spacing, so deleting it wholesale would have resized the heading.
+  Dark now inherits `.pipetitle{color:var(--rbe-head)}` → 15.60:1.
+  **The calendars themselves were always working** — `renderTeamCal()`, the
+  `teamAddBtn` handler and the `appointments` source are all wired; the heading
+  was simply invisible.
+
+  ⚠️ **`#calCard` is DEAD** (`display:none !important`), so the `.calhead b`
+  rules 685 re-inked are on hidden markup. The live calendars are
+  `.pipecard.teamcal` / `.prodcal`. Do not confuse the two again.
+
+  **The cards take the obsidian recipe by NAME**, not by a third copy of the
+  literals: `.pcard` was added to the `--obs-face` / `--obs-bd` / `--obs-lift`
+  selector list. ⚠️ Obsidian has **two** behaviours and they are not
+  interchangeable — `#cr-est-view` / `#reportsView` are **black in both modes**
+  (545, settled), while `.actbox` has a **light twin** (557). Theo said "like
+  the activity count is", so the cards flip with the theme.
+
+  **The initial box and the Call/Text buttons** were on `--rbe-monobg`, a **7%
+  red wash** with almost no edge — Theo: *"can you make those pop out more it
+  seems muted."* They are controls, so they read as raised keys in the card's
+  own language: one step lighter than the ground, a defined border, a white
+  hairline on the top bevel in dark; shadow-led in light.
+
+  **Every ink re-measured on the new, darker card. All of them improved in
+  dark:** name 12.71→13.67, po 6.11→6.57, address 4.82→5.19, rep 7.39→7.95,
+  meta 4.82→5.19, chip 5.47→5.84, Call/Text 8.00→9.30.
+  ⚠️ **In LIGHT the card's darkest corner went #fafafa → #eceef2, so everything
+  there lost a little**: name 17.34→15.58, address 5.11→4.59, rep 5.43→4.88,
+  meta 5.11→4.59 — all still above 4.5, but thinner. **And the known `.pcpo`
+  lavender went 1.99 → 1.79.** It was already failing and is on the queue for
+  Theo's pick; this build made it marginally worse and that is stated rather
+  than buried.
+
+  ⚠️ **A rig error of mine, worth keeping.** My first screenshot of the card
+  wiped `document.body` before injecting it. That removes the ancestor chain the
+  card lives under, a different rule then wins, and the **light-mode name
+  rendered white** in the picture while the live app has it at `rgb(22,22,22)`.
+  I nearly "fixed" a bug that did not exist. **Inject into the card's real host
+  and float the wrapper; never rebuild the page around the thing you are
+  photographing.**
+
+  Gates: `check_build` green (688 prev, marker + negative control).
+  `render_calhead.js` (new) GREEN and **RED with 2 under-floor elements on 688**
+  — it prints the WINNING RULE beside each ratio, which is the part that made
+  this diagnosable. Sweep green: pcard 12/12, navicons 201/201, suppliers 12/12,
+  schedule 27/27, 679 31/31, 680 35/35, colors 110/110.
+
+- **690** · **the pipeline stages are tappable on All Leads & Jobs.** Theo, on a
+  screenshot of that screen: *"This is more complicated than it should be. Can
+  you add somewhere where you can click on the different pipeline stages?"*
+
+  **THE PRIME DOCTRINE, EIGHTH TIME. The filter already existed.**
+  `ljState.sets.stage` is honoured by `ljMatches()`, counted by
+  `ljGroupCounts()`, and ordered by `ljGroupKeys()` — which already special-cases
+  `stage` to return `STAGES` filtered to those with rows. It was reachable only
+  through the funnel SHEET on a phone and the checkbox RAIL on a desktop. **This
+  build surfaces it. It does not add a filter, and it must never become a second
+  one.** The chip handler is a copy of the rail checkbox's toggle — same array,
+  same `delete` when it empties, same single `renderLeadsView()` — so the strip,
+  the rail and the sheet cannot disagree. The harness asserts that directly: tap
+  a chip, then read the rail's checkbox.
+
+  Theo picked chips over tabs and over a button grid, from a rendered sheet of
+  all three, and asked for the funnel to stay (it still owns Assigned To, Job
+  Priority, Job Category). **Chips because they are MULTI-select** — tabs would
+  have been single-select and quietly removed the ability to see Lead and
+  Prospect together, which the filter can do today.
+
+  The dot carries the stage's own `LJ_SOLID` colour rather than tinting the whole
+  chip — nine saturated blocks across the top of a list is noise, and those
+  colours are on the semantic frozen list. ⚠️ **`OnHold` is in `STAGES` but has
+  no `LJ_SOLID` entry**; the app's existing fallback is `|| '#8a93a1'` and the
+  strip uses the same one rather than inventing a tenth colour.
+
+  Gates: `check_build` green (689 prev, marker + negative control).
+  `render_stagechips.js` (new) **32/32 across both themes** — it seeds
+  `cacheProjects` with real project shapes, calls the SHIPPED `renderLeadsView()`,
+  then CLICKS the chips and counts the cards: 17 → 5 on Lead, → 8 on
+  Lead+Prospect, → 3 when Lead is untoggled, → 17 on All. Structure alone would
+  not have shown the filter works. **RED 32/32 on 689.** Sweep green: calhead,
+  pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
+  680 35/35, colors 110/110.
+
+- **704** · **A Supplement Desk card that never once rendered is gone.** Theo,
+  after being shown where the Desk actually lives: *"Remove the dead card."*
+
+  668 put the Desk in the STATIC `.ins-grid` inside `#cardinalTruthView`.
+  `render()` in `cr-cth-script` does `host.innerHTML = …` with
+  `host = document.querySelector('#cardinalTruthView .ins-body')`, and the grid
+  sits inside `.ins-body`, so the card was wiped before it could be drawn. Its
+  only guard is `if(!host) return false` — there is no path where it survives.
+  **679 caught this and added a working tile to the tools rail**; the dead `<a>`
+  stayed behind for 25 builds.
+
+  Measured in Chromium: **0 `.ins-card` in the DOM, no `.ins-grid`, and
+  `.ins-body` holds exactly one child — `.cr-cth-wrap`.** Before AND after this
+  build, which is the point: nothing visible changed.
+
+  **Removed because it is a trap, not because it is clutter.** A future session
+  greps `supplement.html`, finds `<a href="/supplement.html">` in the insurance
+  hub's markup, and concludes the Desk is linked from the hub. The replacement
+  comment says plainly that it cannot work there.
+
+  ⚠️ **SCOPE, stated rather than assumed: the whole static grid is dead**, not
+  just this card — seven more cards. They are **kept**. Theo asked for the one,
+  and there is a real argument for the rest: if `cr-cth-script` ever fails to
+  run, that grid is what the hub would fall back to. It is a poor fallback (its
+  Adjuster Directory card still reads "Coming soon" and that screen is built),
+  but deleting it is his call.
+
+  ⚠️ **A replacement comment tripped its own assertion for the THIRD time this
+  session.** The new comment names `data-go="desk"` to point the reader at the
+  working tile, so `count('data-go="desk") == 1` read 2 and failed. Same shape
+  as 701's `wxPaint` and 701c's `8.2vw`. **Assert on the emit site
+  (`'<button data-go="desk"`), never on a token the prose also contains.**
+
+  ⚠️ **And a hardcoded count was wrong again.** `data-ctnav="supplements"` was
+  asserted `== 1`; it is **2** — the static card *and* its click handler.
+  Rewritten as `== orig.count(...)`, which is the claim actually being made.
+
+  Gate `render_desk704.js`, 12 assertions, **RED on 703 with exactly one
+  failure** — the file-level one, while still reporting 0 `.ins-card` in the
+  DOM on that build. That single-failure control is the evidence for the
+  deletion: dead in the DOM before and after, only the source changed. It
+  asserts **both halves** — the dead card gone AND the live tile still drawn,
+  named, iconed and pointing at `/supplement.html` — because proving only the
+  first would pass on a build that deleted the working tile by mistake.
+
+- **703** · **The insurance claim screen holds still.** Theo, on two screenshots
+  of the Adam Gunn claim: *"Is there a fix for this insurance claim screen? Why
+  can't be static instead of bouncy?"*
+
+  **Cause: an overflow value nobody wrote.** `styleMounts()` sets
+  `display:none; position:fixed; inset:0; z-index:200; overflow-y:auto` INLINE
+  on the mount. It sets **overflow-Y only** — and CSS does not allow `visible`
+  beside a non-visible value, so the used value of **overflow-x is coerced to
+  `auto`**. The entire claim screen became a horizontal scroller for free, and
+  slid and rubber-banded whenever any child was a pixel too wide.
+
+  Something always was. Measured in Chromium with Adam Gunn's real row shapes:
+
+  | element | client | scroll |
+  |---|---:|---:|
+  | `.cr-c-table` (Scope History) | 349 | **386** |
+  | `.cr-c-section` | 349 | 386 |
+  | `.cr-c-pane` | 349 | 386 |
+  | `.cr-c-app` | 393 | 408 |
+  | **`#cr-claims-mount`** | 393 | **408** ← the bounce |
+  | `.portal-retail` | 393 | 393 (`overflow:hidden`) |
+
+  ⚠️ **That last row is why this looked like nothing.** An ancestor clips, so
+  `document.scrollWidth` reads a clean **393** and the page appears innocent —
+  the sliding is confined to the claim screen itself. A page-level overflow
+  check would have reported no problem at all.
+
+  **The fix is two halves and one without the other is worse than neither.**
+  `#cr-claims-mount{overflow-x:hidden}` pins the screen — alone it would CLIP
+  the Scope History table and silently eat a column of real money. So the four
+  tables each gained a `.cr-c-xscroll` wrapper and scroll in their own box.
+  The gate asserts **both** directions: mount `scrollWidth === clientWidth`,
+  AND at least one wrapper with `scrollWidth > clientWidth`.
+
+  **Not done as CSS alone.** `display:block;overflow-x:auto` on the `<table>` is
+  the usual one-liner, but it makes the inner anonymous table box shrink-to-fit,
+  so every table that currently FITS would stop filling its width. A wrapper
+  keeps table layout untouched.
+
+  ⚠️ **`.cr-c-table` appears 14 times in the file and `pl.sub()` splices
+  file-wide** — the 634 trap. Every markup edit was applied to a SLICE of
+  `cr-claims-script` and re-joined, with the file-wide count asserted unchanged.
+
+  **The class is app-wide and is NOT swept.** 13 other full-screen views carry
+  the same coercion today (`landingView`, `cr-estimates-mount`,
+  `cr-pricing-mount`, `payView`, `puDetail` and eight modals);
+  `#cr-claims-mount` is now the only one explicitly pinned. `overflow-x:hidden`
+  **clips**, so each one needs the same two-part treatment rather than a blind
+  find-and-replace. Recorded as bug class 33 and put to Theo.
+
+- **702** · **The address under the map is readable again.** Theo: *"The letters
+  in the map section went illegible again."*
+
+  **637 fixed this for retail and excluded insurance and community**, reasoning
+  in its own comment that *"both already have inks that suit those grounds"*.
+  Measured across all twelve combinations, that reasoning does not hold —
+  because **`.dbaddr` was reading from a different theme switch than its own
+  card**:
+
+      ink     .dbaddr -> var(--rbe-ink)      <html data-theme="rb-light">
+      ground  .acxsec -> var(--ct-surface)   <body data-rltheme="siren|docket">
+
+  Two switches that move independently. `--ct-*` is declared **only** under
+  `[data-rltheme]`, which is the **Resource Library's** theme — a third
+  mechanism beside the two `CLAUDE.md` documents.
+
+  | crm | app | rltheme | ink | ground | before |
+  |---|---|---|---|---|---:|
+  | insurance | dark | siren | `#cfd6df` | `#16161B` | 12.31:1 |
+  | insurance | dark | docket | `#cfd6df` | `#FFFFFF` | **1.38:1** |
+  | insurance | **light** | **siren** | `#161616` | `#16161B` | **1.00:1** |
+  | insurance | light | docket | `#161616` | `#FFFFFF` | 17.09:1 |
+  | community | dark | * | `#cfd6df` | `#FFFDF7` | **1.44:1** |
+  | retail | * | * | `#1e2432` | `#FFFFFF` | 15.51:1 |
+
+  **1.00:1 is not "hard to read" — it is the same colour twice**, and it is the
+  cell Theo photographed. The fix is not another combination-specific literal:
+  each CRM now takes its ink from **the palette that paints its own ground**, so
+  the two cannot drift apart again. Insurance uses `var(--ct-ink)` — the token
+  `.acxsec .acxbody` already used — and community takes a fixed dark ink because
+  its card is `#fffdf7` in both themes. Retail is untouched. **Worst cell after:
+  14.81:1, all twelve passing.**
+
+  ⚠️ **Three rig errors on the way, all of which produced a confident wrong
+  answer.** (1) `getComputedStyle` returns a **LIVE** object — reading `.color`
+  after `holder.remove()` reported every ink as an empty string. (2) Scoring
+  against the *worst of all ancestor grounds* rather than the **nearest opaque**
+  one blamed a near-white page for a dark card. (3) The first probe mounted the
+  card outside the real ancestor chain and resolved `--ct-*` to its light
+  defaults, which said the card was white when the screenshot plainly showed it
+  dark. **The screenshot was right and the instrument was wrong, three times.**
+
+  Gate `render_claimfit703.js`, 25 assertions covering both builds, **RED on 701
+  with 11 failures** — reproducing 1.00:1 and 408-vs-393 exactly.
+
+- **701** · **The weather panel is gone from the home screen.** Theo: *"Get rid
+  of the weather table altogether. It's not needed."* Out of `cr-lr-script`:
+  `wx()`, `wxPaint()`, `wxCached()`, `WX_LL`/`WX_TTL`/`WX_KEY`, `WX_CODES`, the
+  load-time call and the markup slot — 23,983 → 19,410 chars. 18 CSS rules
+  removed, 3 trimmed (grouped rules that also carry `.cr-lr-sub`/`.cr-lr-stamp`).
+  It also removes the only third-party data call the home screen made
+  (Open-Meteo, keyless).
+
+  ⚠️ **The rule remover cut a COMMENT in half and shipped a red gate.** It
+  walked out from each `.cr-lr-wx` match to the nearest brace; for the last rule
+  in the phone media query the nearest boundary going backwards was inside a
+  `/* … */`. The resulting unclosed comment-opener then swallowed **1,411
+  characters of live CSS** as far as the next closing delimiter, leaving a
+  duplicated comment head, an orphaned `{padding:7px 9px…}` with no selector,
+  and an otherwise-empty `@media (max-width:560px)`. `check_build` caught it —
+  `style block 68: 101 open / 100 close` — because it strips comments BEFORE
+  counting braces, which is exactly the case a raw brace count reads as
+  balanced (105/105). **A remover that walks to a brace must first prove it is
+  not standing inside a comment.**
+
+  ⚠️ **And the same fault, in the note about the fault.** `render_wx701.js`'s
+  banner described the bug and wrote the closing delimiter literally, which
+  ended the banner early and made the prose below it parse as code. `node`
+  caught it. The wording in that file is deliberately indirect.
+
+  **Two things came with the removal, both stated rather than folded in.**
+  (a) `.cr-lr-head .cr-lr-mark{font-size:clamp(28px,8.2vw,58px)}` existed only
+  to make room for the panel — its own comment said so — so the wordmark is
+  back to its full `clamp(38px,12vw,58px)`. Measured at four widths first:
+  182px of text in a 353px box at 393px, no overflow anywhere.
+  ⚠️ The first attempt to measure that appended the override to `<head>` and
+  read **no change** — a body `<style>` wins on document order at equal
+  specificity, so the probe's own rule lost. `!important` is what made it
+  honest, and without it the build would have concluded the restore was a no-op.
+  (b) **A pre-existing defect, found while photographing the before/after and
+  reproduced unchanged on 684:** the four course rows read *"Quick
+  InspectionWalk the roof"*. `.tt`, `.sb` and `.n` are `<span>`s at
+  `display:inline`. Two things prove it was never intentional — `margin-top` is
+  set on `.sb` and `.n`, which does nothing at all on an inline box, and the
+  `.cr-lr-pair` tiles directly below use `<b>`/`<small>` and stack correctly.
+  One scoped declaration; subtitle offset 4–6px → 23–26px.
+
+  Gates: `check_build` green (700 prev, marker + negative control).
+  `render_wx701.js` (new) **31 assertions, RED on 700 with 14 failures.** It
+  asserts the landing is ALIVE before asserting the panel is absent — on a
+  removal, "the element is not there" is also what a page that failed to render
+  says. ⚠️ Its `typeof window.wxPaint === 'undefined'` check **passed on the
+  negative control**, because `cr-lr-script` is an IIFE and the helpers were
+  never globals; replaced with a source check that goes red. Sweep green:
+  colors700 11/11, viewhead699 15/15, projsec698 10/10, swipe697 10/10,
+  ljfit696 28/28, tools695 5/5, toggle694 22/22, sflight 11/11, icons692 38/38,
+  gradtext 94/94, inscards 9/9.
+
+- **700** · **The PO number reads in light mode, and On Hold has a colour of its
+  own.** Theo: *"Do whatever you recommend for the lavender in light mode, for
+  the on hold maybe make it a different color of your choice."*
+  `.pcpo` was `#c9a2ff` in both themes — **1.79:1** on the light client card,
+  and 689 had made it marginally worse (1.99 → 1.79), which that entry recorded
+  at the time. Now a token pair: `--pc-po` `#c9a2ff` dark / `#6d3fbf` light.
+  **A pair, not a computed literal**, per the rule 527 established by breaking
+  it the other way.
+  **On Hold had no entry in any of the five stage maps and fell through to
+  Lead's grey**, so the two stages looked identical in a list. It now has one in
+  each: `LJ_SOLID` `#c8862b`, `LJ_INK` `#15171b`, `LJ_SPINE` `#ff9f43`,
+  `STAGE_COLORS` `#0F9B8E`, `STAGE_INK` `#0B5F57`. **Amber on the leads list,
+  teal on the job banner** — deliberately not one colour, because those two
+  screens use different palettes and amber was already spoken for on the banner.
+  Gate `render_colors700.js`, 11 assertions, RED on 699 with 8 failures.
+
+- **699** · **The page headings are drawn, and `ICO` is declared once.**
+  All 15 `h2.viewhead`. `CardinalIcons` 51 → 52 (`chat`). Sweep **570 → 547**.
+  ⚠️ **CORRECTION TO 698, in my own words.** 698 meant to add the `ICO` helper
+  to the main block, where nine runtime `.projsec` headings call it. It
+  anchored on `function crmNow(){`, which lives in **`cr-hd2-script`** — an
+  IIFE — so that copy was private and unused: dead code. **698 still worked,
+  and not for the reason it was written**: measured in Chromium,
+  `typeof ICO === 'function'` at global scope, because five of the six
+  declarations sit at their block's TOP level and a non-IIFE `<script>`'s top
+  level IS global. The main block was resolving against another module's copy
+  by luck. Wrap any one of those modules in an IIFE later and nine headings
+  start throwing. Now declared **once**, deliberately, at the top of the main
+  block, with the ordering asserted because `LIST_DEFS` calls it at parse time.
+  ⚠️ **The DOM has FIFTEEN `h2.viewhead`; a source regex finds fourteen.**
+  `<h2 id="listTitle" class="viewhead">` puts the id BEFORE the class, so
+  `<h2 class="viewhead"` never matches it. It is empty in markup and filled
+  from `LIST_DEFS`, whose three titles each began with an emoji escape. **Count
+  headings from the DOM, not the file.**
+  ⚠️ **The gallery heading needed BOTH halves.** `galTitle.innerHTML` is
+  rewritten on every open (`'📷 Inspection Photos'` / `'📷 Photo Album'`), so
+  converting only the markup would have put the emoji back the moment the
+  gallery opened. The icon now lives on the `<h2>` and the writer sets
+  `textContent` on the inner span alone. The gate drives that rewrite.
+  **A third mechanism exists and was left alone:** Schedule Board carries a RAW
+  inline `<svg>` from 681, predating `hydrate()`. Three ways to place an icon
+  in one class.
+  **The prose site was deleted, not converted** — "The full album lives in
+  **📷 Photo Album**" is a sentence, and `CardinalIcons`' own banner says prose
+  loses its emoji rather than gaining a glyph.
+  ⚠️ **An anchor matched INSIDE a comment and shipped a red gate.** The
+  insertion point for `ICO` was written as the main block's banner *first
+  line*, so the helper landed inside `/* … */` and the rest of the banner
+  became live code. `node --check` caught it. Anchor after the comment CLOSES.
+  ⚠️ **`render_projsec698.js` asserted `ICO declared >= 6` — it encoded the
+  defect as a requirement**, and went red on a strictly better file. Replaced
+  with a reachability check (`typeof ICO === 'function'` in the page). Fourth
+  count-shaped assertion to bite in this session; ask the page, not the text.
+  Gate `render_viewhead699.js`, 15 assertions, RED on 698 with 10 failures.
+
+- **698** · **The client-page section headings are drawn, not emoji.** All 27
+  `.projsec` headings. `CardinalIcons` 47 → 51: four new (`contract` — a page
+  with a signature squiggle, deliberately unlike `page`'s text lines — plus
+  `ruler`, `box`, `lock`), twenty existing ones reused. Sweep **594 → 570**.
+  ⚠️ **The family divides by MECHANISM and the two halves are not
+  interchangeable.** 17 are static markup and take `data-cri`, swapped by
+  `hydrate()` at load. **10 are built as strings at render time** (9 in the
+  main block, 1 in `cr-pp-script`) and must call `get()`, because `hydrate()`
+  ran long before and an attribute written then is never swapped. Same split
+  as 692 vs 695, now inside one build.
+  ⚠️ **8 of the 27 had no icon at all.** Converting only the emoji ones would
+  have left eight bare headings beside nineteen iconed — the half-finished look
+  695 had to go back and fix, and the partial pass CLAUDE.md warns removes the
+  tell. All 27 were done.
+  ⚠️ **`<h3 class="projsec"...>` finds 26 with `[^<]*` and 27 with `.*?`** —
+  the Location heading contains a nested `<span>`, so a character-class scan
+  stops short of it. That heading is also the runtime one, so a source-only
+  count misses it twice over.
+  **An anchor that stops at `>` does not strip what follows it.** The Approvals
+  entry was written as the opening tag alone, so its emoji sat outside the
+  matched string and survived; the gate caught it before the write.
+  Gate `render_projsec698.js`, 10 assertions, RED on 697. The runtime ten are
+  proved three ways — call site in source, glyph resolves, page throws nothing
+  — because **the try/catch is INSIDE `ICO` and cannot catch its own absence**,
+  so an out-of-scope helper is a loud ReferenceError, not a silent blank.
+  ⚠️ **A hardcoded glyph total broke a gate for the THIRD time this session.**
+  `render_tools695.js` asserted `=== 47`; 698 made it 51 and the app was right.
+  Worse, the same mistake was written into `render_projsec698.js` (`=== 51`) in
+  the same sitting. Both are now floors, and `render_icons692.js` was already
+  converted at 695. **A glyph-count equality is guaranteed to break on the next
+  icon build — assert the names you need, not the size of the map.**
+
+- **697** · **A sideways swipe on a scrolling strip no longer backs out of
+  the screen.** Theo, on All Leads & Jobs: *"moving through prospects to click
+  filter and swiping back toward leads exits the screen."*
+  **Cause: scroll chaining.** A horizontal scroller with no
+  `overscroll-behavior-x` hands the leftover gesture to the page the moment it
+  reaches `scrollLeft` 0, and the browser reads that as a back navigation.
+  Nothing on the leads view was broken — the gesture escaped it. The app
+  already had the cure in exactly one place, used nowhere else:
+  `.cr-est-head{overflow-x:auto;overscroll-behavior-x:contain}`.
+  **Scope: he reported one strip, the file had 33.** Every tab rail, chip row
+  and card grid now carries the same property. `contain` stops CHAINING only —
+  it does not change how the element scrolls, does not block touch handlers,
+  and leaves the Y axis alone, which the gate proves by scrolling the strip
+  and reading `scrollLeft` back.
+  ⚠️ **The `overflow:auto` SHORTHAND also sets `overflow-x`.** The first pass
+  matched the longhand and guarded 23; Chromium's parsed-rule walk then said
+  **33**. Ten more rules scroll sideways without saying the words — including
+  `.ljsheet .panel`, the leads filter sheet, directly in the path Theo
+  described. **The gate caught what the source regex could not.**
+  ⚠️ **Three counting traps in one build.** (1) A `<style>` tag inside a JS
+  template string makes a naive span scan treat generated print CSS as a
+  stylesheet. (2) `overflow:auto` appears as PROSE in the `cr-pm-scroll`
+  banner — "…all carry overflow:auto" — and a scan that ignores comments then
+  walks backwards past the comment into the preceding script, which is how
+  `reload: function()` turned up in a list of CSS selectors. (3) Six more sit
+  in inline `style=` attributes on modal overlays; those are vertical, are not
+  the reported defect, and were **left alone deliberately** rather than swept
+  in silently. Gate `render_swipe697.js`, 10 assertions, RED on 696.
+  ⚠️ **CSS cannot fix the iOS system EDGE gesture** — a swipe beginning on the
+  very left of the glass is handled before the page sees it. This fixes a
+  swipe that starts ON the strip, which is what was described.
+
+- **696** · **The chip strips were pushing the results column off the screen.**
+  **My regression, shipped at 690, worse at 691, reported by Theo.** Measured
+  at a 393px viewport: 689 has nothing wider than the screen, 690 has
+  `.ljresults` at **869px**, 691 the same with two strips doing it. He saw it
+  as "the cards gigantic and cut off" — nothing was resized; the column they
+  sit in was 869px wide inside a 393px screen, so the names had room not to
+  wrap and ran off the right edge.
+  **Cause:** `.ljcols{grid-template-columns:1fr}`. `1fr` is `minmax(auto,1fr)`
+  and that AUTO minimum resolves to the item's max-content — every chip laid
+  out unwrapped. The track grew to fit and took the card list with it.
+  ⚠️ **`overflow-x:auto` on the chip row could never have saved it**: the
+  parent grew to max-content instead of the child scrolling inside a clamped
+  parent. The scroll only engages once the parent is bounded.
+  **Fix:** `minmax(0,1fr)` on the track plus `min-width:0` on `.ljresults` —
+  the exact pair `#crewsView .crw-wrap` already documents in this file, in the
+  same words. Second place it has been needed. The desktop rule is untouched:
+  its tracks are `230px minmax(300px,1.05fr) minmax(320px,1fr)`, whose minimums
+  are explicit lengths, so they were never exposed.
+  Gate `render_ljfit696.js`, 28 assertions across 360/393/430/768/1194 — the
+  page must not scroll sideways, no container may exceed the viewport, the
+  strips must scroll INTERNALLY, and a long job name must wrap rather than
+  clip. Negative control on 695 is RED with the name at 556px on a 393px
+  screen. ⚠️ **Chips scrolled out of view to the right are not overflow** — a
+  naive `right > viewport` sweep flags them and reads as failure, so the gate
+  excludes descendants of a scrollable row by design.
+
+- **695** · **The Tools dropdown is drawn, not emoji.** All sixteen rows.
+  Thirteen carried an emoji entity; four new glyphs were drawn for them
+  (`pulse` Self Check, `sparkle` What's New, `pin` Field Walkthrough, `flask`
+  iTel Lab Results) and nine existing ones reused. `CardinalIcons` 43 → 47.
+  **`data-cri` is correct here** — this is static markup and `hydrate()` runs
+  at load, before the menu can be opened. 692's four modules needed `get()`
+  only because they build their panels as strings on user action.
+  ⚠️ **The DOM has SIXTEEN rows, the source shows fourteen.** `Track` and
+  `Reports` are written as `class="cbn"` top-level nav and a runtime routine
+  moves them into the dropdown, rewriting className to `'cbi'`. They never had
+  an emoji, so the sweep skipped them — leaving fourteen iconed rows and two
+  bare, which reads as unfinished rather than as scope. Both were given icons
+  from the existing set; their targets were read off the app's own `data-go`
+  map (`track` → `CardinalEstimates.open`, `reports` → `openReportsView`)
+  rather than guessed from the label. The mover only sets className, so an
+  icon hydrated at load survives it.
+  ⚠️ **`render_icons692.js` went red on this build and the app was right.**
+  It asserted `CardinalIcons` `=== 43`; 695 made it 47. Changed to a floor —
+  what 692 cares about is that its own fifteen resolve, and it checks that
+  separately. BUG_CLASSES 15, caught by the routine regression sweep.
+  Sweep total **606 → 594.**
+
+- **694** · **The light/dark switch is back on the screens that lost it.**
+  Theo: "make sure every page has a light dark switcher. Seems some have
+  disappeared." Two causes, neither the one the stylesheet suggests:
+  `crmNow()` returns `'sales'` on Sales Floor and `'production'` on the punch
+  board, but `refreshVisibility()` only added `.show` for retail/community; and
+  `ensureSearchRow()` adopts the button into the header row, which every
+  z-index 9500 view paints over. Insurance is a third case — 417 gave that slot
+  to the Docket/Siren control. The control now steps out to `document.body`
+  whenever the header slot is unusable. Gate `render_toggle694.js`, 22
+  assertions, RED on 693 for Sales Floor and insurance.
+  **Three things had to be measured, not reasoned.** Floating it IN PLACE fails
+  — at `z-index:2147483000` inside the header it still measured "covered by
+  .why", because z-index only competes inside the nearest stacking context.
+  Moving it is not enough either: the view is appended to body AFTER the button
+  moves (button at child index 276, `#cr-sf` at 280), so an equal 9500 loses on
+  DOM order — hence `.afloat{z-index:9550}`, above the views and deliberately
+  below `#cr-ci`'s 9560 so a modal still covers it. And `ensureSearchRow()`
+  re-adopts from a body observer, reversing the move within a frame; `.afloat`
+  is the handshake that stops it.
+  ⚠️ **`needsFloat()` never inspects the button.** The first version spotted
+  insurance by reading the button's own computed display — true only while it
+  is still in the row. Once moved, the reason to stay out vanished and it
+  oscillated back in every second. A placement predicate must depend on the
+  page, not on the thing being placed.
+  **The Showcase and OC Colors are excluded by name**, not silently: both are
+  single-theme client-facing Blackout by settled decision, and a switch that
+  does nothing is worse than no switch.
+
+- **693** · **Sales Floor follows the light switch.** Theo: "the light mode for
+  sales floor doesn't seem right." It was not wrong, it was ABSENT —
+  `cr-sf-styles` was 6,555 characters of hardcoded dark with zero `var()` refs
+  and zero `rb-light` rules, so the two themes rendered byte-identical. Sixteen
+  `--sf-*` tokens, dark on `#cr-sf` and light under `:root[data-theme="rb-light"]`,
+  every reference carrying a literal fallback. Had it ever gone light the body
+  ink would have read **1.04:1**.
+  **What does not move:** the navy fills and the cardinal rail are the same
+  bytes in both themes, because the module's banner says colour carries meaning
+  here — red is the objection, navy is your answer. ⚠️ **`.cr-sf-cr .you` keeps
+  `color:#f0ede7` as a LITERAL** — the one ink of twelve that sits on a coloured
+  ground; tokenising it would have painted `#17181a` on `#16233b`. Same trap 573
+  recorded.
+  **What inverts on purpose:** which red carries type. `#e8505c` is 5.30:1 dark
+  and 3.26:1 light; `#C8202E` is 3.28:1 dark and 5.15:1 light. `--sf-red-tx`
+  swaps between two reds the module already owned — no new colour was invented.
+  ⚠️ **The gate's first two assertions are the ones contrast cannot make**: that
+  the themes DIFFER at all. On 692 `render_sflight.js` reports "light: every ink
+  clears its floor" — green, and meaningless, because the page never went light.
+
+- **692** · **The emoji sweep reaches four more screens.** Sales Floor, the
+  insurance hub, the community hub and Import-from-AccuLynx: 37 sites, drawn
+  glyphs instead of emoji. `CardinalIcons` 28 → 43; fifteen new (page, books,
+  pencil, scales, bulb, factory, trophy, cards, camera, image, paperclip,
+  compass, calculator, houses, funnel) and nine existing ones reused.
+  **These call `get()` at render time, NOT `data-cri`** — `hydrate()` runs once
+  at load and these four build their panels as strings on user action, so an
+  attribute written then would never be swapped and the row would show nothing.
+  Seven of the fifteen were redrawn after the first contact sheet: books
+  blobbed at 13px, scales collapsed, cards was indistinguishable from page, and
+  houses had lost its walls. Gate `render_icons692.js`, 38 assertions across
+  both themes, RED with 26 failures on 691. Also repaired `render_gradtext.js`,
+  which hard-coded `__dirname/node_modules` and could not run outside the
+  scratchpad it was written in — 687 fixed that in the other harnesses and
+  missed this one; it now runs GREEN 94/0 on 692 and RED 90 on 684.
+  New instrument `emoji_census.py`: **the sweep has 606 sites left, not 533** —
+  see the correction below.
+
+  ⚠️ **CORRECTION — "533 remain" was wrong, and so was the method behind it.**
+  The figure is now produced by `scripts/emoji_census.py`, which prints its
+  exclusions instead of one bare number. At 691 the honest split was:
+  1,838 candidates · 60 in comments · 409 in the CHANGELOG (kept, historical) ·
+  516 functional UI glyphs · **46 ®/™ brand marks** · 210 unclassified ·
+  **643 in scope.** After 692: **606.**
+  Two things the old count got wrong. It missed the **JS `\uD83D\uDD28`
+  surrogate-escape form entirely** — 644 of 957 raw hits are that form, and a
+  literal-UTF-8 grep finds only 91 of them. And it had no bucket for **®**,
+  which appears 46 times on Owens Corning brand names: a sweep that treats it
+  as a sticker strips a trademark symbol `OC_BRAND_RULES.md` requires. The
+  census now refuses to touch ®/™/© by name.
+
+
+- **691** · **Assigned To joins Milestone as a second strip.** Theo, on 690:
+  *"How would I filter by rep? Etc"* — a fair hit. 690 solved **one of seven**
+  groups (`LJ_GROUPS`: Milestone, Assigned To, Job Priority, Job Category, Work
+  Type, Trade, Lead Source) and rep was still four taps behind the funnel.
+
+  Shown two layouts — a switchable strip covering all seven, or two fixed strips
+  — Theo picked **two fixed strips**, and said **Assigned To is the only other
+  group he filters by**. The remaining five stay in the funnel on his say-so.
+  That is a scope *decision*, not an omission.
+
+  **Generalised, not copied.** 690's stage-only block became
+  `ljChipStrip(gkey, mountId, wrapId)` and one `ljChipClick` that reads its group
+  off the **container's** `data-g`. A second copy would have been exactly the
+  second source of truth 690's own comment warns about. Both strips, the desktop
+  rail and the funnel sheet still write one `ljState.sets` and re-render through
+  one `renderLeadsView()`.
+
+  **A group with fewer than two values hides itself** — heading and all. A lone
+  "All" chip under a heading is furniture, and on a one-rep account the second
+  row would otherwise be permanent dead height.
+
+  Only stage gets colour dots. No other group has a palette, and inventing five
+  rep colours would put five new semantic colours on screen against the frozen
+  list. The headings use `var(--rbe-mute)`, which flips by itself and needs no
+  light twin.
+
+  Gates: `check_build` green (690 prev, marker + negative control).
+  `render_stagechips.js` extended to **54 assertions, both themes** — the ones
+  that matter are **stage AND rep combining rather than replacing** (Lead + one
+  rep = the measured intersection, and `Object.keys(ljState.sets)` holds both),
+  and the strip hiding and returning as the rep count crosses two. **Its
+  expectations are now self-computed from the seed** rather than hardcoded, per
+  the counting rules. Control on 690: **34 pass / 20 fail** — it isolates exactly
+  what is new instead of collapsing. ⚠️ It first CRASHED on that control
+  (`getComputedStyle(null)`); a control that dies on line one says far less than
+  one that reports, so the new reads are guarded. Sweep green: calhead, pcard
+  12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31, 680 35/35,
+  colors 110/110.
 ## Docs — the Community CRM audit, recovered and captured (10 Aug, no build number)
 
 Theo asked for the whole community workflow audited on 10 Aug; a five-lens

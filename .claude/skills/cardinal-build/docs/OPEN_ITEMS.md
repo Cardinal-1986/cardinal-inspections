@@ -1,8 +1,9 @@
 # Cardinal Resource App — Open Items
 
-*⚠️ **This file is layered, and each layer carries its own date.** The newest material —
-the bundle-splitting verdict, the deferred `showroom.html`, and what build 627 left open — is at the
-**bottom**, worked **8 Aug 2026 at build 627**. The decisions section was worked **5 Aug 2026**. The
+*⚠️ **This file is layered, and each layer carries its own date.** The newest material — the live
+queue and the two questions standing with Theo — is the **last section**, worked **10 Aug 2026 at
+build 691**; the bundle-splitting verdict and the deferred `showroom.html` sit above it at build 627
+(8 Aug). The decisions section was worked **5 Aug 2026**. The
 long middle of the file was last worked at build **573** · 2 Aug 2026 and knows nothing of 574–627;
 everything under "Illustrations in the Resource Library" and beyond is 467–557 era. Read the date on
 the section you are in, not the top of the file. For anything not covered here, read the `CHANGELOG`
@@ -2379,9 +2380,138 @@ and the VAPID key rotation, which is waiting on Theo setting the env var.
 **Closed.** Home client cards dark in both themes (the bare `.stg-*` pastel
 collision), gradient names gone from the cards (39 gradient-text sites → 38).
 
+- **The emoji sweep is STARTED, not finished.** 686 did the nav (28 rows,
+  `CardinalIcons` 4 → 27 glyphs + `hydrate()`). **533 pictographic emoji
+  remain** — measured with comments excluded and with the 0x2300–0x23FF block
+  included, which the first inventory missed. Dingbats (156), arrows (154) and
+  geometric marks (66) are counted separately and are NOT part of this sweep:
+  ✓ ✕ → ☐ are functional UI glyphs. Next largest surfaces: the card/hero button
+  rows in `cr-sf` / `cr-ch2` / `cr-cth` / `cr-ci` (they already wrap their emoji
+  in `<span class="i">`, so they are the cleanest remaining tranche), the
+  ~~weather table in `cr-lr-script`~~ (**gone at 701 — the panel was removed**),
+  the command palette's `icon:` field, and the file-type ternaries in
+  `cr-lib-script`.
 - **`.pcpo` lavender `#c9a2ff` reads 1.99:1 in LIGHT mode** — pre-existing;
   lavender PO is on the semantic frozen list. Needs Theo's pick of a light
   variant (the `.ljpo` precedent uses `--rbe-po1/po2` pairs).
+- ~~**Remaining gradient-text sites: 38**~~ — **DONE at 685.** All removed;
+  the real count was **37** (the 38th is a comment whose declaration is split
+  across a newline). Chromium's parsed-rule walk now reports 0, and
+  `render_gradtext.js` is the standing instrument — it goes RED on 684.
+
+---
+
+## Builds 685–703 — what closed, and the live queue (10 Aug 2026)
+
+**Closed this span**, all merged and verified deployed (PRs #198–#207):
+gradient text (685), the nav icons (686) and the three Theo rejected (687),
+Suppliers (688), the calendar headings + obsidian client cards (689), the
+pipeline-stage chips (690) and the Assigned To strip beside them (691).
+
+**Also closed, 692–701:** the emoji sweep across four card/hero surfaces (692),
+Sales Floor light mode (693), the light/dark switch put back on the screens
+that lost it (694), the Tools dropdown (695), **my 690 regression on the chip
+strips (696)**, the sideways-swipe escape on All Leads & Jobs (697), the 27
+client-page `.projsec` headings (698), the 15 `.viewhead` page headings and the
+`ICO` consolidation (699), **the lavender PO and On Hold colours (700)** and
+**the weather panel removal (701)**, **the map address ink (702)** and
+**the claim screen's sideways bounce (703)**.
+**704** removed a Supplement Desk card that had never rendered since 668.
+
+**⚠ The Supplement Desk's static `.ins-grid` is dead in full — 7 cards left in
+place.** `render()` in `cr-cth-script` overwrites `.ins-body`, so nothing in
+that grid reaches the DOM. Kept as an accidental fallback if the module ever
+fails to run; its content is already stale (Adjuster Directory reads "Coming
+soon" and that screen is built). **Theo's call whether the rest goes.**
+
+**⚠ THE INSURANCE LOOP — audited 11 Aug, and it is smaller than recorded.**
+The Supplement Desk is **four-fifths built**: analyze ✅ (2 `scope_reads`),
+draft ✅, file ✅, send ✅ — and **`read_response` is the only 501**.
+**No migration is needed to close it**: `insurance_supplements` already carries
+`responses jsonb DEFAULT '[]'`, `responded_at`, `amount_approved`, and its
+`status` CHECK already permits `approved` / `partial` / `denied`. The Desk's
+filing list already renders an approved amount when one exists.
+⚠️ **But the loop has never completed once** — against 5 claims there are
+**0 supplements, 0 payments, 0 upgrades**. The front half has never been driven
+to the end either, so building the reader against invented fixtures risks the
+inert-code failure exactly. **What is needed from Theo: one real supplement
+filed on the Gunn claim, and the carrier's reply document.**
+
+**⚠ OPEN, measured, and put to Theo — the sideways-bounce class is app-wide.**
+703 fixed the insurance claim screen. **13 other full-screen views carry the
+same coercion**: `landingView`, `cr-estimates-mount`, `cr-pricing-mount`,
+`payView`, `puDetail`, `tskModal`, `solModal`, `projModal`, `ckModal`,
+`gcModal`, `leadModal`, `leadFormModal`, `apptModal`. Each will slide and
+rubber-band whenever a child is a pixel too wide.
+**This must NOT be swept blind.** Unlike 697's `overscroll-behavior-x:contain`,
+which is inert where there is no overflow, `overflow-x:hidden` **clips** — so
+every view needs its genuinely-wide child found and given its own scroller
+first. Bug class 33 has the drill.
+
+**Also seen while measuring, not fixed, not reported as a bug yet:** the HOME
+view has small pre-existing overflows — `.wrap` +10px, `.homecols` / `.homemain`
+/ `#kpPunchStrip` / `.pu-strip` / `.sh` +18px each at 393px. They are contained
+by `#mainView{overflow:clip}` so nothing slides today, but they are real and
+they are what class 33 needs as fuel if that clip is ever relaxed.
+
+**The queue, in Theo's priority order:**
+
+1. **The emoji sweep — 532 remain.** Still first. The nav went at 686, the four
+   card/hero surfaces (`cr-sf` / `cr-ch2` / `cr-cth` / `cr-ci`) at 692, and the
+   Tools dropdown at 695, the 27 client-page `.projsec` headings at 698 and
+   the 15 `.viewhead` page headings at 699.
+   The two biggest left are the rest of the static
+   `(markup)` (~296) and the anonymous block-1 script (124). ⚠️ **90 distinct
+   characters remain in the markup** — that is 90 glyph decisions, so it wants
+   splitting into coherent menus/screens rather than one sweep.
+   ✅ **SETTLED 10 Aug, Theo, verbatim: "Keep them as emoji."** Asked about the
+   four condition dots (🟢🟡🟠🔴) in `ck_ventcond`. An `<option>` cannot contain
+   markup, so an SVG is impossible there — the only choices were keep or
+   delete, and he chose keep. **The same physics covers all 17 `<option>`
+   emoji** (`ck_ventcond`, `apKind`, `apptKind`), so every one of them is
+   permanently out of scope and must be left exactly as it is.
+   **The exclusion lives in `scripts/emoji_census.py`, not only here**, because
+   the instrument is what a later sweep actually reads to pick targets. Do not
+   re-open this.
+   ⚠️ **Count with `scripts/emoji_census.py`, never a grep.** The old "533"
+   missed the JS `\uD83D\uDD28` surrogate-escape form, which is two thirds of
+   all hits, and had no bucket for the **46 ® marks on Owens Corning names** —
+   those are trademark symbols `OC_BRAND_RULES.md` requires, not stickers.
+   ⚠️ **The weather table is NO LONGER a target — the whole panel went at 701**
+   on Theo's instruction. Any list that still names `WX_CODES` as the next
+   tranche is stale; `cr-lr-script` has no weather code in it.
+   **Ship icons with a rendered contact sheet, never a pass count**: 686 was
+   195/195 green and shipped three wrong glyphs.
+2. ~~**gradient text**~~ — **DONE at 685**, 37 sites, zero floor failures.
+3. **The insurance loop** — unchanged. `read_response` is still a 501,
+   `insurance_supplements` still has zero rows. Needs Theo, the live key and
+   Gunn's document.
+4. **VAPID rotation** — still waiting on `VAPID_PRIVATE_KEY` in Vercel. **Do
+   not remove the committed literal in `api/notify.js` before the env var is
+   live; this repo is public and push breaks silently without a key match.**
+
+**✅ Both open questions are ANSWERED and SHIPPED at 700.** Theo, verbatim:
+*"Do whatever you recommend for the lavender in light mode, for the on hold
+maybe make it a different color of your choice."*
+
+- **`.pcpo` lavender** is now a token pair — `--pc-po` `#c9a2ff` dark /
+  `#6d3fbf` light. It had been 1.79:1. **A pair, not a computed literal**, so it
+  cannot drift the way 527's `#f08a90` did.
+- **`OnHold` now has an entry in all five stage maps.** Amber on the leads list
+  (`LJ_SOLID` `#c8862b`, `LJ_SPINE` `#ff9f43`), teal on the job banner
+  (`STAGE_COLORS` `#0F9B8E`). **Deliberately two colours, not one** — the two
+  screens use different palettes and amber was already spoken for on the banner.
+  Do not "unify" them.
+
+**Parked by Theo, with his words:** the desktop left nav (`cr-lnav-script`)
+keeps its OWN 26-icon set, unrelated to `CardinalIcons` — folding them into one
+is its own build and changes what his ultrawide looks like, so it wants a
+preview. His call on doing it now was **"not now"**; finish the emoji sweep.
+
+**Not chosen, do not re-propose without a reason:** Option A for the filter
+strips — one switchable strip covering all seven groups. It was rendered and
+shown beside Option C; he picked **C, two fixed strips** (Milestone + Assigned
+To), with the other five groups staying behind the funnel.
 - **Remaining gradient-text sites: 38** — next sweep targets per the settled
   no-gradients rule; list is in the CLAUDE.md standing note.
 
