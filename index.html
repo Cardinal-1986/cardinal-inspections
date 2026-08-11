@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-10 build 703 &#8212; The claim screen holds still, and the address under the map is readable again</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 704 &#8212; A Supplement Desk card that never once appeared is gone from the markup</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4234,15 +4234,15 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="ins-cardsub">Carriers and adjusters you've worked with, what they'll fight over, and their inspection habits.</div>
         <div class="ins-cardgo ins-soon">Coming soon</div>
       </div>
-      <!-- 668: the Supplement Desk — a STANDALONE page (studio.html precedent),
-           admin-only twice over (its own rpc gate + api/supplement.js enforces
-           the same). An <a>, not a data-ctnav: different origin rules, its own
-           sign-in, deliberately not part of this file. -->
-      <a class="ins-card" href="/supplement.html" style="text-decoration:none;">
-        <div class="ins-cardtitle">&#129518; Supplement Desk</div>
-        <div class="ins-cardsub">AI reads the carrier's scope, finds what's missing, cites Cardinal's own Ohio templates, and drafts the response letter with your photos and measurements. Admin only.</div>
-        <div class="ins-cardgo">Open &rsaquo;</div>
-      </a>
+      <!-- 704: the Supplement Desk card was here from 668 and NEVER RENDERED.
+           render() in cr-cth-script does host.innerHTML = ... where host is
+           '#cardinalTruthView .ins-body', and this grid is inside it, so every
+           card below is replaced before it can be seen. Measured: zero .ins-card
+           in the DOM. 679 put the working tile in the TOOLS rail, reached by
+           data-go="desk" like its neighbours; that one is the only way in.
+           Do not add a link to /supplement.html here again — it cannot work.
+           (The rest of this grid is dead for the same reason and is kept, for
+           now, as what the hub would show if cr-cth-script ever failed to run.) -->
       <button class="ins-card" data-ctnav="supplements">
         <div class="ins-cardtitle">&#128206; Supplement Templates</div>
         <div class="ins-cardsub">Pre-formatted supplements for the most common denials: ice barrier, decking, ventilation, matching, flashings, related property damage.</div>
@@ -37461,6 +37461,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:704, d:'2026-08-11', t:'A dead Supplement Desk card is gone',
+s:'There were two Supplement Desk cards in the insurance hub and only one of them ever worked. The older one sat in a block of the page that gets rebuilt every time the hub loads, so it was wiped before it could be drawn \u2014 it had not appeared on screen once since it was added. The working tile, in the Tools row, is untouched. Nothing you could see has changed; this just stops the next person concluding the Desk is linked somewhere it is not.' },
 { b:703, d:'2026-08-10', t:'The insurance claim screen holds still',
 s:'You asked why it was bouncy instead of static. The screen had been sliding sideways \u2014 not by design: it was told to scroll up and down, and the browser quietly makes a box scroll sideways too unless you say otherwise. Anything a shade too wide then dragged the whole screen with it. The screen is now pinned, and the one thing that really is too wide for a phone \u2014 the scope history table \u2014 scrolls on its own inside its box, so no figures are lost.' },
 { b:702, d:'2026-08-10', t:'The address under the map is readable again',

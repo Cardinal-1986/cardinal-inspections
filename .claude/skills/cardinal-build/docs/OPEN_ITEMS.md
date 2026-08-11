@@ -2416,6 +2416,26 @@ client-page `.projsec` headings (698), the 15 `.viewhead` page headings and the
 `ICO` consolidation (699), **the lavender PO and On Hold colours (700)** and
 **the weather panel removal (701)**, **the map address ink (702)** and
 **the claim screen's sideways bounce (703)**.
+**704** removed a Supplement Desk card that had never rendered since 668.
+
+**⚠ The Supplement Desk's static `.ins-grid` is dead in full — 7 cards left in
+place.** `render()` in `cr-cth-script` overwrites `.ins-body`, so nothing in
+that grid reaches the DOM. Kept as an accidental fallback if the module ever
+fails to run; its content is already stale (Adjuster Directory reads "Coming
+soon" and that screen is built). **Theo's call whether the rest goes.**
+
+**⚠ THE INSURANCE LOOP — audited 11 Aug, and it is smaller than recorded.**
+The Supplement Desk is **four-fifths built**: analyze ✅ (2 `scope_reads`),
+draft ✅, file ✅, send ✅ — and **`read_response` is the only 501**.
+**No migration is needed to close it**: `insurance_supplements` already carries
+`responses jsonb DEFAULT '[]'`, `responded_at`, `amount_approved`, and its
+`status` CHECK already permits `approved` / `partial` / `denied`. The Desk's
+filing list already renders an approved amount when one exists.
+⚠️ **But the loop has never completed once** — against 5 claims there are
+**0 supplements, 0 payments, 0 upgrades**. The front half has never been driven
+to the end either, so building the reader against invented fixtures risks the
+inert-code failure exactly. **What is needed from Theo: one real supplement
+filed on the Gunn claim, and the carrier's reply document.**
 
 **⚠ OPEN, measured, and put to Theo — the sideways-bounce class is app-wide.**
 703 fixed the insurance claim screen. **13 other full-screen views carry the
