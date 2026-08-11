@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 705 &#8212; Community jobs get a direct door to Payment Information on the dark client card</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 706 &#8212; The dark Community card shows the funding partner and property, and both can be changed there</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37461,6 +37461,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:706, d:'2026-08-11', t:'Community: the partner and property live on the dark card',
+s:'The dark Community card now has a Partner &amp; Property section under the Job Menu. It names the funding partner \u2014 with their contact line, and a Confidential badge where that applies \u2014 and the attached property with its owner, plus the renter on property-manager jobs, which the app collected but never showed anywhere. Attach, Change and Clear work right there, the Properties button finally opens a partner\u2019s property list (its old tile always refused), and if you wander to another job while a picker is open the choice is safely dropped instead of landing on the job you left.' },
 { b:705, d:'2026-08-11', t:'Community: Payment Information is one tap away',
 s:'On a Community job the dark client card had no way into Payment Information \u2014 the only button that opened it lived on the older screen hidden underneath, so partner payments could not be recorded at all. The Job Menu now ends with a Payment Information tile that opens the ledger directly, with no flash of the old cream screen on the way there, and Back returns to the dark card exactly as you left it.' },
 { b:704, d:'2026-08-11', t:'A dead Supplement Desk card is gone',
@@ -49377,7 +49379,18 @@ background:linear-gradient(var(--ccm-wash,rgba(4,120,87,.18)),var(--ccm-wash,rgb
   #cr-cc .cts{grid-template-columns:1fr 1fr;gap:12px}
   #cr-cc .tabbar button{font-size:14px}
 }
-#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}#cr-cc .cc-jmb .l{font:700 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}#cr-cc .cc-jmb .n.z{color:var(--ccm-dim);opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:var(--ccm-dim)}#cr-cc .cc-out{display:inline-flex;align-items:center;min-height:44px;padding:0 15px;margin:0 0 12px;border-radius:10px;background:transparent;border:1px solid var(--ccm-line);color:var(--ccm-dim);font:700 12.5px -apple-system,'Segoe UI',Arial,sans-serif;cursor:pointer}#cr-cc .cc-out:hover{border-color:var(--ccm-ac);color:var(--ccm-ink)}#cr-cc-return{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:9995;background:var(--ccm-card);border:1px solid var(--ccm-ac);color:var(--ccm-ink);font:700 13px -apple-system,'Segoe UI',Arial,sans-serif;padding:11px 18px;border-radius:999px;box-shadow:var(--ccm-sh-lg);cursor:pointer}body[data-crm="community"] #commsView .viewhead{color:var(--ccm-ac,#34D399);/* 685: was gradient-clipped text */}body[data-crm="community"] #commsView #commsCli{color:#34D399 !important;-webkit-text-fill-color:#34D399}body[data-crm="community"] #commsView .subnote{color:#fff}body[data-crm="community"] footer.site,body[data-crm="insurance"] footer.site{display:none}#cr-cc .cc-oc{background:var(--raise,#1e2220);border:1px solid var(--line,#2a2f2c);border-radius:12px;padding:14px}#cr-cc .cc-oc .hd{font:800 16px inherit;margin:0 0 3px}#cr-cc .cc-oc .sub{font:400 12px inherit;color:var(--mute,#9aa39e);margin:0 0 13px}#cr-cc .cc-oc .step{font:700 9.5px var(--mono,ui-monospace,Menlo,monospace);letter-spacing:.14em;text-transform:uppercase;color:var(--mute,#9aa39e);margin-bottom:10px}#cr-cc .cc-oc .big{display:flex;flex-direction:column;gap:9px}#cr-cc .cc-oc .big button{display:flex;align-items:flex-start;gap:12px;text-align:left;padding:15px;border-radius:11px;border:1px solid var(--line,#2a2f2c);background:var(--card,#161918);color:var(--ink,#f2f4f3);font:700 15px inherit;cursor:pointer;width:100%}#cr-cc .cc-oc .big button .ic{font-size:20px;width:26px;flex:0 0 26px;text-align:center;line-height:1.2}#cr-cc .cc-oc .big button small{display:block;font:400 11.5px/1.45 inherit;color:var(--mute,#9aa39e);margin-top:3px}#cr-cc .cc-oc .big button.go{border-color:var(--a1,#34D399);background:var(--ccm-wash,rgba(4,120,87,.18))}#cr-cc .cc-oc .big button.wait{border-color:var(--warn,#ffcf6b)}#cr-cc .cc-oc .f{margin-top:12px}#cr-cc .cc-oc .f label{display:block;font:800 8.5px var(--mono,ui-monospace,Menlo,monospace);letter-spacing:.15em;text-transform:uppercase;color:var(--mute,#9aa39e);margin-bottom:5px}#cr-cc .cc-oc .f input,#cr-cc .cc-oc .f select{width:100%;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c);border-radius:9px;padding:12px;color:var(--ink,#f2f4f3);font:600 14.5px inherit}#cr-cc .cc-oc .row{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-oc .row .f{margin-top:0}#cr-cc .cc-oc .seg{display:flex;border:1px solid var(--line,#2a2f2c);border-radius:9px;overflow:hidden;margin-top:6px}#cr-cc .cc-oc .seg button{flex:1;background:var(--card,#161918);border:0;border-right:1px solid var(--line,#2a2f2c);padding:12px 4px;color:var(--mute,#9aa39e);font:700 12px inherit;cursor:pointer}#cr-cc .cc-oc .seg button:last-child{border-right:0}#cr-cc .cc-oc .seg button.on{background:var(--ccm-wash,rgba(4,120,87,.18));color:var(--a1,#34D399)}#cr-cc .cc-oc .gap{margin-top:11px;padding:11px 12px;border-radius:9px;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c);font:400 12px/1.5 inherit;color:var(--mute,#9aa39e)}#cr-cc .cc-oc .gap b{color:var(--ink,#f2f4f3);font-weight:700}#cr-cc .cc-oc .tar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:12px;border-radius:9px;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c)}#cr-cc .cc-oc .tar .ic{font-size:18px}#cr-cc .cc-oc .tar b{font:700 13px inherit;display:block;color:var(--ink,#f2f4f3)}#cr-cc .cc-oc .tar small{display:block;font:400 11px inherit;color:var(--mute,#9aa39e);margin-top:1px}#cr-cc .cc-oc .tar input{margin-left:auto;width:132px;background:var(--raise,#1e2220);border:1px solid var(--line,#2a2f2c);border-radius:7px;padding:9px;color:var(--ink,#f2f4f3);font:600 12.5px inherit}#cr-cc .cc-oc .ft{display:flex;gap:9px;margin-top:15px}#cr-cc .cc-oc .ft button{flex:1;padding:14px;border-radius:10px;border:0;font:800 13.5px inherit;cursor:pointer}#cr-cc .cc-oc .ft .save{background:var(--a1,#34D399);color:var(--ccm-onac,#08240f)}#cr-cc .cc-oc .ft .save[disabled]{opacity:.55;cursor:default}#cr-cc .cc-oc .ft .back{background:none;border:1px solid var(--line,#2a2f2c);color:var(--mute,#9aa39e)}#cr-cc .cc-oc .note{font:400 11.5px/1.55 inherit;color:var(--mute,#9aa39e);margin-top:11px}#cr-cc .cc-oc .dots{display:flex;gap:5px;justify-content:center;margin-top:14px}#cr-cc .cc-oc .dots i{width:6px;height:6px;border-radius:99px;background:var(--line,#2a2f2c)}#cr-cc .cc-oc .dots i.on{background:var(--a1,#34D399);width:17px}@media (max-width:420px){#cr-cc .cc-oc .row{grid-template-columns:1fr}#cr-cc .cc-oc .row .f+.f{margin-top:9px}}</style> <script id="cr-cc-script">
+#cr-cc .cc-sect{display:flex;align-items:center;gap:10px;margin:22px 0 9px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim)}#cr-cc .cc-sect::after{content:"";flex:1;height:1px;background:var(--ccm-line)}#cr-cc .cc-jm{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-jmb{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;border-radius:10px;text-align:left;color:var(--ccm-ink);cursor:pointer;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent}#cr-cc .cc-jmb .l{font:700 13px inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}#cr-cc .cc-jmb .n.z{color:var(--ccm-dim);opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:var(--ccm-dim)}
+/* 706: Partner & Property */
+#cr-cc .cc-pp{display:flex;flex-direction:column;padding:4px 6px}
+#cr-cc .cc-pp .pprow{padding:9px 8px;display:flex;flex-direction:column;gap:3px}
+#cr-cc .cc-pp .pprow + .pprow{border-top:1px solid var(--ccm-line,#2a2f2c)}
+#cr-cc .cc-pp .ppk{font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--ccm-dim,#828c86)}
+#cr-cc .cc-pp .ppv{font:700 13.5px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3)}
+#cr-cc .cc-pp .ppv small,#cr-cc .cc-pp .pprow > small{display:block;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86);margin-top:2px}
+#cr-cc .cc-pp .ppchip{display:inline-block;margin-left:7px;padding:1px 7px;border-radius:8px;border:1px solid var(--ccm-line,#2a2f2c);font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--ccm-dim,#828c86);vertical-align:2px}
+#cr-cc .cc-pp .ppacts{display:flex;gap:7px;margin-top:7px;flex-wrap:wrap}
+#cr-cc .cc-pp .ppacts button{background:transparent;border:1px solid var(--ccm-line,#2a2f2c);color:var(--ccm-ink,#f2f4f3);border-radius:7px;padding:7px 11px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
+#cr-cc .cc-pp .ppacts button:active{background:var(--ccm-line,#2a2f2c)}#cr-cc .cc-out{display:inline-flex;align-items:center;min-height:44px;padding:0 15px;margin:0 0 12px;border-radius:10px;background:transparent;border:1px solid var(--ccm-line);color:var(--ccm-dim);font:700 12.5px -apple-system,'Segoe UI',Arial,sans-serif;cursor:pointer}#cr-cc .cc-out:hover{border-color:var(--ccm-ac);color:var(--ccm-ink)}#cr-cc-return{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:9995;background:var(--ccm-card);border:1px solid var(--ccm-ac);color:var(--ccm-ink);font:700 13px -apple-system,'Segoe UI',Arial,sans-serif;padding:11px 18px;border-radius:999px;box-shadow:var(--ccm-sh-lg);cursor:pointer}body[data-crm="community"] #commsView .viewhead{color:var(--ccm-ac,#34D399);/* 685: was gradient-clipped text */}body[data-crm="community"] #commsView #commsCli{color:#34D399 !important;-webkit-text-fill-color:#34D399}body[data-crm="community"] #commsView .subnote{color:#fff}body[data-crm="community"] footer.site,body[data-crm="insurance"] footer.site{display:none}#cr-cc .cc-oc{background:var(--raise,#1e2220);border:1px solid var(--line,#2a2f2c);border-radius:12px;padding:14px}#cr-cc .cc-oc .hd{font:800 16px inherit;margin:0 0 3px}#cr-cc .cc-oc .sub{font:400 12px inherit;color:var(--mute,#9aa39e);margin:0 0 13px}#cr-cc .cc-oc .step{font:700 9.5px var(--mono,ui-monospace,Menlo,monospace);letter-spacing:.14em;text-transform:uppercase;color:var(--mute,#9aa39e);margin-bottom:10px}#cr-cc .cc-oc .big{display:flex;flex-direction:column;gap:9px}#cr-cc .cc-oc .big button{display:flex;align-items:flex-start;gap:12px;text-align:left;padding:15px;border-radius:11px;border:1px solid var(--line,#2a2f2c);background:var(--card,#161918);color:var(--ink,#f2f4f3);font:700 15px inherit;cursor:pointer;width:100%}#cr-cc .cc-oc .big button .ic{font-size:20px;width:26px;flex:0 0 26px;text-align:center;line-height:1.2}#cr-cc .cc-oc .big button small{display:block;font:400 11.5px/1.45 inherit;color:var(--mute,#9aa39e);margin-top:3px}#cr-cc .cc-oc .big button.go{border-color:var(--a1,#34D399);background:var(--ccm-wash,rgba(4,120,87,.18))}#cr-cc .cc-oc .big button.wait{border-color:var(--warn,#ffcf6b)}#cr-cc .cc-oc .f{margin-top:12px}#cr-cc .cc-oc .f label{display:block;font:800 8.5px var(--mono,ui-monospace,Menlo,monospace);letter-spacing:.15em;text-transform:uppercase;color:var(--mute,#9aa39e);margin-bottom:5px}#cr-cc .cc-oc .f input,#cr-cc .cc-oc .f select{width:100%;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c);border-radius:9px;padding:12px;color:var(--ink,#f2f4f3);font:600 14.5px inherit}#cr-cc .cc-oc .row{display:grid;grid-template-columns:1fr 1fr;gap:9px}#cr-cc .cc-oc .row .f{margin-top:0}#cr-cc .cc-oc .seg{display:flex;border:1px solid var(--line,#2a2f2c);border-radius:9px;overflow:hidden;margin-top:6px}#cr-cc .cc-oc .seg button{flex:1;background:var(--card,#161918);border:0;border-right:1px solid var(--line,#2a2f2c);padding:12px 4px;color:var(--mute,#9aa39e);font:700 12px inherit;cursor:pointer}#cr-cc .cc-oc .seg button:last-child{border-right:0}#cr-cc .cc-oc .seg button.on{background:var(--ccm-wash,rgba(4,120,87,.18));color:var(--a1,#34D399)}#cr-cc .cc-oc .gap{margin-top:11px;padding:11px 12px;border-radius:9px;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c);font:400 12px/1.5 inherit;color:var(--mute,#9aa39e)}#cr-cc .cc-oc .gap b{color:var(--ink,#f2f4f3);font-weight:700}#cr-cc .cc-oc .tar{display:flex;align-items:center;gap:10px;margin-top:12px;padding:12px;border-radius:9px;background:var(--card,#161918);border:1px solid var(--line,#2a2f2c)}#cr-cc .cc-oc .tar .ic{font-size:18px}#cr-cc .cc-oc .tar b{font:700 13px inherit;display:block;color:var(--ink,#f2f4f3)}#cr-cc .cc-oc .tar small{display:block;font:400 11px inherit;color:var(--mute,#9aa39e);margin-top:1px}#cr-cc .cc-oc .tar input{margin-left:auto;width:132px;background:var(--raise,#1e2220);border:1px solid var(--line,#2a2f2c);border-radius:7px;padding:9px;color:var(--ink,#f2f4f3);font:600 12.5px inherit}#cr-cc .cc-oc .ft{display:flex;gap:9px;margin-top:15px}#cr-cc .cc-oc .ft button{flex:1;padding:14px;border-radius:10px;border:0;font:800 13.5px inherit;cursor:pointer}#cr-cc .cc-oc .ft .save{background:var(--a1,#34D399);color:var(--ccm-onac,#08240f)}#cr-cc .cc-oc .ft .save[disabled]{opacity:.55;cursor:default}#cr-cc .cc-oc .ft .back{background:none;border:1px solid var(--line,#2a2f2c);color:var(--mute,#9aa39e)}#cr-cc .cc-oc .note{font:400 11.5px/1.55 inherit;color:var(--mute,#9aa39e);margin-top:11px}#cr-cc .cc-oc .dots{display:flex;gap:5px;justify-content:center;margin-top:14px}#cr-cc .cc-oc .dots i{width:6px;height:6px;border-radius:99px;background:var(--line,#2a2f2c)}#cr-cc .cc-oc .dots i.on{background:var(--a1,#34D399);width:17px}@media (max-width:420px){#cr-cc .cc-oc .row{grid-template-columns:1fr}#cr-cc .cc-oc .row .f+.f{margin-top:9px}}</style> <script id="cr-cc-script">
 (function(){
 'use strict';
 var tab = 'thread';
@@ -50161,6 +50174,118 @@ loc.innerHTML = '';
 loc.appendChild(sec);
 try{ window.dispatchEvent(new Event('resize')); }catch(_){}
 }
+/* 706: Partner & Property — the first-build attach rows re-homed on the card
+   (Phase 2 of the settled (a) decision). Reads the MASKED roster on purpose —
+   get()/list() is what keeps confidential partners confidential — and writes
+   through the existing setPartnerForProject / setPropertyForProject pipeline.
+   One guard the cream rows never had: the write is dropped if the open job
+   changed while a picker sat open (the stale-write class the audit named). */
+function ppSync(){
+var box = document.getElementById('cr-cc-pp');
+if(!box) return;
+var pr = window.currentProject;
+if(!pr || !isCommunity(pr)){ box.innerHTML = ''; return; }
+var CP = window.CardinalCommunityPartners || null;
+var CPR = window.CardinalCommunityProperties || null;
+var l = lead(pr);
+var pid = (CP && CP.partnerIdForProject) ? CP.partnerIdForProject(pr) : (l.partner_id || null);
+var p = (pid && CP && CP.get) ? CP.get(pid) : null;
+var nm = p ? p.name : (l.partner_name || l.partner || '');
+var propId = l.property_id || null;
+var sig = [pr.id, pid || '', propId || '', p ? '1' : '0'].join('|');
+box.dataset.ppsig = sig;
+var chips = '';
+if(p && p.__masked) chips += '<span class="ppchip">Confidential</span>';
+if(p && p.prospective) chips += '<span class="ppchip">Prospect</span>';
+var contact = '';
+if(p && (p.contact_name || p.contact_phone)){
+contact = '<small>' + esc([p.contact_name, p.contact_phone].filter(Boolean).join(' \u00b7 ')) + '</small>';
+}
+var renter = l.renter_name
+? '<small>Renter \u00b7 ' + esc([l.renter_name, l.renter_phone].filter(Boolean).join(' \u00b7 ')) + '</small>'
+: '';
+box.innerHTML =
+'<div class="pprow">' +
+'<div class="ppk">Funding partner</div>' +
+'<div class="ppv">' + (nm ? esc(nm) : 'None attached') + chips + contact + '</div>' +
+'<div class="ppacts">' +
+'<button type="button" data-pp="partner">' + (pid ? 'Change' : 'Attach partner') + '</button>' +
+(pid ? '<button type="button" data-pp="props">Properties</button>' : '') +
+(pid ? '<button type="button" data-pp="clearp">Clear</button>' : '') +
+'</div>' +
+'</div>' +
+'<div class="pprow">' +
+'<div class="ppk">Property</div>' +
+'<div class="ppv" data-pp-prop>' +
+(pid ? (propId ? 'Loading\u2026' : 'No property attached.') : 'Attach a partner to choose a property.') +
+'</div>' + renter +
+(pid ? '<div class="ppacts"><button type="button" data-pp="property">' + (propId ? 'Change' : 'Attach property') + '</button></div>' : '') +
+'</div>';
+function guarded(fn){
+var capId = (window.currentProject || {}).id;
+return function(x){
+var cur = window.currentProject;
+if(!cur || cur.id !== capId){
+try{ alert('That job is no longer open \u2014 nothing was changed.'); }catch(_){}
+return;
+}
+fn(cur, x);
+};
+}
+function afterWrite(okv){
+if(okv === false) return;
+if(window.CardinalCommunityJob && window.CardinalCommunityJob.refresh){
+try{ window.CardinalCommunityJob.refresh(); }catch(_){}
+}
+}
+var bp = box.querySelector('[data-pp="partner"]');
+if(bp) bp.onclick = function(){
+if(!(CP && CP.pickPartner)) return;
+CP.pickPartner(guarded(function(cur, chosen){
+if(!chosen) return;
+Promise.resolve(CP.setPartnerForProject(cur, chosen.id)).then(afterWrite);
+}));
+};
+var bc = box.querySelector('[data-pp="clearp"]');
+if(bc) bc.onclick = function(){
+if(!(CP && CP.setPartnerForProject)) return;
+if(!confirm('Remove the partner link from this client?')) return;
+guarded(function(cur){
+Promise.resolve(CP.setPartnerForProject(cur, null)).then(afterWrite);
+})();
+};
+var bd = box.querySelector('[data-pp="props"]');
+if(bd) bd.onclick = function(){
+if(CPR && CPR.openDirectory) CPR.openDirectory(pid);
+};
+var bpr = box.querySelector('[data-pp="property"]');
+if(bpr) bpr.onclick = function(){
+if(!(CPR && CPR.pickProperty)) return;
+CPR.pickProperty(pid, guarded(function(cur, chosen){
+if(!chosen) return;
+Promise.resolve(CPR.setPropertyForProject(cur, chosen.id)).then(afterWrite);
+}));
+};
+if(pid && propId && CPR && CPR.load){
+Promise.resolve(CPR.load(pid)).then(function(){
+if(box.dataset.ppsig !== sig) return;
+var slot = box.querySelector('[data-pp-prop]');
+if(!slot) return;
+var rows = (CPR.list && CPR.list(pid)) || [];
+var prop = rows.filter(function(x){ return x.id === propId; })[0];
+slot.innerHTML = prop
+? esc(prop.address || '') + (prop.unit ? ' \u00b7 ' + esc(prop.unit) : '') +
+(prop.owner_name ? '<small>' + esc(prop.owner_name) + '</small>' : '')
+: 'Unknown property \u2014 it may have been archived.';
+});
+}
+if(pid && !p && CP && CP.load){
+Promise.resolve(CP.load()).then(function(){
+if(box.dataset.ppsig !== sig) return;
+if(CP.get && CP.get(pid)) ppSync();
+});
+}
+}
 var jmTries = 0;
 function syncJobMenu(){
 var jm = document.getElementById('cr-cc-jm');
@@ -50318,6 +50443,7 @@ threadHtml(pr) + contactsHtml(pr) +
 bidHtml(pr) + contactsHtml(pr) +
 '</div>' +
 '<h3 class="cc-sect">Job Menu</h3><div class="cc-jm" id="cr-cc-jm"></div>' +
+'<h3 class="cc-sect">Partner &amp; Property</h3><div class="cc-loc cc-pp" id="cr-cc-pp"></div>' +
 '<h3 class="cc-sect">Location</h3><div class="cc-loc" id="cr-cc-loc"></div>' +
 '<h3 class="cc-sect">Reviews</h3><div class="cc-loc cc-rev" id="cr-cc-rev"></div>';
 wire(mount, pr);
@@ -50326,6 +50452,7 @@ wire(mount, pr);
    so the call goes in beside the others the moment the markup does. */
 wireOut();
 syncJobMenu();
+ppSync();
 adoptLocation();
 adoptReviews();
 takeOver(mount.childNodes.length > 0 && mount.offsetParent !== null);
