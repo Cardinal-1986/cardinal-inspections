@@ -3872,3 +3872,25 @@ each gained a `.cr-c-xscroll` wrapper so the wide one scrolls in its own box.
 `cr-estimates-mount`, `cr-pricing-mount`, `payView`, `puDetail`, eight modals).
 Not swept: `overflow-x:hidden` clips, so each needs its wide child found first.
 See bug class 33.
+
+
+### 704 — the Supplement Desk has exactly one door
+
+**Insurance hub → TOOLS → Supplement Desk**, emitted by `cr-cth-script`'s tools
+rail as `data-go="desk"` and handled by `window.location.href =
+'/supplement.html'`. It is a standalone page on the SAME origin as the app, so
+the Supabase session carries over (unlike `studio.html`, which has its own
+subdomain and its own sign-in). Admin-gated three ways: the UI checks
+`is_cardinal_admin`, `api/supplement.js` re-checks server-side, and RLS is the
+fence.
+
+⚠️ **There used to be a second card and it never worked.** 668 added an
+`<a href="/supplement.html">` to the static `.ins-grid` in
+`#cardinalTruthView` — which `render()` overwrites, because it writes
+`host.innerHTML` and `host` is `.ins-body`, the grid's own parent. The card was
+never on screen once. 679 added the working tile; **704 removed the dead one**.
+Do not add a link there again.
+
+⚠️ **The whole static `.ins-grid` is dead** — 0 `.ins-card` reach the DOM. It is
+kept as an accidental fallback for a total `cr-cth-script` failure, and its
+content is already stale.

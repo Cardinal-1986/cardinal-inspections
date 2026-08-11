@@ -14493,6 +14493,51 @@ as the retirement comment — asserted by grep, count 1.
   pcard 12/12, navicons 201/201, suppliers 12/12, schedule 27/27, 679 31/31,
   680 35/35, colors 110/110.
 
+- **704** · **A Supplement Desk card that never once rendered is gone.** Theo,
+  after being shown where the Desk actually lives: *"Remove the dead card."*
+
+  668 put the Desk in the STATIC `.ins-grid` inside `#cardinalTruthView`.
+  `render()` in `cr-cth-script` does `host.innerHTML = …` with
+  `host = document.querySelector('#cardinalTruthView .ins-body')`, and the grid
+  sits inside `.ins-body`, so the card was wiped before it could be drawn. Its
+  only guard is `if(!host) return false` — there is no path where it survives.
+  **679 caught this and added a working tile to the tools rail**; the dead `<a>`
+  stayed behind for 25 builds.
+
+  Measured in Chromium: **0 `.ins-card` in the DOM, no `.ins-grid`, and
+  `.ins-body` holds exactly one child — `.cr-cth-wrap`.** Before AND after this
+  build, which is the point: nothing visible changed.
+
+  **Removed because it is a trap, not because it is clutter.** A future session
+  greps `supplement.html`, finds `<a href="/supplement.html">` in the insurance
+  hub's markup, and concludes the Desk is linked from the hub. The replacement
+  comment says plainly that it cannot work there.
+
+  ⚠️ **SCOPE, stated rather than assumed: the whole static grid is dead**, not
+  just this card — seven more cards. They are **kept**. Theo asked for the one,
+  and there is a real argument for the rest: if `cr-cth-script` ever fails to
+  run, that grid is what the hub would fall back to. It is a poor fallback (its
+  Adjuster Directory card still reads "Coming soon" and that screen is built),
+  but deleting it is his call.
+
+  ⚠️ **A replacement comment tripped its own assertion for the THIRD time this
+  session.** The new comment names `data-go="desk"` to point the reader at the
+  working tile, so `count('data-go="desk") == 1` read 2 and failed. Same shape
+  as 701's `wxPaint` and 701c's `8.2vw`. **Assert on the emit site
+  (`'<button data-go="desk"`), never on a token the prose also contains.**
+
+  ⚠️ **And a hardcoded count was wrong again.** `data-ctnav="supplements"` was
+  asserted `== 1`; it is **2** — the static card *and* its click handler.
+  Rewritten as `== orig.count(...)`, which is the claim actually being made.
+
+  Gate `render_desk704.js`, 12 assertions, **RED on 703 with exactly one
+  failure** — the file-level one, while still reporting 0 `.ins-card` in the
+  DOM on that build. That single-failure control is the evidence for the
+  deletion: dead in the DOM before and after, only the source changed. It
+  asserts **both halves** — the dead card gone AND the live tile still drawn,
+  named, iconed and pointing at `/supplement.html` — because proving only the
+  first would pass on a build that deleted the working tile by mistake.
+
 - **703** · **The insurance claim screen holds still.** Theo, on two screenshots
   of the Adam Gunn claim: *"Is there a fix for this insurance claim screen? Why
   can't be static instead of bouncy?"*
