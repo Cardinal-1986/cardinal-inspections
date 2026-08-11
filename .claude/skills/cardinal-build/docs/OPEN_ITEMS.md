@@ -2696,34 +2696,76 @@ omission before shipping, because that block is shared.
 write the bid."* This confirms 712's send refusal is **correct behaviour, not a
 restriction to soften** — a rep writes and saves the bid, and the sending is
 Theo's step. Do not "fix" that refusal into a fallback.
+
+### Build 714 — the hardening Theo picked, and what it deliberately does not do
+
+**Settled 11 Aug, do not re-litigate:** app-only hardening, **not** the database
+lock. The measured design for the lock stays in the section above so it can be
+picked up later without redoing the work — **do not build it on your own
+initiative.**
+
+**⚠️ Say what 714 is, accurately.** It stops the app *asking* for a partner's
+contact columns unless Theo is signed in. It is **not** a fence: `window.supa`
+is a live authenticated client and `community_partners_read` is `USING (true)`,
+so a signed-in user who opens devtools can still query the table directly. Theo
+accepted that residual explicitly. Anyone who describes 714 as a lock is
+overselling it, and the next person will trust it further than it goes.
+
+**Closed by 714, with the evidence:**
+- the exported `load()` handing out raw rows, and the raw-`CACHE` `onChange`
+  handout (zero consumers, latent) — nothing to hand out now for a non-owner
+- the module's cache surviving a user switch on a shared tablet
+- a failed load poisoning the roster for the session (no directory, no picker,
+  **no community bid could be created at all**)
+- `save()` returning every column to Joan / Curtis / Scottie via a bare
+  `.select()`
+- **the bid-send refusal never firing for the 5 partners with no contact email**,
+  which put the HOMEOWNER's address in the send box — live, and reachable today
+- the homeowner email missing from the card (now shown when set)
+- two jobs reading "Not recorded" while every other screen showed the name
+
+**Still open, unchanged:**
+- **CR-COM-014** — `cr-nbid`'s `loadPartners()` consumes `load()` rather than
+  `list()`, so a *confidential* partner's real NAME still shows in the New Bid
+  payer select. 714 does not touch it (a name is not a contact column) and it is
+  its own item.
+- `getRaw()`'s name is now slightly false for a non-owner (the row it returns
+  never carried the columns). The comment at its call site still says "the
+  UNMASKED row" — true for the owner, misleading otherwise. Worth a rename the
+  next time that block is open; not worth a build of its own.
+- The **renter** fields are captured by the bid form for property-manager
+  partners and are empty on all 16 live jobs, as are all homeowner emails. That
+  suggests the form is being skipped or worked around; worth watching before
+  anything else is added to it.
+
 ---
 
-## Live walkthrough of the retail CRM — 11 Aug 2026, builds 714–716
+## Live walkthrough of the retail CRM — 11 Aug 2026, builds 715–720
 
 *Driven on **app.cardinalroster.com** as a signed-in rep (throwaway account, disposable
 client, deleted afterwards along with the auth user — nothing left behind). Three
 defects found and fixed; the rest is recorded here rather than quietly patched.*
 
 ### ✅ Fixed in this pass
-- **714** — the PO badge rewrote every client profile ~120×/sec, forever. One-line guard fix.
-- **715** — no AI Estimate door on a client profile; and no AI estimate was ever linked to its job.
-- **716** — the global page's `Templates` button opened the AI builder; empty-state copy named a
+- **715** — the PO badge rewrote every client profile ~120×/sec, forever. One-line guard fix.
+- **716** — no AI Estimate door on a client profile; and no AI estimate was ever linked to its job.
+- **717** — the global page's `Templates` button opened the AI builder; empty-state copy named a
   control (`+ Add project`) that does not exist.
 
-### ✅ All three were fixed at 717–719 (Theo: "All")
-1. ~~audit_sessions 403~~ → **717.** It was not a stray 403: the log had never recorded a single
+### ✅ All three were fixed at 718–720 (Theo: "All")
+1. ~~audit_sessions 403~~ → **718.** It was not a stray 403: the log had never recorded a single
    rep. Proved against production with a temporary non-admin JWT.
-2. ~~deprecated Maps autocomplete~~ → **719**, via the data API, because the advertised replacement
+2. ~~deprecated Maps autocomplete~~ → **720**, via the data API, because the advertised replacement
    would have swapped the `<input>` out from under seven `.value` readers.
-3. ~~two near-identical estimate buttons~~ → **718.** Now `＋ From a template ▾` and
+3. ~~two near-identical estimate buttons~~ → **719.** Now `＋ From a template ▾` and
    `📄 Blank estimate`. Wording was not specified; each string appears once and is easy to change.
 
 ### 📋 Still open
 4. **`ai_estimates` is empty — the AI estimate flow has never been used in production** (0 rows).
-   715 makes the job link work, but the feature itself is unproven against real photos and a real
+   716 makes the job link work, but the feature itself is unproven against real photos and a real
    Gemini response. **Worth one supervised run before it is offered to reps** — this is the only
    item from the walkthrough that code cannot close.
-5. **Places API (New) is now a live dependency** (719). It was verified enabled on the Google Cloud
+5. **Places API (New) is now a live dependency** (720). It was verified enabled on the Google Cloud
    project on 11 Aug 2026; the legacy widget remains as a fallback, so the field degrades rather
    than breaks. If billing or API enablement ever changes, autocomplete quietly reverts to the old
    service rather than failing — which is the safe direction, but means the deprecation warning

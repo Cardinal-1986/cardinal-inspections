@@ -1,4 +1,4 @@
-/* Gate for build 719 — address autocomplete must work off the NEW Places API,
+/* Gate for build 720 — address autocomplete must work off the NEW Places API,
  * without disturbing the <input> the rest of the app reads.
  *
  * Runs the SHIPPED cr-gmap-script in real Chromium against a mock of
@@ -7,9 +7,9 @@
  * real <input>, and checks the outward contract the seven .value readers depend
  * on. Then re-runs with ONLY the legacy class present to prove the fallback.
  *
- * Negative control — MUST go red on build 718:
- *   node harness719.js index.html          -> PASS
- *   node harness719.js index_prev718.html  -> FAIL
+ * Negative control — MUST go red on build 719:
+ *   node harness_720.js index.html          -> PASS
+ *   node harness_720.js index_prev719.html  -> FAIL
  */
 const fs = require('fs');
 const path = require('path');

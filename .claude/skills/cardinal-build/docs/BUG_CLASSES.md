@@ -2046,3 +2046,45 @@ punch-outs module does).
 **Only a real engine catches this.** jsdom would have reported the same
 elements present; the assertion that fails is "click the category, then count
 the value rows", which requires a browser that actually dispatches.
+
+## 31 · The refusal that depends on the thing it is refusing to reveal
+
+*Found at 714, in code shipped at 712 — my own.*
+
+Build 712 refused to hand a sales rep a partner's email address. The test was:
+
+```js
+if(_pe && !_own){ alert('Bids to … are sent by Theo'); return; }
+```
+
+`_pe` is the partner's `contact_email`. So the refusal only fired **when there
+was an address to refuse**. On the five live partners with no email recorded it
+never fired at all, and control fell through to the line below — a `prompt()`
+whose default was `pr.email`, **the homeowner**. The one thing the community
+rules say must never happen was one tap away, reachable *because* the guard was
+written in terms of the protected value.
+
+**The shape.** A guard of the form `if (secret && !allowed) refuse()` is not a
+refusal — it is a refusal *conditional on the secret existing*. The empty case
+falls through to whatever comes next, and what comes next is usually a
+fallback that was written before the guard existed.
+
+**The drill.**
+1. Gate on the **subject**, not the **object**: `if (partnerExists && !allowed)`.
+   Whether the partner has an email on file is irrelevant to whether this person
+   is allowed to see it.
+2. Refuse **before** you fetch. 712 queried the address and then declined to use
+   it, so it reached the browser for nothing. If the answer is no, do not ask
+   the question.
+3. **Follow the fall-through.** Read the code after your guard and ask what it
+   does when the guard does not fire. Here it was `prompt(toAsk, toDflt)` with a
+   default set 30 lines earlier — the guard's author never looked at it.
+4. **Make the error path fail closed too.** The surrounding `try/catch` swallowed
+   any failure and landed on the same homeowner default. A lookup that throws
+   must refuse, not degrade into the unsafe default.
+
+**Why the gates could not see it.** Every assertion at 712 used a fixture whose
+partner *had* an email — the interesting case, and the only case where the guard
+worked. The five partners without one were 50% of the live table.
+**Fixture data that only covers the populated case will confirm a guard that
+only works when the field is populated.**

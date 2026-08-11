@@ -1,11 +1,11 @@
-/* Build 718 fit check — do the renamed buttons still fit their row?
+/* Build 719 fit check — do the renamed buttons still fit their row?
  *
  * The change is label text only (no CSS), so the question is width, not colour.
  * Measures both buttons in the REAL cascade (whole artifact loaded in Chromium)
  * at Theo's three widths. No screenshot: page.screenshot() blocks on
  * document.fonts.ready, and stubbing the webfont responses does not release it.
  *
- *   node measure_718.js <artifact>
+ *   node measure_719.js <artifact>
  */
 const fs = require('fs');
 const path = require('path');
