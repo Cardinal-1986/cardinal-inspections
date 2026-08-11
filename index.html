@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 725 &#8212; The punch sheet stops dragging the page behind it, and closing an item without enough photos now says so in a pop-up instead of a line you could not see</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 726 &#8212; The Money In &amp; Commissions tab is readable: its labels, headings and totals were dark grey on the black page, measured at 1.15 to 1</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37657,6 +37657,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:726, d:'2026-08-11', t:'The Money In & Commissions tab is readable again',
+s:'On a job\u2019s Money In & Commissions tab the labels, headings and the money totals were almost invisible \u2014 dark grey text on the black page. Measured, it was 1.15 to 1, where readable text needs at least 4.5 to 1. The panel had been built back when the app was white and was never re-coloured. Everything on it now uses the app\u2019s own light/dark colours: labels, headings, the totals, the boxes you type in, and the empty-state panels. It was checked in both light and dark \u2014 the small grey notes (\u201Cearns 10% of every dollar collected\u201D, \u201CCollected\u201D, \u201CCommission owed\u201D) had the opposite problem and were white on white in light mode. Both are fixed.' },
 { b:725, d:'2026-08-11', t:'The punch sheet scrolls on its own, and it tells you why it will not close',
 s:'Two things on the punch item sheet. First, scrolling it used to drag the page underneath along with it once you reached the end of the sheet \u2014 more noticeable since the sheet started opening over the home page. The sheet now keeps its scrolling to itself. Second, and this is the one that looked like a dead button: tapping Open to close an item out when it does not have five photos yet printed a small line of text at the very BOTTOM of the sheet, under the photos and the notes, while the control you tapped is at the top \u2014 on a phone you could not see it, so it looked like nothing happened. That refusal is now a pop-up that says how many photos the item has and how many more it needs. Nothing about the five-photo rule itself changed.' },
 { b:724, d:'2026-08-11', t:'Punch & Repairs cards on the home page open when you tap them',
@@ -65369,5 +65371,50 @@ document.addEventListener('DOMContentLoaded', function(){
 window.CardinalItelLab = { open: open, close: close };
 })();
 </script>
+<style id="cr-comm-theme">
+/* ══ 726: the Money In & Commissions pane, themed ═══════════════════════════
+   #tab-commissions was authored against a white page. Its labels, headings and
+   money values inherited #1b1b1b and rendered at **1.15:1** on the app's dark
+   ground; its .subnote spans failed the other way round, #ffffff at **1.07:1**
+   in rb-light. 24 failing elements in total. Measured in real Chromium with
+   composited grounds (scripts/render_comm726.js), never eyeballed.
+
+   Every ink below is an EXISTING token PAIR, and each was scored against BOTH
+   grounds (#09090C dark, #f7f7f7 light) BEFORE it was chosen:
+       --rbe-ink   13.58 / 16.89      --rbe-head  19.89 / 16.89
+       --rbe-mute   7.55 /  4.97
+   --rbe-empty-fg was REJECTED for the subnotes on the numbers: 7.55 dark but
+   **4.24** light, under the 4.5 floor. That is the "dark fix that broke light"
+   trap this project has paid for repeatedly — the arithmetic caught it.
+
+   Scoped to the tab: nothing outside the money pane changes. The .subnote rule
+   carries !important only because #projectView .subnote is itself !important
+   (#5c5c5c, app-wide across the profile) — that global is deliberately NOT
+   touched here, because it has many users and this is a one-pane fix. */
+#tab-commissions{color:var(--rbe-ink,#cfd6df);}
+#tab-commissions h4,
+#tab-commissions b,
+#tab-commissions th{color:var(--rbe-head,#ffffff);}
+#tab-commissions label,
+#tab-commissions td,
+#tab-commissions span{color:var(--rbe-ink,#cfd6df);}
+#tab-commissions .subnote{color:var(--rbe-mute,#9aa0a8) !important;}
+/* a value inside a coloured button keeps the button's own ink */
+#tab-commissions button b,#tab-commissions .btn b,#tab-commissions button span{color:inherit;}
+#tab-commissions input,#tab-commissions select,#tab-commissions textarea{
+  background:var(--rbe-panel2,#101015);color:var(--rbe-ink,#cfd6df);
+  border-color:var(--rbe-line,#232329);}
+/* the money tables are a light-era surface too: leaving them white made the
+   newly-lightened cell text read at 1.46:1 — a PARTIAL pass is worse than none,
+   so the surface moves with the ink. Scoped to this tab; table.reports is a
+   shared class used by the document tabs and is deliberately not touched there. */
+#tab-commissions table.reports{background:transparent;}
+#tab-commissions table.reports th,
+#tab-commissions table.reports td{background:var(--rbe-panel2,#101015);
+  border-color:var(--rbe-line,#232329);}
+#tab-commissions .empty{background:transparent;border-color:var(--rbe-empty-bd,#4a4f58);
+  color:var(--rbe-mute,#9aa0a8);}
+#tab-commissions .empty b{color:var(--rbe-head,#ffffff);}
+</style>
 </body>
 </html>
