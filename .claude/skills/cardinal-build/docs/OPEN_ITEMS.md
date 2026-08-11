@@ -2696,3 +2696,44 @@ omission before shipping, because that block is shared.
 write the bid."* This confirms 712's send refusal is **correct behaviour, not a
 restriction to soften** — a rep writes and saves the bid, and the sending is
 Theo's step. Do not "fix" that refusal into a fallback.
+
+### Build 714 — the hardening Theo picked, and what it deliberately does not do
+
+**Settled 11 Aug, do not re-litigate:** app-only hardening, **not** the database
+lock. The measured design for the lock stays in the section above so it can be
+picked up later without redoing the work — **do not build it on your own
+initiative.**
+
+**⚠️ Say what 714 is, accurately.** It stops the app *asking* for a partner's
+contact columns unless Theo is signed in. It is **not** a fence: `window.supa`
+is a live authenticated client and `community_partners_read` is `USING (true)`,
+so a signed-in user who opens devtools can still query the table directly. Theo
+accepted that residual explicitly. Anyone who describes 714 as a lock is
+overselling it, and the next person will trust it further than it goes.
+
+**Closed by 714, with the evidence:**
+- the exported `load()` handing out raw rows, and the raw-`CACHE` `onChange`
+  handout (zero consumers, latent) — nothing to hand out now for a non-owner
+- the module's cache surviving a user switch on a shared tablet
+- a failed load poisoning the roster for the session (no directory, no picker,
+  **no community bid could be created at all**)
+- `save()` returning every column to Joan / Curtis / Scottie via a bare
+  `.select()`
+- **the bid-send refusal never firing for the 5 partners with no contact email**,
+  which put the HOMEOWNER's address in the send box — live, and reachable today
+- the homeowner email missing from the card (now shown when set)
+- two jobs reading "Not recorded" while every other screen showed the name
+
+**Still open, unchanged:**
+- **CR-COM-014** — `cr-nbid`'s `loadPartners()` consumes `load()` rather than
+  `list()`, so a *confidential* partner's real NAME still shows in the New Bid
+  payer select. 714 does not touch it (a name is not a contact column) and it is
+  its own item.
+- `getRaw()`'s name is now slightly false for a non-owner (the row it returns
+  never carried the columns). The comment at its call site still says "the
+  UNMASKED row" — true for the owner, misleading otherwise. Worth a rename the
+  next time that block is open; not worth a build of its own.
+- The **renter** fields are captured by the bid form for property-manager
+  partners and are empty on all 16 live jobs, as are all homeowner emails. That
+  suggests the form is being skipped or worked around; worth watching before
+  anything else is added to it.

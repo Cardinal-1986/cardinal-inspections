@@ -146,8 +146,15 @@ function boot(email) {
   ok('an owner edit DOES write the contact column', r2 && r2.row.contact_email === 'new@x.org');
 
   /* ── 5 · pattern-checked: the editor and the bid email ── */
+  /* 714 replaced the raw isOwner() gate at this site with canEditContacts,
+     which is `isOwner() && rowCarriesContacts` — strictly stronger, because a
+     row that never carried the columns can no longer be blanked by anyone.
+     The INTENT of this 712 assertion is unchanged (a non-owner sees no contact
+     inputs); only the identifier moved, so the pattern moves with it rather
+     than the app being bent back to satisfy a stale test. */
   ok('the editor renders the contact inputs only for the owner',
-    /\(isOwner\(\)\s*\n\?\s*'<div class="row2">'/.test(block) &&
+    /\(canEditContacts\s*\n\?\s*'<div class="row2">'/.test(block) &&
+    /var canEditContacts = isOwner\(\) && rowCarriesContacts;/.test(block) &&
     block.indexOf('Contact details are held by Theo and are not shown here') !== -1);
   ok('the editor no longer hands a non-owner the raw row',
     block.indexOf('partner = (raw ? (isOwner() ? raw : maskPartner(raw)) : partner);') !== -1 &&
