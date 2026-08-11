@@ -2710,21 +2710,24 @@ defects found and fixed; the rest is recorded here rather than quietly patched.*
 - **716** — the global page's `Templates` button opened the AI builder; empty-state copy named a
   control (`+ Add project`) that does not exist.
 
-### 📋 Reported, NOT fixed — decide before touching
-1. **`GET /rest/v1/audit_sessions` returned 403 once during profile load.** RLS is on with four
-   policies and both `anon` and `authenticated` hold table grants, so the refusal is policy-shaped,
-   not a missing grant. Worth confirming audit telemetry is not silently dropping writes — but it
-   is pre-existing and unrelated to these builds, so it was left alone.
-2. **Google Maps address autocomplete uses a deprecated API.** The lead form logs, on every open,
-   that `google.maps.places.Autocomplete` is closed to new customers and `PlaceAutocompleteElement`
-   is the replacement. Working today; on borrowed time. Not urgent, not free either.
-3. **Two near-identical estimate buttons on the client profile** — the red `+ New estimate ▾`
-   (templates) and the gold `📄 New Estimate` (blank v2 editor). Both work and they do different
-   things, so nothing is broken; the labels just do not say which is which. A wording change, and
-   Theo's call.
+### ✅ All three were fixed at 717–719 (Theo: "All")
+1. ~~audit_sessions 403~~ → **717.** It was not a stray 403: the log had never recorded a single
+   rep. Proved against production with a temporary non-admin JWT.
+2. ~~deprecated Maps autocomplete~~ → **719**, via the data API, because the advertised replacement
+   would have swapped the `<input>` out from under seven `.value` readers.
+3. ~~two near-identical estimate buttons~~ → **718.** Now `＋ From a template ▾` and
+   `📄 Blank estimate`. Wording was not specified; each string appears once and is easy to change.
+
+### 📋 Still open
 4. **`ai_estimates` is empty — the AI estimate flow has never been used in production** (0 rows).
    715 makes the job link work, but the feature itself is unproven against real photos and a real
-   Gemini response. Worth one supervised run before it is offered to reps.
+   Gemini response. **Worth one supervised run before it is offered to reps** — this is the only
+   item from the walkthrough that code cannot close.
+5. **Places API (New) is now a live dependency** (719). It was verified enabled on the Google Cloud
+   project on 11 Aug 2026; the legacy widget remains as a fallback, so the field degrades rather
+   than breaks. If billing or API enablement ever changes, autocomplete quietly reverts to the old
+   service rather than failing — which is the safe direction, but means the deprecation warning
+   would return without anyone noticing.
 
 ### Rig notes worth keeping
 - **Chromium's ClientHello is RST by the egress gateway on passthrough hosts.** Driving the live app

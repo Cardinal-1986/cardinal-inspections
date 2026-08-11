@@ -3976,3 +3976,55 @@ client profile**, for as long as it was open. Fixed by comparing against
 `'PO ' + po`. **Note there are two unrelated `injectOnProfile` functions** — this
 one in `cr-po-script`, and another in `cr-est-script` that injects the gold
 New Estimate button. A name is not a contract; grep the block.
+
+
+---
+
+# Builds 717–719 — the audit log, the estimate buttons, and Places (11 Aug 2026)
+
+## The sign-in log (717) — `audit_sessions`
+
+`auditStart()` records who signed in. Read policy is `is_admin()`; INSERT is
+`email = auth.jwt() email`; UPDATE is either. **Never ask for the row back.**
+`.select('id')` on the insert makes PostgREST need SELECT on the new row, which
+a non-admin does not have, and the whole INSERT is refused — silently, because
+the call is deliberately `catch`-swallowed so the log can never interrupt anyone.
+That is how the table reached 239 rows without a single rep in it.
+
+The id is generated client-side (`auditNewSid()`, `crypto.randomUUID` with a
+`getRandomValues` v4 fallback) so the insert needs no RETURNING.
+
+⚠️ **Anything else writing to a table whose SELECT policy is narrower than its
+INSERT policy has this bug.** The tell is `.insert(...).select(...)` — check the
+read policy before assuming the write lands.
+
+## The three doors into an estimate, renamed (718)
+
+| Surface | Control | Opens |
+|---|---|---|
+| Client profile → Estimates | **`＋ From a template ▾`** (`#pNewEstimateBtn`) | the six trade templates |
+| | **`📄 Blank estimate`** (`#cr-est-new-btn`) | the v2 editor, empty, prefilled with the client |
+| | `⚡ AI Estimate` (`#pAiEstimateBtn`, 715) | the AI builder bound to this client |
+
+Nothing selects these by their text; the labels each appear once.
+
+## Address autocomplete (719) — `cr-gmap-script` + `cr-ac-styles`
+
+**Do not "finish" this migration by switching to `PlaceAutocompleteElement`.**
+It is a custom element that replaces the `<input>`, and seven `.value` reads plus
+the whole address scanner depend on those inputs existing. The data API
+(`AutocompleteSuggestion.fetchAutocompleteSuggestions`) is the deliberate choice.
+
+- `attachSuggestions()` is the live path; `attachLegacyAutocomplete()` is reached
+  only when `google.maps.places.AutocompleteSuggestion` is absent.
+- The dropdown is a single shared `.cr-acbox`, `position:fixed`, z-index 10700.
+  Fixed positioning is not decoration: it is what stops a modal's overflow
+  clipping it and `#pwaNav` (9990) trapping it.
+- ⚠️ **`acSilent` is load-bearing.** `acChoose()` dispatches `input` so the rest
+  of the app sees the new address — and this module now listens to that same
+  field. Without the flag it reads its own write as typing and re-opens the list
+  on the address just picked. Any new programmatic write to an address input
+  needs the same guard.
+- Requires **Places API (New)** enabled on the Google Cloud project. Verified
+  enabled 11 Aug 2026 (`places:autocomplete` → HTTP 200). If that ever changes,
+  the fallback keeps the field working.
