@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 721 &#8212; Money received now lives in one place: logging a collection lowers the job&#8217;s Balance Due, so the profile and the commissions tab can never disagree</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 722 &#8212; A contract now tracks itself: mark it sent, sign it on the same pad you use for reports, or void it, and the status is recorded on the job</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21497,13 +21497,25 @@ sigPad.addEventListener('touchmove', sigMove, { passive: false });
 sigPad.addEventListener('touchend', sigEnd);
 
 document.getElementById('sigBtn').addEventListener('click', function(){
+  window.__ceSigner = null;   /* 722: inspection_reports signing, never a contract */
   sigReset();
   sigModal.style.display = 'block';
 });
 document.getElementById('sigClear').addEventListener('click', sigReset);
-document.getElementById('sigCancel').addEventListener('click', function(){ sigModal.style.display = 'none'; });
+document.getElementById('sigCancel').addEventListener('click', function(){ window.__ceSigner = null; sigModal.style.display = 'none'; });
 document.getElementById('sigApply').addEventListener('click', async function(){
   if(!sigDrawn){ alert('Have the client sign first.'); return; }
+  /* 722: the contracts-table editor borrows this ONE pad via window.openSigner().
+     When a contract callback is armed, hand it the signature PNG and return —
+     the inspection_reports path below never runs. A no-op when nobody armed it
+     (window.__ceSigner is null), so document signing is byte-identical. */
+  if(window.__ceSigner){
+    var _cb = window.__ceSigner; window.__ceSigner = null;
+    var _png = sigPad.toDataURL('image/png');
+    sigModal.style.display = 'none';
+    try{ await _cb(_png); }catch(_e){ showError('Could not record signature: ' + (_e.message || _e)); }
+    return;
+  }
   var doc = frame.contentDocument;
   var cols = doc ? doc.querySelectorAll('.sign .col') : [];
   if(!cols.length){ sigModal.style.display = 'none'; return; }
@@ -21537,6 +21549,16 @@ document.getElementById('sigApply').addEventListener('click', async function(){
     await reload();
   }catch(e){}
 });
+
+/* 722: the ONE signature pad, lent to the contracts-table editor (cr-ce-script).
+   It reuses the same canvas and draw handlers; the sigApply handler above routes
+   the captured PNG to `cb` when armed. Signing an inspection_reports document
+   never calls this, so that flow is untouched. */
+window.openSigner = function(contract, cb){
+  window.__ceSigner = (typeof cb === 'function') ? cb : null;
+  sigReset();
+  sigModal.style.display = 'block';
+};
 
 function compactForPrint(d){
   /* photo boxes: never print an empty frame (all document types) */
@@ -25474,10 +25496,11 @@ function showList() {
     };
     MOUNT.querySelector('[data-act="convert"]').onclick = async () => {
       try {
-        const { contract, contract_number, existed } = await convertToContract(id, estimate.client, estimate.client?.address);
-        toast(existed ? `Contract ${contract_number} already exists` : `Created contract ${contract_number}`, 'success');
-        // Hand off to your existing contract iframe editor:
-        if (typeof window.openContractEditor === 'function') window.openContractEditor(contract);
+        const resp = await convertToContract(id, estimate.client, estimate.client?.address);
+        const _cn = resp.contract_number || (resp.contract && resp.contract.contract_number) || '';
+        toast(resp.existed ? `Contract ${_cn} already exists` : `Created contract ${_cn}`, 'success');
+        // Hand off to the contracts-table editor; it re-fetches the row for authoritative status.
+        if (typeof window.openContractEditor === 'function') window.openContractEditor(resp);
         else showList();
       } catch (e) {
         toast(e.message, 'error');
@@ -27829,8 +27852,7 @@ function showList() {
         if (link === 'estimate' && window.CardinalEstimates?.openOne) {
           window.CardinalEstimates.openOne(id);
         } else if (link === 'contract' && typeof window.openContractEditor === 'function') {
-          window.supa.from('contracts').select('*').eq('id', id).single()
-            .then(r => { if (r.data) window.openContractEditor(r.data.contract); });
+          window.openContractEditor({ id });
         } else if (link === 'project' && typeof window.openProject === 'function') {
           window.openProject(id);
         } else {
@@ -34798,6 +34820,7 @@ return '<div class="ce-card"><h2>Additional Fields</h2>' +
 '<div class="ce-kv">' + extras.join('') + '</div></div>';
 }
 var CURRENT = null;
+var CURRENT_BLOB = null;   /* 722: the raw contract jsonb, kept apart from lifecycle columns */
 function statusLabel(s){
 s = String(s || 'draft').toLowerCase();
 if(s === 'signed' || s === 'executed') return { cls:'signed', text:'Signed' };
@@ -34851,22 +34874,30 @@ v.innerHTML =
 (num ? '<small>#' + esc(String(num)) + '</small>' : '') +
 (template ? '<small>' + esc(String(template)) + '</small>' : '') +
 '</h1>' +
+lifecycleLine(contract) +
 '</div>' +
 '<span class="ce-status ' + st.cls + '">' + esc(st.text) + '</span>' +
 '</div>' +
 '<div class="ce-wrap">' + bodyHtml + '</div>' +
-'<div class="ce-actions">' +
+(function(){
+var _s = String(contract.status || 'draft').toLowerCase();
+var _canSend = (_s === 'draft');
+var _canSign = (_s === 'draft' || _s === 'sent') &&
+               (typeof window.openSigner === 'function' || document.getElementById('sigModal'));
+var _canVoid = (_s !== 'signed' && _s !== 'executed' && _s !== 'voided');
+return '<div class="ce-actions">' +
 '<button data-act="print">\uD83D\uDDA8 Print</button>' +
 '<button data-act="download">\u2B07 Download</button>' +
 (contract.share_token
 ? '<button data-act="copy">\uD83D\uDD17 Copy Link</button>' +
 '<button data-act="mail" class="primary">\u2709 Send by Email</button>'
 : '') +
-(typeof window.openSigner === 'function' || document.getElementById('sigModal')
-? '<button data-act="sign">\u270D Sign</button>'
-: '') +
+(_canSend ? '<button data-act="send">\u2709 Mark sent</button>' : '') +
+(_canSign ? '<button data-act="sign" class="primary">\u270D Sign</button>' : '') +
+(_canVoid ? '<button data-act="void">Void</button>' : '') +
 '<button data-act="close">Close</button>' +
 '</div>';
+})();
 wireActions(v);
 v.classList.add('open');
 v.setAttribute('aria-hidden', 'false');
@@ -34883,6 +34914,8 @@ else if(act === 'print') doPrint();
 else if(act === 'download') doDownload();
 else if(act === 'copy')  doCopy();
 else if(act === 'mail')  doMail();
+else if(act === 'send')  doSend();
+else if(act === 'void')  doVoid();
 else if(act === 'sign')  doSign();
 };
 });
@@ -34941,17 +34974,74 @@ var href = 'mailto:' + encodeURIComponent(to) +
 '&body='    + encodeURIComponent(body);
 location.href = href;
 }
+function ceFmtDay(x){
+if(!x) return '';
+try{ return new Date(x).toLocaleDateString(undefined,{ year:'numeric', month:'short', day:'numeric' }); }
+catch(e){ return ''; }
+}
+function lifecycleLine(contract){
+var s = String(contract.status || 'draft').toLowerCase();
+if((s === 'signed' || s === 'executed') && contract.homeowner_signed_at)
+return '<div class="ce-eyebrow">Signed ' + esc(ceFmtDay(contract.homeowner_signed_at)) + '</div>';
+if(s === 'voided')
+return '<div class="ce-eyebrow">Voided' + (contract.void_reason ? ' \u2014 ' + esc(String(contract.void_reason)) : '') + '</div>';
+if((s === 'sent' || s === 'viewed') && contract.sent_at)
+return '<div class="ce-eyebrow">Sent ' + esc(ceFmtDay(contract.sent_at)) + '</div>';
+return '';
+}
+async function doSend(){
+if(!CURRENT || !CURRENT.id || !window.supa){ alert('This contract is not saved yet.'); return; }
+var now = new Date().toISOString();
+var r = await window.supa.from('contracts')
+.update({ status:'sent', sent_at: now }).eq('id', CURRENT.id).select('status,sent_at').single();
+if(r.error){ alert('Could not mark sent: ' + (r.error.message || r.error)); return; }
+CURRENT.status = 'sent'; CURRENT.sent_at = now;
+render(CURRENT); flash('Marked sent');
+}
+async function doVoid(){
+if(!CURRENT || !CURRENT.id || !window.supa){ return; }
+var reason = prompt('Void this contract? Optionally note why:', '');
+if(reason === null) return;
+var now = new Date().toISOString();
+var r = await window.supa.from('contracts')
+.update({ status:'voided', voided_at: now, void_reason: reason || null })
+.eq('id', CURRENT.id).select('status').single();
+if(r.error){ alert('Could not void: ' + (r.error.message || r.error)); return; }
+CURRENT.status = 'voided'; CURRENT.voided_at = now; CURRENT.void_reason = reason || null;
+render(CURRENT); flash('Contract voided');
+}
 function doSign(){
-if(typeof window.openSigner === 'function'){
-window.openSigner(CURRENT);
-return;
-}
-var sig = document.getElementById('sigModal');
-if(sig){
-sig.style.display = 'block';
-return;
-}
+if(!CURRENT || !CURRENT.id){ alert('This contract is not saved yet.'); return; }
+if(typeof window.openSigner === 'function'){ window.openSigner(CURRENT, onContractSigned); return; }
 alert('Signature workflow is not available in this build.');
+}
+/* 722 (Theo's hybrid): the client signs on the ONE proven pad (openSigner reuses
+   the inspection_reports canvas); here we mirror it onto the contracts ROW —
+   status + timestamps as columns, the signature image into the contract jsonb —
+   and advance the job to Approved exactly as the document flow does. */
+async function onContractSigned(pngDataUrl){
+if(!CURRENT || !CURRENT.id || !window.supa) return;
+var now = new Date().toISOString();
+var hw = (CURRENT_BLOB && (CURRENT_BLOB.homeowner || CURRENT_BLOB.client)) || {};
+var newBlob = Object.assign({}, CURRENT_BLOB || {}, {
+homeowner_signature: pngDataUrl,
+homeowner_signed_at: now,
+homeowner_signer: hw.name || null,
+contractor_signed_at: now
+});
+var r = await window.supa.from('contracts').update({
+status: 'signed',
+homeowner_signed_at: now,
+contractor_signed_at: now,
+contract: newBlob
+}).eq('id', CURRENT.id).select('status').single();
+if(r.error){ alert('Could not record signature: ' + (r.error.message || r.error)); return; }
+CURRENT_BLOB = newBlob;
+CURRENT.status = 'signed'; CURRENT.homeowner_signed_at = now; CURRENT.contractor_signed_at = now;
+render(CURRENT); flash('Contract signed');
+if(CURRENT.project_id && typeof window.setStage === 'function'){
+try{ await window.setStage(CURRENT.project_id, 'Approved'); }catch(e){}
+}
 }
 function flash(msg){
 var v = ensureView();
@@ -34968,13 +35058,34 @@ t.style.cssText =
 document.body.appendChild(t);
 setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 1600);
 }
-window.openContractEditor = function(contract){
-if(!contract){
-alert('No contract data to display.');
-return;
+window.openContractEditor = async function(input){
+if(!input){ alert('No contract data to display.'); return; }
+/* 722: callers pass a DB row, the convert API response, or a bare {id}. Re-fetch
+   the row by id so status/sent_at/*_signed_at/voided_at are authoritative — the
+   jsonb blob alone does not carry the lifecycle columns. Falls back to whatever
+   was passed if the read fails (offline / RLS). */
+var id = input.id || (input.contract && input.contract.id) || null;
+var row = null;
+if(id && window.supa){
+try{ var r = await window.supa.from('contracts').select('*').eq('id', id).single(); if(r && r.data) row = r.data; }catch(e){}
 }
-CURRENT = contract;
-render(contract);
+var src = row || input;
+var blob = (src.contract && typeof src.contract === 'object') ? src.contract
+         : ((input.contract && typeof input.contract === 'object') ? input.contract : input);
+CURRENT_BLOB = blob || {};
+CURRENT = Object.assign({}, CURRENT_BLOB, {
+id: id,
+status: (src.status || blob.status || 'draft'),
+sent_at: src.sent_at || null,
+contractor_signed_at: src.contractor_signed_at || blob.contractor_signed_at || null,
+homeowner_signed_at: src.homeowner_signed_at || blob.homeowner_signed_at || null,
+voided_at: src.voided_at || null,
+void_reason: src.void_reason || null,
+project_id: src.project_id || blob.project_id || null,
+contract_number: src.contract_number || blob.contract_number || null,
+total: (src.total != null ? src.total : blob.total)
+});
+render(CURRENT);
 };
 window.closeContractEditor = close;
 document.addEventListener('keydown', function(e){
@@ -37480,6 +37591,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:722, d:'2026-08-11', t:'A contract now has a life after it is created',
+s:'When you turn an AI estimate into a contract, the contract used to open in a read-only card \u2014 no way to mark it sent, sign it, or void it, and its status never moved off \u201Cdraft.\u201D Now the contract screen has real buttons: Mark sent, Sign, and Void, and it shows the date it was sent or signed. Signing uses the exact same signature pad you already use on inspection reports and estimates \u2014 the client signs once, and the contract is recorded as signed and the job moves to Approved, the same as before. Nothing about signing a report or estimate changed. This is only for the newer AI-estimate contracts; the classic \u201C+ New contract\u201D document on a client profile is unchanged.' },
 { b:721, d:'2026-08-11', t:'Money received now shows up in one place',
 s:'A job\u2019s Balance Due and its Money In & Commissions tab used to read from two different places. Balance Due looked at an old worksheet field; the commissions tab looked at the checks you actually log with \u201CLog Collection.\u201D So a check you logged would create its commission but leave the Balance Due unchanged \u2014 the two screens disagreed. Now the checks you log are the single source: logging one lowers the Balance Due on the profile and in the aging report, and books the commission, all from the one action. Nothing to redo \u2014 any job that had a payment recorded the old way keeps it until you log a collection for that job.' },
 { b:720, d:'2026-08-11', t:'Address auto-complete moved to Google\u2019s current service',

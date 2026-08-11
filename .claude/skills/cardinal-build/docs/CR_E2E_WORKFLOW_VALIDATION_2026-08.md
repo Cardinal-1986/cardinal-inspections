@@ -218,9 +218,12 @@ Everything else the audit flagged is already built. These survived validation as
    reads the `collections` table (collections-first, legacy fallback), so logging a check moves Balance
    Due and the aging report and books the commission from one action. index.html only, no SQL. See the
    build-721 entry in `cardinal_build_log.md`.
-2. **The new-contracts lifecycle** (#1) — write `contracts.status`/`sent_at`/`*_signed_at`, wire the
-   contract editor's own Sign button, or fold the new tables back onto the proven `inspection_reports`
-   signing path. Decide which of the two contract systems is the future before investing.
+2. ~~**The new-contracts lifecycle** (#1)~~ — **DONE, build 722.** The `contracts` row now tracks
+   draft → sent → signed → voided; the editor's Send/Sign/Void write those columns, signing reuses the
+   one proven signature pad (via `window.openSigner`) and mirrors onto the row + advances the job, and
+   `contracts_update` RLS was split (USING/WITH CHECK) so a rep can record the transitions. Deferred:
+   the public `/?share=` remote-sign link (inspection_reports already has `/api/share`). See the
+   build-722 entry in `cardinal_build_log.md`.
 3. **The crew-WO dispatch lifecycle** (#2) — `sent_via`/`sent_at`/`completed_on` + a status past `draft`,
    so a dispatched crew is visible as dispatched.
 4. **Permit / municipal-inspection tracker** (#8) — genuinely absent; a real feature if jobs stall on
