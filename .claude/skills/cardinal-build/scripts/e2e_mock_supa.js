@@ -146,9 +146,27 @@
     } catch (e) { res.error = { message: String(e && e.message || e) }; }
     return res;
   };
+  /* Test knobs (harness-side only; the app never sets these):
+       window.__MOCK_DELAY__ = ms    — hold every query open, so a double-tap
+                                       can actually overlap the first in flight
+       window.__MOCK_FAIL__  = table — make that table's next write return an
+                                       error, to prove a button unlocks again
+     The work happens when the promise RESOLVES, so with a delay two overlapping
+     taps really do produce two writes unless something stops the second. */
   Query.prototype.then = function (resolve, reject) {
-    try { return Promise.resolve(this._run()).then(resolve, reject); }
-    catch (e) { return Promise.resolve({ data: null, error: { message: String(e) } }).then(resolve, reject); }
+    var self = this;
+    var run = function () {
+      try {
+        var fail = (typeof window !== 'undefined') && window.__MOCK_FAIL__;
+        if (fail && fail === self.table && self._op !== 'select')
+          return { data: null, error: { message: 'mock failure on ' + fail } };
+        return self._run();
+      } catch (e) { return { data: null, error: { message: String(e) } }; }
+    };
+    var d = (typeof window !== 'undefined' && Number(window.__MOCK_DELAY__)) || 0;
+    var p = d > 0 ? new Promise(function (r) { setTimeout(r, d); }).then(run)
+                  : Promise.resolve(run());
+    return p.then(resolve, reject);
   };
   Query.prototype.catch = function (f) { return Promise.resolve(this._run()).catch(f); };
   Query.prototype.finally = function (f) { return Promise.resolve(this._run()).finally(f); };
