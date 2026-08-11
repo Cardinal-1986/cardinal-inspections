@@ -2737,3 +2737,46 @@ overselling it, and the next person will trust it further than it goes.
   partners and are empty on all 16 live jobs, as are all homeowner emails. That
   suggests the form is being skipped or worked around; worth watching before
   anything else is added to it.
+
+---
+
+## Live walkthrough of the retail CRM — 11 Aug 2026, builds 715–720
+
+*Driven on **app.cardinalroster.com** as a signed-in rep (throwaway account, disposable
+client, deleted afterwards along with the auth user — nothing left behind). Three
+defects found and fixed; the rest is recorded here rather than quietly patched.*
+
+### ✅ Fixed in this pass
+- **715** — the PO badge rewrote every client profile ~120×/sec, forever. One-line guard fix.
+- **716** — no AI Estimate door on a client profile; and no AI estimate was ever linked to its job.
+- **717** — the global page's `Templates` button opened the AI builder; empty-state copy named a
+  control (`+ Add project`) that does not exist.
+
+### ✅ All three were fixed at 718–720 (Theo: "All")
+1. ~~audit_sessions 403~~ → **718.** It was not a stray 403: the log had never recorded a single
+   rep. Proved against production with a temporary non-admin JWT.
+2. ~~deprecated Maps autocomplete~~ → **720**, via the data API, because the advertised replacement
+   would have swapped the `<input>` out from under seven `.value` readers.
+3. ~~two near-identical estimate buttons~~ → **719.** Now `＋ From a template ▾` and
+   `📄 Blank estimate`. Wording was not specified; each string appears once and is easy to change.
+
+### 📋 Still open
+4. **`ai_estimates` is empty — the AI estimate flow has never been used in production** (0 rows).
+   716 makes the job link work, but the feature itself is unproven against real photos and a real
+   Gemini response. **Worth one supervised run before it is offered to reps** — this is the only
+   item from the walkthrough that code cannot close.
+5. **Places API (New) is now a live dependency** (720). It was verified enabled on the Google Cloud
+   project on 11 Aug 2026; the legacy widget remains as a fallback, so the field degrades rather
+   than breaks. If billing or API enablement ever changes, autocomplete quietly reverts to the old
+   service rather than failing — which is the safe direction, but means the deprecation warning
+   would return without anyone noticing.
+
+### Rig notes worth keeping
+- **Chromium's ClientHello is RST by the egress gateway on passthrough hosts.** Driving the live app
+  from this container needs every request carried over Node's fetch stack (`context.route` +
+  `route.fetch`), or the app boots into **Local mode** with `window.supabase` missing and none of
+  the CDN scripts loaded. `TEAM` is `!!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)` — a
+  blocked CDN silently downgrades the whole app to a single-browser toy, which looks like a bug in
+  the app and is not.
+- **`page.setContent` runs on `about:blank`**, whose opaque origin denies `localStorage`. Any module
+  that stores a session (the AI builder does) needs a real origin — route a fake URL and `goto` it.

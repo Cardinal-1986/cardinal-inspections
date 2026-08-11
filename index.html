@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 714 &#8212; Partner contacts are no longer fetched for anyone but Theo, a bid can no longer be mailed to the homeowner by mistake, and the job card shows the homeowner&#8217;s email</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 720 &#8212; Address auto-complete moved onto Google&#8217;s current service, off the one they closed to new customers</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3825,7 +3825,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <h3 class="projsec" data-cri="calculator lg">Estimates</h3>
       <div style="margin:6px 0 12px;">
         <span id="pEstWrap" style="position:relative;">
-          <button class="btn" id="pNewEstimateBtn">+ New estimate &#9662;</button>
+          <button class="btn" id="pNewEstimateBtn" title="Start from a trade template &#8212; roofing, siding, windows, gutters or repair">&#65291; From a template &#9662;</button>
           <div id="pEstMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
                background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:250px;
                box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
@@ -3837,6 +3837,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
             <button class="estopt" data-tpl="general">&#128295; General repair estimate</button>
           </div>
         </span>
+        <button class="btn" id="pAiEstimateBtn" style="margin-left:6px;" title="Build this client's estimate from photos with AI">&#9889; AI Estimate</button>
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
     </div>
@@ -10071,7 +10072,7 @@ function renderHome(){
       '<button class="btn" data-reload-clients style="margin-top:10px;">Try again</button></div>';
   }else if(!cacheProjects.length){
     out += '<div class="empty"><b>No client projects yet.</b><br>' +
-      'Click <b>+ Add project</b> to create your first client profile.</div>';
+      'Use the <b>\uFF0B</b> button at the top and pick <b>Lead</b> to create your first client profile.</div>';
   }else if(!projs.length){
     out += '<div class="empty"><b>No projects match your search.</b></div>';
   }else{
@@ -12247,7 +12248,7 @@ function renderProjectDocs(){
   document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
-    : '<div class="empty"><b>No estimates yet.</b><br>Use <b>+ New estimate</b> to pick a template.</div>';
+    : '<div class="empty"><b>No estimates yet.</b><br>Use <b>\uFF0B From a template</b> to start from a trade template, or <b>Blank estimate</b> to write your own.</div>';
   /* 654 (CR-AUD-013): sent estimates living only in the estimates TABLE
      have no doc row to list here — say so instead of looking empty while
      the money panes price the job from them. */
@@ -19863,6 +19864,20 @@ document.getElementById('pNewExteriorBtn').addEventListener('click', function(){
   createReportFrom(EXTERIOR_TEMPLATE, 'Exterior report', false);
 });
 
+/* 715: AI Estimate, for the client whose profile this is. Goes through
+   crOpenEstimates() rather than CardinalEstimates.openAI() directly, because the
+   global opener is what runs styleMounts() and hides the sibling mounts — calling
+   the module method alone leaves the mount unstyled and the profile underneath
+   it (the same lesson 571 recorded for history restore). */
+var pAiEstimateBtn = document.getElementById('pAiEstimateBtn');
+if(pAiEstimateBtn){
+  pAiEstimateBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(!currentProject) return;
+    if(typeof window.crOpenEstimates === 'function') window.crOpenEstimates(currentProject);
+    else showError('Estimates are not loaded yet — give it a moment and try again.');
+  });
+}
 var pEstMenu = document.getElementById('pEstMenu');
 document.getElementById('pNewEstimateBtn').addEventListener('click', function(e){
   e.stopPropagation();
@@ -21777,6 +21792,24 @@ var currentUser = null;
 var auditSid = null;
 function ssGet(k){ try{ return sessionStorage.getItem(k); }catch(e){ return null; } }
 function ssSet(k, v){ try{ sessionStorage.setItem(k, v); }catch(e){} }
+/* 717: the id is generated here rather than read back from the database.
+   `id` is uuid NOT NULL DEFAULT gen_random_uuid(), so supplying our own is
+   allowed — and it means the INSERT needs no RETURNING, which is what the
+   SELECT policy was refusing. crypto.randomUUID needs a secure context and
+   iOS 15.4+; the fallback builds the same v4 shape from getRandomValues so an
+   older device still records a session instead of silently recording none. */
+function auditNewSid(){
+  try{
+    if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    var b = new Uint8Array(16);
+    crypto.getRandomValues(b);
+    b[6] = (b[6] & 0x0f) | 0x40;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    var h = Array.prototype.map.call(b, function(x){ return ('0' + x.toString(16)).slice(-2); }).join('');
+    return h.slice(0,8) + '-' + h.slice(8,12) + '-' + h.slice(12,16) + '-' +
+           h.slice(16,20) + '-' + h.slice(20);
+  }catch(_){ return null; }
+}
 async function auditStart(){
   if(!TEAM || !currentUser || auditSid) return;
   try{
@@ -21785,8 +21818,15 @@ async function auditStart(){
       auditSid = existing;
       await sb.from('audit_sessions').update({ last_seen: new Date().toISOString() }).eq('id', auditSid);
     }else{
-      var r = await sb.from('audit_sessions').insert({ email: currentUser.email }).select('id').single();
-      if(r && r.data && r.data.id){ auditSid = r.data.id; ssSet('auditSid', auditSid); }
+      /* 717: no .select() — see auditNewSid above. `.select('id')` made this
+         need SELECT on the new row, and that policy is is_admin(), so every
+         non-admin INSERT was refused and no session was ever recorded for
+         them. 239 rows on 11 Aug, all of them theo@ or joan@. */
+      var newSid = auditNewSid();
+      if(newSid){
+        var r = await sb.from('audit_sessions').insert({ id: newSid, email: currentUser.email });
+        if(r && !r.error){ auditSid = newSid; ssSet('auditSid', auditSid); }
+      }
     }
   }catch(e){ /* audit is best-effort; never block the app */ }
 }
@@ -23770,12 +23810,19 @@ body.claim-insurance #brandLogo{
   };
 
   // ── Public entry points that also close the main app views ──
-  window.crOpenEstimates = function () {
+  /* 715: an optional project opens the AI builder bound to that client.
+     wrapNav forwards arguments (orig.apply(this, arguments)), so the history
+     restore case still calls this with none and lands on the list. */
+  window.crOpenEstimates = function (project) {
     styleMounts();
     try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (e) {}
     window.crHideOtherMounts('cr-estimates-mount');
-    if (window.CardinalEstimates) window.CardinalEstimates.open();
-    else alert('Estimates module not loaded');
+    if (!window.CardinalEstimates) { alert('Estimates module not loaded'); return; }
+    if (project && project.id && typeof window.CardinalEstimates.openAI === 'function') {
+      window.CardinalEstimates.openAI(project);
+    } else {
+      window.CardinalEstimates.open();
+    }
   };
 
   window.crOpenClaims = function () {
@@ -23996,6 +24043,10 @@ body.claim-insurance #brandLogo{
 
   /* Help block */
   .cr-help { font-size: 13.5px; color: var(--cr-muted); line-height: 1.55; margin: 0 0 32px; padding: 14px 16px; background: var(--cr-bg-subtle); border-left: 3px solid var(--cr-red); border-radius: 0 4px 4px 0; }
+  .cr-forclient { display: none; margin: 0 0 22px; padding: 11px 14px; border-radius: 0 4px 4px 0; border-left: 3px solid var(--cr-red,#D9282A); background: var(--cr-red-tint,#3a2226); color: var(--cr-text,#dfe3e8); font: 700 13px 'Segoe UI', Arial, sans-serif; }
+  .cr-forclient.on { display: block; }
+  .cr-forclient .who { font-weight: 800; }
+  .cr-forclient small { display: block; margin-top: 3px; font-weight: 600; opacity: .78; }
   .cr-help strong { color: var(--cr-text); font-weight: 700; }
 
   /* Chat / textarea */
@@ -24253,6 +24304,7 @@ body.claim-insurance #brandLogo{
     <div class="cr-eyebrow">CARDINAL ROOFING &amp; RENOVATIONS · NEW ESTIMATE</div>
     <h1 class="cr-title"><span class="zap">⚡</span>AI Estimate</h1>
     <div class="cr-title-rule"></div>
+    <div class="cr-forclient" data-cr-forclient></div>
 
     <div class="cr-help">
       <strong>Describe the job. Add 4–8 photos.</strong> The AI drafts a fresh estimate from your chosen template — never modifies an existing one.
@@ -24386,9 +24438,21 @@ body.claim-insurance #brandLogo{
   }
 
   // ── Photo session ─────────────────────────────────────────
-  function createSession() {
+  /* 715: `project` is set when the builder is opened from a client profile.
+     /api/estimate has always accepted project_id + client and stores project_id
+     on the row; nothing ever sent them, so every AI estimate was orphaned. */
+  function createSession(project) {
     const id = (crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
     const s = { id, createdAt: new Date().toISOString(), template: 'roofing', description: '', photos: [] };
+    if (project && project.id) {
+      s.project_id = project.id;
+      s.client = {
+        name:    project.name    || '',
+        address: project.address || '',
+        phone:   project.phone   || '',
+        email:   project.email   || '',
+      };
+    }
     saveSession(s);
     return s;
   }
@@ -24480,6 +24544,9 @@ body.claim-insurance #brandLogo{
       template: state.session.template,
       photo_urls: uploaded.map(p => p.url),
       description: state.session.description.trim(),
+      /* 715: the API has always stored these; nothing ever sent them. */
+      project_id: state.session.project_id || null,
+      client:     state.session.client     || null,
     });
     clearSessionFromLS(state.session.id);
     return result;
@@ -25022,14 +25089,44 @@ function showList() {
   }
 
   // ── AI Create view ────────────────────────────────────────
-  function showAICreate(sessionId) {
+  function showAICreate(sessionId, project) {
     state.view = 'ai-create';
-    state.session = sessionId ? loadSessionFromLS(sessionId) : createSession();
-    if (!state.session) state.session = createSession();
+    /* 715: showList assigns this straight to .onclick, so argument 1 can
+       arrive as a MouseEvent. Only a real string is a session id — the old
+       code fell through to a fresh session by luck, via a lookup on the key
+       "[object MouseEvent]". */
+    const sid = (typeof sessionId === 'string' && sessionId) ? sessionId : null;
+    state.session = sid ? loadSessionFromLS(sid) : createSession(project);
+    if (!state.session) state.session = createSession(project);
 
     mount('cr-tmpl-ai-create');
 
     MOUNT.querySelector('[data-act="back"]').onclick = showList;
+
+    /* 715: name the client this estimate is being built for, so a rep can
+       see at a glance that it is bound to the job they came from. */
+    const forClient = MOUNT.querySelector('[data-cr-forclient]');
+    if (forClient) {
+      const c = state.session.client;
+      forClient.textContent = '';
+      if (c && (c.name || c.address)) {
+        /* textContent, not innerHTML: this module has no esc() of its own,
+           and a client name out of the database is the last string that
+           should be pasted into markup. */
+        const who = document.createElement('span');
+        who.className = 'who';
+        who.textContent = 'For ' + (c.name || 'this client');
+        forClient.appendChild(who);
+        if (c.address) {
+          const where = document.createElement('small');
+          where.textContent = c.address;
+          forClient.appendChild(where);
+        }
+        forClient.classList.add('on');
+      } else {
+        forClient.classList.remove('on');
+      }
+    }
 
     MOUNT.querySelectorAll('[data-tmpl]').forEach(tile => {
       tile.classList.toggle('selected', tile.dataset.tmpl === state.session.template);
@@ -25378,7 +25475,7 @@ function showList() {
   // ── Public API ────────────────────────────────────────────
   window.CardinalEstimates = Object.assign(window.CardinalEstimates || {}, {
     open:     showList,
-    openAI:   () => showAICreate(),
+    openAI:   (project) => showAICreate(null, project),
     openOne:  (id) => showOutput(id),
     close:    () => { MOUNT.style.display = 'none'; MOUNT.innerHTML = ''; state = { view: null, sessionId: null, session: null, estimate: null, filter: 'all' }; },
   });
@@ -34256,10 +34353,74 @@ if(!btn || btn.dataset.crEafFixed === '1') return;
 btn.dataset.crEafFixed = '1';
 btn.onclick = function(e){
 e.stopPropagation();
-if(window.CardinalEstimates && typeof window.CardinalEstimates.openAI === 'function'){
-window.CardinalEstimates.openAI();
-}
+openTemplatePicker();
 };
+}
+/* 716: "Templates" used to call openAI(), which made it a second AI Estimate
+   button under a name that promised something else — and left the six trade
+   templates (Roofing, Siding, Windows, Andersen, Gutters, Repair) unreachable
+   from this screen entirely. They already work on a client profile, so pick the
+   client here and hand off to that flow rather than building a second one. */
+function openTemplatePicker(){
+var m = mount();
+if(!m) return;
+var esc = function(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+  return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); };
+var rows = (window.cacheProjects || []).slice().sort(function(a, b){
+return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+});
+m.innerHTML = '<div class="cr-app" data-cr-eaf-tplpick="1" style="padding:18px;max-width:640px;margin:0 auto;">' +
+'<div class="cr-back" data-tplback>\u2190 Back to Estimates</div>' +
+'<h3 style="font:800 18px Georgia,serif;margin:14px 0 6px;">Estimate from a template</h3>' +
+'<p style="opacity:.75;font-size:13px;margin:0 0 12px;">Pick the client. Their page opens on Estimates with the template list showing \u2014 Roofing, Siding, Windows, Andersen, Gutters or Repair.</p>' +
+'<input data-tplq placeholder="Search clients\u2026" style="width:100%;box-sizing:border-box;padding:11px 13px;border-radius:9px;border:1px solid rgba(200,32,46,.35);background:rgba(255,255,255,.04);color:inherit;font:inherit;margin-bottom:10px;">' +
+'<div data-tplrows></div></div>';
+var back = m.querySelector('[data-tplback]');
+if(back) back.onclick = function(){
+  if(window.CardinalEstimates && typeof window.CardinalEstimates.open === 'function') window.CardinalEstimates.open();
+};
+var q = '';
+function paint(){
+var list = rows.filter(function(p){
+return !q || String((p.name || '') + ' ' + (p.address || '')).toLowerCase().indexOf(q) !== -1;
+}).slice(0, 40);
+m.querySelector('[data-tplrows]').innerHTML = list.length ? list.map(function(p){
+return '<button data-tplpick="' + esc(p.id) + '" style="display:block;width:100%;box-sizing:border-box;text-align:left;padding:12px 13px;margin-bottom:7px;border:1px solid rgba(200,32,46,.35);border-radius:10px;background:rgba(255,255,255,.03);color:inherit;cursor:pointer;font:inherit;">' +
+'<b>' + esc(p.name || 'Unnamed') + '</b><br><small style="opacity:.65;">' + esc(p.address || 'No address') + '</small></button>';
+}).join('') : '<p style="opacity:.6;">No clients match.</p>';
+Array.prototype.forEach.call(m.querySelectorAll('[data-tplpick]'), function(b){
+b.onclick = function(){ goToTemplates(b.getAttribute('data-tplpick')); };
+});
+}
+var inp = m.querySelector('[data-tplq]');
+if(inp) inp.oninput = function(){ q = inp.value.trim().toLowerCase(); paint(); };
+paint();
+}
+/* openProject() swaps the view but the profile finishes rendering on its own
+   schedule, so poll for THIS project rather than firing into a half-built page
+   \u2014 the shape CardinalPunchProfile.openItem settled on at 610. Gives up
+   quietly and leaves the user on the client page, which is still the right place. */
+function goToTemplates(pid){
+if(!pid || typeof window.openProject !== 'function') return;
+var m = mount();
+if(m){ m.style.display = 'none'; m.innerHTML = ''; }
+try{ window.openProject(pid); }catch(_){ return; }
+var tries = 0;
+(function go(){
+tries++;
+var ready = window.currentProject && String(window.currentProject.id) === String(pid);
+if(ready){
+try{ if(typeof window.showTab === 'function') window.showTab('estimates'); }catch(_){}
+var menu = document.getElementById('pEstMenu');
+if(menu){
+/* the document-level handler that closes this menu runs on the click that
+   is still propagating, so open it on the next turn instead. */
+setTimeout(function(){ menu.style.display = 'block'; }, 0);
+}
+return;
+}
+if(tries < 40) setTimeout(go, 75);
+})();
 }
 function wireStats(){
 if(!mountVisible()) return;
@@ -37287,6 +37448,18 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:720, d:'2026-08-11', t:'Address auto-complete moved to Google\u2019s current service',
+s:'Typing an address on the lead form was still using the version of Google\u2019s auto-complete that they closed to new customers in March 2025 \u2014 it worked, but it logged a deprecation warning every time the form opened and it is the older service. It now uses the current one. What you see is a little different and a little better: the list of matches is Cardinal\u2019s own, so it reads in the app\u2019s colours in both light and dark, rows are big enough to hit on a phone, arrow keys and Enter work, and it opens upward when the keyboard leaves no room below. The address box itself is unchanged, which matters \u2014 Google\u2019s drop-in replacement would have swapped the box out from under every screen that reads it. If the new service is ever unavailable the old one is still wired underneath, so the field falls back to what it did before rather than to nothing.' },
+{ b:719, d:'2026-08-11', t:'The two estimate buttons say which is which',
+s:'A client\u2019s Estimates tab has two buttons that read almost identically \u2014 \u201C+ New estimate\u201D and \u201CNew Estimate\u201D \u2014 and they do different things. One opens the six trade templates (roofing, siding, windows, Andersen, gutters, repair); the other opens an empty estimate you fill in yourself. They now say so: \uFF0B From a template, and Blank estimate. Nothing about how either one works has changed.' },
+{ b:718, d:'2026-08-11', t:'The sign-in log records everyone, not just the admins',
+s:'Who signed in and when is recorded on every load \u2014 except it never was, for anybody but Theo and Joan. On 11 Aug the table held 239 sessions: 228 of Theo\u2019s, 11 of Joan\u2019s, and not one from Nick, Joey, Jacob, Curtis, Scottie or Jerry. The app asked the database to hand the new row back after writing it, and only admins are allowed to READ that table \u2014 so for everyone else the write was refused outright and the session vanished. It failed quietly by design (the log is meant never to interrupt anyone), and an admin looking at the screen saw their own history and no reason to doubt it. The app now labels the session itself instead of asking for it back, so nothing needs reading. Nobody gained access to the log \u2014 it is still admins only; the difference is that the other six people\u2019s sessions now appear in it.' },
+{ b:717, d:'2026-08-11', t:'The Templates button opens the templates',
+s:'On the Estimates screen the three buttons are AI Estimate, + New and Templates \u2014 but Templates was wired to the AI builder, so it was a second AI button wearing another name, and the six trade templates (Roofing, Siding, Windows, Andersen, Gutters, Repair) could not be reached from that screen at all. Tap it now and it asks which client, then opens their page on Estimates with the template list already showing \u2014 the same list that has always worked from a client\u2019s page, rather than a second one built beside it. Also: the empty Client Projects panel told you to click \u201C+ Add project\u201D, which is not a button anywhere in the app; it now points at the \uFF0B at the top and says to pick Lead.' },
+{ b:716, d:'2026-08-11', t:'AI Estimate, from the client\u2019s own page \u2014 and it stays with the job',
+s:'Two halves of the same gap. \u2666 The Estimates tab on a client\u2019s page could start a template estimate or a blank one, but there was no way to reach the AI builder from there \u2014 it lived only on the main Estimates screen, so you had to leave the client and start something that did not know whose roof it was. There is now an \u26A1 AI Estimate button beside + New estimate, and the builder opens with the client\u2019s name and address across the top. \u2666 Underneath, an AI estimate was never being tied to the job at all. The server has always recorded which client an estimate belongs to; the app simply never told it, so every AI estimate came out unattached \u2014 which is why sending one had no address to start from. It now carries the client through, so the estimate belongs to the job the way a template estimate always has.' },
+{ b:715, d:'2026-08-11', t:'Client profiles stop redrawing themselves in the background',
+s:'Every open client profile was quietly rebuilding its PO badge about 120 times a second, forever, writing exactly the same thing each time. The check meant to stop that compared \u201CPO 1002\u201D against the number 1002, which can never match, so it never stopped. Nothing looked wrong on screen \u2014 it just burned battery and CPU the whole time a profile was open, and could make taps feel slow because the page was rebuilding underneath your finger. Found by walking the retail CRM on the live site; the app\u2019s own performance watchdog had been reporting it.' },
 { b:714, d:'2026-08-11', t:'Partner contacts stop travelling, and a bid can no longer go to the homeowner by mistake',
 s:'Three things. First, the app no longer even asks the database for a partner\u2019s contact details unless you are the one signed in \u2014 before, they were fetched on every load and merely hidden on screen. That is tidiness rather than a lock: anyone determined enough to open the browser\u2019s developer tools can still query the database directly, which is the trade you chose over changing the database itself. Second, and this one was a real bug you could have hit today: sending a bid refused to share a partner\u2019s address only when that partner HAD one on file. For the five partners with no email recorded, the refusal never fired and the send box opened pre-filled with the HOMEOWNER\u2019s address instead. It now refuses on every partner, before it looks anything up, and a failed lookup stops rather than offering the homeowner. Third, the job card now shows the homeowner\u2019s email beside their phone when there is one, and it recovers the homeowner\u2019s name the same way every other screen does \u2014 two jobs that read \u201cNot recorded\u201d here while the hub showed a name now agree. Also fixed quietly: the partner list is now tied to whoever is signed in, so on a shared tablet one person can no longer inherit the previous person\u2019s view.' },
 { b:713, d:'2026-08-11', t:'The job card explains the missing partner contact',
@@ -39722,6 +39895,10 @@ migrateBaseline: migrateBaseline,
 </script>
 
 <style id="cr-gmap-styles">.pac-container{background:#fdfcf7 !important;border:1px solid #d9cfaf !important;box-shadow:0 8px 24px rgba(0,0,0,.18) !important;border-radius:8px !important;z-index:100000 !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif !important;margin-top:4px}.pac-item{padding:9px 12px !important;cursor:pointer !important;border-top:1px solid #f0e8c9 !important;font-size:13.5px !important;color:#5a4a1a !important}.pac-item:first-child{border-top:0 !important}.pac-item:hover,.pac-item-selected{background:#f4f2f1 !important}.pac-item-query{color:#2c2c2c !important;font-weight:800 !important}.pac-icon{display:none !important}.pac-logo::after{opacity:.4}.cr-gmap-block{background:#fdfcf7;border:1px solid #d9cfaf;border-radius:12px;overflow:hidden;margin:8px 0 14px;box-shadow:0 3px 10px rgba(0,0,0,.06)}.cr-gmap-imgwrap{display:block;background:#f0e8d0;line-height:0}.cr-gmap-imgwrap img{width:100%;height:auto;max-height:240px;object-fit:cover;display:block}.cr-gmap-actions{display:flex;gap:8px;padding:10px 12px;background:#f4f2f1;border-top:1px solid #e8d9a8}.cr-gmap-btn{flex:1;padding:9px 14px;border-radius:6px;background:#c8202e;color:#fff;text-decoration:none;text-align:center;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit}.cr-gmap-btn:hover{background:#e8ba15}.cr-gmap-btn.ghost{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-gmap-btn.ghost:hover{background:rgba(200,32,46,.1)}.cr-gmap-hint{background:#fef7d6;border:1px dashed #c8202e;color:#5a4a1a;padding:10px 14px;border-radius:8px;font:600 12px 'Segoe UI',Arial,sans-serif;margin:8px 0}.cr-gmap-hint b{color:#2c2c2c}</style>
+<style id="cr-ac-styles">/* v2026-08-11 build 719 · address suggestions. position:fixed so a modal's
+   overflow cannot clip it and #pwaNav (z-index 9990) cannot trap it; rows are
+   44px minimum, the touch floor 592 set for the showroom. Colours are --rbe-*
+   pairs so they flip with the theme, each with a literal fallback. */.cr-acbox{display:none;position:fixed;z-index:10700;max-height:274px;overflow-y:auto;background:var(--rbe-panel,#16161B);color:var(--rbe-ink,#cfd6df);border:1px solid var(--rbe-line,#232329);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.42);font:600 13.5px 'Segoe UI',Arial,sans-serif;-webkit-overflow-scrolling:touch}.cr-acrow{padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--rbe-line,#232329);display:flex;flex-direction:column;justify-content:center;gap:2px;min-height:44px;box-sizing:border-box}.cr-acrow:last-child{border-bottom:0}.cr-acrow:hover,.cr-acrow.on{background:var(--rbe-redtint,#3a2226)}.cr-acrow .m{color:var(--rbe-ink,#cfd6df);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-acrow .s{font-weight:600;font-size:11.5px;color:var(--rbe-mute,#9aa0a8);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}</style>
 <script id="cr-gmap-script">
 (function(){
 'use strict';
@@ -39803,11 +39980,145 @@ return true;
 }
 return false;
 }
-async function attachAutocomplete(input){
-if(!input || input.dataset.crAutocomplete === '1') return;
-input.dataset.crAutocomplete = '1';
+/* ---- 719: suggestions without the deprecated widget -------------------
+   ONE dropdown for the whole app. It is position:fixed and anchored to the
+   input's rect on paint, which sidesteps both traps this file has paid for
+   before: a modal's overflow clipping an absolutely-positioned child, and
+   #pwaNav's z-index stranding it. No MutationObserver here on purpose —
+   plain listeners are enough and the census does not need a 43rd module. */
+var acBox = null, acItems = [], acIdx = -1, acInput = null, acToken = null, acTimer = null;
+/* set while acChoose writes the field: the input/change events below are the
+   app's contract with seven .value readers, but this module now listens to
+   that same field, and without this it reads its own write as typing and
+   re-opens the list on the address just chosen. */
+var acSilent = false;
+function acEnsureBox(){
+if(acBox) return acBox;
+acBox = document.createElement('div');
+acBox.className = 'cr-acbox';
+acBox.setAttribute('role', 'listbox');
+/* mousedown, not click: preventDefault here stops the input blurring before
+   the click lands, which is what makes a pointer selection work at all. */
+acBox.addEventListener('mousedown', function(e){ e.preventDefault(); });
+acBox.addEventListener('click', function(e){
+var row = e.target.closest('[data-aci]');
+if(row) acChoose(parseInt(row.getAttribute('data-aci'), 10));
+});
+document.body.appendChild(acBox);
+return acBox;
+}
+function acClose(){ if(acBox) acBox.style.display = 'none'; acItems = []; acIdx = -1; }
+function acPosition(){
+if(!acBox || !acInput) return;
+var r = acInput.getBoundingClientRect();
+var below = window.innerHeight - r.bottom;
+acBox.style.left  = Math.round(r.left) + 'px';
+acBox.style.width = Math.round(r.width) + 'px';
+/* flip above the field when the keyboard leaves no room under it */
+if(below < 150 && r.top > below){
+acBox.style.top = '';
+acBox.style.bottom = Math.round(window.innerHeight - r.top + 4) + 'px';
+}else{
+acBox.style.bottom = '';
+acBox.style.top = Math.round(r.bottom + 4) + 'px';
+}
+}
+function acPaint(){
+var box = acEnsureBox();
+if(!acItems.length){ acClose(); return; }
+box.innerHTML = acItems.map(function(s, i){
+return '<div class="cr-acrow' + (i === acIdx ? ' on' : '') + '" role="option" data-aci="' + i +
+'"><span class="m"></span><span class="s"></span></div>';
+}).join('');
+/* textContent, never innerHTML: these strings come back from Google and are
+   not ours to trust into markup. */
+Array.prototype.forEach.call(box.querySelectorAll('[data-aci]'), function(row, i){
+row.querySelector('.m').textContent = acItems[i].__main || '';
+row.querySelector('.s').textContent = acItems[i].__sub  || '';
+});
+box.style.display = 'block';
+acPosition();
+}
+async function acFetch(P, input){
+var q = (input.value || '').trim();
+if(q.length < 3){ acClose(); return; }
 try{
-await loadMaps();
+if(!acToken) acToken = new P.AutocompleteSessionToken();
+var res = await P.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+input: q, includedRegionCodes: ['us'], sessionToken: acToken
+});
+/* the answer is stale if focus moved or they kept typing while it flew */
+if(acInput !== input) return;
+if((input.value || '').trim() !== q) return;
+acItems = (res && res.suggestions ? res.suggestions : [])
+.filter(function(s){ return s && s.placePrediction; }).slice(0, 6);
+acItems.forEach(function(s){
+var p = s.placePrediction;
+s.__main = (p.mainText && p.mainText.text) || (p.text && p.text.text) || '';
+s.__sub  = (p.secondaryText && p.secondaryText.text) || '';
+});
+acIdx = -1;
+acPaint();
+}catch(e){ acClose(); }
+}
+async function acChoose(i){
+var s = acItems[i], input = acInput;
+if(!s || !input) return;
+acClose();
+clearTimeout(acTimer);   /* a keystroke's debounce would re-open the list */
+try{
+var place = s.placePrediction.toPlace();
+await place.fetchFields({ fields: ['formattedAddress', 'location', 'displayName'] });
+var addr = place.formattedAddress || place.displayName || input.value;
+acSilent = true;
+input.value = addr;
+input.dispatchEvent(new Event('input',  { bubbles:true }));
+input.dispatchEvent(new Event('change', { bubbles:true }));
+acSilent = false;
+var loc = place.location;
+input.dispatchEvent(new CustomEvent('cr-place-selected', {
+detail: {
+address: addr,
+lat: loc ? (typeof loc.lat === 'function' ? loc.lat() : loc.lat) : null,
+lng: loc ? (typeof loc.lng === 'function' ? loc.lng() : loc.lng) : null,
+place: place,
+},
+bubbles: true,
+}));
+}catch(e){ /* keep whatever they typed — never blank the field */ }
+acToken = null; /* a session token ends at selection */
+}
+function attachSuggestions(input, P){
+input.setAttribute('autocomplete', 'off');
+input.addEventListener('focus', function(){ acInput = input; });
+input.addEventListener('input', function(){
+if(acSilent) return;
+acInput = input;
+clearTimeout(acTimer);
+acTimer = setTimeout(function(){ acFetch(P, input); }, 220);
+});
+input.addEventListener('blur', function(){
+setTimeout(function(){ if(acInput === input) acClose(); }, 150);
+});
+input.addEventListener('keydown', function(e){
+if(!acItems.length || !acBox || acBox.style.display === 'none') return;
+if(e.key === 'ArrowDown'){ e.preventDefault(); acIdx = Math.min(acIdx + 1, acItems.length - 1); acPaint(); }
+else if(e.key === 'ArrowUp'){ e.preventDefault(); acIdx = Math.max(acIdx - 1, 0); acPaint(); }
+else if(e.key === 'Enter' && acIdx >= 0){ e.preventDefault(); acChoose(acIdx); }
+else if(e.key === 'Escape'){ acClose(); }
+});
+}
+/* capture phase: the lead form scrolls inside its own modal, not the window */
+window.addEventListener('scroll', function(){
+if(acBox && acBox.style.display === 'block') acPosition();
+}, true);
+window.addEventListener('resize', function(){
+if(acBox && acBox.style.display === 'block') acPosition();
+});
+/* The legacy widget, kept whole. Reached only when the new Places library is
+   absent — then the field behaves exactly as it did before 719 instead of
+   losing autocomplete altogether. */
+function attachLegacyAutocomplete(input){
 var ac = new google.maps.places.Autocomplete(input, {
 types: ['address'],
 componentRestrictions: { country: 'us' },
@@ -39830,6 +40141,18 @@ place: place,
 bubbles: true,
 }));
 });
+}
+async function attachAutocomplete(input){
+if(!input || input.dataset.crAutocomplete === '1') return;
+input.dataset.crAutocomplete = '1';
+try{
+await loadMaps();
+var P = google.maps.places;
+if(P && P.AutocompleteSuggestion && P.AutocompleteSessionToken){
+attachSuggestions(input, P);
+}else{
+attachLegacyAutocomplete(input);
+}
 }catch(e){
 /* 565: DO NOT clear the guard here. It used to be reset to '', which put the field
    straight back in front of the requestAnimationFrame scanner — so with no Maps key
@@ -39990,7 +40313,7 @@ return;
 }
 var existing = view.querySelector('.cr-po-badge');
 if(existing){
-if(existing.textContent === po) return;
+if(existing.textContent === 'PO ' + po) return;
 existing.remove();
 }
 var target =
@@ -42394,8 +42717,8 @@ if(!document.getElementById('cr-est-new-btn')){
 var btn = document.createElement('button');
 btn.id = 'cr-est-new-btn';
 btn.type = 'button';
-btn.innerHTML = '\uD83D\uDCC4 New Estimate';
-btn.title = 'Unified estimate (v2 flow)';
+btn.innerHTML = '\uD83D\uDCC4 Blank estimate';
+btn.title = 'Start an empty estimate and add the lines yourself';
 btn.onclick = function(e){
 e.preventDefault(); e.stopPropagation();
 openEditor(window.currentProject, null);

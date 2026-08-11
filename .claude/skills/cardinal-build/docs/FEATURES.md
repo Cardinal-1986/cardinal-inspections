@@ -3922,3 +3922,109 @@ pipeline; the module's string-checklist read/write/delete defects are fixed
 (parse via `parseCkAll`, persist via `patchProjectCk`, delete record-first by
 path). Until Phase 4 the remaining cream surfaces (bid strip, stage row) are
 still hidden-but-live underneath.
+---
+
+# Estimates — the three doors, and the AI/job link (builds 714–716, 11 Aug 2026)
+
+*Written after a live walkthrough of the retail CRM on app.cardinalroster.com: a
+throwaway signed-in account, a disposable client, the whole Lead → Prospect →
+estimate path, then everything deleted.*
+
+## Where an estimate can start
+
+| Surface | Control | Opens |
+|---|---|---|
+| **Client profile** → Estimates tab | `+ New estimate ▾` (`#pNewEstimateBtn` → `#pEstMenu`) | the six trade templates → `createEstimateOfKind()` |
+| | `📄 New Estimate` (`#cr-est-new-btn`, injected by `cr-est`) | the v2 unified editor, blank, prefilled with this client |
+| | **`⚡ AI Estimate` (`#pAiEstimateBtn`, 715)** | the AI builder **bound to this client** |
+| **Global Estimates page** (`#cr-estimates-mount`) | `⚡ AI Estimate` (`[data-act="new-ai"]`) | `showAICreate()`, unbound |
+| | `+ New` (`[data-act="new-manual"]`) | `showManualPick()` → client → blank editor |
+| | **`Templates` (`[data-act="templates"]`, 716)** | client picker → that client's Estimates tab with the template menu open |
+
+**The six templates are `EST_TYPES`** — roof · siding · windows · andersen ·
+gutters · general — and `createEstimateOfKind(kindKey)` is the single creator.
+716 deliberately did **not** add a second template picker: it routes to the
+existing one. One pipeline, more doors into it.
+
+## ⚠ An AI estimate is only attached to a job if the session was bound (715)
+
+`/api/estimate` has always accepted `project_id` and `client` and stores
+`project_id` on the `ai_estimates` row. **The front end never sent them**, so
+every AI estimate was born orphaned — which is what left Send with no address to
+default to (the gap 653 half-fixed from the other end). `createSession(project)`
+records them when the builder is opened from a profile; `generateEstimate()`
+sends them. Opened from the global page with no client, both are `null` and the
+estimate is unattached exactly as before — that path is unchanged, not fixed.
+
+⚠️ **`cr-estimates-script` has no `esc()` of its own.** It is an IIFE; the two
+`esc(` calls in it resolve to the main block's global by luck, and it defines a
+local `esc2` in `showManualPick` for exactly that reason. Build anything new in
+that module with `textContent`, or give it a local escaper — do not lean on the
+global.
+
+⚠️ **`showAICreate` is assigned straight to `.onclick` by `showList`**, so
+argument 1 can be a `MouseEvent`. It takes a session id only when handed a real
+string (715); before that it fell through to a fresh session via a localStorage
+lookup on the key `"[object MouseEvent]"`.
+
+## The PO badge no longer loops (714)
+
+`cr-po`'s `injectOnProfile()` compared `existing.textContent` (`"PO 1002"`)
+against the number `from()` returns (`1002`) — never equal, so it removed and
+re-appended the badge every animation frame, ~120 mutations/sec on **every open
+client profile**, for as long as it was open. Fixed by comparing against
+`'PO ' + po`. **Note there are two unrelated `injectOnProfile` functions** — this
+one in `cr-po-script`, and another in `cr-est-script` that injects the gold
+New Estimate button. A name is not a contract; grep the block.
+
+
+---
+
+# Builds 717–719 — the audit log, the estimate buttons, and Places (11 Aug 2026)
+
+## The sign-in log (717) — `audit_sessions`
+
+`auditStart()` records who signed in. Read policy is `is_admin()`; INSERT is
+`email = auth.jwt() email`; UPDATE is either. **Never ask for the row back.**
+`.select('id')` on the insert makes PostgREST need SELECT on the new row, which
+a non-admin does not have, and the whole INSERT is refused — silently, because
+the call is deliberately `catch`-swallowed so the log can never interrupt anyone.
+That is how the table reached 239 rows without a single rep in it.
+
+The id is generated client-side (`auditNewSid()`, `crypto.randomUUID` with a
+`getRandomValues` v4 fallback) so the insert needs no RETURNING.
+
+⚠️ **Anything else writing to a table whose SELECT policy is narrower than its
+INSERT policy has this bug.** The tell is `.insert(...).select(...)` — check the
+read policy before assuming the write lands.
+
+## The three doors into an estimate, renamed (718)
+
+| Surface | Control | Opens |
+|---|---|---|
+| Client profile → Estimates | **`＋ From a template ▾`** (`#pNewEstimateBtn`) | the six trade templates |
+| | **`📄 Blank estimate`** (`#cr-est-new-btn`) | the v2 editor, empty, prefilled with the client |
+| | `⚡ AI Estimate` (`#pAiEstimateBtn`, 715) | the AI builder bound to this client |
+
+Nothing selects these by their text; the labels each appear once.
+
+## Address autocomplete (719) — `cr-gmap-script` + `cr-ac-styles`
+
+**Do not "finish" this migration by switching to `PlaceAutocompleteElement`.**
+It is a custom element that replaces the `<input>`, and seven `.value` reads plus
+the whole address scanner depend on those inputs existing. The data API
+(`AutocompleteSuggestion.fetchAutocompleteSuggestions`) is the deliberate choice.
+
+- `attachSuggestions()` is the live path; `attachLegacyAutocomplete()` is reached
+  only when `google.maps.places.AutocompleteSuggestion` is absent.
+- The dropdown is a single shared `.cr-acbox`, `position:fixed`, z-index 10700.
+  Fixed positioning is not decoration: it is what stops a modal's overflow
+  clipping it and `#pwaNav` (9990) trapping it.
+- ⚠️ **`acSilent` is load-bearing.** `acChoose()` dispatches `input` so the rest
+  of the app sees the new address — and this module now listens to that same
+  field. Without the flag it reads its own write as typing and re-opens the list
+  on the address just picked. Any new programmatic write to an address input
+  needs the same guard.
+- Requires **Places API (New)** enabled on the Google Cloud project. Verified
+  enabled 11 Aug 2026 (`places:autocomplete` → HTTP 200). If that ever changes,
+  the fallback keeps the field working.
