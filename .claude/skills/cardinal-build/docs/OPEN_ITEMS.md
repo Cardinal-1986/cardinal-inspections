@@ -2536,9 +2536,11 @@ closed, 001/016 partial, stale-write guard at the new call sites).
 directions (read + write + delete) and rendered on the card via host mode
 (CR-COM-007 closed).
 
-**Next: Phase 4** — parity check, then DELETE the cream surfaces + CSS and
-retire the `suspendForTab` detours (CR-COM-001, 020, parts of 003). This is
-the build that ends the black↔cream flip.
+**Phase 4 shipped at build 709 — THE PORT IS COMPLETE.** The cream surfaces
+are deleted (001 resolved; 010 fixed by the Recorded line; 020/024 partial —
+the six shared-tab suspends remain by necessity, the snowflake is gone; two
+body observers retired, census 42). The black card is the only Community
+client page.
 
 **Still open regardless of the port:** Bid Submitted unreachable, 16 jobs at Lead
 (004) · OnHold invisible to hub money (005 — the "jobs sit" case) · Job Menu
