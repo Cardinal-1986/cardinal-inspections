@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 727 &#8212; On the money tab the two form buttons now say which form they close, instead of both reading &#8220;Close&#8221;</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 728 &#8212; Money buttons can no longer be double-tapped into two payments: Save collection, Save draw and Record commission lock while they save</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18701,8 +18701,39 @@ async function miChangeRep(email){
   if(cp) cp.sales_rep = email;
   renderCommissions();
 }
+/* ══ 728: one place that makes a money button un-double-tappable ═══════════
+   Every writer below INSERTS a row, and two of them cascade: a `collections`
+   insert fires make_commission() and writes a commission too. A double tap on
+   a slow connection therefore books the money twice, and nothing downstream
+   can tell the copy from the original. None of these handlers disabled their
+   button — 64 buttons elsewhere in this file do, so this is a gap, not a
+   convention change.
+
+   Takes an id OR the element itself (the crews and payout screens dispatch
+   through data-act, so they hold the node rather than an id). Returns a
+   RESTORE function, or **null** when the control is already busy — the caller
+   returns on null, and that is what stops the second write. Callers wrap their
+   body in try/finally so an early return, an RLS refusal or a thrown error can
+   never leave a button dead. Deletes and status updates are deliberately NOT
+   wrapped: they are keyed by id and idempotent, and they sit behind confirm(). */
+function crBusy(ref, label){
+  var b = (typeof ref === 'string') ? document.getElementById(ref) : ref;
+  if(!b) return function(){};          /* no control (programmatic call) — proceed */
+  if(b.disabled) return null;          /* already in flight — refuse this tap */
+  var prev = b.textContent;
+  b.disabled = true;
+  if(label) b.textContent = label;
+  return function(){
+    try{ b.disabled = false; if(label) b.textContent = prev; }catch(_){}
+  };
+}
+try{ window.crBusy = crBusy; }catch(_){}
+
 async function miSaveColl(){
   if(!currentProject || !commFullAccess()) return;
+  var _busy = crBusy('miSave', 'Saving\u2026');
+  if(!_busy) return;
+  try{
   var msg = document.getElementById('miMsg');
   var amt = Number(document.getElementById('miAmt').value.replace(/[$,\s]/g, ''));
   if(!isFinite(amt) || amt === 0){ if(msg) msg.textContent = 'Enter an amount.'; return; }
@@ -18727,6 +18758,7 @@ async function miSaveColl(){
   if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
   commUi.collForm = false; commUi.editColl = null;
   await renderCommissions();
+  } finally { _busy(); }
 }
 function miEditColl(id){
   if(!commFullAccess()) return;
@@ -18742,6 +18774,9 @@ async function miDelColl(id){
 }
 async function miSaveDraw(){
   if(!currentProject || !commAdmin()) return;
+  var _busy = crBusy('miDrawSave', 'Saving\u2026');
+  if(!_busy) return;
+  try{
   var msg = document.getElementById('miDrawMsg');
   var repSel = document.getElementById('miDrawRep');
   var rep = (repSel && repSel.value || '').toLowerCase();
@@ -18762,6 +18797,7 @@ async function miSaveDraw(){
   if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
   commUi.drawForm = false;
   await renderCommissions();
+  } finally { _busy(); }
 }
 async function miRepayDraw(id){
   if(!commAdmin()) return;
@@ -18772,6 +18808,9 @@ async function miRepayDraw(id){
 }
 async function addCommission(){
   if(!currentProject || !commAdmin()) return;
+  var _busy = crBusy('cmAdd', 'Saving\u2026');
+  if(!_busy) return;
+  try{
   var msg = document.getElementById('cmMsg');
   var rep = document.getElementById('cmRep').value.trim();
   var amt = Number(document.getElementById('cmAmt').value.replace(/[$,\s]/g, ''));
@@ -18795,6 +18834,7 @@ async function addCommission(){
   });
   if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
   await renderCommissions();
+  } finally { _busy(); }
 }
 async function delCommission(id){
   if(!commAdmin()) return;
@@ -37660,6 +37700,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:728, d:'2026-08-11', t:'A money button cannot be tapped twice into two payments',
+s:'On a slow connection a save can take a second or two, and nothing stopped you tapping it again. Save collection, Save draw and Record commission now lock and read \u201CSaving\u2026\u201D until the save finishes, and a second tap is ignored rather than writing a second row. This mattered most on Save collection: logging a check also creates the rep\u2019s 10% commission automatically, so a double tap booked the check twice AND the commission twice, and nothing afterwards could tell the copy from the original. The same lock is on the draw button on the payout screen. If a save fails the button unlocks so you can try again.' },
 { b:727, d:'2026-08-11', t:'The money tab\u2019s two buttons say which one they close',
 s:'Small one. On a job\u2019s Money In & Commissions tab, opening both the collection form and the draw form left two buttons side by side both reading \u201CClose\u201D, with nothing to say which was which. They now read Close collection and Close draw. Nothing else changed.' },
 { b:726, d:'2026-08-11', t:'The Money In & Commissions tab is readable again',
@@ -65115,7 +65157,11 @@ function wire(v){
       return;
     }
     if(act === 'drawsave'){
+      /* 728: delegated, so the clicked node is passed instead of an id */
+      var _pdBusy = (window.crBusy ? window.crBusy(t, 'Saving\u2026') : function(){});
+      if(!_pdBusy) return;
       (async function(){
+        try{
         var msg = document.getElementById('pdMsg');
         var rep = (document.getElementById('pdRep') || {}).value || '';
         var amt = Number(((document.getElementById('pdAmt') || {}).value || '').replace(/[$,\s]/g, ''));
@@ -65134,6 +65180,7 @@ function wire(v){
         if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
         S.drawForm = false;
         await reload();
+        } finally { _pdBusy(); }
       })();
       return;
     }
