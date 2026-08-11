@@ -2662,3 +2662,37 @@ changes at all.
    consumes the raw `load()` return, so a *confidential* partner's real name
    still appears in the New Bid payer select. Re-verified at 712 that it renders
    no contact field, so the hiding pass leaves no hole there.
+
+### Build 713 — and the answer to "can reps still see the homeowner?"
+
+**Measured, not reasoned** (`render_712rep.js`, the real black card in Chromium
+signed in as nick@, live job shape). For a sales rep on a community job:
+
+| Datum | On the card? | Where it comes from |
+|---|---|---|
+| Homeowner name | ✅ yes | `checklist.lead.homeowner_name` |
+| Homeowner phone | ✅ yes | `checklist.lead.homeowner_phone` |
+| **Homeowner email** | ❌ **no — and never was** | see the open item below |
+| Job / property address | ✅ yes | `projects.address` |
+| Renter (property-manager jobs) | ✅ yes | `checklist.lead.renter_name/_phone` |
+| Which partner funds it | ✅ yes | the partner's `name` |
+| Galen Curry, his email, his phone | ❌ hidden (712) | `maskPartner()` |
+| Habitat's own postal address | ❌ hidden (712) | `maskPartner()` |
+
+Homeowner data lives in `projects.checklist.lead.*` and `projects.address` —
+a different table and a different code path from `community_partners`, which is
+the only thing 712 touched. The table above is the proof, not the argument.
+
+**⚠️ OPEN, found by that render, deliberately NOT folded into 713: the homeowner
+EMAIL is not painted on the black card at all.** It is stored (14 of the 16 live
+community jobs have one) and the pin/contacts area shows name and phone only.
+This is **pre-existing** — the same render is red for it on the 711 artifact, so
+712 did not remove it. It is a real gap for a rep who wants to email a
+homeowner, and it is its own small build: decide where it belongs (beside the
+phone, as a `mailto:`) and check the retail/insurance cards for the same
+omission before shipping, because that block is shared.
+
+**Recorded from Theo, 11 Aug, verbatim:** *"Reps don't send bids I do. Reps just
+write the bid."* This confirms 712's send refusal is **correct behaviour, not a
+restriction to soften** — a rep writes and saves the bid, and the sending is
+Theo's step. Do not "fix" that refusal into a fallback.

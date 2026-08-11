@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 712 &#8212; Community partner contact details are yours alone; everyone else sees the partner, not the person</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 713 &#8212; The job card says where a partner\u2019s contact went, instead of showing a blank line</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37213,6 +37213,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:713, d:'2026-08-11', t:'The job card explains the missing partner contact',
+s:'Build 712 made community partner contact details yours alone, and on the partner directory it says so. On the job card itself the line just went blank \u2014 the partner name with nothing underneath, which reads like something failed to load rather than a rule. It now carries the same note the directory does. A partner with no contact recorded still shows nothing at all, because saying the details are held by you would be untrue when there are none. Nothing about who can see what changed in this build: homeowner names, phone numbers and the job address were never touched and are still there for everyone on the job.' },
 { b:712, d:'2026-08-11', t:'Partner contact details are yours alone',
 s:'Contact name, email, phone and address on every community partner are now visible only to you. Everyone else \u2014 Joan, production and the sales reps \u2014 still sees the partner, its type, its terms and its program notes, so they can price a bid for Habitat and know Habitat\u2019s rules; they just do not get the person to call. Three places had to change, not one: the screens that list partners, the partner editor (which was quietly showing the real details even when the list hid them, and would have wiped them the first time a rep saved a note), and the bid email \u2014 which used to pre-fill the partner\u2019s address into the send box for anyone. A rep sending a community bid is now told it goes through you, rather than quietly falling back to the homeowner\u2019s address. This hides the details in the app; locking the database itself so the information never reaches their device is the next build.' },
 { b:711, d:'2026-08-11', t:'Community: Clients opens first, and filters by rep, stage and partner',
@@ -50157,6 +50159,14 @@ if(p && p.prospective) chips += '<span class="ppchip">Prospect</span>';
 var contact = '';
 if(p && (p.contact_name || p.contact_phone)){
 contact = '<small>' + esc([p.contact_name, p.contact_phone].filter(Boolean).join(' \u00b7 ')) + '</small>';
+}else if(p && p.__contactHidden){
+/* 713: 712 made the contacts owner-only and this line simply vanished, leaving
+   the partner name with nothing under it — the same silent blank the directory
+   got fixed for, on the screen Theo actually uses. Only __contactHidden earns
+   the sentence: a partner with a genuinely empty contact column still renders
+   nothing, because "held by Theo" would be a lie about a value that does not
+   exist. */
+contact = '<small style="opacity:.7;font-style:italic">Contact details are held by Theo</small>';
 }
 var renter = l.renter_name
 ? '<small>Renter \u00b7 ' + esc([l.renter_name, l.renter_phone].filter(Boolean).join(' \u00b7 ')) + '</small>'
