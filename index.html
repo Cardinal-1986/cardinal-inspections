@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 720 &#8212; Address auto-complete moved onto Google&#8217;s current service, off the one they closed to new customers</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 721 &#8212; Money received now lives in one place: logging a collection lowers the job&#8217;s Balance Due, so the profile and the commissions tab can never disagree</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9675,6 +9675,15 @@ var moneyDb = {
       .select('id,project_id,total,status,homeowner_signed_at,voided_at');
     if(r.error) throw r.error;
     return r.data || [];
+  },
+  /* 721: money IN, per check. RLS returns a rep only their own projects' rows
+     and an admin all of them — exactly who can see a job's Balance Due, so the
+     total is never fuller than the viewer is entitled to. Narrow select. */
+  collections: async function(){
+    if(!TEAM) return [];
+    var r = await sb.from('collections').select('project_id,amount');
+    if(r.error) throw r.error;
+    return r.data || [];
   }
 };
 
@@ -9859,6 +9868,7 @@ var cacheProjects = [];
 var estBest = {};   /* highest total among SENT/approved estimates */
 var estRows = {};   /* 654: those same rows kept per project — the tile/tab count reads these */
 var ctrSigned = {}; /* total on the signed, un-voided contract */
+var collPaid = {};  /* 721: money-in from the collections table, per project — the single source for Balance Due when a job has any collections */
 /* 493: [] means two different things - the table is empty, or we never got a
    successful read. A denied or failed load leaves cacheProjects at its initial
    [], and the home empty-state then tells the user they have no clients. The
@@ -9887,12 +9897,14 @@ async function reload(){
          for the same reason adb does — an RLS refusal must not take down
          reload(), and with it the entire client profile. */
       moneyDb.estimates().catch(function(){ return []; }),
-      moneyDb.contracts().catch(function(){ return []; })
+      moneyDb.contracts().catch(function(){ return []; }),
+      moneyDb.collections().catch(function(){ return []; })
     ]);
     cacheProjects = res[0];
     cacheRows = res[1];
     cacheAppts = res[2];
     indexMoney(res[3], res[4]);
+    indexCollections(res[5]);
     cacheLoaded = true;   /* 493: only here, and only after the awaits resolved */
     if(currentProject){
       var fresh = cacheProjects.find(function(x){ return x.id === currentProject.id; });
@@ -13979,6 +13991,13 @@ function jobFinance(pr){
   (all.payments || []).forEach(function(p){
     if(p.dir === 'in') paid += Number(p.amt) || 0;
   });
+  /* 721 (CR-AUD-003/004 residue): the collections TABLE is the money-in ledger
+     that also drives commissions. When this job has ANY collections, it is the
+     single source of truth for what has been paid — the legacy worksheet and
+     payments amounts above are ignored, so the two ledgers can never disagree
+     or double-count. A job with no collections yet keeps its legacy paid, so
+     nothing regresses for a job that predates this table. */
+  if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id];
   if(paid > value) paid = value;
   return { contracts: contracts, value: value, paid: paid,
            balance: value - paid, pct: value ? Math.round(paid / value * 100) : 0,
@@ -18164,6 +18183,19 @@ function indexMoney(estimates, contracts){
     if(!c.homeowner_signed_at) return;            /* unsigned is not money either */
     var t = Number(c.total) || 0;
     if(t > (ctrSigned[c.project_id] || 0)) ctrSigned[c.project_id] = t;
+  });
+}
+
+/* 721: total money received per project, from the collections table. This is
+   the same real-world quantity the worksheet `paid` field and the legacy
+   `payments[]` array recorded — but collections is the one that also books
+   the commission, so it is made authoritative for Balance Due (see jobFinance).
+   A project absent here has no collections yet and keeps its legacy paid. */
+function indexCollections(collections){
+  collPaid = {};
+  (collections || []).forEach(function(c){
+    if(!c || !c.project_id) return;
+    collPaid[c.project_id] = (collPaid[c.project_id] || 0) + (Number(c.amount) || 0);
   });
 }
 
@@ -37448,6 +37480,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:721, d:'2026-08-11', t:'Money received now shows up in one place',
+s:'A job\u2019s Balance Due and its Money In & Commissions tab used to read from two different places. Balance Due looked at an old worksheet field; the commissions tab looked at the checks you actually log with \u201CLog Collection.\u201D So a check you logged would create its commission but leave the Balance Due unchanged \u2014 the two screens disagreed. Now the checks you log are the single source: logging one lowers the Balance Due on the profile and in the aging report, and books the commission, all from the one action. Nothing to redo \u2014 any job that had a payment recorded the old way keeps it until you log a collection for that job.' },
 { b:720, d:'2026-08-11', t:'Address auto-complete moved to Google\u2019s current service',
 s:'Typing an address on the lead form was still using the version of Google\u2019s auto-complete that they closed to new customers in March 2025 \u2014 it worked, but it logged a deprecation warning every time the form opened and it is the older service. It now uses the current one. What you see is a little different and a little better: the list of matches is Cardinal\u2019s own, so it reads in the app\u2019s colours in both light and dark, rows are big enough to hit on a phone, arrow keys and Enter work, and it opens upward when the keyboard leaves no room below. The address box itself is unchanged, which matters \u2014 Google\u2019s drop-in replacement would have swapped the box out from under every screen that reads it. If the new service is ever unavailable the old one is still wired underneath, so the field falls back to what it did before rather than to nothing.' },
 { b:719, d:'2026-08-11', t:'The two estimate buttons say which is which',
