@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 707 &#8212; Work orders finally work: the upload no longer fails, the list no longer lies, and both live on the dark Community card</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 708 &#8212; The Photo Album shows its pictures again, and AI captions work on stored photos</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37483,6 +37483,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:708, d:'2026-08-11', t:'The Photo Album loads its pictures again',
+s:'Every tile in a client\u2019s Photo Album could come up as a broken-image icon. When photo links were locked down in July, each photo was given a fresh short-lived link every time the album loads \u2014 but the album\u2019s grid kept using the old permanent link, which stopped working the day the lockdown finished. The grid, the caption window and both download buttons now use the fresh link, with old-style photos unaffected. AI captions are fixed the same way \u2014 they had been failing quietly on every stored photo for the same reason.' },
 { b:707, d:'2026-08-11', t:'Community work orders actually work now, on the dark card',
 s:'The Work Orders section was broken in both directions since it shipped: every upload reported failure after the file had already gone to storage \u2014 stranding a copy each try \u2014 and the list read the job record the wrong way, so it always said \u201CNo work orders on file yet\u201D even when there were some. Both are fixed, saves now go through the same safe write path the rest of the app uses, and the whole section \u2014 list, Open, Upload, Delete \u2014 now lives on the dark Community card where you can actually reach it. Admin and Production only, as before. Deleting now removes the record before the file, so a hiccup can no longer leave a listed work order that opens nothing.' },
 { b:706, d:'2026-08-11', t:'Community: the partner and property live on the dark card',
@@ -40676,6 +40678,24 @@ added = true;
 });
 if(added && typeof window.renderGallery === 'function') window.renderGallery();
 }
+/* 708: api/caption REJECTS anything that is not a base64 data: URL — so for
+   storage-backed photos the AI caption has answered 400 since the bucket went
+   private, signed URL or not. Legacy base64 rows pass straight through; for
+   the rest, fetch the bytes via the signed _src and hand the API what it
+   actually accepts. */
+async function paeImageDataUrl(photo){
+var v = String((photo && (photo._src || photo.data)) || '');
+if(v.indexOf('data:') === 0) return v;
+var res = await fetch(v);
+if(!res.ok) throw new Error('Could not fetch the photo (' + res.status + ')');
+var blob = await res.blob();
+return await new Promise(function(resolve, reject){
+var fr = new FileReader();
+fr.onload = function(){ resolve(String(fr.result)); };
+fr.onerror = function(){ reject(new Error('Could not read the photo')); };
+fr.readAsDataURL(blob);
+});
+}
 function renderEnhancedGrid(){
 var grid = document.getElementById('galGrid');
 if(!grid) return;
@@ -40713,7 +40733,10 @@ var sec = ph.section || 'Inspection';
 var cap = ph.caption || '';
 html +=
 '<div class="gph' + (isChecked ? ' checked' : '') + '" data-gid="' + esc(ph.id) + '">' +
-'<img src="' + esc(ph.data || '') + '" alt="" loading="lazy">' +
+/* 708: `data` is the RETIRED public URL for storage-backed photos (the
+   bucket is private now); `_src` is the signed URL listByProject attaches.
+   Reading `data` alone is what broke every album tile in Theo's screenshot. */
+'<img src="' + esc(String(ph._src || ph.data || '')) + '" alt="" loading="lazy">' +
 '<span class="cr-pae-secbadge">' + esc(sec) + '</span>' +
 '<button class="cr-pae-ai" data-cr-ai="1" title="AI Caption">\u2728</button>' +
 '<div class="gchk">' + (isChecked ? '\u2713' : '') + '</div>' +
@@ -40873,7 +40896,7 @@ var files = [];
 for(var i = 0; i < photos.length; i++){
 setStat('Fetching ' + (i + 1) + '/' + photos.length + '\u2026');
 try{
-var res  = await fetch(photos[i].data);
+var res  = await fetch(photos[i]._src || photos[i].data);
 var blob = await res.blob();
 files.push(new File([blob], fileNameFor(photos[i], i),
 { type: blob.type || 'image/jpeg' }));
@@ -40963,7 +40986,7 @@ var photo = (window.currentPhotos || []).find(function(x){ return String(x.id) =
 if(!photo) return;
 capModal.innerHTML =
 '<div class="box">' +
-'<div class="imgwrap"><img src="' + esc(photo.data || '') + '" alt=""></div>' +
+'<div class="imgwrap"><img src="' + esc(String(photo._src || photo.data || '')) + '" alt=""></div>' +
 '<div class="form">' +
 '<label>Caption</label>' +
 '<textarea data-f="caption" placeholder="What does this photo show?">' + esc(photo.caption || '') + '</textarea>' +
@@ -40997,7 +41020,7 @@ capModal.querySelector('[data-act="dl"]').onclick = async function(){
 var dlBtn = capModal.querySelector('[data-act="dl"]');
 dlBtn.disabled = true; dlBtn.textContent = 'Preparing\u2026';
 try{
-var res  = await fetch(photo.data);
+var res  = await fetch(photo._src || photo.data);
 var blob = await res.blob();
 var file = new File([blob], fileNameFor(photo, 0), { type: blob.type || 'image/jpeg' });
 if(navigator.canShare && navigator.share && navigator.canShare({ files:[file] })){
@@ -41042,7 +41065,7 @@ try{
 var res = await fetch('/api/caption', {
 method:'POST',
 headers: await window.aiHeaders(),
-body: JSON.stringify({ image: photo.data }),
+body: JSON.stringify({ image: await paeImageDataUrl(photo) }),
 });
 var body = null;
 try{ body = await res.json(); }catch(_){}
@@ -41071,7 +41094,7 @@ try{
 var res = await fetch('/api/caption', {
 method:'POST',
 headers: await window.aiHeaders(),
-body: JSON.stringify({ image: photo.data }),
+body: JSON.stringify({ image: await paeImageDataUrl(photo) }),
 });
 var body = null;
 try{ body = await res.json(); }catch(_){}

@@ -1990,3 +1990,27 @@ and both were failing.
 **Test the MATRIX, not the screen you are looking at.** Twelve cells here
 (3 CRMs × 2 app themes × 2 RL themes). Four were failing and eight passing, so
 any single-combination check had a two-in-three chance of reporting green.
+
+## 29 · The hardening that breaks LATER — a preferred value one consumer never adopted (708)
+
+The July photo hardening attached signed `_src` URLs to every listed photo row
+and every renderer was supposed to prefer `_src` over the stored public URL in
+`data` — "while the bucket is still public this cannot make a photo
+disappear." True. Then a later build flipped the bucket private, and the ONE
+renderer still reading `data` alone (the enhanced album grid) broke — weeks
+after the code that broke it shipped, on 183 of 196 photos, while the 13
+base64-legacy rows kept working and made it look client-specific.
+
+The shape: a migration introduces a preferred value and leaves the old one as
+a fallback; the kill-switch for the fallback ships separately, later. Every
+consumer that never adopted the preference is a time bomb with the fuse in a
+different commit. The album also proved the corollary: api/caption only ever
+accepted base64 data: URLs, so its callers sending `data` had been failing
+quietly on storage photos — the fallback's death exposed one bug and had been
+masking another.
+
+The drill: when a migration adds a preferred field, grep EVERY consumer of the
+old field the same day — `_src` had five adopters and one holdout, and the
+holdout was the surface users look at most. And before flipping any
+kill-switch (bucket private, column dropped, endpoint retired), re-run that
+sweep against the CURRENT tree, not the tree the migration remembers.
