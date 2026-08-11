@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 713 &#8212; The job card says where a partner\u2019s contact went, instead of showing a blank line</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 714 &#8212; Client profiles stop redrawing themselves in the background \u2014 the PO badge was rebuilding about 120 times a second on every open profile</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37213,6 +37213,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:714, d:'2026-08-11', t:'Client profiles stop redrawing themselves in the background',
+s:'Every open client profile was quietly rebuilding its PO badge about 120 times a second, forever, writing exactly the same thing each time. The check meant to stop that compared \u201CPO 1002\u201D against the number 1002, which can never match, so it never stopped. Nothing looked wrong on screen \u2014 it just burned battery and CPU the whole time a profile was open, and could make taps feel slow because the page was rebuilding underneath your finger. Found by walking the retail CRM on the live site; the app\u2019s own performance watchdog had been reporting it.' },
 { b:713, d:'2026-08-11', t:'The job card explains the missing partner contact',
 s:'Build 712 made community partner contact details yours alone, and on the partner directory it says so. On the job card itself the line just went blank \u2014 the partner name with nothing underneath, which reads like something failed to load rather than a rule. It now carries the same note the directory does. A partner with no contact recorded still shows nothing at all, because saying the details are held by you would be untrue when there are none. Nothing about who can see what changed in this build: homeowner names, phone numbers and the job address were never touched and are still there for everyone on the job.' },
 { b:712, d:'2026-08-11', t:'Partner contact details are yours alone',
@@ -39914,7 +39916,7 @@ return;
 }
 var existing = view.querySelector('.cr-po-badge');
 if(existing){
-if(existing.textContent === po) return;
+if(existing.textContent === 'PO ' + po) return;
 existing.remove();
 }
 var target =
