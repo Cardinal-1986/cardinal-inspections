@@ -313,6 +313,26 @@ once in the repo — the read. Nothing writes it, in app, SQL or Spark. 0 rows.
 Every community job shows "Held by admin." forever; a crew member reads that as
 "the office has the number" when nobody does.
 
+**Confirmed live on 11 Aug, from the other end.** Theo, looking at the Habitat
+card: *"I don't know who Samantha is but Galen Curry, Frank Gorman and Jim are
+the habitat contacts."* The stored value was
+`contact_name = 'Critical Repair Dept - Galen Curry / Samantha McAvoy'` --
+**two people concatenated into one field with a slash**, because
+`community_partners` has exactly ONE contact slot (name / email / phone) and
+`community_contacts`, the table built for the many-contacts case, still has no
+writer. Habitat needs three. The record was corrected to Galen only (his email
+and phone were already right, and Theo confirmed he is who bids go to); Frank
+Gorman and "Jim" are **deliberately unrecorded** -- no surname for Jim, no
+verified email for either, and the standing rule is never to write an
+unverified address into a partner record.
+
+So the item has two halves, and the partner half is the one that bites daily:
+a multi-contact partner cannot be represented at all, and the workaround
+(slashes in the name field) puts a name on a client-facing card that the owner
+does not recognise. The fix is a contacts LIST on the partner editor writing
+`community_contacts` -- which also gives the job card's "Site contact" its
+first real state.
+
 ---
 
 ## Serious — flow dead ends
