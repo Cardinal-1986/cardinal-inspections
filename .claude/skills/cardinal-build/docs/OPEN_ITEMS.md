@@ -2696,3 +2696,42 @@ omission before shipping, because that block is shared.
 write the bid."* This confirms 712's send refusal is **correct behaviour, not a
 restriction to soften** — a rep writes and saves the bid, and the sending is
 Theo's step. Do not "fix" that refusal into a fallback.
+---
+
+## Live walkthrough of the retail CRM — 11 Aug 2026, builds 714–716
+
+*Driven on **app.cardinalroster.com** as a signed-in rep (throwaway account, disposable
+client, deleted afterwards along with the auth user — nothing left behind). Three
+defects found and fixed; the rest is recorded here rather than quietly patched.*
+
+### ✅ Fixed in this pass
+- **714** — the PO badge rewrote every client profile ~120×/sec, forever. One-line guard fix.
+- **715** — no AI Estimate door on a client profile; and no AI estimate was ever linked to its job.
+- **716** — the global page's `Templates` button opened the AI builder; empty-state copy named a
+  control (`+ Add project`) that does not exist.
+
+### 📋 Reported, NOT fixed — decide before touching
+1. **`GET /rest/v1/audit_sessions` returned 403 once during profile load.** RLS is on with four
+   policies and both `anon` and `authenticated` hold table grants, so the refusal is policy-shaped,
+   not a missing grant. Worth confirming audit telemetry is not silently dropping writes — but it
+   is pre-existing and unrelated to these builds, so it was left alone.
+2. **Google Maps address autocomplete uses a deprecated API.** The lead form logs, on every open,
+   that `google.maps.places.Autocomplete` is closed to new customers and `PlaceAutocompleteElement`
+   is the replacement. Working today; on borrowed time. Not urgent, not free either.
+3. **Two near-identical estimate buttons on the client profile** — the red `+ New estimate ▾`
+   (templates) and the gold `📄 New Estimate` (blank v2 editor). Both work and they do different
+   things, so nothing is broken; the labels just do not say which is which. A wording change, and
+   Theo's call.
+4. **`ai_estimates` is empty — the AI estimate flow has never been used in production** (0 rows).
+   715 makes the job link work, but the feature itself is unproven against real photos and a real
+   Gemini response. Worth one supervised run before it is offered to reps.
+
+### Rig notes worth keeping
+- **Chromium's ClientHello is RST by the egress gateway on passthrough hosts.** Driving the live app
+  from this container needs every request carried over Node's fetch stack (`context.route` +
+  `route.fetch`), or the app boots into **Local mode** with `window.supabase` missing and none of
+  the CDN scripts loaded. `TEAM` is `!!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)` — a
+  blocked CDN silently downgrades the whole app to a single-browser toy, which looks like a bug in
+  the app and is not.
+- **`page.setContent` runs on `about:blank`**, whose opaque origin denies `localStorage`. Any module
+  that stores a session (the AI builder does) needs a real origin — route a fake URL and `goto` it.
