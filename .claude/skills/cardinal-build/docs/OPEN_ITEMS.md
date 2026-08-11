@@ -2532,11 +2532,13 @@ black card's Job Menu ends with a Payment Information tile straight into
 **Phase 2 shipped at build 706** — the Partner & Property section (CR-COM-006
 closed, 001/016 partial, stale-write guard at the new call sites).
 
-**Next, in order, each its own build with its own recon:**
-- **Phase 3** — Work Orders on the black card + the `uploadFile` string-checklist
-  throw (CR-COM-007).
-- **Phase 4** — parity check, then DELETE the cream surfaces + CSS and retire the
-  `suspendForTab` detours (CR-COM-001, 020, parts of 003).
+**Phase 3 shipped at build 707** — the work-order module fixed in both
+directions (read + write + delete) and rendered on the card via host mode
+(CR-COM-007 closed).
+
+**Next: Phase 4** — parity check, then DELETE the cream surfaces + CSS and
+retire the `suspendForTab` detours (CR-COM-001, 020, parts of 003). This is
+the build that ends the black↔cream flip.
 
 **Still open regardless of the port:** Bid Submitted unreachable, 16 jobs at Lead
 (004) · OnHold invisible to hub money (005 — the "jobs sit" case) · Job Menu

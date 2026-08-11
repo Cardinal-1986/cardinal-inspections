@@ -73,8 +73,15 @@ re-litigate.)
   ports the attach/change/clear actions (part of 001), displays the renter
   (016's display half), and adds a stale-write guard at ITS call sites (the
   cream rows' 019 capture is unchanged until Phase 4).
-- **Phase 3:** Work Orders on the black card + the `uploadFile` string-checklist
-  throw fixed on the way (CR-COM-007).
+- **Phase 3 — SHIPPED at build 707:** the work-order module repaired in BOTH
+  directions (the read path parsed nothing off the string checklist, so the
+  list lied empty forever; upload threw AFTER the storage write, orphaning a
+  file per attempt; delete carried the identical throw) and re-homed:
+  `renderSection(host)` gained host mode and the black card hands it
+  `#cr-cc-wo` — one pipeline, no second renderer. Writes go through
+  `patchProjectCk`; delete is record-first, matched by path. Emoji stripped
+  per the settled rule; `.doc/.docx` dropped from the accept list (the photos
+  bucket's mime policy refuses Word anyway).
 - **Phase 4:** bid-strip/stage parity proven against the black card's Bid tab,
   THEN delete the five cream surfaces + CSS and retire the `suspendForTab`
   detours that now have black-card homes (CR-COM-001, 020, parts of 003). This
@@ -167,6 +174,14 @@ The hub tile alerts "Work orders live on each community job — open a client,
 then the Work Orders section." That section is inside the takeover-hidden
 subtree (001), so the instruction cannot be followed.
 **684 verdict on the upload-throw claim:** CONFIRMED WITH CORRECTION — and the correction cuts both ways. The hub tile still only alerts; the section is hidden by the takeover rule (001) — notably NOT by `#tab-overview`'s allow-list, which `#acxMount` is on — reachable only via the suspend detour. The audit's throw claim was at the WRONG LINE but the throw is REAL, executed at 684: the *list* line silently yields `[]` (checklist is a text column), but `uploadFile()` runs `ck.work_orders = ck.work_orders || []` on that string under `'use strict'` → `TypeError: Cannot create property 'work_orders' on string` — **after the storage upload has already succeeded**, so every attempt would orphan a file in `photos/work_orders/` and surface "Upload failed". Zero checklist rows and zero storage objects confirm the feature has never once persisted a work order.
+**✅ FIXED at build 707 (11 Aug):** read path parses via `parseCkAll`; upload
+writes through `patchProjectCk` (no more throw, no more raw overwrite); delete
+is record-first matched by path; and the whole section — list, Open, Upload,
+Del — renders on the black card via the module's new host mode
+(`CardinalWorkOrders.render(host)`), Admin + Production gate unchanged.
+Verified by `harness_707.js` (18 asserts, whole shipped IIFE executed, red on
+706) and `render_ccwo.js` (real modules in Chromium, both themes, floors met).
+The hub tile's alert stands until Phase 4; its advice is at least true now.
 
 ---
 
