@@ -2547,6 +2547,15 @@ stops lying (measured before/after in the audit doc). **Still open:** Job Menu
 missing Documents (003) · money precedence (011/012) · partner identity (008) ·
 hub numbers (022).
 
+**711 answered two of Theo's questions in the product:** the partner row's
+mystery em-dash (it was awarded money, zero everywhere) now shows nothing
+until there is money; and the Clients tab opens first with the hub's existing
+filters attached. **"Waiting on you" is still the open one** — it lists only
+Prospect/Approved/Completed queues, so with everything at Lead it says
+"Nothing waiting on you" while three bids sit past their due date unsent.
+Theo declined the fix this round (he picked tab-order only); the change is a
+fourth queue, "Send the bid", fed by Lead jobs at or past `bid_due_at`.
+
 **Found by the 710 recon, NOT fixed — each its own item, worst first:**
 1. **`#contactedBtn` is a retail button live on community jobs.** It sits in
    `.projhead` (outside `#tab-overview`), so the moment a Job-Menu tile calls

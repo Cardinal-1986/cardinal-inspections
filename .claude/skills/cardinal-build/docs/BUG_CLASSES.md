@@ -2014,3 +2014,35 @@ old field the same day — `_src` had five adopters and one holdout, and the
 holdout was the surface users look at most. And before flipping any
 kill-switch (bucket private, column dropped, endpoint retired), re-run that
 sweep against the CURRENT tree, not the tree the migration remembers.
+
+## 30 · The repaint that unbinds its own handlers (711)
+
+BUG_CLASSES 16 was "a control that renders but is never wired". This is its
+sibling and it is harder to see, because the control IS wired — once, to
+elements that no longer exist by the time the user reaches them.
+
+The Community hub's filter sheet bound `[data-sort]`, `[data-cat]` and
+`[data-opt]` inside `chWire(host)`. Then:
+
+- the funnel handler calls `chFillLists(host)` before opening, which rewrites
+  the category list's `innerHTML` — every row the user sees is a fresh,
+  unwired clone of a row that *was* bound;
+- `chPaintSub(host)` writes the value list from scratch when a category is
+  picked, so `[data-opt]` was never bindable at wire time at all — the loop
+  ran against an empty slot.
+
+Net effect: the picker opened, looked complete, and did nothing. Apply then
+applied an empty selection. It shipped that way and nobody noticed, because
+the only surface using it was a table that opens collapsed.
+
+**The tell:** any `innerHTML =` on a container whose children carry handlers.
+Grep the module for `innerHTML` and ask, for each, "was anything inside this
+bound?" If the answer is yes, the binding must be re-run after the write
+(`el.onclick =` is idempotent, so a shared `bindRows()` called at the end of
+every painter is the cheap fix) — or the handler must live on a stable
+ancestor via delegation (`e.target.closest('[data-cat]')`, which is what the
+punch-outs module does).
+
+**Only a real engine catches this.** jsdom would have reported the same
+elements present; the assertion that fails is "click the category, then count
+the value rows", which requires a browser that actually dispatches.
