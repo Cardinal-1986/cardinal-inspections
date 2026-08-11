@@ -3374,7 +3374,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 710 &#8212; Community bids can be marked submitted, and a job parked on funding stops counting as a win</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 711 &#8212; The Community Clients tab opens first and can be filtered by rep, stage and partner</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -37139,6 +37139,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:711, d:'2026-08-11', t:'Community: Clients opens first, and filters by rep, stage and partner',
+s:'The Clients tab is now the first thing the Community screen opens on, and it has a filter and sort bar above the list \u2014 by who it bills to, partner type, stage, due date, whether a homeowner is recorded, and who it is assigned to. Those filters already existed but were attached only to the All bids table at the bottom of the Bids tab, which opens collapsed, so nobody had seen them; they now drive both lists from one funnel that shows how many filters are on and how many clients you are looking at. Also: the dash on every partner row was that partner\u2019s awarded money \u2014 with nothing awarded yet it was a dash next to a job count, reading like a number it was not. It now shows nothing until there is money to show.' },
 { b:710, d:'2026-08-11', t:'Community bids move, and a parked job tells the truth',
 s:'Every community job in the app was still sitting at Bid Requested \u2014 three of them past their due date \u2014 because the button that said \u201CSubmit the bid\u201D only opened the pricing screen; the job only moved if you then marked the estimate Sent in there, which nothing told you. Marking it submitted is now its own button, and Open the bid sits beside it. Second: a job parked waiting on funding used to vanish from the partner\u2019s money and quietly count as a WIN on their win rate \u2014 a grant that takes two years was scoring as a job you won. Parked jobs now show their own figure and are counted as undecided, which is what they are. The bid stages also stop both showing as just \u201CBid\u201D, and a parked job no longer reads \u201COnHold\u201D in the client directory.' },
 { b:709, d:'2026-08-11', t:'Community: one client page, not two',
@@ -48065,7 +48067,9 @@ box-shadow:var(--ccm-sh-xs)}
 
 (function(){
 'use strict';
-var pane = 'bids';
+/* 711: Theo's pick — Clients, Bids, Partners. The client list is the
+   daily driver; the Bids dashboard is the second stop. */
+var pane = 'clients';
 var query = '';
 var closed = {};
 var closedStamp = 0;
@@ -48332,6 +48336,34 @@ return '<div class="cc-sheet" data-sh="sort"><div class="panel">' +
 '<button class="ap" data-ch="apply" type="button">Apply</button></div>' +
 '<div data-slot="sublist"></div></div></div>';
 }
+/* 711: called after every list repaint — see the note in chWire. */
+function chBindRows(host){
+host.querySelectorAll('[data-sort]').forEach(function(el){
+el.onclick = function(){ chState.sort = el.getAttribute('data-sort'); render(); };
+});
+host.querySelectorAll('[data-cat]').forEach(function(el){
+el.onclick = function(){
+chSheet.cat = el.getAttribute('data-cat');
+chSheet.pend = (chState.sets[chSheet.cat] || []).slice();
+chPaintSub(host);
+chSheetToggle(host, 'filter', false);
+chSheetToggle(host, 'sub', true);
+};
+});
+host.querySelectorAll('[data-opt]').forEach(function(el){
+el.onclick = function(){
+var v = el.getAttribute('data-opt');
+var i = chSheet.pend.indexOf(v);
+if(i !== -1) chSheet.pend.splice(i, 1); else chSheet.pend.push(v);
+chPaintSub(host);
+};
+});
+}
+/* the sheet toggle chWire kept as a closure, hoisted so chBindRows can use it */
+function chSheetToggle(host, name, on){
+var el = host.querySelector('[data-sh="' + name + '"]');
+if(el) el.classList.toggle('open', !!on);
+}
 function chFillLists(host){
 var sl = host.querySelector('[data-slot="sortlist"]');
 if(sl) sl.innerHTML = CH_SORTS.map(function(s){
@@ -48344,6 +48376,7 @@ var n = (chState.sets[g.key] || []).length;
 return '<div class="csrow" data-cat="' + g.key + '">' + esc(g.label) +
 (n ? '<span class="cnt">' + n + '</span>' : '<span class="chev">\u203A</span>') + '</div>';
 }).join('');
+chBindRows(host);
 }
 function chPaintSub(host){
 var g = CH_GROUPS.filter(function(x){ return x.key === chSheet.cat; })[0];
@@ -48359,6 +48392,7 @@ if(sl) sl.innerHTML = keys.map(function(k){
 return '<div class="csrow' + (chSheet.pend.indexOf(k) !== -1 ? ' on' : '') + '" data-opt="' + esc(k) + '">' +
 '<span class="ck">\u2713</span>' + esc(k) + '<span class="cnt">' + counts[k] + '</span></div>';
 }).join('') || '<div class="cc-empty">Nothing to filter on yet.</div>';
+chBindRows(host);
 }
 function chWire(host){
 function sheet(name, on){
@@ -48384,26 +48418,15 @@ render();
 }
 };
 });
-host.querySelectorAll('[data-sort]').forEach(function(el){
-el.onclick = function(){ chState.sort = el.getAttribute('data-sort'); render(); };
-});
-host.querySelectorAll('[data-cat]').forEach(function(el){
-el.onclick = function(){
-chSheet.cat = el.getAttribute('data-cat');
-chSheet.pend = (chState.sets[chSheet.cat] || []).slice();
-chPaintSub(host);
-sheet('filter', false);
-sheet('sub', true);
-};
-});
-host.querySelectorAll('[data-opt]').forEach(function(el){
-el.onclick = function(){
-var v = el.getAttribute('data-opt');
-var i = chSheet.pend.indexOf(v);
-if(i !== -1) chSheet.pend.splice(i, 1); else chSheet.pend.push(v);
-chPaintSub(host);
-};
-});
+/* 711: these three loops used to run ONCE here — and every one of them was
+   undone before the user could reach it. chFillLists() repaints the sort and
+   category lists (the funnel handler calls it on every open), and
+   chPaintSub() writes the value list from scratch, so the rows on screen were
+   always unwired clones; [data-opt] never had anything to bind to at wire
+   time at all. The whole picker rendered and did nothing. Binding lives in
+   chBindRows now and is re-run after each repaint — onclick assignment is
+   idempotent, so calling it again is free. */
+chBindRows(host);
 /* tapping the scrim closes, same as the retail sheets */
 host.querySelectorAll('.cc-sheet').forEach(function(el){
 el.onclick = function(e){ if(e.target === el) el.classList.remove('open'); };
@@ -48712,7 +48735,13 @@ return '<div class="cc-prow" data-go="partners">' +
 '<span style="flex:1;min-width:0">' + pName(p.name) +
 '<div class="cc-mini">' + esc((p.type === 'pm' ? 'property manager' : p.type === 'gc' ? 'general contractor' : 'community program')) +
 ' \u00b7 ' + p.jobs.length + ' live</div></span>' +
-(role === 'prod' ? '' : '<span class="cc-money">' + (p.awarded ? usd(p.awarded) : '\u2014') + '</span>') +
+/* 711: this figure is the partner's AWARDED money to date, and with nothing
+   yet awarded it rendered a bare em-dash on every row — sitting beside
+   "6 live" it read as a count with nothing to say it was money. Theo asked
+   what it was for; the honest answer is "nothing yet", so it now says
+   nothing at all until there is money to show. */
+(role === 'prod' || !p.awarded ? ''
+: '<span class="cc-money" title="Awarded to date">' + usd(p.awarded) + '</span>') +
 '</div>';
 }).join('')
 : '<div class="cc-empty">No partners yet.</div>';
@@ -48784,8 +48813,15 @@ return fold('pg-' + g.key, g.label, members.length,
 '</div>';
 
 /* ---- CLIENTS ---- */
+/* 711: the SAME filter the All-bids table uses (CH_GROUPS: Bill to, Partner
+   type, Stage, Due, Homeowner, Assigned to), pointed at this list too rather
+   than a second mechanism beside it. The sheets are emitted once at host
+   level, so the funnel here opens the same picker. The Due-soon block above
+   is deliberately left alone — a filter that silently emptied it would hide
+   overdue bids, which is what the original comment was guarding. */
+var cRows = chSorted(rows.filter(chMatches));
 var byPartner = {}, byStage = {};
-rows.forEach(function(pr){
+cRows.forEach(function(pr){
 var pn = lead(pr).partner_name || 'No partner';
 byPartner[pn] = (byPartner[pn] || 0) + 1;
 var st = LABEL[normStage(pr.stage)] || normStage(pr.stage);
@@ -48801,9 +48837,9 @@ return '<div class="cc-prow">' +
 '<span class="cc-money">' + obj[k] + '</span></div>';
 }).join('');
 }
-var clientsBody = rows.length
+var clientsBody = cRows.length
 ? '<table class="cc-tbl"><thead><tr><th>Homeowner</th><th class="k-bill">Bill to</th><th>Stage</th><th>Address</th><th>Rep</th></tr></thead><tbody>' +
-rows.map(function(pr){
+cRows.map(function(pr){
 var l = lead(pr), st = normStage(pr.stage);
 return '<tr data-open="' + esc(pr.id) + '">' +
 '<td data-l="Homeowner">' + hoText(pr) + '</td>' +
@@ -48813,11 +48849,14 @@ esc(LABEL[st] || st) + '</span></td>' +
 '<td data-l="Address">' + esc(pr.address || '\u2014') + '</td>' +
 '<td data-l="Rep">' + repAv(pr.created_by) + '</td></tr>';
 }).join('') + '</tbody></table>'
-: '<div class="cc-empty">' + (query ? 'Nothing matches that.' : 'No community clients yet.') + '</div>';
+: '<div class="cc-empty">' +
+(rows.length ? 'No client matches those filters.'
+: (query ? 'Nothing matches that.' : 'No community clients yet.')) + '</div>';
 
 var clientsPane = '<div data-pane="clients" class="' + (pane === 'clients' ? 'on' : '') + '">' +
 '<div class="cc-srch"><input type="search" id="cr-ch2-search" placeholder="Name, address, partner, work type\u2026" value="' + esc(query) + '"></div>' +
-fold('clist', 'Community clients', rows.length, clientsBody) +
+chBar(cRows.length, rows.length) +
+fold('clist', 'Community clients', cRows.length, clientsBody) +
 '<div class="cc-g2">' +
 fold('bypartner', 'By partner', Object.keys(byPartner).length, tally(byPartner, true)) +
 fold('bystage', 'By stage', Object.keys(byStage).length, tally(byStage, false)) +
@@ -48825,13 +48864,13 @@ fold('bystage', 'By stage', Object.keys(byStage).length, tally(byStage, false)) 
 
 host.innerHTML =
 '<div class="cc-tabs"><div class="tabbar">' +
+'<button data-pane="clients" class="' + (pane==='clients'?'on':'') + '" type="button">Clients</button>' +
+'<span class="cc-sep">|</span>' +
 '<button data-pane="bids" class="' + (pane==='bids'?'on':'') + '" type="button">Bids</button>' +
 '<span class="cc-sep">|</span>' +
 '<button data-pane="partners" class="' + (pane==='partners'?'on':'') + '" type="button">Partners</button>' +
-'<span class="cc-sep">|</span>' +
-'<button data-pane="clients" class="' + (pane==='clients'?'on':'') + '" type="button">Clients</button>' +
 '</div></div>' +
-bidsPane + partnersPane + clientsPane +
+clientsPane + bidsPane + partnersPane +
 '<div class="cc-rule">Tools</div>' +
 '<div class="tools">' +
 '<button class="primary" data-go="newbid" type="button"><span class="i">' + ICO('pencil') + '</span>' +
