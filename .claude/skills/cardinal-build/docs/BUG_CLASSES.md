@@ -2447,3 +2447,27 @@ populate -> change -> serializeFrame() -> reopen the saved html -> re-read the v
 `gate_750` does exactly this, and additionally changes the pick twice to prove the
 attribute *moves* rather than accumulating a second `selected`.
 
+## 40 — a rect audit cannot see a pseudo-element hit area, and elementFromPoint sees nothing off-viewport (752)
+
+Two instrument faults in one build, both producing confident wrong answers about touch
+targets:
+
+1. **`getBoundingClientRect` measures the element's box, not its hit area.** A control
+   with `::after{position:absolute;width:44px;height:44px}` centred on it answers taps
+   across 44px while measuring 22×22. The 752 walk flagged `.pu-box` as an offender on
+   exactly this — it was already correct, and had been since `cr-punch2-styles` shipped.
+   **Before declaring a small control an offender, read
+   `getComputedStyle(el, '::after')` (and `'::before'`).**
+
+2. **`document.elementFromPoint` answers `null` for any point outside the viewport.**
+   The punch strip sits below the fold at 844px; the first tap-probe never scrolled, so
+   every sample "missed" — including the box's own centre — and the intact `::after`
+   was blamed. **Scroll the target into view before sampling**, and treat a null from
+   elementFromPoint as "off-screen", never as "not tappable".
+
+The deeper rule joins the two: **a hit-area claim needs the compositor's answer, and
+the compositor only answers about the visible screen, in stacking order.** In the
+seeded harness the landing module painted over the home strip, so even the scrolled
+probe returned the overlay — at which point the honest gate asserts what is provable
+(the computed pseudo box) and says why the tap itself cannot be isolated.
+

@@ -4554,3 +4554,39 @@ was the bug Theo reported: there was no way to look at the photo.
 
 **Touch targets on this overlay are ≥44px** (close 44×44, Back 78×44, action 121×44),
 measured as rendered rects at 390px with touch emulation.
+
+---
+
+## The 44px touch-target floor — `cr-touch44-styles` (752)
+
+**One block, at the very end of `<body>`, is the entire pass.** Every rule carries the
+measured before-size from `walk751.mjs`. If a control is under 44px, its fix belongs in
+THIS block, with its measurement — never scattered into module stylesheets.
+
+**The mechanism is `min-width`/`min-height`, and that is load-bearing.** The offenders
+are sized by id-scoped `width`/`height` rules a class selector cannot out-specify — but
+min-* are different properties that never compete in the cascade (used value =
+max(width, min-width)). That is why the block wins with plain class selectors and zero
+`!important`, and why every module stylesheet stayed byte-identical.
+
+⚠️ **The block must remain the LAST `<style>` in the document** (asserted in
+`gate_752`): its same-specificity rules win by order.
+
+⚠️ **`.pu-box` is deliberately absent** — it measures 22×22 but already carries a
+44×44 `::after` hit box from `cr-punch2-styles`. **A rect-based audit cannot see
+pseudo-element hit areas**; check `getComputedStyle(el,'::after')` before declaring a
+small control an offender.
+
+⚠️ **Printed documents are out of scope by construction**: they render in the
+`#reportFrame` iframe, a separate document that app CSS cannot reach. The 15px contract
+tick boxes print exactly as before.
+
+**Instrument notes** (all cost a red against a correct build): `elementFromPoint`
+answers null outside the viewport — scroll first; the seeded harness paints the landing
+module over the home strip, so tap-through claims there are dishonest; Playwright's
+`screenshot()` hangs "waiting for fonts" under the mock — use CDP
+`Page.captureScreenshot`.
+
+Unmeasured module screens (Pricing, Coach, Partners, Showcase, Crews directory) have
+their own add-buttons (`.cr-p-tool-btn`, `.cr-k-btn`, `.cr-cp-addbtn`, `.cr-sh-btn`) —
+**not covered by this pass**; walk them before extending the census.

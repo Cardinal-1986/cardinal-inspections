@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 751 &#8212; Tapping a photo in the gallery opens the photo full screen instead of jumping to the client</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 752 &#8212; Every button, chip and link is at least 44 pixels to the touch — the size a gloved finger needs</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38610,6 +38610,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:752, d:'2026-08-12', t:'Buttons a gloved finger can hit',
+s:'Every screen was measured at phone width, and everything that came up under 44 pixels \u2014 the size a fingertip actually needs \u2014 got raised to the floor. The menu button, the plus, the home button, all sixteen menu items, the Call and Text buttons on every client card, the calendar arrows, the fifteen action buttons on the client list, the stage filter chips, the sort control, the email and phone links on a profile that were twelve pixels tall, the edit pencil, the Map and Satellite toggles, every chip button including Mark Paid and Mark Repaid, and every dropdown. Photo thumbnails were already big enough and printed documents are untouched \u2014 contracts print exactly as before.' },
 { b:751, d:'2026-08-12', t:'Photos open as photos',
 s:'In Photo Activity, tapping a photo used to jump straight to the client profile, so there was no way to actually look at the picture. It now opens full screen, with the client name under it and two buttons: Back, and Open client if you did want the profile after all. Tapping the photo itself, the X, or Escape all close it. Nothing was built for this \u2014 it is the same full-screen viewer the Resource Library and Punch Outs already used, which the gallery had simply never been pointed at. The close button also grew from 38 to 44 pixels, which is the size a gloved finger needs.' },
 { b:750, d:'2026-08-12', t:'Colour dropdowns on the roofing agreement',
@@ -66805,5 +66807,71 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
   }, true);
 })();
 </script>
+<style id="cr-touch44-styles">
+/* ============================================================================
+   cr-touch44 — the 44px touch-target floor · v2026-08-12 build 752
+   ONE block is the WHOLE pass. Every selector lists its measured size at 390px
+   before this build (walk751.mjs, rendered rects, touch context). If you add a
+   control under 44px, its fix belongs HERE, with its measurement.
+   min-* only: min-width/min-height do not compete with width/height in the
+   cascade, so the id-scoped sizes in module stylesheets stay untouched.
+   NOT here on purpose: .pu-box (already has a 44px ::after hit area — a rect
+   audit cannot see it, do not "fix" it), document tick boxes (iframe, prints),
+   photo tiles (155px).
+   ========================================================================== */
+
+/* ---- chrome, on every screen ------------------------------------------- */
+/* was 38×38 (menu) / 34×34 (+) — the header icon buttons */
+.cr-ib{min-width:44px;min-height:44px;}
+/* was 34×34 */
+#cr-hd2-home{min-width:44px;min-height:44px;}
+/* was 32×40 */
+#cr-home-btn{min-width:44px;min-height:44px;}
+/* was 30×30 — landing light/dark toggle */
+.cr-lr-theme{min-width:44px;min-height:44px;}
+/* was 42×21 ("Skip") and 97×40 ("All clients · N") — landing recents module */
+button.sk{min-height:44px;min-width:44px;}
+.cr-lr-minor button{min-height:44px;}
+
+/* ---- burger menu -------------------------------------------------------- */
+/* was 33–34 tall, all 16 items */
+#newMenu .navopt,#navMenu .navopt{min-height:44px;}
+
+/* ---- home --------------------------------------------------------------- */
+/* was 106×29 ×60 — the Call/Text pills on every client card */
+.pcacts a{min-height:44px;display:inline-flex;align-items:center;justify-content:center;}
+/* was 28×28 (home) / 32×32 (#calCard, .teamcal) — calendar arrows */
+.calnav{min-width:44px;min-height:44px;}
+
+/* ---- All Clients list --------------------------------------------------- */
+/* was 36×36 base, 38×38 in #leadsView — fifteen on screen at once */
+.ljbtn{min-width:44px;min-height:44px;}
+/* was 32 tall — stage filter chips */
+.ljchip{min-height:44px;}
+/* was 87×20 — the shortest control in the app */
+.ljsortchip{min-height:44px;display:inline-flex;align-items:center;}
+
+/* ---- client profile ----------------------------------------------------- */
+/* was 12–14 tall — email, phone, Add contact, Switch Primary */
+a.hem,a.hph,#dbAddContact,#dbSwitchPrim{display:inline-flex;align-items:center;min-height:44px;}
+/* was 30×26 — the edit pencil */
+.editpencil{min-width:44px;min-height:44px;}
+/* was 45×24 — Map/Satellite toggles on the location cards (profile + leads) */
+.dbmtabs button,.ljmaptabs button{min-height:44px;}
+
+/* ---- chip buttons, app-wide (money actions included) -------------------- */
+/* was 34–40 tall: ＋ Add, See all, Remove, Mark repaid, ‹ Overview, cover 📷 */
+.chipbtn{min-height:44px;min-width:44px;}
+/* was 38 tall — Mark Paid / Pay net / Pay full / Confirm */
+.pay-btn,.pay-chip{min-height:44px;}
+/* was 139×36 — ＋ Add a punch out. NOT a .chipbtn, its own class; the first
+   gate run caught the census assuming otherwise. */
+.pp-add{min-height:44px;}
+
+/* ---- form controls in the app document ---------------------------------- */
+/* was 31 tall (Activity Count and friends). Printed documents are in the
+   #reportFrame iframe and cannot inherit this. */
+select{min-height:44px;}
+</style>
 </body>
 </html>
