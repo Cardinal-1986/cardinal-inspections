@@ -4444,3 +4444,78 @@ created ones get boxes.
 
 **Row 10 "Ventilation" was left as plain text**, because it carried no circle prompt
 in the template — the only lettered row in the roofing spec sheet without boxes.
+
+---
+
+## The numbered house diagram — roofing agreement only (749)
+
+`ROOF_AGREEMENT_BODY` carries a `<figure class="roofdiag">` directly above the numbered
+Project Specifications table. **It is the printed master's own illustration**, extracted
+from `docs/Cardinal_Roofing_Contract.pdf` (page 1, image xref 30), not a drawing — so the
+contract on the iPad and the one in the truck show the same picture.
+
+| | |
+|---|---|
+| Source | `docs/Cardinal_Roofing_Contract.pdf` p1, xref 30, PNG 1172×840, placed 218×156 pt |
+| Shipped as | greyscale JPEG q84, 760 px wide, 96,877 bytes → **129,195-char data URI** |
+| Displayed | `max-width:3.6in`, centred, `break-inside:avoid` |
+| Print | 346 px ≈ **211 dpi** |
+| Cost | a saved agreement is **281 KB** (the logo alone was already 139,982 chars) |
+
+**The callouts map 1:1 onto the numbered rows below the figure**, which is the whole point
+of putting it there: 1 decking · 2 roof deck protection · 3 drip edge / gutter apron ·
+4 ice & water barrier (three places) · 5 valley metal · 6 starter shingles · 7 shingles ·
+8 flashing · 9 extrusions · 10 ventilation · 11 ridge cap / hip cap. Items 12 (existing
+layers) and 13 (roof pitch) are counts rather than places and have no callout on the
+master either.
+
+⚠️ **Roofing only, and that is measured.** `Cardinal_Siding_Contract.pdf` and
+`Cardinal_Gutter_Contract.pdf` were opened: both carry only the Cardinal logo and the BBB
+badge. There is no siding or gutter diagram to port.
+
+⚠️ **The `.roofdiag` CSS lives in `ESTIMATE_BASE_RAW`, so it is present in EVERY priced
+document** — same as `.cbx`. That is one skeleton working as designed, not a leak. **Test
+for `<figure class="roofdiag">`, never for the bare string `roofdiag`** — the latter went
+2 red against a correct build.
+
+⚠️ **It must never become a photo slot.** `wireCoverPhoto()` claims `.cover-photo` and
+`wirePhotoFrames()` claims `.fig .frame`, injecting a file input and an upload button.
+`.roofdiag` deliberately collides with neither, and sits outside `EDITABLE_SELECTOR` so a
+rep cannot type over or delete it.
+
+⚠️ **Sizing is a per-DOCUMENT cost, not a per-file one.** `serializeFrame()` stores the
+whole document HTML per saved contract. Measure the logo's existing data URI before
+growing this one.
+
+---
+
+## Colour dropdowns on the roofing agreement (750)
+
+Three colour fields on `ROOF_AGREEMENT_BODY` are `<select class="crsel">` instead of
+free-text `.ph` boxes: **item 7B shingle colour** (`data-crsel="occ"`) and **item 3A/3B
+drip edge + gutter apron** (`data-crsel="trim"`).
+
+| List | Source | Rule |
+|---|---|---|
+| OC shingle colours | `window.CardinalColors.list()` → the module's existing `oc_colors` query | hidden excluded, `sort_order` kept, discontinued badged |
+| Aluminium trim | `TRIM_COLORS` constant | **a starting list, not gospel** — Theo's pick when told none existed |
+
+⚠️ **`oc_colors` still has exactly ONE reader.** The dropdown goes through the OC
+module's accessor, not a second query — asserted in `patch_750` and `gate_750`. Add
+the accessor, never a parallel `from('oc_colors')`.
+
+⚠️ **A `<select>`'s value is a PROPERTY and does not survive `cloneNode(true)`.**
+`serializeFrame()` saves contracts by cloning, so the `change` handler writes the
+**`selected` attribute** onto the chosen option and strips it from the rest. Without
+that the colour is lost on save and nothing in the DOM shows it was ever picked. Any
+future form control added to a document must do the same.
+
+⚠️ **Saved option lists are frozen on purpose.** `wireColorSelects()` fills a select
+only when it is empty, so a signed contract keeps the colours it was offered rather
+than restating today's catalogue.
+
+⚠️ **`contenteditable="false"` on every select** — they land in editable `<td>`s
+(`table.meta td:not(.k)`), the same trap 748 hit.
+
+**Item 5 Valley metal is still free text** — same trim palette, but outside what was
+asked for. One line to add if Theo wants it.

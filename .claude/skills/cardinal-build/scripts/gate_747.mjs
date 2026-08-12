@@ -113,7 +113,17 @@ async function printDoc(html) {
   const s = pdf.toString('latin1');
   let pages = 0, green = 0;
   for (const mm of s.matchAll(/stream\r?\n([\s\S]*?)endstream/g)) {
-    let d; try { d = zlib.inflateSync(Buffer.from(mm[1], 'latin1')).toString('latin1'); } catch (e) { d = mm[1]; }
+    /* ⚠️ ONLY COUNT STREAMS THAT ACTUALLY INFLATE. Chromium writes page content
+       streams as FlateDecode; an embedded JPEG is DCTDecode and will NOT inflate.
+       This used to fall back to the RAW BYTES on a failed inflate — and build 749's
+       embedded house diagram contains the bytes "re" surrounded by word boundaries
+       somewhere in its JPEG data, so the image was counted as a sixth page with no
+       header on it. The gate reported "5 of 6 pages" against a document that is five
+       pages long with the header on every one (confirmed independently with PyMuPDF).
+       Skipping streams that are not Flate excludes images by construction. */
+    let d;
+    try { d = zlib.inflateSync(Buffer.from(mm[1], 'latin1')).toString('latin1'); }
+    catch (e) { continue; }
     if (!/\bre\b/.test(d)) continue;
     pages++;
     if (/0 1 0 rg/.test(d)) green++;
