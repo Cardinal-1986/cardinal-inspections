@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 752 &#8212; Every button, chip and link is at least 44 pixels to the touch — the size a gloved finger needs</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 753 &#8212; The Menu and + menus open under their buttons instead of across the screen</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14022,11 +14022,12 @@ document.getElementById('addProjectBtn').addEventListener('click', function(e){
   var r = this.getBoundingClientRect();
   newMenu.style.top = Math.round(r.bottom + 6) + 'px';
   if(window.innerWidth > 640){
-    /* The + button sits at the top-right, so anchoring the menu by its
-       LEFT edge pushed it off the screen. Anchor by the right edge and
-       let it grow leftward, clamped to the viewport. */
-    newMenu.style.left = 'auto';
-    newMenu.style.right = Math.max(10, Math.round(window.innerWidth - r.right)) + 'px';
+    /* 753: the + sits beside the burger at the LEFT end of the bar (cr-hd2,
+       416) — the old comment said top-right and right-aligned the menu, which
+       clipped it off-screen left at ~1024px. Drop from the button's left
+       edge; clamped below once the real width is known. */
+    newMenu.style.left = Math.round(r.left) + 'px';
+    newMenu.style.right = 'auto';
   }else{
     newMenu.style.left = '10px';
     newMenu.style.right = '10px';
@@ -14035,6 +14036,12 @@ document.getElementById('addProjectBtn').addEventListener('click', function(e){
   newMenu.style.maxHeight = Math.max(200, window.innerHeight - Math.round(r.bottom) - 24) + 'px';
   newMenu.style.overflowY = 'auto';
   newMenu.style.display = 'block';
+  if(window.innerWidth > 640){
+    var nr = newMenu.getBoundingClientRect();
+    if(nr.right > window.innerWidth - 10){
+      newMenu.style.left = Math.max(10, Math.round(window.innerWidth - nr.width - 10)) + 'px';
+    }
+  }
 });
 document.addEventListener('click', function(){ newMenu.style.display = 'none'; });
 window.addEventListener('scroll', function(){ newMenu.style.display = 'none'; }, { passive: true });
@@ -17957,15 +17964,23 @@ document.getElementById('navBtn').addEventListener('click', function(e){
   var r = this.getBoundingClientRect();
   navMenu.style.top = Math.round(r.bottom + 6) + 'px';
   if(window.innerWidth > 640){
-    /* align the menu's right edge with the button, not the screen edge */
-    navMenu.style.right = Math.max(10, Math.round(window.innerWidth - r.right)) + 'px';
-    navMenu.style.left = 'auto';
+    /* 753: the button lives at the LEFT end of the bar (cr-hd2, 416), so the
+       menu drops from the button's left edge. Show first, then clamp against
+       the menu's real width so it can never leave the viewport. */
+    navMenu.style.left = Math.round(r.left) + 'px';
+    navMenu.style.right = 'auto';
   }else{
-    /* mobile: let the CSS full-width sheet rules apply */
+    /* mobile: let the CSS sheet rules apply */
     navMenu.style.right = '';
     navMenu.style.left = '';
   }
   navMenu.style.display = 'block';
+  if(window.innerWidth > 640){
+    var mr = navMenu.getBoundingClientRect();
+    if(mr.right > window.innerWidth - 10){
+      navMenu.style.left = Math.max(10, Math.round(window.innerWidth - mr.width - 10)) + 'px';
+    }
+  }
 });
 document.addEventListener('click', function(){ navMenu.style.display = 'none'; });
 window.addEventListener('scroll', function(){ navMenu.style.display = 'none'; }, { passive: true });
@@ -38610,6 +38625,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:753, d:'2026-08-12', t:'Menus open where their buttons are',
+s:'The Menu button sits at the left end of the header, but its menu had been opening pinned to the far right edge of the screen \u2014 a leftover rule from the old header where the button lived on the right. Both the Menu and the + menu now drop down directly under their buttons, on every screen size, and can never open half off-screen.' },
 { b:752, d:'2026-08-12', t:'Buttons a gloved finger can hit',
 s:'Every screen was measured at phone width, and everything that came up under 44 pixels \u2014 the size a fingertip actually needs \u2014 got raised to the floor. The menu button, the plus, the home button, all sixteen menu items, the Call and Text buttons on every client card, the calendar arrows, the fifteen action buttons on the client list, the stage filter chips, the sort control, the email and phone links on a profile that were twelve pixels tall, the edit pencil, the Map and Satellite toggles, every chip button including Mark Paid and Mark Repaid, and every dropdown. Photo thumbnails were already big enough and printed documents are untouched \u2014 contracts print exactly as before.' },
 { b:751, d:'2026-08-12', t:'Photos open as photos',
@@ -39500,7 +39517,7 @@ window.CardinalBulk = { enterMode:enterMode, exitMode:exitMode, toggleMode:toggl
 })();
 </script>
 
-<style id="cr-menu-styles">#navMenu{left:auto !important;right:10px !important;width:min(300px,calc(100vw - 20px)) !important;max-width:none !important;min-width:0 !important;overflow-y:auto !important;overflow-x:hidden !important;-webkit-overflow-scrolling:touch !important;overscroll-behavior:contain !important;touch-action:pan-y !important;max-height:72vh !important;max-height:calc(100dvh - 150px - env(safe-area-inset-bottom,0px)) !important;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px)) !important;-webkit-transform:translateZ(0);transform:translateZ(0)}#navMenu .navopt{padding:9px 14px !important;font-size:13px !important}#navMenu .navsec{padding:8px 14px 4px !important}#navMenu #cr-nav-sec-admin{border-top:1px dashed #e6d9c8;color:#8f1620 !important;background:#f4f2f1}#cr-nav-palette-hint{display:flex;align-items:center;gap:8px;padding:9px 14px;font:700 12px 'Segoe UI',Arial,sans-serif;color:#5a5a5a;background:#faf7f6;border-top:1px solid #f0e8e2;cursor:pointer;-webkit-tap-highlight-color:rgba(200,32,46,.2);font-family:inherit;width:100%;text-align:left;border-left:0;border-right:0;border-bottom:0}#cr-nav-palette-hint:hover{background:#f5efe0}#cr-nav-palette-hint .lbl{flex:1;min-width:0}#cr-nav-palette-hint kbd{background:#eee;padding:2px 6px;border-radius:4px;font:800 9.5px 'SF Mono',Menlo,Consolas,monospace;color:#666;letter-spacing:.06em}</style>
+<style id="cr-menu-styles">#navMenu{/* 753: the left/right pins are GONE. They pinned the menu to the viewport right edge with !important, beating the click handler’s inline position — written when the Menu button lived on the right of the old masthead; cr-hd2 (416) moved it left. The handler owns the position now. Do not re-pin. */width:min(300px,calc(100vw - 20px)) !important;max-width:none !important;min-width:0 !important;overflow-y:auto !important;overflow-x:hidden !important;-webkit-overflow-scrolling:touch !important;overscroll-behavior:contain !important;touch-action:pan-y !important;max-height:72vh !important;max-height:calc(100dvh - 150px - env(safe-area-inset-bottom,0px)) !important;padding-bottom:calc(40px + env(safe-area-inset-bottom,0px)) !important;-webkit-transform:translateZ(0);transform:translateZ(0)}#navMenu .navopt{padding:9px 14px !important;font-size:13px !important}#navMenu .navsec{padding:8px 14px 4px !important}#navMenu #cr-nav-sec-admin{border-top:1px dashed #e6d9c8;color:#8f1620 !important;background:#f4f2f1}#cr-nav-palette-hint{display:flex;align-items:center;gap:8px;padding:9px 14px;font:700 12px 'Segoe UI',Arial,sans-serif;color:#5a5a5a;background:#faf7f6;border-top:1px solid #f0e8e2;cursor:pointer;-webkit-tap-highlight-color:rgba(200,32,46,.2);font-family:inherit;width:100%;text-align:left;border-left:0;border-right:0;border-bottom:0}#cr-nav-palette-hint:hover{background:#f5efe0}#cr-nav-palette-hint .lbl{flex:1;min-width:0}#cr-nav-palette-hint kbd{background:#eee;padding:2px 6px;border-radius:4px;font:800 9.5px 'SF Mono',Menlo,Consolas,monospace;color:#666;letter-spacing:.06em}</style>
 <script id="cr-menu-script">
 (function(){
 'use strict';
