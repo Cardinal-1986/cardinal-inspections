@@ -4262,3 +4262,31 @@ once** — measured in Chromium, `submitFired === false`. The JS guards were alr
 correct and already refused; they simply were not reached. `gate_741.mjs` asserts both
 halves: **the handler runs** *and* **it still writes nothing**, plus that a filled-in
 value still saves.
+
+### Searching by phone number (743)
+
+**Seven** search boxes include a client's phone: `renderHome`, `ljMatches`, `cdMatch`,
+`renderInsuranceClientsList` (main block) and `cr-search-script` / `cr-ic-script` /
+`cr-ch2-script`. Three more (`cr-estimates`, `cr-eaf`, `cr-bpa`) search name+address
+only and are **deliberately untouched**.
+
+- ⚠️ **None of the seven ever looked in `checklist.lead.phones`.** 16 of the 34 clients
+  in production keep a phone only there, so searching for those people by number had
+  never worked at all. `phoneHay(pr)` reaches `lead.phones`, `lead.homeowner_phone` and
+  `lead.renter_phone` as well as the `phone` column.
+- **The haystack carries every rendering; the query is not normalised.** Digits, dashes,
+  dots, spaces and brackets all appear, so the existing `indexOf(q)` matches whatever is
+  typed. **The comparison lines were not touched** — which is what makes the change
+  strictly additive. It was also the practical choice: those comparison lines are not
+  unique in the file (3 copies each), so normalising the query would have meant 14 edits
+  with block slicing instead of 7.
+- Digit extraction delegates to **`window.crValid.phone`** (739), leading-1 country-code
+  rule included, rather than re-deciding what a phone number is.
+
+**The property that matters is "nothing stopped matching."** `gate_743.mjs` fuzzes 161
+query strings across 6 clients against the old and new haystacks and fails on a single
+lost match — 0 lost, 14 gained. A gate that only checked "more things match" would pass
+even if the change broke searching by name.
+
+⚠️ Short numeric queries (`937`, `01`) now match more rows, because the digit forms are
+in the haystack. That is a superset of the old behaviour and is intended.

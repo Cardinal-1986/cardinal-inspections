@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 742 &#8212; The client CSV called every customer retail and exported no phone, email or assignment; two health checks could never report a problem either</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 743 &#8212; Searching by phone number now finds the client whichever way you type it, and finds the 16 clients whose number the search could never see</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10454,7 +10454,7 @@ function renderHome(){
   var q = searchText.trim().toLowerCase();
   var projs = cacheProjects.filter(function(pr){
     if(!q) return ['Closed','Lost'].indexOf(normStage(pr.stage)) === -1; /* archived/lost: off the board */
-    var hay = [pr.name, pr.address, pr.phone, pr.email, poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
+    var hay = [pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
     return hay.indexOf(q) !== -1;
   });
   countLabel.textContent = projs.length + ' project' + (projs.length === 1 ? '' : 's');
@@ -11715,7 +11715,7 @@ function ljMatches(p){
   var q = document.getElementById('ljSearch').value.trim().toLowerCase();
   if(q){
     var ck = parseCkAll(p);
-    var hay = [p.name, p.address, p.phone, p.email, ck.po ? '#'+ck.po : ''].join(' ').toLowerCase();
+    var hay = [p.name, p.address, p.phone, phoneHay(p), p.email, ck.po ? '#'+ck.po : ''].join(' ').toLowerCase();
     if(hay.indexOf(q) === -1) return false;
   }
   for(var i=0;i<LJ_GROUPS.length;i++){
@@ -17256,6 +17256,64 @@ async function patchProjectCk(pr, patch){
   var cp = cacheProjects.find(function(x){ return x.id === pr.id; });
   if(cp) cp.checklist = s;
 }
+/* 743: every shape of every phone number on a client, as one searchable string.
+
+   WHY EVERY SHAPE rather than normalising the query: the seven haystacks that
+   carry a phone each end in a raw `indexOf(q)`, and those comparison lines are
+   not unique in the file. Widening the HAYSTACK instead means the comparison is
+   untouched and the change is purely additive — a query that matched before
+   still matches, which is the property the gate checks.
+
+   It also reaches `checklist.lead.phones`, which NONE of the seven did. 16 of
+   the 34 clients in production keep their phone only there, so searching for
+   those people by number has never worked.
+
+   Digit extraction is delegated to crValid.phone (739) — including its leading-1
+   country-code rule — rather than re-deciding here what a phone number is. */
+function phoneForms(v){
+  var raw = String(v == null ? '' : v).trim();
+  if(!raw) return [];
+  var out = [raw];
+  var r = (window.crValid && window.crValid.phone) ? window.crValid.phone(raw) : null;
+  var d = r ? r.digits : raw.replace(/\D/g, '');
+  if(!d) return out;
+  /* push the digit string only when it differs — but do NOT return early on a
+     match. A number STORED as bare digits still needs its punctuated forms, or
+     "9375550102" is findable only as itself. (The first version returned here
+     and gate_743 caught it: 4 red.) */
+  if(d !== raw) out.push(d);
+  if(d.length === 10){
+    var a = d.slice(0,3), b = d.slice(3,6), c = d.slice(6);
+    out.push('(' + a + ') ' + b + '-' + c);
+    out.push(a + '-' + b + '-' + c);
+    out.push(a + '.' + b + '.' + c);
+    out.push(a + ' ' + b + ' ' + c);
+  }
+  return out;
+}
+function phoneHay(pr){
+  if(!pr) return '';
+  var out = [], seen = {};
+  function add(v){
+    var fs = phoneForms(v);
+    for(var i = 0; i < fs.length; i++){
+      var f = fs[i];
+      if(f && !seen[f]){ seen[f] = 1; out.push(f); }
+    }
+  }
+  add(pr.phone);
+  try{
+    var L = (parseCkAll(pr) || {}).lead || {};
+    if(Array.isArray(L.phones)){
+      L.phones.forEach(function(x){
+        add(x && (typeof x === 'string' ? x : (x.v || x.value)));
+      });
+    }
+    add(L.homeowner_phone);
+    add(L.renter_phone);
+  }catch(_){}
+  return out.join(' ');
+}
 function assignedRepOf(pr){
   var L = parseCkAll(pr).lead;
   if(L && L.assigned && L.assigned.length) return L.assigned[0];
@@ -17449,7 +17507,7 @@ function cdMatch(pr){
   if(ts.length && !ljTrades(pr).some(function(t){ return ts.indexOf(t) !== -1; })) return false;
   var q = (document.getElementById('cliFilter').value || '').trim().toLowerCase();
   if(q){
-    var hay = [pr.name, pr.address, pr.phone, pr.email, pr.created_by,
+    var hay = [pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, pr.created_by,
       poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : ''].join(' ').toLowerCase();
     if(hay.indexOf(q) === -1) return false;
   }
@@ -22724,7 +22782,7 @@ function renderInsuranceClientsList(){
     var I = projInsurance(pr) || {};
     var adj = I.adjuster || {};
     var hay = [
-      pr.name, pr.address, pr.phone, pr.email, pr.created_by,
+      pr.name, pr.address, pr.phone, phoneHay(pr), pr.email, pr.created_by,
       poOf(pr) ? '#' + poOf(pr) + ' ' + poOf(pr) : '',
       I.carrier, I.claim_number, I.policy_number, adj.name, adj.phone
     ].join(' ').toLowerCase();
@@ -33996,6 +34054,9 @@ var clients = [];
 var s = ((p.name || '') + ' ' +
 (p.address || '') + ' ' +
 (p.phone || '') + ' ' +
+/* 743: every shape of every number on the client, including the ones kept in
+   checklist.lead.phones which this box could not see at all. */
+((window.phoneHay ? window.phoneHay(p) : '') || '') + ' ' +
 (p.email || '') + ' ' +
 ((p.location && p.location.street) || '')).toLowerCase();
 if(s.indexOf(q) !== -1){
@@ -38279,6 +38340,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:743, d:'2026-08-12', t:'Searching by phone number actually finds people now',
+s:'Typing a phone number into any of the search boxes only found a client if you punctuated it exactly the way it happened to be stored \u2014 so 9375550101 would not find a number saved as 937-555-0101, and neither would find (937) 555-0101. Worse, none of the seven search boxes ever looked at the phone numbers kept on the bid form, which is where 16 of the 34 clients on file keep theirs \u2014 searching for those people by number has never worked at all. Now every search that covers a client covers every number on that client, in every ordinary way of writing it: digits, dashes, dots, spaces or brackets all find the same person, and the numbers on the bid form are included. Nothing that used to be found has stopped being found \u2014 the searches only look in more places, never fewer.' },
 { b:742, d:'2026-08-12', t:'The client CSV was wrong in four columns, and two health checks could never fail',
 s:'Three places in the app were reading a client record the wrong way \u2014 looking for the details inside a piece of text instead of opening it first \u2014 so they found nothing and quietly carried on. The client CSV was the visible one: every export this app has ever produced said the same thing about everybody \u2014 claim type \u201Cretail\u201D, no phone, no email, nobody assigned. Across the 34 clients on file that mislabelled 21 of them, including all 16 community jobs, which are exactly the ones where a partner is billed instead of the homeowner. The export now reads the record the same way the rest of the app does, gives the real claim type (and says \u201Cunknown\u201D when it genuinely is not recorded rather than guessing), and includes every phone and email on the client plus who it is assigned to. The other two were on the Health screen: the \u201Cinvalid claim type\u201D and \u201Cinsurance client\u201D checks were looking the same wrong way, so they always came back \u201CNone found\u201D no matter what was in the data. They were telling the truth today by luck, not because they had looked. Nothing about how clients are stored changed \u2014 only the reading of them.' },
 { b:741, d:'2026-08-12', t:'Required fields are marked, and a refused save points at the box',
@@ -49020,7 +49083,8 @@ return null;
 function matches(pr, q){
 if(!q) return true;
 var c = claimOf(pr);
-var hay = [pr.name, pr.address, pr.phone, pr.email,
+var hay = [pr.name, pr.address, pr.phone,
+(window.phoneHay ? window.phoneHay(pr) : ''), pr.email,
 c.carrier, c.claim_number, c.policy_number, c.adjuster_name]
 .join(' ').toLowerCase();
 return hay.indexOf(q) !== -1;
@@ -49947,7 +50011,8 @@ var q = query.trim().toLowerCase();
 var list = projects().filter(function(pr){
 if(!q) return true;
 var l = lead(pr);
-return [pr.name, pr.address, pr.phone, pr.email,
+return [pr.name, pr.address, pr.phone,
+(window.phoneHay ? window.phoneHay(pr) : ''), pr.email,
 l.partner_name, l.work_type, l.scope, l.homeowner_name]
 .join(' ').toLowerCase().indexOf(q) !== -1;
 });
