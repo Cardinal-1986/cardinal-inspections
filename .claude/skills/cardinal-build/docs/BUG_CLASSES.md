@@ -2536,3 +2536,56 @@ for the wrong reason.
 **One teardown.** If a navigation needs to hide "everything else", it calls
 `hideAllViews()`. `#landingView` is the one deliberate exception (absent from it
 by design), so it still goes by hand.
+
+
+---
+
+## 43 — text-overflow:ellipsis is INERT on an inline box, and an inline box measures 0 (758)
+
+Two of Theo's four reports in one session were the same defect on different
+screens, and the fix for both is one declaration.
+
+`.cr-pb-job .nm` / `.cr-pb-job .ad` (Production job rows) and `.cr-ic-row .ad`
+(Insurance client cards) all carry
+
+```css
+overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+```
+
+…and all three are rendered as **`<span>`** by their module's JS. An inline box
+has no width to overflow, so **`text-overflow:ellipsis` does nothing**, while
+`white-space:nowrap` still applies — turning the text into one unbreakable run
+that spills past its card instead of truncating. On the Production rows it also
+put the name and address on the same line with no separator
+("Bob DeBuilder921 Testing Way").
+
+**Fix: `display:block`.** Then the ellipsis has a block box to work in.
+
+### ⚠️ The measurement trap that let it ship green
+
+**An inline element reports `scrollWidth === 0` and `clientWidth === 0`.** So the
+obvious truncation assertion
+
+```js
+ad.scrollWidth <= ad.clientWidth + 1     // 0 <= 1  → PASSES
+```
+
+**passes vacuously on the broken build.** gate_759 shipped exactly this check,
+went green, and the screenshot still showed the address cut off mid-word. Worse,
+the same expression is wrong even on a *correct* build: an element that IS being
+ellipsised has `scrollWidth > clientWidth` **by definition**, so the check
+inverts its own meaning.
+
+### What to assert instead
+1. `getComputedStyle(el).display === 'block'` — the mechanism.
+2. The element's **own** `getBoundingClientRect().right` against its card's —
+   a *container's* rect cannot see inline overflow, so a container-only test
+   also passes on the broken build (the first probe of this bug did exactly
+   that and under-reported it).
+3. Optionally `scrollWidth > clientWidth` as *evidence the ellipsis is in use*.
+
+### Where else to look
+Any renderer emitting `<span class="nm">` / `<span class="ad">` pairs. Spans
+inside a `display:flex` parent are blockified automatically and are fine — which
+is why `.top`, `.meta` and `.carrier` on the same cards never showed the bug and
+made it look surface-specific.

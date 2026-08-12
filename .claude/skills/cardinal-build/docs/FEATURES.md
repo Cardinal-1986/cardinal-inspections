@@ -4701,3 +4701,32 @@ Their stylesheets (`cr-home-btn-styles`, `cr-pme-styles`) were deleted with them
 Dead references remain in `cr-print-styles`, `cr-touch44-styles` and
 `cr-home-cleanup-styles` — harmless selectors that can never match, left rather
 than surgically edit three long minified lines for no behavioural gain.
+
+## Photo Activity is CRM-aware — `phCrm` (759)
+
+Opening Photo Activity preselects the CRM you were standing in
+(`CardinalHeader.crmHead()`), and a chip row (`#phCrmChips`, reusing the global
+`.ljchips`/`.ljchip`) switches between **All / Retail / Insurance / Community**
+with a count on each. The subtitle (`#phScope`) states the active filter.
+
+- `project_photos` has **no CRM column** — the CRM is derived from the joined
+  project via `projClaimType()`.
+- **An untyped job counts as retail**, matching `crmNow()`/`crmHead()`, so the
+  three buckets always sum to the total shown in the All chip.
+
+## `projPhone(pr)` — the one phone resolver (759)
+
+`{ digits, pretty }`. Declared at depth 0 beside `projHomeowner()`, so it is a
+genuine global. Order (copied from `phoneHay()`, 743):
+`projects.phone → lead.phone → lead.homeowner_phone → lead.renter_phone →
+lead.phones[].v`, normalised through `crValid.phone()`.
+
+⚠️ **11 of 34 production projects keep the number ONLY in
+`lead.homeowner_phone`** — any feature reading `pr.phone` alone is invisible for
+a third of the book. `ck.contacts` is deliberately NOT consulted: it is unused
+in production (0 of 34 rows), and `dbSwitchPrimary` promotes a contact **into**
+`projects.phone` anyway.
+
+**Only the Production dossier's Call button uses it so far.** Seven other sites
+still hand-roll `String(pr.phone||'').replace(...)` — repointing them is a known
+follow-up, listed in OPEN_ITEMS.
