@@ -2189,3 +2189,35 @@ This arrived as a UX polish request — *"clicks Save, did it work?"* — and th
 turned out to be on the **error** path, not the success path. **When someone reports
 missing confirmation, check whether failures are visible first.** Silent failure
 reads exactly like silent success.
+
+## 32 — the gate shadows one of the harness's own globals (734)
+
+Three faults in one build, **all in the gate, none in the app** — the app was right
+from its first run. The expensive one:
+
+The gate did `window.__READS__ = 0` to count queries with. **`__READS__` is the
+mock's own read log, and it is an array.** The mock then threw
+`__READS__.push is not a function` *inside* `renderCommissions()`, whose `catch`
+rendered "Could not load commissions" and returned early — so `commUi.lastComms` was
+never set and the toast lost its commission clause.
+
+**It looked exactly like the feature not working.** Two rounds were spent debugging
+correct application code.
+
+**What found it:** printing `#commMount`'s `innerText`. The error message had been
+rendered on screen the entire time — the gate just never looked at the surface the
+app writes its failures to. *Read what the app is showing before theorising about
+what it is doing.*
+
+**The rule:** before a gate sets any `window.__*` variable, grep the mock for that
+name. And prefer **reading the harness's existing log to installing your own probe** —
+the mock already recorded every select.
+
+### The two cheaper ones, same family
+
+- **The gate hardcoded `$1,702.50`.** `fmtMoney` rounds to whole dollars — `$1,703`.
+  The expectation now comes from calling the app's own `fmtMoney()` and
+  `rptRepName()` inside the page. **An assertion should ask the system how it
+  behaves, not encode what you assume** — the same fault as class 30, in a costume.
+- **A fixed `waitForTimeout` read the toast mid-flight.** Wait for the *condition*
+  (the toast exists), never for a guessed number of milliseconds.
