@@ -4398,3 +4398,49 @@ modelled pages as `scrollHeight/1056` and flagged "split rows" — but
 `break-inside:avoid` does nothing in continuous layout; it only acts while paginating.
 That went 2 red against a correct build. Assert **computed style under print media**
 (the rule applies) plus **the real PDF** (what actually lands on each page).
+
+---
+
+## Construction Agreements — tick boxes, not "circle one" (748)
+
+The three Construction Agreements (`ROOF_AGREEMENT_BODY`, `SIDING_AGREEMENT_BODY`,
+`GUTTER_AGREEMENT_BODY`) carry **76 clickable tick boxes** where they used to carry
+**25 `[circle one]` / `[circle all that apply]` text prompts** you could not circle.
+
+**No new mechanism was written.** Everything this uses already shipped:
+
+| Piece | Where it already lived | Since |
+|---|---|---|
+| `.cbx{cursor:pointer;font-size:13pt;user-select:none;}` | `ESTIMATE_BASE_RAW` — the Agreements' own skeleton | before 748 |
+| `wireCheckboxes(doc)` | called from `openEditor`'s frame `onload`, once | before 748 |
+| `serializeFrame()` stripping `data-cbx` | the save path, so a reopened doc re-wires | before 748 |
+| live examples | `GUTTER_BODY` size boxes, `ANDERSEN_BODY` series boxes | before 748 |
+
+**The three behaviours, all pre-existing in `wireCheckboxes`:**
+
+- `data-group="x"` → **radio.** Ticking one clears every other box in group x.
+- no attribute → **independent toggle.** This is "[circle all that apply]" — roof
+  flashing locations and extra structures, gutter miters.
+- `data-val` → the gutter-size boxes, which also rewrite the description via
+  `applyGutterSize()`. **Deliberately not used in any Agreement.**
+
+Group prefixes are per document: `r*` roof, `s*` siding, `g*` gutter.
+
+⚠️ **`.opts` spans (`data-opts="decking|layers|pitch"`) are NOT checkboxes and must
+not become them.** They are the `collapse()` auto-fill from the roof inspection, and
+its regex `<span class="opts" data-opts="KEY">[^<]*(?:<(?!/span>)[^<]*)*</span>` stops
+at the first `</span>` — a box inside one truncates the match and kills the fill.
+
+⚠️ **Every box sits inside a `contenteditable` cell.** `table.meta td:not(.k)` is in
+`EDITABLE_SELECTOR`, so `lockTemplate()` puts a caret where the click lands. It works
+(`e.preventDefault()`), but it is the reason `gate_748.mjs` drives a real browser and
+does a hit-tested mouse click rather than trusting the markup.
+
+⚠️ **A ticked box is plain text (`\u2611`) in the saved HTML** — that is how the state
+persists. Nothing writes it to a column; the contract document IS the record.
+
+**Saved contracts written before 748 keep their `[circle one]` text.** Only newly
+created ones get boxes.
+
+**Row 10 "Ventilation" was left as plain text**, because it carried no circle prompt
+in the template — the only lettered row in the roofing spec sheet without boxes.
