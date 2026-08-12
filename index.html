@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 738 &#8212; An estimate or contract with no total now asks before it goes to the client; inspection reports are never affected</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 739 &#8212; Phone numbers are stored one way instead of six, and a bad one is flagged as you leave the field</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38196,6 +38196,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:739, d:'2026-08-12', t:'Phone numbers get one shape, and a bad one is flagged',
+s:'There was no phone checking anywhere in the app \u2014 every field took whatever you typed, so the same number ended up stored six different ways and \u201Cabc\u201D was as acceptable as a real number. Now every phone field in the app tidies itself the moment you leave it: 9375550101, 937-555-0101 and 1 937 555 0101 all become (937) 555-0101, so numbers match each other and are easier to read and dial. If what you typed is not a phone number the field turns red and tells you \u2014 but it does NOT rewrite what you typed, so an extension or an unusual number is flagged for you to look at rather than quietly mangled. Leaving a phone blank is still fine; most of these fields are optional and always were.' },
 { b:738, d:'2026-08-12', t:'A priced document with no price asks before it goes out',
 s:'You could email a client an estimate or a contract reading $0.00, or mark one sent, and nothing said a word. Both now stop and ask: \u201CThis estimate has no total \u2014 it reads $0.00. Enter a total first, or send it anyway?\u201D It ASKS rather than refuses, because a no-charge warranty estimate is a real thing and being unable to send one would be worse than the problem. Inspection reports are never affected \u2014 the check only looks at documents that actually have a total line, and an inspection report does not have one, so it goes out exactly as before. Un-marking a document as sent is never questioned either; that is a correction, not a claim.' },
 { b:737, d:'2026-08-12', t:'Paying a rep asks first, and every money question says the amount',
@@ -66134,6 +66136,89 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
     return crToast(msg, (t === 'error' || t === 'err') ? 'err'
                       : ((t === 'success' || t === 'ok') ? 'ok' : 'info'));
   };
+})();
+</script>
+<style id="cr-valid-styles">
+/* 739: the app had NO invalid-field convention at all — .invalid, .field-error,
+   aria-invalid and a shake keyframe were each 0 occurrences. This is that
+   convention, created once so the email and required-field work reuses it.
+
+   .cr-bad is deliberately a BORDER + a wash, not a colour change on the text:
+   many of these inputs are rendered by innerHTML from modules with their own
+   palettes, and recolouring their ink would fight each of them. A border is
+   additive everywhere. */
+.cr-bad{
+  border-color:#c8202e !important;
+  box-shadow:0 0 0 2px rgba(200,32,46,.18) !important;
+  background-image:linear-gradient(rgba(200,32,46,.06),rgba(200,32,46,.06)) !important;
+}
+@keyframes crShake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-5px);}
+  40%{transform:translateX(5px);}
+  60%{transform:translateX(-3px);}
+  80%{transform:translateX(3px);}
+}
+.cr-shake{animation:crShake .32s ease-in-out;}
+@media (prefers-reduced-motion: reduce){ .cr-shake{animation:none;} }
+</style>
+<script>
+/* 739: one phone shape, and the shared field-validation helpers.
+
+   window.crValid.phone(v) -> { ok, digits, pretty }
+     10 digits            -> ok, pretty "(937) 555-0101"
+     11 digits leading 1  -> ok, the last 10 (a US country code, typed by habit)
+     empty                -> ok with digits '' — a phone is OPTIONAL in most of
+                             these forms, and refusing a blank would block real work
+     anything else        -> not ok, and the TEXT IS LEFT ALONE
+
+   That last rule is the important one. An extension, an international number or
+   a note in the field must never be silently destroyed by a formatter that did
+   not understand it — it is flagged and left exactly as typed. */
+(function(){
+  function phone(v){
+    var raw = String(v == null ? '' : v).trim();
+    if(!raw) return { ok:true, digits:'', pretty:'' };
+    var d = raw.replace(/\D/g, '');
+    if(d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+    if(d.length !== 10) return { ok:false, digits:d, pretty:raw };
+    return { ok:true, digits:d,
+             pretty:'(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6) };
+  }
+  function mark(el, ok, msg){
+    if(!el || !el.classList) return;
+    el.classList.toggle('cr-bad', !ok);
+    try{
+      if(ok){ el.removeAttribute('aria-invalid'); if(el.dataset) delete el.dataset.crMsg; }
+      else  { el.setAttribute('aria-invalid','true'); if(msg && el.dataset) el.dataset.crMsg = msg; }
+      if(msg !== undefined) el.title = ok ? '' : (msg || '');
+    }catch(_){}
+  }
+  function shake(el){
+    if(!el || !el.classList) return;
+    el.classList.remove('cr-shake');
+    /* reflow, or the class re-add does not restart the animation */
+    try{ void el.offsetWidth; }catch(_){}
+    el.classList.add('cr-shake');
+    setTimeout(function(){ try{ el.classList.remove('cr-shake'); }catch(_){} }, 400);
+  }
+  window.crValid = { phone: phone, mark: mark, shake: shake };
+  try{ window.normPhone = function(v){ return phone(v).digits; }; }catch(_){}
+
+  /* ONE delegated listener for all eight type="tel" inputs. They live in six
+     different modules and several are written by innerHTML, so per-module wiring
+     would be eight edits that the next new field would not inherit. blur does
+     NOT bubble — capture:true is what makes this work.
+     Events inside #reportFrame belong to another document and never reach here,
+     which is correct: those are printed forms, not app fields. */
+  document.addEventListener('blur', function(e){
+    var el = e.target;
+    if(!el || el.tagName !== 'INPUT') return;
+    if((el.getAttribute('type') || '').toLowerCase() !== 'tel') return;
+    var r = phone(el.value);
+    if(r.ok && r.digits) el.value = r.pretty;      /* one shape, everywhere */
+    mark(el, r.ok, r.ok ? '' : 'Enter a 10-digit phone number.');
+  }, true);
 })();
 </script>
 </body>
