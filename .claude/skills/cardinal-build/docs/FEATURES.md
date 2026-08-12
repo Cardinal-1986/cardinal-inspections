@@ -4320,3 +4320,47 @@ four messages that report a figure back to the person who entered it.
   genuinely wrong.
 - **Rounding on a dashboard is a feature.** `$34,050` reads better than `$34,050.00` at
   a glance. The bug was rounding on documents, not rounding at all.
+
+### Company Documents (746)
+
+Five master contract PDFs listed in `COMPANY_DOCS`, served from `docs/`.
+
+- ⚠️ **`COMPANY_DOCS` lists five documents; `docs/` holds three.**
+  `Cardinal_Window_Contract.pdf` and `Cardinal_Gutter_Contract_Fillable.pdf` **404 in
+  production** (verified with curl, 12 Aug 2026). Those rows now say "Not uploaded yet"
+  instead of offering a dead link — **and start working on their own the moment the file
+  is added**, because the check is a runtime `HEAD`, not a hardcoded flag.
+- ⚠️ **The probe downgrades a row on a definite 404 and nothing else.** A network error,
+  an offline PWA or a slow reply leaves the buttons alone. `gate_746.mjs` kills the HEAD
+  request for a document that *does* exist and asserts its row is untouched — hiding a
+  real contract whenever the iPad drops wifi would be worse than the bug being fixed.
+- **Both links open in their own tab.** Download previously had no `target`, and the
+  `download` attribute is **not reliable for a PDF on iOS Safari** — the file opens
+  instead, replacing the app in place. **An installed PWA has no back button**, so that
+  navigation stranded the user until they force-closed the app. Desktop still downloads
+  straight to the Downloads folder; the `download` attribute is retained.
+
+### Print — what is already right, and what is not (audited at 746)
+
+**Theo's item 9 asked for four things. One is already done; three are real gaps.**
+Nothing here has been changed — the templates are legal documents and want his eye.
+
+- ✅ **"Hides nav, buttons, search bars" — ALREADY DONE.** Measured under print media on
+  the estimate editor: **0 of 508** buttons/inputs/nav/header elements paint, and the
+  app page's own `innerText` is empty. There are 18 `@media print` blocks and the
+  estimate/contract path prints an **isolated iframe** (`frame.contentWindow.print()`),
+  which never contained app chrome in the first place.
+  ⚠️ Measuring an element's own `display` is not enough — an ancestor with
+  `display:none` leaves a descendant reading `block` while painting nothing. Measure the
+  **rect**.
+- ❌ **"Logo header on every page" — real gap.** 1 `<img>`, no running header; the logo
+  is on page 1 only. Rendered and confirmed visually.
+- ❌ **"Forces page breaks between sections" — real gap.** **0** `page-break-*` rules in
+  the whole 155 KB agreement. Confirmed visually: the Customer Information table splits
+  across pages 1→2.
+- ❌ **"No grey backgrounds that waste ink" — real.** The `PROPERTY PHOTO` placeholder
+  prints as a **459,580 px² solid grey block** when no photo is attached (`.cover-photo`,
+  `rgb(241,241,241)`), plus near-black `th` bars (`rgb(27,27,27)`) and grey body inks
+  (`#666` ×9, `#9a9a9a` ×2 — 2.85:1 on paper). Note `@media print` already hides *empty
+  photo figures* (`.fig:has(.frame:not(:has(img)))`) — **`.cover-photo` is not covered by
+  that rule.**

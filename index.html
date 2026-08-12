@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 745 &#8212; Invoices were rounding off the cents and printing &#8220;--&#8221; for nothing paid; amounts that name a figure are now exact</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 746 &#8212; Company Documents: Download no longer swallows the app on an iPad, and a document that has not been uploaded says so instead of failing</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8088,6 +8088,8 @@ p{margin:0 0 10px;}
 
 /* ---------- non-printing help panel (delete or ignore) ---------- */
 .no-print{}
+.cdmissing{font:700 12px 'Segoe UI',Arial,sans-serif;color:#9a5b00;background:#fff4e0;
+  border:1px solid #e6c68a;border-radius:7px;padding:6px 10px;white-space:nowrap;}
 @media print{ .no-print{display:none !important;} }
 /* unused photo boxes never print (modern browsers) */
 @media print{
@@ -18425,9 +18427,47 @@ function renderCompanyDocs(){
         return '<div class="cdocrow"><span class="cdicon">&#128196;</span>' +
           '<span class="cdname">' + d.name + '<small>' + d.trade + (d.note ? ' &#183; ' + d.note : '') + '</small></span>' +
           '<a class="btn" href="' + d.file + '" target="_blank" rel="noopener">View</a>' +
-          '<a class="btn ghost" href="' + d.file + '" download>Download</a></div>';
+          /* 746: target="_blank" so this can never replace the app. The `download`
+             attribute is not honoured for a PDF on iOS Safari — the file opens
+             instead — and without a target that navigation replaced the CRM in
+             place. In an installed PWA there is no back button, so the way out
+             went with it. On desktop `download` still wins and no tab appears. */
+          '<a class="btn ghost" href="' + d.file + '" download target="_blank" rel="noopener" ' +
+            'data-cddl="' + esc(d.file) + '">Download</a></div>';
       }).join('')
     : '<div class="empty"><b>No ' + __cdTrade.toLowerCase() + ' documents yet.</b><br>Add the file to the /docs folder and list it in COMPANY_DOCS.</div>';
+  try{ cdCheckFiles(); }catch(_){}
+}
+/* 746: two of the five listed documents did not exist in /docs, so both buttons
+   on those rows led to a 404. This asks the server, once per render, and marks a
+   row unavailable ONLY on a definite 404.
+
+   Deliberately NOT a hardcoded `missing:true` flag: a flag has to be remembered,
+   and the moment the PDF is uploaded this row starts working on its own.
+
+   ⚠️ It downgrades on 404 and nothing else. A network error, an offline PWA or a
+   slow reply leaves the row exactly as it was — refusing to offer a document that
+   IS there would be worse than the bug being fixed. */
+function cdCheckFiles(){
+  var list = document.getElementById('cdDocList');
+  if(!list) return;
+  var seen = {};
+  Array.prototype.forEach.call(list.querySelectorAll('[data-cddl]'), function(a){
+    var file = a.getAttribute('data-cddl');
+    if(!file || seen[file]) return;
+    seen[file] = 1;
+    fetch(file, { method:'HEAD' }).then(function(r){
+      if(r.status !== 404) return;                 /* only a definite 404 counts */
+      var row = a.closest('.cdocrow');
+      if(!row) return;
+      Array.prototype.forEach.call(row.querySelectorAll('a.btn'), function(b){ b.remove(); });
+      var note = document.createElement('span');
+      note.className = 'cdmissing';
+      note.textContent = 'Not uploaded yet';
+      note.title = file + ' is listed but is not in the /docs folder';
+      row.appendChild(note);
+    }).catch(function(){ /* offline or blocked — leave the row alone */ });
+  });
 }
 document.getElementById('cdCats').addEventListener('click', function(e){
   var b = e.target.closest('.cdoccat');
@@ -38398,6 +38438,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:746, d:'2026-08-12', t:'Company Documents: Download stopped swallowing the app',
+s:'Two things were wrong on the Company Documents screen. First, two of the five documents listed \u2014 the Window agreement and the fillable Gutter agreement \u2014 have never actually been uploaded, so both View and Download on those rows led nowhere. Those rows now say \u201CNot uploaded yet\u201D instead of handing you a dead link, and they will start working on their own the moment the file is added; nothing needs changing in the app. Second, and this is the one that trapped you: Download opened in the same window. On an iPad the file opens rather than downloading, and because the app had been replaced in place there was no way back to the CRM short of closing and reopening it. Download now opens in its own tab like View does, so the app is always still there behind it. On a computer it still downloads straight to your Downloads folder as before.' },
 { b:745, d:'2026-08-12', t:'Invoices stopped rounding the cents away',
 s:'The way most money was drawn on screen rounded to the nearest dollar, which is fine on a dashboard tile \u2014 $34,050 is easier to read at a glance than $34,050.00 \u2014 but it was also being used on the invoice. An invoice for $1,702.50 printed $1,703, and an invoice with nothing paid yet printed \u201C--\u201D in the Paid box instead of $0.00. Anywhere a number names a specific amount now shows the exact figure with its cents: the invoice total, paid and due; the audit trail entries for a payment or a job total; and the messages that tell you what you just recorded, like \u201CCollection logged \u2014 $2,150.00\u201D. Dashboard tiles and reports are deliberately left rounded, because that is what makes them readable. One supplier price was also showing as $34050.00 with no comma; that is fixed too.' },
 { b:744, d:'2026-08-12', t:'Dates were showing one day early, and Crews printed them raw',
