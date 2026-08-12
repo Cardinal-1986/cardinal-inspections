@@ -4590,3 +4590,58 @@ module over the home strip, so tap-through claims there are dishonest; Playwrigh
 Unmeasured module screens (Pricing, Coach, Partners, Showcase, Crews directory) have
 their own add-buttons (`.cr-p-tool-btn`, `.cr-k-btn`, `.cr-cp-addbtn`, `.cr-sh-btn`) —
 **not covered by this pass**; walk them before extending the census.
+
+
+---
+
+## Header menus anchor to their buttons (753)
+
+`#navMenu` (burger) and `#newMenu` (+) drop from their button's **left edge** and clamp
+on-screen against their real rendered width after `display:block`. Mobile (≤640px)
+keeps the sheet rules.
+
+⚠️ **History**: `cr-menu-styles` pinned `#navMenu{left:auto/right:10px !important}` from
+the era when the Menu button lived at the RIGHT of the old masthead; cr-hd2 (416) moved
+the button left and the pin silently beat the click handler's inline position for ~340
+builds (inline `right:1021px`, computed `right:10px` — measured). **Do not re-pin the
+menus in CSS** — the handlers own position; the stylesheet owns width/scroll/max-height.
+
+## The header follows your CRM — `data-crm-head` (754)
+
+**Two CRM attributes on `<body>`, different consumers:**
+
+| Attribute | Written by | Means | Consumed by |
+|---|---|---|---|
+| `data-crm` | `skin()` (view-derived `crmNow()`) | what the PAGE is | page grounds, PIPE_SKIP, module gates, theme-toggle float, footer hide |
+| `data-crm-head` | `skin()` (`crmHead()`: view > open client's claim type > sticky portal) | what the HEADER is | all header chrome (.site tokens, bar, ribbon, banner, --bn*), home routing, switcher highlights, left-rail accent, `openLeadForm` default |
+
+**Do not "unify" them.** The single-attribute version was built and measured first:
+`body[data-crm=insurance]{background:var(--ct-bg)}` repaints shared screens' grounds and
+white headings go unreadable. The split is the feature.
+
+**Two header-located rules deliberately stay on `data-crm`** — the insurance dark-toggle
+hide and `body:not([data-crm=insurance]) .cr-ins-theme`: theme controls follow the page
+they theme, or shared screens would show two theme buttons.
+
+`CardinalHeader.crmHead()` is exported beside `.crm()`. Migrated selector census: **26
+occurrences**, asserted in `gate_754.mjs`.
+
+## Per-CRM banner pills — `paintCrmPills` (755)
+
+The Contacts and Leads pills in `#crBanner` are **slots** (`data-cr-slot="0"/"1"`),
+re-labelled and re-routed per `data-crm-head`:
+
+| CRM | slot 0 | slot 1 |
+|---|---|---|
+| retail (and production/sales) | Contacts → client directory | Leads → Leads & Jobs |
+| insurance | Clients → `showInsuranceClients()` | Claims → `crOpenClaims()` (app-level, history-wrapped) |
+| community | Partners → hub, partners tab | Bids → hub, bids tab |
+
+Community deep-links go through `CardinalCommunityHub.show()` +
+`CardinalCommunityHome.tab(k)` — the hub's own pane mechanism. **Do not add
+per-CRM pills as NEW elements** — the swap reuses the two existing spans
+precisely to avoid duplicate entrances (the 417 class). New routes live in the
+same `ROUTES` map (`insclients`, `claims`, `partners`, `bids`).
+
+`#leadsView`'s subtitle reads "All CRMs" as of 755 — it has no CRM facet and
+never had one; the old "Retail only" label was measured false.
