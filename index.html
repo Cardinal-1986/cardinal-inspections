@@ -3446,7 +3446,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 730 &#8212; + New contract now asks which trade and builds the roofing, siding or gutter Construction Agreement; the roofing one says &#8220;Roofing&#8221; on it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 731 &#8212; Four fixes on the way to a signed contract: signing moves the job to Approved and notifies Curtis, Share link works, the link saves, and emailing a document marks it sent</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21599,7 +21599,13 @@ async function openEditor(id){
   try{ r = await db.get(id); }
   catch(err){ showError('Could not open report: ' + (err.message || err)); return; }
   if(!r) return;
-  current = { id: r.id, status: r.status, sent_at: r.sent_at };
+  /* 731: project_id was missing here, and one consumer depended on it.
+     sigApply's stage move reads `current.project_id`, so the condition
+     `if(/^contract/i.test(t) && current.project_id)` was ALWAYS false and
+     signing a contract in person never moved the job to Approved and never
+     notified Curtis - the alert promising both could not fire. The row is
+     already in hand as `r`; it simply was not carried. */
+  current = { id: r.id, status: r.status, sent_at: r.sent_at, project_id: r.project_id };
   titleInput.value = r.title || '';
   (function(){
     var pr = cacheProjects.find(function(p){ return p.id === r.project_id; });
@@ -21755,7 +21761,14 @@ document.getElementById('saveBtn').addEventListener('click', saveCurrent);
    EMAIL TO CLIENT / SIGNATURE / SHARE LINK
    ========================================================================= */
 function currentDocRow(){
-  return cacheRows.find(function(r){ return r.id === current; }) || null;
+  /* 731: this compared a row id against `current`, which is an OBJECT, so it
+     returned null for every document ever opened. `ensureShareToken()` throws
+     'Document not loaded' on a null row, which is why Share link failed every
+     time; Email to client lost both its row and its project the same way.
+     The sibling site in the sent-toggle already read `current.id` correctly -
+     exactly one of the two was wrong. */
+  if(!current) return null;
+  return cacheRows.find(function(r){ return r.id === current.id; }) || null;
 }
 function currentDocProject(){
   var row = currentDocRow();
@@ -21770,7 +21783,11 @@ async function ensureShareToken(){
   if(row.share_token) return row.share_token;
   var tok = (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
           : ('t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12));
-  await db.update(current, { share_token: tok });
+  /* 731: db.update(id, fields) does .eq('id', id) — this passed the `current`
+     OBJECT, so the freshly minted token was never persisted. The in-memory row
+     below got it, which is why one share seemed to work per editor session and
+     the link was dead for everyone else. */
+  await db.update(current.id, { share_token: tok });
   row.share_token = tok;
   return tok;
 }
@@ -21893,7 +21910,9 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     });
     var data = null; try{ data = await res.json(); }catch(e){}
     if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
-    await db.update(current, { status: 'sent', sent_at: new Date().toISOString() });
+    /* 731: same object-as-id bug — the email went out and the document stayed
+       UNSENT, because this write never landed on a row. */
+    await db.update(current.id, { status: 'sent', sent_at: new Date().toISOString() });
     if(pr && row && /^invoice/i.test((row.title || '').trim()) && normStage(pr.stage) !== 'Invoiced'){
       try{ await setStage(pr.id, 'Invoiced'); }catch(e){}
     }
@@ -38047,6 +38066,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:731, d:'2026-08-12', t:'Signing a contract moves the job, and Share link works',
+s:'Four things on the way to a signed contract were broken, all by the same slip, and all older than this week\u2019s contract work. First: signing a contract in person recorded the signature but did NOTHING else \u2014 the job stayed where it was and Curtis was never told, even though the app popped up a message saying it had moved to Approved and he had been notified. It had never once worked. Signing a contract now really does move the job to Approved and really does notify Curtis to schedule and order materials. Second: Share link and Email to client, on ANY document \u2014 contract, estimate, inspection report \u2014 failed every time with \u201CDocument not loaded\u201D. Third: even past that, a share link\u2019s code was never saved, so a link worked for you and was dead for whoever you sent it to. Fourth: emailing a document to a client left it showing UNSENT, because the write that marks it sent went nowhere. All four were one mistake repeated \u2014 the open document was being used where its ID was meant. All four work now. Nothing else changed.' },
 { b:730, d:'2026-08-12', t:'Siding and gutter contracts, and the roofing one says Roofing',
 s:'On a client, + New contract only ever built the ROOFING agreement, and the page it printed just said \u201CConstruction Agreement\u201D \u2014 nothing on it told you which trade. The siding and gutter agreements existed only as blank print masters under Menu \u2192 Company Documents, nowhere near a client. Now + New contract asks which one: Roofing, Siding or Gutters. Each builds that trade\u2019s real Construction Agreement, transcribed section for section from your own printed form \u2014 siding\u2019s eleven sections from removal and house wrap through soffit, fascia, shutters and stories, gutter\u2019s thirteen from profile and material through ShurFlo, fascia wrap and access. Each is prefilled with the buyer, address, phone, email and the price split, exactly like the roofing one, and each is headed with its trade so you can tell them apart in the list and on paper. The Terms &amp; Conditions and both 3-Day Notice of Cancellation copies are still the printed master \u2014 they are statutory text and each trade has its own, so each agreement points at the right one rather than retyping it.' },
 { b:729, d:'2026-08-12', t:'A proper loading screen instead of a half-drawn page',
