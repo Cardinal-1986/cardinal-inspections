@@ -4156,3 +4156,27 @@ did**, not by asking the database again.
 ⚠️ **`e2e_mock_supa.js` now models this trigger** (`fireTriggers`, 734). A harness
 that cannot create the commission out of band cannot test any of the above.
 `__MOCK_NO_TRIGGERS__` opts out. Keep the 10% rate in step with `make_commission()`.
+
+
+## Empty states (736) — the base `.empty` rule
+
+**Sixteen** `class="empty"` states. They already carried their call-to-action wording;
+736 fixed how the box renders.
+
+- ⚠️ **The base rule is light-era.** `.empty{background:var(--paper)…}` and `--paper`
+  is `#ffffff`, declared once, no dark twin. On the dark default theme that painted a
+  **white card on a near-black page** — with perfectly readable text on it (6.69:1),
+  which is why no contrast sweep ever caught it. **The inverse of the usual bug.**
+- The dark override is scoped `:root:not([data-theme="rb-light"])`, so **light mode is
+  byte-identical** and asserted so. Inks are 726's: `--rbe-empty-bd` / `--rbe-mute` /
+  `--rbe-head`.
+- ⚠️ **`empty` is a BARE class name and four other components use it as a modifier**:
+  `.cr-photo.empty`, `.payrow.empty`, `.projinfo .poPfx.empty`, `.insdocrow.empty`.
+  The override is (0,3,0) and out-ranks all of them, so **they are excluded by name in
+  the selector**. `gate_736.mjs` proves the override does not reach them. **If you add
+  a fifth component that carries `.empty` as a modifier, add it to that list.**
+- Every other empty state uses a **prefixed** class (`cr-c-empty`, `pay-empty`,
+  `crw-empty`, `pu-empty`, …). Those are separate and untouched.
+- **The mark is a CSS mask, not an image** — `DB_ICONS`' own `docs` glyph as a
+  data-URI on `::before`, taking `currentColor`. One rule, no call-site edits.
+  `-webkit-mask` is listed first for iOS.
