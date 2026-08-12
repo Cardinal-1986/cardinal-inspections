@@ -89,9 +89,14 @@ const logCollection = (amount) => async (page) => {
     commissions: ((window.__SEED__ && window.__SEED__.commissions) || []).map(c => ({ amt: c.amount, rep: c.rep_email })),
     reads: (window.__READS__ || []).filter(r => r.table === 'commissions').length,
     /* ask the APP how it formats money and names a rep — hardcoding "$1,702.50"
-       here asserted my assumption, not the app's behaviour (fmtMoney rounds to
-       whole dollars). Same class as 732's mock-with-no-constraints. */
-    expect: (function(){ try { return { money: fmtMoney(1702.5), rep: rptRepName('nick@cardinalrenovations.net') }; }
+       here asserted my assumption, not the app's behaviour. Same class as 732's
+       mock-with-no-constraints.
+       ⚠️ UPDATED AT BUILD 745: this call site now asks for exact cents
+       (fmtMoney(x, true)), because a toast that names a specific commission
+       should not round $1,702.50 to $1,703. The expectation has to be computed
+       in the SAME mode as the call site or it drifts the moment either moves —
+       this went red on 745 and the gate was what was stale, not the app. */
+    expect: (function(){ try { return { money: fmtMoney(1702.5, true), rep: rptRepName('nick@cardinalrenovations.net') }; }
                          catch(e){ return { money: null, rep: null }; } })()
   }));
 };
