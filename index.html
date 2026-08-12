@@ -3446,7 +3446,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 732 &#8212; The Void button on an AI contract works instead of being silently refused, and two health checks that could never run now actually run</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 733 &#8212; Failures are finally visible: error messages appear on every screen instead of only the home page, and saves now confirm themselves</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9844,9 +9844,19 @@ function fmtDay(x){
 }
 function uid(){ return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function showError(msg){
-  var m = document.getElementById('bannerMount');
-  m.innerHTML = '<div class="banner err">' + esc(msg) + '</div>';
-  setTimeout(function(){ m.innerHTML = TEAM ? '' : localBannerHTML(); }, 6000);
+  /* 733: this used to write a .banner.err into #bannerMount and clear it after
+     6s. #bannerMount is the first child of #mainView, and #projectView is a
+     SIBLING — hideAllViews() sets mainView.display='none' before every other
+     screen — so measured in Chromium, this error was visible on the HOME SCREEN
+     ONLY: false on a client profile, in the document editor, on crews and on
+     punch. 82 call sites funnel through here. The app has been failing silently
+     wherever the work actually happens.
+
+     The banner write is GONE rather than kept alongside: nothing reads
+     .banner.err (one writer, zero readers, asserted), #bannerMount keeps its
+     other job as the Local-mode host, and leaving both would double every error
+     on the one screen where the old one worked. */
+  try{ if(window.crToastErr) window.crToastErr(msg); }catch(_){}
   /* Persist every user-visible failure. 73 call sites funnel through this
      function, which makes it the highest-leverage reporting hook in the app —
      saves, photo uploads, estimate writes and claim updates all surface here.
@@ -19066,6 +19076,7 @@ async function miSaveColl(){
   if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
   commUi.collForm = false; commUi.editColl = null;
   await renderCommissions();
+  try{ if(window.crToastOk) window.crToastOk('Collection logged \u2014 ' + fmtMoney(amt)); }catch(_){}
   } finally { _busy(); }
 }
 function miEditColl(id){
@@ -19105,6 +19116,7 @@ async function miSaveDraw(){
   if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
   commUi.drawForm = false;
   await renderCommissions();
+  try{ if(window.crToastOk) window.crToastOk('Draw logged'); }catch(_){}
   } finally { _busy(); }
 }
 async function miRepayDraw(id){
@@ -19142,6 +19154,7 @@ async function addCommission(){
   });
   if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
   await renderCommissions();
+  try{ if(window.crToastOk) window.crToastOk('Commission recorded'); }catch(_){}
   } finally { _busy(); }
 }
 async function delCommission(id){
@@ -19430,6 +19443,7 @@ async function createContractForCurrent(tradeKey){
     }
     var id = await db.create('Contract \u2014 ' + kind.label + ' \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
     await reload();
+    try{ if(window.crToastOk) window.crToastOk(kind.label + ' agreement created for ' + (pr.name || 'this client')); }catch(_){}
     await openEditor(id);
   }catch(err){ showError('Could not create contract: ' + (err.message || err)); }
 }
@@ -21750,7 +21764,10 @@ async function saveCurrent(){
     var tot = readEstimateTotal();
     if(tot !== null) fields.total = tot;
     await db.update(current.id, fields);
-    savedFlash.textContent = 'Saved ✓';
+    savedFlash.textContent = 'Saved \u2713';
+    /* 733: .toolbar #savedFlash is display:none under 760px, so on a phone this
+       save has never once confirmed itself. */
+    try{ if(window.crToastOk) window.crToastOk('Saved \u2014 ' + ((titleInput.value || '').trim() || 'document')); }catch(_){}
     setTimeout(function(){ savedFlash.textContent = ''; }, 2500);
     reload();
   }catch(err){ showError('Save failed: ' + (err.message || err)); }
@@ -21913,6 +21930,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     /* 731: same object-as-id bug — the email went out and the document stayed
        UNSENT, because this write never landed on a row. */
     await db.update(current.id, { status: 'sent', sent_at: new Date().toISOString() });
+    try{ if(window.crToastOk) window.crToastOk('Sent \u2014 ' + ((titleInput.value || '').trim() || 'document')); }catch(_){}
     if(pr && row && /^invoice/i.test((row.title || '').trim()) && normStage(pr.stage) !== 'Invoiced'){
       try{ await setStage(pr.id, 'Invoiced'); }catch(e){}
     }
@@ -38079,6 +38097,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:733, d:'2026-08-12', t:'You can finally see it when something fails',
+s:'This started as \u201Cno feedback when I hit Save\u201D and turned out to be worse than that. Every error message in the app \u2014 could not save, upload failed, check your connection, all 82 of them \u2014 was being written to the top of the HOME page. On a client profile, in a document, on crews or punch outs, the home page is not on screen, so the message was written somewhere invisible and deleted six seconds later. The app has been failing silently everywhere the work actually happens. Errors now appear as a message you can actually see, on whatever screen you are on, and they STAY until you tap them away \u2014 a failure you cannot read is a failure you did not see. Saves confirm themselves too, and clear on their own after four seconds: saving a document, logging a collection or a draw, recording a commission, creating an agreement, emailing a document to a client. On a phone the document editor\u2019s \u201CSaved \u2713\u201D was hidden entirely, so that one never confirmed at all.' },
 { b:732, d:'2026-08-12', t:'Void works, and two health checks that never ran now run',
 s:'Three places asked the contracts table for something it does not have. Voiding a contract wrote a status the database refuses, so the Void button was rejected every single time \u2014 that one was my mistake from last week and it is fixed. And two of the checks on the Health screen \u2014 \u201Cjobs advanced past Approved with no signed contract\u201D and \u201Csigned contracts with no signature on file\u201D \u2014 were asking for a date column that does not exist, so both quietly reported \u201Ccannot verify\u201D instead of checking anything, and had done since they were written. Both check for real now.' },
 { b:731, d:'2026-08-12', t:'Signing a contract moves the job, and Share link works',
@@ -65855,5 +65875,114 @@ window.CardinalItelLab = { open: open, close: close };
   color:var(--rbe-mute,#9aa0a8);}
 #tab-commissions .empty b{color:var(--rbe-head,#ffffff);}
 </style>
+<style id="cr-toast-styles">
+/* 733: the app-wide toast. FIVE module-level toast helpers already existed, one
+   each in cr-estimates, cr-claims, cr-coach, cr-ess and cr-bpa, across six CSS
+   namespaces (.cr-toast, .cr-c-toast, .cr-k-toast, .cr-ess-toast, .cr-undo-toast,
+   bare .toast) — all view-scoped and all working, so none of them was touched.
+   What did NOT exist was an app-wide one, which is why showError had to write into
+   #bannerMount and why it was invisible off the home screen.
+   (Their definitions are deliberately not quoted here: a literal copy of the
+   declaration in prose is counted by every grep that looks for the real ones.)
+
+   z-index: everything else in this file tops out at 100000, and #pwaNav is raised
+   to 9990 !important in standalone. A save failure has to be readable over a modal,
+   so this sits above all of it. The boot splash (100001) is deliberately ABOVE this
+   one — nothing toasts during boot, and a toast must never punch through the splash.
+
+   Position: bottom-centre on a phone, but the installed PWA puts #pwaNav across the
+   bottom — body.standalone already reserves calc(64px + safe-area) for it, so this
+   clears the same amount. Desktop gets top-right, out of the way of the work. */
+#crToasts{position:fixed;z-index:99999;pointer-events:none;display:flex;
+  flex-direction:column;gap:8px;align-items:center;
+  left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));}
+body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
+#crToasts .crt{pointer-events:auto;max-width:min(520px,100%);box-sizing:border-box;
+  display:flex;align-items:flex-start;gap:10px;
+  padding:12px 14px;border-radius:10px;
+  font:600 13.5px/1.45 'Segoe UI',Arial,sans-serif;
+  box-shadow:0 8px 26px rgba(0,0,0,.42);
+  border:1px solid transparent;cursor:pointer;
+  animation:crtIn .18s ease-out;}
+#crToasts .crt .crtx{flex:0 0 auto;opacity:.75;font-weight:800;font-size:15px;line-height:1.2;}
+#crToasts .crt .crtm{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;}
+/* inks computed against their own grounds, not eyeballed:
+   #ffffff on #1f7a3d = 5.09:1 · on #a11623 = 7.36:1 · on #232733 = 14.66:1 */
+#crToasts .crt.ok{background:#1f7a3d;border-color:#2f9b52;color:#ffffff;}
+#crToasts .crt.err{background:#a11623;border-color:#c8202e;color:#ffffff;}
+#crToasts .crt.info{background:#232733;border-color:#3a4152;color:#ffffff;}
+@keyframes crtIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+@media (prefers-reduced-motion: reduce){ #crToasts .crt{animation:none;} }
+@media (min-width:900px){
+  #crToasts{left:auto;right:20px;bottom:auto;top:calc(14px + env(safe-area-inset-top));
+    align-items:flex-end;}
+  body.standalone #crToasts{bottom:auto;}
+}
+</style>
+<script>
+/* 733: one app-wide feedback channel. See #cr-toast-styles above for why this
+   exists when five toasts already did.
+
+   crToast(msg, type)  type: 'ok' | 'err' | 'info'  (default 'info')
+
+   ERRORS DO NOT AUTO-DISMISS. That is deliberate and it is the point of the build:
+   a failure you cannot read and act on is a failure you did not see, and the thing
+   this replaces was a banner that deleted itself after 6 seconds on a screen where
+   it was not rendered at all. Successes clear themselves after 4s.
+
+   textContent, never innerHTML — these carry Postgres error strings and client
+   names, and one of the five existing toasts takes HTML, which is a trap this one
+   does not copy. */
+(function(){
+  var MAX = 3, OK_MS = 4000;
+  function stack(){
+    var s = document.getElementById('crToasts');
+    if(!s){
+      s = document.createElement('div');
+      s.id = 'crToasts';
+      document.body.appendChild(s);
+    }else if(s.parentNode !== document.body){
+      document.body.appendChild(s);
+    }
+    return s;
+  }
+  function crToast(msg, type){
+    try{
+      var text = String(msg == null ? '' : msg).trim();
+      if(!text) return null;
+      var kind = (type === 'ok' || type === 'err') ? type : 'info';
+      var s = stack();
+      var el = document.createElement('div');
+      el.className = 'crt ' + kind;
+      /* an error is an interruption; a success is a status line */
+      el.setAttribute('role', kind === 'err' ? 'alert' : 'status');
+      var m = document.createElement('span');
+      m.className = 'crtm';
+      m.textContent = text;
+      var x = document.createElement('span');
+      x.className = 'crtx';
+      x.textContent = '\u00d7';
+      el.appendChild(m); el.appendChild(x);
+      var kill = function(){
+        if(el._t){ clearTimeout(el._t); el._t = null; }
+        if(el.parentNode) el.parentNode.removeChild(el);
+      };
+      el.addEventListener('click', kill);
+      s.appendChild(el);
+      /* newest wins: drop the oldest rather than let the stack grow */
+      while(s.children.length > MAX){
+        var old = s.firstChild;
+        if(old && old._t) clearTimeout(old._t);
+        s.removeChild(old);
+      }
+      if(kind !== 'err') el._t = setTimeout(kill, OK_MS);
+      return el;
+    }catch(_){ return null; }
+  }
+  window.crToast = crToast;
+  window.crToastOk = function(m){ return crToast(m, 'ok'); };
+  window.crToastErr = function(m){ return crToast(m, 'err'); };
+})();
+</script>
 </body>
 </html>
