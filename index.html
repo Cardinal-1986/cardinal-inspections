@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 754 &#8212; The header remembers which CRM you are in — home and the colours follow you onto shared screens</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 755 &#8212; The banner speaks your CRM’s language — Clients &amp; Claims on Insurance, Partners &amp; Bids on Community</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3721,7 +3721,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
     <div class="ljhead">
       <h2 class="ljtitle">All Leads &amp; Jobs</h2>
     </div>
-    <div class="ljsub">Retail only &middot; <span id="ljShown">&mdash;</span></div>
+    <div class="ljsub">All CRMs &middot; <span id="ljShown">&mdash;</span></div>
     <div class="ljtop">
       <input type="search" id="ljSearch" placeholder="Search Results">
     </div>
@@ -38626,6 +38626,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:755, d:'2026-08-12', t:'The banner speaks your CRM\u2019s language',
+s:'The two client-facing buttons in the dark banner now change with the CRM you are working in. On Insurance they read Clients and Claims \u2014 Clients opens the insurance client list and Claims opens the claims tracker. On Community they read Partners and Bids \u2014 each opens the Community hub straight onto that tab. Retail keeps Contacts and Leads exactly as before. The Leads and Jobs screen also stops calling itself Retail only \u2014 it has always shown every CRM\u2019s jobs, and its subtitle now says so.' },
 { b:754, d:'2026-08-12', t:'The header remembers your CRM',
 s:'Tapping Leads, Photos, Contacts or any shared screen from Insurance or Community used to flip the whole header back to retail \u2014 and the gold home button then took you to the retail dashboard instead of back to Cardinal Truth or the Community hub. The header now remembers which CRM you are working in: its colours, its title and the CRM switcher stay yours on shared screens, home returns to your CRM\u2019s home, and a new lead started from a shared screen defaults to your CRM. The pages themselves are untouched \u2014 only the header follows you.' },
 { b:753, d:'2026-08-12', t:'Menus open where their buttons are',
@@ -53785,7 +53787,23 @@ var ROUTES = {
   walk:      'CardinalWalk.showRunner',
   itellab:   'CardinalItelLab.open',
   medmig:    'CardinalMediaMigrate.showRunner',
-  settings:  'openSettingsView'
+  settings:  'openSettingsView',
+  /* 755: per-CRM pill destinations — the pills themselves are re-labelled by
+     paintCrmPills() below, driven by data-crm-head. */
+  insclients:'showInsuranceClients',
+  claims:    'crOpenClaims', /* 755a: the app-level entry, history-wrapped via
+                               wrapNav — styleMounts + hideAllViews + sibling-mount
+                               cleanup before the module opens */
+  partners:  function(){
+    if(!window.CardinalCommunityHub || typeof window.CardinalCommunityHub.show !== 'function') return;
+    window.CardinalCommunityHub.show();
+    if(window.CardinalCommunityHome && typeof window.CardinalCommunityHome.tab === 'function') window.CardinalCommunityHome.tab('partners');
+  },
+  bids:      function(){
+    if(!window.CardinalCommunityHub || typeof window.CardinalCommunityHub.show !== 'function') return;
+    window.CardinalCommunityHub.show();
+    if(window.CardinalCommunityHome && typeof window.CardinalCommunityHome.tab === 'function') window.CardinalCommunityHome.tab('bids');
+  }
 };
 /* resolve-or-hide: an item only shows if its destination exists.
    Deferred to DOMContentLoaded so modules defined later in the document count. */
@@ -53853,11 +53871,46 @@ var CRM_GO = {
   insurance: function(){ if(typeof window.showCardinalTruth === 'function') window.showCardinalTruth(); },
   community: function(){ if(window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function') window.CardinalCommunityHub.show(); }
 };
+/* 755: the two CRM-shaped pills follow the header's CRM. Retail (and the
+   production/sales boards, which cover the banner anyway) keep Contacts/Leads
+   byte-for-byte. Every write below is guarded — this runs from the same
+   rAF-scheduled observer as the switcher highlight, and an unguarded write
+   would wake every body observer each frame (the 567/569 class). */
+var PILL_SETS = {
+  insurance: [ { go:'insclients', label:'Clients'  }, { go:'claims', label:'Claims' } ],
+  community: [ { go:'partners',   label:'Partners' }, { go:'bids',   label:'Bids'   } ]
+};
+var PILL_HOME = [ { go:'contacts', label:'Contacts' }, { go:'leads', label:'Leads' } ];
+function paintCrmPills(k){
+  var slots = B.querySelectorAll('[data-cr-slot]');
+  if(!slots.length){
+    var c = B.querySelector('[data-go="contacts"]');
+    var l = B.querySelector('[data-go="leads"]');
+    if(!c || !l) return;
+    c.setAttribute('data-cr-slot', '0');
+    l.setAttribute('data-cr-slot', '1');
+    slots = B.querySelectorAll('[data-cr-slot]');
+  }
+  var set = PILL_SETS[k] || PILL_HOME;
+  Array.prototype.forEach.call(slots, function(el){
+    var want = set[+el.getAttribute('data-cr-slot')];
+    if(!want) return;
+    if(el.getAttribute('data-go') !== want.go) el.setAttribute('data-go', want.go);
+    if(el.textContent !== want.label) el.textContent = want.label;
+    /* resolve-or-hide, the banner's own rule: a pill only shows if its
+       destination exists. Function routes carry their own guards. */
+    var r = ROUTES[want.go];
+    var dead = (typeof r !== 'function') && !fn(r);
+    var wantDisp = dead ? 'none' : '';
+    if(el.style.display !== wantDisp) el.style.display = wantDisp;
+  });
+}
 function cbCrmSync(){
   var k = document.body.dataset.crmHead || document.body.dataset.crm || 'retail';
   Array.prototype.forEach.call(B.querySelectorAll('[data-crm-go]'), function(x){
     x.classList.toggle('on', x.getAttribute('data-crm-go') === k);
   });
+  paintCrmPills(k);
 }
 B.addEventListener('click', function(e){
   var c = e.target && e.target.closest ? e.target.closest('[data-crm-go]') : null;
