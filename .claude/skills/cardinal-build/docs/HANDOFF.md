@@ -4,6 +4,46 @@
 
 ---
 
+# Session of 12 August 2026 — build 761 (the Exterior Designer)
+
+One feature, one build, one PR — **awaiting Theo's merge; run
+`design_renders.sql` BEFORE merging.** (Builds 705–760 shipped in sessions that
+logged to `cardinal_build_log.md` but not here — that log and the in-app
+CHANGELOG are the record for that span.)
+
+Theo asked for an AI exterior home designer — photograph a house, change roof /
+siding / trim / gutters / windows, into the showroom. His framing, verbatim:
+*"This is a sales resource in front of clients. I can already do this on gemeni,
+just want to look more professional doing it in the vision suite."* **That
+sentence is the recorded YES for sending a client's photograph to Gemini at the
+moment of a press — per-photo consent, NOT a corpus pass.** Do not widen it.
+
+Shipped: `cr-des-styles`/`cr-des-script` (`window.CardinalDesigner`, Blackout,
+`--des-*` all literal-fallback), `api/design.js` (`gemini-3.1-flash-image` →
+`2.5` ladder + `{probe:true}` key probe), `design_renders.sql` (+ `designer/`
+storage prefix), a Designer tile on the Vision hub, a landing door beside
+Showroom (≥820px), `gate_761.mjs` (18 green / 15 red on the v760 control).
+
+The fences as built: AI CONCEPT badged on screen AND burned into every saved
+JPEG; `designer/` + `design_renders` join nothing in the claims pipeline; the
+roof picker offers sellable OC colours only (hidden AND discontinued excluded —
+deliberately stricter than the Colors wall, which badges history).
+
+⚠️ **Trap found, live in production code**: the `__crNav` wrap block runs on a
+`setTimeout(…,400)` scheduled mid-file, and the timer can fire before the LAST
+script in the 4.2MB document has parsed — the wrap then misses silently
+(measured: same artifact, wrapped on one run, not the next). The Designer's
+`open()` records `navSetView('designer')` itself as the belt; **any future
+module appended at the end of the file should do the same.**
+
+Not verifiable from this sandbox, and the PR says so: whether the deployed
+`GEMINI_API_KEY` has image models (the probe answers in one press), and how the
+generations look on real houses — **Theo's eyes are that gate.** Rendered
+screenshots of the UI (hub tile, designer screen, compare slider) were produced
+and reviewed; the AI output itself has not been seen.
+
+---
+
 # Session of 10 August 2026 (later) — builds 685–704
 
 **685 through 704 all shipped, merged and verified deployed** (PRs #198–#219,

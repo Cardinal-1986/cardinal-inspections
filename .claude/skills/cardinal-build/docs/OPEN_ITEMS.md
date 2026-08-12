@@ -538,6 +538,10 @@ He raised using actual client photos, undecided.
 - **There is no image generation in this app.** Both librarian models (`gemini-3.6-flash`,
   `gemini-3.5-flash`) are text-only; nothing in `api/` generates an image. The `MAX_IMAGE_BYTES`
   hits in `analyze.js` / `companycam.js` are image *input*.
+  ⚠️ **Superseded 12 Aug, build 761: `api/design.js` now generates images** (the Exterior
+  Designer, `gemini-3.1-flash-image` per the vendor table below). True when written; do not
+  quote it past 761. The Library-illustration question itself is still open and still
+  Spark-recommended.
 - **Client photos already exist as a feature** — `~~photos` (build 471), real CompanyCam
   photographs, admin-only, model never receives photo data. Theo may simply not have seen it.
 - **The storage half is already built.** `library` bucket + blob upload + signed URL +
@@ -603,6 +607,28 @@ accurate).
 **Still true and still the reason to be careful:** a generated cutaway is an unverifiable claim
 with a picture's authority. Nothing files without Theo looking at it. Do not automate the upload
 step away without re-reading that section.
+
+---
+
+## 🟡 Exterior Designer (761, 12 Aug) — deploy steps + follow-ups
+
+Shipped in the build-761 PR. **Before merge: run `design_renders.sql`.** After
+deploy, the first Generate press either works or names the real blocker — if it
+reports missing models or permissions, POST `{"probe":true}` to `/api/design`
+(signed in) and read `imageModels`: an empty list means the Vercel
+`GEMINI_API_KEY` has no image models enabled, which is a Google AI Studio /
+billing setting, not app code. ~$0.067 per press; a 10–15 image kitchen-table
+session is about a dollar. The free tier 503s — expect to want the paid tier.
+
+Follow-ups, none started, none promised:
+- **(a) Reference-image colour anchoring** — send the picked colour's
+  `oc_color_photos` cover beside the prompt so shingle colour matches the real
+  product rather than the model's idea of the name. Do this first if Theo says
+  the colours look off.
+- **(b) A Designer rail inside the Showcase view** if he wants saved designs in
+  the presentation flow — today they live in the Designer's own shared gallery.
+- **(c)** The hub tile's pencil icon is dim — it matches the existing Colors
+  tile exactly (only `.primary`/`.admin` tiles tint their icons). Cosmetic.
 
 ---
 
