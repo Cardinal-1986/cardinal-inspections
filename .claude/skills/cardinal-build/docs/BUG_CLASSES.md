@@ -2263,3 +2263,32 @@ working code — `check_2` reads `contracts.contract.signature` and must be left
 **A fixture is a claim about production.** `gate_742.mjs` seeds `checklist` as a JSON
 **string**. Seeded as an object, the gate goes green against the broken code and proves
 nothing. When a bug IS the data shape, the seed is the load-bearing part of the test.
+
+## 36 — a Postgres `date` column parsed as UTC midnight (744)
+
+**30 columns in this database are `date`, not `timestamptz`.** PostgREST returns those
+as a bare `"2026-08-15"`, and `new Date("2026-08-15")` is **UTC midnight** — 8pm the
+previous day in Dayton. Every affected screen showed the date **one day early**.
+
+It survived for years because:
+
+- **It is invisible in UTC.** Any test, CI run or reviewer in UTC sees the right day.
+  A gate must run in a timezone *behind* UTC to see it at all — and one *ahead* of UTC
+  to prove the fix isn't just "add a day".
+- **The arithmetic was right.** `cr-crew`'s `daysLeft()` already parsed correctly, so
+  "expires in 12 days" was accurate while the date printed next to it was a day off.
+  Two numbers that disagree by one day read as a rounding quirk, not a bug.
+- **Timestamps are unaffected**, so most dates in the app were always correct. Only the
+  30 `date` columns shift, which makes it look sporadic.
+
+**Check the column type before parsing.** `date` → build it at local midnight.
+`timestamptz` → hand it to the native parser, whose offset is already right.
+
+**A replacement parser must be a true drop-in.** The first version of `crDate` did
+`String(v)` before testing, which changed the meaning of a **number** of epoch ms
+(`String(0)` is `"0"`, and `new Date("0")` is the **year 2000**), of `null`, and of a
+boolean. Only inspect `typeof v === 'string'`; pass everything else to `new Date`
+untouched. The gate fuzzed the equivalence and went 3 red.
+
+⚠️ **`<input type="date">` must keep `YYYY-MM-DD`** — 35 of them. A date-formatting
+sweep that touches input values breaks every date picker in the app.

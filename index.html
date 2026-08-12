@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 743 &#8212; Searching by phone number now finds the client whichever way you type it, and finds the 16 clients whose number the search could never see</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 744 &#8212; Dates that come from a date field were showing one day early everywhere; Crews was also printing them raw</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9873,9 +9873,36 @@ function fmt(x){
   return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) +
          ' · ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
 }
+/* 744: a Date from a value that may be DATE-ONLY.
+
+   30 columns in this database are Postgres `date`, and PostgREST returns them as
+   a bare "YYYY-MM-DD". `new Date("2026-08-15")` parses that as UTC midnight,
+   which is 8pm on Aug 14 in Dayton — so the date displays A DAY EARLY. Measured
+   in Chromium in America/New_York, not reasoned about.
+
+   A full timestamp is a real instant and its offset is already correct, so it is
+   handed to the native parser untouched. Only a BARE date-only string is built at
+   local midnight.
+
+   It is a DROP-IN for `new Date(v)`: it always returns a Date (an Invalid Date on
+   junk, never null), so every existing `isNaN(d)` / `isNaN(d.getTime())` /
+   `d ? … : '—'` guard behaves exactly as before. gate_744 fuzzes that. */
+function crDate(v){
+  if(v instanceof Date) return v;
+  /* Only a STRING can be date-only. Anything else — a number of epoch ms, null,
+     a boolean — goes straight to the native constructor, because coercing it to
+     a string first would change its meaning: String(0) is "0", and new Date("0")
+     is the year 2000 rather than the epoch. gate_744 fuzzes exactly that and
+     caught this on the first run. */
+  if(typeof v === 'string'){
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v);
+    if(m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+  return new Date(v);
+}
 function fmtDay(x){
   if(!x) return '';
-  var d = new Date(x);
+  var d = crDate(x);
   return isNaN(d) ? '' : d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
 }
 function uid(){ return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -19378,7 +19405,9 @@ function woBody(pr, crew, rates, catalog, opts){
     woRow('Work order #', woEsc(opts.wo_number || '')) +
     woRow('Issued', woEsc(opts.issued || '')) +
     woRow('Trade', woEsc(crew.trade)) +
-    woRow('Scheduled', woVal(opts.scheduled_on)) +
+    /* 744: was the raw stored string on a document handed to a crew. commDate()
+       is the main block's already-timezone-safe formatter. */
+    woRow('Scheduled', woVal(opts.scheduled_on ? commDate(opts.scheduled_on) : '')) +
   '</table>' +
   '<h2 class="sec">Job</h2>' +
   '<table class="meta">' +
@@ -19671,7 +19700,7 @@ document.getElementById('pipeRow').addEventListener('click', function(e){
 });
 
 function timeAgo(iso){
-  var s = (Date.now() - new Date(iso).getTime()) / 1000;
+  var s = (Date.now() - crDate(iso).getTime()) / 1000;
   if(s < 60) return 'just now';
   if(s < 3600) return Math.floor(s/60) + 'm ago';
   if(s < 86400) return Math.floor(s/3600) + 'h ago';
@@ -26163,7 +26192,7 @@ function showList() {
 
   // ── Small helpers ─────────────────────────────────────────
   function fmt(n) { return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
-  function fmtDate(iso) { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); }
+  function fmtDate(iso) { var d = window.crDate ? window.crDate(iso) : new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); }
   function fmtDateLong(iso) { return new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); }
   function fmtRel(iso) {
     const d = (Date.now() - +new Date(iso)) / 86400000;
@@ -26968,7 +26997,7 @@ function showList() {
     }
   }
   function fmtWhen(iso) {
-    const d = new Date(iso);
+    const d = window.crDate ? window.crDate(iso) : new Date(iso);
     const days = (Date.now() - d) / 86400000;
     if (days < 1) return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     if (days < 7) return d.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase() + ' ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
@@ -28009,7 +28038,7 @@ function showList() {
     return bits.length ? ('Yes \u2014 ' + bits.join(', ')) : 'Yes';
   }
   function money(v) { return (v === null || v === undefined || v === '') ? '\u2014' : '$' + fmt(v); }
-  function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+  function fmtDate(d) { if (!d) return '—'; var t = window.crDate ? window.crDate(d) : new Date(d); return t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
   function fmtDateShort(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); }
   function statusLabel(s) { return STATUSES.find(x => x.v === s)?.l || s; }
   function causeLabel(c) { return CAUSES.find(x => x.v === c)?.l || c; }
@@ -30167,7 +30196,7 @@ function showList() {
   function esc(s){ return String(s==null?'':s).replace(/[<>&"']/g, function(c){
     return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); }
   function money(n){ return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0}); }
-  function fmtDate(d){ return d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'; }
+  function fmtDate(d){ return d ? (window.crDate ? window.crDate(d) : new Date(d)).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'; }
 
   // ── Aggregate adjusters out of claim history ───────────────
   async function loadAdjusters(){
@@ -30738,7 +30767,7 @@ function showList() {
   function isAdmin(){ try{ return !!(window.is_admin && window.is_admin()); }catch(e){ return false; } }
   function ago(d){
     if(!d) return '—';
-    var h=(Date.now()-new Date(d))/3600000;
+    var h=(Date.now()-(window.crDate ? window.crDate(d) : new Date(d)))/3600000;
     if(h<1) return Math.max(1,Math.round(h*60))+'m ago';
     if(h<24) return Math.round(h)+'h ago';
     var dd=Math.floor(h/24);
@@ -33225,7 +33254,7 @@ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
 function fmtDate(iso){
 if(!iso) return '';
 try{
-var d = new Date(iso);
+var d = window.crDate ? window.crDate(iso) : new Date(iso);
 return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'2-digit' });
 }catch(e){ return ''; }
 }
@@ -35342,7 +35371,7 @@ return '$' + v.toLocaleString('en-US',
 function fmtDate(iso){
 if(!iso) return '';
 try{
-var d = new Date(iso);
+var d = window.crDate ? window.crDate(iso) : new Date(iso);
 if(isNaN(d.getTime())) return String(iso);
 return d.toLocaleDateString('en-US',
 { month:'long', day:'numeric', year:'numeric' });
@@ -38340,6 +38369,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:744, d:'2026-08-12', t:'Dates were showing one day early, and Crews printed them raw',
+s:'Thirty fields in the system store a plain date with no time on it \u2014 date of loss, when a crew document expires, when an estimate is good through, when a punch item is scheduled, when money was collected. Because of the way the app was reading them, every one of those was drawn on screen ONE DAY EARLY. A date of loss recorded as 23 July showed as 22 July; an estimate good through the 23rd said the 22nd. The numbers underneath were always right \u2014 it was only the reading of them \u2014 and dates that carry a time on them, like when a note was added, were never affected. Twelve places have been corrected; the three that were already right were left alone. Separately, the Crews section was printing dates exactly as stored \u2014 \u201Cexpires 2026-11-30\u201D in the compliance vault, \u201C2026-08-12\u201D in the payments table, and the raw date on the printed crew work order. Those now read like dates. Nothing about how dates are stored changed, and every date picker still works the same way.' },
 { b:743, d:'2026-08-12', t:'Searching by phone number actually finds people now',
 s:'Typing a phone number into any of the search boxes only found a client if you punctuated it exactly the way it happened to be stored \u2014 so 9375550101 would not find a number saved as 937-555-0101, and neither would find (937) 555-0101. Worse, none of the seven search boxes ever looked at the phone numbers kept on the bid form, which is where 16 of the 34 clients on file keep theirs \u2014 searching for those people by number has never worked at all. Now every search that covers a client covers every number on that client, in every ordinary way of writing it: digits, dashes, dots, spaces or brackets all find the same person, and the numbers on the bid form are included. Nothing that used to be found has stopped being found \u2014 the searches only look in more places, never fewer.' },
 { b:742, d:'2026-08-12', t:'The client CSV was wrong in four columns, and two health checks could never fail',
@@ -43755,7 +43786,7 @@ return esc(s).replace(/\n/g, '<br>');
 }
 function fmtDate(iso){
 if(!iso) return '';
-var d = iso instanceof Date ? iso : new Date(iso);
+var d = iso instanceof Date ? iso : (window.crDate ? window.crDate(iso) : new Date(iso));
 if(isNaN(d.getTime())) return '';
 return d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
 }
@@ -50671,7 +50702,7 @@ return Math.round((t.getTime() - a.getTime()) / 86400000);
 }
 function ago(iso){
 if(!iso) return '';
-var d = new Date(iso);
+var d = window.crDate ? window.crDate(iso) : new Date(iso);
 if(isNaN(d)) return '';
 var n = Math.floor((Date.now() - d.getTime()) / 86400000);
 if(n <= 0) return 'today';
@@ -54363,7 +54394,7 @@ window.CardinalPunchStrip = { html: stripHtml };
 /* ── item detail sheet ── */
 function fmtDate(iso){
   if(!iso) return '\u2014';
-  var d = new Date(iso);
+  var d = window.crDate ? window.crDate(iso) : new Date(iso);
   if(isNaN(d)) return '\u2014';
   return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
 }
@@ -59820,6 +59851,18 @@ function me(){
 /* Days until a certificate lapses. NEGATIVE means it already has. A W-9 has no
    expiry at all, which is not the same as an expired one — null means "no
    clock", and the caller must not treat that as zero. */
+/* 744: this module printed stored dates verbatim, so the compliance vault read
+   "expires 2026-11-30" and the payments table showed "2026-08-12". It has no date
+   formatter of its own — 0 toLocaleDateString in the whole block — so here is one.
+   ⚠️ daysLeft() below already parsed correctly (iso + 'T00:00:00'), so the
+   "expires in N days" COUNT was right all along while the date beside it was raw.
+   It is deliberately left exactly as it is. */
+function dstr(v){
+  if(!v) return '';
+  var d = window.crDate ? window.crDate(v) : new Date(v);
+  return isNaN(d) ? String(v)
+                  : d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
 function daysLeft(iso){
   if(!iso) return null;
   var d = new Date(iso + 'T00:00:00');
@@ -59832,8 +59875,8 @@ function docState(kind, row){
   if(n === null) return { cls:'ok', label:'\u25cf On file',
     note:row.issued_on ? 'filed ' + row.issued_on : 'no expiry' };
   if(n < 0)  return { cls:'bad',  label:'\u2715 Expired',  note:'expired ' + (-n) + ' days ago' };
-  if(n <= 30) return { cls:'warn', label:'\u25b2 ' + n + ' days', note:'expires ' + row.expires_on };
-  return { cls:'ok', label:'\u25cf Current', note:'expires ' + row.expires_on };
+  if(n <= 30) return { cls:'warn', label:'\u25b2 ' + n + ' days', note:'expires ' + dstr(row.expires_on) };
+  return { cls:'ok', label:'\u25cf Current', note:'expires ' + dstr(row.expires_on) };
 }
 /* A crew is only as good as its worst document. */
 function crewState(id){
@@ -59985,7 +60028,7 @@ function paymentsHtml(c){
     if(isFinite(v)) total += v;
     var meth = (PAY_METHODS.find(function(m){ return m[0] === p.method; }) || [null, p.method || ''])[1];
     return '<tr>' +
-      '<td>' + esc(p.paid_on || '\u2014') + '</td>' +
+      '<td>' + esc(p.paid_on ? dstr(p.paid_on) : '\u2014') + '</td>' +
       '<td style="text-align:right">' + money(p.amount, true) + '</td>' +
       '<td>' + esc(meth) + '</td>' +
       '<td>' + esc(p.reference || '') + '</td>' +
