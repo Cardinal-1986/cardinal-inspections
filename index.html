@@ -3314,7 +3314,79 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 </head>
 <body>
 
-<header class="site">
+<!-- 729: the boot splash.
+     Measured on the real brotli document (1,103,773 bytes) served locally with
+     Chromium's own throttling: on a weak signal the first paint lands at 608ms
+     but the document is not fully down until 5,713ms, so for roughly five
+     seconds the screen is a HALF-PAINTED page - a black ground with one stray
+     white strip - which reads as broken. (There is no white screen; that part
+     of the report was wrong. The window is real, the symptom was different.)
+
+     This must be the FIRST thing in <body> and must carry its own stylesheet
+     immediately above it, because anything further down the file cannot paint
+     until it has been downloaded, which is the whole problem. Ground is
+     #09090C - measured, not chosen: html and body both compute to rgb(9,9,12)
+     in dark AND light mode, so the splash is the document's own ground and
+     cannot flash against it. Ring, motion and ink are lifted verbatim from
+     #restoreVeil so the hand-off to it on a signed-in load has no seam.
+
+     DELIBERATELY SINGLE-THEME. Do not "finish" it with an html[data-mode=light]
+     block. #restoreVeil, which this hands straight off to, is dark in BOTH
+     modes, and a signed-in load - the one Theo does every time - goes
+     splash -> veil -> app. A light splash would put a flash INTO that path to
+     take one out of the signed-out path, which is the rarer one.
+
+     NO progress bar. A percentage we cannot measure is a lie told to the user,
+     and this file has 1,103,773 bytes whose arrival time we do not know.
+
+     It removes itself on EVERY boot path (showMain, showLogin, the boot IIFE's
+     own catch) and, failing all of those, on a hard timer - a splash that
+     cannot be dismissed is worse than the half-painted page it hides. -->
+<style id="cr-splash-styles">
+#crSplash{position:fixed;inset:0;z-index:100001;display:flex;align-items:center;
+  justify-content:center;background:#09090C;}
+#crSplash .crsp-in{text-align:center;padding:0 24px;}
+#crSplash .crsp-ring{width:56px;height:56px;margin:0 auto 14px;border-radius:50%;
+  border:3px solid rgba(200,32,46,.25);border-top-color:#c8202e;
+  animation:crspspin 1s linear infinite;}
+/* both inks computed against #09090C: white 19.89:1, #e35c63 5.66:1 */
+#crSplash .crsp-word{font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.08em;
+  color:#ffffff;margin:0 0 6px;}
+#crSplash .crsp-text{font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.08em;
+  color:#e35c63;margin:0;}
+@keyframes crspspin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion: reduce){
+  #crSplash .crsp-ring{animation:none;border-color:rgba(200,32,46,.45);}
+}
+</style>
+<div id="crSplash" role="status" aria-live="polite">
+  <div class="crsp-in">
+    <div class="crsp-ring"></div>
+    <div class="crsp-word">CARDINAL ROSTER</div>
+    <div class="crsp-text">Loading&#8230;</div>
+  </div>
+</div>
+<script>
+(function(){
+  var t = null;
+  function done(){
+    if(t){ clearTimeout(t); t = null; }
+    var el = document.getElementById('crSplash');
+    if(el && el.parentNode) el.parentNode.removeChild(el);
+  }
+  window.crSplashDone = done;
+  /* Boot ends in showMain() or showLogin() on every path, including the boot
+     IIFE's catch. This is the backstop for the paths that are not boot at all:
+     the supabase CDN refused, a script threw before either ran, or the tab was
+     restored from bfcache with boot already finished. 8s is ~2x the worst boot
+     measured on a throttled weak signal; firing early only reveals the page
+     the user would have had anyway. */
+  t = setTimeout(done, 8000);
+  try{ window.addEventListener('pageshow', function(e){ if(e.persisted) done(); }); }catch(_){}
+})();
+</script>
+
+<header class="site"
   <div class="wrap masthead">
     <div class="headactions">
       <span class="whoami" id="whoami"></span>
@@ -3374,7 +3446,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-11 build 728 &#8212; Money buttons can no longer be double-tapped into two payments: Save collection, Save draw and Record commission lock while they save</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 729 &#8212; The app shows the Cardinal mark and &#8220;Loading&#8230;&#8221; while it opens, instead of a half-drawn screen on a weak signal</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22694,6 +22766,8 @@ try{ _vision = !!(window.CardinalLanding && window.CardinalLanding.isVisionHost
                   && window.CardinalLanding.isVisionHost()); }catch(_){}
 var _rv0 = document.getElementById('restoreVeil');
 if(_rv0){ _rv0.style.display = 'flex'; setTimeout(function(){ _rv0.style.display = 'none'; }, 1600); }
+/* 729: the veil is up, so the splash can go with nothing uncovered between them */
+try{ if(window.crSplashDone) window.crSplashDone(); }catch(_){}
 var hd = document.querySelector('header.site');
   if(hd) hd.style.display = _vision ? 'none' : '';
   fixHeadPad();
@@ -22746,6 +22820,8 @@ whoami.addEventListener('click', async function(){
 });
 
 function showLogin(){
+  /* 729: every signed-out path lands here, including the boot IIFE's catch */
+  try{ if(window.crSplashDone) window.crSplashDone(); }catch(_){}
   hideAllViews();
   document.getElementById('loginView').classList.add('open');
   var hd = document.querySelector('header.site');
@@ -37700,6 +37776,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:729, d:'2026-08-12', t:'A proper loading screen instead of a half-drawn page',
+s:'On a weak signal the app took about five seconds to arrive, and for most of that you were looking at a half-drawn screen \u2014 a black page with one stray white strip \u2014 which looks like it has crashed. You now get the spinning Cardinal mark and \u201CLoading\u2026\u201D from the moment the page appears until the app is actually ready, then it lifts straight into the app. There is deliberately no percentage bar: we cannot know how long the rest of the file will take, and a made-up number is worse than an honest spinner. If anything goes wrong while opening, the loading screen gets out of the way on its own rather than trapping you behind it.' },
 { b:728, d:'2026-08-11', t:'A money button cannot be tapped twice into two payments',
 s:'On a slow connection a save can take a second or two, and nothing stopped you tapping it again. Save collection, Save draw and Record commission now lock and read \u201CSaving\u2026\u201D until the save finishes, and a second tap is ignored rather than writing a second row. This mattered most on Save collection: logging a check also creates the rep\u2019s 10% commission automatically, so a double tap booked the check twice AND the commission twice, and nothing afterwards could tell the copy from the original. The same lock is on the draw button on the payout screen. If a save fails the button unlocks so you can try again.' },
 { b:727, d:'2026-08-11', t:'The money tab\u2019s two buttons say which one they close',

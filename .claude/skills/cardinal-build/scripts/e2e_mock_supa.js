@@ -181,13 +181,21 @@
   StorageBucket.prototype.download = function () { return Promise.resolve({ data: new Blob([]), error: null }); };
 
   var authListeners = [];
+  /* 729 test knob: window.__NO_SESSION__ makes this a SIGNED-OUT boot, so a gate
+     can drive the showLogin() half of the app. Default is unchanged (signed in
+     as admin), so every earlier gate reads exactly as it did. */
+  function _sess() { try { if (typeof window !== 'undefined' && window.__NO_SESSION__) return null; } catch (e) {} return SESSION; }
+  /* 729 test knob: window.__HANG_AUTH__ makes getSession() never settle, which is
+     the one boot outcome that reaches NEITHER showMain() nor showLogin() — the
+     only way to exercise a backstop that lifts a boot overlay on its own. */
+  function _hang() { try { return typeof window !== 'undefined' && !!window.__HANG_AUTH__; } catch (e) { return false; } }
   var client = {
     auth: {
-      getSession: function () { return Promise.resolve({ data: { session: SESSION }, error: null }); },
-      getUser: function () { return Promise.resolve({ data: { user: USER }, error: null }); },
+      getSession: function () { if (_hang()) return new Promise(function () {}); return Promise.resolve({ data: { session: _sess() }, error: null }); },
+      getUser: function () { return Promise.resolve({ data: { user: _sess() ? USER : null }, error: null }); },
       onAuthStateChange: function (cb) {
         authListeners.push(cb);
-        setTimeout(function () { try { cb('INITIAL_SESSION', SESSION); } catch (e) {} }, 0);
+        setTimeout(function () { try { cb('INITIAL_SESSION', _sess()); } catch (e) {} }, 0);
         return { data: { subscription: { unsubscribe: function () {} } } };
       },
       signInWithPassword: function (creds) {

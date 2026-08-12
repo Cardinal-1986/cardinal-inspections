@@ -4028,3 +4028,33 @@ the whole address scanner depend on those inputs existing. The data API
 - Requires **Places API (New)** enabled on the Google Cloud project. Verified
   enabled 11 Aug 2026 (`places:autocomplete` → HTTP 200). If that ever changes,
   the fallback keeps the field working.
+
+## The boot splash (729) — `#crSplash` + `<style id="cr-splash-styles">`
+
+The **first two elements inside `<body>`**, and they have to stay there. Anything
+further down the file cannot paint until it has been downloaded, and the whole
+point is the window before the file has arrived.
+
+- **What it fixes, measured:** on a weak signal (1.6 Mbps / 300 ms) the document's
+  first paint is at 608 ms but it is not fully down until 5,713 ms. For those five
+  seconds the app is a **half-painted page** — black ground, red rule, one stray
+  strip of unstyled text — which reads as crashed. On LTE the whole load is under
+  a second and there is nothing to fix. **There was never a white screen.**
+- **Ground `#09090C` is measured, not chosen.** `html` and `body` both compute to
+  `rgb(9,9,12)` in dark *and* light mode, so the splash is the document's own
+  ground. Ring, spin and inks are `#restoreVeil`'s, verbatim, so the hand-off on a
+  signed-in load has no seam.
+- ⚠️ **Deliberately single-theme. Do not add an `html[data-mode="light"]` block.**
+  `#restoreVeil` is dark in both modes and a signed-in load goes splash → veil →
+  app. A light splash would put a flash *into* that path to take one out of the
+  rarer signed-out path.
+- ⚠️ **No progress bar, and this is a decision, not an omission.** We cannot know
+  when the remaining bytes arrive. A percentage we cannot measure is a lie, and
+  `gate_729.mjs` asserts none is present.
+- **It removes itself on every exit from boot**: `showMain()` (after the veil is
+  up), `showLogin()` — which is also where the boot IIFE's own `catch` lands —
+  `pageshow` from bfcache, and an **8 s backstop**. A splash that cannot be
+  dismissed is worse than the half-painted page it hides.
+- `window.crSplashDone()` is the single remover, defined once, asserted. It is
+  `position:fixed` and **never writes `body.style.overflow`** — still 13 scroll-lock
+  writers, not 14.
