@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 756 &#8212; The header stays with you on Claims, Pricing and the other tool screens, and every Home button goes to your own CRM</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 757 &#8212; One Home button, not three — the two duplicates are retired</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34852,71 +34852,30 @@ onChange: function(fn){ if(typeof fn === 'function') LISTENERS.push(fn); },
 })();
 </script>
 
-<style id="cr-home-btn-styles">#cr-home-btn{background:transparent;border:1px solid rgba(200,32,46,.6);color:#c8202e;border-radius:8px;padding:5px 8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;margin-right:6px;flex:0 0 auto;transition:background .12s,border-color .12s,transform .1s,color .12s;-webkit-tap-highlight-color:transparent}#cr-home-btn:hover{background:rgba(200,32,46,.15);border-color:#c8202e}#cr-home-btn:active{transform:scale(.94)}#cr-home-btn svg{display:block}body.viewing-community-hub #cr-home-btn{color:#a67c0a;border-color:rgba(166,124,10,.5)}body.viewing-community-hub #cr-home-btn:hover{background:rgba(166,124,10,.15);border-color:#a67c0a}body.claim-insurance #cr-home-btn{color:var(--ct-warn);border-color:var(--ct-warn)}body.claim-insurance #cr-home-btn:hover{background:var(--ct-warn-bg);border-color:var(--ct-warn)}</style>
 <script id="cr-home-btn-script">
 (function () {
 'use strict';
-var OVERLAY_IDS = ['cardinalTruthView', 'resourceLibraryView',
-'insClientsView',   'editorView',       'cr-occ'];
-function anyOverlayVisible(){
-for(var i = 0; i < OVERLAY_IDS.length; i++){
-var el = document.getElementById(OVERLAY_IDS[i]);
-if(el && el.style.display !== 'none' && el.style.display !== '') return true;
-if(el && el.style.display && el.style.display !== 'none') return true;
-}
-return false;
-}
-function ensureButton(){
-var wrap = document.getElementById('navWrap');
-if(!wrap) return;
-if(wrap.style.display === 'none') return removeButton();
-var btn = document.getElementById('cr-home-btn');
-if(!btn){
-btn = document.createElement('button');
-btn.id = 'cr-home-btn';
-btn.className = 'btn ghost';
-btn.setAttribute('aria-label', 'Home');
-btn.setAttribute('title', 'Home');
-btn.type = 'button';
-btn.innerHTML =
-'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" ' +
-'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" ' +
-'stroke-linejoin="round" aria-hidden="true">' +
-'<path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-14a2 2 0 0 1-2-2z"/>' +
-'<path d="M9 22 V12 h6 v10"/>' +
-'</svg>';
-btn.onclick = function(e){
-e.stopPropagation();
-/* 756: was showHome() — retail from every CRM. */
-if(window.CardinalHeader && typeof window.CardinalHeader.goHome === 'function'){ window.CardinalHeader.goHome(); return; }
-if(typeof window.showHome === 'function'){ window.showHome(); return; }
-if(typeof window.hideAllViews === 'function') window.hideAllViews();
-};
-var target = document.getElementById('cr-search-btn')
-|| document.getElementById('navBtn');
-if(target && target.parentNode === wrap) wrap.insertBefore(btn, target);
-else wrap.appendChild(btn);
-}
-btn.style.display = anyOverlayVisible() ? 'none' : 'inline-flex';
-}
+/* 757: RETIRED. This floating home button sat in #navWrap beside the portal
+   chip, one row under the header's own gold home button, and did exactly the
+   same job. Theo, seeing three Home buttons on the Claims screen after 756:
+   "Retire redundant ones."
+
+   ⚠️ IT HAD ALREADY BEEN RETIRED ONCE, IN CSS. cr-hd2-styles has carried
+   #cr-home-btn{display:none} since the 416/417 header rebuild — but this module
+   wrote btn.style.display='inline-flex' inline on every observer pass, and an
+   inline style outranks a stylesheet declaration that is not !important. So the
+   button outlived its own retirement by ~340 builds. Deleting at source is the
+   only fix that sticks; out-specifying it never was.
+
+   Its stylesheet went with it, and so did a document.body MutationObserver with
+   subtree:true. All that is left is a one-shot remover, so any document that
+   somehow carries the element still loses it. */
 function removeButton(){
 var btn = document.getElementById('cr-home-btn');
 if(btn && btn.parentNode) btn.parentNode.removeChild(btn);
 }
-function start(){
-ensureButton();
-var ticking = false;
-new MutationObserver(function(){
-if(ticking) return;
-ticking = true;
-requestAnimationFrame(function(){
-ticking = false;
-try{ ensureButton(); }catch(e){}
-});
-}).observe(document.body, {childList:true, subtree:true});
-}
-if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
-else start();
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', removeButton);
+else removeButton();
 })();
 </script>
 
@@ -35204,13 +35163,25 @@ else start();
 })();
 </script>
 
-<style id="cr-pme-styles">.cr-pme-exit{position:fixed !important;top:14px;right:14px;z-index:220;/* above the mount (200) */ background:rgba(0,0,0,.85);border:1px solid #c8202e;color:#c8202e;border-radius:10px;padding:8px 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 4px 14px rgba(0,0,0,.35);transition:background .12s,border-color .12s,transform .1s;-webkit-tap-highlight-color:transparent}.cr-pme-exit:hover{background:rgba(200,32,46,.25)}.cr-pme-exit:active{transform:scale(.94)}.cr-pme-exit svg{display:block}@media (max-width:640px){.cr-pme-exit{padding:7px 9px;top:calc(env(safe-area-inset-top,0px) + 10px);right:10px}.cr-pme-exit .lbl{display:none}}</style>
 <script id="cr-pme-script">
 (function () {
 'use strict';
+/* 757: THE FLOATING "HOME" BUTTON ON THE TOOL SCREENS IS RETIRED. 756 put the
+   real header above all five module mounts, so this button sat a few pixels
+   under the header's own gold home button and did the same job. Theo: "Retire
+   redundant ones."
+
+   WHAT STAYS, deliberately: the ESCAPE KEY. It closes whichever tool screen is
+   open and is duplicated nowhere, so it is not redundant. closePlugins() is
+   kept for it — and it is still the CRM-aware path, through crCloseAll() ->
+   CardinalHeader.goHome() (756). crCloseAll() itself is untouched; two other
+   modules call it.
+
+   Retiring the button also removed this module's document.body observer and its
+   four per-mount attribute observers: nothing needs re-checking once there is no
+   button to keep in sync. */
 var MOUNT_IDS = ['cr-estimates-mount', 'cr-claims-mount',
 'cr-pricing-mount',   'cr-coach-mount'];
-var EXIT_ID = 'cr-pme-exit-btn';
 function visibleMount(){
 for(var i = 0; i < MOUNT_IDS.length; i++){
 var el = document.getElementById(MOUNT_IDS[i]);
@@ -35236,54 +35207,14 @@ if(window.CardinalHeader && typeof window.CardinalHeader.goHome === 'function') 
 else if(typeof window.showHome === 'function') window.showHome();
 }catch(e){}
 }
-removeButton();
 }
-function ensureButton(){
-var mount = visibleMount();
-if(!mount){ removeButton(); return; }
-var btn = document.getElementById(EXIT_ID);
-if(!btn){
-btn = document.createElement('button');
-btn.id = EXIT_ID;
-btn.className = 'cr-pme-exit';
-btn.type = 'button';
-btn.setAttribute('aria-label', 'Home');
-btn.setAttribute('title', 'Home');
-btn.innerHTML =
-'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" ' +
-'stroke="currentColor" stroke-width="2.4" stroke-linecap="round" ' +
-'stroke-linejoin="round" aria-hidden="true">' +
-'<path d="M3 12l9-9 9 9v9a2 2 0 0 1-2 2h-14a2 2 0 0 1-2-2z"/>' +
-'<path d="M9 22 V12 h6 v10"/>' +
-'</svg>' +
-'<span class="lbl">Home</span>';
-btn.onclick = function(e){ e.stopPropagation(); closePlugins(); };
-document.body.appendChild(btn);
-}
-btn.style.display = 'inline-flex';
-}
+/* 757: one shot, in case a document somehow carries the retired button. */
 function removeButton(){
-var btn = document.getElementById(EXIT_ID);
+var btn = document.getElementById('cr-pme-exit-btn');
 if(btn && btn.parentNode) btn.parentNode.removeChild(btn);
 }
-var ticking = false;
-function schedule(){
-if(ticking) return;
-ticking = true;
-requestAnimationFrame(function(){ ticking = false; try{ ensureButton(); }catch(e){} });
-}
 function start(){
-ensureButton();
-MOUNT_IDS.forEach(function(id){
-var el = document.getElementById(id);
-if(!el) return;
-new MutationObserver(schedule).observe(el, {
-attributes:true, attributeFilter:['style']
-});
-});
-new MutationObserver(schedule).observe(document.body, {
-childList:true, subtree:false
-});
+removeButton();
 document.addEventListener('keydown', function(e){
 if(e.key === 'Escape' && visibleMount()){ e.preventDefault(); closePlugins(); }
 });
@@ -38641,6 +38572,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:757, d:'2026-08-12', t:'One Home button, not three',
+s:'With the header back on the tool screens there were three Home buttons on one screen: the gold house in the header, a small one beside the CRM chip just below it, and another floating on the panel itself. The two duplicates are gone. The gold house in the header is the one Home button, and it goes to your own CRM\u2019s home. On a computer, Escape still closes a tool screen \u2014 that shortcut was not duplicated by anything, so it stays.' },
 { b:756, d:'2026-08-12', t:'The header stays on the tool screens',
 s:'On a phone, opening Claims, Pricing, Estimates, the Objection Coach or the Adjuster Directory used to cover the header completely \u2014 no menu, no CRM colours, no way back except the little Home button in the corner, which always went to retail. The header now sits above all five of those screens on every device, exactly as it already did on a desktop. Every Home button in the app \u2014 the gold house, the floating one and the one on those tool screens \u2014 now takes you to YOUR CRM\u2019s home. And leaving a tool screen actually closes it: it used to stay open on top of the page you had just gone to.' },
 { b:755, d:'2026-08-12', t:'The banner speaks your CRM\u2019s language',
@@ -66966,12 +66899,10 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
   top:var(--headh,110px) !important;
   z-index:60 !important;
 }
-/* The mounts' floating "Home" button is z-index 220 and was pinned top:14px —
-   with the header now visible it would sit ON the header's own controls. Drop it
-   to just inside the panel it closes. --headh already includes the notch
-   (fixHeadPad measures offsetHeight, and the bar's padding-top carries
-   env(safe-area-inset-top)), so this needs no separate mobile case. */
-.cr-pme-exit{ top:calc(var(--headh,110px) + 10px) !important; }
+/* 757: the rule that lived here positioned the mounts' floating "Home" button
+   below the header. That button is retired — the header's own home button is
+   directly above it and does the same thing — so both the rule and the button's
+   stylesheet are gone. */
 </style>
 <style id="cr-touch44-styles">
 /* ============================================================================
