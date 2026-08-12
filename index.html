@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 746 &#8212; Company Documents: Download no longer swallows the app on an iPad, and a document that has not been uploaded says so instead of failing</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 747 &#8212; Printed contracts drop the property photo, every page carries a slim header, and the page breaks fall where they should</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8975,9 +8975,40 @@ table.units td.pr{text-align:right;white-space:nowrap;width:22%;}
 .sign .lbl{font-size:9.5pt;color:var(--muted);margin-top:5px;}
 .avoid-break{break-inside:avoid;}
 .page-break{break-before:page;}
+/* 747: the slim running header. position:fixed is the ONLY mechanism that
+   repeats on every printed page in Chromium and WebKit — measured, 5 of 5
+   pages. @page margin boxes are not implemented in either engine, which is why
+   there is no "page N of M" here: counter(page) only resolves inside one. The
+   browser's own print footer supplies page numbers when they are wanted. */
+.runhead{display:none;}
+@media print{
+  .runhead{
+    display:block;position:fixed;top:0;left:0;right:0;height:0.26in;
+    font:600 8.5pt Arial,Helvetica,sans-serif;color:#555;background:#fff;
+    border-bottom:0.5pt solid #d9d9d9;line-height:0.26in;letter-spacing:.02em;
+  }
+  /* the fixed header sits in the page CONTENT box, so the body has to make
+     room for it or page 2 onwards prints text underneath it. */
+  body{padding-top:0.40in !important;}
+
+  /* 747: where the breaks fall. A row never splits, a long table repeats its
+     header, a heading is never left stranded at the foot of a page, and the
+     signature block stays whole. */
+  tr{break-inside:avoid;}
+  thead{display:table-header-group;}
+  h2.sec,.swhead{break-after:avoid;}
+  .sign,.note,.descbox{break-inside:avoid;}
+
+  /* an empty photo frame prints as a solid grey block and wastes more ink than
+     anything else on the page. REPORT_TEMPLATE has had this rule all along;
+     the priced documents never got it. */
+  .cover-photo:not(:has(img)){display:none !important;}
+}
 </style>
 </head>
 <body>
+
+<div class="runhead">Cardinal Roofing &amp; Renovations &nbsp;&middot;&nbsp; ROOFING ESTIMATE</div>
 
 <!-- ======================= HEADER ======================= -->
 <div class="est-head">
@@ -9202,9 +9233,40 @@ table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weig
 .sign .lbl{font-size:9.5pt;color:var(--muted);margin-top:5px;}
 .avoid-break{break-inside:avoid;}
 .page-break{break-before:page;}
+/* 747: the slim running header. position:fixed is the ONLY mechanism that
+   repeats on every printed page in Chromium and WebKit — measured, 5 of 5
+   pages. @page margin boxes are not implemented in either engine, which is why
+   there is no "page N of M" here: counter(page) only resolves inside one. The
+   browser's own print footer supplies page numbers when they are wanted. */
+.runhead{display:none;}
+@media print{
+  .runhead{
+    display:block;position:fixed;top:0;left:0;right:0;height:0.26in;
+    font:600 8.5pt Arial,Helvetica,sans-serif;color:#555;background:#fff;
+    border-bottom:0.5pt solid #d9d9d9;line-height:0.26in;letter-spacing:.02em;
+  }
+  /* the fixed header sits in the page CONTENT box, so the body has to make
+     room for it or page 2 onwards prints text underneath it. */
+  body{padding-top:0.40in !important;}
+
+  /* 747: where the breaks fall. A row never splits, a long table repeats its
+     header, a heading is never left stranded at the foot of a page, and the
+     signature block stays whole. */
+  tr{break-inside:avoid;}
+  thead{display:table-header-group;}
+  h2.sec,.swhead{break-after:avoid;}
+  .sign,.note,.descbox{break-inside:avoid;}
+
+  /* an empty photo frame prints as a solid grey block and wastes more ink than
+     anything else on the page. REPORT_TEMPLATE has had this rule all along;
+     the priced documents never got it. */
+  .cover-photo:not(:has(img)){display:none !important;}
+}
 </style>
 </head>
 <body>
+
+<div class="runhead">Cardinal Roofing &amp; Renovations &nbsp;&middot;&nbsp; __EST_RUNHEAD__</div>
 
 <div class="est-head">
   <img class="est-logo" src="__LOGO__" alt="Cardinal Roofing &amp; Renovations">
@@ -9238,7 +9300,7 @@ before any additional work is performed.</b></div>
 <h2 class="sec">Notes</h2>
 <p class="ph">[Job-specific notes — access, scheduling, color selections, special conditions — or delete this line.]</p>
 
-<h2 class="sec">Terms</h2>
+<h2 class="sec page-break">Terms</h2>
 __EST_TERMS__
 <div class="note"><b>Acceptance.</b> This estimate is valid through the date shown above. Signature below
 authorizes Cardinal Roofing &amp; Renovations to perform the work described, under the terms stated,
@@ -9383,11 +9445,27 @@ var EST_TERMS_GENERAL =
 
 function buildEstimate(titleHtml, body, terms){
   var m = REPORT_TEMPLATE.match(/class="cover-logo" src="(data:image\/[^"]+)"/);
-  return ESTIMATE_BASE_RAW
+  /* 747: the heading without its markup — 'SERVICE <span>CONTRACT</span>' becomes
+     'SERVICE CONTRACT'. Used both for the running header and for the test below.
+     isContractTitle()/isEstimateTitle()/docKind() are deliberately NOT reused:
+     they test a SAVED document's title ("Contract \u2014 Roofing \u2014 Betty
+     Mann"), not a template heading, and all three are declared after this
+     function, which runs at parse time to build the template constants. */
+  var plain = String(titleHtml || '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  var isDeal = /\b(AGREEMENT|CONTRACT)\b/i.test(plain);
+
+  var out = ESTIMATE_BASE_RAW
     .replace('__LOGO__', m ? m[1] : '')
+    .replace('__EST_RUNHEAD__', plain)
     .replace('__EST_TITLE__', titleHtml)
     .replace('__EST_BODY__', body)
     .replace('__EST_TERMS__', terms || EST_TERMS_PH);
+
+  /* Theo, on the print audit: "Take out property photos on contracts." An
+     estimate keeps it — a photo earns its place on a sales document — and the
+     print rule above drops it there too when no photo was ever attached. */
+  if(isDeal) out = out.replace('<div class="cover-photo">PROPERTY PHOTO</div>\n\n', '');
+  return out;
 }
 
 var SIDING_TEMPLATE  = buildEstimate('MASTIC VINYL SIDING <span>ESTIMATE</span>', SIDING_BODY);
@@ -38438,6 +38516,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:747, d:'2026-08-12', t:'Printed contracts look like contracts',
+s:'Three changes to every printed estimate, agreement, contract and invoice. Contracts and agreements no longer carry the property photo at all \u2014 on a blank one that was a big solid grey box that ate more ink than everything else on the page put together. Estimates keep the photo, because it earns its place on something you hand a customer, but they no longer print the empty grey box when no photo was attached. Every page after the first now carries a slim line across the top saying Cardinal Roofing &amp; Renovations and which document it is, so a page that gets separated from the rest still identifies itself. And the page breaks fall sensibly: Terms starts its own page, a heading is never left stranded alone at the bottom of a page, a table row never splits in half across two pages, a long table repeats its heading row at the top of the next page, and the signature block always stays together. Nothing about the wording of any document changed.' },
 { b:746, d:'2026-08-12', t:'Company Documents: Download stopped swallowing the app',
 s:'Two things were wrong on the Company Documents screen. First, two of the five documents listed \u2014 the Window agreement and the fillable Gutter agreement \u2014 have never actually been uploaded, so both View and Download on those rows led nowhere. Those rows now say \u201CNot uploaded yet\u201D instead of handing you a dead link, and they will start working on their own the moment the file is added; nothing needs changing in the app. Second, and this is the one that trapped you: Download opened in the same window. On an iPad the file opens rather than downloading, and because the app had been replaced in place there was no way back to the CRM short of closing and reopening it. Download now opens in its own tab like View does, so the app is always still there behind it. On a computer it still downloads straight to your Downloads folder as before.' },
 { b:745, d:'2026-08-12', t:'Invoices stopped rounding the cents away',
