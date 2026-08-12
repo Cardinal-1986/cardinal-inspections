@@ -2471,3 +2471,68 @@ seeded harness the landing module painted over the home strip, so even the scrol
 probe returned the overlay — at which point the honest gate asserts what is provable
 (the computed pseudo box) and says why the tap itself cannot be isolated.
 
+
+
+---
+
+## 41 — a fix scoped to a DESKTOP-ONLY body class leaves the phone broken, forever (756)
+
+`body.cr-lnav-on` is set only when the desktop left rail mounts (>=1100px). Builds
+561 and 572 used it to scope the rules that push the five module mounts
+(`#cr-claims-mount`, `#cr-pricing-mount`, `#cr-estimates-mount`,
+`#cr-coach-mount`, `#cr-adjusters-mount`) below the header. Those mounts carry
+`position:fixed; inset:0; z-index:200` as INLINE styles from `styleMounts()`, and
+the header is `z-index:90`.
+
+**Measured at 390px on v755: all five sat at `top=0, z=200` and the header was
+completely covered — `elementFromPoint` over the header's own home button
+returned the mount's floating exit button. At 1194px the same five were already
+at `top=187, z=60` with the header reachable.**
+
+So the screen Theo used every day was the one nobody had ever tested, and the
+screen the rules were written against was fine. **Ask what a `body.cr-lnav-on`
+(or any width-gated) scope means on a phone BEFORE using it** — the gate is
+right for layout that only exists on desktop (the rail's `left` offset) and
+wrong for anything the phone needs too (`top`, `z-index`).
+
+### The tell
+A rule whose gate names a *device feature* but whose declarations describe a
+*universal relationship* ("below the header", "under the nav"). Split it: gate
+the device-specific declaration, leave the universal one ungated.
+
+---
+
+## 42 — a navigation that hand-rolls its teardown instead of calling the canonical one (756)
+
+`hideAllViews()` is the app's teardown: it hides ~30 views, the five module
+mounts, calls `close()` on Sales Floor / Production / Showcase / the estimate
+builder, clears the scroll lock and calls `setHeaderJobMenu(false)`.
+
+`showHome()` calls it. `CardinalCommunityHub.show()` calls it. But
+**`showCardinalTruth()`, `showInsuranceClients()` and `showResourceLibrary()`
+each hand-rolled a list of four `getElementById(...).style.display='none'`
+instead** — and that list never included the mounts.
+
+**Result: tapping Home from the Claims screen showed Cardinal Truth *underneath a
+still-open Claims panel*, at BOTH widths.** Retail and Community were fine, which
+is exactly why it read as an insurance-only oddity for builds.
+
+### Why it survived
+Build 679 *noticed* these three "never went through `hideAllViews()`" — and fixed
+only the symptom in front of it (a stale job name) by adding
+`setHeaderJobMenu(false)` to each. **A comment that names the root cause while
+patching the symptom is a bug with a delay on it.**
+
+### The instrument that settled it
+A `MutationObserver` on the mount's `style` attribute recorded **zero writes** —
+proving it was never hidden, rather than hidden-and-re-shown. ⚠️ The obvious
+instrument fails: in Blink a style object's CSS properties are served by a **V8
+named-property interceptor**, so `Object.getOwnPropertyDescriptor(...,'display')`
+finds nothing on the instance OR anywhere in the prototype chain, and a
+`defineProperty` hook silently traces nothing — which reads as "never written"
+for the wrong reason.
+
+### The rule
+**One teardown.** If a navigation needs to hide "everything else", it calls
+`hideAllViews()`. `#landingView` is the one deliberate exception (absent from it
+by design), so it still goes by hand.
