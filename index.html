@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 755 &#8212; The banner speaks your CRM’s language — Clients &amp; Claims on Insurance, Partners &amp; Bids on Community</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 756 &#8212; The header stays with you on Claims, Pricing and the other tool screens, and every Home button goes to your own CRM</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22991,21 +22991,25 @@ function showCardinalTruth(){
      the ribbon — measured on the Insurance hub with a Community job open.
      Every one of the 13 call sites is a leave-the-job navigation, including the
      profile home chip, so this is safe at all of them. */
-  if(typeof setHeaderJobMenu === 'function') setHeaderJobMenu(false);
-  /* 410: dropping the class was not enough — crmNow() reads the VIEW's display. */
-  var ch = document.getElementById('communityHubView'); if(ch) ch.style.display = 'none';
+  /* 756: was a hand-rolled list of four views, which is why arriving here from a
+     tool screen left the tool OPEN ON TOP — measured: cardinalTruthView shown and
+     cr-claims-mount still display:block over it, at BOTH widths. hideAllViews() is
+     the app's canonical teardown and its list is the one that carries the five
+     module mounts, the Sales Floor / Production / Showcase close() calls, the
+     estimate builder, the scroll lock and setHeaderJobMenu(false) (so the 679 fix
+     this replaces is included, not lost). showHome() and the Community hub have
+     always called it; these three were the gap. #landingView is DELIBERATELY
+     absent from hideAllViews(), so it still goes by hand. */
+  hideAllViews();
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
-  var rl = document.getElementById('resourceLibraryView'); if(rl) rl.style.display = 'none';
-  var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
   document.getElementById('cardinalTruthView').style.display = 'block';
   window.scrollTo(0, 0);
 }
 function showResourceLibrary(){
   /* 679: the third of the three hub navigations that skipped the teardown. */
-  if(typeof setHeaderJobMenu === 'function') setHeaderJobMenu(false);
+  /* 756: same gap as showCardinalTruth — see the note there. */
+  hideAllViews();
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
-  var ct = document.getElementById('cardinalTruthView'); if(ct) ct.style.display = 'none';
-  var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
   document.getElementById('resourceLibraryView').style.display = 'block';
   window.scrollTo(0, 0);
 }
@@ -23017,11 +23021,9 @@ function showInsuranceClients(){
   document.body.classList.remove('viewing-community-hub');
   /* 679: same gap as showCardinalTruth — Theo's screenshot of this list still
      read "1009: Adam Gunn" after leaving his card. */
-  if(typeof setHeaderJobMenu === 'function') setHeaderJobMenu(false);
-  var ch = document.getElementById('communityHubView'); if(ch) ch.style.display = 'none';
+  /* 756: same gap as showCardinalTruth — see the note there. */
+  hideAllViews();
   var lv = document.getElementById('landingView'); if(lv) lv.style.display = 'none';
-  var ct = document.getElementById('cardinalTruthView'); if(ct) ct.style.display = 'none';
-  var rl = document.getElementById('resourceLibraryView'); if(rl) rl.style.display = 'none';
   document.getElementById('insClientsView').style.display = 'block';
   renderInsuranceClientsList();
   window.scrollTo(0, 0);
@@ -24835,7 +24837,14 @@ body.claim-insurance #brandLogo{
       var el = document.getElementById(id);
       if (el) { el.style.display = 'none'; el.innerHTML = ''; }
     });
-    try { if (typeof showHome === 'function') showHome(); } catch (e) {}
+    /* 756: was showHome() — retail, always. This is the destination behind the
+       floating Home button on every module mount, and Theo hit it from Insurance
+       Claims. goHome() reads the header's CRM; the guard keeps the old behaviour
+       if the header module ever fails to load. */
+    try {
+      if (window.CardinalHeader && typeof window.CardinalHeader.goHome === 'function') window.CardinalHeader.goHome();
+      else if (typeof showHome === 'function') showHome();
+    } catch (e) {}
   };
 })();
 </script>
@@ -34878,6 +34887,8 @@ btn.innerHTML =
 '</svg>';
 btn.onclick = function(e){
 e.stopPropagation();
+/* 756: was showHome() — retail from every CRM. */
+if(window.CardinalHeader && typeof window.CardinalHeader.goHome === 'function'){ window.CardinalHeader.goHome(); return; }
 if(typeof window.showHome === 'function'){ window.showHome(); return; }
 if(typeof window.hideAllViews === 'function') window.hideAllViews();
 };
@@ -35218,8 +35229,12 @@ MOUNT_IDS.forEach(function(id){
 var el = document.getElementById(id);
 if(el){ el.style.display = 'none'; }
 });
-if(!hadCrCloseAll && typeof window.showHome === 'function'){
-try{ window.showHome(); }catch(e){}
+/* 756: CRM-aware, same as crCloseAll's own path above. */
+if(!hadCrCloseAll){
+try{
+if(window.CardinalHeader && typeof window.CardinalHeader.goHome === 'function') window.CardinalHeader.goHome();
+else if(typeof window.showHome === 'function') window.showHome();
+}catch(e){}
 }
 removeButton();
 }
@@ -38626,6 +38641,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:756, d:'2026-08-12', t:'The header stays on the tool screens',
+s:'On a phone, opening Claims, Pricing, Estimates, the Objection Coach or the Adjuster Directory used to cover the header completely \u2014 no menu, no CRM colours, no way back except the little Home button in the corner, which always went to retail. The header now sits above all five of those screens on every device, exactly as it already did on a desktop. Every Home button in the app \u2014 the gold house, the floating one and the one on those tool screens \u2014 now takes you to YOUR CRM\u2019s home. And leaving a tool screen actually closes it: it used to stay open on top of the page you had just gone to.' },
 { b:755, d:'2026-08-12', t:'The banner speaks your CRM\u2019s language',
 s:'The two client-facing buttons in the dark banner now change with the CRM you are working in. On Insurance they read Clients and Claims \u2014 Clients opens the insurance client list and Claims opens the claims tracker. On Community they read Partners and Bids \u2014 each opens the Community hub straight onto that tab. Retail keeps Contacts and Leads exactly as before. The Leads and Jobs screen also stops calling itself Retail only \u2014 it has always shown every CRM\u2019s jobs, and its subtitle now says so.' },
 { b:754, d:'2026-08-12', t:'The header remembers your CRM',
@@ -52262,15 +52279,11 @@ home.id = 'cr-hd2-home';
 home.type = 'button';
 home.title = 'Home';
 home.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9.8 21v-6h4.4v6"/></svg>';
-home.onclick = function(){
-/* 417: leaving a project. Nothing else clears this, and a stale `projopen`
-   hides the CRM title and the burger on every screen that follows. */
-document.body.classList.remove('projopen');
-var crm = crmHead(); /* 754: from a shared screen, home returns to YOUR CRM */
-if(crm === 'insurance' && typeof window.showCardinalTruth === 'function'){ window.showCardinalTruth(); }
-else if(crm === 'community' && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){ window.CardinalCommunityHub.show(); }
-else if(typeof window.showHome === 'function'){ window.showHome(); }
-};
+/* 756: this ladder used to live here, inline, as the ONLY CRM-aware home in
+   the app — while #cr-home-btn and the mounts' floating exit button each called
+   showHome() and landed on retail. It is goHome() now, exported, and this
+   button is simply its first caller. One pipeline per concept. */
+home.onclick = function(){ goHome(); };
 }
 /* 416: home now anchors the RIGHT END OF THE BAR, not the ribbon. Appended last so
    it sits outside the absolutely-centred title. */
@@ -52432,6 +52445,21 @@ return 'retail';
    NOT follow the portal (the naive version painted white ink on the light
    insurance ground across every shared screen — measured before this shape
    was chosen). */
+/* 756: THE home destination, for every control that means "take me home".
+   Callers: #cr-hd2-home (the gold house), #cr-home-btn (the floating one) and
+   crCloseAll() / the module-mount exit button. Each branch tears the app down
+   through hideAllViews() on its own — showHome() always did, the Community hub
+   always did, and 756 made the three insurance/library hub navigations do it
+   too — so leaving a tool screen closes the tool screen. */
+function goHome(){
+/* 417: leaving a project. Nothing else clears this, and a stale `projopen`
+   hides the CRM title and the burger on every screen that follows. */
+document.body.classList.remove('projopen');
+var crm = crmHead(); /* 754: from a shared screen, home returns to YOUR CRM */
+if(crm === 'insurance' && typeof window.showCardinalTruth === 'function'){ window.showCardinalTruth(); }
+else if(crm === 'community' && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){ window.CardinalCommunityHub.show(); }
+else if(typeof window.showHome === 'function'){ window.showHome(); }
+}
 function crmHead(){
 var k = crmNow();
 if(k !== 'retail') return k;
@@ -52480,6 +52508,7 @@ build : build,
 skin  : skin,
 crm   : crmNow,
 crmHead : crmHead,
+goHome  : goHome,
 };
 })();
 </script>
@@ -66915,6 +66944,35 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
   }, true);
 })();
 </script>
+<style id="cr-mounthead-styles">
+/* ============================================================================
+   cr-mounthead — the header outranks the tool screens · v2026-08-12 build 756
+   Theo: "Can you make the header follow the claims page."
+
+   The five module mounts carry position:fixed; inset:0; z-index:200 as INLINE
+   styles from styleMounts(), so they painted over the header (z-index 90). The
+   rule that pushed them below it (561 for the three, 572 for coach/adjusters)
+   is scoped body.cr-lnav-on — set only at >=1100px. Measured at 390px: all five
+   at top=0, z=200, and elementFromPoint over the header's home button returned
+   the mount's floating exit button. At 1194px they were already top=187, z=60.
+
+   So this rule is the SAME two declarations, ungated. Desktop cannot move: the
+   lnav rule sets identical values at higher specificity. Only the phone changes.
+   !important is mandatory, not decorative — inline styles outrank every
+   stylesheet declaration that is not important (the styleMounts trap).
+   ========================================================================== */
+#cr-estimates-mount,#cr-pricing-mount,#cr-claims-mount,
+#cr-coach-mount,#cr-adjusters-mount{
+  top:var(--headh,110px) !important;
+  z-index:60 !important;
+}
+/* The mounts' floating "Home" button is z-index 220 and was pinned top:14px —
+   with the header now visible it would sit ON the header's own controls. Drop it
+   to just inside the panel it closes. --headh already includes the notch
+   (fixHeadPad measures offsetHeight, and the bar's padding-top carries
+   env(safe-area-inset-top)), so this needs no separate mobile case. */
+.cr-pme-exit{ top:calc(var(--headh,110px) + 10px) !important; }
+</style>
 <style id="cr-touch44-styles">
 /* ============================================================================
    cr-touch44 — the 44px touch-target floor · v2026-08-12 build 752
