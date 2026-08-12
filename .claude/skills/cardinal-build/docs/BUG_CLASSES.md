@@ -2088,3 +2088,30 @@ partner *had* an email — the interesting case, and the only case where the gua
 worked. The five partners without one were 50% of the live table.
 **Fixture data that only covers the populated case will confirm a guard that
 only works when the field is populated.**
+
+## 29 — a summary object used where its ID was meant (731)
+
+`var current = null; /* {id, status, sent_at} */` — the editor's handle on the open
+document. **Four consumers treated it as the row itself**, and every one of them
+failed silently:
+
+| site | wrote | symptom |
+|---|---|---|
+| `sigApply` | `current.project_id` | undefined → the stage guard was ALWAYS false; signing a contract never moved the job, and the alert on the next line claimed it had |
+| `currentDocRow()` | `r.id === current` | always null → Share link threw "Document not loaded" on every document, forever |
+| `ensureShareToken()` | `db.update(current, …)` | `.eq('id', <object>)` → the token was never persisted; the link worked for its author and was dead for the recipient |
+| the email path | `db.update(current, …)` | same → a document emailed to a client stayed UNSENT |
+
+**Why it survived:** none of the four throws. A `.eq()` on an object matches nothing
+and returns success. A `.find()` that matches nothing returns `undefined`. An
+`&& undefined` guard just skips its branch. **The app reports success in all four
+cases** — one of them literally pops an alert saying the thing it did not do.
+
+**The tell was in the file the whole time:** the sent-toggle, ~20 lines below
+`currentDocRow()`, does `r.id === current.id` correctly. **When two sibling sites
+disagree about the shape of the same variable, exactly one of them is wrong — go
+look.**
+
+**The drill:** when a variable is a *summary* of a row rather than the row, enumerate
+**every** use of it in the block before fixing any of them. 731 found 25 uses; 4 were
+wrong and they were not adjacent. Fixing the one you noticed leaves the other three.
