@@ -4519,3 +4519,38 @@ than restating today's catalogue.
 
 **Item 5 Valley metal is still free text** — same trim palette, but outside what was
 asked for. One line to add if Theo wants it.
+
+---
+
+## The full-screen photo viewer — one viewer, seven callers (751)
+
+`cr-ri-script` owns the only full-screen image overlay in the app. **Do not build a
+second one.**
+
+```js
+window.CardinalResourceImages.open(src, caption)                 // 6 original callers
+window.CardinalResourceImages.open(src, caption, {               // 751
+  actionLabel: 'Open client',
+  onAction: function(){ openProject(pid); }
+})
+```
+
+With `opts` it renders a bar: **‹ Back** and **`actionLabel` ›**. Without `opts` the bar
+is hidden — which is how the Resource Library, Punch & Repairs and the lightbox keep
+working untouched.
+
+⚠️ **The overlay is a SINGLETON.** `ensureZoom()` builds it once; every later `open()`
+reuses that node. **Every open must reset the action bar**, or a photo opened from the
+gallery leaves its "Open client" button on the next Library figure, pointing at the
+wrong client. This is the regression most likely to be reintroduced.
+
+⚠️ **`zoom.onclick = close` — any click on the backdrop closes.** That is deliberate and
+six callers rely on it. Anything interactive added inside must `stopPropagation()` and
+call `close()` itself, reading any state it needs **before** close clears it.
+
+⚠️ **Photo Activity's grid tap opens the viewer, and falls back to `openProject`** only
+when there is no image or no viewer. The old behaviour — jumping straight to the client —
+was the bug Theo reported: there was no way to look at the photo.
+
+**Touch targets on this overlay are ≥44px** (close 44×44, Back 78×44, action 121×44),
+measured as rendered rects at 390px with touch emulation.
