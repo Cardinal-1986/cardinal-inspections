@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 744 &#8212; Dates that come from a date field were showing one day early everywhere; Crews was also printing them raw</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 745 &#8212; Invoices were rounding off the cents and printing &#8220;--&#8221; for nothing paid; amounts that name a figure are now exact</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11090,7 +11090,7 @@ async function acxEnterTotalNow(){
   if(v === null) return;
   var n = Number(String(v).replace(/[^\d.]/g,''));
   if(!(n > 0)){ alert('Enter a dollar amount greater than 0.'); return; }
-  try{ await patchProjectCk(c.pr, { manual_value: n }); auditLog('money', 'Manual job total set ' + fmtMoney(n) + ' \u2014 ' + (c.pr.name || ''), c.pr.id); renderOverview(); renderPipeline(); }
+  try{ await patchProjectCk(c.pr, { manual_value: n }); auditLog('money', 'Manual job total set ' + fmtMoney(n, true) + ' \u2014 ' + (c.pr.name || ''), c.pr.id); renderOverview(); renderPipeline(); }
   catch(err){ showError('Could not save: ' + (err.message || err)); }
 }
 function acxBindOnce(mount){
@@ -11158,7 +11158,7 @@ function acxBindOnce(mount){
       ws2[key].paid = (Number(ws2[key].paid) || 0) + n;
       ws2[key].log = ws2[key].log || [];
       ws2[key].log.push({ a: n, at: new Date().toISOString() });
-      try{ await patchProjectCk(pr, { ws: ws2 }); auditLog('money', fmtMoney(n) + ' payment recorded \u2014 ' + (pr.name || ''), pr.id); renderOverview(); }
+      try{ await patchProjectCk(pr, { ws: ws2 }); auditLog('money', fmtMoney(n, true) + ' payment recorded \u2014 ' + (pr.name || ''), pr.id); renderOverview(); }
       catch(err){ showError('Could not record payment: ' + (err.message || err)); }
       return;
     }
@@ -14588,9 +14588,12 @@ async function createInvoiceFor(pr){
   var tpl = prefillUserInfo(prefillClientInfo(INVOICE_TEMPLATE, pr));
   tpl = tpl.replace('[INV_NUM]', esc(num));
   tpl = tpl.replace('[INV_DATE]', new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }));
-  tpl = tpl.replace('[INV_TOTAL]', fmtMoney(fin.value));
-  tpl = tpl.replace('[INV_PAID]', fmtMoney(fin.paid));
-  tpl = tpl.replace('[INV_DUE]', fmtMoney(fin.balance));
+  /* 745: exact cents on the invoice. These rounded, so an invoice for $1,702.50
+     printed $1,703 — and [INV_PAID] printed "--" when nothing had been paid yet,
+     where a client reading it needs $0.00. */
+  tpl = tpl.replace('[INV_TOTAL]', fmtMoney(fin.value, true));
+  tpl = tpl.replace('[INV_PAID]', fmtMoney(fin.paid, true));
+  tpl = tpl.replace('[INV_DUE]', fmtMoney(fin.balance, true));
   try{
     var id = await db.create('Invoice \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
     await reload();
@@ -18718,9 +18721,35 @@ function projectValue(pr){
   if(!pr) return 0;
   return jobFinance(pr).value;
 }
-function fmtMoney(n){
+/* 745: `cents` is opt-in, and the default is byte-for-byte the old behaviour, so
+   the 24 tile/report callers are untouched — "$34,050" reads better than
+   "$34,050.00" at a glance and that was a deliberate choice, not an oversight.
+
+   Pass true wherever the number NAMES A SPECIFIC AMOUNT: an invoice line, an
+   audit entry, a toast that tells someone what they just recorded. Rounding
+   $1,702.50 to $1,703 on a dashboard is fine; doing it on a client's invoice is
+   not.
+
+   Note the zero case also changes under `cents`: '--' is right for an empty tile
+   and wrong on an invoice, where nothing-paid-yet is $0.00.
+
+   The second argument matches `money(n, cents)` in cr-crew-script (build 556) —
+   the same idea already lives in this file, so this is that shape, not a new one. */
+function fmtMoney(n, cents){
+  var v = Number(n);
+  if(cents){
+    if(!isFinite(v)) v = 0;
+    /* The sign goes OUTSIDE the currency symbol. Prepending '$' to an already
+       negative number gives "$-500.00", which is not how money is written
+       anywhere. cr-crew's money(n, cents) solved this at build 556 and this is
+       that same line — gate_745 went red on the first version, which had copied
+       the cents flag without the sign handling that comes with it. */
+    var sign = v < 0 ? '-' : '';
+    return sign + '$' + Math.abs(v).toLocaleString('en-US',
+      { minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
   if(!n) return '--';
-  return '$' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return '$' + Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 function renderApprovals(){
   var card = document.getElementById('approvalsCard');
@@ -19224,15 +19253,15 @@ async function miSaveColl(){
       var _fresh = (commUi.lastComms || []).filter(function(c){ return !_before[c.id]; });
       if(_fresh.length === 1){
         var _c = _fresh[0];
-        _extra = ' \u00b7 ' + fmtMoney(Number(_c.amount) || 0) + ' commission for ' +
+        _extra = ' \u00b7 ' + fmtMoney(Number(_c.amount) || 0, true) + ' commission for ' +
                  rptRepName(_c.rep_email);
       }else if(_fresh.length > 1){
         var _sum = _fresh.reduce(function(t, c){ return t + (Number(c.amount) || 0); }, 0);
-        _extra = ' \u00b7 ' + fmtMoney(_sum) + ' in commissions';
+        _extra = ' \u00b7 ' + fmtMoney(_sum, true) + ' in commissions';
       }
     }
   }catch(_){}
-  try{ if(window.crToastOk) window.crToastOk('Collection logged \u2014 ' + fmtMoney(amt) + _extra); }catch(_){}
+  try{ if(window.crToastOk) window.crToastOk('Collection logged \u2014 ' + fmtMoney(amt, true) + _extra); }catch(_){}
   } finally { _busy(); }
 }
 function miEditColl(id){
@@ -19245,7 +19274,7 @@ async function miDelColl(id){
   /* 737: name the cheque being removed. commUi.lastColls is stashed by
      renderCommissions the same way 734 stashed lastComms, so this costs no query. */
   var _c = (commUi.lastColls || []).filter(function(x){ return String(x.id) === String(id); })[0];
-  if(!confirm('Remove the ' + (_c ? fmtMoney(Number(_c.amount) || 0) + ' ' : '') +
+  if(!confirm('Remove the ' + (_c ? fmtMoney(Number(_c.amount) || 0, true) + ' ' : '') +
               'collection? Its unpaid commission goes with it.')) return;
   var r = await sb.from('collections').delete().eq('id', id);
   if(r.error){ alert('Could not remove: ' + r.error.message); return; }
@@ -38369,6 +38398,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:745, d:'2026-08-12', t:'Invoices stopped rounding the cents away',
+s:'The way most money was drawn on screen rounded to the nearest dollar, which is fine on a dashboard tile \u2014 $34,050 is easier to read at a glance than $34,050.00 \u2014 but it was also being used on the invoice. An invoice for $1,702.50 printed $1,703, and an invoice with nothing paid yet printed \u201C--\u201D in the Paid box instead of $0.00. Anywhere a number names a specific amount now shows the exact figure with its cents: the invoice total, paid and due; the audit trail entries for a payment or a job total; and the messages that tell you what you just recorded, like \u201CCollection logged \u2014 $2,150.00\u201D. Dashboard tiles and reports are deliberately left rounded, because that is what makes them readable. One supplier price was also showing as $34050.00 with no comma; that is fixed too.' },
 { b:744, d:'2026-08-12', t:'Dates were showing one day early, and Crews printed them raw',
 s:'Thirty fields in the system store a plain date with no time on it \u2014 date of loss, when a crew document expires, when an estimate is good through, when a punch item is scheduled, when money was collected. Because of the way the app was reading them, every one of those was drawn on screen ONE DAY EARLY. A date of loss recorded as 23 July showed as 22 July; an estimate good through the 23rd said the 22nd. The numbers underneath were always right \u2014 it was only the reading of them \u2014 and dates that carry a time on them, like when a note was added, were never affected. Twelve places have been corrected; the three that were already right were left alone. Separately, the Crews section was printing dates exactly as stored \u2014 \u201Cexpires 2026-11-30\u201D in the compliance vault, \u201C2026-08-12\u201D in the payments table, and the raw date on the printed crew work order. Those now read like dates. Nothing about how dates are stored changed, and every date picker still works the same way.' },
 { b:743, d:'2026-08-12', t:'Searching by phone number actually finds people now',
@@ -52858,7 +52889,14 @@ var KEY = 'cardinal.abc';
 function cfg(){ try{ return JSON.parse(localStorage.getItem(KEY) || '{}'); }catch(_){ return {}; } }
 function save(c){ try{ localStorage.setItem(KEY, JSON.stringify(c)); }catch(_){} }
 function esc(s){ return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]; }); }
-function usd(n){ var v = Number(n); return isNaN(v) ? '' : '$' + v.toFixed(2); }
+/* 745: toFixed(2) has no thousands separator, so a supplier price came back as
+   "$34050.00". This is the only one of the file's 20 money formatters that was
+   actually wrong — cr-adj's and cr-hub's look wrong in isolation but every one of
+   their call sites writes '$' + money(...), so they are correct as they stand. */
+function usd(n){
+  var v = Number(n);
+  return isNaN(v) ? '' : '$' + v.toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
 async function api(body){
 var r = await fetch('/api/abc', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
 var j = null; try{ j = await r.json(); }catch(_){}

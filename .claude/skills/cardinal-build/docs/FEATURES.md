@@ -4290,3 +4290,33 @@ even if the change broke searching by name.
 
 ⚠️ Short numeric queries (`937`, `01`) now match more rows, because the digit forms are
 in the haystack. That is a superset of the old behaviour and is intended.
+
+### Money and dates — the formatters (744–745)
+
+**`crDate(v)` (744)** — one safe parser. 30 columns in this database are Postgres
+`date` and arrive as a bare `"YYYY-MM-DD"`; `new Date()` treats that as UTC midnight,
+so a date-only value rendered **a day early** in any timezone behind UTC. `crDate`
+builds *only* a bare date-only string at local midnight and hands everything else to
+the native parser, so it is a **drop-in** for `new Date(v)` — it never returns null and
+every existing `isNaN` guard behaves identically. 12 formatters use it; **`commDate`,
+`cr-cc` `fmtDay`, `cr-show` `fmtDate` and `cr-crew` `daysLeft` were already correct and
+are untouched.**
+
+⚠️ **35 `<input type="date">` values must stay `YYYY-MM-DD`** — that is what the HTML
+control binds. Never route an input value through a display formatter.
+
+**`fmtMoney(n, cents)` (745)** — the dominant money formatter, 34 call sites.
+The default is unchanged: rounded, `--` for zero, which is *deliberate* on tiles and
+reports. **Pass `true` wherever the number names a specific amount** — the nine sites
+that do are the three invoice tokens, the two `auditLog('money', …)` entries, and the
+four messages that report a figure back to the person who entered it.
+
+- ⚠️ **The second argument matches `money(n, cents)` in `cr-crew-script` (build 556)** —
+  including putting **the sign outside the symbol** (`-$500.00`, never `$-500.00`).
+  Copy the whole of that function's solution, not just the flag.
+- ⚠️ **20 money formatters exist and most are fine.** `cr-adj`'s and `cr-hub`'s
+  `money(n)` return no dollar sign **on purpose** — all 9 of their call sites write
+  `'$' + money(...)`. Adding one would print `$$34,050`. Only `cr-abc`'s `usd()` was
+  genuinely wrong.
+- **Rounding on a dashboard is a feature.** `$34,050` reads better than `$34,050.00` at
+  a glance. The bug was rounding on documents, not rounding at all.
