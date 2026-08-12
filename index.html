@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 749 &#8212; The roofing agreement now carries the numbered house diagram from the printed contract</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 750 &#8212; Shingle colour and drip edge colour are dropdowns on the roofing agreement instead of blank boxes</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9220,6 +9220,15 @@ table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weig
   background:#fbfaf9;padding:10px 14px;margin:8px 0;}
 .descbox p{margin:7px 0;}
 .cbx{cursor:pointer;font-size:13pt;user-select:none;}
+/* 750: colour dropdowns. Sized to sit inline in a spec row and to print like a
+   filled field rather than a web control -- a contract should not look like a
+   form on paper. */
+.crsel{font:inherit;font-size:10.5pt;padding:2px 6px;border:1px solid var(--line);
+  border-radius:3px;background:#fff;color:inherit;max-width:100%;}
+@media print{
+  .crsel{appearance:none;-webkit-appearance:none;border:0;border-bottom:0.5pt solid #555;
+    border-radius:0;padding:0 2px;background:transparent;}
+}
 /* 749: the numbered house cutaway, lifted from the printed master. A figure element
    carries a 40px UA side margin, so it is zeroed explicitly rather than inherited.
    The callouts only make sense beside their numbered rows, so the block never
@@ -9556,11 +9565,11 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <tr><td class="k">1. Decking</td><td>A. Remove existing roofing layers to roof deck<br>B. Inspect roof deck &amp; replace wood as needed &#8212; $<span class="ph">[rate]</span> per sheet</td></tr>
 <tr><td class="k">&nbsp;&nbsp;&nbsp;Decking type</td><td><span class="opts" data-opts="decking">A. OSB &nbsp; B. Plywood &nbsp; C. T&amp;G &nbsp; D. Plank Board &nbsp; E. Spaced Decking &nbsp; F. Cedar Shake</span></td></tr>
 <tr><td class="k">2. Roof deck protection</td><td><span class="cbx" data-group="rdp">&#9744;</span> A. Felt underlayment 15&nbsp;lb &nbsp; <span class="cbx" data-group="rdp">&#9744;</span> B. Felt underlayment 30&nbsp;lb &nbsp; <span class="cbx" data-group="rdp">&#9744;</span> C. Synthetic underlayment</td></tr>
-<tr><td class="k">3. Drip edge / gutter apron</td><td>A. Drip edge colour <span class="ph">[colour]</span> (rakes)<br>B. Gutter apron colour <span class="ph">[colour]</span> (eaves)</td></tr>
+<tr><td class="k">3. Drip edge / gutter apron</td><td>A. Drip edge colour <select class="crsel" data-crsel="trim" contenteditable="false" aria-label="Drip edge colour"><option value="">&#8212; select &#8212;</option></select> (rakes)<br>B. Gutter apron colour <select class="crsel" data-crsel="trim" contenteditable="false" aria-label="Gutter apron colour"><option value="">&#8212; select &#8212;</option></select> (eaves)</td></tr>
 <tr><td class="k">4. Ice &amp; water barrier</td><td>Install along eaves, valleys &amp; flashings &#8212; <span class="cbx" data-group="riw">&#9744;</span> A. Standard &nbsp; <span class="cbx" data-group="riw">&#9744;</span> B. OC</td></tr>
 <tr><td class="k">5. Valley metal</td><td>A. Colour <span class="ph">[colour]</span></td></tr>
 <tr><td class="k">6. Starter shingles</td><td>Install along all rakes &amp; eaves &#8212; <span class="cbx" data-group="rst">&#9744;</span> A. Standard &nbsp; <span class="cbx" data-group="rst">&#9744;</span> B. OC Starter Plus</td></tr>
-<tr><td class="k">7. Shingles <span style="font-weight:400;font-size:9pt;">(per manufacturer specs)</span></td><td>A. Style <span class="ph">[style]</span><br>B. Colour <span class="ph">[colour]</span><br>C. Brand <span class="ph">[brand]</span></td></tr>
+<tr><td class="k">7. Shingles <span style="font-weight:400;font-size:9pt;">(per manufacturer specs)</span></td><td>A. Style <span class="ph">[style]</span><br>B. Colour <select class="crsel" data-crsel="occ" contenteditable="false" aria-label="Shingle colour"><option value="">&#8212; select &#8212;</option></select><br>C. Brand <span class="ph">[brand]</span></td></tr>
 <tr><td class="k">8. Flashing</td><td><span class="cbx">&#9744;</span> A. Chimney &nbsp; <span class="cbx">&#9744;</span> B. Wall &nbsp; <span class="cbx">&#9744;</span> C. Step<br>Extra structure: <span class="cbx">&#9744;</span> A. Garage &nbsp; <span class="cbx">&#9744;</span> B. Shed &nbsp; <span class="cbx">&#9744;</span> C. Barn</td></tr>
 <tr><td class="k">9. Extrusions</td><td>A. Pipe boots <span class="ph">[qty]</span> &nbsp; B. Skylights <span class="ph">[qty]</span></td></tr>
 <tr><td class="k">10. Ventilation</td><td>A. Shingle-over ridge vent &#8212; 1. Standard &nbsp; 2. OC<br>B. Box / turtle vents <span class="ph">[qty]</span> &nbsp; C. Power vent <span class="ph">[qty]</span> &nbsp; D. Turbine <span class="ph">[qty]</span><br><span style="font-size:9pt;color:#666;">Not responsible for re-attachment of satellite or HVAC.</span></td></tr>
@@ -21891,6 +21900,66 @@ function applyGutterSize(doc, val){
   if(g) g.textContent = val === '5' ? '5"' : '6"';
   if(s) s.textContent = val === '5' ? '2" x 3"' : 'oversized 3" x 4"';
 }
+/* 750: aluminium trim colours for drip edge and gutter apron.
+   ⚠️ THIS LIST IS NOT DERIVED FROM ANYTHING -- it is the one piece of data in
+   this build that had no source in the repo. Drip edge colours appear nowhere:
+   no table, no constant, and all 45 "drip edge" hits in this file are Resource
+   Library prose about Ohio code. Rather than invent a list quietly onto a signed
+   contract, it was put to Theo, who chose the standard aluminium stock range.
+   Treat it as a STARTING list: if a supplier's range differs, this is the single
+   place to change, and 'Other' means a rep is never blocked in the meantime. */
+var TRIM_COLORS = ['White', 'Almond', 'Brown', 'Royal Brown', 'Musket Brown',
+                   'Wicker', 'Clay', 'Black', 'Bronze', 'Mill finish', 'Other'];
+
+/* ---------- colour dropdowns (persist as a `selected` ATTRIBUTE) ---------- */
+async function wireColorSelects(doc){
+  var sels = doc.querySelectorAll('select[data-crsel]');
+  if(!sels.length) return;
+
+  /* Fetch once per document, and only if something actually needs filling. */
+  var occ = null;
+  for(var i = 0; i < sels.length; i++){
+    if(sels[i].getAttribute('data-crsel') === 'occ' && sels[i].options.length <= 1){
+      try{ occ = await window.CardinalColors.list(); }catch(_){ occ = []; }
+      break;
+    }
+  }
+
+  sels.forEach(function(sel){
+    /* Populate ONLY an empty one. A saved contract already carries its own
+       options, frozen as they were offered on the day it was signed, and
+       refilling would silently restate today's catalogue on an old record. */
+    if(sel.options.length <= 1){
+      var list = sel.getAttribute('data-crsel') === 'occ'
+        ? (occ || []).map(function(c){
+            return c.status === 'discontinued' ? c.name + ' (discontinued)' : c.name;
+          })
+        : TRIM_COLORS;
+      var html = '<option value="">\u2014 select \u2014</option>';
+      for(var k = 0; k < list.length; k++){
+        var v = String(list[k]).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+        html += '<option value="' + v + '">' + v + '</option>';
+      }
+      sel.innerHTML = html;
+    }
+
+    /* Restore the saved choice: the ATTRIBUTE is the record, the property is not. */
+    var chosen = sel.querySelector('option[selected]');
+    if(chosen) sel.value = chosen.value;
+
+    if(sel.getAttribute('data-crsel-wired')) return;
+    sel.setAttribute('data-crsel-wired', '1');
+    sel.addEventListener('change', function(){
+      /* ⚠️ WITHOUT THIS THE CHOICE IS LOST ON SAVE. serializeFrame() clones the
+         document, and cloneNode(true) copies attributes, not the live value of a
+         form control. Writing the attribute is what makes a picked colour part
+         of the contract rather than a screen state. */
+      for(var k = 0; k < sel.options.length; k++) sel.options[k].removeAttribute('selected');
+      if(sel.selectedIndex >= 0 && sel.value) sel.options[sel.selectedIndex].setAttribute('selected', 'selected');
+    });
+  });
+}
+
 function wireCheckboxes(doc){
   doc.querySelectorAll('.cbx').forEach(function(el){
     if(el.getAttribute('data-cbx')) return;
@@ -22012,6 +22081,7 @@ async function openEditor(id){
       wireEstimateCalc(doc);
       wireRoofrUpload(doc);
       wireCheckboxes(doc);
+      wireColorSelects(doc);
       document.getElementById('sigBtn').style.display = doc.querySelector('.sign') ? 'inline-block' : 'none';
     }catch(e){}
   };
@@ -22054,6 +22124,9 @@ function serializeFrame(){
   var sf = clone.querySelector('#screenFix');
   if(sf) sf.remove();
   clone.querySelectorAll('.cbx[data-cbx]').forEach(function(el){ el.removeAttribute('data-cbx'); });
+  /* 750: same reason as data-cbx above \u2014 drop the wired marker so a reopened
+     document re-binds. The `selected` attribute is left alone: it IS the answer. */
+  clone.querySelectorAll('select[data-crsel-wired]').forEach(function(el){ el.removeAttribute('data-crsel-wired'); });
   var summaryHeading = clone.querySelector('[data-cardinal-summary-heading]');
   if(summaryHeading){
     summaryHeading.removeAttribute('data-wired');
@@ -38537,6 +38610,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:750, d:'2026-08-12', t:'Colour dropdowns on the roofing agreement',
+s:'Three colour boxes on the roofing agreement are dropdowns now instead of blank lines you type into. Shingle colour lists the real Owens Corning colours \u2014 the same ones behind the Colors screen, in the same order, and a discontinued colour still shows up but says so. Drip edge colour and gutter apron colour list the standard aluminium trim colours, with Other on the end so nobody is stuck. What you pick is saved with the contract and is still there when you open it again, and an old contract keeps the colours it was written with rather than quietly changing if the catalogue moves on.' },
 { b:749, d:'2026-08-12', t:'The house diagram, off the real contract',
 s:'The roofing Construction Agreement now shows the numbered house cutaway, sitting right above the specification list so the numbers on the picture line up with the numbered rows underneath \u2014 1 decking, 2 roof deck protection, 3 drip edge, 4 ice and water barrier, and so on up to 11 ridge cap. It is not a drawing: it is the same illustration off the printed Construction Agreement, taken out of the PDF itself, so the contract on the iPad and the one in the truck show the same picture. It prints with the document and never splits across two pages. Only the roofing agreement gets it \u2014 the siding and gutter masters do not have a diagram to take.' },
 { b:748, d:'2026-08-12', t:'Contracts have tick boxes instead of \u201ccircle one\u201d',
@@ -65665,6 +65740,17 @@ function close(){
 window.CardinalColors = Object.assign(window.CardinalColors || {}, {
   open: open,
   close: close,
+  /* 750: the shingle-colour dropdown on the roofing agreement reads THIS, so
+     `oc_colors` still has exactly one reader in the app. load() touches VIEW
+     nowhere, so it is safe with no hub mounted, and going through it means the
+     dropdown inherits the hidden filter and the sort order rather than
+     re-stating them -- Shasta White is hidden and stays out by construction. */
+  list: async function(){
+    if(!COLORS.length){ try{ await load(); }catch(_){ } }
+    return COLORS.map(function(c){
+      return { name: c.name, status: c.status, line: c.product_line };
+    });
+  },
   reload: async function(){
     if(!VIEW) return;
     await load();

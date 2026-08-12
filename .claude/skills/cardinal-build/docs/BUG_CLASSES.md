@@ -2400,3 +2400,50 @@ element", not a backticked one.
 lines away from the comment that caused it, in generated-looking code. The targeted
 assertion names the actual mistake.
 
+## 39 — a form control's value is a PROPERTY, and the save clones the DOM (750)
+
+`serializeFrame()` persists a document with `cloneNode(true)`. **A clone copies
+attributes; it does not copy the live value of a form control.** So a `<select>` the
+user has picked from serializes back to its default, and an `<input>`'s typed text
+vanishes the same way.
+
+What makes this dangerous is how *well* the broken version behaves:
+
+- it renders correctly,
+- it responds correctly to clicks,
+- `select.value` reads back correctly all session,
+- every structural assertion passes — the element exists, has options, has a class,
+- and the contract silently reopens blank, **with nothing in the DOM to show a colour
+  was ever chosen.**
+
+There is no error, no console warning, and no state to inspect after the fact.
+
+### The rule
+
+**Anything a user sets inside a document must end up in an ATTRIBUTE or in text.**
+
+```js
+sel.addEventListener('change', function(){
+  for (var k = 0; k < sel.options.length; k++) sel.options[k].removeAttribute('selected');
+  if (sel.selectedIndex >= 0 && sel.value)
+    sel.options[sel.selectedIndex].setAttribute('selected', 'selected');
+});
+```
+
+The same applies to `<input>` (`setAttribute('value', …)`) and to `<input type=checkbox>`
+(`setAttribute('checked', …)`). 748's tick boxes avoid the whole class by storing state
+in `textContent`, which clones for free — that is why they were built as glyphs rather
+than real checkboxes.
+
+### The only test that catches it
+
+Structural assertions cannot. **Do the full round trip against the app's own save
+path:**
+
+```
+populate -> change -> serializeFrame() -> reopen the saved html -> re-read the value
+```
+
+`gate_750` does exactly this, and additionally changes the pick twice to prove the
+attribute *moves* rather than accumulating a second `selected`.
+

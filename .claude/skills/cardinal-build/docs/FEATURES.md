@@ -4486,3 +4486,36 @@ rep cannot type over or delete it.
 ⚠️ **Sizing is a per-DOCUMENT cost, not a per-file one.** `serializeFrame()` stores the
 whole document HTML per saved contract. Measure the logo's existing data URI before
 growing this one.
+
+---
+
+## Colour dropdowns on the roofing agreement (750)
+
+Three colour fields on `ROOF_AGREEMENT_BODY` are `<select class="crsel">` instead of
+free-text `.ph` boxes: **item 7B shingle colour** (`data-crsel="occ"`) and **item 3A/3B
+drip edge + gutter apron** (`data-crsel="trim"`).
+
+| List | Source | Rule |
+|---|---|---|
+| OC shingle colours | `window.CardinalColors.list()` → the module's existing `oc_colors` query | hidden excluded, `sort_order` kept, discontinued badged |
+| Aluminium trim | `TRIM_COLORS` constant | **a starting list, not gospel** — Theo's pick when told none existed |
+
+⚠️ **`oc_colors` still has exactly ONE reader.** The dropdown goes through the OC
+module's accessor, not a second query — asserted in `patch_750` and `gate_750`. Add
+the accessor, never a parallel `from('oc_colors')`.
+
+⚠️ **A `<select>`'s value is a PROPERTY and does not survive `cloneNode(true)`.**
+`serializeFrame()` saves contracts by cloning, so the `change` handler writes the
+**`selected` attribute** onto the chosen option and strips it from the rest. Without
+that the colour is lost on save and nothing in the DOM shows it was ever picked. Any
+future form control added to a document must do the same.
+
+⚠️ **Saved option lists are frozen on purpose.** `wireColorSelects()` fills a select
+only when it is empty, so a signed contract keeps the colours it was offered rather
+than restating today's catalogue.
+
+⚠️ **`contenteditable="false"` on every select** — they land in editable `<td>`s
+(`table.meta td:not(.k)`), the same trap 748 hit.
+
+**Item 5 Valley metal is still free text** — same trim palette, but outside what was
+asked for. One line to add if Theo wants it.
