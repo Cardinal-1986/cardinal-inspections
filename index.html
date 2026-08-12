@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 737 &#8212; Paying a rep now asks first and says how much: marking commissions paid was a single tap with no confirmation at all</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 738 &#8212; An estimate or contract with no total now asks before it goes to the client; inspection reports are never affected</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21851,6 +21851,21 @@ document.getElementById('saveBtn').addEventListener('click', saveCurrent);
 /* =========================================================================
    EMAIL TO CLIENT / SIGNATURE / SHARE LINK
    ========================================================================= */
+/* 738: returns true when it is safe to proceed. readEstimateTotal() returns
+   null when the open document has NO #estTotal node at all — that is an
+   inspection report, which legitimately has no price, and it is waved straight
+   through. It returns 0 only when a PRICED document's total really is zero.
+
+   It asks rather than refuses. A no-charge warranty estimate is a real thing,
+   and a guard that blocks legitimate work is worse than the bug it fixes. */
+function priceOkToSend(what){
+  var t;
+  try{ t = readEstimateTotal(); }catch(_){ return true; }
+  if(t === null) return true;              /* no total field — not a priced document */
+  if(Number(t) > 0) return true;
+  return confirm('\u201C' + (what || 'This document') + '\u201D has no total \u2014 it reads $0.00.\n\n' +
+                 'Enter a total first, or send it anyway?');
+}
 function currentDocRow(){
   /* 731: this compared a row id against `current`, which is an OBJECT, so it
      returned null for every document ever opened. `ensureShareToken()` throws
@@ -21899,6 +21914,8 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
   var btn = this;
   try{
     await saveCurrent();
+    /* 738: emailing is the path that reaches the client, so it is guarded first. */
+    if(!priceOkToSend((titleInput.value || '').trim() || 'document')) return;
     var row = currentDocRow();
     var pr = currentDocProject();
     /* Community jobs are funded by a partner (Habitat, Rebuilding Together, the
@@ -22264,6 +22281,10 @@ document.getElementById('printBtn').addEventListener('click', async function(){
 toggleBtn.addEventListener('click', async function(){
   if(!current) return;
   var toSent = current.status !== 'sent';
+  /* 738: marking sent by hand is the same claim as emailing it — the pipeline,
+     jobFinance and the approvals queue all read `sent`. Unmarking is never
+     guarded: that direction is a correction, not a claim. */
+  if(toSent && !priceOkToSend((titleInput.value || '').trim() || 'document')) return;
   var sentAt = toSent ? new Date().toISOString() : null;
   try{
     await db.update(current.id, { status: toSent ? 'sent' : 'unsent', sent_at: sentAt });
@@ -38175,6 +38196,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:738, d:'2026-08-12', t:'A priced document with no price asks before it goes out',
+s:'You could email a client an estimate or a contract reading $0.00, or mark one sent, and nothing said a word. Both now stop and ask: \u201CThis estimate has no total \u2014 it reads $0.00. Enter a total first, or send it anyway?\u201D It ASKS rather than refuses, because a no-charge warranty estimate is a real thing and being unable to send one would be worse than the problem. Inspection reports are never affected \u2014 the check only looks at documents that actually have a total line, and an inspection report does not have one, so it goes out exactly as before. Un-marking a document as sent is never questioned either; that is a correction, not a claim.' },
 { b:737, d:'2026-08-12', t:'Paying a rep asks first, and every money question says the amount',
 s:'On the payout screen, Pay net and Pay full had NO confirmation. One tap marked every commission owed to that rep as paid \u2014 and Pay net also marked their outstanding draws repaid \u2014 with nothing asked and no way to undo it from the app. That was the odd one out: deleting a client already makes you type the client\u2019s name to go through with it. Both now ask, and both say the money and the person: \u201CMark $3,405.00 in commissions paid to Nick Hey?\u201D, plus the draw line when you use Pay net. Pay all reps used to count the reps without ever saying the total \u2014 it says it now. Repaying a draw and removing a collection name their amounts too, instead of saying \u201Cthis draw\u201D and \u201Cthis collection\u201D. Nothing else changed, and no confirmation was removed.' },
 { b:736, d:'2026-08-12', t:'Empty lists stop looking like a broken page',
