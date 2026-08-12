@@ -2348,3 +2348,55 @@ fail nearly everything about the Agreements; it reports **56 of 77**. A control 
 fails two or three checks when the whole feature is missing is telling you the gate
 is mostly measuring things the feature did not change.
 
+## 38 — a COMMENT inside a template literal is code (749)
+
+**Hit twice in one build, the second time by the sentence written to warn about the
+first.** That is what earns it a number.
+
+`ESTIMATE_BASE_RAW` is a **template literal** holding an entire HTML document —
+stylesheet, markup and CSS comments. A backtick anywhere inside it **closes the
+literal**. So this, added as an explanatory CSS comment:
+
+```
+/* 749: the numbered house cutaway. `figure` carries a 40px UA side margin, so … */
+```
+
+would have terminated `ESTIMATE_BASE_RAW` in the middle of its own stylesheet and turned
+the remaining ~5,000 characters into JavaScript. The correction —
+
+```
+NOTE: no backticks in this comment … the first draft put `figure` in backticks here
+```
+
+— **contained the same two backticks**, and failed the identical assertion.
+
+### Why it is easy
+
+Backticks are the normal way to quote an identifier in prose. Every other comment in
+this repo can use them freely. Only comments living *inside* a template literal cannot,
+and nothing about writing a CSS comment reminds you which kind you are in. The same
+applies to `${`, which interpolates rather than terminating.
+
+### The rule
+
+**Check the inserted text BEFORE the write, not the file after it.**
+
+```python
+assert '`' not in new and '${' not in new, \
+    'the CSS being inserted contains a backtick or ${ — it would close the literal'
+src = in_tpl(src, 'ESTIMATE_BASE_RAW', old, new)
+```
+
+749's first two runs asserted only on the *result*, so the file was already written and
+had to be restored from the control both times. Validating the payload first turns a
+revert into a refusal.
+
+**And in prose inside a template literal, name identifiers plainly** — "a figure
+element", not a backticked one.
+
+### It would have been caught, but late and confusingly
+
+`node --check` does flag the resulting syntax error, but it reports it thousands of
+lines away from the comment that caused it, in generated-looking code. The targeted
+assertion names the actual mistake.
+
