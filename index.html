@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 750 &#8212; Shingle colour and drip edge colour are dropdowns on the roofing agreement instead of blank boxes</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 752 &#8212; Every button, chip and link is at least 44 pixels to the touch — the size a gloved finger needs</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38610,6 +38610,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:752, d:'2026-08-12', t:'Buttons a gloved finger can hit',
+s:'Every screen was measured at phone width, and everything that came up under 44 pixels \u2014 the size a fingertip actually needs \u2014 got raised to the floor. The menu button, the plus, the home button, all sixteen menu items, the Call and Text buttons on every client card, the calendar arrows, the fifteen action buttons on the client list, the stage filter chips, the sort control, the email and phone links on a profile that were twelve pixels tall, the edit pencil, the Map and Satellite toggles, every chip button including Mark Paid and Mark Repaid, and every dropdown. Photo thumbnails were already big enough and printed documents are untouched \u2014 contracts print exactly as before.' },
+{ b:751, d:'2026-08-12', t:'Photos open as photos',
+s:'In Photo Activity, tapping a photo used to jump straight to the client profile, so there was no way to actually look at the picture. It now opens full screen, with the client name under it and two buttons: Back, and Open client if you did want the profile after all. Tapping the photo itself, the X, or Escape all close it. Nothing was built for this \u2014 it is the same full-screen viewer the Resource Library and Punch Outs already used, which the gallery had simply never been pointed at. The close button also grew from 38 to 44 pixels, which is the size a gloved finger needs.' },
 { b:750, d:'2026-08-12', t:'Colour dropdowns on the roofing agreement',
 s:'Three colour boxes on the roofing agreement are dropdowns now instead of blank lines you type into. Shingle colour lists the real Owens Corning colours \u2014 the same ones behind the Colors screen, in the same order, and a discontinued colour still shows up but says so. Drip edge colour and gutter apron colour list the standard aluminium trim colours, with Other on the end so nobody is stuck. What you pick is saved with the contract and is still there when you open it again, and an old contract keeps the colours it was written with rather than quietly changing if the catalogue moves on.' },
 { b:749, d:'2026-08-12', t:'The house diagram, off the real contract',
@@ -45853,32 +45857,69 @@ loaded  : function(){ return loaded; },
 })();
 </script>
 
-<style id="cr-ri-styles">.rl-card img,.rl-article img,.rl-page img:not(.rl-navcard img){display:block;max-width:100%;height:auto;margin:16px auto;border-radius:9px;border:1px solid #e0d8c8;background:#faf8f3;cursor:zoom-in}.rl-card figure,.rl-article figure{margin:18px 0;padding:0}.rl-card figure img,.rl-article figure img{margin:0 auto 0}.rl-card figcaption,.rl-article figcaption{margin-top:8px;padding:0 4px;font:600 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.5;color:#6b7a90;text-align:center}.rl-card .rl-imgrow,.rl-article .rl-imgrow{display:grid;grid-template-columns:1fr;gap:12px;margin:18px 0}@media (min-width:620px){.rl-card .rl-imgrow,.rl-article .rl-imgrow{grid-template-columns:1fr 1fr}}.rl-imgrow figure{margin:0}#cr-ri-zoom{display:none;position:fixed;inset:0;background:rgba(10,8,7,.92);z-index:9800;align-items:center;justify-content:center;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));cursor:zoom-out}#cr-ri-zoom.open{display:flex;flex-direction:column}#cr-ri-zoom img{max-width:100%;max-height:calc(100% - 56px);object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.55)}#cr-ri-zoom .cap{margin-top:14px;max-width:640px;font:600 13px 'Segoe UI',Arial,sans-serif;line-height:1.5;color:#d8cfc4;text-align:center}#cr-ri-zoom .close{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;border:0;cursor:pointer;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center}#cr-ri-zoom .close:hover{background:rgba(255,255,255,.24)}@media print{.rl-card img,.rl-article img{max-width:100%;break-inside:avoid;cursor:default}.rl-card figure,.rl-article figure{break-inside:avoid}#cr-ri-zoom{display:none !important}}</style>
+<style id="cr-ri-styles">.rl-card img,.rl-article img,.rl-page img:not(.rl-navcard img){display:block;max-width:100%;height:auto;margin:16px auto;border-radius:9px;border:1px solid #e0d8c8;background:#faf8f3;cursor:zoom-in}.rl-card figure,.rl-article figure{margin:18px 0;padding:0}.rl-card figure img,.rl-article figure img{margin:0 auto 0}.rl-card figcaption,.rl-article figcaption{margin-top:8px;padding:0 4px;font:600 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.5;color:#6b7a90;text-align:center}.rl-card .rl-imgrow,.rl-article .rl-imgrow{display:grid;grid-template-columns:1fr;gap:12px;margin:18px 0}@media (min-width:620px){.rl-card .rl-imgrow,.rl-article .rl-imgrow{grid-template-columns:1fr 1fr}}.rl-imgrow figure{margin:0}#cr-ri-zoom{display:none;position:fixed;inset:0;background:rgba(10,8,7,.92);z-index:9800;align-items:center;justify-content:center;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));cursor:zoom-out}#cr-ri-zoom.open{display:flex;flex-direction:column}#cr-ri-zoom img{max-width:100%;max-height:calc(100% - 118px);object-fit:contain;border-radius:8px;box-shadow:0 20px 50px rgba(0,0,0,.55)}#cr-ri-zoom .acts{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;justify-content:center;}
+#cr-ri-zoom .acts[hidden]{display:none;}
+#cr-ri-zoom .acts button{min-height:44px;min-width:44px;padding:0 18px;border:0;border-radius:22px;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;}
+#cr-ri-zoom .acts button[data-ri="go"]{background:#c8202e;}
+#cr-ri-zoom .cap{margin-top:14px;max-width:640px;font:600 13px 'Segoe UI',Arial,sans-serif;line-height:1.5;color:#d8cfc4;text-align:center}/* 751: 38px measured at 390px width, under the 44px floor. */
+#cr-ri-zoom .close{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;border:0;cursor:pointer;font-size:19px;line-height:1;display:flex;align-items:center;justify-content:center}#cr-ri-zoom .close:hover{background:rgba(255,255,255,.24)}@media print{.rl-card img,.rl-article img{max-width:100%;break-inside:avoid;cursor:default}.rl-card figure,.rl-article figure{break-inside:avoid}#cr-ri-zoom{display:none !important}}</style>
 <script id="cr-ri-script">
 (function(){
 'use strict';
 var zoom = null;
+var action = null;
 function ensureZoom(){
 if(zoom) return zoom;
 zoom = document.createElement('div');
 zoom.id = 'cr-ri-zoom';
 zoom.innerHTML =
 '<button class="close" type="button" aria-label="Close">\u2715</button>' +
-'<img alt=""><div class="cap"></div>';
+'<img alt=""><div class="cap"></div>' +
+'<div class="acts" hidden>' +
+  '<button type="button" data-ri="back">\u2039 Back</button>' +
+  '<button type="button" data-ri="go"></button>' +
+'</div>';
+/* Any click on the backdrop closes -- that is what makes tapping the photo
+   dismiss it, and nine existing callers rely on it. The action bar therefore
+   has to stop the click reaching here and run close() in its own order. */
 zoom.onclick = close;
+zoom.querySelector('.acts').onclick = function(e){ e.stopPropagation(); };
+zoom.querySelector('[data-ri="back"]').onclick = function(e){ e.stopPropagation(); close(); };
+zoom.querySelector('[data-ri="go"]').onclick = function(e){
+  e.stopPropagation();
+  var fn = action;            /* read BEFORE close(), which clears it */
+  close();
+  if(typeof fn === 'function') fn();
+};
 document.body.appendChild(zoom);
 return zoom;
 }
 function close(){
 if(zoom) zoom.classList.remove('open');
+action = null;
 document.body.style.overflow = '';
 }
-function open(src, caption){
+function open(src, caption, opts){
 ensureZoom();
 zoom.querySelector('img').src = src;
 var cap = zoom.querySelector('.cap');
 cap.textContent = caption || '';
 cap.style.display = caption ? '' : 'none';
+
+/* ⚠️ THE OVERLAY IS A SINGLETON. Reset the action bar on EVERY open, or a
+   photo opened from the gallery leaves its "Open client" button sitting on
+   the next Resource Library image, pointing at the wrong client. */
+var acts = zoom.querySelector('.acts');
+var go   = zoom.querySelector('[data-ri="go"]');
+action = (opts && typeof opts.onAction === 'function') ? opts.onAction : null;
+if(action){
+  go.textContent = (opts.actionLabel || 'Open') + ' \u203a';
+  acts.hidden = false;
+}else{
+  go.textContent = '';
+  acts.hidden = true;
+}
+
 zoom.classList.add('open');
 document.body.style.overflow = 'hidden';
 }
@@ -53886,6 +53927,21 @@ document.getElementById('phGrid').addEventListener('click', function(e){
   var c = e.target.closest('.phc');
   if(!c) return;
   var pid = c.getAttribute('data-pid');
+  /* 751: tapping a photo used to jump straight to the client, so there was no
+     way to LOOK at the photo -- Theo's report. It now opens full screen in the
+     viewer that already existed (cr-ri-script), with the client's name as the
+     caption and the jump offered as a button rather than forced. */
+  var img = c.querySelector('img');
+  var who = (c.querySelector('.phn') || {}).textContent || '';
+  var srcUrl = img && (img.currentSrc || img.getAttribute('src'));
+  if(srcUrl && window.CardinalResourceImages){
+    window.CardinalResourceImages.open(srcUrl, who, (pid && typeof openProject === 'function') ? {
+      actionLabel: 'Open client',
+      onAction: function(){ openProject(pid); }
+    } : null);
+    return;
+  }
+  /* no viewer or no image: the old behaviour is better than nothing */
   if(pid && typeof openProject === 'function') openProject(pid);
 });
 })();
@@ -66751,5 +66807,71 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
   }, true);
 })();
 </script>
+<style id="cr-touch44-styles">
+/* ============================================================================
+   cr-touch44 — the 44px touch-target floor · v2026-08-12 build 752
+   ONE block is the WHOLE pass. Every selector lists its measured size at 390px
+   before this build (walk751.mjs, rendered rects, touch context). If you add a
+   control under 44px, its fix belongs HERE, with its measurement.
+   min-* only: min-width/min-height do not compete with width/height in the
+   cascade, so the id-scoped sizes in module stylesheets stay untouched.
+   NOT here on purpose: .pu-box (already has a 44px ::after hit area — a rect
+   audit cannot see it, do not "fix" it), document tick boxes (iframe, prints),
+   photo tiles (155px).
+   ========================================================================== */
+
+/* ---- chrome, on every screen ------------------------------------------- */
+/* was 38×38 (menu) / 34×34 (+) — the header icon buttons */
+.cr-ib{min-width:44px;min-height:44px;}
+/* was 34×34 */
+#cr-hd2-home{min-width:44px;min-height:44px;}
+/* was 32×40 */
+#cr-home-btn{min-width:44px;min-height:44px;}
+/* was 30×30 — landing light/dark toggle */
+.cr-lr-theme{min-width:44px;min-height:44px;}
+/* was 42×21 ("Skip") and 97×40 ("All clients · N") — landing recents module */
+button.sk{min-height:44px;min-width:44px;}
+.cr-lr-minor button{min-height:44px;}
+
+/* ---- burger menu -------------------------------------------------------- */
+/* was 33–34 tall, all 16 items */
+#newMenu .navopt,#navMenu .navopt{min-height:44px;}
+
+/* ---- home --------------------------------------------------------------- */
+/* was 106×29 ×60 — the Call/Text pills on every client card */
+.pcacts a{min-height:44px;display:inline-flex;align-items:center;justify-content:center;}
+/* was 28×28 (home) / 32×32 (#calCard, .teamcal) — calendar arrows */
+.calnav{min-width:44px;min-height:44px;}
+
+/* ---- All Clients list --------------------------------------------------- */
+/* was 36×36 base, 38×38 in #leadsView — fifteen on screen at once */
+.ljbtn{min-width:44px;min-height:44px;}
+/* was 32 tall — stage filter chips */
+.ljchip{min-height:44px;}
+/* was 87×20 — the shortest control in the app */
+.ljsortchip{min-height:44px;display:inline-flex;align-items:center;}
+
+/* ---- client profile ----------------------------------------------------- */
+/* was 12–14 tall — email, phone, Add contact, Switch Primary */
+a.hem,a.hph,#dbAddContact,#dbSwitchPrim{display:inline-flex;align-items:center;min-height:44px;}
+/* was 30×26 — the edit pencil */
+.editpencil{min-width:44px;min-height:44px;}
+/* was 45×24 — Map/Satellite toggles on the location cards (profile + leads) */
+.dbmtabs button,.ljmaptabs button{min-height:44px;}
+
+/* ---- chip buttons, app-wide (money actions included) -------------------- */
+/* was 34–40 tall: ＋ Add, See all, Remove, Mark repaid, ‹ Overview, cover 📷 */
+.chipbtn{min-height:44px;min-width:44px;}
+/* was 38 tall — Mark Paid / Pay net / Pay full / Confirm */
+.pay-btn,.pay-chip{min-height:44px;}
+/* was 139×36 — ＋ Add a punch out. NOT a .chipbtn, its own class; the first
+   gate run caught the census assuming otherwise. */
+.pp-add{min-height:44px;}
+
+/* ---- form controls in the app document ---------------------------------- */
+/* was 31 tall (Activity Count and friends). Printed documents are in the
+   #reportFrame iframe and cannot inherit this. */
+select{min-height:44px;}
+</style>
 </body>
 </html>

@@ -4519,3 +4519,74 @@ than restating today's catalogue.
 
 **Item 5 Valley metal is still free text** — same trim palette, but outside what was
 asked for. One line to add if Theo wants it.
+
+---
+
+## The full-screen photo viewer — one viewer, seven callers (751)
+
+`cr-ri-script` owns the only full-screen image overlay in the app. **Do not build a
+second one.**
+
+```js
+window.CardinalResourceImages.open(src, caption)                 // 6 original callers
+window.CardinalResourceImages.open(src, caption, {               // 751
+  actionLabel: 'Open client',
+  onAction: function(){ openProject(pid); }
+})
+```
+
+With `opts` it renders a bar: **‹ Back** and **`actionLabel` ›**. Without `opts` the bar
+is hidden — which is how the Resource Library, Punch & Repairs and the lightbox keep
+working untouched.
+
+⚠️ **The overlay is a SINGLETON.** `ensureZoom()` builds it once; every later `open()`
+reuses that node. **Every open must reset the action bar**, or a photo opened from the
+gallery leaves its "Open client" button on the next Library figure, pointing at the
+wrong client. This is the regression most likely to be reintroduced.
+
+⚠️ **`zoom.onclick = close` — any click on the backdrop closes.** That is deliberate and
+six callers rely on it. Anything interactive added inside must `stopPropagation()` and
+call `close()` itself, reading any state it needs **before** close clears it.
+
+⚠️ **Photo Activity's grid tap opens the viewer, and falls back to `openProject`** only
+when there is no image or no viewer. The old behaviour — jumping straight to the client —
+was the bug Theo reported: there was no way to look at the photo.
+
+**Touch targets on this overlay are ≥44px** (close 44×44, Back 78×44, action 121×44),
+measured as rendered rects at 390px with touch emulation.
+
+---
+
+## The 44px touch-target floor — `cr-touch44-styles` (752)
+
+**One block, at the very end of `<body>`, is the entire pass.** Every rule carries the
+measured before-size from `walk751.mjs`. If a control is under 44px, its fix belongs in
+THIS block, with its measurement — never scattered into module stylesheets.
+
+**The mechanism is `min-width`/`min-height`, and that is load-bearing.** The offenders
+are sized by id-scoped `width`/`height` rules a class selector cannot out-specify — but
+min-* are different properties that never compete in the cascade (used value =
+max(width, min-width)). That is why the block wins with plain class selectors and zero
+`!important`, and why every module stylesheet stayed byte-identical.
+
+⚠️ **The block must remain the LAST `<style>` in the document** (asserted in
+`gate_752`): its same-specificity rules win by order.
+
+⚠️ **`.pu-box` is deliberately absent** — it measures 22×22 but already carries a
+44×44 `::after` hit box from `cr-punch2-styles`. **A rect-based audit cannot see
+pseudo-element hit areas**; check `getComputedStyle(el,'::after')` before declaring a
+small control an offender.
+
+⚠️ **Printed documents are out of scope by construction**: they render in the
+`#reportFrame` iframe, a separate document that app CSS cannot reach. The 15px contract
+tick boxes print exactly as before.
+
+**Instrument notes** (all cost a red against a correct build): `elementFromPoint`
+answers null outside the viewport — scroll first; the seeded harness paints the landing
+module over the home strip, so tap-through claims there are dishonest; Playwright's
+`screenshot()` hangs "waiting for fonts" under the mock — use CDP
+`Page.captureScreenshot`.
+
+Unmeasured module screens (Pricing, Coach, Partners, Showcase, Crews directory) have
+their own add-buttons (`.cr-p-tool-btn`, `.cr-k-btn`, `.cr-cp-addbtn`, `.cr-sh-btn`) —
+**not covered by this pass**; walk them before extending the census.

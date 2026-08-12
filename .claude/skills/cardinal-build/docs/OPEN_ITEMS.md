@@ -886,7 +886,7 @@ there are 3 punch items total and none are scheduled. That is a coverage gap, no
 | **Resend sender domain** | Daily digest 403s | Verify `cardinalrenovations.net` DNS, then swap the from-address in `digest.js` |
 | **Gemini key** | **Theo confirmed 31 Jul he is on paid Gemini billing — the "free tier 503s" note was stale and is retired.** Still worth confirming the key exposed in an old session was rotated. | The 503 retry ladder in `librarian.js` stays regardless (cheap insurance), but paid quota is what makes a bulk caption backfill viable at all |
 | **GitHub PAT** | Pasted into chat in the 374–388 session | Revoke if not already done: GitHub → Settings → Developer settings → Personal access tokens |
-| **Contract PDFs** | Roofing + gutter ready; siding and windows **missing** | `docs/` now exists in the repo. Siding/window masters were built July 20 in the *"Digital roofing contract formatting"* chat |
+| **Contract PDFs** | Roofing + gutter present but **carry a clause Theo corrected on 12 Aug — see the section at the foot of this file**; siding and windows **missing** | Swap the two revised masters in. Siding/window masters were built July 20 in the *"Digital roofing contract formatting"* chat |
 | **Supabase PITR** | Unconfirmed | Confirm point-in-time recovery is on |
 
 ### Done — do not re-list
@@ -2903,3 +2903,56 @@ Theo's five-item UX list (toasts, empty states, confirmations, form validation) 
 **Still standing with Theo from earlier sessions**, unchanged: the two dead `COMPANY_DOCS` links
 (`Cardinal_Window_Contract.pdf`, `Cardinal_Gutter_Contract_Fillable.pdf` — both 404); whether the
 signing→Approved notification should be gated to Curtis; the permit / municipal-inspection tracker.
+
+---
+
+## 🔴 Theo's action — swap two contract masters (12 Aug 2026, build 750)
+
+**The app does not contain the roofing Terms and Conditions. It points at a PDF.**
+`ROOF_AGREEMENT_TERMS` states the terms are *"reproduced verbatim in ☰ Menu → Company
+Documents → Roofing → Construction Agreement (Master)"* — that is
+`docs/Cardinal_Roofing_Contract.pdf`, which ships publicly. **Every roofing agreement the app
+generates incorporates that file by reference**, so until it is replaced the old wording is
+the binding wording. Nothing shipped in `index.html` changes this.
+
+Theo's instruction, 12 Aug, verbatim: *"These are always included with a replacement roof"* —
+correcting his own earlier "new-only" answer.
+
+| File | Where | State |
+|---|---|---|
+| `docs/Cardinal_Roofing_Contract.pdf` | p3, clause 8 | ❌ still excludes roof jacks and flashing |
+| `docs/Cardinal_Gutter_Contract.pdf` | p3, clause 8 | ❌ **identical clause** — its T&C is a copy of the roofing one |
+| `docs/Cardinal_Siding_Contract.pdf` | — | ✅ clean; its clause 8 covers sheathing, framing, fascia and trim and never names jacks or flashing |
+
+⚠️ **The gutter contract carrying the same clause was not known before this session.** Nothing
+links the two documents and the app never mentions the gutter T&C, so it is easy to fix the
+roofing one and believe the job is done.
+
+**Revised review copies were produced and handed to Theo** (roofing + gutter, page 3 only):
+former clause 7 (bond insurance premiums) removed, clause 8 reworded and renumbered to 7, old
+9–16 renumbered to 8–15. Verified: clauses 1–6 byte-identical to the original, old 9–16
+reproduced verbatim, pages 1/2/4/5 untouched, page count unchanged, new text clears the
+signature block by 56pt (roofing) / 70pt (gutter). **The originals in `docs/` were deliberately
+NOT overwritten and nothing was committed** — replacing a signed-contract master is Theo's call.
+
+**What unsticks it:** Theo approves the review copies, or edits the originals himself at
+`Cardinal Roofing Contracts` on his Desktop; then the two files in `docs/` are replaced. A
+matching HTML version of the revised Terms was sent at the same time and says the same thing.
+
+### ⚠️ If these PDFs are ever patched again, read this first
+
+Two ways the first attempts silently damaged a legal document. **Neither was visible at page
+size**; both were caught only by a clause-by-clause text compare against the original.
+
+1. **Re-rendering existing text corrupts smart punctuation.** Redrawing clause 9 through
+   base-14 Helvetica turned `Company’s` into `Company·s` — U+2019 is not in that encoding.
+   **Never re-render clause text that is not changing.** The shipped approach restrikes only
+   the clause NUMBER and leaves every original glyph where it is.
+2. **`apply_redactions()` deletes any glyph whose box merely INTERSECTS the rectangle.** A
+   6.6pt span is ~7.9pt tall on 8.4pt leading, so padding a number's box by 0.5pt reaches into
+   the line below — which also starts at x=40. That turned **"MIDNIGHT" into "DNIGHT"** in the
+   cancellation clause. Clamp the box bottom to just above the next line's top.
+
+A third, cosmetic: every clause on that page is **justified**. Setting the replacement
+ragged-right left one paragraph visibly unlike the fourteen around it — the render caught what
+the text compare could not.
