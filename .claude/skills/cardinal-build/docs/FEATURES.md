@@ -4180,3 +4180,51 @@ that cannot create the commission out of band cannot test any of the above.
 - **The mark is a CSS mask, not an image** — `DB_ICONS`' own `docs` glyph as a
   data-URI on `::before`, taking `currentColor`. One rule, no call-site edits.
   `-webkit-mask` is listed first for iOS.
+
+### Field validation — phone (739) and email (740)
+
+Two builds, **one convention**, created because the app had none: `.invalid`,
+`.field-error`, `aria-invalid` and a shake keyframe were each **0 occurrences**
+before 739.
+
+- **`<style id="cr-valid-styles">`** — `.cr-bad` (red border + wash, additive so it
+  never fights a module's own palette), `@keyframes crShake`, and a
+  `prefers-reduced-motion` opt-out.
+- **`window.crValid`** — `phone`, `email`, `isEmailField`, `mark`, `shake`.
+- **ONE delegated `blur` listener on `document`, with `capture:true`** — `blur` does
+  not bubble, which is the whole reason capture is there. It covers **8 tel fields and
+  13 email fields living in ten different modules**, several rendered by `innerHTML`,
+  so a new field inherits the behaviour without being wired. **740 added a BRANCH to
+  739's listener rather than a second listener** — the count of capturing blur handlers
+  in the file is still 2 (the other is `cr-gmap`'s autocomplete).
+
+**The rule both halves share: unrecognised input is FLAGGED, NEVER REWRITTEN.**
+`937-555-0101 x123`, `+44 20 7946 0958` and `galen@habitat` all keep their text
+exactly and get the red border. A formatter that silently eats an extension is worse
+than no formatter. Blank is valid in every one of these fields, because they are
+genuinely optional and refusing a blank would block real work.
+
+- ⚠️ **`type="email"` was doing nothing.** It only constrains a *native* form submit
+  and every one of these saves through a JS handler. **And the browser's own check is
+  looser than people assume — `galen@habitat` passes `checkValidity()`.** `gate_740.mjs`
+  asserts that, because it is why the handler-side check matters.
+- ⚠️ **Four of the 13 email fields are `type="text"`**, identified by name instead:
+  `cr-claims` `adjuster_email`, `cr-sol`, `cr-ci`, and `cr-crew` `contact_email`.
+  `isEmailField()` matches `/e-?mail$/i` on `name` / `data-field` / `data-f` / `id`,
+  and excludes anything with a real non-text type so a checkbox named `no_email` is
+  never touched.
+- **One definition of "what is an email."** `crValid.email` uses the same
+  `/^[^@\s]+@[^@\s]+\.[^@\s]+$/` the money paths have used since the draws form. The
+  four working money-path call sites were **deliberately left alone**; only the one
+  weak site was upgraded (`cr-bulk`'s Reassign tested `/@/`, so `nick@` passed — and
+  `assigned` is matched against that exact string by the sales RLS policy).
+
+**The fence: `community_partners.contact_email` cannot be saved malformed.**
+When a community bid is emailed the recipient **defaults to the partner's
+`contact_email`**, so a typo there is a bid that goes nowhere. `save()` refuses it and
+returns `null`; the form says why instead of showing the generic "Save failed."
+`save()` is exported, so the refusal is in `save()` (the fence) and the message in the
+form (the UI) — the same split as **635**'s note on `openEditor`.
+**It fires only when the key is present and non-empty, so 712 still holds**: a rep
+saving a notes change writes normally and never touches the stored contacts, and a
+blank address stays legal. Both asserted.

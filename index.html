@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 739 &#8212; Phone numbers are stored one way instead of six, and a bad one is flagged as you leave the field</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 740 &#8212; Email addresses are checked as you leave the field, and a partner contact email that bids go to can no longer be saved wrong</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -32082,6 +32082,22 @@ if(Object.prototype.hasOwnProperty.call(partner, k)){
 row[k] = (partner[k] || '').trim() || null;
 }
 });
+/* 740: THE FENCE. This column is the default recipient when a community bid
+   is emailed (the main block reads community_partners.contact_email into
+   `toDflt`), so a typo here is a bid that goes nowhere and nobody is told.
+   save() is exported on window.CardinalCommunityPartners, which is why the
+   refusal lives here and not only in the form — same reasoning as 635's note
+   on openEditor: the form is the UI, this is the fence.
+
+   Only when the key was actually supplied (712) and is non-empty: a blank
+   contact_email is legal and five live partners have one. */
+if(Object.prototype.hasOwnProperty.call(row, 'contact_email') && row.contact_email){
+var _ev = window.crValid && window.crValid.email(row.contact_email);
+if(_ev && !_ev.ok){
+console.warn('[cpartners] refused to store an unverified contact_email');
+return null;
+}
+}
 try{
 var r;
 if(partner.id){
@@ -32416,6 +32432,17 @@ next.address       = fd.get('address');
 if(!next.name || !String(next.name).trim()){
 err.style.display = 'block';
 err.textContent   = 'Name is required.';
+return;
+}
+/* 740: save() refuses this outright — without the message here the owner
+   would only ever see the generic "Save failed. Check your connection",
+   which would be a lie about what went wrong. */
+var _em = String(next.contact_email == null ? '' : next.contact_email).trim();
+if(canEditContacts && _em && !window.crValid.email(_em).ok){
+err.style.display = 'block';
+err.textContent   = 'That contact email is not a complete address \u2014 bids default to it, so it has to be right.';
+var _ei = form.querySelector('[name="contact_email"]');
+if(_ei){ window.crValid.mark(_ei, false, 'Not a complete email address.'); window.crValid.shake(_ei); _ei.focus(); }
 return;
 }
 err.style.display = 'none';
@@ -38196,6 +38223,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:740, d:'2026-08-12', t:'Email addresses are checked, and the one that bids go to is fenced',
+s:'Every email box in the app \u2014 thirteen of them, on clients, partners, properties, crews, adjusters and the bid form \u2014 now checks itself the moment you leave it, and turns red if what is in it is not a complete address. As with phone numbers it does not rewrite what you typed; it just tells you. Blank is still fine everywhere it was fine before. One of those boxes gets a real fence rather than a warning: a community partner\u2019s contact email is the address a bid is sent to by default, so a partner can no longer be SAVED with a broken one \u2014 it refuses and says why, instead of storing it and losing a bid to it later. Reassigning clients in bulk also asks for a whole address now; it used to accept anything with an @ in it, which meant \u201Cnick@\u201D would quietly hand those clients to nobody.' },
 { b:739, d:'2026-08-12', t:'Phone numbers get one shape, and a bad one is flagged',
 s:'There was no phone checking anywhere in the app \u2014 every field took whatever you typed, so the same number ended up stored six different ways and \u201Cabc\u201D was as acceptable as a real number. Now every phone field in the app tidies itself the moment you leave it: 9375550101, 937-555-0101 and 1 937 555 0101 all become (937) 555-0101, so numbers match each other and are easier to read and dial. If what you typed is not a phone number the field turns red and tells you \u2014 but it does NOT rewrite what you typed, so an extension or an unusual number is flagged for you to look at rather than quietly mangled. Leaving a phone blank is still fine; most of these fields are optional and always were.' },
 { b:738, d:'2026-08-12', t:'A priced document with no price asks before it goes out',
@@ -38948,7 +38977,10 @@ bar.querySelector('[data-act="reassign"]').onclick = async function(){
 var email = prompt('Reassign to email (e.g. nick@cardinalrenovations.net):');
 if(!email) return;
 email = email.trim().toLowerCase();
-if(!/@/.test(email)){ alert('That doesn\'t look like an email.'); return; }
+/* 740: was /@/, which accepted "nick@". `assigned` is matched against this
+   exact string by the sales RLS policy, so a half-typed address hands the
+   selected clients to nobody and says it worked. */
+if(!window.crValid.email(email).ok){ alert('That doesn\'t look like an email.'); return; }
 if(!confirm('Reassign ' + selected.size + ' client(s) to ' + email + '?')) return;
 var ids = Array.from(selected);
 var btns = bar.querySelectorAll('button');
@@ -66185,6 +66217,33 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
     return { ok:true, digits:d,
              pretty:'(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6) };
   }
+  /* 740: the SAME pattern the money paths have used since the draws form —
+     copied deliberately rather than loosened, so "what is an email" has one
+     answer. It is intentionally not RFC 5322: this is a typo catcher, and a
+     stricter regex rejects real addresses.
+
+     It trims and NOTHING else. Whitespace is never part of an address, but
+     case can be, so it is left alone — same rule as phone(): flag what you do
+     not understand, never rewrite it. */
+  var EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+  function email(v){
+    var raw = String(v == null ? '' : v).trim();
+    if(!raw) return { ok:true, clean:'' };      /* optional, in every one of these forms */
+    return { ok: EMAIL_RE.test(raw), clean: raw };
+  }
+  /* Which inputs are addresses. type="email" is only nine of the thirteen —
+     four more are typed "text" and identified by their name/data-field, and
+     those include cr-crew's contact_email and cr-claims' adjuster_email.
+     Anything with a real non-text type (checkbox, tel, password) is excluded
+     by the second line, so a checkbox named no_email is never touched. */
+  function isEmailField(el){
+    var t = (el.getAttribute('type') || '').toLowerCase();
+    if(t === 'email') return true;
+    if(t && t !== 'text') return false;
+    var k = el.getAttribute('name') || el.getAttribute('data-field') ||
+            el.getAttribute('data-f') || el.id || '';
+    return /e-?mail$/i.test(k);
+  }
   function mark(el, ok, msg){
     if(!el || !el.classList) return;
     el.classList.toggle('cr-bad', !ok);
@@ -66202,7 +66261,8 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
     el.classList.add('cr-shake');
     setTimeout(function(){ try{ el.classList.remove('cr-shake'); }catch(_){} }, 400);
   }
-  window.crValid = { phone: phone, mark: mark, shake: shake };
+  window.crValid = { phone: phone, email: email, isEmailField: isEmailField,
+                     mark: mark, shake: shake };
   try{ window.normPhone = function(v){ return phone(v).digits; }; }catch(_){}
 
   /* ONE delegated listener for all eight type="tel" inputs. They live in six
@@ -66214,10 +66274,19 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
   document.addEventListener('blur', function(e){
     var el = e.target;
     if(!el || el.tagName !== 'INPUT') return;
-    if((el.getAttribute('type') || '').toLowerCase() !== 'tel') return;
-    var r = phone(el.value);
-    if(r.ok && r.digits) el.value = r.pretty;      /* one shape, everywhere */
-    mark(el, r.ok, r.ok ? '' : 'Enter a 10-digit phone number.');
+    if((el.getAttribute('type') || '').toLowerCase() === 'tel'){
+      var r = phone(el.value);
+      if(r.ok && r.digits) el.value = r.pretty;      /* one shape, everywhere */
+      mark(el, r.ok, r.ok ? '' : 'Enter a 10-digit phone number.');
+      return;
+    }
+    /* 740: a BRANCH, not a second listener. Registering another capturing
+       blur handler would be a mechanism beside an existing one. */
+    if(isEmailField(el)){
+      var m = email(el.value);
+      if(m.ok && m.clean !== el.value) el.value = m.clean;   /* trim only */
+      mark(el, m.ok, m.ok ? '' : 'That does not look like a complete email address.');
+    }
   }, true);
 })();
 </script>
