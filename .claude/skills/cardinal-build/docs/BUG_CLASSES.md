@@ -2238,3 +2238,28 @@ This is **class 16 with a different cause**: not a control that was never wired,
 A gate counted `class="cr-req"` in the live DOM and found **7 for 6 literals**. When a module renders a form, the page contains **both the script's string literal and the element built from it**. Anything template-generated double-counts, and how much it double-counts depends on which screens happen to be open — so the number moves between runs.
 
 **Read the file from disk for source-literal assertions.** Use the DOM only for what is actually rendered.
+
+## 35 — a JSON-in-`text` column read as an object (742)
+
+`projects.checklist` is a **`text`** column, so supabase-js returns a **string**. Four
+readers did `p.checklist.lead`, which is `undefined` on a string — silently, with no
+error. The app's own parser `parseCkAll(pr)` exists precisely for this and is used at
+43 sites; these four hand-rolled it and got nothing.
+
+Two failure shapes, and the second is the nastier:
+
+- **A default fills the hole.** `claim_type: lead.claim_type || 'retail'` printed
+  "retail" for all 34 clients, 21 of them wrongly.
+- **A filter finds nothing, and "nothing" reads as "all clear."** Two Health checks
+  reported "None found" regardless of the data. Their answers happened to be correct on
+  the day, which is what let them survive.
+
+**Check the column type before dereferencing.** In this database `checklist`,
+`meas_docs.data` and `project_photos.data` are `text`, while `contracts.contract`,
+`punch_items.comments`/`photos`, `estimates.photos` and `insurance_supplements.items`
+are `jsonb` and object access on those is **correct**. Over-applying this fix breaks
+working code — `check_2` reads `contracts.contract.signature` and must be left alone.
+
+**A fixture is a claim about production.** `gate_742.mjs` seeds `checklist` as a JSON
+**string**. Seeded as an object, the gate goes green against the broken code and proves
+nothing. When a bug IS the data shape, the seed is the load-bearing part of the test.
