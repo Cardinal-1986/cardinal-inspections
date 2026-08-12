@@ -4100,3 +4100,32 @@ section. **If a line is not on the paper form it is not in these bodies.**
 table** is the AI-estimate → contract lifecycle (`contract_number`, `template`, the
 `contract` JSONB blob, `doSend`/`doVoid`/signing from 722). It had **0 rows** as of
 build 730.
+
+## The app-wide toast (733) — `crToast` + `<style id="cr-toast-styles">`
+
+`window.crToast(msg, type)` · `crToastOk(msg)` · `crToastErr(msg)` — type is
+`'ok' | 'err' | 'info'`. Mounts a `#crToasts` stack to `document.body`.
+
+**Why it exists when five toasts already did:** the five (`cr-estimates`,
+`cr-claims`, `cr-coach`, `cr-ess`, `cr-bpa`) are all **view-scoped**. There was no
+app-wide one, which is why `showError` wrote into `#bannerMount` — a normal-flow div
+inside `#mainView`, while `#projectView` is a **sibling** that `hideAllViews()` shows
+after setting `mainView.display='none'`. Measured: errors were visible on **home
+only**. **The five are untouched and asserted still 5. Do not "unify" them without
+cause** — they work, and they are scoped to their own overlays.
+
+- **Errors do NOT auto-dismiss.** They stay until tapped. This is the point of the
+  build: a 4-second visible message replacing a 6-second invisible one is not a fix.
+  Successes clear at 4s. `gate_733.mjs` asserts both.
+- **`textContent`, never `innerHTML`** — these carry Postgres error strings and client
+  names. One of the five existing toasts takes HTML; that trap is not copied here.
+- **Placement follows `body.standalone`**, which already reserves
+  `calc(64px + env(safe-area-inset-bottom))` for `#pwaNav`. The stack clears the same
+  amount, and the gate measures the real overlap rather than trusting the arithmetic.
+  Desktop (≥900px) moves it to top-right.
+- **`showError()` routes through it** and no longer writes `.banner.err` at all — one
+  writer, zero readers. `#bannerMount` keeps its other job as the Local-mode host.
+- Stack caps at **3**, newest wins.
+
+⚠️ **`.toolbar #savedFlash{display:none}` under 760px** — the editor's "Saved ✓" is
+hidden on a phone. That is why `saveCurrent()` now also toasts.

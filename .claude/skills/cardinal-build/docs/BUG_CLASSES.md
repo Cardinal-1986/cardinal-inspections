@@ -2151,3 +2151,41 @@ checks have their own `Cannot verify: <error>` branch — so **two integrity che
 reported a soft warning for their entire life instead of ever checking anything.**
 A check that cannot fail is not a check. **Seed a row that SHOULD trip it and assert
 it trips** — that is the only way to tell a passing check from an inert one.
+
+## 31 — feedback rendered into a container the current screen has hidden (733)
+
+`showError()` — **82 call sites, the app's only error channel** — wrote into
+`#bannerMount`. That div is the first child of `#mainView`. `#projectView`,
+`#editorView`, `crewsView` and `punchView` are **siblings**, and `hideAllViews()`
+sets `mainView.display='none'` before showing any of them.
+
+Hit-tested in Chromium:
+
+| screen | error visible? |
+|---|---|
+| home / landing | ✅ |
+| a client profile | ❌ |
+| the document editor | ❌ |
+| crews | ❌ |
+| punch & repairs | ❌ |
+
+**Nothing throws.** `innerHTML` on a hidden node succeeds. The message is written,
+correct, escaped — and never painted. Then a `setTimeout` deletes it 6 seconds later,
+so even scrolling back cannot recover it.
+
+**The tell to look for:** a feedback element that lives *inside a view* rather than in
+the page chrome. Ask **"which screen is this element on?"**, not "does it render?".
+`#editorView` made it doubly invisible — `position:fixed;inset:0;z-index:150` paints
+over `#bannerMount` even when `#mainView` is shown.
+
+**The drill:** any app-wide feedback must mount to `document.body` and be
+`position:fixed`. And prove it by **hit-testing `elementFromPoint` at the element's
+own centre on every major screen** — a bounding rect only tells you it has a size,
+not that anyone can see it.
+
+### The inversion worth remembering
+
+This arrived as a UX polish request — *"clicks Save, did it work?"* — and the fix
+turned out to be on the **error** path, not the success path. **When someone reports
+missing confirmation, check whether failures are visible first.** Silent failure
+reads exactly like silent success.
