@@ -4228,3 +4228,37 @@ form (the UI) — the same split as **635**'s note on `openEditor`.
 **It fires only when the key is present and non-empty, so 712 still holds**: a rep
 saving a notes change writes normally and never touches the stored contacts, and a
 blank address stays legal. Both asserted.
+
+### Required fields (741)
+
+Six fields carrying the `required` attribute had **nothing on screen to say so** —
+cr-pricing `sku`/`name`/`rate`, cr-claims `amount`, cr-cpartners `name`, cr-cprop
+`address`. They now carry `<span class="cr-req">*</span>`.
+
+- ⚠️ **The asterisk already existed FIVE ways** before this: `<span class="req">*</span>`
+  in cr-nbid / cr-sol / cr-ci (in **three different colours** — red, `#fcd34d`,
+  `#f08a90`), a literal `" *"` in label text (cr-nachi ×3, `pfName`),
+  `placeholder="Name *"` (`qiNpName`), and `placeholder="…(required)"` (cr-estimates).
+  **741 added a sixth only for the six unmarked fields and restyled none of the
+  others** — cr-sol's amber and cr-ci's pink are module palettes, and changing them is
+  a theming decision, not a validation one.
+- ⚠️ **`.cr-req`, not `.req`.** `req` is already four meanings, including cr-shim's
+  section badge that reads "Required" / "4 min · 8 max".
+- ⚠️ **A derived `:has()` rule was the first design and it is wrong.**
+  `label:has(+ input[required])::after` suits `<label>SKU</label><input required>`, but
+  the other structure here is `<label>Name<input required></label>`, where `::after`
+  renders **after the input** and drops a stray asterisk below the box. Two structures,
+  so the mark is placed in the label text.
+
+**`crValid.require(el, msg)`** — marks (`.cr-bad`), shakes (`crShake`), focuses, and
+returns `false` so a guard is one line. Null-safe: several of these run on screens
+where the field may not be rendered. **Six guards use it**: cr-cpartners, cr-cprop,
+cr-estimates, cr-cadj, `pfName`, `qiNpName`.
+
+**⚠️ `#cpForm` and `#cpropForm` now carry `novalidate`, and that is a fix.** Both had
+`<input required>` on a natively-submitting form, so **the browser blocked first** and
+their own "Name is required." / "Address is required." messages had **never rendered
+once** — measured in Chromium, `submitFired === false`. The JS guards were already
+correct and already refused; they simply were not reached. `gate_741.mjs` asserts both
+halves: **the handler runs** *and* **it still writes nothing**, plus that a filled-in
+value still saves.
