@@ -2795,3 +2795,38 @@ enforces `PHOTO_MIN`.** Asked whether the tick box should enforce the five too.
 `data-putoggle`**, and do not "fix" the asymmetry as a bug — it is the intended shape: the sheet is
 the considered close (it shows you the photo count as you do it), the tick box is the quick one.
 `PHOTO_MIN` on the sheet is unchanged and still enforced.
+
+---
+
+## Loading states (Theo's list, 11 Aug) — where it stands after 728–729
+
+Four items were proposed. Two shipped, one is mostly already built, two are open.
+
+| # | Item | State |
+|---|---|---|
+| 1 | Splash while the app opens | ✅ **729** — `#crSplash`. See `FEATURES.md` |
+| 2 | Buttons show `Saving…` during a write | ✅ **~80% pre-existing** (64 buttons already disable, ~50 already relabel); **728** closed the real gap — the seven money writers, none of which did |
+| 3 | Skeleton screens on the dashboard | ⬜ **open, not started.** Ranked third: the data queries return fast; the pain was the document download, which 729 covers |
+| 4 | Route transitions between views | ⬜ **open — recommended AGAINST.** Views here are shown by `display` or a class, with `hideAllViews()` in the middle; adding a transition means touching that path for every one of them, for decoration. High blast radius, no correctness gain |
+
+### ✅ SETTLED at 729 — the splash shows no progress bar
+
+Theo's note asked for one, *"even fake progress beats nothing."* Built without it, and
+this is the reasoning, so nobody adds one back as a "missing" piece: the app cannot
+know when the remaining bytes arrive, so any bar would be an animation timed to a
+guess. When the guess is short it sits at 100% while nothing happens — which is the
+exact "it's frozen" impression the item was raised to fix. The honest spinner is up
+from first paint (608 ms on a weak signal) and lifts the moment the app is ready.
+**`gate_729.mjs` asserts no percentage and no `<progress>` is present**, so this stays
+decided rather than drifting.
+
+### ⚠️ Two numbers in the original note were wrong — do not re-quote them
+
+- **The file is 1,103,773 bytes Brotli, not 734 KB.**
+- **There is no white screen.** The window is a HALF-PAINTED page. A fix aimed at a
+  white screen would have been aimed at nothing.
+
+Both were established by serving the real compressed document from a local http server
+with `Content-Encoding: br` under CDP throttling. ⚠️ **Do not try to measure this
+against the live site from a session container** — the egress gateway RSTs Chromium's
+ClientHello, and an earlier attempt was timing Chrome's own error page.
