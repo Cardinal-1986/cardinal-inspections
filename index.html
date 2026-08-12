@@ -179,6 +179,42 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
   padding:44px 24px;text-align:center;color:var(--muted);
 }
 .empty b{color:var(--ink);}
+/* 736: the app's default theme is DARK and --paper is #ffffff, declared once with
+   no dark twin — so all sixteen empty states painted a white card on the #09090C
+   page. The text on it measured 6.69:1 and 17.22:1, i.e. perfectly readable and
+   still wrong: nothing a contrast check would flag, it just looked like the page
+   had failed to load. Same inks and shape as the #tab-commissions fix at 726,
+   generalised.
+
+   Light is left byte-identical by scoping to :root:not([data-theme="rb-light"]).
+
+   ⚠ THE EXCLUSION LIST IS LOAD-BEARING. `empty` is a bare class name and four
+   OTHER components carry it as a modifier — .cr-photo.empty (an estimate photo
+   slot), .payrow.empty, .projinfo .poPfx.empty and .insdocrow.empty. They each
+   paint their own ground at (0,1,0); this override is (0,3,0) and would out-rank
+   every one of them. Every other empty state in the file uses a prefixed class
+   (cr-c-empty, pay-empty, crw-empty …) and is untouched by design. */
+:root:not([data-theme="rb-light"]) .empty:not(.cr-photo):not(.payrow):not(.poPfx):not(.insdocrow){
+  background:transparent;
+  border-color:var(--rbe-empty-bd,#4a4f58);
+  color:var(--rbe-mute,#9aa0a8);
+}
+:root:not([data-theme="rb-light"]) .empty:not(.cr-photo):not(.payrow):not(.poPfx):not(.insdocrow) b{
+  color:var(--rbe-head,#ffffff);
+}
+/* the mark. Theo asked for an illustration; the app already has an icon language
+   (DB_ICONS + dbIc(), 74 data-cri sites) and this is its `docs` glyph, inlined as
+   a mask so it takes currentColor and needs no call-site change at any of the
+   sixteen. -webkit- first: the iPad is the device this is read on. */
+.empty:not(.cr-photo):not(.payrow):not(.poPfx):not(.insdocrow)::before{
+  content:'';display:block;width:34px;height:34px;margin:0 auto 12px;
+  background-color:currentColor;opacity:.42;
+  -webkit-mask:var(--cr-empty-ico) center/contain no-repeat;
+          mask:var(--cr-empty-ico) center/contain no-repeat;
+}
+:root{
+  --cr-empty-ico:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path d='M3 5.5A1.5 1.5 0 0 1 4.5 4h5.1l2 2.4h7.9A1.5 1.5 0 0 1 21 7.9v10.6a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5v-13z'/></svg>");
+}
 .loading{padding:30px;text-align:center;color:var(--muted);}
 
 /* ---------- login ---------- */
@@ -3446,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 735 &#8212; Nine messages that were popping up as system alerts are proper notifications now, and the Estimates one is no longer invisible</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 736 &#8212; Empty lists stop looking like a broken page: no more white card on the dark app, and three of them now say what to do next</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17853,7 +17889,9 @@ function renderList(){
   if(def.limit) rows = rows.slice(0, def.limit);
   document.getElementById('listMount').innerHTML = rows.length
     ? docTable(rows)
-    : '<div class="empty"><b>Nothing here yet.</b></div>';
+    : '<div class="empty"><b>Nothing here yet.</b><br>'
+      + 'Nothing matches this view. Try another filter above, or create a document '
+      + 'from a client\u2019s profile.</div>';
 }
 var __listRepSel = document.getElementById('listRepSel');
 if(__listRepSel) __listRepSel.addEventListener('change', function(){
@@ -19641,7 +19679,8 @@ function openActivityFeed(){
         (x.cli ? '<span class="afcli"' + (x.pid ? ' data-proj="' + x.pid + '"' : '') + '>' + esc(x.cli) + '</span>' : '') +
         (x.detail ? '<span class="afdetail">' + esc(x.detail) + '</span>' : '') +
       '</span></div>';
-  }).join('') : '<div class="empty"><b>No activity yet.</b></div>';
+  }).join('') : '<div class="empty"><b>No activity yet.</b><br>'
+      + 'This fills in as the team creates clients, sends estimates and logs payments.</div>';
   window.scrollTo(0,0);
 }
 var boardView = document.getElementById('boardView');
@@ -38131,6 +38170,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:736, d:'2026-08-12', t:'Empty lists stop looking like a broken page',
+s:'You said empty tables look like bugs. They did \u2014 but not for the reason it seemed. All sixteen empty lists already existed and already told you what to do next; the problem was that the box they sit in was painted WHITE, left over from when the app was a light-coloured page, so on the dark app an empty list looked like a blank card had failed to load. The words on it were perfectly readable, which is why it never showed up as a contrast problem. The box now matches the app, with a small folder mark above the message. Light mode is unchanged. Three lists that only said \u201CNothing here\u201D now tell you what to do, like the other thirteen already did.' },
 { b:735, d:'2026-08-12', t:'Nine alerts become real messages, and one invisible one is fixed',
 s:'Two leftovers found while auditing yesterday\u2019s notification work. Nine places in the app were written to show a small message and were instead showing the browser\u2019s own grey alert box \u2014 the one you have to tap OK on \u2014 because the helper they were written against never existed. That included the Colors screen telling you what Optimise did, its refusal when a photo is over 10 MB, and its message when a delete fails. All nine are proper notifications now. Separately, the Estimates screen had a message of its own that was painting with NO background colour at all \u2014 white text on a white sheet, invisible \u2014 because it borrowed colours that only exist inside the Estimates panel and it was being shown outside it.' },
 { b:734, d:'2026-08-12', t:'Logging a check says what commission it created',
@@ -52477,7 +52518,7 @@ placeChip  : placeChip,
       return ((p.name||'')+' '+(p.address||'')).toLowerCase().indexOf(q)!==-1;
     }).sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
 
-    if(!S.rows.length){ el.innerHTML='<div class="empty">Nothing here.</div>'; sync(); return; }
+    if(!S.rows.length){ el.innerHTML='<div class="empty"><b>No clients match.</b><br>Clear the search box above to see them all.</div>'; sync(); return; }
     el.innerHTML=S.rows.map(function(p){
       var k=portalOf(p);
       return '<div class="row'+(S.sel[p.id]?' sel':'')+'" data-id="'+p.id+'">'+
