@@ -135,6 +135,31 @@
     }
     return null;
   }
+  /* 734: the mock had no TRIGGERS either, and one of them is load-bearing.
+     commission_on_collection = AFTER INSERT ON collections EXECUTE make_commission()
+     is why the app cannot know a commission was created at the moment it inserts a
+     check — the row appears server-side, out of band. A harness that does not model
+     that cannot test anything downstream of it, so this reproduces the one trigger
+     the UI actually observes. Rate and rep mirror the SQL function.
+     window.__MOCK_NO_TRIGGERS__ opts out. */
+  var COMMISSION_RATE = 0.10;
+  function fireTriggers(table, op, rows) {
+    try { if (typeof window !== 'undefined' && window.__MOCK_NO_TRIGGERS__) return; } catch (e) { return; }
+    if (table !== 'collections' || op !== 'insert') return;
+    rows.forEach(function (row) {
+      var projects = (STORE.projects || []);
+      var pr = projects.filter(function (p) { return String(p.id) === String(row.project_id); })[0];
+      var rep = pr && pr.sales_rep;
+      if (!rep) return;                       /* no rep on the job — no commission, not an error */
+      tbl('commissions').push({
+        id: uuid(), project_id: row.project_id, rep_email: rep,
+        amount: Math.round((Number(row.amount) || 0) * COMMISSION_RATE * 100) / 100,
+        basis: 'collection', status: 'unpaid', rate_pct: COMMISSION_RATE * 100,
+        collection_id: row.id, project_name: pr && pr.name,
+        created_at: new Date().toISOString(), created_by: null
+      });
+    });
+  }
   Query.prototype.insert = function (payload) { this._op = 'insert'; this._payload = payload; return this; };
   Query.prototype.update = function (payload) { this._op = 'update'; this._payload = payload; return this; };
   Query.prototype.upsert = function (payload, opts) { this._op = 'upsert'; this._payload = payload; this._upsertOpts = opts; return this; };
@@ -153,6 +178,7 @@
           t.push(row); return row;
         });
         rec(this.table, this._op, this._payload);
+        fireTriggers(this.table, 'insert', inserted);   /* 734: AFTER INSERT, like the real one */
         res.data = this._single ? inserted[0] : inserted;
       } else if (this._op === 'update') {
         var match = applyFilters(t, this._filters);

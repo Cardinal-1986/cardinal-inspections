@@ -4129,3 +4129,30 @@ cause** — they work, and they are scoped to their own overlays.
 
 ⚠️ **`.toolbar #savedFlash{display:none}` under 760px** — the editor's "Saved ✓" is
 hidden on a phone. That is why `saveCurrent()` now also toasts.
+
+
+## The collection → commission toast (734)
+
+Logging a check reads back: `Collection logged — $17,025 · $1,703 commission for Nick Hey`.
+
+**Why this is not as simple as it looks:** the commission is created by
+`commission_on_collection` (`AFTER INSERT ON collections EXECUTE make_commission()`),
+**server-side**. `miSaveColl` inserts with `.select('id').single()` — it never sees
+the commission. So the amount and the rep are recovered by **diffing
+`commUi.lastComms` across the `await renderCommissions()` that miSaveColl already
+did**, not by asking the database again.
+
+- **Zero extra queries, asserted both ways**: the patch checks `from('commissions')`
+  is 5 before and 5 after, and `gate_734.mjs` counts one commissions read across
+  the save.
+- `commUi.lastComms` is set inside `renderCommissions()` beside the existing
+  `commUi.hasColls`. **Do not remove it** — it looks unused from that function.
+- **Three silent, correct no-commission cases**, each gated: no `sales_rep` on the
+  job · RLS hides another rep's commission from this reader · the user was
+  **editing** a collection, which fires no trigger. All three fall back to the plain
+  collection line. None is an error.
+- Rep names go through the existing `rptRepName()`, so it is "Nick Hey", not an email.
+
+⚠️ **`e2e_mock_supa.js` now models this trigger** (`fireTriggers`, 734). A harness
+that cannot create the commission out of band cannot test any of the above.
+`__MOCK_NO_TRIGGERS__` opts out. Keep the 10% rate in step with `make_commission()`.

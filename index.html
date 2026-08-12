@@ -3446,7 +3446,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 733 &#8212; Failures are finally visible: error messages appear on every screen instead of only the home page, and saves now confirm themselves</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 734 &#8212; Logging a check now tells you the commission it created and who it went to, without asking the database twice</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18784,6 +18784,12 @@ async function renderCommissions(){
     colls = (!rs[0].error && rs[0].data) || [];
     rows = rs[1].data || [];
     draws = (!rs[2].error && rs[2].data) || [];
+    /* 734: this function already reads every commission on the job; it just threw
+       them away. miSaveColl diffs these ids across its own await to find the row
+       the DB trigger created, so the toast can name it WITHOUT a second query.
+       Kept as the raw rows (not a count) because the amount and the rep are both
+       needed, and scoped on commUi like commUi.hasColls beside it. */
+    commUi.lastComms = rows;
   }catch(e){
     mount.innerHTML = '<div class="empty">Could not load commissions: ' + woEsc(e.message || e) + '</div>';
     return;
@@ -19065,6 +19071,11 @@ async function miSaveColl(){
     notes: document.getElementById('miNotes').value.trim() || null,
   };
   if(msg) msg.textContent = 'Saving…';
+  /* 734: what commissions existed BEFORE the insert. The trigger writes the new
+     one server-side, so this is the only way to tell it apart afterwards. */
+  var _before = {};
+  (commUi.lastComms || []).forEach(function(c){ _before[c.id] = 1; });
+  var _isNew = !commUi.editColl;
   var r;
   if(commUi.editColl){
     r = await sb.from('collections').update(row).eq('id', commUi.editColl).select('id').single();
@@ -19076,7 +19087,26 @@ async function miSaveColl(){
   if(r.error){ if(msg) msg.textContent = 'Could not save: ' + r.error.message; return; }
   commUi.collForm = false; commUi.editColl = null;
   await renderCommissions();
-  try{ if(window.crToastOk) window.crToastOk('Collection logged \u2014 ' + fmtMoney(amt)); }catch(_){}
+  /* 734: name the commission the trigger created, if there is one and if this
+     reader is allowed to see it. Three legitimate ways there is nothing to add,
+     none of them a failure: the job has no sales rep, RLS hides other people's
+     commissions from a rep, or this was an EDIT rather than a new collection
+     (no trigger fires). In all three the message is just the collection. */
+  var _extra = '';
+  try{
+    if(_isNew){
+      var _fresh = (commUi.lastComms || []).filter(function(c){ return !_before[c.id]; });
+      if(_fresh.length === 1){
+        var _c = _fresh[0];
+        _extra = ' \u00b7 ' + fmtMoney(Number(_c.amount) || 0) + ' commission for ' +
+                 rptRepName(_c.rep_email);
+      }else if(_fresh.length > 1){
+        var _sum = _fresh.reduce(function(t, c){ return t + (Number(c.amount) || 0); }, 0);
+        _extra = ' \u00b7 ' + fmtMoney(_sum) + ' in commissions';
+      }
+    }
+  }catch(_){}
+  try{ if(window.crToastOk) window.crToastOk('Collection logged \u2014 ' + fmtMoney(amt) + _extra); }catch(_){}
   } finally { _busy(); }
 }
 function miEditColl(id){
@@ -38097,6 +38127,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:734, d:'2026-08-12', t:'Logging a check says what commission it created',
+s:'When you log a collection, the rep\u2019s commission is created automatically by the database, not by the app \u2014 so until now nothing told you it had happened or how much it was. The confirmation now reads the whole story: \u201CCollection logged \u2014 $17,025.00 \u00b7 $1,702.50 commission for Nick\u201D. It costs nothing extra: the commissions list was already being re-read the moment the check saved, so the number was already on hand and was simply being discarded. If the job has no rep, or you are a rep who cannot see somebody else\u2019s commission, or you were editing an existing collection rather than adding one, it just says the collection \u2014 none of those is a failure and none of them shows an error.' },
 { b:733, d:'2026-08-12', t:'You can finally see it when something fails',
 s:'This started as \u201Cno feedback when I hit Save\u201D and turned out to be worse than that. Every error message in the app \u2014 could not save, upload failed, check your connection, all 82 of them \u2014 was being written to the top of the HOME page. On a client profile, in a document, on crews or punch outs, the home page is not on screen, so the message was written somewhere invisible and deleted six seconds later. The app has been failing silently everywhere the work actually happens. Errors now appear as a message you can actually see, on whatever screen you are on, and they STAY until you tap them away \u2014 a failure you cannot read is a failure you did not see. Saves confirm themselves too, and clear on their own after four seconds: saving a document, logging a collection or a draw, recording a commission, creating an agreement, emailing a document to a client. On a phone the document editor\u2019s \u201CSaved \u2713\u201D was hidden entirely, so that one never confirmed at all.' },
 { b:732, d:'2026-08-12', t:'Void works, and two health checks that never ran now run',
