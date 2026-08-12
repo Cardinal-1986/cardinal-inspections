@@ -3446,7 +3446,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 731 &#8212; Four fixes on the way to a signed contract: signing moves the job to Approved and notifies Curtis, Share link works, the link saves, and emailing a document marks it sent</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 732 &#8212; The Void button on an AI contract works instead of being silently refused, and two health checks that could never run now actually run</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -35478,11 +35478,18 @@ if(!CURRENT || !CURRENT.id || !window.supa){ return; }
 var reason = prompt('Void this contract? Optionally note why:', '');
 if(reason === null) return;
 var now = new Date().toISOString();
+/* 732: this wrote the past-tense spelling and the table's CHECK permits 'void' -
+   ('draft','sent','signed','void','change_ordered') - so every Void was
+   rejected by Postgres and the button could never once have worked. My
+   regression, shipped at 722: the mock the 722 gate ran against enforces no
+   CHECK constraints, so the gate asserted the value I had assumed rather than
+   the value the schema allows, and went green on it. Verified against the live
+   schema this time, not against the .sql file. */
 var r = await window.supa.from('contracts')
-.update({ status:'voided', voided_at: now, void_reason: reason || null })
+.update({ status:'void', voided_at: now, void_reason: reason || null })
 .eq('id', CURRENT.id).select('status').single();
 if(r.error){ alert('Could not void: ' + (r.error.message || r.error)); return; }
-CURRENT.status = 'voided'; CURRENT.voided_at = now; CURRENT.void_reason = reason || null;
+CURRENT.status = 'void'; CURRENT.voided_at = now; CURRENT.void_reason = reason || null;
 render(CURRENT); flash('Contract voided');
 }
 function doSign(){
@@ -36414,10 +36421,15 @@ var pr = await window.supa.from('projects')
 if(pr.error) return skipIfErr({error:pr.error.message}, 'projects');
 var ids = (pr.data || []).map(function(p){ return p.id; });
 if(!ids.length) return { status:'ok', count:0, message:'None found', fix:'' };
+/* 732: `contracts` has homeowner_signed_at and contractor_signed_at - there is
+   NO signed_at. PostgREST answered every one of these with an error, the check
+   fell into its own 'Cannot verify' branch, and this integrity check has never
+   verified anything since it was written. It degrades to a warning rather than
+   throwing, which is exactly why nobody noticed. */
 var signed = await window.supa.from('contracts')
 .select('project_id')
 .in('project_id', ids)
-.not('signed_at', 'is', null);
+.not('homeowner_signed_at', 'is', null);
 if(signed.error){
 return { status:'warn',
 message:'Cannot verify — contracts query failed: ' + signed.error.message,
@@ -36444,9 +36456,10 @@ return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
 async function check_2_signedNoSignature(){
 if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
 try{
+/* 732: same non-existent column - see check_1 above. */
 var r = await window.supa.from('contracts')
-.select('id, contract_number, contract, signed_at')
-.not('signed_at', 'is', null)
+.select('id, contract_number, contract, homeowner_signed_at')
+.not('homeowner_signed_at', 'is', null)
 .limit(200);
 if(r.error) return { status:'warn',
 message:'Cannot verify: ' + r.error.message,
@@ -38066,6 +38079,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:732, d:'2026-08-12', t:'Void works, and two health checks that never ran now run',
+s:'Three places asked the contracts table for something it does not have. Voiding a contract wrote a status the database refuses, so the Void button was rejected every single time \u2014 that one was my mistake from last week and it is fixed. And two of the checks on the Health screen \u2014 \u201Cjobs advanced past Approved with no signed contract\u201D and \u201Csigned contracts with no signature on file\u201D \u2014 were asking for a date column that does not exist, so both quietly reported \u201Ccannot verify\u201D instead of checking anything, and had done since they were written. Both check for real now.' },
 { b:731, d:'2026-08-12', t:'Signing a contract moves the job, and Share link works',
 s:'Four things on the way to a signed contract were broken, all by the same slip, and all older than this week\u2019s contract work. First: signing a contract in person recorded the signature but did NOTHING else \u2014 the job stayed where it was and Curtis was never told, even though the app popped up a message saying it had moved to Approved and he had been notified. It had never once worked. Signing a contract now really does move the job to Approved and really does notify Curtis to schedule and order materials. Second: Share link and Email to client, on ANY document \u2014 contract, estimate, inspection report \u2014 failed every time with \u201CDocument not loaded\u201D. Third: even past that, a share link\u2019s code was never saved, so a link worked for you and was dead for whoever you sent it to. Fourth: emailing a document to a client left it showing UNSENT, because the write that marks it sent went nowhere. All four were one mistake repeated \u2014 the open document was being used where its ID was meant. All four work now. Nothing else changed.' },
 { b:730, d:'2026-08-12', t:'Siding and gutter contracts, and the roofing one says Roofing',
