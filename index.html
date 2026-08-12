@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 747 &#8212; Printed contracts drop the property photo, every page carries a slim header, and the page breaks fall where they should</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 748 &#8212; The three Construction Agreements have real tick boxes now instead of telling you to circle something you cannot circle</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9524,7 +9524,7 @@ var ROOF_AGREEMENT_BODY = `
 <tr><td class="k">Phone</td><td><span class="ph">[PHONE NUMBER]</span></td></tr>
 <tr><td class="k">Street</td><td><span class="ph">[STREET]</span></td></tr>
 <tr><td class="k">City / State / ZIP</td><td><span class="ph">[CITY]</span> &nbsp; <span class="ph">[STATE]</span> &nbsp; <span class="ph">[ZIP]</span></td></tr>
-<tr><td class="k">Primary residence</td><td><b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">Primary residence</td><td><span class="cbx" data-group="rprim">&#9744;</span> <b>Yes</b> &nbsp;&nbsp; <span class="cbx" data-group="rprim">&#9744;</span> <b>No</b></td></tr>
 </table>
 
 <p style="font-size:10pt;">Buyer(s) hereby jointly and severally agrees to purchase the products
@@ -9533,19 +9533,20 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <b>Terms and Conditions</b> form, and any accompanying specification sheet(s).</p>
 
 <h2 class="sec">Project Specifications</h2>
+<p class="items-hint no-print">Tap a box to check it &#8212; it prints checked.</p>
 <table class="meta">
 <tr><td class="k">1. Decking</td><td>A. Remove existing roofing layers to roof deck<br>B. Inspect roof deck &amp; replace wood as needed &#8212; $<span class="ph">[rate]</span> per sheet</td></tr>
 <tr><td class="k">&nbsp;&nbsp;&nbsp;Decking type</td><td><span class="opts" data-opts="decking">A. OSB &nbsp; B. Plywood &nbsp; C. T&amp;G &nbsp; D. Plank Board &nbsp; E. Spaced Decking &nbsp; F. Cedar Shake</span></td></tr>
-<tr><td class="k">2. Roof deck protection</td><td>A. Felt underlayment 15&nbsp;lb &nbsp; B. Felt underlayment 30&nbsp;lb &nbsp; C. Synthetic underlayment &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">2. Roof deck protection</td><td><span class="cbx" data-group="rdp">&#9744;</span> A. Felt underlayment 15&nbsp;lb &nbsp; <span class="cbx" data-group="rdp">&#9744;</span> B. Felt underlayment 30&nbsp;lb &nbsp; <span class="cbx" data-group="rdp">&#9744;</span> C. Synthetic underlayment</td></tr>
 <tr><td class="k">3. Drip edge / gutter apron</td><td>A. Drip edge colour <span class="ph">[colour]</span> (rakes)<br>B. Gutter apron colour <span class="ph">[colour]</span> (eaves)</td></tr>
-<tr><td class="k">4. Ice &amp; water barrier</td><td>Install along eaves, valleys &amp; flashings &#8212; A. Standard &nbsp; B. OC &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">4. Ice &amp; water barrier</td><td>Install along eaves, valleys &amp; flashings &#8212; <span class="cbx" data-group="riw">&#9744;</span> A. Standard &nbsp; <span class="cbx" data-group="riw">&#9744;</span> B. OC</td></tr>
 <tr><td class="k">5. Valley metal</td><td>A. Colour <span class="ph">[colour]</span></td></tr>
-<tr><td class="k">6. Starter shingles</td><td>Install along all rakes &amp; eaves &#8212; A. Standard &nbsp; B. OC Starter Plus &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">6. Starter shingles</td><td>Install along all rakes &amp; eaves &#8212; <span class="cbx" data-group="rst">&#9744;</span> A. Standard &nbsp; <span class="cbx" data-group="rst">&#9744;</span> B. OC Starter Plus</td></tr>
 <tr><td class="k">7. Shingles <span style="font-weight:400;font-size:9pt;">(per manufacturer specs)</span></td><td>A. Style <span class="ph">[style]</span><br>B. Colour <span class="ph">[colour]</span><br>C. Brand <span class="ph">[brand]</span></td></tr>
-<tr><td class="k">8. Flashing</td><td>A. Chimney &nbsp; B. Wall &nbsp; C. Step &nbsp; <span class="ph">[circle all that apply]</span><br>Extra structure: A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; <span class="ph">[if any]</span></td></tr>
+<tr><td class="k">8. Flashing</td><td><span class="cbx">&#9744;</span> A. Chimney &nbsp; <span class="cbx">&#9744;</span> B. Wall &nbsp; <span class="cbx">&#9744;</span> C. Step<br>Extra structure: <span class="cbx">&#9744;</span> A. Garage &nbsp; <span class="cbx">&#9744;</span> B. Shed &nbsp; <span class="cbx">&#9744;</span> C. Barn</td></tr>
 <tr><td class="k">9. Extrusions</td><td>A. Pipe boots <span class="ph">[qty]</span> &nbsp; B. Skylights <span class="ph">[qty]</span></td></tr>
 <tr><td class="k">10. Ventilation</td><td>A. Shingle-over ridge vent &#8212; 1. Standard &nbsp; 2. OC<br>B. Box / turtle vents <span class="ph">[qty]</span> &nbsp; C. Power vent <span class="ph">[qty]</span> &nbsp; D. Turbine <span class="ph">[qty]</span><br><span style="font-size:9pt;color:#666;">Not responsible for re-attachment of satellite or HVAC.</span></td></tr>
-<tr><td class="k">11. Ridge cap / hip cap</td><td>A. Standard &nbsp; B. OC &#8212; 1. Pro Edge &nbsp; 2. Decoridge &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">11. Ridge cap / hip cap</td><td><span class="cbx" data-group="rrc">&#9744;</span> A. Standard &nbsp;&nbsp; B. OC &#8212; <span class="cbx" data-group="rrc">&#9744;</span> 1. Pro Edge &nbsp; <span class="cbx" data-group="rrc">&#9744;</span> 2. Decoridge</td></tr>
 <tr><td class="k">12. Existing layers</td><td><span class="opts" data-opts="layers">Number / type of existing layers</span></td></tr>
 <tr><td class="k">13. Roof pitch</td><td><span class="opts" data-opts="pitch">Roof pitch</span></td></tr>
 </table>
@@ -9555,11 +9556,11 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <tr><td class="k">Standard</td><td>25-yr manufacturer &nbsp;&#183;&nbsp; 5-yr workmanship</td></tr>
 <tr><td class="k">Systems Protection</td><td>25-yr mfr. &nbsp;&#183;&nbsp; 10-yr workmanship &nbsp;&#183;&nbsp; Owens Corning &nbsp;&#183;&nbsp; transferable</td></tr>
 <tr><td class="k">Preferred Protection</td><td>50-yr mfr. &nbsp;&#183;&nbsp; 10-yr workmanship &nbsp;&#183;&nbsp; Owens Corning &nbsp;&#183;&nbsp; transferable</td></tr>
-<tr><td class="k">Selected</td><td><span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">Selected</td><td><span class="cbx" data-group="rwar">&#9744;</span> Standard &nbsp;&nbsp; <span class="cbx" data-group="rwar">&#9744;</span> Systems Protection &nbsp;&nbsp; <span class="cbx" data-group="rwar">&#9744;</span> Preferred Protection</td></tr>
 </table>
 
 <h2 class="sec">HOA / Authorization</h2>
-<p style="font-size:10.5pt;">HOA approval required: <b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span><br>
+<p style="font-size:10.5pt;">HOA approval required: <span class="cbx" data-group="rhoa">&#9744;</span> <b>Yes</b> &nbsp;&nbsp; <span class="cbx" data-group="rhoa">&#9744;</span> <b>No</b><br>
 Buyer to obtain required authorization from the HOA and authorities. &nbsp;&nbsp;
 Initials <span class="ph">[__]</span></p>
 
@@ -9640,7 +9641,7 @@ var SIDING_AGREEMENT_BODY = `
 <tr><td class="k">Phone</td><td><span class="ph">[PHONE NUMBER]</span></td></tr>
 <tr><td class="k">Street</td><td><span class="ph">[STREET]</span></td></tr>
 <tr><td class="k">City / State / ZIP</td><td><span class="ph">[CITY]</span> &nbsp; <span class="ph">[STATE]</span> &nbsp; <span class="ph">[ZIP]</span></td></tr>
-<tr><td class="k">Primary residence</td><td><b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">Primary residence</td><td><span class="cbx" data-group="sprim">&#9744;</span> <b>Yes</b> &nbsp;&nbsp; <span class="cbx" data-group="sprim">&#9744;</span> <b>No</b></td></tr>
 </table>
 
 <p style="font-size:10pt;">Buyer(s) hereby jointly and severally agrees to purchase the products
@@ -9649,19 +9650,20 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <b>Terms and Conditions</b> form, and any accompanying specification sheet(s).</p>
 
 <h2 class="sec">Project Specifications</h2>
+<p class="items-hint no-print">Tap a box to check it &#8212; it prints checked.</p>
 <table class="meta">
 <tr><td class="k">1. Removal &amp; preparation</td><td>A. Remove existing siding &#8212; <span class="ph">[layers]</span> layer(s)<br>B. Inspect &amp; replace damaged sheathing as needed &#8212; $<span class="ph">[rate]</span> per sheet</td></tr>
-<tr><td class="k">&nbsp;&nbsp;&nbsp;Existing exterior</td><td>A. Vinyl &nbsp; B. Wood &nbsp; C. Aluminum / steel &nbsp; D. Fiber cement / other &nbsp; <span class="ph">[circle one]</span></td></tr>
-<tr><td class="k">2. House wrap / moisture barrier</td><td>A. Standard house wrap &nbsp; B. Premium house wrap &nbsp; C. Fanfold insulation board &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">&nbsp;&nbsp;&nbsp;Existing exterior</td><td><span class="cbx" data-group="sex">&#9744;</span> A. Vinyl &nbsp; <span class="cbx" data-group="sex">&#9744;</span> B. Wood &nbsp; <span class="cbx" data-group="sex">&#9744;</span> C. Aluminum / steel &nbsp; <span class="cbx" data-group="sex">&#9744;</span> D. Fiber cement / other</td></tr>
+<tr><td class="k">2. House wrap / moisture barrier</td><td><span class="cbx" data-group="swrap">&#9744;</span> A. Standard house wrap &nbsp; <span class="cbx" data-group="swrap">&#9744;</span> B. Premium house wrap &nbsp; <span class="cbx" data-group="swrap">&#9744;</span> C. Fanfold insulation board</td></tr>
 <tr><td class="k">3. Siding <span style="font-weight:400;font-size:9pt;">(per manufacturer specs)</span></td><td>A. Brand <span class="ph">[brand]</span><br>B. Profile / style <span class="ph">[profile]</span><br>C. Colour <span class="ph">[colour]</span></td></tr>
 <tr><td class="k">4. Corner posts &amp; trim</td><td>A. Corner post colour <span class="ph">[colour]</span><br>B. Window / door trim colour <span class="ph">[colour]</span><br>C. Wrap windows &amp; doors (aluminum coil) &nbsp; <span class="ph">[yes / no]</span></td></tr>
-<tr><td class="k">5. Soffit</td><td>A. Vented &nbsp; B. Solid &nbsp; <span class="ph">[circle one]</span> &nbsp;&#183;&nbsp; C. Colour <span class="ph">[colour]</span></td></tr>
+<tr><td class="k">5. Soffit</td><td><span class="cbx" data-group="ssof">&#9744;</span> A. Vented &nbsp; <span class="cbx" data-group="ssof">&#9744;</span> B. Solid &nbsp;&#183;&nbsp; C. Colour <span class="ph">[colour]</span></td></tr>
 <tr><td class="k">6. Fascia</td><td>A. Colour <span class="ph">[colour]</span></td></tr>
-<tr><td class="k">7. Shutters</td><td>A. Remove &amp; reinstall existing &nbsp; B. New shutters &#8212; colour <span class="ph">[colour]</span> &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">7. Shutters</td><td><span class="cbx" data-group="sshut">&#9744;</span> A. Remove &amp; reinstall existing &nbsp; <span class="cbx" data-group="sshut">&#9744;</span> B. New shutters &#8212; colour <span class="ph">[colour]</span></td></tr>
 <tr><td class="k">8. Accessories</td><td>A. Light blocks <span class="ph">[qty]</span> &nbsp; B. Vent / utility blocks <span class="ph">[qty]</span> &nbsp; C. Dryer &amp; exhaust vents <span class="ph">[qty]</span><br>Extra structure: A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; <span class="ph">[if any]</span></td></tr>
 <tr><td class="k">9. Gutters &amp; downspouts</td><td>A. Remove &amp; replace &nbsp; <span class="ph">[yes / no]</span><br>B. Size 5&#8243; &nbsp; 6&#8243; &nbsp; C. Colour <span class="ph">[colour]</span> &nbsp; D. Gutter guards <span class="ph">[yes / no]</span></td></tr>
 <tr><td class="k">10. Existing layers</td><td><span class="opts" data-opts="layers">Number / type of existing layers</span></td></tr>
-<tr><td class="k">11. Stories / height</td><td>1 &nbsp; 1.5 &nbsp; 2 &nbsp; 2+ &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">11. Stories / height</td><td><span class="cbx" data-group="sst">&#9744;</span> 1 &nbsp; <span class="cbx" data-group="sst">&#9744;</span> 1.5 &nbsp; <span class="cbx" data-group="sst">&#9744;</span> 2 &nbsp; <span class="cbx" data-group="sst">&#9744;</span> 2+</td></tr>
 </table>
 
 <h2 class="sec">Warranty System</h2>
@@ -9669,11 +9671,11 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <tr><td class="k">Standard</td><td>Manufacturer limited lifetime warranty &nbsp;&#183;&nbsp; 5-yr workmanship</td></tr>
 <tr><td class="k">Other</td><td>Per the manufacturer program selected on the accompanying estimate</td></tr>
 <tr><td class="k">Warranty program</td><td><span class="ph">[program]</span></td></tr>
-<tr><td class="k">Selected</td><td><span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">Selected</td><td><span class="cbx" data-group="swar">&#9744;</span> Standard &nbsp;&nbsp; <span class="cbx" data-group="swar">&#9744;</span> Other</td></tr>
 </table>
 
 <h2 class="sec">HOA / Authorization</h2>
-<p style="font-size:10.5pt;">HOA approval required: <b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span><br>
+<p style="font-size:10.5pt;">HOA approval required: <span class="cbx" data-group="shoa">&#9744;</span> <b>Yes</b> &nbsp;&nbsp; <span class="cbx" data-group="shoa">&#9744;</span> <b>No</b><br>
 Buyer to obtain required authorization from the HOA and authorities. &nbsp;&nbsp;
 Initials <span class="ph">[__]</span></p>
 
@@ -9740,7 +9742,7 @@ var GUTTER_AGREEMENT_BODY = `
 <tr><td class="k">Phone</td><td><span class="ph">[PHONE NUMBER]</span></td></tr>
 <tr><td class="k">Street</td><td><span class="ph">[STREET]</span></td></tr>
 <tr><td class="k">City / State / ZIP</td><td><span class="ph">[CITY]</span> &nbsp; <span class="ph">[STATE]</span> &nbsp; <span class="ph">[ZIP]</span></td></tr>
-<tr><td class="k">Primary residence</td><td><b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">Primary residence</td><td><span class="cbx" data-group="gprim">&#9744;</span> <b>Yes</b> &nbsp;&nbsp; <span class="cbx" data-group="gprim">&#9744;</span> <b>No</b></td></tr>
 </table>
 
 <p style="font-size:10pt;">Buyer(s) hereby jointly and severally agrees to purchase the products
@@ -9749,16 +9751,17 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <b>Terms and Conditions</b> form, and any accompanying specification sheet(s).</p>
 
 <h2 class="sec">Project Specifications</h2>
+<p class="items-hint no-print">Tap a box to check it &#8212; it prints checked.</p>
 <table class="meta">
 <tr><td class="k">1. Removal &amp; disposal</td><td>A. Remove existing gutters &nbsp; <span class="ph">[yes / no]</span><br>B. Remove existing downspouts &nbsp; <span class="ph">[yes / no]</span><br>C. Haul away &amp; dispose debris &nbsp; <span class="ph">[yes / no]</span></td></tr>
-<tr><td class="k">2. Gutter profile &amp; size</td><td>A. K-style &nbsp; B. Half-round &nbsp; C. Box &nbsp; <span class="ph">[circle one]</span><br>5&nbsp;in. &nbsp; 6&nbsp;in. &nbsp; 7&nbsp;in. &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">2. Gutter profile &amp; size</td><td><span class="cbx" data-group="gprof">&#9744;</span> A. K-style &nbsp; <span class="cbx" data-group="gprof">&#9744;</span> B. Half-round &nbsp; <span class="cbx" data-group="gprof">&#9744;</span> C. Box<br><span class="cbx" data-group="gsize">&#9744;</span> 5&nbsp;in. &nbsp; <span class="cbx" data-group="gsize">&#9744;</span> 6&nbsp;in. &nbsp; <span class="cbx" data-group="gsize">&#9744;</span> 7&nbsp;in.</td></tr>
 <tr><td class="k">3. Gutter material</td><td>A. Aluminum .027 &nbsp; B. Aluminum .032 &nbsp; C. Steel &nbsp; D. Copper &nbsp; E. Other <span class="ph">[other]</span></td></tr>
 <tr><td class="k">4. Gutter colour</td><td><span class="ph">[colour]</span></td></tr>
 <tr><td class="k">5. Hangers</td><td>Hidden hangers &nbsp; <span class="ph">[yes / no]</span></td></tr>
-<tr><td class="k">6. Miters &amp; seams</td><td>A. Strip miters &nbsp; B. Box miters &nbsp; C. Hand-mitered &nbsp; D. Sealed &nbsp; <span class="ph">[circle all that apply]</span></td></tr>
-<tr><td class="k">7. Downspouts</td><td>A. 2&#215;3 &nbsp; B. 3&#215;4 &nbsp; C. Round &nbsp; <span class="ph">[circle one]</span><br>Colour <span class="ph">[colour]</span> &nbsp;&#183;&nbsp; Qty <span class="ph">[qty]</span></td></tr>
-<tr><td class="k">8. Downspout discharge</td><td>A. Splash blocks &nbsp; B. Extensions &nbsp; C. Tie to existing &nbsp; <span class="ph">[circle one]</span><br>Notes <span class="ph">[notes]</span></td></tr>
-<tr><td class="k">9. Gutter protection &#8212; ShurFlo</td><td>A. ShurFlo Flat &nbsp; B. ShurFlo X (ventilation) &nbsp; C. ShurFlo Step-Down (Quick-Screw hangers)<br>Finish: mill &nbsp; black &nbsp; white &nbsp; copper &nbsp;&#183;&nbsp; 5&nbsp;in. &nbsp; 6&nbsp;in. &nbsp; <span class="ph">[circle one]</span><br><span style="font-size:9pt;color:#666;">Panels install into the gutter, not under the roof shingles, and do not void the roof warranty. Carries a 25-year transferable manufacturer warranty from US Aluminum.</span><br>&#9633; No gutter protection on this job</td></tr>
+<tr><td class="k">6. Miters &amp; seams</td><td><span class="cbx">&#9744;</span> A. Strip miters &nbsp; <span class="cbx">&#9744;</span> B. Box miters &nbsp; <span class="cbx">&#9744;</span> C. Hand-mitered &nbsp; <span class="cbx">&#9744;</span> D. Sealed</td></tr>
+<tr><td class="k">7. Downspouts</td><td><span class="cbx" data-group="gds">&#9744;</span> A. 2&#215;3 &nbsp; <span class="cbx" data-group="gds">&#9744;</span> B. 3&#215;4 &nbsp; <span class="cbx" data-group="gds">&#9744;</span> C. Round<br>Colour <span class="ph">[colour]</span> &nbsp;&#183;&nbsp; Qty <span class="ph">[qty]</span></td></tr>
+<tr><td class="k">8. Downspout discharge</td><td><span class="cbx" data-group="gdis">&#9744;</span> A. Splash blocks &nbsp; <span class="cbx" data-group="gdis">&#9744;</span> B. Extensions &nbsp; <span class="cbx" data-group="gdis">&#9744;</span> C. Tie to existing<br>Notes <span class="ph">[notes]</span></td></tr>
+<tr><td class="k">9. Gutter protection &#8212; ShurFlo</td><td><span class="cbx" data-group="ggp">&#9744;</span> A. ShurFlo Flat &nbsp; <span class="cbx" data-group="ggp">&#9744;</span> B. ShurFlo X (ventilation) &nbsp; <span class="cbx" data-group="ggp">&#9744;</span> C. ShurFlo Step-Down (Quick-Screw hangers)<br>Finish: <span class="cbx" data-group="ggpf">&#9744;</span> mill &nbsp; <span class="cbx" data-group="ggpf">&#9744;</span> black &nbsp; <span class="cbx" data-group="ggpf">&#9744;</span> white &nbsp; <span class="cbx" data-group="ggpf">&#9744;</span> copper &nbsp;&#183;&nbsp; <span class="cbx" data-group="ggps">&#9744;</span> 5&nbsp;in. &nbsp; <span class="cbx" data-group="ggps">&#9744;</span> 6&nbsp;in.<br><span style="font-size:9pt;color:#666;">Panels install into the gutter, not under the roof shingles, and do not void the roof warranty. Carries a 25-year transferable manufacturer warranty from US Aluminum.</span><br><span class="cbx" data-group="ggp">&#9744;</span> No gutter protection on this job</td></tr>
 <tr><td class="k">10. Fascia &amp; soffit</td><td>A. Fascia wrap &#8212; colour <span class="ph">[colour]</span><br>B. Replace fascia board &nbsp; <span class="ph">[yes / no]</span> &nbsp; C. Soffit repair / replace &nbsp; <span class="ph">[yes / no]</span></td></tr>
 <tr><td class="k">11. Wood replacement</td><td>Inspect fascia and replace rotted wood as needed &#8212; rate $<span class="ph">[rate]</span> per board (billed as an extra)</td></tr>
 <tr><td class="k">12. Extra structure</td><td>A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; D. Porch / patio cover &nbsp; <span class="ph">[if any]</span></td></tr>
@@ -9769,11 +9772,11 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <table class="meta">
 <tr><td class="k">Standard</td><td>5-yr Cardinal workmanship</td></tr>
 <tr><td class="k">Upgraded</td><td>10-yr Cardinal workmanship</td></tr>
-<tr><td class="k">Selected</td><td><span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">Selected</td><td><span class="cbx" data-group="gwar">&#9744;</span> Standard &nbsp;&nbsp; <span class="cbx" data-group="gwar">&#9744;</span> Upgraded</td></tr>
 </table>
 
 <h2 class="sec">HOA / Authorization</h2>
-<p style="font-size:10.5pt;">HOA approval required: <b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span><br>
+<p style="font-size:10.5pt;">HOA approval required: <span class="cbx" data-group="ghoa">&#9744;</span> <b>Yes</b> &nbsp;&nbsp; <span class="cbx" data-group="ghoa">&#9744;</span> <b>No</b><br>
 Buyer to obtain required authorization from the HOA and authorities. &nbsp;&nbsp;
 Initials <span class="ph">[__]</span></p>
 
@@ -38516,6 +38519,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:748, d:'2026-08-12', t:'Contracts have tick boxes instead of \u201ccircle one\u201d',
+s:'You said a new contract told you to circle things you could not circle, and looked nothing like the real one. Every one of those prompts is now an actual tick box you tap \u2014 25 of them across the Roofing, Siding and Gutter agreements. Where the paper says pick one, ticking a box clears the others in that row automatically. Where it says all that apply \u2014 flashing locations, gutter miters \u2014 each box toggles on its own. The lettering is unchanged, so the screen and the printed master read the same, and a ticked box prints as ticked. On the gutter agreement, the \u201cNo gutter protection on this job\u201d line was already drawn as a box but had never been clickable; it is now, and ticking it clears the ShurFlo choices. Nothing else about any agreement changed.' },
 { b:747, d:'2026-08-12', t:'Printed contracts look like contracts',
 s:'Three changes to every printed estimate, agreement, contract and invoice. Contracts and agreements no longer carry the property photo at all \u2014 on a blank one that was a big solid grey box that ate more ink than everything else on the page put together. Estimates keep the photo, because it earns its place on something you hand a customer, but they no longer print the empty grey box when no photo was attached. Every page after the first now carries a slim line across the top saying Cardinal Roofing &amp; Renovations and which document it is, so a page that gets separated from the rest still identifies itself. And the page breaks fall sensibly: Terms starts its own page, a heading is never left stranded alone at the bottom of a page, a table row never splits in half across two pages, a long table repeats its heading row at the top of the next page, and the signature block always stays together. Nothing about the wording of any document changed.' },
 { b:746, d:'2026-08-12', t:'Company Documents: Download stopped swallowing the app',

@@ -2292,3 +2292,59 @@ untouched. The gate fuzzed the equivalence and went 3 red.
 
 ⚠️ **`<input type="date">` must keep `YYYY-MM-DD`** — 35 of them. A date-formatting
 sweep that touches input values breaks every date picker in the app.
+
+## 37 — the negative control CRASHES instead of going red (739, 743, 748)
+
+**Struck three times in ten builds, which is what makes it a class rather than a
+slip.** A gate is only worth anything if it has been *seen to fail* on the previous
+build. But the previous build is precisely the tree where the thing being tested does
+not exist — so the harness reaches for it, gets `undefined`, and **throws**:
+
+```
+page.evaluate: TypeError: Cannot read properties of undefined (reading 'closest')
+```
+
+- **739 / 743** — `window.phoneHay is not a function` on the control.
+- **748** — the Agreements carry no `.cbx` at all on v747, so `grouped[0]` is
+  `undefined` and every line after it dies.
+
+**A harness that dies on the control has not been seen to fail. It has been seen to
+break, and the two look identical from the terminal — in fact worse, because a crash
+often prints NOTHING through a `grep FAIL` and reads as "no failures".** That is how
+748's first control run reported an empty result and an exit code of 0.
+
+### The rule
+
+**Every harness must produce a RED REPORT on the control, not a stack trace.** Two
+cheap habits get you there:
+
+1. **Bail out with a structured result, not an exception.** Detect the absent feature
+   at the top, return a flag, and let the ordinary checks read it as failures:
+   ```js
+   if (grouped.length < 2) { r.noBoxes = true; return r; }
+   ```
+   Then add an explicit check for it, so the report says *why*:
+   ```js
+   chk(`${T} the document HAS boxes to drive`, !r.crashed && !r.noBoxes && r.total > 0, …)
+   ```
+2. **Wrap each driver so any throw becomes a red check.**
+   ```js
+   try { return await driveRaw(name); }
+   catch (e) { return { crashed: String(e).split('\n')[0] }; }
+   ```
+
+### The trap inside the trap: checks that pass VACUOUSLY on the control
+
+Fixing the crash is not enough — a control with zero elements makes several natural
+assertions **pass**, which quietly hides how red the control should be:
+
+- `[].every(...)` is **`true`**, so "every box starts empty" passes with no boxes.
+- A guard written `r.freeCount === 0 || (…)` passes when the count is `undefined`…
+  except it doesn't, and that accident is not a design. Anchor on a positive fact:
+  `r.total > 0 && (…)`.
+
+**Count the reds on the control and sanity-check the number.** 748's control should
+fail nearly everything about the Agreements; it reports **56 of 77**. A control that
+fails two or three checks when the whole feature is missing is telling you the gate
+is mostly measuring things the feature did not change.
+
