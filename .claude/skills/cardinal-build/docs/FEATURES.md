@@ -4679,3 +4679,25 @@ Each branch tears down through `hideAllViews()`, so **leaving a tool screen
 closes the tool screen**. `showCardinalTruth()`, `showInsuranceClients()` and
 `showResourceLibrary()` were converted to call it at 756; `#landingView` is still
 hidden by hand because it is deliberately absent from `hideAllViews()`.
+
+## One Home button (757)
+
+`#cr-hd2-home`, the gold house in the header bar, is **the** Home control. It is
+present on every screen including all five tool screens (756), and it routes
+through `CardinalHeader.goHome()`.
+
+**Retired at source in 757** — do not re-add either:
+
+| Retired | Was | Why it went |
+|---|---|---|
+| `#cr-home-btn` | floating in `#navWrap` beside the portal chip | one row under the gold house, same job. `cr-hd2-styles` had already declared it `display:none` at 416/417; its module beat that with an inline `display:inline-flex` for ~340 builds |
+| `#cr-pme-exit-btn` | floating "Home" on each tool panel | sat just under the gold house once 756 made the header visible there |
+
+**Kept on purpose**: `Escape` closes the open tool screen (cr-pme, not duplicated
+anywhere), `crCloseAll()` (two other modules call it), and `cr-home-cleanup`'s
+`updateHomeBtn()`, which already no-ops when the button is absent.
+
+Their stylesheets (`cr-home-btn-styles`, `cr-pme-styles`) were deleted with them.
+Dead references remain in `cr-print-styles`, `cr-touch44-styles` and
+`cr-home-cleanup-styles` — harmless selectors that can never match, left rather
+than surgically edit three long minified lines for no behavioural gain.
