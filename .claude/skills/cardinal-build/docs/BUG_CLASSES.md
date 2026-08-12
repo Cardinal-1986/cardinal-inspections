@@ -2221,3 +2221,20 @@ the mock already recorded every select.
   behaves, not encode what you assume** — the same fault as class 30, in a costume.
 - **A fixed `waitForTimeout` read the toast mid-flight.** Wait for the *condition*
   (the toast exists), never for a guessed number of milliseconds.
+
+
+## 33 — a native `required` silently kills the app's own validation message (741)
+
+`<input required>` inside a form that submits natively means **the browser blocks the submit before your handler runs**. The handler's carefully-worded message, its field marking, its shake — none of it is ever reached. Measured in Chromium on `#cpForm`: `submitFired === false`, `#cpErr` never rendered. Two forms had carried a dead message this way for years.
+
+This is **class 16 with a different cause**: not a control that was never wired, but a control wired correctly and pre-empted by the platform. It is invisible to every mechanical gate — the markup is valid, the handler parses, the message string is present in the file.
+
+**The test:** register a `submit` listener and assert it FIRES. Do not assert on the message text alone; the text can be in the DOM and unreachable.
+
+**The fix is `novalidate` — and it is only safe with the second assertion.** Removing the browser's guard means the JS guard is now the only guard, so a gate must prove it still refuses (zero writes) *and* that a valid value still saves. One without the other either opens a hole or ships a dead form.
+
+## 34 — `document.documentElement.outerHTML` is not the source file (741)
+
+A gate counted `class="cr-req"` in the live DOM and found **7 for 6 literals**. When a module renders a form, the page contains **both the script's string literal and the element built from it**. Anything template-generated double-counts, and how much it double-counts depends on which screens happen to be open — so the number moves between runs.
+
+**Read the file from disk for source-literal assertions.** Use the DOM only for what is actually rendered.
