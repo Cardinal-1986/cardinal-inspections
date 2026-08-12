@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 736 &#8212; Empty lists stop looking like a broken page: no more white card on the dark app, and three of them now say what to do next</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 737 &#8212; Paying a rep now asks first and says how much: marking commissions paid was a single tap with no confirmation at all</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18828,6 +18828,7 @@ async function renderCommissions(){
        Kept as the raw rows (not a count) because the amount and the rep are both
        needed, and scoped on commUi like commUi.hasColls beside it. */
     commUi.lastComms = rows;
+    commUi.lastColls = colls;   /* 737: so a delete confirm can name the cheque */
   }catch(e){
     mount.innerHTML = '<div class="empty">Could not load commissions: ' + woEsc(e.message || e) + '</div>';
     return;
@@ -19154,7 +19155,11 @@ function miEditColl(id){
 }
 async function miDelColl(id){
   if(!commAdmin()) return;
-  if(!confirm('Remove this collection? Its unpaid commission goes with it.')) return;
+  /* 737: name the cheque being removed. commUi.lastColls is stashed by
+     renderCommissions the same way 734 stashed lastComms, so this costs no query. */
+  var _c = (commUi.lastColls || []).filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!confirm('Remove the ' + (_c ? fmtMoney(Number(_c.amount) || 0) + ' ' : '') +
+              'collection? Its unpaid commission goes with it.')) return;
   var r = await sb.from('collections').delete().eq('id', id);
   if(r.error){ alert('Could not remove: ' + r.error.message); return; }
   await renderCommissions();
@@ -38170,6 +38175,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:737, d:'2026-08-12', t:'Paying a rep asks first, and every money question says the amount',
+s:'On the payout screen, Pay net and Pay full had NO confirmation. One tap marked every commission owed to that rep as paid \u2014 and Pay net also marked their outstanding draws repaid \u2014 with nothing asked and no way to undo it from the app. That was the odd one out: deleting a client already makes you type the client\u2019s name to go through with it. Both now ask, and both say the money and the person: \u201CMark $3,405.00 in commissions paid to Nick Hey?\u201D, plus the draw line when you use Pay net. Pay all reps used to count the reps without ever saying the total \u2014 it says it now. Repaying a draw and removing a collection name their amounts too, instead of saying \u201Cthis draw\u201D and \u201Cthis collection\u201D. Nothing else changed, and no confirmation was removed.' },
 { b:736, d:'2026-08-12', t:'Empty lists stop looking like a broken page',
 s:'You said empty tables look like bugs. They did \u2014 but not for the reason it seemed. All sixteen empty lists already existed and already told you what to do next; the problem was that the box they sit in was painted WHITE, left over from when the app was a light-coloured page, so on the dark app an empty list looked like a blank card had failed to load. The words on it were perfectly readable, which is why it never showed up as a contrast problem. The box now matches the app, with a small folder mark above the message. Light mode is unchanged. Three lists that only said \u201CNothing here\u201D now tell you what to do, like the other thirteen already did.' },
 { b:735, d:'2026-08-12', t:'Nine alerts become real messages, and one invisible one is fixed',
@@ -65580,6 +65587,22 @@ function renderRep(){
   return h;
 }
 
+/* 737: names the amount and the person, which is the whole point — "Mark paid?"
+   is not a question anyone can answer. Returns false when there is nothing owed
+   so the caller stays a no-op rather than popping an empty dialog. */
+function confirmPay(em, deductDraws){
+  var g = groupOwed()[em];
+  if(!g || !g.ids.length) return false;
+  var who = repName(em);
+  var msg = 'Mark ' + payMoney(g.owed) + ' in commissions paid to ' + who + '?';
+  if(deductDraws && g.drawSum > 0){
+    msg += '\n\nTheir ' + payMoney(g.drawSum) + ' in outstanding draws will be marked repaid at the same time' +
+           ' \u2014 net ' + payMoney(g.owed - g.drawSum) + '.';
+  }else if(g.drawSum > 0){
+    msg += '\n\nTheir ' + payMoney(g.drawSum) + ' in draws stays outstanding.';
+  }
+  return confirm(msg);
+}
 async function payRep(em, deductDraws){
   var by = groupOwed();
   var g = by[em];
@@ -65636,7 +65659,11 @@ function wire(v){
       var by = groupOwed();
       var reps = Object.keys(by).filter(function(e2){ return by[e2].owed > 0; });
       if(!reps.length) return;
-      if(!confirm('Mark every owed commission paid (' + reps.length + ' rep' + (reps.length > 1 ? 's' : '') + ')?\nDraws stay outstanding — use Pay net per rep to deduct them.')) return;
+      /* 737: this counted the reps and never said the money. */
+      var _tot = reps.reduce(function(t, e2){ return t + (Number(by[e2].owed) || 0); }, 0);
+      if(!confirm('Mark ' + payMoney(_tot) + ' in commissions paid across ' +
+                  reps.length + ' rep' + (reps.length > 1 ? 's' : '') + '?\n' +
+                  'Draws stay outstanding — use Pay net per rep to deduct them.')) return;
       (async function(){
         for(var i = 0; i < reps.length; i++) await payRep(reps[i], false);
       })();
@@ -65672,13 +65699,23 @@ function wire(v){
     }
     var em = t.getAttribute('data-pay');
     if(em){ S.choice = (S.choice === em ? null : em); render(); return; }
+    /* 737: these two had NO confirmation. One tap marked every owed commission
+       for a rep PAID, and Pay net additionally marked their outstanding draws
+       repaid — real money, irreversible from the UI, no question asked. Note the
+       asymmetry this closes: deleting a client already makes you TYPE the
+       client's name, while paying one out was a single tap.
+       The amounts come from groupOwed(), which the buttons were already drawn
+       from, so this asks no new question of the database. */
     em = t.getAttribute('data-paynet');
-    if(em){ payRep(em, true); return; }
+    if(em){ if(confirmPay(em, true)) payRep(em, true); return; }
     em = t.getAttribute('data-payfull');
-    if(em){ payRep(em, false); return; }
+    if(em){ if(confirmPay(em, false)) payRep(em, false); return; }
     var did = t.getAttribute('data-repay');
     if(did){
-      if(!confirm('Mark this draw repaid?')) return;
+      /* 737: "this draw" is not enough to check against a cheque stub. */
+      var _d = (S.draws || []).filter(function(x){ return String(x.id) === String(did); })[0];
+      if(!confirm(_d ? ('Mark ' + payMoney(_d.amount) + ' draw to ' + repName(_d.rep_email) + ' repaid?')
+                     : 'Mark this draw repaid?')) return;
       (async function(){
         var d = db();
         var r = await d.from('draws').update({ status:'repaid', repaid_at: dToday() }).eq('id', did);
