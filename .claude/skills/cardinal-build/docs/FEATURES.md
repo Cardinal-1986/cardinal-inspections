@@ -4364,3 +4364,37 @@ Nothing here has been changed — the templates are legal documents and want his
   (`#666` ×9, `#9a9a9a` ×2 — 2.85:1 on paper). Note `@media print` already hides *empty
   photo figures* (`.fig:has(.frame:not(:has(img)))`) — **`.cover-photo` is not covered by
   that rule.**
+
+### Print — what 747 changed
+
+**Two skeletons, not one.** `ESTIMATE_BASE_RAW` feeds `buildEstimate()` (the three
+Construction Agreements, the Service Contract, the Invoice, and the siding/window/
+gutter estimates); the older `ESTIMATE_TEMPLATE_RAW` feeds the **roof estimate** only.
+⚠️ **They share the same CSS tail**, so a file-wide anchor matches twice.
+
+- **The property photo is stripped in `buildEstimate`, not removed from the skeleton** —
+  gated on the heading text, so an AGREEMENT or CONTRACT drops it and an ESTIMATE keeps
+  it. ⚠️ `isContractTitle` / `isEstimateTitle` / `docKind` are **not** reusable here:
+  they test a *saved document's* title, not a template heading, and all three are
+  declared **after** `buildEstimate`, which runs at parse time.
+- **Estimates gained `.cover-photo:not(:has(img))` on print** — the rule
+  `REPORT_TEMPLATE` has had all along. An estimate with no photo attached no longer
+  prints a **459,580 px²** grey block.
+- **The running header is `position:fixed`, and that is the only thing that works.**
+  Measured by counting its colour band per page in the PDF: `position:fixed` = 5 of 5
+  pages, `<thead>` = 5 of 5. ⚠️ **`@page` margin boxes are not implemented in Chrome or
+  Safari**, so `counter(page)` cannot be used — there is deliberately no "page N of M".
+  The browser's own print footer supplies page numbers.
+  ⚠️ A fixed header sits in the page **content** box, so `body{padding-top}` is required
+  or page 2 onward prints text underneath it.
+- **The break classes already existed and were used zero times.** 747 applies them:
+  Terms gets `page-break`; and under print, `tr{break-inside:avoid}`,
+  `thead{display:table-header-group}`, `h2.sec{break-after:avoid}`,
+  `.sign{break-inside:avoid}`. **Deliberately not a break after every section** — that
+  would turn a 13-row spec sheet into 13 pages.
+
+⚠️ **Pagination outcomes are not directly assertable.** `gate_747`'s first version
+modelled pages as `scrollHeight/1056` and flagged "split rows" — but
+`break-inside:avoid` does nothing in continuous layout; it only acts while paginating.
+That went 2 red against a correct build. Assert **computed style under print media**
+(the rule applies) plus **the real PDF** (what actually lands on each page).
