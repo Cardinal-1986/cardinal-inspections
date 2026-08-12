@@ -3446,7 +3446,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 734 &#8212; Logging a check now tells you the commission it created and who it went to, without asking the database twice</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 735 &#8212; Nine messages that were popping up as system alerts are proper notifications now, and the Estimates one is no longer invisible</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24692,9 +24692,13 @@ body.claim-insurance #brandLogo{
   .cr-terms strong { color: var(--rbe-pagetext); font-weight: 700; }
 
   /* Toast */
-  .cr-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--cr-black); color: white; padding: 12px 20px; border-radius: 24px; font-size: 13px; font-weight: 600; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
-  .cr-toast.error { background: var(--cr-red); }
-  .cr-toast.success { background: var(--cr-green); }
+  /* 735: literal fallbacks. This element is appended to document.body, and
+     --cr-* is declared on #cr-estimates-mount only, so on body it resolved to
+     nothing and the ground computed rgba(0,0,0,0) - white text on whatever was
+     behind it. Same class as builds 448-449. Values are the tokens' own. */
+  .cr-toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: var(--cr-black,#1b1b1b); color: white; padding: 12px 20px; border-radius: 24px; font-size: 13px; font-weight: 600; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  .cr-toast.error { background: var(--cr-red,#c8202e); }
+  .cr-toast.success { background: var(--cr-green,#2e7d32); }
 
   /* Loading */
   .cr-loading { text-align: center; padding: 60px 20px; color: var(--cr-muted); font-size: 13px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; }
@@ -38127,6 +38131,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:735, d:'2026-08-12', t:'Nine alerts become real messages, and one invisible one is fixed',
+s:'Two leftovers found while auditing yesterday\u2019s notification work. Nine places in the app were written to show a small message and were instead showing the browser\u2019s own grey alert box \u2014 the one you have to tap OK on \u2014 because the helper they were written against never existed. That included the Colors screen telling you what Optimise did, its refusal when a photo is over 10 MB, and its message when a delete fails. All nine are proper notifications now. Separately, the Estimates screen had a message of its own that was painting with NO background colour at all \u2014 white text on a white sheet, invisible \u2014 because it borrowed colours that only exist inside the Estimates panel and it was being shown outside it.' },
 { b:734, d:'2026-08-12', t:'Logging a check says what commission it created',
 s:'When you log a collection, the rep\u2019s commission is created automatically by the database, not by the app \u2014 so until now nothing told you it had happened or how much it was. The confirmation now reads the whole story: \u201CCollection logged \u2014 $17,025.00 \u00b7 $1,702.50 commission for Nick\u201D. It costs nothing extra: the commissions list was already being re-read the moment the check saved, so the number was already on hand and was simply being discarded. If the job has no rep, or you are a rep who cannot see somebody else\u2019s commission, or you were editing an existing collection rather than adding one, it just says the collection \u2014 none of those is a failure and none of them shows an error.' },
 { b:733, d:'2026-08-12', t:'You can finally see it when something fails',
@@ -66014,6 +66020,19 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
   window.crToast = crToast;
   window.crToastOk = function(m){ return crToast(m, 'ok'); };
   window.crToastErr = function(m){ return crToast(m, 'err'); };
+  /* 735: NINE sites across cr-eaf, cr-health and cr-occ already call window.toast,
+     and it was assigned NOWHERE in the file — verified in Chromium on the real
+     document, typeof window.toast === 'undefined'. Every one of them fell through
+     to a native alert(): OC Colors' optimise result, its 10 MB refusal, its delete
+     failure, the AI-estimate save note and the health screen's not-wired message.
+     They were written against an app-wide helper that did not exist until 733, so
+     this adopts the name rather than editing nine call sites in four modules.
+     Their vocabulary is 'error'/'success'; this module's is 'err'/'ok'. */
+  window.toast = function(msg, type){
+    var t = String(type || '').toLowerCase();
+    return crToast(msg, (t === 'error' || t === 'err') ? 'err'
+                      : ((t === 'success' || t === 'ok') ? 'ok' : 'info'));
+  };
 })();
 </script>
 </body>
