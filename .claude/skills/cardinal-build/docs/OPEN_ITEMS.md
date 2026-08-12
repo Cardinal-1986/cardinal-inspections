@@ -2830,3 +2830,44 @@ Both were established by serving the real compressed document from a local http 
 with `Content-Encoding: br` under CDP throttling. ⚠️ **Do not try to measure this
 against the live site from a session container** — the egress gateway RSTs Chromium's
 ClientHello, and an earlier attempt was timing Chrome's own error page.
+
+---
+
+## Contracts — what 730 closed, and what it deliberately left
+
+**Closed at 730:** siding and gutter Construction Agreements now exist in the app and
+`+ New contract` picks the trade. See `FEATURES.md`.
+
+### ⬜ Still open, found during the 730 audit — none of these were in scope
+
+1. **Two COMPANY_DOCS entries point at files that do not exist.**
+   `docs/Cardinal_Window_Contract.pdf` and `docs/Cardinal_Gutter_Contract_Fillable.pdf`
+   are referenced in `COMPANY_DOCS` but are **not in `docs/`** — only the roofing,
+   siding and gutter masters are. Tapping either is a dead link. Either the two PDFs
+   need uploading or the two rows need removing; **that is Theo's call, because the
+   files may simply not have been pushed yet.**
+2. **There is no WINDOWS contract in the app**, though `COMPANY_DOCS` advertises a
+   window master and `EST_TYPES` has two window estimate templates (vinyl and
+   Andersen). Adding it is the same shape as 730 — a `WINDOW_AGREEMENT` plus one
+   `CONTRACT_TYPES` row — but it needs the print master first (see 1).
+3. **`buildEstimate` never replaces `<head><title>`.** Every contract, invoice and
+   work order the factory produces says *"Cardinal Roofing & Renovations — Estimate"*
+   in the browser tab and in a saved PDF's filename. Pre-existing since the factory
+   was written; cosmetic but wrong on three document types.
+4. **The shared header block labels a contract "Estimate #" / "Estimate Date" /
+   "Valid Through".** Same root cause as 3 — one base template serves estimates and
+   agreements. Fixing it means parameterising `ESTIMATE_BASE_RAW`, which touches
+   every document type, so it wants its own build.
+5. **`api/estimate-to-contract.js` has no gutters.** Its contract-number prefix map is
+   `{roofing:'CRC', siding:'CSC', windows:'CWC'}` and its `WARRANTIES` map matches —
+   both silently lack a gutter branch. That is the **other** contract system (the
+   `contracts` table), not the client Contracts tab, so 730 did not touch it. It has
+   0 rows today, which is why nobody has hit this.
+
+### The title-order rule, so it is not "tidied" later
+
+`Contract — <Trade> — <client>` keeps `isContractTitle` and **six** inlined copies of
+`/^contract/i` unchanged. Trade-first (`Siding Contract — …`, the way estimates are
+titled) would force all seven to grow, and the `insp` bucket in `renderProjectDocs` is
+defined by NEGATION — so a missed contract does not error, it files itself under
+Inspection Reports. **Do not reorder these titles.**
