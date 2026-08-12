@@ -4645,3 +4645,37 @@ same `ROUTES` map (`insclients`, `claims`, `partners`, `bids`).
 
 `#leadsView`'s subtitle reads "All CRMs" as of 755 — it has no CRM facet and
 never had one; the old "Retail only" label was measured false.
+
+## The header outranks the tool screens — `cr-mounthead-styles` (756)
+
+The five module mounts — `#cr-claims-mount`, `#cr-pricing-mount`,
+`#cr-estimates-mount`, `#cr-coach-mount`, `#cr-adjusters-mount` — sit **below the
+header at every width**, `top:var(--headh) !important; z-index:60 !important`.
+
+⚠️ **`!important` is mandatory**: `styleMounts()` writes
+`position:fixed; inset:0; z-index:200` as INLINE styles, which outrank every
+non-important declaration.
+
+⚠️ **Do not re-gate this on `body.cr-lnav-on`.** That class is desktop-only, and
+gating it there is exactly what hid the header on every phone from 561 to 755
+(BUG_CLASSES 41). The desktop rule still exists and still owns
+`left:var(--lnav-w)` — that one *is* device-specific and stays gated.
+
+`.cr-pme-exit` (the mounts' floating Home) sits at
+`calc(var(--headh,110px) + 10px)`; `--headh` already includes the safe-area
+inset, so there is no separate mobile case.
+
+## One home destination — `CardinalHeader.goHome()` (756)
+
+**Every control that means "take me home" calls `goHome()`**, which reads
+`crmHead()` and lands on Cardinal Truth / the Community hub / the retail
+dashboard. Callers: `#cr-hd2-home` (the gold house), `#cr-home-btn` (floating),
+and `crCloseAll()` + `cr-pme`'s own fallback (the tool screens' Home).
+
+**Do not add a fourth copy of the ladder** — before 756 there were two, and the
+other two controls just called `showHome()` and landed on retail from every CRM.
+
+Each branch tears down through `hideAllViews()`, so **leaving a tool screen
+closes the tool screen**. `showCardinalTruth()`, `showInsuranceClients()` and
+`showResourceLibrary()` were converted to call it at 756; `#landingView` is still
+hidden by hand because it is deliberately absent from `hideAllViews()`.
