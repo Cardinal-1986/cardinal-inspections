@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 741 &#8212; Required fields are marked with a red asterisk, and a save that is refused now shakes and highlights the box that needs filling in</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 742 &#8212; The client CSV called every customer retail and exported no phone, email or assignment; two health checks could never report a problem either</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -36639,20 +36639,36 @@ fix    : 'Data integrity risk. If these were signed on paper, add a scan referen
 return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
 }
 }
+/* 742: local, deliberately NOT a new global. The "read the lead block" idiom
+   already exists in four named variants across this file (cdCrmOf, claimTypeOf,
+   crmOf, and a module-local `lead`), so a fifth global would be a mechanism
+   beside an existing one. This just wraps the app's own parseCkAll. */
+function invLead(p){
+try{
+var ck = window.parseCkAll ? window.parseCkAll(p) : JSON.parse((p && p.checklist) || '{}');
+return (ck && ck.lead) || {};
+}catch(_){ return {}; }
+}
 async function check_3_invalidClaimType(){
 var VALID = { retail:1, insurance:1, community:1, unknown:1 };
 if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
 try{
 var r = await window.supa.from('projects').select('id, name, checklist').limit(1000);
 if(r.error) return { status:'warn', message:'Cannot verify: ' + r.error.message, fix:'' };
+/* 742: `checklist` is a TEXT column, so `p.checklist.lead` was undefined on
+   every row and this filter could never select anything — the check reported
+   "None found" regardless of the data. The RAW stored value is what matters
+   here (projClaimType would normalise an invalid one away to 'unknown' and
+   hide exactly what this is looking for), so it is read through the parser
+   and tested as stored. */
 var bad = (r.data || []).filter(function(p){
-var ct = p.checklist && p.checklist.lead && p.checklist.lead.claim_type;
+var ct = invLead(p).claim_type;
 if(ct == null || ct === '') return false;
 return !VALID[String(ct).toLowerCase()];
 });
 if(!bad.length) return { status:'ok', count:0, message:'None found', fix:'' };
 var sample = bad.slice(0, 3).map(function(p){
-var ct = p.checklist.lead.claim_type;
+var ct = invLead(p).claim_type;
 return (p.name || p.id.slice(0,8)) + '="' + ct + '"';
 }).join(', ');
 return {
@@ -36723,9 +36739,12 @@ var pr = await window.supa.from('projects')
 .select('id, name, checklist')
 .limit(1000);
 if(pr.error) return skipIfErr({error:pr.error.message}, 'projects');
+/* 742: same dead filter as check_3. Here projClaimType IS the right reader —
+   it also catches a row flagged insurance via lead.insurance with no explicit
+   claim_type, which this check wants. */
 var ins = (pr.data || []).filter(function(p){
-var ct = p.checklist && p.checklist.lead && p.checklist.lead.claim_type;
-return String(ct || '').toLowerCase() === 'insurance';
+return String(window.projClaimType ? window.projClaimType(p) : invLead(p).claim_type || '')
+.toLowerCase() === 'insurance';
 });
 if(!ins.length) return { status:'ok', count:0, message:'None found', fix:'' };
 var ids = ins.map(function(p){ return p.id; });
@@ -38079,17 +38098,43 @@ if(!Array.isArray(window.cacheProjects) || !window.cacheProjects.length){
 alert('No clients loaded yet.');
 return;
 }
+/* 742: `projects.checklist` is a TEXT column, so it arrives as a STRING and
+   `.lead` on a string is undefined. `lead` was `{}` on every row, always —
+   which is why claim_type read "retail" for all 34 clients (16 of them
+   community) and phone / email / assigned exported blank for everybody.
+   parseCkAll() is the app's own parser, used at 43 other sites; this was one
+   of three readers that hand-rolled it. */
+function ckLead(p){
+try{
+var ck = window.parseCkAll ? window.parseCkAll(p) : JSON.parse((p && p.checklist) || '{}');
+return (ck && ck.lead) || {};
+}catch(_){ return {}; }
+}
+/* The lead form writes [{v,t}]; imported rows may hold a bare string. Every
+   value is kept and joined the way `assigned` already is below — the column is
+   empty today, so there is no behaviour to preserve, and quietly dropping a
+   client's second number would be a new bug of its own. */
+function contactList(arr, fallback){
+var out = (Array.isArray(arr) ? arr : []).map(function(x){
+if(x == null) return '';
+if(typeof x === 'string') return x.trim();
+return String(x.v || x.value || '').trim();
+}).filter(Boolean);
+if(out.length) return out.join('; ');
+return String(fallback == null ? '' : fallback).trim();
+}
 var rows = window.cacheProjects.map(function(p){
-var lead = (p.checklist && p.checklist.lead) || {};
-var phones = Array.isArray(lead.phones) ? lead.phones : [];
-var emails = Array.isArray(lead.emails) ? lead.emails : [];
+var lead = ckLead(p);
 return {
 client_name: p.name || p.client_name || '',
 address    : p.address || '',
 stage      : p.stage || '',
-claim_type : lead.claim_type || 'retail',
-phone      : (phones[0] && (phones[0].value || phones[0])) || '',
-email      : (emails[0] && (emails[0].value || emails[0])) || '',
+/* projClaimType is the canonical resolver (20 window-qualified callers). It
+   also answers 'unknown' rather than guessing 'retail', which is the whole
+   defect being fixed here. */
+claim_type : (window.projClaimType ? window.projClaimType(p) : (lead.claim_type || 'unknown')),
+phone      : contactList(lead.phones, p.phone),
+email      : contactList(lead.emails, p.email),
 assigned   : (Array.isArray(lead.assigned) ? lead.assigned.join('; ') : (lead.assigned || '')),
 created_at : p.created_at || '',
 };
@@ -38234,6 +38279,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:742, d:'2026-08-12', t:'The client CSV was wrong in four columns, and two health checks could never fail',
+s:'Three places in the app were reading a client record the wrong way \u2014 looking for the details inside a piece of text instead of opening it first \u2014 so they found nothing and quietly carried on. The client CSV was the visible one: every export this app has ever produced said the same thing about everybody \u2014 claim type \u201Cretail\u201D, no phone, no email, nobody assigned. Across the 34 clients on file that mislabelled 21 of them, including all 16 community jobs, which are exactly the ones where a partner is billed instead of the homeowner. The export now reads the record the same way the rest of the app does, gives the real claim type (and says \u201Cunknown\u201D when it genuinely is not recorded rather than guessing), and includes every phone and email on the client plus who it is assigned to. The other two were on the Health screen: the \u201Cinvalid claim type\u201D and \u201Cinsurance client\u201D checks were looking the same wrong way, so they always came back \u201CNone found\u201D no matter what was in the data. They were telling the truth today by luck, not because they had looked. Nothing about how clients are stored changed \u2014 only the reading of them.' },
 { b:741, d:'2026-08-12', t:'Required fields are marked, and a refused save points at the box',
 s:'Six fields the app genuinely will not save without \u2014 the SKU, name and rate on a pricing item, the amount on a claim payment, a partner\u2019s name and a property\u2019s address \u2014 had nothing on screen to say so. They now carry a red asterisk like the other forms already did. And when a save is refused for a missing field, the app no longer just prints a line of text that can be off the top of a long form: the box itself turns red, shakes, and takes the cursor, so you can see what it wants. Two forms had a quieter problem \u2014 the Add Partner and Add Property forms had their own polite message written years ago that had NEVER appeared, because the browser was stopping the save first with its own grey bubble. Those now show Cardinal\u2019s own message. Nothing can be saved that could not be saved before; this is only about being told which box needs you.' },
 { b:740, d:'2026-08-12', t:'Email addresses are checked, and the one that bids go to is fenced',
