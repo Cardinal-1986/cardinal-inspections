@@ -114,7 +114,17 @@ await page.waitForTimeout(500);
 await clickCE("void");
 await page.waitForTimeout(400);
 let wVoid = await lastWrite('contracts');
-chk('Void writes contracts {status:voided, voided_at}', wVoid && wVoid.op === 'update' && wVoid.payload.status === 'voided' && !!wVoid.payload.voided_at, JSON.stringify(wVoid && wVoid.payload));
+/* 732 CORRECTION: this asserted status === 'voided', which is what I assumed when
+   I wrote 722, not what the table permits. contracts_status_check allows
+   ('draft','sent','signed','void','change_ordered'), so Postgres refused every
+   Void — and this assertion went green anyway because the mock enforced no
+   constraints. The mock now enforces them, so a wrong value here goes red.
+   The assertion is on the ACCEPTED write, not merely the attempted one. */
+chk('Void writes contracts {status:void, voided_at} and is ACCEPTED',
+    wVoid && wVoid.op === 'update' && wVoid.payload.status === 'void' && !!wVoid.payload.voided_at,
+    JSON.stringify(wVoid && wVoid.payload));
+const refused = await page.evaluate(() => (window.__WRITES__ || []).filter(w => /REFUSED/.test(w.op)).map(w => w.violation && w.violation.details));
+chk('no contracts write was refused by a CHECK constraint', refused.length === 0, JSON.stringify(refused));
 
 let fails = 0;
 console.log('lifecycle editor present:', hasLifecycle);

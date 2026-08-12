@@ -2858,11 +2858,18 @@ ClientHello, and an earlier attempt was timing Chrome's own error page.
    "Valid Through".** Same root cause as 3 — one base template serves estimates and
    agreements. Fixing it means parameterising `ESTIMATE_BASE_RAW`, which touches
    every document type, so it wants its own build.
-5. **`api/estimate-to-contract.js` has no gutters.** Its contract-number prefix map is
-   `{roofing:'CRC', siding:'CSC', windows:'CWC'}` and its `WARRANTIES` map matches —
-   both silently lack a gutter branch. That is the **other** contract system (the
-   `contracts` table), not the client Contracts tab, so 730 did not touch it. It has
-   0 rows today, which is why nobody has hit this.
+5. **`api/estimate-to-contract.js` has no gutters, and neither does the table.** Its
+   contract-number prefix map is `{roofing:'CRC', siding:'CSC', windows:'CWC'}` and its
+   `WARRANTIES` map matches — and **`contracts_template_check` permits only
+   `('roofing','siding','windows')`**, verified on the live schema. So the `contracts`
+   table cannot hold a gutter contract at all. Widening the CHECK without the API
+   branch is half a change, so 732 left both alone. That is the **other** contract
+   system, not the client Contracts tab; it has 0 rows today, which is why nobody has
+   hit it.
+6. **`contracts` has no `signed_at`** — it has `homeowner_signed_at` and
+   `contractor_signed_at`. 732 fixed the two health checks that assumed otherwise, but
+   **check the column list before writing any new query against this table**; the
+   recorded 18 columns are in `gate_732.mjs`, with the SQL that produced them.
 
 ### The title-order rule, so it is not "tidied" later
 

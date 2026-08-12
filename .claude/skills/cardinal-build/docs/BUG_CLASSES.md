@@ -2115,3 +2115,39 @@ look.**
 **The drill:** when a variable is a *summary* of a row rather than the row, enumerate
 **every** use of it in the block before fixing any of them. 731 found 25 uses; 4 were
 wrong and they were not adjacent. Fixing the one you noticed leaves the other three.
+
+## 30 — a mock with no constraints models the author's beliefs, not the database (732)
+
+Build 722 shipped `doVoid()` writing `contracts.status = 'voided'`. The real table's
+CHECK permits `('draft','sent','signed','void','change_ordered')`, so **Postgres
+refused every Void and the button never once worked** — while `gate_722` asserted
+`status === 'voided'` and went green, because `e2e_mock_supa.js` enforced nothing.
+
+**The gate did not verify the app. It verified that the app agreed with me.**
+
+Three things make this class invisible:
+- A refused write returns an **error object**, not a throw. Handlers that only
+  `catch` see nothing.
+- The mock accepted the same value the app wrote, so the round trip looked perfect.
+- The `.sql` file in the repo is not necessarily the live schema. **Read
+  `pg_constraint` and `information_schema.columns`, not the migration you have.**
+
+**The fix, now in the mock:** a `CHECKS` table mirroring the live constraints, which
+refuses a violating write the way PostgREST does and records it as `op:'…:REFUSED'`.
+Keep it in step with the real table or delete the entry — **a stale constraint here
+is worse than none.**
+
+**And the cheap half needs no browser.** `gate_732.mjs` statically extracts every
+column named in a `from('contracts')` chain and every `status:` literal, and checks
+them against the recorded schema. That scan alone would have caught all three of
+732's defects. **When a table has constraints, write them down beside the code and
+assert against them.**
+
+### The sibling: a column that does not exist fails SOFTLY
+
+`check_1_advancedNoSignedContract` and `check_2_signedNoSignature` both filtered
+`contracts.signed_at`, which has never existed. PostgREST answers `42703`, and both
+checks have their own `Cannot verify: <error>` branch — so **two integrity checks
+reported a soft warning for their entire life instead of ever checking anything.**
+A check that cannot fail is not a check. **Seed a row that SHOULD trip it and assert
+it trips** — that is the only way to tell a passing check from an inert one.

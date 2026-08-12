@@ -93,6 +93,48 @@
   Query.prototype.range = function () { return this; };
   Query.prototype.single = function () { this._single = true; return this; };
   Query.prototype.maybeSingle = function () { this._maybe = true; return this; };
+  /* 732: the mock enforced NO constraints, and that is how a broken value went
+     green. Build 722 wrote contracts.status = 'voided'; the real table's CHECK
+     permits only ('draft','sent','signed','void','change_ordered'), so every Void
+     was refused by Postgres — while gate_722 asserted the value I had assumed and
+     passed. A mock with no constraints does not model the database, it models the
+     author's beliefs.
+
+     These mirror the LIVE schema of project yipslubcptjoarblzbpl, read with:
+       select conname, pg_get_constraintdef(oid) from pg_constraint
+        where conrelid='public.contracts'::regclass and contype='c';
+     Keep them in step with the real table, or delete the entry rather than let it
+     drift — a stale constraint here is worse than none. */
+  var CHECKS = {
+    contracts: {
+      status:   ['draft', 'sent', 'signed', 'void', 'change_ordered'],
+      template: ['roofing', 'siding', 'windows']
+    },
+    projects: {
+      stage: ['Lead', 'Prospect', 'OnHold', 'Approved', 'Scheduled', 'Completed', 'Invoiced', 'Closed', 'Lost']
+    },
+    studio_tray: { bucket: ['showcase', 'workmanship', 'colors'] }
+  };
+  function checkViolation(table, payload) {
+    var rules = CHECKS[table];
+    if (!rules || !payload) return null;
+    var rows = Array.isArray(payload) ? payload : [payload];
+    for (var i = 0; i < rows.length; i++) {
+      for (var col in rules) {
+        if (!Object.prototype.hasOwnProperty.call(rows[i], col)) continue;
+        var v = rows[i][col];
+        if (v == null) continue;
+        if (rules[col].indexOf(v) === -1) {
+          return { message: 'new row for relation "' + table + '" violates check constraint "' +
+                            table + '_' + col + '_check"',
+                   details: 'Failing row contains ' + col + ' = ' + JSON.stringify(v) +
+                            '; permitted: ' + rules[col].join(', '),
+                   code: '23514' };
+        }
+      }
+    }
+    return null;
+  }
   Query.prototype.insert = function (payload) { this._op = 'insert'; this._payload = payload; return this; };
   Query.prototype.update = function (payload) { this._op = 'update'; this._payload = payload; return this; };
   Query.prototype.upsert = function (payload, opts) { this._op = 'upsert'; this._payload = payload; this._upsertOpts = opts; return this; };
@@ -160,6 +202,17 @@
         var fail = (typeof window !== 'undefined') && window.__MOCK_FAIL__;
         if (fail && fail === self.table && self._op !== 'select')
           return { data: null, error: { message: 'mock failure on ' + fail } };
+        /* 732: refuse a write the real table's CHECK would refuse, and refuse it
+           the way PostgREST does — an error object, not a throw — so a gate sees
+           what the app sees. Opt out for one call with __MOCK_NO_CHECKS__ if you
+           are deliberately testing the rejection path itself. */
+        if (self._op === 'insert' || self._op === 'update' || self._op === 'upsert') {
+          var noChecks = (typeof window !== 'undefined') && window.__MOCK_NO_CHECKS__;
+          if (!noChecks) {
+            var v = checkViolation(self.table, self._payload);
+            if (v) { rec(self.table, self._op + ':REFUSED', self._payload, { violation: v }); return { data: null, error: v }; }
+          }
+        }
         return self._run();
       } catch (e) { return { data: null, error: { message: String(e) } }; }
     };
