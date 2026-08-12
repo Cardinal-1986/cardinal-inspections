@@ -4768,3 +4768,16 @@ photograph comes back wearing them — before/after under a drag slider.
   delete) with NO join to project_photos, reports, claims or CompanyCam.
 - Gallery is shared team-wide; delete selects the id back (the silent-204
   lesson). `gate_761.mjs`: 18 green · 15 red on the v760 negative control.
+
+### 762 — Studio White, full screen, house first (same session)
+
+Theo's picks off six rendered options: the Designer is now **single-theme
+Studio White** (the first LIGHT Vision surface — warm paper, red accents, all
+literals), **full-bleed** (the `body.cr-lnav-on` framing rule is deleted; no
+header, no left nav, and `cr-des` joined the 694 theme-toggle exclusion list so
+the floating switch no longer hovers over it), **house-first** ≥900px (sticky
+hero stage ~746px + a 396px picker rail; stacks below 900px), and **showroom
+voice** — no "AI" anywhere a client reads: tag `AFTER · CARDINAL DESIGNER`,
+badge `DESIGN`, burned mark `CARDINAL DESIGNER · VISUALIZATION`. The images
+are still AI-generated and the internal record still says so (`via`, banner,
+docs). `gate_762.mjs`: 23 green · 5 red on the v761 control.

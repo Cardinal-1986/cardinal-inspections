@@ -18,11 +18,24 @@ just want to look more professional doing it in the vision suite."* **That
 sentence is the recorded YES for sending a client's photograph to Gemini at the
 moment of a press — per-photo consent, NOT a corpus pass.** Do not widen it.
 
-Shipped: `cr-des-styles`/`cr-des-script` (`window.CardinalDesigner`, Blackout,
+Shipped: `cr-des-styles`/`cr-des-script` (`window.CardinalDesigner`,
 `--des-*` all literal-fallback), `api/design.js` (`gemini-3.1-flash-image` →
 `2.5` ladder + `{probe:true}` key probe), `design_renders.sql` (+ `designer/`
 storage prefix), a Designer tile on the Vision hub, a landing door beside
 Showroom (≥820px), `gate_761.mjs` (18 green / 15 red on the v760 control).
+
+**762, same session, Theo's picks off six rendered concepts**: Studio White as
+the single theme (the first LIGHT Vision surface), FULL-BLEED (framing rule
+deleted; `cr-des` joined the 694 theme-toggle exclusion list — the identical
+Showcase/OC-Colors decision), house-first layout ≥900px (sticky hero stage +
+396px picker rail), and SHOWROOM VOICE — no "AI" anywhere a client reads
+(`AFTER · CARDINAL DESIGNER`, `DESIGN`, `CARDINAL DESIGNER · VISUALIZATION`).
+His two corrections that drove it, verbatim: *"This studio showroom does not
+run insurance claims. It is for client side only"* and *"get rid of the retail
+crm all over it and make the navigation area where you pick the different
+styles so you can have a bigger view of the house."* The b:761 CHANGELOG entry
+still says AI CONCEPT — history, not a miss. `gate_762.mjs`: 23 green / 5 red
+on the v761 control.
 
 The fences as built: AI CONCEPT badged on screen AND burned into every saved
 JPEG; `designer/` + `design_renders` join nothing in the claims pipeline; the
