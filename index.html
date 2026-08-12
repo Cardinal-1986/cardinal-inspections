@@ -3152,9 +3152,9 @@ body.rl-at-book #rlAskBtn{display:none !important;}
 #cr-hd2-srch .cr-ins-theme:hover{border-color:var(--bnac,#c8202e)}
 
 /* per-CRM strip colours, matching #crBanner so the two rows read as one block */
-body[data-crm="insurance"]{--bnbg:#1a0e0d;--bnbd:#3d1512;--bnac:#ff8a7a}
-body[data-crm="community"]{--bnbg:#08211a;--bnbd:#12463a;--bnac:#34D399}
-body[data-crm="retail"]   {--bnbg:#101620;--bnbd:#243040;--bnac:#8fb4d8}
+body[data-crm-head="insurance"]{--bnbg:#1a0e0d;--bnbd:#3d1512;--bnac:#ff8a7a}
+body[data-crm-head="community"]{--bnbg:#08211a;--bnbd:#12463a;--bnac:#34D399}
+body[data-crm-head="retail"]   {--bnbg:#101620;--bnbd:#243040;--bnac:#8fb4d8}
 
 /* the ribbon now carries only the project context, and gets out of the way
    entirely when there is none */
@@ -3179,7 +3179,7 @@ body[data-crm="retail"]   {--bnbg:#101620;--bnbd:#243040;--bnac:#8fb4d8}
 /* .titlecard h1 carries font-size:17px !important, so this needs it too */
 #cr-hd2-bar #cr-hd2-mid #brandTitle h1{font-size:20px !important;line-height:1.15;
   color:var(--hin,#fff);-webkit-text-fill-color:var(--hin,#fff)}
-body[data-crm="retail"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{
+body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-mid #brandTitle h1{
   font-family:'American Typewriter','Courier New',Courier,serif;
   font-size:17px !important;font-weight:800;font-style:normal;letter-spacing:.005em;white-space:nowrap}
 #cr-hd2-mid #brandTitle h1 span.hq{color:#5d6b7a;-webkit-text-fill-color:#5d6b7a}
@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 753 &#8212; The Menu and + menus open under their buttons instead of across the screen</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 754 &#8212; The header remembers which CRM you are in — home and the colours follow you onto shared screens</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14130,7 +14130,8 @@ function openLeadForm(){
   /* default claim type: follow the portal you're standing in */
   var __ldDef = (function(){
     try{
-      var c = (window.CardinalHeader && window.CardinalHeader.crm) ? window.CardinalHeader.crm() : '';
+      var _h = window.CardinalHeader || {};
+      var c = (_h.crmHead || _h.crm) ? (_h.crmHead || _h.crm)() : '';
       return (c === 'insurance' || c === 'community' || c === 'retail') ? c : 'unknown';
     }catch(_){ return 'unknown'; }
   })();
@@ -24621,10 +24622,10 @@ body.claim-insurance #commsView .chipbtn:hover{
 /* 411: the ribbon ground became theme-aware at 409 but its ink stayed color:#fff,
    so the clock and project context went white-on-white in Docket. Insurance is the
    only CRM whose ribbon reads --ct-* tokens, so only insurance needs (and gets) this. */
-body[data-crm="insurance"] #cr-hd2-ribbon #qClock,
-body[data-crm="insurance"] #cr-hd2-ribbon #cbCtx{color:var(--ct-ink);}
-body[data-crm="insurance"] #cr-hd2-ribbon #cbCtx b,
-body[data-crm="insurance"] #cr-hd2-ribbon #cbCtx span{color:inherit;}
+body[data-crm-head="insurance"] #cr-hd2-ribbon #qClock,
+body[data-crm-head="insurance"] #cr-hd2-ribbon #cbCtx{color:var(--ct-ink);}
+body[data-crm-head="insurance"] #cr-hd2-ribbon #cbCtx b,
+body[data-crm-head="insurance"] #cr-hd2-ribbon #cbCtx span{color:inherit;}
 
 /* Section headers — same steel-blue treatment used inside #projectView */
 body.claim-insurance #paymentsView .projsec,
@@ -38625,6 +38626,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:754, d:'2026-08-12', t:'The header remembers your CRM',
+s:'Tapping Leads, Photos, Contacts or any shared screen from Insurance or Community used to flip the whole header back to retail \u2014 and the gold home button then took you to the retail dashboard instead of back to Cardinal Truth or the Community hub. The header now remembers which CRM you are working in: its colours, its title and the CRM switcher stay yours on shared screens, home returns to your CRM\u2019s home, and a new lead started from a shared screen defaults to your CRM. The pages themselves are untouched \u2014 only the header follows you.' },
 { b:753, d:'2026-08-12', t:'Menus open where their buttons are',
 s:'The Menu button sits at the left end of the header, but its menu had been opening pinned to the far right edge of the screen \u2014 a leftover rule from the old header where the button lived on the right. Both the Menu and the + menu now drop down directly under their buttons, on every screen size, and can never open half off-screen.' },
 { b:752, d:'2026-08-12', t:'Buttons a gloved finger can hit',
@@ -52208,24 +52211,24 @@ tab : function(k){ tab = k; render(); },
 </script>
 
 <style id="cr-hd2-styles">header.site .wrap.masthead{display:none}header.site{position:fixed;top:0;left:0;right:0;z-index:90;background:var(--hbg,#fbfaf7);border-bottom:none;box-shadow:0 2px 10px rgba(0,0,0,.22);padding:0}#cr-hd2-bar{display:flex;align-items:center;gap:10px;max-width:960px;margin:0 auto;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));padding-left:calc(12px + env(safe-area-inset-left,0px));padding-right:calc(12px + env(safe-area-inset-right,0px));min-height:56px;border-bottom:1px solid var(--hln,#ddd6cf)}#cr-hd2-bar .cr-ib{flex:0 0 auto;width:34px;height:34px;border-radius:9px;background:transparent;border:1px solid var(--hln,#ddd6cf);color:var(--hmt,#6b6357);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;line-height:1;padding:0;-webkit-tap-highlight-color:transparent}
-body[data-crm="retail"] #cr-hd2-bar .cr-ib,body[data-crm="retail"] #cr-hd2-bar #cr-hd2-home{
+body[data-crm-head="retail"] #cr-hd2-bar .cr-ib,body[data-crm-head="retail"] #cr-hd2-bar #cr-hd2-home{
   background:linear-gradient(180deg,#33414f 0%,#242f3b 45%,#1a232c 100%);
   border:1px solid #3d4b5a;border-top-color:#55677a;border-bottom-color:#111820;
   color:var(--hac,#8fb4d8);
   box-shadow:0 2px 5px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.13),inset 0 -1px 0 rgba(0,0,0,.45)}
-body[data-crm="retail"] #cr-hd2-bar .cr-ib.primary{
+body[data-crm-head="retail"] #cr-hd2-bar .cr-ib.primary{
   background:linear-gradient(180deg,#b9d3ec,#8fb4d8 52%,#4f7396);
   border-color:#4f7396;border-top-color:#b9d3ec;color:#0b1218;
   box-shadow:0 2px 6px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(0,0,0,.3)}#cr-hd2-bar .cr-ib.menu{width:38px;height:38px;font-size:16px}#cr-hd2-bar .cr-ib:hover{border-color:var(--hac,#c8202e);color:var(--hac,#c8202e)}#cr-hd2-bar .cr-ib.primary{background:var(--hac,#c8202e);border-color:var(--hac,#c8202e);color:var(--hoc,#1a1a1a);font-size:18px;font-weight:400}#cr-hd2-mid{flex:1 1 auto;min-width:0;text-align:center}#cr-hd2-mid #brandTitle,#cr-hd2-mid #brandCtx{display:block;min-width:0;margin:0;padding:0;background:none;border:0;box-shadow:none}#cr-hd2-mid #brandTitle h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:40px;letter-spacing:.01em;line-height:1.15;color:var(--hac,#c8202e);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:none;-webkit-background-clip:border-box;background-clip:border-box;-webkit-text-fill-color:var(--hac,#c8202e)}#cr-hd2-bar{position:relative}#cr-hd2-mid #brandTitle{position:absolute;left:50%;top:calc(env(safe-area-inset-top,0px) + 26px);transform:translate(-50%,-50%);pointer-events:none;max-width:70%;width:max-content}#cr-hd2-mid #brandTitle h1 span{color:var(--hac,#c8202e)}#cr-hd2-mid #brandCtx,#cr-hd2-mid #headCtx{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(14px,4.4vw,18px);line-height:1.2;color:var(--hin,#2c2c2c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-bar #headSearch{display:none;flex:0 1 240px;min-width:0;width:auto;height:40px;padding:0 12px;border-radius:10px;box-sizing:border-box;border:1px solid var(--hln,#ddd6cf);background:var(--hsf,#fff);color:var(--hin,#2c2c2c);font:400 13.5px inherit;outline:none}#cr-hd2-bar #headSearch:focus{border-color:var(--hac,#c8202e);box-shadow:0 0 0 3px rgba(200,32,46,.18)}#cr-hd2-bar #headSearch::placeholder{color:var(--hdm,#9a917f)}@media (min-width:760px){#cr-hd2-bar #headSearch{display:block}#cr-hd2-bar .cr-ib.searchbtn{display:none}
 /* Build 372: search lives on the banner — the header copy is retired everywhere. */
 #cr-hd2-bar #headSearch,#cr-hd2-bar .cr-ib.searchbtn{display:none !important}
-#cr-hd2-bar.searching #headSearch{display:none !important}}#cr-hd2-bar.searching #headSearch{display:block;flex:1 1 100%;order:9;margin-top:8px}#cr-hd2-bar{flex-wrap:nowrap}#cr-hd2-bar.searching{flex-wrap:wrap}header.site #cr-hd2-bar #navBtn{display:flex !important}#cr-hd2-util{display:flex;align-items:center;gap:6px;flex:0 0 auto}#cr-hd2-util>*{flex:0 0 auto}@media (max-width:560px){#cr-hd2-util #crPortalChip{display:none}}header.site #cr-search-btn{display:none}header.site #whoami,header.site #jobMenuSel,header.site #brandLogo{display:none}body .site{--hbg:#1a1215;--hln:#3a2f22;--hin:#c8202e;--hmt:#d8c9a8;--hdm:#9a917f;--hac:#c8202e;--hoc:#1a1a1a;--hsf:#241c1a;--tgrad:linear-gradient(100deg,var(--red),#c8202e 55%,#e35c63)}body[data-crm="insurance"] .site{--hbg:var(--ct-head-bg);--hln:var(--ct-head-line);--hin:var(--ct-head-ink);--hmt:var(--ct-head-ink);--hdm:var(--ct-head-dim);--hac:var(--ct-head-kick);--hoc:var(--ct-head-bg);--hsf:var(--ct-surface);--tgrad:linear-gradient(100deg,var(--ct-head-kick),var(--ct-head-ink))}body[data-crm="retail"] .site{--hbg:linear-gradient(180deg,#243342,#16202b);--hln:#2f3f4f;--hin:#fff;--hmt:#fff;--hdm:rgba(255,255,255,.72);--hac:#8fb4d8;--hoc:#141c24;--hsf:#243342;--tgrad:linear-gradient(100deg,#8fb4d8,#fff)}
-body[data-crm="community"] .site{--hbg:#047857;--hln:#0a9268;--hin:#fff;--hmt:#fff;--hdm:rgba(255,255,255,.74);--hac:#A7F3D0;--hoc:#047857;--hsf:#065F46;--tgrad:linear-gradient(100deg,#A7F3D0,#fff)}body[data-crm="production"] .site{--hbg:#181b20;--hln:#2a3038;--hin:#fff;--hmt:#b9c0c9;--hdm:#7d8794;--hac:#f5a623;--hoc:#14171b;--hsf:#1c2128;--tgrad:linear-gradient(100deg,#f5a623,#ffd27a)}body[data-crm="sales"] .site{--hbg:#1a1310;--hln:#2e2320;--hin:#fff;--hmt:#e0cec4;--hdm:#a08b7f;--hac:#e8544f;--hoc:#1a1310;--hsf:#241b17;--tgrad:linear-gradient(100deg,#e8544f,#e35c63)}header.site #navMenu,header.site #newMenu{z-index:95}#cr-hd2-ribbon{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-bottom:3px solid var(--racc,var(--red));background:linear-gradient(168deg,var(--rb1,#241518) 0%,var(--rb2,#170f11) 48%,var(--rb3,#221407) 100%)}#cr-hd2-ribbon::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--rh1,#c8202e) 30%,var(--rh2,#e35c63) 50%,var(--rh1,#c8202e) 70%,transparent)}#cr-hd2-ribbon #qClock,#cr-hd2-ribbon #cbCtx{display:block;max-width:100%;margin:0;color:#fff;font:800 13.5px/1.2 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-ribbon #cbCtx{display:none}#cr-hd2-ribbon #cbCtx small{color:#B57EDC;font-size:.9em;margin-right:4px;font-weight:800}body.projopen #cr-hd2-ribbon #qClock{display:none}body.projopen #cr-hd2-ribbon #cbCtx{display:block}#cr-hd2-ribbon{padding-left:56px;padding-right:56px;min-height:52px}#cr-hd2-home{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:10px;background:rgba(200,32,46,.08);border:1px solid #c8202e;color:#e35c63;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}#cr-hd2-home svg{display:block;width:17px;height:17px}#cr-home-btn{display:none}#cr-hd2-bar{border-bottom:2px solid transparent;border-image:linear-gradient(90deg,transparent,var(--hac,#8fb4d8) 25%,#b9d3ec 50%,var(--hac,#8fb4d8) 75%,transparent) 1}body[data-crm="insurance"] #cr-hd2-bar,body[data-crm="community"] #cr-hd2-bar,body[data-crm="production"] #cr-hd2-bar,body[data-crm="sales"] #cr-hd2-bar{border-image:none;border-bottom:1px solid var(--hln,#ddd6cf)}#cardinalTruthView,#insClientsView,#resourceLibraryView,#crewsView{top:var(--headh,110px) !important;z-index:60 !important}#cr-ih-bar{display:none}#insClientsView .ins-header,#resourceLibraryView .ins-header{display:none}#resourceLibraryView .rl-search{top:0}body.viewing-community-hub footer.site{display:none}body[data-crm="community"]{background:var(--ccm-ground,#0e100f)}body[data-crm="insurance"]{background:var(--ct-bg)}.dashcard,section.history{border-color:var(--rbe-panelbd)}.cr-est-body{max-width:100vw;box-sizing:border-box}.cr-est-head{max-width:100vw;box-sizing:border-box}.cr-est-body{overflow-x:hidden}.cr-est-body input,.cr-est-body select,.cr-est-body textarea{min-width:0;max-width:100%;box-sizing:border-box}.cr-est-head{overflow-x:auto;overscroll-behavior-x:contain}
+#cr-hd2-bar.searching #headSearch{display:none !important}}#cr-hd2-bar.searching #headSearch{display:block;flex:1 1 100%;order:9;margin-top:8px}#cr-hd2-bar{flex-wrap:nowrap}#cr-hd2-bar.searching{flex-wrap:wrap}header.site #cr-hd2-bar #navBtn{display:flex !important}#cr-hd2-util{display:flex;align-items:center;gap:6px;flex:0 0 auto}#cr-hd2-util>*{flex:0 0 auto}@media (max-width:560px){#cr-hd2-util #crPortalChip{display:none}}header.site #cr-search-btn{display:none}header.site #whoami,header.site #jobMenuSel,header.site #brandLogo{display:none}body .site{--hbg:#1a1215;--hln:#3a2f22;--hin:#c8202e;--hmt:#d8c9a8;--hdm:#9a917f;--hac:#c8202e;--hoc:#1a1a1a;--hsf:#241c1a;--tgrad:linear-gradient(100deg,var(--red),#c8202e 55%,#e35c63)}body[data-crm-head="insurance"] .site{--hbg:var(--ct-head-bg);--hln:var(--ct-head-line);--hin:var(--ct-head-ink);--hmt:var(--ct-head-ink);--hdm:var(--ct-head-dim);--hac:var(--ct-head-kick);--hoc:var(--ct-head-bg);--hsf:var(--ct-surface);--tgrad:linear-gradient(100deg,var(--ct-head-kick),var(--ct-head-ink))}body[data-crm-head="retail"] .site{--hbg:linear-gradient(180deg,#243342,#16202b);--hln:#2f3f4f;--hin:#fff;--hmt:#fff;--hdm:rgba(255,255,255,.72);--hac:#8fb4d8;--hoc:#141c24;--hsf:#243342;--tgrad:linear-gradient(100deg,#8fb4d8,#fff)}
+body[data-crm-head="community"] .site{--hbg:#047857;--hln:#0a9268;--hin:#fff;--hmt:#fff;--hdm:rgba(255,255,255,.74);--hac:#A7F3D0;--hoc:#047857;--hsf:#065F46;--tgrad:linear-gradient(100deg,#A7F3D0,#fff)}body[data-crm-head="production"] .site{--hbg:#181b20;--hln:#2a3038;--hin:#fff;--hmt:#b9c0c9;--hdm:#7d8794;--hac:#f5a623;--hoc:#14171b;--hsf:#1c2128;--tgrad:linear-gradient(100deg,#f5a623,#ffd27a)}body[data-crm-head="sales"] .site{--hbg:#1a1310;--hln:#2e2320;--hin:#fff;--hmt:#e0cec4;--hdm:#a08b7f;--hac:#e8544f;--hoc:#1a1310;--hsf:#241b17;--tgrad:linear-gradient(100deg,#e8544f,#e35c63)}header.site #navMenu,header.site #newMenu{z-index:95}#cr-hd2-ribbon{position:relative;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-bottom:3px solid var(--racc,var(--red));background:linear-gradient(168deg,var(--rb1,#241518) 0%,var(--rb2,#170f11) 48%,var(--rb3,#221407) 100%)}#cr-hd2-ribbon::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--rh1,#c8202e) 30%,var(--rh2,#e35c63) 50%,var(--rh1,#c8202e) 70%,transparent)}#cr-hd2-ribbon #qClock,#cr-hd2-ribbon #cbCtx{display:block;max-width:100%;margin:0;color:#fff;font:800 13.5px/1.2 'Segoe UI',Arial,sans-serif;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-hd2-ribbon #cbCtx{display:none}#cr-hd2-ribbon #cbCtx small{color:#B57EDC;font-size:.9em;margin-right:4px;font-weight:800}body.projopen #cr-hd2-ribbon #qClock{display:none}body.projopen #cr-hd2-ribbon #cbCtx{display:block}#cr-hd2-ribbon{padding-left:56px;padding-right:56px;min-height:52px}#cr-hd2-home{position:absolute;left:calc(12px + env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:10px;background:rgba(200,32,46,.08);border:1px solid #c8202e;color:#e35c63;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}#cr-hd2-home svg{display:block;width:17px;height:17px}#cr-home-btn{display:none}#cr-hd2-bar{border-bottom:2px solid transparent;border-image:linear-gradient(90deg,transparent,var(--hac,#8fb4d8) 25%,#b9d3ec 50%,var(--hac,#8fb4d8) 75%,transparent) 1}body[data-crm-head="insurance"] #cr-hd2-bar,body[data-crm-head="community"] #cr-hd2-bar,body[data-crm-head="production"] #cr-hd2-bar,body[data-crm-head="sales"] #cr-hd2-bar{border-image:none;border-bottom:1px solid var(--hln,#ddd6cf)}#cardinalTruthView,#insClientsView,#resourceLibraryView,#crewsView{top:var(--headh,110px) !important;z-index:60 !important}#cr-ih-bar{display:none}#insClientsView .ins-header,#resourceLibraryView .ins-header{display:none}#resourceLibraryView .rl-search{top:0}body.viewing-community-hub footer.site{display:none}body[data-crm="community"]{background:var(--ccm-ground,#0e100f)}body[data-crm="insurance"]{background:var(--ct-bg)}.dashcard,section.history{border-color:var(--rbe-panelbd)}.cr-est-body{max-width:100vw;box-sizing:border-box}.cr-est-head{max-width:100vw;box-sizing:border-box}.cr-est-body{overflow-x:hidden}.cr-est-body input,.cr-est-body select,.cr-est-body textarea{min-width:0;max-width:100%;box-sizing:border-box}.cr-est-head{overflow-x:auto;overscroll-behavior-x:contain}
 /* 697: the rule above was the ONLY guarded horizontal scroller in the file;
    the other 23 now carry the same property. Without it a strip that reaches
    its left end passes the rest of the swipe to the page, and the browser
    reads that as a back navigation \u2014 Theo hit it on the leads chips and the
-   whole screen exited. Any new overflow-x:auto row needs this. */#projectView .subnote{color:#fff}#listView #listTitle{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#listView #listTitle .chipbtn{-webkit-text-fill-color:#2c2c2c}#listView #listNote{color:#fff}#listView label,#listView .listlbl{color:#c8202e}#listView #listBody,#listView .cards,#listView .doclist{background:transparent}#listView .card{margin-bottom:12px;border-radius:12px}#listView .listctl{color:#c8202e}#galleryView .subnote{color:#fff}#listView table.reports,#listView .reports thead,#listView .reports tbody{background:transparent;border:none;box-shadow:none}#listView .reports tr{border-radius:12px;overflow:hidden;margin-bottom:12px}/*cr-lv-readable-487: 44310 made this table transparent over --bg:#09090C but left the cells on their paper-theme colours - #333 read 1.57:1 and var(--muted) 2.97:1 at >700px. Retail token pair, so rb-light flips with it. .projrow sets its own light band and is excluded.*/#listView table.reports tr:not(.projrow) td{color:var(--rbe-ink)}#listView table.reports tr:not(.projrow) td small,#listView table.reports tr:not(.projrow) td .ref{color:var(--rbe-mute)}#listView table.reports tr:not(.projrow):hover td{background:rgba(255,255,255,.06)}.projhead{align-items:stretch}.projinfo{padding:11px 13px 12px}#projName{line-height:1.2;margin:2px 0 4px;overflow-wrap:anywhere}.cr-est-saved-list{background:#202329;border-radius:12px;padding:8px 8px 2px}.ljpo{color:#B57EDC;font-weight:800}#projectView .projsec{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#projectView .projsec a{-webkit-text-fill-color:#e35c63;color:#e35c63}.hero-hi,.hero-hi *,.acthead{color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}#mainView{background:transparent}#pwaNav #cr-ahc-badge{margin-right:0}body[data-crm="insurance"] #cr-hd2-ribbon{--racc:var(--ct-red);--rb1:var(--ct-bg);--rb2:var(--ct-surface-2);--rb3:var(--ct-surface);--rh1:var(--ct-red);--rh2:var(--ct-red-deep)}body[data-crm="community"] #cr-hd2-ribbon{--racc:#047857;--rb1:#04150f;--rb2:#061c14;--rb3:#08211a;--rh1:#047857;--rh2:#34D399}body[data-crm="production"] #cr-hd2-ribbon{--racc:#f5a623;--rb1:#14171b;--rb2:#181b20;--rb3:#1b1710;--rh1:#f5a623;--rh2:#ffd27a}body[data-crm="sales"] #cr-hd2-ribbon{--racc:#C8202E;--rb1:#1a1310;--rb2:#17120f;--rb3:#221407;--rh1:#e8544f;--rh2:#e35c63}#cr-hd2-mid #brandTitle{display:block !important}#cr-hd2-mid #brandCtx{display:none !important}#mainView .dashcard{display:none}</style>
+   whole screen exited. Any new overflow-x:auto row needs this. */#projectView .subnote{color:#fff}#listView #listTitle{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#listView #listTitle .chipbtn{-webkit-text-fill-color:#2c2c2c}#listView #listNote{color:#fff}#listView label,#listView .listlbl{color:#c8202e}#listView #listBody,#listView .cards,#listView .doclist{background:transparent}#listView .card{margin-bottom:12px;border-radius:12px}#listView .listctl{color:#c8202e}#galleryView .subnote{color:#fff}#listView table.reports,#listView .reports thead,#listView .reports tbody{background:transparent;border:none;box-shadow:none}#listView .reports tr{border-radius:12px;overflow:hidden;margin-bottom:12px}/*cr-lv-readable-487: 44310 made this table transparent over --bg:#09090C but left the cells on their paper-theme colours - #333 read 1.57:1 and var(--muted) 2.97:1 at >700px. Retail token pair, so rb-light flips with it. .projrow sets its own light band and is excluded.*/#listView table.reports tr:not(.projrow) td{color:var(--rbe-ink)}#listView table.reports tr:not(.projrow) td small,#listView table.reports tr:not(.projrow) td .ref{color:var(--rbe-mute)}#listView table.reports tr:not(.projrow):hover td{background:rgba(255,255,255,.06)}.projhead{align-items:stretch}.projinfo{padding:11px 13px 12px}#projName{line-height:1.2;margin:2px 0 4px;overflow-wrap:anywhere}.cr-est-saved-list{background:#202329;border-radius:12px;padding:8px 8px 2px}.ljpo{color:#B57EDC;font-weight:800}#projectView .projsec{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#projectView .projsec a{-webkit-text-fill-color:#e35c63;color:#e35c63}.hero-hi,.hero-hi *,.acthead{color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}#mainView{background:transparent}#pwaNav #cr-ahc-badge{margin-right:0}body[data-crm-head="insurance"] #cr-hd2-ribbon{--racc:var(--ct-red);--rb1:var(--ct-bg);--rb2:var(--ct-surface-2);--rb3:var(--ct-surface);--rh1:var(--ct-red);--rh2:var(--ct-red-deep)}body[data-crm-head="community"] #cr-hd2-ribbon{--racc:#047857;--rb1:#04150f;--rb2:#061c14;--rb3:#08211a;--rh1:#047857;--rh2:#34D399}body[data-crm-head="production"] #cr-hd2-ribbon{--racc:#f5a623;--rb1:#14171b;--rb2:#181b20;--rb3:#1b1710;--rh1:#f5a623;--rh2:#ffd27a}body[data-crm-head="sales"] #cr-hd2-ribbon{--racc:#C8202E;--rb1:#1a1310;--rb2:#17120f;--rb3:#221407;--rh1:#e8544f;--rh2:#e35c63}#cr-hd2-mid #brandTitle{display:block !important}#cr-hd2-mid #brandCtx{display:none !important}#mainView .dashcard{display:none}</style>
 <script id="cr-hd2-script">
 (function(){
 'use strict';
@@ -52261,7 +52264,7 @@ home.onclick = function(){
 /* 417: leaving a project. Nothing else clears this, and a stale `projopen`
    hides the CRM title and the burger on every screen that follows. */
 document.body.classList.remove('projopen');
-var crm = crmNow();
+var crm = crmHead(); /* 754: from a shared screen, home returns to YOUR CRM */
 if(crm === 'insurance' && typeof window.showCardinalTruth === 'function'){ window.showCardinalTruth(); }
 else if(crm === 'community' && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){ window.CardinalCommunityHub.show(); }
 else if(typeof window.showHome === 'function'){ window.showHome(); }
@@ -52407,17 +52410,51 @@ if(t === 'insurance' || t === 'community') return t;
 }
 return 'retail';
 }
-var lastCrm = '';
+var lastCrm = '', lastHead = '';
+/* 754: the sticky per-user portal (CardinalPortal, localStorage) — the thing
+   the landing cards, the CRM homes and the banner switcher already keep
+   updated. 'all' has no single CRM, so it reads as retail, which is the
+   pre-754 behaviour for that mode. */
+function stickyCrm(){
+try{
+var p = window.CardinalPortal && window.CardinalPortal.get ? window.CardinalPortal.get() : '';
+if(p === 'insurance' || p === 'community' || p === 'retail') return p;
+}catch(e){}
+return 'retail';
+}
+/* 754: what the HEADER is — the open view first, then the open client's own
+   type, then the sticky portal. crmNow() alone answers 'retail' on every
+   shared screen (Leads, Photos, Reports...), which is why one tap used to
+   repaint the header steel and point home at the retail dashboard. The PAGE
+   keeps reading body.dataset.crm — grounds and module gates deliberately do
+   NOT follow the portal (the naive version painted white ink on the light
+   insurance ground across every shared screen — measured before this shape
+   was chosen). */
+function crmHead(){
+var k = crmNow();
+if(k !== 'retail') return k;
+var pr = window.currentProject;
+if(pr){
+var t = claimTypeOf(pr);
+if(!t && typeof window.projClaimType === 'function'){
+try{ t = window.projClaimType(pr) || ''; }catch(e){}
+}
+if(t === 'retail') return 'retail';
+}
+return stickyCrm();
+}
 function skin(){
 var k = crmNow();
-if(k === lastCrm) return;
-lastCrm = k;
+var kh = crmHead();
+if(k === lastCrm && kh === lastHead) return;
+lastCrm = k; lastHead = kh;
 document.body.dataset.crm = k;
+document.body.dataset.crmHead = kh;
 var h1 = document.querySelector('#brandTitle h1');
 if(h1){
-  var wantHtml = TITLES_HTML[k];
+  var wantHtml = TITLES_HTML[kh];
   if(wantHtml){ if(h1.innerHTML !== wantHtml) h1.innerHTML = wantHtml; }
-  else if(h1.textContent !== TITLES[k]) h1.textContent = TITLES[k];
+  else if(h1.textContent !== TITLES[kh]) h1.textContent = TITLES[kh];
 }
 }
 var scheduled = false;
@@ -52440,6 +52477,7 @@ window.CardinalHeader = {
 build : build,
 skin  : skin,
 crm   : crmNow,
+crmHead : crmHead,
 };
 })();
 </script>
@@ -53672,8 +53710,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .jan.zero{opacity:
 /* ── Universal banner nav (build 344) — skinned per CRM via body[data-crm] ── */
 #crBanner{--bacc:#c8202e;--bacclt:#e35c63;--bink:#22262d;--bline:#3a3f47;
   display:flex;align-items:center;flex-wrap:wrap;padding:0 8px;background:#15171b;border-bottom:1px solid #262a31;}
-body[data-crm="insurance"] #crBanner{--bacc:#c4180f;--bacclt:#ff8a7a;--bink:#2b0b09;--bline:#4a1512;background:#1a0e0d;border-color:#3d1512;}
-body[data-crm="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink:#04150f;--bline:#12463a;background:#08211a;border-color:#12463a;}
+body[data-crm-head="insurance"] #crBanner{--bacc:#c4180f;--bacclt:#ff8a7a;--bink:#2b0b09;--bline:#4a1512;background:#1a0e0d;border-color:#3d1512;}
+body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink:#04150f;--bline:#12463a;background:#08211a;border-color:#12463a;}
 #crBanner .cbn{position:relative;display:flex;align-items:center;gap:5px;padding:11px 12px;color:#c8cdd4;
   font:700 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;border-bottom:3px solid transparent;user-select:none;}
 #crBanner .cbn:hover{color:var(--bacclt);}
@@ -53724,7 +53762,7 @@ function fn(path){
 }
 var ROUTES = {
   home: function(){
-    var crm = document.body.dataset.crm || 'retail';
+    var crm = document.body.dataset.crmHead || document.body.dataset.crm || 'retail';
     if(crm === 'insurance' && typeof window.showCardinalTruth === 'function'){ window.showCardinalTruth(); }
     else if(crm === 'community' && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){ window.CardinalCommunityHub.show(); }
     else if(typeof window.showHome === 'function'){ window.showHome(); }
@@ -53816,7 +53854,7 @@ var CRM_GO = {
   community: function(){ if(window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function') window.CardinalCommunityHub.show(); }
 };
 function cbCrmSync(){
-  var k = document.body.dataset.crm || 'retail';
+  var k = document.body.dataset.crmHead || document.body.dataset.crm || 'retail';
   Array.prototype.forEach.call(B.querySelectorAll('[data-crm-go]'), function(x){
     x.classList.toggle('on', x.getAttribute('data-crm-go') === k);
   });
@@ -53831,7 +53869,7 @@ B.addEventListener('click', function(e){
   Array.prototype.forEach.call(B.querySelectorAll('[data-crm-go]'), function(x){
     x.classList.toggle('on', x === c);
   });
-  try{ document.body.dataset.crm = k; }catch(_e){}
+  try{ document.body.dataset.crm = k; document.body.dataset.crmHead = k; }catch(_e){}
   try{
     if(window.CardinalPortal && typeof window.CardinalPortal.set === 'function') window.CardinalPortal.set(k, false);
   }catch(err){}
@@ -58399,7 +58437,7 @@ return { key:b.getAttribute('data-crm-go'), label:(b.textContent || '').trim(), 
 });
 }
 function activeCrm(){
-try{ return document.body.dataset.crm || 'retail'; }catch(_){ return 'retail'; }
+try{ return document.body.dataset.crmHead || document.body.dataset.crm || 'retail'; }catch(_){ return 'retail'; }
 }
 
 function esc(s){
