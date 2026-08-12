@@ -2589,3 +2589,20 @@ Any renderer emitting `<span class="nm">` / `<span class="ad">` pairs. Spans
 inside a `display:flex` parent are blockified automatically and are fine — which
 is why `.top`, `.meta` and `.carrier` on the same cards never showed the bug and
 made it look surface-specific.
+
+⚠️ **But blockification does NOT reach a grandchild.** Build 760 found a third
+instance, `.kptrow .ti2`, which is a span nested *inside* a span that is itself a
+flex item: the wrapper blockifies, the child does not. "It's in a flex row" is
+not a clearance.
+
+**A `min-width:0` sitting on one of these is a TELL, not a fix** — that property
+does nothing on an inline box, so its presence usually means someone already
+tried to fix the overflow and aimed at the wrong axis.
+
+### The sweep that finds them
+Enumerate every `text-overflow:ellipsis` selector (70 of them across 125 style
+blocks), cross-reference each against the **tag its renderer actually emits**,
+then settle each candidate in Chromium at 390/430/1194px. Static reading is not
+enough in either direction: 19 candidates cleared this way were fine, and one
+only *looked* broken when fed a fabricated label — measure with the real shipped
+strings before calling anything a bug.

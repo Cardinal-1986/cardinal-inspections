@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 759 &#8212; Photo Activity opens on your own CRM, and a punch out can call the client</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 760 &#8212; Long appointment titles stop overflowing the Today list on a phone</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38614,6 +38614,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:760, d:'2026-08-12', t:'Long appointment titles stay in their row',
+s:'A third place had the same fault as the client cards and the production rows fixed in 758: on a phone, a long appointment title in the Today list ran off the side of its row instead of trimming with dots. Found by sweeping the whole app for that one mistake rather than waiting to trip over it.' },
 { b:759, d:'2026-08-12', t:'Photos follow your CRM, and you can call from a punch out',
 s:'Photo Activity used to show every job in the company no matter which CRM you were working in. Open it from Insurance and you now get insurance jobs, from Community you get community jobs, and a row of chips lets you switch or go back to All \u2014 with a count beside each so you can see what you are not looking at. On the Production board, the Call button on a job now finds the number even when it was only ever typed into the homeowner field on the lead, which was true for about a third of clients, and it carries a phone icon. Clients with no number recorded anywhere still show no Call button \u2014 there is nothing to dial.' },
 { b:758, d:'2026-08-12', t:'Cards and job rows stay on the screen',
@@ -54267,7 +54269,7 @@ document.addEventListener('click', function(e){
 .kptrow{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--rbe-hair);font-size:12px;cursor:pointer;}
 .kptrow:last-child{border-bottom:0;}
 .kptrow .tm2{font:800 11px ui-monospace,Menlo,monospace;color:var(--rbe-acclt);width:66px;flex:0 0 auto;}
-.kptrow .ti2{font-weight:700;color:var(--rbe-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kptrow .ti2{/* 760: BUG_CLASSES 43, third instance - found by the sweep that followed 758. This is a <span> nested INSIDE a flex item (the wrapper span carries flex:1), so the wrapper is blockified but this is not: it computes display:inline, its text-overflow:ellipsis is inert, and a long appointment title overflowed the row by 51px at 390px (measured). The min-width:0 already here is the tell - that property does nothing on an inline box, so an earlier fix aimed at the wrong axis. */display:block;font-weight:700;color:var(--rbe-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .kptrow .m3{font-size:10.5px;color:var(--rbe-mute2);}
 .kpempty{border:1px dashed var(--rbe-empty-bd);border-radius:10px;padding:11px;text-align:center;color:var(--rbe-empty-fg);
   font:600 11.5px 'Segoe UI',Arial,sans-serif;margin-top:10px;}
