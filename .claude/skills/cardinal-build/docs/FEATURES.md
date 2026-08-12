@@ -4058,3 +4058,45 @@ point is the window before the file has arrived.
 - `window.crSplashDone()` is the single remover, defined once, asserted. It is
   `position:fixed` and **never writes `body.style.overflow`** — still 13 scroll-lock
   writers, not 14.
+
+## Client contracts — three trades, one pipeline (730)
+
+`#tab-contracts` on a client profile. **`+ New contract` is a trade picker**, not a
+single button: Roofing, Siding, Gutters. Each builds that trade's own Construction
+Agreement, prefilled from the profile.
+
+| | variable | printed heading | spec sections |
+|---|---|---|---|
+| Roofing | `ROOF_AGREEMENT` (542) | `ROOFING CONSTRUCTION AGREEMENT` | 13 — decking → roof pitch |
+| Siding | `SIDING_AGREEMENT` (730) | `SIDING CONSTRUCTION AGREEMENT` | 11 — removal & prep → stories/height |
+| Gutters | `GUTTER_AGREEMENT` (730) | `GUTTER CONSTRUCTION AGREEMENT` | 13 — removal & disposal → access & height |
+
+All three are transcribed from the shipped print masters in `docs/`, section for
+section. **If a line is not on the paper form it is not in these bodies.**
+
+- **`CONTRACT_TYPES`** mirrors `EST_TYPES` — `{key:{label,tpl}}`. One creation path,
+  `createContractForCurrent(tradeKey)`, asserted defined once. The picker is
+  `pEstMenu`'s markup and delegation copied, not a second mechanism.
+- ⚠️ **The saved title is `Contract — <Trade> — <client>`, and the order matters.**
+  Keeping `Contract` first is why **`isContractTitle` (`/^contract/i`) did not have to
+  grow** — and neither did the **six** other sites that inline the same regex:
+  `jobFinance()`, the worksheet contract-value key, the overview roll-up,
+  `sigApply`'s `setStage('Approved')`, and `renderProjectDocs`' `insp` bucket, which
+  is defined by **NEGATION** and silently swallows any contract the predicate misses.
+  Titling these `Siding Contract — …` the way estimates are titled would have forced
+  all seven to change. **Do not "tidy" the title into trade-first order.**
+- **`docKind()` is the one place that did grow** — it returned `trade:'—'` for every
+  contract, so the Trade column said nothing. It reads the title's **second segment**
+  only: a client named "Siding Supply Co" is not a siding job, and contracts written
+  before 730 still answer `—`.
+- **Each body points at ITS OWN printed master** for the Terms & Conditions and the
+  two 3-Day Notice copies. The T&C differ per trade, and the cancellation notice is
+  statutory text under ORC 1345.23 — it is deliberately not retyped in the app.
+- `approveAndContract` (approving from the pipeline) still issues the **roofing**
+  agreement, because approving carries no trade. It just says so in the title now.
+
+⚠️ **Two separate contract systems exist — do not confuse them.** This one is
+`inspection_reports` (HTML documents, the client Contracts tab). The **`contracts`
+table** is the AI-estimate → contract lifecycle (`contract_number`, `template`, the
+`contract` JSONB blob, `doSend`/`doVoid`/signing from 722). It had **0 rows** as of
+build 730.

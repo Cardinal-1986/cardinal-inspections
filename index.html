@@ -3446,7 +3446,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 729 &#8212; The app shows the Cardinal mark and &#8220;Loading&#8230;&#8221; while it opens, instead of a half-drawn screen on a weak signal</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 730 &#8212; + New contract now asks which trade and builds the roofing, siding or gutter Construction Agreement; the roofing one says &#8220;Roofing&#8221; on it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3924,10 +3924,21 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
     <div id="tab-contracts" style="display:none;">
       <button class="chipbtn" style="margin:0 0 12px;" onclick="showTab('overview')">&#8249; Overview</button>
       <h3 class="projsec" data-cri="contract lg">Contracts</h3>
-      <p class="subnote">Client contracts &#8212; prefilled from this profile. Blank print masters live in
+      <p class="subnote">Client contracts &#8212; roofing, siding and gutters, each the trade&#8217;s own
+      Construction Agreement, prefilled from this profile. The Terms &amp; Conditions and both
+      3-Day Notice of Cancellation copies stay the printed master in
       <b>&#9776; Menu &#8594; Company Documents</b>.</p>
       <div style="margin:6px 0 12px;">
-        <button class="btn" id="pNewContractBtn">+ New contract</button>
+        <span id="pContractWrap" style="position:relative;">
+          <button class="btn" id="pNewContractBtn" title="Start the trade's own Construction Agreement, prefilled from this profile">+ New contract &#9662;</button>
+          <div id="pContractMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
+               background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:250px;
+               box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
+            <button class="estopt" data-ctpl="roof">&#127968; Roofing agreement</button>
+            <button class="estopt" data-ctpl="siding">&#129521; Siding agreement</button>
+            <button class="estopt" data-ctpl="gutters">&#127783; Gutter agreement</button>
+          </div>
+        </span>
       </div>
       <div id="contractDocsMount"><div class="loading">Loading…</div></div>
     </div>
@@ -9487,7 +9498,221 @@ retyped here.</p>
 <tr><td class="k">Contractor signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
 </table>
 `;
-var ROOF_AGREEMENT = buildEstimate('CONSTRUCTION <span>AGREEMENT</span>', ROOF_AGREEMENT_BODY, ROOF_AGREEMENT_TERMS);
+var ROOF_AGREEMENT = buildEstimate('ROOFING CONSTRUCTION <span>AGREEMENT</span>', ROOF_AGREEMENT_BODY, ROOF_AGREEMENT_TERMS);
+/* 730: the other two agreements Cardinal actually sells. Both are transcribed
+   from the shipped print masters - docs/Cardinal_Siding_Contract.pdf page 1 and
+   docs/Cardinal_Gutter_Contract.pdf page 1 - section for section, the same way
+   542 transcribed the roofing one. Nothing here is invented: if a line is not on
+   the paper form it is not in these bodies.
+
+   They deliberately share ROOF_AGREEMENT's markup vocabulary (h2.sec, table.meta,
+   td.k, span.ph, the [BUYER]/[EMAIL]/[STREET]/[CITY]/[STATE]/[ZIP] placeholder
+   names) because prefillClientInfo() fills BY PLACEHOLDER NAME - so both new
+   agreements get client prefill, the price split and the print path for free,
+   with no second pipeline. Same reason the T&C are not retyped: the statutory
+   3-Day Notice text under ORC 1345.23 lives in the printed master, and each
+   trade's master carries ITS OWN Terms - the siding T&C are not the roofing
+   T&C - so each body points at its own. */
+var SIDING_AGREEMENT_TERMS = `<li><b>The Terms and Conditions and both Notice of Cancellation copies are the printed master.</b> They are reproduced verbatim in <b>&#9776; Menu &#8594; Company Documents &#8594; Siding &#8594; Siding Construction Agreement (Master)</b> and are deliberately not retyped here &#8212; the cancellation notice is statutory text under ORC 1345.23. <b>The siding Terms and Conditions are not the roofing ones</b>: clause 2 carries the manufacturer&#8217;s limited lifetime siding warranty and clause 8 excludes deteriorated sheathing, framing, fascia and trim.</li>\n<li>This Agreement, the accompanying Terms and Conditions, and any specification sheet(s) together form the entire agreement between Buyer and Contractor.</li>`;
+var SIDING_AGREEMENT_BODY = `
+<h2 class="sec">Customer Information</h2>
+<table class="meta">
+<tr><td class="k">Date</td><td><span class="ph">[Date]</span></td></tr>
+<tr><td class="k">Buyer</td><td><span class="ph">[BUYER]</span></td></tr>
+<tr><td class="k">Co-buyer</td><td><span class="ph">[CO-BUYER]</span></td></tr>
+<tr><td class="k">Email</td><td><span class="ph">[EMAIL]</span></td></tr>
+<tr><td class="k">Phone</td><td><span class="ph">[PHONE NUMBER]</span></td></tr>
+<tr><td class="k">Street</td><td><span class="ph">[STREET]</span></td></tr>
+<tr><td class="k">City / State / ZIP</td><td><span class="ph">[CITY]</span> &nbsp; <span class="ph">[STATE]</span> &nbsp; <span class="ph">[ZIP]</span></td></tr>
+<tr><td class="k">Primary residence</td><td><b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span></td></tr>
+</table>
+
+<p style="font-size:10pt;">Buyer(s) hereby jointly and severally agrees to purchase the products
+and/or services of Cardinal Roofing &amp; Renovations, LLC (&#8220;Contractor&#8221;) as listed herein,
+in accordance with the terms and conditions described in this Agreement, the accompanying
+<b>Terms and Conditions</b> form, and any accompanying specification sheet(s).</p>
+
+<h2 class="sec">Project Specifications</h2>
+<table class="meta">
+<tr><td class="k">1. Removal &amp; preparation</td><td>A. Remove existing siding &#8212; <span class="ph">[layers]</span> layer(s)<br>B. Inspect &amp; replace damaged sheathing as needed &#8212; $<span class="ph">[rate]</span> per sheet</td></tr>
+<tr><td class="k">&nbsp;&nbsp;&nbsp;Existing exterior</td><td>A. Vinyl &nbsp; B. Wood &nbsp; C. Aluminum / steel &nbsp; D. Fiber cement / other &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">2. House wrap / moisture barrier</td><td>A. Standard house wrap &nbsp; B. Premium house wrap &nbsp; C. Fanfold insulation board &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">3. Siding <span style="font-weight:400;font-size:9pt;">(per manufacturer specs)</span></td><td>A. Brand <span class="ph">[brand]</span><br>B. Profile / style <span class="ph">[profile]</span><br>C. Colour <span class="ph">[colour]</span></td></tr>
+<tr><td class="k">4. Corner posts &amp; trim</td><td>A. Corner post colour <span class="ph">[colour]</span><br>B. Window / door trim colour <span class="ph">[colour]</span><br>C. Wrap windows &amp; doors (aluminum coil) &nbsp; <span class="ph">[yes / no]</span></td></tr>
+<tr><td class="k">5. Soffit</td><td>A. Vented &nbsp; B. Solid &nbsp; <span class="ph">[circle one]</span> &nbsp;&#183;&nbsp; C. Colour <span class="ph">[colour]</span></td></tr>
+<tr><td class="k">6. Fascia</td><td>A. Colour <span class="ph">[colour]</span></td></tr>
+<tr><td class="k">7. Shutters</td><td>A. Remove &amp; reinstall existing &nbsp; B. New shutters &#8212; colour <span class="ph">[colour]</span> &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">8. Accessories</td><td>A. Light blocks <span class="ph">[qty]</span> &nbsp; B. Vent / utility blocks <span class="ph">[qty]</span> &nbsp; C. Dryer &amp; exhaust vents <span class="ph">[qty]</span><br>Extra structure: A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; <span class="ph">[if any]</span></td></tr>
+<tr><td class="k">9. Gutters &amp; downspouts</td><td>A. Remove &amp; replace &nbsp; <span class="ph">[yes / no]</span><br>B. Size 5&#8243; &nbsp; 6&#8243; &nbsp; C. Colour <span class="ph">[colour]</span> &nbsp; D. Gutter guards <span class="ph">[yes / no]</span></td></tr>
+<tr><td class="k">10. Existing layers</td><td><span class="opts" data-opts="layers">Number / type of existing layers</span></td></tr>
+<tr><td class="k">11. Stories / height</td><td>1 &nbsp; 1.5 &nbsp; 2 &nbsp; 2+ &nbsp; <span class="ph">[circle one]</span></td></tr>
+</table>
+
+<h2 class="sec">Warranty System</h2>
+<table class="meta">
+<tr><td class="k">Standard</td><td>Manufacturer limited lifetime warranty &nbsp;&#183;&nbsp; 5-yr workmanship</td></tr>
+<tr><td class="k">Other</td><td>Per the manufacturer program selected on the accompanying estimate</td></tr>
+<tr><td class="k">Warranty program</td><td><span class="ph">[program]</span></td></tr>
+<tr><td class="k">Selected</td><td><span class="ph">[circle one]</span></td></tr>
+</table>
+
+<h2 class="sec">HOA / Authorization</h2>
+<p style="font-size:10.5pt;">HOA approval required: <b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span><br>
+Buyer to obtain required authorization from the HOA and authorities. &nbsp;&nbsp;
+Initials <span class="ph">[__]</span></p>
+
+<h2 class="sec">Project Timeline</h2>
+<p style="font-size:10.5pt;">The anticipated start date is <span class="ph">[n]</span> weeks from the date on
+which all HOA permissions, permits and other contingencies necessary to complete the project are
+obtained, and the anticipated completion date is <span class="ph">[n]</span> weeks from the actual start date.</p>
+
+<h2 class="sec">Notes &amp; Insurance Claim</h2>
+<table class="meta">
+<tr><td class="k">Notes</td><td><div class="descbox"><span class="ph">[notes]</span></div></td></tr>
+<tr><td class="k">Insurance co.</td><td><span class="ph">[INSURANCE CO.]</span></td></tr>
+<tr><td class="k">Claim #</td><td><span class="ph">[CLAIM #]</span></td></tr>
+</table>
+<p style="font-size:10pt;">Buyer(s) acknowledges that Contractor is due any and all monies received
+from any insurance company pursuant to an insurance claim, including overhead and profit, approved
+cost increases, and approved claim supplements. &nbsp;&nbsp; Initials <span class="ph">[__]</span></p>
+
+<h2 class="sec">Payment Structure</h2>
+<table class="items">
+  <thead><tr><th>Payment</th><th>Due</th><th class="price">Amount</th></tr></thead>
+  <tbody>
+    <tr><td>Down payment</td><td>Upon signing this Agreement</td>
+        <td class="price"><span class="ph">[0.00]</span></td></tr>
+    <tr><td>Balance due on completion</td><td>Upon substantial completion</td>
+        <td class="price"><span class="ph">[0.00]</span></td></tr>
+  </tbody>
+  <tfoot><tr><td colspan="2" style="text-align:right;font-weight:800;">CONTRACT PRICE</td>
+    <td class="price" style="font-weight:800;" id="estTotal">
+      <span class="ph" data-cprice="1">[0.00]</span></td></tr></tfoot>
+</table>
+<p style="font-size:10.5pt;">Cash on completion &nbsp;or&nbsp; financed: $<span class="ph">[0.00]</span>
+per month for <span class="ph">[n]</span> months.</p>
+
+<h2 class="sec">Acknowledgement &amp; Right to Cancel</h2>
+<p style="font-size:10pt;">Buyer(s) hereby acknowledges that Buyer(s) has read this Agreement and
+the accompanying Terms and Conditions, understands the terms of this Agreement, has received a
+completed, signed and dated copy of this Agreement on the date first written above, and was orally
+advised of his/her right to cancel this transaction.</p>
+<p style="font-size:10pt;"><b>You, the buyer, may cancel this transaction at any time prior to
+midnight of the third business day after the date of this transaction.</b> See the two attached
+<i>Notice of Cancellation</i> copies for an explanation of that right.</p>
+<p style="font-size:9.5pt;color:#666;">The Terms and Conditions and both Notice of Cancellation
+copies are the printed master &#8212; <b>&#9776; Menu &#8594; Company Documents &#8594; Siding
+&#8594; Siding Construction Agreement (Master)</b>. They are reproduced there verbatim and are not
+retyped here.</p>
+
+<table class="meta" style="margin-top:14px;">
+<tr><td class="k">Buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Co-buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Contractor representative</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>
+<tr><td class="k">Contractor signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+</table>
+`;
+var SIDING_AGREEMENT = buildEstimate('SIDING CONSTRUCTION <span>AGREEMENT</span>', SIDING_AGREEMENT_BODY, SIDING_AGREEMENT_TERMS);
+var GUTTER_AGREEMENT_TERMS = `<li><b>The Terms and Conditions and both Notice of Cancellation copies are the printed master.</b> They are reproduced verbatim in <b>&#9776; Menu &#8594; Company Documents &#8594; Gutters &#8594; Gutter Construction Agreement (Master)</b> and are deliberately not retyped here &#8212; the cancellation notice is statutory text under ORC 1345.23.</li>\n<li>This Agreement, the accompanying Terms and Conditions, and any specification sheet(s) together form the entire agreement between Buyer and Contractor.</li>`;
+var GUTTER_AGREEMENT_BODY = `
+<h2 class="sec">Customer Information</h2>
+<table class="meta">
+<tr><td class="k">Date</td><td><span class="ph">[Date]</span></td></tr>
+<tr><td class="k">Buyer</td><td><span class="ph">[BUYER]</span></td></tr>
+<tr><td class="k">Co-buyer</td><td><span class="ph">[CO-BUYER]</span></td></tr>
+<tr><td class="k">Email</td><td><span class="ph">[EMAIL]</span></td></tr>
+<tr><td class="k">Phone</td><td><span class="ph">[PHONE NUMBER]</span></td></tr>
+<tr><td class="k">Street</td><td><span class="ph">[STREET]</span></td></tr>
+<tr><td class="k">City / State / ZIP</td><td><span class="ph">[CITY]</span> &nbsp; <span class="ph">[STATE]</span> &nbsp; <span class="ph">[ZIP]</span></td></tr>
+<tr><td class="k">Primary residence</td><td><b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span></td></tr>
+</table>
+
+<p style="font-size:10pt;">Buyer(s) hereby jointly and severally agrees to purchase the products
+and/or services of Cardinal Roofing &amp; Renovations, LLC (&#8220;Contractor&#8221;) as listed herein,
+in accordance with the terms and conditions described in this Agreement, the accompanying
+<b>Terms and Conditions</b> form, and any accompanying specification sheet(s).</p>
+
+<h2 class="sec">Project Specifications</h2>
+<table class="meta">
+<tr><td class="k">1. Removal &amp; disposal</td><td>A. Remove existing gutters &nbsp; <span class="ph">[yes / no]</span><br>B. Remove existing downspouts &nbsp; <span class="ph">[yes / no]</span><br>C. Haul away &amp; dispose debris &nbsp; <span class="ph">[yes / no]</span></td></tr>
+<tr><td class="k">2. Gutter profile &amp; size</td><td>A. K-style &nbsp; B. Half-round &nbsp; C. Box &nbsp; <span class="ph">[circle one]</span><br>5&nbsp;in. &nbsp; 6&nbsp;in. &nbsp; 7&nbsp;in. &nbsp; <span class="ph">[circle one]</span></td></tr>
+<tr><td class="k">3. Gutter material</td><td>A. Aluminum .027 &nbsp; B. Aluminum .032 &nbsp; C. Steel &nbsp; D. Copper &nbsp; E. Other <span class="ph">[other]</span></td></tr>
+<tr><td class="k">4. Gutter colour</td><td><span class="ph">[colour]</span></td></tr>
+<tr><td class="k">5. Hangers</td><td>Hidden hangers &nbsp; <span class="ph">[yes / no]</span></td></tr>
+<tr><td class="k">6. Miters &amp; seams</td><td>A. Strip miters &nbsp; B. Box miters &nbsp; C. Hand-mitered &nbsp; D. Sealed &nbsp; <span class="ph">[circle all that apply]</span></td></tr>
+<tr><td class="k">7. Downspouts</td><td>A. 2&#215;3 &nbsp; B. 3&#215;4 &nbsp; C. Round &nbsp; <span class="ph">[circle one]</span><br>Colour <span class="ph">[colour]</span> &nbsp;&#183;&nbsp; Qty <span class="ph">[qty]</span></td></tr>
+<tr><td class="k">8. Downspout discharge</td><td>A. Splash blocks &nbsp; B. Extensions &nbsp; C. Tie to existing &nbsp; <span class="ph">[circle one]</span><br>Notes <span class="ph">[notes]</span></td></tr>
+<tr><td class="k">9. Gutter protection &#8212; ShurFlo</td><td>A. ShurFlo Flat &nbsp; B. ShurFlo X (ventilation) &nbsp; C. ShurFlo Step-Down (Quick-Screw hangers)<br>Finish: mill &nbsp; black &nbsp; white &nbsp; copper &nbsp;&#183;&nbsp; 5&nbsp;in. &nbsp; 6&nbsp;in. &nbsp; <span class="ph">[circle one]</span><br><span style="font-size:9pt;color:#666;">Panels install into the gutter, not under the roof shingles, and do not void the roof warranty. Carries a 25-year transferable manufacturer warranty from US Aluminum.</span><br>&#9633; No gutter protection on this job</td></tr>
+<tr><td class="k">10. Fascia &amp; soffit</td><td>A. Fascia wrap &#8212; colour <span class="ph">[colour]</span><br>B. Replace fascia board &nbsp; <span class="ph">[yes / no]</span> &nbsp; C. Soffit repair / replace &nbsp; <span class="ph">[yes / no]</span></td></tr>
+<tr><td class="k">11. Wood replacement</td><td>Inspect fascia and replace rotted wood as needed &#8212; rate $<span class="ph">[rate]</span> per board (billed as an extra)</td></tr>
+<tr><td class="k">12. Extra structure</td><td>A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; D. Porch / patio cover &nbsp; <span class="ph">[if any]</span></td></tr>
+<tr><td class="k">13. Access &amp; height</td><td>Stories <span class="ph">[n]</span> &nbsp;&#183;&nbsp; Steep / limited access &nbsp; <span class="ph">[yes / no]</span><br><span style="font-size:9pt;color:#666;">Not responsible for pre-existing fascia rot or damage concealed behind existing gutters, or for re-attachment of satellite dishes and wiring.</span></td></tr>
+</table>
+
+<h2 class="sec">Warranty</h2>
+<table class="meta">
+<tr><td class="k">Standard</td><td>5-yr Cardinal workmanship</td></tr>
+<tr><td class="k">Upgraded</td><td>10-yr Cardinal workmanship</td></tr>
+<tr><td class="k">Selected</td><td><span class="ph">[circle one]</span></td></tr>
+</table>
+
+<h2 class="sec">HOA / Authorization</h2>
+<p style="font-size:10.5pt;">HOA approval required: <b>Yes</b> &nbsp;/&nbsp; <b>No</b> &nbsp; <span class="ph">[circle one]</span><br>
+Buyer to obtain required authorization from the HOA and authorities. &nbsp;&nbsp;
+Initials <span class="ph">[__]</span></p>
+
+<h2 class="sec">Project Timeline</h2>
+<p style="font-size:10.5pt;">The anticipated start date is <span class="ph">[n]</span> weeks from the date on
+which all HOA permissions, permits and other contingencies necessary to complete the project are
+obtained, and the anticipated completion date is <span class="ph">[n]</span> weeks from the actual start date.</p>
+
+<h2 class="sec">Notes &amp; Insurance Claim</h2>
+<table class="meta">
+<tr><td class="k">Notes</td><td><div class="descbox"><span class="ph">[notes]</span></div></td></tr>
+<tr><td class="k">Insurance co.</td><td><span class="ph">[INSURANCE CO.]</span></td></tr>
+<tr><td class="k">Claim #</td><td><span class="ph">[CLAIM #]</span></td></tr>
+</table>
+<p style="font-size:10pt;">Buyer(s) acknowledges that Contractor is due any and all monies received
+from any insurance company pursuant to an insurance claim, including overhead and profit, approved
+cost increases, and approved claim supplements. &nbsp;&nbsp; Initials <span class="ph">[__]</span></p>
+
+<h2 class="sec">Payment Structure</h2>
+<table class="items">
+  <thead><tr><th>Payment</th><th>Due</th><th class="price">Amount</th></tr></thead>
+  <tbody>
+    <tr><td>Down payment</td><td>Upon signing this Agreement</td>
+        <td class="price"><span class="ph">[0.00]</span></td></tr>
+    <tr><td>Balance due on completion</td><td>Upon substantial completion</td>
+        <td class="price"><span class="ph">[0.00]</span></td></tr>
+  </tbody>
+  <tfoot><tr><td colspan="2" style="text-align:right;font-weight:800;">CONTRACT PRICE</td>
+    <td class="price" style="font-weight:800;" id="estTotal">
+      <span class="ph" data-cprice="1">[0.00]</span></td></tr></tfoot>
+</table>
+<p style="font-size:10.5pt;">Cash on completion &nbsp;or&nbsp; financed: $<span class="ph">[0.00]</span>
+per month for <span class="ph">[n]</span> months.</p>
+
+<h2 class="sec">Acknowledgement &amp; Right to Cancel</h2>
+<p style="font-size:10pt;">Buyer(s) hereby acknowledges that Buyer(s) has read this Agreement and
+the accompanying Terms and Conditions, understands the terms of this Agreement, has received a
+completed, signed and dated copy of this Agreement on the date first written above, and was orally
+advised of his/her right to cancel this transaction.</p>
+<p style="font-size:10pt;"><b>You, the buyer, may cancel this transaction at any time prior to
+midnight of the third business day after the date of this transaction.</b> See the two attached
+<i>Notice of Cancellation</i> copies for an explanation of that right.</p>
+<p style="font-size:9.5pt;color:#666;">The Terms and Conditions and both Notice of Cancellation
+copies are the printed master &#8212; <b>&#9776; Menu &#8594; Company Documents &#8594; Gutters
+&#8594; Gutter Construction Agreement (Master)</b>. They are reproduced there verbatim and are not
+retyped here.</p>
+
+<table class="meta" style="margin-top:14px;">
+<tr><td class="k">Buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Co-buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Contractor representative</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>
+<tr><td class="k">Contractor signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+</table>
+`;
+var GUTTER_AGREEMENT = buildEstimate('GUTTER CONSTRUCTION <span>AGREEMENT</span>', GUTTER_AGREEMENT_BODY, GUTTER_AGREEMENT_TERMS);
 var INVOICE_BODY =
   '<div class="secthead">INVOICE</div>' +
   '<table style="width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:13.5px;">' +
@@ -10022,6 +10247,17 @@ function docKind(title){
   if(/^gutter estimate/i.test(t)) return { type:'Estimate', trade:'Gutters' };
   if(/^repair estimate/i.test(t)) return { type:'Estimate', trade:'Repair' };
   if(/^estimate/i.test(t))        return { type:'Estimate', trade:'Roofing' };
+  /* 730: three trades share the Contracts list now, so the Trade column has to
+     answer instead of printing an em-dash for all of them. It reads the title the
+     creator wrote (`Contract \u2014 Siding \u2014 client`) rather than a new column,
+     so docKind and isContractTitle stay on ONE source of truth. Bounded to the
+     SECOND segment on purpose: a client called "Siding Supply Co" must not be
+     read as a siding job, and every contract written before this build still
+     falls through to the em-dash, which is the honest answer for them. */
+  var _ctrade = t.match(/^contract\s*(?:\u2014|-)\s*(roofing|siding|gutters?)\s*(?:\u2014|-)/i);
+  if(_ctrade) return { type:'Contract',
+                       trade: /^gutter/i.test(_ctrade[1]) ? 'Gutters'
+                            : (/^siding/i.test(_ctrade[1]) ? 'Siding' : 'Roofing') };
   if(/^contract/i.test(t))        return { type:'Contract', trade:'\u2014' };
   if(/^invoice/i.test(t))         return { type:'Invoice', trade:'\u2014' };
   return { type:'Inspection', trade:'Roofing' };
@@ -19161,12 +19397,30 @@ async function createWorkOrder(pr, crew, opts){
   }
 }
 
-async function createContractForCurrent(){
+/* 730: the trade registry, deliberately the same shape as EST_TYPES above -
+   { key: { label, tpl } } - because the estimate side already solved "one button,
+   several trade templates" and a second mechanism beside an existing one is a bug
+   with a delay on it.
+
+   The saved title is `Contract - <Trade> - <client>`. That keeps isContractTitle
+   (/^contract/i) matching UNCHANGED, so nothing else has to grow: not the
+   predicate, not renderProjectDocs' insp bucket (defined by NEGATION of the three
+   predicates), not the approve-queue suppression, not isContractSigned. Titling
+   these `Siding Contract - x` the way estimates are titled would have forced the
+   regex to grow and put every unmatched contract silently into the Inspections
+   bucket. */
+var CONTRACT_TYPES = {
+  roof:    { label:'Roofing', tpl:function(){ return ROOF_AGREEMENT; } },
+  siding:  { label:'Siding',  tpl:function(){ return SIDING_AGREEMENT; } },
+  gutters: { label:'Gutters', tpl:function(){ return GUTTER_AGREEMENT; } }
+};
+async function createContractForCurrent(tradeKey){
   var pr = currentProject;
   if(!pr) return;
+  var kind = CONTRACT_TYPES[tradeKey] || CONTRACT_TYPES.roof;
   try{
     var price = projectValue(pr);
-    var tpl = prefillUserInfo(prefillClientInfo(ROOF_AGREEMENT, pr));
+    var tpl = prefillUserInfo(prefillClientInfo(kind.tpl(), pr));
     if(price > 0){
       var half = price / 2;
       var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
@@ -19174,13 +19428,28 @@ async function createContractForCurrent(){
       tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(half));
       tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(price - half));
     }
-    var id = await db.create('Contract \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
+    var id = await db.create('Contract \u2014 ' + kind.label + ' \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
     await reload();
     await openEditor(id);
   }catch(err){ showError('Could not create contract: ' + (err.message || err)); }
 }
+/* the toggle + delegated pick, copied from pEstMenu rather than reinvented */
 var __pNewContractBtn = document.getElementById('pNewContractBtn');
-if(__pNewContractBtn) __pNewContractBtn.addEventListener('click', createContractForCurrent);
+var __pContractMenu = document.getElementById('pContractMenu');
+if(__pNewContractBtn && __pContractMenu){
+  __pNewContractBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    __pContractMenu.style.display = __pContractMenu.style.display === 'block' ? 'none' : 'block';
+  });
+  document.addEventListener('click', function(){ __pContractMenu.style.display = 'none'; });
+  __pContractMenu.addEventListener('click', function(e){
+    var opt = e.target.closest('.estopt');
+    if(!opt || !currentProject) return;
+    e.stopPropagation();
+    __pContractMenu.style.display = 'none';
+    createContractForCurrent(opt.getAttribute('data-ctpl'));
+  });
+}
 var __contractDocsMount = document.getElementById('contractDocsMount');
 if(__contractDocsMount) __contractDocsMount.addEventListener('click', handleDocAction);
 var __pNewWorkOrderBtn = document.getElementById('pNewWorkOrderBtn');
@@ -19213,7 +19482,9 @@ async function approveAndContract(prId){
       tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(half));
       tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(price - half));
     }
-    var id = await db.create('Contract \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
+    /* 730: still the roofing agreement — approving from the pipeline carries no
+       trade — but it now says so, because three trades share this list. */
+    var id = await db.create('Contract \u2014 Roofing \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
     await reload();
     await openEditor(id);
     alert('Contract created and prefilled. Review the scope, then have the client sign \u2014 in person (\u270D\uFE0F) or by \uD83D\uDD17 share link. The project moves to APPROVED when the contract is signed.');
@@ -37776,6 +38047,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:730, d:'2026-08-12', t:'Siding and gutter contracts, and the roofing one says Roofing',
+s:'On a client, + New contract only ever built the ROOFING agreement, and the page it printed just said \u201CConstruction Agreement\u201D \u2014 nothing on it told you which trade. The siding and gutter agreements existed only as blank print masters under Menu \u2192 Company Documents, nowhere near a client. Now + New contract asks which one: Roofing, Siding or Gutters. Each builds that trade\u2019s real Construction Agreement, transcribed section for section from your own printed form \u2014 siding\u2019s eleven sections from removal and house wrap through soffit, fascia, shutters and stories, gutter\u2019s thirteen from profile and material through ShurFlo, fascia wrap and access. Each is prefilled with the buyer, address, phone, email and the price split, exactly like the roofing one, and each is headed with its trade so you can tell them apart in the list and on paper. The Terms &amp; Conditions and both 3-Day Notice of Cancellation copies are still the printed master \u2014 they are statutory text and each trade has its own, so each agreement points at the right one rather than retyping it.' },
 { b:729, d:'2026-08-12', t:'A proper loading screen instead of a half-drawn page',
 s:'On a weak signal the app took about five seconds to arrive, and for most of that you were looking at a half-drawn screen \u2014 a black page with one stray white strip \u2014 which looks like it has crashed. You now get the spinning Cardinal mark and \u201CLoading\u2026\u201D from the moment the page appears until the app is actually ready, then it lifts straight into the app. There is deliberately no percentage bar: we cannot know how long the rest of the file will take, and a made-up number is worse than an honest spinner. If anything goes wrong while opening, the loading screen gets out of the way on its own rather than trapping you behind it.' },
 { b:728, d:'2026-08-11', t:'A money button cannot be tapped twice into two payments',
