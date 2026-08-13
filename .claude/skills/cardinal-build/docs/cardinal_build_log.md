@@ -15658,3 +15658,50 @@ Theo's hands, so the control is gone. Double-tap to type a caption is untouched;
 present). ⚠️ Two harness faults first, both the TEST's: it called `openGallery()`, which does not exist —
 the opener is `openGalleryMode(mode)` — and the `typeof` guard swallowed it, so every visibility probe read
 a hidden view and reported false; and a source assertion kept the old variable name after the rewrite.
+
+## build 790 — 13 Aug 2026 — the Overview is one screen, not alternating slabs
+
+Theo: *"Do both"* — the white cards, and the estimate photos.
+
+### ✅ CORRECTION: the estimate photos are NOT broken. I was wrong at 788.
+
+788's report said three estimate photos were dead alongside the four cover photos. **The stored URL is dead;
+the app never uses it.** `photoPathOf()` already derives the storage path out of a retired
+`/object/public/photos/...` link and signs it — a repair shipped earlier and verified then against all 215
+stored photos. Re-proved here by extracting the **shipped** function text and running it against the three
+**real** rows from production: 3/3 return exactly the `storage_path` the database holds for those photos.
+`estPhotoUrl()` prefers the signed URL. **Nothing to fix.** The only real casualties were the four cover
+photos, retired at 788.
+
+One small hardening did ship: `estPhotoUrl()` fell back to `p.url` when signing had not finished, and that
+URL is known to 403 — a guaranteed broken-image icon for a moment. It now renders nothing in that window.
+Legacy base64 rows (where `photoPathOf` returns null) still fall through exactly as before.
+
+### The white cards
+
+Measured at 402px: **nine** elements painting a light ground on the dark profile — `.dbmoney`, `.dbrow`,
+`.acxsec` ×3, `.acxsel` ×3, `.dbmap`.
+
+⚠️ **The treatment already existed, for a different CRM.** `body.claim-insurance` carries a complete dark
+version of exactly these cards (L611–655) down to every inner ink. This build **mirrors that selector list**
+for retail with `--rbe-*` tokens, and uses the same gradient `.projinfo` uses so the cards match the client
+card rebuilt at 788. Scoped three ways — `:not([data-theme="rb-light"])`, `:not(.claim-insurance)`,
+`:not(.claim-community)` — asserted across all 24 selector lines.
+
+**Result, measured:** dark **10 failures → 0**; light **10 → 10**, identical to baseline. Ten of those were
+*pre-existing* dark-mode failures this build fixes as a side effect (Job Value 3.86→4.82, Directions
+1.55→8.22, five field labels 4.11→4.82).
+
+⚠️ **THE MEASURING RIG WAS WRONG FIRST, AND IT NEARLY COST THE BUILD.** The contrast probe walked ancestors
+to the page root and scored against the worst, so dark text on a **white** card over a black page read
+**1.15:1** — it reported 16 perfectly readable elements as failures and would have justified "fixing" text
+that was fine. Once an ancestor background is **fully opaque, nothing behind it is visible**: composite
+outward and STOP there. Gradient stops and translucent layers still stack, per the trap CLAUDE.md names —
+this is that trap's other half.
+
+⚠️ **Mirroring the insurance list was NOT enough, and only a full sweep caught it.** Three elements carry a
+hardcoded light-era ink and are absent from that list — `.payringinner` (#1b1b1b), `.locaddr` (#2b2b2b),
+`.dbaddr` (#1e2432) — so the donut percentage fell to **1.46:1** and the address under the map to
+**1.08:1**. And `.dbringin` paints a **white circle** for the donut's hole, so the card-level ink landed
+light-on-white; the hole now takes the card's ground. Found by scoring **every text node** in the repainted
+cards, not the ones I expected to matter. That sweep is the whole defence against a partial pass.

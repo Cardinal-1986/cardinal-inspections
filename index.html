@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 789 &#8212; The Photo Album toolbar is two buttons instead of five: the plus opens CompanyCam, Take photo stays, and the Inspection and Report actions appear in the selection bar when you check a photo</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 790 &#8212; The white cards on a client profile are dark like the rest of the page, so the Overview reads as one screen instead of alternating slabs</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39522,6 +39522,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:790, d:'2026-08-13', t:'The Overview is one screen, not alternating slabs',
+s:'A retail client profile was half black and half white \u2014 Job Value, Payment Information, Location, Job Details, Assigned To and the three dropdowns were all white cards sitting on a black page, which is most of what made the screen feel scattered. They are dark now, using the same card shade as the client card at the top, so the Overview reads as one screen. Nothing was invented for it: the insurance side of the app has had exactly this treatment for months, down to which piece of text takes which shade, and this is the same list applied to retail. Light mode is untouched, and so are the insurance and community profiles, which have their own colours. Every piece of text on those cards was measured against its new background in both themes.' },
 { b:789, d:'2026-08-13', t:'The Photo Album toolbar, cut to two buttons',
 s:'The Photo Album toolbar was five buttons stacked in three rows. It is two now. THE PLUS OPENS COMPANYCAM, so the separate From CompanyCam button is gone \u2014 for admins, that is; a rep\u2019s plus still opens their own phone, because CompanyCam refuses anyone who is not an admin and a plus button that did nothing for the crew would be worse than the mess. TAKE PHOTO is unchanged. THE TWO BIG RED BUTTONS have moved: Add checked to Inspection Photos and Transfer checked to report were always duplicates of the selection bar that already slides up when you check a photo, so they are only there now \u2014 check something and the bar appears with To Inspection, To Report, move to a section, save and clear. THE ORANGE BALL ON EACH PHOTO IS GONE. It was an AI caption button and it could not work: the caption service only accepts photographs sent as raw data, and every photo taken since the storage went private is stored as a file instead. Double-tapping a photo to type your own caption still works, and always did.' },
 { b:788, d:'2026-08-13', t:'The client card, lined up',
@@ -44457,7 +44459,14 @@ view.querySelectorAll('.desc-input').forEach(autoGrow);
 var estPhotoUrls = {};
 function estPhotoUrl(p){
 var k = (typeof photoPathOf === 'function') ? photoPathOf(p) : null;
-return (k && estPhotoUrls[k]) || (p && p.url) || '';
+if(k && estPhotoUrls[k]) return estPhotoUrls[k];
+/* 790: when photoPathOf found a storage path, p.url is the RETIRED public link
+   for a bucket that is private — it answers 403, so falling back to it painted
+   a broken-image icon for the moment before signing finished. Render nothing
+   instead. A path of null means a legacy base64 row, and those still fall
+   through to p.url/p.data exactly as before. */
+if(k) return '';
+return (p && (p.url || p.data)) || '';
 }
 function paintEstPhotoUrls(){
 if(!view || !state) return;
@@ -70755,6 +70764,89 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
   #projectView .hph,
   #projectView .hem,
   #projectView .projmeta .mrow{ grid-template-columns:66px minmax(0,1fr); }
+}
+</style>
+
+<style id="cr-profilecards-styles">
+/* ==========================================================================
+   THE OVERVIEW CARDS, IN THE DARK  — build 790
+   Theo: "On Cardinal it's just scattered everywhere and in orderly."
+
+   Nine elements painted white or cream on the black profile. This gives retail
+   the same dark treatment insurance has had since the Cardinal Truth work, so
+   the page reads as one surface instead of alternating slabs.
+
+   The card ground is deliberately the SAME gradient .projinfo uses, so these
+   line up with the client card rebuilt at 788 rather than introducing a third
+   card style.
+
+   SELECTOR LIST MIRRORED FROM `body.claim-insurance` (L611-655). If you add an
+   ink there, add it here. A half-done pass is worse than none: it leaves
+   thirteen of fourteen elements right, which reads as a style choice rather
+   than a bug.
+   ========================================================================== */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec),
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbmoney,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbrow{
+  background:linear-gradient(180deg,var(--rbe-bg1,#2e333b),var(--rbe-bg2,#262a31));
+  border:1px solid var(--rbe-line2,#2b2b33);
+  color:var(--rbe-ink,#cfd6df);
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbrow:active{
+  background:var(--rbe-panel,#16161B);
+}
+
+/* the inks inside, one for one with the insurance list */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbmoney b,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .acxbody,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .ackv > div,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .acxtrs label,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .dbassign,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .dbrep b,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .dbprim b,
+/* 790: these three carry a HARDCODED light-era ink (#1b1b1b, #2b2b2b, #1e2432)
+   and are not in the insurance list, so mirroring it alone left them dark ink
+   on the new dark card - the donut percentage fell to 1.46:1 and the address
+   under the map to 1.08:1. Caught by sweeping EVERY text node in the repainted
+   cards rather than the ones I expected to matter. That sweep is the whole
+   defence against a partial pass. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .payringinner,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .locaddr,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbaddr{
+  color:var(--rbe-head,#ffffff);
+}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbmoney small,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .ackv > span,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .axnote,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .dbprim small{
+  color:var(--rbe-mute,#9aa0a8);
+}
+/* links: --rbe-acclt is the pair the phone number already uses, measured at
+   8.22:1 on the dark card and 4.64:1 on the light one. Cardinal red would have
+   been the obvious pick and fails on this ground. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .ackv a,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) a[href^="https://maps"],
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsec:not(.rvsec) .rt2 a{
+  color:var(--rbe-acclt,#b9d3ec);
+}
+
+/* the dropdowns, which were three more white rectangles */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .acxsel{
+  background:var(--rbe-panel2,#101015);
+  border:1px solid var(--rbe-line2,#2b2b33);
+  color:var(--rbe-head,#ffffff);
+}
+/* The donut's hole is a WHITE circle (.dbringin{background:#fff}), so the
+   card-level ink above landed light-on-white at 1.46:1. The hole takes the
+   card's own ground instead, which also makes the donut read as a ring rather
+   than a white disc floating on a dark card. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbringin{
+  background:var(--rbe-bg2,#262a31);
+  color:var(--rbe-head,#ffffff);
+}
+/* the map's own placeholder ground, cream since it was written */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbmap{
+  background:var(--rbe-panel2,#101015);
 }
 </style>
 </body>
