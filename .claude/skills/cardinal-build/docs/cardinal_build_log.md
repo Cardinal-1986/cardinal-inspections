@@ -15230,6 +15230,33 @@ job SCHEDULED?" button** — the honest form is `orig.count(...) + 1`. And `__ap
 counts **3**, not 2: the function's own DEFINITION matches the call pattern.
 
 
+**784** PHASE 3 — the 11:00 digest chases estimates. It reported the calendar and nothing else, so an
+estimate could go out and sit unanswered indefinitely with nothing anywhere saying so. Live at the time of
+writing: **4 sent estimates aged 12–17 days, $71,846 between them**, all theo's, and not one line about them
+anywhere in the app or the mail.
+
+Each rep now gets their own list — client, amount, and days since it was last touched — for anything sent
+more than `DIGEST_STALE_DAYS` (default 5) ago. Admins get the team's.
+
+⚠️ **The load-bearing change is the EARLY RETURN.** `if (!appts.length) return;` sat above everything, so a
+day with no appointments sent nothing at all — which is precisely the morning a rep has time to chase an
+estimate. Estimates are now fetched BEFORE that gate, and the gate needs both halves empty. The estimates
+query is wrapped so an outage there still lets the schedule half send.
+
+`updated_at` is the clock, and the comment says why: **the table has no `sent_at`**, so this is "last
+touched" and editing an estimate legitimately restarts it. Adding a real `sent_at` is a migration plus an
+app write — deliberately not smuggled into this build.
+
+Also: subjects go through one `subjectFor()` so the three cases cannot drift, with **no emoji** (the 772/773
+rule for outbound subjects). That fixed a pre-existing inconsistency the negative control surfaced — the old
+team-schedule subject never said "Cardinal" at all.
+
+⚠️ **`gate_784` executes the REAL handler with `global.fetch` stubbed** rather than re-implementing it, which
+is the only way to test a serverless function's composition without sending mail. Nothing leaves the machine.
+**Not verified in production, and deliberately so: hitting `/api/digest` sends real email to theo, joan and
+the reps.** It will first run on the next cron.
+
+
 **Gates**: `gate_766` 38, `gate_767` 54, `gate_768` 65, `gate_769` 16, `gate_770_history` 1, `gate_771` 31,
 **`gate_776` 14 (three Chromium runs — happy / slow-save / failed-write; RED on 775, where the slow save
 produced ZERO dialogs and the failed write still claimed success)**,
