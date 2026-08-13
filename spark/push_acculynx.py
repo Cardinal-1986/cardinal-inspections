@@ -323,10 +323,21 @@ def dig_contact(rec):
 
 def dig_address(rec):
     """street/suite/city/state/zip plus the single display line."""
-    for holder in (rec.get('detail') or {}, rec.get('job') or {},
+    # ⚠ locationAddress FIRST, and it is the one that actually fires: the live
+    # API puts the job-site address there, nested inside the job — not as bare
+    # street1/city keys on the job itself. Without it every one of the 166
+    # imported clients lands with a completely blank address, which the old
+    # fixtures could not show because they carried a flat `address` key that no
+    # real record has. The contact's mailingAddress is the last resort, since a
+    # roofer needs the roof's address, not where the bill goes.
+    contact0 = ((rec.get('contacts') or [{}])[0] or {}) if rec.get('contacts') else {}
+    for holder in ((rec.get('job') or {}).get('locationAddress') or {},
+                   (rec.get('detail') or {}).get('locationAddress') or {},
+                   rec.get('detail') or {}, rec.get('job') or {},
                    (rec.get('detail') or {}).get('jobSiteAddress') or {},
                    (rec.get('detail') or {}).get('address') or {},
-                   (rec.get('job') or {}).get('address') or {}):
+                   (rec.get('job') or {}).get('address') or {},
+                   (contact0.get('detail') or {}).get('mailingAddress') or {}):
         if not isinstance(holder, dict):
             continue
         a = holder.get('address') if isinstance(holder.get('address'), dict) else holder

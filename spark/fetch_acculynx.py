@@ -20,9 +20,13 @@ THE THREE TRAPS THIS CODE IS SHAPED AROUND (all live-verified elsewhere)
        Every milestone is swept twice — default and assignment=unassigned —
        and the results unioned by job id. Skipping this silently under-counts
        the client base, which is the worst possible failure for an export.
-    2. /jobs pages by RECORD OFFSET (recordStartIndex). Other endpoints page
-       by page number. This script only pages /jobs, asserts forward progress
-       on every page, and dies loudly if a page ever repeats.
+    2. /jobs pages by RECORD OFFSET, and the parameter is pageStartIndex.
+       ⚠ CORRECTED 13 Aug 2026 against Cardinal's live account: the name is
+       NOT recordStartIndex. An unknown parameter is IGNORED rather than
+       refused, so the wrong name returns page 1 forever with HTTP 200 —
+       the quietest possible failure. This script asserts forward progress
+       on every page and dies loudly if a page ever repeats.
+       Measured: pageStartIndex=1 shifts the window by exactly one record.
     3. Contact emails/phones come back as {id,_link} REFS unless you ask for
        ?includes=emailAddress,phoneNumber. Asked for, always.
 
@@ -59,7 +63,12 @@ import argparse, json, os, re, sys, time, urllib.error, urllib.parse, urllib.req
 
 API = 'https://api.acculynx.com/api/v2'
 UA = 'cardinal-migration-fetch/1.0'
-PAGE_SIZE = 100
+# ⚠ 25 is the API's own ceiling on /jobs, not a politeness setting. Anything
+# larger is refused outright: HTTP 400 "Page Size must not be greater than 25."
+# Measured 13 Aug 2026 — /jobs 400s at 50, while /users and /contacts allow 50
+# and sub-resources allow 200. This value governs the /jobs sweep only, so it
+# is safe at the strictest of those. Raising it fails on the very first call.
+PAGE_SIZE = 25
 # 10 req/s per key is the stated limit; ~8/s is the pace a production
 # integration settled on after living with 429s.
 PACE_S = 0.13
@@ -95,8 +104,14 @@ def throttle():
     _last_call[0] = time.time()
 
 
-def get(path, key, params=None, tries=5, optional=False):
+def get(path, key, params=None, tries=5, optional=False, end_of_listing_ok=False):
     """GET with the fatal-vs-transient split fetch_companycam.py uses.
+
+    end_of_listing_ok=True is for paged sweeps: /jobs and /users answer HTTP
+    416 for a pageStartIndex at or past the record count, rather than an empty
+    page. That is a normal end-of-listing, not a failure, so it returns None
+    and lets the caller stop. (/contacts and the sub-resources answer 200 with
+    an empty list instead — measured 13 Aug 2026.)
 
     optional=True is for per-job sub-resources: 204/404/405 mean 'this job has
     no such thing' and return None instead of dying. 401 is always fatal (dead
@@ -131,6 +146,8 @@ def get(path, key, params=None, tries=5, optional=False):
                 pass
             if e.code == 401:
                 die('AccuLynx refused the key (401). %s' % scrub(body, key))
+            if end_of_listing_ok and e.code == 416:
+                return None
             if optional and e.code in (204, 403, 404, 405, 410):
                 return ('__403__' if e.code == 403 else None)
             if e.code == 403:
@@ -205,17 +222,22 @@ def list_job_ids(key, milestones):
             start, prev_first = 0, None
             while True:
                 params = {'pageSize': PAGE_SIZE, 'milestones': m,
-                          'recordStartIndex': start}
+                          'pageStartIndex': start}
                 if assignment:
                     params['assignment'] = assignment
-                body = get('/jobs', key, params)
+                # A start index past the end answers 416, not an empty page.
+                # The count check at the bottom of this loop normally breaks
+                # first, so this is belt-and-braces for a listing that ever
+                # omits `count` — without it, one 416 kills the whole export
+                # at the tail of a sweep.
+                body = get('/jobs', key, params, end_of_listing_ok=True)
                 got = items_of(body)
                 if not got:
                     break
                 first = jid(got[0])
                 if first is not None and first == prev_first:
                     die('pagination is not progressing on /jobs (milestone %s, '
-                        'start %d) — the recordStartIndex unit assumption is '
+                        'start %d) — the pageStartIndex unit assumption is '
                         'wrong for this account. Stop and re-probe.' % (m, start))
                 prev_first = first
                 for j in got:
@@ -228,6 +250,59 @@ def list_job_ids(key, milestones):
                     break
         print('  %-10s → running union %d' % (m, len(seen)))
     return seen
+
+
+_USERS = {}
+
+
+def user_map(key):
+    """The company roster, by user id, fetched ONCE and cached.
+
+    ⚠ Representatives come back as {user:{id,_link}} REFS — same trap as the
+    contact emails/phones, and it bites harder: dig_rep() in push_acculynx.py
+    reads an email off that node, finds none, and the job silently lands on
+    the admin. With all 8 AccuLynx users on the Cardinal roster, that would
+    have put every one of the 166 imported jobs on Theo instead of its real
+    salesperson. The roster is tiny and fixed, so one call resolves them all."""
+    if _USERS:
+        return _USERS
+    start = 0
+    while True:
+        body = get('/users', key, {'pageSize': 25, 'pageStartIndex': start},
+                   end_of_listing_ok=True)
+        got = items_of(body)
+        if not got:
+            break
+        for u in got:
+            uid = pick(u, 'id', 'userId')
+            if uid:
+                _USERS[str(uid)] = u
+        start += len(got)
+        total = count_of(body)
+        if total is not None and start >= total:
+            break
+    return _USERS
+
+
+def resolve_user(node, users):
+    """Swap a {user:{id,_link}} ref for the full user object. Handles the
+    sales-owner shape too, where the node IS the user rather than wrapping it."""
+    if not isinstance(node, dict):
+        return node
+    u = node.get('user')
+    if isinstance(u, dict):
+        full = users.get(str(u.get('id')))
+        if full:
+            merged = dict(u)
+            merged.update(full)
+            node = dict(node)
+            node['user'] = merged
+    elif node.get('id') and not pick(node, 'email', 'emailAddress'):
+        full = users.get(str(node.get('id')))
+        if full:
+            node = dict(node)
+            node.update(full)
+    return node
 
 
 def enrich(key, job_id, f403):
@@ -252,12 +327,15 @@ def enrich(key, job_id, f403):
                          {'includes': 'emailAddress,phoneNumber'})
         contacts.append({'link': item, 'detail': detail})
 
+    users = user_map(key)
     return {
         'detail': opt('/jobs/%s' % job_id, {'includes': 'contact'}),
         'contacts': contacts,
         'milestone_history': items_of(opt('/jobs/%s/milestone-history' % job_id)),
-        'representatives': items_of(opt('/jobs/%s/representatives' % job_id)),
-        'sales_owner': opt('/jobs/%s/representatives/sales-owner' % job_id),
+        'representatives': [resolve_user(r, users) for r in
+                            items_of(opt('/jobs/%s/representatives' % job_id))],
+        'sales_owner': resolve_user(
+            opt('/jobs/%s/representatives/sales-owner' % job_id), users),
         'insurance': opt('/jobs/%s/insurance' % job_id),
         'adjuster': opt('/jobs/%s/adjuster' % job_id),
         'custom_fields': items_of(opt('/jobs/%s/custom-fields' % job_id)),

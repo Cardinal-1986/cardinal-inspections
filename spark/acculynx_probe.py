@@ -51,6 +51,15 @@ PACE_S = 0.13
 MILESTONES = ['lead', 'prospect', 'approved', 'completed', 'invoiced',
               'closed', 'cancelled', 'dead']
 
+# Candidate pagination parameters, most likely first. An unknown parameter is
+# ignored rather than refused, so each is tried and the window is watched.
+PAGE_PARAMS = ['pageStartIndex', 'recordStartIndex', 'startIndex', 'offset',
+               'page', 'pageNumber']
+# What fetch_acculynx.py actually sends — the probe reports a mismatch as a
+# stop-and-fix rather than leaving the two files to drift apart silently.
+FETCH_PAGE_PARAM = 'pageStartIndex'
+FETCH_PAGE_SIZE = 25
+
 # Candidate read routes for job files. None of these appears in the public
 # docs (which show POST-only for files) — that is exactly why each gets tried.
 FILE_ROUTES = ['/documents', '/photos', '/photos-videos', '/files',
@@ -199,18 +208,63 @@ def main():
         first = [jid(j) for j in items_of(page1)]
         say('`GET /jobs?pageSize=2` → HTTP 200, count=%s, %d items, envelope keys: %s'
             % (total, len(first), ', '.join(sorted(page1.keys())) if isinstance(page1, dict) else '(list)'))
-        st2, page2 = get('/jobs', key, {'pageSize': 2, 'recordStartIndex': 2})
-        second = [jid(j) for j in items_of(page2)] if st2 == 200 else []
-        if second and first and second[0] not in first:
-            say('`recordStartIndex=2` returned different jobs → **/jobs pages by '
-                'RECORD OFFSET**, as the plan assumes. Good.')
-        elif second and first and second[0] in first:
-            say('⚠ `recordStartIndex=2` repeated the first page → the pagination '
-                'unit is NOT a record offset here. **Stop and re-check before '
-                'fetching** — this is the documented stall trap.')
+        say()
+        # An unknown query parameter is IGNORED, not refused — so the only way
+        # to learn the real name is to try each and see which window MOVES.
+        # Naming it wrong returns page 1 forever at HTTP 200, which is how a
+        # whole export silently becomes 25 records.
+        say('| parameter tried | HTTP | window moved? |')
+        say('|---|---:|---|')
+        winner = None
+        for name in PAGE_PARAMS:
+            st2, page2 = get('/jobs', key, {'pageSize': 2, name: 2})
+            second = [jid(j) for j in items_of(page2)] if st2 == 200 else []
+            if st2 != 200:
+                verdict = 'no — HTTP %d' % st2
+            elif not second:
+                verdict = 'no — empty'
+            elif first and second[0] in first:
+                verdict = '**no — same page (ignored)**'
+            else:
+                verdict = '**YES — this is the one**'
+                winner = winner or name
+            say('| `%s=2` | %d | %s |' % (name, st2, verdict))
+        say()
+        if winner == FETCH_PAGE_PARAM:
+            say('**✅ `%s` is the pagination parameter**, and it is a record '
+                'offset — which is what `fetch_acculynx.py` sends. Good.'
+                % winner)
+        elif winner:
+            say('🛑 **The fetch is misconfigured.** This account pages by '
+                '`%s`, but `fetch_acculynx.py` sends `%s`. Fix PAGE_PARAM '
+                'before fetching — the wrong name does not error, it just '
+                'returns the first page forever.' % (winner, FETCH_PAGE_PARAM))
         else:
-            say('Could not compare pages (HTTP %d, %d items) — the account may '
-                'simply have <3 jobs in the default listing.' % (st2, len(second)))
+            say('⚠ No candidate advanced the window. **Stop and re-check '
+                'before fetching** — this is the documented stall trap. The '
+                'account may simply have <3 jobs in the default listing.')
+    say()
+
+    # ── 2b · the page-size ceiling ───────────────────────────────────────────
+    say('## 2b · Page-size ceiling')
+    say()
+    say('Over the cap, `/jobs` refuses the call outright (HTTP 400) — so a '
+        'PAGE_SIZE set too high fails on the very first request, before any '
+        'record is read.')
+    say()
+    say('| endpoint | 25 | 50 | 200 | max usable |')
+    say('|---|---:|---:|---:|---:|')
+    for path in ('/jobs', '/users', '/contacts'):
+        row, ok = [], []
+        for n in (25, 50, 200):
+            st, _ = get(path, key, {'pageSize': n})
+            row.append(str(st))
+            if st == 200:
+                ok.append(n)
+        say('| `%s` | %s | %s |' % (path, ' | '.join(row),
+                                    max(ok) if ok else '—'))
+    say()
+    say('`fetch_acculynx.py` sweeps `/jobs` only, at PAGE_SIZE=%d.' % FETCH_PAGE_SIZE)
     say()
 
     # ── 3 · per-milestone counts, both assignment sweeps ─────────────────────

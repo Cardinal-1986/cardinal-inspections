@@ -4,6 +4,74 @@
 
 ---
 
+# Session of 13 August 2026 — AccuLynx gates 1–3 run for real (no build consumed)
+
+**Gates 1, 2 and 3 are DONE and clean. Gates 4–5 are blocked on one thing: the
+`CARDINAL_PASSWORD` in this cloud environment is rejected.** No `index.html`
+change, no SQL, no build number. **Nothing has been written to Cardinal.**
+
+**Run in the cloud environment** — Theo's explicit pick when offered the
+desktop path a second time, so the runbook's desktop-first default is now
+overridden *for this migration only*. The security cleanup it obliges is
+listed at the bottom of this section and is NOT yet done.
+
+⚠️ **A container restart wipes the export, and the scratchpad with it.** The
+11 Aug fetch was gone on re-entry; the whole export had to be re-run. It costs
+~10 minutes at 0.3 jobs/s and is fully re-runnable, so this is an annoyance,
+not a risk — but do not assume `jobs.jsonl` survives between sessions.
+
+| Gate | Result |
+|---|---|
+| 1 · probe | 166 jobs in scope. **Files NO-GO again** — every read route 404s |
+| 2 · fetch | **166/166 enriched**, exit 0 |
+| 3 · dry run | **164 new + 2 collisions + 0 unmappable = 166.** Reconciles exactly |
+
+Gate 3 detail: stages Lead 3 · Prospect 80 · Approved 40 · Completed 8 ·
+Invoiced 12 · Closed 21 · PO ladder **1044–1207, contiguous**, starting after
+the live max of 1043 · reps spread over six real people (Nick 42, Theo 39,
+Jerry 35, Joey 29, Jacob 18, Curtis 3) with **zero roster fallbacks** · **7
+records carry insurance data** for the Phase C sort. Both collisions are
+genuine — Karrie Johnson (804 E Center St) and Dan Thompson (2825 Arden Ave),
+each an address the app already holds in a different format.
+
+**NEW: `spark/dry_run_offline.py` — gate 3 without the admin password.**
+`push_acculynx.py --dry-run` writes nothing but still signs in, because it
+needs two plain READS (projects, team_profiles). This runs the **shipped**
+`dry_run()` against those two reads supplied as JSON, so `load_existing`,
+`map_job`, `find_collision`, the PO ladder and the poison guard are all
+untouched real code. It cannot write: `rest_post` / `rest_delete` /
+`storage_upload` / `storage_delete` / `get_token` are all replaced with a
+raiser. **Negative-controlled three ways** — a wrong project count aborts, a
+wrong max PO aborts, and a stand-in `dry_run()` that attempts a write trips
+the guard. That third check was **inert on its first version** (it patched a
+module instance `main()` re-imports, so the stand-in never ran — bug class 15,
+struck again); it now asserts the stand-in actually executed.
+
+**Two things for Theo before the pilot:**
+
+1. **There are TWO test records, not one.** `test test` (Lead, PO 1044) and
+   `Team Test` (Closed, PO 1198), both at 5735 Webster Street. PR #279 spotted
+   only the first. Recommendation: skip both.
+2. **While files are NO-GO, a "collision" is purely "no new row."** The
+   attach-files half is a no-op, so those 2 AccuLynx jobs contribute nothing
+   beyond the client already on file. Correct per the 11 Aug decision — worth
+   saying because `collisions.csv` promises an attach that has nothing to
+   attach.
+
+**The blocker, diagnosed rather than guessed:** sign-in returns
+`invalid_credentials`. Ruled out — the email is right
+(`theo@cardinalrenovations.net`), no whitespace or wrapping quotes on either
+variable, the hardcoded publishable key is live and not disabled, and the
+account is confirmed, unbanned and signed in successfully at **01:54 UTC on
+13 Aug**. The password *value* does not match. Nothing else is wrong.
+
+**⚠ OWED WHEN THE REAL RUN FINISHES:** delete the AccuLynx key in
+AppConnections, clear both variables, and change the Cardinal password. This
+environment currently holds **both halves** of the migration at once — exactly
+the pairing the runbook's credentials fence was written to avoid.
+
+---
+
 # Session of 12 August 2026 — build 761 (the Exterior Designer)
 
 One feature, one build, one PR — **awaiting Theo's merge; run

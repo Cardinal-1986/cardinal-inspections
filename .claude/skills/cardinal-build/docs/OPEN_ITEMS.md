@@ -2984,12 +2984,29 @@ the text compare could not.
 
 ---
 
-## 🟠 AccuLynx migration — pipeline SHIPPED, waiting on the API key (11 Aug 2026)
+## 🟠 AccuLynx migration — records EXPORTED, waiting on the Cardinal login (13 Aug 2026)
 
 The bulk client/docs/photos migration out of AccuLynx is built (`spark/acculynx_probe.py`,
 `fetch_acculynx.py`, `push_acculynx.py` + runbook `spark/ACCULYNX_MIGRATION.md`; offline harnesses
-green with negative controls). **No app change, no SQL, no build number.** Blocked on exactly one
-action: **Theo generates the AccuLynx API key** (click-path in the runbook) and runs the probe.
+green with negative controls). **No app change, no SQL, no build number.**
+
+**13 Aug — gates 1 and 2 are done.** The key was generated and the probe ran against the live
+account: **166 jobs in scope** (lead 3 · prospect 81 · approved 41 · completed 8 · invoiced 12 ·
+closed 21), all 8 AccuLynx users map onto the Cardinal roster, and **files are a NO-GO** — every
+candidate read route 404s, exactly as the public docs implied. The records fetch then completed.
+Nothing has been written to Cardinal.
+
+⚠️ **The probe earned its place: it caught two fatal faults in the shipped fetch.** `/jobs` pages by
+`pageStartIndex`, not `recordStartIndex` (five other names are *silently ignored* — HTTP 200, page 1,
+forever), and `PAGE_SIZE` must be ≤ 25 or the first call is refused with HTTP 400. Both fixed;
+`test_acculynx_fetch.py` §1b now models the real contract and goes red if either returns. The old
+harness could not see either fault because its fake API had been built from the same assumption as
+the code under test.
+
+**Now blocked on one action: the Cardinal admin login** (`CARDINAL_EMAIL` / `CARDINAL_PASSWORD`) for
+gates 3–5 — dry run, five-client pilot, real run. ⚠️ Note the runbook's own security appendix before
+putting a live admin password into a cloud environment; the desktop path is the documented default,
+and the export is re-runnable anywhere in about four minutes.
 
 Settled by Theo 11 Aug, not to be re-litigated: everything imports as **retail** and gets sorted to
 insurance/community afterwards (the insurance data rides along in `lead.insurance` for that sort);
@@ -3004,3 +3021,25 @@ After the records land: **Phase C sorting** runs over the Supabase connector as 
 (retail→insurance from the preserved claim data + companion `insurance_claims` rows;
 retail→community against `community_partners` + Theo's word). Gate sequence and anti-goals live in
 the runbook; session detail in `HANDOFF.md` (11 Aug section).
+
+**✅ UPDATE 13 Aug — gates 1–3 are DONE and clean; the blocker moved.** The API key arrived and
+gates 1–3 ran in the cloud environment (Theo's pick, second time offered). **166/166 exported ·
+164 new + 2 collisions + 0 unmappable · PO ladder 1044–1207 contiguous · six reps, zero roster
+fallbacks · 7 records carry insurance data.** Files are **NO-GO** — confirmed twice now, every
+read route 404s. **Nothing has been written to Cardinal.**
+
+**The live blocker is now the credential, not the key: `CARDINAL_PASSWORD` is rejected**
+(`invalid_credentials`). Diagnosed, not guessed — the email is right, there are no paste
+artifacts, the publishable key is live, and the account is confirmed, unbanned and signed in
+successfully at 01:54 UTC on 13 Aug. The password value simply does not match. Gates 4–5 (pilot,
+real run) resume from the export on disk the moment it works. ⚠️ **The export does NOT survive a
+container restart** — re-running the fetch costs ~10 minutes.
+
+Two decisions waiting on Theo: **there are TWO test records, not one** (`test test` and
+`Team Test`, both at 5735 Webster Street — recommend skipping both), and note that while files
+are NO-GO a "collision" is purely *no new row* — the attach half is a no-op.
+
+New tool: **`spark/dry_run_offline.py`** runs gate 3 without the admin password, by feeding the
+shipped `dry_run()` its two READS as JSON. Negative-controlled three ways and physically unable
+to write. ⚠️ **Still owed when the real run finishes:** delete the AccuLynx key in AppConnections,
+clear both variables, change the Cardinal password — this environment holds both halves at once.
