@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 769 &#8212; Punch-outs now find their person: filing or assigning one buzzes whoever it belongs to, closing one tells the office, and every punch-out in the app opens the same card</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 770 &#8212; Closed repairs really do reach the client’s history now (the read was shaped wrong and a catch was hiding it)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20029,7 +20029,16 @@ function buildActivityEvents(){
      and never opens a second query path. Guarded because the punch module
      parses later in the document than this function does. */
   try{
-    ((window.CardinalPunch && window.CardinalPunch.rows) || []).forEach(function(it){
+    /* CardinalPunch.rows is a FUNCTION returning a copy of the cache, not an
+       array property. Treating it as an array threw a TypeError straight into
+       the catch below, so closed repairs silently never reached the client's
+       history — the exact feature this block exists for. A guard that hides
+       its own bug is worse than no guard: the call is now shaped correctly and
+       the catch is only for the module not having parsed yet. */
+    var _pk = window.CardinalPunch;
+    var _closed = (_pk && typeof _pk.rows === 'function') ? (_pk.rows() || [])
+                : (_pk && Array.isArray(_pk.rows)) ? _pk.rows : [];
+    _closed.forEach(function(it){
       if(!it || it.status !== 'done' || !it.done_at) return;
       var pr3 = it.project_id ? cacheProjects.find(function(x){ return x.id === it.project_id; }) : null;
       var ac = actor(it.done_by);
@@ -38711,6 +38720,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:770, d:'2026-08-13', t:'Closed repairs reach the client history', s:'Build 766 added closed punch-outs to the client\u2019s history feed, and it never once worked: the read was shaped as an array when the punch cache hands back a function, so it threw straight into a catch that hid the failure. Proven in a browser both ways \u2014 zero closed repairs before the fix, the repair with its closer and date after.' },
 { b:769, d:'2026-08-13', t:'A punch-out now finds its person', s:'Filing a punch-out on someone, or handing one to them, sends them a push and an email \u2014 Curtis and Scottie no longer have to open the app to find out there is work. Closing one tells the office the same way, with the count of photos and steps. Nobody is ever notified about their own action, and the app says plainly when a notification could not be delivered instead of claiming it was. Chat is unchanged: only the people a message @tags are notified.' },
 { b:768, d:'2026-08-13', t:'The punch-out card', s:'Tapping a punch-out anywhere now opens one proper card: the job with directions and a call button, a field checklist you can start from a Roofing, Siding or Gutter template, steps that refuse to tick until a note is written, five guided photo slots, a Flag supplement button that files the extra scope and tells the office, and the message thread with @tagging. Closing needs five photos and every step ticked, and the button says what is missing until then. Curtis and the office get the manager card \u2014 dispatch, edit steps, set urgency; Scottie gets field mode with bigger targets and the camera first.' },
 { b:767, d:'2026-08-13', t:'Production, rebuilt around the calendar', s:'The Production screen is one calm page now: five boxes \u2014 Needs ordered, Ordered, Scheduled, Punch-outs and Closed repairs \u2014 over a week strip and the day\u2019s work. Tap a box for its list; tap Full calendar for a whole month of build days, material drops, scheduled punch-outs and closed repairs, with a Needs a date queue for anything waiting to be dispatched. Marking materials ordered works straight from the list. Cardinal Steel throughout, in both light and dark, and no floating buttons anywhere.' },
