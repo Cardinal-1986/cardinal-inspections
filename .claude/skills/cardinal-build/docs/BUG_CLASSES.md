@@ -2046,3 +2046,563 @@ punch-outs module does).
 **Only a real engine catches this.** jsdom would have reported the same
 elements present; the assertion that fails is "click the category, then count
 the value rows", which requires a browser that actually dispatches.
+
+## 31 · The refusal that depends on the thing it is refusing to reveal
+
+*Found at 714, in code shipped at 712 — my own.*
+
+Build 712 refused to hand a sales rep a partner's email address. The test was:
+
+```js
+if(_pe && !_own){ alert('Bids to … are sent by Theo'); return; }
+```
+
+`_pe` is the partner's `contact_email`. So the refusal only fired **when there
+was an address to refuse**. On the five live partners with no email recorded it
+never fired at all, and control fell through to the line below — a `prompt()`
+whose default was `pr.email`, **the homeowner**. The one thing the community
+rules say must never happen was one tap away, reachable *because* the guard was
+written in terms of the protected value.
+
+**The shape.** A guard of the form `if (secret && !allowed) refuse()` is not a
+refusal — it is a refusal *conditional on the secret existing*. The empty case
+falls through to whatever comes next, and what comes next is usually a
+fallback that was written before the guard existed.
+
+**The drill.**
+1. Gate on the **subject**, not the **object**: `if (partnerExists && !allowed)`.
+   Whether the partner has an email on file is irrelevant to whether this person
+   is allowed to see it.
+2. Refuse **before** you fetch. 712 queried the address and then declined to use
+   it, so it reached the browser for nothing. If the answer is no, do not ask
+   the question.
+3. **Follow the fall-through.** Read the code after your guard and ask what it
+   does when the guard does not fire. Here it was `prompt(toAsk, toDflt)` with a
+   default set 30 lines earlier — the guard's author never looked at it.
+4. **Make the error path fail closed too.** The surrounding `try/catch` swallowed
+   any failure and landed on the same homeowner default. A lookup that throws
+   must refuse, not degrade into the unsafe default.
+
+**Why the gates could not see it.** Every assertion at 712 used a fixture whose
+partner *had* an email — the interesting case, and the only case where the guard
+worked. The five partners without one were 50% of the live table.
+**Fixture data that only covers the populated case will confirm a guard that
+only works when the field is populated.**
+
+## 29 — a summary object used where its ID was meant (731)
+
+`var current = null; /* {id, status, sent_at} */` — the editor's handle on the open
+document. **Four consumers treated it as the row itself**, and every one of them
+failed silently:
+
+| site | wrote | symptom |
+|---|---|---|
+| `sigApply` | `current.project_id` | undefined → the stage guard was ALWAYS false; signing a contract never moved the job, and the alert on the next line claimed it had |
+| `currentDocRow()` | `r.id === current` | always null → Share link threw "Document not loaded" on every document, forever |
+| `ensureShareToken()` | `db.update(current, …)` | `.eq('id', <object>)` → the token was never persisted; the link worked for its author and was dead for the recipient |
+| the email path | `db.update(current, …)` | same → a document emailed to a client stayed UNSENT |
+
+**Why it survived:** none of the four throws. A `.eq()` on an object matches nothing
+and returns success. A `.find()` that matches nothing returns `undefined`. An
+`&& undefined` guard just skips its branch. **The app reports success in all four
+cases** — one of them literally pops an alert saying the thing it did not do.
+
+**The tell was in the file the whole time:** the sent-toggle, ~20 lines below
+`currentDocRow()`, does `r.id === current.id` correctly. **When two sibling sites
+disagree about the shape of the same variable, exactly one of them is wrong — go
+look.**
+
+**The drill:** when a variable is a *summary* of a row rather than the row, enumerate
+**every** use of it in the block before fixing any of them. 731 found 25 uses; 4 were
+wrong and they were not adjacent. Fixing the one you noticed leaves the other three.
+
+## 30 — a mock with no constraints models the author's beliefs, not the database (732)
+
+Build 722 shipped `doVoid()` writing `contracts.status = 'voided'`. The real table's
+CHECK permits `('draft','sent','signed','void','change_ordered')`, so **Postgres
+refused every Void and the button never once worked** — while `gate_722` asserted
+`status === 'voided'` and went green, because `e2e_mock_supa.js` enforced nothing.
+
+**The gate did not verify the app. It verified that the app agreed with me.**
+
+Three things make this class invisible:
+- A refused write returns an **error object**, not a throw. Handlers that only
+  `catch` see nothing.
+- The mock accepted the same value the app wrote, so the round trip looked perfect.
+- The `.sql` file in the repo is not necessarily the live schema. **Read
+  `pg_constraint` and `information_schema.columns`, not the migration you have.**
+
+**The fix, now in the mock:** a `CHECKS` table mirroring the live constraints, which
+refuses a violating write the way PostgREST does and records it as `op:'…:REFUSED'`.
+Keep it in step with the real table or delete the entry — **a stale constraint here
+is worse than none.**
+
+**And the cheap half needs no browser.** `gate_732.mjs` statically extracts every
+column named in a `from('contracts')` chain and every `status:` literal, and checks
+them against the recorded schema. That scan alone would have caught all three of
+732's defects. **When a table has constraints, write them down beside the code and
+assert against them.**
+
+### The sibling: a column that does not exist fails SOFTLY
+
+`check_1_advancedNoSignedContract` and `check_2_signedNoSignature` both filtered
+`contracts.signed_at`, which has never existed. PostgREST answers `42703`, and both
+checks have their own `Cannot verify: <error>` branch — so **two integrity checks
+reported a soft warning for their entire life instead of ever checking anything.**
+A check that cannot fail is not a check. **Seed a row that SHOULD trip it and assert
+it trips** — that is the only way to tell a passing check from an inert one.
+
+## 31 — feedback rendered into a container the current screen has hidden (733)
+
+`showError()` — **82 call sites, the app's only error channel** — wrote into
+`#bannerMount`. That div is the first child of `#mainView`. `#projectView`,
+`#editorView`, `crewsView` and `punchView` are **siblings**, and `hideAllViews()`
+sets `mainView.display='none'` before showing any of them.
+
+Hit-tested in Chromium:
+
+| screen | error visible? |
+|---|---|
+| home / landing | ✅ |
+| a client profile | ❌ |
+| the document editor | ❌ |
+| crews | ❌ |
+| punch & repairs | ❌ |
+
+**Nothing throws.** `innerHTML` on a hidden node succeeds. The message is written,
+correct, escaped — and never painted. Then a `setTimeout` deletes it 6 seconds later,
+so even scrolling back cannot recover it.
+
+**The tell to look for:** a feedback element that lives *inside a view* rather than in
+the page chrome. Ask **"which screen is this element on?"**, not "does it render?".
+`#editorView` made it doubly invisible — `position:fixed;inset:0;z-index:150` paints
+over `#bannerMount` even when `#mainView` is shown.
+
+**The drill:** any app-wide feedback must mount to `document.body` and be
+`position:fixed`. And prove it by **hit-testing `elementFromPoint` at the element's
+own centre on every major screen** — a bounding rect only tells you it has a size,
+not that anyone can see it.
+
+### The inversion worth remembering
+
+This arrived as a UX polish request — *"clicks Save, did it work?"* — and the fix
+turned out to be on the **error** path, not the success path. **When someone reports
+missing confirmation, check whether failures are visible first.** Silent failure
+reads exactly like silent success.
+
+## 32 — the gate shadows one of the harness's own globals (734)
+
+Three faults in one build, **all in the gate, none in the app** — the app was right
+from its first run. The expensive one:
+
+The gate did `window.__READS__ = 0` to count queries with. **`__READS__` is the
+mock's own read log, and it is an array.** The mock then threw
+`__READS__.push is not a function` *inside* `renderCommissions()`, whose `catch`
+rendered "Could not load commissions" and returned early — so `commUi.lastComms` was
+never set and the toast lost its commission clause.
+
+**It looked exactly like the feature not working.** Two rounds were spent debugging
+correct application code.
+
+**What found it:** printing `#commMount`'s `innerText`. The error message had been
+rendered on screen the entire time — the gate just never looked at the surface the
+app writes its failures to. *Read what the app is showing before theorising about
+what it is doing.*
+
+**The rule:** before a gate sets any `window.__*` variable, grep the mock for that
+name. And prefer **reading the harness's existing log to installing your own probe** —
+the mock already recorded every select.
+
+### The two cheaper ones, same family
+
+- **The gate hardcoded `$1,702.50`.** `fmtMoney` rounds to whole dollars — `$1,703`.
+  The expectation now comes from calling the app's own `fmtMoney()` and
+  `rptRepName()` inside the page. **An assertion should ask the system how it
+  behaves, not encode what you assume** — the same fault as class 30, in a costume.
+- **A fixed `waitForTimeout` read the toast mid-flight.** Wait for the *condition*
+  (the toast exists), never for a guessed number of milliseconds.
+
+
+## 33 — a native `required` silently kills the app's own validation message (741)
+
+`<input required>` inside a form that submits natively means **the browser blocks the submit before your handler runs**. The handler's carefully-worded message, its field marking, its shake — none of it is ever reached. Measured in Chromium on `#cpForm`: `submitFired === false`, `#cpErr` never rendered. Two forms had carried a dead message this way for years.
+
+This is **class 16 with a different cause**: not a control that was never wired, but a control wired correctly and pre-empted by the platform. It is invisible to every mechanical gate — the markup is valid, the handler parses, the message string is present in the file.
+
+**The test:** register a `submit` listener and assert it FIRES. Do not assert on the message text alone; the text can be in the DOM and unreachable.
+
+**The fix is `novalidate` — and it is only safe with the second assertion.** Removing the browser's guard means the JS guard is now the only guard, so a gate must prove it still refuses (zero writes) *and* that a valid value still saves. One without the other either opens a hole or ships a dead form.
+
+## 34 — `document.documentElement.outerHTML` is not the source file (741)
+
+A gate counted `class="cr-req"` in the live DOM and found **7 for 6 literals**. When a module renders a form, the page contains **both the script's string literal and the element built from it**. Anything template-generated double-counts, and how much it double-counts depends on which screens happen to be open — so the number moves between runs.
+
+**Read the file from disk for source-literal assertions.** Use the DOM only for what is actually rendered.
+
+## 35 — a JSON-in-`text` column read as an object (742)
+
+`projects.checklist` is a **`text`** column, so supabase-js returns a **string**. Four
+readers did `p.checklist.lead`, which is `undefined` on a string — silently, with no
+error. The app's own parser `parseCkAll(pr)` exists precisely for this and is used at
+43 sites; these four hand-rolled it and got nothing.
+
+Two failure shapes, and the second is the nastier:
+
+- **A default fills the hole.** `claim_type: lead.claim_type || 'retail'` printed
+  "retail" for all 34 clients, 21 of them wrongly.
+- **A filter finds nothing, and "nothing" reads as "all clear."** Two Health checks
+  reported "None found" regardless of the data. Their answers happened to be correct on
+  the day, which is what let them survive.
+
+**Check the column type before dereferencing.** In this database `checklist`,
+`meas_docs.data` and `project_photos.data` are `text`, while `contracts.contract`,
+`punch_items.comments`/`photos`, `estimates.photos` and `insurance_supplements.items`
+are `jsonb` and object access on those is **correct**. Over-applying this fix breaks
+working code — `check_2` reads `contracts.contract.signature` and must be left alone.
+
+**A fixture is a claim about production.** `gate_742.mjs` seeds `checklist` as a JSON
+**string**. Seeded as an object, the gate goes green against the broken code and proves
+nothing. When a bug IS the data shape, the seed is the load-bearing part of the test.
+
+## 36 — a Postgres `date` column parsed as UTC midnight (744)
+
+**30 columns in this database are `date`, not `timestamptz`.** PostgREST returns those
+as a bare `"2026-08-15"`, and `new Date("2026-08-15")` is **UTC midnight** — 8pm the
+previous day in Dayton. Every affected screen showed the date **one day early**.
+
+It survived for years because:
+
+- **It is invisible in UTC.** Any test, CI run or reviewer in UTC sees the right day.
+  A gate must run in a timezone *behind* UTC to see it at all — and one *ahead* of UTC
+  to prove the fix isn't just "add a day".
+- **The arithmetic was right.** `cr-crew`'s `daysLeft()` already parsed correctly, so
+  "expires in 12 days" was accurate while the date printed next to it was a day off.
+  Two numbers that disagree by one day read as a rounding quirk, not a bug.
+- **Timestamps are unaffected**, so most dates in the app were always correct. Only the
+  30 `date` columns shift, which makes it look sporadic.
+
+**Check the column type before parsing.** `date` → build it at local midnight.
+`timestamptz` → hand it to the native parser, whose offset is already right.
+
+**A replacement parser must be a true drop-in.** The first version of `crDate` did
+`String(v)` before testing, which changed the meaning of a **number** of epoch ms
+(`String(0)` is `"0"`, and `new Date("0")` is the **year 2000**), of `null`, and of a
+boolean. Only inspect `typeof v === 'string'`; pass everything else to `new Date`
+untouched. The gate fuzzed the equivalence and went 3 red.
+
+⚠️ **`<input type="date">` must keep `YYYY-MM-DD`** — 35 of them. A date-formatting
+sweep that touches input values breaks every date picker in the app.
+
+## 37 — the negative control CRASHES instead of going red (739, 743, 748)
+
+**Struck three times in ten builds, which is what makes it a class rather than a
+slip.** A gate is only worth anything if it has been *seen to fail* on the previous
+build. But the previous build is precisely the tree where the thing being tested does
+not exist — so the harness reaches for it, gets `undefined`, and **throws**:
+
+```
+page.evaluate: TypeError: Cannot read properties of undefined (reading 'closest')
+```
+
+- **739 / 743** — `window.phoneHay is not a function` on the control.
+- **748** — the Agreements carry no `.cbx` at all on v747, so `grouped[0]` is
+  `undefined` and every line after it dies.
+
+**A harness that dies on the control has not been seen to fail. It has been seen to
+break, and the two look identical from the terminal — in fact worse, because a crash
+often prints NOTHING through a `grep FAIL` and reads as "no failures".** That is how
+748's first control run reported an empty result and an exit code of 0.
+
+### The rule
+
+**Every harness must produce a RED REPORT on the control, not a stack trace.** Two
+cheap habits get you there:
+
+1. **Bail out with a structured result, not an exception.** Detect the absent feature
+   at the top, return a flag, and let the ordinary checks read it as failures:
+   ```js
+   if (grouped.length < 2) { r.noBoxes = true; return r; }
+   ```
+   Then add an explicit check for it, so the report says *why*:
+   ```js
+   chk(`${T} the document HAS boxes to drive`, !r.crashed && !r.noBoxes && r.total > 0, …)
+   ```
+2. **Wrap each driver so any throw becomes a red check.**
+   ```js
+   try { return await driveRaw(name); }
+   catch (e) { return { crashed: String(e).split('\n')[0] }; }
+   ```
+
+### The trap inside the trap: checks that pass VACUOUSLY on the control
+
+Fixing the crash is not enough — a control with zero elements makes several natural
+assertions **pass**, which quietly hides how red the control should be:
+
+- `[].every(...)` is **`true`**, so "every box starts empty" passes with no boxes.
+- A guard written `r.freeCount === 0 || (…)` passes when the count is `undefined`…
+  except it doesn't, and that accident is not a design. Anchor on a positive fact:
+  `r.total > 0 && (…)`.
+
+**Count the reds on the control and sanity-check the number.** 748's control should
+fail nearly everything about the Agreements; it reports **56 of 77**. A control that
+fails two or three checks when the whole feature is missing is telling you the gate
+is mostly measuring things the feature did not change.
+
+## 38 — a COMMENT inside a template literal is code (749)
+
+**Hit twice in one build, the second time by the sentence written to warn about the
+first.** That is what earns it a number.
+
+`ESTIMATE_BASE_RAW` is a **template literal** holding an entire HTML document —
+stylesheet, markup and CSS comments. A backtick anywhere inside it **closes the
+literal**. So this, added as an explanatory CSS comment:
+
+```
+/* 749: the numbered house cutaway. `figure` carries a 40px UA side margin, so … */
+```
+
+would have terminated `ESTIMATE_BASE_RAW` in the middle of its own stylesheet and turned
+the remaining ~5,000 characters into JavaScript. The correction —
+
+```
+NOTE: no backticks in this comment … the first draft put `figure` in backticks here
+```
+
+— **contained the same two backticks**, and failed the identical assertion.
+
+### Why it is easy
+
+Backticks are the normal way to quote an identifier in prose. Every other comment in
+this repo can use them freely. Only comments living *inside* a template literal cannot,
+and nothing about writing a CSS comment reminds you which kind you are in. The same
+applies to `${`, which interpolates rather than terminating.
+
+### The rule
+
+**Check the inserted text BEFORE the write, not the file after it.**
+
+```python
+assert '`' not in new and '${' not in new, \
+    'the CSS being inserted contains a backtick or ${ — it would close the literal'
+src = in_tpl(src, 'ESTIMATE_BASE_RAW', old, new)
+```
+
+749's first two runs asserted only on the *result*, so the file was already written and
+had to be restored from the control both times. Validating the payload first turns a
+revert into a refusal.
+
+**And in prose inside a template literal, name identifiers plainly** — "a figure
+element", not a backticked one.
+
+### It would have been caught, but late and confusingly
+
+`node --check` does flag the resulting syntax error, but it reports it thousands of
+lines away from the comment that caused it, in generated-looking code. The targeted
+assertion names the actual mistake.
+
+## 39 — a form control's value is a PROPERTY, and the save clones the DOM (750)
+
+`serializeFrame()` persists a document with `cloneNode(true)`. **A clone copies
+attributes; it does not copy the live value of a form control.** So a `<select>` the
+user has picked from serializes back to its default, and an `<input>`'s typed text
+vanishes the same way.
+
+What makes this dangerous is how *well* the broken version behaves:
+
+- it renders correctly,
+- it responds correctly to clicks,
+- `select.value` reads back correctly all session,
+- every structural assertion passes — the element exists, has options, has a class,
+- and the contract silently reopens blank, **with nothing in the DOM to show a colour
+  was ever chosen.**
+
+There is no error, no console warning, and no state to inspect after the fact.
+
+### The rule
+
+**Anything a user sets inside a document must end up in an ATTRIBUTE or in text.**
+
+```js
+sel.addEventListener('change', function(){
+  for (var k = 0; k < sel.options.length; k++) sel.options[k].removeAttribute('selected');
+  if (sel.selectedIndex >= 0 && sel.value)
+    sel.options[sel.selectedIndex].setAttribute('selected', 'selected');
+});
+```
+
+The same applies to `<input>` (`setAttribute('value', …)`) and to `<input type=checkbox>`
+(`setAttribute('checked', …)`). 748's tick boxes avoid the whole class by storing state
+in `textContent`, which clones for free — that is why they were built as glyphs rather
+than real checkboxes.
+
+### The only test that catches it
+
+Structural assertions cannot. **Do the full round trip against the app's own save
+path:**
+
+```
+populate -> change -> serializeFrame() -> reopen the saved html -> re-read the value
+```
+
+`gate_750` does exactly this, and additionally changes the pick twice to prove the
+attribute *moves* rather than accumulating a second `selected`.
+
+## 40 — a rect audit cannot see a pseudo-element hit area, and elementFromPoint sees nothing off-viewport (752)
+
+Two instrument faults in one build, both producing confident wrong answers about touch
+targets:
+
+1. **`getBoundingClientRect` measures the element's box, not its hit area.** A control
+   with `::after{position:absolute;width:44px;height:44px}` centred on it answers taps
+   across 44px while measuring 22×22. The 752 walk flagged `.pu-box` as an offender on
+   exactly this — it was already correct, and had been since `cr-punch2-styles` shipped.
+   **Before declaring a small control an offender, read
+   `getComputedStyle(el, '::after')` (and `'::before'`).**
+
+2. **`document.elementFromPoint` answers `null` for any point outside the viewport.**
+   The punch strip sits below the fold at 844px; the first tap-probe never scrolled, so
+   every sample "missed" — including the box's own centre — and the intact `::after`
+   was blamed. **Scroll the target into view before sampling**, and treat a null from
+   elementFromPoint as "off-screen", never as "not tappable".
+
+The deeper rule joins the two: **a hit-area claim needs the compositor's answer, and
+the compositor only answers about the visible screen, in stacking order.** In the
+seeded harness the landing module painted over the home strip, so even the scrolled
+probe returned the overlay — at which point the honest gate asserts what is provable
+(the computed pseudo box) and says why the tap itself cannot be isolated.
+
+
+
+---
+
+## 41 — a fix scoped to a DESKTOP-ONLY body class leaves the phone broken, forever (756)
+
+`body.cr-lnav-on` is set only when the desktop left rail mounts (>=1100px). Builds
+561 and 572 used it to scope the rules that push the five module mounts
+(`#cr-claims-mount`, `#cr-pricing-mount`, `#cr-estimates-mount`,
+`#cr-coach-mount`, `#cr-adjusters-mount`) below the header. Those mounts carry
+`position:fixed; inset:0; z-index:200` as INLINE styles from `styleMounts()`, and
+the header is `z-index:90`.
+
+**Measured at 390px on v755: all five sat at `top=0, z=200` and the header was
+completely covered — `elementFromPoint` over the header's own home button
+returned the mount's floating exit button. At 1194px the same five were already
+at `top=187, z=60` with the header reachable.**
+
+So the screen Theo used every day was the one nobody had ever tested, and the
+screen the rules were written against was fine. **Ask what a `body.cr-lnav-on`
+(or any width-gated) scope means on a phone BEFORE using it** — the gate is
+right for layout that only exists on desktop (the rail's `left` offset) and
+wrong for anything the phone needs too (`top`, `z-index`).
+
+### The tell
+A rule whose gate names a *device feature* but whose declarations describe a
+*universal relationship* ("below the header", "under the nav"). Split it: gate
+the device-specific declaration, leave the universal one ungated.
+
+---
+
+## 42 — a navigation that hand-rolls its teardown instead of calling the canonical one (756)
+
+`hideAllViews()` is the app's teardown: it hides ~30 views, the five module
+mounts, calls `close()` on Sales Floor / Production / Showcase / the estimate
+builder, clears the scroll lock and calls `setHeaderJobMenu(false)`.
+
+`showHome()` calls it. `CardinalCommunityHub.show()` calls it. But
+**`showCardinalTruth()`, `showInsuranceClients()` and `showResourceLibrary()`
+each hand-rolled a list of four `getElementById(...).style.display='none'`
+instead** — and that list never included the mounts.
+
+**Result: tapping Home from the Claims screen showed Cardinal Truth *underneath a
+still-open Claims panel*, at BOTH widths.** Retail and Community were fine, which
+is exactly why it read as an insurance-only oddity for builds.
+
+### Why it survived
+Build 679 *noticed* these three "never went through `hideAllViews()`" — and fixed
+only the symptom in front of it (a stale job name) by adding
+`setHeaderJobMenu(false)` to each. **A comment that names the root cause while
+patching the symptom is a bug with a delay on it.**
+
+### The instrument that settled it
+A `MutationObserver` on the mount's `style` attribute recorded **zero writes** —
+proving it was never hidden, rather than hidden-and-re-shown. ⚠️ The obvious
+instrument fails: in Blink a style object's CSS properties are served by a **V8
+named-property interceptor**, so `Object.getOwnPropertyDescriptor(...,'display')`
+finds nothing on the instance OR anywhere in the prototype chain, and a
+`defineProperty` hook silently traces nothing — which reads as "never written"
+for the wrong reason.
+
+### The rule
+**One teardown.** If a navigation needs to hide "everything else", it calls
+`hideAllViews()`. `#landingView` is the one deliberate exception (absent from it
+by design), so it still goes by hand.
+
+
+---
+
+## 43 — text-overflow:ellipsis is INERT on an inline box, and an inline box measures 0 (758)
+
+Two of Theo's four reports in one session were the same defect on different
+screens, and the fix for both is one declaration.
+
+`.cr-pb-job .nm` / `.cr-pb-job .ad` (Production job rows) and `.cr-ic-row .ad`
+(Insurance client cards) all carry
+
+```css
+overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+```
+
+…and all three are rendered as **`<span>`** by their module's JS. An inline box
+has no width to overflow, so **`text-overflow:ellipsis` does nothing**, while
+`white-space:nowrap` still applies — turning the text into one unbreakable run
+that spills past its card instead of truncating. On the Production rows it also
+put the name and address on the same line with no separator
+("Bob DeBuilder921 Testing Way").
+
+**Fix: `display:block`.** Then the ellipsis has a block box to work in.
+
+### ⚠️ The measurement trap that let it ship green
+
+**An inline element reports `scrollWidth === 0` and `clientWidth === 0`.** So the
+obvious truncation assertion
+
+```js
+ad.scrollWidth <= ad.clientWidth + 1     // 0 <= 1  → PASSES
+```
+
+**passes vacuously on the broken build.** gate_759 shipped exactly this check,
+went green, and the screenshot still showed the address cut off mid-word. Worse,
+the same expression is wrong even on a *correct* build: an element that IS being
+ellipsised has `scrollWidth > clientWidth` **by definition**, so the check
+inverts its own meaning.
+
+### What to assert instead
+1. `getComputedStyle(el).display === 'block'` — the mechanism.
+2. The element's **own** `getBoundingClientRect().right` against its card's —
+   a *container's* rect cannot see inline overflow, so a container-only test
+   also passes on the broken build (the first probe of this bug did exactly
+   that and under-reported it).
+3. Optionally `scrollWidth > clientWidth` as *evidence the ellipsis is in use*.
+
+### Where else to look
+Any renderer emitting `<span class="nm">` / `<span class="ad">` pairs. Spans
+inside a `display:flex` parent are blockified automatically and are fine — which
+is why `.top`, `.meta` and `.carrier` on the same cards never showed the bug and
+made it look surface-specific.
+
+⚠️ **But blockification does NOT reach a grandchild.** Build 760 found a third
+instance, `.kptrow .ti2`, which is a span nested *inside* a span that is itself a
+flex item: the wrapper blockifies, the child does not. "It's in a flex row" is
+not a clearance.
+
+**A `min-width:0` sitting on one of these is a TELL, not a fix** — that property
+does nothing on an inline box, so its presence usually means someone already
+tried to fix the overflow and aimed at the wrong axis.
+
+### The sweep that finds them
+Enumerate every `text-overflow:ellipsis` selector (70 of them across 125 style
+blocks), cross-reference each against the **tag its renderer actually emits**,
+then settle each candidate in Chromium at 390/430/1194px. Static reading is not
+enough in either direction: 19 candidates cleared this way were fine, and one
+only *looked* broken when fed a fabricated label — measure with the real shipped
+strings before calling anything a bug.

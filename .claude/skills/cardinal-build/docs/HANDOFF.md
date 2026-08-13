@@ -4,6 +4,59 @@
 
 ---
 
+# Session of 12 August 2026 — build 761 (the Exterior Designer)
+
+One feature, one build, one PR — **awaiting Theo's merge; run
+`design_renders.sql` BEFORE merging.** (Builds 705–760 shipped in sessions that
+logged to `cardinal_build_log.md` but not here — that log and the in-app
+CHANGELOG are the record for that span.)
+
+Theo asked for an AI exterior home designer — photograph a house, change roof /
+siding / trim / gutters / windows, into the showroom. His framing, verbatim:
+*"This is a sales resource in front of clients. I can already do this on gemeni,
+just want to look more professional doing it in the vision suite."* **That
+sentence is the recorded YES for sending a client's photograph to Gemini at the
+moment of a press — per-photo consent, NOT a corpus pass.** Do not widen it.
+
+Shipped: `cr-des-styles`/`cr-des-script` (`window.CardinalDesigner`,
+`--des-*` all literal-fallback), `api/design.js` (`gemini-3.1-flash-image` →
+`2.5` ladder + `{probe:true}` key probe), `design_renders.sql` (+ `designer/`
+storage prefix), a Designer tile on the Vision hub, a landing door beside
+Showroom (≥820px), `gate_761.mjs` (18 green / 15 red on the v760 control).
+
+**762, same session, Theo's picks off six rendered concepts**: Studio White as
+the single theme (the first LIGHT Vision surface), FULL-BLEED (framing rule
+deleted; `cr-des` joined the 694 theme-toggle exclusion list — the identical
+Showcase/OC-Colors decision), house-first layout ≥900px (sticky hero stage +
+396px picker rail), and SHOWROOM VOICE — no "AI" anywhere a client reads
+(`AFTER · CARDINAL DESIGNER`, `DESIGN`, `CARDINAL DESIGNER · VISUALIZATION`).
+His two corrections that drove it, verbatim: *"This studio showroom does not
+run insurance claims. It is for client side only"* and *"get rid of the retail
+crm all over it and make the navigation area where you pick the different
+styles so you can have a bigger view of the house."* The b:761 CHANGELOG entry
+still says AI CONCEPT — history, not a miss. `gate_762.mjs`: 23 green / 5 red
+on the v761 control.
+
+The fences as built: AI CONCEPT badged on screen AND burned into every saved
+JPEG; `designer/` + `design_renders` join nothing in the claims pipeline; the
+roof picker offers sellable OC colours only (hidden AND discontinued excluded —
+deliberately stricter than the Colors wall, which badges history).
+
+⚠️ **Trap found, live in production code**: the `__crNav` wrap block runs on a
+`setTimeout(…,400)` scheduled mid-file, and the timer can fire before the LAST
+script in the 4.2MB document has parsed — the wrap then misses silently
+(measured: same artifact, wrapped on one run, not the next). The Designer's
+`open()` records `navSetView('designer')` itself as the belt; **any future
+module appended at the end of the file should do the same.**
+
+Not verifiable from this sandbox, and the PR says so: whether the deployed
+`GEMINI_API_KEY` has image models (the probe answers in one press), and how the
+generations look on real houses — **Theo's eyes are that gate.** Rendered
+screenshots of the UI (hub tile, designer screen, compare slider) were produced
+and reviewed; the AI output itself has not been seen.
+
+---
+
 # Session of 11 August 2026 — the AccuLynx migration pipeline (no build consumed)
 
 **The bulk AccuLynx → Cardinal migration is BUILT and waiting on one thing:

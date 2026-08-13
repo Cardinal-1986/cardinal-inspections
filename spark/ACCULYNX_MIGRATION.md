@@ -24,6 +24,11 @@ wrong clients happen at once.
 - **Never a service-role key.** The push signs in as a real admin through the
   public anon key, the same way `push_studio_tags.py` does. The service-role
   key never leaves Vercel's env vars.
+- **Run it from a machine Theo controls** — his desktop or the Spark — so
+  both credentials live only in that terminal session and are gone when it
+  closes. That is the point of the desktop-first path below, and it is
+  Theo's decision of 11 Aug. The cloud alternative is an appendix, and it
+  costs something real: see the warning there before choosing it.
 
 Generating the AccuLynx key (needs a Company/Location Administrator):
 your name (top right) → **Account Settings** → **Add-On Features and
@@ -46,10 +51,32 @@ access may not be on the plan — that is exactly what the probe reports.
    row** — the AccuLynx files attach to the existing record instead. Every
    match is listed in `collisions.csv` by the dry run first.
 
+## Getting the scripts onto the machine (no git required)
+
+If you already have a checkout, `git pull` and skip this. If you don't —
+Cardinal is normally deployed through the GitHub web UI, so you may not —
+download the four files straight from GitHub into one folder:
+
+`acculynx_probe.py`, `fetch_acculynx.py`, `push_acculynx.py` and this
+runbook, from `Cardinal-1986/cardinal-inspections` → `spark/` → open each →
+**Raw** → save. (The two `test_*.py` files are the offline harnesses; they
+are not needed to run a migration.) Or use **Code → Download ZIP** on the
+repo and keep the `spark/` folder out of it.
+
+Check Python is there — 3.8 or newer, no packages to install:
+
+```bash
+python3 --version        # macOS/Linux
+py --version             # Windows, if python3 is not recognised
+```
+
+On Windows substitute `py` for `python3` in every command below, and use
+`set VAR=value` instead of `export VAR='value'`.
+
 ## The gates, in order
 
 ```bash
-cd cardinal-inspections/spark
+cd <the folder with the scripts>
 export ACCULYNX_API_KEY='...'
 
 # 1 · the probe — one minute, read-only, writes acculynx_probe_report.md
@@ -65,7 +92,7 @@ regardless, files fall back (see "If files are unreachable").
 
 ```bash
 # 2 · the fetch — records (and files, if a route answered) to local disk
-python3 fetch_acculynx.py --dest /data/cardinal/acculynx
+python3 fetch_acculynx.py --dest ./acculynx_export
 ```
 
 Resumable: `jobs.jsonl` is the record; re-run the same command after any
@@ -75,7 +102,7 @@ interruption and it carries on. `--limit 5` first if you want a look.
 # 3 · the dry run — the review files, nothing written to Cardinal
 export CARDINAL_EMAIL='theo@cardinalrenovations.net'
 export CARDINAL_PASSWORD='...'
-python3 push_acculynx.py --src /data/cardinal/acculynx --dry-run
+python3 push_acculynx.py --src ./acculynx_export --dry-run
 ```
 
 **Gate — Theo reads two files** (they open in Excel):
@@ -90,7 +117,7 @@ Supabase storage cost).
 
 ```bash
 # 4 · the pilot — five real clients
-python3 push_acculynx.py --src /data/cardinal/acculynx --limit 5
+python3 push_acculynx.py --src ./acculynx_export --limit 5
 ```
 
 **Gate — look at all five in the app**: they show in the client directory
@@ -102,7 +129,7 @@ the pilot has run.
 
 ```bash
 # 5 · the real run — off-hours, and nobody creating leads in the app
-python3 push_acculynx.py --src /data/cardinal/acculynx
+python3 push_acculynx.py --src ./acculynx_export
 ```
 
 The push prints its **batch stamp** at the start — keep it. Resumable the
@@ -118,7 +145,7 @@ reviewed step at a time.
 ## Rollback
 
 ```bash
-python3 push_acculynx.py --src /data/cardinal/acculynx --rollback <STAMP>
+python3 push_acculynx.py --src ./acculynx_export --rollback <STAMP>
 ```
 
 Reads the batch's own ledger (`push_ledger_*.jsonl`, written as the push
@@ -163,16 +190,38 @@ push from `jobs.jsonl.pushed.json`, and every storage path is deterministic
 (`projects/<id>/acx-<fileId>.<ext>`, upsert on) so a repeated write is a
 no-op, not a duplicate.
 
-## Running it from the cloud session instead
+## Appendix — running it from a cloud session instead (last resort)
 
-The scripts are machine-portable — the Spark and a desktop run identical
-commands. If the Spark's connection is down and the desktop is not an
-option, the Claude environment itself can run everything: in the
-environment's settings, allow network egress to `api.acculynx.com` and
-`yipslubcptjoarblzbpl.supabase.co`, add `ACCULYNX_API_KEY`,
-`CARDINAL_EMAIL` and `CARDINAL_PASSWORD` as environment variables (settings
-→ environment variables, never chat), start a fresh session, and ask it to
-run the gates above. Same scripts, same order, same stops.
+The scripts are machine-portable: the Spark, a desktop and a cloud session
+run identical commands. **But read this before choosing the cloud.**
+
+⚠️ **A cloud environment is not a secrets store, and the product says so.**
+Its own dialog carries the warning: *"Anyone who uses the environment can
+read the values, and cloud environments have no dedicated secrets store, so
+don't add API keys or other credentials."* Personal environments are scoped
+to one account, so the practical exposure is small — but `CARDINAL_PASSWORD`
+is a live admin login, not a burnable token. **That is why the desktop path
+above is the documented default.** If you use the cloud anyway: use a
+PERSONAL environment (never an organization-shared one), and afterwards
+delete the AccuLynx key in AppConnections, clear both variables, and change
+the Cardinal password.
+
+Where the settings actually live — **there is no Environments page and no
+direct URL.** On [claude.ai/code](https://claude.ai/code), tap the **cloud
+icon showing the current environment's name, in the row above the message
+box**. From that menu: **Add cloud environment**, or hover an existing one
+and tap the **gear**. One dialog holds the name, network access,
+environment variables and the setup script.
+
+- **Network access:** switch from **Trusted** to **Custom**, then one domain
+  per line in **Allowed domains** — `api.acculynx.com` and
+  `yipslubcptjoarblzbpl.supabase.co` — and tick **"Also include default list
+  of common package managers"** to keep the defaults.
+- **Environment variables:** `.env` format, subject to the warning above.
+
+Then start a **fresh** session in that environment (a running session keeps
+the configuration it was provisioned with) and ask it to run the gates
+above. Same scripts, same order, same stops.
 
 ## Handoff
 

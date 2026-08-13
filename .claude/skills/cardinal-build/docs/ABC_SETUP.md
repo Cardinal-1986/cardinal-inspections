@@ -21,7 +21,51 @@ Then **redeploy** (any deploy picks them up). Never put these in the app file.
 ## 3. Upload the API file (1 min)
 - Put **`abc.js`** into the repo at **`api/abc.js`** (same folder as the other API functions). It follows the existing ESM convention.
 
-## 4. Your account numbers (ask your ABC rep or check myABCsupply)
+## ⚠ 4. Your account numbers — THE WORKING VALUES, confirmed live 13 Aug 2026
+
+## ✅ WORKING, end to end — a real price returned 13 Aug 2026 ($76.00)
+
+```
+Ship-To # : 2153354-2
+Bill-To # : 2153354-1
+Branch  # : 106
+```
+
+**Both suffixes belong to the same base account, and they are NOT
+interchangeable — `-1` is the bill-to, `-2` is the ship-to.** `2153354-2` is
+the number printed as "Account #" on `account.abcsupply.com`; it was rejected
+with a 401 when tried as a *bill-to*, which made it look wrong. It was never
+wrong — it was in the wrong field. **Before concluding an ABC account number is
+invalid, try it in the other box.**
+
+`0003` (the "Ship To" on an invoice) and `2153354-0001` (the invoice "Customer
+Number") are display codes and are **not** API identifiers. **Find my Ship-To**
+in the app asks ABC for the real list and fills the field for you — use it
+rather than typing a number off paperwork.
+
+---
+
+**Bill-To # = `2153354-1`** — confirmed working against production; returns real
+frequent items. **This was not guessable and cost five attempts.** The same
+account is rendered three different ways across ABC's own surfaces, and only
+one of them is what the API accepts:
+
+| Where you see it | Value | API? |
+|---|---|---|
+| **`account.abcsupply.com` "Account #"** | `2153354-2` | ❌ 401 — "does not have access to the requested data" |
+| **Invoice "Customer Number"** | `2153354-0001` | ❌ |
+| **Neither — a third form** | **`2153354-1`** | ✅ **this one** |
+
+The 401 text is the tell: ABC provisions API access per bill-to sub-account, so
+a number that is perfectly valid for buying can still be refused by the API.
+**If this ever stops working, do not re-derive it by guessing — the error names
+itself, and `apisupport@abcsupply.com` can say which sub-account is enabled.**
+
+**Branch # = `106`** (Dayton, Old Troy Pike) — confirmed on two ABC documents.
+**Ship-To #** is per delivery address (`0003` was the Habitat/Stormont job), so
+it changes per job rather than being a fixed account setting.
+
+## The old guidance (kept for context)
 - **Ship-To #** (your "job account" — used for pricing and ordering)
 - **Bill-To #** (used for frequent/recent items and invoices)
 - **Branch #** (your home branch)
@@ -32,8 +76,27 @@ Then **redeploy** (any deploy picks them up). Never put these in the app file.
 - Search "Duration" → tap **Price at my branch** on a result.
 - A **$0 price is normal** for some items — the branch prices those manually; the app tells you to call them.
 
-## One honest caveat
-ABC's docs list endpoint paths but the API host base is confirmed inside their developer portal after you register. The proxy defaults to `sandbox.api.partners.abcsupply.com` / `api.partners.abcsupply.com`; if the portal shows a different host, add one more Vercel env var — `ABC_API_BASE` — with the host they show, and redeploy. That's the only value I couldn't verify from outside.
+## ✅ The "one honest caveat" above was right to be nervous — and it was the bug
+
+This file used to say the API host was the one value that could not be verified
+from outside, and that the proxy's defaults were `api.partners.abcsupply.com` /
+`sandbox.api.partners.abcsupply.com`. **Those hosts do not exist.** They were a
+guess, they never resolved in DNS, and every data call failed on them for
+months while auth (a genuinely different host) kept succeeding — which is
+exactly why the screen said "Connected" and still returned nothing.
+
+**Confirmed 13 Aug 2026 against eleven of ABC's own endpoint reference pages:**
+
+| | Host |
+|---|---|
+| Production | **`partners.abcsupply.com`** |
+| Sandbox | **`partners-sb.abcsupply.com`** (hyphenated suffix, *not* a `sandbox.` prefix) |
+
+Both are now the built-in defaults in `api/abc.js`. `ABC_API_BASE` remains as an
+override but should not be needed. Also corrected at the same time: every data
+path needed its real `/api/{family}/v{n}` prefix, `pageNumber` is **required**
+on frequent/recent items despite ABC's docs calling it optional, and the catalog
+search and price lookup were both using field names ABC has never accepted.
 
 ## What comes after your credentials exist (next builds, in order)
 1. Response-shape tuning against real sandbox data (their fields vs my best-guess mappings — one quick build).

@@ -3922,3 +3922,862 @@ pipeline; the module's string-checklist read/write/delete defects are fixed
 (parse via `parseCkAll`, persist via `patchProjectCk`, delete record-first by
 path). Until Phase 4 the remaining cream surfaces (bid strip, stage row) are
 still hidden-but-live underneath.
+---
+
+# Estimates — the three doors, and the AI/job link (builds 714–716, 11 Aug 2026)
+
+*Written after a live walkthrough of the retail CRM on app.cardinalroster.com: a
+throwaway signed-in account, a disposable client, the whole Lead → Prospect →
+estimate path, then everything deleted.*
+
+## Where an estimate can start
+
+| Surface | Control | Opens |
+|---|---|---|
+| **Client profile** → Estimates tab | `+ New estimate ▾` (`#pNewEstimateBtn` → `#pEstMenu`) | the six trade templates → `createEstimateOfKind()` |
+| | `📄 New Estimate` (`#cr-est-new-btn`, injected by `cr-est`) | the v2 unified editor, blank, prefilled with this client |
+| | **`⚡ AI Estimate` (`#pAiEstimateBtn`, 715)** | the AI builder **bound to this client** |
+| **Global Estimates page** (`#cr-estimates-mount`) | `⚡ AI Estimate` (`[data-act="new-ai"]`) | `showAICreate()`, unbound |
+| | `+ New` (`[data-act="new-manual"]`) | `showManualPick()` → client → blank editor |
+| | **`Templates` (`[data-act="templates"]`, 716)** | client picker → that client's Estimates tab with the template menu open |
+
+**The six templates are `EST_TYPES`** — roof · siding · windows · andersen ·
+gutters · general — and `createEstimateOfKind(kindKey)` is the single creator.
+716 deliberately did **not** add a second template picker: it routes to the
+existing one. One pipeline, more doors into it.
+
+## ⚠ An AI estimate is only attached to a job if the session was bound (715)
+
+`/api/estimate` has always accepted `project_id` and `client` and stores
+`project_id` on the `ai_estimates` row. **The front end never sent them**, so
+every AI estimate was born orphaned — which is what left Send with no address to
+default to (the gap 653 half-fixed from the other end). `createSession(project)`
+records them when the builder is opened from a profile; `generateEstimate()`
+sends them. Opened from the global page with no client, both are `null` and the
+estimate is unattached exactly as before — that path is unchanged, not fixed.
+
+⚠️ **`cr-estimates-script` has no `esc()` of its own.** It is an IIFE; the two
+`esc(` calls in it resolve to the main block's global by luck, and it defines a
+local `esc2` in `showManualPick` for exactly that reason. Build anything new in
+that module with `textContent`, or give it a local escaper — do not lean on the
+global.
+
+⚠️ **`showAICreate` is assigned straight to `.onclick` by `showList`**, so
+argument 1 can be a `MouseEvent`. It takes a session id only when handed a real
+string (715); before that it fell through to a fresh session via a localStorage
+lookup on the key `"[object MouseEvent]"`.
+
+## The PO badge no longer loops (714)
+
+`cr-po`'s `injectOnProfile()` compared `existing.textContent` (`"PO 1002"`)
+against the number `from()` returns (`1002`) — never equal, so it removed and
+re-appended the badge every animation frame, ~120 mutations/sec on **every open
+client profile**, for as long as it was open. Fixed by comparing against
+`'PO ' + po`. **Note there are two unrelated `injectOnProfile` functions** — this
+one in `cr-po-script`, and another in `cr-est-script` that injects the gold
+New Estimate button. A name is not a contract; grep the block.
+
+
+---
+
+# Builds 717–719 — the audit log, the estimate buttons, and Places (11 Aug 2026)
+
+## The sign-in log (717) — `audit_sessions`
+
+`auditStart()` records who signed in. Read policy is `is_admin()`; INSERT is
+`email = auth.jwt() email`; UPDATE is either. **Never ask for the row back.**
+`.select('id')` on the insert makes PostgREST need SELECT on the new row, which
+a non-admin does not have, and the whole INSERT is refused — silently, because
+the call is deliberately `catch`-swallowed so the log can never interrupt anyone.
+That is how the table reached 239 rows without a single rep in it.
+
+The id is generated client-side (`auditNewSid()`, `crypto.randomUUID` with a
+`getRandomValues` v4 fallback) so the insert needs no RETURNING.
+
+⚠️ **Anything else writing to a table whose SELECT policy is narrower than its
+INSERT policy has this bug.** The tell is `.insert(...).select(...)` — check the
+read policy before assuming the write lands.
+
+## The three doors into an estimate, renamed (718)
+
+| Surface | Control | Opens |
+|---|---|---|
+| Client profile → Estimates | **`＋ From a template ▾`** (`#pNewEstimateBtn`) | the six trade templates |
+| | **`📄 Blank estimate`** (`#cr-est-new-btn`) | the v2 editor, empty, prefilled with the client |
+| | `⚡ AI Estimate` (`#pAiEstimateBtn`, 715) | the AI builder bound to this client |
+
+Nothing selects these by their text; the labels each appear once.
+
+## Address autocomplete (719) — `cr-gmap-script` + `cr-ac-styles`
+
+**Do not "finish" this migration by switching to `PlaceAutocompleteElement`.**
+It is a custom element that replaces the `<input>`, and seven `.value` reads plus
+the whole address scanner depend on those inputs existing. The data API
+(`AutocompleteSuggestion.fetchAutocompleteSuggestions`) is the deliberate choice.
+
+- `attachSuggestions()` is the live path; `attachLegacyAutocomplete()` is reached
+  only when `google.maps.places.AutocompleteSuggestion` is absent.
+- The dropdown is a single shared `.cr-acbox`, `position:fixed`, z-index 10700.
+  Fixed positioning is not decoration: it is what stops a modal's overflow
+  clipping it and `#pwaNav` (9990) trapping it.
+- ⚠️ **`acSilent` is load-bearing.** `acChoose()` dispatches `input` so the rest
+  of the app sees the new address — and this module now listens to that same
+  field. Without the flag it reads its own write as typing and re-opens the list
+  on the address just picked. Any new programmatic write to an address input
+  needs the same guard.
+- Requires **Places API (New)** enabled on the Google Cloud project. Verified
+  enabled 11 Aug 2026 (`places:autocomplete` → HTTP 200). If that ever changes,
+  the fallback keeps the field working.
+
+## The boot splash (729) — `#crSplash` + `<style id="cr-splash-styles">`
+
+The **first two elements inside `<body>`**, and they have to stay there. Anything
+further down the file cannot paint until it has been downloaded, and the whole
+point is the window before the file has arrived.
+
+- **What it fixes, measured:** on a weak signal (1.6 Mbps / 300 ms) the document's
+  first paint is at 608 ms but it is not fully down until 5,713 ms. For those five
+  seconds the app is a **half-painted page** — black ground, red rule, one stray
+  strip of unstyled text — which reads as crashed. On LTE the whole load is under
+  a second and there is nothing to fix. **There was never a white screen.**
+- **Ground `#09090C` is measured, not chosen.** `html` and `body` both compute to
+  `rgb(9,9,12)` in dark *and* light mode, so the splash is the document's own
+  ground. Ring, spin and inks are `#restoreVeil`'s, verbatim, so the hand-off on a
+  signed-in load has no seam.
+- ⚠️ **Deliberately single-theme. Do not add an `html[data-mode="light"]` block.**
+  `#restoreVeil` is dark in both modes and a signed-in load goes splash → veil →
+  app. A light splash would put a flash *into* that path to take one out of the
+  rarer signed-out path.
+- ⚠️ **No progress bar, and this is a decision, not an omission.** We cannot know
+  when the remaining bytes arrive. A percentage we cannot measure is a lie, and
+  `gate_729.mjs` asserts none is present.
+- **It removes itself on every exit from boot**: `showMain()` (after the veil is
+  up), `showLogin()` — which is also where the boot IIFE's own `catch` lands —
+  `pageshow` from bfcache, and an **8 s backstop**. A splash that cannot be
+  dismissed is worse than the half-painted page it hides.
+- `window.crSplashDone()` is the single remover, defined once, asserted. It is
+  `position:fixed` and **never writes `body.style.overflow`** — still 13 scroll-lock
+  writers, not 14.
+
+## Client contracts — three trades, one pipeline (730)
+
+`#tab-contracts` on a client profile. **`+ New contract` is a trade picker**, not a
+single button: Roofing, Siding, Gutters. Each builds that trade's own Construction
+Agreement, prefilled from the profile.
+
+| | variable | printed heading | spec sections |
+|---|---|---|---|
+| Roofing | `ROOF_AGREEMENT` (542) | `ROOFING CONSTRUCTION AGREEMENT` | 13 — decking → roof pitch |
+| Siding | `SIDING_AGREEMENT` (730) | `SIDING CONSTRUCTION AGREEMENT` | 11 — removal & prep → stories/height |
+| Gutters | `GUTTER_AGREEMENT` (730) | `GUTTER CONSTRUCTION AGREEMENT` | 13 — removal & disposal → access & height |
+
+All three are transcribed from the shipped print masters in `docs/`, section for
+section. **If a line is not on the paper form it is not in these bodies.**
+
+- **`CONTRACT_TYPES`** mirrors `EST_TYPES` — `{key:{label,tpl}}`. One creation path,
+  `createContractForCurrent(tradeKey)`, asserted defined once. The picker is
+  `pEstMenu`'s markup and delegation copied, not a second mechanism.
+- ⚠️ **The saved title is `Contract — <Trade> — <client>`, and the order matters.**
+  Keeping `Contract` first is why **`isContractTitle` (`/^contract/i`) did not have to
+  grow** — and neither did the **six** other sites that inline the same regex:
+  `jobFinance()`, the worksheet contract-value key, the overview roll-up,
+  `sigApply`'s `setStage('Approved')`, and `renderProjectDocs`' `insp` bucket, which
+  is defined by **NEGATION** and silently swallows any contract the predicate misses.
+  Titling these `Siding Contract — …` the way estimates are titled would have forced
+  all seven to change. **Do not "tidy" the title into trade-first order.**
+- **`docKind()` is the one place that did grow** — it returned `trade:'—'` for every
+  contract, so the Trade column said nothing. It reads the title's **second segment**
+  only: a client named "Siding Supply Co" is not a siding job, and contracts written
+  before 730 still answer `—`.
+- **Each body points at ITS OWN printed master** for the Terms & Conditions and the
+  two 3-Day Notice copies. The T&C differ per trade, and the cancellation notice is
+  statutory text under ORC 1345.23 — it is deliberately not retyped in the app.
+- `approveAndContract` (approving from the pipeline) still issues the **roofing**
+  agreement, because approving carries no trade. It just says so in the title now.
+
+⚠️ **Two separate contract systems exist — do not confuse them.** This one is
+`inspection_reports` (HTML documents, the client Contracts tab). The **`contracts`
+table** is the AI-estimate → contract lifecycle (`contract_number`, `template`, the
+`contract` JSONB blob, `doSend`/`doVoid`/signing from 722). It had **0 rows** as of
+build 730.
+
+## The app-wide toast (733) — `crToast` + `<style id="cr-toast-styles">`
+
+`window.crToast(msg, type)` · `crToastOk(msg)` · `crToastErr(msg)` — type is
+`'ok' | 'err' | 'info'`. Mounts a `#crToasts` stack to `document.body`.
+
+**Why it exists when five toasts already did:** the five (`cr-estimates`,
+`cr-claims`, `cr-coach`, `cr-ess`, `cr-bpa`) are all **view-scoped**. There was no
+app-wide one, which is why `showError` wrote into `#bannerMount` — a normal-flow div
+inside `#mainView`, while `#projectView` is a **sibling** that `hideAllViews()` shows
+after setting `mainView.display='none'`. Measured: errors were visible on **home
+only**. **The five are untouched and asserted still 5. Do not "unify" them without
+cause** — they work, and they are scoped to their own overlays.
+
+- **Errors do NOT auto-dismiss.** They stay until tapped. This is the point of the
+  build: a 4-second visible message replacing a 6-second invisible one is not a fix.
+  Successes clear at 4s. `gate_733.mjs` asserts both.
+- **`textContent`, never `innerHTML`** — these carry Postgres error strings and client
+  names. One of the five existing toasts takes HTML; that trap is not copied here.
+- **Placement follows `body.standalone`**, which already reserves
+  `calc(64px + env(safe-area-inset-bottom))` for `#pwaNav`. The stack clears the same
+  amount, and the gate measures the real overlap rather than trusting the arithmetic.
+  Desktop (≥900px) moves it to top-right.
+- **`showError()` routes through it** and no longer writes `.banner.err` at all — one
+  writer, zero readers. `#bannerMount` keeps its other job as the Local-mode host.
+- Stack caps at **3**, newest wins.
+
+⚠️ **`.toolbar #savedFlash{display:none}` under 760px** — the editor's "Saved ✓" is
+hidden on a phone. That is why `saveCurrent()` now also toasts.
+
+
+## The collection → commission toast (734)
+
+Logging a check reads back: `Collection logged — $17,025 · $1,703 commission for Nick Hey`.
+
+**Why this is not as simple as it looks:** the commission is created by
+`commission_on_collection` (`AFTER INSERT ON collections EXECUTE make_commission()`),
+**server-side**. `miSaveColl` inserts with `.select('id').single()` — it never sees
+the commission. So the amount and the rep are recovered by **diffing
+`commUi.lastComms` across the `await renderCommissions()` that miSaveColl already
+did**, not by asking the database again.
+
+- **Zero extra queries, asserted both ways**: the patch checks `from('commissions')`
+  is 5 before and 5 after, and `gate_734.mjs` counts one commissions read across
+  the save.
+- `commUi.lastComms` is set inside `renderCommissions()` beside the existing
+  `commUi.hasColls`. **Do not remove it** — it looks unused from that function.
+- **Three silent, correct no-commission cases**, each gated: no `sales_rep` on the
+  job · RLS hides another rep's commission from this reader · the user was
+  **editing** a collection, which fires no trigger. All three fall back to the plain
+  collection line. None is an error.
+- Rep names go through the existing `rptRepName()`, so it is "Nick Hey", not an email.
+
+⚠️ **`e2e_mock_supa.js` now models this trigger** (`fireTriggers`, 734). A harness
+that cannot create the commission out of band cannot test any of the above.
+`__MOCK_NO_TRIGGERS__` opts out. Keep the 10% rate in step with `make_commission()`.
+
+
+## Empty states (736) — the base `.empty` rule
+
+**Sixteen** `class="empty"` states. They already carried their call-to-action wording;
+736 fixed how the box renders.
+
+- ⚠️ **The base rule is light-era.** `.empty{background:var(--paper)…}` and `--paper`
+  is `#ffffff`, declared once, no dark twin. On the dark default theme that painted a
+  **white card on a near-black page** — with perfectly readable text on it (6.69:1),
+  which is why no contrast sweep ever caught it. **The inverse of the usual bug.**
+- The dark override is scoped `:root:not([data-theme="rb-light"])`, so **light mode is
+  byte-identical** and asserted so. Inks are 726's: `--rbe-empty-bd` / `--rbe-mute` /
+  `--rbe-head`.
+- ⚠️ **`empty` is a BARE class name and four other components use it as a modifier**:
+  `.cr-photo.empty`, `.payrow.empty`, `.projinfo .poPfx.empty`, `.insdocrow.empty`.
+  The override is (0,3,0) and out-ranks all of them, so **they are excluded by name in
+  the selector**. `gate_736.mjs` proves the override does not reach them. **If you add
+  a fifth component that carries `.empty` as a modifier, add it to that list.**
+- Every other empty state uses a **prefixed** class (`cr-c-empty`, `pay-empty`,
+  `crw-empty`, `pu-empty`, …). Those are separate and untouched.
+- **The mark is a CSS mask, not an image** — `DB_ICONS`' own `docs` glyph as a
+  data-URI on `::before`, taking `currentColor`. One rule, no call-site edits.
+  `-webkit-mask` is listed first for iOS.
+
+### Field validation — phone (739) and email (740)
+
+Two builds, **one convention**, created because the app had none: `.invalid`,
+`.field-error`, `aria-invalid` and a shake keyframe were each **0 occurrences**
+before 739.
+
+- **`<style id="cr-valid-styles">`** — `.cr-bad` (red border + wash, additive so it
+  never fights a module's own palette), `@keyframes crShake`, and a
+  `prefers-reduced-motion` opt-out.
+- **`window.crValid`** — `phone`, `email`, `isEmailField`, `mark`, `shake`.
+- **ONE delegated `blur` listener on `document`, with `capture:true`** — `blur` does
+  not bubble, which is the whole reason capture is there. It covers **8 tel fields and
+  13 email fields living in ten different modules**, several rendered by `innerHTML`,
+  so a new field inherits the behaviour without being wired. **740 added a BRANCH to
+  739's listener rather than a second listener** — the count of capturing blur handlers
+  in the file is still 2 (the other is `cr-gmap`'s autocomplete).
+
+**The rule both halves share: unrecognised input is FLAGGED, NEVER REWRITTEN.**
+`937-555-0101 x123`, `+44 20 7946 0958` and `galen@habitat` all keep their text
+exactly and get the red border. A formatter that silently eats an extension is worse
+than no formatter. Blank is valid in every one of these fields, because they are
+genuinely optional and refusing a blank would block real work.
+
+- ⚠️ **`type="email"` was doing nothing.** It only constrains a *native* form submit
+  and every one of these saves through a JS handler. **And the browser's own check is
+  looser than people assume — `galen@habitat` passes `checkValidity()`.** `gate_740.mjs`
+  asserts that, because it is why the handler-side check matters.
+- ⚠️ **Four of the 13 email fields are `type="text"`**, identified by name instead:
+  `cr-claims` `adjuster_email`, `cr-sol`, `cr-ci`, and `cr-crew` `contact_email`.
+  `isEmailField()` matches `/e-?mail$/i` on `name` / `data-field` / `data-f` / `id`,
+  and excludes anything with a real non-text type so a checkbox named `no_email` is
+  never touched.
+- **One definition of "what is an email."** `crValid.email` uses the same
+  `/^[^@\s]+@[^@\s]+\.[^@\s]+$/` the money paths have used since the draws form. The
+  four working money-path call sites were **deliberately left alone**; only the one
+  weak site was upgraded (`cr-bulk`'s Reassign tested `/@/`, so `nick@` passed — and
+  `assigned` is matched against that exact string by the sales RLS policy).
+
+**The fence: `community_partners.contact_email` cannot be saved malformed.**
+When a community bid is emailed the recipient **defaults to the partner's
+`contact_email`**, so a typo there is a bid that goes nowhere. `save()` refuses it and
+returns `null`; the form says why instead of showing the generic "Save failed."
+`save()` is exported, so the refusal is in `save()` (the fence) and the message in the
+form (the UI) — the same split as **635**'s note on `openEditor`.
+**It fires only when the key is present and non-empty, so 712 still holds**: a rep
+saving a notes change writes normally and never touches the stored contacts, and a
+blank address stays legal. Both asserted.
+
+### Required fields (741)
+
+Six fields carrying the `required` attribute had **nothing on screen to say so** —
+cr-pricing `sku`/`name`/`rate`, cr-claims `amount`, cr-cpartners `name`, cr-cprop
+`address`. They now carry `<span class="cr-req">*</span>`.
+
+- ⚠️ **The asterisk already existed FIVE ways** before this: `<span class="req">*</span>`
+  in cr-nbid / cr-sol / cr-ci (in **three different colours** — red, `#fcd34d`,
+  `#f08a90`), a literal `" *"` in label text (cr-nachi ×3, `pfName`),
+  `placeholder="Name *"` (`qiNpName`), and `placeholder="…(required)"` (cr-estimates).
+  **741 added a sixth only for the six unmarked fields and restyled none of the
+  others** — cr-sol's amber and cr-ci's pink are module palettes, and changing them is
+  a theming decision, not a validation one.
+- ⚠️ **`.cr-req`, not `.req`.** `req` is already four meanings, including cr-shim's
+  section badge that reads "Required" / "4 min · 8 max".
+- ⚠️ **A derived `:has()` rule was the first design and it is wrong.**
+  `label:has(+ input[required])::after` suits `<label>SKU</label><input required>`, but
+  the other structure here is `<label>Name<input required></label>`, where `::after`
+  renders **after the input** and drops a stray asterisk below the box. Two structures,
+  so the mark is placed in the label text.
+
+**`crValid.require(el, msg)`** — marks (`.cr-bad`), shakes (`crShake`), focuses, and
+returns `false` so a guard is one line. Null-safe: several of these run on screens
+where the field may not be rendered. **Six guards use it**: cr-cpartners, cr-cprop,
+cr-estimates, cr-cadj, `pfName`, `qiNpName`.
+
+**⚠️ `#cpForm` and `#cpropForm` now carry `novalidate`, and that is a fix.** Both had
+`<input required>` on a natively-submitting form, so **the browser blocked first** and
+their own "Name is required." / "Address is required." messages had **never rendered
+once** — measured in Chromium, `submitFired === false`. The JS guards were already
+correct and already refused; they simply were not reached. `gate_741.mjs` asserts both
+halves: **the handler runs** *and* **it still writes nothing**, plus that a filled-in
+value still saves.
+
+### Searching by phone number (743)
+
+**Seven** search boxes include a client's phone: `renderHome`, `ljMatches`, `cdMatch`,
+`renderInsuranceClientsList` (main block) and `cr-search-script` / `cr-ic-script` /
+`cr-ch2-script`. Three more (`cr-estimates`, `cr-eaf`, `cr-bpa`) search name+address
+only and are **deliberately untouched**.
+
+- ⚠️ **None of the seven ever looked in `checklist.lead.phones`.** 16 of the 34 clients
+  in production keep a phone only there, so searching for those people by number had
+  never worked at all. `phoneHay(pr)` reaches `lead.phones`, `lead.homeowner_phone` and
+  `lead.renter_phone` as well as the `phone` column.
+- **The haystack carries every rendering; the query is not normalised.** Digits, dashes,
+  dots, spaces and brackets all appear, so the existing `indexOf(q)` matches whatever is
+  typed. **The comparison lines were not touched** — which is what makes the change
+  strictly additive. It was also the practical choice: those comparison lines are not
+  unique in the file (3 copies each), so normalising the query would have meant 14 edits
+  with block slicing instead of 7.
+- Digit extraction delegates to **`window.crValid.phone`** (739), leading-1 country-code
+  rule included, rather than re-deciding what a phone number is.
+
+**The property that matters is "nothing stopped matching."** `gate_743.mjs` fuzzes 161
+query strings across 6 clients against the old and new haystacks and fails on a single
+lost match — 0 lost, 14 gained. A gate that only checked "more things match" would pass
+even if the change broke searching by name.
+
+⚠️ Short numeric queries (`937`, `01`) now match more rows, because the digit forms are
+in the haystack. That is a superset of the old behaviour and is intended.
+
+### Money and dates — the formatters (744–745)
+
+**`crDate(v)` (744)** — one safe parser. 30 columns in this database are Postgres
+`date` and arrive as a bare `"YYYY-MM-DD"`; `new Date()` treats that as UTC midnight,
+so a date-only value rendered **a day early** in any timezone behind UTC. `crDate`
+builds *only* a bare date-only string at local midnight and hands everything else to
+the native parser, so it is a **drop-in** for `new Date(v)` — it never returns null and
+every existing `isNaN` guard behaves identically. 12 formatters use it; **`commDate`,
+`cr-cc` `fmtDay`, `cr-show` `fmtDate` and `cr-crew` `daysLeft` were already correct and
+are untouched.**
+
+⚠️ **35 `<input type="date">` values must stay `YYYY-MM-DD`** — that is what the HTML
+control binds. Never route an input value through a display formatter.
+
+**`fmtMoney(n, cents)` (745)** — the dominant money formatter, 34 call sites.
+The default is unchanged: rounded, `--` for zero, which is *deliberate* on tiles and
+reports. **Pass `true` wherever the number names a specific amount** — the nine sites
+that do are the three invoice tokens, the two `auditLog('money', …)` entries, and the
+four messages that report a figure back to the person who entered it.
+
+- ⚠️ **The second argument matches `money(n, cents)` in `cr-crew-script` (build 556)** —
+  including putting **the sign outside the symbol** (`-$500.00`, never `$-500.00`).
+  Copy the whole of that function's solution, not just the flag.
+- ⚠️ **20 money formatters exist and most are fine.** `cr-adj`'s and `cr-hub`'s
+  `money(n)` return no dollar sign **on purpose** — all 9 of their call sites write
+  `'$' + money(...)`. Adding one would print `$$34,050`. Only `cr-abc`'s `usd()` was
+  genuinely wrong.
+- **Rounding on a dashboard is a feature.** `$34,050` reads better than `$34,050.00` at
+  a glance. The bug was rounding on documents, not rounding at all.
+
+### Company Documents (746)
+
+Five master contract PDFs listed in `COMPANY_DOCS`, served from `docs/`.
+
+- ⚠️ **`COMPANY_DOCS` lists five documents; `docs/` holds three.**
+  `Cardinal_Window_Contract.pdf` and `Cardinal_Gutter_Contract_Fillable.pdf` **404 in
+  production** (verified with curl, 12 Aug 2026). Those rows now say "Not uploaded yet"
+  instead of offering a dead link — **and start working on their own the moment the file
+  is added**, because the check is a runtime `HEAD`, not a hardcoded flag.
+- ⚠️ **The probe downgrades a row on a definite 404 and nothing else.** A network error,
+  an offline PWA or a slow reply leaves the buttons alone. `gate_746.mjs` kills the HEAD
+  request for a document that *does* exist and asserts its row is untouched — hiding a
+  real contract whenever the iPad drops wifi would be worse than the bug being fixed.
+- **Both links open in their own tab.** Download previously had no `target`, and the
+  `download` attribute is **not reliable for a PDF on iOS Safari** — the file opens
+  instead, replacing the app in place. **An installed PWA has no back button**, so that
+  navigation stranded the user until they force-closed the app. Desktop still downloads
+  straight to the Downloads folder; the `download` attribute is retained.
+
+### Print — what is already right, and what is not (audited at 746)
+
+**Theo's item 9 asked for four things. One is already done; three are real gaps.**
+Nothing here has been changed — the templates are legal documents and want his eye.
+
+- ✅ **"Hides nav, buttons, search bars" — ALREADY DONE.** Measured under print media on
+  the estimate editor: **0 of 508** buttons/inputs/nav/header elements paint, and the
+  app page's own `innerText` is empty. There are 18 `@media print` blocks and the
+  estimate/contract path prints an **isolated iframe** (`frame.contentWindow.print()`),
+  which never contained app chrome in the first place.
+  ⚠️ Measuring an element's own `display` is not enough — an ancestor with
+  `display:none` leaves a descendant reading `block` while painting nothing. Measure the
+  **rect**.
+- ❌ **"Logo header on every page" — real gap.** 1 `<img>`, no running header; the logo
+  is on page 1 only. Rendered and confirmed visually.
+- ❌ **"Forces page breaks between sections" — real gap.** **0** `page-break-*` rules in
+  the whole 155 KB agreement. Confirmed visually: the Customer Information table splits
+  across pages 1→2.
+- ❌ **"No grey backgrounds that waste ink" — real.** The `PROPERTY PHOTO` placeholder
+  prints as a **459,580 px² solid grey block** when no photo is attached (`.cover-photo`,
+  `rgb(241,241,241)`), plus near-black `th` bars (`rgb(27,27,27)`) and grey body inks
+  (`#666` ×9, `#9a9a9a` ×2 — 2.85:1 on paper). Note `@media print` already hides *empty
+  photo figures* (`.fig:has(.frame:not(:has(img)))`) — **`.cover-photo` is not covered by
+  that rule.**
+
+### Print — what 747 changed
+
+**Two skeletons, not one.** `ESTIMATE_BASE_RAW` feeds `buildEstimate()` (the three
+Construction Agreements, the Service Contract, the Invoice, and the siding/window/
+gutter estimates); the older `ESTIMATE_TEMPLATE_RAW` feeds the **roof estimate** only.
+⚠️ **They share the same CSS tail**, so a file-wide anchor matches twice.
+
+- **The property photo is stripped in `buildEstimate`, not removed from the skeleton** —
+  gated on the heading text, so an AGREEMENT or CONTRACT drops it and an ESTIMATE keeps
+  it. ⚠️ `isContractTitle` / `isEstimateTitle` / `docKind` are **not** reusable here:
+  they test a *saved document's* title, not a template heading, and all three are
+  declared **after** `buildEstimate`, which runs at parse time.
+- **Estimates gained `.cover-photo:not(:has(img))` on print** — the rule
+  `REPORT_TEMPLATE` has had all along. An estimate with no photo attached no longer
+  prints a **459,580 px²** grey block.
+- **The running header is `position:fixed`, and that is the only thing that works.**
+  Measured by counting its colour band per page in the PDF: `position:fixed` = 5 of 5
+  pages, `<thead>` = 5 of 5. ⚠️ **`@page` margin boxes are not implemented in Chrome or
+  Safari**, so `counter(page)` cannot be used — there is deliberately no "page N of M".
+  The browser's own print footer supplies page numbers.
+  ⚠️ A fixed header sits in the page **content** box, so `body{padding-top}` is required
+  or page 2 onward prints text underneath it.
+- **The break classes already existed and were used zero times.** 747 applies them:
+  Terms gets `page-break`; and under print, `tr{break-inside:avoid}`,
+  `thead{display:table-header-group}`, `h2.sec{break-after:avoid}`,
+  `.sign{break-inside:avoid}`. **Deliberately not a break after every section** — that
+  would turn a 13-row spec sheet into 13 pages.
+
+⚠️ **Pagination outcomes are not directly assertable.** `gate_747`'s first version
+modelled pages as `scrollHeight/1056` and flagged "split rows" — but
+`break-inside:avoid` does nothing in continuous layout; it only acts while paginating.
+That went 2 red against a correct build. Assert **computed style under print media**
+(the rule applies) plus **the real PDF** (what actually lands on each page).
+
+---
+
+## Construction Agreements — tick boxes, not "circle one" (748)
+
+The three Construction Agreements (`ROOF_AGREEMENT_BODY`, `SIDING_AGREEMENT_BODY`,
+`GUTTER_AGREEMENT_BODY`) carry **76 clickable tick boxes** where they used to carry
+**25 `[circle one]` / `[circle all that apply]` text prompts** you could not circle.
+
+**No new mechanism was written.** Everything this uses already shipped:
+
+| Piece | Where it already lived | Since |
+|---|---|---|
+| `.cbx{cursor:pointer;font-size:13pt;user-select:none;}` | `ESTIMATE_BASE_RAW` — the Agreements' own skeleton | before 748 |
+| `wireCheckboxes(doc)` | called from `openEditor`'s frame `onload`, once | before 748 |
+| `serializeFrame()` stripping `data-cbx` | the save path, so a reopened doc re-wires | before 748 |
+| live examples | `GUTTER_BODY` size boxes, `ANDERSEN_BODY` series boxes | before 748 |
+
+**The three behaviours, all pre-existing in `wireCheckboxes`:**
+
+- `data-group="x"` → **radio.** Ticking one clears every other box in group x.
+- no attribute → **independent toggle.** This is "[circle all that apply]" — roof
+  flashing locations and extra structures, gutter miters.
+- `data-val` → the gutter-size boxes, which also rewrite the description via
+  `applyGutterSize()`. **Deliberately not used in any Agreement.**
+
+Group prefixes are per document: `r*` roof, `s*` siding, `g*` gutter.
+
+⚠️ **`.opts` spans (`data-opts="decking|layers|pitch"`) are NOT checkboxes and must
+not become them.** They are the `collapse()` auto-fill from the roof inspection, and
+its regex `<span class="opts" data-opts="KEY">[^<]*(?:<(?!/span>)[^<]*)*</span>` stops
+at the first `</span>` — a box inside one truncates the match and kills the fill.
+
+⚠️ **Every box sits inside a `contenteditable` cell.** `table.meta td:not(.k)` is in
+`EDITABLE_SELECTOR`, so `lockTemplate()` puts a caret where the click lands. It works
+(`e.preventDefault()`), but it is the reason `gate_748.mjs` drives a real browser and
+does a hit-tested mouse click rather than trusting the markup.
+
+⚠️ **A ticked box is plain text (`\u2611`) in the saved HTML** — that is how the state
+persists. Nothing writes it to a column; the contract document IS the record.
+
+**Saved contracts written before 748 keep their `[circle one]` text.** Only newly
+created ones get boxes.
+
+**Row 10 "Ventilation" was left as plain text**, because it carried no circle prompt
+in the template — the only lettered row in the roofing spec sheet without boxes.
+
+---
+
+## The numbered house diagram — roofing agreement only (749)
+
+`ROOF_AGREEMENT_BODY` carries a `<figure class="roofdiag">` directly above the numbered
+Project Specifications table. **It is the printed master's own illustration**, extracted
+from `docs/Cardinal_Roofing_Contract.pdf` (page 1, image xref 30), not a drawing — so the
+contract on the iPad and the one in the truck show the same picture.
+
+| | |
+|---|---|
+| Source | `docs/Cardinal_Roofing_Contract.pdf` p1, xref 30, PNG 1172×840, placed 218×156 pt |
+| Shipped as | greyscale JPEG q84, 760 px wide, 96,877 bytes → **129,195-char data URI** |
+| Displayed | `max-width:3.6in`, centred, `break-inside:avoid` |
+| Print | 346 px ≈ **211 dpi** |
+| Cost | a saved agreement is **281 KB** (the logo alone was already 139,982 chars) |
+
+**The callouts map 1:1 onto the numbered rows below the figure**, which is the whole point
+of putting it there: 1 decking · 2 roof deck protection · 3 drip edge / gutter apron ·
+4 ice & water barrier (three places) · 5 valley metal · 6 starter shingles · 7 shingles ·
+8 flashing · 9 extrusions · 10 ventilation · 11 ridge cap / hip cap. Items 12 (existing
+layers) and 13 (roof pitch) are counts rather than places and have no callout on the
+master either.
+
+⚠️ **Roofing only, and that is measured.** `Cardinal_Siding_Contract.pdf` and
+`Cardinal_Gutter_Contract.pdf` were opened: both carry only the Cardinal logo and the BBB
+badge. There is no siding or gutter diagram to port.
+
+⚠️ **The `.roofdiag` CSS lives in `ESTIMATE_BASE_RAW`, so it is present in EVERY priced
+document** — same as `.cbx`. That is one skeleton working as designed, not a leak. **Test
+for `<figure class="roofdiag">`, never for the bare string `roofdiag`** — the latter went
+2 red against a correct build.
+
+⚠️ **It must never become a photo slot.** `wireCoverPhoto()` claims `.cover-photo` and
+`wirePhotoFrames()` claims `.fig .frame`, injecting a file input and an upload button.
+`.roofdiag` deliberately collides with neither, and sits outside `EDITABLE_SELECTOR` so a
+rep cannot type over or delete it.
+
+⚠️ **Sizing is a per-DOCUMENT cost, not a per-file one.** `serializeFrame()` stores the
+whole document HTML per saved contract. Measure the logo's existing data URI before
+growing this one.
+
+---
+
+## Colour dropdowns on the roofing agreement (750)
+
+Three colour fields on `ROOF_AGREEMENT_BODY` are `<select class="crsel">` instead of
+free-text `.ph` boxes: **item 7B shingle colour** (`data-crsel="occ"`) and **item 3A/3B
+drip edge + gutter apron** (`data-crsel="trim"`).
+
+| List | Source | Rule |
+|---|---|---|
+| OC shingle colours | `window.CardinalColors.list()` → the module's existing `oc_colors` query | hidden excluded, `sort_order` kept, discontinued badged |
+| Aluminium trim | `TRIM_COLORS` constant | **a starting list, not gospel** — Theo's pick when told none existed |
+
+⚠️ **`oc_colors` still has exactly ONE reader.** The dropdown goes through the OC
+module's accessor, not a second query — asserted in `patch_750` and `gate_750`. Add
+the accessor, never a parallel `from('oc_colors')`.
+
+⚠️ **A `<select>`'s value is a PROPERTY and does not survive `cloneNode(true)`.**
+`serializeFrame()` saves contracts by cloning, so the `change` handler writes the
+**`selected` attribute** onto the chosen option and strips it from the rest. Without
+that the colour is lost on save and nothing in the DOM shows it was ever picked. Any
+future form control added to a document must do the same.
+
+⚠️ **Saved option lists are frozen on purpose.** `wireColorSelects()` fills a select
+only when it is empty, so a signed contract keeps the colours it was offered rather
+than restating today's catalogue.
+
+⚠️ **`contenteditable="false"` on every select** — they land in editable `<td>`s
+(`table.meta td:not(.k)`), the same trap 748 hit.
+
+**Item 5 Valley metal is still free text** — same trim palette, but outside what was
+asked for. One line to add if Theo wants it.
+
+---
+
+## The full-screen photo viewer — one viewer, seven callers (751)
+
+`cr-ri-script` owns the only full-screen image overlay in the app. **Do not build a
+second one.**
+
+```js
+window.CardinalResourceImages.open(src, caption)                 // 6 original callers
+window.CardinalResourceImages.open(src, caption, {               // 751
+  actionLabel: 'Open client',
+  onAction: function(){ openProject(pid); }
+})
+```
+
+With `opts` it renders a bar: **‹ Back** and **`actionLabel` ›**. Without `opts` the bar
+is hidden — which is how the Resource Library, Punch & Repairs and the lightbox keep
+working untouched.
+
+⚠️ **The overlay is a SINGLETON.** `ensureZoom()` builds it once; every later `open()`
+reuses that node. **Every open must reset the action bar**, or a photo opened from the
+gallery leaves its "Open client" button on the next Library figure, pointing at the
+wrong client. This is the regression most likely to be reintroduced.
+
+⚠️ **`zoom.onclick = close` — any click on the backdrop closes.** That is deliberate and
+six callers rely on it. Anything interactive added inside must `stopPropagation()` and
+call `close()` itself, reading any state it needs **before** close clears it.
+
+⚠️ **Photo Activity's grid tap opens the viewer, and falls back to `openProject`** only
+when there is no image or no viewer. The old behaviour — jumping straight to the client —
+was the bug Theo reported: there was no way to look at the photo.
+
+**Touch targets on this overlay are ≥44px** (close 44×44, Back 78×44, action 121×44),
+measured as rendered rects at 390px with touch emulation.
+
+---
+
+## The 44px touch-target floor — `cr-touch44-styles` (752)
+
+**One block, at the very end of `<body>`, is the entire pass.** Every rule carries the
+measured before-size from `walk751.mjs`. If a control is under 44px, its fix belongs in
+THIS block, with its measurement — never scattered into module stylesheets.
+
+**The mechanism is `min-width`/`min-height`, and that is load-bearing.** The offenders
+are sized by id-scoped `width`/`height` rules a class selector cannot out-specify — but
+min-* are different properties that never compete in the cascade (used value =
+max(width, min-width)). That is why the block wins with plain class selectors and zero
+`!important`, and why every module stylesheet stayed byte-identical.
+
+⚠️ **The block must remain the LAST `<style>` in the document** (asserted in
+`gate_752`): its same-specificity rules win by order.
+
+⚠️ **`.pu-box` is deliberately absent** — it measures 22×22 but already carries a
+44×44 `::after` hit box from `cr-punch2-styles`. **A rect-based audit cannot see
+pseudo-element hit areas**; check `getComputedStyle(el,'::after')` before declaring a
+small control an offender.
+
+⚠️ **Printed documents are out of scope by construction**: they render in the
+`#reportFrame` iframe, a separate document that app CSS cannot reach. The 15px contract
+tick boxes print exactly as before.
+
+**Instrument notes** (all cost a red against a correct build): `elementFromPoint`
+answers null outside the viewport — scroll first; the seeded harness paints the landing
+module over the home strip, so tap-through claims there are dishonest; Playwright's
+`screenshot()` hangs "waiting for fonts" under the mock — use CDP
+`Page.captureScreenshot`.
+
+Unmeasured module screens (Pricing, Coach, Partners, Showcase, Crews directory) have
+their own add-buttons (`.cr-p-tool-btn`, `.cr-k-btn`, `.cr-cp-addbtn`, `.cr-sh-btn`) —
+**not covered by this pass**; walk them before extending the census.
+
+
+---
+
+## Header menus anchor to their buttons (753)
+
+`#navMenu` (burger) and `#newMenu` (+) drop from their button's **left edge** and clamp
+on-screen against their real rendered width after `display:block`. Mobile (≤640px)
+keeps the sheet rules.
+
+⚠️ **History**: `cr-menu-styles` pinned `#navMenu{left:auto/right:10px !important}` from
+the era when the Menu button lived at the RIGHT of the old masthead; cr-hd2 (416) moved
+the button left and the pin silently beat the click handler's inline position for ~340
+builds (inline `right:1021px`, computed `right:10px` — measured). **Do not re-pin the
+menus in CSS** — the handlers own position; the stylesheet owns width/scroll/max-height.
+
+## The header follows your CRM — `data-crm-head` (754)
+
+**Two CRM attributes on `<body>`, different consumers:**
+
+| Attribute | Written by | Means | Consumed by |
+|---|---|---|---|
+| `data-crm` | `skin()` (view-derived `crmNow()`) | what the PAGE is | page grounds, PIPE_SKIP, module gates, theme-toggle float, footer hide |
+| `data-crm-head` | `skin()` (`crmHead()`: view > open client's claim type > sticky portal) | what the HEADER is | all header chrome (.site tokens, bar, ribbon, banner, --bn*), home routing, switcher highlights, left-rail accent, `openLeadForm` default |
+
+**Do not "unify" them.** The single-attribute version was built and measured first:
+`body[data-crm=insurance]{background:var(--ct-bg)}` repaints shared screens' grounds and
+white headings go unreadable. The split is the feature.
+
+**Two header-located rules deliberately stay on `data-crm`** — the insurance dark-toggle
+hide and `body:not([data-crm=insurance]) .cr-ins-theme`: theme controls follow the page
+they theme, or shared screens would show two theme buttons.
+
+`CardinalHeader.crmHead()` is exported beside `.crm()`. Migrated selector census: **26
+occurrences**, asserted in `gate_754.mjs`.
+
+## Per-CRM banner pills — `paintCrmPills` (755)
+
+The Contacts and Leads pills in `#crBanner` are **slots** (`data-cr-slot="0"/"1"`),
+re-labelled and re-routed per `data-crm-head`:
+
+| CRM | slot 0 | slot 1 |
+|---|---|---|
+| retail (and production/sales) | Contacts → client directory | Leads → Leads & Jobs |
+| insurance | Clients → `showInsuranceClients()` | Claims → `crOpenClaims()` (app-level, history-wrapped) |
+| community | Partners → hub, partners tab | Bids → hub, bids tab |
+
+Community deep-links go through `CardinalCommunityHub.show()` +
+`CardinalCommunityHome.tab(k)` — the hub's own pane mechanism. **Do not add
+per-CRM pills as NEW elements** — the swap reuses the two existing spans
+precisely to avoid duplicate entrances (the 417 class). New routes live in the
+same `ROUTES` map (`insclients`, `claims`, `partners`, `bids`).
+
+`#leadsView`'s subtitle reads "All CRMs" as of 755 — it has no CRM facet and
+never had one; the old "Retail only" label was measured false.
+
+## The header outranks the tool screens — `cr-mounthead-styles` (756)
+
+The five module mounts — `#cr-claims-mount`, `#cr-pricing-mount`,
+`#cr-estimates-mount`, `#cr-coach-mount`, `#cr-adjusters-mount` — sit **below the
+header at every width**, `top:var(--headh) !important; z-index:60 !important`.
+
+⚠️ **`!important` is mandatory**: `styleMounts()` writes
+`position:fixed; inset:0; z-index:200` as INLINE styles, which outrank every
+non-important declaration.
+
+⚠️ **Do not re-gate this on `body.cr-lnav-on`.** That class is desktop-only, and
+gating it there is exactly what hid the header on every phone from 561 to 755
+(BUG_CLASSES 41). The desktop rule still exists and still owns
+`left:var(--lnav-w)` — that one *is* device-specific and stays gated.
+
+`.cr-pme-exit` (the mounts' floating Home) sits at
+`calc(var(--headh,110px) + 10px)`; `--headh` already includes the safe-area
+inset, so there is no separate mobile case.
+
+## One home destination — `CardinalHeader.goHome()` (756)
+
+**Every control that means "take me home" calls `goHome()`**, which reads
+`crmHead()` and lands on Cardinal Truth / the Community hub / the retail
+dashboard. Callers: `#cr-hd2-home` (the gold house), `#cr-home-btn` (floating),
+and `crCloseAll()` + `cr-pme`'s own fallback (the tool screens' Home).
+
+**Do not add a fourth copy of the ladder** — before 756 there were two, and the
+other two controls just called `showHome()` and landed on retail from every CRM.
+
+Each branch tears down through `hideAllViews()`, so **leaving a tool screen
+closes the tool screen**. `showCardinalTruth()`, `showInsuranceClients()` and
+`showResourceLibrary()` were converted to call it at 756; `#landingView` is still
+hidden by hand because it is deliberately absent from `hideAllViews()`.
+
+## One Home button (757)
+
+`#cr-hd2-home`, the gold house in the header bar, is **the** Home control. It is
+present on every screen including all five tool screens (756), and it routes
+through `CardinalHeader.goHome()`.
+
+**Retired at source in 757** — do not re-add either:
+
+| Retired | Was | Why it went |
+|---|---|---|
+| `#cr-home-btn` | floating in `#navWrap` beside the portal chip | one row under the gold house, same job. `cr-hd2-styles` had already declared it `display:none` at 416/417; its module beat that with an inline `display:inline-flex` for ~340 builds |
+| `#cr-pme-exit-btn` | floating "Home" on each tool panel | sat just under the gold house once 756 made the header visible there |
+
+**Kept on purpose**: `Escape` closes the open tool screen (cr-pme, not duplicated
+anywhere), `crCloseAll()` (two other modules call it), and `cr-home-cleanup`'s
+`updateHomeBtn()`, which already no-ops when the button is absent.
+
+Their stylesheets (`cr-home-btn-styles`, `cr-pme-styles`) were deleted with them.
+Dead references remain in `cr-print-styles`, `cr-touch44-styles` and
+`cr-home-cleanup-styles` — harmless selectors that can never match, left rather
+than surgically edit three long minified lines for no behavioural gain.
+
+## Photo Activity is CRM-aware — `phCrm` (759)
+
+Opening Photo Activity preselects the CRM you were standing in
+(`CardinalHeader.crmHead()`), and a chip row (`#phCrmChips`, reusing the global
+`.ljchips`/`.ljchip`) switches between **All / Retail / Insurance / Community**
+with a count on each. The subtitle (`#phScope`) states the active filter.
+
+- `project_photos` has **no CRM column** — the CRM is derived from the joined
+  project via `projClaimType()`.
+- **An untyped job counts as retail**, matching `crmNow()`/`crmHead()`, so the
+  three buckets always sum to the total shown in the All chip.
+
+## `projPhone(pr)` — the one phone resolver (759)
+
+`{ digits, pretty }`. Declared at depth 0 beside `projHomeowner()`, so it is a
+genuine global. Order (copied from `phoneHay()`, 743):
+`projects.phone → lead.phone → lead.homeowner_phone → lead.renter_phone →
+lead.phones[].v`, normalised through `crValid.phone()`.
+
+⚠️ **11 of 34 production projects keep the number ONLY in
+`lead.homeowner_phone`** — any feature reading `pr.phone` alone is invisible for
+a third of the book. `ck.contacts` is deliberately NOT consulted: it is unused
+in production (0 of 34 rows), and `dbSwitchPrimary` promotes a contact **into**
+`projects.phone` anyway.
+
+**Only the Production dossier's Call button uses it so far.** Seven other sites
+still hand-roll `String(pr.phone||'').replace(...)` — repointing them is a known
+follow-up, listed in OPEN_ITEMS.
+
+## The Exterior Designer — `cr-des-styles` / `cr-des-script`, `window.CardinalDesigner` (761)
+
+Theo, 12 Aug: an AI exterior home designer — *"This is a sales resource in front
+of clients… I can already do this on gemeni, just want to look more professional
+doing it in the vision suite."* Photograph a house, pick materials, and the SAME
+photograph comes back wearing them — before/after under a drag slider.
+
+- **Doors**: a Designer tile on the Vision hub (`data-go="designer"`), and a
+  `.cr-lr-show` row beside Showroom on the ordinary landing (≥820px gate;
+  phones use the hub). Registered in `hideAllViews()` (class-shown, own
+  `close()`), `navRestore('designer')`, and the `__crNav` wrap — PLUS `open()`
+  records `navSetView('designer')` itself, because the central wrap runs on a
+  400ms timer that can fire before the LAST script in a 4.2MB document has
+  parsed (measured: same artifact, wrapped on one run and not the next;
+  navSetView's double-push guard makes the two paths compose).
+- **Surfaces**: roof from `oc_colors` — hidden excluded (the Shasta White rule)
+  AND discontinued excluded: the Designer offers what Cardinal can order,
+  unlike the Colors wall, which badges history so an old roof can be
+  identified. Different jobs, different filters, both deliberate.
+  Siding/trim/gutters/windows come from small curated palettes in the module —
+  colour suggestions, not product claims.
+- **Engine**: `api/design.js` — the first image-GENERATING route in the app
+  (the 534-era "no image generation in this app" fact retires here). Signed-in
+  gate (a sales tool, deliberately not admin-only), 5MB cap, pinned surface
+  vocabulary, server-pinned prompt wrapper (same house, same geometry, only
+  the listed surfaces change), ladder `gemini-3.1-flash-image` →
+  `gemini-2.5-flash-image` with the settled 1.2s 503 pause, and `{probe:true}`
+  listing which image models the deployed key can actually reach — OPEN_ITEMS'
+  one unverified thing, closed the way it recommended. No OpenAI fallback on
+  purpose (vendor decision settled 1 Aug). ~$0.067/image.
+- **The fence** (CONTRACTOR_VISION_SUITE, presentation-only): every render is
+  badged AI CONCEPT on screen and BURNED into the saved JPEG (`burnMark()`).
+  Saved designs live in `design_renders` + the `designer/` prefix of the photos
+  bucket (`design_renders.sql` — all staff read/insert-own, owner-or-admin
+  delete) with NO join to project_photos, reports, claims or CompanyCam.
+- Gallery is shared team-wide; delete selects the id back (the silent-204
+  lesson). `gate_761.mjs`: 18 green · 15 red on the v760 negative control.
+
+### 762 — Studio White, full screen, house first (same session)
+
+Theo's picks off six rendered options: the Designer is now **single-theme
+Studio White** (the first LIGHT Vision surface — warm paper, red accents, all
+literals), **full-bleed** (the `body.cr-lnav-on` framing rule is deleted; no
+header, no left nav, and `cr-des` joined the 694 theme-toggle exclusion list so
+the floating switch no longer hovers over it), **house-first** ≥900px (sticky
+hero stage ~746px + a 396px picker rail; stacks below 900px), and **showroom
+voice** — no "AI" anywhere a client reads: tag `AFTER · CARDINAL DESIGNER`,
+badge `DESIGN`, burned mark `CARDINAL DESIGNER · VISUALIZATION`. The images
+are still AI-generated and the internal record still says so (`via`, banner,
+docs). `gate_762.mjs`: 23 green · 5 red on the v761 control.

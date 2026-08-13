@@ -538,6 +538,10 @@ He raised using actual client photos, undecided.
 - **There is no image generation in this app.** Both librarian models (`gemini-3.6-flash`,
   `gemini-3.5-flash`) are text-only; nothing in `api/` generates an image. The `MAX_IMAGE_BYTES`
   hits in `analyze.js` / `companycam.js` are image *input*.
+  ⚠️ **Superseded 12 Aug, build 761: `api/design.js` now generates images** (the Exterior
+  Designer, `gemini-3.1-flash-image` per the vendor table below). True when written; do not
+  quote it past 761. The Library-illustration question itself is still open and still
+  Spark-recommended.
 - **Client photos already exist as a feature** — `~~photos` (build 471), real CompanyCam
   photographs, admin-only, model never receives photo data. Theo may simply not have seen it.
 - **The storage half is already built.** `library` bucket + blob upload + signed URL +
@@ -603,6 +607,28 @@ accurate).
 **Still true and still the reason to be careful:** a generated cutaway is an unverifiable claim
 with a picture's authority. Nothing files without Theo looking at it. Do not automate the upload
 step away without re-reading that section.
+
+---
+
+## 🟡 Exterior Designer (761, 12 Aug) — deploy steps + follow-ups
+
+Shipped in the build-761 PR. **Before merge: run `design_renders.sql`.** After
+deploy, the first Generate press either works or names the real blocker — if it
+reports missing models or permissions, POST `{"probe":true}` to `/api/design`
+(signed in) and read `imageModels`: an empty list means the Vercel
+`GEMINI_API_KEY` has no image models enabled, which is a Google AI Studio /
+billing setting, not app code. ~$0.067 per press; a 10–15 image kitchen-table
+session is about a dollar. The free tier 503s — expect to want the paid tier.
+
+Follow-ups, none started, none promised:
+- **(a) Reference-image colour anchoring** — send the picked colour's
+  `oc_color_photos` cover beside the prompt so shingle colour matches the real
+  product rather than the model's idea of the name. Do this first if Theo says
+  the colours look off.
+- **(b) A Designer rail inside the Showcase view** if he wants saved designs in
+  the presentation flow — today they live in the Designer's own shared gallery.
+- **(c)** The hub tile's pencil icon is dim — it matches the existing Colors
+  tile exactly (only `.primary`/`.admin` tiles tint their icons). Cosmetic.
 
 ---
 
@@ -880,13 +906,12 @@ there are 3 punch items total and none are scheduled. That is a coverage gap, no
 
 | Item | State | What unsticks it |
 |---|---|---|
-| **ABC Supply 401** | App registered, credentials + `ABC_ENV` in Vercel, `api/abc.js` reachable, but ABC's auth rejects the pair on **both** sandbox and production | Clean re-paste of both values using the portal's clipboard icons, redeploy (env changes only reach a **new** deployment). If it persists, email **apisupport@abcsupply.com** |
-| **ABC account numbers** | Not entered | Ship-To and Bill-To from an invoice or myABCsupply (Branch # 106 already entered) |
+| **ABC Supply — wrong host + wrong paths on every data action** | ✅ **RESOLVED, 13 Aug — was never a 401, was never really just "fetch failed" either; the whole `api/abc.js` data layer was pointed at the wrong place.** The chain: 401-stale-note (12 Aug AM) → diagnostic fix shipped so the next failure would be self-explaining → live production retest returned `"Could not reach api.partners.abcsupply.com (ENOTFOUND: …)"` — a DNS failure, not a guess, because the auth host (a *different*, always-correct host) had already proven the credentials and network path were fine. Cross-checked against **9 of ABC's own endpoint reference pages** (`apidocs.abcsupply.com/get-branch/`, `/get-frequent-items/`, `/search-items/`, `/search-item-availability/`, `/price-items/`, `/get-recent-items/`, `/get-order-templates/`, `/search-branches/`, `/get-item-availability/`, `/place-orders/`, `/get-orders/` — 11 pages, all agreeing): the real hosts are **`partners.abcsupply.com`** (production) / **`partners-sb.abcsupply.com`** (sandbox, hyphenated suffix — not `sandbox.partners.*` like every other host in this file). **Separately**, 7 of the file's 9 data paths were also missing their real `/api/{family}/v{n}` prefix (only `frequents`/`recents` happened to already be right) — so a host-only fix would have traded one dead end for a wave of fresh 404s. `priceItems`'s request body was also wrong: real field names are `shipToNumber`/`branchNumber`/`purpose`/`lines[]` (not the invented `items[]`/`unitOfMeasure`/`variation`) — confirmed against ABC's own verbatim example JSON. All fixed, proven with a URL/body-capturing harness across all 9 actions (9/9 green) and negative-controlled against the pre-fix file (9/9 red — same file, same harness). | ✅ **WORKING — a real branch price returned 13 Aug 2026 ($76.00 on 11IWRRGU2).** ABC Supply had never once returned data; it now searches, lists frequent items, and prices. **Working values: Ship-To `2153354-2`, Bill-To `2153354-1`, Branch `106`.** ⚠️ **Both suffixes are the same base account and are NOT interchangeable** — and `2153354-2` is the number that 401'd earlier *as a bill-to*, which made it look invalid. It was in the wrong field. **Before calling an ABC account number wrong, try it in the other box.** Six faults, each hidden behind the one in front: (1) the API host did not exist (`api.partners.abcsupply.com`, ENOTFOUND) — real hosts `partners.abcsupply.com` / `partners-sb.abcsupply.com`; (2) 7 of 9 data paths missing their `/api/{family}/v{n}` prefix; (3) `pageNumber` REQUIRED on frequents/recents though ABC's docs call it optional; (4) `searchItems` sending invented fields (`query`/`page`/`pageSize`) ABC has never accepted, and `priceItems` reading `j.items` when ABC returns `lines[]`/`unitPrice` — the latter would have shown "Branch will price — call them" for every item, **a plausible wrong answer on a money surface**; (5) the error text mangled three ways (double-escaped, cut at 60 chars, in a 120px column) so no refusal could be read; (6) ship-to `0003` an invoice display code, not an identifier. **The through-line: this feature discarded the answer it already had FOUR times** (`e.cause`, `err.detail`, the truncation, the account-field mix-up). Every fix after the first came from reading ABC's own words instead of guessing. | **Nothing outstanding.** `Find my Ship-To` asks ABC for the real ship-to list rather than trusting paperwork — use it per job. Untested only because it needs a real purchase: `placeOrder`/`getOrder`/`templates` paths are pattern-inferred, not doc-verified, and are unreachable from the UI today. Next natural step is Phase 2 from `ABC_SETUP.md`: "+ ABC Supply" inside the estimate editor. |
 | **OpenAI quota (429)** | Coach fallback down. Theo says he pays for ChatGPT — **verify that is API credit, not a ChatGPT subscription.** `api/coach.js` calls `api.openai.com/v1/chat/completions` with `OPENAI_API_KEY` and `gpt-4o-mini`; a ChatGPT Plus/Pro plan does **not** fund that. | Check credit at platform.openai.com → Billing, not chatgpt.com |
 | **Resend sender domain** | Daily digest 403s | Verify `cardinalrenovations.net` DNS, then swap the from-address in `digest.js` |
 | **Gemini key** | **Theo confirmed 31 Jul he is on paid Gemini billing — the "free tier 503s" note was stale and is retired.** Still worth confirming the key exposed in an old session was rotated. | The 503 retry ladder in `librarian.js` stays regardless (cheap insurance), but paid quota is what makes a bulk caption backfill viable at all |
 | **GitHub PAT** | Pasted into chat in the 374–388 session | Revoke if not already done: GitHub → Settings → Developer settings → Personal access tokens |
-| **Contract PDFs** | Roofing + gutter ready; siding and windows **missing** | `docs/` now exists in the repo. Siding/window masters were built July 20 in the *"Digital roofing contract formatting"* chat |
+| **Contract PDFs** | Roofing + gutter present but **carry a clause Theo corrected on 12 Aug — see the section at the foot of this file**; siding and windows **missing** | Swap the two revised masters in. Siding/window masters were built July 20 in the *"Digital roofing contract formatting"* chat |
 | **Supabase PITR** | Unconfirmed | Confirm point-in-time recovery is on |
 
 ### Done — do not re-list
@@ -2597,6 +2622,365 @@ photos render dead links again — there is no retry.
 - The New Bid property dropdown never renders: `loadPropertiesFor` prefers two
   methods that have never existed on the export and falls to a cold cache, so
   even partners WITH properties get the free-text address input.
+
+---
+
+## Build 712 — partner contacts are Theo's, and what it left for 713 (11 Aug 2026)
+
+**Theo, verbatim:** *"Hide all main contacts for all community partners. Only I
+should have the main contact info. Sales reps just put bids on jobs and only
+have contacts for homeowners."* Two picks, both settled, **do not re-litigate**:
+
+| Question | **Theo's answer** |
+|---|---|
+| Who keeps the contacts — the admin pair, or you alone? | **theo@ only.** Joan is treated as everyone else on this screen (`OWNER_EMAILS`, deliberately not `ADMIN_EMAILS`) |
+| Hide first, or lock the database first? | **Hide now, lock the database next** — 712 is the hiding, 713 is the RLS |
+
+**⏭️ 713 — the RLS lock, the agreed follow-up and the next build.** Today the
+columns still travel to a rep's browser and are stripped in JavaScript; anyone
+reading the network tab sees them. The columns must stop leaving Postgres for a
+non-owner. **SQL runs BEFORE any dependent app change**, per the house rule.
+
+⚠️ **Three things measured against the live database on 11 Aug, before anyone
+designs this. The first revision of this very note got the third one wrong.**
+
+1. **`community_partners_read` is `USING (true)`** — every signed-in user reads
+   every row. And **RLS is row-level: it cannot hide a column.** "Column-level
+   RLS" does not exist; the tool is a `GRANT`.
+2. **A column-level `REVOKE` is silently inert on its own.** Supabase has already
+   granted table-wide `SELECT` to `authenticated`, and a column revoke cannot
+   subtract from a table-level grant — `information_schema.column_privileges`
+   still showed `SELECT` on the revoked column. You must `REVOKE SELECT ON <table>`
+   first, **then** `GRANT SELECT (cols)`. Measured on a scratch table, since
+   getting this wrong ships a lock that locks nothing.
+3. **A revoke does not make the columns arrive as null — it makes the query
+   ERROR.** Under a per-column grant, `select *` came back
+   `permission denied for table`, while an explicit column list succeeded.
+   `load()` uses `.select('*')`, so a revoke alone would **break the partner
+   roster outright, for everyone including Theo** (he shares the `authenticated`
+   role — a grant cannot single one person out). *An earlier revision of this
+   note claimed the app would keep working because the columns would simply be
+   null. That was an assumption, and it was wrong.*
+
+**So the shape that actually works is a VIEW**, not a revoke: a view over the
+table that returns the four contact columns as `CASE WHEN auth.email() = <owner>
+THEN … ELSE NULL END`, with the table's direct grant to `authenticated` removed.
+Then `select('*')` keeps working, and a non-owner receives exactly the row shape
+`maskPartner()` already produces — which is what makes 712 the compatible client
+for it. Two things to settle when building it: the writes (a simple view is
+auto-updatable, but not through the computed columns, so Theo's contact edit
+needs an INSTEAD OF trigger or a separate grant), and whether the view takes the
+name `community_partners` (table renamed beneath it) so no query in the app
+changes at all.
+
+**Left standing on purpose, recorded so nobody reads them as oversights:**
+1. **A rep can still edit a partner's name and notes, and archive it.**
+   Pre-existing, unchanged by 712, and not what Theo asked to close.
+2. **`notes` is free text and everyone sees it.** Habitat's note legitimately
+   reads "Galen is the bid contact" — the app cannot police prose, and reps need
+   the programme rules. If a phone number is typed there it is visible.
+3. **`pickPartner`'s rows show the name only** for a non-owner and are left
+   without a "held by Theo" line — a chooser row is *supposed* to be a name, and
+   a note on every row would be noise. The directory got the line because a
+   directory with no contact reads as broken.
+4. **CR-COM-014 is untouched and still open**: `cr-nbid`'s `loadPartners()`
+   consumes the raw `load()` return, so a *confidential* partner's real name
+   still appears in the New Bid payer select. Re-verified at 712 that it renders
+   no contact field, so the hiding pass leaves no hole there.
+
+### Build 713 — and the answer to "can reps still see the homeowner?"
+
+**Measured, not reasoned** (`render_712rep.js`, the real black card in Chromium
+signed in as nick@, live job shape). For a sales rep on a community job:
+
+| Datum | On the card? | Where it comes from |
+|---|---|---|
+| Homeowner name | ✅ yes | `checklist.lead.homeowner_name` |
+| Homeowner phone | ✅ yes | `checklist.lead.homeowner_phone` |
+| **Homeowner email** | ❌ **no — and never was** | see the open item below |
+| Job / property address | ✅ yes | `projects.address` |
+| Renter (property-manager jobs) | ✅ yes | `checklist.lead.renter_name/_phone` |
+| Which partner funds it | ✅ yes | the partner's `name` |
+| Galen Curry, his email, his phone | ❌ hidden (712) | `maskPartner()` |
+| Habitat's own postal address | ❌ hidden (712) | `maskPartner()` |
+
+Homeowner data lives in `projects.checklist.lead.*` and `projects.address` —
+a different table and a different code path from `community_partners`, which is
+the only thing 712 touched. The table above is the proof, not the argument.
+
+**⚠️ OPEN, found by that render, deliberately NOT folded into 713: the homeowner
+EMAIL is not painted on the black card at all.** It is stored (14 of the 16 live
+community jobs have one) and the pin/contacts area shows name and phone only.
+This is **pre-existing** — the same render is red for it on the 711 artifact, so
+712 did not remove it. It is a real gap for a rep who wants to email a
+homeowner, and it is its own small build: decide where it belongs (beside the
+phone, as a `mailto:`) and check the retail/insurance cards for the same
+omission before shipping, because that block is shared.
+
+**Recorded from Theo, 11 Aug, verbatim:** *"Reps don't send bids I do. Reps just
+write the bid."* This confirms 712's send refusal is **correct behaviour, not a
+restriction to soften** — a rep writes and saves the bid, and the sending is
+Theo's step. Do not "fix" that refusal into a fallback.
+
+### Build 714 — the hardening Theo picked, and what it deliberately does not do
+
+**Settled 11 Aug, do not re-litigate:** app-only hardening, **not** the database
+lock. The measured design for the lock stays in the section above so it can be
+picked up later without redoing the work — **do not build it on your own
+initiative.**
+
+**⚠️ Say what 714 is, accurately.** It stops the app *asking* for a partner's
+contact columns unless Theo is signed in. It is **not** a fence: `window.supa`
+is a live authenticated client and `community_partners_read` is `USING (true)`,
+so a signed-in user who opens devtools can still query the table directly. Theo
+accepted that residual explicitly. Anyone who describes 714 as a lock is
+overselling it, and the next person will trust it further than it goes.
+
+**Closed by 714, with the evidence:**
+- the exported `load()` handing out raw rows, and the raw-`CACHE` `onChange`
+  handout (zero consumers, latent) — nothing to hand out now for a non-owner
+- the module's cache surviving a user switch on a shared tablet
+- a failed load poisoning the roster for the session (no directory, no picker,
+  **no community bid could be created at all**)
+- `save()` returning every column to Joan / Curtis / Scottie via a bare
+  `.select()`
+- **the bid-send refusal never firing for the 5 partners with no contact email**,
+  which put the HOMEOWNER's address in the send box — live, and reachable today
+- the homeowner email missing from the card (now shown when set)
+- two jobs reading "Not recorded" while every other screen showed the name
+
+**Still open, unchanged:**
+- **CR-COM-014** — `cr-nbid`'s `loadPartners()` consumes `load()` rather than
+  `list()`, so a *confidential* partner's real NAME still shows in the New Bid
+  payer select. 714 does not touch it (a name is not a contact column) and it is
+  its own item.
+- `getRaw()`'s name is now slightly false for a non-owner (the row it returns
+  never carried the columns). The comment at its call site still says "the
+  UNMASKED row" — true for the owner, misleading otherwise. Worth a rename the
+  next time that block is open; not worth a build of its own.
+- The **renter** fields are captured by the bid form for property-manager
+  partners and are empty on all 16 live jobs, as are all homeowner emails. That
+  suggests the form is being skipped or worked around; worth watching before
+  anything else is added to it.
+
+---
+
+## Live walkthrough of the retail CRM — 11 Aug 2026, builds 715–720
+
+*Driven on **app.cardinalroster.com** as a signed-in rep (throwaway account, disposable
+client, deleted afterwards along with the auth user — nothing left behind). Three
+defects found and fixed; the rest is recorded here rather than quietly patched.*
+
+### ✅ Fixed in this pass
+- **715** — the PO badge rewrote every client profile ~120×/sec, forever. One-line guard fix.
+- **716** — no AI Estimate door on a client profile; and no AI estimate was ever linked to its job.
+- **717** — the global page's `Templates` button opened the AI builder; empty-state copy named a
+  control (`+ Add project`) that does not exist.
+
+### ✅ All three were fixed at 718–720 (Theo: "All")
+1. ~~audit_sessions 403~~ → **718.** It was not a stray 403: the log had never recorded a single
+   rep. Proved against production with a temporary non-admin JWT.
+2. ~~deprecated Maps autocomplete~~ → **720**, via the data API, because the advertised replacement
+   would have swapped the `<input>` out from under seven `.value` readers.
+3. ~~two near-identical estimate buttons~~ → **719.** Now `＋ From a template ▾` and
+   `📄 Blank estimate`. Wording was not specified; each string appears once and is easy to change.
+
+### 📋 Still open
+4. **`ai_estimates` is empty — the AI estimate flow has never been used in production** (0 rows).
+   716 makes the job link work, but the feature itself is unproven against real photos and a real
+   Gemini response. **Worth one supervised run before it is offered to reps** — this is the only
+   item from the walkthrough that code cannot close.
+5. **Places API (New) is now a live dependency** (720). It was verified enabled on the Google Cloud
+   project on 11 Aug 2026; the legacy widget remains as a fallback, so the field degrades rather
+   than breaks. If billing or API enablement ever changes, autocomplete quietly reverts to the old
+   service rather than failing — which is the safe direction, but means the deprecation warning
+   would return without anyone noticing.
+
+### Rig notes worth keeping
+- **Chromium's ClientHello is RST by the egress gateway on passthrough hosts.** Driving the live app
+  from this container needs every request carried over Node's fetch stack (`context.route` +
+  `route.fetch`), or the app boots into **Local mode** with `window.supabase` missing and none of
+  the CDN scripts loaded. `TEAM` is `!!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase)` — a
+  blocked CDN silently downgrades the whole app to a single-browser toy, which looks like a bug in
+  the app and is not.
+- **`page.setContent` runs on `about:blank`**, whose opaque origin denies `localStorage`. Any module
+  that stores a session (the AI builder does) needs a real origin — route a fake URL and `goto` it.
+
+---
+
+## ✅ SETTLED BY THEO, 11 Aug 2026 (build 727) — the punch tick box stays a ONE-TAP CLOSE
+
+Raised at 725, after the five-photo refusal on the punch DETAIL sheet was made visible (it had been
+writing its reason into `#puMsg` at the bottom of the sheet, off-screen on a phone). That surfaced an
+inconsistency worth a decision: **the tick box on a punch CARD (`data-putoggle`, on the home/insurance/
+community strips and the punch list) closes an item with no photo check at all — only the sheet
+enforces `PHOTO_MIN`.** Asked whether the tick box should enforce the five too.
+
+**Theo: "One tap close."** The tick box stays as it is. **Do not add the photo gate to
+`data-putoggle`**, and do not "fix" the asymmetry as a bug — it is the intended shape: the sheet is
+the considered close (it shows you the photo count as you do it), the tick box is the quick one.
+`PHOTO_MIN` on the sheet is unchanged and still enforced.
+
+---
+
+## Loading states (Theo's list, 11 Aug) — where it stands after 728–729
+
+Four items were proposed. Two shipped, one is mostly already built, two are open.
+
+| # | Item | State |
+|---|---|---|
+| 1 | Splash while the app opens | ✅ **729** — `#crSplash`. See `FEATURES.md` |
+| 2 | Buttons show `Saving…` during a write | ✅ **~80% pre-existing** (64 buttons already disable, ~50 already relabel); **728** closed the real gap — the seven money writers, none of which did |
+| 3 | Skeleton screens on the dashboard | ⬜ **open, not started.** Ranked third: the data queries return fast; the pain was the document download, which 729 covers |
+| 4 | Route transitions between views | ⬜ **open — recommended AGAINST.** Views here are shown by `display` or a class, with `hideAllViews()` in the middle; adding a transition means touching that path for every one of them, for decoration. High blast radius, no correctness gain |
+
+### ✅ SETTLED at 729 — the splash shows no progress bar
+
+Theo's note asked for one, *"even fake progress beats nothing."* Built without it, and
+this is the reasoning, so nobody adds one back as a "missing" piece: the app cannot
+know when the remaining bytes arrive, so any bar would be an animation timed to a
+guess. When the guess is short it sits at 100% while nothing happens — which is the
+exact "it's frozen" impression the item was raised to fix. The honest spinner is up
+from first paint (608 ms on a weak signal) and lifts the moment the app is ready.
+**`gate_729.mjs` asserts no percentage and no `<progress>` is present**, so this stays
+decided rather than drifting.
+
+### ⚠️ Two numbers in the original note were wrong — do not re-quote them
+
+- **The file is 1,103,773 bytes Brotli, not 734 KB.**
+- **There is no white screen.** The window is a HALF-PAINTED page. A fix aimed at a
+  white screen would have been aimed at nothing.
+
+Both were established by serving the real compressed document from a local http server
+with `Content-Encoding: br` under CDP throttling. ⚠️ **Do not try to measure this
+against the live site from a session container** — the egress gateway RSTs Chromium's
+ClientHello, and an earlier attempt was timing Chrome's own error page.
+
+---
+
+## Contracts — what 730 closed, and what it deliberately left
+
+**Closed at 730:** siding and gutter Construction Agreements now exist in the app and
+`+ New contract` picks the trade. See `FEATURES.md`.
+
+### ⬜ Still open, found during the 730 audit — none of these were in scope
+
+1. **Two COMPANY_DOCS entries point at files that do not exist.**
+   `docs/Cardinal_Window_Contract.pdf` and `docs/Cardinal_Gutter_Contract_Fillable.pdf`
+   are referenced in `COMPANY_DOCS` but are **not in `docs/`** — only the roofing,
+   siding and gutter masters are. Tapping either is a dead link. Either the two PDFs
+   need uploading or the two rows need removing; **that is Theo's call, because the
+   files may simply not have been pushed yet.**
+2. **There is no WINDOWS contract in the app**, though `COMPANY_DOCS` advertises a
+   window master and `EST_TYPES` has two window estimate templates (vinyl and
+   Andersen). Adding it is the same shape as 730 — a `WINDOW_AGREEMENT` plus one
+   `CONTRACT_TYPES` row — but it needs the print master first (see 1).
+3. **`buildEstimate` never replaces `<head><title>`.** Every contract, invoice and
+   work order the factory produces says *"Cardinal Roofing & Renovations — Estimate"*
+   in the browser tab and in a saved PDF's filename. Pre-existing since the factory
+   was written; cosmetic but wrong on three document types.
+4. **The shared header block labels a contract "Estimate #" / "Estimate Date" /
+   "Valid Through".** Same root cause as 3 — one base template serves estimates and
+   agreements. Fixing it means parameterising `ESTIMATE_BASE_RAW`, which touches
+   every document type, so it wants its own build.
+5. **`api/estimate-to-contract.js` has no gutters, and neither does the table.** Its
+   contract-number prefix map is `{roofing:'CRC', siding:'CSC', windows:'CWC'}` and its
+   `WARRANTIES` map matches — and **`contracts_template_check` permits only
+   `('roofing','siding','windows')`**, verified on the live schema. So the `contracts`
+   table cannot hold a gutter contract at all. Widening the CHECK without the API
+   branch is half a change, so 732 left both alone. That is the **other** contract
+   system, not the client Contracts tab; it has 0 rows today, which is why nobody has
+   hit it.
+6. **`contracts` has no `signed_at`** — it has `homeowner_signed_at` and
+   `contractor_signed_at`. 732 fixed the two health checks that assumed otherwise, but
+   **check the column list before writing any new query against this table**; the
+   recorded 18 columns are in `gate_732.mjs`, with the SQL that produced them.
+
+### The title-order rule, so it is not "tidied" later
+
+`Contract — <Trade> — <client>` keeps `isContractTitle` and **six** inlined copies of
+`/^contract/i` unchanged. Trade-first (`Siding Contract — …`, the way estimates are
+titled) would force all seven to grow, and the `insp` bucket in `renderProjectDocs` is
+defined by NEGATION — so a missed contract does not error, it files itself under
+Inspection Reports. **Do not reorder these titles.**
+
+---
+
+## Left out of 738–741 deliberately — 12 Aug 2026, build 741
+
+Theo's five-item UX list (toasts, empty states, confirmations, form validation) shipped as builds
+733–741. Three things were scoped out rather than forgotten:
+
+1. **Two phone fields the 739 normaliser does not reach.** `cr-crew`'s `contact_phone` and
+   `cr-cpartners`' `contact_phone` are `type="text"`, and the delegated listener keys on
+   `type="tel"`. Email solved the same problem at 740 with `isEmailField()` matching on
+   name/`data-f`/`data-field`/`id`; **the phone branch could take the same treatment** — one
+   `isPhoneField()` beside it, no new listener. Not done because 741 was already touching six
+   modules.
+2. **The asterisk is still not one convention.** 741 marked the six unmarked `required` fields and
+   left the five pre-existing conventions alone — including cr-sol's amber `#fcd34d` and cr-ci's
+   pink `#f08a90` asterisks. **Unifying them is a theming decision and wants Theo's eye**, not a
+   validation build's opinion.
+3. **`novalidate` was applied to exactly two forms** (`#cpForm`, `#cpropForm`) — the two proven to
+   have unreachable messages. **Other native forms were not audited for the same class.** The test
+   is cheap: register a `submit` listener and assert it fires (see BUG_CLASSES 33).
+
+**Still standing with Theo from earlier sessions**, unchanged: the two dead `COMPANY_DOCS` links
+(`Cardinal_Window_Contract.pdf`, `Cardinal_Gutter_Contract_Fillable.pdf` — both 404); whether the
+signing→Approved notification should be gated to Curtis; the permit / municipal-inspection tracker.
+
+---
+
+## 🔴 Theo's action — swap two contract masters (12 Aug 2026, build 750)
+
+**The app does not contain the roofing Terms and Conditions. It points at a PDF.**
+`ROOF_AGREEMENT_TERMS` states the terms are *"reproduced verbatim in ☰ Menu → Company
+Documents → Roofing → Construction Agreement (Master)"* — that is
+`docs/Cardinal_Roofing_Contract.pdf`, which ships publicly. **Every roofing agreement the app
+generates incorporates that file by reference**, so until it is replaced the old wording is
+the binding wording. Nothing shipped in `index.html` changes this.
+
+Theo's instruction, 12 Aug, verbatim: *"These are always included with a replacement roof"* —
+correcting his own earlier "new-only" answer.
+
+| File | Where | State |
+|---|---|---|
+| `docs/Cardinal_Roofing_Contract.pdf` | p3, clause 8 | ❌ still excludes roof jacks and flashing |
+| `docs/Cardinal_Gutter_Contract.pdf` | p3, clause 8 | ❌ **identical clause** — its T&C is a copy of the roofing one |
+| `docs/Cardinal_Siding_Contract.pdf` | — | ✅ clean; its clause 8 covers sheathing, framing, fascia and trim and never names jacks or flashing |
+
+⚠️ **The gutter contract carrying the same clause was not known before this session.** Nothing
+links the two documents and the app never mentions the gutter T&C, so it is easy to fix the
+roofing one and believe the job is done.
+
+**Revised review copies were produced and handed to Theo** (roofing + gutter, page 3 only):
+former clause 7 (bond insurance premiums) removed, clause 8 reworded and renumbered to 7, old
+9–16 renumbered to 8–15. Verified: clauses 1–6 byte-identical to the original, old 9–16
+reproduced verbatim, pages 1/2/4/5 untouched, page count unchanged, new text clears the
+signature block by 56pt (roofing) / 70pt (gutter). **The originals in `docs/` were deliberately
+NOT overwritten and nothing was committed** — replacing a signed-contract master is Theo's call.
+
+**What unsticks it:** Theo approves the review copies, or edits the originals himself at
+`Cardinal Roofing Contracts` on his Desktop; then the two files in `docs/` are replaced. A
+matching HTML version of the revised Terms was sent at the same time and says the same thing.
+
+### ⚠️ If these PDFs are ever patched again, read this first
+
+Two ways the first attempts silently damaged a legal document. **Neither was visible at page
+size**; both were caught only by a clause-by-clause text compare against the original.
+
+1. **Re-rendering existing text corrupts smart punctuation.** Redrawing clause 9 through
+   base-14 Helvetica turned `Company’s` into `Company·s` — U+2019 is not in that encoding.
+   **Never re-render clause text that is not changing.** The shipped approach restrikes only
+   the clause NUMBER and leaves every original glyph where it is.
+2. **`apply_redactions()` deletes any glyph whose box merely INTERSECTS the rectangle.** A
+   6.6pt span is ~7.9pt tall on 8.4pt leading, so padding a number's box by 0.5pt reaches into
+   the line below — which also starts at x=40. That turned **"MIDNIGHT" into "DNIGHT"** in the
+   cancellation clause. Clamp the box bottom to just above the next line's top.
+
+A third, cosmetic: every clause on that page is **justified**. Setting the replacement
+ragged-right left one paragraph visibly unlike the fourteen around it — the render caught what
+the text compare could not.
 
 ---
 
