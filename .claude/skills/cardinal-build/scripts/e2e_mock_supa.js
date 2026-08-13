@@ -115,6 +115,45 @@
     },
     studio_tray: { bucket: ['showcase', 'workmanship', 'colors'] }
   };
+  /* 775: the mock applied NO COLUMN DEFAULTS, and that made it lie about a real
+     screen. Publishing an estimate goes save -> loadForProject() -> publish(),
+     and loadForProject filters `.eq('archived', false)`. The mock stored the new
+     row without `archived` at all, so the row it had just written was invisible
+     to the very next read: the harness reported "Could not find the saved
+     estimate to publish" and no document — a defect the app does not have.
+
+     These mirror the LIVE defaults of project yipslubcptjoarblzbpl, read with:
+       select column_name, column_default from information_schema.columns
+        where table_schema='public' and table_name='estimates';
+     Same rule as CHECKS above: keep them in step with the real table, or delete
+     the entry rather than let it drift. A default that only exists in the
+     database is a default the harness has to model, or every read-after-write
+     it performs is testing fiction. */
+  var SEQ = { estimate_number: 0 };
+  var DEFAULTS = {
+    estimates: {
+      archived: false,
+      status: 'draft',
+      estimate_number: function () {
+        SEQ.estimate_number += 1;
+        return 'EST-2026-' + String(SEQ.estimate_number).padStart(4, '0');
+      }
+    },
+    punch_items: { status: 'open', steps: [] },
+    projects: { stage: 'Lead' },
+    contracts: { status: 'draft' },
+    studio_tray: { bucket: 'showcase' }
+  };
+  function applyDefaults(table, row) {
+    var d = DEFAULTS[table];
+    if (!d) return row;
+    for (var col in d) {
+      if (row[col] === undefined || row[col] === null) {
+        row[col] = (typeof d[col] === 'function') ? d[col]() : d[col];
+      }
+    }
+    return row;
+  }
   function checkViolation(table, payload) {
     var rules = CHECKS[table];
     if (!rules || !payload) return null;
@@ -171,10 +210,12 @@
     try {
       if (this._op === 'insert' || this._op === 'upsert') {
         var rows = Array.isArray(this._payload) ? this._payload : [this._payload];
+        var _table = this.table;   /* map() gets no thisArg — `this` is undefined under 'use strict' */
         var inserted = rows.map(function (r) {
           var row = Object.assign({}, r);
           if (row.id === undefined) row.id = uuid();
           if (row.created_at === undefined) row.created_at = new Date().toISOString();
+          applyDefaults(_table, row);   /* 775: model the table's DEFAULTs, not just its columns */
           t.push(row); return row;
         });
         rec(this.table, this._op, this._payload);

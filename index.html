@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 775 &#8212; the giant pencil in the menu is an icon again, and the menu stops closing when your thumb misses it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 776 &#8212; Publish says what happened instead of going quiet, and nothing claims an estimate published unless a document exists</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38745,6 +38745,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:776, d:'2026-08-13', t:'Publish stops failing in silence', s:'Publishing an estimate saves it first and waits for the editor to close. If that save did not finish in time \u2014 a slow connection, a big estimate \u2014 the button simply went back to \u201cPublish\u201d with no document and nothing said, which looks exactly like a broken button. It now tells you the estimate has not finished saving and that your work is still on screen, so you can try again. The \u2192 Contract button had the same silence and got the same fix. Separately: the app used to announce \u201cEstimate published\u201d whenever the editor closed, whether or not a document was actually made \u2014 it now checks that the document exists before saying so.' },
 { b:775, d:'2026-08-13', t:'The menu behaves again', s:'Two things Theo caught on the phone. The Production line in the burger menu was drawing a pencil the size of a playing card \u2014 its icon had no size rule that reached it once the button was placed in the menu, so it grew to 270 pixels and ate a third of the screen. It is a normal 17px icon now. And the menu no longer closes when your thumb misses it: the menu is narrower than the screen, and a swipe landing beside it used to scroll the page underneath and shut the menu mid-scroll.' },
 { b:774, d:'2026-08-13', t:'Build an estimate straight from ABC\u2019s catalog',
 s:'The estimate editor has a third button beside From Library and Custom: + ABC Supply. Search ABC\u2019s catalog, tap an item, and it lands as a line item already priced at your branch \u2014 description, item number and unit filled in. It reuses the same picker the library already used rather than adding a second one, and the same connection the Suppliers screen uses, so anything fixed in one place is fixed in both. If a price cannot be fetched the item is still added at $0 with the reason shown, so an account hiccup never strands you halfway through an estimate. The item number is kept on the line, which is what a future purchase order will need.' },
@@ -44731,7 +44732,14 @@ try{
 saveBtn.click();
 var closed = await waitForEditorClose(9000);
 if(!closed){
+/* 776: this used to return in SILENCE. The button went "Publishing…" and then
+   back to "Publish", with no document and no explanation — the user has no way
+   to tell a slow save from a broken button. Nothing here is recoverable
+   automatically: the estimate is still open and still unsaved, so say so and
+   let them retry. */
 btn.disabled = false; btn.textContent = 'Publish';
+alert('The estimate has not finished saving, so nothing was published.\n\n' +
+'Check your connection, then press Publish again. Your work is still on screen.');
 return;
 }
 var rows = await window.CardinalEstimates.loadForProject(projectBefore.id);
@@ -44921,7 +44929,12 @@ var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 try{
 saveBtn.click();
 var closed = await waitForEditorClose(9000);
-if(!closed) return;
+if(!closed){
+/* 776: silent give-up, same class as the Publish button above. */
+alert('The estimate has not finished saving, so no contract was generated.\n\n' +
+'Check your connection, then press \u2192 Contract again.');
+return;
+}
 var rows = await window.CardinalEstimates.loadForProject(project.id);
 if(!rows.length){ alert('Could not find the saved estimate.'); return; }
 var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
@@ -45108,13 +45121,28 @@ elapsed += 200;
 if(!view.classList.contains('open')){
 clearInterval(iv);
 setTimeout(async function(){
+/* 776: this announced "Estimate published." on the strength of the EDITOR
+   CLOSING, which says nothing about whether a document was made. When publish
+   aborted, the user was told it had published anyway. Confirm a document
+   exists first — and poll for it, because cr-epub writes doc_id a moment after
+   the editor closes and demanding it immediately would lose this prompt on a
+   slow connection, trading a false yes for a false no. */
+var est = null;
+for(var _try = 0; _try < 8; _try++){
+try{
+var _rows = (await window.CardinalEstimates.loadForProject(project.id)) || [];
+if(_rows.length){
+est = (typeof pickEstimate === 'function') ? pickEstimate(_rows, openId) : _rows[0];
+if(est && est.doc_id) break;
+}
+}catch(_e){}
+await new Promise(function(r){ setTimeout(r, 750); });
+}
+if(!est || !est.doc_id) return;   /* no document: cr-epub has already spoken */
 if(!confirm('Estimate published.\n\nMark it as Sent and move the pipeline forward?')) return;
 try{
-var rows = await window.CardinalEstimates.loadForProject(project.id);
-if(rows.length && window.supa){
-await window.supa.from('estimates')
-.update({ status:'sent' })
-.eq('id', ((typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0]).id);
+if(window.supa){
+await window.supa.from('estimates').update({ status:'sent' }).eq('id', est.id);
 }
 }catch(e){ console.warn('[ess] status bump failed:', e); }
 syncStageFor(project, 'sent');

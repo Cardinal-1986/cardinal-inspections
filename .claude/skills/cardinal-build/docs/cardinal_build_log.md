@@ -15162,7 +15162,29 @@ drifts. Retired; outside-CLICK dismissal untouched. ⚠️ On 774 an on-menu swi
 control overwrote the fixed one and the image showed a giant pencil beside a green result. The measurement
 was right and the picture was stale — pass `GATE_OUT` per run.
 
+**776** Publish stops failing in silence — Theo, verbatim: *"publishing can't open."* Both publish-family
+buttons save the estimate and then wait up to 9s for the editor to close; when the save did not land in time
+**both gave up with no word at all** (`if(!closed){ btn.textContent='Publish'; return; }` and
+`if(!closed) return;`). The button flickered, no document was made, nothing said why — which reads exactly
+like a dead button. Both now say the estimate has not finished saving and that the work is still on screen.
+Second defect in the same run: `cr-ess-script` also hooks that button and announced **"Estimate published."**
+purely because the editor closed. The negative control caught it red-handed — *"Publish failed: mock failure
+on inspection_reports"* immediately followed by *"Estimate published."* It now polls briefly for a real
+`doc_id` (polls, because cr-epub writes it a moment later — demanding it instantly would trade a false yes
+for a false no) and stays quiet if no document exists.
+
+⚠️ **FALSE POSITIVE, recorded so nobody re-reports it: the publish path itself works.** The first probe
+reported *"Could not find the saved estimate to publish"* and no document. That was **the harness**, not the
+app: `e2e_mock_supa.js` applied no column DEFAULTs, so the estimate it inserted carried no `archived` field
+and `loadForProject`'s `.eq('archived', false)` could not see the row it had just written. The live table
+defaults `archived` to `false NOT NULL` and generates `estimate_number` from a sequence — both now modelled
+in the mock, against the schema read from the live database. **A read-after-write test against a mock with no
+defaults is testing fiction.** With the mock fixed, publish creates the document, writes `doc_id` back and
+opens the document editor.
+
 **Gates**: `gate_766` 38, `gate_767` 54, `gate_768` 65, `gate_769` 16, `gate_770_history` 1, `gate_771` 31,
+**`gate_776` 14 (three Chromium runs — happy / slow-save / failed-write; RED on 775, where the slow save
+produced ZERO dialogs and the failed write still claimed success)**,
 **`gate_775` 16 (Chromium at 430x932, installed-app mode; RED on 774 with 9 failures)** —
 Chromium, each verified RED on its own predecessor. **773's gate is `drive_lifecycle.mjs` itself** — the 772
 run recorded the duplicate recipient and the emoji subject (RED for both behaviours); the 773 run shows theo
