@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 770 &#8212; Closed repairs really do reach the client’s history now (the read was shaped wrong and a catch was hiding it)</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 771 &#8212; Audit repairs: the Production tick was writing the opposite of what you tapped, delete and photo removal and description editing came back, and the punch-out card is now genuinely the only one</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -23887,6 +23887,10 @@ function __histPush(st){
            history, so back went wherever the previous real entry was. */
         case 'salesfloor':      if(window.CardinalSalesFloor) window.CardinalSalesFloor.open(); break;
         case 'production':      if(window.CardinalProduction) window.CardinalProduction.open(); break;
+        /* 771: registered in hideAllViews since 768 but missing here, which is
+           the half-convention this switch's own comment warns about. */
+        case 'punchcard':       if(window.CardinalPunchCard && window.__crPunchCardLast)
+                                  window.CardinalPunchCard.open(window.__crPunchCardLast); break;
         case 'showcase':        if(window.CardinalShowcase) window.CardinalShowcase.open(); break;
         /* Build 367: views added after this switch was written. */
         case 'communityHub':    if(window.CardinalCommunityHub) window.CardinalCommunityHub.show(); break;
@@ -38720,6 +38724,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:771, d:'2026-08-13', t:'Audit repairs on the Production rebuild', s:'Nine defects an adversarial audit found in builds 766\u2013770, all fixed. The worst: ticking a punch-out closed on the Production screen wrote the OPPOSITE \u2014 it flipped the row, then handed the id to the shared writer which flipped it back, so closing did nothing and reopening re-stamped who finished the work. Delete, photo removal and description editing had quietly become unreachable app-wide and are back on the card. The client profile\u2019s punch list now opens the same card as everywhere else. The card clears the installed app\u2019s bottom bar, restores on the back button, repaints the home strips, closes the burger menu properly, and no longer hijacks navigation when another screen opens.' },
 { b:770, d:'2026-08-13', t:'Closed repairs reach the client history', s:'Build 766 added closed punch-outs to the client\u2019s history feed, and it never once worked: the read was shaped as an array when the punch cache hands back a function, so it threw straight into a catch that hid the failure. Proven in a browser both ways \u2014 zero closed repairs before the fix, the repair with its closer and date after.' },
 { b:769, d:'2026-08-13', t:'A punch-out now finds its person', s:'Filing a punch-out on someone, or handing one to them, sends them a push and an email \u2014 Curtis and Scottie no longer have to open the app to find out there is work. Closing one tells the office the same way, with the count of photos and steps. Nobody is ever notified about their own action, and the app says plainly when a notification could not be delivered instead of claiming it was. Chat is unchanged: only the people a message @tags are notified.' },
 { b:768, d:'2026-08-13', t:'The punch-out card', s:'Tapping a punch-out anywhere now opens one proper card: the job with directions and a call button, a field checklist you can start from a Roofing, Siding or Gutter template, steps that refuse to tick until a note is written, five guided photo slots, a Flag supplement button that files the extra scope and tells the office, and the message thread with @tagging. Closing needs five photos and every step ticked, and the button says what is missing until then. Curtis and the office get the manager card \u2014 dispatch, edit steps, set urgency; Scottie gets field mode with bigger targets and the camera first.' },
@@ -46602,7 +46607,11 @@ objections : OBJECTIONS,
   --pb-hot:#a83f24; --pb-ok:#2f7d55;
   --pb-line:#e2e4e8; --pb-line2:#eef0f2;
 }
-#cr-pb .pbwrap{ max-width:1180px; margin:0 auto; padding:18px 15px 90px; }
+/* The installed PWA paints #pwaNav over everything at z-index 9990 and it is
+   ~96px tall with the home-indicator inset. Clear it, or the last control on
+   the page sits under the bar and cannot be scrolled free. */
+#cr-pb .pbwrap{ max-width:1180px; margin:0 auto;
+  padding:18px 15px calc(96px + env(safe-area-inset-bottom,0px)); }
 
 /* ---- header ------------------------------------------------------------- */
 #cr-pb .pbtop{ display:flex; align-items:center; gap:10px; margin-bottom:3px; }
@@ -47498,6 +47507,33 @@ async function markOrdered(pid){
   render();
 }
 async function toggle(it){
+  /* 771 — THE DOUBLE FLIP. This used to apply its own optimistic patch to `it`
+     and THEN delegate to CardinalPunch.toggle(id), which re-derives the
+     direction from `it.status`. rows() hands back a SHALLOW copy, so the row
+     OBJECT is shared: the second flip undid the first. Closing from Production
+     wrote {status:'open'} on an already-open row (a silent no-op that snapped
+     back on the next render), and reopening a closed item wrote
+     {status:'done'} again — stamping done_at/done_by with whoever tapped and
+     losing who actually finished the work.
+     The shared layer owns the flip. Do not pre-mutate before delegating. */
+  var P = window.CardinalPunch;
+  if(P && typeof P.toggle === 'function'){
+    try{
+      var res = await P.toggle(it.id);
+      if(res && res.ok === false) throw new Error(res.error || 'write refused');
+      var fresh = punchRows().find(function(x){ return String(x.id) === String(it.id); });
+      if(fresh) it = fresh;
+    }catch(e){
+      alert('Could not save: ' + (e.message || e));
+      await load();
+    }
+    lastSig = ''; render();
+    if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){
+      try{ window.CardinalPunchProfile.refresh(); }catch(_){}
+    }
+    return;
+  }
+  /* fallback only: the shared layer has not parsed yet */
   var done = it.status !== 'done';
   var patch = done
     ? { status:'done', done_at:new Date().toISOString(), done_by:myEmail() || null }
@@ -47506,17 +47542,7 @@ async function toggle(it){
   lastSig = '';
   render();
   try{
-    /* CardinalPunch.toggle is the app's one punch write path (optimistic with
-       rollback, and it cross-refreshes the other surfaces). Use it; the direct
-       update is the fallback for a boot order where it has not parsed yet. */
-    var r;
-    if(window.CardinalPunch && typeof window.CardinalPunch.toggle === 'function'){
-      r = await window.CardinalPunch.toggle(it.id);
-      if(r && r.ok === false) throw new Error(r.error || 'write refused');
-      r = { error:null };
-    }else{
-      r = await window.supa.from('punch_items').update(patch).eq('id', it.id);
-    }
+    var r = await window.supa.from('punch_items').update(patch).eq('id', it.id);
     if(r.error) throw r.error;
     if(done && typeof window.auditLog === 'function'){
       try{ window.auditLog('punch', 'Closed: ' + it.title, it.project_id); }catch(_){}
@@ -47678,8 +47704,10 @@ async function notifyAssignee(email, title, pid, verb){
       (verb === 'filed' ? 'filed a punch-out' : 'assigned you a punch-out') +
       ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p>' +
       '<p>' + esc(title) + '</p>');
+    /* 771: notifyOutcomeText's first statement is to.map(...) — it takes the
+       ARRAY of addresses, not a display name. Passing a string threw. */
     if(typeof window.notifyOutcomeText === 'function'){
-      try{ console.log('[prod]', window.notifyOutcomeText(res, shortName(email))); }catch(_){}
+      try{ console.log('[prod]', window.notifyOutcomeText(res, [email])); }catch(_){}
     }
   }catch(_){}
 }
@@ -47758,9 +47786,13 @@ function addMenuItem(){
   b.className = 'navopt';
   b.type = 'button';
   b.innerHTML = svg('tool') + ' Production';
-  b.onclick = function(){
+  b.onclick = function(e){
+    /* 771: #navMenu is toggled by style.display, never by a class — the old
+       classList.remove('show') was a dead line and the menu only closed by
+       accident, via the delegated .navopt handler that also ran openList(). */
+    if(e){ e.preventDefault(); e.stopPropagation(); }
     var m = document.getElementById('navMenu');
-    if(m) m.classList.remove('show');
+    if(m) m.style.display = 'none';
     open();
   };
   var before = null;
@@ -47833,7 +47865,9 @@ window.CardinalProduction = {
   --pk-acc:#8f1620; --pk-accl:#8f1620; --pk-accd:#8f1620; --pk-hot:#a83f24; --pk-ok:#2f7d55;
   --pk-line:#e2e4e8; --pk-line2:#eef0f2;
 }
-#cr-pk .pkwrap{ max-width:920px; margin:0 auto; padding:18px 15px 40px; }
+#cr-pk .pkwrap{ max-width:920px; margin:0 auto;
+  /* same clearance: the Close button is the LAST thing in flow on a phone */
+  padding:18px 15px calc(96px + env(safe-area-inset-bottom,0px)); }
 #cr-pk .pktop{ display:flex; align-items:center; gap:9px; margin-bottom:10px; }
 #cr-pk .pkback{
   flex:none; width:34px; height:34px; border-radius:10px; cursor:pointer;
@@ -47963,6 +47997,13 @@ window.CardinalProduction = {
 #cr-pk .pksup svg{ width:13px; height:13px; flex:none; }
 /* ---- photos ---- */
 #cr-pk .pkslots{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:7px; }
+#cr-pk .pkslotwrap{ position:relative; min-width:0; }
+#cr-pk .pkrm{
+  position:absolute; top:-6px; right:-6px; width:22px; height:22px; border-radius:50%;
+  cursor:pointer; padding:0; line-height:1; font:700 13px var(--pk-mono,ui-monospace,Menlo,monospace);
+  background:var(--pk-accd,#c8202e); color:var(--pk-accink,#fff);
+  border:2px solid var(--pk-c,#15171a); display:flex; align-items:center; justify-content:center;
+}
 #cr-pk .pkslot{ min-width:0; text-align:center; background:transparent; border:0; padding:0; cursor:pointer; }
 #cr-pk .pkslot .im{
   display:block; width:100%; aspect-ratio:1; border-radius:9px; object-fit:cover;
@@ -48216,7 +48257,7 @@ function cardHtml(){
     '<div class="pksplit"><div>' +
       jobHtml(pr) + metaHtml() + descHtml() + checklistHtml() + photosHtml() +
     '</div><div>' +
-      msgsHtml() + closeHtml(done) +
+      msgsHtml() + closeHtml(done) + dangerHtml() +
     '</div></div></div>';
 }
 function jobHtml(pr){
@@ -48260,9 +48301,12 @@ function metaHtml(){
       '</div>' : '');
 }
 function descHtml(){
-  if(!it.detail) return '';
-  return '<div class="pksec"><div class="pkh">' + svg('doc') + 'Description</div>' +
-    '<div class="pkdesc">' + esc(it.detail) + '</div></div>';
+  /* 771: the description was render-only, and the only editor for it lived in
+     the #puDetail sheet that 768 stopped opening — so notes became read-only
+     app-wide. It renders even when empty now, so there is somewhere to write. */
+  return '<div class="pksec"><div class="pkh">' + svg('doc') + 'Description' +
+    '<span class="rt"><button class="pkbtn" data-act="editdesc" type="button">Edit</button></span></div>' +
+    '<div class="pkdesc">' + (it.detail ? esc(it.detail) : 'No description yet.') + '</div></div>';
 }
 function checklistHtml(){
   var st = steps(), mgr = isManager();
@@ -48299,10 +48343,15 @@ function photosHtml(){
   var ph = photos();
   var cells = SLOTS.map(function(s, i){
     var u = ph[i];
-    return '<button class="pkslot' + (u ? '' : ' e') + '" data-slot="' + i + '" type="button">' +
+    /* 771: a wrong photo could not be taken off an item anywhere in the app
+       once 768 stopped opening the sheet that owned the remove control. */
+    return '<div class="pkslotwrap">' +
+      '<button class="pkslot' + (u ? '' : ' e') + '" data-slot="' + i + '" type="button">' +
       (u ? '<img class="im" data-src="' + esc(u) + '" alt="' + esc(s.l) + '">'
          : '<span class="im">' + svg('cam') + '</span>') +
-      '<span class="sl">' + esc(s.l) + '</span></button>';
+      '<span class="sl">' + esc(s.l) + '</span></button>' +
+      (u ? '<button class="pkrm" data-rmphoto="' + i + '" type="button" aria-label="Remove this photo">&times;</button>' : '') +
+      '</div>';
   }).join('');
   var extra = ph.length > SLOTS.length ? ' · +' + (ph.length - SLOTS.length) + ' more' : '';
   return '<div class="pksec"><div class="pkh">' + svg('cam') + 'Photos' +
@@ -48327,6 +48376,25 @@ function msgsHtml(){
     '<div class="pkin"><input type="text" data-f="msg" placeholder="Message…">' +
     '<button class="snd" data-act="send" type="button" aria-label="Send">' + svg('send') + '</button></div>' +
     (outMsg ? '<div class="pkout' + (/not|no one|failed/i.test(outMsg) ? ' bad' : '') + '">' + esc(outMsg) + '</div>' : '') +
+    '</div>';
+}
+/* 771: punch_items.delete() became unreachable at 768 — the sheet that owned it
+   is no longer opened, so a mistyped or duplicate punch-out could not be removed
+   by anyone. Same gate as before: admins and production. RLS (is_full_access)
+   remains the authority; this is only the explanation. */
+function mayDelete(){
+  if(typeof window.is_full_access === 'function'){
+    try{ return !!window.is_full_access(); }catch(_){}
+  }
+  return isManager();
+}
+function dangerHtml(){
+  if(!mayDelete()) return '';
+  return '<div class="pksec" style="margin-top:10px;">' +
+    '<div class="pkh">' + svg('flag') + 'Remove</div>' +
+    '<button class="pkbtn" data-act="del" type="button">Delete this punch-out</button>' +
+    '<div class="pknote">Deletes the item and its thread for everyone. A finished ' +
+    'repair should be CLOSED instead — closed work stays in the client\u2019s history.</div>' +
     '</div>';
 }
 function closeHtml(done){
@@ -48384,7 +48452,10 @@ async function save(patch){
 function refreshOthers(){
   try{ if(window.CardinalProduction) window.CardinalProduction.refresh(); }catch(_){}
   try{ if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh) window.CardinalPunchProfile.refresh(); }catch(_){}
-  try{ if(window.CardinalPunchStrip && window.CardinalPunchStrip.paint) window.CardinalPunchStrip.paint(); }catch(_){}
+  /* 771: CardinalPunchStrip exports { html } only — .paint() never existed, so
+     every write from this card silently failed to repaint the home strips.
+     window.renderPunchStrips is the real entry point. */
+  try{ if(typeof window.renderPunchStrips === 'function') window.renderPunchStrips(); }catch(_){}
 }
 async function tickStep(i){
   var st = steps().slice();
@@ -48458,7 +48529,7 @@ async function flagSupplement(){
         '<p><b>' + esc(nameOf(myEmail())) + '</b> flagged extra scope on <b>' +
         esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(String(what).trim()) + '</p>' +
         '<p>Filed against the punch-out: ' + esc(it.title || '') + '</p>');
-      outMsg = outcomeText(res, 'the office');
+      outMsg = outcomeText(res, to, 'the office');
     }else{
       outMsg = 'Flagged on the job. Nobody to notify.';
     }
@@ -48474,13 +48545,17 @@ function officeEmails(){
   var me = myEmail();
   return out.filter(function(e){ return e !== me; });
 }
-function outcomeText(res, who){
-  if(typeof window.notifyOutcomeText === 'function'){
-    try{ return window.notifyOutcomeText(res, who); }catch(_){}
+/* 771: `to` must be the ARRAY of addresses — notifyOutcomeText maps over it.
+   `label` is what we say on screen when we have to word it ourselves. */
+function outcomeText(res, to, label){
+  var list = Array.isArray(to) ? to : (to ? [to] : []);
+  var name = label || list.map(nameOf).join(', ') || 'anyone';
+  if(list.length && typeof window.notifyOutcomeText === 'function'){
+    try{ return window.notifyOutcomeText(res, list); }catch(_){}
   }
-  if(!res) return 'Saved — could not tell whether ' + who + ' was notified.';
+  if(!res) return 'Saved — could not tell whether ' + name + ' was notified.';
   var sent = (res.sent || 0) + (res.mailed || 0);
-  return sent ? ('Notified ' + who + '.') : ('Saved, but nothing was delivered to ' + who + '.');
+  return sent ? ('Notified ' + name + '.') : ('Saved, but nothing was delivered to ' + name + '.');
 }
 async function send(){
   var inp = el.querySelector('[data-f="msg"]');
@@ -48513,7 +48588,7 @@ async function send(){
       var res = await window.notifyTeam(to,
         'Punch-out — ' + ((pr && pr.name) || 'a job'),
         '<p><b>' + esc(nameOf(me)) + '</b> on <b>' + esc(it.title || '') + '</b>:</p><p>' + esc(text) + '</p>');
-      outMsg = outcomeText(res, to.map(nameOf).join(', '));
+      outMsg = outcomeText(res, to);
       lastSig = ''; render();
     }
   }
@@ -48563,7 +48638,7 @@ async function notifyAssigned(email){
       '<p><b>' + esc(nameOf(me)) + '</b> assigned you a punch-out at <b>' +
       esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(it.title || '') + '</p>' +
       (it.scheduled_at ? '<p>Scheduled ' + esc(fmtWhen(it.scheduled_at)) + '</p>' : ''));
-    outMsg = outcomeText(res, nameOf(email));
+    outMsg = outcomeText(res, [email]);
     lastSig = ''; render();
   }catch(_){}
 }
@@ -48578,7 +48653,7 @@ async function notifyClosed(){
       nameOf(myEmail()) + ' closed: ' + (it.title || 'a punch-out'),
       '<p><b>' + esc(it.title || '') + '</b> at <b>' + esc((pr && pr.name) || 'a job') + '</b> is closed.</p>' +
       '<p>' + photos().length + ' photos · ' + stepsDone() + ' of ' + steps().length + ' steps.</p>');
-    outMsg = outcomeText(res, 'the office');
+    outMsg = outcomeText(res, to, 'the office');
   }catch(_){}
 }
 function pickPhoto(i){
@@ -48613,10 +48688,10 @@ function pickPhoto(i){
 /* -------------------------------------------------------------------- wire */
 function wire(){
   var q = function(sel, fn){ el.querySelectorAll(sel).forEach(fn); };
-  q('[data-act="back"]', function(b){ b.onclick = function(){ close(); }; });
+  q('[data-act="back"]', function(b){ b.onclick = function(){ close(true); }; });
   q('[data-act="job"]', function(b){ b.onclick = function(){
     var pid = it.project_id;
-    close(true);
+    close(false);                                   /* openProject does the navigating */
     if(typeof window.openProject === 'function') window.openProject(pid);
   }; });
   q('[data-step]', function(b){ b.onclick = function(){ tickStep(Number(b.getAttribute('data-step'))); }; });
@@ -48639,6 +48714,35 @@ function wire(){
     inp.focus();
   }; });
   q('[data-act="send"]', function(b){ b.onclick = send; });
+  q('[data-act="editdesc"]', function(b){ b.onclick = function(){
+    var v = prompt('Description', it.detail || '');
+    if(v === null) return;
+    save({ detail: String(v).trim() || null });
+  }; });
+  q('[data-rmphoto]', function(b){ b.onclick = function(ev){
+    ev.stopPropagation();
+    var i = Number(b.getAttribute('data-rmphoto'));
+    var list = photos().slice();
+    if(!list[i]) return;
+    if(!confirm('Remove this photo from the punch-out?')) return;
+    list.splice(i, 1);
+    save({ photos: list });
+  }; });
+  q('[data-act="del"]', function(b){ b.onclick = async function(){
+    if(!confirm('Delete this punch-out for everyone?\n\n' + (it.title || '') +
+      '\n\nIf the work is finished, close it instead — closed work stays in the client history.')) return;
+    var id = it.id;
+    try{
+      var r = await window.supa.from('punch_items').delete().eq('id', id);
+      if(r.error) throw r.error;
+      if(typeof window.auditLog === 'function'){
+        try{ window.auditLog('punch', 'Deleted: ' + (it.title || ''), it.project_id); }catch(_){}
+      }
+      try{ if(window.CardinalPunch && window.CardinalPunch.reload) await window.CardinalPunch.reload(); }catch(_){}
+      close(true);
+      refreshOthers();
+    }catch(e){ alert('Could not delete: ' + (e.message || e)); }
+  }; });
   var msg = el.querySelector('[data-f="msg"]');
   if(msg) msg.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); send(); } };
   q('[data-act="close"]', function(b){ b.onclick = doClose; });
@@ -48671,6 +48775,7 @@ async function open(itemId, opts){
     return;
   }
   it = row;
+  window.__crPunchCardLast = row.id;                /* so navRestore can come back to it */
   lastSig = '';
   render();
   el.classList.add('open');
@@ -48681,16 +48786,17 @@ async function open(itemId, opts){
     try{ window.navSetView('punchcard'); }catch(_){}
   }
 }
-function close(silent){
+/* 771 — the default is HIDE, not navigate. hideAllViews() calls every
+   registered api.close() with NO argument; the old signature treated that as
+   "navigate", so any view change while the card was open re-opened Production
+   on top of wherever the user was actually going. Only the back button, which
+   passes true, navigates. */
+function close(navigate){
   if(el) el.classList.remove('open');
   it = null;
   lastSig = '';
-  if(silent === true) return;
-  /* back goes UP ONE LEVEL: to whoever opened this, else the Production screen */
-  if(back === 'production' && window.CardinalProduction){
-    try{ window.CardinalProduction.open(); return; }catch(_){}
-  }
-  if(back === 'none') return;
+  if(navigate !== true) return;
+  if(back === 'none') return;                       /* opened from a page that stays put */
   if(window.CardinalProduction){
     try{ window.CardinalProduction.open(); }catch(_){}
   }
@@ -49148,7 +49254,17 @@ if(html) paintSignedPhotoImgs(host);
 }
 function wirePage(host){
 host.querySelectorAll('[data-open]').forEach(function(b){
-b.onclick = function(){ selItem = b.dataset.open; renderPage(); window.scrollTo(0, 0); };
+b.onclick = function(){
+/* 771: ONE card. 768 rewired only the external openItem() entry, so tapping a
+   row on this tab still opened this module's own in-page detail — two
+   user-reachable punch-out detail screens, which is exactly what the rebuild
+   set out to collapse. back:'none' keeps the client profile underneath. */
+if(window.CardinalPunchCard && typeof window.CardinalPunchCard.open === 'function'){
+window.CardinalPunchCard.open(b.dataset.open, { back:'none' });
+return;
+}
+selItem = b.dataset.open; renderPage(); window.scrollTo(0, 0);
+};
 });
 var back = host.querySelector('[data-act="tolist"]');
 if(back) back.onclick = function(){ selItem = null; renderPage(); window.scrollTo(0, 0); };

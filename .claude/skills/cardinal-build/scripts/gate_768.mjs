@@ -180,7 +180,12 @@ const afterTpl = await page.evaluate(() => {
   return {
     steps: [...e.querySelectorAll('.pkck .st')].map(s => s.textContent.trim()),
     req: [...e.querySelectorAll('.pkck .req')].length,
-    counter: (e.querySelector('.pkh .rt') || {}).textContent,
+    /* scope to the CHECKLIST section: 771 added an Edit control in the
+       Description header, which also lives in a .rt and comes first. */
+    counter: (() => {
+      const sec = [...e.querySelectorAll('.pksec')].find(x => /Checklist/i.test(x.querySelector('.pkh')?.textContent || ''));
+      return sec ? (sec.querySelector('.pkh .rt') || {}).textContent : null;
+    })(),
     writes: (window.__WRITES__ || []).map(w => ({ t: w.table, p: JSON.stringify(w.payload || {}).slice(0, 120) })),
   };
 });
