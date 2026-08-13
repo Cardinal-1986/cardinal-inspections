@@ -126,6 +126,53 @@ except ValueError:
     raised = True
 check('no usable name -> refused (ValueError), never a blank client', raised)
 
+# ── 1c · THE REAL WIRE SHAPE, copied from the live account ──────────────────
+# The fixture above uses detail.address/streetAddress1 and a pre-filled
+# sales_owner.user.email. The live API returns NEITHER: the address arrives as
+# detail.locationAddress (street1/state-as-object) and every representative's
+# `user` is a bare {id,_link} ref. Both shipped green against the invented
+# fixture and then produced, on all 166 real jobs, a BLANK address and an
+# admin-assigned rep. These assertions are transcribed from the wire.
+print('1c · the shapes the live API actually returns (13 Aug 2026)')
+
+
+def rec_wire(resolved=False):
+    user = ({'id': 'U1', 'firstName': 'Nick', 'lastName': 'Hey',
+             'email': 'nick@cardinalrenovations.net'} if resolved
+            else {'id': 'U1', '_link': 'https://api.acculynx.com/api/v2/users/U1'})
+    return {
+        'id': 'ACXW', 'job': {'jobNumber': 'N-1'},
+        'detail': {'locationAddress': {
+            'street1': '5735 Webster Street', 'street2': '', 'city': 'Dayton',
+            'state': {'id': 35, 'name': 'Ohio', 'abbreviation': 'OH'},
+            'zipCode': '45414', 'country': {'id': 1, 'abbreviation': 'US'}}},
+        'contacts': [{'link': {'isPrimary': True,
+                               'contact': {'id': 'C1', 'firstName': 'Loretta',
+                                           'lastName': 'Trickler'}},
+                      'detail': {}}],
+        'milestone_history': [], 'custom_fields': [], 'files': [],
+        'representatives': [{'type': 'CompanyRepresentative', 'user': user}],
+        'sales_owner': None, 'insurance': {}, 'adjuster': {},
+    }
+
+
+mw = pa.map_job(rec_wire(), ROSTER, ADMIN, 2000, 'b')
+lw = json.loads(mw['row']['checklist'])['lead']
+_addr = mw['row']['address'] or ''      # or '' so a regression FAILs, not crashes
+check('locationAddress -> a real address line',
+      '5735 Webster Street' in _addr and 'Dayton' in _addr, repr(_addr))
+check('state object flattened to its abbreviation',
+      lw['location']['state'] == 'OH' and lw['location']['zip'] == '45414')
+check('an UNRESOLVED rep ref warns instead of silently taking the admin',
+      lw['assigned'] == [ADMIN] and any('no rep resolved' in w for w in mw['warnings']),
+      str(mw['warnings']))
+
+mr = pa.map_job(rec_wire(resolved=True), ROSTER, ADMIN, 2001, 'b')
+lr = json.loads(mr['row']['checklist'])['lead']
+check('a RESOLVED rep lands on that rep, not the admin',
+      lr['assigned'] == ['nick@cardinalrenovations.net'] and not mr['warnings'],
+      str(lr['assigned']) + ' ' + str(mr['warnings']))
+
 # ── 2 · collision matching ──────────────────────────────────────────────────
 print('2 · find_collision: name AND street number, not name alone')
 

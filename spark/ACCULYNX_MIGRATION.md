@@ -73,6 +73,42 @@ py --version             # Windows, if python3 is not recognised
 On Windows substitute `py` for `python3` in every command below, and use
 `set VAR=value` instead of `export VAR='value'`.
 
+## What the live account actually answered (13 Aug 2026)
+
+Gates 1 and 2 have now been RUN against Cardinal's real AccuLynx account. The
+findings below are measured, not predicted — they replace the guesses the
+scripts were originally written against, and five of them were bugs.
+
+- **Files: NO-GO, confirmed.** All six candidate read routes
+  (`/documents`, `/photos`, `/photos-videos`, `/files`, `/attachments`,
+  `/media`) return **404 on every job**. This matches AccuLynx's public docs.
+  Records migrate; documents and photographs need the fallback below.
+- **166 jobs in scope** (lead 3 · prospect 81 · approved 41 · completed 8 ·
+  invoiced 12 · closed 21), plus 35 cancelled and 36 dead deliberately left
+  behind. The default `/jobs` listing returns 201 — it includes cancelled and
+  excludes dead.
+- **All 8 AccuLynx users are on Cardinal's roster**, so no imported client
+  falls back to the admin for a missing rep.
+- **`pageStartIndex` is the pagination parameter, and it is a RECORD offset.**
+  ⚠️ AccuLynx **silently ignores an unknown query parameter** — it answers
+  `200` and returns page one. The scripts originally sent `recordStartIndex`,
+  which does not exist, so the fetch could never advance past the first page.
+  `recordStartIndex`, `startIndex`, `page` and `offset` are all ignored.
+- **`pageSize` is capped at 25**, and the cap is inconsistent per endpoint:
+  `/jobs` and `/custom-fields` refuse 26 with an explicit
+  `400 "Page Size must not be greater than 25."`, while `/contacts`,
+  `/milestone-history` and `/representatives` allow more. 25 is the one value
+  every route accepts.
+- **Refs come back unexpanded, and this bites twice.** Contacts need
+  `?includes=emailAddress,phoneNumber` (the scripts already did this). But
+  `/jobs/{id}/representatives` returns its `user` as a bare `{id,_link}` with
+  no email and no name — so the rep must be resolved against `/users` (one
+  call, 8 users). Unresolved, every client imports assigned to the admin.
+- **The site address is `locationAddress`**, on both the listing object and
+  the job detail, with `street1` and `state` as an object carrying
+  `abbreviation`. It is **not** `address` or `jobSiteAddress`. All 166 jobs
+  have one.
+
 ## The gates, in order
 
 ```bash

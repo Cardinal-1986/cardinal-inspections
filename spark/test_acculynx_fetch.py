@@ -31,6 +31,23 @@ def job(i):
     return {'id': 'J%s' % i, 'jobNumber': 'N-%s' % i}
 
 
+def envelope(all_items, params):
+    """Model the REAL API, not the implementation's assumption.
+
+    Measured against the live account 13 Aug 2026: `pageStartIndex` is a
+    record offset, and any OTHER parameter name is silently ignored — the
+    server answers 200 and hands back page one. Reading the offset from any
+    other key here is what let the shipped fetch ship with the wrong spelling
+    (`recordStartIndex`) and still go green: the stub had been written to
+    agree with the code instead of with AccuLynx, so the two were wrong
+    together and no assertion could tell.
+    """
+    size = params.get('pageSize', 10)
+    start = params.get('pageStartIndex', 0)      # deliberately the ONLY offset
+    return {'count': len(all_items), 'pageSize': size, 'pageStartIndex': start,
+            'items': all_items[start:start + size]}
+
+
 # ── 1 · the union sweep: unassigned jobs must not be missed ─────────────────
 print('1 · both assignment sweeps, unioned by id')
 
@@ -46,8 +63,7 @@ def get_union(path, key, params=None, tries=5, optional=False):
             items = [job('U1')] if m == 'closed' else []
         else:
             items = [job('A'), job('B')] if m == 'closed' else []
-        start = params.get('recordStartIndex', 0)
-        return {'count': len(items), 'items': items if start == 0 else []}
+        return envelope(items, params)
     return None
 
 
@@ -60,6 +76,36 @@ check('UNASSIGNED job found too (the completeness trap)', 'JU1' in seen)
 check('empty milestone contributes nothing', len(seen) == 3)
 check('an assignment=unassigned request was actually made',
       any(p.get('assignment') == 'unassigned' for _, p in CALLS))
+
+# ── 1b · paging must actually ADVANCE, across more than one page ────────────
+# Scenarios 1 and 5 both fit their whole result in a single page (2 items, and
+# the code asks for 100), so neither one ever exercises the offset — which is
+# how a wrong offset parameter stayed green. This forces three pages.
+print('1b · paging advances, and only on pageStartIndex')
+PAGED = [job(str(i)) for i in range(5)]
+
+
+def get_paged(path, key, params=None, tries=5, optional=False):
+    if path == '/jobs':
+        if params.get('assignment') == 'unassigned':
+            return envelope([], params)
+        return envelope(PAGED if params.get('milestones') == 'closed' else [], params)
+    return None
+
+
+fa.get = get_paged
+_page = fa.PAGE_SIZE
+fa.PAGE_SIZE = 2                      # 5 items over 3 pages
+try:
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+        seen = fa.list_job_ids('k', ['closed'])
+except SystemExit:
+    seen = {}                         # forward-progress assertion fired
+finally:
+    fa.PAGE_SIZE = _page
+check('all 5 jobs collected across 3 pages', len(seen) == 5, str(sorted(seen)))
+check('none lost to a stalled offset', 'J4' in seen,
+      'wrong offset param -> server returns page one forever -> abort or truncation')
 
 # ── 2 · NEGATIVE CONTROL: a page that never advances must abort ─────────────
 print('2 · negative control: repeating page aborts instead of looping')
@@ -108,6 +154,47 @@ check('includes param present', inc and
 check('milestone history captured', rec['milestone_history'] and
       rec['milestone_history'][0]['name'] == 'Lead')
 
+# ── 3b · representative refs get resolved to real users ─────────────────────
+# /jobs/{id}/representatives returns `user` as a bare {id,_link} ref — the same
+# unexpanded-ref trap as /contacts above. Unresolved, the push finds no rep
+# email and silently assigns the ENTIRE imported client base to the admin.
+print('3b · rep {id,_link} refs are resolved to users with emails')
+
+
+def get_reps(path, key, params=None, tries=5, optional=False):
+    if path == '/users':
+        return {'count': 2, 'items': [
+            {'id': 'U1', 'email': 'nick@cardinalrenovations.net',
+             'firstName': 'Nick', 'lastName': 'Hey'},
+            {'id': 'U2', 'email': 'joan@cardinalrenovations.net',
+             'firstName': 'Joan', 'lastName': 'Hunt'}]}
+    if path.endswith('/representatives'):
+        return {'items': [{'type': 'CompanyRepresentative',
+                           'user': {'id': 'U1', '_link': 'https://…/users/U1'}}]}
+    if path.endswith('/representatives/sales-owner'):
+        return {'type': 'SalesOwner', 'user': {'id': 'U2', '_link': 'https://…/users/U2'}}
+    return None
+
+
+fa.get = get_reps
+users = fa.fetch_users('k')
+check('users map built from /users', len(users) == 2 and 'U1' in users)
+rec2 = fa.enrich('k', 'J2', [0, 0], None, users)
+check('rep ref -> real email (not a bare {id,_link})',
+      rec2['representatives'][0]['user'].get('email') == 'nick@cardinalrenovations.net',
+      json.dumps(rec2['representatives'][0]['user']))
+check('sales_owner ref resolved too',
+      (rec2['sales_owner'] or {}).get('user', {}).get('email')
+      == 'joan@cardinalrenovations.net')
+
+# an id the map does not know must be left ALONE, not blanked
+fa.get = lambda path, key, params=None, tries=5, optional=False: (
+    {'items': [{'type': 'CompanyRepresentative', 'user': {'id': 'UNKNOWN'}}]}
+    if path.endswith('/representatives') else None)
+rec3 = fa.enrich('k', 'J3', [0, 0], None, users)
+check('an unknown user id is left untouched, never blanked',
+      rec3['representatives'][0]['user'] == {'id': 'UNKNOWN'})
+
 # ── 4 · extract_files digs the plausible shapes ─────────────────────────────
 print('4 · extract_files: defensive field mapping')
 
@@ -130,12 +217,10 @@ d = tempfile.mkdtemp()
 
 def get_main(path, key, params=None, tries=5, optional=False):
     if path == '/jobs':
-        if params.get('recordStartIndex', 0) > 0:
-            return {'count': 2, 'items': []}
         if params.get('assignment') == 'unassigned':
-            return {'count': 0, 'items': []}
+            return envelope([], params)
         items = [job('1'), job('2')] if params.get('milestones') == 'closed' else []
-        return {'count': len(items), 'items': items}
+        return envelope(items, params)
     if path.endswith('/milestone-history'):
         return {'items': [{'name': 'Closed', 'date': '2024-06-01T00:00:00Z'}]}
     return None                      # every other sub-resource: job has none

@@ -20,9 +20,15 @@ THE THREE TRAPS THIS CODE IS SHAPED AROUND (all live-verified elsewhere)
        Every milestone is swept twice — default and assignment=unassigned —
        and the results unioned by job id. Skipping this silently under-counts
        the client base, which is the worst possible failure for an export.
-    2. /jobs pages by RECORD OFFSET (recordStartIndex). Other endpoints page
-       by page number. This script only pages /jobs, asserts forward progress
-       on every page, and dies loudly if a page ever repeats.
+    2. /jobs pages by RECORD OFFSET, and the parameter is spelled
+       **pageStartIndex** — measured against the live account 13 Aug 2026
+       (pageStartIndex=1 at pageSize=3 returns records 2-4, =3 returns 4-6).
+       ⚠ AccuLynx SILENTLY IGNORES an unknown query parameter: the earlier
+       spelling `recordStartIndex` was accepted with HTTP 200 and simply
+       returned page one every time, which reads as "pagination is broken"
+       rather than "wrong parameter name". This script only pages /jobs,
+       asserts forward progress on every page, and dies loudly if a page
+       ever repeats.
     3. Contact emails/phones come back as {id,_link} REFS unless you ask for
        ?includes=emailAddress,phoneNumber. Asked for, always.
 
@@ -59,7 +65,17 @@ import argparse, json, os, re, sys, time, urllib.error, urllib.parse, urllib.req
 
 API = 'https://api.acculynx.com/api/v2'
 UA = 'cardinal-migration-fetch/1.0'
-PAGE_SIZE = 100
+# 25 is a HARD SERVER CAP, not a preference: /jobs answers
+# 400 "Page Size must not be greater than 25." above it. Measured 13 Aug 2026
+# the cap is per-endpoint and inconsistent — /jobs and /custom-fields refuse
+# 26, while /contacts, /milestone-history and /representatives allow it — so
+# 25 is the one value every route accepts. Do not raise it to go faster.
+PAGE_SIZE = 25
+# Single-page ceiling for a job's list sub-resources (contacts, reps,
+# milestone history, custom fields). The API default is 10 and these are read
+# as ONE page, so this is what stops a silent truncation; anything still
+# short of its own `count` is reported loudly at the end of the run.
+PAGE_SUB = 25
 # 10 req/s per key is the stated limit; ~8/s is the pace a production
 # integration settled on after living with 429s.
 PACE_S = 0.13
@@ -205,7 +221,7 @@ def list_job_ids(key, milestones):
             start, prev_first = 0, None
             while True:
                 params = {'pageSize': PAGE_SIZE, 'milestones': m,
-                          'recordStartIndex': start}
+                          'pageStartIndex': start}
                 if assignment:
                     params['assignment'] = assignment
                 body = get('/jobs', key, params)
@@ -215,8 +231,11 @@ def list_job_ids(key, milestones):
                 first = jid(got[0])
                 if first is not None and first == prev_first:
                     die('pagination is not progressing on /jobs (milestone %s, '
-                        'start %d) — the recordStartIndex unit assumption is '
-                        'wrong for this account. Stop and re-probe.' % (m, start))
+                        'start %d) — the pageStartIndex parameter is being '
+                        'ignored or its unit changed for this account. Note '
+                        'AccuLynx answers 200 and returns page one for an '
+                        'unknown parameter name, so suspect the SPELLING '
+                        'first. Stop and re-probe.' % (m, start))
                 prev_first = first
                 for j in got:
                     i = jid(j)
@@ -230,7 +249,34 @@ def list_job_ids(key, milestones):
     return seen
 
 
-def enrich(key, job_id, f403):
+def fetch_users(key):
+    """{user id: full user object} — one call, and the rep names hang off it.
+
+    /jobs/{id}/representatives returns its `user` as a bare {id,_link} REF with
+    no email and no name, exactly like /contacts does. Unresolved, the push
+    finds no rep email, assigns every imported client to the admin, and cannot
+    even warn about it because the display name is empty too — a silent
+    misassignment of the whole client base. Resolving here keeps the push a
+    pure transform of the export.
+    """
+    body = get('/users', key, {'pageSize': PAGE_SIZE}, optional=True)
+    users = {}
+    for u in items_of(body):
+        if isinstance(u, dict) and u.get('id'):
+            users[str(u['id'])] = u
+    return users
+
+
+def resolve_user(holder, users):
+    """Swap a {id,_link} user ref for the real user object, in place."""
+    if not isinstance(holder, dict) or not users:
+        return
+    u = holder.get('user')
+    if isinstance(u, dict) and str(u.get('id') or '') in users:
+        holder['user'] = dict(users[str(u['id'])])
+
+
+def enrich(key, job_id, f403, trunc=None, users=None):
     """Every sub-resource for one job, raw. None where the job has none."""
     def opt(path, params=None):
         r = get(path, key, params, optional=True)
@@ -240,8 +286,23 @@ def enrich(key, job_id, f403):
         f403[1] += 1
         return r
 
+    def optlist(path):
+        """A list sub-resource, read as ONE page of PAGE_SUB. If the envelope's
+        own `count` exceeds what came back, the rest is being dropped — record
+        it so the run ends with a visible number instead of quiet data loss."""
+        r = opt(path, {'pageSize': PAGE_SUB})
+        if isinstance(r, dict):
+            total, got = count_of(r), len(items_of(r))
+            if isinstance(total, int) and total > got and trunc is not None:
+                trunc.append((job_id, path.rsplit('/', 1)[-1], total, got))
+        return r
+
+    # Every list sub-resource is asked for explicitly at PAGE_SUB. The API's
+    # own default is 10 (measured: /representatives echoes pageSize:10), and
+    # these are read as a single page — so without this a job with 11 contacts
+    # would lose the 11th silently, with nothing downstream able to notice.
     contacts = []
-    jc = opt('/jobs/%s/contacts' % job_id)
+    jc = optlist('/jobs/%s/contacts' % job_id)
     for item in items_of(jc):
         c = item.get('contact') if isinstance(item.get('contact'), dict) else item
         cid = pick(c, 'id', 'contactId')
@@ -252,15 +313,21 @@ def enrich(key, job_id, f403):
                          {'includes': 'emailAddress,phoneNumber'})
         contacts.append({'link': item, 'detail': detail})
 
+    reps = items_of(optlist('/jobs/%s/representatives' % job_id))
+    for item in reps:
+        resolve_user(item, users)
+    sales_owner = opt('/jobs/%s/representatives/sales-owner' % job_id)
+    resolve_user(sales_owner, users)
+
     return {
         'detail': opt('/jobs/%s' % job_id, {'includes': 'contact'}),
         'contacts': contacts,
-        'milestone_history': items_of(opt('/jobs/%s/milestone-history' % job_id)),
-        'representatives': items_of(opt('/jobs/%s/representatives' % job_id)),
-        'sales_owner': opt('/jobs/%s/representatives/sales-owner' % job_id),
+        'milestone_history': items_of(optlist('/jobs/%s/milestone-history' % job_id)),
+        'representatives': reps,
+        'sales_owner': sales_owner,
         'insurance': opt('/jobs/%s/insurance' % job_id),
         'adjuster': opt('/jobs/%s/adjuster' % job_id),
-        'custom_fields': items_of(opt('/jobs/%s/custom-fields' % job_id)),
+        'custom_fields': items_of(optlist('/jobs/%s/custom-fields' % job_id)),
     }
 
 
@@ -393,6 +460,10 @@ def main():
     print('%d jobs in scope, %d already enriched, %d to do'
           % (len(listing), len(listing) - len(todo), len(todo)))
 
+    users = fetch_users(key)
+    print('%d AccuLynx users resolved (rep refs carry no email of their own)'
+          % len(users))
+
     file_routes = []
     if not args.no_files:
         sample = (todo or list(listing))[:3]
@@ -409,6 +480,7 @@ def main():
     files_f = open(files_path, 'a', encoding='utf-8')
     skipped_f = open(skipped_path, 'a', encoding='utf-8')
     f403 = [0, 0]            # [count of 403s, count of sub-calls]
+    trunc = []               # sub-resources whose `count` outran one page
     new = files_got = files_skipped = files_failed = 0
     started = time.time()
 
@@ -424,12 +496,12 @@ def main():
 
             rec = {'id': job_id, 'job': listing[job_id],
                    'fetched_at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
-            rec.update(enrich(key, job_id, f403))
+            rec.update(enrich(key, job_id, f403, trunc, users))
 
             rec['files'] = []
             for route in file_routes:
                 body = get('/jobs/%s%s' % (job_id, route), key,
-                           {'pageSize': 200}, optional=True)
+                           {'pageSize': PAGE_SIZE}, optional=True)
                 if body == '__403__' or body is None:
                     continue
                 for f in extract_files(body):
@@ -499,6 +571,17 @@ def main():
         print('files   : NONE — no read route on this account (see the probe report)')
     if files_failed:
         print('re-run to retry the %d downloads that failed' % files_failed)
+    if trunc:
+        # Loud on purpose: this is real data being dropped, and the whole point
+        # of the export is that under-counting the client base is the worst
+        # failure it can have.
+        print('\n⚠ %d sub-resource(s) had MORE rows than one page of %d returned '
+              '— data was dropped:' % (len(trunc), PAGE_SUB))
+        for job_id, what, total, got in trunc[:20]:
+            print('    %s %s: count=%d, got %d' % (job_id, what, total, got))
+        if len(trunc) > 20:
+            print('    …and %d more' % (len(trunc) - 20))
+        print('  These need real pagination before the push — tell the session.')
 
 
 if __name__ == '__main__':

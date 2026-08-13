@@ -10,9 +10,12 @@ WHY THIS EXISTS
       1. The key works at all. AccuLynx sells API access as an add-on
          ("Add-On Features and Integrations"), so a fresh key on the wrong
          plan may be refused outright. Better to learn that in step one.
-      2. The pagination unit. /jobs pages by RECORD OFFSET (recordStartIndex);
-         /contacts pages by PAGE NUMBER. A production integration stalled on
-         exactly this. The probe measures it rather than trusting the docs.
+      2. The pagination unit. /jobs pages by RECORD OFFSET and the parameter
+         is spelled `pageStartIndex`; /contacts pages by PAGE NUMBER. A
+         production integration stalled on exactly this. The probe measures
+         it rather than trusting the docs — and note AccuLynx answers 200 and
+         returns page one for an UNKNOWN parameter name, so a misspelling is
+         indistinguishable from broken pagination unless you compare pages.
       3. How many jobs are in each milestone — the real numbers behind the
          "skip Dead/Cancelled" decision, and the dry-run's denominator.
       4. THE BIG ONE: whether job documents and photos can be READ. AccuLynx's
@@ -199,15 +202,22 @@ def main():
         first = [jid(j) for j in items_of(page1)]
         say('`GET /jobs?pageSize=2` → HTTP 200, count=%s, %d items, envelope keys: %s'
             % (total, len(first), ', '.join(sorted(page1.keys())) if isinstance(page1, dict) else '(list)'))
-        st2, page2 = get('/jobs', key, {'pageSize': 2, 'recordStartIndex': 2})
+        st2, page2 = get('/jobs', key, {'pageSize': 2, 'pageStartIndex': 2})
         second = [jid(j) for j in items_of(page2)] if st2 == 200 else []
+        echo = page2.get('pageStartIndex') if isinstance(page2, dict) else None
         if second and first and second[0] not in first:
-            say('`recordStartIndex=2` returned different jobs → **/jobs pages by '
-                'RECORD OFFSET**, as the plan assumes. Good.')
+            say('`pageStartIndex=2` returned different jobs (echoed '
+                '`pageStartIndex=%s`) → **/jobs pages by RECORD OFFSET on '
+                '`pageStartIndex`**, as the fetch assumes. Good.' % echo)
         elif second and first and second[0] in first:
-            say('⚠ `recordStartIndex=2` repeated the first page → the pagination '
-                'unit is NOT a record offset here. **Stop and re-check before '
-                'fetching** — this is the documented stall trap.')
+            say('⚠ `pageStartIndex=2` repeated the first page (echoed '
+                '`pageStartIndex=%s`) → the pagination parameter is being '
+                'ignored or its unit changed. **Stop and re-check before '
+                'fetching** — this is the documented stall trap. AccuLynx '
+                'answers 200 and returns page one for an unknown parameter '
+                'name, so suspect the SPELLING first: measured 13 Aug 2026, '
+                '`pageStartIndex` works and `recordStartIndex`, `startIndex`, '
+                '`page` and `offset` are all silently ignored.' % echo)
         else:
             say('Could not compare pages (HTTP %d, %d items) — the account may '
                 'simply have <3 jobs in the default listing.' % (st2, len(second)))
