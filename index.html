@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 783 &#8212; booking the build day moves the job to SCHEDULED by itself</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 784 &#8212; the morning email now chases the estimates that have gone quiet</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39387,6 +39387,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:784, d:'2026-08-13', t:'The morning email chases estimates', s:'The daily email used to report the calendar and nothing else \u2014 so an estimate could go out and sit unanswered for weeks with nothing anywhere saying so. Right now there are four sitting between twelve and seventeen days, worth about $71,800 between them. Each rep now gets their own list of estimates that went out over five days ago and have heard nothing back, with the client, the amount and how long it has been. And it arrives on quiet days too: the email used to send nothing at all when the calendar was empty, which is exactly the morning you have time to chase one.' },
 { b:783, d:'2026-08-13', t:'The calendar moves the stage', s:'Book a build day and the job moves itself to SCHEDULED. Until now the Production board read the booking straight away \u2014 it would say \u201cbuild Aug 20\u201d \u2014 while the stage sat on APPROVED until somebody remembered to tap the arrow and answer a confirmation about something the calendar already knew. Only a Job start does it, only from APPROVED, and deleting the day does not move it back \u2014 rescheduling is a delete and a re-book, and a stage that bounced both ways would be worse than one that waits.' },
 { b:782, d:'2026-08-13', t:'A lead you can actually reach', s:'Thirty-five of the forty client records in the app have no email address and twenty-four have no phone \u2014 which means nothing can be sent to them: no estimate, no invoice, no signature link. The New Lead form now asks for a phone number or an email before it will save. If you genuinely have neither \u2014 a door-knock or a canvass \u2014 tick the box it offers and it saves anyway, and the lead is marked so it can be chased later. The form is also shorter: company, job type, lead source, assignment, appointment and notes now sit behind \u201cMore detail\u201d, leaving name, phone, email, address and claim type on the first screen.' },
 { b:781, d:'2026-08-13', t:'The contract is signable, and the deposit is yours',
