@@ -15182,6 +15182,33 @@ in the mock, against the schema read from the live database. **A read-after-writ
 defaults is testing fiction.** With the mock fixed, publish creates the document, writes `doc_id` back and
 opens the document editor.
 
+**782** PHASE 1 of Theo's 13 Aug list — the intake form. The live data was the brief: **35 of 40 client
+records carry no email and 24 carry no phone**, so nothing can be sent to them — no estimate, no invoice, no
+signature link.
+
+⚠️ **The QA report's "43 fields, ZERO required" was wrong and this build corrects it.** That was measured off
+the `required` ATTRIBUTE, which is genuinely absent everywhere — but `ldSave` has always enforced six fields
+in JavaScript (First, Last, Street, City, State, Zip). The gap was never "nothing is required"; it was that
+**no way to CONTACT the person was ever required**, which is exactly what the data shows. Measure the
+behaviour, not the attribute.
+
+A phone or an email is now required — **not unconditionally**. Canvasser / Door Knocking / Door hanger /
+Yard Sign are real lead sources and a canvasser logging an address genuinely has neither, so the refusal
+reveals an explicit tick rather than a wall: one extra tap on the exception path, none on the normal one, and
+`lead.no_contact` records the intent so those leads can be chased. Plus progressive disclosure — company,
+job type, source, assignment, appointment and notes now sit behind **More detail** (28 → 21 visible fields).
+
+**NO NODE WAS MOVED**: one class and one CSS rule, because every field is read by `getElementById` and
+`openLeadForm()`'s reset list walks ids. The rule carries `!important` deliberately — `#ldAssignBox` and
+`#ldPartnerWrap` set their display INLINE at runtime.
+
+⚠️ **A render caught what reading could not: two disclosure mechanisms over one field is a dead control.**
+`cr-lac-script` already discloses Mailing/Billing with its own `hidden` toggle; tagging those two `.ldmore`
+as well made ITS button do nothing, because `display:none !important` beats clearing `hidden`. Mailing and
+billing are deliberately NOT in the `.ldmore` set, and `gate_782` asserts that toggle still works while the
+More-detail section is collapsed. Same family as BUG_CLASSES 16.
+
+
 **Gates**: `gate_766` 38, `gate_767` 54, `gate_768` 65, `gate_769` 16, `gate_770_history` 1, `gate_771` 31,
 **`gate_776` 14 (three Chromium runs — happy / slow-save / failed-write; RED on 775, where the slow save
 produced ZERO dialogs and the failed write still claimed success)**,
