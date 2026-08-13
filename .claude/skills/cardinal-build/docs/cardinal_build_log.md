@@ -15250,3 +15250,55 @@ artifact in Chromium: admin sees the button / rep does not, open seeds + auto-se
 two `action:fetch` round trips, two `project_photos` inserts with the caption on the right row and **no
 coordinate keys on either row** (the GPS fence, asserted), count re-renders 2/50, insp mode hides everything.
 `check_build.py` green (113 scripts parse, stamp 776→777, marker `galCcPanel`, negative control clean).
+
+## build 778 — 13 Aug 2026 — the first run of the CompanyCam picker, three fixes
+
+Theo used 777 within minutes of the merge and reported three things. All three are real; two were mine.
+
+1. **Select all** — 27 photographs at one tap each is not a feature. `galCcToggleAll()` ticks everything the
+   search found and the control flips to **Clear all** once they are; a partial tick still offers Select all,
+   because the useful move is to finish, not to start over. **It warns about the 50-photo album cap BEFORE the
+   fetches**, not after N round trips.
+2. **"After adding photos it says 0 on profile screen"** — not a counting bug. The gallery's Back button was the
+   **only** client sub-page whose close never re-rendered the overview; `dbCloseTo()` has called `renderOverview()`
+   for payments, tasks, documents and appointments all along. The number was painted once on entry and never asked
+   again. One line. `gate_778.mjs` reproduces his exact path — profile at 0 → add → Back → read the tile.
+3. **The AI caption "bugged out"** — 27 photographs, `count(caption) = 0` in production, so it never wrote. The
+   three failure paths (storage read, API, save) all alerted the same shapeless string, so the report could not be
+   actioned. Each now names its step and points at the manual route (double-tap). **This is instrumentation, not a
+   fix** — the underlying failure is still unidentified and the next report will say which step.
+
+**Gate**: `gate_778.mjs` — 19 green, **15 red on the 777 control**. `check_build.py` green, stamp 777→778.
+
+## build 779 — 13 Aug 2026 — the roofing agreement's spec sheet matches the printed master
+
+Theo, with the app's contract beside a photograph of the paper master: *"I was hoping that the contracts that
+come from the job menu would look like the 2nd picture and that the checkboxes could be used instead of whats
+there now. With drop downs for style, color, brand for Owens Corning, as well as a drop down for the amount of
+pipeboots, etc."*
+
+**The content was all there since 749/750 — the LAYOUT was not.** Project Specifications was a one-column
+`table.meta` of key/value rows; the master is two columns of numbered, red-ruled sections with the house cutaway
+sitting beside the items it points at. Replaced with a `.specgrid` (one column under 640px — a phone is not a
+Letter page). All 13 sections plus Extra Structure, in the master's order and column split.
+
+**Three rows printed letters with nothing to tick** — decking type A–F, and the ridge vent's 1. Standard /
+2. OC. They are `.cbx` boxes now, so every lettered option on the sheet has a box. Grouped rows stay exclusive;
+flashing and extra structure remain multi-pick, as on paper.
+
+**Six new dropdowns, none of which invents data.** `CardinalColors` gained `lines()` — the OC hub's own `LINES`,
+filtered to `ready !== false`, so the Style list is what the colour wall actually sells and a line added there
+reaches the contract with no second edit (the 750 precedent: the colour dropdown reads `list()`). Brand offers
+**Owens Corning** and "Other (see notes)" — **no competitor is named**, per `OC_BRAND_RULES`, and a rep matching
+an existing roof is still not blocked. Quantities (layers to remove, pipe boots, skylights, box/turtle vents,
+power vent, turbine) are 0–13+.
+
+⚠️ **The decking prefill had to change mechanism.** 750's `collapse()` swaps a `.opts` span for the checklist's
+answer, and its regex stops at the first `</span>` — so it cannot survive nested checkbox markup. Decking now
+**ticks the matching box** by `data-val`; layers and pitch keep `collapse()`, which is right anyway because the
+master leaves both as blank lines.
+
+**Gate**: `gate_779.mjs` — 25 green, **22 red on the 778 control, no crash** (probes guarded after the first
+control run threw, which is not a control). It renders the real contract in Chromium and also writes a
+full-page PNG, which is what actually answered "does it look like the master" — the assertions cannot see that.
+`check_build.py` green, stamp 778→779.
