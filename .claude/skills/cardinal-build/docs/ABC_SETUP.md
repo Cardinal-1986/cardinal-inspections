@@ -23,6 +23,28 @@ Then **redeploy** (any deploy picks them up). Never put these in the app file.
 
 ## ⚠ 4. Your account numbers — THE WORKING VALUES, confirmed live 13 Aug 2026
 
+## ✅ WORKING, end to end — a real price returned 13 Aug 2026 ($76.00)
+
+```
+Ship-To # : 2153354-2
+Bill-To # : 2153354-1
+Branch  # : 106
+```
+
+**Both suffixes belong to the same base account, and they are NOT
+interchangeable — `-1` is the bill-to, `-2` is the ship-to.** `2153354-2` is
+the number printed as "Account #" on `account.abcsupply.com`; it was rejected
+with a 401 when tried as a *bill-to*, which made it look wrong. It was never
+wrong — it was in the wrong field. **Before concluding an ABC account number is
+invalid, try it in the other box.**
+
+`0003` (the "Ship To" on an invoice) and `2153354-0001` (the invoice "Customer
+Number") are display codes and are **not** API identifiers. **Find my Ship-To**
+in the app asks ABC for the real list and fills the field for you — use it
+rather than typing a number off paperwork.
+
+---
+
 **Bill-To # = `2153354-1`** — confirmed working against production; returns real
 frequent items. **This was not guessable and cost five attempts.** The same
 account is rendered three different ways across ABC's own surfaces, and only
