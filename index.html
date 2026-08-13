@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 760 &#8212; Long appointment titles stop overflowing the Today list on a phone</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 762 &#8212; The Designer goes Studio White and full screen: the house is the hero and the picks sit in a side rail</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -16921,7 +16921,9 @@ function hideAllViews(){
      with its own close() that also dismisses the add-pair form. */
   [{ id:'cr-sf', api:window.CardinalSalesFloor },
    { id:'cr-pb', api:window.CardinalProduction },
-   { id:'cr-show', api:window.CardinalShowcase }].forEach(function(o){
+   { id:'cr-show', api:window.CardinalShowcase },
+   /* 761: the Exterior Designer — same shape as the Showcase. */
+   { id:'cr-des', api:window.CardinalDesigner }].forEach(function(o){
     var el = document.getElementById(o.id);
     if(!el || !el.classList.contains('open')) return;
     if(o.api && typeof o.api.close === 'function'){ try{ o.api.close(); }catch(_){} }
@@ -23815,6 +23817,7 @@ function __histPush(st){
         case 'pricing':         if(typeof window.crOpenPricing === 'function') window.crOpenPricing(); break;
         case 'claims':          if(typeof window.crOpenClaims === 'function') window.crOpenClaims(); break;
         case 'crews':           if(window.CardinalCrews) window.CardinalCrews.open(); break;
+        case 'designer':        if(window.CardinalDesigner) window.CardinalDesigner.open(); break;
         case 'pay':             if(window.CardinalPay) window.CardinalPay.open(); break;
       }
     }catch(_e){}
@@ -23940,6 +23943,21 @@ function __histPush(st){
         };
         w2.__crNav = true;
         est.open = w2;
+      }
+    })();
+    /* 761: the Exterior Designer is a METHOD like Crews — same wrap,
+       __crNav guard included so a second pass cannot double-wrap it. */
+    (function(){
+      var des = window.CardinalDesigner;
+      if(des && typeof des.open === 'function' && !des.open.__crNav){
+        var origOpen = des.open;
+        var w3 = function(){
+          var out = origOpen.apply(this, arguments);
+          try{ window.navSetView('designer'); }catch(_e){}
+          return out;
+        };
+        w3.__crNav = true;
+        des.open = w3;
       }
     })();
   }, 400);
@@ -38551,7 +38569,10 @@ document.body.appendChild(btn);
    them, so offering it would be a control that lies. The Showcase and OC
    Colors are client-facing Blackout and CLAUDE.md records both as settled.
    Named here rather than silently skipped, so the choice is visible. */
-var BLACKOUT = ['cr-show', 'cr-occ'];
+/* 762: cr-des joins — single-theme Studio White rather than blackout,
+   but the identical decision: every colour is a literal, the switch
+   does nothing on it. */
+var BLACKOUT = ['cr-show', 'cr-occ', 'cr-des'];
 function blackoutUp(){
 for(var i = 0; i < BLACKOUT.length; i++){
 var v = document.getElementById(BLACKOUT[i]);
@@ -38614,6 +38635,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:762, d:'2026-08-12', t:'The Designer: Studio White, full screen, house first',
+s:'Three changes, all Theo\u2019s picks off rendered options. The Exterior Designer now wears the Studio White look \u2014 warm paper, soft shadows, red accents \u2014 instead of the dark palette it shipped with a build ago. It takes the whole screen: the app\u2019s header and menus no longer frame it, so nothing around it reads CRM while a client is watching. On a tablet or desktop the photograph is the hero \u2014 the surface picks and Generate live in a rail down the right side, so the house view is roughly twice the size. And the wording a client can read is showroom voice now: the compare tag says CARDINAL DESIGNER, saved images carry a small CARDINAL DESIGNER \u00b7 VISUALIZATION mark in the corner, and the gallery badge says DESIGN.' },
+{ b:761, d:'2026-08-12', t:'The Exterior Designer \u2014 their house, your materials',
+s:'A new door in the Vision hub and beside the Showroom row on the landing: photograph a client\u2019s house, pick a shingle colour from the real Owens Corning catalogue \u2014 plus siding, trim, gutter and window choices \u2014 and the AI redraws the same photograph wearing those materials, before and after under a slider you drag. Designs can be saved to a shared gallery so the same house comes back up on the next visit. Every image it makes is marked AI CONCEPT, on screen and burned into the saved file: it is a visualization for the kitchen table, never a photograph, and nothing it makes can reach job photos, reports or claims. Run design_renders.sql before this build; generation uses the same Gemini key the app already has \u2014 if a press says the key lacks image models, that is a Google AI Studio setting, not an app fault.' },
 { b:760, d:'2026-08-12', t:'Long appointment titles stay in their row',
 s:'A third place had the same fault as the client cards and the production rows fixed in 758: on a phone, a long appointment title in the Today list ran off the side of its row instead of trimming with dots. Found by sweeping the whole app for that one mistake rather than waiting to trip over it.' },
 { b:759, d:'2026-08-12', t:'Photos follow your CRM, and you can call from a punch out',
@@ -45359,6 +45384,13 @@ return (
 '</span><span class="go">\u2192</span>' +
 '</a>')
 : '') +
+'<button type="button" class="cr-vh-tile" data-go="designer">' +
+'<span class="ic">\u270E</span>' +
+'<span class="tx">' +
+'<span class="tt">Designer<span class="cr-vh-badge">NEW</span></span>' +
+'<span class="sb">Their house, your materials \u2014 an AI exterior visualizer</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
 '<button type="button" class="cr-vh-tile" data-go="colors">' +
 '<span class="ic">\u25D4</span>' +
 '<span class="tx">' +
@@ -45493,6 +45525,17 @@ lv.innerHTML =
 '<span class="sb">Hand the tablet to a homeowner — finished work, full screen, and nothing in it can be changed while they hold it.</span>' +
 '</span><span class="go">\u2192</span>' +
 '</button>' +
+/* 761: the Exterior Designer — the same door style as Showroom above,
+   because it is the same kind of screen: full-bleed blackout, used across
+   a table. Same ≥820px gate via .cr-lr-show; phones reach it from the
+   Vision hub (?vision=1 or showroom.*). */
+'<button class="cr-lr-show" data-go="designer">' +
+'<span class="ic">\u270E</span>' +
+'<span class="tx">' +
+'<span class="tt">Exterior Designer<span class="nw">NEW</span></span>' +
+'<span class="sb">Photograph the house, then change the roof, siding, trim, gutters or windows to your materials \u2014 in front of the client.</span>' +
+'</span><span class="go">\u2192</span>' +
+'</button>' +
 /* Same "plain <a>, new tab" pattern as the Studio tile below — popup.html
    is its own static page, not an SPA view, so there is nothing to wire
    through wire()'s data-go dispatch. Opens in a new tab so the rep's
@@ -45569,6 +45612,11 @@ return;
 if(d === 'library'){
 leave();
 if(typeof window.showResourceLibrary === 'function') window.showResourceLibrary();
+return;
+}
+if(d === 'designer'){
+leave();
+if(window.CardinalDesigner) window.CardinalDesigner.open();
 return;
 }
 if(d === 'colors'){
@@ -67084,5 +67132,795 @@ a.hem,a.hph,#dbAddContact,#dbSwitchPrim{display:inline-flex;align-items:center;m
    #reportFrame iframe and cannot inherit this. */
 select{min-height:44px;}
 </style>
+<style id="cr-des-styles">
+/* Exterior Designer — v2026-08-12 · build 762 (Studio White)
+   Theo's picks, 12 Aug: concept 3 Studio White, showroom voice, "get rid of
+   the retail crm all over it and make the navigation area where you pick the
+   different styles so you can have a bigger view of the house."
+   So: single-theme LIGHT (warm paper — his pick makes this the third
+   single-theme Vision surface, light where the others are Blackout), the view
+   is FULL-BLEED (no body.cr-lnav-on rule on purpose — the app's header and
+   left nav never frame this screen; the Showcase's showroom mode is the
+   precedent), and ≥900px the photograph is the hero with the picks in a
+   right-hand rail. Every colour is var(--des-*,#literal) — the 448-449 rule;
+   the fallbacks ARE the palette. Inks that sit ON A PHOTOGRAPH (tags, the
+   gallery badge and delete) pin their own light literals instead of the ink
+   token, which is dark here. Flat colours only — no gradients, settled. */
+#cr-des{display:none;position:fixed;inset:0;background:var(--des-bg,#F4F1EA);z-index:9500;
+  overflow:auto;-webkit-overflow-scrolling:touch;color:var(--des-ink,#1D1B18);
+  font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif}
+#cr-des.open{display:block}
+.des-wrap{max-width:1280px;margin:0 auto;padding:16px 16px 90px;box-sizing:border-box}
+.des-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.des-ttl{flex:1;min-width:0}
+.des-ttl h1{font-family:Georgia,'Times New Roman',serif;font-weight:700;margin:0;
+  font-size:clamp(21px,3vw,26px);color:var(--des-ink,#1D1B18)}
+.des-ttl p{margin:3px 0 0;font-size:13px;color:var(--des-dim,#6E675C)}
+.des-x{flex:0 0 auto;min-width:44px;min-height:44px;border-radius:12px;cursor:pointer;
+  border:1px solid var(--des-line,#DDD6C9);background:var(--des-card,#FBF9F5);
+  color:var(--des-ink,#1D1B18);font-size:17px;font-weight:700;
+  box-shadow:0 1px 4px rgba(40,35,25,.14)}
+.des-x:hover{border-color:var(--des-line2,#C4BBAA)}
+/* ── house first: hero stage + picker rail on wide screens ──────────── */
+.des-main{display:block}
+@media (min-width:900px){
+  .des-main{display:grid;grid-template-columns:minmax(0,1fr) 396px;gap:20px;
+    align-items:start}
+  .des-stagecol{position:sticky;top:14px}
+  .des-cmp{aspect-ratio:auto;height:calc(100vh - 210px);height:calc(100dvh - 210px);
+    min-height:430px}
+  .des-drop{min-height:min(560px,calc(100vh - 260px))}
+  .des-rail .des-sec{margin-top:0}
+}
+/* ── the photograph / compare stage ─────────────────────────────────── */
+.des-stage{border:1px solid var(--des-line,#DDD6C9);border-radius:16px;overflow:hidden;
+  background:var(--des-card,#FBF9F5);box-shadow:0 1px 4px rgba(40,35,25,.14)}
+.des-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;min-height:240px;cursor:pointer;padding:26px 16px;text-align:center}
+.des-drop .big{font-size:15px;font-weight:700;color:var(--des-ink,#1D1B18)}
+.des-drop .small{font-size:12.5px;color:var(--des-dim,#6E675C);max-width:420px;line-height:1.5}
+.des-drop .plus{width:54px;height:54px;border-radius:16px;display:flex;align-items:center;
+  justify-content:center;font-size:26px;font-weight:700;color:var(--des-red,#c8202e);
+  border:1px dashed var(--des-line2,#C4BBAA)}
+.des-cmp{position:relative;width:100%;aspect-ratio:4/3;background:var(--des-well,#E8E4DA);
+  touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+.des-cmp img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  pointer-events:none;display:block}
+.des-cmp .after{clip-path:inset(0 0 0 50%)}
+.des-div{position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;
+  background:var(--des-ink,#1D1B18);opacity:.85}
+.des-knob{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:44px;height:44px;border-radius:50%;background:var(--des-card,#FBF9F5);
+  border:2px solid var(--des-ink,#1D1B18);color:var(--des-ink,#1D1B18);
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800}
+/* Tags sit ON the photograph — dark chip, light ink, pinned literals so the
+   dark-on-dark trap cannot reach them from a token change. */
+.des-tag{position:absolute;top:10px;font:800 10px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.12em;padding:5px 9px;border-radius:7px;
+  background:var(--des-chipbg,rgba(8,10,9,.78));color:#F2F4F2}
+.des-tag.b{left:10px}
+.des-tag.a{right:10px;color:var(--des-mark,#E8B34B)}
+.des-solo .after,.des-solo .des-div,.des-solo .des-tag{display:none}
+.des-stagebar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  padding:10px 12px;border-top:1px solid var(--des-line,#DDD6C9)}
+.des-stagebar .note{flex:1;min-width:180px;font-size:12px;color:var(--des-dim,#6E675C)}
+/* ── surface chips and option panels (the rail) ─────────────────────── */
+.des-sec{margin-top:22px}
+.des-sec h2{font-family:Georgia,'Times New Roman',serif;font-weight:700;margin:0 0 4px;
+  font-size:17px;color:var(--des-ink,#1D1B18)}
+.des-sec .s{margin:0 0 12px;font-size:12.5px;color:var(--des-dim,#6E675C)}
+.des-chips{display:flex;gap:8px;flex-wrap:wrap}
+.des-chip{min-height:44px;padding:8px 15px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--des-line,#DDD6C9);background:var(--des-card,#FBF9F5);
+  color:var(--des-ink,#1D1B18);font-size:13.5px;font-weight:700}
+.des-chip[aria-pressed="true"]{border-color:var(--des-red,#c8202e);
+  background:var(--des-redbg,#F7E9E6)}
+.des-chip .pick{display:block;font-size:10.5px;font-weight:700;
+  color:var(--des-pick,#8A6210);margin-top:1px}
+.des-panel{margin-top:12px;border:1px solid var(--des-line,#DDD6C9);border-radius:14px;
+  background:var(--des-card,#FBF9F5);padding:14px;box-shadow:0 1px 4px rgba(40,35,25,.14)}
+.des-panel .ttl{font-size:12px;font-weight:800;letter-spacing:.08em;
+  color:var(--des-dim,#6E675C);text-transform:uppercase;margin:0 0 10px}
+.des-sws{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.des-sw{display:flex;align-items:center;gap:9px;min-height:48px;padding:7px 10px;
+  border-radius:11px;cursor:pointer;text-align:left;
+  border:1px solid var(--des-line,#DDD6C9);background:var(--des-bg,#F4F1EA);
+  color:var(--des-ink,#1D1B18)}
+.des-sw[aria-pressed="true"]{border-color:var(--des-pick,#8A6210);
+  background:var(--des-card,#FBF9F5)}
+.des-sw .dot{flex:0 0 auto;width:26px;height:26px;border-radius:8px;
+  border:1px solid var(--des-line2,#C4BBAA)}
+.des-sw .nm{flex:1;min-width:0;font-size:12.5px;font-weight:700;line-height:1.25}
+.des-sw .ln{display:block;font-size:10px;font-weight:600;color:var(--des-dim,#6E675C)}
+.des-empty{font-size:12.5px;color:var(--des-dim,#6E675C);display:flex;gap:10px;
+  align-items:center;flex-wrap:wrap}
+/* ── buttons, toast ─────────────────────────────────────────────────── */
+.des-btn{min-height:48px;padding:10px 20px;border-radius:12px;cursor:pointer;
+  border:1px solid var(--des-line,#DDD6C9);background:var(--des-card,#FBF9F5);
+  color:var(--des-ink,#1D1B18);font-size:14.5px;font-weight:800}
+.des-btn.p{background:var(--des-red,#c8202e);border-color:var(--des-red,#c8202e);
+  color:var(--des-onred,#fff)}
+.des-btn.p[disabled]{opacity:.45;cursor:default}
+.des-btn[disabled]{opacity:.45;cursor:default}
+.des-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.des-actions .why{flex:1;min-width:200px;font-size:12px;color:var(--des-dim,#6E675C);
+  line-height:1.5}
+.des-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:9600;
+  max-width:min(520px,92vw);padding:12px 18px;border-radius:12px;font-size:13.5px;
+  font-weight:700;background:var(--des-toastbg,#FFFFFF);color:var(--des-ink,#1D1B18);
+  border:1px solid var(--des-line2,#C4BBAA);box-shadow:0 2px 8px rgba(40,35,25,.18);
+  display:none}
+.des-toast.on{display:block}
+/* ── the saved-designs gallery ──────────────────────────────────────── */
+.des-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.des-card{border:1px solid var(--des-line,#DDD6C9);border-radius:14px;overflow:hidden;
+  background:var(--des-card,#FBF9F5);cursor:pointer;position:relative;text-align:left;
+  padding:0;color:var(--des-ink,#1D1B18);box-shadow:0 1px 4px rgba(40,35,25,.14)}
+.des-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;
+  background:var(--des-well,#E8E4DA)}
+.des-card .m{padding:9px 11px 11px}
+.des-card .t{font-size:12.5px;font-weight:700;line-height:1.3;overflow:hidden;
+  text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.des-card .d{font-size:10.5px;color:var(--des-dim,#6E675C);margin-top:3px}
+.des-card .ai{position:absolute;top:8px;right:8px;font:800 9px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.1em;padding:4px 7px;border-radius:6px;
+  background:var(--des-chipbg,rgba(8,10,9,.78));color:var(--des-mark,#E8B34B)}
+.des-card .del{position:absolute;top:8px;left:8px;min-width:44px;min-height:44px;
+  border-radius:10px;border:1px solid var(--des-line2,#C4BBAA);cursor:pointer;
+  background:var(--des-chipbg,rgba(8,10,9,.78));color:#F2F4F2;
+  font-size:13px;display:none}
+.des-card:hover .del,.des-card:focus-within .del{display:block}
+@media (max-width:640px){
+  .des-wrap{padding:14px 10px 110px}
+  .des-sws{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
+  .des-gal{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
+</style>
+<script id="cr-des-script">
+/* Exterior Designer — v2026-08-12 · build 762
+   Photograph a client's house and show it wearing Cardinal's materials —
+   roof, siding, trim, gutters, windows — edited by AI, live at the table.
+   Theo, 12 Aug 2026: "This is a sales resource in front of clients."
+
+   762, his picks from rendered options: Studio White (concept 3), full-bleed
+   (no CRM chrome around it), the photograph as hero with the picks in a
+   right-hand rail ≥900px, and SHOWROOM VOICE — the letters "AI" appear
+   nowhere a client reads; the compare tag and the burned corner mark say
+   CARDINAL DESIGNER · VISUALIZATION, the gallery badge says DESIGN. The
+   images are still AI-generated and the internal record still says so
+   (design_renders.via, this banner, the docs) — only the client-facing
+   voice changed.
+
+   THE FENCE (CONTRACTOR_VISION_SUITE.md, presentation-only): every image this
+   module produces is an AI-generated concept of a real house, marked on
+   screen and BURNED into the saved file (CARDINAL DESIGNER · VISUALIZATION —
+   showroom voice since 762). Saved designs live in design_renders + the
+   designer/ storage prefix and have NO path into project photos, estimates,
+   inspection reports, claims or CompanyCam. Do not add one — an AI-altered
+   photo of a real roof reaching an insurance file is altered evidence.
+
+   The customer's photograph goes to Gemini (api/design.js) only when a
+   signed-in user presses Generate — per-photo, at the moment of use, on
+   Theo's 12 Aug instruction. No corpus pass, ever, without a new yes.
+
+   Roof colours come from oc_colors — the real Owens Corning catalogue the
+   Colors hub already maintains. Sellable only: hidden rows never render
+   (the Shasta White rule) and discontinued rows are not offered — you
+   cannot design a roof Cardinal cannot order.
+
+   Conventions held: registered in hideAllViews() and navRestore(); shown by
+   CLASS (.open), closed by close(); no scroll-lock writer (internal scroll
+   only — the 13-module rule stands); no document.body observer (opened by
+   explicit calls only); every colour token carries a literal fallback. */
+(function(){
+'use strict';
+
+var SURFACES = ['roof','siding','trim','gutters','windows'];
+var SURF_LABEL = { roof:'Roof', siding:'Siding', trim:'Trim',
+                   gutters:'Gutters', windows:'Windows' };
+
+/* Curated, small palettes for the non-roof surfaces — there is no in-app
+   catalogue for these (the roof has oc_colors), so these are common exterior
+   colours, not product claims. Names travel into the prompt; hexes are hints. */
+var PAL = {
+  siding: [
+    ['White','#F2F1EA'],['Linen','#E6DFCE'],['Greige','#BDB4A4'],
+    ['Light Gray','#C9CDCB'],['Iron Gray','#5B6166'],['Charcoal','#3A3E42'],
+    ['Navy Blue','#33414F'],['Slate Blue','#5E7183'],['Sage Green','#7D8A76'],
+    ['Forest Green','#45523F'],['Clay','#B08B67'],['Barn Red','#7A3B33']
+  ],
+  trim: [
+    ['White','#F4F4F1'],['Black','#1E2022'],['Almond','#E7DCC4'],
+    ['Clay','#B9A489'],['Bronze','#5A4A3A']
+  ],
+  gutters: [
+    ['White','#F2F2EF'],['Black','#202224'],['Musket Brown','#4A3A2C'],
+    ['Bronze','#4E4136'],['Copper','#B06E3F']
+  ],
+  windows: [
+    ['White','#F4F4F2'],['Black','#1C1E20'],['Bronze','#4A3E33']
+  ]
+};
+
+function inst(surf, name, hex){
+  var n = String(name || '').toLowerCase();
+  if(surf === 'siding')  return 'new horizontal lap siding in ' + n + ' (approximately ' + hex + ')';
+  if(surf === 'trim')    return 'crisp ' + n + ' (approximately ' + hex + ')';
+  if(surf === 'gutters') return (name === 'Copper'
+    ? 'copper gutters and downspouts with a bright new-copper finish'
+    : n + ' seamless aluminum gutters and downspouts');
+  if(surf === 'windows') return 'new ' + n + '-framed windows of the same size and style (approximately ' + hex + ' frames)';
+  return n;
+}
+
+var el = null, open_ = false;
+var colors = [], colorsTried = false;
+var myEmail = '';
+var photo = null;    // { url, b64, mime }  — the client's photograph
+var gen = null;      // { url, b64, mime, via } — the AI concept
+var savedId = null;  // non-null when the stage shows an already-saved design
+var choices = {};    // surf -> { label, instruction, hex }
+var openSurf = '';
+var busyGen = false, busySave = false;
+var renders = [], galLoaded = false;
+
+function sb(){ return window.supa || null; }
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function amAdmin(){
+  try{ return !!(window.is_admin && window.is_admin()); }catch(_){ return false; }
+}
+var toastT = null;
+function toast(msg){
+  var t = el && el.querySelector('.des-toast');
+  if(!t) return;
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(function(){ t.classList.remove('on'); }, 4200);
+}
+function newId(){
+  try{ if(window.crypto && crypto.randomUUID) return crypto.randomUUID(); }catch(_){}
+  return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+}
+
+/* ── image plumbing ─────────────────────────────────────────────────── */
+/* Bare base64 — api/design.js hands `image` straight to Gemini as
+   inline_data.data. The Walk paid for this lesson at 579: strip the data:
+   prefix, pass mime separately. */
+function blobB64(blob){
+  return new Promise(function(resolve, reject){
+    var fr = new FileReader();
+    fr.onload = function(){
+      var s = String(fr.result || '');
+      var c = s.indexOf(',');
+      resolve(c === -1 ? s : s.slice(c + 1));
+    };
+    fr.onerror = function(){ reject(new Error('could not read the image')); };
+    fr.readAsDataURL(blob);
+  });
+}
+function shrinkBlob(blob, max, q){
+  return new Promise(function(resolve, reject){
+    var url = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function(){
+      try{
+        var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        var k = Math.min(1, max / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k));
+        var c = document.createElement('canvas');
+        c.width = cw; c.height = ch;
+        c.getContext('2d').drawImage(img, 0, 0, cw, ch);
+        URL.revokeObjectURL(url);
+        c.toBlob(function(out){
+          if(out) resolve(out); else reject(new Error('could not process the image'));
+        }, 'image/jpeg', q);
+      }catch(e){ URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('could not open the image')); };
+    img.src = url;
+  });
+}
+/* The visualization mark, burned into the pixels at save time. On screen the
+   badge is DOM; in the saved file it has to survive a screenshot, a share, a
+   print — which is the point. This draws on a COPY made for presentation;
+   detect.js's header blesses exactly that and nothing else. */
+function burnMark(b64, mime){
+  return new Promise(function(resolve, reject){
+    var img = new Image();
+    img.onload = function(){
+      try{
+        var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        var c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        var x = c.getContext('2d');
+        x.drawImage(img, 0, 0);
+        var fs = Math.max(14, Math.round(w * 0.016));
+        x.font = '700 ' + fs + 'px ui-monospace, Menlo, monospace';
+        var txt = 'CARDINAL DESIGNER · VISUALIZATION';
+        var tw = x.measureText(txt).width;
+        var pad = Math.round(fs * 0.6);
+        var bw = tw + pad * 2, bh = fs + pad * 1.3;
+        var bx = w - bw - Math.round(w * 0.02), by = h - bh - Math.round(w * 0.02);
+        x.fillStyle = 'rgba(8,10,9,0.72)';
+        x.beginPath();
+        if(x.roundRect) x.roundRect(bx, by, bw, bh, Math.round(fs * 0.45));
+        else x.rect(bx, by, bw, bh);
+        x.fill();
+        x.fillStyle = '#F2F4F2';
+        x.textBaseline = 'middle';
+        x.fillText(txt, bx + pad, by + bh / 2 + 1);
+        c.toBlob(function(out){
+          if(out) resolve(out); else reject(new Error('could not mark the image'));
+        }, 'image/jpeg', 0.9);
+      }catch(e){ reject(e); }
+    };
+    img.onerror = function(){ reject(new Error('could not open the generated image')); };
+    img.src = 'data:' + (mime || 'image/png') + ';base64,' + b64;
+  });
+}
+
+/* ── data ───────────────────────────────────────────────────────────── */
+async function loadColors(){
+  var cl = sb(); if(!cl) return;
+  colorsTried = true;
+  /* Sellable only. hidden=false is the Shasta White rule (the wall MUST
+     filter on it); discontinued is additionally excluded HERE — unlike the
+     Colors hub, which badges discontinued so an old roof can be identified,
+     the Designer offers what Cardinal can order. Different jobs, different
+     filters, both deliberate. */
+  var r = await cl.from('oc_colors')
+    .select('name,hex,family,product_line,status,description,sort_order,hidden')
+    .eq('hidden', false)
+    .neq('status', 'discontinued')
+    .order('sort_order', { ascending:true });
+  colors = (r && !r.error && r.data) ? r.data : [];
+}
+async function loadGallery(){
+  var cl = sb(); if(!cl) return;
+  var r = await cl.from('design_renders')
+    .select('*')
+    .order('created_at', { ascending:false })
+    .limit(60);
+  renders = (r && !r.error && r.data) ? r.data : [];
+  galLoaded = true;
+  var paths = [];
+  renders.forEach(function(d){
+    if(d.render_path) paths.push(d.render_path);
+    if(d.source_path) paths.push(d.source_path);
+  });
+  if(paths.length && typeof window.signedPhotoMap === 'function'){
+    try{
+      var map = await window.signedPhotoMap(paths, 3600) || {};
+      renders.forEach(function(d){
+        d._render = map[d.render_path] || '';
+        d._source = map[d.source_path] || '';
+      });
+    }catch(_){}
+  }
+}
+
+/* ── view ───────────────────────────────────────────────────────────── */
+function ensure(){
+  if(el) return el;
+  el = document.getElementById('cr-des');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'cr-des';
+    document.body.appendChild(el);
+  }
+  if(!el.dataset.desBuilt){
+    el.dataset.desBuilt = '1';
+    el.innerHTML =
+      '<div class="des-wrap">' +
+        '<div class="des-top">' +
+          '<div class="des-ttl">' +
+            '<h1>Exterior Designer</h1>' +
+            '<p>Their house, your materials.</p>' +
+          '</div>' +
+          '<button type="button" class="des-x" data-act="close" aria-label="Close">✕</button>' +
+        '</div>' +
+        '<div class="des-main">' +
+          '<div class="des-stagecol">' +
+            '<div class="des-stage" id="desStage"></div>' +
+          '</div>' +
+          '<div class="des-rail">' +
+            '<div class="des-sec">' +
+              '<h2>What changes?</h2>' +
+              '<p class="s">Pick a surface, then a colour. Anything you leave alone stays exactly as photographed.</p>' +
+              '<div class="des-chips" id="desChips"></div>' +
+              '<div id="desPanel"></div>' +
+            '</div>' +
+            '<div class="des-actions">' +
+              '<button type="button" class="des-btn p" id="desGen" data-act="gen">Generate</button>' +
+              '<button type="button" class="des-btn" id="desSave" data-act="save">Save design</button>' +
+              '<span class="why" id="desWhy"></span>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="des-sec">' +
+          '<h2>Saved designs</h2>' +
+          '<p class="s">Shared with the whole team — pull a house back up on the next visit.</p>' +
+          '<div class="des-gal" id="desGal"></div>' +
+        '</div>' +
+      '</div>' +
+      '<input type="file" accept="image/*" id="desFile" style="display:none">' +
+      '<div class="des-toast" role="status"></div>';
+    wire();
+  }
+  return el;
+}
+
+function paintStage(){
+  var st = el.querySelector('#desStage');
+  if(!photo){
+    st.innerHTML =
+      '<div class="des-drop" data-act="pick" role="button" tabindex="0">' +
+        '<span class="plus">+</span>' +
+        '<span class="big">Add a photograph of the house</span>' +
+        '<span class="small">Straight-on, whole house in frame, good light. ' +
+        'Take it now or choose one from the camera roll.</span>' +
+      '</div>';
+  }else{
+    var solo = !gen;
+    st.innerHTML =
+      '<div class="des-cmp' + (solo ? ' des-solo' : '') + '" id="desCmp">' +
+        '<img class="before" alt="The house as photographed" src="' + esc(photo.url) + '">' +
+        (gen ? '<img class="after" alt="AI concept" src="' + esc(gen.url) + '">' : '') +
+        '<div class="des-div"><div class="des-knob">⇄</div></div>' +
+        '<span class="des-tag b">BEFORE</span>' +
+        '<span class="des-tag a">AFTER · CARDINAL DESIGNER</span>' +
+      '</div>' +
+      '<div class="des-stagebar">' +
+        '<span class="note">' + (gen
+          ? 'Drag the line to compare — a visualization; installed colours can read a shade different in real light.'
+          : 'Photograph is in. Pick surfaces in the panel, then Generate.') + '</span>' +
+        '<button type="button" class="des-btn" data-act="pick">Change photo</button>' +
+      '</div>';
+    if(gen) wireCmp();
+  }
+  paintActions();
+}
+function wireCmp(){
+  var cmp = el.querySelector('#desCmp');
+  if(!cmp) return;
+  var after = cmp.querySelector('.after');
+  var div = cmp.querySelector('.des-div');
+  function setX(clientX){
+    var r = cmp.getBoundingClientRect();
+    var p = Math.min(98, Math.max(2, ((clientX - r.left) / r.width) * 100));
+    if(after) after.style.clipPath = 'inset(0 0 0 ' + p + '%)';
+    if(div) div.style.left = p + '%';
+  }
+  cmp.addEventListener('pointerdown', function(e){
+    cmp.setPointerCapture && cmp.setPointerCapture(e.pointerId);
+    setX(e.clientX);
+    function mv(ev){ setX(ev.clientX); }
+    function up(){
+      cmp.removeEventListener('pointermove', mv);
+      cmp.removeEventListener('pointerup', up);
+      cmp.removeEventListener('pointercancel', up);
+    }
+    cmp.addEventListener('pointermove', mv);
+    cmp.addEventListener('pointerup', up);
+    cmp.addEventListener('pointercancel', up);
+  });
+}
+function paintChips(){
+  var host = el.querySelector('#desChips');
+  host.innerHTML = SURFACES.map(function(s){
+    var c = choices[s];
+    return '<button type="button" class="des-chip" data-surf="' + s + '" ' +
+           'aria-pressed="' + (openSurf === s ? 'true' : 'false') + '">' +
+           esc(SURF_LABEL[s]) +
+           (c ? '<span class="pick">' + esc(c.label) + '</span>' : '') +
+           '</button>';
+  }).join('');
+}
+function swBtn(surf, label, hex, sub, on){
+  return '<button type="button" class="des-sw" data-pick="' + esc(label) + '" ' +
+         'data-hex="' + esc(hex || '') + '" aria-pressed="' + (on ? 'true' : 'false') + '">' +
+         '<span class="dot" style="background:' + esc(hex || 'transparent') + '"></span>' +
+         '<span class="nm">' + esc(label) +
+         (sub ? '<span class="ln">' + esc(sub) + '</span>' : '') +
+         '</span></button>';
+}
+function paintPanel(){
+  var host = el.querySelector('#desPanel');
+  if(!openSurf){ host.innerHTML = ''; return; }
+  var cur = choices[openSurf];
+  var rows = '';
+  if(openSurf === 'roof'){
+    if(!colors.length){
+      rows = '<div class="des-empty">Could not load the Owens Corning colour catalogue.' +
+             '<button type="button" class="des-btn" data-act="retryColors">Try again</button></div>';
+    }else{
+      rows = '<div class="des-sws">' +
+        swBtn('roof', 'Leave as is', '', '', !cur) +
+        colors.map(function(c){
+          var sub = c.product_line === 'designer' ? 'Duration Designer' : 'TruDefinition Duration';
+          return swBtn('roof', c.name, c.hex, sub, !!(cur && cur.label === c.name));
+        }).join('') + '</div>';
+    }
+  }else{
+    rows = '<div class="des-sws">' +
+      swBtn(openSurf, 'Leave as is', '', '', !cur) +
+      PAL[openSurf].map(function(p){
+        return swBtn(openSurf, p[0], p[1], '', !!(cur && cur.label === p[0]));
+      }).join('') + '</div>';
+  }
+  host.innerHTML =
+    '<div class="des-panel"><p class="ttl">' + esc(SURF_LABEL[openSurf]) +
+    (openSurf === 'roof' ? ' — Owens Corning' : '') + '</p>' + rows + '</div>';
+}
+function paintActions(){
+  var g = el.querySelector('#desGen'), sv = el.querySelector('#desSave'),
+      why = el.querySelector('#desWhy');
+  var n = Object.keys(choices).length;
+  var can = !!photo && n > 0 && !busyGen;
+  g.disabled = !can;
+  g.textContent = busyGen ? 'Generating… about 15 seconds' : 'Generate';
+  var canSave = !!(gen && gen.b64) && !savedId && !busySave;
+  sv.style.display = (gen && gen.b64) ? '' : 'none';
+  sv.disabled = !canSave;
+  sv.textContent = busySave ? 'Saving…' : (savedId ? 'Saved' : 'Save design');
+  why.textContent = !photo ? 'Add a photograph to start.'
+    : (n === 0 ? 'Pick at least one surface to change.'
+    : (busyGen ? 'The photograph is being redrawn with your choices.'
+    : n + ' change' + (n === 1 ? '' : 's') + ' picked.'));
+}
+function paintGallery(){
+  var host = el.querySelector('#desGal');
+  if(!galLoaded){ host.innerHTML = '<span class="des-empty">Loading…</span>'; return; }
+  if(!renders.length){
+    host.innerHTML = '<span class="des-empty">Nothing saved yet — the first design you save lands here.</span>';
+    return;
+  }
+  host.innerHTML = renders.map(function(d, i){
+    var mine = myEmail && d.created_by && d.created_by.toLowerCase() === myEmail.toLowerCase();
+    var when = '';
+    try{ when = new Date(d.created_at).toLocaleDateString(undefined, { month:'short', day:'numeric' }); }catch(_){}
+    return '<div class="des-card" data-open="' + i + '" role="button" tabindex="0">' +
+      (d._render ? '<img alt="" loading="lazy" src="' + esc(d._render) + '">' : '') +
+      '<span class="ai">DESIGN</span>' +
+      ((mine || amAdmin()) ? '<button type="button" class="del" data-del="' + esc(d.id) + '" aria-label="Delete">✕</button>' : '') +
+      '<div class="m"><div class="t">' + esc(d.title || 'Design') + '</div>' +
+      '<div class="d">' + esc(when) + (d.created_by ? ' · ' + esc(String(d.created_by).split('@')[0]) : '') + '</div></div>' +
+      '</div>';
+  }).join('');
+}
+function paintAll(){ paintStage(); paintChips(); paintPanel(); paintGallery(); }
+
+/* ── actions ────────────────────────────────────────────────────────── */
+async function takeFile(file){
+  if(!file) return;
+  try{
+    var small = await shrinkBlob(file, 1600, 0.86);
+    var b64 = await blobB64(small);
+    if(photo && photo.url && photo.url.indexOf('blob:') === 0){
+      try{ URL.revokeObjectURL(photo.url); }catch(_){}
+    }
+    photo = { url: URL.createObjectURL(small), b64: b64, mime: 'image/jpeg' };
+    gen = null; savedId = null;
+    paintStage();
+  }catch(e){
+    toast('Could not read that photograph — ' + (e && e.message || 'try another'));
+  }
+}
+function pickChoice(surf, label, hex){
+  if(label === 'Leave as is'){ delete choices[surf]; }
+  else if(surf === 'roof'){
+    var c = null;
+    colors.forEach(function(x){ if(x.name === label) c = x; });
+    if(!c) return;
+    var line = c.product_line === 'designer'
+      ? 'Owens Corning TruDefinition Duration Designer Series'
+      : 'Owens Corning TruDefinition Duration';
+    var d = String(c.description || '').split('.')[0];
+    choices.roof = {
+      label: c.name, hex: c.hex || '',
+      instruction: line + ' architectural shingles in "' + c.name + '"' +
+        (d ? ' — ' + d.slice(0, 120) : '') +
+        (c.hex ? ' (approximately ' + c.hex + ')' : '')
+    };
+  }else{
+    choices[surf] = { label: label, hex: hex || '', instruction: inst(surf, label, hex) };
+  }
+  savedId = null;
+  paintChips(); paintPanel(); paintActions();
+}
+async function generate(){
+  if(busyGen) return;
+  if(!photo || !photo.b64){
+    /* A design reopened from the gallery holds signed URLs, not bytes — fetch
+       the original back so Generate can iterate on the same house. */
+    if(photo && photo.url && !photo.b64){
+      try{
+        var rblob = await (await fetch(photo.url)).blob();
+        await takeFile(rblob);
+      }catch(_){
+        toast('Could not reload the original photograph — add it again.');
+        return;
+      }
+      if(!photo || !photo.b64) return;
+    }else{ toast('Add a photograph first.'); return; }
+  }
+  var changes = {};
+  SURFACES.forEach(function(s){ if(choices[s]) changes[s] = choices[s].instruction; });
+  if(!Object.keys(changes).length){ toast('Pick at least one surface to change.'); return; }
+  busyGen = true; paintActions();
+  try{
+    var res = await fetch('/api/design', {
+      method: 'POST',
+      headers: await window.aiHeaders(),
+      body: JSON.stringify({ image: photo.b64, mime: photo.mime, changes: changes })
+    });
+    var body = null;
+    try{ body = await res.json(); }catch(_){}
+    if(!res.ok || !body || !body.image){
+      throw new Error((body && body.error) || ('HTTP ' + res.status));
+    }
+    gen = { b64: body.image, mime: body.mime || 'image/png', via: body.via || '',
+            url: 'data:' + (body.mime || 'image/png') + ';base64,' + body.image };
+    savedId = null;
+    busyGen = false;
+    paintStage();
+    if(body.note) toast(body.note);
+  }catch(e){
+    busyGen = false; paintActions();
+    toast('Could not generate — ' + (e && e.message || 'try again'));
+  }
+}
+async function saveDesign(){
+  if(busySave || !gen || !gen.b64 || savedId) return;
+  var cl = sb(); if(!cl){ toast('Not signed in.'); return; }
+  busySave = true; paintActions();
+  try{
+    var marked = await burnMark(gen.b64, gen.mime);
+    var srcBlob = photo.b64
+      ? await (await fetch('data:' + photo.mime + ';base64,' + photo.b64)).blob()
+      : await (await fetch(photo.url)).blob();
+    var id = newId();
+    var sp = 'designer/' + id + '/source.jpg';
+    var rp = 'designer/' + id + '/render.jpg';
+    var u1 = await cl.storage.from('photos').upload(sp, srcBlob,
+      { cacheControl:'3600', upsert:false, contentType:'image/jpeg' });
+    if(u1.error) throw u1.error;
+    var u2 = await cl.storage.from('photos').upload(rp, marked,
+      { cacheControl:'3600', upsert:false, contentType:'image/jpeg' });
+    if(u2.error) throw u2.error;
+    var parts = [];
+    SURFACES.forEach(function(s){ if(choices[s]) parts.push(SURF_LABEL[s] + ' ' + choices[s].label); });
+    var row = {
+      title: parts.join(' · ').slice(0, 120) || 'Design',
+      source_path: sp, render_path: rp,
+      choices: choices, via: gen.via || null,
+      created_by: myEmail || null
+    };
+    var ins = await cl.from('design_renders').insert(row).select('id').single();
+    if(ins.error || !ins.data) throw (ins.error || new Error('save refused'));
+    savedId = ins.data.id;
+    toast('Saved — it’s in the gallery below for the whole team.');
+    await loadGallery();
+    paintGallery(); paintActions();
+  }catch(e){
+    toast('Could not save — ' + (e && e.message || 'try again'));
+  }
+  busySave = false; paintActions();
+}
+async function removeDesign(id){
+  var cl = sb(); if(!cl) return;
+  var d = null;
+  renders.forEach(function(x){ if(String(x.id) === String(id)) d = x; });
+  if(!d) return;
+  if(!window.confirm('Delete this design? The saved images go with it.')) return;
+  /* Select the id back — a delete refused by RLS is a silent 204 otherwise
+     (showcase_pairs.sql's own warning). */
+  var r = await cl.from('design_renders').delete().eq('id', id).select('id');
+  if(r.error || !r.data || !r.data.length){
+    toast('Not deleted — only the person who saved it (or an admin) can.');
+    return;
+  }
+  try{ await cl.storage.from('photos').remove([d.source_path, d.render_path]); }catch(_){}
+  renders = renders.filter(function(x){ return String(x.id) !== String(id); });
+  paintGallery();
+  toast('Deleted.');
+}
+function openSaved(i){
+  var d = renders[i];
+  if(!d || !d._source || !d._render){ toast('Could not open that design.'); return; }
+  photo = { url: d._source, b64: null, mime: 'image/jpeg' };
+  gen = { url: d._render, b64: null, mime: 'image/jpeg', via: d.via || '' };
+  savedId = d.id;
+  choices = {};
+  var ch = d.choices || {};
+  SURFACES.forEach(function(s){
+    if(ch[s] && ch[s].label && ch[s].instruction) choices[s] = ch[s];
+  });
+  openSurf = '';
+  paintAll();
+  try{ el.querySelector('.des-wrap').scrollIntoView(); el.scrollTop = 0; }catch(_){}
+}
+
+/* ── events ─────────────────────────────────────────────────────────── */
+function wire(){
+  var file = el.querySelector('#desFile');
+  file.addEventListener('change', function(){
+    takeFile(file.files && file.files[0]);
+    file.value = '';
+  });
+  el.addEventListener('click', function(e){
+    var t = e.target.closest ? e.target : null;
+    if(!t) return;
+    var del = t.closest('[data-del]');
+    if(del){ e.stopPropagation(); removeDesign(del.getAttribute('data-del')); return; }
+    var act = t.closest('[data-act]');
+    if(act){
+      var a = act.getAttribute('data-act');
+      if(a === 'close'){ close(); return; }
+      if(a === 'pick'){ file.click(); return; }
+      if(a === 'gen'){ generate(); return; }
+      if(a === 'save'){ saveDesign(); return; }
+      if(a === 'retryColors'){ loadColors().then(paintPanel); return; }
+    }
+    var chip = t.closest('[data-surf]');
+    if(chip){
+      var s = chip.getAttribute('data-surf');
+      openSurf = (openSurf === s) ? '' : s;
+      paintChips(); paintPanel();
+      return;
+    }
+    var sw = t.closest('[data-pick]');
+    if(sw && openSurf){
+      pickChoice(openSurf, sw.getAttribute('data-pick'), sw.getAttribute('data-hex'));
+      return;
+    }
+    var card = t.closest('[data-open]');
+    if(card){ openSaved(parseInt(card.getAttribute('data-open'), 10)); return; }
+  });
+}
+
+/* ── open / close ───────────────────────────────────────────────────── */
+async function open(){
+  ensure();
+  el.classList.add('open');
+  open_ = true;
+  /* Record history from INSIDE open as well as via the central __crNav wrap.
+     That wrap runs on a 400ms timer scheduled mid-file, and this module is the
+     LAST script in the document — under load the timer fires before this
+     script has parsed and the wrap silently misses (measured in the 761 gate:
+     same artifact, wrapped on one run, not on the next). navSetView's own
+     double-push guard makes the two paths compose, so when the wrap does land
+     the second call is a no-op. */
+  try{ if(typeof window.navSetView === 'function') window.navSetView('designer'); }catch(_){}
+  paintAll();
+  var cl = sb();
+  if(cl && !myEmail){
+    try{
+      var s = await cl.auth.getSession();
+      myEmail = (s && s.data && s.data.session && s.data.session.user &&
+                 s.data.session.user.email) || '';
+    }catch(_){}
+  }
+  if(!colors.length && !colorsTried) await loadColors();
+  if(!galLoaded) await loadGallery();
+  if(open_) paintAll();
+}
+function close(){
+  var v = el || document.getElementById('cr-des');
+  if(v) v.classList.remove('open');
+  open_ = false;
+}
+
+window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
+  open: open,
+  close: close
+});
+})();
+</script>
 </body>
 </html>

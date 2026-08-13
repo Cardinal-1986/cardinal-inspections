@@ -4730,3 +4730,54 @@ in production (0 of 34 rows), and `dbSwitchPrimary` promotes a contact **into**
 **Only the Production dossier's Call button uses it so far.** Seven other sites
 still hand-roll `String(pr.phone||'').replace(...)` — repointing them is a known
 follow-up, listed in OPEN_ITEMS.
+
+## The Exterior Designer — `cr-des-styles` / `cr-des-script`, `window.CardinalDesigner` (761)
+
+Theo, 12 Aug: an AI exterior home designer — *"This is a sales resource in front
+of clients… I can already do this on gemeni, just want to look more professional
+doing it in the vision suite."* Photograph a house, pick materials, and the SAME
+photograph comes back wearing them — before/after under a drag slider.
+
+- **Doors**: a Designer tile on the Vision hub (`data-go="designer"`), and a
+  `.cr-lr-show` row beside Showroom on the ordinary landing (≥820px gate;
+  phones use the hub). Registered in `hideAllViews()` (class-shown, own
+  `close()`), `navRestore('designer')`, and the `__crNav` wrap — PLUS `open()`
+  records `navSetView('designer')` itself, because the central wrap runs on a
+  400ms timer that can fire before the LAST script in a 4.2MB document has
+  parsed (measured: same artifact, wrapped on one run and not the next;
+  navSetView's double-push guard makes the two paths compose).
+- **Surfaces**: roof from `oc_colors` — hidden excluded (the Shasta White rule)
+  AND discontinued excluded: the Designer offers what Cardinal can order,
+  unlike the Colors wall, which badges history so an old roof can be
+  identified. Different jobs, different filters, both deliberate.
+  Siding/trim/gutters/windows come from small curated palettes in the module —
+  colour suggestions, not product claims.
+- **Engine**: `api/design.js` — the first image-GENERATING route in the app
+  (the 534-era "no image generation in this app" fact retires here). Signed-in
+  gate (a sales tool, deliberately not admin-only), 5MB cap, pinned surface
+  vocabulary, server-pinned prompt wrapper (same house, same geometry, only
+  the listed surfaces change), ladder `gemini-3.1-flash-image` →
+  `gemini-2.5-flash-image` with the settled 1.2s 503 pause, and `{probe:true}`
+  listing which image models the deployed key can actually reach — OPEN_ITEMS'
+  one unverified thing, closed the way it recommended. No OpenAI fallback on
+  purpose (vendor decision settled 1 Aug). ~$0.067/image.
+- **The fence** (CONTRACTOR_VISION_SUITE, presentation-only): every render is
+  badged AI CONCEPT on screen and BURNED into the saved JPEG (`burnMark()`).
+  Saved designs live in `design_renders` + the `designer/` prefix of the photos
+  bucket (`design_renders.sql` — all staff read/insert-own, owner-or-admin
+  delete) with NO join to project_photos, reports, claims or CompanyCam.
+- Gallery is shared team-wide; delete selects the id back (the silent-204
+  lesson). `gate_761.mjs`: 18 green · 15 red on the v760 negative control.
+
+### 762 — Studio White, full screen, house first (same session)
+
+Theo's picks off six rendered options: the Designer is now **single-theme
+Studio White** (the first LIGHT Vision surface — warm paper, red accents, all
+literals), **full-bleed** (the `body.cr-lnav-on` framing rule is deleted; no
+header, no left nav, and `cr-des` joined the 694 theme-toggle exclusion list so
+the floating switch no longer hovers over it), **house-first** ≥900px (sticky
+hero stage ~746px + a 396px picker rail; stacks below 900px), and **showroom
+voice** — no "AI" anywhere a client reads: tag `AFTER · CARDINAL DESIGNER`,
+badge `DESIGN`, burned mark `CARDINAL DESIGNER · VISUALIZATION`. The images
+are still AI-generated and the internal record still says so (`via`, banner,
+docs). `gate_762.mjs`: 23 green · 5 red on the v761 control.

@@ -538,6 +538,10 @@ He raised using actual client photos, undecided.
 - **There is no image generation in this app.** Both librarian models (`gemini-3.6-flash`,
   `gemini-3.5-flash`) are text-only; nothing in `api/` generates an image. The `MAX_IMAGE_BYTES`
   hits in `analyze.js` / `companycam.js` are image *input*.
+  ⚠️ **Superseded 12 Aug, build 761: `api/design.js` now generates images** (the Exterior
+  Designer, `gemini-3.1-flash-image` per the vendor table below). True when written; do not
+  quote it past 761. The Library-illustration question itself is still open and still
+  Spark-recommended.
 - **Client photos already exist as a feature** — `~~photos` (build 471), real CompanyCam
   photographs, admin-only, model never receives photo data. Theo may simply not have seen it.
 - **The storage half is already built.** `library` bucket + blob upload + signed URL +
@@ -603,6 +607,28 @@ accurate).
 **Still true and still the reason to be careful:** a generated cutaway is an unverifiable claim
 with a picture's authority. Nothing files without Theo looking at it. Do not automate the upload
 step away without re-reading that section.
+
+---
+
+## 🟡 Exterior Designer (761, 12 Aug) — deploy steps + follow-ups
+
+Shipped in the build-761 PR. **Before merge: run `design_renders.sql`.** After
+deploy, the first Generate press either works or names the real blocker — if it
+reports missing models or permissions, POST `{"probe":true}` to `/api/design`
+(signed in) and read `imageModels`: an empty list means the Vercel
+`GEMINI_API_KEY` has no image models enabled, which is a Google AI Studio /
+billing setting, not app code. ~$0.067 per press; a 10–15 image kitchen-table
+session is about a dollar. The free tier 503s — expect to want the paid tier.
+
+Follow-ups, none started, none promised:
+- **(a) Reference-image colour anchoring** — send the picked colour's
+  `oc_color_photos` cover beside the prompt so shingle colour matches the real
+  product rather than the model's idea of the name. Do this first if Theo says
+  the colours look off.
+- **(b) A Designer rail inside the Showcase view** if he wants saved designs in
+  the presentation flow — today they live in the Designer's own shared gallery.
+- **(c)** The hub tile's pencil icon is dim — it matches the existing Colors
+  tile exactly (only `.primary`/`.admin` tiles tint their icons). Cosmetic.
 
 ---
 
@@ -880,8 +906,7 @@ there are 3 punch items total and none are scheduled. That is a coverage gap, no
 
 | Item | State | What unsticks it |
 |---|---|---|
-| **ABC Supply 401** | App registered, credentials + `ABC_ENV` in Vercel, `api/abc.js` reachable, but ABC's auth rejects the pair on **both** sandbox and production | Clean re-paste of both values using the portal's clipboard icons, redeploy (env changes only reach a **new** deployment). If it persists, email **apisupport@abcsupply.com** |
-| **ABC account numbers** | Not entered | Ship-To and Bill-To from an invoice or myABCsupply (Branch # 106 already entered) |
+| **ABC Supply — data actions fail with "fetch failed"** | ✅ **CORRECTION, 12 Aug — the 401 above is stale, do not re-quote it.** Auth is confirmed genuinely working: Theo's own device shows "Connected — production environment," which only renders after a real token exchange succeeds against ABC's auth host. **The live symptom now is different** — Search / Frequent items on the Suppliers screen threw a bare `"Fetch failed"`, Node's own generic network-error text, on the call that actually fetches catalog/pricing data (a different host than auth). Leading theory, **unconfirmed**: `api/abc.js`'s own header has always flagged `api.partners.abcsupply.com` / `sandbox.api.partners.abcsupply.com` as a **guessed default**, never verified against ABC's developer portal — Theo checked the portal's "Manage Applications" screen and confirmed the app is ACTIVE with real Client ID/Secret, but that screen doesn't list an API host at all, so the guess is still unverified either way. **Shipped same session**: `netFetch()` in `api/abc.js` now surfaces the real cause Node was discarding (`e.cause` — e.g. `ENOTFOUND host`) instead of the bare message, negative-controlled against the pre-fix file (which reproduces the bare "fetch failed" on the identical simulated failure). | **Retest Search / Frequent items after this deploys** and report the new, specific error — it will name the host and the real reason (DNS, refused, timeout), which settles whether `ABC_API_BASE` needs setting in Vercel to a host from ABC's portal, or whether this is something else entirely. **ABC account numbers are done** — Ship-To 0002, Bill-To 2153354, Branch 106, confirmed entered and saved on Theo's device. |
 | **OpenAI quota (429)** | Coach fallback down. Theo says he pays for ChatGPT — **verify that is API credit, not a ChatGPT subscription.** `api/coach.js` calls `api.openai.com/v1/chat/completions` with `OPENAI_API_KEY` and `gpt-4o-mini`; a ChatGPT Plus/Pro plan does **not** fund that. | Check credit at platform.openai.com → Billing, not chatgpt.com |
 | **Resend sender domain** | Daily digest 403s | Verify `cardinalrenovations.net` DNS, then swap the from-address in `digest.js` |
 | **Gemini key** | **Theo confirmed 31 Jul he is on paid Gemini billing — the "free tier 503s" note was stale and is retired.** Still worth confirming the key exposed in an old session was rotated. | The 503 retry ladder in `librarian.js` stays regardless (cheap insurance), but paid quota is what makes a bulk caption backfill viable at all |
