@@ -3021,3 +3021,25 @@ After the records land: **Phase C sorting** runs over the Supabase connector as 
 (retail→insurance from the preserved claim data + companion `insurance_claims` rows;
 retail→community against `community_partners` + Theo's word). Gate sequence and anti-goals live in
 the runbook; session detail in `HANDOFF.md` (11 Aug section).
+
+**✅ UPDATE 13 Aug — gates 1–3 are DONE and clean; the blocker moved.** The API key arrived and
+gates 1–3 ran in the cloud environment (Theo's pick, second time offered). **166/166 exported ·
+164 new + 2 collisions + 0 unmappable · PO ladder 1044–1207 contiguous · six reps, zero roster
+fallbacks · 7 records carry insurance data.** Files are **NO-GO** — confirmed twice now, every
+read route 404s. **Nothing has been written to Cardinal.**
+
+**The live blocker is now the credential, not the key: `CARDINAL_PASSWORD` is rejected**
+(`invalid_credentials`). Diagnosed, not guessed — the email is right, there are no paste
+artifacts, the publishable key is live, and the account is confirmed, unbanned and signed in
+successfully at 01:54 UTC on 13 Aug. The password value simply does not match. Gates 4–5 (pilot,
+real run) resume from the export on disk the moment it works. ⚠️ **The export does NOT survive a
+container restart** — re-running the fetch costs ~10 minutes.
+
+Two decisions waiting on Theo: **there are TWO test records, not one** (`test test` and
+`Team Test`, both at 5735 Webster Street — recommend skipping both), and note that while files
+are NO-GO a "collision" is purely *no new row* — the attach half is a no-op.
+
+New tool: **`spark/dry_run_offline.py`** runs gate 3 without the admin password, by feeding the
+shipped `dry_run()` its two READS as JSON. Negative-controlled three ways and physically unable
+to write. ⚠️ **Still owed when the real run finishes:** delete the AccuLynx key in AppConnections,
+clear both variables, change the Cardinal password — this environment holds both halves at once.
