@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 764 &#8212; When a supplier price is refused, the supplier’s own explanation is readable instead of cut off mid-sentence</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 765 &#8212; Find my Ship-To: ABC lists the job accounts it will actually price against, with addresses, so you pick instead of guess</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38635,6 +38635,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:765, d:'2026-08-13', t:'Find my Ship-To \u2014 pick the job, don\u2019t guess the number',
+s:'ABC refused to price anything and said why: the ship-to number it was being given, 0003, is not one it recognises. That number is a display code off an invoice, not the identifier ABC\u2019s system uses \u2014 the same trap as the account number earlier, where the value printed on the invoice and the one on the ABC website were both wrong and a third form was correct. So rather than guess a fourth time, there is now a Find my Ship-To button: ABC returns the job accounts your login is actually allowed to price against, each with its address, and tapping one fills the field for you. Pricing should work from there.' },
 { b:764, d:'2026-08-13', t:'The supplier\u2019s reason is readable now',
 s:'When ABC refuses to price an item it says why, and the app was mangling the sentence three ways at once: cutting it off at sixty characters, squeezing it into a column about three words wide beside the item, and garbling the punctuation so an arrow came out as \u201c-&amp;gt;\u201d. The explanation now prints in full underneath the item, wrapped and legible, so a refusal can be acted on instead of guessed at.' },
 { b:763, d:'2026-08-13', t:'ABC Supply reaches the real catalog',
@@ -53329,6 +53331,7 @@ el.innerHTML =
 '</div>' +
 '<button class="btn2 ghost" data-act="test" type="button">Test connection</button>' +
 '<button class="btn2 ghost" data-act="freq" type="button">Frequent items</button>' +
+'<button class="btn2 ghost" data-act="ship" type="button">Find my Ship-To</button>' +
 '<div class="sect">Catalog</div>' +
 '<input data-q placeholder="Search ABC catalog\u2026 e.g. Duration shingles">' +
 '<button class="btn2" data-act="search" type="button">Search my branch</button>' +
@@ -53348,6 +53351,7 @@ el.addEventListener('click', function(e){ if(e.target === el) close(); });
 el.querySelector('[data-act="test"]').onclick = refreshStatus;
 el.querySelector('[data-act="search"]').onclick = doSearch;
 el.querySelector('[data-act="freq"]').onclick = doFrequents;
+el.querySelector('[data-act="ship"]').onclick = doShipTos;
 return el;
 }
 function statusBox(html){ ensure().querySelector('[data-status]').innerHTML = html; }
@@ -53400,6 +53404,40 @@ if(msg) msg.textContent = String(e.message || e);
 }
 };
 });
+}
+/* 765: ABC names the ship-to it will price against — so ask it, rather than
+   guessing a fourth account format. The invoice's "Ship To: 0003" is a
+   display code; the API wants an independent number (ABC's own example is
+   1163698). Each row shows the address so a human recognises the JOB, which
+   is the thing a rep actually knows. */
+function shipRows(list){
+var box = ensure().querySelector('[data-results]');
+if(!list || !list.length){ box.innerHTML = '<div class="quiet">ABC returned no ship-to accounts for this login.</div>'; return; }
+box.innerHTML = '<div class="quiet">Tap the job you are pricing for \u2014 it fills Ship-To above.</div>' +
+list.map(function(a){
+var ad = a.address || {};
+var where = [ad.line1, ad.city, ad.state].filter(Boolean).join(', ');
+return '<div class="item"><b>' + esc(a.name || ('Ship-To ' + (a.number || ''))) + '</b>' +
+'<small>#' + esc(String(a.number || '')) + (where ? ' \u00b7 ' + esc(where) : '') +
+(a.status && a.status !== 'active' ? ' \u00b7 ' + esc(a.status) : '') + '</small><br>' +
+'<button class="btn2 ghost" data-useship="' + esc(String(a.number || '')) + '" type="button" ' +
+'style="padding:7px 12px;font-size:12px;margin-top:8px;">Use this ship-to</button></div>';
+}).join('');
+box.querySelectorAll('[data-useship]').forEach(function(b){
+b.onclick = function(){
+var n = b.getAttribute('data-useship');
+var cc = cfg(); cc.shipTo = n; save(cc);
+var f = ensure().querySelector('[data-f="shipTo"]'); if(f) f.value = n;
+box.innerHTML = '<div class="quiet">Ship-To set to ' + esc(n) + '. Search the catalog, then Price at my branch.</div>';
+};
+});
+}
+async function doShipTos(){
+ensure().querySelector('[data-results]').innerHTML = '<div class="quiet">Asking ABC which ship-to accounts you can price against\u2026</div>';
+try{
+var j = await api({ action:'accounts' });
+shipRows(j.shipTos || j.accounts || j.items || (Array.isArray(j) ? j : []));
+}catch(e){ ensure().querySelector('[data-results]').innerHTML = '<div class="quiet">' + esc(String(e.message || e)) + '</div>'; }
 }
 async function doSearch(){
 var c = cfg(), q = ensure().querySelector('[data-q]').value.trim();
