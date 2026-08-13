@@ -2984,12 +2984,29 @@ the text compare could not.
 
 ---
 
-## 🟠 AccuLynx migration — pipeline SHIPPED, waiting on the API key (11 Aug 2026)
+## 🟠 AccuLynx migration — records EXPORTED, waiting on the Cardinal login (13 Aug 2026)
 
 The bulk client/docs/photos migration out of AccuLynx is built (`spark/acculynx_probe.py`,
 `fetch_acculynx.py`, `push_acculynx.py` + runbook `spark/ACCULYNX_MIGRATION.md`; offline harnesses
-green with negative controls). **No app change, no SQL, no build number.** Blocked on exactly one
-action: **Theo generates the AccuLynx API key** (click-path in the runbook) and runs the probe.
+green with negative controls). **No app change, no SQL, no build number.**
+
+**13 Aug — gates 1 and 2 are done.** The key was generated and the probe ran against the live
+account: **166 jobs in scope** (lead 3 · prospect 81 · approved 41 · completed 8 · invoiced 12 ·
+closed 21), all 8 AccuLynx users map onto the Cardinal roster, and **files are a NO-GO** — every
+candidate read route 404s, exactly as the public docs implied. The records fetch then completed.
+Nothing has been written to Cardinal.
+
+⚠️ **The probe earned its place: it caught two fatal faults in the shipped fetch.** `/jobs` pages by
+`pageStartIndex`, not `recordStartIndex` (five other names are *silently ignored* — HTTP 200, page 1,
+forever), and `PAGE_SIZE` must be ≤ 25 or the first call is refused with HTTP 400. Both fixed;
+`test_acculynx_fetch.py` §1b now models the real contract and goes red if either returns. The old
+harness could not see either fault because its fake API had been built from the same assumption as
+the code under test.
+
+**Now blocked on one action: the Cardinal admin login** (`CARDINAL_EMAIL` / `CARDINAL_PASSWORD`) for
+gates 3–5 — dry run, five-client pilot, real run. ⚠️ Note the runbook's own security appendix before
+putting a live admin password into a cloud environment; the desktop path is the documented default,
+and the export is re-runnable anywhere in about four minutes.
 
 Settled by Theo 11 Aug, not to be re-litigated: everything imports as **retail** and gets sorted to
 insurance/community afterwards (the insurance data rides along in `lead.insurance` for that sort);

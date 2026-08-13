@@ -3,6 +3,65 @@
 *Written 11 Aug 2026. Scripts: `acculynx_probe.py` → `fetch_acculynx.py` →
 `push_acculynx.py`, all in this folder, all standard-library Python 3.*
 
+> **Status, 13 Aug 2026 — gates 1 and 2 are DONE.** The key was generated, the
+> probe ran against the live account, and the records fetch completed. What it
+> found, so nobody re-derives it:
+>
+> - **166 jobs in scope** — lead 3 · prospect 81 · approved 41 · completed 8 ·
+>   invoiced 12 · closed 21. Cancelled (35) and dead (35) stay behind, as
+>   settled. The default listing holds 201; the 35 dead are the difference.
+> - **🛑 Files are a NO-GO.** Every candidate read route answered 404 on three
+>   separate jobs. This matches AccuLynx's public docs (upload-only). Records
+>   are unaffected — see "If files are unreachable".
+> - **All 8 AccuLynx users are `@cardinalrenovations.net`** and map straight
+>   onto the Cardinal roster, so no job lands on `former_rep`.
+> - Contact enrichment resolves properly: names, addresses, emails and phones
+>   all come back as values, not `{id,_link}` refs.
+> - ⚠️ **The probe caught two faults in the shipped fetch, both fatal, both now
+>   fixed** — see "What the probe corrected" below. This is what the gate is
+>   for; do not skip it on a re-run.
+>
+> **The full export is verified.** All 166 records fetched and run through the
+> shipped `map_job()`. Every checklist parses, every stage lands inside the
+> `STAGES` whitelist (so nothing silently becomes a `Lead`), and **no record
+> is missing a name or an address**. Reps resolve to all six active people —
+> nick 42 · theo 39 · jerry 35 · joey 29 · jacob 18 · curtis 3, **zero
+> falling back to the admin**. Only **7 of 166 carry insurance data**, which
+> is the size of the later Phase C sort.
+>
+> ⚠️ **Two facts about the source data, not faults** — worth knowing at the
+> review gate rather than discovering afterwards: **26 of 166 have no phone**
+> and **131 of 166 have no email**. AccuLynx simply does not hold them. The
+> import cannot invent contact details, and the same rule as
+> `community_partners` applies — never write an unverified email address.
+> Also, the oldest record is a literal **`test test`** entry carrying Theo's
+> own email; exclude it at the review gate.
+>
+> **Remaining: gates 3–5 (dry run, pilot, real run), which need the Cardinal
+> admin login.** Nothing has been written to Cardinal yet.
+
+## What the probe corrected (13 Aug 2026)
+
+Both faults would have stopped the export dead, and neither was visible to the
+offline harness, because the harness's fake API had been built from the same
+assumption as the code it was testing. Measured against the live account:
+
+| Assumption as shipped | What the API actually does |
+|---|---|
+| `/jobs` pages by **`recordStartIndex`** | **`pageStartIndex`.** Five other candidate names — `recordStartIndex`, `startIndex`, `offset`, `page`, `pageNumber` — are **silently ignored**, answering HTTP 200 with page 1 every time. It is a record offset, as assumed. |
+| `PAGE_SIZE = 100` | **25 is the ceiling on `/jobs`**, refused with HTTP 400 *"Page Size must not be greater than 25."* on the first call. `/users` and `/contacts` allow 50; sub-resources allow 200. |
+
+A third, latent: `pageStartIndex` at or past the record count answers **416**,
+not an empty page. The sweep's `count` check normally stops first, so this was
+never live — but a listing without `count` would have aborted the export at the
+tail of a sweep, so `get()` now treats a flagged 416 as a clean end-of-listing.
+
+**The lesson worth keeping: an unknown query parameter is ignored, not
+refused.** Getting the name wrong does not raise anything — it quietly returns
+the first 25 records forever. `test_acculynx_fetch.py` §1b now models the real
+contract (the cap, the ignored names, the 416) and goes red if either fault is
+reintroduced.
+
 **What this is for.** One re-runnable migration of every real AccuLynx client
 — records, and (where the API allows) their documents and photographs — into
 the Cardinal app's own tables, in the exact shapes the app already writes.
@@ -85,10 +144,13 @@ python3 acculynx_probe.py
 
 **Gate:** read the report (it contains no secrets — safe to hand to the
 session). It answers: does the key work at all; how many jobs sit in each
-milestone; do the AccuLynx user emails match Cardinal's roster; and the big
-one — **did any file read route answer**, because AccuLynx's public docs show
-upload-only file endpoints. No file route ≠ no migration: records proceed
-regardless, files fall back (see "If files are unreachable").
+milestone; do the AccuLynx user emails match Cardinal's roster; **which
+pagination parameter and page size this account actually accepts** (§2 and
+§2b — both cross-check what `fetch_acculynx.py` is configured to send, and
+say "stop and fix" if they have drifted apart); and the big one — **did any
+file read route answer**, because AccuLynx's public docs show upload-only file
+endpoints. No file route ≠ no migration: records proceed regardless, files
+fall back (see "If files are unreachable").
 
 ```bash
 # 2 · the fetch — records (and files, if a route answered) to local disk
