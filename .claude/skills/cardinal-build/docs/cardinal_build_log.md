@@ -15250,3 +15250,22 @@ artifact in Chromium: admin sees the button / rep does not, open seeds + auto-se
 two `action:fetch` round trips, two `project_photos` inserts with the caption on the right row and **no
 coordinate keys on either row** (the GPS fence, asserted), count re-renders 2/50, insp mode hides everything.
 `check_build.py` green (113 scripts parse, stamp 776→777, marker `galCcPanel`, negative control clean).
+
+## build 778 — 13 Aug 2026 — the first run of the CompanyCam picker, three fixes
+
+Theo used 777 within minutes of the merge and reported three things. All three are real; two were mine.
+
+1. **Select all** — 27 photographs at one tap each is not a feature. `galCcToggleAll()` ticks everything the
+   search found and the control flips to **Clear all** once they are; a partial tick still offers Select all,
+   because the useful move is to finish, not to start over. **It warns about the 50-photo album cap BEFORE the
+   fetches**, not after N round trips.
+2. **"After adding photos it says 0 on profile screen"** — not a counting bug. The gallery's Back button was the
+   **only** client sub-page whose close never re-rendered the overview; `dbCloseTo()` has called `renderOverview()`
+   for payments, tasks, documents and appointments all along. The number was painted once on entry and never asked
+   again. One line. `gate_778.mjs` reproduces his exact path — profile at 0 → add → Back → read the tile.
+3. **The AI caption "bugged out"** — 27 photographs, `count(caption) = 0` in production, so it never wrote. The
+   three failure paths (storage read, API, save) all alerted the same shapeless string, so the report could not be
+   actioned. Each now names its step and points at the manual route (double-tap). **This is instrumentation, not a
+   fix** — the underlying failure is still unidentified and the next report will say which step.
+
+**Gate**: `gate_778.mjs` — 19 green, **15 red on the 777 control**. `check_build.py` green, stamp 777→778.

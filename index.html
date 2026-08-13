@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 777 &#8212; CompanyCam photographs can be pulled straight into a client&#8217;s Photo Album, and photo sections and captions now survive a reload</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 778 &#8212; Select all in the CompanyCam picker, the profile photo count refreshes when you come back from the album, and a failed AI caption says what went wrong</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4157,6 +4157,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 #galCcPanel .gcc-p.foreign .gcc-meta{color:#8f1620;font-weight:800}
 #galCcPanel .gcc-foot{margin-top:11px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid #e2d9d5;padding-top:11px}
 #galCcPanel .gcc-note{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#5a5a5a}
+#galCcPanel button.gcc-all{background:#fff;color:#2c2c2c;border:1px solid #c9c2bf;border-radius:8px;padding:9px 13px;cursor:pointer;font:800 11.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;flex:0 0 auto}
+#galCcPanel button.gcc-all:hover{border-color:#c8202e;color:#8f1620}
 </style>
 <!-- ============ PHOTO GALLERY PAGE ============ -->
 <div id="galleryView" style="display:none;">
@@ -4193,6 +4195,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <div class="gcc-grid" id="galCcGrid"></div>
         <div class="gcc-foot">
           <button class="gcc-go" id="galCcAddBtn" type="button">Add checked to album</button>
+          <button class="gcc-all" id="galCcAllBtn" type="button">Select all</button>
           <span class="gcc-note">Copies into this album &#183; CompanyCam is never changed</span>
         </div>
       </div>
@@ -13104,6 +13107,11 @@ document.getElementById('galBackBtn').addEventListener('click', function(){
   galleryView.style.display = 'none';
   projectView.style.display = 'block';
   setHeaderJobMenu(true);
+  /* 778: the Photos tile read 0 after adding photographs, because this was the
+     ONE client sub-page whose Back never re-rendered the overview — dbCloseTo()
+     has called renderOverview() for payments, tasks, documents and appointments
+     all along. The count itself was never wrong; nobody asked it again. */
+  try{ if(typeof renderOverview === 'function') renderOverview(); }catch(_){}
   window.scrollTo(0,0);
 });
 document.getElementById('galAddBtn').addEventListener('click', function(){
@@ -13249,8 +13257,32 @@ function galCcPicked(){
 function galCcRefreshN(){
   var b = document.getElementById('galCcAddBtn');
   if(!b) return;
+  var all = document.querySelectorAll('#galCcGrid [data-gcc-pick]');
   var n = document.querySelectorAll('#galCcGrid [data-gcc-pick]:checked').length;
   b.textContent = n ? ('Add ' + n + ' to album') : 'Add checked to album';
+  /* 778: one control, two jobs — it offers the move you have not made yet.
+     Everything ticked, so the only useful action is to clear them. */
+  var a = document.getElementById('galCcAllBtn');
+  if(a){
+    a.style.display = all.length ? '' : 'none';
+    a.textContent = (all.length && n === all.length) ? 'Clear all' : 'Select all';
+  }
+}
+function galCcToggleAll(){
+  var all = [].slice.call(document.querySelectorAll('#galCcGrid [data-gcc-pick]'));
+  if(!all.length) return;
+  var want = all.some(function(c){ return !c.checked; });   /* any unticked -> tick everything */
+  all.forEach(function(c){ c.checked = want; });
+  galCcRefreshN();
+  /* The album cap is what actually bites at 60 results, so say so before the
+     press rather than after the fetches. */
+  var room = GAL_MAX - (Array.isArray(currentPhotos) ? currentPhotos.length : 0);
+  if(want && all.length > room){
+    galCcStatus(all.length + ' ticked · only ' + Math.max(0, room) +
+                ' will fit (the album holds ' + GAL_MAX + ')', true);
+  }else{
+    galCcStatus(want ? (all.length + ' ticked') : 'Cleared.');
+  }
 }
 async function galCcAdd(){
   if(galCcBusy) return;
@@ -13317,6 +13349,7 @@ document.getElementById('galCcBtn').addEventListener('click', function(){
 document.getElementById('galCcClose').addEventListener('click', galCcClose);
 document.getElementById('galCcFind').addEventListener('click', galCcFind);
 document.getElementById('galCcAddBtn').addEventListener('click', galCcAdd);
+document.getElementById('galCcAllBtn').addEventListener('click', galCcToggleAll);
 document.getElementById('galCcQ').addEventListener('keydown', function(e){
   if(e.key === 'Enter'){ e.preventDefault(); galCcFind(); }
 });
@@ -38998,6 +39031,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:778, d:'2026-08-13', t:'Select all in the CompanyCam picker, and the photo count keeps up',
+s:'Three things off the first run of yesterday\u2019s CompanyCam picker. Select all ticks every photograph the search found in one tap (and turns into Clear all once they are); if more are ticked than the fifty-photo album can hold, it says so before you press Add rather than after. The Photos number on the client profile was stuck at whatever it said when you opened the page \u2014 add photographs, come back, and it still read 0. Coming back from the album now re-reads it, the way coming back from Payments or Tasks already did. And when the AI caption fails it now names the step that failed and reminds you that double-tapping a photo lets you type a caption yourself.' },
 { b:777, d:'2026-08-13', t:'CompanyCam photographs straight into the Photo Album',
 s:'Open a client\u2019s Photo Album and there is a From CompanyCam button (admins). It opens with the property address already typed and searched, so the photographs you took before the client was even in Cardinal are one tick away. Ticked photos are copied in through the same door as a phone upload \u2014 same size treatment, same fifty-photo limit \u2014 and the crew\u2019s caption comes across with each one. Photos marked internal in CompanyCam never appear, and CompanyCam itself is never changed. Fixed alongside: a photo\u2019s section and caption used to vanish when you left the page \u2014 the album saved both and then never asked for them back, so everything showed under Inspection with no caption. Both now survive a reload.' },
 { b:776, d:'2026-08-13', t:'Publish stops failing in silence', s:'Publishing an estimate saves it first and waits for the editor to close. If that save did not finish in time \u2014 a slow connection, a big estimate \u2014 the button simply went back to \u201cPublish\u201d with no document and nothing said, which looks exactly like a broken button. It now tells you the estimate has not finished saving and that your work is still on screen, so you can try again. The \u2192 Contract button had the same silence and got the same fix. Separately: the app used to announce \u201cEstimate published\u201d whenever the editor closed, whether or not a document was actually made \u2014 it now checks that the document exists before saying so.' },
@@ -42483,7 +42518,8 @@ async function paeImageDataUrl(photo){
 var v = String((photo && (photo._src || photo.data)) || '');
 if(v.indexOf('data:') === 0) return v;
 var res = await fetch(v);
-if(!res.ok) throw new Error('Could not fetch the photo (' + res.status + ')');
+if(!res.ok) throw new Error('the photo could not be read back from storage (' + res.status +
+  '). If it was just added, give it a moment and try again.');
 var blob = await res.blob();
 return await new Promise(function(resolve, reject){
 var fr = new FileReader();
@@ -42895,7 +42931,9 @@ body: JSON.stringify({ image: await paeImageDataUrl(photo) }),
 var body = null;
 try{ body = await res.json(); }catch(_){}
 if(!res.ok){
-alert('AI caption failed: ' + ((body && (body.detail || body.error)) || ('HTTP ' + res.status)));
+alert('The AI caption service refused: ' +
+  ((body && (body.detail || body.error)) || ('HTTP ' + res.status)) +
+  '\n\nNothing was changed. You can still type a caption yourself: double-tap the photo.');
 return;
 }
 var caption = (body && body.caption) || '';
@@ -42904,7 +42942,12 @@ if(upd.error) throw upd.error;
 photo.caption = caption;
 if(typeof window.renderGallery === 'function') window.renderGallery();
 }catch(e){
-alert('AI caption error: ' + (e.message || e));
+/* 778: "AI caption error: Failed to fetch" named nothing. Three different
+   steps can fail here — reading the photo, the API, and the save — and the
+   message must say which, or the next report is unactionable again. */
+alert('The AI caption did not run — ' + ((e && e.message) || e) +
+  '\n\nNothing was changed. You can still type a caption yourself: ' +
+  'double-tap the photo.');
 }finally{
 btnEl.disabled = false;
 btnEl.innerHTML = '\u2728';
