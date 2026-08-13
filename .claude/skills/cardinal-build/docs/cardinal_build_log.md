@@ -15440,3 +15440,44 @@ printed $6,875 down). ⚠️ **Two of its assertions were wrong first, and both 
 the chokepoint's own *definition* as a call site (CLAUDE.md's counting trap, again), and one assumed a job with
 no estimate still has a price — `projectValue()` derives money FROM the estimate, so there is nothing to split
 and fill-in boxes are correct.
+
+## build 785 — 13 Aug 2026 — the contract deposit section is editable, and it adds up
+
+Theo: *"Make the contract deposit section editable fields."*
+
+**Why they were dead.** The report editor does not make the document freely typeable. `lockTemplate()`
+**removes** `contenteditable` from `doc.body` and grants it only to `EDITABLE_SELECTOR` — `.ph`, `.fill`,
+`#estItems td.qty|.rate`, a few table cells. The money writer replaced the whole
+`<span class="ph">[0.00]</span>` with **plain text**, so the moment a contract had a real price its
+amounts matched no editable selector and went dead. True before 781 as well as after — 781 changed the
+arithmetic, not the markup class.
+
+**The app already had the convention**, stated in its own editing hint: *"Yellow highlights are fill-in
+fields."* `.ph` = unfilled placeholder (yellow, `#fff6c4`); **`.fill` = a filled value that is still
+editable** — declared in `EDITABLE_SELECTOR`, already used 8× in markup, and carrying **no CSS anywhere**,
+so it prints as ordinary text. The amounts are written as `.fill` spans now. Nothing invented.
+
+**`wireContractMoney(doc)`** is a sibling of `wireEstimateCalc`, deliberately not folded into it: that one
+keys off `#estItems` and sums Qty × Rate, this one keys off the marked money cells and holds
+`price = deposit + balance`. A contract has no `#estItems`, so the estimate calc returns at its first line
+and the two never fight. Edit the deposit → the balance follows; edit the balance → the deposit follows;
+edit the price → the balance absorbs it. **The cell being typed in is never rewritten** (`doc.activeElement`),
+and the write is guarded per 567/569 so an identical value emits no mutation record.
+⚠️ **It is NOT called on load, on purpose** — a saved contract may hold figures set by hand that do not
+sum, and recalculating on open would silently rewrite a signed document.
+
+If a template prints a percentage beside the deposit, it is now wrapped in `[data-cpct]` and **follows the
+real figure**. A label reading 30% next to an amount that is not 30% is a contradiction on a signed document.
+
+⚠️ **A THIRD contract writer existed that 781 missed** — `cr-e2c-script`'s `generate()`, the
+estimate→contract path. It had its own copy of the money logic with a **50% default** (against 781's 30)
+and was the **only** one that honoured an `est.deposit_amount` column. All three now share the chokepoint,
+and a dollar deposit outranks the percentage everywhere. **781's claim of "one chokepoint" was two-thirds
+true; this is the build that made it true.**
+
+**Gate**: `gate_785.mjs` — 20 green, **17 red on the 784 control**. It asserts the cells are genuinely
+`contenteditable` after `lockTemplate`, types into them through the real keyboard, and checks the saved
+HTML keeps the figures while stripping `contenteditable`. ⚠️ The control first **crashed** instead of going
+red (`typeInto` hit a null on cells 784 does not have); a harness that explodes proves nothing, so it now
+degrades to a reported failure. Three patch assertions were also wrong before the code was — a definition
+counted as a call site, a miscounted marker, and a name count polluted by my own new comment.
