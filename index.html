@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 772 &#8212; QA pass: no emoji in the emails that leave the building, and the contract button says why when it cannot make one</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 773 &#8212; one buzz per person: duplicate notification recipients removed, and the last two emoji subject lines cleaned</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -16526,7 +16526,7 @@ async function sendChat(){
       if(to.length){
         /* 612: await the report rather than claiming success beside it. */
         var _r = await notifyTeam(to,
-          '\uD83D\uDCAC ' + msg.name + ' tagged you \u2014 ' + (currentProject.name || 'a client'),
+          msg.name + ' tagged you \u2014 ' + (currentProject.name || 'a client'),
           '<p><b>' + esc(msg.name) + '</b> tagged you on <b>' + esc(currentProject.name || '') + '</b>:</p>' +
           '<blockquote>' + esc(text) + '</blockquote>' +
           '<p>Open the client\u2019s Communications page in Cardinal Resource to reply.</p>');
@@ -17432,6 +17432,11 @@ function notifyTeam(to, subject, bodyHtml){
        html — the route now emails it as well as pushing. */
     var _list = Array.isArray(to) ? to.filter(Boolean)
               : (to ? String(to).split(/[,;]\s*/).filter(Boolean) : []);
+    /* 773: dedupe. The Completed buzz builds (rep + ADMIN_EMAILS), and when the
+       rep IS an admin the same address rode the list twice — /api/notify hands
+       the list straight to Resend and web-push, so that person got every buzz
+       double. One chokepoint covers all twelve call sites. */
+    _list = _list.filter(function(e, i){ return _list.indexOf(e) === i; });
     var _text = String(bodyHtml || '')
       .replace(/<br\s*\/?>/gi, ' ')
       .replace(/<[^>]*>/g, '')
@@ -22607,7 +22612,7 @@ document.getElementById('sigApply').addEventListener('click', async function(){
       await setStage(current.project_id, 'Approved');
       alert('Contract signed \u2014 project moved to APPROVED. Curtis has been notified to schedule and order materials.');
     }else if(isEstimateTitle(t)){
-      notifyTeam(ADMIN_EMAILS, '\u270D\uFE0F Estimate signed \u2014 needs approval: ' + t,
+      notifyTeam(ADMIN_EMAILS, 'Estimate signed \u2014 needs approval: ' + t,
         '<p><b>' + esc(t) + '</b> was signed in person.</p><p>Review it in the <b>Approvals</b> card on the app home page, then approve &amp; generate the contract.</p>');
       alert('Estimate signed. It now appears in the admin Approvals queue \u2014 a contract will be generated on approval.');
     }
@@ -38734,6 +38739,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:773, d:'2026-08-13', t:'One buzz per person', s:'An end-to-end drive of the whole retail lifecycle \u2014 lead to invoice, every stage \u2014 turned up two leftovers. When a job\u2019s assigned rep is also an admin, the \u201cjob complete\u201d notification listed them twice and they got every email and push double; the list is deduped now. And the last two emoji subject lines (the estimate-approvals buzz and the chat @-tag buzz) are plain text like the rest \u2014 subjects render in whatever font the mail app picks.' },
 { b:772, d:'2026-08-13', t:'QA pass on the retail lifecycle', s:'Two fixes from a walk-through of the whole retail path. The stage emails that go to Curtis and the reps no longer start with an emoji \u2014 those subject lines leave the building and render in whatever font the mail app picks. And the trade-agreement buttons now say \u201cOpen a client first\u201d instead of doing nothing at all when no job is loaded.' },
 { b:771, d:'2026-08-13', t:'Audit repairs on the Production rebuild', s:'Nine defects an adversarial audit found in builds 766\u2013770, all fixed. The worst: ticking a punch-out closed on the Production screen wrote the OPPOSITE \u2014 it flipped the row, then handed the id to the shared writer which flipped it back, so closing did nothing and reopening re-stamped who finished the work. Delete, photo removal and description editing had quietly become unreachable app-wide and are back on the card. The client profile\u2019s punch list now opens the same card as everywhere else. The card clears the installed app\u2019s bottom bar, restores on the back button, repaints the home strips, closes the burger menu properly, and no longer hijacks navigation when another screen opens.' },
 { b:770, d:'2026-08-13', t:'Closed repairs reach the client history', s:'Build 766 added closed punch-outs to the client\u2019s history feed, and it never once worked: the read was shaped as an array when the punch cache hands back a function, so it threw straight into a catch that hid the failure. Proven in a browser both ways \u2014 zero closed repairs before the fix, the repair with its closer and date after.' },
