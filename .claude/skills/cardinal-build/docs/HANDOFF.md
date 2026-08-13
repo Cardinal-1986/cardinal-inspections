@@ -57,6 +57,75 @@ and reviewed; the AI output itself has not been seen.
 
 ---
 
+# Session of 13 August 2026 — the AccuLynx migration actually RAN (no build consumed)
+
+**Gates 1 and 2 are done. 166 client records are fetched. Nothing has been
+written to Cardinal.** Zero `index.html` changes, zero SQL, no build number —
+`spark/` tooling only, PR #281.
+
+**The headline: running the pipeline against the real API found FIVE faults,
+and the pipeline could not have completed a migration as written.** It had
+been built, harnessed and merged on 11 Aug without ever touching AccuLynx.
+
+| # | Fault | What it would have done |
+|---|---|---|
+| 1 | `/jobs` paged with `recordStartIndex`, which does not exist | fetch never advances past page one — **AccuLynx answers 200 and returns page one for an unknown parameter**, so a misspelling looks exactly like broken pagination |
+| 2 | `pageSize` asked for 100; the server caps it at 25 | hard `400`, nothing fetched at all |
+| 3 | address read from `address`/`jobSiteAddress`; it is `locationAddress` | **all 166 clients import BLANK** — and that silently disabled duplicate detection, since `find_collision()` matches on the street number |
+| 4 | rep `user` is an unexpanded `{id,_link}` ref | **all 166 assigned to the admin** instead of the 6 real reps |
+| 5 | the no-rep fallback warned only when a display name existed — it was empty too | fault 4 lands **silently**, with a clean review file |
+
+⚠️ **Both harnesses were GREEN through every one of those.** Their fixtures
+were **invented rather than observed** — the push fixture used
+`detail.address.streetAddress1` and a pre-filled `sales_owner.user.email`; the
+fetch stub read `recordStartIndex`. A stub written from the implementation's
+mental model cannot disagree with the implementation. Fixtures are now
+transcribed from real responses and dated, and the new assertions are
+negative-controlled (they go red against the pre-fix code — confirmed in a
+scratch copy). This is `BUG_CLASSES.md` **45**; the silently-ignored parameter
+and its unexpanded-ref cousin are **44**.
+
+**⛔ THE ONE BLOCKER: `CARDINAL_PASSWORD` is stale.** Supabase auth returns
+`400 invalid_credentials`. `CARDINAL_EMAIL` is correct
+(`theo@cardinalrenovations.net`); neither variable has stray whitespace or
+quotes, so it is the password itself. **Refresh it and gates 3→4→5 run as
+written.** Do not go looking for a bug in the push — it is a credential.
+
+**Gate 3 was run in a SUBSTITUTE form, and the distinction matters.** The
+push's dry run needs the token for exactly two read-only queries (`projects`,
+`team_profiles`), so those were replayed over the Supabase connector into the
+**shipped** `dry_run()`, with every write path stubbed to raise. It validates
+the transform against real data. **It is not gate 3** — re-run the real command
+once the password works. Result: **164 new · 2 collisions · 0 unmappable ·
+0 warnings · PO 1044–1207**; stages Lead 3 / Prospect 80 / Approved 40 /
+Completed 8 / Invoiced 12 / Closed 21; reps nick 42 / theo 39 / jerry 35 /
+joey 29 / jacob 18 / curtis 3; 7 jobs carry insurance data for Phase C.
+
+**✅ Files are a confirmed NO-GO.** All six candidate read routes 404 on every
+job — exactly what the public docs predicted, now measured. The records
+migration is unaffected; documents and photographs need the fallback decision
+(manual pull for named jobs, or a browser-automation pass — still deliberately
+not built).
+
+**Two decisions waiting on Theo before the pilot:**
+1. The 2 collisions are real — Karrie Johnson (804 E Center St) and Dan
+   Thompson (2825 Arden Ave) both already exist in Cardinal. Default is
+   attach, not duplicate.
+2. **Two AccuLynx test records** would import as clients: `test test` (Lead)
+   and `Team Test` (Closed), both at 5735 Webster Street.
+
+**Live-API facts now recorded in the runbook** (they were guesses before):
+`pageStartIndex` is a record offset · unknown query parameters are silently
+ignored · `pageSize` caps at 25 and the cap is inconsistent per endpoint ·
+contacts AND representatives both return unexpanded refs · the site address is
+`locationAddress` with `state` as an object.
+
+⚠️ **Export hygiene:** the fetched client data lives in the session scratchpad,
+never in the repo — the repo root is served publicly. Nothing under
+`acculynx_export/` may be committed.
+
+---
+
 # Session of 11 August 2026 — the AccuLynx migration pipeline (no build consumed)
 
 **The bulk AccuLynx → Cardinal migration is BUILT and waiting on one thing:
