@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 782 &#8212; a new lead now needs a phone or an email, and the long half of the form is behind “More detail”</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 783 &#8212; booking the build day moves the job to SCHEDULED by itself</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10493,6 +10493,36 @@ var AKEY = 'cardinal_appointments_v1';
 function alsLoad(){ try{ return JSON.parse(localStorage.getItem(AKEY)) || []; }catch(e){ return []; } }
 function alsSave(l){ localStorage.setItem(AKEY, JSON.stringify(l)); }
 
+/* 783: booking the build day is what "Scheduled" MEANS, so the stage should not
+   need a second, manual confirmation of a fact the calendar already carries.
+   Placed on the data layer because adb.create is the ONLY writer of an
+   appointment in this file — the other two from('appointments') sites are a
+   health check and a dashboard read. One writer, one rule.
+
+   Narrow on purpose: only a 'job' appointment (a material drop is not the
+   build), and only the single hop Approved -> Scheduled. Never from Lead or
+   Prospect, which would jump the pipeline on a job nobody has sold yet; never
+   from Completed or Invoiced, which would walk it backwards. There is
+   deliberately no reverse on delete: rescheduling is a delete plus a create,
+   and a reversible rule would bounce the stage twice and stamp it each way. */
+async function __apptMayAdvanceStage(fields){
+  try{
+    if(!fields || fields.kind !== 'job' || !fields.project_id) return;
+    if(typeof window.setStage !== 'function') return;
+    var pr = (window.cacheProjects || []).filter(function(p){
+      return String(p.id) === String(fields.project_id);
+    })[0];
+    if(!pr) return;
+    var st = (typeof normStage === 'function') ? normStage(pr.stage) : pr.stage;
+    if(st !== 'Approved') return;
+    await window.setStage(pr.id, 'Scheduled');
+    try{
+      if(window.crToastOk){
+        window.crToastOk((pr.name || 'This job') + ' \u2014 build day booked, moved to SCHEDULED');
+      }
+    }catch(_t){}
+  }catch(_){ /* never let a stage courtesy break saving the appointment */ }
+}
 var adb = {
   list: async function(){
     if(TEAM){
@@ -10513,10 +10543,12 @@ var adb = {
       fields.created_by = user ? user.email : null;
       var r = await sb.from('appointments').insert(fields);
       if(r.error) throw r.error;
+      await __apptMayAdvanceStage(fields);   /* 783 */
       return;
     }
     fields.id = uid(); fields.created_by = null;
     var l = alsLoad(); l.push(fields); alsSave(l);
+    await __apptMayAdvanceStage(fields);     /* 783 */
   },
   remove: async function(id){
     if(TEAM){
@@ -39355,6 +39387,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:783, d:'2026-08-13', t:'The calendar moves the stage', s:'Book a build day and the job moves itself to SCHEDULED. Until now the Production board read the booking straight away \u2014 it would say \u201cbuild Aug 20\u201d \u2014 while the stage sat on APPROVED until somebody remembered to tap the arrow and answer a confirmation about something the calendar already knew. Only a Job start does it, only from APPROVED, and deleting the day does not move it back \u2014 rescheduling is a delete and a re-book, and a stage that bounced both ways would be worse than one that waits.' },
 { b:782, d:'2026-08-13', t:'A lead you can actually reach', s:'Thirty-five of the forty client records in the app have no email address and twenty-four have no phone \u2014 which means nothing can be sent to them: no estimate, no invoice, no signature link. The New Lead form now asks for a phone number or an email before it will save. If you genuinely have neither \u2014 a door-knock or a canvass \u2014 tick the box it offers and it saves anyway, and the lead is marked so it can be chased later. The form is also shorter: company, job type, lead source, assignment, appointment and notes now sit behind \u201cMore detail\u201d, leaving name, phone, email, address and claim type on the first screen.' },
 { b:781, d:'2026-08-13', t:'The contract is signable, and the deposit is yours',
 s:'Two things that made a contract unusable in front of a client. THE DEPOSIT: every contract built from the job menu split the price 50/50, no matter what the estimate said. It now takes the deposit percentage from that job\u2019s own estimate \u2014 yours are set to 30% \u2014 and falls back to 30% when there is no estimate to read. The percentage printed in the row label follows the real number instead of always saying 50%. THE SIGNING SECTION: an agreement had FIVE signature slots in two competing blocks, and the signature pad only ever filled the last one, so a client signed at the bottom of the page while the Buyer box above stayed an empty yellow placeholder, and there was no way at all to capture a co-buyer or your own countersignature. An agreement now carries one signing block \u2014 Buyer, Co-buyer, Contractor \u2014 and the pad asks whose signature it is and stamps that row with the signature and the date. Only the buyer signing moves the job to Approved. Estimates are unchanged. The acceptance paragraph no longer calls a contract an estimate.' },

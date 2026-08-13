@@ -15209,6 +15209,27 @@ billing are deliberately NOT in the `.ldmore` set, and `gate_782` asserts that t
 More-detail section is collapsed. Same family as BUG_CLASSES 16.
 
 
+**783** PHASE 2 — booking the build day moves the job to **SCHEDULED** by itself. The one hop still done by
+hand: contract signature already auto-advances to Approved (all three signing paths) and the invoice email
+already auto-advances to Invoiced, but the middle step sat waiting for an arrow tap and a confirm about a
+fact the calendar already carried. `blockerFor` computed the truth from the appointment; the stage lagged it.
+
+**Placed on `adb.create`, which is the ONLY appointment writer in the file** — the two other
+`from('appointments')` sites are a health check and a dashboard read, both SELECTs. One writer, one rule,
+rather than a copy on each of the several buttons that book a day.
+
+Deliberately narrow: only `kind:'job'` (a material drop is not the build); only Approved → Scheduled, never
+from Lead/Prospect (which would jump the pipeline on a job nobody sold) and never from Completed/Invoiced
+(backwards); **no reverse on delete**, because rescheduling is a delete plus a create and a reversible rule
+would bounce the stage twice and stamp it each way. `setStage` sends no email for Scheduled, so this adds
+nothing to anyone's inbox — asserted, not assumed.
+
+⚠️ **Two assertion traps, both caught by the gate going red against correct code:** a file-wide
+`setStage(pr.id,'Scheduled') == 1` fails because the **community client page already has a MANUAL "Mark this
+job SCHEDULED?" button** — the honest form is `orig.count(...) + 1`. And `__apptMayAdvanceStage(fields)`
+counts **3**, not 2: the function's own DEFINITION matches the call pattern.
+
+
 **Gates**: `gate_766` 38, `gate_767` 54, `gate_768` 65, `gate_769` 16, `gate_770_history` 1, `gate_771` 31,
 **`gate_776` 14 (three Chromium runs — happy / slow-save / failed-write; RED on 775, where the slow save
 produced ZERO dialogs and the failed write still claimed success)**,
