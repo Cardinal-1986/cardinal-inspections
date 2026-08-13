@@ -86,7 +86,15 @@ await page.addInitScript(() => {
   try { Object.defineProperty(document, 'fonts', { configurable: true, get: () => ({ ready: Promise.resolve(), status: 'loaded', check: () => true, load: () => Promise.resolve([]), forEach: () => {}, addEventListener: () => {}, removeEventListener: () => {} }) }); } catch (e) {}
 });
 
-const shot = async (n) => { try { await page.screenshot({ path: OUT + '/' + n + '.png' }); } catch (e) {} };
+/* page.screenshot() blocks on document.fonts.ready and the harness aborts font
+   requests, so capture through CDP instead — otherwise every shot times out
+   into a silent catch and the gate "passes" with no picture to look at. */
+const cdp = await ctx.newCDPSession(page);
+const shot = async (n) => {
+  try { const r = await cdp.send('Page.captureScreenshot', { format: 'png' });
+    writeFileSync(OUT + '/' + n + '.png', Buffer.from(r.data, 'base64')); }
+  catch (e) { console.log('  (shot ' + n + ' failed: ' + String(e).slice(0, 60) + ')'); }
+};
 
 console.log('gate_767 — Production rebuilt, in Chromium');
 await page.goto('https://app.cardinalroster.com/', { waitUntil: 'domcontentloaded' });

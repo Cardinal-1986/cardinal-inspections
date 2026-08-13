@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 767 &#8212; Production, rebuilt: one page with Needs ordered, Ordered, Scheduled, Punch-outs and Closed repairs, a full-screen calendar behind it, and back that goes up one level instead of Home</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 768 &#8212; The punch-out card: a field checklist with trade templates and required notes, guided photo slots, a supplement flag, and the messages thread — one card everywhere, with Curtis dispatching and Scottie in field mode</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -16925,6 +16925,9 @@ function hideAllViews(){
      with its own close() that also dismisses the add-pair form. */
   [{ id:'cr-sf', api:window.CardinalSalesFloor },
    { id:'cr-pb', api:window.CardinalProduction },
+   /* 768: the punch-out card. Class-shown like its neighbours, so it closes
+      through the module's own close() and hideAllViews confirms the class went. */
+   { id:'cr-pk', api:window.CardinalPunchCard },
    { id:'cr-show', api:window.CardinalShowcase },
    /* 761: the Exterior Designer — same shape as the Showcase. */
    { id:'cr-des', api:window.CardinalDesigner }].forEach(function(o){
@@ -38708,6 +38711,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:768, d:'2026-08-13', t:'The punch-out card', s:'Tapping a punch-out anywhere now opens one proper card: the job with directions and a call button, a field checklist you can start from a Roofing, Siding or Gutter template, steps that refuse to tick until a note is written, five guided photo slots, a Flag supplement button that files the extra scope and tells the office, and the message thread with @tagging. Closing needs five photos and every step ticked, and the button says what is missing until then. Curtis and the office get the manager card \u2014 dispatch, edit steps, set urgency; Scottie gets field mode with bigger targets and the camera first.' },
 { b:767, d:'2026-08-13', t:'Production, rebuilt around the calendar', s:'The Production screen is one calm page now: five boxes \u2014 Needs ordered, Ordered, Scheduled, Punch-outs and Closed repairs \u2014 over a week strip and the day\u2019s work. Tap a box for its list; tap Full calendar for a whole month of build days, material drops, scheduled punch-outs and closed repairs, with a Needs a date queue for anything waiting to be dispatched. Marking materials ordered works straight from the list. Cardinal Steel throughout, in both light and dark, and no floating buttons anywhere.' },
 { b:766, d:'2026-08-13', t:'Production tells the truth about scheduling', s:'The Production board used to say \u201cNeeds scheduling\u201d forever, even after Curtis put the job on the Schedule Board \u2014 it was reading a date field nothing in the app has ever written. It now reads the real build-day appointment, so the chip clears when the job is scheduled and a job that should have started says so. The Materials tab gained a Mark ordered button, which answers the board\u2019s \u201cMaterials?\u201d chip. And closing a punch-out no longer makes it vanish: it lands in the client\u2019s history as a completed repair.' },
 { b:765, d:'2026-08-13', t:'Find my Ship-To \u2014 pick the job, don\u2019t guess the number',
@@ -47449,6 +47453,12 @@ function wire(){
       var id = b.getAttribute('data-item');
       var it = punchRows().find(function(x){ return String(x.id) === String(id); });
       if(!it) return;
+      /* 768: one card. Every punch-out detail in the app opens CardinalPunchCard;
+         back from it returns HERE, not to the client profile. */
+      if(window.CardinalPunchCard && window.CardinalPunchCard.open){
+        window.CardinalPunchCard.open(it.id, { back:'production' });
+        return;
+      }
       close(false);
       if(typeof window.openProject === 'function') window.openProject(it.project_id);
       if(window.CardinalPunchProfile && window.CardinalPunchProfile.openItem){
@@ -47744,6 +47754,897 @@ window.CardinalProduction = {
   addFor    : function(projectId){ openAdd(projectId); },
   refresh   : async function(){ await load(); lastSig = ''; render(); },
   openCount : function(){ return punchRows().filter(function(i){ return i.status === 'open'; }).length; },
+};
+})();
+</script>
+<style id="cr-pk-styles">
+/* ============================================================================
+   THE PUNCH-OUT CARD  ·  v2026-08-13 build 768  ·  Cardinal Steel
+   ----------------------------------------------------------------------------
+   ONE card. Every punch-out detail surface in the app now opens THIS: the
+   Production screen, the per-CRM home strips, the Punch & Repairs page and the
+   client profile's Punch Outs tab all route here. It replaces those detail
+   renderings rather than becoming a third one.
+
+   Two hats off the same markup:
+     FIELD (Scottie)  — big targets, camera first, no configuration
+     MANAGER (Theo, Joan, CURTIS — Scottie's boss) — dispatch, reorder steps,
+                        set note-required, urgency, gallery review
+
+   Inks are the module's own tokens with literal fallbacks; both themes computed.
+   ========================================================================== */
+#cr-pk{
+  --pk-g:#0c0d0f; --pk-c:#15171a; --pk-c2:#1b1e22; --pk-c3:#22262c;
+  --pk-ink:#eceef0; --pk-mut:#9aa3ab; --pk-dim:#848c94;
+  /* --pk-accl is the accent as it sits ON its own tinted chip wash: plain
+     --pk-acc measured 4.44:1 there, just under the 4.5 floor. */
+  --pk-acc:#e35c63; --pk-accl:#e8676e; --pk-accd:#c8202e; --pk-accink:#ffffff;
+  --pk-hot:#e07a5f; --pk-ok:#6cb98f;
+  --pk-line:rgba(230,235,240,.11); --pk-line2:rgba(230,235,240,.06);
+  --pk-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  display:none; position:fixed; inset:0; z-index:9550;
+  overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
+  background:var(--pk-g,#0c0d0f); color:var(--pk-ink,#eceef0);
+  -webkit-overflow-scrolling:touch;
+}
+#cr-pk.open{ display:block; }
+:root[data-theme="rb-light"] #cr-pk{
+  --pk-g:#f4f5f6; --pk-c:#ffffff; --pk-c2:#f4f5f7; --pk-c3:#eceef1;
+  --pk-ink:#17191c; --pk-mut:#5f6670; --pk-dim:#666d77;
+  --pk-acc:#8f1620; --pk-accl:#8f1620; --pk-accd:#8f1620; --pk-hot:#a83f24; --pk-ok:#2f7d55;
+  --pk-line:#e2e4e8; --pk-line2:#eef0f2;
+}
+#cr-pk .pkwrap{ max-width:920px; margin:0 auto; padding:18px 15px 40px; }
+#cr-pk .pktop{ display:flex; align-items:center; gap:9px; margin-bottom:10px; }
+#cr-pk .pkback{
+  flex:none; width:34px; height:34px; border-radius:10px; cursor:pointer;
+  border:1px solid var(--pk-line,rgba(230,235,240,.11)); background:transparent;
+  color:var(--pk-mut,#9aa3ab); display:flex; align-items:center; justify-content:center;
+}
+#cr-pk .pkback svg{ width:15px; height:15px; }
+#cr-pk .pkey{
+  font:600 9px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.22em;
+  color:var(--pk-dim,#848c94); text-transform:uppercase;
+}
+#cr-pk .pkchip{
+  font:700 8px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.1em;
+  border-radius:5px; padding:3px 7px; text-transform:uppercase;
+}
+#cr-pk .pkchip.open{ background:rgba(200,32,46,.16); color:var(--pk-accl,#e8676e); }
+#cr-pk .pkchip.done{ background:rgba(108,185,143,.16); color:var(--pk-ok,#6cb98f); }
+#cr-pk .pkurg{
+  display:flex; align-items:center; gap:8px; margin-bottom:11px;
+  background:rgba(200,32,46,.16); border:1px solid var(--pk-acc,#e35c63);
+  border-radius:10px; padding:10px 12px;
+  font:700 11px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.12em;
+  color:var(--pk-accl,#e8676e); text-transform:uppercase;
+}
+#cr-pk .pkurg svg{ width:14px; height:14px; flex:none; }
+#cr-pk h1{
+  margin:2px 0 13px; font:700 20px/1.25 -apple-system,'Segoe UI',Roboto,sans-serif;
+  color:var(--pk-ink,#eceef0);
+}
+#cr-pk .pksec{
+  background:var(--pk-c,#15171a); border:1px solid var(--pk-line2,rgba(230,235,240,.06));
+  border-radius:12px; padding:12px 13px; margin-bottom:10px;
+}
+:root[data-theme="rb-light"] #cr-pk .pksec{ box-shadow:0 1px 6px rgba(25,28,40,.06); }
+#cr-pk .pkh{
+  display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-bottom:9px;
+  font:600 8.5px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.16em;
+  color:var(--pk-dim,#848c94); text-transform:uppercase;
+}
+#cr-pk .pkh svg{ width:13px; height:13px; flex:none; }
+#cr-pk .pkh .rt{ margin-left:auto; letter-spacing:.06em; }
+#cr-pk .pkh .rt b{ color:var(--pk-ink,#eceef0); }
+#cr-pk .pktpl{
+  font:700 7.5px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em;
+  color:var(--pk-mut,#9aa3ab); background:var(--pk-c2,#1b1e22);
+  border:1px solid var(--pk-line,rgba(230,235,240,.11)); border-radius:5px;
+  padding:3px 7px; text-transform:uppercase;
+}
+#cr-pk .jn{ display:flex; align-items:center; gap:8px; font:700 14px -apple-system,'Segoe UI',Roboto,sans-serif; }
+#cr-pk .jn .dot{ width:8px; height:8px; border-radius:50%; flex:none; background:#3a4149; }
+#cr-pk .jn .dot.retail{ background:#c8202e; }
+#cr-pk .jn .dot.insurance{ background:#c4180f; }
+#cr-pk .jn .dot.community{ background:#047857; }
+#cr-pk .ja{ display:block; color:var(--pk-dim,#848c94); font-size:11.5px; margin:3px 0 9px; }
+#cr-pk .pkbtns{ display:flex; gap:7px; flex-wrap:wrap; }
+#cr-pk .pkbtn{
+  display:inline-flex; align-items:center; gap:6px; cursor:pointer; text-decoration:none;
+  font:700 9.5px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.06em;
+  text-transform:uppercase; border:1px solid var(--pk-line,rgba(230,235,240,.11));
+  border-radius:8px; padding:8px 11px; min-height:36px; color:var(--pk-mut,#9aa3ab);
+  background:transparent;
+}
+#cr-pk .pkbtn svg{ width:12px; height:12px; }
+#cr-pk .pkbtn.hot{ background:var(--pk-accd,#c8202e); border-color:var(--pk-accd,#c8202e); color:var(--pk-accink,#fff); }
+#cr-pk .pkmeta{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:10px; }
+#cr-pk .pkm{
+  background:var(--pk-c,#15171a); border:1px solid var(--pk-line2,rgba(230,235,240,.06));
+  border-radius:10px; padding:9px 11px; min-width:0;
+}
+:root[data-theme="rb-light"] #cr-pk .pkm{ box-shadow:0 1px 6px rgba(25,28,40,.06); }
+#cr-pk .pkm .k{
+  font:600 7.5px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.14em;
+  color:var(--pk-dim,#848c94); text-transform:uppercase;
+}
+#cr-pk .pkm .w{ font:600 12px -apple-system,'Segoe UI',Roboto,sans-serif; margin-top:4px; }
+#cr-pk .pkm select,#cr-pk .pkm input{
+  width:100%; box-sizing:border-box; margin-top:4px; padding:7px 8px; font-size:13px; min-height:36px;
+  background:var(--pk-g,#0c0d0f); color:var(--pk-ink,#eceef0);
+  border:1px solid var(--pk-line,rgba(230,235,240,.11)); border-radius:8px;
+}
+:root[data-theme="rb-light"] #cr-pk .pkm select,
+:root[data-theme="rb-light"] #cr-pk .pkm input{ background:var(--pk-c2,#f4f5f7); }
+#cr-pk .pkdesc{
+  font:400 13px/1.55 -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pk-mut,#9aa3ab);
+  white-space:pre-wrap; word-break:break-word;
+}
+/* ---- checklist ---- */
+#cr-pk .pkck{
+  display:flex; gap:10px; align-items:flex-start; padding:9px 0;
+  border-top:1px solid var(--pk-line2,rgba(230,235,240,.06));
+}
+#cr-pk .pkck:first-of-type{ border-top:none; }
+#cr-pk .pkck .bx{
+  flex:none; width:22px; height:22px; border-radius:6px; cursor:pointer; padding:0; margin-top:1px;
+  border:1.5px solid var(--pk-dim,#848c94); background:transparent; color:transparent;
+  display:flex; align-items:center; justify-content:center;
+}
+#cr-pk .pkck .bx svg{ width:12px; height:12px; }
+#cr-pk .pkck.d .bx{ background:rgba(108,185,143,.2); border-color:var(--pk-ok,#6cb98f); color:var(--pk-ok,#6cb98f); }
+#cr-pk .pkck .bd{ flex:1; min-width:0; }
+#cr-pk .pkck .st{ display:block; font-size:13.5px; word-break:break-word; }
+#cr-pk .pkck.d .st{ color:var(--pk-dim,#848c94); text-decoration:line-through; }
+#cr-pk .pkck .req{
+  display:inline-block; font:700 7px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em;
+  color:var(--pk-hot,#e07a5f); border:1px solid var(--pk-hot,#e07a5f); border-radius:4px;
+  padding:1px 5px; margin-left:6px; text-transform:uppercase; vertical-align:1px;
+}
+#cr-pk .pkck .note{
+  display:block; font:400 11px/1.5 -apple-system,'Segoe UI',Roboto,sans-serif;
+  color:var(--pk-dim,#848c94); margin-top:5px; padding:7px 9px;
+  background:var(--pk-c2,#1b1e22); border-left:2px solid var(--pk-ok,#6cb98f);
+  border-radius:6px; text-decoration:none; word-break:break-word;
+}
+#cr-pk .pkck .hnd{ color:var(--pk-dim,#848c94); font:700 13px var(--pk-mono,ui-monospace,Menlo,monospace); cursor:default; }
+#cr-pk .pkadd{
+  display:flex; gap:8px; align-items:center; width:100%; cursor:pointer; margin-top:4px;
+  border-top:1px dashed var(--pk-line,rgba(230,235,240,.11)); background:transparent;
+  padding:11px 0 2px; color:var(--pk-dim,#848c94); min-height:40px;
+  font:600 10.5px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.06em; text-align:left;
+}
+#cr-pk .pksup{
+  display:flex; gap:8px; align-items:center; width:100%; cursor:pointer; margin-top:9px;
+  border:1.5px dashed var(--pk-acc,#e35c63); border-radius:9px; padding:10px 12px;
+  background:transparent; color:var(--pk-acc,#e35c63); min-height:42px;
+  font:700 9.5px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.06em; text-transform:uppercase;
+}
+#cr-pk .pksup svg{ width:13px; height:13px; flex:none; }
+/* ---- photos ---- */
+#cr-pk .pkslots{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:7px; }
+#cr-pk .pkslot{ min-width:0; text-align:center; background:transparent; border:0; padding:0; cursor:pointer; }
+#cr-pk .pkslot .im{
+  display:block; width:100%; aspect-ratio:1; border-radius:9px; object-fit:cover;
+  background:var(--pk-c3,#22262c); border:1px solid var(--pk-line2,rgba(230,235,240,.06));
+}
+#cr-pk .pkslot.e .im{
+  background:transparent; border:1.5px dashed var(--pk-line,rgba(230,235,240,.11));
+  display:flex; align-items:center; justify-content:center; color:var(--pk-dim,#848c94);
+}
+#cr-pk .pkslot .im svg{ width:15px; height:15px; }
+#cr-pk .pkslot .sl{
+  display:block; font:600 6.8px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.06em;
+  color:var(--pk-dim,#848c94); text-transform:uppercase; margin-top:4px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* ---- messages ---- */
+#cr-pk .pkbub{
+  max-width:82%; border-radius:12px; padding:9px 11px; margin-bottom:8px;
+  font-size:12.5px; line-height:1.45; word-break:break-word;
+  background:var(--pk-c2,#1b1e22); border:1px solid var(--pk-line2,rgba(230,235,240,.06));
+}
+#cr-pk .pkbub.me{
+  margin-left:auto; background:rgba(200,32,46,.15); border-color:rgba(200,32,46,.32);
+}
+#cr-pk .pkbub small{
+  display:block; font:400 8.5px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.06em;
+  color:var(--pk-dim,#848c94); margin-top:4px;
+}
+#cr-pk .pktags{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+#cr-pk .pktag{
+  cursor:pointer; background:transparent; font:700 9px var(--pk-mono,ui-monospace,Menlo,monospace);
+  color:var(--pk-mut,#9aa3ab); border:1px solid var(--pk-line,rgba(230,235,240,.11));
+  border-radius:999px; padding:5px 10px; min-height:30px;
+}
+#cr-pk .pkin{ display:flex; gap:8px; align-items:center; margin-top:9px; }
+#cr-pk .pkin input{
+  flex:1; min-width:0; box-sizing:border-box; padding:11px 12px; font-size:14px;
+  background:var(--pk-g,#0c0d0f); color:var(--pk-ink,#eceef0);
+  border:1px solid var(--pk-line,rgba(230,235,240,.11)); border-radius:10px;
+}
+:root[data-theme="rb-light"] #cr-pk .pkin input{ background:var(--pk-c2,#f4f5f7); }
+#cr-pk .pkin .snd{
+  flex:none; width:44px; height:44px; border-radius:50%; cursor:pointer; border:0;
+  background:var(--pk-accd,#c8202e); color:var(--pk-accink,#fff);
+  display:flex; align-items:center; justify-content:center;
+}
+#cr-pk .pkin .snd svg{ width:16px; height:16px; }
+#cr-pk .pkout{
+  font:400 11px -apple-system,'Segoe UI',Roboto,sans-serif; margin-top:7px; color:var(--pk-dim,#848c94);
+}
+#cr-pk .pkout.bad{ color:var(--pk-hot,#e07a5f); }
+/* ---- close ---- */
+#cr-pk .pkclose{
+  display:block; width:100%; cursor:pointer; text-align:center; margin-top:4px;
+  border:1.5px solid var(--pk-line,rgba(230,235,240,.11)); border-radius:12px; padding:14px;
+  background:transparent; color:var(--pk-dim,#848c94); min-height:52px;
+  font:700 12px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em; text-transform:uppercase;
+}
+#cr-pk .pkclose b{
+  display:block; font:600 9px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.1em;
+  margin-top:3px; text-transform:none; color:var(--pk-dim,#848c94);
+}
+#cr-pk .pkclose.ready{
+  background:var(--pk-accd,#c8202e); border-color:var(--pk-accd,#c8202e); color:var(--pk-accink,#fff);
+}
+#cr-pk .pkclose.ready b{ color:rgba(255,255,255,.78); }
+#cr-pk .pkclose.reopen{ border-color:var(--pk-ok,#6cb98f); color:var(--pk-ok,#6cb98f); }
+/* ---- FIELD MODE: bigger targets, camera first ---- */
+#cr-pk.field .pkck{ padding:13px 0; }
+#cr-pk.field .pkck .bx{ width:30px; height:30px; border-radius:8px; }
+#cr-pk.field .pkck .bx svg{ width:16px; height:16px; }
+#cr-pk.field .pkck .st{ font-size:15px; }
+#cr-pk.field .pkslots{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+#cr-pk.field .pkslot .sl{ font-size:7.5px; }
+#cr-pk.field h1{ font-size:22px; }
+/* ---- manager rows ---- */
+#cr-pk .pkrow{
+  display:flex; gap:9px; align-items:center; padding:9px 0; font-size:12.5px;
+  border-top:1px solid var(--pk-line2,rgba(230,235,240,.06));
+}
+#cr-pk .pkrow:first-of-type{ border-top:none; }
+#cr-pk .pkrow .gr{ margin-left:auto; display:flex; gap:6px; }
+#cr-pk .pknote{ font:400 10.5px -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pk-dim,#848c94); margin-top:8px; }
+@media (min-width:900px){
+  #cr-pk .pksplit{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr); gap:18px; align-items:start; }
+}
+</style>
+<script id="cr-pk-script">
+(function(){
+'use strict';
+/* ============================================================================
+   THE PUNCH-OUT CARD  ·  v2026-08-13 build 768
+   ----------------------------------------------------------------------------
+   window.CardinalPunchCard.open(itemId) is now THE punch-out detail screen.
+   It does not own data: reads come from CardinalPunch (the one punch cache),
+   writes go through CardinalPunch.update / .toggle, comments reuse the app's
+   ONE mention resolver and notifyTeam. Nothing here is a second pipeline.
+
+   Not a 14th scroll-lock writer: the overlay carries overscroll-behavior:
+   contain, which is the sanctioned pattern for exactly this.
+   No new document.body observer either.
+   ========================================================================== */
+var it = null;              /* the row on screen */
+var el = null, back = null; /* back = where close() should return to */
+var lastSig = '', busy = false, outMsg = '';
+
+var PHOTO_MIN = 5;
+var SLOTS = [
+  { k:'overview', l:'Overview' },
+  { k:'closeup',  l:'Close-up' },
+  { k:'cleanup',  l:'Cleanup' },
+  { k:'material', l:'Material' },
+  { k:'final',    l:'Final' },
+];
+/* Trade templates: a starting checklist, not a cage — every step stays editable
+   and a manager can add, retitle or drop any of them on the card. Hardcoded at
+   768 on purpose; a template manager screen is a later build, not silent scope. */
+var TEMPLATES = {
+  roofing: { label:'Roofing punch', steps:[
+    { t:'Confirm the complaint from the ground' },
+    { t:'Inspect decking / substrate for rot', req:true },
+    { t:'Make the repair — match existing material' },
+    { t:'Seal and check the two courses above' },
+    { t:'Clean-up sweep, magnet the beds and drive' },
+  ]},
+  siding: { label:'Siding / eave repair', steps:[
+    { t:'Confirm the complaint and the affected elevation' },
+    { t:'Check sheathing and house wrap behind', req:true },
+    { t:'Replace / re-secure the course' },
+    { t:'Caulk and seal penetrations' },
+    { t:'Clean-up sweep, magnet the beds' },
+  ]},
+  gutters: { label:'Gutter / downspout fix', steps:[
+    { t:'Confirm the run and the pitch' },
+    { t:'Check fascia behind the gutter for rot', req:true },
+    { t:'Re-hang / re-strap and re-seal the joint' },
+    { t:'Water-test the run' },
+    { t:'Clean-up sweep' },
+  ]},
+};
+var ICON = {
+  chev :'<path d="M15 5l-7 7 7 7"/>',
+  tick :'<path d="M5 12.5l4.2 4.2L19 7"/>',
+  cam  :'<rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13.5" r="4"/><path d="M8.5 7l2-3h3l2 3"/>',
+  pin  :'<path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/>',
+  ph   :'<path d="M5 4h4l2 5-2.5 1.5a12 12 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+  chat :'<path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H4l2.4-3.2A8.5 8.5 0 1 1 21 11.5z"/>',
+  send :'<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',
+  list :'<path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>',
+  doc  :'<path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9 13h6M9 17h6"/>',
+  flag :'<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  user :'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+};
+function svg(n){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (ICON[n] || '') + '</svg>';
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function myEmail(){ return ((window.currentUser && window.currentUser.email) || '').toLowerCase(); }
+function nameOf(e){
+  if(!e) return 'unassigned';
+  if(window.DEFAULT_NAMES && window.DEFAULT_NAMES[e]) return window.DEFAULT_NAMES[e];
+  if(Array.isArray(window.TEAM_ROSTER)){
+    var m = window.TEAM_ROSTER.find(function(x){ return x && x.email === e; });
+    if(m && m.name) return m.name;
+  }
+  return String(e).split('@')[0];
+}
+function roster(){
+  return Array.isArray(window.TEAM_ROSTER)
+    ? window.TEAM_ROSTER.filter(function(m){ return m && m.email; })
+    : [];
+}
+/* MANAGER = the office plus Curtis, who is Scottie's boss and dispatches the
+   punch-outs. Everyone else in the field gets the field card. The gate is UX
+   only; RLS and the punch_close_guard trigger remain the authority. */
+function isManager(){
+  var me = myEmail();
+  if(!me) return false;
+  if(typeof window.is_admin === 'function'){ try{ if(window.is_admin()) return true; }catch(_){} }
+  return me === 'curtis@cardinalrenovations.net';
+}
+function rowFor(id){
+  var P = window.CardinalPunch, list = [];
+  if(P && typeof P.rows === 'function'){ try{ list = P.rows() || []; }catch(_){} }
+  return list.find(function(x){ return String(x.id) === String(id); }) || null;
+}
+function projectFor(pid){
+  return (window.cacheProjects || []).find(function(p){ return String(p.id) === String(pid); });
+}
+function portalOf(pr){
+  if(!pr) return 'unknown';
+  if(typeof window.projClaimType === 'function'){
+    try{ return window.projClaimType(pr) || 'unknown'; }catch(_){}
+  }
+  return 'unknown';
+}
+function steps(){ return Array.isArray(it && it.steps) ? it.steps : []; }
+function photos(){ return Array.isArray(it && it.photos) ? it.photos : []; }
+function comments(){ return Array.isArray(it && it.comments) ? it.comments : []; }
+function stepsDone(){ return steps().filter(function(s){ return s && s.d; }).length; }
+function readyToClose(){
+  return photos().length >= PHOTO_MIN && (!steps().length || stepsDone() === steps().length);
+}
+function fmtWhen(v){
+  if(!v) return '';
+  var d = (typeof window.crDate === 'function') ? window.crDate(v) : new Date(v);
+  if(!d || isNaN(d)) return '';
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+function fmtTime(v){
+  var d = new Date(v);
+  if(isNaN(d)) return '';
+  return d.toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+}
+
+/* -------------------------------------------------------------- rendering */
+function ensure(){
+  if(el) return el;
+  el = document.createElement('div');
+  el.id = 'cr-pk';
+  document.body.appendChild(el);
+  return el;
+}
+function render(){
+  if(!el || !it) return;
+  var html = cardHtml();
+  if(html === lastSig) return;      /* the 606 stored-signature guard */
+  lastSig = html;
+  el.innerHTML = html;
+  el.classList.toggle('field', !isManager());
+  wire();
+  paintPhotos();
+}
+function cardHtml(){
+  var pr = projectFor(it.project_id);
+  var done = it.status === 'done';
+  var urgent = it.priority === 'high' && !done;
+  return '<div class="pkwrap">' +
+    '<div class="pktop">' +
+      '<button class="pkback" data-act="back" type="button" aria-label="Back">' + svg('chev') + '</button>' +
+      '<span class="pkey">' + esc(it.kind === 'callback' ? 'Callback' : it.kind === 'ticket' ? 'Ticket' : 'Punch-Out') + '</span>' +
+      '<span class="pkchip ' + (done ? 'done' : 'open') + '" style="margin-left:auto;">' + (done ? 'Closed' : 'Open') + '</span>' +
+    '</div>' +
+    (urgent ? '<div class="pkurg">' + svg('flag') + 'Urgent — do first</div>' : '') +
+    '<h1>' + esc(it.title || 'Punch-out') + '</h1>' +
+    '<div class="pksplit"><div>' +
+      jobHtml(pr) + metaHtml() + descHtml() + checklistHtml() + photosHtml() +
+    '</div><div>' +
+      msgsHtml() + closeHtml(done) +
+    '</div></div></div>';
+}
+function jobHtml(pr){
+  var addr = pr ? (pr.address || '') : '';
+  var phone = '';
+  if(pr && typeof window.projPhone === 'function'){ try{ phone = window.projPhone(pr) || ''; }catch(_){} }
+  return '<div class="pksec">' +
+    '<div class="jn"><span class="dot ' + portalOf(pr) + '"></span>' + esc(pr ? (pr.name || 'Unnamed') : 'Unknown job') + '</div>' +
+    '<span class="ja">' + esc(addr || 'No address on file') +
+      (it.created_by ? ' · filed by ' + esc(nameOf(it.created_by)) : '') + '</span>' +
+    '<div class="pkbtns">' +
+      (addr ? '<a class="pkbtn" target="_blank" rel="noopener" href="https://maps.google.com/?q=' +
+        encodeURIComponent(addr) + '">' + svg('pin') + 'Directions</a>' : '') +
+      (phone ? '<a class="pkbtn" href="tel:' + esc(String(phone).replace(/[^0-9+]/g, '')) + '">' + svg('ph') + 'Call</a>' : '') +
+      (pr ? '<button class="pkbtn" data-act="job" type="button">Open job</button>' : '') +
+    '</div></div>';
+}
+function metaHtml(){
+  var mgr = isManager();
+  var who = it.assigned_to || '';
+  var sel = mgr
+    ? '<select data-f="assigned"><option value="">Anyone</option>' +
+        roster().map(function(m){
+          return '<option value="' + esc(m.email) + '"' + (m.email === who ? ' selected' : '') + '>' +
+            esc(m.name || nameOf(m.email)) + '</option>';
+        }).join('') + '</select>'
+    : '<div class="w">' + esc(nameOf(who)) + '</div>';
+  var when = it.scheduled_at ? String(it.scheduled_at).slice(0, 10) : '';
+  var sch = mgr
+    ? '<input type="date" data-f="when" value="' + esc(when) + '">'
+    : '<div class="w">' + esc(when ? fmtWhen(when) : 'not scheduled') + '</div>';
+  return '<div class="pkmeta">' +
+    '<div class="pkm"><div class="k">Assigned</div>' + sel + '</div>' +
+    '<div class="pkm"><div class="k">Scheduled</div>' + sch + '</div>' +
+    '</div>' +
+    (mgr ? '<div class="pksec"><div class="pkh">' + svg('user') + 'Priority</div>' +
+      '<div class="pkrow"><span>Urgent — do this first</span><span class="gr">' +
+      '<button class="pkbtn' + (it.priority === 'high' ? ' hot' : '') + '" data-act="urg" type="button">' +
+      (it.priority === 'high' ? 'Urgent' : 'Normal') + '</button></span></div>' +
+      '<div class="pknote">Curtis dispatches: set who and when above, and it lands on the Production calendar and the assignee’s day.</div>' +
+      '</div>' : '');
+}
+function descHtml(){
+  if(!it.detail) return '';
+  return '<div class="pksec"><div class="pkh">' + svg('doc') + 'Description</div>' +
+    '<div class="pkdesc">' + esc(it.detail) + '</div></div>';
+}
+function checklistHtml(){
+  var st = steps(), mgr = isManager();
+  var tplName = it.template && TEMPLATES[it.template] ? TEMPLATES[it.template].label : '';
+  var body = st.map(function(s, i){
+    return '<div class="pkck' + (s.d ? ' d' : '') + '">' +
+      (mgr && !it.status_done ? '<span class="hnd" aria-hidden="true">≡</span>' : '') +
+      '<button class="bx" data-step="' + i + '" type="button" aria-label="' +
+        (s.d ? 'Untick' : 'Tick') + ' step">' + svg('tick') + '</button>' +
+      '<span class="bd"><span class="st">' + esc(s.t || '') +
+        (s.req ? '<span class="req">Note required</span>' : '') + '</span>' +
+        (s.note ? '<span class="note">' + esc(s.note) + '</span>' : '') +
+      '</span>' +
+      (mgr ? '<button class="pkbtn" data-delstep="' + i + '" type="button" aria-label="Remove step">×</button>' : '') +
+      '</div>';
+  }).join('');
+  var pick = '';
+  if(!st.length && mgr){
+    pick = '<div class="pkbtns" style="margin-bottom:4px;">' +
+      Object.keys(TEMPLATES).map(function(k){
+        return '<button class="pkbtn" data-tpl="' + k + '" type="button">' + esc(TEMPLATES[k].label) + '</button>';
+      }).join('') + '</div>';
+  }
+  return '<div class="pksec"><div class="pkh">' + svg('list') + 'Checklist' +
+    (tplName ? '<span class="pktpl">' + esc(tplName) + '</span>' : '') +
+    (st.length ? '<span class="rt"><b>' + stepsDone() + '</b> / ' + st.length + '</span>' : '') +
+    '</div>' + pick + body +
+    (mgr ? '<button class="pkadd" data-act="addstep" type="button">+ Add step</button>' : '') +
+    '<button class="pksup" data-act="supp" type="button">' + svg('flag') +
+      'Flag supplement / material request</button>' +
+    '</div>';
+}
+function photosHtml(){
+  var ph = photos();
+  var cells = SLOTS.map(function(s, i){
+    var u = ph[i];
+    return '<button class="pkslot' + (u ? '' : ' e') + '" data-slot="' + i + '" type="button">' +
+      (u ? '<img class="im" data-src="' + esc(u) + '" alt="' + esc(s.l) + '">'
+         : '<span class="im">' + svg('cam') + '</span>') +
+      '<span class="sl">' + esc(s.l) + '</span></button>';
+  }).join('');
+  var extra = ph.length > SLOTS.length ? ' · +' + (ph.length - SLOTS.length) + ' more' : '';
+  return '<div class="pksec"><div class="pkh">' + svg('cam') + 'Photos' +
+    '<span class="rt"><b>' + ph.length + '</b> of ' + PHOTO_MIN + ' to close' + esc(extra) + '</span></div>' +
+    '<div class="pkslots">' + cells + '</div></div>';
+}
+function msgsHtml(){
+  var me = myEmail();
+  var body = comments().map(function(c){
+    var mine = String(c.by || '').toLowerCase() === me;
+    return '<div class="pkbub' + (mine ? ' me' : '') + '">' + esc(c.text || '') +
+      '<small>' + esc((c.name || nameOf(c.by)).toUpperCase()) + ' · ' + esc(fmtTime(c.at)) + '</small></div>';
+  }).join('');
+  var chips = roster().filter(function(m){ return m.email !== me; }).slice(0, 5).map(function(m){
+    return '<button class="pktag" data-tag="' + esc((m.name || nameOf(m.email)).split(' ')[0]) + '" type="button">@' +
+      esc((m.name || nameOf(m.email)).split(' ')[0]) + '</button>';
+  }).join('');
+  return '<div class="pksec"><div class="pkh">' + svg('chat') + 'Messages' +
+    '<span class="rt">@ tags notify</span></div>' +
+    (body || '<div class="pkdesc">No messages yet. Tag someone with @ and only they are notified.</div>') +
+    '<div class="pktags">' + chips + '</div>' +
+    '<div class="pkin"><input type="text" data-f="msg" placeholder="Message…">' +
+    '<button class="snd" data-act="send" type="button" aria-label="Send">' + svg('send') + '</button></div>' +
+    (outMsg ? '<div class="pkout' + (/not|no one|failed/i.test(outMsg) ? ' bad' : '') + '">' + esc(outMsg) + '</div>' : '') +
+    '</div>';
+}
+function closeHtml(done){
+  if(done){
+    return '<button class="pkclose reopen" data-act="reopen" type="button">Reopen punch-out' +
+      '<b>' + esc('closed ' + (it.done_at ? fmtWhen(it.done_at) : '') + ' by ' + nameOf(it.done_by)) + '</b></button>';
+  }
+  var ph = photos().length, st = steps(), left = st.length - stepsDone();
+  var want = [];
+  if(ph < PHOTO_MIN) want.push((PHOTO_MIN - ph) + ' photo' + (PHOTO_MIN - ph === 1 ? '' : 's'));
+  if(left > 0) want.push(left + ' step' + (left === 1 ? '' : 's'));
+  var ready = readyToClose();
+  return '<button class="pkclose' + (ready ? ' ready' : '') + '" data-act="close" type="button">' +
+    'Close punch-out' +
+    '<b>' + (ready ? 'everything is done' : esc(want.join(' · ') + ' left')) + '</b></button>';
+}
+function paintPhotos(){
+  if(typeof window.paintSignedPhotoImgs === 'function'){
+    /* the app signs public-bucket URLs for display only; never rewrite storage */
+    el.querySelectorAll('img[data-src]').forEach(function(img){
+      if(!img.getAttribute('src')) img.setAttribute('src', img.getAttribute('data-src'));
+    });
+    try{ window.paintSignedPhotoImgs(el); }catch(_){}
+  }else{
+    el.querySelectorAll('img[data-src]').forEach(function(img){
+      if(!img.getAttribute('src')) img.setAttribute('src', img.getAttribute('data-src'));
+    });
+  }
+}
+
+/* ------------------------------------------------------------------ writes */
+async function save(patch){
+  if(busy) return;
+  busy = true;
+  Object.assign(it, patch);
+  lastSig = ''; render();
+  try{
+    var P = window.CardinalPunch;
+    if(P && typeof P.update === 'function'){
+      var r = await P.update(it.id, patch);
+      if(r && r.ok === false) throw new Error(r.error || 'write refused');
+    }else{
+      var d = await window.supa.from('punch_items').update(patch).eq('id', it.id);
+      if(d.error) throw d.error;
+    }
+  }catch(e){
+    alert('Could not save: ' + (e.message || e));
+    var fresh = rowFor(it.id);
+    if(fresh) it = fresh;
+    lastSig = ''; render();
+  }
+  busy = false;
+  refreshOthers();
+}
+function refreshOthers(){
+  try{ if(window.CardinalProduction) window.CardinalProduction.refresh(); }catch(_){}
+  try{ if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh) window.CardinalPunchProfile.refresh(); }catch(_){}
+  try{ if(window.CardinalPunchStrip && window.CardinalPunchStrip.paint) window.CardinalPunchStrip.paint(); }catch(_){}
+}
+async function tickStep(i){
+  var st = steps().slice();
+  var s = st[i];
+  if(!s) return;
+  if(!s.d && s.req && !String(s.note || '').trim()){
+    /* The note gate: "found more damage" gets written down at the moment, not
+       remembered at the truck. */
+    var note = prompt('This step needs a note before it can be ticked:\n\n' + s.t);
+    if(note === null) return;
+    if(!String(note).trim()){ alert('A note is required to tick this step.'); return; }
+    s = Object.assign({}, s, { note: String(note).trim() });
+  }
+  st[i] = Object.assign({}, s, {
+    d: !s.d,
+    by: !s.d ? (myEmail() || null) : null,
+    at: !s.d ? new Date().toISOString() : null,
+  });
+  await save({ steps: st });
+}
+async function addStep(){
+  var t = prompt('What is the step?');
+  if(!t || !String(t).trim()) return;
+  var req = confirm('Require a written note before this step can be ticked?\n\nOK = note required, Cancel = no note needed.');
+  var st = steps().slice();
+  st.push({ t:String(t).trim(), d:false, req:!!req, note:'' });
+  await save({ steps: st });
+}
+async function delStep(i){
+  var st = steps().slice();
+  if(!st[i]) return;
+  if(!confirm('Remove this step?\n\n' + (st[i].t || ''))) return;
+  st.splice(i, 1);
+  await save({ steps: st });
+}
+async function useTemplate(k){
+  var tpl = TEMPLATES[k];
+  if(!tpl) return;
+  var st = tpl.steps.map(function(s){
+    return { t:s.t, d:false, req:!!s.req, note:'' };
+  });
+  await save({ steps: st, template: k });
+}
+/* The supplement flag: files a flagged follow-up on the SAME job and tells the
+   office. The money side (supplement, change order, extra material pricing)
+   stays in the office tools — Production carries no money, Theo's rule. */
+async function flagSupplement(){
+  var what = prompt('What did you find that is outside the original scope?');
+  if(!what || !String(what).trim()) return;
+  var pr = projectFor(it.project_id);
+  var title = 'SUPPLEMENT / MATERIAL REQUEST — ' + String(what).trim().slice(0, 90);
+  try{
+    var row = {
+      project_id : it.project_id,
+      title      : title,
+      detail     : 'Found while working: ' + (it.title || '') + '\n\n' + String(what).trim(),
+      kind       : 'ticket',
+      priority   : 'high',
+      status     : 'open',
+      created_by : myEmail() || null,
+    };
+    var r = await window.supa.from('punch_items').insert(row).select().single();
+    if(r.error) throw r.error;
+    if(typeof window.auditLog === 'function'){
+      try{ window.auditLog('punch', 'Supplement flagged: ' + String(what).trim(), it.project_id); }catch(_){}
+    }
+    var to = officeEmails();
+    if(to.length && typeof window.notifyTeam === 'function'){
+      var res = await window.notifyTeam(to,
+        'Supplement flagged — ' + ((pr && pr.name) || 'a job'),
+        '<p><b>' + esc(nameOf(myEmail())) + '</b> flagged extra scope on <b>' +
+        esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(String(what).trim()) + '</p>' +
+        '<p>Filed against the punch-out: ' + esc(it.title || '') + '</p>');
+      outMsg = outcomeText(res, 'the office');
+    }else{
+      outMsg = 'Flagged on the job. Nobody to notify.';
+    }
+    try{ if(window.CardinalPunch && window.CardinalPunch.reload) await window.CardinalPunch.reload(); }catch(_){}
+    lastSig = ''; render();
+    refreshOthers();
+  }catch(e){
+    alert('Could not flag it: ' + (e.message || e));
+  }
+}
+function officeEmails(){
+  var out = ['theo@cardinalrenovations.net', 'curtis@cardinalrenovations.net'];
+  var me = myEmail();
+  return out.filter(function(e){ return e !== me; });
+}
+function outcomeText(res, who){
+  if(typeof window.notifyOutcomeText === 'function'){
+    try{ return window.notifyOutcomeText(res, who); }catch(_){}
+  }
+  if(!res) return 'Saved — could not tell whether ' + who + ' was notified.';
+  var sent = (res.sent || 0) + (res.mailed || 0);
+  return sent ? ('Notified ' + who + '.') : ('Saved, but nothing was delivered to ' + who + '.');
+}
+async function send(){
+  var inp = el.querySelector('[data-f="msg"]');
+  var text = inp ? inp.value.trim() : '';
+  if(!text) return;
+  var me = myEmail();
+  var list = comments().slice();
+  /* The public API is CardinalMentions.names / .emails — the INTERNAL functions
+     are called mentionNamesIn/mentionEmailsFor, and calling those names on the
+     object silently resolved nobody. The gate caught it by tagging someone and
+     finding no notification. */
+  var M = window.CardinalMentions || {};
+  var names = [];
+  try{
+    if(typeof M.names === 'function') names = M.names(text) || [];
+    else if(typeof M.mentionNamesIn === 'function') names = M.mentionNamesIn(text) || [];
+  }catch(_){}
+  list.push({ by:me, name:nameOf(me), at:new Date().toISOString(), text:text, mentions:names });
+  if(inp) inp.value = '';
+  await save({ comments: list });
+  /* Theo's rule, unchanged: only the people a comment TAGS are notified. */
+  if(names.length && typeof window.notifyTeam === 'function'){
+    var to = [];
+    try{
+      if(typeof M.emails === 'function') to = M.emails(names, me) || [];
+      else if(typeof M.mentionEmailsFor === 'function') to = M.mentionEmailsFor(names, me) || [];
+    }catch(_){}
+    if(to.length){
+      var pr = projectFor(it.project_id);
+      var res = await window.notifyTeam(to,
+        'Punch-out — ' + ((pr && pr.name) || 'a job'),
+        '<p><b>' + esc(nameOf(me)) + '</b> on <b>' + esc(it.title || '') + '</b>:</p><p>' + esc(text) + '</p>');
+      outMsg = outcomeText(res, to.map(nameOf).join(', '));
+      lastSig = ''; render();
+    }
+  }
+}
+async function doClose(){
+  if(it.status === 'done') return;
+  if(!readyToClose()){
+    var ph = photos().length, left = steps().length - stepsDone();
+    alert('Not ready to close.\n\n' +
+      (ph < PHOTO_MIN ? (PHOTO_MIN - ph) + ' more photo(s) needed.\n' : '') +
+      (left > 0 ? left + ' checklist step(s) still open.' : ''));
+    return;
+  }
+  await doToggle();
+}
+async function doToggle(){
+  try{
+    var P = window.CardinalPunch;
+    if(P && typeof P.toggle === 'function'){
+      var r = await P.toggle(it.id);
+      if(r && r.ok === false) throw new Error(r.error || 'refused');
+    }else{
+      var done = it.status !== 'done';
+      var patch = done
+        ? { status:'done', done_at:new Date().toISOString(), done_by:myEmail() || null }
+        : { status:'open', done_at:null, done_by:null };
+      var d = await window.supa.from('punch_items').update(patch).eq('id', it.id);
+      if(d.error) throw d.error;
+    }
+    var fresh = rowFor(it.id);
+    if(fresh) it = fresh;
+    if(it.status === 'done') await notifyClosed();
+    lastSig = ''; render();
+    refreshOthers();
+  }catch(e){ alert('Could not save: ' + (e.message || e)); }
+}
+/* The office hears when the field finishes — Theo's A1 pick. */
+async function notifyClosed(){
+  var to = officeEmails();
+  if(!to.length || typeof window.notifyTeam !== 'function') return;
+  var pr = projectFor(it.project_id);
+  try{
+    var res = await window.notifyTeam(to,
+      nameOf(myEmail()) + ' closed: ' + (it.title || 'a punch-out'),
+      '<p><b>' + esc(it.title || '') + '</b> at <b>' + esc((pr && pr.name) || 'a job') + '</b> is closed.</p>' +
+      '<p>' + photos().length + ' photos · ' + stepsDone() + ' of ' + steps().length + ' steps.</p>');
+    outMsg = outcomeText(res, 'the office');
+  }catch(_){}
+}
+function pickPhoto(i){
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  /* capture asks the phone for the camera first. A browser cannot BLOCK the
+     library — saying otherwise would be a promise this cannot keep. */
+  inp.setAttribute('capture', 'environment');
+  inp.onchange = async function(){
+    var f = inp.files && inp.files[0];
+    if(!f) return;
+    try{
+      if(window.CardinalSolUpload && window.CardinalSolUpload.prepare){
+        try{ f = await window.CardinalSolUpload.prepare(f); }catch(_){}
+      }
+      var path = 'punch/' + it.id + '/' + Date.now() + '-' + (SLOTS[i] ? SLOTS[i].k : 'extra') + '.jpg';
+      var up = await window.supa.storage.from('photos').upload(path, f, { upsert:true, contentType:'image/jpeg' });
+      if(up.error) throw up.error;
+      var pub = window.supa.storage.from('photos').getPublicUrl(path);
+      var url = (pub && pub.data && pub.data.publicUrl) || '';
+      if(!url) throw new Error('no url back from storage');
+      var list = photos().slice();
+      while(list.length < i) list.push(null);
+      list[i] = url;
+      await save({ photos: list.filter(function(x){ return !!x; }) });
+    }catch(e){ alert('Could not attach the photo: ' + (e.message || e)); }
+  };
+  inp.click();
+}
+
+/* -------------------------------------------------------------------- wire */
+function wire(){
+  var q = function(sel, fn){ el.querySelectorAll(sel).forEach(fn); };
+  q('[data-act="back"]', function(b){ b.onclick = function(){ close(); }; });
+  q('[data-act="job"]', function(b){ b.onclick = function(){
+    var pid = it.project_id;
+    close(true);
+    if(typeof window.openProject === 'function') window.openProject(pid);
+  }; });
+  q('[data-step]', function(b){ b.onclick = function(){ tickStep(Number(b.getAttribute('data-step'))); }; });
+  q('[data-delstep]', function(b){ b.onclick = function(){ delStep(Number(b.getAttribute('data-delstep'))); }; });
+  q('[data-tpl]', function(b){ b.onclick = function(){ useTemplate(b.getAttribute('data-tpl')); }; });
+  q('[data-act="addstep"]', function(b){ b.onclick = addStep; });
+  q('[data-act="supp"]', function(b){ b.onclick = flagSupplement; });
+  q('[data-slot]', function(b){ b.onclick = function(){
+    var i = Number(b.getAttribute('data-slot'));
+    var u = photos()[i];
+    if(u && window.CardinalResourceImages && window.CardinalResourceImages.open){
+      try{ window.CardinalResourceImages.open(u, it.title || ''); return; }catch(_){}
+    }
+    pickPhoto(i);
+  }; });
+  q('[data-tag]', function(b){ b.onclick = function(){
+    var inp = el.querySelector('[data-f="msg"]');
+    if(!inp) return;
+    inp.value = (inp.value ? inp.value.replace(/\s*$/, ' ') : '') + '@' + b.getAttribute('data-tag') + ' ';
+    inp.focus();
+  }; });
+  q('[data-act="send"]', function(b){ b.onclick = send; });
+  var msg = el.querySelector('[data-f="msg"]');
+  if(msg) msg.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); send(); } };
+  q('[data-act="close"]', function(b){ b.onclick = doClose; });
+  q('[data-act="reopen"]', function(b){ b.onclick = doToggle; });
+  q('[data-act="urg"]', function(b){ b.onclick = function(){
+    save({ priority: it.priority === 'high' ? 'normal' : 'high' });
+  }; });
+  var as = el.querySelector('[data-f="assigned"]');
+  if(as) as.onchange = function(){ save({ assigned_to: as.value || null }); };
+  var wh = el.querySelector('[data-f="when"]');
+  if(wh) wh.onchange = function(){ save({ scheduled_at: wh.value || null }); };
+}
+
+/* ------------------------------------------------------------ open / close */
+async function open(itemId, opts){
+  ensure();
+  back = (opts && opts.back) || null;
+  outMsg = '';
+  var row = rowFor(itemId);
+  if(!row && window.CardinalPunch && typeof window.CardinalPunch.reload === 'function'){
+    try{ await window.CardinalPunch.reload(); row = rowFor(itemId); }catch(_){}
+  }
+  if(!row){
+    alert('That punch-out could not be loaded.');
+    return;
+  }
+  it = row;
+  lastSig = '';
+  render();
+  el.classList.add('open');
+  el.scrollTop = 0;
+  if(typeof window.navSetView === 'function'){
+    /* the belt: the __crNav wrap can miss a module appended at the end of the
+       file, so record the view here too */
+    try{ window.navSetView('punchcard'); }catch(_){}
+  }
+}
+function close(silent){
+  if(el) el.classList.remove('open');
+  it = null;
+  lastSig = '';
+  if(silent === true) return;
+  /* back goes UP ONE LEVEL: to whoever opened this, else the Production screen */
+  if(back === 'production' && window.CardinalProduction){
+    try{ window.CardinalProduction.open(); return; }catch(_){}
+  }
+  if(back === 'none') return;
+  if(window.CardinalProduction){
+    try{ window.CardinalProduction.open(); }catch(_){}
+  }
+}
+window.addEventListener('popstate', function(ev){
+  var v = ev.state && ev.state.view;
+  if(v !== 'punchcard' && el && el.classList.contains('open')){
+    el.classList.remove('open');
+    it = null;
+  }
+});
+window.CardinalPunchCard = {
+  open  : open,
+  close : close,
+  isOpen: function(){ return !!(el && el.classList.contains('open')); },
+  TEMPLATES : TEMPLATES,
 };
 })();
 </script>
@@ -55494,6 +56395,14 @@ function repName(email){
 function openDetail(id){
   var it = rows().filter(function(x){ return String(x.id) === String(id); })[0];
   if(!it) return;
+  /* 768: THE punch-out card replaced this sheet. Everything that used to open
+     #puDetail now opens CardinalPunchCard — one detail screen, not three. The
+     old sheet below stays as the fallback for a boot where the card module has
+     not parsed yet; it is not a second surface anyone can reach on purpose. */
+  if(window.CardinalPunchCard && typeof window.CardinalPunchCard.open === 'function'){
+    window.CardinalPunchCard.open(id, { back:'none' });
+    return;
+  }
   var pr = projOf(it.project_id) || {};
   var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
   var done = it.status === 'done';
