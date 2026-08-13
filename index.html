@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-12 build 762 &#8212; The Designer goes Studio White and full screen: the house is the hero and the picks sit in a side rail</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 763 &#8212; ABC Supply talks to the real catalog: search, frequent items and branch pricing all read the shapes ABC actually sends</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38635,6 +38635,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:763, d:'2026-08-13', t:'ABC Supply reaches the real catalog',
+s:'The supplier screen has never once returned an item, and tonight it said why. Three faults stacked on top of each other, each hidden behind the one in front. The address it called did not exist \u2014 so nothing else could even be tested. Once that was right, ABC answered but refused the request, and the refusal said the app was leaving out a page number that ABC\u2019s own written instructions call optional. And underneath both, the catalog search was sending made-up wording ABC has never accepted, while the price lookup was reading the wrong place in ABC\u2019s reply \u2014 so a real price would have shown as \u201cBranch will price, call them\u201d even after everything else worked. All of it now matches ABC\u2019s published examples line for line: search by description (or by item code, if you paste one off an invoice), frequent items with your branch attached so each row says whether that yard has it, and prices read from the field ABC actually puts them in.' },
 { b:762, d:'2026-08-12', t:'The Designer: Studio White, full screen, house first',
 s:'Three changes, all Theo\u2019s picks off rendered options. The Exterior Designer now wears the Studio White look \u2014 warm paper, soft shadows, red accents \u2014 instead of the dark palette it shipped with a build ago. It takes the whole screen: the app\u2019s header and menus no longer frame it, so nothing around it reads CRM while a client is watching. On a tablet or desktop the photograph is the hero \u2014 the surface picks and Generate live in a rail down the right side, so the house view is roughly twice the size. And the wording a client can read is showroom voice now: the compare tag says CARDINAL DESIGNER, saved images carry a small CARDINAL DESIGNER \u00b7 VISUALIZATION mark in the corner, and the gallery badge says DESIGN.' },
 { b:761, d:'2026-08-12', t:'The Exterior Designer \u2014 their house, your materials',
@@ -53361,7 +53363,8 @@ if(!items || !items.length){ box.innerHTML = '<div class="quiet">No items.</div>
 box.innerHTML = items.slice(0, 25).map(function(it, i){
 var num = it.itemNumber || it.number || it.id || '';
 var nm = it.itemDescription || it.description || it.name || ('Item ' + num);
-var uom = (it.unitsOfMeasure && it.unitsOfMeasure.stocking) || it.stockingUom || it.uom || '';
+var uom = (it.unitsOfMeasure && it.unitsOfMeasure.stocking) || it.stockingUom || it.uom ||
+(Array.isArray(it.uoms) && it.uoms.length ? (it.uoms[0].code || it.uoms[0].name || '') : '') || '';
 return '<div class="item" data-i="' + i + '"><span class="pr" data-pr></span><b>' + esc(nm) + '</b>' +
 '<small>#' + esc(num) + (uom ? ' \u00b7 ' + esc(uom) : '') + '</small><br>' +
 '<button class="btn2 ghost" data-price="' + esc(String(num)) + '" type="button" style="padding:7px 12px;font-size:12px;margin-top:8px;">Price at my branch</button></div>';
@@ -53374,9 +53377,9 @@ var host = b.closest('.item'); var pr = host.querySelector('[data-pr]');
 pr.textContent = '\u2026';
 try{
 var j = await api({ action:'priceItems', shipTo:c.shipTo, branchNumber:c.branch, items:[{ itemNumber:b.getAttribute('data-price'), quantity:1 }] });
-var arr = j.items || j.prices || (Array.isArray(j) ? j : []);
+var arr = j.lines || j.items || j.prices || (Array.isArray(j) ? j : []);
 var p = arr[0] || {};
-var val = Number(p.price != null ? p.price : (p.unitPrice != null ? p.unitPrice : NaN));
+var val = Number(p.unitPrice != null ? p.unitPrice : (p.price != null ? p.price : NaN));
 if(!isNaN(val) && val > 0){ pr.className = 'pr'; pr.textContent = usd(val); }
 else { pr.className = 'pr zero'; pr.textContent = 'Branch will price \u2014 call them'; }
 }catch(e){ pr.className = 'pr zero'; pr.textContent = esc(String(e.message || e).slice(0, 60)); }
@@ -53397,7 +53400,7 @@ var c = cfg();
 if(!c.billTo){ alert('Enter your Bill-To number first.'); return; }
 ensure().querySelector('[data-results]').innerHTML = '<div class="quiet">Loading frequent items\u2026</div>';
 try{
-var j = await api({ action:'frequents', billTo:c.billTo });
+var j = await api({ action:'frequents', billTo:c.billTo, branchNumber:c.branch || undefined });
 rows(j.items || (Array.isArray(j) ? j : []));
 }catch(e){ ensure().querySelector('[data-results]').innerHTML = '<div class="quiet">' + esc(e.message || e) + '</div>'; }
 }
