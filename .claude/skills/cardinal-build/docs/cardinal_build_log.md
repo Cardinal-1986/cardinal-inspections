@@ -15522,3 +15522,49 @@ with exactly the reproduction's numbers (36/36/31.5/36/22.5, box 36 vs column 63
 898/893.5/884.5). ⚠️ **No screenshot**: `page.screenshot` times out on this card in this environment at
 every setting tried (element, fullPage, viewport, animations disabled/allowed). The geometry is measured,
 but the visual result is unverified by eye — Theo's screen is that gate.
+
+## build 787 — 13 Aug 2026 — @Curtis is back, and a failed jump to a client says so
+
+Theo: *"Also when you try to click client profile, it takes you to retail crm home. Also @Curtis is missing."*
+
+### @Curtis — confirmed, root-caused, reproduced
+
+`TEAM_ROSTER` order is Nick, Joan, Joseph, **Theo**, Jacob, Jerry, Scottie, **Curtis**. The punch-out
+mention chips did:
+
+```js
+roster().filter(function(m){ return m.email !== me; }).slice(0, 5)
+```
+
+Filtering Theo out leaves seven; `.slice(0, 5)` keeps five — **exactly the five in his screenshot** —
+and drops the last two: **Scottie and Curtis**. So *who you could tag was decided by roster order*, and
+it cut precisely the man who dispatches punch-outs (this module's own comment says so) and his crew
+lead. `.pktags` already wraps, so there was nothing the cap was protecting. All seven now.
+
+### The client-profile jump — a real defect with that symptom; his exact path NOT reproduced
+
+```js
+function openProject(id){
+  var pr = cacheProjects.find(function(x){ return x.id === id; });
+  if(!pr) return;                    // <- silent
+```
+
+~40 call sites navigate through this, and the ones that matter share a shape: **they close their own
+screen first and then call it** — `close(false); openProject(pid);` — the punch card, the production
+board, the punch list, search, recents, the palette. On a cache miss the screen is already gone and
+nothing replaces it, so the user is left on whatever sat underneath — **the retail CRM home** — with
+nothing said. It now reloads once, retries, and gives up *out loud*; a `__retrying` latch stops the loop.
+
+⚠️ **The control proves it is worse than one dead tap**: on 786 the miss leaves `cacheProjects` empty, so
+the *next* client will not open either (`projectView` measured `display:none`). 787 self-heals because
+the retry repopulates the cache.
+
+**Paths tested and working, so this is not yet proof of Theo's report:** clicking a client card in the
+client list, the punch card's Open job (its button is correctly hidden when the project is uncached), and
+a project absent from cache. **Asked him for the exact tap.**
+
+**Gate**: `gate_787.mjs` — 10 green, **8 red on the 786 control**. ⚠️ One assertion was wrong first and it
+was the TEST's fault: it watched `window.alert` only, but the app prefers `showError()`. It now watches
+both **and checks the message is actually on screen** — 762 fixed a class where errors were written to
+the home page while the user was elsewhere, and a fix that reports into a hidden node is the same bug
+wearing a hat.
