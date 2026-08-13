@@ -4843,3 +4843,31 @@ regression checks (the old `CardinalABC.open` survives, the editor still opens, 
 spreads `extra` into the insert (and the localStorage row); `addGalleryFiles(files[, metas])` passes `metas[i]` through.
 **Fences held:** no new full-screen view (widget inside `galleryView`) · no new `document.body` observer · no 14th
 scroll-lock writer · GPS never crosses (re-encode + explicit-field inserts, asserted in `gate_777.mjs`).
+
+## Select all in the CompanyCam picker (build 778)
+
+| Feature | Where | Notes |
+|---|---|---|
+| `Select all` / `Clear all` | `#galCcAllBtn` → `galCcToggleAll()` | One control, two jobs — it offers the move you have not made. A **partial** tick still offers Select all (finishing is the useful move, not starting over). Hidden when the grid is empty. |
+| Cap warning up front | `galCcToggleAll()` | If more are ticked than `GAL_MAX - currentPhotos.length` allows, it says so **before** the Add press rather than after N fetches. |
+| The album Back re-renders the overview | `galBackBtn` handler | **The bug Theo hit**: the gallery was the only client sub-page whose close never called `renderOverview()`, so the profile's Photos tile kept whatever number it was painted with on entry. `dbCloseTo()` has always done this for payments/tasks/docs/appointments. |
+| Legible AI-caption failures | `inlineAiCaption()`, `paeImageDataUrl()` | Three failure paths (storage read / the API / the save) each name their step and point at the manual route (double-tap to type one). **Instrumentation, not a fix** — the underlying failure is still unidentified. |
+
+## The roofing agreement matches the printed master (build 779)
+
+| Feature | Where | Notes |
+|---|---|---|
+| Two-column spec sheet | `.specgrid` in `ROOF_AGREEMENT_BODY` + the estimate stylesheet | 13 numbered red-ruled sections plus Extra Structure, in the master's order and column split, with the house cutaway in the right column beside the items it points at. **One column under 640px** — a phone is not a Letter page. |
+| A box on every lettered option | `.cbx[data-group="rdk"]` ×6, `[data-group="rvt"]` ×2 | Decking types A–F and the ridge vent's 1/2 printed as plain letters before. Grouped rows stay exclusive; flashing and extra structure stay multi-pick, as on paper. |
+| Shingle **Style** dropdown | `data-crsel="style"` → **`CardinalColors.lines()`** (new export) | The OC hub's own `LINES`, filtered to `ready !== false`. A line added to the colour wall reaches the contract with no second edit — the 750 precedent, where the colour dropdown reads `list()`. |
+| **Brand** dropdown | `data-crsel="brand"` | `Owens Corning` + `Other (see notes)`. **No competitor is named** (`OC_BRAND_RULES`), and a rep matching an existing roof is not blocked. |
+| Quantity dropdowns ×6 | `data-crsel="qty"` | Layers to remove, pipe boots, skylights, box/turtle vents, power vent, turbine — 0 to 13+. |
+| Decking prefill | the roofing-checklist prefill in `createReportFrom`'s template pass | **Ticks the matching box** by `data-val`, because 750's `collapse()` regex stops at the first `</span>` and cannot cross nested checkbox markup. Layers and pitch keep `collapse()` — the master leaves both as blank lines anyway. |
+
+## Estimates: the count and the publish prompt (build 780)
+
+| Feature | Where | Notes |
+|---|---|---|
+| The Estimates tile counts rows | `#dbEstN` in `renderAcxOverview()`, filled from `CardinalEstimates.loadForProject()` | It counted estimate-titled **documents**, so drafts were invisible and two estimates read as **0** while the box listed both. 654 fixed this shape on the legacy `#jaGrid` tile and never reached the one that renders. **Navigation count, not money** — `indexMoney`'s `SENT_EST` filter is untouched, asserted in the gate. |
+| The publish prompt tells the truth | `cr-ess-script` publish hook | It promised to "move the pipeline forward" on a job already at Prospect, where `syncStageFor()` correctly does nothing. It now computes the outcome with the same `rank()` guard and says either *"X moves to Prospect"* or *"The pipeline stays at Prospect"*. |
+| The Sent write is visible, and audible when refused | same | Toast + `refreshSavedList()` + `renderOverview()`; the UPDATE carries `.select('id,status')` so a refusal is an **error**, not a silent no-op, and says the document was still created. |
