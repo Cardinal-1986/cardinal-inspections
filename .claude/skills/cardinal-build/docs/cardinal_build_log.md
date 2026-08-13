@@ -15225,3 +15225,28 @@ Chromium: open the editor, tap the button, prove typing does NOT call ABC, searc
 LINE ITEM's price/number/unit — then the 401 path, then that Library mode is unharmed. The contrast floor is
 asserted inside it. `gate_756`/`gate_757`'s reds were checked against main's own 773 artifact and are
 **byte-identical there** — pre-existing (757 retired the floating Home that 756 asserts), not this build's.
+
+## build 777 — 13 Aug 2026 — CompanyCam photographs into the client Photo Album
+
+Theo, with a screenshot of a new lead's empty album: *"It would be nice if I can pick some photos out of
+company cam and upload them here as I have already got pictures in company cam for this address."*
+
+**Nothing new was invented — two existing pieces were pointed at each other.** `/api/companycam` (468, admin-only,
+internal photos refused, list via the 60k-photo Postgres index since 473/496) supplies search + bytes; the album's
+own `addGalleryFiles → resizeImageFile → photoDb.add` pipeline takes them in, so an import behaves exactly like a
+phone upload — same 1600px re-encode (which also strips the EXIF/GPS block), same 50-photo cap, same storage path.
+`photoDb.add` and `addGalleryFiles` each gained one OPTIONAL trailing param (per-photo `{caption}`), so the crew's
+CompanyCam description lands in `project_photos.caption`; every existing caller is byte-identical in behaviour.
+New surface: `#galCcBtn` + `#galCcPanel` (`cr-galcc-styles`, light card, all literals — inks computed 5.67–16.94:1),
+seeded with the client's address and searched on open. Foreign-job picks are marked and challenged (the 486
+picker's cross-client guard, adapted). Mid-flight client switches are guarded on both the search and the import.
+
+**Found while wiring captions, fixed in the same build: `listByProject` never selected `section`/`caption` back**,
+so the album's tabs and captions have been resetting on every reload since they shipped (the writes were fine; the
+read dropped them). Two words in the select. Verified against production's real columns over the Supabase connector.
+
+**Gate**: `gate_777.mjs` — **29 green, 26 red on the 776 control**, no crashes (probes guarded). Drives the real
+artifact in Chromium: admin sees the button / rep does not, open seeds + auto-searches, foreign confirm fires,
+two `action:fetch` round trips, two `project_photos` inserts with the caption on the right row and **no
+coordinate keys on either row** (the GPS fence, asserted), count re-renders 2/50, insp mode hides everything.
+`check_build.py` green (113 scripts parse, stamp 776→777, marker `galCcPanel`, negative control clean).
