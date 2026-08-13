@@ -956,6 +956,19 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .ldhead{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:var(--red-dk);border-bottom:2px solid var(--red);
   padding-bottom:4px;margin-bottom:8px;}
 .ldreq{float:right;font:600 11px 'Segoe UI',Arial,sans-serif;color:#9a8c85;}
+/* 782: progressive disclosure on the New Lead form. Mailing/Billing are NOT in
+   this set on purpose — cr-lac-script already discloses that pair with its own
+   toggle, and tagging them here made ITS control dead: display:none !important
+   beats clearing `hidden`. Two disclosure mechanisms over one field is a dead
+   button with a delay on it. Caught by rendering the form, not by reading it. !important is load-bearing,
+   not habit: #ldAssignBox and #ldPartnerWrap are shown/hidden by INLINE style at
+   runtime, and a normal declaration loses to an inline one. Collapsed must win
+   over both; expanded returns control to their own logic. */
+#leadFormModal:not(.ldshow) .ldmore{display:none !important;}
+#ldMoreBtn{width:100%;text-align:center;border-style:dashed;}
+#ldNoContactWrap{display:none;margin-top:10px;padding:9px 11px;border:1px solid #e0b4b8;
+  border-radius:8px;background:#fdf4f4;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620;}
+#ldNoContactWrap input{margin-right:7px;}
 .ldrow{display:flex;gap:8px;margin:4px 0;}
 .ldrow input{flex:1;}
 .ldrow select{flex:0 0 110px;}
@@ -3482,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 781 &#8212; Contracts take the deposit from the job&#8217;s own estimate instead of always 50%, and the signing section is one block where the buyer, co-buyer and contractor can each actually sign</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 782 &#8212; a new lead now needs a phone or an email, and the long half of the form is behind “More detail”</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7776,13 +7789,16 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <label>First Name *<input type="text" id="ldFirst" autocomplete="given-name"></label>
           <label>Last Name *<input type="text" id="ldLast" autocomplete="family-name"></label>
         </div>
-        <label>Company Name<input type="text" id="ldCompany" autocomplete="organization"></label>
-        <label style="margin-top:10px;">Phone</label>
+        <label class="ldmore">Company Name<input type="text" id="ldCompany" autocomplete="organization"></label>
+        <label style="margin-top:10px;">Phone <span class="ldreq">* phone or email</span></label>
         <div id="ldPhones"></div>
         <button class="chipbtn ldadd" id="ldAddPhone" type="button">&#65291; Add Another</button>
         <label style="margin-top:12px;">Email</label>
         <div id="ldEmails"></div>
         <button class="chipbtn ldadd" id="ldAddEmail" type="button">&#65291; Add Another</button>
+        <!-- 782: revealed only when a save is refused for having neither. -->
+        <label id="ldNoContactWrap"><input type="checkbox" id="ldNoContact">No phone or email yet
+        &#8212; door-knock or canvass. Nothing can be sent to this client until one is added.</label>
         <label style="margin-top:12px;">Mailing Address<input type="text" id="ldMailing" autocomplete="off"></label>
         <label>Billing Address<input type="text" id="ldBilling" autocomplete="off" placeholder="Leave blank if same"></label>
       </div>
@@ -7793,7 +7809,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <input type="text" id="ldStreet" autocomplete="off" placeholder="Start typing &#8212; address auto-completes">
           <div id="ldSugg" class="ldsugg" style="display:none;"></div>
         </label>
-        <label>Suite/Apt/Unit<input type="text" id="ldSuite" autocomplete="off"></label>
+        <label class="ldmore">Suite/Apt/Unit<input type="text" id="ldSuite" autocomplete="off"></label>
         <div class="ckrow">
           <label>City *<input type="text" id="ldCity" autocomplete="address-level2"></label>
           <label>State *<select id="ldState"><option value="">State*</option><option>AL</option><option>AK</option><option>AZ</option><option>AR</option><option>CA</option><option>CO</option><option>CT</option><option>DE</option><option>FL</option><option>GA</option><option>GU</option><option>HI</option><option>ID</option><option>IL</option><option>IN</option><option>IA</option><option>KS</option><option>KY</option><option>LA</option><option>ME</option><option>MD</option><option>MA</option><option>MI</option><option>MN</option><option>MS</option><option>MO</option><option>MT</option><option>NE</option><option>NV</option><option>NH</option><option>NJ</option><option>NM</option><option>NY</option><option>NC</option><option>ND</option><option>OH</option><option>OK</option><option>OR</option><option>PA</option><option>PR</option><option>RI</option><option>SC</option><option>SD</option><option>TN</option><option>TX</option><option>VI</option><option>UT</option><option>VT</option><option>VA</option><option>WA</option><option>DC</option><option>WV</option><option>WI</option><option>WY</option></select></label>
@@ -7806,7 +7822,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
 
       <div class="ldbox">
         <div class="ldhead">Job Details</div>
-        <div class="ckrow">
+        <div class="ckrow ldmore">
           <label>Job Category
             <select id="ldCategory"><option value="">&#8212; select &#8212;</option>
               <option>Commercial</option><option>Property Management</option><option>Residential</option></select></label>
@@ -7815,7 +7831,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
               <option>Inspection</option><option>Insurance</option><option>New</option><option>Repair</option>
               <option>Retail</option><option>Service</option><option>Warranty</option></select></label>
         </div>
-        <label>Lead Source
+        <label class="ldmore">Lead Source
           <select id="ldSource"><option value="">&#8212; select &#8212;</option>
             <option>Canvasser</option><option>Commercial</option><option>Direct Mailings</option>
             <option>Door hanger</option><option>Door Knocking</option><option>Habitat - Dayton</option>
@@ -7832,10 +7848,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="unknown" checked> &#10067; Don't know yet</label>
         </div>
 
-        <div class="ckinline" style="margin-top:12px;">
+        <div class="ckinline ldmore" style="margin-top:12px;">
           <label><input type="checkbox" id="ldPartnerCk"> Partnership organization</label>
         </div>
-        <label id="ldPartnerWrap" style="display:none;">Partner organization
+        <label id="ldPartnerWrap" class="ldmore" style="display:none;">Partner organization
           <select id="ldPartner"><option value="">&#8212; select &#8212;</option>
             <option>Habitat For Humanity</option><option>Rebuilding Together</option><option>County Corp</option>
             <option>Community Action</option><option>Kitty Hawk Realty</option><option>Dayton Home Repair Network</option></select></label>
@@ -7881,13 +7897,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;resize:vertical;"></textarea></label><label style="margin-top:8px;display:block;">&#128209; Scope of Loss (optional)<input type="file" id="ldScopeFile" accept=".pdf,image/*" style="display:block;margin-top:5px;font-size:12.5px;"><small id="ldScopeNote" style="display:block;color:#8a6f66;margin-top:3px;">Attach the carrier scope &mdash; after saving, the reader opens the new claim and fills carrier, claim #, RCV/ACV and the rest automatically.</small></label>
       </div>
 
-      <div class="ldbox" id="ldAssignBox">
+      <div class="ldbox ldmore" id="ldAssignBox">
         <div class="ldhead">Assign Lead</div>
         <label>Assign to
           <select id="ldAssignSel"></select></label>
       </div>
 
-      <div class="ldbox">
+      <div class="ldbox ldmore">
         <div class="ldhead">&#128197; Initial Appointment</div>
         <div class="ckrow">
           <label>Appointment Date<input type="date" id="ldApptDate"></label>
@@ -7896,7 +7912,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </div>
       </div>
 
-      <div class="ldbox">
+      <div class="ldbox ldmore">
         <div class="ldhead">Notes / Tools</div>
         <div class="ckrow">
           <label>Priority Level
@@ -7906,6 +7922,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         </div>
         <label>Notes<textarea id="ldNotes" rows="3" style="width:100%;box-sizing:border-box;margin-top:4px;
           padding:9px 11px;border:1px solid #c9c2bf;border-radius:7px;font:14px 'Segoe UI',Arial,sans-serif;resize:vertical;"></textarea></label>
+      </div>
+
+      <div style="margin:2px 0 12px;">
+        <button class="chipbtn" id="ldMoreBtn" type="button" aria-expanded="false">&#65291; More detail
+        &#8212; company, job type, source, assignment, appointment, notes</button>
       </div>
 
       <div style="margin-top:6px;text-align:right;">
@@ -14573,6 +14594,19 @@ function openLeadForm(){
   var radios = document.querySelectorAll('input[name="ldClaimType"]');
   radios.forEach(function(r){ r.checked = (r.value === __ldDef); });
   updateClaimTypeUi();
+  /* 782: every lead starts collapsed and with the no-contact escape hatch put
+     away, or the previous lead's answer carries into this one. */
+  var _lm = document.getElementById('leadFormModal');
+  if(_lm) _lm.classList.remove('ldshow');
+  var _mb = document.getElementById('ldMoreBtn');
+  if(_mb){
+    _mb.setAttribute('aria-expanded', 'false');
+    _mb.innerHTML = '\uFF0B More detail \u2014 company, job type, source, assignment, appointment, notes';
+  }
+  var _nc = document.getElementById('ldNoContact');
+  if(_nc) _nc.checked = false;
+  var _ncw = document.getElementById('ldNoContactWrap');
+  if(_ncw) _ncw.style.display = 'none';
   var ph = document.getElementById('ldPhones'); ph.innerHTML = ''; ph.appendChild(ldContactRow('phone'));
   var em = document.getElementById('ldEmails'); em.innerHTML = ''; em.appendChild(ldContactRow('email'));
   var assignBox = document.getElementById('ldAssignBox');
@@ -14799,6 +14833,20 @@ document.addEventListener('click', function(e){
   }
 });
 
+/* 782: the More-detail toggle. The form was 43 fields deep before the Create
+   button; everything past the essentials now starts collapsed. */
+(function(){
+  var b = document.getElementById('ldMoreBtn');
+  if(!b) return;
+  b.addEventListener('click', function(e){
+    e.preventDefault();
+    var m = document.getElementById('leadFormModal');
+    var on = m.classList.toggle('ldshow');
+    b.setAttribute('aria-expanded', on ? 'true' : 'false');
+    b.innerHTML = on ? '\u2212 Less detail'
+      : '\uFF0B More detail \u2014 company, job type, source, assignment, appointment, notes';
+  });
+})();
 document.getElementById('ldSave').addEventListener('click', async function(){
   var err = document.getElementById('ldError');
   var first = document.getElementById('ldFirst').value.trim();
@@ -14823,6 +14871,20 @@ document.getElementById('ldSave').addEventListener('click', async function(){
   }
   var phones = rows('ldPhones');
   var emails = rows('ldEmails');
+  /* 782: the one field this form never enforced, and the reason 35 of 40 client
+     records carry no email and 24 carry no phone. Not an unconditional block:
+     Canvasser / Door Knocking / Door hanger / Yard Sign are real lead sources
+     and a canvasser logging an address genuinely has neither, so the refusal
+     offers an explicit tick rather than a wall. */
+  var _noContact = document.getElementById('ldNoContact');
+  if(!phones.length && !emails.length && !(_noContact && _noContact.checked)){
+    var _w = document.getElementById('ldNoContactWrap');
+    if(_w) _w.style.display = 'block';
+    err.textContent = 'Add a phone number or an email address \u2014 without one, nothing can be ' +
+      'sent to this client: no estimate, no invoice, no signature link. If you genuinely have ' +
+      'neither yet, tick the box in the contact section and save again.';
+    return;
+  }
   var suite = document.getElementById('ldSuite').value.trim();
   var addr = street + (suite ? ', ' + suite : '') + ', ' + city + ', ' + state + ' ' + zip;
   var assigned;
@@ -14834,6 +14896,10 @@ document.getElementById('ldSave').addEventListener('click', async function(){
   var lead = {
     company: document.getElementById('ldCompany').value.trim(),
     phones: phones, emails: emails,
+    /* 782: true only when the rep explicitly said there is no way to reach them
+       yet — so these leads can be found and chased, rather than silently sitting
+       in the list looking complete. */
+    no_contact: (!phones.length && !emails.length) || undefined,
     mailing: document.getElementById('ldMailing').value.trim(),
     billing: document.getElementById('ldBilling').value.trim(),
     location: { street:street, suite:suite, city:city, state:state, zip:zip, country:'USA' },
@@ -39289,6 +39355,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:782, d:'2026-08-13', t:'A lead you can actually reach', s:'Thirty-five of the forty client records in the app have no email address and twenty-four have no phone \u2014 which means nothing can be sent to them: no estimate, no invoice, no signature link. The New Lead form now asks for a phone number or an email before it will save. If you genuinely have neither \u2014 a door-knock or a canvass \u2014 tick the box it offers and it saves anyway, and the lead is marked so it can be chased later. The form is also shorter: company, job type, lead source, assignment, appointment and notes now sit behind \u201cMore detail\u201d, leaving name, phone, email, address and claim type on the first screen.' },
 { b:781, d:'2026-08-13', t:'The contract is signable, and the deposit is yours',
 s:'Two things that made a contract unusable in front of a client. THE DEPOSIT: every contract built from the job menu split the price 50/50, no matter what the estimate said. It now takes the deposit percentage from that job\u2019s own estimate \u2014 yours are set to 30% \u2014 and falls back to 30% when there is no estimate to read. The percentage printed in the row label follows the real number instead of always saying 50%. THE SIGNING SECTION: an agreement had FIVE signature slots in two competing blocks, and the signature pad only ever filled the last one, so a client signed at the bottom of the page while the Buyer box above stayed an empty yellow placeholder, and there was no way at all to capture a co-buyer or your own countersignature. An agreement now carries one signing block \u2014 Buyer, Co-buyer, Contractor \u2014 and the pad asks whose signature it is and stamps that row with the signature and the date. Only the buyer signing moves the job to Approved. Estimates are unchanged. The acceptance paragraph no longer calls a contract an estimate.' },
 { b:780, d:'2026-08-13', t:'Estimates: the count is right, and publishing tells you what it did',
