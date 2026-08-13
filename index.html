@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 780 &#8212; The Estimates count on a client&#8217;s profile matches what the estimates box lists, and publishing says plainly whether it marked the estimate Sent and where the pipeline went</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 781 &#8212; Contracts take the deposit from the job&#8217;s own estimate instead of always 50%, and the signing section is one block where the buyer, co-buyer and contractor can each actually sign</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9270,6 +9270,13 @@ table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weig
   background:#fbfaf9;padding:10px 14px;margin:8px 0;}
 .descbox p{margin:7px 0;}
 .cbx{cursor:pointer;font-size:13pt;user-select:none;}
+/* 781: a signature slot. Empty it shows the fill-in box; signed it holds the
+   PNG and the rule under it, so it prints like a signed line rather than a
+   web control. */
+.sigslot{display:inline-block;min-width:2.2in;vertical-align:bottom;}
+.sigslot.signed{border-bottom:1.2pt solid var(--ink);padding-bottom:1px;}
+.sigslot.signed .ph{display:none;}
+.sigslot img{height:40px;display:inline-block;vertical-align:bottom;}
 /* 779: the spec sheet, laid out like the printed master — two columns of
    numbered, red-ruled sections. The grid is the ONLY layout mechanism here;
    the old key/value table could not carry the master's two-column shape.
@@ -9542,6 +9549,16 @@ var EST_TERMS_GENERAL =
   'Restrictions to warranty may apply for repair work.</p>' +
   '<p><b>Payment Schedule</b> \u2014 Deposit due upon contract signing, remaining balance due upon final completion.</p>';
 
+var SIGN_FOOTER = '<div class="sign">\n' +
+'  <div class="col">\n' +
+'    <div class="line"></div>\n' +
+'    <div class="lbl">Cardinal Roofing &amp; Renovations \u2014 Authorized Representative &nbsp;|&nbsp; Date</div>\n' +
+'  </div>\n' +
+'  <div class="col">\n' +
+'    <div class="line"></div>\n' +
+'    <div class="lbl">Client Acceptance &nbsp;|&nbsp; Date</div>\n' +
+'  </div>\n' +
+'</div>';
 function buildEstimate(titleHtml, body, terms){
   var m = REPORT_TEMPLATE.match(/class="cover-logo" src="(data:image\/[^"]+)"/);
   /* 747: the heading without its markup — 'SERVICE <span>CONTRACT</span>' becomes
@@ -9564,6 +9581,17 @@ function buildEstimate(titleHtml, body, terms){
      estimate keeps it — a photo earns its place on a sales document — and the
      print rule above drops it there too when no photo was ever attached. */
   if(isDeal) out = out.replace('<div class="cover-photo">PROPERTY PHOTO</div>\n\n', '');
+  /* 781: an AGREEMENT carries its own Buyer / Co-buyer / Contractor signature
+     table, so the base's two ruled lines were a SECOND signing block on the
+     same page — five slots, and the pad filled only the last one. The client
+     signed at the bottom while the official-looking Buyer box stayed a yellow
+     [sign]. Estimates keep the footer: it is the only signing block they have. */
+  if(isDeal){
+    out = out.replace(SIGN_FOOTER, '');
+    /* ...and it is an Agreement, not an estimate, once it is one. */
+    out = out.replace('<b>Acceptance.</b> This estimate is valid through the date shown above. Signature below',
+                      '<b>Acceptance.</b> Signature below');
+  }
   return out;
 }
 
@@ -9778,10 +9806,10 @@ copies are the printed master &#8212; <b>&#9776; Menu &#8594; Company Documents 
 retyped here.</p>
 
 <table class="meta" style="margin-top:14px;">
-<tr><td class="k">Buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
-<tr><td class="k">Co-buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Buyer signature</td><td><span class="sigslot" data-sig="buyer"><span class="ph">[sign]</span></span> &nbsp;&nbsp; Date <span class="sigdate" data-sigdate="buyer"><span class="ph">[date]</span></span></td></tr>
+<tr><td class="k">Co-buyer signature</td><td><span class="sigslot" data-sig="cobuyer"><span class="ph">[sign]</span></span> &nbsp;&nbsp; Date <span class="sigdate" data-sigdate="cobuyer"><span class="ph">[date]</span></span></td></tr>
 <tr><td class="k">Contractor representative</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>
-<tr><td class="k">Contractor signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Contractor signature</td><td><span class="sigslot" data-sig="contractor"><span class="ph">[sign]</span></span> &nbsp;&nbsp; Date <span class="sigdate" data-sigdate="contractor"><span class="ph">[date]</span></span></td></tr>
 </table>
 `;
 var ROOF_AGREEMENT = buildEstimate('ROOFING CONSTRUCTION <span>AGREEMENT</span>', ROOF_AGREEMENT_BODY, ROOF_AGREEMENT_TERMS);
@@ -9893,10 +9921,10 @@ copies are the printed master &#8212; <b>&#9776; Menu &#8594; Company Documents 
 retyped here.</p>
 
 <table class="meta" style="margin-top:14px;">
-<tr><td class="k">Buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
-<tr><td class="k">Co-buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Buyer signature</td><td><span class="sigslot" data-sig="buyer"><span class="ph">[sign]</span></span> &nbsp;&nbsp; Date <span class="sigdate" data-sigdate="buyer"><span class="ph">[date]</span></span></td></tr>
+<tr><td class="k">Co-buyer signature</td><td><span class="sigslot" data-sig="cobuyer"><span class="ph">[sign]</span></span> &nbsp;&nbsp; Date <span class="sigdate" data-sigdate="cobuyer"><span class="ph">[date]</span></span></td></tr>
 <tr><td class="k">Contractor representative</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>
-<tr><td class="k">Contractor signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Contractor signature</td><td><span class="sigslot" data-sig="contractor"><span class="ph">[sign]</span></span> &nbsp;&nbsp; Date <span class="sigdate" data-sigdate="contractor"><span class="ph">[date]</span></span></td></tr>
 </table>
 `;
 var SIDING_AGREEMENT = buildEstimate('SIDING CONSTRUCTION <span>AGREEMENT</span>', SIDING_AGREEMENT_BODY, SIDING_AGREEMENT_TERMS);
@@ -9994,10 +10022,10 @@ copies are the printed master &#8212; <b>&#9776; Menu &#8594; Company Documents 
 retyped here.</p>
 
 <table class="meta" style="margin-top:14px;">
-<tr><td class="k">Buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
-<tr><td class="k">Co-buyer signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Buyer signature</td><td><span class="sigslot" data-sig="buyer"><span class="ph">[sign]</span></span> &nbsp;&nbsp; Date <span class="sigdate" data-sigdate="buyer"><span class="ph">[date]</span></span></td></tr>
+<tr><td class="k">Co-buyer signature</td><td><span class="sigslot" data-sig="cobuyer"><span class="ph">[sign]</span></span> &nbsp;&nbsp; Date <span class="sigdate" data-sigdate="cobuyer"><span class="ph">[date]</span></span></td></tr>
 <tr><td class="k">Contractor representative</td><td><span class="ph">[Rep name &amp; title]</span></td></tr>
-<tr><td class="k">Contractor signature</td><td><span class="ph">[sign]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span></td></tr>
+<tr><td class="k">Contractor signature</td><td><span class="sigslot" data-sig="contractor"><span class="ph">[sign]</span></span> &nbsp;&nbsp; Date <span class="sigdate" data-sigdate="contractor"><span class="ph">[date]</span></span></td></tr>
 </table>
 `;
 var GUTTER_AGREEMENT = buildEstimate('GUTTER CONSTRUCTION <span>AGREEMENT</span>', GUTTER_AGREEMENT_BODY, GUTTER_AGREEMENT_TERMS);
@@ -20318,13 +20346,7 @@ async function createContractForCurrent(tradeKey){
   try{
     var price = projectValue(pr);
     var tpl = prefillUserInfo(prefillClientInfo(kind.tpl(), pr));
-    if(price > 0){
-      var half = price / 2;
-      var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
-      tpl = tpl.replace('<span class="ph" data-cprice="1">[0.00]</span>', '$' + f2(price));
-      tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(half));
-      tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(price - half));
-    }
+    tpl = await fillContractMoney(tpl, pr, price);
     var id = await db.create('Contract \u2014 ' + kind.label + ' \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
     await reload();
     try{ if(window.crToastOk) window.crToastOk(kind.label + ' agreement created for ' + (pr.name || 'this client')); }catch(_){}
@@ -20373,13 +20395,7 @@ async function approveAndContract(prId){
     await patchProjectCk(pr, { wf_approved: { at: new Date().toISOString(), by: currentUser ? currentUser.email : null } });
     var price = projectValue(pr);
     var tpl = prefillUserInfo(prefillClientInfo(ROOF_AGREEMENT, pr));
-    if(price > 0){
-      var half = price / 2;
-      var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
-      tpl = tpl.replace('<span class="ph" data-cprice="1">[0.00]</span>', '$' + f2(price));
-      tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(half));
-      tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(price - half));
-    }
+    tpl = await fillContractMoney(tpl, pr, price);
     /* 730: still the roofing agreement — approving from the pipeline carries no
        trade — but it now says so, because three trades share this list. */
     var id = await db.create('Contract \u2014 Roofing \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
@@ -21240,6 +21256,42 @@ function prefillClientInfo(tpl, pr){
           : whole;
       });
   })(_ck.decking);
+  return tpl;
+}
+
+/* 781: Theo's own number, not a guess — 14 of 17 live estimates carry 30%.
+   Used only when the job has NO estimate to read a deposit from. One place to
+   change if the house rate ever moves. */
+var DEPOSIT_PCT_DEFAULT = 30;
+
+/* 781: ONE place where a contract's money is written.
+   Both contract creators — the job menu and Approve\u2192contract — carried an
+   identical `price / 2`, so every contract went out at a 50% deposit no matter
+   what the job's estimate said. Two copies is how it stayed wrong in two
+   places; this is the single chokepoint now.
+   The job's own estimate wins; DEPOSIT_PCT_DEFAULT applies only when there is
+   no estimate to ask. A deliberate 0% estimate is a real answer and is kept. */
+async function fillContractMoney(tpl, pr, price){
+  var pct = DEPOSIT_PCT_DEFAULT;
+  try{
+    if(pr && window.CardinalEstimates && typeof window.CardinalEstimates.loadForProject === 'function'){
+      var rows = await window.CardinalEstimates.loadForProject(pr.id);
+      var src0 = (rows || []).filter(function(e){ return e && e.deposit_pct != null; })[0];
+      if(src0) pct = Math.max(0, Math.min(100, Number(src0.deposit_pct) || 0));
+    }
+  }catch(_e){}
+  var trim = function(n){ return String(Math.round(n * 100) / 100); };
+  /* The generic contract writes the percentage into its ROW LABELS, so fixing
+     the arithmetic alone would still have printed "50%" beside the right money. */
+  tpl = tpl.split('Deposit (50%)').join('Deposit (' + trim(pct) + '%)')
+           .split('Final balance (50%)').join('Final balance (' + trim(100 - pct) + '%)');
+  if(price > 0){
+    var down = price * pct / 100;
+    var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    tpl = tpl.replace('<span class="ph" data-cprice="1">[0.00]</span>', '$' + f2(price));
+    tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(down));
+    tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(price - down));
+  }
   return tpl;
 }
 
@@ -22689,7 +22741,7 @@ async function openEditor(id){
       wireRoofrUpload(doc);
       wireCheckboxes(doc);
       wireColorSelects(doc);
-      document.getElementById('sigBtn').style.display = doc.querySelector('.sign') ? 'inline-block' : 'none';
+      document.getElementById('sigBtn').style.display = (doc.querySelector('.sign') || doc.querySelector('[data-sig]')) ? 'inline-block' : 'none';
     }catch(e){}
   };
   editor.classList.add('open');
@@ -23015,9 +23067,30 @@ sigPad.addEventListener('touchend', sigEnd);
 
 document.getElementById('sigBtn').addEventListener('click', function(){
   window.__ceSigner = null;   /* 722: inspection_reports signing, never a contract */
+  /* 781: an agreement has three signature rows. Ask WHOSE signature this is
+     before opening the pad — the old code had exactly one destination and
+     silently filled the bottom line, which is how a client signed a contract
+     and left the Buyer box empty. */
+  __sigWho = null;
+  var doc = frame.contentDocument;
+  var slots = doc ? doc.querySelectorAll('[data-sig]') : [];
+  if(slots.length){
+    var names = { buyer:'Buyer', cobuyer:'Co-buyer', contractor:'Contractor' };
+    var pick = prompt('Who is signing?\n\n' +
+      '1 = Buyer\n2 = Co-buyer\n3 = Contractor (you)\n\nType 1, 2 or 3.', '1');
+    if(pick === null) return;
+    var key = ({ '1':'buyer', '2':'cobuyer', '3':'contractor' })[String(pick).trim()];
+    if(!key){ alert('Type 1, 2 or 3.'); return; }
+    if(!doc.querySelector('[data-sig="' + key + '"]')){
+      alert('This document has no ' + names[key] + ' signature line.');
+      return;
+    }
+    __sigWho = key;
+  }
   sigReset();
   sigModal.style.display = 'block';
 });
+var __sigWho = null;
 document.getElementById('sigClear').addEventListener('click', sigReset);
 document.getElementById('sigCancel').addEventListener('click', function(){ window.__ceSigner = null; sigModal.style.display = 'none'; });
 document.getElementById('sigApply').addEventListener('click', async function(){
@@ -23034,6 +23107,36 @@ document.getElementById('sigApply').addEventListener('click', async function(){
     return;
   }
   var doc = frame.contentDocument;
+  /* 781: an agreement's own slot, chosen above. The PNG and the date go into
+     the row the user named; nothing else on the page moves. */
+  if(__sigWho && doc){
+    var slot = doc.querySelector('[data-sig="' + __sigWho + '"]');
+    var dcell = doc.querySelector('[data-sigdate="' + __sigWho + '"]');
+    if(slot){
+      slot.innerHTML = '';
+      var simg = doc.createElement('img');
+      simg.src = sigPad.toDataURL('image/png');
+      simg.alt = __sigWho + ' signature';
+      slot.appendChild(simg);
+      slot.className = 'sigslot signed';
+      if(dcell) dcell.textContent = fmtLongDate(new Date());
+      var _who = __sigWho;
+      __sigWho = null;
+      sigModal.style.display = 'none';
+      await saveCurrent();
+      try{
+        /* Only the BUYER accepting is the deal being struck — a contractor
+           countersignature must not advance anyone's pipeline. */
+        if(_who === 'buyer'){
+          await db.update(current.id, { signed_at: new Date().toISOString() });
+          var _t = (titleInput.value || '').trim();
+          if(/^contract/i.test(_t) && current.project_id){ await setStage(current.project_id, 'Approved'); }
+        }
+      }catch(_e){}
+      try{ if(window.crToastOk) window.crToastOk('Signed \u2014 ' + _who); }catch(_e2){}
+      return;
+    }
+  }
   var cols = doc ? doc.querySelectorAll('.sign .col') : [];
   if(!cols.length){ sigModal.style.display = 'none'; return; }
   var col = cols[cols.length - 1];
@@ -39186,6 +39289,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:781, d:'2026-08-13', t:'The contract is signable, and the deposit is yours',
+s:'Two things that made a contract unusable in front of a client. THE DEPOSIT: every contract built from the job menu split the price 50/50, no matter what the estimate said. It now takes the deposit percentage from that job\u2019s own estimate \u2014 yours are set to 30% \u2014 and falls back to 30% when there is no estimate to read. The percentage printed in the row label follows the real number instead of always saying 50%. THE SIGNING SECTION: an agreement had FIVE signature slots in two competing blocks, and the signature pad only ever filled the last one, so a client signed at the bottom of the page while the Buyer box above stayed an empty yellow placeholder, and there was no way at all to capture a co-buyer or your own countersignature. An agreement now carries one signing block \u2014 Buyer, Co-buyer, Contractor \u2014 and the pad asks whose signature it is and stamps that row with the signature and the date. Only the buyer signing moves the job to Approved. Estimates are unchanged. The acceptance paragraph no longer calls a contract an estimate.' },
 { b:780, d:'2026-08-13', t:'Estimates: the count is right, and publishing tells you what it did',
 s:'Three things behind \u201cit says 0 but the box has 2, and publish did not move anything\u201d. The Estimates number on the client profile counted only estimates that had already produced a document, so drafts were invisible and two estimates read as zero \u2014 it now counts exactly what the Estimates box lists. The pop-up after publishing offered to \u201cmove the pipeline forward\u201d even when the job was already at that stage, so it looked broken when it was right; it now says either where the client will move or that the pipeline stays put. And when it marks the estimate Sent it says so, refreshes the list and the profile instead of leaving \u201cdraft\u201d on screen \u2014 and if the change is refused it tells you rather than going quiet.' },
 { b:779, d:'2026-08-13', t:'The roofing agreement looks like the printed master',
