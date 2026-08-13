@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 784 &#8212; the morning email now chases the estimates that have gone quiet</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 785 &#8212; The contract&#8217;s deposit, balance and price are fields you can type in at the table, and they keep adding up to the contract price as you change them</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21369,26 +21369,52 @@ var DEPOSIT_PCT_DEFAULT = 30;
    places; this is the single chokepoint now.
    The job's own estimate wins; DEPOSIT_PCT_DEFAULT applies only when there is
    no estimate to ask. A deliberate 0% estimate is a real answer and is kept. */
-async function fillContractMoney(tpl, pr, price){
-  var pct = DEPOSIT_PCT_DEFAULT;
+async function fillContractMoney(tpl, pr, price, est){
+  /* 785: `est` is passed straight in by the estimate\u2192contract path, which
+     already holds the row. The other two callers have only the job, so they
+     look one up. Same rule either way. */
+  var pct = DEPOSIT_PCT_DEFAULT, down = null, row = est || null;
   try{
-    if(pr && window.CardinalEstimates && typeof window.CardinalEstimates.loadForProject === 'function'){
+    if(!row && pr && window.CardinalEstimates && typeof window.CardinalEstimates.loadForProject === 'function'){
       var rows = await window.CardinalEstimates.loadForProject(pr.id);
-      var src0 = (rows || []).filter(function(e){ return e && e.deposit_pct != null; })[0];
-      if(src0) pct = Math.max(0, Math.min(100, Number(src0.deposit_pct) || 0));
+      row = (rows || []).filter(function(e){ return e && (e.deposit_pct != null || Number(e.deposit_amount) > 0); })[0] || null;
     }
   }catch(_e){}
-  var trim = function(n){ return String(Math.round(n * 100) / 100); };
+  if(row){
+    if(row.deposit_pct != null) pct = Math.max(0, Math.min(100, Number(row.deposit_pct) || 0));
+    /* An explicit dollar deposit OUTRANKS the percentage — it is the number a
+       person typed. Only cr-e2c read this column before 785; now all three do. */
+    if(Number(row.deposit_amount) > 0) down = Number(row.deposit_amount);
+  }
+  if(down === null) down = price * pct / 100;
+  else if(price > 0) pct = down / price * 100;   /* keep the printed % honest */
+
+  var trim = function(n){ return String(Math.round(n * 10) / 10); };
   /* The generic contract writes the percentage into its ROW LABELS, so fixing
-     the arithmetic alone would still have printed "50%" beside the right money. */
-  tpl = tpl.split('Deposit (50%)').join('Deposit (' + trim(pct) + '%)')
-           .split('Final balance (50%)').join('Final balance (' + trim(100 - pct) + '%)');
+     the arithmetic alone would still have printed "50%" beside the right money.
+     Wrapped in a marker so the live recalc can keep it true as the deposit is
+     edited \u2014 a label saying 30% beside a figure that is not 30% is a
+     contradiction on a signed document. */
+  tpl = tpl.split('Deposit (50%)').join('Deposit (<span data-cpct="dep">' + trim(pct) + '%</span>)')
+           .split('Final balance (50%)').join('Final balance (<span data-cpct="bal">' + trim(100 - pct) + '%</span>)');
+
+  /* 785: the amounts stay INSIDE a span carrying an EDITABLE_SELECTOR class,
+     or lockTemplate() cannot grant them contenteditable and the figures are
+     dead text on the page. `.fill` is the filled-value class (no CSS, prints
+     as ordinary text); `.ph` stays yellow while a cell is still a blank. */
+  var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
   if(price > 0){
-    var down = price * pct / 100;
-    var f2 = function(n){ return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
-    tpl = tpl.replace('<span class="ph" data-cprice="1">[0.00]</span>', '$' + f2(price));
-    tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(down));
-    tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + f2(price - down));
+    tpl = tpl.replace('<span class="ph" data-cprice="1">[0.00]</span>',
+                      '<span class="fill" data-cprice="1">$' + f2(price) + '</span>');
+    tpl = tpl.replace('<span class="ph">[0.00]</span>',
+                      '<span class="fill" data-cmoney="down">$' + f2(down) + '</span>');
+    tpl = tpl.replace('<span class="ph">[0.00]</span>',
+                      '<span class="fill" data-cmoney="balance">$' + f2(Math.max(0, price - down)) + '</span>');
+  }else{
+    /* No estimate, so no money to print \u2014 but mark the cells anyway, so the
+       arithmetic wires itself up the moment a price is typed at the table. */
+    tpl = tpl.replace('<span class="ph">[0.00]</span>', '<span class="ph" data-cmoney="down">[0.00]</span>');
+    tpl = tpl.replace('<span class="ph">[0.00]</span>', '<span class="ph" data-cmoney="balance">[0.00]</span>');
   }
   return tpl;
 }
@@ -22344,6 +22370,69 @@ function escHtml(s){
   });
 }
 
+/* ---------- contract: the Payment Structure adds up as you type (785) ----------
+   Sibling of wireEstimateCalc below, deliberately NOT folded into it: that one
+   keys off #estItems and sums Qty x Rate, this one keys off the contract's
+   marked money cells and holds price = deposit + balance. A contract has no
+   #estItems, so wireEstimateCalc returns at its first line and never fights
+   this. Both no-op on an inspection report. */
+function wireContractMoney(doc){
+  var priceEl = doc.querySelector('[data-cprice]');
+  var downEl  = doc.querySelector('[data-cmoney="down"]');
+  var balEl   = doc.querySelector('[data-cmoney="balance"]');
+  if(!priceEl || !downEl || !balEl) return;          /* not a contract */
+  if(doc.body.getAttribute('data-cmoney-wired')) return;
+  doc.body.setAttribute('data-cmoney-wired', '1');
+
+  function num(el){
+    var t = ((el && el.textContent) || '').replace(/[$,\s]/g, '');
+    if(!t || t.charAt(0) === '[') return NaN;        /* still a [0.00] blank */
+    var v = parseFloat(t);
+    return isNaN(v) ? NaN : v;
+  }
+  function put(el, v){
+    var s = '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    /* Guarded, per 567/569: an unguarded write emits a mutation record even
+       when the text is identical, and every one of those wakes the app's body
+       observers. It also keeps a filled cell from flickering under the caret. */
+    if(el.textContent !== s){
+      el.textContent = s;
+      if(el.className === 'ph') el.className = 'fill';   /* no longer a blank */
+    }
+  }
+  function repct(price, down){
+    if(!(price > 0)) return;
+    var r = function(n){ return (Math.round(n * 10) / 10) + '%'; };
+    var a = doc.querySelector('[data-cpct="dep"]'), b = doc.querySelector('[data-cpct="bal"]');
+    var pd = r(down / price * 100), pb = r(100 - (down / price * 100));
+    if(a && a.textContent !== pd) a.textContent = pd;
+    if(b && b.textContent !== pb) b.textContent = pb;
+  }
+  function recalc(){
+    var price = num(priceEl), down = num(downEl), bal = num(balEl);
+    if(isNaN(price)) return;                         /* nothing to divide yet */
+    /* Never rewrite the cell being typed in \u2014 that is what moves a caret and
+       eats digits. Whichever of the two the user is NOT in follows. */
+    if(doc.activeElement === balEl){
+      if(isNaN(bal)) return;
+      down = Math.max(0, price - bal);
+      put(downEl, down);
+    }else{
+      if(isNaN(down)) return;
+      put(balEl, Math.max(0, price - down));
+    }
+    repct(price, down);
+  }
+  var t = null;
+  doc.body.addEventListener('input', function(){
+    clearTimeout(t); t = setTimeout(recalc, 250);
+  });
+  /* Deliberately NOT called on load. A saved contract may hold figures Theo set
+     by hand (a discount, a rounded deposit) that do not sum, and recalculating
+     on open would silently rewrite a signed document. It corrects only what the
+     user is actively editing. */
+}
+
 /* ---------- estimate: auto-calc line items (no-op on inspection reports) ---------- */
 function wireEstimateCalc(doc){
   var table = doc.getElementById('estItems');
@@ -22836,6 +22925,7 @@ async function openEditor(id){
       if(_rv2) _rv2.style.display = 'none';
       wireCoverPhoto(doc);
       wireEstimateCalc(doc);
+      wireContractMoney(doc);
       wireRoofrUpload(doc);
       wireCheckboxes(doc);
       wireColorSelects(doc);
@@ -39387,6 +39477,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:785, d:'2026-08-13', t:'The deposit section is editable, and it adds up',
+s:'You can type in the contract\u2019s Payment Structure now. The down payment, the balance and the contract price are all editable at the table, and they stay consistent: change the deposit and the balance follows, change the balance and the deposit follows, change the price and the balance absorbs it. If the contract prints a percentage beside the deposit, that percentage follows the real figure too, so the document can never say 30% next to a number that is not 30%. WHY THEY WERE DEAD BEFORE: the editor only lets you type in cells marked as fill-in fields, and once a contract had a real price the amounts were written as plain text instead, which took them off that list. They are written as filled fields now. Also: a third place that built contracts \u2014 the one that turns an estimate into a contract \u2014 had its own copy of the deposit maths with a 50% default, and it was the only one that honoured a deposit typed as a dollar amount rather than a percentage. All three build the money the same way now, and a dollar deposit is honoured everywhere.' },
 { b:784, d:'2026-08-13', t:'The morning email chases estimates', s:'The daily email used to report the calendar and nothing else \u2014 so an estimate could go out and sit unanswered for weeks with nothing anywhere saying so. Right now there are four sitting between twelve and seventeen days, worth about $71,800 between them. Each rep now gets their own list of estimates that went out over five days ago and have heard nothing back, with the client, the amount and how long it has been. And it arrives on quiet days too: the email used to send nothing at all when the calendar was empty, which is exactly the morning you have time to chase one.' },
 { b:783, d:'2026-08-13', t:'The calendar moves the stage', s:'Book a build day and the job moves itself to SCHEDULED. Until now the Production board read the booking straight away \u2014 it would say \u201cbuild Aug 20\u201d \u2014 while the stage sat on APPROVED until somebody remembered to tap the arrow and answer a confirmation about something the calendar already knew. Only a Job start does it, only from APPROVED, and deleting the day does not move it back \u2014 rescheduling is a delete and a re-book, and a stage that bounced both ways would be worse than one that waits.' },
 { b:782, d:'2026-08-13', t:'A lead you can actually reach', s:'Thirty-five of the forty client records in the app have no email address and twenty-four have no phone \u2014 which means nothing can be sent to them: no estimate, no invoice, no signature link. The New Lead form now asks for a phone number or an email before it will save. If you genuinely have neither \u2014 a door-knock or a canvass \u2014 tick the box it offers and it saves anyway, and the lead is marked so it can be chased later. The form is also shorter: company, job type, lead source, assignment, appointment and notes now sit behind \u201cMore detail\u201d, leaving name, phone, email, address and claim type on the first screen.' },
@@ -45509,6 +45601,7 @@ var missing = [];
 if(typeof window.CONTRACT_TEMPLATE !== 'string') missing.push('CONTRACT_TEMPLATE');
 if(typeof window.prefillClientInfo !== 'function') missing.push('prefillClientInfo');
 if(typeof window.prefillUserInfo   !== 'function') missing.push('prefillUserInfo');
+if(typeof window.fillContractMoney !== 'function') missing.push('fillContractMoney');
 if(!window.db || typeof window.db.create !== 'function') missing.push('db.create');
 if(missing.length){
 alert('Cannot generate contract \u2014 missing: ' + missing.join(', ') +
@@ -45526,21 +45619,13 @@ tpl = tpl.replace(scopeRe, openTag + scopeHtml + closeTag);
 tpl = tpl.replace(/[<]div class="descbox">[\s\S]*?[<]\/div>/,
 openTag + scopeHtml + closeTag);
 }
-var total   = Number(est.total) || 0;
-var pct     = Number(est.deposit_pct);
-if(!(pct >= 0 && pct <= 100)) pct = 50;
-var deposit = Number(est.deposit_amount);
-if(!(deposit > 0)) deposit = total * pct / 100;
-var balance = Math.max(0, total - deposit);
-var pctLabel = (Math.round(pct * 10) / 10) + '%';
-var balPct   = (Math.round((100 - pct) * 10) / 10) + '%';
-tpl = tpl.replace('Deposit (50%)',       'Deposit (' + pctLabel + ')');
-tpl = tpl.replace('Final balance (50%)', 'Final balance (' + balPct + ')');
-if(total > 0){
-tpl = tpl.replace('<span class="ph" data-cprice="1">[0.00]</span>', '$' + money2(total));
-tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + money2(deposit));
-tpl = tpl.replace('<span class="ph">[0.00]</span>', '$' + money2(balance));
-}
+var total = Number(est.total) || 0;
+/* 785: this was the THIRD copy of the contract money logic \u2014 its own 50%
+   default against the shared 30, and the only one that read deposit_amount.
+   One chokepoint now, and the estimate goes straight in because this path
+   already holds it. deposit_amount still outranks the percentage, and the
+   amounts it writes are editable cells. */
+tpl = await window.fillContractMoney(tpl, project, total, est);
 var title = 'Contract \u2014 ' + ((project && (project.name || project.client_name)) || 'Client');
 var docId = await window.db.create(title, tpl,
 (project && (project.name || project.client_name)) || '', project.id);
