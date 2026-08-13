@@ -15269,3 +15269,36 @@ Theo used 777 within minutes of the merge and reported three things. All three a
    fix** — the underlying failure is still unidentified and the next report will say which step.
 
 **Gate**: `gate_778.mjs` — 19 green, **15 red on the 777 control**. `check_build.py` green, stamp 777→778.
+
+## build 779 — 13 Aug 2026 — the roofing agreement's spec sheet matches the printed master
+
+Theo, with the app's contract beside a photograph of the paper master: *"I was hoping that the contracts that
+come from the job menu would look like the 2nd picture and that the checkboxes could be used instead of whats
+there now. With drop downs for style, color, brand for Owens Corning, as well as a drop down for the amount of
+pipeboots, etc."*
+
+**The content was all there since 749/750 — the LAYOUT was not.** Project Specifications was a one-column
+`table.meta` of key/value rows; the master is two columns of numbered, red-ruled sections with the house cutaway
+sitting beside the items it points at. Replaced with a `.specgrid` (one column under 640px — a phone is not a
+Letter page). All 13 sections plus Extra Structure, in the master's order and column split.
+
+**Three rows printed letters with nothing to tick** — decking type A–F, and the ridge vent's 1. Standard /
+2. OC. They are `.cbx` boxes now, so every lettered option on the sheet has a box. Grouped rows stay exclusive;
+flashing and extra structure remain multi-pick, as on paper.
+
+**Six new dropdowns, none of which invents data.** `CardinalColors` gained `lines()` — the OC hub's own `LINES`,
+filtered to `ready !== false`, so the Style list is what the colour wall actually sells and a line added there
+reaches the contract with no second edit (the 750 precedent: the colour dropdown reads `list()`). Brand offers
+**Owens Corning** and "Other (see notes)" — **no competitor is named**, per `OC_BRAND_RULES`, and a rep matching
+an existing roof is still not blocked. Quantities (layers to remove, pipe boots, skylights, box/turtle vents,
+power vent, turbine) are 0–13+.
+
+⚠️ **The decking prefill had to change mechanism.** 750's `collapse()` swaps a `.opts` span for the checklist's
+answer, and its regex stops at the first `</span>` — so it cannot survive nested checkbox markup. Decking now
+**ticks the matching box** by `data-val`; layers and pitch keep `collapse()`, which is right anyway because the
+master leaves both as blank lines.
+
+**Gate**: `gate_779.mjs` — 25 green, **22 red on the 778 control, no crash** (probes guarded after the first
+control run threw, which is not a control). It renders the real contract in Chromium and also writes a
+full-page PNG, which is what actually answered "does it look like the master" — the assertions cannot see that.
+`check_build.py` green, stamp 778→779.
