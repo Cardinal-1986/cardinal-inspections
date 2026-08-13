@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 774 &#8212; Estimates can pull line items straight from ABC Supply, priced at your branch</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 775 &#8212; the giant pencil in the menu is an icon again, and the menu stops closing when your thumb misses it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18097,7 +18097,13 @@ document.getElementById('navBtn').addEventListener('click', function(e){
   }
 });
 document.addEventListener('click', function(){ navMenu.style.display = 'none'; });
-window.addEventListener('scroll', function(){ navMenu.style.display = 'none'; }, { passive: true });
+/* 775: the scroll-closer is GONE. It dates from the masthead that scrolled
+   with the page; header.site has been position:fixed since cr-hd2 (416) and
+   #navMenu is fixed with it, so neither drifts and there is nothing to
+   dismiss for. What it actually did on a phone: the menu is 300px wide on a
+   430px screen, so a swipe landing on the strip beside it scrolled the
+   document and shut the menu under the user's thumb (measured, 430x932).
+   Outside-CLICK dismissal is the line above and is untouched. */
 function fixHeadPad(){
   var h = document.querySelector('header.site');
   if(!h) return;
@@ -38739,6 +38745,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:775, d:'2026-08-13', t:'The menu behaves again', s:'Two things Theo caught on the phone. The Production line in the burger menu was drawing a pencil the size of a playing card \u2014 its icon had no size rule that reached it once the button was placed in the menu, so it grew to 270 pixels and ate a third of the screen. It is a normal 17px icon now. And the menu no longer closes when your thumb misses it: the menu is narrower than the screen, and a swipe landing beside it used to scroll the page underneath and shut the menu mid-scroll.' },
 { b:774, d:'2026-08-13', t:'Build an estimate straight from ABC\u2019s catalog',
 s:'The estimate editor has a third button beside From Library and Custom: + ABC Supply. Search ABC\u2019s catalog, tap an item, and it lands as a line item already priced at your branch \u2014 description, item number and unit filled in. It reuses the same picker the library already used rather than adding a second one, and the same connection the Suppliers screen uses, so anything fixed in one place is fixed in both. If a price cannot be fetched the item is still added at $0 with the reason shown, so an account hiccup never strands you halfway through an estimate. The item number is kept on the line, which is what a future purchase order will need.' },
 { b:773, d:'2026-08-13', t:'One buzz per person', s:'An end-to-end drive of the whole retail lifecycle \u2014 lead to invoice, every stage \u2014 turned up two leftovers. When a job\u2019s assigned rep is also an admin, the \u201cjob complete\u201d notification listed them twice and they got every email and push double; the list is deduped now. And the last two emoji subject lines (the estimate-approvals buzz and the chat @-tag buzz) are plain text like the rest \u2014 subjects render in whatever font the mail app picks.' },
@@ -46969,6 +46976,12 @@ objections : OBJECTIONS,
   display:flex; align-items:center; justify-content:center; color:transparent;
 }
 #cr-pb .pbitem .bx svg{ width:12px; height:12px; }
+/* 775: the ONE rule in this stylesheet that must NOT be scoped to #cr-pb —
+   it dresses the button this module injects into the burger menu, which is
+   somebody else's container. Bare-class first so the icon is sized wherever
+   it is hosted; the #navMenu copy out-specifies any generic svg rule there. */
+.pbnavico,
+#navMenu .pbnavico{ width:17px; height:17px; flex:none; vertical-align:-3px; margin-right:7px; }
 #cr-pb .pbitem.done .bx{ background:rgba(108,185,143,.2); border-color:var(--pb-ok,#6cb98f); color:var(--pb-ok,#6cb98f); }
 #cr-pb .pbitem .tx{ min-width:0; flex:1; }
 #cr-pb .pbitem .tx b{
@@ -47922,7 +47935,10 @@ function addMenuItem(){
   b.id = 'cr-nav-production';
   b.className = 'navopt';
   b.type = 'button';
-  b.innerHTML = svg('tool') + ' Production';
+  /* 775: the class is not decoration — every other rule in this module is
+     scoped `#cr-pb ...`, and this node lives in #navMenu. Without a rule
+     that reaches it the svg has no intrinsic size and painted 270x270. */
+  b.innerHTML = svg('tool', 'pbnavico') + ' Production';
   b.onclick = function(e){
     /* 771: #navMenu is toggled by style.display, never by a class — the old
        classList.remove('show') was a dead line and the menu only closed by
