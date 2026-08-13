@@ -15302,3 +15302,30 @@ master leaves both as blank lines.
 control run threw, which is not a control). It renders the real contract in Chromium and also writes a
 full-page PNG, which is what actually answered "does it look like the master" — the assertions cannot see that.
 `check_build.py` green, stamp 778→779.
+
+## build 780 — 13 Aug 2026 — estimates: the count is right, and publishing says what it did
+
+Theo: *"When writing estimates, and hitting publish, it does not go out of draft. For James Tiege, I did 2
+separate but in his client profile it says 0, when i open the estimates box it has 2 with status draft. When I
+hit publish tho a pop up said something like send then move the pipeline forward but it did not move anything."*
+
+**Reproduced against the live rows before touching anything** (Supabase connector): EST-2026-0899 `draft`,
+no doc; EST-2026-0900 `sent` with `doc_id`; project stage `Prospect`. **Three separate faults, none of them the
+one the sentence names** — publish was not failing.
+
+1. **The count.** The visible job menu counted estimate-titled DOCUMENTS. A draft has no document, so two
+   estimates read as **0** while the box he opened listed both from the estimates TABLE. 654 fixed exactly this
+   shape on the legacy `#jaGrid` tile and never reached the tile that renders (the `#tab-overview` two-tiles
+   problem again). Now async-filled from `loadForProject()` — the same source the box lists — with the doc
+   count as fallback. **It is a navigation count, not money: `indexMoney`'s SENT_EST rule is untouched**, asserted.
+2. **The promise.** The confirm said *"Mark it as Sent and move the pipeline forward?"*. `sent` targets
+   Prospect and the job was **already** Prospect, so `syncStageFor()` correctly did nothing — silently. The
+   prompt now computes the outcome with the same `rank()` guard and says either *"James Tiege moves to
+   Prospect"* or *"The pipeline stays at Prospect"*.
+3. **The silence.** After the status write nothing re-rendered — no toast, list still reading `draft`. That is
+   precisely what *"it does not go out of draft"* looks like from the other side. It now toasts, refreshes the
+   saved list and the profile, and the UPDATE carries `.select('id,status')` so a refusal is an **error** rather
+   than a silent no-op, with a message that says the document was still created.
+
+**Gate**: `gate_780.mjs` — 17 green, **10 red on the 779 control**. It seeds Theo's exact two rows and drives
+both stage cases (already-Prospect must NOT advance; a Lead must).

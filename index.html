@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 779 &#8212; The roofing agreement&#8217;s specification sheet is laid out like the printed master &#8212; two columns, a tick box on every option, and dropdowns for shingle style, colour, brand and quantities</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 780 &#8212; The Estimates count on a client&#8217;s profile matches what the estimates box lists, and publishing says plainly whether it marked the estimate Sent and where the pipeline went</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11153,7 +11153,7 @@ function renderAcxOverview(){
       jt(dbIc('tasks'), 'Tasks', openTasks, 'tasks') +
     '</div><div class="jaboxrow">' +
       jt(dbIc('ruler'), 'Measurements', '\u2026', 'measure', 'dbMeasN') +
-      jt(dbIc('estimates'), 'Estimates', ests.length, 'estimates') +
+      jt(dbIc('estimates'), 'Estimates', '\u2026', 'estimates', 'dbEstN') +
     '</div><div class="jaboxrow">' +
       jt(dbIc('docs'), 'Documents', fileDocs.length, 'docs') +
       jt(dbIc('appts'), 'Appointments', appts, 'appts') +
@@ -11249,6 +11249,30 @@ function renderAcxOverview(){
   /* 420: Convert to Insurance, all the way at the bottom (Theo's words) */
   html += _cvHtml;
   mount.innerHTML = html;
+  /* 780: the Estimates tile counted estimate-titled DOCUMENTS, and a draft has
+     no document — so two estimates on a job read as 0 while the box he opened
+     listed both. 654 fixed this shape on the legacy tile (#jaGrid) and never
+     reached the tile that actually renders. Count what the box lists: the
+     estimates TABLE, non-archived, drafts included. It is a NAVIGATION count,
+     not money — the money panes keep their SENT_EST rule untouched. */
+  (function(){
+    var el0 = document.getElementById('dbEstN');
+    if(!el0) return;
+    var _fill = function(n){
+      if(!currentProject || currentProject.id !== pr.id) return;
+      var el = document.getElementById('dbEstN');
+      if(!el) return;
+      el.textContent = n;
+      el.classList.toggle('zero', !n);
+    };
+    var E = window.CardinalEstimates;
+    if(E && typeof E.loadForProject === 'function'){
+      E.loadForProject(pr.id).then(function(rows){ _fill((rows || []).length); })
+       .catch(function(){ _fill(ests.length); });   /* fall back to the doc count */
+    }else{
+      _fill(ests.length);
+    }
+  })();
   /* async: photo count + cover thumb */
   photoDb.listByProject(pr.id).then(function(l){
     if(!currentProject || currentProject.id !== pr.id) return;
@@ -39162,6 +39186,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:780, d:'2026-08-13', t:'Estimates: the count is right, and publishing tells you what it did',
+s:'Three things behind \u201cit says 0 but the box has 2, and publish did not move anything\u201d. The Estimates number on the client profile counted only estimates that had already produced a document, so drafts were invisible and two estimates read as zero \u2014 it now counts exactly what the Estimates box lists. The pop-up after publishing offered to \u201cmove the pipeline forward\u201d even when the job was already at that stage, so it looked broken when it was right; it now says either where the client will move or that the pipeline stays put. And when it marks the estimate Sent it says so, refreshes the list and the profile instead of leaving \u201cdraft\u201d on screen \u2014 and if the change is refused it tells you rather than going quiet.' },
 { b:779, d:'2026-08-13', t:'The roofing agreement looks like the printed master',
 s:'The Project Specifications page of the Roofing Construction Agreement is now laid out the way the paper master is \u2014 two columns of numbered, red-ruled sections with the house diagram beside the items it points at. Every lettered option is a real tick box, including the decking types and the two ridge-vent choices, which used to print as plain letters with nothing to tick. Where a rep was typing, there is now a dropdown: shingle Style offers the Owens Corning lines the colour wall itself sells, Brand offers Owens Corning, and the counts \u2014 layers to remove, pipe boots, skylights, box vents, power vents, turbines \u2014 are all pick-a-number. Colour and the two trim colours work as they did. If the roofing checklist already recorded the decking type, the box arrives ticked.' },
 { b:778, d:'2026-08-13', t:'Select all in the CompanyCam picker, and the photo count keeps up',
@@ -45570,12 +45596,44 @@ if(est && est.doc_id) break;
 await new Promise(function(r){ setTimeout(r, 750); });
 }
 if(!est || !est.doc_id) return;   /* no document: cr-epub has already spoken */
-if(!confirm('Estimate published.\n\nMark it as Sent and move the pipeline forward?')) return;
+/* 780: the old prompt promised to "move the pipeline forward" and then, on a
+   job already at or past Prospect, correctly did nothing — silently. Say what
+   will actually happen to THIS job before asking. */
+var _cur = project.stage;
+try{ if(typeof window.normStage === 'function') _cur = window.normStage(_cur); }catch(_){}
+var _willMove = !!(STATUS_STAGE.sent && _cur !== 'Lost' && _cur !== STATUS_STAGE.sent &&
+                   rank(_cur) < rank(STATUS_STAGE.sent));
+if(!confirm('Estimate published.\n\nMark it as Sent?' +
+    (_willMove ? '\n\n' + (project.name || 'This client') + ' moves to ' +
+                 displayStage(STATUS_STAGE.sent) + '.'
+               : '\n\nThe pipeline stays at ' + displayStage(_cur) + '.'))) return;
+var _wrote = false;
 try{
 if(window.supa){
-await window.supa.from('estimates').update({ status:'sent' }).eq('id', est.id);
+  /* .select() so a refused UPDATE is an error rather than a silent no-op —
+     RLS or a missing row must not read as success. */
+  var _r = await window.supa.from('estimates').update({ status:'sent' })
+                   .eq('id', est.id).select('id,status');
+  if(_r.error) throw _r.error;
+  _wrote = !!(_r.data && _r.data.length);
 }
-}catch(e){ console.warn('[ess] status bump failed:', e); }
+}catch(e){
+console.warn('[ess] status bump failed:', e);
+alert('Could not mark it Sent \u2014 ' + ((e && e.message) || e) +
+      '\n\nThe document was still created. Open the estimate and set the status by hand.');
+return;
+}
+/* 780: the write landed and NOTHING said so — the list still read draft, which
+   is exactly what "it does not go out of draft" looked like from his side. */
+if(_wrote){
+toast('Estimate marked <b>Sent</b>');
+try{
+  if(window.CardinalEstimates && typeof window.CardinalEstimates.refreshSavedList === 'function'){
+    window.CardinalEstimates.refreshSavedList(project.id);
+  }
+}catch(_){}
+try{ if(typeof window.renderOverview === 'function') window.renderOverview(); }catch(_){}
+}
 syncStageFor(project, 'sent');
 }, 900);
 }else if(elapsed > 12000){
