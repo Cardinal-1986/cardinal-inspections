@@ -15329,3 +15329,39 @@ one the sentence names** — publish was not failing.
 
 **Gate**: `gate_780.mjs` — 17 green, **10 red on the 779 control**. It seeds Theo's exact two rows and drives
 both stage cases (already-Prospect must NOT advance; a Lead must).
+
+## build 781 — 13 Aug 2026 — the contract that was unusable at a client's house
+
+Theo, from a client's driveway: *"the contract was unusable. The signing section was not right. The deposit was
+set to 50%."*
+
+**Both faults are OLDER than today's builds** — verified byte-identical in the pre-777 tree, so 779's spec-sheet
+work (which stopped at the Warranty System heading) did not cause them. Reproduced in Chromium on a $13,750 job
+before a line was changed.
+
+**1. The deposit.** `createContractForCurrent()` did `var half = price / 2` — a 50% deposit on every contract,
+ignoring the estimate the job already had. ⚠️ **`approveAndContract()` carried the IDENTICAL block**, which is
+why it stayed wrong in two places. Both now call **one chokepoint**, `fillContractMoney(tpl, pr, price)` — the
+`bidAmt()` rule applied to contracts. The job's own estimate wins; `DEPOSIT_PCT_DEFAULT = 30` applies only when
+there is no estimate to ask. **30 is measured, not invented: 14 of 17 live estimates carry 30%**, three carry 0
+and a deliberate 0% is honoured. The generic contract also wrote the percentage into its **row labels**, so the
+arithmetic alone would still have printed "50%" beside the right money — the labels follow the real number now.
+
+**2. The signing section.** An agreement had **five signature slots in two competing blocks**, and the pad filled
+exactly one: the base footer's bottom "Client Acceptance" line. So a client signed at the bottom of the page
+while the official-looking **Buyer signature** box three inches above stayed a dead yellow `[sign]`, and a
+co-buyer or a countersignature could not be captured at all. Now: an agreement carries **one** block — the
+`isDeal` flag that already stripped the cover photo also strips the duplicate footer — and Buyer / Co-buyer /
+Contractor are each `[data-sig]` slots. The pad **asks whose signature it is** and stamps that row with the PNG
+and the date. **Only the buyer signing advances the job to Approved**; a countersignature must not move anyone's
+pipeline. Estimates are untouched — they keep the footer, which is their only signing block. The acceptance
+paragraph also stopped calling a contract an estimate.
+
+**Theo's picks**: offered as two numbered choices with the evidence; he answered "continue", so the two
+recommendations shipped (estimate's own % / one block, three rows). Both are reversible in one place.
+
+**Gate**: `gate_781.mjs` — 21 green, **16 red on the 780 control** (the control's tell: a 0% estimate still
+printed $6,875 down). ⚠️ **Two of its assertions were wrong first, and both were the TEST's fault**: one counted
+the chokepoint's own *definition* as a call site (CLAUDE.md's counting trap, again), and one assumed a job with
+no estimate still has a price — `projectValue()` derives money FROM the estimate, so there is nothing to split
+and fill-in boxes are correct.
