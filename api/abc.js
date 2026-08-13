@@ -72,6 +72,42 @@ async function getToken() {
   return j.access_token;
 }
 
+/* ABC states the actual reason for a 4xx in the RESPONSE BODY, which nobody
+   downstream ever saw: abc() put the parsed body on err.detail, the handler
+   passed it back as a separate `detail` field, and index.html's api() reads
+   only `j.error` — so the body was dropped one layer short of the screen and
+   every rejection rendered as a bare "-> HTTP 400" with no reason attached.
+   Same class as the bare "fetch failed" defect: the answer was already in
+   hand and thrown away.
+
+   Field names are not documented and differ per endpoint, so this pulls the
+   shapes REST APIs actually use and falls back to the raw body rather than
+   inventing a schema and silently matching nothing. detail still travels
+   intact for anyone who wants the whole object. */
+function abcReason(j) {
+  if (j == null) return '';
+  if (typeof j === 'string') return j;
+  if (typeof j !== 'object') return String(j);
+  const pick = (o) => (o && typeof o === 'object')
+    ? (o.message || o.detail || o.description || o.error_description ||
+       o.errorMessage || o.reason || o.title || '')
+    : (typeof o === 'string' ? o : '');
+  let m = pick(j);
+  for (const key of ['errors', 'messages', 'details', 'errorMessages']) {
+    if (m) break;
+    const arr = j[key];
+    if (Array.isArray(arr) && arr.length) {
+      m = arr.map(x => pick(x) || (typeof x === 'string' ? x : (x && x.code) || ''))
+             .filter(Boolean).join('; ');
+    }
+  }
+  if (!m && typeof j.error === 'string') m = j.error;
+  if (!m && j.raw) m = String(j.raw);
+  if (!m) { try { m = JSON.stringify(j); } catch (_) { m = ''; } }
+  m = String(m).replace(/\s+/g, ' ').trim();
+  return m.length > 300 ? m.slice(0, 299) + '…' : m;
+}
+
 async function abc(method, path, payload) {
   const token = await getToken();
   const r = await netFetch(apiBase() + path, {
@@ -86,7 +122,9 @@ async function abc(method, path, payload) {
   const text = await r.text();
   let j; try { j = JSON.parse(text); } catch (_) { j = { raw: text }; }
   if (!r.ok) {
-    const err = new Error('ABC ' + method + ' ' + path + ' -> HTTP ' + r.status);
+    const reason = abcReason(j);
+    const err = new Error('ABC ' + method + ' ' + path + ' -> HTTP ' + r.status +
+                          (reason ? ' — ' + reason : ''));
     err.status = r.status; err.detail = j;
     throw err;
   }
