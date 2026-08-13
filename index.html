@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 786 &#8212; The punch-out card lays out properly on a phone: the five photo boxes are the same size again instead of shrinking to fit their captions, and the office gets the roomy layout on a phone too</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 787 &#8212; Curtis and Scottie can be tagged on a punch-out again, and tapping through to a client that has not loaded says so instead of dropping you on the home screen</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12883,7 +12883,30 @@ function showHome(){
 }
 function openProject(id){
   var pr = cacheProjects.find(function(x){ return x.id === id; });
-  if(!pr) return;
+  if(!pr){
+    /* 787: this was a bare `return`, and it is how tapping through to a client
+       could land you on the retail home. Callers CLOSE THEIR OWN SCREEN first
+       and then call this \u2014 `close(false); openProject(pid);` \u2014 in the punch
+       card, the production board, the punch list, search, recents and the
+       palette. On a cache miss the screen they closed was already gone and
+       nothing replaced it, so the user was left on whatever sat underneath
+       with nothing said. Reload once, retry, and only give up OUT LOUD.
+       The __retrying latch is what stops that retry from looping. */
+    if(openProject.__retrying === id){
+      openProject.__retrying = null;
+      var _m = 'That client could not be opened. It may have been deleted, or you may not have access to it.';
+      if(typeof showError === 'function'){ try{ showError(_m); return; }catch(_e){} }
+      alert(_m);
+      return;
+    }
+    openProject.__retrying = id;
+    Promise.resolve()
+      .then(function(){ return (typeof reload === 'function') ? reload() : null; })
+      .catch(function(){})
+      .then(function(){ openProject(id); });
+    return;
+  }
+  openProject.__retrying = null;
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   currentProject = pr;
   /* Repaint the cover card in the insurance theme when this client is an insurance claim. */
@@ -39477,6 +39500,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:787, d:'2026-08-13', t:'Curtis is back, and a failed jump says so',
+s:'Two things. @CURTIS WAS MISSING from the people you can tag on a punch-out, and so was @Scottie. The tag row was only ever showing the first five names on the team list, so who you could reach was decided by the order people happen to sit in \u2014 and Curtis and Scottie are last, which meant the man who dispatches punch-outs and his crew lead were the two it cut. Everyone is there now. SECOND: tapping through to a client could land you on the retail home screen instead. When the app is asked to open a client it does not currently have loaded, it used to do nothing at all \u2014 and because the screen you tapped from closes itself first, you were left looking at whatever was behind it. It now reloads and tries again, and if the client really cannot be opened it tells you so rather than quietly dumping you somewhere.' },
 { b:786, d:'2026-08-13', t:'The punch-out card fits a phone',
 s:'The photo row on a punch-out was a staircase: the five boxes came out different sizes, getting smaller left to right, with their captions sitting at five different heights. The boxes were being sized by the length of their own captions — Overview is eight letters and Final is five — instead of by the row they sit in. They are equal again, and the smallest one has gone from 23 pixels wide to a proper tap target. Second thing: this card has a roomy layout built for working on a phone, but it was switched on by WHO you are rather than WHAT you are holding, so the office got the tight five-across desktop grid on a phone. Any narrow screen gets the roomy one now, and it survives turning the phone sideways. Captions went from 6.8px to 10px. The checklist is fine — tapping a template does fill in its steps; that one was a false alarm.' },
 { b:785, d:'2026-08-13', t:'The deposit section is editable, and it adds up',
@@ -49353,7 +49378,12 @@ function msgsHtml(){
     return '<div class="pkbub' + (mine ? ' me' : '') + '">' + esc(c.text || '') +
       '<small>' + esc((c.name || nameOf(c.by)).toUpperCase()) + ' · ' + esc(fmtTime(c.at)) + '</small></div>';
   }).join('');
-  var chips = roster().filter(function(m){ return m.email !== me; }).slice(0, 5).map(function(m){
+  /* 787: this carried `.slice(0, 5)`, so who you could tag was decided by
+     ROSTER ORDER. Curtis and Scottie are last in TEAM_ROSTER and were the two
+     it cut \u2014 the man who dispatches punch-outs and his crew lead, the two
+     people a punch-out most needs to reach. The row already wraps
+     (`.pktags{flex-wrap:wrap}`), so there was nothing to protect. */
+  var chips = roster().filter(function(m){ return m.email !== me; }).map(function(m){
     return '<button class="pktag" data-tag="' + esc((m.name || nameOf(m.email)).split(' ')[0]) + '" type="button">@' +
       esc((m.name || nameOf(m.email)).split(' ')[0]) + '</button>';
   }).join('');
