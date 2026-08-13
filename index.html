@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 765 &#8212; Find my Ship-To: ABC lists the job accounts it will actually price against, with addresses, so you pick instead of guess</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 766 &#8212; Production reads the real schedule: &ldquo;needs scheduling&rdquo; now clears when the job goes on the board, materials can be marked ordered, and a closed punch-out lands in the client&rsquo;s history</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4072,6 +4072,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <h3 class="projsec" data-cri="box lg">Material Order Lists</h3>
       <p class="subnote">Import measurements once and auto-generate a material order with quantities and units.
       Quantities include standard waste and are fully editable &#8212; always verify against the scope before ordering.</p>
+      <!-- 766: the ordered flag. setStage() has always told Curtis to order the
+           materials; nothing ever recorded that he had, so the Production
+           board's "Materials?" chip could never clear. This is that answer. -->
+      <div id="matOrderState" style="margin:0 0 14px;"></div>
 
       <div class="matcard" data-trade="roofing">
         <div class="mathead collhead matcoll"><b>&#127968; Roofing</b><span class="projcount" id="matSrcroofing">No measurements yet</span><span class="collchev">&#9656;</span></div>
@@ -17092,6 +17096,53 @@ function renderMatList(trade){
 function renderMaterialsTab(){
   renderMatSources();
   Object.keys(MAT_TRADES).forEach(renderMatList);
+  renderMatOrderState();
+}
+/* 766: one flag per JOB, not per trade — the Production board counts jobs, and
+   a per-trade flag would make "is this job ordered?" a question with four
+   answers. Stored as checklist.materials_ordered_at (ISO) + _by. */
+function renderMatOrderState(){
+  var mount = document.getElementById('matOrderState');
+  if(!mount || !currentProject) return;
+  var all = parseCkAll(currentProject);
+  var at = all.materials_ordered_at || '';
+  var by = all.materials_ordered_by || '';
+  if(at){
+    var d = crDate(at);
+    mount.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;' +
+      'background:var(--rbe-card,#161918);border:1px solid rgba(108,185,143,.35);' +
+      'border-radius:12px;padding:11px 14px;">' +
+      '<b style="color:#2f7d55;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.08em;">MATERIALS ORDERED</b>' +
+      '<span style="color:var(--rbe-mut,#8d959d);font-size:13px;">' +
+      esc(isNaN(d) ? at : fmtLongDate(d)) + (by ? ' \u00b7 ' + esc(shortNameOf(by)) : '') + '</span>' +
+      '<button class="chipbtn" data-matord="clear" style="margin-left:auto;">Not ordered after all</button>' +
+      '</div>';
+  }else{
+    mount.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;' +
+      'background:var(--rbe-card,#161918);border:1px solid rgba(245,166,35,.35);' +
+      'border-radius:12px;padding:11px 14px;">' +
+      '<b style="color:#8a5a08;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.08em;">NOT ORDERED YET</b>' +
+      '<span style="color:var(--rbe-mut,#8d959d);font-size:13px;">This job reads &ldquo;Materials?&rdquo; on the Production board.</span>' +
+      '<button class="chipbtn" data-matord="set" style="margin-left:auto;">Mark ordered</button>' +
+      '</div>';
+  }
+}
+function shortNameOf(email){
+  if(!email) return '';
+  return (typeof DEFAULT_NAMES === 'object' && DEFAULT_NAMES[email]) || String(email).split('@')[0];
+}
+async function setMaterialsOrdered(on){
+  if(!currentProject) return;
+  var me = (window.currentUser && window.currentUser.email) || '';
+  await saveCkPatch(on
+    ? { materials_ordered_at: new Date().toISOString(), materials_ordered_by: me }
+    : { materials_ordered_at: '', materials_ordered_by: '' });
+  renderMatOrderState();
+  try{ auditLog('materials', (on ? 'Marked ordered' : 'Cleared ordered flag'), currentProject.id); }catch(_){}
+  /* The board derives its chips from the checklist, so a refresh is all it needs. */
+  try{ if(window.CardinalProduction) window.CardinalProduction.refresh(); }catch(_){}
 }
 function matListText(trade){
   var all = parseCkAll(currentProject);
@@ -17110,6 +17161,14 @@ function matListText(trade){
   tab.addEventListener('click', async function(e){
     var btn = e.target.closest('button');
     if(!btn || !currentProject) return;
+    var ord = btn.getAttribute('data-matord');
+    if(ord){
+      btn.disabled = true;
+      try{ await setMaterialsOrdered(ord === 'set'); }
+      catch(err){ alert('Could not save: ' + (err && err.message || err)); }
+      btn.disabled = false;
+      return;
+    }
     var trade = btn.getAttribute('data-trade');
 
     if(btn.classList.contains('matup')){
@@ -19962,6 +20021,20 @@ function buildActivityEvents(){
     if(r.sent_at) ev.push({ t:r.sent_at, ini:'\uD83D\uDCE7', label:'Document Sent:', who:a.nm,
       cli:cli, pid: pr ? pr.id : null, detail:r.title });
   });
+  /* 766: a closed punch-out is not deleted — it becomes the client's repair
+     history. CardinalPunch is the one punch data layer; this reads its cache
+     and never opens a second query path. Guarded because the punch module
+     parses later in the document than this function does. */
+  try{
+    ((window.CardinalPunch && window.CardinalPunch.rows) || []).forEach(function(it){
+      if(!it || it.status !== 'done' || !it.done_at) return;
+      var pr3 = it.project_id ? cacheProjects.find(function(x){ return x.id === it.project_id; }) : null;
+      var ac = actor(it.done_by);
+      ev.push({ t:it.done_at, ini:ac.ini, email:ac.email,
+        label:(it.kind === 'callback' ? 'Callback closed:' : 'Repair closed:'), who:ac.nm,
+        cli: pr3 ? pr3.name : '', pid: pr3 ? pr3.id : null, detail: it.title || '' });
+    });
+  }catch(_){}
   cacheAppts.forEach(function(ap){
     if(!ap.created_at) return;
     var pr = ap.project_id ? cacheProjects.find(function(x){ return x.id === ap.project_id; }) : null;
@@ -38635,6 +38708,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:766, d:'2026-08-13', t:'Production tells the truth about scheduling', s:'The Production board used to say \u201cNeeds scheduling\u201d forever, even after Curtis put the job on the Schedule Board \u2014 it was reading a date field nothing in the app has ever written. It now reads the real build-day appointment, so the chip clears when the job is scheduled and a job that should have started says so. The Materials tab gained a Mark ordered button, which answers the board\u2019s \u201cMaterials?\u201d chip. And closing a punch-out no longer makes it vanish: it lands in the client\u2019s history as a completed repair.' },
 { b:765, d:'2026-08-13', t:'Find my Ship-To \u2014 pick the job, don\u2019t guess the number',
 s:'ABC refused to price anything and said why: the ship-to number it was being given, 0003, is not one it recognises. That number is a display code off an invoice, not the identifier ABC\u2019s system uses \u2014 the same trap as the account number earlier, where the value printed on the invoice and the one on the ABC website were both wrong and a third form was correct. So rather than guess a fourth time, there is now a Find my Ship-To button: ABC returns the job accounts your login is actually allowed to price against, each with its address, and tapping one fills the field for you. Pricing should work from there.' },
 { b:764, d:'2026-08-13', t:'The supplier\u2019s reason is readable now',
@@ -46678,27 +46752,79 @@ try{
 return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {});
 }catch(_){ return pr.checklist || {}; }
 }
+/* 766: THE SCHEDULING BRIDGE. Until this build blockerFor() read
+   checklist.build_date / scheduled_date / lead.build_date — three keys that
+   NOTHING in this app has ever written (verified: one occurrence of each in the
+   whole file, and it was this reader). So 'Needs scheduling' could never clear,
+   and 'Should have started' had never once rendered. Meanwhile Curtis schedules
+   on the Schedule Board, which writes the appointments table with kind 'job'.
+   Read THAT. The checklist keys stay last in the chain so any future writer
+   still works, and so this is additive rather than a swap. */
+function schedFor(pr){
+var aps = window.cacheAppts || [];
+var today = new Date(new Date().toDateString());
+var soonest = null, latestPast = null;
+for(var i = 0; i < aps.length; i++){
+var a = aps[i];
+if(!a || a.kind !== 'job' || !a.appt_date) continue;
+if(String(a.project_id) !== String(pr.id)) continue;
+var d = apptDay(a.appt_date);
+if(!d) continue;
+if(d >= today){ if(!soonest || d < soonest) soonest = d; }
+else if(!latestPast || d > latestPast) latestPast = d;
+}
+/* Prefer the next build day; fall back to the most recent past one so a job
+   that should have started still reads as late instead of as unscheduled. */
+if(soonest) return soonest;
+if(latestPast) return latestPast;
+var c = ck(pr) || {};
+var raw = c.build_date || c.scheduled_date || (c.lead && c.lead.build_date) || null;
+return raw ? apptDay(raw) : null;
+}
+/* A Postgres date column is date-ONLY: new Date('2026-08-21') parses as UTC
+   midnight and renders as the 20th west of Greenwich. crDate() is the app's
+   fix for exactly that (744); this falls back to an explicit local parse so
+   the module still behaves if it is ever loaded before the main block. */
+function apptDay(v){
+if(!v) return null;
+var d = null;
+if(typeof window.crDate === 'function'){ try{ d = window.crDate(v); }catch(_){} }
+if(!d){
+var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v));
+d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(v);
+}
+return (d && !isNaN(d)) ? d : null;
+}
+function pbDay(d){
+return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+}
+/* 766: the other half of the loop the app has always left open — setStage()
+   tells Curtis to order materials, and nothing has ever recorded that he did.
+   One checklist key, written by the Materials tab. */
+function matOrdered(pr){
+return !!(ck(pr) || {}).materials_ordered_at;
+}
 function blockerFor(pr){
 var st = normStage(pr.stage);
 var open = items.filter(function(i){
 return String(i.project_id) === String(pr.id) && i.status === 'open';
 });
-var c = ck(pr) || {};
-var sched = c.build_date || c.scheduled_date || (c.lead && c.lead.build_date) || null;
+var sched = schedFor(pr);
+var ordered = matOrdered(pr);
 if(st === 'Approved'){
 if(!sched) return { tone:'blocked', text:'Needs scheduling' };
-return { tone:'soon', text:'Materials?' };
+if(!ordered) return { tone:'soon', text:'Materials?' };
+return { tone:'soon', text:'Build ' + pbDay(sched) };
 }
 if(st === 'Scheduled'){
 if(sched){
-var d = new Date(sched);
-if(!isNaN(d) && d < new Date(new Date().toDateString())){
+if(sched < new Date(new Date().toDateString())){
 return { tone:'blocked', text:'Should have started' };
 }
-return { tone:'soon', text:'Scheduled ' + d.toLocaleDateString('en-US',
-{ month:'short', day:'numeric' }) };
+if(!ordered) return { tone:'soon', text:'Materials?' };
+return { tone:'soon', text:'Build ' + pbDay(sched) };
 }
-return { tone:'soon', text:'Scheduled' };
+return { tone:'blocked', text:'Needs scheduling' };
 }
 if(st === 'Completed'){
 if(open.length){
