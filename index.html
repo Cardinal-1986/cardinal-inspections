@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 771 &#8212; Audit repairs: the Production tick was writing the opposite of what you tapped, delete and photo removal and description editing came back, and the punch-out card is now genuinely the only one</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 772 &#8212; QA pass: no emoji in the emails that leave the building, and the contract button says why when it cannot make one</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17615,14 +17615,16 @@ async function setStage(prId, v){
   /* workflow notifications */
   if(v === 'Approved' && prev !== 'Approved'){
     notifyTeam(['curtis@cardinalrenovations.net'].concat(ADMIN_EMAILS),
-      '\uD83D\uDD28 APPROVED \u2014 schedule + order materials: ' + (pr.name || ''),
+      /* 772: no emoji in a subject line that leaves the building — this is what
+         Curtis sees in his inbox, rendered in whatever font his mail client picks. */
+      'APPROVED \u2014 schedule + order materials: ' + (pr.name || ''),
       '<p><b>' + esc(pr.name || '') + '</b> (' + esc(pr.address || '') + ') is now <b>APPROVED</b>.</p>' +
       '<p><b>Curtis:</b> please schedule the job and the material drop on the Schedule Board, and order materials (see the client\u2019s \uD83D\uDCE6 Materials tab).</p>');
   }
   if(v === 'Completed' && prev !== 'Completed'){
     var rep = assignedRepOf(pr);
     notifyTeam((rep ? [rep] : []).concat(ADMIN_EMAILS),
-      '\uD83C\uDFC1 Job complete \u2014 walk-around + invoice: ' + (pr.name || ''),
+      'Job complete \u2014 walk-around + invoice: ' + (pr.name || ''),
       '<p><b>' + esc(pr.name || '') + '</b> (' + esc(pr.address || '') + ') is marked <b>COMPLETED</b>.</p>' +
       '<p>Next: do the <b>final walk-around</b> with the client, then send the invoice. ' +
       'Once the invoice goes out, move the client to <b>Invoiced</b>.</p>');
@@ -19890,7 +19892,15 @@ var CONTRACT_TYPES = {
 };
 async function createContractForCurrent(tradeKey){
   var pr = currentProject;
-  if(!pr) return;
+  /* 772: this used to `return` in silence. The rest of the function is honest —
+     it toasts on success and shows the error on failure — but with no project
+     loaded the button did nothing and said nothing, which reads as "the contract
+     was made". Silent refusal on a legal document is the one class worth a line. */
+  if(!pr){
+    if(window.crToastErr) window.crToastErr('Open a client first — a contract needs a job to belong to.');
+    else alert('Open a client first — a contract needs a job to belong to.');
+    return;
+  }
   var kind = CONTRACT_TYPES[tradeKey] || CONTRACT_TYPES.roof;
   try{
     var price = projectValue(pr);
@@ -38724,6 +38734,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:772, d:'2026-08-13', t:'QA pass on the retail lifecycle', s:'Two fixes from a walk-through of the whole retail path. The stage emails that go to Curtis and the reps no longer start with an emoji \u2014 those subject lines leave the building and render in whatever font the mail app picks. And the trade-agreement buttons now say \u201cOpen a client first\u201d instead of doing nothing at all when no job is loaded.' },
 { b:771, d:'2026-08-13', t:'Audit repairs on the Production rebuild', s:'Nine defects an adversarial audit found in builds 766\u2013770, all fixed. The worst: ticking a punch-out closed on the Production screen wrote the OPPOSITE \u2014 it flipped the row, then handed the id to the shared writer which flipped it back, so closing did nothing and reopening re-stamped who finished the work. Delete, photo removal and description editing had quietly become unreachable app-wide and are back on the card. The client profile\u2019s punch list now opens the same card as everywhere else. The card clears the installed app\u2019s bottom bar, restores on the back button, repaints the home strips, closes the burger menu properly, and no longer hijacks navigation when another screen opens.' },
 { b:770, d:'2026-08-13', t:'Closed repairs reach the client history', s:'Build 766 added closed punch-outs to the client\u2019s history feed, and it never once worked: the read was shaped as an array when the punch cache hands back a function, so it threw straight into a catch that hid the failure. Proven in a browser both ways \u2014 zero closed repairs before the fix, the repair with its closer and date after.' },
 { b:769, d:'2026-08-13', t:'A punch-out now finds its person', s:'Filing a punch-out on someone, or handing one to them, sends them a push and an email \u2014 Curtis and Scottie no longer have to open the app to find out there is work. Closing one tells the office the same way, with the count of photos and steps. Nobody is ever notified about their own action, and the app says plainly when a notification could not be delivered instead of claiming it was. Chat is unchanged: only the people a message @tags are notified.' },

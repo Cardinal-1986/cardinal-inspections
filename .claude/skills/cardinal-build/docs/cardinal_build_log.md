@@ -15090,3 +15090,43 @@ OPEN_ITEMS, HANDOFF and FEATURES.
 - **✅ ABC Supply WORKS — a real branch price, 13 Aug 2026** · `$76.00` on 11IWRRGU2, Ship-To `2153354-2` / Bill-To `2153354-1` / Branch `106`. **The last fault was not code at all**: `2153354-2` is the number printed on `account.abcsupply.com`, it 401'd earlier when tried as a *bill-to*, and that made it look invalid — it was simply in the wrong field. Both suffixes belong to the same base account and are not interchangeable. **Before calling an ABC account number wrong, try it in the other box.** Six faults in total, each invisible until the one in front of it was fixed: nonexistent host → missing path prefixes → a required parameter the docs call optional → invented request fields in search AND a wrong response field in pricing → an error message mangled three ways so nothing could be read → a ship-to display code mistaken for an identifier. **The through-line worth carrying forward: this feature threw away the answer it already had four separate times** (`e.cause`, `err.detail`, the 60-char truncation, and finally a value sitting in the wrong input). After the first fix, every single answer came from reading ABC's own words — the docs were wrong twice (`pageNumber` "optional", the host), and ABC's live error text was right every time.
 
 - **(no build number — `spark/` only, 13 Aug 2026)** · **The AccuLynx migration ran for the first time, and the pipeline could not have completed one** · Built, harnessed and merged on 11 Aug without ever touching the real API; gates 1–2 have now been run against Cardinal's live account and turned up **five faults**, each of which alone would have wrecked the import. **(1)** `/jobs` was paged with `recordStartIndex`, **a parameter that does not exist** — and AccuLynx does not reject an unknown query parameter, it answers `200` and returns page one, forever. So a misspelling was indistinguishable from broken pagination, which is exactly how the day-one probe read it ("the pagination unit is NOT a record offset here"); the unit assumption had been right all along and the name was wrong. Measured: `startIndex`, `page` and `offset` are silently ignored too. **(2)** `pageSize` asked for 100 against a **hard cap of 25** (`400 "Page Size must not be greater than 25."`), and the cap is inconsistent per endpoint — `/jobs` and `/custom-fields` refuse 26 while `/contacts`, `/milestone-history` and `/representatives` allow it, so 25 is the only value every route takes. **(3)** The site address arrives as `locationAddress` (with `street1`, and `state` as an object carrying `abbreviation`); `dig_address()` looked only at `address`/`jobSiteAddress`/`streetAddress1`, so **all 166 clients imported with a BLANK address** — which also silently disabled duplicate detection, because `find_collision()` matches on the street number, making the first dry run's headline "0 collisions" an artifact of the bug rather than a finding (the corrected run finds **2 real ones**). **(4)** `/jobs/{id}/representatives` returns its `user` as an unexpanded `{id,_link}` ref with no email — the same trap the code already handled for `/contacts` via `?includes=` — so **every client landed on the admin** instead of the 6 real reps; fixed by resolving against `/users` in one call. **(5)** That fallback was **silent**, because the "rep not on roster" warning keyed off a display name that was also empty on an unresolved ref: 166 misassigned clients and a clean review file. ⚠️ **Both offline harnesses were GREEN through all five**, because their fixtures were **invented rather than observed** — the push fixture used `detail.address.streetAddress1` and a pre-filled `sales_owner.user.email`, the fetch stub read `recordStartIndex`. A stub written from the implementation's own mental model encodes that model's mistakes and cannot disagree with it; this is class 15 moved up a level, and it is now `BUG_CLASSES.md` **45** (the silently-ignored parameter and its unexpanded-ref cousin are **44**). Fixtures are now transcribed from real responses with the date, and every new assertion is negative-controlled against the pre-fix code — the existing scenarios never exercised the offset at all, because two fixture items fit inside one 100-row page. Sub-resources were also reading the API's default page of **10** with no pagination; they now ask for 25 and report loudly if a `count` still outruns one page. **Result: 166 records fetched, 0 failures; files a confirmed NO-GO** (all six candidate read routes 404 on every job, exactly as the public docs predicted). Dry run after the fixes — driven through the Supabase connector with every write path stubbed to raise, a substitute for gate 3 and explicitly not a replacement — reports **164 new · 2 collisions · 0 unmappable · 0 warnings · PO 1044–1207**, reps spread nick 42 / theo 39 / jerry 35 / joey 29 / jacob 18 / curtis 3, 7 jobs carrying insurance data for Phase C. **Nothing written to Cardinal.** ⛔ Blocked on one thing: `CARDINAL_PASSWORD` is stale (`400 invalid_credentials`; the email is correct and neither variable has stray whitespace) — refresh it and gates 3→4→5 run as written. Two decisions waiting on Theo: the 2 collisions (Karrie Johnson 804 E Center St, Dan Thompson 2825 Arden Ave — both already in Cardinal, default is attach not duplicate) and **two AccuLynx test records** (`test test`, `Team Test`, both at 5735 Webster Street) that would otherwise import as clients.
+
+## 766-772 — Production rebuilt, and the punch-out card (13 Aug 2026)
+
+**766** The scheduling bridge. `blockerFor()` read `checklist.build_date` / `scheduled_date` /
+`lead.build_date` — three keys NOTHING in this app has ever written (one occurrence of each in the file, and
+it was the reader). "Needs scheduling" could never clear; "Should have started" had never rendered. Curtis
+schedules on the Schedule Board, which writes `appointments` kind `job` — it reads that now, preferring the
+next build day, falling back to the most recent past one. Checklist keys stay last in the chain (additive,
+not a swap). Also: `checklist.materials_ordered_at` + Mark ordered in the Materials tab, and closed
+punch-outs pushed into `buildActivityEvents()`. `punch_steps.sql` ships (steps + template columns).
+
+**767** The screen, replaced. `cr-pb-styles` + `cr-pb-script` rewritten wholesale — same `#cr-pb`, same
+`window.CardinalProduction`, same hideAllViews/navSetView/scroll-lock/observer registrations. Three panes:
+home (five boxes + week strip + the day), cal (full month, named chips, Needs-a-date queue), list. Back goes
+up ONE level. No floating buttons. Cardinal Steel, dark base + scoped light twin.
+
+**768** `cr-pk-styles` + `cr-pk-script` — THE punch-out card. `window.CardinalPunchCard`. Trade templates,
+note-required steps, five guided photo slots, supplement flag, messages, close gated on 5 photos + all steps.
+Manager (office + Curtis) vs field (Scottie) off the same markup. No new observer, no 14th scroll-lock writer.
+
+**769** Notify on file/assign (Theo's A1) and on close. Never yourself, never for unassigned work, honest
+outcome line. `CardinalPunchProfile.openItem` routed into the card.
+
+**770** Closed repairs reach the client history — 766's read was array-shaped where `CardinalPunch.rows` is a
+FUNCTION, so it threw into the catch that was meant to tolerate a late-parsing module. The guard hid its own
+bug. Proven in Chromium both ways.
+
+**771** Nine audit repairs. The worst: `toggle()` pre-mutated the row then delegated to
+`CardinalPunch.toggle(id)`, which re-derives direction from that same shared object — the second flip undid
+the first, so closing was a no-op and reopening re-stamped `done_at`/`done_by`. Also: delete / photo removal /
+description editing had become unreachable app-wide (they lived only in the `#puDetail` sheet 768 stopped
+opening); the client profile tab still opened its own detail; `#cr-pk` sat under `#pwaNav`; no `navRestore`
+case; `CardinalPunchStrip.paint` never existed; `notifyOutcomeText` needs an ARRAY; `hideAllViews` calling
+`close()` NAVIGATED; the burger menu closed with a class the menu does not use.
+
+**772** QA pass on the retail lifecycle: emoji out of the two outbound stage-email subjects, and
+`createContractForCurrent` says "Open a client first" instead of returning in silence.
+
+**Gates**: `gate_766` 38, `gate_767` 54, `gate_768` 65, `gate_769` 16, `gate_770_history` 1, `gate_771` 31 —
+Chromium, each verified RED on its own predecessor.
