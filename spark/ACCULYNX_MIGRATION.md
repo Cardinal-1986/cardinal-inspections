@@ -73,6 +73,80 @@ py --version             # Windows, if python3 is not recognised
 On Windows substitute `py` for `python3` in every command below, and use
 `set VAR=value` instead of `export VAR='value'`.
 
+## Where this stands (13 Aug 2026)
+
+**Gates 1 and 2 are DONE. Gate 3 has been run in a substitute form. Nothing
+has been written to Cardinal.**
+
+| Gate | State |
+|---|---|
+| 1 · probe | ✅ run — key works, 166 jobs in scope, **files NO-GO** |
+| 2 · fetch | ✅ run — all 166 records on local disk, 0 failures |
+| 3 · dry run | ⚠️ run via the Supabase connector, **not** via the admin login — see below |
+| 4 · pilot (5) | ⛔ blocked — needs a working `CARDINAL_PASSWORD` |
+| 5 · real run | ⛔ blocked — same |
+
+⛔ **`CARDINAL_PASSWORD` is stale.** Supabase auth answers
+`400 invalid_credentials`. `CARDINAL_EMAIL` is correct
+(`theo@cardinalrenovations.net`) and neither variable has stray whitespace or
+quotes. **Refresh that password and gates 3–5 run as written.**
+
+Because the push's dry run needs the token for exactly two read-only queries
+(`projects` and `team_profiles`), those were replayed over the session's
+Supabase connector into the **shipped** `dry_run()`, with every write path
+stubbed to raise. That validates the transform against real data. **It is not
+a substitute for gate 3** — re-run the real command once the password works.
+
+**Dry-run result (all 166 records, after the five fixes below):**
+164 new clients · **2 collisions** · 0 unmappable · 0 warnings · PO 1044–1207.
+Stages: Lead 3 · Prospect 80 · Approved 40 · Completed 8 · Invoiced 12 ·
+Closed 21. Reps: nick 42 · theo 39 · jerry 35 · joey 29 · jacob 18 · curtis 3.
+7 jobs carry insurance data for the later sort.
+
+⚠️ **Two decisions waiting on Theo:**
+1. The two collisions are real (Karrie Johnson, 804 E Center St; Dan Thompson,
+   2825 Arden Ave) — both already exist in Cardinal. Default is attach, not
+   duplicate.
+2. **Two AccuLynx test records** would import as clients: `test test` (Lead)
+   and `Team Test` (Closed), both at 5735 Webster Street. Say if they should
+   be skipped.
+
+## What the live account actually answered (13 Aug 2026)
+
+Gates 1 and 2 have now been RUN against Cardinal's real AccuLynx account. The
+findings below are measured, not predicted — they replace the guesses the
+scripts were originally written against, and five of them were bugs.
+
+- **Files: NO-GO, confirmed.** All six candidate read routes
+  (`/documents`, `/photos`, `/photos-videos`, `/files`, `/attachments`,
+  `/media`) return **404 on every job**. This matches AccuLynx's public docs.
+  Records migrate; documents and photographs need the fallback below.
+- **166 jobs in scope** (lead 3 · prospect 81 · approved 41 · completed 8 ·
+  invoiced 12 · closed 21), plus 35 cancelled and 36 dead deliberately left
+  behind. The default `/jobs` listing returns 201 — it includes cancelled and
+  excludes dead.
+- **All 8 AccuLynx users are on Cardinal's roster**, so no imported client
+  falls back to the admin for a missing rep.
+- **`pageStartIndex` is the pagination parameter, and it is a RECORD offset.**
+  ⚠️ AccuLynx **silently ignores an unknown query parameter** — it answers
+  `200` and returns page one. The scripts originally sent `recordStartIndex`,
+  which does not exist, so the fetch could never advance past the first page.
+  `recordStartIndex`, `startIndex`, `page` and `offset` are all ignored.
+- **`pageSize` is capped at 25**, and the cap is inconsistent per endpoint:
+  `/jobs` and `/custom-fields` refuse 26 with an explicit
+  `400 "Page Size must not be greater than 25."`, while `/contacts`,
+  `/milestone-history` and `/representatives` allow more. 25 is the one value
+  every route accepts.
+- **Refs come back unexpanded, and this bites twice.** Contacts need
+  `?includes=emailAddress,phoneNumber` (the scripts already did this). But
+  `/jobs/{id}/representatives` returns its `user` as a bare `{id,_link}` with
+  no email and no name — so the rep must be resolved against `/users` (one
+  call, 8 users). Unresolved, every client imports assigned to the admin.
+- **The site address is `locationAddress`**, on both the listing object and
+  the job detail, with `street1` and `state` as an object carrying
+  `abbreviation`. It is **not** `address` or `jobSiteAddress`. All 166 jobs
+  have one.
+
 ## The gates, in order
 
 ```bash

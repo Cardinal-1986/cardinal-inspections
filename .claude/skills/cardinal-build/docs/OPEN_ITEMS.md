@@ -2984,23 +2984,42 @@ the text compare could not.
 
 ---
 
-## 🟠 AccuLynx migration — pipeline SHIPPED, waiting on the API key (11 Aug 2026)
+## 🟠 AccuLynx migration — gates 1–2 RUN, blocked on a stale password (13 Aug 2026)
 
-The bulk client/docs/photos migration out of AccuLynx is built (`spark/acculynx_probe.py`,
-`fetch_acculynx.py`, `push_acculynx.py` + runbook `spark/ACCULYNX_MIGRATION.md`; offline harnesses
-green with negative controls). **No app change, no SQL, no build number.** Blocked on exactly one
-action: **Theo generates the AccuLynx API key** (click-path in the runbook) and runs the probe.
+**The API key works and the records are fetched.** All **166 in-scope jobs** are on local disk
+(lead 3 · prospect 81 · approved 41 · completed 8 · invoiced 12 · closed 21; cancelled and dead
+left behind per the 11 Aug decision). Nothing has been written to Cardinal.
 
-Settled by Theo 11 Aug, not to be re-litigated: everything imports as **retail** and gets sorted to
-insurance/community afterwards (the insurance data rides along in `lead.insurance` for that sort);
-**Dead/Cancelled stay behind**; a name+street-number match against an existing client attaches files
-to the existing record instead of creating a duplicate.
+⛔ **The one blocker: `CARDINAL_PASSWORD` is stale** — Supabase auth returns
+`400 invalid_credentials`. The email is right and there is no whitespace/quoting problem. Refresh
+it and gates 3 (dry run) → 4 (5-client pilot) → 5 (real run) proceed exactly as the runbook says.
 
-The one open unknown the probe answers: whether AccuLynx exposes ANY file read route — its public
-docs show upload-only. If not, records still migrate; docs/photos fall back to manual pulls or a
-browser-automation pass (a separate decision, deliberately not built).
+✅ **Files are a confirmed NO-GO** — all six candidate read routes 404 on every job, matching
+AccuLynx's public docs. Measured now, not predicted. Records migrate; documents and photographs
+need the fallback decision (manual pull for jobs Theo names, or a browser-automation pass — still
+deliberately not built).
 
-After the records land: **Phase C sorting** runs over the Supabase connector as reviewed SQL
-(retail→insurance from the preserved claim data + companion `insurance_claims` rows;
-retail→community against `community_partners` + Theo's word). Gate sequence and anti-goals live in
-the runbook; session detail in `HANDOFF.md` (11 Aug section).
+⚠️ **Running the pipeline for real found FIVE faults that would have wrecked the migration**, all
+fixed and negative-controlled (PR #281; `BUG_CLASSES.md` 44–45): pagination sent a parameter
+AccuLynx silently ignores (`recordStartIndex` → `pageStartIndex`; an unknown parameter returns page
+one with HTTP 200) · `pageSize` is capped at 25, not 100 · the site address is `locationAddress`,
+so **every client imported blank** — which also silently disabled duplicate detection · rep `user`
+fields are unexpanded `{id,_link}` refs, so **every client landed on the admin** · and that
+fallback was silent, because the warning keyed off a name that was also empty. Both harnesses were
+green throughout: their fixtures were invented rather than observed.
+
+**Dry run after the fixes** (driven through the Supabase connector with all writes stubbed — a
+substitute for gate 3, not a replacement): 164 new · **2 real collisions** · 0 unmappable ·
+0 warnings · PO 1044–1207 · 7 jobs carrying insurance data.
+
+**Two decisions waiting on Theo:** the 2 collisions (Karrie Johnson 804 E Center St, Dan Thompson
+2825 Arden Ave — both already in Cardinal; default is attach, not duplicate), and **two AccuLynx
+test records** (`test test`, `Team Test`, both at 5735 Webster Street) that would otherwise import
+as clients.
+
+Settled 11 Aug and unchanged: everything imports as **retail** and is sorted to insurance/community
+afterwards (insurance data rides along in `lead.insurance`); **Dead/Cancelled stay behind**; a
+name+street-number match attaches to the existing record instead of duplicating.
+
+After the records land: **Phase C sorting** over the Supabase connector as reviewed SQL. Gate
+sequence and anti-goals live in the runbook; session detail in `HANDOFF.md` (13 Aug section).

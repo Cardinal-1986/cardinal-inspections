@@ -323,7 +323,15 @@ def dig_contact(rec):
 
 def dig_address(rec):
     """street/suite/city/state/zip plus the single display line."""
-    for holder in (rec.get('detail') or {}, rec.get('job') or {},
+    # locationAddress FIRST: it is what this account actually returns, on both
+    # the listing object and the job detail, for all 166 jobs (measured 13 Aug
+    # 2026). The other holders are kept as fallbacks for other tenants. Without
+    # it every imported client got a BLANK address — which also silently
+    # disabled collision detection, since find_collision() matches on the
+    # street number.
+    for holder in ((rec.get('detail') or {}).get('locationAddress') or {},
+                   (rec.get('job') or {}).get('locationAddress') or {},
+                   rec.get('detail') or {}, rec.get('job') or {},
                    (rec.get('detail') or {}).get('jobSiteAddress') or {},
                    (rec.get('detail') or {}).get('address') or {},
                    (rec.get('job') or {}).get('address') or {}):
@@ -535,6 +543,12 @@ def map_job(rec, roster, admin_email, po, batch):
         if former:
             warnings.append('rep %r not on the Cardinal roster -> assigned to %s'
                             % (former, admin_email))
+        else:
+            # The fallback must never be silent. When the rep ref came back
+            # unresolved this branch is the ONLY tell, and without it the whole
+            # client base lands on the admin with a clean review file.
+            warnings.append('no rep resolved on the AccuLynx job -> assigned '
+                            'to %s' % admin_email)
 
     ins, has_ins = dig_insurance(rec)
     worktype = dig_worktype(rec)

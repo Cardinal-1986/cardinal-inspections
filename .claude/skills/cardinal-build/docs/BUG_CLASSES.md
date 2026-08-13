@@ -2606,3 +2606,82 @@ then settle each candidate in Chromium at 390/430/1194px. Static reading is not
 enough in either direction: 19 candidates cleared this way were fine, and one
 only *looked* broken when fed a fabricated label — measure with the real shipped
 strings before calling anything a bug.
+
+---
+
+## 44 — a remote API that IGNORES an unknown query parameter (AccuLynx migration, 13 Aug)
+
+`fetch_acculynx.py` paged `/jobs` with `recordStartIndex`. That parameter does
+not exist. AccuLynx did not answer `400`; it answered **`200` and returned page
+one**, every time. The offset never advanced, so the symptom — "pagination is
+broken on this account" — pointed at the pagination *unit* rather than at the
+*spelling*, and the day-one probe duly reported the unit as suspect and told the
+next session to stop.
+
+The real parameter is `pageStartIndex`, and the unit assumption was right all
+along. Measured on the live account: `recordStartIndex`, `startIndex`, `page`
+and `offset` are ALL silently ignored.
+
+### The rule
+**A silently-ignored parameter reads as a broken feature.** When a request
+"works" but has no effect, test the parameter NAME before you theorise about
+its semantics: send the parameter, then compare the response against a
+baseline with no parameter at all. Identical results mean it was never applied.
+Where the envelope echoes the value back (`pageStartIndex` here), that echo is
+the cheapest possible tell — an echo of `0` after asking for `2` settles it in
+one call.
+
+### Its cousin, found in the same hour
+The same API caps `pageSize` at 25 — and **inconsistently**: `/jobs` and
+`/custom-fields` refuse 26 with an explicit
+`400 "Page Size must not be greater than 25."`, while `/contacts`,
+`/milestone-history` and `/representatives` accept it. A limit proven on one
+endpoint is not a limit proven on the API.
+
+### And its other cousin: the unexpanded ref
+`/jobs/{id}/representatives` returns `user` as a bare `{id,_link}` — no email,
+no name. The scripts already knew this about `/contacts` (they ask for
+`?includes=…`) and did not know it about representatives, so **every one of the
+166 real jobs mapped to "no rep" and was assigned to the admin.** Worse, the
+"rep not on roster" warning keyed off the rep's *display name*, which was also
+empty — so the fallback fired **silently** and the review file looked clean.
+Fixed by resolving against `/users` once, and by making the no-rep fallback
+always emit a warning.
+
+**Any fallback that can swallow the entire dataset must announce itself.**
+
+---
+
+## 45 — a fixture INVENTED rather than observed: the stub agrees with the code, so both are wrong together (13 Aug)
+
+`test_acculynx_push.py` fed `map_job()` a record with
+`detail.address.streetAddress1` and a pre-filled `sales_owner.user.email`.
+`test_acculynx_fetch.py` stubbed the pager to read `recordStartIndex`. Every
+assertion passed. **The live API returns none of those shapes** — addresses
+arrive as `detail.locationAddress` (with `street1`, and `state` as an object),
+reps arrive as unexpanded refs, and the offset parameter is `pageStartIndex`.
+
+Both harnesses were green while the pipeline would have imported 166 clients
+with a **blank address** and **every one assigned to the admin**. Blank
+addresses also silently disabled duplicate detection, because
+`find_collision()` matches on the street number — so the dry run's headline
+"0 collisions" was an artifact of the bug, not a finding.
+
+### Why it is invisible
+A stub written from the same mental model as the implementation encodes that
+model's mistakes. It cannot disagree with the code, because it *is* the code's
+assumptions in another file. This is class 15 (an assertion matching its own
+prose) moved up a level: here the whole fixture matches its own prose.
+
+### The rule
+**Transcribe fixtures from a real response, and say so in a comment with the
+date.** One recorded payload is worth more than a page of plausible-looking
+JSON. Where a shape is load-bearing, keep the negative control: revert the fix
+in a scratch copy and confirm the harness goes RED — three of the four new
+assertions here fail against the pre-fix code, which is the only reason they
+are worth having.
+
+### The tell to look for
+The harness passes on data no server has ever sent. If you cannot point at the
+request that produced a fixture's shape, treat that fixture as an unverified
+claim — the same standard this project already applies to a count.
