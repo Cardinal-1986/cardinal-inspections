@@ -124,6 +124,40 @@ contacts AND representatives both return unexpanded refs · the site address is
 never in the repo — the repo root is served publicly. Nothing under
 `acculynx_export/` may be committed.
 
+**✅ Gate 3 then ran for real, from Theo's Windows desktop, and MATCHED the
+connector replay exactly** — 34 clients / max PO 1043 / 10 roster emails /
+164 new / 2 collisions / 0 unmappable, every stage count identical. So the
+replay was faithful, and the stale `CARDINAL_PASSWORD` was only ever the
+cloud environment's copy: **the password itself was always correct** (the
+account's own `last_sign_in_at` proved it, hours before we found the value
+was wrong). The desktop route is what unblocked it — one file (`jobs.jsonl`)
+and `push_acculynx.py` sent through chat, `set` not `export`, no quotes on
+Windows, and the AccuLynx key not needed at all because the push never reads
+it.
+
+**⚠️ NOTES ARE GONE TOO, and this is the bigger find.** Theo asked "what
+about notes?" — `lead.notes` is empty on all 166. Measured: **806 job
+messages across 156 of the 166 jobs (94%)**, none of the text reachable
+(twelve endpoint spellings 404, no v1/v3, no swagger). `/history` answers
+with 6,191 actions but logs only *that* a message was added, never the words.
+`custom_fields` is one empty `Policy Number`. Same fence as files, and now
+the same decision.
+
+**✅ SETTLED (Theo, 13 Aug): front door only.** Theo read the terms and ruled
+out scraping / browser automation; he is right, and rate-limiting does not
+move it out of the restricted category. **The stronger argument is practical:
+tripping their security flags LOCKS the account and destroys the only copy of
+those messages mid-migration.** ⚠️ The runbook used to *recommend* a browser
+pass — that text is corrected in both the runbook and `OPEN_ITEMS`. Do not
+propose it again. Permitted routes: offboarding export request · **ask for
+written permission** (a contractual restriction can be waived, and a yes makes
+a proper fetcher legitimate) · ask about another API tier · AccuLynx's own
+Reports/CSV exports. Manual fallback is scoped to the **41 Approved jobs =
+249 messages**, not 806.
+
+⛔ **Do not cancel the AccuLynx subscription** until notes and files are
+settled — they exist nowhere else.
+
 ---
 
 # Session of 11 August 2026 — the AccuLynx migration pipeline (no build consumed)

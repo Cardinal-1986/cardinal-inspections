@@ -247,15 +247,87 @@ that way — that is what the ledger is for).
   hand** — tell the session; the checklist column is fragile (one malformed
   row breaks the whole client list for everyone).
 
-## If files are unreachable (the probe said NO-GO)
+## Files AND notes are unreachable — one gap, one decision (13 Aug)
 
-That matches AccuLynx's public documentation, and the records import is
-unaffected. The options, in order of effort: pull the documents that matter
-by hand for the jobs Theo names (the review CSV shows which jobs claim
-files); a browser-automation pass against the AccuLynx web UI with the
-admin session — a separate build, decided separately; or a data-export
-request to AccuLynx. The push can attach late-arriving files any time — it
-is idempotent.
+⚠️ **This section used to recommend "a browser-automation pass against the
+AccuLynx web UI". That is now RULED OUT — see the settled decision below.
+Do not propose it again.**
+
+**Both are confirmed NO-GO, and they are the same problem.** AccuLynx's API
+is upload-and-audit, not read:
+
+- **Files:** all six candidate read routes 404 on every job.
+- **Notes:** measured **806 job messages across 156 of the 166 jobs (94%)**,
+  and none of the text is reachable. Twelve endpoint spellings were tried
+  (`/notes`, `/messages`, `/comments`, `/job-messages`, `/conversations`,
+  `/posts`, top-level collections filtered by `jobId`, …) — all 404. There is
+  no v1 or v3, and no swagger/OpenAPI spec is served.
+- **`/jobs/{id}/history` DOES answer** — 6,191 actions across the 166 jobs —
+  but it records only *that* a note happened (`"Job Message Added"`, with a
+  date and an author). **Never the words.** It is an audit trail, not content.
+- `custom_fields` is a dead end too: one field (`Policy Number`) on all 166
+  rows, **zero of them with a value**.
+
+⚠️ **`lead.notes` is therefore empty on all 166 imported clients.** `map_job()`
+reads `detail.description` / `detail.notes`; neither key exists on this
+tenant. Unlike the address bug, fixing the mapping would not help — there is
+nothing to map from. The dead lookup is left in place as a fallback for other
+tenants.
+
+### ✅ SETTLED (Theo, 13 Aug): front door only — no scraping, no automation
+
+Theo read the terms and ruled it out, and he is right. Standard SaaS
+agreements restrict automated bulk extraction, bypassing what the reporting
+UI exposes, and unthrottled request loops. **Rate-limiting a scraper does not
+move it out of that category.**
+
+**The stronger argument is practical: an automated extraction that trips
+AccuLynx's security flags gets the account LOCKED — and the 806 messages
+exist nowhere else.** That would destroy the data the exercise is trying to
+rescue, mid-migration, with no recourse but their support queue.
+
+### The permitted routes, in order
+
+1. **An offboarding data-export request.** Not "can I have a CSV" — *"We are
+   migrating off AccuLynx; I need a complete export of my company's data,
+   including job messages and job files."* Vendors expect this at contract end.
+2. **Ask for written permission** to extract programmatically. The restriction
+   is contractual, so the counterparty can waive it — and often will for a
+   departing customer. A yes makes the fetcher legitimate; a no costs nothing.
+   **If permission is granted, build it properly: their documented rate limit,
+   a pace that cannot trip a flag, and resumable.**
+3. **Ask whether message/file read access exists on another API tier.** The v2
+   key we have genuinely has no such routes; their team knows if a higher tier
+   does.
+4. **AccuLynx's own Reports/CSV exports.** Anything the UI offers as an export
+   button is designed for extraction, so using it is sanctioned by definition.
+
+### The manual fallback is smaller than it looks
+
+Scoped by stage, so nobody copies 806 messages by hand:
+
+| milestone | jobs | messages | avg |
+|---|---:|---:|---:|
+| Prospect | 81 | 317 | 3.9 |
+| Approved | 41 | **249** | 6.1 |
+| Closed | 21 | 108 | 5.1 |
+| Invoiced | 12 | 75 | 6.2 |
+| Completed | 8 | 54 | 6.8 |
+| Lead | 3 | 3 | 1.0 |
+
+Live work (Approved + Completed + Invoiced) is **61 jobs / 378 messages**;
+everything else is 105 jobs / 428 messages, most of it prospects that never
+became work. **The realistic manual scope is the 41 Approved jobs — 249
+messages, an afternoon.** A person reading their own screen is fully
+permitted.
+
+### ⛔ Do not cancel the AccuLynx subscription until this is settled
+
+The 806 messages and every file exist only inside AccuLynx. The records
+migration does not touch them; when the account goes, they go. Same trap the
+docs already record for CompanyCam.
+
+The push can attach late-arriving files any time — it is idempotent.
 
 ## Resumability
 
