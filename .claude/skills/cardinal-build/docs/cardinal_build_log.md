@@ -15143,7 +15143,27 @@ gap is **Approved → Scheduled**: booking the build day writes the appointment 
 manual arrow tap. Friction census: 11 native dialogs (4 confirm / 3 prompt / 4 alert) across one clean
 lifecycle; the worst single moment is invoice creation → send (alert, prompt, confirm back-to-back).
 
-**Gates**: `gate_766` 38, `gate_767` 54, `gate_768` 65, `gate_769` 16, `gate_770_history` 1, `gate_771` 31 —
+**775** The burger menu, from two phone screenshots. **The massive pencil**: `addMenuItem()` (767) injects
+this module's own `svg('tool')` into `#navMenu`, but every sizing rule in `cr-pb-styles` is scoped
+`#cr-pb …` — outside that container an `<svg>` carrying only a viewBox has no intrinsic size and inflates to
+fill its block. Measured **270x270 in a 44px row**, making the item **307px** — 36% of the visible menu, and
+the reason it needed **859px** of scrolling. Every neighbouring item uses `data-cri`, which is why only this
+one blew up. Fixed with a `.pbnavico` rule that is deliberately NOT `#cr-pb`-scoped (a scoped rule could
+never match the node this module puts in somebody else's container).
+
+**The menu closing under your thumb**: it is 300px wide on a 430px screen, so ~130px beside it is page. A
+swipe landing there scrolled the document (measured 512px) and `window.addEventListener('scroll')` shut the
+menu mid-scroll. That listener is **obsolete** — it dates from the masthead that scrolled with the page;
+`header.site` has been `position:fixed` since cr-hd2 (416) and `#navMenu` is fixed with it, so neither
+drifts. Retired; outside-CLICK dismissal untouched. ⚠️ On 774 an on-menu swipe scrolled the menu by **0px**
+— it closed before it could scroll, so the menu was effectively unscrollable on a phone.
+
+⚠️ **Rig trap, recorded**: the two gate runs wrote screenshots to the same `GATE_OUT`, so the negative
+control overwrote the fixed one and the image showed a giant pencil beside a green result. The measurement
+was right and the picture was stale — pass `GATE_OUT` per run.
+
+**Gates**: `gate_766` 38, `gate_767` 54, `gate_768` 65, `gate_769` 16, `gate_770_history` 1, `gate_771` 31,
+**`gate_775` 16 (Chromium at 430x932, installed-app mode; RED on 774 with 9 failures)** —
 Chromium, each verified RED on its own predecessor. **773's gate is `drive_lifecycle.mjs` itself** — the 772
 run recorded the duplicate recipient and the emoji subject (RED for both behaviours); the 773 run shows theo
 once and plain-text subjects, all 12 stations green both times.
