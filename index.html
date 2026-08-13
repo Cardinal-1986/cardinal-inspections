@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 766 &#8212; Production reads the real schedule: &ldquo;needs scheduling&rdquo; now clears when the job goes on the board, materials can be marked ordered, and a closed punch-out lands in the client&rsquo;s history</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 767 &#8212; Production, rebuilt: one page with Needs ordered, Ordered, Scheduled, Punch-outs and Closed repairs, a full-screen calendar behind it, and back that goes up one level instead of Home</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38708,6 +38708,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:767, d:'2026-08-13', t:'Production, rebuilt around the calendar', s:'The Production screen is one calm page now: five boxes \u2014 Needs ordered, Ordered, Scheduled, Punch-outs and Closed repairs \u2014 over a week strip and the day\u2019s work. Tap a box for its list; tap Full calendar for a whole month of build days, material drops, scheduled punch-outs and closed repairs, with a Needs a date queue for anything waiting to be dispatched. Marking materials ordered works straight from the list. Cardinal Steel throughout, in both light and dark, and no floating buttons anywhere.' },
 { b:766, d:'2026-08-13', t:'Production tells the truth about scheduling', s:'The Production board used to say \u201cNeeds scheduling\u201d forever, even after Curtis put the job on the Schedule Board \u2014 it was reading a date field nothing in the app has ever written. It now reads the real build-day appointment, so the chip clears when the job is scheduled and a job that should have started says so. The Materials tab gained a Mark ordered button, which answers the board\u2019s \u201cMaterials?\u201d chip. And closing a punch-out no longer makes it vanish: it lands in the client\u2019s history as a completed repair.' },
 { b:765, d:'2026-08-13', t:'Find my Ship-To \u2014 pick the job, don\u2019t guess the number',
 s:'ABC refused to price anything and said why: the ship-to number it was being given, 0003, is not one it recognises. That number is a display code off an invoice, not the identifier ABC\u2019s system uses \u2014 the same trap as the account number earlier, where the value printed on the invoice and the one on the ABC website were both wrong and a third form was correct. So rather than guess a fourth time, there is now a Find my Ship-To button: ABC returns the job accounts your login is actually allowed to price against, each with its address, and tapping one fills the field for you. Pricing should work from there.' },
@@ -46539,853 +46540,1210 @@ objections : OBJECTIONS,
 })();
 </script>
 
-<style id="cr-pb-styles">#cr-pb{display:none;position:fixed;inset:0;background:#14171b;z-index:9500;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e6e8ea}#cr-pb.open{display:block}.cr-pb-wrap{max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom,0px))}.cr-pb-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}.cr-pb-back{flex:0 0 auto;background:transparent;border:1px solid rgba(230,232,234,.2);color:#8d959d;width:36px;height:36px;border-radius:9px;cursor:pointer;font-size:17px;line-height:1;margin-top:3px}.cr-pb-back:hover{border-color:#f5a623;color:#e6e8ea}.cr-pb-ttl{flex:1;min-width:0}.cr-pb-ttl h1{margin:0;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(26px,7vw,34px);letter-spacing:-.02em;line-height:1}.cr-pb-ttl h1 span{color:#f5a623}.cr-pb-ttl p{margin:6px 0 0;font:600 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#697079}.cr-pb-att{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:22px}.cr-pb-att button{background:#1c2128;border:1px solid rgba(230,232,234,.1);border-radius:10px;padding:13px 12px;cursor:pointer;font-family:inherit;text-align:left;color:#e6e8ea;transition:border-color .15s,background .15s}.cr-pb-att button:hover{border-color:#f5a623;background:#222831}.cr-pb-att button.on{border-color:#f5a623;background:#2a323d}.cr-pb-att .n{font:700 24px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.03em;line-height:1}.cr-pb-att .l{font:700 9.5px inherit;letter-spacing:.1em;text-transform:uppercase;color:#697079;margin-top:6px;line-height:1.3}.cr-pb-att .hot .n{color:#f5a623}.cr-pb-att .bad .n{color:#e07a5f}.cr-pb-att .ok .n{color:#6cb98f}.cr-pb-rule{display:flex;align-items:center;gap:12px;margin:28px 0 4px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:#697079}.cr-pb-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(245,166,35,.45),transparent)}.cr-pb-empty{padding:26px 16px;text-align:center;font-size:13.5px;line-height:1.6;color:#697079}.cr-pb-job{display:flex;align-items:center;gap:13px;width:100%;background:#1c2128;border:1px solid rgba(230,232,234,.09);border-left:3px solid #3a4149;border-radius:10px;padding:14px 15px;margin-top:9px;cursor:pointer;font-family:inherit;color:#e6e8ea;text-align:left;transition:border-color .15s,background .15s}.cr-pb-job:hover{background:#222831}.cr-pb-job.blocked{border-left-color:#e07a5f}.cr-pb-job.soon{border-left-color:#f5a623}.cr-pb-job.clear{border-left-color:#6cb98f}.cr-pb-job .who{flex:1;min-width:0}.cr-pb-job .nm{display:block;font:700 14.5px inherit;letter-spacing:.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-pb-job .ad{/* 758: display:block is the whole fix. These are <span>s from the renderer, and text-overflow:ellipsis is INERT on an inline box - so the name and address ran together with no separator and the address spilled past the card instead of truncating. Blocking them puts the address on its own line, which is what Theo asked for, and lets the ellipsis rules that were already here finally work. Ink was #697079 = 3.23:1 on this card, under the 4.5 floor; #8d959d = 5.33:1 and is already used by .cr-pb-back and .blk.off in this module. The light twin below (#6b7280, 4.83:1 on white) is untouched - #697079 PASSES on white, so a blanket swap of this module's muted ink would have broken light mode. */display:block;font-size:11.5px;color:#8d959d;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-pb-job .blk{display:inline-block;margin-top:6px;font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:4px}.cr-pb-job.blocked .blk{background:rgba(224,122,95,.16);color:#e07a5f}.cr-pb-job.soon .blk{background:rgba(245,166,35,.15);color:#f5a623}.cr-pb-job.clear .blk{background:rgba(108,185,143,.15);color:#6cb98f}.cr-pb-job .portal{flex:0 0 auto;width:8px;height:8px;border-radius:50%}.cr-pb-job .portal.retail{background:#c8202e}.cr-pb-job .portal.insurance{background:#c4180f}.cr-pb-job .portal.community{background:#047857}.cr-pb-job .portal.unknown{background:#3a4149}.cr-pb-item{display:flex;align-items:flex-start;gap:12px;width:100%;background:#1c2128;border:1px solid rgba(230,232,234,.08);border-radius:9px;padding:12px 14px;margin-top:7px;font-family:inherit;color:#e6e8ea;text-align:left}.cr-pb-item.high{border-color:rgba(224,122,95,.4)}.cr-pb-item .box{flex:0 0 auto;width:21px;height:21px;margin-top:1px;border-radius:5px;border:2px solid #4a525b;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#14171b;padding:0;transition:background .15s,border-color .15s}.cr-pb-item .box:hover{border-color:#6cb98f}.cr-pb-item.done .box{background:#6cb98f;border-color:#6cb98f}.cr-pb-item .txt{flex:1;min-width:0}.cr-pb-item .t{font:600 13.5px inherit;line-height:1.4}.cr-pb-item.done .t{color:#697079;text-decoration:line-through}.cr-pb-item .m{font-size:11px;color:#697079;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}.cr-pb-item .m .kind{font:800 8px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:rgba(245,166,35,.14);color:#f5a623}.cr-pb-item .m .kind.callback{background:rgba(224,122,95,.16);color:#e07a5f}.cr-pb-item .m .kind.ticket{background:rgba(74,111,165,.2);color:#7fa6d6}.cr-pb-item .cam{flex:0 0 auto;background:transparent;border:0;cursor:pointer;color:#4a525b;font-size:15px;padding:2px 4px}.cr-pb-item .cam:hover{color:#f5a623}.cr-pb-item img.proof{width:38px;height:38px;object-fit:cover;border-radius:6px;flex:0 0 auto;cursor:zoom-in}.cr-pb-fab{position:fixed;right:18px;bottom:calc(22px + env(safe-area-inset-bottom,0px));width:54px;height:54px;border-radius:50%;background:#f5a623;color:#14171b;border:0;font-size:26px;line-height:1;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.45);z-index:9510;display:none;align-items:center;justify-content:center}#cr-pb.open ~ .cr-pb-fab{display:flex}body.standalone #cr-pb ~ .cr-pb-fab{bottom:calc(79px + env(safe-area-inset-bottom,0px))}.cr-pb-fab:active{transform:scale(.94)}#cr-pb-modal{display:none;position:fixed;inset:0;background:rgba(10,12,15,.8);z-index:9600;align-items:center;justify-content:center;padding:18px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-pb-modal.open{display:flex}#cr-pb-modal .box{background:#1c2128;border:1px solid rgba(245,166,35,.3);border-radius:13px;width:min(430px,100%);max-height:100%;overflow-y:auto;padding:20px;color:#e6e8ea}#cr-pb-modal h3{margin:0 0 14px;font:700 17px Georgia,serif;color:#e6e8ea}#cr-pb-modal label{display:block;margin:13px 0 5px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#697079}#cr-pb-modal label:first-of-type{margin-top:0}#cr-pb-modal input,#cr-pb-modal select,#cr-pb-modal textarea{width:100%;box-sizing:border-box;padding:10px 12px;background:#14171b;color:#e6e8ea;border:1px solid rgba(230,232,234,.16);border-radius:8px;font:400 14px inherit;font-family:inherit;outline:none}#cr-pb-modal input:focus,#cr-pb-modal select:focus,#cr-pb-modal textarea:focus{border-color:#f5a623;box-shadow:0 0 0 3px rgba(245,166,35,.18)}#cr-pb-modal textarea{min-height:60px;resize:vertical}#cr-pb-modal .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 11px}#cr-pb-modal .ft{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}#cr-pb-modal .ft button{padding:10px 16px;border-radius:8px;cursor:pointer;font:700 12.5px inherit;font-family:inherit;border:0}#cr-pb-modal .ft .cancel{background:transparent;color:#8d959d;border:1px solid rgba(230,232,234,.2)}#cr-pb-modal .ft .save{background:#f5a623;color:#14171b}#cr-pb-modal .ft .save:disabled{opacity:.5;cursor:wait}
-/* ── Production board in daylight (build 393) ─────────────────────────────
-   The board has its own palette -- amber #f5a623 on charcoal #14171b -- and it
-   is CRM-independent, so a retail user with the light theme on could open it
-   and get a dark full-screen overlay mid-session. That is the Photo Activity
-   gap from 386, not a deliberate contrast.
-   Scoped overrides rather than tokens, for the same reason as the calendars
-   (387) and the brass directory (391): this is a different design, not the
-   retail design in another palette. The dark original above is untouched.
-   Every colour that carries TEXT is swapped for a darkened twin -- on white the
-   originals read amber 2.03:1, ink 1.23:1, blocked 2.95:1, clear 2.34:1,
-   ticket 2.52:1, all under the 4.5:1 floor. The portal dots keep their CRM
-   colours: they are 8px dots, not text. ── */
-:root[data-theme="rb-light"] #cr-pb{background:#ffffff;color:#141414}
-:root[data-theme="rb-light"] .cr-pb-back{border-color:#e0e0e0;color:#5b6169}
-:root[data-theme="rb-light"] .cr-pb-back:hover{border-color:#8a5a08;color:#141414}
-:root[data-theme="rb-light"] .cr-pb-ttl h1{color:#141414}
-:root[data-theme="rb-light"] .cr-pb-ttl h1 span{color:#8a5a08}
-:root[data-theme="rb-light"] .cr-pb-ttl p{color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-att button{background:#ffffff;border-color:#e6e6e6;color:#141414}
-:root[data-theme="rb-light"] .cr-pb-att button:hover{border-color:#8a5a08;background:#fbfbfb}
-:root[data-theme="rb-light"] .cr-pb-att button.on{border-color:#8a5a08;background:#faf6ee}
-:root[data-theme="rb-light"] .cr-pb-att .l{color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-att .hot .n{color:#8a5a08}
-:root[data-theme="rb-light"] .cr-pb-att .bad .n{color:#a83f24}
-:root[data-theme="rb-light"] .cr-pb-att .ok .n{color:#2f7d55}
-:root[data-theme="rb-light"] .cr-pb-rule{color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-rule::after{background:linear-gradient(90deg,rgba(138,90,8,.35),transparent)}
-:root[data-theme="rb-light"] .cr-pb-empty{color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-job{background:#ffffff;border-color:#e6e6e6;border-left-color:#d4d4d4;color:#141414}
-:root[data-theme="rb-light"] .cr-pb-job:hover{background:#fbfbfb}
-:root[data-theme="rb-light"] .cr-pb-job.blocked{border-left-color:#a83f24}
-:root[data-theme="rb-light"] .cr-pb-job.soon{border-left-color:#8a5a08}
-:root[data-theme="rb-light"] .cr-pb-job.clear{border-left-color:#2f7d55}
-:root[data-theme="rb-light"] .cr-pb-job .ad{color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-job.blocked .blk{background:#fbeeea;color:#a83f24}
-:root[data-theme="rb-light"] .cr-pb-job.soon .blk{background:#faf4e8;color:#8a5a08}
-:root[data-theme="rb-light"] .cr-pb-job.clear .blk{background:#eaf6ef;color:#2f7d55}
-:root[data-theme="rb-light"] .cr-pb-item{background:#ffffff;border-color:#e6e6e6;color:#141414}
-:root[data-theme="rb-light"] .cr-pb-item.high{border-color:#e7c2ba}
-:root[data-theme="rb-light"] .cr-pb-item .box{border-color:#c9c9c9;color:#ffffff}
-:root[data-theme="rb-light"] .cr-pb-item .box:hover{border-color:#2f7d55}
-:root[data-theme="rb-light"] .cr-pb-item.done .box{background:#2f7d55;border-color:#2f7d55}
-:root[data-theme="rb-light"] .cr-pb-item.done .t{color:#767676}
-:root[data-theme="rb-light"] .cr-pb-item .m{color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-item .m .kind{background:#faf4e8;color:#8a5a08}
-:root[data-theme="rb-light"] .cr-pb-item .m .kind.callback{background:#fbeeea;color:#a83f24}
-:root[data-theme="rb-light"] .cr-pb-item .m .kind.ticket{background:#eaf1f9;color:#2c5f96}
-:root[data-theme="rb-light"] .cr-pb-item .cam{color:#8a8a8a}
-:root[data-theme="rb-light"] .cr-pb-item .cam:hover{color:#8a5a08}
-:root[data-theme="rb-light"] .cr-pb-fab{background:#8a5a08;color:#ffffff;box-shadow:0 8px 24px rgba(0,0,0,.22)}
-:root[data-theme="rb-light"] #cr-pb-modal{background:rgba(20,20,20,.45)}
-:root[data-theme="rb-light"] #cr-pb-modal .box{background:#ffffff;border-color:#e6e6e6;color:#141414}
-:root[data-theme="rb-light"] #cr-pb-modal h3{color:#141414}
-:root[data-theme="rb-light"] #cr-pb-modal label{color:#6b7280}
-:root[data-theme="rb-light"] #cr-pb-modal input,:root[data-theme="rb-light"] #cr-pb-modal select,:root[data-theme="rb-light"] #cr-pb-modal textarea{background:#ffffff;color:#141414;border-color:#e0e0e0}
-:root[data-theme="rb-light"] #cr-pb-modal input:focus,:root[data-theme="rb-light"] #cr-pb-modal select:focus,:root[data-theme="rb-light"] #cr-pb-modal textarea:focus{border-color:#8a5a08;box-shadow:0 0 0 3px rgba(138,90,8,.15)}
-:root[data-theme="rb-light"] #cr-pb-modal .ft .cancel{color:#5b6169;border-color:#e0e0e0}
-:root[data-theme="rb-light"] #cr-pb-modal .ft .save{background:#8a5a08;color:#ffffff}
-/* ── 603: the board became a job dossier ──────────────────────────────────
-   Master-detail. The phone shows ONE pane at a time (data-pane on the split);
-   the desktop shows both, gated on body.cr-lnav-on — the SAME signal the 572
-   width rule below uses, not a fresh media query (grep the convention before
-   inventing a mechanism). The desktop rule out-specifies the phone rule
-   0,3,1 vs 0,3,0, which is deliberate and proved in a real engine, not
-   assumed — build 481 shipped a rule that parsed, balanced and never applied.
-   Dark values here; the daylight twins sit at the bottom of this block in the
-   393 shape. Every rule 393 shipped is untouched. */
-.cr-pb-split{margin-top:4px}
-.cr-pb-list,.cr-pb-doss{min-width:0}
-.cr-pb-split[data-pane="list"] .cr-pb-doss{display:none}
-.cr-pb-split[data-pane="doss"] .cr-pb-list{display:none}
-body.cr-lnav-on .cr-pb-split{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:24px;align-items:start}
-body.cr-lnav-on .cr-pb-split .cr-pb-list,body.cr-lnav-on .cr-pb-split .cr-pb-doss{display:block}
-body.cr-lnav-on .cr-pb-dback{display:none}
-.cr-pb-job.sel{border-color:#f5a623;background:#2a323d}
-.cr-pb-job.off{opacity:.72}
-.cr-pb-job .blk.off{background:rgba(230,232,234,.08);color:#8d959d}
-.cr-pb-job .pcount{flex:0 0 auto;min-width:22px;text-align:center;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums;color:#f5a623;background:rgba(245,166,35,.14);border-radius:20px;padding:3px 7px}
-.cr-pb-job .chev{flex:0 0 auto;color:#4a525b;font-size:16px;line-height:1}
-.cr-pb-mine{background:none;border:0;cursor:pointer;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#697079;padding:0 0 0 10px;font-family:inherit}
-.cr-pb-mine.on{color:#f5a623}
-.cr-pb-hint{display:block;margin-top:8px;font-size:12px;line-height:1.6;color:#697079}
-.cr-pb-dcard{background:#1c2128;border:1px solid rgba(230,232,234,.09);border-radius:12px;padding:16px 16px 14px;margin-top:9px}
-.cr-pb-dtop{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.cr-pb-dback{background:transparent;border:1px solid rgba(230,232,234,.2);color:#8d959d;border-radius:8px;padding:6px 11px;cursor:pointer;font:700 11.5px inherit;font-family:inherit}
-.cr-pb-dback:hover{border-color:#f5a623;color:#e6e8ea}
-.cr-pb-dstage{margin-left:auto;font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#697079;border:1px solid rgba(230,232,234,.14);border-radius:5px;padding:3px 8px}
-.cr-pb-dname{margin:0;font:700 20px Georgia,'Times New Roman',serif;color:#e6e8ea;line-height:1.2}
-.cr-pb-daddr{margin-top:3px;font-size:12.5px;color:#697079}
-.cr-pb-dblk{margin-top:11px;border-radius:9px;padding:10px 12px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase}
-.cr-pb-dblk.blocked{background:rgba(224,122,95,.16);color:#e07a5f}
-.cr-pb-dblk.soon{background:rgba(245,166,35,.15);color:#f5a623}
-.cr-pb-dblk.clear{background:rgba(108,185,143,.15);color:#6cb98f}
-.cr-pb-dacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
-.cr-pb-dgo{flex:1 1 auto;background:#f5a623;color:#14171b;border:0;border-radius:9px;padding:11px 14px;cursor:pointer;font:800 12.5px inherit;font-family:inherit}
-.cr-pb-dgo:hover{background:#e0940f}
-.cr-pb-dtel,.cr-pb-dadd{flex:0 0 auto;background:transparent;border:1px solid rgba(230,232,234,.2);color:#e6e8ea;border-radius:9px;padding:11px 14px;cursor:pointer;font:700 12.5px inherit;font-family:inherit;text-decoration:none;display:inline-block}
-.cr-pb-dtel:hover,.cr-pb-dadd:hover{border-color:#f5a623}
-.cr-pb-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:16px 0 4px}
-.cr-pb-tab{background:#14171b;border:1px solid rgba(230,232,234,.1);border-radius:9px;padding:9px 8px;cursor:pointer;font-family:inherit;color:#e6e8ea;text-align:center}
-.cr-pb-tab:hover{border-color:#f5a623}
-.cr-pb-tab.on{border-color:#f5a623;background:#2a323d}
-.cr-pb-tab .tn{display:block;font:700 19px ui-monospace,'SF Mono',Menlo,monospace;font-variant-numeric:tabular-nums;line-height:1}
-.cr-pb-tab .tl{display:block;margin-top:5px;font:700 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#697079}
-.cr-pb-tab.on .tn{color:#f5a623}
-/* 603 daylight twins — 393's shape, its rules untouched */
-:root[data-theme="rb-light"] .cr-pb-job.sel{border-color:#8a5a08;background:#faf6ee}
-:root[data-theme="rb-light"] .cr-pb-job .blk.off{background:#f2f2f2;color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-job .pcount{color:#8a5a08;background:#faf4e8}
-:root[data-theme="rb-light"] .cr-pb-job .chev{color:#c9c9c9}
-:root[data-theme="rb-light"] .cr-pb-mine{color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-mine.on{color:#8a5a08}
-:root[data-theme="rb-light"] .cr-pb-hint{color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-dcard{background:#ffffff;border-color:#e6e6e6}
-:root[data-theme="rb-light"] .cr-pb-dback{border-color:#e0e0e0;color:#5b6169}
-:root[data-theme="rb-light"] .cr-pb-dback:hover{border-color:#8a5a08;color:#141414}
-:root[data-theme="rb-light"] .cr-pb-dstage{color:#6b7280;border-color:#e6e6e6}
-:root[data-theme="rb-light"] .cr-pb-dname{color:#141414}
-:root[data-theme="rb-light"] .cr-pb-daddr{color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-dblk.blocked{background:#fbeeea;color:#a83f24}
-:root[data-theme="rb-light"] .cr-pb-dblk.soon{background:#faf4e8;color:#8a5a08}
-:root[data-theme="rb-light"] .cr-pb-dblk.clear{background:#eaf6ef;color:#2f7d55}
-:root[data-theme="rb-light"] .cr-pb-dgo{background:#8a5a08;color:#ffffff}
-:root[data-theme="rb-light"] .cr-pb-dgo:hover{background:#6f4806}
-:root[data-theme="rb-light"] .cr-pb-dtel,:root[data-theme="rb-light"] .cr-pb-dadd{border-color:#e0e0e0;color:#141414}
-:root[data-theme="rb-light"] .cr-pb-dtel:hover,:root[data-theme="rb-light"] .cr-pb-dadd:hover{border-color:#8a5a08}
-:root[data-theme="rb-light"] .cr-pb-tab{background:#ffffff;border-color:#e6e6e6;color:#141414}
-:root[data-theme="rb-light"] .cr-pb-tab:hover{border-color:#8a5a08}
-:root[data-theme="rb-light"] .cr-pb-tab.on{border-color:#8a5a08;background:#faf6ee}
-:root[data-theme="rb-light"] .cr-pb-tab .tl{color:#6b7280}
-:root[data-theme="rb-light"] .cr-pb-tab.on .tn{color:#8a5a08}</style>
+<style id="cr-pb-styles">
+/* ============================================================================
+   PRODUCTION  ·  v2026-08-13 build 767  ·  Cardinal Steel
+   ----------------------------------------------------------------------------
+   This REPLACES the build-393/603 board wholesale — same view (#cr-pb), same
+   public API (window.CardinalProduction), same registrations. It is not a
+   second production screen; there is one, and this is it.
+
+   Three panes inside the one view: home (tiles + week + today), cal (the full
+   month), list (a box's jobs or items). Back always goes up ONE level.
+
+   PALETTE: tokens scoped to #cr-pb, and EVERY reference carries a literal
+   fallback — the 448/449 lesson (another module stripped a token declaration
+   within a second of load and eight screens went see-through). Light is a
+   scoped twin, not an inversion: every ink below was computed against its own
+   ground before it was written down.
+       dark   ink #eceef0 on #15171a = 15.44:1   mut #9aa3ab = 7.01:1
+              dim #848c94 =  5.27:1              acc #e35c63 on #0c0d0f = 5.53:1
+              ok  #6cb98f =  7.77:1              hot #e07a5f = 6.09:1
+       light  ink #17191c on #ffffff = 17.61:1   mut #5f6670 = 5.80:1
+              acc #8f1620 =  9.12:1              ok  #2f7d55 = 5.02:1
+              hot #a83f24 =  6.17:1
+   Floors: 4.5:1 body, 3.0:1 large. Portal dots keep their CRM colours in both
+   themes — they are dots, not text.
+   ========================================================================== */
+#cr-pb{
+  --pb-g:#0c0d0f; --pb-c:#15171a; --pb-c2:#1b1e22; --pb-c3:#22262c;
+  --pb-ink:#eceef0; --pb-mut:#9aa3ab; --pb-dim:#848c94;
+  --pb-acc:#e35c63; --pb-accd:#c8202e; --pb-accink:#ffffff;
+  --pb-hot:#e07a5f; --pb-ok:#6cb98f;
+  --pb-line:rgba(230,235,240,.11); --pb-line2:rgba(230,235,240,.06);
+  --pb-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  display:none; position:fixed; inset:0; z-index:9500; overflow-y:auto;
+  overflow-x:hidden; overscroll-behavior:contain;
+  background:var(--pb-g,#0c0d0f); color:var(--pb-ink,#eceef0);
+  -webkit-overflow-scrolling:touch;
+}
+#cr-pb.open{ display:block; }
+:root[data-theme="rb-light"] #cr-pb{
+  --pb-g:#f4f5f6; --pb-c:#ffffff; --pb-c2:#f4f5f7; --pb-c3:#eceef1;
+  /* #6b7280 measured 4.43:1 on this ground — under the 4.5 floor. #666d77 is
+     4.79:1 and still reads lighter than --pb-mut, so the hierarchy holds. */
+  --pb-ink:#17191c; --pb-mut:#5f6670; --pb-dim:#666d77;
+  --pb-acc:#8f1620; --pb-accd:#8f1620; --pb-accink:#ffffff;
+  --pb-hot:#a83f24; --pb-ok:#2f7d55;
+  --pb-line:#e2e4e8; --pb-line2:#eef0f2;
+}
+#cr-pb .pbwrap{ max-width:1180px; margin:0 auto; padding:18px 15px 90px; }
+
+/* ---- header ------------------------------------------------------------- */
+#cr-pb .pbtop{ display:flex; align-items:center; gap:10px; margin-bottom:3px; }
+#cr-pb .pbback{
+  flex:none; width:34px; height:34px; border-radius:10px; cursor:pointer;
+  border:1px solid var(--pb-line,rgba(230,235,240,.11)); background:transparent;
+  color:var(--pb-mut,#9aa3ab); display:flex; align-items:center; justify-content:center;
+}
+#cr-pb .pbback svg{ width:15px; height:15px; }
+#cr-pb h1{
+  margin:0; font:700 26px Georgia,'Times New Roman',serif; letter-spacing:.2px;
+  color:var(--pb-ink,#eceef0);
+}
+#cr-pb h1 span{ color:var(--pb-acc,#e35c63); }
+#cr-pb .pbmon{
+  margin-left:auto; display:flex; align-items:center; gap:2px;
+  font:600 10px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.12em; color:var(--pb-mut,#9aa3ab);
+  text-transform:uppercase;
+}
+#cr-pb .pbmon button{
+  background:transparent; border:0; cursor:pointer; color:var(--pb-dim,#848c94);
+  font:700 15px var(--pb-mono,ui-monospace,Menlo,monospace); padding:4px 8px; min-width:30px; min-height:30px;
+}
+#cr-pb .pbsub{
+  font:600 8.5px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.28em; color:var(--pb-dim,#848c94);
+  text-transform:uppercase; margin:2px 0 14px;
+}
+
+/* ---- the boxes ---------------------------------------------------------- */
+#cr-pb .pbtiles{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+#cr-pb .pbtile{
+  text-align:left; cursor:pointer; min-width:0;
+  background:radial-gradient(125% 135% at 28% 16%, var(--pb-c2,#1b1e22) 0%, var(--pb-c,#15171a) 74%);
+  border:1px solid var(--pb-line,rgba(230,235,240,.11)); border-radius:13px;
+  padding:12px 12px 10px; box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 6px 16px rgba(0,0,0,.3);
+}
+:root[data-theme="rb-light"] #cr-pb .pbtile{
+  background:var(--pb-c,#fff); box-shadow:0 2px 10px rgba(25,28,40,.09);
+}
+#cr-pb .pbtile .v{ font:700 23px/1 var(--pb-mono,ui-monospace,Menlo,monospace); color:var(--pb-ink,#eceef0); letter-spacing:-.5px; }
+#cr-pb .pbtile.att .v{ color:var(--pb-hot,#e07a5f); }
+#cr-pb .pbtile .l{
+  display:flex; align-items:center; gap:6px; margin-top:6px;
+  font:600 8.5px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.14em; color:var(--pb-mut,#9aa3ab);
+  text-transform:uppercase;
+}
+#cr-pb .pbtile .l svg{ width:12px; height:12px; color:var(--pb-dim,#848c94); flex:none; }
+#cr-pb .pbtile .s{
+  font:500 9.5px -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pb-dim,#848c94);
+  margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#cr-pb .pbtile .s em{ color:var(--pb-hot,#e07a5f); font-style:normal; font-weight:700; }
+#cr-pb .pbclosed{
+  display:flex; align-items:center; gap:9px; width:100%; cursor:pointer; margin-top:9px;
+  background:var(--pb-c,#15171a); border:1px solid rgba(108,185,143,.28);
+  border-radius:12px; padding:11px 13px; color:var(--pb-ink,#eceef0);
+}
+:root[data-theme="rb-light"] #cr-pb .pbclosed{ box-shadow:0 2px 10px rgba(25,28,40,.07); }
+#cr-pb .pbclosed svg{ width:16px; height:16px; color:var(--pb-ok,#6cb98f); flex:none; }
+#cr-pb .pbclosed .t{ font:600 12px -apple-system,'Segoe UI',Roboto,sans-serif; }
+#cr-pb .pbclosed .c{ font:700 12.5px var(--pb-mono,ui-monospace,Menlo,monospace); color:var(--pb-ok,#6cb98f); }
+#cr-pb .pbclosed .go{ margin-left:auto; color:var(--pb-dim,#848c94); font:700 14px var(--pb-mono,ui-monospace,Menlo,monospace); }
+
+/* ---- week strip --------------------------------------------------------- */
+#cr-pb .pbweek{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; margin:16px 0 2px; }
+#cr-pb .pbwd{
+  text-align:center; border-radius:10px; padding:7px 0 6px; cursor:pointer;
+  border:1px solid transparent; background:transparent; min-width:0;
+}
+#cr-pb .pbwd .dw{ display:block; font:600 7.5px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.1em; color:var(--pb-dim,#848c94); }
+#cr-pb .pbwd .dn{ display:block; font:700 14px var(--pb-mono,ui-monospace,Menlo,monospace); color:var(--pb-ink,#eceef0); margin-top:1px; }
+#cr-pb .pbwd.on{ background:var(--pb-c2,#1b1e22); border-color:var(--pb-acc,#e35c63); }
+#cr-pb .pbwd.on .dn{ color:var(--pb-acc,#e35c63); }
+:root[data-theme="rb-light"] #cr-pb .pbwd.on{ background:var(--pb-c,#fff); box-shadow:0 1px 6px rgba(25,28,40,.1); }
+#cr-pb .pbpips{ display:flex; gap:2px; justify-content:center; margin-top:3px; height:4px; }
+#cr-pb .pbpip{ width:4px; height:4px; border-radius:50%; }
+#cr-pb .pbpip.build{ background:var(--pb-accd,#c8202e); }
+#cr-pb .pbpip.punch{ background:var(--pb-hot,#e07a5f); }
+#cr-pb .pbpip.drop{ background:var(--pb-dim,#848c94); }
+#cr-pb .pbpip.done{ background:var(--pb-ok,#6cb98f); }
+
+/* ---- section rule + agenda ---------------------------------------------- */
+#cr-pb .pbrule{
+  display:flex; align-items:baseline; gap:10px; margin:14px 0 8px;
+  font:600 9px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.16em; color:var(--pb-dim,#848c94);
+  text-transform:uppercase;
+}
+#cr-pb .pbrule .sp{ margin-left:auto; display:flex; gap:6px; }
+#cr-pb .pbchip{
+  cursor:pointer; background:transparent; font:700 8.5px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em;
+  color:var(--pb-acc,#e35c63); border:1px solid var(--pb-acc,#e35c63); border-radius:7px;
+  padding:5px 9px; text-transform:uppercase; min-height:30px;
+}
+#cr-pb .pbev{
+  display:flex; gap:11px; align-items:center; width:100%; text-align:left; cursor:pointer;
+  background:var(--pb-c,#15171a); border:1px solid var(--pb-line2,rgba(230,235,240,.06));
+  border-radius:12px; padding:11px 12px; margin-bottom:8px; color:var(--pb-ink,#eceef0);
+}
+:root[data-theme="rb-light"] #cr-pb .pbev{ box-shadow:0 1px 6px rgba(25,28,40,.06); }
+#cr-pb .pbev .eic{ flex:none; width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; }
+#cr-pb .pbev .eic svg{ width:15px; height:15px; }
+#cr-pb .pbev.build .eic{ background:rgba(200,32,46,.16); color:var(--pb-acc,#e35c63); }
+#cr-pb .pbev.punch .eic{ background:rgba(224,122,95,.14); color:var(--pb-hot,#e07a5f); }
+#cr-pb .pbev.drop  .eic{ background:rgba(154,163,171,.14); color:var(--pb-mut,#9aa3ab); }
+#cr-pb .pbev.done  .eic{ background:rgba(108,185,143,.13); color:var(--pb-ok,#6cb98f); }
+#cr-pb .pbev .tx{ min-width:0; }
+/* 758: a <span> cannot ellipsis — text-overflow is inert on an inline box and
+   the span measures 0. Every truncating element in this module is block. */
+#cr-pb .pbev .tx b{
+  display:block; font:600 13.5px -apple-system,'Segoe UI',Roboto,sans-serif;
+  color:var(--pb-ink,#eceef0); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#cr-pb .pbev .tx small{
+  display:block; font:400 10.5px -apple-system,'Segoe UI',Roboto,sans-serif;
+  color:var(--pb-dim,#848c94); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#cr-pb .pbev .tg{
+  margin-left:auto; flex:none; font:700 8px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em;
+  color:var(--pb-dim,#848c94); border:1px solid var(--pb-line,rgba(230,235,240,.11));
+  border-radius:5px; padding:3px 6px; text-transform:uppercase;
+}
+#cr-pb .pbempty{
+  color:var(--pb-dim,#848c94); font-size:13px; background:var(--pb-c,#15171a);
+  border:1px dashed var(--pb-line,rgba(230,235,240,.11)); border-radius:12px;
+  padding:16px 14px; text-align:center;
+}
+#cr-pb .pbempty b{ display:block; color:var(--pb-mut,#9aa3ab); margin-bottom:3px; font-size:13.5px; }
+
+/* ---- month grid --------------------------------------------------------- */
+#cr-pb .pbcal{ margin-top:6px; }
+#cr-pb .pbdow{
+  display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; margin-bottom:4px;
+}
+#cr-pb .pbdow span{
+  font:600 7.5px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.12em; color:var(--pb-dim,#848c94); text-align:center;
+}
+#cr-pb .pbgrid{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; }
+#cr-pb .pbday{
+  background:var(--pb-c,#15171a); border:1px solid var(--pb-line2,rgba(230,235,240,.06));
+  border-radius:8px; min-height:58px; padding:4px 4px 3px; cursor:pointer; min-width:0;
+  overflow:hidden; text-align:left; color:var(--pb-ink,#eceef0); display:block;
+}
+:root[data-theme="rb-light"] #cr-pb .pbday{ box-shadow:0 1px 4px rgba(25,28,40,.05); }
+#cr-pb .pbday .dn{ display:block; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); color:var(--pb-ink,#eceef0); }
+#cr-pb .pbday.out{ opacity:.45; }
+#cr-pb .pbday.today{ border-color:var(--pb-acc,#e35c63); border-width:1.5px; }
+#cr-pb .pbday.today .dn{ color:var(--pb-acc,#e35c63); }
+#cr-pb .pbday.sel{ background:var(--pb-c2,#1b1e22); }
+#cr-pb .pbday .cch{
+  display:block; font:700 6.6px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.02em; border-radius:3px;
+  padding:1.5px 3px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+#cr-pb .cch.build{ background:rgba(200,32,46,.2);  color:var(--pb-acc,#e35c63); }
+#cr-pb .cch.punch{ background:rgba(224,122,95,.18); color:var(--pb-hot,#e07a5f); }
+#cr-pb .cch.drop { background:rgba(154,163,171,.16); color:var(--pb-mut,#9aa3ab); }
+#cr-pb .cch.done { background:rgba(108,185,143,.16); color:var(--pb-ok,#6cb98f); }
+#cr-pb .pbsheet{
+  background:var(--pb-c2,#1b1e22); border:1px solid var(--pb-line,rgba(230,235,240,.11));
+  border-radius:16px; padding:9px 12px 12px; margin-top:12px;
+}
+:root[data-theme="rb-light"] #cr-pb .pbsheet{ background:var(--pb-c,#fff); box-shadow:0 -2px 14px rgba(25,28,40,.08); }
+#cr-pb .pbsheet .hd{
+  width:36px; height:4px; border-radius:2px; background:var(--pb-dim,#848c94);
+  opacity:.5; margin:0 auto 9px;
+}
+#cr-pb .pbsheet .pbev{ background:var(--pb-g,#0c0d0f); }
+:root[data-theme="rb-light"] #cr-pb .pbsheet .pbev{ background:var(--pb-c2,#f4f5f7); }
+
+/* ---- lists -------------------------------------------------------------- */
+#cr-pb .pbjob{
+  display:block; width:100%; text-align:left; cursor:pointer; margin-bottom:8px;
+  background:var(--pb-c,#15171a); border:1px solid var(--pb-line2,rgba(230,235,240,.06));
+  border-left:3px solid var(--pb-dim,#848c94); border-radius:10px; padding:11px 12px;
+  color:var(--pb-ink,#eceef0);
+}
+:root[data-theme="rb-light"] #cr-pb .pbjob{ box-shadow:0 1px 6px rgba(25,28,40,.06); }
+#cr-pb .pbjob.blocked{ border-left-color:var(--pb-hot,#e07a5f); }
+#cr-pb .pbjob.soon{ border-left-color:var(--pb-acc,#e35c63); }
+#cr-pb .pbjob.clear{ border-left-color:var(--pb-ok,#6cb98f); }
+#cr-pb .pbjob .nm{
+  display:flex; align-items:center; gap:8px;
+  font:700 14px -apple-system,'Segoe UI',Roboto,sans-serif; min-width:0;
+}
+#cr-pb .pbjob .nm .t{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#cr-pb .pbjob .ad{
+  display:block; color:var(--pb-dim,#848c94); font-size:11.5px; margin:2px 0 0;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#cr-pb .pbdot{ width:8px; height:8px; border-radius:50%; flex:none; background:#3a4149; }
+#cr-pb .pbdot.retail{ background:#c8202e; }
+#cr-pb .pbdot.insurance{ background:#c4180f; }
+#cr-pb .pbdot.community{ background:#047857; }
+#cr-pb .pbrow2{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }
+#cr-pb .pbtag{
+  font:700 8.5px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.1em; border-radius:5px; padding:3px 7px;
+  text-transform:uppercase;
+}
+#cr-pb .pbtag.blocked{ background:rgba(224,122,95,.14); color:var(--pb-hot,#e07a5f); }
+#cr-pb .pbtag.soon{ background:rgba(200,32,46,.15); color:var(--pb-acc,#e35c63); }
+#cr-pb .pbtag.clear,#cr-pb .pbtag.done{ background:rgba(108,185,143,.14); color:var(--pb-ok,#6cb98f); }
+#cr-pb .pbtag.mut{ background:rgba(154,163,171,.13); color:var(--pb-mut,#9aa3ab); }
+#cr-pb .pbact{
+  cursor:pointer; font:700 9.5px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.06em; text-transform:uppercase;
+  border-radius:8px; padding:7px 11px; min-height:32px;
+  background:var(--pb-accd,#c8202e); color:var(--pb-accink,#fff); border:1px solid var(--pb-accd,#c8202e);
+}
+#cr-pb .pbact.ghost{ background:transparent; color:var(--pb-mut,#9aa3ab); border-color:var(--pb-line,rgba(230,235,240,.11)); }
+#cr-pb .pbact[disabled]{ opacity:.55; }
+#cr-pb .pbitem{
+  display:flex; gap:10px; align-items:center; width:100%; text-align:left; cursor:pointer;
+  background:var(--pb-c,#15171a); border:1px solid var(--pb-line2,rgba(230,235,240,.06));
+  border-radius:11px; padding:10px 11px; margin-bottom:7px; color:var(--pb-ink,#eceef0);
+}
+:root[data-theme="rb-light"] #cr-pb .pbitem{ box-shadow:0 1px 6px rgba(25,28,40,.06); }
+#cr-pb .pbitem .bx{
+  flex:none; width:22px; height:22px; border-radius:6px; cursor:pointer; padding:0;
+  border:1.5px solid var(--pb-dim,#848c94); background:transparent;
+  display:flex; align-items:center; justify-content:center; color:transparent;
+}
+#cr-pb .pbitem .bx svg{ width:12px; height:12px; }
+#cr-pb .pbitem.done .bx{ background:rgba(108,185,143,.2); border-color:var(--pb-ok,#6cb98f); color:var(--pb-ok,#6cb98f); }
+#cr-pb .pbitem .tx{ min-width:0; flex:1; }
+#cr-pb .pbitem .tx b{
+  display:block; font:600 13px -apple-system,'Segoe UI',Roboto,sans-serif;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+#cr-pb .pbitem.done .tx b{ color:var(--pb-dim,#848c94); text-decoration:line-through; }
+#cr-pb .pbitem .tx small{
+  display:block; font:400 10.5px -apple-system,'Segoe UI',Roboto,sans-serif;
+  color:var(--pb-dim,#848c94); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+
+/* ---- add modal ---------------------------------------------------------- */
+#cr-pb-modal{
+  display:none; position:fixed; inset:0; z-index:9600; background:rgba(0,0,0,.62);
+  align-items:flex-end; justify-content:center; overscroll-behavior:contain;
+}
+#cr-pb-modal.open{ display:flex; }
+#cr-pb-modal .sheet{
+  width:100%; max-width:520px; max-height:88vh; overflow-y:auto; overflow-x:hidden;
+  overscroll-behavior:contain;
+  background:#15171a; border:1px solid rgba(230,235,240,.11); border-radius:18px 18px 0 0;
+  padding:18px 16px 22px; color:#eceef0;
+}
+:root[data-theme="rb-light"] #cr-pb-modal .sheet{ background:#fff; border-color:#e2e4e8; color:#17191c; }
+#cr-pb-modal h3{ margin:0 0 14px; font:700 18px Georgia,serif; }
+#cr-pb-modal label{
+  display:block; font:600 9px ui-monospace,Menlo,monospace; letter-spacing:.14em;
+  color:#9aa3ab; text-transform:uppercase; margin:0 0 5px;
+}
+:root[data-theme="rb-light"] #cr-pb-modal label{ color:#5f6670; }
+#cr-pb-modal input,#cr-pb-modal select,#cr-pb-modal textarea{
+  width:100%; box-sizing:border-box; margin:0 0 13px; padding:11px 12px; font-size:15px;
+  background:#0c0d0f; border:1px solid rgba(230,235,240,.13); border-radius:10px; color:#eceef0;
+}
+:root[data-theme="rb-light"] #cr-pb-modal input,
+:root[data-theme="rb-light"] #cr-pb-modal select,
+:root[data-theme="rb-light"] #cr-pb-modal textarea{ background:#f4f5f6; border-color:#e2e4e8; color:#17191c; }
+#cr-pb-modal textarea{ min-height:78px; resize:vertical; }
+#cr-pb-modal .row{ display:flex; gap:10px; }
+#cr-pb-modal .row > div{ flex:1; min-width:0; }
+#cr-pb-modal .btns{ display:flex; gap:10px; margin-top:4px; }
+#cr-pb-modal button{
+  flex:1; padding:13px; border-radius:11px; font:700 12px ui-monospace,Menlo,monospace;
+  letter-spacing:.08em; text-transform:uppercase; cursor:pointer; min-height:44px;
+}
+#cr-pb-modal .save{ background:#c8202e; color:#fff; border:1px solid #c8202e; }
+:root[data-theme="rb-light"] #cr-pb-modal .save{ background:#8f1620; border-color:#8f1620; }
+#cr-pb-modal .cancel{ background:transparent; color:#9aa3ab; border:1px solid rgba(230,235,240,.13); }
+:root[data-theme="rb-light"] #cr-pb-modal .cancel{ color:#5f6670; border-color:#e2e4e8; }
+
+/* ---- desktop ------------------------------------------------------------
+   The gate is body.cr-lnav-on (the 572 left-nav signal), not a media query —
+   grep-the-convention. BUG_CLASSES 41: never hang a phone-needed declaration
+   (top, z-index, inset) on this class; it is desktop-only by construction. */
+body.cr-lnav-on #cr-pb .pbtiles{ grid-template-columns:repeat(5,minmax(0,1fr)); }
+body.cr-lnav-on #cr-pb .pbsplit{ display:grid; grid-template-columns:minmax(0,1.7fr) minmax(0,1fr); gap:22px; align-items:start; }
+body.cr-lnav-on #cr-pb .pbday{ min-height:78px; }
+body.cr-lnav-on #cr-pb .pbday .cch{ font-size:8px; padding:2px 4px; }
+body.cr-lnav-on #cr-pb .pbsheet{ margin-top:0; }
+body.cr-lnav-on #cr-pb h1{ font-size:30px; }
+/* 767: cr-lnav-on is the app's desktop signal, but it is set by ANOTHER module
+   when the left nav mounts — so on a wide screen where that has not happened
+   the split silently never applied and the month stacked above its own day
+   sheet. Caught by rendering it, not by reading it. This twin keys on the
+   actual viewport at the same 1100px breakpoint the left nav uses, so the
+   desktop layout no longer depends on a second module having run. */
+@media (min-width:1100px){
+  #cr-pb .pbtiles{ grid-template-columns:repeat(5,minmax(0,1fr)); }
+  #cr-pb .pbsplit{ display:grid; grid-template-columns:minmax(0,1.7fr) minmax(0,1fr); gap:22px; align-items:start; }
+  #cr-pb .pbday{ min-height:78px; }
+  #cr-pb .pbday .cch{ font-size:8px; padding:2px 4px; }
+  #cr-pb .pbsheet{ margin-top:0; }
+  #cr-pb h1{ font-size:30px; }
+}
+</style>
 <script id="cr-pb-script">
 (function(){
 'use strict';
-var items = [];
-var recentlyDone = {};
-var jobFilter    = '';
-/* 603: master-detail state. selJob is the project the dossier is showing;
-   pane is the PHONE's visible half (the desktop shows both and ignores it);
-   dossTab is which punch bucket is open. */
-var selJob  = null;
-var pane    = 'list';
-var dossTab = 'new';
-/* New / Remaining / Closed is DERIVED, not stored — punch_items.status is
-   binary ('open' | 'done'), confirmed against the live table. A row is NEW
-   while it is open and under a week old, REMAINING once it is open and older,
-   CLOSED when it is done. No column, no migration, nothing to backfill. */
+/* ============================================================================
+   PRODUCTION  ·  v2026-08-13 build 767  ·  Cardinal Steel
+   ----------------------------------------------------------------------------
+   This REPLACES the 393/603 board. There is one Production screen and one punch
+   pipeline; this is the same #cr-pb view wearing a new shape, not a second one.
+   What survived byte-for-behaviour, because other modules call it:
+     · window.CardinalProduction {open, close, addFor, refresh, openCount}
+     · openAdd()/saveAdd() — THE add pipeline (cr-pp-script calls addFor twice)
+     · #cr-pb + .open + hideAllViews registration + navSetView('production')
+     · the ONE body observer and the ONE scroll-lock pair (no 14th writer)
+
+   THREE PANES, one view:
+     home — the boxes, the week, today
+     cal  — the full month + a day sheet
+     list — one box's contents
+   BACK GOES UP ONE LEVEL, never Home: list/cal -> home, home -> showHome().
+
+   No emoji: every glyph is an inline SVG on currentColor (the 759 convention).
+   ========================================================================== */
+
+var items = [];          /* punch rows — CardinalPunch's cache when it exists  */
+var pane  = 'home';      /* 'home' | 'cal' | 'list'                            */
+var listKey = 'punch';   /* which box the list pane is showing                 */
+var calMonth = null;     /* Date pinned to the 1st of the month on screen      */
+var selDay = null;       /* Date the agenda/sheet is showing                   */
+var el = null, modal = null, lastSig = '';
+
 var NEW_DAYS = 7;
-function bucketOf(it){
-if(it.status === 'done') return 'closed';
-var t = it.created_at ? Date.parse(it.created_at) : 0;
-if(!t || isNaN(t)) return 'remaining';
-return (Date.now() - t) < NEW_DAYS * 86400000 ? 'new' : 'remaining';
+var ICON = {
+  box  :'<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/>',
+  truck:'<path d="M1 7h11v9H1z"/><path d="M12 10h4l3 3v3h-7"/><circle cx="5.5" cy="18" r="1.7"/><circle cx="15.5" cy="18" r="1.7"/>',
+  cal  :'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  tool :'<path d="M15 5l4 4-9.5 9.5H5.5V14.5z"/><path d="M13 7l4 4"/>',
+  check:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16 9"/>',
+  tick :'<path d="M5 12.5l4.2 4.2L19 7"/>',
+  chev :'<path d="M15 5l-7 7 7 7"/>',
+};
+function svg(name, cls){
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round"' + (cls ? ' class="' + cls + '"' : '') +
+    ' aria-hidden="true">' + (ICON[name] || '') + '</svg>';
 }
-function punchFor(pid){
-return items.filter(function(i){ return String(i.project_id) === String(pid); });
-}
-function openPunchFor(pid){
-return punchFor(pid).filter(function(i){ return i.status === 'open'; });
-}
-/* The list is every project carrying production work: the active jobs first,
-   then any project that owns punch items without being in an active stage.
-   Without that tail those items are reachable from nowhere on this screen —
-   and on the live table today that is EVERY punch item, because the only one
-   sits on a Prospect. */
-function boardJobs(){
-var act = activeJobs();
-var seen = {};
-act.forEach(function(j){ seen[String(j.pr.id)] = true; });
-var extra = [];
-items.forEach(function(i){
-var k = String(i.project_id || '');
-if(!k || seen[k]) return;
-seen[k] = true;
-var pr = projectFor(i.project_id);
-if(pr) extra.push({ pr:pr, blk:null, off:true });
-});
-extra.sort(function(x, y){
-return String(x.pr.name || '').localeCompare(String(y.pr.name || ''));
-});
-return act.concat(extra);
-}
+
+/* ---------------------------------------------------------------- helpers */
 function esc(s){
-return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
-return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
-});
+  return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
 }
 function myEmail(){
-return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
+  return ((window.currentUser && window.currentUser.email) || '').toLowerCase();
 }
 function shortName(e){
-if(!e) return 'unassigned';
-var n = window.DEFAULT_NAMES && window.DEFAULT_NAMES[e];
-return n || String(e).split('@')[0];
+  if(!e) return 'unassigned';
+  if(window.DEFAULT_NAMES && window.DEFAULT_NAMES[e]) return window.DEFAULT_NAMES[e];
+  if(Array.isArray(window.TEAM_ROSTER)){
+    var m = window.TEAM_ROSTER.find(function(x){ return x && x.email === e; });
+    if(m && m.name) return m.name;
+  }
+  return String(e).split('@')[0];
 }
 function portalOf(pr){
-if(typeof window.projClaimType === 'function'){
-try{ return window.projClaimType(pr) || 'unknown'; }catch(_){}
-}
-return 'unknown';
+  if(typeof window.projClaimType === 'function'){
+    try{ return window.projClaimType(pr) || 'unknown'; }catch(_){}
+  }
+  return 'unknown';
 }
 function normStage(s){
-if(typeof window.normStage === 'function'){
-try{ return window.normStage(s); }catch(_){}
-}
-return s;
+  if(typeof window.normStage === 'function'){
+    try{ return window.normStage(s); }catch(_){}
+  }
+  return s;
 }
 function ck(pr){
-try{
-return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {});
-}catch(_){ return pr.checklist || {}; }
-}
-/* 766: THE SCHEDULING BRIDGE. Until this build blockerFor() read
-   checklist.build_date / scheduled_date / lead.build_date — three keys that
-   NOTHING in this app has ever written (verified: one occurrence of each in the
-   whole file, and it was this reader). So 'Needs scheduling' could never clear,
-   and 'Should have started' had never once rendered. Meanwhile Curtis schedules
-   on the Schedule Board, which writes the appointments table with kind 'job'.
-   Read THAT. The checklist keys stay last in the chain so any future writer
-   still works, and so this is additive rather than a swap. */
-function schedFor(pr){
-var aps = window.cacheAppts || [];
-var today = new Date(new Date().toDateString());
-var soonest = null, latestPast = null;
-for(var i = 0; i < aps.length; i++){
-var a = aps[i];
-if(!a || a.kind !== 'job' || !a.appt_date) continue;
-if(String(a.project_id) !== String(pr.id)) continue;
-var d = apptDay(a.appt_date);
-if(!d) continue;
-if(d >= today){ if(!soonest || d < soonest) soonest = d; }
-else if(!latestPast || d > latestPast) latestPast = d;
-}
-/* Prefer the next build day; fall back to the most recent past one so a job
-   that should have started still reads as late instead of as unscheduled. */
-if(soonest) return soonest;
-if(latestPast) return latestPast;
-var c = ck(pr) || {};
-var raw = c.build_date || c.scheduled_date || (c.lead && c.lead.build_date) || null;
-return raw ? apptDay(raw) : null;
-}
-/* A Postgres date column is date-ONLY: new Date('2026-08-21') parses as UTC
-   midnight and renders as the 20th west of Greenwich. crDate() is the app's
-   fix for exactly that (744); this falls back to an explicit local parse so
-   the module still behaves if it is ever loaded before the main block. */
-function apptDay(v){
-if(!v) return null;
-var d = null;
-if(typeof window.crDate === 'function'){ try{ d = window.crDate(v); }catch(_){} }
-if(!d){
-var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v));
-d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(v);
-}
-return (d && !isNaN(d)) ? d : null;
-}
-function pbDay(d){
-return d.toLocaleDateString('en-US', { month:'short', day:'numeric' });
-}
-/* 766: the other half of the loop the app has always left open — setStage()
-   tells Curtis to order materials, and nothing has ever recorded that he did.
-   One checklist key, written by the Materials tab. */
-function matOrdered(pr){
-return !!(ck(pr) || {}).materials_ordered_at;
-}
-function blockerFor(pr){
-var st = normStage(pr.stage);
-var open = items.filter(function(i){
-return String(i.project_id) === String(pr.id) && i.status === 'open';
-});
-var sched = schedFor(pr);
-var ordered = matOrdered(pr);
-if(st === 'Approved'){
-if(!sched) return { tone:'blocked', text:'Needs scheduling' };
-if(!ordered) return { tone:'soon', text:'Materials?' };
-return { tone:'soon', text:'Build ' + pbDay(sched) };
-}
-if(st === 'Scheduled'){
-if(sched){
-if(sched < new Date(new Date().toDateString())){
-return { tone:'blocked', text:'Should have started' };
-}
-if(!ordered) return { tone:'soon', text:'Materials?' };
-return { tone:'soon', text:'Build ' + pbDay(sched) };
-}
-return { tone:'blocked', text:'Needs scheduling' };
-}
-if(st === 'Completed'){
-if(open.length){
-return { tone:'blocked',
-text:open.length + ' punch item' + (open.length === 1 ? '' : 's') };
-}
-return { tone:'clear', text:'Ready to invoice' };
-}
-if(open.length){
-return { tone:'blocked',
-text:open.length + ' open item' + (open.length === 1 ? '' : 's') };
-}
-return null;
-}
-function activeJobs(){
-var list = window.cacheProjects || [];
-return list.filter(function(pr){
-var st = normStage(pr.stage);
-return st === 'Approved' || st === 'Scheduled' || st === 'Completed';
-}).map(function(pr){
-return { pr:pr, blk:blockerFor(pr) };
-}).sort(function(a, b){
-var rank = { blocked:0, soon:1, clear:2 };
-var ra = a.blk ? rank[a.blk.tone] : 3;
-var rb = b.blk ? rank[b.blk.tone] : 3;
-if(ra !== rb) return ra - rb;
-return String(a.pr.name || '').localeCompare(String(b.pr.name || ''));
-});
-}
-async function load(){
-if(!window.supa) return;
-try{
-var r = await window.supa.from('punch_items')
-.select('*').order('created_at', { ascending:false });
-if(r.error){
-if(/does not exist|schema cache/i.test(r.error.message || '')){
-items = []; return;
-}
-console.warn('[prod] load:', r.error.message);
-return;
-}
-items = r.data || [];
-}catch(e){ console.warn('[prod] load failed:', e); }
+  try{ return window.parseCkAll ? window.parseCkAll(pr) : (pr.checklist || {}); }
+  catch(_){ return pr.checklist || {}; }
 }
 function projectFor(pid){
-return (window.cacheProjects || []).find(function(p){
-return String(p.id) === String(pid);
-});
+  return (window.cacheProjects || []).find(function(p){ return String(p.id) === String(pid); });
 }
-var el = null;
-function ensure(){
-if(el) return el;
-el = document.createElement('div');
-el.id = 'cr-pb';
-document.body.appendChild(el);
-var fab = document.createElement('button');
-fab.className = 'cr-pb-fab';
-fab.type = 'button';
-fab.innerHTML = '+';
-fab.title = 'Add a punch item';
-fab.onclick = function(){ openAdd(null); };
-document.body.appendChild(fab);
-return el;
+function midnight(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+function today(){ return midnight(new Date()); }
+function keyOf(d){
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+         String(d.getDate()).padStart(2, '0');
 }
+/* A Postgres date column is date-ONLY: new Date('2026-08-21') is UTC midnight
+   and renders as the 20th west of Greenwich. crDate() is the app's fix (744). */
+function apptDay(v){
+  if(!v) return null;
+  var d = null;
+  if(typeof window.crDate === 'function'){ try{ d = window.crDate(v); }catch(_){} }
+  if(!d || isNaN(d)){
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v));
+    d = m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : new Date(v);
+  }
+  return (d && !isNaN(d)) ? midnight(d) : null;
+}
+function pbDay(d){ return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
+function pbFull(d){ return d.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' }); }
+
+/* ------------------------------------------------------------ punch access */
+/* CardinalPunch.rows is a FUNCTION returning a fresh copy of the cache, not an
+   array property — the gate caught this by exploding on the first render. The
+   copy is shallow, so the row OBJECTS are shared and an optimistic mutation
+   still lands on the real cache. */
+function punchRows(){
+  var P = window.CardinalPunch;
+  if(P && typeof P.rows === 'function'){
+    try{ var r = P.rows(); if(Array.isArray(r)) return r; }catch(_){}
+  }
+  if(P && Array.isArray(P.rows)) return P.rows;
+  return Array.isArray(items) ? items : [];
+}
+function openPunchFor(pid){
+  return punchRows().filter(function(i){
+    return String(i.project_id) === String(pid) && i.status === 'open';
+  });
+}
+function bucketOf(it){
+  if(it.status === 'done') return 'closed';
+  var t = it.created_at ? Date.parse(it.created_at) : 0;
+  if(!t || isNaN(t)) return 'remaining';
+  return (Date.now() - t) < NEW_DAYS * 86400000 ? 'new' : 'remaining';
+}
+
+/* ------------------------------------------------- job state (766's truth) */
+/* schedFor reads the REAL schedule: appointments of kind 'job'. Before 766 this
+   read three checklist keys nothing has ever written, so "Needs scheduling"
+   could not clear. The checklist keys stay last so it is additive. */
+function schedFor(pr){
+  var aps = window.cacheAppts || [];
+  var t = today(), soonest = null, latestPast = null;
+  for(var i = 0; i < aps.length; i++){
+    var a = aps[i];
+    if(!a || a.kind !== 'job' || !a.appt_date) continue;
+    if(String(a.project_id) !== String(pr.id)) continue;
+    var d = apptDay(a.appt_date);
+    if(!d) continue;
+    if(d >= t){ if(!soonest || d < soonest) soonest = d; }
+    else if(!latestPast || d > latestPast) latestPast = d;
+  }
+  if(soonest) return soonest;
+  if(latestPast) return latestPast;
+  var c = ck(pr) || {};
+  var raw = c.build_date || c.scheduled_date || (c.lead && c.lead.build_date) || null;
+  return raw ? apptDay(raw) : null;
+}
+function dropFor(pr){
+  var aps = window.cacheAppts || [], t = today(), soonest = null;
+  for(var i = 0; i < aps.length; i++){
+    var a = aps[i];
+    if(!a || a.kind !== 'drop' || !a.appt_date) continue;
+    if(String(a.project_id) !== String(pr.id)) continue;
+    var d = apptDay(a.appt_date);
+    if(d && d >= t && (!soonest || d < soonest)) soonest = d;
+  }
+  return soonest;
+}
+function matOrdered(pr){ return !!(ck(pr) || {}).materials_ordered_at; }
+function blockerFor(pr){
+  var st = normStage(pr.stage);
+  var open = openPunchFor(pr.id);
+  var sched = schedFor(pr);
+  var ordered = matOrdered(pr);
+  if(st === 'Approved'){
+    if(!sched) return { tone:'blocked', text:'Needs scheduling' };
+    if(!ordered) return { tone:'soon', text:'Materials?' };
+    return { tone:'soon', text:'Build ' + pbDay(sched) };
+  }
+  if(st === 'Scheduled'){
+    if(sched){
+      if(sched < today()) return { tone:'blocked', text:'Should have started' };
+      if(!ordered) return { tone:'soon', text:'Materials?' };
+      return { tone:'soon', text:'Build ' + pbDay(sched) };
+    }
+    return { tone:'blocked', text:'Needs scheduling' };
+  }
+  if(st === 'Completed'){
+    if(open.length) return { tone:'blocked', text:open.length + ' punch item' + (open.length === 1 ? '' : 's') };
+    return { tone:'clear', text:'Ready to invoice' };
+  }
+  if(open.length) return { tone:'blocked', text:open.length + ' open item' + (open.length === 1 ? '' : 's') };
+  return null;
+}
+function activeJobs(){
+  return (window.cacheProjects || []).filter(function(pr){
+    var st = normStage(pr.stage);
+    return st === 'Approved' || st === 'Scheduled' || st === 'Completed';
+  }).map(function(pr){ return { pr:pr, blk:blockerFor(pr) }; })
+    .sort(function(a, b){
+      var rank = { blocked:0, soon:1, clear:2 };
+      var ra = a.blk ? rank[a.blk.tone] : 3, rb = b.blk ? rank[b.blk.tone] : 3;
+      if(ra !== rb) return ra - rb;
+      return String(a.pr.name || '').localeCompare(String(b.pr.name || ''));
+    });
+}
+/* The off-stage tail is load-bearing, not untidiness: on the live database
+   EVERY punch item sits on a project that is not in an active stage, so without
+   this they are reachable from nowhere on this screen (604/605). */
+function boardJobs(){
+  var act = activeJobs(), seen = {}, extra = [];
+  act.forEach(function(j){ seen[String(j.pr.id)] = true; });
+  punchRows().forEach(function(i){
+    var k = String(i.project_id || '');
+    if(!k || seen[k]) return;
+    seen[k] = true;
+    var pr = projectFor(i.project_id);
+    if(pr) extra.push({ pr:pr, blk:null, off:true });
+  });
+  extra.sort(function(x, y){ return String(x.pr.name || '').localeCompare(String(y.pr.name || '')); });
+  return act.concat(extra);
+}
+
+/* ----------------------------------------------------------- the five boxes */
+function boxes(){
+  var jobs = activeJobs();
+  var needs = jobs.filter(function(j){
+    var st = normStage(j.pr.stage);
+    return (st === 'Approved' || st === 'Scheduled') && !matOrdered(j.pr);
+  });
+  var ordered = jobs.filter(function(j){
+    return matOrdered(j.pr) && normStage(j.pr.stage) !== 'Completed';
+  });
+  var sched = jobs.filter(function(j){ return !!schedFor(j.pr); });
+  var open = punchRows().filter(function(i){ return i.status === 'open'; });
+  var mstart = new Date(); mstart.setDate(1); mstart = midnight(mstart);
+  var closed = punchRows().filter(function(i){
+    if(i.status !== 'done' || !i.done_at) return false;
+    var d = new Date(i.done_at);
+    return !isNaN(d) && d >= mstart;
+  });
+  return { needs:needs, ordered:ordered, sched:sched, open:open, closed:closed };
+}
+
+/* ------------------------------------------------------------- day events */
+function eventsFor(d){
+  var k = keyOf(d), out = [];
+  (window.cacheAppts || []).forEach(function(a){
+    if(!a || !a.appt_date || (a.kind !== 'job' && a.kind !== 'drop')) return;
+    var ad = apptDay(a.appt_date);
+    if(!ad || keyOf(ad) !== k) return;
+    var pr = projectFor(a.project_id);
+    out.push({
+      cls  : a.kind === 'job' ? 'build' : 'drop',
+      icon : a.kind === 'job' ? 'cal' : 'truck',
+      title: (pr && pr.name) ? pr.name + (a.kind === 'job' ? ' — build day' : ' — material drop')
+                             : (a.title || (a.kind === 'job' ? 'Build day' : 'Material drop')),
+      sub  : a.title || '',
+      tag  : a.appt_time ? String(a.appt_time).slice(0, 5) : (a.kind === 'job' ? 'BUILD' : 'DROP'),
+      pid  : a.project_id || null,
+      chip : (pr && pr.name) ? pr.name : (a.kind === 'job' ? 'Build' : 'Drop'),
+    });
+  });
+  punchRows().forEach(function(i){
+    var when = i.status === 'done' ? i.done_at : i.scheduled_at;
+    if(!when) return;
+    var wd = apptDay(when);
+    if(!wd || keyOf(wd) !== k) return;
+    var pr = projectFor(i.project_id);
+    out.push({
+      cls  : i.status === 'done' ? 'done' : 'punch',
+      icon : i.status === 'done' ? 'check' : 'tool',
+      title: (pr && pr.name ? pr.name + ' — ' : '') + (i.title || 'Punch-out'),
+      sub  : (i.status === 'done' ? 'closed by ' + shortName(i.done_by) : shortName(i.assigned_to)),
+      tag  : i.status === 'done' ? 'DONE' : (i.priority === 'high' ? 'URGENT' : 'PUNCH'),
+      pid  : i.project_id || null,
+      item : i.id,
+      chip : (pr && pr.name) ? pr.name : (i.title || 'Punch'),
+    });
+  });
+  return out;
+}
+
+/* ------------------------------------------------------------------ render */
 function render(){
-ensure();
-var allJobs = activeJobs();
-var open    = items.filter(function(i){ return i.status === 'open'; });
-var blocked = allJobs.filter(function(j){ return j.blk && j.blk.tone === 'blocked'; });
-var ready   = allJobs.filter(function(j){ return j.blk && j.blk.tone === 'clear'; });
-var list    = boardJobs();
-/* Keep the selection across a reload; fall back to the top of the list. The
-   desktop always has a dossier open, the phone starts on the list. */
-if(selJob && !list.some(function(j){ return String(j.pr.id) === String(selJob); })) selJob = null;
-if(!selJob && list.length) selJob = list[0].pr.id;
-if(!list.length){ selJob = null; pane = 'list'; }
-el.innerHTML =
-'<div class="cr-pb-wrap">' +
-'<div class="cr-pb-top">' +
-'<button class="cr-pb-back" data-act="back" type="button" title="Back">←</button>' +
-'<div class="cr-pb-ttl">' +
-'<h1>Pro<span>duction</span></h1>' +
-'<p>Jobs · Punch · Callbacks</p>' +
-'</div>' +
-'</div>' +
-'<div class="cr-pb-att">' +
-'<button class="bad' + (jobFilter === 'blocked' ? ' on' : '') +
-'" data-jump="blocked" type="button">' +
-'<div class="n">' + blocked.length + '</div>' +
-'<div class="l">Blocked</div></button>' +
-'<button class="hot" data-jump="punch" type="button">' +
-'<div class="n">' + open.length + '</div>' +
-'<div class="l">Open items</div></button>' +
-'<button class="ok' + (jobFilter === 'ready' ? ' on' : '') +
-'" data-jump="ready" type="button">' +
-'<div class="n">' + ready.length + '</div>' +
-'<div class="l">To invoice</div></button>' +
-'</div>' +
-'<div class="cr-pb-split" data-pane="' + pane + '">' +
-'<div class="cr-pb-list">' + listHtml(list) + '</div>' +
-'<div class="cr-pb-doss">' + dossHtml(list) + '</div>' +
-'</div>' +
-'</div>';
-wire();
-paintSignedPhotoImgs(el);
+  ensure();
+  var html = pane === 'cal' ? calHtml() : pane === 'list' ? listPaneHtml() : homeHtml();
+  /* 606: an unguarded innerHTML write inside a module whose own observer
+     watches document.body repainted 54x/sec and destroyed the button under
+     Theo's finger. Compare against the last GENERATED markup, never against
+     live innerHTML — the browser re-serialises and a live compare can never
+     settle. */
+  if(html === lastSig) return;
+  lastSig = html;
+  el.innerHTML = html;
+  wire();
 }
-function listHtml(list){
-var jobs = list;
-if(jobFilter === 'blocked'){
-jobs = list.filter(function(j){ return j.blk && j.blk.tone === 'blocked'; });
-}else if(jobFilter === 'ready'){
-jobs = list.filter(function(j){ return j.blk && j.blk.tone === 'clear'; });
-}else if(jobFilter === 'mine'){
-var me = myEmail();
-jobs = list.filter(function(j){
-return openPunchFor(j.pr.id).some(function(i){
-return String(i.assigned_to || '').toLowerCase() === me;
-});
-});
+function head(title, backTo){
+  return '<div class="pbtop">' +
+    (backTo ? '<button class="pbback" data-back="' + backTo + '" type="button" aria-label="Back">' + svg('chev') + '</button>' : '') +
+    '<h1>' + title + '</h1>' +
+    (pane === 'cal'
+      ? '<div class="pbmon"><button data-mon="-1" type="button" aria-label="Previous month">‹</button>' +
+        esc(calMonth.toLocaleDateString('en-US', { month:'long', year:'numeric' })) +
+        '<button data-mon="1" type="button" aria-label="Next month">›</button></div>'
+      : '<div class="pbmon">' + esc(pbFull(today())) + '</div>') +
+    '</div>';
 }
-var head = jobFilter === 'blocked' ? 'Blocked jobs'
-: jobFilter === 'ready' ? 'Ready to invoice'
-: jobFilter === 'mine' ? 'My punch items'
-: 'Jobs in flight';
-return '<div class="cr-pb-rule" id="cr-pb-jobs">' + head +
-'<button class="cr-pb-mine' + (jobFilter === 'mine' ? ' on' : '') +
-'" data-jump="mine" type="button">MINE</button>' +
-(jobFilter ? '<button class="cr-pb-mine" data-jump="clear" type="button">SHOW ALL</button>' : '') +
-'</div>' +
-(jobs.length
-? jobs.map(jobRow).join('')
-: '<div class="cr-pb-empty">' +
-(list.length
-? 'Nothing under that filter.'
-: 'Nothing in production right now.' +
-'<span class="cr-pb-hint">A job lands here once its stage is Approved, ' +
-'Scheduled or Completed. Any job carrying punch items shows up too, ' +
-'whatever its stage.</span>') +
-'</div>');
+function tilesHtml(){
+  var b = boxes();
+  var nextBuild = null;
+  b.sched.forEach(function(j){
+    var d = schedFor(j.pr);
+    if(d && d >= today() && (!nextBuild || d < nextBuild)) nextBuild = d;
+  });
+  var urg = b.open.filter(function(i){ return i.priority === 'high'; }).length;
+  function tile(key, n, icon, label, sub, att){
+    return '<button class="pbtile' + (att && n ? ' att' : '') + '" data-box="' + key + '" type="button">' +
+      '<div class="v">' + n + '</div>' +
+      '<div class="l">' + svg(icon) + esc(label) + '</div>' +
+      '<div class="s">' + sub + '</div></button>';
+  }
+  return '<div class="pbtiles">' +
+    tile('needs', b.needs.length, 'box', 'Needs ordered',
+      b.needs.length ? esc(b.needs[0].pr.name || 'a job') + (b.needs.length > 1 ? ' +' + (b.needs.length - 1) : '') : 'all ordered', true) +
+    tile('ordered', b.ordered.length, 'truck', 'Ordered',
+      b.ordered.length ? 'on the way' : 'nothing out') +
+    tile('sched', b.sched.length, 'cal', 'Scheduled',
+      nextBuild ? 'next build ' + esc(pbDay(nextBuild)) : 'nothing booked') +
+    tile('punch', b.open.length, 'tool', 'Punch-outs',
+      (urg ? '<em>' + urg + ' urgent</em>' : 'none urgent'), true) +
+    '</div>' +
+    '<button class="pbclosed" data-box="closed" type="button">' + svg('check') +
+      '<span class="t">Closed repairs</span><span class="c">' + b.closed.length + ' this month</span>' +
+      '<span class="go">›</span></button>';
 }
-function jobRow(j){
-var p = portalOf(j.pr);
-var tone = j.blk ? j.blk.tone : '';
-var nOpen = openPunchFor(j.pr.id).length;
-return '<button class="cr-pb-job ' + tone +
-(String(j.pr.id) === String(selJob) ? ' sel' : '') +
-(j.off ? ' off' : '') + '" data-sel="' + esc(j.pr.id) + '" type="button">' +
-'<span class="portal ' + p + '" title="' + p + '"></span>' +
-'<span class="who">' +
-'<span class="nm">' + esc(j.pr.name || 'Unnamed') + '</span>' +
-'<span class="ad">' + esc(j.pr.address || '') + '</span>' +
-(j.blk
-? '<span class="blk">' + esc(j.blk.text) + '</span>'
-: (j.off ? '<span class="blk off">Not in production</span>' : '')) +
-'</span>' +
-(nOpen ? '<span class="pcount">' + nOpen + '</span>' : '') +
-'<span class="chev">›</span>' +
-'</button>';
+function weekHtml(){
+  var base = selDay || today(), start = new Date(base);
+  start.setDate(start.getDate() - start.getDay());
+  var out = '<div class="pbweek">';
+  for(var i = 0; i < 7; i++){
+    var d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    var evs = eventsFor(d), seen = {}, pips = '';
+    evs.forEach(function(e){
+      if(seen[e.cls]) return;
+      seen[e.cls] = true;
+      pips += '<span class="pbpip ' + e.cls + '"></span>';
+    });
+    out += '<button class="pbwd' + (keyOf(d) === keyOf(base) ? ' on' : '') + '" data-day="' + keyOf(d) + '" type="button">' +
+      '<span class="dw">' + d.toLocaleDateString('en-US', { weekday:'narrow' }) + '</span>' +
+      '<span class="dn">' + d.getDate() + '</span>' +
+      '<span class="pbpips">' + pips + '</span></button>';
+  }
+  return out + '</div>';
 }
-function tabBtn(k, lbl, n){
-return '<button class="cr-pb-tab' + (dossTab === k ? ' on' : '') +
-'" data-tab="' + k + '" type="button">' +
-'<span class="tn">' + n + '</span>' +
-'<span class="tl">' + lbl + '</span></button>';
+function evHtml(e){
+  return '<button class="pbev ' + e.cls + '" type="button"' +
+    (e.item ? ' data-item="' + esc(e.item) + '"' : '') +
+    (e.pid ? ' data-job="' + esc(e.pid) + '"' : '') + '>' +
+    '<span class="eic">' + svg(e.icon) + '</span>' +
+    '<span class="tx"><b>' + esc(e.title) + '</b>' +
+    (e.sub ? '<small>' + esc(e.sub) + '</small>' : '') + '</span>' +
+    '<span class="tg">' + esc(e.tag) + '</span></button>';
 }
-function dossHtml(list){
-var entry = null;
-for(var x = 0; x < list.length; x++){
-if(String(list[x].pr.id) === String(selJob)){ entry = list[x]; break; }
+function agendaHtml(d){
+  var evs = eventsFor(d);
+  if(!evs.length){
+    return '<div class="pbempty"><b>Nothing on ' + esc(pbDay(d)) + '</b>' +
+      'Tap a day to see its work, or add something to this one.</div>';
+  }
+  return evs.map(evHtml).join('');
 }
-if(!entry) return '';
-var pr = entry.pr;
-var pf = punchFor(pr.id);
-var nNew = 0, nRem = 0, nCls = 0;
-pf.forEach(function(i){
-var bk = bucketOf(i);
-if(bk === 'new') nNew++; else if(bk === 'remaining') nRem++; else nCls++;
-});
-var counts = { 'new':nNew, 'remaining':nRem, 'closed':nCls };
-if(!counts[dossTab]) dossTab = nNew ? 'new' : (nRem ? 'remaining' : (nCls ? 'closed' : 'new'));
-var shown = pf.filter(function(i){ return bucketOf(i) === dossTab; }).sort(function(a, b){
-var wa = (a.priority === 'high' ? 0 : 1) + (a.kind === 'callback' ? -0.5 : 0);
-var wb = (b.priority === 'high' ? 0 : 1) + (b.kind === 'callback' ? -0.5 : 0);
-if(wa !== wb) return wa - wb;
-return String(b.created_at || '').localeCompare(String(a.created_at || ''));
-});
-/* 759: was pr.phone only, which is NULL for a third of the book. */
-var _ph = (typeof window.projPhone === 'function')
-? window.projPhone(pr)
-: { digits: String(pr.phone || '').replace(/[^0-9+]/g, ''), pretty: '' };
-var tel = _ph.digits;
-var empty = dossTab === 'new' ? 'Nothing new on this job.'
-: dossTab === 'remaining' ? 'Nothing outstanding on this job.'
-: 'Nothing closed on this job yet.';
-return '<div class="cr-pb-dcard">' +
-'<div class="cr-pb-dtop">' +
-'<button class="cr-pb-dback" data-act="tolist" type="button">← Jobs</button>' +
-'<span class="portal ' + portalOf(pr) + '" title="' + portalOf(pr) + '"></span>' +
-'<span class="cr-pb-dstage">' + esc(normStage(pr.stage) || '') + '</span>' +
-'</div>' +
-'<h2 class="cr-pb-dname">' + esc(pr.name || 'Unnamed') + '</h2>' +
-(pr.address ? '<div class="cr-pb-daddr">' + esc(pr.address) + '</div>' : '') +
-(entry.blk
-? '<div class="cr-pb-dblk ' + entry.blk.tone + '">' + esc(entry.blk.text) + '</div>'
-: (entry.off
-? '<div class="cr-pb-dblk soon">Carries punch · not in an active stage</div>'
-: '')) +
-'<div class="cr-pb-dacts">' +
-'<button class="cr-pb-dgo" data-open="' + esc(pr.id) + '" type="button">Open client profile</button>' +
-(tel ? '<a class="cr-pb-dtel" href="tel:' + esc(tel) + '" title="Call ' + esc(_ph.pretty || tel) + '">' +
-  /* 759: Theo asked for a phone icon. Inline SVG with currentColor, the
-     convention this app settled on at 414 — an emoji cannot take the button's
-     colour and renders differently on every device. */
-  '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" ' +
-  'stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
-  'style="vertical-align:-2px;margin-right:6px">' +
-  '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.9.6 2.8a2 2 0 0 1-.4 2.1L8 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.9.5 2.8.6a2 2 0 0 1 1.8 2.1z"/>' +
-  '</svg>Call</a>' : '') +
-'<button class="cr-pb-dadd" data-addfor="' + esc(pr.id) + '" type="button">+ Punch item</button>' +
-'</div>' +
-'<div class="cr-pb-tabs">' +
-tabBtn('new', 'New', nNew) +
-tabBtn('remaining', 'Remaining', nRem) +
-tabBtn('closed', 'Closed', nCls) +
-'</div>' +
-(shown.length
-? shown.map(renderItem).join('')
-: '<div class="cr-pb-empty">' + empty + '</div>') +
-'</div>';
+function homeHtml(){
+  var d = selDay || today();
+  return '<div class="pbwrap">' +
+    head('Pro<span>duction</span>', 'home') +
+    '<div class="pbsub">Jobs · Schedule · Punch</div>' +
+    tilesHtml() +
+    weekHtml() +
+    '<div class="pbrule">' + esc(keyOf(d) === keyOf(today()) ? 'Today' : pbFull(d)) +
+      '<span class="sp">' +
+      '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
+      '<button class="pbchip" data-go="cal" type="button">Full calendar ›</button>' +
+      '</span></div>' +
+    agendaHtml(d) +
+    '</div>';
 }
-function renderItem(i){
-var pr = projectFor(i.project_id);
-var when = i.created_at
-? new Date(i.created_at).toLocaleDateString('en-US', { month:'short', day:'numeric' })
-: '';
-return '<div class="cr-pb-item' + (i.priority === 'high' ? ' high' : '') +
-(i.status === 'done' ? ' done' : '') + '" data-item="' + esc(i.id) + '">' +
-'<button class="box" data-act="toggle" type="button">' +
-(i.status === 'done' ? '\u2713' : '') + '</button>' +
-'<span class="txt">' +
-'<span class="t">' + esc(i.title) + '</span>' +
-'<span class="m">' +
-'<span class="kind ' + esc(i.kind) + '">' + esc(i.kind) + '</span>' +
-(pr ? '<span>' + esc(pr.name || '') + '</span>' : '') +
-(i.assigned_to ? '<span>\u00b7 ' + esc(shortName(i.assigned_to)) + '</span>' : '') +
-(when ? '<span>\u00b7 ' + when + '</span>' : '') +
-'</span>' +
-'</span>' +
-(i.photo_url
-? '<img class="proof" src="' + esc(i.photo_url) + '" alt="" data-act="zoom">'
-: '<button class="cam" data-act="photo" type="button" title="Attach proof">\uD83D\uDCF7</button>') +
-'</div>';
+function calHtml(){
+  var m = calMonth, first = new Date(m.getFullYear(), m.getMonth(), 1);
+  var start = new Date(first); start.setDate(1 - first.getDay());
+  var d = selDay || today();
+  var cells = '';
+  for(var i = 0; i < 42; i++){
+    var day = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    if(i >= 35 && day.getMonth() !== m.getMonth()) break;
+    var evs = eventsFor(day);
+    var chips = evs.slice(0, 2).map(function(e){
+      return '<span class="cch ' + e.cls + '">' + esc(e.chip) + '</span>';
+    }).join('');
+    if(evs.length > 2) chips += '<span class="cch drop">+' + (evs.length - 2) + ' more</span>';
+    cells += '<button class="pbday' +
+      (day.getMonth() !== m.getMonth() ? ' out' : '') +
+      (keyOf(day) === keyOf(today()) ? ' today' : '') +
+      (keyOf(day) === keyOf(d) ? ' sel' : '') +
+      '" data-day="' + keyOf(day) + '" type="button">' +
+      '<span class="dn">' + day.getDate() + '</span>' + chips + '</button>';
+  }
+  return '<div class="pbwrap">' +
+    head('Calendar', 'home') +
+    '<div class="pbsplit"><div class="pbcal">' +
+    '<div class="pbdow"><span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span></div>' +
+    '<div class="pbgrid">' + cells + '</div></div>' +
+    '<div class="pbsheet"><div class="hd"></div>' +
+    '<div class="pbrule">' + esc(pbFull(d)) +
+      '<span class="sp"><button class="pbchip" data-add="1" type="button">+ Add</button></span></div>' +
+    agendaHtml(d) + unscheduledHtml() +
+    '</div></div></div>';
 }
+/* Curtis's dispatch queue: work that exists but has no date on it yet. */
+function unscheduledHtml(){
+  var b = boxes();
+  var waiting = b.needs.concat(b.sched.length ? [] : []).filter(function(j){ return !schedFor(j.pr); });
+  var loose = punchRows().filter(function(i){ return i.status === 'open' && !i.scheduled_at; });
+  if(!waiting.length && !loose.length) return '';
+  var out = '<div class="pbrule" style="margin-top:16px;">Needs a date</div>';
+  waiting.slice(0, 4).forEach(function(j){
+    out += jobHtml(j);
+  });
+  loose.slice(0, 4).forEach(function(i){
+    out += itemHtml(i);
+  });
+  return out;
+}
+function jobHtml(j){
+  var pr = j.pr, blk = j.blk, sched = schedFor(pr), drop = dropFor(pr);
+  var bits = '';
+  if(blk) bits += '<span class="pbtag ' + blk.tone + '">' + esc(blk.text) + '</span>';
+  else if(j.off) bits += '<span class="pbtag mut">Not in production</span>';
+  if(drop) bits += '<span class="pbtag mut">Drop ' + esc(pbDay(drop)) + '</span>';
+  if(matOrdered(pr)) bits += '<span class="pbtag done">Ordered</span>';
+  var n = openPunchFor(pr.id).length;
+  if(n) bits += '<span class="pbtag blocked">' + n + ' open</span>';
+  var acts = '';
+  if(listKey === 'needs' || (!matOrdered(pr) && listKey !== 'closed')){
+    acts += '<button class="pbact" data-ord="' + esc(pr.id) + '" type="button">Mark ordered</button>';
+  }
+  acts += '<button class="pbact ghost" data-job="' + esc(pr.id) + '" type="button">Open job</button>';
+  return '<div class="pbjob ' + (blk ? blk.tone : '') + '">' +
+    '<div class="nm"><span class="pbdot ' + portalOf(pr) + '"></span><span class="t">' + esc(pr.name || 'Unnamed') + '</span></div>' +
+    '<span class="ad">' + esc(pr.address || 'No address') + (sched ? ' · build ' + esc(pbDay(sched)) : '') + '</span>' +
+    '<div class="pbrow2">' + bits + '</div>' +
+    '<div class="pbrow2">' + acts + '</div>' +
+    '</div>';
+}
+function itemHtml(i){
+  var pr = projectFor(i.project_id);
+  var when = i.status === 'done'
+    ? (i.done_at ? 'closed ' + pbDay(new Date(i.done_at)) + ' · ' + shortName(i.done_by) : 'closed')
+    : (i.scheduled_at ? pbDay(apptDay(i.scheduled_at)) + ' · ' + shortName(i.assigned_to)
+                      : shortName(i.assigned_to));
+  return '<div class="pbitem' + (i.status === 'done' ? ' done' : '') + '" data-item="' + esc(i.id) + '">' +
+    '<button class="bx" data-tick="' + esc(i.id) + '" type="button" aria-label="' +
+      (i.status === 'done' ? 'Reopen' : 'Close') + '">' + svg('tick') + '</button>' +
+    '<span class="tx"><b>' + esc(i.title || 'Punch-out') + '</b>' +
+    '<small>' + esc((pr && pr.name ? pr.name + ' · ' : '') + when) + '</small></span>' +
+    (i.priority === 'high' && i.status !== 'done' ? '<span class="pbtag blocked">Urgent</span>' : '') +
+    '</div>';
+}
+var BOX_TITLE = {
+  needs:'Needs ordered', ordered:'Ordered', sched:'Scheduled',
+  punch:'Punch-outs', closed:'Closed repairs',
+};
+function listPaneHtml(){
+  var b = boxes(), body = '';
+  if(listKey === 'punch'){
+    var open = b.open.slice().sort(function(x, y){
+      var px = x.priority === 'high' ? 0 : 1, py = y.priority === 'high' ? 0 : 1;
+      if(px !== py) return px - py;
+      return String(y.created_at || '').localeCompare(String(x.created_at || ''));
+    });
+    body = open.length ? open.map(itemHtml).join('')
+      : '<div class="pbempty"><b>No open punch-outs</b>Nothing is waiting on the field right now.</div>';
+  }else if(listKey === 'closed'){
+    var done = punchRows().filter(function(i){ return i.status === 'done'; })
+      .sort(function(x, y){ return String(y.done_at || '').localeCompare(String(x.done_at || '')); });
+    body = done.length ? done.map(itemHtml).join('')
+      : '<div class="pbempty"><b>No closed repairs yet</b>Closed punch-outs land here and on the client’s history — they are never deleted.</div>';
+  }else{
+    var jobs = listKey === 'needs' ? b.needs : listKey === 'ordered' ? b.ordered : b.sched;
+    body = jobs.length ? jobs.map(jobHtml).join('')
+      : '<div class="pbempty"><b>Nothing here</b>' +
+        (listKey === 'needs' ? 'Every job in production has its materials marked ordered.'
+         : listKey === 'ordered' ? 'No materials are out for order right now.'
+         : 'No job has a build day on the Schedule Board yet.') + '</div>';
+  }
+  return '<div class="pbwrap">' +
+    head(esc(BOX_TITLE[listKey] || 'Production'), 'home') +
+    '<div class="pbsub">' + esc(BOX_TITLE[listKey] || '') + '</div>' +
+    (listKey === 'punch' ? '<div class="pbrule">Open<span class="sp">' +
+      '<button class="pbchip" data-add="1" type="button">+ Add</button></span></div>' : '') +
+    body + '</div>';
+}
+
+/* -------------------------------------------------------------------- wire */
 function wire(){
-el.querySelector('[data-act="back"]').onclick = close;
-el.querySelectorAll('[data-jump]').forEach(function(b){
-b.onclick = function(){
-var k = b.dataset.jump;
-if(k === 'punch'){
-/* The phone has to change pane to show the dossier at all; the desktop
-   already has it on screen and only needs it scrolled to. */
-if(!document.body.classList.contains('cr-lnav-on') && selJob) pane = 'doss';
-render();
-var n = el.querySelector('.cr-pb-doss');
-if(n) n.scrollIntoView({ behavior:'smooth', block:'start' });
-return;
+  el.querySelectorAll('[data-back]').forEach(function(b){
+    b.onclick = function(){
+      if(pane === 'home') close();          /* one level up from home is Home */
+      else { pane = 'home'; render(); scrollTop(); }
+    };
+  });
+  el.querySelectorAll('[data-box]').forEach(function(b){
+    b.onclick = function(){ listKey = b.getAttribute('data-box'); pane = 'list'; render(); scrollTop(); };
+  });
+  el.querySelectorAll('[data-go="cal"]').forEach(function(b){
+    b.onclick = function(){
+      calMonth = calMonth || monthOf(selDay || today());
+      pane = 'cal'; render(); scrollTop();
+    };
+  });
+  el.querySelectorAll('[data-mon]').forEach(function(b){
+    b.onclick = function(){
+      var step = Number(b.getAttribute('data-mon')) || 0;
+      calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + step, 1);
+      render();
+    };
+  });
+  el.querySelectorAll('[data-day]').forEach(function(b){
+    b.onclick = function(){
+      var parts = b.getAttribute('data-day').split('-');
+      selDay = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      render();
+    };
+  });
+  el.querySelectorAll('[data-add]').forEach(function(b){
+    b.onclick = function(){ openAdd(null); };
+  });
+  el.querySelectorAll('[data-job]').forEach(function(b){
+    b.onclick = function(ev){
+      ev.stopPropagation();
+      var id = b.getAttribute('data-job');
+      if(!id) return;
+      close(false);
+      if(typeof window.openProject === 'function') window.openProject(id);
+    };
+  });
+  el.querySelectorAll('[data-ord]').forEach(function(b){
+    b.onclick = async function(ev){
+      ev.stopPropagation();
+      b.disabled = true;
+      try{ await markOrdered(b.getAttribute('data-ord')); }
+      catch(e){ alert('Could not save: ' + (e.message || e)); b.disabled = false; }
+    };
+  });
+  el.querySelectorAll('[data-tick]').forEach(function(b){
+    b.onclick = function(ev){
+      ev.stopPropagation();
+      var it = punchRows().find(function(x){ return String(x.id) === b.getAttribute('data-tick'); });
+      if(it) toggle(it);
+    };
+  });
+  /* An item row opens the client's punch screen with THAT item showing — the
+     610 contract. Build 768 replaces the destination with the new card; the
+     handoff shape stays the same. */
+  el.querySelectorAll('[data-item]').forEach(function(b){
+    if(b.hasAttribute('data-tick')) return;
+    b.onclick = function(ev){
+      if(ev.target.closest('[data-tick]')) return;
+      var id = b.getAttribute('data-item');
+      var it = punchRows().find(function(x){ return String(x.id) === String(id); });
+      if(!it) return;
+      close(false);
+      if(typeof window.openProject === 'function') window.openProject(it.project_id);
+      if(window.CardinalPunchProfile && window.CardinalPunchProfile.openItem){
+        try{ window.CardinalPunchProfile.openItem(it.project_id, it.id); }catch(_){}
+      }
+    };
+  });
 }
-jobFilter = (k === 'clear' || jobFilter === k) ? '' : k;
-render();
-var top = document.getElementById('cr-pb-jobs');
-if(top) top.scrollIntoView({ behavior:'smooth', block:'start' });
-};
-});
-el.querySelectorAll('[data-sel]').forEach(function(b){
-b.onclick = function(){
-selJob  = b.dataset.sel;
-dossTab = 'new';
-if(!document.body.classList.contains('cr-lnav-on')) pane = 'doss';
-render();
-el.scrollTop = 0;
-};
-});
-el.querySelectorAll('[data-tab]').forEach(function(b){
-b.onclick = function(){ dossTab = b.dataset.tab; render(); };
-});
-var back = el.querySelector('[data-act="tolist"]');
-if(back) back.onclick = function(){ pane = 'list'; render(); el.scrollTop = 0; };
-el.querySelectorAll('[data-addfor]').forEach(function(b){
-b.onclick = function(){ openAdd(b.dataset.addfor); };
-});
-el.querySelectorAll('[data-open]').forEach(function(b){
-b.onclick = function(){
-var id = b.dataset.open;
-close(false);
-if(typeof window.openProject === 'function') window.openProject(id);
-};
-});
-el.querySelectorAll('.cr-pb-item').forEach(function(row){
-var id = row.dataset.item;
-var it = items.find(function(x){ return String(x.id) === String(id); });
-if(!it) return;
-var box = row.querySelector('[data-act="toggle"]');
-if(box) box.onclick = function(ev){ ev.stopPropagation(); toggle(it); };
-row.style.cursor = 'pointer';
-row.onclick = function(){
-/* 610: this used to land on the client Overview, which duplicates the
-   "Open client profile" button directly above and buries the item you just
-   tapped. Go to that client's Punch Outs tab with THIS item open.
-   openProject() is asynchronous in effect — it swaps the view and the punch
-   module reloads its rows on the next observer pass — so the tab switch and
-   the selection are handed to CardinalPunchProfile, which retries until its
-   own rows for that project have arrived rather than firing into an empty
-   list. Falls back to the plain client page if anything is missing. */
-close(false);
-if(typeof window.openProject !== 'function') return;
-window.openProject(it.project_id);
-if(window.CardinalPunchProfile && window.CardinalPunchProfile.openItem){
-window.CardinalPunchProfile.openItem(it.project_id, it.id);
-}
-};
-var cam = row.querySelector('[data-act="photo"]');
-if(cam) cam.onclick = function(ev){ ev.stopPropagation(); attachPhoto(it); };
-var img = row.querySelector('[data-act="zoom"]');
-if(img) img.onclick = function(ev){
-ev.stopPropagation();
-if(window.CardinalResourceImages) window.CardinalResourceImages.open(it.photo_url, it.title);
-};
-});
+function scrollTop(){ if(el) el.scrollTop = 0; }
+function monthOf(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+
+/* ------------------------------------------------------------ the writers */
+async function markOrdered(pid){
+  var pr = projectFor(pid);
+  if(!pr) return;
+  var me = myEmail();
+  if(typeof window.patchProjectCk === 'function'){
+    await window.patchProjectCk(pr, {
+      materials_ordered_at: new Date().toISOString(), materials_ordered_by: me,
+    });
+  }
+  if(typeof window.auditLog === 'function'){
+    try{ window.auditLog('materials', 'Marked ordered', pid); }catch(_){}
+  }
+  lastSig = '';                                  /* the checklist changed */
+  render();
 }
 async function toggle(it){
-var done = it.status !== 'done';
-if(done) recentlyDone[it.id] = true;
-else delete recentlyDone[it.id];
-var patch = done
-? { status:'done', done_at:new Date().toISOString(), done_by:myEmail() || null }
-: { status:'open', done_at:null, done_by:null };
-Object.assign(it, patch);
-render();
-try{
-var r = await window.supa.from('punch_items').update(patch).eq('id', it.id);
-if(r.error) throw r.error;
-if(done && typeof window.auditLog === 'function'){
-try{ window.auditLog('punch', 'Closed: ' + it.title, it.project_id); }catch(_){}
+  var done = it.status !== 'done';
+  var patch = done
+    ? { status:'done', done_at:new Date().toISOString(), done_by:myEmail() || null }
+    : { status:'open', done_at:null, done_by:null };
+  Object.assign(it, patch);
+  lastSig = '';
+  render();
+  try{
+    /* CardinalPunch.toggle is the app's one punch write path (optimistic with
+       rollback, and it cross-refreshes the other surfaces). Use it; the direct
+       update is the fallback for a boot order where it has not parsed yet. */
+    var r;
+    if(window.CardinalPunch && typeof window.CardinalPunch.toggle === 'function'){
+      r = await window.CardinalPunch.toggle(it.id);
+      if(r && r.ok === false) throw new Error(r.error || 'write refused');
+      r = { error:null };
+    }else{
+      r = await window.supa.from('punch_items').update(patch).eq('id', it.id);
+    }
+    if(r.error) throw r.error;
+    if(done && typeof window.auditLog === 'function'){
+      try{ window.auditLog('punch', 'Closed: ' + it.title, it.project_id); }catch(_){}
+    }
+    if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){
+      try{ window.CardinalPunchProfile.refresh(); }catch(_){}
+    }
+  }catch(e){
+    alert('Could not save: ' + (e.message || e));
+    await load(); lastSig = ''; render();
+  }
 }
-if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){
-try{ window.CardinalPunchProfile.refresh(); }catch(_){}
-}
-}catch(e){
-alert('Could not save: ' + (e.message || e));
-await load(); render();
-}
-}
-async function attachPhoto(it){
-var input = document.createElement('input');
-input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment';
-input.onchange = async function(){
-var f = input.files && input.files[0];
-if(!f) return;
-try{
-if(window.CardinalSolUpload && window.CardinalSolUpload.prepare){
-var ready = await window.CardinalSolUpload.prepare(f);
-if(ready && ready.file) f = ready.file;
-}
-var path = 'punch/' + it.id + '-' + Date.now() + '.jpg';
-var up = await window.supa.storage.from('photos')
-.upload(path, f, { contentType:f.type || 'image/jpeg' });
-if(up.error) throw up.error;
-var url = window.supa.storage.from('photos').getPublicUrl(path).data.publicUrl;
-var r = await window.supa.from('punch_items')
-.update({ photo_url:url }).eq('id', it.id);
-if(r.error) throw r.error;
-it.photo_url = url;
-render();
-}catch(e){ alert('Could not attach: ' + (e.message || e)); }
-};
-input.click();
-}
-var modal = null;
+
+/* ------------------------------------------------------------ the add form
+   THE one add pipeline: cr-pp-script calls CardinalProduction.addFor() from two
+   places and alerts if it is missing. Rebuilding a second add form beside this
+   is the named most-expensive bug class on this project. */
 function openAdd(presetProjectId){
-if(!modal){
-modal = document.createElement('div');
-modal.id = 'cr-pb-modal';
-modal.onclick = function(e){ if(e.target === modal) closeAdd(); };
-document.body.appendChild(modal);
-}
-/* 605: this list used to be activeJobs() alone — Approved / Scheduled /
-   Completed. With none of those on the books that is an EMPTY list, so every
-   "+ Add" opened a modal reading "No active jobs" and saveAdd() refused with
-   "Pick a job." The client-profile card 604 un-hid, and this module's own
-   "+ Punch item", were both dead ends on real data.
-   Two rules now: the job you opened this FROM is always selectable whatever its
-   stage, and anything already carrying punch belongs here for the same reason
-   it is on the board. Off-stage jobs carry their stage in the label so it is
-   obvious you are filing against a Prospect rather than a job in flight. */
-var _addJobs = boardJobs().map(function(j){ return j.pr; });
-var _seenJob = {};
-_addJobs.forEach(function(p){ _seenJob[String(p.id)] = true; });
-if(presetProjectId && !_seenJob[String(presetProjectId)]){
-var _pp = projectFor(presetProjectId);
-if(_pp){ _addJobs.unshift(_pp); _seenJob[String(_pp.id)] = true; }
-}
-var opts = _addJobs.map(function(pr){
-var st = normStage(pr.stage);
-var inFlight = st === 'Approved' || st === 'Scheduled' || st === 'Completed';
-return '<option value="' + esc(pr.id) + '"' +
-(String(pr.id) === String(presetProjectId) ? ' selected' : '') + '>' +
-esc(pr.name || 'Unnamed') +
-(inFlight ? '' : ' · ' + esc(st)) + '</option>';
-}).join('');
-modal.innerHTML =
-'<div class="box">' +
-'<h3>Add an item</h3>' +
-'<label>What needs doing</label>' +
-'<input type="text" data-f="title" placeholder="Reattach gutter on the north side">' +
-'<label>Job</label>' +
-'<select data-f="project">' + (opts || '<option value="">No jobs yet</option>') + '</select>' +
-'<div class="row2">' +
-'<div><label>Kind</label><select data-f="kind">' +
-'<option value="punch">Punch</option>' +
-'<option value="ticket">Ticket</option>' +
-'<option value="callback">Callback</option>' +
-'</select></div>' +
-'<div><label>Priority</label><select data-f="priority">' +
-'<option value="normal">Normal</option>' +
-'<option value="high">Urgent</option>' +
-'<option value="low">Low</option>' +
-'</select></div>' +
-'</div>' +
-'<label>Assign to</label>' +
-'<select data-f="assigned">' +
-'<option value="">Anyone</option>' +
-'<option value="curtis@cardinalrenovations.net">Curtis</option>' +
-'<option value="scottie@cardinalrenovations.net">Scottie</option>' +
-'</select>' +
-'<label>Detail</label>' +
-'<textarea data-f="detail" placeholder="Optional"></textarea>' +
-'<div class="ft">' +
-'<button class="cancel" data-act="cancel" type="button">Cancel</button>' +
-'<button class="save" data-act="save" type="button">Add it</button>' +
-'</div>' +
-'</div>';
-modal.querySelector('[data-act="cancel"]').onclick = closeAdd;
-modal.querySelector('[data-act="save"]').onclick = saveAdd;
-modal.classList.add('open');
-setTimeout(function(){
-var t = modal.querySelector('[data-f="title"]');
-if(t) t.focus();
-}, 80);
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'cr-pb-modal';
+    modal.onclick = function(e){ if(e.target === modal) closeAdd(); };
+    document.body.appendChild(modal);
+  }
+  /* 605: the job list is boardJobs() PLUS the preset job whatever its stage —
+     with nothing in an active stage that list is empty, and every "+ Add"
+     opened a modal that refused to save. */
+  var jobs = boardJobs().map(function(j){ return j.pr; });
+  var seen = {};
+  jobs.forEach(function(p){ seen[String(p.id)] = true; });
+  if(presetProjectId && !seen[String(presetProjectId)]){
+    var pp = projectFor(presetProjectId);
+    if(pp){ jobs.unshift(pp); seen[String(pp.id)] = true; }
+  }
+  var opts = jobs.map(function(pr){
+    var st = normStage(pr.stage);
+    var inFlight = st === 'Approved' || st === 'Scheduled' || st === 'Completed';
+    return '<option value="' + esc(pr.id) + '"' +
+      (String(pr.id) === String(presetProjectId) ? ' selected' : '') + '>' +
+      esc(pr.name || 'Unnamed') + (inFlight ? '' : ' · ' + esc(st)) + '</option>';
+  }).join('');
+  /* 767: the assignee list comes from the real roster instead of two hardcoded
+     addresses. TEAM_ROSTER is the app's own list; production first, because
+     production is who punch-outs go to. */
+  /* TEAM_ROSTER is an ARRAY of {email,name,...} — Object.keys() on it returns
+     "0","1","2", which is exactly what the gate printed. */
+  var roster = window.TEAM_ROSTER;
+  var prod = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
+  var emails = Array.isArray(roster)
+    ? roster.map(function(m){ return m && m.email; }).filter(Boolean)
+    : (roster && typeof roster === 'object' ? Object.keys(roster) : []);
+  emails.sort(function(a, b){
+    var pa = prod.indexOf(a), pb = prod.indexOf(b);
+    if(pa !== pb) return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);
+    return shortName(a).localeCompare(shortName(b));
+  });
+  if(!emails.length) emails = prod;
+  var who = '<option value="">Anyone</option>' + emails.map(function(e){
+    return '<option value="' + esc(e) + '">' + esc(shortName(e)) + '</option>';
+  }).join('');
+  modal.innerHTML =
+    '<div class="sheet">' +
+    '<h3>Add an item</h3>' +
+    '<label>What needs doing</label>' +
+    '<input type="text" data-f="title" placeholder="Reattach gutter on the north side">' +
+    '<label>Job</label>' +
+    '<select data-f="project">' + (opts || '<option value="">No jobs yet</option>') + '</select>' +
+    '<div class="row">' +
+    '<div><label>Kind</label><select data-f="kind">' +
+    '<option value="punch">Punch</option><option value="ticket">Ticket</option>' +
+    '<option value="callback">Callback</option></select></div>' +
+    '<div><label>Priority</label><select data-f="priority">' +
+    '<option value="normal">Normal</option><option value="high">Urgent</option>' +
+    '<option value="low">Low</option></select></div>' +
+    '</div>' +
+    '<div class="row">' +
+    '<div><label>Assign to</label><select data-f="assigned">' + who + '</select></div>' +
+    '<div><label>Schedule for</label><input type="date" data-f="when"></div>' +
+    '</div>' +
+    '<label>Detail</label>' +
+    '<textarea data-f="detail" placeholder="Optional"></textarea>' +
+    '<div class="btns">' +
+    '<button class="cancel" data-act="cancel" type="button">Cancel</button>' +
+    '<button class="save" data-act="save" type="button">Add it</button>' +
+    '</div></div>';
+  modal.querySelector('[data-act="cancel"]').onclick = closeAdd;
+  modal.querySelector('[data-act="save"]').onclick = saveAdd;
+  modal.classList.add('open');
+  setTimeout(function(){
+    var t = modal.querySelector('[data-f="title"]');
+    if(t) t.focus();
+  }, 80);
 }
 function closeAdd(){ if(modal) modal.classList.remove('open'); }
 async function saveAdd(){
-var g = function(f){
-var i = modal.querySelector('[data-f="' + f + '"]');
-return i ? i.value.trim() : '';
-};
-var title = g('title'), pid = g('project');
-if(!title){ alert('What needs doing?'); return; }
-if(!pid){ alert('Pick a job.'); return; }
-var btn = modal.querySelector('[data-act="save"]');
-btn.disabled = true; btn.textContent = 'Adding\u2026';
-try{
-var row = {
-project_id : pid,
-title      : title,
-detail     : g('detail') || null,
-kind       : g('kind') || 'punch',
-priority   : g('priority') || 'normal',
-assigned_to: g('assigned') || null,
-status     : 'open',
-created_by : myEmail() || null,
-};
-var r = await window.supa.from('punch_items').insert(row).select().single();
-if(r.error) throw r.error;
-items.unshift(r.data);
-if(typeof window.auditLog === 'function'){
-try{ window.auditLog('punch', 'Added: ' + title, pid); }catch(_){}
+  var g = function(f){
+    var i = modal.querySelector('[data-f="' + f + '"]');
+    return i ? i.value.trim() : '';
+  };
+  var title = g('title'), pid = g('project');
+  if(!title){ alert('What needs doing?'); return; }
+  if(!pid){ alert('Pick a job.'); return; }
+  var btn = modal.querySelector('[data-act="save"]');
+  btn.disabled = true; btn.textContent = 'Adding…';
+  try{
+    var row = {
+      project_id : pid,
+      title      : title,
+      detail     : g('detail') || null,
+      kind       : g('kind') || 'punch',
+      priority   : g('priority') || 'normal',
+      assigned_to: g('assigned') || null,
+      status     : 'open',
+      created_by : myEmail() || null,
+    };
+    var when = g('when');
+    if(when) row.scheduled_at = when;
+    var r = await window.supa.from('punch_items').insert(row).select().single();
+    if(r.error) throw r.error;
+    items.unshift(r.data);
+    /* rows() hands back a copy, so pushing into it would be a no-op — ask the
+       shared layer to reload instead. One data layer, one refresh. */
+    if(window.CardinalPunch && typeof window.CardinalPunch.reload === 'function'){
+      try{ await window.CardinalPunch.reload(); items = punchRows(); }catch(_){}
+    }
+    if(typeof window.auditLog === 'function'){
+      try{ window.auditLog('punch', 'Added: ' + title, pid); }catch(_){}
+    }
+    closeAdd();
+    lastSig = ''; render();
+    if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){
+      try{ window.CardinalPunchProfile.refresh(); }catch(_){}
+    }
+  }catch(e){
+    alert('Could not add: ' + (e.message || e));
+    btn.disabled = false; btn.textContent = 'Add it';
+  }
 }
-closeAdd();
-render();
-if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){
-try{ window.CardinalPunchProfile.refresh(); }catch(_){}
+
+/* ------------------------------------------------------------------- load */
+async function load(){
+  /* CardinalPunch is the app's one punch query/write path. Use it when it has
+     parsed (it lives later in the document); the direct read is the fallback,
+     not a second pipeline. */
+  var P = window.CardinalPunch;
+  if(P && typeof P.reload === 'function'){
+    try{
+      await P.reload();
+      var got = punchRows();
+      if(Array.isArray(got)){ items = got; return; }
+    }catch(_){}
+  }
+  if(!window.supa) return;
+  try{
+    var r = await window.supa.from('punch_items').select('*').order('created_at', { ascending:false });
+    if(r.error){
+      if(/does not exist|schema cache/i.test(r.error.message || '')){ items = []; return; }
+      console.warn('[prod] load:', r.error.message);
+      return;
+    }
+    items = r.data || [];
+  }catch(e){ console.warn('[prod] load failed:', e); }
 }
-}catch(e){
-alert('Could not add: ' + (e.message || e) +
-(/does not exist|schema cache/i.test(e.message || '')
-? '\n\nRun punch_setup.sql first.' : ''));
-btn.disabled = false; btn.textContent = 'Add it';
-}
+
+/* ---------------------------------------------------------------- mount */
+function ensure(){
+  if(el) return el;
+  el = document.createElement('div');
+  el.id = 'cr-pb';
+  document.body.appendChild(el);
+  return el;
 }
 async function open(){
-ensure();
-pane = 'list';
-render();
-if(typeof window.hideAllViews === 'function'){
-try{ window.hideAllViews(); }catch(_){}
-}
-el.classList.add('open');
-document.body.style.overflow = 'hidden';
-el.scrollTop = 0;
-if(typeof window.navSetView === 'function'){
-try{ window.navSetView('production'); }catch(_){}
-}
-await load();
-render();
+  ensure();
+  pane = 'home';
+  selDay = today();
+  calMonth = monthOf(selDay);
+  lastSig = '';
+  render();
+  if(typeof window.hideAllViews === 'function') window.hideAllViews();
+  el.classList.add('open');
+  document.body.style.overflow = 'hidden';       /* one of the 13 writers */
+  scrollTop();
+  /* The __crNav wrap runs on a setTimeout scheduled mid-file and can fire
+     before the last script parses, so record the view here as the belt. */
+  if(typeof window.navSetView === 'function'){
+    try{ window.navSetView('production'); }catch(_){}
+  }
+  await load();
+  lastSig = '';
+  render();
 }
 function close(goHome){
-if(el) el.classList.remove('open');
-document.body.style.overflow = '';
-if(goHome !== false && typeof window.showHome === 'function') window.showHome();
+  if(el) el.classList.remove('open');
+  document.body.style.overflow = '';
+  if(goHome !== false && typeof window.showHome === 'function') window.showHome();
 }
-function addMenuItem(){
-if(document.getElementById('cr-nav-production')) return true;
-var menu = document.getElementById('navMenu');
-if(!menu) return false;
-var anchor = Array.prototype.slice.call(menu.querySelectorAll('.navopt'))
-.find(function(b){ return /schedule board/i.test(b.textContent || ''); });
-var btn = document.createElement('button');
-btn.className = 'navopt';
-btn.id = 'cr-nav-production';
-btn.type = 'button';
-btn.innerHTML = '\uD83D\uDD28 Production';
-btn.onclick = function(e){
-e.stopPropagation();
-var m = document.getElementById('navMenu');
-if(m) m.style.display = 'none';
-open();
-};
-if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor);
-else menu.appendChild(btn);
-return true;
-}
+
+/* -------------------------------------------------- burger-menu entry point */
 var scheduled = false;
 function scan(){
-if(scheduled) return;
-scheduled = true;
-requestAnimationFrame(function(){
-scheduled = false;
-try{ addMenuItem(); }catch(_){}
-});
+  if(scheduled) return;
+  scheduled = true;
+  requestAnimationFrame(function(){ scheduled = false; addMenuItem(); });
+}
+function addMenuItem(){
+  var menu = document.getElementById('navMenu');
+  if(!menu || document.getElementById('cr-nav-production')) return;
+  var b = document.createElement('button');
+  b.id = 'cr-nav-production';
+  b.className = 'navopt';
+  b.type = 'button';
+  b.innerHTML = svg('tool') + ' Production';
+  b.onclick = function(){
+    var m = document.getElementById('navMenu');
+    if(m) m.classList.remove('show');
+    open();
+  };
+  var before = null;
+  menu.querySelectorAll('.navopt').forEach(function(o){
+    if(before) return;
+    if(/schedule board/i.test(o.textContent || '')) before = o;
+  });
+  if(before) menu.insertBefore(b, before);
+  else menu.appendChild(b);
 }
 function start(){
-scan();
-new MutationObserver(scan).observe(document.body, {
-childList:true, subtree:true,
-});
+  scan();
+  /* The module's ONE document.body observer — the census entry for cr-pb. It
+     only inserts a menu button; it never rewrites DOM from inside its wake. */
+  new MutationObserver(scan).observe(document.body, { childList:true, subtree:true });
 }
 window.addEventListener('popstate', function(ev){
-var v = ev.state && ev.state.view;
-if(v !== 'production' && el && el.classList.contains('open')){
-el.classList.remove('open');
-document.body.style.overflow = '';
-}
+  var v = ev.state && ev.state.view;
+  if(v !== 'production' && el && el.classList.contains('open')){
+    el.classList.remove('open');
+    document.body.style.overflow = '';
+  }
 });
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
 else start();
+
 window.CardinalProduction = {
-open      : open,
-close     : close,
-addFor    : function(projectId){ openAdd(projectId); },
-refresh   : async function(){ await load(); render(); },
-openCount : function(){ return items.filter(function(i){ return i.status === 'open'; }).length; },
+  open      : open,
+  close     : close,
+  addFor    : function(projectId){ openAdd(projectId); },
+  refresh   : async function(){ await load(); lastSig = ''; render(); },
+  openCount : function(){ return punchRows().filter(function(i){ return i.status === 'open'; }).length; },
 };
 })();
 </script>
