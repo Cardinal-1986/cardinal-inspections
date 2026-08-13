@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 768 &#8212; The punch-out card: a field checklist with trade templates and required notes, guided photo slots, a supplement flag, and the messages thread — one card everywhere, with Curtis dispatching and Scottie in field mode</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 769 &#8212; Punch-outs now find their person: filing or assigning one buzzes whoever it belongs to, closing one tells the office, and every punch-out in the app opens the same card</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38711,6 +38711,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:769, d:'2026-08-13', t:'A punch-out now finds its person', s:'Filing a punch-out on someone, or handing one to them, sends them a push and an email \u2014 Curtis and Scottie no longer have to open the app to find out there is work. Closing one tells the office the same way, with the count of photos and steps. Nobody is ever notified about their own action, and the app says plainly when a notification could not be delivered instead of claiming it was. Chat is unchanged: only the people a message @tags are notified.' },
 { b:768, d:'2026-08-13', t:'The punch-out card', s:'Tapping a punch-out anywhere now opens one proper card: the job with directions and a call button, a field checklist you can start from a Roofing, Siding or Gutter template, steps that refuse to tick until a note is written, five guided photo slots, a Flag supplement button that files the extra scope and tells the office, and the message thread with @tagging. Closing needs five photos and every step ticked, and the button says what is missing until then. Curtis and the office get the manager card \u2014 dispatch, edit steps, set urgency; Scottie gets field mode with bigger targets and the camera first.' },
 { b:767, d:'2026-08-13', t:'Production, rebuilt around the calendar', s:'The Production screen is one calm page now: five boxes \u2014 Needs ordered, Ordered, Scheduled, Punch-outs and Closed repairs \u2014 over a week strip and the day\u2019s work. Tap a box for its list; tap Full calendar for a whole month of build days, material drops, scheduled punch-outs and closed repairs, with a Needs a date queue for anything waiting to be dispatched. Marking materials ordered works straight from the list. Cardinal Steel throughout, in both light and dark, and no floating buttons anywhere.' },
 { b:766, d:'2026-08-13', t:'Production tells the truth about scheduling', s:'The Production board used to say \u201cNeeds scheduling\u201d forever, even after Curtis put the job on the Schedule Board \u2014 it was reading a date field nothing in the app has ever written. It now reads the real build-day appointment, so the chip clears when the job is scheduled and a job that should have started says so. The Materials tab gained a Mark ordered button, which answers the board\u2019s \u201cMaterials?\u201d chip. And closing a punch-out no longer makes it vanish: it lands in the client\u2019s history as a completed repair.' },
@@ -47636,6 +47637,13 @@ async function saveAdd(){
     }
     closeAdd();
     lastSig = ''; render();
+    /* 769 (Theo's A1): the assignee hears about it. Until now Curtis and
+       Scottie only found new work by opening the app — the gap CLAUDE.md
+       records as "routing and notification, not software". This is one call
+       into the notify system @mentions already use, and it reports honestly
+       whether anything was delivered. Chat stays @-only; an assignment is a
+       different act and has its own yes. */
+    notifyAssignee(row.assigned_to, title, pid, 'filed');
     if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){
       try{ window.CardinalPunchProfile.refresh(); }catch(_){}
     }
@@ -47643,6 +47651,27 @@ async function saveAdd(){
     alert('Could not add: ' + (e.message || e));
     btn.disabled = false; btn.textContent = 'Add it';
   }
+}
+
+/* 769: one place that tells somebody work is theirs. Never notifies the person
+   who did the assigning — being told about your own action is noise. */
+async function notifyAssignee(email, title, pid, verb){
+  if(!email) return;
+  var me = myEmail();
+  if(String(email).toLowerCase() === me) return;
+  if(typeof window.notifyTeam !== 'function') return;
+  var pr = projectFor(pid);
+  try{
+    var res = await window.notifyTeam([email],
+      (verb === 'filed' ? 'New punch-out: ' : 'Assigned to you: ') + title,
+      '<p><b>' + esc(shortName(me) || 'Someone') + '</b> ' +
+      (verb === 'filed' ? 'filed a punch-out' : 'assigned you a punch-out') +
+      ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p>' +
+      '<p>' + esc(title) + '</p>');
+    if(typeof window.notifyOutcomeText === 'function'){
+      try{ console.log('[prod]', window.notifyOutcomeText(res, shortName(email))); }catch(_){}
+    }
+  }catch(_){}
 }
 
 /* ------------------------------------------------------------------- load */
@@ -48511,6 +48540,24 @@ async function doToggle(){
     refreshOthers();
   }catch(e){ alert('Could not save: ' + (e.message || e)); }
 }
+/* 769: the person it was just handed to hears about it. */
+async function notifyAssigned(email){
+  if(!email) return;
+  var me = myEmail();
+  if(String(email).toLowerCase() === me) return;
+  if(typeof window.notifyTeam !== 'function') return;
+  var pr = projectFor(it.project_id);
+  try{
+    var res = await window.notifyTeam([email],
+      'Assigned to you: ' + (it.title || 'a punch-out'),
+      '<p><b>' + esc(nameOf(me)) + '</b> assigned you a punch-out at <b>' +
+      esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(it.title || '') + '</p>' +
+      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtWhen(it.scheduled_at)) + '</p>' : ''));
+    outMsg = outcomeText(res, nameOf(email));
+    lastSig = ''; render();
+  }catch(_){}
+}
+
 /* The office hears when the field finishes — Theo's A1 pick. */
 async function notifyClosed(){
   var to = officeEmails();
@@ -48590,7 +48637,12 @@ function wire(){
     save({ priority: it.priority === 'high' ? 'normal' : 'high' });
   }; });
   var as = el.querySelector('[data-f="assigned"]');
-  if(as) as.onchange = function(){ save({ assigned_to: as.value || null }); };
+  if(as) as.onchange = async function(){
+    var to = as.value || null;
+    await save({ assigned_to: to });
+    /* 769: reassigning is telling somebody the work is theirs now. */
+    await notifyAssigned(to);
+  };
   var wh = el.querySelector('[data-f="when"]');
   if(wh) wh.onchange = function(){ save({ scheduled_at: wh.value || null }); };
 }
@@ -49220,6 +49272,14 @@ window.CardinalPunchProfile = {
    Gives up quietly after ~3s and leaves the user on the client page, which is
    where they used to land anyway. */
 openItem : function(pid, itemId){
+/* 768/769: one card. The client profile's punch list hands off to
+   CardinalPunchCard like every other surface; back returns to the profile
+   rather than bouncing to Production. The poll-and-open path below stays as
+   the fallback for a boot where the card module has not parsed. */
+if(itemId && window.CardinalPunchCard && typeof window.CardinalPunchCard.open === 'function'){
+  window.CardinalPunchCard.open(itemId, { back:'none' });
+  return;
+}
 var tries = 0;
 (function go(){
 tries++;

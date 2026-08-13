@@ -58,6 +58,17 @@ function makeEnv(appts, projects, punch) {
   const harness = `
     var window = __win;
     var items = __punch;
+    /* 767 moved the punch lookup behind punchRows()/openPunchFor(); this gate
+       slices blockerFor out of the shipped file, so the sandbox has to provide
+       the same neighbours the module gives it. */
+    function midnight(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+    function today(){ return midnight(new Date()); }
+    function punchRows(){ return items; }
+    function openPunchFor(pid){
+      return punchRows().filter(function(i){
+        return String(i.project_id) === String(pid) && i.status === 'open';
+      });
+    }
     function normStage(s){ return s; }
     function ck(pr){ try { return JSON.parse(pr.checklist || '{}'); } catch(e){ return {}; } }
     ${texts.apptDay}
@@ -176,7 +187,8 @@ ok('a Mark ordered control exists', /data-matord="set"/.test(src));
 ok('an undo control exists', /data-matord="clear"/.test(src));
 ok('the click handler reads data-matord', /getAttribute\('data-matord'\)/.test(src));
 ok('the writer stamps who and when', /materials_ordered_at: new Date\(\)\.toISOString\(\)/.test(src));
-ok('the writer goes through saveCkPatch (one checklist write path)', /saveCkPatch\(on\n?\s*\?/.test(src));
+ok('the Materials-tab writer goes through saveCkPatch', /saveCkPatch\(on/.test(src));
+ok('the board writer goes through patchProjectCk (same checklist, one store)', /window\.patchProjectCk\(pr, \{/.test(src));
 ok('closed punch-outs are pushed into the activity feed', /Repair closed:/.test(src));
 ok('history reads CardinalPunch, not a second query', /window\.CardinalPunch && window\.CardinalPunch\.rows/.test(src));
 ok('the feed push is guarded (punch module parses later)', /\}catch\(_\)\{\}\n\s*cacheAppts\.forEach/.test(src));
