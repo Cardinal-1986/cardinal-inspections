@@ -15147,3 +15147,39 @@ lifecycle; the worst single moment is invoice creation → send (alert, prompt, 
 Chromium, each verified RED on its own predecessor. **773's gate is `drive_lifecycle.mjs` itself** — the 772
 run recorded the duplicate recipient and the emoji subject (RED for both behaviours); the 773 run shows theo
 once and plain-text subjects, all 12 stations green both times.
+
+**774** Build an estimate straight from ABC Supply's catalog. `+ ABC Supply` sits beside `+ From Library` and
+`+ Custom` in the estimate editor: search ABC, tap an item, and it lands as a line item already priced at your
+branch with the description, item number and stocking UOM filled in.
+
+**The prime doctrine paid again.** The catalog picker already existed — a bottom sheet with a search field, a
+grouped list and a tap-to-add handler. So ABC became a **second MODE on that one picker** (`openPicker(mode)`),
+not a second picker beside it. Nine of the sheet's behaviours are shared verbatim; only the row source and the
+search trigger differ. `window.CardinalABC` grew `search`/`price`/`cfg` through `Object.assign`, and both wrap
+the **same `api()`** the Suppliers screen uses, so the six faults fixed at 762-765 apply here without a second
+fetch path that could drift.
+
+Three deliberate behaviours, each learned the hard way earlier tonight: (1) **typing never calls ABC** — the
+remote search runs on Enter or the button only, because every press is a paid round trip, and the library half
+still filters live; (2) **a price failure does not block the line** — the item is added at $0 with ABC's own
+sentence, because a rep in front of a client can read the number off a quote but cannot recover from a dead
+end; (3) **no account set says where to go** (Suppliers) instead of surfacing a 401. `abc_item` is kept on the
+line as forward wiring for ordering — nothing reads it yet, and that is the point.
+
+⚠️ **Shipped a 3.06:1 button and caught it before the PR.** `#2a6b3c` on the editor's `#0b0b0e` ground is under
+the 4.5 floor for 10.5px bold — THE RECURRING ONE, in a build that had nothing to do with colour. Fixed by the
+neighbour's own mechanism (base rule light, `cr-nvl-styles` dark twin, as `.add-custom` does), with `#78c98e`
+chosen by arithmetic at 9.87:1 to match `.add-custom`'s 9.84:1. **The measuring rig lied first**: it appended a
+white ground unconditionally and scored white-on-green as 1:1, so the instrument was fixed before the number was
+believed — an element's own opaque background IS the ground, and the walk stops there.
+
+**Renumbered 766 → 774 before pushing.** It was built as 766 against 765; `main` shipped 766-773 in the interim
+and `next_build.py` named 774. Every anchor was re-verified against the 773 tree (all 11 still unique, the
+estimate editor untouched by the Production rebuild) and the gate was renamed off a collision — **main already
+had a `gate_766.mjs`**.
+
+**Gate**: `gate_774.mjs` — 27 green, **24 red on the 773 control**, nothing crashing. It drives the real seam in
+Chromium: open the editor, tap the button, prove typing does NOT call ABC, search, tap a row, and assert the
+LINE ITEM's price/number/unit — then the 401 path, then that Library mode is unharmed. The contrast floor is
+asserted inside it. `gate_756`/`gate_757`'s reds were checked against main's own 773 artifact and are
+**byte-identical there** — pre-existing (757 retired the floating Home that 756 asserts), not this build's.

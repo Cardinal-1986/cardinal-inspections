@@ -4802,3 +4802,27 @@ reassign, the schedule picker, step editing and the urgency toggle.
 
 **Fences held**: no money anywhere on Production · no photo GPS · quick-tick close kept · one calendar per
 concept · no new body observer · no 14th scroll-lock writer (the card uses `overscroll-behavior:contain`).
+
+## Build an estimate from ABC Supply's catalog (build 774)
+
+| Feature | Where | Notes |
+|---|---|---|
+| `+ ABC Supply` | `cr-est-script` items head, beside `+ From Library` and `+ Custom` | A **third source on the SAME picker**, not a second picker. `openPicker(mode)` takes `'library'` or `'abc'`; the sheet retitles, re-placeholders and grows a Search button. |
+| Remote search | `abcSearch()` → `CardinalABC.search()` | Runs on **Enter or the button only, never per keystroke** — every press is a paid round trip to ABC. The library half still filters as you type; `oninput` is gated on the mode. |
+| Tap to add, priced | `abcPick()` → `CardinalABC.price()` | Lands a line item carrying ABC's branch price, the item number, the description and the stocking UOM. |
+| `abc_item` on the line | the pushed line object | The ABC item number rides along so a future purchase order knows what to actually order. Nothing reads it yet — it is deliberate forward wiring, and it is why the seam exists at all. |
+| Failure never blocks | `abcPick()` | A price error **still adds the line, at $0**, with ABC's own sentence in an alert. A rep mid-estimate in front of a client types the number off a quote and carries on; an account problem must not strand the estimate. |
+| No account set | `abcCfg()` | Says *open Suppliers and set your Ship-To and Branch* instead of returning a 401. One place to configure, named in the message. |
+
+**The seam**: `window.CardinalABC` now exports `search`, `price` and `cfg` (via `Object.assign`, so `open`/`close`
+survive). Both wrap the **same `api()`** the Suppliers screen uses — one code path, so tonight's six fixes apply
+here for free and a future fix cannot drift between the two.
+
+⚠️ **The contrast trap caught this build too.** `+ ABC Supply` first shipped `#2a6b3c`, which is **3.06:1** on the
+editor's dark ground — under the 4.5 floor for 10.5px bold. Fixed the way its own neighbour already does it: base
+rule keeps the light-ground green, `cr-nvl-styles` carries the dark twin, exactly as `.add-custom` does
+(`#8f1620` → `#f0a3a9`). `#78c98e` was picked by arithmetic at **9.87:1** to match `.add-custom`'s 9.84:1, so the
+two buttons read at equal weight. **The contrast check is now IN `gate_774.mjs`**, so it cannot come back quietly.
+
+`gate_774.mjs`: **27 green · 24 red on the 773 control**. The three that pass on the control are deliberate
+regression checks (the old `CardinalABC.open` survives, the editor still opens, Library mode still says Library).

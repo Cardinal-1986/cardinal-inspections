@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 773 &#8212; one buzz per person: duplicate notification recipients removed, and the last two emoji subject lines cleaned</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 774 &#8212; Estimates can pull line items straight from ABC Supply, priced at your branch</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38739,6 +38739,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:774, d:'2026-08-13', t:'Build an estimate straight from ABC\u2019s catalog',
+s:'The estimate editor has a third button beside From Library and Custom: + ABC Supply. Search ABC\u2019s catalog, tap an item, and it lands as a line item already priced at your branch \u2014 description, item number and unit filled in. It reuses the same picker the library already used rather than adding a second one, and the same connection the Suppliers screen uses, so anything fixed in one place is fixed in both. If a price cannot be fetched the item is still added at $0 with the reason shown, so an account hiccup never strands you halfway through an estimate. The item number is kept on the line, which is what a future purchase order will need.' },
 { b:773, d:'2026-08-13', t:'One buzz per person', s:'An end-to-end drive of the whole retail lifecycle \u2014 lead to invoice, every stage \u2014 turned up two leftovers. When a job\u2019s assigned rep is also an admin, the \u201cjob complete\u201d notification listed them twice and they got every email and push double; the list is deduped now. And the last two emoji subject lines (the estimate-approvals buzz and the chat @-tag buzz) are plain text like the rest \u2014 subjects render in whatever font the mail app picks.' },
 { b:772, d:'2026-08-13', t:'QA pass on the retail lifecycle', s:'Two fixes from a walk-through of the whole retail path. The stage emails that go to Curtis and the reps no longer start with an emoji \u2014 those subject lines leave the building and render in whatever font the mail app picks. And the trade-agreement buttons now say \u201cOpen a client first\u201d instead of doing nothing at all when no job is loaded.' },
 { b:771, d:'2026-08-13', t:'Audit repairs on the Production rebuild', s:'Nine defects an adversarial audit found in builds 766\u2013770, all fixed. The worst: ticking a punch-out closed on the Production screen wrote the OPPOSITE \u2014 it flipped the row, then handed the id to the shared writer which flipped it back, so closing did nothing and reopening re-stamped who finished the work. Delete, photo removal and description editing had quietly become unreachable app-wide and are back on the card. The client profile\u2019s punch list now opens the same card as everywhere else. The card clears the installed app\u2019s bottom bar, restores on the back button, repaints the home strips, closes the burger menu properly, and no longer hijacks navigation when another screen opens.' },
@@ -43222,7 +43224,7 @@ window.CardinalPhotoEditor = { open: open, close: close };
 .cr-est-head button.danger{color:#d8cfc4;border-color:rgba(216,207,196,.4)}
 .cr-est-head button.danger:hover{background:#c8202e;color:#fff;border-color:#c8202e}
 .cr-est-saved-row .rowdel{flex:0 0 auto;background:transparent;border:0;cursor:pointer;color:#8f1620;font-size:15px;line-height:1;padding:3px 5px;border-radius:5px;font-family:inherit}
-.cr-est-saved-row .rowdel:hover{background:#c8202e;color:#fff}.cr-est-head button.primary:hover{background:#e8ba15}.cr-est-head button.primary:disabled{opacity:.55;cursor:wait}.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px}.cr-est-clientcard .name{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:7px 12px;border-radius:6px;border:0;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#e8ba15}.cr-est-items-head .add-custom{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-est-items-head .add-custom:hover{background:rgba(200,32,46,.1)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 14px 'Segoe UI',Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-itemchk{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;background:#f4f2f1;border:1px solid #d9cfaf;border-radius:6px;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8f1620;cursor:pointer;white-space:nowrap;flex:0 0 auto}.cr-est-itemchk:hover{background:#f5efd8;border-color:#c8202e}.cr-est-itemchk input{width:15px !important;height:15px;margin:0;accent-color:#c8202e;flex:0 0 auto}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:10px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:10px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:14px 16px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline}.cr-est-totals .lbl{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-est-totals .grand-val{font:800 20px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}#cr-est-picker .cat-header{padding:10px 16px 5px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;background:#f4f2f1;border-top:1px solid #e8d9a8;border-bottom:1px solid #f0e8d0}#cr-est-picker .p-item{padding:12px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}#cr-est-picker .p-item:hover{background:#f4f2f1}#cr-est-picker .p-item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}#cr-est-picker .p-item .name{flex:1;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .p-item .price{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker .p-item .desc{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;max-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#cr-est-picker .empty{padding:32px 20px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}</style>
+.cr-est-saved-row .rowdel:hover{background:#c8202e;color:#fff}.cr-est-head button.primary:hover{background:#e8ba15}.cr-est-head button.primary:disabled{opacity:.55;cursor:wait}.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px}.cr-est-clientcard .name{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:7px 12px;border-radius:6px;border:0;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#e8ba15}.cr-est-items-head .add-custom{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-est-items-head .add-abc{background:transparent;color:#2a6b3c;border:1px solid #2a6b3c;margin-left:6px}.cr-est-items-head .add-abc:hover{background:rgba(42,107,60,.1)}.cr-est-items-head .add-custom:hover{background:rgba(200,32,46,.1)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 14px 'Segoe UI',Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-itemchk{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;background:#f4f2f1;border:1px solid #d9cfaf;border-radius:6px;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8f1620;cursor:pointer;white-space:nowrap;flex:0 0 auto}.cr-est-itemchk:hover{background:#f5efd8;border-color:#c8202e}.cr-est-itemchk input{width:15px !important;height:15px;margin:0;accent-color:#c8202e;flex:0 0 auto}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:10px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:10px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:14px 16px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline}.cr-est-totals .lbl{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-est-totals .grand-val{font:800 20px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}#cr-est-picker .box-search{display:flex;gap:8px;align-items:center}#cr-est-picker .box-search input{flex:1;min-width:0}/* 774: only ABC's remote search needs a button — the library filters as you type. */#cr-est-picker .abcgo{display:none;flex:0 0 auto;padding:9px 14px;border:0;border-radius:8px;background:#2a6b3c;color:#fff;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit;min-height:44px}#cr-est-picker[data-pick="abc"] .abcgo{display:block}#cr-est-picker .cat-header{padding:10px 16px 5px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;background:#f4f2f1;border-top:1px solid #e8d9a8;border-bottom:1px solid #f0e8d0}#cr-est-picker .p-item{padding:12px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}#cr-est-picker .p-item:hover{background:#f4f2f1}#cr-est-picker .p-item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}#cr-est-picker .p-item .name{flex:1;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .p-item .price{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker .p-item .desc{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;max-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#cr-est-picker .empty{padding:32px 20px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}</style>
 <script id="cr-est-script">
 (function(){
 'use strict';
@@ -43469,6 +43471,7 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 '</label>' +
 '<button class="add-lib"    data-act="add-lib"    type="button">+ From Library</button>' +
 '<button class="add-custom" data-act="add-custom" type="button">+ Custom</button>' +
+'<button class="add-abc"    data-act="add-abc"    type="button">+ ABC Supply</button>' +
 '</div>' +
 '<div data-slot="lines">' +
 (s.lines.length
@@ -43776,7 +43779,8 @@ var notesEl = view.querySelector('[data-f="notes"]');
 if(notesEl) notesEl.oninput = function(e){ state.notes = e.target.value; };
 var payEl = view.querySelector('[data-f="payment_instructions"]');
 if(payEl) payEl.oninput = function(e){ state.payment_instructions = e.target.value; };
-view.querySelector('[data-act="add-lib"]').onclick = openPicker;
+view.querySelector('[data-act="add-lib"]').onclick = function(){ openPicker('library'); };
+view.querySelector('[data-act="add-abc"]').onclick = function(){ openPicker('abc'); };
 view.querySelector('[data-act="add-custom"]').onclick = function(){
 state.lines.push({
 _lid: newLineId(),
@@ -43962,6 +43966,7 @@ picker.innerHTML =
 '</div>' +
 '<div class="box-search">' +
 '<input type="search" placeholder="Search library\u2026" autocomplete="off" />' +
+'<button class="abcgo" data-act="abcgo" type="button">Search ABC</button>' +
 '</div>' +
 '<div class="box-list"></div>' +
 '</div>';
@@ -43969,12 +43974,31 @@ document.body.appendChild(picker);
 picker.querySelector('[data-act="close"]').onclick = closePicker;
 picker.querySelector('.box-search input').oninput = function(e){
 pickerQuery = e.target.value;
-renderPicker();
+/* ABC is a remote search — typing must not call it. */
+if(pickerMode !== 'abc') renderPicker();
 };
+picker.querySelector('.box-search input').onkeydown = function(e){
+if(pickerMode === 'abc' && (e.key === 'Enter' || e.keyCode === 13)){ e.preventDefault(); abcSearch(); }
+};
+picker.querySelector('[data-act="abcgo"]').onclick = abcSearch;
 return picker;
 }
-function openPicker(){
+/* 774: mode is 'library' (the pricing_items catalog, filtered locally as
+   you type) or 'abc' (ABC Supply's catalogue, which is a REMOTE search —
+   so it runs on Enter or the button, never per keystroke: every press is
+   a paid round trip to ABC). Everything else about the sheet is shared. */
+var pickerMode = 'library';
+function openPicker(mode){
+pickerMode = (mode === 'abc') ? 'abc' : 'library';
 ensurePicker();
+picker.dataset.pick = pickerMode;
+var h3 = picker.querySelector('.box-head h3');
+if(h3) h3.textContent = pickerMode === 'abc' ? 'Add from ABC Supply' : 'Add from Library';
+var si = picker.querySelector('.box-search input');
+if(si) si.placeholder = pickerMode === 'abc'
+? 'Search ABC catalog\u2026 e.g. Duration shingles'
+: 'Search library\u2026';
+abcRows = [];
 pickerQuery = '';
 var input = picker.querySelector('.box-search input');
 if(input) input.value = '';
@@ -43990,6 +44014,12 @@ if(picker) picker.classList.remove('open');
 }
 function renderPicker(){
 if(!picker) return;
+if(pickerMode === 'abc'){
+var l0 = picker.querySelector('.box-list');
+if(l0 && !abcRows.length) l0.innerHTML = '<div class="empty">Search ABC\u2019s catalog and tap an item \u2014 it comes in priced at your branch.</div>';
+else if(abcRows.length) renderAbcRows();
+return;
+}
 var items = (window.CardinalLineItems && window.CardinalLineItems.all()) || [];
 if(pickerQuery){
 var q = pickerQuery.toLowerCase();
@@ -44047,6 +44077,96 @@ closePicker();
 render();
 };
 });
+}
+/* 774: ABC Supply as a line-item source.
+   Deliberate behaviours, each learned tonight:
+   - a price failure NEVER blocks the line. The item is added at 0 with ABC's
+     own sentence shown, so a rep can type the number off a quote and carry on
+     rather than being stuck behind an account problem mid-estimate.
+   - the account comes from the Suppliers screen (one place to set it up); if
+     it is missing we say exactly where to go instead of returning a 401.
+   - `abc_item` rides along on the line so a future purchase order knows what
+     to actually order. It is additive to an existing jsonb array. */
+var abcRows = [];
+function abcCfg(){
+try{ return (window.CardinalABC && window.CardinalABC.cfg && window.CardinalABC.cfg()) || {}; }
+catch(_){ return {}; }
+}
+async function abcSearch(){
+if(!picker) return;
+var list = picker.querySelector('.box-list');
+var q = (picker.querySelector('.box-search input') || {}).value || '';
+q = String(q).trim();
+if(!q){ list.innerHTML = '<div class="empty">Type what you are looking for, then Search ABC.</div>'; return; }
+if(!window.CardinalABC || !window.CardinalABC.search){
+list.innerHTML = '<div class="empty">ABC Supply is not available in this build.</div>'; return;
+}
+list.innerHTML = '<div class="empty">Searching ABC\u2026</div>';
+try{
+var j = await window.CardinalABC.search(q);
+abcRows = j.items || j.results || (Array.isArray(j) ? j : []);
+renderAbcRows();
+}catch(e){
+list.innerHTML = '<div class="empty">' + esc(String(e.message || e)) + '</div>';
+}
+}
+function abcUom(it){
+return (it.unitsOfMeasure && it.unitsOfMeasure.stocking) || it.stockingUom || it.uom ||
+(Array.isArray(it.uoms) && it.uoms.length ? (it.uoms[0].code || it.uoms[0].name || '') : '') || '';
+}
+function renderAbcRows(){
+var list = picker.querySelector('.box-list');
+if(!abcRows.length){ list.innerHTML = '<div class="empty">No ABC items matched that.</div>'; return; }
+list.innerHTML = '<div class="cat-header">ABC Supply \u00b7 branch ' +
+esc(String(abcCfg().branch || '\u2014')) + '</div>' +
+abcRows.slice(0, 40).map(function(it, i){
+var num = it.itemNumber || it.number || it.id || '';
+var nm = it.itemDescription || it.description || it.name || ('Item ' + num);
+var uom = abcUom(it);
+return '<div class="p-item" data-abc="' + i + '">' +
+'<div class="top"><div class="name">' + esc(nm) + '</div></div>' +
+'<div class="desc">#' + esc(String(num)) + (uom ? ' \u00b7 ' + esc(uom) : '') + '</div>' +
+'</div>';
+}).join('');
+list.querySelectorAll('[data-abc]').forEach(function(el){
+el.onclick = function(){ abcPick(abcRows[parseInt(el.dataset.abc, 10)], el); };
+});
+}
+async function abcPick(it, el){
+if(!it) return;
+var num = String(it.itemNumber || it.number || it.id || '');
+var nm = it.itemDescription || it.description || it.name || ('Item ' + num);
+var uom = abcUom(it);
+var c = abcCfg();
+var price = 0, why = '';
+if(!c.shipTo || !c.branch){
+why = 'No ABC account set \u2014 open Suppliers from the menu and set your Ship-To and Branch to price automatically.';
+}else{
+if(el) el.style.opacity = '.5';
+try{
+var j = await window.CardinalABC.price(num, 1);
+var arr = j.lines || j.items || j.prices || (Array.isArray(j) ? j : []);
+var p = arr[0] || {};
+var v = Number(p.unitPrice != null ? p.unitPrice : (p.price != null ? p.price : NaN));
+if(!isNaN(v) && v > 0) price = v;
+else why = 'ABC did not return a price for this item \u2014 the branch prices it manually.';
+}catch(e){ why = String(e.message || e); }
+if(el) el.style.opacity = '';
+}
+state.lines.push({
+_lid       : newLineId(),
+library_id : null,
+abc_item   : num,
+name       : nm,
+description: '#' + num + (uom ? ' \u00b7 ' + uom : '') + ' \u00b7 ABC Supply',
+qty        : 1,
+unit       : uom,
+unit_price : price,
+amount     : price,
+});
+closePicker();
+render();
+if(why){ try{ alert(nm + '\n\nAdded at $0 \u2014 enter the price by hand.\n\n' + why); }catch(_){} }
 }
 function currentProjectId(){
 var p = window.currentProject;
@@ -55047,7 +55167,21 @@ rows(j.items || (Array.isArray(j) ? j : []));
 }
 function open(){ ensure().style.display = 'flex'; refreshStatus(); }
 function close(){ if(el) el.style.display = 'none'; }
-window.CardinalABC = { open: open, close: close };
+/* 774: the estimate editor prices line items through these. They are the
+   same api() calls the Suppliers screen uses — one code path, so a fix
+   there is a fix here. cfg() is exposed so the editor can tell a rep to
+   set the account up in Suppliers instead of failing cryptically. */
+async function searchApi(q){
+return await api({ action:'searchItems', query:q, branchNumber: cfg().branch || undefined });
+}
+async function priceApi(itemNumber, qty){
+var c = cfg();
+return await api({ action:'priceItems', shipTo:c.shipTo, branchNumber:c.branch,
+items:[{ itemNumber:itemNumber, quantity:qty || 1 }] });
+}
+window.CardinalABC = Object.assign(window.CardinalABC || {}, {
+open: open, close: close, search: searchApi, price: priceApi, cfg: cfg
+});
 })();
 </script>
 <style id="cr-can-styles">
@@ -61409,6 +61543,10 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #cr-est-view .cr-est-itemchk{background:var(--obs-well,#0d0e12);border:1px solid var(--obs-hair,#2f3038);color:#f0a3a9;}
 #cr-est-view .cr-est-itemchk:hover{background:#16171d;border-color:#c8202e;}
 #cr-est-view .cr-est-items-head .add-custom{color:#f0a3a9;border:1px solid #c8202e;}
+/* 774: the same lift .add-custom gets above. #2a6b3c is 3.06:1 on this
+   ground — under the floor — and #78c98e is 9.87:1, matching its
+   neighbour's 9.84:1 so the two buttons carry equal weight. */
+#cr-est-view .cr-est-items-head .add-abc{color:#78c98e;border:1px solid #3f9457;}
 #cr-est-view .cr-est-move button{background:var(--obs-well,#0d0e12);border:1px solid var(--obs-hair,#2f3038);color:#f0a3a9;}
 #cr-est-view .cr-est-move button:disabled{opacity:.35;}
 #cr-est-view .cr-est-photo .thumb{background:#15161c;}
