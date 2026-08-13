@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 787 &#8212; Curtis and Scottie can be tagged on a punch-out again, and tapping through to a client that has not loaded says so instead of dropping you on the home screen</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 788 &#8212; The client card is half the height, everything on it lines up in one column, and the cover photo is gone</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39500,6 +39500,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:788, d:'2026-08-13', t:'The client card, lined up',
+s:'The client card was gigantic and nothing on it lined up. Measured on a phone it was about 440 pixels tall before you saw anything useful, and its text started at FOUR different left edges \u2014 the phone number and email were pushed over to the right while the name, PO and address sat on the left. It is now one card with a label column and a value column, the way AccuLynx lays a client out: PHONE, EMAIL and ADDRESS all start at the same place, and the name, PO badge, star and pencil sit on one line together. THE COVER PHOTO IS GONE, as asked. Worth knowing why it was showing a broken image: every cover photo in the system was stored as a public link into a storage bucket that is private, so all four of them answered “forbidden” and could never load. Removing the card retires those four. There are three more of the same kind on estimates, which are still to fix.' },
 { b:787, d:'2026-08-13', t:'Curtis is back, and a failed jump says so',
 s:'Two things. @CURTIS WAS MISSING from the people you can tag on a punch-out, and so was @Scottie. The tag row was only ever showing the first five names on the team list, so who you could reach was decided by the order people happen to sit in \u2014 and Curtis and Scottie are last, which meant the man who dispatches punch-outs and his crew lead were the two it cut. Everyone is there now. SECOND: tapping through to a client could land you on the retail home screen instead. When the app is asked to open a client it does not currently have loaded, it used to do nothing at all \u2014 and because the screen you tapped from closes itself first, you were left looking at whatever was behind it. It now reloads and tries again, and if the client really cannot be opened it tells you so rather than quietly dumping you somewhere.' },
 { b:786, d:'2026-08-13', t:'The punch-out card fits a phone',
@@ -70602,5 +70604,126 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
 });
 })();
 </script>
+
+<style id="cr-clientcard-styles">
+/* ==========================================================================
+   THE CLIENT CARD - build 788
+   Theo: "the client card is gigantic ... make it visually pleasing while
+   making it line everything up well ... maybe we can make it look more like
+   AccuLynx. On Cardinal it's just scattered everywhere and in orderly."
+
+   Measured before, at 402px: a 150px cover card holding a broken image, then
+   a 283px info card whose text started at FOUR different left edges (49 /
+   128 / 262 / 275) because .hcontact carried `margin-left:auto;
+   text-align:right` inside a wrapping flex row. AccuLynx's client card is a
+   label column and a value column; that is all this is.
+
+   THIS BLOCK IS THE ONE PLACE THE CLIENT CARD IS LAID OUT. The rules it
+   supersedes are spread across eight earlier blocks (447-474, 496-529,
+   3325-3360, 54886, 56419-56438), left alone deliberately because they still
+   carry the insurance and community COLOURS over the same structure. Change
+   geometry here, not there.
+   ========================================================================== */
+
+/* ---- the cover photo is retired --------------------------------------
+   Hidden, not deleted: openProject() dereferences #projCover and
+   #projCoverEmpty unguarded, so removing the markup throws INSIDE the profile
+   renderer and takes the whole client profile down. One line to restore.
+   It was also never loading - every cover_image in the database is a PUBLIC
+   storage URL for a bucket whose public flag is false, so all four answered
+   403. */
+#projectView .projhead .projcover{ display:none !important; }
+#projectView .projhead{ display:block; margin:6px 0 10px; }
+
+/* ---- one grid for the whole card --------------------------------------
+   `display:contents` on the <h2> is what makes this possible: it drops the
+   heading's own box so its children and #projMeta become items of the SAME
+   grid. Without it the address is stranded in a sibling element and cannot
+   be ordered between the email and the actions. */
+#projectView .projinfo{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto auto;
+  column-gap:8px;
+  align-items:center;
+  padding:12px 14px 13px;
+}
+#projectView #projName{ display:contents; }
+/* Catch-all: anything not named below gets its own full-width row instead of
+   landing in a random cell. The rules under it carry a class and out-specify
+   it, so source order does not matter. */
+#projectView #projName > *{ grid-column:1 / -1; }
+
+#projectView #projName .insBadge  { grid-row:1; justify-self:start; margin-bottom:6px; }
+#projectView #projName .poPfx     { grid-row:2; grid-column:1; margin-right:0; }
+#projectView #projName .heroNm    { grid-row:2; grid-column:2; font-size:20px; }
+#projectView #projName .namestar  { grid-row:2; grid-column:3; }
+/* The pencil carried background:#faf7f5 from the light era, so on the dark
+   card it rendered as a bright white square beside the client's name - the
+   defect class this project hits more than any other. Token pair, so it
+   flips with the theme instead of being right in one of them. */
+#projectView #projName .editpencil{
+  grid-row:2; grid-column:4; margin-left:4px;
+  background:var(--rbe-panel2,#1b1f24);
+  border:1px solid var(--rbe-line2,rgba(255,255,255,.12));
+  color:var(--rbe-head,#ffffff);
+}
+#projectView #projName .hcontact  { grid-row:3; }
+#projectView #projMeta            { grid-row:4; grid-column:1 / -1; }
+#projectView #projName .hmanage   { grid-row:5; }
+/* the stage / "Contacted" row, the only other child of .projinfo */
+#projectView .projinfo > div:not(.projmeta){ grid-row:6; grid-column:1 / -1; }
+
+/* The PO is already shown as the #1032 chip beside the name; this second
+   badge said the same number twice and, being unplaced, auto-flowed into the
+   row .insBadge vacates on a retail job - landing ABOVE the client's name. */
+#projectView #projName .cr-po-badge{ display:none; }
+
+/* ---- PHONE / EMAIL / ADDRESS share one label column -------------------- */
+#projectView #projName .hcontact{
+  margin-left:0;              /* was `auto` - this is what pushed it right */
+  text-align:left;
+  align-items:stretch;
+  row-gap:3px;
+  margin-top:10px;
+}
+#projectView .hph,
+#projectView .hem,
+#projectView .projmeta .mrow{
+  display:grid;
+  grid-template-columns:74px minmax(0,1fr);
+  align-items:baseline;
+  column-gap:10px;
+  margin:0 0 3px;
+}
+#projectView .hph::before{ content:'PHONE'; }
+#projectView .hem::before{ content:'EMAIL'; }
+#projectView .hph::before,
+#projectView .hem::before,
+#projectView .projmeta .mlbl{
+  font:800 10.5px 'Segoe UI',Arial,sans-serif;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--rbe-mute,#9a8c85);
+}
+#projectView .projmeta .mlbl{ flex:none; }
+#projectView .hph{ font:700 14px/1.5 'Segoe UI',Arial,sans-serif; }
+#projectView .hem{ font:600 13px/1.5 'Segoe UI',Arial,sans-serif; }
+#projectView .projmeta .mrow{ font:600 13.5px/1.5 'Segoe UI',Arial,sans-serif; }
+
+/* ---- the secondary actions sit last, under a hairline ------------------ */
+#projectView #projName .hmanage{
+  font:700 11px 'Segoe UI',Arial,sans-serif;
+  margin-top:9px;
+  padding-top:9px;
+  border-top:1px solid var(--rbe-line2,rgba(255,255,255,.08));
+}
+
+@media (max-width:560px){
+  #projectView #projName .heroNm{ font-size:18px; }
+  #projectView .hph,
+  #projectView .hem,
+  #projectView .projmeta .mrow{ grid-template-columns:66px minmax(0,1fr); }
+}
+</style>
 </body>
 </html>

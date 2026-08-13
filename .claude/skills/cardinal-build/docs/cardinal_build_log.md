@@ -15568,3 +15568,58 @@ was the TEST's fault: it watched `window.alert` only, but the app prefers `showE
 both **and checks the message is actually on screen** — 762 fixed a class where errors were written to
 the home page while the user was elsewhere, and a fix that reports into a hidden node is the same bug
 wearing a hat.
+
+## build 788 — 13 Aug 2026 — the client card, lined up (cover photo retired)
+
+Theo: *"Lots of photos not reappearing in different places again. Also the client card is gigantic. Can you
+make it visually pleasing while making it line everything up well? Also, maybe we can just get rid of cover
+photos on client card all together. Maybe we can make it look more like AccuLynx. On Cardinal it's just
+scattered everywhere and in orderly."*
+
+### The photos — root-caused against PRODUCTION, not guessed
+
+```
+storage.buckets           photos.public = FALSE
+projects.cover_image      37 none · 4 rows → ALL FOUR are /object/PUBLIC/ links
+estimates.photos          3 entries       → all three the same
+team_profiles.photo       5 data-URLs     → fine
+```
+
+`uploadDataUrl()` stores `getPublicUrl()`. The bucket is private, so **every one of those seven URLs
+answers 403 and can never load** — that is the broken "?" in the screenshot. This file already carries a
+comment elsewhere warning that a "public URL would 403 the moment the bucket goes private". It did.
+**Removing the cover card retires 4 of the 7. The 3 on estimates are NOT fixed here and are reported.**
+
+### The card — measured, at 402px, before touching anything
+
+```
+cover card   330 x 150      (holding the broken image)
+info card    330 x 283      → ~440px of hero on an ~800px screen
+left edges   49 (PO/manage/address) · 128 (name) · 262 (email) · 275 (phone)
+```
+
+Four left edges in one card, because `.hcontact` carried `margin-left:auto; text-align:right` inside a
+wrapping flex row. That is "scattered everywhere", in pixels. **After: 274px, and TWO left edges** (the
+label column and the value column) — the AccuLynx shape.
+
+**`display:contents` on the `<h2>` is the load-bearing trick.** ADDRESS lives in `#projMeta`, a *sibling*
+of `#projName`, so with the heading keeping its own box the address could never be ordered between the
+email and the actions. Dropping that box makes both sets of children items of one grid.
+
+⚠️ **The cover is HIDDEN, not deleted.** `openProject()` does `cov.querySelector(...)` and
+`getElementById('projCoverEmpty').style...` unguarded — removing the markup throws *inside the profile
+renderer* and takes the whole client profile down with it.
+
+Also found and fixed while in there: a **duplicate PO badge** (`.cr-po-badge`, "PO 1032") that said the
+same number as the `#1032` chip and, being unplaced, auto-flowed into the grid row `.insBadge` vacates on
+a retail job — landing **above the client's name**. And the **edit pencil was `background:#faf7f5`**, a
+light-era white square on the dark card; now a `--rbe-*` token pair so it flips.
+
+**Gate**: geometry + contrast measured in Chromium, both themes — all six text roles pass 4.5:1
+(dark 4.82–12.71, light 4.64–16.89). ⚠️ The contrast probe stamps `data-theme="rb-light"` and **left it
+stamped**, so the first "after" screenshot silently captured the wrong theme. It restores it now — a rig
+that changes the thing it measures is the trap this file names twice.
+
+**Not done, and Theo's call:** the Overview still alternates dark cards with WHITE ones (Job Value,
+Payment Information, Location, Job Details, Google Reviews, Assigned To). That alternation is most of the
+remaining "scattered" feeling and is a much bigger theming pass.
