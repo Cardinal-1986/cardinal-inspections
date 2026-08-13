@@ -18,12 +18,33 @@ let tokenCache = { token: null, exp: 0, env: '' };
 function env() { return (process.env.ABC_ENV || 'sandbox').toLowerCase() === 'production' ? 'production' : 'sandbox'; }
 function apiBase() { return process.env.ABC_API_BASE || API_DEFAULT[env()]; }
 
+/* Node's own fetch throws a bare "TypeError: fetch failed" on any network-level
+   failure (bad host, connection refused, timeout, TLS) and puts the ACTUAL
+   reason on `.cause` — which the two raw fetch() calls below were discarding,
+   so a wrong ABC_API_BASE and a genuinely down endpoint both read identically
+   as "fetch failed" with nothing to tell them apart. This wraps every outbound
+   call so the host and the real cause survive into the error the UI shows. */
+async function netFetch(url, opts) {
+  try {
+    return await fetch(url, opts);
+  } catch (e) {
+    const host = (() => { try { return new URL(url).host; } catch (_) { return url; } })();
+    let cause = e && e.cause;
+    if (cause && Array.isArray(cause.errors) && cause.errors.length) cause = cause.errors[0];
+    const why = cause ? (cause.code ? (cause.code + ': ' + (cause.message || '')) : String(cause.message || cause))
+                       : String(e.message || e);
+    const err = new Error('Could not reach ' + host + ' (' + why + ')');
+    err.code = 'NETWORK';
+    throw err;
+  }
+}
+
 async function getToken() {
   const e = env();
   if (tokenCache.token && tokenCache.env === e && Date.now() < tokenCache.exp) return tokenCache.token;
   const id = process.env.ABC_CLIENT_ID, secret = process.env.ABC_CLIENT_SECRET;
   if (!id || !secret) { const err = new Error('ABC credentials not configured'); err.code = 'NOT_CONFIGURED'; throw err; }
-  const r = await fetch(AUTH[e], {
+  const r = await netFetch(AUTH[e], {
     method: 'POST',
     headers: {
       'Authorization': 'Basic ' + Buffer.from(id + ':' + secret).toString('base64'),
@@ -44,7 +65,7 @@ async function getToken() {
 
 async function abc(method, path, payload) {
   const token = await getToken();
-  const r = await fetch(apiBase() + path, {
+  const r = await netFetch(apiBase() + path, {
     method,
     headers: {
       'Authorization': 'Bearer ' + token,
