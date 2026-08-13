@@ -223,6 +223,24 @@ export default async function handler(req, res) {
          sent only when the caller has one. Trust the error, not the doc. */
       case 'frequents': return res.status(200).json(await abc('GET', '/api/product/v1/items/' + encodeURIComponent(String(b.billTo || '')) + '/frequents' + pageQs(b)));
       case 'recents': return res.status(200).json(await abc('GET', '/api/product/v1/items/' + encodeURIComponent(String(b.billTo || '')) + '/recents' + pageQs(b)));
+      /* https://apidocs.abcsupply.com/search-accounts/ — ask ABC which ship-to
+         accounts this key may actually price against, instead of guessing.
+         Earned the hard way: the ship-to shown on an invoice ("Ship To: 0003")
+         is a display code, NOT the API's identifier, exactly as the account
+         number on the myABCsupply portal was not the API's bill-to. Real
+         ship-to numbers are independent 7-digit values (ABC's own example:
+         1163698). Each row carries name + address + its parent billTo, so a
+         human can recognise the job rather than decode a number. */
+      case 'accounts': {
+        const body = b.payload || {
+          filters: [
+            { key: 'accountType', condition: 'equals', values: ['Ship-to'], joinCondition: 'and' },
+            { key: 'storefront', condition: 'equals', values: ['abc'] },
+          ],
+          pagination: { itemsPerPage: b.itemsPerPage || 100, pageNumber: b.pageNumber || 1 },
+        };
+        return res.status(200).json(await abc('POST', '/api/account/v1/search/accounts', body));
+      }
       case 'templates': return res.status(200).json(await abc('GET', '/api/order/v2/orders/templates' + (b.query ? '?' + String(b.query) : '')));
       case 'branches': return res.status(200).json(await abc('GET', '/api/location/v1/branches' + (b.query ? '?' + String(b.query) : '')));
       case 'itemAvailability': return res.status(200).json(await abc('GET', '/api/product/v1/availability/items/' + encodeURIComponent(String(b.itemNumber || '')) + '/branches'));
