@@ -21,6 +21,22 @@
 >   fixed** — see "What the probe corrected" below. This is what the gate is
 >   for; do not skip it on a re-run.
 >
+> **The full export is verified.** All 166 records fetched and run through the
+> shipped `map_job()`. Every checklist parses, every stage lands inside the
+> `STAGES` whitelist (so nothing silently becomes a `Lead`), and **no record
+> is missing a name or an address**. Reps resolve to all six active people —
+> nick 42 · theo 39 · jerry 35 · joey 29 · jacob 18 · curtis 3, **zero
+> falling back to the admin**. Only **7 of 166 carry insurance data**, which
+> is the size of the later Phase C sort.
+>
+> ⚠️ **Two facts about the source data, not faults** — worth knowing at the
+> review gate rather than discovering afterwards: **26 of 166 have no phone**
+> and **131 of 166 have no email**. AccuLynx simply does not hold them. The
+> import cannot invent contact details, and the same rule as
+> `community_partners` applies — never write an unverified email address.
+> Also, the oldest record is a literal **`test test`** entry carrying Theo's
+> own email; exclude it at the review gate.
+>
 > **Remaining: gates 3–5 (dry run, pilot, real run), which need the Cardinal
 > admin login.** Nothing has been written to Cardinal yet.
 
