@@ -15623,3 +15623,38 @@ that changes the thing it measures is the trap this file names twice.
 **Not done, and Theo's call:** the Overview still alternates dark cards with WHITE ones (Job Value,
 Payment Information, Location, Job Details, Google Reviews, Assigned To). That alternation is most of the
 remaining "scattered" feeling and is a much bigger theming pass.
+
+## build 789 — 13 Aug 2026 — the Photo Album toolbar, cut from five buttons to two
+
+Theo: *"the photo gallery is a mess. Maybe have just the plus photos pop up the company cam, leave the take
+photos and have another bar for photo inspections/transfer? Also, the orange ball is a generate caption,
+which won't work here."*
+
+**THE PRIME DOCTRINE PAID OFF AGAIN: the bar he asked for already existed.** `cr-pae-script` builds
+`#cr-pae-actionbar` and raises it the moment a photo is checked, already carrying To Inspection, To Report,
+move-to-section, Save and Clear. The two big red buttons across the top were **duplicates of it**. This
+build did not add a bar; it stopped drawing the copies.
+
+⚠️ **CompanyCam cannot be the plus button for everyone.** `api/companycam` refuses non-admins server-side
+with a 403 and `#galCcBtn` is admin-gated for exactly that reason (777, the rccGate rule). Wiring the plus
+straight to CompanyCam would have left Curtis, Nick, Joey and Jacob **with no way to add a photograph at
+all**. The plus opens CompanyCam for an admin and the device picker for everyone else — one button, the
+right source for whoever taps it. Both paths are asserted in the gate.
+
+⚠️ **The first attempt at moving the transfer control was a REGRESSION I caught in the harness.**
+`#galXferMenu` is `position:absolute` *inside* `#galXferWrap`, so the wrap has to live where it is tapped —
+but `renderBulkActionBar` rewrites `actionBar.innerHTML` on **every** render, which **detaches** anything
+appended into it. Appending the real node and re-reading it by id next render found `null`: the Transfer
+control would have disappeared from the document permanently. The node survives as a **JS reference**,
+listeners intact, so it is cached in `paeXferNode` and re-homed after each render. *Appending a real node
+into an innerHTML-rewritten container is a bug with a delay on it.*
+
+**The orange ball** was an AI caption button. 708 had already diagnosed it — `api/caption` rejects anything
+that is not a base64 `data:` URL, and every photograph taken since the bucket went private is
+storage-backed — and tried to rescue it by fetching the bytes back and re-encoding. It still fails in
+Theo's hands, so the control is gone. Double-tap to type a caption is untouched; that path never used the API.
+
+**Gate**: `gate_789.mjs` — 15 green, **7 red on the 788 control** (which reports `ai:1`, the badge still
+present). ⚠️ Two harness faults first, both the TEST's: it called `openGallery()`, which does not exist —
+the opener is `openGalleryMode(mode)` — and the `typeof` guard swallowed it, so every visibility probe read
+a hidden view and reported false; and a source assertion kept the old variable name after the rewrite.

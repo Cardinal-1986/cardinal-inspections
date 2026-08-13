@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 788 &#8212; The client card is half the height, everything on it lines up in one column, and the cover photo is gone</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 789 &#8212; The Photo Album toolbar is two buttons instead of five: the plus opens CompanyCam, Take photo stays, and the Inspection and Report actions appear in the selection bar when you check a photo</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -13313,10 +13313,20 @@ function openGalleryMode(mode){
   /* 777: api/companycam refuses non-admins server-side with a 403; a button
      that 403s for the reps is worse than no button (the rccGate rule). Set on
      every open, so a sign-in change never leaves a stale button behind. */
-  document.getElementById('galCcBtn').style.display =
-    (galMode !== 'insp' && typeof isAdminUser === 'function' && isAdminUser()) ? '' : 'none';
+  /* 789: folded into the plus button, which now opens CompanyCam for admins.
+     The element stays in the markup because galCcOpen/galCcClose and the
+     panel's own wiring reference it; it is simply never shown. */
+  document.getElementById('galCcBtn').style.display = 'none';
   if(galMode === 'insp') galCcClose();
-  document.getElementById('galInspBtn').style.display = galMode === 'insp' ? 'none' : '';
+  /* 789: the selection bar (#cr-pae-actionbar) already carries "To Inspection"
+     and "To Report" and shows the moment a photo is checked. These were the
+     same two actions drawn a second time across the top, which is most of why
+     the toolbar was five buttons deep. Kept in the DOM — the bar's buttons
+     work by clicking these. */
+  document.getElementById('galInspBtn').style.display = 'none';
+  /* 789: and the transfer control leaves the toolbar the moment the album
+     opens; cr-pae re-homes it into the selection bar. */
+  try{ document.getElementById('galXferWrap').style.display = 'none'; }catch(_x){}
   document.getElementById('galInspRmBtn').style.display = galMode === 'insp' ? '' : 'none';
   projectView.style.display = 'none';
   galleryView.style.display = 'block';
@@ -13335,6 +13345,18 @@ document.getElementById('galBackBtn').addEventListener('click', function(){
   window.scrollTo(0,0);
 });
 document.getElementById('galAddBtn').addEventListener('click', function(){
+  /* 789: Theo — "have just the plus photos pop up the company cam". For an
+     admin the plus opens CompanyCam, which is where the photographs actually
+     are, and the separate From CompanyCam button is retired into it.
+     It CANNOT do that for everyone: api/companycam answers a non-admin with
+     403, so a rep whose plus opened CompanyCam would have no way to add a
+     photograph at all. Same gate as the button it replaces (777). */
+  var canCc = (typeof isAdminUser === 'function') && isAdminUser() && galMode !== 'insp';
+  if(canCc){
+    var p = document.getElementById('galCcPanel');
+    if(p && p.style.display !== 'none') galCcClose(); else galCcOpen();
+    return;
+  }
   document.getElementById('galFileInput').click();
 });
 document.getElementById('galCamBtn').addEventListener('click', function(){
@@ -39500,6 +39522,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:789, d:'2026-08-13', t:'The Photo Album toolbar, cut to two buttons',
+s:'The Photo Album toolbar was five buttons stacked in three rows. It is two now. THE PLUS OPENS COMPANYCAM, so the separate From CompanyCam button is gone \u2014 for admins, that is; a rep\u2019s plus still opens their own phone, because CompanyCam refuses anyone who is not an admin and a plus button that did nothing for the crew would be worse than the mess. TAKE PHOTO is unchanged. THE TWO BIG RED BUTTONS have moved: Add checked to Inspection Photos and Transfer checked to report were always duplicates of the selection bar that already slides up when you check a photo, so they are only there now \u2014 check something and the bar appears with To Inspection, To Report, move to a section, save and clear. THE ORANGE BALL ON EACH PHOTO IS GONE. It was an AI caption button and it could not work: the caption service only accepts photographs sent as raw data, and every photo taken since the storage went private is stored as a file instead. Double-tapping a photo to type your own caption still works, and always did.' },
 { b:788, d:'2026-08-13', t:'The client card, lined up',
 s:'The client card was gigantic and nothing on it lined up. Measured on a phone it was about 440 pixels tall before you saw anything useful, and its text started at FOUR different left edges \u2014 the phone number and email were pushed over to the right while the name, PO and address sat on the left. It is now one card with a label column and a value column, the way AccuLynx lays a client out: PHONE, EMAIL and ADDRESS all start at the same place, and the name, PO badge, star and pencil sit on one line together. THE COVER PHOTO IS GONE, as asked. Worth knowing why it was showing a broken image: every cover photo in the system was stored as a public link into a storage bucket that is private, so all four of them answered “forbidden” and could never load. Removing the card retires those four. There are three more of the same kind on estimates, which are still to fix.' },
 { b:787, d:'2026-08-13', t:'Curtis is back, and a failed jump says so',
@@ -42968,10 +42992,9 @@ var el = document.getElementById(id);
 if(el && el.style.display === 'none') el.style.display = '';
 });
 if(pickerMode) return;
-['galInspBtn', 'galXferWrap'].forEach(function(id){
-var el = document.getElementById(id);
-if(el && el.style.display === 'none') el.style.display = '';
-});
+/* 789: these two used to be re-shown here on every album open. They now live
+   in the selection bar only, so putting them back would restore the duplicate
+   row this build removed. */
 var view = document.getElementById('galleryView');
 if(view) view.classList.remove('cr-pae-pickermode');
 }
@@ -43056,7 +43079,13 @@ html +=
    Reading `data` alone is what broke every album tile in Theo's screenshot. */
 '<img src="' + esc(String(ph._src || ph.data || '')) + '" alt="" loading="lazy">' +
 '<span class="cr-pae-secbadge">' + esc(sec) + '</span>' +
-'<button class="cr-pae-ai" data-cr-ai="1" title="AI Caption">\u2728</button>' +
+/* 789: the AI caption badge is gone. Theo: "the orange ball is a generate
+   caption, which won't work here." 708 had already found why — api/caption
+   rejects anything that is not a base64 data: URL, and every photograph
+   taken since the bucket went private is storage-backed — and tried to
+   rescue it by fetching the bytes back and re-encoding. It still fails in
+   his hands, and a control that fails is worse than no control. Double-tap
+   to type a caption still works; that path never involved the API. */
 '<div class="gchk">' + (isChecked ? '\u2713' : '') + '</div>' +
 '<button class="gdel" title="Delete photo">\u2715</button>' +
 '<span class="cr-pae-initials" title="' + esc((ROSTER[String(ph.created_by || '').toLowerCase()] || {}).name || ph.created_by || 'Unknown') + '">' + esc(initials) + '</span>' +
@@ -43101,6 +43130,9 @@ window.renderGallery.__crPaeWrapped = true;
 return true;
 }
 var actionBar = null;
+/* 789: the real #galXferWrap, held by reference so the bar's innerHTML rewrite
+   cannot destroy it. Never re-read this by id once it has been moved. */
+var paeXferNode = null;
 function ensureActionBar(){
 if(actionBar) return actionBar;
 actionBar = document.createElement('div');
@@ -43128,19 +43160,26 @@ return;
 view.classList.add('cr-pae-selectmode');
 if(pickerMode) renderPickerActionBar();
 else           renderBulkActionBar(checkedIds);
+/* 789: re-home the real transfer control after the render that just wiped the
+   bar's children. paeXferNode is a REFERENCE, so it stays alive (and keeps its
+   listeners) while detached — getElementById would return null here. */
+if(!paeXferNode) paeXferNode = document.getElementById('galXferWrap');
+if(paeXferNode && !pickerMode){
+paeXferNode.style.display = '';
+if(paeXferNode.parentElement !== actionBar) actionBar.appendChild(paeXferNode);
+}
 actionBar.classList.add('show');
 }
 function renderBulkActionBar(checkedIds){
 var hasInsp  = !!document.getElementById('galInspBtn');
-var hasXfer  = !!document.getElementById('galXferBtn');
 actionBar.innerHTML =
 '<span class="count">' + checkedIds.length + ' selected</span>' +
 (hasInsp
 ? '<button class="wf" data-act="to-insp" type="button">\u27A1\uFE0F To Inspection</button>'
 : '') +
-(hasXfer
-? '<button class="wf" data-act="to-report" type="button">\u2192 Report</button>'
-: '') +
+/* 789: no proxy for Report any more \u2014 the REAL #galXferWrap is appended
+   below, because #galXferMenu is position:absolute INSIDE it and a proxy
+   click on a wrap sitting in a hidden toolbar opens a menu nobody can see. */
 '<select class="move-to" data-act="bulk-move">' +
 '<option value="">Move to section\u2026</option>' +
 SECTIONS.map(function(s){
@@ -43160,13 +43199,6 @@ var insp = actionBar.querySelector('[data-act="to-insp"]');
 if(insp) insp.onclick = function(){
 var real = document.getElementById('galInspBtn');
 if(real) real.click();
-};
-var rep = actionBar.querySelector('[data-act="to-report"]');
-if(rep) rep.onclick = function(){
-var real = document.getElementById('galXferBtn');
-if(!real) return;
-real.scrollIntoView({ behavior:'smooth', block:'center' });
-setTimeout(function(){ real.click(); }, 320);
 };
 }
 function renderPickerActionBar(){
