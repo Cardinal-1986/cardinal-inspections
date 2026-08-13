@@ -108,6 +108,15 @@ function abcReason(j) {
   return m.length > 300 ? m.slice(0, 299) + '…' : m;
 }
 
+/* The paginated item lists (frequents/recents) all take the same trio. */
+function pageQs(b) {
+  const p = new URLSearchParams();
+  p.set('pageNumber', String(b.pageNumber || 1));
+  p.set('itemsPerPage', String(b.itemsPerPage || 25));
+  if (b.branchNumber) p.set('branchNumber', String(b.branchNumber));
+  return '?' + p.toString();
+}
+
 async function abc(method, path, payload) {
   const token = await getToken();
   const r = await netFetch(apiBase() + path, {
@@ -149,11 +158,40 @@ export default async function handler(req, res) {
         return res.status(200).json({ configured: true, connected: true, env: env(), apiBase: apiBase() });
       }
       case 'searchItems': {
-        // https://apidocs.abcsupply.com/search-item-availability/ + /search-items/
-        // availability-aware search per ABC best practices; falls back to plain catalog search
-        const body = b.payload || { query: b.query || '', branchNumbers: b.branchNumber ? [String(b.branchNumber)] : undefined, page: 1, pageSize: 20 };
-        try { return res.status(200).json(await abc('POST', '/api/product/v1/search/availability/items', body)); }
-        catch (e1) { return res.status(200).json(await abc('POST', '/api/product/v1/search/items', body)); }
+        /* https://apidocs.abcsupply.com/search-items/ — the real request shape.
+           `{query, branchNumbers, page, pageSize}` was this file's invention;
+           none of those fields exist. ABC takes a filters[] array and a
+           pagination object, and the ONLY filter key that matches free text is
+           itemDescription (the availability-search endpoint accepts just
+           itemNumber/branchNumber, so it cannot serve the catalog box at all —
+           which is why the old availability-first ladder is gone rather than
+           reordered). `embed:['branches']` carries per-branch availability back
+           with each hit, which is what "Search my branch" wants; a branchNumber
+           FILTER would instead drop every item the branch does not stock, and
+           that is a narrowing decision to make against real data, not now. */
+        const q = String(b.query || '').trim();
+        const page = { itemsPerPage: b.itemsPerPage || 20, pageNumber: b.pageNumber || 1 };
+        const byDesc = {
+          filters: [{ key: 'itemDescription', condition: 'contains', values: [q] }],
+          embed: ['branches'],
+          pagination: page,
+        };
+        let out = await abc('POST', '/api/product/v1/search/items', b.payload || byDesc);
+        /* Theo works from invoices full of item codes (02OCTDDML, 14ANADE15W).
+           A code will not match a description search, so when a single-token
+           query finds nothing, try it as an exact item number before giving up.
+           Guarded and non-fatal: a failure here keeps the first result. */
+        if (!b.payload && q && !/\s/.test(q) &&
+            !(out && Array.isArray(out.items) && out.items.length)) {
+          try {
+            out = await abc('POST', '/api/product/v1/search/items', {
+              filters: [{ key: 'itemNumber', condition: 'equals', values: [q] }],
+              embed: ['branches'],
+              pagination: page,
+            });
+          } catch (_) { /* keep the description-search result */ }
+        }
+        return res.status(200).json(out);
       }
       case 'priceItems': {
         // POST /api/pricing/v2/prices — https://apidocs.abcsupply.com/price-items/
@@ -176,8 +214,15 @@ export default async function handler(req, res) {
         };
         return res.status(200).json(await abc('POST', '/api/pricing/v2/prices', body));
       }
-      case 'frequents': return res.status(200).json(await abc('GET', '/api/product/v1/items/' + encodeURIComponent(String(b.billTo || '')) + '/frequents'));
-      case 'recents': return res.status(200).json(await abc('GET', '/api/product/v1/items/' + encodeURIComponent(String(b.billTo || '')) + '/recents'));
+      /* ⚠ pageNumber is REQUIRED here, and ABC's own docs say it is optional.
+         Measured, not assumed: production answered
+         "Bad Request: Required query parameter pageNumber not specified".
+         itemsPerPage rides along because it is the other half of the pair and
+         appears in every one of ABC's own examples; branchNumber is genuinely
+         optional (it enriches each row with availability at that branch) and is
+         sent only when the caller has one. Trust the error, not the doc. */
+      case 'frequents': return res.status(200).json(await abc('GET', '/api/product/v1/items/' + encodeURIComponent(String(b.billTo || '')) + '/frequents' + pageQs(b)));
+      case 'recents': return res.status(200).json(await abc('GET', '/api/product/v1/items/' + encodeURIComponent(String(b.billTo || '')) + '/recents' + pageQs(b)));
       case 'templates': return res.status(200).json(await abc('GET', '/api/order/v2/orders/templates' + (b.query ? '?' + String(b.query) : '')));
       case 'branches': return res.status(200).json(await abc('GET', '/api/location/v1/branches' + (b.query ? '?' + String(b.query) : '')));
       case 'itemAvailability': return res.status(200).json(await abc('GET', '/api/product/v1/availability/items/' + encodeURIComponent(String(b.itemNumber || '')) + '/branches'));
