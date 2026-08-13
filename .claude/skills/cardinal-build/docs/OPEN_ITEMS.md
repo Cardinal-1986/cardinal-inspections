@@ -3023,3 +3023,25 @@ name+street-number match attaches to the existing record instead of duplicating.
 
 After the records land: **Phase C sorting** over the Supabase connector as reviewed SQL. Gate
 sequence and anti-goals live in the runbook; session detail in `HANDOFF.md` (13 Aug section).
+
+## From the 13 Aug retail-lifecycle QA (builds 766-772)
+
+Ranked. Two shipped at 772; the rest are open.
+
+1. **Auto-advance the stage on contract signature** — highest operational value. The homeowner signs and the
+   job sits in Prospect until a human drags it to Approved; everything downstream (Curtis's notification, the
+   Needs-ordered box, the build day) waits on that flip. One call at the signature handler into machinery
+   that already exists.
+2. **Split the intake form** — 19 fields, NONE marked required. Name · phone · address · work type up front,
+   the rest behind "More detail", and make those four actually required.
+3. **Stale-estimate line in the daily digest** — nothing watches an estimate after it is sent. The 11:00 cron
+   already runs and already knows each job's rep.
+4. **One writer for the address** — it is stored twice from one form: `projects.address` (flat) AND
+   `checklist.lead.location.*` (parts). They agree at birth and drift on any later edit.
+5. **Invoiced is a silent stage** — fold "invoiced and unpaid past 30 days" into the Friday owed email.
+
+DONE at 772: emoji removed from the two outbound stage-email subjects; `createContractForCurrent` no longer
+returns in silence when no project is loaded.
+
+**Verified NOT a bug** (do not re-report): "Log Collection missing" — `#miCollBtn` is correctly gated on
+admin+production; its absence in the harness was the mock session.

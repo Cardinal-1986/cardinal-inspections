@@ -4781,3 +4781,24 @@ voice** — no "AI" anywhere a client reads: tag `AFTER · CARDINAL DESIGNER`,
 badge `DESIGN`, burned mark `CARDINAL DESIGNER · VISUALIZATION`. The images
 are still AI-generated and the internal record still says so (`via`, banner,
 docs). `gate_762.mjs`: 23 green · 5 red on the v761 control.
+
+## Production + Punch-Outs (builds 766-772) — REPLACED the 393/603 board
+
+| Feature | Where | Notes |
+|---|---|---|
+| Production screen | `cr-pb-styles` + `cr-pb-script`, `#cr-pb`, `window.CardinalProduction` | Three panes in one view: home / cal / list. Five boxes: Needs ordered · Ordered · Scheduled · Punch-outs · Closed repairs. Back goes up ONE level, never straight Home. |
+| Full calendar | the `cal` pane | Month grid, NAMED chips (build/punch/drop/closed), day sheet, "Needs a date" = Curtis's dispatch queue. Absorbs the dashboard's mini production calendar — one calendar per concept. |
+| The punch-out card | `cr-pk-styles` + `cr-pk-script`, `#cr-pk`, `window.CardinalPunchCard` | **THE** punch detail screen. Four entry points route here: Production, Punch & Repairs (`openDetail`), the client profile tab, and `CardinalPunchProfile.openItem`. |
+| Field SOP checklist | `punch_items.steps` jsonb (`punch_steps.sql`) | Trade templates (roofing/siding/gutters), steps that refuse to tick until a note is written, manager can add/remove/reorder. `template` column records the seed. |
+| Guided photo slots | the card | Overview · Close-up · Cleanup · Material · Final. Feeds the existing 5-photo close gate. Remove pip on filled slots. |
+| Supplement flag | the card | Files extra scope as its own URGENT item on the same job + notifies the office. **No money fields** — pricing stays in the office tools. |
+| Notifications | `notifyAssignee` (cr-pb), `notifyAssigned`/`notifyClosed` (cr-pk) | File/assign notifies the owner; close notifies the office. Never yourself, never for unassigned. Chat stays @-only. |
+| Materials ordered | `checklist.materials_ordered_at` + `_by` | Written from the Materials tab (`saveCkPatch`) and from the board's list (`patchProjectCk`). Answers the "Materials?" chip. |
+| Closed repairs | `buildActivityEvents()` | A closed punch-out is NOT deleted — it becomes the client's repair history. |
+
+**Roles**: manager card = admins + **Curtis** (Scottie's boss, dispatches the punch-outs). Field mode =
+everyone else in production. Field keeps the full messenger, photos, checklist ticking and close; it loses
+reassign, the schedule picker, step editing and the urgency toggle.
+
+**Fences held**: no money anywhere on Production · no photo GPS · quick-tick close kept · one calendar per
+concept · no new body observer · no 14th scroll-lock writer (the card uses `overscroll-behavior:contain`).
