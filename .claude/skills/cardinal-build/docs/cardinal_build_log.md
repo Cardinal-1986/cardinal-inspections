@@ -15481,3 +15481,44 @@ HTML keeps the figures while stripping `contenteditable`. ⚠️ The control fir
 red (`typeInto` hit a null on cells 784 does not have); a harness that explodes proves nothing, so it now
 degrades to a reported failure. Three patch assertions were also wrong before the code was — a definition
 counted as a call site, a miscounted marker, and a name count polluted by my own new comment.
+
+## build 786 — 13 Aug 2026 — the punch-out card on a phone
+
+Theo, with a screenshot: *"This screen doesn't look right."*
+
+**Reproduced before theorising**, in Chromium at 402 CSS px, signed in as an admin, on the item from the
+screenshot. The numbers, measured on the untouched 785 artifact:
+
+```
+grid columns : 63.2px each          (five equal columns, as the CSS intends)
+actual boxes : Overview 36  Close-up 36  Cleanup 31.5  Material 36  Final 22.5
+caption tops : 898, 898, 893.5, 898, 884.5      <- five different heights
+```
+
+**Cause: `.pkslot` is a `<button>` with `border:0; padding:0` and NO width.** A button is inline-block, so
+it shrink-wraps to its widest child — **the caption**. `.im` then takes `width:100%` *of the shrunken
+button*, so each photo slot was sized by how many letters its caption has: "Overview" is eight, "Final" is
+five. That is the staircase in the screenshot and why the captions sat at five different heights. One
+declaration (`display:block; width:100%`) fixes it — **and it was wrong on the desktop too**, just less
+visibly (80px columns, boxes at 36).
+
+**Second fault: the phone layout is keyed to WHO YOU ARE, not what you are holding.**
+`el.classList.toggle('field', !isManager())` — so the office on a phone got the dense five-across grid
+built for a desktop, with 6.8px captions. Fixed with a `@media (max-width:560px)` block **beside** the
+`.field` rules rather than by widening that line: role and viewport are different questions, and the class
+keeps meaning "this user is field crew". ⚠️ **A media query was also the only correct mechanism here** — a
+class toggled inside `render()` sits *after* the 606 stored-signature guard, so on rotation the HTML is
+unchanged, `render()` returns early, and the class would never be re-evaluated.
+
+Result: 402px → 3 columns × 108.7px, **all five boxes identical**, captions 10px on a shared baseline.
+1280px → still 5 columns × 80.4px, now all identical. Tap targets under 44px: **16 → 9** (the photo slots
+and the @tag chips left that list; nine controls remain at 36–42px and are recorded as not-yet-done).
+
+**Not a bug, and reported as such:** the checklist showing template buttons beside a template chip is the
+correct empty-steps state — tapping a template writes its 5 steps and the picker disappears, verified.
+
+**Gate**: `gate_786.mjs` — 10 green at 402px, 9 green at 1280px, **6 red on the 785 control**, which fails
+with exactly the reproduction's numbers (36/36/31.5/36/22.5, box 36 vs column 63.19, 6.8px, baselines
+898/893.5/884.5). ⚠️ **No screenshot**: `page.screenshot` times out on this card in this environment at
+every setting tried (element, fullPage, viewport, animations disabled/allowed). The geometry is measured,
+but the visual result is unverified by eye — Theo's screen is that gate.

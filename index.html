@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 785 &#8212; The contract&#8217;s deposit, balance and price are fields you can type in at the table, and they keep adding up to the contract price as you change them</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 786 &#8212; The punch-out card lays out properly on a phone: the five photo boxes are the same size again instead of shrinking to fit their captions, and the office gets the roomy layout on a phone too</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39477,6 +39477,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:786, d:'2026-08-13', t:'The punch-out card fits a phone',
+s:'The photo row on a punch-out was a staircase: the five boxes came out different sizes, getting smaller left to right, with their captions sitting at five different heights. The boxes were being sized by the length of their own captions — Overview is eight letters and Final is five — instead of by the row they sit in. They are equal again, and the smallest one has gone from 23 pixels wide to a proper tap target. Second thing: this card has a roomy layout built for working on a phone, but it was switched on by WHO you are rather than WHAT you are holding, so the office got the tight five-across desktop grid on a phone. Any narrow screen gets the roomy one now, and it survives turning the phone sideways. Captions went from 6.8px to 10px. The checklist is fine — tapping a template does fill in its steps; that one was a false alarm.' },
 { b:785, d:'2026-08-13', t:'The deposit section is editable, and it adds up',
 s:'You can type in the contract\u2019s Payment Structure now. The down payment, the balance and the contract price are all editable at the table, and they stay consistent: change the deposit and the balance follows, change the balance and the deposit follows, change the price and the balance absorbs it. If the contract prints a percentage beside the deposit, that percentage follows the real figure too, so the document can never say 30% next to a number that is not 30%. WHY THEY WERE DEAD BEFORE: the editor only lets you type in cells marked as fill-in fields, and once a contract had a real price the amounts were written as plain text instead, which took them off that list. They are written as filled fields now. Also: a third place that built contracts \u2014 the one that turns an estimate into a contract \u2014 had its own copy of the deposit maths with a 50% default, and it was the only one that honoured a deposit typed as a dollar amount rather than a percentage. All three build the money the same way now, and a dollar deposit is honoured everywhere.' },
 { b:784, d:'2026-08-13', t:'The morning email chases estimates', s:'The daily email used to report the calendar and nothing else \u2014 so an estimate could go out and sit unanswered for weeks with nothing anywhere saying so. Right now there are four sitting between twelve and seventeen days, worth about $71,800 between them. Each rep now gets their own list of estimates that went out over five days ago and have heard nothing back, with the client, the amount and how long it has been. And it arrives on quiet days too: the email used to send nothing at all when the calendar was empty, which is exactly the morning you have time to chase one.' },
@@ -48965,7 +48967,12 @@ window.CardinalProduction = {
   background:var(--pk-accd,#c8202e); color:var(--pk-accink,#fff);
   border:2px solid var(--pk-c,#15171a); display:flex; align-items:center; justify-content:center;
 }
-#cr-pk .pkslot{ min-width:0; text-align:center; background:transparent; border:0; padding:0; cursor:pointer; }
+/* 786: `width:100%` is load-bearing, not tidying. Without it this <button>
+   is inline-block and shrink-wraps to its widest child \u2014 the caption \u2014 so
+   the five photo slots rendered 36 / 36 / 31.5 / 36 / 22.5 px wide inside five
+   equal 63.2px columns, sized by how many letters each caption has, with their
+   captions at five different heights. Measured at 402px before the fix. */
+#cr-pk .pkslot{ display:block; width:100%; min-width:0; text-align:center; background:transparent; border:0; padding:0; cursor:pointer; }
 #cr-pk .pkslot .im{
   display:block; width:100%; aspect-ratio:1; border-radius:9px; object-fit:cover;
   background:var(--pk-c3,#22262c); border:1px solid var(--pk-line2,rgba(230,235,240,.06));
@@ -49032,6 +49039,26 @@ window.CardinalProduction = {
 }
 #cr-pk .pkclose.ready b{ color:rgba(255,255,255,.78); }
 #cr-pk .pkclose.reopen{ border-color:var(--pk-ok,#6cb98f); color:var(--pk-ok,#6cb98f); }
+/* ---- NARROW SCREEN: the same roomy layout, for whoever is holding it (786) ----
+   The .field block below is keyed to the USER (crew, not office). That is a
+   different question from how wide the screen is, and an admin on a phone was
+   getting the dense five-across grid the office desktop uses. These declarations
+   deliberately mirror the .field ones rather than widening that class: keep the
+   two in step if either changes. A media query also survives rotation, which a
+   class toggled inside render() does not \u2014 render() returns early on an
+   unchanged signature, so the class would not be re-evaluated. */
+@media (max-width:560px){
+  #cr-pk .pkslots{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+  #cr-pk .pkslot .sl{ font-size:10px; letter-spacing:.04em; }
+  #cr-pk .pkck{ padding:13px 0; }
+  #cr-pk .pkck .bx{ width:30px; height:30px; border-radius:8px; }
+  #cr-pk .pkck .bx svg{ width:16px; height:16px; }
+  #cr-pk .pkck .st{ font-size:15px; }
+  /* 592 pushed every showroom control to \u226544px; this card never had that pass.
+     The photo slots are fixed by the grid above \u2014 these are the leftovers. */
+  #cr-pk .pktag{ min-height:44px; }
+  #cr-pk .pkback{ width:44px; height:44px; }
+}
 /* ---- FIELD MODE: bigger targets, camera first ---- */
 #cr-pk.field .pkck{ padding:13px 0; }
 #cr-pk.field .pkck .bx{ width:30px; height:30px; border-radius:8px; }
