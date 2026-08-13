@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 776 &#8212; Publish says what happened instead of going quiet, and nothing claims an estimate published unless a document exists</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 777 &#8212; CompanyCam photographs can be pulled straight into a client&#8217;s Photo Album, and photo sections and captions now survive a reload</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4131,6 +4131,33 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
   </div>
 </div>
 
+<style id="cr-galcc-styles">
+/* ============ 777 — CompanyCam -> Photo Album picker ============
+   Light card on the dark page, same precedent as #galXferMenu. Every colour
+   is a literal on a ground this block itself paints, so no theme can strip
+   it (the 448-449 class). Inks computed against #fdfcf7: #1a1a1a 17.4:1,
+   #2c2c2c 13.6:1, #5a5a5a 6.6:1, #8f1620 9.2:1. */
+#galCcPanel{background:#fdfcf7;border:1px solid #c9c2bf;border-left:4px solid #c8202e;border-radius:10px;padding:12px 14px;margin:0 0 14px;max-width:860px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+#galCcPanel .gcc-head{display:flex;justify-content:space-between;align-items:center;font:800 13px 'Segoe UI',Arial,sans-serif;color:#1a1a1a;margin-bottom:9px}
+#galCcPanel .gcc-head button{background:transparent;border:0;color:#5a5a5a;font-size:16px;line-height:1;cursor:pointer;padding:2px 6px}
+#galCcPanel .gcc-row{display:flex;gap:7px}
+#galCcPanel .gcc-row input{flex:1;min-width:0;padding:9px 11px;border:1px solid #c9c2bf;border-radius:8px;font:600 14px 'Segoe UI',Arial,sans-serif;background:#fff;color:#1a1a1a;outline:none}
+#galCcPanel .gcc-row input:focus{border-color:#c8202e}
+#galCcPanel button.gcc-go{background:#c8202e;color:#fff;border:0;border-radius:8px;padding:9px 14px;cursor:pointer;font:800 11.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;flex:0 0 auto}
+#galCcPanel button.gcc-go:disabled{opacity:.5;cursor:wait}
+#galCcPanel .gcc-stat{font:600 12px 'Segoe UI',Arial,sans-serif;color:#5a5a5a;margin:8px 0 0;min-height:15px;line-height:1.45}
+#galCcPanel .gcc-stat.bad{color:#8f1620}
+#galCcPanel .gcc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:10px;max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#galCcPanel .gcc-p{position:relative;display:block;cursor:pointer}
+#galCcPanel .gcc-p img{width:100%;height:72px;object-fit:cover;border-radius:6px;display:block;background:#eee6e2;border:1px solid #c9c2bf}
+#galCcPanel .gcc-p input{position:absolute;top:4px;left:4px;width:17px;height:17px;margin:0}
+#galCcPanel .gcc-p .gcc-cap{display:block;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;margin-top:3px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#galCcPanel .gcc-p .gcc-meta{display:block;font:600 9.5px 'Segoe UI',Arial,sans-serif;color:#5a5a5a}
+#galCcPanel .gcc-p.foreign img{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.28)}
+#galCcPanel .gcc-p.foreign .gcc-meta{color:#8f1620;font-weight:800}
+#galCcPanel .gcc-foot{margin-top:11px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid #e2d9d5;padding-top:11px}
+#galCcPanel .gcc-note{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#5a5a5a}
+</style>
 <!-- ============ PHOTO GALLERY PAGE ============ -->
 <div id="galleryView" style="display:none;">
   <div class="wrap" style="padding-top:18px;">
@@ -4142,6 +4169,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
       <div style="margin:6px 0 10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
         <button class="chipbtn" id="galAddBtn">&#43; Add photos</button>
         <button class="chipbtn" id="galCamBtn" style="background:#C8202E;color:#fff;border-color:var(--red);">&#128247; Take photo</button>
+        <button class="chipbtn" id="galCcBtn" style="display:none;">From CompanyCam</button>
         <button class="btn" id="galInspBtn">&#10145;&#65039; Add checked to Inspection Photos</button>
         <button class="btn" id="galInspRmBtn" style="display:none;">&#10060; Remove checked from Inspection</button>
         <span id="galXferWrap" style="position:relative;">
@@ -4153,6 +4181,20 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
         <span id="galStatus" style="font:12.5px 'Segoe UI',Arial,sans-serif;color:#666;"></span>
         <input type="file" id="galFileInput" accept="image/*" multiple style="display:none;">
         <input type="file" id="galCamInput" accept="image/*" capture="environment" style="display:none;">
+      </div>
+      <div id="galCcPanel" style="display:none;">
+        <div class="gcc-head">Photographs from CompanyCam
+          <button id="galCcClose" type="button" title="Close">&#10005;</button></div>
+        <div class="gcc-row">
+          <input id="galCcQ" type="search" placeholder="Address, job name or crew" aria-label="Search CompanyCam">
+          <button class="gcc-go" id="galCcFind" type="button">Search</button>
+        </div>
+        <div class="gcc-stat" id="galCcStat"></div>
+        <div class="gcc-grid" id="galCcGrid"></div>
+        <div class="gcc-foot">
+          <button class="gcc-go" id="galCcAddBtn" type="button">Add checked to album</button>
+          <span class="gcc-note">Copies into this album &#183; CompanyCam is never changed</span>
+        </div>
       </div>
       <div id="galGrid" class="galgrid"></div>
   </div>
@@ -10238,7 +10280,7 @@ var photoDb = {
   listByProject: async function(projectId){
     if(TEAM){
       var r = await sb.from('project_photos')
-        .select('id,project_id,data,storage_path,created_by,created_at')
+        .select('id,project_id,data,storage_path,created_by,created_at,section,caption')
         .eq('project_id', projectId)
         .order('created_at', {ascending:true});
       if(r.error) throw r.error;
@@ -10248,7 +10290,7 @@ var photoDb = {
     }
     return glsLoad().filter(function(x){ return x.project_id === projectId; });
   },
-  add: async function(projectId, dataUrl){
+  add: async function(projectId, dataUrl, extra){
     if(TEAM){
       var user = (await sb.auth.getUser()).data.user;
       var store = dataUrl;
@@ -10264,24 +10306,24 @@ var photoDb = {
         if(up.error) throw up.error;
         store = sb.storage.from('photos').getPublicUrl(spath).data.publicUrl;
       }catch(stErr){ spath = null; store = dataUrl; }
-      var r = await sb.from('project_photos').insert({
+      var r = await sb.from('project_photos').insert(Object.assign({
         project_id: projectId, data: store, storage_path: spath,
         created_by: user ? user.email : null
-      });
+      }, extra || {}));
       if(r.error){
         if(spath){ try{ await sb.storage.from('photos').remove([spath]); }catch(e3){} }
         /* storage_path column may not exist yet: retry without it */
-        var r2 = await sb.from('project_photos').insert({
+        var r2 = await sb.from('project_photos').insert(Object.assign({
           project_id: projectId, data: store,
           created_by: user ? user.email : null
-        });
+        }, extra || {}));
         if(r2.error) throw r2.error;
       }
       return;
     }
     var l = glsLoad();
-    l.push({ id: uid(), project_id: projectId, data: dataUrl,
-             created_by: null, created_at: new Date().toISOString() });
+    l.push(Object.assign({ id: uid(), project_id: projectId, data: dataUrl,
+             created_by: null, created_at: new Date().toISOString() }, extra || {}));
     glsSave(l);
   },
   remove: async function(id){
@@ -12987,7 +13029,7 @@ document.getElementById('galGrid').addEventListener('click', async function(e){
   renderGallery();
 });
 
-async function addGalleryFiles(files){
+async function addGalleryFiles(files, metas){
   if(!currentProject || !files || !files.length) return;
   var room = GAL_MAX - currentPhotos.length;
   var status = document.getElementById('galStatus');
@@ -13001,7 +13043,7 @@ async function addGalleryFiles(files){
     status.textContent = 'Adding photo ' + (i+1) + ' of ' + take.length + '\u2026';
     try{
       var dataUrl = await resizeImageFile(take[i], 1600, 0.82);
-      await photoDb.add(currentProject.id, dataUrl);
+      await photoDb.add(currentProject.id, dataUrl, metas && metas[i]);
     }catch(err){
       status.textContent = 'Upload failed: ' + (err.message || err);
       await loadGallery();
@@ -13045,6 +13087,12 @@ function openGalleryMode(mode){
     : 'Every photo for this client. Check photos, then send them to Inspection Photos or straight into a report \u2014 the album always keeps the originals.';
   document.getElementById('galAddBtn').style.display = galMode === 'insp' ? 'none' : '';
   document.getElementById('galCamBtn').style.display = galMode === 'insp' ? 'none' : '';
+  /* 777: api/companycam refuses non-admins server-side with a 403; a button
+     that 403s for the reps is worse than no button (the rccGate rule). Set on
+     every open, so a sign-in change never leaves a stale button behind. */
+  document.getElementById('galCcBtn').style.display =
+    (galMode !== 'insp' && typeof isAdminUser === 'function' && isAdminUser()) ? '' : 'none';
+  if(galMode === 'insp') galCcClose();
   document.getElementById('galInspBtn').style.display = galMode === 'insp' ? 'none' : '';
   document.getElementById('galInspRmBtn').style.display = galMode === 'insp' ? '' : 'none';
   projectView.style.display = 'none';
@@ -13069,6 +13117,211 @@ document.getElementById('galFileInput').addEventListener('change', function(){
 });
 document.getElementById('galCamInput').addEventListener('change', function(){
   addGalleryFiles(this.files); this.value = '';
+});
+
+/* =========================================================================
+   777 — CompanyCam photographs into the client Photo Album.
+   The same one-way door as the report picker (486): /api/companycam does
+   list and fetch, refuses non-admins and never returns an `internal` photo.
+   The bytes then go through the album's OWN pipeline (addGalleryFiles ->
+   resizeImageFile -> photoDb.add), so an import behaves exactly like a
+   phone upload: same 1600px re-encode (which also drops the EXIF block),
+   same GAL_MAX cap, same storage path, same reload. The crew's caption
+   comes across into project_photos.caption.
+   ========================================================================= */
+var galCcPhotos = [];
+var galCcBusy = false;
+var galCcFor = null;   /* which project the panel's results belong to */
+
+function galCcStatus(msg, bad){
+  var el = document.getElementById('galCcStat');
+  if(!el) return;
+  el.textContent = msg || '';
+  el.className = 'gcc-stat' + (bad ? ' bad' : '');
+}
+function galCcApi(body){
+  return window.aiHeaders().then(function(h){
+    return fetch('/api/companycam', { method:'POST', headers:h, body:JSON.stringify(body) });
+  }).then(function(res){
+    return res.json().catch(function(){ return null; }).then(function(data){
+      if(!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
+      return data;
+    });
+  });
+}
+/* The property this album is about. Address first — it is what CompanyCam
+   stores; the client name is the fallback for a job with no address yet. */
+function galCcSubject(){
+  var p = currentProject || null;
+  var addr = String((p && p.address) || '').trim();
+  if(addr) return addr;
+  return String((p && p.name) || '').trim();
+}
+function galCcOpen(){
+  var panel = document.getElementById('galCcPanel');
+  if(!panel || !currentProject) return;
+  /* One screen serves every client: results from the last client must not
+     survive into this one. */
+  if(galCcFor !== currentProject.id){
+    galCcFor = currentProject.id;
+    galCcPhotos = [];
+    document.getElementById('galCcGrid').innerHTML = '';
+    document.getElementById('galCcQ').value = '';
+    galCcStatus('');
+  }
+  panel.style.display = 'block';
+  var q = document.getElementById('galCcQ');
+  if(!q.value){
+    q.value = galCcSubject();
+    /* Seeded from the job's own address: run it straight away. An empty
+       seed is a client with no address yet — leave the box for typing. */
+    if(q.value) galCcFind();
+    else galCcStatus('Type the property address, then Search.');
+  }
+}
+function galCcClose(){
+  var p = document.getElementById('galCcPanel');
+  if(p) p.style.display = 'none';
+}
+function galCcFind(){
+  if(galCcBusy) return;
+  var q = (document.getElementById('galCcQ').value || '').trim();
+  if(!q){ galCcStatus('Type an address, a job name or a crew member first.', true); return; }
+  var pid = currentProject && currentProject.id;
+  if(!pid) return;
+  galCcBusy = true;
+  galCcStatus('Looking\u2026');
+  galCcApi({ action:'list', q:q, limit:60 }).then(function(d){
+    /* The album may have moved to another client during the round trip. */
+    if(!currentProject || currentProject.id !== pid) return;
+    galCcPhotos = (d && d.photos) || [];
+    galCcRender();
+    galCcStatus(galCcPhotos.length
+      ? galCcPhotos.length + ' found \u00b7 tick the ones you want'
+      : 'Nothing matching \u201c' + q + '\u201d.', !galCcPhotos.length);
+  }).catch(function(e){
+    if(!currentProject || currentProject.id !== pid) return;
+    var m = String((e && e.message) || e);
+    galCcStatus(/Admins only/i.test(m)
+      ? 'CompanyCam photographs are admin-only.'
+      : 'Could not reach CompanyCam \u2014 ' + m.slice(0, 120), true);
+  }).then(function(){ galCcBusy = false; galCcRefreshN(); });
+}
+/* Cross-client guard, same intent as the report picker's: the search can
+   reach every job in the account, and these copies land in one client's
+   album. A photo whose job does not look like this property is marked
+   before it can be filed. The index answers project_address as well as
+   project_name, so check both; a photo with neither is left unmarked
+   because there is nothing to judge it by. */
+function galCcForeign(p, subject){
+  if(!subject) return false;
+  var s = subject.toLowerCase();
+  var head = (s.split(',')[0] || '').trim();
+  var name = String(p.project_name || '').toLowerCase();
+  var addr = String(p.project_address || '').toLowerCase();
+  if(!name && !addr) return false;
+  if(addr && head && (addr.indexOf(head) > -1 || s.indexOf((addr.split(',')[0] || '').trim()) > -1)) return false;
+  if(name && head && (name.indexOf(head) > -1 || s.indexOf(name) > -1)) return false;
+  return true;
+}
+function galCcRender(){
+  var subject = galCcSubject();
+  var grid = document.getElementById('galCcGrid');
+  grid.innerHTML = galCcPhotos.map(function(p, i){
+    var when = p.captured_at ? String(p.captured_at).slice(0, 10) : '';
+    var job = p.project_name || p.project_address || '';
+    var foreign = galCcForeign(p, subject);
+    return '<label class="gcc-p' + (foreign ? ' foreign' : '') + '" data-gcc-i="' + i + '">' +
+      '<input type="checkbox" data-gcc-pick>' +
+      '<img src="' + esc(p.thumb) + '" alt="' + esc(p.description || 'Job photograph') + '" loading="lazy">' +
+      '<span class="gcc-cap">' + esc(job || '(no job name)') + '</span>' +
+      '<span class="gcc-meta">' + esc(when) + (foreign ? ' \u00b7 different job' : '') + '</span>' +
+      '</label>';
+  }).join('');
+  galCcRefreshN();
+}
+function galCcPicked(){
+  return [].slice.call(document.querySelectorAll('#galCcGrid .gcc-p'))
+    .filter(function(n){ var c = n.querySelector('[data-gcc-pick]'); return c && c.checked; })
+    .map(function(n){ return galCcPhotos[Number(n.getAttribute('data-gcc-i'))]; })
+    .filter(Boolean);
+}
+function galCcRefreshN(){
+  var b = document.getElementById('galCcAddBtn');
+  if(!b) return;
+  var n = document.querySelectorAll('#galCcGrid [data-gcc-pick]:checked').length;
+  b.textContent = n ? ('Add ' + n + ' to album') : 'Add checked to album';
+}
+async function galCcAdd(){
+  if(galCcBusy) return;
+  if(!currentProject) return;
+  var pid = currentProject.id;
+  var picked = galCcPicked();
+  var status = document.getElementById('galStatus');
+  if(!picked.length){ galCcStatus('Tick the photographs you want first.', true); return; }
+  var foreign = [].slice.call(document.querySelectorAll('#galCcGrid .gcc-p.foreign input:checked')).length;
+  if(foreign && !confirm(foreign + ' of the photographs you ticked look like a different job than this ' +
+      'client\u2019s property. They will be copied into this album anyway. Continue?')) return;
+  var room = GAL_MAX - currentPhotos.length;
+  if(room <= 0){
+    galCcStatus('The album is full (' + GAL_MAX + ' photos). Delete some first.', true);
+    return;
+  }
+  var take = picked.slice(0, room);
+  galCcBusy = true;
+  var btn = document.getElementById('galCcAddBtn');
+  var fnd = document.getElementById('galCcFind');
+  if(btn) btn.disabled = true;
+  if(fnd) fnd.disabled = true;
+  var files = [], metas = [], failed = 0;
+  try{
+    /* One at a time, the ccSave() reason: CompanyCam advertises no rate
+       limits, so politeness has to be structural. */
+    for(var i = 0; i < take.length; i++){
+      if(!currentProject || currentProject.id !== pid) break;  /* left the album */
+      galCcStatus('Fetching ' + (i + 1) + ' of ' + take.length + '\u2026');
+      try{
+        var d = await galCcApi({ action:'fetch', id: take[i].id });
+        var bin = atob(d.data);
+        var u8 = new Uint8Array(bin.length);
+        for(var k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+        files.push(new Blob([u8], { type: d.mime || 'image/jpeg' }));
+        metas.push(d.description ? { caption: String(d.description).slice(0, 500) } : null);
+      }catch(err){ failed++; }
+    }
+    /* The fetches took real time; re-check whose album is open before any
+       write. addGalleryFiles reads currentProject itself, so this is the
+       one guard that keeps photos out of the wrong client's album. */
+    if(files.length && currentProject && currentProject.id === pid){
+      await addGalleryFiles(files, metas);
+    }
+  }finally{
+    galCcBusy = false;
+    if(btn) btn.disabled = false;
+    if(fnd) fnd.disabled = false;
+  }
+  [].forEach.call(document.querySelectorAll('#galCcGrid [data-gcc-pick]'), function(c){ c.checked = false; });
+  galCcRefreshN();
+  galCcStatus(
+    files.length + ' copied into the album' +
+    (failed ? ' \u00b7 ' + failed + ' could not be fetched' : '') +
+    (picked.length > take.length
+      ? ' \u00b7 ' + (picked.length - take.length) + ' skipped (' + GAL_MAX + '-photo limit)'
+      : ''),
+    failed > 0);
+}
+document.getElementById('galCcBtn').addEventListener('click', function(){
+  var p = document.getElementById('galCcPanel');
+  if(p && p.style.display !== 'none') galCcClose(); else galCcOpen();
+});
+document.getElementById('galCcClose').addEventListener('click', galCcClose);
+document.getElementById('galCcFind').addEventListener('click', galCcFind);
+document.getElementById('galCcAddBtn').addEventListener('click', galCcAdd);
+document.getElementById('galCcQ').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){ e.preventDefault(); galCcFind(); }
+});
+document.getElementById('galCcGrid').addEventListener('change', function(e){
+  if(e.target && e.target.matches && e.target.matches('[data-gcc-pick]')) galCcRefreshN();
 });
 document.getElementById('galInspBtn').addEventListener('click', async function(){
   if(!currentProject) return;
@@ -38745,6 +38998,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:777, d:'2026-08-13', t:'CompanyCam photographs straight into the Photo Album',
+s:'Open a client\u2019s Photo Album and there is a From CompanyCam button (admins). It opens with the property address already typed and searched, so the photographs you took before the client was even in Cardinal are one tick away. Ticked photos are copied in through the same door as a phone upload \u2014 same size treatment, same fifty-photo limit \u2014 and the crew\u2019s caption comes across with each one. Photos marked internal in CompanyCam never appear, and CompanyCam itself is never changed. Fixed alongside: a photo\u2019s section and caption used to vanish when you left the page \u2014 the album saved both and then never asked for them back, so everything showed under Inspection with no caption. Both now survive a reload.' },
 { b:776, d:'2026-08-13', t:'Publish stops failing in silence', s:'Publishing an estimate saves it first and waits for the editor to close. If that save did not finish in time \u2014 a slow connection, a big estimate \u2014 the button simply went back to \u201cPublish\u201d with no document and nothing said, which looks exactly like a broken button. It now tells you the estimate has not finished saving and that your work is still on screen, so you can try again. The \u2192 Contract button had the same silence and got the same fix. Separately: the app used to announce \u201cEstimate published\u201d whenever the editor closed, whether or not a document was actually made \u2014 it now checks that the document exists before saying so.' },
 { b:775, d:'2026-08-13', t:'The menu behaves again', s:'Two things Theo caught on the phone. The Production line in the burger menu was drawing a pencil the size of a playing card \u2014 its icon had no size rule that reached it once the button was placed in the menu, so it grew to 270 pixels and ate a third of the screen. It is a normal 17px icon now. And the menu no longer closes when your thumb misses it: the menu is narrower than the screen, and a swipe landing beside it used to scroll the page underneath and shut the menu mid-scroll.' },
 { b:774, d:'2026-08-13', t:'Build an estimate straight from ABC\u2019s catalog',

@@ -4826,3 +4826,20 @@ two buttons read at equal weight. **The contrast check is now IN `gate_774.mjs`*
 
 `gate_774.mjs`: **27 green · 24 red on the 773 control**. The three that pass on the control are deliberate
 regression checks (the old `CardinalABC.open` survives, the editor still opens, Library mode still says Library).
+
+## CompanyCam photographs into the Photo Album (build 777)
+
+| Feature | Where | Notes |
+|---|---|---|
+| `From CompanyCam` button | `#galCcBtn`, album toolbar (`galleryView`) | **Admin-only, set on every `openGalleryMode`** — api/companycam 403s everyone else, and a button that 403s the reps is worse than no button (the rccGate rule). Hidden in Inspection Photos mode. NOT in `enforceAlbumButtons()`'s un-hide list, on purpose. |
+| Picker panel | `#galCcPanel` + `cr-galcc-styles`, above the pae tabs | Light card (the `#galXferMenu` precedent), every colour a literal. Opens seeded with `currentProject.address` (name as fallback) and runs the search itself; results from the previous client are cleared by a `galCcFor` project-id check. |
+| Search | `galCcFind()` → `/api/companycam {action:'list'}` | The same index-first search the report picker uses (473/496) — address, job name or crew, across all ~60k photos. |
+| Foreign-job guard | `galCcForeign()` | Marks picks whose `project_name`/`project_address` don't look like this client's property, and `galCcAdd()` asks before copying them in — these land permanently in a client's album, so the 486 guard was kept, not dropped. |
+| Import | `galCcAdd()` → `{action:'fetch'}` per photo → `addGalleryFiles(files, metas)` | **The album's own pipeline, not a second one**: same 1600px canvas re-encode (EXIF/GPS stripped by construction), same `GAL_MAX` room check, same status line, same reload. Sequential fetches (CompanyCam publishes no rate limits — politeness is structural). Crew captions land in `project_photos.caption`, truncated at 500. |
+| One-way door | `/api/companycam` unchanged | List + fetch only, internal photos refused server-side, bytes never come from CompanyCam's CDN, CompanyCam is never written to. |
+| Reload fix | `photoDb.listByProject` select | **`section` and `caption` are now selected back** — both were written by the 211-era pae module and then dropped on every re-list, so tabs and captions reset on reload. Confirmed against production columns before shipping. |
+
+**Signatures that moved (both optional-param only, all callers unchanged):** `photoDb.add(projectId, dataUrl[, extra])`
+spreads `extra` into the insert (and the localStorage row); `addGalleryFiles(files[, metas])` passes `metas[i]` through.
+**Fences held:** no new full-screen view (widget inside `galleryView`) · no new `document.body` observer · no 14th
+scroll-lock writer · GPS never crosses (re-encode + explicit-field inserts, asserted in `gate_777.mjs`).
