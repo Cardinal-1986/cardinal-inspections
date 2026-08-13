@@ -3482,7 +3482,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 763 &#8212; ABC Supply talks to the real catalog: search, frequent items and branch pricing all read the shapes ABC actually sends</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 764 &#8212; When a supplier price is refused, the supplier’s own explanation is readable instead of cut off mid-sentence</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -38635,6 +38635,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:764, d:'2026-08-13', t:'The supplier\u2019s reason is readable now',
+s:'When ABC refuses to price an item it says why, and the app was mangling the sentence three ways at once: cutting it off at sixty characters, squeezing it into a column about three words wide beside the item, and garbling the punctuation so an arrow came out as \u201c-&amp;gt;\u201d. The explanation now prints in full underneath the item, wrapped and legible, so a refusal can be acted on instead of guessed at.' },
 { b:763, d:'2026-08-13', t:'ABC Supply reaches the real catalog',
 s:'The supplier screen has never once returned an item, and tonight it said why. Three faults stacked on top of each other, each hidden behind the one in front. The address it called did not exist \u2014 so nothing else could even be tested. Once that was right, ABC answered but refused the request, and the refusal said the app was leaving out a page number that ABC\u2019s own written instructions call optional. And underneath both, the catalog search was sending made-up wording ABC has never accepted, while the price lookup was reading the wrong place in ABC\u2019s reply \u2014 so a real price would have shown as \u201cBranch will price, call them\u201d even after everything else worked. All of it now matches ABC\u2019s published examples line for line: search by description (or by item code, if you paste one off an invoice), frequent items with your branch attached so each row says whether that yard has it, and prices read from the field ABC actually puts them in.' },
 { b:762, d:'2026-08-12', t:'The Designer: Studio White, full screen, house first',
@@ -53271,6 +53273,12 @@ placeChip  : placeChip,
 #cr-abc .item small{color:#6b6357;font-size:11.5px}
 #cr-abc .item .pr{float:right;font:800 15px ui-monospace,Menlo,monospace;color:#1a6b3c}
 #cr-abc .item .pr.zero{color:#8f1620;font-size:11px;max-width:120px;text-align:right}
+/* 764: ABC's own rejection text, full width and wrapping. It used to be
+   squeezed into .pr (float:right, max-width:120px) and cut at 60 chars,
+   so the sentence that says WHY was unreadable. */
+#cr-abc .item .prmsg{clear:both;margin-top:9px;font:600 11.5px 'Segoe UI',Arial,sans-serif;
+color:#8f1620;line-height:1.5;word-break:break-word;overflow-wrap:anywhere}
+#cr-abc .item .prmsg:empty{display:none}
 #cr-abc .quiet{color:#9aa4b0;font-size:12.5px;padding:8px 2px}
 #cr-abc .sect{margin:16px 0 7px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.22em;text-transform:uppercase;color:#c8202e}
 </style>
@@ -53367,13 +53375,16 @@ var uom = (it.unitsOfMeasure && it.unitsOfMeasure.stocking) || it.stockingUom ||
 (Array.isArray(it.uoms) && it.uoms.length ? (it.uoms[0].code || it.uoms[0].name || '') : '') || '';
 return '<div class="item" data-i="' + i + '"><span class="pr" data-pr></span><b>' + esc(nm) + '</b>' +
 '<small>#' + esc(num) + (uom ? ' \u00b7 ' + esc(uom) : '') + '</small><br>' +
-'<button class="btn2 ghost" data-price="' + esc(String(num)) + '" type="button" style="padding:7px 12px;font-size:12px;margin-top:8px;">Price at my branch</button></div>';
+'<button class="btn2 ghost" data-price="' + esc(String(num)) + '" type="button" style="padding:7px 12px;font-size:12px;margin-top:8px;">Price at my branch</button>' +
+'<div class="prmsg" data-prmsg></div></div>';
 }).join('');
 box.querySelectorAll('[data-price]').forEach(function(b){
 b.onclick = async function(){
 var c = cfg();
 if(!c.shipTo || !c.branch){ alert('Enter your Ship-To and Branch numbers first.'); return; }
 var host = b.closest('.item'); var pr = host.querySelector('[data-pr]');
+var pmsg0 = host.querySelector('[data-prmsg]'); if(pmsg0) pmsg0.textContent = '';
+pr.className = 'pr';
 pr.textContent = '\u2026';
 try{
 var j = await api({ action:'priceItems', shipTo:c.shipTo, branchNumber:c.branch, items:[{ itemNumber:b.getAttribute('data-price'), quantity:1 }] });
@@ -53382,7 +53393,11 @@ var p = arr[0] || {};
 var val = Number(p.unitPrice != null ? p.unitPrice : (p.price != null ? p.price : NaN));
 if(!isNaN(val) && val > 0){ pr.className = 'pr'; pr.textContent = usd(val); }
 else { pr.className = 'pr zero'; pr.textContent = 'Branch will price \u2014 call them'; }
-}catch(e){ pr.className = 'pr zero'; pr.textContent = esc(String(e.message || e).slice(0, 60)); }
+}catch(e){
+pr.className = 'pr zero'; pr.textContent = '\u2014';
+var msg = host.querySelector('[data-prmsg]');
+if(msg) msg.textContent = String(e.message || e);
+}
 };
 });
 }
