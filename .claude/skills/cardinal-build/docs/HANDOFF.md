@@ -4,6 +4,32 @@
 
 ---
 
+# Session of 13 August 2026 (later) — Production rebuilt 766–772, then the E2E drive shipped 773
+
+Two arcs. First: the Production redesign Theo iterated to over four artifact rounds (Cardinal Steel;
+landing = boxes + mini calendar + day agenda; full-screen five-week calendar one tap deeper; the punch-out
+CARD with trade templates / note-gated steps / five photo slots / messenger; **no money anywhere on
+Production**; closed punch-outs go to client history, never vanish). Shipped as **766–771**, audited, then
+**772** from the first QA pass. PRs #283/#284, both squash-merged, deployed. `punch_steps.sql` APPLIED to
+live. Detail: `cardinal_build_log.md` 766–773; decisions locked in the artifact + OPEN_ITEMS.
+
+Second: **the full E2E lifecycle drive** — `drive_lifecycle.mjs` (committed beside the gates) boots the real
+index.html in Chromium against the recording mock and drives a mock client Lead → Prospect → inspection →
+estimate (total, signed) → Approvals → contract (signed) → Production → Completed → punch → payment →
+invoice → emailed. **All 12 stations green on 772 and again on 773.** It settled a standing WRONG claim:
+contract signature auto-advances to Approved on ALL THREE signing paths, and the invoice email
+auto-advances to Invoiced — the old "auto-advance the stage" open item is struck (see OPEN_ITEMS, which now
+carries the corrected ranked list). It also caught the two defects **773** fixed: duplicate notification
+recipients (theo got every "Job complete" buzz twice on his own jobs — dedupe at the `notifyTeam`
+chokepoint) and the last two emoji subjects (`✍️` approvals, `💬` @-tag).
+
+Traps this session for the next rig: a `force: true` Playwright click is a COORDINATE click — it lands on
+whatever is topmost (a toast) and reads as "button does nothing"; the Production landing shows box COUNTS
+and the per-job chips live one tap into the box panes; `#pNewContractBtn` only opens the trade flyout, the
+`[data-ctpl]` option creates the contract.
+
+---
+
 # Session of 12 August 2026 — build 761 (the Exterior Designer)
 
 One feature, one build, one PR — **awaiting Theo's merge; run

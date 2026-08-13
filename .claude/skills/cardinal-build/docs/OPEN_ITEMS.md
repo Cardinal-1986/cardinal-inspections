@@ -3024,24 +3024,45 @@ name+street-number match attaches to the existing record instead of duplicating.
 After the records land: **Phase C sorting** over the Supabase connector as reviewed SQL. Gate
 sequence and anti-goals live in the runbook; session detail in `HANDOFF.md` (13 Aug section).
 
-## From the 13 Aug retail-lifecycle QA (builds 766-772)
+## From the 13 Aug retail-lifecycle QA (builds 766-773)
 
-Ranked. Two shipped at 772; the rest are open.
+Ranked. Two shipped at 772, two more at 773; the rest are open.
 
-1. **Auto-advance the stage on contract signature** — highest operational value. The homeowner signs and the
-   job sits in Prospect until a human drags it to Approved; everything downstream (Curtis's notification, the
-   Needs-ordered box, the build day) waits on that flip. One call at the signature handler into machinery
-   that already exists.
-2. **Split the intake form** — 19 fields, NONE marked required. Name · phone · address · work type up front,
-   the rest behind "More detail", and make those four actually required.
+⚠️ **STRUCK — the old item 1 was WRONG, do not rebuild it.** It read "the homeowner signs and the job sits
+in Prospect until a human drags it to Approved". The E2E drive (`drive_lifecycle.mjs`, 13 Aug) proved the
+opposite with write capture: **all three signing paths already auto-advance** — the in-person pad
+(index.html:22607), the contracts-table editor (36132) and the remote share-link (`api/clientsign.js`, which
+also emails rep+admin) each move the job to Approved, and the in-app paths buzz Curtis. The invoice email
+likewise auto-advances to Invoiced (22511). Anyone re-proposing "wire the signature to the stage" is
+describing code that ships today.
+
+1. **Auto-advance Approved → Scheduled when the build day is booked** — the real residue of the old item 1.
+   The appointment (kind='job') exists, Production reads it ("build Aug 20"), but the stage waits for a
+   manual arrow tap + confirm. `blockerFor` already computes the truth; the stage lags it.
+2. **Split the intake form** — measured in the E2E: **43 visible fields, 0 with a required attribute** (the
+   `*` on First/Last/City/State/Zip is label text only). Name · phone · address · work type up front, the
+   rest behind "More detail", and make the starred five actually enforce.
 3. **Stale-estimate line in the daily digest** — nothing watches an estimate after it is sent. The 11:00 cron
    already runs and already knows each job's rep.
 4. **One writer for the address** — it is stored twice from one form: `projects.address` (flat) AND
    `checklist.lead.location.*` (parts). They agree at birth and drift on any later edit.
 5. **Invoiced is a silent stage** — fold "invoiced and unpaid past 30 days" into the Friday owed email.
+6. **Dialog diet** — the E2E counted **11 native dialogs** (4 confirm / 3 prompt / 4 alert) on one clean
+   lifecycle; worst is invoice create→send: alert, prompt, confirm back-to-back. Native dialogs in the
+   installed PWA look like system errors. Candidates: title prompts → prefilled inline fields; stage-arrow
+   confirms → one tap + undo toast; the send prompt → a field defaulted to the client's email.
+7. **Remote signature buzz parity** — `api/clientsign.js` advances the stage and sends the Resend email, but
+   nothing web-pushes Curtis the way an in-person signature does (the front-end setStage does that half).
 
 DONE at 772: emoji removed from the two outbound stage-email subjects; `createContractForCurrent` no longer
 returns in silence when no project is loaded.
+DONE at 773: `notifyTeam` dedupes its recipient list — the "Job complete" buzz listed an admin rep twice and
+`/api/notify` mails the list verbatim, so theo got every buzz double on his own jobs. And the last two emoji
+subjects (estimate-approvals `✍️`, chat @-tag `💬`) are plain text.
 
 **Verified NOT a bug** (do not re-report): "Log Collection missing" — `#miCollBtn` is correctly gated on
-admin+production; its absence in the harness was the mock session.
+admin+production; its absence in the harness was the mock session. Also from the E2E: the Production landing
+shows box COUNTS, not per-job chips — the chips (`Needs scheduling` → `Materials?` → `Build <day>` →
+`1 punch item` → `Ready to invoice`) live one tap deeper in the box panes and all five were seen rendering
+in order; and `#pNewContractBtn` only opens the trade flyout — the contract is created by the `[data-ctpl]`
+option inside it, so a harness clicking the toggle and expecting a write is testing its own mistake.

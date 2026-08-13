@@ -15128,5 +15128,22 @@ case; `CardinalPunchStrip.paint` never existed; `notifyOutcomeText` needs an ARR
 **772** QA pass on the retail lifecycle: emoji out of the two outbound stage-email subjects, and
 `createContractForCurrent` says "Open a client first" instead of returning in silence.
 
+**773** One buzz per person. The E2E lifecycle drive (`drive_lifecycle.mjs` — a mock client through every
+stage, Lead → Invoiced, all 12 stations green) caught the "Job complete" notification listing theo twice:
+the list is built `(assigned rep) + ADMIN_EMAILS`, the rep on his own jobs IS an admin, and `/api/notify`
+hands the list straight to Resend and web-push (`mailed = emails.length`) — every buzz doubled. Deduped at
+the `notifyTeam` chokepoint, covering all twelve call sites. Also finished 772's emoji-subject sweep: the
+estimate-approvals buzz (`✍️`) and the chat @-tag buzz (`💬`) were the two subjects still carrying one.
+
+The same drive settled two standing claims WRONG in the docs: (1) contract signature DOES auto-advance the
+stage — all three signing paths (in-person pad line 22607, contracts-table editor 36132, remote share-link
+`api/clientsign.js`) move the job to Approved, verified by write capture; the old "signs and sits until a
+human drags it" item is struck. (2) The invoice email auto-advances to Invoiced (22511). The real residual
+gap is **Approved → Scheduled**: booking the build day writes the appointment but the stage waits for a
+manual arrow tap. Friction census: 11 native dialogs (4 confirm / 3 prompt / 4 alert) across one clean
+lifecycle; the worst single moment is invoice creation → send (alert, prompt, confirm back-to-back).
+
 **Gates**: `gate_766` 38, `gate_767` 54, `gate_768` 65, `gate_769` 16, `gate_770_history` 1, `gate_771` 31 —
-Chromium, each verified RED on its own predecessor.
+Chromium, each verified RED on its own predecessor. **773's gate is `drive_lifecycle.mjs` itself** — the 772
+run recorded the duplicate recipient and the emoji subject (RED for both behaviours); the 773 run shows theo
+once and plain-text subjects, all 12 stations green both times.
