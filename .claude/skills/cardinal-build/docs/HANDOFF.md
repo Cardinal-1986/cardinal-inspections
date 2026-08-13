@@ -57,6 +57,65 @@ and reviewed; the AI output itself has not been seen.
 
 ---
 
+# Session of 11 August 2026 — the AccuLynx migration pipeline (no build consumed)
+
+**The bulk AccuLynx → Cardinal migration is BUILT and waiting on one thing:
+Theo generating an AccuLynx API key.** Zero `index.html` changes, zero SQL —
+six new files in `spark/`, one PR. An imported client is byte-for-byte the
+shape the in-app OCR importer (cr-ci, build 252) writes, so nothing in the
+app needed to move.
+
+| File | What |
+|---|---|
+| `spark/acculynx_probe.py` | day-one go/no-go: key works? counts per milestone? **do file read routes exist at all?** writes `acculynx_probe_report.md` |
+| `spark/fetch_acculynx.py` | full pull → `jobs.jsonl` + files/ (probe-gated). Both assignment sweeps per milestone — the default listing hides unassigned jobs |
+| `spark/push_acculynx.py` | `--dry-run` (review.csv + collisions.csv) → `--limit 5` pilot → full run → `--rollback <stamp>` via a per-batch write ledger |
+| `spark/test_acculynx_fetch.py` / `_push.py` | offline harnesses on the shipped modules, network stubbed — **green, incl. two negative controls** (dead-token run must LOSE jobs; repeating page must abort) |
+| `spark/ACCULYNX_MIGRATION.md` | the runbook — credentials fence, key click-path, the gates, anti-goals, cloud-session appendix |
+
+**Theo's decisions this session — settled, do not re-litigate:**
+
+1. *"All the clients will probably have to be dumped into retail then sorted
+   to insurance or community from there."* — every import lands
+   `claim_type:'retail'`; the AccuLynx insurance block is PRESERVED at
+   `lead.insurance` and the sort happens afterwards (see Phase C below).
+2. **Skip Dead + Cancelled** (fetch default; re-runnable later with
+   `--milestones`).
+3. **Duplicates**: name+street-number match against an existing client →
+   no new row, files attach to the existing record, every match listed in
+   `collisions.csv` first.
+4. Run location is machine-portable (Theo flagged Spark WiFi reliability) —
+   Spark, desktop, or the cloud session itself (appendix in the runbook).
+
+**Live-DB facts this was built against (verified over the Supabase connector,
+11 Aug):** 34 projects (13 retail / 16 community / 2 insurance / 3 untyped) ·
+max PO **1043** · `checklist` TEXT, 0 unparseable — and `project_assigned_rep()`
+casts `ck::jsonb` with **no exception guard**, so ONE malformed checklist row
+kills the client list for everyone; the push round-trips every checklist
+through `json.loads` before insert · `projects_insert` = `is_full_access() OR
+created_by = my_email() OR created_by IS NULL` · triggers `sales_rep_default`
++ `sales_rep_lock` · roster has jerry@ and clarkie022@gmail.com beyond the
+CLAUDE.md six.
+
+**The one genuinely open unknown: AccuLynx's public API documents UPLOAD-ONLY
+file endpoints.** The probe tests candidate read routes with a real key;
+records import regardless. If NO-GO: manual pulls for named jobs, or a
+browser-automation harvest as its own decision later.
+
+**Phase C (after the records land):** the session sorts retail→insurance from
+the preserved `lead.insurance` data (reviewed UPDATE + companion
+`insurance_claims` rows), and retail→community against `community_partners` +
+Theo's word — over the Supabase connector, one reviewed step at a time. The
+in-app bulk-assign tool stays the manual fallback.
+
+**Photo-shape note for whoever reviews:** the import writes `project_photos`
+rows exactly as `photoDb.add` does TODAY (data = public URL + storage_path) —
+including 708's known quirk that `data` is inert and display goes through the
+signed `_src`. Deliberate: indistinguishable from the app's own writes, and
+the pilot's gallery check is the gate.
+
+---
+
 # Session of 10 August 2026 (later) — builds 685–704
 
 **685 through 704 all shipped, merged and verified deployed** (PRs #198–#219,

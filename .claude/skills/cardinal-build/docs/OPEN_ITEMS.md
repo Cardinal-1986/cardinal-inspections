@@ -2981,3 +2981,26 @@ size**; both were caught only by a clause-by-clause text compare against the ori
 A third, cosmetic: every clause on that page is **justified**. Setting the replacement
 ragged-right left one paragraph visibly unlike the fourteen around it — the render caught what
 the text compare could not.
+
+---
+
+## 🟠 AccuLynx migration — pipeline SHIPPED, waiting on the API key (11 Aug 2026)
+
+The bulk client/docs/photos migration out of AccuLynx is built (`spark/acculynx_probe.py`,
+`fetch_acculynx.py`, `push_acculynx.py` + runbook `spark/ACCULYNX_MIGRATION.md`; offline harnesses
+green with negative controls). **No app change, no SQL, no build number.** Blocked on exactly one
+action: **Theo generates the AccuLynx API key** (click-path in the runbook) and runs the probe.
+
+Settled by Theo 11 Aug, not to be re-litigated: everything imports as **retail** and gets sorted to
+insurance/community afterwards (the insurance data rides along in `lead.insurance` for that sort);
+**Dead/Cancelled stay behind**; a name+street-number match against an existing client attaches files
+to the existing record instead of creating a duplicate.
+
+The one open unknown the probe answers: whether AccuLynx exposes ANY file read route — its public
+docs show upload-only. If not, records still migrate; docs/photos fall back to manual pulls or a
+browser-automation pass (a separate decision, deliberately not built).
+
+After the records land: **Phase C sorting** runs over the Supabase connector as reviewed SQL
+(retail→insurance from the preserved claim data + companion `insurance_claims` rows;
+retail→community against `community_partners` + Theo's word). Gate sequence and anti-goals live in
+the runbook; session detail in `HANDOFF.md` (11 Aug section).
