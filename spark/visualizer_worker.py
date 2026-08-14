@@ -101,6 +101,10 @@ COMFY_URL    = (os.environ.get("COMFY_URL") or "http://127.0.0.1:8188").rstrip("
 WORKER_NAME  = os.environ.get("WORKER_NAME") or socket.gethostname()
 POLL_SECONDS = float(os.environ.get("POLL_SECONDS") or 5)
 BUCKET       = "photos"
+# The long edge every photograph is fitted to before FLUX sees it. Tunable
+# without a code change because the right value is a trade against render time
+# and nobody has measured it on real photographs yet. See fit_for_flux().
+FLUX_LONG_EDGE = int(os.environ.get("FLUX_LONG_EDGE") or 1280)
 
 if not SUPABASE_URL or not SERVICE_KEY:
     sys.exit("SUPABASE_URL and SUPABASE_SERVICE_KEY are required (see the docstring).")
@@ -399,6 +403,40 @@ def to_png(data):
     return buf.getvalue()
 
 
+def fit_for_flux(png):
+    """Put the working image inside FLUX's operating band before anything is
+    masked or painted. Returns (png, (was_w, was_h), (now_w, now_h)).
+
+    FLUX Fill is trained around 1024px and BOTH directions hurt. Hand it a
+    small photograph and there are not enough pixels to build a shingle course
+    out of — the fill comes back as a grey smear that reads, correctly, as
+    "that doesn't look like a roof". Hand it a 12MP original and the model is
+    running far outside its training distribution, slowly, and the texture goes
+    soft the same way. The first real render hit the first case: a 43 KB source.
+
+    This runs BEFORE segmentation on purpose. Every mask is then generated at
+    the working size and matches it exactly. Resizing masks afterwards instead
+    shifts every boundary by a pixel or two, which shows up as a fringe of the
+    old colour along the edge of the new roof.
+
+    Multiples of 16 because the VAE downsamples by 8 and FLUX patchifies by 2;
+    an odd size gets padded internally and the padding can show as a seam."""
+    im = Image.open(io.BytesIO(png)).convert("RGB")
+    w, h = im.size
+    scale = FLUX_LONG_EDGE / float(max(w, h))
+    nw = max(16, int(round(w * scale / 16.0)) * 16)
+    nh = max(16, int(round(h * scale / 16.0)) * 16)
+    if (nw, nh) == (w, h):
+        return png, (w, h), (w, h)          # no re-encode when nothing changes
+    # LANCZOS in both directions. The upscale is deliberately NOT a smart one:
+    # the masked region is about to be repainted, so detail invented there
+    # would be discarded anyway, and the region outside the mask only has to
+    # avoid looking processed.
+    buf = io.BytesIO()
+    im.resize((nw, nh), Image.LANCZOS).save(buf, format="PNG")
+    return buf.getvalue(), (w, h), (nw, nh)
+
+
 def to_jpeg(data, max_px, quality):
     im = Image.open(io.BytesIO(data)).convert("RGB")
     if max(im.size) > max_px:
@@ -420,6 +458,11 @@ def run_job(comfy, job):
 
     source = storage_download(job["source_path"])
     working = to_png(source)
+    working, was, now = fit_for_flux(working)
+    if was != now:
+        log("  %dx%d -> %dx%d for FLUX" % (was[0], was[1], now[0], now[1]))
+    else:
+        log("  %dx%d — already in FLUX's band" % now)
 
     log("  segmenting…")
     masks = segment(comfy, working)

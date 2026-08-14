@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-14 build 808
+  v2026-08-14 build 809
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -436,12 +436,28 @@ $('vzOut').addEventListener('click', function(){
    colour's own recorded facts and then frozen into the job. That freezing is
    the point: a render can always be traced to the exact words that made it,
    even after somebody edits the catalog. */
+/* The first sentence only. oc_colors.description is BRAND MARKETING, and the
+   two halves do different jobs: Onyx Black reads "Deep consistent black with
+   dimensional variation. One of the top sellers nationally." Sentence one
+   describes a colour. Sentence two is a sales claim that spends the text
+   encoder's attention and steers nothing. The first render shipped the whole
+   string and came back mid-grey. */
+function firstSentence(s){
+  var m = String(s || '').trim().match(/^[^.!?]+/);
+  return m ? m[0].trim() : '';
+}
 function roofPrompt(c){
-  var bits = ['architectural asphalt shingle roof',
-    'Owens Corning ' + (c.product_line || 'Duration') + ' in ' + c.name];
-  if(c.description) bits.push(String(c.description).slice(0, 160));
-  else if(c.family) bits.push(String(c.family).toLowerCase() + ' tone');
-  bits.push('realistic granular shingle texture, straight consistent course lines',
+  /* The colour leads and the brand does not. The encoder weights early tokens
+     most, and "Onyx Black" is a trade name it has never seen — the words that
+     actually steer the render are the ones describing the colour itself. The
+     name is kept further back because it usually carries a colour word too. */
+  var lead = firstSentence(c.description) ||
+             (c.family ? String(c.family).toLowerCase() + ' tone' : '');
+  var bits = [];
+  if(lead) bits.push(lead.toLowerCase());
+  bits.push('architectural asphalt shingle roof',
+            'Owens Corning ' + (c.product_line || 'Duration') + ' in ' + c.name,
+            'realistic granular shingle texture, straight consistent course lines',
             'same roof shape, same pitch, same lighting as the photograph');
   return bits.join(', ');
 }

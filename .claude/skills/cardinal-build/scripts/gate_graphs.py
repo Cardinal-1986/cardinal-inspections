@@ -36,6 +36,7 @@ os.environ.setdefault("SUPABASE_SERVICE_KEY", "gate-not-a-key")
 spec = importlib.util.spec_from_file_location("vw", SPARK / "visualizer_worker.py")
 vw = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(vw)
+vw_source = (SPARK / "visualizer_worker.py").read_text()
 
 CHECKS = []
 
@@ -185,6 +186,42 @@ def check_graph_pair(seg, inp):
     chk("the worker's seed is not the one baked into the graph",
         a1 != node_of(inp, vw.T_SAMPLER)["inputs"].get("seed"),
         "graph ships %s" % node_of(inp, vw.T_SAMPLER)["inputs"].get("seed"))
+
+    # ── 7c. the working image is fitted into FLUX's band ──────────────────
+    #  The first real render was a 43 KB source: too few pixels to build a
+    #  shingle course out of, so the fill came back as a grey smear. Both
+    #  directions are failures, so both are checked.
+    import io as _io
+    from PIL import Image as _Im
+
+    def png_of(w, h):
+        b = _io.BytesIO()
+        _Im.new("RGB", (w, h), (128, 128, 128)).save(b, format="PNG")
+        return b.getvalue()
+
+    small, was, now = vw.fit_for_flux(png_of(400, 300))
+    chk("a small photograph is scaled UP into the band",
+        max(now) == vw.FLUX_LONG_EDGE and now[0] > was[0], "%s -> %s" % (was, now))
+    huge, hwas, hnow = vw.fit_for_flux(png_of(4032, 3024))
+    chk("a 12MP original is scaled DOWN into the band",
+        max(hnow) == vw.FLUX_LONG_EDGE and hnow[0] < hwas[0], "%s -> %s" % (hwas, hnow))
+    chk("both output dimensions are multiples of 16 (the VAE pads otherwise)",
+        now[0] % 16 == 0 and now[1] % 16 == 0 and hnow[0] % 16 == 0 and hnow[1] % 16 == 0,
+        "%s %s" % (now, hnow))
+    chk("aspect ratio survives the fit",
+        abs((now[0] / float(now[1])) - (was[0] / float(was[1]))) < 0.02,
+        "%.4f vs %.4f" % (now[0] / float(now[1]), was[0] / float(was[1])))
+    #  An image already in band must come back BYTE-IDENTICAL, not re-encoded:
+    #  a needless PNG round-trip is a second generation of loss for nothing.
+    exact = png_of(vw.FLUX_LONG_EDGE, vw.FLUX_LONG_EDGE // 2)
+    same, ewas, enow = vw.fit_for_flux(exact)
+    chk("an image already in band is returned untouched, not re-encoded",
+        same is exact and ewas == enow, "%s -> %s" % (ewas, enow))
+    #  And the mask must be able to match it: segmentation runs on the FITTED
+    #  image, so this is only true because fit_for_flux happens first.
+    chk("fit_for_flux runs before segment() in run_job",
+        vw_source.index("fit_for_flux(working)") < vw_source.index("masks = segment("),
+        "resize after segmenting would leave a fringe of old colour")
 
     # ── 8. no resize anywhere in segmentation ─────────────────────────────
     #  A mask that is not the source's exact dimensions cannot be composited
