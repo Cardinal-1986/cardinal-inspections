@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 794 &#8212; Location and the map now run across the screen under the pipeline bar, on the same pattern as the bar itself; the heading keeps its red rule and everything still lines up</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 795 &#8212; Job Details is four rows laid out like the AccuLynx card: Job Category, Work Type, Trade Type and Lead Source, each one a plain value you tap to change</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11012,6 +11012,10 @@ function renderOps(){
    ACCULYNX-STYLE CLIENT OVERVIEW
    ========================================================================= */
 var acxTaskTab = 'open', acxTaskView = 'All';
+/* 795: whether the Trade Type panel is showing. Module state, not a DOM
+   attribute, because every save calls renderAcxOverview() and rebuilds the
+   card - a panel remembered in the DOM would shut on every tick. */
+var acxTrOpen = false;
 var REVIEW_URL = 'https://g.page/r/CQqAO-p2l8AAEBM/review';
 var GOOGLE_G = '<svg class="gicon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
 function reviewMsg(pr, followup){
@@ -11286,15 +11290,25 @@ function renderAcxOverview(){
       '</div></div></div>';
   }
   /* ---- job details ---- */
+  /* 795: four rows, laid out like the AccuLynx card - label, rule, value, and
+     something to open on every one. The ids (acxCat/acxWt/acxSrc) and the
+     .acxTr class are the change handler's contract at ~11563 and are
+     unchanged; only chrome moved. .acxjd is the styling hook and .acxsl marks
+     a row that carries a control, so the caret can be drawn without :has().
+     Trade Type is a BUTTON, not a <select>, because `trades` is an array -
+     the same reason the AccuLynx card prints "Roofing, Repair" on one line.
+     It opens the six checkboxes beneath it and they save as they always did. */
+  var _acxTr = ljTrades(pr);
   html += '<h3 class="projsec" style="margin:20px 0 10px;">' + ICO('tag') + 'Job Details</h3>' +
-  '<div class="acxsec"><div class="acxbody"><div class="ackv">' +
-    '<span>Category:</span><div><select class="acxsel" id="acxCat">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
-    '<span>Work Type:</span><div><select class="acxsel" id="acxWt">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service'], ck.work_type) + '</select></div>' +
-    '<span>Trade:</span><div class="acxtrs">' + ['Roofing','Siding','Gutters','Windows','Repairs','Misc'].map(function(t){
-      return '<label><input type="checkbox" class="cbx acxTr" value="' + t + '"' + (ljTrades(pr).indexOf(t) !== -1 ? ' checked' : '') + '> ' + t + '</label>';
+  '<div class="acxsec acxjdsec"><div class="acxbody"><div class="ackv acxjd">' +
+    '<span>Job Category</span><div class="acxsl"><select class="acxsel" id="acxCat">' + acxOpts(['Residential','Commercial','Property Management'], ck.job_category) + '</select></div>' +
+    '<span>Work Type</span><div class="acxsl"><select class="acxsel" id="acxWt">' + acxOpts(['Inspection','Insurance','New','Repair','Retail','Service'], ck.work_type) + '</select></div>' +
+    '<span>Trade Type</span><div class="acxsl"><button type="button" class="acxsel acxtrbtn" id="acxTrBtn" aria-expanded="' + (acxTrOpen ? 'true' : 'false') + '">' +
+      (_acxTr.length ? esc(_acxTr.join(', ')) : '\u2014') + '</button></div>' +
+    '<div class="acxtrs" id="acxTrPanel"' + (acxTrOpen ? '' : ' hidden') + '>' + ['Roofing','Siding','Gutters','Windows','Repairs','Misc'].map(function(t){
+      return '<label><input type="checkbox" class="cbx acxTr" value="' + t + '"' + (_acxTr.indexOf(t) !== -1 ? ' checked' : '') + '><span>' + t + '</span></label>';
     }).join('') + '</div>' +
-    '<span>Lead Source:</span><div><select class="acxsel" id="acxSrc">' + acxOpts(['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social','Other'], ck.lead_source) + '</select></div>' +
-    '<span>Initial Appt:</span><div>' + (ck.t_Prospect ? acxDate(ck.t_Prospect) : '\u2014') + '</div>' +
+    '<span>Lead Source</span><div class="acxsl"><select class="acxsel" id="acxSrc">' + acxOpts(['Door knock','Referral','Google / website','Yard sign','Repeat customer','Storm canvass','Facebook / social','Other'], ck.lead_source) + '</select></div>' +
   '</div></div></div>';
   /* ---- google review (dark card) ---- */
   var rvAt = ck.review_requested_at, rvVia = ck.review_via;
@@ -11549,6 +11563,9 @@ function acxBindOnce(mount){
       openTaskModal(pr, parseInt(el.getAttribute('data-viewtask'), 10));
       return;
     }
+    /* 795: Trade Type opens its six checkboxes. Re-rendering is what keeps the
+       panel and the joined summary above it in step. */
+    if((el = hit('#acxTrBtn'))){ acxTrOpen = !acxTrOpen; renderAcxOverview(); return; }
     if((el = hit('.tsktabs span'))){ acxTaskTab = el.getAttribute('data-tt'); renderAcxOverview(); return; }
   });
   mount.addEventListener('change', async function(e){
@@ -39531,6 +39548,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:795, d:'2026-08-14', t:'Job Details, laid out like AccuLynx',
+s:'Job Details on a client now reads the way the AccuLynx card does: four rows - Job Category, Work Type, Trade Type, Lead Source - with the label on the left, a thin rule down the middle and the value on the right. The heavy dropdown boxes are gone; each value is plain text with a small arrow you tap. Trade Type shows what is on as one line, like Roofing, Repairs, and opens the six trades as chips when you tap it. Everything saves exactly as it did; nothing became read-only. Initial Appt has come off this card. Retail only: the insurance and community profiles paint this card from their own colours and are untouched.' },
 { b:794, d:'2026-08-14', t:'Location and the map run across the screen',
 s:'Location and its map now run all the way across the screen, directly under the pipeline bar and on the same pattern as the bar itself. The difference from the version you turned down: the heading keeps its red rule and its plain ground instead of turning into a grey slab, and the map and the address stay lined up with the Location heading above them rather than shifting left. The map is wider for it. Phone only \u2014 the desktop is untouched. The pipeline bar above is unchanged.' },
 { b:793, d:'2026-08-14', t:'Location and the map go back in their card',
@@ -71219,5 +71238,119 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
   }
 })();
 </script>
+<style id="cr-jobdetails-styles">
+/* Cardinal - Job Details, the AccuLynx layout - v2026-08-14 build 795
+   Label, a hairline rule, the value. Every rule below is fenced to retail
+   (`body:not(.claim-insurance):not(.claim-community)`), the same fence 790
+   used, because Insurance and Community paint this card from their own --ct-*
+   palette. The `:root` on the front is not decoration: 790's dropdown rule is
+   (1,4,1) and an exact tie would leave the winner depending on source order. */
+
+/* The one place an existing pair will not do. On this card's ground
+   --rbe-line2 is 1.10:1 and --rbe-line3 is 1.13:1 - both invisible - so the
+   rule and the selected-chip wash are a real pair, declared once per theme. */
+:root{ --acxjd-rule:rgba(255,255,255,.14); --acxjd-chip:rgba(185,211,236,.14); }
+:root[data-theme="rb-light"]{ --acxjd-rule:rgba(0,0,0,.14); --acxjd-chip:rgba(79,115,150,.14); }
+
+/* `auto 1fr`, not a percentage: the label column then hugs the longest label
+   exactly and never wraps, and never steals width from the values on a wide
+   card. A 31% column wrapped "Lead Source" onto two lines. */
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd{
+  grid-template-columns:auto 1fr;
+  gap:0;
+  font:600 13.5px 'Segoe UI',Arial,sans-serif;
+}
+/* the label column */
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd > span{
+  display:flex; align-items:center; white-space:nowrap;
+  min-height:52px; padding:5px 14px 5px 0;
+  font-weight:600; color:var(--rbe-mute,#9aa0a8);
+}
+/* the value column - the border IS the vertical rule, and gap:0 above is what
+   makes the separate rows join into one continuous line */
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd > div{
+  display:flex; align-items:center; min-width:0;
+  min-height:52px; padding:5px 0 5px 14px;
+  border-left:1px solid var(--acxjd-rule,rgba(255,255,255,.14));
+}
+/* No `color` here on purpose. AccuLynx paints every value the same blue
+   because every value there is read-only; here all four ARE controls, so the
+   accent lives on the control itself below. A `color` declaration here would
+   also have been dead - 790's rule is (1,7,2) against this one's (1,4,1). */
+
+/* ---- the controls: still <select> (and one <button>), just no longer a box ---- */
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxsl{
+  position:relative; padding-right:20px;
+}
+/* the caret, drawn rather than imaged, so it inherits the theme */
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxsl::after{
+  content:''; position:absolute; right:4px; top:50%; margin-top:-5px;
+  width:7px; height:7px; transform:rotate(45deg); pointer-events:none;
+  border-right:2px solid var(--rbe-mute,#9aa0a8);
+  border-bottom:2px solid var(--rbe-mute,#9aa0a8);
+}
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxsel{
+  appearance:none; -webkit-appearance:none;
+  background:transparent; border:0; box-shadow:none; border-radius:0;
+  padding:0; margin:0; flex:1 1 auto; min-width:0; max-width:100%;
+  min-height:44px; text-align:left;
+  font:700 13.5px 'Segoe UI',Arial,sans-serif;
+  color:var(--rbe-acclt,#b9d3ec); cursor:pointer;
+}
+/* the Trade Type button has to sit where the <select>s sit, and a button
+   inherits neither the alignment nor the ellipsis by itself */
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrbtn{
+  display:flex; align-items:center;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+/* ...and on a phone it has to match a font size it cannot see. `input, select,
+   textarea{font-size:16px !important}` at ~1814 is the iOS auto-zoom guard, so
+   under 900px the three <select>s render at 16px no matter what this
+   stylesheet says. Measured: select 16px, button 13.5px - the Trade Type row
+   read visibly smaller than the three around it. The guard is right and stays;
+   the button matches it instead. */
+@media (max-width:900px){
+  :root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrbtn{
+    font-size:16px;
+  }
+}
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxsel:focus-visible{
+  outline:2px solid var(--rbe-acclt,#b9d3ec); outline-offset:3px;
+}
+
+/* ---- the trade panel: column 2 only, so the vertical rule stays unbroken ---- */
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrs{
+  grid-column:2 / -1;
+  display:flex; flex-wrap:wrap; gap:7px;
+  min-height:0; padding:2px 0 12px 14px;
+  border-left:1px solid var(--acxjd-rule,rgba(255,255,255,.14));
+}
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrs[hidden]{
+  display:none;
+}
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrs label{
+  display:inline-flex; margin:0; min-height:0; gap:0; cursor:pointer;
+}
+/* hidden, NOT display:none - it has to stay focusable and clickable */
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrs input.cbx{
+  position:absolute; opacity:0; width:1px; height:1px; margin:0; pointer-events:none;
+}
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrs input.cbx + span{
+  display:inline-flex; align-items:center; min-height:34px; padding:0 11px;
+  border-radius:999px; cursor:pointer;
+  font:700 12px 'Segoe UI',Arial,sans-serif;
+  background:var(--rbe-panel2,#101015);
+  border:1px solid var(--acxjd-rule,rgba(255,255,255,.14));
+  color:var(--rbe-mute,#9aa0a8);
+}
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrs input.cbx:checked + span{
+  background:var(--acxjd-chip,rgba(185,211,236,.14));
+  border-color:var(--rbe-acclt,#b9d3ec);
+  color:var(--rbe-head,#ffffff);
+}
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrs input.cbx:focus-visible + span{
+  outline:2px solid var(--rbe-acclt,#b9d3ec); outline-offset:2px;
+}
+</style>
 </body>
 </html>

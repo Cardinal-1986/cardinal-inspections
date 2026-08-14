@@ -15817,3 +15817,46 @@ caught either — the first two renders of this build were wrong and looked plau
 control, no crash**. The control also independently reproduces the misalignment 794 fixes: map at
 x=51, heading text at x=36. Checked at 360 / 402 / 430 / 560px; `documentElement.scrollWidth` equals
 `innerWidth` at every one, so the negative margins introduce no horizontal overflow.
+
+## build 795 — 14 Aug 2026 — Job Details, laid out like the AccuLynx card
+
+Theo, verbatim: *"Just job category, work type, trade type, and lead source only with a dropdown next
+to each just like the 2nd picture."* Four rows, AccuLynx's own labels, label left, hairline rule,
+value right, a caret on every one. Initial Appt comes off the card. Retail only —
+`body:not(.claim-insurance):not(.claim-community)`, the fence 790 used, because those two CRMs paint
+this card from their own `--ct-*` palette.
+
+**Nothing became read-only.** `acxCat` / `acxWt` / `acxSrc` and the `.acxTr` class are the change
+handler's contract at ~11563 and are untouched; only chrome moved. `<select>`s get
+`appearance:none`, no box, accent ink, and a caret drawn by the row's `::after` (a `.acxsl` class
+marks those rows so no `:has()` is needed).
+
+**Trade Type is the interesting one.** `trades` is an ARRAY — which is exactly why the AccuLynx card
+itself prints "Roofing, Repair" on one line — so a `<select>` cannot hold it and `<select multiple>`
+is the box we are removing. It is a **button** that reads identically to the other three and opens
+the six trades as chips beneath it, in grid column 2 so the vertical rule stays unbroken. The
+checkboxes are visually hidden and the LABEL TEXT is the chip, via `input:checked + span` — a
+sibling selector, not `:has()`, because the sibling is exact and needs no support argument.
+
+**`acxTrOpen` is module state beside `acxTaskTab`, not a DOM attribute.** Every save calls
+`renderAcxOverview()`, so a panel remembered in the DOM would slam shut the moment you ticked a
+trade. Asserted: the panel is still open after a save, and the summary above it has updated.
+
+**Three things measurement caught that reading would not.**
+1. `--cr-wrap-pad`-style guessing on the label column: a `31%` column **wrapped "Lead Source"** onto
+   two lines. `auto 1fr` makes the column hug the longest label — no wrap, no wasted width on a
+   desktop card.
+2. Rows came out **66 / 66 / 66 / 37** because a `<select>` here computes to 44px and a plain value
+   to 19px. `min-height:52px` on both columns is what makes the list read as a list.
+3. **The `<select>`s render at 16px on a phone no matter what this stylesheet says** — `input,
+   select, textarea{font-size:16px !important}` at ~1814 is the iOS auto-zoom guard. The Trade Type
+   button was 13.5px and its row read visibly smaller than the three around it. The guard is right
+   and stays; the button matches it inside the same media query.
+
+**Gate**: `gate_795.mjs` — **35 green in dark, 35 green in light**, **27 red on the 794 control with
+no crash**. ⚠️ It went red on its own first run with **five false failures** (`#b9d3ec` scored at
+1.55:1, a white chip label at 1.00:1): the ground walk appended its white fallback to the *candidate*
+list and then scored against it. White is the backdrop translucent grounds composite onto, never a
+ground the element sits on. Same family as the 790 probe bug, one level down — the fix separates
+`{ list, opaque }`. Hand-computed values agreed with the corrected probe, which is the only reason
+the false red was recognisable as a false red.
