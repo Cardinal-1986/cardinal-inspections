@@ -354,3 +354,35 @@ Neither graph has ever executed. Structure, contracts, node types and settings a
 against the worker's own `find_node`/`set_input`, and every node type taken from a graph that ran
 on this box — but the first end-to-end run will still be the first. If either throws, ComfyUI
 names the node, and `design_jobs.error` carries the worker's own sentence verbatim.
+
+---
+
+## ⚠ The phantom-claim bug — found on the first real run, 14 Aug 2026
+
+The first time the worker ran against a live queue it did two real jobs, then span into a hot
+loop: hundreds of `FAILED: can only concatenate str (not "NoneType") to str` a second, each one
+also unable to record its own failure.
+
+**Cause.** `claim_design_job(p_worker)` is declared `returns public.design_jobs` — a **composite
+type**. When it returns `null`, PostgREST does not send `null`. It sends a row with every column
+present and set to null:
+
+```json
+{"id": null, "project_id": null, "source_path": null, "selections": null, …}
+```
+
+That dict is **non-empty, therefore truthy**, so `claim_job()`'s `if not j: return None` sailed
+straight past it and handed `run_job()` a job that could never be done. `patch_job()` then did
+`"…?id=eq." + None` and threw — including inside the handler trying to record the failure. With no
+sleep on that path, it ran as fast as the network allowed.
+
+**Fix, in `claim_job()`:** an empty queue is now detected by the absence of `id`, which is the one
+field that can never legitimately be null. A `time.sleep(POLL_SECONDS)` was also added to the
+failure path so nothing can hot-loop again even if a new pathology appears.
+
+⚠️ **This is a shape to remember, not a one-off.** Any PostgREST RPC declared `returns <table>`
+behaves this way. Truthiness is not a null check against a composite return — test a field.
+
+**No data was harmed** — the phantom claims matched no row, so they wrote nothing. The two real
+jobs were marked `failed` (correctly, the graphs were missing) with `attempts` at 1, and were
+reset to `queued`.
