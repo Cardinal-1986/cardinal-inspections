@@ -252,3 +252,66 @@ Until someone holds the sample board next to the screen, the UI must say
 front of a paying customer choosing what their house will look like. Flip
 `hex_verified` one row at a time as each is confirmed; re-running the seed
 never resets it.
+
+---
+
+## ⚠ Which prompts actually work — measured 14 Aug 2026, on real Cardinal photos
+
+**`segment_api.json` is written and committed.** It was not designed on paper: every prompt below
+was run through Florence2 + SAM 2 on a real drone photograph from the *Minnie marsh kent — Habitat
+for Humanity* job, and the mask was looked at.
+
+| surface | prompt | result |
+|---|---|---|
+| roof | **`roof`** | ✅ clean — mask on the subject roof, nothing on sky, grass, fence or neighbours |
+| siding | **`house wall`** | ✅ works |
+| windows | **`window`** | ✅ works |
+| trim | *(none found)* | ❌ `trim`, `window trim` — no usable mask |
+| gutters | *(none found)* | ❌ `gutters`, `gutter` — **masked the LAWN and the roof** |
+
+**`siding` does not work and `house wall` does.** Florence-2 was trained on ordinary English
+captions, not trade words. It *finds* things when given "siding" — you can see the boxes — but SAM 2
+then segments the dominant surface inside those boxes, which is the roof. Do not "fix" the graph by
+putting the trade word back.
+
+**Why trim and gutters fail is structural, not a wording problem.** This pipeline works by drawing a
+box and segmenting what is inside it. A box around a gutter contains mostly roof, wall and lawn, so
+that is what comes back. Thin linear features are the wrong shape for it. A different technique
+(edge detection off the roof mask, or a purpose-trained model) would be needed — no amount of
+rephrasing gets there.
+
+⚠️ **The gutters failure is the dangerous kind and is worth looking at once**: the mask covered the
+customer's lawn. Had that reached FLUX it would have painted Musket Brown gutters across the grass.
+It is the clearest argument in the whole project for `design_renders.approved` defaulting to false.
+
+**So v1 does roof, siding and windows.** `SURFACE_ORDER` still lists all five and the catalog still
+offers all five — a surface with no `CARDINAL_MASK_*` node is **skipped and reported**, which is the
+behaviour the worker was built with. Verified by driving the worker's own `find_node` / `set_input`
+against the committed graph: a job asking for roof + siding + trim + gutters applies roof and
+siding and logs *"not found in photo: trim, gutters"*; a job asking **only** for trim raises
+"Nothing could be applied" rather than silently producing an unchanged image.
+
+### Two settings in `segment_api.json` that are load-bearing
+
+- **`individual_objects: false`.** The worker takes `images[0]` from each SaveImage. With
+  `individual_objects: true` SAM 2 emits one mask *per detection*, so a roof seen as three planes
+  would silently lose two of them. False combines them into the one mask per surface the worker
+  expects.
+- **No resize node.** The example workflow squashes to 768×512 with `keep_proportion: false`, which
+  both distorts the house and — more seriously — produces masks at different dimensions from the
+  photograph `inpaint()` works on. Misaligned masks paint the right colour in the wrong place. Every
+  chain in the committed graph reads node `1` (the original) directly.
+
+### Still to build: `inpaint_api.json`
+
+FLUX.1 Fill dev is downloaded (23.8 GB, `models/unet/flux1-fill-dev.safetensors`). The inpaint graph
+is the remaining piece — load ComfyUI's own Flux Fill template, prove it runs, then retitle
+`CARDINAL_IMAGE`, `CARDINAL_MASK`, `CARDINAL_POSITIVE`, `CARDINAL_NEGATIVE`, `CARDINAL_OUTPUT` and
+export API format. ⚠ It must **not** resize either, for the same reason as above.
+
+### Installed on the Spark, 14 Aug 2026
+
+`ComfyUI-segment-anything-2`, `ComfyUI-Florence2`, `ComfyUI-KJNodes` (kijai), plus `color-matcher`
+and `mss` into `~/ComfyUI/venv`. Nothing declared `torch`, so the working `2.13.0+cu130` aarch64
+build was untouched — **check that before installing any node pack's requirements.** The Florence2
+and SAM 2 weights download themselves on first run; there is no manual model fetch for either.
