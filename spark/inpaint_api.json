@@ -1,0 +1,155 @@
+{
+  "1": {
+    "inputs": {
+      "image": "cardinal_work.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "CARDINAL_IMAGE"
+    }
+  },
+  "2": {
+    "inputs": {
+      "image": "cardinal_mask.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "CARDINAL_MASK"
+    }
+  },
+  "3": {
+    "inputs": {
+      "channel": "red",
+      "image": ["2", 0]
+    },
+    "class_type": "ImageToMask",
+    "_meta": {
+      "title": "mask png -> MASK"
+    }
+  },
+
+  "4": {
+    "inputs": {
+      "unet_name": "flux1-fill-dev.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "FLUX Fill"
+    }
+  },
+  "5": {
+    "inputs": {
+      "model": ["4", 0]
+    },
+    "class_type": "DifferentialDiffusion",
+    "_meta": {
+      "title": "soft mask edges"
+    }
+  },
+  "6": {
+    "inputs": {
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp16.safetensors",
+      "type": "flux",
+      "device": "default"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "text encoders"
+    }
+  },
+  "7": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "vae"
+    }
+  },
+
+  "8": {
+    "inputs": {
+      "text": "architectural asphalt shingle roof",
+      "clip": ["6", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CARDINAL_POSITIVE"
+    }
+  },
+  "9": {
+    "inputs": {
+      "text": "",
+      "clip": ["6", 0]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CARDINAL_NEGATIVE"
+    }
+  },
+  "10": {
+    "inputs": {
+      "guidance": 30,
+      "conditioning": ["8", 0]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "flux guidance"
+    }
+  },
+
+  "11": {
+    "inputs": {
+      "noise_mask": true,
+      "positive": ["10", 0],
+      "negative": ["9", 0],
+      "vae": ["7", 0],
+      "pixels": ["1", 0],
+      "mask": ["3", 0]
+    },
+    "class_type": "InpaintModelConditioning",
+    "_meta": {
+      "title": "inpaint conditioning"
+    }
+  },
+  "12": {
+    "inputs": {
+      "seed": 1786640000101,
+      "steps": 20,
+      "cfg": 1,
+      "sampler_name": "euler",
+      "scheduler": "normal",
+      "denoise": 1,
+      "model": ["5", 0],
+      "positive": ["11", 0],
+      "negative": ["11", 1],
+      "latent_image": ["11", 2]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "sampler"
+    }
+  },
+  "13": {
+    "inputs": {
+      "samples": ["12", 0],
+      "vae": ["7", 0]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "decode"
+    }
+  },
+  "14": {
+    "inputs": {
+      "filename_prefix": "cardinal/render",
+      "images": ["13", 0]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "CARDINAL_OUTPUT"
+    }
+  }
+}

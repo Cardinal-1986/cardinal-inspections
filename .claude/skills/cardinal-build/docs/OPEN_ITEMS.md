@@ -3111,3 +3111,7 @@ for a new file, **not a diagnosis of Studio**. Nobody has reproduced Studio's re
 
 **Not measured yet:** whether the composed roof prompt actually produces a convincing shingle. That
 needs the Spark running and Theo's eyes on a real render — it is not something a harness can judge.
+
+**Struck at 808** — "queued with no explanation" is closed. The Visualizer now distinguishes
+*never connected* from *asleep* from *just queued*. The Spark setup itself (§1–4) is still the
+open item; nothing renders until it is done.

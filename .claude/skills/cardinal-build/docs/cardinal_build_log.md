@@ -16405,3 +16405,28 @@ against a correct file because the replacement comment says "cr-des" in prose. T
 assertion, every time. **Not verified end to end, and not claimed to be: nothing renders until the
 Spark is switched on** (`spark/VISUALIZER_SETUP.md` §1–4); queued jobs sit at `queued` until then,
 which is correct, not a fault.
+
+- **808** · The Visualizer says WHY a render is waiting · Theo queued two renders within ten minutes
+of 807 going live and both sat on a grey `queued` chip with no explanation. **The rows were
+perfectly correct** — `attempts 0`, `claimed_by null`, no error, exactly what "the Spark is not
+running" looks like — but the only way to learn that was to query the database, which nobody else on
+the crew can do. **A correct state with no explanation is its own defect**, and this one was mine:
+807 shipped the chip knowing the worker did not exist yet. The screen now distinguishes three cases
+from the rows themselves. Queued over three minutes with **no job ever claimed** → *the render
+machine has never connected*, nothing is lost, and the command to start it. Queued over three
+minutes but **`claimed_at` is set somewhere** → *last picked up on <date>*, i.e. asleep rather than
+absent — **a different problem needing a different answer, which is why `claimed_at` was added to
+the select**. Under three minutes → **say nothing**, because a render queued thirty seconds ago is
+not a fault and crying wolf trains people to ignore the banner. A stalled queue also backs its poll
+off from 6s to 30s rather than asking the database ten times a minute forever. Contrast computed,
+not eyeballed: **10.25:1** body and **12.81:1** on the lead, and **11.95:1 even if the banner's own
+background never paints** — the 448–449 failure mode, checked deliberately. ⚠️ **`contrast.py`
+scores against WHITE by default and called the ink a 1.67:1 failure**; this is a single-theme
+Blackout surface with no light mode, so that was the wrong ground and the wrong answer — the real
+pair was computed, then **confirmed in Chromium against the composited ground** the browser actually
+paints. `gate_808.mjs`: **16/16 green, 14 red on the 807 file from `main`** — a real previous build
+as the control, not a mutant. ⚠️ **The control CRASHED on its first run** (`ratio()` assumed two
+colour strings; on 807 `#vzWait` does not exist, so it threw `undefined.match` and the run died
+before printing a line — and piping to `tail` masked the exit code). **BUG_CLASSES 37 again, in my
+own gate.** It now returns null and the check fails with "no banner to measure" instead of taking
+the process down.

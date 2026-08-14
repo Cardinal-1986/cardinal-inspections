@@ -1,0 +1,223 @@
+{
+  "1": {
+    "inputs": {
+      "image": "cardinal_seg.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "CARDINAL_SEG_IMAGE"
+    }
+  },
+  "2": {
+    "inputs": {
+      "model": "microsoft/Florence-2-base",
+      "precision": "fp16",
+      "convert_to_safetensors": true
+    },
+    "class_type": "DownloadAndLoadFlorence2Model",
+    "_meta": {
+      "title": "Florence2 model"
+    }
+  },
+  "3": {
+    "inputs": {
+      "model": "sam2_hiera_small.safetensors",
+      "segmentor": "single_image",
+      "device": "cuda",
+      "precision": "bf16"
+    },
+    "class_type": "DownloadAndLoadSAM2Model",
+    "_meta": {
+      "title": "SAM2 model"
+    }
+  },
+
+  "10": {
+    "inputs": {
+      "text_input": "roof",
+      "task": "caption_to_phrase_grounding",
+      "fill_mask": true,
+      "keep_model_loaded": true,
+      "max_new_tokens": 1024,
+      "num_beams": 3,
+      "do_sample": true,
+      "output_mask_select": "",
+      "seed": 1786640000001,
+      "image": ["1", 0],
+      "florence2_model": ["2", 0]
+    },
+    "class_type": "Florence2Run",
+    "_meta": {
+      "title": "find roof"
+    }
+  },
+  "11": {
+    "inputs": {
+      "index": "",
+      "batch": false,
+      "data": ["10", 3]
+    },
+    "class_type": "Florence2toCoordinates",
+    "_meta": {
+      "title": "roof boxes"
+    }
+  },
+  "12": {
+    "inputs": {
+      "keep_model_loaded": true,
+      "individual_objects": false,
+      "sam2_model": ["3", 0],
+      "image": ["1", 0],
+      "bboxes": ["11", 1]
+    },
+    "class_type": "Sam2Segmentation",
+    "_meta": {
+      "title": "segment roof"
+    }
+  },
+  "13": {
+    "inputs": {
+      "mask": ["12", 0]
+    },
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "roof mask to image"
+    }
+  },
+  "14": {
+    "inputs": {
+      "filename_prefix": "cardinal/mask_roof",
+      "images": ["13", 0]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "CARDINAL_MASK_ROOF"
+    }
+  },
+
+  "20": {
+    "inputs": {
+      "text_input": "house wall",
+      "task": "caption_to_phrase_grounding",
+      "fill_mask": true,
+      "keep_model_loaded": true,
+      "max_new_tokens": 1024,
+      "num_beams": 3,
+      "do_sample": true,
+      "output_mask_select": "",
+      "seed": 1786640000002,
+      "image": ["1", 0],
+      "florence2_model": ["2", 0]
+    },
+    "class_type": "Florence2Run",
+    "_meta": {
+      "title": "find siding"
+    }
+  },
+  "21": {
+    "inputs": {
+      "index": "",
+      "batch": false,
+      "data": ["20", 3]
+    },
+    "class_type": "Florence2toCoordinates",
+    "_meta": {
+      "title": "siding boxes"
+    }
+  },
+  "22": {
+    "inputs": {
+      "keep_model_loaded": true,
+      "individual_objects": false,
+      "sam2_model": ["3", 0],
+      "image": ["1", 0],
+      "bboxes": ["21", 1]
+    },
+    "class_type": "Sam2Segmentation",
+    "_meta": {
+      "title": "segment siding"
+    }
+  },
+  "23": {
+    "inputs": {
+      "mask": ["22", 0]
+    },
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "siding mask to image"
+    }
+  },
+  "24": {
+    "inputs": {
+      "filename_prefix": "cardinal/mask_siding",
+      "images": ["23", 0]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "CARDINAL_MASK_SIDING"
+    }
+  },
+
+  "30": {
+    "inputs": {
+      "text_input": "window",
+      "task": "caption_to_phrase_grounding",
+      "fill_mask": true,
+      "keep_model_loaded": false,
+      "max_new_tokens": 1024,
+      "num_beams": 3,
+      "do_sample": true,
+      "output_mask_select": "",
+      "seed": 1786640000003,
+      "image": ["1", 0],
+      "florence2_model": ["2", 0]
+    },
+    "class_type": "Florence2Run",
+    "_meta": {
+      "title": "find windows"
+    }
+  },
+  "31": {
+    "inputs": {
+      "index": "",
+      "batch": false,
+      "data": ["30", 3]
+    },
+    "class_type": "Florence2toCoordinates",
+    "_meta": {
+      "title": "window boxes"
+    }
+  },
+  "32": {
+    "inputs": {
+      "keep_model_loaded": false,
+      "individual_objects": false,
+      "sam2_model": ["3", 0],
+      "image": ["1", 0],
+      "bboxes": ["31", 1]
+    },
+    "class_type": "Sam2Segmentation",
+    "_meta": {
+      "title": "segment windows"
+    }
+  },
+  "33": {
+    "inputs": {
+      "mask": ["32", 0]
+    },
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "windows mask to image"
+    }
+  },
+  "34": {
+    "inputs": {
+      "filename_prefix": "cardinal/mask_windows",
+      "images": ["33", 0]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "CARDINAL_MASK_WINDOWS"
+    }
+  }
+}

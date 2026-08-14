@@ -5010,3 +5010,46 @@ and the fence check carries a **self-test that plants a coordinate and requires 
 **Nothing renders until the Spark is switched on** (`spark/VISUALIZER_SETUP.md` §1–4). Queued
 jobs sit at `queued` until then, which is correct behaviour, not a fault. This build could not
 be verified end to end and was not claimed to be.
+
+---
+
+## Build 808 — the Visualizer says why a render is waiting
+
+807 shipped a grey `queued` chip with nothing behind it. Theo queued two renders within ten
+minutes of it going live and had to ask me to run SQL to find out why nothing happened. **The
+rows were correct** (`attempts 0`, `claimed_by null`, no error — exactly what "the Spark is not
+running" looks like); the screen was simply silent about a state it already knew.
+
+`#vzWait`, above the Review list. Three cases, told apart from the job rows themselves:
+
+| condition | what it says |
+|---|---|
+| queued > 3 min, **no job ever claimed** | the render machine has never connected · nothing is lost · the command to start it |
+| queued > 3 min, **`claimed_at` set somewhere** | last picked up on \<date\> — asleep, not absent |
+| queued < 3 min, or nothing queued | **nothing** |
+
+The middle row is why `claimed_at` joined the `design_jobs` select. "Never set up" and "set up
+but asleep" need different answers, and a banner that cannot tell them apart gives the wrong one
+half the time. The third row matters as much: a render queued thirty seconds ago is not a fault,
+and a banner that cries wolf gets ignored. **The worker claims within seconds of a poll, so three
+minutes is a very safe floor.**
+
+`schedule()` also backs a stalled queue off from **6s to 30s** — no point asking the database ten
+times a minute about a queue nothing is listening to.
+
+**Contrast computed, not eyeballed:** 10.25:1 body, 12.81:1 lead, **11.95:1 even if the banner's
+own background never paints** (the 448–449 failure mode, checked deliberately).
+
+⚠️ **`contrast.py` scores against WHITE by default and called this ink a 1.67:1 failure.** Wrong
+ground — the Visualizer is single-theme Blackout with no light mode. The real pair was computed
+and then confirmed in Chromium against the **composited** ground. Do not take that script's bare
+output as a verdict on a Blackout surface.
+
+`gate_808.mjs` — **16/16 green, 14 red on the 807 file from `main`** (a real previous build as
+the control, not a mutant).
+
+⚠️ **That control crashed on its first run and printed nothing**, which reads exactly like a
+quiet pass. `ratio()` assumed two colour strings; on 807 `#vzWait` does not exist, so it threw
+`undefined.match` and took the process down — and piping to `tail` masked the exit code.
+BUG_CLASSES 37, inside the gate itself. It now returns null and the check fails with "no banner
+to measure".

@@ -152,7 +152,18 @@ def claim_job():
     j = r.json()
     if not j:
         return None
-    return j[0] if isinstance(j, list) else j
+    row = j[0] if isinstance(j, list) else j
+    # claim_design_job() is `returns public.design_jobs` — a COMPOSITE. When it
+    # returns null, PostgREST does not send null; it sends a row with every
+    # column set to null: {"id": null, "project_id": null, …}. That dict is
+    # non-empty, so `if not j` above sails straight past it and the worker
+    # treats an empty queue as a job it can never do. Observed live: two real
+    # jobs failed, then several hundred phantom claims a second, each one dying
+    # on `"…?id=eq." + None` and unable to record its own failure.
+    # The id is the only field that can never legitimately be null.
+    if not row.get("id"):
+        return None
+    return row
 
 
 def patch_job(job_id, patch):
@@ -507,6 +518,11 @@ def main():
                                       "finished_at": _now()})
             except Exception as e2:
                 log("  and could not record the failure: %s" % _short(e2))
+            # Never spin. A failure that cannot even be written down is exactly
+            # the case where the loop would otherwise hammer the database as
+            # fast as the network allows — which is what the phantom-claim bug
+            # did before the guard in claim_job() was added.
+            time.sleep(POLL_SECONDS)
 
     log("stopped")
 

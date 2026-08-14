@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-14 build 807
+  v2026-08-14 build 808
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -212,6 +212,15 @@ h2.sec:first-child{margin-top:6px}
   display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 #vzBox .feet .d{flex:1;min-width:0;color:var(--vz-dim,#A8B0BF);font-size:13px}
 
+/* 808: why nothing is happening, said out loud. A grey "queued" chip that never
+   changes is a correct state with no explanation, which is its own defect —
+   Theo hit it within ten minutes of the first real use and had to ask. */
+.wait{padding:11px 13px;border-radius:11px;margin-bottom:10px;font-size:13.5px;
+  border:1px solid var(--vz-warn,#D98324);background:#241A0E;color:#F0C088}
+.wait b{color:#FFD9A8}
+.wait code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+  background:#00000059;padding:1px 5px;border-radius:5px;white-space:nowrap}
+
 /* A render is a proposal, never a photograph of the finished job. Said on the
    screen because a homeowner keeps the screenshot. */
 .disclaim{padding:9px 12px;border-radius:10px;border:1px solid var(--vz-line,#252932);
@@ -272,6 +281,7 @@ h2.sec:first-child{margin-top:6px}
 
       <h2 class="sec">3 · Review — a person looks before a customer does</h2>
       <p class="note">Renders start unapproved and stay out of Present until you approve them.</p>
+      <div id="vzWait" class="wait hide"></div>
       <div class="rows" id="vzJobs"><div class="empty">Nothing queued yet.</div></div>
 
       <div class="disclaim">Renders are a <b>proposal</b>, not a photograph of finished work.
@@ -659,7 +669,10 @@ function refresh(){
   if(!pid){ jobs = []; renders = []; drawJobs(); drawGallery(); return; }
   Promise.all([
     sb.from('design_jobs')
-      .select('id,status,source_path,selections,render_path,preview_path,error,created_at,duration_ms')
+      /* 808: claimed_at is the difference between "nothing is listening" and
+         "something is listening but asleep". Without it the screen can only
+         say "queued", which is what sent Theo to ask me. */
+      .select('id,status,source_path,selections,render_path,preview_path,error,created_at,duration_ms,claimed_at')
       .eq('project_id', pid).order('created_at', { ascending:false }).limit(60),
     sb.from('design_renders')
       .select('id,job_id,title,source_path,render_path,preview_path,selections,approved,created_at')
@@ -667,15 +680,53 @@ function refresh(){
   ]).then(function(res){
     jobs    = (res[0] && res[0].data) || [];
     renders = (res[1] && res[1].data) || [];
-    drawJobs(); drawGallery(); schedule();
+    drawJobs(); drawWait(); drawGallery(); schedule();
   });
 }
+
+/* 808 — say why nothing is happening.
+   The worker claims a job within seconds of a poll, so anything still `queued`
+   after three minutes means nothing is listening. That is knowable from the
+   rows themselves: `claimed_at` separates "the render machine has never
+   connected" from "it has, and it is asleep or busy". A rep cannot query the
+   database, so the screen has to tell them. */
+var WAIT_MS = 3 * 60 * 1000;
+function stalled(){
+  var queued = jobs.filter(function(j){ return j.status === 'queued'; });
+  if(!queued.length) return null;
+  var oldest = Infinity;
+  queued.forEach(function(j){
+    var t = new Date(j.created_at).getTime();
+    if(t < oldest) oldest = t;
+  });
+  if(!isFinite(oldest) || Date.now() - oldest < WAIT_MS) return null;
+  /* The newest claim across everything we can see. Null means no worker has
+     ever touched a job — which is a different sentence to the user. */
+  var seen = jobs.map(function(j){ return j.claimed_at; }).filter(Boolean).sort().pop();
+  return { seen: seen || null, n: queued.length };
+}
+function drawWait(){
+  var el = $('vzWait'), s = stalled();
+  if(!s){ el.className = 'wait hide'; el.innerHTML = ''; return; }
+  el.className = 'wait';
+  el.innerHTML = s.seen
+    ? '<b>Still waiting.</b> The render machine last picked up a job on ' +
+      esc(new Date(s.seen).toLocaleString()) + '. It may be asleep. Nothing is lost — ' +
+      (s.n === 1 ? 'this one goes' : 'these ' + s.n + ' go') + ' through on its next poll.'
+    : '<b>Nothing is rendering yet.</b> The render machine has never connected, so ' +
+      (s.n === 1 ? 'this is' : 'these ' + s.n + ' are') + ' sitting in the queue waiting ' +
+      'for it. Nothing is lost and nothing is broken. On the Spark: start ComfyUI, then ' +
+      '<code>python3 spark/visualizer_worker.py</code> — queued jobs are picked up within ' +
+      'seconds of it starting.';
+}
+
 /* Poll only while something is actually in flight. An idle screen must not sit
-   there hitting the database every few seconds. */
+   there hitting the database every few seconds — and once a queue is known to
+   be stalled, back off hard rather than asking ten times a minute forever. */
 function schedule(){
   if(poll){ clearTimeout(poll); poll = null; }
   var busy = jobs.some(function(j){ return j.status === 'queued' || j.status === 'running'; });
-  if(busy) poll = setTimeout(refresh, 6000);
+  if(busy) poll = setTimeout(refresh, stalled() ? 30000 : 6000);
 }
 function titleOf(sel){
   return SURFACES.filter(function(s){ return sel && sel[s.key]; })
