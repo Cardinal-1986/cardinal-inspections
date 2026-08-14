@@ -3473,6 +3473,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <div id="navMenu" style="display:none;">
           <div class="navsec">Daily</div>
           <button class="navopt" data-nav="landing" data-cri="home lg">Landing</button>
+          <!-- 799: the portal switcher, formerly its own row under the search
+               bar (#crPortalChip, hidden below). Same sheet, same
+               window.CardinalPortal.pick() - see the click handler at ~18753. -->
+          <button class="navopt" data-nav="portal" data-cri="group lg">Switch Portal</button>
           <button class="navopt" data-nav="clients" data-cri="people lg">Clients</button>
           <button class="navopt" data-nav="leads" data-cri="clipboard lg">Leads &amp; Jobs</button>
           <button class="navopt" data-nav="board" data-cri="calendar lg">Schedule Board</button>
@@ -3500,7 +3504,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 798 &#8212; The Convert to Insurance card no longer stays black in light mode — its dark styling was missing a theme guard and applied all the time</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 799 &#8212; The portal switcher (Retail / Insurance / Community / All) moved off its own row and into the menu, under Switch Portal</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18758,6 +18762,7 @@ navMenu.addEventListener('click', function(e){
   var nav = opt.getAttribute('data-nav');
   if(nav === 'home'){ showHome(); }
   else if(nav === 'landing'){ goToLanding(); }
+  else if(nav === 'portal'){ if(window.CardinalPortal) window.CardinalPortal.pick(); }
   else if(nav === 'profile'){ openMyProfile(); }
   else if(nav === 'clients'){ openClientsDirectory(); }
   else if(nav === 'crews'){ if(window.CardinalCrews) window.CardinalCrews.open(); }
@@ -39553,6 +39558,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:799, d:'2026-08-14', t:'The portal switcher moves into the menu',
+s:'The Retail/Insurance/Community/All badge that sat on its own row under the search bar is gone. It was not just decoration \u2014 it was the only way to switch which CRM\u2019s clients you were looking at, or jump to Cardinal Truth or the Community Hub from the dashboard \u2014 so rather than drop that, it moved into the menu. Tap the menu button, then Switch Portal, for the exact same picker as before.' },
 { b:798, d:'2026-08-14', t:'Convert to Insurance, fixed for light mode',
 s:'The Convert to Insurance card stayed a near-black rectangle in light mode, with the title almost invisible against it. Its dark styling had no theme guard on it at all, so it ran regardless of which theme you were in. It is scoped to dark mode now, the way it was always meant to be, which lets the card\u2019s original light design \u2014 a pale pink panel with dark blue text \u2014 show through in light mode again. Dark mode is untouched.' },
 { b:797, d:'2026-08-14', t:'The top of a client profile, rebuilt on the phone',
@@ -71541,6 +71548,13 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
 :root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvtog{
   background:#d5d5da;
 }
+</style>
+<style id="cr-portalmenu-styles">
+/* the portal switcher moved into the burger menu - v2026-08-14 build 799
+   #crPortalChip itself keeps running (paintChip() still syncs
+   body.classList's portal-* tag every frame, which other stylesheets key
+   off), only its own visible row is removed. */
+#crPortalChip{ display:none !important; }
 </style>
 </body>
 </html>
