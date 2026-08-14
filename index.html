@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-13 build 791 &#8212; On a phone the client card is a band across the screen &#8212; name and star, PO and pencil, email text and call &#8212; with the pipeline bar and the map right under it. The desktop is unchanged</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 792 &#8212; Tapping call, text or email shows you the number or address first, with a Copy button, instead of dialling the moment you touch it. Location and the map now run across the screen under the pipeline bar</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39531,6 +39531,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:792, d:'2026-08-14', t:'The call and email buttons show you the number first',
+s:'Tapping the phone, text or email button on a client used to fire straight into the dialler or your mail app \u2014 you never got to see the number you were about to ring, and there was no way to read it off the screen or copy it. Each one now opens a small panel showing the number or address in full, with the Call, Text or Email button beside a Copy button. Tapping the same icon again puts it away. It is one more tap to dial, and you can see who you are dialling. Also: Location and its map now run all the way across the screen, directly under the pipeline bar, so the top of a client is three full-width bands and then the map. Phone only \u2014 the desktop is untouched.' },
 { b:791, d:'2026-08-13', t:'The client card is a band, on the phone',
 s:'ON A PHONE, the client card is now a band straight across the screen instead of a rounded box: the name and the star on the left, the PO and the pencil under them, and email, text and call as three buttons on the right. The pipeline bar sits directly below it, also edge to edge, and the map comes right after that. Switch Primary and Add contact are gone, and so are the Overview dropdown and the ALL chip while you are inside a client \u2014 you are already there. The phone number, email and address are no longer printed twice on one screen. THE DESKTOP IS UNCHANGED: every rule is inside the phone layout, and it was checked by drawing the desktop with and without this change and comparing the two pictures. ALSO FIXED: the pencil beside a client\u2019s name has never once worked \u2014 tapping it did nothing at all, on any screen, because it was listening in the wrong place. It opens the edit form now. Insurance and community profiles are untouched; their card carries the adjuster details.' },
 { b:790, d:'2026-08-13', t:'The Overview is one screen, not alternating slabs',
@@ -70875,6 +70877,7 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
    with and without the change and comparing the images (same md5).
    ========================================================================== */
 #cr-namebar{ display:none; }
+#cr-namebar .nb-pop[hidden]{ display:none; }
 
 @media (max-width:560px){
   body:not(.claim-insurance):not(.claim-community) #projectView .projhead{ display:block; margin:0; }
@@ -70943,8 +70946,54 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
 
   /* the pipeline bar, flush under the band and edge to edge */
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="stage"]{
-    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 10px !important;
+    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 0 !important;
     border-radius:0 !important; width:auto !important; max-width:none !important;
+  }
+  /* 792: Location and its map join them — three full-width bands and then the
+     map, which is the shape of the screenshot Theo sent. */
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loch"]{
+    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 0 !important;
+    padding:11px var(--cr-wrap-pad, 18px) 8px !important;
+    background:var(--rbe-panel2,#101015);
+    border-bottom:0 !important;
+  }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"]{
+    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 12px !important;
+    border-radius:0 !important; border-left:0 !important; border-right:0 !important;
+    width:auto !important; max-width:none !important;
+  }
+
+  /* ---- the panel a contact icon opens ---- */
+  #cr-namebar{ flex-wrap:wrap; }
+  #cr-namebar .nb-pop{
+    flex:1 0 100%; margin-top:10px;
+    padding:11px 12px; border-radius:11px;
+    background:var(--rbe-panel2,#101015);
+    border:1px solid var(--rbe-line2,#2b2b33);
+  }
+  #cr-namebar .nb-pop[hidden]{ display:none; }
+  #cr-namebar .nb-pop-lbl{
+    font:800 10px 'Segoe UI',Arial,sans-serif; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--rbe-mute,#9aa0a8);
+  }
+  #cr-namebar .nb-pop-val{
+    font:700 17px 'Segoe UI',Arial,sans-serif; color:var(--rbe-head,#fff);
+    margin-top:3px; word-break:break-all; user-select:text;
+  }
+  #cr-namebar .nb-pop-btns{ display:flex; gap:8px; margin-top:10px; }
+  #cr-namebar .nb-pop-go,
+  #cr-namebar .nb-pop-cp{
+    min-height:44px; display:inline-flex; align-items:center; justify-content:center;
+    padding:0 16px; border-radius:10px; cursor:pointer;
+    font:800 12px 'Segoe UI',Arial,sans-serif; letter-spacing:.05em;
+    text-transform:uppercase; text-decoration:none;
+  }
+  #cr-namebar .nb-pop-go{
+    background:var(--red,#c8202e); color:#fff; border:1px solid var(--red,#c8202e); flex:1;
+  }
+  #cr-namebar .nb-pop-cp{
+    background:transparent; color:var(--rbe-head,#fff);
+    border:1px solid var(--rbe-line2,#2b2b33);
   }
 }
 </style>
@@ -70967,6 +71016,52 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
+  }
+  function hidePop(bar){
+    var p = bar && bar.querySelector('[data-cr-pop]');
+    if(p) p.hidden = true;
+  }
+  function showPop(bar, pr, kind){
+    var p = bar.querySelector('[data-cr-pop]');
+    if(!p) return;
+    var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
+    var map = {
+      call : { lbl:'Phone',  val: pr.phone || tel, href:'tel:'  + tel, go:'Call'  },
+      text : { lbl:'Text',   val: pr.phone || tel, href:'sms:'  + tel, go:'Text'  },
+      email: { lbl:'Email',  val: pr.email || '',  href:'mailto:' + (pr.email || ''), go:'Email' }
+    }[kind];
+    if(!map || !map.val){ hidePop(bar); return; }
+    /* toggle: tapping the same icon again puts it away */
+    if(!p.hidden && p.getAttribute('data-cr-kind') === kind){ hidePop(bar); return; }
+    p.setAttribute('data-cr-kind', kind);
+    p.querySelector('[data-cr-pop-lbl]').textContent = map.lbl;
+    p.querySelector('[data-cr-pop-val]').textContent = map.val;
+    var go = p.querySelector('[data-cr-pop-go]');
+    go.setAttribute('href', map.href);
+    go.textContent = map.go;
+    var cp = p.querySelector('[data-cr-pop-copy]');
+    if(cp) cp.textContent = 'Copy';
+    p.hidden = false;
+  }
+  function copyText(txt, btn){
+    var done = function(){ if(btn){ btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = 'Copy'; }, 1400); } };
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(done, function(){ fallback(); });
+        return;
+      }
+    }catch(_e){}
+    fallback();
+    /* clipboard access can be refused; selecting the text still lets the number
+       be copied by hand rather than leaving a button that silently does nothing */
+    function fallback(){
+      try{
+        var v = document.querySelector('#cr-namebar [data-cr-pop-val]');
+        var r = document.createRange(); r.selectNodeContents(v);
+        var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        if(btn){ btn.textContent = 'Selected'; setTimeout(function(){ btn.textContent = 'Copy'; }, 1600); }
+      }catch(_e2){}
+    }
   }
   function build(){
     var pr = window.currentProject;
@@ -70998,10 +71093,14 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
 
     /* only draw a channel that exists: a mailto: with no address is a dead
        control, which is the very thing this build is fixing elsewhere */
+    /* 792: these were <a href="tel:"> and dialled the moment you touched them,
+       so you never saw the number and had no way to read or copy it. They are
+       buttons now; each opens the panel below with the value spelled out and
+       the action as a deliberate second tap. */
     var acts = '';
-    if(pr.email) acts += '<a class="nb-ico" href="mailto:' + esc(pr.email) + '" aria-label="Email">' + svg('mail') + '</a>';
-    if(tel)      acts += '<a class="nb-ico" href="sms:' + esc(tel) + '" aria-label="Text">' + svg('chat') + '</a>';
-    if(tel)      acts += '<a class="nb-ico" href="tel:' + esc(tel) + '" aria-label="Call">' + svg('phone') + '</a>';
+    if(pr.email) acts += '<button class="nb-ico" type="button" data-cr-act="email" aria-label="Email">' + svg('mail') + '</button>';
+    if(tel)      acts += '<button class="nb-ico" type="button" data-cr-act="text" aria-label="Text">' + svg('chat') + '</button>';
+    if(tel)      acts += '<button class="nb-ico" type="button" data-cr-act="call" aria-label="Call">' + svg('phone') + '</button>';
 
     bar.innerHTML =
       '<span class="nb-l">' +
@@ -71015,8 +71114,17 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
           '<button class="nb-pen" type="button" data-cr-edit="1" aria-label="Edit client info">\u270E</button>' +
         '</span>' +
       '</span>' +
-      (acts ? '<span class="nb-r">' + acts + '</span>' : '');
+      (acts ? '<span class="nb-r">' + acts + '</span>' : '') +
+      '<div class="nb-pop" data-cr-pop hidden>' +
+        '<div class="nb-pop-lbl" data-cr-pop-lbl></div>' +
+        '<div class="nb-pop-val" data-cr-pop-val></div>' +
+        '<div class="nb-pop-btns">' +
+          '<a class="nb-pop-go" data-cr-pop-go href="#"></a>' +
+          '<button class="nb-pop-cp" type="button" data-cr-pop-copy>Copy</button>' +
+        '</div>' +
+      '</div>';
 
+    hidePop(bar);
     if(!bar.__crWired){
       bar.__crWired = true;
       bar.addEventListener('click', function(e){
@@ -71031,7 +71139,21 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
              inside a card this stylesheet hides on a phone, and until this
              build its own click went nowhere at all. */
           if(typeof openProjModal === 'function') openProjModal(pr2);
+          return;
         }
+        var act = e.target.closest('[data-cr-act]');
+        if(act){ showPop(bar, pr2, act.getAttribute('data-cr-act')); return; }
+        if(e.target.closest('[data-cr-pop-copy]')){
+          var v = bar.querySelector('[data-cr-pop-val]');
+          copyText(v ? v.textContent : '', e.target.closest('[data-cr-pop-copy]'));
+          return;
+        }
+        /* a tap anywhere else in the band closes the panel */
+        if(!e.target.closest('[data-cr-pop]')) hidePop(bar);
+      });
+      /* ...and so does a tap outside it */
+      document.addEventListener('click', function(e){
+        if(!bar.contains(e.target)) hidePop(bar);
       });
     }
   }
