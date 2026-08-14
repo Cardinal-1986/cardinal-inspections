@@ -15860,3 +15860,46 @@ list and then scored against it. White is the backdrop translucent grounds compo
 ground the element sits on. Same family as the 790 probe bug, one level down — the fix separates
 `{ list, opaque }`. Hand-computed values agreed with the corrected probe, which is the only reason
 the false red was recognisable as a false red.
+
+## build 796 — 14 Aug 2026 — the Payments card goes; Money In moves up
+
+Theo: *"Can you get rid of payments and money in, since it's already in payment information and it is
+redundant. Or move payment in into payment information."* Two options offered — and **they are not
+the same claim**, so both were checked before anything was deleted.
+
+**Payments (`#kpPay`, the Keeper pill from 349) IS redundant.** It renders a Paid bar plus
+`ck.payments` read-only. Payment Information (`#dbPayRow` → `openPaymentsPage` → `renderPayments`)
+renders the **same log** split into Received / Paid / Additional Job Expenses, **plus** the contract
+payments the pill cannot see, **plus** an add button per section. Strict superset. Its one control,
+the "Open payments" button, proxied `#jaGrid [data-ja="payments"]` — **`#jaGrid` is the legacy grid
+hidden by `#tab-overview`'s `display:none` rule**, so that button had been `display:none` since the
+day it shipped. Gone, along with its two `.kppaybtn` listeners.
+
+**Money In is NOT redundant, and deleting it would have cost a feature.**
+`jt(dbIc('estimates'), 'Money In', '', 'commissions')` was the **only** door anywhere into
+`#tab-commissions` — the Money In & Commissions pane built at 650 and themed at 726. Measured: the
+original file contains **zero** literal `showTab('commissions')`; the tile passed `'commissions'`
+through the router's else branch. Delete the tile and the pane is stranded — **the 607 punch-out
+trap exactly**. So it moved instead: out of the Job Menu, where it was an orphan half-width tile
+alone on its own row (which is what the screenshot was of), and up beside Payment Information as a
+second `.dbrow`. No new CSS — `.dbrow` was already themed at 790.
+
+History (`#kpHis`) shares the `.kpsec` shell and its `.kpsech` toggle and is untouched.
+
+**Left undone, said out loud:** the payments-only CSS (`.kppayrow` / `.kppaybar` / `.kppaybtn` /
+`.kprowi` / `.kpin` / `.kpout` / `.kpmute`) is now dead but stays. It is inert, and the neighbouring
+`.kp*` classes are shared with History.
+
+**Gate**: `gate_796.mjs` — **16 green**, **10 red on the 795 control, no crash**. The load-bearing
+assertion is D: *tapping Money In opens `#tab-commissions`*. E asserts the redundancy claim itself
+rather than restating it — Payment Information is opened and both seeded payments are found in it.
+
+⚠️ **Three of my own assertions were wrong before the app was.** (1) A blanket
+`'kppaybtn' not in src` failed a correct patch because the replacement **comment names the class it
+explains** — the file's own comment-pollution trap, in my own patch. (2) `kppayrow`/`kppaybar` were
+asserted at `== 1`; each is 1 markup site + **2** CSS rules, so the answer is 2. Replaced with the
+self-computing form (`patched == orig - 1`), which cannot be guessed wrong. (3) The gate asserted a
+section called "Paid out"; `PAY_SECTIONS` calls it **"Paid"** — a red that was the test's fault, not
+the app's. And a fourth, subtler: the "No payments logged yet." assertion **passed on both builds**,
+because that copy only renders when the log is empty and the seed has two payments. Swapped for the
+pill's heading, which is there either way.
