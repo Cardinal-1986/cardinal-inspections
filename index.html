@@ -3504,7 +3504,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 803 &#8212; The section banner stops repeating the tabs directly underneath it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 804 &#8212; The always-on search bar folds into a magnifier beside Home, giving every screen its height back</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39558,6 +39558,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:804, d:'2026-08-14', t:'The search bar folds into a magnifier',
+s:'The search bar no longer sits across every screen all the time. There is a magnifier next to the Home button instead \u2014 tap it and the same search bar drops down with the cursor already in it, so it is one tap to start typing rather than two. That is roughly 40 pixels back on every screen in Retail, Insurance and Community. Nothing was buried to make room: the light/dark moon returns to its floating corner button on its own, which is where it lived before it was ever put in that row, and Insurance\u2019s own theme switch moved up into the header beside the magnifier.' },
 { b:803, d:'2026-08-14', t:'The banner stops repeating the tabs under it',
 s:'On the Community hub the banner read Partners | Bids and the row directly under it read Clients | Bids | Partners \u2014 the same two buttons, twice, one row apart, going to exactly the same place (checked by clicking, not by reading the code). The banner now drops those two while that row is on screen. Same on the Insurance hub for Clients. Nothing is lost: the buttons come back the moment you are on a screen that does not already have them, because the banner is on every screen and those tab rows are not. The banner\u2019s Claims button stays put \u2014 it goes to the Claims Tracker, which is a different screen that just shares a word. Retail is untouched. This is the first of two \u2014 the taller question, folding the search row into a header icon, is coming as a preview first.' },
 { b:802, d:'2026-08-14', t:'Community Partners: no repeated name, real status chips, Tools tucked away',
@@ -55124,6 +55126,30 @@ home.onclick = function(){ goHome(); };
    it sits outside the absolutely-centred title. */
 var _bar = document.getElementById('cr-hd2-bar');
 if(_bar && home.parentNode !== _bar) _bar.appendChild(home);
+/* 804: the search lens. Same idempotent shape as the Home append above -
+   build() re-runs from a body observer, so "create only if absent" is the
+   rule here, not an optimisation. ICO('search') is the app's own glyph and
+   .cr-ib its own icon-button class; no second pipeline for either.
+   The click opens the row AND focuses the field, so the keyboard is up in
+   one tap. */
+if(_bar && !document.getElementById('cr-hd2-lens')){
+  var _lens = document.createElement('button');
+  _lens.type = 'button';
+  _lens.id = 'cr-hd2-lens';
+  _lens.className = 'cr-ib';
+  _lens.setAttribute('aria-label', 'Search');
+  _lens.setAttribute('aria-expanded', 'false');
+  try{ _lens.innerHTML = window.CardinalIcons.get('search'); }catch(_e){ _lens.textContent = '\u2315'; }
+  _lens.onclick = function(){
+    var open = document.body.classList.toggle('cr-srch-open');
+    _lens.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(open){
+      var f = document.getElementById('headSearch');
+      if(f){ try{ f.focus(); }catch(_f){} }
+    }
+  };
+  _bar.appendChild(_lens);
+}
 /* 416: qClock is NOT relocated — Theo dropped the date and time, and the phone's
    own status bar shows the clock two rows above it anyway. The ribbon now carries
    only the project context, and hides itself when there is none. */
@@ -58334,7 +58360,11 @@ body:not([data-crm="insurance"]) .cr-ins-theme{display:none !important;}
      reason: 'retired in build 301 - the unified header owns insurance chrome'.
      #cr-hd2-bar IS that chrome, and it is present on every CRM, so the button is
      hidden by CSS unless body[data-crm="insurance"]. */
-  var HOSTS = ['#cr-hd2-srch'];   /* 416: the toggle closes the search row */
+  var HOSTS = ['#cr-hd2-bar'];   /* 804: was '#cr-hd2-srch'. That row is
+     collapsed by default now, and unlike #cr-dark-toggle this button has
+     NO floating fallback - left in the row it would have become a control
+     that renders and can never be reached. It rides in the header bar
+     instead, beside the lens, inheriting .cr-ib sizing. */
 
   function cur(){
     try { return localStorage.getItem(KEY) === 'siren' ? 'siren' : 'docket'; }
@@ -71711,6 +71741,20 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
 :root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner .cbcrm b.on{
   background:rgba(0,0,0,.07);
 }
+</style>
+<style id="cr-hd2-lens-styles">
+/* the search row folds into a header lens - v2026-08-14 build 804
+   Specificity, not !important: the base rule is #cr-hd2-srch{display:flex}
+   (0,1,0); this is (0,2,1) and wins on its own. Nothing sets display on
+   this row inline, so there is nothing louder to beat. */
+body:not(.cr-srch-open) #cr-hd2-srch{ display:none; }
+/* ⚠️ order, not DOM position - see the banner note in cr-hd2-script.
+   Home is 9; these sit just after it, on the right, clear of the
+   absolutely-centred title. */
+#cr-hd2-bar #cr-hd2-lens,
+#cr-hd2-bar .cr-ins-theme{ order:10; }
+#cr-hd2-bar #cr-hd2-lens .cri{ width:18px; height:18px; }
+body.cr-srch-open #cr-hd2-bar #cr-hd2-lens{ border-color:var(--hac,#c8202e); color:var(--hac,#c8202e); }
 </style>
 </body>
 </html>
