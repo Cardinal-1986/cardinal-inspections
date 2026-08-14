@@ -15705,3 +15705,45 @@ hardcoded light-era ink and are absent from that list — `.payringinner` (#1b1b
 **1.08:1**. And `.dbringin` paints a **white circle** for the donut's hole, so the card-level ink landed
 light-on-white; the hole now takes the card's ground. Found by scoring **every text node** in the repainted
 cards, not the ones I expected to matter. That sweep is the whole defence against a partial pass.
+
+## build 791 — 13 Aug 2026 — the client card becomes a band, on the phone only
+
+Three rounds of preview with Theo, then: *"I just meant the square design on mobile."*
+
+**What shipped, on a phone, retail only:** the client card is a band across the full screen — name and
+star left, PO and pencil beneath them, email / text / call on the right. The pipeline bar sits directly
+under it, also edge to edge, then the map. Switch Primary and Add contact are gone; so are the Overview
+dropdown (`#jobMenuSel`) and the ALL chip (`#crPortalChip`) while `body.projopen`. Phone, email and
+address are no longer printed twice on one screen.
+
+### ⚠️ "Mobile only" was harder than it looks, and the first attempt failed
+
+Hiding the band above 560px was **not enough**. The pipeline bar and the map are physically **MOVED**,
+and **CSS cannot un-move a DOM change** — the desktop was still quietly rearranged. So the ordering is
+done with flex `order` inside the media query and **JS only tags the nodes** (`data-cr-ord`). The browser
+then owns rotation, which a one-time width test would not.
+
+**The desktop is PROVEN unchanged, not asserted:** the gate renders 1280px against this build and against
+790 and compares the **image md5**. Identical. That check is what caught the DOM-move leak.
+
+### ⚠️ A DEAD CONTROL, FOUND AND FIXED — bug class 16, live in production
+
+**The ✎ pencil beside the client's name has never worked, on any screen.** Its handler is delegated on
+`#projMeta`, but the button renders inside `#projName` — a **sibling** — so a click never reached a
+handler. Verified in Chromium rather than by reading: click it, `#projModal` stays `display:none`. The
+only working routes to the edit form were `#acxEdit1` / `#acxEdit2` lower down the page. The delegation
+now also sits on `#projName`, where `#favStar`'s already does. Fixed for every screen, not just the phone.
+
+**Scoped to retail on purpose:** `#projMeta` carries the **adjuster rows** on an insurance client, so
+hiding the old card app-wide would have destroyed real information. Insurance and community keep their
+cards, as at 790. Asserted.
+
+Two small things the band does deliberately: it **mirrors the live `#favStar`** rather than re-deriving
+"is this a favourite" a second way (two sources for one fact is how they drift), and it **draws only the
+contact channels that exist** — a `mailto:` with no address is exactly the dead control this build is
+fixing elsewhere.
+
+**Gate**: `gate_791.mjs` — 16 green, **10 red on the 790 control**. ⚠️ Two harness faults first, both the
+TEST's: the seed set a `claim_type` COLUMN, but `projClaimType()` reads the checklist's `lead.claim_type`,
+so every project came back "unknown" and the insurance case was never exercised; and the pencil test
+dereferenced a band the previous build does not have, so the control **crashed instead of going red**.
