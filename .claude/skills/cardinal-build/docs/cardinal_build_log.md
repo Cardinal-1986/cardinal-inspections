@@ -15786,3 +15786,77 @@ bar's 10px bottom margin came back with it.
 
 `gate_793.mjs` — the two Location assertions are **inverted on purpose** and say so in the file: inset is
 the shape Theo picked, not a regression. 25 green, desktop image-md5 still identical.
+
+## build 794 — 14 Aug 2026 — Location and the map run across the screen
+
+Third state of this design in three builds, so the history is worth stating once: **791** inset heading
+and inset card · **792** full bleed *plus* a grey panel behind the heading with its red rule killed,
+*plus* contents allowed to jump left to x=15 — turned down · **793** reverted to 791 · **794** full
+bleed on **the pipeline bar's pattern only**.
+
+Theo, third ask: *"make the location and maps go across the screen just like the item above same
+pattern"*, with *"don't change it to the second picture"* and *"leave the bar above alone"*. So this
+copies exactly what the stage bar does — negative margin, no radius, width auto — and nothing else.
+The heading keeps its transparent ground and its red rule; the content is padded back onto the page's
+gutter so **the heading, the map and the address all start at the same x**. The map is 300 → 330px
+wide for it. The stage bar rule is byte-identical, asserted.
+
+**Measured before a rule was written** (402px, shipped build): `--cr-wrap-pad` is really **36px** — the
+`var(--cr-wrap-pad, 18px)` fallback never fires — `#acxMount` runs 36→366, and `h3.projsec` ships an
+**inline `style="margin:20px 0 10px;"`**, so the heading's margin override needs `!important` or it
+loses to the element.
+
+**Two things only a render could see, both under the red rule.** `.acxsec` carries a 1px `#2b2b33`
+border *and* `rgba(255,255,255,.9) 0 1px 0 inset` — the ridge-cap bevel from the 430–436 retail
+restyle. At 330px inside a rounded card those read as an outline and a bevel; run edge to edge they
+read as two bright hairlines welded under the heading's rule. Both dropped on the bled card only; the
+gradient ground is the card now, the way the blue bar's colour is the bar. No assertion would have
+caught either — the first two renders of this build were wrong and looked plausible.
+
+**Gate**: `gate_794.mjs` — **30 green** (incl. desktop image-md5 identical to 793), **5 red on the 793
+control, no crash**. The control also independently reproduces the misalignment 794 fixes: map at
+x=51, heading text at x=36. Checked at 360 / 402 / 430 / 560px; `documentElement.scrollWidth` equals
+`innerWidth` at every one, so the negative margins introduce no horizontal overflow.
+
+## build 795 — 14 Aug 2026 — Job Details, laid out like the AccuLynx card
+
+Theo, verbatim: *"Just job category, work type, trade type, and lead source only with a dropdown next
+to each just like the 2nd picture."* Four rows, AccuLynx's own labels, label left, hairline rule,
+value right, a caret on every one. Initial Appt comes off the card. Retail only —
+`body:not(.claim-insurance):not(.claim-community)`, the fence 790 used, because those two CRMs paint
+this card from their own `--ct-*` palette.
+
+**Nothing became read-only.** `acxCat` / `acxWt` / `acxSrc` and the `.acxTr` class are the change
+handler's contract at ~11563 and are untouched; only chrome moved. `<select>`s get
+`appearance:none`, no box, accent ink, and a caret drawn by the row's `::after` (a `.acxsl` class
+marks those rows so no `:has()` is needed).
+
+**Trade Type is the interesting one.** `trades` is an ARRAY — which is exactly why the AccuLynx card
+itself prints "Roofing, Repair" on one line — so a `<select>` cannot hold it and `<select multiple>`
+is the box we are removing. It is a **button** that reads identically to the other three and opens
+the six trades as chips beneath it, in grid column 2 so the vertical rule stays unbroken. The
+checkboxes are visually hidden and the LABEL TEXT is the chip, via `input:checked + span` — a
+sibling selector, not `:has()`, because the sibling is exact and needs no support argument.
+
+**`acxTrOpen` is module state beside `acxTaskTab`, not a DOM attribute.** Every save calls
+`renderAcxOverview()`, so a panel remembered in the DOM would slam shut the moment you ticked a
+trade. Asserted: the panel is still open after a save, and the summary above it has updated.
+
+**Three things measurement caught that reading would not.**
+1. `--cr-wrap-pad`-style guessing on the label column: a `31%` column **wrapped "Lead Source"** onto
+   two lines. `auto 1fr` makes the column hug the longest label — no wrap, no wasted width on a
+   desktop card.
+2. Rows came out **66 / 66 / 66 / 37** because a `<select>` here computes to 44px and a plain value
+   to 19px. `min-height:52px` on both columns is what makes the list read as a list.
+3. **The `<select>`s render at 16px on a phone no matter what this stylesheet says** — `input,
+   select, textarea{font-size:16px !important}` at ~1814 is the iOS auto-zoom guard. The Trade Type
+   button was 13.5px and its row read visibly smaller than the three around it. The guard is right
+   and stays; the button matches it inside the same media query.
+
+**Gate**: `gate_795.mjs` — **35 green in dark, 35 green in light**, **27 red on the 794 control with
+no crash**. ⚠️ It went red on its own first run with **five false failures** (`#b9d3ec` scored at
+1.55:1, a white chip label at 1.00:1): the ground walk appended its white fallback to the *candidate*
+list and then scored against it. White is the backdrop translucent grounds composite onto, never a
+ground the element sits on. Same family as the 790 probe bug, one level down — the fix separates
+`{ list, opaque }`. Hand-computed values agreed with the corrected probe, which is the only reason
+the false red was recognisable as a false red.
