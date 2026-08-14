@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 792 &#8212; Tapping call, text or email shows you the number or address first, with a Copy button, instead of dialling the moment you touch it. Location and the map now run across the screen under the pipeline bar</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 793 &#8212; Location and the map go back to their own card under the pipeline bar, the way they looked before</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39531,6 +39531,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:793, d:'2026-08-14', t:'Location and the map go back in their card',
+s:'Location and the map are back in their own card under the pipeline bar, with the heading and its red rule, the way they looked before yesterday\u2019s change. Running them right across the screen looked better described than done. Everything else stays: the client band, the pipeline bar across the screen, and tapping call, text or email to see the number before it dials.' },
 { b:792, d:'2026-08-14', t:'The call and email buttons show you the number first',
 s:'Tapping the phone, text or email button on a client used to fire straight into the dialler or your mail app \u2014 you never got to see the number you were about to ring, and there was no way to read it off the screen or copy it. Each one now opens a small panel showing the number or address in full, with the Call, Text or Email button beside a Copy button. Tapping the same icon again puts it away. It is one more tap to dial, and you can see who you are dialling. Also: Location and its map now run all the way across the screen, directly under the pipeline bar, so the top of a client is three full-width bands and then the map. Phone only \u2014 the desktop is untouched.' },
 { b:791, d:'2026-08-13', t:'The client card is a band, on the phone',
@@ -70946,22 +70948,14 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
 
   /* the pipeline bar, flush under the band and edge to edge */
   body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="stage"]{
-    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 0 !important;
+    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 10px !important;
     border-radius:0 !important; width:auto !important; max-width:none !important;
   }
-  /* 792: Location and its map join them — three full-width bands and then the
-     map, which is the shape of the screenshot Theo sent. */
-  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loch"]{
-    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 0 !important;
-    padding:11px var(--cr-wrap-pad, 18px) 8px !important;
-    background:var(--rbe-panel2,#101015);
-    border-bottom:0 !important;
-  }
-  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"]{
-    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 12px !important;
-    border-radius:0 !important; border-left:0 !important; border-right:0 !important;
-    width:auto !important; max-width:none !important;
-  }
+  /* 793: Location and its map are NOT full-bleed. 792 ran them across the
+     screen as asked; seeing it, Theo preferred the 791 look \u2014 the heading
+     with its red rule and the map in its own inset card. They keep their
+     ORDER (loch 2, loc 3, straight under the pipeline bar); only the bleed is
+     gone. Do not re-add it without asking. */
 
   /* ---- the panel a contact icon opens ---- */
   #cr-namebar{ flex-wrap:wrap; }
