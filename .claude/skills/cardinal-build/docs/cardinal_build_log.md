@@ -15903,3 +15903,67 @@ section called "Paid out"; `PAY_SECTIONS` calls it **"Paid"** — a red that was
 the app's. And a fourth, subtler: the "No payments logged yet." assertion **passed on both builds**,
 because that copy only renders when the log is empty and the seed has two payments. Swapped for the
 pill's heading, which is there either way.
+
+## build 797 — 14 Aug 2026 — the top of a client profile, rebuilt (phone)
+
+Ships what preview_v3/v4 showed and Theo confirmed, plus a same-session follow-up he asked for after
+seeing it live: Job Value/circle/Balance Due merge with Payment Information into one full-bleed card
+with no split, and that card moves **above the client name band**. Job Details moves to directly
+under the map, full-bleed like Location. Money In & Commissions stays its own row (only Payment
+Information was named for the merge) but goes full-bleed to match. The green "payment received — move
+to Invoiced?" nudge (`cr-autotrans`, an existing site-wide feature) is hidden on this screen only.
+Pipeline bar and Location+map are untouched — both were already exactly what was asked for, since
+791/793/794.
+
+**Second round, same build, after Theo reviewed the live result on his phone:** *"make everything
+under Money In and Commissions… go to the edge of the screen… rectangles under job menu"* —
+History, Google Reviews, Assigned To and Convert to Insurance all go full-bleed too, each keeping
+its own semantic accent rather than losing it with the rest of the chrome (History's red top border,
+Convert to Insurance's red left stripe — the same call 794 made keeping Location's red rule).
+**Scope of Loss Reader (`#solCard`) and Delete Client are deliberately NOT in this pass** — both
+render outside `#acxMount`, past `#tab-overview`'s own `display:none` allow-list, the single
+most-repeated trap in this codebase (five cards lost to it already, per CLAUDE.md). Touching that
+container gets its own investigation, not a drive-by extension of this patch.
+
+**Separately flagged in the same message, a real bug, not a layout ask:** *"The google review card is
+black when switching to light mode."* Confirmed by rendering — `.rvcard` has exactly one declaration
+in the whole file, no `[data-theme="rb-light"]` guard anywhere, so `#171717` ships in both themes.
+Given a real light-mode twin (own `<style id="cr-rvcard-light-styles">` block, not folded into the
+phone media query — this is a colour fix, not a phone-layout one, so it applies at every width).
+Computed before a colour was picked, worst case (white card): status ink `--rbe-mute` 5.33:1; the
+green checkmark deepened `#37c26b → #1f8f4f` (6.02:1, same hue, the 557 Activity-Count precedent —
+not a hue swap); the gold "Copy message" ink deepened `#f0c674 → #8a6d1f` (4.90:1, was 1.61:1).
+
+**Why moving the money card needed real JS, not just CSS order — the one genuinely new mechanism in
+this build.** Every other move in this stack (791–794) is a `data-cr-ord` tag plus a flex `order`
+value, because every element being reordered is a direct child of `#acxMount`. `#cr-namebar` is
+**not** a descendant of `#acxMount` — it is inserted as a sibling of `.projhead`, both children of
+`.wrap`. CSS `order` cannot cross that boundary. This needed a real reparent, the same category of
+move `adoptLocation()` (636) already does for the Community Location card.
+
+**And why that reparent needed a resize listener, not just a render-time move.**
+`renderAcxOverview()` rebuilds `#acxMount`'s entire `innerHTML` from a string on every re-render. A
+prior render's physical move of `#dbMoneyCard` out of `#acxMount` survives that rebuild untouched (it
+is no longer a descendant) — so without care, the render after it would insert a **second**,
+brand-new `.dbmoney`/`#dbPayRow` pair while the old wrapper sat stale in `.wrap`. `syncMoneyCard()`
+always checks for a fresh `#acxMount > .dbmoney` first: if one exists, a real render just happened
+and any existing wrapper is discarded before a new one is built from the fresh nodes; if there is no
+fresh `.dbmoney`, this call is a resize, and the existing wrapper is only repositioned. Verified with
+a dedicated probe: exactly one live `.dbmoney`/`#dbPayRow`/`#dbMoneyCard` through phone→desktop→phone
+resizes **and** real re-renders fired at each width, including the trickiest case — a re-render fired
+*while already at desktop width*, which must leave the card inside `#acxMount` rather than wrongly
+yanking it into `.wrap`.
+
+**A real correctness bug caught by the gate before it shipped**: `syncMoneyCard()` had no CRM check.
+`.dbmoney`/`#dbPayRow` render unconditionally for every CRM (unlike the Payments pill removed at 796,
+they were never CRM-gated) — so an insurance profile's money strip would have been wrapped and moved
+above its name band too. `gate_797.mjs`'s insurance test caught `moneyCard:true` on first run. Fixed
+with the same `body:not(.claim-insurance):not(.claim-community)` fence used everywhere else in this
+stack, checked in JS since this decision has to be made before any DOM move, not just in CSS.
+
+**Gate**: `gate_797.mjs` — **34 green**, **23 red on the 796 control with no crash**, desktop
+image-md5 identical to 796. Two of my own gate assertions were wrong before the app was, both
+recorded in the harness: a `.acxjd > div` row-count check also matched the trade-chip panel (5, not
+4 — narrowed to `.acxsl`); and an insurance check asserted the `data-cr-ord="jd"` **tag** was absent,
+when the established Location precedent is to tag unconditionally and gate only the CSS effect —
+rewritten to assert the meaningful invariant (still boxed, not bled) instead.

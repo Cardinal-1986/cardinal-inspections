@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 796 &#8212; The Payments card is gone from a client Overview, and Money In sits next to Payment Information instead of alone at the bottom of the Job Menu</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 797 &#8212; The top of a client profile is rebuilt on the phone: Job Details moves under the map, Job Value and Payment Information become one card, and it moves above the client name</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11327,7 +11327,10 @@ function renderAcxOverview(){
   /* ---- assigned to ---- */
   var rep = assignedRepOf(pr);
   html += '<h3 class="projsec" style="margin:20px 0 10px;">' + ICO('person') + 'Assigned To</h3>' +
-  '<div class="acxsec"><div class="acxbody dbassign">' +
+  /* 797: acxassignsec is a plain styling hook, same idea as .acxjdsec at 795.
+     .dbassign alone selects a DESCENDANT; the target here is the ancestor
+     card, and there is no sibling to key off the way the trade chips could. */
+  '<div class="acxsec acxassignsec"><div class="acxbody dbassign">' +
     '<span class="dbrep">&#128100; <b>' + esc(rptRepName(rep) || rep || 'Unassigned') + '</b></span>' +
     (isAdminUser() ? '<select id="dbAssignSel" class="acxsel" style="margin-left:auto;">' +
       '<option value="">reassign\u2026</option>' +
@@ -39545,6 +39548,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:797, d:'2026-08-14', t:'The top of a client profile, rebuilt on the phone',
+s:'The top of a client profile, on the phone, is rebuilt: Job Details now sits directly under the map, full width like everything above it. Job Value, the paid-percent circle and Balance Due are merged with Payment Information into one card with no line between them, and that card now sits above the client\u2019s name at the very top of the screen. Everything from the Job Menu down \u2014 History, Google Reviews, Assigned To, Convert to Insurance \u2014 goes edge to edge too, the same way. The green \u201Cpayment received \u2014 move to Invoiced?\u201D nudge no longer shows on this screen \u2014 it still fires everywhere else. And the Google Reviews card no longer stays black when you switch to light mode; it now matches the white cards around it. Desktop is untouched.' },
 { b:796, d:'2026-08-14', t:'The Payments card goes; Money In moves up',
 s:'The Payments card has come off a client Overview. It showed a Paid bar and the payments already listed on Payment Information, which shows the same ones split into Received, Paid out and Expenses, plus the contract payments the card could not see, plus a way to add a row. Its own Open payments button had never worked - it pointed at an old screen the app stopped drawing years ago. Money In was NOT redundant and has moved rather than gone: it was the only way into the Money In and Commissions pane anywhere in the app, so deleting it would have stranded that whole screen. It now sits directly under Payment Information as its own row, instead of alone at the bottom of the Job Menu. History is untouched.' },
 { b:795, d:'2026-08-14', t:'Job Details, laid out like AccuLynx',
@@ -70991,6 +70996,94 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
     padding-left:var(--cr-wrap-pad, 18px); padding-right:var(--cr-wrap-pad, 18px);
   }
 
+  /* 797: Job Details, right under the map — the identical full-bleed pattern
+     as Location above it: negative margin, no radius, no border, no shadow,
+     contents padded back onto the page gutter so the heading and the four
+     rows still line up with everything else. */
+  #projectView #acxMount > [data-cr-ord="jdh"]{ order:4; }
+  #projectView #acxMount > [data-cr-ord="jd"]{ order:4; }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="jdh"]{
+    margin:20px calc(-1 * var(--cr-wrap-pad, 18px)) 10px !important;
+    padding-left:var(--cr-wrap-pad, 18px); padding-right:var(--cr-wrap-pad, 18px);
+    width:auto !important; max-width:none !important;
+  }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="jd"]{
+    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 14px !important;
+    border-radius:0 !important; border:0 !important; box-shadow:none !important;
+    width:auto !important; max-width:none !important;
+  }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="jd"] .acxbody{
+    padding-left:var(--cr-wrap-pad, 18px); padding-right:var(--cr-wrap-pad, 18px);
+  }
+
+  /* 797: Job Value/circle + Payment Information — one full-bleed rectangle,
+     no split. .dbmoney and #dbPayRow already share the identical background
+     gradient (themed together at 790), so the ONLY visible seam was the gap
+     and each piece's own rounded corners/shadow; both go here, on the
+     children only — the wrapper alone owns the border and the ridge-cap
+     shadow that both children carried is switched off, not just left uncut,
+     or it reads as a bright hairline exactly where 794 hit the same trap on
+     Location's card. */
+  body:not(.claim-insurance):not(.claim-community) #projectView #dbMoneyCard{
+    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 12px !important;
+    border-radius:0 !important; overflow:hidden;
+    background:linear-gradient(180deg,var(--rbe-bg1,#2e333b),var(--rbe-bg2,#262a31));
+    border:1px solid var(--rbe-line2,#2b2b33);
+  }
+  body:not(.claim-insurance):not(.claim-community) #projectView #dbMoneyCard .dbmoney,
+  body:not(.claim-insurance):not(.claim-community) #projectView #dbMoneyCard #dbPayRow{
+    margin:0 !important; border-radius:0 !important; border:0 !important;
+    background:transparent !important; box-shadow:none !important;
+  }
+  body:not(.claim-insurance):not(.claim-community) #projectView #dbMoneyCard #dbPayRow:active{
+    background:var(--rbe-panel,#16161B) !important;
+  }
+
+  /* Money In stays its own row (only Payment Information was named for the
+     merge) but goes full-bleed too, to match its new neighbour instead of
+     sitting there as a leftover rounded card. */
+  body:not(.claim-insurance):not(.claim-community) #projectView #dbMoneyRow{
+    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 12px !important;
+    border-radius:0 !important;
+  }
+
+  /* the "payment received — move to Invoiced?" nudge (cr-autotrans, an
+     existing site-wide feature, unrelated to this build) was landing between
+     Job Details and the money card in the reordered stack. Hidden here, on
+     the phone view only — it still fires everywhere else. */
+  body:not(.claim-insurance):not(.claim-community) #projectView .cr-autotrans{
+    display:none !important;
+  }
+
+  /* 797, second round: everything from Job Menu down goes full-bleed too -
+     History, Google Reviews, Assigned To, Convert to Insurance. Same recipe
+     each time: negative margin, no radius, no side borders. A semantic accent
+     that already meant something survives the conversion rather than being
+     stripped with the rest of the chrome - History keeps its red TOP border
+     (its own marker, same call 794 made keeping Location's red rule),
+     Convert to Insurance keeps its LEFT accent stripe.
+     Scope of Loss Reader (#solCard) and Delete Client are NOT in this pass -
+     they render outside #acxMount, past #tab-overview's own display:none
+     allow-list (the single most-repeated trap in this codebase - five cards
+     lost to it already). Touching that container needs its own careful look,
+     not a drive-by. */
+  body:not(.claim-insurance):not(.claim-community) #projectView #kpHis{
+    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 12px !important;
+    border-radius:0 !important; border-left:0 !important; border-right:0 !important;
+  }
+  body:not(.claim-insurance):not(.claim-community) #projectView .rvcard{
+    margin:14px calc(-1 * var(--cr-wrap-pad, 18px)) 0 !important;
+    border-radius:0 !important; border-left:0 !important; border-right:0 !important;
+  }
+  body:not(.claim-insurance):not(.claim-community) #projectView .acxassignsec{
+    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 12px !important;
+    border-radius:0 !important; border-left:0 !important; border-right:0 !important;
+  }
+  body:not(.claim-insurance):not(.claim-community) #projectView .convertins{
+    margin:18px calc(-1 * var(--cr-wrap-pad, 18px)) 4px !important;
+    border-radius:0 !important; border-right:0 !important;
+  }
+
   /* ---- the panel a contact icon opens ---- */
   #cr-namebar{ flex-wrap:wrap; }
   #cr-namebar .nb-pop{
@@ -71202,8 +71295,63 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
         break;
       }
     }
+    /* 797: Job Details, found by the .acxjdsec hook 795 already gives it —
+       same by-content pattern as Location, immune to a renamed class. */
+    var jd = mount.querySelector(':scope > .acxjdsec');
+    if(jd){
+      jd.setAttribute('data-cr-ord', 'jd');
+      var jdPrev = jd.previousElementSibling;
+      if(jdPrev && jdPrev.classList.contains('projsec')) jdPrev.setAttribute('data-cr-ord', 'jdh');
+    }
   }
-  function run(){ try{ build(); tagOrder(); }catch(_e){} }
+  /* 797: the Job Value/circle card + Payment Information, merged into one
+     full-bleed card and (phone only) moved above the name band. Not reachable
+     with data-cr-ord/CSS order — #cr-namebar lives outside #acxMount, across
+     a flex boundary order cannot cross. See the build-log comment above this
+     patch for why this needs BOTH a render-time call and a resize listener. */
+  var moneyCardHomeNext = null;
+  function syncMoneyCard(){
+    var mount = document.getElementById('acxMount');
+    if(!mount) return;
+    /* retail only, same fence as everything else in this stack. .dbmoney and
+       #dbPayRow render UNCONDITIONALLY for every CRM (unlike the Payments
+       pill removed at 796, they were never CRM-gated), so without this check
+       an insurance profile's money strip would get wrapped and reparented
+       above its name band too. */
+    var bodyEl = document.body;
+    if(bodyEl.classList.contains('claim-insurance') || bodyEl.classList.contains('claim-community')) return;
+    var freshMoney = mount.querySelector(':scope > .dbmoney');
+    var moneyCard = document.getElementById('dbMoneyCard');
+    if(freshMoney){
+      /* a real render just happened — fresh nodes exist directly under
+         #acxMount. Any existing #dbMoneyCard is a stale wrapper from the
+         PREVIOUS render (rebuilding #acxMount's innerHTML does not touch it,
+         since it now lives outside #acxMount) and must go, or its old
+         content would linger with nothing left to clean it up. */
+      if(moneyCard) moneyCard.remove();
+      var payRow = document.getElementById('dbPayRow');
+      if(!payRow) return;
+      moneyCard = document.createElement('div');
+      moneyCard.id = 'dbMoneyCard';
+      freshMoney.parentNode.insertBefore(moneyCard, freshMoney);
+      moneyCard.appendChild(freshMoney);
+      moneyCard.appendChild(payRow);
+      moneyCardHomeNext = moneyCard.nextSibling;
+    }
+    if(!moneyCard) return;
+    var namebar = document.getElementById('cr-namebar');
+    var wrapEl = document.querySelector('#projectView .wrap');
+    if(!namebar || !wrapEl) return;
+    var phone = window.matchMedia('(max-width:560px)').matches;
+    if(phone){
+      if(moneyCard.parentNode !== wrapEl || moneyCard.nextElementSibling !== namebar){
+        wrapEl.insertBefore(moneyCard, namebar);
+      }
+    }else if(moneyCard.parentNode !== mount){
+      mount.insertBefore(moneyCard, moneyCardHomeNext);
+    }
+  }
+  function run(){ try{ build(); tagOrder(); syncMoneyCard(); }catch(_e){} }
   function hook(){
     if(typeof window.renderOverview !== 'function') return false;
     if(window.renderOverview.__crNameBar) return true;
@@ -71225,6 +71373,17 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
       if(hook() || tries > 40) clearInterval(t);
     }, 250);
   }
+  /* 797: rotation/resize alone does not call renderOverview, so the phone/
+     desktop decision above needs its own listener — the same debounce shape
+     already used for resize elsewhere in this file (clearTimeout + a short
+     setTimeout). syncMoneyCard() is safe to call with no fresh render behind
+     it: with no direct-child .dbmoney left in #acxMount it skips straight to
+     repositioning the existing wrapper. */
+  var moneyRz = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(moneyRz);
+    moneyRz = setTimeout(function(){ try{ syncMoneyCard(); }catch(_e){} }, 150);
+  });
 })();
 </script>
 <style id="cr-jobdetails-styles">
@@ -71339,6 +71498,41 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
 }
 :root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrs input.cbx:focus-visible + span{
   outline:2px solid var(--rbe-acclt,#b9d3ec); outline-offset:2px;
+}
+</style>
+<style id="cr-rvcard-light-styles">
+/* Google Reviews card, light-theme twin - v2026-08-14 build 797
+   .rvcard shipped with exactly one declaration and no [data-theme] guard, so
+   it stayed near-black (#171717) in light mode while every card around it
+   went white. Dark stays byte-identical; this ADDS the light override, same
+   direction every other --rbe-* twin in this file runs. */
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvcard{
+  background:var(--rbe-panel2,#ffffff);
+  border:1px solid var(--rbe-line2,#e2e2e2);
+}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvcard .rvtop{
+  background:var(--rbe-panel,#fafafa);
+  color:var(--rbe-head,#161616);
+}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvstatus,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvstatus.none,
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvhint{
+  color:var(--rbe-mute,#6b6b6b);
+}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvstatus .rvchk{
+  color:#1f8f4f;
+}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvbtn.copy{
+  color:#8a6d1f; border-color:#c9b98a;
+}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvbtn.copy:active{
+  background:var(--rbe-panel,#fafafa);
+}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvflip{
+  border-top-color:var(--rbe-line2,#e2e2e2);
+}
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .rvtog{
+  background:#d5d5da;
 }
 </style>
 </body>
