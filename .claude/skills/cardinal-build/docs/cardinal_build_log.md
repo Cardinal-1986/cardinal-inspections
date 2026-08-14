@@ -15747,3 +15747,30 @@ fixing elsewhere.
 TEST's: the seed set a `claim_type` COLUMN, but `projClaimType()` reads the checklist's `lead.claim_type`,
 so every project came back "unknown" and the insurance case was never exercised; and the pencil test
 dereferenced a band the previous build does not have, so the control **crashed instead of going red**.
+
+## build 792 — 14 Aug 2026 — the contact icons show the value first; Location goes edge to edge
+
+Theo: *"The phone icon should pop up the phone number and so on for email and text"* + *"the location then
+map goes underneath the pipeline across the screen mobile only"*, with an AccuLynx screenshot.
+
+**The icons no longer dial blind.** They were `<a href="tel:">` / `sms:` / `mailto:` and fired the moment
+they were touched — you never saw the number you were about to ring, and there was no way to read it off
+the screen or copy it. They are buttons now; each opens a panel under the band carrying the label, the
+value in full, the action as an explicit button, and Copy. Tapping the same icon again closes it, as does
+a tap anywhere else. **One more tap to dial, and you can see who you are dialling.**
+
+`copyText()` falls back to *selecting* the value when the clipboard API refuses, rather than leaving a
+Copy button that silently does nothing — the dead-control shape this session has now hit twice.
+
+**Location and the map join the full-width stack.** 791 already ordered them under the pipeline bar; 792
+makes the heading and the card span the screen with the radius off, so the top of a client profile reads
+as three full-width bands and then the map. That is the shape of the screenshot.
+
+**Mobile only, by the same construction as 791** — every rule inside the `@media` block, the panel
+`display:none` outside it, asserted (only the two hides sit outside the query), and the gate compares a
+1280px render against 791 by **image md5**. Identical.
+
+**Gate**: `gate_792.mjs` (extends 791's) — 24 green, **8 red on the 791 control**. ⚠️ The control **crashed
+before it went red** for the THIRD time this session: the probe dereferenced a panel the previous build
+does not have. Every probe in this harness now returns a sentinel instead of touching a null. *If a
+negative control can crash, it is not yet a control.*
