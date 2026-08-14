@@ -3504,7 +3504,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 802 &#8212; The Community Partners card is decluttered — no repeated partner name, real status chips, Tools tucked behind More tools</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 803 &#8212; The section banner stops repeating the tabs directly underneath it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39558,6 +39558,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:803, d:'2026-08-14', t:'The banner stops repeating the tabs under it',
+s:'On the Community hub the banner read Partners | Bids and the row directly under it read Clients | Bids | Partners \u2014 the same two buttons, twice, one row apart, going to exactly the same place (checked by clicking, not by reading the code). The banner now drops those two while that row is on screen. Same on the Insurance hub for Clients. Nothing is lost: the buttons come back the moment you are on a screen that does not already have them, because the banner is on every screen and those tab rows are not. The banner\u2019s Claims button stays put \u2014 it goes to the Claims Tracker, which is a different screen that just shares a word. Retail is untouched. This is the first of two \u2014 the taller question, folding the search row into a header icon, is coming as a preview first.' },
 { b:802, d:'2026-08-14', t:'Community Partners: no repeated name, real status chips, Tools tucked away',
 s:'Theo pushed back on my read of the Partners screen with a real teardown, and checking the actual database instead of just the code proved him right on every point. The repeated partner name on each bid row \u2014 confirmed real, but the partner name is literally saved inside the client\u2019s own name field in production, not a rendering bug \u2014 is now stripped for display on this card only. The plain-text status under each name (\u2018due\u2019, \u2018chase\u2019\u2026) is now a real chip: Due today, Overdue, Out for decision, Awarded. And the seven-button Tools list \u2014 rendered on every pane, every time \u2014 is now just New Bid up front, with the other six behind a closed More tools row. The three-navigation-bar question is still open; that\u2019s shared chrome across all three CRMs, not Community\u2019s alone to change.' },
 { b:801, d:'2026-08-14', t:'Cardinal Truth: a tab strip, and icons on the metric tiles',
@@ -56807,6 +56809,26 @@ var PILL_SETS = {
   community: [ { go:'partners',   label:'Partners' }, { go:'bids',   label:'Bids'   } ]
 };
 var PILL_HOME = [ { go:'contacts', label:'Contacts' }, { go:'leads', label:'Leads' } ];
+/* 803: is this pill's destination ALREADY reachable from a tab strip that is
+   on screen right now? Only then is it a duplicate control rather than the
+   one way there. Checked live (getClientRects) rather than by guessing which
+   view is open, because #crBanner outlives every view and the strips do not. */
+function dupedHere(go){
+  if(go === 'partners' || go === 'bids'){
+    var tb = document.querySelector('#cr-ch2 .tabbar');
+    return !!(tb && tb.getClientRects().length &&
+              tb.querySelector('[data-pane="' + go + '"]'));
+  }
+  /* insurance: the Cardinal Truth strip (801) covers the client list four
+     ways over. Its sibling "Claims" pill is NOT listed here on purpose -
+     ROUTES.claims is crOpenClaims, the Claims Tracker, a different screen
+     that shares a word and nothing else. */
+  if(go === 'insclients'){
+    var ct = document.querySelector('#cardinalTruthView .cr-cth-tabs');
+    return !!(ct && ct.getClientRects().length);
+  }
+  return false;
+}
 function paintCrmPills(k){
   var slots = B.querySelectorAll('[data-cr-slot]');
   if(!slots.length){
@@ -56827,7 +56849,11 @@ function paintCrmPills(k){
        destination exists. Function routes carry their own guards. */
     var r = ROUTES[want.go];
     var dead = (typeof r !== 'function') && !fn(r);
-    var wantDisp = dead ? 'none' : '';
+    /* 803: same display lever, one more reason to pull it. The write stays
+       guarded below - this runs from a rAF-scheduled body observer, and an
+       unguarded write here would wake every body observer each frame (the
+       567/569 repaint class the comment above already warns about). */
+    var wantDisp = (dead || dupedHere(want.go)) ? 'none' : '';
     if(el.style.display !== wantDisp) el.style.display = wantDisp;
   });
 }

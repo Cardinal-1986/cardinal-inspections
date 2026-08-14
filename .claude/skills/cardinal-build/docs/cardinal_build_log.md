@@ -16184,3 +16184,69 @@ collapsed sheet while the other six render inside it closed-by-default and open 
 `data-go` wiring intact, and the partner-level Out/Awarded totals are unchanged. **11 red on the 801
 control** (everything suffix/chip/sheet-related doesn't exist there), **the untouched-path checks
 (dollar amount, click-through, partner totals) stayed green on both builds**. No crash.
+
+## build 803 — 14 Aug 2026 — the banner stops repeating the tabs under it
+
+Theo's third teardown point, scoped before it was built. **Measured at 402px, all three CRMs**, rather
+than estimated:
+
+| Row | Height | Element | Scope |
+|---|---|---|---|
+| Header (burger, title, ＋, home) | 65px | `#cr-hd2-bar` | universal |
+| Search input | 37–45px | `#cr-hd2-srch` | universal |
+| Section banner | 40px | `#crBanner` | universal, labels swap per CRM |
+| Tab strip | 29–37px | per-page | Community + Insurance only |
+
+**Total chrome before content: 191px Community, 201px Insurance, 143px Retail** — about a quarter of
+a phone's usable height, not the third Theo estimated, but the same order.
+
+**The duplication is real, and was confirmed by clicking rather than by reading.** `#crBanner`'s
+"Partners" pill routes through `ROUTES.partners` → `CardinalCommunityHub.show()` +
+`CardinalCommunityHome.tab('partners')` — the identical destination the hub's own tab strip reaches.
+Verified in Chromium: start on the clients pane, click the *banner's* Partners, the active pane
+becomes `partners`. Two controls, same word, same destination, one row apart. Same for "Bids".
+
+**Two findings the scope turned up that reading alone would have missed:**
+- **Retail has no fourth bar at all** — it is header + search + banner, full stop, because it has no
+  tab strip to duplicate. The complaint is Community/Insurance-shaped, not app-wide.
+- **Insurance's fourth bar came from build 801, two builds earlier, in this session.** Cardinal Truth
+  had no tab strip until the 801 build added one. So the stacking Theo was complaining about on
+  Community had just been reproduced on Insurance, by me, while telling him the screen was already
+  fine. Recorded rather than quietly fixed.
+
+**The fix, and the constraint that shapes it.** `#crBanner` is UNIVERSAL chrome — it renders on every
+screen in the app; each tab strip exists only on its own hub. So a pill is hidden **only while the
+duplicating strip is actually on screen**, checked live via `getClientRects()` rather than by guessing
+which view is open. Hiding one globally would delete the only one-tap route back to Partners from
+inside a client profile. The rule is "not twice at once", never "gone" — and `gate_803.mjs` case C
+exists specifically to prove the pills come back.
+
+Implemented as one more reason to pull the display lever the function already had: `paintCrmPills()`'s
+existing resolve-or-hide line becomes `(dead || dupedHere(want.go))`. The write stays guarded
+(`if(el.style.display !== wantDisp)`) — this runs from a rAF-scheduled body observer, and an unguarded
+write would wake every body observer each frame (the 567/569 repaint class the surrounding comment
+already warns about). Gate case F measures it: zero style mutations on an idle banner.
+
+**Per-CRM outcome, and the word that does not mean what it looks like:**
+- **Community** — both pills go. The hub's strip (Clients | Bids | Partners) is a *superset* of the
+  banner's (Partners | Bids), so nothing is lost.
+- **Insurance** — only "Clients" goes. The banner's **"Claims" pill stays**: `ROUTES.claims` is
+  `crOpenClaims`, the Claims Tracker — a genuinely different screen that merely shares a word with the
+  801 strip's "Active Claims". Read the route before assuming a shared label meant a shared screen.
+- **Retail** — untouched. Nothing is duplicated there.
+
+Deliberately NOT in this build: the height question (folding the search row into a header icon). It
+wants a preview first, and `#cr-hd2-srch` also carries the light/dark toggle and the insurance theme
+button — confirmed by enumerating the row's children, not assumed — so collapsing it is not the
+one-liner it looks like.
+
+**Gate**: `gate_803.mjs` — **14 green**: both pills hidden on the Community hub while Photos /
+Production / Tools stay, the hub strip still switches panes, **the pills come back once you navigate
+off the hub**, Cardinal Truth hides Clients but keeps Claims, Retail's Contacts/Leads untouched, and
+zero style mutations on an idle banner. **3 red on the 802 control** — exactly the three
+discriminating assertions; the no-route-lost check and the Claims-stays check **stayed green on both
+builds**, proving neither was accidentally changed. No crash.
+
+⚠️ One gate bug, caught and fixed as the test's fault, not the app's: the dropdown pills render their
+caret inside the label, so their `textContent` is `"Production ▼"` — a lookup by the plain word read
+`undefined` and failed a passing build. The gate now strips the caret.
