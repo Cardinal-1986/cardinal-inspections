@@ -11,7 +11,9 @@ node_modules/
 !.env.example
 spark/.env
 
-# Next.js visualizer app
+# The Exterior Visualizer is plain static HTML (807) — no build step, no
+# dependencies. These stay as a guard in case anyone reintroduces tooling
+# there; the Next.js app they were written for was dropped before it shipped.
 visualizer/.next/
 visualizer/out/
 visualizer/node_modules/

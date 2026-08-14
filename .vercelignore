@@ -63,3 +63,15 @@ spark/
 # sign-in + an is_cardinal_admin() check, and api/supplement.js enforces
 # admin server-side. supplement_desk.sql and code_letters.sql (670) are both
 # covered by the *.sql blanket — neither is ever served.
+
+# --- visualizer/ DELIBERATELY SHIPS (build 807). The Exterior Visualizer is a
+#     SEPARATE APPLICATION — its own file, no CRM code in it at all — served
+#     from this project at /visualizer/ so it is reachable today. It is laid
+#     out as a folder precisely so it can become the ROOT of its own Vercel
+#     project later, at which point the CRM is not on that domain at any path.
+#     Gated by its own Supabase sign-in; every table it touches is RLS'd
+#     (is_staff() to read the catalog, created_by = my_email() for jobs and
+#     renders). It carries the publishable anon key, which is designed to be
+#     public, and no other secret — checked, not assumed (gate_807.mjs).
+#     Build 805 is why this is a separate file rather than a screen in
+#     index.html: a hostname check inside one big file separates nothing. ---
