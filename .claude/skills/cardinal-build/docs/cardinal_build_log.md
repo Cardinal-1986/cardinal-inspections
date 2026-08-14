@@ -16065,3 +16065,63 @@ Dark mode is byte-identical — asserted directly against the full original decl
 dark-on-dark), a dark-mode regression check, both CRM-head variants confirmed untouched, and a full
 top-of-page sweep finding no other dark spot. **3 red on the 799 control** (bar background, dropdown
 background, and the sweep — all three the discriminating checks), **no crash**.
+
+## build 801 — 14 Aug 2026 — Cardinal Truth: a tab strip, and icons on the metric tiles
+
+Theo pasted an AI-generated mockup for a new "Insurance Home Screen" and asked whether to use it.
+It wasn't a blank screen to fill: Cardinal Truth (`cr-cth-script`) already renders almost everything
+the mockup showed — real numbers instead of `$0` placeholders, all **nine** pipeline stages instead
+of two (counted directly off the `RAIL` array; this session's own chat commentary said ten at one
+point and was wrong, caught by `gate_801.mjs`'s own assertion coming back red against a hardcoded
+10), plus a chase list, a carrier breakdown, a this-week calendar and eight tool destinations the
+mockup had none of, in a theme system (`--ct-*`, `docket`/`siren`) the mockup didn't attempt either
+half of. Sent Theo four renders proving it — the mockup as pasted (light and dark variants) next to
+the real screen, both themes, phone and desktop. **The mockup's own Tailwind CDN script failed to
+load in the render sandbox** and the page came back as an unstyled wall of giant raw SVG icons —
+screenshotted and sent as-is. Whether or not that reproduces on every real load, it's a dependency
+class this app has zero exposure to anywhere else: no other screen fetches CSS or JS from a third
+party to render at all.
+
+Two things from the mockup were worth taking, and Theo said to build them.
+
+**A tab strip — Overview / Active Claims / Supplements / Closed — real navigation, not decoration.**
+Reuses the filter mechanism that already existed (`window.icStageFilter` + `showInsuranceClients()`,
+the same pair the pipeline rail and the Insurance Clients tool button already call) rather than
+inventing a second one. Two of the four states aren't a single literal stage: Active Claims is every
+stage except Closed and Lost (OnHold stays in — it's a real active state, "the claim keeps its money
+while the job waits," not a terminal one), and Supplements is `claim.supplement_status === 'filed'`,
+a claim attribute with no stage of its own. `icStageFilter` gained two sentinel values,
+`'__active__'` and `'__supplements__'`, read by one more branch in the SAME predicate in
+`cr-ic-script` that already read a literal stage name — one filter pipeline, three kinds of value it
+accepts, not two pipelines. Closed reuses the existing literal-stage path unchanged.
+
+**Icons on the four metric tiles** (Avg Supplement, ACV Released, Deductibles Due, Contract Value),
+matching the mockup's layout. Uses `ICO()` and its existing icon set — this exact module already
+calls `ICO('shield')` etc. in its own Tools grid — rather than new inline SVG, which is what the
+mockup did and is exactly the second-icon-pipeline problem the 686 comment on
+`CardinalIcons.hydrate()` already warns against.
+
+**Verified which of two Insurance-Clients renderers is actually live before touching either.**
+`renderInsuranceClientsList()` (main block, `#insClientsList`) and `cr-ic-script`'s newer
+`#cr-ic-wrap` both still exist and both still run on every `showInsuranceClients()` call. Opened the
+real screen and read computed style and bounding rects rather than trusting the source: the old one
+renders at **0 height**, hidden behind the new one in DOM order. Only `cr-ic-script`'s filter was
+touched; the dead renderer is untouched and not this build's concern.
+
+**A real, separate theme-mechanism bug surfaced and got worked around, not fixed.** Cardinal Truth's
+`--ct-*` palette is not the retail `data-theme="rb-light"` mechanism at all — it's a third one,
+`body[data-rltheme="docket"(light)/"siren"(dark)]`, shared with the Resource Library and read from
+`localStorage['cardinalRLTheme']`. A background sync (`cr-instheme`) re-asserts it from storage
+within about two seconds of any view change, silently reverting a direct DOM toggle — confirmed by
+setting the attribute by hand and watching it flip back. The preview renders for this build seed the
+real storage key before the app boots rather than fighting the sync. Not filed as a bug: it's a
+pre-existing mechanism this build didn't touch and wasn't asked to fix.
+
+**Gate**: `gate_801.mjs` — **13 green**: the tab strip's own counts (Active 9 / Supplements 1 /
+Closed 1 against an 11-project seed), Active Claims excludes Closed and Lost while keeping OnHold,
+Supplements matches only the one claim with an open supplement (not the two Invoiced claims sitting
+on approved-but-unrelated money), Closed reuses the literal-stage path correctly, all 4 tiles carry
+an icon, and the untouched pipeline rail (9 rows) and chase list still render. **11 red on the 800
+control** (everything tab/icon-related — the strip doesn't exist there at all), **the two
+untouched-path checks stayed green on both builds**, proving those weren't accidentally changed
+either way. No crash.
