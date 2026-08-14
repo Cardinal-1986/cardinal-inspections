@@ -16028,3 +16028,40 @@ substring count that legitimately matches twice.
 **Gate**: `gate_799.mjs` — **8 green** (chip hidden at both widths, class-sync intact, the new menu
 entry opens the identical sheet, picking a portal from it actually re-filters, the Insurance mini-chip
 untouched), **7 red on the 798 control, no crash**.
+
+## build 800 — 14 Aug 2026 — the section banner, fixed for light mode
+
+Theo, with a screenshot: *"There's a dark spot there."* A near-black band sitting directly under the
+search bar, between the header and the light page below it — the "UNIVERSAL BANNER NAV" from build
+344 (`#crBanner`: Contacts / Leads / Photos / Production▾ / Tools▾).
+
+Found by rendering, not by guessing which element the screenshot meant: a script scanning every
+element in the top 560px of the light-mode client profile for a background darker than `rgb(60,60,60)`
+turned up exactly one real hit besides the header chrome itself — `#crBanner`, `rgb(21,23,27)`, rect
+top:103/bottom:143. The header chrome (`#cr-hd2-srch`) is a separate, deliberately-always-dark
+component with its own `--hbg`/`--hln` token system; already documented, not this build's concern.
+
+**Third instance of the identical bug class this session** (Google Reviews at 797, Convert to
+Insurance at 798): a component authored dark-only, with no `[data-theme="rb-light"]` guard anywhere,
+so it renders `#15171b` regardless of theme.
+
+**Fix**: `#crBanner` already parameterizes most of itself through four custom properties
+(`--bacc`/`--bacclt`/`--bink`/`--bline`) so its retail/insurance/community CRM-head variants can each
+recolor it in one place. Light mode reuses that same lever for `--bacclt`/`--bink`/`--bline`, plus an
+explicit override for the background, the two genuinely-hardcoded inks (`.cbn`, `.cbi`), and the two
+hover washes tuned for a dark ground (`rgba(255,255,255,.05/.07)`, invisible on white). Computed before
+any colour was picked: `.cbn`/`.cbi` ink `#2c2c2c` → **13.97:1**; `--bacclt` (hover/active) reuses the
+app's own cardinal red `#c8202e` → **5.67:1**. `.car`/`.cbmenu small`'s existing literal `#6d747e`
+(4.72:1) was already theme-independent and already passing — left untouched, not scope creep.
+
+**Retail only, on purpose** — the same discipline as every fix this session. Insurance and community
+CRM-head variants (their own `background`/`--bacc` overrides, declared two lines above the base rule)
+are untouched; whether they have the same bug is a separate, unverified claim.
+
+Dark mode is byte-identical — asserted directly against the full original declaration, not inferred.
+
+**Gate**: `gate_800.mjs` — **8 green**: the bar's own background and contrast, the Production/Tools
+*dropdown* specifically (catches the partial-pass trap where the bar goes light but the popover stays
+dark-on-dark), a dark-mode regression check, both CRM-head variants confirmed untouched, and a full
+top-of-page sweep finding no other dark spot. **3 red on the 799 control** (bar background, dropdown
+background, and the sweep — all three the discriminating checks), **no crash**.

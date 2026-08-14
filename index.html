@@ -3504,7 +3504,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 799 &#8212; The portal switcher (Retail / Insurance / Community / All) moved off its own row and into the menu, under Switch Portal</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 800 &#8212; The Contacts / Leads / Photos / Production / Tools banner no longer stays black in light mode</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39558,6 +39558,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:800, d:'2026-08-14', t:'The section banner, fixed for light mode',
+s:'The Contacts / Leads / Photos / Production / Tools banner just under the search bar stayed a near-black band in light mode, with no way to read what was in the Production or Tools dropdowns either. Same root cause as the Google Reviews card and Convert to Insurance fixed earlier today: no light-theme colours were ever written for it. It is white now, matching the page around it, with the same cardinal red for the active tab and hover state everywhere else in the app already uses. Dark mode is untouched. Retail only for now.' },
 { b:799, d:'2026-08-14', t:'The portal switcher moves into the menu',
 s:'The Retail/Insurance/Community/All badge that sat on its own row under the search bar is gone. It was not just decoration \u2014 it was the only way to switch which CRM\u2019s clients you were looking at, or jump to Cardinal Truth or the Community Hub from the dashboard \u2014 so rather than drop that, it moved into the menu. Tap the menu button, then Switch Portal, for the exact same picker as before.' },
 { b:798, d:'2026-08-14', t:'Convert to Insurance, fixed for light mode',
@@ -71555,6 +71557,36 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
    body.classList's portal-* tag every frame, which other stylesheets key
    off), only its own visible row is removed. */
 #crPortalChip{ display:none !important; }
+</style>
+<style id="cr-banner-light-styles">
+/* the Contacts/Leads/Photos/.../Tools banner, light-theme twin - v2026-08-14
+   build 800. #crBanner has no [data-theme="rb-light"] guard anywhere, so it
+   stays #15171b (near black) regardless of theme. Dark mode is untouched,
+   byte for byte; this ADDS the light override, the same direction every
+   other --rbe-* twin in this file runs.
+   RETAIL ONLY - insurance and community CRM-head variants (background,
+   --bacc, etc., declared two lines above the base rule) are untouched. */
+:root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner{
+  --bacclt:#c8202e; --bink:#ffffff; --bline:#e2e2e2;
+  background:#ffffff; border-bottom-color:#e2e2e2;
+}
+:root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner .cbn{
+  color:#2c2c2c;
+}
+:root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner .cbi{
+  color:#2c2c2c;
+}
+/* tuned for a dark dropdown/panel - invisible on the light one .cbmenu and
+   .cbcrm now paint via --bink above */
+:root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner .cbi:hover{
+  background:rgba(0,0,0,.05);
+}
+:root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner .cbcrm b{
+  color:#5a6470;
+}
+:root[data-theme="rb-light"] body:not([data-crm-head="insurance"]):not([data-crm-head="community"]) #crBanner .cbcrm b.on{
+  background:rgba(0,0,0,.07);
+}
 </style>
 </body>
 </html>
