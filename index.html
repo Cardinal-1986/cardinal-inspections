@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 793 &#8212; Location and the map go back to their own card under the pipeline bar, the way they looked before</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 794 &#8212; Location and the map now run across the screen under the pipeline bar, on the same pattern as the bar itself; the heading keeps its red rule and everything still lines up</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39531,6 +39531,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:794, d:'2026-08-14', t:'Location and the map run across the screen',
+s:'Location and its map now run all the way across the screen, directly under the pipeline bar and on the same pattern as the bar itself. The difference from the version you turned down: the heading keeps its red rule and its plain ground instead of turning into a grey slab, and the map and the address stay lined up with the Location heading above them rather than shifting left. The map is wider for it. Phone only \u2014 the desktop is untouched. The pipeline bar above is unchanged.' },
 { b:793, d:'2026-08-14', t:'Location and the map go back in their card',
 s:'Location and the map are back in their own card under the pipeline bar, with the heading and its red rule, the way they looked before yesterday\u2019s change. Running them right across the screen looked better described than done. Everything else stays: the client band, the pipeline bar across the screen, and tapping call, text or email to see the number before it dials.' },
 { b:792, d:'2026-08-14', t:'The call and email buttons show you the number first',
@@ -70951,11 +70953,35 @@ window.CardinalDesigner = Object.assign(window.CardinalDesigner || {}, {
     margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 10px !important;
     border-radius:0 !important; width:auto !important; max-width:none !important;
   }
-  /* 793: Location and its map are NOT full-bleed. 792 ran them across the
-     screen as asked; seeing it, Theo preferred the 791 look \u2014 the heading
-     with its red rule and the map in its own inset card. They keep their
-     ORDER (loch 2, loc 3, straight under the pipeline bar); only the bleed is
-     gone. Do not re-add it without asking. */
+  /* 794: Location and its map run across the screen on the pipeline bar's
+     pattern — and ONLY that pattern: negative margin, no radius, width auto.
+     What 792 did on top of it is deliberately not here, because that is the
+     version Theo turned down: no grey panel behind the heading, the red rule
+     stays, and the content is padded back onto the page's gutter so the
+     heading, the map and the address still line up at the same x. The
+     heading's margin carries !important because .projsec ships an INLINE
+     style="margin:20px 0 10px;" and inline beats a normal declaration. */
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loch"]{
+    margin:20px calc(-1 * var(--cr-wrap-pad, 18px)) 10px !important;
+    padding-left:var(--cr-wrap-pad, 18px); padding-right:var(--cr-wrap-pad, 18px);
+    width:auto !important; max-width:none !important;
+  }
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"]{
+    margin:0 calc(-1 * var(--cr-wrap-pad, 18px)) 14px !important;
+    border-radius:0 !important; border:0 !important; box-shadow:none !important;
+    width:auto !important; max-width:none !important;
+  }
+  /* The outline and the ridge-cap bevel go with the radius. .acxsec carries
+     `rgba(255,255,255,.9) 0 1px 0 inset` from the 430-436 retail restyle — at
+     330px inside a rounded card that is a bevel; run edge to edge it is a bright
+     white hairline straight under the red rule, and the 1px border was a second
+     one beside it. The gradient ground IS the card now, the way the blue bar's
+     colour is the bar. Both were found in a render; no assertion would have
+     seen either. The card bleeds; its CONTENTS do not — the map gets wider and
+     still starts where "Location" above it starts. */
+  body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > [data-cr-ord="loc"] > .acxbody{
+    padding-left:var(--cr-wrap-pad, 18px); padding-right:var(--cr-wrap-pad, 18px);
+  }
 
   /* ---- the panel a contact icon opens ---- */
   #cr-namebar{ flex-wrap:wrap; }

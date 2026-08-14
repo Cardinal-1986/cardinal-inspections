@@ -15786,3 +15786,34 @@ bar's 10px bottom margin came back with it.
 
 `gate_793.mjs` — the two Location assertions are **inverted on purpose** and say so in the file: inset is
 the shape Theo picked, not a regression. 25 green, desktop image-md5 still identical.
+
+## build 794 — 14 Aug 2026 — Location and the map run across the screen
+
+Third state of this design in three builds, so the history is worth stating once: **791** inset heading
+and inset card · **792** full bleed *plus* a grey panel behind the heading with its red rule killed,
+*plus* contents allowed to jump left to x=15 — turned down · **793** reverted to 791 · **794** full
+bleed on **the pipeline bar's pattern only**.
+
+Theo, third ask: *"make the location and maps go across the screen just like the item above same
+pattern"*, with *"don't change it to the second picture"* and *"leave the bar above alone"*. So this
+copies exactly what the stage bar does — negative margin, no radius, width auto — and nothing else.
+The heading keeps its transparent ground and its red rule; the content is padded back onto the page's
+gutter so **the heading, the map and the address all start at the same x**. The map is 300 → 330px
+wide for it. The stage bar rule is byte-identical, asserted.
+
+**Measured before a rule was written** (402px, shipped build): `--cr-wrap-pad` is really **36px** — the
+`var(--cr-wrap-pad, 18px)` fallback never fires — `#acxMount` runs 36→366, and `h3.projsec` ships an
+**inline `style="margin:20px 0 10px;"`**, so the heading's margin override needs `!important` or it
+loses to the element.
+
+**Two things only a render could see, both under the red rule.** `.acxsec` carries a 1px `#2b2b33`
+border *and* `rgba(255,255,255,.9) 0 1px 0 inset` — the ridge-cap bevel from the 430–436 retail
+restyle. At 330px inside a rounded card those read as an outline and a bevel; run edge to edge they
+read as two bright hairlines welded under the heading's rule. Both dropped on the bled card only; the
+gradient ground is the card now, the way the blue bar's colour is the bar. No assertion would have
+caught either — the first two renders of this build were wrong and looked plausible.
+
+**Gate**: `gate_794.mjs` — **30 green** (incl. desktop image-md5 identical to 793), **5 red on the 793
+control, no crash**. The control also independently reproduces the misalignment 794 fixes: map at
+x=51, heading text at x=36. Checked at 360 / 402 / 430 / 560px; `documentElement.scrollWidth` equals
+`innerWidth` at every one, so the negative margins introduce no horizontal overflow.
