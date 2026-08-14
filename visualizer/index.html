@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-14 build 809
+  v2026-08-14 build 810
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -230,6 +230,157 @@ h2.sec:first-child{margin-top:6px}
   main{padding:12px 10px 92px}
   .opts{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
 }
+
+/* ══ 809: the spec-book shell ══════════════════════════════════════════════
+   Four columns — surface rail, catalog, photograph, renders. Every colour
+   carries a literal fallback (the 448-449 rule: another module can strip a
+   token within a second of load and the surface goes transparent). Blackout
+   by design, same call as the Showcase and OC Colors — no rb-light twin. */
+/* Height is set at runtime by fitShell() from the shell's own measured top —
+   the header is 68px today and a hardcoded offset was already wrong once (58,
+   which overflowed the viewport by 26px and pushed the disclaimer off-screen).
+   dvh here is the fallback before that first measurement and the right unit on
+   iOS, where 100vh is the height WITHOUT browser chrome. */
+.shell{display:grid;grid-template-columns:64px 340px minmax(0,1fr) 184px;
+  height:calc(100dvh - 84px);min-height:520px;background:var(--vz-bg,#0B0D10)}
+
+.rail{background:#0E1114;border-right:1px solid var(--vz-line,#252932);
+  display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:6px;overflow-y:auto}
+.rail button{width:48px;min-height:48px;border-radius:11px;border:0;background:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--vz-mute,#767E8D);cursor:pointer;font:inherit;font-size:9px;letter-spacing:.03em}
+.rail button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7;
+  stroke-linecap:round;stroke-linejoin:round}
+.rail button[aria-pressed="true"]{background:rgba(200,32,46,.16);color:var(--vz-ink,#E9ECF2);
+  box-shadow:inset 0 0 0 1px rgba(200,32,46,.5)}
+.rail button .rdot{width:6px;height:6px;border-radius:99px;background:var(--vz-red,#C8202E)}
+
+.spec{background:var(--vz-panel,#14171B);border-right:1px solid var(--vz-line,#252932);
+  display:flex;flex-direction:column;min-height:0}
+.spec-top{padding:12px 12px 8px;border-bottom:1px solid var(--vz-line,#252932)}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--vz-line,#252932);
+  border-radius:10px;padding:0 11px;background:rgba(0,0,0,.25);color:var(--vz-mute,#767E8D);
+  min-height:44px}
+.search input{flex:1;min-width:0;background:none;border:0;outline:none;font:inherit;
+  font-size:14px;color:var(--vz-ink,#E9ECF2);padding:11px 0}
+.search input::placeholder{color:var(--vz-mute,#767E8D)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips button{font:inherit;font-size:12px;padding:7px 12px;min-height:34px;cursor:pointer;
+  border:1px solid var(--vz-line,#252932);border-radius:999px;background:none;
+  color:var(--vz-dim,#A8B0BF)}
+.chips button[aria-pressed="true"]{border-color:var(--vz-ink,#E9ECF2);color:var(--vz-ink,#E9ECF2)}
+
+.list{flex:1;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch}
+.lhead{position:sticky;top:0;z-index:2;background:var(--vz-panel,#14171B);
+  border-bottom:1px solid var(--vz-line,#252932);padding:9px 13px 7px;
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;
+  color:var(--vz-mute,#767E8D);display:flex;gap:8px;align-items:baseline}
+.lhead i{font-style:normal;font-weight:600;letter-spacing:0;text-transform:none;font-size:11px}
+.crow{width:100%;display:flex;align-items:center;gap:11px;padding:8px 13px;min-height:56px;
+  text-align:left;background:none;border:0;border-bottom:1px solid rgba(255,255,255,.045);
+  cursor:pointer;font:inherit;color:var(--vz-ink,#E9ECF2)}
+.crow:hover{background:rgba(255,255,255,.035)}
+.crow .tx{min-width:0;flex:1}
+.crow .tx b{display:block;font-size:13.5px;font-weight:600;line-height:1.25}
+.crow .tx i{font-style:normal;display:block;font-size:11px;color:var(--vz-mute,#767E8D);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crow .pick{width:18px;height:18px;border-radius:99px;flex:none;
+  border:1.7px solid var(--vz-mute,#767E8D)}
+.crow[aria-pressed="true"]{background:rgba(200,32,46,.09)}
+.crow[aria-pressed="true"] .pick{border-color:var(--vz-red,#C8202E);
+  background:var(--vz-red,#C8202E);box-shadow:inset 0 0 0 3px var(--vz-panel,#14171B)}
+.crow .est{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;
+  color:#D9A43C;border:1px solid rgba(217,164,60,.45);border-radius:4px;padding:1px 4px;
+  margin-left:6px;vertical-align:1px}
+
+/* swatches — a real photograph when one exists, else texture over the hex */
+.sw.shingle,.sw.lap,.sw.bnb,.sw.shake,.sw.glass{position:relative;overflow:hidden}
+.sw.photo{background-size:cover;background-position:center}
+.sw.shingle{background-image:
+  repeating-linear-gradient(180deg,rgba(0,0,0,.30) 0 1px,rgba(255,255,255,.05) 1px 2px,transparent 2px 9px),
+  repeating-linear-gradient(90deg,rgba(0,0,0,.14) 0 1px,transparent 1px 14px)}
+.sw.lap{background-image:
+  repeating-linear-gradient(180deg,rgba(0,0,0,.28) 0 1px,rgba(255,255,255,.07) 1px 2px,transparent 2px 8px)}
+.sw.bnb{background-image:
+  repeating-linear-gradient(90deg,rgba(0,0,0,.26) 0 2px,rgba(255,255,255,.06) 2px 3px,transparent 3px 13px)}
+.sw.shake{background-image:
+  repeating-linear-gradient(90deg,rgba(0,0,0,.20) 0 1px,transparent 1px 8px),
+  repeating-linear-gradient(180deg,rgba(0,0,0,.16) 0 1px,transparent 1px 18px)}
+.sw.glass{background-image:
+  linear-gradient(135deg,transparent 42%,rgba(255,255,255,.26) 47%,transparent 53%)}
+.crow .sw{width:54px;height:40px;border-radius:7px;flex:none;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 -6px 12px rgba(0,0,0,.22)}
+
+.tray{border-top:1px solid var(--vz-line,#252932);background:rgba(0,0,0,.25);
+  padding:10px 12px;display:flex;gap:10px;align-items:center}
+.tchips{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:5px}
+.tchip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:4px 9px 4px 4px;
+  border:1px solid var(--vz-line2,#333A46);border-radius:999px;color:var(--vz-dim,#A8B0BF)}
+.tchip .sw{width:16px;height:16px;border-radius:99px;flex:none}
+.tchip button{border:0;background:none;color:var(--vz-mute,#767E8D);cursor:pointer;
+  font:inherit;font-size:13px;line-height:1;padding:0 0 0 2px}
+.tray .go{min-height:44px;padding:0 20px;flex:none}
+.tray-sum{padding:0 12px 10px;font-size:11.5px;color:var(--vz-mute,#767E8D);
+  background:rgba(0,0,0,.25);margin:0}
+
+.canvas{display:flex;flex-direction:column;min-width:0;min-height:0;
+  background:radial-gradient(900px 420px at 55% -10%,#12161B,var(--vz-bg,#0B0D10) 70%)}
+.canvas .shots{display:flex;gap:8px;padding:10px 12px;overflow-x:auto;flex:none;
+  border-bottom:1px solid var(--vz-line,#252932)}
+.canvas .shots .shot{flex:none;width:104px}
+.canvas .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:14px}
+.canvas .stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;
+  box-shadow:0 20px 44px rgba(0,0,0,.5)}
+.canvas .disclaim{margin:0;border-top:1px solid var(--vz-line,#252932);flex:none}
+
+.renders{background:rgba(0,0,0,.22);border-left:1px solid var(--vz-line,#252932);
+  display:flex;flex-direction:column;min-height:0}
+.r-head{padding:11px 12px 8px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:800;color:var(--vz-mute,#767E8D)}
+/* The waiting banner was written for a full-width row and lands here in a
+   184px column, where it wrapped to ten lines and swamped the renders it sits
+   above. Same words, sized for the space it actually occupies. */
+.renders .wait{margin:0 10px 10px;padding:9px 10px;font-size:11.5px;line-height:1.45;
+  border-radius:9px}
+.renders .wait b{display:block;margin-bottom:2px}
+.r-list{flex:1;overflow-y:auto;min-height:0;padding:0 10px 10px;display:flex;
+  flex-direction:column;gap:8px}
+.rcard{position:relative;border:1px solid var(--vz-line,#252932);border-radius:10px;
+  background:var(--vz-card,#1B1F26);overflow:visible}
+.rcard > .open{display:block;width:100%;border:0;background:none;padding:0;cursor:pointer;
+  font:inherit;color:inherit;text-align:left}
+.rcard img{width:100%;height:74px;object-fit:cover;display:block;
+  border-radius:9px 9px 0 0;background:#12161B}
+.rcard .cap{padding:6px 8px 8px}
+.rcard .cap b{display:block;font-size:11px;font-weight:600;line-height:1.3}
+.rcard .cap i{font-style:normal;font-size:10px;color:var(--vz-mute,#767E8D)}
+.rcard .st{position:absolute;left:6px;top:6px;font-size:9px;letter-spacing:.07em;
+  text-transform:uppercase;font-weight:800;padding:2px 6px;border-radius:5px;
+  background:rgba(0,0,0,.62);color:#7FD39B}
+.rcard .st.queued,.rcard .st.running{color:#D9A43C}
+.rcard .st.failed{color:#F0808C}
+.rcard .more{position:absolute;right:4px;top:4px;width:28px;height:28px;border-radius:7px;
+  border:0;background:rgba(0,0,0,.62);color:var(--vz-ink,#E9ECF2);cursor:pointer;
+  font:inherit;font-weight:800;line-height:1}
+.rmenu{position:absolute;right:6px;top:34px;z-index:30;min-width:132px;padding:5px;
+  background:#22272E;border:1px solid var(--vz-line2,#333A46);border-radius:9px;
+  box-shadow:0 14px 30px rgba(0,0,0,.55)}
+.rmenu.up{top:auto;bottom:34px}
+.rmenu button{display:block;width:100%;text-align:left;padding:9px;border:0;background:none;
+  border-radius:6px;color:var(--vz-ink,#E9ECF2);cursor:pointer;font:inherit;font-size:12.5px}
+.rmenu button:hover{background:rgba(255,255,255,.07)}
+.rmenu .del{color:#F0808C}
+
+/* Tablet and phone: the four columns cannot survive, so the shell stacks and
+   the two side panels become full-width sections in reading order. */
+@media (max-width:1080px){
+  .shell{grid-template-columns:56px minmax(0,1fr);grid-template-rows:auto auto;height:auto}
+  .spec{max-height:52vh}
+  .canvas{grid-column:1 / -1;min-height:46vh}
+  .renders{grid-column:1 / -1;border-left:0;border-top:1px solid var(--vz-line,#252932)}
+  .r-list{flex-direction:row;overflow-x:auto;padding:0 10px 10px}
+  .rcard{flex:none;width:158px}
+}
 </style>
 </head>
 <body>
@@ -269,25 +420,46 @@ h2.sec:first-child{margin-top:6px}
   <main>
     <!-- ============ PREP ============ -->
     <section id="vzPrep" role="tabpanel" aria-labelledby="tabPrep">
-      <h2 class="sec">1 · The photograph</h2>
-      <p class="note">A straight, unobstructed shot of the elevation works best. The
-        original is never altered — the render is a separate image.</p>
-      <div class="strip" id="vzShots"><div class="empty">Pick a job above.</div></div>
+      <div class="shell">
 
-      <h2 class="sec">2 · The materials</h2>
-      <p class="note">Leave a surface on <b>No change</b> and it stays exactly as
-        photographed. Roofing is Owens Corning; the rest are the brands we actually hang.</p>
-      <div id="vzSurfaces"></div>
+        <!-- surface rail — which part of the house you are changing -->
+        <nav class="rail" id="vzRail" aria-label="Surface"></nav>
 
-      <h2 class="sec">3 · Review — a person looks before a customer does</h2>
-      <p class="note">Renders start unapproved and stay out of Present until you approve them.</p>
-      <div id="vzWait" class="wait hide"></div>
-      <div class="rows" id="vzJobs"><div class="empty">Nothing queued yet.</div></div>
+        <!-- the spec book: search, profile chips, one list with sticky brands -->
+        <aside class="spec">
+          <div class="spec-top">
+            <label class="search">
+              <span aria-hidden="true">⌕</span>
+              <input id="vzSearch" type="search" placeholder="Search colours, brands or lines…"
+                     autocomplete="off" aria-label="Search the catalog">
+            </label>
+            <div class="chips" id="vzProfiles" role="group" aria-label="Profile"></div>
+          </div>
+          <div class="list" id="vzList"><div class="empty">Pick a job above.</div></div>
+          <div class="tray">
+            <div class="tchips" id="vzTray"></div>
+            <button class="btn go" id="vzQueue" disabled>Render</button>
+          </div>
+          <p class="tray-sum" id="vzSum">Pick a photograph to begin.</p>
+        </aside>
 
-      <div class="disclaim">Renders are a <b>proposal</b>, not a photograph of finished work.
-        Colour on a screen is not a colour sample — always confirm against a real board or
-        shingle in daylight. These images never go into the job file, an inspection report
-        or a claim.</div>
+        <!-- the photograph -->
+        <div class="canvas">
+          <div class="shots" id="vzShots"><div class="empty">Pick a job above.</div></div>
+          <div class="stage" id="vzStage"><div class="empty">Pick a photograph.</div></div>
+          <div class="disclaim">A <b>proposal</b>, not a photograph of finished work. Screen
+            colour is not a colour sample — confirm against a real board or shingle in
+            daylight. These never go into the job file, an inspection report or a claim.</div>
+        </div>
+
+        <!-- renders, newest first, each with its own menu -->
+        <aside class="renders">
+          <div class="r-head">Renders</div>
+          <div id="vzWait" class="wait hide"></div>
+          <div class="r-list" id="vzJobs"><div class="empty">Nothing yet.</div></div>
+        </aside>
+
+      </div>
     </section>
 
     <!-- ============ PRESENT ============ -->
@@ -299,10 +471,6 @@ h2.sec:first-child{margin-top:6px}
     </section>
   </main>
 
-  <div class="qbar" id="vzBar">
-    <div class="sum" id="vzSum">Pick a photograph to begin.</div>
-    <button class="btn go" id="vzQueue" disabled>Queue this combination</button>
-  </div>
 </div>
 
 <!-- ───────────────────────── compare ───────────────────────── -->
@@ -405,6 +573,7 @@ function showApp(email){
   me = email;
   $('vzSignin').classList.add('hide');
   $('vzApp').classList.remove('hide');
+  fitShell();
   loadCatalog().then(loadProjects);
 }
 $('vzForm').addEventListener('submit', function(e){
@@ -425,6 +594,27 @@ $('vzForm').addEventListener('submit', function(e){
     $('vzErr').textContent = String(e2 && e2.message || e2);
   });
 });
+/* Size the shell from where it actually sits, not from an assumed header
+   height. The first version subtracted 58px, the header measured 68, and the
+   disclaimer fell 26px off the bottom of the iPad — a hardcoded offset is a
+   guess that only looks right on the machine it was written on. */
+function fitShell(){
+  var sh = document.querySelector('.shell');
+  if(!sh || sh.offsetParent === null) return;
+  var top = sh.getBoundingClientRect().top + window.scrollY;
+  sh.style.height = Math.max(520, window.innerHeight - top) + 'px';
+}
+window.addEventListener('resize', fitShell);
+window.addEventListener('orientationchange', fitShell);
+
+/* Search filters as you type. No debounce: the whole catalog is already in
+   memory (59 rows today, and a few hundred would still be nothing), so a
+   round trip is not involved and a delay would only feel laggy. */
+$('vzSearch').addEventListener('input', function(){
+  query = this.value.trim();
+  drawList();
+});
+
 $('vzOut').addEventListener('click', function(){
   sb.auth.signOut().then(function(){ location.reload(); });
 });
@@ -464,13 +654,75 @@ function roofPrompt(c){
 var ROOF_NEG = 'metal roof, tile roof, flat roof, wavy or warped courses, ' +
   'changed roof geometry, added dormers, text, watermark, cartoon';
 
+/* ── profiles and textures ─────────────────────────────────────────────────
+   A profile is HOW the material sits on the wall — lap, dutch lap, board and
+   batten, shake. It is a facet, not a brand: Theo lists "Board and batten"
+   alongside Mastic and CertainTeed because that is how it is sold, but every
+   one of those makers offers it. So it is read off the product line and shown
+   as a filter chip that cuts ACROSS brands, rather than as a brand of its own.
+
+   Read from the line name because that is where the fact already lives —
+   adding a `profile` column would mean two places to keep in step, and the
+   line name is what the catalog is keyed on anyway. */
+var PROFILES = ['Lap','Dutch Lap','Board & Batten','Shake','Panel'];
+function profileOf(cat, line){
+  var L = String(line || '').toLowerCase();
+  if(cat === 'roof') return 'Shingle';
+  if(/batten|vertical/.test(L))            return 'Board & Batten';
+  if(/shake|shingle|cedar impressions/.test(L)) return 'Shake';
+  if(/dutch/.test(L))                      return 'Dutch Lap';
+  if(/lap|plank|clapboard/.test(L))        return 'Lap';
+  if(cat === 'siding')                     return 'Lap';
+  return 'Panel';
+}
+function texOf(cat, line){
+  if(cat === 'roof')    return 'shingle';
+  if(cat === 'windows') return 'glass';
+  var p = profileOf(cat, line);
+  return p === 'Board & Batten' ? 'bnb' : p === 'Shake' ? 'shake' : 'lap';
+}
+
+/* The swatch. A real photograph wins whenever there is one; otherwise a
+   procedural texture is drawn over the hex — shingle courses, lap shadows,
+   battens. The point of the fallback is honesty: a chip that reads as a chip
+   is better than a photograph that is wrong, and swapping in real swatch
+   photography later changes NOTHING about this layout, only what fills it.
+
+   `verified` rides along because an unverified hex is an estimate, and the
+   list marks it rather than presenting a guess as a product colour. */
+function swatchHTML(o, cls){
+  var c = 'sw ' + (cls || '') + ' ' + (o && o.tex ? o.tex : '');
+  if(!o) return '<span class="sw none ' + (cls || '') + '"></span>';
+  if(o.swatch && signedSwatch[o.swatch])
+    return '<span class="' + c + ' photo" style="background-image:url(' +
+           esc(signedSwatch[o.swatch]) + ')"></span>';
+  return '<span class="' + c + (o.verified ? '' : ' est') + '" style="background-color:' +
+         esc(o.hex || '#555') + '"></span>';
+}
+var signedSwatch = {};   /* storage path -> signed url, filled by signSwatches() */
+
+/* One round trip for every swatch photograph in the catalog. Keyed by the path
+   the API answered for, never by array position — build 633 paid for that
+   lesson when a missing path silently shifted every later URL by one. */
+function signSwatches(list){
+  var paths = list.map(function(o){ return o.swatch; })
+                  .filter(function(p){ return p && !signedSwatch[p]; });
+  if(!paths.length) return Promise.resolve();
+  return sb.storage.from('photos').createSignedUrls(paths, 3600)
+    .then(function(r){
+      (r.data || []).forEach(function(row){
+        if(row && row.path && row.signedUrl) signedSwatch[row.path] = row.signedUrl;
+      });
+    }).catch(function(){ /* no photograph is not an error — the texture stands in */ });
+}
+
 function loadCatalog(){
   return Promise.all([
     sb.from('oc_colors')
-      .select('id,name,hex,family,product_line,status,description,sort_order,hidden')
+      .select('id,name,hex,hex_verified,swatch_path,family,product_line,status,description,sort_order,hidden')
       .order('sort_order', { ascending:true }).order('name', { ascending:true }),
     sb.from('materials')
-      .select('id,category,manufacturer,product_line,color_name,hex,finish,prompt,negative,status,sort_order')
+      .select('id,category,manufacturer,product_line,color_name,hex,hex_verified,swatch_path,finish,prompt,negative,status,sort_order')
       .order('sort_order', { ascending:true }).order('color_name', { ascending:true })
   ]).then(function(res){
     var oc = (res[0] && res[0].data) || [];
@@ -478,6 +730,9 @@ function loadCatalog(){
     catalog.roof = oc.filter(function(c){ return !c.hidden; }).map(function(c){
       return { id:c.id, surface:'roof', name:c.name,
                sub:'Owens Corning ' + (c.product_line || ''), hex:c.hex,
+               brand:'Owens Corning', line:c.product_line || '',
+               profile:'Shingle', tex:'shingle',
+               swatch:c.swatch_path || null, verified:!!c.hex_verified,
                status:c.status, prompt:roofPrompt(c), negative:ROOF_NEG };
     });
     ['siding','trim','windows','gutters'].forEach(function(k){ catalog[k] = []; });
@@ -486,10 +741,14 @@ function loadCatalog(){
       catalog[m.category].push({
         id:m.id, surface:m.category, name:m.color_name,
         sub:m.manufacturer + ' ' + m.product_line + (m.finish ? ' · ' + m.finish : ''),
-        hex:m.hex, status:m.status, prompt:m.prompt, negative:m.negative || ''
+        hex:m.hex, status:m.status, prompt:m.prompt, negative:m.negative || '',
+        brand:m.manufacturer, line:m.product_line,
+        profile:profileOf(m.category, m.product_line),
+        tex:texOf(m.category, m.product_line),
+        swatch:m.swatch_path || null, verified:!!m.hex_verified
       });
     });
-    drawSurfaces();
+    drawRail(); drawProfiles(); drawList(); drawTray();
   }).catch(function(e){
     $('vzSurfaces').innerHTML = '<div class="empty">Could not load the catalog — ' +
       esc(e && e.message || e) + '</div>';
@@ -559,6 +818,14 @@ function chooseShot(s, btn){
   Array.prototype.forEach.call($('vzShots').querySelectorAll('.shot'), function(el){
     el.setAttribute('aria-pressed', el === btn ? 'true' : 'false');
   });
+  /* Paint the big preview. The stage is the working surface — the strip above
+     it is only for choosing, and at 104px a rep cannot judge a photograph. */
+  var stage = $('vzStage');
+  stage.innerHTML = '';
+  var im = document.createElement('img');
+  im.alt = s.caption || 'Selected photograph';
+  paint(im, s.storage_path);
+  stage.appendChild(im);
   sum();
 }
 
@@ -569,69 +836,184 @@ function badge(status){
   if(status === 'coty') return ' <span class="badge coty">COLOR OF THE YEAR</span>';
   return '';
 }
-function drawSurfaces(){
-  var host = $('vzSurfaces');
+/* ── the spec book ─────────────────────────────────────────────────────────
+   One scrolling list, brand headers stuck to the top while you scroll, search
+   and profile chips narrowing it. Chosen over a brand-card accordion because
+   the catalog only grows: cards stop working somewhere around fifty colours,
+   a searchable list does not. */
+var surfNow = 'roof';        /* which surface the rail has selected */
+var query   = '';            /* the search box */
+var profNow = 'All';         /* the profile chip */
+
+var RAIL_ICON = {
+  roof:   '<svg viewBox="0 0 24 24"><path d="M3 12 12 4l9 8"/><path d="M6 10v9h12v-9"/></svg>',
+  siding: '<svg viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>',
+  trim:   '<svg viewBox="0 0 24 24"><path d="M5 4v16M19 4v16M5 4h14M5 20h14"/></svg>',
+  windows:'<svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="1"/><path d="M12 4v16M5 12h14"/></svg>',
+  gutters:'<svg viewBox="0 0 24 24"><path d="M3 8h18v4a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3z"/><path d="M8 15v5"/></svg>'
+};
+
+function drawRail(){
+  var host = $('vzRail');
   host.innerHTML = '';
   SURFACES.forEach(function(s){
-    var d = document.createElement('details');
-    d.className = 'surf';
-    d.innerHTML =
-      '<summary><span class="sw none" id="sw-' + s.key + '"></span>' +
-      '<span>' + esc(s.label) + '</span>' +
-      '<span class="pick" id="pk-' + s.key + '">No change</span>' +
-      '<span class="chev">▾</span></summary>' +
-      '<div class="opts" id="op-' + s.key + '"></div>';
-    host.appendChild(d);
-
-    var box = d.querySelector('#op-' + s.key);
-    var list = catalog[s.key] || [];
-    if(!list.length){
-      box.innerHTML = '<div class="empty">Nothing in the catalog for ' + esc(s.label) + ' yet.</div>';
-      return;
-    }
-    box.appendChild(optBtn(s.key, null));
-    list.forEach(function(o){ box.appendChild(optBtn(s.key, o)); });
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(s.key === surfNow));
+    b.title = s.label;
+    b.innerHTML = (RAIL_ICON[s.key] || '') + '<span>' + esc(s.label) + '</span>' +
+                  (picked[s.key] ? '<span class="rdot"></span>' : '');
+    b.addEventListener('click', function(){
+      surfNow = s.key; profNow = 'All';
+      drawRail(); drawProfiles(); drawList();
+    });
+    host.appendChild(b);
   });
 }
-function optBtn(surface, o){
+
+/* Profiles are shown only when the surface actually has more than one, so a
+   single-profile surface does not get a row of chips that do nothing. */
+function profilesFor(surf){
+  var seen = {};
+  (catalog[surf] || []).forEach(function(o){ if(o.profile) seen[o.profile] = 1; });
+  return PROFILES.filter(function(p){ return seen[p]; });
+}
+function drawProfiles(){
+  var host = $('vzProfiles'), list = profilesFor(surfNow);
+  if(list.length < 2){ host.innerHTML = ''; return; }
+  host.innerHTML = '';
+  ['All'].concat(list).forEach(function(p){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-pressed', String(p === profNow));
+    b.textContent = p;
+    b.addEventListener('click', function(){ profNow = p; drawProfiles(); drawList(); });
+    host.appendChild(b);
+  });
+}
+
+function matches(o){
+  if(profNow !== 'All' && o.profile !== profNow) return false;
+  if(!query) return true;
+  var q = query.toLowerCase();
+  return (o.name + ' ' + o.brand + ' ' + o.line).toLowerCase().indexOf(q) !== -1;
+}
+
+function drawList(){
+  var host = $('vzList'), all = catalog[surfNow] || [];
+  var list = all.filter(matches);
+  host.innerHTML = '';
+
+  /* "No change" always sits at the top, above the brands, and is never
+     filtered away — leaving a surface alone must stay reachable no matter
+     what has been typed into the search box. */
+  host.appendChild(crow(null));
+
+  if(!list.length){
+    var e = document.createElement('div');
+    e.className = 'empty';
+    e.textContent = all.length
+      ? 'Nothing matches. Clear the search or the profile chip.'
+      : 'Nothing in the catalog for this surface yet.';
+    host.appendChild(e);
+    return;
+  }
+  var brand = null;
+  list.forEach(function(o){
+    if(o.brand !== brand){
+      brand = o.brand;
+      var n = list.filter(function(x){ return x.brand === brand; }).length;
+      var h = document.createElement('div');
+      h.className = 'lhead';
+      h.innerHTML = esc(brand) + '<i>' + n + '</i>';
+      host.appendChild(h);
+    }
+    host.appendChild(crow(o));
+  });
+  signSwatches(list).then(function(){ if(surfNow) repaintSwatches(); });
+}
+
+/* Re-fill the swatch backgrounds once signed URLs land, without rebuilding the
+   list — a rebuild would lose the scroll position mid-scroll. */
+function repaintSwatches(){
+  Array.prototype.forEach.call($('vzList').querySelectorAll('.crow[data-sw]'), function(el){
+    var url = signedSwatch[el.dataset.sw];
+    if(!url) return;
+    var sw = el.querySelector('.sw');
+    if(sw && !sw.classList.contains('photo')){
+      sw.classList.add('photo');
+      sw.style.backgroundImage = 'url(' + url + ')';
+    }
+  });
+}
+
+function crow(o){
   var b = document.createElement('button');
-  b.className = 'opt'; b.type = 'button';
-  b.setAttribute('aria-pressed', o ? 'false' : 'true');
-  b.dataset.surface = surface;
-  b.dataset.id = o ? o.id : '';
-  var swatch = o && o.hex
-    ? '<span class="sw" style="background:' + esc(o.hex) + '"></span>'
-    : '<span class="sw none"></span>';
-  b.innerHTML = swatch + '<span class="nm"><b>' +
-    (o ? esc(o.name) + badge(o.status) : 'No change') + '</b><i>' +
-    (o ? esc(o.sub) : 'Leave this surface as photographed') + '</i></span>';
-  b.addEventListener('click', function(){ choose(surface, o); });
+  b.className = 'crow'; b.type = 'button';
+  b.setAttribute('aria-pressed', String(o ? !!(picked[surfNow] && picked[surfNow].id === o.id) : !picked[surfNow]));
+  b.dataset.id = o ? String(o.id) : '';
+  if(o && o.swatch) b.dataset.sw = o.swatch;
+  b.innerHTML = swatchHTML(o) +
+    '<span class="tx"><b>' +
+      (o ? esc(o.name) + badge(o.status) + (o.verified ? '' : '<span class="est" title="Estimated colour — confirm against a real sample">est</span>') : 'No change') +
+    '</b><i>' + (o ? esc(o.line || o.sub) : 'Leave this surface as photographed') + '</i></span>' +
+    '<span class="pick"></span>';
+  b.addEventListener('click', function(){ choose(surfNow, o); });
   return b;
+}
+
+/* The tray: what Render will actually make, always visible, each removable. */
+function drawTray(){
+  var host = $('vzTray');
+  host.innerHTML = '';
+  SURFACES.forEach(function(s){
+    var o = picked[s.key];
+    if(!o) return;
+    var c = document.createElement('span');
+    c.className = 'tchip';
+    c.innerHTML = swatchHTML(o) + esc(s.label) + ': ' + esc(o.name) +
+                  '<button type="button" aria-label="Remove ' + esc(s.label) + '">✕</button>';
+    c.querySelector('button').addEventListener('click', function(){ choose(s.key, null); });
+    host.appendChild(c);
+  });
 }
 function choose(surface, o){
   if(o) picked[surface] = o; else delete picked[surface];
-  Array.prototype.forEach.call(
-    document.querySelectorAll('.opt[data-surface="' + surface + '"]'), function(el){
-      el.setAttribute('aria-pressed', el.dataset.id === (o ? String(o.id) : '') ? 'true' : 'false');
+  /* Only the rows for the surface on screen need their state redrawn — but
+     the rail dot and the tray are cross-surface, so both always refresh. */
+  /* Match on the id carried by each row. Not on position — the list is
+     filtered and re-sorted, so an index means nothing between draws — and not
+     on the rendered name, which has badges appended to it. */
+  if(surface === surfNow){
+    var want = o ? String(o.id) : '';
+    Array.prototype.forEach.call($('vzList').querySelectorAll('.crow'), function(el){
+      el.setAttribute('aria-pressed', String(el.dataset.id === want));
     });
-  var sw = $('sw-' + surface), pk = $('pk-' + surface);
-  if(sw){
-    sw.className = 'sw' + (o && o.hex ? '' : ' none');
-    sw.style.background = o && o.hex ? o.hex : '';
   }
-  if(pk) pk.textContent = o ? o.name : 'No change';
-  sum();
+  drawRail(); drawTray(); sum();
 }
 
 /* ── the queue bar ─────────────────────────────────────────────────────── */
 function sum(){
   var keys = Object.keys(picked);
   var ok = !!(chosenShot && keys.length);
-  $('vzQueue').disabled = !ok;
-  if(!chosenShot){ $('vzSum').textContent = 'Pick a photograph to begin.'; return; }
-  if(!keys.length){ $('vzSum').textContent = 'Pick at least one material.'; return; }
-  $('vzSum').textContent = SURFACES.filter(function(s){ return picked[s.key]; })
-    .map(function(s){ return s.label + ': ' + picked[s.key].name; }).join('  ·  ');
+  var b = $('vzQueue');
+  b.disabled = !ok;
+  if(!chosenShot){ $('vzSum').textContent = 'Pick a photograph to begin.'; b.textContent = 'Render'; return; }
+  if(!keys.length){ $('vzSum').textContent = 'Pick at least one material — the tray shows what Render will make.'; b.textContent = 'Render'; return; }
+  /* The tray already lists the picks, so this line says the thing the tray
+     cannot: whether this exact combination has been rendered before. The
+     button then says "Render again" so a second one is deliberate. */
+  var key = comboKey(chosenShot.storage_path, picked);
+  var prior = jobs.filter(function(j){
+    return j.status !== 'error' && comboKey(j.source_path, j.selections) === key;
+  })[0];
+  b.textContent = prior && (prior.status === 'done' || prior.status === 'failed') ? 'Render again' : 'Render';
+  $('vzSum').textContent = prior
+    ? (prior.status === 'done'
+        ? 'Rendered before — Render again gives a different take, not the same picture.'
+        : 'Already ' + prior.status + '.')
+    : (chosenShot.caption || 'Ready.');
 }
 
 $('vzQueue').addEventListener('click', function(){
@@ -640,14 +1022,19 @@ $('vzQueue').addEventListener('click', function(){
 
   /* The same combination on the same photograph is already answered — show it
      rather than spending the Spark on it twice. */
+  /* 810: a duplicate WARNS, it no longer blocks.
+     Blocking was right when every render of a combination was byte-identical —
+     the seed was fixed, so a second one truly was waste. Since 809 the seed
+     comes from the job id, so the same combination genuinely gives a different
+     take, and refusing to make one stopped the single most useful thing a rep
+     can do: try again. Still queued means still queued, though — that one is
+     pure waste and stays refused. */
   var key = comboKey(chosenShot.storage_path, picked);
   var dupe = jobs.filter(function(j){
     return j.status !== 'error' && comboKey(j.source_path, j.selections) === key;
   })[0];
-  if(dupe){
-    $('vzSum').textContent = dupe.status === 'done'
-      ? 'Already rendered — it is in the list below.'
-      : 'Already queued — it is in the list below.';
+  if(dupe && dupe.status !== 'done' && dupe.status !== 'failed'){
+    $('vzSum').textContent = 'That one is already ' + dupe.status + ' — it is on the right.';
     return;
   }
 
@@ -688,7 +1075,9 @@ function refresh(){
       /* 808: claimed_at is the difference between "nothing is listening" and
          "something is listening but asleep". Without it the screen can only
          say "queued", which is what sent Theo to ask me. */
-      .select('id,status,source_path,selections,render_path,preview_path,error,created_at,duration_ms,claimed_at')
+      /* masks and project_id ride along for 810: delete removes the mask files
+         too, and Render-again re-inserts against the same project. */
+      .select('id,project_id,status,source_path,selections,render_path,preview_path,masks,error,created_at,duration_ms,claimed_at')
       .eq('project_id', pid).order('created_at', { ascending:false }).limit(60),
     sb.from('design_renders')
       .select('id,job_id,title,source_path,render_path,preview_path,selections,approved,created_at')
@@ -696,7 +1085,9 @@ function refresh(){
   ]).then(function(res){
     jobs    = (res[0] && res[0].data) || [];
     renders = (res[1] && res[1].data) || [];
-    drawJobs(); drawWait(); drawGallery(); schedule();
+    /* sum() last: the button label depends on whether THIS combination has
+       already been rendered, which is only knowable once jobs have landed. */
+    drawJobs(); drawWait(); drawGallery(); schedule(); sum();
   });
 }
 
@@ -750,36 +1141,128 @@ function titleOf(sel){
 }
 function drawJobs(){
   var host = $('vzJobs');
-  if(!jobs.length){ host.innerHTML = '<div class="empty">Nothing queued yet.</div>'; return; }
+  if(!jobs.length){ host.innerHTML = '<div class="empty">Nothing yet.</div>'; return; }
   host.innerHTML = '';
-  jobs.forEach(function(j){
+  jobs.forEach(function(j, idx){
     var rend = renders.filter(function(r){ return r.job_id === j.id; })[0];
-    var row = document.createElement('div');
-    row.className = 'row';
+    var card = document.createElement('div');
+    card.className = 'rcard';
+
+    var open = document.createElement('button');
+    open.type = 'button'; open.className = 'open';
     var im = document.createElement('img');
-    im.className = 'th'; im.alt = '';
+    im.alt = '';
     paint(im, j.preview_path || j.source_path);
-    row.appendChild(im);
-    var t = document.createElement('div');
-    t.className = 't';
-    t.innerHTML = '<b>' + esc(titleOf(j.selections)) + '</b><i>' +
-      new Date(j.created_at).toLocaleString() +
-      (j.duration_ms ? ' · ' + (j.duration_ms / 1000).toFixed(1) + 's' : '') +
+    open.appendChild(im);
+    var cap = document.createElement('div');
+    cap.className = 'cap';
+    cap.innerHTML = '<b>' + esc(titleOf(j.selections)) + '</b><i>' +
+      (j.duration_ms ? (j.duration_ms / 1000).toFixed(0) + 's' : new Date(j.created_at).toLocaleDateString()) +
       (rend && rend.approved ? ' · approved' : '') + '</i>' +
       (j.error ? '<div class="err">' + esc(j.error) + '</div>' : '');
-    row.appendChild(t);
+    open.appendChild(cap);
+    open.addEventListener('click', function(){ if(rend) openBox(rend); });
+    card.appendChild(open);
+
     var st = document.createElement('span');
     st.className = 'st ' + esc(j.status);
     st.textContent = j.status;
-    row.appendChild(st);
-    if(j.status === 'done' && rend){
-      var b = document.createElement('button');
-      b.className = 'btn';
-      b.textContent = rend.approved ? 'View' : 'Review';
-      b.addEventListener('click', function(){ openBox(rend); });
-      row.appendChild(b);
-    }
-    host.appendChild(row);
+    card.appendChild(st);
+
+    var more = document.createElement('button');
+    more.type = 'button'; more.className = 'more';
+    more.textContent = '⋯';
+    more.setAttribute('aria-label', 'Actions for this render');
+    more.addEventListener('click', function(ev){ ev.stopPropagation(); toggleMenu(card, j, rend, idx); });
+    card.appendChild(more);
+
+    host.appendChild(card);
+  });
+}
+
+/* One menu open at a time, and it closes on the next click anywhere. */
+function closeMenus(){
+  Array.prototype.forEach.call(document.querySelectorAll('.rmenu'), function(m){ m.remove(); });
+}
+document.addEventListener('click', closeMenus);
+
+function toggleMenu(card, j, rend, idx){
+  var had = card.querySelector('.rmenu');
+  closeMenus();
+  if(had) return;
+  var m = document.createElement('div');
+  m.className = 'rmenu' + (idx > 2 ? ' up' : '');
+  m.addEventListener('click', function(ev){ ev.stopPropagation(); });
+
+  if(rend){
+    m.appendChild(mItem(rend.approved ? 'View' : 'Review', function(){ closeMenus(); openBox(rend); }));
+  }
+  m.appendChild(mItem('Render again', function(){ closeMenus(); renderAgain(j); }));
+  m.appendChild(mItem('Delete…', function(){ closeMenus(); removeJob(j, rend); }, 'del'));
+  card.appendChild(m);
+}
+function mItem(label, fn, cls){
+  var b = document.createElement('button');
+  b.type = 'button'; b.textContent = label;
+  if(cls) b.className = cls;
+  b.addEventListener('click', fn);
+  return b;
+}
+
+/* Re-render: a NEW job carrying the SAME selections. New row means a new id,
+   and since 809 the worker derives its seed from the job id — so this returns
+   a genuinely different take rather than the picture that was just rejected.
+   The old job is left alone; comparing the two is the point. */
+function renderAgain(j){
+  $('vzSum').textContent = 'Queueing another take…';
+  sb.from('design_jobs').insert({
+    project_id: j.project_id || $('vzProject').value || null,
+    source_path: j.source_path,
+    selections: j.selections,
+    created_by: me
+  }).select().maybeSingle().then(function(r){
+    if(r.error){ $('vzSum').textContent = 'Could not queue it — ' + (r.error.message || ''); return; }
+    $('vzSum').textContent = 'Queued another take. The Spark picks it up on its next poll.';
+    refresh();
+  });
+}
+
+/* Delete, in the order the schema requires.
+   design_renders.job_id is ON DELETE SET NULL, so removing the job first would
+   ORPHAN the render row rather than remove it — it would vanish from this list
+   and keep sitting in the gallery. Render row first, then the job.
+   The files go too, but only an admin can remove them (visualizer_objects_delete
+   is is_cardinal_admin()). A rep's rows still delete; the bytes stay. That is
+   said out loud rather than swallowed. */
+function removeJob(j, rend){
+  var what = titleOf(j.selections);
+  if(!window.confirm('Delete this render?\n\n' + what +
+      '\n\nThe job, the render and its image files go. This cannot be undone.')) return;
+  $('vzSum').textContent = 'Deleting…';
+
+  var files = [j.render_path, j.preview_path].filter(Boolean);
+  if(j.masks) Object.keys(j.masks).forEach(function(k){ if(j.masks[k]) files.push(j.masks[k]); });
+
+  var step = rend
+    ? sb.from('design_renders').delete().eq('id', rend.id)
+    : Promise.resolve({ error:null });
+
+  Promise.resolve(step).then(function(r){
+    if(r && r.error) throw new Error('the render row — ' + r.error.message);
+    return sb.from('design_jobs').delete().eq('id', j.id);
+  }).then(function(r){
+    if(r && r.error) throw new Error('the job — ' + r.error.message);
+    if(!files.length) return { data:[], error:null };
+    return sb.storage.from('photos').remove(files);
+  }).then(function(r){
+    var left = files.length && !(r && r.data && r.data.length);
+    $('vzSum').textContent = left
+      ? 'Deleted. The image files could not be removed — that needs an admin, and the record is already gone.'
+      : 'Deleted.';
+    refresh();
+  }).catch(function(e){
+    $('vzSum').textContent = 'Could not delete ' + String(e && e.message || e);
+    refresh();
   });
 }
 function drawGallery(){
@@ -868,9 +1351,11 @@ function tab(which){
   $('tabPresent').setAttribute('aria-selected', prep ? 'false' : 'true');
   $('vzPrep').classList.toggle('hide', !prep);
   $('vzPresent').classList.toggle('hide', prep);
-  /* The queue bar is a PREP control. In front of a homeowner there is nothing
-     to queue — that is the whole point of pre-rendering. */
-  $('vzBar').classList.toggle('hide', !prep);
+  /* The tray and Render button are PREP controls — in front of a homeowner
+     there is nothing to queue, which is the whole point of pre-rendering.
+     Since 810 they live inside #vzPrep, so hiding the section hides them and
+     the separate bar this used to toggle no longer exists. */
+  if(prep) fitShell();
 }
 $('tabPrep').addEventListener('click', function(){ tab('prep'); });
 $('tabPresent').addEventListener('click', function(){ tab('present'); refresh(); });
