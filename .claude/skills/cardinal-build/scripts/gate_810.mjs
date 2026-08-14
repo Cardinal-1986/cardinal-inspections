@@ -224,13 +224,15 @@ chk('a QUEUED duplicate is still refused, not offered again', !/again/i.test(qLa
 
 // ── 6. delete: render row BEFORE job row, then the files ──────────────────
 await page.evaluate(`window.__calls = []`);
-await page.click('.rcard .more');
-await page.waitForTimeout(120);
-chk('the render card menu opens', await has('.rmenu'));
-const items = await page.evaluate(`[...document.querySelectorAll('.rmenu button')].map(b=>b.textContent)`);
-chk('the menu offers Delete and Render again', items.some(t=>/Delete/.test(t)) && items.some(t=>/Render again/.test(t)),
-    JSON.stringify(items));
-await page.click('.rmenu .del');
+const acts = await page.evaluate(`[...document.querySelectorAll('.rcard .acts button')].map(b=>b.textContent)`);
+chk('Delete and Again are VISIBLE buttons on the card, not behind a menu',
+    acts.includes('Delete') && acts.includes('Again'), JSON.stringify(acts));
+chk('the delete button is on screen and big enough to hit',
+    await page.evaluate(`(()=>{ const b=document.querySelector('.rcard .acts .del');
+      if(!b) return false; const r=b.getBoundingClientRect();
+      return r.width > 40 && r.height >= 32 && getComputedStyle(b).opacity === '1'; })()`));
+chk('the old hidden dot menu is gone', !(await has('.rcard .more')));
+await page.click('.rcard .acts .del');
 await page.waitForTimeout(400);
 const seq = await page.evaluate(`window.__calls.filter(c=>c.op==='delete'||c.op==='remove')
   .map(c=>c.op==='remove'?'remove':('delete:'+c.table))`);
@@ -244,7 +246,7 @@ chk('delete also removes the render, the preview AND the mask files',
 //  The shell is four fixed-ish columns. On Theo's 1194px iPad they cannot all
 //  survive, so the CSS stacks them — if that media query is wrong the body
 //  scrolls horizontally and the page feels broken before anything is read.
-for (const [w, h] of [[1440, 900], [1194, 834]]) {
+for (const [w, h] of [[2000, 1100], [1440, 900], [1194, 834]]) {
   await page.setViewportSize({ width: w, height: h });
   await page.waitForTimeout(200);
   const over = await page.evaluate(`document.documentElement.scrollWidth > document.documentElement.clientWidth + 1`);
@@ -261,6 +263,21 @@ for (const [w, h] of [[1440, 900], [1194, 834]]) {
       await page.evaluate(`(()=>{ const d=document.querySelector('.canvas .disclaim');
         if(!d) return false; const r=d.getBoundingClientRect();
         return r.bottom <= innerHeight + 1 && r.height > 0; })()`));
+
+  /* 811: the shell must USE the monitor. main caps at 1400px and centres,
+     which left an ultrawide with black bars either side and the photograph
+     floating small in a large empty stage. */
+  const fill = await page.evaluate(`(()=>{ const s=document.querySelector('.shell');
+    return s ? Math.round(s.getBoundingClientRect().width) : 0; })()`);
+  chk('the shell spans the full window at ' + w + 'px (no centred 1400px cap)',
+      fill >= w - 2, fill + ' of ' + w + 'px');
+  const img = await page.evaluate(`(()=>{ const i=document.querySelector('.canvas .stage img'),
+      st=document.querySelector('.canvas .stage');
+    if(!i||!st) return null; const a=i.getBoundingClientRect(), b=st.getBoundingClientRect();
+    return { fill: Math.round(100*(a.width*a.height)/(b.width*b.height)),
+             w: Math.round(a.width) }; })()`);
+  chk('the photograph scales UP to fill its stage at ' + w + 'px',
+      img && img.fill >= 45, img ? (img.fill + '% of the stage, ' + img.w + 'px wide') : 'no image');
 }
 
 // tab switching must not throw — #vzBar was deleted in 810 and tab() referenced it
@@ -276,7 +293,7 @@ chk('no uncaught page errors', pageErrors.length === 0, pageErrors.join(' | '));
    the thing reads — 628 shipped 347 green assertions over a checkbox whose
    shape meant the opposite of what was intended. */
 if (process.env.GATE_SHOTS) {
-  for (const [name, w, h] of [['desk', 1440, 900], ['ipad', 1194, 834]]) {
+  for (const [name, w, h] of [['wide', 2000, 1100], ['desk', 1440, 900], ['ipad', 1194, 834]]) {
     await page.setViewportSize({ width: w, height: h });
     await page.waitForTimeout(250);
     await page.screenshot({ path: process.env.GATE_SHOTS + '/viz-' + name + '.png' });

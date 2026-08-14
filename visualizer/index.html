@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-14 build 810
+  v2026-08-14 build 811
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -241,7 +241,19 @@ h2.sec:first-child{margin-top:6px}
    which overflowed the viewport by 26px and pushed the disclaimer off-screen).
    dvh here is the fallback before that first measurement and the right unit on
    iOS, where 100vh is the height WITHOUT browser chrome. */
-.shell{display:grid;grid-template-columns:64px 340px minmax(0,1fr) 184px;
+/* Prep goes FULL BLEED. `main` caps at 1400px and centres, which is right for
+   the Present gallery and wrong for a four-column workbench — on an ultrawide
+   it left the shell floating in the middle with black bars either side and the
+   photograph small in a big box. The cap lifts only while Prep is showing, and
+   the 90px bottom padding goes with it: that was clearance for the fixed queue
+   bar build 810 deleted. */
+body.vz-prep main{max-width:none;padding:0}
+
+/* The side columns GROW with the screen rather than staying fixed. vw units so
+   a 2000px monitor gets a wider catalog and bigger render cards, clamped so a
+   laptop is unchanged and the photograph always keeps the largest share. */
+.shell{display:grid;
+  grid-template-columns:64px clamp(320px,23vw,460px) minmax(0,1fr) clamp(184px,13vw,280px);
   height:calc(100dvh - 84px);min-height:520px;background:var(--vz-bg,#0B0D10)}
 
 .rail{background:#0E1114;border-right:1px solid var(--vz-line,#252932);
@@ -325,11 +337,25 @@ h2.sec:first-child{margin-top:6px}
 
 .canvas{display:flex;flex-direction:column;min-width:0;min-height:0;
   background:radial-gradient(900px 420px at 55% -10%,#12161B,var(--vz-bg,#0B0D10) 70%)}
-.canvas .shots{display:flex;gap:8px;padding:10px 12px;overflow-x:auto;flex:none;
-  border-bottom:1px solid var(--vz-line,#252932)}
-.canvas .shots .shot{flex:none;width:104px}
+/* The chooser is a QUIET strip. It was 104px tiles each carrying a caption bar
+   reading "Inspection" — the same word on every one, a row of identical labels
+   costing vertical space and telling you nothing while making the picture below
+   harder to look at. Smaller tiles, and the caption appears only on the one you
+   are pointing at or have chosen. */
+.canvas .shots{display:flex;gap:6px;padding:8px 12px;overflow-x:auto;flex:none;
+  border-bottom:1px solid var(--vz-line,#252932);scrollbar-width:thin}
+.canvas .shots .shot{flex:none;width:78px;border-width:1px}
+.canvas .shots .shot .cap{opacity:0;transition:opacity .12s;font-size:10px;padding:3px 5px}
+.canvas .shots .shot:hover .cap,
+.canvas .shots .shot:focus-visible .cap,
+.canvas .shots .shot[aria-pressed="true"] .cap{opacity:1}
+@media (prefers-reduced-motion: reduce){ .canvas .shots .shot .cap{transition:none} }
 .canvas .stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:14px}
-.canvas .stage img{max-width:100%;max-height:100%;object-fit:contain;border-radius:10px;
+/* width/height, NOT max-width. max-* can only SHRINK an image — a small
+   photograph sat at its natural size in the middle of a large empty stage,
+   which is exactly what it looked like. object-fit:contain then scales it up
+   without distorting or cropping. */
+.canvas .stage img{width:100%;height:100%;object-fit:contain;border-radius:10px;
   box-shadow:0 20px 44px rgba(0,0,0,.5)}
 .canvas .disclaim{margin:0;border-top:1px solid var(--vz-line,#252932);flex:none}
 
@@ -359,9 +385,18 @@ h2.sec:first-child{margin-top:6px}
   background:rgba(0,0,0,.62);color:#7FD39B}
 .rcard .st.queued,.rcard .st.running{color:#D9A43C}
 .rcard .st.failed{color:#F0808C}
-.rcard .more{position:absolute;right:4px;top:4px;width:28px;height:28px;border-radius:7px;
-  border:0;background:rgba(0,0,0,.62);color:var(--vz-ink,#E9ECF2);cursor:pointer;
-  font:inherit;font-weight:800;line-height:1}
+/* The actions are a VISIBLE ROW on the card, not a menu behind a dot button.
+   Theo: "i dont see a delete button or check box." The trigger was 28px of
+   dark translucency on a dark thumbnail — present, and invisible. A control
+   nobody can find is no better than one that was never wired (BUG_CLASSES 16).
+   Delete keeps its confirm, so nothing is one stray tap from gone. */
+.rcard .acts{display:flex;gap:6px;padding:0 8px 8px}
+.rcard .acts button{flex:1;min-height:34px;border-radius:7px;cursor:pointer;font:inherit;
+  font-size:11.5px;font-weight:600;border:1px solid var(--vz-line2,#333A46);
+  background:rgba(255,255,255,.045);color:var(--vz-dim,#A8B0BF);padding:0 6px}
+.rcard .acts button:hover{background:rgba(255,255,255,.10);color:var(--vz-ink,#E9ECF2)}
+.rcard .acts .del{border-color:rgba(240,128,140,.4);color:#F0808C}
+.rcard .acts .del:hover{background:rgba(240,128,140,.14);color:#F0808C}
 .rmenu{position:absolute;right:6px;top:34px;z-index:30;min-width:132px;padding:5px;
   background:#22272E;border:1px solid var(--vz-line2,#333A46);border-radius:9px;
   box-shadow:0 14px 30px rgba(0,0,0,.55)}
@@ -573,6 +608,7 @@ function showApp(email){
   me = email;
   $('vzSignin').classList.add('hide');
   $('vzApp').classList.remove('hide');
+  document.body.classList.add('vz-prep');   /* Prep is the landing tab */
   fitShell();
   loadCatalog().then(loadProjects);
 }
@@ -1169,43 +1205,26 @@ function drawJobs(){
     st.textContent = j.status;
     card.appendChild(st);
 
-    var more = document.createElement('button');
-    more.type = 'button'; more.className = 'more';
-    more.textContent = '⋯';
-    more.setAttribute('aria-label', 'Actions for this render');
-    more.addEventListener('click', function(ev){ ev.stopPropagation(); toggleMenu(card, j, rend, idx); });
-    card.appendChild(more);
+    /* Actions on the face of the card. See the .acts comment in the CSS: the
+       dot menu this replaces was invisible against a dark thumbnail, and a
+       control nobody can find is no better than one that was never wired. */
+    var acts = document.createElement('div');
+    acts.className = 'acts';
+    acts.appendChild(actBtn('Again', 'Render this combination again',
+      function(){ renderAgain(j); }));
+    acts.appendChild(actBtn('Delete', 'Delete this render',
+      function(){ removeJob(j, rend); }, 'del'));
+    card.appendChild(acts);
 
     host.appendChild(card);
   });
 }
-
-/* One menu open at a time, and it closes on the next click anywhere. */
-function closeMenus(){
-  Array.prototype.forEach.call(document.querySelectorAll('.rmenu'), function(m){ m.remove(); });
-}
-document.addEventListener('click', closeMenus);
-
-function toggleMenu(card, j, rend, idx){
-  var had = card.querySelector('.rmenu');
-  closeMenus();
-  if(had) return;
-  var m = document.createElement('div');
-  m.className = 'rmenu' + (idx > 2 ? ' up' : '');
-  m.addEventListener('click', function(ev){ ev.stopPropagation(); });
-
-  if(rend){
-    m.appendChild(mItem(rend.approved ? 'View' : 'Review', function(){ closeMenus(); openBox(rend); }));
-  }
-  m.appendChild(mItem('Render again', function(){ closeMenus(); renderAgain(j); }));
-  m.appendChild(mItem('Delete…', function(){ closeMenus(); removeJob(j, rend); }, 'del'));
-  card.appendChild(m);
-}
-function mItem(label, fn, cls){
+function actBtn(label, title, fn, cls){
   var b = document.createElement('button');
-  b.type = 'button'; b.textContent = label;
+  b.type = 'button'; b.textContent = label; b.title = title;
+  b.setAttribute('aria-label', title);
   if(cls) b.className = cls;
-  b.addEventListener('click', fn);
+  b.addEventListener('click', function(ev){ ev.stopPropagation(); fn(); });
   return b;
 }
 
@@ -1351,6 +1370,9 @@ function tab(which){
   $('tabPresent').setAttribute('aria-selected', prep ? 'false' : 'true');
   $('vzPrep').classList.toggle('hide', !prep);
   $('vzPresent').classList.toggle('hide', prep);
+  /* Prep is full-bleed; Present keeps main's centred 1400px cap. A gallery
+     wants a reading measure, a workbench wants the whole monitor. */
+  document.body.classList.toggle('vz-prep', prep);
   /* The tray and Render button are PREP controls — in front of a homeowner
      there is nothing to queue, which is the whole point of pre-rendering.
      Since 810 they live inside #vzPrep, so hiding the section hides them and
