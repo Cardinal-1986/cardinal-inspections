@@ -3504,7 +3504,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 801 &#8212; Cardinal Truth gets an Overview / Active Claims / Supplements / Closed tab strip, and icons on its four metric tiles</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 802 &#8212; The Community Partners card is decluttered — no repeated partner name, real status chips, Tools tucked behind More tools</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39558,6 +39558,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:802, d:'2026-08-14', t:'Community Partners: no repeated name, real status chips, Tools tucked away',
+s:'Theo pushed back on my read of the Partners screen with a real teardown, and checking the actual database instead of just the code proved him right on every point. The repeated partner name on each bid row \u2014 confirmed real, but the partner name is literally saved inside the client\u2019s own name field in production, not a rendering bug \u2014 is now stripped for display on this card only. The plain-text status under each name (\u2018due\u2019, \u2018chase\u2019\u2026) is now a real chip: Due today, Overdue, Out for decision, Awarded. And the seven-button Tools list \u2014 rendered on every pane, every time \u2014 is now just New Bid up front, with the other six behind a closed More tools row. The three-navigation-bar question is still open; that\u2019s shared chrome across all three CRMs, not Community\u2019s alone to change.' },
 { b:801, d:'2026-08-14', t:'Cardinal Truth: a tab strip, and icons on the metric tiles',
 s:'Theo sent over a mockup for a new Insurance Home Screen. Cardinal Truth already does almost everything it showed \u2014 real numbers instead of the mockup\u2019s placeholders, all nine pipeline stages instead of two, plus a chase list, carrier breakdown, this-week calendar and eight tool shortcuts the mockup didn\u2019t have \u2014 so rather than replace it, this build takes the two ideas from the mockup worth keeping. A tab strip \u2014 Overview, Active Claims, Supplements, Closed \u2014 sits above the dashboard now and actually filters the client list when tapped. And the four metric tiles (Avg Supplement, ACV Released, Deductibles Due, Contract Value) each carry a small icon, matching the mockup\u2019s layout.' },
 { b:800, d:'2026-08-14', t:'The section banner, fixed for light mode',
@@ -52569,6 +52571,20 @@ border-radius:4px;background:var(--chip);color:var(--chipink);white-space:nowrap
 .cc-pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:13px}
 .cc-rule{font:800 10px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--mute);margin:20px 0 10px;
 padding-top:12px;border-top:1px solid var(--line)}
+/* 802: the job-row status chip - same --chip/--good/--warn pair the "N due"
+   chip and the WIN/OWED numbers already use on this exact card, not a new
+   colour. */
+#cr-ch2 .bchip{display:inline-block;margin-top:2px;font:700 10px var(--mono);letter-spacing:.03em;background:var(--chip);color:var(--chipink);border-radius:999px;padding:2px 8px}
+#cr-ch2 .bchip.good{background:var(--goodbg);color:var(--good)}
+#cr-ch2 .bchip.bad{background:var(--warnbg);color:var(--warnink)}
+/* 802: the collapsed Tools sheet. Native <details> - same pattern this file
+   already uses for the Cardinal Truth carrier accordion, not a new widget. */
+.cc-moretools{margin-top:11px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.cc-moretools>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 14px;font:800 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.cc-moretools>summary::-webkit-details-marker{display:none}
+.cc-moretools>summary::before{content:'\203A';display:inline-block;transition:transform .15s;font-size:14px;line-height:1}
+.cc-moretools[open]>summary::before{transform:rotate(90deg)}
+.cc-moretools .tools{padding:0 12px 12px}
 #cr-ch2 .tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:11px}
 #cr-ch2 .tools button{display:flex;align-items:center;gap:11px;background:var(--ccm-grad);
 border:1px solid var(--line);border-radius:9px;padding:12px 14px;text-align:left;color:var(--ink);
@@ -53170,6 +53186,43 @@ function mountMissing(){
 var v = document.getElementById('communityHubView');
 return !v || !v.querySelector('#cr-ch2');
 }
+/* 802: the job row repeated the partner name because that name is baked
+   into the CLIENT's own `name` field in production - e.g. "Zulema Hall \u2014
+   Habitat for Humanity" - confirmed against the real community_partners /
+   projects data, not assumed. Not a template bug: this function never
+   concatenated the partner name onto anything. Stripped for DISPLAY only,
+   here, where the partner is already the card you're looking at - the
+   stored name is untouched, since it may still help elsewhere (search, the
+   main client list). */
+function stripPartnerSuffix(name, partnerName){
+var s = String(name || '');
+if(!partnerName) return s;
+var esc2 = String(partnerName).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+var re = new RegExp('\\s*[\\-\\u2010\\u2011\\u2012\\u2013\\u2014]\\s*' + esc2 + '\\s*$', 'i');
+var out = s.replace(re, '').trim();
+return out || s;
+}
+/* 802: same j.tag / j.d this function already computed, read into a chip
+   instead of printed as the raw lowercase tag. 'Out for decision' and
+   'overdue' match the vocabulary Theo's mockup used; 'Awaiting funding'
+   matches this module's own existing LABEL['OnHold'], reused rather than
+   reworded twice. No blue - this file is on record as one green, zero blue
+   for Community (cr-ch2-styles banner), so urgency is red/--warnink and a
+   win is green/--good, same pair the WIN and OWED numbers already use. */
+function bidChip(j){
+if(j.tag === 'due'){
+if(j.d == null) return { text:'No due date' };
+if(j.d < 0) return { text:(-j.d) + 'd overdue', bad:true };
+if(j.d === 0) return { text:'Due today', bad:true };
+if(j.d <= 3) return { text:'Due in ' + j.d + 'd', bad:true };
+return { text:'Due in ' + j.d + 'd' };
+}
+if(j.tag === 'chase') return { text:'Out for decision' };
+if(j.tag === 'awarded') return { text:'Awarded', good:true };
+if(j.tag === 'invoiced') return { text:'Invoiced', good:true };
+if(j.tag === 'parked') return { text:'Awaiting funding' };
+return { text:j.tag };
+}
 function partnerCard(p, role){
 var cls = isClosed(p) ? ' closed' : '';
 var chip = p.dueCount
@@ -53192,13 +53245,12 @@ var nums = (role === 'prod') ? '' :
 var jobs = p.jobs.length
 ? '<div class="pbids">' + p.jobs.slice(0, 5).map(function(j){
 var hot = (j.tag === 'due' && j.d != null && j.d <= 3);
-var d = (j.tag === 'due') ? (j.d == null ? '\u2013' : j.d + 'd')
-: (j.tag === 'chase') ? (j.d != null ? j.d + 'd' : '') : '';
+var bc = bidChip(j);
+var nm = stripPartnerSuffix(j.pr.name, p.name);
 return '<button class="brow' + (hot ? ' hot' : '') +
 '" data-open="' + esc(j.pr.id) + '" type="button">' +
-'<span class="d">' + d + '</span>' +
-'<span class="x"><b>' + esc(j.pr.name || 'Unnamed') + '</b>' +
-'<small>' + j.tag + '</small></span>' +
+'<span class="x"><b>' + esc(nm || 'Unnamed') + '</b>' +
+'<small class="bchip' + (bc.good ? ' good' : '') + (bc.bad ? ' bad' : '') + '">' + esc(bc.text) + '</small></span>' +
 '<span class="amt">' + ((j.amt && role !== 'prod') ? usd(j.amt) : '') + '</span>' +
 '</button>';
 }).join('') + '</div>'
@@ -53432,6 +53484,14 @@ clientsPane + bidsPane + partnersPane +
 '<div class="tools">' +
 '<button class="primary" data-go="newbid" type="button"><span class="i">' + ICO('pencil') + '</span>' +
 '<span class="x"><b>New Bid</b><small>Price a request</small></span></button>' +
+'</div>' +
+/* 802 (Fix C): the other six were a full site map rendered on every pane,
+   every time - Theo's word for it was "dumped." Same buttons, same
+   data-go dispatch below (untouched), just closed by default behind a
+   native <details> instead of permanently on screen. New Bid stays out
+   front since it is the one action this screen exists for. */
+'<details class="cc-moretools"><summary>More tools</summary>' +
+'<div class="tools">' +
 '<button data-go="props" type="button"><span class="i">' + ICO('home') + '</span>' +
 '<span class="x"><b>Properties</b><small>Units and addresses</small></span></button>' +
 '<button data-go="wo" type="button"><span class="i">' + ICO('clipboard') + '</span>' +
@@ -53444,7 +53504,7 @@ clientsPane + bidsPane + partnersPane +
 '<span class="x"><b>Activity</b><small>Team feed, newest first</small></span></button>' +
 '<button data-go="calendar" type="button"><span class="i">' + ICO('calendar') + '</span>' +
 '<span class="x"><b>Calendar</b><small>Jobs on the board</small></span></button>' +
-'</div>' + chSheets();
+'</div></details>' + chSheets();
 host.querySelectorAll('.cc-fh').forEach(function(h){
 h.onclick = function(e){
 if(e.target.closest('[data-open]')) return;

@@ -16125,3 +16125,62 @@ an icon, and the untouched pipeline rail (9 rows) and chase list still render. *
 control** (everything tab/icon-related — the strip doesn't exist there at all), **the two
 untouched-path checks stayed green on both builds**, proving those weren't accidentally changed
 either way. No crash.
+
+## build 802 — 14 Aug 2026 — the Community Partners card, decluttered
+
+Theo pushed back hard on the previous "the real screen already does this, better" call, with a
+detailed teardown: repeated partner names on every bid row, three navigation bars stacked before any
+data, tables that are mostly em-dashes, a seven-button tools list dumped on every pane. Read
+`partnerCard()`'s own row template first and doubted the repeated-name claim — it only ever prints
+`j.pr.name` and `j.tag`, never the partner name, so there's no place in the code that could produce
+it. **Checked the real database instead of arguing from the source**, and the claim was right: six
+of Habitat's current leads are named things like `"Zulema Hall — Habitat for Humanity"` in
+production — the partner name is baked into the client's own `name` column. The card was faithfully
+showing what's actually stored. Checked the dash-spam claim too, and it's exactly true and slightly
+worse than stated: all 16 current community bids, every partner, are still in Lead stage — nothing
+anywhere has been decided, so Win/Awarded/Owed read as dashes on *every* card, not just Habitat's.
+And the mockup's dollar figures ($58,655 Habitat, $57,487 Dayton Home Repair Network) turned out to
+match the real numbers exactly — whatever produced that mockup was reading Theo's live data, not
+inventing placeholders.
+
+Theo confirmed building Fix A (streamline the card) and Fix C (tools out of the way); Fix B
+(collapsing the shared header/banner/tab chrome into one bar) stays a separate decision — that chrome
+is shared with Retail and Insurance, not Community's alone to redesign, and it's the same `#crBanner`
+fixed for light mode two builds ago.
+
+**Fix A — two changes to `partnerCard()`'s job rows, both display-only:**
+- `stripPartnerSuffix(name, partnerName)` strips a trailing "— known partner name" (any dash
+  variant) from the row's client name, only when it's actually there. The underlying `projects.name`
+  is untouched — it may still help elsewhere (search, the main client list) — this is cosmetic to
+  this one card. Verified against 9 cases run through the actual shipped function in Node, including
+  the 5 real Habitat names pulled from production, a name with no suffix (must pass through), a
+  client literally named identically to the partner (must not blank out), an apostrophe in a client
+  name, and a partner name that's a regex-special-character-heavy *prefix* rather than a trailing
+  suffix (must not falsely strip).
+- `bidChip(j)` replaces the plain lowercase tag (`due`/`chase`/`awarded`/`invoiced`/`parked`) with a
+  real status chip: "Due today" / "Nd overdue" / "Due in Nd" / "Out for decision" / "Awarded" /
+  "Invoiced" / "Awaiting funding" (the last reuses this module's own existing `LABEL['OnHold']`
+  wording rather than inventing new phrasing). Colours are the `--chip`/`--good`/`--goodbg`/
+  `--warnbg`/`--warnink` pairs this exact card already uses for its "N due" badge and its WIN/OWED
+  numbers — no new colour, and no blue, honoring `cr-cc-styles`' own "one green, zero blue" rule for
+  Community.
+
+**Fix C — the seven-tool grid** (`New Bid`, `Properties`, `Work Orders`, `All Partners`, `Analytics`,
+`Activity`, `Calendar`) was rendered once, unconditionally, under all three panes — Clients, Bids,
+*and* Partners, confirmed by reading where it sits in `host.innerHTML`, outside every `data-pane` div.
+`New Bid` stays a full-width primary button, visible immediately. The other six now sit inside a
+`<details class="cc-moretools">`, closed by default — the same native `<summary>`/`<details>` pattern
+this file already uses for the Cardinal Truth carrier accordion, not a new widget. The `data-go`
+click dispatch underneath is completely untouched; the buttons just moved.
+
+**One correction to my own prior message**: I told Theo "six rows in my render, not seven" for the
+Tools grid. The source has seven (`New Bid` through `Calendar`); my earlier screenshot must have
+clipped before the last one rendered. Owned plainly rather than left standing.
+
+**Gate**: `gate_802.mjs` — **16 green**: the suffix strips only when actually present (3 real cases)
+and leaves a suffix-free name alone, all four chip states render with the right text and class, the
+dollar amount and the row's click-through to `openProject` are untouched, `New Bid` sits outside the
+collapsed sheet while the other six render inside it closed-by-default and open on tap with their
+`data-go` wiring intact, and the partner-level Out/Awarded totals are unchanged. **11 red on the 801
+control** (everything suffix/chip/sheet-related doesn't exist there), **the untouched-path checks
+(dollar amount, click-through, partner totals) stayed green on both builds**. No crash.
