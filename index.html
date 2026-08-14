@@ -3303,17 +3303,22 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hmanage
 body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   color:var(--rbe-ink)}
 
-/* the Convert bar is a light-theme panel sitting on a dark page */
-body:not(.claim-insurance):not(.claim-community) #projectView .convertins{
+/* the Convert bar is a light-theme panel sitting on a dark page - DARK MODE
+   ONLY. 798: this whole block had no [data-theme="rb-light"] guard, so it ran
+   unconditionally and the card stayed #241a1a with --rbe-ink text (which
+   itself flips to a near-black light-mode value) - 1.07:1, essentially
+   invisible. Guarding it restores the original #FDECEC/#2d4468 light design
+   underneath, untouched since before this session. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .convertins{
   background:#241a1a;border-color:#4a2320;border-left-color:#c4180f}
-body:not(.claim-insurance):not(.claim-community) #projectView .convertins .cvtxt{
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .convertins .cvtxt{
   color:var(--rbe-ink)}
-body:not(.claim-insurance):not(.claim-community) #projectView .convertins .cvtxt small{
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .convertins .cvtxt small{
   color:var(--rbe-mute)}
-body:not(.claim-insurance):not(.claim-community) #projectView .convertins .cvgo{
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .convertins .cvgo{
   color:var(--rbe-acclt)}
-body:not(.claim-insurance):not(.claim-community) #projectView .convertins:hover,
-body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active{
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .convertins:hover,
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active{
   background:#2d1f1f;border-color:#7a2a24}
 /* it is the last thing on the card now, so it needs air above it, not below */
 #projectView .convertins{margin:18px 0 4px}
@@ -3495,7 +3500,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 797 &#8212; The top of a client profile is rebuilt on the phone: Job Details moves under the map, Job Value and Payment Information become one card, and it moves above the client name</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 798 &#8212; The Convert to Insurance card no longer stays black in light mode — its dark styling was missing a theme guard and applied all the time</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39548,6 +39553,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:798, d:'2026-08-14', t:'Convert to Insurance, fixed for light mode',
+s:'The Convert to Insurance card stayed a near-black rectangle in light mode, with the title almost invisible against it. Its dark styling had no theme guard on it at all, so it ran regardless of which theme you were in. It is scoped to dark mode now, the way it was always meant to be, which lets the card\u2019s original light design \u2014 a pale pink panel with dark blue text \u2014 show through in light mode again. Dark mode is untouched.' },
 { b:797, d:'2026-08-14', t:'The top of a client profile, rebuilt on the phone',
 s:'The top of a client profile, on the phone, is rebuilt: Job Details now sits directly under the map, full width like everything above it. Job Value, the paid-percent circle and Balance Due are merged with Payment Information into one card with no line between them, and that card now sits above the client\u2019s name at the very top of the screen. Everything from the Job Menu down \u2014 History, Google Reviews, Assigned To, Convert to Insurance \u2014 goes edge to edge too, the same way. The green \u201Cpayment received \u2014 move to Invoiced?\u201D nudge no longer shows on this screen \u2014 it still fires everywhere else. And the Google Reviews card no longer stays black when you switch to light mode; it now matches the white cards around it. Desktop is untouched.' },
 { b:796, d:'2026-08-14', t:'The Payments card goes; Money In moves up',
