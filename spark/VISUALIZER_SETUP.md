@@ -315,3 +315,42 @@ export API format. ⚠ It must **not** resize either, for the same reason as abo
 and `mss` into `~/ComfyUI/venv`. Nothing declared `torch`, so the working `2.13.0+cu130` aarch64
 build was untouched — **check that before installing any node pack's requirements.** The Florence2
 and SAM 2 weights download themselves on first run; there is no manual model fetch for either.
+
+---
+
+## ⚠ `inpaint_api.json` is written too — and three things in it correct this guide
+
+Built from ComfyUI's own `flux_fill_inpaint_example` template, read out of
+`comfyui_workflow_templates_json` on the Spark. **Every model filename it wants is
+already on the box**: `flux1-fill-dev.safetensors`, `clip_l.safetensors`,
+`t5xxl_fp16.safetensors`, `ae.safetensors`.
+
+**1. The negative prompt does nothing, and this guide implied otherwise.** FLUX Fill runs at
+**cfg 1**, where classifier-free guidance is off — the negative conditioning has no influence on
+the image. The stock template does not even use a text encoder for it; it uses
+`ConditioningZeroOut`. A `CLIPTextEncode` titled `CARDINAL_NEGATIVE` is kept so the worker's
+`set_input` resolves and nothing has to change on that side, but **the `negative` field in
+`materials` and in the composed roof prompt is inert with this model.** Do not spend effort
+tuning negatives. Raising cfg to make them work would degrade FLUX dev, which is distilled for
+cfg 1.
+
+**2. Denoise is 1, not 0.85.** §4 of this guide says "denoise around 0.85 for a material change".
+That is correct for ordinary SD inpainting; it is **wrong for FLUX Fill**, where
+`InpaintModelConditioning` with `noise_mask` defines the region and the stock template ships
+denoise 1. Left at the template's value.
+
+**3. The mask must go through `ImageToMask`, not `LoadImage`'s MASK output.** The worker hands
+the mask over as its own greyscale PNG. `LoadImage`'s MASK output is the **alpha channel**, and a
+greyscale PNG has an opaque alpha — so wiring it that way yields an empty mask and FLUX repaints
+nothing, silently. The graph loads the mask as an IMAGE and converts with
+`ImageToMask(channel="red")`.
+
+Also carried over from the template deliberately: **`DifferentialDiffusion`** on the model, which
+is what makes mask edges blend instead of reading as a cut-out sticker, and **`FluxGuidance 30`**.
+
+### The remaining unknown
+
+Neither graph has ever executed. Structure, contracts, node types and settings are verified —
+against the worker's own `find_node`/`set_input`, and every node type taken from a graph that ran
+on this box — but the first end-to-end run will still be the first. If either throws, ComfyUI
+names the node, and `design_jobs.error` carries the worker's own sentence verbatim.
