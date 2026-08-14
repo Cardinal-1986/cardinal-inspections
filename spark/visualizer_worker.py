@@ -59,6 +59,7 @@ ENVIRONMENT (put these in a .env beside this file, or export them)
 """
 
 import base64
+import hashlib
 import io
 import json
 import os
@@ -115,6 +116,7 @@ T_MASK     = "CARDINAL_MASK"       # LoadImage      — this surface's mask
 T_POSITIVE = "CARDINAL_POSITIVE"   # CLIPTextEncode — the material prompt
 T_NEGATIVE = "CARDINAL_NEGATIVE"   # CLIPTextEncode — what must not appear
 T_OUTPUT   = "CARDINAL_OUTPUT"     # SaveImage
+T_SAMPLER  = "CARDINAL_SAMPLER"    # KSampler       — the seed goes here
 T_SEG_IN   = "CARDINAL_SEG_IMAGE"  # LoadImage in the segmentation graph
 
 _stop = False
@@ -349,12 +351,32 @@ def segment(comfy, image_png):
     return masks
 
 
-def inpaint(comfy, image_png, mask_png, positive, negative):
+def seed_for(job_id, surface):
+    """A seed that is stable for one job+surface and different for every other.
+
+    The graph ships with a seed baked in, and the worker used to leave it
+    alone — so every render in the app's history would have used the same
+    number. Same photograph + same material + same seed is byte-identical
+    output, which means "render it again" hands the rep back the picture they
+    just rejected. The first time that happens in front of a customer is the
+    wrong time to discover it.
+
+    Derived rather than random on purpose: a given job always reproduces, so a
+    retry after a crash yields the same image and a bad render can be
+    investigated. A NEW job gets a new id, and therefore a genuinely different
+    look. hashlib, not hash() — the built-in is salted per process and would
+    make the same job irreproducible across restarts."""
+    h = hashlib.sha256(("%s/%s" % (job_id, surface)).encode("utf-8")).digest()
+    return int.from_bytes(h[:6], "big")   # < 2^48, well inside ComfyUI's range
+
+
+def inpaint(comfy, image_png, mask_png, positive, negative, seed):
     graph = load_graph("inpaint_api.json")
     set_input(graph, T_IMAGE, "image", comfy.upload_image("cardinal_work.png", image_png))
     set_input(graph, T_MASK,  "image", comfy.upload_image("cardinal_mask.png", mask_png))
     set_input(graph, T_POSITIVE, "text", positive)
     set_input(graph, T_NEGATIVE, "text", negative or "")
+    set_input(graph, T_SAMPLER, "seed", seed)
 
     pid = comfy.run(graph, timeout=900)
     out = comfy.outputs(pid)
@@ -425,7 +447,8 @@ def run_job(comfy, job):
             continue
         log("  inpainting %s — %s" % (surface, _short(sel.get("name") or "", 60)))
         working = inpaint(comfy, working, masks[surface],
-                          sel.get("prompt") or "", sel.get("negative") or "")
+                          sel.get("prompt") or "", sel.get("negative") or "",
+                          seed_for(job_id, surface))
         applied.append(surface)
 
     if not applied:
