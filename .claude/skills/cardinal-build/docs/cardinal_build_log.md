@@ -15993,3 +15993,38 @@ nobody asked for that and re-tokenising it is a separate, unscoped change.
 
 **Gate**: `gate_798.mjs` — **5 green**, including a dark-mode regression check (still `#241a1a`,
 unchanged) and desktop image-md5 identical to 797. **2 red on the 797 control, no crash.**
+
+## build 799 — 14 Aug 2026 — the portal switcher moves into the burger menu
+
+Theo: *"Can you remove the retail badge row under the light/dark theme selector? Will it mess anything
+up?"* Checked before answering, not assumed: `#crPortalChip` is not decoration. It is the **only**
+control anywhere in the app that (a) switches which CRM's clients `renderClientDirectory` filters to
+(Retail / Insurance / Community / All), and (b) jumps straight to Cardinal Truth or the Community Hub
+from the dashboard, or back to the shared Landing/Hub once a portal is picked. No other button opened
+the same sheet — checked the burger menu first, there was nothing.
+
+Told him that, and asked how he wanted to handle it. **His pick: move it into the menu rather than
+lose the capability.** A new "Switch Portal" row in the Daily section, right after Landing (the two
+are related — the picker's own sheet already has a "Landing / Hub" card built in), wired to the exact
+same `window.CardinalPortal.pick()` the chip called.
+
+**The chip is hidden by CSS only — `paintChip()` itself is untouched.** That function does two things
+in one pass: repaints the chip's own text, and syncs `body.classList`'s `portal-*` tag every frame,
+which other stylesheets key off for palette. Stopping the function would have broken the sync too;
+`#crPortalChip{ display:none !important; }` removes only the visible row and leaves the sync running
+exactly as before — verified directly (`body.classList` still flips on pick), not assumed.
+
+**Deliberately NOT phone-scoped**, unlike every build since 794. The chip sits in the ONE global
+header shared by every screen at every width, so hiding it only under `@media (max-width:560px)`
+would have left it back on desktop with no explanation. Confirmed hidden and the menu option present
+at both 402px and 1280px.
+
+**A real second caller of `pick()` already existed and had to be left alone**: Cardinal Truth's own
+header carries an unrelated mini portal-chip (`CHIP_ID`, `.ins-header`) that calls the identical
+`window.CardinalPortal.pick()`. My first gate assertion (`== 1`) was wrong the moment I ran it —
+the honest count is **2**, and the fix was to assert the exact new dispatch line instead of a bare
+substring count that legitimately matches twice.
+
+**Gate**: `gate_799.mjs` — **8 green** (chip hidden at both widths, class-sync intact, the new menu
+entry opens the identical sheet, picking a portal from it actually re-filters, the Insurance mini-chip
+untouched), **7 red on the 798 control, no crash**.
