@@ -59,6 +59,12 @@ const JOBS = [
     render_path:'visualizer/j-done/render.jpg', preview_path:'visualizer/j-done/preview.jpg',
     masks:{ roof:'visualizer/j-done/mask_roof.png', siding:'visualizer/j-done/mask_siding.png' },
     error:null, created_at:'2026-08-14T22:07:00Z', duration_ms:38341, claimed_at:'2026-08-14T22:07:00Z' },
+  { id:'j-done2', project_id:'p1', status:'done', source_path:'projects/p1/front.jpg',
+    selections:{ roof:{ id:'oc1', name:'Onyx Black', sub:'OC Duration', hex:'#232427', prompt:'p', negative:'' },
+                 siding:{ id:'m1', name:'Harbor Blue', sub:'Mastic Quest', hex:'#5C7186', prompt:'p', negative:'' } },
+    render_path:'visualizer/j-done2/render.jpg', preview_path:'visualizer/j-done2/preview.jpg',
+    masks:null, error:null, created_at:'2026-08-14T22:15:00Z', duration_ms:31000,
+    claimed_at:'2026-08-14T22:15:00Z' },
   { id:'j-queued', project_id:'p1', status:'queued', source_path:'projects/p1/front.jpg',
     selections:{ roof:{ id:'oc2', name:'Black Sable', sub:'OC Designer', hex:'#26282B', prompt:'p', negative:'' } },
     render_path:null, preview_path:null, masks:null, error:null,
@@ -68,6 +74,9 @@ const RENDERS = [
   { id:'r1', job_id:'j-done', title:'Onyx Black', source_path:'projects/p1/front.jpg',
     render_path:'visualizer/j-done/render.jpg', preview_path:'visualizer/j-done/preview.jpg',
     selections:JOBS[0].selections, approved:false, created_at:'2026-08-14T22:07:40Z' },
+  { id:'r2', job_id:'j-done2', title:'Onyx Black + Harbor Blue', source_path:'projects/p1/front.jpg',
+    render_path:'visualizer/j-done2/render.jpg', preview_path:'visualizer/j-done2/preview.jpg',
+    selections:JOBS[1].selections, approved:false, created_at:'2026-08-14T22:15:40Z' },
 ];
 
 /* The stub records every call so the gate can assert on what the page DID,
@@ -241,6 +250,60 @@ chk('delete removes the RENDER row before the JOB row (job_id is ON DELETE SET N
 const removed = await page.evaluate(`(window.__calls.find(c=>c.op==='remove')||{}).files||[]`);
 chk('delete also removes the render, the preview AND the mask files',
     removed.length === 4 && removed.includes('visualizer/j-done/mask_siding.png'), JSON.stringify(removed));
+
+// ── 6b. 812: stepping between renders inside the compare box ────────
+//  Two renders exist in the fixture but only ONE has a design_renders row, so
+//  this also proves the counter is built from openable renders rather than
+//  from jobs — otherwise it would claim "1 of 2" with a second view that can
+//  never be reached.
+{
+  const first = await page.evaluate(`(()=>{
+    const c=[...document.querySelectorAll('.rcard .open')][0]; if(c) c.click();
+    return new Promise(res=>setTimeout(()=>res({
+      open: !document.getElementById('vzBox').classList.contains('hide'),
+      title: document.getElementById('vzBoxT').textContent,
+      pos: document.getElementById('vzPos').textContent,
+      prevDis: document.getElementById('vzPrev').disabled,
+      nextDis: document.getElementById('vzNext').disabled,
+      navHidden: document.querySelector('#vzBox .nav').classList.contains('solo')
+    }),300));
+  })()`);
+  chk('clicking a render card opens the compare box', first.open, first.title);
+  chk('the arrows are shown when more than one render is openable', first.navHidden === false);
+  chk('the counter counts only OPENABLE renders, not every job (3 jobs, 2 renders)',
+      first.pos === '1 of 2', first.pos);
+  chk('Previous is disabled on the first render', first.prevDis === true);
+  chk('Next is enabled on the first render', first.nextDis === false);
+
+  await page.click('#vzNext');
+  await page.waitForTimeout(250);
+  const second = await page.evaluate(`({
+    title: document.getElementById('vzBoxT').textContent,
+    pos: document.getElementById('vzPos').textContent,
+    prevDis: document.getElementById('vzPrev').disabled,
+    nextDis: document.getElementById('vzNext').disabled,
+    after: document.getElementById('vzAfterImg').getAttribute('src') || ''
+  })`);
+  chk('Next steps to the following render', second.pos === '2 of 2', second.pos);
+  chk('stepping actually changes the picture shown',
+      /j-done2/.test(second.after), second.after.slice(-46));
+  chk('the title follows the render', /Harbor Blue/.test(second.title), second.title);
+  chk('Next is disabled at the end — no wrap to the first house',
+      second.nextDis === true && second.prevDis === false);
+
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(150);
+  chk('ArrowRight at the end is a safe no-op',
+      await page.evaluate(`document.getElementById('vzPos').textContent === '2 of 2'`));
+  await page.keyboard.press('ArrowLeft');
+  await page.waitForTimeout(250);
+  chk('ArrowLeft steps back',
+      await page.evaluate(`document.getElementById('vzPos').textContent === '1 of 2'`));
+
+  chk('Escape still closes the box',
+      await page.evaluate(`(()=>{ document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));
+        return new Promise(r=>setTimeout(()=>r(document.getElementById('vzBox').classList.contains('hide')),150)); })()`));
+}
 
 // ── 7. it must not scroll sideways, at either width ───────────────────────
 //  The shell is four fixed-ish columns. On Theo's 1194px iPad they cannot all

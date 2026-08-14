@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-14 build 811
+  v2026-08-14 build 812
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -390,6 +390,17 @@ body.vz-prep main{max-width:none;padding:0}
    dark translucency on a dark thumbnail — present, and invisible. A control
    nobody can find is no better than one that was never wired (BUG_CLASSES 16).
    Delete keeps its confirm, so nothing is one stray tap from gone. */
+/* 812: stepping between renders without leaving the compare view. At a kitchen
+   table you show three roofs in a row — closing back to the rail between each
+   one loses the wipe position and the customer's attention. */
+#vzBox .nav{display:flex;align-items:center;gap:4px;margin-left:auto;margin-right:10px}
+#vzBox .nb{min-width:44px;min-height:44px;padding:0;font-size:22px;line-height:1;
+  font-weight:700;display:flex;align-items:center;justify-content:center}
+#vzBox .nb[disabled]{opacity:.3;cursor:default}
+#vzBox .pos{font-size:12px;color:var(--vz-dim,#A8B0BF);min-width:52px;text-align:center;
+  font-variant-numeric:tabular-nums}
+#vzBox .nav.solo{display:none}
+
 .rcard .acts{display:flex;gap:6px;padding:0 8px 8px}
 .rcard .acts button{flex:1;min-height:34px;border-radius:7px;cursor:pointer;font:inherit;
   font-size:11.5px;font-weight:600;border:1px solid var(--vz-line2,#333A46);
@@ -512,6 +523,11 @@ body.vz-prep main{max-width:none;padding:0}
 <div id="vzBox" class="hide" role="dialog" aria-modal="true" aria-label="Before and after">
   <div class="top">
     <div class="t" id="vzBoxT"></div>
+    <div class="nav">
+      <button class="btn nb" id="vzPrev" aria-label="Previous render" title="Previous (←)">‹</button>
+      <span class="pos" id="vzPos" aria-live="polite"></span>
+      <button class="btn nb" id="vzNext" aria-label="Next render" title="Next (→)">›</button>
+    </div>
     <button class="btn" id="vzBoxX">Close</button>
   </div>
   <div class="cmp" id="vzCmp">
@@ -1322,9 +1338,55 @@ function openBox(r){
   paint($('vzAfterImg'), r.render_path || r.preview_path);
   $('vzSlide').value = 50; wipe(50);
   approveBtn();
+  drawNav();
   $('vzBox').classList.remove('hide');
   document.body.style.overflow = 'hidden';
 }
+
+/* ── stepping between renders ──────────────────────────────────────────────
+   Order follows the RAIL, not design_renders' own ordering, so ‹ and › move
+   the way the cards are stacked on screen. Anything else would feel arbitrary.
+
+   Built from `jobs` rather than `renders` because a job can exist without a
+   render (queued, failed) and those are not openable — walking `renders`
+   directly would let the counter claim "2 of 5" while three of the five could
+   never be reached. */
+function openable(){
+  var out = [];
+  jobs.forEach(function(j){
+    var r = renders.filter(function(x){ return x.job_id === j.id; })[0];
+    if(r) out.push(r);
+  });
+  return out;
+}
+function boxIndex(){
+  if(!boxed) return -1;
+  var list = openable();
+  for(var i = 0; i < list.length; i++) if(list[i].id === boxed.id) return i;
+  return -1;
+}
+function step(delta){
+  var list = openable(), i = boxIndex();
+  if(i === -1) return;
+  var next = i + delta;
+  if(next < 0 || next >= list.length) return;   /* stop at the ends — a wrap
+     makes the last render silently become the first, and in front of a
+     customer that reads as the tool showing the wrong house. */
+  openBox(list[next]);
+}
+function drawNav(){
+  var list = openable(), i = boxIndex();
+  var nav = document.querySelector('#vzBox .nav');
+  /* One render is not a slideshow — hide the controls rather than show two
+     dead arrows. */
+  nav.classList.toggle('solo', list.length < 2);
+  $('vzPrev').disabled = i <= 0;
+  $('vzNext').disabled = i === -1 || i >= list.length - 1;
+  $('vzPos').textContent = i === -1 ? '' : (i + 1) + ' of ' + list.length;
+}
+$('vzPrev').addEventListener('click', function(){ step(-1); });
+$('vzNext').addEventListener('click', function(){ step(1); });
+
 function closeBox(){
   $('vzBox').classList.add('hide');
   document.body.style.overflow = '';
@@ -1332,8 +1394,32 @@ function closeBox(){
 }
 $('vzBoxX').addEventListener('click', closeBox);
 document.addEventListener('keydown', function(e){
-  if(e.key === 'Escape' && !$('vzBox').classList.contains('hide')) closeBox();
+  if($('vzBox').classList.contains('hide')) return;
+  if(e.key === 'Escape'){ closeBox(); return; }
+  /* Arrows step, unless the wipe slider has focus — there they belong to the
+     slider, and stealing them would break dragging the comparison by keyboard. */
+  if(document.activeElement === $('vzSlide')) return;
+  if(e.key === 'ArrowLeft'){  e.preventDefault(); step(-1); }
+  if(e.key === 'ArrowRight'){ e.preventDefault(); step(1); }
 });
+
+/* Swipe, because this is used on a tablet. Horizontal only, and well past the
+   slop of a vertical scroll or a wipe drag, so it cannot fire by accident. */
+(function(){
+  var x0 = null, y0 = null;
+  var cmp = $('vzCmp');
+  cmp.addEventListener('touchstart', function(e){
+    if(e.touches.length !== 1){ x0 = null; return; }
+    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
+  }, { passive:true });
+  cmp.addEventListener('touchend', function(e){
+    if(x0 === null || !e.changedTouches.length) return;
+    var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    x0 = null;
+    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    step(dx < 0 ? 1 : -1);
+  }, { passive:true });
+})();
 function wipe(pct){
   $('vzAfter').style.width = pct + '%';
   $('vzHandle').style.left = pct + '%';
