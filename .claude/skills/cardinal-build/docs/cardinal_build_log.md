@@ -16184,3 +16184,121 @@ collapsed sheet while the other six render inside it closed-by-default and open 
 `data-go` wiring intact, and the partner-level Out/Awarded totals are unchanged. **11 red on the 801
 control** (everything suffix/chip/sheet-related doesn't exist there), **the untouched-path checks
 (dollar amount, click-through, partner totals) stayed green on both builds**. No crash.
+
+## build 803 — 14 Aug 2026 — the banner stops repeating the tabs under it
+
+Theo's third teardown point, scoped before it was built. **Measured at 402px, all three CRMs**, rather
+than estimated:
+
+| Row | Height | Element | Scope |
+|---|---|---|---|
+| Header (burger, title, ＋, home) | 65px | `#cr-hd2-bar` | universal |
+| Search input | 37–45px | `#cr-hd2-srch` | universal |
+| Section banner | 40px | `#crBanner` | universal, labels swap per CRM |
+| Tab strip | 29–37px | per-page | Community + Insurance only |
+
+**Total chrome before content: 191px Community, 201px Insurance, 143px Retail** — about a quarter of
+a phone's usable height, not the third Theo estimated, but the same order.
+
+**The duplication is real, and was confirmed by clicking rather than by reading.** `#crBanner`'s
+"Partners" pill routes through `ROUTES.partners` → `CardinalCommunityHub.show()` +
+`CardinalCommunityHome.tab('partners')` — the identical destination the hub's own tab strip reaches.
+Verified in Chromium: start on the clients pane, click the *banner's* Partners, the active pane
+becomes `partners`. Two controls, same word, same destination, one row apart. Same for "Bids".
+
+**Two findings the scope turned up that reading alone would have missed:**
+- **Retail has no fourth bar at all** — it is header + search + banner, full stop, because it has no
+  tab strip to duplicate. The complaint is Community/Insurance-shaped, not app-wide.
+- **Insurance's fourth bar came from build 801, two builds earlier, in this session.** Cardinal Truth
+  had no tab strip until the 801 build added one. So the stacking Theo was complaining about on
+  Community had just been reproduced on Insurance, by me, while telling him the screen was already
+  fine. Recorded rather than quietly fixed.
+
+**The fix, and the constraint that shapes it.** `#crBanner` is UNIVERSAL chrome — it renders on every
+screen in the app; each tab strip exists only on its own hub. So a pill is hidden **only while the
+duplicating strip is actually on screen**, checked live via `getClientRects()` rather than by guessing
+which view is open. Hiding one globally would delete the only one-tap route back to Partners from
+inside a client profile. The rule is "not twice at once", never "gone" — and `gate_803.mjs` case C
+exists specifically to prove the pills come back.
+
+Implemented as one more reason to pull the display lever the function already had: `paintCrmPills()`'s
+existing resolve-or-hide line becomes `(dead || dupedHere(want.go))`. The write stays guarded
+(`if(el.style.display !== wantDisp)`) — this runs from a rAF-scheduled body observer, and an unguarded
+write would wake every body observer each frame (the 567/569 repaint class the surrounding comment
+already warns about). Gate case F measures it: zero style mutations on an idle banner.
+
+**Per-CRM outcome, and the word that does not mean what it looks like:**
+- **Community** — both pills go. The hub's strip (Clients | Bids | Partners) is a *superset* of the
+  banner's (Partners | Bids), so nothing is lost.
+- **Insurance** — only "Clients" goes. The banner's **"Claims" pill stays**: `ROUTES.claims` is
+  `crOpenClaims`, the Claims Tracker — a genuinely different screen that merely shares a word with the
+  801 strip's "Active Claims". Read the route before assuming a shared label meant a shared screen.
+- **Retail** — untouched. Nothing is duplicated there.
+
+Deliberately NOT in this build: the height question (folding the search row into a header icon). It
+wants a preview first, and `#cr-hd2-srch` also carries the light/dark toggle and the insurance theme
+button — confirmed by enumerating the row's children, not assumed — so collapsing it is not the
+one-liner it looks like.
+
+**Gate**: `gate_803.mjs` — **14 green**: both pills hidden on the Community hub while Photos /
+Production / Tools stay, the hub strip still switches panes, **the pills come back once you navigate
+off the hub**, Cardinal Truth hides Clients but keeps Claims, Retail's Contacts/Leads untouched, and
+zero style mutations on an idle banner. **3 red on the 802 control** — exactly the three
+discriminating assertions; the no-route-lost check and the Claims-stays check **stayed green on both
+builds**, proving neither was accidentally changed. No crash.
+
+⚠️ One gate bug, caught and fixed as the test's fault, not the app's: the dropdown pills render their
+caret inside the label, so their `textContent` is `"Production ▼"` — a lookup by the plain word read
+`undefined` and failed a passing build. The gate now strips the caret.
+
+## build 804 — 14 Aug 2026 — the search bar folds into a header lens
+
+Theo's option 2, previewed then approved. The permanent search row — **37px on retail and community,
+45px on insurance, on every screen in all three CRMs** — is collapsed by default. A lens beside Home
+opens it and focuses the field, so it is one tap to type rather than two.
+
+**The preview earned its keep twice, and both findings would have shipped as bugs otherwise.**
+
+**1. This header lays out by CSS `order`, not DOM order.** `navBtn` is 0, `addProjectBtn` 8,
+`cr-hd2-home` 9. A fresh button defaults to `order:0`, so appending it *after* Home still painted it
+hard **left, on top of the absolutely-centred title** (`#cr-hd2-mid` is `position:absolute; left:50%`
+with `max-width:calc(100% - 190px)`). It took three preview passes to place: order:9 tied with Home
+and lost to Home's auto-margin; `margin-left:auto` split the free space and parked it mid-title;
+`order:10` appended after Home is the one that works. **Anything else added to this bar later needs an
+explicit order.**
+
+**2. The moon needed no new home — and that is what made this cheap.** Going in, "where does the
+light/dark toggle go" was the thing that made this look expensive; the plan was to bury it in the
+burger menu. It was already solved: `#cr-dark-toggle`'s base CSS is a fixed bottom-right round
+button, build 417 *adopted* it into the search row, and 694 added `.afloat` for "this row is covered
+or spoken for on the current screen." `needsFloat()` decides purely from the row's rect —
+`if(!r.width || !r.height) return true` — on a 1s interval. Collapsing the row hands the toggle back
+to its corner through machinery the app already owns. **Not one line of that module is touched.** It
+rides back into the row while the row is open and out again when it closes, which is exactly what
+`.afloat` was built for.
+
+**The one real hazard, and it did need fixing.** `.cr-ins-theme` — insurance's Docket/Siren switch —
+had exactly one host: `var HOSTS = ['#cr-hd2-srch']`. Unlike the moon it has **no floating fallback**,
+so collapsing the row would have left insurance with no way to change theme at all: a control that
+renders and can never be reached, BUG_CLASSES 16. `HOSTS` is now `['#cr-hd2-bar']`, so it rides in the
+header beside the lens, inheriting `.cr-ib` sizing and keeping its own
+`body:not([data-crm="insurance"])` hide rule. Found by reading the module's host list, not by
+noticing it missing in a render.
+
+The row is **hidden, never removed** — `#headSearch`'s keydown listener is bound at boot and would
+throw against a null element, the same reasoning build 417 recorded when it hid the banner's own
+search copy. Done with specificity rather than `!important`: `body:not(.cr-srch-open) #cr-hd2-srch`
+is (0,2,1) against the base rule's (0,1,0), and nothing sets display on that row inline.
+
+**Gate**: `gate_804.mjs` — **16 green**: collapsed on load, lens present with the app's own icon and
+**to the right of Home without overlapping the title** (an assertion that exists precisely because
+the order:0 version failed it), tap opens *and focuses* with `aria-expanded` tracking, tap again
+closes, `#headSearch` is the same element and survives the close, **the moon reaches the corner with
+`.afloat` and nothing covers it**, **insurance's switch is in the header and reachable with the row
+collapsed**, and the height is genuinely back on all three CRMs. **16 red on the 803 control** — a
+total sweep, printing the honest pre-fix state (37/45/37px rows, moon and theme switch both still in
+the row).
+
+⚠️ The negative control initially **crashed** rather than going red: section B dereferenced a null
+lens on 803, which aborted the run so D/E/F never reported. Guarded. A control that stops early is a
+weaker signal than one that fails every discriminating assertion.
