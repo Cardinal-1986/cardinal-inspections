@@ -15967,3 +15967,29 @@ recorded in the harness: a `.acxjd > div` row-count check also matched the trade
 4 — narrowed to `.acxsl`); and an insurance check asserted the `data-cr-ord="jd"` **tag** was absent,
 when the established Location precedent is to tag unconditionally and gate only the CSS effect —
 rewritten to assert the meaningful invariant (still boxed, not bled) instead.
+
+## build 798 — 14 Aug 2026 — Convert to Insurance, fixed for light mode
+
+Theo, with a screenshot: *"In light menu this is still dark."* The "Convert to Insurance" title was
+essentially invisible against a near-black card. Pre-existing bug, not introduced by 797 — 797 only
+added margin/border-radius for the full-bleed conversion and never touched colour here; it surfaced
+because 797 made the card prominent and Theo tested light mode right after.
+
+**Root cause, confirmed by rendering before writing a fix**: the dark-mode conversion rule at ~3306
+(`.convertins{background:#241a1a;...}` plus its `.cvtxt`/`.cvtxt small`/`.cvgo`/`:hover`/`:active`
+siblings) had **no `[data-theme="rb-light"]` guard at all** — it ran unconditionally. In light mode
+the card stayed `#241a1a` while `--rbe-ink` resolved to its light value (`#161616`, near-black too) —
+measured **1.07:1** on the title. Same root shape as the Google Reviews bug fixed one build earlier: a
+rule written for one theme with nothing keeping it out of the other.
+
+**Fix**: wrapped the existing rule (unchanged otherwise, still the same six declarations) in
+`:root:not([data-theme="rb-light"])`. Dark mode is byte-identical — verified directly, not assumed.
+Light mode now falls through to the card's ORIGINAL base declaration (`#FDECEC` / `#2d4468`), which
+predates this session and was untouched. Measured: title `#2d4468` on `#FDECEC` **8.60:1** (was
+1.07:1). One pre-existing imperfection carried over rather than expanded on: the subtitle ink
+(`#6b7a90`, 3.82:1) was already under the 4.5:1 floor in the original light design, before any of
+this session's work — restoring it is a real improvement over the bug and is not itself "fixed," since
+nobody asked for that and re-tokenising it is a separate, unscoped change.
+
+**Gate**: `gate_798.mjs` — **5 green**, including a dark-mode regression check (still `#241a1a`,
+unchanged) and desktop image-md5 identical to 797. **2 red on the 797 control, no crash.**
