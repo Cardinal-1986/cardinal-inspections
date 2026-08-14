@@ -3066,3 +3066,22 @@ shows box COUNTS, not per-job chips — the chips (`Needs scheduling` → `Mater
 `1 punch item` → `Ready to invoice`) live one tap deeper in the box panes and all five were seen rendering
 in order; and `#pNewContractBtn` only opens the trade flyout — the contract is created by the `[data-ctpl]`
 option inside it, so a harness clicking the toggle and expecting a write is testing its own mistake.
+
+---
+
+### Opened at 806 — one action for Theo, one question deferred
+
+**ACTION REQUIRED BEFORE THIS DEPLOYS: set `ANTHROPIC_API_KEY` in Vercel env.** Without it
+`/api/librarian` returns a 500 naming the variable, and the Library's assistant stops answering.
+`GEMINI_API_KEY` **stays** — `caption.js`, `organize.js`, `analyze.js` and `sol.js` still need it.
+
+**Deferred, deliberately: the other four Gemini routes.** 806 moved the librarian only, because it is
+the one route where a wrong answer is expensive — staff act on the code sections it writes. Captioning,
+tagging and organising photographs are cheap, high-volume and forgiving; moving them is a cost decision,
+not a correctness one, and nobody has asked. **Do not "finish the migration" without a reason.**
+`caption.js` carries the same four-rung ladder the librarian just shed — if it is ever moved, that
+ladder goes with it.
+
+**Worth measuring after a fortnight of real use:** whether `output_config.effort:'medium'` is the right
+setting. It is the latency lever and it is the only knob — `high` if answers get sloppy. Theo's ears and
+eyes are that gate, not a harness.

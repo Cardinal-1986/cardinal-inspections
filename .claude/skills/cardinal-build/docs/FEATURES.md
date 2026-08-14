@@ -4889,3 +4889,47 @@ scroll-lock writer · GPS never crosses (re-encode + explicit-field inserts, ass
 ⚠️ **Do not restore the `window.CardinalLanding.isVisionHost()` lookup in `showMain()`.** That object is
 defined ~22,000 lines later in the file and is reliably `undefined` when `showMain()` runs on a session
 restore. Measured with a probe, not inferred.
+
+---
+
+## Build 806 — the librarian runs on Claude (`api/librarian.js`)
+
+`api/librarian.js` is the Resource Library's assistant. At 806 it moved from Gemini to
+**`claude-opus-5`** via `@anthropic-ai/sdk`. **The JSON it hands back to `index.html` is
+unchanged, field for field** — that is the contract, and `gate_806.mjs` proves it by running
+the old route and the new route against the same model output and diffing what each emits.
+
+**What went away, and why it is not coming back:**
+
+| Removed | Was there because |
+|---|---|
+| the four-rung ladder — `gemini-3.6-flash` ×2 → `gemini-3.5-flash` ×2 → `gpt-4o-mini` | the free Gemini tier 503'd about one call in four. A second provider quietly answering roofing-code questions is worse than an honest error |
+| `OPENAI_API_KEY` | the third rung. **This route no longer reads it.** Other routes still do — `caption.js` has the same ladder |
+| "Respond with ONLY raw JSON, no markdown fences" as a *hope*, and the ```-strip behind it | the shape is now enforced by `output_config.format`. The strip was a latent corruption bug: any answer whose `body` legitimately contained a fence would have been mangled before `JSON.parse` |
+
+**What is deliberately unchanged:** the Supabase session gate, the scope fence (reference
+material only — no clients, no job paperwork), the `~~photos` exception of 471, the `~~stack` /
+`~~flow` / `~~bars` / `~~pitch` diagram vocabulary, the 510 marker-spacing rule, the citation
+rules, the `sources` sanitiser of 446/512, and the `belongs:false` refusal path.
+
+**Shape of the request now:** the standing brief (`RULES` + the writing brief, or `RULES` +
+`SHAPE`) is the **`system`** block and carries `cache_control:{type:'ephemeral'}`; the volatile
+half — the library outline and the actual question — is the **user turn**. Splitting it that way
+is what makes the prefix cacheable. `output_config.effort` is **`medium`**: it is the latency
+lever, and thinking is the reason to be on this model at all. Raise it to `high` if answers get
+sloppy; that is the one knob.
+
+⚠️ **`ANTHROPIC_API_KEY` must be set in Vercel env or this route 500s** with a message naming
+the variable. `GEMINI_API_KEY` is still needed by `caption.js` / `organize.js` / `analyze.js` /
+`sol.js` and must not be removed.
+
+⚠️ **One narrowing, on a path that has never carried traffic.** Gemini swallowed any mime type;
+Claude reads PDFs and photographs. Uploading anything else to the librarian now gets a 400 that
+says to save it as a PDF or paste the text. Measured before narrowing: **all 32 `library_items`
+rows are `kind='note'`** — 21 written by the AI from a typed question, 11 seeded. **Zero files or
+images have ever gone through this route.**
+
+**It was priced before it was switched, on real traffic:** 21 real questions, 5,803 chars in and
+2,221 out on average, ≈**$1/month** at the observed rate and $7.25/month at ten questions a day.
+Cost was never the constraint. `scripts/librarian_measure.mjs`-style measurement ran the *shipped*
+handler with a stubbed transport, so the sizes are what the route really sends, not an estimate.

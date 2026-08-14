@@ -3504,7 +3504,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 805 &#8212; The showroom door no longer renders the CRM behind it — presentations only, on the domain you hand to a customer</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 806 &#8212; The Resource Library’s AI now runs on Claude — no more “high demand” failures when you ask it a question</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39588,6 +39588,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:806, d:'2026-08-14', t:'The Library\u2019s librarian moves to Claude',
+s:'The Resource Library\u2019s assistant \u2014 the one you ask a code question and it writes the entry \u2014 was running on Google\u2019s free tier, which refused about one call in four with \u201chigh demand\u201d and took six to fourteen seconds when it did answer. It now runs on Claude. Three things you should notice: it stops failing under load, it stops needing the retry-and-hope ladder that was stacked behind it, and its answer format is now enforced rather than requested, so the \u201ccould not add that\u201d error from a mangled reply cannot happen. Everything else is deliberately identical \u2014 same fence (reference material only, no client records or job paperwork), same diagrams, same photo search, same citation rules, same filing. Priced before switching, on the twenty-one questions actually asked so far rather than a guess: about a dollar a month at the current rate. Cost was never the reason; a confidently wrong code citation is. One narrowing, on a path nothing has ever used: uploading a file to the librarian now takes PDFs and photographs, and asks you to paste the text for anything else.' },
 { b:805, d:'2026-08-14', t:'The showroom door shows presentations, not the CRM',
 s:'Signing in at showroom.cardinalroster.com was painting the whole retail CRM \u2014 the pipeline, the work schedule, accounts receivable, punch items with a client\u2019s name on them, the client list and a staff email address \u2014 on the one domain meant to be handed across a kitchen table. Build 625 was supposed to prevent that, but the check it used lives 22,000 lines further down the file than the code asking the question, so on a real sign-in the answer came back empty and the app fell through to a normal CRM load. The check is now made directly against the address bar, and on the showroom door the CRM is not drawn at all: the Vision hub is the whole screen and no client data is even fetched. Nothing changes on app.cardinalroster.com. Worth knowing: this stops the CRM being shown, not being downloaded \u2014 only a separate showroom file does that, and it is still on the list.' },
 { b:804, d:'2026-08-14', t:'The search bar folds into a magnifier',

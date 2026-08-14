@@ -16338,3 +16338,33 @@ change at all. All six `app.cardinalroster.com` assertions pass identically on 8
 **downloaded**. Only a separate file removes the code — `OPEN_ITEMS`' Option 3, which Theo asked to keep on
 the table at 625 (*"Option 1 but remember option 3"*). This build is the evidence that Option 1 cannot
 deliver separation on its own.
+
+- **806** · The Library's librarian moves off Gemini onto Claude · `api/librarian.js` now calls
+**`claude-opus-5`** through `@anthropic-ai/sdk`. **The reason was never cost.** It was priced first, on
+real traffic rather than a guess: the 21 questions the crew has actually asked, measured by running the
+**shipped** handler against a stubbed transport so the sizes are the bytes it really sends — **5,803 chars
+in, 2,221 out** on average, **≈$1/month** at the observed rate, $7.25/month at ten a day. What the switch
+buys is the thing the route's own comments recorded: the free Gemini tier **503'd about one call in four
+and took 6-14s** when it answered, which is why a four-rung ladder (`3.6-flash` ×2 → `3.5-flash` ×2 →
+`gpt-4o-mini`) had grown behind it. The ladder is gone; `OPENAI_API_KEY` is no longer read by this route.
+**The answer shape is now ENFORCED** by `output_config.format` instead of requested in prose, which also
+retired the ```-strip — a latent corruption bug, since any answer whose `body` legitimately contained a
+fence was mangled before `JSON.parse` ever saw it. The standing brief moved into a **cacheable `system`
+prefix** and the volatile half (library outline + question) stayed in the user turn; `effort:'medium'`
+keeps latency near what the crew is used to. **Every prompt fix from 466/471/508/510/512 is byte-identical
+and asserted** — the transport changed, the prompt did not. `gate_806.mjs`: **42/42 green, 20 red on the
+pre-swap route.** The gate's shape is the point: it runs the **old route and the new route against the
+same model output and diffs the JSON each emits**, because the contract that matters is not "it calls
+Claude", it is that `index.html` cannot tell. It drives the **real SDK** against a local server speaking
+proper SSE, so the captured request is what would go on the wire; a hand-rolled fake would have proved my
+own assumption. ⚠️ **The gate went red once on a correct file** — `!src.includes('OPENAI_API_KEY')` matched
+the route's own header comment saying the key is no longer read. **The comment-pollution trap, third time
+this session, and the fix is always the assertion and never the comment**; it now asserts on
+`process.env.OPENAI_API_KEY`. ⚠️ **The first negative control was red for the wrong reason** — pointed at
+the old route it put a real request on the wire to Google and failed with "API key not valid", which would
+also be red offline and for a third reason again. That host is now intercepted, so the control fails on
+**what this build changed** and nothing else. ⚠️ **One narrowing, on a path with zero traffic:** Gemini took
+any mime type, Claude reads PDFs and photographs, so anything else now gets a 400 saying to save it as a
+PDF or paste the text — measured first, **all 32 `library_items` rows are `kind='note'`** and no file or
+image has ever gone through this route. **`ANTHROPIC_API_KEY` must be set in Vercel env before this
+deploys**; `GEMINI_API_KEY` stays, four other routes still need it.
