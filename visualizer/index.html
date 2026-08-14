@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en" data-theme="blackout">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08090B">
+<meta name="robots" content="noindex, nofollow">
+<title>Cardinal Exterior Visualizer</title>
+
+<!--
+  Cardinal Exterior Visualizer — tier 1 of three.
+  v2026-08-14 build 807
+
+  A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
+  Build 805 is the reason: hiding the CRM behind a hostname check inside the
+  one big file does not separate anything — the code still ships to the tablet,
+  and one missed branch renders the pipeline on a customer-facing domain. There
+  is no CRM code in this file at all. Nothing to hide, nothing to leak.
+
+  It lives in its own folder so it can be the ROOT of its own Vercel project.
+  Until that project exists it is still reachable from the main one at
+  /visualizer/, which is what makes it testable today.
+
+  THE SHAPE OF THE THING, and why:
+
+    PREP     at the office, before the appointment. Pick the house, pick the
+             combinations worth showing, queue them. The DGX Spark renders them
+             while nobody is waiting.
+    REVIEW   a person looks at every render before a customer does. Same rule
+             The Walk runs on. `approved` starts false and only this screen
+             sets it true.
+    PRESENT  at the kitchen table. Only approved renders, already made, so a
+             tap is instant. Nothing generates while a homeowner watches.
+
+  That split IS the settled decision "pre-render before the appointment". If
+  you find yourself adding a Generate button to PRESENT, you are undoing it.
+
+  THE SEAM: `design_jobs`. This file writes a row and reads it back. It never
+  talks to ComfyUI, never holds a service key, and does not care whether the
+  Spark is switched on. `spark/visualizer_worker.py` is the other half and
+  polls outbound only — no tunnel, no inbound port.
+
+  ROOFING IS OWENS CORNING, from `oc_colors`. Everything else is a real brand
+  from `materials`, whose `category` CHECK constraint deliberately excludes
+  roofing so the two catalogs can never disagree about a shingle.
+
+  AI-generated images are PRESENTATION ONLY. They never reach project photos,
+  inspection reports, claims, supplements or CompanyCam. An altered photograph
+  of a real roof is an insurance problem, which is why the render lives in its
+  own table and its own storage prefix and never touches `project_photos`.
+-->
+
+<style id="vz-styles">
+/* Blackout, single-theme, exactly like the Showcase and OC Colors: this is a
+   client-facing presentation surface and it is deliberately outside the app's
+   light/dark system. Do not wire it to rb-light.
+   Every reference carries a literal fallback — the 448-449 rule. */
+:root{
+  --vz-bg:#08090B; --vz-panel:#111318; --vz-card:#171A21; --vz-line:#252932;
+  --vz-ink:#F2F4F8; --vz-dim:#A8B0BF; --vz-mute:#767E8D;
+  --vz-red:#C8202E; --vz-go:#3FA46A; --vz-warn:#D98324; --vz-sel:#5B9DD9;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--vz-bg,#08090B); color:var(--vz-ink,#F2F4F8);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+img{max-width:100%;display:block}
+.hide{display:none !important}
+
+/* ---------- sign in ---------- */
+#vzSignin{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:24px;background:var(--vz-bg,#08090B);z-index:50}
+.vz-card{width:100%;max-width:390px;background:var(--vz-panel,#111318);
+  border:1px solid var(--vz-line,#252932);border-radius:16px;padding:26px}
+.vz-card h1{margin:0 0 4px;font-size:21px;letter-spacing:.2px}
+.vz-card p.sub{margin:0 0 20px;color:var(--vz-dim,#A8B0BF);font-size:13.5px}
+.vz-f{margin-bottom:12px}
+.vz-f label{display:block;font-size:12px;letter-spacing:.4px;text-transform:uppercase;
+  color:var(--vz-mute,#767E8D);margin-bottom:6px}
+input[type=email],input[type=password],input[type=search],select{
+  width:100%;min-height:46px;padding:11px 13px;border-radius:10px;
+  background:var(--vz-card,#171A21);color:var(--vz-ink,#F2F4F8);
+  border:1px solid var(--vz-line,#252932);font:inherit}
+input:focus,select:focus{outline:2px solid var(--vz-sel,#5B9DD9);outline-offset:1px}
+.btn{min-height:46px;padding:11px 18px;border-radius:10px;border:1px solid var(--vz-line,#252932);
+  background:var(--vz-card,#171A21);color:var(--vz-ink,#F2F4F8);font-weight:600}
+.btn:hover{border-color:var(--vz-mute,#767E8D)}
+.btn.primary{background:var(--vz-red,#C8202E);border-color:var(--vz-red,#C8202E);color:#fff}
+.btn.go{background:var(--vz-go,#3FA46A);border-color:var(--vz-go,#3FA46A);color:#08090B}
+.btn[disabled]{opacity:.45;cursor:default}
+.btn.wide{width:100%}
+.vz-err{margin-top:12px;color:#FF9AA2;font-size:13.5px;min-height:1.2em}
+
+/* ---------- chrome ---------- */
+header.vz{position:sticky;top:0;z-index:30;display:flex;gap:12px;align-items:center;
+  padding:10px 14px;background:var(--vz-panel,#111318);
+  border-bottom:1px solid var(--vz-line,#252932);flex-wrap:wrap}
+.vz-brand{font-weight:700;letter-spacing:.3px;white-space:nowrap}
+.vz-brand span{color:var(--vz-red,#C8202E)}
+header.vz .grow{flex:1 1 120px;min-width:0}
+.vz-tabs{display:flex;gap:6px}
+.vz-tab{min-height:44px;padding:9px 15px;border-radius:9px;border:1px solid transparent;
+  background:transparent;color:var(--vz-dim,#A8B0BF);font-weight:600}
+.vz-tab[aria-selected=true]{background:var(--vz-card,#171A21);
+  border-color:var(--vz-line,#252932);color:var(--vz-ink,#F2F4F8)}
+main{padding:16px 14px 90px;max-width:1400px;margin:0 auto}
+h2.sec{font-size:13px;letter-spacing:.9px;text-transform:uppercase;
+  color:var(--vz-mute,#767E8D);margin:26px 0 10px;font-weight:700}
+h2.sec:first-child{margin-top:6px}
+.note{color:var(--vz-dim,#A8B0BF);font-size:13.5px;margin:0 0 12px}
+.empty{padding:26px;border:1px dashed var(--vz-line,#252932);border-radius:12px;
+  color:var(--vz-dim,#A8B0BF);text-align:center}
+
+/* ---------- photo strip ---------- */
+.strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.shot{position:relative;padding:0;border:2px solid var(--vz-line,#252932);border-radius:12px;
+  overflow:hidden;background:var(--vz-card,#171A21);aspect-ratio:4/3}
+.shot img{width:100%;height:100%;object-fit:cover}
+.shot[aria-pressed=true]{border-color:var(--vz-go,#3FA46A)}
+.shot .cap{position:absolute;left:0;right:0;bottom:0;padding:6px 8px;font-size:11.5px;
+  text-align:left;background:#000000C0;color:var(--vz-ink,#F2F4F8);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- surfaces ---------- */
+.surf{border:1px solid var(--vz-line,#252932);border-radius:12px;margin-bottom:10px;
+  background:var(--vz-panel,#111318);overflow:hidden}
+.surf > summary{list-style:none;cursor:pointer;min-height:52px;display:flex;align-items:center;
+  gap:11px;padding:10px 14px;font-weight:600}
+.surf > summary::-webkit-details-marker{display:none}
+.surf .chev{margin-left:auto;color:var(--vz-mute,#767E8D);font-size:12px}
+.sw{width:26px;height:26px;border-radius:7px;border:1px solid var(--vz-line,#252932);flex:0 0 auto}
+.sw.none{background:repeating-linear-gradient(45deg,#2A2E38 0 5px,#171A21 5px 10px)}
+.pick{color:var(--vz-dim,#A8B0BF);font-weight:400;font-size:13.5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px;
+  padding:4px 12px 14px}
+.opt{display:flex;align-items:center;gap:9px;text-align:left;min-height:52px;padding:8px 10px;
+  border-radius:10px;border:1px solid var(--vz-line,#252932);background:var(--vz-card,#171A21)}
+.opt[aria-pressed=true]{border-color:var(--vz-go,#3FA46A);background:#16241D}
+.opt .nm{font-size:13.5px;line-height:1.25;min-width:0}
+.opt .nm b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opt .nm i{display:block;font-style:normal;color:var(--vz-mute,#767E8D);font-size:11.5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:999px;
+  font-size:10px;font-weight:700;letter-spacing:.4px;vertical-align:1px}
+.badge.disc{background:#3A2A16;color:#E8B173}
+.badge.new{background:#152A1E;color:#79D3A2}
+.badge.coty{background:#2A1620;color:#E894B4}
+
+/* ---------- queue bar ---------- */
+.qbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;gap:12px;align-items:center;
+  padding:10px 14px;background:var(--vz-panel,#111318);
+  border-top:1px solid var(--vz-line,#252932)}
+.qbar .sum{flex:1;min-width:0;font-size:13px;color:var(--vz-dim,#A8B0BF);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- job + render rows ---------- */
+.rows{display:grid;gap:8px}
+.row{display:flex;gap:12px;align-items:center;padding:10px 12px;border-radius:11px;
+  border:1px solid var(--vz-line,#252932);background:var(--vz-panel,#111318)}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:600;font-size:14px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .t i{font-style:normal;color:var(--vz-mute,#767E8D);font-size:12px}
+.row img.th{width:78px;height:58px;object-fit:cover;border-radius:8px;flex:0 0 auto;
+  background:var(--vz-card,#171A21)}
+.st{padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;
+  letter-spacing:.3px;white-space:nowrap}
+.st.queued{background:#1B2430;color:#8FB6DC}
+.st.running{background:#2C2413;color:#E2B457}
+.st.done{background:#15271D;color:#71C795}
+.st.error{background:#2E1619;color:#F09099}
+.err{color:#F09099;font-size:12px;margin-top:3px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ---------- gallery ---------- */
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.tile{padding:0;border:1px solid var(--vz-line,#252932);border-radius:14px;overflow:hidden;
+  background:var(--vz-panel,#111318);text-align:left}
+.tile img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.tile .lab{padding:9px 11px;font-size:13px;font-weight:600;line-height:1.35}
+.tile .lab i{display:block;font-style:normal;font-weight:400;font-size:11.5px;
+  color:var(--vz-mute,#767E8D);margin-top:2px}
+
+/* ---------- compare ---------- */
+#vzBox{position:fixed;inset:0;z-index:60;background:#050607;display:flex;flex-direction:column}
+#vzBox .top{display:flex;gap:10px;align-items:center;padding:10px 14px;
+  border-bottom:1px solid var(--vz-line,#252932)}
+#vzBox .top .t{flex:1;min-width:0;font-weight:600;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cmp{flex:1;position:relative;overflow:hidden;background:#050607;
+  display:flex;align-items:center;justify-content:center}
+.cmp .wrap{position:relative;max-width:100%;max-height:100%}
+.cmp img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.cmp .after{position:absolute;inset:0;overflow:hidden}
+.cmp .after img{width:100%;height:100%;object-fit:contain}
+.cmp .handle{position:absolute;top:0;bottom:0;width:3px;background:#fff;pointer-events:none}
+.cmp .handle::after{content:'';position:absolute;top:50%;left:50%;width:42px;height:42px;
+  margin:-21px 0 0 -21px;border-radius:50%;background:#fff;
+  box-shadow:0 2px 10px #0009}
+.cmp input[type=range]{position:absolute;left:0;right:0;bottom:0;width:100%;height:56px;
+  margin:0;opacity:0;cursor:ew-resize}
+.cmp .tagl,.cmp .tagr{position:absolute;top:12px;padding:4px 10px;border-radius:999px;
+  font-size:11.5px;font-weight:700;letter-spacing:.5px;background:#000000B0}
+.cmp .tagl{left:12px}
+.cmp .tagr{right:12px}
+#vzBox .feet{padding:10px 14px;border-top:1px solid var(--vz-line,#252932);
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#vzBox .feet .d{flex:1;min-width:0;color:var(--vz-dim,#A8B0BF);font-size:13px}
+
+/* A render is a proposal, never a photograph of the finished job. Said on the
+   screen because a homeowner keeps the screenshot. */
+.disclaim{padding:9px 12px;border-radius:10px;border:1px solid var(--vz-line,#252932);
+  background:var(--vz-panel,#111318);color:var(--vz-dim,#A8B0BF);font-size:12.5px;margin-top:14px}
+
+@media (max-width:640px){
+  main{padding:12px 10px 92px}
+  .opts{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
+</style>
+</head>
+<body>
+
+<!-- ───────────────────────── sign in ───────────────────────── -->
+<div id="vzSignin">
+  <form class="vz-card" id="vzForm">
+    <h1>Cardinal <span style="color:#C8202E">Exterior</span> Visualizer</h1>
+    <p class="sub">Cardinal staff only. This is a different site from the app, so it asks once here.</p>
+    <div class="vz-f">
+      <label for="vzEmail">Email</label>
+      <input id="vzEmail" type="email" autocomplete="username" required>
+    </div>
+    <div class="vz-f">
+      <label for="vzPass">Password</label>
+      <input id="vzPass" type="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn primary wide" id="vzGo" type="submit">Sign in</button>
+    <div class="vz-err" id="vzErr" role="alert"></div>
+  </form>
+</div>
+
+<!-- ───────────────────────── app ───────────────────────── -->
+<div id="vzApp" class="hide">
+  <header class="vz">
+    <div class="vz-brand">Cardinal <span>Exterior</span></div>
+    <div class="grow">
+      <select id="vzProject" aria-label="Job"><option value="">Loading jobs…</option></select>
+    </div>
+    <div class="vz-tabs" role="tablist">
+      <button class="vz-tab" id="tabPrep"    role="tab" aria-selected="true"  aria-controls="vzPrep">Prep</button>
+      <button class="vz-tab" id="tabPresent" role="tab" aria-selected="false" aria-controls="vzPresent">Present</button>
+    </div>
+    <button class="btn" id="vzOut" title="Sign out">Sign out</button>
+  </header>
+
+  <main>
+    <!-- ============ PREP ============ -->
+    <section id="vzPrep" role="tabpanel" aria-labelledby="tabPrep">
+      <h2 class="sec">1 · The photograph</h2>
+      <p class="note">A straight, unobstructed shot of the elevation works best. The
+        original is never altered — the render is a separate image.</p>
+      <div class="strip" id="vzShots"><div class="empty">Pick a job above.</div></div>
+
+      <h2 class="sec">2 · The materials</h2>
+      <p class="note">Leave a surface on <b>No change</b> and it stays exactly as
+        photographed. Roofing is Owens Corning; the rest are the brands we actually hang.</p>
+      <div id="vzSurfaces"></div>
+
+      <h2 class="sec">3 · Review — a person looks before a customer does</h2>
+      <p class="note">Renders start unapproved and stay out of Present until you approve them.</p>
+      <div class="rows" id="vzJobs"><div class="empty">Nothing queued yet.</div></div>
+
+      <div class="disclaim">Renders are a <b>proposal</b>, not a photograph of finished work.
+        Colour on a screen is not a colour sample — always confirm against a real board or
+        shingle in daylight. These images never go into the job file, an inspection report
+        or a claim.</div>
+    </section>
+
+    <!-- ============ PRESENT ============ -->
+    <section id="vzPresent" class="hide" role="tabpanel" aria-labelledby="tabPresent">
+      <h2 class="sec">Ready to show</h2>
+      <p class="note">Approved renders for this job. Everything here is already made —
+        tapping one is instant.</p>
+      <div class="gal" id="vzGal"><div class="empty">Nothing approved for this job yet.</div></div>
+    </section>
+  </main>
+
+  <div class="qbar" id="vzBar">
+    <div class="sum" id="vzSum">Pick a photograph to begin.</div>
+    <button class="btn go" id="vzQueue" disabled>Queue this combination</button>
+  </div>
+</div>
+
+<!-- ───────────────────────── compare ───────────────────────── -->
+<div id="vzBox" class="hide" role="dialog" aria-modal="true" aria-label="Before and after">
+  <div class="top">
+    <div class="t" id="vzBoxT"></div>
+    <button class="btn" id="vzBoxX">Close</button>
+  </div>
+  <div class="cmp" id="vzCmp">
+    <div class="wrap" id="vzWrap">
+      <img id="vzBefore" alt="The house as photographed">
+      <div class="after" id="vzAfter"><img id="vzAfterImg" alt="The house with the proposed materials"></div>
+      <div class="handle" id="vzHandle"></div>
+      <div class="tagl">NOW</div><div class="tagr">PROPOSED</div>
+      <input type="range" id="vzSlide" min="0" max="100" value="50" aria-label="Wipe between now and proposed">
+    </div>
+  </div>
+  <div class="feet">
+    <div class="d" id="vzBoxD"></div>
+    <button class="btn" id="vzApprove"></button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script id="vz-script">
+(function(){
+'use strict';
+
+/* These two are designed to be public — the same pair every api/*.js carries.
+   Nothing else belongs in this file. The service key lives on the Spark. */
+var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
+var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
+var BUCKET = 'photos';
+
+/* Its OWN storage key. Studio and the CRM use the supabase-js default, which is
+   derived from the project ref — on a shared origin three apps would fight over
+   one session. persistSession and autoRefreshToken are the defaults but are
+   written out because they are the whole point: a rep signs in here once, and
+   the refresh token carries them until they sign out. */
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    storageKey: 'cr-viz-auth',
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false,
+  }
+});
+
+var $ = function(id){ return document.getElementById(id); };
+var esc = function(s){ return String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+
+/* ── state ─────────────────────────────────────────────────────────────── */
+var me = '';                 /* signed-in email — RLS matches created_by to it */
+var projects = [], shots = [], jobs = [], renders = [];
+var chosenShot = null;       /* a project_photos row */
+var picked = {};             /* surface -> selection object frozen into the job */
+var catalog = { roof:[], siding:[], trim:[], windows:[], gutters:[] };
+var urlCache = {};
+var poll = null;
+
+var SURFACES = [
+  { key:'roof',    label:'Roof' },
+  { key:'siding',  label:'Siding' },
+  { key:'trim',    label:'Trim' },
+  { key:'windows', label:'Windows' },
+  { key:'gutters', label:'Gutters' },
+];
+
+/* Order-independent identity for a combination, so the same five picks made in
+   a different order are recognised as the render that already exists rather
+   than queued a second time. */
+function comboKey(shotPath, sel){
+  var parts = Object.keys(sel || {}).sort().map(function(k){
+    return k + '=' + (sel[k] && sel[k].id ? sel[k].id : '');
+  });
+  return String(shotPath || '') + '|' + parts.join('&');
+}
+
+/* ── storage ───────────────────────────────────────────────────────────── */
+/* Signed rather than public: it works whether or not the bucket is public, and
+   a customer-facing screen should not depend on a bucket staying public.
+   Signed URLs EXPIRE — they are for display and are never written to a row. */
+function signed(path){
+  if(!path) return Promise.resolve('');
+  if(urlCache[path]) return Promise.resolve(urlCache[path]);
+  return sb.storage.from(BUCKET).createSignedUrl(path, 3600).then(function(r){
+    var u = r && r.data && r.data.signedUrl ? r.data.signedUrl : '';
+    if(u) urlCache[path] = u;
+    return u;
+  }).catch(function(){ return ''; });
+}
+function paint(img, path){
+  signed(path).then(function(u){ if(u) img.src = u; });
+}
+
+/* ── auth ──────────────────────────────────────────────────────────────── */
+function showApp(email){
+  me = email;
+  $('vzSignin').classList.add('hide');
+  $('vzApp').classList.remove('hide');
+  loadCatalog().then(loadProjects);
+}
+$('vzForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  var b = $('vzGo'), was = b.textContent;
+  $('vzErr').textContent = '';
+  b.disabled = true; b.textContent = 'Signing in…';
+  sb.auth.signInWithPassword({
+    email: $('vzEmail').value.trim(), password: $('vzPass').value
+  }).then(function(r){
+    b.disabled = false; b.textContent = was;
+    if(r.error){ $('vzErr').textContent = r.error.message || 'Could not sign in.'; return; }
+    var em = r.data && r.data.user ? r.data.user.email : '';
+    if(!em){ $('vzErr').textContent = 'Signed in but no email came back.'; return; }
+    showApp(em);
+  }).catch(function(e2){
+    b.disabled = false; b.textContent = was;
+    $('vzErr').textContent = String(e2 && e2.message || e2);
+  });
+});
+$('vzOut').addEventListener('click', function(){
+  sb.auth.signOut().then(function(){ location.reload(); });
+});
+
+/* ── catalog ───────────────────────────────────────────────────────────── */
+/* Roofing comes from oc_colors and everything else from materials. oc_colors
+   has no prompt column — it is the brand reference the Colors hub renders, not
+   an image-generation table — so the roof prompt is COMPOSED here from the
+   colour's own recorded facts and then frozen into the job. That freezing is
+   the point: a render can always be traced to the exact words that made it,
+   even after somebody edits the catalog. */
+function roofPrompt(c){
+  var bits = ['architectural asphalt shingle roof',
+    'Owens Corning ' + (c.product_line || 'Duration') + ' in ' + c.name];
+  if(c.description) bits.push(String(c.description).slice(0, 160));
+  else if(c.family) bits.push(String(c.family).toLowerCase() + ' tone');
+  bits.push('realistic granular shingle texture, straight consistent course lines',
+            'same roof shape, same pitch, same lighting as the photograph');
+  return bits.join(', ');
+}
+var ROOF_NEG = 'metal roof, tile roof, flat roof, wavy or warped courses, ' +
+  'changed roof geometry, added dormers, text, watermark, cartoon';
+
+function loadCatalog(){
+  return Promise.all([
+    sb.from('oc_colors')
+      .select('id,name,hex,family,product_line,status,description,sort_order,hidden')
+      .order('sort_order', { ascending:true }).order('name', { ascending:true }),
+    sb.from('materials')
+      .select('id,category,manufacturer,product_line,color_name,hex,finish,prompt,negative,status,sort_order')
+      .order('sort_order', { ascending:true }).order('color_name', { ascending:true })
+  ]).then(function(res){
+    var oc = (res[0] && res[0].data) || [];
+    var mt = (res[1] && res[1].data) || [];
+    catalog.roof = oc.filter(function(c){ return !c.hidden; }).map(function(c){
+      return { id:c.id, surface:'roof', name:c.name,
+               sub:'Owens Corning ' + (c.product_line || ''), hex:c.hex,
+               status:c.status, prompt:roofPrompt(c), negative:ROOF_NEG };
+    });
+    ['siding','trim','windows','gutters'].forEach(function(k){ catalog[k] = []; });
+    mt.forEach(function(m){
+      if(!catalog[m.category]) return;
+      catalog[m.category].push({
+        id:m.id, surface:m.category, name:m.color_name,
+        sub:m.manufacturer + ' ' + m.product_line + (m.finish ? ' · ' + m.finish : ''),
+        hex:m.hex, status:m.status, prompt:m.prompt, negative:m.negative || ''
+      });
+    });
+    drawSurfaces();
+  }).catch(function(e){
+    $('vzSurfaces').innerHTML = '<div class="empty">Could not load the catalog — ' +
+      esc(e && e.message || e) + '</div>';
+  });
+}
+
+/* ── projects and photographs ──────────────────────────────────────────── */
+function loadProjects(){
+  return sb.from('projects').select('id,name,stage')
+    .order('created_at', { ascending:false }).limit(400)
+    .then(function(r){
+      projects = (r && r.data) || [];
+      var sel = $('vzProject');
+      if(!projects.length){ sel.innerHTML = '<option value="">No jobs you can see</option>'; return; }
+      sel.innerHTML = '<option value="">Choose a job…</option>' + projects.map(function(p){
+        return '<option value="' + esc(p.id) + '">' + esc(p.name || '(no name)') +
+               (p.stage ? ' · ' + esc(p.stage) : '') + '</option>';
+      }).join('');
+    });
+}
+$('vzProject').addEventListener('change', function(){
+  chosenShot = null;
+  loadShots();
+  refresh();
+});
+
+function loadShots(){
+  var pid = $('vzProject').value;
+  var box = $('vzShots');
+  if(!pid){ box.innerHTML = '<div class="empty">Pick a job above.</div>'; sum(); return; }
+  box.innerHTML = '<div class="empty">Loading photographs…</div>';
+  sb.from('project_photos').select('id,storage_path,caption,section,created_at')
+    .eq('project_id', pid).not('storage_path','is',null)
+    .order('created_at', { ascending:false }).limit(60)
+    .then(function(r){
+      shots = (r && r.data) || [];
+      if(!shots.length){
+        box.innerHTML = '<div class="empty">No photographs on this job yet. ' +
+          'Add them in the app first.</div>';
+        sum(); return;
+      }
+      box.innerHTML = '';
+      shots.forEach(function(s){
+        var b = document.createElement('button');
+        b.className = 'shot'; b.type = 'button';
+        b.setAttribute('aria-pressed', 'false');
+        b.dataset.path = s.storage_path;
+        var im = document.createElement('img');
+        im.alt = s.caption || 'Job photograph';
+        im.loading = 'lazy';
+        b.appendChild(im);
+        paint(im, s.storage_path);
+        if(s.caption || s.section){
+          var c = document.createElement('span');
+          c.className = 'cap';
+          c.textContent = s.caption || s.section;
+          b.appendChild(c);
+        }
+        b.addEventListener('click', function(){ chooseShot(s, b); });
+        box.appendChild(b);
+      });
+      sum();
+    });
+}
+function chooseShot(s, btn){
+  chosenShot = s;
+  Array.prototype.forEach.call($('vzShots').querySelectorAll('.shot'), function(el){
+    el.setAttribute('aria-pressed', el === btn ? 'true' : 'false');
+  });
+  sum();
+}
+
+/* ── the surface pickers ───────────────────────────────────────────────── */
+function badge(status){
+  if(status === 'discontinued') return ' <span class="badge disc">DISCONTINUED</span>';
+  if(status === 'new')  return ' <span class="badge new">NEW</span>';
+  if(status === 'coty') return ' <span class="badge coty">COLOR OF THE YEAR</span>';
+  return '';
+}
+function drawSurfaces(){
+  var host = $('vzSurfaces');
+  host.innerHTML = '';
+  SURFACES.forEach(function(s){
+    var d = document.createElement('details');
+    d.className = 'surf';
+    d.innerHTML =
+      '<summary><span class="sw none" id="sw-' + s.key + '"></span>' +
+      '<span>' + esc(s.label) + '</span>' +
+      '<span class="pick" id="pk-' + s.key + '">No change</span>' +
+      '<span class="chev">▾</span></summary>' +
+      '<div class="opts" id="op-' + s.key + '"></div>';
+    host.appendChild(d);
+
+    var box = d.querySelector('#op-' + s.key);
+    var list = catalog[s.key] || [];
+    if(!list.length){
+      box.innerHTML = '<div class="empty">Nothing in the catalog for ' + esc(s.label) + ' yet.</div>';
+      return;
+    }
+    box.appendChild(optBtn(s.key, null));
+    list.forEach(function(o){ box.appendChild(optBtn(s.key, o)); });
+  });
+}
+function optBtn(surface, o){
+  var b = document.createElement('button');
+  b.className = 'opt'; b.type = 'button';
+  b.setAttribute('aria-pressed', o ? 'false' : 'true');
+  b.dataset.surface = surface;
+  b.dataset.id = o ? o.id : '';
+  var swatch = o && o.hex
+    ? '<span class="sw" style="background:' + esc(o.hex) + '"></span>'
+    : '<span class="sw none"></span>';
+  b.innerHTML = swatch + '<span class="nm"><b>' +
+    (o ? esc(o.name) + badge(o.status) : 'No change') + '</b><i>' +
+    (o ? esc(o.sub) : 'Leave this surface as photographed') + '</i></span>';
+  b.addEventListener('click', function(){ choose(surface, o); });
+  return b;
+}
+function choose(surface, o){
+  if(o) picked[surface] = o; else delete picked[surface];
+  Array.prototype.forEach.call(
+    document.querySelectorAll('.opt[data-surface="' + surface + '"]'), function(el){
+      el.setAttribute('aria-pressed', el.dataset.id === (o ? String(o.id) : '') ? 'true' : 'false');
+    });
+  var sw = $('sw-' + surface), pk = $('pk-' + surface);
+  if(sw){
+    sw.className = 'sw' + (o && o.hex ? '' : ' none');
+    sw.style.background = o && o.hex ? o.hex : '';
+  }
+  if(pk) pk.textContent = o ? o.name : 'No change';
+  sum();
+}
+
+/* ── the queue bar ─────────────────────────────────────────────────────── */
+function sum(){
+  var keys = Object.keys(picked);
+  var ok = !!(chosenShot && keys.length);
+  $('vzQueue').disabled = !ok;
+  if(!chosenShot){ $('vzSum').textContent = 'Pick a photograph to begin.'; return; }
+  if(!keys.length){ $('vzSum').textContent = 'Pick at least one material.'; return; }
+  $('vzSum').textContent = SURFACES.filter(function(s){ return picked[s.key]; })
+    .map(function(s){ return s.label + ': ' + picked[s.key].name; }).join('  ·  ');
+}
+
+$('vzQueue').addEventListener('click', function(){
+  if(!chosenShot || !Object.keys(picked).length) return;
+  var b = $('vzQueue'), was = b.textContent;
+
+  /* The same combination on the same photograph is already answered — show it
+     rather than spending the Spark on it twice. */
+  var key = comboKey(chosenShot.storage_path, picked);
+  var dupe = jobs.filter(function(j){
+    return j.status !== 'error' && comboKey(j.source_path, j.selections) === key;
+  })[0];
+  if(dupe){
+    $('vzSum').textContent = dupe.status === 'done'
+      ? 'Already rendered — it is in the list below.'
+      : 'Already queued — it is in the list below.';
+    return;
+  }
+
+  b.disabled = true; b.textContent = 'Queueing…';
+  /* Only the fields the worker reads, named one by one. Nothing about a
+     location travels with a job: `selections` is materials, `source_path` is a
+     storage path, and neither carries a coordinate. Do not "complete" this row
+     with anything from the photograph's metadata. */
+  var sel = {};
+  SURFACES.forEach(function(s){
+    var o = picked[s.key];
+    if(!o) return;
+    sel[s.key] = { id:o.id, name:o.name, sub:o.sub, hex:o.hex || null,
+                   prompt:o.prompt, negative:o.negative || '' };
+  });
+  sb.from('design_jobs').insert({
+    project_id: $('vzProject').value || null,
+    source_path: chosenShot.storage_path,
+    selections: sel,
+    created_by: me            /* RLS refuses the insert if this is not me */
+  }).select().maybeSingle().then(function(r){
+    b.disabled = false; b.textContent = was;
+    if(r.error){ $('vzSum').textContent = 'Could not queue it — ' + (r.error.message || ''); return; }
+    $('vzSum').textContent = 'Queued. The Spark picks it up on its next poll.';
+    refresh();
+  }).catch(function(e){
+    b.disabled = false; b.textContent = was;
+    $('vzSum').textContent = 'Could not queue it — ' + String(e && e.message || e);
+  });
+});
+
+/* ── jobs and renders ──────────────────────────────────────────────────── */
+function refresh(){
+  var pid = $('vzProject').value;
+  if(!pid){ jobs = []; renders = []; drawJobs(); drawGallery(); return; }
+  Promise.all([
+    sb.from('design_jobs')
+      .select('id,status,source_path,selections,render_path,preview_path,error,created_at,duration_ms')
+      .eq('project_id', pid).order('created_at', { ascending:false }).limit(60),
+    sb.from('design_renders')
+      .select('id,job_id,title,source_path,render_path,preview_path,selections,approved,created_at')
+      .eq('project_id', pid).order('created_at', { ascending:false }).limit(60)
+  ]).then(function(res){
+    jobs    = (res[0] && res[0].data) || [];
+    renders = (res[1] && res[1].data) || [];
+    drawJobs(); drawGallery(); schedule();
+  });
+}
+/* Poll only while something is actually in flight. An idle screen must not sit
+   there hitting the database every few seconds. */
+function schedule(){
+  if(poll){ clearTimeout(poll); poll = null; }
+  var busy = jobs.some(function(j){ return j.status === 'queued' || j.status === 'running'; });
+  if(busy) poll = setTimeout(refresh, 6000);
+}
+function titleOf(sel){
+  return SURFACES.filter(function(s){ return sel && sel[s.key]; })
+    .map(function(s){ return sel[s.key].name; }).join(' · ') || 'No materials';
+}
+function drawJobs(){
+  var host = $('vzJobs');
+  if(!jobs.length){ host.innerHTML = '<div class="empty">Nothing queued yet.</div>'; return; }
+  host.innerHTML = '';
+  jobs.forEach(function(j){
+    var rend = renders.filter(function(r){ return r.job_id === j.id; })[0];
+    var row = document.createElement('div');
+    row.className = 'row';
+    var im = document.createElement('img');
+    im.className = 'th'; im.alt = '';
+    paint(im, j.preview_path || j.source_path);
+    row.appendChild(im);
+    var t = document.createElement('div');
+    t.className = 't';
+    t.innerHTML = '<b>' + esc(titleOf(j.selections)) + '</b><i>' +
+      new Date(j.created_at).toLocaleString() +
+      (j.duration_ms ? ' · ' + (j.duration_ms / 1000).toFixed(1) + 's' : '') +
+      (rend && rend.approved ? ' · approved' : '') + '</i>' +
+      (j.error ? '<div class="err">' + esc(j.error) + '</div>' : '');
+    row.appendChild(t);
+    var st = document.createElement('span');
+    st.className = 'st ' + esc(j.status);
+    st.textContent = j.status;
+    row.appendChild(st);
+    if(j.status === 'done' && rend){
+      var b = document.createElement('button');
+      b.className = 'btn';
+      b.textContent = rend.approved ? 'View' : 'Review';
+      b.addEventListener('click', function(){ openBox(rend); });
+      row.appendChild(b);
+    }
+    host.appendChild(row);
+  });
+}
+function drawGallery(){
+  var host = $('vzGal');
+  var ok = renders.filter(function(r){ return r.approved; });
+  if(!ok.length){
+    host.innerHTML = '<div class="empty">Nothing approved for this job yet. ' +
+      'Approve a render in Prep and it appears here.</div>';
+    return;
+  }
+  host.innerHTML = '';
+  ok.forEach(function(r){
+    var b = document.createElement('button');
+    b.className = 'tile'; b.type = 'button';
+    var im = document.createElement('img');
+    im.alt = r.title || 'Proposed exterior';
+    im.loading = 'lazy';
+    b.appendChild(im);
+    paint(im, r.preview_path || r.render_path);
+    var l = document.createElement('div');
+    l.className = 'lab';
+    l.innerHTML = esc(r.title || titleOf(r.selections)) + '<i>Tap to compare with now</i>';
+    b.appendChild(l);
+    b.addEventListener('click', function(){ openBox(r); });
+    host.appendChild(b);
+  });
+}
+
+/* ── the compare box ───────────────────────────────────────────────────── */
+var boxed = null;
+function openBox(r){
+  boxed = r;
+  $('vzBoxT').textContent = r.title || titleOf(r.selections);
+  $('vzBoxD').textContent = SURFACES.filter(function(s){ return r.selections && r.selections[s.key]; })
+    .map(function(s){ return s.label + ': ' + r.selections[s.key].name +
+      (r.selections[s.key].sub ? ' (' + r.selections[s.key].sub + ')' : ''); }).join('   ·   ');
+  paint($('vzBefore'), r.source_path);
+  paint($('vzAfterImg'), r.render_path || r.preview_path);
+  $('vzSlide').value = 50; wipe(50);
+  approveBtn();
+  $('vzBox').classList.remove('hide');
+  document.body.style.overflow = 'hidden';
+}
+function closeBox(){
+  $('vzBox').classList.add('hide');
+  document.body.style.overflow = '';
+  boxed = null;
+}
+$('vzBoxX').addEventListener('click', closeBox);
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' && !$('vzBox').classList.contains('hide')) closeBox();
+});
+function wipe(pct){
+  $('vzAfter').style.width = pct + '%';
+  $('vzHandle').style.left = pct + '%';
+}
+$('vzSlide').addEventListener('input', function(){ wipe(this.value); });
+
+function approveBtn(){
+  var b = $('vzApprove');
+  if(!boxed){ b.textContent = ''; return; }
+  b.textContent = boxed.approved ? 'Approved — take it back' : 'Approve for Present';
+  b.className = 'btn' + (boxed.approved ? '' : ' go');
+}
+$('vzApprove').addEventListener('click', function(){
+  if(!boxed) return;
+  var next = !boxed.approved, b = $('vzApprove'), was = b.textContent;
+  b.disabled = true; b.textContent = 'Saving…';
+  sb.from('design_renders').update({
+    approved: next,
+    approved_by: next ? me : null,
+    approved_at: next ? new Date().toISOString() : null
+  }).eq('id', boxed.id).select().maybeSingle().then(function(r){
+    b.disabled = false;
+    if(r.error){ b.textContent = was; $('vzBoxD').textContent = 'Could not save — ' + r.error.message; return; }
+    boxed.approved = next;
+    approveBtn();
+    refresh();
+  }).catch(function(){ b.disabled = false; b.textContent = was; });
+});
+
+/* ── tabs ──────────────────────────────────────────────────────────────── */
+function tab(which){
+  var prep = which === 'prep';
+  $('tabPrep').setAttribute('aria-selected', prep ? 'true' : 'false');
+  $('tabPresent').setAttribute('aria-selected', prep ? 'false' : 'true');
+  $('vzPrep').classList.toggle('hide', !prep);
+  $('vzPresent').classList.toggle('hide', prep);
+  /* The queue bar is a PREP control. In front of a homeowner there is nothing
+     to queue — that is the whole point of pre-rendering. */
+  $('vzBar').classList.toggle('hide', !prep);
+}
+$('tabPrep').addEventListener('click', function(){ tab('prep'); });
+$('tabPresent').addEventListener('click', function(){ tab('present'); refresh(); });
+
+/* ── boot ──────────────────────────────────────────────────────────────── */
+sb.auth.getSession().then(function(r){
+  var s = r && r.data ? r.data.session : null;
+  if(s && s.user && s.user.email) showApp(s.user.email);
+  else $('vzEmail').focus();
+}).catch(function(){ /* fall through to the sign-in card */ });
+
+window.CardinalVisualizer = { comboKey: comboKey, roofPrompt: roofPrompt };
+})();
+</script>
+</body>
+</html>

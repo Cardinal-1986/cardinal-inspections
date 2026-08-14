@@ -4781,3 +4781,232 @@ voice** — no "AI" anywhere a client reads: tag `AFTER · CARDINAL DESIGNER`,
 badge `DESIGN`, burned mark `CARDINAL DESIGNER · VISUALIZATION`. The images
 are still AI-generated and the internal record still says so (`via`, banner,
 docs). `gate_762.mjs`: 23 green · 5 red on the v761 control.
+
+## Production + Punch-Outs (builds 766-772) — REPLACED the 393/603 board
+
+| Feature | Where | Notes |
+|---|---|---|
+| Production screen | `cr-pb-styles` + `cr-pb-script`, `#cr-pb`, `window.CardinalProduction` | Three panes in one view: home / cal / list. Five boxes: Needs ordered · Ordered · Scheduled · Punch-outs · Closed repairs. Back goes up ONE level, never straight Home. |
+| Full calendar | the `cal` pane | Month grid, NAMED chips (build/punch/drop/closed), day sheet, "Needs a date" = Curtis's dispatch queue. Absorbs the dashboard's mini production calendar — one calendar per concept. |
+| The punch-out card | `cr-pk-styles` + `cr-pk-script`, `#cr-pk`, `window.CardinalPunchCard` | **THE** punch detail screen. Four entry points route here: Production, Punch & Repairs (`openDetail`), the client profile tab, and `CardinalPunchProfile.openItem`. |
+| Field SOP checklist | `punch_items.steps` jsonb (`punch_steps.sql`) | Trade templates (roofing/siding/gutters), steps that refuse to tick until a note is written, manager can add/remove/reorder. `template` column records the seed. |
+| Guided photo slots | the card | Overview · Close-up · Cleanup · Material · Final. Feeds the existing 5-photo close gate. Remove pip on filled slots. |
+| Supplement flag | the card | Files extra scope as its own URGENT item on the same job + notifies the office. **No money fields** — pricing stays in the office tools. |
+| Notifications | `notifyAssignee` (cr-pb), `notifyAssigned`/`notifyClosed` (cr-pk) | File/assign notifies the owner; close notifies the office. Never yourself, never for unassigned. Chat stays @-only. |
+| Materials ordered | `checklist.materials_ordered_at` + `_by` | Written from the Materials tab (`saveCkPatch`) and from the board's list (`patchProjectCk`). Answers the "Materials?" chip. |
+| Closed repairs | `buildActivityEvents()` | A closed punch-out is NOT deleted — it becomes the client's repair history. |
+
+**Roles**: manager card = admins + **Curtis** (Scottie's boss, dispatches the punch-outs). Field mode =
+everyone else in production. Field keeps the full messenger, photos, checklist ticking and close; it loses
+reassign, the schedule picker, step editing and the urgency toggle.
+
+**Fences held**: no money anywhere on Production · no photo GPS · quick-tick close kept · one calendar per
+concept · no new body observer · no 14th scroll-lock writer (the card uses `overscroll-behavior:contain`).
+
+## Build an estimate from ABC Supply's catalog (build 774)
+
+| Feature | Where | Notes |
+|---|---|---|
+| `+ ABC Supply` | `cr-est-script` items head, beside `+ From Library` and `+ Custom` | A **third source on the SAME picker**, not a second picker. `openPicker(mode)` takes `'library'` or `'abc'`; the sheet retitles, re-placeholders and grows a Search button. |
+| Remote search | `abcSearch()` → `CardinalABC.search()` | Runs on **Enter or the button only, never per keystroke** — every press is a paid round trip to ABC. The library half still filters as you type; `oninput` is gated on the mode. |
+| Tap to add, priced | `abcPick()` → `CardinalABC.price()` | Lands a line item carrying ABC's branch price, the item number, the description and the stocking UOM. |
+| `abc_item` on the line | the pushed line object | The ABC item number rides along so a future purchase order knows what to actually order. Nothing reads it yet — it is deliberate forward wiring, and it is why the seam exists at all. |
+| Failure never blocks | `abcPick()` | A price error **still adds the line, at $0**, with ABC's own sentence in an alert. A rep mid-estimate in front of a client types the number off a quote and carries on; an account problem must not strand the estimate. |
+| No account set | `abcCfg()` | Says *open Suppliers and set your Ship-To and Branch* instead of returning a 401. One place to configure, named in the message. |
+
+**The seam**: `window.CardinalABC` now exports `search`, `price` and `cfg` (via `Object.assign`, so `open`/`close`
+survive). Both wrap the **same `api()`** the Suppliers screen uses — one code path, so tonight's six fixes apply
+here for free and a future fix cannot drift between the two.
+
+⚠️ **The contrast trap caught this build too.** `+ ABC Supply` first shipped `#2a6b3c`, which is **3.06:1** on the
+editor's dark ground — under the 4.5 floor for 10.5px bold. Fixed the way its own neighbour already does it: base
+rule keeps the light-ground green, `cr-nvl-styles` carries the dark twin, exactly as `.add-custom` does
+(`#8f1620` → `#f0a3a9`). `#78c98e` was picked by arithmetic at **9.87:1** to match `.add-custom`'s 9.84:1, so the
+two buttons read at equal weight. **The contrast check is now IN `gate_774.mjs`**, so it cannot come back quietly.
+
+`gate_774.mjs`: **27 green · 24 red on the 773 control**. The three that pass on the control are deliberate
+regression checks (the old `CardinalABC.open` survives, the editor still opens, Library mode still says Library).
+
+## CompanyCam photographs into the Photo Album (build 777)
+
+| Feature | Where | Notes |
+|---|---|---|
+| `From CompanyCam` button | `#galCcBtn`, album toolbar (`galleryView`) | **Admin-only, set on every `openGalleryMode`** — api/companycam 403s everyone else, and a button that 403s the reps is worse than no button (the rccGate rule). Hidden in Inspection Photos mode. NOT in `enforceAlbumButtons()`'s un-hide list, on purpose. |
+| Picker panel | `#galCcPanel` + `cr-galcc-styles`, above the pae tabs | Light card (the `#galXferMenu` precedent), every colour a literal. Opens seeded with `currentProject.address` (name as fallback) and runs the search itself; results from the previous client are cleared by a `galCcFor` project-id check. |
+| Search | `galCcFind()` → `/api/companycam {action:'list'}` | The same index-first search the report picker uses (473/496) — address, job name or crew, across all ~60k photos. |
+| Foreign-job guard | `galCcForeign()` | Marks picks whose `project_name`/`project_address` don't look like this client's property, and `galCcAdd()` asks before copying them in — these land permanently in a client's album, so the 486 guard was kept, not dropped. |
+| Import | `galCcAdd()` → `{action:'fetch'}` per photo → `addGalleryFiles(files, metas)` | **The album's own pipeline, not a second one**: same 1600px canvas re-encode (EXIF/GPS stripped by construction), same `GAL_MAX` room check, same status line, same reload. Sequential fetches (CompanyCam publishes no rate limits — politeness is structural). Crew captions land in `project_photos.caption`, truncated at 500. |
+| One-way door | `/api/companycam` unchanged | List + fetch only, internal photos refused server-side, bytes never come from CompanyCam's CDN, CompanyCam is never written to. |
+| Reload fix | `photoDb.listByProject` select | **`section` and `caption` are now selected back** — both were written by the 211-era pae module and then dropped on every re-list, so tabs and captions reset on reload. Confirmed against production columns before shipping. |
+
+**Signatures that moved (both optional-param only, all callers unchanged):** `photoDb.add(projectId, dataUrl[, extra])`
+spreads `extra` into the insert (and the localStorage row); `addGalleryFiles(files[, metas])` passes `metas[i]` through.
+**Fences held:** no new full-screen view (widget inside `galleryView`) · no new `document.body` observer · no 14th
+scroll-lock writer · GPS never crosses (re-encode + explicit-field inserts, asserted in `gate_777.mjs`).
+
+## Select all in the CompanyCam picker (build 778)
+
+| Feature | Where | Notes |
+|---|---|---|
+| `Select all` / `Clear all` | `#galCcAllBtn` → `galCcToggleAll()` | One control, two jobs — it offers the move you have not made. A **partial** tick still offers Select all (finishing is the useful move, not starting over). Hidden when the grid is empty. |
+| Cap warning up front | `galCcToggleAll()` | If more are ticked than `GAL_MAX - currentPhotos.length` allows, it says so **before** the Add press rather than after N fetches. |
+| The album Back re-renders the overview | `galBackBtn` handler | **The bug Theo hit**: the gallery was the only client sub-page whose close never called `renderOverview()`, so the profile's Photos tile kept whatever number it was painted with on entry. `dbCloseTo()` has always done this for payments/tasks/docs/appointments. |
+| Legible AI-caption failures | `inlineAiCaption()`, `paeImageDataUrl()` | Three failure paths (storage read / the API / the save) each name their step and point at the manual route (double-tap to type one). **Instrumentation, not a fix** — the underlying failure is still unidentified. |
+
+## The roofing agreement matches the printed master (build 779)
+
+| Feature | Where | Notes |
+|---|---|---|
+| Two-column spec sheet | `.specgrid` in `ROOF_AGREEMENT_BODY` + the estimate stylesheet | 13 numbered red-ruled sections plus Extra Structure, in the master's order and column split, with the house cutaway in the right column beside the items it points at. **One column under 640px** — a phone is not a Letter page. |
+| A box on every lettered option | `.cbx[data-group="rdk"]` ×6, `[data-group="rvt"]` ×2 | Decking types A–F and the ridge vent's 1/2 printed as plain letters before. Grouped rows stay exclusive; flashing and extra structure stay multi-pick, as on paper. |
+| Shingle **Style** dropdown | `data-crsel="style"` → **`CardinalColors.lines()`** (new export) | The OC hub's own `LINES`, filtered to `ready !== false`. A line added to the colour wall reaches the contract with no second edit — the 750 precedent, where the colour dropdown reads `list()`. |
+| **Brand** dropdown | `data-crsel="brand"` | `Owens Corning` + `Other (see notes)`. **No competitor is named** (`OC_BRAND_RULES`), and a rep matching an existing roof is not blocked. |
+| Quantity dropdowns ×6 | `data-crsel="qty"` | Layers to remove, pipe boots, skylights, box/turtle vents, power vent, turbine — 0 to 13+. |
+| Decking prefill | the roofing-checklist prefill in `createReportFrom`'s template pass | **Ticks the matching box** by `data-val`, because 750's `collapse()` regex stops at the first `</span>` and cannot cross nested checkbox markup. Layers and pitch keep `collapse()` — the master leaves both as blank lines anyway. |
+
+## Estimates: the count and the publish prompt (build 780)
+
+| Feature | Where | Notes |
+|---|---|---|
+| The Estimates tile counts rows | `#dbEstN` in `renderAcxOverview()`, filled from `CardinalEstimates.loadForProject()` | It counted estimate-titled **documents**, so drafts were invisible and two estimates read as **0** while the box listed both. 654 fixed this shape on the legacy `#jaGrid` tile and never reached the one that renders. **Navigation count, not money** — `indexMoney`'s `SENT_EST` filter is untouched, asserted in the gate. |
+| The publish prompt tells the truth | `cr-ess-script` publish hook | It promised to "move the pipeline forward" on a job already at Prospect, where `syncStageFor()` correctly does nothing. It now computes the outcome with the same `rank()` guard and says either *"X moves to Prospect"* or *"The pipeline stays at Prospect"*. |
+| The Sent write is visible, and audible when refused | same | Toast + `refreshSavedList()` + `renderOverview()`; the UPDATE carries `.select('id,status')` so a refusal is an **error**, not a silent no-op, and says the document was still created. |
+
+
+## The showroom door renders no CRM (build 805)
+
+| | |
+|---|---|
+| Where | `showMain()` in the main block; `cr-lr-styles` for the CSS half |
+| Trigger | `location.hostname` starts with `showroom.`, or `?vision=1` |
+| Effect | `#landingView` (the Vision hub) is the entire screen. `mainView` is not shown, `showLanding()` and `reload()` never run, so **no client data is fetched**. |
+| Hardening | `body[data-cr-vision="1"]` + a stylesheet `!important` hides `header.site`, `#pwaNav` and `#navWrap`. An inline `display:none` does **not** hold — five call sites restore it. |
+| Untouched | `app.cardinalroster.com`, asserted identical on 804 and 805 by `gate_805.mjs` |
+
+⚠️ **This stops the CRM being SHOWN, not being DOWNLOADED.** A showroom tablet still receives the whole
+4.4 MB file. Only a separate `showroom.html` removes the code — `OPEN_ITEMS`' Option 3.
+
+⚠️ **Do not restore the `window.CardinalLanding.isVisionHost()` lookup in `showMain()`.** That object is
+defined ~22,000 lines later in the file and is reliably `undefined` when `showMain()` runs on a session
+restore. Measured with a probe, not inferred.
+
+---
+
+## Build 806 — the librarian runs on Claude (`api/librarian.js`)
+
+`api/librarian.js` is the Resource Library's assistant. At 806 it moved from Gemini to
+**`claude-opus-5`** via `@anthropic-ai/sdk`. **The JSON it hands back to `index.html` is
+unchanged, field for field** — that is the contract, and `gate_806.mjs` proves it by running
+the old route and the new route against the same model output and diffing what each emits.
+
+**What went away, and why it is not coming back:**
+
+| Removed | Was there because |
+|---|---|
+| the four-rung ladder — `gemini-3.6-flash` ×2 → `gemini-3.5-flash` ×2 → `gpt-4o-mini` | the free Gemini tier 503'd about one call in four. A second provider quietly answering roofing-code questions is worse than an honest error |
+| `OPENAI_API_KEY` | the third rung. **This route no longer reads it.** Other routes still do — `caption.js` has the same ladder |
+| "Respond with ONLY raw JSON, no markdown fences" as a *hope*, and the ```-strip behind it | the shape is now enforced by `output_config.format`. The strip was a latent corruption bug: any answer whose `body` legitimately contained a fence would have been mangled before `JSON.parse` |
+
+**What is deliberately unchanged:** the Supabase session gate, the scope fence (reference
+material only — no clients, no job paperwork), the `~~photos` exception of 471, the `~~stack` /
+`~~flow` / `~~bars` / `~~pitch` diagram vocabulary, the 510 marker-spacing rule, the citation
+rules, the `sources` sanitiser of 446/512, and the `belongs:false` refusal path.
+
+**Shape of the request now:** the standing brief (`RULES` + the writing brief, or `RULES` +
+`SHAPE`) is the **`system`** block and carries `cache_control:{type:'ephemeral'}`; the volatile
+half — the library outline and the actual question — is the **user turn**. Splitting it that way
+is what makes the prefix cacheable. `output_config.effort` is **`medium`**: it is the latency
+lever, and thinking is the reason to be on this model at all. Raise it to `high` if answers get
+sloppy; that is the one knob.
+
+⚠️ **`ANTHROPIC_API_KEY` must be set in Vercel env or this route 500s** with a message naming
+the variable. `GEMINI_API_KEY` is still needed by `caption.js` / `organize.js` / `analyze.js` /
+`sol.js` and must not be removed.
+
+⚠️ **One narrowing, on a path that has never carried traffic.** Gemini swallowed any mime type;
+Claude reads PDFs and photographs. Uploading anything else to the librarian now gets a 400 that
+says to save it as a PDF or paste the text. Measured before narrowing: **all 32 `library_items`
+rows are `kind='note'`** — 21 written by the AI from a typed question, 11 seeded. **Zero files or
+images have ever gone through this route.**
+
+**It was priced before it was switched, on real traffic:** 21 real questions, 5,803 chars in and
+2,221 out on average, ≈**$1/month** at the observed rate and $7.25/month at ten questions a day.
+Cost was never the constraint. `scripts/librarian_measure.mjs`-style measurement ran the *shipped*
+handler with a stubbed transport, so the sizes are what the route really sends, not an estimate.
+
+---
+
+## Build 807 — the Exterior Visualizer (`visualizer/index.html`), and the death of `cr-des`
+
+**The AI Exterior Designer of 761–762 is gone.** Not disabled — removed: `api/design.js`
+deleted, its `vercel.json` entry removed, and the `cr-des-styles` + `cr-des-script` blocks cut
+whole out of `index.html` along with all five wirings (`hideAllViews()`, the `navRestore()`
+case, the `__crNav` wrap, the `BLACKOUT` list, the hub handler). **35,420 characters removed.**
+A dead module that still registers in `hideAllViews()` is exactly the buried thing the prime
+doctrine warns about.
+
+### It is a SEPARATE APPLICATION, and build 805 is the reason
+
+`visualizer/index.html` contains **no CRM code at all** — asserted, with the same test run
+against `index.html` as its control (7/7 markers trip there, 0 here). Build 805 proved a
+hostname check inside one big file separates nothing: the code still ships to the tablet and
+one missed branch paints the pipeline on a customer-facing domain. There is nothing here to
+miss.
+
+It is a **folder** so it can become the root of its own Vercel project. Until that exists it is
+served by the main project at **`/visualizer/`**, which is what makes it reachable today. Both
+tiles that used to open the old designer (the Vision hub tile and the showroom rail) route
+through **one** handler, which now goes to `window.CR_VISUALIZER_URL || '/visualizer/'` — moving
+it to its own subdomain is that one line.
+
+### The three screens, and why they are three
+
+| | |
+|---|---|
+| **Prep** | at the office. Pick the house photograph, pick materials per surface, queue the combinations. |
+| **Review** | a person looks at every render before a customer does. `approved` starts **false** and only this screen sets it true — the same rule The Walk runs on. |
+| **Present** | at the kitchen table. **Approved renders only**, already made, so a tap is instant. The queue bar is not rendered here at all. |
+
+That split **is** the settled decision "pre-render before the appointment". A Generate button
+in Present would undo it.
+
+### Contracts, measured not assumed
+
+- **Roofing is `oc_colors`; everything else is `materials`**, whose `category` CHECK excludes
+  roofing so the two catalogs cannot disagree about a shingle. `oc_colors` has **no prompt
+  column** — it is the brand reference the Colors hub renders — so the roof prompt is
+  **composed in the browser** from the colour's own recorded facts and **frozen into the job**.
+  A render can always be traced to the exact words that made it.
+- **`source_path` is `project_photos.storage_path`.** Checked before building on it, because
+  CLAUDE.md records a photo-signing change that shipped completely inert against this exact
+  column: **223 of 223 rows have it**, all under `projects/`.
+- **The job row names four fields and only four** — `project_id`, `source_path`, `selections`,
+  `created_by`. `created_by` must be the signed-in email or RLS refuses the insert.
+- ⚠️ **The GPS fence is asserted here too** — schema, worker, and now the front end. No
+  coordinate travels with a job. **Do not "complete" that row.**
+- Signed URLs, never public ones, and **never written to a row** — they expire.
+
+### Sign-in
+
+Its own `storageKey: 'cr-viz-auth'`, `persistSession`, `autoRefreshToken`. Studio and the CRM
+both use the supabase-js default key (derived from the project ref); on a shared origin three
+apps would fight over one session. **This is the answer to Theo's "Studio keeps logging in"
+complaint for the new app only — Studio itself is untouched and still asks.**
+
+### Gate
+
+`gate_807.mjs` — **33/33 green**, and **6 red on a mutant** with three planted defects (no
+private storage key, Present showing unapproved renders, `created_by` dropped).
+
+⚠️ **Two assertions in it were passing vacuously and are worth knowing about.** The surface
+pickers live inside closed `<details>`, so `innerText` returns "" for all of them — the test
+meant to prove a hidden colour is never offered was reading an empty string and passing on
+anything. And the GPS-fence regex was written `/\b…\b/` inside a **plain regex literal**, where
+`\b` is an escaped backslash, not a word boundary; it could never match. Both now read the DOM
+and the fence check carries a **self-test that plants a coordinate and requires a catch**.
+
+### Not yet true
+
+**Nothing renders until the Spark is switched on** (`spark/VISUALIZER_SETUP.md` §1–4). Queued
+jobs sit at `queued` until then, which is correct behaviour, not a fault. This build could not
+be verified end to end and was not claimed to be.

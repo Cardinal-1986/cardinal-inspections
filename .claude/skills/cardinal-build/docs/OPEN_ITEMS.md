@@ -906,7 +906,7 @@ there are 3 punch items total and none are scheduled. That is a coverage gap, no
 
 | Item | State | What unsticks it |
 |---|---|---|
-| **ABC Supply — wrong host + wrong paths on every data action** | ✅ **RESOLVED, 13 Aug — was never a 401, was never really just "fetch failed" either; the whole `api/abc.js` data layer was pointed at the wrong place.** The chain: 401-stale-note (12 Aug AM) → diagnostic fix shipped so the next failure would be self-explaining → live production retest returned `"Could not reach api.partners.abcsupply.com (ENOTFOUND: …)"` — a DNS failure, not a guess, because the auth host (a *different*, always-correct host) had already proven the credentials and network path were fine. Cross-checked against **9 of ABC's own endpoint reference pages** (`apidocs.abcsupply.com/get-branch/`, `/get-frequent-items/`, `/search-items/`, `/search-item-availability/`, `/price-items/`, `/get-recent-items/`, `/get-order-templates/`, `/search-branches/`, `/get-item-availability/`, `/place-orders/`, `/get-orders/` — 11 pages, all agreeing): the real hosts are **`partners.abcsupply.com`** (production) / **`partners-sb.abcsupply.com`** (sandbox, hyphenated suffix — not `sandbox.partners.*` like every other host in this file). **Separately**, 7 of the file's 9 data paths were also missing their real `/api/{family}/v{n}` prefix (only `frequents`/`recents` happened to already be right) — so a host-only fix would have traded one dead end for a wave of fresh 404s. `priceItems`'s request body was also wrong: real field names are `shipToNumber`/`branchNumber`/`purpose`/`lines[]` (not the invented `items[]`/`unitOfMeasure`/`variation`) — confirmed against ABC's own verbatim example JSON. All fixed, proven with a URL/body-capturing harness across all 9 actions (9/9 green) and negative-controlled against the pre-fix file (9/9 red — same file, same harness). | ✅ **WORKING — a real branch price returned 13 Aug 2026 ($76.00 on 11IWRRGU2).** ABC Supply had never once returned data; it now searches, lists frequent items, and prices. **Working values: Ship-To `2153354-2`, Bill-To `2153354-1`, Branch `106`.** ⚠️ **Both suffixes are the same base account and are NOT interchangeable** — and `2153354-2` is the number that 401'd earlier *as a bill-to*, which made it look invalid. It was in the wrong field. **Before calling an ABC account number wrong, try it in the other box.** Six faults, each hidden behind the one in front: (1) the API host did not exist (`api.partners.abcsupply.com`, ENOTFOUND) — real hosts `partners.abcsupply.com` / `partners-sb.abcsupply.com`; (2) 7 of 9 data paths missing their `/api/{family}/v{n}` prefix; (3) `pageNumber` REQUIRED on frequents/recents though ABC's docs call it optional; (4) `searchItems` sending invented fields (`query`/`page`/`pageSize`) ABC has never accepted, and `priceItems` reading `j.items` when ABC returns `lines[]`/`unitPrice` — the latter would have shown "Branch will price — call them" for every item, **a plausible wrong answer on a money surface**; (5) the error text mangled three ways (double-escaped, cut at 60 chars, in a 120px column) so no refusal could be read; (6) ship-to `0003` an invoice display code, not an identifier. **The through-line: this feature discarded the answer it already had FOUR times** (`e.cause`, `err.detail`, the truncation, the account-field mix-up). Every fix after the first came from reading ABC's own words instead of guessing. | **Nothing outstanding.** `Find my Ship-To` asks ABC for the real ship-to list rather than trusting paperwork — use it per job. Untested only because it needs a real purchase: `placeOrder`/`getOrder`/`templates` paths are pattern-inferred, not doc-verified, and are unreachable from the UI today. Next natural step is Phase 2 from `ABC_SETUP.md`: "+ ABC Supply" inside the estimate editor. |
+| **ABC Supply — wrong host + wrong paths on every data action** | ✅ **RESOLVED, 13 Aug — was never a 401, was never really just "fetch failed" either; the whole `api/abc.js` data layer was pointed at the wrong place.** The chain: 401-stale-note (12 Aug AM) → diagnostic fix shipped so the next failure would be self-explaining → live production retest returned `"Could not reach api.partners.abcsupply.com (ENOTFOUND: …)"` — a DNS failure, not a guess, because the auth host (a *different*, always-correct host) had already proven the credentials and network path were fine. Cross-checked against **9 of ABC's own endpoint reference pages** (`apidocs.abcsupply.com/get-branch/`, `/get-frequent-items/`, `/search-items/`, `/search-item-availability/`, `/price-items/`, `/get-recent-items/`, `/get-order-templates/`, `/search-branches/`, `/get-item-availability/`, `/place-orders/`, `/get-orders/` — 11 pages, all agreeing): the real hosts are **`partners.abcsupply.com`** (production) / **`partners-sb.abcsupply.com`** (sandbox, hyphenated suffix — not `sandbox.partners.*` like every other host in this file). **Separately**, 7 of the file's 9 data paths were also missing their real `/api/{family}/v{n}` prefix (only `frequents`/`recents` happened to already be right) — so a host-only fix would have traded one dead end for a wave of fresh 404s. `priceItems`'s request body was also wrong: real field names are `shipToNumber`/`branchNumber`/`purpose`/`lines[]` (not the invented `items[]`/`unitOfMeasure`/`variation`) — confirmed against ABC's own verbatim example JSON. All fixed, proven with a URL/body-capturing harness across all 9 actions (9/9 green) and negative-controlled against the pre-fix file (9/9 red — same file, same harness). | ✅ **WORKING — a real branch price returned 13 Aug 2026 ($76.00 on 11IWRRGU2).** ABC Supply had never once returned data; it now searches, lists frequent items, and prices. **Working values: Ship-To `2153354-2`, Bill-To `2153354-1`, Branch `106`.** ⚠️ **Both suffixes are the same base account and are NOT interchangeable** — and `2153354-2` is the number that 401'd earlier *as a bill-to*, which made it look invalid. It was in the wrong field. **Before calling an ABC account number wrong, try it in the other box.** Six faults, each hidden behind the one in front: (1) the API host did not exist (`api.partners.abcsupply.com`, ENOTFOUND) — real hosts `partners.abcsupply.com` / `partners-sb.abcsupply.com`; (2) 7 of 9 data paths missing their `/api/{family}/v{n}` prefix; (3) `pageNumber` REQUIRED on frequents/recents though ABC's docs call it optional; (4) `searchItems` sending invented fields (`query`/`page`/`pageSize`) ABC has never accepted, and `priceItems` reading `j.items` when ABC returns `lines[]`/`unitPrice` — the latter would have shown "Branch will price — call them" for every item, **a plausible wrong answer on a money surface**; (5) the error text mangled three ways (double-escaped, cut at 60 chars, in a 120px column) so no refusal could be read; (6) ship-to `0003` an invoice display code, not an identifier. **The through-line: this feature discarded the answer it already had FOUR times** (`e.cause`, `err.detail`, the truncation, the account-field mix-up). Every fix after the first came from reading ABC's own words instead of guessing. | **Nothing outstanding.** `Find my Ship-To` asks ABC for the real ship-to list rather than trusting paperwork — use it per job. Untested only because it needs a real purchase: `placeOrder`/`getOrder`/`templates` paths are pattern-inferred, not doc-verified, and are unreachable from the UI today. ✅ **Phase 2 SHIPPED at build 774** — "+ ABC Supply" is in the estimate editor: search ABC, tap an item, it lands as a line item priced at your branch, with `abc_item` kept on the line as forward wiring for ordering. Reuses the library picker as a second MODE and the same `api()` the Suppliers screen uses. **Remaining: ordering.** `placeOrder`/`getOrder`/`templates` are still pattern-inferred, not doc-verified, unreachable from the UI, and gated behind ABC API Support — see `ABC_ORDER_TESTING_EMAIL.md` (drafted 13 Aug, **awaiting send**). `placeOrder`'s body is also still the wrong shape (ABC wants an **array**). |
 | **OpenAI quota (429)** | Coach fallback down. Theo says he pays for ChatGPT — **verify that is API credit, not a ChatGPT subscription.** `api/coach.js` calls `api.openai.com/v1/chat/completions` with `OPENAI_API_KEY` and `gpt-4o-mini`; a ChatGPT Plus/Pro plan does **not** fund that. | Check credit at platform.openai.com → Billing, not chatgpt.com |
 | **Resend sender domain** | Daily digest 403s | Verify `cardinalrenovations.net` DNS, then swap the from-address in `digest.js` |
 | **Gemini key** | **Theo confirmed 31 Jul he is on paid Gemini billing — the "free tier 503s" note was stale and is retired.** Still worth confirming the key exposed in an old session was rotated. | The 503 retry ladder in `librarian.js` stays regardless (cheap insurance), but paid quota is what makes a bulk caption backfill viable at all |
@@ -1000,7 +1000,7 @@ a light ground changes how they read. Same reasoning as the calendars.
 2. **Distinguish "no clients" from "couldn't load."** Both render the same empty state, which is why a transient read failure looked like data loss.
 3. **Real PDF export.** Downloads are standalone `.html`. A `/api/pdf` endpoint using the ReportLab toolchain that built the contract masters would give true `.pdf`.
 4. **Siding + window contract masters** — the moment those PDFs are found; both need the same letter-split as roofing.
-5. **ABC phase 2** once credentials work: response-shape tuning → "+ ABC Supply" inside the estimate editor → ordering → webhooks to the production board.
+5. **ABC ordering** — phases 1 and 2 are done (credentials, response shapes, and "+ ABC Supply" in the estimate editor, build 774). What is left: send `ABC_ORDER_TESTING_EMAIL.md` to apisupport@abcsupply.com (a human loop with unknown latency, which is why it goes first), get sandbox order credentials as a **separate** `ABC_SB_*` env pair rather than swapping the working production ones, fix `placeOrder`'s body to the array shape ABC documents, then webhooks to the production board. **Ordering puts materials on a truck — whatever gets built shows the full order back to a human and requires an explicit confirm.**
 6. **Old landing markup** — never paints since 309, still in the file for its boot writers. Delete markup and writers together, carefully.
 7. **Community activity filter** — enhancement, not a bug.
 8. **Backfill for pre-331 typeless clients** — deliberately not done; a backfill has to guess.
@@ -3050,3 +3050,91 @@ name+street-number match attaches to the existing record instead of duplicating.
 
 After the records land: **Phase C sorting** over the Supabase connector as reviewed SQL. Gate
 sequence and anti-goals live in the runbook; session detail in `HANDOFF.md` (13 Aug section).
+
+## From the 13 Aug retail-lifecycle QA (builds 766-773)
+
+Ranked. Two shipped at 772, two more at 773; the rest are open.
+
+⚠️ **STRUCK — the old item 1 was WRONG, do not rebuild it.** It read "the homeowner signs and the job sits
+in Prospect until a human drags it to Approved". The E2E drive (`drive_lifecycle.mjs`, 13 Aug) proved the
+opposite with write capture: **all three signing paths already auto-advance** — the in-person pad
+(index.html:22607), the contracts-table editor (36132) and the remote share-link (`api/clientsign.js`, which
+also emails rep+admin) each move the job to Approved, and the in-app paths buzz Curtis. The invoice email
+likewise auto-advances to Invoiced (22511). Anyone re-proposing "wire the signature to the stage" is
+describing code that ships today.
+
+1. **Auto-advance Approved → Scheduled when the build day is booked** — the real residue of the old item 1.
+   The appointment (kind='job') exists, Production reads it ("build Aug 20"), but the stage waits for a
+   manual arrow tap + confirm. `blockerFor` already computes the truth; the stage lags it.
+2. **Split the intake form** — measured in the E2E: **43 visible fields, 0 with a required attribute** (the
+   `*` on First/Last/City/State/Zip is label text only). Name · phone · address · work type up front, the
+   rest behind "More detail", and make the starred five actually enforce.
+3. **Stale-estimate line in the daily digest** — nothing watches an estimate after it is sent. The 11:00 cron
+   already runs and already knows each job's rep.
+4. **One writer for the address** — it is stored twice from one form: `projects.address` (flat) AND
+   `checklist.lead.location.*` (parts). They agree at birth and drift on any later edit.
+5. **Invoiced is a silent stage** — fold "invoiced and unpaid past 30 days" into the Friday owed email.
+6. **Dialog diet** — the E2E counted **11 native dialogs** (4 confirm / 3 prompt / 4 alert) on one clean
+   lifecycle; worst is invoice create→send: alert, prompt, confirm back-to-back. Native dialogs in the
+   installed PWA look like system errors. Candidates: title prompts → prefilled inline fields; stage-arrow
+   confirms → one tap + undo toast; the send prompt → a field defaulted to the client's email.
+7. **Remote signature buzz parity** — `api/clientsign.js` advances the stage and sends the Resend email, but
+   nothing web-pushes Curtis the way an in-person signature does (the front-end setStage does that half).
+
+DONE at 772: emoji removed from the two outbound stage-email subjects; `createContractForCurrent` no longer
+returns in silence when no project is loaded.
+DONE at 773: `notifyTeam` dedupes its recipient list — the "Job complete" buzz listed an admin rep twice and
+`/api/notify` mails the list verbatim, so theo got every buzz double on his own jobs. And the last two emoji
+subjects (estimate-approvals `✍️`, chat @-tag `💬`) are plain text.
+
+**Verified NOT a bug** (do not re-report): "Log Collection missing" — `#miCollBtn` is correctly gated on
+admin+production; its absence in the harness was the mock session. Also from the E2E: the Production landing
+shows box COUNTS, not per-job chips — the chips (`Needs scheduling` → `Materials?` → `Build <day>` →
+`1 punch item` → `Ready to invoice`) live one tap deeper in the box panes and all five were seen rendering
+in order; and `#pNewContractBtn` only opens the trade flyout — the contract is created by the `[data-ctpl]`
+option inside it, so a harness clicking the toggle and expecting a write is testing its own mistake.
+
+---
+
+### Opened at 806 — one action for Theo, one question deferred
+
+**ACTION REQUIRED BEFORE THIS DEPLOYS: set `ANTHROPIC_API_KEY` in Vercel env.** Without it
+`/api/librarian` returns a 500 naming the variable, and the Library's assistant stops answering.
+`GEMINI_API_KEY` **stays** — `caption.js`, `organize.js`, `analyze.js` and `sol.js` still need it.
+
+**Deferred, deliberately: the other four Gemini routes.** 806 moved the librarian only, because it is
+the one route where a wrong answer is expensive — staff act on the code sections it writes. Captioning,
+tagging and organising photographs are cheap, high-volume and forgiving; moving them is a cost decision,
+not a correctness one, and nobody has asked. **Do not "finish the migration" without a reason.**
+`caption.js` carries the same four-rung ladder the librarian just shed — if it is ever moved, that
+ladder goes with it.
+
+**Worth measuring after a fortnight of real use:** whether `output_config.effort:'medium'` is the right
+setting. It is the latency lever and it is the only knob — `high` if answers get sloppy. Theo's ears and
+eyes are that gate, not a harness.
+
+---
+
+### Opened at 807 — the Exterior Visualizer
+
+**Theo's two actions, in order:**
+
+1. **Switch the Spark on** — `spark/VISUALIZER_SETUP.md` §1–4 (ComfyUI + SAM 2 + the inpainting
+   graph, then `visualizer_worker.py`). Until this is done, queueing works and nothing renders.
+   Jobs sitting at `queued` is the correct behaviour, not a bug.
+2. **Optional, later: give it its own Vercel project** scoped to `visualizer/`, then set
+   `window.CR_VISUALIZER_URL` (or edit the one line in the hub handler). Only then is the CRM
+   absent from that domain at every path. Until then `/visualizer/` on the main project is a
+   separate *file* but the same *deployment*.
+
+**Settled and not to be re-litigated:** pre-render before the appointment (Prep queues, Present
+only shows what is already made — **no Generate button in Present**); OC roofing from `oc_colors`,
+real brands elsewhere from `materials`; a person approves every render before a customer sees it.
+
+**Deliberately still open: why Studio keeps asking for a sign-in.** 807 gave the *new* app its own
+`storageKey` and explicit `persistSession`, which is the right shape — but that is a design choice
+for a new file, **not a diagnosis of Studio**. Nobody has reproduced Studio's re-login yet. Do not
+"fix" Studio by copying 807's client options and claiming the cause; measure it first.
+
+**Not measured yet:** whether the composed roof prompt actually produces a convincing shingle. That
+needs the Spark running and Theo's eyes on a real render — it is not something a harness can judge.

@@ -15092,3 +15092,1318 @@ OPEN_ITEMS, HANDOFF and FEATURES.
 - **(no build number — `spark/` only, 13 Aug 2026)** · **The AccuLynx migration ran for the first time, and the pipeline could not have completed one** · Built, harnessed and merged on 11 Aug without ever touching the real API; gates 1–2 have now been run against Cardinal's live account and turned up **five faults**, each of which alone would have wrecked the import. **(1)** `/jobs` was paged with `recordStartIndex`, **a parameter that does not exist** — and AccuLynx does not reject an unknown query parameter, it answers `200` and returns page one, forever. So a misspelling was indistinguishable from broken pagination, which is exactly how the day-one probe read it ("the pagination unit is NOT a record offset here"); the unit assumption had been right all along and the name was wrong. Measured: `startIndex`, `page` and `offset` are silently ignored too. **(2)** `pageSize` asked for 100 against a **hard cap of 25** (`400 "Page Size must not be greater than 25."`), and the cap is inconsistent per endpoint — `/jobs` and `/custom-fields` refuse 26 while `/contacts`, `/milestone-history` and `/representatives` allow it, so 25 is the only value every route takes. **(3)** The site address arrives as `locationAddress` (with `street1`, and `state` as an object carrying `abbreviation`); `dig_address()` looked only at `address`/`jobSiteAddress`/`streetAddress1`, so **all 166 clients imported with a BLANK address** — which also silently disabled duplicate detection, because `find_collision()` matches on the street number, making the first dry run's headline "0 collisions" an artifact of the bug rather than a finding (the corrected run finds **2 real ones**). **(4)** `/jobs/{id}/representatives` returns its `user` as an unexpanded `{id,_link}` ref with no email — the same trap the code already handled for `/contacts` via `?includes=` — so **every client landed on the admin** instead of the 6 real reps; fixed by resolving against `/users` in one call. **(5)** That fallback was **silent**, because the "rep not on roster" warning keyed off a display name that was also empty on an unresolved ref: 166 misassigned clients and a clean review file. ⚠️ **Both offline harnesses were GREEN through all five**, because their fixtures were **invented rather than observed** — the push fixture used `detail.address.streetAddress1` and a pre-filled `sales_owner.user.email`, the fetch stub read `recordStartIndex`. A stub written from the implementation's own mental model encodes that model's mistakes and cannot disagree with it; this is class 15 moved up a level, and it is now `BUG_CLASSES.md` **45** (the silently-ignored parameter and its unexpanded-ref cousin are **44**). Fixtures are now transcribed from real responses with the date, and every new assertion is negative-controlled against the pre-fix code — the existing scenarios never exercised the offset at all, because two fixture items fit inside one 100-row page. Sub-resources were also reading the API's default page of **10** with no pagination; they now ask for 25 and report loudly if a `count` still outruns one page. **Result: 166 records fetched, 0 failures; files a confirmed NO-GO** (all six candidate read routes 404 on every job, exactly as the public docs predicted). Dry run after the fixes — driven through the Supabase connector with every write path stubbed to raise, a substitute for gate 3 and explicitly not a replacement — reports **164 new · 2 collisions · 0 unmappable · 0 warnings · PO 1044–1207**, reps spread nick 42 / theo 39 / jerry 35 / joey 29 / jacob 18 / curtis 3, 7 jobs carrying insurance data for Phase C. **Nothing written to Cardinal.** ⛔ Blocked on one thing: `CARDINAL_PASSWORD` is stale (`400 invalid_credentials`; the email is correct and neither variable has stray whitespace) — refresh it and gates 3→4→5 run as written. Two decisions waiting on Theo: the 2 collisions (Karrie Johnson 804 E Center St, Dan Thompson 2825 Arden Ave — both already in Cardinal, default is attach not duplicate) and **two AccuLynx test records** (`test test`, `Team Test`, both at 5735 Webster Street) that would otherwise import as clients.
 
 - **(no build number — `spark/` docs only, 13 Aug 2026)** · **Gate 3 passed for real, and the notes turned out to be gone as well** · The dry run re-run from Theo's own Windows desktop **matched the Supabase-connector replay exactly** (34 clients / max PO 1043 / 10 roster emails / 164 new / 2 collisions / 0 unmappable, every stage count identical), which retroactively validates the substitute gate. The stale `CARDINAL_PASSWORD` was only ever the cloud environment's copy — **the password itself was always correct**, and `auth.users.last_sign_in_at` had already proved the account healthy hours before the wrong value was identified by its shape (15 chars, starts and ends with a symbol, contains a `!`). Worth keeping: `push_acculynx.py` reads **only** `CARDINAL_EMAIL`/`CARDINAL_PASSWORD` — never the AccuLynx key, which is the credentials fence working as designed, and it meant the desktop route needed one secret rather than two. **The find of the session came from one question from Theo — "What about notes?"** `lead.notes` is empty on all 166 imports because `map_job()` reads `detail.description`/`detail.notes` and neither key exists on this tenant — superficially the same defect as the blank address, but **this one cannot be fixed by re-pointing the mapping, because there is nothing to point it at**: measured **806 job messages across 156 of the 166 jobs (94%)**, with twelve endpoint spellings all answering 404 (`/notes`, `/messages`, `/comments`, `/job-messages`, `/conversations`, `/posts`, top-level collections filtered by `jobId`), no v1 or v3, and no swagger/OpenAPI spec served. `/jobs/{id}/history` DOES answer — 6,191 actions — but records only *that* a note happened (`"Job Message Added"`, with date and author) and never the text; `custom_fields` is a single `Policy Number` on all 166 rows with **zero** values. So notes sit behind the same upload-and-audit fence as files, and the two are now one decision. **✅ SETTLED (Theo): front door only.** He read the terms and ruled out a scraping/browser-automation pass — correctly, and **rate-limiting does not move an automated bulk extraction out of the restricted category**; the stronger argument is that tripping AccuLynx's security flags would LOCK the account and destroy the only copy of those messages mid-migration. ⚠️ **The runbook had previously RECOMMENDED exactly that browser pass — that text is now corrected in the runbook, `OPEN_ITEMS.md` and `HANDOFF.md`. Do not propose it again.** Permitted routes recorded in order: an offboarding data-export request; **asking for written permission** (the restriction is contractual, so the counterparty can waive it, and a departing customer is often granted it — a yes makes a properly rate-limited fetcher legitimate); asking whether another API tier exposes message/file reads; and AccuLynx's own Reports/CSV exports, which are sanctioned by definition. The manual fallback was scoped rather than left as a scary 806: live work is 61 jobs / 378 messages and the realistic target is the **41 Approved jobs = 249 messages**, since the 81 Prospects carrying 317 messages mostly never became work. ⛔ **Do not cancel the AccuLynx subscription until this is settled** — same trap already recorded for CompanyCam, where the bytes die with the account.
+
+## 766-772 — Production rebuilt, and the punch-out card (13 Aug 2026)
+
+**766** The scheduling bridge. `blockerFor()` read `checklist.build_date` / `scheduled_date` /
+`lead.build_date` — three keys NOTHING in this app has ever written (one occurrence of each in the file, and
+it was the reader). "Needs scheduling" could never clear; "Should have started" had never rendered. Curtis
+schedules on the Schedule Board, which writes `appointments` kind `job` — it reads that now, preferring the
+next build day, falling back to the most recent past one. Checklist keys stay last in the chain (additive,
+not a swap). Also: `checklist.materials_ordered_at` + Mark ordered in the Materials tab, and closed
+punch-outs pushed into `buildActivityEvents()`. `punch_steps.sql` ships (steps + template columns).
+
+**767** The screen, replaced. `cr-pb-styles` + `cr-pb-script` rewritten wholesale — same `#cr-pb`, same
+`window.CardinalProduction`, same hideAllViews/navSetView/scroll-lock/observer registrations. Three panes:
+home (five boxes + week strip + the day), cal (full month, named chips, Needs-a-date queue), list. Back goes
+up ONE level. No floating buttons. Cardinal Steel, dark base + scoped light twin.
+
+**768** `cr-pk-styles` + `cr-pk-script` — THE punch-out card. `window.CardinalPunchCard`. Trade templates,
+note-required steps, five guided photo slots, supplement flag, messages, close gated on 5 photos + all steps.
+Manager (office + Curtis) vs field (Scottie) off the same markup. No new observer, no 14th scroll-lock writer.
+
+**769** Notify on file/assign (Theo's A1) and on close. Never yourself, never for unassigned work, honest
+outcome line. `CardinalPunchProfile.openItem` routed into the card.
+
+**770** Closed repairs reach the client history — 766's read was array-shaped where `CardinalPunch.rows` is a
+FUNCTION, so it threw into the catch that was meant to tolerate a late-parsing module. The guard hid its own
+bug. Proven in Chromium both ways.
+
+**771** Nine audit repairs. The worst: `toggle()` pre-mutated the row then delegated to
+`CardinalPunch.toggle(id)`, which re-derives direction from that same shared object — the second flip undid
+the first, so closing was a no-op and reopening re-stamped `done_at`/`done_by`. Also: delete / photo removal /
+description editing had become unreachable app-wide (they lived only in the `#puDetail` sheet 768 stopped
+opening); the client profile tab still opened its own detail; `#cr-pk` sat under `#pwaNav`; no `navRestore`
+case; `CardinalPunchStrip.paint` never existed; `notifyOutcomeText` needs an ARRAY; `hideAllViews` calling
+`close()` NAVIGATED; the burger menu closed with a class the menu does not use.
+
+**772** QA pass on the retail lifecycle: emoji out of the two outbound stage-email subjects, and
+`createContractForCurrent` says "Open a client first" instead of returning in silence.
+
+**773** One buzz per person. The E2E lifecycle drive (`drive_lifecycle.mjs` — a mock client through every
+stage, Lead → Invoiced, all 12 stations green) caught the "Job complete" notification listing theo twice:
+the list is built `(assigned rep) + ADMIN_EMAILS`, the rep on his own jobs IS an admin, and `/api/notify`
+hands the list straight to Resend and web-push (`mailed = emails.length`) — every buzz doubled. Deduped at
+the `notifyTeam` chokepoint, covering all twelve call sites. Also finished 772's emoji-subject sweep: the
+estimate-approvals buzz (`✍️`) and the chat @-tag buzz (`💬`) were the two subjects still carrying one.
+
+The same drive settled two standing claims WRONG in the docs: (1) contract signature DOES auto-advance the
+stage — all three signing paths (in-person pad line 22607, contracts-table editor 36132, remote share-link
+`api/clientsign.js`) move the job to Approved, verified by write capture; the old "signs and sits until a
+human drags it" item is struck. (2) The invoice email auto-advances to Invoiced (22511). The real residual
+gap is **Approved → Scheduled**: booking the build day writes the appointment but the stage waits for a
+manual arrow tap. Friction census: 11 native dialogs (4 confirm / 3 prompt / 4 alert) across one clean
+lifecycle; the worst single moment is invoice creation → send (alert, prompt, confirm back-to-back).
+
+**775** The burger menu, from two phone screenshots. **The massive pencil**: `addMenuItem()` (767) injects
+this module's own `svg('tool')` into `#navMenu`, but every sizing rule in `cr-pb-styles` is scoped
+`#cr-pb …` — outside that container an `<svg>` carrying only a viewBox has no intrinsic size and inflates to
+fill its block. Measured **270x270 in a 44px row**, making the item **307px** — 36% of the visible menu, and
+the reason it needed **859px** of scrolling. Every neighbouring item uses `data-cri`, which is why only this
+one blew up. Fixed with a `.pbnavico` rule that is deliberately NOT `#cr-pb`-scoped (a scoped rule could
+never match the node this module puts in somebody else's container).
+
+**The menu closing under your thumb**: it is 300px wide on a 430px screen, so ~130px beside it is page. A
+swipe landing there scrolled the document (measured 512px) and `window.addEventListener('scroll')` shut the
+menu mid-scroll. That listener is **obsolete** — it dates from the masthead that scrolled with the page;
+`header.site` has been `position:fixed` since cr-hd2 (416) and `#navMenu` is fixed with it, so neither
+drifts. Retired; outside-CLICK dismissal untouched. ⚠️ On 774 an on-menu swipe scrolled the menu by **0px**
+— it closed before it could scroll, so the menu was effectively unscrollable on a phone.
+
+⚠️ **Rig trap, recorded**: the two gate runs wrote screenshots to the same `GATE_OUT`, so the negative
+control overwrote the fixed one and the image showed a giant pencil beside a green result. The measurement
+was right and the picture was stale — pass `GATE_OUT` per run.
+
+**776** Publish stops failing in silence — Theo, verbatim: *"publishing can't open."* Both publish-family
+buttons save the estimate and then wait up to 9s for the editor to close; when the save did not land in time
+**both gave up with no word at all** (`if(!closed){ btn.textContent='Publish'; return; }` and
+`if(!closed) return;`). The button flickered, no document was made, nothing said why — which reads exactly
+like a dead button. Both now say the estimate has not finished saving and that the work is still on screen.
+Second defect in the same run: `cr-ess-script` also hooks that button and announced **"Estimate published."**
+purely because the editor closed. The negative control caught it red-handed — *"Publish failed: mock failure
+on inspection_reports"* immediately followed by *"Estimate published."* It now polls briefly for a real
+`doc_id` (polls, because cr-epub writes it a moment later — demanding it instantly would trade a false yes
+for a false no) and stays quiet if no document exists.
+
+⚠️ **FALSE POSITIVE, recorded so nobody re-reports it: the publish path itself works.** The first probe
+reported *"Could not find the saved estimate to publish"* and no document. That was **the harness**, not the
+app: `e2e_mock_supa.js` applied no column DEFAULTs, so the estimate it inserted carried no `archived` field
+and `loadForProject`'s `.eq('archived', false)` could not see the row it had just written. The live table
+defaults `archived` to `false NOT NULL` and generates `estimate_number` from a sequence — both now modelled
+in the mock, against the schema read from the live database. **A read-after-write test against a mock with no
+defaults is testing fiction.** With the mock fixed, publish creates the document, writes `doc_id` back and
+opens the document editor.
+
+**782** PHASE 1 of Theo's 13 Aug list — the intake form. The live data was the brief: **35 of 40 client
+records carry no email and 24 carry no phone**, so nothing can be sent to them — no estimate, no invoice, no
+signature link.
+
+⚠️ **The QA report's "43 fields, ZERO required" was wrong and this build corrects it.** That was measured off
+the `required` ATTRIBUTE, which is genuinely absent everywhere — but `ldSave` has always enforced six fields
+in JavaScript (First, Last, Street, City, State, Zip). The gap was never "nothing is required"; it was that
+**no way to CONTACT the person was ever required**, which is exactly what the data shows. Measure the
+behaviour, not the attribute.
+
+A phone or an email is now required — **not unconditionally**. Canvasser / Door Knocking / Door hanger /
+Yard Sign are real lead sources and a canvasser logging an address genuinely has neither, so the refusal
+reveals an explicit tick rather than a wall: one extra tap on the exception path, none on the normal one, and
+`lead.no_contact` records the intent so those leads can be chased. Plus progressive disclosure — company,
+job type, source, assignment, appointment and notes now sit behind **More detail** (28 → 21 visible fields).
+
+**NO NODE WAS MOVED**: one class and one CSS rule, because every field is read by `getElementById` and
+`openLeadForm()`'s reset list walks ids. The rule carries `!important` deliberately — `#ldAssignBox` and
+`#ldPartnerWrap` set their display INLINE at runtime.
+
+⚠️ **A render caught what reading could not: two disclosure mechanisms over one field is a dead control.**
+`cr-lac-script` already discloses Mailing/Billing with its own `hidden` toggle; tagging those two `.ldmore`
+as well made ITS button do nothing, because `display:none !important` beats clearing `hidden`. Mailing and
+billing are deliberately NOT in the `.ldmore` set, and `gate_782` asserts that toggle still works while the
+More-detail section is collapsed. Same family as BUG_CLASSES 16.
+
+
+**783** PHASE 2 — booking the build day moves the job to **SCHEDULED** by itself. The one hop still done by
+hand: contract signature already auto-advances to Approved (all three signing paths) and the invoice email
+already auto-advances to Invoiced, but the middle step sat waiting for an arrow tap and a confirm about a
+fact the calendar already carried. `blockerFor` computed the truth from the appointment; the stage lagged it.
+
+**Placed on `adb.create`, which is the ONLY appointment writer in the file** — the two other
+`from('appointments')` sites are a health check and a dashboard read, both SELECTs. One writer, one rule,
+rather than a copy on each of the several buttons that book a day.
+
+Deliberately narrow: only `kind:'job'` (a material drop is not the build); only Approved → Scheduled, never
+from Lead/Prospect (which would jump the pipeline on a job nobody sold) and never from Completed/Invoiced
+(backwards); **no reverse on delete**, because rescheduling is a delete plus a create and a reversible rule
+would bounce the stage twice and stamp it each way. `setStage` sends no email for Scheduled, so this adds
+nothing to anyone's inbox — asserted, not assumed.
+
+⚠️ **Two assertion traps, both caught by the gate going red against correct code:** a file-wide
+`setStage(pr.id,'Scheduled') == 1` fails because the **community client page already has a MANUAL "Mark this
+job SCHEDULED?" button** — the honest form is `orig.count(...) + 1`. And `__apptMayAdvanceStage(fields)`
+counts **3**, not 2: the function's own DEFINITION matches the call pattern.
+
+
+**784** PHASE 3 — the 11:00 digest chases estimates. It reported the calendar and nothing else, so an
+estimate could go out and sit unanswered indefinitely with nothing anywhere saying so. Live at the time of
+writing: **4 sent estimates aged 12–17 days, $71,846 between them**, all theo's, and not one line about them
+anywhere in the app or the mail.
+
+Each rep now gets their own list — client, amount, and days since it was last touched — for anything sent
+more than `DIGEST_STALE_DAYS` (default 5) ago. Admins get the team's.
+
+⚠️ **The load-bearing change is the EARLY RETURN.** `if (!appts.length) return;` sat above everything, so a
+day with no appointments sent nothing at all — which is precisely the morning a rep has time to chase an
+estimate. Estimates are now fetched BEFORE that gate, and the gate needs both halves empty. The estimates
+query is wrapped so an outage there still lets the schedule half send.
+
+`updated_at` is the clock, and the comment says why: **the table has no `sent_at`**, so this is "last
+touched" and editing an estimate legitimately restarts it. Adding a real `sent_at` is a migration plus an
+app write — deliberately not smuggled into this build.
+
+Also: subjects go through one `subjectFor()` so the three cases cannot drift, with **no emoji** (the 772/773
+rule for outbound subjects). That fixed a pre-existing inconsistency the negative control surfaced — the old
+team-schedule subject never said "Cardinal" at all.
+
+⚠️ **`gate_784` executes the REAL handler with `global.fetch` stubbed** rather than re-implementing it, which
+is the only way to test a serverless function's composition without sending mail. Nothing leaves the machine.
+**Not verified in production, and deliberately so: hitting `/api/digest` sends real email to theo, joan and
+the reps.** It will first run on the next cron.
+
+
+**Gates**: `gate_766` 38, `gate_767` 54, `gate_768` 65, `gate_769` 16, `gate_770_history` 1, `gate_771` 31,
+**`gate_776` 14 (three Chromium runs — happy / slow-save / failed-write; RED on 775, where the slow save
+produced ZERO dialogs and the failed write still claimed success)**,
+**`gate_775` 16 (Chromium at 430x932, installed-app mode; RED on 774 with 9 failures)** —
+Chromium, each verified RED on its own predecessor. **773's gate is `drive_lifecycle.mjs` itself** — the 772
+run recorded the duplicate recipient and the emoji subject (RED for both behaviours); the 773 run shows theo
+once and plain-text subjects, all 12 stations green both times.
+
+**774** Build an estimate straight from ABC Supply's catalog. `+ ABC Supply` sits beside `+ From Library` and
+`+ Custom` in the estimate editor: search ABC, tap an item, and it lands as a line item already priced at your
+branch with the description, item number and stocking UOM filled in.
+
+**The prime doctrine paid again.** The catalog picker already existed — a bottom sheet with a search field, a
+grouped list and a tap-to-add handler. So ABC became a **second MODE on that one picker** (`openPicker(mode)`),
+not a second picker beside it. Nine of the sheet's behaviours are shared verbatim; only the row source and the
+search trigger differ. `window.CardinalABC` grew `search`/`price`/`cfg` through `Object.assign`, and both wrap
+the **same `api()`** the Suppliers screen uses, so the six faults fixed at 762-765 apply here without a second
+fetch path that could drift.
+
+Three deliberate behaviours, each learned the hard way earlier tonight: (1) **typing never calls ABC** — the
+remote search runs on Enter or the button only, because every press is a paid round trip, and the library half
+still filters live; (2) **a price failure does not block the line** — the item is added at $0 with ABC's own
+sentence, because a rep in front of a client can read the number off a quote but cannot recover from a dead
+end; (3) **no account set says where to go** (Suppliers) instead of surfacing a 401. `abc_item` is kept on the
+line as forward wiring for ordering — nothing reads it yet, and that is the point.
+
+⚠️ **Shipped a 3.06:1 button and caught it before the PR.** `#2a6b3c` on the editor's `#0b0b0e` ground is under
+the 4.5 floor for 10.5px bold — THE RECURRING ONE, in a build that had nothing to do with colour. Fixed by the
+neighbour's own mechanism (base rule light, `cr-nvl-styles` dark twin, as `.add-custom` does), with `#78c98e`
+chosen by arithmetic at 9.87:1 to match `.add-custom`'s 9.84:1. **The measuring rig lied first**: it appended a
+white ground unconditionally and scored white-on-green as 1:1, so the instrument was fixed before the number was
+believed — an element's own opaque background IS the ground, and the walk stops there.
+
+**Renumbered 766 → 774 before pushing.** It was built as 766 against 765; `main` shipped 766-773 in the interim
+and `next_build.py` named 774. Every anchor was re-verified against the 773 tree (all 11 still unique, the
+estimate editor untouched by the Production rebuild) and the gate was renamed off a collision — **main already
+had a `gate_766.mjs`**.
+
+**Gate**: `gate_774.mjs` — 27 green, **24 red on the 773 control**, nothing crashing. It drives the real seam in
+Chromium: open the editor, tap the button, prove typing does NOT call ABC, search, tap a row, and assert the
+LINE ITEM's price/number/unit — then the 401 path, then that Library mode is unharmed. The contrast floor is
+asserted inside it. `gate_756`/`gate_757`'s reds were checked against main's own 773 artifact and are
+**byte-identical there** — pre-existing (757 retired the floating Home that 756 asserts), not this build's.
+
+## build 777 — 13 Aug 2026 — CompanyCam photographs into the client Photo Album
+
+Theo, with a screenshot of a new lead's empty album: *"It would be nice if I can pick some photos out of
+company cam and upload them here as I have already got pictures in company cam for this address."*
+
+**Nothing new was invented — two existing pieces were pointed at each other.** `/api/companycam` (468, admin-only,
+internal photos refused, list via the 60k-photo Postgres index since 473/496) supplies search + bytes; the album's
+own `addGalleryFiles → resizeImageFile → photoDb.add` pipeline takes them in, so an import behaves exactly like a
+phone upload — same 1600px re-encode (which also strips the EXIF/GPS block), same 50-photo cap, same storage path.
+`photoDb.add` and `addGalleryFiles` each gained one OPTIONAL trailing param (per-photo `{caption}`), so the crew's
+CompanyCam description lands in `project_photos.caption`; every existing caller is byte-identical in behaviour.
+New surface: `#galCcBtn` + `#galCcPanel` (`cr-galcc-styles`, light card, all literals — inks computed 5.67–16.94:1),
+seeded with the client's address and searched on open. Foreign-job picks are marked and challenged (the 486
+picker's cross-client guard, adapted). Mid-flight client switches are guarded on both the search and the import.
+
+**Found while wiring captions, fixed in the same build: `listByProject` never selected `section`/`caption` back**,
+so the album's tabs and captions have been resetting on every reload since they shipped (the writes were fine; the
+read dropped them). Two words in the select. Verified against production's real columns over the Supabase connector.
+
+**Gate**: `gate_777.mjs` — **29 green, 26 red on the 776 control**, no crashes (probes guarded). Drives the real
+artifact in Chromium: admin sees the button / rep does not, open seeds + auto-searches, foreign confirm fires,
+two `action:fetch` round trips, two `project_photos` inserts with the caption on the right row and **no
+coordinate keys on either row** (the GPS fence, asserted), count re-renders 2/50, insp mode hides everything.
+`check_build.py` green (113 scripts parse, stamp 776→777, marker `galCcPanel`, negative control clean).
+
+## build 778 — 13 Aug 2026 — the first run of the CompanyCam picker, three fixes
+
+Theo used 777 within minutes of the merge and reported three things. All three are real; two were mine.
+
+1. **Select all** — 27 photographs at one tap each is not a feature. `galCcToggleAll()` ticks everything the
+   search found and the control flips to **Clear all** once they are; a partial tick still offers Select all,
+   because the useful move is to finish, not to start over. **It warns about the 50-photo album cap BEFORE the
+   fetches**, not after N round trips.
+2. **"After adding photos it says 0 on profile screen"** — not a counting bug. The gallery's Back button was the
+   **only** client sub-page whose close never re-rendered the overview; `dbCloseTo()` has called `renderOverview()`
+   for payments, tasks, documents and appointments all along. The number was painted once on entry and never asked
+   again. One line. `gate_778.mjs` reproduces his exact path — profile at 0 → add → Back → read the tile.
+3. **The AI caption "bugged out"** — 27 photographs, `count(caption) = 0` in production, so it never wrote. The
+   three failure paths (storage read, API, save) all alerted the same shapeless string, so the report could not be
+   actioned. Each now names its step and points at the manual route (double-tap). **This is instrumentation, not a
+   fix** — the underlying failure is still unidentified and the next report will say which step.
+
+**Gate**: `gate_778.mjs` — 19 green, **15 red on the 777 control**. `check_build.py` green, stamp 777→778.
+
+## build 779 — 13 Aug 2026 — the roofing agreement's spec sheet matches the printed master
+
+Theo, with the app's contract beside a photograph of the paper master: *"I was hoping that the contracts that
+come from the job menu would look like the 2nd picture and that the checkboxes could be used instead of whats
+there now. With drop downs for style, color, brand for Owens Corning, as well as a drop down for the amount of
+pipeboots, etc."*
+
+**The content was all there since 749/750 — the LAYOUT was not.** Project Specifications was a one-column
+`table.meta` of key/value rows; the master is two columns of numbered, red-ruled sections with the house cutaway
+sitting beside the items it points at. Replaced with a `.specgrid` (one column under 640px — a phone is not a
+Letter page). All 13 sections plus Extra Structure, in the master's order and column split.
+
+**Three rows printed letters with nothing to tick** — decking type A–F, and the ridge vent's 1. Standard /
+2. OC. They are `.cbx` boxes now, so every lettered option on the sheet has a box. Grouped rows stay exclusive;
+flashing and extra structure remain multi-pick, as on paper.
+
+**Six new dropdowns, none of which invents data.** `CardinalColors` gained `lines()` — the OC hub's own `LINES`,
+filtered to `ready !== false`, so the Style list is what the colour wall actually sells and a line added there
+reaches the contract with no second edit (the 750 precedent: the colour dropdown reads `list()`). Brand offers
+**Owens Corning** and "Other (see notes)" — **no competitor is named**, per `OC_BRAND_RULES`, and a rep matching
+an existing roof is still not blocked. Quantities (layers to remove, pipe boots, skylights, box/turtle vents,
+power vent, turbine) are 0–13+.
+
+⚠️ **The decking prefill had to change mechanism.** 750's `collapse()` swaps a `.opts` span for the checklist's
+answer, and its regex stops at the first `</span>` — so it cannot survive nested checkbox markup. Decking now
+**ticks the matching box** by `data-val`; layers and pitch keep `collapse()`, which is right anyway because the
+master leaves both as blank lines.
+
+**Gate**: `gate_779.mjs` — 25 green, **22 red on the 778 control, no crash** (probes guarded after the first
+control run threw, which is not a control). It renders the real contract in Chromium and also writes a
+full-page PNG, which is what actually answered "does it look like the master" — the assertions cannot see that.
+`check_build.py` green, stamp 778→779.
+
+## build 780 — 13 Aug 2026 — estimates: the count is right, and publishing says what it did
+
+Theo: *"When writing estimates, and hitting publish, it does not go out of draft. For James Tiege, I did 2
+separate but in his client profile it says 0, when i open the estimates box it has 2 with status draft. When I
+hit publish tho a pop up said something like send then move the pipeline forward but it did not move anything."*
+
+**Reproduced against the live rows before touching anything** (Supabase connector): EST-2026-0899 `draft`,
+no doc; EST-2026-0900 `sent` with `doc_id`; project stage `Prospect`. **Three separate faults, none of them the
+one the sentence names** — publish was not failing.
+
+1. **The count.** The visible job menu counted estimate-titled DOCUMENTS. A draft has no document, so two
+   estimates read as **0** while the box he opened listed both from the estimates TABLE. 654 fixed exactly this
+   shape on the legacy `#jaGrid` tile and never reached the tile that renders (the `#tab-overview` two-tiles
+   problem again). Now async-filled from `loadForProject()` — the same source the box lists — with the doc
+   count as fallback. **It is a navigation count, not money: `indexMoney`'s SENT_EST rule is untouched**, asserted.
+2. **The promise.** The confirm said *"Mark it as Sent and move the pipeline forward?"*. `sent` targets
+   Prospect and the job was **already** Prospect, so `syncStageFor()` correctly did nothing — silently. The
+   prompt now computes the outcome with the same `rank()` guard and says either *"James Tiege moves to
+   Prospect"* or *"The pipeline stays at Prospect"*.
+3. **The silence.** After the status write nothing re-rendered — no toast, list still reading `draft`. That is
+   precisely what *"it does not go out of draft"* looks like from the other side. It now toasts, refreshes the
+   saved list and the profile, and the UPDATE carries `.select('id,status')` so a refusal is an **error** rather
+   than a silent no-op, with a message that says the document was still created.
+
+**Gate**: `gate_780.mjs` — 17 green, **10 red on the 779 control**. It seeds Theo's exact two rows and drives
+both stage cases (already-Prospect must NOT advance; a Lead must).
+
+## build 781 — 13 Aug 2026 — the contract that was unusable at a client's house
+
+Theo, from a client's driveway: *"the contract was unusable. The signing section was not right. The deposit was
+set to 50%."*
+
+**Both faults are OLDER than today's builds** — verified byte-identical in the pre-777 tree, so 779's spec-sheet
+work (which stopped at the Warranty System heading) did not cause them. Reproduced in Chromium on a $13,750 job
+before a line was changed.
+
+**1. The deposit.** `createContractForCurrent()` did `var half = price / 2` — a 50% deposit on every contract,
+ignoring the estimate the job already had. ⚠️ **`approveAndContract()` carried the IDENTICAL block**, which is
+why it stayed wrong in two places. Both now call **one chokepoint**, `fillContractMoney(tpl, pr, price)` — the
+`bidAmt()` rule applied to contracts. The job's own estimate wins; `DEPOSIT_PCT_DEFAULT = 30` applies only when
+there is no estimate to ask. **30 is measured, not invented: 14 of 17 live estimates carry 30%**, three carry 0
+and a deliberate 0% is honoured. The generic contract also wrote the percentage into its **row labels**, so the
+arithmetic alone would still have printed "50%" beside the right money — the labels follow the real number now.
+
+**2. The signing section.** An agreement had **five signature slots in two competing blocks**, and the pad filled
+exactly one: the base footer's bottom "Client Acceptance" line. So a client signed at the bottom of the page
+while the official-looking **Buyer signature** box three inches above stayed a dead yellow `[sign]`, and a
+co-buyer or a countersignature could not be captured at all. Now: an agreement carries **one** block — the
+`isDeal` flag that already stripped the cover photo also strips the duplicate footer — and Buyer / Co-buyer /
+Contractor are each `[data-sig]` slots. The pad **asks whose signature it is** and stamps that row with the PNG
+and the date. **Only the buyer signing advances the job to Approved**; a countersignature must not move anyone's
+pipeline. Estimates are untouched — they keep the footer, which is their only signing block. The acceptance
+paragraph also stopped calling a contract an estimate.
+
+**Theo's picks**: offered as two numbered choices with the evidence; he answered "continue", so the two
+recommendations shipped (estimate's own % / one block, three rows). Both are reversible in one place.
+
+**Gate**: `gate_781.mjs` — 21 green, **16 red on the 780 control** (the control's tell: a 0% estimate still
+printed $6,875 down). ⚠️ **Two of its assertions were wrong first, and both were the TEST's fault**: one counted
+the chokepoint's own *definition* as a call site (CLAUDE.md's counting trap, again), and one assumed a job with
+no estimate still has a price — `projectValue()` derives money FROM the estimate, so there is nothing to split
+and fill-in boxes are correct.
+
+## build 785 — 13 Aug 2026 — the contract deposit section is editable, and it adds up
+
+Theo: *"Make the contract deposit section editable fields."*
+
+**Why they were dead.** The report editor does not make the document freely typeable. `lockTemplate()`
+**removes** `contenteditable` from `doc.body` and grants it only to `EDITABLE_SELECTOR` — `.ph`, `.fill`,
+`#estItems td.qty|.rate`, a few table cells. The money writer replaced the whole
+`<span class="ph">[0.00]</span>` with **plain text**, so the moment a contract had a real price its
+amounts matched no editable selector and went dead. True before 781 as well as after — 781 changed the
+arithmetic, not the markup class.
+
+**The app already had the convention**, stated in its own editing hint: *"Yellow highlights are fill-in
+fields."* `.ph` = unfilled placeholder (yellow, `#fff6c4`); **`.fill` = a filled value that is still
+editable** — declared in `EDITABLE_SELECTOR`, already used 8× in markup, and carrying **no CSS anywhere**,
+so it prints as ordinary text. The amounts are written as `.fill` spans now. Nothing invented.
+
+**`wireContractMoney(doc)`** is a sibling of `wireEstimateCalc`, deliberately not folded into it: that one
+keys off `#estItems` and sums Qty × Rate, this one keys off the marked money cells and holds
+`price = deposit + balance`. A contract has no `#estItems`, so the estimate calc returns at its first line
+and the two never fight. Edit the deposit → the balance follows; edit the balance → the deposit follows;
+edit the price → the balance absorbs it. **The cell being typed in is never rewritten** (`doc.activeElement`),
+and the write is guarded per 567/569 so an identical value emits no mutation record.
+⚠️ **It is NOT called on load, on purpose** — a saved contract may hold figures set by hand that do not
+sum, and recalculating on open would silently rewrite a signed document.
+
+If a template prints a percentage beside the deposit, it is now wrapped in `[data-cpct]` and **follows the
+real figure**. A label reading 30% next to an amount that is not 30% is a contradiction on a signed document.
+
+⚠️ **A THIRD contract writer existed that 781 missed** — `cr-e2c-script`'s `generate()`, the
+estimate→contract path. It had its own copy of the money logic with a **50% default** (against 781's 30)
+and was the **only** one that honoured an `est.deposit_amount` column. All three now share the chokepoint,
+and a dollar deposit outranks the percentage everywhere. **781's claim of "one chokepoint" was two-thirds
+true; this is the build that made it true.**
+
+**Gate**: `gate_785.mjs` — 20 green, **17 red on the 784 control**. It asserts the cells are genuinely
+`contenteditable` after `lockTemplate`, types into them through the real keyboard, and checks the saved
+HTML keeps the figures while stripping `contenteditable`. ⚠️ The control first **crashed** instead of going
+red (`typeInto` hit a null on cells 784 does not have); a harness that explodes proves nothing, so it now
+degrades to a reported failure. Three patch assertions were also wrong before the code was — a definition
+counted as a call site, a miscounted marker, and a name count polluted by my own new comment.
+
+## build 786 — 13 Aug 2026 — the punch-out card on a phone
+
+Theo, with a screenshot: *"This screen doesn't look right."*
+
+**Reproduced before theorising**, in Chromium at 402 CSS px, signed in as an admin, on the item from the
+screenshot. The numbers, measured on the untouched 785 artifact:
+
+```
+grid columns : 63.2px each          (five equal columns, as the CSS intends)
+actual boxes : Overview 36  Close-up 36  Cleanup 31.5  Material 36  Final 22.5
+caption tops : 898, 898, 893.5, 898, 884.5      <- five different heights
+```
+
+**Cause: `.pkslot` is a `<button>` with `border:0; padding:0` and NO width.** A button is inline-block, so
+it shrink-wraps to its widest child — **the caption**. `.im` then takes `width:100%` *of the shrunken
+button*, so each photo slot was sized by how many letters its caption has: "Overview" is eight, "Final" is
+five. That is the staircase in the screenshot and why the captions sat at five different heights. One
+declaration (`display:block; width:100%`) fixes it — **and it was wrong on the desktop too**, just less
+visibly (80px columns, boxes at 36).
+
+**Second fault: the phone layout is keyed to WHO YOU ARE, not what you are holding.**
+`el.classList.toggle('field', !isManager())` — so the office on a phone got the dense five-across grid
+built for a desktop, with 6.8px captions. Fixed with a `@media (max-width:560px)` block **beside** the
+`.field` rules rather than by widening that line: role and viewport are different questions, and the class
+keeps meaning "this user is field crew". ⚠️ **A media query was also the only correct mechanism here** — a
+class toggled inside `render()` sits *after* the 606 stored-signature guard, so on rotation the HTML is
+unchanged, `render()` returns early, and the class would never be re-evaluated.
+
+Result: 402px → 3 columns × 108.7px, **all five boxes identical**, captions 10px on a shared baseline.
+1280px → still 5 columns × 80.4px, now all identical. Tap targets under 44px: **16 → 9** (the photo slots
+and the @tag chips left that list; nine controls remain at 36–42px and are recorded as not-yet-done).
+
+**Not a bug, and reported as such:** the checklist showing template buttons beside a template chip is the
+correct empty-steps state — tapping a template writes its 5 steps and the picker disappears, verified.
+
+**Gate**: `gate_786.mjs` — 10 green at 402px, 9 green at 1280px, **6 red on the 785 control**, which fails
+with exactly the reproduction's numbers (36/36/31.5/36/22.5, box 36 vs column 63.19, 6.8px, baselines
+898/893.5/884.5). ⚠️ **No screenshot**: `page.screenshot` times out on this card in this environment at
+every setting tried (element, fullPage, viewport, animations disabled/allowed). The geometry is measured,
+but the visual result is unverified by eye — Theo's screen is that gate.
+
+## build 787 — 13 Aug 2026 — @Curtis is back, and a failed jump to a client says so
+
+Theo: *"Also when you try to click client profile, it takes you to retail crm home. Also @Curtis is missing."*
+
+### @Curtis — confirmed, root-caused, reproduced
+
+`TEAM_ROSTER` order is Nick, Joan, Joseph, **Theo**, Jacob, Jerry, Scottie, **Curtis**. The punch-out
+mention chips did:
+
+```js
+roster().filter(function(m){ return m.email !== me; }).slice(0, 5)
+```
+
+Filtering Theo out leaves seven; `.slice(0, 5)` keeps five — **exactly the five in his screenshot** —
+and drops the last two: **Scottie and Curtis**. So *who you could tag was decided by roster order*, and
+it cut precisely the man who dispatches punch-outs (this module's own comment says so) and his crew
+lead. `.pktags` already wraps, so there was nothing the cap was protecting. All seven now.
+
+### The client-profile jump — a real defect with that symptom; his exact path NOT reproduced
+
+```js
+function openProject(id){
+  var pr = cacheProjects.find(function(x){ return x.id === id; });
+  if(!pr) return;                    // <- silent
+```
+
+~40 call sites navigate through this, and the ones that matter share a shape: **they close their own
+screen first and then call it** — `close(false); openProject(pid);` — the punch card, the production
+board, the punch list, search, recents, the palette. On a cache miss the screen is already gone and
+nothing replaces it, so the user is left on whatever sat underneath — **the retail CRM home** — with
+nothing said. It now reloads once, retries, and gives up *out loud*; a `__retrying` latch stops the loop.
+
+⚠️ **The control proves it is worse than one dead tap**: on 786 the miss leaves `cacheProjects` empty, so
+the *next* client will not open either (`projectView` measured `display:none`). 787 self-heals because
+the retry repopulates the cache.
+
+**Paths tested and working, so this is not yet proof of Theo's report:** clicking a client card in the
+client list, the punch card's Open job (its button is correctly hidden when the project is uncached), and
+a project absent from cache. **Asked him for the exact tap.**
+
+**Gate**: `gate_787.mjs` — 10 green, **8 red on the 786 control**. ⚠️ One assertion was wrong first and it
+was the TEST's fault: it watched `window.alert` only, but the app prefers `showError()`. It now watches
+both **and checks the message is actually on screen** — 762 fixed a class where errors were written to
+the home page while the user was elsewhere, and a fix that reports into a hidden node is the same bug
+wearing a hat.
+
+## build 788 — 13 Aug 2026 — the client card, lined up (cover photo retired)
+
+Theo: *"Lots of photos not reappearing in different places again. Also the client card is gigantic. Can you
+make it visually pleasing while making it line everything up well? Also, maybe we can just get rid of cover
+photos on client card all together. Maybe we can make it look more like AccuLynx. On Cardinal it's just
+scattered everywhere and in orderly."*
+
+### The photos — root-caused against PRODUCTION, not guessed
+
+```
+storage.buckets           photos.public = FALSE
+projects.cover_image      37 none · 4 rows → ALL FOUR are /object/PUBLIC/ links
+estimates.photos          3 entries       → all three the same
+team_profiles.photo       5 data-URLs     → fine
+```
+
+`uploadDataUrl()` stores `getPublicUrl()`. The bucket is private, so **every one of those seven URLs
+answers 403 and can never load** — that is the broken "?" in the screenshot. This file already carries a
+comment elsewhere warning that a "public URL would 403 the moment the bucket goes private". It did.
+**Removing the cover card retires 4 of the 7. The 3 on estimates are NOT fixed here and are reported.**
+
+### The card — measured, at 402px, before touching anything
+
+```
+cover card   330 x 150      (holding the broken image)
+info card    330 x 283      → ~440px of hero on an ~800px screen
+left edges   49 (PO/manage/address) · 128 (name) · 262 (email) · 275 (phone)
+```
+
+Four left edges in one card, because `.hcontact` carried `margin-left:auto; text-align:right` inside a
+wrapping flex row. That is "scattered everywhere", in pixels. **After: 274px, and TWO left edges** (the
+label column and the value column) — the AccuLynx shape.
+
+**`display:contents` on the `<h2>` is the load-bearing trick.** ADDRESS lives in `#projMeta`, a *sibling*
+of `#projName`, so with the heading keeping its own box the address could never be ordered between the
+email and the actions. Dropping that box makes both sets of children items of one grid.
+
+⚠️ **The cover is HIDDEN, not deleted.** `openProject()` does `cov.querySelector(...)` and
+`getElementById('projCoverEmpty').style...` unguarded — removing the markup throws *inside the profile
+renderer* and takes the whole client profile down with it.
+
+Also found and fixed while in there: a **duplicate PO badge** (`.cr-po-badge`, "PO 1032") that said the
+same number as the `#1032` chip and, being unplaced, auto-flowed into the grid row `.insBadge` vacates on
+a retail job — landing **above the client's name**. And the **edit pencil was `background:#faf7f5`**, a
+light-era white square on the dark card; now a `--rbe-*` token pair so it flips.
+
+**Gate**: geometry + contrast measured in Chromium, both themes — all six text roles pass 4.5:1
+(dark 4.82–12.71, light 4.64–16.89). ⚠️ The contrast probe stamps `data-theme="rb-light"` and **left it
+stamped**, so the first "after" screenshot silently captured the wrong theme. It restores it now — a rig
+that changes the thing it measures is the trap this file names twice.
+
+**Not done, and Theo's call:** the Overview still alternates dark cards with WHITE ones (Job Value,
+Payment Information, Location, Job Details, Google Reviews, Assigned To). That alternation is most of the
+remaining "scattered" feeling and is a much bigger theming pass.
+
+## build 789 — 13 Aug 2026 — the Photo Album toolbar, cut from five buttons to two
+
+Theo: *"the photo gallery is a mess. Maybe have just the plus photos pop up the company cam, leave the take
+photos and have another bar for photo inspections/transfer? Also, the orange ball is a generate caption,
+which won't work here."*
+
+**THE PRIME DOCTRINE PAID OFF AGAIN: the bar he asked for already existed.** `cr-pae-script` builds
+`#cr-pae-actionbar` and raises it the moment a photo is checked, already carrying To Inspection, To Report,
+move-to-section, Save and Clear. The two big red buttons across the top were **duplicates of it**. This
+build did not add a bar; it stopped drawing the copies.
+
+⚠️ **CompanyCam cannot be the plus button for everyone.** `api/companycam` refuses non-admins server-side
+with a 403 and `#galCcBtn` is admin-gated for exactly that reason (777, the rccGate rule). Wiring the plus
+straight to CompanyCam would have left Curtis, Nick, Joey and Jacob **with no way to add a photograph at
+all**. The plus opens CompanyCam for an admin and the device picker for everyone else — one button, the
+right source for whoever taps it. Both paths are asserted in the gate.
+
+⚠️ **The first attempt at moving the transfer control was a REGRESSION I caught in the harness.**
+`#galXferMenu` is `position:absolute` *inside* `#galXferWrap`, so the wrap has to live where it is tapped —
+but `renderBulkActionBar` rewrites `actionBar.innerHTML` on **every** render, which **detaches** anything
+appended into it. Appending the real node and re-reading it by id next render found `null`: the Transfer
+control would have disappeared from the document permanently. The node survives as a **JS reference**,
+listeners intact, so it is cached in `paeXferNode` and re-homed after each render. *Appending a real node
+into an innerHTML-rewritten container is a bug with a delay on it.*
+
+**The orange ball** was an AI caption button. 708 had already diagnosed it — `api/caption` rejects anything
+that is not a base64 `data:` URL, and every photograph taken since the bucket went private is
+storage-backed — and tried to rescue it by fetching the bytes back and re-encoding. It still fails in
+Theo's hands, so the control is gone. Double-tap to type a caption is untouched; that path never used the API.
+
+**Gate**: `gate_789.mjs` — 15 green, **7 red on the 788 control** (which reports `ai:1`, the badge still
+present). ⚠️ Two harness faults first, both the TEST's: it called `openGallery()`, which does not exist —
+the opener is `openGalleryMode(mode)` — and the `typeof` guard swallowed it, so every visibility probe read
+a hidden view and reported false; and a source assertion kept the old variable name after the rewrite.
+
+## build 790 — 13 Aug 2026 — the Overview is one screen, not alternating slabs
+
+Theo: *"Do both"* — the white cards, and the estimate photos.
+
+### ✅ CORRECTION: the estimate photos are NOT broken. I was wrong at 788.
+
+788's report said three estimate photos were dead alongside the four cover photos. **The stored URL is dead;
+the app never uses it.** `photoPathOf()` already derives the storage path out of a retired
+`/object/public/photos/...` link and signs it — a repair shipped earlier and verified then against all 215
+stored photos. Re-proved here by extracting the **shipped** function text and running it against the three
+**real** rows from production: 3/3 return exactly the `storage_path` the database holds for those photos.
+`estPhotoUrl()` prefers the signed URL. **Nothing to fix.** The only real casualties were the four cover
+photos, retired at 788.
+
+One small hardening did ship: `estPhotoUrl()` fell back to `p.url` when signing had not finished, and that
+URL is known to 403 — a guaranteed broken-image icon for a moment. It now renders nothing in that window.
+Legacy base64 rows (where `photoPathOf` returns null) still fall through exactly as before.
+
+### The white cards
+
+Measured at 402px: **nine** elements painting a light ground on the dark profile — `.dbmoney`, `.dbrow`,
+`.acxsec` ×3, `.acxsel` ×3, `.dbmap`.
+
+⚠️ **The treatment already existed, for a different CRM.** `body.claim-insurance` carries a complete dark
+version of exactly these cards (L611–655) down to every inner ink. This build **mirrors that selector list**
+for retail with `--rbe-*` tokens, and uses the same gradient `.projinfo` uses so the cards match the client
+card rebuilt at 788. Scoped three ways — `:not([data-theme="rb-light"])`, `:not(.claim-insurance)`,
+`:not(.claim-community)` — asserted across all 24 selector lines.
+
+**Result, measured:** dark **10 failures → 0**; light **10 → 10**, identical to baseline. Ten of those were
+*pre-existing* dark-mode failures this build fixes as a side effect (Job Value 3.86→4.82, Directions
+1.55→8.22, five field labels 4.11→4.82).
+
+⚠️ **THE MEASURING RIG WAS WRONG FIRST, AND IT NEARLY COST THE BUILD.** The contrast probe walked ancestors
+to the page root and scored against the worst, so dark text on a **white** card over a black page read
+**1.15:1** — it reported 16 perfectly readable elements as failures and would have justified "fixing" text
+that was fine. Once an ancestor background is **fully opaque, nothing behind it is visible**: composite
+outward and STOP there. Gradient stops and translucent layers still stack, per the trap CLAUDE.md names —
+this is that trap's other half.
+
+⚠️ **Mirroring the insurance list was NOT enough, and only a full sweep caught it.** Three elements carry a
+hardcoded light-era ink and are absent from that list — `.payringinner` (#1b1b1b), `.locaddr` (#2b2b2b),
+`.dbaddr` (#1e2432) — so the donut percentage fell to **1.46:1** and the address under the map to
+**1.08:1**. And `.dbringin` paints a **white circle** for the donut's hole, so the card-level ink landed
+light-on-white; the hole now takes the card's ground. Found by scoring **every text node** in the repainted
+cards, not the ones I expected to matter. That sweep is the whole defence against a partial pass.
+
+## build 791 — 13 Aug 2026 — the client card becomes a band, on the phone only
+
+Three rounds of preview with Theo, then: *"I just meant the square design on mobile."*
+
+**What shipped, on a phone, retail only:** the client card is a band across the full screen — name and
+star left, PO and pencil beneath them, email / text / call on the right. The pipeline bar sits directly
+under it, also edge to edge, then the map. Switch Primary and Add contact are gone; so are the Overview
+dropdown (`#jobMenuSel`) and the ALL chip (`#crPortalChip`) while `body.projopen`. Phone, email and
+address are no longer printed twice on one screen.
+
+### ⚠️ "Mobile only" was harder than it looks, and the first attempt failed
+
+Hiding the band above 560px was **not enough**. The pipeline bar and the map are physically **MOVED**,
+and **CSS cannot un-move a DOM change** — the desktop was still quietly rearranged. So the ordering is
+done with flex `order` inside the media query and **JS only tags the nodes** (`data-cr-ord`). The browser
+then owns rotation, which a one-time width test would not.
+
+**The desktop is PROVEN unchanged, not asserted:** the gate renders 1280px against this build and against
+790 and compares the **image md5**. Identical. That check is what caught the DOM-move leak.
+
+### ⚠️ A DEAD CONTROL, FOUND AND FIXED — bug class 16, live in production
+
+**The ✎ pencil beside the client's name has never worked, on any screen.** Its handler is delegated on
+`#projMeta`, but the button renders inside `#projName` — a **sibling** — so a click never reached a
+handler. Verified in Chromium rather than by reading: click it, `#projModal` stays `display:none`. The
+only working routes to the edit form were `#acxEdit1` / `#acxEdit2` lower down the page. The delegation
+now also sits on `#projName`, where `#favStar`'s already does. Fixed for every screen, not just the phone.
+
+**Scoped to retail on purpose:** `#projMeta` carries the **adjuster rows** on an insurance client, so
+hiding the old card app-wide would have destroyed real information. Insurance and community keep their
+cards, as at 790. Asserted.
+
+Two small things the band does deliberately: it **mirrors the live `#favStar`** rather than re-deriving
+"is this a favourite" a second way (two sources for one fact is how they drift), and it **draws only the
+contact channels that exist** — a `mailto:` with no address is exactly the dead control this build is
+fixing elsewhere.
+
+**Gate**: `gate_791.mjs` — 16 green, **10 red on the 790 control**. ⚠️ Two harness faults first, both the
+TEST's: the seed set a `claim_type` COLUMN, but `projClaimType()` reads the checklist's `lead.claim_type`,
+so every project came back "unknown" and the insurance case was never exercised; and the pencil test
+dereferenced a band the previous build does not have, so the control **crashed instead of going red**.
+
+## build 792 — 14 Aug 2026 — the contact icons show the value first; Location goes edge to edge
+
+Theo: *"The phone icon should pop up the phone number and so on for email and text"* + *"the location then
+map goes underneath the pipeline across the screen mobile only"*, with an AccuLynx screenshot.
+
+**The icons no longer dial blind.** They were `<a href="tel:">` / `sms:` / `mailto:` and fired the moment
+they were touched — you never saw the number you were about to ring, and there was no way to read it off
+the screen or copy it. They are buttons now; each opens a panel under the band carrying the label, the
+value in full, the action as an explicit button, and Copy. Tapping the same icon again closes it, as does
+a tap anywhere else. **One more tap to dial, and you can see who you are dialling.**
+
+`copyText()` falls back to *selecting* the value when the clipboard API refuses, rather than leaving a
+Copy button that silently does nothing — the dead-control shape this session has now hit twice.
+
+**Location and the map join the full-width stack.** 791 already ordered them under the pipeline bar; 792
+makes the heading and the card span the screen with the radius off, so the top of a client profile reads
+as three full-width bands and then the map. That is the shape of the screenshot.
+
+**Mobile only, by the same construction as 791** — every rule inside the `@media` block, the panel
+`display:none` outside it, asserted (only the two hides sit outside the query), and the gate compares a
+1280px render against 791 by **image md5**. Identical.
+
+**Gate**: `gate_792.mjs` (extends 791's) — 24 green, **8 red on the 791 control**. ⚠️ The control **crashed
+before it went red** for the THIRD time this session: the probe dereferenced a panel the previous build
+does not have. Every probe in this harness now returns a sentinel instead of touching a null. *If a
+negative control can crash, it is not yet a control.*
+
+## build 793 — 14 Aug 2026 — Location and the map go back in their card
+
+Theo asked for them to run across the screen (792), saw it shipped, and preferred the 791 look: the
+heading with its red rule and the map in its own inset card. Reverted exactly that.
+
+**Kept:** their ORDER (`loch` 2, `loc` 3 — straight under the pipeline bar), the full-bleed pipeline bar,
+the client band, and 792's contact panel. Only the bleed on those two elements is gone, and the stage
+bar's 10px bottom margin came back with it.
+
+`gate_793.mjs` — the two Location assertions are **inverted on purpose** and say so in the file: inset is
+the shape Theo picked, not a regression. 25 green, desktop image-md5 still identical.
+
+## build 794 — 14 Aug 2026 — Location and the map run across the screen
+
+Third state of this design in three builds, so the history is worth stating once: **791** inset heading
+and inset card · **792** full bleed *plus* a grey panel behind the heading with its red rule killed,
+*plus* contents allowed to jump left to x=15 — turned down · **793** reverted to 791 · **794** full
+bleed on **the pipeline bar's pattern only**.
+
+Theo, third ask: *"make the location and maps go across the screen just like the item above same
+pattern"*, with *"don't change it to the second picture"* and *"leave the bar above alone"*. So this
+copies exactly what the stage bar does — negative margin, no radius, width auto — and nothing else.
+The heading keeps its transparent ground and its red rule; the content is padded back onto the page's
+gutter so **the heading, the map and the address all start at the same x**. The map is 300 → 330px
+wide for it. The stage bar rule is byte-identical, asserted.
+
+**Measured before a rule was written** (402px, shipped build): `--cr-wrap-pad` is really **36px** — the
+`var(--cr-wrap-pad, 18px)` fallback never fires — `#acxMount` runs 36→366, and `h3.projsec` ships an
+**inline `style="margin:20px 0 10px;"`**, so the heading's margin override needs `!important` or it
+loses to the element.
+
+**Two things only a render could see, both under the red rule.** `.acxsec` carries a 1px `#2b2b33`
+border *and* `rgba(255,255,255,.9) 0 1px 0 inset` — the ridge-cap bevel from the 430–436 retail
+restyle. At 330px inside a rounded card those read as an outline and a bevel; run edge to edge they
+read as two bright hairlines welded under the heading's rule. Both dropped on the bled card only; the
+gradient ground is the card now, the way the blue bar's colour is the bar. No assertion would have
+caught either — the first two renders of this build were wrong and looked plausible.
+
+**Gate**: `gate_794.mjs` — **30 green** (incl. desktop image-md5 identical to 793), **5 red on the 793
+control, no crash**. The control also independently reproduces the misalignment 794 fixes: map at
+x=51, heading text at x=36. Checked at 360 / 402 / 430 / 560px; `documentElement.scrollWidth` equals
+`innerWidth` at every one, so the negative margins introduce no horizontal overflow.
+
+## build 795 — 14 Aug 2026 — Job Details, laid out like the AccuLynx card
+
+Theo, verbatim: *"Just job category, work type, trade type, and lead source only with a dropdown next
+to each just like the 2nd picture."* Four rows, AccuLynx's own labels, label left, hairline rule,
+value right, a caret on every one. Initial Appt comes off the card. Retail only —
+`body:not(.claim-insurance):not(.claim-community)`, the fence 790 used, because those two CRMs paint
+this card from their own `--ct-*` palette.
+
+**Nothing became read-only.** `acxCat` / `acxWt` / `acxSrc` and the `.acxTr` class are the change
+handler's contract at ~11563 and are untouched; only chrome moved. `<select>`s get
+`appearance:none`, no box, accent ink, and a caret drawn by the row's `::after` (a `.acxsl` class
+marks those rows so no `:has()` is needed).
+
+**Trade Type is the interesting one.** `trades` is an ARRAY — which is exactly why the AccuLynx card
+itself prints "Roofing, Repair" on one line — so a `<select>` cannot hold it and `<select multiple>`
+is the box we are removing. It is a **button** that reads identically to the other three and opens
+the six trades as chips beneath it, in grid column 2 so the vertical rule stays unbroken. The
+checkboxes are visually hidden and the LABEL TEXT is the chip, via `input:checked + span` — a
+sibling selector, not `:has()`, because the sibling is exact and needs no support argument.
+
+**`acxTrOpen` is module state beside `acxTaskTab`, not a DOM attribute.** Every save calls
+`renderAcxOverview()`, so a panel remembered in the DOM would slam shut the moment you ticked a
+trade. Asserted: the panel is still open after a save, and the summary above it has updated.
+
+**Three things measurement caught that reading would not.**
+1. `--cr-wrap-pad`-style guessing on the label column: a `31%` column **wrapped "Lead Source"** onto
+   two lines. `auto 1fr` makes the column hug the longest label — no wrap, no wasted width on a
+   desktop card.
+2. Rows came out **66 / 66 / 66 / 37** because a `<select>` here computes to 44px and a plain value
+   to 19px. `min-height:52px` on both columns is what makes the list read as a list.
+3. **The `<select>`s render at 16px on a phone no matter what this stylesheet says** — `input,
+   select, textarea{font-size:16px !important}` at ~1814 is the iOS auto-zoom guard. The Trade Type
+   button was 13.5px and its row read visibly smaller than the three around it. The guard is right
+   and stays; the button matches it inside the same media query.
+
+**Gate**: `gate_795.mjs` — **35 green in dark, 35 green in light**, **27 red on the 794 control with
+no crash**. ⚠️ It went red on its own first run with **five false failures** (`#b9d3ec` scored at
+1.55:1, a white chip label at 1.00:1): the ground walk appended its white fallback to the *candidate*
+list and then scored against it. White is the backdrop translucent grounds composite onto, never a
+ground the element sits on. Same family as the 790 probe bug, one level down — the fix separates
+`{ list, opaque }`. Hand-computed values agreed with the corrected probe, which is the only reason
+the false red was recognisable as a false red.
+
+## build 796 — 14 Aug 2026 — the Payments card goes; Money In moves up
+
+Theo: *"Can you get rid of payments and money in, since it's already in payment information and it is
+redundant. Or move payment in into payment information."* Two options offered — and **they are not
+the same claim**, so both were checked before anything was deleted.
+
+**Payments (`#kpPay`, the Keeper pill from 349) IS redundant.** It renders a Paid bar plus
+`ck.payments` read-only. Payment Information (`#dbPayRow` → `openPaymentsPage` → `renderPayments`)
+renders the **same log** split into Received / Paid / Additional Job Expenses, **plus** the contract
+payments the pill cannot see, **plus** an add button per section. Strict superset. Its one control,
+the "Open payments" button, proxied `#jaGrid [data-ja="payments"]` — **`#jaGrid` is the legacy grid
+hidden by `#tab-overview`'s `display:none` rule**, so that button had been `display:none` since the
+day it shipped. Gone, along with its two `.kppaybtn` listeners.
+
+**Money In is NOT redundant, and deleting it would have cost a feature.**
+`jt(dbIc('estimates'), 'Money In', '', 'commissions')` was the **only** door anywhere into
+`#tab-commissions` — the Money In & Commissions pane built at 650 and themed at 726. Measured: the
+original file contains **zero** literal `showTab('commissions')`; the tile passed `'commissions'`
+through the router's else branch. Delete the tile and the pane is stranded — **the 607 punch-out
+trap exactly**. So it moved instead: out of the Job Menu, where it was an orphan half-width tile
+alone on its own row (which is what the screenshot was of), and up beside Payment Information as a
+second `.dbrow`. No new CSS — `.dbrow` was already themed at 790.
+
+History (`#kpHis`) shares the `.kpsec` shell and its `.kpsech` toggle and is untouched.
+
+**Left undone, said out loud:** the payments-only CSS (`.kppayrow` / `.kppaybar` / `.kppaybtn` /
+`.kprowi` / `.kpin` / `.kpout` / `.kpmute`) is now dead but stays. It is inert, and the neighbouring
+`.kp*` classes are shared with History.
+
+**Gate**: `gate_796.mjs` — **16 green**, **10 red on the 795 control, no crash**. The load-bearing
+assertion is D: *tapping Money In opens `#tab-commissions`*. E asserts the redundancy claim itself
+rather than restating it — Payment Information is opened and both seeded payments are found in it.
+
+⚠️ **Three of my own assertions were wrong before the app was.** (1) A blanket
+`'kppaybtn' not in src` failed a correct patch because the replacement **comment names the class it
+explains** — the file's own comment-pollution trap, in my own patch. (2) `kppayrow`/`kppaybar` were
+asserted at `== 1`; each is 1 markup site + **2** CSS rules, so the answer is 2. Replaced with the
+self-computing form (`patched == orig - 1`), which cannot be guessed wrong. (3) The gate asserted a
+section called "Paid out"; `PAY_SECTIONS` calls it **"Paid"** — a red that was the test's fault, not
+the app's. And a fourth, subtler: the "No payments logged yet." assertion **passed on both builds**,
+because that copy only renders when the log is empty and the seed has two payments. Swapped for the
+pill's heading, which is there either way.
+
+## build 797 — 14 Aug 2026 — the top of a client profile, rebuilt (phone)
+
+Ships what preview_v3/v4 showed and Theo confirmed, plus a same-session follow-up he asked for after
+seeing it live: Job Value/circle/Balance Due merge with Payment Information into one full-bleed card
+with no split, and that card moves **above the client name band**. Job Details moves to directly
+under the map, full-bleed like Location. Money In & Commissions stays its own row (only Payment
+Information was named for the merge) but goes full-bleed to match. The green "payment received — move
+to Invoiced?" nudge (`cr-autotrans`, an existing site-wide feature) is hidden on this screen only.
+Pipeline bar and Location+map are untouched — both were already exactly what was asked for, since
+791/793/794.
+
+**Second round, same build, after Theo reviewed the live result on his phone:** *"make everything
+under Money In and Commissions… go to the edge of the screen… rectangles under job menu"* —
+History, Google Reviews, Assigned To and Convert to Insurance all go full-bleed too, each keeping
+its own semantic accent rather than losing it with the rest of the chrome (History's red top border,
+Convert to Insurance's red left stripe — the same call 794 made keeping Location's red rule).
+**Scope of Loss Reader (`#solCard`) and Delete Client are deliberately NOT in this pass** — both
+render outside `#acxMount`, past `#tab-overview`'s own `display:none` allow-list, the single
+most-repeated trap in this codebase (five cards lost to it already, per CLAUDE.md). Touching that
+container gets its own investigation, not a drive-by extension of this patch.
+
+**Separately flagged in the same message, a real bug, not a layout ask:** *"The google review card is
+black when switching to light mode."* Confirmed by rendering — `.rvcard` has exactly one declaration
+in the whole file, no `[data-theme="rb-light"]` guard anywhere, so `#171717` ships in both themes.
+Given a real light-mode twin (own `<style id="cr-rvcard-light-styles">` block, not folded into the
+phone media query — this is a colour fix, not a phone-layout one, so it applies at every width).
+Computed before a colour was picked, worst case (white card): status ink `--rbe-mute` 5.33:1; the
+green checkmark deepened `#37c26b → #1f8f4f` (6.02:1, same hue, the 557 Activity-Count precedent —
+not a hue swap); the gold "Copy message" ink deepened `#f0c674 → #8a6d1f` (4.90:1, was 1.61:1).
+
+**Why moving the money card needed real JS, not just CSS order — the one genuinely new mechanism in
+this build.** Every other move in this stack (791–794) is a `data-cr-ord` tag plus a flex `order`
+value, because every element being reordered is a direct child of `#acxMount`. `#cr-namebar` is
+**not** a descendant of `#acxMount` — it is inserted as a sibling of `.projhead`, both children of
+`.wrap`. CSS `order` cannot cross that boundary. This needed a real reparent, the same category of
+move `adoptLocation()` (636) already does for the Community Location card.
+
+**And why that reparent needed a resize listener, not just a render-time move.**
+`renderAcxOverview()` rebuilds `#acxMount`'s entire `innerHTML` from a string on every re-render. A
+prior render's physical move of `#dbMoneyCard` out of `#acxMount` survives that rebuild untouched (it
+is no longer a descendant) — so without care, the render after it would insert a **second**,
+brand-new `.dbmoney`/`#dbPayRow` pair while the old wrapper sat stale in `.wrap`. `syncMoneyCard()`
+always checks for a fresh `#acxMount > .dbmoney` first: if one exists, a real render just happened
+and any existing wrapper is discarded before a new one is built from the fresh nodes; if there is no
+fresh `.dbmoney`, this call is a resize, and the existing wrapper is only repositioned. Verified with
+a dedicated probe: exactly one live `.dbmoney`/`#dbPayRow`/`#dbMoneyCard` through phone→desktop→phone
+resizes **and** real re-renders fired at each width, including the trickiest case — a re-render fired
+*while already at desktop width*, which must leave the card inside `#acxMount` rather than wrongly
+yanking it into `.wrap`.
+
+**A real correctness bug caught by the gate before it shipped**: `syncMoneyCard()` had no CRM check.
+`.dbmoney`/`#dbPayRow` render unconditionally for every CRM (unlike the Payments pill removed at 796,
+they were never CRM-gated) — so an insurance profile's money strip would have been wrapped and moved
+above its name band too. `gate_797.mjs`'s insurance test caught `moneyCard:true` on first run. Fixed
+with the same `body:not(.claim-insurance):not(.claim-community)` fence used everywhere else in this
+stack, checked in JS since this decision has to be made before any DOM move, not just in CSS.
+
+**Gate**: `gate_797.mjs` — **34 green**, **23 red on the 796 control with no crash**, desktop
+image-md5 identical to 796. Two of my own gate assertions were wrong before the app was, both
+recorded in the harness: a `.acxjd > div` row-count check also matched the trade-chip panel (5, not
+4 — narrowed to `.acxsl`); and an insurance check asserted the `data-cr-ord="jd"` **tag** was absent,
+when the established Location precedent is to tag unconditionally and gate only the CSS effect —
+rewritten to assert the meaningful invariant (still boxed, not bled) instead.
+
+## build 798 — 14 Aug 2026 — Convert to Insurance, fixed for light mode
+
+Theo, with a screenshot: *"In light menu this is still dark."* The "Convert to Insurance" title was
+essentially invisible against a near-black card. Pre-existing bug, not introduced by 797 — 797 only
+added margin/border-radius for the full-bleed conversion and never touched colour here; it surfaced
+because 797 made the card prominent and Theo tested light mode right after.
+
+**Root cause, confirmed by rendering before writing a fix**: the dark-mode conversion rule at ~3306
+(`.convertins{background:#241a1a;...}` plus its `.cvtxt`/`.cvtxt small`/`.cvgo`/`:hover`/`:active`
+siblings) had **no `[data-theme="rb-light"]` guard at all** — it ran unconditionally. In light mode
+the card stayed `#241a1a` while `--rbe-ink` resolved to its light value (`#161616`, near-black too) —
+measured **1.07:1** on the title. Same root shape as the Google Reviews bug fixed one build earlier: a
+rule written for one theme with nothing keeping it out of the other.
+
+**Fix**: wrapped the existing rule (unchanged otherwise, still the same six declarations) in
+`:root:not([data-theme="rb-light"])`. Dark mode is byte-identical — verified directly, not assumed.
+Light mode now falls through to the card's ORIGINAL base declaration (`#FDECEC` / `#2d4468`), which
+predates this session and was untouched. Measured: title `#2d4468` on `#FDECEC` **8.60:1** (was
+1.07:1). One pre-existing imperfection carried over rather than expanded on: the subtitle ink
+(`#6b7a90`, 3.82:1) was already under the 4.5:1 floor in the original light design, before any of
+this session's work — restoring it is a real improvement over the bug and is not itself "fixed," since
+nobody asked for that and re-tokenising it is a separate, unscoped change.
+
+**Gate**: `gate_798.mjs` — **5 green**, including a dark-mode regression check (still `#241a1a`,
+unchanged) and desktop image-md5 identical to 797. **2 red on the 797 control, no crash.**
+
+## build 799 — 14 Aug 2026 — the portal switcher moves into the burger menu
+
+Theo: *"Can you remove the retail badge row under the light/dark theme selector? Will it mess anything
+up?"* Checked before answering, not assumed: `#crPortalChip` is not decoration. It is the **only**
+control anywhere in the app that (a) switches which CRM's clients `renderClientDirectory` filters to
+(Retail / Insurance / Community / All), and (b) jumps straight to Cardinal Truth or the Community Hub
+from the dashboard, or back to the shared Landing/Hub once a portal is picked. No other button opened
+the same sheet — checked the burger menu first, there was nothing.
+
+Told him that, and asked how he wanted to handle it. **His pick: move it into the menu rather than
+lose the capability.** A new "Switch Portal" row in the Daily section, right after Landing (the two
+are related — the picker's own sheet already has a "Landing / Hub" card built in), wired to the exact
+same `window.CardinalPortal.pick()` the chip called.
+
+**The chip is hidden by CSS only — `paintChip()` itself is untouched.** That function does two things
+in one pass: repaints the chip's own text, and syncs `body.classList`'s `portal-*` tag every frame,
+which other stylesheets key off for palette. Stopping the function would have broken the sync too;
+`#crPortalChip{ display:none !important; }` removes only the visible row and leaves the sync running
+exactly as before — verified directly (`body.classList` still flips on pick), not assumed.
+
+**Deliberately NOT phone-scoped**, unlike every build since 794. The chip sits in the ONE global
+header shared by every screen at every width, so hiding it only under `@media (max-width:560px)`
+would have left it back on desktop with no explanation. Confirmed hidden and the menu option present
+at both 402px and 1280px.
+
+**A real second caller of `pick()` already existed and had to be left alone**: Cardinal Truth's own
+header carries an unrelated mini portal-chip (`CHIP_ID`, `.ins-header`) that calls the identical
+`window.CardinalPortal.pick()`. My first gate assertion (`== 1`) was wrong the moment I ran it —
+the honest count is **2**, and the fix was to assert the exact new dispatch line instead of a bare
+substring count that legitimately matches twice.
+
+**Gate**: `gate_799.mjs` — **8 green** (chip hidden at both widths, class-sync intact, the new menu
+entry opens the identical sheet, picking a portal from it actually re-filters, the Insurance mini-chip
+untouched), **7 red on the 798 control, no crash**.
+
+## build 800 — 14 Aug 2026 — the section banner, fixed for light mode
+
+Theo, with a screenshot: *"There's a dark spot there."* A near-black band sitting directly under the
+search bar, between the header and the light page below it — the "UNIVERSAL BANNER NAV" from build
+344 (`#crBanner`: Contacts / Leads / Photos / Production▾ / Tools▾).
+
+Found by rendering, not by guessing which element the screenshot meant: a script scanning every
+element in the top 560px of the light-mode client profile for a background darker than `rgb(60,60,60)`
+turned up exactly one real hit besides the header chrome itself — `#crBanner`, `rgb(21,23,27)`, rect
+top:103/bottom:143. The header chrome (`#cr-hd2-srch`) is a separate, deliberately-always-dark
+component with its own `--hbg`/`--hln` token system; already documented, not this build's concern.
+
+**Third instance of the identical bug class this session** (Google Reviews at 797, Convert to
+Insurance at 798): a component authored dark-only, with no `[data-theme="rb-light"]` guard anywhere,
+so it renders `#15171b` regardless of theme.
+
+**Fix**: `#crBanner` already parameterizes most of itself through four custom properties
+(`--bacc`/`--bacclt`/`--bink`/`--bline`) so its retail/insurance/community CRM-head variants can each
+recolor it in one place. Light mode reuses that same lever for `--bacclt`/`--bink`/`--bline`, plus an
+explicit override for the background, the two genuinely-hardcoded inks (`.cbn`, `.cbi`), and the two
+hover washes tuned for a dark ground (`rgba(255,255,255,.05/.07)`, invisible on white). Computed before
+any colour was picked: `.cbn`/`.cbi` ink `#2c2c2c` → **13.97:1**; `--bacclt` (hover/active) reuses the
+app's own cardinal red `#c8202e` → **5.67:1**. `.car`/`.cbmenu small`'s existing literal `#6d747e`
+(4.72:1) was already theme-independent and already passing — left untouched, not scope creep.
+
+**Retail only, on purpose** — the same discipline as every fix this session. Insurance and community
+CRM-head variants (their own `background`/`--bacc` overrides, declared two lines above the base rule)
+are untouched; whether they have the same bug is a separate, unverified claim.
+
+Dark mode is byte-identical — asserted directly against the full original declaration, not inferred.
+
+**Gate**: `gate_800.mjs` — **8 green**: the bar's own background and contrast, the Production/Tools
+*dropdown* specifically (catches the partial-pass trap where the bar goes light but the popover stays
+dark-on-dark), a dark-mode regression check, both CRM-head variants confirmed untouched, and a full
+top-of-page sweep finding no other dark spot. **3 red on the 799 control** (bar background, dropdown
+background, and the sweep — all three the discriminating checks), **no crash**.
+
+## build 801 — 14 Aug 2026 — Cardinal Truth: a tab strip, and icons on the metric tiles
+
+Theo pasted an AI-generated mockup for a new "Insurance Home Screen" and asked whether to use it.
+It wasn't a blank screen to fill: Cardinal Truth (`cr-cth-script`) already renders almost everything
+the mockup showed — real numbers instead of `$0` placeholders, all **nine** pipeline stages instead
+of two (counted directly off the `RAIL` array; this session's own chat commentary said ten at one
+point and was wrong, caught by `gate_801.mjs`'s own assertion coming back red against a hardcoded
+10), plus a chase list, a carrier breakdown, a this-week calendar and eight tool destinations the
+mockup had none of, in a theme system (`--ct-*`, `docket`/`siren`) the mockup didn't attempt either
+half of. Sent Theo four renders proving it — the mockup as pasted (light and dark variants) next to
+the real screen, both themes, phone and desktop. **The mockup's own Tailwind CDN script failed to
+load in the render sandbox** and the page came back as an unstyled wall of giant raw SVG icons —
+screenshotted and sent as-is. Whether or not that reproduces on every real load, it's a dependency
+class this app has zero exposure to anywhere else: no other screen fetches CSS or JS from a third
+party to render at all.
+
+Two things from the mockup were worth taking, and Theo said to build them.
+
+**A tab strip — Overview / Active Claims / Supplements / Closed — real navigation, not decoration.**
+Reuses the filter mechanism that already existed (`window.icStageFilter` + `showInsuranceClients()`,
+the same pair the pipeline rail and the Insurance Clients tool button already call) rather than
+inventing a second one. Two of the four states aren't a single literal stage: Active Claims is every
+stage except Closed and Lost (OnHold stays in — it's a real active state, "the claim keeps its money
+while the job waits," not a terminal one), and Supplements is `claim.supplement_status === 'filed'`,
+a claim attribute with no stage of its own. `icStageFilter` gained two sentinel values,
+`'__active__'` and `'__supplements__'`, read by one more branch in the SAME predicate in
+`cr-ic-script` that already read a literal stage name — one filter pipeline, three kinds of value it
+accepts, not two pipelines. Closed reuses the existing literal-stage path unchanged.
+
+**Icons on the four metric tiles** (Avg Supplement, ACV Released, Deductibles Due, Contract Value),
+matching the mockup's layout. Uses `ICO()` and its existing icon set — this exact module already
+calls `ICO('shield')` etc. in its own Tools grid — rather than new inline SVG, which is what the
+mockup did and is exactly the second-icon-pipeline problem the 686 comment on
+`CardinalIcons.hydrate()` already warns against.
+
+**Verified which of two Insurance-Clients renderers is actually live before touching either.**
+`renderInsuranceClientsList()` (main block, `#insClientsList`) and `cr-ic-script`'s newer
+`#cr-ic-wrap` both still exist and both still run on every `showInsuranceClients()` call. Opened the
+real screen and read computed style and bounding rects rather than trusting the source: the old one
+renders at **0 height**, hidden behind the new one in DOM order. Only `cr-ic-script`'s filter was
+touched; the dead renderer is untouched and not this build's concern.
+
+**A real, separate theme-mechanism bug surfaced and got worked around, not fixed.** Cardinal Truth's
+`--ct-*` palette is not the retail `data-theme="rb-light"` mechanism at all — it's a third one,
+`body[data-rltheme="docket"(light)/"siren"(dark)]`, shared with the Resource Library and read from
+`localStorage['cardinalRLTheme']`. A background sync (`cr-instheme`) re-asserts it from storage
+within about two seconds of any view change, silently reverting a direct DOM toggle — confirmed by
+setting the attribute by hand and watching it flip back. The preview renders for this build seed the
+real storage key before the app boots rather than fighting the sync. Not filed as a bug: it's a
+pre-existing mechanism this build didn't touch and wasn't asked to fix.
+
+**Gate**: `gate_801.mjs` — **13 green**: the tab strip's own counts (Active 9 / Supplements 1 /
+Closed 1 against an 11-project seed), Active Claims excludes Closed and Lost while keeping OnHold,
+Supplements matches only the one claim with an open supplement (not the two Invoiced claims sitting
+on approved-but-unrelated money), Closed reuses the literal-stage path correctly, all 4 tiles carry
+an icon, and the untouched pipeline rail (9 rows) and chase list still render. **11 red on the 800
+control** (everything tab/icon-related — the strip doesn't exist there at all), **the two
+untouched-path checks stayed green on both builds**, proving those weren't accidentally changed
+either way. No crash.
+
+## build 802 — 14 Aug 2026 — the Community Partners card, decluttered
+
+Theo pushed back hard on the previous "the real screen already does this, better" call, with a
+detailed teardown: repeated partner names on every bid row, three navigation bars stacked before any
+data, tables that are mostly em-dashes, a seven-button tools list dumped on every pane. Read
+`partnerCard()`'s own row template first and doubted the repeated-name claim — it only ever prints
+`j.pr.name` and `j.tag`, never the partner name, so there's no place in the code that could produce
+it. **Checked the real database instead of arguing from the source**, and the claim was right: six
+of Habitat's current leads are named things like `"Zulema Hall — Habitat for Humanity"` in
+production — the partner name is baked into the client's own `name` column. The card was faithfully
+showing what's actually stored. Checked the dash-spam claim too, and it's exactly true and slightly
+worse than stated: all 16 current community bids, every partner, are still in Lead stage — nothing
+anywhere has been decided, so Win/Awarded/Owed read as dashes on *every* card, not just Habitat's.
+And the mockup's dollar figures ($58,655 Habitat, $57,487 Dayton Home Repair Network) turned out to
+match the real numbers exactly — whatever produced that mockup was reading Theo's live data, not
+inventing placeholders.
+
+Theo confirmed building Fix A (streamline the card) and Fix C (tools out of the way); Fix B
+(collapsing the shared header/banner/tab chrome into one bar) stays a separate decision — that chrome
+is shared with Retail and Insurance, not Community's alone to redesign, and it's the same `#crBanner`
+fixed for light mode two builds ago.
+
+**Fix A — two changes to `partnerCard()`'s job rows, both display-only:**
+- `stripPartnerSuffix(name, partnerName)` strips a trailing "— known partner name" (any dash
+  variant) from the row's client name, only when it's actually there. The underlying `projects.name`
+  is untouched — it may still help elsewhere (search, the main client list) — this is cosmetic to
+  this one card. Verified against 9 cases run through the actual shipped function in Node, including
+  the 5 real Habitat names pulled from production, a name with no suffix (must pass through), a
+  client literally named identically to the partner (must not blank out), an apostrophe in a client
+  name, and a partner name that's a regex-special-character-heavy *prefix* rather than a trailing
+  suffix (must not falsely strip).
+- `bidChip(j)` replaces the plain lowercase tag (`due`/`chase`/`awarded`/`invoiced`/`parked`) with a
+  real status chip: "Due today" / "Nd overdue" / "Due in Nd" / "Out for decision" / "Awarded" /
+  "Invoiced" / "Awaiting funding" (the last reuses this module's own existing `LABEL['OnHold']`
+  wording rather than inventing new phrasing). Colours are the `--chip`/`--good`/`--goodbg`/
+  `--warnbg`/`--warnink` pairs this exact card already uses for its "N due" badge and its WIN/OWED
+  numbers — no new colour, and no blue, honoring `cr-cc-styles`' own "one green, zero blue" rule for
+  Community.
+
+**Fix C — the seven-tool grid** (`New Bid`, `Properties`, `Work Orders`, `All Partners`, `Analytics`,
+`Activity`, `Calendar`) was rendered once, unconditionally, under all three panes — Clients, Bids,
+*and* Partners, confirmed by reading where it sits in `host.innerHTML`, outside every `data-pane` div.
+`New Bid` stays a full-width primary button, visible immediately. The other six now sit inside a
+`<details class="cc-moretools">`, closed by default — the same native `<summary>`/`<details>` pattern
+this file already uses for the Cardinal Truth carrier accordion, not a new widget. The `data-go`
+click dispatch underneath is completely untouched; the buttons just moved.
+
+**One correction to my own prior message**: I told Theo "six rows in my render, not seven" for the
+Tools grid. The source has seven (`New Bid` through `Calendar`); my earlier screenshot must have
+clipped before the last one rendered. Owned plainly rather than left standing.
+
+**Gate**: `gate_802.mjs` — **16 green**: the suffix strips only when actually present (3 real cases)
+and leaves a suffix-free name alone, all four chip states render with the right text and class, the
+dollar amount and the row's click-through to `openProject` are untouched, `New Bid` sits outside the
+collapsed sheet while the other six render inside it closed-by-default and open on tap with their
+`data-go` wiring intact, and the partner-level Out/Awarded totals are unchanged. **11 red on the 801
+control** (everything suffix/chip/sheet-related doesn't exist there), **the untouched-path checks
+(dollar amount, click-through, partner totals) stayed green on both builds**. No crash.
+
+## build 803 — 14 Aug 2026 — the banner stops repeating the tabs under it
+
+Theo's third teardown point, scoped before it was built. **Measured at 402px, all three CRMs**, rather
+than estimated:
+
+| Row | Height | Element | Scope |
+|---|---|---|---|
+| Header (burger, title, ＋, home) | 65px | `#cr-hd2-bar` | universal |
+| Search input | 37–45px | `#cr-hd2-srch` | universal |
+| Section banner | 40px | `#crBanner` | universal, labels swap per CRM |
+| Tab strip | 29–37px | per-page | Community + Insurance only |
+
+**Total chrome before content: 191px Community, 201px Insurance, 143px Retail** — about a quarter of
+a phone's usable height, not the third Theo estimated, but the same order.
+
+**The duplication is real, and was confirmed by clicking rather than by reading.** `#crBanner`'s
+"Partners" pill routes through `ROUTES.partners` → `CardinalCommunityHub.show()` +
+`CardinalCommunityHome.tab('partners')` — the identical destination the hub's own tab strip reaches.
+Verified in Chromium: start on the clients pane, click the *banner's* Partners, the active pane
+becomes `partners`. Two controls, same word, same destination, one row apart. Same for "Bids".
+
+**Two findings the scope turned up that reading alone would have missed:**
+- **Retail has no fourth bar at all** — it is header + search + banner, full stop, because it has no
+  tab strip to duplicate. The complaint is Community/Insurance-shaped, not app-wide.
+- **Insurance's fourth bar came from build 801, two builds earlier, in this session.** Cardinal Truth
+  had no tab strip until the 801 build added one. So the stacking Theo was complaining about on
+  Community had just been reproduced on Insurance, by me, while telling him the screen was already
+  fine. Recorded rather than quietly fixed.
+
+**The fix, and the constraint that shapes it.** `#crBanner` is UNIVERSAL chrome — it renders on every
+screen in the app; each tab strip exists only on its own hub. So a pill is hidden **only while the
+duplicating strip is actually on screen**, checked live via `getClientRects()` rather than by guessing
+which view is open. Hiding one globally would delete the only one-tap route back to Partners from
+inside a client profile. The rule is "not twice at once", never "gone" — and `gate_803.mjs` case C
+exists specifically to prove the pills come back.
+
+Implemented as one more reason to pull the display lever the function already had: `paintCrmPills()`'s
+existing resolve-or-hide line becomes `(dead || dupedHere(want.go))`. The write stays guarded
+(`if(el.style.display !== wantDisp)`) — this runs from a rAF-scheduled body observer, and an unguarded
+write would wake every body observer each frame (the 567/569 repaint class the surrounding comment
+already warns about). Gate case F measures it: zero style mutations on an idle banner.
+
+**Per-CRM outcome, and the word that does not mean what it looks like:**
+- **Community** — both pills go. The hub's strip (Clients | Bids | Partners) is a *superset* of the
+  banner's (Partners | Bids), so nothing is lost.
+- **Insurance** — only "Clients" goes. The banner's **"Claims" pill stays**: `ROUTES.claims` is
+  `crOpenClaims`, the Claims Tracker — a genuinely different screen that merely shares a word with the
+  801 strip's "Active Claims". Read the route before assuming a shared label meant a shared screen.
+- **Retail** — untouched. Nothing is duplicated there.
+
+Deliberately NOT in this build: the height question (folding the search row into a header icon). It
+wants a preview first, and `#cr-hd2-srch` also carries the light/dark toggle and the insurance theme
+button — confirmed by enumerating the row's children, not assumed — so collapsing it is not the
+one-liner it looks like.
+
+**Gate**: `gate_803.mjs` — **14 green**: both pills hidden on the Community hub while Photos /
+Production / Tools stay, the hub strip still switches panes, **the pills come back once you navigate
+off the hub**, Cardinal Truth hides Clients but keeps Claims, Retail's Contacts/Leads untouched, and
+zero style mutations on an idle banner. **3 red on the 802 control** — exactly the three
+discriminating assertions; the no-route-lost check and the Claims-stays check **stayed green on both
+builds**, proving neither was accidentally changed. No crash.
+
+⚠️ One gate bug, caught and fixed as the test's fault, not the app's: the dropdown pills render their
+caret inside the label, so their `textContent` is `"Production ▼"` — a lookup by the plain word read
+`undefined` and failed a passing build. The gate now strips the caret.
+
+## build 804 — 14 Aug 2026 — the search bar folds into a header lens
+
+Theo's option 2, previewed then approved. The permanent search row — **37px on retail and community,
+45px on insurance, on every screen in all three CRMs** — is collapsed by default. A lens beside Home
+opens it and focuses the field, so it is one tap to type rather than two.
+
+**The preview earned its keep twice, and both findings would have shipped as bugs otherwise.**
+
+**1. This header lays out by CSS `order`, not DOM order.** `navBtn` is 0, `addProjectBtn` 8,
+`cr-hd2-home` 9. A fresh button defaults to `order:0`, so appending it *after* Home still painted it
+hard **left, on top of the absolutely-centred title** (`#cr-hd2-mid` is `position:absolute; left:50%`
+with `max-width:calc(100% - 190px)`). It took three preview passes to place: order:9 tied with Home
+and lost to Home's auto-margin; `margin-left:auto` split the free space and parked it mid-title;
+`order:10` appended after Home is the one that works. **Anything else added to this bar later needs an
+explicit order.**
+
+**2. The moon needed no new home — and that is what made this cheap.** Going in, "where does the
+light/dark toggle go" was the thing that made this look expensive; the plan was to bury it in the
+burger menu. It was already solved: `#cr-dark-toggle`'s base CSS is a fixed bottom-right round
+button, build 417 *adopted* it into the search row, and 694 added `.afloat` for "this row is covered
+or spoken for on the current screen." `needsFloat()` decides purely from the row's rect —
+`if(!r.width || !r.height) return true` — on a 1s interval. Collapsing the row hands the toggle back
+to its corner through machinery the app already owns. **Not one line of that module is touched.** It
+rides back into the row while the row is open and out again when it closes, which is exactly what
+`.afloat` was built for.
+
+**The one real hazard, and it did need fixing.** `.cr-ins-theme` — insurance's Docket/Siren switch —
+had exactly one host: `var HOSTS = ['#cr-hd2-srch']`. Unlike the moon it has **no floating fallback**,
+so collapsing the row would have left insurance with no way to change theme at all: a control that
+renders and can never be reached, BUG_CLASSES 16. `HOSTS` is now `['#cr-hd2-bar']`, so it rides in the
+header beside the lens, inheriting `.cr-ib` sizing and keeping its own
+`body:not([data-crm="insurance"])` hide rule. Found by reading the module's host list, not by
+noticing it missing in a render.
+
+The row is **hidden, never removed** — `#headSearch`'s keydown listener is bound at boot and would
+throw against a null element, the same reasoning build 417 recorded when it hid the banner's own
+search copy. Done with specificity rather than `!important`: `body:not(.cr-srch-open) #cr-hd2-srch`
+is (0,2,1) against the base rule's (0,1,0), and nothing sets display on that row inline.
+
+**Gate**: `gate_804.mjs` — **16 green**: collapsed on load, lens present with the app's own icon and
+**to the right of Home without overlapping the title** (an assertion that exists precisely because
+the order:0 version failed it), tap opens *and focuses* with `aria-expanded` tracking, tap again
+closes, `#headSearch` is the same element and survives the close, **the moon reaches the corner with
+`.afloat` and nothing covers it**, **insurance's switch is in the header and reachable with the row
+collapsed**, and the height is genuinely back on all three CRMs. **16 red on the 803 control** — a
+total sweep, printing the honest pre-fix state (37/45/37px rows, moon and theme switch both still in
+the row).
+
+⚠️ The negative control initially **crashed** rather than going red: section B dereferenced a null
+lens on 803, which aborted the run so D/E/F never reported. Guarded. A control that stops early is a
+weaker signal than one that fails every discriminating assertion.
+
+**805** The showroom door stops rendering the CRM behind it. Theo screenshotted
+`showroom.cardinalroster.com/#h` showing the full retail dashboard — Cardinal Pipeline, Work Schedule,
+Accounts Receivable, an urgent punch item carrying a client's name, the client list, and a staff email
+address — on the one domain that gets handed across a kitchen table.
+
+**Two faults stacked, and the primary one was MEASURED, not inferred.** A probe injected at the exact
+decision line reported `window.CardinalLanding` **`undefined`** and `_vision` **`false`** while
+`location.hostname` was correctly `showroom.cardinalroster.com`. `showMain()` lives in the block starting
+at line 8065; `isVisionHost()` and the `CardinalLanding` export live in `cr-lr-script` at **line 46416** —
+~22,000 lines later. `showMain()` runs on session restore, which routinely beats that block's parse, so
+the lookup found nothing every time. The old comment called `false` *"the safe direction (a normal CRM
+load)"*; on a customer-facing host it is the dangerous direction. **The What's New banner ~800 lines below
+already tests the hostname inline, with a comment giving this exact reason** — one of the two had been
+fixed and this one had not.
+
+**The second fault is that hiding chrome was never going to be enough.** `_vision` gated five elements;
+`showLanding()` and `reload()` painted everything else regardless. On a vision host `showMain()` now
+returns before painting: `#landingView` holds the Vision hub and that is the whole screen, and `reload()`
+never runs, so no client data is even fetched.
+
+⚠️ **An inline `display:none` cannot hide the header, and this is a trap worth remembering.** FIVE separate
+call sites run `if(hd && hd.style.display === 'none') hd.style.display = '';` (12895, 12936, 23930, 23937,
+23942) and actively undo it — grepped, not assumed. The fix is declarative: `body[data-cr-vision="1"]` plus
+a stylesheet `!important`, which outranks a normal inline style. Same mechanism `#tab-overview` uses to beat
+a renderer. Verified by computed style: the header reads `display:none` while its inline style is still `''`.
+
+**Gate**: `gate_805.mjs` — 16 green, **6 red on the 804 control**, which reproduces the exact leak from the
+screenshot (main view rendered, all five CRM surfaces, the staff email, the client name). It drives BOTH
+hostnames because this build's risk is asymmetric: showroom must change completely and `app.` must not
+change at all. All six `app.cardinalroster.com` assertions pass identically on 804 and 805.
+
+**Scope, stated plainly so nobody over-claims it:** this stops the CRM being **shown**, not being
+**downloaded**. Only a separate file removes the code — `OPEN_ITEMS`' Option 3, which Theo asked to keep on
+the table at 625 (*"Option 1 but remember option 3"*). This build is the evidence that Option 1 cannot
+deliver separation on its own.
+
+- **806** · The Library's librarian moves off Gemini onto Claude · `api/librarian.js` now calls
+**`claude-opus-5`** through `@anthropic-ai/sdk`. **The reason was never cost.** It was priced first, on
+real traffic rather than a guess: the 21 questions the crew has actually asked, measured by running the
+**shipped** handler against a stubbed transport so the sizes are the bytes it really sends — **5,803 chars
+in, 2,221 out** on average, **≈$1/month** at the observed rate, $7.25/month at ten a day. What the switch
+buys is the thing the route's own comments recorded: the free Gemini tier **503'd about one call in four
+and took 6-14s** when it answered, which is why a four-rung ladder (`3.6-flash` ×2 → `3.5-flash` ×2 →
+`gpt-4o-mini`) had grown behind it. The ladder is gone; `OPENAI_API_KEY` is no longer read by this route.
+**The answer shape is now ENFORCED** by `output_config.format` instead of requested in prose, which also
+retired the ```-strip — a latent corruption bug, since any answer whose `body` legitimately contained a
+fence was mangled before `JSON.parse` ever saw it. The standing brief moved into a **cacheable `system`
+prefix** and the volatile half (library outline + question) stayed in the user turn; `effort:'medium'`
+keeps latency near what the crew is used to. **Every prompt fix from 466/471/508/510/512 is byte-identical
+and asserted** — the transport changed, the prompt did not. `gate_806.mjs`: **42/42 green, 20 red on the
+pre-swap route.** The gate's shape is the point: it runs the **old route and the new route against the
+same model output and diffs the JSON each emits**, because the contract that matters is not "it calls
+Claude", it is that `index.html` cannot tell. It drives the **real SDK** against a local server speaking
+proper SSE, so the captured request is what would go on the wire; a hand-rolled fake would have proved my
+own assumption. ⚠️ **The gate went red once on a correct file** — `!src.includes('OPENAI_API_KEY')` matched
+the route's own header comment saying the key is no longer read. **The comment-pollution trap, third time
+this session, and the fix is always the assertion and never the comment**; it now asserts on
+`process.env.OPENAI_API_KEY`. ⚠️ **The first negative control was red for the wrong reason** — pointed at
+the old route it put a real request on the wire to Google and failed with "API key not valid", which would
+also be red offline and for a third reason again. That host is now intercepted, so the control fails on
+**what this build changed** and nothing else. ⚠️ **One narrowing, on a path with zero traffic:** Gemini took
+any mime type, Claude reads PDFs and photographs, so anything else now gets a 400 saying to save it as a
+PDF or paste the text — measured first, **all 32 `library_items` rows are `kind='note'`** and no file or
+image has ever gone through this route. **`ANTHROPIC_API_KEY` must be set in Vercel env before this
+deploys**; `GEMINI_API_KEY` stays, four other routes still need it.
+
+- **807** · The Exterior Visualizer becomes its own app; `cr-des` is deleted, not disabled ·
+Theo: *"I want to completely redo the entire Ai Exterior designer."* Tiers 2 and 3 shipped at 805
+(the schema, applied; the Spark worker). **This is tier 1, and it is deliberately NOT a screen in
+`index.html`.** Build 805 is the whole argument: a hostname check inside one big file separates
+nothing, because the code still ships to the tablet and one missed branch paints the CRM on a
+customer-facing domain. `visualizer/index.html` contains **no CRM code at all** — asserted with
+`index.html` as the control, where all 7 markers trip. Laid out as a **folder** so it can become the
+root of its own Vercel project; until then the main project serves it at `/visualizer/`, which is
+what makes it testable today. **The old designer went out whole**: `api/design.js` deleted, its
+`vercel.json` entry removed, both `cr-des` blocks cut, and all five wirings unpicked —
+`hideAllViews()`, the `navRestore()` case, the `__crNav` wrap, `BLACKOUT`, and the hub handler.
+**35,420 characters removed**, byte-identical on re-apply. The two tiles that opened it route
+through ONE handler, so re-pointing them at `window.CR_VISUALIZER_URL || '/visualizer/'` was a
+single edit. **Three screens, and the split IS the settled decision "pre-render before the
+appointment":** Prep queues combinations at the office, Review requires a person to approve every
+render (`approved` starts false — The Walk's rule), Present shows approved images only and does not
+render the queue bar at all. **Contracts measured, not assumed:** `source_path` is
+`project_photos.storage_path`, checked first because CLAUDE.md records a photo-signing change that
+shipped inert against that exact column — **223 of 223 rows carry it**; `oc_colors` has **no prompt
+column**, so the roof prompt is composed in the browser and frozen into the job, traceable after any
+catalog edit; the job row names four fields and only four. **The GPS fence is now asserted at three
+sites** — schema, worker, front end. Sign-in uses its own `storageKey: 'cr-viz-auth'` with
+`persistSession`, because Studio and the CRM both use the supabase-js default and would fight over
+one session on a shared origin — **that answers Theo's "Studio keeps logging in" for the NEW app
+only; Studio is untouched.** `gate_807.mjs`: **33/33 green, 6 red on a mutant** carrying three
+planted defects. ⚠️ **Two of its assertions were passing VACUOUSLY and both are recorded in
+`BUG_CLASSES` terms:** the surface pickers sit inside closed `<details>`, so `innerText` is `""` and
+the check meant to prove a hidden colour is never offered passed on any input; and the GPS regex was
+written `/\b…\b/` in a **plain regex literal**, where `\b` is an escaped backslash and not a word
+boundary — it could never match anything, so the privacy assertion it guarded was decorative. Both
+now read the DOM, and the fence check **plants a coordinate and requires a catch**. ⚠️ **The
+comment-pollution trap struck a FOURTH time this session** — `after.count('cr-des') == 0` failed
+against a correct file because the replacement comment says "cr-des" in prose. The fix is the
+assertion, every time. **Not verified end to end, and not claimed to be: nothing renders until the
+Spark is switched on** (`spark/VISUALIZER_SETUP.md` §1–4); queued jobs sit at `queued` until then,
+which is correct, not a fault.

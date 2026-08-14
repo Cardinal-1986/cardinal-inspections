@@ -1,3 +1,19 @@
 __pycache__/
 *.pyc
 node_modules/
+
+# Secrets. spark/.env holds the Supabase SERVICE ROLE key, which bypasses
+# every RLS policy in the database — it lives on the Spark box and must never
+# reach a commit. VISUALIZER_SETUP.md tells the reader this file is ignored;
+# these lines are what make that true.
+.env
+.env.*
+!.env.example
+spark/.env
+
+# The Exterior Visualizer is plain static HTML (807) — no build step, no
+# dependencies. These stay as a guard in case anyone reintroduces tooling
+# there; the Next.js app they were written for was dropped before it shipped.
+visualizer/.next/
+visualizer/out/
+visualizer/node_modules/
