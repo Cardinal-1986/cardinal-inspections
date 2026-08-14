@@ -3111,3 +3111,26 @@ for a new file, **not a diagnosis of Studio**. Nobody has reproduced Studio's re
 
 **Not measured yet:** whether the composed roof prompt actually produces a convincing shingle. That
 needs the Spark running and Theo's eyes on a real render — it is not something a harness can judge.
+
+
+---
+
+## 🔻 Deferred, 14 Aug 2026 (build 809) — un-fixing the landing so a screenshot catches all of it
+
+Build 809 fixed the **black slab** in an iPhone full-page screenshot of the landing (ground on the
+canvas). It did **not** make the whole landing fit in one screenshot, and that was Theo's choice
+between two rendered options.
+
+**What is left:** `#landingView` is `position:fixed;inset:0;overflow-y:auto`, so the PAGE never
+scrolls — the pane does. A full-page capture therefore ends where the pane's laid-out content ends,
+missing Production, Sales Floor, Resource Library, Schedule Board, The Pop-Up Roof and the footer.
+
+**Why it is not a CSS change, and why it was deferred.** ⚠️ `backToLanding()` and `goToLanding()`
+(`index.html` 24123, 24137) show the landing with `display='block'` and **never hide
+`header.site`**. The CRM header is covered today **purely** because the landing is `z-index:150`
+above it. Take the fixed positioning away and the header paints straight over the mark — confirmed
+in a Chromium render, not assumed. **15 sites touch `header.site`.** Any attempt at this must hide
+the header on every path INTO the landing and restore it on every path OUT, and belongs in its own
+build with its own gate.
+
+**Trigger to pick it up:** Theo wanting to send someone a picture of the whole landing.
