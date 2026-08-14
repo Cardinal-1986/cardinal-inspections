@@ -3495,7 +3495,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .convertins:active
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 795 &#8212; Job Details is four rows laid out like the AccuLynx card: Job Category, Work Type, Trade Type and Lead Source, each one a plain value you tap to change</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 796 &#8212; The Payments card is gone from a client Overview, and Money In sits next to Payment Information instead of alone at the bottom of the Job Menu</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11203,8 +11203,12 @@ function renderAcxOverview(){
     '<span class="dbring" style="background:conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0);"><span class="dbringin">' + fin.pct + '%</span></span>' +
     '<span style="text-align:right;"><small>Balance Due</small><b style="color:' + (fin.balance > 0 ? '#C8202E' : '#7CB342') + ';">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
   '</div>';
-  /* ---- payment information ---- */
-  html += '<div class="dbrow" id="dbPayRow"><span class="dbic1">$</span> Payment Information<span class="dbgo">&#8250;</span></div>';
+  /* ---- payment information + money in ---- */
+  /* 796: the two money doors sit together. Money In was a half-width tile
+     alone on its own row at the bottom of the Job Menu, and it is the ONLY
+     door anywhere into the commissions tab, so it moved rather than went. */
+  html += '<div class="dbrow" id="dbPayRow"><span class="dbic1">$</span> Payment Information<span class="dbgo">&#8250;</span></div>' +
+    '<div class="dbrow" id="dbMoneyRow"><span class="dbic1">%</span> Money In &amp; Commissions<span class="dbgo">&#8250;</span></div>';
   /* ---- job menu ---- */
   function jt(ic, label, n, act, idn){
     var zero = (n === 0 || n === '0' || n === '');
@@ -11255,29 +11259,18 @@ function renderAcxOverview(){
     '</div><div class="jaboxrow">' +
       jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
       jt(dbIc('orders'), 'Orders', '', 'materials') +
-    '</div><div class="jaboxrow">' +
-      jt(dbIc('estimates'), 'Money In', '', 'commissions') +
     '</div>';
   /* ---- contacts: retired to the hero name row (Keeper, build 348). dbSwitchPrimary + add-contact live there now. ---- */
   var extra = ck.contacts || [];
   /* ---- payments + history pills (Keeper 3/3, build 349) \u2014 retail + community; insurance keeps its own cards ---- */
   if(!document.body.classList.contains('claim-insurance')){
-    var _fin = (typeof jobFinance === 'function') ? (jobFinance(pr) || {}) : {};
-    var _paylog = ck.payments || [];
-    var _paid = Number(_fin.paid) || 0, _val = Number(_fin.value) || 0;
-    var _pct = _val > 0 ? Math.min(100, Math.round(_paid / _val * 100)) : 0;
-    html += '<div class="kpsec open" id="kpPay"><div class="kpsech" data-kps="1">' +
-        '<span class="kpst">\uD83D\uDCB5 Payments</span><span class="kpcnt">' + _paylog.length + '</span><span class="kpcar">\u203A</span></div>' +
-      '<div class="kpsecb">' +
-        '<div class="kppayrow"><span>Paid</span><span class="kppaybar"><i style="width:' + _pct + '%"></i></span>' +
-          '<b>' + fmtMoney(_paid) + '</b><span class="kpmute">of ' + fmtMoney(_val) + '</span></div>' +
-        (_paylog.length ? _paylog.map(function(p){
-          return '<div class="kprowi"><div><div class="kpti">' + esc(p.note || (p.dir === 'out' ? 'Payment out' : 'Payment received')) + '</div>' +
-            '<div class="kpm">' + esc(String(p.at || p.date || '')) + '</div></div>' +
-            '<b class="' + (p.dir === 'out' ? 'kpout' : 'kpin') + '">' + (p.dir === 'out' ? '\u2212' : '') + fmtMoney(Number(p.amt) || 0) + '</b></div>';
-        }).join('') : '<div class="kpm" style="margin-top:8px;">No payments logged yet.</div>') +
-        '<button type="button" class="btn ghost kppaybtn" style="margin-top:10px;display:none;">Open payments</button>' +
-      '</div></div>';
+    /* 796: the Payments pill (Keeper 349) is gone. It showed a Paid bar and
+       `ck.payments` read-only; Payment Information renders the same log split
+       into Received / Paid out / Expenses, plus the contract payments the pill
+       could not see, plus an add button per section. Its own "Open payments"
+       button proxied `#jaGrid [data-ja="payments"]` — the legacy grid hidden by
+       #tab-overview — so it had been display:none since the day it shipped.
+       History below keeps the .kpsec shell and its toggle. */
     var _hist = (typeof buildActivityEvents === 'function')
       ? buildActivityEvents().filter(function(x){ return x.pid === pr.id; }).slice(0, 8) : [];
     html += '<div class="kpsec kpred" id="kpHis"><div class="kpsech" data-kps="1">' +
@@ -11413,6 +11406,10 @@ function renderAcxOverview(){
   });
   var pRow = document.getElementById('dbPayRow');
   if(pRow) pRow.addEventListener('click', openPaymentsPage);
+  /* 796: the same door the Job Menu tile used - the tile passed 'commissions'
+     to the router's else branch, which is this call. */
+  var mRow = document.getElementById('dbMoneyRow');
+  if(mRow) mRow.addEventListener('click', function(){ showTab('commissions'); });
   var civBtn = document.getElementById('dbConvertIns');
   if(civBtn) civBtn.addEventListener('click', function(){
     if(typeof changeClaimType === 'function') changeClaimType(currentProject, 'insurance');
@@ -39548,6 +39545,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:796, d:'2026-08-14', t:'The Payments card goes; Money In moves up',
+s:'The Payments card has come off a client Overview. It showed a Paid bar and the payments already listed on Payment Information, which shows the same ones split into Received, Paid out and Expenses, plus the contract payments the card could not see, plus a way to add a row. Its own Open payments button had never worked - it pointed at an old screen the app stopped drawing years ago. Money In was NOT redundant and has moved rather than gone: it was the only way into the Money In and Commissions pane anywhere in the app, so deleting it would have stranded that whole screen. It now sits directly under Payment Information as its own row, instead of alone at the bottom of the Job Menu. History is untouched.' },
 { b:795, d:'2026-08-14', t:'Job Details, laid out like AccuLynx',
 s:'Job Details on a client now reads the way the AccuLynx card does: four rows - Job Category, Work Type, Trade Type, Lead Source - with the label on the left, a thin rule down the middle and the value on the right. The heavy dropdown boxes are gone; each value is plain text with a small arrow you tap. Trade Type shows what is on as one line, like Roofing, Repairs, and opens the six trades as chips when you tap it. Everything saves exactly as it did; nothing became read-only. Initial Appt has come off this card. Retail only: the insurance and community profiles paint this card from their own colours and are untouched.' },
 { b:794, d:'2026-08-14', t:'Location and the map run across the screen',
@@ -57015,21 +57014,11 @@ document.addEventListener('click', function(e){
   if(!h) return;
   h.parentNode.classList.toggle('open');
 });
-/* the Open payments button proxies the real Job Menu door, if this profile has one */
-document.addEventListener('click', function(e){
-  var b = e.target.closest('.kppaybtn');
-  if(!b) return;
-  var t = document.querySelector('#jaGrid [data-ja="payments"], #jaGrid [data-jm="payments"]');
-  if(t) t.click();
-});
-/* cheap check when the Payments pill is opened \u2014 no observers */
-document.addEventListener('click', function(e){
-  if(!e.target.closest('#kpPay .kpsech')) return;
-  var b = document.querySelector('.kppaybtn');
-  if(!b) return;
-  var t = document.querySelector('#jaGrid [data-ja="payments"], #jaGrid [data-jm="payments"]');
-  b.style.display = t ? 'inline-block' : 'none';
-});
+/* 796: the two .kppaybtn listeners went with the Payments pill. They existed
+   only to show/hide its "Open payments" button by proxying
+   `#jaGrid [data-ja="payments"]`, and #jaGrid is the legacy grid hidden by
+   #tab-overview, so the button never appeared. The .kpsech toggle above stays
+   \u2014 History still uses it. */
 })();
 </script>
 <style id="cr-kphome-styles">
