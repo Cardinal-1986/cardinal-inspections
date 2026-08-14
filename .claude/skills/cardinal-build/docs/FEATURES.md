@@ -4871,3 +4871,21 @@ scroll-lock writer · GPS never crosses (re-encode + explicit-field inserts, ass
 | The Estimates tile counts rows | `#dbEstN` in `renderAcxOverview()`, filled from `CardinalEstimates.loadForProject()` | It counted estimate-titled **documents**, so drafts were invisible and two estimates read as **0** while the box listed both. 654 fixed this shape on the legacy `#jaGrid` tile and never reached the one that renders. **Navigation count, not money** — `indexMoney`'s `SENT_EST` filter is untouched, asserted in the gate. |
 | The publish prompt tells the truth | `cr-ess-script` publish hook | It promised to "move the pipeline forward" on a job already at Prospect, where `syncStageFor()` correctly does nothing. It now computes the outcome with the same `rank()` guard and says either *"X moves to Prospect"* or *"The pipeline stays at Prospect"*. |
 | The Sent write is visible, and audible when refused | same | Toast + `refreshSavedList()` + `renderOverview()`; the UPDATE carries `.select('id,status')` so a refusal is an **error**, not a silent no-op, and says the document was still created. |
+
+
+## The showroom door renders no CRM (build 805)
+
+| | |
+|---|---|
+| Where | `showMain()` in the main block; `cr-lr-styles` for the CSS half |
+| Trigger | `location.hostname` starts with `showroom.`, or `?vision=1` |
+| Effect | `#landingView` (the Vision hub) is the entire screen. `mainView` is not shown, `showLanding()` and `reload()` never run, so **no client data is fetched**. |
+| Hardening | `body[data-cr-vision="1"]` + a stylesheet `!important` hides `header.site`, `#pwaNav` and `#navWrap`. An inline `display:none` does **not** hold — five call sites restore it. |
+| Untouched | `app.cardinalroster.com`, asserted identical on 804 and 805 by `gate_805.mjs` |
+
+⚠️ **This stops the CRM being SHOWN, not being DOWNLOADED.** A showroom tablet still receives the whole
+4.4 MB file. Only a separate `showroom.html` removes the code — `OPEN_ITEMS`' Option 3.
+
+⚠️ **Do not restore the `window.CardinalLanding.isVisionHost()` lookup in `showMain()`.** That object is
+defined ~22,000 lines later in the file and is reliably `undefined` when `showMain()` runs on a session
+restore. Measured with a probe, not inferred.

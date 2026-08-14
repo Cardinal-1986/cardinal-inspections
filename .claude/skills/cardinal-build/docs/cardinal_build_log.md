@@ -16302,3 +16302,39 @@ the row).
 ⚠️ The negative control initially **crashed** rather than going red: section B dereferenced a null
 lens on 803, which aborted the run so D/E/F never reported. Guarded. A control that stops early is a
 weaker signal than one that fails every discriminating assertion.
+
+**805** The showroom door stops rendering the CRM behind it. Theo screenshotted
+`showroom.cardinalroster.com/#h` showing the full retail dashboard — Cardinal Pipeline, Work Schedule,
+Accounts Receivable, an urgent punch item carrying a client's name, the client list, and a staff email
+address — on the one domain that gets handed across a kitchen table.
+
+**Two faults stacked, and the primary one was MEASURED, not inferred.** A probe injected at the exact
+decision line reported `window.CardinalLanding` **`undefined`** and `_vision` **`false`** while
+`location.hostname` was correctly `showroom.cardinalroster.com`. `showMain()` lives in the block starting
+at line 8065; `isVisionHost()` and the `CardinalLanding` export live in `cr-lr-script` at **line 46416** —
+~22,000 lines later. `showMain()` runs on session restore, which routinely beats that block's parse, so
+the lookup found nothing every time. The old comment called `false` *"the safe direction (a normal CRM
+load)"*; on a customer-facing host it is the dangerous direction. **The What's New banner ~800 lines below
+already tests the hostname inline, with a comment giving this exact reason** — one of the two had been
+fixed and this one had not.
+
+**The second fault is that hiding chrome was never going to be enough.** `_vision` gated five elements;
+`showLanding()` and `reload()` painted everything else regardless. On a vision host `showMain()` now
+returns before painting: `#landingView` holds the Vision hub and that is the whole screen, and `reload()`
+never runs, so no client data is even fetched.
+
+⚠️ **An inline `display:none` cannot hide the header, and this is a trap worth remembering.** FIVE separate
+call sites run `if(hd && hd.style.display === 'none') hd.style.display = '';` (12895, 12936, 23930, 23937,
+23942) and actively undo it — grepped, not assumed. The fix is declarative: `body[data-cr-vision="1"]` plus
+a stylesheet `!important`, which outranks a normal inline style. Same mechanism `#tab-overview` uses to beat
+a renderer. Verified by computed style: the header reads `display:none` while its inline style is still `''`.
+
+**Gate**: `gate_805.mjs` — 16 green, **6 red on the 804 control**, which reproduces the exact leak from the
+screenshot (main view rendered, all five CRM surfaces, the staff email, the client name). It drives BOTH
+hostnames because this build's risk is asymmetric: showroom must change completely and `app.` must not
+change at all. All six `app.cardinalroster.com` assertions pass identically on 804 and 805.
+
+**Scope, stated plainly so nobody over-claims it:** this stops the CRM being **shown**, not being
+**downloaded**. Only a separate file removes the code — `OPEN_ITEMS`' Option 3, which Theo asked to keep on
+the table at 625 (*"Option 1 but remember option 3"*). This build is the evidence that Option 1 cannot
+deliver separation on its own.
