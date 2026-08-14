@@ -18,12 +18,50 @@
 // section the material belongs in, writes a short title and summary, and may
 // propose a NEW section or subsection when nothing existing fits.
 //
-// Same GEMINI_API_KEY and the same session gate as organize.js / caption.js.
+// 806: MOVED OFF GEMINI, onto Claude. Same Supabase session gate; the JSON this
+// route hands back to index.html is unchanged, field for field. What went away
+// with the swap:
+//
+//   - the four-rung ladder (3.6-flash x2 -> 3.5-flash x2 -> gpt-4o-mini). It
+//     existed because the free Gemini tier 503'd about one call in four; it is
+//     not needed here and a second provider silently answering roofing-code
+//     questions is worse than an honest error. OPENAI_API_KEY is no longer read.
+//   - the "respond with ONLY raw JSON, no markdown fences" hope, and the
+//     ```-stripping that backed it up. The shape is now ENFORCED by
+//     output_config.format, so a fence cannot appear and the strip — which
+//     would have corrupted any answer whose body legitimately contained one —
+//     is gone. The shape prose below is kept anyway: it carries instructions
+//     the schema does not (which section to prefer, when to cite nothing).
+//
+// Priced before it was switched, on real traffic rather than a guess: 21 real
+// questions, 5,803 chars in and 2,221 out on average, ~$1/month at the observed
+// rate. Cost was never the constraint; a wrong code citation is.
+//
+// GEMINI_API_KEY is no longer read by this route. It needs ANTHROPIC_API_KEY.
+
+import Anthropic from '@anthropic-ai/sdk';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
 const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
 
-/* Only signed-in Cardinal users may spend the Gemini key. Same gate as
+const MODEL = 'claude-opus-5';
+
+/* The 662 rule — 60s maxDuration (vercel.json), leave headroom. maxRetries
+   only fires on transport failures (429, 5xx, connection reset) and those come
+   back in well under a second, so the realistic worst case is one fast retry
+   plus one full attempt. A genuine 45s hang leaves no room for the retry and
+   Vercel ends the function, which is exactly what the old route did when
+   Gemini hung. */
+const REQ_TIMEOUT_MS = 45000;
+const MAX_RETRIES = 1;
+
+/* Effort is the latency lever. Thinking is on by default on this model and is
+   the reason to be here at all — the failure that costs money on this route is
+   a confidently wrong code section, not a slow answer. 'medium' keeps it close
+   to the 6-14s the crew is used to; raise it to 'high' if answers get sloppy. */
+const EFFORT = 'medium';
+
+/* Only signed-in Cardinal users may spend the key. Same gate as
    /api/organize.js and /api/analyze.js. */
 async function requireSession(req, res){
   const auth = req.headers.authorization || '';
@@ -41,87 +79,6 @@ async function requireSession(req, res){
     res.status(401).json({ error: 'Could not verify session' });
     return null;
   }
-}
-
-/* 502: the second rung. gemini-3.5-flash 503s "high demand" roughly one call in
-   four and takes 6-14s when it answers; gpt-4o-mini answers the same server in
-   0.6s. Measured via /api/ai-status, not assumed.
-
-   Returns GEMINI'S OWN RESPONSE SHAPE so every existing call site reads it
-   unchanged - no caller has to learn there is a second provider. Never throws:
-   on total failure it returns the Gemini response (or null) and the caller's
-   existing error path handles it exactly as before.
-
-   Copied from caption.js, which has had this ladder for a long time. Not
-   factored into a shared module on purpose: no route in this repo imports a
-   sibling file, check.yml is syntax-only and could not catch a bundling failure,
-   and the blast radius would be every AI route at once. */
-async function aiFallback(parts, geminiRes) {
-  const oaKey = (process.env.OPENAI_API_KEY || '').trim();
-  if (!oaKey) return geminiRes;
-  try {
-    const content = [];
-    (parts || []).forEach(p => {
-      if (p && typeof p.text === 'string') content.push({ type: 'text', text: p.text });
-      else if (p && p.inlineData) content.push({
-        type: 'image_url',
-        image_url: { url: 'data:' + p.inlineData.mimeType + ';base64,' + p.inlineData.data }
-      });
-    });
-    if (!content.length) return geminiRes;
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + oaKey },
-      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 1200, messages: [{ role: 'user', content }] })
-    });
-    if (!r || !r.ok) return geminiRes;
-    const d = await r.json();
-    const t = d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content;
-    if (!t) return geminiRes;
-    /* Gemini's shape, so nothing downstream changes. */
-    return { ok: true, status: 200, _via: 'openai', json: async () => ({
-      candidates: [{ content: { parts: [{ text: String(t) }] } }]
-    }) };
-  } catch (e) {
-    return geminiRes;
-  }
-}
-
-/* The retry ladder this project uses everywhere: flash, pause, flash again.
-   The free Gemini tier 503s under load, so one retry is worth the 1.2s. */
-/* 503: MODEL LADDER. Theo confirmed the current line-up is Gemini 3.6 Flash,
-   3.5 Flash and 3.1 Pro. Everything here was pinned to 3.5, which is valid but is
-   the one measurably struggling today - /api/ai-status showed it 503ing "high
-   demand" about one call in four and taking 6-14s when it answered.
-
-   3.6 is tried first and 3.5 is the fallback, so if 3.6 is unavailable to this
-   key the cost is one fast 404 and nothing breaks. OpenAI remains the rung below
-   both. */
-const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash'];
-
-async function askGemini(apiKey, parts){
-  const body = JSON.stringify({ contents: [{ parts }] });
-  const opts = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body
-  };
-  let last = null;
-  for (const model of GEMINI_MODELS) {
-    const url = 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent';
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const r = await fetch(url, opts);
-      if (r.ok) return r;
-      last = r;
-      if (r.status !== 503 && r.status !== 429) break;
-      /* 502: only pause when another attempt actually follows - the original
-         slept after the final failure too, burning 1200ms of billed time. */
-      if (attempt < 1) await new Promise(s => setTimeout(s, 1200));
-    }
-  }
-  /* 502: and when Gemini is simply unavailable, ask OpenAI instead of giving up.
-     Returns Gemini's shape, so both call sites below are unchanged. */
-  return await aiFallback(parts, last);
 }
 
 function outline(sections){
@@ -154,6 +111,11 @@ const RULES =
   'NOT in scope when it belongs to one job - a site plan or shop drawing for a \n' +
   'single address. The test is whose it is, not whether it is a picture.\n';
 
+/* 806: the shape below is now ENFORCED by output_config.format, not requested.
+   It is kept in the prompt because it says things the schema cannot: prefer an
+   existing section, never invent more than one, cite nothing rather than
+   guess. Schema and prose must stay in step - if you add a field to one, add
+   it to the other. */
 const SHAPE =
   'Respond with ONLY raw JSON, no markdown fences, in this shape:\n' +
   '{\n' +
@@ -201,6 +163,165 @@ const DIAGRAM =
         'If the answer is values that vary by one thing, a TABLE is better. If \n' +
         'nothing genuinely benefits from a picture, do not add one.\n';
 
+/* The writing brief for a question. Unchanged wording; it moved out of the
+   user turn so the whole standing instruction is one cacheable prefix. */
+const ASK_BRIEF =
+  'Write a reference entry for the library that answers it and is worth ' +
+  'keeping. Plain, practical language for a roofer in Ohio. Lead with the ' +
+  'answer, then the detail that matters on a roof or a job site. Use short ' +
+  'paragraphs; use "- " bullets for lists of requirements or steps.\n' +
+  'The body is rendered as light markdown. You may use: "## " for a short ' +
+  'heading on its own line, "- " bullets, "1. " numbered steps, **bold**, ' +
+  'and GitHub-style pipe tables. Separate every block with a blank line.\n' +
+  'Reach for a TABLE whenever the answer is a set of values that vary by ' +
+  'one thing — sizes, spacings, fastener counts, thresholds by material, ' +
+  'requirements by jurisdiction. A table a roofer can read one row off ' +
+  'beats the same numbers buried in a sentence. Example shape:\n' +
+  '| Pitch | Multiplier |\n|---|---|\n| 4/12 | 1.0541 |\n' +
+  'Keep tables to 4 columns or fewer — this is read on a phone.\n' +
+  'Do NOT use raw HTML, links or images; they will not render.\n' +
+  DIAGRAM +
+  /* 471: real photographs, on the same principle — you write a SEARCH,
+     the app runs it. The model never receives photo data back. */
+  'REAL PHOTOGRAPHS. When someone asks to SEE something — "show me", \n' +
+  '"what does X look like", "have we got photos of" — you may add ONE \n' +
+  '~~photos block. It searches the company\'s own job photographs.\n' +
+  '  ~~photos q=ice dam\n' +
+  '  ~~photos q=kickout flashing from=2026-01-01 to=2026-03-31\n' +
+  'ALWAYS use q= with the plain words someone would have written on the \n' +
+  'photo. It matches the caption the crew typed. Tags on this account are \n' +
+  'used inconsistently, so tag= is a last resort, not the default. Dates \n' +
+  'only when the question is about a season or period. Put it on ONE line, and \n' +
+  'do NOT describe what the photos will show — you cannot see them, and \n' +
+  'the app puts the real captions underneath. Say something like "Here is \n' +
+  'what we have on file:" and nothing more about their content.\n' +
+  'Use it only for things a photograph actually settles. A definition, a \n' +
+  'code citation or a measurement is not one of those.\n' +
+  'Where a number comes from code or a manufacturer spec, name the source ' +
+  '(for example "2019 Residential Code of Ohio R905.2.8.5" or "per the ' +
+  'manufacturer\'s installation instructions"). If you are not certain of a ' +
+  'number, say what governs it instead of inventing one — a wrong number in ' +
+  'the library is worse than no entry.\n' +
+  'Aim for 150-400 words. Respond with ONLY raw JSON, no markdown fences:\n' +
+  '{\n' +
+  '  "belongs": true|false,\n' +
+  '  "reason": "<if belongs is false, why>",\n' +
+  '  "hub": "general"|"insurance",\n' +
+  '  "section": "<existing section title, or a new one>",\n' +
+  '  "section_is_new": true|false,\n' +
+  '  "subsection": "<optional, or empty string>",\n' +
+  '  "subsection_is_new": true|false,\n' +
+  '  "title": "<a title someone would scan for later, under 70 characters>",\n' +
+  '  "summary": "<one sentence on what it covers>",\n' +
+  '  "body": "<the entry itself>",\n' +
+  '  "sources": ["<short citation>", "..."]\n' +
+  '}\n' +
+  'sources: the code sections, manufacturer documents or statutes the ' +
+  'answer actually rests on, each a short label a person could look up ' +
+  '(for example "2019 RCO R905.1.2" or "Owens Corning installation ' +
+  'instructions"). Cite only what genuinely governs the answer. If nothing ' +
+  'specific does, return an EMPTY array — the library shows an uncited ' +
+  'entry as uncited, which is far better than a citation that does not ' +
+  'say what you claim it says. Never cite a section number you are not ' +
+  'sure of.';
+
+const ILLUSTRATE_BRIEF =
+  'A reference entry in a roofing company library already exists and someone \n' +
+  'has asked for a drawing to go with it. Do NOT rewrite it, summarise it, \n' +
+  'correct it or comment on it. Your entire job is the drawing.\n\n' +
+  DIAGRAM + '\n' +
+  'Draw ONLY what the entry actually says. Never introduce a measurement, \n' +
+  'a layer or a step the text does not contain - a diagram that disagrees \n' +
+  'with the words above it is worse than no diagram.\n' +
+  'Some entries should NOT be illustrated. If it is about who to call, \n' +
+  'where to file, what a permit costs or which office has jurisdiction, \n' +
+  'return an empty diagram and say why. A picture of an office helps nobody.';
+
+/* ── the shapes, enforced ─────────────────────────────────────────────────
+   Every property is required and additionalProperties is false, so the
+   handler below can read each field without guarding for its absence — which
+   is the whole point of moving off "please answer in JSON". */
+const str = d => ({ type: 'string', description: d });
+
+const FILING_FIELDS = {
+  belongs:           { type: 'boolean', description: 'False when this is job paperwork, a client file, a contract, an invoice or an inspection report rather than reference material.' },
+  reason:            str('If belongs is false, one short sentence saying why. Empty string otherwise.'),
+  hub:               { type: 'string', enum: ['general', 'insurance'], description: 'Which hub of the library this belongs in.' },
+  section:           str('The existing section title it belongs in, or a NEW one you are proposing.'),
+  section_is_new:    { type: 'boolean', description: 'True only when section is not already in the outline you were shown.' },
+  subsection:        str('Optional subsection title, or an empty string.'),
+  subsection_is_new: { type: 'boolean', description: 'True only when subsection is not already in the outline you were shown.' },
+  title:             str('A clear title for this item, under 70 characters.'),
+  summary:           str('One or two sentences on what it covers and when someone would reach for it.'),
+};
+
+const CLASSIFY_SCHEMA = {
+  type: 'object',
+  properties: { ...FILING_FIELDS },
+  required: Object.keys(FILING_FIELDS),
+  additionalProperties: false,
+};
+
+const ASK_SCHEMA = {
+  type: 'object',
+  properties: {
+    ...FILING_FIELDS,
+    body: str('The reference entry itself, in the light markdown described in the brief.'),
+    sources: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Short citations a person could look up. EMPTY when nothing specific governs the answer — an uncited entry beats a citation that does not say what you claim.',
+    },
+  },
+  required: [...Object.keys(FILING_FIELDS), 'body', 'sources'],
+  additionalProperties: false,
+};
+
+const ILLUSTRATE_SCHEMA = {
+  type: 'object',
+  properties: {
+    diagram: str('The marker line and its data lines, or an empty string.'),
+    caption: str('One short sentence introducing it, or an empty string.'),
+    reason:  str('If diagram is empty, why a picture would not help here.'),
+  },
+  required: ['diagram', 'caption', 'reason'],
+  additionalProperties: false,
+};
+
+/* One place the model is called. Streams and takes the final message, because
+   a non-streaming request at this max_tokens is where SDK HTTP timeouts live. */
+async function askClaude(client, system, content, schema) {
+  const stream = client.messages.stream({
+    model: MODEL,
+    max_tokens: 16000,
+    /* Thinking is adaptive by default on this model; effort bounds it. */
+    output_config: {
+      effort: EFFORT,
+      format: { type: 'json_schema', schema },
+    },
+    system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
+    messages: [{ role: 'user', content }],
+  }, { timeout: REQ_TIMEOUT_MS });
+  return await stream.finalMessage();
+}
+
+function textOf(msg) {
+  return (msg && Array.isArray(msg.content) ? msg.content : [])
+    .filter(b => b && b.type === 'text' && typeof b.text === 'string')
+    .map(b => b.text).join('').trim();
+}
+
+/* Map an SDK error onto the shape index.html already renders. `retryable`
+   keeps its old meaning: try the same thing again and it may work. */
+function apiFailure(res, err) {
+  const status = err && typeof err.status === 'number' ? err.status : 0;
+  const retryable = status === 429 || status >= 500 || status === 0;
+  res.status(502).json({
+    error: 'Claude request failed',
+    detail: String((err && err.message) || err || 'no response').slice(0, 500),
+    retryable
+  });
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -211,9 +332,9 @@ export default async function handler(req, res) {
   const _user = await requireSession(req, res);
   if (!_user) return;
 
-  const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+  const apiKey = (process.env.ANTHROPIC_API_KEY || '').trim();
   if (!apiKey) {
-    res.status(500).json({ error: 'GEMINI_API_KEY is not configured on the server' });
+    res.status(500).json({ error: 'ANTHROPIC_API_KEY is not configured on the server' });
     return;
   }
 
@@ -225,7 +346,7 @@ export default async function handler(req, res) {
     }
 
     const shelf = 'The library currently looks like this:\n' + outline(sections) + '\n\n';
-    let parts;
+    let system, content, schema;
 
     if (illustrate) {
       /* 512: add a drawing to an entry that ALREADY EXISTS. It gets the entry's
@@ -238,105 +359,45 @@ export default async function handler(req, res) {
         res.status(400).json({ error: 'That entry has no text to illustrate' });
         return;
       }
-      parts = [{ text:
-        'A reference entry in a roofing company library already exists and someone \n' +
-        'has asked for a drawing to go with it. Do NOT rewrite it, summarise it, \n' +
-        'correct it or comment on it. Your entire job is the drawing.\n\n' +
-        'Title: ' + itTitle + '\n\n' +
-        'The entry says:\n"""\n' + itBody + '\n"""\n\n' +
-        DIAGRAM + '\n' +
-        'Draw ONLY what this entry actually says. Never introduce a measurement, \n' +
-        'a layer or a step the text does not contain - a diagram that disagrees \n' +
-        'with the words above it is worse than no diagram.\n' +
-        'Some entries should NOT be illustrated. If it is about who to call, \n' +
-        'where to file, what a permit costs or which office has jurisdiction, \n' +
-        'return an empty diagram and say why. A picture of an office helps nobody.\n' +
-        'Respond with ONLY raw JSON, no markdown fences:\n' +
-        '{\n' +
-        '  "diagram": "<the marker line and its data lines, or an empty string>",\n' +
-        '  "caption": "<one short sentence introducing it, or an empty string>",\n' +
-        '  "reason": "<if diagram is empty, why a picture would not help here>"\n' +
-        '}'
-      }];
+      system = ILLUSTRATE_BRIEF;
+      schema = ILLUSTRATE_SCHEMA;
+      content = 'Title: ' + itTitle + '\n\nThe entry says:\n"""\n' + itBody + '\n"""';
+
     } else if (ask) {
       /* A question is a request to GROW the library. Write a reference entry
          worth keeping and say where it should be filed — the browser then
          stores it, so the next person finds it without asking. */
-      parts = [{ text:
-        RULES + '\n' + shelf +
-        'A member of the crew asked:\n"' + String(ask).slice(0, 800) + '"\n\n' +
-        'Write a reference entry for the library that answers it and is worth ' +
-        'keeping. Plain, practical language for a roofer in Ohio. Lead with the ' +
-        'answer, then the detail that matters on a roof or a job site. Use short ' +
-        'paragraphs; use "- " bullets for lists of requirements or steps.\n' +
-        'The body is rendered as light markdown. You may use: "## " for a short ' +
-        'heading on its own line, "- " bullets, "1. " numbered steps, **bold**, ' +
-        'and GitHub-style pipe tables. Separate every block with a blank line.\n' +
-        'Reach for a TABLE whenever the answer is a set of values that vary by ' +
-        'one thing — sizes, spacings, fastener counts, thresholds by material, ' +
-        'requirements by jurisdiction. A table a roofer can read one row off ' +
-        'beats the same numbers buried in a sentence. Example shape:\n' +
-        '| Pitch | Multiplier |\n|---|---|\n| 4/12 | 1.0541 |\n' +
-        'Keep tables to 4 columns or fewer — this is read on a phone.\n' +
-        'Do NOT use raw HTML, links or images; they will not render.\n' +
-        DIAGRAM +
-        /* 471: real photographs, on the same principle — you write a SEARCH,
-           the app runs it. The model never receives photo data back. */
-        'REAL PHOTOGRAPHS. When someone asks to SEE something — "show me", \n' +
-        '"what does X look like", "have we got photos of" — you may add ONE \n' +
-        '~~photos block. It searches the company\'s own job photographs.\n' +
-        '  ~~photos q=ice dam\n' +
-        '  ~~photos q=kickout flashing from=2026-01-01 to=2026-03-31\n' +
-        'ALWAYS use q= with the plain words someone would have written on the \n' +
-        'photo. It matches the caption the crew typed. Tags on this account are \n' +
-        'used inconsistently, so tag= is a last resort, not the default. Dates \n' +
-        'only when the question is about a season or period. Put it on ONE line, and \n' +
-        'do NOT describe what the photos will show — you cannot see them, and \n' +
-        'the app puts the real captions underneath. Say something like "Here is \n' +
-        'what we have on file:" and nothing more about their content.\n' +
-        'Use it only for things a photograph actually settles. A definition, a \n' +
-        'code citation or a measurement is not one of those.\n' +
-        'Where a number comes from code or a manufacturer spec, name the source ' +
-        '(for example "2019 Residential Code of Ohio R905.2.8.5" or "per the ' +
-        'manufacturer\'s installation instructions"). If you are not certain of a ' +
-        'number, say what governs it instead of inventing one — a wrong number in ' +
-        'the library is worse than no entry.\n' +
-        'Aim for 150-400 words. Respond with ONLY raw JSON, no markdown fences:\n' +
-        '{\n' +
-        '  "belongs": true|false,\n' +
-        '  "reason": "<if belongs is false, why>",\n' +
-        '  "hub": "general"|"insurance",\n' +
-        '  "section": "<existing section title, or a new one>",\n' +
-        '  "section_is_new": true|false,\n' +
-        '  "subsection": "<optional, or empty string>",\n' +
-        '  "subsection_is_new": true|false,\n' +
-        '  "title": "<a title someone would scan for later, under 70 characters>",\n' +
-        '  "summary": "<one sentence on what it covers>",\n' +
-        '  "body": "<the entry itself>",\n' +
-        '  "sources": ["<short citation>", "..."]\n' +
-        '}\n' +
-        'sources: the code sections, manufacturer documents or statutes the ' +
-        'answer actually rests on, each a short label a person could look up ' +
-        '(for example "2019 RCO R905.1.2" or "Owens Corning installation ' +
-        'instructions"). Cite only what genuinely governs the answer. If nothing ' +
-        'specific does, return an EMPTY array — the library shows an uncited ' +
-        'entry as uncited, which is far better than a citation that does not ' +
-        'say what you claim it says. Never cite a section number you are not ' +
-        'sure of.'
-      }];
+      system = RULES + '\n' + ASK_BRIEF;
+      schema = ASK_SCHEMA;
+      content = shelf + 'A member of the crew asked:\n"' + String(ask).slice(0, 800) + '"';
+
     } else if (file) {
       /* Same request shape as /api/sol.js: { file: <base64 payload>, mime }.
-         Gemini reads PDFs directly, so no text extraction in the browser. */
+         PDFs go up as a document block and are read directly.
+
+         806: Gemini would swallow any mime type. Claude takes PDFs and images;
+         anything else is refused HERE with a sentence that says what to do,
+         rather than being sent up to fail obscurely. Nothing has ever come
+         through this branch in production - all 32 library items are notes -
+         so this narrows a path that has never carried traffic. */
       const mt = String(mime || 'application/pdf').toLowerCase();
       const b64 = String(file).includes(',') ? String(file).split(',').pop() : String(file);
       if (!b64) { res.status(400).json({ error: 'Empty file payload' }); return; }
-      parts = [
-        { text: RULES + '\n' + shelf +
-          'This file was uploaded to the library' +
+      if (mt.indexOf('pdf') === -1) {
+        res.status(400).json({
+          error: 'The librarian reads PDFs and photos. Save this as a PDF, or paste its text in and ask about that.'
+        });
+        return;
+      }
+      system = RULES + '\n' + SHAPE;
+      schema = CLASSIFY_SCHEMA;
+      content = [
+        { type: 'text', text: shelf + 'This file was uploaded to the library' +
           (filename ? ' (filename: ' + String(filename).slice(0, 120) + ')' : '') +
-          '. Read it and decide where it belongs.\n\n' + SHAPE },
-        { inlineData: { mimeType: mt, data: b64 } }
+          '. Read it and decide where it belongs.' },
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }
       ];
+
     } else if (image) {
       const match = typeof image === 'string'
         ? image.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/)
@@ -345,38 +406,46 @@ export default async function handler(req, res) {
         res.status(400).json({ error: 'Missing or invalid image data URL' });
         return;
       }
-      parts = [
-        { text: RULES + '\n' + shelf +
-          'A photo was uploaded to the library' +
+      system = RULES + '\n' + SHAPE;
+      schema = CLASSIFY_SCHEMA;
+      content = [
+        { type: 'text', text: shelf + 'A photo was uploaded to the library' +
           (filename ? ' (filename: ' + String(filename).slice(0, 120) + ')' : '') +
-          '. Decide where it belongs.\n\n' + SHAPE },
-        { inlineData: { mimeType: match[1], data: match[2] } }
+          '. Decide where it belongs.' },
+        { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } }
       ];
+
     } else {
-      parts = [{ text:
-        RULES + '\n' + shelf +
+      system = RULES + '\n' + SHAPE;
+      schema = CLASSIFY_SCHEMA;
+      content = shelf +
         'A document was uploaded to the library' +
         (filename ? ' (filename: ' + String(filename).slice(0, 120) + ')' : '') +
         (mime ? ', type ' + String(mime).slice(0, 60) : '') + '.\n' +
         'Here is the text extracted from it:\n"""\n' +
-        String(text).slice(0, 12000) + '\n"""\n\n' + SHAPE
-      }];
+        String(text).slice(0, 12000) + '\n"""';
     }
 
-    const geminiRes = await askGemini(apiKey, parts);
-    if (!geminiRes || !geminiRes.ok) {
-      const errText = geminiRes ? await geminiRes.text() : 'no response';
-      res.status(502).json({
-        error: 'Gemini request failed',
-        detail: String(errText).slice(0, 500),
-        retryable: !!geminiRes && (geminiRes.status === 503 || geminiRes.status === 429)
-      });
+    const client = new Anthropic({ apiKey, maxRetries: MAX_RETRIES });
+
+    let msg;
+    try { msg = await askClaude(client, system, content, schema); }
+    catch (e) { apiFailure(res, e); return; }
+
+    /* A refusal is a 200 with nothing usable in it. Say so rather than
+       failing to parse an empty string. */
+    if (msg && msg.stop_reason === 'refusal') {
+      res.status(502).json({ error: 'The model declined that one', detail: '', retryable: false });
+      return;
+    }
+    /* Truncation would hand JSON.parse half an object. Structured output
+       cannot protect against running out of room. */
+    if (msg && msg.stop_reason === 'max_tokens') {
+      res.status(502).json({ error: 'The answer ran long and was cut off — ask for something narrower', retryable: true });
       return;
     }
 
-    const data = await geminiRes.json();
-    let out = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-    out = out.replace(/```json|```/g, '').trim();
+    const out = textOf(msg);
 
     let parsed;
     try { parsed = JSON.parse(out); }

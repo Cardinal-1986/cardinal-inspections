@@ -3504,7 +3504,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 804 &#8212; The always-on search bar folds into a magnifier beside Home, giving every screen its height back</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 806 &#8212; The Resource Library’s AI now runs on Claude — no more “high demand” failures when you ask it a question</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24473,11 +24473,21 @@ function showMain(userEmail){
    it regardless of hostname — so signing in there handed Theo a customer-
    facing tablet with a site header, a nav strip and an Add-project button on
    it. Every line below is now gated; NOTHING changes on app.cardinalroster.com.
-   Defensive on purpose: if the landing block has not run, the answer is false,
-   and false is the safe direction (a normal CRM load). */
+   805: this read window.CardinalLanding.isVisionHost(), which is defined in
+   cr-lr-script roughly 22,000 LINES LATER in this file. showMain() runs on
+   session restore, which routinely beats that block's parse, so the lookup
+   found nothing and fell through to false every time. Measured, not
+   inferred: a probe at this line reported CardinalLanding 'undefined' and
+   _vision false while location.hostname was showroom.cardinalroster.com.
+   The old comment called false "the safe direction". On a customer-facing
+   host it is the DANGEROUS direction -- it paints the whole CRM. Tested
+   inline against the hostname instead, which is exactly what the What's New
+   banner ~800 lines below already does, with a comment giving this same
+   reason. One of the two had been fixed; this one had not. */
 var _vision = false;
-try{ _vision = !!(window.CardinalLanding && window.CardinalLanding.isVisionHost
-                  && window.CardinalLanding.isVisionHost()); }catch(_){}
+try{ _vision = (location.search.indexOf('vision=1') !== -1)
+            || (location.hostname.indexOf('showroom.') === 0); }catch(_){}
+try{ if(_vision) document.body.setAttribute('data-cr-vision','1'); }catch(_){}
 var _rv0 = document.getElementById('restoreVeil');
 if(_rv0){ _rv0.style.display = 'flex'; setTimeout(function(){ _rv0.style.display = 'none'; }, 1600); }
 /* 729: the veil is up, so the splash can go with nothing uncovered between them */
@@ -24503,6 +24513,26 @@ var hd = document.querySelector('header.site');
   var leadOpt = document.querySelector('#newMenu [data-new="lead"]');
   if(leadOpt) leadOpt.style.display = (PRODUCTION_EMAILS.indexOf(userEmail) !== -1) ? 'none' : 'block';
   hideAllViews();
+  /* 805: hiding chrome was never enough, and this is the second half of the
+     same bug. _vision gated five elements -- the header, the add button, the
+     nav strip and two admin links -- while showLanding() and reload() below
+     painted the pipeline, the work schedule, accounts receivable, punch
+     items and every client project regardless. A real client's name and a
+     staff email address rendered on the domain Theo hands across a kitchen
+     table. Reproduced in Chromium on build 804 before this was written.
+     On a vision host the CRM is not rendered at all: #landingView holds the
+     Vision hub (cr-lr-script's build() fills it at module init) and that is
+     the entire screen. reload() is skipped, so no client data is fetched.
+     ⚠ This stops the CRM being SHOWN, not being DOWNLOADED. Only a separate
+     file removes the code -- OPEN_ITEMS' Option 3, which Theo asked to keep
+     on the table at 625 ("Option 1 but remember option 3"). */
+  if(_vision){
+    var _lv = document.getElementById('landingView');
+    if(_lv) _lv.style.display = 'block';
+    mainView.style.display = 'none';
+    try{ document.body.style.overflow = ''; }catch(_e){}
+    return;
+  }
   mainView.style.display = 'block';
   showLanding(userEmail);
   if(TEAM){
@@ -39558,6 +39588,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:806, d:'2026-08-14', t:'The Library\u2019s librarian moves to Claude',
+s:'The Resource Library\u2019s assistant \u2014 the one you ask a code question and it writes the entry \u2014 was running on Google\u2019s free tier, which refused about one call in four with \u201chigh demand\u201d and took six to fourteen seconds when it did answer. It now runs on Claude. Three things you should notice: it stops failing under load, it stops needing the retry-and-hope ladder that was stacked behind it, and its answer format is now enforced rather than requested, so the \u201ccould not add that\u201d error from a mangled reply cannot happen. Everything else is deliberately identical \u2014 same fence (reference material only, no client records or job paperwork), same diagrams, same photo search, same citation rules, same filing. Priced before switching, on the twenty-one questions actually asked so far rather than a guess: about a dollar a month at the current rate. Cost was never the reason; a confidently wrong code citation is. One narrowing, on a path nothing has ever used: uploading a file to the librarian now takes PDFs and photographs, and asks you to paste the text for anything else.' },
+{ b:805, d:'2026-08-14', t:'The showroom door shows presentations, not the CRM',
+s:'Signing in at showroom.cardinalroster.com was painting the whole retail CRM \u2014 the pipeline, the work schedule, accounts receivable, punch items with a client\u2019s name on them, the client list and a staff email address \u2014 on the one domain meant to be handed across a kitchen table. Build 625 was supposed to prevent that, but the check it used lives 22,000 lines further down the file than the code asking the question, so on a real sign-in the answer came back empty and the app fell through to a normal CRM load. The check is now made directly against the address bar, and on the showroom door the CRM is not drawn at all: the Vision hub is the whole screen and no client data is even fetched. Nothing changes on app.cardinalroster.com. Worth knowing: this stops the CRM being shown, not being downloaded \u2014 only a separate showroom file does that, and it is still on the list.' },
 { b:804, d:'2026-08-14', t:'The search bar folds into a magnifier',
 s:'The search bar no longer sits across every screen all the time. There is a magnifier next to the Home button instead \u2014 tap it and the same search bar drops down with the cursor already in it, so it is one tap to start typing rather than two. That is roughly 40 pixels back on every screen in Retail, Insurance and Community. Nothing was buried to make room: the light/dark moon returns to its floating corner button on its own, which is where it lived before it was ever put in that row, and Insurance\u2019s own theme switch moved up into the header beside the magnifier.' },
 { b:803, d:'2026-08-14', t:'The banner stops repeating the tabs under it',
@@ -46339,7 +46373,12 @@ apply : apply,
 })();
 </script>
 
-<style id="cr-lr-styles">#landingView>*{display:none}#landingView>.cr-lr{display:block}#landingView{background:#09090c !important}/* 647: was var(--bg), an APP-theme token, while every .cr-lr-* ink below keys off data-mode — the LANDING theme. Two mechanisms, one surface: put the app in rb-light, leave the landing dark, and the ground went #f7f7f7 under cream #e8ded4 inks. 1.24:1, measured in Chromium, and the red ::before radial over near-white is what made it pink. The landing owns its ground now; html[data-mode="light"] #landingView below still handles light. body{background:var(--bg)} is deliberately untouched — that is 429's overscroll fix and it is not this bug. */#landingView::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 420px at 50% -8%,rgba(200,32,46,.13) 0%,transparent 62%),radial-gradient(700px 340px at 82% 8%,rgba(200,32,46,.07) 0%,transparent 60%);pointer-events:none}.cr-lr{position:relative;max-width:560px;margin:0 auto;padding:max(30px,env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e8ded4}.cr-lr-eyebrow{display:flex;align-items:center;gap:10px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.22em;text-transform:uppercase;color:#9c8b7e;margin-bottom:26px}.cr-lr-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex:0 0 auto}.cr-lr-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}.cr-lr-mark{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(38px,12vw,58px);line-height:.92;letter-spacing:-.025em;margin:0;color:#e8ded4}.cr-lr-mark em{font-style:normal;color:var(--red)}.cr-lr-sub{font:600 10.5px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.3em;text-transform:uppercase;color:#c8202e;margin:9px 0 0}.cr-lr-greet{margin:34px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(21px,5.6vw,27px);font-weight:400;line-height:1.25;color:#e8ded4}.cr-lr-greet strong{font-weight:700;color:#c8202e}.cr-lr-stamp{margin:7px 0 0;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9c8b7e}.cr-lr-quote{position:relative;margin:28px 0 34px;padding:20px 20px 20px 24px;background:linear-gradient(180deg,rgba(200,32,46,.055),transparent 70%);border-left:2px solid #c8202e}.cr-lr-quote p{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(16px,4.4vw,19px);line-height:1.5;color:#f0e6da}.cr-lr-quote cite{display:block;margin-top:11px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9c8b7e;font-style:normal}.cr-lr-roof{border-radius:12px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.5)}.cr-lr-course .wm-c{color:#d9282a}.cr-lr-course .wm-t{color:#9a9a9a}.cr-lr-course{position:relative;display:flex;align-items:center;gap:15px;width:100%;padding:19px 18px;border:0;text-align:left;cursor:pointer;font-family:inherit;background:linear-gradient(180deg,#241b17 0%,#1d1613 88%);color:#e8ded4;transition:background .16s ease,transform .16s ease}.cr-lr-course + .cr-lr-course{border-top:1px solid rgba(255,255,255,.055);box-shadow:inset 0 3px 7px -4px rgba(0,0,0,.75)}.cr-lr-course::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,#c8202e)}.cr-lr-course:hover{background:linear-gradient(180deg,#2b211c 0%,#221a16 88%)}.cr-lr-course:active{transform:translateY(1px)}.cr-lr-course:focus-visible{outline:2px solid #c8202e;outline-offset:-2px}.cr-lr-course .ic{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.045)}.cr-lr-course .tx{flex:1;min-width:0}.cr-lr-course .tt{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--acc,#c8202e);line-height:1.2}.cr-lr-course .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}
+<style id="cr-lr-styles">/* 805: CRM chrome is not merely hidden on the showroom door, it is refused.
+   An inline display:none does NOT survive here — five separate call sites
+   restore it with `if(hd.style.display==='none') hd.style.display=''`.
+   A stylesheet !important outranks a normal inline style, so this holds
+   whatever runs afterwards. #pwaNav is included because an installed
+   tablet would otherwise show the CRM bottom nav under a presentation. */body[data-cr-vision="1"] header.site,body[data-cr-vision="1"] #pwaNav,body[data-cr-vision="1"] #navWrap{display:none!important}#landingView>*{display:none}#landingView>.cr-lr{display:block}#landingView{background:#09090c !important}/* 647: was var(--bg), an APP-theme token, while every .cr-lr-* ink below keys off data-mode — the LANDING theme. Two mechanisms, one surface: put the app in rb-light, leave the landing dark, and the ground went #f7f7f7 under cream #e8ded4 inks. 1.24:1, measured in Chromium, and the red ::before radial over near-white is what made it pink. The landing owns its ground now; html[data-mode="light"] #landingView below still handles light. body{background:var(--bg)} is deliberately untouched — that is 429's overscroll fix and it is not this bug. */#landingView::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 420px at 50% -8%,rgba(200,32,46,.13) 0%,transparent 62%),radial-gradient(700px 340px at 82% 8%,rgba(200,32,46,.07) 0%,transparent 60%);pointer-events:none}.cr-lr{position:relative;max-width:560px;margin:0 auto;padding:max(30px,env(safe-area-inset-top)) 20px calc(48px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#e8ded4}.cr-lr-eyebrow{display:flex;align-items:center;gap:10px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.22em;text-transform:uppercase;color:#9c8b7e;margin-bottom:26px}.cr-lr-eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--red);flex:0 0 auto}.cr-lr-eyebrow .ln{flex:1;height:1px;background:linear-gradient(90deg,rgba(200,32,46,.4),transparent)}.cr-lr-mark{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(38px,12vw,58px);line-height:.92;letter-spacing:-.025em;margin:0;color:#e8ded4}.cr-lr-mark em{font-style:normal;color:var(--red)}.cr-lr-sub{font:600 10.5px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.3em;text-transform:uppercase;color:#c8202e;margin:9px 0 0}.cr-lr-greet{margin:34px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(21px,5.6vw,27px);font-weight:400;line-height:1.25;color:#e8ded4}.cr-lr-greet strong{font-weight:700;color:#c8202e}.cr-lr-stamp{margin:7px 0 0;font:600 11px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9c8b7e}.cr-lr-quote{position:relative;margin:28px 0 34px;padding:20px 20px 20px 24px;background:linear-gradient(180deg,rgba(200,32,46,.055),transparent 70%);border-left:2px solid #c8202e}.cr-lr-quote p{margin:0;font-family:Georgia,'Times New Roman',serif;font-size:clamp(16px,4.4vw,19px);line-height:1.5;color:#f0e6da}.cr-lr-quote cite{display:block;margin-top:11px;font:600 10px ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:#9c8b7e;font-style:normal}.cr-lr-roof{border-radius:12px;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.5)}.cr-lr-course .wm-c{color:#d9282a}.cr-lr-course .wm-t{color:#9a9a9a}.cr-lr-course{position:relative;display:flex;align-items:center;gap:15px;width:100%;padding:19px 18px;border:0;text-align:left;cursor:pointer;font-family:inherit;background:linear-gradient(180deg,#241b17 0%,#1d1613 88%);color:#e8ded4;transition:background .16s ease,transform .16s ease}.cr-lr-course + .cr-lr-course{border-top:1px solid rgba(255,255,255,.055);box-shadow:inset 0 3px 7px -4px rgba(0,0,0,.75)}.cr-lr-course::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc,#c8202e)}.cr-lr-course:hover{background:linear-gradient(180deg,#2b211c 0%,#221a16 88%)}.cr-lr-course:active{transform:translateY(1px)}.cr-lr-course:focus-visible{outline:2px solid #c8202e;outline-offset:-2px}.cr-lr-course .ic{flex:0 0 auto;width:34px;height:34px;display:grid;place-items:center;font-size:18px;border-radius:8px;background:rgba(255,255,255,.045)}.cr-lr-course .tx{flex:1;min-width:0}.cr-lr-course .tt{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:17px;letter-spacing:.01em;color:var(--acc,#c8202e);line-height:1.2}.cr-lr-course .sb{margin-top:3px;font-size:12.5px;line-height:1.45;color:#a89a8d}
 /* 701: these three are <span>s, so they sat on one line and the title ran
    straight into the subtitle - 'Quick InspectionWalk the roof'. The
    margin-top above (and on .n) is the tell: it does nothing on an inline

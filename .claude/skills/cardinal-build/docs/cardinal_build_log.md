@@ -16302,3 +16302,69 @@ the row).
 ⚠️ The negative control initially **crashed** rather than going red: section B dereferenced a null
 lens on 803, which aborted the run so D/E/F never reported. Guarded. A control that stops early is a
 weaker signal than one that fails every discriminating assertion.
+
+**805** The showroom door stops rendering the CRM behind it. Theo screenshotted
+`showroom.cardinalroster.com/#h` showing the full retail dashboard — Cardinal Pipeline, Work Schedule,
+Accounts Receivable, an urgent punch item carrying a client's name, the client list, and a staff email
+address — on the one domain that gets handed across a kitchen table.
+
+**Two faults stacked, and the primary one was MEASURED, not inferred.** A probe injected at the exact
+decision line reported `window.CardinalLanding` **`undefined`** and `_vision` **`false`** while
+`location.hostname` was correctly `showroom.cardinalroster.com`. `showMain()` lives in the block starting
+at line 8065; `isVisionHost()` and the `CardinalLanding` export live in `cr-lr-script` at **line 46416** —
+~22,000 lines later. `showMain()` runs on session restore, which routinely beats that block's parse, so
+the lookup found nothing every time. The old comment called `false` *"the safe direction (a normal CRM
+load)"*; on a customer-facing host it is the dangerous direction. **The What's New banner ~800 lines below
+already tests the hostname inline, with a comment giving this exact reason** — one of the two had been
+fixed and this one had not.
+
+**The second fault is that hiding chrome was never going to be enough.** `_vision` gated five elements;
+`showLanding()` and `reload()` painted everything else regardless. On a vision host `showMain()` now
+returns before painting: `#landingView` holds the Vision hub and that is the whole screen, and `reload()`
+never runs, so no client data is even fetched.
+
+⚠️ **An inline `display:none` cannot hide the header, and this is a trap worth remembering.** FIVE separate
+call sites run `if(hd && hd.style.display === 'none') hd.style.display = '';` (12895, 12936, 23930, 23937,
+23942) and actively undo it — grepped, not assumed. The fix is declarative: `body[data-cr-vision="1"]` plus
+a stylesheet `!important`, which outranks a normal inline style. Same mechanism `#tab-overview` uses to beat
+a renderer. Verified by computed style: the header reads `display:none` while its inline style is still `''`.
+
+**Gate**: `gate_805.mjs` — 16 green, **6 red on the 804 control**, which reproduces the exact leak from the
+screenshot (main view rendered, all five CRM surfaces, the staff email, the client name). It drives BOTH
+hostnames because this build's risk is asymmetric: showroom must change completely and `app.` must not
+change at all. All six `app.cardinalroster.com` assertions pass identically on 804 and 805.
+
+**Scope, stated plainly so nobody over-claims it:** this stops the CRM being **shown**, not being
+**downloaded**. Only a separate file removes the code — `OPEN_ITEMS`' Option 3, which Theo asked to keep on
+the table at 625 (*"Option 1 but remember option 3"*). This build is the evidence that Option 1 cannot
+deliver separation on its own.
+
+- **806** · The Library's librarian moves off Gemini onto Claude · `api/librarian.js` now calls
+**`claude-opus-5`** through `@anthropic-ai/sdk`. **The reason was never cost.** It was priced first, on
+real traffic rather than a guess: the 21 questions the crew has actually asked, measured by running the
+**shipped** handler against a stubbed transport so the sizes are the bytes it really sends — **5,803 chars
+in, 2,221 out** on average, **≈$1/month** at the observed rate, $7.25/month at ten a day. What the switch
+buys is the thing the route's own comments recorded: the free Gemini tier **503'd about one call in four
+and took 6-14s** when it answered, which is why a four-rung ladder (`3.6-flash` ×2 → `3.5-flash` ×2 →
+`gpt-4o-mini`) had grown behind it. The ladder is gone; `OPENAI_API_KEY` is no longer read by this route.
+**The answer shape is now ENFORCED** by `output_config.format` instead of requested in prose, which also
+retired the ```-strip — a latent corruption bug, since any answer whose `body` legitimately contained a
+fence was mangled before `JSON.parse` ever saw it. The standing brief moved into a **cacheable `system`
+prefix** and the volatile half (library outline + question) stayed in the user turn; `effort:'medium'`
+keeps latency near what the crew is used to. **Every prompt fix from 466/471/508/510/512 is byte-identical
+and asserted** — the transport changed, the prompt did not. `gate_806.mjs`: **42/42 green, 20 red on the
+pre-swap route.** The gate's shape is the point: it runs the **old route and the new route against the
+same model output and diffs the JSON each emits**, because the contract that matters is not "it calls
+Claude", it is that `index.html` cannot tell. It drives the **real SDK** against a local server speaking
+proper SSE, so the captured request is what would go on the wire; a hand-rolled fake would have proved my
+own assumption. ⚠️ **The gate went red once on a correct file** — `!src.includes('OPENAI_API_KEY')` matched
+the route's own header comment saying the key is no longer read. **The comment-pollution trap, third time
+this session, and the fix is always the assertion and never the comment**; it now asserts on
+`process.env.OPENAI_API_KEY`. ⚠️ **The first negative control was red for the wrong reason** — pointed at
+the old route it put a real request on the wire to Google and failed with "API key not valid", which would
+also be red offline and for a third reason again. That host is now intercepted, so the control fails on
+**what this build changed** and nothing else. ⚠️ **One narrowing, on a path with zero traffic:** Gemini took
+any mime type, Claude reads PDFs and photographs, so anything else now gets a 400 saying to save it as a
+PDF or paste the text — measured first, **all 32 `library_items` rows are `kind='note'`** and no file or
+image has ever gone through this route. **`ANTHROPIC_API_KEY` must be set in Vercel env before this
+deploys**; `GEMINI_API_KEY` stays, four other routes still need it.
