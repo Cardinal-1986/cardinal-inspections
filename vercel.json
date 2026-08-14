@@ -41,9 +41,6 @@
     "api/companycam-sync.js": {
       "maxDuration": 60
     },
-    "api/design.js": {
-      "maxDuration": 60
-    },
     "api/detect.js": {
       "maxDuration": 60
     },

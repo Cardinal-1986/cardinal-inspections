@@ -3085,3 +3085,29 @@ ladder goes with it.
 **Worth measuring after a fortnight of real use:** whether `output_config.effort:'medium'` is the right
 setting. It is the latency lever and it is the only knob — `high` if answers get sloppy. Theo's ears and
 eyes are that gate, not a harness.
+
+---
+
+### Opened at 807 — the Exterior Visualizer
+
+**Theo's two actions, in order:**
+
+1. **Switch the Spark on** — `spark/VISUALIZER_SETUP.md` §1–4 (ComfyUI + SAM 2 + the inpainting
+   graph, then `visualizer_worker.py`). Until this is done, queueing works and nothing renders.
+   Jobs sitting at `queued` is the correct behaviour, not a bug.
+2. **Optional, later: give it its own Vercel project** scoped to `visualizer/`, then set
+   `window.CR_VISUALIZER_URL` (or edit the one line in the hub handler). Only then is the CRM
+   absent from that domain at every path. Until then `/visualizer/` on the main project is a
+   separate *file* but the same *deployment*.
+
+**Settled and not to be re-litigated:** pre-render before the appointment (Prep queues, Present
+only shows what is already made — **no Generate button in Present**); OC roofing from `oc_colors`,
+real brands elsewhere from `materials`; a person approves every render before a customer sees it.
+
+**Deliberately still open: why Studio keeps asking for a sign-in.** 807 gave the *new* app its own
+`storageKey` and explicit `persistSession`, which is the right shape — but that is a design choice
+for a new file, **not a diagnosis of Studio**. Nobody has reproduced Studio's re-login yet. Do not
+"fix" Studio by copying 807's client options and claiming the cause; measure it first.
+
+**Not measured yet:** whether the composed roof prompt actually produces a convincing shingle. That
+needs the Spark running and Theo's eyes on a real render — it is not something a harness can judge.

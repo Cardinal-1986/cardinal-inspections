@@ -16368,3 +16368,40 @@ any mime type, Claude reads PDFs and photographs, so anything else now gets a 40
 PDF or paste the text — measured first, **all 32 `library_items` rows are `kind='note'`** and no file or
 image has ever gone through this route. **`ANTHROPIC_API_KEY` must be set in Vercel env before this
 deploys**; `GEMINI_API_KEY` stays, four other routes still need it.
+
+- **807** · The Exterior Visualizer becomes its own app; `cr-des` is deleted, not disabled ·
+Theo: *"I want to completely redo the entire Ai Exterior designer."* Tiers 2 and 3 shipped at 805
+(the schema, applied; the Spark worker). **This is tier 1, and it is deliberately NOT a screen in
+`index.html`.** Build 805 is the whole argument: a hostname check inside one big file separates
+nothing, because the code still ships to the tablet and one missed branch paints the CRM on a
+customer-facing domain. `visualizer/index.html` contains **no CRM code at all** — asserted with
+`index.html` as the control, where all 7 markers trip. Laid out as a **folder** so it can become the
+root of its own Vercel project; until then the main project serves it at `/visualizer/`, which is
+what makes it testable today. **The old designer went out whole**: `api/design.js` deleted, its
+`vercel.json` entry removed, both `cr-des` blocks cut, and all five wirings unpicked —
+`hideAllViews()`, the `navRestore()` case, the `__crNav` wrap, `BLACKOUT`, and the hub handler.
+**35,420 characters removed**, byte-identical on re-apply. The two tiles that opened it route
+through ONE handler, so re-pointing them at `window.CR_VISUALIZER_URL || '/visualizer/'` was a
+single edit. **Three screens, and the split IS the settled decision "pre-render before the
+appointment":** Prep queues combinations at the office, Review requires a person to approve every
+render (`approved` starts false — The Walk's rule), Present shows approved images only and does not
+render the queue bar at all. **Contracts measured, not assumed:** `source_path` is
+`project_photos.storage_path`, checked first because CLAUDE.md records a photo-signing change that
+shipped inert against that exact column — **223 of 223 rows carry it**; `oc_colors` has **no prompt
+column**, so the roof prompt is composed in the browser and frozen into the job, traceable after any
+catalog edit; the job row names four fields and only four. **The GPS fence is now asserted at three
+sites** — schema, worker, front end. Sign-in uses its own `storageKey: 'cr-viz-auth'` with
+`persistSession`, because Studio and the CRM both use the supabase-js default and would fight over
+one session on a shared origin — **that answers Theo's "Studio keeps logging in" for the NEW app
+only; Studio is untouched.** `gate_807.mjs`: **33/33 green, 6 red on a mutant** carrying three
+planted defects. ⚠️ **Two of its assertions were passing VACUOUSLY and both are recorded in
+`BUG_CLASSES` terms:** the surface pickers sit inside closed `<details>`, so `innerText` is `""` and
+the check meant to prove a hidden colour is never offered passed on any input; and the GPS regex was
+written `/\b…\b/` in a **plain regex literal**, where `\b` is an escaped backslash and not a word
+boundary — it could never match anything, so the privacy assertion it guarded was decorative. Both
+now read the DOM, and the fence check **plants a coordinate and requires a catch**. ⚠️ **The
+comment-pollution trap struck a FOURTH time this session** — `after.count('cr-des') == 0` failed
+against a correct file because the replacement comment says "cr-des" in prose. The fix is the
+assertion, every time. **Not verified end to end, and not claimed to be: nothing renders until the
+Spark is switched on** (`spark/VISUALIZER_SETUP.md` §1–4); queued jobs sit at `queued` until then,
+which is correct, not a fault.

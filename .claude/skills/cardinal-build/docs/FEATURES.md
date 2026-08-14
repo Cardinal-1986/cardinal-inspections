@@ -4933,3 +4933,80 @@ images have ever gone through this route.**
 2,221 out on average, ≈**$1/month** at the observed rate and $7.25/month at ten questions a day.
 Cost was never the constraint. `scripts/librarian_measure.mjs`-style measurement ran the *shipped*
 handler with a stubbed transport, so the sizes are what the route really sends, not an estimate.
+
+---
+
+## Build 807 — the Exterior Visualizer (`visualizer/index.html`), and the death of `cr-des`
+
+**The AI Exterior Designer of 761–762 is gone.** Not disabled — removed: `api/design.js`
+deleted, its `vercel.json` entry removed, and the `cr-des-styles` + `cr-des-script` blocks cut
+whole out of `index.html` along with all five wirings (`hideAllViews()`, the `navRestore()`
+case, the `__crNav` wrap, the `BLACKOUT` list, the hub handler). **35,420 characters removed.**
+A dead module that still registers in `hideAllViews()` is exactly the buried thing the prime
+doctrine warns about.
+
+### It is a SEPARATE APPLICATION, and build 805 is the reason
+
+`visualizer/index.html` contains **no CRM code at all** — asserted, with the same test run
+against `index.html` as its control (7/7 markers trip there, 0 here). Build 805 proved a
+hostname check inside one big file separates nothing: the code still ships to the tablet and
+one missed branch paints the pipeline on a customer-facing domain. There is nothing here to
+miss.
+
+It is a **folder** so it can become the root of its own Vercel project. Until that exists it is
+served by the main project at **`/visualizer/`**, which is what makes it reachable today. Both
+tiles that used to open the old designer (the Vision hub tile and the showroom rail) route
+through **one** handler, which now goes to `window.CR_VISUALIZER_URL || '/visualizer/'` — moving
+it to its own subdomain is that one line.
+
+### The three screens, and why they are three
+
+| | |
+|---|---|
+| **Prep** | at the office. Pick the house photograph, pick materials per surface, queue the combinations. |
+| **Review** | a person looks at every render before a customer does. `approved` starts **false** and only this screen sets it true — the same rule The Walk runs on. |
+| **Present** | at the kitchen table. **Approved renders only**, already made, so a tap is instant. The queue bar is not rendered here at all. |
+
+That split **is** the settled decision "pre-render before the appointment". A Generate button
+in Present would undo it.
+
+### Contracts, measured not assumed
+
+- **Roofing is `oc_colors`; everything else is `materials`**, whose `category` CHECK excludes
+  roofing so the two catalogs cannot disagree about a shingle. `oc_colors` has **no prompt
+  column** — it is the brand reference the Colors hub renders — so the roof prompt is
+  **composed in the browser** from the colour's own recorded facts and **frozen into the job**.
+  A render can always be traced to the exact words that made it.
+- **`source_path` is `project_photos.storage_path`.** Checked before building on it, because
+  CLAUDE.md records a photo-signing change that shipped completely inert against this exact
+  column: **223 of 223 rows have it**, all under `projects/`.
+- **The job row names four fields and only four** — `project_id`, `source_path`, `selections`,
+  `created_by`. `created_by` must be the signed-in email or RLS refuses the insert.
+- ⚠️ **The GPS fence is asserted here too** — schema, worker, and now the front end. No
+  coordinate travels with a job. **Do not "complete" that row.**
+- Signed URLs, never public ones, and **never written to a row** — they expire.
+
+### Sign-in
+
+Its own `storageKey: 'cr-viz-auth'`, `persistSession`, `autoRefreshToken`. Studio and the CRM
+both use the supabase-js default key (derived from the project ref); on a shared origin three
+apps would fight over one session. **This is the answer to Theo's "Studio keeps logging in"
+complaint for the new app only — Studio itself is untouched and still asks.**
+
+### Gate
+
+`gate_807.mjs` — **33/33 green**, and **6 red on a mutant** with three planted defects (no
+private storage key, Present showing unapproved renders, `created_by` dropped).
+
+⚠️ **Two assertions in it were passing vacuously and are worth knowing about.** The surface
+pickers live inside closed `<details>`, so `innerText` returns "" for all of them — the test
+meant to prove a hidden colour is never offered was reading an empty string and passing on
+anything. And the GPS-fence regex was written `/\b…\b/` inside a **plain regex literal**, where
+`\b` is an escaped backslash, not a word boundary; it could never match. Both now read the DOM
+and the fence check carries a **self-test that plants a coordinate and requires a catch**.
+
+### Not yet true
+
+**Nothing renders until the Spark is switched on** (`spark/VISUALIZER_SETUP.md` §1–4). Queued
+jobs sit at `queued` until then, which is correct behaviour, not a fault. This build could not
+be verified end to end and was not claimed to be.
