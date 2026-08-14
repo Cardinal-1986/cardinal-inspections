@@ -30,7 +30,7 @@ const APP  = readFileSync(FILE, 'utf8');
 const MOCK = readFileSync(ROOT + '/.claude/skills/cardinal-build/scripts/e2e_mock_supa.js', 'utf8');
 let pass = 0, fail = 0;
 const ok = (n, c, x) => { if (c) { pass++; console.log('  ok   ' + n); } else { fail++; console.log('  FAIL ' + n + (x !== undefined ? '  — ' + x : '')); } };
-console.log('gate_792 on ' + FILE);
+console.log('gate_793 on ' + FILE);
 
 const mkSeed = kind => ({
   projects: [{ id: 'p-1', name: 'Bob DeBuilder', stage: 'Completed',
@@ -189,11 +189,16 @@ const loc = await P.page.evaluate(() => {
   return { screen: window.innerWidth, head: r(h), card: r(c), stage: r(st),
            radius: c ? getComputedStyle(c).borderTopLeftRadius : null };
 });
-ok('the Location heading spans the screen',
-  loc.head && loc.head.left === 0 && loc.head.right === loc.screen, JSON.stringify(loc.head));
-ok('the map card spans the screen, with no rounded corner',
-  loc.card && loc.card.left === 0 && loc.card.right === loc.screen && loc.radius === '0px',
+/* 793: Theo saw the full-bleed version and preferred the inset card, so the
+   assertion is inverted on purpose — this is the shape he picked, not a
+   regression. The ORDER below is what must hold. */
+ok('the Location heading is INSET, not edge to edge',
+  loc.head && loc.head.left > 0 && loc.head.right < loc.screen, JSON.stringify(loc.head));
+ok('the map sits in its own rounded card',
+  loc.card && loc.card.left > 0 && loc.card.right < loc.screen && loc.radius !== '0px',
   JSON.stringify({ card: loc.card, radius: loc.radius }));
+ok('the pipeline bar above it still spans the screen',
+  loc.stage && loc.stage.left === 0 && loc.stage.right === loc.screen, JSON.stringify(loc.stage));
 ok('and both sit below the pipeline bar',
   !!(loc.head && loc.stage && loc.card) && loc.head.top >= loc.stage.top && loc.card.top > loc.head.top,
   JSON.stringify({ stage: loc.stage.top, head: loc.head.top, card: loc.card.top }));

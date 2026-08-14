@@ -15774,3 +15774,15 @@ as three full-width bands and then the map. That is the shape of the screenshot.
 before it went red** for the THIRD time this session: the probe dereferenced a panel the previous build
 does not have. Every probe in this harness now returns a sentinel instead of touching a null. *If a
 negative control can crash, it is not yet a control.*
+
+## build 793 — 14 Aug 2026 — Location and the map go back in their card
+
+Theo asked for them to run across the screen (792), saw it shipped, and preferred the 791 look: the
+heading with its red rule and the map in its own inset card. Reverted exactly that.
+
+**Kept:** their ORDER (`loch` 2, `loc` 3 — straight under the pipeline bar), the full-bleed pipeline bar,
+the client band, and 792's contact panel. Only the bleed on those two elements is gone, and the stage
+bar's 10px bottom margin came back with it.
+
+`gate_793.mjs` — the two Location assertions are **inverted on purpose** and say so in the file: inset is
+the shape Theo picked, not a regression. 25 green, desktop image-md5 still identical.
