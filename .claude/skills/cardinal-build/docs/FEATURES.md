@@ -5010,3 +5010,25 @@ and the fence check carries a **self-test that plants a coordinate and requires 
 **Nothing renders until the Spark is switched on** (`spark/VISUALIZER_SETUP.md` §1–4). Queued
 jobs sit at `queued` until then, which is correct behaviour, not a fault. This build could not
 be verified end to end and was not claimed to be.
+
+
+## Build 809 — the landing ground reaches the bottom of a screenshot
+
+**Where:** `<style id="cr-lr-styles">`, one rule beside the existing landing light-mode block.
+
+`#landingView` is a `position:fixed;inset:0;overflow-y:auto` pane (inline, in the markup at ~4325),
+so its ground paints **one viewport** while its content is ~1471px. An iPhone Full Page screenshot
+captures the **document**, and the difference fell through to `body{background:var(--bg)}` — the
+**app** theme token, not the landing's. Light-mode cards on a black slab; invisible in dark mode
+because both grounds are `#09090c`.
+
+`html[data-mode="light"]{background:#f7f5f2}` puts the ground on the canvas, which is the only box
+that always covers the capture. **Light only** — no dark twin ships, because body's `var(--bg)`
+already propagates correctly there and the dark rule measured as a no-op.
+
+**Gate:** `scripts/render_landingground.js` (Chromium — jsdom cannot see an `!important` ground on
+a fixed box). 12/12 green on 809, **6 red on 807**, at 390px and 1440px, both themes.
+
+⚠️ The screenshot still ends where the pane's content ends — the page does not scroll, the pane
+does. Fixing that means un-fixing the landing, which is a nav change, not a CSS one: nothing hides
+`header.site` on the landing today except the landing's own `z-index:150`.

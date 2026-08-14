@@ -16405,3 +16405,37 @@ against a correct file because the replacement comment says "cr-des" in prose. T
 assertion, every time. **Not verified end to end, and not claimed to be: nothing renders until the
 Spark is switched on** (`spark/VISUALIZER_SETUP.md` §1–4); queued jobs sit at `queued` until then,
 which is correct, not a fault.
+
+
+## build 809 — 14 Aug 2026 — the landing's ground stops running out mid-screenshot
+
+**Theo, with a photograph:** a full-page screenshot of the landing on his iPhone came back as the
+top of the page followed by a tall black slab, light-mode cards sitting on it.
+
+**Root cause, measured in Chromium — not inferred.** `#landingView` carries
+`position:fixed;inset:0;overflow-y:auto` as an **inline** style in the markup (~4325), so it is a
+viewport-locked pane with its own scroller, and the document behind it is 182px of content.
+Measured at iPhone width: the pane's **content is 1471px**, its **painted ground is 844px** — one
+viewport, because that is the fixed box. An iPhone Full Page screenshot captures the **document**,
+so everything past the first screen fell through to `body{background:var(--bg)}`.
+
+**And `var(--bg)` is the wrong theme.** `body` follows the APP theme (`data-theme`); the landing
+follows the LANDING theme (`data-mode`). Two mechanisms, one surface — the same collision recorded
+at 647. In dark mode both are `#09090c`, so the bug is invisible; it only bites in light.
+
+**The fix is one rule:** `html[data-mode="light"]{background:#f7f5f2}`. The canvas is the only box
+that always covers the capture. **Light only, deliberately** — with no dark twin, body's
+`var(--bg)` still propagates to the canvas exactly as it does today, so dark mode and `rb-light`
+are untouched. The dark rule was written, measured as a **no-op**, and dropped rather than shipped.
+
+**Gate:** `scripts/render_landingground.js` — Chromium, not jsdom, because the failure is a
+COMPOSITE (content taller than an `!important` ground on a `position:fixed` box) and jsdom resolves
+neither the fixed box nor the paint. **12/12 green on 809, 6 RED on 807**, at 390px and 1440px,
+both themes.
+
+⚠️ **Not fixed, and not claimed to be:** the capture still ends where the pane's laid-out content
+ends, because the PAGE still does not scroll — the pane does. Getting the whole landing into one
+screenshot means taking the landing out of the fixed overlay, and that is **not a CSS change**:
+`backToLanding()` and `goToLanding()` (24123, 24137) show the landing with `display='block'` and
+**never hide `header.site`**, so the landing's `z-index:150` is the only thing covering the CRM
+header today. Offered to Theo as option 2 and deferred — see `OPEN_ITEMS.md`.
