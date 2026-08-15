@@ -16902,3 +16902,76 @@ six visible, at 0.6% of the frame against the roof's 3%, is not worth more round
 `gutters` still has the flag with **no sheet at all** behind it, which is the larger gap.
 
 `test_segment.py` 19/19, RED on reverting the plural.
+
+---
+
+## build 825 / wb-2026-08-15.7 — 15 Aug 2026 — label the surfaces yourself
+
+**Files:** `spark/regions_api.json` (new) · `spark/visualizer_worker.py` (`.6` → `.7`) ·
+`visualizer/index.html` (824 → 825) · `spark/test_segment.py`, `scripts/render_regions.mjs`.
+**No SQL.**
+
+Theo: *"Why can't we do the siding by walls? With clickable circles like hover does it?"*
+
+### Why phrase-tuning stopped
+
+Two photographs of the SAME house, hours apart. `"shingles"` grounded the roof correctly
+on the eye-level shot and grounded **roof + wall** on the drone shot; the render put Autumn
+Red on the garage doors and the "trim" mask landed on both cars. **Tuning the phrase moved
+the failure from one house to the next rather than removing it** — and that is the argument
+for this build, not a defect to patch.
+
+### Two jobs, no queue change
+
+`selections._regions` marks a segmentation-only job. The worker answers it with
+`Sam2AutoSegmentation` — **no Florence2, no phrase** — stores the regions and finishes. The
+rep labels them. Render queues an **ordinary** job whose selections carry `_regions: [paths]`.
+
+A `review` stage in the queue was the obvious design and is worse: a worker that pauses is a
+worker that hangs the first time a tab closes. Two rows, no pause. The marker is an
+underscore key, matching `achieved._worker` / `_skipped`, and costs no migration — the
+alternative was a column plus a claim-function change that had to ship before the writer.
+
+- **Regions are ranked by area, floor 0.30% of frame, cap 40.** Automatic mode returns
+  every leaf and shingle clump; a picker with two hundred choices is not a picker.
+- **`points_per_side` 16, not the default 32**, for the same reason.
+- **Hand-picked masks go through `exclusive()` too** — one reconciliation path, not two.
+- **Segmentation is skipped entirely** when every selected surface was labelled.
+
+### ⚠ `fill_defaults()` — the guessing stops at the node boundary
+
+`Sam2AutoSegmentation` takes a dozen widget inputs. `regions_api.json` names **only the four
+confirmed against this install's own `/object_info`** plus the two we tune; every other
+required input is filled from the node's own schema at submit time. Values already in the
+graph are never overwritten, and LINK inputs are left to the wiring — inventing an IMAGE
+value is worse than the error you get without one.
+
+This narrows one class of mistake. It does not make the graph correct.
+
+### The picker
+
+Circles at each region's centre, computed from the bounding box the worker already stored —
+**so no mask pixel is read in the browser** and the canvas-tainting problem the 823 overlay
+had never arises. A region belongs to **at most one surface**: tapping it under another
+moves it, rather than pushing the conflict down to `exclusive()` where nobody can see it.
+Picks live in memory keyed by the photograph; persisting them means a table and a rule about
+re-imports, neither worth building before anyone has used this once.
+
+**Gates.** `render_regions.mjs` 29/29 in Chromium, clicking the circles through real
+hit-testing — RED on 824. `test_segment.py` 36/36 with `fill_defaults` mutation-tested
+three ways. `gate_822` 24/24, `gate_823` 52/52, `render_found` 27/27.
+
+### ⚠️ Two harness faults, both familiar
+
+- **A block of assertions appended BELOW the report.** They ran, recorded failures into
+  `fails`, and nothing looked at `fails` again — three mutation runs came back green against
+  code that was provably broken. The report now sits last and **counts what actually ran**;
+  the hardcoded total was already wrong (33 against 35).
+- **A sample point on a control for the third time this session.** `(200,160)` is exactly
+  where region r02's circle sits, so an untouched photograph read as dark. Sample points are
+  now checked against the circles' real rects.
+
+**Not verified by eye.** The picker is proven in Chromium against synthetic regions. Nobody
+has labelled a real house with it, and **`Sam2AutoSegmentation` has never run on this box** —
+whether it returns usable planes at `points_per_side` 16 is the open question this build
+exists to answer.

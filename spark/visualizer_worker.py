@@ -288,6 +288,65 @@ class Comfy:
         r.raise_for_status()
         return r.json().get(prompt_id, {}).get("outputs", {})
 
+    def node_schema(self, class_type):
+        """What inputs a node class actually takes, from ComfyUI itself.
+
+        Cached per process. Returns {} if the server will not say, which the
+        caller must treat as "fill nothing" rather than "fill everything".
+        """
+        if not hasattr(self, "_schema_cache"):
+            self._schema_cache = {}
+        if class_type in self._schema_cache:
+            return self._schema_cache[class_type]
+        try:
+            r = requests.get(self.base + "/object_info/" + class_type, timeout=30)
+            r.raise_for_status()
+            info = (r.json() or {}).get(class_type) or {}
+        except Exception as e:
+            log("    could not read the schema for %s (%s) — sending the graph as written"
+                % (class_type, _short(e, 60)))
+            info = {}
+        self._schema_cache[class_type] = info
+        return info
+
+    def fill_defaults(self, graph, class_type):
+        """Add every REQUIRED input the node declares and the graph omits,
+        using the node's own default.
+
+        This narrows one class of mistake: a parameter name written from
+        memory. Sam2AutoSegmentation takes a dozen widget inputs, and guessing
+        them into the JSON is how a graph gets rejected at submit time — or
+        accepted with a value that means something else. Asking the node what
+        it wants removes the guess. It does not make the graph correct; the
+        wiring and the tuned values can still be wrong.
+        Values already present in the graph are never overwritten — the two we
+        deliberately tune stay tuned.
+
+        Returns the names it filled, so the log can say.
+        """
+        info = self.node_schema(class_type)
+        req = ((info.get("input") or {}).get("required") or {})
+        added = []
+        for nid, node in graph.items():
+            if node.get("class_type") != class_type:
+                continue
+            ins = node.setdefault("inputs", {})
+            for name, spec in req.items():
+                if name in ins:
+                    continue
+                # spec is [type, {...opts}] or [[choices], {...}]
+                opts = spec[1] if len(spec) > 1 and isinstance(spec[1], dict) else {}
+                if "default" in opts:
+                    ins[name] = opts["default"]
+                    added.append(name)
+                elif isinstance(spec[0], list) and spec[0]:
+                    ins[name] = spec[0][0]          # an enum — take the first
+                    added.append(name)
+                # A required input with no default and no choices is a LINK
+                # (IMAGE, MASK, SAM2MODEL…). Those are the graph's job, and
+                # inventing one would be worse than the error you get without.
+        return added
+
     def fetch(self, meta):
         r = requests.get(self.base + "/view",
                          params={"filename": meta["filename"],
@@ -533,8 +592,8 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 # One query ends the argument:
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
-#   "wb-2026-08-15.6 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.6"
+#   "wb-2026-08-15.7 recolour" -> this code, this mode
+WORKER_BUILD = "wb-2026-08-15.7"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
@@ -829,6 +888,91 @@ def to_jpeg(data, max_px, quality):
     return buf.getvalue()
 
 
+REGION_MAX = 40          # how many regions the picker will ever be handed
+REGION_MIN_PCT = 0.30    # ignore anything smaller than this share of the frame
+
+
+def run_regions_job(comfy, job, job_id, started):
+    """Segment the photograph into every region, for a person to label.
+
+    No text prompt, no Florence2, no phrase. Two photographs of the same
+    house on 15 Aug produced very different masks, because a phrase that
+    grounds correctly on one angle grounded the whole building on another —
+    so tuning the phrase trades one house for the next. Here the machine
+    proposes regions and a person says which is the roof, which is Theo's own
+    doctrine from The Walk.
+
+    This removes the phrase as a failure mode. It does not make the regions
+    right: SAM 2 can still split a roof across a shadow line or merge a wall
+    with the garage door, and the picker is what that costs.
+    """
+    source = storage_download(job["source_path"])
+    fitted, was, now = fit_for_flux(to_png(source))
+    frame = Image.open(io.BytesIO(fitted)).size
+    log("  regions pass — %dx%d" % frame)
+
+    graph = load_graph("regions_api.json")
+    added = comfy.fill_defaults(graph, "Sam2AutoSegmentation")
+    if added:
+        log("    filled from the node's own schema: %s" % ", ".join(sorted(set(added))))
+    name = comfy.upload_image("cardinal_regions.png", fitted)
+    set_input(graph, T_SEG_IN, "image", name)
+
+    pid = comfy.run(graph, timeout=900)
+    out = comfy.outputs(pid)
+
+    images = []
+    for nid, payload in out.items():
+        if ((graph.get(nid, {}).get("_meta") or {}).get("title") or "") == "CARDINAL_REGIONS":
+            images = payload.get("images") or []
+            break
+    if not images:
+        raise RuntimeError("the regions graph produced no masks")
+
+    # Rank by area and keep the biggest. SAM 2's automatic mode returns
+    # everything — a leaf, a shingle clump, a car door handle — and a picker
+    # with two hundred choices is not a picker. Big things first is also the
+    # order a person looks in: roof, walls, garage door, then detail.
+    kept = []
+    for meta in images:
+        png = comfy.fetch(meta)
+        m = Image.open(io.BytesIO(png)).convert("L")
+        if m.size != frame:
+            m = m.resize(frame, Image.LANCZOS)
+        bw = m.point(lambda p: 255 if p >= 128 else 0)
+        lit = sum(bw.histogram()[128:])
+        pct = 100.0 * lit / float(frame[0] * frame[1])
+        if pct < REGION_MIN_PCT:
+            continue
+        kept.append((pct, png, bw.getbbox()))
+    kept.sort(key=lambda t: -t[0])
+    kept = kept[:REGION_MAX]
+
+    if not kept:
+        raise RuntimeError(
+            "Every region was smaller than %.2f%% of the frame — nothing worth "
+            "showing. Try a photograph where the house fills more of the shot."
+            % REGION_MIN_PCT)
+
+    regions = {}
+    for i, (pct, png, box) in enumerate(kept, 1):
+        p = "visualizer/%s/region_%02d.png" % (job_id, i)
+        storage_upload(p, png, "image/png")
+        regions["r%02d" % i] = {"path": p, "pct": round(pct, 2), "box": list(box or ())}
+
+    took = int((time.time() - started) * 1000)
+    patch_job(job_id, {
+        "status": "done", "masks": regions, "finished_at": _now(),
+        "duration_ms": took, "error": None,
+        # No render_path and no design_renders row on purpose: this job produced
+        # no picture. A gallery entry for it would be an empty card.
+        "achieved": {"_worker": "%s regions" % WORKER_BUILD,
+                     "_regions": len(kept)},
+    })
+    log("  %d region(s) kept of %d found, in %.1fs — largest %.1f%% of frame"
+        % (len(kept), len(images), took / 1000.0, kept[0][0]))
+
+
 def run_job(comfy, job):
     job_id = job["id"]
     started = time.time()
@@ -838,6 +982,22 @@ def run_job(comfy, job):
     selections = job.get("selections") or {}
     if isinstance(selections, str):
         selections = json.loads(selections)
+
+    # ── a REGIONS job, not a render ──────────────────────────────────────
+    # Two jobs, no queue change. This one segments the photograph into every
+    # distinct region and finishes; the rep taps which regions are roof and
+    # which are siding; pressing Render queues an ORDINARY job carrying those
+    # picks. A `review` stage in the queue would have meant a worker that
+    # pauses, and a paused worker is a stuck worker the first time a tab
+    # closes.
+    #
+    # Marked by an underscore key in `selections`, matching the convention
+    # already on this row (`achieved._worker`, `achieved._skipped`) — and
+    # costing no migration, which matters because the alternative was a column
+    # plus a claim-function change to ship before the writer.
+    if selections.get("_regions"):
+        run_regions_job(comfy, job, job_id, started)
+        return
 
     source = storage_download(job["source_path"])
     working = to_png(source)
@@ -862,9 +1022,30 @@ def run_job(comfy, job):
                           if RESTYLE else
                           "recolour — the photograph keeps its own geometry"))
     log("  segmenting…")
-    masks = segment(comfy, fitted)
-    log("  found: %s" % (", ".join(sorted(masks)) or "nothing"))
+    # ── hand-picked regions beat anything a phrase found ─────────────────
+    # If every selected surface was labelled by hand there is nothing left for
+    # the segmenter to do, and skipping it saves a Florence2 + SAM 2 load.
+    picked = {s: (sel or {}).get("_regions") for s, sel in selections.items()
+              if isinstance(sel, dict) and (sel or {}).get("_regions")}
+    want = [s for s in selections if selections.get(s)]
+
+    if picked and all(s in picked for s in want):
+        masks = {}
+        log("  every surface was labelled by hand — skipping segmentation")
+    else:
+        masks = segment(comfy, fitted)
+        log("  found: %s" % (", ".join(sorted(masks)) or "nothing"))
+
+    for surface, paths in picked.items():
+        pngs = [storage_download(p) for p in paths]
+        masks[surface] = pngs[0] if len(pngs) == 1 else union_masks(pngs)
+        log("    %s: %d hand-picked region(s)" % (surface, len(pngs)))
+
     # Reconcile them before anything is painted — see exclusive().
+    # ⚠ Hand-picked masks go through exclusive() TOO, deliberately: if a rep
+    # labels a region as both roof and window, the detail still wins, exactly
+    # as it would for a found mask. Exempting them would make two paths where
+    # there is one.
     masks = exclusive(masks)
 
     # Persist the masks: the presentation app overlays them so a rep can tap a
