@@ -104,6 +104,10 @@ SRC, MSK = png(img), png(mask)
 GREEN = "#6E7A69"          # Evergreen Mist, the real value off oc_colors
 
 
+def luma(t):
+    return 0.2126 * t[0] + 0.7152 * t[1] + 0.0722 * t[2]
+
+
 def mean_rgb(im, box):
     x0, y0, x1, y1 = box
     n = 0
@@ -135,6 +139,41 @@ drift = max(abs(after[i] - tgt[i]) for i in range(3))
 chk("and it is the swatch's own hue, not merely 'some green'",
     drift < 42, "mean rgb(%.0f,%.0f,%.0f) vs swatch rgb%s" % (after + (tgt,)))
 
+# ── 1b. A BRIGHT source — the case the first fixture was too easy to catch ──
+# ⚠ THE ORIGINAL FIXTURE PASSED ON BROKEN CODE. Its tan averages rgb(140,118,86),
+# whose lightness happens to sit near Evergreen Mist's, so a tint that kept
+# luminance EXACTLY still landed within 3 of the swatch and read as green.
+#
+# The real roof is far brighter — about rgb(198,172,140), L*184 against the
+# swatch's L*127. Keeping luminance there paints rgb(168,181,162): a pale
+# washed sage, right hue and wrong colour, and close enough to the model's tan
+# attractor that FLUX pulls it back. That is exactly what Theo saw.
+#
+# A fixture must include the case that FAILS, or it certifies the bug.
+bright = Image.new("RGB", (W, H), (60, 140, 60))
+bp = bright.load()
+for y in range(0, 60):
+    for x in range(W):
+        shade = 0.75 + 0.25 * (x / (W - 1))
+        if 20 <= y <= 28:
+            shade *= 0.55
+        bp[x, y] = (min(255, int(232 * shade)), min(255, int(202 * shade)), min(255, int(164 * shade)))
+BSRC = png(bright)
+bout = open_png(vw.tint(BSRC, MSK, GREEN, strength=1.0))
+b_before = mean_rgb(bright, (0, 0, W, 60))
+b_after  = mean_rgb(bout,   (0, 0, W, 60))
+chk("the bright source really is much lighter than the swatch (not vacuous)",
+    luma(b_before) > luma(tgt) + 40,
+    "source luma %.0f vs swatch %.0f" % (luma(b_before), luma(tgt)))
+b_drift = max(abs(b_after[i] - tgt[i]) for i in range(3))
+chk("⚠ a BRIGHT roof still lands ON the swatch — lightness is moved, not just hue. "
+    "Keeping luminance gives a pale wash that FLUX pulls back to tan",
+    b_drift < 30, "mean rgb(%.0f,%.0f,%.0f) vs swatch rgb%s" % (b_after + (tgt,)))
+b_shadow = luma(mean_rgb(bout, (0, 21, W, 28)))
+b_plane  = luma(mean_rgb(bout, (0, 5,  W, 15)))
+chk("and the shading survives the lightness move too (re-centred, not flattened)",
+    b_shadow < b_plane * 0.8, "shadow %.0f vs plane %.0f" % (b_shadow, b_plane))
+
 # ── 2. it touches ONLY the mask ───────────────────────────────────────────
 grass_before = mean_rgb(img, (0, 70, W, H))
 grass_after  = mean_rgb(out, (0, 70, W, H))
@@ -144,9 +183,6 @@ chk("⚠ nothing outside the mask moves — the lawn is untouched",
 
 # ── 3. the shading survives ───────────────────────────────────────────────
 # The tree-shadow band must still be materially darker than the plane above it.
-def luma(t):
-    return 0.2126 * t[0] + 0.7152 * t[1] + 0.0722 * t[2]
-
 shadow_b = luma(mean_rgb(img, (0, 21, W, 28)))
 plane_b  = luma(mean_rgb(img, (0, 5,  W, 15)))
 shadow_a = luma(mean_rgb(out, (0, 21, W, 28)))

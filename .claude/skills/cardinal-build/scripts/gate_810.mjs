@@ -226,6 +226,20 @@ page.on('pageerror', e => pageErrors.push(String(e)));
 await page.route('**/*', async r => {
   const u = r.request().url();
   if (u.startsWith('https://viz.test/')) return r.fulfill({ status:200, contentType:'text/html; charset=utf-8', body:APP });
+  /* A REAL 4:3 PNG for every image request. An empty body gives an image with
+     no intrinsic size, so .wrap collapsed to the height of its alt text (23px)
+     and every layout assertion about the compare box measured almost nothing
+     while passing.
+
+     ⚠ AND IT HAS TO BE BIG. At 64x48 the check for "the wipe spans the full
+     height" passed against the OLD build too — a 56px bottom strip is taller
+     than a 48px image, so the bug could not express itself. 640x480, so the
+     rendered photograph is hundreds of pixels tall and a bottom strip is
+     unmistakably not all of it. A stub has to be shaped like the thing it
+     stands in for, and big enough for the defect to show. */
+  if (/\.(png|jpe?g|gif|webp)(\?|$)/i.test(u) || /^https:\/\/stub\.invalid\//.test(u))
+    return r.fulfill({ status:200, contentType:'image/png',
+      body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAoAAAAHgCAIAAAC6s0uzAAAF9klEQVR42u3VoQEAMAjAsLEz0Wj+l3wBJjmhppHVDwDY9SUAAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgADBgAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYAAwYADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgADBgAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYAAwYADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgADBgAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYAAwYADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgAMGAAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYADBgADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAwYAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgAMGAAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYADBgADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAwYAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgAMGAAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYADBgADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAwYAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgAMGAAMGAAwYAAwYAAwYADAgAHAgAEAAwYAAwYADBgADBgAMGAAMGAAMGAAwIABwIABAAMGAAMGAAwYAAwYADBgADBgADBgAMCAAcCAAQADBgADBgAMGAAMGAAwYAAwYAAwYADAgAHAgAEAAwYAAwYADBgADBgAMGAAMGAAMGAAwIABwIABAAMGAAMGAAwYAAwYADBgADBgADBgAMCAAcCAAQADBgADBgAMGAAMGAAwYAAwYAAwYADAgAHAgAEAAwYAAwYADBgADBgAMGAAMGAAMGAAwIABwIABAAMGAAMGAAwYAAwYADBgADBgADBgAMCAAcCAAQADBgADBgAMGAAMGAAwYAAwYAAwYAkAwIABwIABAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAcCAAQADBgADBgAMGAAMGAAwYAAwYADAgAHAgAHAgAEAAwYAAwYADBgADBgAMGAAMGAAwIABwIABwIABAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAcCAAQADBgADBgAMGAAMGAAwYAAwYADAgAHAgAHAgAEAAwYAAwYADBgADBgAMGAAMGAAwIABwIABwIABAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAcCAAQADBgADBgAMGAAMGAAwYAAwYADAgAHAgAHAgAEAAwYAAwYADBgADBgAMGAAMGAAwIABwIABwIABAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgADBgAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYAAwYADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgADBgAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYAAwYADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgADBgAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYAAwYADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAMGAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgAMGAAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYADBgADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAwYAAwYAAwYADBgADBgAMCAAcCAAQADBgADBgAMGAAMGAAMGAAwYAAwYADAgAHAgAEAAwYAAwYADBgADBgADBgAMGAAMGAAwIABwIABAAMGAAMGAAwYAO4NCfUE7ElaU50AAAAASUVORK5CYII=', 'base64') });
   return r.fulfill({ status:200, body:'' });
 });
 await page.addInitScript(mock());
@@ -616,6 +630,62 @@ if (!(await has('#vzSrcCC')) || !(await has('#vzCCBox')) || !(await has('#vzCCGr
   const fired = await page.evaluate(`window.__calls.filter(c=>c.op==='insert'&&c.table==='design_jobs').length`);
   chk('clicking Render on an imported photograph queues a job',
       fired > before, before + ' -> ' + fired + ' | ' + await page.evaluate(`document.getElementById('vzSum').textContent`));
+
+  /* ── 821: the wipe covers the whole photograph ───────────────────────
+     Theo: "Where my cursor at and below is the only spot I can expand the
+     photo out." The control was a 56px band pinned to bottom:0; everywhere
+     else in the image was dead and nothing said so. */
+  /* ⚠ Open the card that HAS a render, by id. The first version clicked the
+     first .rcard it found — which is the RUNNING job, with no render to show
+     — so the box never opened, every rect measured 0x0, and `0 >= 0-2`
+     passed. Three checks green against a closed dialog. */
+  await page.evaluate(`(()=>{ const c=[...document.querySelectorAll('#vzJobs .rcard')]
+    .find(x=>x.dataset.job==='j-done'); if(c) c.querySelector('.open').click(); })()`);
+  await page.waitForTimeout(450);
+  const wipe = await page.evaluate(`(()=>{
+    const box = document.getElementById('vzBox');
+    if(!box || box.classList.contains('hide')) return { closed:true };
+    const s = document.getElementById('vzSlide');
+    const w = document.getElementById('vzWrap');
+    if(!s || !w) return { missing:true };
+    const sr = s.getBoundingClientRect(), wr = w.getBoundingClientRect();
+    return { sh: Math.round(sr.height), wh: Math.round(wr.height),
+             sw: Math.round(sr.width),  ww: Math.round(wr.width),
+             top: Math.round(sr.top - wr.top) };
+  })()`);
+  /* Everything below is meaningless on a closed dialog, so prove it is OPEN
+     and prove the photograph has REAL SIZE before measuring anything. */
+  chk('821: the compare box actually opened (not a vacuous pass)',
+      !wipe.closed && !wipe.missing, JSON.stringify(wipe));
+  chk('821: and the photograph has real size, so the rects below mean something',
+      !wipe.closed && !wipe.missing && wipe.wh > 40 && wipe.ww > 40,
+      wipe.closed ? 'box closed' : (wipe.ww + 'x' + wipe.wh));
+  chk('821: the wipe control spans the FULL height of the photograph, not a bottom strip',
+      !wipe.missing && wipe.sh >= wipe.wh - 2,
+      wipe.missing ? '' : (wipe.sh + 'px of ' + wipe.wh + 'px tall'));
+  chk('821: and it starts at the top of the image, not partway down',
+      !wipe.missing && Math.abs(wipe.top) <= 2, wipe.missing ? '' : ('top offset ' + wipe.top));
+  chk('821: it still spans the full width',
+      !wipe.missing && wipe.sw >= wipe.ww - 2,
+      wipe.missing ? '' : (wipe.sw + ' of ' + wipe.ww));
+  /* Dragging near the TOP of the image must move the wipe. That is the exact
+     spot that did nothing before. */
+  const moved = await page.evaluate(`(()=>{
+    const s = document.getElementById('vzSlide');
+    const w = document.getElementById('vzWrap').getBoundingClientRect();
+    const before = document.getElementById('vzAfter').style.width;
+    s.value = 20; s.dispatchEvent(new Event('input'));
+    const after = document.getElementById('vzAfter').style.width;
+    return { before, after, topY: Math.round(w.top + 8) };
+  })()`);
+  chk('821: moving the wipe actually changes the reveal (the control is wired)',
+      moved.after === '20%', moved.before + ' -> ' + moved.after);
+  /* And the ambiguous gesture is gone: one horizontal drag, one meaning. */
+  chk('821: swipe-to-step is removed, so a horizontal drag means only "wipe"',
+      !/changedTouches/.test(APP),
+      /changedTouches/.test(APP) ? 'a touch-step handler is still present' : '');
+  await page.evaluate(`document.getElementById('vzBoxX').click()`);
+  await page.waitForTimeout(250);
 
   /* ── 820: a RUNNING job says how long it has been running ────────────
      The render was never the problem — the screen was silent. A card showed

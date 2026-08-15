@@ -420,13 +420,16 @@ def tint(image_png, mask_png, hex_colour, strength=None):
     agreeing with it by luck.
 
     ────────────────────────────────────────────────────────────────────────
-    WHY LUMINANCE-PRESERVING, and not a flat fill
+    WHY THE SHADING SURVIVES, and why a flat fill will not do
 
     Painting the region flat destroys exactly what makes a render believable:
     the shading across a roof plane, the shadow a tree throws, the darker
-    course lines. Replacing hue and chroma while KEEPING each pixel's
-    luminance keeps all of that geometry and changes only the colour — so a
-    shaded part of the roof stays shaded, in the new colour.
+    course lines. So the region's lightness is RE-CENTRED on the swatch and
+    every pixel keeps its distance from the mean — a shaded part of the roof
+    stays shaded, in the new colour, at the new lightness.
+
+    ⚠ Keeping lightness EXACTLY, which is what the first version did, is not
+    good enough and the section on lightness below says why with numbers.
 
     Paired with denoise below 1 the diffusion pass then re-textures the region
     as shingle or lap siding while the hue underneath survives. Either half
@@ -455,9 +458,51 @@ def tint(image_png, mask_png, hex_colour, strength=None):
     L, A, B = lab.split()
     A2 = Image.new("L", im.size, swatch[1])
     B2 = Image.new("L", im.size, swatch[2])
-    # Blend a/b by strength so a partial tint is possible; L is never touched.
     A = Image.blend(A, A2, k)
     B = Image.blend(B, B2, k)
+
+    # ── lightness ────────────────────────────────────────────────────────
+    # ⚠ THE FIRST VERSION KEPT L EXACTLY, AND THAT WAS WRONG. Measured on the
+    # real render: a tan roof at L*184 tinted toward Evergreen Mist (L*127)
+    # came out rgb(168,181,162) — a PALE SAGE — against a swatch of
+    # rgb(110,122,105). The hue was right and the colour was still wrong.
+    #
+    # And the same +58 error hid on the siding. Charcoal over a blue-grey
+    # gave rgb(134,138,141) instead of rgb(78,81,84): too light, but grey
+    # against grey still READS as grey, so it looked like it worked. On a
+    # chromatic colour it does not — a washed-out sage sits right beside the
+    # model's tan attractor, and at denoise 0.82 FLUX pulls it back there.
+    # One defect, two very different appearances. Theo saw exactly that:
+    # "Siding seems working. Roof color still off."
+    #
+    # So move the lightness to the swatch, and keep only the VARIATION around
+    # it — which is what the shading, the shadows and the course lines are.
+    # Re-centre rather than flatten: every pixel keeps its distance from the
+    # region's mean, the mean itself lands on the swatch.
+    from PIL import ImageStat
+    st = ImageStat.Stat(L, mk)
+    try:
+        mean_l = st.mean[0]
+        sd_l = st.stddev[0] or 0.0
+    except (IndexError, ZeroDivisionError):
+        mean_l, sd_l = swatch[0], 0.0
+    target_l = swatch[0]
+
+    # Scale the deviations only as far as they can go without clipping. A
+    # plain shift would crush the dark end of a bright roof against 0 and
+    # take the shadow with it — losing the shading is the thing this whole
+    # function exists to avoid.
+    span = 2.5 * sd_l                       # ~99% of the region
+    contrast = 1.0
+    if span > 1e-6:
+        contrast = min(1.0, (255.0 - target_l) / span, target_l / span)
+
+    lut = []
+    for v in range(256):
+        moved = target_l + (v - mean_l) * contrast
+        lut.append(max(0, min(255, int(round(v + (moved - v) * k)))))
+    L = L.point(lut)
+
     tinted = Image.merge("LAB", (L, A, B)).convert("RGB")
 
     # Only inside the mask. The mask is the segmenter's own output, so its
