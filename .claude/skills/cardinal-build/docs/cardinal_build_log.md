@@ -16554,3 +16554,28 @@ colours correctly — `muted green with grey and earthy undertones … Evergreen
   malformed swatch never throws, because a job that dies on a bad colour is worse than one that
   renders in the wrong one. ⚠️ **It does NOT prove the render looks right — only the Spark runs
   FLUX, and only Theo's eyes settle whether 0.82 is the right amount of denoise.**
+
+- **Spark, 15 Aug (late) — the audit, on Theo's direct instruction.** *"Can you please audit this
+project and make this work as intended instead of doing experiments."* Fair, and the audit found
+the process failure before the code failures: **three rounds were lost in one night to the question
+"which code rendered this job?"** — a curl-copied file, a stale checkout and a leftover foreground
+worker all look identical from outside (a done row, a wrong picture). Both the 03:32 and 03:38
+renders — the invented door, the changed windows, the warped gutters — were the OLD diffusion
+worker; `achieved` null and the 76s FLUX-shaped duration prove it. Nothing shipped tonight had run
+on the Spark yet when those were judged.
+
+  **Fixes out of the audit, one pass:** (1) **provenance** — `WORKER_BUILD` is stamped into
+  `achieved._worker` on every job, unconditionally, and announced in the startup line, so "which
+  code ran this" is a query, never an argument; (2) **resolution** — recolour mode was still
+  downscaling the photograph to 1280px, a loss inherited from the FLUX path for no reason;
+  segmentation now runs on the fitted copy while the render keeps every pixel the photo arrived
+  with (`tint()`/`measure()` already scale masks to the image they are given); (3) `gate_tint.py`
+  grew an `order()` helper because an ordering check written with bare `src.index()` CRASHES on an
+  older worker instead of reporting red — BUG_CLASSES 37, hit twice in this one gate.
+
+  **The intended product, stated once:** recolour IS the product — the customer's own photograph
+  with the chosen colours, exact by construction, incapable of inventing doors or warping lines.
+  Diffusion (`RENDER_MODE=restyle`) is opt-in for material changes only. The remaining known gap is
+  the **gutter mask** (needs a `CARDINAL_MASK_GUTTERS` chain built by eye in ComfyUI on the Spark —
+  §5d) and **mask precision generally**, which only renders on real photographs can judge.
+  `gate_tint.py` 56/56 green, RED 5 (reported, not crashed) on the pre-audit worker.

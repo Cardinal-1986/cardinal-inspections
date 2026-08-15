@@ -436,6 +436,29 @@ else:
         vw.DETAIL_WINS.index("gutters") < vw.DETAIL_WINS.index("siding")
         and vw.DETAIL_WINS.index("trim") < vw.DETAIL_WINS.index("siding"))
 
+# ── 11. provenance and resolution — the 15 Aug audit ──────────────────────
+# Three rounds were lost in one night to the same question: WHICH code
+# rendered this job? A curl-copied file, a stale checkout and a foreground
+# process that predated the fix all look identical from the outside — a done
+# row and a wrong picture. The row itself now answers.
+chk("⚠ the worker stamps its build+mode into achieved._worker on EVERY job — "
+    "so 'which code ran this' is a query, never an argument",
+    'achieved["_worker"] = "%s %s" % (WORKER_BUILD, RENDER_MODE)' in src)
+chk("WORKER_BUILD exists and is a dated, bumpable tag",
+    getattr(vw, "WORKER_BUILD", "").startswith("wb-"),
+    getattr(vw, "WORKER_BUILD", "missing"))
+chk("the stamp is written BEFORE the row goes back, unconditionally — a null "
+    "achieved must mean 'old worker', never 'measure failed'",
+    order(src, 'achieved["_worker"]', '"achieved": achieved or None'))
+chk("the startup line announces build and mode, so a terminal screenshot is "
+    "also proof",
+    "worker %s [%s · %s]" in src)
+chk("⚠ recolour keeps the photograph's OWN resolution — segmentation runs on "
+    "the fitted 1280px copy, the render on the original. The downscale was a "
+    "quality loss inherited from the FLUX path for no reason",
+    "masks = segment(comfy, fitted)" in src
+    and "if RESTYLE:\n        working = fitted" in src)
+
 fails = 0
 for name, ok, detail in CHECKS:
     if not ok:

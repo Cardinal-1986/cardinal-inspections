@@ -165,8 +165,20 @@ pip install --user requests websocket-client pillow \
 Expected on a healthy idle box:
 
 ```
-[09:14:02] worker spark-dayton → http://127.0.0.1:8188 (lock /tmp/cardinal_visualizer.lock)
+[09:14:02] worker spark-dayton [wb-2026-08-15.3 · recolour] → http://127.0.0.1:8188 (lock /tmp/cardinal_visualizer.lock)
 [09:14:02] queue empty — waiting
+```
+
+⚠️ **The bracketed tag is the worker's build and mode, and it is also written
+into every job it renders** (`achieved->>'_worker'` on `design_jobs`). Three
+rounds were lost on 15 Aug to the question "which code rendered this?" — a
+curl-copied file, a stale checkout and a leftover foreground process all look
+identical from outside. Now it is one query:
+
+```sql
+select achieved->>'_worker' from design_jobs order by created_at desc limit 1;
+-- null                       -> a worker from before 15 Aug ran it
+-- "wb-2026-08-15.3 recolour" -> this build, this mode
 ```
 
 ## 5b. ⚠ ONE worker per GPU — the failure that hides in plain sight

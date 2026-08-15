@@ -458,6 +458,19 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #                                     colour. Fast, exact, and it sells.
 #   RENDER_MODE=restyle               tint + FLUX. Use when the material
 #                                     itself is changing.
+# ⚠ BUMP THIS ON EVERY WORKER CHANGE. Found the hard way, three times in one
+# night: a render looked wrong, and nobody could prove WHICH code produced it.
+# The Spark was variously running a curl-copied file, a stale checkout, and a
+# foreground process that predated the fix being tested — and from the outside
+# every one of those looks identical: a done row and a wrong picture.
+#
+# So the worker stamps its build and mode into achieved._worker on every job.
+# One query ends the argument:
+#   select achieved->>'_worker' from design_jobs where id = '...';
+#   null                      -> a worker from before 15 Aug ran it
+#   "wb-2026-08-15.3 recolour" -> this code, this mode
+WORKER_BUILD = "wb-2026-08-15.3"
+
 RENDER_MODE = (os.environ.get("RENDER_MODE") or "recolour").strip().lower()
 if RENDER_MODE not in ("recolour", "recolor", "restyle"):
     RENDER_MODE = "recolour"
@@ -729,17 +742,28 @@ def run_job(comfy, job):
 
     source = storage_download(job["source_path"])
     working = to_png(source)
-    working, was, now = fit_for_flux(working)
+    # Segmentation (and FLUX, in restyle mode) want the ~1280px band. The
+    # RENDER does not. Found in the 15 Aug audit: recolour mode was still
+    # downscaling the photograph to 1280px — a quality loss inherited from the
+    # FLUX path for no reason, since no diffusion ever runs. Now the masks are
+    # made on the fitted copy and scaled up by tint()/measure(), which both
+    # already resize a mask to the image they are given, and the photograph
+    # keeps every pixel it arrived with.
+    fitted, was, now = fit_for_flux(working)
     if was != now:
-        log("  %dx%d -> %dx%d for FLUX" % (was[0], was[1], now[0], now[1]))
+        log("  %dx%d -> %dx%d for segmentation%s"
+            % (was[0], was[1], now[0], now[1], " + FLUX" if RESTYLE else
+               " — the render keeps %dx%d" % was))
     else:
-        log("  %dx%d — already in FLUX's band" % now)
+        log("  %dx%d — already in the segmentation band" % now)
+    if RESTYLE:
+        working = fitted   # FLUX needs its band, and image must match mask
 
     log("  mode: %s" % ("restyle — the model redraws each surface"
                           if RESTYLE else
                           "recolour — the photograph keeps its own geometry"))
     log("  segmenting…")
-    masks = segment(comfy, working)
+    masks = segment(comfy, fitted)
     log("  found: %s" % (", ".join(sorted(masks)) or "nothing"))
     # Reconcile them before anything is painted — see exclusive().
     masks = exclusive(masks)
@@ -793,7 +817,11 @@ def run_job(comfy, job):
             "Try a straighter, less obstructed shot of the elevation."
             % (", ".join(sorted(selections)) or "any selected surface"))
 
-    # Measure BEFORE the JPEG round trip, on the pixels the model produced.
+    # The stamp goes on even when nothing could be measured — a job with a
+    # null achieved must mean "an old worker ran this", never "measure failed".
+    achieved["_worker"] = "%s %s" % (WORKER_BUILD, RENDER_MODE)
+
+    # Measure BEFORE the JPEG round trip, on the pixels the render produced.
     for surface in applied:
         m = measure(working, masks[surface], (selections.get(surface) or {}).get("hex"))
         if not m:
@@ -825,7 +853,7 @@ def run_job(comfy, job):
         "render_path": render_path,
         "preview_path": preview_path,
         "selections": selections,
-        "via": "spark/comfyui sam2+inpaint",
+        "via": "spark %s %s" % (WORKER_BUILD, RENDER_MODE),
         # approved stays FALSE. A person looks at it before a customer does.
         "created_by": job.get("created_by"),
     })
@@ -891,7 +919,8 @@ def main():
     if not take_lock():
         return 1
     comfy = Comfy(COMFY_URL)
-    log("worker %s → %s (lock %s)" % (WORKER_NAME, COMFY_URL, LOCK_PATH))
+    log("worker %s [%s · %s] → %s (lock %s)"
+        % (WORKER_NAME, WORKER_BUILD, RENDER_MODE, COMFY_URL, LOCK_PATH))
     if not comfy.up():
         log("WARNING: ComfyUI is not answering at %s yet — will keep polling" % COMFY_URL)
 
