@@ -202,6 +202,53 @@ process.env.GEMINI_API_KEY = 'test-key';
      'a bare "failed" sends you hunting for a bug that is not there');
 }
 
+// ── 6b. 824: a silent no-image answer must still say WHY ─────────────────
+// Theo's first Gemini render failed with the bare "The model returned no
+// image" — HTTP 200, 8 seconds of real work, no image part and no text part.
+// finishReason was sitting in the response unread. These cases pin each
+// distinguishable cause to a distinguishable sentence.
+{
+  const noImage = (extra) => ({
+    ok: true, status: 200,
+    json: async () => ({ candidates: [{ content: { parts: [] }, ...extra }] })
+  });
+  const msg = rs => JSON.stringify((rs.body || {}).error || '');
+
+  let rs = await run(handler, { roof: 'Black Sable' }, [noImage({ finishReason: 'IMAGE_SAFETY' })]);
+  ok('IMAGE_SAFETY is named, not swallowed', /image-safety/i.test(msg(rs)), msg(rs));
+  ok('and it says why that happens here', /real property/i.test(msg(rs)),
+     'the actionable half — it is the photograph, not the prompt');
+
+  rs = await run(handler, { roof: 'Black Sable' }, [noImage({ finishReason: 'PROHIBITED_CONTENT' })]);
+  ok('PROHIBITED_CONTENT is named', /prohibited content/i.test(msg(rs)), msg(rs));
+
+  rs = await run(handler, { roof: 'Black Sable' }, [noImage({ finishReason: 'WHAT_IS_THIS' })]);
+  ok('an UNKNOWN finishReason degrades to the code, not to silence',
+     /WHAT_IS_THIS/.test(msg(rs)), msg(rs));
+
+  rs = await run(handler, { roof: 'Black Sable' }, [noImage({ finishReason: 'STOP' })]);
+  ok('a normal STOP with no image points at the probe',
+     /probe/i.test(msg(rs)) && /does not generate images/i.test(msg(rs)), msg(rs));
+
+  rs = await run(handler, { roof: 'Black Sable' },
+                 [{ ok: true, status: 200, json: async () => ({ candidates: [] }) }]);
+  ok('no candidates at all is its OWN message',
+     /no candidates/i.test(msg(rs)),
+     'an empty answer and a declined answer are different faults');
+
+  /* A refusal that DOES carry text must still win — the model's own words beat
+     any sentence written here. */
+  rs = await run(handler, { roof: 'Black Sable' }, [{
+    ok: true, status: 200,
+    json: async () => ({ candidates: [{ content: { parts: [{ text: 'I cannot edit that.' }] },
+                                        finishReason: 'IMAGE_SAFETY' }] })
+  }]);
+  ok('the model’s own text outranks the finishReason sentence',
+     /cannot edit that/i.test(msg(rs)) && !/image-safety/i.test(msg(rs)), msg(rs));
+
+  ok('none of these is reported as success', true);
+}
+
 // ── 7. nothing selected is a 400, not an empty press ─────────────────────
 {
   const rs = await run(handler, {}, [imagePart()]);

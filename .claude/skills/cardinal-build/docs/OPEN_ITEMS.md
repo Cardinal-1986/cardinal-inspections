@@ -3204,12 +3204,32 @@ itself and **fails against the pre-fix version**. It answers **823**.
 carries a build stamp and is not listed is invisible to the collision check —
 which is this bug, exactly.
 
+### ⚠️ THE MASKS ARE WRONG ON A REAL HOUSE (found 15 Aug by 823's overlay)
+
+Theo's Autumn Red render, first real use of "Show what it found": the **roof**
+tint covered a band across the garage roof only, and the **upper gable roof read
+as siding**. The colours were landing perfectly — on the wrong regions.
+
+**This is the next build, and it is a WORKER change** (`segment()` / `exclusive()`
+in `visualizer_worker.py`), not a browser one. 824's solo makes it diagnosable;
+it does not fix it.
+
+⚠️ **And it is why `achieved` drift must never be quoted as validation** — that
+render scored **drift 7 / drift 3**. See `BUG_CLASSES.md` class 47.
+
 **Open, in the order they matter:**
 
-1. **Nobody has rendered through the Gemini path yet.** It has never met the real key. `POST
-   {"probe":true}` to `/api/design` lists which image models the deployed `GEMINI_API_KEY` can
-   actually reach; the first real render answers it too. Until then "it works" is a claim, not a
-   fact.
+1. ~~**Nobody has rendered through the Gemini path yet.**~~ — **HALF CLOSED 15 Aug.**
+   Theo rendered through it. It failed: **HTTP 200, 8 seconds of real work, then no image and no
+   text.** That is not a missing model or a bad key, so **the deployed `GEMINI_API_KEY` DOES have
+   image model access** — the standing unknown since 822 is answered.
+
+   **What is still open is why it declined.** 824 added `finishReason` to the error, which was
+   being read from the response by nobody; the next attempt will name `IMAGE_SAFETY`,
+   `PROHIBITED_CONTENT` or whatever it actually is instead of the bare *"The model returned no
+   image"*. If it comes back `IMAGE_SAFETY`, that is a model policy on photographs of real
+   property and is **not fixable from here** — it would make Gemini unusable for this product and
+   the Spark becomes the only engine.
 2. **The composite is unbuilt, and blocked on one number.** Compositing Gemini's pixels back through
    our masks is what turns the DO-NOT-TOUCH list from a request into a constraint. It is only sound
    if the render is registered with the original. `scripts/align_check.py` answers that — it needs

@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 823
+  v2026-08-15 build 824
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -261,11 +261,28 @@ h2.sec:first-child{margin-top:6px}
 .cmp .found .flay{position:absolute;inset:0;mix-blend-mode:screen;opacity:.55}
 .cmp .found .flay img{width:100%;height:100%;object-fit:contain;
   mix-blend-mode:multiply;display:block}
+/* 824: a soloed-out layer is REMOVED from the composite, not faded. Fading it
+   would leave its tint screening over the one you are trying to read, which is
+   the exact ambiguity solo exists to remove. */
+.cmp .found .flay.off{display:none}
+
+/* ⚠ The legend is interactive, and .found above is pointer-events:none so the
+   wipe slider underneath stays draggable. The legend must therefore opt BACK
+   in, or the chips render, highlight on hover and do nothing — BUG_CLASSES 16,
+   a control that is drawn but never reachable. */
 .cmp .found .fkey{position:absolute;left:12px;bottom:12px;display:flex;
-  flex-wrap:wrap;gap:6px 12px;padding:7px 11px;border-radius:9px;
-  background:rgba(5,6,7,.82);font-size:11px;letter-spacing:.02em;color:#E9ECF2}
-.cmp .found .fkey span{display:inline-flex;align-items:center;gap:6px}
-.cmp .found .fkey i{width:11px;height:11px;border-radius:3px;display:block}
+  flex-wrap:wrap;align-items:center;gap:6px 8px;padding:7px 9px;border-radius:9px;
+  background:rgba(5,6,7,.86);font-size:11px;letter-spacing:.02em;color:#E9ECF2;
+  pointer-events:auto;max-width:calc(100% - 24px)}
+.cmp .found .fkey button{display:inline-flex;align-items:center;gap:6px;
+  min-height:44px;padding:0 10px;border-radius:7px;cursor:pointer;
+  font:inherit;color:inherit;letter-spacing:inherit;
+  background:transparent;border:1px solid transparent}
+.cmp .found .fkey button:hover{background:rgba(255,255,255,.10)}
+.cmp .found .fkey button[aria-pressed="true"]{background:rgba(255,255,255,.16);
+  border-color:rgba(255,255,255,.42)}
+.cmp .found .fkey i{width:11px;height:11px;border-radius:3px;display:block;flex:none}
+.cmp .found .fkey .fnote{color:#A8B0BF;padding-left:2px}
 
 /* The card's partial-success line. Same amber, same reasoning. */
 .rcard .cap .warn{color:#E8B75C;font-size:11px;margin-top:3px;
@@ -2272,6 +2289,7 @@ function drawFound(j){
   host.innerHTML = '';
   host.classList.add('hide');
   foundOn = false;
+  foundSolo = null;                   /* 824: solo is per-render, like foundOn */
   var masks = (j && j.masks) || null;
   var keys = masks ? SURFACES.map(function(s){ return s.key; })
                              .filter(function(k){ return masks[k]; }) : [];
@@ -2290,6 +2308,7 @@ function drawFound(j){
     var s = SURFACES.filter(function(x){ return x.key === k; })[0];
     var lay = document.createElement('div');
     lay.className = 'flay';
+    lay.dataset.surface = k;          /* 824: what solo hides everything else by */
     lay.style.background = (s && s.tint) || '#FFFFFF';
     var im = document.createElement('img');
     im.alt = '';
@@ -2297,14 +2316,67 @@ function drawFound(j){
     lay.appendChild(im);
     host.appendChild(lay);
   });
+
+  /* 824 — the legend is the CONTROL, not a caption.
+     All five masks at once is how the first real overlay was read, and it
+     could not answer the only question being asked: WHICH mask is wrong.
+     Screened tints compound — cyan over a red render reads pale pink, and
+     amber over that reads like something else again — so overlapping masks
+     are exactly where the eye is least reliable. One surface alone is
+     unambiguous.
+
+     Tap-to-SOLO rather than five independent toggles: isolating one of five
+     costs one tap here and four the other way, and isolating is the whole
+     job. Tapping the soloed chip returns to all. */
   var key = document.createElement('div');
   key.className = 'fkey';
-  key.innerHTML = keys.map(function(k){
+  keys.forEach(function(k){
     var s = SURFACES.filter(function(x){ return x.key === k; })[0];
-    return '<span><i style="background:' + esc((s && s.tint) || '#fff') + '"></i>' +
-           esc(s ? s.label : k) + '</span>';
-  }).join('');
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.surface = k;
+    b.setAttribute('aria-pressed', 'false');
+    b.title = 'Show only ' + (s ? s.label : k);
+    b.innerHTML = '<i style="background:' + esc((s && s.tint) || '#fff') + '"></i>' +
+                  esc(s ? s.label : k);
+    b.addEventListener('click', function(ev){ ev.stopPropagation(); soloFound(k); });
+    key.appendChild(b);
+  });
+  var note = document.createElement('span');
+  note.className = 'fnote';
+  key.appendChild(note);
   host.appendChild(key);
+  applySolo();
+}
+
+/* null = every mask at once, which is how the overlay opens. */
+var foundSolo = null;
+
+function applySolo(){
+  var host = $('vzFound');
+  var lays = host.querySelectorAll('.flay');
+  var i;
+  for(i = 0; i < lays.length; i++){
+    lays[i].classList.toggle('off', !!foundSolo && lays[i].dataset.surface !== foundSolo);
+  }
+  var btns = host.querySelectorAll('.fkey button');
+  for(i = 0; i < btns.length; i++){
+    btns[i].setAttribute('aria-pressed', foundSolo === btns[i].dataset.surface ? 'true' : 'false');
+  }
+  var note = host.querySelector('.fnote');
+  if(note){
+    var s = foundSolo && SURFACES.filter(function(x){ return x.key === foundSolo; })[0];
+    /* Say which state you are in AND how to leave it. A solo with no way back
+       on screen reads as the overlay having broken. */
+    note.textContent = foundSolo
+      ? (s ? s.label : foundSolo) + ' only — tap it again for all'
+      : 'tap one to see it on its own';
+  }
+}
+
+function soloFound(key){
+  foundSolo = (foundSolo === key) ? null : key;
+  applySolo();
 }
 
 var foundOn = false;
@@ -2370,6 +2442,7 @@ function closeBox(){
      the previous house's found regions, which is worse than showing nothing. */
   $('vzFound').classList.add('hide');
   foundOn = false;
+  foundSolo = null;
   $('vzFoundBtn').setAttribute('aria-pressed', 'false');
   $('vzFoundBtn').textContent = 'Show what it found';
 }

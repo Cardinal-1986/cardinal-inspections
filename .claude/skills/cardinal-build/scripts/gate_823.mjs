@@ -199,6 +199,43 @@ ok('the overlay host does NOT isolate', !/\.found\{[^}]*isolation:isolate/.test(
 ok('the overlay does not eat clicks', /\.found\{[^}]*pointer-events:none/.test(src),
    'the wipe slider lives underneath it');
 
+// ── 824: the legend is a control ─────────────────────────────────────────
+// Five masks at once could not answer the only question the overlay is opened
+// to ask — WHICH mask is wrong — because screened tints compound and overlap
+// is exactly where the eye is least reliable.
+{
+  const df = grab('drawFound') || '';
+  const as = grab('applySolo');
+  const sf = grab('soloFound');
+  ok('applySolo() exists', !!as);
+  ok('soloFound() exists', !!sf);
+  ok('the legend builds BUTTONS, not spans',
+     /createElement\('button'\)/.test(df) && !/<span><i style/.test(df),
+     'a caption cannot be tapped');
+  ok('each layer is tagged with its surface', /lay\.dataset\.surface = k/.test(df),
+     'what solo hides everything else by');
+  ok('soloing the same chip twice returns to all',
+     sf && /foundSolo === key\) \? null : key/.test(sf),
+     'a solo with no way out reads as the overlay having broken');
+  ok('the note says how to leave solo', as && /tap it again for all/.test(as));
+  ok('drawFound resets solo', /foundSolo = null;\s*\/\* 824/.test(src),
+     'solo is per-render, like foundOn');
+  ok('closeBox resets solo',
+     /function closeBox\(\)[\s\S]{0,500}foundSolo = null/.test(src));
+
+  ok('a hidden layer is REMOVED from the composite, not faded',
+     /\.found \.flay\.off\{[^}]*display:none/.test(src),
+     'a faded layer still screens over the one you are reading');
+  ok('the legend opts back INTO pointer events',
+     /\.found \.fkey\{[^}]*pointer-events:auto/.test(src),
+     'BUG_CLASSES 16 — .found is pointer-events:none so the wipe stays draggable');
+  ok('the chips meet the 44px floor',
+     /\.found \.fkey button\{[^}]*min-height:44px/.test(src),
+     'the 592 precedent');
+  ok('the pressed state is visible, not only announced',
+     /\.fkey button\[aria-pressed="true"\]\{/.test(src));
+}
+
 // ── build label ──────────────────────────────────────────────────────────
 {
   const m = /v2026-\d\d-\d\d build (\d+)/.exec(src);

@@ -170,15 +170,59 @@ function prompt(changes) {
 /* Models wrap image parts in either casing depending on API generation, and a
    refusal arrives as text parts — surface those honestly instead of a bare
    failure. */
+/* ⚠ 824: `finishReason` is read here because WITHOUT IT THIS FUNCTION GOES
+   SILENT EXACTLY WHEN IT MATTERS. Theo's first Gemini render, 15 Aug, failed
+   with the bare fallback string "The model returned no image" — no image part
+   AND no text part, so there was nothing to report and the row said nothing
+   useful. HTTP 200 after 8 seconds of real work is not a missing model or a
+   bad key; it is the model deciding not to hand one over, and `finishReason`
+   is the field that says why (IMAGE_SAFETY, PROHIBITED_CONTENT, RECITATION,
+   MAX_TOKENS…). An error path that has no answer at the one moment it is
+   read is worse than no error path — it sends you hunting somewhere else. */
 function pickImagePart(j) {
-  const parts = (((j.candidates || [])[0] || {}).content || {}).parts || [];
+  const cand = (j.candidates || [])[0] || {};
+  const parts = (cand.content || {}).parts || [];
   let img = null; const notes = [];
   for (const p of parts) {
     const d = p.inline_data || p.inlineData;
     if (d && d.data && !img) img = { data: d.data, mime: d.mime_type || d.mimeType || 'image/png' };
     else if (p.text) notes.push(p.text);
   }
-  return { img, note: trim(notes.join(' '), 400) };
+  return {
+    img,
+    note: trim(notes.join(' '), 400),
+    finish: cand.finishReason || cand.finish_reason || '',
+    /* No candidate at all is a DIFFERENT fault from a candidate that declined,
+       and both used to render as the same sentence. */
+    empty: !(j.candidates || []).length
+  };
+}
+
+/* Why the model handed back no picture, in words, from whatever it did give
+   us. Falls through to the raw code rather than to silence — a reason this
+   file has never seen is still more use than "no image". */
+const FINISH_WHY = {
+  IMAGE_SAFETY:       'the model refused on image-safety grounds (this is common on photographs of real property)',
+  PROHIBITED_CONTENT: 'the model treated the request as prohibited content',
+  SAFETY:             'the model refused on safety grounds',
+  RECITATION:         'the model stopped over a recitation match',
+  MAX_TOKENS:         'the model hit its output limit before finishing the image',
+  BLOCKLIST:          'the request matched a blocklist',
+  SPII:               'the model detected sensitive personal information'
+};
+
+function noImageMessage(r) {
+  if (r.note) return r.note;                       // a text answer IS the refusal
+  if (r.empty) return 'The model returned no answer at all (no candidates).';
+  if (r.finish && r.finish !== 'STOP') {
+    return 'The model returned no image — ' +
+           (FINISH_WHY[r.finish] || ('it stopped with finishReason ' + r.finish)) + '.';
+  }
+  if (r.finish === 'STOP') {
+    return 'The model finished normally but returned no image and said nothing. ' +
+           'That usually means this model does not generate images — run the probe: POST {"probe":true}.';
+  }
+  return 'The model returned no image, and gave no reason.';
 }
 
 async function askGeminiImage(model, key, image, mime, text, bare) {
@@ -313,9 +357,10 @@ export default async function handler(req, res) {
           try {
             const r = await askGeminiImage(model, key, image, mime, text, bare);
             if (r.img) { result = r; via = model; next = 'done'; break; }
-            /* Parsed fine but no image part — a text-only answer is a refusal;
-               keep it as the error and move on. */
-            lastErr = new Error(r.note || 'The model returned no image');
+            /* Parsed fine but no image part — a text-only answer is a refusal,
+               and a silent one still has finishReason to explain itself (824).
+               Keep it as the error and move on. */
+            lastErr = new Error(noImageMessage(r));
             break;
           } catch (e) {
             lastErr = e;
