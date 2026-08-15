@@ -16805,3 +16805,71 @@ stage is now tall enough that the legend sits below every band.
 **Not verified by eye.** Solo is proven in Chromium against synthetic masks. The masks
 themselves are still wrong on a real house — that is the next build, and it is a worker
 change.
+
+---
+
+## wb-2026-08-15.5 — 15 Aug 2026 — the roof mask, fixed on the evidence of a picture
+
+**Files:** `spark/segment_api.json` · `spark/visualizer_worker.py` (`.4` → `.5`) ·
+`spark/test_segment.py` (new). **No app build, no SQL** — worker-side only, and it takes
+effect on the next render after a restart.
+
+**This is the first change in the thread that improves a render rather than reporting on
+one**, and it is the direct product of `probe_planes.py --upload`: the sheets were fetched
+through their signed links and LOOKED AT, not inferred from coverage numbers.
+
+### What the picture showed
+
+| phrase | flag | what the gold actually covered |
+|---|---|---|
+| `roof` | merged | the garage band only — 2.0% |
+| `roof of a house` | either | **the whole building** (box byte-identical to `house wall`) |
+| `shingles` | merged | the upper plane only — 1.2% |
+| **`shingles`** | **split** | **both planes, clean edges, no bleed — 3.1%** |
+
+So: **`find roof` → `"shingles"`, `segment roof` → `individual_objects: true`.**
+
+**And fixing the roof fixes the siding for free.** `exclusive()` already subtracts roof
+from siding and always did — the gable rendered red because with the roof mask covering
+only the garage band, nothing contested the gable and it genuinely WAS siding as far as
+the pipeline knew. No siding change was needed or made.
+
+### ⚠ `segment()` took `images[0]` — that had to land in the same commit
+
+With `individual_objects: true` a surface comes back as one image PER OBJECT, and the
+first was kept while the rest were discarded. **The failure is invisible: a roof whose
+second plane was found and then thrown away renders exactly like one whose second plane
+was never found.** No error, a plausible picture, the wrong one.
+
+`union_masks()` combines them with `ImageChops.lighter` — per-pixel max. Not a paste
+(which would overwrite a lit pixel with an unlit one wherever masks overlap, making the
+union *smaller* than an input) and not an add (which saturates SAM 2's soft edges into a
+hard fringe, visible as a rim of new colour along every roof edge).
+
+### Windows and gutters got the FLAG, not a phrase
+
+A house has eight windows and several runs of gutter — genuinely many objects, so one
+mask each unioned is the point, and the union makes it safe. **Their phrases are
+untouched**, and so is siding's: no sheet supports a change, and guessing is exactly what
+produced `roof of a house` = the whole building. Siding stays merged too — measured 12.6%
+vs 12.8%, nothing to gain.
+
+**Gates.** `test_segment.py` 18/18 — RED 7 on the pre-change worker and graph.
+`test_probe_planes.py` 39/39, `test_skip_reason.py` 14/14.
+
+⚠️ **Three assertion faults found and fixed, all of them CLAUDE.md classes:**
+- **File-wide instead of scoped.** `"comfy.fetch(images[0])" not in worker` went red on
+  correct code — `inpaint()` has its own legitimate one (one SaveImage, one image). Sliced
+  to `segment()`.
+- **A snapshot posing as an invariant.** `test_probe_planes` asserted the graph ships with
+  splitting OFF everywhere, and that the roof phrase is `"roof"`. Both encoded yesterday's
+  config and failed the moment it changed. Now: compare the roof phrase against the
+  graph's OWN value, and assert the real pairing — *any split node means segment() must
+  union*.
+- **Definition-pollution in the replacement.** That new pairing check matched
+  `"union_masks(pngs)"`, which is also the text of `def union_masks(pngs):` — so deleting
+  the CALL left it green. Mutation-tested until it bit.
+
+**Not verified by eye.** The roof mask is proven on ONE photograph. Windows and gutters
+have the flag on the strength of reasoning, not a sheet — run the probe on them before
+trusting either.

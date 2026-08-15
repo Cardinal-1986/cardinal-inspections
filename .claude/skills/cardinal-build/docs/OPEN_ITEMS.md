@@ -3204,7 +3204,26 @@ itself and **fails against the pre-fix version**. It answers **823**.
 carries a build stamp and is not listed is invisible to the collision check —
 which is this bug, exactly.
 
-### ⚠️ THE MASKS ARE WRONG ON A REAL HOUSE (found 15 Aug by 823's overlay)
+### ✅ THE ROOF MASK IS FIXED (wb-2026-08-15.5) — restart the worker
+
+`find roof` grounds on **`"shingles"`** and `segment roof` returns per-object masks.
+Verified by LOOKING at the sheet, not by a coverage number: the gold covers both roof
+planes with clean edges and no bleed. `roof` found the garage band only; `roof of a house`
+found the whole building.
+
+**The siding needed no change.** `exclusive()` already subtracts roof from siding — the
+gable rendered red because nothing contested it. Fix the roof and the siding follows.
+
+⚠️ **`segment()` no longer takes `images[0]`** — it unions every returned object. That had
+to land in the same commit as the flag; without it a found second plane is silently
+discarded and renders identically to one never found.
+
+**Windows and gutters have the flag but NOT a verified phrase** — many real objects each,
+so per-object masks are motivated, but no sheet backs it. Windows found ONE window at 0.2%
+and gutters found something at the far right that is probably not a gutter. Probe them
+before trusting either. Siding stays merged (12.6% vs 12.8% — nothing to gain).
+
+### ~~⚠️ THE MASKS ARE WRONG ON A REAL HOUSE~~ (found 15 Aug by 823's overlay, roof half CLOSED)
 
 Theo's Autumn Red render, first real use of "Show what it found": the **roof**
 tint covered a band across the garage roof only, and the **upper gable roof read

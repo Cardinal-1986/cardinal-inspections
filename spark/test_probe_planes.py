@@ -65,10 +65,27 @@ ok("false is settable too (the control run)",
    all(v["inputs"]["individual_objects"] is False
        for v in x.values() if v.get("class_type") == "Sam2Segmentation"))
 
-ok("the real graph ships with splitting OFF",
-   all(v["inputs"]["individual_objects"] is False
-       for v in GRAPH.values() if v.get("class_type") == "Sam2Segmentation"),
-   "if this fails the shipped default changed and the worker takes images[0] only")
+# This used to assert the graph ships with splitting OFF everywhere, guarding
+# the fact that segment() took images[0] and would silently drop the rest.
+# That premise died when segment() learned to union, and the assertion then
+# failed on correct code — a snapshot of yesterday's config masquerading as an
+# invariant. The real invariant is the PAIRING: any split node at all means
+# segment() must combine what comes back.
+_split_on = [v for v in GRAPH.values()
+             if v.get("class_type") == "Sam2Segmentation"
+             and v["inputs"].get("individual_objects") is True]
+#
+# ⚠ And it must look at the CALL, inside segment() — not at the file. The
+# first version matched "union_masks(pngs)", which is also the text of
+# `def union_masks(pngs):`, so deleting the call left the assertion green.
+# Definition-pollution, in the assertion written to replace a bad one.
+_worker_src = (HERE / "visualizer_worker.py").read_text()
+_seg_src = _worker_src[_worker_src.index("\ndef segment("):]
+_seg_src = _seg_src[:_seg_src.index("\ndef ", 1)]
+ok("if any node is split, segment() unions",
+   not _split_on or "union_masks(" in _seg_src,
+   "%d split node(s) and no union CALL in segment() — every extra object is "
+   "discarded silently" % len(_split_on))
 
 # ── phrases are retargeted by TITLE, not id ──────────────────────────────
 x = g()
@@ -78,10 +95,18 @@ hit = [v for v in x.values()
        and (v.get("_meta") or {}).get("title") == "find siding"]
 ok("on the right node", hit and hit[0]["inputs"]["text_input"] == "wall section",
    repr(hit and hit[0]["inputs"]["text_input"]))
+# Compared against the graph's OWN current value, not a literal. Hardcoding
+# "roof" here meant this went red the moment the shipped phrase became
+# "shingles" — the test asserting a snapshot instead of the behaviour it cares
+# about, which is only that set_phrase(siding) leaves the roof node alone.
+_roof_now = [v["inputs"]["text_input"] for v in GRAPH.values()
+             if v.get("class_type") == "Florence2Run"
+             and (v.get("_meta") or {}).get("title") == "find roof"]
 ok("and nothing else moved",
    [v["inputs"]["text_input"] for v in x.values()
     if v.get("class_type") == "Florence2Run"
-    and (v.get("_meta") or {}).get("title") == "find roof"] == ["roof"])
+    and (v.get("_meta") or {}).get("title") == "find roof"] == _roof_now,
+   "set_phrase must touch exactly one node")
 ok("an unknown surface reports FALSE rather than silently doing nothing",
    P.set_phrase(g(), "chimney", "chimney") is False,
    "a silent miss means the probe reports a phrase it never sent")
