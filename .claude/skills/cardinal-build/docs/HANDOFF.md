@@ -4,6 +4,107 @@
 
 ---
 
+# Session of 14–15 August 2026 — the Visualizer surface picker, builds 813–826 · **the picker does not work, and the reason is structural**
+
+**Read this section before touching the Visualizer.** Twenty-three hours, seventeen PRs
+(#322–#338), builds **813–826** and worker **wb-2026-08-15.1 → .8**. The plumbing all works.
+The feature it was built for does not, and the last test says the approach is wrong — not
+mistuned.
+
+## The verdict, first
+
+Theo's question that started the arc: *"Why can't we do the siding by walls? With clickable
+circles."* The answer built for it was **`run_regions_job()`** — segment the photograph into
+regions, show them, let a person say which is the roof and which is the siding.
+
+**Tested on a real house at 15 Aug 13:17 on wb-2026-08-15.8. It returned regions covering the
+tree canopies, the lawn, the driveway and both cars, and single regions that span roof + sky +
+tree canopy together. Nothing traced a wall plane, a roof plane or a window.**
+
+**The mechanism, which is the part worth carrying forward** (`spark/visualizer_worker.py:978-995`):
+
+- SAM 2's automatic mask generator is **class-agnostic**. It segments everything — foliage,
+  grass, tarmac, a car door, a shadow edge.
+- The worker then **ranks by area and keeps the 40 biggest** (`REGION_MAX = 40`,
+  `REGION_MIN_PCT = 0.30`).
+- In a real listing photograph the house is roughly a third of the frame **and is cut into
+  pieces by its own shadow**, while the trees, lawn and driveway are large and visually
+  uniform.
+
+So area-ranking **actively selects against the building**. The biggest coherent masks in the
+frame are exactly the things that are not the house. This is not a density-knob problem:
+`points_per_batch`, `crop_n_layers` and `stability_score_thresh` change *how many* blobs come
+back, not *what they are of*.
+
+The function's own docstring predicted a milder version of this — *"SAM 2 can still split a roof
+across a shadow line or merge a wall with the garage door, and the picker is what that costs."*
+The real result is worse than the guess, and the picker cannot pay that cost.
+
+## The fork for next session — do not start coding before Theo picks
+
+**A — point-prompted SAM 2.** Theo taps the wall; SAM 2 returns *that* mask. Same model, same
+checkpoint already on the Spark; the graph swaps automask for a points input. Cheapest path,
+and it is what SAM 2 is genuinely good at. Cost: a browser change to capture tap coordinates,
+and a shadow-split wall still needs a second tap to complete. **Does not give you circles until
+something proposes where to put them.**
+
+**B — semantic segmentation (ADE20K-trained: SegFormer / OneFormer).** Returns *labelled*
+classes — building, house, roof, window, door, sky, tree, grass, road, car. That is precisely
+the vocabulary this feature needs, and it excludes vegetation **by construction** rather than by
+ranking. It is also what makes Theo's original ask literal: take the building/wall class, find
+its connected components, put a circle on each centroid. Cost: a new model on the Spark and a
+new step in the pipeline — the largest of the three, and the only one that ends with circles on
+walls.
+
+**C — automask plus a "is this inside the building?" filter.** Collapses into B, because the
+filter needs a building mask. Recorded so nobody proposes it as a third way.
+
+**A hybrid (B to find the planes, A to correct one) is the strong play, and is design work, not
+a patch.** Bring options to Theo before building — his stated preference all session.
+
+## Settled this session — do not re-litigate
+
+- **No text prompt, no Florence2 in the regions pass.** Two photographs of the *same house* on
+  15 Aug produced very different masks, because a phrase that grounds correctly on one angle
+  grounds the whole building on another. Tuning the phrase trades one house for the next. The
+  reasoning is in `run_regions_job()`'s docstring; keep it there.
+- **A person confirms before the client sees it.** Same order as The Walk. The picker exists
+  because the machine's proposal is not trustworthy on its own, and that stays true under any
+  of A/B/C.
+- **Recolour by default, not regenerate** (819–822). The render must change the surface and
+  leave the house alone.
+
+## State of the machine
+
+- Worker unit is **`cardinal-visualizer`** on `spark-3c4a`; setup in `spark/VISUALIZER_SETUP.md:274`.
+  It runs from **`/home/cardinal2023/ComfyUI/venv/bin/python3`**, not `/usr/bin/python3` —
+  system Python is missing the deps.
+- Restart + read: `sudo systemctl restart cardinal-visualizer && journalctl -u cardinal-visualizer -f`.
+  Startup line carries the worker version — currently `wb-2026-08-15.8 · recolour`.
+- `origin/main` = **`f1df3c6`**, deployed.
+- `spark/regions_api.json` node 3 now reads `"segmentor": "automaskgenerator"`. That one field
+  was the whole of wb-.8, and it fixed the real `Loaded model is not SAM2AutomaticMaskGenerator`
+  error — **the loader is correct now; do not revert it while changing approach.**
+- `spark/test_segment.py` — 47 assertions, mutation-tested three ways. Still valid; it tests the
+  graph plumbing, which is not what failed.
+
+## Cost, honestly
+
+Two of the last three builds fixed my own errors rather than moving forward. **825 merged at
+00:01 with the region-picker button never wired to anything** — `setupMode()` returned before
+the listener attached — and it stayed dead until **826 at 11:06**. Eleven hours in which the
+feature existed and could not be opened. The scope also crept: the ask was recolouring siding by
+wall, and the session spent its second half on plane detection, which is a harder problem than
+the one that was asked about.
+
+**What is actually banked:** CompanyCam as a photo source on phone and desktop (813–817), a
+render belonging to a job (816), the stage agreeing with the button (818), recolour-by-default
+and a second engine (819–822), the finished colour catalog from OC's and Mastic's own documents
+(#330), a surface that says when it was not changed (823), and mask-solo + a refusal reason from
+Gemini (824). All of that is live and none of it depends on the picker.
+
+---
+
 # Session of 13 August 2026 (later) — Production rebuilt 766–772, then the E2E drive shipped 773
 
 Two arcs. First: the Production redesign Theo iterated to over four artifact rounds (Cardinal Steel;
