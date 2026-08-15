@@ -636,7 +636,7 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.7 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.9"
+WORKER_BUILD = "wb-2026-08-15.10"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
@@ -1167,6 +1167,32 @@ def run_job(comfy, job):
         run_points_job(comfy, job, job_id, started)
         return
 
+    # ── 829: an underscore key this worker does not know is a STALE WORKER ──
+    # Underscore keys are modes, not surfaces. Every one of them is handled by
+    # a branch above; reaching here with one means the browser is newer than
+    # this process.
+    #
+    # Without this the job fell through to the ordinary render path, which
+    # segmented all four surfaces, looked for a mask named `_points`, found
+    # none, and told the rep:
+    #
+    #   "the segmenter did not find _points in this photograph.
+    #    Try a straighter, less obstructed shot of the elevation."
+    #
+    # That sentence sent us hunting a photography problem for an hour when the
+    # Spark simply had not been restarted after 827. A mode key is not a
+    # surface and must never be printed as one.
+    #
+    # Note the honest limit: this guard only speaks once the NEW code is
+    # running, so it cannot report the very stall that prompted it. It is here
+    # for the next time the browser outruns the worker, which is now twice.
+    unknown_modes = sorted(k for k in selections if k.startswith("_"))
+    if unknown_modes:
+        raise RuntimeError(
+            "This job needs a newer worker. It asks for %s, which %s does not "
+            "understand. On the Spark: git pull, then restart the worker."
+            % (", ".join(unknown_modes), WORKER_BUILD))
+
     source = storage_download(job["source_path"])
     working = to_png(source)
     # Segmentation (and FLUX, in restyle mode) want the ~1280px band. The
@@ -1440,8 +1466,19 @@ def main():
                 # office. A job that fails silently is worse than one that
                 # fails loudly — the whole ABC saga was six rounds of an error
                 # message being thrown away.
+                # 829: stamp the build on FAILURES too. The success path has
+                # written `achieved._worker` since 823, on the stated rule that
+                # a null `achieved` means "an old worker ran this" — but a
+                # failure wrote no stamp at all, so that rule silently did not
+                # hold for the half of the rows where knowing the version
+                # matters most. Four failed tap jobs carried no version and it
+                # had to be inferred from which mask keys they left behind.
+                # Any partial `achieved` from a raising branch is not worth
+                # preserving on a row nothing will read.
                 patch_job(job["id"], {"status": "failed", "error": reason,
-                                      "finished_at": _now()})
+                                      "finished_at": _now(),
+                                      "achieved": {"_worker": "%s %s" % (
+                                          WORKER_BUILD, RENDER_MODE)}})
             except Exception as e2:
                 log("  and could not record the failure: %s" % _short(e2))
             # Never spin. A failure that cannot even be written down is exactly
