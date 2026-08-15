@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 824
+  v2026-08-15 build 825
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -200,6 +200,43 @@ h2.sec:first-child{margin-top:6px}
 
 /* ---------- compare ---------- */
 #vzBox{position:fixed;inset:0;z-index:60;background:#050607;display:flex;flex-direction:column}
+
+/* ---------- 825: the region picker ---------- */
+#vzReg{position:fixed;inset:0;z-index:62;background:#050607;display:flex;flex-direction:column}
+#vzReg .top{display:flex;gap:10px;align-items:center;padding:10px 14px;
+  border-bottom:1px solid var(--vz-line,#252932)}
+#vzReg .top .t{flex:1;min-width:0;font-weight:600}
+#vzReg .rsurf{display:flex;gap:8px;padding:9px 14px;flex-wrap:wrap;
+  border-bottom:1px solid var(--vz-line,#252932)}
+#vzReg .rsurf button{display:inline-flex;align-items:center;gap:7px;min-height:44px;
+  padding:0 13px;border-radius:9px;cursor:pointer;font:inherit;
+  color:var(--vz-ink,#E9ECF2);background:transparent;
+  border:1px solid var(--vz-line,#252932)}
+#vzReg .rsurf button i{width:12px;height:12px;border-radius:3px;display:block;flex:none}
+#vzReg .rsurf button b{font-weight:600;font-variant-numeric:tabular-nums;opacity:.75}
+#vzReg .rsurf button[aria-checked="true"]{background:rgba(255,255,255,.13);
+  border-color:rgba(255,255,255,.46)}
+#vzReg .wrap{position:relative;max-width:100%;max-height:100%;isolation:isolate}
+#vzReg img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+#vzReg .rtint{position:absolute;inset:0;pointer-events:none}
+/* Same blend sandwich as the 823 overlay, and the same reason: the tint has to
+   sit ON the photograph, not cover it. See drawFound(). */
+#vzReg .rtint div{position:absolute;inset:0;mix-blend-mode:screen;opacity:.5}
+#vzReg .rtint img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
+#vzReg .rdots{position:absolute;inset:0}
+/* 44px hit area, 18px of visible dot. A circle big enough to tap is bigger
+   than a circle that looks right on a photograph, so the target is padding. */
+#vzReg .rdots button{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;
+  border:0;background:none;padding:0;cursor:pointer;display:grid;place-items:center}
+#vzReg .rdots button::after{content:'';width:18px;height:18px;border-radius:50%;
+  background:rgba(9,11,14,.55);border:2px solid #fff;
+  box-shadow:0 1px 6px #000a;transition:none}
+#vzReg .rdots button[aria-pressed="true"]::after{width:22px;height:22px;
+  background:var(--dot,#FFC53D);border-color:#fff}
+#vzReg .rdots button:hover::after{border-color:#fff;transform:scale(1.12)}
+#vzReg .feet{padding:10px 14px;border-top:1px solid var(--vz-line,#252932);
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#vzReg .feet .d{flex:1;min-width:0;color:var(--vz-dim,#A8B0BF);font-size:13px}
 #vzBox .top{display:flex;gap:10px;align-items:center;padding:10px 14px;
   border-bottom:1px solid var(--vz-line,#252932)}
 #vzBox .top .t{flex:1;min-width:0;font-weight:600;
@@ -667,6 +704,10 @@ body.vz-prep main{max-width:none;padding:0}
           </div>
           <div class="tray">
             <div class="tchips" id="vzTray"></div>
+            <!-- 825: label the surfaces before rendering. Optional — leave it
+                 alone and the segmenter guesses from a phrase, exactly as
+                 before. Use it when the guess was wrong. -->
+            <button class="btn" id="vzFind" type="button">Find surfaces</button>
             <button class="btn go" id="vzQueue" disabled>Render</button>
           </div>
           <p class="tray-sum" id="vzSum">Pick a photograph to begin.</p>
@@ -732,6 +773,31 @@ body.vz-prep main{max-width:none;padding:0}
 </div>
 
 <!-- ───────────────────────── compare ───────────────────────── -->
+<!-- 825: label the surfaces yourself. A circle sits at the centre of every
+     region SAM 2 found; tap a surface, then tap the circles that belong to it.
+     No phrase is involved, which is the point — two photographs of one house
+     produced very different masks because a phrase that grounds correctly on
+     one angle grounded the whole building on another. -->
+<div id="vzReg" class="hide" role="dialog" aria-modal="true" aria-label="Label the surfaces">
+  <div class="top">
+    <div class="t">Which parts are which?</div>
+    <button class="btn" id="vzRegX">Cancel</button>
+  </div>
+  <div class="rsurf" id="vzRegSurf" role="radiogroup" aria-label="Surface being labelled"></div>
+  <div class="cmp" id="vzRegCmp">
+    <div class="wrap" id="vzRegWrap">
+      <img id="vzRegImg" alt="The house as photographed">
+      <div class="rtint" id="vzRegTint" aria-hidden="true"></div>
+      <div class="rdots" id="vzRegDots"></div>
+    </div>
+  </div>
+  <div class="feet">
+    <div class="d" id="vzRegSum"></div>
+    <button class="btn" id="vzRegClear" type="button">Clear</button>
+    <button class="btn go" id="vzRegOK" type="button">Use these</button>
+  </div>
+</div>
+
 <div id="vzBox" class="hide" role="dialog" aria-modal="true" aria-label="Before and after">
   <div class="top">
     <div class="t" id="vzBoxT"></div>
@@ -1868,6 +1934,13 @@ $('vzQueue').addEventListener('click', function(){
     if(!o) return;
     sel[s.key] = { id:o.id, name:o.name, sub:o.sub, hex:o.hex || null,
                    prompt:o.prompt, negative:o.negative || '' };
+    /* 825: hand-labelled regions travel as STORAGE PATHS, not ids — the
+       worker downloads them directly and never has to look up the job they
+       came from. Still no coordinate on this row: a path is a path. */
+    var rp  = (regionPick[chosenShot.storage_path] || {})[s.key] || [];
+    var lut = labelledMasks[chosenShot.storage_path] || {};
+    var paths = rp.map(function(id){ return lut[id]; }).filter(Boolean);
+    if(paths.length) sel[s.key]._regions = paths;
   });
   sb.from('design_jobs').insert({
     project_id: $('vzProject').value,   /* never null — guarded above */
@@ -2217,6 +2290,219 @@ function drawGallery(){
 
 /* ── the compare box ───────────────────────────────────────────────────── */
 var boxed = null;
+/* ── 825: label the surfaces yourself ─────────────────────────────────────
+
+   WHY THIS EXISTS. On 15 Aug two photographs of the same house produced very
+   different masks, because the phrase that grounds a roof correctly on an
+   eye-level shot grounded the whole building on a drone shot. Tuning the
+   phrase moved the failure from one house to the next rather than removing it.
+
+   So: no phrase. The worker segments the photograph into every region it can
+   find and a person says which regions are the roof. Theo's own doctrine from
+   The Walk — the machine proposes, a person confirms.
+
+   This does not make the regions right. SAM 2 can still split a roof across a
+   shadow line or merge a wall into the garage door, and tapping two circles
+   instead of one is what that costs.
+
+   `regionPick[shot_path] = { roof:['r01','r04'], siding:[…] }` — held in
+   memory for the session, deliberately. Persisting it means a table, a
+   migration and a rule about what happens when the photograph is re-imported;
+   none of that is worth building before anyone has used this once. */
+var regionPick = {};       /* shot path -> surface -> [region ids] */
+/* shot path -> region id -> storage path. Render needs the PATHS, and by then
+   the picker is closed and its job row is gone from view, so the lookup is
+   captured when the regions arrive rather than reconstructed later. */
+var labelledMasks = {};
+var regionJob = null;      /* the finished _regions job being labelled */
+var regionSurf = 'roof';   /* which surface the next tap assigns to */
+var regionPoll = null;
+
+function regionsOf(job){
+  var m = (job && job.masks) || {};
+  return Object.keys(m)
+    .filter(function(k){ return m[k] && m[k].path; })
+    .sort();                                  /* r01, r02 … biggest first */
+}
+
+/* Queue a segmentation-only job. It is an ordinary row — the worker sees the
+   `_regions` marker in `selections` and answers it without rendering — so the
+   queue, the claim function and RLS are all untouched. */
+function findSurfaces(){
+  var b = $('vzFind');
+  if(!chosenShot){ $('vzSum').textContent = 'Pick a photograph first.'; return; }
+  if(!$('vzProject').value){ $('vzSum').textContent = 'Pick a job first.'; return; }
+  b.disabled = true; b.textContent = 'Looking…';
+  sb.from('design_jobs').insert({
+    project_id: $('vzProject').value,
+    source_path: chosenShot.storage_path,
+    selections: { _regions: true },
+    engine: 'spark',        /* only the Spark can segment; Gemini has no masks */
+    created_by: me
+  }).select().maybeSingle().then(function(r){
+    if(r.error || !r.data){
+      b.disabled = false; b.textContent = 'Find surfaces';
+      $('vzSum').textContent = 'Could not queue it — ' + ((r.error || {}).message || '');
+      return;
+    }
+    jobs.unshift(r.data);
+    $('vzSum').textContent = 'Finding the surfaces — about a minute.';
+    waitForRegions(r.data.id);
+  });
+}
+
+/* Poll THIS row rather than leaning on refresh(): the regions job is not in
+   the gallery and a rep is standing still waiting for it. */
+function waitForRegions(id){
+  var tries = 0;
+  clearInterval(regionPoll);
+  regionPoll = setInterval(function(){
+    tries++;
+    sb.from('design_jobs').select('id,status,masks,source_path,error')
+      .eq('id', id).maybeSingle().then(function(r){
+        var j = r.data;
+        if(!j) return;
+        if(j.status === 'done'){
+          clearInterval(regionPoll); regionPoll = null;
+          $('vzFind').disabled = false; $('vzFind').textContent = 'Find surfaces';
+          openRegions(j);
+        } else if(j.status === 'failed'){
+          clearInterval(regionPoll); regionPoll = null;
+          $('vzFind').disabled = false; $('vzFind').textContent = 'Find surfaces';
+          $('vzSum').textContent = j.error || 'Could not find the surfaces.';
+        } else if(tries > 60){       /* five minutes */
+          clearInterval(regionPoll); regionPoll = null;
+          $('vzFind').disabled = false; $('vzFind').textContent = 'Find surfaces';
+          $('vzSum').textContent = 'Still working — it will appear in the list on the right.';
+        }
+      });
+  }, 5000);
+}
+
+function openRegions(job){
+  regionJob = job;
+  regionSurf = 'roof';
+  var m = job.masks || {}, lut = {};
+  Object.keys(m).forEach(function(k){ if(m[k] && m[k].path) lut[k] = m[k].path; });
+  labelledMasks[job.source_path] = lut;
+  paint($('vzRegImg'), job.source_path);
+  drawRegionSurfaces();
+  drawRegions();
+  $('vzReg').classList.remove('hide');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeRegions(){
+  $('vzReg').classList.add('hide');
+  document.body.style.overflow = '';
+  regionJob = null;
+  clearInterval(regionPoll); regionPoll = null;
+}
+
+function pickFor(surface){
+  var p = regionPick[regionJob.source_path] || (regionPick[regionJob.source_path] = {});
+  return p[surface] || (p[surface] = []);
+}
+
+function drawRegionSurfaces(){
+  var host = $('vzRegSurf');
+  host.innerHTML = '';
+  SURFACES.forEach(function(s){
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', regionSurf === s.key ? 'true' : 'false');
+    b.dataset.surface = s.key;
+    var n = pickFor(s.key).length;
+    b.innerHTML = '<i style="background:' + esc(s.tint) + '"></i>' + esc(s.label) +
+                  (n ? '<b>' + n + '</b>' : '');
+    b.addEventListener('click', function(){
+      regionSurf = s.key; drawRegionSurfaces(); drawRegions();
+    });
+    host.appendChild(b);
+  });
+}
+
+/* Which surface a region is assigned to, or '' — a region belongs to at most
+   one surface, so tapping it for a second surface MOVES it. Allowing two
+   would just push the conflict down to exclusive(), where a rep cannot see
+   what happened. */
+function surfaceOf(id){
+  var p = regionPick[regionJob.source_path] || {};
+  for(var k in p){ if(p[k].indexOf(id) !== -1) return k; }
+  return '';
+}
+
+function tintOf(key){
+  var s = SURFACES.filter(function(x){ return x.key === key; })[0];
+  return (s && s.tint) || '#FFC53D';
+}
+
+function toggleRegion(id){
+  var was = surfaceOf(id);
+  var p = regionPick[regionJob.source_path] || (regionPick[regionJob.source_path] = {});
+  if(was){ p[was] = p[was].filter(function(x){ return x !== id; }); }
+  if(was !== regionSurf) pickFor(regionSurf).push(id);
+  drawRegionSurfaces();
+  drawRegions();
+}
+
+function drawRegions(){
+  var masks = (regionJob && regionJob.masks) || {};
+  var ids = regionsOf(regionJob);
+  var tint = $('vzRegTint'), dots = $('vzRegDots');
+  tint.innerHTML = ''; dots.innerHTML = '';
+
+  ids.forEach(function(id){
+    var r = masks[id];
+    var owner = surfaceOf(id);
+
+    if(owner){
+      var lay = document.createElement('div');
+      lay.style.background = tintOf(owner);
+      var im = document.createElement('img');
+      im.alt = '';
+      paint(im, r.path);
+      lay.appendChild(im);
+      tint.appendChild(lay);
+    }
+
+    /* The circle sits at the centre of the region's bounding box, which the
+       worker already stored — so no mask pixel is ever read here, and the
+       canvas-tainting problem the 823 overlay had does not arise. */
+    var box = r.box || [];
+    if(box.length !== 4) return;
+    var cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.region = id;
+    b.style.left = (100 * cx / (regionJob._w || frameW())) + '%';
+    b.style.top  = (100 * cy / (regionJob._h || frameH())) + '%';
+    b.style.setProperty('--dot', tintOf(owner || regionSurf));
+    b.setAttribute('aria-pressed', owner ? 'true' : 'false');
+    b.setAttribute('aria-label', owner
+      ? (id + ' — ' + owner + ', tap to change')
+      : (id + ' — tap to add to ' + regionSurf));
+    b.title = b.getAttribute('aria-label');
+    b.addEventListener('click', function(ev){ ev.stopPropagation(); toggleRegion(id); });
+    dots.appendChild(b);
+  });
+
+  var total = 0, p = regionPick[regionJob.source_path] || {};
+  SURFACES.forEach(function(s){ total += (p[s.key] || []).length; });
+  $('vzRegSum').textContent = total
+    ? total + ' of ' + ids.length + ' region(s) labelled — tap a surface, then its parts'
+    : ids.length + ' region(s) found. Tap a surface above, then tap its parts on the photo.';
+  $('vzRegOK').disabled = !total;
+}
+
+/* The mask PNGs are the size of the FITTED photograph, and the box
+   coordinates are in that space — so a percentage needs the fitted size, not
+   the displayed size. The worker does not send it, so it is inferred from the
+   image once it has loaded, and falls back to the natural size. */
+function frameW(){ var i = $('vzRegImg'); return i.naturalWidth || 1280; }
+function frameH(){ var i = $('vzRegImg'); return i.naturalHeight || 720; }
+
 /* The JOB behind the open render. `renders` carries the picture; `masks` and
    `achieved` live on the job, so the box has to walk back to it. A render can
    outlive nothing here — every render has a job_id — but the row may be
@@ -2448,6 +2734,19 @@ function closeBox(){
 }
 $('vzBoxX').addEventListener('click', closeBox);
 $('vzFoundBtn').addEventListener('click', toggleFound);
+$('vzRegX').addEventListener('click', closeRegions);
+$('vzRegClear').addEventListener('click', function(){
+  if(!regionJob) return;
+  regionPick[regionJob.source_path] = {};
+  drawRegionSurfaces(); drawRegions();
+});
+$('vzRegOK').addEventListener('click', function(){
+  /* Nothing to store here — the picks already live in regionPick, keyed by the
+     photograph. Closing is the whole action; Render reads them. */
+  closeRegions();
+  $('vzSum').textContent = 'Labelled. Render will use those parts.';
+  sum();
+});
 document.addEventListener('keydown', function(e){
   if($('vzBox').classList.contains('hide')) return;
   if(e.key === 'Escape'){ closeBox(); return; }
