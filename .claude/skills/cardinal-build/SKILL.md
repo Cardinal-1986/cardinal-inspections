@@ -95,7 +95,57 @@ Non-negotiable:
 
 ## Step 3 — Gates (every build, in order)
 
-Mechanical gates first:
+### Gate 0 — the sentinel. Run it on every build that changes a screen.
+
+**This is the standing check, and it is the only one that is not disposable.**
+Everything else in this file is a per-build gate: written once, run twice, never
+run again. The sentinel is the opposite — one script, every build, checking only
+the classes that have **already bitten this project more than twice**.
+
+```bash
+node <skill>/scripts/sentinel.js --selftest            # prove the instrument works
+node <skill>/scripts/sentinel.js <artifact> \
+     --setup <skill>/scripts/sentinel_setup_visualizer.js \
+     --since <the previous build's artifact> \
+     --viewports 390x844,1194x834,1440x900
+```
+
+| id | what it catches | what it already cost |
+|---|---|---|
+| `INK` | text below the contrast floor, scored against the **composited** ground | 448, 487, 527, 557, 573, 630, 681 — **seven** times, every one reported as "can't read this" |
+| `COLLAPSE` | a box materially shorter than its own image | shipped in **814, 815 and 816** before a phone screenshot caught it |
+| `OVERLAP` | two siblings whose boxes intersect | 588/590, 814 |
+| `OVERFLOW` | the body scrolls sideways | checked in a dozen disposable harnesses, permanently in none |
+| `DEAD` | a rule that loses to something **no more specific than itself** — a source-order accident | 481, 817. Every mechanical gate was green both times |
+| `OVERRIDDEN` | a rule beaten by something deliberately more specific — the cascade working, only interesting when the rule is **new** | build 481's shape |
+| `UNWIRED` | a control that renders and does nothing | BUG_CLASSES 16 — Studio Archive, dead from 614 to 632 |
+
+**Three rules about using it, each of which it has already violated once:**
+
+1. **`--selftest` before you trust a clean run.** Two checks were incapable of
+   firing when first written and both looked perfectly reasonable in the source:
+   `COLLAPSE` exempted `overflow:hidden` as "a deliberate crop" and therefore
+   slept through the exact build it was written for; `DEAD` descended into
+   non-matching `@media` blocks and reported build 817's **fix** as the defect.
+   Silence from an instrument never seen to speak is not evidence.
+2. **`--since <prev>` or it dies of noise.** A checker reporting the same forty
+   pre-existing findings every build is muted by the third build. `--since`
+   renders the previous artifact through the identical probe and subtracts. The
+   carried count is always printed; `--all` shows it. Never hide debt.
+3. **A `--setup` file, or it only ever checks the login screen.** Every defect
+   worth catching lives behind the sign-in, and half of them live inside a panel
+   that does not exist until it is opened — so the setup file also declares
+   `window.__sentinelStates`, the screens to walk through. A sweep of the landing
+   page reports CLEAN and means nothing by it.
+
+**THE RULE THAT KEEPS THIS ALIVE — and it is the whole point.** When a bug class
+recurs, it does **not** get another paragraph in `BUG_CLASSES.md`. It gets a
+check in `sentinel_probe.js` and a case in `sentinel_selftest.html`, or an
+explicit written note saying no mechanical check is possible and why. Prose has
+lost to this project 45 times. A class with neither a check nor that note is an
+open wound.
+
+### Then the mechanical gates:
 
 ```bash
 python3 <skill>/scripts/check_build.py index_v334.html \

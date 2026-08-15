@@ -1,6 +1,46 @@
 # Cardinal Resource App — Bug Classes
 
 **Failure modes already paid for. Every entry cost at least one build.**
+
+> ## ⚠ READ THIS BEFORE ADDING A 46th CLASS
+>
+> Theo, 15 Aug 2026: *"Can't you make a countermeasure to having to fix things
+> more than twice and knowing it is an error?"*
+>
+> He is right, and this document is the evidence. Forty-five classes are written
+> down here, and the project still shipped class 16 and the aspect-ratio collapse
+> **again** in August 2026 — with this file open. **Prose does not run.** A
+> paragraph explaining a trap loses to the trap every single time, because the
+> paragraph has to be read, remembered and applied by someone under time
+> pressure, and the trap only has to exist.
+>
+> **So: a class that RECURS does not get another entry here. It gets a check.**
+>
+> `scripts/sentinel.js` is the standing checker — one script, run on every build
+> that changes a screen, covering only classes that have already bitten more than
+> twice. Adding to it is two edits: a check in `sentinel_probe.js` and a
+> deliberate instance in `sentinel_selftest.html` so `--selftest` proves the
+> check can actually fire.
+>
+> If a recurring class genuinely cannot be checked mechanically, **write that
+> down here, with the reason.** A recurring class with neither a check nor that
+> note is an open wound, and it will be paid for a third time.
+>
+> **Column added below: every class now says whether a machine is watching it.**
+
+| class | what it is | watched by |
+|---|---|---|
+| light ink on a dark ground (the recurring one — 7 times) | contrast below the floor | ✅ `sentinel` `INK` |
+| a rule that parses, balances and never wins (481, 817) | source-order / specificity loss | ✅ `sentinel` `DEAD` |
+| a box collapsed under its own content (814–816) | aspect-ratio on a grid item | ✅ `sentinel` `COLLAPSE` |
+| overlapping siblings (588/590, 814) | a sizing rule that did not take | ✅ `sentinel` `OVERLAP` |
+| sideways scroll at a real width | responsive break | ✅ `sentinel` `OVERFLOW` |
+| **16** — a control that renders but is never wired (614→632) | no handler, nothing delegating | ✅ `sentinel` `UNWIRED` |
+| **15** — an assertion that matches its own prose / a hardcoded count | vacuous green | ❌ **no mechanical check.** It needs to read intent, and an assertion that cannot fail looks identical to one that passes. The only defence found so far is the negative control — run the gate against the previous build and require it to go red |
+| **37** — the negative control CRASHES instead of going red (739, 743, 748, ×5 more on 14 Aug) | an interaction on a selector the old build lacks | ⚠️ **partial.** `tryClick()` in `gate_810.mjs` is the pattern: record the failure and carry on, never let Playwright's 30s timeout kill the run. Not yet generic |
+| **38** — a comment inside a template literal is code (749) | a backtick ends the string | ⚠️ **avoided structurally, not checked.** `sentinel_probe.js` was moved out of a template literal into its own file for exactly this reason — the hazard is gone rather than documented. Prefer that fix over a lint |
+| **45** — a fixture invented rather than observed | the stub agrees with the code, so both are wrong | ❌ no mechanical check; query the real table |
+
 *Read before debugging; skim before shipping. Written at build 427; **classes 12 and 13 added 2 Aug 2026 at build 573; class 14 added 4 Aug 2026 at build 595**. For anything else since 427, read the `CHANGELOG` array in `index.html` — it is the only record that survives work done outside this folder.*
 
 ---

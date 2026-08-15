@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sentinel self-test</title>
+
+<!--
+  ONE DELIBERATE INSTANCE OF EVERY DEFECT THE SENTINEL CLAIMS TO CATCH.
+
+  This exists because of the rule the project already lives by: a gate that
+  has never been seen to go red proves nothing. The sentinel's silence on a
+  real artifact is only meaningful if the sentinel is known to speak.
+
+  It nearly was not. Two checks were quietly incapable of firing when first
+  written, and both looked perfectly reasonable in the source:
+
+    - COLLAPSE skipped any parent with overflow:hidden, calling it "a
+      deliberate crop". Tiles clip. So it stayed silent through build 816 —
+      a 362x44 tile holding a 358x168 image — which is the precise defect it
+      was written for.
+
+    - DEAD descended into @media blocks without checking whether the media
+      matched, and reported the build-817 mobile rule as dead at desktop
+      width. That rule is the FIX for the bug DEAD exists to catch.
+
+  Run:  node sentinel.js sentinel_selftest.html --viewports 900x800 --json
+  Every id below must appear. If one does not, that check is inert and its
+  quiet on a real page means nothing at all.
+
+  ⚠ Keep each case MINIMAL and keep them isolated from each other. A case
+  that accidentally triggers a second check makes a broken check look alive.
+-->
+
+<style>
+  :root { color-scheme: dark; }
+  body { background: #0b0d12; color: #e8ecf3; font: 14px/1.5 system-ui, sans-serif;
+         margin: 0; padding: 24px; }
+  h2 { font-size: 13px; color: #8b93a3; margin: 26px 0 8px; font-weight: 700; }
+  .case { border: 1px solid #232833; border-radius: 10px; padding: 14px; margin-bottom: 8px; }
+
+  /* ── INK: 11px grey on the page ground. Arithmetic, not opinion. ────── */
+  .ink-bad { color: #3a3f4a; font-size: 11px; }
+
+  /* ── COLLAPSE: the build-816 shape. The parent clips, which is exactly
+        why the first version of the check never saw it. ───────────────── */
+  .collapse-host { height: 40px; overflow: hidden; background: #161a22; }
+  .collapse-host img { display: block; width: 200px; height: 180px; }
+
+  /* ── OVERLAP: two grid items in one cell. ────────────────────────────── */
+  .overlap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .overlap-grid > * { background: #1b2430; height: 60px; border-radius: 6px; }
+  .overlap-grid > .a { grid-column: 1; grid-row: 1; }
+  .overlap-grid > .b { grid-column: 1; grid-row: 1; margin-top: 20px; }
+
+  /* ── OVERFLOW: wider than any viewport it will be run at. ───────────── */
+  .overflow-bar { width: 3200px; height: 8px; background: #232833; }
+
+  /* ── DEAD: equal specificity, later rule wins. Build 817 exactly.
+        .dead-a is (0,1,0); .dead-b is (0,1,0) and comes second. ───────── */
+  .dead-a { height: 30px; background-color: #2a1620; }
+  .dead-b { height: 70px; background-color: #16202a; }
+
+  /* ── OVERRIDDEN: beaten by something deliberately MORE specific. This is
+        the cascade working, and must NOT be reported as DEAD. ─────────── */
+  .over-base { height: 30px; background-color: #202a16; }
+  #overHost .over-base { height: 64px; background-color: #1a2230; }
+</style>
+</head>
+<body>
+
+<h2>INK — 11px #3a3f4a on #0b0d12, about 1.8:1</h2>
+<div class="case"><span class="ink-bad">this text is below the contrast floor</span></div>
+
+<h2>COLLAPSE — a 40px clipping box holding a 180px image</h2>
+<div class="case">
+  <div class="collapse-host">
+    <img alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==">
+  </div>
+</div>
+
+<h2>OVERLAP — two grid items sharing one cell</h2>
+<div class="case">
+  <div class="overlap-grid"><div class="a"></div><div class="b"></div><div></div></div>
+</div>
+
+<h2>OVERFLOW — a 3200px bar</h2>
+<div class="case"><div class="overflow-bar"></div></div>
+
+<h2>DEAD — .dead-a loses to .dead-b at equal specificity</h2>
+<div class="case"><div class="dead-a dead-b">both rules match; the later one wins</div></div>
+
+<h2>OVERRIDDEN — a base rule beaten by a more specific one (not a defect)</h2>
+<div class="case" id="overHost"><div class="over-base">normal cascade</div></div>
+
+<h2>UNWIRED — a button nothing listens to</h2>
+<div class="case">
+  <button type="button" id="wired">this one is wired</button>
+  <button type="button" id="dead-button">this one does nothing</button>
+</div>
+
+<script>
+  /* Only the first button gets a handler. The second is BUG_CLASSES 16:
+     drawn, enabled, and inert — the Studio Archive button, 614 to 632. */
+  document.getElementById('wired').addEventListener('click', function () {});
+</script>
+</body>
+</html>

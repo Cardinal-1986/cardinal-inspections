@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 818
+  v2026-08-15 build 819
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -59,6 +59,12 @@
   --vz-bg:#08090B; --vz-panel:#111318; --vz-card:#171A21; --vz-line:#252932;
   --vz-ink:#F2F4F8; --vz-dim:#A8B0BF; --vz-mute:#767E8D;
   --vz-red:#C8202E; --vz-go:#3FA46A; --vz-warn:#D98324; --vz-sel:#5B9DD9;
+  /* Cardinal red is a 3.51:1 ink on this ground — fine for a badge or a
+     filled button, under the 4.5:1 floor for anything you have to READ.
+     --vz-red-lt is the same red lifted to 5.67:1, and it is not invented:
+     it is the value PR #8 migrated the old gold to, so it is a colour this
+     company already uses. Fills and rules keep --vz-red; TEXT takes this. */
+  --vz-red-lt:#E35C63;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -118,7 +124,7 @@ h2.sec:first-child{margin-top:6px}
    only names what is missing leaves the rep nowhere to go; this one offers the
    way out inline. */
 .lnk{background:none;border:0;padding:0;font:inherit;cursor:pointer;
-  color:var(--vz-red,#C8202E);text-decoration:underline;text-underline-offset:2px}
+  color:var(--vz-red-lt,#E35C63);text-decoration:underline;text-underline-offset:2px}
 .lnk:hover{color:#fff}
 
 /* ---------- photo strip ---------- */
