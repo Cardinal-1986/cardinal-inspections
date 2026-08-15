@@ -73,7 +73,7 @@ from pathlib import Path
 try:
     import requests
     import websocket                      # websocket-client
-    from PIL import Image
+    from PIL import Image, ImageChops
 except ImportError as e:                  # a missing dep should say which
     sys.exit("Missing dependency: %s\n  pip install requests websocket-client pillow" % e.name)
 
@@ -355,6 +355,55 @@ def segment(comfy, image_png):
     return masks
 
 
+# Detail beats plane. Florence2 grounds "house wall" as a BOX and SAM 2 fills
+# it, so the siding mask legitimately swallows everything sitting on that wall
+# — windows, trim, and the gutter running along the top of it.
+DETAIL_WINS = ["windows", "trim", "gutters", "roof", "siding"]
+
+
+def exclusive(masks):
+    """Stop one surface's mask from covering another's.
+
+    ⚠ Theo, 15 Aug: "It also painted the gutter." The siding mask is grounded
+    on the phrase "house wall", which is a BOX around the whole elevation —
+    so SAM 2 fills in the gutter along its top edge, the trim, and the windows,
+    and all of them get painted as siding. The windows were already being
+    recoloured this way and nobody had noticed, because a window tinted toward
+    a siding colour looks like a reflection.
+
+    The masks are made independently and nothing ever reconciled them. This
+    subtracts the smaller, more specific surfaces from the larger ones, in the
+    order above: a pixel claimed by "windows" stops being siding.
+
+    It cannot invent a mask that was never made — if the segmenter found no
+    gutters in a photograph, there is nothing to subtract and the gutter stays
+    part of the wall. That case needs a gutters pass in segment_api.json and
+    it is called out in VISUALIZER_SETUP.md rather than pretended away.
+    """
+    if len(masks) < 2:
+        return masks
+    order = [s for s in DETAIL_WINS if s in masks] + \
+            [s for s in masks if s not in DETAIL_WINS]
+    out, claimed = {}, None
+    for surface in order:
+        try:
+            m = Image.open(io.BytesIO(masks[surface])).convert("L")
+        except Exception:
+            out[surface] = masks[surface]
+            continue
+        if claimed is not None:
+            if claimed.size != m.size:
+                claimed = claimed.resize(m.size, Image.LANCZOS)
+            # keep only what nothing more specific has already taken
+            m = ImageChops.subtract(m, claimed)
+        buf = io.BytesIO()
+        m.save(buf, format="PNG")
+        out[surface] = buf.getvalue()
+        claimed = m if claimed is None else ImageChops.lighter(
+            claimed.resize(m.size, Image.LANCZOS) if claimed.size != m.size else claimed, m)
+    return out
+
+
 def seed_for(job_id, surface):
     """A seed that is stable for one job+surface and different for every other.
 
@@ -380,6 +429,39 @@ def seed_for(job_id, surface):
 # photographs and only Theo's eyes can settle them.
 TINT_STRENGTH = float(os.environ.get("TINT_STRENGTH") or 0.85)
 FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
+
+# ── recolour or restyle ───────────────────────────────────────────────────
+# ⚠ THE DEFAULT IS RECOLOUR, AND THE REASON IS THE WHOLE POINT OF THE TOOL.
+#
+# Theo, 15 Aug, on a render of a house whose siding had just been installed:
+#   "the picture is of a new siding install completed. The original siding one
+#    looks great but when rendered it looks warped and wouldn't sell a job"
+#
+# He is right, and it is not a tuning problem. That photograph ALREADY has
+# everything a render needs: straight lap lines, correct perspective, real
+# shadows under every course, real reflections. The only thing being asked for
+# is a different COLOUR. Sending it through a diffusion model at denoise 0.82
+# throws all of that away and redraws it from scratch — and a model redrawing
+# a large angled plane of horizontal lines makes them wander. That is the
+# warping. We destroyed geometry we had no reason to touch.
+#
+# So: for a colour change, do not diffuse. tint() alone changes the colour and
+# keeps the photograph's own geometry, which is why it looks photographic —
+# because it IS the photograph. It is also exact (no model to pull the colour
+# back toward tan) and about forty times faster.
+#
+# Reach for the model when the MATERIAL changes, not the colour: lap siding to
+# board-and-batten, a 3-tab roof to a dimensional architectural shingle, or a
+# surface too damaged to recolour convincingly.
+#
+#   RENDER_MODE=recolour   (default)  tint only. The photograph, in the new
+#                                     colour. Fast, exact, and it sells.
+#   RENDER_MODE=restyle               tint + FLUX. Use when the material
+#                                     itself is changing.
+RENDER_MODE = (os.environ.get("RENDER_MODE") or "recolour").strip().lower()
+if RENDER_MODE not in ("recolour", "recolor", "restyle"):
+    RENDER_MODE = "recolour"
+RESTYLE = RENDER_MODE == "restyle"
 
 
 def _hex_rgb(h):
@@ -653,9 +735,14 @@ def run_job(comfy, job):
     else:
         log("  %dx%d — already in FLUX's band" % now)
 
+    log("  mode: %s" % ("restyle — the model redraws each surface"
+                          if RESTYLE else
+                          "recolour — the photograph keeps its own geometry"))
     log("  segmenting…")
     masks = segment(comfy, working)
     log("  found: %s" % (", ".join(sorted(masks)) or "nothing"))
+    # Reconcile them before anything is painted — see exclusive().
+    masks = exclusive(masks)
 
     # Persist the masks: the presentation app overlays them so a rep can tap a
     # region of the house and have the sidebar jump to that surface.
@@ -677,18 +764,27 @@ def run_job(comfy, job):
             # photograph — say so plainly and carry on with the rest.
             skipped.append(surface)
             continue
-        log("  inpainting %s — %s" % (surface, _short(sel.get("name") or "", 60)))
-        # Hand the model the colour in the pixels first. Without this the text
-        # is the only steer and a distilled model at cfg 1 ignores it — which
-        # is how "Evergreen Mist" came back tan.
+        log("  %s %s — %s" % ("restyling" if RESTYLE else "recolouring",
+                                surface, _short(sel.get("name") or "", 60)))
         hexv = sel.get("hex")
-        if hexv:
-            working = tint(working, masks[surface], hexv)
+        if not hexv:
+            if not RESTYLE:
+                # Nothing to recolour WITH. Say so rather than silently doing
+                # nothing, which would look like the surface was skipped.
+                log("    no swatch hex on this selection — nothing to recolour with, skipping")
+                skipped.append(surface)
+                continue
+            log("    no swatch hex — colour rests on the prompt alone")
         else:
-            log("    no swatch hex on this selection — colour rests on the prompt alone")
-        working = inpaint(comfy, working, masks[surface],
-                          sel.get("prompt") or "", sel.get("negative") or "",
-                          seed_for(job_id, surface))
+            # In recolour mode there is no diffusion pass afterwards to bring
+            # texture back, so the tint carries the whole result and goes on
+            # at full strength. In restyle mode it is a steer for the model.
+            working = tint(working, masks[surface], hexv,
+                           strength=1.0 if not RESTYLE else None)
+        if RESTYLE:
+            working = inpaint(comfy, working, masks[surface],
+                              sel.get("prompt") or "", sel.get("negative") or "",
+                              seed_for(job_id, surface))
         applied.append(surface)
 
     if not applied:

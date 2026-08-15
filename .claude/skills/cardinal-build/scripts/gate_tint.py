@@ -243,8 +243,8 @@ chk("⚠ denoise is BELOW 1 — at 1 the region is rebuilt from noise and the "
     vw.FLUX_DENOISE < 1.0, "FLUX_DENOISE = %s" % vw.FLUX_DENOISE)
 chk("both knobs are env-tunable, so they can be dialled without editing code",
     'os.environ.get("TINT_STRENGTH")' in src and 'os.environ.get("FLUX_DENOISE")' in src)
-chk("the tint runs BEFORE the inpaint, on the same mask",
-    src.index("working = tint(working, masks[surface], hexv)")
+chk("the tint runs BEFORE any diffusion pass, on the same mask",
+    src.index("working = tint(working, masks[surface], hexv,")
     < src.index("working = inpaint(comfy, working, masks[surface],"))
 
 # ── 7. one worker per GPU ─────────────────────────────────────────────────
@@ -337,10 +337,89 @@ else:
 
     chk("the measurement is written onto the job row",
         '"achieved": achieved or None' in src)
-    chk("it is taken BEFORE the JPEG round trip, on the pixels the model made",
+    chk("it is taken BEFORE the JPEG round trip, on the pixels the render made",
         src.index("m = measure(working, masks[surface]") < src.index('to_jpeg(working, 2400'))
+    chk("the tint runs before the measurement, so what is measured is the result",
+        src.index("working = tint(working, masks[surface], hexv,")
+        < src.index("m = measure(working, masks[surface]"))
     chk("a failure to measure never costs the render",
         "could not measure the result" in src)
+
+# ── 9. recolour, not restyle, by default ──────────────────────────────────
+# Theo, on a house whose siding had just been installed: "The original siding
+# one looks great but when rendered it looks warped and wouldn\'t sell a job."
+# The photograph already had straight lap lines, real perspective and real
+# shadows. Only the COLOUR was being changed. Diffusing over it redrew all of
+# that from scratch and a model redrawing a large angled plane of horizontal
+# lines makes them wander. We destroyed geometry we had no reason to touch.
+chk("recolour is the DEFAULT — the photograph keeps its own geometry",
+    getattr(vw, "RENDER_MODE", None) in ("recolour", "recolor") and vw.RESTYLE is False,
+    "RENDER_MODE=%s RESTYLE=%s" % (getattr(vw, "RENDER_MODE", "?"), getattr(vw, "RESTYLE", "?")))
+chk("⚠ in recolour mode the diffusion pass is SKIPPED, not merely weakened — "
+    "a weaker pass still redraws the lines",
+    "if RESTYLE:\n            working = inpaint(" in src)
+chk("restyle is still reachable for a MATERIAL change (lap to board-and-batten)",
+    'RENDER_MODE=restyle' in src or '"restyle"' in src)
+chk("the tint goes on at FULL strength when nothing follows it to add texture",
+    "strength=1.0 if not RESTYLE else None" in src)
+chk("a selection with no hex is SKIPPED and said out loud in recolour mode, "
+    "rather than silently leaving the surface untouched",
+    "nothing to recolour with, skipping" in src)
+chk("the log says which mode ran, so a warped render can be explained",
+    "the photograph keeps its own geometry" in src)
+
+# The claim that matters: a recolour leaves geometry EXACTLY intact. Prove it
+# on the shading, which is what "warped" destroys.
+rec = open_png(vw.tint(BSRC, MSK, GREEN, strength=1.0))
+edges_before, edges_after = 0, 0
+bp2, rp2 = bright.load(), rec.load()
+for x in range(W):
+    for y in range(1, 60):
+        if abs(luma(bp2[x, y]) - luma(bp2[x, y - 1])) > 12: edges_before += 1
+        if abs(luma(rp2[x, y]) - luma(rp2[x, y - 1])) > 12: edges_after += 1
+chk("⚠ a recolour preserves every hard edge in the surface — the lap lines and "
+    "shadow boundaries survive exactly, which is what stops it looking warped",
+    edges_before > 0 and abs(edges_after - edges_before) <= max(2, edges_before * 0.05),
+    "%d edges before, %d after" % (edges_before, edges_after))
+
+# ── 10. one surface does not paint another ────────────────────────────────
+# "It also painted the gutter." The siding mask is grounded on "house wall",
+# which is a BOX around the whole elevation, so SAM 2 fills in the gutter, the
+# trim and the windows along with it. The windows were already being painted
+# this way and nobody had noticed — a window tinted toward a siding colour
+# just looks like a reflection.
+if not hasattr(vw, "exclusive"):
+    chk("masks are reconciled so one surface cannot paint another", False, "no exclusive()")
+else:
+    def band(y0, y1):
+        m = Image.new("L", (W, H), 0)
+        for yy in range(y0, y1):
+            for xx in range(W):
+                m.putpixel((xx, yy), 255)
+        return png(m)
+
+    # siding claims the whole wall 0-60; windows claim 20-30 INSIDE it
+    wall, win = band(0, 60), band(20, 30)
+    ex = vw.exclusive({"siding": wall, "windows": win})
+    sm = Image.open(io.BytesIO(ex["siding"])).convert("L")
+    wm = Image.open(io.BytesIO(ex["windows"])).convert("L")
+    overlap = sum(1 for yy in range(20, 30) for xx in range(W) if sm.getpixel((xx, yy)) > 8)
+    chk("⚠ the window region is REMOVED from the siding mask — siding can no "
+        "longer paint a window",
+        overlap == 0, "%d pixels still claimed by both" % overlap)
+    kept = sum(1 for yy in range(35, 55) for xx in range(W) if sm.getpixel((xx, yy)) > 200)
+    chk("and the rest of the wall is untouched (not a vacuous pass — it did "
+        "not just empty the mask)",
+        kept > W * 15, "%d wall pixels survive" % kept)
+    still = sum(1 for yy in range(22, 28) for xx in range(W) if wm.getpixel((xx, yy)) > 200)
+    chk("the window keeps its OWN mask — detail wins, it is not erased too",
+        still > W * 4, "%d window pixels survive" % still)
+    chk("a single mask is returned untouched (nothing to reconcile)",
+        vw.exclusive({"roof": wall})["roof"] == wall)
+    chk("gutters and trim rank as detail too, so they win over the wall "
+        "the moment the segmenter produces them",
+        vw.DETAIL_WINS.index("gutters") < vw.DETAIL_WINS.index("siding")
+        and vw.DETAIL_WINS.index("trim") < vw.DETAIL_WINS.index("siding"))
 
 fails = 0
 for name, ok, detail in CHECKS:

@@ -197,6 +197,54 @@ A second GPU is a real reason to run two. Give it its own lock:
 VISUALIZER_LOCK=/tmp/cardinal_visualizer_gpu1.lock python3 spark/visualizer_worker.py
 ```
 
+## 5c. Recolour vs restyle — and why the default is recolour
+
+Theo, 15 Aug, on a render of a house whose siding had just been installed:
+*"The original siding one looks great but when rendered it looks warped and
+wouldn't sell a job."*
+
+He was right, and it was not a tuning problem. **That photograph already had
+everything a render needs** — straight lap lines, correct perspective, real
+shadows under every course. The only thing being asked for was a different
+colour. Sending it through a diffusion model redrew all of it from scratch,
+and a model redrawing a large angled plane of horizontal lines makes them
+wander. **We destroyed geometry we had no reason to touch.**
+
+| `RENDER_MODE` | what it does | when |
+|---|---|---|
+| **`recolour`** (default) | the mask region is recoloured to the swatch, keeping the photograph's own texture, shading and edges | **a colour change** — which is nearly always. Exact colour, ~2s, and it looks photographic because it *is* the photograph |
+| `restyle` | recolour, then FLUX redraws the surface | the **material** changes: lap → board-and-batten, 3-tab → dimensional architectural, or a surface too damaged to recolour |
+
+```bash
+RENDER_MODE=restyle python3 spark/visualizer_worker.py
+```
+
+## 5d. ⚠ The gutter, and what is NOT fixed
+
+*"It also painted the gutter."*
+
+The siding mask is grounded on the phrase **`house wall`** (`segment_api.json`,
+node 20). Florence2 returns a **box** around the whole elevation and SAM 2
+fills it — so the gutter along its top edge, the trim and the windows all end
+up inside the siding mask.
+
+`exclusive()` in the worker now subtracts the more specific surfaces from the
+larger ones, so **windows and trim are no longer painted as siding** — that
+was happening already and had gone unnoticed, because a window tinted toward a
+siding colour just looks like a reflection.
+
+**It cannot fix the gutter yet, and that is stated rather than pretended
+away:** there is no gutter pass in `segment_api.json`, so there is no gutter
+mask to subtract. Adding one means a fourth Florence2 → SAM 2 → SaveImage
+chain titled `CARDINAL_MASK_GUTTERS`, grounded on something like
+`rain gutter downspout`. The worker already reads any mask whose SaveImage is
+titled `CARDINAL_MASK_<surface>`, so nothing on the Python side needs to
+change — the moment that chain exists, gutters rank above siding in
+`DETAIL_WINS` and stop being painted.
+
+That edit has to be made and eyeballed in ComfyUI on the Spark; it is not
+something to ship blind from a build session.
+
 ## 6. Run it as a service
 
 ```ini
