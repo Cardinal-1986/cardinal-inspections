@@ -514,6 +514,52 @@ def tint(image_png, mask_png, hex_colour, strength=None):
     return buf.getvalue()
 
 
+def measure(image_png, mask_png, hex_wanted):
+    """What colour did that surface ACTUALLY come out?
+
+    ────────────────────────────────────────────────────────────────────────
+    Three times on 15 Aug a render came back the wrong colour, and the only
+    evidence anyone had was a photograph of a monitor. Every diagnosis was a
+    guess, and two were wrong before they were right — the last one because
+    ONE defect looked fine on siding and broken on roof, which is exactly the
+    kind of thing an eye cannot separate and arithmetic can.
+
+    The worker is the only place that can see both the swatch and the
+    finished pixels. So it measures, and the answer is written on the job.
+
+    What it makes possible is a DIAGNOSIS, not just a number:
+
+      drift SMALL and Theo unhappy -> the pipeline did its job. The swatch is
+                                      wrong, or the paint chip disagrees with
+                                      the eye. Do not touch the code.
+      drift LARGE                  -> the tint did not land, or FLUX pulled it
+                                      back. TINT_STRENGTH up, FLUX_DENOISE down.
+
+    Those two need opposite fixes and look identical from a screenshot.
+    """
+    want = _hex_rgb(hex_wanted)
+    if not want:
+        return None
+    try:
+        from PIL import ImageStat
+        im = Image.open(io.BytesIO(image_png)).convert("RGB")
+        mk = Image.open(io.BytesIO(mask_png)).convert("L")
+        if mk.size != im.size:
+            mk = mk.resize(im.size, Image.LANCZOS)
+        st = ImageStat.Stat(im, mk)
+        got = tuple(int(round(v)) for v in st.mean[:3])
+    except Exception as e:
+        # Measuring must never cost a render. A job that dies taking its own
+        # temperature is a worse outcome than not knowing the temperature.
+        log("    could not measure the result: %s" % _short(e))
+        return None
+    return {
+        "want": "#%02X%02X%02X" % want,
+        "got":  "#%02X%02X%02X" % got,
+        "drift": max(abs(got[i] - want[i]) for i in range(3)),
+    }
+
+
 def inpaint(comfy, image_png, mask_png, positive, negative, seed):
     graph = load_graph("inpaint_api.json")
     set_input(graph, T_IMAGE, "image", comfy.upload_image("cardinal_work.png", image_png))
@@ -621,7 +667,7 @@ def run_job(comfy, job):
     if mask_paths:
         patch_job(job_id, {"masks": mask_paths})
 
-    applied, skipped = [], []
+    applied, skipped, achieved = [], [], {}
     for surface in SURFACE_ORDER:
         sel = selections.get(surface)
         if not sel:
@@ -651,6 +697,16 @@ def run_job(comfy, job):
             "Try a straighter, less obstructed shot of the elevation."
             % (", ".join(sorted(selections)) or "any selected surface"))
 
+    # Measure BEFORE the JPEG round trip, on the pixels the model produced.
+    for surface in applied:
+        m = measure(working, masks[surface], (selections.get(surface) or {}).get("hex"))
+        if not m:
+            continue
+        achieved[surface] = m
+        log("    %s wanted %s, got %s — drift %d%s"
+            % (surface, m["want"], m["got"], m["drift"],
+               "  ⚠ the colour did not land" if m["drift"] > 40 else ""))
+
     render_path  = "visualizer/%s/render.jpg"  % job_id
     preview_path = "visualizer/%s/preview.jpg" % job_id
     storage_upload(render_path,  to_jpeg(working, 2400, 90))
@@ -662,6 +718,7 @@ def run_job(comfy, job):
     patch_job(job_id, {
         "status": "done", "render_path": render_path, "preview_path": preview_path,
         "finished_at": _now(), "duration_ms": took, "error": None,
+        "achieved": achieved or None,
     })
 
     insert_render({

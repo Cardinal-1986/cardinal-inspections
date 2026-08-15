@@ -295,6 +295,53 @@ with tempfile.TemporaryDirectory() as td:
     chk("and the lock is released when the holder exits — no stale lock",
         r2.stdout.strip() == "GOT", r2.stdout.strip() or r2.stderr.strip()[:60])
 
+# ── 8. the worker measures what it produced ───────────────────────────────
+# Three colour diagnoses on 15 Aug came from photographs of a monitor, and two
+# were wrong before they were right. measure() is how the next one comes from
+# a number instead — and, more usefully, how "the pipeline missed" is told
+# apart from "the swatch is wrong", which need opposite fixes and look
+# identical in a screenshot.
+if not hasattr(vw, "measure"):
+    chk("the worker measures the colour it actually produced", False, "no measure()")
+else:
+    # A render that came out EXACTLY right.
+    perfect = Image.new("RGB", (W, H), vw._hex_rgb(GREEN))
+    m = vw.measure(png(perfect), MSK, GREEN)
+    chk("a render that hit the swatch measures near-zero drift",
+        m and m["drift"] <= 1, str(m))
+    chk("and it reports both what was asked for and what arrived",
+        m and m["want"].upper() == GREEN.upper() and m["got"].startswith("#"), str(m))
+
+    # The REAL failure: the pale sage the luminance-preserving tint produced.
+    pale = Image.new("RGB", (W, H), (168, 181, 162))
+    m2 = vw.measure(png(pale), MSK, GREEN)
+    chk("⚠ CONTROL: the pale sage that shipped as 'roof colour still off' is "
+        "measured as a LARGE drift — this is the number that would have "
+        "diagnosed it in one query instead of three guesses",
+        m2 and m2["drift"] >= 40, str(m2))
+
+    # It measures INSIDE the mask only — the lawn must not drag the mean.
+    half = Image.new("RGB", (W, H), (255, 0, 255))     # screaming magenta
+    hp = half.load()
+    for y in range(0, 60):
+        for x in range(W):
+            hp[x, y] = vw._hex_rgb(GREEN)             # correct inside the mask
+    m3 = vw.measure(png(half), MSK, GREEN)
+    chk("⚠ it measures INSIDE the mask only — magenta everywhere else does not "
+        "move the reading",
+        m3 and m3["drift"] <= 1, str(m3))
+
+    for label, val in [("a missing hex", None), ("junk", "nope")]:
+        chk("measure() returns None rather than throwing on %s" % label,
+            vw.measure(png(perfect), MSK, val) is None)
+
+    chk("the measurement is written onto the job row",
+        '"achieved": achieved or None' in src)
+    chk("it is taken BEFORE the JPEG round trip, on the pixels the model made",
+        src.index("m = measure(working, masks[surface]") < src.index('to_jpeg(working, 2400'))
+    chk("a failure to measure never costs the render",
+        "could not measure the result" in src)
+
 fails = 0
 for name, ok, detail in CHECKS:
     if not ok:
