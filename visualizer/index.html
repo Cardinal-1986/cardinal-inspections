@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 814
+  v2026-08-15 build 815
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -1097,15 +1097,33 @@ function ccPick(p, btn){
   btn.appendChild(busy);
   $('vzCCNote').textContent = 'Importing…';
 
-  ccCall({ action:'fetch', id: p.id })
-    .then(function(j){ return stripAndStore(j.data, j.mime); })
-    .then(function(path){
+  /* Ask for the ORIGINAL, unannotated. The route's default order is the
+     Resource Library's — annotated web copy first, original last — which gave
+     the Visualizer a small marked-up picture. Resolution is the thing that
+     decides whether a render reads as a roof (see build 809), so this asks for
+     the biggest clean rendition there is.
+
+     If the original blows the route's 3 MB ceiling it answers 413 and names
+     the way out; we retry for the web copy and SAY the picture is the smaller
+     one, rather than silently handing FLUX less to work with. */
+  var got = null;
+  ccCall({ action:'fetch', id: p.id, prefer:'original' })
+    .catch(function(err){
+      if(!/too large/i.test(String(err && err.message || ''))) throw err;
+      $('vzCCNote').textContent = 'The full-size original is too large — using the web copy…';
+      return ccCall({ action:'fetch', id: p.id });
+    })
+    .then(function(j){ got = j; return stripAndStore(j.data, j.mime); })
+    .then(function(r){
       busy.remove();
-      $('vzCCNote').textContent = 'Imported.';
-      /* Close on success — the picker has done its job and the rep wants to
-         be back at the materials with the photograph on the stage. */
+      /* Say what actually arrived. "Imported" alone hides the difference
+         between a 4000px original and a 1200px web copy, and that difference
+         is most of the render quality. */
+      $('vzCCNote').textContent = 'Imported — ' + (got && got.rendition || 'photo') +
+        ', ' + r.w + '\u00d7' + r.h +
+        (r.w < 1280 ? ' (small — the render will be soft)' : '');
       closeCC();
-      chooseShot({ storage_path: path,
+      chooseShot({ storage_path: r.path,
                    caption: p.project_address || p.description || 'CompanyCam' }, null);
     })
     .catch(function(err){
@@ -1131,15 +1149,19 @@ function stripAndStore(b64, mime){
       c.width = im.naturalWidth; c.height = im.naturalHeight;
       c.getContext('2d').drawImage(im, 0, 0);
       URL.revokeObjectURL(url);
+      /* q0.97, not 0.95. This re-encode exists only to drop EXIF — it is not
+         a compression step, and every point of quality spent here is detail
+         FLUX never gets back. The file is about to be resized by the worker
+         anyway, so the bytes cost nothing that matters. */
       c.toBlob(function(out){
         if(!out){ reject(new Error('it could not be re-encoded')); return; }
         var path = 'visualizer/src/' + uid() + '.jpg';
         sb.storage.from('photos').upload(path, out, { contentType:'image/jpeg', upsert:false })
           .then(function(r){
             if(r && r.error) reject(new Error(r.error.message));
-            else resolve(path);
+            else resolve({ path: path, w: c.width, h: c.height, bytes: out.size });
           }, function(e){ reject(e); });
-      }, 'image/jpeg', 0.95);
+      }, 'image/jpeg', 0.97);
     };
     im.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('it could not be decoded')); };
     im.src = url;
