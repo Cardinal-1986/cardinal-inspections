@@ -397,7 +397,21 @@ export default async function handler(req, res) {
          of the list must not become reachable by asking for it directly. */
       if (!usable(photo)) { res.status(403).json({ error: 'That photo is marked internal or is not active' }); return; }
 
-      const pick = pickUri(photo);
+      /* 815: WHICH rendition, and it is not a detail.
+
+         URI_ORDER exists for the Resource Library, which wants the ANNOTATED
+         web copy — the one with CompanyCam's arrows and circles drawn on it —
+         because that is the useful reference. The Visualizer wants the exact
+         opposite: the largest ORIGINAL with nothing drawn on it. Taking the
+         library's order gave it a downsized, marked-up copy, which is what
+         Theo saw as "the quality is also super horrendous".
+
+         `prefer: 'original'` asks for original first and lists NO annotated
+         type at all, so a marked-up rendition can never be imported into a
+         picture a customer will see. */
+      const prefer = String((req.body && req.body.prefer) || '').trim();
+      const order = prefer === 'original' ? ['original', 'web'] : null;
+      const pick = pickUri(photo, order);
       if (!pick) { res.status(502).json({ error: 'That photo has no usable rendition' }); return; }
 
       /* The URL came from CompanyCam's own response, never from the caller. */
@@ -405,7 +419,13 @@ export default async function handler(req, res) {
       if (!img.ok) { res.status(502).json({ error: 'Could not download the photo', status: img.status }); return; }
       const buf = Buffer.from(await img.arrayBuffer());
       if (buf.length > MAX_IMAGE_BYTES) {
-        res.status(413).json({ error: 'That rendition is too large to import', bytes: buf.length });
+        /* Name the way out. The caller can retry without `prefer` and get the
+           web rendition; a bare refusal leaves it guessing. */
+        res.status(413).json({
+          error: 'That rendition is too large to import',
+          bytes: buf.length, limit: MAX_IMAGE_BYTES, rendition: pick.type,
+          retry_without_prefer: prefer === 'original'
+        });
         return;
       }
 

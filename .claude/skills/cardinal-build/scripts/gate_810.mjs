@@ -119,12 +119,19 @@ window.__ccAdmin = true;     /* flipped per-scenario before load */
           photos: out, next_cursor: null, has_next: false
         }), {status:200, headers:{'Content-Type':'application/json'}}));
       }
-      if(body.action === 'fetch')
+      if(body.action === 'fetch'){
+        /* Mirrors api/companycam.js: with prefer:'original' it resolves the
+           ORIGINAL and never an annotated type; without it, the library's
+           default order lands on web_annotation — the small, marked-up copy
+           that made the first imports look terrible. */
+        var rend = body.prefer === 'original' ? 'original' : 'web_annotation';
+        window.__lastRendition = rend;
         return Promise.resolve(new Response(JSON.stringify({
           id: body.id, mime:'image/jpeg', bytes: window.__EXIFJPEG.length,
-          rendition:'web', description:'front elevation', captured_at:'2026-07-02',
+          rendition: rend, description:'front elevation', captured_at:'2026-07-02',
           data: window.__EXIFJPEG_B64
         }), {status:200, headers:{'Content-Type':'application/json'}}));
+      }
       return Promise.resolve(new Response('{}', {status:400, headers:{'Content-Type':'application/json'}}));
     }
     return real.apply(this, arguments);
@@ -475,6 +482,18 @@ if (!(await has('#vzSrcCC')) || !(await has('#vzCCBox')) || !(await has('#vzCCGr
   chk('no GPS tag survives in the uploaded bytes', imported.gps === false);
   chk('the full photograph came through /api/companycam, never the CDN',
       await page.evaluate(`(window.__cc||[]).some(c=>c.body.action==='fetch' && c.body.id==='ccphoto1')`));
+
+  /* 815: the rendition is most of the quality. The route's DEFAULT order is
+     the Resource Library's — annotated web copy first, original last — so the
+     Visualizer has to ask, and asking is what this proves. */
+  chk('815: the import asks for the ORIGINAL rendition, not the library default',
+      await page.evaluate(`(window.__cc||[]).some(c=>c.body.action==='fetch' && c.body.prefer==='original')`));
+  chk('815: it therefore never receives an ANNOTATED copy',
+      await page.evaluate(`window.__lastRendition === 'original'`),
+      await page.evaluate(`String(window.__lastRendition)`));
+  chk('815: the screen reports which rendition arrived, not just "Imported"',
+      /original/.test(await page.evaluate(`document.getElementById('vzCCNote').textContent`)),
+      await page.evaluate(`document.getElementById('vzCCNote').textContent`));
 
   const after = await page.evaluate(`({
     closed: document.getElementById('vzCCBox').classList.contains('hide'),
