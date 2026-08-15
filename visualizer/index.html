@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 815
+  v2026-08-15 build 816
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -1396,10 +1396,23 @@ function choose(surface, o){
 
 /* ── the queue bar ─────────────────────────────────────────────────────── */
 function sum(){
-  var keys = Object.keys(picked);
-  var ok = !!(chosenShot && keys.length);
   var b = $('vzQueue');
+  /* An insert already in flight owns the button. sum() runs from refresh(),
+     which runs from the poll — so without this it re-enabled the button a
+     second after every click, and a rep who clicked again because nothing had
+     appeared yet queued a second job. That is exactly what happened: TEN jobs
+     in thirteen seconds off one photograph. */
+  if(queueing){ b.disabled = true; b.textContent = 'Queueing…'; return; }
+
+  var keys = Object.keys(picked);
+  /* A render must belong to a job. The rail lists by project_id and refresh()
+     bails without one, so a project-less job is created, rendered by the
+     Spark, and INVISIBLE forever. A CompanyCam photograph has no CRM project
+     of its own, which is how this got in. */
+  var pid = $('vzProject').value;
+  var ok = !!(chosenShot && keys.length && pid);
   b.disabled = !ok;
+  if(!pid){ $('vzSum').textContent = 'Pick a job at the top first — every render is filed against one.'; b.textContent = 'Render'; return; }
   if(!chosenShot){ $('vzSum').textContent = 'Pick a photograph to begin.'; b.textContent = 'Render'; return; }
   if(!keys.length){ $('vzSum').textContent = 'Pick at least one material — the tray shows what Render will make.'; b.textContent = 'Render'; return; }
   /* The tray already lists the picks, so this line says the thing the tray
@@ -1417,8 +1430,17 @@ function sum(){
     : (chosenShot.caption || 'Ready.');
 }
 
+var queueing = false;    /* an insert is in flight — see sum() */
 $('vzQueue').addEventListener('click', function(){
+  if(queueing) return;
   if(!chosenShot || !Object.keys(picked).length) return;
+  /* Belt as well as braces: sum() disables the button without a job, and this
+     refuses even if something re-enabled it. A project-less job renders and
+     can never be seen. */
+  if(!$('vzProject').value){
+    $('vzSum').textContent = 'Pick a job at the top first — every render is filed against one.';
+    return;
+  }
   var b = $('vzQueue'), was = b.textContent;
 
   /* The same combination on the same photograph is already answered — show it
@@ -1439,6 +1461,7 @@ $('vzQueue').addEventListener('click', function(){
     return;
   }
 
+  queueing = true;
   b.disabled = true; b.textContent = 'Queueing…';
   /* Only the fields the worker reads, named one by one. Nothing about a
      location travels with a job: `selections` is materials, `source_path` is a
@@ -1452,16 +1475,27 @@ $('vzQueue').addEventListener('click', function(){
                    prompt:o.prompt, negative:o.negative || '' };
   });
   sb.from('design_jobs').insert({
-    project_id: $('vzProject').value || null,
+    project_id: $('vzProject').value,   /* never null — guarded above */
     source_path: chosenShot.storage_path,
     selections: sel,
     created_by: me            /* RLS refuses the insert if this is not me */
   }).select().maybeSingle().then(function(r){
+    queueing = false;
     b.disabled = false; b.textContent = was;
     if(r.error){ $('vzSum').textContent = 'Could not queue it — ' + (r.error.message || ''); return; }
+    /* Put the new job into `jobs` NOW, before the poll returns.
+       The duplicate guard reads `jobs`, so until this row is in it every
+       further click looks like a brand-new combination. That is how one
+       photograph became TEN jobs in thirteen seconds: project_id was null, so
+       refresh() bailed, `jobs` stayed empty, and the guard could never fire.
+       A lock on the button alone does not fix it — the insert can return
+       faster than a person clicks. The list has to know. */
+    if(r.data) jobs.unshift(r.data);
     $('vzSum').textContent = 'Queued. The Spark picks it up on its next poll.';
+    drawJobs(); sum();
     refresh();
   }).catch(function(e){
+    queueing = false;
     b.disabled = false; b.textContent = was;
     $('vzSum').textContent = 'Could not queue it — ' + String(e && e.message || e);
   });
@@ -1548,6 +1582,7 @@ function drawJobs(){
     var rend = renders.filter(function(r){ return r.job_id === j.id; })[0];
     var card = document.createElement('div');
     card.className = 'rcard';
+    card.dataset.job = j.id;   /* a stable handle — position is not one */
 
     var open = document.createElement('button');
     open.type = 'button'; open.className = 'open';
@@ -1598,6 +1633,8 @@ function actBtn(label, title, fn, cls){
    a genuinely different take rather than the picture that was just rejected.
    The old job is left alone; comparing the two is the point. */
 function renderAgain(j){
+  if(queueing) return;
+  queueing = true;
   $('vzSum').textContent = 'Queueing another take…';
   sb.from('design_jobs').insert({
     project_id: j.project_id || $('vzProject').value || null,
@@ -1605,9 +1642,16 @@ function renderAgain(j){
     selections: j.selections,
     created_by: me
   }).select().maybeSingle().then(function(r){
+    queueing = false;
     if(r.error){ $('vzSum').textContent = 'Could not queue it — ' + (r.error.message || ''); return; }
+    /* Same reason as the Render path: the guard reads `jobs`. */
+    if(r.data) jobs.unshift(r.data);
     $('vzSum').textContent = 'Queued another take. The Spark picks it up on its next poll.';
+    drawJobs(); sum();
     refresh();
+  }).catch(function(e){
+    queueing = false;
+    $('vzSum').textContent = 'Could not queue it — ' + String(e && e.message || e);
   });
 }
 

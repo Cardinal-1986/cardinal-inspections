@@ -87,6 +87,10 @@ window.__EXIFJPEG_B64 = '/9j//gASR1BTIDM5Ljc1LC04NC4xOf/hAEBFeGlmAABJSSoACAAAAAE
 window.__EXIFJPEG = atob(window.__EXIFJPEG_B64);
 window.__calls = [];
 window.__signed = [];
+/* A MUTABLE jobs table. An insert must be visible to the next select, exactly
+   as PostgREST behaves — the duplicate guard reads the job list, so a stub
+   whose list never grows makes a working guard look broken. */
+window.__jobsTable = ${JSON.stringify(JOBS)};
 window.confirm = function(){ window.__calls.push({op:'confirm'}); return true; };
 window.__cc = [];            /* every /api/companycam body the page sent */
 window.__uploads = [];       /* every storage upload, with its bytes */
@@ -144,14 +148,30 @@ window.supabase = { createClient: function(){ return {
     var rows = { oc_colors:${JSON.stringify(OC)}, materials:${JSON.stringify(MAT)},
                  projects:[{id:'p1',name:'James Tiege',stage:'Prospect'}],
                  project_photos:[{id:'ph1',storage_path:'projects/p1/front.jpg',caption:'Front elevation',created_at:'2026-08-02'}],
-                 design_jobs:${JSON.stringify(JOBS)}, design_renders:${JSON.stringify(RENDERS)} }[t] || [];
+                 design_jobs: window.__jobsTable, design_renders:${JSON.stringify(RENDERS)} }[t] || [];
     var b = {};
     ['select','order','limit','eq','not','is'].forEach(function(m){ b[m] = function(){ return b; }; });
     b.then = function(ok){ return Promise.resolve({data:rows,error:null}).then(ok); };
     b.maybeSingle = function(){ return Promise.resolve({data:rows[0]||null,error:null}); };
     return {
       select:function(){ return b; },
-      insert:function(v){ window.__calls.push({op:'insert',table:t,value:v}); return b; },
+      insert:function(v){
+        window.__calls.push({op:'insert',table:t,value:v});
+        /* PostgREST returns the INSERTED row from .insert().select(), not the
+           first row of the table. The stub used to hand back rows[0], which
+           made the app's optimistic "add the new job to the list" look broken
+           when it was the harness that was wrong. */
+        var made = Object.assign({ id:'new-' + (window.__calls.length),
+          status:'queued', render_path:null, preview_path:null, masks:null,
+          error:null, created_at:new Date().toISOString(), duration_ms:null,
+          claimed_at:null }, v);
+        if(t === 'design_jobs') window.__jobsTable.unshift(made);
+        var ib = {};
+        ['select','order','limit','eq','not','is'].forEach(function(m){ ib[m]=function(){ return ib; }; });
+        ib.then = function(ok){ return Promise.resolve({data:[made],error:null}).then(ok); };
+        ib.maybeSingle = function(){ return Promise.resolve({data:made,error:null}); };
+        return ib;
+      },
       update:function(v){ window.__calls.push({op:'update',table:t,value:v}); return b; },
       delete:function(){ window.__calls.push({op:'delete',table:t});
         var d = { then:function(ok){ return Promise.resolve({data:[],error:null}).then(ok); } };
@@ -192,6 +212,19 @@ await page.evaluate(`(async()=>{ const s=document.getElementById('vzProject');
   await new Promise(r=>setTimeout(r,600)); })()`);
 
 const has = sel => page.locator(sel).count().then(n => n > 0);
+
+/* Click something that may not exist in an older artifact.
+   Five times tonight a control CRASHED instead of reporting red, every one the
+   same shape: an interaction on a selector the previous build does not have,
+   Playwright waiting 30s, then an unhandled rejection that killed the run
+   before it printed a line. A control that crashes proves nothing. This
+   records a failure and carries on, which is what red is supposed to look
+   like. Returns true if it clicked. */
+async function tryClick(sel, why) {
+  if (!(await has(sel))) { chk(why || ('a control exists: ' + sel), false, 'missing ' + sel); return false; }
+  try { await page.click(sel, { timeout: 4000 }); return true; }
+  catch (e) { chk(why || ('clickable: ' + sel), false, String(e.message).split('\n')[0]); return false; }
+}
 
 // ── 1. the shell exists at all ────────────────────────────────────────────
 chk('the four-column shell is present', await has('.shell'));
@@ -290,15 +323,15 @@ chk('a QUEUED duplicate is still refused, not offered again', !/again/i.test(qLa
 
 // ── 6. delete: render row BEFORE job row, then the files ──────────────────
 await page.evaluate(`window.__calls = []`);
-const acts = await page.evaluate(`[...document.querySelectorAll('.rcard .acts button')].map(b=>b.textContent)`);
+const acts = await page.evaluate(`[...document.querySelectorAll('.rcard[data-job="j-done"] .acts button')].map(b=>b.textContent)`);
 chk('Delete and Again are VISIBLE buttons on the card, not behind a menu',
     acts.includes('Delete') && acts.includes('Again'), JSON.stringify(acts));
 chk('the delete button is on screen and big enough to hit',
-    await page.evaluate(`(()=>{ const b=document.querySelector('.rcard .acts .del');
+    await page.evaluate(`(()=>{ const b=document.querySelector('.rcard[data-job="j-done"] .acts .del');
       if(!b) return false; const r=b.getBoundingClientRect();
       return r.width > 40 && r.height >= 32 && getComputedStyle(b).opacity === '1'; })()`));
-chk('the old hidden dot menu is gone', !(await has('.rcard .more')));
-await page.click('.rcard .acts .del');
+chk('the old hidden dot menu is gone', !(await has('.rcard[data-job="j-done"] .more')));
+await tryClick('.rcard[data-job="j-done"] .acts .del', 'the delete button on a render card is reachable');
 await page.waitForTimeout(400);
 const seq = await page.evaluate(`window.__calls.filter(c=>c.op==='delete'||c.op==='remove')
   .map(c=>c.op==='remove'?'remove':('delete:'+c.table))`);
@@ -315,7 +348,7 @@ chk('delete also removes the render, the preview AND the mask files',
 //  never be reached.
 {
   const first = await page.evaluate(`(()=>{
-    const c=[...document.querySelectorAll('.rcard .open')][0]; if(c) c.click();
+    const c=document.querySelector('.rcard[data-job="j-done"] .open'); if(c) c.click();
     return new Promise(res=>setTimeout(()=>res({
       open: !document.getElementById('vzBox').classList.contains('hide'),
       title: document.getElementById('vzBoxT').textContent,
@@ -332,7 +365,7 @@ chk('delete also removes the render, the preview AND the mask files',
   chk('Previous is disabled on the first render', first.prevDis === true);
   chk('Next is enabled on the first render', first.nextDis === false);
 
-  await page.click('#vzNext');
+  await tryClick('#vzNext', 'the Next arrow is reachable');
   await page.waitForTimeout(250);
   const second = await page.evaluate(`({
     title: document.getElementById('vzBoxT').textContent,
@@ -460,7 +493,7 @@ if (!(await has('#vzSrcCC')) || !(await has('#vzCCBox')) || !(await has('#vzCCGr
   chk('picker tiles do not overlap the row beneath them',
       overlap.same && overlap.gap >= 0, 'gap ' + overlap.gap + 'px between row 1 and row 2');
 
-  await page.click('#vzCCGrid .cctile[data-ccid="ccphoto1"]');
+  await tryClick('#vzCCGrid .cctile[data-ccid="ccphoto1"]', 'a picker tile is reachable');
   await page.waitForTimeout(800);
 
   const imported = await page.evaluate(`(()=>{
@@ -504,6 +537,81 @@ if (!(await has('#vzSrcCC')) || !(await has('#vzCCBox')) || !(await has('#vzCCGr
   chk('the imported photograph becomes the chosen one on the stage',
       /visualizer\/src\//.test(after.src), after.src.slice(-44));
   chk('closing releases the scroll lock', after.scroll === '', 'overflow=' + after.scroll);
+
+  /* THE THING THAT MATTERS: can you actually render the photograph you just
+     imported? Everything above is choosing; this is the button that spends
+     the Spark. */
+  await page.click('#vzList .crow[data-id="oc1"]');
+  await page.waitForTimeout(200);
+  const ready = await page.evaluate(`({
+    disabled: document.getElementById('vzQueue').disabled,
+    label: document.getElementById('vzQueue').textContent,
+    sum: document.getElementById('vzSum').textContent,
+    tray: document.getElementById('vzTray').textContent,
+    shot: !!window.__dbgShot
+  })`);
+  chk('after a CompanyCam import the Render button is ENABLED',
+      ready.disabled === false, 'label=' + ready.label + ' | ' + ready.sum);
+  const before = await page.evaluate(`window.__calls.filter(c=>c.op==='insert'&&c.table==='design_jobs').length`);
+  await page.click('#vzQueue');
+  await page.waitForTimeout(400);
+  const fired = await page.evaluate(`window.__calls.filter(c=>c.op==='insert'&&c.table==='design_jobs').length`);
+  chk('clicking Render on an imported photograph queues a job',
+      fired > before, before + ' -> ' + fired + ' | ' + await page.evaluate(`document.getElementById('vzSum').textContent`));
+
+  /* ── 816: the two defects that produced TEN jobs in thirteen seconds ──── */
+
+  /* A job is required. Without one the row carries project_id NULL, refresh()
+     bails on it and the rail filters by project_id — so the Spark renders a
+     picture nobody can ever see. */
+  const noJob = await page.evaluate(`(()=>{
+    const s=document.getElementById('vzProject'); s.value=''; s.dispatchEvent(new Event('change'));
+    return new Promise(r=>setTimeout(()=>r({
+      disabled: document.getElementById('vzQueue').disabled,
+      msg: document.getElementById('vzSum').textContent
+    }),300));
+  })()`);
+  chk('816: with no job selected the Render button is DISABLED',
+      noJob.disabled === true, noJob.msg);
+  chk('816: and it says to pick a job rather than failing silently',
+      /pick a job/i.test(noJob.msg), noJob.msg);
+  const n0 = await page.evaluate(`window.__calls.filter(c=>c.op==='insert'&&c.table==='design_jobs').length`);
+  await page.evaluate(`document.getElementById('vzQueue').click()`);
+  await page.waitForTimeout(250);
+  chk('816: forcing a click with no job queues NOTHING',
+      (await page.evaluate(`window.__calls.filter(c=>c.op==='insert'&&c.table==='design_jobs').length`)) === n0);
+
+  /* And the button must stay locked while an insert is in flight. sum() runs
+     from the poll and used to re-enable it a second later, so every extra
+     click a rep made — because nothing had appeared yet — bought another
+     render. */
+  await page.evaluate(`(()=>{ const s=document.getElementById('vzProject');
+    s.value='p1'; s.dispatchEvent(new Event('change')); })()`);
+  await page.waitForTimeout(500);
+  /* A FRESH combination, or the duplicate guard short-circuits before the
+     lock is ever reached and the burst assertion passes at zero — which is
+     exactly what it did the first time I wrote it. A check that cannot fail
+     is worse than no check. */
+  await tryClick('#vzShots .shot', 'a job photograph is reachable');
+  await page.waitForTimeout(200);
+  await tryClick('#vzRail button[title="Siding"]', 'the Siding rail button is reachable');
+  await page.waitForTimeout(200);
+  await page.click('#vzList .crow[data-id="m3"]');
+  await page.waitForTimeout(250);
+  chk('816: the burst test starts from an ENABLED button (not a vacuous pass)',
+      (await page.evaluate(`document.getElementById('vzQueue').disabled`)) === false,
+      await page.evaluate(`document.getElementById('vzSum').textContent`));
+  const n1 = await page.evaluate(`window.__calls.filter(c=>c.op==='insert'&&c.table==='design_jobs').length`);
+  const burst = await page.evaluate(`(async()=>{
+    const b=document.getElementById('vzQueue');
+    for(let i=0;i<6;i++){ b.click(); await new Promise(r=>setTimeout(r,30)); }
+    /* let the poll run, which is what used to unlock it */
+    await new Promise(r=>setTimeout(r,900));
+    return { disabledDuring: b.disabled };
+  })()`);
+  const n2 = await page.evaluate(`window.__calls.filter(c=>c.op==='insert'&&c.table==='design_jobs').length`);
+  chk('816: six rapid clicks queue EXACTLY one job, not six',
+      n2 - n1 === 1, (n2 - n1) + ' job(s) from 6 clicks');
 }
 
 // ── 7. it must not scroll sideways, at either width ───────────────────────
