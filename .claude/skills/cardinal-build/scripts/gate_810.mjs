@@ -493,6 +493,41 @@ if (!(await has('#vzSrcCC')) || !(await has('#vzCCBox')) || !(await has('#vzCCGr
   chk('picker tiles do not overlap the row beneath them',
       overlap.same && overlap.gap >= 0, 'gap ' + overlap.gap + 'px between row 1 and row 2');
 
+  /* 817: THE PHONE. The tile height sat on the <img>, and a grid row is sized
+     from the button's intrinsic contribution, which ignores a child's explicit
+     height — so on a 390px screen the row came out 14px and every photograph
+     was clipped to a sliver. Desktop was fine throughout, which is exactly why
+     this has to be measured at a phone width and not assumed. */
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(300);
+  const phone = await page.evaluate(`(()=>{
+    const ts=[...document.querySelectorAll('#vzCCGrid .cctile')];
+    if(ts.length < 4) return null;
+    const r=i=>ts[i].getBoundingClientRect();
+    const img=ts[0].querySelector('img').getBoundingClientRect();
+    let worst=0;
+    for(let i=0;i<ts.length-1;i++)
+      for(let j=i+1;j<ts.length;j++){
+        const a=r(i),b=r(j);
+        const ov=Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top);
+        const oh=Math.min(a.right,b.right)-Math.max(a.left,b.left);
+        if(ov>1&&oh>1) worst=Math.max(worst,ov);
+      }
+    return { w:Math.round(r(0).width), h:Math.round(r(0).height),
+             imgH:Math.round(img.height), overlap:Math.round(worst),
+             perRow: ts.filter(t=>Math.abs(t.getBoundingClientRect().top-r(0).top)<2).length };
+  })()`);
+  chk('817: on a 390px phone the tiles have real height, not a 14px sliver',
+      phone && phone.h >= 120, phone ? (phone.w + 'x' + phone.h) : 'fewer than 4 tiles');
+  chk('817: the image fills the tile rather than overflowing it',
+      phone && Math.abs(phone.imgH - phone.h) <= 6, phone ? ('img ' + phone.imgH + ' vs tile ' + phone.h) : '');
+  chk('817: no two tiles overlap at phone width',
+      phone && phone.overlap === 0, phone ? (phone.overlap + 'px worst overlap') : '');
+  chk('817: the phone shows two tiles per row, not one letterbox strip',
+      phone && phone.perRow === 2, phone ? (phone.perRow + ' per row') : '');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(250);
+
   await tryClick('#vzCCGrid .cctile[data-ccid="ccphoto1"]', 'a picker tile is reachable');
   await page.waitForTimeout(800);
 
