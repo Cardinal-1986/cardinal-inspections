@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 819
+  v2026-08-15 build 820
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -473,7 +473,11 @@ body.vz-prep main{max-width:none;padding:0}
   border-radius:9px 9px 0 0;background:#12161B}
 .rcard .cap{padding:6px 8px 8px}
 .rcard .cap b{display:block;font-size:11px;font-weight:600;line-height:1.3}
-.rcard .cap i{font-style:normal;font-size:10px;color:var(--vz-mute,#767E8D)}
+/* --vz-mute is 4.26:1 on this card — under the 4.5 floor for 10px text,
+   and this line carries the duration, the date and the live elapsed
+   clock, all of which someone actually reads. --vz-dim is 7.98:1. The
+   sentinel found this; nobody had noticed it in six builds. */
+.rcard .cap i{font-style:normal;font-size:10px;color:var(--vz-dim,#A8B0BF)}
 .rcard .st{position:absolute;left:6px;top:6px;font-size:9px;letter-spacing:.07em;
   text-transform:uppercase;font-weight:800;padding:2px 6px;border-radius:5px;
   background:rgba(0,0,0,.62);color:#7FD39B}
@@ -1610,8 +1614,41 @@ function stalled(){
   var seen = jobs.map(function(j){ return j.claimed_at; }).filter(Boolean).sort().pop();
   return { seen: seen || null, n: queued.length };
 }
+/* A job that has been RUNNING a long time is a third case, and until 820 the
+   screen had no sentence for it at all — stalled() only ever looked at queued
+   jobs, so a render twelve minutes into the machine produced silence.
+
+   It is deliberately NOT called a failure. It usually is not one: a cold Spark
+   reloads three models before it draws a pixel, and the longest real render
+   here took 12m13s and came back correct. Saying "this looks stuck" would have
+   been wrong, and wrong in the direction that makes someone cancel good work. */
+function running(){
+  var live = jobs.filter(function(j){ return j.status === 'running' && j.claimed_at; });
+  if(!live.length) return null;
+  var oldest = live.map(function(j){ return new Date(j.claimed_at).getTime(); })
+                   .sort(function(a, b){ return a - b; })[0];
+  var ms = Date.now() - oldest;
+  return ms < RUN_SLOW_MS ? null : { ms: ms, n: live.length };
+}
 function drawWait(){
-  var el = $('vzWait'), s = stalled();
+  var el = $('vzWait'), s = stalled(), r = running();
+  /* ⚠ A RUNNING job OUTRANKS a stalled queue, and getting this the wrong way
+     round shipped a sentence that was flatly untrue. The queued banner says
+     the render machine "may be asleep" — and a job in flight is proof it is
+     awake. With the old precedence, a rep watching a render actually being
+     made was told the machine might not be listening.
+
+     A queue behind a live render is not a stall. It is a queue. */
+  if(r){
+    el.className = 'wait';
+    el.innerHTML = '<b>Still rendering — ' + Math.floor(r.ms / 60000) + ' minutes in.</b> ' +
+      'This is long but not wrong. Most renders finish in under two minutes; the ' +
+      'first one after the Spark has been sitting idle takes far longer, because ' +
+      'ComfyUI reloads the models before it draws anything. The longest real ' +
+      'render so far was 12 minutes and it came back correct. Leave it — nothing ' +
+      'is lost, and the picture appears here the moment it lands.';
+    return;
+  }
   if(!s){ el.className = 'wait hide'; el.innerHTML = ''; return; }
   el.className = 'wait';
   el.innerHTML = s.seen
@@ -1631,12 +1668,34 @@ function drawWait(){
 function schedule(){
   if(poll){ clearTimeout(poll); poll = null; }
   var busy = jobs.some(function(j){ return j.status === 'queued' || j.status === 'running'; });
-  if(busy) poll = setTimeout(refresh, stalled() ? 30000 : 6000);
+  /* A running job keeps the 6s poll even once a QUEUED one has been declared
+     stalled — the 30s back-off exists for a queue nobody is serving, and a job
+     actually in the machine is the opposite of that. It also keeps the elapsed
+     clock on the card moving, which is the whole point of showing it. */
+  var live = jobs.some(function(j){ return j.status === 'running'; });
+  if(busy) poll = setTimeout(refresh, (stalled() && !live) ? 30000 : 6000);
 }
 function titleOf(sel){
   return SURFACES.filter(function(s){ return sel && sel[s.key]; })
     .map(function(s){ return sel[s.key].name; }).join(' · ') || 'No materials';
 }
+/* How long a job has been in the machine's hands. claimed_at, not created_at:
+   the wait before a worker picks it up is a different problem with a different
+   answer, and 808 already covers that one. */
+function elapsed(claimed){
+  if(!claimed) return 'starting…';
+  var s = Math.max(0, Math.round((Date.now() - new Date(claimed).getTime()) / 1000));
+  return s < 90 ? s + 's' : Math.floor(s / 60) + 'm ' + (s % 60) + 's';
+}
+
+/* What a render actually costs, measured — not guessed. Across every finished
+   job: one surface ~30-40s, two ~40-190s, and the first render after the
+   Spark has been idle a while runs LONG because ComfyUI reloads FLUX, Florence2
+   and SAM 2 from disk. One real job took 12m13s on a cold box and came back
+   perfect. So the screen must not call twelve minutes a failure — it must say
+   what is normal and let the number speak. */
+var RUN_SLOW_MS = 4 * 60 * 1000;
+
 function drawJobs(){
   var host = $('vzJobs');
   if(!jobs.length){ host.innerHTML = '<div class="empty">Nothing yet.</div>'; return; }
@@ -1655,8 +1714,18 @@ function drawJobs(){
     open.appendChild(im);
     var cap = document.createElement('div');
     cap.className = 'cap';
+    /* A RUNNING job shows how long it has been running. It used to show the
+       creation date, which is not an answer to the only question anyone asks
+       of a spinning job: is this still going, or is it stuck?
+
+       Theo, 15 Aug: "The render has been at running stage for several
+       minutes." It had — twelve of them — and it finished perfectly. The
+       render was fine; the SCREEN had nothing to say. 808 gave a queued job
+       an explanation and left a running one with none. */
     cap.innerHTML = '<b>' + esc(titleOf(j.selections)) + '</b><i>' +
-      (j.duration_ms ? (j.duration_ms / 1000).toFixed(0) + 's' : new Date(j.created_at).toLocaleDateString()) +
+      (j.status === 'running' ? elapsed(j.claimed_at)
+        : j.duration_ms ? (j.duration_ms / 1000).toFixed(0) + 's'
+        : new Date(j.created_at).toLocaleDateString()) +
       (rend && rend.approved ? ' · approved' : '') + '</i>' +
       (j.error ? '<div class="err">' + esc(j.error) + '</div>' : '');
     open.appendChild(cap);

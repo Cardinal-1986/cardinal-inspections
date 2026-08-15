@@ -187,6 +187,15 @@ const DEADLINE = setTimeout(() => {
 const findings = [];
 const add = f => findings.push(f);
 
+/* What --since compares, and what the report PRINTS, are deliberately not the
+   same string. A finding's detail quotes live page text, and text changes: an
+   elapsed clock reads "38s" one build and "9m 1s" the next. Keyed on the
+   printed line, a standing defect looks new every time the number ticks — and
+   a genuinely new defect on that element becomes impossible to see among the
+   ticking. So a check that quotes content supplies its own `key`, built from
+   what identifies the DEFECT rather than what the element happens to say. */
+const keyOf = f => f.id + '|' + (f.key || f.detail);
+
 /* ── the page-side probe ───────────────────────────────────────────────────
    Everything below runs INSIDE the browser, against the real composited
    page. It is one function so the traps documented above are solved once. */
@@ -263,9 +272,19 @@ async function sweep(HTML, findings) {
     const at = (theme === 'default' ? '' : theme + ' ') + vp.w + 'px'
              + (states[si] ? ' ' + states[si] : '');
 
+    /* ⚠ `key` is what --since compares; `detail` is only what it PRINTS.
+       They must differ, and learning that took one build. An INK finding's
+       detail quotes the element's text, and text changes — a live elapsed
+       clock reads "38s" on one build and "9m 1s" on the next. Keyed on the
+       printed string, the same standing defect reads as brand new every time
+       the number ticks, and worse, a genuinely new defect on that element
+       becomes impossible to distinguish from the ticking. Key on what
+       identifies the DEFECT — element, colours, floor — never on content. */
     if (on('INK'))
       for (const f of res.ink.slice(0, 25))
-        add({ id: 'INK', where: at, detail: `${f.ratio}:1 (floor ${f.floor}) ${f.el} "${f.text}" ${f.fg} on ${f.bg}` });
+        add({ id: 'INK', where: at,
+              key: `${f.el}|${f.fg}|${f.bg}|${f.floor}`,
+              detail: `${f.ratio}:1 (floor ${f.floor}) ${f.el} "${f.text}" ${f.fg} on ${f.bg}` });
 
     if (on('COLLAPSE'))
       for (const f of res.collapse.slice(0, 15))
@@ -344,7 +363,7 @@ let priorRan = 0;
 if (SINCE) {
   const before = [];
   priorRan = await sweep(readFileSync(SINCE, 'utf8'), before);
-  for (const f of before) priorKeys.add(f.id + '|' + f.detail);
+  for (const f of before) priorKeys.add(keyOf(f));
 }
 
 await browser.close();
@@ -372,15 +391,15 @@ if (SINCE && !priorRan) {
    defect, not four, and printing it four times buries the other three. */
 const seen = new Map();
 for (const f of findings) {
-  const key = f.id + '|' + f.detail;
+  const key = keyOf(f);
   /* Twelve tiles with the same defect are ONE defect. Without this the
      where-list repeats "390px picker" a dozen times and the line is
      unreadable — which is its own way of hiding a finding. */
   if (seen.has(key)) { const g = seen.get(key); if (!g.at.includes(f.where)) g.at.push(f.where); }
-  else seen.set(key, { id: f.id, detail: f.detail, at: [f.where] });
+  else seen.set(key, { id: f.id, key: f.key, detail: f.detail, at: [f.where] });
 }
 const all = [...seen.values()];
-for (const r of all) r.carried = priorKeys.has(r.id + '|' + r.detail);
+for (const r of all) r.carried = priorKeys.has(keyOf(r));
 const fresh   = all.filter(r => !r.carried);
 const carried = all.filter(r => r.carried);
 

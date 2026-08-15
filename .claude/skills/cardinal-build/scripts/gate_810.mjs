@@ -69,6 +69,18 @@ const JOBS = [
     selections:{ roof:{ id:'oc2', name:'Black Sable', sub:'OC Designer', hex:'#26282B', prompt:'p', negative:'' } },
     render_path:null, preview_path:null, masks:null, error:null,
     created_at:'2026-08-14T22:20:00Z', duration_ms:null, claimed_at:null },
+  /* A job the Spark has been holding for nine minutes. Theo hit this on
+     15 Aug — "the render has been at running stage for several minutes" —
+     and the screen had no sentence for it: stalled() only ever looked at
+     QUEUED jobs. The real render took 12m13s and came back correct.
+     claimed_at is COMPUTED, never hardcoded: a fixed timestamp silently
+     stops meaning "nine minutes ago" the day after it is written. */
+  { id:'j-running', project_id:'p1', status:'running', source_path:'visualizer/src/import.jpg',
+    selections:{ roof:{ id:'oc2', name:'Black Sable', sub:'OC Designer', hex:'#26282B', prompt:'p', negative:'' },
+                 siding:{ id:'m1', name:'Harbor Blue', sub:'Mastic Quest', hex:'#5C7186', prompt:'p', negative:'' } },
+    render_path:null, preview_path:null, masks:null, error:null,
+    created_at:new Date(Date.now() - 9.5 * 60000).toISOString(), duration_ms:null,
+    claimed_at:new Date(Date.now() - 9 * 60000).toISOString() },
 ];
 const RENDERS = [
   { id:'r1', job_id:'j-done', project_id:'p1', title:'Onyx Black', source_path:'projects/p1/front.jpg',
@@ -604,6 +616,44 @@ if (!(await has('#vzSrcCC')) || !(await has('#vzCCBox')) || !(await has('#vzCCGr
   const fired = await page.evaluate(`window.__calls.filter(c=>c.op==='insert'&&c.table==='design_jobs').length`);
   chk('clicking Render on an imported photograph queues a job',
       fired > before, before + ' -> ' + fired + ' | ' + await page.evaluate(`document.getElementById('vzSum').textContent`));
+
+  /* ── 820: a RUNNING job says how long it has been running ────────────
+     The render was never the problem — the screen was silent. A card showed
+     the creation DATE while a job was in the machine, which answers a
+     question nobody asks; the only question is "is this still going?" */
+  await page.evaluate(`(()=>{ const s=document.getElementById('vzProject');
+    s.value='p1'; s.dispatchEvent(new Event('change')); })()`);
+  await page.waitForTimeout(600);
+  const runCard = await page.evaluate(`(()=>{
+    const c=[...document.querySelectorAll('#vzJobs .rcard')]
+      .find(x=>x.dataset.job==='j-running');
+    if(!c) return { missing:true };
+    return { cap: c.querySelector('.cap i') ? c.querySelector('.cap i').textContent : '',
+             chip: c.querySelector('.st') ? c.querySelector('.st').textContent : '' };
+  })()`);
+  chk('820: the running job renders a card at all (not a vacuous pass)',
+      !runCard.missing, JSON.stringify(runCard));
+  chk('820: a running card shows ELAPSED time, not the creation date',
+      /^\d+m \d+s$|^\d+s$/.test((runCard.cap || '').trim()), 'cap = "' + runCard.cap + '"');
+  chk('820: and it reads about nine minutes, so it is a real clock not a constant',
+      /^9m /.test((runCard.cap || '').trim()), runCard.cap);
+
+  const banner = await page.evaluate(`(()=>{ const w=document.getElementById('vzWait');
+    return { hidden: w.classList.contains('hide'), text: w.textContent.trim() }; })()`);
+  /* ⚠ The first version of this asserted only `hidden === false` and PASSED —
+     on the 808 QUEUED banner, which was showing for a different job entirely.
+     A visible banner is not a banner about the right thing. Assert the
+     sentence, not the visibility. */
+  chk('820: the wait banner speaks for a long-RUNNING job, not the queued one',
+      banner.hidden === false && /rendering/i.test(banner.text),
+      banner.hidden ? 'banner hidden with a 9-minute render in flight' : banner.text.slice(0, 90));
+  chk('820: it says how many minutes rather than a vague "still working"',
+      /\b9 minutes in\b/.test(banner.text), banner.text.slice(0, 90));
+  /* ⚠ It must NOT call this a failure. A cold Spark reloads three models
+     before it draws a pixel; the longest real render was 12m13s and correct.
+     Telling someone their good render looks stuck is worse than silence. */
+  chk('820: and it does NOT call a long render stuck, failed or broken',
+      !/stuck|fail|broken|error/i.test(banner.text), banner.text.slice(0, 90));
 
   /* ── 818: the stage has to agree with the button ───────────────────────
      Theo: "Now the render button does not function." It functioned perfectly.

@@ -3122,10 +3122,20 @@ prompt leads with colour and takes the first sentence only.
 
 #### Still open after 818 — in the order they will bite
 
-1. **No stale-claim recovery.** A job claimed by a worker that dies stays `running` **forever** —
-   one sat at 426s on a ~35s render. A `claimed_at` older than N minutes should return the row to
-   `queued`. This is the one to build before a customer is ever in the room, because the screen
-   currently has no way to say "that one is never coming back".
+1. **No stale-claim recovery.** A job claimed by a worker that dies stays `running` **forever**.
+   A `claimed_at` older than N minutes should return the row to `queued`.
+
+   ⚠️ **Pick N from the measured ceiling, not from the average, and the measurement changed on
+   15 Aug.** A real render took **12m 13s** (732.8s) and came back **correct** — the first one
+   applying siding, and the first from a CompanyCam import. Comparable warm renders take 30–190s.
+   The gap is almost certainly a cold ComfyUI reloading FLUX, Florence2 and SAM 2 before it draws
+   anything, and it is not a fault. **A five-minute reclaim would have killed a good render and
+   silently charged the Spark for a second one.** Whatever N is, it must sit well above 12 minutes,
+   and the reclaim should say what it did rather than quietly re-queueing.
+
+   Build 820 removed the urgency without fixing the underlying gap: a running job now shows a live
+   elapsed clock and the banner explains that a long render is normal, so nobody is left guessing.
+   The row can still be stranded forever if the worker dies — that part is still open.
 2. **Siding has never once been applied by a render.** Every render so far is roof-only. The
    pipeline is wired for it and the catalog carries the brands; nobody has proved a siding mask
    comes back correct on a real house.

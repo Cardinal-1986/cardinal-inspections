@@ -49,7 +49,19 @@ window.supabase = {
       { id:'j2', project_id:'p1', status:'queued', source_path:'projects/p1/front.jpg',
         selections:{ roof:{ id:'oc2', name:'Black Sable', sub:'OC Designer', hex:'#26282B', prompt:'p', negative:'' } },
         render_path:null, preview_path:null, masks:null, error:null,
-        created_at:'2026-08-14T22:20:00Z', duration_ms:null, claimed_at:null }
+        created_at:'2026-08-14T22:20:00Z', duration_ms:null, claimed_at:null },
+      /* A job that has been RUNNING a long time. Claimed nine minutes ago and
+         still going — the state Theo hit on 15 Aug, which the screen had no
+         sentence for. claimed_at is computed so the fixture never goes stale;
+         a hardcoded timestamp would silently stop being "nine minutes" the
+         day after it was written. */
+      { id:'j3', project_id:'p1', status:'running', source_path:'visualizer/src/import.jpg',
+        selections:{ roof:{ id:'oc3', name:'Evergreen Mist', sub:'OC Duration', hex:'#4A5B4F', prompt:'p', negative:'' },
+                     siding:{ id:'m2', name:'Colonial White', sub:'CertainTeed Cedar Impressions', hex:'#E8E4DA', prompt:'p', negative:'' } },
+        render_path:null, preview_path:null, masks:null, error:null,
+        created_at:new Date(Date.now() - 9.5 * 60000).toISOString(),
+        duration_ms:null,
+        claimed_at:new Date(Date.now() - 9 * 60000).toISOString() }
     ];
     var RENDERS = [
       { id:'r1', job_id:'j1', project_id:'p1', title:'Onyx Black',
