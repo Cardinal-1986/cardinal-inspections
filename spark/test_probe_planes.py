@@ -141,6 +141,19 @@ ok("the gap between planes is untouched", mid == (48, 48, 48), repr(mid))
 ok("there are enough distinct tints for a busy elevation", len(set(P.TINTS)) >= 6,
    str(len(set(P.TINTS))))
 
+# ── fit_for_flux returns THREE values ────────────────────────────────────
+# Called with one target it raises "a bytes-like object is required, not
+# 'tuple'" several lines later, pointing at Image.open rather than at the
+# guess. Asserted against the SHIPPED worker, so a change to its return shape
+# breaks this rather than the probe on Theo's box.
+_p = png(lambda im: rect(im, 0, 0, 99, 99))
+_r = P.W.fit_for_flux(_p)
+ok("fit_for_flux returns (png, was, now)",
+   isinstance(_r, tuple) and len(_r) == 3, "len=%s" % (len(_r) if isinstance(_r, tuple) else "?"))
+ok("its first element is the image bytes", isinstance(_r[0], (bytes, bytearray)))
+ok("and the probe unpacks all three",
+   "fitted, was, now = W.fit_for_flux(raw)" in (HERE / "probe_planes.py").read_text())
+
 # ── --job must never filter a UUID column with `like` ────────────────────
 # Confirmed against the real database:
 #   ERROR 42883: operator does not exist: uuid ~~ unknown
@@ -207,4 +220,4 @@ if fails:
     for f in fails:
         print("  - " + f)
     sys.exit(1)
-print("\ntest_probe_planes — all 27 checks pass")
+print("\ntest_probe_planes — all 30 checks pass")

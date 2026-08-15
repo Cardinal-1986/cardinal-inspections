@@ -272,10 +272,19 @@ def main():
     # The worker fits every image before segmenting, so the probe must too —
     # segmenting a 4000px frame the pipeline never sees would answer a
     # question nobody asked.
-    fitted = W.fit_for_flux(raw)
+    # ⚠ THREE values, not one: (png, (was_w, was_h), (now_w, now_h)).
+    # Taking only the first gives `TypeError: a bytes-like object is required,
+    # not 'tuple'` several lines later, which points at Image.open rather than
+    # at the real mistake — reading a function's docstring instead of guessing
+    # its return shape.
+    fitted, was, now = W.fit_for_flux(raw)
     photo = Image.open(io.BytesIO(fitted)).convert("RGB")
     frame = photo.size
-    log("photograph: %dx%d" % frame)
+    # Say the working size out loud. Every mask below is generated at THIS
+    # size, and a coverage percentage means nothing without the frame it is a
+    # percentage of.
+    log("photograph: %dx%d%s" % (frame[0], frame[1],
+        "" if was == now else "  (source was %dx%d)" % was))
 
     outdir = OUT_ROOT / re.sub(r"[^A-Za-z0-9_.-]", "_", label)
     outdir.mkdir(parents=True, exist_ok=True)
