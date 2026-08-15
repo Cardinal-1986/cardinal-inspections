@@ -34,6 +34,31 @@ const src = fs.readFileSync(FILE, 'utf8');
 let pass = 0, fail = 0; const bad = [];
 const ok = (n, c, d) => { if (c) { pass++; return; } fail++; bad.push(n + (d ? '  — ' + d : '')); };
 
+// ── every button the markup draws must be wired ──────────────────────────
+// 825 shipped #vzFind with no listener. The button drew, "Find surfaces" did
+// nothing, and the picker behind it — everything else in this file — was
+// reachable only by calling openRegions() directly, which is exactly what
+// this harness does. So the harness passed on a feature nobody could open.
+// Same shape as the Studio Archive button, BUG_CLASSES 16.
+//
+// Scoped to buttons OUTSIDE a form: a submit button is wired by its form's
+// submit handler, and flagging those is a false red — vzGo and vzCCgo are
+// the reason the rule is not simply "every button".
+{
+  const unwired = [];
+  const re = /<button\b[^>]*\bid="(vz[A-Za-z0-9]+)"[^>]*>/g;
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    const id = m[1];
+    const before = src.slice(0, m.index);
+    if (before.lastIndexOf('<form') > before.lastIndexOf('</form>')) continue;
+    if (new RegExp("\\$\\('" + id + "'\\)\\.(addEventListener\\(|on\\w+\\s*=)").test(src)) continue;
+    unwired.push(id);
+  }
+  ok('every button outside a form has a listener', unwired.length === 0,
+     'nothing listens to: ' + unwired.join(', '));
+}
+
 function grab(name) {
   const at = src.indexOf('function ' + name + '(');
   if (at < 0) return null;

@@ -16975,3 +16975,38 @@ three ways. `gate_822` 24/24, `gate_823` 52/52, `render_found` 27/27.
 has labelled a real house with it, and **`Sam2AutoSegmentation` has never run on this box** —
 whether it returns usable planes at `points_per_side` 16 is the open question this build
 exists to answer.
+
+## build 826 — 15 Aug 2026 — the button that opened the picker was never wired
+
+`visualizer/index.html` (825 → 826) · `scripts/render_regions.mjs`.
+
+Theo: *"no option for use these"* — the label on `#vzRegOK`, the button that closes the
+picker and hands the labels to Render. He could not reach it, because he could not reach
+the picker: **`#vzFind` shipped at 825 with no listener.** The markup drew "Find surfaces",
+`findSurfaces()` was defined 1,600 lines below it, and nothing connected the two. Tapping
+it did nothing at all — no error, no toast, no queued row.
+
+The database corroborates it rather than my reading of the code: `findSurfaces()` is the
+only writer of a `selections._regions` row, and **there has never been one**. The feature
+had not merely gone unused, it had never once been reachable.
+
+This is BUG_CLASSES 16 — a control that renders but is never wired — and it is the second
+time on this project. The first was Studio's Archive button, dead from 614 to 632. My
+regression, shipped yesterday.
+
+**Why 29 green assertions missed it.** `render_regions.mjs` extracts the picker's functions
+and calls `openRegions()` **directly**, which is the right way to test hit-testing and
+compositing without a Spark. It is also a way to test a screen the user cannot open. The
+harness entered through the back door and never checked the front one.
+
+**The gate now sweeps the markup.** Every `<button id="vz…">` **outside a form** must appear
+in an `addEventListener(` call. Scoped to outside-a-form on purpose: `vzGo` and `vzCCgo` are
+submit buttons wired by their form's handler, and flagging those is a false red — the rule
+is not "every button" for a measured reason. 30/30 on 826, **RED on 825 naming `vzFind`**,
+so it is a gate that has been seen to fail.
+
+`gate_822` 24/24, `gate_823` 52/52, `render_found` 27/27 — unchanged.
+
+**Still not verified by eye.** `Sam2AutoSegmentation` has never run on that box. Whether it
+returns usable planes at `points_per_side` 16 is the same open question 825 was built to
+answer, and it stayed open a day longer than it needed to.
