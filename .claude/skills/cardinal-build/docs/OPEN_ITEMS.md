@@ -3201,3 +3201,49 @@ or CompanyCam. The altered-evidence fence is untouched.
 **Still true from before and unchanged:** no stale-claim recovery on the Spark side; ~60 unreferenced
 files in `photos/visualizer/` awaiting a sweep; the 12m13s render ceiling is contaminated by three
 concurrent workers on one GPU and the clean recolour baseline is ~14s.
+
+---
+
+## The colour catalog — `hex_verified` finally means something (15 Aug 2026)
+
+**Settled by Theo, 15 Aug, and it is the right split:** *"With siding I believe
+using gemeni's is good enough. I agree with you on the shingles tho."*
+
+The two fail differently, which is why one is loaded and one is not:
+
+- **Siding is extruded vinyl** — one flat pigment. A named colour is a single
+  colour and an estimate lands close. **Mastic Carvedwood is loaded: 24 colours,
+  `hex_verified = false`.**
+- **Shingles are a granule BLEND** — twenty stone colours averaged by the eye at
+  twenty feet. The two available sources disagree by up to **47 of 255**
+  (Driftwood `#8A8578` vs `#5E564D`), and Aged Copper is **green in one and
+  brown in the other** (`#5E6B5C` vs `#524C44`). That is not calibration drift,
+  it is a disagreement about what colour the thing is. **No shingle hex changes
+  without a photograph of the physical board.**
+
+**The measurement that makes this the priority:** the render pipeline lands the
+requested hex at **drift 2–4 of 255**. The catalog disagrees with itself by up
+to 47. **The catalog has been the dominant error term for some time — by roughly
+10–20×.** Any further tuning of tint, denoise or prompt is spent on the smaller
+half of the problem.
+
+`hex_verified` existed on both `materials` and `oc_colors` and was **false on all
+97 rows** — it had never meant anything. It means this now:
+
+| | |
+|---|---|
+| `false` | estimated. Good enough to browse and to render a concept. |
+| `true` | **sampled off the physical chip.** Do not set it for anything that was not. |
+
+**Open:** photograph the OC shingle board flat, in daylight, no flash — the only
+thing that resolves the four disagreements above. Nothing else in the pipeline is
+waiting on anything.
+
+⚠️ **Availability is not asserted by the catalog.** It holds a palette, not an
+order sheet. Which colours a given profile can actually be ordered in is a
+supplier question.
+
+⚠️ **Three colour names now exist in two Mastic lines with different hexes** —
+Rugged Canyon, Pebblestone Clay, Montana Suede (~33–45 apart). Deliberate:
+overwriting the originals would silently change a colour that may already sit
+behind a saved render, and `design_renders` does not record which hex built it.
