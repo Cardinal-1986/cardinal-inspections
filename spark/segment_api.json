@@ -205,7 +205,7 @@
   },
   "30": {
     "inputs": {
-      "text_input": "window",
+      "text_input": "windows",
       "task": "caption_to_phrase_grounding",
       "fill_mask": true,
       "keep_model_loaded": true,

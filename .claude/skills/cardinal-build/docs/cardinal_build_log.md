@@ -16873,3 +16873,32 @@ vs 12.8%, nothing to gain.
 **Not verified by eye.** The roof mask is proven on ONE photograph. Windows and gutters
 have the flag on the strength of reasoning, not a sheet — run the probe on them before
 trusting either.
+
+---
+
+## wb-2026-08-15.6 — 15 Aug 2026 — windows, plural
+
+**Files:** `spark/segment_api.json` (one word) · `spark/visualizer_worker.py` (`.5` → `.6`).
+
+`find windows` grounds on **`"windows"`**, not `"window"`. Sheet-backed, same standard
+as the roof:
+
+| phrase | flag | windows found |
+|---|---|---:|
+| `window` | merged | **1** — 0.1–0.2% of frame |
+| `window` | split | **3** — 0.5% |
+| **`windows`** | **split** | **4** — 0.6%, reaching the right gable window |
+
+**The singular wraps ONE CLUSTER.** Its box stopped at x=690; the plural runs to x=760.
+SAM 2 was always doing its job inside the box it was handed — **the box was the limit**,
+which is the same shape as the roof's `"roof"` finding only the garage band, and the same
+reason `individual_objects` alone could never fix either.
+
+**The flag change shipped at `.5` on reasoning is now backed by a picture** — merged finds
+one window, split finds three, same phrase.
+
+**Still incomplete and left there:** the first-floor windows are not found. Four of five or
+six visible, at 0.6% of the frame against the roof's 3%, is not worth more rounds — and
+`gutters` still has the flag with **no sheet at all** behind it, which is the larger gap.
+
+`test_segment.py` 19/19, RED on reverting the plural.
