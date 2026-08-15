@@ -3249,6 +3249,33 @@ render scored **drift 7 / drift 3**. See `BUG_CLASSES.md` class 47.
 
    It is also cheaper than it was: the masks are already uploaded, already selected, and now
    already drawn. The remaining work is per-plane segmentation and a `review` status.
+
+   **⚠️ AND IT IS NOW BLOCKED ON A PROBE, NOT ON A DECISION.** Theo, 15 Aug:
+   *"Why can't we do the siding by walls? With clickable circles like hover does it?"* —
+   which is this item, and which the schema comment has wanted since day one.
+
+   The root cause is written in the worker already: **Florence2 grounds "house wall" as a
+   BOX and SAM 2 fills it**, so the siding mask is a filled rectangle over the elevation.
+   `exclusive()` can only claw back where a *competing* mask exists — the roof box caught
+   the garage roof and missed the gable, so nothing contested the gable and siding kept it.
+
+   `individual_objects` is **`false` on all four `Sam2Segmentation` nodes**; flipping it is
+   one edit. But it splits by **what Florence2 grounded**, not by planes, so if Florence2
+   answers with one box the flag changes nothing. **Nobody has looked.**
+
+   `spark/probe_planes.py` answers it — segmentation only, queues nothing, writes nothing,
+   runs both ways and counts, and leaves a `_SHEET.png` per surface with each plane tinted
+   and numbered. Run it before building any UI:
+
+       /home/cardinal2023/ComfyUI/venv/bin/python3 probe_planes.py --job 80ebeb54
+
+   If every surface comes back as one object, try `--phrase siding="wall section"` before
+   concluding anything — and if no phrase splits it, tap-a-plane needs a different
+   segmenter rather than a different flag, which is a much larger decision.
+
+   ⚠️ **`segment()` takes `images[0]` only.** The moment the flag is flipped for real, the
+   worker silently keeps the first mask and discards the rest. That is a one-line change and
+   it must land in the same commit as the flag.
 4. ~~**Evergreen Mist's swatch hex is probably wrong**~~ — **CLOSED 15 Aug.** Sampled from the 2026
    Color of the Year sheet and applied to production; the whole line followed from OC's own data
    sheets. **The one live half of this item survives and still catches people:** the tray freezes
