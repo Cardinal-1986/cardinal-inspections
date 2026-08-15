@@ -141,6 +141,64 @@ ok("the gap between planes is untouched", mid == (48, 48, 48), repr(mid))
 ok("there are enough distinct tints for a busy elevation", len(set(P.TINTS)) >= 6,
    str(len(set(P.TINTS))))
 
+# ── --upload composes a URL a browser can actually open ──────────────────
+# The storage API returns a PATH ("/object/sign/photos/…?token=…"), not a URL.
+# Returning it bare gives a link that 404s with no clue why — and the only
+# place that would surface is Theo's browser at 3am. Mocked end to end so the
+# composition is verified rather than assumed.
+class _FakeResp:
+    def __init__(self, payload): self._p = payload
+    def raise_for_status(self): pass
+    def json(self): return self._p
+
+class _FakeRequests:
+    def __init__(self, payload): self.payload = payload; self.calls = []
+    def post(self, url, **kw):
+        self.calls.append((url, kw))
+        return _FakeResp(self.payload)
+
+import types
+_up_png = png(lambda im: rect(im, 0, 0, 99, 99))
+with tempfile.TemporaryDirectory() as td:
+    _f = Path(td) / "sheet.png"
+    _f.write_bytes(_up_png)
+
+    _fake = _FakeRequests({"signedURL": "/object/sign/photos/visualizer/probe/x/sheet.png?token=abc"})
+    _sent = {}
+    _real_upload = P.W.storage_upload
+    P.W.storage_upload = lambda path, data, ct="image/jpeg": _sent.update(
+        path=path, n=len(data), ct=ct) or path
+    _real_url, _real_key = P.W.SUPABASE_URL, P.W.SERVICE_KEY
+    P.W.SUPABASE_URL, P.W.SERVICE_KEY = "https://ref.supabase.co", "svc"
+    sys.modules["requests"] = types.SimpleNamespace(post=_fake.post)
+    try:
+        url = P.upload_sheet(_f, "visualizer/probe/x/sheet.png")
+    finally:
+        P.W.storage_upload = _real_upload
+        P.W.SUPABASE_URL, P.W.SERVICE_KEY = _real_url, _real_key
+        sys.modules.pop("requests", None)
+
+    ok("the signed link is absolute, not a bare path",
+       url.startswith("https://ref.supabase.co/storage/v1/object/sign/"), url)
+    ok("it keeps the token", "token=abc" in url, url)
+    ok("no doubled /storage/v1", url.count("/storage/v1") == 1, url)
+    ok("the sheet bytes were actually uploaded", _sent.get("n") == len(_up_png),
+       repr(_sent))
+    ok("uploaded as a PNG, not the default jpeg", _sent.get("ct") == "image/png",
+       repr(_sent.get("ct")))
+    ok("it lands under visualizer/probe/ so the sweeper cleans it",
+       _sent.get("path", "").startswith("visualizer/probe/"), repr(_sent.get("path")))
+
+ok("--upload is opt-in, not the default",
+   "upload = False" in (HERE / "probe_planes.py").read_text(),
+   "a probe that writes by default is not a probe")
+ok("missing credentials are caught BEFORE the GPU runs",
+   "--upload needs real credentials" in (HERE / "probe_planes.py").read_text(),
+   "finding out after two model loads is a bad way to find out")
+ok("an upload failure does not lose the run",
+   "upload failed for" in (HERE / "probe_planes.py").read_text(),
+   "the counts are already printed and the sheet is already on disk")
+
 # ── fit_for_flux returns THREE values ────────────────────────────────────
 # Called with one target it raises "a bytes-like object is required, not
 # 'tuple'" several lines later, pointing at Image.open rather than at the
@@ -220,4 +278,4 @@ if fails:
     for f in fails:
         print("  - " + f)
     sys.exit(1)
-print("\ntest_probe_planes — all 30 checks pass")
+print("\ntest_probe_planes — all 39 checks pass")

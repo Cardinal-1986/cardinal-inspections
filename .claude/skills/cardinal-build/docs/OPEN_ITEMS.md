@@ -3269,9 +3269,34 @@ render scored **drift 7 / drift 3**. See `BUG_CLASSES.md` class 47.
 
        /home/cardinal2023/ComfyUI/venv/bin/python3 probe_planes.py --job 80ebeb54
 
-   If every surface comes back as one object, try `--phrase siding="wall section"` before
-   concluding anything — and if no phrase splits it, tap-a-plane needs a different
-   segmenter rather than a different flag, which is a much larger decision.
+   **✅ IT RAN, 15 Aug, on job 80ebeb54 (1280x720 working frame). The flag is not the
+   answer.** Every surface came back as ONE object, merged and split alike — Florence2
+   grounds each phrase as a single box, so `individual_objects` has nothing to split.
+   Three builds of tap-a-plane UI avoided by ten minutes of probe.
+
+   **The bigger finding is that the ROOF is barely being found at all**, and that is the
+   actual cause of the bad render, not a greedy siding mask:
+
+   | phrase | coverage | box (y) | what it actually found |
+   |---|---:|---|---|
+   | `roof` | 2.0% | 199–289 | the garage band only |
+   | `roof of a house` | 12.6% | 117–428 | **the whole building** — byte-identical box to `house wall` |
+   | `shingles` | 3.1% split / 1.2% merged | 117–289 | reaches the gable — best so far |
+
+   `exclusive()` already subtracts roof from siding and did; the gable rendered as siding
+   because, as far as the pipeline knew, the gable WAS siding. Nothing contested it.
+
+   ⚠️ **The flag IS phrase-dependent** — worth correcting, because it was written off after
+   one test. With `roof` it changes nothing; with `shingles` it takes 1.2% to 3.1%.
+
+   ⚠️ **Coverage % cannot tell a good mask from a bad one** — `roof of a house` scored 6x
+   better than `roof` and found the whole house. That is BUG_CLASSES 47 again, one level
+   out: a number that counts pixels cannot say WHICH pixels. Judge on the sheet.
+
+   **If no phrase lands it, the answer is a different segmenter, not a different word** —
+   SAM 2's automatic mode (no text prompt, segment every region, let a person tap the
+   ones that are roof) removes Florence2 from plane selection entirely and is much closer
+   to what Theo described. Bigger change; the version that actually works.
 
    ⚠️ **`segment()` takes `images[0]` only.** The moment the flag is flipped for real, the
    worker silently keeps the first mask and discards the rest. That is a one-line change and
