@@ -16516,3 +16516,138 @@ trusting.
   return to `queued`, and that wants building before a customer ever sees this. **~60 unreferenced
   files (~20 MB)** sit under `photos/visualizer/`; `spark/sweep_visualizer.py` is merged and has not
   been run.
+
+- **Spark, 15 Aug — the swatch reaches the pixels.** Theo, on a render of Evergreen Mist roof +
+Charcoal Gray siding: *"Wrong color on both."* The roof came back tan; the siding came back a
+generic grey. **Nothing was broken.** The masks were real (22 KB / 26 KB / 18 KB PNGs, not empty),
+the apply loop paired each mask with its own prompt, and the prompts frozen onto the job named both
+colours correctly — `muted green with grey and earthy undertones … Evergreen Mist` at `#6E7A69`, and
+`dark charcoal vinyl lap siding, 4.5 inch exposure` at `#4E5154`.
+
+  **The cause is `denoise = 1` with `noise_mask = True`.** That regenerates the masked region FROM
+  PURE NOISE — nothing of the original survives inside the mask — so the *only* thing steering
+  colour is the text. FLUX.1 Fill dev is distilled and runs at **cfg 1**, where colour words are
+  weakly enforced, and it falls back on whatever is most likely: tan for asphalt shingle, grey for
+  siding. **The pipeline was never reading the swatch.**
+
+  ⚠️ **And this is why the early renders hid it.** Onyx Black and Black Sable are near-black —
+  simultaneously the commonest shingle colour in the training data AND a strongly represented word.
+  The pipeline agreed with the swatch *by luck*, on three consecutive jobs, and every one of them
+  read as proof the colour path worked. A muted sage green is neither common nor strongly worded,
+  and it is the first colour that could ever have exposed this. **Three green results in a row are
+  not a test if they all sit on the easy side of the distribution.**
+
+  The fix is **`tint()`** — a luminance-preserving recolour of the masked region toward the
+  selection's own hex, run BEFORE the diffusion pass, plus **`denoise` dropped to 0.82** so the tint
+  survives it. **Both halves are required**: tinting at denoise 1 is thrown away, and lowering
+  denoise without tinting merely preserves the ORIGINAL colour, which is the tan roof we started
+  with. Luminance-preserving rather than a flat fill because a flat fill destroys the plane shading,
+  the tree shadow and the course lines — everything that makes a render believable; keeping L and
+  replacing a/b changes the colour and nothing else. `TINT_STRENGTH` and `FLUX_DENOISE` are both env
+  vars, because the right values are a matter of taste on real photographs.
+
+  `gate_tint.py`: **19/19 green, RED on the previous worker** (which has no `tint()` at all — and it
+  REPORTS that rather than crashing, BUG_CLASSES 37). It proves the arithmetic: a tan roof
+  `rgb(140,118,86)` becomes `rgb(113,125,108)` against a swatch of `rgb(110,122,105)`; the lawn
+  outside the mask does not move by a single value; the tree shadow keeps its depth ratio at 0.45
+  before and after; a 3-digit hex is expanded rather than silently ignored; and a missing or
+  malformed swatch never throws, because a job that dies on a bad colour is worse than one that
+  renders in the wrong one. ⚠️ **It does NOT prove the render looks right — only the Spark runs
+  FLUX, and only Theo's eyes settle whether 0.82 is the right amount of denoise.**
+
+- **Spark, 15 Aug (late) — the audit, on Theo's direct instruction.** *"Can you please audit this
+project and make this work as intended instead of doing experiments."* Fair, and the audit found
+the process failure before the code failures: **three rounds were lost in one night to the question
+"which code rendered this job?"** — a curl-copied file, a stale checkout and a leftover foreground
+worker all look identical from outside (a done row, a wrong picture). Both the 03:32 and 03:38
+renders — the invented door, the changed windows, the warped gutters — were the OLD diffusion
+worker; `achieved` null and the 76s FLUX-shaped duration prove it. Nothing shipped tonight had run
+on the Spark yet when those were judged.
+
+  **Fixes out of the audit, one pass:** (1) **provenance** — `WORKER_BUILD` is stamped into
+  `achieved._worker` on every job, unconditionally, and announced in the startup line, so "which
+  code ran this" is a query, never an argument; (2) **resolution** — recolour mode was still
+  downscaling the photograph to 1280px, a loss inherited from the FLUX path for no reason;
+  segmentation now runs on the fitted copy while the render keeps every pixel the photo arrived
+  with (`tint()`/`measure()` already scale masks to the image they are given); (3) `gate_tint.py`
+  grew an `order()` helper because an ordering check written with bare `src.index()` CRASHES on an
+  older worker instead of reporting red — BUG_CLASSES 37, hit twice in this one gate.
+
+  **The intended product, stated once:** recolour IS the product — the customer's own photograph
+  with the chosen colours, exact by construction, incapable of inventing doors or warping lines.
+  Diffusion (`RENDER_MODE=restyle`) is opt-in for material changes only. The remaining known gap is
+  the **gutter mask** (needs a `CARDINAL_MASK_GUTTERS` chain built by eye in ComfyUI on the Spark —
+  §5d) and **mask precision generally**, which only renders on real photographs can judge.
+  `gate_tint.py` 56/56 green, RED 5 (reported, not crashed) on the pre-audit worker.
+
+---
+
+### 822 — the Visualizer gets a second engine, and `api/design.js` comes back (15 Aug 2026)
+
+**Theo, on being shown a Gemini render of a real Cardinal elevation:** *"its perfect on black
+sable."* And, on an earlier one: *"I prompted Make only the shingled roof Evergreen Mist Owens
+Corning"* — with the siding coming back a different colour anyway.
+
+**What the evidence actually said.** Three Gemini presses, one prompt, three outcomes: one broke
+containment (repainted siding nobody selected), one missed the colour entirely (tan for Evergreen
+Mist), one gave a standing-seam porch deck brown architectural shingles. Against that, the Spark
+landed the OC hex at **drift 2–4 of 255** on four consecutive jobs, measured on the delivered
+pixels, and structurally cannot paint outside its mask. **Neither wins**, so neither was chosen:
+the rep picks per render.
+
+⚠️ **Black Sable cannot discriminate between the two engines and must not be cited as if it can.**
+Near-black is nearly impossible to get wrong; the Spark scored drift 2 on it too. The colours that
+separate them are the chromatics — Evergreen Mist, Driftwood, Sedona Canyon.
+
+- **`api/design.js` recovered from `e5cec82^`, not rewritten.** The prime doctrine paying out: the
+  retired route already had the model ladder (`gemini-3.1-flash-image` → `2.5-flash-image`), the
+  `inline_data`/`inlineData` casing split, `responseModalities`, the session gate and a `probe`
+  mode. Retiring it at 807 was the wrong call — Gemini got good in between.
+- **The prompt now ENUMERATES.** "Change nothing that is not listed" does not hold. Every surface
+  in the vocabulary the caller did not select is named ("keep the wall cladding and its exact
+  existing colour"), and the list flips per request. Six `ALWAYS_HOLD` clauses, each one a thing
+  that actually happened: metal roofs are locked even when the roof IS changing; framing, crop and
+  aspect are locked because a re-composed render cannot be composited through a mask.
+  `temperature: 0.2` — a fidelity job, not a creative one.
+- ⚠️ **A pre-existing retry bug, found by reading it.** The ladder's comment described behaviour the
+  code did not have: `continue` advanced the CONFIG loop, so a 503 slept and retried with a
+  *different* request, and a 503 on the bare pass was never retried at all.
+- **`design_jobs.engine`** (`design_jobs_engine.sql`, **applied**). The fence is the point —
+  `claim_design_job()` filters on `engine`, so the Spark and the browser cannot race to write the
+  same `render_path`. Adding the column without the filter would be worse than no column.
+  `requeue_stale` **fails** a stale Gemini job rather than requeuing it: a tab that closed is not
+  coming back.
+- **The browser answers a Gemini job**, because `/api/design` gates on the caller's own session.
+  Same two storage paths the worker writes, so the gallery never learns there are two engines.
+  `visualizer_objects_write` already allowed it (authenticated + `is_staff()` on `visualizer/%`).
+- **`stalled()` counts SPARK jobs only.** That banner hands over the command to wake the Spark —
+  a lie about a job no worker will ever claim.
+- **No `achieved` on a Gemini render.** It takes words, not a hex; absent is honest, an invented
+  drift is not.
+
+**Gates.** `gate_design.mjs` 27/27 through one mocked global `fetch` so the shipped handler runs
+unmodified — RED 16/27 on the pre-fix file. ⚠️ Note the 503 case: *"exactly 2 presses" PASSES on the
+old code*, because it did press twice — with a different config. Only asserting the two configs are
+identical catches it. `gate_822.mjs` 24/24, with `stalled()` and `changesFor()` **extracted from the
+file by brace-matching and executed** rather than re-implemented — RED 6/19 on the previous file.
+The load-bearing pair is "a stale gemini job must not stall" **and** "a stale spark job still must",
+because the second is what catches a filter written the wrong way round.
+
+⚠️ **Two faults the gates caught in themselves first.** Stubbing `Date` as an object literal left it
+without a constructor. And "no fabricated drift" matched the **comment** beside the code explaining
+why there is no drift — the comment-pollution trap from `CLAUDE.md`, inside the gate written to
+enforce it. `drift` is prose; `drift:` is a written property.
+
+**Also shipped: `scripts/align_check.py`** — ALIGNED / SHIFTED / RECOMPOSED plus a geometry verdict,
+for deciding whether a generated render can be composited back through our masks. `--selftest` runs
+six pairs, **four of which must come back bad**. It found three faults in itself: a median residual
+over every unmasked pixel read **0.00** on a 14%-zoomed re-crop (flat fills agree with themselves at
+any zoom and outnumber the detail); `gradient >= median` is not a filter when most of the frame is
+flat, because the median is then 0 and `>= 0` is everything; and early returns never set
+`geometry_ok`, which the test read with a default of `True`.
+
+**Not verified by eye.** The Gemini path has never run against the real key — whether the deployed
+`GEMINI_API_KEY` has image models at all is what `POST {"probe":true}` exists to answer. And the
+enumerated hold list narrows the containment failure; it does not close it. **A prompt is a request,
+not a constraint** — the mask is what makes it a constraint, and that is the composite, still
+unbuilt and still waiting on an alignment number.

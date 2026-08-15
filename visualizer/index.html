@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 818
+  v2026-08-15 build 822
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -59,6 +59,12 @@
   --vz-bg:#08090B; --vz-panel:#111318; --vz-card:#171A21; --vz-line:#252932;
   --vz-ink:#F2F4F8; --vz-dim:#A8B0BF; --vz-mute:#767E8D;
   --vz-red:#C8202E; --vz-go:#3FA46A; --vz-warn:#D98324; --vz-sel:#5B9DD9;
+  /* Cardinal red is a 3.51:1 ink on this ground — fine for a badge or a
+     filled button, under the 4.5:1 floor for anything you have to READ.
+     --vz-red-lt is the same red lifted to 5.67:1, and it is not invented:
+     it is the value PR #8 migrated the old gold to, so it is a colour this
+     company already uses. Fills and rules keep --vz-red; TEXT takes this. */
+  --vz-red-lt:#E35C63;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -118,7 +124,7 @@ h2.sec:first-child{margin-top:6px}
    only names what is missing leaves the rep nowhere to go; this one offers the
    way out inline. */
 .lnk{background:none;border:0;padding:0;font:inherit;cursor:pointer;
-  color:var(--vz-red,#C8202E);text-decoration:underline;text-underline-offset:2px}
+  color:var(--vz-red-lt,#E35C63);text-decoration:underline;text-underline-offset:2px}
 .lnk:hover{color:#fff}
 
 /* ---------- photo strip ---------- */
@@ -208,8 +214,18 @@ h2.sec:first-child{margin-top:6px}
 .cmp .handle::after{content:'';position:absolute;top:50%;left:50%;width:42px;height:42px;
   margin:-21px 0 0 -21px;border-radius:50%;background:#fff;
   box-shadow:0 2px 10px #0009}
-.cmp input[type=range]{position:absolute;left:0;right:0;bottom:0;width:100%;height:56px;
-  margin:0;opacity:0;cursor:ew-resize}
+/* The wipe control covers the WHOLE photograph, not a strip along the bottom.
+   Theo, 15 Aug: "Where my cursor at and below is the only spot I can expand
+   the photo out." It was a 56px band pinned to bottom:0 — everywhere else in
+   the image was dead, and nothing on screen said so. A control you have to
+   find by hunting is barely a control.
+
+   Still a real <input type=range>, just transparent and full-size: dragging
+   anywhere maps X to the wipe for free, and it keeps the keyboard arrows and
+   the accessible name that a hand-rolled pointer handler would have thrown
+   away. */
+.cmp input[type=range]{position:absolute;inset:0;width:100%;height:100%;
+  margin:0;opacity:0;cursor:ew-resize;touch-action:none}
 .cmp .tagl,.cmp .tagr{position:absolute;top:12px;padding:4px 10px;border-radius:999px;
   font-size:11.5px;font-weight:700;letter-spacing:.5px;background:#000000B0}
 .cmp .tagl{left:12px}
@@ -328,6 +344,19 @@ body.vz-prep main{max-width:none;padding:0}
   linear-gradient(135deg,transparent 42%,rgba(255,255,255,.26) 47%,transparent 53%)}
 .crow .sw{width:54px;height:40px;border-radius:7px;flex:none;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),inset 0 -6px 12px rgba(0,0,0,.22)}
+
+/* 822: the engine picker. Two flat pills, the live one filled — the same
+   shape as .chips above so it reads as a choice, not a setting. 44px tall
+   because 592 settled that every control here is thumb-sized. */
+.engrow{border-top:1px solid var(--vz-line,#252932);background:rgba(0,0,0,.25);
+  padding:9px 12px 0;display:flex;gap:6px}
+.engrow .eng{flex:1;min-height:36px;padding:0 10px;font:inherit;font-size:12px;
+  cursor:pointer;border-radius:8px;
+  border:1px solid var(--vz-line2,#333A46);background:transparent;
+  color:var(--vz-mute,#767E8D)}
+.engrow .eng.on{border-color:var(--vz-go,#3FA46A);color:var(--vz-ink,#E7EBF2);
+  background:rgba(63,164,106,.14)}
+.engrow .eng:focus-visible{outline:2px solid var(--vz-go,#3FA46A);outline-offset:2px}
 
 .tray{border-top:1px solid var(--vz-line,#252932);background:rgba(0,0,0,.25);
   padding:10px 12px;display:flex;gap:10px;align-items:center}
@@ -467,7 +496,11 @@ body.vz-prep main{max-width:none;padding:0}
   border-radius:9px 9px 0 0;background:#12161B}
 .rcard .cap{padding:6px 8px 8px}
 .rcard .cap b{display:block;font-size:11px;font-weight:600;line-height:1.3}
-.rcard .cap i{font-style:normal;font-size:10px;color:var(--vz-mute,#767E8D)}
+/* --vz-mute is 4.26:1 on this card — under the 4.5 floor for 10px text,
+   and this line carries the duration, the date and the live elapsed
+   clock, all of which someone actually reads. --vz-dim is 7.98:1. The
+   sentinel found this; nobody had noticed it in six builds. */
+.rcard .cap i{font-style:normal;font-size:10px;color:var(--vz-dim,#A8B0BF)}
 .rcard .st{position:absolute;left:6px;top:6px;font-size:9px;letter-spacing:.07em;
   text-transform:uppercase;font-weight:800;padding:2px 6px;border-radius:5px;
   background:rgba(0,0,0,.62);color:#7FD39B}
@@ -570,6 +603,14 @@ body.vz-prep main{max-width:none;padding:0}
             <div class="chips" id="vzProfiles" role="group" aria-label="Profile"></div>
           </div>
           <div class="list" id="vzList"><div class="empty">Pick a job above.</div></div>
+          <!-- 822: which renderer. Two engines, good at opposite things, and
+               the rep picks per render — see the engine block in the script. -->
+          <div class="engrow" id="vzEngine" role="radiogroup" aria-label="Which renderer">
+            <button type="button" class="eng on" data-engine="spark"
+                    role="radio" aria-checked="true">Exact colour</button>
+            <button type="button" class="eng" data-engine="gemini"
+                    role="radio" aria-checked="false">Sharper</button>
+          </div>
           <div class="tray">
             <div class="tchips" id="vzTray"></div>
             <button class="btn go" id="vzQueue" disabled>Render</button>
@@ -1487,6 +1528,201 @@ function sum(){
     : (chosenShot.caption || 'Ready.');
 }
 
+/* ── which renderer (822) ──────────────────────────────────────────────────
+   Two engines, and neither one wins. Proven on real Cardinal photographs on
+   15 Aug, which is why this is a choice and not a setting somebody tuned:
+
+     spark   segment, then recolour in LAB inside the mask. Landed the Owens
+             Corning hex to within 2-4 of 255 on four consecutive jobs,
+             measured on the delivered pixels. It CANNOT paint a surface that
+             is not in the mask, so it cannot repaint siding you did not pick.
+             Free — it is Theo's own box. Weakness: the segmenter can miss a
+             roof plane, and then that plane keeps its old colour.
+
+     gemini  one image-to-image press through /api/design. Sharper, ~2s, and
+             it never "misses a plane" because it never segments. Weakness is
+             the opposite and is NOT fixable from here: asked for the roof
+             alone it returned different siding, once gave a standing-seam
+             porch deck brown architectural shingles, and produced a mint
+             roof, a tan roof and a re-framed scene from one prompt. The
+             enumerated DO-NOT-TOUCH list in api/design.js narrows that. It
+             does not close it — a prompt is a request, not a constraint.
+
+   Spark is the default deliberately: a render that is the wrong colour is
+   obviously wrong and gets thrown away, and a render that quietly repainted
+   the customer's siding is the one that reaches a kitchen table. */
+var engine = 'spark';
+
+var ENGINE_NOTE = {
+  spark:  'Exact colour — the photograph keeps its own geometry, and nothing ' +
+          'outside the surfaces you picked can change. Runs on the Spark.',
+  gemini: 'Sharper and faster, but it can repaint things you did not pick — ' +
+          'check the whole house before you show it.'
+};
+
+$('vzEngine').addEventListener('click', function(e){
+  var b = e.target.closest('.eng');
+  if(!b || b.dataset.engine === engine) return;
+  engine = b.dataset.engine;
+  Array.prototype.forEach.call(this.querySelectorAll('.eng'), function(x){
+    var on = x.dataset.engine === engine;
+    x.classList.toggle('on', on);
+    x.setAttribute('aria-checked', on ? 'true' : 'false');
+  });
+  $('vzSum').textContent = ENGINE_NOTE[engine];
+});
+
+/* Gemini takes WORDS, not a hex — that is the whole difference. Give it the
+   product name and the line as well as the prompt, because "Evergreen Mist"
+   with "Owens Corning TruDefinition Duration" beside it lands far closer than
+   the colour word alone. api/design.js trims each to 300 characters. */
+function changesFor(sel){
+  var out = {};
+  Object.keys(sel || {}).forEach(function(k){
+    var o = sel[k]; if(!o) return;
+    out[k] = [o.name, o.sub].filter(Boolean).join(' — ') +
+             (o.prompt ? '. ' + o.prompt : '');
+  });
+  return out;
+}
+
+/* Vercel refuses a body much past 4.5 MB and base64 inflates by ~37%, so a
+   5712x4284 drone frame cannot go up untouched. 1600px on the long edge is
+   comfortably more than the model returns anyway. */
+var API_MAX_EDGE = 1600;
+
+function shrinkToB64(blob){
+  return new Promise(function(resolve, reject){
+    var url = URL.createObjectURL(blob);
+    var im = new Image();
+    im.onload = function(){
+      var w = im.naturalWidth, h = im.naturalHeight;
+      var s = Math.min(1, API_MAX_EDGE / Math.max(w, h));
+      var c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(w * s));
+      c.height = Math.max(1, Math.round(h * s));
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(function(out){
+        if(!out){ reject(new Error('could not re-encode the photograph')); return; }
+        var fr = new FileReader();
+        fr.onload = function(){
+          resolve({ b64: String(fr.result).split(',')[1] || '', w: c.width, h: c.height });
+        };
+        fr.onerror = function(){ reject(new Error('could not read the photograph')); };
+        fr.readAsDataURL(out);
+      }, 'image/jpeg', 0.9);
+    };
+    im.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('the photograph would not open')); };
+    im.src = url;
+  });
+}
+
+function b64ToBlob(b64, mime){
+  var bin = atob(b64 || '');
+  var arr = new Uint8Array(bin.length);
+  for(var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime || 'image/png' });
+}
+
+/* Re-encode the answer to JPEG at two sizes, the same two the worker writes,
+   so the gallery and the lightbox do not care which engine made a render.
+   One pipeline per concept. */
+function jpegAt(blob, maxEdge, q){
+  return new Promise(function(resolve, reject){
+    var url = URL.createObjectURL(blob);
+    var im = new Image();
+    im.onload = function(){
+      var s = Math.min(1, maxEdge / Math.max(im.naturalWidth, im.naturalHeight));
+      var c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(im.naturalWidth * s));
+      c.height = Math.max(1, Math.round(im.naturalHeight * s));
+      c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      c.toBlob(function(o){ o ? resolve(o) : reject(new Error('re-encode failed')); },
+               'image/jpeg', q);
+    };
+    im.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('the render would not open')); };
+    im.src = url;
+  });
+}
+
+/* A Gemini job is answered HERE, by the browser that queued it, because
+   /api/design gates on the caller's own session. The Spark never sees it —
+   claim_design_job() filters on engine, which is the fence that stops the
+   worker and this function racing to write the same render_path.
+
+   Every exit writes a terminal status. A row left at 'running' is the thing
+   that had Theo watching a spinner at 3am, and requeue_stale would only fail
+   it half an hour later. */
+function runGemini(job){
+  var t0 = Date.now();
+  var patch = function(fields){
+    return sb.from('design_jobs').update(fields).eq('id', job.id).select().maybeSingle();
+  };
+
+  return patch({ status:'running', claimed_by:'browser', claimed_at:new Date().toISOString() })
+    .then(function(){ $('vzSum').textContent = 'Rendering…'; refresh(); })
+    .then(function(){ return sb.storage.from(BUCKET).download(job.source_path); })
+    .then(function(r){
+      if(r.error || !r.data) throw new Error('could not read the photograph from storage');
+      return shrinkToB64(r.data);
+    })
+    .then(function(src){
+      return sb.auth.getSession().then(function(s){
+        var tok = s && s.data && s.data.session && s.data.session.access_token;
+        if(!tok) throw new Error('Sign in again');
+        return fetch('/api/design', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json', Authorization:'Bearer ' + tok },
+          body: JSON.stringify({ image: src.b64, mime:'image/jpeg',
+                                 changes: changesFor(job.selections) })
+        });
+      });
+    })
+    .then(function(res){
+      return res.json().catch(function(){ return {}; }).then(function(j){
+        /* The route hands back the model's own words when it declines. Pass
+           them through — "failed" alone sends you hunting for a bug that is
+           not there. */
+        if(!res.ok) throw new Error(j.error || ('The renderer refused that (' + res.status + ')'));
+        if(!j.image) throw new Error(j.error || 'The model returned no image');
+        return j;
+      });
+    })
+    .then(function(j){
+      var full = b64ToBlob(j.image, j.mime);
+      return Promise.all([ jpegAt(full, 2400, 0.9), jpegAt(full, 640, 0.8) ])
+        .then(function(two){
+          var rp = 'visualizer/' + job.id + '/render.jpg';
+          var pp = 'visualizer/' + job.id + '/preview.jpg';
+          return Promise.all([
+            sb.storage.from(BUCKET).upload(rp, two[0], { contentType:'image/jpeg', upsert:true }),
+            sb.storage.from(BUCKET).upload(pp, two[1], { contentType:'image/jpeg', upsert:true })
+          ]).then(function(up){
+            if(up[0].error) throw new Error(up[0].error.message || 'could not store the render');
+            return patch({
+              status:'done', render_path:rp, preview_path:pp,
+              finished_at:new Date().toISOString(),
+              duration_ms: Date.now() - t0, error:null,
+              /* No `achieved`. Gemini takes words, not a hex, so there is no
+                 requested colour to measure against and a number here would
+                 be invented. Absent is honest; a fabricated drift is not. */
+              achieved: { _engine: 'gemini', _model: j.via || null }
+            });
+          });
+        });
+    })
+    .then(function(){ $('vzSum').textContent = 'Done.'; refresh(); })
+    .catch(function(err){
+      var msg = String(err && err.message || err);
+      return patch({ status:'failed', error: msg,
+                     finished_at:new Date().toISOString(),
+                     duration_ms: Date.now() - t0 })
+        .then(function(){ $('vzSum').textContent = 'Could not render it — ' + msg; refresh(); });
+    });
+}
+
 var queueing = false;    /* an insert is in flight — see sum() */
 $('vzQueue').addEventListener('click', function(){
   if(queueing) return;
@@ -1535,6 +1771,9 @@ $('vzQueue').addEventListener('click', function(){
     project_id: $('vzProject').value,   /* never null — guarded above */
     source_path: chosenShot.storage_path,
     selections: sel,
+    engine: engine,           /* 822 — spark or gemini; the check constraint
+                                 refuses anything else, so a stale client
+                                 cannot queue a job nothing can answer */
     created_by: me            /* RLS refuses the insert if this is not me */
   }).select().maybeSingle().then(function(r){
     queueing = false;
@@ -1548,6 +1787,16 @@ $('vzQueue').addEventListener('click', function(){
        A lock on the button alone does not fix it — the insert can return
        faster than a person clicks. The list has to know. */
     if(r.data) jobs.unshift(r.data);
+    /* 822: a Gemini job has no queue to wait in — this browser answers it,
+       starting now. Only the Spark's jobs get the "picked up on its next
+       poll" sentence, because only they are waiting for a poll. */
+    if(engine === 'gemini'){
+      $('vzSum').textContent = 'Rendering…';
+      drawJobs(); sum();
+      if(r.data) runGemini(r.data);
+      else { $('vzSum').textContent = 'Queued, but the row came back empty — reload and check the list.'; refresh(); }
+      return;
+    }
     $('vzSum').textContent = 'Queued. The Spark picks it up on its next poll.';
     drawJobs(); sum();
     refresh();
@@ -1569,7 +1818,9 @@ function refresh(){
          say "queued", which is what sent Theo to ask me. */
       /* masks and project_id ride along for 810: delete removes the mask files
          too, and Render-again re-inserts against the same project. */
-      .select('id,project_id,status,source_path,selections,render_path,preview_path,masks,error,created_at,duration_ms,claimed_at')
+      /* 822: `engine` rides along — stalled() must not count a Gemini job as
+         evidence the Spark is asleep, and the card says which one made it. */
+      .select('id,project_id,status,source_path,selections,render_path,preview_path,masks,error,created_at,duration_ms,claimed_at,engine')
       .eq('project_id', pid).order('created_at', { ascending:false }).limit(60),
     sb.from('design_renders')
       .select('id,job_id,title,source_path,render_path,preview_path,selections,approved,created_at')
@@ -1591,7 +1842,15 @@ function refresh(){
    database, so the screen has to tell them. */
 var WAIT_MS = 3 * 60 * 1000;
 function stalled(){
-  var queued = jobs.filter(function(j){ return j.status === 'queued'; });
+  /* 822: SPARK jobs only. This whole banner says "the render machine may be
+     asleep, here is how to wake it" — and that sentence is flatly untrue of a
+     Gemini job, which no worker ever claims by design (claim_design_job()
+     filters on engine). Counting one here would send Theo to ssh into the
+     Spark over a job the Spark is right to ignore. Rows written before the
+     engine column default to spark, which is what they were. */
+  var queued = jobs.filter(function(j){
+    return j.status === 'queued' && (j.engine || 'spark') === 'spark';
+  });
   if(!queued.length) return null;
   var oldest = Infinity;
   queued.forEach(function(j){
@@ -1604,8 +1863,41 @@ function stalled(){
   var seen = jobs.map(function(j){ return j.claimed_at; }).filter(Boolean).sort().pop();
   return { seen: seen || null, n: queued.length };
 }
+/* A job that has been RUNNING a long time is a third case, and until 820 the
+   screen had no sentence for it at all — stalled() only ever looked at queued
+   jobs, so a render twelve minutes into the machine produced silence.
+
+   It is deliberately NOT called a failure. It usually is not one: a cold Spark
+   reloads three models before it draws a pixel, and the longest real render
+   here took 12m13s and came back correct. Saying "this looks stuck" would have
+   been wrong, and wrong in the direction that makes someone cancel good work. */
+function running(){
+  var live = jobs.filter(function(j){ return j.status === 'running' && j.claimed_at; });
+  if(!live.length) return null;
+  var oldest = live.map(function(j){ return new Date(j.claimed_at).getTime(); })
+                   .sort(function(a, b){ return a - b; })[0];
+  var ms = Date.now() - oldest;
+  return ms < RUN_SLOW_MS ? null : { ms: ms, n: live.length };
+}
 function drawWait(){
-  var el = $('vzWait'), s = stalled();
+  var el = $('vzWait'), s = stalled(), r = running();
+  /* ⚠ A RUNNING job OUTRANKS a stalled queue, and getting this the wrong way
+     round shipped a sentence that was flatly untrue. The queued banner says
+     the render machine "may be asleep" — and a job in flight is proof it is
+     awake. With the old precedence, a rep watching a render actually being
+     made was told the machine might not be listening.
+
+     A queue behind a live render is not a stall. It is a queue. */
+  if(r){
+    el.className = 'wait';
+    el.innerHTML = '<b>Still rendering — ' + Math.floor(r.ms / 60000) + ' minutes in.</b> ' +
+      'This is long but not wrong. Most renders finish in under two minutes; the ' +
+      'first one after the Spark has been sitting idle takes far longer, because ' +
+      'ComfyUI reloads the models before it draws anything. The longest real ' +
+      'render so far was 12 minutes and it came back correct. Leave it — nothing ' +
+      'is lost, and the picture appears here the moment it lands.';
+    return;
+  }
   if(!s){ el.className = 'wait hide'; el.innerHTML = ''; return; }
   el.className = 'wait';
   el.innerHTML = s.seen
@@ -1625,12 +1917,34 @@ function drawWait(){
 function schedule(){
   if(poll){ clearTimeout(poll); poll = null; }
   var busy = jobs.some(function(j){ return j.status === 'queued' || j.status === 'running'; });
-  if(busy) poll = setTimeout(refresh, stalled() ? 30000 : 6000);
+  /* A running job keeps the 6s poll even once a QUEUED one has been declared
+     stalled — the 30s back-off exists for a queue nobody is serving, and a job
+     actually in the machine is the opposite of that. It also keeps the elapsed
+     clock on the card moving, which is the whole point of showing it. */
+  var live = jobs.some(function(j){ return j.status === 'running'; });
+  if(busy) poll = setTimeout(refresh, (stalled() && !live) ? 30000 : 6000);
 }
 function titleOf(sel){
   return SURFACES.filter(function(s){ return sel && sel[s.key]; })
     .map(function(s){ return sel[s.key].name; }).join(' · ') || 'No materials';
 }
+/* How long a job has been in the machine's hands. claimed_at, not created_at:
+   the wait before a worker picks it up is a different problem with a different
+   answer, and 808 already covers that one. */
+function elapsed(claimed){
+  if(!claimed) return 'starting…';
+  var s = Math.max(0, Math.round((Date.now() - new Date(claimed).getTime()) / 1000));
+  return s < 90 ? s + 's' : Math.floor(s / 60) + 'm ' + (s % 60) + 's';
+}
+
+/* What a render actually costs, measured — not guessed. Across every finished
+   job: one surface ~30-40s, two ~40-190s, and the first render after the
+   Spark has been idle a while runs LONG because ComfyUI reloads FLUX, Florence2
+   and SAM 2 from disk. One real job took 12m13s on a cold box and came back
+   perfect. So the screen must not call twelve minutes a failure — it must say
+   what is normal and let the number speak. */
+var RUN_SLOW_MS = 4 * 60 * 1000;
+
 function drawJobs(){
   var host = $('vzJobs');
   if(!jobs.length){ host.innerHTML = '<div class="empty">Nothing yet.</div>'; return; }
@@ -1649,8 +1963,18 @@ function drawJobs(){
     open.appendChild(im);
     var cap = document.createElement('div');
     cap.className = 'cap';
+    /* A RUNNING job shows how long it has been running. It used to show the
+       creation date, which is not an answer to the only question anyone asks
+       of a spinning job: is this still going, or is it stuck?
+
+       Theo, 15 Aug: "The render has been at running stage for several
+       minutes." It had — twelve of them — and it finished perfectly. The
+       render was fine; the SCREEN had nothing to say. 808 gave a queued job
+       an explanation and left a running one with none. */
     cap.innerHTML = '<b>' + esc(titleOf(j.selections)) + '</b><i>' +
-      (j.duration_ms ? (j.duration_ms / 1000).toFixed(0) + 's' : new Date(j.created_at).toLocaleDateString()) +
+      (j.status === 'running' ? elapsed(j.claimed_at)
+        : j.duration_ms ? (j.duration_ms / 1000).toFixed(0) + 's'
+        : new Date(j.created_at).toLocaleDateString()) +
       (rend && rend.approved ? ' · approved' : '') + '</i>' +
       (j.error ? '<div class="err">' + esc(j.error) + '</div>' : '');
     open.appendChild(cap);
@@ -1853,23 +2177,16 @@ document.addEventListener('keydown', function(e){
   if(e.key === 'ArrowRight'){ e.preventDefault(); step(1); }
 });
 
-/* Swipe, because this is used on a tablet. Horizontal only, and well past the
-   slop of a vertical scroll or a wipe drag, so it cannot fire by accident. */
-(function(){
-  var x0 = null, y0 = null;
-  var cmp = $('vzCmp');
-  cmp.addEventListener('touchstart', function(e){
-    if(e.touches.length !== 1){ x0 = null; return; }
-    x0 = e.touches[0].clientX; y0 = e.touches[0].clientY;
-  }, { passive:true });
-  cmp.addEventListener('touchend', function(e){
-    if(x0 === null || !e.changedTouches.length) return;
-    var dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
-    x0 = null;
-    if(Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    step(dx < 0 ? 1 : -1);
-  }, { passive:true });
-})();
+/* The swipe-to-step gesture is GONE, deliberately, and this comment is here
+   so it is not helpfully restored.
+
+   It stepped to the next render on a horizontal swipe. Now that the wipe
+   covers the whole photograph, a horizontal drag has to mean ONE thing, and
+   on a compare view it means wipe — that is the entire point of the screen.
+   Two meanings for one gesture is a coin toss the user has to win.
+
+   Stepping did not lose anything: the ‹ › buttons that Theo actually asked
+   for at 812 are still there, on screen, and the arrow keys still work. */
 function wipe(pct){
   $('vzAfter').style.width = pct + '%';
   $('vzHandle').style.left = pct + '%';

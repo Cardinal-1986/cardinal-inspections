@@ -142,12 +142,131 @@ pip install requests websocket-client pillow
 python3 spark/visualizer_worker.py
 ```
 
+⚠️ **`python3` here must be the SAME interpreter you installed those three
+into, and on this box it is not the system one.** Found 15 Aug: the workers
+had been started from shells with the ComfyUI virtualenv active, so a later
+`python3 spark/visualizer_worker.py` from a fresh shell died on
+`Missing dependency: websocket` — while three workers were happily running.
+Check before assuming:
+
+```bash
+~/ComfyUI/venv/bin/python -c "import websocket, requests, PIL; print('all present')"
+```
+
+If that prints, use that interpreter (and put its full path in the systemd
+unit below, NOT `/usr/bin/python3`). If it does not, install into system
+Python — recent Debian/Ubuntu marks it externally managed, hence the fallback:
+
+```bash
+pip install --user requests websocket-client pillow \
+  || pip install --break-system-packages requests websocket-client pillow
+```
+
 Expected on a healthy idle box:
 
 ```
-[09:14:02] worker spark-dayton → http://127.0.0.1:8188
+[09:14:02] worker spark-dayton [wb-2026-08-15.3 · recolour] → http://127.0.0.1:8188 (lock /tmp/cardinal_visualizer.lock)
 [09:14:02] queue empty — waiting
 ```
+
+⚠️ **The bracketed tag is the worker's build and mode, and it is also written
+into every job it renders** (`achieved->>'_worker'` on `design_jobs`). Three
+rounds were lost on 15 Aug to the question "which code rendered this?" — a
+curl-copied file, a stale checkout and a leftover foreground process all look
+identical from outside. Now it is one query:
+
+```sql
+select achieved->>'_worker' from design_jobs order by created_at desc limit 1;
+-- null                       -> a worker from before 15 Aug ran it
+-- "wb-2026-08-15.3 recolour" -> this build, this mode
+```
+
+## 5b. ⚠ ONE worker per GPU — the failure that hides in plain sight
+
+**Found on the Spark 15 Aug: three workers had been polling the same queue
+since the previous evening.** Nothing was corrupted and no job rendered twice
+— `claim_job()` uses `FOR UPDATE SKIP LOCKED`, so they take *different* jobs.
+That is exactly why it survived a full day. What they actually did was run
+FLUX **concurrently on one GPU**, loading 24 GB of weights two and three times
+over and thrashing VRAM. A render that takes 30–190s warm took **12m13s**.
+
+**A clean database and a badly wrong wall clock is what this looks like from
+the outside.** Nothing in the rows says anything is wrong.
+
+The worker now takes a `flock` at startup and **refuses to run** if another
+holds it, printing what to do. `flock` rather than a PID file because the
+kernel releases it when the process dies — a crash or a reboot leaves no stale
+lock to clear.
+
+```bash
+ps aux | grep [v]isualizer_worker     # how many are really up?
+pkill -f visualizer_worker.py         # stop them all, then start ONE
+```
+
+A second GPU is a real reason to run two. Give it its own lock:
+
+```bash
+VISUALIZER_LOCK=/tmp/cardinal_visualizer_gpu1.lock python3 spark/visualizer_worker.py
+```
+
+## 5c. Recolour vs restyle — and why the default is recolour
+
+Theo, 15 Aug, on a render of a house whose siding had just been installed:
+*"The original siding one looks great but when rendered it looks warped and
+wouldn't sell a job."*
+
+He was right, and it was not a tuning problem. **That photograph already had
+everything a render needs** — straight lap lines, correct perspective, real
+shadows under every course. The only thing being asked for was a different
+colour. Sending it through a diffusion model redrew all of it from scratch,
+and a model redrawing a large angled plane of horizontal lines makes them
+wander. **We destroyed geometry we had no reason to touch.**
+
+| `RENDER_MODE` | what it does | when |
+|---|---|---|
+| **`recolour`** (default) | the mask region is recoloured to the swatch, keeping the photograph's own texture, shading and edges | **a colour change** — which is nearly always. Exact colour, ~2s, and it looks photographic because it *is* the photograph |
+| `restyle` | recolour, then FLUX redraws the surface | the **material** changes: lap → board-and-batten, 3-tab → dimensional architectural, or a surface too damaged to recolour |
+
+```bash
+RENDER_MODE=restyle python3 spark/visualizer_worker.py
+```
+
+## 5d. ⚠ The gutter, and what is NOT fixed
+
+*"It also painted the gutter."*
+
+The siding mask is grounded on the phrase **`house wall`** (`segment_api.json`,
+node 20). Florence2 returns a **box** around the whole elevation and SAM 2
+fills it — so the gutter along its top edge, the trim and the windows all end
+up inside the siding mask.
+
+`exclusive()` in the worker now subtracts the more specific surfaces from the
+larger ones, so **windows and trim are no longer painted as siding** — that
+was happening already and had gone unnoticed, because a window tinted toward a
+siding colour just looks like a reflection.
+
+✅ **The gutter chain now exists** — nodes **40–44**, grounded on the phrase
+`rain gutter`, titled `CARDINAL_MASK_GUTTERS`. It was written straight into
+the JSON: **the graph is data, and a Florence2 → SAM 2 → MaskToImage →
+SaveImage chain is four nodes with named inputs.** No ComfyUI session was
+needed, the same way the `batch=true` fix was not.
+
+Because `DETAIL_WINS` already ranks gutters above siding and roof,
+`exclusive()` subtracts them from both the moment the mask appears — so the
+gutter stops taking the wall colour whether or not gutters were selected.
+
+⚠️ **A hand-built chain is exactly the thing to verify rather than trust**, so
+`gate_graphs.py` walks every `CARDINAL_MASK_*` node back through
+MaskToImage → Sam2Segmentation → Florence2toCoordinates → Florence2Run to
+`CARDINAL_SEG_IMAGE`, and a mutant that re-points one `bboxes` link at a
+non-existent node is caught. Without that walk, a chain wired to nothing would
+still have passed the title check — and the worker would have uploaded a mask
+computed from no photograph at all.
+
+**Still Theo's eyes, not a gate:** whether Florence2 actually finds a thin
+gutter line on a real elevation. If it misses, the phrase is one string in
+node 40 — `gutter`, `roof gutter`, `eavestrough` are all worth trying, and the
+mask lands in `~/ComfyUI/output/cardinal/mask_gutters_*.png` to look at.
 
 ## 6. Run it as a service
 
@@ -161,7 +280,7 @@ After=network-online.target
 Type=simple
 User=YOUR_USER
 WorkingDirectory=/home/YOUR_USER/cardinal-inspections/spark
-ExecStart=/usr/bin/python3 visualizer_worker.py
+ExecStart=/usr/bin/python3 visualizer_worker.py   # ⚠ see 5 — use the interpreter that HAS the deps
 Restart=always
 RestartSec=10
 

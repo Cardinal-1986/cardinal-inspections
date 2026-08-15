@@ -3122,13 +3122,37 @@ prompt leads with colour and takes the first sentence only.
 
 #### Still open after 818 — in the order they will bite
 
-1. **No stale-claim recovery.** A job claimed by a worker that dies stays `running` **forever** —
-   one sat at 426s on a ~35s render. A `claimed_at` older than N minutes should return the row to
-   `queued`. This is the one to build before a customer is ever in the room, because the screen
-   currently has no way to say "that one is never coming back".
-2. **Siding has never once been applied by a render.** Every render so far is roof-only. The
-   pipeline is wired for it and the catalog carries the brands; nobody has proved a siding mask
-   comes back correct on a real house.
+1. **No stale-claim recovery.** A job claimed by a worker that dies stays `running` **forever**.
+   A `claimed_at` older than N minutes should return the row to `queued`.
+
+   ⚠️ **Pick N from a measured ceiling — and the 12m13s figure recorded here earlier is NOT one.**
+   That render did take 732.8s and come back correct, but an hour later the Spark turned out to
+   have had **three workers** polling the same queue since the previous evening, running FLUX
+   concurrently on one GPU. I had attributed the 12 minutes to a cold ComfyUI reloading three
+   models; GPU contention is at least as likely and probably more so. **It is not a clean
+   measurement of anything.** Re-take it with one worker running before sizing any timeout on it.
+
+   What still holds regardless: comparable warm renders are 30–190s, a first render after real
+   idle IS genuinely slower, and **a five-minute reclaim could kill a good render and silently
+   charge the Spark for a second one.** The reclaim must also say what it did rather than quietly
+   re-queueing.
+
+   Build 820 removed the urgency without fixing the underlying gap: a running job now shows a live
+   elapsed clock and the banner explains that a long render is normal, so nobody is left guessing.
+   The row can still be stranded forever if the worker dies — that part is still open.
+2. ~~**Siding has never once been applied by a render.**~~ **Struck 15 Aug** — job `88ebd369`
+   applied roof AND siding, from a CompanyCam import, in one render. It also surfaced the colour
+   bug below, which is what a first real test is for.
+
+   **NEW, and it needs Theo's eyes on the Spark:** the swatch never reached the pixels. `denoise=1`
+   rebuilt each masked region from noise, so colour rested entirely on a prompt that a distilled
+   model at cfg 1 largely ignores — Evergreen Mist came back tan. Fixed by `tint()` (a
+   luminance-preserving recolour toward the selection's hex, before the diffusion pass) plus
+   `denoise` at 0.82. `gate_tint.py` proves the arithmetic; **it cannot prove the render looks
+   right.** Restart `visualizer_worker.py` on the Spark and press **Render again** on that job.
+   If the roof over- or under-shoots, dial it without editing code:
+   `TINT_STRENGTH=0.7 FLUX_DENOISE=0.9 python3 spark/visualizer_worker.py` — higher denoise gives
+   the model more freedom and weaker colour; higher tint strength pushes harder toward the swatch.
 3. **No render has used a CompanyCam import at full resolution.** 815 fixed the rendition order
    (it had been taking the annotated web copy); the fix is merged and unproven on a real render.
 4. **Run the sweep.** ~60 unreferenced files, ~20 MB, under `photos/visualizer/`.
@@ -3137,3 +3161,43 @@ prompt leads with colour and takes the first sentence only.
    rendered yet — do not lower it to be tidy.
 5. **Item 2 above from 807 is still open** — its own Vercel project scoped to `visualizer/`. Until
    then it is a separate *file* on the same *deployment*.
+
+---
+
+## The Visualizer's two engines (822, 15 Aug 2026) — what is open
+
+**Settled, do not re-litigate.** Neither engine wins. Spark is the exact-colour engine and cannot
+leave its mask; Gemini is the sharp one and will repaint what it likes. The rep picks per render,
+and **Spark is the default** — Theo's own framing applies: a wrong colour gets thrown away, a
+quietly repainted siding reaches a customer. Customer photographs may go to Gemini
+(Theo, 15 Aug, explicit) for **presentation only** — never claims, inspection reports, supplements
+or CompanyCam. The altered-evidence fence is untouched.
+
+**Open, in the order they matter:**
+
+1. **Nobody has rendered through the Gemini path yet.** It has never met the real key. `POST
+   {"probe":true}` to `/api/design` lists which image models the deployed `GEMINI_API_KEY` can
+   actually reach; the first real render answers it too. Until then "it works" is a claim, not a
+   fact.
+2. **The composite is unbuilt, and blocked on one number.** Compositing Gemini's pixels back through
+   our masks is what turns the DO-NOT-TOUCH list from a request into a constraint. It is only sound
+   if the render is registered with the original. `scripts/align_check.py` answers that — it needs
+   the original drone frame and one Gemini output **as files**; pasted chat images do not reach
+   disk. Verdict RECOMPOSED kills the composite; ALIGNED or SHIFTED green-lights it.
+3. **The mask-confirm step** — per-plane masks (`Sam2Segmentation.individual_objects=true`), a
+   `review` stage, tap a plane in or out, then paint. This is the Spark's only real weakness and it
+   is the fix Theo's own doctrine points at (*AI proposes, a person confirms* — The Walk). It is the
+   better spend than the composite if the alignment number comes back bad.
+4. **Evergreen Mist's swatch hex is probably wrong**, and it is Theo's to change — this session is
+   blocked from writing production data. `update oc_colors set hex = '#5D6557' where name =
+   'Evergreen Mist';` then **reload the Visualizer and re-pick the colour**, because the tray freezes
+   the hex at pick time. Only affects the Spark engine. The better version: photograph the real OC
+   swatch board in daylight and sample the whole line at once.
+5. **`comboKey()` does not include `engine`.** The same picks on the two engines read as a duplicate,
+   which only ever produces a slightly wrong warning ("Rendered before…") — a queued duplicate is
+   still correctly refused. Left alone on purpose: three call sites in a file with no test runner,
+   for a cosmetic string.
+
+**Still true from before and unchanged:** no stale-claim recovery on the Spark side; ~60 unreferenced
+files in `photos/visualizer/` awaiting a sweep; the 12m13s render ceiling is contaminated by three
+concurrent workers on one GPU and the clean recolour baseline is ~14s.

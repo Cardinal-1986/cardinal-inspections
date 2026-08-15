@@ -239,6 +239,61 @@ def check_graph_pair(seg, inp):
            and (n.get("inputs") or {}).get("individual_objects") is not False]
     chk("every Sam2Segmentation combines objects into one mask", not bad, bad)
 
+    # ── 10. …and every detected box actually REACHES SAM 2 ────────────────
+    #  ⚠ Check 9 above reasoned about precisely the right failure — "a house
+    #  with two roof planes would silently get one of them" — and guarded the
+    #  WRONG NODE. Florence2toCoordinates sits one step upstream, and with
+    #  batch=False it hands on a SINGLE bounding box no matter how many
+    #  Florence2 found. Theo, 15 Aug: "didn't render the lower roof
+    #  correctly." Both planes had been detected; only one was ever masked.
+    #  The same limit applied to siding, where a second wall plane simply went
+    #  unpainted and nobody noticed because it is usually out of frame.
+    nb = [((n.get("_meta") or {}).get("title") or nid)
+          for nid, n in seg.items()
+          if n.get("class_type") == "Florence2toCoordinates"
+          and (n.get("inputs") or {}).get("batch") is not True]
+    chk("every Florence2toCoordinates passes ALL boxes to SAM 2 (batch=true), "
+        "not just the first — this is the node that decides whether a second "
+        "roof plane exists at all", not nb, nb)
+
+    # ── 11. every mask chain is COMPLETE and reaches the source image ──────
+    #  The gutters chain (nodes 40-44) was hand-written into this JSON without
+    #  ComfyUI open. A title check alone would have passed a chain wired to
+    #  nothing: the worker would upload a mask that was never computed from the
+    #  photograph, and every gutter in every render would be masked by garbage.
+    #  So walk it — SaveImage -> MaskToImage -> Sam2Segmentation ->
+    #  Florence2toCoordinates -> Florence2Run -> CARDINAL_SEG_IMAGE — and prove
+    #  each hop lands on the class it must.
+    #  ⚠ Follow a NAMED input at each hop, never "the first link found".
+    #  Sam2Segmentation lists sam2_model BEFORE bboxes, so a first-link walker
+    #  strolls into the model loader and reports every chain broken — which is
+    #  exactly what the first version of this check did.
+    WANT = [("images", "MaskToImage"), ("mask", "Sam2Segmentation"),
+            ("bboxes", "Florence2toCoordinates"), ("data", "Florence2Run")]
+    for nid, n in sorted(seg.items()):
+        title = (n.get("_meta") or {}).get("title", "")
+        if not title.startswith("CARDINAL_MASK_"):
+            continue
+        surface, cur, trail = title[len("CARDINAL_MASK_"):].lower(), n, []
+        broken = None
+        for key, want in WANT:
+            v = (cur.get("inputs") or {}).get(key)
+            if not (isinstance(v, list) and len(v) == 2 and str(v[0]) in seg):
+                broken = "no '%s' input after %s" % (key, trail[-1] if trail else title)
+                break
+            cur = seg[str(v[0])]
+            got = cur.get("class_type")
+            trail.append("%s(%s)" % (got, v[0]))
+            if got != want:
+                broken = "expected %s via '%s', found %s" % (want, key, got); break
+        if not broken:
+            src_img = (cur.get("inputs") or {}).get("image")
+            if not (isinstance(src_img, list) and
+                    (seg.get(str(src_img[0])) or {}).get("class_type") == "LoadImage"):
+                broken = "Florence2Run does not read CARDINAL_SEG_IMAGE"
+        chk("the %s mask chain is fully wired back to the photograph" % surface,
+            not broken, broken or " -> ".join(trail))
+
 
 def main():
     control = "--control" in sys.argv
@@ -279,6 +334,14 @@ def main():
             '"individual_objects": false', '"individual_objects": true', 1), inp_raw),
         ("a resize node slipped into segmentation", seg_raw.replace(
             '"class_type": "MaskToImage"', '"class_type": "ImageScale"', 1), inp_raw),
+        # The real defect of 15 Aug: Florence2 found both roof planes, only the
+        # first reached SAM 2, and the lower roof went unpainted.
+        ("only the first detected box reaching SAM 2 (the lower roof)",
+         seg_raw.replace('"batch": true', '"batch": false', 1), inp_raw),
+        # The gutters chain was hand-written into the JSON with no ComfyUI
+        # open. A mis-wired clone is the realistic way that goes wrong.
+        ("a mask chain wired to nothing (the hand-built gutters clone)",
+         seg_raw.replace('"bboxes": [\n        "41",', '"bboxes": [\n        "99",', 1), inp_raw),
     ]
     worst = 0
     for label, s, i in mutants:

@@ -73,7 +73,7 @@ from pathlib import Path
 try:
     import requests
     import websocket                      # websocket-client
-    from PIL import Image
+    from PIL import Image, ImageChops
 except ImportError as e:                  # a missing dep should say which
     sys.exit("Missing dependency: %s\n  pip install requests websocket-client pillow" % e.name)
 
@@ -329,6 +329,32 @@ def load_graph(name):
 
 
 # ── the pipeline ──────────────────────────────────────────────────────────
+# Surfaces whose detection chain must never be able to fail a whole job.
+# ⚠ gutters was added on 15 Aug by hand-writing nodes 40-44 into
+# segment_api.json. If Florence2 finds no gutter on an elevation — and a thin
+# gutter line is far more missable than a window — an empty bbox list reaching
+# SAM 2 can raise inside ComfyUI, and that takes down the ENTIRE segmentation,
+# not just gutters. The customer then gets a failed render because of a surface
+# they did not ask about.
+OPTIONAL_MASKS = ("gutters",)
+
+
+def _drop_mask_chain(graph, surface):
+    """Remove a surface's SaveImage so ComfyUI never executes its chain.
+
+    Deleting only the output node is enough and is why this is safe: ComfyUI
+    executes backwards from outputs, so with nothing asking for that mask the
+    whole Florence2 -> SAM 2 branch simply goes unrun. No renumbering, no
+    dangling links, nothing else touched.
+    """
+    title = "CARDINAL_MASK_" + surface.upper()
+    for nid, n in list(graph.items()):
+        if (n.get("_meta") or {}).get("title") == title:
+            del graph[nid]
+            return True
+    return False
+
+
 def segment(comfy, image_png):
     """Run SAM 2 once and get a mask per surface.
 
@@ -339,7 +365,17 @@ def segment(comfy, image_png):
     name = comfy.upload_image("cardinal_seg.png", image_png)
     set_input(graph, T_SEG_IN, "image", name)
 
-    pid = comfy.run(graph, timeout=300)
+    try:
+        pid = comfy.run(graph, timeout=300)
+    except Exception as e:
+        # Retry without the optional chains before giving up. The surfaces the
+        # job actually asked for matter; a gutter it never mentioned does not.
+        dropped = [s for s in OPTIONAL_MASKS if _drop_mask_chain(graph, s)]
+        if not dropped:
+            raise
+        log("    segmentation failed (%s) — retrying without %s"
+            % (_short(e, 80), ", ".join(dropped)))
+        pid = comfy.run(graph, timeout=300)
     out = comfy.outputs(pid)
 
     masks = {}
@@ -353,6 +389,55 @@ def segment(comfy, image_png):
         if images:
             masks[surface] = comfy.fetch(images[0])
     return masks
+
+
+# Detail beats plane. Florence2 grounds "house wall" as a BOX and SAM 2 fills
+# it, so the siding mask legitimately swallows everything sitting on that wall
+# — windows, trim, and the gutter running along the top of it.
+DETAIL_WINS = ["windows", "trim", "gutters", "roof", "siding"]
+
+
+def exclusive(masks):
+    """Stop one surface's mask from covering another's.
+
+    ⚠ Theo, 15 Aug: "It also painted the gutter." The siding mask is grounded
+    on the phrase "house wall", which is a BOX around the whole elevation —
+    so SAM 2 fills in the gutter along its top edge, the trim, and the windows,
+    and all of them get painted as siding. The windows were already being
+    recoloured this way and nobody had noticed, because a window tinted toward
+    a siding colour looks like a reflection.
+
+    The masks are made independently and nothing ever reconciled them. This
+    subtracts the smaller, more specific surfaces from the larger ones, in the
+    order above: a pixel claimed by "windows" stops being siding.
+
+    It cannot invent a mask that was never made — if the segmenter found no
+    gutters in a photograph, there is nothing to subtract and the gutter stays
+    part of the wall. That case needs a gutters pass in segment_api.json and
+    it is called out in VISUALIZER_SETUP.md rather than pretended away.
+    """
+    if len(masks) < 2:
+        return masks
+    order = [s for s in DETAIL_WINS if s in masks] + \
+            [s for s in masks if s not in DETAIL_WINS]
+    out, claimed = {}, None
+    for surface in order:
+        try:
+            m = Image.open(io.BytesIO(masks[surface])).convert("L")
+        except Exception:
+            out[surface] = masks[surface]
+            continue
+        if claimed is not None:
+            if claimed.size != m.size:
+                claimed = claimed.resize(m.size, Image.LANCZOS)
+            # keep only what nothing more specific has already taken
+            m = ImageChops.subtract(m, claimed)
+        buf = io.BytesIO()
+        m.save(buf, format="PNG")
+        out[surface] = buf.getvalue()
+        claimed = m if claimed is None else ImageChops.lighter(
+            claimed.resize(m.size, Image.LANCZOS) if claimed.size != m.size else claimed, m)
+    return out
 
 
 def seed_for(job_id, surface):
@@ -374,6 +459,238 @@ def seed_for(job_id, surface):
     return int.from_bytes(h[:6], "big")   # < 2^48, well inside ComfyUI's range
 
 
+# How much of the region's colour comes from the swatch rather than from the
+# model, and how much of the original texture survives the diffusion pass.
+# Both are env-tunable because the right values are a matter of taste on real
+# photographs and only Theo's eyes can settle them.
+TINT_STRENGTH = float(os.environ.get("TINT_STRENGTH") or 0.85)
+FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
+
+# ── recolour or restyle ───────────────────────────────────────────────────
+# ⚠ THE DEFAULT IS RECOLOUR, AND THE REASON IS THE WHOLE POINT OF THE TOOL.
+#
+# Theo, 15 Aug, on a render of a house whose siding had just been installed:
+#   "the picture is of a new siding install completed. The original siding one
+#    looks great but when rendered it looks warped and wouldn't sell a job"
+#
+# He is right, and it is not a tuning problem. That photograph ALREADY has
+# everything a render needs: straight lap lines, correct perspective, real
+# shadows under every course, real reflections. The only thing being asked for
+# is a different COLOUR. Sending it through a diffusion model at denoise 0.82
+# throws all of that away and redraws it from scratch — and a model redrawing
+# a large angled plane of horizontal lines makes them wander. That is the
+# warping. We destroyed geometry we had no reason to touch.
+#
+# So: for a colour change, do not diffuse. tint() alone changes the colour and
+# keeps the photograph's own geometry, which is why it looks photographic —
+# because it IS the photograph. It is also exact (no model to pull the colour
+# back toward tan) and about forty times faster.
+#
+# Reach for the model when the MATERIAL changes, not the colour: lap siding to
+# board-and-batten, a 3-tab roof to a dimensional architectural shingle, or a
+# surface too damaged to recolour convincingly.
+#
+#   RENDER_MODE=recolour   (default)  tint only. The photograph, in the new
+#                                     colour. Fast, exact, and it sells.
+#   RENDER_MODE=restyle               tint + FLUX. Use when the material
+#                                     itself is changing.
+# ⚠ BUMP THIS ON EVERY WORKER CHANGE. Found the hard way, three times in one
+# night: a render looked wrong, and nobody could prove WHICH code produced it.
+# The Spark was variously running a curl-copied file, a stale checkout, and a
+# foreground process that predated the fix being tested — and from the outside
+# every one of those looks identical: a done row and a wrong picture.
+#
+# So the worker stamps its build and mode into achieved._worker on every job.
+# One query ends the argument:
+#   select achieved->>'_worker' from design_jobs where id = '...';
+#   null                      -> a worker from before 15 Aug ran it
+#   "wb-2026-08-15.3 recolour" -> this code, this mode
+WORKER_BUILD = "wb-2026-08-15.3"
+
+RENDER_MODE = (os.environ.get("RENDER_MODE") or "recolour").strip().lower()
+if RENDER_MODE not in ("recolour", "recolor", "restyle"):
+    RENDER_MODE = "recolour"
+RESTYLE = RENDER_MODE == "restyle"
+
+
+def _hex_rgb(h):
+    h = (h or "").strip().lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    if len(h) != 6:
+        return None
+    try:
+        return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+    except ValueError:
+        return None
+
+
+def tint(image_png, mask_png, hex_colour, strength=None):
+    """Recolour the masked region toward a swatch, KEEPING its luminance.
+
+    ────────────────────────────────────────────────────────────────────────
+    WHY THIS EXISTS — the colour has to be in the PIXELS, not only the words.
+
+    Theo, 15 Aug, on a render of Evergreen Mist roof + Charcoal Gray siding:
+    "Wrong color on both." The roof came back tan and the siding came back a
+    generic grey. Nothing was broken: the masks were real, the loop paired
+    each mask with its own prompt, and the prompts stored on the job named
+    both colours correctly.
+
+    The cause is `denoise = 1` with `noise_mask = True`. That regenerates the
+    masked region FROM PURE NOISE — nothing of the original survives inside
+    the mask — so the only thing steering colour is the text. FLUX.1 Fill dev
+    is distilled and runs at cfg 1, where colour words are weakly enforced,
+    and it falls back on whatever is most likely: tan for asphalt shingle,
+    grey for siding.
+
+    It is also why the early renders looked right and hid this. Onyx Black
+    and Black Sable are near-black — simultaneously the commonest shingle
+    colour in the training data AND a strongly represented word. A muted sage
+    green is neither. The pipeline was never reading the swatch; it was
+    agreeing with it by luck.
+
+    ────────────────────────────────────────────────────────────────────────
+    WHY THE SHADING SURVIVES, and why a flat fill will not do
+
+    Painting the region flat destroys exactly what makes a render believable:
+    the shading across a roof plane, the shadow a tree throws, the darker
+    course lines. So the region's lightness is RE-CENTRED on the swatch and
+    every pixel keeps its distance from the mean — a shaded part of the roof
+    stays shaded, in the new colour, at the new lightness.
+
+    ⚠ Keeping lightness EXACTLY, which is what the first version did, is not
+    good enough and the section on lightness below says why with numbers.
+
+    Paired with denoise below 1 the diffusion pass then re-textures the region
+    as shingle or lap siding while the hue underneath survives. Either half
+    alone fails: tinting with denoise 1 is thrown away, and lowering denoise
+    without tinting just preserves the ORIGINAL colour, which is the tan roof
+    we started with.
+    """
+    rgb = _hex_rgb(hex_colour)
+    if not rgb:
+        return image_png                      # no swatch, nothing to steer with
+    k = TINT_STRENGTH if strength is None else strength
+    k = max(0.0, min(1.0, k))
+    if k == 0.0:
+        return image_png
+
+    im = Image.open(io.BytesIO(image_png)).convert("RGB")
+    mk = Image.open(io.BytesIO(mask_png)).convert("L")
+    if mk.size != im.size:
+        mk = mk.resize(im.size, Image.LANCZOS)
+
+    # Do the recolour in LAB: keep L (all the shading), take a/b from the
+    # swatch. PIL converts through ImageCms-free "LAB" mode, which is enough
+    # here — we are matching a paint chip, not proofing for print.
+    lab   = im.convert("LAB")
+    swatch = Image.new("RGB", (1, 1), rgb).convert("LAB").getpixel((0, 0))
+    L, A, B = lab.split()
+    A2 = Image.new("L", im.size, swatch[1])
+    B2 = Image.new("L", im.size, swatch[2])
+    A = Image.blend(A, A2, k)
+    B = Image.blend(B, B2, k)
+
+    # ── lightness ────────────────────────────────────────────────────────
+    # ⚠ THE FIRST VERSION KEPT L EXACTLY, AND THAT WAS WRONG. Measured on the
+    # real render: a tan roof at L*184 tinted toward Evergreen Mist (L*127)
+    # came out rgb(168,181,162) — a PALE SAGE — against a swatch of
+    # rgb(110,122,105). The hue was right and the colour was still wrong.
+    #
+    # And the same +58 error hid on the siding. Charcoal over a blue-grey
+    # gave rgb(134,138,141) instead of rgb(78,81,84): too light, but grey
+    # against grey still READS as grey, so it looked like it worked. On a
+    # chromatic colour it does not — a washed-out sage sits right beside the
+    # model's tan attractor, and at denoise 0.82 FLUX pulls it back there.
+    # One defect, two very different appearances. Theo saw exactly that:
+    # "Siding seems working. Roof color still off."
+    #
+    # So move the lightness to the swatch, and keep only the VARIATION around
+    # it — which is what the shading, the shadows and the course lines are.
+    # Re-centre rather than flatten: every pixel keeps its distance from the
+    # region's mean, the mean itself lands on the swatch.
+    from PIL import ImageStat
+    st = ImageStat.Stat(L, mk)
+    try:
+        mean_l = st.mean[0]
+        sd_l = st.stddev[0] or 0.0
+    except (IndexError, ZeroDivisionError):
+        mean_l, sd_l = swatch[0], 0.0
+    target_l = swatch[0]
+
+    # Scale the deviations only as far as they can go without clipping. A
+    # plain shift would crush the dark end of a bright roof against 0 and
+    # take the shadow with it — losing the shading is the thing this whole
+    # function exists to avoid.
+    span = 2.5 * sd_l                       # ~99% of the region
+    contrast = 1.0
+    if span > 1e-6:
+        contrast = min(1.0, (255.0 - target_l) / span, target_l / span)
+
+    lut = []
+    for v in range(256):
+        moved = target_l + (v - mean_l) * contrast
+        lut.append(max(0, min(255, int(round(v + (moved - v) * k)))))
+    L = L.point(lut)
+
+    tinted = Image.merge("LAB", (L, A, B)).convert("RGB")
+
+    # Only inside the mask. The mask is the segmenter's own output, so its
+    # soft edges feather the recolour exactly where DifferentialDiffusion
+    # will feather the diffusion.
+    out = Image.composite(tinted, im, mk)
+    buf = io.BytesIO()
+    out.save(buf, format="PNG")
+    return buf.getvalue()
+
+
+def measure(image_png, mask_png, hex_wanted):
+    """What colour did that surface ACTUALLY come out?
+
+    ────────────────────────────────────────────────────────────────────────
+    Three times on 15 Aug a render came back the wrong colour, and the only
+    evidence anyone had was a photograph of a monitor. Every diagnosis was a
+    guess, and two were wrong before they were right — the last one because
+    ONE defect looked fine on siding and broken on roof, which is exactly the
+    kind of thing an eye cannot separate and arithmetic can.
+
+    The worker is the only place that can see both the swatch and the
+    finished pixels. So it measures, and the answer is written on the job.
+
+    What it makes possible is a DIAGNOSIS, not just a number:
+
+      drift SMALL and Theo unhappy -> the pipeline did its job. The swatch is
+                                      wrong, or the paint chip disagrees with
+                                      the eye. Do not touch the code.
+      drift LARGE                  -> the tint did not land, or FLUX pulled it
+                                      back. TINT_STRENGTH up, FLUX_DENOISE down.
+
+    Those two need opposite fixes and look identical from a screenshot.
+    """
+    want = _hex_rgb(hex_wanted)
+    if not want:
+        return None
+    try:
+        from PIL import ImageStat
+        im = Image.open(io.BytesIO(image_png)).convert("RGB")
+        mk = Image.open(io.BytesIO(mask_png)).convert("L")
+        if mk.size != im.size:
+            mk = mk.resize(im.size, Image.LANCZOS)
+        st = ImageStat.Stat(im, mk)
+        got = tuple(int(round(v)) for v in st.mean[:3])
+    except Exception as e:
+        # Measuring must never cost a render. A job that dies taking its own
+        # temperature is a worse outcome than not knowing the temperature.
+        log("    could not measure the result: %s" % _short(e))
+        return None
+    return {
+        "want": "#%02X%02X%02X" % want,
+        "got":  "#%02X%02X%02X" % got,
+        "drift": max(abs(got[i] - want[i]) for i in range(3)),
+    }
+
+
 def inpaint(comfy, image_png, mask_png, positive, negative, seed):
     graph = load_graph("inpaint_api.json")
     set_input(graph, T_IMAGE, "image", comfy.upload_image("cardinal_work.png", image_png))
@@ -381,6 +698,9 @@ def inpaint(comfy, image_png, mask_png, positive, negative, seed):
     set_input(graph, T_POSITIVE, "text", positive)
     set_input(graph, T_NEGATIVE, "text", negative or "")
     set_input(graph, T_SAMPLER, "seed", seed)
+    # Below 1 so the tint underneath survives the pass. At denoise 1 the region
+    # is rebuilt from noise and the swatch is thrown away — see tint().
+    set_input(graph, T_SAMPLER, "denoise", FLUX_DENOISE)
 
     pid = comfy.run(graph, timeout=900)
     out = comfy.outputs(pid)
@@ -458,15 +778,31 @@ def run_job(comfy, job):
 
     source = storage_download(job["source_path"])
     working = to_png(source)
-    working, was, now = fit_for_flux(working)
+    # Segmentation (and FLUX, in restyle mode) want the ~1280px band. The
+    # RENDER does not. Found in the 15 Aug audit: recolour mode was still
+    # downscaling the photograph to 1280px — a quality loss inherited from the
+    # FLUX path for no reason, since no diffusion ever runs. Now the masks are
+    # made on the fitted copy and scaled up by tint()/measure(), which both
+    # already resize a mask to the image they are given, and the photograph
+    # keeps every pixel it arrived with.
+    fitted, was, now = fit_for_flux(working)
     if was != now:
-        log("  %dx%d -> %dx%d for FLUX" % (was[0], was[1], now[0], now[1]))
+        log("  %dx%d -> %dx%d for segmentation%s"
+            % (was[0], was[1], now[0], now[1], " + FLUX" if RESTYLE else
+               " — the render keeps %dx%d" % was))
     else:
-        log("  %dx%d — already in FLUX's band" % now)
+        log("  %dx%d — already in the segmentation band" % now)
+    if RESTYLE:
+        working = fitted   # FLUX needs its band, and image must match mask
 
+    log("  mode: %s" % ("restyle — the model redraws each surface"
+                          if RESTYLE else
+                          "recolour — the photograph keeps its own geometry"))
     log("  segmenting…")
-    masks = segment(comfy, working)
+    masks = segment(comfy, fitted)
     log("  found: %s" % (", ".join(sorted(masks)) or "nothing"))
+    # Reconcile them before anything is painted — see exclusive().
+    masks = exclusive(masks)
 
     # Persist the masks: the presentation app overlays them so a rep can tap a
     # region of the house and have the sidebar jump to that surface.
@@ -478,7 +814,7 @@ def run_job(comfy, job):
     if mask_paths:
         patch_job(job_id, {"masks": mask_paths})
 
-    applied, skipped = [], []
+    applied, skipped, achieved = [], [], {}
     for surface in SURFACE_ORDER:
         sel = selections.get(surface)
         if not sel:
@@ -488,10 +824,27 @@ def run_job(comfy, job):
             # photograph — say so plainly and carry on with the rest.
             skipped.append(surface)
             continue
-        log("  inpainting %s — %s" % (surface, _short(sel.get("name") or "", 60)))
-        working = inpaint(comfy, working, masks[surface],
-                          sel.get("prompt") or "", sel.get("negative") or "",
-                          seed_for(job_id, surface))
+        log("  %s %s — %s" % ("restyling" if RESTYLE else "recolouring",
+                                surface, _short(sel.get("name") or "", 60)))
+        hexv = sel.get("hex")
+        if not hexv:
+            if not RESTYLE:
+                # Nothing to recolour WITH. Say so rather than silently doing
+                # nothing, which would look like the surface was skipped.
+                log("    no swatch hex on this selection — nothing to recolour with, skipping")
+                skipped.append(surface)
+                continue
+            log("    no swatch hex — colour rests on the prompt alone")
+        else:
+            # In recolour mode there is no diffusion pass afterwards to bring
+            # texture back, so the tint carries the whole result and goes on
+            # at full strength. In restyle mode it is a steer for the model.
+            working = tint(working, masks[surface], hexv,
+                           strength=1.0 if not RESTYLE else None)
+        if RESTYLE:
+            working = inpaint(comfy, working, masks[surface],
+                              sel.get("prompt") or "", sel.get("negative") or "",
+                              seed_for(job_id, surface))
         applied.append(surface)
 
     if not applied:
@@ -499,6 +852,20 @@ def run_job(comfy, job):
             "Nothing could be applied — the segmenter did not find %s in this photograph. "
             "Try a straighter, less obstructed shot of the elevation."
             % (", ".join(sorted(selections)) or "any selected surface"))
+
+    # The stamp goes on even when nothing could be measured — a job with a
+    # null achieved must mean "an old worker ran this", never "measure failed".
+    achieved["_worker"] = "%s %s" % (WORKER_BUILD, RENDER_MODE)
+
+    # Measure BEFORE the JPEG round trip, on the pixels the render produced.
+    for surface in applied:
+        m = measure(working, masks[surface], (selections.get(surface) or {}).get("hex"))
+        if not m:
+            continue
+        achieved[surface] = m
+        log("    %s wanted %s, got %s — drift %d%s"
+            % (surface, m["want"], m["got"], m["drift"],
+               "  ⚠ the colour did not land" if m["drift"] > 40 else ""))
 
     render_path  = "visualizer/%s/render.jpg"  % job_id
     preview_path = "visualizer/%s/preview.jpg" % job_id
@@ -511,6 +878,7 @@ def run_job(comfy, job):
     patch_job(job_id, {
         "status": "done", "render_path": render_path, "preview_path": preview_path,
         "finished_at": _now(), "duration_ms": took, "error": None,
+        "achieved": achieved or None,
     })
 
     insert_render({
@@ -521,7 +889,7 @@ def run_job(comfy, job):
         "render_path": render_path,
         "preview_path": preview_path,
         "selections": selections,
-        "via": "spark/comfyui sam2+inpaint",
+        "via": "spark %s %s" % (WORKER_BUILD, RENDER_MODE),
         # approved stays FALSE. A person looks at it before a customer does.
         "created_by": job.get("created_by"),
     })
@@ -532,9 +900,63 @@ def run_job(comfy, job):
     log(msg)
 
 
+LOCK_PATH = os.environ.get("VISUALIZER_LOCK") or "/tmp/cardinal_visualizer.lock"
+_lock_fh = None
+
+
+def take_lock():
+    """One worker per box, unless someone deliberately says otherwise.
+
+    ⚠ THIS IS NOT BELT-AND-BRACES. Found on the Spark 15 Aug: THREE workers
+    had been polling the same queue since the previous evening.
+
+    claim_job() uses FOR UPDATE SKIP LOCKED, so two workers never take the
+    SAME job — which is exactly why this went unnoticed. Nothing was corrupted
+    and no job was rendered twice. What they did instead was claim DIFFERENT
+    jobs and run FLUX concurrently on one GPU: 24 GB of weights loaded two or
+    three times over, thrashing VRAM, every render crawling. The render Theo
+    asked about took 12m13s against a warm baseline of 30-190s, and this is
+    the likeliest reason.
+
+    A correct-looking database and a badly wrong wall clock is what the
+    failure mode looks like from the outside, which is why it survived.
+
+    flock and not a PID file: the kernel drops the lock when the process
+    dies, so there is no stale lock to clear after a crash or a reboot. If a
+    second worker is genuinely wanted (a second GPU), give it its own lock
+    path: VISUALIZER_LOCK=/tmp/cardinal_visualizer_gpu1.lock
+    """
+    global _lock_fh
+    try:
+        import fcntl
+    except ImportError:                      # not POSIX — nothing to enforce
+        return True
+    _lock_fh = open(LOCK_PATH, "w")
+    try:
+        fcntl.flock(_lock_fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        log("REFUSING TO START — another worker already holds %s." % LOCK_PATH)
+        log("  Several workers on one GPU do not corrupt anything: the claim")
+        log("  is atomic, so they take different jobs. They just fight over")
+        log("  VRAM and every render crawls.")
+        log("  Running workers:")
+        log("    ps aux | grep [v]isualizer_worker")
+        log("  Stop them all, then start one:")
+        log("    pkill -f visualizer_worker.py")
+        log("  A second GPU is a real reason to run two — give it its own lock:")
+        log("    VISUALIZER_LOCK=/tmp/cardinal_visualizer_gpu1.lock python3 spark/visualizer_worker.py")
+        return False
+    _lock_fh.write("%d\n" % os.getpid())
+    _lock_fh.flush()
+    return True
+
+
 def main():
+    if not take_lock():
+        return 1
     comfy = Comfy(COMFY_URL)
-    log("worker %s → %s" % (WORKER_NAME, COMFY_URL))
+    log("worker %s [%s · %s] → %s (lock %s)"
+        % (WORKER_NAME, WORKER_BUILD, RENDER_MODE, COMFY_URL, LOCK_PATH))
     if not comfy.up():
         log("WARNING: ComfyUI is not answering at %s yet — will keep polling" % COMFY_URL)
 
@@ -594,4 +1016,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # sys.exit(main()), not a bare main(): a refused start must exit NON-ZERO.
+    # Discarding the return made "another worker already holds the lock" look
+    # like a clean shutdown to systemd, which would then treat it as success
+    # and never restart or alarm. main() returns None on the normal path, and
+    # sys.exit(None) is 0.
+    sys.exit(main())
