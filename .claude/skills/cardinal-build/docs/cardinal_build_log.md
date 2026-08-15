@@ -17323,3 +17323,49 @@ Negative-controlled at 8/16.
 
 `test_points` 64/64 (46/64 on `main`), and its control path was inert until now
 — the same hole found in `test_segment` at 830. `test_drop_paint` still has it.
+
+---
+
+## Build 833 — "looks worse?" It was, and 832 did it
+
+Theo screenshotted a speckled, half-eroded tint bleeding onto the roof and the
+trees. It was worse than 831, and the cause was mine.
+
+**The two boxes he drew were tiny.** `[0.661, 0.4295 → 0.7007, 0.4603]` is
+**51 x 22 px** on the 1280x720 fitted frame; the second was **27 x 5 px**.
+
+832 set `BOX_MARGIN = 0.06` **of the box**. On a 51px-wide box that puts the
+"not this" points **3 pixels** outside the "this" points. Positive and negative
+prompts three pixels apart are not a constraint, they are a **contradiction**,
+and a speckled half-eroded mask is exactly what SAM 2 returns for one.
+
+**Two fixes.**
+
+- **The margin is measured against the FRAME, not the box** — `BOX_MARGIN_FRAME
+  = 0.025` with a `BOX_MARGIN_MIN_PX = 16` floor. On his own drag the nearest
+  negative moves from **3px to 29px**; on a real 294x158px drag it is 97px.
+- **A drag smaller than `BOX_MIN` (4% of the frame) falls back to a tap.** A box
+  that small is a point wearing a hat — its positives sit within a few pixels of
+  each other and it says nothing a tap did not. `dragMoved` stays true so the
+  trailing click cannot queue a second job, which is why the fallback queues the
+  tap itself rather than leaving it to `tapAt`.
+
+`WORKER_BUILD` → `wb-2026-08-15.14`.
+
+**One thing 832 got right, measured:** corner negatives helped plain taps. The
+same wall tap that returned **12.31%** of frame before returns **7.23%** now.
+Lever 1 works; lever 3 was the one I broke.
+
+**Gates.** `test_points` 66/66 — the new assertion measures the **distance**
+between the nearest positive and negative, because that is the property that was
+wrong; a test that only checked "a margin exists" passes against the broken
+version. `render_drag` 28/28, with a too-small-drag case at both widths.
+Controlled against the real 832: **65/66** and **26/28**, each failing on
+exactly the new contract.
+
+⚠️ **The first control run was against a STALE `origin/main`** — the local ref
+still pointed at 831, so it silently controlled against the wrong build and
+reported the same numbers as the previous run. `git fetch` before building a
+control tree, or the control quietly tests something else. Third instrument
+fault in four builds, and the same shape every time: the harness looked fine and
+the answer was about a different artifact.

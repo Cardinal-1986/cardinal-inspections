@@ -364,7 +364,28 @@ if _have:
      any(p["x"] > _box[2] * _W for p in _side), str(_side))
   ok("a box also carries the corner negatives", len(_bneg) == 8, str(len(_bneg)))
 
-  # A box drawn flush to the edge has no outside on two sides. Inventing a point
+    # 833: the negatives must stay a REAL distance from the positives even when
+  # the box is tiny. 832 measured the margin as a fraction of the BOX, so
+  # Theo's 51x22px drag put them 3px apart -- positives and negatives a few
+  # pixels apart are a contradiction, not a constraint, and SAM 2 answered
+  # with the speckled half-eroded mask he screenshotted. Asserted as a
+  # DISTANCE, because that is the property that was wrong; a test that only
+  # checked "a margin exists" passed against the broken version.
+  def _closest(pos, neg):
+      return min(min(abs(a["x"] - b["x"]) + abs(a["y"] - b["y"]) for b in neg)
+                 for a in pos)
+
+  _tiny = [0.6610772357723578, 0.42953929539295393,
+           0.7007113821138211, 0.46025293586269195]      # Theo's real drag
+  _tp, _tn = W._box_prompt(_tiny, _W, _H)
+  ok("a tiny box still separates its negatives from its positives",
+     _closest(_tp, _tn) >= 20,
+     "%d px apart — box-relative margins made this 3px" % _closest(_tp, _tn))
+  _bp, _bn = W._box_prompt([0.55, 0.30, 0.78, 0.52], _W, _H)
+  ok("a large box separates them further still",
+     _closest(_bp, _bn) > _closest(_tp, _tn))
+
+# A box drawn flush to the edge has no outside on two sides. Inventing a point
   # there would put it off-frame, and SAM 2 answers an off-frame prompt with
   # nothing — which reads to a rep as "the drag did nothing".
   _p2, _n2 = W._box_prompt([0.0, 0.0, 0.2, 0.2], _W, _H)
