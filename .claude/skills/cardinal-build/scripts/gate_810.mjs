@@ -83,11 +83,47 @@ const RENDERS = [
    not on what its source says it would do. */
 function mock() {
   return `
+window.__EXIFJPEG_B64 = '/9j//gASR1BTIDM5Ljc1LC04NC4xOf/hAEBFeGlmAABJSSoACAAAAAEAJYgEAAEAAAAaAAAAAAAAAAIAAQACAAIAAABOAAAAAwACAAIAAABXAAAAAAAAAP/gABBKRklGAAEBAAABAAEAAP/bAEMAAwICAwICAwMDAwQDAwQFCAUFBAQFCgcHBggMCgwMCwoLCw0OEhANDhEOCwsQFhARExQVFRUMDxcYFhQYEhQVFP/bAEMBAwQEBQQFCQUFCRQNCw0UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFP/AABEIADAAQAMBIgACEQEDEQH/xAAfAAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgv/xAC1EAACAQMDAgQDBQUEBAAAAX0BAgMABBEFEiExQQYTUWEHInEUMoGRoQgjQrHBFVLR8CQzYnKCCQoWFxgZGiUmJygpKjQ1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4eLj5OXm5+jp6vHy8/T19vf4+fr/xAAfAQADAQEBAQEBAQEBAAAAAAAAAQIDBAUGBwgJCgv/xAC1EQACAQIEBAMEBwUEBAABAncAAQIDEQQFITEGEkFRB2FxEyIygQgUQpGhscEJIzNS8BVictEKFiQ04SXxFxgZGiYnKCkqNTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqCg4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2dri4+Tl5ufo6ery8/T19vf4+fr/2gAMAwEAAhEDEQA/APD6KKK/Qz48KKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigD/2Q==';
+window.__EXIFJPEG = atob(window.__EXIFJPEG_B64);
 window.__calls = [];
 window.__signed = [];
 window.confirm = function(){ window.__calls.push({op:'confirm'}); return true; };
+window.__cc = [];            /* every /api/companycam body the page sent */
+window.__uploads = [];       /* every storage upload, with its bytes */
+window.__ccAdmin = true;     /* flipped per-scenario before load */
+(function(){
+  var real = window.fetch;
+  window.fetch = function(url, opts){
+    if(String(url).indexOf('/api/companycam') === 0){
+      var body = {}; try { body = JSON.parse((opts && opts.body) || '{}'); } catch(e){}
+      window.__cc.push({ body: body, auth: !!(opts && opts.headers && opts.headers.Authorization) });
+      if(!window.__ccAdmin)
+        return Promise.resolve(new Response(JSON.stringify({error:'Admins only'}),
+          {status:403, headers:{'Content-Type':'application/json'}}));
+      if(body.action === 'tags')
+        return Promise.resolve(new Response(JSON.stringify({tags:[{id:'1',name:'Roof'}]}),
+          {status:200, headers:{'Content-Type':'application/json'}}));
+      if(body.action === 'list')
+        return Promise.resolve(new Response(JSON.stringify({photos:[
+          { id:'ccphoto1', description:'front elevation', captured_at:'2026-07-02',
+            project_id:'ccp1', project_name:'Monica', project_address:'843 Farnam Dr',
+            creator_name:'Curtis', annotated:false,
+            thumb:'https://cdn.companycam.invalid/t/ccphoto1.jpg',
+            preview:'https://cdn.companycam.invalid/p/ccphoto1.jpg' }
+        ], next_cursor:null, has_next:false}), {status:200, headers:{'Content-Type':'application/json'}}));
+      if(body.action === 'fetch')
+        return Promise.resolve(new Response(JSON.stringify({
+          id: body.id, mime:'image/jpeg', bytes: window.__EXIFJPEG.length,
+          rendition:'web', description:'front elevation', captured_at:'2026-07-02',
+          data: window.__EXIFJPEG_B64
+        }), {status:200, headers:{'Content-Type':'application/json'}}));
+      return Promise.resolve(new Response('{}', {status:400, headers:{'Content-Type':'application/json'}}));
+    }
+    return real.apply(this, arguments);
+  };
+})();
 window.supabase = { createClient: function(){ return {
-  auth:{ getSession:function(){ return Promise.resolve({data:{session:{user:{email:'theo@cardinalrenovations.net'}}}}); },
+  auth:{ getSession:function(){ return Promise.resolve({data:{session:{access_token:'stub-jwt', user:{email:'theo@cardinalrenovations.net'}}}}); },
          signOut:function(){ return Promise.resolve({}); } },
   from:function(t){
     var rows = { oc_colors:${JSON.stringify(OC)}, materials:${JSON.stringify(MAT)},
@@ -112,7 +148,13 @@ window.supabase = { createClient: function(){ return {
     createSignedUrls:function(paths){ window.__signed.push(paths.slice());
       return Promise.resolve({data:paths.map(function(p){ return {path:p,signedUrl:'https://stub.invalid/'+p}; })}); },
     remove:function(files){ window.__calls.push({op:'remove',files:files.slice()});
-      return Promise.resolve({data:files.map(function(f){ return {name:f}; }),error:null}); }
+      return Promise.resolve({data:files.map(function(f){ return {name:f}; }),error:null}); },
+    upload:function(path, blob, opts){
+      return blob.arrayBuffer().then(function(buf){
+        window.__uploads.push({ path: path, bytes: new Uint8Array(buf), type: (opts||{}).contentType });
+        return { data:{ path: path }, error:null };
+      });
+    }
   }; } }
 }; } };`;
 }
@@ -305,6 +347,85 @@ chk('delete also removes the render, the preview AND the mask files',
         return new Promise(r=>setTimeout(()=>r(document.getElementById('vzBox').classList.contains('hide')),150)); })()`));
 }
 
+// ── 6c. 813: CompanyCam as a photograph source ──────────────────────
+//  Three fences, and each has a wrong version that ships silently:
+//    a) the tab must NOT appear for a non-admin (403 from the route)
+//    b) the full photograph must come through /api/companycam, never the CDN
+//    c) EXIF must be gone BEFORE the upload — the worker's own strip happens
+//       after this, so a GPS coordinate would already be sitting in the bucket
+/* Bail cleanly when the source bar is absent. Pointed at 812 the first
+   version clicked a tab that did not exist, the evaluate rejected, and the
+   whole control died having printed nothing — BUG_CLASSES 37 for the third
+   time tonight, each time in a gate rather than in the app. A control that
+   crashes proves nothing; it has to REPORT red. */
+if (!(await has('#vzSrcCC'))) {
+  chk('the CompanyCam source bar exists', false, 'no #vzSrcCC in this artifact');
+} else {
+  const cc = await page.evaluate(`(()=>{
+    document.getElementById('vzSrcCC').click();
+    return new Promise(res=>setTimeout(()=>res({
+      tabShown: !document.getElementById('vzSrcCC').classList.contains('hide'),
+      formShown: !document.getElementById('vzCCForm').classList.contains('hide'),
+      probed: (window.__cc||[]).some(c=>c.body.action==='tags'),
+      authed: (window.__cc||[]).every(c=>c.auth === true)
+    }),200));
+  })()`);
+  chk('the CompanyCam tab appears for an admin', cc.tabShown === true);
+  chk('the search box appears with it', cc.formShown === true);
+  chk('the tab is decided by ASKING the route, not by re-implementing its role check',
+      cc.probed === true);
+  chk('every CompanyCam call carries the signed-in bearer token', cc.authed === true);
+
+  await page.fill('#vzCCq', '843 Farnam');
+  await page.click('#vzCCgo');
+  await page.waitForTimeout(400);
+  const hits = await page.evaluate(`[...document.querySelectorAll('#vzShots .shot')].map(b=>b.dataset.ccid)`);
+  chk('searching CompanyCam lists results in the photograph strip',
+      hits.length === 1 && hits[0] === 'ccphoto1', JSON.stringify(hits));
+  chk('the query reached the route as typed',
+      await page.evaluate(`(window.__cc||[]).some(c=>c.body.action==='list' && c.body.q==='843 Farnam')`));
+
+  await page.click('#vzShots .shot[data-ccid="ccphoto1"]');
+  await page.waitForTimeout(700);
+
+  const imported = await page.evaluate(`(()=>{
+    const u = (window.__uploads||[])[0];
+    if(!u) return { none:true };
+    const b = u.bytes;
+    /* Walk the JPEG segments looking for APP1 (0xFFE1), which is where EXIF —
+       and therefore GPS — lives. Reading the bytes, not trusting the code. */
+    let exif = false;
+    for(let i=0;i<b.length-1;i++) if(b[i]===0xFF && b[i+1]===0xE1){ exif = true; break; }
+    /* And the literal GPS tag text, as a second independent check. */
+    let gps = false;
+    const needle = [0x47,0x50,0x53]; // "GPS"
+    for(let i=0;i<b.length-2;i++)
+      if(b[i]===needle[0]&&b[i+1]===needle[1]&&b[i+2]===needle[2]){ gps = true; break; }
+    return { path:u.path, type:u.type, len:b.length, exif, gps,
+             jpeg: b[0]===0xFF && b[1]===0xD8 };
+  })()`);
+  chk('picking a CompanyCam photo uploads it into the bucket', !imported.none, imported.path);
+  chk('it lands under visualizer/ where the write policy allows staff',
+      /^visualizer\/src\//.test(imported.path || ''), imported.path);
+  chk('the uploaded file is a real JPEG', imported.jpeg === true);
+  chk('EXIF is STRIPPED before upload — no APP1 segment survives', imported.exif === false);
+  chk('no GPS tag survives in the uploaded bytes', imported.gps === false);
+
+  chk('the full photograph came through /api/companycam, never the CDN',
+      await page.evaluate(`(window.__cc||[]).some(c=>c.body.action==='fetch' && c.body.id==='ccphoto1')`));
+
+  const chosen = await page.evaluate(`(()=>{ const i=document.querySelector('.canvas .stage img');
+    return { src: i ? (i.getAttribute('src')||'') : '', note: document.getElementById('vzCCNote').textContent }; })()`);
+  chk('the imported photograph becomes the chosen one on the stage',
+      /visualizer\/src\//.test(chosen.src), chosen.src.slice(-44));
+  chk('the screen says it imported', /Imported/i.test(chosen.note), chosen.note);
+
+  await page.click('#vzSrcJob');
+  await page.waitForTimeout(250);
+  chk('switching back to Job photos restores the job strip',
+      await page.evaluate(`[...document.querySelectorAll('#vzShots .shot')].every(b=>!b.dataset.ccid)`));
+}
+
 // ── 7. it must not scroll sideways, at either width ───────────────────────
 //  The shell is four fixed-ish columns. On Theo's 1194px iPad they cannot all
 //  survive, so the CSS stacks them — if that media query is wrong the body
@@ -362,6 +483,41 @@ if (process.env.GATE_SHOTS) {
     await page.screenshot({ path: process.env.GATE_SHOTS + '/viz-' + name + '.png' });
   }
   console.log('  (screenshots written to ' + process.env.GATE_SHOTS + ')');
+}
+
+/* ── 9. the fence: a NON-ADMIN must never see the CompanyCam tab ──────────
+   The route answers 403 to anyone who is not an admin. A tab that is drawn and
+   then returns nothing reads as broken software rather than as a permission,
+   and this check is what keeps the two in step. Its own context, because the
+   probe runs once at sign-in. */
+{
+  const ctx2 = await browser.newContext({ viewport:{ width:1440, height:900 } });
+  const p2 = await ctx2.newPage();
+  const err2 = [];
+  p2.on('pageerror', e => err2.push(String(e)));
+  await p2.route('**/*', async r => {
+    const u = r.request().url();
+    if (u.startsWith('https://viz.test/')) return r.fulfill({status:200,contentType:'text/html; charset=utf-8',body:APP});
+    return r.fulfill({status:200, body:''});
+  });
+  await p2.addInitScript(mock());
+  await p2.addInitScript('window.__ccAdmin = false;');
+  await p2.goto('https://viz.test/', { waitUntil:'domcontentloaded' });
+  await p2.waitForTimeout(700);
+  const asRep = await p2.evaluate(`({
+    hidden: !document.getElementById('vzSrcCC') ||
+            document.getElementById('vzSrcCC').classList.contains('hide'),
+    probed: (window.__cc||[]).some(c=>c.body.action==='tags'),
+    listed: (window.__cc||[]).some(c=>c.body.action==='list'),
+    fetched:(window.__cc||[]).some(c=>c.body.action==='fetch')
+  })`);
+  chk('a 403 from the route leaves the CompanyCam tab HIDDEN', asRep.hidden === true);
+  chk('it still asked — the ANSWER hides it, not a client-side role guess',
+      asRep.probed === true);
+  chk('nothing was listed or fetched for a non-admin',
+      asRep.listed === false && asRep.fetched === false);
+  chk('a refused probe throws nothing at the user', err2.length === 0, err2.join(' | '));
+  await ctx2.close();
 }
 
 await browser.close();
