@@ -11,7 +11,7 @@
   "3": {
     "inputs": {
       "model": "sam2_hiera_small.safetensors",
-      "segmentor": "single_image",
+      "segmentor": "automaskgenerator",
       "device": "cuda",
       "precision": "bf16"
     },

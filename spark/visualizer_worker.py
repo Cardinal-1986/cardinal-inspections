@@ -347,6 +347,49 @@ class Comfy:
                 # inventing one would be worse than the error you get without.
         return added
 
+    def force_automask(self, graph):
+        """Load the SAM2 model as an automatic mask generator.
+
+        `Sam2AutoSegmentation` will not accept an ordinary SAM2 model. The
+        loader's `segmentor` enum is what decides, and regions_api.json shipped
+        `single_image` — the mode the OTHER graph wants — so ComfyUI rejected
+        it with "Loaded model is not SAM2AutomaticMaskGenerator". Same
+        checkpoint file, different wrapper; no new download.
+
+        The enum's spelling comes from the node rather than from me. Writing a
+        parameter value from memory is the mistake that has cost the most on
+        this feature, and a mode name is exactly the sort of thing a node pack
+        renames between versions.
+
+        Unlike fill_defaults() this DOES overwrite what the graph carries: the
+        shipped value is known to be wrong for this graph. Returns the mode it
+        set, or None when the schema could not be read and the graph's own
+        value was left alone.
+        """
+        LOADER = "DownloadAndLoadSAM2Model"
+        nodes = [n for n in graph.values() if n.get("class_type") == LOADER]
+        if not nodes:
+            return None
+        spec = (((self.node_schema(LOADER).get("input") or {}).get("required") or {})
+                .get("segmentor") or [])
+        choices = spec[0] if spec and isinstance(spec[0], list) else []
+        if not choices:
+            log("    could not read the SAM2 loader's segmentor list — sending "
+                "the graph's own %r, which may be refused"
+                % (nodes[0].get("inputs", {}).get("segmentor")))
+            return None
+        pick = next((c for c in choices if "automask" in c.lower().replace("_", "")), None)
+        if pick is None:
+            pick = next((c for c in choices if c.lower().startswith("auto")), None)
+        if pick is None:
+            raise RuntimeError(
+                "the SAM2 loader offers no automatic-mask mode — it lists %s. "
+                "Sam2AutoSegmentation cannot run without one."
+                % ", ".join(map(str, choices)))
+        for n in nodes:
+            n.setdefault("inputs", {})["segmentor"] = pick
+        return pick
+
     def fetch(self, meta):
         r = requests.get(self.base + "/view",
                          params={"filename": meta["filename"],
@@ -593,7 +636,7 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.7 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.7"
+WORKER_BUILD = "wb-2026-08-15.8"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
@@ -912,6 +955,9 @@ def run_regions_job(comfy, job, job_id, started):
     log("  regions pass — %dx%d" % frame)
 
     graph = load_graph("regions_api.json")
+    mode = comfy.force_automask(graph)
+    if mode:
+        log("    SAM2 loaded as %s" % mode)
     added = comfy.fill_defaults(graph, "Sam2AutoSegmentation")
     if added:
         log("    filled from the node's own schema: %s" % ", ".join(sorted(set(added))))
