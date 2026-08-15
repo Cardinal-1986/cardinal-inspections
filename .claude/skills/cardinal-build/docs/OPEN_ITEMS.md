@@ -3113,5 +3113,27 @@ for a new file, **not a diagnosis of Studio**. Nobody has reproduced Studio's re
 needs the Spark running and Theo's eyes on a real render — it is not something a harness can judge.
 
 **Struck at 808** — "queued with no explanation" is closed. The Visualizer now distinguishes
-*never connected* from *asleep* from *just queued*. The Spark setup itself (§1–4) is still the
-open item; nothing renders until it is done.
+*never connected* from *asleep* from *just queued*.
+
+**Struck at 809** — item 1 is done. **The Spark is on and rendering.** "Not measured yet: whether
+the composed roof prompt produces a convincing shingle" is also closed, by Theo's eyes on three
+renders of the same 43 KB photograph: grey smear → texture with the wrong colour → correct. The
+prompt leads with colour and takes the first sentence only.
+
+#### Still open after 818 — in the order they will bite
+
+1. **No stale-claim recovery.** A job claimed by a worker that dies stays `running` **forever** —
+   one sat at 426s on a ~35s render. A `claimed_at` older than N minutes should return the row to
+   `queued`. This is the one to build before a customer is ever in the room, because the screen
+   currently has no way to say "that one is never coming back".
+2. **Siding has never once been applied by a render.** Every render so far is roof-only. The
+   pipeline is wired for it and the catalog carries the brands; nobody has proved a siding mask
+   comes back correct on a real house.
+3. **No render has used a CompanyCam import at full resolution.** 815 fixed the rendition order
+   (it had been taking the annotated web copy); the fix is merged and unproven on a real render.
+4. **Run the sweep.** ~60 unreferenced files, ~20 MB, under `photos/visualizer/`.
+   `python3 spark/sweep_visualizer.py` on the Spark is a dry run and prints what it would remove;
+   `--apply` removes it. The 24-hour age floor is what protects an import that has not been
+   rendered yet — do not lower it to be tidy.
+5. **Item 2 above from 807 is still open** — its own Vercel project scoped to `visualizer/`. Until
+   then it is a separate *file* on the same *deployment*.
