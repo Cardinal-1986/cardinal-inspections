@@ -141,10 +141,58 @@ ok("the gap between planes is untouched", mid == (48, 48, 48), repr(mid))
 ok("there are enough distinct tints for a busy elevation", len(set(P.TINTS)) >= 6,
    str(len(set(P.TINTS))))
 
+# ── the .env placeholders must NOT beat a real .env ──────────────────────
+# THE REGRESSION THIS FILE EXISTS FOR, SECOND EDITION. probe_planes sets inert
+# SUPABASE_* placeholders so it can import the worker without a database. The
+# worker's own .env reader is `setdefault` BY DESIGN (an explicit export beats
+# a stale file) — so placeholders set unconditionally win over the real .env,
+# and --job dies with "needs real credentials" while sitting next to a perfectly
+# good .env. That happened on the Spark on the first run.
+#
+# Run in a subprocess against a throwaway tree, because the import has already
+# happened in this process and cannot be undone.
+import subprocess, tempfile, shutil
+
+# ⚠ The child MUST NOT inherit this process's SUPABASE_* — THIS FILE sets the
+# same placeholders at the top, subprocess passes os.environ through, and the
+# worker's setdefault then finds them already present. The first version of
+# this test failed on the fixed code AND on the broken code, for that reason:
+# an assertion that cannot pass is not a test, it is a stuck light. Strip them.
+CLEAN = {k: v for k, v in os.environ.items() if not k.startswith("SUPABASE_")}
+
+with tempfile.TemporaryDirectory() as td:
+    for f in ("probe_planes.py", "visualizer_worker.py", "segment_api.json"):
+        shutil.copy(HERE / f, Path(td) / f)
+    (Path(td) / ".env").write_text(
+        "SUPABASE_URL=https://real.example.test\n"
+        "SUPABASE_SERVICE_KEY=a-real-looking-key\n")
+    probe = ("import sys; sys.path.insert(0,%r); import probe_planes as P; "
+             "import os; print(os.environ['SUPABASE_URL'], P.W.SERVICE_KEY)" % td)
+    r = subprocess.run([sys.executable, "-c", probe], cwd=td, env=CLEAN,
+                       capture_output=True, text=True)
+    got = (r.stdout or "").strip()
+    ok("a real .env beats the inert placeholders",
+       "real.example.test" in got and "a-real-looking-key" in got,
+       repr(got or r.stderr[-200:]))
+    ok("and --job's own guard therefore passes",
+       "inert-" not in got, repr(got))
+
+# With NO .env the placeholders must still stand in, or the probe cannot be
+# used on a local image away from the Spark.
+with tempfile.TemporaryDirectory() as td:
+    for f in ("probe_planes.py", "visualizer_worker.py", "segment_api.json"):
+        shutil.copy(HERE / f, Path(td) / f)
+    probe = ("import sys; sys.path.insert(0,%r); import probe_planes; "
+             "import os; print(os.environ['SUPABASE_URL'])" % td)
+    r = subprocess.run([sys.executable, "-c", probe], cwd=td, env=CLEAN,
+                       capture_output=True, text=True)
+    ok("with no .env the probe still imports",
+       "example.invalid" in (r.stdout or ""), repr((r.stdout or r.stderr)[-200:]))
+
 # ── report ───────────────────────────────────────────────────────────────
 if fails:
     print("\ntest_probe_planes — %d FAILED" % len(fails))
     for f in fails:
         print("  - " + f)
     sys.exit(1)
-print("\ntest_probe_planes — all 21 checks pass")
+print("\ntest_probe_planes — all 24 checks pass")

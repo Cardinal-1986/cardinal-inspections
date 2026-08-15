@@ -64,11 +64,22 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 # The worker refuses to import without these. A probe pointed at a LOCAL file
-# needs no database at all, so inert placeholders stand in when .env is absent
-# — `storage_download` would fail loudly later if --job were then used, which
-# is the right place to fail. Never a real key here; this file is in git.
-os.environ.setdefault("SUPABASE_URL", "https://example.invalid")
-os.environ.setdefault("SUPABASE_SERVICE_KEY", "inert-placeholder-not-a-key")
+# needs no database at all, so inert placeholders stand in — but ONLY when
+# there is no .env to read.
+#
+# ⚠ THE GUARD IS `if not .env.exists()`, AND THAT CONDITION IS THE WHOLE FIX.
+# The worker's own loader is `os.environ.setdefault`, on purpose, so that an
+# explicit export beats a stale file. Setting placeholders unconditionally
+# here therefore WINS over the real .env — the worker's setdefault finds the
+# key already present and leaves the fake one in place. First run on the Spark:
+# `--job needs real credentials`, from inside spark/, with a perfectly good
+# .env sitting next to the script. A fallback that runs before the real source
+# is not a fallback, it is an override.
+#
+# Never a real key here; this file is in git.
+if not (HERE / ".env").exists():
+    os.environ.setdefault("SUPABASE_URL", "https://example.invalid")
+    os.environ.setdefault("SUPABASE_SERVICE_KEY", "inert-placeholder-not-a-key")
 
 try:
     from PIL import Image
