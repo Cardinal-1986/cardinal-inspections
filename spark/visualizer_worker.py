@@ -651,7 +651,7 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.7 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.13"
+WORKER_BUILD = "wb-2026-08-15.14"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
@@ -1046,10 +1046,19 @@ def run_regions_job(comfy, job, job_id, started):
 
 POINTS_MAX = 8           # taps one job may carry, so a stuck finger cannot queue 400
 
-# 832: how far outside a dragged box the "not this" points sit, as a fraction
-# of the box. Far enough to be off the surface, close enough to still be the
-# same wall rather than the sky.
-BOX_MARGIN = 0.06
+# 833: how far outside a dragged box the "not this" points sit — as a fraction
+# of the FRAME, with a pixel floor, NOT as a fraction of the box.
+#
+# ⚠ 832 made it 6% OF THE BOX and that was wrong in the way that matters. Theo
+# drew a 51x22px box; 6% of it put the negatives THREE PIXELS outside the
+# positives. Positive and negative prompts a few pixels apart are not a
+# constraint, they are a contradiction, and SAM 2 answers a contradiction with
+# the speckled, half-eroded mask he screenshotted: "looks worse?" — it was.
+#
+# Frame-relative keeps the negatives a real distance away no matter how small
+# the box is, and the floor keeps them meaningful on a small frame.
+BOX_MARGIN_FRAME = 0.025      # of the frame's own width/height
+BOX_MARGIN_MIN_PX = 16        # never closer than this, whatever the arithmetic
 
 
 def _corner_negatives(w, h):
@@ -1091,7 +1100,10 @@ def _box_prompt(box, w, h):
     pos = [(cx, cy),
            (x0 + bw * 0.25, y0 + bh * 0.25), (x0 + bw * 0.75, y0 + bh * 0.25),
            (x0 + bw * 0.25, y0 + bh * 0.75), (x0 + bw * 0.75, y0 + bh * 0.75)]
-    mx, my = bw * BOX_MARGIN, bh * BOX_MARGIN
+    # 833: measured against the FRAME, floored in pixels. See the note on
+    # BOX_MARGIN_FRAME — box-relative made a small drag self-contradictory.
+    mx = max(BOX_MARGIN_FRAME, BOX_MARGIN_MIN_PX / float(w))
+    my = max(BOX_MARGIN_FRAME, BOX_MARGIN_MIN_PX / float(h))
     neg = [(cx, y0 - my), (cx, y1 + my), (x0 - mx, cy), (x1 + mx, cy)]
 
     def px(pairs):

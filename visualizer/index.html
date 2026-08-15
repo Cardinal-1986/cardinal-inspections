@@ -2506,6 +2506,14 @@ function tapAt(ev){
    still runs the proven path. Only a drag past DRAG_MIN becomes a box, so
    nothing a rep already knows how to do changes. */
 var DRAG_MIN = 12;          /* CSS px before a press becomes a drag */
+/* 833: and a box must also be big enough to MEAN something. Theo's first two
+   drags were 51x22 and 27x5 CSS px — over DRAG_MIN, so they became boxes, but
+   a box that small is a point wearing a hat: its positives sit within a few
+   pixels of each other and the prompt says nothing a tap did not already say.
+   Below this, fall back to the tap, which is the better answer for a small
+   target anyway. Expressed as a fraction of the PHOTOGRAPH so it means the
+   same thing on a phone and on the ultrawide. */
+var BOX_MIN = 0.04;         /* of the frame, in the larger dimension */
 var dragFrom = null, dragMoved = false;
 
 function dragStart(ev){
@@ -2533,8 +2541,16 @@ function dragEnd(ev){
   clearBand();
   if(!dragMoved) return;      /* a plain tap — tapAt takes it on the click */
   if(tapBusy) return;
-  queueTapJob({ _box: [Math.min(a.x, b.x), Math.min(a.y, b.y),
-                       Math.max(a.x, b.x), Math.max(a.y, b.y)] }, 'box');
+  var x0 = Math.min(a.x, b.x), y0 = Math.min(a.y, b.y),
+      x1 = Math.max(a.x, b.x), y1 = Math.max(a.y, b.y);
+  /* 833: too small to be a box — send the tap it really was. `dragMoved` stays
+     true so the trailing click does not queue a SECOND job on top of this one;
+     that guard is why the tap is queued here rather than left to tapAt. */
+  if(Math.max(x1 - x0, y1 - y0) < BOX_MIN){
+    queueTapJob({ _points: [{ x: (x0 + x1) / 2, y: (y0 + y1) / 2 }] }, 'tap');
+    return;
+  }
+  queueTapJob({ _box: [x0, y0, x1, y1] }, 'box');
 }
 
 function drawBand(a, b){

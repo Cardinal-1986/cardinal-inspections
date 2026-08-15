@@ -161,6 +161,23 @@ window.__drag = { set chosenShot(v){chosenShot=v;}, tapSurfaces: tapSurfaces, sb
         ok(tag + ': a backwards drag is ordered too', bx[0] < bx[2] && bx[1] < bx[3], JSON.stringify(bx));
       }
 
+      // ── 833: a drag too SMALL to mean anything falls back to a tap ──────
+      // Theo's first two drags were 51x22 and 27x5 CSS px. Both cleared
+      // DRAG_MIN and became boxes, and a box that small is a point wearing a
+      // hat — its positives sit within a few pixels of each other. It must
+      // queue a _points, and still exactly ONE job.
+      await fresh(pg);
+      const s0 = at(0.50, 0.50);
+      await pg.mouse.move(s0.x, s0.y); await pg.mouse.down();
+      await pg.mouse.move(s0.x + box.width * 0.02, s0.y + box.height * 0.015, { steps: 4 });
+      await pg.mouse.up();
+      await pg.waitForTimeout(200);
+      jobs = await pg.evaluate(() => window.__jobs);
+      ok(tag + ': a too-small drag queues exactly one job', jobs.length === 1,
+        'queued ' + jobs.length + ' — ' + JSON.stringify(jobs));
+      ok(tag + ': a too-small drag falls back to _points',
+        jobs.length === 1 && !!jobs[0]._points && !jobs[0]._box, JSON.stringify(jobs[0]));
+
       // ── a plain press is still a tap ────────────────────────────────────
       await fresh(pg);
       const c = at(0.50, 0.45);
