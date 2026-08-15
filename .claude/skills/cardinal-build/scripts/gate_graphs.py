@@ -239,6 +239,23 @@ def check_graph_pair(seg, inp):
            and (n.get("inputs") or {}).get("individual_objects") is not False]
     chk("every Sam2Segmentation combines objects into one mask", not bad, bad)
 
+    # ── 10. …and every detected box actually REACHES SAM 2 ────────────────
+    #  ⚠ Check 9 above reasoned about precisely the right failure — "a house
+    #  with two roof planes would silently get one of them" — and guarded the
+    #  WRONG NODE. Florence2toCoordinates sits one step upstream, and with
+    #  batch=False it hands on a SINGLE bounding box no matter how many
+    #  Florence2 found. Theo, 15 Aug: "didn't render the lower roof
+    #  correctly." Both planes had been detected; only one was ever masked.
+    #  The same limit applied to siding, where a second wall plane simply went
+    #  unpainted and nobody noticed because it is usually out of frame.
+    nb = [((n.get("_meta") or {}).get("title") or nid)
+          for nid, n in seg.items()
+          if n.get("class_type") == "Florence2toCoordinates"
+          and (n.get("inputs") or {}).get("batch") is not True]
+    chk("every Florence2toCoordinates passes ALL boxes to SAM 2 (batch=true), "
+        "not just the first — this is the node that decides whether a second "
+        "roof plane exists at all", not nb, nb)
+
 
 def main():
     control = "--control" in sys.argv
@@ -279,6 +296,10 @@ def main():
             '"individual_objects": false', '"individual_objects": true', 1), inp_raw),
         ("a resize node slipped into segmentation", seg_raw.replace(
             '"class_type": "MaskToImage"', '"class_type": "ImageScale"', 1), inp_raw),
+        # The real defect of 15 Aug: Florence2 found both roof planes, only the
+        # first reached SAM 2, and the lower roof went unpainted.
+        ("only the first detected box reaching SAM 2 (the lower roof)",
+         seg_raw.replace('"batch": true', '"batch": false', 1), inp_raw),
     ]
     worst = 0
     for label, s, i in mutants:
