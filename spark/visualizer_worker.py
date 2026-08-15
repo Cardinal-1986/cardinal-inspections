@@ -533,8 +533,8 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 # One query ends the argument:
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
-#   "wb-2026-08-15.5 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.5"
+#   "wb-2026-08-15.6 recolour" -> this code, this mode
+WORKER_BUILD = "wb-2026-08-15.6"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys

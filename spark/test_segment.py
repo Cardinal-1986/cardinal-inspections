@@ -139,9 +139,17 @@ ok("gutters return per-object masks",
 ok("siding is left merged, on purpose",
    (node("segment siding") or {}).get("inputs", {}).get("individual_objects") is False,
    "no measurement supports splitting it")
-ok("no phrase was changed without a sheet behind it",
+# windows is PLURAL, and that is a sheet-backed change like the roof's:
+#   "window"  + merged  -> 1 window   (0.1-0.2% of frame)
+#   "window"  + split   -> 3 windows  (0.5%)
+#   "windows" + split   -> 4 windows  (0.6%) — picks up the right gable one
+# The singular wraps one cluster; SAM 2 was always doing its job inside the
+# box it was given, and the BOX was the limit. Same shape as the roof.
+ok("windows grounds on the plural", (node("find windows") or {}).get("inputs", {}).get("text_input") == "windows",
+   "the singular found 3 of 5; the plural reaches the right gable window")
+
+ok("the phrases with no sheet behind them are untouched",
    (node("find siding") or {}).get("inputs", {}).get("text_input") == "house wall" and
-   (node("find windows") or {}).get("inputs", {}).get("text_input") == "window" and
    (node("find gutters") or {}).get("inputs", {}).get("text_input") == "rain gutter",
    "guessing phrases produced 'roof of a house' = the whole building")
 
@@ -150,4 +158,4 @@ if fails:
     for f in fails:
         print("  - " + f)
     sys.exit(1)
-print("\ntest_segment — all 18 checks pass")
+print("\ntest_segment — all 19 checks pass")
