@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 825
+  v2026-08-15 build 826
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -2734,6 +2734,11 @@ function closeBox(){
 }
 $('vzBoxX').addEventListener('click', closeBox);
 $('vzFoundBtn').addEventListener('click', toggleFound);
+/* 826: #vzFind shipped at 825 with no listener, so "Find surfaces" did
+   nothing and the picker behind it was unreachable — zero `_regions` jobs
+   were ever queued. The sweep in render_regions.mjs now fails on a
+   type="button" control outside a form that nothing listens to. */
+$('vzFind').addEventListener('click', findSurfaces);
 $('vzRegX').addEventListener('click', closeRegions);
 $('vzRegClear').addEventListener('click', function(){
   if(!regionJob) return;
