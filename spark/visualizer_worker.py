@@ -438,6 +438,21 @@ def load_graph(name):
 # SAM 2 can raise inside ComfyUI, and that takes down the ENTIRE segmentation,
 # not just gutters. The customer then gets a failed render because of a surface
 # they did not ask about.
+#
+# 830: node 40 grounds on "rain gutter . downspout", not "rain gutter". The
+# trough and the downspout are two OBJECTS, so grounding the trough alone left
+# the downspout out of the gutters mask — and because siding subtracts the
+# detail masks from itself (DETAIL_WINS below), an unmasked downspout was being
+# painted as siding. Same class as Theo's "It also painted the gutter" on the
+# 15th, one object further down the wall.
+#
+# ⚠ The dot separator is Grounding DINO's list convention and this node is
+# Florence2, which grounds noun phrases inside a caption. It is not the
+# documented syntax for this model, so it is plausible rather than proven —
+# and it is UNVERIFIED BY EYE. If the mask comes back empty, OPTIONAL_MASKS is
+# what keeps that from failing the whole job; if it comes back too big, the
+# tell is a hole carved out of the siding. Either way the fix is a separate
+# downspouts pass, not a longer prompt.
 OPTIONAL_MASKS = ("gutters",)
 
 
@@ -636,7 +651,7 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.7 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.10"
+WORKER_BUILD = "wb-2026-08-15.11"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
