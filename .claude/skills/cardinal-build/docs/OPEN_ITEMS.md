@@ -3173,6 +3173,37 @@ quietly repainted siding reaches a customer. Customer photographs may go to Gemi
 (Theo, 15 Aug, explicit) for **presentation only** — never claims, inspection reports, supplements
 or CompanyCam. The altered-evidence fence is untouched.
 
+### ✅ A PARTIAL RENDER NO LONGER LOOKS LIKE A CLEAN ONE (823, 15 Aug)
+
+A job could finish `done`, upload a render, leave `error` null — and never have
+touched a surface the rep picked. `skipped` lived only in a **log line on the
+Spark box**. See `BUG_CLASSES.md` **class 46**, which is what this is.
+
+- **`achieved._skipped`** — `{surface: reason}`, two reasons because they tell a
+  rep to do different things. No migration: an underscore meta key beside the
+  existing `_worker`.
+- **"Show what it found"** — the stored masks overlaid, for the *partial* find
+  (main roof yes, garage no) that is not a skip and so nothing else reports.
+  **The worker has uploaded those masks since the first build; the browser read
+  them only to DELETE them.**
+- ⚠️ **Absence is UNKNOWN, not "none".** Gemini jobs and pre-`wb-2026-08-15.4`
+  workers have no key and are given no claim.
+- **Worker must be restarted** for `_skipped` to appear — the browser half is
+  live on deploy but has nothing to read until the Spark runs `.4`. Older jobs
+  never backfill, by design.
+
+### ✅ `next_build.py` WAS ANSWERING WITH A NUMBER 13 BUILDS IN THE PAST (823)
+
+It parsed `index.html` only. **Builds 810–822 were all spent on
+`visualizer/index.html`** while `index.html` sat at 808, so it reported *"next
+safe: 810"* — the exact collision it exists to prevent. Stamps now come from
+every artifact in `STAMPED`; the self-test stubs `git`, exercises `index_at()`
+itself and **fails against the pre-fix version**. It answers **823**.
+
+⚠️ **Adding a new stamped artifact means adding it to `STAMPED`.** A file that
+carries a build stamp and is not listed is invisible to the collision check —
+which is this bug, exactly.
+
 **Open, in the order they matter:**
 
 1. **Nobody has rendered through the Gemini path yet.** It has never met the real key. `POST
@@ -3188,11 +3219,22 @@ or CompanyCam. The altered-evidence fence is untouched.
    `review` stage, tap a plane in or out, then paint. This is the Spark's only real weakness and it
    is the fix Theo's own doctrine points at (*AI proposes, a person confirms* — The Walk). It is the
    better spend than the composite if the alignment number comes back bad.
-4. **Evergreen Mist's swatch hex is probably wrong**, and it is Theo's to change — this session is
-   blocked from writing production data. `update oc_colors set hex = '#5D6557' where name =
-   'Evergreen Mist';` then **reload the Visualizer and re-pick the colour**, because the tray freezes
-   the hex at pick time. Only affects the Spark engine. The better version: photograph the real OC
-   swatch board in daylight and sample the whole line at once.
+
+   **⚠️ Build 823 did NOT close this — it closed the half that was free.** The *diagnostic* now
+   exists: a surface that was skipped entirely says so (`achieved._skipped`), and **"Show what it
+   found"** overlays the stored masks so a partially-found plane is visible. What is still open is
+   the *intervention* — 823 lets you SEE that the garage was missed, and gives you no way to
+   include it except re-rendering and hoping. Confirm-before-paint also needs a real pause in the
+   job, which the queue has no stage for today.
+
+   It is also cheaper than it was: the masks are already uploaded, already selected, and now
+   already drawn. The remaining work is per-plane segmentation and a `review` status.
+4. ~~**Evergreen Mist's swatch hex is probably wrong**~~ — **CLOSED 15 Aug.** Sampled from the 2026
+   Color of the Year sheet and applied to production; the whole line followed from OC's own data
+   sheets. **The one live half of this item survives and still catches people:** the tray freezes
+   the hex **at pick time**, so after any catalog change you must **reload the Visualizer and
+   re-pick the colour** or the old value renders. Only affects the Spark engine — Gemini takes
+   words, not a hex.
 5. **`comboKey()` does not include `engine`.** The same picks on the two engines read as a duplicate,
    which only ever produces a slightly wrong warning ("Rendered before…") — a queued duplicate is
    still correctly refused. Left alone on purpose: three call sites in a file with no test runner,
@@ -3361,13 +3403,27 @@ where Black Sable's swatch is labelled. That is the whole remaining request.
 
 ### ✅ THE COLOUR CATALOG IS DONE (15 Aug)
 
-`oc_colors`: **25 of 34 verified. ZERO unverified sellable colours.** The nine
-still estimated are all `discontinued` and cannot be sold. It began the day at
-**0 of 31**.
+`oc_colors`: **28 of 34 verified. ZERO unverified sellable colours.** The six
+still estimated are all `discontinued`, cannot be sold, and appear in no current
+OC document. It began the day at **0 of 31**.
+
+⚠️ This section read **"25 of 34 … the nine still estimated"** until 15 Aug.
+That was true when it was written and was overtaken three commits later, when
+Amber, Storm Cloud and Bourbon came off the Style Board guide. Re-measured
+against production: 34 rows, 28 verified, 6 unverified, **0 unverified and not
+discontinued.**
 
 Sources, all Owens Corning's own artwork: the Duration data sheet (15), the
-Designer data sheet (6), the Style Board Reference Guide (3 — Gray Tweed,
-Mountain Pine, Black Sable), the 2026 COTY sheet (Evergreen Mist).
+Designer data sheet (6), the Style Board Reference Guide (6 — Gray Tweed,
+Mountain Pine, Black Sable, then Amber, Storm Cloud, Bourbon), the 2026 COTY
+sheet (Evergreen Mist).
+
+**Deliberately NOT churned:** the Style Board guide disagrees with the data
+sheets by 10–20 on colours already verified (Driftwood `#615C54` vs `#69645C`,
+Onyx Black `#3A3E41` vs `#272C2A`). That is print variation between a
+merchandising piece and a product data sheet; the data sheet is the more
+canonical document, and rewriting 25 rows to chase it would be motion, not
+accuracy.
 
 **Two statistics, and which applies is decided by the IMAGE TYPE, not by taste:**
 

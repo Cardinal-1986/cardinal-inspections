@@ -16651,3 +16651,83 @@ flat, because the median is then 0 and `>= 0` is everything; and early returns n
 enumerated hold list narrows the containment failure; it does not close it. **A prompt is a request,
 not a constraint** — the mask is what makes it a constraint, and that is the composite, still
 unbuilt and still waiting on an alignment number.
+
+---
+
+## build 823 — 15 Aug 2026 — a surface the render did not change now says so
+
+**Files:** `spark/visualizer_worker.py` (`wb-2026-08-15.4`) · `visualizer/index.html` (822 → 823) ·
+`spark/test_skip_reason.py`, `scripts/gate_823.mjs`, `scripts/render_found.mjs` (new) ·
+`scripts/next_build.py` (repaired). **No SQL** — the column it uses has existed since the
+`achieved` migration.
+
+**The defect.** Pick roof + siding, have the segmenter find only the roof, and the job finished
+`done`, uploaded a render, left `error` null — and **nothing anywhere said the siding was never
+touched.** `skipped` existed only as a log line inside `run_job`, on the box in Theo's house.
+Every screen showed an unqualified success.
+
+A silent PARTIAL success is the worst of the three outcomes, because it is the one nobody checks:
+a failure announces itself and a success is what you expected.
+
+**`achieved` could not answer it either** — which is why a new key was needed rather than an
+inference. `measure()` returns nothing for a surface it could not measure and the loop `continue`s
+past it, so *"absent from `achieved`"* already meant two different things.
+
+- **`achieved._skipped`** — `{surface: reason}`, beside the existing `_worker`. An underscore meta
+  key, not a new column: the convention was already on this row, every deployed reader keeps
+  working, and it removes a migration that would have had to land *before* the worker to be safe.
+- **Two reasons, not one list.** `not_found` and `no_hex` tell a rep to do different things —
+  reshoot the elevation, or pick a swatch that carries a colour. The old single list threw away the
+  half that says what to do next. Order is load-bearing: **no mask beats no hex**, or a gutter
+  that is not in the photograph gets reported as a swatch problem.
+- **`skip_reason()` was extracted** out of `run_job`. It was two `continue`s a hundred lines into a
+  function needing ComfyUI, a GPU and a photograph — which is the practical reason nobody ever
+  checked the skip travelled anywhere.
+- **The browser reads `achieved` at all**, for the first time. It was never in the select list.
+- **Amber, not red.** `.err` means the job died. A partial success is a different fact.
+
+**⚠ Absence is UNKNOWN, never "nothing was skipped".** A Gemini job never segments and a
+pre-`.4` worker never wrote the key. Both report nothing rather than promising everything landed —
+replacing a silent omission with a confident false claim would be worse than the bug.
+
+**"Show what it found"** — the stored masks, overlaid. A surface can be found *partially* (the main
+roof, not the garage), which is not a skip, so nothing above catches it. **The worker has uploaded
+these masks since the first build and this file read them only to DELETE them.** The prime
+doctrine, again.
+
+No canvas: the masks are cross-origin signed URLs and reading their pixels taints it — a lesson
+already paid for once. Instead each layer carries the surface tint as its background with the mask
+`mix-blend-mode:multiply` inside it (white → tint, black → black), and the layer sits over the
+photograph at `mix-blend-mode:screen` (black is a no-op). Tints are five hues chosen only to be
+told apart — **not** the material colours, because a Driftwood grey wash over a grey roof answers
+nothing.
+
+**⚠ `isolation:isolate` went on the wrong element, and only a render caught it.** Putting it on
+`.found` is the obvious placement and it is backwards — isolation stops a group blending with its
+backdrop, and the backdrop *is* the picture. The layers screened against transparent black and
+composited over the photo. Chromium measured the unfound band at **rgb(9,9,9)** where it should
+read **rgb(48,48,48)**. It belongs on `.wrap`, which contains the photograph.
+
+**Gates.** `gate_823.mjs` 39/39, functions brace-matched out of the file and executed — **RED 8/27**
+on 822. `render_found.mjs` 15/15 in **Chromium**, reading composited pixels back — RED on 822.
+`spark/test_skip_reason.py` 14/14 against the shipped module — RED on the pre-823 worker.
+
+⚠️ **Three faults the harnesses found in themselves before they found any in the app**, all named in
+`CLAUDE.md` already: a contract regex read `skipped[surface] = "..."` and went red when the logic
+moved into a function; `.cmp` is `flex:1` with an absolutely-positioned child, so alone it computes
+to **height zero** and the harness sampled the page behind it, reporting a uniform `#08090B` that
+looked exactly like a broken blend; and the siding sample point landed **inside the legend chip**,
+reading its `rgba(5,6,7,.82)` and calling a perfectly good cyan near-black. The sample points are
+now checked against the legend's real rect instead of my arithmetic.
+
+**✅ `next_build.py` repaired — it was answering with a number thirteen builds in the past.** It
+parsed `index.html` only. Builds **810–822 were all spent on `visualizer/index.html`** while
+`index.html` sat at 808, so it reported *"next safe: 810"* — the exact collision it exists to
+prevent, produced by the tool itself. Stamps now come from every artifact in `STAMPED`; changelog
+entries stay `index.html`'s, since that is the only file with a `CHANGELOG`. The self-test stubs
+`git` and exercises `index_at()` itself, and **fails against the pre-fix version**. It now answers
+**823**, independently matching the number picked by hand.
+
+**Not verified by eye.** The overlay is proven in Chromium against synthetic masks; it has never
+been over a real house. And this build makes a skip *visible* — it does not make the segmenter
+find more. The Gemini path is still untested against the live key.

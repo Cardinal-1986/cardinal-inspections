@@ -5099,3 +5099,30 @@ Sedona Canyon.
 answers whether it has image models); the enumerated hold list **narrows** the containment failure
 and does not close it — a prompt is a request, not a constraint; the composite that would make it
 one is unbuilt, pending an alignment number.
+
+### A surface the render did not change (823) — `achieved._skipped` + the mask overlay
+
+| Feature | Where | Notes |
+|---|---|---|
+| **"Not changed: Siding"** on the job card | `notChanged()` → `drawJobs()` | The render finished `done`, uploaded, no error — and never touched the siding. **The only record was a log line on the Spark box.** Amber, not red: nothing failed |
+| **The reason, in the box** | `drawSkip()` → `#vzSkip` | `not_found` → *reshoot that elevation*; `no_hex` → *that swatch carries no colour*. **Two reasons, because they tell a rep to do different things** — the old single list threw that half away |
+| **`achieved._skipped`** | `spark/visualizer_worker.py` | `{surface: reason}` beside `_worker`. An underscore meta key, **not a new column** — the convention was already on the row, and it removes a migration that would have had to land before the worker |
+| **`skip_reason()`** | worker, module level | Extracted out of `run_job`. Order is load-bearing: **no mask beats no hex**, or a gutter that is not in the photograph gets reported as a swatch problem |
+| **"Show what it found"** | `drawFound()` → `#vzFound` | The stored masks, overlaid per surface. Catches the PARTIAL find — main roof yes, garage no — which is not a skip and so nothing else reports it. **The worker has uploaded these since the first build; this file read them only to DELETE them** |
+| **No canvas in the overlay** | `drawFound()` | The masks are cross-origin signed URLs; reading their pixels taints it. Two blend modes instead: mask `multiply` inside a tinted layer, layer `screen` over the photograph |
+| **`achieved` is read at all** | `refresh()` select | It was never in the select list. The column has existed since the `achieved` migration |
+
+⚠️ **Absence means UNKNOWN, never "nothing was skipped."** A Gemini job never segments; a worker
+older than `wb-2026-08-15.4` never wrote the key. Both report **nothing** rather than promising
+everything landed — a confident false claim is worse than the silence this build removed.
+
+⚠️ **`isolation:isolate` belongs on `.wrap`, not `.found`.** Isolation stops a group blending with
+its backdrop, and the backdrop is the picture. On `.found` the layers screened against transparent
+black and covered the photo — Chromium measured **rgb(9,9,9)** where **rgb(48,48,48)** was correct.
+
+⚠️ **The overlay tints are NOT the material colours**, deliberately. Five hues chosen only to be
+told apart from each other on a photograph of a house. A Driftwood grey wash over a grey roof
+answers nothing.
+
+**Not verified by eye:** the overlay is proven in Chromium against synthetic masks and has never
+been over a real house. And this makes a skip *visible* — it does not make the segmenter find more.

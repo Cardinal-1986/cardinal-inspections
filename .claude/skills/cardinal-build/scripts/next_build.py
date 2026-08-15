@@ -68,17 +68,48 @@ def git(*args):
     return p.returncode, out.decode("utf-8", "replace"), err.decode("utf-8", "replace")
 
 
+# ⚠ THE BUILD SEQUENCE IS SHARED ACROSS ARTIFACTS, AND THIS SCRIPT COULD ONLY
+# SEE ONE OF THEM.
+#
+# Builds 810-822 were all spent on visualizer/index.html while index.html sat
+# at 808. Reading index.html alone, this script answered "next safe: 810" —
+# a number thirteen builds into the past, and one that would have written a
+# second build 810 into the repo. That is precisely the collision it exists to
+# prevent, produced by the tool itself.
+#
+# So: stamps come from EVERY artifact that carries one. Changelog entries stay
+# index.html's, because that is the only file with a CHANGELOG array — the two
+# signals answer different questions and only the stamp is per-artifact.
+#
+# Adding a new stamped artifact means adding it here. A file that carries a
+# stamp and is not listed is invisible to this check, which is the failure
+# above, exactly.
+STAMPED = ("index.html", "visualizer/index.html")
+
+
 def index_at(ref):
-    """The changelog entries and stamp of index.html at a ref, or None."""
+    """Changelog entries and the HIGHEST build stamp across every artifact."""
     code, out, _ = git("show", ref + ":index.html")
     if code != 0:
         return None
     stamps = [int(n) for n in STAMP.findall(out)]
     entries = dict((int(n), t) for n, t in ENTRY_OLD.findall(out))
     entries.update(dict((int(n), t) for n, t in ENTRY_NEW.findall(out)))
+
+    per_file = {"index.html": max(stamps) if stamps else None}
+    for path in STAMPED[1:]:
+        c2, o2, _ = git("show", ref + ":" + path)
+        if c2 != 0:            # absent on this ref — normal for old branches
+            continue
+        s2 = [int(n) for n in STAMP.findall(o2)]
+        if s2:
+            per_file[path] = max(s2)
+            stamps.extend(s2)
+
     return {
         "stamp": max(stamps) if stamps else None,
         "entries": entries,
+        "per_file": per_file,
     }
 
 
@@ -126,6 +157,65 @@ def self_test():
         ok = False
     else:
         print("ok: BOTH changelog entry shapes parse — { build, note } and { b, d, t, s }")
+
+    # THE REGRESSION THAT MADE THIS SCRIPT ANSWER 810 ON 15 AUG 2026, when
+    # builds 810-822 had already shipped in visualizer/index.html. Reading one
+    # artifact is not reading the build sequence. `git` is stubbed so this
+    # exercises index_at() itself rather than a re-implementation of it — and
+    # against the pre-fix version it returns 808 and fails.
+    global git
+    real_git = git
+
+    FAKE = {
+        "index.html": "<!-- v2026-08-14 build 808 -->\nvar CHANGELOG = [\n"
+                      "  { b:808, d:'2026-08-14', t:'a', s:'b' },\n];\n",
+        "visualizer/index.html": "<!--\n  v2026-08-15 build 822\n-->\n",
+    }
+
+    def fake_git(*args):
+        if args[0] == "show":
+            path = args[1].split(":", 1)[1]
+            if path in FAKE:
+                return 0, FAKE[path], ""
+            return 128, "", "fatal: path does not exist"
+        return real_git(*args)
+
+    git = fake_git
+    try:
+        got = index_at("origin/main")
+    finally:
+        git = real_git
+
+    if not got or got["stamp"] != 822:
+        print("FAIL: the highest stamp across ALL artifacts must win — got %s, expected 822"
+              % (got and got["stamp"]))
+        print("      (reading index.html alone is what made this script answer 810")
+        print("       when 810-822 were already spent in visualizer/index.html)")
+        ok = False
+    else:
+        print("ok: the build number is the MAX across every stamped artifact")
+
+    if not got or "visualizer/index.html" not in (got.get("per_file") or {}):
+        print("FAIL: visualizer/index.html is not being scanned at all")
+        ok = False
+    else:
+        print("ok: every artifact in STAMPED is reported separately")
+
+    # A file absent on a ref must be skipped, not fatal — old branches predate
+    # the Visualizer entirely, and treating that as an error would make this
+    # script refuse to run over most of the repo's history.
+    FAKE.pop("visualizer/index.html")
+    git = fake_git
+    try:
+        got2 = index_at("origin/main")
+    finally:
+        git = real_git
+    if not got2 or got2["stamp"] != 808:
+        print("FAIL: an artifact absent on a ref must be skipped — got %s"
+              % (got2 and got2["stamp"]))
+        ok = False
+    else:
+        print("ok: a ref predating an artifact still resolves")
 
     return 0 if ok else 1
 

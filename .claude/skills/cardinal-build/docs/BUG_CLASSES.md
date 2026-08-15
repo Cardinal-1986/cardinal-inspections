@@ -2725,3 +2725,63 @@ are worth having.
 The harness passes on data no server has ever sent. If you cannot point at the
 request that produced a fixture's shape, treat that fixture as an unverified
 claim — the same standard this project already applies to a count.
+
+---
+
+## 46 — a PARTIAL success reported as a success, because the evidence never left the machine that produced it (Visualizer, 15 Aug)
+
+The Spark worker was asked to change the roof and the siding. The segmenter
+found the roof and not the siding. So it changed the roof, appended `siding`
+to a local list called `skipped`, finished the job `done`, uploaded the render,
+left `error` null — and printed the skip to **stdout, on a box in Theo's
+house.**
+
+Every screen a person could look at showed an unqualified success.
+
+### Why this class is worse than a failure
+
+There are three outcomes and only two of them are self-announcing. A failure
+raises. A success is what you expected. **A partial success looks exactly like
+the outcome you wanted**, so it is the only one nobody checks — and the render
+it produces is the one that reaches a kitchen table, where "we'll do the siding
+in Pebblestone Clay" is contradicted by the picture on the iPad.
+
+### The specific trap: the derived signal that ALREADY means two things
+
+The obvious repair is to infer it — the job stores `achieved` per surface, so
+surely *selected minus achieved = skipped*. **No.** `measure()` returns nothing
+for a surface it could not measure and the loop `continue`s past it, so
+"absent from `achieved`" was already ambiguous. Inferring would have reported
+a *measurement* gap as a *surface* gap.
+
+Before deriving a fact from an absence, enumerate every path that produces
+that absence. If there is more than one, the fact must be written down, not
+derived.
+
+### The second trap: absence is UNKNOWN, not "none"
+
+Once the key exists, two populations have no key at all — Gemini jobs (which
+never segment, so nothing can be "not found") and every job from an older
+worker. Treating a missing key as *"nothing was skipped"* replaces a silent
+omission with a **confident false claim**, which is strictly worse. Only a
+present key may produce a statement.
+
+### The rule
+**State that only exists in a log on the machine that produced it does not
+exist.** If a worker knows something a reader would act on, it goes on the row.
+And a reason belongs with it — `skipped: ['siding']` cannot say whether to
+reshoot the elevation or pick a different swatch, and those are the only two
+things a rep can do about it.
+
+### The tell to look for
+A `log(...)`, `print(...)` or `console.log(...)` carrying a variable that no
+line below ever persists or returns. Grep the worker for its own diagnostics
+and ask, of each one: **who reads this, and on what screen?** Here the answer
+was "nobody, ever" for the whole life of the feature.
+
+### Its cousin, in the same build
+The masks that show *where* a surface was found had been uploaded by the worker
+since the first build, were selected by the browser on every refresh — and were
+referenced in exactly one place: the **delete** path. Built, stored, fetched,
+and never once shown. That is the prime doctrine's usual shape, and it means
+the fix for a "missing" diagnostic was a display, not a pipeline.
