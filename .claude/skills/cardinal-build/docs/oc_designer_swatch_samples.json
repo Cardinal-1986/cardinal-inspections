@@ -1,0 +1,44 @@
+[
+ {
+  "name": "Aged Copper",
+  "catalog": "#5E6B5C",
+  "mean": "#52453A",
+  "lit": "#6D5D4F"
+ },
+ {
+  "name": "Merlot",
+  "catalog": "#5A3A38",
+  "mean": "#392D2C",
+  "lit": "#4A3B3A"
+ },
+ {
+  "name": "Pacific Wave",
+  "catalog": "#4C5A63",
+  "mean": "#3A3F42",
+  "lit": "#51575A"
+ },
+ {
+  "name": "Sand Dune",
+  "catalog": "#A89579",
+  "mean": "#615548",
+  "lit": "#7F7163"
+ },
+ {
+  "name": "Sedona Canyon",
+  "catalog": "#7E6350",
+  "mean": "#4C3731",
+  "lit": "#61483F"
+ },
+ {
+  "name": "Summer Harvest",
+  "catalog": "#8B7350",
+  "mean": "#423833",
+  "lit": "#574B45"
+ },
+ {
+  "name": "m Cloud",
+  "catalog": "-",
+  "mean": "#3D3C3D",
+  "lit": "#505150"
+ }
+]
