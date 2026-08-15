@@ -245,17 +245,28 @@ larger ones, so **windows and trim are no longer painted as siding** — that
 was happening already and had gone unnoticed, because a window tinted toward a
 siding colour just looks like a reflection.
 
-**It cannot fix the gutter yet, and that is stated rather than pretended
-away:** there is no gutter pass in `segment_api.json`, so there is no gutter
-mask to subtract. Adding one means a fourth Florence2 → SAM 2 → SaveImage
-chain titled `CARDINAL_MASK_GUTTERS`, grounded on something like
-`rain gutter downspout`. The worker already reads any mask whose SaveImage is
-titled `CARDINAL_MASK_<surface>`, so nothing on the Python side needs to
-change — the moment that chain exists, gutters rank above siding in
-`DETAIL_WINS` and stop being painted.
+✅ **The gutter chain now exists** — nodes **40–44**, grounded on the phrase
+`rain gutter`, titled `CARDINAL_MASK_GUTTERS`. It was written straight into
+the JSON: **the graph is data, and a Florence2 → SAM 2 → MaskToImage →
+SaveImage chain is four nodes with named inputs.** No ComfyUI session was
+needed, the same way the `batch=true` fix was not.
 
-That edit has to be made and eyeballed in ComfyUI on the Spark; it is not
-something to ship blind from a build session.
+Because `DETAIL_WINS` already ranks gutters above siding and roof,
+`exclusive()` subtracts them from both the moment the mask appears — so the
+gutter stops taking the wall colour whether or not gutters were selected.
+
+⚠️ **A hand-built chain is exactly the thing to verify rather than trust**, so
+`gate_graphs.py` walks every `CARDINAL_MASK_*` node back through
+MaskToImage → Sam2Segmentation → Florence2toCoordinates → Florence2Run to
+`CARDINAL_SEG_IMAGE`, and a mutant that re-points one `bboxes` link at a
+non-existent node is caught. Without that walk, a chain wired to nothing would
+still have passed the title check — and the worker would have uploaded a mask
+computed from no photograph at all.
+
+**Still Theo's eyes, not a gate:** whether Florence2 actually finds a thin
+gutter line on a real elevation. If it misses, the phrase is one string in
+node 40 — `gutter`, `roof gutter`, `eavestrough` are all worth trying, and the
+mask lands in `~/ComfyUI/output/cardinal/mask_gutters_*.png` to look at.
 
 ## 6. Run it as a service
 

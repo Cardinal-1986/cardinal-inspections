@@ -208,7 +208,7 @@
       "text_input": "window",
       "task": "caption_to_phrase_grounding",
       "fill_mask": true,
-      "keep_model_loaded": false,
+      "keep_model_loaded": true,
       "max_new_tokens": 1024,
       "num_beams": 3,
       "do_sample": true,
@@ -244,7 +244,7 @@
   },
   "32": {
     "inputs": {
-      "keep_model_loaded": false,
+      "keep_model_loaded": true,
       "individual_objects": false,
       "sam2_model": [
         "3",
@@ -287,6 +287,92 @@
     "class_type": "SaveImage",
     "_meta": {
       "title": "CARDINAL_MASK_WINDOWS"
+    }
+  },
+  "40": {
+    "inputs": {
+      "text_input": "rain gutter",
+      "task": "caption_to_phrase_grounding",
+      "fill_mask": true,
+      "keep_model_loaded": false,
+      "max_new_tokens": 1024,
+      "num_beams": 3,
+      "do_sample": true,
+      "output_mask_select": "",
+      "seed": 1786640000004,
+      "image": [
+        "1",
+        0
+      ],
+      "florence2_model": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "Florence2Run",
+    "_meta": {
+      "title": "find gutters"
+    }
+  },
+  "41": {
+    "inputs": {
+      "index": "",
+      "batch": true,
+      "data": [
+        "40",
+        3
+      ]
+    },
+    "class_type": "Florence2toCoordinates",
+    "_meta": {
+      "title": "gutter boxes"
+    }
+  },
+  "42": {
+    "inputs": {
+      "keep_model_loaded": false,
+      "individual_objects": false,
+      "sam2_model": [
+        "3",
+        0
+      ],
+      "image": [
+        "1",
+        0
+      ],
+      "bboxes": [
+        "41",
+        1
+      ]
+    },
+    "class_type": "Sam2Segmentation",
+    "_meta": {
+      "title": "segment gutters"
+    }
+  },
+  "43": {
+    "inputs": {
+      "mask": [
+        "42",
+        0
+      ]
+    },
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "gutters mask to image"
+    }
+  },
+  "44": {
+    "inputs": {
+      "filename_prefix": "cardinal/mask_gutters",
+      "images": [
+        "43",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "CARDINAL_MASK_GUTTERS"
     }
   }
 }
