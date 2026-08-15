@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-14 build 813
+  v2026-08-15 build 814
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -337,6 +337,47 @@ body.vz-prep main{max-width:none;padding:0}
 
 .canvas{display:flex;flex-direction:column;min-width:0;min-height:0;
   background:radial-gradient(900px 420px at 55% -10%,#12161B,var(--vz-bg,#0B0D10) 70%)}
+/* 814: the CompanyCam picker. Tiles are ~220px because the job is to tell one
+   elevation from another, and at thumbnail size every photograph of the same
+   house looks the same. */
+#vzCCBox{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;
+  background:var(--vz-bg,#0B0D10)}
+#vzCCBox.hide{display:none}
+#vzCCBox .cchead{display:flex;align-items:center;gap:10px;padding:12px 14px;flex-wrap:wrap;
+  border-bottom:1px solid var(--vz-line,#252932);background:var(--vz-panel,#14171B)}
+#vzCCBox .cchead .t{font-weight:800;font-size:15px}
+#vzCCBox .ccq{display:flex;gap:8px;align-items:center;flex:1;min-width:240px}
+#vzCCBox .ccq input{flex:1;min-width:0;background:rgba(0,0,0,.3);
+  border:1px solid var(--vz-line,#252932);border-radius:10px;padding:0 12px;min-height:44px;
+  font:inherit;font-size:14px;color:var(--vz-ink,#E9ECF2);outline:none}
+#vzCCBox .ccq input::placeholder{color:var(--vz-mute,#767E8D)}
+#vzCCBox .ccq .btn,#vzCCBox .cchead > .btn{min-height:44px}
+#vzCCBox .ccgrid{flex:1;min-height:0;overflow-y:auto;padding:14px;
+  display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+  align-content:start}
+#vzCCBox .ccfoot{flex:none;display:flex;align-items:center;gap:12px;padding:12px 14px;
+  border-top:1px solid var(--vz-line,#252932);background:var(--vz-panel,#14171B)}
+#vzCCBox .ccfoot .btn{min-height:44px;padding:0 22px}
+/* An EXPLICIT image height, not aspect-ratio on the tile.
+   aspect-ratio:4/3 on a grid item in a 1fr column does not size the implicit
+   ROW — the row sized itself to the content instead, so every tile overflowed
+   its row by ~90px and overlapped the one below it. Measured in Chromium:
+   tile 1 spanned y 86-255 while tile 7 began at 163. A fixed image height is
+   deterministic and needs no aspect-ratio resolution at all. */
+.cctile{position:relative;padding:0;border:2px solid var(--vz-line,#252932);border-radius:12px;
+  overflow:hidden;background:var(--vz-card,#171A21);cursor:pointer;
+  font:inherit;color:inherit;text-align:left;display:block}
+.cctile img{width:100%;height:168px;object-fit:cover;display:block;background:#12161B}
+.cctile:hover{border-color:var(--vz-line2,#333A46)}
+.cctile[aria-pressed="true"]{border-color:var(--vz-red,#C8202E)}
+.cctile .cap{position:absolute;left:0;right:0;bottom:0;padding:7px 9px;font-size:12px;
+  background:linear-gradient(transparent,rgba(0,0,0,.86) 45%);color:var(--vz-ink,#E9ECF2)}
+.cctile .cap b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+.cctile .cap i{font-style:normal;font-size:10.5px;color:#B9C0CC}
+.cctile .busy{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.66);font-size:12.5px;font-weight:600}
+
 /* 813: the photograph source bar. CompanyCam only appears for someone the
    API will actually answer — see ccProbe(). Showing a tab that returns 403 to
    most of the staff reads as broken rather than as a permission. */
@@ -363,7 +404,7 @@ body.vz-prep main{max-width:none;padding:0}
    are pointing at or have chosen. */
 .canvas .shots{display:flex;gap:6px;padding:8px 12px;overflow-x:auto;flex:none;
   border-bottom:1px solid var(--vz-line,#252932);scrollbar-width:thin}
-.canvas .shots .shot{flex:none;width:78px;border-width:1px}
+.canvas .shots .shot{flex:none;width:156px;border-width:1px}
 .canvas .shots .shot .cap{opacity:0;transition:opacity .12s;font-size:10px;padding:3px 5px}
 .canvas .shots .shot:hover .cap,
 .canvas .shots .shot:focus-visible .cap,
@@ -512,13 +553,8 @@ body.vz-prep main{max-width:none;padding:0}
         <div class="canvas">
           <div class="srcbar" id="vzSrcBar">
             <button class="srctab" id="vzSrcJob" type="button" aria-pressed="true">Job photos</button>
-            <button class="srctab hide" id="vzSrcCC" type="button" aria-pressed="false">CompanyCam</button>
-            <form class="ccq hide" id="vzCCForm">
-              <input id="vzCCq" type="search" autocomplete="off"
-                     placeholder="Address, client or caption…" aria-label="Search CompanyCam">
-              <button class="btn" id="vzCCgo" type="submit">Search</button>
-            </form>
-            <span class="ccnote" id="vzCCNote"></span>
+            <button class="srctab hide" id="vzSrcCC" type="button" aria-pressed="false">CompanyCam…</button>
+            <span class="ccnote" id="vzSrcNote"></span>
           </div>
           <div class="shots" id="vzShots"><div class="empty">Pick a job above.</div></div>
           <div class="stage" id="vzStage"><div class="empty">Pick a photograph.</div></div>
@@ -546,6 +582,30 @@ body.vz-prep main{max-width:none;padding:0}
     </section>
   </main>
 
+</div>
+
+<!-- ─────────────────── CompanyCam picker (814) ─────────────────────
+     Its own screen, not a strip. Browsing an archive to find the one
+     elevation that will sell a roof is a looking task, and 78px tiles in a
+     horizontal scroller cannot support it. -->
+<div id="vzCCBox" class="hide" role="dialog" aria-modal="true" aria-label="Choose a CompanyCam photograph">
+  <div class="cchead">
+    <div class="t">CompanyCam</div>
+    <form class="ccq" id="vzCCForm">
+      <input id="vzCCq" type="search" autocomplete="off"
+             placeholder="Address, client or caption…" aria-label="Search CompanyCam">
+      <button class="btn" id="vzCCgo" type="submit">Search</button>
+    </form>
+    <span class="ccnote" id="vzCCNote"></span>
+    <button class="btn" id="vzCCX" type="button">Close</button>
+  </div>
+  <div class="ccgrid" id="vzCCGrid">
+    <div class="empty">Search for an address or a client name — or press Search with the box empty to browse the newest.</div>
+  </div>
+  <div class="ccfoot">
+    <button class="btn" id="vzCCMore" type="button" hidden>Load more</button>
+    <span class="ccnote" id="vzCCFootNote"></span>
+  </div>
 </div>
 
 <!-- ───────────────────────── compare ───────────────────────── -->
@@ -864,7 +924,6 @@ $('vzProject').addEventListener('change', function(){
    route answers. One gate, on the server, where it cannot be edited by anyone
    holding the page open. */
 var ccPhotos = [];       /* the current CompanyCam result set */
-var srcNow   = 'job';    /* 'job' | 'cc' */
 
 function ccCall(body){
   return sb.auth.getSession().then(function(r){
@@ -891,66 +950,126 @@ function ccProbe(){
     .catch(function(){ /* not an admin, or the key is not configured — stay hidden */ });
 }
 
-function setSource(which){
-  srcNow = which;
-  var job = which === 'job';
-  $('vzSrcJob').setAttribute('aria-pressed', String(job));
-  $('vzSrcCC').setAttribute('aria-pressed', String(!job));
-  $('vzCCForm').classList.toggle('hide', job);
-  $('vzCCNote').textContent = '';
-  if(job){ loadShots(); }
-  else {
-    $('vzShots').innerHTML = '<div class="empty">Search CompanyCam above — try an address or a client name.</div>';
-    $('vzCCq').focus();
-  }
+/* The picker is its own screen. The source bar's CompanyCam button opens it
+   rather than filling the strip; the strip stays what it is good at, which is
+   the handful of photographs already on the job. */
+var CC_PAGE   = 24;      /* how many a first search asks for */
+var CC_CAP    = 100;     /* api/companycam.js clamps limit to this */
+var ccLimit   = CC_PAGE;
+var ccQuery   = '';
+var ccCursor  = null;    /* only the browse path returns one — see ccMore() */
+
+function openCC(){
+  $('vzCCBox').classList.remove('hide');
+  document.body.style.overflow = 'hidden';
+  $('vzCCq').focus();
+  $('vzSrcCC').setAttribute('aria-pressed', 'true');
 }
-$('vzSrcJob').addEventListener('click', function(){ setSource('job'); });
-$('vzSrcCC').addEventListener('click',  function(){ setSource('cc'); });
+function closeCC(){
+  $('vzCCBox').classList.add('hide');
+  document.body.style.overflow = '';
+  $('vzSrcCC').setAttribute('aria-pressed', 'false');
+}
+$('vzSrcCC').addEventListener('click', openCC);
+$('vzSrcJob').addEventListener('click', function(){
+  $('vzSrcJob').setAttribute('aria-pressed', 'true');
+  $('vzSrcCC').setAttribute('aria-pressed', 'false');
+  loadShots();
+});
+$('vzCCX').addEventListener('click', closeCC);
+document.addEventListener('keydown', function(e){
+  if(e.key === 'Escape' && !$('vzCCBox').classList.contains('hide')) closeCC();
+});
 
 $('vzCCForm').addEventListener('submit', function(e){
   e.preventDefault();
-  var q = $('vzCCq').value.trim();
-  if(!q) return;
-  var box = $('vzShots');
-  box.innerHTML = '<div class="empty">Searching CompanyCam…</div>';
-  $('vzCCNote').textContent = '';
-  ccCall({ action:'list', q: q, limit: 24 }).then(function(j){
-    ccPhotos = j.photos || [];
-    if(!ccPhotos.length){
-      box.innerHTML = '<div class="empty">Nothing matched. Try the street number, or the client name.</div>';
-      return;
-    }
-    $('vzCCNote').textContent = ccPhotos.length + ' found';
-    box.innerHTML = '';
-    ccPhotos.forEach(function(p){
-      var b = document.createElement('button');
-      b.className = 'shot'; b.type = 'button';
-      b.setAttribute('aria-pressed', 'false');
-      b.dataset.ccid = p.id;
-      var im = document.createElement('img');
-      im.alt = p.description || p.project_address || 'CompanyCam photograph';
-      im.loading = 'lazy';
-      /* The THUMBNAIL is displayed straight from CompanyCam's CDN, which is
-         fine — it is only ever an <img>. The full photograph is a different
-         matter and never comes from the CDN; see ccPick(). */
-      im.src = p.thumb || p.preview || '';
-      b.appendChild(im);
-      var mark = document.createElement('span');
-      mark.className = 'ccmark'; mark.textContent = 'CC';
-      b.appendChild(mark);
-      var lab = p.project_address || p.project_name || p.description || '';
-      if(lab){
-        var c = document.createElement('span');
-        c.className = 'cap'; c.textContent = lab;
-        b.appendChild(c);
-      }
-      b.addEventListener('click', function(){ ccPick(p, b); });
-      box.appendChild(b);
-    });
-  }).catch(function(err){
-    box.innerHTML = '<div class="empty">' + esc(String(err && err.message || err)) + '</div>';
-  });
+  ccQuery = $('vzCCq').value.trim();
+  ccLimit = CC_PAGE; ccCursor = null; ccPhotos = [];
+  ccFetchPage(true);
 });
+$('vzCCMore').addEventListener('click', function(){ ccMore(); });
+
+/* Load more, honestly.
+
+   The route offers TWO different things and they are not interchangeable:
+   a text search runs against the Postgres index, which returns everything it
+   is going to return in one shot (next_cursor is always null), so "more" there
+   means asking again with a bigger limit — and api/companycam.js clamps that
+   at 100. Browsing WITHOUT a query goes to the live API, which does hand back
+   a real cursor and can page indefinitely.
+
+   When the 100 ceiling is reached the footer SAYS SO. A Load more button that
+   quietly stops working reads as the archive having run out, which would be a
+   lie about how much of Cardinal's own history a rep can see. */
+function ccMore(){
+  if(ccCursor){ ccFetchPage(false); return; }
+  if(ccLimit >= CC_CAP){
+    $('vzCCFootNote').textContent =
+      'That is the most a single search returns (' + CC_CAP + '). Narrow it — a street number, or a client name.';
+    $('vzCCMore').hidden = true;
+    return;
+  }
+  ccLimit = Math.min(ccLimit + CC_PAGE, CC_CAP);
+  ccFetchPage(true);
+}
+
+function ccFetchPage(replace){
+  var grid = $('vzCCGrid');
+  if(replace) grid.innerHTML = '<div class="empty">Searching CompanyCam…</div>';
+  $('vzCCFootNote').textContent = 'Loading…';
+  var body = { action:'list', limit: ccLimit };
+  if(ccQuery) body.q = ccQuery;
+  if(ccCursor) body.after = ccCursor;
+
+  ccCall(body).then(function(j){
+    var got = j.photos || [];
+    ccPhotos = replace ? got : ccPhotos.concat(got);
+    ccCursor = j.has_next === true ? (j.next_cursor || null) : null;
+    drawCC();
+    $('vzCCNote').textContent = ccPhotos.length + ' shown';
+    $('vzCCFootNote').textContent = '';
+    /* Offer more only when more can actually be had. */
+    $('vzCCMore').hidden = !(ccCursor || (ccQuery && ccPhotos.length >= ccLimit && ccLimit < CC_CAP));
+    if(!ccCursor && ccQuery && ccPhotos.length < ccLimit)
+      $('vzCCFootNote').textContent = 'That is everything matching “' + ccQuery + '”.';
+  }).catch(function(err){
+    $('vzCCFootNote').textContent = '';
+    grid.innerHTML = '<div class="empty">' + esc(String(err && err.message || err)) + '</div>';
+  });
+}
+
+function drawCC(){
+  var grid = $('vzCCGrid');
+  if(!ccPhotos.length){
+    grid.innerHTML = '<div class="empty">Nothing matched. Try the street number, or the client name.</div>';
+    return;
+  }
+  grid.innerHTML = '';
+  ccPhotos.forEach(function(p){
+    var b = document.createElement('button');
+    b.className = 'cctile'; b.type = 'button';
+    b.setAttribute('aria-pressed', 'false');
+    b.dataset.ccid = p.id;
+    var im = document.createElement('img');
+    im.alt = p.description || p.project_address || 'CompanyCam photograph';
+    im.loading = 'lazy';
+    /* The THUMBNAIL comes straight from CompanyCam's CDN, which is fine — it
+       is only ever an <img>. The full photograph is a different matter and
+       never comes from the CDN; see ccPick(). */
+    im.src = p.preview || p.thumb || '';
+    b.appendChild(im);
+    var lab = p.project_address || p.project_name || '';
+    var sub = [p.description, p.captured_at ? String(p.captured_at).slice(0, 10) : '']
+                .filter(Boolean).join(' · ');
+    var c = document.createElement('span');
+    c.className = 'cap';
+    c.innerHTML = '<b>' + esc(lab || p.description || 'CompanyCam') + '</b>' +
+                  (sub ? '<i>' + esc(sub) + '</i>' : '');
+    b.appendChild(c);
+    b.addEventListener('click', function(){ ccPick(p, b); });
+    grid.appendChild(b);
+  });
+}
 
 /* Import a CompanyCam photograph so the Spark can reach it.
 
@@ -970,21 +1089,29 @@ $('vzCCForm').addEventListener('submit', function(e){
       metadata of any kind, which is the whole point; the canvas is not tainted
       because the blob URL is same-origin. */
 function ccPick(p, btn){
-  var box = $('vzShots');
-  Array.prototype.forEach.call(box.querySelectorAll('.shot'), function(el){
+  Array.prototype.forEach.call($('vzCCGrid').querySelectorAll('.cctile'), function(el){
     el.setAttribute('aria-pressed', el === btn ? 'true' : 'false');
   });
+  var busy = document.createElement('span');
+  busy.className = 'busy'; busy.textContent = 'Importing…';
+  btn.appendChild(busy);
   $('vzCCNote').textContent = 'Importing…';
+
   ccCall({ action:'fetch', id: p.id })
     .then(function(j){ return stripAndStore(j.data, j.mime); })
     .then(function(path){
+      busy.remove();
       $('vzCCNote').textContent = 'Imported.';
+      /* Close on success — the picker has done its job and the rep wants to
+         be back at the materials with the photograph on the stage. */
+      closeCC();
       chooseShot({ storage_path: path,
-                   caption: p.project_address || p.description || 'CompanyCam' }, btn);
+                   caption: p.project_address || p.description || 'CompanyCam' }, null);
     })
     .catch(function(err){
-      $('vzCCNote').textContent = 'Could not import it — ' + String(err && err.message || err);
+      busy.remove();
       btn.setAttribute('aria-pressed', 'false');
+      $('vzCCNote').textContent = 'Could not import it — ' + String(err && err.message || err);
     });
 }
 
@@ -1026,9 +1153,6 @@ function uid(){
 }
 
 function loadShots(){
-  /* A project change while the CompanyCam tab is open must not replace the
-     search results underneath the rep. */
-  if(srcNow === 'cc') return;
   var pid = $('vzProject').value;
   var box = $('vzShots');
   if(!pid){ box.innerHTML = '<div class="empty">Pick a job above.</div>'; sum(); return; }
@@ -1068,8 +1192,10 @@ function loadShots(){
 }
 function chooseShot(s, btn){
   chosenShot = s;
+  /* btn is null for a CompanyCam import: the photograph is chosen but has no
+     tile in the strip, so every strip tile simply goes unpressed. */
   Array.prototype.forEach.call($('vzShots').querySelectorAll('.shot'), function(el){
-    el.setAttribute('aria-pressed', el === btn ? 'true' : 'false');
+    el.setAttribute('aria-pressed', (btn && el === btn) ? 'true' : 'false');
   });
   /* Paint the big preview. The stage is the working surface — the strip above
      it is only for choosing, and at 104px a rep cannot judge a photograph. */

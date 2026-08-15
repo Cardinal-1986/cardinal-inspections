@@ -103,14 +103,22 @@ window.__ccAdmin = true;     /* flipped per-scenario before load */
       if(body.action === 'tags')
         return Promise.resolve(new Response(JSON.stringify({tags:[{id:'1',name:'Roof'}]}),
           {status:200, headers:{'Content-Type':'application/json'}}));
-      if(body.action === 'list')
-        return Promise.resolve(new Response(JSON.stringify({photos:[
-          { id:'ccphoto1', description:'front elevation', captured_at:'2026-07-02',
-            project_id:'ccp1', project_name:'Monica', project_address:'843 Farnam Dr',
-            creator_name:'Curtis', annotated:false,
-            thumb:'https://cdn.companycam.invalid/t/ccphoto1.jpg',
-            preview:'https://cdn.companycam.invalid/p/ccphoto1.jpg' }
-        ], next_cursor:null, has_next:false}), {status:200, headers:{'Content-Type':'application/json'}}));
+      if(body.action === 'list'){
+        /* Mirrors the real route: a TEXT SEARCH runs against the index and
+           never returns a cursor, so more means a bigger limit, clamped at
+           100. There are 60 matching photos in this fixture, so 24 -> 48 -> 60
+           and then it is genuinely everything. */
+        var n = Math.min(body.limit || 30, 100), total = 60, out = [];
+        for(var i = 1; i <= Math.min(n, total); i++)
+          out.push({ id:'ccphoto' + i, description:'front elevation ' + i,
+            captured_at:'2026-07-02', project_id:'ccp1', project_name:'Monica',
+            project_address:'843 Farnam Dr', creator_name:'Curtis', annotated:false,
+            thumb:'https://cdn.companycam.invalid/t/ccphoto' + i + '.jpg',
+            preview:'https://cdn.companycam.invalid/p/ccphoto' + i + '.jpg' });
+        return Promise.resolve(new Response(JSON.stringify({
+          photos: out, next_cursor: null, has_next: false
+        }), {status:200, headers:{'Content-Type':'application/json'}}));
+      }
       if(body.action === 'fetch')
         return Promise.resolve(new Response(JSON.stringify({
           id: body.id, mime:'image/jpeg', bytes: window.__EXIFJPEG.length,
@@ -358,51 +366,106 @@ chk('delete also removes the render, the preview AND the mask files',
    whole control died having printed nothing — BUG_CLASSES 37 for the third
    time tonight, each time in a gate rather than in the app. A control that
    crashes proves nothing; it has to REPORT red. */
-if (!(await has('#vzSrcCC'))) {
-  chk('the CompanyCam source bar exists', false, 'no #vzSrcCC in this artifact');
+/* Guard on EVERY element the block below touches, not just the first one.
+   This crashed against 813 — which HAS the tab but not the picker — because
+   the guard checked #vzSrcCC and the code then reached for #vzCCBox. Fourth
+   BUG_CLASSES 37 of the session, and every one of them was the same shape: an
+   interaction added without extending the structural guard in front of it. */
+if (!(await has('#vzSrcCC')) || !(await has('#vzCCBox')) || !(await has('#vzCCGrid'))) {
+  chk('the CompanyCam source bar exists', await has('#vzSrcCC'), 'tab');
+  chk('814: the tab opens a full picker screen, not a strip', await has('#vzCCBox'),
+      'no #vzCCBox in this artifact');
+  chk('the picker has a grid to fill', await has('#vzCCGrid'));
 } else {
-  const cc = await page.evaluate(`(()=>{
+  const opened = await page.evaluate(`(()=>{
     document.getElementById('vzSrcCC').click();
     return new Promise(res=>setTimeout(()=>res({
       tabShown: !document.getElementById('vzSrcCC').classList.contains('hide'),
-      formShown: !document.getElementById('vzCCForm').classList.contains('hide'),
+      pickerOpen: !document.getElementById('vzCCBox').classList.contains('hide'),
       probed: (window.__cc||[]).some(c=>c.body.action==='tags'),
       authed: (window.__cc||[]).every(c=>c.auth === true)
-    }),200));
+    }),250));
   })()`);
-  chk('the CompanyCam tab appears for an admin', cc.tabShown === true);
-  chk('the search box appears with it', cc.formShown === true);
+  chk('the CompanyCam tab appears for an admin', opened.tabShown === true);
   chk('the tab is decided by ASKING the route, not by re-implementing its role check',
-      cc.probed === true);
-  chk('every CompanyCam call carries the signed-in bearer token', cc.authed === true);
+      opened.probed === true);
+  chk('every CompanyCam call carries the signed-in bearer token', opened.authed === true);
+  chk('814: the tab opens a full picker screen, not a strip', opened.pickerOpen === true);
 
   await page.fill('#vzCCq', '843 Farnam');
   await page.click('#vzCCgo');
   await page.waitForTimeout(400);
-  const hits = await page.evaluate(`[...document.querySelectorAll('#vzShots .shot')].map(b=>b.dataset.ccid)`);
-  chk('searching CompanyCam lists results in the photograph strip',
-      hits.length === 1 && hits[0] === 'ccphoto1', JSON.stringify(hits));
+  const first = await page.evaluate(`({
+    tiles: document.querySelectorAll('#vzCCGrid .cctile').length,
+    moreShown: !document.getElementById('vzCCMore').hidden,
+    note: document.getElementById('vzCCNote').textContent
+  })`);
+  chk('searching fills the picker grid', first.tiles === 24, first.tiles + ' tiles');
   chk('the query reached the route as typed',
       await page.evaluate(`(window.__cc||[]).some(c=>c.body.action==='list' && c.body.q==='843 Farnam')`));
+  chk('the count is shown', /24 shown/.test(first.note), first.note);
 
-  await page.click('#vzShots .shot[data-ccid="ccphoto1"]');
-  await page.waitForTimeout(700);
+  /* 814: the tiles must be big enough to tell one elevation from another —
+     that is the whole reason the picker exists. */
+  const tile = await page.evaluate(`(()=>{ const t=document.querySelector('#vzCCGrid .cctile');
+    if(!t) return null; const r=t.getBoundingClientRect(); return { w:Math.round(r.width), h:Math.round(r.height) }; })()`);
+  chk('picker tiles are large (>=200px wide), not 78px thumbnails',
+      tile && tile.w >= 200, tile ? (tile.w + 'x' + tile.h) : 'none');
+
+  chk('Load more is offered when there is more to get', first.moreShown === true);
+  await page.click('#vzCCMore');
+  await page.waitForTimeout(350);
+  const second = await page.evaluate(`({
+    tiles: document.querySelectorAll('#vzCCGrid .cctile').length,
+    asked: (window.__cc||[]).filter(c=>c.body.action==='list').map(c=>c.body.limit)
+  })`);
+  chk('Load more actually loads more', second.tiles === 48, second.tiles + ' tiles');
+  chk('it does it by raising the limit — a text search has no cursor',
+      second.asked.join(',') === '24,48', second.asked.join(','));
+
+  await page.click('#vzCCMore');
+  await page.waitForTimeout(350);
+  const third = await page.evaluate(`({
+    tiles: document.querySelectorAll('#vzCCGrid .cctile').length,
+    moreShown: !document.getElementById('vzCCMore').hidden,
+    foot: document.getElementById('vzCCFootNote').textContent
+  })`);
+  chk('it stops at the real end of the results', third.tiles === 60, third.tiles + ' tiles');
+  chk('and SAYS it is the end rather than leaving a dead button',
+      third.moreShown === false && /everything matching/i.test(third.foot), third.foot);
+
+  /* Back to the top of the grid before picking. After two Load mores the
+     grid is scrolled, and clicking a tile that is off-screen is not what a
+     rep does — they scroll up and click the one they can see. The tile's size
+     is asserted separately above, so this is not papering over a hit-target
+     problem. */
+  await page.evaluate(`document.getElementById('vzCCGrid').scrollTop = 0`);
+  await page.waitForTimeout(150);
+  /* Tiles must not overlap. aspect-ratio on a 1fr grid column did not size the
+     implicit row, so every tile spilled ~90px into the one below it. This is
+     the check that caught it, and it is geometry rather than a class name. */
+  const overlap = await page.evaluate(`(()=>{
+    const g=document.getElementById('vzCCGrid');
+    const a=g.querySelector('[data-ccid="ccphoto1"]').getBoundingClientRect();
+    const b=g.querySelector('[data-ccid="ccphoto7"]').getBoundingClientRect();
+    return { same: Math.abs(a.left-b.left) < 2, gap: Math.round(b.top - a.bottom) };
+  })()`);
+  chk('picker tiles do not overlap the row beneath them',
+      overlap.same && overlap.gap >= 0, 'gap ' + overlap.gap + 'px between row 1 and row 2');
+
+  await page.click('#vzCCGrid .cctile[data-ccid="ccphoto1"]');
+  await page.waitForTimeout(800);
 
   const imported = await page.evaluate(`(()=>{
     const u = (window.__uploads||[])[0];
     if(!u) return { none:true };
     const b = u.bytes;
-    /* Walk the JPEG segments looking for APP1 (0xFFE1), which is where EXIF —
-       and therefore GPS — lives. Reading the bytes, not trusting the code. */
     let exif = false;
     for(let i=0;i<b.length-1;i++) if(b[i]===0xFF && b[i+1]===0xE1){ exif = true; break; }
-    /* And the literal GPS tag text, as a second independent check. */
     let gps = false;
-    const needle = [0x47,0x50,0x53]; // "GPS"
     for(let i=0;i<b.length-2;i++)
-      if(b[i]===needle[0]&&b[i+1]===needle[1]&&b[i+2]===needle[2]){ gps = true; break; }
-    return { path:u.path, type:u.type, len:b.length, exif, gps,
-             jpeg: b[0]===0xFF && b[1]===0xD8 };
+      if(b[i]===0x47&&b[i+1]===0x50&&b[i+2]===0x53){ gps = true; break; }
+    return { path:u.path, len:b.length, exif, gps, jpeg: b[0]===0xFF && b[1]===0xD8 };
   })()`);
   chk('picking a CompanyCam photo uploads it into the bucket', !imported.none, imported.path);
   chk('it lands under visualizer/ where the write policy allows staff',
@@ -410,20 +473,18 @@ if (!(await has('#vzSrcCC'))) {
   chk('the uploaded file is a real JPEG', imported.jpeg === true);
   chk('EXIF is STRIPPED before upload — no APP1 segment survives', imported.exif === false);
   chk('no GPS tag survives in the uploaded bytes', imported.gps === false);
-
   chk('the full photograph came through /api/companycam, never the CDN',
       await page.evaluate(`(window.__cc||[]).some(c=>c.body.action==='fetch' && c.body.id==='ccphoto1')`));
 
-  const chosen = await page.evaluate(`(()=>{ const i=document.querySelector('.canvas .stage img');
-    return { src: i ? (i.getAttribute('src')||'') : '', note: document.getElementById('vzCCNote').textContent }; })()`);
+  const after = await page.evaluate(`({
+    closed: document.getElementById('vzCCBox').classList.contains('hide'),
+    src: (document.querySelector('.canvas .stage img')||{}).src || '',
+    scroll: document.body.style.overflow
+  })`);
+  chk('the picker closes once the photograph is in', after.closed === true);
   chk('the imported photograph becomes the chosen one on the stage',
-      /visualizer\/src\//.test(chosen.src), chosen.src.slice(-44));
-  chk('the screen says it imported', /Imported/i.test(chosen.note), chosen.note);
-
-  await page.click('#vzSrcJob');
-  await page.waitForTimeout(250);
-  chk('switching back to Job photos restores the job strip',
-      await page.evaluate(`[...document.querySelectorAll('#vzShots .shot')].every(b=>!b.dataset.ccid)`));
+      /visualizer\/src\//.test(after.src), after.src.slice(-44));
+  chk('closing releases the scroll lock', after.scroll === '', 'overflow=' + after.scroll);
 }
 
 // ── 7. it must not scroll sideways, at either width ───────────────────────
