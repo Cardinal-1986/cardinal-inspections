@@ -48,13 +48,32 @@ and it is what SAM 2 is genuinely good at. Cost: a browser change to capture tap
 and a shadow-split wall still needs a second tap to complete. **Does not give you circles until
 something proposes where to put them.**
 
-**B — semantic segmentation (ADE20K-trained: SegFormer / OneFormer).** Returns *labelled*
-classes — building, house, roof, window, door, sky, tree, grass, road, car. That is precisely
-the vocabulary this feature needs, and it excludes vegetation **by construction** rather than by
-ranking. It is also what makes Theo's original ask literal: take the building/wall class, find
-its connected components, put a circle on each centroid. Cost: a new model on the Spark and a
-new step in the pipeline — the largest of the three, and the only one that ends with circles on
-walls.
+**B — Grounding DINO → SAM 2 box prompt.** An open-vocabulary *detector* runs first on
+`"roof", "house siding", "garage door", "window"`, filters out trees, cars, grass and sky by
+construction rather than by ranking, and hands its boxes to SAM 2 for a crisp mask. This is the
+one that ends with circles on walls.
+
+⚠️ **I first wrote this row as ADE20K semantic segmentation and priced it as "the largest of the
+three." Theo corrected both halves on 15 Aug and he is right on the evidence:**
+
+- **ADE20K segmenters bleed on shingle and trim lines**, because they upsample from
+  quarter-resolution logits. Box-prompted SAM 2 does not have that failure.
+- **The pipeline already exists.** `segment_api.json` — live, loaded at
+  `visualizer_worker.py:466` — is *exactly this shape*: `Florence2Run` →
+  `Florence2toCoordinates` → `Sam2Segmentation(bboxes=…)` → `MaskToImage` → `SaveImage`, four
+  surfaces wide. **Grounding DINO is a swap of nodes 10/11, 20/21, 30/31, 40/41 in a graph that
+  ships today.** What failed at wb-.5 was the grounding model, not the architecture.
+
+**The one live risk, and it is a real one: Grounding DINO is text-prompted, the same class of
+instrument as the Florence2 we removed.** Two photographs of the same house on 15 Aug diverged
+because a phrase that grounded on one angle grounded the whole building on the other. Grounding
+DINO is a purpose-built detector rather than captioning-with-grounding-attached and may well
+survive where Florence2 did not — **but it must be probed on those two photographs before any
+pipeline is built on it.** Run the detector alone and look at the boxes; SAM 2 need not be
+involved to answer it. Precedent for the probe: `probe_planes.py` (build 824).
+
+**Prerequisite, unverified as of this writing:** whether a Grounding DINO node pack and weights
+are installed in the Spark's ComfyUI. Settle it with `/object_info` before estimating anything.
 
 **C — automask plus a "is this inside the building?" filter.** Collapses into B, because the
 filter needs a building mask. Recorded so nobody proposes it as a third way.
