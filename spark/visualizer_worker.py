@@ -386,9 +386,38 @@ def segment(comfy, image_png):
             continue
         surface = title[len("CARDINAL_MASK_"):].lower()
         images = payload.get("images") or []
-        if images:
-            masks[surface] = comfy.fetch(images[0])
+        if not images:
+            continue
+        # ⚠ NOT images[0]. With individual_objects=true a surface comes back
+        # as one image PER OBJECT, and taking the first silently discards the
+        # rest — a roof whose second plane was found and then thrown away
+        # renders exactly like a roof whose second plane was never found.
+        # Union, because the rest of this pipeline is one mask per surface;
+        # keeping them apart is the tap-a-plane feature and a much bigger
+        # change. This preserves today's contract and stops the silent loss.
+        pngs = [comfy.fetch(m) for m in images]
+        if len(pngs) > 1:
+            log("    %s came back as %d objects — unioned" % (surface, len(pngs)))
+        masks[surface] = pngs[0] if len(pngs) == 1 else union_masks(pngs)
     return masks
+
+
+def union_masks(pngs):
+    """One surface mask from N object masks — per-pixel max.
+
+    `lighter` rather than a paste or an add: a paste would overwrite a lit
+    pixel with an unlit one wherever the masks overlap, and an add would
+    saturate the soft edges SAM 2 produces into a hard fringe.
+    """
+    base = Image.open(io.BytesIO(pngs[0])).convert("L")
+    for p in pngs[1:]:
+        m = Image.open(io.BytesIO(p)).convert("L")
+        if m.size != base.size:
+            m = m.resize(base.size, Image.LANCZOS)
+        base = ImageChops.lighter(base, m)
+    buf = io.BytesIO()
+    base.save(buf, format="PNG")
+    return buf.getvalue()
 
 
 # Detail beats plane. Florence2 grounds "house wall" as a BOX and SAM 2 fills
@@ -504,8 +533,8 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 # One query ends the argument:
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
-#   "wb-2026-08-15.3 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.4"
+#   "wb-2026-08-15.5 recolour" -> this code, this mode
+WORKER_BUILD = "wb-2026-08-15.5"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys

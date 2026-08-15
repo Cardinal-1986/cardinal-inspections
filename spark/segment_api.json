@@ -33,7 +33,7 @@
   },
   "10": {
     "inputs": {
-      "text_input": "roof",
+      "text_input": "shingles",
       "task": "caption_to_phrase_grounding",
       "fill_mask": true,
       "keep_model_loaded": true,
@@ -73,7 +73,7 @@
   "12": {
     "inputs": {
       "keep_model_loaded": true,
-      "individual_objects": false,
+      "individual_objects": true,
       "sam2_model": [
         "3",
         0
@@ -245,7 +245,7 @@
   "32": {
     "inputs": {
       "keep_model_loaded": true,
-      "individual_objects": false,
+      "individual_objects": true,
       "sam2_model": [
         "3",
         0
@@ -331,7 +331,7 @@
   "42": {
     "inputs": {
       "keep_model_loaded": false,
-      "individual_objects": false,
+      "individual_objects": true,
       "sam2_model": [
         "3",
         0
