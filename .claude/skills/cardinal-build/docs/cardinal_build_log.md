@@ -16579,3 +16579,75 @@ on the Spark yet when those were judged.
   the **gutter mask** (needs a `CARDINAL_MASK_GUTTERS` chain built by eye in ComfyUI on the Spark —
   §5d) and **mask precision generally**, which only renders on real photographs can judge.
   `gate_tint.py` 56/56 green, RED 5 (reported, not crashed) on the pre-audit worker.
+
+---
+
+### 822 — the Visualizer gets a second engine, and `api/design.js` comes back (15 Aug 2026)
+
+**Theo, on being shown a Gemini render of a real Cardinal elevation:** *"its perfect on black
+sable."* And, on an earlier one: *"I prompted Make only the shingled roof Evergreen Mist Owens
+Corning"* — with the siding coming back a different colour anyway.
+
+**What the evidence actually said.** Three Gemini presses, one prompt, three outcomes: one broke
+containment (repainted siding nobody selected), one missed the colour entirely (tan for Evergreen
+Mist), one gave a standing-seam porch deck brown architectural shingles. Against that, the Spark
+landed the OC hex at **drift 2–4 of 255** on four consecutive jobs, measured on the delivered
+pixels, and structurally cannot paint outside its mask. **Neither wins**, so neither was chosen:
+the rep picks per render.
+
+⚠️ **Black Sable cannot discriminate between the two engines and must not be cited as if it can.**
+Near-black is nearly impossible to get wrong; the Spark scored drift 2 on it too. The colours that
+separate them are the chromatics — Evergreen Mist, Driftwood, Sedona Canyon.
+
+- **`api/design.js` recovered from `e5cec82^`, not rewritten.** The prime doctrine paying out: the
+  retired route already had the model ladder (`gemini-3.1-flash-image` → `2.5-flash-image`), the
+  `inline_data`/`inlineData` casing split, `responseModalities`, the session gate and a `probe`
+  mode. Retiring it at 807 was the wrong call — Gemini got good in between.
+- **The prompt now ENUMERATES.** "Change nothing that is not listed" does not hold. Every surface
+  in the vocabulary the caller did not select is named ("keep the wall cladding and its exact
+  existing colour"), and the list flips per request. Six `ALWAYS_HOLD` clauses, each one a thing
+  that actually happened: metal roofs are locked even when the roof IS changing; framing, crop and
+  aspect are locked because a re-composed render cannot be composited through a mask.
+  `temperature: 0.2` — a fidelity job, not a creative one.
+- ⚠️ **A pre-existing retry bug, found by reading it.** The ladder's comment described behaviour the
+  code did not have: `continue` advanced the CONFIG loop, so a 503 slept and retried with a
+  *different* request, and a 503 on the bare pass was never retried at all.
+- **`design_jobs.engine`** (`design_jobs_engine.sql`, **applied**). The fence is the point —
+  `claim_design_job()` filters on `engine`, so the Spark and the browser cannot race to write the
+  same `render_path`. Adding the column without the filter would be worse than no column.
+  `requeue_stale` **fails** a stale Gemini job rather than requeuing it: a tab that closed is not
+  coming back.
+- **The browser answers a Gemini job**, because `/api/design` gates on the caller's own session.
+  Same two storage paths the worker writes, so the gallery never learns there are two engines.
+  `visualizer_objects_write` already allowed it (authenticated + `is_staff()` on `visualizer/%`).
+- **`stalled()` counts SPARK jobs only.** That banner hands over the command to wake the Spark —
+  a lie about a job no worker will ever claim.
+- **No `achieved` on a Gemini render.** It takes words, not a hex; absent is honest, an invented
+  drift is not.
+
+**Gates.** `gate_design.mjs` 27/27 through one mocked global `fetch` so the shipped handler runs
+unmodified — RED 16/27 on the pre-fix file. ⚠️ Note the 503 case: *"exactly 2 presses" PASSES on the
+old code*, because it did press twice — with a different config. Only asserting the two configs are
+identical catches it. `gate_822.mjs` 24/24, with `stalled()` and `changesFor()` **extracted from the
+file by brace-matching and executed** rather than re-implemented — RED 6/19 on the previous file.
+The load-bearing pair is "a stale gemini job must not stall" **and** "a stale spark job still must",
+because the second is what catches a filter written the wrong way round.
+
+⚠️ **Two faults the gates caught in themselves first.** Stubbing `Date` as an object literal left it
+without a constructor. And "no fabricated drift" matched the **comment** beside the code explaining
+why there is no drift — the comment-pollution trap from `CLAUDE.md`, inside the gate written to
+enforce it. `drift` is prose; `drift:` is a written property.
+
+**Also shipped: `scripts/align_check.py`** — ALIGNED / SHIFTED / RECOMPOSED plus a geometry verdict,
+for deciding whether a generated render can be composited back through our masks. `--selftest` runs
+six pairs, **four of which must come back bad**. It found three faults in itself: a median residual
+over every unmasked pixel read **0.00** on a 14%-zoomed re-crop (flat fills agree with themselves at
+any zoom and outnumber the detail); `gradient >= median` is not a filter when most of the frame is
+flat, because the median is then 0 and `>= 0` is everything; and early returns never set
+`geometry_ok`, which the test read with a default of `True`.
+
+**Not verified by eye.** The Gemini path has never run against the real key — whether the deployed
+`GEMINI_API_KEY` has image models at all is what `POST {"probe":true}` exists to answer. And the
+enumerated hold list narrows the containment failure; it does not close it. **A prompt is a request,
+not a constraint** — the mask is what makes it a constraint, and that is the composite, still
+unbuilt and still waiting on an alignment number.

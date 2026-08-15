@@ -5073,7 +5073,29 @@ Full narrative in `cardinal_build_log.md` under **809–818**.
 | **The stage agrees with the button** (818) | project-change handler → `clearStage()` | Changing the job clears the photograph — **except a CompanyCam import, which survives**, because it belongs to no job. The empty strip now offers CompanyCam rather than only naming what is missing |
 | **Storage sweep** | `spark/sweep_visualizer.py` | Dry run by default; `--min-age-hours` protects an import that has not been rendered yet. Goes through the storage API — a SQL delete removes the index, not the object |
 
-**Not done, and not claimed:** siding has never been applied by a render (all roof-only so far); no
-render has used a CompanyCam import at full resolution; there is **no stale-claim recovery** (a job
+**Not done, and not claimed:** no render has used a CompanyCam import at full resolution; there is **no stale-claim recovery** (a job
 claimed by a worker that dies stays `running` forever); ~60 unreferenced files (~20 MB) are still in
 `photos/visualizer/` awaiting a sweep run.
+
+### Two engines (822) — `design_jobs.engine`
+
+| Feature | Where | Notes |
+|---|---|---|
+| **Exact colour \| Sharper**, per render | `#vzEngine`, `var engine` | **Spark is the default deliberately.** A wrong colour is obviously wrong and gets thrown away; a render that quietly repainted the customer's siding is the one that reaches a kitchen table |
+| **Spark** — segment, then LAB recolour in the mask | `spark/visualizer_worker.py` | Hit the OC hex at **drift 2–4 of 255** on four consecutive jobs, measured on delivered pixels. **Cannot** paint outside the mask. Free. Weakness: the segmenter can miss a roof plane |
+| **Gemini** — one image-to-image press | `api/design.js` | Sharper, ~2s, never misses a plane because it never segments. Weakness is the opposite and is **not fixable from here**: it repaints surfaces it was not asked to touch |
+| **The enumerated hold list** | `SURFACE_HOLD` + `ALWAYS_HOLD` | Every unselected surface named, per request. Six always-locked clauses — metal roofs, framing/crop/aspect, window and door counts — each one an observed failure, not a precaution |
+| **The engine fence** | `claim_design_job()` | Filters on `engine`, so the worker and the browser cannot race to write the same `render_path`. `requeue_stale` **fails** a stale Gemini job rather than requeuing it |
+| **A Gemini job runs in the BROWSER** | `runGemini()` | `/api/design` gates on the caller's own session. Writes the same two storage paths the worker does — the gallery never learns there are two engines |
+| **`stalled()` is Spark-only** | `stalled()` | The "wake the Spark" banner is a lie about a job no worker will ever claim |
+| **No `achieved` on a Gemini render** | `runGemini()` | It takes words, not a hex. Absent is honest; an invented drift is not |
+| **`align_check.py`** | `scripts/` | ALIGNED / SHIFTED / RECOMPOSED + a geometry verdict — whether a generated render can be composited back through our masks. `--selftest`: six pairs, **four must fail** |
+
+⚠️ **Black Sable does not discriminate between the engines.** Near-black is nearly impossible to get
+wrong and the Spark scored drift 2 on it too. Judge them on chromatics — Evergreen Mist, Driftwood,
+Sedona Canyon.
+
+**Not verified by eye:** the Gemini path has never run against the real key (`POST {"probe":true}`
+answers whether it has image models); the enumerated hold list **narrows** the containment failure
+and does not close it — a prompt is a request, not a constraint; the composite that would make it
+one is unbuilt, pending an alignment number.

@@ -3161,3 +3161,43 @@ prompt leads with colour and takes the first sentence only.
    rendered yet — do not lower it to be tidy.
 5. **Item 2 above from 807 is still open** — its own Vercel project scoped to `visualizer/`. Until
    then it is a separate *file* on the same *deployment*.
+
+---
+
+## The Visualizer's two engines (822, 15 Aug 2026) — what is open
+
+**Settled, do not re-litigate.** Neither engine wins. Spark is the exact-colour engine and cannot
+leave its mask; Gemini is the sharp one and will repaint what it likes. The rep picks per render,
+and **Spark is the default** — Theo's own framing applies: a wrong colour gets thrown away, a
+quietly repainted siding reaches a customer. Customer photographs may go to Gemini
+(Theo, 15 Aug, explicit) for **presentation only** — never claims, inspection reports, supplements
+or CompanyCam. The altered-evidence fence is untouched.
+
+**Open, in the order they matter:**
+
+1. **Nobody has rendered through the Gemini path yet.** It has never met the real key. `POST
+   {"probe":true}` to `/api/design` lists which image models the deployed `GEMINI_API_KEY` can
+   actually reach; the first real render answers it too. Until then "it works" is a claim, not a
+   fact.
+2. **The composite is unbuilt, and blocked on one number.** Compositing Gemini's pixels back through
+   our masks is what turns the DO-NOT-TOUCH list from a request into a constraint. It is only sound
+   if the render is registered with the original. `scripts/align_check.py` answers that — it needs
+   the original drone frame and one Gemini output **as files**; pasted chat images do not reach
+   disk. Verdict RECOMPOSED kills the composite; ALIGNED or SHIFTED green-lights it.
+3. **The mask-confirm step** — per-plane masks (`Sam2Segmentation.individual_objects=true`), a
+   `review` stage, tap a plane in or out, then paint. This is the Spark's only real weakness and it
+   is the fix Theo's own doctrine points at (*AI proposes, a person confirms* — The Walk). It is the
+   better spend than the composite if the alignment number comes back bad.
+4. **Evergreen Mist's swatch hex is probably wrong**, and it is Theo's to change — this session is
+   blocked from writing production data. `update oc_colors set hex = '#5D6557' where name =
+   'Evergreen Mist';` then **reload the Visualizer and re-pick the colour**, because the tray freezes
+   the hex at pick time. Only affects the Spark engine. The better version: photograph the real OC
+   swatch board in daylight and sample the whole line at once.
+5. **`comboKey()` does not include `engine`.** The same picks on the two engines read as a duplicate,
+   which only ever produces a slightly wrong warning ("Rendered before…") — a queued duplicate is
+   still correctly refused. Left alone on purpose: three call sites in a file with no test runner,
+   for a cosmetic string.
+
+**Still true from before and unchanged:** no stale-claim recovery on the Spark side; ~60 unreferenced
+files in `photos/visualizer/` awaiting a sweep; the 12m13s render ceiling is contaminated by three
+concurrent workers on one GPU and the clean recolour baseline is ~14s.
