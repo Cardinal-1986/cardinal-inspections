@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 816
+  v2026-08-15 build 817
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -355,19 +355,41 @@ body.vz-prep main{max-width:none;padding:0}
 #vzCCBox .ccgrid{flex:1;min-height:0;overflow-y:auto;padding:14px;
   display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
   align-content:start}
+/* On a phone a 220px minimum yields ONE column ~360px wide, which makes every
+   photograph a letterbox strip. Two narrower tiles read better and match how
+   the archive is actually scanned. */
+@media (max-width:640px){
+  #vzCCBox .ccgrid{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;padding:10px}
+  /* #vzCCBox-scoped, because the .cctile rule below this block would otherwise
+     win on source order and this line would sit here doing nothing. A rule
+     that looks like it applies and does not is worse than no rule. */
+  #vzCCBox .cctile{height:150px}
+  #vzCCBox .cchead{padding:10px 12px}
+  #vzCCBox .cchead .t{width:100%}
+}
 #vzCCBox .ccfoot{flex:none;display:flex;align-items:center;gap:12px;padding:12px 14px;
   border-top:1px solid var(--vz-line,#252932);background:var(--vz-panel,#14171B)}
 #vzCCBox .ccfoot .btn{min-height:44px;padding:0 22px}
-/* An EXPLICIT image height, not aspect-ratio on the tile.
-   aspect-ratio:4/3 on a grid item in a 1fr column does not size the implicit
-   ROW — the row sized itself to the content instead, so every tile overflowed
-   its row by ~90px and overlapped the one below it. Measured in Chromium:
-   tile 1 spanned y 86-255 while tile 7 began at 163. A fixed image height is
-   deterministic and needs no aspect-ratio resolution at all. */
+/* The TILE carries the height, not the image. Two goes at this, both wrong in
+   opposite directions and both only visible in a real browser:
+
+     aspect-ratio:4/3 on the tile did not size the implicit grid row, so tiles
+     overflowed their row by ~90px and OVERLAPPED the one below (desktop).
+
+     Moving the height onto the <img> fixed desktop and broke the phone: the
+     row is sized from the button's INTRINSIC contribution, which ignores a
+     child's explicit height, so the row came out 14px and the button stretched
+     to it — a 168px image clipped to a 14px sliver. Measured at 390px:
+     tile 362x14, image 358x168.
+
+   An explicit height on the grid item itself depends on nothing — not on
+   aspect-ratio resolution, not on whether the image has loaded, not on
+   intrinsic contributions. The caption is absolutely positioned, so it adds
+   no layout dependency either. */
 .cctile{position:relative;padding:0;border:2px solid var(--vz-line,#252932);border-radius:12px;
   overflow:hidden;background:var(--vz-card,#171A21);cursor:pointer;
-  font:inherit;color:inherit;text-align:left;display:block}
-.cctile img{width:100%;height:168px;object-fit:cover;display:block;background:#12161B}
+  font:inherit;color:inherit;text-align:left;display:block;height:190px}
+.cctile img{width:100%;height:100%;object-fit:cover;display:block;background:#12161B}
 .cctile:hover{border-color:var(--vz-line2,#333A46)}
 .cctile[aria-pressed="true"]{border-color:var(--vz-red,#C8202E)}
 .cctile .cap{position:absolute;left:0;right:0;bottom:0;padding:7px 9px;font-size:12px;
