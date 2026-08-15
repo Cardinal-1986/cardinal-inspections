@@ -17010,3 +17010,40 @@ so it is a gate that has been seen to fail.
 **Still not verified by eye.** `Sam2AutoSegmentation` has never run on that box. Whether it
 returns usable planes at `points_per_side` 16 is the same open question 825 was built to
 answer, and it stayed open a day longer than it needed to.
+
+## wb-2026-08-15.8 — 15 Aug 2026 — the regions graph loaded the wrong kind of SAM2
+
+`spark/regions_api.json`, `spark/visualizer_worker.py`, `spark/test_segment.py`.
+
+The first regions job ever to run came back:
+
+> ComfyUI error: Loaded model is not SAM2AutomaticMaskGenerator
+
+`Sam2AutoSegmentation` will not take an ordinary SAM2 model. The loader's `segmentor` enum
+decides which wrapper you get, and `regions_api.json` had copied `segment_api.json`'s loader
+verbatim — `single_image`, which is the mode `Sam2Segmentation` needs. Same checkpoint file,
+wrong wrapper, and the graph was refused before a single pixel was segmented.
+
+**The gate had asserted the bug as a virtue.** `test_segment.py` said *"it reuses the SAM2
+model the other graph loads — no new model download"*, which was true and was exactly the
+fault: **the mode travels with the loaded model**, so reuse is the one thing that could not
+work. An assertion can be green, accurate, and pointed at the wrong property.
+
+**The fix does not write the mode from memory.** `Comfy.force_automask()` reads
+`DownloadAndLoadSAM2Model`'s own `segmentor` enum from `/object_info` and takes the choice
+matching `automask` — so a node pack that renames it needs no code change, and a pack with no
+automatic mode raises **before** submitting, listing what it does offer, instead of failing 90
+seconds later in the node pack's wording. Unlike `fill_defaults()` it **overwrites** what the
+graph carries, because the shipped value is known wrong here; that difference is asserted in
+both directions. An unreadable schema leaves the graph alone and says so rather than guessing.
+
+The JSON now also carries `automaskgenerator` as its written intent, so the graph reads
+correctly on its own; the submit-time resolution confirms or corrects it.
+
+**Gates.** `test_segment.py` 47/47, **mutation-tested three ways** — reverting the graph to
+`single_image`, dropping the `force_automask` call, and making it defer like `fill_defaults`
+each go red on their own assertion. `test_probe_planes.py` 39/39. No browser change:
+`visualizer/index.html` is untouched at 826.
+
+**Theo must pull and restart the worker** — the graph and the worker both changed, and nothing
+on the Spark reloads itself.

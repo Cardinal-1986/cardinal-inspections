@@ -251,6 +251,78 @@ ok("hand-picked masks still go through exclusive()",
    _apply in _rj and _excl in _rj and _rj.index(_apply) < _rj.index(_excl),
    "one reconciliation path, not two")
 
+# ── the loader mode Sam2AutoSegmentation demands ─────────────────────────
+# The first real regions job came back "ComfyUI error: Loaded model is not
+# SAM2AutomaticMaskGenerator". regions_api.json had copied the other graph's
+# loader verbatim, including `segmentor: single_image` — the mode Sam2Segmentation
+# wants. Same checkpoint, wrong wrapper.
+#
+# The gate asserted "it reuses the SAM2 model the other graph loads — no new
+# model download", which was true and was the bug: the mode travels WITH the
+# loaded model, so reuse is exactly what could not work.
+_loader = [v for v in R.values() if v.get("class_type") == "DownloadAndLoadSAM2Model"]
+ok("the regions graph has its own SAM2 loader", len(_loader) == 1, str(len(_loader)))
+ok("and it is not the single-image mode",
+   (_loader[0] if _loader else {}).get("inputs", {}).get("segmentor") != "single_image",
+   "that is the mode Sam2Segmentation wants, and it is refused here")
+ok("it loads the same checkpoint file — no second download",
+   (_loader[0] if _loader else {}).get("inputs", {}).get("model")
+   == (node("sam2 model") or {}).get("inputs", {}).get("model") is not None,
+   "%r vs %r" % ((_loader[0] if _loader else {}).get("inputs", {}).get("model"),
+                 (node("sam2 model") or {}).get("inputs", {}).get("model")))
+
+class _FakeLoader(W.Comfy):
+    def __init__(self, choices):
+        self.base = "http://stub"
+        self._schema_cache = {"DownloadAndLoadSAM2Model":
+            ({"input": {"required": {"segmentor": [choices, {}]}}} if choices is not None else {})}
+
+def _g():
+    return json.loads(json.dumps(R))
+
+_real = ["single_image", "video", "automaskgenerator"]
+_gr = _g()
+ok("the mode is read from the node, not written from memory",
+   _FakeLoader(_real).force_automask(_gr) == "automaskgenerator")
+ok("and it is set on the loader",
+   [v for v in _gr.values() if v.get("class_type") == "DownloadAndLoadSAM2Model"
+    ][0]["inputs"]["segmentor"] == "automaskgenerator")
+
+# A rename must not need a code change — this is the whole reason it asks.
+_gr = _g()
+ok("a differently-spelled automatic mode is still found",
+   _FakeLoader(["single_image", "auto_mask_generator"]).force_automask(_gr)
+   == "auto_mask_generator")
+
+# Unlike fill_defaults, this one overwrites — the shipped value is known wrong.
+_gr = _g()
+for v in _gr.values():
+    if v.get("class_type") == "DownloadAndLoadSAM2Model":
+        v["inputs"]["segmentor"] = "single_image"
+_FakeLoader(_real).force_automask(_gr)
+ok("it overwrites a wrong value already in the graph",
+   [v for v in _gr.values() if v.get("class_type") == "DownloadAndLoadSAM2Model"
+    ][0]["inputs"]["segmentor"] == "automaskgenerator",
+   "fill_defaults never overwrites; this one must")
+
+# No automatic mode at all is a clear error, not a submitted graph that fails
+# 90 seconds later with the node pack's wording.
+try:
+    _FakeLoader(["single_image", "video"]).force_automask(_g())
+    ok("no automatic mode raises before submitting", False, "it returned instead")
+except RuntimeError as _e:
+    ok("no automatic mode raises before submitting", True)
+    ok("and the error lists what the node does offer", "single_image" in str(_e), str(_e))
+
+# An unreadable schema must leave the graph as written rather than guess.
+_gr = _g()
+ok("an unreadable schema changes nothing", _FakeLoader(None).force_automask(_gr) is None)
+
+_rg = _w[_w.index("\ndef run_regions_job("):]
+_rg = _rg[:_rg.index("\ndef ", 1)]
+ok("the regions job sets the mode before it submits",
+   "force_automask" in _rg and _rg.index("force_automask") < _rg.index("comfy.run("))
+
 # ── report ───────────────────────────────────────────────────────────────
 # MUST BE THE LAST THING IN THIS FILE. See the note in the commit that moved
 # it: assertions appended below a report are assertions nobody reads.
