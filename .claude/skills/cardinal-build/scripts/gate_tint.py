@@ -56,6 +56,21 @@ CHECKS = []
 def chk(name, ok, detail=""):
     CHECKS.append((name, bool(ok), str(detail)))
 
+
+def order(src, first, second):
+    """Does `first` appear before `second`? FALSE if either is missing.
+
+    ⚠ src.index() RAISES on a miss, and against an older worker these strings
+    genuinely are missing — so an ordering check written the obvious way takes
+    the whole control down before it prints a line. That is BUG_CLASSES 37 and
+    it has now happened in this gate twice. A control that crashes proves
+    nothing; it has to REPORT red.
+    """
+    try:
+        return src.index(first) < src.index(second)
+    except ValueError:
+        return False
+
 spec = importlib.util.spec_from_file_location("vw", WORKER)
 vw = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(vw)
@@ -244,8 +259,8 @@ chk("⚠ denoise is BELOW 1 — at 1 the region is rebuilt from noise and the "
 chk("both knobs are env-tunable, so they can be dialled without editing code",
     'os.environ.get("TINT_STRENGTH")' in src and 'os.environ.get("FLUX_DENOISE")' in src)
 chk("the tint runs BEFORE any diffusion pass, on the same mask",
-    src.index("working = tint(working, masks[surface], hexv,")
-    < src.index("working = inpaint(comfy, working, masks[surface],"))
+    order(src, "working = tint(working, masks[surface], hexv,",
+               "working = inpaint(comfy, working, masks[surface],"))
 
 # ── 7. one worker per GPU ─────────────────────────────────────────────────
 # Found on the Spark 15 Aug: THREE workers polling the same queue since the
@@ -338,10 +353,10 @@ else:
     chk("the measurement is written onto the job row",
         '"achieved": achieved or None' in src)
     chk("it is taken BEFORE the JPEG round trip, on the pixels the render made",
-        src.index("m = measure(working, masks[surface]") < src.index('to_jpeg(working, 2400'))
+        order(src, "m = measure(working, masks[surface]", "to_jpeg(working, 2400"))
     chk("the tint runs before the measurement, so what is measured is the result",
-        src.index("working = tint(working, masks[surface], hexv,")
-        < src.index("m = measure(working, masks[surface]"))
+        order(src, "working = tint(working, masks[surface], hexv,",
+                   "m = measure(working, masks[surface]"))
     chk("a failure to measure never costs the render",
         "could not measure the result" in src)
 
