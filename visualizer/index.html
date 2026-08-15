@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-14 build 812
+  v2026-08-14 build 813
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -337,6 +337,25 @@ body.vz-prep main{max-width:none;padding:0}
 
 .canvas{display:flex;flex-direction:column;min-width:0;min-height:0;
   background:radial-gradient(900px 420px at 55% -10%,#12161B,var(--vz-bg,#0B0D10) 70%)}
+/* 813: the photograph source bar. CompanyCam only appears for someone the
+   API will actually answer — see ccProbe(). Showing a tab that returns 403 to
+   most of the staff reads as broken rather than as a permission. */
+.srcbar{display:flex;align-items:center;gap:8px;padding:8px 12px 0;flex:none;flex-wrap:wrap}
+.srctab{border:1px solid var(--vz-line,#252932);background:none;border-radius:999px;
+  padding:0 14px;min-height:36px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600;
+  color:var(--vz-dim,#A8B0BF)}
+.srctab[aria-pressed="true"]{background:var(--vz-red,#C8202E);border-color:var(--vz-red,#C8202E);
+  color:#fff}
+.ccq{display:flex;gap:6px;align-items:center;flex:1;min-width:220px}
+.ccq input{flex:1;min-width:0;background:rgba(0,0,0,.25);border:1px solid var(--vz-line,#252932);
+  border-radius:9px;padding:9px 11px;min-height:36px;font:inherit;font-size:13px;
+  color:var(--vz-ink,#E9ECF2);outline:none}
+.ccq input::placeholder{color:var(--vz-mute,#767E8D)}
+.ccq .btn{min-height:36px}
+.ccnote{font-size:11.5px;color:var(--vz-mute,#767E8D)}
+.shot .ccmark{position:absolute;left:4px;top:4px;font-size:8.5px;letter-spacing:.06em;
+  font-weight:800;background:rgba(0,0,0,.66);color:#8FC7E8;padding:2px 5px;border-radius:4px}
+
 /* The chooser is a QUIET strip. It was 104px tiles each carrying a caption bar
    reading "Inspection" — the same word on every one, a row of identical labels
    costing vertical space and telling you nothing while making the picture below
@@ -491,6 +510,16 @@ body.vz-prep main{max-width:none;padding:0}
 
         <!-- the photograph -->
         <div class="canvas">
+          <div class="srcbar" id="vzSrcBar">
+            <button class="srctab" id="vzSrcJob" type="button" aria-pressed="true">Job photos</button>
+            <button class="srctab hide" id="vzSrcCC" type="button" aria-pressed="false">CompanyCam</button>
+            <form class="ccq hide" id="vzCCForm">
+              <input id="vzCCq" type="search" autocomplete="off"
+                     placeholder="Address, client or caption…" aria-label="Search CompanyCam">
+              <button class="btn" id="vzCCgo" type="submit">Search</button>
+            </form>
+            <span class="ccnote" id="vzCCNote"></span>
+          </div>
           <div class="shots" id="vzShots"><div class="empty">Pick a job above.</div></div>
           <div class="stage" id="vzStage"><div class="empty">Pick a photograph.</div></div>
           <div class="disclaim">A <b>proposal</b>, not a photograph of finished work. Screen
@@ -626,6 +655,7 @@ function showApp(email){
   $('vzApp').classList.remove('hide');
   document.body.classList.add('vz-prep');   /* Prep is the landing tab */
   fitShell();
+  ccProbe();
   loadCatalog().then(loadProjects);
 }
 $('vzForm').addEventListener('submit', function(e){
@@ -827,7 +857,178 @@ $('vzProject').addEventListener('change', function(){
   refresh();
 });
 
+/* ── CompanyCam as a photograph source (813) ───────────────────────────────
+   Admin-only, and deliberately so — Theo's pick. api/companycam.js gates on a
+   team_profiles role with a hardcoded fallback, and this does NOT re-implement
+   that check: it asks the route a cheap question and shows the tab only if the
+   route answers. One gate, on the server, where it cannot be edited by anyone
+   holding the page open. */
+var ccPhotos = [];       /* the current CompanyCam result set */
+var srcNow   = 'job';    /* 'job' | 'cc' */
+
+function ccCall(body){
+  return sb.auth.getSession().then(function(r){
+    var tok = r && r.data && r.data.session && r.data.session.access_token;
+    if(!tok) throw new Error('Sign in again');
+    return fetch('/api/companycam', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify(body)
+    });
+  }).then(function(res){
+    return res.json().catch(function(){ return {}; }).then(function(j){
+      if(!res.ok) throw new Error(j.error || ('CompanyCam refused that (' + res.status + ')'));
+      return j;
+    });
+  });
+}
+
+/* Probe rather than guess. A 403 means "not an admin" and is the expected
+   answer for most of the staff — it is not an error and is never shown. */
+function ccProbe(){
+  ccCall({ action:'tags' })
+    .then(function(){ $('vzSrcCC').classList.remove('hide'); })
+    .catch(function(){ /* not an admin, or the key is not configured — stay hidden */ });
+}
+
+function setSource(which){
+  srcNow = which;
+  var job = which === 'job';
+  $('vzSrcJob').setAttribute('aria-pressed', String(job));
+  $('vzSrcCC').setAttribute('aria-pressed', String(!job));
+  $('vzCCForm').classList.toggle('hide', job);
+  $('vzCCNote').textContent = '';
+  if(job){ loadShots(); }
+  else {
+    $('vzShots').innerHTML = '<div class="empty">Search CompanyCam above — try an address or a client name.</div>';
+    $('vzCCq').focus();
+  }
+}
+$('vzSrcJob').addEventListener('click', function(){ setSource('job'); });
+$('vzSrcCC').addEventListener('click',  function(){ setSource('cc'); });
+
+$('vzCCForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  var q = $('vzCCq').value.trim();
+  if(!q) return;
+  var box = $('vzShots');
+  box.innerHTML = '<div class="empty">Searching CompanyCam…</div>';
+  $('vzCCNote').textContent = '';
+  ccCall({ action:'list', q: q, limit: 24 }).then(function(j){
+    ccPhotos = j.photos || [];
+    if(!ccPhotos.length){
+      box.innerHTML = '<div class="empty">Nothing matched. Try the street number, or the client name.</div>';
+      return;
+    }
+    $('vzCCNote').textContent = ccPhotos.length + ' found';
+    box.innerHTML = '';
+    ccPhotos.forEach(function(p){
+      var b = document.createElement('button');
+      b.className = 'shot'; b.type = 'button';
+      b.setAttribute('aria-pressed', 'false');
+      b.dataset.ccid = p.id;
+      var im = document.createElement('img');
+      im.alt = p.description || p.project_address || 'CompanyCam photograph';
+      im.loading = 'lazy';
+      /* The THUMBNAIL is displayed straight from CompanyCam's CDN, which is
+         fine — it is only ever an <img>. The full photograph is a different
+         matter and never comes from the CDN; see ccPick(). */
+      im.src = p.thumb || p.preview || '';
+      b.appendChild(im);
+      var mark = document.createElement('span');
+      mark.className = 'ccmark'; mark.textContent = 'CC';
+      b.appendChild(mark);
+      var lab = p.project_address || p.project_name || p.description || '';
+      if(lab){
+        var c = document.createElement('span');
+        c.className = 'cap'; c.textContent = lab;
+        b.appendChild(c);
+      }
+      b.addEventListener('click', function(){ ccPick(p, b); });
+      box.appendChild(b);
+    });
+  }).catch(function(err){
+    box.innerHTML = '<div class="empty">' + esc(String(err && err.message || err)) + '</div>';
+  });
+});
+
+/* Import a CompanyCam photograph so the Spark can reach it.
+
+   design_jobs.source_path must be a path in the photos bucket — the worker
+   downloads from storage and knows nothing about CompanyCam. So the bytes are
+   copied in, and TWO things about that copy are load-bearing:
+
+   1. THE BYTES COME THROUGH api/companycam.js, never the CDN. The route
+      re-checks the internal flag on fetch, so a photo filtered out of a list
+      cannot be reached by asking for its id directly. Reading the CDN URL
+      straight from the browser would skip that check entirely.
+
+   2. EXIF IS STRIPPED HERE, not later. CompanyCam photographs carry GPS. The
+      worker does drop EXIF when it re-encodes, but that happens AFTER this
+      upload — without this step a coordinate lands in the bucket and sits
+      there. Drawing to a canvas and re-encoding produces a file with no
+      metadata of any kind, which is the whole point; the canvas is not tainted
+      because the blob URL is same-origin. */
+function ccPick(p, btn){
+  var box = $('vzShots');
+  Array.prototype.forEach.call(box.querySelectorAll('.shot'), function(el){
+    el.setAttribute('aria-pressed', el === btn ? 'true' : 'false');
+  });
+  $('vzCCNote').textContent = 'Importing…';
+  ccCall({ action:'fetch', id: p.id })
+    .then(function(j){ return stripAndStore(j.data, j.mime); })
+    .then(function(path){
+      $('vzCCNote').textContent = 'Imported.';
+      chooseShot({ storage_path: path,
+                   caption: p.project_address || p.description || 'CompanyCam' }, btn);
+    })
+    .catch(function(err){
+      $('vzCCNote').textContent = 'Could not import it — ' + String(err && err.message || err);
+      btn.setAttribute('aria-pressed', 'false');
+    });
+}
+
+function stripAndStore(b64, mime){
+  return new Promise(function(resolve, reject){
+    var bin, arr;
+    try {
+      bin = atob(b64 || '');
+      arr = new Uint8Array(bin.length);
+      for(var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    } catch(e){ reject(new Error('the download was not readable')); return; }
+
+    var url = URL.createObjectURL(new Blob([arr], { type: mime || 'image/jpeg' }));
+    var im = new Image();
+    im.onload = function(){
+      var c = document.createElement('canvas');
+      c.width = im.naturalWidth; c.height = im.naturalHeight;
+      c.getContext('2d').drawImage(im, 0, 0);
+      URL.revokeObjectURL(url);
+      c.toBlob(function(out){
+        if(!out){ reject(new Error('it could not be re-encoded')); return; }
+        var path = 'visualizer/src/' + uid() + '.jpg';
+        sb.storage.from('photos').upload(path, out, { contentType:'image/jpeg', upsert:false })
+          .then(function(r){
+            if(r && r.error) reject(new Error(r.error.message));
+            else resolve(path);
+          }, function(e){ reject(e); });
+      }, 'image/jpeg', 0.95);
+    };
+    im.onerror = function(){ URL.revokeObjectURL(url); reject(new Error('it could not be decoded')); };
+    im.src = url;
+  });
+}
+/* crypto.randomUUID needs a secure context, which this always is in
+   production — but a plain fallback beats an exception on someone's LAN. */
+function uid(){
+  if(window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+}
+
 function loadShots(){
+  /* A project change while the CompanyCam tab is open must not replace the
+     search results underneath the rep. */
+  if(srcNow === 'cc') return;
   var pid = $('vzProject').value;
   var box = $('vzShots');
   if(!pid){ box.innerHTML = '<div class="empty">Pick a job above.</div>'; sum(); return; }
