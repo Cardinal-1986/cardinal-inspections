@@ -3125,13 +3125,17 @@ prompt leads with colour and takes the first sentence only.
 1. **No stale-claim recovery.** A job claimed by a worker that dies stays `running` **forever**.
    A `claimed_at` older than N minutes should return the row to `queued`.
 
-   ⚠️ **Pick N from the measured ceiling, not from the average, and the measurement changed on
-   15 Aug.** A real render took **12m 13s** (732.8s) and came back **correct** — the first one
-   applying siding, and the first from a CompanyCam import. Comparable warm renders take 30–190s.
-   The gap is almost certainly a cold ComfyUI reloading FLUX, Florence2 and SAM 2 before it draws
-   anything, and it is not a fault. **A five-minute reclaim would have killed a good render and
-   silently charged the Spark for a second one.** Whatever N is, it must sit well above 12 minutes,
-   and the reclaim should say what it did rather than quietly re-queueing.
+   ⚠️ **Pick N from a measured ceiling — and the 12m13s figure recorded here earlier is NOT one.**
+   That render did take 732.8s and come back correct, but an hour later the Spark turned out to
+   have had **three workers** polling the same queue since the previous evening, running FLUX
+   concurrently on one GPU. I had attributed the 12 minutes to a cold ComfyUI reloading three
+   models; GPU contention is at least as likely and probably more so. **It is not a clean
+   measurement of anything.** Re-take it with one worker running before sizing any timeout on it.
+
+   What still holds regardless: comparable warm renders are 30–190s, a first render after real
+   idle IS genuinely slower, and **a five-minute reclaim could kill a good render and silently
+   charge the Spark for a second one.** The reclaim must also say what it did rather than quietly
+   re-queueing.
 
    Build 820 removed the urgency without fixing the underlying gap: a running job now shows a live
    elapsed clock and the banner explains that a long render is normal, so nobody is left guessing.
