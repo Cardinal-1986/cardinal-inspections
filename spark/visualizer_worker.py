@@ -374,6 +374,101 @@ def seed_for(job_id, surface):
     return int.from_bytes(h[:6], "big")   # < 2^48, well inside ComfyUI's range
 
 
+# How much of the region's colour comes from the swatch rather than from the
+# model, and how much of the original texture survives the diffusion pass.
+# Both are env-tunable because the right values are a matter of taste on real
+# photographs and only Theo's eyes can settle them.
+TINT_STRENGTH = float(os.environ.get("TINT_STRENGTH") or 0.85)
+FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
+
+
+def _hex_rgb(h):
+    h = (h or "").strip().lstrip("#")
+    if len(h) == 3:
+        h = "".join(c * 2 for c in h)
+    if len(h) != 6:
+        return None
+    try:
+        return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+    except ValueError:
+        return None
+
+
+def tint(image_png, mask_png, hex_colour, strength=None):
+    """Recolour the masked region toward a swatch, KEEPING its luminance.
+
+    ────────────────────────────────────────────────────────────────────────
+    WHY THIS EXISTS — the colour has to be in the PIXELS, not only the words.
+
+    Theo, 15 Aug, on a render of Evergreen Mist roof + Charcoal Gray siding:
+    "Wrong color on both." The roof came back tan and the siding came back a
+    generic grey. Nothing was broken: the masks were real, the loop paired
+    each mask with its own prompt, and the prompts stored on the job named
+    both colours correctly.
+
+    The cause is `denoise = 1` with `noise_mask = True`. That regenerates the
+    masked region FROM PURE NOISE — nothing of the original survives inside
+    the mask — so the only thing steering colour is the text. FLUX.1 Fill dev
+    is distilled and runs at cfg 1, where colour words are weakly enforced,
+    and it falls back on whatever is most likely: tan for asphalt shingle,
+    grey for siding.
+
+    It is also why the early renders looked right and hid this. Onyx Black
+    and Black Sable are near-black — simultaneously the commonest shingle
+    colour in the training data AND a strongly represented word. A muted sage
+    green is neither. The pipeline was never reading the swatch; it was
+    agreeing with it by luck.
+
+    ────────────────────────────────────────────────────────────────────────
+    WHY LUMINANCE-PRESERVING, and not a flat fill
+
+    Painting the region flat destroys exactly what makes a render believable:
+    the shading across a roof plane, the shadow a tree throws, the darker
+    course lines. Replacing hue and chroma while KEEPING each pixel's
+    luminance keeps all of that geometry and changes only the colour — so a
+    shaded part of the roof stays shaded, in the new colour.
+
+    Paired with denoise below 1 the diffusion pass then re-textures the region
+    as shingle or lap siding while the hue underneath survives. Either half
+    alone fails: tinting with denoise 1 is thrown away, and lowering denoise
+    without tinting just preserves the ORIGINAL colour, which is the tan roof
+    we started with.
+    """
+    rgb = _hex_rgb(hex_colour)
+    if not rgb:
+        return image_png                      # no swatch, nothing to steer with
+    k = TINT_STRENGTH if strength is None else strength
+    k = max(0.0, min(1.0, k))
+    if k == 0.0:
+        return image_png
+
+    im = Image.open(io.BytesIO(image_png)).convert("RGB")
+    mk = Image.open(io.BytesIO(mask_png)).convert("L")
+    if mk.size != im.size:
+        mk = mk.resize(im.size, Image.LANCZOS)
+
+    # Do the recolour in LAB: keep L (all the shading), take a/b from the
+    # swatch. PIL converts through ImageCms-free "LAB" mode, which is enough
+    # here — we are matching a paint chip, not proofing for print.
+    lab   = im.convert("LAB")
+    swatch = Image.new("RGB", (1, 1), rgb).convert("LAB").getpixel((0, 0))
+    L, A, B = lab.split()
+    A2 = Image.new("L", im.size, swatch[1])
+    B2 = Image.new("L", im.size, swatch[2])
+    # Blend a/b by strength so a partial tint is possible; L is never touched.
+    A = Image.blend(A, A2, k)
+    B = Image.blend(B, B2, k)
+    tinted = Image.merge("LAB", (L, A, B)).convert("RGB")
+
+    # Only inside the mask. The mask is the segmenter's own output, so its
+    # soft edges feather the recolour exactly where DifferentialDiffusion
+    # will feather the diffusion.
+    out = Image.composite(tinted, im, mk)
+    buf = io.BytesIO()
+    out.save(buf, format="PNG")
+    return buf.getvalue()
+
+
 def inpaint(comfy, image_png, mask_png, positive, negative, seed):
     graph = load_graph("inpaint_api.json")
     set_input(graph, T_IMAGE, "image", comfy.upload_image("cardinal_work.png", image_png))
@@ -381,6 +476,9 @@ def inpaint(comfy, image_png, mask_png, positive, negative, seed):
     set_input(graph, T_POSITIVE, "text", positive)
     set_input(graph, T_NEGATIVE, "text", negative or "")
     set_input(graph, T_SAMPLER, "seed", seed)
+    # Below 1 so the tint underneath survives the pass. At denoise 1 the region
+    # is rebuilt from noise and the swatch is thrown away — see tint().
+    set_input(graph, T_SAMPLER, "denoise", FLUX_DENOISE)
 
     pid = comfy.run(graph, timeout=900)
     out = comfy.outputs(pid)
@@ -489,6 +587,14 @@ def run_job(comfy, job):
             skipped.append(surface)
             continue
         log("  inpainting %s — %s" % (surface, _short(sel.get("name") or "", 60)))
+        # Hand the model the colour in the pixels first. Without this the text
+        # is the only steer and a distilled model at cfg 1 ignores it — which
+        # is how "Evergreen Mist" came back tan.
+        hexv = sel.get("hex")
+        if hexv:
+            working = tint(working, masks[surface], hexv)
+        else:
+            log("    no swatch hex on this selection — colour rests on the prompt alone")
         working = inpaint(comfy, working, masks[surface],
                           sel.get("prompt") or "", sel.get("negative") or "",
                           seed_for(job_id, surface))

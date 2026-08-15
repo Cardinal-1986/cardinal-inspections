@@ -16516,3 +16516,41 @@ trusting.
   return to `queued`, and that wants building before a customer ever sees this. **~60 unreferenced
   files (~20 MB)** sit under `photos/visualizer/`; `spark/sweep_visualizer.py` is merged and has not
   been run.
+
+- **Spark, 15 Aug — the swatch reaches the pixels.** Theo, on a render of Evergreen Mist roof +
+Charcoal Gray siding: *"Wrong color on both."* The roof came back tan; the siding came back a
+generic grey. **Nothing was broken.** The masks were real (22 KB / 26 KB / 18 KB PNGs, not empty),
+the apply loop paired each mask with its own prompt, and the prompts frozen onto the job named both
+colours correctly — `muted green with grey and earthy undertones … Evergreen Mist` at `#6E7A69`, and
+`dark charcoal vinyl lap siding, 4.5 inch exposure` at `#4E5154`.
+
+  **The cause is `denoise = 1` with `noise_mask = True`.** That regenerates the masked region FROM
+  PURE NOISE — nothing of the original survives inside the mask — so the *only* thing steering
+  colour is the text. FLUX.1 Fill dev is distilled and runs at **cfg 1**, where colour words are
+  weakly enforced, and it falls back on whatever is most likely: tan for asphalt shingle, grey for
+  siding. **The pipeline was never reading the swatch.**
+
+  ⚠️ **And this is why the early renders hid it.** Onyx Black and Black Sable are near-black —
+  simultaneously the commonest shingle colour in the training data AND a strongly represented word.
+  The pipeline agreed with the swatch *by luck*, on three consecutive jobs, and every one of them
+  read as proof the colour path worked. A muted sage green is neither common nor strongly worded,
+  and it is the first colour that could ever have exposed this. **Three green results in a row are
+  not a test if they all sit on the easy side of the distribution.**
+
+  The fix is **`tint()`** — a luminance-preserving recolour of the masked region toward the
+  selection's own hex, run BEFORE the diffusion pass, plus **`denoise` dropped to 0.82** so the tint
+  survives it. **Both halves are required**: tinting at denoise 1 is thrown away, and lowering
+  denoise without tinting merely preserves the ORIGINAL colour, which is the tan roof we started
+  with. Luminance-preserving rather than a flat fill because a flat fill destroys the plane shading,
+  the tree shadow and the course lines — everything that makes a render believable; keeping L and
+  replacing a/b changes the colour and nothing else. `TINT_STRENGTH` and `FLUX_DENOISE` are both env
+  vars, because the right values are a matter of taste on real photographs.
+
+  `gate_tint.py`: **19/19 green, RED on the previous worker** (which has no `tint()` at all — and it
+  REPORTS that rather than crashing, BUG_CLASSES 37). It proves the arithmetic: a tan roof
+  `rgb(140,118,86)` becomes `rgb(113,125,108)` against a swatch of `rgb(110,122,105)`; the lawn
+  outside the mask does not move by a single value; the tree shadow keeps its depth ratio at 0.45
+  before and after; a 3-digit hex is expanded rather than silently ignored; and a missing or
+  malformed swatch never throws, because a job that dies on a bad colour is worse than one that
+  renders in the wrong one. ⚠️ **It does NOT prove the render looks right — only the Spark runs
+  FLUX, and only Theo's eyes settle whether 0.82 is the right amount of denoise.**

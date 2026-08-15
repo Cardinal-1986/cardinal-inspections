@@ -3136,9 +3136,19 @@ prompt leads with colour and takes the first sentence only.
    Build 820 removed the urgency without fixing the underlying gap: a running job now shows a live
    elapsed clock and the banner explains that a long render is normal, so nobody is left guessing.
    The row can still be stranded forever if the worker dies — that part is still open.
-2. **Siding has never once been applied by a render.** Every render so far is roof-only. The
-   pipeline is wired for it and the catalog carries the brands; nobody has proved a siding mask
-   comes back correct on a real house.
+2. ~~**Siding has never once been applied by a render.**~~ **Struck 15 Aug** — job `88ebd369`
+   applied roof AND siding, from a CompanyCam import, in one render. It also surfaced the colour
+   bug below, which is what a first real test is for.
+
+   **NEW, and it needs Theo's eyes on the Spark:** the swatch never reached the pixels. `denoise=1`
+   rebuilt each masked region from noise, so colour rested entirely on a prompt that a distilled
+   model at cfg 1 largely ignores — Evergreen Mist came back tan. Fixed by `tint()` (a
+   luminance-preserving recolour toward the selection's hex, before the diffusion pass) plus
+   `denoise` at 0.82. `gate_tint.py` proves the arithmetic; **it cannot prove the render looks
+   right.** Restart `visualizer_worker.py` on the Spark and press **Render again** on that job.
+   If the roof over- or under-shoots, dial it without editing code:
+   `TINT_STRENGTH=0.7 FLUX_DENOISE=0.9 python3 spark/visualizer_worker.py` — higher denoise gives
+   the model more freedom and weaker colour; higher tint strength pushes harder toward the swatch.
 3. **No render has used a CompanyCam import at full resolution.** 815 fixed the rendition order
    (it had been taking the annotated web copy); the fix is merged and unproven on a real render.
 4. **Run the sweep.** ~60 unreferenced files, ~20 MB, under `photos/visualizer/`.
