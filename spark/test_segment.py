@@ -26,7 +26,16 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))
+
+# 830: this file used to read the worker and all three graphs from HERE and
+# ignore argv entirely — so `test_segment.py /some/old/tree` silently tested
+# the WORKING TREE and printed 47/47. Every negative control ever run against
+# it proved nothing. Caught when a changed gutter-prompt assertion passed
+# against a tree that could not possibly satisfy it.
+#     python3 test_segment.py /tmp/ctl/spark
+CONTROL = len(sys.argv) > 1
+ROOT = Path(sys.argv[1]).resolve() if CONTROL else HERE
+sys.path.insert(0, str(ROOT))
 
 if not (HERE / ".env").exists():
     os.environ.setdefault("SUPABASE_URL", "https://example.invalid")
@@ -104,7 +113,7 @@ ok("a mismatched size is resized to the first",
 # `comfy.fetch(images[0])` — one SaveImage, one image, always — and a
 # file-wide check fails on correct code because of it. CLAUDE.md's "scope the
 # assertion to the function, not the file", hit on the first run of this test.
-_w = (HERE / "visualizer_worker.py").read_text()
+_w = (ROOT / "visualizer_worker.py").read_text()
 _seg = _w[_w.index("\ndef segment("):]
 _seg = _seg[:_seg.index("\ndef ", 1)]
 
@@ -117,7 +126,7 @@ ok("inpaint()'s single-image fetch is left alone",
    "one SaveImage, one image — changing it would be churn")
 
 # ── the graph config the sheets verified ─────────────────────────────────
-G = json.loads((HERE / "segment_api.json").read_text())
+G = json.loads((ROOT / "segment_api.json").read_text())
 
 def node(title):
     for v in G.values():
@@ -153,7 +162,7 @@ ok("windows grounds on the plural", (node("find windows") or {}).get("inputs", {
 
 ok("the phrases with no sheet behind them are untouched",
    (node("find siding") or {}).get("inputs", {}).get("text_input") == "house wall" and
-   (node("find gutters") or {}).get("inputs", {}).get("text_input") == "rain gutter",
+   (node("find gutters") or {}).get("inputs", {}).get("text_input") == "rain gutter . downspout",
    "guessing phrases produced 'roof of a house' = the whole building")
 
 
@@ -163,7 +172,7 @@ ok("the phrases with no sheet behind them are untouched",
 # ComfyUI what the node takes, so the graph carries only wiring plus the two
 # values we deliberately tune.
 try:
-    R = json.loads((HERE / "regions_api.json").read_text())
+    R = json.loads((ROOT / "regions_api.json").read_text())
 except Exception as _e:          # absent or unparseable -> a red, not a crash
     R = {}
     fails.append("regions_api.json is readable  — %s" % _e)

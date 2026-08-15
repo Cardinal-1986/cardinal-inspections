@@ -17143,3 +17143,48 @@ the Spark does not need restarting for this one.
 827 touched only `visualizer/` and `spark/`, so the tool still reports "highest seen 826" and
 would hand 827 out a second time. 828 was chosen by hand. Worth fixing in the tool before it
 causes the collision it exists to prevent.
+
+---
+
+## Build 830 — the downspout was being painted as siding
+
+Theo proposed a set of Grounding DINO prompts for the gutter pass. Two notes
+on them before the change:
+
+- **`rain gutter` was already shipped.** Node 40's `text_input` has been
+  exactly that since gutters were added on the 15th.
+- **The dot-separator list is Grounding DINO's convention, and node 40 is
+  `Florence2Run`**, which grounds noun phrases inside a caption. The syntax is
+  plausible for it, not documented.
+
+The part worth having was **`downspout`**. The trough and the downspout are two
+objects; grounding the trough alone left the downspout out of the gutters mask,
+and because siding subtracts the detail masks from itself (`DETAIL_WINS`), an
+unmasked downspout was **being painted as siding**. Same class as Theo's "It
+also painted the gutter" on the 15th, one object further down the wall.
+
+Node 40 now grounds on `rain gutter . downspout`. `WORKER_BUILD` →
+`wb-2026-08-15.11`.
+
+⚠️ **UNVERIFIED BY EYE.** No GPU here, so this is a plausible prompt, not a
+proven one. Theo picked it in seconds, so it is his call to ship, not a tested
+result. The failure modes are bounded and are written at `OPTIONAL_MASKS`: an
+empty mask skips the surface rather than failing the job, and an over-large one
+shows as a hole carved out of the siding. If it misses, the answer is a
+separate downspouts pass, not a longer prompt.
+
+### ⚠ `test_segment.py`'s negative control was inert, and had always been
+
+The gate that pins this graph read the worker and all three graphs from `HERE`
+and **ignored `sys.argv` entirely**. So `test_segment.py /some/old/tree`
+silently tested the WORKING TREE and printed a confident 47/47. **Every
+negative control ever run against this file proved nothing.**
+
+Found by accident: the changed gutter assertion passed against a tree that
+could not possibly satisfy it. That is the only reason it surfaced — a control
+that cannot fail looks exactly like a control that passed.
+
+Now takes `ROOT` like `test_skip_reason.py` and `test_stale_worker.py` do, and
+all four reads come from it. Verified in both directions: 47/47 on the working
+tree, and **1 of 47 red on `origin/main`, failing on precisely the gutter
+phrase**. Worth checking whether the other spark tests have the same hole.
