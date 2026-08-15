@@ -224,6 +224,7 @@ h2.sec:first-child{margin-top:6px}
 #vzReg .rtint div{position:absolute;inset:0;mix-blend-mode:screen;opacity:.5}
 #vzReg .rtint img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
 #vzReg .rdots{position:absolute;inset:0}
+#vzReg .rdots.tap{cursor:crosshair}
 /* 44px hit area, 18px of visible dot. A circle big enough to tap is bigger
    than a circle that looks right on a photograph, so the target is padding. */
 #vzReg .rdots button{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;
@@ -708,6 +709,12 @@ body.vz-prep main{max-width:none;padding:0}
                  alone and the segmenter guesses from a phrase, exactly as
                  before. Use it when the guess was wrong. -->
             <button class="btn" id="vzFind" type="button">Find surfaces</button>
+            <!-- 827: tap the surface instead of hunting for it. "Find" ranks
+                 regions by area and a real photograph's biggest uniform things
+                 are the lawn, the canopy and the driveway — so it proposes
+                 everything except the house. Both doors lead to the same
+                 picker; this one starts empty and fills a region per tap. -->
+            <button class="btn" id="vzTap" type="button">Tap surfaces</button>
             <button class="btn go" id="vzQueue" disabled>Render</button>
           </div>
           <p class="tray-sum" id="vzSum">Pick a photograph to begin.</p>
@@ -2379,6 +2386,106 @@ function waitForRegions(id){
   }, 5000);
 }
 
+/* ── 827: tap a surface, rather than hunt for it among forty circles ──────
+   SAM 2's automatic mode is class-agnostic and this worker keeps the biggest
+   regions by area; in a real photograph the house is a third of the frame and
+   cut into pieces by its own shadow, while the lawn and the tree canopies are
+   large and uniform. Ranking by size therefore selects against the building.
+   A tap supplies the one thing the model cannot know — which pixel is siding.
+
+   Everything downstream is untouched: a tapped region is an ordinary region
+   that happened to arrive one at a time, so `regionPick`, `labelledMasks`,
+   the Render hand-off and exclusive() all consume it without knowing which
+   pass made it. One pipeline per concept. */
+var tapBusy = false;
+var tapPoll = null;
+
+function tapSurfaces(){
+  if(!chosenShot){ $('vzSum').textContent = 'Pick a photograph first.'; return; }
+  if(!$('vzProject').value){ $('vzSum').textContent = 'Pick a job first.'; return; }
+  /* Start clean. `openRegions` replaces `labelledMasks` for this photograph,
+     so leaving old picks in `regionPick` would leave ids pointing at masks
+     that are no longer in the lookup — they would silently vanish at Render
+     rather than fail loudly. */
+  regionPick[chosenShot.storage_path] = {};
+  openRegions({ source_path: chosenShot.storage_path, masks: {}, _tap: true });
+}
+
+/* The dots layer is inset:0 over the wrap, and the wrap is sized by the
+   photograph itself, so its box IS the painted image — no letterbox maths.
+   Coordinates go up NORMALISED: the browser cannot know the size the worker
+   fitted the photograph to, and a ratio survives every resize between us. */
+function tapAt(ev){
+  if(!regionJob || !regionJob._tap || tapBusy) return;
+  var r = $('vzRegDots').getBoundingClientRect();
+  if(!r.width || !r.height) return;
+  var nx = (ev.clientX - r.left) / r.width;
+  var ny = (ev.clientY - r.top)  / r.height;
+  if(nx < 0 || nx > 1 || ny < 0 || ny > 1) return;
+  tapBusy = true;
+  drawRegions();
+  sb.from('design_jobs').insert({
+    project_id: $('vzProject').value,
+    source_path: regionJob.source_path,
+    selections: { _points: [{ x: nx, y: ny }] },
+    engine: 'spark',        /* only the Spark has SAM 2; Gemini has no masks */
+    created_by: me
+  }).select().maybeSingle().then(function(res){
+    if(res.error || !res.data){
+      tapBusy = false;
+      $('vzRegSum').textContent = 'Could not queue that tap — ' +
+        ((res.error || {}).message || '');
+      return;
+    }
+    waitForPoint(res.data.id);
+  });
+}
+
+/* Faster cadence than waitForRegions: one point through a loaded predictor is
+   a second or two, and a rep is holding a finger on the glass. */
+function waitForPoint(id){
+  var tries = 0;
+  clearInterval(tapPoll);
+  tapPoll = setInterval(function(){
+    tries++;
+    sb.from('design_jobs').select('id,status,masks,error')
+      .eq('id', id).maybeSingle().then(function(r){
+        var j = r.data;
+        if(!j) return;
+        if(j.status === 'done'){
+          clearInterval(tapPoll); tapPoll = null; tapBusy = false;
+          addTapRegion(j);
+        } else if(j.status === 'failed'){
+          clearInterval(tapPoll); tapPoll = null; tapBusy = false;
+          /* The worker writes a rep-readable sentence for an empty mask —
+             show it rather than a generic failure. */
+          $('vzRegSum').textContent = j.error || 'Nothing at that spot.';
+        } else if(tries > 40){        /* eighty seconds */
+          clearInterval(tapPoll); tapPoll = null; tapBusy = false;
+          $('vzRegSum').textContent = 'Still working — try again in a moment.';
+        }
+      });
+  }, 2000);
+}
+
+function addTapRegion(job){
+  var m = ((job.masks || {}).r01) || null;
+  if(!m || !m.path){ $('vzRegSum').textContent = 'Nothing at that spot.'; return; }
+  var sp  = regionJob.source_path;
+  var lut = labelledMasks[sp] || (labelledMasks[sp] = {});
+  var n = 1;
+  while(regionJob.masks['r' + (n < 10 ? '0' : '') + n]) n++;
+  var id = 'r' + (n < 10 ? '0' : '') + n;
+  regionJob.masks[id] = { path: m.path, pct: m.pct, box: m.box };
+  lut[id] = m.path;
+  /* Assign it to the surface the rep has selected — the tap already said
+     which surface it meant, so making them tap the circle again would be
+     asking the same question twice. */
+  pickFor(regionSurf).push(id);
+  drawRegionSurfaces();
+  drawRegions();
+}
+
 function openRegions(job){
   regionJob = job;
   regionSurf = 'roof';
@@ -2386,6 +2493,10 @@ function openRegions(job){
   Object.keys(m).forEach(function(k){ if(m[k] && m[k].path) lut[k] = m[k].path; });
   labelledMasks[job.source_path] = lut;
   paint($('vzRegImg'), job.source_path);
+  /* Only tap mode makes the photograph itself a target, so only tap mode
+     shows the crosshair — in Find mode the circles are the controls and a
+     crosshair over dead space would promise something that does nothing. */
+  $('vzRegDots').classList.toggle('tap', !!job._tap);
   drawRegionSurfaces();
   drawRegions();
   $('vzReg').classList.remove('hide');
@@ -2397,6 +2508,10 @@ function closeRegions(){
   document.body.style.overflow = '';
   regionJob = null;
   clearInterval(regionPoll); regionPoll = null;
+  /* A tap in flight outlives the picker otherwise: its poll would keep firing
+     against a closed screen and addTapRegion() would dereference a null
+     regionJob. */
+  clearInterval(tapPoll); tapPoll = null; tapBusy = false;
 }
 
 function pickFor(surface){
@@ -2490,9 +2605,18 @@ function drawRegions(){
 
   var total = 0, p = regionPick[regionJob.source_path] || {};
   SURFACES.forEach(function(s){ total += (p[s.key] || []).length; });
-  $('vzRegSum').textContent = total
-    ? total + ' of ' + ids.length + ' region(s) labelled — tap a surface, then its parts'
-    : ids.length + ' region(s) found. Tap a surface above, then tap its parts on the photo.';
+  if(regionJob._tap){
+    /* Tap mode has no denominator — there is no set of found regions to be a
+       fraction of, only what has been tapped so far. */
+    $('vzRegSum').textContent = tapBusy
+      ? 'Reading that spot…'
+      : (total ? total + ' part(s) labelled. Tap again to add more.'
+               : 'Tap a surface above, then tap it on the photograph.');
+  } else {
+    $('vzRegSum').textContent = total
+      ? total + ' of ' + ids.length + ' region(s) labelled — tap a surface, then its parts'
+      : ids.length + ' region(s) found. Tap a surface above, then tap its parts on the photo.';
+  }
   $('vzRegOK').disabled = !total;
 }
 
@@ -2739,6 +2863,11 @@ $('vzFoundBtn').addEventListener('click', toggleFound);
    were ever queued. The sweep in render_regions.mjs now fails on a
    type="button" control outside a form that nothing listens to. */
 $('vzFind').addEventListener('click', findSurfaces);
+/* 827: wired here beside vzFind, and the 826 sweep in render_regions.mjs is
+   what guarantees it stays wired — a type="button" control nothing listens to
+   is exactly the defect that cost eleven hours at 825. */
+$('vzTap').addEventListener('click', tapSurfaces);
+$('vzRegDots').addEventListener('click', tapAt);
 $('vzRegX').addEventListener('click', closeRegions);
 $('vzRegClear').addEventListener('click', function(){
   if(!regionJob) return;
