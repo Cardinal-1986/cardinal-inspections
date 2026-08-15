@@ -235,17 +235,36 @@ def main():
                      ".env is found, or pass a local image path instead.")
         log("looking up job %s…" % jid)
         import requests                       # already a worker dependency
-        r = requests.get(
-            W.SUPABASE_URL + "/rest/v1/design_jobs",
-            params={"id": "like." + jid + "*", "select": "source_path", "limit": 1},
-            headers={"apikey": W.SERVICE_KEY,
-                     "Authorization": "Bearer " + W.SERVICE_KEY},
-            timeout=30)
+
+        # ⚠ NO `like` FILTER HERE, and the reason is not obvious.
+        # `design_jobs.id` is a UUID. PostgreSQL has no `uuid ~~ text`
+        # operator, so `id=like.80ebeb54*` raises undefined_function (42883)
+        # — and PostgREST maps that to **404 Not Found**, which reads exactly
+        # like a missing table or a broken key and sends you to check the
+        # wrong three things. (It did. First run on the Spark.)
+        #
+        # So: exact match on a full uuid, otherwise pull the recent rows and
+        # match the prefix here. The list is small and this is a probe.
+        hdrs = {"apikey": W.SERVICE_KEY, "Authorization": "Bearer " + W.SERVICE_KEY}
+        full = re.fullmatch(r"[0-9a-fA-F-]{36}", jid) is not None
+        if full:
+            params = {"id": "eq." + jid, "select": "id,source_path", "limit": 1}
+        else:
+            params = {"select": "id,source_path,created_at",
+                      "order": "created_at.desc", "limit": 200}
+        r = requests.get(W.SUPABASE_URL + "/rest/v1/design_jobs",
+                         params=params, headers=hdrs, timeout=30)
         r.raise_for_status()
-        d = r.json()
-        path = d[0]["source_path"] if d else None
+        rows = r.json()
+        if not full:
+            rows = [x for x in rows if str(x.get("id", "")).startswith(jid.lower())]
+        path = rows[0].get("source_path") if rows else None
         if not path:
-            sys.exit("No job matching %s" % jid)
+            sys.exit("No job matching %s.\n"
+                     "  Pass the full id, or a prefix of one of the most recent 200.\n"
+                     "  A job with no source_path has not been rendered." % jid)
+        if len(rows) > 1:
+            log("  ⚠ %d jobs match that prefix — using %s" % (len(rows), rows[0]["id"]))
         log("  source: %s" % path)
         raw = W.storage_download(path)
         label = jid[:8]

@@ -141,6 +141,18 @@ ok("the gap between planes is untouched", mid == (48, 48, 48), repr(mid))
 ok("there are enough distinct tints for a busy elevation", len(set(P.TINTS)) >= 6,
    str(len(set(P.TINTS))))
 
+# ── --job must never filter a UUID column with `like` ────────────────────
+# Confirmed against the real database:
+#   ERROR 42883: operator does not exist: uuid ~~ unknown
+# PostgREST maps 42883 to **404 Not Found**, so this reads as a missing table
+# or a dead key and sends you to check the wrong three things. It did.
+src = (HERE / "probe_planes.py").read_text()
+ok("no `like` filter on the uuid id column",
+   '"id": "like.' not in src and "'id': 'like." not in src,
+   "uuid has no ~~ operator; PostgREST reports it as 404")
+ok("a full uuid is matched with eq", '"id": "eq." + jid' in src)
+ok("a prefix is matched client-side", ".startswith(jid.lower())" in src)
+
 # ── the .env placeholders must NOT beat a real .env ──────────────────────
 # THE REGRESSION THIS FILE EXISTS FOR, SECOND EDITION. probe_planes sets inert
 # SUPABASE_* placeholders so it can import the worker without a database. The
@@ -195,4 +207,4 @@ if fails:
     for f in fails:
         print("  - " + f)
     sys.exit(1)
-print("\ntest_probe_planes — all 24 checks pass")
+print("\ntest_probe_planes — all 27 checks pass")
