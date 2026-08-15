@@ -17099,3 +17099,47 @@ so a format mismatch is one log line rather than a mystery. If the first tap ret
 that line before changing anything else.
 
 **Theo must pull and restart the worker** — the graph and the worker both changed.
+
+---
+
+## Build 828 — the tap overlay was not the photograph
+
+**Symptom, in Theo's words: "There is a crosshair and I tap but it doesn't do anything."**
+
+Everything 827 asserted was true — the button was wired, `render_regions.mjs` proved it, the
+crosshair meant `_tap` was set, the handler was bound, and `test_points.py` proved the worker
+would answer. The tap still never reached the queue: **zero `_points` rows in `design_jobs`,
+ever.**
+
+**Cause, measured in Chromium at his own 1194px width:** `#vzRegDots` — the click target, and the
+box tap coordinates are normalised against — was **636px tall while `#vzRegImg` was 796px.**
+
+`.cmp` centres its items, so `.wrap`'s height is **auto**. A percentage `max-height` against an
+indefinite height is **ignored**, so the image was constrained only by `max-width:100%`, rendered
+796px tall, and overflowed a wrap that had clamped itself to `max-height:100%` = 636px. Both
+overlays are `inset:0` of that wrap. So a fifth of the photograph had no click target at all —
+taps there hit the `<img>` and were lost — and every tap that did land was scaled by 636/796,
+landing a quarter of the frame below the finger.
+
+**The same box positions the circles**, so `drawRegions()` had been placing them wrong by the same
+amount since 825. That was invisible while the only regions came from a whole-frame union.
+
+**Fix.** `fitRegionWrap()` sets the wrap's `aspect-ratio` from the image's own
+`naturalWidth/naturalHeight`. With a definite ratio both `max-width:100%` and `max-height:100%`
+resolve, so the wrap becomes the largest correctly-shaped box that fits, and `width/height:100%`
+on the `<img>` fills it exactly. Assigned with `onload =` rather than `addEventListener`, because
+the picker opens many times a session and listeners would stack; called directly in
+`openRegions()` too, since a cached image fires no load event.
+
+**Gates.** New: **`render_tapbox.js`, 30 assertions across five viewports** — overlay size, origin,
+and what is actually on top at the centre, the top edge and the bottom edge of the picture.
+**Negative-controlled against `origin/main`, where it reports the 636-vs-796 mismatch and
+`got null — taps there are lost`.** End-to-end in a real browser at 1194 / 390 / 2560: a click at
+25%/75% of the photograph now queues `x=0.249 y=0.749` (was landing elsewhere entirely).
+`render_regions.mjs` 30/30. Inline script parses; tags and braces balance. No worker change, so
+the Spark does not need restarting for this one.
+
+⚠️ **`next_build.py` cannot see visualizer-only builds.** It reads the app stamp in `index.html`;
+827 touched only `visualizer/` and `spark/`, so the tool still reports "highest seen 826" and
+would hand 827 out a second time. 828 was chosen by hand. Worth fixing in the tool before it
+causes the collision it exists to prevent.

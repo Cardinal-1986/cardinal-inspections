@@ -216,8 +216,16 @@ h2.sec:first-child{margin-top:6px}
 #vzReg .rsurf button b{font-weight:600;font-variant-numeric:tabular-nums;opacity:.75}
 #vzReg .rsurf button[aria-checked="true"]{background:rgba(255,255,255,.13);
   border-color:rgba(255,255,255,.46)}
-#vzReg .wrap{position:relative;max-width:100%;max-height:100%;isolation:isolate}
-#vzReg img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+/* 828: the wrap carries the PHOTOGRAPH'S aspect ratio, set from naturalWidth
+   in fitRegionWrap(). Without it the wrap's height is auto, so the image's
+   `max-height:100%` resolves against an indefinite height and is ignored —
+   the picture rendered 796px tall inside a 636px wrap on Theo's iPad. Both
+   overlays are inset:0 of THIS box, so a fifth of the photograph had no click
+   target and every tap that did land was normalised against the wrong height.
+   16/9 is only the value before the first image reports its size. */
+#vzReg .wrap{position:relative;max-width:100%;max-height:100%;isolation:isolate;
+  aspect-ratio:16/9;min-height:0}
+#vzReg img{width:100%;height:100%;object-fit:contain;display:block}
 #vzReg .rtint{position:absolute;inset:0;pointer-events:none}
 /* Same blend sandwich as the 823 overlay, and the same reason: the tint has to
    sit ON the photograph, not cover it. See drawFound(). */
@@ -2400,6 +2408,20 @@ function waitForRegions(id){
 var tapBusy = false;
 var tapPoll = null;
 
+/* 828: the overlays are inset:0 of .wrap, so .wrap must BE the photograph's
+   box — not the letterboxed area around it, and not a clipped part of it.
+   Giving the wrap the picture's own ratio makes both `max-width:100%` and
+   `max-height:100%` resolve, so the largest correctly-shaped box that fits is
+   what you get, and `width/height:100%` on the <img> then fills it exactly.
+   Assigned with `onload =` rather than addEventListener because the picker is
+   opened many times a session and listeners would stack. */
+function fitRegionWrap(){
+  var im = $('vzRegImg'), w = $('vzRegWrap');
+  if(!im || !w) return;
+  if(im.naturalWidth && im.naturalHeight)
+    w.style.aspectRatio = im.naturalWidth + ' / ' + im.naturalHeight;
+}
+
 function tapSurfaces(){
   if(!chosenShot){ $('vzSum').textContent = 'Pick a photograph first.'; return; }
   if(!$('vzProject').value){ $('vzSum').textContent = 'Pick a job first.'; return; }
@@ -2493,6 +2515,7 @@ function openRegions(job){
   Object.keys(m).forEach(function(k){ if(m[k] && m[k].path) lut[k] = m[k].path; });
   labelledMasks[job.source_path] = lut;
   paint($('vzRegImg'), job.source_path);
+  fitRegionWrap();          /* cached images fire no load event */
   /* Only tap mode makes the photograph itself a target, so only tap mode
      shows the crosshair — in Find mode the circles are the controls and a
      crosshair over dead space would promise something that does nothing. */
@@ -2868,6 +2891,7 @@ $('vzFind').addEventListener('click', findSurfaces);
    is exactly the defect that cost eleven hours at 825. */
 $('vzTap').addEventListener('click', tapSurfaces);
 $('vzRegDots').addEventListener('click', tapAt);
+$('vzRegImg').onload = fitRegionWrap;
 $('vzRegX').addEventListener('click', closeRegions);
 $('vzRegClear').addEventListener('click', function(){
   if(!regionJob) return;
