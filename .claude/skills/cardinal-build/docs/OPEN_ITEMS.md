@@ -3247,3 +3247,75 @@ supplier question.
 Rugged Canyon, Pebblestone Clay, Montana Suede (~33–45 apart). Deliberate:
 overwriting the originals would silently change a colour that may already sit
 behind a saved render, and `design_renders` does not record which hex built it.
+
+---
+
+## ✅ CLOSED 15 Aug — the shingle swatch board. Do NOT re-raise it.
+
+An earlier entry in this file told you to photograph the physical OC swatch
+board. **That advice was mine and it was wrong.** Theo, verbatim:
+
+> "Shingles colors can vary by shingle sample boards quite a bit. It will never
+> be spot on. Can we just use OCs pdfs"
+
+and, on what the render is actually for:
+
+> "So with this being just a rendition of a color of a roof on their own house,
+> it should look amazing like the oc catalogues because there is no
+> imperfections. When these shingles get installed they dont look dead on like
+> the catalogues. Which is OK."
+
+He is right, on both counts. A board photographed in a driveway carries its own
+lighting, white balance and camera profile; the manufacturer's published sheet
+is consistent, is defensible ("that is OC's own colour"), and is what the
+customer is looking at anyway. **The reference is the catalogue rendition.**
+
+### The method, settled — copy it for any future sheet
+
+**Sample the LIT granule field: the median of pixels at or above the 60th
+percentile of luminance.** The naive mean of a shingle photograph includes the
+keyway shadow between courses and lands **20–30 of 255 too dark** — every roof
+would render muddy. Verified across both sheets.
+
+**Pair swatches to names by GEOMETRY, never by eye.** The Duration sheet's page
+3 is a 3×5 grid of 170×55pt images with the name typeset directly beneath each,
+so all 15 paired mechanically. `scripts/pdf_matrix.py` is the positional
+extractor. Naming by eye is what put Portsmouth Blue into Carvedwood.
+
+### What this bought, in one morning
+
+| | before | after |
+|---|---:|---:|
+| `oc_colors` rows | 31 | **34** |
+| verified hexes (whole app) | **0 of 97** | **21** |
+| Mastic Carvedwood | 10, one of them fictional | 40 with official codes |
+| gutter colours | 5 generic | 23, inherited from siding by code |
+
+⚠️ **The catalog was the dominant error term all along, by 10–20×.** The
+renderer lands a requested hex at drift 2–4 of 255. Driftwood was **41** out of
+255 wrong, on a volume colour, and the pipeline was painting it faithfully.
+Three Duration colours (Sand Castle, Slatestone Gray, Colonial Slate) were
+absent entirely and could not be offered. **None of this was reachable by tuning
+tint, denoise or the prompt.** Before touching the renderer again, ask whether
+the catalog is the thing that is wrong.
+
+### Still open
+
+- **13 of 34 `oc_colors` remain estimated**: Black Sable, Bourbon, Storm Cloud,
+  Evergreen Mist, Harbor Blue, Mountain Pine, Quarry Gray, Gray Tweed, Slate
+  Grey, Shasta White, Aged Cedar, Amber, Desert Tan. Several read as older or
+  discontinued names that may appear in no current sheet. Needs the Designer
+  two-pager (Black Sable, Bourbon) and an Oakridge/Berkshire sheet.
+- **Storm Cloud** is deliberately untouched — its strip straddles a page break
+  in the Designer sheet, so the sample is partial. Half-sourced is not sourced.
+- **17 Carvedwood colours carry `hex = NULL`** — real colours, no swatch source.
+  They render nothing rather than render a guess.
+- **`swatch_path` is empty on all rows.** Real shingle texture in the picker is
+  still possible; the images would go to Supabase storage behind auth, never to
+  this repo (OC's copyrighted photography, public repo), and through the
+  `OC_BRAND_RULES` gate first.
+
+⚠️ **Uploaded PDFs do not survive the session.** Each session gets its own
+container. The only manufacturer document that outlived the OC Colors session is
+`OC_MGM_Guidelines_for_Contractors.pdf`, because it was committed. If a source
+document matters, commit it.
