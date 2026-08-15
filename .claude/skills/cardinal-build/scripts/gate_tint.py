@@ -211,6 +211,54 @@ chk("the tint runs BEFORE the inpaint, on the same mask",
     src.index("working = tint(working, masks[surface], hexv)")
     < src.index("working = inpaint(comfy, working, masks[surface],"))
 
+# ── 7. one worker per GPU ─────────────────────────────────────────────────
+# Found on the Spark 15 Aug: THREE workers polling the same queue since the
+# previous evening. Nothing was corrupted — claim_job() is atomic, so they
+# took DIFFERENT jobs — they simply ran FLUX concurrently on one GPU and every
+# render crawled. A clean database and a wrong wall clock is what this looks
+# like from outside, which is why it survived a full day.
+chk("the worker takes a single-instance lock at startup",
+    "def take_lock" in src and "fcntl.flock" in src)
+chk("⚠ it uses flock, not a PID file — the kernel drops it when the process "
+    "dies, so a crash leaves no stale lock to clear",
+    "LOCK_EX | fcntl.LOCK_NB" in src and "pidfile" not in src.lower())
+chk("a refused start exits NON-ZERO (a bare main() would look like success "
+    "to systemd and never restart or alarm)",
+    "sys.exit(main())" in src)
+chk("the refusal says how to fix it, not just that it refused",
+    "pkill -f visualizer_worker.py" in src)
+chk("a second GPU is still possible — the lock path is overridable",
+    'os.environ.get("VISUALIZER_LOCK")' in src)
+
+# and prove the lock actually excludes a second holder, rather than trusting
+# that flock does what the docs say in this environment
+import subprocess, tempfile, textwrap
+_probe = textwrap.dedent("""
+    import fcntl, sys
+    fh = open(sys.argv[1], "w")
+    try:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        print("GOT")
+    except OSError:
+        print("BLOCKED")
+""")
+with tempfile.TemporaryDirectory() as td:
+    probe = Path(td) / "probe.py"
+    probe.write_text(_probe)
+    lockf = Path(td) / "l.lock"
+    first = open(lockf, "w")
+    import fcntl as _f
+    _f.flock(first.fileno(), _f.LOCK_EX | _f.LOCK_NB)
+    r = subprocess.run([sys.executable, str(probe), str(lockf)],
+                       capture_output=True, text=True)
+    chk("CONTROL: a second process really IS blocked while the first holds it",
+        r.stdout.strip() == "BLOCKED", r.stdout.strip() or r.stderr.strip()[:60])
+    first.close()
+    r2 = subprocess.run([sys.executable, str(probe), str(lockf)],
+                        capture_output=True, text=True)
+    chk("and the lock is released when the holder exits — no stale lock",
+        r2.stdout.strip() == "GOT", r2.stdout.strip() or r2.stderr.strip()[:60])
+
 fails = 0
 for name, ok, detail in CHECKS:
     if not ok:

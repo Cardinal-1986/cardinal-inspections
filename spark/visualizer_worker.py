@@ -638,9 +638,62 @@ def run_job(comfy, job):
     log(msg)
 
 
+LOCK_PATH = os.environ.get("VISUALIZER_LOCK") or "/tmp/cardinal_visualizer.lock"
+_lock_fh = None
+
+
+def take_lock():
+    """One worker per box, unless someone deliberately says otherwise.
+
+    ⚠ THIS IS NOT BELT-AND-BRACES. Found on the Spark 15 Aug: THREE workers
+    had been polling the same queue since the previous evening.
+
+    claim_job() uses FOR UPDATE SKIP LOCKED, so two workers never take the
+    SAME job — which is exactly why this went unnoticed. Nothing was corrupted
+    and no job was rendered twice. What they did instead was claim DIFFERENT
+    jobs and run FLUX concurrently on one GPU: 24 GB of weights loaded two or
+    three times over, thrashing VRAM, every render crawling. The render Theo
+    asked about took 12m13s against a warm baseline of 30-190s, and this is
+    the likeliest reason.
+
+    A correct-looking database and a badly wrong wall clock is what the
+    failure mode looks like from the outside, which is why it survived.
+
+    flock and not a PID file: the kernel drops the lock when the process
+    dies, so there is no stale lock to clear after a crash or a reboot. If a
+    second worker is genuinely wanted (a second GPU), give it its own lock
+    path: VISUALIZER_LOCK=/tmp/cardinal_visualizer_gpu1.lock
+    """
+    global _lock_fh
+    try:
+        import fcntl
+    except ImportError:                      # not POSIX — nothing to enforce
+        return True
+    _lock_fh = open(LOCK_PATH, "w")
+    try:
+        fcntl.flock(_lock_fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        log("REFUSING TO START — another worker already holds %s." % LOCK_PATH)
+        log("  Several workers on one GPU do not corrupt anything: the claim")
+        log("  is atomic, so they take different jobs. They just fight over")
+        log("  VRAM and every render crawls.")
+        log("  Running workers:")
+        log("    ps aux | grep [v]isualizer_worker")
+        log("  Stop them all, then start one:")
+        log("    pkill -f visualizer_worker.py")
+        log("  A second GPU is a real reason to run two — give it its own lock:")
+        log("    VISUALIZER_LOCK=/tmp/cardinal_visualizer_gpu1.lock python3 spark/visualizer_worker.py")
+        return False
+    _lock_fh.write("%d\n" % os.getpid())
+    _lock_fh.flush()
+    return True
+
+
 def main():
+    if not take_lock():
+        return 1
     comfy = Comfy(COMFY_URL)
-    log("worker %s → %s" % (WORKER_NAME, COMFY_URL))
+    log("worker %s → %s (lock %s)" % (WORKER_NAME, COMFY_URL, LOCK_PATH))
     if not comfy.up():
         log("WARNING: ComfyUI is not answering at %s yet — will keep polling" % COMFY_URL)
 
@@ -700,4 +753,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # sys.exit(main()), not a bare main(): a refused start must exit NON-ZERO.
+    # Discarding the return made "another worker already holds the lock" look
+    # like a clean shutdown to systemd, which would then treat it as success
+    # and never restart or alarm. main() returns None on the normal path, and
+    # sys.exit(None) is 0.
+    sys.exit(main())

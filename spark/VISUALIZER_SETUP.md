@@ -142,11 +142,59 @@ pip install requests websocket-client pillow
 python3 spark/visualizer_worker.py
 ```
 
+⚠️ **`python3` here must be the SAME interpreter you installed those three
+into, and on this box it is not the system one.** Found 15 Aug: the workers
+had been started from shells with the ComfyUI virtualenv active, so a later
+`python3 spark/visualizer_worker.py` from a fresh shell died on
+`Missing dependency: websocket` — while three workers were happily running.
+Check before assuming:
+
+```bash
+~/ComfyUI/venv/bin/python -c "import websocket, requests, PIL; print('all present')"
+```
+
+If that prints, use that interpreter (and put its full path in the systemd
+unit below, NOT `/usr/bin/python3`). If it does not, install into system
+Python — recent Debian/Ubuntu marks it externally managed, hence the fallback:
+
+```bash
+pip install --user requests websocket-client pillow \
+  || pip install --break-system-packages requests websocket-client pillow
+```
+
 Expected on a healthy idle box:
 
 ```
-[09:14:02] worker spark-dayton → http://127.0.0.1:8188
+[09:14:02] worker spark-dayton → http://127.0.0.1:8188 (lock /tmp/cardinal_visualizer.lock)
 [09:14:02] queue empty — waiting
+```
+
+## 5b. ⚠ ONE worker per GPU — the failure that hides in plain sight
+
+**Found on the Spark 15 Aug: three workers had been polling the same queue
+since the previous evening.** Nothing was corrupted and no job rendered twice
+— `claim_job()` uses `FOR UPDATE SKIP LOCKED`, so they take *different* jobs.
+That is exactly why it survived a full day. What they actually did was run
+FLUX **concurrently on one GPU**, loading 24 GB of weights two and three times
+over and thrashing VRAM. A render that takes 30–190s warm took **12m13s**.
+
+**A clean database and a badly wrong wall clock is what this looks like from
+the outside.** Nothing in the rows says anything is wrong.
+
+The worker now takes a `flock` at startup and **refuses to run** if another
+holds it, printing what to do. `flock` rather than a PID file because the
+kernel releases it when the process dies — a crash or a reboot leaves no stale
+lock to clear.
+
+```bash
+ps aux | grep [v]isualizer_worker     # how many are really up?
+pkill -f visualizer_worker.py         # stop them all, then start ONE
+```
+
+A second GPU is a real reason to run two. Give it its own lock:
+
+```bash
+VISUALIZER_LOCK=/tmp/cardinal_visualizer_gpu1.lock python3 spark/visualizer_worker.py
 ```
 
 ## 6. Run it as a service
@@ -161,7 +209,7 @@ After=network-online.target
 Type=simple
 User=YOUR_USER
 WorkingDirectory=/home/YOUR_USER/cardinal-inspections/spark
-ExecStart=/usr/bin/python3 visualizer_worker.py
+ExecStart=/usr/bin/python3 visualizer_worker.py   # ⚠ see 5 — use the interpreter that HAS the deps
 Restart=always
 RestartSec=10
 
