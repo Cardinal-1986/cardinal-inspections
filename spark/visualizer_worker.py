@@ -636,7 +636,7 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.7 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.8"
+WORKER_BUILD = "wb-2026-08-15.9"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
@@ -1019,6 +1019,119 @@ def run_regions_job(comfy, job, job_id, started):
         % (len(kept), len(images), took / 1000.0, kept[0][0]))
 
 
+POINTS_MAX = 8           # taps one job may carry, so a stuck finger cannot queue 400
+
+
+def run_points_job(comfy, job, job_id, started):
+    """Segment ONE surface, where a person tapped it.
+
+    The automatic pass returned lawns, tree canopies, driveways and cars,
+    because SAM 2's automatic mode is class-agnostic and this worker then kept
+    the biggest regions by area — and in a real photograph the house is a third
+    of the frame, cut into pieces by its own shadow, while the trees and lawn
+    are large and uniform. Ranking by size selects against the building. A tap
+    carries the one thing the model has no way to know: which pixel is siding.
+
+    ⚠ THE `segmentor` ON NODE 3 MUST STAY `single_image`, and that is the
+    opposite of the fix that shipped at wb-2026-08-15.8. `automaskgenerator`
+    builds a generator that samples its own grid and accepts no prompt;
+    `Sam2Segmentation` needs the plain predictor and answers `SAM2AutomaticMask
+    Generator is not a SAM2ImagePredictor` if it is handed the other. Two
+    graphs, two modes, both correct — do not make them agree.
+
+    Coordinates arrive NORMALISED (0..1) and are scaled here. The browser has
+    no way to know the fitted size, and a ratio survives every resize between
+    the two of us — the same reasoning as the note above frameW() in the
+    visualizer.
+
+    The mask lands under the SAME storage name and in the same `masks` shape a
+    regions job produces, so the picker, the render hand-off and exclusive()
+    consume it without knowing which pass made it. One pipeline per concept.
+    """
+    selections = job.get("selections") or {}
+    if isinstance(selections, str):
+        selections = json.loads(selections)
+    pts = selections.get("_points") or []
+    if isinstance(pts, dict):
+        pts = [pts]
+    pts = [p for p in pts if isinstance(p, dict) and "x" in p and "y" in p][:POINTS_MAX]
+    if not pts:
+        raise RuntimeError("no tap on this job — nothing to segment")
+
+    source = storage_download(job["source_path"])
+    fitted, was, now = fit_for_flux(to_png(source))
+    frame = Image.open(io.BytesIO(fitted)).size
+    log("  points pass — %dx%d, %d tap(s)" % (frame[0], frame[1], len(pts)))
+
+    # Normalised -> pixels in the fitted frame. Clamped one pixel inside the
+    # edge: SAM 2 takes a point ON the boundary and returns an empty mask, and
+    # an empty mask reads to a rep as "the tap did nothing".
+    scaled = []
+    for p in pts:
+        x = min(max(float(p["x"]), 0.0), 1.0) * frame[0]
+        y = min(max(float(p["y"]), 0.0), 1.0) * frame[1]
+        scaled.append({"x": int(min(max(x, 1), frame[0] - 1)),
+                       "y": int(min(max(y, 1), frame[1] - 1))})
+
+    graph = load_graph("points_api.json")
+    # Logged in full because the coordinate STRING is the one part of this
+    # graph nothing here can verify: `coordinates_positive` is declared
+    # forceInput, so the shape is whatever Florence2toCoordinates emits. If a
+    # tap ever comes back empty, this line says whether the format was wrong
+    # or the model simply found nothing there.
+    coords = json.dumps(scaled)
+    log("    coordinates_positive = %s" % coords)
+    set_input(graph, "CARDINAL_POINTS", "coordinates_positive", coords)
+    added = comfy.fill_defaults(graph, "Sam2Segmentation")
+    if added:
+        log("    filled from the node's own schema: %s" % ", ".join(sorted(set(added))))
+    name = comfy.upload_image("cardinal_points.png", fitted)
+    set_input(graph, T_SEG_IN, "image", name)
+
+    pid = comfy.run(graph, timeout=900)
+    out = comfy.outputs(pid)
+
+    images = []
+    for nid, payload in out.items():
+        if ((graph.get(nid, {}).get("_meta") or {}).get("title") or "") == "CARDINAL_REGIONS":
+            images = payload.get("images") or []
+            break
+    if not images:
+        raise RuntimeError("the points graph produced no mask")
+
+    png = comfy.fetch(images[0])
+    m = Image.open(io.BytesIO(png)).convert("L")
+    if m.size != frame:
+        m = m.resize(frame, Image.LANCZOS)
+    bw = m.point(lambda p: 255 if p >= 128 else 0)
+    box = bw.getbbox()
+    lit = sum(bw.histogram()[128:])
+    pct = 100.0 * lit / float(frame[0] * frame[1])
+    if not box or not lit:
+        # Deliberately a rep-readable sentence: this one is shown on the iPad.
+        raise RuntimeError(
+            "Nothing at that spot — try the middle of the surface, away from a "
+            "window or an edge.")
+
+    # region_01 because ONE tap is ONE region. A surface built from several taps
+    # arrives at the render as several paths, and union_masks() already joins
+    # them — which is why this pass does not have to merge anything itself.
+    p = "visualizer/%s/region_01.png" % job_id
+    storage_upload(p, png, "image/png")
+    regions = {"r01": {"path": p, "pct": round(pct, 2), "box": list(box)}}
+
+    took = int((time.time() - started) * 1000)
+    patch_job(job_id, {
+        "status": "done", "masks": regions, "finished_at": _now(),
+        "duration_ms": took, "error": None,
+        # No render_path, for the same reason a regions job has none: this
+        # produced a mask, not a picture, and a gallery card for it is empty.
+        "achieved": {"_worker": "%s points" % WORKER_BUILD,
+                     "_points": len(scaled)},
+    })
+    log("  tapped region is %.1f%% of frame, in %.1fs" % (pct, took / 1000.0))
+
+
 def run_job(comfy, job):
     job_id = job["id"]
     started = time.time()
@@ -1043,6 +1156,15 @@ def run_job(comfy, job):
     # plus a claim-function change to ship before the writer.
     if selections.get("_regions"):
         run_regions_job(comfy, job, job_id, started)
+        return
+
+    # ── a POINTS job: one tap, one mask ──────────────────────────────────
+    # Same trick as above and for the same reasons — an underscore key on
+    # `selections`, no column, no migration, no change to the claim function.
+    # Checked after `_regions` only because that one shipped first; the two are
+    # mutually exclusive and the browser never sets both.
+    if selections.get("_points"):
+        run_points_job(comfy, job, job_id, started)
         return
 
     source = storage_download(job["source_path"])

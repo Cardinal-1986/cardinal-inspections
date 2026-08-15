@@ -1,0 +1,67 @@
+{
+  "1": {
+    "inputs": {
+      "image": "cardinal_points.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "CARDINAL_SEG_IMAGE"
+    }
+  },
+  "3": {
+    "inputs": {
+      "model": "sam2_hiera_small.safetensors",
+      "segmentor": "single_image",
+      "device": "cuda",
+      "precision": "bf16"
+    },
+    "class_type": "DownloadAndLoadSAM2Model",
+    "_meta": {
+      "title": "SAM2 model"
+    }
+  },
+  "10": {
+    "inputs": {
+      "sam2_model": [
+        "3",
+        0
+      ],
+      "image": [
+        "1",
+        0
+      ],
+      "coordinates_positive": "[{\"x\": 640, \"y\": 360}]",
+      "keep_model_loaded": true,
+      "individual_objects": false
+    },
+    "class_type": "Sam2Segmentation",
+    "_meta": {
+      "title": "CARDINAL_POINTS"
+    }
+  },
+  "11": {
+    "inputs": {
+      "mask": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "point mask to image"
+    }
+  },
+  "12": {
+    "inputs": {
+      "filename_prefix": "cardinal/point",
+      "images": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "CARDINAL_REGIONS"
+    }
+  }
+}

@@ -42,11 +42,24 @@ The real result is worse than the guess, and the picker cannot pay that cost.
 
 ## The fork for next session — do not start coding before Theo picks
 
-**A — point-prompted SAM 2.** Theo taps the wall; SAM 2 returns *that* mask. Same model, same
-checkpoint already on the Spark; the graph swaps automask for a points input. Cheapest path,
-and it is what SAM 2 is genuinely good at. Cost: a browser change to capture tap coordinates,
-and a shadow-split wall still needs a second tap to complete. **Does not give you circles until
-something proposes where to put them.**
+**A — point-prompted SAM 2. ✅ SHIPPED at build 827 / wb-2026-08-15.9.** Theo taps the wall; SAM 2
+returns *that* mask. Same model, same checkpoint already on the Spark. `Tap surfaces` opens the
+picker empty and each tap adds an ordinary region — `regionPick`, `labelledMasks`, the Render
+hand-off and `exclusive()` were all left untouched, and several taps on one surface are joined by
+the `union_masks()` that already existed. `points_api.json` + `run_points_job()`, an `_points`
+underscore key on `selections`, no column and no migration.
+
+⚠️ **`points_api.json` is `segmentor: "single_image"` and `regions_api.json` is
+`automaskgenerator`. They disagree on purpose** — `Sam2Segmentation` needs the plain predictor,
+so this is the exact inverse of the wb-.8 fix, and `force_automask()` must never touch this
+graph. Asserted in both directions by `test_points.py`.
+
+**Still true after 827:** a shadow-split wall needs a second tap, and **A does not give you
+circles until something proposes where to put them** — that is still B's job.
+
+⚠️ **Unverified at ship:** `coordinates_positive` is `forceInput`, so its string shape is
+whatever `Florence2toCoordinates` emits. 827 sends `[{"x": N, "y": N}]` and **logs the exact
+string**. If the first tap comes back empty, read that log line before changing anything.
 
 **B — Grounding DINO → SAM 2 box prompt.** An open-vocabulary *detector* runs first on
 `"roof", "house siding", "garage door", "window"`, filters out trees, cars, grass and sky by

@@ -17047,3 +17047,55 @@ each go red on their own assertion. `test_probe_planes.py` 39/39. No browser cha
 
 **Theo must pull and restart the worker** — the graph and the worker both changed, and nothing
 on the Spark reloads itself.
+
+---
+
+## Build 827 / wb-2026-08-15.9 — tap the surface, because ranking by area finds the lawn
+
+**Why.** wb-2026-08-15.8 fixed the loader and the automatic pass finally ran clean — and returned
+tree canopies, the lawn, the driveway and both cars, with single regions spanning roof + sky +
+canopy. Not a tuning miss. SAM 2's automatic mode is **class-agnostic**, and `run_regions_job()`
+**ranks by area and keeps the 40 biggest**; in a real photograph the house is about a third of the
+frame and cut into pieces by its own shadow, while the trees and lawn are large and uniform. Area
+ranking selects *against* the building. `points_per_side` and `stability_score_thresh` change how
+many blobs return, not what they are of.
+
+A tap supplies the one thing the model cannot know: which pixel is siding.
+
+**What shipped.** `Tap surfaces` beside `Find surfaces`. It opens **the picker that already
+exists**, empty, and each tap on the photograph queues a one-point job whose mask arrives as an
+ordinary region. `regionPick`, `labelledMasks`, the Render hand-off and `exclusive()` are all
+untouched — a tapped region is a region that happened to arrive one at a time. Several taps on one
+surface travel to Render as several paths, and `union_masks()` already joins them, so this pass
+never merges anything itself.
+
+- `spark/points_api.json` — LoadImage → **`Sam2Segmentation`** (`coordinates_positive`) →
+  MaskToImage → SaveImage, keeping the `CARDINAL_REGIONS` title so the output finder is unchanged.
+- `run_points_job()` + an `_points` route in `run_job()`, matching the `_regions` convention: an
+  underscore key on `selections`, **no column, no migration, no claim-function change.**
+
+**⚠ The two graphs disagree on `segmentor`, on purpose.** `regions_api.json` is
+`automaskgenerator`; `points_api.json` is **`single_image`**, because `Sam2Segmentation` needs the
+plain predictor. That is the exact inverse of the wb-.8 fix, and `force_automask()` must never be
+called on this graph. Asserted in both directions.
+
+**Coordinates travel NORMALISED (0..1)** and are scaled worker-side. The browser cannot know the
+fitted size, and a ratio survives every resize between the two. Points are clamped one pixel inside
+the frame — SAM 2 answers a point on the boundary with an empty mask, and an empty mask reads to a
+rep as "the tap did nothing". A genuinely empty result raises a **rep-readable sentence** rather
+than storing a black PNG that would render as "this surface did not change".
+
+**Gates.** `test_points.py` **42/42, mutation-tested four ways** — dropping the scaling, flipping
+the segmentor to `automaskgenerator`, removing the empty-mask guard, and removing the `POINTS_MAX`
+cap each go red on their own assertion. `render_regions.mjs` 30/30, **negative-controlled**: with
+the `vzTap` listener deleted it reports *nothing listens to: vzTap*, which is the 825 defect class
+this sweep exists to catch. All 11 spark tests green. Visualizer inline script parses; tags and
+braces balance.
+
+**One thing this build did NOT verify, and it is the first thing to watch.**
+`coordinates_positive` is declared `forceInput`, so its string shape is whatever
+`Florence2toCoordinates` emits. This sends `[{"x": 640, "y": 360}]` and **logs the exact string**,
+so a format mismatch is one log line rather than a mystery. If the first tap returns empty, read
+that line before changing anything else.
+
+**Theo must pull and restart the worker** — the graph and the worker both changed.
