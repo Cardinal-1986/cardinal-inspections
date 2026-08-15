@@ -459,6 +459,39 @@ chk("⚠ recolour keeps the photograph's OWN resolution — segmentation runs on
     "masks = segment(comfy, fitted)" in src
     and "if RESTYLE:\n        working = fitted" in src)
 
+# ── 12. an optional chain cannot fail a whole job ─────────────────────────
+# The gutters chain (segment_api nodes 40-44) was hand-written without ComfyUI
+# open. A thin gutter line is far more missable than a window, and an empty
+# bbox list reaching SAM 2 can raise inside ComfyUI — which would fail the
+# ENTIRE segmentation over a surface the customer never asked about.
+if not hasattr(vw, "_drop_mask_chain"):
+    chk("an optional mask chain cannot fail a whole render", False, "no _drop_mask_chain")
+else:
+    import json as _json
+    _seg = _json.loads((SPARK / "segment_api.json").read_text())
+    _before = len(_seg)
+    _ok = vw._drop_mask_chain(_seg, "gutters")
+    chk("the gutters SaveImage can be dropped from the graph", _ok)
+    chk("⚠ dropping it removes ONE node — ComfyUI executes backwards from "
+        "outputs, so the whole Florence2/SAM2 branch simply goes unrun. No "
+        "renumbering, no dangling links",
+        len(_seg) == _before - 1, "%d -> %d nodes" % (_before, len(_seg)))
+    _titles = {(n.get("_meta") or {}).get("title", "") for n in _seg.values()}
+    chk("and the REQUIRED masks survive untouched",
+        {"CARDINAL_MASK_ROOF", "CARDINAL_MASK_SIDING",
+         "CARDINAL_MASK_WINDOWS"} <= _titles)
+    chk("CARDINAL_MASK_GUTTERS is the node that went",
+        "CARDINAL_MASK_GUTTERS" not in _titles)
+    chk("dropping a surface that is not there is a no-op, not a crash",
+        vw._drop_mask_chain(_seg, "nosuchsurface") is False)
+    chk("gutters is declared optional; roof and siding are NOT",
+        "gutters" in vw.OPTIONAL_MASKS
+        and "roof" not in vw.OPTIONAL_MASKS
+        and "siding" not in vw.OPTIONAL_MASKS,
+        str(vw.OPTIONAL_MASKS))
+    chk("segment() retries without the optional chains before giving up",
+        "retrying without" in src and "if not dropped:\n            raise" in src)
+
 fails = 0
 for name, ok, detail in CHECKS:
     if not ok:

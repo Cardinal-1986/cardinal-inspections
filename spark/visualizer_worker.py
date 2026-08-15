@@ -329,6 +329,32 @@ def load_graph(name):
 
 
 # ── the pipeline ──────────────────────────────────────────────────────────
+# Surfaces whose detection chain must never be able to fail a whole job.
+# ⚠ gutters was added on 15 Aug by hand-writing nodes 40-44 into
+# segment_api.json. If Florence2 finds no gutter on an elevation — and a thin
+# gutter line is far more missable than a window — an empty bbox list reaching
+# SAM 2 can raise inside ComfyUI, and that takes down the ENTIRE segmentation,
+# not just gutters. The customer then gets a failed render because of a surface
+# they did not ask about.
+OPTIONAL_MASKS = ("gutters",)
+
+
+def _drop_mask_chain(graph, surface):
+    """Remove a surface's SaveImage so ComfyUI never executes its chain.
+
+    Deleting only the output node is enough and is why this is safe: ComfyUI
+    executes backwards from outputs, so with nothing asking for that mask the
+    whole Florence2 -> SAM 2 branch simply goes unrun. No renumbering, no
+    dangling links, nothing else touched.
+    """
+    title = "CARDINAL_MASK_" + surface.upper()
+    for nid, n in list(graph.items()):
+        if (n.get("_meta") or {}).get("title") == title:
+            del graph[nid]
+            return True
+    return False
+
+
 def segment(comfy, image_png):
     """Run SAM 2 once and get a mask per surface.
 
@@ -339,7 +365,17 @@ def segment(comfy, image_png):
     name = comfy.upload_image("cardinal_seg.png", image_png)
     set_input(graph, T_SEG_IN, "image", name)
 
-    pid = comfy.run(graph, timeout=300)
+    try:
+        pid = comfy.run(graph, timeout=300)
+    except Exception as e:
+        # Retry without the optional chains before giving up. The surfaces the
+        # job actually asked for matter; a gutter it never mentioned does not.
+        dropped = [s for s in OPTIONAL_MASKS if _drop_mask_chain(graph, s)]
+        if not dropped:
+            raise
+        log("    segmentation failed (%s) — retrying without %s"
+            % (_short(e, 80), ", ".join(dropped)))
+        pid = comfy.run(graph, timeout=300)
     out = comfy.outputs(pid)
 
     masks = {}
