@@ -6,9 +6,21 @@ probe_planes.py — does splitting the masks by object actually give us WALLS?
     python3 probe_planes.py --job 80ebeb54            # the exact photo a job used
     python3 probe_planes.py ~/photo.jpg --phrase siding="wall section"
     python3 probe_planes.py ~/photo.jpg --only siding,roof
+    python3 probe_planes.py --job 80ebeb54 --upload   # sheets as links, not files
 
-Segmentation ONLY. It queues nothing, writes nothing to Supabase, touches no
-job row and produces no render. Run it as often as you like.
+Segmentation ONLY. It queues nothing, touches no job row and produces no
+render. Run it as often as you like.
+
+⚠ `--upload` is the one exception to "writes nothing", and it is opt-in for
+that reason: it PUTs the contact sheets into the photos bucket under
+`visualizer/probe/<label>/` and prints a signed link for each. Nothing else
+about the run changes. The Spark is headless — there is no way to open a PNG
+on it — and "look at the sheet" is useless advice when the sheet is a file on
+a box with no screen. This is that advice made actionable.
+
+The sheets land under `visualizer/`, so `sweep_visualizer.py` treats them as
+unreferenced and removes them on its next run. That is deliberate: diagnostics
+should not accumulate in a bucket that holds customers' houses.
 
 ────────────────────────────────────────────────────────────────────────────
 THE QUESTION IT ANSWERS
@@ -101,6 +113,40 @@ TINTS = [(255, 197, 61), (78, 201, 245), (245, 92, 192), (123, 227, 139),
 
 def log(*a):
     print(*a, flush=True)
+
+
+# How long an uploaded sheet stays reachable. These are photographs of real
+# customers' houses, so the link is deliberately short-lived rather than
+# permanent — re-run the probe if you need it again, it is cheap.
+SIGN_SECONDS = int(os.environ.get("PROBE_SIGN_SECONDS") or 86400)
+
+
+def upload_sheet(local_path, remote_path):
+    """Put a sheet in the photos bucket and return a signed link to it.
+
+    Uses the SERVICE ROLE key, so RLS is bypassed on the write and no policy
+    change is needed — and the READ is a signed URL, which is pre-authorised
+    and equally independent of RLS. Nothing here widens what a signed-in user
+    can reach.
+    """
+    import requests
+    data = Path(local_path).read_bytes()
+    W.storage_upload(remote_path, data, "image/png")
+
+    r = requests.post(
+        "%s/storage/v1/object/sign/%s/%s" % (W.SUPABASE_URL, W.BUCKET, remote_path),
+        headers={"apikey": W.SERVICE_KEY,
+                 "Authorization": "Bearer " + W.SERVICE_KEY,
+                 "Content-Type": "application/json"},
+        json={"expiresIn": SIGN_SECONDS}, timeout=60)
+    r.raise_for_status()
+    signed = (r.json() or {}).get("signedURL") or ""
+    if not signed:
+        raise RuntimeError("storage signed no URL for %s" % remote_path)
+    # The API returns a PATH ("/object/sign/photos/…?token=…"), not a URL —
+    # supabase-js prepends the storage base and so must this. Returning the
+    # bare path gives you a link that 404s in a browser with no clue why.
+    return W.SUPABASE_URL + "/storage/v1" + signed
 
 
 # ── graph surgery ────────────────────────────────────────────────────────
@@ -196,6 +242,7 @@ def main():
 
     phrases, only, src_arg = {}, None, None
     both = True
+    upload = False
     i = 0
     while i < len(argv):
         a = argv[i]
@@ -214,12 +261,20 @@ def main():
             src_arg = ("job", argv[i])
         elif a == "--only-split":
             both = False
+        elif a == "--upload":
+            upload = True
         elif not a.startswith("-"):
             src_arg = ("file", a)
         i += 1
 
     if not src_arg:
         sys.exit("Give an image path, or --job <id>. -h for help.")
+
+    # Check this BEFORE the segmentation runs. Discovering there are no
+    # credentials after two model loads and four minutes is a bad way to
+    # find out.
+    if upload and (not W.SERVICE_KEY or W.SERVICE_KEY.startswith("inert-")):
+        sys.exit("--upload needs real credentials (spark/.env).")
 
     # ── the photograph ───────────────────────────────────────────────────
     if src_arg[0] == "file":
@@ -304,6 +359,7 @@ def main():
         sys.exit("Nothing to segment. Graph has: %s" % ", ".join(available))
 
     results = {}
+    links = []
     modes = ([("merged", False), ("split", True)] if both else [("split", True)])
 
     for mode, split in modes:
@@ -346,7 +402,17 @@ def main():
                 log("      %d: %5.1f%% of frame   box=%s"
                     % (k + 1, st["pct"], st["box"]))
             if stats:
-                sheet(photo, stats, outdir / ("%s_%s_SHEET.png" % (surface, mode)))
+                name = "%s_%s_SHEET.png" % (surface, mode)
+                sheet(photo, stats, outdir / name)
+                if upload:
+                    try:
+                        links.append((name, upload_sheet(
+                            outdir / name,
+                            "visualizer/probe/%s/%s" % (outdir.name, name))))
+                    except Exception as e:
+                        # A failed upload must not lose the RUN. The sheet is
+                        # already on disk and the counts are already printed.
+                        log("      ⚠ upload failed for %s: %s" % (name, _short(e)))
 
     # ── the verdict ──────────────────────────────────────────────────────
     log("\n" + "=" * 68)
@@ -387,7 +453,15 @@ def main():
         log("  not a different flag, and that is a much bigger decision.")
 
     log("\n  masks + sheets: %s" % outdir)
-    log("  Look at the *_SHEET.png files first.")
+    if links:
+        hrs = SIGN_SECONDS // 3600
+        log("\n  OPEN THESE — signed for %d hour%s:" % (hrs, "" if hrs == 1 else "s"))
+        for name, url in links:
+            log("    %-28s %s" % (name, url))
+    elif upload:
+        log("  (--upload was asked for but nothing uploaded — see the warnings above)")
+    else:
+        log("  Look at the *_SHEET.png files first, or re-run with --upload for links.")
     return 0
 
 
