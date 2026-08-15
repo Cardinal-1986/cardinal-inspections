@@ -651,7 +651,7 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.7 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.11"
+WORKER_BUILD = "wb-2026-08-15.12"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
@@ -1021,6 +1021,16 @@ def run_regions_job(comfy, job, job_id, started):
         storage_upload(p, png, "image/png")
         regions["r%02d" % i] = {"path": p, "pct": round(pct, 2), "box": list(box or ())}
 
+    # 831: the frame those boxes are measured in. Without it the browser divides
+    # box coordinates by the DISPLAYED photograph's natural size, which is the
+    # original — 4032px on a phone shot against a ~1280px segmentation frame —
+    # so every circle collapsed toward the top-left corner by that ratio. The
+    # highlights were right the whole time because a mask PNG is full-frame and
+    # aligns itself; only the box arithmetic needed to know the scale.
+    # `regionsOf()` in the browser keeps only entries carrying `path`, so this
+    # key is invisible to every existing consumer by construction.
+    regions["_frame"] = {"w": now[0], "h": now[1]}
+
     took = int((time.time() - started) * 1000)
     patch_job(job_id, {
         "status": "done", "masks": regions, "finished_at": _now(),
@@ -1133,7 +1143,11 @@ def run_points_job(comfy, job, job_id, started):
     # them — which is why this pass does not have to merge anything itself.
     p = "visualizer/%s/region_01.png" % job_id
     storage_upload(p, png, "image/png")
-    regions = {"r01": {"path": p, "pct": round(pct, 2), "box": list(box)}}
+    # `_frame` for the same reason as the regions pass — see the note there.
+    # It matters more here: a tap is answered one region at a time, so the
+    # circle is the ONLY thing that tells a rep their tap was understood.
+    regions = {"r01": {"path": p, "pct": round(pct, 2), "box": list(box)},
+               "_frame": {"w": now[0], "h": now[1]}}
 
     took = int((time.time() - started) * 1000)
     patch_job(job_id, {
