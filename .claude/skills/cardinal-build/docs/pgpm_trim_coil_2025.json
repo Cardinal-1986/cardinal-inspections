@@ -1,0 +1,1310 @@
+[
+ {
+  "code": "345",
+  "pgpm": "Spruce",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "344",
+  "pgpm": "Green Tea",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "34",
+  "pgpm": "Terra Bronze",
+  "legacy_mastic": "Terra Bronze",
+  "special_order": false
+ },
+ {
+  "code": "33/274",
+  "pgpm": "Black/Window White",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "33",
+  "pgpm": "Black",
+  "legacy_mastic": "Black",
+  "special_order": false
+ },
+ {
+  "code": "31",
+  "pgpm": "Cameo",
+  "legacy_mastic": "Cameo",
+  "special_order": false
+ },
+ {
+  "code": "30",
+  "pgpm": "Classic Cream",
+  "legacy_mastic": "Classic Cream",
+  "special_order": false
+ },
+ {
+  "code": "290",
+  "pgpm": "Russet Red",
+  "legacy_mastic": "Russet Red",
+  "special_order": false
+ },
+ {
+  "code": "276",
+  "pgpm": "Window Almond",
+  "legacy_mastic": "Window Almond",
+  "special_order": false
+ },
+ {
+  "code": "275",
+  "pgpm": "Timberstone",
+  "legacy_mastic": "Timberstone",
+  "special_order": false
+ },
+ {
+  "code": "274",
+  "pgpm": "Window White",
+  "legacy_mastic": "Window White",
+  "special_order": false
+ },
+ {
+  "code": "262",
+  "pgpm": "Grecian Green",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "260",
+  "pgpm": "Hazelnut",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "254",
+  "pgpm": "Amber",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "252",
+  "pgpm": "Vineyard Grove",
+  "legacy_mastic": "Vineyard Grove",
+  "special_order": false
+ },
+ {
+  "code": "251",
+  "pgpm": "Autumn Harvest",
+  "legacy_mastic": "Autumn Harvest",
+  "special_order": false
+ },
+ {
+  "code": "228",
+  "pgpm": "Tuxedo Gray",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "227",
+  "pgpm": "Pearl Gray",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "226",
+  "pgpm": "Imperial Brown",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "225",
+  "pgpm": "Carey Tan",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "224",
+  "pgpm": "Antique Ivory",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "223",
+  "pgpm": "Cranberry",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "22",
+  "pgpm": "Desert Sand",
+  "legacy_mastic": "Desert Sand",
+  "special_order": false
+ },
+ {
+  "code": "210",
+  "pgpm": "Corn Silk",
+  "legacy_mastic": "Corn Silk",
+  "special_order": false
+ },
+ {
+  "code": "18",
+  "pgpm": "Sage",
+  "legacy_mastic": "Sage",
+  "special_order": false
+ },
+ {
+  "code": "170",
+  "pgpm": "Quiet Willow",
+  "legacy_mastic": "Quiet Willow",
+  "special_order": false
+ },
+ {
+  "code": "17",
+  "pgpm": "Everest",
+  "legacy_mastic": "Everest",
+  "special_order": false
+ },
+ {
+  "code": "160",
+  "pgpm": "Stone",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "157",
+  "pgpm": "Richmond Red",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "156",
+  "pgpm": "Natural Slate",
+  "legacy_mastic": "Natural Slate",
+  "special_order": false
+ },
+ {
+  "code": "149",
+  "pgpm": "Red Brick",
+  "legacy_mastic": "Red Brick",
+  "special_order": false
+ },
+ {
+  "code": "148",
+  "pgpm": "Mahogany",
+  "legacy_mastic": "Mahogany",
+  "special_order": false
+ },
+ {
+  "code": "147",
+  "pgpm": "Brandy Wood",
+  "legacy_mastic": "Brandy Wood",
+  "special_order": false
+ },
+ {
+  "code": "146",
+  "pgpm": "Newport Bay",
+  "legacy_mastic": "Newport Bay",
+  "special_order": false
+ },
+ {
+  "code": "145",
+  "pgpm": "Bayou",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "144",
+  "pgpm": "Misty Shadow",
+  "legacy_mastic": "Misty Shadow",
+  "special_order": false
+ },
+ {
+  "code": "135",
+  "pgpm": "Copper Penny",
+  "legacy_mastic": "Copper Penny",
+  "special_order": false
+ },
+ {
+  "code": "100",
+  "pgpm": "Rugged Canyon",
+  "legacy_mastic": "Rugged Canyon",
+  "special_order": false
+ },
+ {
+  "code": "10",
+  "pgpm": "Colonial Yellow",
+  "legacy_mastic": "Colonial Yellow",
+  "special_order": false
+ },
+ {
+  "code": "090",
+  "pgpm": "Deep Granite",
+  "legacy_mastic": "Deep Granite",
+  "special_order": false
+ },
+ {
+  "code": "09",
+  "pgpm": "Window Bronze",
+  "legacy_mastic": "Window Bronze",
+  "special_order": false
+ },
+ {
+  "code": "04",
+  "pgpm": "White",
+  "legacy_mastic": "White",
+  "special_order": false
+ },
+ {
+  "code": "02",
+  "pgpm": "Silver Gray",
+  "legacy_mastic": "Silver Gray",
+  "special_order": false
+ },
+ {
+  "code": "70",
+  "pgpm": "Evergreen",
+  "legacy_mastic": "Evergreen",
+  "special_order": false
+ },
+ {
+  "code": "644",
+  "pgpm": "Rich Espresso",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "643",
+  "pgpm": "Aged Pewter",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "629",
+  "pgpm": "Night Gray",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "628",
+  "pgpm": "Gray Slate",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "627",
+  "pgpm": "Deep Ocean",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "626",
+  "pgpm": "Timber Bark",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "625",
+  "pgpm": "Khaki Brown",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "624",
+  "pgpm": "Iron Gray",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "623",
+  "pgpm": "Evening Blue",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "622",
+  "pgpm": "Countrylane Red",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "621",
+  "pgpm": "Chestnut Brown",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "620",
+  "pgpm": "Autumn Tan",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "62",
+  "pgpm": "Royal Brown",
+  "legacy_mastic": "Royal Brown",
+  "special_order": false
+ },
+ {
+  "code": "591",
+  "pgpm": "French Vanilla",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "59",
+  "pgpm": "Musket Brown",
+  "legacy_mastic": "Musket Brown",
+  "special_order": false
+ },
+ {
+  "code": "585",
+  "pgpm": "Flagstone",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "583",
+  "pgpm": "Stratus",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "581",
+  "pgpm": "Spring Moss",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "579",
+  "pgpm": "Tundra Moss",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "575",
+  "pgpm": "Forest",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "574",
+  "pgpm": "Mulberry Wine",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "573",
+  "pgpm": "Southern Cypress",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "555",
+  "pgpm": "Rockaway Grey",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "53",
+  "pgpm": "Almond",
+  "legacy_mastic": "Almond",
+  "special_order": false
+ },
+ {
+  "code": "52",
+  "pgpm": "Pebblestone Clay",
+  "legacy_mastic": "Nat Cedar / Peb Clay",
+  "special_order": false
+ },
+ {
+  "code": "513",
+  "pgpm": "Dark Green",
+  "legacy_mastic": "Dark Green",
+  "special_order": true
+ },
+ {
+  "code": "511",
+  "pgpm": "Tuscan Olive",
+  "legacy_mastic": "Tuscan Olive",
+  "special_order": false
+ },
+ {
+  "code": "510",
+  "pgpm": "Scottish \u001fistle",
+  "legacy_mastic": "Scottish \u001fistle",
+  "special_order": false
+ },
+ {
+  "code": "44",
+  "pgpm": "Linen",
+  "legacy_mastic": "Linen",
+  "special_order": false
+ },
+ {
+  "code": "390",
+  "pgpm": "English Wedgewood",
+  "legacy_mastic": "English Wedgewood",
+  "special_order": false
+ },
+ {
+  "code": "39",
+  "pgpm": "Sandtone",
+  "legacy_mastic": "Sandtone",
+  "special_order": false
+ },
+ {
+  "code": "36",
+  "pgpm": "Victorian Grey",
+  "legacy_mastic": "Victorian Grey",
+  "special_order": false
+ },
+ {
+  "code": "358",
+  "pgpm": "Midnight Blue",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "355",
+  "pgpm": "Woodland Green",
+  "legacy_mastic": "Woodland Green",
+  "special_order": false
+ },
+ {
+  "code": "354",
+  "pgpm": "Whispering Timber",
+  "legacy_mastic": "Whispering Timber",
+  "special_order": false
+ },
+ {
+  "code": "353",
+  "pgpm": "Rock Harbor",
+  "legacy_mastic": "Rock Harbor",
+  "special_order": false
+ },
+ {
+  "code": "352",
+  "pgpm": "Deep Cavern",
+  "legacy_mastic": "Deep Cavern",
+  "special_order": false
+ },
+ {
+  "code": "350",
+  "pgpm": "Alpine Forest",
+  "legacy_mastic": "Alpine Forest",
+  "special_order": false
+ },
+ {
+  "code": "35",
+  "pgpm": "Harbor Grey",
+  "legacy_mastic": "Harbor Grey",
+  "special_order": false
+ },
+ {
+  "code": "349",
+  "pgpm": "Espresso",
+  "legacy_mastic": "Espresso",
+  "special_order": false
+ },
+ {
+  "code": "348",
+  "pgpm": "Hearthstone",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "347",
+  "pgpm": "Autumn Red",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "346",
+  "pgpm": "Forest",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "DT",
+  "pgpm": "Wheat",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "DS",
+  "pgpm": "Cypress DS",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "DQ",
+  "pgpm": "Cabin",
+  "legacy_mastic": "Cabin",
+  "special_order": false
+ },
+ {
+  "code": "DP",
+  "pgpm": "Scotch Pine",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "DN",
+  "pgpm": "Lighthouse Red",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "DM",
+  "pgpm": "Regatta",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "DK",
+  "pgpm": "Graphite DK",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "DF",
+  "pgpm": "Slate",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "D9",
+  "pgpm": "Wedgewood",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "CZ",
+  "pgpm": "Dri\u001dwood",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "CW",
+  "pgpm": "Rye",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "CU",
+  "pgpm": "Pearl",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "CT",
+  "pgpm": "Brownstone",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "CJ",
+  "pgpm": "Graystone",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "CI",
+  "pgpm": "Harbor Blue",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "CH",
+  "pgpm": "Monterey",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "C3",
+  "pgpm": "Silver Mist",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "C1",
+  "pgpm": "Warm Sand C",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "BU",
+  "pgpm": "Buckskin",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "BR",
+  "pgpm": "Black/Royal Brown",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "BM",
+  "pgpm": "Black/Musket Brown",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "AY",
+  "pgpm": "Autumn Yellow",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "AT",
+  "pgpm": "Suede AT",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "AS",
+  "pgpm": "Sandpiper AS",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "A9",
+  "pgpm": "Heritage Cream",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "A8",
+  "pgpm": "Sail Cloth",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "A7",
+  "pgpm": "Wicker",
+  "legacy_mastic": "Wicker",
+  "special_order": false
+ },
+ {
+  "code": "A6",
+  "pgpm": "Oxford Blue",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "A5",
+  "pgpm": "Stone Clay",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "A4",
+  "pgpm": "Glacier Blend",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "A0",
+  "pgpm": "Je\u001eerson Tan",
+  "legacy_mastic": "Je\u001eerson Tan",
+  "special_order": false
+ },
+ {
+  "code": "869",
+  "pgpm": "Peppercorn",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "868",
+  "pgpm": "Nantucket",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "867",
+  "pgpm": "Polaris",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "866",
+  "pgpm": "Carbon",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "865",
+  "pgpm": "Marine Blue",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "814",
+  "pgpm": "Iron",
+  "legacy_mastic": "Iron",
+  "special_order": false
+ },
+ {
+  "code": "813",
+  "pgpm": "Dublin",
+  "legacy_mastic": "Dublin",
+  "special_order": false
+ },
+ {
+  "code": "812",
+  "pgpm": "Brunswick",
+  "legacy_mastic": "Brunswick",
+  "special_order": false
+ },
+ {
+  "code": "803",
+  "pgpm": "Brownstone",
+  "legacy_mastic": "Brownstone",
+  "special_order": false
+ },
+ {
+  "code": "802",
+  "pgpm": "Cinnabar",
+  "legacy_mastic": "Cinnabar",
+  "special_order": false
+ },
+ {
+  "code": "80",
+  "pgpm": "Charcoal Grey",
+  "legacy_mastic": "Charcoal Grey",
+  "special_order": false
+ },
+ {
+  "code": "755",
+  "pgpm": "Cottage Red",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "711",
+  "pgpm": "Bark",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "N32",
+  "pgpm": "Evergreen",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "N31",
+  "pgpm": "Ivy",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "N30",
+  "pgpm": "Hazel",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "N29",
+  "pgpm": "Russett",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "N28",
+  "pgpm": "Wedgewood",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "N27",
+  "pgpm": "Fern",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "N26",
+  "pgpm": "Olive",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "N25",
+  "pgpm": "Steel Blue",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "N23",
+  "pgpm": "Granite",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "N22",
+  "pgpm": "Wheat",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "N21",
+  "pgpm": "Cobblestone",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "N20",
+  "pgpm": "Cactus",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "LU",
+  "pgpm": "Sandstone",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "LT",
+  "pgpm": "Heritage Gray",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "LP",
+  "pgpm": "Tan",
+  "legacy_mastic": "Tan",
+  "special_order": true
+ },
+ {
+  "code": "LM",
+  "pgpm": "Russet Red",
+  "legacy_mastic": "Russet Red",
+  "special_order": true
+ },
+ {
+  "code": "LH",
+  "pgpm": "Almond KP",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "L1",
+  "pgpm": "Antique White",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "K7",
+  "pgpm": "Sienna",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "K6",
+  "pgpm": "Linen K",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "K5",
+  "pgpm": "Aspen Grey",
+  "legacy_mastic": "Aspen Grey",
+  "special_order": false
+ },
+ {
+  "code": "K2",
+  "pgpm": "Cypress",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "JS/274",
+  "pgpm": "Bronze",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "JS",
+  "pgpm": "Dark Bronze JS",
+  "legacy_mastic": "Dark Bronze JS",
+  "special_order": false
+ },
+ {
+  "code": "JN",
+  "pgpm": "London Brown",
+  "legacy_mastic": "London Brown",
+  "special_order": false
+ },
+ {
+  "code": "J1",
+  "pgpm": "80D White",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "J0",
+  "pgpm": "30D White",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "IG",
+  "pgpm": "Hazelwood",
+  "legacy_mastic": "Hazelwood",
+  "special_order": false
+ },
+ {
+  "code": "IF",
+  "pgpm": "Montana Suede",
+  "legacy_mastic": "Montana Suede",
+  "special_order": false
+ },
+ {
+  "code": "ID",
+  "pgpm": "Terra Cotta",
+  "legacy_mastic": "Terra Cotta",
+  "special_order": false
+ },
+ {
+  "code": "IC",
+  "pgpm": "Lakeshore Fern",
+  "legacy_mastic": "Lakeshore Fern",
+  "special_order": false
+ },
+ {
+  "code": "IB",
+  "pgpm": "Portsmouth Blue",
+  "legacy_mastic": "Portsmouth Blue",
+  "special_order": false
+ },
+ {
+  "code": "HG",
+  "pgpm": "Sandstone Beige",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "H8",
+  "pgpm": "Sandalwood",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "H2",
+  "pgpm": "Blue Gray",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "GK",
+  "pgpm": "Winslow Taupe GK",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "EP",
+  "pgpm": "Horizon Blue",
+  "legacy_mastic": "Horizon Blue",
+  "special_order": true
+ },
+ {
+  "code": "E9",
+  "pgpm": "American Walnut",
+  "legacy_mastic": "American Walnut",
+  "special_order": false
+ },
+ {
+  "code": "E7",
+  "pgpm": "Hickory",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "E6",
+  "pgpm": "Glacier Blue",
+  "legacy_mastic": "Glacier Blue",
+  "special_order": false
+ },
+ {
+  "code": "E4",
+  "pgpm": "Woodland Green",
+  "legacy_mastic": "Woodland Green",
+  "special_order": false
+ },
+ {
+  "code": "E3",
+  "pgpm": "Frontier Blend",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "DV",
+  "pgpm": "Ivory",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "*Colors with an asterisk are Special Order only.",
+  "pgpm": "",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "YW",
+  "pgpm": "Wine",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "YV",
+  "pgpm": "Harbour",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "YT",
+  "pgpm": "Linen",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "YS",
+  "pgpm": "Coastal Blue",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "YR",
+  "pgpm": "Brandy",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "YP",
+  "pgpm": "Autumn Beige",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "YJ",
+  "pgpm": "Savannah Blue",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "YH",
+  "pgpm": "Cottage Gray",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "Y8",
+  "pgpm": "Sterling",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "Y6",
+  "pgpm": "Heritage Linen",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "XM",
+  "pgpm": "Natural Cedar",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "XL",
+  "pgpm": "Heritage Blue",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "XK",
+  "pgpm": "Platinum",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "XJ",
+  "pgpm": "Castle Stone",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "WY",
+  "pgpm": "Camel/Beige",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "WX",
+  "pgpm": "Window White",
+  "legacy_mastic": "Window White",
+  "special_order": true
+ },
+ {
+  "code": "WV",
+  "pgpm": "Sandtone",
+  "legacy_mastic": "Sandtone",
+  "special_order": false
+ },
+ {
+  "code": "WU",
+  "pgpm": "Earthtone",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "WB",
+  "pgpm": "Canyon Blend",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "WA6",
+  "pgpm": "Forest Green/ White",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "WA5",
+  "pgpm": "Ark Bronze / Red",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "WA4",
+  "pgpm": "Cocoa Bean / Win White",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "WA3",
+  "pgpm": "Red Rock",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "WA2",
+  "pgpm": "Terratone Sandtone",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "WA1",
+  "pgpm": "White Canvas",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "T8",
+  "pgpm": "Paci\u001cc Blue",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "T7",
+  "pgpm": "Sable Brown",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "T6",
+  "pgpm": "Ivy Green",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "T2",
+  "pgpm": "Traditional Red",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "S5",
+  "pgpm": "Silver Ash",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "RA",
+  "pgpm": "Flagstone RA",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "R3",
+  "pgpm": "Maple",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "PT",
+  "pgpm": "Tan",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "PQ",
+  "pgpm": "Putty",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "PP",
+  "pgpm": "Poplar White",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "P3",
+  "pgpm": "Cocoa Bean",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "P2",
+  "pgpm": "Terratone (Renewal)",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "NW",
+  "pgpm": "Estate Gray",
+  "legacy_mastic": null,
+  "special_order": true
+ },
+ {
+  "code": "NU",
+  "pgpm": "Sierra Brown",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "NJ",
+  "pgpm": "Desert",
+  "legacy_mastic": "Desert",
+  "special_order": true
+ },
+ {
+  "code": "NE",
+  "pgpm": "Bone",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "N5",
+  "pgpm": "Colonial",
+  "legacy_mastic": null,
+  "special_order": false
+ },
+ {
+  "code": "N33",
+  "pgpm": "Colonial",
+  "legacy_mastic": null,
+  "special_order": true
+ }
+]

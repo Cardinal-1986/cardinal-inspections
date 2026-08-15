@@ -3201,3 +3201,183 @@ or CompanyCam. The altered-evidence fence is untouched.
 **Still true from before and unchanged:** no stale-claim recovery on the Spark side; ~60 unreferenced
 files in `photos/visualizer/` awaiting a sweep; the 12m13s render ceiling is contaminated by three
 concurrent workers on one GPU and the clean recolour baseline is ~14s.
+
+---
+
+## The colour catalog — `hex_verified` finally means something (15 Aug 2026)
+
+**Settled by Theo, 15 Aug, and it is the right split:** *"With siding I believe
+using gemeni's is good enough. I agree with you on the shingles tho."*
+
+The two fail differently, which is why one is loaded and one is not:
+
+- **Siding is extruded vinyl** — one flat pigment. A named colour is a single
+  colour and an estimate lands close. **Mastic Carvedwood is loaded: 24 colours,
+  `hex_verified = false`.**
+- **Shingles are a granule BLEND** — twenty stone colours averaged by the eye at
+  twenty feet. The two available sources disagree by up to **47 of 255**
+  (Driftwood `#8A8578` vs `#5E564D`), and Aged Copper is **green in one and
+  brown in the other** (`#5E6B5C` vs `#524C44`). That is not calibration drift,
+  it is a disagreement about what colour the thing is. **No shingle hex changes
+  without a photograph of the physical board.**
+
+**The measurement that makes this the priority:** the render pipeline lands the
+requested hex at **drift 2–4 of 255**. The catalog disagrees with itself by up
+to 47. **The catalog has been the dominant error term for some time — by roughly
+10–20×.** Any further tuning of tint, denoise or prompt is spent on the smaller
+half of the problem.
+
+`hex_verified` existed on both `materials` and `oc_colors` and was **false on all
+97 rows** — it had never meant anything. It means this now:
+
+| | |
+|---|---|
+| `false` | estimated. Good enough to browse and to render a concept. |
+| `true` | **sampled off the physical chip.** Do not set it for anything that was not. |
+
+**Open:** photograph the OC shingle board flat, in daylight, no flash — the only
+thing that resolves the four disagreements above. Nothing else in the pipeline is
+waiting on anything.
+
+⚠️ **Availability is not asserted by the catalog.** It holds a palette, not an
+order sheet. Which colours a given profile can actually be ordered in is a
+supplier question.
+
+⚠️ **Three colour names now exist in two Mastic lines with different hexes** —
+Rugged Canyon, Pebblestone Clay, Montana Suede (~33–45 apart). Deliberate:
+overwriting the originals would silently change a colour that may already sit
+behind a saved render, and `design_renders` does not record which hex built it.
+
+---
+
+## ✅ CLOSED 15 Aug — the shingle swatch board. Do NOT re-raise it.
+
+An earlier entry in this file told you to photograph the physical OC swatch
+board. **That advice was mine and it was wrong.** Theo, verbatim:
+
+> "Shingles colors can vary by shingle sample boards quite a bit. It will never
+> be spot on. Can we just use OCs pdfs"
+
+and, on what the render is actually for:
+
+> "So with this being just a rendition of a color of a roof on their own house,
+> it should look amazing like the oc catalogues because there is no
+> imperfections. When these shingles get installed they dont look dead on like
+> the catalogues. Which is OK."
+
+He is right, on both counts. A board photographed in a driveway carries its own
+lighting, white balance and camera profile; the manufacturer's published sheet
+is consistent, is defensible ("that is OC's own colour"), and is what the
+customer is looking at anyway. **The reference is the catalogue rendition.**
+
+### The method, settled — copy it for any future sheet
+
+**Sample the LIT granule field: the median of pixels at or above the 60th
+percentile of luminance.** The naive mean of a shingle photograph includes the
+keyway shadow between courses and lands **20–30 of 255 too dark** — every roof
+would render muddy. Verified across both sheets.
+
+**Pair swatches to names by GEOMETRY, never by eye.** The Duration sheet's page
+3 is a 3×5 grid of 170×55pt images with the name typeset directly beneath each,
+so all 15 paired mechanically. `scripts/pdf_matrix.py` is the positional
+extractor. Naming by eye is what put Portsmouth Blue into Carvedwood.
+
+### What this bought, in one morning
+
+| | before | after |
+|---|---:|---:|
+| `oc_colors` rows | 31 | **34** |
+| verified hexes (whole app) | **0 of 97** | **21** |
+| Mastic Carvedwood | 10, one of them fictional | 40 with official codes |
+| gutter colours | 5 generic | 23, inherited from siding by code |
+
+⚠️ **The catalog was the dominant error term all along, by 10–20×.** The
+renderer lands a requested hex at drift 2–4 of 255. Driftwood was **41** out of
+255 wrong, on a volume colour, and the pipeline was painting it faithfully.
+Three Duration colours (Sand Castle, Slatestone Gray, Colonial Slate) were
+absent entirely and could not be offered. **None of this was reachable by tuning
+tint, denoise or the prompt.** Before touching the renderer again, ask whether
+the catalog is the thing that is wrong.
+
+### Still open
+
+- **13 of 34 `oc_colors` remain estimated**: Black Sable, Bourbon, Storm Cloud,
+  Evergreen Mist, Harbor Blue, Mountain Pine, Quarry Gray, Gray Tweed, Slate
+  Grey, Shasta White, Aged Cedar, Amber, Desert Tan. Several read as older or
+  discontinued names that may appear in no current sheet. Needs the Designer
+  two-pager (Black Sable, Bourbon) and an Oakridge/Berkshire sheet.
+- **Storm Cloud** is deliberately untouched — its strip straddles a page break
+  in the Designer sheet, so the sample is partial. Half-sourced is not sourced.
+- **17 Carvedwood colours carry `hex = NULL`** — real colours, no swatch source.
+  They render nothing rather than render a guess.
+- **`swatch_path` is empty on all rows.** Real shingle texture in the picker is
+  still possible; the images would go to Supabase storage behind auth, never to
+  this repo (OC's copyrighted photography, public repo), and through the
+  `OC_BRAND_RULES` gate first.
+
+⚠️ **Uploaded PDFs do not survive the session.** Each session gets its own
+container. The only manufacturer document that outlived the OC Colors session is
+`OC_MGM_Guidelines_for_Contractors.pdf`, because it was committed. If a source
+document matters, commit it.
+
+### The colour gap, narrowed to FOUR (15 Aug, Theo)
+
+> "Storm Cloud, Harbor Blue, Shasta White, Amber, Desert Tan Discontinued. We
+> dont need Oakridge"
+
+**Oakridge is out of scope — do not chase that sheet.**
+
+⚠️ **Those five were ALREADY marked `discontinued` in `oc_colors`, and Shasta
+White was already `hidden`.** Nothing needed changing. Recorded because the
+obvious move was to write an UPDATE, and the database already knew — check
+before "fixing" this class of thing.
+
+The settled rule still holds: **a discontinued colour keeps its badged spot.**
+`status` marks it, only `hidden` removes it, and only Shasta White is hidden.
+
+**13 rows are still `hex_verified = false`, but NINE of them are discontinued**
+(Aged Cedar, Amber, Bourbon, Desert Tan, Harbor Blue, Quarry Gray, Shasta White,
+Slate Grey, Storm Cloud). They cannot be sold, so an estimated hex on them costs
+nothing. **Do not spend effort there.**
+
+**The real gap is FOUR — and they are the four that matter most:**
+
+| colour | status | hex today |
+|---|---|---|
+| **Evergreen Mist** | `coty` — Colour of the Year | `#5D6557` |
+| **Black Sable** | current, designer | `#2E3033` |
+| **Gray Tweed** | new, designer | `#585A58` |
+| **Mountain Pine** | new, designer | `#4F5B4A` |
+
+Neither sheet in hand covers them. Black Sable IS in the Designer collection but
+its swatch strip carries no text label (pairing is done by geometry, never by
+eye — that rule is not bent for one colour). Evergreen Mist, Gray Tweed and
+Mountain Pine are COTY/new and appear in neither the Designer nor the standard
+Duration data sheet.
+
+**What to ask for:** the current OC Designer Colors Collection sheet or a COTY
+sheet carrying Evergreen Mist, Gray Tweed and Mountain Pine — and any sheet
+where Black Sable's swatch is labelled. That is the whole remaining request.
+
+### ✅ THE COLOUR CATALOG IS DONE (15 Aug)
+
+`oc_colors`: **25 of 34 verified. ZERO unverified sellable colours.** The nine
+still estimated are all `discontinued` and cannot be sold. It began the day at
+**0 of 31**.
+
+Sources, all Owens Corning's own artwork: the Duration data sheet (15), the
+Designer data sheet (6), the Style Board Reference Guide (3 — Gray Tweed,
+Mountain Pine, Black Sable), the 2026 COTY sheet (Evergreen Mist).
+
+**Two statistics, and which applies is decided by the IMAGE TYPE, not by taste:**
+
+| source | statistic | why |
+|---|---|---|
+| flat swatch artwork | **LIT** — median ≥ p60 luminance | keyway shadows between courses are a big share of pixels and drag the mean dark |
+| photograph of an installed roof | **MEAN** | the plane is uniformly sunlit, keyways barely resolve, so the mean already is the perceived colour |
+
+Only Evergreen Mist used the roof method, because only it had no swatch.
+
+**Still true, still the rule:** pair swatches to names by GEOMETRY, never by eye,
+and LOOK at the crop before sampling it. The Style Board crops first caught the
+board's door panel and paint chip — plausible numbers, polluted at both ends.

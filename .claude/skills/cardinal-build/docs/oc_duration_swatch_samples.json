@@ -1,0 +1,77 @@
+[
+ {
+  "name": "Estate Gray",
+  "hex": "#5E6467",
+  "px": "355x114"
+ },
+ {
+  "name": "Driftwood",
+  "hex": "#615C54",
+  "px": "355x114"
+ },
+ {
+  "name": "Williamsburg Gray",
+  "hex": "#4C4D51",
+  "px": "355x113"
+ },
+ {
+  "name": "Terra Cotta",
+  "hex": "#9C5846",
+  "px": "355x114"
+ },
+ {
+  "name": "Teak",
+  "hex": "#55463F",
+  "px": "355x114"
+ },
+ {
+  "name": "Midnight Plum",
+  "hex": "#4B4649",
+  "px": "355x114"
+ },
+ {
+  "name": "Onyx Black",
+  "hex": "#3A3E41",
+  "px": "355x114"
+ },
+ {
+  "name": "Peppercorn",
+  "hex": "#4A4A47",
+  "px": "355x114"
+ },
+ {
+  "name": "Desert Rose",
+  "hex": "#695044",
+  "px": "354x114"
+ },
+ {
+  "name": "Brownwood",
+  "hex": "#5B3D37",
+  "px": "355x114"
+ },
+ {
+  "name": "Chateau Green",
+  "hex": "#475E54",
+  "px": "355x114"
+ },
+ {
+  "name": "Slatestone Gray",
+  "hex": "#6A6D6E",
+  "px": "355x113"
+ },
+ {
+  "name": "Sierra Gray",
+  "hex": "#959897",
+  "px": "355x118"
+ },
+ {
+  "name": "Sand Castle",
+  "hex": "#8D7962",
+  "px": "355x117"
+ },
+ {
+  "name": "Colonial Slate",
+  "hex": "#6D6763",
+  "px": "355x114"
+ }
+]
