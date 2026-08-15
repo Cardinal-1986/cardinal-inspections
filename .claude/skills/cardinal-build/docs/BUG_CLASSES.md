@@ -2785,3 +2785,46 @@ since the first build, were selected by the browser on every refresh — and wer
 referenced in exactly one place: the **delete** path. Built, stored, fetched,
 and never once shown. That is the prime doctrine's usual shape, and it means
 the fix for a "missing" diagnostic was a display, not a pipeline.
+
+---
+
+## 47 — a metric computed INSIDE a region cannot tell you the region is right (Visualizer, 15 Aug)
+
+`measure()` samples the delivered pixels **inside each mask** and reports how
+far they sit from the requested swatch. On Theo's Autumn Red render it said:
+
+```
+roof   want #3B3931  got #423B34  drift 7
+siding want #7E3B32  got #7E3E35  drift 3
+```
+
+Both excellent. The render was wrong. The siding mask had taken the upper roof,
+so drift 3 meant *"the siding colour landed beautifully on the pixels the siding
+mask covered"* — and the siding mask covered the roof.
+
+### Why it reads as validation when it is not
+
+The number is real, it is computed off delivered pixels, and it moves when the
+pipeline breaks — so it looks like an end-to-end check. It is not. It closes a
+loop from **swatch → tint → pixels** and says nothing whatsoever about
+**pixels → surface**. Every "drift 2–4 of 255" figure in this repo carries that
+unstated caveat, and it was quoted for four builds before anyone said so.
+
+### The general shape
+
+Any metric evaluated over a region that the system itself chose is scored
+against its own answer. Segmentation IoU against a predicted mask, an accuracy
+figure over rows a filter selected, a contrast ratio measured against the ground
+a script *believed* was behind the element (BUG_CLASSES class 3's ancestor walk
+is the same error one level down).
+
+### The rule
+**Say what a number does not cover, in the sentence that reports it.** "Drift 3"
+is honest only as "drift 3 *within the mask*". And where the region is itself a
+guess, ship a way to LOOK at it — build 823's mask overlay found this on its
+first real use, after four builds of green numbers.
+
+### The tell to look for
+A quality metric whose scope is defined by an earlier, unvalidated step of the
+same pipeline. Ask: *if the earlier step were completely wrong, would this
+number notice?* Here the answer was no, and it scored 3 out of 255.

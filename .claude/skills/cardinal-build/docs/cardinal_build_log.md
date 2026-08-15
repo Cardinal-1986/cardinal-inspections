@@ -16731,3 +16731,77 @@ entries stay `index.html`'s, since that is the only file with a `CHANGELOG`. The
 **Not verified by eye.** The overlay is proven in Chromium against synthetic masks; it has never
 been over a real house. And this build makes a skip *visible* — it does not make the segmenter
 find more. The Gemini path is still untested against the live key.
+
+---
+
+## build 824 — 15 Aug 2026 — the legend becomes a control, and Gemini says why it refused
+
+**Files:** `visualizer/index.html` (823 → 824) · `api/design.js` · `gate_823.mjs`,
+`gate_design.mjs`, `render_found.mjs` (extended). **No SQL, no worker change.**
+
+Both halves came straight off Theo's first look at 823 on a real house.
+
+### The overlay could not answer the question it was opened to ask
+
+All five masks at once. Screened tints **compound** — cyan over a red render reads
+pale pink, amber over that reads like something else again — so overlap is exactly
+where the eye is least reliable, and reading the shot required hedging about which
+mask was wrong.
+
+**Tap a legend chip to solo that surface; tap it again for all.** Solo rather than
+five independent toggles: isolating one of five costs **one tap** this way and four
+the other, and isolating is the whole job.
+
+- **`.flay.off` is `display:none`, not an opacity fade.** A faded layer still screens
+  over the one you are trying to read — the exact ambiguity solo exists to remove.
+- ⚠ **`.fkey` must set `pointer-events:auto`.** `.found` is `pointer-events:none` so
+  the wipe slider underneath stays draggable; without the opt-back-in the chips draw,
+  highlight on hover and do nothing. BUG_CLASSES 16.
+- Chips are **44px** (the 592 precedent) and carry a visible pressed state, not only
+  `aria-pressed`.
+
+### Gemini went silent at the one moment it was read
+
+Theo's first Gemini render failed with the bare fallback `"The model returned no
+image"`. That string is used only when there is **no image part AND no text part** —
+so it was not a refusal, not a safety block, not a missing model. HTTP 200 after 8
+seconds of real work.
+
+**Which settles the standing question: the deployed `GEMINI_API_KEY` does have image
+model access.** A request reached a model and it ran.
+
+`pickImagePart()` was reading parts and **ignoring `finishReason` entirely** — the
+field that says why. Now: `IMAGE_SAFETY` (named, plus *"common on photographs of real
+property"*, the actionable half), `PROHIBITED_CONTENT`, `RECITATION`, `MAX_TOKENS`,
+`SPII`, `BLOCKLIST`; an **unknown** code degrades to the code itself rather than to
+silence; **no candidates at all** is its own message, because an empty answer and a
+declined answer are different faults; and a normal `STOP` with no image points at the
+probe. **The model's own text still outranks all of it** — a refusal in its words beats
+a sentence written here.
+
+### ⚠️ The finding that outranks both — BUG_CLASSES class 47
+
+`measure()` samples **inside the mask**. The bad render scored **drift 7 and 3**. Both
+numbers were true and both were meaningless: the siding mask had taken the upper roof,
+so drift 3 said *"the siding colour landed beautifully on the pixels the siding mask
+covered."* **Every "drift 2–4 of 255" quoted in this repo carries that caveat**, unstated
+for four builds. A metric evaluated over a region the system itself chose is scored
+against its own answer.
+
+**Gates.** `gate_823.mjs` 52/52 — **RED 12 on build 823**. `render_found.mjs` 27/27 in
+Chromium, now clicking the chips through real hit-testing so a control buried under
+`pointer-events:none` fails here rather than passing a regex — RED 12 on 823.
+`gate_design.mjs` 35/35 — **RED 6 on the pre-824 route, every one of them reporting the
+literal string Theo saw.** `gate_822.mjs` 24/24 unchanged.
+
+⚠️ **The render harness broke its own rule first: run against 823 it CRASHED**, because
+an unguarded `page.click()` on a chip that does not exist waits out its 30s timeout and
+throws — the process dies and the control reports nothing. *A control that crashes proves
+exactly as much as a control that passes.* Every click is now guarded and a missing chip
+comes out as a failed assertion. The legend also ate a sample point for the **second**
+time (the 44px chips and the new note made it far wider than my arithmetic assumed); the
+stage is now tall enough that the legend sits below every band.
+
+**Not verified by eye.** Solo is proven in Chromium against synthetic masks. The masks
+themselves are still wrong on a real house — that is the next build, and it is a worker
+change.

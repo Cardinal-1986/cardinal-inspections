@@ -5126,3 +5126,21 @@ answers nothing.
 
 **Not verified by eye:** the overlay is proven in Chromium against synthetic masks and has never
 been over a real house. And this makes a skip *visible* — it does not make the segmenter find more.
+
+### Solo a surface, and an honest Gemini failure (824)
+
+| Feature | Where | Notes |
+|---|---|---|
+| **Tap a legend chip to solo that mask** | `soloFound()` / `applySolo()` | All five at once cannot say WHICH mask is wrong — screened tints compound, and overlap is where the eye is least reliable. Tap again for all |
+| **`.flay.off` is `display:none`** | `.cmp .found .flay.off` | Not an opacity fade. A faded layer still screens over the one you are reading |
+| **The legend opts back into pointer events** | `.cmp .found .fkey` | `.found` is `pointer-events:none` so the wipe stays draggable. Without `pointer-events:auto` the chips draw, hover and do nothing — BUG_CLASSES 16 |
+| **`finishReason` on the Gemini path** | `pickImagePart()` + `noImageMessage()` | `IMAGE_SAFETY` (with *"common on photographs of real property"*), `PROHIBITED_CONTENT`, `RECITATION`, `MAX_TOKENS`, `SPII`, `BLOCKLIST`. An unknown code degrades to the code; **no candidates** is its own message; a normal `STOP` points at the probe |
+| **The model's own words win** | `noImageMessage()` | A text refusal outranks any sentence written here |
+
+**✅ The deployed `GEMINI_API_KEY` HAS image model access.** Settled 15 Aug by Theo's
+first Gemini render: HTTP 200 after 8 seconds of real work, then no image and no text.
+Not a missing model, not a bad key — the model declined to hand one over.
+
+⚠️ **`achieved` drift is measured INSIDE the mask and validates nothing about the mask.**
+A render whose siding mask had taken the upper roof scored **drift 3**. Quote drift only
+as *"within the mask"* — see `BUG_CLASSES.md` class 47.

@@ -83,7 +83,11 @@ function grabVar(name) {
 }
 
 const drawFound = grab('drawFound');
+const applySolo = grab('applySolo');
+const soloFound = grab('soloFound');
 const SURFACES = grabVar('SURFACES');
+ok('applySolo() extracted', !!applySolo);
+ok('soloFound() extracted', !!soloFound);
 const CSS = [...src.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map(m => m[1]).join('\n');
 
 ok('drawFound() extracted', !!drawFound);
@@ -93,7 +97,7 @@ ok('stylesheet extracted', CSS.length > 2000, CSS.length + ' chars');
 if (!drawFound || !SURFACES) {
   report();
 } else {
-  const W = 200, H = 150, BASE = 0x30;      // the "photograph": flat #303030
+  const W = 300, H = 400, BASE = 0x30;      // the "photograph": flat #303030
 
   const page_html = `<!doctype html><meta charset="utf-8">
 <style>
@@ -138,10 +142,12 @@ function band(y0,y1){
   x.fillStyle='#fff'; x.fillRect(0,y0,${W},y1-y0);   // white = the found region
   return c.toDataURL();
 }
-var FAKE = { 'm/roof': band(0,50), 'm/siding': band(100,150) };
+var FAKE = { 'm/roof': band(0,90), 'm/siding': band(150,250) };
 function paint(img, path){ img.src = FAKE[path] || solid(${BASE},${BASE},${BASE}); }
 
 ${drawFound}
+${applySolo}
+${soloFound}
 
 document.getElementById('vzBefore').src = solid(${BASE},${BASE},${BASE});
 window.__draw = function(job){ drawFound(job); };
@@ -149,7 +155,7 @@ window.__show = function(){ $('vzFound').classList.remove('hide'); };
 </script>`;
 
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 320, height: 260 } });
+  const page = await browser.newPage({ viewport: { width: 420, height: 520 } });
   await page.setContent(page_html);
   await page.waitForTimeout(120);
 
@@ -183,8 +189,8 @@ window.__show = function(){ $('vzFound').classList.remove('hide'); };
       const x = c.getContext('2d');
       x.drawImage(im, 0, 0);
       const at = (px, py) => {
-        const p = x.getImageData(Math.round(px * im.width / 200),
-                                 Math.round(py * im.height / 150), 1, 1).data;
+        const p = x.getImageData(Math.round(px * im.width / 300),
+                                 Math.round(py * im.height / 400), 1, 1).data;
         return [p[0], p[1], p[2]];
       };
       /* ⚠ The siding sample is at x=185, not x=100. The legend chip is
@@ -193,7 +199,7 @@ window.__show = function(){ $('vzFound').classList.remove('hide'); };
          rgba(5,6,7,.82) and reports a perfectly good cyan as near-black.
          That cost a wrong diagnosis once already, so the sample points are
          checked against the legend's real rect below rather than eyeballed. */
-      return { roof: at(100, 25), mid: at(100, 75), siding: at(185, 128) };
+      return { roof: at(150, 45), mid: at(150, 120), siding: at(150, 200) };
     }, b64);
   };
 
@@ -206,10 +212,10 @@ window.__show = function(){ $('vzFound').classList.remove('hide'); };
     if (!k) return null;
     const r = k.getBoundingClientRect();
     const hits = (px, py) => {
-      const x = w.left + px * w.width / 200, y = w.top + py * w.height / 150;
+      const x = w.left + px * w.width / 300, y = w.top + py * w.height / 400;
       return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
     };
-    return { roof: hits(100, 25), mid: hits(100, 75), siding: hits(185, 128) };
+    return { roof: hits(150, 45), mid: hits(150, 120), siding: hits(150, 200) };
   });
   ok('the sample points miss the legend chip',
      clear && !clear.roof && !clear.mid && !clear.siding,
@@ -241,6 +247,73 @@ window.__show = function(){ $('vzFound').classList.remove('hide'); };
   ok('the two surfaces are told apart',
      Math.abs(on.roof[0] - on.siding[0]) > 40,
      'roof R ' + on.roof[0] + ' vs siding R ' + on.siding[0]);
+
+  // ── 824: solo — the legend is a control, not a caption ─────────────────
+  // This is the half a static assertion cannot reach: the legend sits inside
+  // an overlay that is pointer-events:none so the wipe slider stays draggable,
+  // so the chips must opt back in. Clicking them for real is the only way to
+  // know they did.
+  {
+    const chips = await page.$$('#vzFound .fkey button');
+    ok('the legend renders one button per surface', chips.length === 2,
+       'got ' + chips.length);
+
+    /* ⚠ EVERY CLICK BELOW IS GUARDED, and that is not defensive clutter.
+       Run against a build with no legend buttons, an unguarded page.click()
+       sits for its full 30s timeout and then THROWS — the process dies, the
+       report never prints, and the negative control reports nothing at all.
+       A control that crashes proves exactly as much as a control that passes.
+       Missing chips must come out as failed ASSERTIONS. */
+    const tap = async (surface) => {
+      try {
+        await page.click('#vzFound .fkey button[data-surface="' + surface + '"]',
+                         { timeout: 1500 });
+        await page.waitForTimeout(120);
+        return true;
+      } catch (e) {
+        ok('tapping the ' + surface + ' chip works', false,
+           (e.name === 'TimeoutError' ? 'no such chip, or it is not clickable' : e.message));
+        return false;
+      }
+    };
+    const q = (fn, dflt) => page.evaluate(fn).catch(() => dflt);
+
+    ok('the chips are big enough to hit on an iPad', await q(() =>
+       [...document.querySelectorAll('#vzFound .fkey button')].length > 0 &&
+       [...document.querySelectorAll('#vzFound .fkey button')]
+         .every(b => b.getBoundingClientRect().height >= 44), false),
+       'the 592 precedent — every control >= 44px');
+
+    /* Clicking through Playwright goes through real hit-testing, so a chip
+       buried under pointer-events:none fails here rather than passing a
+       regex. */
+    const tapped = await tap('roof');
+
+    ok('solo hides the OTHER layers', tapped && await q(() =>
+       document.querySelectorAll('#vzFound .flay.off').length === 1, false));
+    ok('solo keeps its own layer', tapped && await q(() =>
+       !document.querySelector('#vzFound .flay[data-surface="roof"]')
+          .classList.contains('off'), false));
+    ok('the soloed chip reads as pressed', tapped && await q(() =>
+       document.querySelector('#vzFound .fkey button[data-surface="roof"]')
+         .getAttribute('aria-pressed') === 'true', false));
+    ok('the note says how to get back', tapped && /tap it again for all/i.test(
+       await q(() => (document.querySelector('#vzFound .fnote') || {}).textContent || '', '')));
+
+    const solo = tapped ? await shot() : null;
+    ok('the soloed surface still paints', !!solo && solo.roof[0] > 120,
+       JSON.stringify(solo && solo.roof));
+    ok('the hidden surface is GONE, not faded',
+       !!solo && solo.siding.every(v => Math.abs(v - 0x30) <= 4),
+       JSON.stringify(solo && solo.siding) + ' should be back to the bare photograph');
+
+    const untapped = tapped && await tap('roof');
+    ok('tapping the soloed chip restores all', untapped && await q(() =>
+       document.querySelectorAll('#vzFound .flay.off').length === 0, false));
+    const back = untapped ? await shot() : null;
+    ok('and the other surface paints again', !!back && back.siding[2] > 120,
+       JSON.stringify(back && back.siding));
+  }
 
   // ── a job with no masks offers nothing ─────────────────────────────────
   await page.evaluate(() => window.__draw({ id: 'j2' }));
