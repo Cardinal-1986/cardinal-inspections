@@ -3319,3 +3319,42 @@ the catalog is the thing that is wrong.
 container. The only manufacturer document that outlived the OC Colors session is
 `OC_MGM_Guidelines_for_Contractors.pdf`, because it was committed. If a source
 document matters, commit it.
+
+### The colour gap, narrowed to FOUR (15 Aug, Theo)
+
+> "Storm Cloud, Harbor Blue, Shasta White, Amber, Desert Tan Discontinued. We
+> dont need Oakridge"
+
+**Oakridge is out of scope — do not chase that sheet.**
+
+⚠️ **Those five were ALREADY marked `discontinued` in `oc_colors`, and Shasta
+White was already `hidden`.** Nothing needed changing. Recorded because the
+obvious move was to write an UPDATE, and the database already knew — check
+before "fixing" this class of thing.
+
+The settled rule still holds: **a discontinued colour keeps its badged spot.**
+`status` marks it, only `hidden` removes it, and only Shasta White is hidden.
+
+**13 rows are still `hex_verified = false`, but NINE of them are discontinued**
+(Aged Cedar, Amber, Bourbon, Desert Tan, Harbor Blue, Quarry Gray, Shasta White,
+Slate Grey, Storm Cloud). They cannot be sold, so an estimated hex on them costs
+nothing. **Do not spend effort there.**
+
+**The real gap is FOUR — and they are the four that matter most:**
+
+| colour | status | hex today |
+|---|---|---|
+| **Evergreen Mist** | `coty` — Colour of the Year | `#5D6557` |
+| **Black Sable** | current, designer | `#2E3033` |
+| **Gray Tweed** | new, designer | `#585A58` |
+| **Mountain Pine** | new, designer | `#4F5B4A` |
+
+Neither sheet in hand covers them. Black Sable IS in the Designer collection but
+its swatch strip carries no text label (pairing is done by geometry, never by
+eye — that rule is not bent for one colour). Evergreen Mist, Gray Tweed and
+Mountain Pine are COTY/new and appear in neither the Designer nor the standard
+Duration data sheet.
+
+**What to ask for:** the current OC Designer Colors Collection sheet or a COTY
+sheet carrying Evergreen Mist, Gray Tweed and Mountain Pine — and any sheet
+where Black Sable's swatch is labelled. That is the whole remaining request.
