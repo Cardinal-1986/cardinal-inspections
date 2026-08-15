@@ -505,7 +505,41 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.3 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.3"
+WORKER_BUILD = "wb-2026-08-15.4"
+
+# 823 — why a selected surface came back unchanged. These two codes are the
+# CONTRACT with the browser: visualizer/index.html carries the same two keys
+# and turns them into a sentence for a rep. Adding a third here without adding
+# it there degrades to showing the bare code, which is ugly but not wrong —
+# so a new reason is safe to ship worker-first. Removing or renaming one is
+# NOT: the browser would silently stop explaining a real skip.
+SKIP_REASON = {
+    "not_found": "the segmenter could not find it in this photograph",
+    "no_hex":    "that swatch carries no colour value",
+}
+
+
+def skip_reason(surface, sel, masks, restyle):
+    """Why this SELECTED surface cannot be changed — or None if it can.
+
+    Pulled out of run_job so it can be tested without ComfyUI, a GPU or a
+    photograph. It used to be two `continue`s buried a hundred lines into a
+    function that needs all three, which is the practical reason nobody ever
+    checked that the skip travelled anywhere.
+
+    The order is load-bearing: no mask beats no hex. A surface the segmenter
+    never found is not made changeable by having a colour, and reporting
+    "no colour value" for a surface that is not in the picture sends a rep to
+    fix the wrong thing.
+    """
+    if surface not in masks:
+        return "not_found"
+    # In restyle mode the prompt carries the colour, so a hexless swatch is
+    # workable. In recolour mode the tint IS the render and there is nothing
+    # to tint toward.
+    if not (sel or {}).get("hex") and not restyle:
+        return "no_hex"
+    return None
 
 RENDER_MODE = (os.environ.get("RENDER_MODE") or "recolour").strip().lower()
 if RENDER_MODE not in ("recolour", "recolor", "restyle"):
@@ -814,26 +848,28 @@ def run_job(comfy, job):
     if mask_paths:
         patch_job(job_id, {"masks": mask_paths})
 
-    applied, skipped, achieved = [], [], {}
+    # 823: skipped is a MAP now, surface -> reason. A rep is told to do two
+    # different things by the two reasons ("shoot the elevation again" vs
+    # "that swatch carries no colour"), so collapsing them into one list
+    # throws away the half that says what to do next.
+    applied, skipped, achieved = [], {}, {}
     for surface in SURFACE_ORDER:
         sel = selections.get(surface)
         if not sel:
             continue
-        if surface not in masks:
-            # Not a failure. The model could not see that surface in this
-            # photograph — say so plainly and carry on with the rest.
-            skipped.append(surface)
+        why = skip_reason(surface, sel, masks, RESTYLE)
+        if why:
+            # Not a failure. Say plainly which surface is coming back
+            # untouched and why, then carry on with the rest.
+            log("    %s NOT changed — %s" % (surface, SKIP_REASON.get(why, why)))
+            skipped[surface] = why
             continue
         log("  %s %s — %s" % ("restyling" if RESTYLE else "recolouring",
                                 surface, _short(sel.get("name") or "", 60)))
         hexv = sel.get("hex")
         if not hexv:
-            if not RESTYLE:
-                # Nothing to recolour WITH. Say so rather than silently doing
-                # nothing, which would look like the surface was skipped.
-                log("    no swatch hex on this selection — nothing to recolour with, skipping")
-                skipped.append(surface)
-                continue
+            # RESTYLE only — skip_reason() already refused this in recolour
+            # mode, where there is no diffusion pass to carry the colour.
             log("    no swatch hex — colour rests on the prompt alone")
         else:
             # In recolour mode there is no diffusion pass afterwards to bring
@@ -856,6 +892,27 @@ def run_job(comfy, job):
     # The stamp goes on even when nothing could be measured — a job with a
     # null achieved must mean "an old worker ran this", never "measure failed".
     achieved["_worker"] = "%s %s" % (WORKER_BUILD, RENDER_MODE)
+
+    # ── 823: a surface that was NOT changed has to travel back ──────────────
+    # Until now `skipped` existed only in the log line at the bottom of this
+    # function, on this box, in Theo's house. The row went `done`, the render
+    # uploaded, `error` stayed null — and the screen had no way to know the
+    # siding was never touched. A silent PARTIAL success is the worst of the
+    # three outcomes, because it is the one nobody thinks to check: a failure
+    # announces itself and a success is what you expected.
+    #
+    # It rides inside `achieved` under an underscore key, beside `_worker`,
+    # rather than in a new column. That convention already exists on this row
+    # and it means every deployed reader keeps working — an unknown underscore
+    # key is ignorable in a way an unknown column is not, and it saves a
+    # migration that would have to land before this worker to be safe.
+    #
+    # ⚠ `achieved` cannot answer this on its own, which is why the key is
+    # needed at all: measure() returns nothing for a surface it could not
+    # measure and the loop below `continue`s past it, so "absent from
+    # achieved" ALREADY means two different things. This says which.
+    if skipped:
+        achieved["_skipped"] = dict(skipped)
 
     # Measure BEFORE the JPEG round trip, on the pixels the render produced.
     for surface in applied:
@@ -896,7 +953,10 @@ def run_job(comfy, job):
 
     msg = "  done in %.1fs — applied %s" % (took / 1000.0, ", ".join(applied))
     if skipped:
-        msg += " · not found in photo: %s" % ", ".join(skipped)
+        # Reason included: "not found in photo" was true of one of the two
+        # cases and quietly wrong about the other.
+        msg += " · NOT CHANGED: %s" % ", ".join(
+            "%s (%s)" % (s, SKIP_REASON.get(r, r)) for s, r in skipped.items())
     log(msg)
 
 
