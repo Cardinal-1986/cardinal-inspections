@@ -93,8 +93,11 @@ function grabVar(name) {
   return null;
 }
 
+// 831: frameOf() joined the list because drawRegions() now asks it what frame
+// the boxes are in. Leaving it out is not a soft failure — the harness dies
+// with "frameOf is not defined", which is how this list stays honest.
 const NEED = ['regionsOf', 'pickFor', 'drawRegionSurfaces', 'surfaceOf', 'tintOf',
-              'toggleRegion', 'drawRegions', 'frameW', 'frameH'];
+              'toggleRegion', 'drawRegions', 'frameW', 'frameH', 'frameOf'];
 const fns = {};
 NEED.forEach(n => { fns[n] = grab(n); ok(n + '() found', !!fns[n]); });
 const SURFACES = grabVar('SURFACES');

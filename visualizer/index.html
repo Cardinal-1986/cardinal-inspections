@@ -2494,6 +2494,14 @@ function addTapRegion(job){
   var m = ((job.masks || {}).r01) || null;
   if(!m || !m.path){ $('vzRegSum').textContent = 'Nothing at that spot.'; return; }
   var sp  = regionJob.source_path;
+  /* 831: carry the worker's segmentation frame onto the synthetic job the tap
+     path builds. `tapSurfaces()` invents `{source_path, masks:{}, _tap:true}`
+     before any worker has answered, so the frame can only arrive with the
+     first result — and every circle drawn after that depends on it. Taken from
+     the first answer and left alone: one photograph is fitted the same way
+     every time, so a later tap cannot legitimately disagree. */
+  if(job.masks && job.masks._frame && !regionJob.masks._frame)
+    regionJob.masks._frame = job.masks._frame;
   var lut = labelledMasks[sp] || (labelledMasks[sp] = {});
   var n = 1;
   while(regionJob.masks['r' + (n < 10 ? '0' : '') + n]) n++;
@@ -2614,8 +2622,9 @@ function drawRegions(){
     var b = document.createElement('button');
     b.type = 'button';
     b.dataset.region = id;
-    b.style.left = (100 * cx / (regionJob._w || frameW())) + '%';
-    b.style.top  = (100 * cy / (regionJob._h || frameH())) + '%';
+    var fr = frameOf(regionJob);
+    b.style.left = (100 * cx / fr[0]) + '%';
+    b.style.top  = (100 * cy / fr[1]) + '%';
     b.style.setProperty('--dot', tintOf(owner || regionSurf));
     b.setAttribute('aria-pressed', owner ? 'true' : 'false');
     b.setAttribute('aria-label', owner
@@ -2649,6 +2658,29 @@ function drawRegions(){
    image once it has loaded, and falls back to the natural size. */
 function frameW(){ var i = $('vzRegImg'); return i.naturalWidth || 1280; }
 function frameH(){ var i = $('vzRegImg'); return i.naturalHeight || 720; }
+
+/* 831: the frame a job's BOXES are measured in, which is the worker's
+   segmentation size and NOT the photograph the browser is showing. The worker
+   fits every image into FLUX's band (~1280px) before masking, so on a phone
+   shot the two differ by 3x or more.
+
+   Dividing by frameW() — the displayed original's natural width — was the only
+   path that ever ran, because `_w` was read here and written nowhere, by
+   anything, ever. Measured at 4032x3024: three circles that belonged at 53%,
+   28% landed at 17%, 9% — stacked in a 25px cluster in the top-left corner,
+   over the trees. On a SMALL source the same arithmetic sends them off-screen
+   the other way.
+
+   The highlights were never affected, which is what made this hard to see: a
+   mask PNG is full-frame and aligns itself no matter what the numbers say.
+   Only the box arithmetic needed the scale. "Highlights but no circles" is the
+   exact signature of this bug. */
+function frameOf(job){
+  var f = job && job.masks && job.masks._frame;
+  if(f && f.w && f.h) return [f.w, f.h];
+  if(job && job._w && job._h) return [job._w, job._h];   /* older rows */
+  return [frameW(), frameH()];
+}
 
 /* The JOB behind the open render. `renders` carries the picture; `masks` and
    `achieved` live on the job, so the box has to walk back to it. A render can

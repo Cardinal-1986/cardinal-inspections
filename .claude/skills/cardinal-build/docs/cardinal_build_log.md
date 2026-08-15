@@ -17188,3 +17188,68 @@ Now takes `ROOT` like `test_skip_reason.py` and `test_stale_worker.py` do, and
 all four reads come from it. Verified in both directions: 47/47 on the working
 tree, and **1 of 47 red on `origin/main`, failing on precisely the gutter
 phrase**. Worth checking whether the other spark tests have the same hole.
+
+---
+
+## Build 831 — "there is no circles just highlights"
+
+Theo's sentence is the whole diagnosis. Both are drawn in the same loop of
+`drawRegions()`, so the data was never the problem — the difference is how each
+one is POSITIONED:
+
+- the **highlight** is a full-frame mask PNG. It aligns itself. Always right.
+- the **circle** is arithmetic on the region's `box`, and needs to know what
+  frame those numbers are in.
+
+The worker fits every photograph into FLUX's band (~1280px) **before** masking,
+so its boxes are in that frame. The browser divided by `frameW()` — the
+DISPLAYED photograph's natural width, which is the untouched original.
+
+**`regionJob._w` was read at that line and written by nothing, anywhere, ever.**
+The fallback was the only path that had ever run.
+
+Measured in Chromium against Theo's own eight masks:
+
+| source | circle landed | belonged at |
+|---|---|---|
+| phone original 4032x3024 | 16.7%, 9.0% | 52.7%, 28.3% |
+| small source 400x300 | **168.6%, 196.4%** — off-screen | 52.7%, 28.3% |
+| segmentation-sized 1280x960 | correct | correct |
+
+Three circles stacked in a 25px cluster in the top-left corner, over the trees.
+Not missing — invisible, which looks the same from the iPad.
+
+His own tap is the proof: he tapped x=0.667, and box `[369…980]` has centre
+674. At 1280 that is 0.527 — the same object. At 4032 it is 0.167, which is not
+where his finger was.
+
+**This was never tap-specific.** `Find surfaces` draws its circles through the
+same line and has been wrong since it shipped — worse on a small source, where
+they leave the frame entirely.
+
+**Fix.** The worker already knows its fitted size (`fit_for_flux` returns it) and
+now writes `masks._frame = {w,h}` in both the regions and the points pass.
+`frameOf(job)` reads it, falling back to `_w`/`_h` then `frameW()` for older
+rows. `regionsOf()` keeps only entries carrying `path`, so `_frame` is invisible
+to every existing consumer **by construction** rather than by care.
+
+`addTapRegion()` copies `_frame` onto the synthetic job the tap path invents —
+`tapSurfaces()` builds `{source_path, masks:{}, _tap:true}` before any worker
+has answered, so the frame can only arrive with the first result.
+
+`WORKER_BUILD` → `wb-2026-08-15.12`.
+
+**Gates.** New **`render_dots.js`, 24 assertions across three source sizes** —
+that every region has a circle, that the highlights still render, and that each
+circle sits at its region's centre AND inside its own bounding box. Red on
+`origin/main` with the numbers above.
+
+⚠️ **1280x960 is in the source list on purpose: it PASSES on the broken code.**
+This is a ratio bug, so any test whose fixture happens to match the segmentation
+frame proves nothing. A single-size version of this gate would have been another
+inert control, three days after finding the last one.
+
+⚠️ **`render_regions.mjs` died with `frameOf is not defined`** when it ran — it
+extracts the shipped function text and executes it, so a new dependency has to
+join its `NEED` list. That is a hard failure rather than a silent skip, which is
+the behaviour worth keeping. 31/31 after.
