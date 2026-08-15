@@ -3358,3 +3358,26 @@ Duration data sheet.
 **What to ask for:** the current OC Designer Colors Collection sheet or a COTY
 sheet carrying Evergreen Mist, Gray Tweed and Mountain Pine — and any sheet
 where Black Sable's swatch is labelled. That is the whole remaining request.
+
+### ✅ THE COLOUR CATALOG IS DONE (15 Aug)
+
+`oc_colors`: **25 of 34 verified. ZERO unverified sellable colours.** The nine
+still estimated are all `discontinued` and cannot be sold. It began the day at
+**0 of 31**.
+
+Sources, all Owens Corning's own artwork: the Duration data sheet (15), the
+Designer data sheet (6), the Style Board Reference Guide (3 — Gray Tweed,
+Mountain Pine, Black Sable), the 2026 COTY sheet (Evergreen Mist).
+
+**Two statistics, and which applies is decided by the IMAGE TYPE, not by taste:**
+
+| source | statistic | why |
+|---|---|---|
+| flat swatch artwork | **LIT** — median ≥ p60 luminance | keyway shadows between courses are a big share of pixels and drag the mean dark |
+| photograph of an installed roof | **MEAN** | the plane is uniformly sunlit, keyways barely resolve, so the mean already is the perceived colour |
+
+Only Evergreen Mist used the roof method, because only it had no swatch.
+
+**Still true, still the rule:** pair swatches to names by GEOMETRY, never by eye,
+and LOOK at the crop before sampling it. The Style Board crops first caught the
+board's door panel and paint chip — plausible numbers, polluted at both ends.
