@@ -41,7 +41,15 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE))
+
+# 832: this file ignored argv, so `test_points.py /some/old/tree` silently
+# tested the WORKING TREE and reported a confident pass — the same inert
+# control found in test_segment.py at 830. Fixed here for the same reason: a
+# control that cannot fail is worse than no control, because it is believed.
+#     python3 test_points.py /tmp/ctl/spark
+CONTROL = len(sys.argv) > 1
+ROOT = Path(sys.argv[1]).resolve() if CONTROL else HERE
+sys.path.insert(0, str(ROOT))
 
 if not (HERE / ".env").exists():
     os.environ.setdefault("SUPABASE_URL", "https://example.invalid")
@@ -84,12 +92,20 @@ def maskpng(size, box=None):
 
 class FakeComfy(object):
     """Records the graph it was handed; answers with one mask."""
-    def __init__(self, mask_bytes, mask_size):
+    def __init__(self, mask_bytes, mask_size, negatives=True):
         self.graph = None
         self.uploaded = None
         self.filled_for = []
         self._mask = mask_bytes
         self._size = mask_size
+        # 832: whether this pretend node declares coordinates_negative. The
+        # real worker asks before sending, so the fake has to be able to say
+        # no — otherwise the "degrades on an older node" path is never run.
+        self._negatives = negatives
+
+    def node_schema(self, cls):
+        opt = {"coordinates_negative": ["STRING", {}]} if self._negatives else {}
+        return {"input": {"required": {}, "optional": opt}}
 
     def fill_defaults(self, graph, cls):
         self.filled_for.append(cls)
@@ -110,7 +126,8 @@ class FakeComfy(object):
         return self._mask
 
 
-def harness(points, mask_box="auto", photo_size=(1600, 900)):
+def harness(points, mask_box="auto", photo_size=(1600, 900),
+            selections=None, negatives=True):
     """Run the shipped run_points_job against fakes. Returns (patch, comfy)."""
     seen = {}
     stored = {}
@@ -120,7 +137,7 @@ def harness(points, mask_box="auto", photo_size=(1600, 900)):
         mask_box = (10, 10, now[0] // 2, now[1] // 2)
     mb = maskpng(now, mask_box)
 
-    comfy = FakeComfy(mb, now)
+    comfy = FakeComfy(mb, now, negatives=negatives)
 
     orig = (W.storage_download, W.storage_upload, W.patch_job)
     W.storage_download = lambda p: photo(photo_size)
@@ -128,7 +145,8 @@ def harness(points, mask_box="auto", photo_size=(1600, 900)):
     W.patch_job = lambda jid, patch: seen.update(patch)
     try:
         job = {"id": "job-abc", "source_path": "visualizer/src/x.jpg",
-               "selections": {"_points": points}}
+               "selections": (selections if selections is not None
+                              else {"_points": points})}
         err = None
         try:
             # A real start time, so the duration this logs is a duration.
@@ -145,7 +163,7 @@ def coords_of(comfy):
 
 
 # ── 1. the graph on disk ────────────────────────────────────────────────────
-g = json.loads((HERE / "points_api.json").read_text())
+g = json.loads((ROOT / "points_api.json").read_text())
 ok("graph: node 3 is the SAM2 loader",
    g["3"]["class_type"] == "DownloadAndLoadSAM2Model")
 ok("graph: segmentor is single_image, NOT automaskgenerator",
@@ -265,10 +283,20 @@ ok("…and says something a rep can act on",
 ok("…and stores no black PNG", not stored, repr(list(stored)))
 
 # ── 8. dispatch ─────────────────────────────────────────────────────────────
-src = (HERE / "visualizer_worker.py").read_text()
+src = (ROOT / "visualizer_worker.py").read_text()
+# 832: asserted on the ROUTING CONTRACT, not the punctuation. The dispatch
+# became `if selections.get("_points") or selections.get("_box"):` when the
+# dragged box joined this pass, and a test pinned to the exact `...("_points"):`
+# spelling called that correct change a failure. Both keys must reach
+# run_points_job, and both must be consulted before the stale-worker guard.
+_disp = src[src.index('if selections.get("_regions")'):src.index("unknown_modes = sorted(")]
 ok("run_job routes _points to run_points_job",
-   'if selections.get("_points"):' in src and
-   src.index('if selections.get("_points"):') < src.index("def take_lock"))
+   'selections.get("_points")' in _disp and "run_points_job(" in _disp)
+ok("run_job routes a dragged _box to the same pass",
+   'selections.get("_box")' in _disp,
+   "a box would fall through to the unknown-mode guard and be refused")
+ok("the dispatch sits before the lock helper",
+   src.index("unknown_modes = sorted(") < src.index("def take_lock"))
 ok("run_points_job is defined exactly once",
    src.count("def run_points_job(") == 1, str(src.count("def run_points_job(")))
 ok("the regions route is untouched",
@@ -276,6 +304,108 @@ ok("the regions route is untouched",
 ok("force_automask is not called in the points path",
    "force_automask" not in src[src.index("def run_points_job("):
                                src.index("def run_job(")])
+
+# ── 832: the prompt geometry ────────────────────────────────────────────────
+# Theo: "if i tap the bottom right siding it masks the whole house, otherwise i
+# have to tap all the other pieces of siding individually." One point on a
+# large uniform wall is ambiguous and SAM 2 takes the largest reading. Two
+# levers ship together: corner negatives on every prompt, and a dragged box
+# expressed as positives inside and negatives around.
+#
+# Asserted on GEOMETRY, not on wording — a test that only greps for the word
+# "negative" passes against a stub that computes the wrong points.
+_W, _H = 1280, 960
+
+# Guarded so a NEGATIVE CONTROL reports rather than crashes. Against a tree
+# without these helpers the block below would raise AttributeError, which is
+# technically red but tells you nothing about which contract broke.
+_have = hasattr(W, "_corner_negatives") and hasattr(W, "_box_prompt")
+ok("the prompt-geometry helpers exist", _have,
+   "no _corner_negatives/_box_prompt — every geometry check below is skipped")
+
+if not _have:                      # report the rest as failures, do not crash
+    for _n in ["a tap carries four corner negatives",
+               "every corner negative is inside the frame",
+               "the corner negatives are actually in the corners",
+               "a box samples the surface more than once",
+               "every box positive is INSIDE the box",
+               "a box is bounded above and below",
+               "a box is bounded left and right",
+               "a box also carries the corner negatives",
+               "an edge-flush box keeps every point inside the frame",
+               "an edge-flush box drops the negatives it cannot place"]:
+        ok(_n, False, "helpers absent")
+    W._corner_negatives = lambda w, h: []
+    W._box_prompt = lambda b, w, h: ([], [])
+
+_neg = W._corner_negatives(_W, _H) if _have else []
+if _have:
+  ok("a tap carries four corner negatives", len(_neg) == 4, str(len(_neg)))
+  ok("every corner negative is inside the frame",
+     all(0 < p["x"] < _W and 0 < p["y"] < _H for p in _neg), str(_neg))
+  ok("the corner negatives are actually in the corners",
+     len({(p["x"] < _W / 2, p["y"] < _H / 2) for p in _neg}) == 4,
+     "four distinct quadrants — " + str(_neg))
+
+  _box = [0.55, 0.30, 0.78, 0.52]
+  _pos, _bneg = W._box_prompt(_box, _W, _H)
+  ok("a box samples the surface more than once", len(_pos) >= 5, str(len(_pos)))
+  ok("every box positive is INSIDE the box",
+     all(_box[0] * _W <= p["x"] <= _box[2] * _W and
+         _box[1] * _H <= p["y"] <= _box[3] * _H for p in _pos), str(_pos))
+  # The negatives are what actually bound the answer. Without one on each side
+  # the box does not constrain the extent in that direction.
+  _side = _bneg[:4]
+  ok("a box is bounded above and below",
+     any(p["y"] < _box[1] * _H for p in _side) and
+     any(p["y"] > _box[3] * _H for p in _side), str(_side))
+  ok("a box is bounded left and right",
+     any(p["x"] < _box[0] * _W for p in _side) and
+     any(p["x"] > _box[2] * _W for p in _side), str(_side))
+  ok("a box also carries the corner negatives", len(_bneg) == 8, str(len(_bneg)))
+
+  # A box drawn flush to the edge has no outside on two sides. Inventing a point
+  # there would put it off-frame, and SAM 2 answers an off-frame prompt with
+  # nothing — which reads to a rep as "the drag did nothing".
+  _p2, _n2 = W._box_prompt([0.0, 0.0, 0.2, 0.2], _W, _H)
+  ok("an edge-flush box keeps every point inside the frame",
+     all(0 < q["x"] < _W and 0 < q["y"] < _H for q in _p2 + _n2), str(_n2))
+  ok("an edge-flush box drops the negatives it cannot place",
+     len(_n2) < 8, str(len(_n2)))
+
+# The negatives must only be SENT when the node declares the input, and the
+# graph must still be submitted without them when it does not.
+_pt = src[src.index("def run_points_job("):src.index("def run_job(")]
+ok("the negatives are gated on the node's own schema",
+   'node_schema("Sam2Segmentation")' in _pt and '"coordinates_negative" in _known' in _pt)
+# Behaviour, not wording. The first version of this grepped the source for the
+# log sentence and failed against correct code, because that string is split
+# across two lines -- CLAUDE.md's "assertions matching their own prose" trap,
+# caught by the test itself.
+_s2, _c2, _st2, _e2, _n2f = harness([{"x": 0.5, "y": 0.5}], negatives=False)
+_in2 = (_c2.graph or {}).get("10", {}).get("inputs", {})
+ok("an older node still gets a complete job", _e2 is None, str(_e2))
+ok("an older node gets the positives", bool(_in2.get("coordinates_positive")))
+ok("an older node is sent NO coordinates_negative",
+   "coordinates_negative" not in _in2, str(sorted(_in2.keys())))
+
+_s3, _c3, _st3, _e3, _n3f = harness([{"x": 0.5, "y": 0.5}])
+_in3 = (_c3.graph or {}).get("10", {}).get("inputs", {})
+ok("a capable node is sent four corner negatives",
+   len(json.loads(_in3.get("coordinates_negative") or "[]")) == 4,
+   str(_in3.get("coordinates_negative")))
+
+_s4, _c4, _st4, _e4, _n4f = harness(None, selections={"_box": [0.55, 0.30, 0.78, 0.52]})
+_in4 = (_c4.graph or {}).get("10", {}).get("inputs", {})
+ok("a dragged box completes end to end", _e4 is None, str(_e4))
+ok("a dragged box sends several positives",
+   len(json.loads(_in4.get("coordinates_positive") or "[]")) >= 5,
+   str(_in4.get("coordinates_positive")))
+ok("a dragged box sends more negatives than a tap does",
+   len(json.loads(_in4.get("coordinates_negative") or "[]")) == 8,
+   str(_in4.get("coordinates_negative")))
+ok("a box job is accepted alongside a tap job",
+   'selections.get("_box")' in _pt)
 
 print("test_points — %d/%d pass" % (ran - len(fails), ran))
 for f in fails:

@@ -102,13 +102,38 @@ ok("the guard sits before the ordinary render path",
 # mode cannot be added on one side only.
 page = ROOT.parent / "visualizer" / "index.html"
 if page.exists():
-    sent = set(re.findall(r"selections:\s*\{\s*(_[a-z]+)\s*:", page.read_text()))
-    sent |= set(re.findall(r"\{\s*(_[a-z]+)\s*:\s*true\s*\}", page.read_text()))
+    txt = page.read_text()
+    # Every place the browser builds a `selections` value. Kept broad on
+    # purpose: this list is the input to the "is it handled?" check below, so
+    # a pattern that quietly stops matching quietly stops testing.
+    sent = set(re.findall(r"selections:\s*\{\s*(_[a-z]+)\s*:", txt))
+    sent |= set(re.findall(r"\{\s*(_[a-z]+)\s*:\s*true\s*\}", txt))
+    sent |= set(re.findall(r"queueTapJob\(\s*\{\s*(_[a-z]+)\s*:", txt))
+
+    # ⚠ THE DETECTOR MUST NOT BE ABLE TO SHRINK SILENTLY.
+    # At 832 `selections: { _points: … }` became `queueTapJob({ _points: … })`
+    # and this detector stopped seeing _points. The suite still passed — with
+    # ONE FEWER CHECK, because the checks are generated from what it finds.
+    # Coverage fell and nothing went red. A floor of the modes known to exist
+    # turns that into a failure instead of a smaller number nobody reads.
+    FLOOR = {"_points", "_regions", "_box"}
+    missing = FLOOR - sent
+    ok("the detector still sees every known mode key", not missing,
+       "did not find " + ", ".join(sorted(missing)) +
+       " — the browser's shape changed and this regex did not")
     ok("the browser's mode keys were found at all", bool(sent), sorted(sent))
+    # The contract is "consulted before the guard", NOT "has its own `if`".
+    # `_box` shares the points branch as `... or selections.get("_box")`, which
+    # is correct dispatch and which a literal `if selections.get("_box")` test
+    # calls a failure. Assert the region, not the punctuation.
+    dispatch = SRC[i_regions:i_guard] if 0 < i_regions < i_guard else ""
+    ok("the dispatch region was located", bool(dispatch),
+       "regions %d, guard %d" % (i_regions, i_guard))
     for k in sorted(sent):
-        ok("mode %s is handled by a branch" % k,
-           ('if selections.get("%s")' % k) in SRC,
-           "no branch — it would reach the guard and fail as a stale worker")
+        ok("mode %s is dispatched before the guard" % k,
+           ('selections.get("%s")' % k) in dispatch,
+           "not consulted in the dispatch — it would reach the guard and be "
+           "refused as a stale worker by the very worker that handles it")
 else:                                                     # pragma: no cover
     ok("visualizer/index.html was found", False, str(page))
 

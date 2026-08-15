@@ -231,7 +231,13 @@ h2.sec:first-child{margin-top:6px}
    sit ON the photograph, not cover it. See drawFound(). */
 #vzReg .rtint div{position:absolute;inset:0;mix-blend-mode:screen;opacity:.5}
 #vzReg .rtint img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply}
-#vzReg .rdots{position:absolute;inset:0}
+#vzReg .rdots{position:absolute;inset:0;touch-action:none}
+/* 832: the rubber band. `touch-action:none` above is what makes a drag on the
+   iPad a drag rather than a page scroll — without it the browser claims the
+   gesture and pointermove never fires. */
+#vzReg .rband{position:absolute;display:none;pointer-events:none;
+  border:2px dashed #fff;border-radius:6px;background:rgba(255,255,255,.14);
+  box-shadow:0 0 0 1px rgba(0,0,0,.55)}
 #vzReg .rdots.tap{cursor:crosshair}
 /* 44px hit area, 18px of visible dot. A circle big enough to tap is bigger
    than a circle that looks right on a photograph, so the target is padding. */
@@ -804,6 +810,12 @@ body.vz-prep main{max-width:none;padding:0}
       <img id="vzRegImg" alt="The house as photographed">
       <div class="rtint" id="vzRegTint" aria-hidden="true"></div>
       <div class="rdots" id="vzRegDots"></div>
+      <!-- 832: the band is a SIBLING of the dots layer, not a child of it.
+           drawRegions() clears that layer with `dots.innerHTML = ''` on every
+           redraw — and queueTapJob() redraws immediately — so a band living
+           inside it was deleted before it could ever be seen. Caught by
+           render_drag.js reporting `display missing`, not by reading the code. -->
+      <div class="rband" id="vzRegBand" aria-hidden="true"></div>
     </div>
   </div>
   <div class="feet">
@@ -2437,31 +2449,105 @@ function tapSurfaces(){
    photograph itself, so its box IS the painted image — no letterbox maths.
    Coordinates go up NORMALISED: the browser cannot know the size the worker
    fitted the photograph to, and a ratio survives every resize between us. */
-function tapAt(ev){
-  if(!regionJob || !regionJob._tap || tapBusy) return;
-  var r = $('vzRegDots').getBoundingClientRect();
-  if(!r.width || !r.height) return;
-  var nx = (ev.clientX - r.left) / r.width;
-  var ny = (ev.clientY - r.top)  / r.height;
-  if(nx < 0 || nx > 1 || ny < 0 || ny > 1) return;
+/* 832: one queue for both gestures. A tap sends `_points`, a drag sends
+   `_box` — the worker chooses its prompt from whichever arrived, and every
+   other part of the round trip (polling, addTapRegion, the picker) is
+   identical because the ANSWER shape is identical. */
+function queueTapJob(selections, what){
   tapBusy = true;
   drawRegions();
   sb.from('design_jobs').insert({
     project_id: $('vzProject').value,
     source_path: regionJob.source_path,
-    selections: { _points: [{ x: nx, y: ny }] },
+    selections: selections,
     engine: 'spark',        /* only the Spark has SAM 2; Gemini has no masks */
     created_by: me
   }).select().maybeSingle().then(function(res){
     if(res.error || !res.data){
       tapBusy = false;
-      $('vzRegSum').textContent = 'Could not queue that tap — ' +
+      $('vzRegSum').textContent = 'Could not queue that ' + what + ' — ' +
         ((res.error || {}).message || '');
       return;
     }
     waitForPoint(res.data.id);
   });
 }
+
+function normAt(ev){
+  var r = $('vzRegDots').getBoundingClientRect();
+  if(!r.width || !r.height) return null;
+  var nx = (ev.clientX - r.left) / r.width;
+  var ny = (ev.clientY - r.top)  / r.height;
+  if(nx < 0 || nx > 1 || ny < 0 || ny > 1) return null;
+  return { x: nx, y: ny, w: r.width, h: r.height };
+}
+
+function tapAt(ev){
+  /* A drag ends with a click too. That click is not a tap and must not queue
+     a second job on top of the box the drag already sent. */
+  if(dragMoved){ dragMoved = false; return; }
+  if(!regionJob || !regionJob._tap || tapBusy) return;
+  var n = normAt(ev);
+  if(!n) return;
+  queueTapJob({ _points: [{ x: n.x, y: n.y }] }, 'tap');
+}
+
+/* ── 832: drag a box ──────────────────────────────────────────────────────
+   Theo: "if i tap the bottom right siding it masks the whole house, otherwise
+   i have to tap all the other pieces of siding individually."
+
+   Both halves are the same problem. One point on a large uniform wall is
+   genuinely ambiguous — "this clapboard", "this wall", "this building" all
+   answer it — and with nothing bounding the question SAM 2 takes the largest
+   reading. Dragging a box states the extent, so "the whole house" stops being
+   a legal answer to a question about one wall.
+
+   The gesture is additive, not a mode: a press-and-release is still a tap and
+   still runs the proven path. Only a drag past DRAG_MIN becomes a box, so
+   nothing a rep already knows how to do changes. */
+var DRAG_MIN = 12;          /* CSS px before a press becomes a drag */
+var dragFrom = null, dragMoved = false;
+
+function dragStart(ev){
+  if(!regionJob || !regionJob._tap || tapBusy) return;
+  var n = normAt(ev);
+  if(!n) return;
+  dragFrom = n; dragMoved = false;
+  try{ $('vzRegDots').setPointerCapture(ev.pointerId); }catch(_){}
+}
+
+function dragMove(ev){
+  if(!dragFrom) return;
+  var n = normAt(ev);
+  if(!n) return;
+  if(!dragMoved &&
+     (Math.abs(n.x - dragFrom.x) * n.w > DRAG_MIN ||
+      Math.abs(n.y - dragFrom.y) * n.h > DRAG_MIN)) dragMoved = true;
+  if(dragMoved) drawBand(dragFrom, n);
+}
+
+function dragEnd(ev){
+  if(!dragFrom) return;
+  var a = dragFrom, b = normAt(ev) || dragFrom;
+  dragFrom = null;
+  clearBand();
+  if(!dragMoved) return;      /* a plain tap — tapAt takes it on the click */
+  if(tapBusy) return;
+  queueTapJob({ _box: [Math.min(a.x, b.x), Math.min(a.y, b.y),
+                       Math.max(a.x, b.x), Math.max(a.y, b.y)] }, 'box');
+}
+
+function drawBand(a, b){
+  var el = $('vzRegBand');
+  if(!el) return;
+  el.style.display = 'block';
+  el.style.left   = (100 * Math.min(a.x, b.x)) + '%';
+  el.style.top    = (100 * Math.min(a.y, b.y)) + '%';
+  el.style.width  = (100 * Math.abs(b.x - a.x)) + '%';
+  el.style.height = (100 * Math.abs(b.y - a.y)) + '%';
+}
+
+function clearBand(){ var el = $('vzRegBand'); if(el) el.style.display = 'none'; }
 
 /* Faster cadence than waitForRegions: one point through a loaded predictor is
    a second or two, and a rep is holding a finger on the glass. */
@@ -2924,6 +3010,15 @@ $('vzFind').addEventListener('click', findSurfaces);
 $('vzTap').addEventListener('click', tapSurfaces);
 $('vzRegDots').addEventListener('click', tapAt);
 $('vzRegImg').onload = fitRegionWrap;
+/* 832: pointer events, not mouse — one set covers the iPad and the desktop.
+   `click` still drives the tap, so the gesture that already worked keeps the
+   code path that was already tested. */
+$('vzRegDots').addEventListener('pointerdown', dragStart);
+$('vzRegDots').addEventListener('pointermove', dragMove);
+$('vzRegDots').addEventListener('pointerup', dragEnd);
+$('vzRegDots').addEventListener('pointercancel', function(){
+  dragFrom = null; dragMoved = false; clearBand();
+});
 $('vzRegX').addEventListener('click', closeRegions);
 $('vzRegClear').addEventListener('click', function(){
   if(!regionJob) return;
