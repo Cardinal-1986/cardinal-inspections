@@ -71,10 +71,10 @@ const JOBS = [
     created_at:'2026-08-14T22:20:00Z', duration_ms:null, claimed_at:null },
 ];
 const RENDERS = [
-  { id:'r1', job_id:'j-done', title:'Onyx Black', source_path:'projects/p1/front.jpg',
+  { id:'r1', job_id:'j-done', project_id:'p1', title:'Onyx Black', source_path:'projects/p1/front.jpg',
     render_path:'visualizer/j-done/render.jpg', preview_path:'visualizer/j-done/preview.jpg',
     selections:JOBS[0].selections, approved:false, created_at:'2026-08-14T22:07:40Z' },
-  { id:'r2', job_id:'j-done2', title:'Onyx Black + Harbor Blue', source_path:'projects/p1/front.jpg',
+  { id:'r2', job_id:'j-done2', project_id:'p1', title:'Onyx Black + Harbor Blue', source_path:'projects/p1/front.jpg',
     render_path:'visualizer/j-done2/render.jpg', preview_path:'visualizer/j-done2/preview.jpg',
     selections:JOBS[1].selections, approved:false, created_at:'2026-08-14T22:15:40Z' },
 ];
@@ -145,12 +145,24 @@ window.supabase = { createClient: function(){ return {
   auth:{ getSession:function(){ return Promise.resolve({data:{session:{access_token:'stub-jwt', user:{email:'theo@cardinalrenovations.net'}}}}); },
          signOut:function(){ return Promise.resolve({}); } },
   from:function(t){
+    /* p2 is Theo's screenshot: a real job with NO photographs on it. Without a
+       second project the empty state cannot be reached at all, and the message
+       it shows went untested for eight builds. */
     var rows = { oc_colors:${JSON.stringify(OC)}, materials:${JSON.stringify(MAT)},
-                 projects:[{id:'p1',name:'James Tiege',stage:'Prospect'}],
-                 project_photos:[{id:'ph1',storage_path:'projects/p1/front.jpg',caption:'Front elevation',created_at:'2026-08-02'}],
+                 projects:[{id:'p1',name:'James Tiege',stage:'Prospect'},
+                           {id:'p2',name:'Carl Bolivar',stage:'Closed'}],
+                 project_photos:[{id:'ph1',project_id:'p1',storage_path:'projects/p1/front.jpg',caption:'Front elevation',created_at:'2026-08-02'}],
                  design_jobs: window.__jobsTable, design_renders:${JSON.stringify(RENDERS)} }[t] || [];
     var b = {};
-    ['select','order','limit','eq','not','is'].forEach(function(m){ b[m] = function(){ return b; }; });
+    ['select','order','limit','not','is'].forEach(function(m){ b[m] = function(){ return b; }; });
+    /* .eq() FILTERS, the way PostgREST does. It used to be a no-op, so every
+       project saw every project's photographs and jobs — which made "a job
+       with nothing on it" impossible to express in the harness. */
+    b.eq = function(col, val){
+      if(rows.length && Object.prototype.hasOwnProperty.call(rows[0], col))
+        rows = rows.filter(function(r){ return r[col] === val; });
+      return b;
+    };
     b.then = function(ok){ return Promise.resolve({data:rows,error:null}).then(ok); };
     b.maybeSingle = function(){ return Promise.resolve({data:rows[0]||null,error:null}); };
     return {
@@ -582,8 +594,7 @@ if (!(await has('#vzSrcCC')) || !(await has('#vzCCBox')) || !(await has('#vzCCGr
     disabled: document.getElementById('vzQueue').disabled,
     label: document.getElementById('vzQueue').textContent,
     sum: document.getElementById('vzSum').textContent,
-    tray: document.getElementById('vzTray').textContent,
-    shot: !!window.__dbgShot
+    tray: document.getElementById('vzTray').textContent
   })`);
   chk('after a CompanyCam import the Render button is ENABLED',
       ready.disabled === false, 'label=' + ready.label + ' | ' + ready.sum);
@@ -593,6 +604,72 @@ if (!(await has('#vzSrcCC')) || !(await has('#vzCCBox')) || !(await has('#vzCCGr
   const fired = await page.evaluate(`window.__calls.filter(c=>c.op==='insert'&&c.table==='design_jobs').length`);
   chk('clicking Render on an imported photograph queues a job',
       fired > before, before + ' -> ' + fired + ' | ' + await page.evaluate(`document.getElementById('vzSum').textContent`));
+
+  /* ── 818: the stage has to agree with the button ───────────────────────
+     Theo: "Now the render button does not function." It functioned perfectly.
+     The SCREEN was lying — changing the job nulled chosenShot while the
+     previous job's photograph stayed painted on the stage, so a correctly
+     disabled button sat underneath a picture saying it should work. A
+     disabled button beside a photograph reads as a broken button.
+
+     A CompanyCam import is the one exception: it belongs to no job, and the
+     order of work is import it, THEN file it against a job. */
+  const ccKept = await page.evaluate(`(()=>{
+    const s=document.getElementById('vzProject'); s.value='p2'; s.dispatchEvent(new Event('change'));
+    return new Promise(r=>setTimeout(()=>r({
+      picked: s.value,
+      src: (document.querySelector('.canvas .stage img')||{}).src || '',
+      disabled: document.getElementById('vzQueue').disabled,
+      msg: document.getElementById('vzSum').textContent
+    }),500));
+  })()`);
+  chk('818: the harness can actually reach a second job (not a vacuous pass)',
+      ccKept.picked === 'p2', 'select landed on "' + ccKept.picked + '"');
+  chk('818: a CompanyCam import SURVIVES changing the job — import first, file it second',
+      /visualizer\/src\//.test(ccKept.src), ccKept.src.slice(-46) || '(the stage went empty)');
+  /* Asserted on the BUTTON, not only on the painted pixels. The stage image
+     survives a job change in the previous build too — by accident, because
+     nothing cleared it — so a check that only reads the <img> cannot tell the
+     two builds apart. Whether the photograph is still CHOSEN is the question,
+     and Render is where that shows. */
+  chk('818: and it is still the CHOSEN photograph — Render stays live across the change',
+      ccKept.disabled === false, ccKept.msg);
+
+  /* And the strip on that job is empty, which is the screen Theo was looking
+     at. It said "Add them in the app first." — naming the one route that was
+     not open to him — while CompanyCam, which was, went unmentioned. */
+  const offer = await page.evaluate(`document.getElementById('vzShots').innerHTML`);
+  chk('818: an empty photo strip offers CompanyCam instead of only naming what is missing',
+      /vzShotsCC/.test(offer), offer.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 80));
+  if (await tryClick('#vzShotsCC', '818: the offer in the empty strip is clickable')) {
+    await page.waitForTimeout(250);
+    chk('818: and it opens the picker (a control that renders but does nothing is BUG_CLASSES 16)',
+        !(await page.evaluate(`document.getElementById('vzCCBox').classList.contains('hide')`)));
+    await page.evaluate(`document.getElementById('vzCCX').click()`);
+    await page.waitForTimeout(200);
+  }
+
+  /* A JOB photograph is the opposite case: it belongs to the job it came
+     from, so it goes when the job does — and the stage goes with it. */
+  await page.evaluate(`(()=>{ const s=document.getElementById('vzProject');
+    s.value='p1'; s.dispatchEvent(new Event('change')); })()`);
+  await page.waitForTimeout(600);
+  await tryClick('#vzShots .shot', '818: a job photograph is reachable');
+  await page.waitForTimeout(250);
+  chk('818: the job photograph IS on the stage before the switch (not a vacuous pass)',
+      await has('#vzStage img'));
+  const cleared = await page.evaluate(`(()=>{
+    const s=document.getElementById('vzProject'); s.value='p2'; s.dispatchEvent(new Event('change'));
+    return new Promise(r=>setTimeout(()=>r({
+      img: !!document.querySelector('#vzStage img'),
+      disabled: document.getElementById('vzQueue').disabled,
+      msg: document.getElementById('vzSum').textContent
+    }),500));
+  })()`);
+  chk('818: changing the job CLEARS the stage — no photograph left above a dead button',
+      cleared.img === false, cleared.img ? 'a photograph is still painted' : '');
+  chk('818: and the button is disabled, so the screen and the button now agree',
+      cleared.disabled === true, cleared.msg);
 
   /* ── 816: the two defects that produced TEN jobs in thirteen seconds ──── */
 

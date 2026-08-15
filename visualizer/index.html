@@ -9,7 +9,7 @@
 
 <!--
   Cardinal Exterior Visualizer — tier 1 of three.
-  v2026-08-15 build 817
+  v2026-08-15 build 818
 
   A SEPARATE APPLICATION. Not a screen inside index.html, and deliberately so.
   Build 805 is the reason: hiding the CRM behind a hostname check inside the
@@ -114,6 +114,12 @@ h2.sec:first-child{margin-top:6px}
 .note{color:var(--vz-dim,#A8B0BF);font-size:13.5px;margin:0 0 12px}
 .empty{padding:26px;border:1px dashed var(--vz-line,#252932);border-radius:12px;
   color:var(--vz-dim,#A8B0BF);text-align:center}
+/* A button that reads as part of the sentence around it. An empty state that
+   only names what is missing leaves the rep nowhere to go; this one offers the
+   way out inline. */
+.lnk{background:none;border:0;padding:0;font:inherit;cursor:pointer;
+  color:var(--vz-red,#C8202E);text-decoration:underline;text-underline-offset:2px}
+.lnk:hover{color:#fff}
 
 /* ---------- photo strip ---------- */
 .strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
@@ -933,8 +939,26 @@ function loadProjects(){
       }).join('');
     });
 }
+/* The stage is the working surface, so it has to agree with the button.
+   It did not: changing the job nulled chosenShot while the PREVIOUS job's
+   photograph stayed painted here, and Render went correctly dead above a
+   picture that said it should work. A disabled button beside a photograph
+   reads as a broken button. */
+function clearStage(){
+  $('vzStage').innerHTML = '<div class="empty">Pick a photograph.</div>';
+}
+
+/* One exception, and it is the one that costs real work. A CompanyCam import
+   belongs to NO job — it is bytes copied into visualizer/src/ and chosen on
+   its own — and the natural order is to import it and THEN file it against a
+   job. Dropping it on the next change silently undid a round-trip the rep had
+   already waited for. A job photograph is the opposite: it is that job's, and
+   it goes with it. */
 $('vzProject').addEventListener('change', function(){
-  chosenShot = null;
+  if(!chosenShot || chosenShot.origin !== 'companycam'){
+    chosenShot = null;
+    clearStage();
+  }
   loadShots();
   refresh();
 });
@@ -1145,7 +1169,10 @@ function ccPick(p, btn){
         ', ' + r.w + '\u00d7' + r.h +
         (r.w < 1280 ? ' (small — the render will be soft)' : '');
       closeCC();
-      chooseShot({ storage_path: r.path,
+      /* `origin` is read by the project-change handler and by nothing else.
+         It is not persisted: the insert names its fields one by one, so this
+         never reaches design_jobs. */
+      chooseShot({ storage_path: r.path, origin: 'companycam',
                    caption: p.project_address || p.description || 'CompanyCam' }, null);
     })
     .catch(function(err){
@@ -1207,8 +1234,16 @@ function loadShots(){
     .then(function(r){
       shots = (r && r.data) || [];
       if(!shots.length){
+        /* Say what CAN be done, not only what is missing. On a job with no
+           photographs CompanyCam is the only way forward, and the rep already
+           has it — the tab is unhidden only when api/companycam.js answers,
+           so its visibility IS the permission check. */
+        var cc = !$('vzSrcCC').classList.contains('hide');
         box.innerHTML = '<div class="empty">No photographs on this job yet. ' +
-          'Add them in the app first.</div>';
+          (cc ? 'Add them in the app, or <button type="button" class="lnk" ' +
+                'id="vzShotsCC">import one from CompanyCam</button>.'
+              : 'Add them in the app first.') + '</div>';
+        if(cc) $('vzShotsCC').addEventListener('click', openCC);
         sum(); return;
       }
       box.innerHTML = '';

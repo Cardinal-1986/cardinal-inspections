@@ -16430,3 +16430,89 @@ colour strings; on 807 `#vzWait` does not exist, so it threw `undefined.match` a
 before printing a line — and piping to `tail` masked the exit code). **BUG_CLASSES 37 again, in my
 own gate.** It now returns null and the check fails with "no banner to measure" instead of taking
 the process down.
+
+- **809–818** · **The Visualizer becomes usable** — ten builds in one session, every one merged and
+deployed. Written up as a span because they are one arc: 807 shipped a queue, 808 explained why it
+was silent, and these are what it took to make a render worth looking at and a screen worth
+trusting.
+
+  **809 — the render stopped being a grey smear.** Three faults, all in the worker, all proved on
+  the *identical* 43 KB photograph so the comparison means something: 16:55 (old prompt, unscaled)
+  31s → grey smear · 22:27 (old prompt, fitted to 1280px) 88s → real texture, wrong colour · 23:27
+  (new prompt, 1280px) 36s → correct. (a) **FLUX.1 Fill is trained around 1024px** and a 43 KB
+  source is far below the band it can hold detail in — `fit_for_flux()` scales the photograph to a
+  1280px long edge, rounded to a multiple of 16, and runs BEFORE `segment()` so the masks still
+  match the source dimensions. No re-encode when nothing changed. (b) **The seed was fixed**, so
+  every re-render of a combination was byte-identical — `seed_for(job_id, surface)` derives it from
+  a SHA-256 of the job id, which makes "render again" mean something and keeps a given job
+  reproducible. (c) **The prompt led with marketing copy**: `oc_colors.description` includes *"One
+  of the top sellers nationally"*, which a diffusion model cannot draw. `roofPrompt()` now takes the
+  **first sentence only**, colour first, then the material words. ⚠️ **`_meta.title` is how a node
+  is found, not its id** — ComfyUI renumbers on edit — so the KSampler is titled
+  `CARDINAL_SAMPLER` and `gate_graphs.py` (45 checks, 9 mutants) asserts on the title.
+
+  **810 — the spec-book shell.** Theo, on an ultrawide: *"i dont see a delete button or check box.
+  also I have plenty of room on a wider screen."* The stacked Prep page became four columns —
+  surface rail, searchable catalog with sticky brand headers, the photograph, a render rail whose
+  cards carry their own menu. ⚠️ **`design_renders.job_id` is `ON DELETE SET NULL`**, so deleting
+  the job first ORPHANS the render row rather than removing it: it vanishes from the rail and keeps
+  sitting in the gallery. **The render row goes first**, asserted against the call sequence, not the
+  source text. **The duplicate block was removed for a finished render** — Theo: *"cant do another
+  black sable"* — which is only correct because 809 varied the seed; a **queued** duplicate is still
+  refused, because that one really is waste.
+
+  **811–812 — the monitor, and stepping between renders.** The shell spans the window instead of
+  capping at 1400px and centring; the photograph scales up to fill its stage; ‹ › walk the renders
+  without leaving the compare view.
+
+  **813–815, 817 — CompanyCam as a photograph source, admin-only** (Theo's pick: *"1 for now"* — no
+  permission fence moved). The tab is unhidden **only when `api/companycam.js` answers**, so its
+  visibility IS the permission check and there is no second role guess in the browser. **EXIF is
+  stripped in the browser, before upload** — a canvas re-encode at q0.97 produces a file with no
+  metadata of any kind; the blob URL is same-origin so the canvas is not tainted. Gated on real
+  bytes containing an APP1 segment and a literal `GPS`. ⚠️ **815 is the one that cost quality:**
+  `api/companycam.js`'s default rendition order is the Resource Library's — annotated web copy
+  first, original **last** — so every import until then took a downsized, marked-up picture, and
+  resolution is most of what decides whether a render reads as a roof. It now asks
+  `prefer:'original'` and **says which rendition arrived**, because "Imported" alone hides the
+  difference. 814 made the picker its own screen with tiles twice the size; 817 fixed those tiles
+  collapsing to a 14px sliver on a phone.
+
+  **816 — a render must belong to a job, and one click is one job.** One photograph became **TEN
+  jobs in thirteen seconds**. Two faults compounding: `project_id` was null (a CompanyCam photograph
+  has no CRM project of its own), so `refresh()` bailed, `jobs` stayed empty, the duplicate guard
+  could never fire — **and the rail filters by `project_id`, so all ten were invisible**. A job is
+  now required, and the inserted row is pushed into `jobs` **optimistically**, before the poll
+  returns: a lock on the button alone does not fix it, because the insert can return faster than a
+  person clicks. The list has to know.
+
+  **818 — the stage has to agree with the button.** Theo: *"I feel like my credits are being wasted.
+  Now the render button does not function."* **It functioned.** Changing the job nulled `chosenShot`
+  and **nothing ever cleared `#vzStage`**, so the previous job's photograph stayed painted on the
+  working surface and a correctly-disabled button sat underneath a picture saying it should work. A
+  disabled button beside a photograph reads as a broken button, not as an empty selection. The stage
+  now clears with the selection — **except for a CompanyCam import, which survives the change**,
+  because it belongs to no job and the natural order of work is import it, THEN file it against a
+  job; dropping it silently undid a round-trip the rep had already paid for. And the empty strip now
+  **offers** CompanyCam instead of only naming what is missing: on the job in his screenshot it was
+  the only way forward and the message said *"Add them in the app first."*
+
+  **The gates.** `gate_810.mjs` grew 33 → **108 checks**, Chromium not jsdom. ⚠️ **BUG_CLASSES 37
+  struck FIVE times in one session** — the negative control CRASHED instead of reporting red, every
+  time the same shape: a new interaction on a selector the previous build does not have, Playwright
+  waiting 30s, an unhandled rejection killing the run before it printed a line. **A control that
+  crashes proves nothing.** Fixed systemically with `tryClick(sel, why)`, which records a failure
+  and carries on. ⚠️ **Three harness bugs of my own** in 816: the stub returned `rows[0]` instead of
+  the inserted row, its `design_jobs` table never grew, and **the burst test passed at ZERO jobs
+  from six clicks** because the duplicate guard short-circuited before the lock was reached — *a
+  check that cannot fail is worse than no check.* 818 found a fourth: `.eq()` was a no-op, so every
+  project saw every project's photographs and "a job with nothing on it" could not be expressed at
+  all. It filters now, like PostgREST.
+
+  **Still not done, stated plainly:** **siding has never once been applied by a render** — every
+  render so far has been roof-only. **No render has yet used a CompanyCam import at full
+  resolution.** **There is no stale-claim recovery**: a job claimed by a worker that dies stays
+  `running` forever (one sat 426s on a ~35s render) — a `claimed_at` older than N minutes should
+  return to `queued`, and that wants building before a customer ever sees this. **~60 unreferenced
+  files (~20 MB)** sit under `photos/visualizer/`; `spark/sweep_visualizer.py` is merged and has not
+  been run.

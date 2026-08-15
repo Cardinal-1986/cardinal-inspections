@@ -5053,3 +5053,27 @@ quiet pass. `ratio()` assumed two colour strings; on 807 `#vzWait` does not exis
 `undefined.match` and took the process down — and piping to `tail` masked the exit code.
 BUG_CLASSES 37, inside the gate itself. It now returns null and the check fails with "no banner
 to measure".
+
+## Builds 809–818 — the Exterior Visualizer becomes usable
+
+Ten builds, one session, all merged and deployed. 807 shipped the queue and 808 explained its
+silence; this span is what it took to make a render worth looking at and a screen worth trusting.
+Full narrative in `cardinal_build_log.md` under **809–818**.
+
+| What | Where | Note |
+|---|---|---|
+| **Photograph fitted to FLUX's band** (1280px long edge, multiple of 16) | `spark/visualizer_worker.py` → `fit_for_flux()` | Runs BEFORE `segment()` so masks match the source dims. A 43 KB source is far under the band FLUX.1 Fill holds detail in |
+| **Per-job seed** — `seed_for(job_id, surface)`, SHA-256 of the job id | `visualizer_worker.py`, `spark/inpaint_api.json` | Makes "render again" mean something. The KSampler is found by `_meta.title` = `CARDINAL_SAMPLER`; ComfyUI renumbers node ids on edit |
+| **Colour-first roof prompt**, first sentence only | `visualizer/index.html` → `roofPrompt()` | `oc_colors.description` carries marketing copy ("top sellers nationally") a diffusion model cannot draw |
+| **The spec-book shell** — surface rail · searchable catalog with sticky brand headers · stage · render rail | `visualizer/index.html` | Theo's pick: option 3 as the floor, backfilled with option 1. Only his brands: OC (roof), Mastic / CertainTeed / Exterior Portfolio / Norandex (siding), Andersen / WinCore (windows) |
+| **Delete a render** | render-card menu | ⚠️ `design_renders.job_id` is `ON DELETE SET NULL` — **the render row goes first**, or the job delete orphans it into the gallery |
+| **Render again** on a finished job | `#vzQueue` | Only correct because 809 varies the seed. A **queued** duplicate is still refused |
+| **CompanyCam as a photograph source**, admin-only | `#vzCCBox`, `api/companycam.js` | The tab is unhidden only when the route answers — its visibility IS the permission check. Asks `prefer:'original'`; **EXIF stripped in the browser before upload** |
+| **A render must belong to a job** | `sum()` + the queue handler | One photograph made TEN invisible jobs in 13s. The insert is pushed into `jobs` optimistically — the duplicate guard reads that list |
+| **The stage agrees with the button** (818) | project-change handler → `clearStage()` | Changing the job clears the photograph — **except a CompanyCam import, which survives**, because it belongs to no job. The empty strip now offers CompanyCam rather than only naming what is missing |
+| **Storage sweep** | `spark/sweep_visualizer.py` | Dry run by default; `--min-age-hours` protects an import that has not been rendered yet. Goes through the storage API — a SQL delete removes the index, not the object |
+
+**Not done, and not claimed:** siding has never been applied by a render (all roof-only so far); no
+render has used a CompanyCam import at full resolution; there is **no stale-claim recovery** (a job
+claimed by a worker that dies stays `running` forever); ~60 unreferenced files (~20 MB) are still in
+`photos/visualizer/` awaiting a sweep run.
