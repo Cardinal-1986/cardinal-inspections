@@ -651,7 +651,7 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.7 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.12"
+WORKER_BUILD = "wb-2026-08-15.13"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
@@ -1046,6 +1046,65 @@ def run_regions_job(comfy, job, job_id, started):
 
 POINTS_MAX = 8           # taps one job may carry, so a stuck finger cannot queue 400
 
+# 832: how far outside a dragged box the "not this" points sit, as a fraction
+# of the box. Far enough to be off the surface, close enough to still be the
+# same wall rather than the sky.
+BOX_MARGIN = 0.06
+
+
+def _corner_negatives(w, h):
+    """The four frame corners, as points that are NOT the thing being asked for.
+
+    A single positive point on a large uniform wall is ambiguous — "this
+    clapboard", "this wall", "this building" all answer it — and SAM 2 resolves
+    the ambiguity toward the largest reading. Theo: "if i tap the bottom right
+    siding it masks the whole house". Corner negatives say "not the entire
+    picture", which is the cheapest available push toward the local surface.
+
+    Inset because a point exactly on the boundary returns an empty mask, the
+    same reason the positives are clamped a pixel inside.
+    """
+    ins = 0.02
+    return [{"x": int(w * ins), "y": int(h * ins)},
+            {"x": int(w * (1 - ins)), "y": int(h * ins)},
+            {"x": int(w * ins), "y": int(h * (1 - ins))},
+            {"x": int(w * (1 - ins)), "y": int(h * (1 - ins))}]
+
+
+def _box_prompt(box, w, h):
+    """Turn a dragged box into positives inside it and negatives around it.
+
+    ⚠ Deliberately expressed as POINTS rather than as the node's `bboxes`
+    input. `coordinates_positive` is a string widget this graph already sets
+    and this worker has seen work; `bboxes` is a socket expecting a BBOX from
+    another node, and wiring one from a literal is a guess this cannot test
+    from here. Points reach the same place through a door already open.
+
+    Positives: the centre plus the four quarter points, so the model has
+    several samples of the surface rather than one lucky pixel.
+    Negatives: just outside each edge, which is what actually bounds the
+    answer — plus the frame corners.
+    """
+    x0, y0, x1, y1 = box
+    cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+    bw, bh = max(x1 - x0, 1e-6), max(y1 - y0, 1e-6)
+    pos = [(cx, cy),
+           (x0 + bw * 0.25, y0 + bh * 0.25), (x0 + bw * 0.75, y0 + bh * 0.25),
+           (x0 + bw * 0.25, y0 + bh * 0.75), (x0 + bw * 0.75, y0 + bh * 0.75)]
+    mx, my = bw * BOX_MARGIN, bh * BOX_MARGIN
+    neg = [(cx, y0 - my), (cx, y1 + my), (x0 - mx, cy), (x1 + mx, cy)]
+
+    def px(pairs):
+        out = []
+        for x, y in pairs:
+            if not (0.0 <= x <= 1.0 and 0.0 <= y <= 1.0):
+                continue            # a box against the edge has no outside there
+            out.append({"x": int(min(max(x * w, 1), w - 1)),
+                        "y": int(min(max(y * h, 1), h - 1))})
+        return out
+
+    return px(pos), px(neg) + _corner_negatives(w, h)
+
 
 def run_points_job(comfy, job, job_id, started):
     """Segment ONE surface, where a person tapped it.
@@ -1076,27 +1135,39 @@ def run_points_job(comfy, job, job_id, started):
     selections = job.get("selections") or {}
     if isinstance(selections, str):
         selections = json.loads(selections)
+    box = selections.get("_box") or None
+    if box is not None and not (isinstance(box, (list, tuple)) and len(box) == 4):
+        raise RuntimeError("a dragged box must be [x0, y0, x1, y1] normalised 0..1")
+
     pts = selections.get("_points") or []
     if isinstance(pts, dict):
         pts = [pts]
     pts = [p for p in pts if isinstance(p, dict) and "x" in p and "y" in p][:POINTS_MAX]
-    if not pts:
+    if not pts and box is None:
         raise RuntimeError("no tap on this job — nothing to segment")
 
     source = storage_download(job["source_path"])
     fitted, was, now = fit_for_flux(to_png(source))
     frame = Image.open(io.BytesIO(fitted)).size
-    log("  points pass — %dx%d, %d tap(s)" % (frame[0], frame[1], len(pts)))
+    log("  points pass — %dx%d, %s" % (
+        frame[0], frame[1],
+        ("a dragged box" if box is not None else "%d tap(s)" % len(pts))))
 
     # Normalised -> pixels in the fitted frame. Clamped one pixel inside the
     # edge: SAM 2 takes a point ON the boundary and returns an empty mask, and
     # an empty mask reads to a rep as "the tap did nothing".
-    scaled = []
-    for p in pts:
-        x = min(max(float(p["x"]), 0.0), 1.0) * frame[0]
-        y = min(max(float(p["y"]), 0.0), 1.0) * frame[1]
-        scaled.append({"x": int(min(max(x, 1), frame[0] - 1)),
-                       "y": int(min(max(y, 1), frame[1] - 1))})
+    if box is not None:
+        scaled, negatives = _box_prompt([float(v) for v in box], frame[0], frame[1])
+        if not scaled:
+            raise RuntimeError("that box landed outside the photograph")
+    else:
+        scaled = []
+        for p in pts:
+            x = min(max(float(p["x"]), 0.0), 1.0) * frame[0]
+            y = min(max(float(p["y"]), 0.0), 1.0) * frame[1]
+            scaled.append({"x": int(min(max(x, 1), frame[0] - 1)),
+                           "y": int(min(max(y, 1), frame[1] - 1))})
+        negatives = _corner_negatives(frame[0], frame[1])
 
     graph = load_graph("points_api.json")
     # Logged in full because the coordinate STRING is the one part of this
@@ -1107,6 +1178,24 @@ def run_points_job(comfy, job, job_id, started):
     coords = json.dumps(scaled)
     log("    coordinates_positive = %s" % coords)
     set_input(graph, "CARDINAL_POINTS", "coordinates_positive", coords)
+
+    # 832: the negatives, but ONLY if the node declares that input. Asking the
+    # node rather than assuming is the same discipline fill_defaults() exists
+    # for — a parameter name written from memory is how a graph gets rejected
+    # at submit time, and this one is being added from a different machine than
+    # the one that will run it. If it is absent the pass still works exactly as
+    # it did before, and the log says why it is not there.
+    _schema = comfy.node_schema("Sam2Segmentation") or {}
+    _ins = (_schema.get("input") or {})
+    _known = set((_ins.get("required") or {}).keys()) | set((_ins.get("optional") or {}).keys())
+    if negatives and "coordinates_negative" in _known:
+        neg = json.dumps(negatives)
+        log("    coordinates_negative = %s" % neg)
+        set_input(graph, "CARDINAL_POINTS", "coordinates_negative", neg)
+    elif negatives:
+        log("    Sam2Segmentation declares no coordinates_negative — sending the "
+            "positives alone; a tap on a large wall may still take the whole building")
+
     added = comfy.fill_defaults(graph, "Sam2Segmentation")
     if added:
         log("    filled from the node's own schema: %s" % ", ".join(sorted(set(added))))
@@ -1192,7 +1281,16 @@ def run_job(comfy, job):
     # `selections`, no column, no migration, no change to the claim function.
     # Checked after `_regions` only because that one shipped first; the two are
     # mutually exclusive and the browser never sets both.
-    if selections.get("_points"):
+    # 832: `_box` routes here too. A dragged box and a tap are the same pass —
+    # one prompt shape, one mask, one answer — so they share a function rather
+    # than growing a third branch.
+    #
+    # ⚠ This line was missing when the box first shipped, and every gate was
+    # green: test_points calls run_points_job DIRECTLY, so it exercised the
+    # function and never the ROUTE. A box job would have fallen through to the
+    # unknown-mode guard below and been refused by the very worker that could
+    # handle it. Test the route, not just the function.
+    if selections.get("_points") or selections.get("_box"):
         run_points_job(comfy, job, job_id, started)
         return
 

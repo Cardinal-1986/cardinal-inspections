@@ -17253,3 +17253,73 @@ inert control, three days after finding the last one.
 extracts the shipped function text and executes it, so a new dependency has to
 join its `NEED` list. That is a hard failure rather than a silent skip, which is
 the behaviour worth keeping. 31/31 after.
+
+---
+
+## Build 832 — drag a box, and stop asking SAM 2 an ambiguous question
+
+Theo: *"if i tap the bottom right siding it masks the whole house, otherwise i
+have to tap all the other pieces of siding individually."*
+
+Both halves are one problem. A single point on a large uniform wall is
+genuinely ambiguous — "this clapboard", "this wall", "this building" all answer
+it — and with nothing bounding the question SAM 2 takes the largest reading.
+The graph was sending exactly one positive point and nothing else.
+
+**Two levers, both of Theo's picks.**
+
+**1 — corner negatives on every prompt.** Four points at the frame corners say
+"not the entire picture", the cheapest available push toward the local surface.
+
+**2 — drag a box.** A press-and-release is still a tap and still runs the proven
+path; only a drag past `DRAG_MIN` (12 CSS px) becomes a box. The box goes up
+normalised and the worker turns it into five positives inside and eight
+negatives around, so nothing about the answer shape changes downstream.
+
+⚠️ **The box is expressed as POINTS, not as the node's `bboxes` input.**
+`coordinates_positive` is a string widget this graph already sets and this
+worker has seen work; `bboxes` is a socket expecting a BBOX from another node,
+and wiring one from a literal is a guess that cannot be tested from here.
+
+⚠️ **`coordinates_negative` is sent only if the node declares it**, asked via
+`node_schema()` — the same discipline `fill_defaults()` exists for. On a node
+without it the pass runs exactly as before and the log says why.
+
+`WORKER_BUILD` → `wb-2026-08-15.13`.
+
+### Three defects the gates caught, all of them mine
+
+**The rubber band could never be seen.** It was a child of `#vzRegDots`, and
+`drawRegions()` clears that layer with `dots.innerHTML = ''` on every redraw —
+which `queueTapJob()` triggers immediately. `render_drag.js` reported `display
+missing`; reading the code did not.
+
+**`_box` was never dispatched.** `run_job` checked `_points` and `_regions`, so
+a box job fell through to the 829 unknown-mode guard and would have been
+refused **by the very worker that handles it**. Every gate was green, because
+`test_points` calls `run_points_job` DIRECTLY and so exercised the function and
+never the route. **Test the route, not just the function.**
+
+**A test lost a check and stayed green.** `test_stale_worker` generates its
+checks from the mode keys it finds in the page. When `selections: { _points: … }`
+became `queueTapJob({ _points: … })` the regex stopped matching, coverage fell
+from 15 checks to 14, and nothing went red — *a smaller number nobody reads*.
+It now carries a FLOOR of the modes known to exist and fails when it cannot see
+one.
+
+⚠️ **Two assertions were pinned to punctuation and failed correct code** — both
+`'if selections.get("_points"):'` with the trailing colon, which stopped
+matching when the dispatch became `... or selections.get("_box"):`. Both now
+assert the routing contract over the dispatch REGION instead of the spelling.
+Same family as the `render_regions.mjs` `NEED` list at 831.
+
+**Gates.** New **`render_drag.js`, 24 assertions at iPad and desktop widths**: a
+drag queues exactly ONE job and it is a `_box`; the box is normalised and
+ordered even when dragged right-to-left and bottom-to-top; a press queues
+exactly one `_points`; a 3px wobble stays a tap; the band shows mid-drag and
+clears after. **The one-job assertions are the point** — a drag ends with a
+`click` too, so without the guard one gesture queues a box AND a tap.
+Negative-controlled at 8/16.
+
+`test_points` 64/64 (46/64 on `main`), and its control path was inert until now
+— the same hole found in `test_segment` at 830. `test_drop_paint` still has it.
