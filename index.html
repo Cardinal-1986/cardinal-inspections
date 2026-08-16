@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 855 &#8212; The Production hub gains Crew Dispatch and Crews &#8212; the whole toolset in one screen</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 856 &#8212; The Production hub&#8217;s Punch-outs opens the full Punch &amp; Repairs page, not a bare list</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39722,6 +39722,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:856, d:'2026-08-16', t:'Hub Punch-outs opens the full Punch &amp; Repairs page',
+s:'Tapping Punch-outs (or Closed repairs) in the Production hub was opening a bare internal list \u2014 just the open items with a + Add. It now opens the full Punch &amp; Repairs page, the same one the Production menu opens: search by item, client or address; Active, Scheduled and Completed tabs; the sort control; and the full punch-out cards with their CRM, urgency and schedule. Nothing new underneath \u2014 the hub just routes to the real page (window.openPunchView) instead of its own stripped list. The materials boxes (Needs ordered, Ordered, Scheduled) still use the hub list.' },
 { b:855, d:'2026-08-16', t:'Production hub \u2014 Crew Dispatch &amp; Crews',
 s:'The Production hub was missing two tools it should hold: the hub now has a Crew Dispatch and a Crews button right under the command tiles, so the whole production toolset \u2014 calendar, jobs, punch-outs, dispatch and the crew directory \u2014 is on one screen. They open the same Crew Dispatch board (841) and Crews directory the menu does; nothing new underneath. Kept the Cardinal Steel colours.' },
 { b:854, d:'2026-08-16', t:'Production accounts open into the hub',
@@ -48759,7 +48761,18 @@ function wire(){
     };
   });
   el.querySelectorAll('[data-box]').forEach(function(b){
-    b.onclick = function(){ listKey = b.getAttribute('data-box'); pane = 'list'; render(); scrollTop(); };
+    b.onclick = function(){
+      var k = b.getAttribute('data-box');
+      /* 856: Punch-outs and Closed repairs open the FULL Punch & Repairs page
+         — the same window.openPunchView the menu opens, with search, the
+         Active / Scheduled / Completed tabs and the punch-out cards — instead
+         of the hub's bare internal list. Falls back to that list if the
+         module isn't present. Materials boxes keep the internal list. */
+      if((k === 'punch' || k === 'closed') && typeof window.openPunchView === 'function'){
+        try{ window.openPunchView(); return; }catch(_pv){}
+      }
+      listKey = k; pane = 'list'; render(); scrollTop();
+    };
   });
   el.querySelectorAll('[data-hub]').forEach(function(b){
     b.onclick = function(){
