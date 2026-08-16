@@ -17880,3 +17880,18 @@ Reproduced first in Chromium (the empty cell's `::before` masked the folder SVG,
 radius), then fixed. Gate: `render_dispatch848.mjs` opens the board with idle crews and asserts the empty
 cell's `::before` paints no mask, no 2px-dashed border, no 8px radius, keeps the hatch, and no longer uses the
 bare `empty` class — GREEN 5/5, RED (folder mask + dashed card) against the 847 tree. `check_build` green.
+
+
+## Build 849 — A Work Orders tile in the profile Job Menu (16 Aug 2026)
+Theo: *"Add a Work Orders tile to the profile Job Menu."* The Job Menu on a client's overview (the
+`jt()`/`data-jm` tiles in `renderAcxOverview`) had no Work Orders entry — the only gap in the document set
+(Estimates, Contracts, Inspections, Orders were all there). Added a **Work Orders** tile that rides the Job
+Menu router's else branch (`data-jm="workorders"` -> `showTab('workorders')`) — the same section the header
+dropdown and the 846 header button open, so no new pipeline. It is a **full-width tile at the bottom** of
+the menu so the 12-tile 2-column grid above stays in even pairs (13 tiles would otherwise strand one).
+New `workorder` glyph added to `DB_ICONS` (a filled hard hat — the crew signifier, distinct from Contracts'
+`docs` folder and Estimates' document; rendered on a blank page to confirm it reads as a hard hat). This
+also gives the phone a Job-Menu path to work orders, matching the desktop. No money on the tile. Gate:
+`render_wotile849.mjs` opens a project and asserts the tile exists, is labelled, carries an icon, is
+full-width, and its click opens `#tab-workorders` and hides Overview — GREEN 6/6, RED against the 848 tree.
+`check_build` green.
