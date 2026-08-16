@@ -3275,14 +3275,7 @@ body[data-crm="insurance"] #cr-hd2-srch #cr-dark-toggle{display:none !important}
 
 /* locked: production-only, and it says so instead of just not working */
 .pu-box.locked{cursor:not-allowed;opacity:.55;border-style:dashed;
-  font-size:11px;display:flex;align-items:center;justify-content:center}
-.pud-check.locked{opacity:.6;cursor:not-allowed}
-.pud-check.locked .bx{border-style:dashed}
-
-/* delete keeps its distance from Save */
-.pud-ft .pud-btn.del{margin-right:auto;border-color:#7d2a24;color:#e2574a;background:transparent}
-.pud-ft .pud-btn.del:hover{background:rgba(226,87,74,.12)}
-</style>
+  font-size:11px;display:flex;align-items:center;justify-content:center}</style>
 
 <style id="cr-pcard-styles">
 /* ── Build 420: the client card ──────────────────────────────────────────────
@@ -3504,7 +3497,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-14 build 808 &#8212; The Visualizer now says WHY a render is waiting instead of sitting on a grey “queued” chip forever</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 837 &#8212; Retire the unreachable punch-detail fallback sheet &#8212; one card everywhere, less dead code</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3836,14 +3829,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div id="puSubList"></div>
   </div></div>
 </div>
-<!-- 724: the punch DETAIL sheet lives OUTSIDE #punchView on purpose.
-     It used to be a child of it, and #punchView is display:none unless you are
-     on the punch page — so tapping a card in the home/insurance/community
-     Punch & Repairs strip ran openDetail(), filled this element and added
-     .open, all inside a hidden parent. The tap worked; nothing ever appeared.
-     It is position:fixed/inset:0/z-index:9998 (above #pwaNav's 9990), so it
-     does not care who its parent is — but it must not be a hidden one. -->
-<div class="pu-detail" id="puDetail"></div>
+
 
 <!-- ============ GLOBAL PHOTO ACTIVITY (build 345) ============ -->
 <div id="photosView" style="display:none;">
@@ -39569,6 +39555,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:837, d:'2026-08-16', t:'Retire the unreachable punch-detail fallback sheet',
+s:'Build 768 made the punch-out card the one detail screen and turned openDetail into a router that opens it; the old 724-era sheet stayed underneath as a boot fallback that in practice nothing ever reached. This removes that fallback sheet, its action handlers, the photo-input handler and 49 dead style rules, and points the Punch & Repairs strip and list straight at the card. Behaviour is unchanged \u2014 a Chromium render opened a punch-out from the strip before and after and got the identical card \u2014 it is roughly 18 KB less dead code. No user-facing change.' },
 { b:808, d:'2026-08-14', t:'The Visualizer says why a render is waiting',
 s:'Theo queued two renders within ten minutes of 807 going live and both sat on a grey \u201cqueued\u201d chip with no explanation \u2014 he had to ask me to query the database to find out why, which nobody else on the crew can do. The rows were perfectly correct; the screen was just silent. It now says it out loud. If something has been queued more than three minutes and nothing has ever picked up a job, it says the render machine has never connected, that nothing is lost, and exactly what to start on the Spark. If the machine HAS run before, it says when it was last seen instead \u2014 that is the difference between \u201cnot set up\u201d and \u201casleep\u201d, and they need different answers. Under three minutes it stays quiet, because a render that has only just been queued is not a fault and crying wolf would train everyone to ignore it. A stalled queue also stops asking the database ten times a minute and backs off to twice. Nothing about how renders are made changed \u2014 this is only the screen being honest about what it already knew.' },
 { b:807, d:'2026-08-14', t:'The Exterior Visualizer is its own app',
@@ -57391,9 +57379,7 @@ if(typeof _origOLF === 'function'){
   margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--rbe-line);display:flex;align-items:center;gap:8px;}
 .pu-grp .n{background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;padding:1px 8px;font-size:9.5px;}
 .pu-sheet{position:fixed;inset:0;background:rgba(8,9,11,.7);display:none;z-index:9997;
-  overscroll-behavior:contain;}   /* 725: same guard as .pu-detail */
-.pu-sheet.open{display:flex;align-items:flex-start;justify-content:center;}
-.pu-sheet .panel{background:var(--rbe-panel);border:1px solid var(--rbe-line);border-top:0;border-radius:0 0 16px 16px;width:100%;
+  overscroll-behavior:contain;}.pu-sheet .panel{background:var(--rbe-panel);border:1px solid var(--rbe-line);border-top:0;border-radius:0 0 16px 16px;width:100%;
   max-width:560px;max-height:86%;overflow:auto;overscroll-behavior-x:contain;}
 .pu-sheet .ph{display:flex;align-items:center;padding:13px 15px;border-bottom:1px solid var(--rbe-hair);position:sticky;top:0;background:var(--rbe-panel);}
 .pu-sheet .ph .t{font:800 14px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);flex:1;text-align:center;}
@@ -57452,75 +57438,6 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pu-tab .n{font:700 10px ui-monospace,Menlo,monospace;background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;
   padding:2px 7px;margin-left:7px;}
 .pu-sched{font:700 10px ui-monospace,Menlo,monospace;color:var(--rbe-money);margin-top:3px;}
-/* photo evidence */
-.pud-ph{margin-top:13px;}
-.pud-ph .k{display:flex;align-items:center;gap:8px;font:800 8px ui-monospace,Menlo,monospace;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--rbe-mute2);margin-bottom:6px;}
-.pud-ph .k b{font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.06em;padding:2px 8px;border-radius:999px;
-  background:var(--rbe-line);color:var(--rbe-ink);}
-.pud-ph .k b.ok{background:var(--rbe-okbg);color:var(--rbe-money);}
-.pud-ph .k b.short{background:var(--rbe-del-bg);color:var(--rbe-del-fg);}
-.pud-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:7px;}
-.pud-thumb{position:relative;aspect-ratio:1;border:1px solid var(--rbe-line);border-radius:8px;overflow:hidden;background:var(--rbe-panel2);}
-.pud-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
-.pud-thumb .rm{position:absolute;top:2px;right:2px;background:rgba(10,12,16,.8);color:#f2a08a;border:0;
-  border-radius:6px;font:800 11px inherit;cursor:pointer;padding:1px 6px;}
-.pud-add{aspect-ratio:1;border:1px dashed var(--rbe-empty-bd);border-radius:8px;background:var(--rbe-panel);
-  color:var(--rbe-mute);font:700 10.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:3px;}
-.pud-add span{font-size:17px;}
-.pud-f select{width:100%;background:var(--rbe-panel2);border:1px solid var(--rbe-line);color:var(--rbe-ink);border-radius:7px;
-  padding:5px 8px;font:600 12.5px 'Segoe UI',Arial,sans-serif;}
-.pud-f select.prio-high{color:#f2a08a;border-color:#6e3129;}
-.pud-f select.prio-normal{color:#f0a962;border-color:#6b4a1e;}
-.pud-f select.prio-low{color:#e35c63;border-color:#6b5a1e;}
-/* item detail sheet */
-.pu-detail{position:fixed;inset:0;background:rgba(8,9,11,.72);display:none;z-index:9998;
-  align-items:flex-start;justify-content:center;padding:5vh 14px;overflow-y:auto;
-  /* 725: the sheet IS the scroller, and without this a drag that reaches its
-     end chains into whatever is mounted underneath — which since 724 is the
-     home page, so the page crept about under the open sheet. Deliberately NOT
-     document.body.style.overflow: that global has 13 writers, no reconciler,
-     and the leak class has recurred three times (see the cr-sf banner). */
-  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
-.pu-detail.open{display:flex;}
-.pud-box{background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));border:1px solid var(--rbe-line2);border-radius:14px;
-  width:100%;max-width:600px;box-shadow:0 18px 44px rgba(0,0,0,.55);overflow:hidden;}
-.pud-hd{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--rbe-line);}
-.pud-hd b{flex:1;min-width:0;font:800 15px Georgia,'Times New Roman',serif;color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
-.pud-x{background:none;border:0;color:var(--rbe-mute);font-size:17px;cursor:pointer;padding:2px 6px;}
-.pud-bd{padding:14px 16px;}
-.pud-check{display:flex;align-items:center;gap:11px;flex-wrap:wrap;background:var(--rbe-panel2);
-  border:1px solid var(--rbe-line);border-radius:11px;padding:11px 13px;cursor:pointer;margin-bottom:14px;}
-.pud-check .bx{width:24px;height:24px;border:1.7px solid var(--rbe-checkbd);border-radius:7px;display:flex;
-  align-items:center;justify-content:center;font:800 13px inherit;color:var(--rbe-checkfg);flex:0 0 auto;}
-.pud-check.on .bx{background:var(--rbe-ok);border-color:var(--rbe-ok);}
-.pud-check .tx{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
-.pud-check.on .tx{color:var(--rbe-money);}
-.pud-check small{flex-basis:100%;font-size:10.5px;color:var(--rbe-mute2);padding-left:35px;}
-.pud-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
-.pud-f{min-width:0;background:var(--rbe-panel2);border:1px solid var(--rbe-line);border-radius:9px;padding:8px 11px;}
-.pud-f.pud-wide{grid-column:1 / -1;}
-.pud-f .k{display:block;font:800 8px ui-monospace,Menlo,monospace;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--rbe-mute2);margin-bottom:3px;}
-.pud-f b,.pud-f a{font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);text-decoration:none;
-  overflow-wrap:anywhere;display:block;}
-.pud-f a{color:var(--rbe-acclt);}
-.pud-f .pud-link{color:var(--rbe-acclt);cursor:pointer;}
-.pud-f input[type=date]{width:100%;background:var(--rbe-panel2);border:1px solid var(--rbe-line);color:var(--rbe-ink);border-radius:7px;
-  padding:5px 8px;font:600 12.5px 'Segoe UI',Arial,sans-serif;}
-.pud-note{margin-top:13px;}
-.pud-note .k{display:block;font:800 8px ui-monospace,Menlo,monospace;letter-spacing:.16em;
-  text-transform:uppercase;color:var(--rbe-mute2);margin-bottom:5px;}
-.pud-note textarea{width:100%;background:var(--rbe-panel2);border:1px solid var(--rbe-line);color:var(--rbe-ink);border-radius:9px;
-  padding:10px 12px;font:400 13px 'Segoe UI',Arial,sans-serif;resize:vertical;box-sizing:border-box;}
-.pud-msg{margin-top:9px;font-size:11.5px;color:var(--rbe-flag);min-height:14px;}
-.pud-ft{display:flex;gap:9px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--rbe-line);
-  background:var(--rbe-panel2);}
-.pud-btn{border:1px solid var(--rbe-line);background:var(--rbe-panel);color:var(--rbe-ink);border-radius:9px;padding:8px 16px;
-  font:700 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
-.pud-btn.go{border-color:var(--rbe-acc);background:var(--rbe-ctabg);color:var(--rbe-acclt);}
-@media (max-width:640px){ .pud-grid{grid-template-columns:1fr;} }
 @media print{#punchView{background:#fff;color:#000;}}
 </style>
 <script id="cr-punch-script">
@@ -57877,189 +57794,10 @@ function repName(email){
   if(typeof window.rptRepName === 'function'){ try{ return window.rptRepName(email) || email; }catch(e){} }
   return email;
 }
-function openDetail(id){
-  var it = rows().filter(function(x){ return String(x.id) === String(id); })[0];
-  if(!it) return;
-  /* 768: THE punch-out card replaced this sheet. Everything that used to open
-     #puDetail now opens CardinalPunchCard — one detail screen, not three. The
-     old sheet below stays as the fallback for a boot where the card module has
-     not parsed yet; it is not a second surface anyone can reach on purpose. */
-  if(window.CardinalPunchCard && typeof window.CardinalPunchCard.open === 'function'){
-    window.CardinalPunchCard.open(id, { back:'none' });
-    return;
-  }
-  var pr = projOf(it.project_id) || {};
-  var tel = String(pr.phone || '').replace(/[^0-9+]/g, '');
-  var done = it.status === 'done';
-  var m = document.getElementById('puDetail');
-  m.innerHTML =
-    '<div class="pud-box" role="dialog" aria-modal="true">' +
-      '<div class="pud-hd"><b>' + esc(it.title || 'Punch item') + '</b>' +
-        '<button class="pud-x" data-pud="close">\u2715</button></div>' +
-      '<div class="pud-bd">' +
-        '<label class="pud-check' + (done ? ' on' : '') + (mayClose() ? '' : ' locked') + '"' +
-          (mayClose() ? ' data-pud="status"' : ' title="Only the production team can close punch items"') + '>' +
-          '<span class="bx">' + (done ? '\u2713' : '') + '</span>' +
-          '<span class="tx">' + (done ? 'Closed' : 'Open') + '</span>' +
-          '<small>' + (done ? 'Tap to reopen \u2014 it moves back to the open list'
-                            : 'Tap to close \u2014 it folds into Completed and can be reopened') + '</small>' +
-        '</label>' +
-        '<div class="pud-grid">' +
-          '<div class="pud-f"><span class="k">Customer</span>' +
-            '<b class="pud-link" data-pud="open-client">' + esc(pr.name || 'Unknown client') + '</b></div>' +
-          '<div class="pud-f"><span class="k">Phone</span>' +
-            (tel ? '<a href="tel:' + tel + '">' + esc(pr.phone) + '</a>' : '<b>\u2014</b>') + '</div>' +
-          '<div class="pud-f pud-wide"><span class="k">Address</span>' +
-            (pr.address ? '<a target="_blank" href="https://maps.google.com/?q=' + encodeURIComponent(pr.address) + '">' +
-              esc(pr.address) + ' \u2197</a>' : '<b>\u2014</b>') + '</div>' +
-          '<div class="pud-f"><span class="k">Sales rep</span><b>' + esc(repName(pr.created_by)) + '</b></div>' +
-          '<div class="pud-f"><span class="k">Assigned to</span>' +
-            '<select id="puWho"><option value="">Unassigned</option>' +
-            teamList().map(function(m){
-              var sel = (it.assigned_to === m.email || it.assigned_to === m.name) ? ' selected' : '';
-              return '<option value="' + esc(m.email) + '"' + sel + '>' + esc(m.name) + '</option>';
-            }).join('') + '</select></div>' +
-          '<div class="pud-f"><span class="k">Type</span><b>' + esc(kindOf(it)) + '</b></div>' +
-          '<div class="pud-f"><span class="k">Priority</span>' +
-            '<select id="puPrio" class="prio-' + prioOf(it) + '">' +
-            ['high','normal','low'].map(function(p){
-              return '<option value="' + p + '"' + (prioOf(it) === p ? ' selected' : '') + '>' + prioLabel(p) + '</option>';
-            }).join('') + '</select></div>' +
-          '<div class="pud-f"><span class="k">Date created</span><b>' + fmtDate(it.created_at) + '</b></div>' +
-          '<div class="pud-f"><span class="k">Date scheduled</span>' +
-            '<input type="date" id="puSched" value="' + esc(String(it.scheduled_at || '').slice(0,10)) + '"></div>' +
-          (done ? '<div class="pud-f pud-wide"><span class="k">Closed</span><b>' + fmtDate(it.done_at) +
-                  (it.done_by ? ' \u00b7 ' + esc(repName(it.done_by)) : '') + '</b></div>' : '') +
-        '</div>' +
-        (function(){
-          var ph = photosOf(it);
-          var enough = ph.length >= PHOTO_MIN;
-          return '<div class="pud-ph"><div class="k">Photos ' +
-            '<b class="' + (enough ? 'ok' : 'short') + '">' + ph.length + ' of ' + PHOTO_MIN + ' required</b></div>' +
-            '<div class="pud-strip">' +
-              ph.map(function(u, i){
-                return '<div class="pud-thumb"><img src="' + esc(u) + '" alt="">' +
-                  '<button class="rm" data-pud="rmphoto" data-i="' + i + '">\u2715</button></div>';
-              }).join('') +
-              '<button class="pud-add" data-pud="addphoto"><span>\uD83D\uDCF7</span>Add</button>' +
-            '</div>' +
-            '<input type="file" id="puPhotoInput" accept="image/*" multiple capture="environment" style="display:none;">' +
-          '</div>';
-        })() +
-        '<div class="pud-note"><span class="k">Notes / description</span>' +
-          '<textarea id="puNote" rows="5" placeholder="What needs doing, what was found, what the customer said\u2026">' +
-          esc(it.detail || '') + '</textarea></div>' +
-        '<div class="pud-msg" id="puMsg"></div>' +
-      '</div>' +
-      '<div class="pud-ft">' +
-        (mayDelete() ? '<button class="pud-btn del" data-pud="delete">Delete</button>' : '') +
-        '<button class="pud-btn" data-pud="close">Cancel</button>' +
-        '<button class="pud-btn go" data-pud="save">Save</button>' +
-      '</div>' +
-    '</div>';
-  m.classList.add('open');
-  m.setAttribute('data-id', String(id));
-  paintSignedPhotoImgs(m);
-}
-function closeDetail(){
-  var m = document.getElementById('puDetail');
-  m.classList.remove('open'); m.innerHTML = ''; m.removeAttribute('data-id');
-}
+
+
 document.addEventListener('click', function(e){
-  var m = document.getElementById('puDetail');
-  if(m && m.classList.contains('open')){
-    var act = e.target.closest('[data-pud]');
-    if(e.target === m){ closeDetail(); return; }
-    if(act){
-      var a = act.getAttribute('data-pud');
-      var id = m.getAttribute('data-id');
-      if(a === 'close'){ closeDetail(); return; }
-      /* 418: delete. Confirmed first, then the rows are reloaded so every
-         surface repaints. The DELETE policy is restricted to is_full_access()
-         in punch_roles_v1.sql, so this is enforced, not just hidden. */
-      if(a === 'delete'){
-        var dit = rows().filter(function(x){ return String(x.id) === String(id); })[0];
-        if(!confirm('Delete "' + ((dit && dit.title) || 'this item') + '"?\n\nThis cannot be undone.')) return;
-        var dmsg = document.getElementById('puMsg');
-        if(dmsg) dmsg.textContent = 'Deleting\u2026';
-        Promise.resolve(window.supa.from('punch_items').delete().eq('id', id)).then(function(r){
-          if(r && r.error){ if(dmsg) dmsg.textContent = 'Could not delete: ' + r.error.message; return; }
-          Promise.resolve(window.CardinalPunch && window.CardinalPunch.reload
-            ? window.CardinalPunch.reload() : null).then(function(){
-            closeDetail();
-            if(document.getElementById('punchView').style.display === 'block') render();
-            if(typeof window.renderPunchStrips === 'function') window.renderPunchStrips();
-          });
-        }).catch(function(err){
-          if(dmsg) dmsg.textContent = 'Could not delete: ' + ((err && err.message) || err);
-        });
-        return;
-      }
-      if(a === 'open-client'){
-        var it0 = rows().filter(function(x){ return String(x.id) === String(id); })[0];
-        closeDetail();
-        if(it0 && typeof openProject === 'function') openProject(it0.project_id);
-        return;
-      }
-      if(a === 'status'){
-        e.preventDefault();
-        var cur = rows().filter(function(x){ return String(x.id) === String(id); })[0];
-        if(cur && cur.status !== 'done' && photosOf(cur).length < PHOTO_MIN){
-          /* 725: this refusal used to be written into #puMsg, which sits at the
-             BOTTOM of the sheet, below Photos and Notes — while the control you
-             tap is at the TOP. On a phone the message was off-screen, so closing
-             an item with too few photos looked like nothing happened at all.
-             Theo reported exactly that. Same shape as the module's other
-             refusal (mayClose), which has always used a popup. */
-          var _have = photosOf(cur).length;
-          alert('Add at least ' + PHOTO_MIN + ' photos before closing this out.\n\n' +
-                'This item has ' + _have + '. Tap \uFF0B Add under Photos to attach ' +
-                (PHOTO_MIN - _have) + ' more.');
-          return;
-        }
-        if(window.CardinalPunch && window.CardinalPunch.toggle){
-          Promise.resolve(window.CardinalPunch.toggle(id)).then(function(){
-            openDetail(id);
-            if(document.getElementById('punchView').style.display === 'block') render();
-            if(typeof window.renderPunchStrips === 'function') window.renderPunchStrips();
-          });
-        }
-        return;
-      }
-      if(a === 'addphoto'){
-        document.getElementById('puPhotoInput').click();
-        return;
-      }
-      if(a === 'rmphoto'){
-        var idx = parseInt(act.getAttribute('data-i'), 10);
-        var cur2 = rows().filter(function(x){ return String(x.id) === String(id); })[0];
-        var list = photosOf(cur2);
-        list.splice(idx, 1);
-        Promise.resolve(window.CardinalPunch.update(id, { photos: list })).then(function(){ openDetail(id); });
-        return;
-      }
-      if(a === 'save'){
-        var note = document.getElementById('puNote').value;
-        var sched = document.getElementById('puSched').value || null;
-        var who = document.getElementById('puWho').value || null;
-        var prio = document.getElementById('puPrio').value;
-        var msg = document.getElementById('puMsg');
-        msg.textContent = 'Saving\u2026';
-        Promise.resolve(window.CardinalPunch.update(id, {
-          detail: note, scheduled_at: sched, assigned_to: who, priority: prio
-        })).then(function(res){
-          if(!res.ok){ msg.textContent = 'Could not save: ' + (res.error || 'unknown error'); return; }
-          if(res.partial){
-            msg.textContent = 'Notes saved. The scheduled date needs a one-time database column (scheduled_at) \u2014 see the setup note.';
-          } else { closeDetail(); }
-          if(document.getElementById('punchView').style.display === 'block') render();
-          if(typeof window.renderPunchStrips === 'function') window.renderPunchStrips();
-        });
-        return;
-      }
-    }
-    return;
-  }
+  
   var all = e.target.closest('[data-puall]');
   if(all){ openPunchView({ crm: all.getAttribute('data-puall') }); return; }
   var tg = e.target.closest('[data-putoggle]');
@@ -58081,56 +57819,14 @@ document.addEventListener('click', function(e){
     return;
   }
   var card = e.target.closest('#puList .pu-card, .pu-strip .pu-card');
-  if(card){
-    openDetail(card.getAttribute('data-pu'));
+  if(card && window.CardinalPunchCard && window.CardinalPunchCard.open){
+    /* 837: one detail screen — the card, same as Production and the client
+       profile. back:'none' closes back to whatever page the strip is on. */
+    window.CardinalPunchCard.open(card.getAttribute('data-pu'), { back:'none' });
   }
 }, false);
 
-document.addEventListener('change', function(e){
-  if(e.target && e.target.id === 'puPrio'){
-    e.target.className = 'prio-' + e.target.value;
-    return;
-  }
-  if(e.target && e.target.id === 'puPhotoInput'){
-    var m = document.getElementById('puDetail');
-    var id = m && m.getAttribute('data-id');
-    var files = Array.prototype.slice.call(e.target.files || []);
-    if(!id || !files.length) return;
-    var msg = document.getElementById('puMsg');
-    msg.textContent = 'Uploading ' + files.length + ' photo' + (files.length > 1 ? 's' : '') + '\u2026';
-    var cur = rows().filter(function(x){ return String(x.id) === String(id); })[0];
-    var have = photosOf(cur);
-    var reads = files.map(function(f){
-      return new Promise(function(res){
-        var fr = new FileReader();
-        fr.onload = function(){ res(fr.result); };
-        fr.onerror = function(){ res(null); };
-        fr.readAsDataURL(f);
-      });
-    });
-    Promise.all(reads).then(async function(urls){
-      var out = have.slice();
-      for(var i = 0; i < urls.length; i++){
-        var dataUrl = urls[i];
-        if(!dataUrl) continue;
-        var store = dataUrl;
-        try{
-          var blob = await (await fetch(dataUrl)).blob();
-          var p = 'punch/' + id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
-          var up = await window.supa.storage.from('photos').upload(p, blob,
-                   { contentType: blob.type || 'image/jpeg', cacheControl: '31536000' });
-          if(up.error) throw up.error;
-          store = window.supa.storage.from('photos').getPublicUrl(p).data.publicUrl;
-        }catch(err){ /* storage unavailable: keep the inline copy */ }
-        out.push(store);
-      }
-      var res = await window.CardinalPunch.update(id, { photos: out });
-      if(!res.ok){ msg.textContent = 'Could not save photos: ' + (res.error || 'unknown error'); return; }
-      openDetail(id);
-      if(document.getElementById('punchView').style.display === 'block') render();
-    });
-  }
-});
+
 document.getElementById('puTabs').addEventListener('click', function(e){
   var b = e.target.closest('[data-putab]');
   if(!b) return;

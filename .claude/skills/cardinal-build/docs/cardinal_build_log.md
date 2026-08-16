@@ -17525,3 +17525,30 @@ pinned to exactly two reasons, and `test_segment`'s gutter phrase. All three now
 assert the contract rather than the punctuation. **And three separate controls
 crashed with AttributeError** on symbols the older tree lacks — every new symbol
 in `test_exclusive.py` is now read through `getattr` with a default.
+
+## Build 837 — retire the unreachable punch-detail fallback sheet (16 Aug 2026)
+
+Housekeeping subtraction, no user-facing change. Build 768 made `CardinalPunchCard`
+(`#cr-pk`) the one punch-out detail screen and rewrote `openDetail()` into a router that
+opens it (`CardinalPunchCard.open(id,{back:'none'})` then `return`); the 724-era `#puDetail`
+sheet stayed underneath as a boot fallback "for a boot where the card module has not parsed
+yet — not a second surface anyone can reach on purpose." In practice nothing reached it: taps
+happen post-load, when the card module has always parsed, and `check_build`'s `node --check`
+on every block prevents a card-module parse failure from shipping at all. So the sheet, its
+action handlers (delete / status / addphoto / rmphoto / save), the `change` handler
+(`puPrio` + `puPhotoInput`), the `#puDetail` div and **49 dead `.pu-detail`/`.pud-` style
+rules** were all unreachable weight — ~18 KB.
+
+Removed all of it; the Punch & Repairs strip and `#puList` now call `CardinalPunchCard.open`
+directly (same guard, same `{back:'none'}`). **Survivors kept and asserted**: `CardinalPunch`
+(data), `CardinalPunchStrip` (the strip renderer), and `photosOf` / `PHOTO_MIN`, which the
+surviving list/strip cards use for the "N/5 photos" badge.
+
+⚠️ **The render corrected the premise this build started from.** It began as "the strip shows
+the old sheet while Production shows the card — two divergent screens." `render_punchcard837.mjs`
+(boots the real file in Chromium against the mock, renders the REAL strip from a seeded row,
+dispatches a REAL tap) disproved that: on **both** 808 and 837 the tap opens the identical card,
+because 768's router already sent the strip to the card. The sheet was never a competing screen —
+it was dead since 768. So this is dead-code removal, not a behaviour fix. The harness proves
+parity (card opens the same before/after, no page errors) and discriminates on the real change
+(`#puDetail` present at 808, gone at 837). `check_build` green, negative-controlled.
