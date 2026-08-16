@@ -5196,3 +5196,34 @@ Indiana `464xx` ZIPs where Ohio `454xx` was meant.
 If the job already has squares on file, the panel shows the delta and flags a disagreement
 ≥25%. A Hover parse that read a siding total as a roof total is the failure `api/hover.js`'s
 own header warns about, and nothing was watching for it before this.
+
+---
+
+## Address Check — Settings → `cr-addr-script` (839)
+
+Every client address the app cannot place on a map, with the reason, and a tap to the record.
+
+| Thing | Where |
+|---|---|
+| Entry | Settings → **Check client addresses** (`data-set="addrcheck"`) |
+| View | `#addrCheckView` — an ordinary `.wrap` view modelled on `#auditView`, **registered in `hideAllViews()`** |
+| Module | `<script id="cr-addr-script">`, `window.CardinalAddrCheck.open/scan/verify` |
+| Remote check | `/api/measure` with **`check_only: true`** — geocode + wrong-state fence, no Solar call |
+
+**Two layers.** Local = `addrLooksIncomplete()`, **the 679 rule, reused not copied** (asserted
+`=== 1` app-wide). Remote = the Verify button, one Google geocode per address.
+
+Measured over the 42 real rows: local catches **5**, Verify catches **10 more** it cannot
+structurally see. The remote pass is the only thing that finds an address which *looks*
+complete — a valid-looking ZIP for the wrong state passes every string test.
+
+### Rules
+
+- **Writes nothing.** It finds records and hands you to the client page; the existing pencil fixes them.
+- **A network failure does not flag a record** — the row is left for the next Rescan.
+- **RLS scopes it** — admin sees all clients, a rep sees their own. No extra gate.
+- **No scroll-lock writer, no body observer, no stylesheet block.**
+
+⚠️ **The app has two geocoders.** The Location card uses **Nominatim**; this screen's Verify
+uses **Google**, which is much better at messy input. Expect Verify to report fewer bad
+addresses than the 13/42 recorded at 838 — that is the geocoders differing, not a bug.

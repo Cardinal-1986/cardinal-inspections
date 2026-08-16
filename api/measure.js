@@ -115,6 +115,17 @@ export default async function handler(req, res) {
   try {
     const body = req.body || {};
     const address = typeof body.address === 'string' ? body.address.trim() : '';
+    /* 839: stop after the geocode and the fence, and never spend a Solar call.
+       The Address Check screen asks "would this address resolve, and to the
+       right part of the country" for every client in the CRM — the roof is
+       irrelevant to that question and billing one buildingInsights per client
+       to answer it would be waste.
+
+       It is a MODE of this route rather than a route of its own on purpose:
+       the geocoder and the wrong-state fence must never exist in two places.
+       A second copy would drift, and the fence is the thing standing between a
+       typo and a confidently measured stranger's roof. One fence, one file. */
+    const checkOnly = body.check_only === true;
     let lat = Number(body.lat), lon = Number(body.lon);
     let resolved = null, partial = false;
 
@@ -156,6 +167,18 @@ export default async function handler(req, res) {
                 ' — almost certainly the wrong place, not the wrong roof. ' +
                 'Add the city and ZIP to the client record and try again.',
         resolved: resolved, miles_away: Math.round(away)
+      });
+      return;
+    }
+
+    if (checkOnly) {
+      res.setHeader('Cache-Control', 'no-store');
+      res.status(200).json({
+        ok: true,
+        check_only: true,
+        resolved_address: resolved,
+        partial_match: partial,
+        miles_from_dayton: Math.round(away)
       });
       return;
     }

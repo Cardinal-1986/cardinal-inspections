@@ -1816,7 +1816,7 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
   #historyMount, #estDocsMount, #inspDocsMount, #listMount{
     overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;max-width:100%;}
   /* belt-and-suspenders: no view may widen the page */
-  #mainView, #projectView, #clientsView, #activityView, #reportsView, #leadsView, #auditView, #teamView, #settingsView{
+  #mainView, #projectView, #clientsView, #activityView, #reportsView, #leadsView, #auditView, #addrCheckView, #teamView, #settingsView{
     overflow-x:clip;max-width:100%;}
 }
 /* ---- trades checkboxes: aligned everywhere ---- */
@@ -3497,7 +3497,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 838 &#8212; Instant satellite roof estimate on the Measurements tab &#8212; an estimate, never a measurement</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 839 &#8212; Address Check in Settings &#8212; every client address the app cannot place, in one list</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3849,6 +3849,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <button class="setrow" data-set="profile" data-cri="person lg">My Profile <span class="chev">&#8250;</span></button>
     <button class="setrow" data-set="team" id="teamNav" style="display:none;" data-cri="people lg">Team <span class="chev">&#8250;</span></button>
     <button class="setrow" data-set="notify" data-cri="bell lg">Enable Notifications <span class="chev">&#8250;</span></button>
+    <button class="setrow" data-set="addrcheck" data-cri="pin lg">Check client addresses <span class="chev">&#8250;</span></button>
     <button class="setrow" data-set="audit" id="auditNav" style="display:none;" data-cri="eye lg">Audit Log <span class="chev">&#8250;</span></button>
     <button class="setrow" data-set="backup" id="backupNav" style="display:none;" data-cri="save lg">Backup all data <span class="chev">&#8250;</span></button>
   </div>
@@ -7534,6 +7535,17 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <h2 class="viewhead" data-cri="eye lg">Audit Log</h2>
     <p class="subnote">Sign-ins across the team and how long each session stayed active. Sessions ping every minute while the app is open; &#8220;online&#8221; means activity in the last 2 minutes.</p>
     <div id="auditMount"></div>
+  </div>
+</div>
+<div id="addrCheckView" style="display:none;">
+  <div class="wrap" style="padding-top:18px;max-width:980px;">
+    <h2 class="viewhead" data-cri="pin lg">Address Check</h2>
+    <p class="subnote">Client addresses the app cannot place on a map. A bad address costs you the property photo, the map, directions and the satellite estimate &#8212; and an address with a street but no city can quietly resolve to another state entirely. Fix them here in one pass.</p>
+    <div class="matbtns" style="margin:0 0 12px;">
+      <button class="chipbtn" id="addrRescan">&#8635; Rescan</button>
+      <button class="chipbtn" id="addrVerify">&#127758; Verify the rest with Google</button>
+    </div>
+    <div id="addrMount"></div>
   </div>
 </div>
 <div id="boardView" style="display:none;">
@@ -17492,6 +17504,9 @@ function hideAllViews(){
   boardView.style.display = 'none';
   commsView.style.display = 'none';
   document.getElementById('auditView').style.display = 'none';
+  /* 839: a view that is not registered here swaps the page underneath
+     itself and traps the user. Registered in the same edit that created it. */
+  var _ac = document.getElementById('addrCheckView'); if(_ac) _ac.style.display = 'none';
   /* 570: the four full-screen overlays this function never knew about. Each is
      position:fixed and inset:0, so leaving them shown swapped the page underneath
      and left you looking at the same screen with no way out but its X — Theo hit
@@ -25011,6 +25026,8 @@ document.getElementById('settingsView').addEventListener('click', function(e){
   if(k === 'profile') openMyProfile();
   else if(k === 'team') openTeamView();
   else if(k === 'notify') enableNotifications();
+  else if(k === 'addrcheck'){ if(window.CardinalAddrCheck) window.CardinalAddrCheck.open();
+    else showError('Address Check did not load \u2014 reload the app.'); }
   else if(k === 'audit') openAuditLog();
   else if(k === 'backup') exportBackup();
 });
@@ -39566,6 +39583,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:839, d:'2026-08-16', t:'Address Check \u2014 find the client records the app cannot map',
+s:'Settings has a new row, Check client addresses, and it does what it says: it lists every client whose address the app cannot place on a map, tells you what is wrong with each one, and takes you straight to the record to fix it. Why it matters more than it sounds \u2014 a bad address costs you the property photo, the map, the directions link and the new satellite estimate, all quietly. Worse, an address with a street and no city does not fail; it resolves somewhere else entirely. Checking every client in the system turned up two that Google places in San Francisco and Oklahoma City, and thirteen it cannot find at all. Several carry an Indiana ZIP where an Ohio one was meant. The screen works in two passes. The first is instant and free: it flags anything with no city, state or ZIP, using the same rule the map warning has used since last week rather than a second opinion that could disagree with it. The second is a button, Verify the rest with Google, because it costs a lookup for each address \u2014 that pass is the only way to catch an address that LOOKS complete and is not, since a real-looking ZIP for the wrong state passes every spelling check there is. It runs one at a time and you can leave it going. It changes nothing on its own: it finds them and hands you to the client page, where the pencil you already use does the fixing. What you see depends on what you can see \u2014 an admin gets every client, a rep gets their own.' },
 { b:838, d:'2026-08-16', t:'Instant satellite roof estimate',
 s:'The Measurements tab can now give you a rough roof size straight from aerial imagery, in about two seconds, for nothing — before you spend $13–19 on a Roofr or Hover report for a job that may not close. It is for three things: sizing up a lead at the door or on the phone, working a storm street and knowing which roofs are big, and checking a report you already bought. That last one matters more than it sounds — if a Hover parse says 41 squares and the satellite says 24, something was read wrong, and until now nothing was watching for it. What it gives you: total squares, square footage, how many roof planes, and the pitch of each one. What it does NOT give you is lineal feet — no ridge, hip, valley, eave or rake — because satellite data gives area and slope, not edges. That is most of why a real report still costs money. Two things it will refuse to do rather than guess: if the address cannot be found it says so instead of measuring the wrong house, and if it resolves somewhere absurd it stops. That guard is not theoretical — checking this against every address in the system, thirteen of forty-two could not be found at all and two came back in the wrong STATE, because the client record has a street with no city. Those records need fixing regardless; this now tells you which. Most importantly: this number is never filed against the job, never saved, and never appears on an estimate, agreement, work order or supplement. Those all read the measurements you record by hand or import from a report, and nothing here touches them. It is a number for deciding, not a number for defending.' },
 { b:837, d:'2026-08-16', t:'Retire the unreachable punch-detail fallback sheet',
@@ -70846,6 +70865,182 @@ document.addEventListener('click', function(e){
 });
 
 window.CardinalSatMeasure = Object.assign(window.CardinalSatMeasure || {}, { run: run });
+})();
+</script>
+<script id="cr-addr-script">
+/* Cardinal — Address Check · v2026-08-16 build 839
+   ------------------------------------------------------------------
+   Every client address the app cannot place, in one list, with the reason.
+
+   WHY IT EXISTS. Build 838 geocoded all 42 rows on `projects` to check Solar
+   API coverage and found the coverage was never the problem: 13 would not
+   geocode at all, and TWO resolved to the wrong state — "948 Huron" to San
+   Francisco, "2420 Brookline" to Oklahoma City — because the row carries a
+   street and no city. Several more carry Indiana 464xx ZIPs where Ohio 454xx
+   was meant. Those records were being discovered one at a time, by whoever
+   opened the job and found a map of open water.
+
+   TWO LAYERS, AND THE FIRST ONE IS FREE.
+     local  — addrLooksIncomplete(), the rule that has decided what "incomplete"
+              means since 679 and that the map's own warning already uses. Runs
+              on every row instantly and costs nothing. REUSED, NOT REWRITTEN:
+              a second copy of that rule would drift from the map's, and then
+              two screens would disagree about the same address.
+     remote — /api/measure with check_only, which geocodes and applies the
+              wrong-state fence and stops before spending a Solar call. This is
+              the only way to catch an address that LOOKS complete and is not:
+              a valid-looking ZIP for the wrong state passes every string test
+              there is. Opt-in, because it is a Google lookup per address
+              (10,000 free a month, then $5/1000 — a full sweep here is free,
+              but it should still be a button rather than something that
+              happens because you opened a screen).
+
+   It writes nothing. Fixing an address is done on the client record, through
+   the pencil that already exists — this screen finds them and hands you over.
+
+   An ordinary view, not a fixed overlay, so it adds no scroll-lock writer
+   (still 13 modules) and no body observer. Registered in hideAllViews() in the
+   same edit that created it. No stylesheet block: every class is borrowed from
+   the Audit Log and the Measurements tab, already themed in both modes. */
+(function(){
+'use strict';
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
+  });
+}
+function mount(){ return document.getElementById('addrMount'); }
+function db(){ return window.supa || window.sb || null; }
+
+var ROWS = [];          /* [{id,name,address,bad,why,checked}] */
+var verifying = false;
+
+/* The 679 rule, borrowed. The fallback exists only so this screen degrades to
+   something honest if that function is ever moved — it is deliberately the
+   same shape, not a cleverer one. */
+function localWhy(a){
+  var s = String(a == null ? '' : a).trim();
+  if(!s) return 'No address on the record at all.';
+  var f = window.addrLooksIncomplete;
+  var bad = (typeof f === 'function') ? !!f(s)
+          : !(/\b\d{5}(-\d{4})?\b/.test(s) || /,/.test(s));
+  return bad ? 'No city, state or ZIP — Google cannot place this, and a static map answers with open water.' : null;
+}
+
+function summary(){
+  var total = ROWS.length;
+  var bad = ROWS.filter(function(r){ return r.bad; }).length;
+  var unchecked = ROWS.filter(function(r){ return !r.bad && !r.checked; }).length;
+  if(!total) return '<p class="subnote">No client records to check.</p>';
+  return '<div class="note" style="margin:0 0 12px;">' +
+    (bad ? '<b>' + bad + ' of ' + total + '</b> client addresses cannot be placed.'
+         : '<b>All ' + total + '</b> client addresses look placeable.') +
+    (unchecked ? ' ' + unchecked + ' more look complete but have not been checked against Google — that is what Verify does.' : '') +
+    '</div>';
+}
+
+function render(){
+  var m = mount();
+  if(!m) return;
+  var bad = ROWS.filter(function(r){ return r.bad; });
+  m.innerHTML = summary() + (bad.length
+    ? bad.map(function(r){
+        return '<div class="tskrow" style="cursor:pointer;" data-addrgo="' + esc(r.id) + '">' +
+          '<b>' + esc(r.name || '(no name)') + '</b>' +
+          '<small>' + (r.address ? esc(r.address) : '<i>no address</i>') + '<br>' +
+          '<span style="color:var(--red);">' + esc(r.why) + '</span></small></div>';
+      }).join('')
+    : '<p class="subnote">Nothing to fix here.</p>');
+}
+
+async function scan(){
+  var m = mount();
+  if(!m) return;
+  var client = db();
+  if(!client){ m.innerHTML = '<p class="subnote">Not signed in — reload the app.</p>'; return; }
+  m.innerHTML = '<p class="subnote">Reading client records…</p>';
+  try{
+    /* RLS scopes this by itself: an admin sees every client, a rep sees the
+       ones they created or are assigned. That is the correct scope for a
+       "fix your own records" screen and needs no extra gate here. */
+    var res = await client.from('projects').select('id,name,address').order('name');
+    if(res.error) throw new Error(res.error.message || 'query failed');
+    ROWS = (res.data || []).map(function(p){
+      var why = localWhy(p.address);
+      return { id: p.id, name: p.name, address: p.address, bad: !!why, why: why || '', checked: false };
+    });
+    render();
+  }catch(err){
+    m.innerHTML = '<p class="subnote">Could not read the client list: ' +
+      esc(String(err && err.message || err)).slice(0, 160) + '</p>';
+  }
+}
+
+/* The remote pass, over the rows the local rule cleared. Sequential on purpose:
+   this is a background chore, not something anyone is watching, and a burst of
+   40 parallel geocodes is how you get rate-limited for no gain. */
+async function verify(){
+  if(verifying) return;
+  var btn = document.getElementById('addrVerify');
+  var todo = ROWS.filter(function(r){ return !r.bad && !r.checked && r.address; });
+  if(!todo.length){ render(); return; }
+  verifying = true;
+  if(btn){ btn.disabled = true; }
+  var headers;
+  try{ headers = await window.aiHeaders(); }catch(e){ headers = { 'Content-Type':'application/json' }; }
+  for(var i = 0; i < todo.length; i++){
+    if(!verifying) break;
+    var r = todo[i];
+    if(btn) btn.textContent = 'Checking ' + (i + 1) + ' of ' + todo.length + '…';
+    try{
+      var res = await fetch('/api/measure', {
+        method: 'POST', headers: headers,
+        body: JSON.stringify({ address: r.address, check_only: true })
+      });
+      var d = null; try{ d = await res.json(); }catch(pe){}
+      r.checked = true;
+      if(!res.ok){
+        r.bad = true;
+        r.why = (d && d.detail) ? String(d.detail) : ('Google refused this address (HTTP ' + res.status + ').');
+      }else if(d && d.partial_match){
+        r.bad = true;
+        r.why = 'Google could only partially match this' +
+          (d.resolved_address ? ' — it read it as "' + d.resolved_address + '"' : '') + '.';
+      }
+    }catch(err){
+      /* a network failure is not a bad address — leave the row alone and let
+         a later Rescan try again, rather than accusing a record that is fine */
+      r.checked = false;
+    }
+    render();
+  }
+  verifying = false;
+  if(btn){ btn.disabled = false; btn.innerHTML = '&#127758; Verify the rest with Google'; }
+  render();
+}
+
+document.addEventListener('click', function(e){
+  if(!e.target.closest) return;
+  var go = e.target.closest('[data-addrgo]');
+  if(go){
+    var id = go.getAttribute('data-addrgo');
+    if(typeof window.openProject === 'function') window.openProject(id);
+    return;
+  }
+  if(e.target.closest('#addrRescan')){ e.preventDefault(); verifying = false; scan(); return; }
+  if(e.target.closest('#addrVerify')){ e.preventDefault(); verify(); return; }
+});
+
+function open(){
+  if(typeof window.hideAllViews === 'function') window.hideAllViews();
+  var v = document.getElementById('addrCheckView');
+  if(v) v.style.display = 'block';
+  window.scrollTo(0, 0);
+  scan();
+}
+
+window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open: open, scan: scan, verify: verify });
 })();
 </script>
 </body>
