@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 853 &#8212; The Production hub leads with the month calendar, then the tiles, then today&#8217;s work &#8212; everything in one screen</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 854 &#8212; Curtis and Scottie open straight into the Production hub when they log in &#8212; their main work screen</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24658,7 +24658,19 @@ var hd = document.querySelector('header.site');
     return;
   }
   mainView.style.display = 'block';
-  showLanding(userEmail);
+  /* 854: Curtis and Scottie run Production, so on login they land straight on the
+     Production hub — their main work screen — instead of the front door. reload()
+     below fetches the data and refreshes the hub. They can still open the landing
+     and the other portals from the menu (Landing) — goToLanding() is untouched.
+     Guarded: a non-production account, or the module missing, falls back to the
+     landing exactly as before. */
+  if(typeof isProductionUser === 'function' && isProductionUser() &&
+     window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
+    try{ var _plv = document.getElementById('landingView'); if(_plv) _plv.style.display = 'none'; }catch(_pl){}
+    try{ window.CardinalProduction.open(); }catch(_pe){ showLanding(userEmail); }
+  }else{
+    showLanding(userEmail);
+  }
   if(TEAM){
     whoami.textContent = currentUser ? displayNameFor(currentUser) : (userEmail || '');
     whoami.title = (userEmail || '') + ' \u2014 click to set your display name';
@@ -39710,6 +39722,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:854, d:'2026-08-16', t:'Production accounts open into the hub',
+s:'Curtis and Scottie run Production, so when they log in they now land straight on the Production hub \u2014 the calendar, the tiles and today\u2019s work \u2014 instead of the landing front door. Everyone else (sales, admins) still opens on the landing. Curtis and Scottie can still reach the landing and the other portals from the menu; only the first screen after sign-in changed. Login routing only \u2014 no data or permissions changed.' },
 { b:853, d:'2026-08-16', t:'Production hub \u2014 calendar, tiles, then today',
 s:'The Production home is reordered the way you picked from the concept board: a compact month calendar sits up top, the command tiles (Needs ordered, Ordered, Scheduled, Punch-outs) in the middle, and the day\u2019s agenda at the bottom. Tap any day in the calendar and the agenda below swaps to that day; the month arrows page through, and Full calendar still opens the big view. Same Cardinal Steel colours, same tiles and same day cells \u2014 only the arrangement changed, so a project manager sees the schedule, the counts and today\u2019s work in one screen.' },
 { b:852, d:'2026-08-16', t:'Landing \u2014 focused on the work',
