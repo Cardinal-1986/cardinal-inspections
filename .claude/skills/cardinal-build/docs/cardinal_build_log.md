@@ -17919,3 +17919,16 @@ stays the red primary. Same buttons, same IDs, same actions — just aligned and
 drawn icon and a `.bl` span, no emoji, a 2-column grid on the phone, and the email button keeping both its
 icon and its span — GREEN 6/6, RED against the 849 tree. Rendered on phone and desktop for the eye.
 `check_build` green.
+
+
+## Build 851 — Work Order Email button says "crew," not "client" (16 Aug 2026)
+Theo, on the 850 toolbar: *"And email to client is not right"* — confirmed it was the wording. A Work
+Order is Cardinal’s document to the CREW, not the homeowner, so "Email to client" on one is wrong. The
+Email button label is now context-aware, set in `openEditor` by document type: **"Email to crew"** on a
+Work Order, **"Email to client"** on Estimates and Contracts (client-facing). The label is stashed on the
+button as `data-lbl` so the send-state reset (Sending… / ✓ Sent → back to the label) restores the right
+words rather than a hardcoded "client" — the 850 handler now reads `btn.dataset.lbl`. Wording only; the
+send flow still prompts for the address, unchanged (Theo scoped this to the label, not the recipient).
+Gate: `render_email851.mjs` opens a Work Order and an Estimate through the real `openEditor` and asserts
+the label flips ("Email to crew" vs "Email to client") and is stored on the button — GREEN 3/3, RED
+against the 850 tree. `check_build` green.

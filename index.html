@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 850 &#8212; The document editor toolbar is tidied &#8212; one aligned button set with drawn icons in place of the mismatched emoji</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 851 &#8212; On a Work Order the Email button says &#8220;Email to crew,&#8221; not &#8220;Email to client&#8221; &#8212; it goes to the crew</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -23059,6 +23059,18 @@ async function openEditor(id){
      already in hand as `r`; it simply was not carried. */
   current = { id: r.id, status: r.status, sent_at: r.sent_at, project_id: r.project_id };
   titleInput.value = r.title || '';
+  /* 851: a Work Order goes to the CREW, not the homeowner, so the Email button
+     must not say "client" on one. Context-aware label, stored on the button so
+     the send-state reset in the handler restores the right words, not a hardcoded
+     'client'. Estimates and Contracts are client-facing and keep 'Email to client'. */
+  (function(){
+    var eb = document.getElementById('emailDocBtn');
+    if(eb){
+      var _lbl = isWorkOrderTitle(r.title) ? 'Email to crew' : 'Email to client';
+      eb.dataset.lbl = _lbl;
+      var _b = eb.querySelector('.bl'); if(_b) _b.textContent = _lbl;
+    }
+  })();
   (function(){
     var pr = cacheProjects.find(function(p){ return p.id === r.project_id; });
     window.__edPid = pr ? pr.id : null;
@@ -23396,7 +23408,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
       try{ await setStage(pr.id, 'Invoiced'); }catch(e){}
     }
     _bl.textContent = '\u2713 Sent';
-    setTimeout(function(){ _bl.textContent = 'Email to client'; btn.disabled = false; }, 2500);
+    setTimeout(function(){ _bl.textContent = (btn.dataset.lbl || 'Email to client'); btn.disabled = false; }, 2500);
     if(pr && confirm('Sent. Schedule a follow-up reminder in 3 days?')){
       var d = new Date(Date.now() + 3 * 86400000);
       await adb.create({
@@ -23410,7 +23422,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     }
     await reload();
   }catch(err){
-    _bl.textContent = 'Email to client'; btn.disabled = false;
+    _bl.textContent = (btn.dataset.lbl || 'Email to client'); btn.disabled = false;
     showError('Could not send: ' + (err.message || err));
   }
 });
@@ -39698,6 +39710,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:851, d:'2026-08-16', t:'Work Order \u2014 Email button says \u201ccrew\u201d',
+s:'On a Work Order the toolbar\u2019s Email button read \u201cEmail to client,\u201d but a work order goes to the CREW, not the homeowner. The label is now context-aware: \u201cEmail to crew\u201d on a Work Order, \u201cEmail to client\u201d on Estimates and Contracts (which are client-facing). The label is set when the document opens and restored correctly after a send. Wording only \u2014 the send flow still prompts for the address, unchanged.' },
 { b:850, d:'2026-08-16', t:'Document editor \u2014 a tidier toolbar',
 s:'The toolbar on a document (Work Order, Estimate, Contract) was a scattered pile of differently-sized buttons with mismatched emoji icons. The action buttons \u2014 Save, Print/PDF, Download, Email, Client signature, Share link, Assistant, CompanyCam \u2014 are now one aligned set: a neat wrapped row on desktop and an even two-up grid on the phone, every button the same size. The emoji are replaced with the app\u2019s own drawn icons so they read as one family (the folder emoji on Assistant becomes a proper sparkle, the flash camera becomes the clean camera, and so on). Same buttons, same actions \u2014 just aligned and de-cluttered.' },
 { b:849, d:'2026-08-16', t:'Job Menu \u2014 a Work Orders tile',
