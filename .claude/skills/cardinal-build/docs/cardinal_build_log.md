@@ -17749,3 +17749,22 @@ the comment I wrote to explain a value contained the value.** `components=countr
 counted 2 (code + prose); `upgradeNearbyRow` moved because the new comment names it. The
 fix, which this document already prescribes: **assert on a brace-matched function body, not
 a file-wide string count.** Recorded because it is now the fourth build in a row to pay for it.
+
+## Build 841 — Crew Dispatch: the week grid (16 Aug 2026)
+A new full-screen Production view (`#cr-disp`, `window.CardinalDispatch`, opened from
+**Menu → Production → Crew Dispatch**). A **read-only** week grid of every crew's booked
+`crew_work_orders`: rows are crews grouped under **trade bands** (Roofing/Siding/Windows/Gutters/…),
+columns are the build days **Mon–Sun — Sunday only when it is worked, or when today is Sunday** so
+the current day is never hidden. A crew shows only when it has work this week; **idle crews collapse**
+into a per-band "+ N idle crews · tap to show" row. Scheduled jobs with no crew sit in a
+**Needs-a-crew rail** (Habitat sorts first). Tap a job or an unassigned client → `openProject()`,
+where the **existing build-555 picker** assigns a crew — no second pipeline. Palette is **Mono+Red**
+(greyscale board, red reserved for action), `--disp-*` tokens both themes with literal fallbacks;
+sticky crew column and trade-band labels. **No money renders**: the read selects
+`id,crew_id,project_id,report_id,status,scheduled_on,sent_at,completed_on` and **never `amount`**.
+Registered at all five sites (`hideAllViews` class-clear, `navRestore` case, `__crNav` wrap, `BLACKOUT`,
+the `dispatch` ROUTE + menu item that `resolveHide` auto-hides if the module is absent). Gates:
+`check_build` green, `render_dispatch841.mjs` 18/18 in both themes with an 840 negative control; the
+amount-fence and Habitat-first are asserted in the harness. **Repairs band + Curtis/Scottie owner
+lanes are build 842** (needs a `punch_items` load and the assignee→manager map). In-grid assign (the
+555 picker prefilled) is a follow-up; v1 routes to the profile.

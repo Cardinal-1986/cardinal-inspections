@@ -5262,3 +5262,17 @@ Google also corrects typed ZIPs (`46417` → `45417`). Its one regression is a w
 resolves the address inside the URL, so there is no geocode round trip at all. **`upgradeNearbyRow()`
 (the Nearby sort) still uses Nominatim** on purpose: it caches geocodes in `localStorage`
 permanently and Google's terms cap that at 30 days, so moving it needs an expiry first.
+
+## Crew Dispatch (build 841) — `cr-disp-styles` + `cr-disp-script`, `window.CardinalDispatch`
+
+A full-screen Production view: a **read-only week grid** of every crew's booked work orders.
+Rows are crews under **trade bands**; columns are build days (**Mon–Sun**, Sunday shown only when
+worked or when today is Sunday). Only crews with work this week show; **idle crews collapse** per
+band. Scheduled jobs with no crew sit in a **Needs-a-crew rail** (Habitat first). Tap a job or an
+unassigned client → `openProject()`, where the existing **build-555 Work-Order picker** assigns a
+crew. **Mono+Red** palette, `--disp-*` tokens both themes; sticky crew column + band labels. **No
+money** — the `crew_work_orders` read never selects `amount`. Opens from **Menu → Production → Crew
+Dispatch** (`ROUTES.dispatch`, auto-hidden by `resolveHide` if the module is absent). Registered in
+`hideAllViews` (class-clear), `navRestore` (`dispatch`), the `__crNav` wrap, and `BLACKOUT`. Gate:
+`scripts/render_dispatch841.mjs` (18 assertions, both themes, 840 negative control). Repairs band +
+owner lanes and in-grid assign are build 842.
