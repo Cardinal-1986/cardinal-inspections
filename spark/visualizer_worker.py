@@ -651,7 +651,7 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.7 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-16.15"
+WORKER_BUILD = "wb-2026-08-16.16"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
@@ -1085,6 +1085,17 @@ BOX_MARGIN_MIN_PX = 16        # never closer than this, whatever the arithmetic
 #     POINT_NEGATIVES=1 systemctl ... # or export it before running by hand
 USE_NEGATIVES = (os.environ.get("POINT_NEGATIVES") or "0").strip() == "1"
 
+# 835: how a dragged box is expressed to SAM 2.
+#   auto   (default) use the node's own `bboxes` input when it declares one,
+#                    fall back to points inside the box when it does not
+#   points           force the old behaviour
+#   bbox             force the box prompt and do not fall back on refusal
+# Switchable because the whole question is what this particular ComfyUI node
+# accepts, and that can only be answered on the Spark.
+BOX_PROMPT = (os.environ.get("BOX_PROMPT") or "auto").strip().lower()
+if BOX_PROMPT not in ("auto", "points", "bbox"):
+    BOX_PROMPT = "auto"
+
 
 def _corner_negatives(w, h):
     """The four frame corners, as points that are NOT the thing being asked for.
@@ -1239,20 +1250,70 @@ def run_points_job(comfy, job, job_id, started):
         log("    Sam2Segmentation declares no coordinates_negative — sending the "
             "positives alone; a tap on a large wall may still take the whole building")
 
+    # ── 835: SAM 2's OWN box prompt ─────────────────────────────────────────
+    # Measured on Theo's first clean drag: he dragged 42x70px and the mask came
+    # back 559x310 — thirteen times wider. That is not a bug, it is the
+    # CONSTRUCTION. 832 expressed a dragged box as five positive POINTS inside
+    # it, and a point can only ever say "include this". Nothing in that prompt
+    # says "and nothing past here". The corner negatives were the only bound,
+    # and they were the thing shredding the mask (834). So it was bounded and
+    # speckled, or clean and unbounded — never both.
+    #
+    # SAM 2 takes a BOX prompt natively and it needs no negatives. That is the
+    # right instrument; points-from-a-box was my workaround for not knowing
+    # whether this ComfyUI node exposed it.
+    #
+    # Ask, do not assume — and fall back rather than fail. A wrong guess here
+    # costs one retry, not a dead job, because I cannot reach ComfyUI from
+    # where this was written.
+    prompt_kind = "points"
+    if box is not None and BOX_PROMPT != "points" and "bboxes" in _known:
+        px_box = [int(min(max(float(box[0]), 0.0), 1.0) * frame[0]),
+                  int(min(max(float(box[1]), 0.0), 1.0) * frame[1]),
+                  int(min(max(float(box[2]), 0.0), 1.0) * frame[0]),
+                  int(min(max(float(box[3]), 0.0), 1.0) * frame[1])]
+        log("    bboxes = %s  (SAM 2's own box prompt)" % json.dumps([px_box]))
+        set_input(graph, "CARDINAL_POINTS", "bboxes", [px_box])
+        prompt_kind = "bbox"
+    elif box is not None and BOX_PROMPT != "points":
+        log("    Sam2Segmentation declares no `bboxes` — falling back to points "
+            "inside the box, which cannot bound the answer")
+
     added = comfy.fill_defaults(graph, "Sam2Segmentation")
     if added:
         log("    filled from the node's own schema: %s" % ", ".join(sorted(set(added))))
     name = comfy.upload_image("cardinal_points.png", fitted)
     set_input(graph, T_SEG_IN, "image", name)
 
-    pid = comfy.run(graph, timeout=900)
-    out = comfy.outputs(pid)
+    def _run(g):
+        _pid = comfy.run(g, timeout=900)
+        _out = comfy.outputs(_pid)
+        for _nid, _payload in _out.items():
+            if ((g.get(_nid, {}).get("_meta") or {}).get("title") or "") == "CARDINAL_REGIONS":
+                return _payload.get("images") or []
+        return []
 
-    images = []
-    for nid, payload in out.items():
-        if ((graph.get(nid, {}).get("_meta") or {}).get("title") or "") == "CARDINAL_REGIONS":
-            images = payload.get("images") or []
-            break
+    try:
+        images = _run(graph)
+    except Exception as e:
+        if prompt_kind != "bbox":
+            raise
+        # The node declared `bboxes` and still refused the graph — most likely
+        # it wants a BBOX from another node rather than a literal. Retry once
+        # with the points prompt so the rep gets a mask either way, and say so
+        # loudly enough that the next session knows to stop trying.
+        log("    the bbox prompt was refused (%s) — retrying with points"
+            % _short(e, 120))
+        graph = load_graph("points_api.json")
+        set_input(graph, "CARDINAL_POINTS", "coordinates_positive", coords)
+        if negatives and "coordinates_negative" in _known:
+            set_input(graph, "CARDINAL_POINTS", "coordinates_negative",
+                      json.dumps(negatives))
+        comfy.fill_defaults(graph, "Sam2Segmentation")
+        set_input(graph, T_SEG_IN, "image", name)
+        images = _run(graph)
+        prompt_kind = "points-after-bbox-refused"
+
     if not images:
         raise RuntimeError("the points graph produced no mask")
 
@@ -1307,8 +1368,13 @@ def run_points_job(comfy, job, job_id, started):
         "duration_ms": took, "error": None,
         # No render_path, for the same reason a regions job has none: this
         # produced a mask, not a picture, and a gallery card for it is empty.
+        # 835: `_prompt` records WHICH prompt SAM 2 was actually given —
+        # "bbox", "points", or "points-after-bbox-refused". Without it the only
+        # way to know whether the box prompt took is to read the Spark's log,
+        # which means asking Theo to paste it. The row should answer it.
         "achieved": {"_worker": "%s points" % WORKER_BUILD,
-                     "_points": len(scaled)},
+                     "_points": len(scaled),
+                     "_prompt": prompt_kind},
     })
     log("  tapped region is %.1f%% of frame, in %.1fs" % (pct, took / 1000.0))
 

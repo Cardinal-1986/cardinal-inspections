@@ -17422,3 +17422,49 @@ exactly (100%) plus a check that it is not `pct` under another name.
 on `USE_NEGATIVES` rather than reporting. Second time this exact shape has come
 up (830, `_corner_negatives`); guard any new-symbol assertion in a file that
 takes a control path.
+
+---
+
+## Build 835 — SAM 2's own box prompt
+
+834 proved the negatives caused the speckle: the same kind of drag went from
+**24.1% fill to 60.8%** with them off. But the first clean drag also exposed the
+next thing, and it is structural rather than a bug.
+
+**Theo dragged 42x70px and the mask came back 559x310** — thirteen times wider.
+
+832 expressed a dragged box as five positive POINTS inside it. A point can only
+ever say *include this*. **Nothing in that prompt says "and nothing past here."**
+The corner negatives were the only bound, and they were the thing shredding the
+mask. So the feature could be bounded and speckled, or clean and unbounded —
+never both. Points-from-a-box cannot bound extent **by construction**.
+
+SAM 2 takes a **box prompt natively** and needs no negatives for it. That is the
+instrument; the points workaround existed only because I did not know whether
+this ComfyUI node exposed `bboxes`.
+
+**Ask, do not assume — and fall back rather than fail.** `BOX_PROMPT` is
+`auto` / `points` / `bbox`:
+
+- `auto` uses the node's `bboxes` input when it declares one, in PIXELS of the
+  fitted frame, and falls back to points when it does not.
+- If the node declares it and then **refuses the graph** — most likely because
+  it wants a BBOX from another node rather than a literal — the pass retries
+  **once** with points. A wrong guess costs a retry, not a dead job. This
+  matters because the answer can only be found on the Spark.
+
+**`achieved._prompt` records which prompt was actually used** — `bbox`,
+`points`, or `points-after-bbox-refused`. Without it the only way to know
+whether the box prompt took is to read the Spark's log, which means asking Theo
+to paste it. The row should answer it, the same reasoning as `_worker` at 829
+and `fill` at 834.
+
+`WORKER_BUILD` → `wb-2026-08-16.16`.
+
+**Gates.** `test_points` **86/86**, control **78/86** against 834. The fake
+ComfyUI can now declare `bboxes` and can refuse the first run, so all three
+outcomes are executed rather than reasoned about: the box is used and is in
+pixels of the fitted frame and matches the drag; a node without it still
+completes on points; and a refusal retries exactly once, drops the bbox from
+the retry, and records `points-after-bbox-refused`. The `runs == 2` assertion is
+the one that matters — it proves the fallback fired once and not in a loop.
