@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 854 &#8212; Curtis and Scottie open straight into the Production hub when they log in &#8212; their main work screen</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 855 &#8212; The Production hub gains Crew Dispatch and Crews &#8212; the whole toolset in one screen</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39722,6 +39722,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:855, d:'2026-08-16', t:'Production hub \u2014 Crew Dispatch &amp; Crews',
+s:'The Production hub was missing two tools it should hold: the hub now has a Crew Dispatch and a Crews button right under the command tiles, so the whole production toolset \u2014 calendar, jobs, punch-outs, dispatch and the crew directory \u2014 is on one screen. They open the same Crew Dispatch board (841) and Crews directory the menu does; nothing new underneath. Kept the Cardinal Steel colours.' },
 { b:854, d:'2026-08-16', t:'Production accounts open into the hub',
 s:'Curtis and Scottie run Production, so when they log in they now land straight on the Production hub \u2014 the calendar, the tiles and today\u2019s work \u2014 instead of the landing front door. Everyone else (sales, admins) still opens on the landing. Curtis and Scottie can still reach the landing and the other portals from the menu; only the first screen after sign-in changed. Login routing only \u2014 no data or permissions changed.' },
 { b:853, d:'2026-08-16', t:'Production hub \u2014 calendar, tiles, then today',
@@ -47954,6 +47956,13 @@ objections : OBJECTIONS,
 #cr-pb .pbclosed .t{ font:600 12px -apple-system,'Segoe UI',Roboto,sans-serif; }
 #cr-pb .pbclosed .c{ font:700 12.5px var(--pb-mono,ui-monospace,Menlo,monospace); color:var(--pb-ok,#6cb98f); }
 #cr-pb .pbclosed .go{ margin-left:auto; color:var(--pb-dim,#848c94); font:700 14px var(--pb-mono,ui-monospace,Menlo,monospace); }
+/* 855: Crew Dispatch + Crews, folded into the hub under the command tiles. */
+#cr-pb .pbnav{ display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:9px; }
+#cr-pb .pbnavbtn{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; background:var(--pb-c,#15171a); border:1px solid var(--pb-line,rgba(230,235,240,.11)); border-radius:11px; padding:12px 13px; cursor:pointer; color:var(--pb-ink,#eceef0); text-align:left; transition:border-color .15s,background .15s; }
+#cr-pb .pbnavbtn:hover{ border-color:var(--pb-acc,#e35c63); background:var(--pb-c2,#1b1e22); }
+#cr-pb .pbnavbtn svg{ width:17px; height:17px; color:var(--pb-acc,#e35c63); margin-bottom:5px; flex:none; }
+#cr-pb .pbnavbtn .t{ font:700 12.5px -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pb-ink,#eceef0); }
+#cr-pb .pbnavbtn .s{ font:600 9px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.02em; color:var(--pb-dim,#848c94); }
 
 /* ---- week strip --------------------------------------------------------- */
 #cr-pb .pbweek{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; margin:16px 0 2px; }
@@ -48244,6 +48253,8 @@ var ICON = {
   check:'<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16 9"/>',
   tick :'<path d="M5 12.5l4.2 4.2L19 7"/>',
   chev :'<path d="M15 5l-7 7 7 7"/>',
+  grid :'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11M15 9v11"/>',
+  crew :'<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.2a3 3 0 0 1 0 5.6M21 20a6 6 0 0 0-4.6-5.8"/>',
 };
 function svg(name, cls){
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
@@ -48571,6 +48582,14 @@ function agendaHtml(d){
   }
   return evs.map(evHtml).join('');
 }
+function crewNavHtml(){
+  return '<div class="pbnav">' +
+    '<button class="pbnavbtn" data-hub="dispatch" type="button">' + svg('grid') +
+      '<span class="t">Crew Dispatch</span><span class="s">Week grid</span></button>' +
+    '<button class="pbnavbtn" data-hub="crews" type="button">' + svg('crew') +
+      '<span class="t">Crews</span><span class="s">Directory &amp; jobs</span></button>' +
+    '</div>';
+}
 function homeMonthHtml(){
   var m = calMonth, first = new Date(m.getFullYear(), m.getMonth(), 1);
   var start = new Date(first); start.setDate(1 - first.getDay());
@@ -48606,6 +48625,7 @@ function homeHtml(){
     '<div class="pbsub">Schedule · Jobs · Punch</div>' +
     homeMonthHtml() +
     tilesHtml() +
+    crewNavHtml() +
     '<div class="pbrule">' + esc(keyOf(d) === keyOf(today()) ? 'Today' : pbFull(d)) +
       '<span class="sp">' +
       '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
@@ -48740,6 +48760,13 @@ function wire(){
   });
   el.querySelectorAll('[data-box]').forEach(function(b){
     b.onclick = function(){ listKey = b.getAttribute('data-box'); pane = 'list'; render(); scrollTop(); };
+  });
+  el.querySelectorAll('[data-hub]').forEach(function(b){
+    b.onclick = function(){
+      var h = b.getAttribute('data-hub');
+      if(h === 'dispatch' && window.CardinalDispatch && window.CardinalDispatch.open) window.CardinalDispatch.open();
+      else if(h === 'crews' && window.CardinalCrews && window.CardinalCrews.open) window.CardinalCrews.open();
+    };
   });
   el.querySelectorAll('[data-go="cal"]').forEach(function(b){
     b.onclick = function(){

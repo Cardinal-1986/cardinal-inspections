@@ -17975,3 +17975,7 @@ permission change. Third of three builds off Theo's concept-board picks (852 lan
 routing). Gate: `render_route854.mjs` drives the real `showMain` as curtis@ and theo@ and asserts curtis
 opens the hub with the landing hidden while theo opens the landing and is not force-routed — GREEN 4/4,
 RED against the 853 tree. `check_build` green.
+
+## Build 855 — Production hub gains Crew Dispatch and Crews
+
+Theo: “The dispatch and crews is missing.” The 853 hub folded in the calendar, the command tiles and the day agenda but not the two crew tools it should hold. 855 adds a `.pbnav` row of two buttons directly under the command tiles (and the Closed-repairs bar), before the day-agenda rule: **Crew Dispatch** (opens the 841 week-grid board via `window.CardinalDispatch.open`) and **Crews** (opens the crew directory via `window.CardinalCrews.open`). Both route to the existing full-screen views — nothing new underneath, same as the menu items. Two glyphs added to `cr-pb`’s `ICON` set (`grid`, `crew`); `crewNavHtml()` builder inserted between `tilesHtml()` and the `.pbrule` in `homeHtml()`; a `[data-hub]` handler added beside `[data-box]` in `wire()`. Cardinal Steel palette kept (`--pb-acc:#e35c63`). Gated: `check_build` green; `render_hubnav855.mjs` 11/11 GREEN, negative-controlled RED against v854.
