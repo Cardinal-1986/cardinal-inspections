@@ -17895,3 +17895,40 @@ also gives the phone a Job-Menu path to work orders, matching the desktop. No mo
 `render_wotile849.mjs` opens a project and asserts the tile exists, is labelled, carries an icon, is
 full-width, and its click opens `#tab-workorders` and hides Overview — GREEN 6/6, RED against the 848 tree.
 `check_build` green.
+
+
+## Build 850 — The document editor toolbar, tidied (16 Aug 2026)
+Theo (screenshot of a Work Order): *"Can you clean up and align all these buttons so they don't look so
+messy and cluttered."* The shared document-editor toolbar (Work Order / Estimate / Contract) was a
+scattered wrap of differently-sized buttons carrying **mismatched emoji** (a blue 3-D download arrow, a
+flat envelope, a hand, a chain link, a **folder** on Assistant, a flash camera). Two fixes:
+
+1. **Aligned as one set.** Wrapped the eight action buttons in a `.edbtns` container — a neat wrapped row
+   on desktop, an even **2-column grid** on the phone (`grid-template-columns:1fr 1fr`), every button the
+   same size, Save the red primary top-left. The status row and the title bar sit below, unchanged.
+2. **One icon family.** Replaced the emoji with the app's own drawn icons via `data-cri`
+   (page / save / mail / pencil / paperclip / sparkle / camera / funnel) — the same sweep 686–699 did
+   everywhere else and missed here. Assistant's folder emoji becomes a proper **sparkle**. Added one new
+   `mail` glyph to `CardinalIcons` (stroke envelope, matching the set).
+
+The email button's label is rewritten by its handler (Sending… / ✓ Sent / reset), which would wipe an
+injected icon — so its label now lives in a `.bl` span and the four handler writes target the span, not
+the whole button; the icon survives. Save keeps its plain text (its label churns across many modules) and
+stays the red primary. Same buttons, same IDs, same actions — just aligned and de-cluttered. Gate:
+`render_toolbar850.mjs` opens the editor and asserts one `.edbtns` set, every dark button hydrated with a
+drawn icon and a `.bl` span, no emoji, a 2-column grid on the phone, and the email button keeping both its
+icon and its span — GREEN 6/6, RED against the 849 tree. Rendered on phone and desktop for the eye.
+`check_build` green.
+
+
+## Build 851 — Work Order Email button says "crew," not "client" (16 Aug 2026)
+Theo, on the 850 toolbar: *"And email to client is not right"* — confirmed it was the wording. A Work
+Order is Cardinal’s document to the CREW, not the homeowner, so "Email to client" on one is wrong. The
+Email button label is now context-aware, set in `openEditor` by document type: **"Email to crew"** on a
+Work Order, **"Email to client"** on Estimates and Contracts (client-facing). The label is stashed on the
+button as `data-lbl` so the send-state reset (Sending… / ✓ Sent → back to the label) restores the right
+words rather than a hardcoded "client" — the 850 handler now reads `btn.dataset.lbl`. Wording only; the
+send flow still prompts for the address, unchanged (Theo scoped this to the label, not the recipient).
+Gate: `render_email851.mjs` opens a Work Order and an Estimate through the real `openEditor` and asserts
+the label flips ("Email to crew" vs "Email to client") and is stored on the button — GREEN 3/3, RED
+against the 850 tree. `check_build` green.
