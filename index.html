@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 851 &#8212; On a Work Order the Email button says &#8220;Email to crew,&#8221; not &#8220;Email to client&#8221; &#8212; it goes to the crew</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 852 &#8212; The landing focuses on the CRMs, Production &amp; Sales Floor &#8212; Quick Inspection and Schedule Board come off it, the Pop-Up Roof moves to the Sales Floor</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39710,6 +39710,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:852, d:'2026-08-16', t:'Landing \u2014 focused on the work',
+s:'The front door is pared back to what a project manager or rep opens the app to reach: the three CRMs (Retail, Cardinal Truth, Community), then Production and the Sales Floor, with the Resource Library kept as a full-width utility. Quick Inspection and Schedule Board come off the landing \u2014 both are still in the menu \u2014 and The Pop-Up Roof book moves onto the Sales Floor, beside the Showcase, where it belongs at the kitchen table. Nothing else changed; the greeting, the House Rule and the CRM client counts are untouched.' },
 { b:851, d:'2026-08-16', t:'Work Order \u2014 Email button says \u201ccrew\u201d',
 s:'On a Work Order the toolbar\u2019s Email button read \u201cEmail to client,\u201d but a work order goes to the CREW, not the homeowner. The label is now context-aware: \u201cEmail to crew\u201d on a Work Order, \u201cEmail to client\u201d on Estimates and Contracts (which are client-facing). The label is set when the document opens and restored correctly after a send. Wording only \u2014 the send flow still prompts for the address, unchanged.' },
 { b:850, d:'2026-08-16', t:'Document editor \u2014 a tidier toolbar',
@@ -46837,13 +46839,6 @@ lv.innerHTML =
 '<p data-slot="qt"></p><cite data-slot="qc"></cite>' +
 '</blockquote>' +
 '<div class="cr-lr-roof">' +
-'<button class="cr-lr-course lead" data-go="qi" style="--acc:#c8202e;">' +
-'<span class="ic">\u26A1</span>' +
-'<span class="tx">' +
-'<span class="tt">Quick Inspection</span>' +
-'<span class="sb" data-slot="qisub">Walk the roof, shoot the photos, attach it before you\u2019re off the ladder.</span>' +
-'</span><span class="go">\u2192</span>' +
-'</button>' +
 '<button class="cr-lr-course" data-go="retail" style="--acc:#5590b5;">' +
 '<span class="ic">\uD83C\uDFE0</span>' +
 '<span class="tx">' +
@@ -46885,15 +46880,10 @@ lv.innerHTML =
    they get the same treatment as Production and Sales Floor rather than
    the ghost-pill tier they were in. */
 '<div class="cr-lr-pair">' +
-'<button data-go="library" style="--racc:#7fa6d6;">' +
+'<button data-go="library" style="--racc:#7fa6d6;grid-column:1 / -1;">' +
 '<span class="ic">\uD83D\uDCDA</span>' +
 '<b>Resource Library</b>' +
 '<small>Building code, specs, manufacturer references</small>' +
-'</button>' +
-'<button data-go="board" style="--racc:#c8a24a;">' +
-'<span class="ic">\uD83D\uDCC5</span>' +
-'<b>Schedule Board</b>' +
-'<small>Who is where, and when</small>' +
 '</button>' +
 '</div>' +
 /* 590: Showroom. Full width rather than a third cell in a two-column pair,
@@ -46918,18 +46908,6 @@ lv.innerHTML =
 '<span class="sb">Photograph the house, then change the roof, siding, trim, gutters or windows to your materials \u2014 in front of the client.</span>' +
 '</span><span class="go">\u2192</span>' +
 '</button>' +
-/* Same "plain <a>, new tab" pattern as the Studio tile below — popup.html
-   is its own static page, not an SPA view, so there is nothing to wire
-   through wire()'s data-go dispatch. Opens in a new tab so the rep's
-   CRM session and place in the app are still there when they come back.
-   NOT width-gated like Showroom — the book is phone-shaped already. */
-'<a class="cr-lr-book" href="/popup.html" target="_blank" rel="noopener">' +
-'<span class="ic">\ud83d\udcd6</span>' +
-'<span class="tx">' +
-'<span class="tt">The Pop-Up Roof</span>' +
-'<span class="sb">A tap-through book of how your roof gets built — works great on a homeowner’s own phone.</span>' +
-'</span><span class="go">\u2192</span>' +
-'</a>' +
 /* what is left is an admin shortcut, not a destination - and it renders
    for nobody else, so the row has to be able to vanish. */
 '<div class="cr-lr-minor">' +
@@ -47065,8 +47043,6 @@ lrSetText(lv.querySelector('[data-slot="who"]'), nm);
 lrSetText(lv.querySelector('[data-slot="stamp"]'),
 now.toLocaleDateString('en-US', { weekday:'long' }) + ' \u00b7 ' +
 now.toLocaleDateString('en-US', { month:'long', day:'numeric' }));
-var r = qiResume();
-if(r) lrSetText(lv.querySelector('[data-slot="qisub"]'), r);
 }
 try{ build(); }catch(e){ console.warn('[landing] initial build:', e); }
 var scheduled = false;
@@ -47691,6 +47667,8 @@ el.innerHTML =
 '<span class="x"><b>Log a real one</b><small>Something you heard today</small></span></button>' +
 '<button data-go="showcase" type="button"><span class="i">' + ICO('home') + '</span>' +
 '<span class="x"><b>Showcase</b><small>Before and after, for the kitchen table</small></span></button>' +
+'<button data-go="popup" type="button"><span class="i">' + ICO('books') + '</span>' +
+'<span class="x"><b>The Pop-Up Roof</b><small>A tap-through book of how a roof gets built \u2014 hand them your phone</small></span></button>' +
 '</div>' +
 '<div class="cr-sf-rule">Objections</div>' +
 '<p class="cr-sf-lede">What they say, what you say, and why it lands.</p>' +
@@ -47753,6 +47731,7 @@ close(false); window.showResourceLibrary(); return;
 if(d === 'showcase' && window.CardinalShowcase){
 close(false); window.CardinalShowcase.open(); return;
 }
+if(d === 'popup'){ window.open('/popup.html', '_blank', 'noopener'); return; }
 alert('That isn\u2019t available yet.');
 };
 });
@@ -55625,7 +55604,6 @@ var SURFACES = [
 if(typeof window.showLanding === 'function') window.showLanding();
 },
 controls:[
-['#landingView [data-go="qi"]',         'Quick Inspection'],
 ['#landingView [data-go="retail"]',     'Retail portal'],
 ['#landingView [data-go="insurance"]',  'Insurance portal'],
 ['#landingView [data-go="community"]',  'Community portal'],

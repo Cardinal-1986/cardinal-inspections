@@ -17932,3 +17932,18 @@ send flow still prompts for the address, unchanged (Theo scoped this to the labe
 Gate: `render_email851.mjs` opens a Work Order and an Estimate through the real `openEditor` and asserts
 the label flips ("Email to crew" vs "Email to client") and is stored on the button — GREEN 3/3, RED
 against the 850 tree. `check_build` green.
+
+
+## Build 852 — Landing focused on the work; Pop-Up Roof to the Sales Floor (16 Aug 2026)
+Theo picked landing concept #1 (Obsidian & Ember) from the concept board. The front door is pared to
+the destinations a PM or rep opens the app to reach: the three CRMs (Retail, Cardinal Truth, Community)
+as the ranked course list, then Production + Sales Floor as the workspace pair, with Resource Library
+kept as a **full-width** utility (it spanned the row once its Schedule Board pair-mate was removed).
+**Removed from the landing:** the Quick Inspection lead course, the Schedule Board card, and The Pop-Up
+Roof link — Quick Inspection and Schedule Board are still in the burger menu, and the Pop-Up Roof **moves
+onto the Sales Floor** as a coach-grid button (`data-go="popup"` → opens `/popup.html`), beside the
+Showcase where it belongs at the kitchen table. Also dropped the now-dead `[data-go="qi"]` probe from the
+Self Check surface list so it doesn't report the removed button as missing. The greeting, House Rule and
+CRM client counts are untouched. First of three builds off Theo's picks (hub redesign and the
+Curtis/Scottie login routing follow). Gate: `render_landing852.mjs` — GREEN 8/8, RED against 851.
+`check_build` green.
