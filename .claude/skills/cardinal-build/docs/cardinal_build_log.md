@@ -17749,3 +17749,48 @@ the comment I wrote to explain a value contained the value.** `components=countr
 counted 2 (code + prose); `upgradeNearbyRow` moved because the new comment names it. The
 fix, which this document already prescribes: **assert on a brace-matched function body, not
 a file-wide string count.** Recorded because it is now the fourth build in a row to pay for it.
+
+## Build 841 — Crew Dispatch: the week grid (16 Aug 2026)
+A new full-screen Production view (`#cr-disp`, `window.CardinalDispatch`, opened from
+**Menu → Production → Crew Dispatch**). A **read-only** week grid of every crew's booked
+`crew_work_orders`: rows are crews grouped under **trade bands** (Roofing/Siding/Windows/Gutters/…),
+columns are the build days **Mon–Sun — Sunday only when it is worked, or when today is Sunday** so
+the current day is never hidden. A crew shows only when it has work this week; **idle crews collapse**
+into a per-band "+ N idle crews · tap to show" row. Scheduled jobs with no crew sit in a
+**Needs-a-crew rail** (Habitat sorts first). Tap a job or an unassigned client → `openProject()`,
+where the **existing build-555 picker** assigns a crew — no second pipeline. Palette is **Mono+Red**
+(greyscale board, red reserved for action), `--disp-*` tokens both themes with literal fallbacks;
+sticky crew column and trade-band labels. **No money renders**: the read selects
+`id,crew_id,project_id,report_id,status,scheduled_on,sent_at,completed_on` and **never `amount`**.
+Registered at all five sites (`hideAllViews` class-clear, `navRestore` case, `__crNav` wrap, `BLACKOUT`,
+the `dispatch` ROUTE + menu item that `resolveHide` auto-hides if the module is absent). Gates:
+`check_build` green, `render_dispatch841.mjs` 18/18 in both themes with an 840 negative control; the
+amount-fence and Habitat-first are asserted in the harness. **Repairs band + Curtis/Scottie owner
+lanes are build 842** (needs a `punch_items` load and the assignee→manager map). In-grid assign (the
+555 picker prefilled) is a follow-up; v1 routes to the profile.
+
+## Build 842 — Crew Dispatch: the Repairs band (16 Aug 2026)
+The Crew Dispatch grid (841) gains a **Punch-outs & Repairs band** at the bottom, peer to the trade
+bands, with a **red section label**. One lane per assignee, grouped from `punch_items.assigned_to`
+(an email): **Curtis (cyan) and Scottie (violet)** map to owner-colour tokens, anyone else with open
+punch-outs to steel, and an **Unassigned** lane last. `PRODUCTION_EMAILS` orders the managers first
+(alphabetical fallback if it's not global). A repair with a `scheduled_at` lands in that day's cell as
+a **red chip**; unscheduled ones roll up into a **red "N open" backlog badge** on the lane. Crew rows
+stay purely crew jobs — a repair never sits inside a crew's row. Tap a repair → `openProject()`.
+`--disp-repair/-curtis/-scottie` tokens in both themes with literal fallbacks. Loads open `punch_items`
+on grid open (`id,title,project_id,assigned_to,scheduled_at,status`). ⚠ The band class was **renamed
+`dband rep` → `dband repband`** so `.rep` unambiguously means a repair chip — a `querySelector('.rep')`
+had matched the band (which has no `data-pid`) and swallowed the chip; the app was safe (the tap handler
+keys on `[data-pid]`) but the collision was a latent trap. Gate: `render_dispatch842.mjs`, **25/25 in
+both themes** with an 841 negative control (band absent). Build 842 rides in the same PR as 841 (a span).
+
+## Build 843 — Crew Dispatch: assign in place (16 Aug 2026)
+On the Crew Dispatch grid, tapping a job in the **Needs-a-crew rail** now opens the existing
+**build-555 crew picker for that job directly** — pick the crew (and day and scope) and it generates
+the Work Order, exactly as the client profile's **New work order** button does. `openWorkOrderPicker`
+gained an **optional `project` argument** (`var pr = project || currentProject`); the profile button
+passes none and is byte-for-byte unchanged. The grid **closes first** because `tskModal` is z-index
+210 and would otherwise open behind the grid (9550). Job and repair chips still open the client. No
+new pipeline, no money. Gate: `render_dispatch843.mjs`, **29/29 both themes** — and it asserts
+`typeof window.openWorkOrderPicker === 'function'` (so the shortcut can't silently degrade to the
+profile) with an 842 negative control (the chip routes to the profile there). Same PR span as 841–842.

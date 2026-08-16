@@ -5262,3 +5262,32 @@ Google also corrects typed ZIPs (`46417` → `45417`). Its one regression is a w
 resolves the address inside the URL, so there is no geocode round trip at all. **`upgradeNearbyRow()`
 (the Nearby sort) still uses Nominatim** on purpose: it caches geocodes in `localStorage`
 permanently and Google's terms cap that at 30 days, so moving it needs an expiry first.
+
+## Crew Dispatch (build 841) — `cr-disp-styles` + `cr-disp-script`, `window.CardinalDispatch`
+
+A full-screen Production view: a **read-only week grid** of every crew's booked work orders.
+Rows are crews under **trade bands**; columns are build days (**Mon–Sun**, Sunday shown only when
+worked or when today is Sunday). Only crews with work this week show; **idle crews collapse** per
+band. Scheduled jobs with no crew sit in a **Needs-a-crew rail** (Habitat first). Tap a job or an
+unassigned client → `openProject()`, where the existing **build-555 Work-Order picker** assigns a
+crew. **Mono+Red** palette, `--disp-*` tokens both themes; sticky crew column + band labels. **No
+money** — the `crew_work_orders` read never selects `amount`. Opens from **Menu → Production → Crew
+Dispatch** (`ROUTES.dispatch`, auto-hidden by `resolveHide` if the module is absent). Registered in
+`hideAllViews` (class-clear), `navRestore` (`dispatch`), the `__crNav` wrap, and `BLACKOUT`. Gate:
+`scripts/render_dispatch841.mjs` (18 assertions, both themes, 840 negative control). Repairs band +
+owner lanes and in-grid assign are build 842.
+
+### Crew Dispatch — Repairs band (build 842)
+Adds a **Punch-outs & Repairs** band (peer to the trade bands, red label) to the dispatch grid: a lane
+per assignee from `punch_items.assigned_to`, **Curtis cyan / Scottie violet** (owner tokens), others
+steel, Unassigned last. Scheduled repairs (`scheduled_at`) land on their day as red chips; unscheduled
+show a red "N open" backlog badge on the lane. Crew rows stay crew-only. Tap → `openProject()`. Band
+class is `dband repband` (renamed from `rep` to free `.rep` for the chip). Gate: `render_dispatch842.mjs`
+(25 assertions, both themes, 841 negative control).
+
+### Crew Dispatch — assign in place (build 843)
+Tapping a **Needs-a-crew** chip on the dispatch grid opens the build-555 crew picker prefilled for that
+job (`openWorkOrderPicker(project)`), instead of routing through the profile. The grid closes first
+(the picker modal is z-index 210, below the grid). Backward-compatible — the profile's New-work-order
+button still calls `openWorkOrderPicker()` with no args. Gate: `render_dispatch843.mjs` (29 assertions,
+both themes, asserts the picker is a real global, 842 negative control).

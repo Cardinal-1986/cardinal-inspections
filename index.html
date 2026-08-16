@@ -3497,7 +3497,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 840 &#8212; Quick Inspection finds addresses through Google &#8212; measured 40 of 42 against Nominatim&#8217;s 29</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 843 &#8212; Crew Dispatch assigns in place &#8212; tap a Needs-a-crew job for the crew picker</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3516,7 +3516,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <span class="cbn" data-go="track" data-cri="calculator lg">Track</span>
   <span class="cbn" data-go="reports" data-cri="chart lg">Reports</span>
   <span class="cbn cbdd" data-dd="prod">Production <b class="car">&#9660;</b>
-    <span class="cbmenu"><span class="cbi" data-go="prodboard" data-cri="hardhat lg">Production Board</span><span class="cbi" data-go="punch" data-cri="ladder lg">Punch &amp; Repairs</span><span class="cbi" data-go="schedule" data-cri="calendar lg">Schedule Board</span></span>
+    <span class="cbmenu"><span class="cbi" data-go="prodboard" data-cri="hardhat lg">Production Board</span><span class="cbi" data-go="dispatch" data-cri="calendar lg">Crew Dispatch</span><span class="cbi" data-go="punch" data-cri="ladder lg">Punch &amp; Repairs</span><span class="cbi" data-go="schedule" data-cri="calendar lg">Schedule Board</span></span>
   </span>
   <span class="cbn cbdd" data-dd="tools">Tools <b class="car">&#9660;</b>
     <span class="cbmenu">
@@ -17461,6 +17461,10 @@ function hideAllViews(){
      cr-show-form above. */
   var _itl = document.getElementById('cr-itellab');
   if(_itl) _itl.classList.remove('open');
+  /* 841: Crew Dispatch is class-shown like cr-show-form above — clear the class,
+     never display:none (writing it onto a class-shown element is permanent damage). */
+  var _dsp = document.getElementById('cr-disp');
+  if(_dsp) _dsp.classList.remove('open');
   /* 615: the OC Colors wall is a fixed inset:0 view. It is DISPLAY-shown, so
      display:none is the correct lever here — writing a class instead would
      leave it covering the next screen (the 570-572 class). */
@@ -20445,8 +20449,9 @@ async function woNextNumber(){
   }
 }
 
-async function openWorkOrderPicker(){
-  var pr = currentProject;
+async function openWorkOrderPicker(project){
+  /* 843: Crew Dispatch passes the job to crew here; the New-work-order button passes none. */
+  var pr = project || currentProject;
   if(!pr) return;
   var m = document.getElementById('tskModal');
   var body = document.getElementById('tskModalBody');
@@ -24813,6 +24818,7 @@ function __histPush(st){
            history, so back went wherever the previous real entry was. */
         case 'salesfloor':      if(window.CardinalSalesFloor) window.CardinalSalesFloor.open(); break;
         case 'production':      if(window.CardinalProduction) window.CardinalProduction.open(); break;
+        case 'dispatch':        if(window.CardinalDispatch) window.CardinalDispatch.open(); break;
         /* 771: registered in hideAllViews since 768 but missing here, which is
            the half-convention this switch's own comment warns about. */
         case 'punchcard':       if(window.CardinalPunchCard && window.__crPunchCardLast)
@@ -24957,6 +24963,18 @@ function __histPush(st){
         };
         w2.__crNav = true;
         est.open = w2;
+      }
+      /* 841: Crew Dispatch — same method-wrap shape as the estimates open above. */
+      var disp = window.CardinalDispatch;
+      if(disp && typeof disp.open === 'function' && !disp.open.__crNav){
+        var origDispOpen = disp.open;
+        var wDisp = function(){
+          var out = origDispOpen.apply(this, arguments);
+          try{ window.navSetView('dispatch'); }catch(_e){}
+          return out;
+        };
+        wDisp.__crNav = true;
+        disp.open = wDisp;
       }
     })();
   }, 400);
@@ -39572,7 +39590,7 @@ document.body.appendChild(btn);
    Named here rather than silently skipped, so the choice is visible. */
 /* 807: cr-des left this list when the in-app designer was retired. The
    Exterior Visualizer is its own site now and carries its own palette. */
-var BLACKOUT = ['cr-show', 'cr-occ'];
+var BLACKOUT = ['cr-show', 'cr-occ', 'cr-disp'];
 function blackoutUp(){
 for(var i = 0; i < BLACKOUT.length; i++){
 var v = document.getElementById(BLACKOUT[i]);
@@ -39635,6 +39653,12 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:843, d:'2026-08-16', t:'Crew Dispatch \u2014 assign in place',
+s:'On the Crew Dispatch grid, tapping a job in the Needs-a-crew rail now opens the existing build-555 crew picker for that job directly \u2014 pick the crew (and day and scope) and it generates the Work Order, same as the client profile\u2019s New work order button. The grid closes first so the picker is not hidden behind it. openWorkOrderPicker gained an optional project argument; the profile button still passes none and behaves exactly as before. Job and repair chips still open the client. No new pipeline, no money.' },
+{ b:842, d:'2026-08-16', t:'Crew Dispatch \u2014 the Repairs band',
+s:'The Crew Dispatch grid gains a Punch-outs & Repairs band at the bottom, peer to the trade bands: one lane per assignee (Curtis, Scottie, anyone with open punch-outs, then Unassigned), name in the owner\u2019s colour. A repair with a scheduled_at lands in that day\u2019s cell as a red chip; unscheduled ones show as a red open-count badge on the lane. Crew rows stay purely crew jobs \u2014 a repair never sits inside a crew\u2019s row. Tap a repair to open its client. assigned_to is the punch\u2019s email; Curtis and Scottie map to the two owner colours, others to steel. Both themes.' },
+{ b:841, d:'2026-08-16', t:'Crew Dispatch \u2014 the week grid',
+s:'Production gains a Crew Dispatch board: a read-only week grid of every crew\u2019s booked work orders, crews grouped under trade bands, columns the build days (Mon\u2013Sun, Sunday only when it is worked). A crew shows only when it has work this week; idle crews collapse. Jobs that are Scheduled with no crew yet sit in a Needs-a-crew rail. Tap a job or an unassigned client to open their profile and assign a crew with the existing New work order picker \u2014 no second pipeline. Greyscale board, red reserved for action, both themes. NO money renders here; the read never selects crew_work_orders.amount. Opens from Menu \u2192 Production \u2192 Crew Dispatch.' },
 { b:840, d:'2026-08-16', t:'Quick Inspection finds addresses properly',
 s:'Dragging the pin on a Quick Inspection, or typing an address into it, now asks Google instead of the free open-source geocoder the app has used there since it was built. This was measured before it was changed, against every address in the system: the old geocoder placed 29 of 42, Google places 40. It also quietly fixes the sort of typing that actually happens \u2014 "5241 rucks rd Dayton Ohio 46417" has an INDIANA zip on it and comes back as "5241 Rucks Rd, Dayton, OH 45417". One address got WORSE and that is the best reason to have done it: "948 Huron" now returns nothing at all, where the old one confidently put it in San Francisco. Nothing beats being told an address cannot be found; a wrong pin that looks right is how a crew ends up on the wrong street. If Google is unavailable for any reason the old geocoder still answers, so the pin can only get better than it was, never worse. Nothing else moved \u2014 the client Location card has used Google since build 636, and the Nearby sort still uses the old one.' },
 { b:839, d:'2026-08-16', t:'Address Check \u2014 find the client records the app cannot map',
@@ -56831,6 +56855,7 @@ var ROUTES = {
   track:     'CardinalEstimates.open',
   reports:   'openReportsView',
   prodboard: 'CardinalProduction.open',
+  dispatch:  'CardinalDispatch.open',
   punch:     'openPunchView',
   schedule:  'openScheduleBoard',
   aiest:     'CardinalEstimates.open',
@@ -71097,5 +71122,422 @@ function open(){
 window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open: open, scan: scan, verify: verify });
 })();
 </script>
+<style id="cr-disp-styles">
+/* ============================================================================
+   CREW DISPATCH  ·  v2026-08-16 build 841  ·  Mono + Red
+   ----------------------------------------------------------------------------
+   A read-only week grid of every crew's booked work orders. Rows are crews
+   grouped under trade bands; columns are the build days (Mon–Sun, Sunday only
+   when it is worked). A crew shows only when it has work this week; idle crews
+   collapse. Assigning is unchanged — tap a job to open the client, where the
+   existing build-555 Work-Order picker lives. NO money renders here; the read
+   never selects crew_work_orders.amount.
+
+   Greyscale board, red reserved for action. Own --disp-* tokens, both themes,
+   every reference carries a literal fallback (the 448–449 invariant).
+   ========================================================================== */
+#cr-disp{
+  --disp-bg:#08090b; --disp-panel:#101216; --disp-card:#171a1f; --disp-line:#282c34;
+  --disp-hatch:rgba(255,255,255,.05);
+  --disp-ink:#ffffff; --disp-dim:#9aa1ac; --disp-mute:#5c636e; --disp-accent:#6b7280;
+  --disp-today:#15171c; --disp-tline:#ffffff; --disp-need:#f5c045; --disp-band:#8b97a8;
+  --disp-repair:#ff3b46; --disp-curtis:#3fb8c9; --disp-scottie:#a98bec;
+  --disp-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  display:none; position:fixed; inset:0; z-index:9550;
+  overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
+  background:var(--disp-bg,#08090b); color:var(--disp-ink,#ffffff);
+  -webkit-overflow-scrolling:touch;
+}
+#cr-disp.open{ display:block; }
+:root[data-theme="rb-light"] #cr-disp{
+  --disp-bg:#f4f5f7; --disp-panel:#ffffff; --disp-card:#ffffff; --disp-line:#dfe3e9;
+  --disp-hatch:rgba(0,0,0,.05);
+  --disp-ink:#14171c; --disp-dim:#5a616c; --disp-mute:#767d88; --disp-accent:#7b828d;
+  --disp-today:#eef0f3; --disp-tline:#14171c; --disp-need:#9a6410; --disp-band:#5f6b7d;
+  --disp-repair:#d81b28; --disp-curtis:#0f7c8b; --disp-scottie:#6a4db0;
+}
+#cr-disp .dspwrap{ max-width:1180px; margin:0 auto;
+  padding:16px 14px calc(60px + env(safe-area-inset-bottom,0px)); }
+#cr-disp .dsptop{ display:flex; align-items:center; gap:9px; margin-bottom:12px; }
+#cr-disp .dspback{ flex:none; width:34px; height:34px; border-radius:10px; cursor:pointer;
+  border:1px solid var(--disp-line,#282c34); background:transparent; color:var(--disp-dim,#9aa1ac);
+  display:flex; align-items:center; justify-content:center; }
+#cr-disp .dspback svg{ width:15px; height:15px; }
+#cr-disp .dsptitle{ font:800 18px 'Segoe UI',Arial,sans-serif; letter-spacing:-.01em; color:var(--disp-ink,#fff); }
+#cr-disp .dspwk{ margin-left:auto; display:flex; align-items:center; gap:8px;
+  font:600 12px var(--disp-mono,monospace); color:var(--disp-dim,#9aa1ac); }
+#cr-disp .dspwk button{ background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34);
+  color:var(--disp-dim,#9aa1ac); border-radius:7px; width:26px; height:26px; cursor:pointer; font-size:14px; line-height:1; }
+#cr-disp .dspfilt{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
+#cr-disp .dspfilt .fc{ font:600 11px 'Segoe UI',Arial,sans-serif; padding:5px 11px; border-radius:8px;
+  background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); color:var(--disp-dim,#9aa1ac); cursor:pointer; }
+#cr-disp .dspfilt .fc.on{ border-color:var(--disp-ink,#fff); color:var(--disp-ink,#fff); }
+
+#cr-disp .dspframe{ background:var(--disp-bg,#08090b); border:1px solid var(--disp-line,#282c34);
+  border-radius:12px; overflow:hidden; }
+#cr-disp .dspscroll{ overflow-x:auto; }
+#cr-disp .dspgrid{ min-width:730px; }
+#cr-disp .drow{ display:grid; grid-template-columns:154px repeat(var(--dcols,6),minmax(66px,1fr)); }
+
+#cr-disp .drail{ background:var(--disp-panel,#101216); border-bottom:2px solid var(--disp-line,#282c34); }
+#cr-disp .drail .rl{ padding:7px 10px; border-right:1px solid var(--disp-line,#282c34);
+  position:sticky; left:0; z-index:4; background:var(--disp-panel,#101216); }
+#cr-disp .drail .rl .t{ font:750 11px 'Segoe UI',Arial,sans-serif; color:var(--disp-need,#f5c045);
+  display:flex; align-items:center; gap:5px; }
+#cr-disp .drail .rl .s{ font-size:8.5px; color:var(--disp-dim,#9aa1ac); margin-top:1px; }
+#cr-disp .drail .runrow{ grid-column:2 / -1; border-left:1px solid var(--disp-line,#282c34);
+  padding:6px; display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+#cr-disp .uch{ border:1px solid var(--disp-need,#f5c045); border-radius:6px; padding:3px 7px;
+  background:rgba(0,0,0,.14); cursor:pointer; }
+#cr-disp .uch .c{ font:700 10px 'Segoe UI',Arial,sans-serif; color:var(--disp-need,#f5c045); }
+#cr-disp .uch .a{ font-size:8px; color:var(--disp-mute,#5c636e); margin-top:1px; }
+#cr-disp .runrow .none{ font:600 9px var(--disp-mono,monospace); color:var(--disp-mute,#5c636e); font-style:italic; }
+
+#cr-disp .dcol{ background:var(--disp-panel,#101216); border-bottom:1px solid var(--disp-line,#282c34); }
+#cr-disp .dcol .c{ padding:6px 2px; text-align:center; border-left:1px solid var(--disp-line,#282c34);
+  font:600 8.5px var(--disp-mono,monospace); color:var(--disp-mute,#5c636e); }
+#cr-disp .dcol .c b{ display:block; color:var(--disp-dim,#9aa1ac); font-size:12px; margin-top:1px; }
+#cr-disp .dcol .c.rail{ border-left:none; text-align:left; padding-left:12px;
+  position:sticky; left:0; z-index:4; background:var(--disp-panel,#101216); }
+#cr-disp .dcol .c.today{ background:var(--disp-today,#15171c); border-top:2px solid var(--disp-tline,#fff); }
+#cr-disp .dcol .c.today b{ color:var(--disp-ink,#fff); }
+#cr-disp .dcol .c.today::after{ content:"TODAY"; display:block; font:700 6.5px var(--disp-mono,monospace);
+  letter-spacing:.1em; color:var(--disp-tline,#fff); margin-top:1px; }
+
+#cr-disp .dband{ padding:5px 0; font:700 9px var(--disp-mono,monospace); letter-spacing:.14em;
+  text-transform:uppercase; background:var(--disp-panel,#101216);
+  border-top:1px solid var(--disp-line,#282c34); border-bottom:1px solid var(--disp-line,#282c34); }
+#cr-disp .dband .bl{ position:sticky; left:0; z-index:5; display:inline-flex; align-items:center; gap:6px;
+  padding:0 12px; color:var(--disp-band,#8b97a8); }
+#cr-disp .dband .bl::before{ content:""; width:7px; height:7px; border-radius:2px;
+  background:var(--disp-band,#8b97a8); opacity:.55; flex:none; }
+
+#cr-disp .dlane{ border-bottom:1px solid var(--disp-line,#282c34); }
+#cr-disp .crewc{ padding:7px 10px; border-right:1px solid var(--disp-line,#282c34);
+  display:flex; align-items:center; background:var(--disp-bg,#08090b);
+  position:sticky; left:0; z-index:4; cursor:default; }
+#cr-disp .crewc .cn{ font-size:10px; font-weight:700; color:var(--disp-ink,#fff); line-height:1.2; }
+#cr-disp .crewc .cc{ font-size:8px; font-weight:600; color:var(--disp-mute,#5c636e); line-height:1.2; margin-top:1px; }
+
+#cr-disp .idle{ padding:5px 0; background:var(--disp-bg,#08090b); border-bottom:1px solid var(--disp-line,#282c34); }
+#cr-disp .idle .il{ position:sticky; left:0; z-index:3; padding:0 12px; display:inline-flex; align-items:center; gap:6px;
+  font:600 8.5px var(--disp-mono,monospace); letter-spacing:.03em; color:var(--disp-mute,#5c636e); cursor:pointer; }
+#cr-disp .idle .il::before{ content:"+"; font:800 10px var(--disp-mono,monospace); color:var(--disp-band,#8b97a8); }
+#cr-disp .idle .il b{ color:var(--disp-dim,#9aa1ac); font-weight:700; }
+
+#cr-disp .dcell{ border-left:1px solid var(--disp-line,#282c34); padding:4px; min-height:46px;
+  display:flex; flex-direction:column; gap:3px; }
+#cr-disp .dcell.today{ background:var(--disp-today,#15171c); }
+#cr-disp .dcell.empty{ background:repeating-linear-gradient(135deg,transparent 0,transparent 6px,var(--disp-hatch,rgba(255,255,255,.05)) 6px,var(--disp-hatch,rgba(255,255,255,.05)) 7px); }
+#cr-disp .dcell.week{ grid-column:2 / -1; display:flex; align-items:center; justify-content:center;
+  font:600 9px var(--disp-mono,monospace); font-style:italic; color:var(--disp-mute,#5c636e);
+  border-left:1px solid var(--disp-line,#282c34);
+  background:repeating-linear-gradient(135deg,transparent 0,transparent 6px,var(--disp-hatch,rgba(255,255,255,.05)) 6px,var(--disp-hatch,rgba(255,255,255,.05)) 7px); }
+#cr-disp .job{ border-radius:6px; padding:4px 6px; background:var(--disp-card,#171a1f);
+  border:1px solid var(--disp-line,#282c34); border-left:3px solid var(--disp-accent,#6b7280); cursor:pointer; }
+#cr-disp .job .t{ font:700 8.5px 'Segoe UI',Arial,sans-serif; color:var(--disp-ink,#fff);
+  display:flex; align-items:center; gap:4px; }
+#cr-disp .job .t .pip{ margin-left:auto; width:7px; height:7px; border-radius:50%; flex:none; background:var(--disp-mute,#5c636e); }
+#cr-disp .job .t .pip.sent{ background:var(--disp-dim,#9aa1ac); }
+#cr-disp .job .t .pip.done{ background:var(--disp-band,#8b97a8); }
+#cr-disp .job .a{ font-size:7.5px; color:var(--disp-mute,#5c636e); margin-top:1px; }
+#cr-disp .more{ font:700 8px 'Segoe UI',Arial,sans-serif; color:var(--disp-dim,#9aa1ac); text-align:center;
+  border:1px dashed var(--disp-line,#282c34); border-radius:5px; padding:2px; cursor:pointer; }
+
+#cr-disp .dband.repband .bl{ color:var(--disp-repair,#ff3b46); }
+#cr-disp .dband.repband .bl::before{ background:var(--disp-repair,#ff3b46); opacity:.7; }
+#cr-disp .crewc.own-curtis .cn{ color:var(--disp-curtis,#3fb8c9); }
+#cr-disp .crewc.own-scottie .cn{ color:var(--disp-scottie,#a98bec); }
+#cr-disp .repbdg{ margin-left:auto; font:700 7px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46);
+  border:1px solid var(--disp-repair,#ff3b46); border-radius:4px; padding:1px 5px; white-space:nowrap; }
+#cr-disp .rep{ border-radius:6px; padding:4px 6px; border:1px solid var(--disp-repair,#ff3b46);
+  border-left:3px solid var(--disp-repair,#ff3b46); background:rgba(0,0,0,.14); cursor:pointer; }
+#cr-disp .rep .t{ font:700 8.5px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46); }
+#cr-disp .rep .a{ font-size:7.5px; color:var(--disp-mute,#5c636e); margin-top:1px; }
+#cr-disp .dspmsg{ padding:40px 16px; text-align:center; color:var(--disp-dim,#9aa1ac); font-size:14px; }
+#cr-disp .dspnote{ margin-top:12px; font-size:11.5px; color:var(--disp-mute,#5c636e); line-height:1.5; }
+</style>
+<script id="cr-disp-script">
+/* Crew Dispatch (build 841). Read-only week grid over crews + crew_work_orders,
+   rendered against cacheProjects already in memory. window.CardinalDispatch. */
+(function(){
+  var el, crews = [], wos = [], punches = [], weekOffset = 0, filter = 'All', showIdle = {};
+  var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs'];
+
+  function two(n){ return (n<10?'0':'') + n; }
+  function who(e){ var x = String(e||'').split('@')[0]; return x ? x.charAt(0).toUpperCase() + x.slice(1) : String(e||''); }
+  function ymd(d){ return d.getFullYear() + '-' + two(d.getMonth()+1) + '-' + two(d.getDate()); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  function mondayOf(base){
+    var d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
+    var dow = (d.getDay() + 6) % 7;         /* 0 = Monday */
+    d.setDate(d.getDate() - dow);
+    return d;
+  }
+  function weekDays(){
+    var m = mondayOf(new Date());
+    m.setDate(m.getDate() + weekOffset * 7);
+    var out = [];
+    for(var i=0;i<7;i++){ var d = new Date(m); d.setDate(m.getDate()+i); out.push(d); }
+    return out;                              /* [Mon..Sun] */
+  }
+
+  function projById(id){
+    var arr = window.cacheProjects || [];
+    for(var i=0;i<arr.length;i++){ if(String(arr[i].id) === String(id)) return arr[i]; }
+    return null;
+  }
+  function firstLine(addr){ return String(addr||'').split(/[\n,]/)[0].trim(); }
+
+  async function load(){
+    crews = []; wos = []; punches = [];
+    var sbx = window.sb || window.supa;
+    if(!sbx) return;
+    try{
+      var cr = await sbx.from('crews').select('id,name,trade,archived,contact,phone').eq('archived', false).order('name');
+      if(!cr.error && cr.data) crews = cr.data;
+    }catch(_e){}
+    try{
+      /* amount is deliberately NOT selected — money never reaches Production. */
+      var wr = await sbx.from('crew_work_orders')
+                 .select('id,crew_id,project_id,report_id,status,scheduled_on,sent_at,completed_on')
+                 .neq('status','superseded');
+      if(!wr.error && wr.data) wos = wr.data;
+    }catch(_e2){}
+    try{
+      var pu = await sbx.from('punch_items')
+                 .select('id,title,project_id,assigned_to,scheduled_at,status').eq('status','open');
+      if(!pu.error && pu.data) punches = pu.data;
+    }catch(_e3){}
+  }
+
+  function statusPip(w){
+    if(w.completed_on || w.status === 'completed') return 'done';
+    if(w.sent_at || w.status === 'sent') return 'sent';
+    return 'draft';
+  }
+
+  function jobChip(w){
+    var p = projById(w.project_id);
+    var nm = p ? (p.name || 'Job') : 'Job';
+    var ad = p ? firstLine(p.address) : '';
+    return '<div class="job" data-pid="' + esc(w.project_id) + '">' +
+      '<div class="t">' + esc(nm) + '<span class="pip ' + statusPip(w) + '"></span></div>' +
+      (ad ? '<div class="a">' + esc(ad) + '</div>' : '') + '</div>';
+  }
+
+  function render(){
+    var wrap = el.querySelector('.dspwrap');
+    if(!crews.length){
+      wrap.querySelector('.dspbody').innerHTML =
+        '<div class="dspmsg">No crews on file yet. Add one in <b>&#9776; Menu &#8594; Crews</b> first, ' +
+        'then dispatch them here.</div>';
+      return;
+    }
+    var days = weekDays();
+    var dayStr = days.map(ymd);
+    var todayStr = ymd(new Date());
+    /* Sunday (index 6) shows if it is worked, or if today IS that Sunday — so the
+       current day is never hidden on a Sunday with nothing booked. */
+    var hasSun = dayStr[6] === todayStr || wos.some(function(w){ return w.scheduled_on === dayStr[6]; });
+    var nDays = hasSun ? 7 : 6;
+
+    var byCrewDay = {};
+    wos.forEach(function(w){
+      if(!w.scheduled_on) return;
+      var di = dayStr.indexOf(w.scheduled_on);
+      if(di < 0 || di >= nDays) return;
+      (byCrewDay[w.crew_id] = byCrewDay[w.crew_id] || {});
+      (byCrewDay[w.crew_id][di] = byCrewDay[w.crew_id][di] || []).push(w);
+    });
+
+    /* crews grouped by trade, in TRADE_ORDER, then any extras alphabetically. */
+    var trades = [];
+    crews.forEach(function(c){ var t = c.trade || 'General'; if(trades.indexOf(t) < 0) trades.push(t); });
+    trades.sort(function(a,b){
+      var ia = TRADE_ORDER.indexOf(a), ib = TRADE_ORDER.indexOf(b);
+      if(ia < 0) ia = 99; if(ib < 0) ib = 99;
+      return ia - ib || a.localeCompare(b);
+    });
+
+    var colH = '<div class="drow dcol"><div class="c rail">CREW &middot; WEEK</div>' +
+      days.slice(0, nDays).map(function(d){
+        var s = ymd(d), t = (s === todayStr) ? ' today' : '';
+        var dn = ['MON','TUE','WED','THU','FRI','SAT','SUN'][(d.getDay()+6)%7];
+        return '<div class="c' + t + '">' + dn + '<b>' + d.getDate() + '</b></div>';
+      }).join('') + '</div>';
+
+    /* unassigned rail: Scheduled projects with no active crew work order. */
+    var woProjIds = {}; wos.forEach(function(w){ if(w.project_id) woProjIds[w.project_id] = 1; });
+    var needCrew = (window.cacheProjects || []).filter(function(p){
+      return p && p.stage === 'Scheduled' && !woProjIds[p.id];
+    });
+    /* Habitat first, same rule as the partner lists. */
+    needCrew.sort(function(a,b){
+      var ha = /habitat/i.test(a.name||'') ? 0 : 1, hb = /habitat/i.test(b.name||'') ? 0 : 1;
+      return ha - hb || String(a.name||'').localeCompare(String(b.name||''));
+    });
+    var railInner = needCrew.length
+      ? needCrew.map(function(p){
+          return '<div class="uch" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
+            '</div><div class="a">' + esc(firstLine(p.address)) + '</div></div>';
+        }).join('')
+      : '<span class="none">every scheduled job has a crew</span>';
+    var railH = '<div class="drow drail"><div class="rl"><div class="t">' +
+      '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>' +
+      'Needs a crew (' + needCrew.length + ')</div>' +
+      '<div class="s">tap to assign</div></div><div class="runrow">' + railInner + '</div></div>';
+
+    var bandsH = trades.map(function(tr){
+      if(filter !== 'All' && filter !== tr) return '';
+      var inTrade = crews.filter(function(c){ return (c.trade||'General') === tr; });
+      var active = inTrade.filter(function(c){ return byCrewDay[c.id]; });
+      var idle   = inTrade.filter(function(c){ return !byCrewDay[c.id]; });
+      if(!active.length && !idle.length) return '';
+
+      function lane(c){
+        var cells = '';
+        for(var di=0; di<nDays; di++){
+          var list = (byCrewDay[c.id] && byCrewDay[c.id][di]) || [];
+          var s = dayStr[di], tcls = (s === todayStr) ? ' today' : '';
+          if(!list.length){ cells += '<div class="dcell empty' + tcls + '"></div>'; continue; }
+          var shown = list.slice(0,2).map(jobChip).join('');
+          if(list.length > 2) shown += '<div class="more">+' + (list.length-2) + ' more</div>';
+          cells += '<div class="dcell' + tcls + '">' + shown + '</div>';
+        }
+        var sub = c.contact ? '<div class="cc">' + esc(c.contact) + '</div>' : '';
+        return '<div class="drow dlane"><div class="crewc"><div><div class="cn">' + esc(c.name) +
+          '</div>' + sub + '</div></div>' + cells + '</div>';
+      }
+
+      var lanes = active.map(lane).join('');
+      /* a primary crew with no work this week still shows if the trade has no
+         active crew at all — so a quiet trade is not invisible. */
+      if(!active.length && idle.length){ lanes = lane(idle[0]); idle = idle.slice(1); }
+      var idleRow = '';
+      if(idle.length){
+        if(showIdle[tr]){ lanes += idle.map(lane).join(''); }
+        else idleRow = '<div class="idle" data-idle="' + esc(tr) + '"><span class="il"><b>' +
+          idle.length + ' idle ' + esc(tr.toLowerCase()) + (idle.length===1?' crew':' crews') + '</b> &middot; tap to show</span></div>';
+      }
+      return '<div class="dband"><span class="bl">' + esc(tr) + '</span></div>' + lanes + idleRow;
+    }).join('');
+
+    /* 842: Repairs band — punch-outs/repairs, one lane per assignee, red label. */
+    function repChip(pi){
+      var pp = projById(pi.project_id);
+      var loc = pp ? firstLine(pp.address) : '';
+      return '<div class="rep" data-pid="' + esc(pi.project_id) + '"><div class="t">' + esc(pi.title||'Repair') +
+        '</div>' + (loc ? '<div class="a">' + esc(loc) + '</div>' : '') + '</div>';
+    }
+    function repairsBand(){
+      if(!punches.length) return '';
+      var groups = {}, order = [];
+      punches.forEach(function(pi){ var k = pi.assigned_to || '__none__';
+        if(!groups[k]){ groups[k] = []; order.push(k); } groups[k].push(pi); });
+      var PROD = window.PRODUCTION_EMAILS || [];
+      order.sort(function(a,b){ if(a==='__none__') return 1; if(b==='__none__') return -1;
+        var ia = PROD.indexOf(a), ib = PROD.indexOf(b); if(ia<0) ia=50; if(ib<0) ib=50;
+        return ia - ib || a.localeCompare(b); });
+      var lanes = order.map(function(k){
+        var items = groups[k];
+        var oc = k==='curtis@cardinalrenovations.net' ? ' own-curtis'
+               : k==='scottie@cardinalrenovations.net' ? ' own-scottie' : '';
+        var name = k==='__none__' ? 'Unassigned' : who(k);
+        var cells = '';
+        for(var di=0; di<nDays; di++){
+          var day = dayStr[di], tcls = (day === todayStr) ? ' today' : '';
+          var onDay = items.filter(function(pi){ return pi.scheduled_at && String(pi.scheduled_at).slice(0,10) === day; });
+          cells += onDay.length ? '<div class="dcell' + tcls + '">' + onDay.map(repChip).join('') + '</div>'
+                                : '<div class="dcell empty' + tcls + '"></div>';
+        }
+        var backlog = items.filter(function(pi){ var d = pi.scheduled_at ? String(pi.scheduled_at).slice(0,10) : '';
+          return !d || dayStr.indexOf(d) < 0; }).length;
+        var bdg = backlog ? '<span class="repbdg">' + backlog + ' open</span>' : '';
+        return '<div class="drow dlane"><div class="crewc' + oc + '"><div class="cn">' + esc(name) + '</div>' + bdg + '</div>' + cells + '</div>';
+      }).join('');
+      return '<div class="dband repband"><span class="bl">Punch-outs &amp; Repairs</span></div>' + lanes;
+    }
+    var repsH = repairsBand();
+
+    wrap.querySelector('.dspbody').innerHTML =
+      '<div class="dspframe"><div class="dspscroll"><div class="dspgrid" style="--dcols:' + nDays + '">' +
+      railH + colH + bandsH + repsH + '</div></div></div>' +
+      '<p class="dspnote">Shows <b>bookings, not availability</b> — an empty cell means no job is booked that day, not that the crew is free. ' +
+      'Tap a job to open its client; tap a <b>Needs-a-crew</b> job to assign a crew right away. No dollar figures appear on this board.</p>';
+
+    /* week label + filter active state */
+    var lab = el.querySelector('.dspwklab');
+    if(lab){ var a = days[0], b = days[nDays-1];
+      var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      lab.textContent = mo[a.getMonth()] + ' ' + a.getDate() + ' – ' + b.getDate(); }
+    Array.prototype.forEach.call(el.querySelectorAll('.dspfilt .fc'), function(f){
+      f.classList.toggle('on', f.getAttribute('data-f') === filter);
+    });
+  }
+
+  function buildShell(){
+    el = document.createElement('div');
+    el.id = 'cr-disp';
+    var tradeChips = ['All','Roofing','Siding','Windows','Gutters'].map(function(t){
+      return '<span class="fc' + (t==='All'?' on':'') + '" data-f="' + t + '">' + t + '</span>';
+    }).join('');
+    el.innerHTML =
+      '<div class="dspwrap">' +
+        '<div class="dsptop">' +
+          '<button class="dspback" aria-label="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button>' +
+          '<span class="dsptitle">Crew Dispatch</span>' +
+          '<span class="dspwk"><button class="dspprev" aria-label="Previous week">&#8249;</button>' +
+            '<span class="dspwklab">this week</span>' +
+            '<button class="dspnext" aria-label="Next week">&#8250;</button></span>' +
+        '</div>' +
+        '<div class="dspfilt">' + tradeChips + '</div>' +
+        '<div class="dspbody"><div class="dspmsg">Loading crews…</div></div>' +
+      '</div>';
+    document.body.appendChild(el);
+
+    el.querySelector('.dspback').addEventListener('click', close);
+    el.querySelector('.dspprev').addEventListener('click', function(){ weekOffset--; render(); });
+    el.querySelector('.dspnext').addEventListener('click', function(){ weekOffset++; render(); });
+    el.addEventListener('click', function(e){
+      var f = e.target.closest('.dspfilt .fc');
+      if(f){ filter = f.getAttribute('data-f'); render(); return; }
+      var idle = e.target.closest('.idle[data-idle]');
+      if(idle){ showIdle[idle.getAttribute('data-idle')] = 1; render(); return; }
+      var uch = e.target.closest('.uch[data-pid]');
+      if(uch){
+        var upid = uch.getAttribute('data-pid'), proj = projById(upid);
+        close();   /* the picker modal is z-index 210 — must not open behind the grid */
+        if(proj && typeof window.openWorkOrderPicker === 'function') window.openWorkOrderPicker(proj);
+        else if(typeof window.openProject === 'function') window.openProject(upid);
+        return;
+      }
+      var pel = e.target.closest('[data-pid]');
+      if(pel && typeof window.openProject === 'function'){ close(); window.openProject(pel.getAttribute('data-pid')); }
+    });
+  }
+
+  async function open(){
+    if(!el) buildShell();
+    if(typeof window.hideAllViews === 'function') window.hideAllViews();
+    el.classList.add('open');
+    try{ el.scrollTop = 0; }catch(_e){}
+    weekOffset = 0; filter = 'All'; showIdle = {};
+    render();                 /* paint immediately with whatever is cached */
+    await load();
+    render();                 /* repaint with fresh crews + work orders */
+  }
+
+  function close(){
+    if(el) el.classList.remove('open');
+    if(typeof window.showHome === 'function') window.showHome();
+  }
+
+  window.CardinalDispatch = Object.assign(window.CardinalDispatch || {}, { open: open, close: close });
+})();
+</script>
+
 </body>
 </html>
