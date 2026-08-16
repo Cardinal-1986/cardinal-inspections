@@ -3,17 +3,50 @@
 Single-file PWA (`index.html`) for **Cardinal Roofing & Renovations, LLC**, Dayton OH.
 Live at **app.cardinalroster.com** · Vercel deploys on merge to `main` · Supabase backend (DB, storage, auth, RLS) · serverless functions in `/api/` (ESM — `api/package.json` has `"type":"module"`, handlers are `export default async function handler`).
 
-Since the 574–594 span the repo ships **three HTML artifacts**, not one: `index.html` (the app — which also serves the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` is set), `popup.html` (**The Pop-Up Roof**, the client-facing book behind the `presentation.cardinalroster.com` / `presentation.cardinalrenovations.com` rewrites in `vercel.json`) and `studio.html` (**Cardinal Studio**, the standalone admin curation browser). See "Builds 574–594" and "Builds 595–636" below before touching any of them.
+### ⚠ FIRST, THE THING THAT CHANGED MOST: **a build number is no longer `index.html`'s**
 
-For app work the file you want is still lowercase **`index.html`** at the repo root. **106** inline `<script>` blocks, **118** `<style>` blocks, **3** external CDN scripts, **0** module scripts. No build step, no bundler, no framework, no test runner.
+**The app is at build 836. `index.html` is at build 808 — and that is correct, not stale.**
+Builds **809–836 shipped entirely outside `index.html`**: in `visualizer/index.html` (its own
+stamp, `v2026-08-15 build 826`) and in `spark/visualizer_worker.py` (its own `WORKER_BUILD`,
+currently **`wb-2026-08-16.17`**). Verified against `git log -- index.html`, whose newest commit
+is 808.
+
+Three consequences, and every one of them has already cost somebody time:
+
+- **`check_build.py` takes ONE artifact and gates only that artifact.** Green on `index.html`
+  says nothing about the Visualizer, Studio or the book. Parse their inline scripts separately.
+- **The app stamp in `index.html` is not "the current build" any more** — it is the current build
+  *of index.html*. `scripts/next_build.py` asks the remote for the safe next number across all of
+  them; it is still the only correct way to pick one.
+- **Some builds carry TWO version stamps** — an app/visualizer build number *and* a
+  `wb-YYYY-MM-DD.N` worker build. The build log writes them as `Build 827 / wb-2026-08-15.9`.
+  When a Visualizer bug is reported, the first question is *which pair ran it*; that is what
+  `achieved._worker` (build 829) exists to answer.
+
+---
+
+The repo now ships **five HTML artifacts plus a second application**, not one:
+
+| Artifact | What | Read before touching |
+|---|---|---|
+| `index.html` | the app — and the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` | this whole file |
+| `popup.html` | **The Pop-Up Roof**, the client-facing book behind the `presentation.*` rewrites in `vercel.json` | `ROOF_JOURNEY_BRIEF.md` |
+| `studio.html` | **Cardinal Studio**, the standalone admin curation browser | "Cardinal Studio" below |
+| `supplement.html` | **The Supplement Desk** (668) — the Studio pattern again: public file, own Supabase sign-in, `is_cardinal_admin()`, and `api/supplement.js` enforcing admin server-side | build log 667–673 |
+| `ai-field-manual.html` | the 17-part manual the Resource Library iframes | `.vercelignore`'s header |
+| **`visualizer/index.html`** | **The Exterior Visualizer — a SEPARATE APPLICATION** (807+). No CRM code in it at all. Laid out as a folder so it can become the root of its own Vercel project | **"The Exterior Visualizer" below, and `HANDOFF.md`** |
+
+For app work the file you want is still lowercase **`index.html`** at the repo root. **113** inline
+`<script>` blocks, **135** `<style>` blocks, **3** external CDN scripts, **0** module scripts. No
+build step, no bundler, no framework, no test runner.
 
 Owner: **Theo Dorion** · theo@cardinalrenovations.net
 
-*Figures below carry the build they were measured at. Rows marked **@627** were re-measured 8 Aug 2026 on the build-627 artifact, by a script that was first validated against the build-573 tree (`aeac5e5`) and reproduced this document's recorded 573 column exactly — so the deltas below are real movement, not a regex that drifted. Anything still carrying an older stamp is flagged in place; it is kept rather than deleted so nobody "corrects" a right number, but do not quote it as current without re-measuring.*
+*Figures below carry the build they were measured at. Rows marked **@808** were re-measured **16 Aug 2026** on the shipped tree by `scripts/measure_counts.py` — the same script that was validated against the build-573 tree (`aeac5e5`) and reproduced this document's recorded 573 column exactly. Anything still carrying an older stamp is flagged in place; it is kept rather than deleted so nobody "corrects" a right number, but do not quote it as current without re-measuring.*
 
-*Across 573 → 627 the file grew by two modules and one span nobody wrote down. Inline scripts 104 → **106**, style blocks 114 → **118**, `window.Cardinal*` 87 → **90**. The named deltas are the Showcase at 574 (`cr-show-styles` / `cr-show-script` / `CardinalShowcase`) and **OC Colors at 615** (`cr-occ-styles` / `cr-occ-script` / `CardinalColors`, palette `--occ-*`); the remainder arrived in the **595–614** span, which had no narrative in this file until now — see its section below. `</body>` is still **11**. **`.observe(document.body …)`: a naive grep says 50, and 49 of those hits are not all code — the honest number is 46 real chained CALLS across 45 modules (measured @684 with `\)\s*\.observe\(` to skip the comments that quote the pattern; metallicize's was removed at 682, 47→46).** The census and the no-new-observer rule are in the invariants section. If you are quoting a number from a revision of this document older than 557, it is wrong.*
+*Across 627 → 808 the file grew by seven inline scripts and seventeen style blocks. Inline scripts 106 → **113**, style blocks 118 → **135**, `window.Cardinal*` 90 → **94**, `</body>` 11 → **12**. That growth is the insurance/supplement arc (637–673), the emoji-to-drawn-icon sweep (676–699), the Community port to the black card (705–), the Production rebuild (766–772) and the client-profile rebuild (788–804). **The Visualizer added none of it — it is a different file.** If you are quoting a number from a revision of this document older than 557, it is wrong.*
 
-**Size, stated once so nobody re-derives it wrong (@627):** **3,653,330 bytes on disk (3.48 MiB / 3.65 MB)** — but **3,630,040 characters**, because the file is UTF-8 with multi-byte content. `check_build.py` prints the *character* count and labels it "bytes". `wc -c` prints the byte count. They will never agree; neither is broken. The file grew ~151 KB across 595–627 (and ~177 KB across 574–594, ~42 KB across 558–573, ~464 KB across 483–557).
+**Size, stated once so nobody re-derives it wrong (@808):** **4,467,167 bytes on disk (4.26 MiB / 4.47 MB)** — but **4,442,369 characters**, because the file is UTF-8 with multi-byte content. `check_build.py` prints the *character* count and labels it "bytes". `wc -c` prints the byte count. They will never agree; neither is broken. The file grew ~814 KB across 628–808 (and ~151 KB across 595–627, ~177 KB across 574–594, ~42 KB across 558–573, ~464 KB across 483–557).
 
 ---
 
@@ -31,6 +64,10 @@ Owner: **Theo Dorion** · theo@cardinalrenovations.net
 | `.claude/skills/cardinal-build/docs/ROOF_JOURNEY_BRIEF.md` (+ `_COPY`, `_DIRECTIONS`) | Before touching `popup.html` — Theo's verbatim brief and the book's copy |
 | `.claude/skills/cardinal-build/docs/DGX_SPARK_ILLUSTRATIONS.md` | Anything DGX-Spark-adjacent — the standing rule that the Spark is never a live app dependency |
 | `spark/README.md` + `spark/STUDIO_TAGGING.md` | Spark-side pipeline work — archiving photo bytes, tagging, Studio pushes |
+| **`spark/VISUALIZER_SETUP.md`** | **Before any Visualizer or Spark-worker work** — the ComfyUI graphs, the `cardinal-visualizer` systemd unit, and which Python it runs from |
+| `spark/ORIENTATION.md`, `spark/ACCULYNX_MIGRATION.md`, `spark/RECOVERY_602.md` | Spark-side history — the AccuLynx pull and the 602 taxonomy remap |
+| `.claude/skills/cardinal-build/docs/CR_AUDIT_2026-08.md` (+ `_COMMUNITY_`, `CR_E2E_WORKFLOW_VALIDATION_2026-08.md`) | Picking up audit follow-ups — the CR-AUD / CR-COM item ids the build log cites by number |
+| `.claude/skills/cardinal-build/docs/ABC_SETUP.md` | ABC Supply / Suppliers work (688, 774) |
 | `.claude/skills/cardinal-build/docs/OC_BRAND_RULES.md` | **Before putting any Owens Corning or Pink Panther mark on a screen** — the approval gate is Theo's to pass, and the Panther IS available to contractors (a claim to the contrary shipped at 615–623 and was wrong) |
 
 The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It triggers on any Cardinal work — features, bug fixes, theming, SQL, `/api`, audits.
@@ -39,31 +76,33 @@ The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It trigger
 
 *The one thing that has never changed: **`cardinal_build_log.md` has no entry for roughly 468–542**, because much of that span was built through a different tool that never read this folder.*
 
-**As of 10 Aug 2026 the app is at build 684** (679–684 shipped in one session, all merged and verified deployed). Current state:
+**As of 16 Aug 2026 the app is at build 836** — `index.html` at **808**, `visualizer/index.html` at **826**, the Spark worker at **`wb-2026-08-16.17`**. Current state:
 
 | File | Worked forward to | Trust it? |
 |---|---|---|
-| `cardinal_build_log.md` | **683** — 684 is in the in-app CHANGELOG and HANDOFF | ✅ **the one doc that never fell behind.** Entries written as each build shipped, 543 onward |
-| `FEATURES.md` | **683 in content**; header stamp older — the newest section at the bottom outranks it | ✅ 679–683 appended 10 Aug |
-| `OPEN_ITEMS.md` | **683** | ✅ brought forward 10 Aug — the queue (emoji sweep → gradient text → insurance loop → VAPID rotation) and the light-mode lavender PO |
-| `HANDOFF.md` | **10 Aug session** (679–684) | ✅ **START HERE for session state** — Theo's six settled decisions of 10 Aug, the queue in his priority order, the three measuring-rig traps, and the squash-then-rebase drill |
-| `BUG_CLASSES.md` | **683** (classes 27–28: the one-class-two-meanings collision — struck TWICE in three builds — and the partial theming pass) | ✅ classes 12–13 at 573, 14 at 595, **15 at 630 (assertions matching their own prose or a hardcoded count — TEN false reds in one session) and 16 at 632 (a control that renders but is never wired: the Studio Archive button did nothing from 614 to 632)**; the rest is 427-era |
-| `OC_BRAND_RULES.md` | **8 Aug** | ✅ newest doc in the set — read it before any OC or Pink Panther mark |
+| `cardinal_build_log.md` | **836** | ✅ **the one doc that has never fallen behind.** Entries written as each build shipped, 543 onward. 1.2 MB now — grep it, don't read it |
+| `HANDOFF.md` | **14–15 Aug session (813–826)** | ✅ **START HERE for session state.** Its newest section is the Visualizer surface-picker verdict and the A/B/C fork — read it before touching the Visualizer |
+| `FEATURES.md` | **~824 in content**; header stamp older — the newest section at the bottom outranks it | ✅ 318 KB. The Visualizer overlay/solo tables are at the very end |
+| `OPEN_ITEMS.md` | **~15 Aug** in its newest layer; **the file is explicitly layered and each layer carries its own date** — its own header says so | ✅ for the newest layer (the OC colour catalog, done 15 Aug). ⚠️ the long middle is still 573-era |
+| `BUG_CLASSES.md` | **~836** — 152 KB, and the class numbers are now in the **40s** (37 = a negative control that CRASHES instead of reporting red; 47 = `achieved` drift measured inside the mask) | ✅ classes 12–13 at 573, 14 at 595, 15–16 at 630/632, 27–28 at 683, and the 30s–40s across the Visualizer arc |
+| `OC_BRAND_RULES.md` | **8 Aug** | ✅ read it before any OC or Pink Panther mark |
 | `CONTRACTOR_VISION_SUITE.md` | **572** | ✅ an audit, not a status page — its fences are still the fences |
 | `START_HERE.md` | 467 | ⚠️ historical — it now says itself to read `CLAUDE.md` first |
 
-**The span with no narrative record anywhere in the doc set is still roughly 468–542.** 595–633 *is* recorded — in `cardinal_build_log.md`, in the in-app `CHANGELOG`, and (since 8 Aug) in this file and `FEATURES.md`.
+**The span with no narrative record anywhere in the doc set is still roughly 468–542, and that is now the ONLY gap.** Everything from 543 to 836 is in `cardinal_build_log.md`.
+
+⚠️ **The build log's heading levels are inconsistent and a header grep will lie to you.** 543–684 and 827–836 use `## Build NNN`; **685–826 mostly use `## build NNN` (lowercase), a `### NNN —` sub-head, or a bold `**NNN**` bullet inside a span write-up** (766–772, 809–818 and the Community port are all written as spans). A grep for `^## Build` finds 684 then jumps to 827 and reads like 142 missing builds. They are all there. **Grep case-insensitively, and for the number rather than the word.**
 
 **Every doc states the build it was worked forward to.** That stamp stays true forever; the table above says whether it is still current. This file has twice been found making a *stale claim about staleness* — asserting `START_HERE.md` said 427 when it said 467, then calling the whole set two sessions behind after most of it had been updated. **Re-check the table before repeating any claim in it, including this one.**
 
 **✅ CORRECTION (9 Aug, build 639) — the in-app `CHANGELOG` was NOT rebuilt, and nothing was retired to git history.** Every revision of this file until now said the array in `<script id="cr-cl-script">` was "replaced wholesale at 574", that the old record "now exists only in git history", and that it holds "48 entries, builds 574–627". **All three are wrong.** Measured on the working tree:
 
-- There is **ONE** `CHANGELOG` array. **Re-measured @670: 365 entries** — **90** in the current shape (`{ b, d, t, s }` — build, date, title, long summary, **574–670**) and **275** in the original shape (`{ build, note }`, **166–600**), **interleaved in one descending list**. (It read 335 / 60 / 275 at 639; only the new shape has grown.)
+- There is **ONE** `CHANGELOG` array. **Re-measured @808: 503 entries spanning 166–808** — **228** in the current shape (`{ b, d, t, s }` — build, date, title, long summary, **574–808**) and **275** in the original shape (`{ build, note }`, **166–600**), **interleaved in one descending list**. (365 / 90 / 275 at 670; 335 / 60 / 275 at 639. **Only the new shape has ever grown — the old-shape 275 has not moved since build 600.**) The block is now **246,281 characters**, which is why the fixed-window bug below mattered.
 - ⚠️ **Six build numbers exist in BOTH shapes: 574, 575, 576, 577, 578, 584.** This is the parallel-branch collision this file describes in prose, now measured — the AI Field Manual lineage and the Vision suite lineage each wrote an entry under the same number. **A "duplicate changelog entry" in that range is history, not a bug. Do not de-duplicate it.**
 - **574 ADDED a shape beside the old one; it replaced nothing.** The old shape kept receiving entries until **build 600**, twenty-six builds after it was supposedly retired.
 - The renderer normalises both **on purpose** — `function entryBuild(e){ return e.build != null ? e.build : e.b; }` and `if(e.note != null) return e.note;`. Two shapes is the design, not drift.
 
-So **the full 166–670 record is in the working file.** You do not need `git show aeac5e5:index.html` to read builds 428–542 — grep `index.html`. (That SHA is still the last build-573 tree and is still correct for *measuring* 573: 104 inline scripts, 114 style blocks, 87 `window.Cardinal*`, 81% bare `var()`.) A summary of 428–451 is in the section below.
+So **the full 166–808 record is in the working file.** You do not need `git show aeac5e5:index.html` to read builds 428–542 — grep `index.html`. ⚠️ **But the `CHANGELOG` stops at 808 for the same reason the app stamp does** — 809–836 shipped in `visualizer/index.html` and `spark/`, which have no changelog array. For those builds `cardinal_build_log.md` is the only record, which reverses this file's usual "the CHANGELOG outranks the docs" rule. **The CHANGELOG outranks the docs only for builds that touched `index.html`.** (That SHA is still the last build-573 tree and is still correct for *measuring* 573: 104 inline scripts, 114 style blocks, 87 `window.Cardinal*`, 81% bare `var()`.) A summary of 428–451 is in the section below.
 
 ⚠️ **This error cost a build number, and it is now FIXED.** `next_build.py`'s entry regex matched the **old** shape only, so it counted an identical 275 on every branch, no branch ever looked like it added a build, every branch was skipped by the `if new or bad or edited` guard, and **branch-collision detection was dead from 574 until 9 Aug** — which is how two PRs both shipped a "build 638". It now parses **both** shapes (`ENTRY_OLD` + `ENTRY_NEW`) and folds each branch's **stamp** into the highest-seen number even when its entries parse to nothing, so the safe-number answer no longer depends on one assumption about a changelog shape that has already changed once. `--self-test` covers the dual-shape parse and **fails against the old regex**, so it is not an inert assertion. Proof it works: run against the live remote it surfaces the real 638 clash (`claude/production-handoff-taxonomy-g3fg09`) that the broken version reported as "No collisions".
 
@@ -77,7 +116,16 @@ So **the full 166–670 record is in the working file.** You do not need `git sh
 
 **Things that look missing are usually buried.** Six "missing features" on this project were fully built and merely unreachable or plain-looking — a dead handler stub, an Attach bar under the bottom nav's z-index, a punch module mounting to hidden anchors, an entire Team page in the burger menu, a `styleMounts()` inline style beating every CSS rule, and two separate Estimates screens.
 
-**⚠ `#tab-overview`'s hide rule is the single worst offender, and it has now claimed FIVE cards.** `#tab-overview > *:not(…){display:none !important;}` hides every direct child not on its allow-list. Victims so far: the job menu (607, found at 609), the **Scope of Loss card** (639) and — the whole insurance group — **`insCard`, `insDocsCard`, `insItelCard` (641)**. The last three each set `mount.style.display='block'` at runtime **and it never worked**: an `!important` stylesheet declaration outranks a **normal** inline style. iTel shipped at 406 into a container Keeper retired at **348**, so it had never rendered once. **Before adding anything to that container, check the allow-list — and never conclude a card is dead because its renderer "sets display".** Prove it with `render_inscards.js`; jsdom cannot see this and neither can reading the code.
+**⚠ `#tab-overview`'s hide rule is the single worst offender, and it has claimed FIVE cards.** `#tab-overview > *:not(…){display:none !important;}` hides every direct child not on its allow-list. Victims: the job menu (607, found at 609), the **Scope of Loss card** (639) and — the whole insurance group — **`insCard`, `insDocsCard`, `insItelCard` (641)**. The last three each set `mount.style.display='block'` at runtime **and it never worked**: an `!important` stylesheet declaration outranks a **normal** inline style. iTel shipped at 406 into a container Keeper retired at **348**, so it had never rendered once.
+
+**✅ All five are now ON the allow-list — verified in the shipped file @808:**
+
+```css
+#tab-overview > *:not(#acxMount):not(#cr-pp-mount):not(#solCard)
+               :not(#insCard):not(#insDocsCard):not(#insItelCard){display:none !important;}
+```
+
+**The rule is still the trap; those five are simply no longer its victims.** Do not "fix" them again. **Before adding anything to that container, extend the allow-list in the same edit — and never conclude a card is dead because its renderer "sets display".** Prove it with `render_inscards.js`; jsdom cannot see this and neither can reading the code.
 
 Before building: grep `FEATURES.md`, then grep the in-app `CHANGELOG` (it covers what `FEATURES.md` doesn't), then grep `index.html` for the feature name **and its mount anchor**. Ask "does this *element* still exist?" — not "does this code exist?" Extend, don't add. One pipeline per concept.
 
@@ -219,8 +267,8 @@ No build pipeline, no module folder, no pristine base. **All work is direct surg
 - **Prove scope two ways.** Re-applying the edits to a fresh copy must reproduce the file byte-for-byte; and replacing each changed region with a sentinel in both old and new must compare equal. **Walk regions in file order** or you get a false failure.
 - `patch_lib.sub()` is literal splicing — it does **not** expand regex backreferences. Use `re.sub` for backrefs.
 - **Recon regexes need bounds.** `[^{}]` can't cross a brace; unbounded `[\s\S]*` on a 2.6 MB file backtracks until timeout.
-- **`</body>` now appears 11 times**, not 10 — contract templates and generated print/share documents carry their own, and **three of the eleven are prose inside install-instruction comments**, not markup at all. **Anchor with `rfind()`**, which still lands on the real document close.
-- New `window.Cardinal*` export → `Object.assign(window.X || {}, {...})`, never plain assignment. There are **88** distinct `window.Cardinal*` names (the 88th is `CardinalShowcase`, 574).
+- **`</body>` now appears 12 times** (@808), not 10 and not 11 — contract templates and generated print/share documents carry their own, and several are prose inside install-instruction comments, not markup at all. **Anchor with `rfind()`**, which still lands on the real document close.
+- New `window.Cardinal*` export → `Object.assign(window.X || {}, {...})`, never plain assignment. There are **94** distinct `window.Cardinal*` names (@808).
 - **`function money(` is defined ELEVEN times** — one per module, with three different signatures. A file-wide `count == 1` assertion on it is meaningless. Build 556 changed only the `cr-crew-script` one (to `money(n, cents)`) by slicing the block first and asserting the other ten survived. Same class as the `.single()` and `LABEL` traps below.
 - **Grep the whole file for every occurrence of a selector before patching it.** `.acthead` had three definitions; the winner was ~39,000 lines after the two found first.
 
@@ -246,6 +294,27 @@ Both shortcuts were wrong, in opposite directions. **Use the lexer** — `script
 
 **Scope the assertion to the function, not the file.** The single most repeated error here. `await signedPhotoMap(...)` appears twice — `publish()` and `openPreview()` — so asserting `1` file-wide fails a correct patch. Extract the function by brace-matching, then assert against that slice. Same trap with `LABEL`, and **it is worse than this file used to say**: there are **three** `var LABEL` maps, and the **two community ones are byte-identical** — so an anchor that reads correctly still matches twice. A file-wide regex also finds the *insurance* map (`'Lead':'Claim Filed'`) when you meant community (`'Lead':'Bid Requested'`). **634 hit this**: the assertion was correctly scoped to the `cr-cc` block and said 1, but `pl.sub()` splices **file-wide** and found 2. **Scoping the assertion is not enough if the substitution is global** — anchor on something unique in the whole file, or slice, patch and re-join the block.
 
+### ⚠ Two assertion faults that struck repeatedly across 827–836 — both fail CORRECT code
+
+**1. An assertion pinned to PUNCTUATION.** `'if selections.get("_points"):'` stopped matching the
+moment the dispatch legitimately became `... or selections.get("_box"):`, and
+`"masks = exclusive(masks)"` broke when the call started returning a tuple. **Three of my own
+assertions failed correct code in one build.** Assert the **contract over a region** — that the
+dispatch routes this key to that worker — never the spelling of one line.
+
+**2. A test that silently LOSES a check and stays green.** `test_stale_worker` generated its checks
+from the mode keys it found in the page; when `selections: { _points: … }` became
+`queueTapJob({ _points: … })` the regex stopped matching, coverage fell **15 → 14**, and nothing
+went red. *A smaller number nobody reads.* **Any test that derives its own check count needs a
+FLOOR** — assert the minimum set you know must exist, so shrinking coverage is a failure.
+
+**A related one, the same family: a check that CANNOT fail.** Build 816's burst test passed at
+**zero jobs from six clicks**, because the duplicate guard short-circuited before the lock was ever
+reached. And two of `gate_807.mjs`'s assertions passed **vacuously** — one read `innerText` from
+inside a closed `<details>` (always `""`), the other used `\b` in a plain regex literal, where it is
+an escaped backslash and not a word boundary, so it could never match anything. **A check that
+cannot fail is worse than no check.**
+
 **Prefer self-computing assertions** over hardcoded numbers, which are usually read off an already-patched tree:
 
 ```python
@@ -258,36 +327,67 @@ assert count(patched, VALUE) == count(orig, VALUE) - 1   # "exactly one changed"
 
 **Watch for foreign namespaces inside your pattern.** A sweep for same-origin `/api/` routes returns `/api/staticmap` and `/api/js` — both are `maps.googleapis.com/maps/api/...`, not Cardinal routes. Two of three hits were false. Bound the pattern to the origin you mean.
 
-### Current measurements — the **@627** column is 8 Aug 2026
+### Current measurements — the **@808** column is 16 Aug 2026
 
 **Declaration counts are SITES, not distinct names, and the two differ by ~2× because every token is declared once per theme.** An earlier revision of this file quoted 64 `--ccm-*` and 154 `--rbe-*` — those were sites. Count distinct names and you get 32 and 77, which looks like tokens were deleted. Nothing was deleted. Both are given below so nobody "corrects" the right number.
 
-**Re-measured by `scripts/measure_counts.py`, which was validated before it was trusted:** run against the build-573 tree (`git show aeac5e5:index.html`) it reproduces this document's recorded 573 column exactly — 104 / 114 / 87 / 641 `--rbe-*` refs / 81% bare. So where a number below differs from the retired @594 column, the app moved; the pattern did not. **Re-run it rather than re-deriving these by hand** — it prints every row below, splits SITES from DISTINCT, routes the scroll lock through the lexer, and shows what a naive count would have said.
+**Re-measured by `scripts/measure_counts.py`, which was validated before it was trusted:** run against the build-573 tree (`git show aeac5e5:index.html`) it reproduces this document's recorded 573 column exactly — 104 / 114 / 87 / 641 `--rbe-*` refs / 81% bare. So where a number below differs from the retired @627 column, the app moved; the pattern did not. **Re-run it rather than re-deriving these by hand** — it prints every row below, splits SITES from DISTINCT, routes the scroll lock through the lexer, and shows what a naive count would have said.
+
+⚠️ **The rows below describe `index.html` ONLY.** They do not count `visualizer/index.html`,
+`studio.html`, `supplement.html` or `popup.html`, all of which have their own inline scripts,
+styles and palettes. Point the script at those files separately; do not add their numbers to these.
 
 | Thing | Value | Measured | How it was measured |
 |---|---:|---|---|
-| Inline `<script>` blocks | **106** | **@627** | `<script>` tags without `src=` — was 105 @594; 615 added `cr-occ-script` |
-| `<script>` tags total / external CDN | **109** / 3 | **@627** | supabase-js@2, chart.js@4.4.3, papaparse@5.4.1 — unchanged since 482 |
-| `<style>` blocks | **118** | **@627** | was 115 @594 — `cr-occ-styles` (615), `cr-pm-scroll` (595) and one more from the 595–614 span |
-| `<style>` blocks with an `id` | **111** | **@627** | was 108 @594 |
-| `window.Cardinal*` exports | **90** | **@627** | distinct names — was 88 @594; the newest is `CardinalColors` (615) |
-| **`.observe(document.body …)`** | **50** | **@627** | **A counting trap, and it has not moved since 594.** All 50 are real code. Stripping `/* */` first says **40** — naive comment-stripping eats ten real calls sitting after a `/*` inside a string. A guaranteed mutation each frame wakes **all 50, every frame**; see the re-render section |
-| Modules writing the global scroll lock | **13** | **@627** | lexer, CODE hits only — **34 CODE sites, 0 in strings, 0 in comments** (a bare regex says 35). Unchanged since 594: the Showcase, OC Colors *and* the tray each added zero. **The no-14th-writer rule has now held across 33 builds** |
-| `normStage()` copies | 6 | **@627** | 1 whitelist + 5 delegates — unchanged, and the whitelist is still the nine stages quoted in the invariants section |
-| `.single()` / `.maybeSingle()` | **45 / 6** | **@627** | was 44 / 6 @594. The one new site is the `punch_items` comment update, and **it guards** (`if(r.error)`) — checked individually, not inferred. `.throwOnError(` is still **0**, which is why `.single()` never throws here. **All guard — there is no migration backlog**, see the invariants section |
-| `--ccm-*` decl sites / distinct / refs | 64 / 32 / 137 | **@627** | unchanged since 557 |
-| `--rbe-*` decl sites / distinct / refs | 169 / 77 / **694** | **@627** | **Sites and distinct names unchanged; refs 641 → 694.** 595–627 added no new retail tokens and wired 53 more references to the existing ones — which is the healthy direction |
-| `--lb-*` decl sites / distinct / refs | 22 / 11 / **87** | **@627** | Resource Library, 77 of 87 refs carry a literal — unchanged since 451 |
-| `--crw-*` decl sites / refs | **0 / 95** | **@627** | Crews (547+). **Declared nowhere; all 95 refs are `var(--crw-x,#literal)`.** The fallbacks *are* the palette. Deliberate, and immune to the 448–449 class by construction |
-| **`--sh-*` decl sites / refs / with fallback** | **1 / 180 / 180** | **@627** | the Showcase (574+). **All 180 references carry a literal fallback**, re-verified. ⚠️ A broad `var\(\s*--sh-` says **182** — the two extra are the module's own banner prose describing the pattern as `var(--sh-*,#literal)`. The comment-pollution trap, in the one direction that flatters you |
-| **`--occ-*` sites / distinct / refs / with fallback** | **12 / 12 / 138 / 138** | **@627** | **NEW ROW — OC Colors (615–623).** Twelve names, each declared **once** — single-theme by design, Blackout like the Showcase, not a light/dark pair someone forgot to finish. **All 138 references carry a literal fallback, 0 bare** — measured, joining Crews, the Library and the Showcase. Do not wire it to `rb-light` |
-| `--cr-*` decl sites / distinct / refs | **176 / 20 / 577** | **@627** | **Five modules share one identical palette** — coach, pricing, claims, adjusters (all themed at 573) and **`cr-bpa-script`, which is not**. See the theming section |
-| `var()` refs total / with a fallback | **3,750 / 998** | **@627** | **73% are bare** (888 of the 998 fallbacks are a hex). **Improving steadily: 77% @594, 81% @573, 88% @482** — the Showcase, Crews, Library and now OC Colors each pin their own. See 448–449 |
-| Surviving legacy gold hexes | **33** | **@627** | `#c9a227` ×22 + `#b8860b` ×11 — was 30 @594. Still the **retail CRM badge** and the gradient-clip fallback; the three dead values (`#d4a017`, `#f5d061`, `#8a5a00`) are still at **0**, asserted |
-| `#c8202e` (cardinal red) | **341** | **@627** | was 327 @594, 270 @573 |
-| `</body>` | **11** | **@627** | **not 10.** Three of the eleven are prose inside install-instruction comments, not real markup. `rfind()` still lands on the real document close |
-| `api/*.js` serverless functions | **26** | **@627** | unchanged since 594 — the whole 595–627 span added none. **OC Colors and the tray are pure Supabase + RLS, no new endpoint** |
-| `*.sql` at the repo root | **32** | **@627** | all applied by hand; `.vercelignore` blanket-excludes them so none is ever served |
+| Inline `<script>` blocks | **113** | **@808** | `<script>` tags without `src=` — was 106 @627 |
+| `<script>` tags total / external CDN | **116** / 3 | **@808** | supabase-js@2, chart.js@4.4.3, papaparse@5.4.1 — unchanged since 482 |
+| `<style>` blocks | **135** | **@808** | was 118 @627. Seventeen added across 628–808 — most of them the drawn-icon sweep and the client-profile rebuild |
+| `<style>` blocks with an `id` | **127** | **@808** | was 111 @627 |
+| `window.Cardinal*` exports | **94** | **@808** | distinct names — was 90 @627 |
+| **`.observe(document.body …)`** | **45 real / 46 hits** | **@808** | **⚠ THE COUNTING METHOD THIS FILE USED TO RECOMMEND IS WRONG — see the correction below the table.** 46 bare hits; **1 is prose** (a comment in the main block that says "~50"); the other **45 are real calls**, across **44 identified `<script id=>` blocks plus one un-id'd block** |
+| Modules writing the global scroll lock | **13** | **@808** | lexer, CODE hits only — **35 CODE sites, 0 in strings, 0 in comments** (a bare regex says 37). **The no-14th-writer rule has now held across 234 builds**, 574 → 808, through the Supplement Desk, the Production rebuild and the whole client-profile rebuild |
+| `normStage()` copies | 6 | **@808** | 1 whitelist + 5 delegates — unchanged, and the whitelist is still the nine stages quoted in the invariants section |
+| `.single()` / `.maybeSingle()` | **55 / 6** | **@808** | was 45 / 6 @627. **`.throwOnError(` is still 0**, which is why `.single()` never throws here. The ten new sites arrived with the supplement/scope/commissions arc. **There is no migration backlog** — see the invariants section |
+| `--ccm-*` decl sites / distinct / refs | 64 / 32 / **162** | **@808** | sites and distinct names unchanged since 557; refs 137 → 162 as Community ported to the black card (705–) |
+| `--rbe-*` decl sites / distinct / refs | **167 / 76 / 739** | **@808** | refs 694 → 739. **Sites went DOWN by two and distinct by one** — that is the light-mode repair work retiring a token, not tokens going missing |
+| `--lb-*` decl sites / distinct / refs | 22 / 11 / **87** | **@808** | Resource Library, 77 of 87 refs carry a literal — unchanged since 451 |
+| `--crw-*` decl sites / refs | **0 / 95** | **@808** | Crews (547+). **Declared nowhere; all 95 refs are `var(--crw-x,#literal)`.** The fallbacks *are* the palette. Deliberate, and immune to the 448–449 class by construction |
+| **`--sh-*` decl sites / refs / with fallback** | **1 / 180 / 180** | **@808** | the Showcase (574+). **All 180 references carry a literal fallback.** ⚠️ A broad `var\(\s*--sh-` says **182** — the two extra are the module's own banner prose describing the pattern as `var(--sh-*,#literal)`. The comment-pollution trap, in the one direction that flatters you |
+| **`--occ-*` sites / distinct / refs** | **14 / 12 / 150** | **@808** | OC Colors (615+). Twelve names; **14 sites now, so two are declared twice** — check before assuming a light twin was added. Single-theme Blackout by design. Do not wire it to `rb-light` |
+| `--cr-*` decl sites / distinct / refs | **177 / 21 / 603** | **@808** | **Five modules share one identical palette** — coach, pricing, claims, adjusters (all themed at 573) and **`cr-bpa-script`, which is not**. See the theming section |
+| `var()` refs total / with a fallback | **4,167 / 1,457** | **@808** | **65% are bare** (1,248 of the 1,457 fallbacks are a hex). **Still improving: 73% @627, 77% @594, 81% @573, 88% @482.** See 448–449 |
+| Surviving legacy gold hexes | **27** | **@808** | `#c9a227` ×22 + `#b8860b` ×**5** — was 33 @627. **The `#b8860b` drop from 11 to 5 is build 685 removing gradient-clipped text**, whose fallback colour it was. The three dead values (`#d4a017`, `#f5d061`, `#8a5a00`) are still at **0**, asserted |
+| `#c8202e` (cardinal red) | **352** | **@808** | was 341 @627, 327 @594, 270 @573 |
+| `</body>` | **12** | **@808** | **not 10 and not 11.** Several are prose inside install-instruction comments or generated print documents, not real markup. `rfind()` still lands on the real document close |
+| `api/*.js` serverless functions | **29** | **@808** | was 26 @627. Net +3 across a lot of churn: `abc.js`, `commissions-digest.js`, `hover.js`, `sol.js`, `supplement.js`, `ai-status.js` and `companycam-status.js` arrived; **`design.js` was deleted at 807 and came back at 822** as the Visualizer's second engine |
+| `*.sql` at the repo root | **62** | **@808** | was 32 @627 — thirty migrations in 180 builds. All applied by hand; `.vercelignore` blanket-excludes them so none is ever served |
+| `.html` at the repo root | **17** | **@808** | was 16 — `supplement.html` (668). **10 excluded as scratch, 7 ship on purpose.** `visualizer/index.html` is NOT among them; it is a folder, deliberately |
+
+### ⚠ CORRECTION @808 — the observer count, and the pattern this file told you to use
+
+Every revision since 684 has said to count body observers with `\)\s*\.observe\(document\.body`,
+"to skip the comments that quote the pattern." **That pattern undercounts, and it undercounts in
+two independent ways.** Measured four ways on the shipped file:
+
+| method | answer | why it is wrong |
+|---:|---:|---|
+| `grep -oE '\)\s*\.observe\(document\.body'` | **40** | **`grep` is LINE-BASED.** `\s` never matches a newline, so every observer whose `)` sits on the previous line is invisible. Six of them do |
+| Python, same pattern, `re.S` | **42** | fixes the newline, still wrong — see below |
+| bare `\.observe\(document\.body` | **46** | includes 1 comment |
+| **read what each hit is** | **45 real + 1 prose** | ✅ the honest answer |
+
+**The three the chained pattern misses are not comments — they are real observers held in a
+variable.** `observer.observe(document.body …)`, `bodyObs.observe(…)` and one `mo.observe(…)`.
+The pattern assumes every observer is constructed and observed in one chained expression. Most
+are; three are not, and those three are as awake as the other 42.
+
+**So the pattern was excluding real code to avoid a comment — and there is only ONE comment.**
+Count bare, then read the handful of hits and drop the prose. That is what
+`measure_counts.py` now does, and it is cheap: 46 hits is a screenful.
+
+*This is the file's own rule — "print what your extractor captured" — biting the file itself. A
+pattern chosen to exclude noise excluded signal, and because the wrong number was **smaller** it
+read as reassuring progress (46 → 42) rather than as a defect.*
 
 **The `--lb-*` row is a correction to a correction, and it is instructive.** The previous revision said *"the 22 recorded at 451 does not reproduce — `--lb-[a-z-]+\s*:` finds 14."* **22 reproduces exactly.** That regex has no `0-9` in its class, so it silently dropped `--lb-ink2`, `--lb-line2`, `--lb-surface2` and `--lb-surface3`. The file's own rule — *when a count contradicts you, suspect the regex* — caught a wrong "correction" that had been sitting here as fact.
 
@@ -304,9 +404,26 @@ python3 .claude/skills/cardinal-build/scripts/check_build.py index.html \
 
 Covers per-block `node --check` on all inline scripts, tag balance, CSS brace balance, duplicate `<style id=>` detection, the dupe-API check, build-label bump, marker present in the artifact you wrote, and the **negative control**.
 
-**It is green on build 627 right now** (exit 0, re-run 8 Aug 2026), reporting: 106 inline scripts parse · 109/109 script tags · **118/118** style tags · CSS braces balanced · no duplicate style ids · no double-assigned `window.Cardinal*` · app stamp `v2026-08-08 build 627` · 24 version strings, 8 distinct builds. Start from green; if your first run is red, you broke it.
+**It is green on build 808 right now** (exit 0, re-run 16 Aug 2026), reporting: 113 inline scripts parse · 116/116 script tags · **135/135** style tags · CSS braces balanced · no duplicate style ids · no double-assigned `window.Cardinal*` · app stamp `v2026-08-14 build 808` · 38 version strings, 19 distinct builds. Start from green; if your first run is red, you broke it.
 
-⚠️ **`check_build.py` does not see `studio.html` or `popup.html`.** It takes one artifact and the app is the one it is pointed at. When you touch Studio, parse its inline scripts separately (`node --check` on each block) — 627 did, and that is now the convention, not a courtesy.
+⚠️ **`check_build.py` sees ONE artifact, and there are now six.** It does not see `studio.html`, `popup.html`, `supplement.html`, `ai-field-manual.html` or **`visualizer/index.html`**. When you touch any of them, parse their inline scripts separately (`node --check` on each block). This is the convention, not a courtesy — and it matters more now than at 627, because **builds 809–836 never touched the file `check_build.py` gates.**
+
+### The gate inventory has outgrown a list — the convention is what to learn
+
+`scripts/` now holds ~90 gates and harnesses. Naming tells you what a file is:
+
+| Prefix | What it is | Runs in |
+|---|---|---|
+| `check_build.py` | the mechanical ladder, every build | — |
+| `gate_NNN.mjs` | **the per-build gate, named for the build that added it** (721 → 823) | Playwright / Chromium |
+| `harness_NNN.js` / `harness_<name>.js` | functional assertions on a surface | jsdom |
+| `render_<name>.js` | **a real Chromium render** — the only thing that settles a colour, an `!important`, or whether a control is wired | Chromium |
+| `gate_tint.py`, `gate_graphs.py`, `spark/test_*.py` | **the Spark worker's gates** — pure Python, no browser | Python |
+| `drive_lifecycle.mjs`, `e2e_drive.mjs` | the full E2E lifecycle drive (773) against a recording mock | Chromium |
+
+**Do not read the whole folder.** Find the newest `gate_*` touching your surface, run it, and copy its shape. **Every one takes an optional path argument so it can be pointed at the previous build as a negative control** — a harness that has never been run red proves nothing.
+
+⚠️ **`BUG_CLASSES` class 37 — "a negative control that CRASHES instead of reporting red" — struck FIVE times in one session and is still striking.** The shape is always the same: the control tree lacks a symbol or a selector the new gate names, so the run dies with `AttributeError` / `undefined.match` / a 30s Playwright timeout **before printing a line**, and a crash reads as "not green" rather than as "proved nothing". Two standing fixes: read every new symbol through `getattr(mod, 'X', default)` on the Python side, and wrap interactions in a `tryClick(sel, why)` that records a failure and carries on. **And `git fetch` before building a control tree** — build 833's first control silently ran against a stale `origin/main` two builds old and reported the previous run's numbers.
 
 Then a **jsdom functional harness** on the changed surface. Recipe in `references/gates.md`. Where practical, go further: extract the *shipped* function text and execute it against real data shapes — not a re-implementation.
 
@@ -407,8 +524,9 @@ but not in the history switch is one the **back button walks straight past**. 57
 `wrapNav(globalName, viewName)` handles globals; methods need the `__crNav` IIFE pattern (copy the
 `CardinalCommunityHub` block).
 
-⚠️ **`openEditor` is defined FIVE times** (19397, 29216, 31477, 37979, 39392 @627 — line numbers
-drift every build, and these five moved ~130–230 lines between 594 and 627; grep, don't trust them).
+⚠️ **`openEditor` is defined FIVE times** (22931, 33672, 35742, 42822, 44272 @808 — **line numbers
+drift every build, and these five moved 3,500–4,900 lines between 627 and 808**; grep, don't trust
+them. The count of five has held).
 The one `CardinalEstimates` exports is the **last**, and it takes `(project, existing)`. A name is
 not a contract.
 
@@ -418,6 +536,13 @@ not a contract.
 `CardinalEstimates` close are all in it. ⚠️ A 4,000-character window over that function finds only
 three of them and reads like four missing registrations — **brace-match it, or you will file four
 false bugs.**
+
+⚠️ **`cr-des` is NO LONGER one of them, and its absence is correct.** Build 807 deleted the old
+in-app Exterior Designer whole and unpicked **all five** of its wirings: the `hideAllViews()` entry,
+the `navRestore()` case, the `__crNav` wrap, `BLACKOUT`, and the hub handler. **That five-site list
+is the checklist for retiring any full-screen view** — a view removed from `hideAllViews()` alone
+leaves four dangling references. The Visualizer that replaced it is **not in `index.html` at all**,
+so it needs no registration and must not be given one.
 
 ---
 
@@ -445,22 +570,31 @@ Current whitelist, verified in the file:
 
 **Adding `await` to a synchronous function is never a local change.** It opens a window in which the user can leave. List every side effect after the `await` and revalidate the precondition — a signed-URL round-trip inserted before a scroll lock froze the page with no overlay to dismiss.
 
-**46 `document.body` observers, 45 modules — do not add a 47th without written cause.** Each module watches the body to know when its mount appeared or navigation happened; that is how a no-framework app coordinates, and an idle observer costs nothing. **The count is a risk multiplier, not a cost**: a runaway repaint (567/569 were 388 writes/sec) wakes ALL of them, every frame. The census @684: `cr-sc-script` ×2, then one each in cr-adj, cr-portal, cr-insstage, cr-cpartners, cr-comstage, cr-nbid, cr-cct, cr-claims-fx, cr-comclient, cr-ctfx, cr-recents, cr-search, cr-cprop, cr-home-btn, cr-home-cleanup, cr-pme, cr-est-fix, cr-eaf, cr-health, cr-ahc, cr-csv, cr-bulk, cr-gmap, cr-po, cr-est, cr-epub, cr-e2c, cr-ess, cr-wtd, cr-lac, cr-rf, cr-lr, cr-sf, cr-pb, cr-pp, cr-ci, cr-sp, cr-ch2, cr-cc, cr-hd2, cr-pnc, cr-bpa, cr-banner, cr-lnav. Before adding one, ask: can an existing module's observer host the check? Is a plain event enough? **An observer that REWRITES the DOM from inside its wake is the dangerous kind** (metallicize was one; removed at 682) — never add that kind at all. Count with `\)\s*\.observe\(document\.body` — a bare grep counts the comments that mention the pattern, including this one. **@709 correction: the census is 42 across 43 modules** — metallicize went at 682 (46→…), two more sessions' removals landed by 704, and Phase 4 of the Community port (build 709) retired `cr-cprop`'s and `cr-comclient`'s observers with their cream surfaces (44→42). Strike cr-cprop and cr-comclient from the list above; the no-new-observer rule now reads "do not add a 43rd module". **@757 correction: measured 42, and strike `cr-home-btn` and `cr-pme` from the list too** — build 757 retired both modules' floating Home buttons as redundant (the header's own gold home sits directly above them since 756), and their observers went with them. cr-home-btn's was a `subtree:true` body observer, the expensive kind. Re-measure with the pattern above rather than quoting this number.
+**45 `document.body` observers across 45 blocks — do not add a 46th without written cause.** Each module watches the body to know when its mount appeared or navigation happened; that is how a no-framework app coordinates, and an idle observer costs nothing. **The count is a risk multiplier, not a cost**: a runaway repaint (567/569 were 388 writes/sec) wakes ALL of them, every frame. Before adding one, ask: can an existing module's observer host the check? Is a plain event enough? **An observer that REWRITES the DOM from inside its wake is the dangerous kind** (metallicize was one; removed at 682) — never add that kind at all.
 
-**One global scroll lock, 13 modules, no reconciler.** `document.body.style.overflow` is written by 13 independent modules (15 locks, 18 bare releases, 1 conditional restore — all individually balanced; **13 modules / 34 CODE sites re-verified with the lexer @627**, 0 in strings, 0 in comments; a bare regex says 35). It leaks on any early return or throw between lock and release. This class has recurred three times. Do not add a 14th writer without checking `BUG_CLASSES.md` — **the no-14th-writer rule has now held across 33 builds**: the 108 KB Showcase (574), OC Colors (615) and the tray (627) each added **zero**. Block 1 carries a deliberate self-heal (`if(... === 'hidden') ... = ''`) — that comparison is the one non-assignment hit in the count, and it is not a bug.
+**The census @808, re-derived by mapping each hit to its enclosing `<script id=>`** — 44 named blocks plus one un-id'd, one call each:
+
+> cr-adj · cr-ahc · cr-banner · cr-bpa · cr-bulk · cr-cc · cr-cct · cr-ch2 · cr-ci · cr-claims-fx · cr-comstage · cr-cpartners · cr-csv · cr-ctfx · cr-e2c · cr-eaf · cr-epub · cr-ess · cr-est · cr-est-fix · cr-gmap · cr-hd2 · cr-health · cr-home-cleanup · **cr-hub-bridge** · cr-insstage · cr-lac · **cr-lg** · cr-lnav · cr-lr · cr-nbid · cr-pb · **cr-perf** · cr-pnc · cr-po · cr-portal · cr-pp · cr-recents · cr-rf · cr-sc · cr-search · cr-sf · cr-sp · cr-wtd · *(one un-id'd block)*
+
+**What moved since the @684 list, and why the number barely did.** Gone: `metallicize` (682), `cr-cprop` and `cr-comclient` (709, retired with their cream surfaces), `cr-home-btn` and `cr-pme` (757, when the header's own gold home made both floating buttons redundant — cr-home-btn's was a `subtree:true` observer, the expensive kind), and `cr-sc-script`'s second call. Arrived: **`cr-hub-bridge`, `cr-lg` and `cr-perf`**. **A flat count concealed five removals and three additions.** Diff the census, not the total.
+
+⚠️ **Do NOT count these with `\)\s*\.observe\(document\.body`, which this file recommended until now** — in `grep` it answers 40 and in Python 42, and both drop real observers held in a variable. Count bare and read the hits; the correction and its four-way measurement are under the measurements table.
+
+**One global scroll lock, 13 modules, no reconciler.** `document.body.style.overflow` is written by 13 independent modules (**13 modules / 35 CODE sites re-verified with the lexer @808**, 0 in strings, 0 in comments; a bare regex says 37). It leaks on any early return or throw between lock and release. This class has recurred three times. Do not add a 14th writer without checking `BUG_CLASSES.md` — **the no-14th-writer rule has now held across 234 builds, 574 → 808**: the 108 KB Showcase (574), OC Colors (615), the Studio tray (627), the Supplement Desk (667–673), the Production rebuild (766–772) and the whole client-profile rebuild (788–804) each added **zero**. One extra CODE site appeared without a new module, which is the healthy direction. Block 1 carries a deliberate self-heal (`if(... === 'hidden') ... = ''`) — that comparison is a non-assignment hit in the count, and it is not a bug.
 
 ---
 
-## The build label — there are 22 of them, and only one is the app version
+## The build label — there are 38 of them, and only one is the app version
 
-**Two separators, and a regex that assumes one will miss the other.** Module banner comments use a middot (`v2026-07-22 · build 148`); footers and the app stamp use a space (`v2026-08-08 build 627`). Counting only the space form misses every middot banner.
+**Two separators, and a regex that assumes one will miss the other.** Module banner comments use a middot (`v2026-07-22 · build 148`); footers and the app stamp use a space (`v2026-08-14 build 808`). Counting only the space form misses every middot banner.
 
-`re.finditer(r"v(2026-\d\d-\d\d)\s*(?:·|)\s*build\s+(\d+)")` is the honest count:
-**24 strings · 8 distinct builds (95, 146, 148, 404, 574, 620, 623, 627).** Re-measured at **627**: OC Colors added two more banner stamps (620, 623) that will now sit frozen like every other module banner. Only the app stamp moves.
+`re.finditer(r"v(2026-\d\d-\d\d)\s*(?:·|)\s*build\s+(\d+)")` is the honest count, and it has grown a lot:
+**38 strings · 19 distinct builds (95, 146, 148, 404, 574, 620, 623, 650, 719, 752, 756, 767, 768, 795, 797, 799, 800, 804, 808)** @808 — was 24 / 8 at 627. **Eleven new frozen banner stamps in 180 builds.** Only the app stamp moves; every other one is a module banner that froze at that module's last restyle. **The growth is expected and is not drift** — but it means a gate comparing the *set* of labels is now comparing 38 things, 37 of which never change.
 
 | Label | Count | Where | Meaning |
 |---|---:|---|---|
-| `v2026-08-08 build 627` | 1 | nav menu `<div data-cr-footer>` | **the app version — the only one in rendered markup, and the only one to bump** |
+| `v2026-08-14 build 808` | 1 | nav menu `<div data-cr-footer>` | **the app version — the only one in rendered markup, and the only one to bump** |
+| 650, 719, 752, 756, 767, 768, 795, 797, 799, 800, 804 | 1–2 each | module banners + `.cr-*-footer` templates | frozen at each module's last restyle — **do not bump these** |
 | `v2026-08-08 build 623` | 1 | `cr-occ-styles` banner | OC Colors' stylesheet, frozen at its last restyle |
 | `v2026-08-07 build 620` | 1 | `cr-occ-script` banner | OC Colors' script, frozen at the SureNail strip |
 | `v2026-08-02 · build 574` | 2 | `cr-show-styles` + `cr-show-script` banners | the Showcase module |
@@ -478,9 +612,9 @@ Current whitelist, verified in the file:
 `cardinal_build_log.md` §2 documents three live defects. **All three were resolved at build 428 and are verified fixed on `d62244c`.** The doc has not been updated to say so; this section is the correction.
 
 - `data-cr-footer` **now exists in the markup**, exactly once, on the app-stamp `<div>`. `.menu-footer` still appears zero times — the selector lists in both consumers are `'[data-cr-footer], .menu-footer'` and `'.menu-footer, [data-cr-footer]'`, and because `querySelector` resolves in *document order* rather than selector order, both land on the stamp regardless.
-- **`currentBuild()` returns the live build (594 as of this writing)**, not 406. It no longer falls through to scanning `body.textContent` and matching a `(build 406)` string inside CSS source. What's New works again.
+- **`currentBuild()` returns the live build (808 as of this writing)**, not 406. It no longer falls through to scanning `body.textContent` and matching a `(build 406)` string inside CSS source. What's New works again — and 684 reopened it for the whole team, not just admins.
 - **`buildTag()` returns the live `build NNN`**, so error reports carry a build number.
-- **`CHANGELOG` is current** (entries through 594 as of this writing) — but note the array was rebuilt at 574 and now covers 574+ only; older entries live in git history. Its gaps (581–583) are normal, not defects.
+- **`CHANGELOG` is current through 808** and holds the full 166–808 record in two interleaved shapes. ⚠️ **The line that used to sit here — "the array was rebuilt at 574 and older entries live in git history" — was wrong and is corrected in full above.** Its gaps (450, 581–583) are normal, not defects.
 
 One attribute, three silent failures, all closed. If you find yourself about to "fix" any of these, re-measure first.
 
@@ -491,7 +625,11 @@ One attribute, three silent failures, all closed. If you find yourself about to 
 A reference-material library with an AI assistant. Nothing in the doc set mentions it.
 
 - **Front end:** `<style id="cr-lib-styles">` + `<script id="cr-lib-script">` (~28 KB), the last block in the file. Mounts into **`#resourceLibraryView` only**, as a fixed overlay. Exports `window.CardinalLibrary` via `Object.assign` (`open`, `reload`).
-- **Back end:** `api/librarian.js`. Gemini-backed, same `GEMINI_API_KEY` and the same signed-in-session gate as `organize.js` / `caption.js` / `analyze.js`. Retry ladder is flash → 1.2s pause → flash, because the free tier 503s under load.
+- **Back end:** `api/librarian.js`. ⚠️ **NO LONGER GEMINI — it moved to Claude at build 806** and calls **`claude-opus-5`** through `@anthropic-ai/sdk`. Same signed-in-session gate as before. **`ANTHROPIC_API_KEY` must be set in Vercel env**; `GEMINI_API_KEY` stays, because four other routes still need it, and `OPENAI_API_KEY` is **no longer read by this route**.
+  - **The reason was never cost** — it was priced first, on the 21 questions the crew has actually asked, by running the *shipped* handler against a stubbed transport: ≈5,803 chars in / 2,221 out, **≈$1/month**. What the switch bought is reliability: the free Gemini tier **503'd about one call in four** and took 6–14s when it answered, which is why a four-rung fallback ladder had grown behind it. The ladder is gone.
+  - **The answer shape is now ENFORCED** by `output_config.format` rather than requested in prose, which retired the ```-strip — a latent corruption bug, since any answer whose `body` legitimately contained a fence was mangled before `JSON.parse` saw it.
+  - **Every prompt fix from 466/471/508/510/512 is byte-identical and asserted.** The transport changed; the prompt did not.
+  - ⚠️ **One narrowing, on a path with zero traffic:** Gemini took any mime type; Claude reads PDFs and photographs, so anything else now gets a 400. Measured before shipping — all 32 `library_items` rows are `kind='note'`.
 - **Scope is fenced, in both the module banner and the API header** — but the fence MOVED at build 471 and the old wording is no longer true. The Library files *reference* material: building code, roofing, siding, windows, gutters, manufacturer specs. It still has **no knowledge of clients, inspections, job paperwork or Company Documents, and must not be pointed at them.** That part is a stated design constraint, not an oversight.
 - **The one exception, added 471 on Theo's explicit instruction after the constraint was put in front of him:** the librarian may ask for **photographs** from Cardinal's own CompanyCam account by emitting a `~~photos` block. **The model never receives photo data** — not the image, not the caption, not the project. It writes a search; `index.html` runs it through `api/companycam.js`, which is admin-only and refuses anything flagged `internal`. Do not widen this to client records on your own initiative; do not narrow it back either.
 - **Its own token namespace, `--lb-*`** — 22 declaration sites (11 distinct names), 87 references, **77 of them with literal fallbacks**. Still the best-behaved palette in the app; copy its habit, not the other 82%. The Crews module (547+) goes further and declares no tokens at all — every `--crw-*` reference is `var(--crw-x,#literal)`, so the fallbacks *are* the palette.
@@ -582,9 +720,33 @@ A backend photo-curation browser: search and browse the tagged archive when stoc
 
 All three are `is_cardinal_admin()` at the RLS layer, so the fence held even while the sentence was wrong. **`studio_tray` is the one seam between Studio and the client-facing Showcase**, and it is the reason the GPS rule below is stated at the schema, at both ends of the code, and in `harness_tray.js`.
 
+**✅ Re-audited 16 Aug and the table is still complete — those are the only three DB writes in the file.** ⚠️ **A grep for `.delete(` in `studio.html` says FIVE.** Three of them are `Map.delete()` / `Set.delete()` on the in-memory `TRAY` and `PICKED` collections, and one is a *comment* explaining that the API deliberately mirrors `Set`. **One is the real PostgREST delete.** Read them; a raw count reads as four unrecorded writes.
+
+**Studio reads five tables, and two of them are newer than this section:** `photos`, `studio_photos`, `studio_tray`, and **`studio_private` / `studio_private_events`** (the private lens, `studio_private_objects_rls.sql`). Both private tables are **read-only from the browser** — no write site exists for either.
+
 ### The DGX Spark — `spark/`, Theo's own hardware, excluded from deploy
 
 Offline tooling, never fetched by the app: `fetch_companycam.py` (**archive the actual photo bytes** — the Supabase mirror is metadata only; stop paying CompanyCam and every CDN link in it dies), `hail_review.py`, `strip_exif.py`, and `push_studio_tags.py` (joins the Spark-side tagger's `studio_tags.jsonl` against the manifest and upserts `studio_photos`). `STUDIO_TAGGING.md` is written to be handed to the Spark-side agent as-is. The standing rule from `DGX_SPARK_ILLUSTRATIONS.md`: **generate on the Spark, review by eye, upload through paths that already exist — no new endpoint, no live dependency.**
+
+**Since 807 the folder is also a live system, and the rule survives intact — by construction.**
+`visualizer_worker.py` runs as the **`cardinal-visualizer` systemd unit on `spark-3c4a`** and
+**polls `design_jobs` outbound only** — no tunnel, no inbound port, no service key in any browser.
+Nothing in any shipped artifact fetches the Spark; the Visualizer writes a row and reads it back,
+so **a job sitting at `queued` because the Spark is off is correct behaviour, not a fault** (808
+exists to *say* so). Operational notes:
+
+- It runs from **`/home/cardinal2023/ComfyUI/venv/bin/python3`**, not `/usr/bin/python3` — system
+  Python is missing the deps. `spark/VISUALIZER_SETUP.md` is the setup record.
+- Restart and read: `sudo systemctl restart cardinal-visualizer && journalctl -u cardinal-visualizer -f`.
+  **The startup line carries `WORKER_BUILD`** — that is how you learn which code is running.
+- The ComfyUI graphs are checked-in JSON (`points_api.json`, `segment_api.json`,
+  `regions_api.json`, `inpaint_api.json`). ⚠️ **A node is found by `_meta.title`, never by id** —
+  ComfyUI renumbers on edit, which is why the sampler is titled `CARDINAL_SAMPLER` and
+  `gate_graphs.py` asserts on the title.
+- **13 `spark/test_*.py` files are its gates**, pure Python, no browser. ⚠️ **`test_points` calls
+  `run_points_job` directly and so has never exercised the ROUTE** — a mode key that never reaches
+  the dispatch is refused by the very worker that handles it, with every gate green. **Test the
+  route, not just the function.**
 
 ### The Pop-Up Roof — `popup.html` (594 put its link on the landing screen)
 
@@ -674,6 +836,124 @@ Two hardenings shipped with it: **`shrinkOne(file, name)` is the single place th
 
 ---
 
+## Builds 637–836 — the insurance loop, the icon sweep, two rebuilds, and a second application
+
+*Written 16 Aug 2026. `cardinal_build_log.md` has an entry for every build here — this is the
+orientation map, not the record. Two hundred builds in eight days. Nothing below is new work.*
+
+**The arcs, in order. Read the row before you grep for a feature — most of these ended somewhere
+different from where they started.**
+
+| Builds | Arc | Where |
+|---|---|---|
+| **637–649** | **The insurance loop closes.** A claim with nothing in it stops being a claim (638); the Scope of Loss card was hidden by CSS all along (639); insurance documents move under Documents (644); the info lives on the claim and **only** there (645); the **claim bridge** turns a read scope into a tracked number (646–649) | claims + `cr-ins*` |
+| **642** | ⚠️ **`/api/notify` was PUBLIC and sending everything twice.** Security fix — treat any new `/api` route as public until you have read its gate | `api/notify.js` |
+| **650–652** | **Money in, commissions out** — `commissions` wired end to end, Finance as a source, Theo's weekly owed email (`api/commissions-digest.js`, a **second Vercel cron**, Fridays 11:00 UTC) | money |
+| **653–666** | **The CR Audit's menu, worked down by item id** (CR-AUD-003/004/007/009…), then the **scope reader** made honest: a failed read says *which* failure (661), the retry cannot eat the diagnosis (662), history is never lost (665) | audit follow-ups |
+| **667–673** | **The Supplement Desk** — `supplement.html`, the fifth shipped artifact. Studio's pattern again: public file, own sign-in, `is_cardinal_admin()`, `api/supplement.js` enforcing admin server-side. 671 is *"the Desk, made honest: nine repairs before the next feature"* | `supplement.html` |
+| **670** | **Code authority** — building-official letters kept by jurisdiction (`code_letters.sql`) | insurance |
+| **674–675** | A **Hover report** fills the measurements (`api/hover.js`); Insurance Clients leads the hub | |
+| **676–678** | **The app stops opening on a screen of scattered emoji**, opens from the phone instead of downloading itself, and the retired welcome screen stops flashing up | landing / PWA |
+| **681, 686–699** | **The emoji sweep — emoji replaced by DRAWN icons**, 28 nav rows at 686 alone, then Tools, client-page headings, page headings. **682 removed `metallicize`**, the DOM-rewriting observer | app-wide |
+| **685** | **Gradient text is gone — 37 sites, one solid colour each.** See the settled-decision section above | app-wide |
+| **689, 693–694** | Calendar titles were **1.06:1**; client cards go obsidian; **Sales Floor gets a light theme** and the light/dark switch comes back | theming |
+| **700–712** | **Community ports to the black card** — Theo's option (a), picked 11 Aug. Phased: payments door (705), Partner & Property (706), then the cream surfaces retired with their observers (709) | `cr-cc-*` |
+| **766–773** | **Production, rebuilt.** Cardinal Steel; landing = boxes + mini calendar + day agenda; full-screen five-week calendar one tap deeper; the **punch-out CARD** with trade templates, note-gated steps, five photo slots and a messenger. **No money anywhere on Production** — settled. Then **773, the full E2E lifecycle drive** (`drive_lifecycle.mjs`) | production + `punch_steps.sql` |
+| **774–789** | **ABC Supply becomes Suppliers** (688) and you can build an estimate straight from its catalog (774); **CompanyCam photographs into the client Photo Album** (777–778); the contract that was unusable at a client's house (781); deposits that add up (785) | estimates / contracts |
+| **788–804** | **The client profile, rebuilt — phone-first.** Cover photo retired, the card becomes a band, Overview stops alternating slabs, Location goes edge to edge and back, Job Details laid out like the AccuLynx card, Payments card retired, the portal switcher moves into the burger menu, the search bar folds into a header lens. ⚠️ **Most of these are deliberately phone-scoped; 799 deliberately is not.** Check the media query before assuming a change is global | client profile |
+| **805** | ⚠️ **The showroom door was rendering the CRM behind it.** Fixed — **and the build is the evidence that a hostname check inside one big file cannot deliver separation.** It stops the CRM being *shown*, not being *downloaded*. This is the whole argument for 807 | landing |
+| **806** | **The librarian moves off Gemini onto `claude-opus-5`** — see the Resource Library section | `api/librarian.js` |
+| **807–836** | **The Exterior Visualizer** — see its own section below | `visualizer/` + `spark/` |
+
+### ⚠ The Exterior Visualizer (807–836) — a SEPARATE APPLICATION, and the newest thing here
+
+**Read `HANDOFF.md`'s newest section and `spark/VISUALIZER_SETUP.md` before touching any of it.**
+Theo: *"I want to completely redo the entire Ai Exterior designer."* The old in-app designer
+(`cr-des`) **went out whole at 807** — both blocks cut, `api/design.js` deleted, all five wirings
+unpicked (`hideAllViews()`, the `navRestore()` case, the `__crNav` wrap, `BLACKOUT`, the hub
+handler), **35,420 characters removed**. `api/design.js` came back at **822** as the Visualizer's
+second engine; the deletion and the return are different things and both were deliberate.
+
+**It is `visualizer/index.html`, not a screen in the app, and 805 is the reason.** There is **no
+CRM code in that file at all** — asserted with `index.html` as the control, where all 7 markers
+trip. It is a **folder** so it can become the root of its own Vercel project; until then the main
+project serves it at `/visualizer/`, which is what makes it testable today.
+
+**Three screens, and the split IS the settled decision "pre-render before the appointment":**
+
+| Screen | What | The rule it encodes |
+|---|---|---|
+| **PREP** | at the office — pick the house, pick the combinations, queue them | the Spark renders while nobody is waiting |
+| **REVIEW** | a person looks at every render before a customer does | **`approved` starts false and only this screen sets it true** — The Walk's rule |
+| **PRESENT** | at the kitchen table — approved renders only, so a tap is instant | **If you find yourself adding a Generate button to PRESENT, you are undoing the decision** |
+
+**The seam is `design_jobs`.** The browser writes a row and reads it back. It **never** talks to
+ComfyUI, never holds a service key, and does not care whether the Spark is switched on.
+`spark/visualizer_worker.py` is the other half and **polls outbound only** — no tunnel, no inbound
+port. That is how the standing "the Spark is never a live dependency" rule survives a feature that
+obviously depends on the Spark: a queued job sitting at `queued` is **correct**, not a fault.
+
+**Its own sign-in key.** `storageKey: 'cr-viz-auth'`, because Studio and the CRM both use the
+supabase-js default and would fight over one session on a shared origin. ⚠️ **That fixes the new
+app only — Studio is untouched**, so "Studio keeps logging in" is still open.
+
+**Standing fences, all asserted:**
+- **AI-generated images are PRESENTATION ONLY.** They never reach project photos, inspection
+  reports, claims, supplements or CompanyCam. An altered photograph of a real roof is an insurance
+  problem — the same rule The Walk runs on. Own table, own storage prefix.
+- **Roofing is Owens Corning, from `oc_colors`. Everything else is a real brand from `materials`,
+  whose `category` CHECK constraint deliberately excludes roofing** so the two catalogs can never
+  disagree about a shingle.
+- **The GPS fence is asserted at three sites** — schema, worker, front end.
+- **EXIF is stripped in the browser, before upload** (canvas re-encode at q0.97), gated on real
+  bytes containing an APP1 segment and a literal `GPS`.
+
+**What the 827–836 run actually is: a segmentation problem, and it is not finished.** The arc is
+worth reading in the build log because almost every build in it fixed the *previous* build's fix.
+The short version:
+
+- **Region picking by area-ranked automask FAILED and the approach was wrong, not mistuned.** SAM 2's
+  automatic generator is class-agnostic; ranking by area **actively selects against the building**,
+  because trees, lawn and driveway are large and uniform while the house is cut up by its own
+  shadow. Tested on a real house: regions covering tree canopies, the lawn and both cars.
+- **827 replaced it with point-prompted SAM 2** (tap the surface), **832 with a dragged box**, and
+  **835 with SAM 2's native `bboxes` prompt** — because points can only ever say *include this* and
+  **nothing in a point prompt says "and nothing past here"**. A dragged 42×70px box returned a
+  559×310 mask.
+- ⚠️ **`points_api.json` is `segmentor:"single_image"` and `regions_api.json` is
+  `automaskgenerator`. They disagree ON PURPOSE** — asserted in both directions by `test_points.py`.
+- **834 turned off the corner negatives and made quality a NUMBER.** `pct` cannot tell a solid wall
+  from confetti over the same area; **`fill` — what share of its own bounding box a mask lights —
+  can**. >70% is a surface, <40% is fragmented. ⚠️ **I had read a mask getting SMALLER as a mask
+  getting BETTER** and reported it to Theo as a win.
+- **836: `exclusive()` could erase a surface entirely** and report `done` with no error — siding is
+  last in `DETAIL_WINS` and is subtracted by everything. It now returns a report naming
+  `eaten_by`, and `skip_reason()` gained `erased`.
+- **Recolour, not regenerate, is the product** — `tint()` is a luminance-preserving recolour of the
+  masked region toward the selection's own hex at `denoise 0.82`. ⚠️ **Both halves are required:**
+  tinting at `denoise 1` is thrown away, and lowering denoise without tinting just preserves the
+  original colour. Diffusion (`RENDER_MODE=restyle`) is opt-in, for material changes only.
+
+⚠️ **Three green results in a row are not a test if they all sit on the easy side of the
+distribution.** The colour path was broken from the start and three consecutive renders agreed with
+the swatch **by luck**, because Onyx Black and Black Sable are near-black — simultaneously the
+commonest shingle in the training data and a strongly-weighted word. A muted sage green was the
+first colour that could ever have exposed it.
+
+⚠️ **"Which code rendered this job?" cost three rounds in one night.** A curl-copied file, a stale
+checkout and a leftover foreground worker all look identical from outside — a `done` row and a
+wrong picture. **`WORKER_BUILD` is now stamped into `achieved._worker` on every job,
+unconditionally**, and announced in the startup line. `achieved._prompt` (835) records which prompt
+shape actually ran. **Provenance is a query now, never an argument.**
+
+**Known-open, stated plainly:** no stale-claim recovery (a job claimed by a worker that dies stays
+`running` forever); ~60 unreferenced files (~20 MB) under `photos/visualizer/` with
+`spark/sweep_visualizer.py` merged but never run; the gutter mask still wants a
+`CARDINAL_MASK_GUTTERS` chain built by eye on the Spark; **830's `"rain gutter . downspout"` prompt
+is REVERTED as triage at 836**, not overruled.
+
+---
+
 ## Theming — three CRMs, and two different light/dark mechanisms
 
 **Retail** · **Cardinal Claims** (Aurora teal) · **Community** (green `--ccm-*`, dark by default). Plus Production, Sales Floor, Punch & Repairs, Photo Activity and the Team Directory, which are CRM-independent.
@@ -759,22 +1039,25 @@ Everything in this repo is served publicly at `app.cardinalroster.com` **unless 
 | `index.html` | the app — and the host-gated Vision hub front door (`showroom.*`) |
 | `popup.html` | The Pop-Up Roof — public by design; the two `presentation.*` domains rewrite to it |
 | `studio.html` | Cardinal Studio — served publicly, gated by its own Supabase sign-in plus admin-only RLS and storage policies |
+| **`supplement.html`** | **The Supplement Desk (668) — deliberately ships.** Studio's pattern: public file, own Supabase sign-in, `is_cardinal_admin()`, and `api/supplement.js` enforcing admin **server-side** |
+| **`visualizer/index.html`** | **The Exterior Visualizer (807) — deliberately ships, and is a FOLDER on purpose** so it can become the root of its own Vercel project. No CRM code in it. Own sign-in (`cr-viz-auth`), every table RLS'd. Carries the publishable anon key and no other secret — **checked by `gate_807.mjs`, not assumed** |
 | `ai-field-manual.html` | **deliberately ships** — the Library iframes it (562); noindex; the decision and its audit are recorded in `.vercelignore` |
 | `drivewaytest.html` | The Driveway Test — **deliberately public and standalone**: no login, no Supabase, no SQL, no token. Handed over at the kerb, reachable at `/drivewaytest.html` on any domain serving this repo |
-| `api/*.js` | 26 serverless functions (ESM) |
+| `api/*.js` | **29** serverless functions (ESM) |
 | `sw.js` | service worker — push + offline shell |
 | `manifest.json`, `icon-*.png`, `apple-touch-icon.png` | PWA assets |
 | `robots.txt` | `Disallow: /` — an internal tool; nothing should index |
 | `docs/*.pdf` | 3 contract PDFs — **referenced 6× by the app as print masters, deliberately public** |
 | `bulk_assign.html` | referenced 2×, deliberately public |
-| `*.sql` (32 at root) | migrations, **all applied by hand**; `.vercelignore` blanket-excludes them so none is ever served |
+| `*.sql` (**62** at root) | migrations, **all applied by hand**; `.vercelignore` blanket-excludes them so none is ever served |
 | `brand/` | the Word letterhead template (7 Aug) — **excluded**, internal |
-| `vercel.json` | the `/api/digest` cron (11:00 UTC daily) **plus the two `presentation.*` host rewrites → `/popup.html`** |
-| `package.json` (root) + `api/package.json` | Node 22.x; `@supabase/supabase-js`, `web-push`. **Only `api/package.json` sets `"type":"module"`.** |
+| `spark/` | **excluded** — Theo's own hardware. Now also holds `visualizer_worker.py`, the ComfyUI graph JSONs (`points_api.json`, `segment_api.json`, `regions_api.json`, `inpaint_api.json`) and **13 `test_*.py` gates** |
+| `vercel.json` | **TWO crons** — `/api/digest` daily 11:00 UTC and **`/api/commissions-digest` Fridays 11:00 UTC** — the two `presentation.*` host rewrites → `/popup.html`, **and a `functions` block raising `maxDuration` to 60s on 13 AI/long-running routes**. A new slow route needs an entry here or it times out at the default |
+| `package.json` (root) + `api/package.json` | Node 22.x; `@supabase/supabase-js`, `web-push`, **`@anthropic-ai/sdk`** (806). **Only `api/package.json` sets `"type":"module"`.** |
 
-`.vercelignore` excludes `.claude/`, `CLAUDE.md`, `.github/`, **`AI_CHEATSHEET.md`**, **`spark/`**, **`brand/`**, **`*.sql`** (a blanket rule — migrations are run by hand against Supabase and must never be served) and ten orphaned scratch `.html` pages. Its header comments explain each reasoning and record that entries were verified returning HTTP 200 to an anonymous visitor before being added. **Keep that discipline: if you add a file to the root, decide whether it ships — and say so in `.vercelignore` either way.**
+`.vercelignore` excludes `.claude/`, `CLAUDE.md`, `.github/`, **`AI_CHEATSHEET.md`**, **`spark/`**, **`brand/`**, **`*.sql`** (a blanket rule — migrations are run by hand against Supabase and must never be served) and ten orphaned scratch `.html` pages. Its header comments explain each reasoning and record that entries were verified returning HTTP 200 to an anonymous visitor before being added. **Keep that discipline: if you add a file to the root, decide whether it ships — and say so in `.vercelignore` either way.** It has held: `supplement.html` and `visualizer/` each got a written paragraph when they were added.
 
-**Verified 8 Aug 2026 at build 627:** 16 `.html` files at the root — 10 excluded as scratch, and **6 that ship on purpose** (`index`, `popup`, `studio`, `ai-field-manual`, `drivewaytest`, `bulk_assign`). **32 `*.sql`** files, all applied by hand and all excluded by the blanket rule. `brand/` (the Word letterhead template, 7 Aug) was excluded when it was added — the discipline held.
+**Verified 16 Aug 2026 at build 808/836:** **17** `.html` files at the root — 10 excluded as scratch, and **7 that ship on purpose** (`index`, `popup`, `studio`, `supplement`, `ai-field-manual`, `drivewaytest`, `bulk_assign`), plus `visualizer/index.html` in its folder. **62 `*.sql`** files, all applied by hand and all excluded by the blanket rule.
 
 ### ✅ The dead public files are gone — all four, do not re-report them
 
@@ -801,7 +1084,11 @@ Deleting the wrong one of the pair breaks the first thing anyone sees. **Only th
 went.** Every other root image is referenced and earns its place — checked one by one against
 `index.html`, `sw.js` and `manifest.json`, not eyeballed.
 
-**✅ `/api/config` EXISTS — do not re-report it as missing.** An earlier revision of this file said `loadConfig()` fetched a route with no `api/config.js` behind it, and that Google Maps autocomplete was therefore silently off. `api/config.js` is present in the repo. Verified 1 Aug 2026 at build 557. There are **26** functions in `api/` as of 594 (`detect.js` arrived with The Walk), not 20.
+**✅ `/api/config` EXISTS — do not re-report it as missing.** An earlier revision of this file said `loadConfig()` fetched a route with no `api/config.js` behind it, and that Google Maps autocomplete was therefore silently off. `api/config.js` is present in the repo. Verified 1 Aug 2026 at build 557 and re-counted 16 Aug — there are **29** functions in `api/` @808, not 20 and not 26.
+
+⚠️ **`api/design.js` was DELETED at 807 and RESTORED at 822.** Both were deliberate: 807 removed the old in-app designer whole, and 822 brought the route back as the Visualizer's **second engine** (a Gemini path beside the Spark's FLUX/recolour path). If you find it in a diff, check which side of 822 you are on before calling it a mistake.
+
+⚠️ **`/api/notify` was PUBLIC until build 642**, and was sending everything twice. **Read a route's own gate before assuming it has one** — the hardcoded Supabase URL and anon key in `api/*.js` are safe by design and are *not* an auth check.
 
 ---
 
@@ -810,9 +1097,12 @@ went.** Every other root image is referenced and earns its place — checked one
 Work on a branch, push, open a PR with a plain summary of what changed and what it cost. **Theo reviews and merges; Vercel deploys from `main`.**
 
 - **SQL ships as separate `.sql` files, and runs BEFORE the `index.html` change.** Say so explicitly in the PR. (`.vercelignore` now blanket-excludes `*.sql`, so a committed migration is never served.)
-- **Pick the build number with `scripts/next_build.py`** — it asks the remote. Two sessions colliding on numbers has happened twice (504–506, then the whole 574 span).
-- On ship: add the feature row to `FEATURES.md`, one line to `cardinal_build_log.md`, strike the `OPEN_ITEMS.md` entry — in the same PR. **The 428–451 span is what skipping this looks like:** 24 builds of real work with no record outside the in-app changelog.
+- **Pick the build number with `scripts/next_build.py`** — it asks the remote. Two sessions colliding on numbers has happened twice (504–506, then the whole 574 span). **It is more necessary now, not less**: a build can land in `index.html`, in `visualizer/index.html` or in the Spark worker, and only the remote knows what the other lineages took.
+- **State BOTH stamps when the work touches the Visualizer** — the build number and the `wb-YYYY-MM-DD.N` worker build. The build log's `Build 827 / wb-2026-08-15.9` is the format.
+- On ship: add the feature row to `FEATURES.md`, one line to `cardinal_build_log.md`, strike the `OPEN_ITEMS.md` entry — in the same PR. **The 428–451 span is what skipping this looks like:** 24 builds of real work with no record outside the in-app changelog. **The discipline has held from 543 to 836** — do not be the session that breaks it.
+- **PRs are squash-merged.** One build per PR is the norm; a span of related builds in one PR happens (809–818) and the build log writes it up as a span.
 - Take a fresh `git hash-object` before pushing, to confirm what you push is what you verified.
+- ⚠️ **`git fetch` before building a negative-control tree.** A stale `origin/main` silently controls against the wrong build and reports the previous run's numbers — build 833 lost a round to exactly this.
 
 ### The service worker no longer serves stale builds — and the CACHE chore is gone too
 
@@ -838,7 +1128,7 @@ Sales       nick@, joey@, jacob@      only what they created or are assigned (RL
 
 Client name column is **`name`**. Money has one chokepoint: `bidAmt()`. `stage_since` must be written on creation.
 
-### ✅ `.single()` does **not** throw here, and there is no backlog — audited at build 474, re-counted at 627
+### ✅ `.single()` does **not** throw here, and there is no backlog — audited at build 474, re-counted at 808
 
 Previous revisions of this file said "**`.single()` throws on zero rows** — there are 43 of them
 against only 4 `.maybeSingle()`; use `.maybeSingle()` wherever absence is legal." **Both halves are
@@ -865,14 +1155,17 @@ That is the file's own "scope the assertion, then read what it captured" rule ea
 
 **Still prefer `.maybeSingle()` in new code where absence is expected** — not for safety, but
 because `.single()` manufactures an error object the caller then has to tell apart from a real
-failure. Current counts at **627**: **45 `.single()` · 6 `.maybeSingle()`**, and **`.throwOnError(` is
-still 0** — re-measured, which is the only reason the paragraph above is still true.
+failure. Current counts at **808**: **55 `.single()` · 6 `.maybeSingle()`**, and **`.throwOnError(` is
+still 0** — re-measured 16 Aug, which is the only reason the paragraph above is still true.
 
-The one site added since the 594 count is the **`punch_items` comment update** (607-era):
-`…update({ comments: list }).eq('id', it.id).select().single()` — and it **guards**, `if(r.error)`,
-with a schema-cache fallback. Found by diffing the 573 tree against 627 and reading the new site,
-not by trusting the delta. **Zero raw dereferences still holds at 45.** The other sites added since
-the audit (the 547–557 Crews work, 568's `creOpenSaved()`) also guard.
+⚠️ **Ten `.single()` sites were added between 627 and 808** (the supplement, scope-reader,
+commissions and punch arcs) and **they have NOT been individually re-read since the 474 audit.**
+The audit's conclusion — every site guards, zero raw dereferences — is verified through 627 and
+**asserted, not measured, past it.** The invariant that makes it safe is unchanged and *is*
+measured: `.throwOnError(` is 0, so `.single()` still cannot throw here, and the only hazard is
+`const { data } = await ….single()` followed by `data.foo`. **If you touch one of the newer sites,
+read it; do not open a migration.** Converting the other 45 is churn with real regression risk and
+no correctness gain.
 
 ---
 
@@ -890,6 +1183,9 @@ the audit (the 547–557 Crews work, 568's `creOpenSaved()`) also guard.
 - **Domain detail from him is load-bearing.** "Some of these could last 2 years depending on the grant" is why the `OnHold` stage exists. Habitat for Humanity of Greater Dayton does most of the community volume and appears in an annual joint TV commercial — **Habitat sorts first in every partner list.** Owens Corning throughout, not GAF.
 - **Never write an unverified email address into `community_partners`.** A bid sent to a guessed address is a lost bid. Ask.
 - **One build at a time**, verified before the next starts.
+- ⚠️ **"Can you please audit this project and make this work as intended instead of doing experiments."** — Theo, 15 Aug, and it was fair. The Visualizer arc spent whole builds fixing the previous build's fix, and **two of three consecutive builds fixed my own errors rather than moving forward**. When a feature needs three screenshots to converge, **stop and build the instrument** — `fill` (834), `_worker` (829), `_prompt` (835) and `exclusive()`'s report (836) each ended a round-trip that Theo's eyes had been paying for.
+- ⚠️ **Scope creep reads as not listening.** The 14–15 Aug ask was *recolour siding by wall*; the session's second half went to plane detection, a harder problem nobody asked about. **Bring options before building** — his stated preference all session.
+- **A correct state with no explanation is its own defect.** Build 808 exists because 807 shipped a grey `queued` chip that was perfectly accurate and told nobody the render machine had never connected. Say *why*, and say nothing at all when there is nothing wrong yet — crying wolf trains people to ignore the banner.
 - Theo works from a phone **and** a desktop with an ultrawide — the doc set once recorded him as mobile-only, and that error hid a desktop-width contrast bug (487). He deploys through the GitHub web UI and works very late. Match the pace he sets and get out of the way.
 
 ---
