@@ -3497,7 +3497,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 837 &#8212; Retire the unreachable punch-detail fallback sheet &#8212; one card everywhere, less dead code</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 838 &#8212; Instant satellite roof estimate on the Measurements tab &#8212; an estimate, never a measurement</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4040,6 +4040,17 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <div class="mathead collhead matcoll open"><b>&#128200; Measurement Values</b><span class="projcount" id="msValCount"></span><span class="collchev">&#9656;</span></div>
         <div class="matbody"><div id="msValMount"></div>
           <button class="chipbtn" id="msValEdit" style="margin-top:8px;">&#9998; Edit values</button>
+        </div>
+      </div>
+
+      <div class="matcard">
+        <div class="mathead collhead matcoll open"><b>&#128225; Satellite estimate</b><span class="projcount" id="satCount">not run</span><span class="collchev">&#9656;</span></div>
+        <div class="matbody">
+          <p class="subnote" style="margin:0 0 8px;">A rough roof size from aerial imagery, in about two seconds and at no cost. <b>An estimate, not a measurement</b> &mdash; it is never filed against the job and never goes on a document. Order a report when you need a number to defend.</p>
+          <div class="matbtns">
+            <button class="chipbtn" id="satGo">&#128225; Estimate from satellite</button>
+          </div>
+          <div id="satMount"></div>
         </div>
       </div>
 
@@ -39555,6 +39566,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:838, d:'2026-08-16', t:'Instant satellite roof estimate',
+s:'The Measurements tab can now give you a rough roof size straight from aerial imagery, in about two seconds, for nothing — before you spend $13–19 on a Roofr or Hover report for a job that may not close. It is for three things: sizing up a lead at the door or on the phone, working a storm street and knowing which roofs are big, and checking a report you already bought. That last one matters more than it sounds — if a Hover parse says 41 squares and the satellite says 24, something was read wrong, and until now nothing was watching for it. What it gives you: total squares, square footage, how many roof planes, and the pitch of each one. What it does NOT give you is lineal feet — no ridge, hip, valley, eave or rake — because satellite data gives area and slope, not edges. That is most of why a real report still costs money. Two things it will refuse to do rather than guess: if the address cannot be found it says so instead of measuring the wrong house, and if it resolves somewhere absurd it stops. That guard is not theoretical — checking this against every address in the system, thirteen of forty-two could not be found at all and two came back in the wrong STATE, because the client record has a street with no city. Those records need fixing regardless; this now tells you which. Most importantly: this number is never filed against the job, never saved, and never appears on an estimate, agreement, work order or supplement. Those all read the measurements you record by hand or import from a report, and nothing here touches them. It is a number for deciding, not a number for defending.' },
 { b:837, d:'2026-08-16', t:'Retire the unreachable punch-detail fallback sheet',
 s:'Build 768 made the punch-out card the one detail screen and turned openDetail into a router that opens it; the old 724-era sheet stayed underneath as a boot fallback that in practice nothing ever reached. This removes that fallback sheet, its action handlers, the photo-input handler and 49 dead style rules, and points the Punch & Repairs strip and list straight at the card. Behaviour is unchanged \u2014 a Chromium render opened a punch-out from the strip before and after and got the identical card \u2014 it is roughly 18 KB less dead code. No user-facing change.' },
 { b:808, d:'2026-08-14', t:'The Visualizer says why a render is waiting',
@@ -70689,5 +70702,151 @@ body:not(.cr-srch-open) #cr-hd2-srch{ display:none; }
 #cr-hd2-bar #cr-hd2-lens .cri{ width:18px; height:18px; }
 body.cr-srch-open #cr-hd2-bar #cr-hd2-lens{ border-color:var(--hac,#c8202e); color:var(--hac,#c8202e); }
 </style>
+<script id="cr-sat-script">
+/* Cardinal — Satellite estimate · v2026-08-16 build 838
+   ------------------------------------------------------------------
+   An instant, ADVISORY roof size from /api/measure (Google Solar).
+
+   The whole design is one rule: this number must never be mistaken for a
+   measurement. So it is not written to checklist.meas, it is not written to the
+   database at all, and it is not persisted anywhere — close the panel and it is
+   gone. aerialMerge() is deliberately not called from this module. If a future
+   build wants to file it, that is a decision for Theo, not a refactor: the
+   Construction Agreement, the crew work order and the Supplement Desk all read
+   checklist.meas, and those go to a carrier.
+
+   It also does the cheapest useful thing with a report we already paid for: if
+   the job already has squares on file, it shows the DIFFERENCE. A parse that
+   read a siding total as a roof total shows up as a wild disagreement, which is
+   the one failure /api/hover's own header warns about and nothing has been
+   watching for.
+
+   No stylesheet block on purpose — every class here already exists and is
+   already themed in both modes. (Deliberately written without the literal tag:
+   check_build counts style tags with a bare regex over the whole file, so prose
+   naming one unbalances the count and goes red on correct code. Same hazard
+   CLAUDE.md records for the twelve closing-body tags, several of which are
+   comments rather than markup.) */
+(function(){
+'use strict';
+
+/* local, not the main block's — there are 58 functions named esc() in this file
+   and reaching across blocks for one of them is how a name becomes a contract
+   it never agreed to */
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
+  });
+}
+function mount(){ return document.getElementById('satMount'); }
+function count(){ return document.getElementById('satCount'); }
+function say(html, cls){
+  var m = mount();
+  if(m) m.innerHTML = '<div class="note" style="margin:8px 0 0;' +
+    (cls === 'bad' ? 'border-left:3px solid var(--red);' : '') + '">' + html + '</div>';
+}
+
+/* the squares already on file, if any — parsed here rather than through
+   parseCkAll so this module holds no cross-block dependency */
+function filedSquares(pr){
+  try{
+    var ck = JSON.parse(pr.checklist || '{}') || {};
+    var ms = ck.meas || {};
+    var n = parseFloat(ms.sq);
+    return isFinite(n) ? { sq: n, source: ms.source || 'on file' } : null;
+  }catch(e){ return null; }
+}
+
+function render(d, pr){
+  var c = count();
+  if(c) c.textContent = d.squares != null ? ('~' + d.squares + ' squares') : 'no result';
+
+  var warn = [];
+  if(d.partial_match) warn.push('Google only partially matched that address &mdash; check it is the right house before using this.');
+  if(d.unmodelled_pct != null && d.unmodelled_pct >= 10)
+    warn.push('About <b>' + d.unmodelled_pct + '%</b> of this building’s footprint has no roof model, so the real roof is larger than the figure above.');
+  if(d.imagery_quality && d.imagery_quality !== 'HIGH')
+    warn.push('Imagery for this address is <b>' + esc(d.imagery_quality) + '</b> quality, not HIGH &mdash; treat the number as looser than usual.');
+
+  /* the cross-check: cheap, and it catches a mis-parsed report */
+  var filed = filedSquares(pr), cross = '';
+  if(filed && d.squares){
+    var diff = d.squares - filed.sq;
+    var pct = Math.round(Math.abs(diff) / filed.sq * 100);
+    cross = '<div class="subnote" style="margin-top:8px;">On file: <b>' + filed.sq +
+      ' squares</b> (' + esc(filed.source) + '). Satellite is ' +
+      (Math.abs(diff) < 0.05 ? 'the same'
+        : '<b>' + (diff > 0 ? '+' : '−') + Math.abs(Math.round(diff * 10) / 10) +
+          '</b> (' + pct + '%) ' + (diff > 0 ? 'larger' : 'smaller')) + '.' +
+      (pct >= 25 ? ' <b>That is a big disagreement</b> — worth opening the report and checking which number is wrong.' : '') +
+      '</div>';
+  }
+
+  mount().innerHTML =
+    '<div class="ackv" style="grid-template-columns:110px 1fr 110px 1fr;max-width:560px;margin-top:8px;">' +
+      '<span>Squares:</span><div><b>~' + esc(d.squares) + '</b></div>' +
+      '<span>Area:</span><div>' + esc(Number(d.area_sqft).toLocaleString('en-US')) + ' ft²</div>' +
+      '<span>Facets:</span><div>' + esc(d.facet_count) + '</div>' +
+      '<span>Pitch:</span><div>' + esc(d.pitch || '—') + ' <small>(predominant)</small></div>' +
+    '</div>' +
+    (Array.isArray(d.pitch_breakdown) && d.pitch_breakdown.length > 1
+      ? '<div class="subnote" style="margin-top:6px;">Pitches: ' +
+        d.pitch_breakdown.map(function(p){
+          return esc(p.pitch) + ' (' + Number(p.area_sqft).toLocaleString('en-US') + ' ft², ' + p.percent + '%)';
+        }).join(' · ') + '</div>'
+      : '') +
+    cross +
+    (warn.length ? '<div class="note" style="margin-top:8px;">' + warn.join('<br>') + '</div>' : '') +
+    '<div class="subnote" style="margin-top:8px;opacity:.85;">' +
+      'Estimate only — <b>not filed against this job</b> and not saved. ' +
+      'No lineal feet: satellite gives area and pitch, not ridge, hip, valley, eave or rake. ' +
+      'Order a Roofr or Hover report for a number that goes on a document.<br>' +
+      'Google imagery' + (d.imagery_date ? ' from ' + esc(d.imagery_date) : '') +
+      (d.resolved_address ? ' · read as: ' + esc(d.resolved_address) : '') +
+    '</div>';
+}
+
+async function run(){
+  var pr = window.currentProject;
+  var btn = document.getElementById('satGo');
+  if(!pr){ say('Open a client first.', 'bad'); return; }
+  var addr = String(pr.address || '').trim();
+  if(addr.length < 6){
+    say('This client has no usable address on file, so there is nothing to look up. Add the street, city and ZIP first.', 'bad');
+    return;
+  }
+  if(btn){ btn.disabled = true; btn.textContent = 'Looking…'; }
+  say('Reading the roof from aerial imagery…');
+  try{
+    var headers = await window.aiHeaders();
+    var res = await fetch('/api/measure', {
+      method: 'POST', headers: headers, body: JSON.stringify({ address: addr })
+    });
+    var data = null; try{ data = await res.json(); }catch(pe){}
+    if(!res.ok){
+      /* every one of these is a real, named state — the route refuses rather
+         than guessing, and the refusal is the useful part */
+      say(esc((data && (data.detail || data.error)) || ('HTTP ' + res.status)), 'bad');
+      var c0 = count(); if(c0) c0.textContent = 'no result';
+      return;
+    }
+    render(data, pr);
+  }catch(err){
+    say('Could not reach the satellite lookup: ' + esc(String(err && err.message || err)).slice(0, 160), 'bad');
+  }finally{
+    if(btn){ btn.disabled = false; btn.innerHTML = '&#128225; Estimate from satellite'; }
+  }
+}
+
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('#satGo');
+  if(!b) return;
+  e.preventDefault();
+  run();
+});
+
+window.CardinalSatMeasure = Object.assign(window.CardinalSatMeasure || {}, { run: run });
+})();
+</script>
 </body>
 </html>

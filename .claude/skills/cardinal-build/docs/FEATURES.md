@@ -5144,3 +5144,55 @@ Not a missing model, not a bad key — the model declined to hand one over.
 ⚠️ **`achieved` drift is measured INSIDE the mask and validates nothing about the mask.**
 A render whose siding mask had taken the upper roof scored **drift 3**. Quote drift only
 as *"within the mask"* — see `BUG_CLASSES.md` class 47.
+
+---
+
+## Satellite estimate — `#tab-measure`, `cr-sat-script` + `api/measure.js` (838)
+
+An instant, **advisory** roof size for a client's address, from Google's Solar API.
+Lives as its own `matcard` on the Measurements tab, between Measurement Values and Roofr.
+
+| Thing | Where | Note |
+|---|---|---|
+| The card | `#tab-measure` markup — `#satGo`, `#satMount`, `#satCount` | **Not** `#tab-overview`, so the allow-list trap does not apply. Asserted by `harness_838.js` |
+| The module | `<script id="cr-sat-script">`, `window.CardinalSatMeasure.run()` | ~7 KB. **No stylesheet block** — every class it uses already exists and is already themed |
+| The route | `api/measure.js` | Signed-in gate (the `/api/librarian` pattern). Geocode → fence → `buildingInsights:findClosest` |
+| The key | **`GOOGLE_SOLAR_KEY`** in Vercel | ⚠ A SECOND key. Server-side, no referrer restriction, **Solar API + Geocoding API** enabled. The `/api/config` browser key is referrer-restricted and cannot be used here. Unset → 503 that says so |
+
+**What it returns:** total squares, area ft², facet count, predominant pitch, and the full
+per-facet pitch breakdown. `areaMeters2` is the **sloped** surface ("accounting for tilt,
+not the ground footprint"), so no pitch multiplier is applied and applying one would
+double-count.
+
+**What it deliberately does NOT return: lineal feet.** `buildingInsights` gives a bounding
+box per segment, not a polygon, so ridge / hip / valley / eave / rake cannot be derived and
+are not guessed. That is most of why a Roofr or Hover report still costs money.
+
+### The fences — do not remove any of these
+
+- **It never writes `checklist.meas`**, and `aerialMerge()` is not called from the module.
+  That field feeds the Construction Agreement, the crew work order and the Supplement Desk.
+  A $0.01 satellite estimate must not become indistinguishable from a field measurement.
+  Asserted at runtime by a write-recording Supabase mock, not only by grep.
+- **It persists nothing at all** — no DB write, no cache. Google caps Solar Data caching at
+  30 consecutive days; storing nothing means the question cannot arise.
+- **The wrong-state fence** (100 miles of Dayton). Measured, not theoretical: of 42 real
+  addresses, two geocoded to *San Francisco* and *Oklahoma City* because the row has a
+  street with no city. Refusing beats confidently measuring a stranger's roof.
+- **Google's `partial_match`, non-HIGH imagery, and unmodelled roof share are surfaced**,
+  never swallowed. `wholeRoofStats` "may not include the entire building", so the share of
+  footprint Google could not model is reported separately rather than folded into the total.
+
+### Coverage, measured 16 Aug 2026
+
+All 42 `projects` addresses geocoded and point-in-polygon tested against Google's published
+coverage GeoJSONs: **27 HIGH · 2 MEDIUM · 0 BASE · 0 uncovered** of the 29 that resolve.
+Montgomery County is fully inside the 0.1 m/pixel aerial tier. **Coverage is not the
+constraint — address quality is:** 13 of 42 rows do not geocode at all, and several carry
+Indiana `464xx` ZIPs where Ohio `454xx` was meant.
+
+### The cross-check
+
+If the job already has squares on file, the panel shows the delta and flags a disagreement
+≥25%. A Hover parse that read a siding total as a roof total is the failure `api/hover.js`'s
+own header warns about, and nothing was watching for it before this.
