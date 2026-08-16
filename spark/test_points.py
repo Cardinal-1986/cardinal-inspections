@@ -97,7 +97,8 @@ def maskpng(size, box=None):
 
 class FakeComfy(object):
     """Records the graph it was handed; answers with one mask."""
-    def __init__(self, mask_bytes, mask_size, negatives=True):
+    def __init__(self, mask_bytes, mask_size, negatives=True,
+                 bboxes=False, fail_first=False):
         self.graph = None
         self.uploaded = None
         self.filled_for = []
@@ -107,9 +108,20 @@ class FakeComfy(object):
         # real worker asks before sending, so the fake has to be able to say
         # no — otherwise the "degrades on an older node" path is never run.
         self._negatives = negatives
+        # 835: whether this pretend node exposes SAM 2's own box prompt, and
+        # whether it REFUSES the graph the first time — the real question is
+        # what this ComfyUI node accepts, so the fake has to be able to say no
+        # in both ways or the fallback path is never executed.
+        self._bboxes = bboxes
+        self._fail_first = fail_first
+        self.runs = 0
 
     def node_schema(self, cls):
-        opt = {"coordinates_negative": ["STRING", {}]} if self._negatives else {}
+        opt = {}
+        if self._negatives:
+            opt["coordinates_negative"] = ["STRING", {}]
+        if self._bboxes:
+            opt["bboxes"] = ["BBOX", {}]
         return {"input": {"required": {}, "optional": opt}}
 
     def fill_defaults(self, graph, cls):
@@ -122,6 +134,9 @@ class FakeComfy(object):
 
     def run(self, graph, timeout=None):
         self.graph = json.loads(json.dumps(graph))   # snapshot, not a live ref
+        self.runs += 1
+        if self._fail_first and self.runs == 1:
+            raise RuntimeError("Value not in list: bboxes")
         return "pid-1"
 
     def outputs(self, pid):
@@ -132,7 +147,7 @@ class FakeComfy(object):
 
 
 def harness(points, mask_box="auto", photo_size=(1600, 900),
-            selections=None, negatives=True):
+            selections=None, negatives=True, bboxes=False, fail_first=False):
     """Run the shipped run_points_job against fakes. Returns (patch, comfy)."""
     seen = {}
     stored = {}
@@ -142,7 +157,8 @@ def harness(points, mask_box="auto", photo_size=(1600, 900),
         mask_box = (10, 10, now[0] // 2, now[1] // 2)
     mb = maskpng(now, mask_box)
 
-    comfy = FakeComfy(mb, now, negatives=negatives)
+    comfy = FakeComfy(mb, now, negatives=negatives,
+                      bboxes=bboxes, fail_first=fail_first)
 
     orig = (W.storage_download, W.storage_upload, W.patch_job)
     W.storage_download = lambda p: photo(photo_size)
@@ -442,6 +458,53 @@ ok("a solid rectangular mask fills ~100% of its own box",
 ok("fill is not just pct under another name",
    abs(float(_r01.get("fill", 0)) - float(_r01.get("pct", 0))) > 1.0,
    "fill %r vs pct %r" % (_r01.get("fill"), _r01.get("pct")))
+
+# ── 835: SAM 2's own box prompt ─────────────────────────────────────────────
+# A drag of 42x70px returned a 559x310 mask, because points inside a box only
+# ever say "include this" — nothing says "and nothing past here". The box
+# prompt is the instrument built for that. Three cases, because the open
+# question is what the real node accepts and all three can happen.
+_BOX = [0.30, 0.20, 0.60, 0.55]
+
+# 1. the node declares `bboxes` — use it, in PIXELS of the fitted frame
+_sB, _cB, _stB, _eB, _nB = harness(None, selections={"_box": _BOX}, bboxes=True)
+_inB = (_cB.graph or {}).get("10", {}).get("inputs", {})
+ok("a declared bboxes input is used", "bboxes" in _inB, str(sorted(_inB.keys())))
+ok("the bbox is in pixels of the fitted frame, not 0..1",
+   isinstance(_inB.get("bboxes"), list) and
+   all(isinstance(v, int) and v > 1 for v in (_inB.get("bboxes") or [[]])[0]),
+   str(_inB.get("bboxes")))
+ok("the bbox matches the drag",
+   abs((_inB.get("bboxes") or [[0, 0, 0, 0]])[0][0] - _BOX[0] * _nB[0]) <= 2 and
+   abs((_inB.get("bboxes") or [[0, 0, 0, 0]])[0][3] - _BOX[3] * _nB[1]) <= 2,
+   "%s for a %dx%d frame" % (_inB.get("bboxes"), _nB[0], _nB[1]))
+ok("the row records which prompt was used",
+   (_sB.get("achieved") or {}).get("_prompt") == "bbox",
+   str((_sB.get("achieved") or {}).get("_prompt")))
+
+# 2. the node does NOT declare it — fall back to points, and say so
+_sP, _cP, _stP, _eP, _nP = harness(None, selections={"_box": _BOX}, bboxes=False)
+_inP = (_cP.graph or {}).get("10", {}).get("inputs", {})
+ok("without a bboxes input the pass still completes", _eP is None, str(_eP))
+ok("without a bboxes input it sends points", bool(_inP.get("coordinates_positive")))
+ok("and records the points prompt",
+   (_sP.get("achieved") or {}).get("_prompt") == "points",
+   str((_sP.get("achieved") or {}).get("_prompt")))
+
+# 3. the node declares it and REFUSES the graph anyway — most likely it wants a
+# BBOX from another node rather than a literal. One retry with points, so a
+# wrong guess costs a retry and not a dead job.
+_sR, _cR, _stR, _eR, _nR = harness(None, selections={"_box": _BOX},
+                                   bboxes=True, fail_first=True)
+ok("a refused bbox prompt does not fail the job", _eR is None, str(_eR))
+ok("a refused bbox prompt retries exactly once", _cR.runs == 2, str(_cR.runs))
+_inR = (_cR.graph or {}).get("10", {}).get("inputs", {})
+ok("the retry sends points", bool(_inR.get("coordinates_positive")))
+ok("the retry does NOT still carry the bbox", "bboxes" not in _inR,
+   str(sorted(_inR.keys())))
+ok("the row says the bbox was refused",
+   (_sR.get("achieved") or {}).get("_prompt") == "points-after-bbox-refused",
+   str((_sR.get("achieved") or {}).get("_prompt")))
 
 # The negatives must only be SENT when the node declares the input, and the
 # graph must still be submitted without them when it does not.
