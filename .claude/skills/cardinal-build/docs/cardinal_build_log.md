@@ -17369,3 +17369,56 @@ reported the same numbers as the previous run. `git fetch` before building a
 control tree, or the control quietly tests something else. Third instrument
 fault in four builds, and the same shape every time: the harness looked fine and
 the answer was about a different artifact.
+
+---
+
+## Build 834 — the negatives come out, and quality becomes a number
+
+Theo, three speckled screenshots in a row: *"It gets worse every time, please
+help."* He was right, and the corner negatives were mine.
+
+**Off by default.** `USE_NEGATIVES`, from `POINT_NEGATIVES` (default `0`). Left
+switchable rather than deleted so the question can be settled on the Spark
+without another build.
+
+⚠️ **I ALSO MISREAD THE EVIDENCE FOR THEM.** At 833 I reported a tap going
+**12.31% → 7.23%** of frame as proof the negatives were working. A mask getting
+SMALLER is equally consistent with it getting CORRUPTED. I read a shrinking
+number as an improving one and told Theo it was a win.
+
+**The suspected mechanism, unverified from here:** SAM 2 takes ONE point array
+with a parallel label array. This graph passes two separate strings, and a tap
+sent 1 positive against 4 negatives while a box sent 5 against 8. If the node
+pairs them positionally rather than concatenating with labels, the prompt is
+malformed — which is what a speckled mask looks like.
+
+### FILL — the instrument that should have existed three builds ago
+
+`pct` cannot tell a solid wall from confetti scattered over the same area. Both
+score the same. **`fill` — what share of its own bounding box a mask lights —
+separates them**, because a real surface is mostly solid inside its box.
+
+Measured on Theo's own `.14` jobs the night it was added:
+
+| his drag | pct of frame | fill of its bbox |
+|---|---:|---:|
+| tight | 0.56% | **91.4%** — a surface |
+| across the wall | 4.93% | **24.1%** — confetti |
+
+That is the difference he could see and no stored number could. Rule of thumb
+from those samples: **>70% is a surface, <40% is fragmented.** Stored on every
+mask and logged with a ⚠ under 40.
+
+**This is the lesson of the whole 827–834 run.** Every round cost a screenshot,
+a guess and a build because the only quality signal was Theo's eyes. One derived
+number ends that.
+
+**Gates.** `test_points` **74/74**, control **67/74** on 833. The switch is
+tested by RUNNING the pass under both settings, not by grepping for the flag,
+and `fill` is asserted against a solid rectangle whose correct answer is known
+exactly (100%) plus a check that it is not `pct` under another name.
+
+⚠️ The control needed a `hasattr` guard — against 833 it raised AttributeError
+on `USE_NEGATIVES` rather than reporting. Second time this exact shape has come
+up (830, `_corner_negatives`); guard any new-symbol assertion in a file that
+takes a control path.

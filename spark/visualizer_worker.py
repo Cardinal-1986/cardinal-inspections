@@ -651,7 +651,7 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.7 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-15.14"
+WORKER_BUILD = "wb-2026-08-16.15"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
@@ -1060,6 +1060,31 @@ POINTS_MAX = 8           # taps one job may carry, so a stuck finger cannot queu
 BOX_MARGIN_FRAME = 0.025      # of the frame's own width/height
 BOX_MARGIN_MIN_PX = 16        # never closer than this, whatever the arithmetic
 
+# 834: NEGATIVE POINTS ARE OFF BY DEFAULT.
+#
+# They were my idea, they shipped at 832, and every speckled render Theo has
+# sent since arrived with them. Measured on the .14 worker: a tight drag comes
+# back 91.4% solid inside its own bounding box, while a drag across the wall
+# comes back 24.1% — shredded. The only prompt difference between those and the
+# clean masks of .10 is the negatives.
+#
+# ⚠ I ALSO MISREAD THE EVIDENCE FOR THEM. I reported a tap going 12.31% -> 7.23%
+# of frame as proof the negatives helped. A mask getting SMALLER is equally
+# consistent with it getting CORRUPTED, and the fill ratio says corrupted. A
+# shrinking number is not an improving number.
+#
+# The suspected mechanism, unverified from here: SAM 2 takes one point array
+# with a parallel label array. This graph passes two separate STRINGS, and a
+# tap sends 1 positive against 4 negatives while a box sends 5 against 8. If
+# the node pairs them positionally rather than concatenating with labels, the
+# prompt it builds is malformed — which is exactly what a speckled mask looks
+# like.
+#
+# Left switchable rather than deleted so the question can be settled on the
+# Spark without another build:
+#     POINT_NEGATIVES=1 systemctl ... # or export it before running by hand
+USE_NEGATIVES = (os.environ.get("POINT_NEGATIVES") or "0").strip() == "1"
+
 
 def _corner_negatives(w, h):
     """The four frame corners, as points that are NOT the thing being asked for.
@@ -1181,6 +1206,12 @@ def run_points_job(comfy, job, job_id, started):
                            "y": int(min(max(y, 1), frame[1] - 1))})
         negatives = _corner_negatives(frame[0], frame[1])
 
+    # 834: off unless POINT_NEGATIVES=1. See the note on USE_NEGATIVES — these
+    # are the prime suspect for every speckled mask since 832, and the positives
+    # alone are the prompt that produced clean masks at .10.
+    if not USE_NEGATIVES:
+        negatives = []
+
     graph = load_graph("points_api.json")
     # Logged in full because the coordinate STRING is the one part of this
     # graph nothing here can verify: `coordinates_positive` is declared
@@ -1244,10 +1275,30 @@ def run_points_job(comfy, job, job_id, started):
     # them — which is why this pass does not have to merge anything itself.
     p = "visualizer/%s/region_01.png" % job_id
     storage_upload(p, png, "image/png")
+    # 834: FILL — what share of its own bounding box the mask actually lights.
+    #
+    # This is the number that ends the screenshot loop. `pct` says how much of
+    # the frame is lit and says nothing about QUALITY: a clean wall and a cloud
+    # of confetti scattered over the same area score identically. Fill separates
+    # them, because a real surface is mostly solid inside its own box.
+    #
+    # Measured on real jobs the night it was added: a tight drag returned 91.4%
+    # (solid, correct) and a drag across the wall returned 24.1% (shredded) —
+    # the difference Theo could see and no stored number could. Now it is
+    # stored, so "looks worse" has an instrument.
+    #
+    # Rule of thumb from those samples: >70% is a surface, <40% is confetti.
+    bw_ = box[2] - box[0]
+    bh_ = box[3] - box[1]
+    fill = round(100.0 * lit / float(max(bw_ * bh_, 1)), 1)
+    log("    mask fills %.1f%% of its own bounding box%s"
+        % (fill, "" if fill >= 40 else "  ⚠ fragmented — this is the speckle"))
+
     # `_frame` for the same reason as the regions pass — see the note there.
     # It matters more here: a tap is answered one region at a time, so the
     # circle is the ONLY thing that tells a rep their tap was understood.
-    regions = {"r01": {"path": p, "pct": round(pct, 2), "box": list(box)},
+    regions = {"r01": {"path": p, "pct": round(pct, 2), "box": list(box),
+                       "fill": fill},
                "_frame": {"w": now[0], "h": now[1]}}
 
     took = int((time.time() - started) * 1000)

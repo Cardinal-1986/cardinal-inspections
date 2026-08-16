@@ -34,6 +34,7 @@ are faked at their seams; fit_for_flux, the scaling and the measurement are the
 real ones.
 """
 
+import importlib
 import io
 import json
 import os
@@ -62,6 +63,10 @@ except SystemExit as e:
     print("CANNOT RUN — %s" % e); sys.exit(1)
 except ImportError as e:
     print("CANNOT RUN — %s" % e); sys.exit(1)
+
+class _SkipSwitch(Exception):
+    """Control-tree escape: the switch under test does not exist there."""
+
 
 fails = []
 ran = 0
@@ -394,6 +399,50 @@ if _have:
   ok("an edge-flush box drops the negatives it cannot place",
      len(_n2) < 8, str(len(_n2)))
 
+# ── 834: negatives OFF by default, and a FILL number on every mask ──────────
+# They shipped at 832 and every speckled render since arrived with them. Off
+# unless POINT_NEGATIVES=1, so the question can be settled on the Spark without
+# another build. Asserted by RUNNING the pass, not by grepping for the flag.
+# Guarded so a NEGATIVE CONTROL reports instead of raising AttributeError.
+_hasSwitch = hasattr(W, "USE_NEGATIVES")
+ok("the POINT_NEGATIVES switch exists", _hasSwitch,
+   "no USE_NEGATIVES — negatives cannot be turned off on this tree")
+_prev = os.environ.get("POINT_NEGATIVES")
+try:
+    if not _hasSwitch:
+        ok("negatives are OFF by default", False, "switch absent")
+        ok("POINT_NEGATIVES=1 turns them back on", False, "switch absent")
+        raise _SkipSwitch()
+    os.environ["POINT_NEGATIVES"] = "0"
+    importlib.reload(W)
+    ok("negatives are OFF by default", W.USE_NEGATIVES is False, repr(W.USE_NEGATIVES))
+    os.environ["POINT_NEGATIVES"] = "1"
+    importlib.reload(W)
+    ok("POINT_NEGATIVES=1 turns them back on", W.USE_NEGATIVES is True, repr(W.USE_NEGATIVES))
+except _SkipSwitch:
+    pass
+finally:
+    if _prev is None:
+        os.environ.pop("POINT_NEGATIVES", None)
+    else:
+        os.environ["POINT_NEGATIVES"] = _prev
+    importlib.reload(W)
+
+# FILL is the instrument that replaces the screenshot loop. `pct` cannot tell a
+# solid wall from confetti spread over the same area; fill can, because a real
+# surface is mostly solid inside its own bounding box. Asserted against a mask
+# that IS a solid rectangle, so the expected answer is known exactly: 100%.
+_seenF, _cF, _stF, _eF, _nF = harness([{"x": 0.5, "y": 0.5}],
+                                      mask_box=(100, 100, 300, 260))
+_r01 = (_seenF.get("masks") or {}).get("r01") or {}
+ok("a mask carries a fill number", "fill" in _r01, str(sorted(_r01.keys())))
+ok("a solid rectangular mask fills ~100% of its own box",
+   abs(float(_r01.get("fill", 0)) - 100.0) <= 2.0,
+   "got %r — a solid mask must score near 100" % _r01.get("fill"))
+ok("fill is not just pct under another name",
+   abs(float(_r01.get("fill", 0)) - float(_r01.get("pct", 0))) > 1.0,
+   "fill %r vs pct %r" % (_r01.get("fill"), _r01.get("pct")))
+
 # The negatives must only be SENT when the node declares the input, and the
 # graph must still be submitted without them when it does not.
 _pt = src[src.index("def run_points_job("):src.index("def run_job(")]
@@ -410,11 +459,23 @@ ok("an older node gets the positives", bool(_in2.get("coordinates_positive")))
 ok("an older node is sent NO coordinates_negative",
    "coordinates_negative" not in _in2, str(sorted(_in2.keys())))
 
+# 834: by default a capable node is sent NO negatives — they are the prime
+# suspect for the speckle. The four-corner behaviour only exists behind the
+# POINT_NEGATIVES switch, so it is tested there rather than deleted.
 _s3, _c3, _st3, _e3, _n3f = harness([{"x": 0.5, "y": 0.5}])
 _in3 = (_c3.graph or {}).get("10", {}).get("inputs", {})
-ok("a capable node is sent four corner negatives",
-   len(json.loads(_in3.get("coordinates_negative") or "[]")) == 4,
-   str(_in3.get("coordinates_negative")))
+ok("by default a capable node is sent NO negatives",
+   not _in3.get("coordinates_negative"),
+   "sent %r — negatives are off by default since 834" % _in3.get("coordinates_negative"))
+
+_prevN = os.environ.get("POINT_NEGATIVES")
+os.environ["POINT_NEGATIVES"] = "1"
+importlib.reload(W)
+_s3b, _c3b, _st3b, _e3b, _n3b = harness([{"x": 0.5, "y": 0.5}])
+_in3b = (_c3b.graph or {}).get("10", {}).get("inputs", {})
+ok("with POINT_NEGATIVES=1 a tap sends four corner negatives",
+   len(json.loads(_in3b.get("coordinates_negative") or "[]")) == 4,
+   str(_in3b.get("coordinates_negative")))
 
 _s4, _c4, _st4, _e4, _n4f = harness(None, selections={"_box": [0.55, 0.30, 0.78, 0.52]})
 _in4 = (_c4.graph or {}).get("10", {}).get("inputs", {})
@@ -422,9 +483,19 @@ ok("a dragged box completes end to end", _e4 is None, str(_e4))
 ok("a dragged box sends several positives",
    len(json.loads(_in4.get("coordinates_positive") or "[]")) >= 5,
    str(_in4.get("coordinates_positive")))
-ok("a dragged box sends more negatives than a tap does",
-   len(json.loads(_in4.get("coordinates_negative") or "[]")) == 8,
-   str(_in4.get("coordinates_negative")))
+ok("with the switch on, a dragged box sends more negatives than a tap",
+   len(json.loads(((harness(None, selections={"_box": [0.55, 0.30, 0.78, 0.52]})[1].graph
+                    or {}).get("10", {}).get("inputs", {})).get("coordinates_negative")
+                  or "[]")) == 8)
+if _prevN is None:
+    os.environ.pop("POINT_NEGATIVES", None)
+else:
+    os.environ["POINT_NEGATIVES"] = _prevN
+importlib.reload(W)
+_s4d, _c4d, _st4d, _e4d, _n4d = harness(None, selections={"_box": [0.55, 0.30, 0.78, 0.52]})
+_in4d = (_c4d.graph or {}).get("10", {}).get("inputs", {})
+ok("by default a dragged box sends no negatives either",
+   not _in4d.get("coordinates_negative"), str(_in4d.get("coordinates_negative")))
 ok("a box job is accepted alongside a tap job",
    'selections.get("_box")' in _pt)
 
