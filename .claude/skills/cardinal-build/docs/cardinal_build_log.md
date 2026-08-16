@@ -17552,3 +17552,67 @@ because 768's router already sent the strip to the card. The sheet was never a c
 it was dead since 768. So this is dead-code removal, not a behaviour fix. The harness proves
 parity (card opens the same before/after, no page errors) and discriminates on the real change
 (`#puDetail` present at 808, gone at 837). `check_build` green, negative-controlled.
+
+## Build 838 — instant satellite roof estimate, advisory only (16 Aug 2026)
+
+Theo asked whether an AI could give instant roof measurements from satellite imagery and
+3D elevation data. The honest answer, and what shipped: **buy the geometry, do not train a
+model.** Google's Solar API has already run the photogrammetry and sells per-facet
+`pitchDegrees` / `azimuthDegrees` / `areaMeters2` at **$0.01 an address, 10,000 free a
+month**, against $13–19 for Roofr, $18 GAF, $15–38 EagleView.
+
+**Step one was coverage, and it was measured before a line was written.** Google publishes
+its coverage as three MultiPolygon GeoJSONs. Downloaded, negative-controlled (mid-Atlantic
+and Antarctica say no, San Francisco says yes), then every one of the 42 addresses on
+`projects` geocoded and point-in-polygon tested. Result: **27 HIGH, 2 MEDIUM, 0 BASE, 0
+uncovered** — Montgomery County is fully inside the 0.1 m/pixel aerial tier. Coverage is
+not the constraint.
+
+**The constraint is the address data, and that was the real finding.** 13 of 42 rows would
+not geocode at all, and **two came back in the wrong STATE** — `948 Huron` resolved to San
+Francisco and `2420 Brookline` to Oklahoma City, because neither row carries a city. A
+silent wrong answer is far worse here than a refusal: the panel would have shown a real
+roof, correctly measured, belonging to a stranger. Hence the **wrong-state fence** in
+`api/measure.js` — 100 miles of Dayton, deliberately far wider than the service area,
+because it is a geocoder sanity check and not a service-area policy. Several rows also
+carry Indiana ZIPs (`464xx`) where Ohio `454xx` was meant.
+
+**What it does NOT do is the point.** No lineal feet — `buildingInsights` returns a
+bounding box per segment, not a polygon, so ridge/hip/valley/eave/rake cannot be derived
+from it and are not guessed. And it **never writes `checklist.meas`**: that field feeds the
+Construction Agreement, the crew work order and the Supplement Desk, and a $0.01 estimate
+must not be indistinguishable from a number somebody stood on the roof for. `aerialMerge()`
+is deliberately not called; the harness asserts it at runtime with a write-recording
+Supabase mock, not just by grep.
+
+**It persists nothing at all.** Google's terms cap Solar Data caching at 30 consecutive
+days and a checklist row lives for the life of the job. Rather than build an expiry sweeper
+for an advisory number, the answer is never stored — the ToS question then cannot arise and
+"advisory" is enforced by construction.
+
+**Free extra: the cross-check.** If the job already has squares on file it shows the
+delta, and calls out a disagreement ≥25%. A Hover parse that read a siding total as a roof
+total is exactly the failure `api/hover.js`'s own header warns about, and nothing was
+watching for it.
+
+⚠ **`GOOGLE_SOLAR_KEY` must be set in Vercel before this does anything.** It is a SECOND,
+server-side key with **Solar API + Geocoding API** enabled and no referrer restriction —
+the browser key behind `/api/config` is HTTP-referrer restricted and cannot be used
+server-side. Unset, the route answers 503 and says exactly that rather than failing
+silently.
+
+**Three of my own assertions failed correct code before this went green**, all of them
+traps this document already records: `build 838` is TWO strings (app stamp + module banner,
+never one); `data-cr-footer` is FOUR (one div, three selector-list mentions); and the
+literal style tag inside my module's banner comment — written to say the module adds no
+stylesheet — unbalanced `check_build.py`'s tag count and went red on correct code, the same
+comment-pollution class as the twelve closing-body tags. The comment was reworded; the gate
+is right to stay simple. **The harness also hit BUG_CLASSES class 37 on its first control
+run** — a TypeError in an async continuation escaped `probe()`'s try/catch and killed the
+run before the summary, so a crash read as "not green" instead of "proved nothing". All DOM
+reads now go through null-safe helpers and every async step through a recording `step()`.
+
+Gates: `check_build.py` green with negative control · `harness_838.js` **29/29 GREEN on
+838, 25 failures RED on 837** with a printed summary, not a crash · scroll-lock writers
+still **13 modules** (no 14th) · body observers unchanged at 46 bare hits · `aerialMerge`
+CODE hits unchanged 837→838 (4 hits, 1 block) via `jslex_count.py`.
