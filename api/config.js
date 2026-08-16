@@ -26,10 +26,26 @@
 // in, a 401 would cache API_KEY = '' for the rest of the session and maps would
 // stay dead after signing in. Gating would buy no real security and cost that.
 //
-//   >>> BEFORE SETTING GOOGLE_MAPS_API_KEY, RESTRICT THE KEY IN GOOGLE CLOUD <<<
+//   >>> RESTRICT THIS KEY IN GOOGLE CLOUD — IT IS NOT RESTRICTED TODAY <<<
 //   Application restrictions -> HTTP referrers -> app.cardinalroster.com/*
-//   API restrictions -> Maps JavaScript API, Places API, Maps Static API
+//     (add showroom.* and the two presentation.* hosts if they need maps)
+//   API restrictions -> Maps JavaScript API, Places API, Maps Static API,
+//                       **Geocoding API**
 //   An unrestricted key served from here can be lifted and billed to Cardinal.
+//
+// ⚠ MEASURED 16 Aug 2026, build 840 — this warning was written, the key was set,
+// and the restriction step was never done. Called from a server with NO Referer
+// header, this key answered Geocoding, Places and Static Maps all with 200/OK; a
+// referrer-restricted key answers REQUEST_DENIED. Anyone who loads the app can
+// read the key out of this route and spend Cardinal's quota. Restricting it is
+// five minutes in the Cloud console and costs nothing.
+//
+// ⚠ AND GEOCODING API MUST BE ON THAT LIST. It was NOT in the three APIs this
+// comment used to prescribe, and since build 840 Quick Inspection's pin geocodes
+// through it (qiGoogleGeo in index.html). Restricting to the old three would not
+// break the app — the pin falls back to Nominatim exactly as before — but it
+// would silently undo 840 and nobody would be told. Grep qiGoogleGeo before
+// narrowing this list.
 //
 // Unset env var means this returns an empty key, which is byte-for-byte the
 // behaviour the app has today. Shipping this cannot regress anything; it only

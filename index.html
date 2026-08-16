@@ -3497,7 +3497,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 839 &#8212; Address Check in Settings &#8212; every client address the app cannot place, in one list</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 840 &#8212; Quick Inspection finds addresses through Google &#8212; measured 40 of 42 against Nominatim&#8217;s 29</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18952,7 +18952,49 @@ function qiGeolocate(){
     if(qiMap){ qiMap.setView(ll, 17); qiPin.setLatLng(ll); qiReverseGeocode({ lat: ll[0], lng: ll[1] }); }
   }, function(){}, { enableHighAccuracy: true, timeout: 8000 });
 }
+/* 840: Quick Inspection geocodes through GOOGLE, and falls back to Nominatim.
+
+   MEASURED before switching, over all 42 addresses on `projects` rather than
+   asserted: Nominatim resolved 29, Google resolved 40. Google also silently
+   corrects the typos this CRM is full of \u2014 "5241 rucks rd Dayton Ohio 46417"
+   carries an INDIANA zip and comes back "5241 Rucks Rd, Dayton, OH 45417".
+
+   Its one apparent LOSS is the best argument for it: "948 Huron" returns
+   ZERO_RESULTS from Google, where Nominatim confidently answered San Francisco.
+   An honest refusal beats a wrong answer that nobody checks.
+
+   THE FALLBACK IS NOT DEFENSIVE PADDING \u2014 it is what makes this safe to ship.
+   If the key is unset, or Geocoding is not on the key's API allow-list, or the
+   HTTP-referrer check refuses, the pin behaves exactly as it did before. This
+   can only improve on today's behaviour; it cannot take it away.
+
+   \u26a0 Geocoding API MUST be on the key's API restriction list in Google Cloud.
+   api/config.js's header prescribes that list and now names Geocoding in it \u2014
+   restricting the key to the three APIs it used to name would silence this. */
+async function qiGoogleGeo(qs){
+  try{
+    var M = window.CardinalMaps;
+    if(!M || !M.loadConfig) return null;
+    var key = await M.loadConfig();
+    if(!key) return null;
+    var r = await fetch('https://maps.googleapis.com/maps/api/geocode/json?' + qs +
+      '&key=' + encodeURIComponent(key));
+    if(!r.ok) return null;
+    var j = await r.json();
+    if(!j || j.status !== 'OK' || !j.results || !j.results.length) return null;
+    return j.results[0];
+  }catch(e){ return null; }
+}
 async function qiReverseGeocode(ll){
+  var hit = await qiGoogleGeo('latlng=' + encodeURIComponent(ll.lat + ',' + ll.lng));
+  if(hit && hit.formatted_address){
+    /* the app writes US addresses without a country; the rows that carry a
+       trailing ", USA" got it from a paste and read badly on a contract */
+    qiAddr = String(hit.formatted_address).replace(/,\s*USA\s*$/, '');
+    var gEl = document.getElementById('qiAddrInp');
+    if(qiAddr && gEl) gEl.value = qiAddr;
+    return;
+  }
   try{
     var r = await fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + ll.lat + '&lon=' + ll.lng);
     var j = await r.json();
@@ -18967,6 +19009,16 @@ async function qiSearchAddr(){
   if(!q) return;
   qiAddr = q;
   if(!window.L || !qiMap) return;
+  /* components=country:US is a HARD filter, and it is here because of a
+     measured result: "921 Testing Way" resolves to Test Way, UNITED KINGDOM
+     without it. Nominatim's own call in upgradeNearbyRow() has carried
+     countrycodes=us for the same reason since it was written. */
+  var hit = await qiGoogleGeo('address=' + encodeURIComponent(q) + '&components=country:US');
+  if(hit && hit.geometry && hit.geometry.location){
+    qiMap.setView([hit.geometry.location.lat, hit.geometry.location.lng], 18);
+    qiPin.setLatLng([hit.geometry.location.lat, hit.geometry.location.lng]);
+    return;
+  }
   try{
     var r = await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + encodeURIComponent(q));
     var j = await r.json();
@@ -39583,6 +39635,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:840, d:'2026-08-16', t:'Quick Inspection finds addresses properly',
+s:'Dragging the pin on a Quick Inspection, or typing an address into it, now asks Google instead of the free open-source geocoder the app has used there since it was built. This was measured before it was changed, against every address in the system: the old geocoder placed 29 of 42, Google places 40. It also quietly fixes the sort of typing that actually happens \u2014 "5241 rucks rd Dayton Ohio 46417" has an INDIANA zip on it and comes back as "5241 Rucks Rd, Dayton, OH 45417". One address got WORSE and that is the best reason to have done it: "948 Huron" now returns nothing at all, where the old one confidently put it in San Francisco. Nothing beats being told an address cannot be found; a wrong pin that looks right is how a crew ends up on the wrong street. If Google is unavailable for any reason the old geocoder still answers, so the pin can only get better than it was, never worse. Nothing else moved \u2014 the client Location card has used Google since build 636, and the Nearby sort still uses the old one.' },
 { b:839, d:'2026-08-16', t:'Address Check \u2014 find the client records the app cannot map',
 s:'Settings has a new row, Check client addresses, and it does what it says: it lists every client whose address the app cannot place on a map, tells you what is wrong with each one, and takes you straight to the record to fix it. Why it matters more than it sounds \u2014 a bad address costs you the property photo, the map, the directions link and the new satellite estimate, all quietly. Worse, an address with a street and no city does not fail; it resolves somewhere else entirely. Checking every client in the system turned up two that Google places in San Francisco and Oklahoma City, and thirteen it cannot find at all. Several carry an Indiana ZIP where an Ohio one was meant. The screen works in two passes. The first is instant and free: it flags anything with no city, state or ZIP, using the same rule the map warning has used since last week rather than a second opinion that could disagree with it. The second is a button, Verify the rest with Google, because it costs a lookup for each address \u2014 that pass is the only way to catch an address that LOOKS complete and is not, since a real-looking ZIP for the wrong state passes every spelling check there is. It runs one at a time and you can leave it going. It changes nothing on its own: it finds them and hands you to the client page, where the pencil you already use does the fixing. What you see depends on what you can see \u2014 an admin gets every client, a rep gets their own.' },
 { b:838, d:'2026-08-16', t:'Instant satellite roof estimate',

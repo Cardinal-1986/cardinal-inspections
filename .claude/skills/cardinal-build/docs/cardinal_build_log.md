@@ -17673,3 +17673,79 @@ and the SHIPPED module against the **real** addresses, not fixtures. **Three of 
 passed vacuously on the first control run** — "a dropped connection does not flag a good
 address" is trivially true on a tree where nothing renders at all — so a guard asserting the
 list drew first was added, and all three now fail on the control as they should.
+
+## Build 840 — Quick Inspection geocodes through Google (16 Aug 2026)
+
+Theo asked whether the Location card should move to Google "if it's better". **It already
+had — build 636 moved it, and its own comment says so** (*"ONE map on this screen, and it is
+Google's… Google resolves the address inside the URL"*). That suggestion, made at the end of
+839, was mine and it was wrong: I proposed it without grepping first, which is the one thing
+this document opens by telling you not to do.
+
+**What DID still use Nominatim, measured — three sites, none of them the Location card:**
+`upgradeNearbyRow()` (the Nearby sort), `qiReverseGeocode()` and `qiSearchAddr()` (Quick
+Inspection's pin). This build moves the last two. Theo picked option 2 of four.
+
+### ⚠ THE URGENT FINDING, and it is not this feature
+
+Testing whether Google was actually better meant calling it, so I took the key
+`/api/config` serves to **any anonymous visitor** and called Google from this container with
+**no `Referer` header**:
+
+| API | answer |
+|---|---|
+| Geocoding | `OK` |
+| Places | `OK` |
+| Static Maps | `200`, 18,565 bytes |
+
+**A referrer-restricted key answers `REQUEST_DENIED`. This key is not restricted.**
+`api/config.js` has carried the warning in capitals since it was written — *"An unrestricted
+key served from here can be lifted and billed to Cardinal"* — so the warning was written,
+the key was set, and the restriction step was never done. The header now says so in the past
+tense with the measurement attached, rather than as advice. **Theo's five minutes in the
+Cloud console, not a code change.**
+
+### Is Google better? Measured over all 42 rows on `projects`
+
+| | Nominatim | Google |
+|---|---:|---:|
+| resolved | 29 / 42 | **40 / 42** |
+
+Google rescued **12**, and corrected the typos this CRM is full of on the way:
+`5241 rucks rd Dayton Ohio **46417**` (an Indiana ZIP) → `5241 Rucks Rd, Dayton, OH **45417**`;
+`ohio46416` → `45416`; `Adrian cr` → `Adrian Ct`.
+
+**Its one loss is the best argument for it.** `948 Huron` returns `ZERO_RESULTS` from Google
+where Nominatim confidently answered **San Francisco**. An honest refusal beats a wrong pin
+that looks right — that is how a crew ends up on the wrong street.
+
+`components=country:US` is on the forward call because of a measured result, not a hunch:
+without it `921 Testing Way` resolves to **Test Way, United Kingdom**. Nominatim's own call
+in `upgradeNearbyRow()` has carried `countrycodes=us` for the same reason since it was written.
+
+### The fallback is the build
+
+Google first, Nominatim second, in both functions. If the key is unset, or Geocoding is not
+on the key's API allow-list, or the referrer check refuses, **the pin behaves exactly as it
+did at 839** — the harness asserts the fallback reproduces the old parts-based address shape
+byte for byte. This can only improve on today's behaviour; it cannot take it away.
+
+⚠ **`api/config.js` used to prescribe restricting the key to three APIs, and Geocoding was
+not among them.** Following that list literally would have silently undone this build — no
+error, just the fallback quietly taking over. The header now names Geocoding and says to
+grep `qiGoogleGeo` before narrowing the list.
+
+**Nearby was deliberately left alone.** It caches geocodes in `localStorage` **permanently**,
+and Google's terms cap a geocoding cache at 30 days. Moving it needs an expiry, which is a
+decision rather than a substitution.
+
+Gates: `check_build.py` green with negative control · `harness_840.js` **21/21 GREEN on 840,
+11 failures RED on 839** (and its FLOOR caught the coverage drop, 21 → 12, independently).
+Most cases are failure cases on purpose — no key, HTTP refusal, `ZERO_RESULTS` — because the
+fallback is what makes this safe.
+
+⚠ **Four of my own assertions failed correct code in this one build, all the same trap:
+the comment I wrote to explain a value contained the value.** `components=country:US`
+counted 2 (code + prose); `upgradeNearbyRow` moved because the new comment names it. The
+fix, which this document already prescribes: **assert on a brace-matched function body, not
+a file-wide string count.** Recorded because it is now the fourth build in a row to pay for it.
