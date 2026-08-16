@@ -5276,3 +5276,11 @@ Dispatch** (`ROUTES.dispatch`, auto-hidden by `resolveHide` if the module is abs
 `hideAllViews` (class-clear), `navRestore` (`dispatch`), the `__crNav` wrap, and `BLACKOUT`. Gate:
 `scripts/render_dispatch841.mjs` (18 assertions, both themes, 840 negative control). Repairs band +
 owner lanes and in-grid assign are build 842.
+
+### Crew Dispatch — Repairs band (build 842)
+Adds a **Punch-outs & Repairs** band (peer to the trade bands, red label) to the dispatch grid: a lane
+per assignee from `punch_items.assigned_to`, **Curtis cyan / Scottie violet** (owner tokens), others
+steel, Unassigned last. Scheduled repairs (`scheduled_at`) land on their day as red chips; unscheduled
+show a red "N open" backlog badge on the lane. Crew rows stay crew-only. Tap → `openProject()`. Band
+class is `dband repband` (renamed from `rep` to free `.rep` for the chip). Gate: `render_dispatch842.mjs`
+(25 assertions, both themes, 841 negative control).

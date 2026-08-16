@@ -3497,7 +3497,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 841 &#8212; Crew Dispatch &#8212; a read-only week grid of every crew&#8217;s booked work, by trade and day</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 842 &#8212; Crew Dispatch gains a Repairs band &#8212; a lane per assignee, scheduled repairs on their day</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39652,6 +39652,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:842, d:'2026-08-16', t:'Crew Dispatch \u2014 the Repairs band',
+s:'The Crew Dispatch grid gains a Punch-outs & Repairs band at the bottom, peer to the trade bands: one lane per assignee (Curtis, Scottie, anyone with open punch-outs, then Unassigned), name in the owner\u2019s colour. A repair with a scheduled_at lands in that day\u2019s cell as a red chip; unscheduled ones show as a red open-count badge on the lane. Crew rows stay purely crew jobs \u2014 a repair never sits inside a crew\u2019s row. Tap a repair to open its client. assigned_to is the punch\u2019s email; Curtis and Scottie map to the two owner colours, others to steel. Both themes.' },
 { b:841, d:'2026-08-16', t:'Crew Dispatch \u2014 the week grid',
 s:'Production gains a Crew Dispatch board: a read-only week grid of every crew\u2019s booked work orders, crews grouped under trade bands, columns the build days (Mon\u2013Sun, Sunday only when it is worked). A crew shows only when it has work this week; idle crews collapse. Jobs that are Scheduled with no crew yet sit in a Needs-a-crew rail. Tap a job or an unassigned client to open their profile and assign a crew with the existing New work order picker \u2014 no second pipeline. Greyscale board, red reserved for action, both themes. NO money renders here; the read never selects crew_work_orders.amount. Opens from Menu \u2192 Production \u2192 Crew Dispatch.' },
 { b:840, d:'2026-08-16', t:'Quick Inspection finds addresses properly',
@@ -71136,6 +71138,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-hatch:rgba(255,255,255,.05);
   --disp-ink:#ffffff; --disp-dim:#9aa1ac; --disp-mute:#5c636e; --disp-accent:#6b7280;
   --disp-today:#15171c; --disp-tline:#ffffff; --disp-need:#f5c045; --disp-band:#8b97a8;
+  --disp-repair:#ff3b46; --disp-curtis:#3fb8c9; --disp-scottie:#a98bec;
   --disp-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   display:none; position:fixed; inset:0; z-index:9550;
   overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
@@ -71148,6 +71151,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-hatch:rgba(0,0,0,.05);
   --disp-ink:#14171c; --disp-dim:#5a616c; --disp-mute:#767d88; --disp-accent:#7b828d;
   --disp-today:#eef0f3; --disp-tline:#14171c; --disp-need:#9a6410; --disp-band:#5f6b7d;
+  --disp-repair:#d81b28; --disp-curtis:#0f7c8b; --disp-scottie:#6a4db0;
 }
 #cr-disp .dspwrap{ max-width:1180px; margin:0 auto;
   padding:16px 14px calc(60px + env(safe-area-inset-bottom,0px)); }
@@ -71237,6 +71241,16 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .more{ font:700 8px 'Segoe UI',Arial,sans-serif; color:var(--disp-dim,#9aa1ac); text-align:center;
   border:1px dashed var(--disp-line,#282c34); border-radius:5px; padding:2px; cursor:pointer; }
 
+#cr-disp .dband.repband .bl{ color:var(--disp-repair,#ff3b46); }
+#cr-disp .dband.repband .bl::before{ background:var(--disp-repair,#ff3b46); opacity:.7; }
+#cr-disp .crewc.own-curtis .cn{ color:var(--disp-curtis,#3fb8c9); }
+#cr-disp .crewc.own-scottie .cn{ color:var(--disp-scottie,#a98bec); }
+#cr-disp .repbdg{ margin-left:auto; font:700 7px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46);
+  border:1px solid var(--disp-repair,#ff3b46); border-radius:4px; padding:1px 5px; white-space:nowrap; }
+#cr-disp .rep{ border-radius:6px; padding:4px 6px; border:1px solid var(--disp-repair,#ff3b46);
+  border-left:3px solid var(--disp-repair,#ff3b46); background:rgba(0,0,0,.14); cursor:pointer; }
+#cr-disp .rep .t{ font:700 8.5px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46); }
+#cr-disp .rep .a{ font-size:7.5px; color:var(--disp-mute,#5c636e); margin-top:1px; }
 #cr-disp .dspmsg{ padding:40px 16px; text-align:center; color:var(--disp-dim,#9aa1ac); font-size:14px; }
 #cr-disp .dspnote{ margin-top:12px; font-size:11.5px; color:var(--disp-mute,#5c636e); line-height:1.5; }
 </style>
@@ -71244,10 +71258,11 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 /* Crew Dispatch (build 841). Read-only week grid over crews + crew_work_orders,
    rendered against cacheProjects already in memory. window.CardinalDispatch. */
 (function(){
-  var el, crews = [], wos = [], weekOffset = 0, filter = 'All', showIdle = {};
+  var el, crews = [], wos = [], punches = [], weekOffset = 0, filter = 'All', showIdle = {};
   var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs'];
 
   function two(n){ return (n<10?'0':'') + n; }
+  function who(e){ var x = String(e||'').split('@')[0]; return x ? x.charAt(0).toUpperCase() + x.slice(1) : String(e||''); }
   function ymd(d){ return d.getFullYear() + '-' + two(d.getMonth()+1) + '-' + two(d.getDate()); }
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
@@ -71274,7 +71289,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   function firstLine(addr){ return String(addr||'').split(/[\n,]/)[0].trim(); }
 
   async function load(){
-    crews = []; wos = [];
+    crews = []; wos = []; punches = [];
     var sbx = window.sb || window.supa;
     if(!sbx) return;
     try{
@@ -71288,6 +71303,11 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
                  .neq('status','superseded');
       if(!wr.error && wr.data) wos = wr.data;
     }catch(_e2){}
+    try{
+      var pu = await sbx.from('punch_items')
+                 .select('id,title,project_id,assigned_to,scheduled_at,status').eq('status','open');
+      if(!pu.error && pu.data) punches = pu.data;
+    }catch(_e3){}
   }
 
   function statusPip(w){
@@ -71402,9 +71422,46 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       return '<div class="dband"><span class="bl">' + esc(tr) + '</span></div>' + lanes + idleRow;
     }).join('');
 
+    /* 842: Repairs band — punch-outs/repairs, one lane per assignee, red label. */
+    function repChip(pi){
+      var pp = projById(pi.project_id);
+      var loc = pp ? firstLine(pp.address) : '';
+      return '<div class="rep" data-pid="' + esc(pi.project_id) + '"><div class="t">' + esc(pi.title||'Repair') +
+        '</div>' + (loc ? '<div class="a">' + esc(loc) + '</div>' : '') + '</div>';
+    }
+    function repairsBand(){
+      if(!punches.length) return '';
+      var groups = {}, order = [];
+      punches.forEach(function(pi){ var k = pi.assigned_to || '__none__';
+        if(!groups[k]){ groups[k] = []; order.push(k); } groups[k].push(pi); });
+      var PROD = window.PRODUCTION_EMAILS || [];
+      order.sort(function(a,b){ if(a==='__none__') return 1; if(b==='__none__') return -1;
+        var ia = PROD.indexOf(a), ib = PROD.indexOf(b); if(ia<0) ia=50; if(ib<0) ib=50;
+        return ia - ib || a.localeCompare(b); });
+      var lanes = order.map(function(k){
+        var items = groups[k];
+        var oc = k==='curtis@cardinalrenovations.net' ? ' own-curtis'
+               : k==='scottie@cardinalrenovations.net' ? ' own-scottie' : '';
+        var name = k==='__none__' ? 'Unassigned' : who(k);
+        var cells = '';
+        for(var di=0; di<nDays; di++){
+          var day = dayStr[di], tcls = (day === todayStr) ? ' today' : '';
+          var onDay = items.filter(function(pi){ return pi.scheduled_at && String(pi.scheduled_at).slice(0,10) === day; });
+          cells += onDay.length ? '<div class="dcell' + tcls + '">' + onDay.map(repChip).join('') + '</div>'
+                                : '<div class="dcell empty' + tcls + '"></div>';
+        }
+        var backlog = items.filter(function(pi){ var d = pi.scheduled_at ? String(pi.scheduled_at).slice(0,10) : '';
+          return !d || dayStr.indexOf(d) < 0; }).length;
+        var bdg = backlog ? '<span class="repbdg">' + backlog + ' open</span>' : '';
+        return '<div class="drow dlane"><div class="crewc' + oc + '"><div class="cn">' + esc(name) + '</div>' + bdg + '</div>' + cells + '</div>';
+      }).join('');
+      return '<div class="dband repband"><span class="bl">Punch-outs &amp; Repairs</span></div>' + lanes;
+    }
+    var repsH = repairsBand();
+
     wrap.querySelector('.dspbody').innerHTML =
       '<div class="dspframe"><div class="dspscroll"><div class="dspgrid" style="--dcols:' + nDays + '">' +
-      railH + colH + bandsH + '</div></div></div>' +
+      railH + colH + bandsH + repsH + '</div></div></div>' +
       '<p class="dspnote">Shows <b>bookings, not availability</b> — an empty cell means no job is booked that day, not that the crew is free. ' +
       'Tap a job or an unassigned client to open their profile; assign a crew there with <b>New work order</b>. No dollar figures appear on this board.</p>';
 

@@ -17768,3 +17768,18 @@ the `dispatch` ROUTE + menu item that `resolveHide` auto-hides if the module is 
 amount-fence and Habitat-first are asserted in the harness. **Repairs band + Curtis/Scottie owner
 lanes are build 842** (needs a `punch_items` load and the assignee→manager map). In-grid assign (the
 555 picker prefilled) is a follow-up; v1 routes to the profile.
+
+## Build 842 — Crew Dispatch: the Repairs band (16 Aug 2026)
+The Crew Dispatch grid (841) gains a **Punch-outs & Repairs band** at the bottom, peer to the trade
+bands, with a **red section label**. One lane per assignee, grouped from `punch_items.assigned_to`
+(an email): **Curtis (cyan) and Scottie (violet)** map to owner-colour tokens, anyone else with open
+punch-outs to steel, and an **Unassigned** lane last. `PRODUCTION_EMAILS` orders the managers first
+(alphabetical fallback if it's not global). A repair with a `scheduled_at` lands in that day's cell as
+a **red chip**; unscheduled ones roll up into a **red "N open" backlog badge** on the lane. Crew rows
+stay purely crew jobs — a repair never sits inside a crew's row. Tap a repair → `openProject()`.
+`--disp-repair/-curtis/-scottie` tokens in both themes with literal fallbacks. Loads open `punch_items`
+on grid open (`id,title,project_id,assigned_to,scheduled_at,status`). ⚠ The band class was **renamed
+`dband rep` → `dband repband`** so `.rep` unambiguously means a repair chip — a `querySelector('.rep')`
+had matched the band (which has no `data-pid`) and swallowed the chip; the app was safe (the tap handler
+keys on `[data-pid]`) but the collision was a latent trap. Gate: `render_dispatch842.mjs`, **25/25 in
+both themes** with an 841 negative control (band absent). Build 842 rides in the same PR as 841 (a span).
