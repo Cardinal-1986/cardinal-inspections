@@ -3500,7 +3500,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 848 &#8212; Crew Dispatch empty cells no longer draw a stray folder placeholder &#8212; a class-name clash with the app&#8217;s global empty state</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 849 &#8212; The client Job Menu gains a Work Orders tile &#8212; open a job&#8217;s work orders straight from the profile</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11141,7 +11141,8 @@ var DB_ICONS = {
   orders:'M3 3h2.3l.6 2H21l-2.4 8H8.2L6.1 5H3V3zm6.2 15a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7.6 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4z',
   phone:'M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.3.2 2.5.57 3.6a1 1 0 0 1-.25 1l-2.22 2.2z',
   text:'M3 4.5A1.5 1.5 0 0 1 4.5 3h15A1.5 1.5 0 0 1 21 4.5v10a1.5 1.5 0 0 1-1.5 1.5H9.4L3 21V4.5zm4.5 4.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm4.5 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm4.5 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6z',
-  mail:'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 7L4 6v2l8 5 8-5V6l-8 5z'
+  mail:'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 7L4 6v2l8 5 8-5V6l-8 5z',
+  workorder:'M6 13a6 6 0 0 1 12 0v.6H6V13z M3.4 14.6h17.2a1 1 0 0 1 0 2H3.4a1 1 0 0 1 0-2z'
 };
 function dbIc(n){
   return '<svg class="dbic2" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" ' +
@@ -11281,6 +11282,12 @@ function renderAcxOverview(){
     '</div><div class="jaboxrow">' +
       jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
       jt(dbIc('orders'), 'Orders', '', 'materials') +
+    '</div>' +
+    /* 849: Work Orders — the crew document. Full-width so the grid above stays
+       in pairs; data-jm="workorders" rides the router's else branch to
+       showTab, the same section the header button and the dropdown open. */
+    '<div class="jaboxrow" style="grid-template-columns:1fr">' +
+      jt(dbIc('workorder'), 'Work Orders', '', 'workorders') +
     '</div>';
   /* ---- contacts: retired to the hero name row (Keeper, build 348). dbSwitchPrimary + add-contact live there now. ---- */
   var extra = ck.contacts || [];
@@ -39676,6 +39683,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:849, d:'2026-08-16', t:'Job Menu \u2014 a Work Orders tile',
+s:'The Job Menu on a client\u2019s profile gains a Work Orders tile, alongside Estimates, Contracts, Inspections and the rest. One tap opens the Work Orders section \u2014 the same place the header dropdown and the Work Orders button (846) go. It rides the existing Job Menu router, so nothing new was wired underneath; it is a full-width tile at the bottom of the menu so the grid above stays in even pairs. This also gives the phone a Job-Menu path to work orders, matching the desktop. No money on the tile.' },
 { b:848, d:'2026-08-16', t:'Crew Dispatch \u2014 no more folder boxes in empty cells',
 s:'On the Crew Dispatch board, every empty day cell was drawing a dashed box with a folder icon in it \u2014 it looked broken and like it should be tappable, but was not. The cells carried the bare class name \u201cempty\u201d, which collided with the app\u2019s global empty-state component (a dashed card with a folder illustration); the day cells were inheriting that whole look. Renamed the cell\u2019s class to a prefixed one so it no longer matches, the convention the rest of the app already follows. Empty cells now read as a quiet hatched square, as intended. No behaviour change; a genuinely empty cell was always meant to be blank.' },
 { b:847, d:'2026-08-16', t:'Crews \u2014 a Jobs history tab',
