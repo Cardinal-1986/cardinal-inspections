@@ -17947,3 +17947,17 @@ Self Check surface list so it doesn't report the removed button as missing. The 
 CRM client counts are untouched. First of three builds off Theo's picks (hub redesign and the
 Curtis/Scottie login routing follow). Gate: `render_landing852.mjs` — GREEN 8/8, RED against 851.
 `check_build` green.
+
+
+## Build 853 — Production hub: calendar, tiles, then today (16 Aug 2026)
+Theo picked Production concept #3 with the month calendar from #2 up top and the day's focus at the
+bottom. Reordered the Production home (`cr-pb-script` `homeHtml`): a **compact month calendar**
+(`homeMonthHtml`, the 42-cell grid with per-day pips, prev/next month nav) leads, then the **command
+tiles** (Needs ordered / Ordered / Scheduled / Punch-outs + Closed repairs), then the **day's agenda**.
+Tapping a day up top swaps the agenda below (selDay → re-render); the month arrows page (`data-mon`,
+already wired); Full calendar still opens the big split view. The old week strip is gone from the home.
+Pure layout — kept the module's existing Cardinal Steel palette (`--pb-*`, red accent), same tiles, same
+day cells and pips, same handlers. A PM now sees the schedule, the counts and today's work in one screen.
+Gate: `render_prodhub853.mjs` seeds a scheduled job + an urgent punch and asserts the calendar leads,
+tiles follow, agenda is last, the week strip is gone, month paging and day-tap still work — GREEN 8/8,
+RED against the 852 tree. Rendered for the eye. `check_build` green.

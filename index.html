@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 852 &#8212; The landing focuses on the CRMs, Production &amp; Sales Floor &#8212; Quick Inspection and Schedule Board come off it, the Pop-Up Roof moves to the Sales Floor</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 853 &#8212; The Production hub leads with the month calendar, then the tiles, then today&#8217;s work &#8212; everything in one screen</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39710,6 +39710,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:853, d:'2026-08-16', t:'Production hub \u2014 calendar, tiles, then today',
+s:'The Production home is reordered the way you picked from the concept board: a compact month calendar sits up top, the command tiles (Needs ordered, Ordered, Scheduled, Punch-outs) in the middle, and the day\u2019s agenda at the bottom. Tap any day in the calendar and the agenda below swaps to that day; the month arrows page through, and Full calendar still opens the big view. Same Cardinal Steel colours, same tiles and same day cells \u2014 only the arrangement changed, so a project manager sees the schedule, the counts and today\u2019s work in one screen.' },
 { b:852, d:'2026-08-16', t:'Landing \u2014 focused on the work',
 s:'The front door is pared back to what a project manager or rep opens the app to reach: the three CRMs (Retail, Cardinal Truth, Community), then Production and the Sales Floor, with the Resource Library kept as a full-width utility. Quick Inspection and Schedule Board come off the landing \u2014 both are still in the menu \u2014 and The Pop-Up Roof book moves onto the Sales Floor, beside the Showcase, where it belongs at the kitchen table. Nothing else changed; the greeting, the House Rule and the CRM client counts are untouched.' },
 { b:851, d:'2026-08-16', t:'Work Order \u2014 Email button says \u201ccrew\u201d',
@@ -47956,6 +47958,17 @@ objections : OBJECTIONS,
 #cr-pb .pbpip.punch{ background:var(--pb-hot,#e07a5f); }
 #cr-pb .pbpip.drop{ background:var(--pb-dim,#848c94); }
 #cr-pb .pbpip.done{ background:var(--pb-ok,#6cb98f); }
+/* 853: the home hub leads with a COMPACT month calendar (concept 2), then the
+   command tiles, then the day's agenda. Same cells and pips as the full
+   calendar, just tighter and pip-marked for the home. */
+#cr-pb .pbmonth{ margin:16px 0 6px; }
+#cr-pb .pbmonth .pbmhd{ display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
+#cr-pb .pbmonth .pbmhd .lbl{ font:700 11.5px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.14em; text-transform:uppercase; color:var(--pb-ink,#eceef0); }
+#cr-pb .pbmonth .pbmhd button{ background:transparent; border:0; cursor:pointer; color:var(--pb-dim,#848c94); font:700 16px var(--pb-mono,ui-monospace,Menlo,monospace); padding:2px 10px; min-width:34px; min-height:34px; border-radius:8px; }
+#cr-pb .pbmonth .pbmhd button:hover{ color:var(--pb-acc,#e35c63); background:var(--pb-c2,#1b1e22); }
+#cr-pb .pbmonth .pbday{ min-height:34px; padding:5px 2px 4px; display:flex; flex-direction:column; align-items:center; gap:0; }
+#cr-pb .pbmonth .pbday .dn{ display:block; font-size:11px; text-align:center; }
+#cr-pb .pbmonth .pbday .pbpips{ margin-top:3px; }
 
 /* ---- section rule + agenda ---------------------------------------------- */
 #cr-pb .pbrule{
@@ -48544,13 +48557,41 @@ function agendaHtml(d){
   }
   return evs.map(evHtml).join('');
 }
+function homeMonthHtml(){
+  var m = calMonth, first = new Date(m.getFullYear(), m.getMonth(), 1);
+  var start = new Date(first); start.setDate(1 - first.getDay());
+  var d = selDay || today(), cells = '';
+  for(var i = 0; i < 42; i++){
+    var day = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    if(i >= 35 && day.getMonth() !== m.getMonth()) break;
+    var evs = eventsFor(day), seen = {}, pips = '';
+    evs.forEach(function(e){ if(seen[e.cls]) return; seen[e.cls] = true; pips += '<span class="pbpip ' + e.cls + '"></span>'; });
+    cells += '<button class="pbday' +
+      (day.getMonth() !== m.getMonth() ? ' out' : '') +
+      (keyOf(day) === keyOf(today()) ? ' today' : '') +
+      (keyOf(day) === keyOf(d) ? ' sel' : '') +
+      '" data-day="' + keyOf(day) + '" type="button">' +
+      '<span class="dn">' + day.getDate() + '</span>' +
+      '<span class="pbpips">' + pips + '</span></button>';
+  }
+  return '<div class="pbmonth">' +
+    '<div class="pbmhd">' +
+      '<button data-mon="-1" type="button" aria-label="Previous month">\u2039</button>' +
+      '<span class="lbl">' + esc(m.toLocaleDateString('en-US', { month:'long', year:'numeric' })) + '</span>' +
+      '<button data-mon="1" type="button" aria-label="Next month">\u203A</button>' +
+    '</div>' +
+    '<div class="pbdow"><span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span></div>' +
+    '<div class="pbgrid">' + cells + '</div></div>';
+}
 function homeHtml(){
   var d = selDay || today();
+  /* 853: month calendar first (concept 2), then the command tiles, then the
+     day's agenda — tapping a day up top swaps the agenda at the bottom. */
   return '<div class="pbwrap">' +
     head('Pro<span>duction</span>', 'home') +
-    '<div class="pbsub">Jobs · Schedule · Punch</div>' +
+    '<div class="pbsub">Schedule · Jobs · Punch</div>' +
+    homeMonthHtml() +
     tilesHtml() +
-    weekHtml() +
     '<div class="pbrule">' + esc(keyOf(d) === keyOf(today()) ? 'Today' : pbFull(d)) +
       '<span class="sp">' +
       '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
