@@ -691,6 +691,8 @@ body.claim-insurance #leadCard .llrow b{color:var(--ct-ink);}
 .jobmenu-head{padding:9px 30px 9px 11px;min-width:0;max-width:150px;font-size:13px;border-radius:9px;
   background-position:right 10px center;vertical-align:middle;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#woQuick{padding:9px 13px;font:700 13px 'Segoe UI',Arial,sans-serif;border-radius:9px;
+  vertical-align:middle;white-space:nowrap;margin-left:6px;}
 #brandTitle{min-width:0;overflow:hidden;}
 #brandTitle h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .jobmenu:focus{outline:2px solid var(--red);outline-offset:1px;}
@@ -3462,6 +3464,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <option value="materials">Materials</option>
           <option value="measure">Measurements</option>
         </select>
+        <button class="btn ghost" id="woQuick" data-cri="ladder lg" style="display:none;" onclick="showTab('workorders')">Work Orders</button>
         <button class="btn ghost" id="navBtn" data-cri="menu lg">Menu</button>
         <div id="navMenu" style="display:none;">
           <div class="navsec">Daily</div>
@@ -3497,7 +3500,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 845 &#8212; Crew Dispatch reads the real crew columns &#8212; the grid was empty on a wrong column name</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 846 &#8212; A Work Orders button sits beside the job section dropdown &#8212; one tap to the work orders, no scrolling the menu</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17418,7 +17421,9 @@ window.addEventListener('resize', function(){
 function setHeaderJobMenu(on){
   var jm = document.getElementById('jobMenuSel');
   var nb = document.getElementById('navBtn');
+  var wq = document.getElementById('woQuick');
   if(jm) jm.style.display = on ? 'inline-block' : 'none';
+  if(wq) wq.style.display = on ? 'inline-block' : 'none';
   document.body.classList.toggle('projopen', !!on);
   /* 679: this function already owns `projopen`, which is the ONLY thing gating
      the job name in the ribbon — so it owns clearing the name too. openProject()
@@ -39671,6 +39676,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:846, d:'2026-08-16', t:'Work Orders \u2014 a button beside the section dropdown',
+s:'On an open client, a Work Orders button now sits right next to the section dropdown in the header \u2014 one tap opens the Work Orders section instead of opening the dropdown and finding it in the list. It shows exactly when the dropdown does (only inside a job) and calls the same showTab(\u2018workorders\u2019) the dropdown does, so nothing new was wired underneath. The ladder icon matches the Production board. No money on this button; the Work Orders section is unchanged.' },
 { b:845, d:'2026-08-16', t:'Crew Dispatch \u2014 fix the empty grid',
 s:'The Crew Dispatch grid showed \u201cNo crews on file yet\u201d even with crews on file: its read asked crews for columns contact and phone, which do not exist (the table has contact_name and legal_name), so PostgREST rejected the whole query and the grid saw zero crews. Now it reads the real columns and shows the company (legal_name) with the crew lead underneath, falling back to the crew name. Verified against the live schema.' },
 { b:844, d:'2026-08-16', t:'Re-crewing \u2014 supersede the old work order',

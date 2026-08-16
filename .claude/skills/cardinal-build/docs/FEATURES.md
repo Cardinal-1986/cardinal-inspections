@@ -5299,3 +5299,12 @@ rows `superseded` before inserting the new one, and the profile/production read 
 The grid already ignored superseded, so it shows only the current crew. SQL first — the status CHECK
 constraint was widened to allow `superseded` (`crew_work_orders_add_superseded_status.sql`, applied to
 production). Gate: `gate_844.mjs` drives the real `createWorkOrder` with an 843 negative control.
+
+### Work Orders — a button beside the job section dropdown (build 846)
+On an open client, `#woQuick` (a ladder-icon **Work Orders** button in `#navWrap`) sits next to the
+section dropdown `#jobMenuSel`. It calls the same `showTab('workorders')` the dropdown option does — a
+second door to the existing tab, no new pipeline. `setHeaderJobMenu(on)` shows/hides it in lockstep with
+the dropdown, so it only appears inside a job. **Phone exception:** the dropdown is hidden on ≤560px by
+the client-band rule and the Job Menu has no Work Orders tile, so `#woQuick` (not covered by that rule)
+is the phone's only header path to Work Orders. Gate: `render_woquick846.mjs` — 24/24 at 1194px and
+390px (hidden→visible, icon hydrated, click opens `#tab-workorders`, no header overflow), RED against 845.

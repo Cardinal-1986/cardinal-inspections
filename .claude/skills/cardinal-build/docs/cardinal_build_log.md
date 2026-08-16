@@ -17823,3 +17823,21 @@ query broke.** The real gate for wrong-column errors is the live schema — veri
 (`crews` has `contact_name`/`legal_name`; `punch_items` and `crew_work_orders` columns re-confirmed
 present). Harness seed corrected to the real column names. `check_build` green; `render_dispatch843.mjs`
 29/29 with company names.
+
+## Build 846 — A Work Orders button beside the job section dropdown (16 Aug 2026)
+Theo, from his desktop: *"I see the drop down, can you also add a work order tab on the profile make it
+visible along with the drop down."* On an open client the header's section switcher (`#jobMenuSel`) now
+has a **Work Orders** button (`#woQuick`, ladder icon) sitting beside it — one tap into the Work Orders
+section instead of opening the dropdown and hunting for the entry in the list. It shows only inside a
+job (`setHeaderJobMenu` toggles it in lockstep with the dropdown) and calls the same
+`showTab('workorders')` the dropdown option does, so **no new pipeline underneath** — just a second door
+to the existing tab. No money on the button; the Work Orders section is unchanged.
+
+**The one deliberate divergence:** on the phone (≤560px) the section dropdown is hidden by the client-band
+media rule (`body.projopen #jobMenuSel{display:none!important}` — "you're already inside a client"), and
+the Job Menu has no Work Orders tile, so the phone had **no header path to Work Orders at all**. The new
+button is not hidden by that rule, so on the phone it stands in for the hidden dropdown and becomes the
+one-tap path. `render_woquick846.mjs` proves the whole thing at 1194px and 390px — hidden before a job is
+open, visible after, icon hydrated, click opens `#tab-workorders` and hides Overview, and the header does
+not scroll sideways at either width — GREEN 24/24, and RED (button absent) against the 845 tree.
+`check_build` green.
