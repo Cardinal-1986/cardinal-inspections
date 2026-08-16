@@ -17616,3 +17616,60 @@ Gates: `check_build.py` green with negative control · `harness_838.js` **29/29 
 838, 25 failures RED on 837** with a printed summary, not a crash · scroll-lock writers
 still **13 modules** (no 14th) · body observers unchanged at 46 bare hits · `aerialMerge`
 CODE hits unchanged 837→838 (4 hits, 1 block) via `jslex_count.py`.
+
+## Build 839 — Address Check: the records the app cannot map, in one list (16 Aug 2026)
+
+The follow-up 838 flagged. 838's coverage sweep found the constraint on the satellite
+estimate was never imagery — it was address quality — and those records were being
+discovered one at a time by whoever opened a job and got a map of open water. Settings now
+has **Check client addresses**: every client the app cannot place, the reason, and a tap
+straight to the record.
+
+**The prime doctrine paid again: `addrLooksIncomplete()` already existed.** Build 679 wrote
+it for the map's own "this address has no city, state or ZIP" warning. This screen **reuses
+it** — asserted at `function addrLooksIncomplete\(` **=== 1 app-wide**, so there is still one
+rule and not two that can disagree about the same address.
+
+**Two layers, and the split is measured rather than argued.** Run against all 42 real rows:
+
+| layer | catches | cost |
+|---|---:|---|
+| local — the 679 rule | **5 of 42** | free, instant |
+| remote — `/api/measure` with `check_only` | **10 more** it structurally cannot see | one Google geocode each |
+
+The remote pass is the only way to catch an address that *looks* complete and is not: a
+real-looking ZIP for the wrong state passes every string test there is. Geocoding is 10,000
+free a month then $5/1000, so a full sweep here is free — but it is a button rather than
+something that happens because you opened a screen.
+
+⚠ **`check_only` is a MODE of `/api/measure`, not a route of its own, and that was deliberate.**
+The geocoder and the wrong-state fence must never exist in two places; a second copy drifts,
+and the fence is what stands between a typo and a confidently measured stranger's roof. It
+returns after the fence and before the Solar call — asserted by position, so a later edit
+that moves it starts billing a `buildingInsights` per client and the assertion catches it.
+
+⚠️ **THE APP HAS TWO GEOCODERS AND THEY DISAGREE — recorded so the two numbers are not read
+as a contradiction.** 838's "13 of 42 do not geocode" was measured through **Nominatim**,
+which is what the Location card uses. This screen's Verify pass goes through **Google**,
+which is markedly better at messy input — several rows Nominatim refused (`4508 Sydenham Dr,
+Englewood, OH 45322` reads as perfectly well-formed) will very likely resolve. **Expect
+Verify to report FEWER bad addresses than 13, and that is the geocoders differing, not a
+bug in either.** Whether the Location card should move to Google is a separate question and
+is not answered here.
+
+**A network failure does not accuse a record.** A dropped connection leaves the row
+untouched for the next Rescan rather than flagging an address that is fine — gated by a
+harness case, because the naive `catch` marks it bad.
+
+An ordinary `.wrap` view following `#auditView`, not a fixed overlay: **no scroll-lock
+writer (still 13 modules), no body observer (still 46 bare hits), no stylesheet block.**
+Registered in `hideAllViews()` **in the same edit that created it** — an unregistered
+full-screen view swaps the page underneath itself, which cost six screens at 570–572. RLS
+scopes the list by itself: an admin sees every client, a rep sees their own.
+
+Gates: `check_build.py` green with negative control · `harness_839.js` **31/31 GREEN on 839,
+26 failures RED on 838** with a printed summary. It executes the SHIPPED `addrLooksIncomplete`
+and the SHIPPED module against the **real** addresses, not fixtures. **Three of its checks
+passed vacuously on the first control run** — "a dropped connection does not flag a good
+address" is trivially true on a tree where nothing renders at all — so a guard asserting the
+list drew first was added, and all three now fail on the control as they should.
