@@ -17810,3 +17810,16 @@ screen, no money. Gate: `gate_844.mjs` boots the app and drives the **real** `cr
 (db.create + openEditor stubbed) — crew A's roofing WO goes superseded, crew C's siding WO is
 untouched, crew B's new WO exists; 843 negative control shows no supersede. `render_dispatch843.mjs`
 re-run 29/29 (no grid regression).
+
+## Build 845 — Crew Dispatch: fix the empty grid (wrong crew columns) (16 Aug 2026)
+The grid showed **"No crews on file yet"** even with 11 crews on file. Its read asked `crews` for
+columns **`contact` and `phone`, which do not exist** — the table has `contact_name`, `contact_phone`,
+`legal_name`. PostgREST 400'd the whole select, `crews` came back empty, and the grid rendered its
+no-crews message. Fixed the select to `id,name,legal_name,trade,archived,contact_name`, and the lane
+now shows the **company (`legal_name`) with the crew lead underneath**, falling back to the crew name.
+**Root cause is BUG_CLASSES "test data that lies": the render harness seeded a fake `contact` column,
+so the mock (which ignores the select's column list) validated fiction and stayed green while the live
+query broke.** The real gate for wrong-column errors is the live schema — verified via the DB directly
+(`crews` has `contact_name`/`legal_name`; `punch_items` and `crew_work_orders` columns re-confirmed
+present). Harness seed corrected to the real column names. `check_build` green; `render_dispatch843.mjs`
+29/29 with company names.
