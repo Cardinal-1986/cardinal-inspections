@@ -17783,3 +17783,14 @@ on grid open (`id,title,project_id,assigned_to,scheduled_at,status`). ⚠ The ba
 had matched the band (which has no `data-pid`) and swallowed the chip; the app was safe (the tap handler
 keys on `[data-pid]`) but the collision was a latent trap. Gate: `render_dispatch842.mjs`, **25/25 in
 both themes** with an 841 negative control (band absent). Build 842 rides in the same PR as 841 (a span).
+
+## Build 843 — Crew Dispatch: assign in place (16 Aug 2026)
+On the Crew Dispatch grid, tapping a job in the **Needs-a-crew rail** now opens the existing
+**build-555 crew picker for that job directly** — pick the crew (and day and scope) and it generates
+the Work Order, exactly as the client profile's **New work order** button does. `openWorkOrderPicker`
+gained an **optional `project` argument** (`var pr = project || currentProject`); the profile button
+passes none and is byte-for-byte unchanged. The grid **closes first** because `tskModal` is z-index
+210 and would otherwise open behind the grid (9550). Job and repair chips still open the client. No
+new pipeline, no money. Gate: `render_dispatch843.mjs`, **29/29 both themes** — and it asserts
+`typeof window.openWorkOrderPicker === 'function'` (so the shortcut can't silently degrade to the
+profile) with an 842 negative control (the chip routes to the profile there). Same PR span as 841–842.

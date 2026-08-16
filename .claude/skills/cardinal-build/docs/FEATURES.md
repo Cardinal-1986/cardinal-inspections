@@ -5284,3 +5284,10 @@ steel, Unassigned last. Scheduled repairs (`scheduled_at`) land on their day as 
 show a red "N open" backlog badge on the lane. Crew rows stay crew-only. Tap → `openProject()`. Band
 class is `dband repband` (renamed from `rep` to free `.rep` for the chip). Gate: `render_dispatch842.mjs`
 (25 assertions, both themes, 841 negative control).
+
+### Crew Dispatch — assign in place (build 843)
+Tapping a **Needs-a-crew** chip on the dispatch grid opens the build-555 crew picker prefilled for that
+job (`openWorkOrderPicker(project)`), instead of routing through the profile. The grid closes first
+(the picker modal is z-index 210, below the grid). Backward-compatible — the profile's New-work-order
+button still calls `openWorkOrderPicker()` with no args. Gate: `render_dispatch843.mjs` (29 assertions,
+both themes, asserts the picker is a real global, 842 negative control).

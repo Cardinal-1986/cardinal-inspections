@@ -3497,7 +3497,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 842 &#8212; Crew Dispatch gains a Repairs band &#8212; a lane per assignee, scheduled repairs on their day</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 843 &#8212; Crew Dispatch assigns in place &#8212; tap a Needs-a-crew job for the crew picker</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20449,8 +20449,9 @@ async function woNextNumber(){
   }
 }
 
-async function openWorkOrderPicker(){
-  var pr = currentProject;
+async function openWorkOrderPicker(project){
+  /* 843: Crew Dispatch passes the job to crew here; the New-work-order button passes none. */
+  var pr = project || currentProject;
   if(!pr) return;
   var m = document.getElementById('tskModal');
   var body = document.getElementById('tskModalBody');
@@ -39652,6 +39653,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:843, d:'2026-08-16', t:'Crew Dispatch \u2014 assign in place',
+s:'On the Crew Dispatch grid, tapping a job in the Needs-a-crew rail now opens the existing build-555 crew picker for that job directly \u2014 pick the crew (and day and scope) and it generates the Work Order, same as the client profile\u2019s New work order button. The grid closes first so the picker is not hidden behind it. openWorkOrderPicker gained an optional project argument; the profile button still passes none and behaves exactly as before. Job and repair chips still open the client. No new pipeline, no money.' },
 { b:842, d:'2026-08-16', t:'Crew Dispatch \u2014 the Repairs band',
 s:'The Crew Dispatch grid gains a Punch-outs & Repairs band at the bottom, peer to the trade bands: one lane per assignee (Curtis, Scottie, anyone with open punch-outs, then Unassigned), name in the owner\u2019s colour. A repair with a scheduled_at lands in that day\u2019s cell as a red chip; unscheduled ones show as a red open-count badge on the lane. Crew rows stay purely crew jobs \u2014 a repair never sits inside a crew\u2019s row. Tap a repair to open its client. assigned_to is the punch\u2019s email; Curtis and Scottie map to the two owner colours, others to steel. Both themes.' },
 { b:841, d:'2026-08-16', t:'Crew Dispatch \u2014 the week grid',
@@ -71463,7 +71466,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       '<div class="dspframe"><div class="dspscroll"><div class="dspgrid" style="--dcols:' + nDays + '">' +
       railH + colH + bandsH + repsH + '</div></div></div>' +
       '<p class="dspnote">Shows <b>bookings, not availability</b> — an empty cell means no job is booked that day, not that the crew is free. ' +
-      'Tap a job or an unassigned client to open their profile; assign a crew there with <b>New work order</b>. No dollar figures appear on this board.</p>';
+      'Tap a job to open its client; tap a <b>Needs-a-crew</b> job to assign a crew right away. No dollar figures appear on this board.</p>';
 
     /* week label + filter active state */
     var lab = el.querySelector('.dspwklab');
@@ -71503,6 +71506,14 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       if(f){ filter = f.getAttribute('data-f'); render(); return; }
       var idle = e.target.closest('.idle[data-idle]');
       if(idle){ showIdle[idle.getAttribute('data-idle')] = 1; render(); return; }
+      var uch = e.target.closest('.uch[data-pid]');
+      if(uch){
+        var upid = uch.getAttribute('data-pid'), proj = projById(upid);
+        close();   /* the picker modal is z-index 210 — must not open behind the grid */
+        if(proj && typeof window.openWorkOrderPicker === 'function') window.openWorkOrderPicker(proj);
+        else if(typeof window.openProject === 'function') window.openProject(upid);
+        return;
+      }
       var pel = e.target.closest('[data-pid]');
       if(pel && typeof window.openProject === 'function'){ close(); window.openProject(pel.getAttribute('data-pid')); }
     });
