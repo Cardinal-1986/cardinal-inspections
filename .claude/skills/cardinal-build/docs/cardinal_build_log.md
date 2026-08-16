@@ -17794,3 +17794,19 @@ passes none and is byte-for-byte unchanged. The grid **closes first** because `t
 new pipeline, no money. Gate: `render_dispatch843.mjs`, **29/29 both themes** — and it asserts
 `typeof window.openWorkOrderPicker === 'function'` (so the shortcut can't silently degrade to the
 profile) with an 842 negative control (the chip routes to the profile there). Same PR span as 841–842.
+
+## Build 844 — Re-crewing: supersede the old work order (16 Aug 2026)
+Issuing a work order for a job that already has one **for the same trade** now marks the prior one
+**`superseded`** instead of leaving two. So reassigning a crew (New work order → a different crew)
+**replaces rather than duplicates**, and the Crew Dispatch grid and the client profile show only the
+current crew. History is kept — the old `crew_work_orders` row goes `superseded`, its document is
+untouched. `createWorkOrder` supersedes prior active same-trade WOs (looked up by joining the project's
+active WOs to their crews' trades) **before** inserting the new one, wrapped in try/catch so it can
+never block the WO. The profile/production read (723) gained `.neq('status','superseded')` so a
+replaced WO's tile disappears. **SQL first:** the `crew_work_orders_status_check` constraint was
+widened to allow `superseded` (preserving `draft/sent/in_progress/completed/void`) and **applied to
+production before this HTML** — `crew_work_orders_add_superseded_status.sql` is the record. No new
+screen, no money. Gate: `gate_844.mjs` boots the app and drives the **real** `createWorkOrder`
+(db.create + openEditor stubbed) — crew A's roofing WO goes superseded, crew C's siding WO is
+untouched, crew B's new WO exists; 843 negative control shows no supersede. `render_dispatch843.mjs`
+re-run 29/29 (no grid regression).

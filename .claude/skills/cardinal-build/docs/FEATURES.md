@@ -5291,3 +5291,11 @@ job (`openWorkOrderPicker(project)`), instead of routing through the profile. Th
 (the picker modal is z-index 210, below the grid). Backward-compatible — the profile's New-work-order
 button still calls `openWorkOrderPicker()` with no args. Gate: `render_dispatch843.mjs` (29 assertions,
 both themes, asserts the picker is a real global, 842 negative control).
+
+### Crew Dispatch — re-crewing (build 844)
+Reassigning a crew (New work order → a different crew for the same trade) now **supersedes** the prior
+work order rather than duplicating it: `createWorkOrder` marks prior active same-trade `crew_work_orders`
+rows `superseded` before inserting the new one, and the profile/production read filters superseded out.
+The grid already ignored superseded, so it shows only the current crew. SQL first — the status CHECK
+constraint was widened to allow `superseded` (`crew_work_orders_add_superseded_status.sql`, applied to
+production). Gate: `gate_844.mjs` drives the real `createWorkOrder` with an 843 negative control.

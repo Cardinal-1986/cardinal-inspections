@@ -3497,7 +3497,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 843 &#8212; Crew Dispatch assigns in place &#8212; tap a Needs-a-crew job for the crew picker</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 844 &#8212; Re-crewing supersedes the old work order &#8212; one active crew per job per trade</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10633,6 +10633,7 @@ async function reload(){
          who never issues one. Catches to [] like the money tables. */
       (TEAM ? sb.from('crew_work_orders')
                 .select('report_id,status,sent_at,sent_via,sent_to,completed_on')
+                .neq('status', 'superseded')
                 .then(function(r){ return (!r.error && r.data) || []; })
                 .catch(function(){ return []; })
             : Promise.resolve([]))
@@ -20541,6 +20542,23 @@ async function createWorkOrder(pr, crew, opts){
 
     /* the document is the deliverable; the row is the record of it. A failure
        here must not lose the document that was just created. */
+    /* 844: re-crewing \u2014 a new work order for this project + trade supersedes the prior
+       active one, so the Crew Dispatch grid and the profile show only the current crew.
+       History is kept: the old row goes 'superseded', its document is untouched. A failure
+       here must never block the work order that was just created. */
+    try{
+      var _act = await sb.from('crew_work_orders').select('id,crew_id')
+        .eq('project_id', pr.id).neq('status', 'superseded');
+      var _prior = (!_act.error && _act.data) || [];
+      if(_prior.length && crew && crew.trade){
+        var _cids = _prior.map(function(w){ return w.crew_id; }).filter(Boolean);
+        var _cr = _cids.length ? await sb.from('crews').select('id,trade').in('id', _cids) : { data: [] };
+        var _same = {};
+        ((!_cr.error && _cr.data) || []).forEach(function(c){ if(c.trade === crew.trade) _same[c.id] = 1; });
+        var _sup = _prior.filter(function(w){ return _same[w.crew_id]; }).map(function(w){ return w.id; });
+        if(_sup.length) await sb.from('crew_work_orders').update({ status: 'superseded' }).in('id', _sup);
+      }
+    }catch(_se){}
     try{
       await sb.from('crew_work_orders').insert({
         wo_number: num, crew_id: crew.id, project_id: pr.id, report_id: id,
@@ -39653,6 +39671,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:844, d:'2026-08-16', t:'Re-crewing \u2014 supersede the old work order',
+s:'Issuing a new work order for a job that already has one for the same trade now marks the prior one superseded instead of leaving two. So reassigning a crew (New work order \u2192 a different crew) replaces rather than duplicates, and the Crew Dispatch grid and the client profile show only the current crew. History is kept \u2014 the old row goes superseded, its document is untouched. Needs the crew_work_orders status constraint to allow superseded (applied to the database first). No new screen, no money.' },
 { b:843, d:'2026-08-16', t:'Crew Dispatch \u2014 assign in place',
 s:'On the Crew Dispatch grid, tapping a job in the Needs-a-crew rail now opens the existing build-555 crew picker for that job directly \u2014 pick the crew (and day and scope) and it generates the Work Order, same as the client profile\u2019s New work order button. The grid closes first so the picker is not hidden behind it. openWorkOrderPicker gained an optional project argument; the profile button still passes none and behaves exactly as before. Job and repair chips still open the client. No new pipeline, no money.' },
 { b:842, d:'2026-08-16', t:'Crew Dispatch \u2014 the Repairs band',
