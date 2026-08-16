@@ -268,6 +268,17 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 .toolbar .statuswrap{display:flex;align-items:center;gap:8px;font-size:13px;}
 .toolbar .statuswrap small{color:#bbb;}
 #savedFlash{font-size:12.5px;color:#9fdcb4;min-width:70px;}
+/* 850: the editor action buttons as one aligned set — a wrapped row on desktop,
+   an even 2-up grid on the phone, so they stop reading as a scattered pile. The
+   .bl span carries the label beside the drawn icon (and is what the email handler
+   rewrites, so the icon is never wiped). */
+.toolbar .edbtns{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.toolbar .edbtns .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;}
+.toolbar .edbtns .btn .cri{flex:0 0 auto;opacity:.92;}
+@media (max-width:760px){
+  .toolbar .edbtns{order:2;flex:1 1 100%;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0;}
+  .toolbar .edbtns .btn{width:100%;justify-content:flex-start;padding:11px 14px;font-size:13px;}
+}
 #reportFrame{flex:1;width:100%;border:0;background:#3d3d3d;}
 
 /* ---------- assistant chat panel ---------- */
@@ -3500,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 849 &#8212; The client Job Menu gains a Work Orders tile &#8212; open a job&#8217;s work orders straight from the profile</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 850 &#8212; The document editor toolbar is tidied &#8212; one aligned button set with drawn icons in place of the mismatched emoji</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8024,15 +8035,17 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <small id="editorSentDate"></small>
       <button class="chipbtn" id="toggleStatusBtn" style="border-color:#666;background:#2a2a2a;color:#fff;">Mark sent</button>
     </span>
-    <button class="btn" id="saveBtn">Save</button>
-    <button class="btn dark" id="printBtn">Print / PDF</button>
-     <button class="btn dark" id="dlBtn">&#11015; Download</button>
-    <button class="btn dark" id="emailDocBtn">&#128231; Email to client</button>
-    <button class="btn dark" id="sigBtn" style="display:none;">&#9997;&#65039; Client signature</button>
-    <button class="btn dark" id="shareBtn">&#128279; Share link</button>
-    <button class="btn dark" id="assistantBtn">&#128194; Assistant</button>
-    <button class="btn dark" id="rccBtn" style="display:none;">&#128248; CompanyCam</button>
-    <button class="btn dark" id="sortBtn" style="display:none;">&#129517; Sort photos</button>
+    <div class="edbtns">
+      <button class="btn" id="saveBtn">Save</button>
+      <button class="btn dark" id="printBtn" data-cri="page"><span class="bl">Print / PDF</span></button>
+      <button class="btn dark" id="dlBtn" data-cri="save"><span class="bl">Download</span></button>
+      <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>
+      <button class="btn dark" id="sigBtn" style="display:none;" data-cri="pencil"><span class="bl">Client signature</span></button>
+      <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
+      <button class="btn dark" id="assistantBtn" data-cri="sparkle"><span class="bl">Assistant</span></button>
+      <button class="btn dark" id="rccBtn" style="display:none;" data-cri="camera"><span class="bl">CompanyCam</span></button>
+      <button class="btn dark" id="sortBtn" style="display:none;" data-cri="funnel"><span class="bl">Sort photos</span></button>
+    </div>
     <span id="savedFlash"></span>
   </div>
   <div class="editor-body">
@@ -20900,7 +20913,8 @@ var CardinalIcons = (function(){
     ruler:      "<rect x='2.6' y='8.4' width='18.8' height='7.2' rx='1.4'/><path d='M7 8.4v3.1M12 8.4v4.2M17 8.4v3.1'/>",
     box:        "<path d='M20.6 7.9v8.2a1.9 1.9 0 0 1-.95 1.65l-6.7 3.9a1.9 1.9 0 0 1-1.9 0l-6.7-3.9A1.9 1.9 0 0 1 3.4 16.1V7.9a1.9 1.9 0 0 1 .95-1.65l6.7-3.9a1.9 1.9 0 0 1 1.9 0l6.7 3.9A1.9 1.9 0 0 1 20.6 7.9z'/><path d='M3.7 6.9 12 11.7l8.3-4.8M12 21.3V11.7'/>",
     lock:       "<rect x='4.2' y='10.4' width='15.6' height='10.4' rx='2.2'/><path d='M7.9 10.4V7.3a4.1 4.1 0 0 1 8.2 0v3.1'/>",
-    chat:       "<path d='M20.9 12.1a7.8 7.8 0 0 1-8.4 7.8 8.9 8.9 0 0 1-2.5-.4L4.3 21.2l1.6-5.2a7.5 7.5 0 0 1-1.4-4.3 7.8 7.8 0 0 1 8.4-7.5 7.8 7.8 0 0 1 8 7.5z'/>"
+    chat:       "<path d='M20.9 12.1a7.8 7.8 0 0 1-8.4 7.8 8.9 8.9 0 0 1-2.5-.4L4.3 21.2l1.6-5.2a7.5 7.5 0 0 1-1.4-4.3 7.8 7.8 0 0 1 8.4-7.5 7.8 7.8 0 0 1 8 7.5z'/>",
+    mail:       "<rect x='3.2' y='5' width='17.6' height='14' rx='2'/><path d='M3.8 7.2 12 12.4 20.2 7.2'/>"
   };
   function get(name, cls){ return P[name] ? svg(P[name], cls) : ''; }
   /* 686: static markup cannot call get(), and a second pipeline of raw
@@ -23267,6 +23281,7 @@ document.getElementById('shareBtn').addEventListener('click', async function(){
 /* ---- email to client ---- */
 document.getElementById('emailDocBtn').addEventListener('click', async function(){
   var btn = this;
+  var _bl = btn.querySelector('.bl') || btn;
   try{
     await saveCurrent();
     /* 738: emailing is the path that reaches the client, so it is guarded first. */
@@ -23336,7 +23351,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     if(to === null) return;
     to = to.trim();
     if(!to || to.indexOf('@') === -1){ showError('Enter a valid email address.'); return; }
-    btn.disabled = true; btn.textContent = 'Sending\u2026';
+    btn.disabled = true; _bl.textContent = 'Sending\u2026';
     /* Who the email greets, and the one line that says whose house this is.
        On a community job the recipient is the partner, so greeting them by the
        homeowner's name (or by the concatenated project name) reads as a mistake. */
@@ -23380,8 +23395,8 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     if(pr && row && /^invoice/i.test((row.title || '').trim()) && normStage(pr.stage) !== 'Invoiced'){
       try{ await setStage(pr.id, 'Invoiced'); }catch(e){}
     }
-    btn.textContent = '\u2713 Sent';
-    setTimeout(function(){ btn.textContent = '\uD83D\uDCE7 Email to client'; btn.disabled = false; }, 2500);
+    _bl.textContent = '\u2713 Sent';
+    setTimeout(function(){ _bl.textContent = 'Email to client'; btn.disabled = false; }, 2500);
     if(pr && confirm('Sent. Schedule a follow-up reminder in 3 days?')){
       var d = new Date(Date.now() + 3 * 86400000);
       await adb.create({
@@ -23395,7 +23410,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     }
     await reload();
   }catch(err){
-    btn.textContent = '\uD83D\uDCE7 Email to client'; btn.disabled = false;
+    _bl.textContent = 'Email to client'; btn.disabled = false;
     showError('Could not send: ' + (err.message || err));
   }
 });
@@ -39683,6 +39698,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:850, d:'2026-08-16', t:'Document editor \u2014 a tidier toolbar',
+s:'The toolbar on a document (Work Order, Estimate, Contract) was a scattered pile of differently-sized buttons with mismatched emoji icons. The action buttons \u2014 Save, Print/PDF, Download, Email, Client signature, Share link, Assistant, CompanyCam \u2014 are now one aligned set: a neat wrapped row on desktop and an even two-up grid on the phone, every button the same size. The emoji are replaced with the app\u2019s own drawn icons so they read as one family (the folder emoji on Assistant becomes a proper sparkle, the flash camera becomes the clean camera, and so on). Same buttons, same actions \u2014 just aligned and de-cluttered.' },
 { b:849, d:'2026-08-16', t:'Job Menu \u2014 a Work Orders tile',
 s:'The Job Menu on a client\u2019s profile gains a Work Orders tile, alongside Estimates, Contracts, Inspections and the rest. One tap opens the Work Orders section \u2014 the same place the header dropdown and the Work Orders button (846) go. It rides the existing Job Menu router, so nothing new was wired underneath; it is a full-width tile at the bottom of the menu so the grid above stays in even pairs. This also gives the phone a Job-Menu path to work orders, matching the desktop. No money on the tile.' },
 { b:848, d:'2026-08-16', t:'Crew Dispatch \u2014 no more folder boxes in empty cells',
