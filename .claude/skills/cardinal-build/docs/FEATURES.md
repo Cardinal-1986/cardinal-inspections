@@ -5227,3 +5227,38 @@ complete — a valid-looking ZIP for the wrong state passes every string test.
 ⚠️ **The app has two geocoders.** The Location card uses **Nominatim**; this screen's Verify
 uses **Google**, which is much better at messy input. Expect Verify to report fewer bad
 addresses than the 13/42 recorded at 838 — that is the geocoders differing, not a bug.
+
+---
+
+## Quick Inspection geocoding — Google first, Nominatim fallback (840)
+
+`qiGoogleGeo()` + `qiReverseGeocode()` + `qiSearchAddr()`, main block.
+
+| | |
+|---|---|
+| Reverse (drag the pin → address) | Google `geocode/json?latlng=`, `formatted_address` with a trailing `, USA` stripped |
+| Forward (type an address → pin) | Google `geocode/json?address=` + **`components=country:US`** |
+| Fallback | Nominatim, unchanged, in both — reproduces the pre-840 address shape exactly |
+| Key | the browser key from `/api/config` via `CardinalMaps.loadConfig()` |
+
+**Measured over all 42 `projects` rows before switching: Nominatim 29/42, Google 40/42.**
+Google also corrects typed ZIPs (`46417` → `45417`). Its one regression is a win —
+`948 Huron` → `ZERO_RESULTS`, where Nominatim answered San Francisco.
+
+`components=country:US` exists because without it `921 Testing Way` → **Test Way, United Kingdom**.
+
+### ⚠ Two things that will silently undo this
+
+1. **Geocoding API must be on the key's API restriction list.** `api/config.js` prescribes
+   that list; it named three APIs and not Geocoding until 840. Narrowing it back does not
+   error — the pin just falls back to Nominatim and nobody is told. Grep `qiGoogleGeo` first.
+2. **The key is not referrer-restricted** (measured 16 Aug: server-side calls with no
+   `Referer` returned OK on Geocoding, Places and Static Maps). Restricting it is required
+   and overdue — see `api/config.js`'s header.
+
+### Not changed
+
+**The Location card has used Google since 636** — it paints a Static Maps `<img>` and Google
+resolves the address inside the URL, so there is no geocode round trip at all. **`upgradeNearbyRow()`
+(the Nearby sort) still uses Nominatim** on purpose: it caches geocodes in `localStorage`
+permanently and Google's terms cap that at 30 days, so moving it needs an expiry first.
