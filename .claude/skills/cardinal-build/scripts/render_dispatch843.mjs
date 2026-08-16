@@ -133,7 +133,7 @@ try {
 
   ok('the view opened (#cr-disp.open)', r.open);
   ok('trade bands rendered (Roofing/Siding/Windows/Gutters)', r.bands.length >= 4, r.bands.join(','));
-  ok('active crew lanes rendered', r.crewNames.length >= 4, r.crewNames.join(' | '));
+  ok('active crew lanes rendered (company names)', r.crewNames.length >= 4 && r.crewNames.some(n=>/Betos|Sarceno|Pineda/.test(n)), r.crewNames.join(' | '));
   ok('day columns rendered (6 or 7)', r.dayHeads === 6 || r.dayHeads === 7, r.dayHeads);
   ok('today column highlighted', r.hasToday);
   ok('job chips rendered from work orders', r.jobs >= 4, r.jobs);

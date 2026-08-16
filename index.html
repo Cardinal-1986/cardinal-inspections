@@ -3497,7 +3497,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 844 &#8212; Re-crewing supersedes the old work order &#8212; one active crew per job per trade</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 845 &#8212; Crew Dispatch reads the real crew columns &#8212; the grid was empty on a wrong column name</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39671,6 +39671,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:845, d:'2026-08-16', t:'Crew Dispatch \u2014 fix the empty grid',
+s:'The Crew Dispatch grid showed \u201cNo crews on file yet\u201d even with crews on file: its read asked crews for columns contact and phone, which do not exist (the table has contact_name and legal_name), so PostgREST rejected the whole query and the grid saw zero crews. Now it reads the real columns and shows the company (legal_name) with the crew lead underneath, falling back to the crew name. Verified against the live schema.' },
 { b:844, d:'2026-08-16', t:'Re-crewing \u2014 supersede the old work order',
 s:'Issuing a new work order for a job that already has one for the same trade now marks the prior one superseded instead of leaving two. So reassigning a crew (New work order \u2192 a different crew) replaces rather than duplicates, and the Crew Dispatch grid and the client profile show only the current crew. History is kept \u2014 the old row goes superseded, its document is untouched. Needs the crew_work_orders status constraint to allow superseded (applied to the database first). No new screen, no money.' },
 { b:843, d:'2026-08-16', t:'Crew Dispatch \u2014 assign in place',
@@ -71316,7 +71318,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     var sbx = window.sb || window.supa;
     if(!sbx) return;
     try{
-      var cr = await sbx.from('crews').select('id,name,trade,archived,contact,phone').eq('archived', false).order('name');
+      var cr = await sbx.from('crews').select('id,name,legal_name,trade,archived,contact_name').eq('archived', false).order('name');
       if(!cr.error && cr.data) crews = cr.data;
     }catch(_e){}
     try{
@@ -71427,8 +71429,10 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
           if(list.length > 2) shown += '<div class="more">+' + (list.length-2) + ' more</div>';
           cells += '<div class="dcell' + tcls + '">' + shown + '</div>';
         }
-        var sub = c.contact ? '<div class="cc">' + esc(c.contact) + '</div>' : '';
-        return '<div class="drow dlane"><div class="crewc"><div><div class="cn">' + esc(c.name) +
+        var _main = c.legal_name || c.name || 'Crew';
+        var _sub = c.legal_name ? (c.name || c.contact_name) : c.contact_name;
+        var sub = (_sub && _sub !== _main) ? '<div class="cc">' + esc(_sub) + '</div>' : '';
+        return '<div class="drow dlane"><div class="crewc"><div><div class="cn">' + esc(_main) +
           '</div>' + sub + '</div></div>' + cells + '</div>';
       }
 
