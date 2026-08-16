@@ -439,6 +439,19 @@ def load_graph(name):
 # not just gutters. The customer then gets a failed render because of a surface
 # they did not ask about.
 #
+# ⚠ 836 REVERTED THIS. Node 40 is back to "rain gutter". The gutters mask came
+# back as the LARGEST of the four on Theo's 16 Aug render — larger than roof,
+# larger than siding — which is backwards for a thin line, and gutters is
+# subtracted from siding by exclusive(). An over-grounded gutter is therefore a
+# prime suspect for the empty siding mask that made that render a no-op.
+#
+# 830 was shipped UNVERIFIED BY EYE on a prompt I could not test from here, and
+# a downspout painted as siding is a cosmetic nuisance while siding not
+# rendering at all is fatal. Reverting to the known-good phrase is triage, not
+# a judgement that the downspout idea was wrong — 836's claim report will name
+# the real culprit on the next render, and this can come back with evidence.
+#
+# The original 830 note follows.
 # 830: node 40 grounds on "rain gutter . downspout", not "rain gutter". The
 # trough and the downspout are two OBJECTS, so grounding the trough alone left
 # the downspout out of the gutters mask — and because siding subtracts the
@@ -542,6 +555,13 @@ def union_masks(pngs):
 # — windows, trim, and the gutter running along the top of it.
 DETAIL_WINS = ["windows", "trim", "gutters", "roof", "siding"]
 
+# 836: below this share of its own original area, a surface has not been
+# reconciled by exclusive() — it has been ERASED, and rendering it is a no-op
+# that looks like success. 10% is deliberately generous: siding legitimately
+# loses a lot to windows and trim on a busy elevation, so this fires only on
+# the pathological case Theo hit, where the wall came back essentially black.
+ANNIHILATED_PCT = 10.0
+
 
 def exclusive(masks):
     """Stop one surface's mask from covering another's.
@@ -561,29 +581,81 @@ def exclusive(masks):
     gutters in a photograph, there is nothing to subtract and the gutter stays
     part of the wall. That case needs a gutters pass in segment_api.json and
     it is called out in VISUALIZER_SETUP.md rather than pretended away.
+
+    ⚠ 836: THIS FUNCTION CAN ANNIHILATE A SURFACE, and until now it did so in
+    silence. Theo's 16 Aug restyle produced a `mask_siding.png` that was black
+    but for about forty stray pixels — so FLUX ran for 67 seconds, repainted
+    nothing, and the render came back looking identical to the photograph. No
+    error, no warning, a plausible picture, and no way to tell why without
+    opening a mask file by hand in the Supabase dashboard at half past two in
+    the morning.
+
+    Siding is LAST in DETAIL_WINS, so it is subtracted by every other surface.
+    Its own grounding phrase is "house wall", which SAM 2 answers with a box
+    around the whole elevation — so when the other masks are also box-shaped
+    and cover most of the building, the subtraction leaves nothing behind.
+    That is not reconciliation, it is erasure, and the two are indistinguishable
+    downstream.
+
+    So the areas are now measured, logged and RETURNED. `run_job` records them
+    and refuses a surface that lost almost everything, naming the mask that
+    took it. Same principle as `fill` at 834: the thing Theo could see and no
+    stored number could.
     """
     if len(masks) < 2:
-        return masks
+        return masks, {}
     order = [s for s in DETAIL_WINS if s in masks] + \
             [s for s in masks if s not in DETAIL_WINS]
-    out, claimed = {}, None
+    out, claimed, report = {}, None, {}
     for surface in order:
         try:
             m = Image.open(io.BytesIO(masks[surface])).convert("L")
         except Exception:
             out[surface] = masks[surface]
             continue
+        frame_px = float(m.size[0] * m.size[1]) or 1.0
+        before = sum(m.point(lambda p: 255 if p >= 128 else 0).histogram()[128:])
+        eaten_by = None
         if claimed is not None:
             if claimed.size != m.size:
                 claimed = claimed.resize(m.size, Image.LANCZOS)
             # keep only what nothing more specific has already taken
             m = ImageChops.subtract(m, claimed)
+        after = sum(m.point(lambda p: 255 if p >= 128 else 0).histogram()[128:])
+        # Who took the most of it — the single most useful fact when a surface
+        # comes back empty, and the one that used to require reading a PNG.
+        if before and after < before:
+            worst, worst_n = None, 0
+            for other in order:
+                if other == surface or other not in out:
+                    continue
+                try:
+                    o = Image.open(io.BytesIO(out[other])).convert("L")
+                except Exception:
+                    continue
+                if o.size != m.size:
+                    o = o.resize(m.size, Image.LANCZOS)
+                orig = Image.open(io.BytesIO(masks[surface])).convert("L")
+                if orig.size != m.size:
+                    orig = orig.resize(m.size, Image.LANCZOS)
+                overlap = sum(ImageChops.multiply(
+                    orig.point(lambda p: 255 if p >= 128 else 0),
+                    o.point(lambda p: 255 if p >= 128 else 0)).histogram()[128:])
+                if overlap > worst_n:
+                    worst, worst_n = other, overlap
+            eaten_by = worst
+        report[surface] = {
+            "before_pct": round(100.0 * before / frame_px, 2),
+            "after_pct": round(100.0 * after / frame_px, 2),
+            "kept_pct": round(100.0 * after / float(before or 1), 1),
+            "eaten_by": eaten_by,
+        }
         buf = io.BytesIO()
         m.save(buf, format="PNG")
         out[surface] = buf.getvalue()
         claimed = m if claimed is None else ImageChops.lighter(
             claimed.resize(m.size, Image.LANCZOS) if claimed.size != m.size else claimed, m)
-    return out
+    return out, report
 
 
 def seed_for(job_id, surface):
@@ -651,7 +723,7 @@ FLUX_DENOISE  = float(os.environ.get("FLUX_DENOISE")  or 0.82)
 #   select achieved->>'_worker' from design_jobs where id = '...';
 #   null                      -> a worker from before 15 Aug ran it
 #   "wb-2026-08-15.7 recolour" -> this code, this mode
-WORKER_BUILD = "wb-2026-08-16.16"
+WORKER_BUILD = "wb-2026-08-16.17"
 
 # 823 — why a selected surface came back unchanged. These two codes are the
 # CONTRACT with the browser: visualizer/index.html carries the same two keys
@@ -662,10 +734,13 @@ WORKER_BUILD = "wb-2026-08-16.16"
 SKIP_REASON = {
     "not_found": "the segmenter could not find it in this photograph",
     "no_hex":    "that swatch carries no colour value",
+    # 836 — the third one, and the one that cost a night. See exclusive().
+    "erased":    "the other surfaces overlapped it almost completely, so there "
+                 "was nothing left to change",
 }
 
 
-def skip_reason(surface, sel, masks, restyle):
+def skip_reason(surface, sel, masks, restyle, claims=None):
     """Why this SELECTED surface cannot be changed — or None if it can.
 
     Pulled out of run_job so it can be tested without ComfyUI, a GPU or a
@@ -680,6 +755,14 @@ def skip_reason(surface, sel, masks, restyle):
     """
     if surface not in masks:
         return "not_found"
+    # 836: present but ERASED by exclusive(). Ordered after not_found because
+    # "we never saw it" and "we saw it and then subtracted it away" send a rep
+    # to fix two different things — reshoot the elevation, versus a segmenter
+    # that is over-grounding some other surface. Before this, an erased surface
+    # rendered as a silent no-op and looked like success.
+    _c = (claims or {}).get(surface)
+    if _c and _c.get("kept_pct", 100) < ANNIHILATED_PCT:
+        return "erased"
     # In restyle mode the prompt carries the colour, so a hexless swatch is
     # workable. In recolour mode the tint IS the render and there is nothing
     # to tint toward.
@@ -1496,7 +1579,16 @@ def run_job(comfy, job):
     # labels a region as both roof and window, the detail still wins, exactly
     # as it would for a found mask. Exempting them would make two paths where
     # there is one.
-    masks = exclusive(masks)
+    masks, claim_report = exclusive(masks)
+    # 836: say what the subtraction cost, every time, in the log and on the row.
+    # A surface that comes back empty is now a sentence rather than a silent
+    # no-op render — the failure that cost Theo a night.
+    for _s, _r in sorted(claim_report.items()):
+        if _r["kept_pct"] < 100:
+            log("    %-8s %.2f%% of frame -> %.2f%% after subtraction (kept %.1f%%)%s"
+                % (_s, _r["before_pct"], _r["after_pct"], _r["kept_pct"],
+                   ("  ⚠ mostly taken by %s" % _r["eaten_by"])
+                   if _r["kept_pct"] < ANNIHILATED_PCT and _r["eaten_by"] else ""))
 
     # Persist the masks: the presentation app overlays them so a rep can tap a
     # region of the house and have the sidebar jump to that surface.
@@ -1517,7 +1609,7 @@ def run_job(comfy, job):
         sel = selections.get(surface)
         if not sel:
             continue
-        why = skip_reason(surface, sel, masks, RESTYLE)
+        why = skip_reason(surface, sel, masks, RESTYLE, claim_report)
         if why:
             # Not a failure. Say plainly which surface is coming back
             # untouched and why, then carry on with the rest.
