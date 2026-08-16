@@ -162,7 +162,7 @@ ok("windows grounds on the plural", (node("find windows") or {}).get("inputs", {
 
 ok("the phrases with no sheet behind them are untouched",
    (node("find siding") or {}).get("inputs", {}).get("text_input") == "house wall" and
-   (node("find gutters") or {}).get("inputs", {}).get("text_input") == "rain gutter . downspout",
+   (node("find gutters") or {}).get("inputs", {}).get("text_input") == "rain gutter",
    "guessing phrases produced 'roof of a house' = the whole building")
 
 
@@ -254,7 +254,11 @@ ok("segmentation is skipped when every surface was labelled",
    "skipping segmentation" in _rj,
    "a Florence2 + SAM 2 load for nothing")
 _apply = "for surface, paths in picked.items()"
-_excl  = "masks = exclusive(masks)"
+# 836: exclusive() now returns (masks, claim_report), so the call site reads
+# `masks, claim_report = exclusive(masks)`. Matched on the CALL rather than the
+# assignment spelling — pinning the whole line is what made two other
+# assertions fail correct code tonight.
+_excl  = "= exclusive(masks)"
 ok("the hand-picked override exists", _apply in _rj)
 ok("hand-picked masks still go through exclusive()",
    _apply in _rj and _excl in _rj and _rj.index(_apply) < _rj.index(_excl),

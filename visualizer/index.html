@@ -922,7 +922,13 @@ var SURFACES = [
    this whole build exists to remove. */
 var SKIP_WHY = {
   not_found: 'the render could not find it in this photograph — try a straighter, less obstructed shot of that elevation',
-  no_hex:    'that swatch carries no colour value, so there was nothing to recolour it with'
+  no_hex:    'that swatch carries no colour value, so there was nothing to recolour it with',
+  /* 836: the third reason, and the one that cost a night. The worker builds
+     each surface by subtracting the more specific ones from it — siding is
+     "house wall" minus windows, trim, gutters and roof. When those overlap it
+     almost completely there is nothing left, and the render came back looking
+     identical to the photograph with no error at all. Now it says so. */
+  erased:    'the other surfaces overlapped it almost completely, so there was nothing left to change'
 };
 
 /* Which surfaces a finished job did NOT change, despite being asked to.

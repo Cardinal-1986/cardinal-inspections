@@ -115,12 +115,24 @@ ok("an empty-string hex counts as no hex",
 # The contract with visualizer/index.html. A code with no sentence renders to
 # a rep as a bare enum.
 produced = set()
+# 836: `claims` is the fifth argument and carries exclusive()'s per-surface
+# report. "erased" is only reachable through it, so a sweep that never passes
+# one reports a live reason as dead weight — which is exactly what this test
+# did the moment the reason shipped.
+ERASED = {"roof": {"kept_pct": 0.4, "before_pct": 9.1, "after_pct": 0.04,
+                   "eaten_by": "gutters"}}
 for surface in ("roof", "trim"):
     for sel in (HEX, NOHEX, None, {"hex": ""}):
         for restyle in (False, True):
-            r = W.skip_reason(surface, sel, MASKS, restyle)
-            if r:
-                produced.add(r)
+            for claims in (None, {}, ERASED):
+                try:
+                    r = W.skip_reason(surface, sel, MASKS, restyle, claims)
+                except TypeError:
+                    # An older tree whose skip_reason takes four arguments.
+                    # Report it as a miss rather than crashing the control.
+                    r = W.skip_reason(surface, sel, MASKS, restyle)
+                if r:
+                    produced.add(r)
 
 ok("every reason skip_reason can produce has a sentence",
    produced <= set(W.SKIP_REASON),
@@ -128,8 +140,14 @@ ok("every reason skip_reason can produce has a sentence",
 ok("no sentence is dead weight",
    set(W.SKIP_REASON) <= produced,
    "unreachable: " + ", ".join(sorted(set(W.SKIP_REASON) - produced)))
-ok("both reasons are actually reachable", produced == {"not_found", "no_hex"},
-   "got " + repr(sorted(produced)))
+# 836: was pinned to exactly {"not_found","no_hex"} and so failed the moment a
+# THIRD reason shipped — a correct addition reported as a regression. The two
+# checks above already carry the real contract in both directions (every
+# reason has a sentence, every sentence is reachable), so this one only needs
+# to hold the floor: the known reasons must all still be produced.
+ok("every reason known to this test is still reachable",
+   {"not_found", "no_hex", "erased"} <= produced,
+   "missing " + repr(sorted({"not_found", "no_hex", "erased"} - produced)))
 
 # ── 7. the sentences are for a person, not a log ─────────────────────────
 for code, text in W.SKIP_REASON.items():

@@ -17468,3 +17468,60 @@ pixels of the fitted frame and matches the drag; a node without it still
 completes on points; and a refusal retries exactly once, drops the bbox from
 the retry, and records `points-after-bbox-refused`. The `runs == 2` assertion is
 the one that matters — it proves the fallback fired once and not in a loop.
+
+---
+
+## Build 836 — the render that repainted nothing
+
+Theo's first restyle: FLUX Fill loaded, ran 67 seconds, wrote a 448 KB render —
+and the picture came back looking exactly like the photograph. Status `done`,
+no error. He said *"doesn't look like it did anything."*
+
+**`mask_siding.png` was black but for about forty stray pixels.**
+
+`exclusive()` builds each surface by subtracting the more specific ones from
+it — siding is `"house wall"` MINUS windows, trim, gutters and roof, and siding
+is LAST in `DETAIL_WINS`, so it is subtracted by everything. When the other
+masks are also box-shaped over the same building, nothing survives. **That is
+not reconciliation, it is erasure, and downstream the two are identical.**
+
+The only way to find it was to open a PNG by hand in the Supabase dashboard at
+half past two in the morning. That is the actual defect.
+
+### The fix is an instrument, not a tweak
+
+`exclusive()` now returns `(masks, report)`. Per surface it records
+`before_pct`, `after_pct`, `kept_pct`, and **`eaten_by` — which mask took the
+most**, because "siding is empty" and "gutters ate siding" send you to two
+different places. Logged every run, and `skip_reason()` gained a third code,
+**`erased`**, so a wiped surface is reported as a skip with a rep-readable
+sentence instead of rendering a confident no-op. Same principle as `fill` at
+834 and `_prompt` at 835.
+
+`ANNIHILATED_PCT = 10` is deliberately generous — siding legitimately loses a
+lot to windows on a busy elevation, so this fires only on the pathological case.
+
+### ⚠ 830's gutter prompt is REVERTED, as triage
+
+Node 40 is back to `"rain gutter"`. On that render the **gutters mask was the
+largest of the four** — larger than roof, larger than siding — which is
+backwards for a thin line, and gutters is subtracted from siding. 830 shipped
+`"rain gutter . downspout"` **unverified by eye**, and a downspout painted as
+siding is a cosmetic nuisance while siding not rendering at all is fatal.
+
+This is triage, not a verdict that the downspout idea was wrong. The claim
+report will name the real culprit on the next render, and it can come back with
+evidence.
+
+**Gates.** New **`test_exclusive.py`, 18 checks** on masks whose areas are known
+exactly, so the numbers have a right answer: the erased surface is reported, the
+claimant is named, a NORMAL subtraction (siding losing windows) stays above the
+floor and is not flagged, and `skip_reason` refuses the erased one while still
+rendering the healthy one. Control **14 of 18 red** against 835.
+
+⚠️ **Three of my own assertions failed correct code again**, all the same shape:
+`"masks = exclusive(masks)"` pinned to an assignment spelling, a reason sweep
+pinned to exactly two reasons, and `test_segment`'s gutter phrase. All three now
+assert the contract rather than the punctuation. **And three separate controls
+crashed with AttributeError** on symbols the older tree lacks — every new symbol
+in `test_exclusive.py` is now read through `getattr` with a default.

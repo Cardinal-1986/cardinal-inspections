@@ -291,7 +291,7 @@
   },
   "40": {
     "inputs": {
-      "text_input": "rain gutter . downspout",
+      "text_input": "rain gutter",
       "task": "caption_to_phrase_grounding",
       "fill_mask": true,
       "keep_model_loaded": false,
