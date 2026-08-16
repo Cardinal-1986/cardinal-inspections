@@ -1152,6 +1152,7 @@ builds; CLAUDE.md was its only description.*
 | **554** | A **Roofr upload fills the job, not just the page** — squares, pitch, ridge, hip, valley, eave and rake land in `checklist.meas`, and the pitch reaches the Contract |
 | **555** | **The crew Work Order** — Cardinal's *own* document, Production → crew, **one per trade** |
 | **556** | **Payments and Commissions.** A Payments tab per crew (amount, date, method, check number, running total) and a Commissions tab |
+| **847** | **A Jobs history tab** per crew: every `crew_work_orders` row newest-**created** first — the date it was made (`created_at`), client (from `cacheProjects`), WO number, status chip (Draft/Dispatched/Completed/Superseded, superseded dim), scheduled/done date. Admin-only Amount + per-job Paid columns and Billed/Paid-to-crew totals, behind the same `canSeeRates()` fence as Payments; production sees jobs + dates, not dollars. No schema change. Gate `render_crewjobs847.mjs` (15/15) |
 
 ## ⚠ The permission rule — settled by Theo, do not re-litigate
 

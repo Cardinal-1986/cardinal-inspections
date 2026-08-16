@@ -17841,3 +17841,23 @@ one-tap path. `render_woquick846.mjs` proves the whole thing at 1194px and 390px
 open, visible after, icon hydrated, click opens `#tab-workorders` and hides Overview, and the header does
 not scroll sideways at either width — GREEN 24/24, and RED (button absent) against the 845 tree.
 `check_build` green.
+
+## Build 847 — Crews gains a Jobs history tab (16 Aug 2026)
+Theo: *"Also add date created when made … I'd like to have a history in the crew section of the jobs a
+crew has done with the payments made."* The Crews section gains a **Jobs** tab (its own module header had
+listed "Work Orders" as a planned-but-unbuilt tab since 547 — buried concept, now built). For the
+selected crew it lists every `crew_work_orders` row, newest **created** first, with: the date the work
+order was made (`created_at` — already stored, no schema change), the client (resolved from
+`cacheProjects`), the WO number, a status chip (Draft / Dispatched / Completed / Superseded), and the
+scheduled-or-done date. Superseded rows stay and read dim — a re-crewed job is history, not something to
+hide.
+
+**Money is fenced exactly like the Payments and Labor Rates tabs.** Jobs is *not* a `MONEY_TAB`, so the
+list and dates show to anyone who can see a crew (production included); but the Amount and per-job Paid
+columns, and the Billed / Paid-to-crew footer, render only for `canSeeRates()` (admin). Per-job Paid sums
+`crew_payments` by `work_order_id`; Billed excludes superseded rows; Paid-to-crew is the whole crew total
+so a payment recorded without a job still counts. No SQL — reads existing `crew_work_orders` +
+`crew_payments`. Gate: `render_crewjobs847.mjs` seeds draft/dispatched/completed/superseded WOs and both
+job-tied and general payments, drives the real open→select→click-tab path, and checks the table, the
+newest-first order, the status chips, the dim superseded row, the money totals, AND the non-admin path
+(tab and jobs show, money hidden) — GREEN 15/15, RED against the 846 tree. `check_build` green.

@@ -3500,7 +3500,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 846 &#8212; A Work Orders button sits beside the job section dropdown &#8212; one tap to the work orders, no scrolling the menu</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 847 &#8212; The Crews section gains a Jobs tab &#8212; every work order a crew has done, when it was made, and what has been paid</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39676,6 +39676,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:847, d:'2026-08-16', t:'Crews \u2014 a Jobs history tab',
+s:'The Crews section gains a Jobs tab: for the selected crew, every work order it has been given, newest first, showing the date the work order was CREATED, the client, the WO number, its status (Draft / Dispatched / Completed / Superseded) and its scheduled or done date. For an admin it also shows what each job was worth and what has been paid against it, with Billed and Paid-to-crew totals \u2014 behind the same admin fence as the Payments and Labor Rates tabs, so production sees the jobs and dates but never the dollars. Reads the existing crew_work_orders and crew_payments (no schema change); superseded work orders are kept and shown dim as history. Fills in further once the AccuLynx history is imported.' },
 { b:846, d:'2026-08-16', t:'Work Orders \u2014 a button beside the section dropdown',
 s:'On an open client, a Work Orders button now sits right next to the section dropdown in the header \u2014 one tap opens the Work Orders section instead of opening the dropdown and finding it in the list. It shows exactly when the dropdown does (only inside a job) and calls the same showTab(\u2018workorders\u2019) the dropdown does, so nothing new was wired underneath. The ladder icon matches the Production board. No money on this button; the Work Orders section is unchanged.' },
 { b:845, d:'2026-08-16', t:'Crew Dispatch \u2014 fix the empty grid',
@@ -63148,7 +63150,7 @@ var DOCS = [
    for anyone who is not an admin — crew_rates is admin-only in RLS, so for
    production the tab would render and then show nothing, turning a deliberate
    restriction into what looks like a broken screen. */
-var TABS = [['profile','Profile'],['compliance','Compliance'],['rates','Labor Rates'],['payments','Payments'],['notes','Notes']];
+var TABS = [['profile','Profile'],['compliance','Compliance'],['jobs','Jobs'],['rates','Labor Rates'],['payments','Payments'],['notes','Notes']];
 /* 556: rates and payments are both admin-only and gate together — crew_rates and
    crew_payments are both is_cardinal_admin() in RLS. */
 var MONEY_TABS = ['rates','payments'];
@@ -63162,6 +63164,7 @@ function tabsFor(){
 var crews = [], docs = [], notes = [], selId = null, tab = 'compliance', booted = false;
 var catalog = [], rates = [];   /* 548: pricing_items + crew_rates */
 var payments = [];              /* 556: crew_payments, admin-only */
+var workorders = [];            /* 847: crew_work_orders — the job history */
 
 function db(){ return window.supa || window.sb || null; }
 function view(){ return document.getElementById('crewsView'); }
@@ -63238,7 +63241,13 @@ async function load(){
     cl.from('crew_rates').select('*'),
     /* 556: same rule as crew_rates — RLS refusing production is CORRECT and must
        degrade to an empty list, never to a failed load that blanks the directory. */
-    cl.from('crew_payments').select('*').order('paid_on', { ascending:false })
+    cl.from('crew_payments').select('*').order('paid_on', { ascending:false }),
+    /* 847: the crew's job history. crew_work_orders is is_full_access RLS, so a
+       rep reads [] like the money tables — which is who never issues one. Keep
+       superseded rows: a re-crewed job is history, not something to hide. */
+    cl.from('crew_work_orders')
+      .select('id,wo_number,crew_id,project_id,report_id,status,sent_at,scope,amount,scheduled_on,completed_on,created_at')
+      .order('created_at', { ascending:false })
   ]);
   if(res[0].error) throw res[0].error;
   crews = res[0].data || [];
@@ -63247,6 +63256,7 @@ async function load(){
   catalog = (res[3].data) || [];
   rates   = (res[4].data) || [];
   payments = (res[5].data) || [];
+  workorders = (res[6].data) || [];
   if(selId && !crews.some(function(c){ return c.id === selId; })) selId = null;
   if(!selId && crews.length) selId = crews[0].id;
 }
@@ -63343,6 +63353,89 @@ function money(n, cents){
    query, so the figure and the list cannot drift apart. */
 var PAY_METHODS = [['check','Check'],['ach','ACH'],['cash','Cash'],['card','Card'],['other','Other']];
 
+/* ── 847: the crew's job history ─────────────────────────────────────────────
+   Every work order this crew has been given, newest first, with the date it was
+   CREATED and its dispatch/completion state. Superseded rows stay and read dim —
+   a re-crewed job is history, not a mistake to bury. The money columns (what a
+   job was worth, what has been paid against it) render only for an admin, behind
+   the same is_cardinal_admin fence the Payments and Labor Rates tabs sit behind;
+   production sees the jobs and the dates, never the dollars. Per-job "Paid" sums
+   crew_payments matched by work_order_id; the footer "Paid to crew" is the whole
+   crew total (matching the Payments tab), so a payment recorded without a job
+   still counts once. Client names come from the app's own cacheProjects; after
+   the AccuLynx import lands, this fills in on its own. */
+function woFor(crewId){
+  return workorders.filter(function(w){ return w.crew_id === crewId; });
+}
+function projName(pid){
+  if(!pid) return '';
+  try{
+    var list = window.cacheProjects || [];
+    for(var i = 0; i < list.length; i++){ if(list[i].id === pid) return list[i].name || ''; }
+  }catch(_){ }
+  return '';
+}
+function paidForWO(woId){
+  var t = 0;
+  payments.forEach(function(p){
+    if(p.work_order_id === woId){ var v = Number(p.amount); if(isFinite(v)) t += v; }
+  });
+  return t;
+}
+function woChip(w){
+  if(w.status === 'superseded')
+    return '<span class="crw-pill warn" style="font-size:11px">Superseded</span>';
+  if(w.completed_on)
+    return '<span class="crw-pill ok" style="font-size:11px">Completed</span>';
+  if(w.status === 'sent' || w.sent_at)
+    return '<span class="crw-pill" style="font-size:11px;background:rgba(21,101,192,.18);color:#7fb2e6;border-color:#1565c0">Dispatched</span>';
+  return '<span class="crw-mut" style="font-size:11px">Draft</span>';
+}
+function jobsHtml(c){
+  var mine = woFor(c.id);
+  var admin = canSeeRates();
+  var billed = 0;
+  var rows = mine.map(function(w){
+    var cli = projName(w.project_id);
+    var when = w.completed_on ? ('Done ' + dstr(w.completed_on))
+             : w.scheduled_on ? ('Sched ' + dstr(w.scheduled_on)) : '—';
+    var moneyCells = '';
+    if(admin){
+      var amt = (w.amount != null && isFinite(Number(w.amount))) ? Number(w.amount) : null;
+      if(amt != null && w.status !== 'superseded') billed += amt;
+      var pd = paidForWO(w.id);
+      moneyCells = '<td style="text-align:right">' + (amt != null ? money(amt, true) : '—') + '</td>' +
+                   '<td style="text-align:right">' + (pd ? money(pd, true) : '—') + '</td>';
+    }
+    return '<tr' + (w.status === 'superseded' ? ' style="opacity:.55"' : '') + '>' +
+      '<td>' + esc(w.created_at ? dstr(w.created_at) : '—') + '</td>' +
+      '<td>' + esc(cli || '—') + '</td>' +
+      '<td>' + esc(w.wo_number || '') + '</td>' +
+      '<td>' + woChip(w) + '</td>' +
+      '<td>' + esc(when) + '</td>' +
+      moneyCells +
+    '</tr>';
+  }).join('');
+  var headMoney = admin ? '<th style="text-align:right">Amount</th><th style="text-align:right">Paid</th>' : '';
+  var cols = admin ? 7 : 5;
+  var colg = admin
+    ? '<col style="width:15%"><col style="width:27%"><col style="width:12%"><col style="width:14%"><col style="width:14%"><col style="width:9%"><col style="width:9%">'
+    : '<col style="width:19%"><col style="width:39%"><col style="width:14%"><col style="width:14%"><col style="width:14%">';
+  var out = '<div class="crw-rtwrap"><table class="crw-rt">' +
+    '<colgroup>' + colg + '</colgroup>' +
+    '<thead><tr><th>Created</th><th>Client</th><th>WO #</th><th>Status</th><th>Scheduled / done</th>' + headMoney + '</tr></thead>' +
+    '<tbody>' + (rows || '<tr><td colspan="' + cols + '" class="crw-mut">No jobs on record for this crew yet.</td></tr>') +
+    '</tbody></table></div>';
+  var foot = '<span class="crw-mut">' + mine.length + (mine.length === 1 ? ' job' : ' jobs') + '</span>';
+  if(admin){
+    var paidTotal = 0;
+    payments.forEach(function(p){ if(p.crew_id === c.id){ var v = Number(p.amount); if(isFinite(v)) paidTotal += v; } });
+    foot += '<span class="crw-mut" style="margin-left:14px">Billed <b>' + money(billed, true) + '</b></span>' +
+            '<span class="crw-mut" style="margin-left:14px">Paid to crew <b>' + money(paidTotal, true) + '</b></span>';
+  }
+  out += '<div style="display:flex;justify-content:flex-end;align-items:baseline;flex-wrap:wrap;gap:2px;margin:8px 2px 4px">' + foot + '</div>';
+  return out;
+}
 function payFor(crewId){
   return payments.filter(function(p){ return p.crew_id === crewId; });
 }
@@ -63533,6 +63626,7 @@ function panelHtml(){
      rather than seeing an empty panel. */
   if(MONEY_TABS.indexOf(tab) !== -1 && !canSeeRates()) tab = 'compliance';
   var body = tab === 'profile' ? profileHtml(c)
+    : tab === 'jobs' ? jobsHtml(c)
     : tab === 'rates' ? ratesHtml(c)
     : tab === 'payments' ? paymentsHtml(c)
     : tab === 'notes' ? notesHtml(c) : complianceHtml(c);
