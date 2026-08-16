@@ -2828,3 +2828,87 @@ first real use, after four builds of green numbers.
 A quality metric whose scope is defined by an earlier, unvalidated step of the
 same pipeline. Ask: *if the earlier step were completely wrong, would this
 number notice?* Here the answer was no, and it scored 3 out of 255.
+
+---
+
+## 48 — a PR's green tick can belong to a DIFFERENT COMMIT than its head (16 Aug, build 840)
+
+**Both of this class's failures happened in one merge attempt, and the second
+was caused by the first.**
+
+PR #354's page showed a green `check`. The run it was showing had
+`head_sha = d774def` — **the previous build's commit**. GitHub associates
+workflow runs with a PR by BRANCH, so after a force-push the newest run on that
+branch keeps decorating the PR even though it never saw the code now sitting at
+the head. `get_status` was no help either: it returned three green Vercel
+*commit statuses* and no Actions run at all, which reads as "everything green".
+
+**The honest question is never "is the PR green?" but "is there a successful run
+whose `head_sha` equals this PR's head sha?"** Those are different questions and
+they had different answers.
+
+### Why no run existed at all — and the wrong diagnosis I reached for first
+
+Three separate triggers (opened, reopened, a force-push `synchronize`) produced
+**no** run. I hypothesised exhausted Actions minutes — this repo has hit that
+before — and told Theo to check his billing page. **That was wrong and would
+have sent him chasing a non-problem.**
+
+The real cause: GitHub builds `pull_request` workflow runs against the **merge
+ref** (`refs/pull/N/merge`), and that ref **cannot be created while the PR
+conflicts**. The PR was `mergeable_state: "dirty"` the whole time. The instant
+the conflict was rebased away, CI queued within seconds.
+
+> **"No CI run at all" is a CONFLICT symptom far more often than an outage.**
+> Read `mergeable_state` before you read the billing page.
+
+### The check
+`scripts/gate_ship.py <pr>` — `ci_run_for_sha()` requires a run that both names
+the job and carries this head sha; a run for any other sha counts as absent.
+`--selftest` drives it with a green run on the *wrong* sha and requires a refusal,
+so the check has been seen to fail.
+
+---
+
+## 49 — `git checkout -B <branch>` after a SQUASH merge re-applies the last build (16 Aug, build 840)
+
+Build 839 shipped from `claude/…-2slbpv` and was **squash-merged**, so `main`
+got a NEW commit (`20c23af`) with 839's content, and 839's own commit
+(`d774def`) never became an ancestor of main.
+
+Starting 840 I ran:
+
+```bash
+git checkout -q -B claude/…-2slbpv          # ← no origin/main
+```
+
+which re-pointed the branch at **the current HEAD — still `d774def`**. The
+branch therefore carried 839 a second time. The PR reported **2 commits, 7 files,
+933 additions and 8 conflict markers**, and merging it would have re-applied a
+build that was already live.
+
+⚠ **The content was never wrong** — my working tree was correct throughout, and
+the rebase left the tree hash byte-identical. Only the branch's *base* was wrong.
+That is what makes this class quiet: nothing you can see in the app is broken.
+
+### The rule
+After a merged PR, restart the branch **from the remote default branch**, and
+say so in the command — the project's own shipping note already prescribes it:
+
+```bash
+git fetch origin main && git checkout -B <branch> origin/main
+```
+
+Recovery when it has already happened (this is what 840 used, and the tree hash
+before and after was identical — verify that, do not assume it):
+
+```bash
+git rebase --onto origin/main <duplicate-commit> <head>
+```
+
+### The check
+`scripts/gate_ship.py <pr>` — `already_upstream()` reads `git cherry origin/main
+HEAD`, which marks `-` any commit whose patch is already upstream. **Negative-
+controlled against the real artifacts**, not a fixture: against `main` as it
+stood at decision time (`20c23af`), the broken head `50b366f` reports 1 duplicate
+(`d774def`) and blocks; the rebased head `839f879` reports 0 and passes.

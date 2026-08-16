@@ -1102,6 +1102,20 @@ Work on a branch, push, open a PR with a plain summary of what changed and what 
 - On ship: add the feature row to `FEATURES.md`, one line to `cardinal_build_log.md`, strike the `OPEN_ITEMS.md` entry — in the same PR. **The 428–451 span is what skipping this looks like:** 24 builds of real work with no record outside the in-app changelog. **The discipline has held from 543 to 836** — do not be the session that breaks it.
 - **PRs are squash-merged.** One build per PR is the norm; a span of related builds in one PR happens (809–818) and the build log writes it up as a span.
 - Take a fresh `git hash-object` before pushing, to confirm what you push is what you verified.
+- ⚠ **Before merging ANY PR, run `python3 scripts/gate_ship.py <pr-number>`.** It is four
+  checks, and each one has already cost a round: the branch carries no commit whose patch
+  is **already on main** (a squash-merged predecessor re-applied — BUG_CLASSES 49); a
+  successful `check` run exists **for the PR's own head sha** rather than one inherited
+  from an earlier commit on the same branch (BUG_CLASSES 48); `mergeable_state` is `clean`;
+  and the app stamp is above main's. `--selftest` proves it can fail.
+  **"No CI run at all" is usually a CONFLICT, not an Actions outage** — a `pull_request`
+  run is built against the merge ref, which cannot exist while the PR is `dirty`. Read
+  `mergeable_state` before you go looking at the billing page.
+- ⚠ **After a merged PR, restart the branch from the REMOTE default branch** —
+  `git fetch origin main && git checkout -B <branch> origin/main`. A bare
+  `git checkout -B <branch>` re-points it at the current HEAD, which after a squash merge
+  still holds the *pre-squash* commit; the branch then ships the last build a second time
+  with the content looking perfectly correct. That is BUG_CLASSES 49 and it happened at 840.
 - ⚠️ **`git fetch` before building a negative-control tree.** A stale `origin/main` silently controls against the wrong build and reports the previous run's numbers — build 833 lost a round to exactly this.
 
 ### The service worker no longer serves stale builds — and the CACHE chore is gone too
