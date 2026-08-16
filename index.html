@@ -3500,7 +3500,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 847 &#8212; The Crews section gains a Jobs tab &#8212; every work order a crew has done, when it was made, and what has been paid</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 848 &#8212; Crew Dispatch empty cells no longer draw a stray folder placeholder &#8212; a class-name clash with the app&#8217;s global empty state</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39676,6 +39676,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:848, d:'2026-08-16', t:'Crew Dispatch \u2014 no more folder boxes in empty cells',
+s:'On the Crew Dispatch board, every empty day cell was drawing a dashed box with a folder icon in it \u2014 it looked broken and like it should be tappable, but was not. The cells carried the bare class name \u201cempty\u201d, which collided with the app\u2019s global empty-state component (a dashed card with a folder illustration); the day cells were inheriting that whole look. Renamed the cell\u2019s class to a prefixed one so it no longer matches, the convention the rest of the app already follows. Empty cells now read as a quiet hatched square, as intended. No behaviour change; a genuinely empty cell was always meant to be blank.' },
 { b:847, d:'2026-08-16', t:'Crews \u2014 a Jobs history tab',
 s:'The Crews section gains a Jobs tab: for the selected crew, every work order it has been given, newest first, showing the date the work order was CREATED, the client, the WO number, its status (Draft / Dispatched / Completed / Superseded) and its scheduled or done date. For an admin it also shows what each job was worth and what has been paid against it, with Billed and Paid-to-crew totals \u2014 behind the same admin fence as the Payments and Labor Rates tabs, so production sees the jobs and dates but never the dollars. Reads the existing crew_work_orders and crew_payments (no schema change); superseded work orders are kept and shown dim as history. Fills in further once the AccuLynx history is imported.' },
 { b:846, d:'2026-08-16', t:'Work Orders \u2014 a button beside the section dropdown',
@@ -71351,7 +71353,10 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .dcell{ border-left:1px solid var(--disp-line,#282c34); padding:4px; min-height:46px;
   display:flex; flex-direction:column; gap:3px; }
 #cr-disp .dcell.today{ background:var(--disp-today,#15171c); }
-#cr-disp .dcell.empty{ background:repeating-linear-gradient(135deg,transparent 0,transparent 6px,var(--disp-hatch,rgba(255,255,255,.05)) 6px,var(--disp-hatch,rgba(255,255,255,.05)) 7px); }
+/* 848: the empty-day cell uses a PREFIXED class (demp), never the bare `empty`.
+   The global .empty at ~177 is a dashed 8px card with a folder ::before mark,
+   and a bare `empty` here inherited the whole illustration in every idle cell. */
+#cr-disp .dcell.demp{ background:repeating-linear-gradient(135deg,transparent 0,transparent 6px,var(--disp-hatch,rgba(255,255,255,.05)) 6px,var(--disp-hatch,rgba(255,255,255,.05)) 7px); }
 #cr-disp .dcell.week{ grid-column:2 / -1; display:flex; align-items:center; justify-content:center;
   font:600 9px var(--disp-mono,monospace); font-style:italic; color:var(--disp-mute,#5c636e);
   border-left:1px solid var(--disp-line,#282c34);
@@ -71525,7 +71530,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         for(var di=0; di<nDays; di++){
           var list = (byCrewDay[c.id] && byCrewDay[c.id][di]) || [];
           var s = dayStr[di], tcls = (s === todayStr) ? ' today' : '';
-          if(!list.length){ cells += '<div class="dcell empty' + tcls + '"></div>'; continue; }
+          if(!list.length){ cells += '<div class="dcell demp' + tcls + '"></div>'; continue; }
           var shown = list.slice(0,2).map(jobChip).join('');
           if(list.length > 2) shown += '<div class="more">+' + (list.length-2) + ' more</div>';
           cells += '<div class="dcell' + tcls + '">' + shown + '</div>';
@@ -71576,7 +71581,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
           var day = dayStr[di], tcls = (day === todayStr) ? ' today' : '';
           var onDay = items.filter(function(pi){ return pi.scheduled_at && String(pi.scheduled_at).slice(0,10) === day; });
           cells += onDay.length ? '<div class="dcell' + tcls + '">' + onDay.map(repChip).join('') + '</div>'
-                                : '<div class="dcell empty' + tcls + '"></div>';
+                                : '<div class="dcell demp' + tcls + '"></div>';
         }
         var backlog = items.filter(function(pi){ var d = pi.scheduled_at ? String(pi.scheduled_at).slice(0,10) : '';
           return !d || dayStr.indexOf(d) < 0; }).length;

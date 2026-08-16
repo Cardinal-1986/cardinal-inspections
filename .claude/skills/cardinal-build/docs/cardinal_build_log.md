@@ -17861,3 +17861,22 @@ so a payment recorded without a job still counts. No SQL — reads existing `cre
 job-tied and general payments, drives the real open→select→click-tab path, and checks the table, the
 newest-first order, the status chips, the dim superseded row, the money totals, AND the non-admin path
 (tab and jobs show, money hidden) — GREEN 15/15, RED against the 846 tree. `check_build` green.
+
+
+## Build 848 — Crew Dispatch empty cells stop drawing a folder placeholder (16 Aug 2026)
+Theo (screenshot): *"Is this screen supposed to look this way with the folders? Nothing clickable."* Every
+idle day cell on the Crew Dispatch board rendered as a **dashed 8px card with a grey folder glyph** — it
+looked broken and tappable, but was inert. Root cause is a **class-name collision, my regression from 841**:
+the empty cells carried the bare class `empty` (`<div class="dcell empty">`), and the app's global `.empty`
+component (line ~177 — a dashed card whose `::before` masks the `docs`/folder SVG `--cr-empty-ico`) matched
+them, so the day cells inherited the whole empty-state illustration. **The `.empty` rule's own comment already
+warns this** — "`empty` is a bare class name ... Every other empty state uses a prefixed class (cr-c-empty,
+pay-empty, crw-empty ...)." Same class of bug as the `.rep` collision fixed at 842.
+
+Fix: renamed the cell class `empty` -> **`demp`** (prefixed, single token, does not match `.empty`) at the one
+CSS selector and both JS emitters; the cell reverts to plain `.dcell` (column-separator border-left, 4px
+padding) plus its faint hatch — the quiet-empty look it was always meant to have. No behaviour change.
+Reproduced first in Chromium (the empty cell's `::before` masked the folder SVG, 2px dashed border, 8px
+radius), then fixed. Gate: `render_dispatch848.mjs` opens the board with idle crews and asserts the empty
+cell's `::before` paints no mask, no 2px-dashed border, no 8px radius, keeps the hatch, and no longer uses the
+bare `empty` class — GREEN 5/5, RED (folder mask + dashed card) against the 847 tree. `check_build` green.
