@@ -18123,3 +18123,20 @@ scripts, stamp 870 -> 871). No SQL.
 NB: a first pass had the resurrect assertion count ANY write, which caught the app's own
 `audit_sessions` insert on reconnect and read as a flaky 1-write leak; scoping it to the
 specific cleared writes made it deterministic (BUG_CLASSES: an over-broad assertion).
+
+## Build 872 — Offline-first, phase 5 (part 3): protect the queue from eviction + warn on store failure
+
+Two safeguards for the offline outboxes. (1) `requestPersist()` calls `navigator.storage.persist()`
+on load (guarded; checks `persisted()` first) so the browser will not EVICT our IndexedDB under
+storage pressure and silently wipe a crew's queued offline work. (2) `queue()` now handles a
+rejected store (quota full / eviction) by warning via `crToastErr` ("Could not save this change on
+your phone — it may be out of storage") instead of swallowing it while the optimistic UI still
+reads 'saved'; the photo outbox's `queuePhoto()` gets the same catch. Everyday use is unchanged;
+these only bite when a device is offline a long time or nearly full.
+
+Gate: `render_storage872.mjs` drives the real app — **GREEN 7/7**: `requestPersist` is exposed and
+`navigator.storage.persist` (spied) is called on load and on demand; a write with a non-cloneable
+payload (DataCloneError, standing in for a real quota failure) fires a visible warning and is NOT
+silently queued; a photo that cannot be stored warns; a normal write raises NO false warning.
+Negative-controlled **RED (5)** against v871. Regression: 866/868/870/871 harnesses stay GREEN.
+`check_build` green (117 inline scripts, stamp 871 -> 872). No SQL.

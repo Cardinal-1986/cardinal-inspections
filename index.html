@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 871 &#8212; Offline-first polish &#8212; signing out clears pending changes so they can never sync under the next person on a shared device</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 872 &#8212; Offline-first polish &#8212; the phone protects your pending changes from being cleared, and warns you if it runs out of room to save them</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39885,6 +39885,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:872, d:'2026-08-17', t:'Offline-first, polish \u2014 protect the pending queue, warn if storage is full',
+s:'Two safeguards for offline mode. First, the app now asks the phone NOT to clear its store of pending offline changes when the phone is low on space \u2014 so a long stretch with no signal can no longer quietly wipe your queued work. Second, if the phone genuinely runs out of room to hold a change or a photo, you now get a clear warning to connect and sync, instead of it failing silently while the screen still says saved. Everyday use is unchanged \u2014 these only matter when a device is offline for a long time or nearly full.' },
 { b:871, d:'2026-08-17', t:'Offline-first, polish \u2014 signing out clears pending changes',
 s:'A safety fix for shared devices. Until now, if you made changes offline and then signed out, those pending changes stayed on the device \u2014 and could have synced under the NEXT person who signed in. Now signing out first syncs whatever it can (while you are still signed in and online), warns you if anything still has not synced and would be lost, and then clears the pending queue so nothing can ever cross from one account to another. The offline read cache was already cleared on sign-out; this closes the same gap for saves and photos.' },
 { b:870, d:'2026-08-17', t:'Offline-first, polish \u2014 offline edits fold together',
@@ -50374,7 +50376,13 @@ function queuePhoto(itemId, blob){
   var me = myEmail();
   return pTx('readwrite', function(st){ return st.add({ itemId:itemId, blob:blob, by:me, name:nameOf(me), at:new Date().toISOString() }); })
     .then(function(){ return refreshPhotoPend(); })
-    .then(function(){ lastSig=''; render(); });
+    .then(function(){ lastSig=''; render(); })
+    .catch(function(err){
+      /* 872: a photo is large; if it can't be stored (quota) say so rather than
+         lose it silently after the card already showed it as held. */
+      console.warn('[photo-outbox] could not store a held photo:', err && err.message);
+      try{ if(window.crToastErr) window.crToastErr('Could not save this photo on your phone \u2014 it may be out of storage.'); }catch(_){}
+    });
 }
 function _pNet(e){ var m = String((e && e.message) || e); return /load failed|failed to fetch|networkerror|network request failed|timed? ?out|fetch/i.test(m); }
 async function flushPhotos(){
@@ -72306,7 +72314,13 @@ function queue(entry){
         return add(entry);
       })
     : add(entry);
-  return write.then(function(){ badge(); flush(); });
+  /* 872: if the change cannot be STORED on the device (quota full / evicted),
+     don't swallow it — the optimistic UI already said 'saved', so at least warn. */
+  return write.then(function(){ badge(); flush(); }, function(err){
+    console.warn('[outbox] could not store a queued write:', err && err.message);
+    try{ if(window.crToastErr) window.crToastErr('Could not save this change on your phone \u2014 it may be out of storage. Connect to sync.'); }catch(_){}
+    try{ badge(); }catch(_){}
+  });
 }
 
 /* a small "N waiting to sync" indicator, sibling to the Offline badge */
@@ -72333,6 +72347,20 @@ function badge(){
   });
 }
 
+/* 872: ask the browser NOT to evict our IndexedDB. Without this a phone under
+   storage pressure can silently drop the ENTIRE offline queue. Best-effort:
+   unsupported or denied is fine, it just means default (evictable) storage. */
+function requestPersist(){
+  try{
+    if(typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist){
+      return Promise.resolve(navigator.storage.persisted ? navigator.storage.persisted() : false)
+        .then(function(already){ return already ? true : navigator.storage.persist(); })
+        .catch(function(){ return false; });
+    }
+  }catch(_){}
+  return Promise.resolve(false);
+}
+requestPersist();
 window.addEventListener('online', flush);
 document.addEventListener('visibilitychange', function(){ if(!document.hidden) flush(); });
 setInterval(flush, 30000);
@@ -72340,7 +72368,7 @@ if(document.readyState !== 'loading') badge();
 else document.addEventListener('DOMContentLoaded', badge);
 
 window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
-  queue: queue, flush: flush, pending: pending, networkish: networkish, patchesFor: patchesFor, clear: clearAll
+  queue: queue, flush: flush, pending: pending, networkish: networkish, patchesFor: patchesFor, clear: clearAll, requestPersist: requestPersist
 });
 })();
 </script>
