@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 867 &#8212; Offline-first phase 3 &#8212; Team Directory edits save on the phone with no signal and sync when you&#8217;re back</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 868 &#8212; Offline-first phase 3 &#8212; client &amp; job edits (stage, contact, notes) save on the phone with no signal and sync when you&#8217;re back</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10399,6 +10399,19 @@ var moneyDb = {
   }
 };
 
+/* 868: apply a project patch to the in-memory cache so the profile the user is
+   looking at reflects an offline edit right away. */
+function pdbApplyLocal(id, fields){
+  try{
+    var row = (cacheProjects || []).find(function(x){ return String(x.id) === String(id); });
+    if(row) Object.assign(row, fields);
+    if(currentProject && String(currentProject.id) === String(id)) Object.assign(currentProject, fields);
+  }catch(_){}
+}
+function pdbQueueOffline(id, fields){
+  pdbApplyLocal(id, fields);
+  try{ if(window.CardinalOutbox) window.CardinalOutbox.queue({ table:'projects', match:{ col:'id', val:id }, patch: fields }); }catch(_pq){}
+}
 var pdb = {
   list: async function(){
     if(TEAM){
@@ -10427,8 +10440,22 @@ var pdb = {
   update: async function(id, fields){
     fields.updated_at = new Date().toISOString();
     if(TEAM){
-      var r = await sb.from('projects').update(fields).eq('id', id);
-      if(r.error) throw r.error;
+      /* 868: no signal — hold the change in the outbox and apply it locally now,
+         then sync when we're back. A real RLS refusal (returned r.error, not a
+         thrown network error) still throws so the caller can react. */
+      if(typeof navigator !== 'undefined' && navigator.onLine === false && window.CardinalOutbox){
+        pdbQueueOffline(id, fields); return;
+      }
+      var r;
+      try{ r = await sb.from('projects').update(fields).eq('id', id); }
+      catch(e){
+        if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(e)){ pdbQueueOffline(id, fields); return; }
+        throw e;
+      }
+      if(r.error){
+        if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(r.error)){ pdbQueueOffline(id, fields); return; }
+        throw r.error;
+      }
       return;
     }
     var l = plsLoad();
@@ -10655,6 +10682,21 @@ async function reload(){
             : Promise.resolve([]))
     ]);
     cacheProjects = res[0];
+    /* 868: re-apply any project edits still waiting in the outbox on top of the
+       rows we just loaded — offline that load can be a stale cached copy, and
+       without this an optimistic edit would vanish on the next refresh. Once a
+       queued write syncs it leaves the outbox, so the overlay stops on its own. */
+    try{
+      if(window.CardinalOutbox && window.CardinalOutbox.patchesFor){
+        var _pp = await window.CardinalOutbox.patchesFor('projects');
+        _pp.forEach(function(e){
+          if(e && e.match && e.patch && (!e.op || e.op === 'update')){
+            var _row = cacheProjects.find(function(x){ return String(x.id) === String(e.match.val); });
+            if(_row) Object.assign(_row, e.patch);
+          }
+        });
+      }
+    }catch(_ov){}
     cacheRows = res[1];
     cacheAppts = res[2];
     indexMoney(res[3], res[4]);
@@ -39773,6 +39815,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:868, d:'2026-08-17', t:'Offline-first, phase 3 \u2014 client & job edits survive no signal',
+s:'Phase 3 continues: the whole client profile now saves offline. Change a job\u2019s stage, edit a client\u2019s name, address, phone or email, add a note, tick an inspection item \u2014 with no signal it is saved on the phone, the profile updates right away, and it syncs itself when you are back (the \u201cN waiting to sync\u201d badge shows what is still queued). Because every one of these edits goes through a single save path, this one change covers the entire profile at once. A refresh while offline no longer wipes a pending edit \u2014 queued changes are re-applied on top of whatever loaded. Edits key on the job, so a re-sync can never duplicate, and a real permission error still tells you at once.' },
 { b:867, d:'2026-08-17', t:'Offline-first, phase 3 \u2014 Team Directory edits survive no signal',
 s:'Phase 3 starts routing the office screens through the same offline outbox the punch-out card already uses. First up is the Team Directory \u2014 the exact screen that showed you \u201cLoad failed.\u201d Edit a teammate\u2019s name, title, phone or photo with no signal and it is now saved on the phone, the card updates right away, and it syncs itself the moment you are back (the small \u201cN waiting to sync\u201d badge shows what is still queued). Nothing is lost. Saves key on the email address, so a re-sync can never create a duplicate, and a real permission error still tells you at once. More office screens follow.' },
 { b:866, d:'2026-08-17', t:'Offline-first, phase 4 \u2014 photos survive no signal',
@@ -72090,6 +72134,15 @@ function networkish(e){
   return /load failed|failed to fetch|networkerror|network request failed|timed? ?out|fetch/i.test(m);
 }
 function pending(){ return getAll().then(function(r){ return r.length; }).catch(function(){ return 0; }); }
+/* 868: the queued entries for one table, oldest first — a reload overlays
+   these on top of freshly-loaded (maybe stale-cached) rows so an offline edit
+   survives a refresh until it syncs. */
+function patchesFor(table){
+  return getAll().then(function(rows){
+    return rows.filter(function(r){ return r.table === table; })
+               .sort(function(a, b){ return a.id - b.id; });
+  }).catch(function(){ return []; });
+}
 
 var flushing = false, sentSome = false;
 function flush(){
@@ -72176,7 +72229,7 @@ if(document.readyState !== 'loading') badge();
 else document.addEventListener('DOMContentLoaded', badge);
 
 window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
-  queue: queue, flush: flush, pending: pending, networkish: networkish
+  queue: queue, flush: flush, pending: pending, networkish: networkish, patchesFor: patchesFor
 });
 })();
 </script>

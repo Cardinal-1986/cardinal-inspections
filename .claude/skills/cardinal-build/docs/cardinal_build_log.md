@@ -18041,3 +18041,23 @@ queued, no direct DB write, badge shown, card shows the new name; online the que
 to 0 and a team_profiles upsert with the new name is actually sent). Negative-controlled
 **RED (3)** against v866 (offline it writes directly / never queues). `check_build` green
 (117 inline scripts, stamp 866 → 867). No SQL.
+
+## Build 868 — Offline-first, phase 3 (part 2): client/job edits save offline
+
+Routes `pdb.update()` — the single chokepoint every project edit funnels through (stage
+change, contact fields, notes, checklist, cover, sales_rep) — through the outbox, so one
+change covers the whole client profile. `navigator.onLine === false` OR a networkish
+throw/`r.error` → `pdbQueueOffline()` applies the patch to `cacheProjects`/`currentProject`
+now and queues `{ table:'projects', match:{col:'id',val:id}, patch: fields }`; a real RLS
+refusal still throws. Extended `CardinalOutbox` with `patchesFor(table)`, and `reload()`
+now re-overlays still-queued project patches on top of the freshly-loaded rows — so an
+offline reload (which reads the stale SW-cached copy) can't revert an optimistic edit.
+Idempotent: full-field patch keyed on id; the overlay stops once the write syncs and
+leaves the outbox.
+
+Gate: `render_projoff868.mjs` drives the real app — **GREEN 13/13** (offline stage change
+queued, no direct DB write, optimistic cache, badge; a forced STALE reload keeps the new
+stage via the overlay; online the queue drains and a `projects` UPDATE{stage} is actually
+sent). Negative-controlled **RED (5)** against v867 (offline it writes directly / never
+queues, and the stale reload reverts to Lead). `check_build` green (117 inline scripts,
+stamp 867 → 868). No SQL.
