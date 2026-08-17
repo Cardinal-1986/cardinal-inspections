@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 870 &#8212; Offline-first polish &#8212; multiple offline edits to the same thing now fold into one, so nothing piles up on your phone</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 871 &#8212; Offline-first polish &#8212; signing out clears pending changes so they can never sync under the next person on a shared device</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24835,10 +24835,30 @@ async function doLogin(){
   btn.disabled = false;
 }
 signOutBtn.addEventListener('click', async function(){
+  /* 871: pending offline changes belong to THIS user. Sync what we can while
+     still signed in and online, warn if anything is still unsynced, then wipe
+     both write outboxes below so they can never flush under the next account. */
+  try{
+    var _pw = (window.CardinalOutbox && window.CardinalOutbox.pending) ? await window.CardinalOutbox.pending() : 0;
+    var _pp = (window.CardinalPunchCard && window.CardinalPunchCard._pendingPhotos) ? await window.CardinalPunchCard._pendingPhotos() : 0;
+    if((_pw + _pp) > 0 && typeof navigator !== 'undefined' && navigator.onLine){
+      try{ if(window.CardinalOutbox && window.CardinalOutbox.flush) await window.CardinalOutbox.flush(); }catch(_f1){}
+      try{ if(window.CardinalPunchCard && window.CardinalPunchCard._flushPhotos) await window.CardinalPunchCard._flushPhotos(); }catch(_f2){}
+      _pw = (window.CardinalOutbox && window.CardinalOutbox.pending) ? await window.CardinalOutbox.pending() : 0;
+      _pp = (window.CardinalPunchCard && window.CardinalPunchCard._pendingPhotos) ? await window.CardinalPunchCard._pendingPhotos() : 0;
+    }
+    if((_pw + _pp) > 0){
+      var _n = _pw + _pp;
+      if(!confirm(_n + ' change' + (_n === 1 ? '' : 's') + ' on this device ' + (_n === 1 ? 'has' : 'have') + ' not synced yet and will be lost if you sign out now.\n\nSign out anyway?')) return;
+    }
+  }catch(_){}
   try{ await sb.auth.signOut(); }catch(e){}
   /* 864: wipe the offline data cache so the next person to sign in on this
      device cannot see the last person's cached rows. */
   try{ if(navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type:'cr-clear-data-cache' }); }catch(_){}
+  /* 871: and wipe the WRITE outboxes so the next account never inherits them. */
+  try{ if(window.CardinalOutbox && window.CardinalOutbox.clear) await window.CardinalOutbox.clear(); }catch(_){}
+  try{ if(window.CardinalPunchCard && window.CardinalPunchCard._clearPhotos) await window.CardinalPunchCard._clearPhotos(); }catch(_){}
   showLogin();
 });
 
@@ -39865,6 +39885,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:871, d:'2026-08-17', t:'Offline-first, polish \u2014 signing out clears pending changes',
+s:'A safety fix for shared devices. Until now, if you made changes offline and then signed out, those pending changes stayed on the device \u2014 and could have synced under the NEXT person who signed in. Now signing out first syncs whatever it can (while you are still signed in and online), warns you if anything still has not synced and would be lost, and then clears the pending queue so nothing can ever cross from one account to another. The offline read cache was already cleared on sign-out; this closes the same gap for saves and photos.' },
 { b:870, d:'2026-08-17', t:'Offline-first, polish \u2014 offline edits fold together',
 s:'A quiet but important tidy-up to offline mode. When you make several changes to the same thing with no signal \u2014 nudging a job\u2019s stage then adding a note, or saving a report five times \u2014 they now fold into a single pending change on your phone instead of piling up. That keeps the phone from filling with copies (a report\u2019s full contents used to be stored once per save) and makes the sync quicker when you are back. The result on the server is exactly the same as before \u2014 your latest version \u2014 it just gets there more efficiently. Changes to different things still queue separately and sync in order.' },
 { b:869, d:'2026-08-17', t:'Offline-first, phase 3 \u2014 inspection reports & documents survive no signal',
@@ -50344,6 +50366,7 @@ function pTx(mode, run){
 }
 function pAll(){ return pTx('readonly', function(st){ return st.getAll(); }).catch(function(){ return []; }); }
 function pDel(id){ return pTx('readwrite', function(st){ return st.delete(id); }); }
+function pClear(){ return pAll().then(function(rows){ return Promise.all(rows.map(function(r){ return pDel(r.id); })); }).then(function(){ _photoPend = {}; lastSig=''; try{ render(); }catch(_){} }).catch(function(){}); }  /* 871: drop every held photo on sign-out */
 var _photoPend = {}, _flushingPhotos = false;
 function refreshPhotoPend(){ return pAll().then(function(rows){ var m={}; rows.forEach(function(r){ m[r.itemId]=(m[r.itemId]||0)+1; }); _photoPend=m; return rows.length; }); }
 function photoPendFor(id){ return _photoPend[id] || 0; }
@@ -50575,6 +50598,7 @@ window.CardinalPunchCard = {
   _queuePhoto: function(id, blob){ return queuePhoto(id, blob); },
   _flushPhotos: function(){ return flushPhotos(); },
   _pendingPhotos: function(){ return refreshPhotoPend(); },
+  _clearPhotos: function(){ return pClear(); },
 };
 })();
 </script>
@@ -72182,6 +72206,9 @@ function add(entry){ return op('readwrite', function(st){ return st.add(entry); 
 function getAll(){ return op('readonly',  function(st){ return st.getAll(); }); }
 function del(id){   return op('readwrite', function(st){ return st.delete(id); }); }
 function put(entry){ return op('readwrite', function(st){ return st.put(entry); }); }  /* 870: update-in-place by id */
+/* 871: drop every queued write. Used on sign-out so one person's offline edits
+   never flush under the next person to sign in on a shared device. */
+function clearAll(){ return getAll().then(function(rows){ return Promise.all(rows.map(function(r){ return del(r.id); })); }).then(function(){ badge(); }).catch(function(){}); }
 /* 870: a stable identity for an entry's TARGET — same target folds together. */
 function entryKey(e){
   if(!e || !e.table) return null;
@@ -72313,7 +72340,7 @@ if(document.readyState !== 'loading') badge();
 else document.addEventListener('DOMContentLoaded', badge);
 
 window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
-  queue: queue, flush: flush, pending: pending, networkish: networkish, patchesFor: patchesFor
+  queue: queue, flush: flush, pending: pending, networkish: networkish, patchesFor: patchesFor, clear: clearAll
 });
 })();
 </script>
