@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-16 build 856 &#8212; The Production hub&#8217;s Punch-outs opens the full Punch &amp; Repairs page, not a bare list</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 857 &#8212; Fixed the Production hub opening the retail home behind Punch &amp; Repairs, Dispatch and Crews</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39722,6 +39722,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:857, d:'2026-08-17', t:'Hub Punch/Dispatch/Crews no longer flash the retail home',
+s:'Opening Punch &amp; Repairs (and Crew Dispatch or Crews) from the Production hub was leaving the retail home screen showing behind it. The hub closes through its own close(), which by default also sends you Home; when the destination page then ran its own screen-reset it re-triggered that Home jump. The hub now closes itself quietly before opening any of those three, so you land straight on the page you tapped. No change to the pages themselves.' },
 { b:856, d:'2026-08-16', t:'Hub Punch-outs opens the full Punch &amp; Repairs page',
 s:'Tapping Punch-outs (or Closed repairs) in the Production hub was opening a bare internal list \u2014 just the open items with a + Add. It now opens the full Punch &amp; Repairs page, the same one the Production menu opens: search by item, client or address; Active, Scheduled and Completed tabs; the sort control; and the full punch-out cards with their CRM, urgency and schedule. Nothing new underneath \u2014 the hub just routes to the real page (window.openPunchView) instead of its own stripped list. The materials boxes (Needs ordered, Ordered, Scheduled) still use the hub list.' },
 { b:855, d:'2026-08-16', t:'Production hub \u2014 Crew Dispatch &amp; Crews',
@@ -48769,7 +48771,11 @@ function wire(){
          of the hub's bare internal list. Falls back to that list if the
          module isn't present. Materials boxes keep the internal list. */
       if((k === 'punch' || k === 'closed') && typeof window.openPunchView === 'function'){
-        try{ window.openPunchView(); return; }catch(_pv){}
+        /* 857: close the hub WITHOUT its showHome() side-effect first. Otherwise
+           openPunchView's hideAllViews finds cr-pb still .open and calls close()
+           with no arg, which defaults to showHome() — so the retail home paints
+           behind the punch page. close(false) drops the class and skips showHome. */
+        close(false); window.openPunchView(); return;
       }
       listKey = k; pane = 'list'; render(); scrollTop();
     };
@@ -48777,8 +48783,11 @@ function wire(){
   el.querySelectorAll('[data-hub]').forEach(function(b){
     b.onclick = function(){
       var h = b.getAttribute('data-hub');
-      if(h === 'dispatch' && window.CardinalDispatch && window.CardinalDispatch.open) window.CardinalDispatch.open();
-      else if(h === 'crews' && window.CardinalCrews && window.CardinalCrews.open) window.CardinalCrews.open();
+      /* 857: same as the punch route — Dispatch and Crews call hideAllViews in
+         their own open(), so drop the hub without showHome() first. Close only
+         when the target module is actually present. */
+      if(h === 'dispatch' && window.CardinalDispatch && window.CardinalDispatch.open){ close(false); window.CardinalDispatch.open(); }
+      else if(h === 'crews' && window.CardinalCrews && window.CardinalCrews.open){ close(false); window.CardinalCrews.open(); }
     };
   });
   el.querySelectorAll('[data-go="cal"]').forEach(function(b){
