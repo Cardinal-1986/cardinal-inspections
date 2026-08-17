@@ -5309,3 +5309,27 @@ the dropdown, so it only appears inside a job. **Phone exception:** the dropdown
 the client-band rule and the Job Menu has no Work Orders tile, so `#woQuick` (not covered by that rule)
 is the phone's only header path to Work Orders. Gate: `render_woquick846.mjs` — 24/24 at 1194px and
 390px (hidden→visible, icon hydrated, click opens `#tab-workorders`, no header overflow), RED against 845.
+
+
+## Offline-first (builds 864–873) — the app works with no signal
+A read cache (service-worker `DATA_CACHE`, network-first, logout-cleared) plus a write **outbox**
+(`CardinalOutbox` in `cr-outbox-script`, IndexedDB) that each data-layer chokepoint routes to when
+offline or on a networkish error. Optimistic in-memory apply + full-value idempotent queue + flush on
+reconnect; `reload()`/`db.get()` overlay still-queued edits so a stale offline refresh can't revert them.
+Covered surfaces: **reads** (864), **punch saves** (865), **photos** (866), **Team Directory** (867),
+**client/job profile** — stage/contact/notes/checklist via `pdb.update` (868), **documents** — reports/
+contracts/work orders via `db.update` (869). Durability: **coalescing** of same-target edits (870),
+**sign-out clears the outboxes** so nothing crosses accounts (871), **`storage.persist()` + storage-full
+warning** (872), and a four-state **sync indicator** — offline / waiting / syncing / "all synced" (873).
+Chokepoints are one-per-concept; RLS refusals still surface immediately. **Offline CREATE of new
+numbered records (estimates / community partners) is deliberately NOT built** — see the settled decision
+in HANDOFF (17 Aug).
+
+## Team alerts by text + a test button (builds 874–875)
+`api/notify.js` fans a team alert to **push + email + SMS**, each best-effort and independent. SMS via
+Twilio is gated on `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_FROM` (like email on `RESEND_API_KEY`);
+recipient phones come from `team_profiles`, E.164-normalised by `normPhone()`, de-duped; the response
+reports `texted` + `env.sms` (presence only, no keys). Build 875 adds **"Send a test alert to myself"**
+(`#testAlertBtn`, under Phone Notifications) — fires all three channels to the current user ONLY and shows
+a per-channel readout, the fastest way to confirm the Resend + Twilio setup end to end. Email/SMS require
+their Vercel env vars (and a Verified Resend domain / approved A2P 10DLC) to actually deliver — see HANDOFF.
