@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 876 &#8212; Dark mode no longer leaks white cards: the Inspections/Reports list, its filters, Graphs &amp; Reports and Settings rows are dark on the dark theme</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 878 &#8212; E2E Smoke Walk is honest too: it no longer reports Estimates, Claims, Pricing and Coach as unreachable when they opened fine (the check couldn&#8217;t see full-screen panels)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39242,7 +39242,17 @@ await sleep(80);
 return null;
 }
 function visible(el){
-return el && el.offsetParent != null && getComputedStyle(el).display !== 'none';
+/* 878: offsetParent is ALWAYS null for a position:fixed element, even when it
+   fills the screen. Every plugin mount here — cr-estimates-mount, cr-claims-mount,
+   cr-pricing-mount, cr-coach-mount — is position:fixed, so the old offsetParent
+   test could never see them and the walk reported four "mount never visible"
+   failures for plugins that had opened perfectly (the very next step tapped a
+   button inside one and passed). Score real on-screen box instead. */
+if(!el) return false;
+var s = getComputedStyle(el);
+if(s.display === 'none' || s.visibility === 'hidden') return false;
+var r = el.getBoundingClientRect();
+return r.width > 0 && r.height > 0;
 }
 var STEPS = [
 {
@@ -39969,6 +39979,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:878, d:'2026-08-17', t:'E2E Smoke Walk stops crying wolf too',
+s:'Same story as build 877, on the other built-in test. The E2E Smoke Walk (Tools) was reporting Estimates, Claims, Pricing and Coach as "mount never visible" even though they opened perfectly — you could see the very next step tap a button inside the panel and pass. The walk was asking the browser a question that full-screen panels can never answer "yes" to, so it declared four working screens broken. It now checks whether the panel actually fills the screen, which it does, so those four false failures are gone. Nothing about those plugins changed — they were never broken.' },
+{ b:877, d:'2026-08-17', t:'Self Check stops crying wolf',
+s:'Self Check (Menu → Self Check) was reporting 8 controls unreachable, but 7 of those were the check testing for buttons that no longer exist. When the Production board was rebuilt its tiles were renamed, and the CRM portal switcher moved into the burger menu back in build 799 — Self Check was never told, so it kept looking for the old ones and flagging them as broken. It now tests the real, current controls, so those seven false alarms are gone. The eighth was real: in the installed app the bottom bar overlapped the Production and Sales Floor tiles on the opening portal screen — the landing now leaves room so every portal clears the bar. Nothing about how the app works changed here; the diagnostic just tells the truth now.' },
 { b:876, d:'2026-08-17', t:'Dark mode no longer leaks white screens',
 s:'A few older screens were still painting themselves white while the rest of the app was in dark mode \u2014 most obviously the Inspections/Reports list, whose cards showed up as bright white boxes with faint, hard-to-read titles. Audited every main screen in a real browser render: the Inspections/Reports list and its salesman filter, the action buttons on those cards, the whole Graphs & Reports screen and the Settings rows now sit dark on the dark theme, matching everything else. Clients, Leads & Jobs, the Activity Feed, Team and the client profile were already correct and were left untouched. The light (sun) theme is completely unchanged \u2014 this fix only applies while you are in dark mode.' },
 { b:875, d:'2026-08-17', t:'\u201CSend a test alert to myself\u201D button',
@@ -56179,6 +56193,16 @@ else start();
 </script>
 
 <style id="cr-sc-styles">#cr-sc-panel{display:none;position:fixed;inset:0;z-index:9700;background:#12161c;color:#e8ecf1;overflow-y:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-sc-panel.open{display:block}#cr-sc-panel .hd{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:10px;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:#171d25;border-bottom:1px solid #2a333f}#cr-sc-panel .hd h3{flex:1;margin:0;font:700 15px Georgia,serif;color:#e8ecf1}#cr-sc-panel .hd button{background:transparent;border:1px solid #3a4552;color:#9fb0c4;border-radius:8px;padding:7px 12px;cursor:pointer;font:700 11.5px inherit;font-family:inherit}#cr-sc-panel .hd button.go{background:#4a8c5a;border-color:#4a8c5a;color:#fff}#cr-sc-panel .bd{padding:14px 16px calc(40px + env(safe-area-inset-bottom,0px))}#cr-sc-panel .lede{font-size:13px;line-height:1.55;color:#8b9aab;margin:0 0 14px}#cr-sc-panel .sum{border-radius:11px;padding:14px 16px;margin-bottom:14px;font:700 14px inherit}#cr-sc-panel .sum.pass{background:#16301f;border:1px solid #2f6b41;color:#8fe0a8}#cr-sc-panel .sum.fail{background:#331a1a;border:1px solid #7a3535;color:#f0a3a3}#cr-sc-panel .grp{font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:#63748a;margin:16px 0 6px}#cr-sc-panel .row{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:9px;background:#1a212a;margin-bottom:6px}#cr-sc-panel .row.bad{background:#2a1c1c}#cr-sc-panel .row .ic{flex:0 0 auto;font-size:13px;line-height:1.5}#cr-sc-panel .row.ok .ic{color:#6cc98a}#cr-sc-panel .row.bad .ic{color:#e88}#cr-sc-panel .row .tx{flex:1;min-width:0}#cr-sc-panel .row .tx b{display:block;font:600 13.5px inherit}#cr-sc-panel .row .tx small{display:block;font-size:11.5px;color:#8b9aab;margin-top:2px}#cr-sc-panel .busy{text-align:center;padding:40px 20px;color:#8b9aab;font-size:13.5px}</style>
+<style id="cr-navclear-877">
+/* 877: in the installed (standalone) app the fixed bottom nav (#pwaNav, ~62px
+   + safe-area) overlapped the last portal row on the landing — the Production
+   and Sales Floor tiles sat under it, so a tap at their centre hit the nav
+   (Self Check: "covered by #pwaNav"). The landing had only 48px of bottom
+   padding, less than the bar is tall. Give it real clearance so every portal
+   clears the bar. Standalone-only: in a browser #pwaNav is display:none, so
+   nothing changes there. */
+body.standalone #landingView .cr-lr{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px));}
+</style>
 <script id="cr-sc-script">
 (function(){
 'use strict';
@@ -56197,7 +56221,11 @@ controls:[
 if(typeof window.showCardinalTruth === 'function') window.showCardinalTruth();
 },
 controls:[
-['#cr-hd2-home', 'home (banner)'], ['#pwaNav #crPortalChip', 'CRM switcher'], ['#addProjectBtn', 'add (+)'], ['#navBtn', 'menu'],
+/* 877: the '#pwaNav #crPortalChip' CRM switcher was retired at build 799
+   (#crPortalChip{display:none!important}) — the switcher moved into the burger
+   menu, which is already covered by 'menu' below. Probing the hidden chip
+   reported a phantom "zero size" failure for a control that is gone by design. */
+['#cr-hd2-home', 'home (banner)'], ['#addProjectBtn', 'add (+)'], ['#navBtn', 'menu'],
 ['#cardinalTruthView .cr-cth-stage', 'a pipeline stage'],
 ['#cardinalTruthView .cr-cth-tools [data-go="clients"]', 'Insurance Clients tile'],
 ['#cardinalTruthView .cr-cth-chase', 'chase list'],
@@ -56220,12 +56248,17 @@ if(window.CardinalProduction) window.CardinalProduction.open();
 close:function(){
 if(window.CardinalProduction) window.CardinalProduction.close(false);
 },
+/* 877: the 766-772 Production rebuild renamed every control here. The old
+   selectors (data-jump / data-filter / .cr-pb-fab) match nothing on the new
+   board, so Self Check reported five phantom "not present" failures for
+   controls that no longer exist. These are the rebuilt board's real controls,
+   verified rendering in a Chromium boot (audit) — a status tile, the two hub
+   buttons, the + Add chip and the back arrow. */
 controls:[
-['#cr-pb [data-jump="blocked"]', 'Blocked tile'],
-['#cr-pb [data-jump="punch"]',   'Open items tile'],
-['#cr-pb [data-filter]',         'a punch filter'],
-['.cr-pb-fab',                   'add punch item'],
-['#cr-pb [data-act="back"]',     'back'],
+['#cr-pb [data-box]',            'a status tile'],
+['#cr-pb [data-hub="dispatch"]', 'Dispatch'],
+['#cr-pb [data-add]',            'add (+)'],
+['#cr-pb [data-back]',           'back'],
 ] },
 { name:'Sales Floor', open:function(){
 if(window.CardinalSalesFloor) window.CardinalSalesFloor.open();

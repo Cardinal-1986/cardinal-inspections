@@ -18224,3 +18224,48 @@ Gates: `audit_darkmode.mjs` GREEN on v876 (0 real light surfaces; the lone `span
 transparent decorative progress ring), negative-controlled RED on v875 (13 light surfaces across Home/
 Inspections/Reports/Settings). Both-theme spot check: chipbtn/setrow compute dark in the default theme
 and white under `rb-light`. `check_build` green (stamp 875 -> 876, 137/137 style tags). No SQL.
+
+## Build 877 — Self Check honesty: stale test list + one real landing-clearance fix
+Theo ran Menu → Self Check and it reported "8 of 27 controls unreachable". Triaged all eight in a
+real Chromium boot (audit harness driving the app's own CardinalSelfCheck). Proven first that build
+876 (dark mode) did NOT cause them — CardinalSelfCheck.run() returns byte-identical failures on v875
+and v876, and 876 was colour-only. Seven of the eight were the Self Check testing controls that the
+rebuilds renamed or retired:
+
+- **Production (5 × "not present")**: the 766-772 Production rebuild replaced the board's controls.
+  `#cr-pb [data-jump="blocked"|"punch"]`, `[data-filter]` and `.cr-pb-fab` match nothing now — those
+  strings exist ONLY in the Self Check's own list. The real board renders `[data-box]` tiles,
+  `[data-hub="dispatch"|"crews"]`, `[data-add]` and `[data-back]`. Pointed the test at those four;
+  all four probe OK (reachable) in the harness.
+- **CRM switcher ("zero size")**: `#pwaNav #crPortalChip` was retired at build 799 —
+  `#crPortalChip{display:none!important}`, the switcher moved into the burger menu (already covered by
+  the 'menu' control). Removed the phantom entry.
+
+The eighth was real: **the landing's Production/Sales portal tiles sat under the fixed bottom nav in
+the installed (standalone) app** ("covered by #pwaNav"). `.cr-lr` had only 48px bottom padding vs a
+~62px+safe-area bar. Added `body.standalone #landingView .cr-lr{padding-bottom:calc(120px + safe)}`
+(new `<style id="cr-navclear-877">`). Confirmed in Chromium: 48px in a browser (unchanged), 120px in
+standalone. Every change is either the diagnostic's own test list or standalone-only padding — no app
+behaviour and no theming changed.
+
+Gates: Self Check harness 7 unreachable on v876 → 1 on v877 (the lone remainder, "Sales Floor — an
+objection tab", is a harness-render artifact; Theo's own phone run showed all Sales Floor controls
+green). New Production selectors probe OK. `check_build` green (stamp 876 -> 877, 138/138 style tags).
+No SQL.
+
+## Build 878 — E2E Smoke Walk honesty: the visible() check couldn't see fixed panels
+Theo ran Tools → E2E Smoke Walk and it reported four plugins "mount never visible": Estimates,
+Claims, Pricing, Coach (each after the full 6s timeout). But the Estimates step immediately after,
+"Tap + New AI", PASSED — it found and clicked a button inside the very mount just declared invisible.
+Same class as 877: the diagnostic is wrong, the app is fine.
+
+Root cause: cr-walk-script's `visible(el)` used `el.offsetParent != null`. offsetParent is ALWAYS
+null for a position:fixed element (CSS spec), and all four plugin mounts are position:fixed;
+display:block, filling the screen (measured 390×738/844 in Chromium). So the check could never return
+true for them. Community Hub passed because its view is not fixed. Replaced the offsetParent test with
+a real on-screen-box test (display/visibility not hidden AND getBoundingClientRect width/height > 0),
+which is correct for fixed elements. One module-scoped function; nothing else uses this `visible()`.
+
+Gates: the REAL CardinalWalk.run() driven in Chromium — 4 "mount never visible" failures on v877
+(reproduces Theo's screenshot exactly, Tap+New AI passing) → 0 on v878, all 8 steps PASS.
+`check_build` green (stamp 877 -> 878, 138/138 style tags). No SQL.
