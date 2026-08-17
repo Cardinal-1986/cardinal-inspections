@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 861 &#8212; Punch-out saves retry a dropped connection instead of failing on the first blip</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 862 &#8212; Team Directory saves retry a dropped connection too, like the punch-out card</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25337,6 +25337,24 @@ document.getElementById('tmInviteBtn').addEventListener('click', async function(
           '\n\nRelay this to them directly — nothing was emailed automatically.');
   }catch(err){ showError('Could not invite teammate: ' + (err.message || err)); }
 });
+/* 862: retry a dropped fetch (iOS "TypeError: Load failed") on a weak signal
+   before failing a team_profiles write. A real RLS refusal comes back as
+   r.error (not a thrown network error), so it is surfaced by the caller and
+   never retried. Upserts key on email, so a retry cannot duplicate. */
+function tmRetryWrite(fn){
+  return (async function(){
+    var a = 0;
+    while(true){
+      try{ return await fn(); }
+      catch(e){
+        a++;
+        var m = String((e && e.message) || e);
+        if(!/load failed|failed to fetch|networkerror|network request failed|timed? ?out/i.test(m) || a >= 3) throw e;
+        await new Promise(function(res){ setTimeout(res, 400 * a); });
+      }
+    }
+  })();
+}
 document.getElementById('tmMount').addEventListener('click', async function(e){
   var card = e.target.closest('.tmcard');
   if(!card) return;
@@ -25360,7 +25378,7 @@ document.getElementById('tmMount').addEventListener('click', async function(e){
       updated_at: new Date().toISOString()
     };
     try{
-      var r = await sb.from('team_profiles').upsert(row, { onConflict: 'email' });
+      var r = await tmRetryWrite(function(){ return sb.from('team_profiles').upsert(row, { onConflict: 'email' }); });
       if(r.error) throw r.error;
       auditLog('team', 'Profile edited \u2014 ' + (row.name || em), null);
       await loadTeamProfiles(); renderTeamView(); renderActivity(); renderPipeline();
@@ -25377,7 +25395,7 @@ document.getElementById('tmMount').addEventListener('change', async function(e){
   var em = card.getAttribute('data-em');
   try{
     var dataUrl = await tmResize(f.files[0]);
-    var r = await sb.from('team_profiles').upsert({ email: em, photo: dataUrl, updated_at: new Date().toISOString() }, { onConflict: 'email' });
+    var r = await tmRetryWrite(function(){ return sb.from('team_profiles').upsert({ email: em, photo: dataUrl, updated_at: new Date().toISOString() }, { onConflict: 'email' }); });
     if(r.error) throw r.error;
     await loadTeamProfiles(); renderTeamView(); renderActivity();
   }catch(err){ showError('Could not upload: ' + (err.message || err)); }
@@ -39723,6 +39741,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:862, d:'2026-08-17', t:'Team Directory saves survive a weak signal',
+s:'Editing a teammate\u2019s profile \u2014 name, title, phone, or portrait \u2014 no longer fails the moment the phone drops a request. Like the punch-out card (861), the Team Directory now quietly retries a dropped connection a couple of times before giving up. The \u201cLoad failed\u201d you saw was a weak-signal blip, not a missing table \u2014 the directory had already loaded, so the table is there. A real permission error still shows right away.' },
 { b:861, d:'2026-08-17', t:'Punch-out saves survive a weak signal',
 s:'Saving on the punch-out card \u2014 a message, a photo, a step, closing it \u2014 no longer fails the moment the phone drops a request. On a roof with a weak signal iOS reports a dropped connection as \u201cTypeError: Load failed\u201d; the save now quietly retries a couple of times before it gives up, so a brief blip recovers on its own. A real permission refusal still surfaces immediately, and retrying can never double-post \u2014 each save writes the whole value, not an addition.' },
 { b:860, d:'2026-08-17', t:'Punch-out gallery button always visible',
