@@ -18252,3 +18252,20 @@ Gates: Self Check harness 7 unreachable on v876 → 1 on v877 (the lone remainde
 objection tab", is a harness-render artifact; Theo's own phone run showed all Sales Floor controls
 green). New Production selectors probe OK. `check_build` green (stamp 876 -> 877, 138/138 style tags).
 No SQL.
+
+## Build 878 — E2E Smoke Walk honesty: the visible() check couldn't see fixed panels
+Theo ran Tools → E2E Smoke Walk and it reported four plugins "mount never visible": Estimates,
+Claims, Pricing, Coach (each after the full 6s timeout). But the Estimates step immediately after,
+"Tap + New AI", PASSED — it found and clicked a button inside the very mount just declared invisible.
+Same class as 877: the diagnostic is wrong, the app is fine.
+
+Root cause: cr-walk-script's `visible(el)` used `el.offsetParent != null`. offsetParent is ALWAYS
+null for a position:fixed element (CSS spec), and all four plugin mounts are position:fixed;
+display:block, filling the screen (measured 390×738/844 in Chromium). So the check could never return
+true for them. Community Hub passed because its view is not fixed. Replaced the offsetParent test with
+a real on-screen-box test (display/visibility not hidden AND getBoundingClientRect width/height > 0),
+which is correct for fixed elements. One module-scoped function; nothing else uses this `visible()`.
+
+Gates: the REAL CardinalWalk.run() driven in Chromium — 4 "mount never visible" failures on v877
+(reproduces Theo's screenshot exactly, Tap+New AI passing) → 0 on v878, all 8 steps PASS.
+`check_build` green (stamp 877 -> 878, 138/138 style tags). No SQL.
