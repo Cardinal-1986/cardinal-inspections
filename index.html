@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 864 &#8212; Offline-first phase 1 &#8212; screens you have opened come back with no signal</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 865 &#8212; Offline-first phase 2 &#8212; punch-out saves are kept on the phone and sync when you&#8217;re back</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39744,6 +39744,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:865, d:'2026-08-17', t:'Offline-first, phase 2 \u2014 saves survive no signal',
+s:'The second phase of offline support: saving. A punch-out change made with no signal \u2014 a message, a step, closing it out \u2014 is now saved on the phone instead of failing, and syncs itself the moment you are back online (or next time you open the app). A small \u201cN waiting to sync\u201d badge shows how many changes are queued, and tapping it tries now. Nothing is lost in a dead zone. Photos in a dead zone are the next phase. A real permission error still tells you right away \u2014 only lost-signal saves are held.' },
 { b:864, d:'2026-08-17', t:'Offline-first, phase 1 \u2014 screens work with no signal',
 s:'First piece of real offline support: the app now keeps a copy of the data you load, so any screen you have already opened comes back even with no signal at all \u2014 no more blank app in a dead zone. It stays live when you have a connection (you always see fresh data online; the saved copy is only used when you are offline), it is kept separate and wiped when you sign out so it can never show the next person\u2019s data, and a screen you have never opened will still wait for signal. Next phases: saving offline (an outbox that syncs when you are back) and offline photos.' },
 { b:863, d:'2026-08-17', t:'Clearer \u201ccould not notify\u201d message',
@@ -49925,6 +49927,13 @@ async function save(patch){
   busy = true;
   Object.assign(it, patch);
   lastSig = ''; render();
+  /* 865: no signal — don't fight the network. Save it on the phone and let the
+     outbox sync it when we're back. Keep the optimistic state; the global
+     'N waiting to sync' badge is the receipt. */
+  if(typeof navigator !== 'undefined' && navigator.onLine === false && window.CardinalOutbox){
+    try{ await window.CardinalOutbox.queue({ table:'punch_items', match:{ col:'id', val:it.id }, patch: patch }); }catch(_oq){}
+    busy = false; refreshOthers(); return;
+  }
   try{
     /* 861: a punch-out is filled on a roof with weak signal. iOS Safari reports
        a dropped fetch as "TypeError: Load failed"; retry those a couple of times
@@ -49952,10 +49961,16 @@ async function save(patch){
       }
     }
   }catch(e){
-    alert('Could not save: ' + (e.message || e));
-    var fresh = rowFor(it.id);
-    if(fresh) it = fresh;
-    lastSig = ''; render();
+    /* 865: the network dropped after the retries — queue it rather than lose
+       it. A real refusal (RLS) is not networkish, so it still alerts + reverts. */
+    if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(e)){
+      try{ await window.CardinalOutbox.queue({ table:'punch_items', match:{ col:'id', val:it.id }, patch: patch }); }catch(_oq2){}
+    }else{
+      alert('Could not save: ' + (e.message || e));
+      var fresh = rowFor(it.id);
+      if(fresh) it = fresh;
+      lastSig = ''; render();
+    }
   }
   busy = false;
   refreshOthers();
@@ -71905,6 +71920,133 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   }
 
   window.CardinalDispatch = Object.assign(window.CardinalDispatch || {}, { open: open, close: close });
+})();
+</script>
+
+<script id="cr-outbox-script">
+(function(){
+'use strict';
+/* Cardinal offline WRITE OUTBOX (build 865, offline-first phase 2).
+   A write that cannot reach the server (no signal) is stored on the DEVICE
+   (IndexedDB) and replayed when you are back online. Generic UPDATE replay:
+   an entry is { table, match:{col,val}, patch }. Idempotent by design — callers
+   queue FULL-VALUE patches, so replaying FIFO ends at the latest value and
+   nothing double-posts. Reads are cached by the service worker (864); this is
+   the write half. */
+var DB = 'cardinal-outbox', STORE = 'writes', VER = 1;
+function db(){
+  return new Promise(function(res, rej){
+    var r = indexedDB.open(DB, VER);
+    r.onupgradeneeded = function(){
+      if(!r.result.objectStoreNames.contains(STORE))
+        r.result.createObjectStore(STORE, { keyPath:'id', autoIncrement:true });
+    };
+    r.onsuccess = function(){ res(r.result); };
+    r.onerror   = function(){ rej(r.error); };
+  });
+}
+function op(mode, run){
+  return db().then(function(d){
+    return new Promise(function(res, rej){
+      var t = d.transaction(STORE, mode), st = t.objectStore(STORE), rq = run(st);
+      t.oncomplete = function(){ res(rq && ('result' in rq) ? rq.result : undefined); };
+      t.onerror    = function(){ rej(t.error); };
+      t.onabort    = function(){ rej(t.error); };
+    });
+  });
+}
+function add(entry){ return op('readwrite', function(st){ return st.add(entry); }); }
+function getAll(){ return op('readonly',  function(st){ return st.getAll(); }); }
+function del(id){   return op('readwrite', function(st){ return st.delete(id); }); }
+
+function client(){ return window.sb || window.supa || null; }
+function networkish(e){
+  var m = String((e && e.message) || e);
+  return /load failed|failed to fetch|networkerror|network request failed|timed? ?out|fetch/i.test(m);
+}
+function pending(){ return getAll().then(function(r){ return r.length; }).catch(function(){ return 0; }); }
+
+var flushing = false, sentSome = false;
+function flush(){
+  if(flushing) return Promise.resolve();
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return Promise.resolve();
+  var cx = client();
+  if(!cx) return Promise.resolve();
+  flushing = true; sentSome = false;
+  return getAll().then(function(rows){
+    rows.sort(function(a, b){ return a.id - b.id; });   /* FIFO */
+    var chain = Promise.resolve();
+    rows.forEach(function(row){
+      chain = chain.then(function(stop){
+        if(stop) return true;
+        return Promise.resolve(cx.from(row.table).update(row.patch).eq(row.match.col, row.match.val))
+          .then(function(r){
+            if(r && r.error){
+              if(networkish(r.error)) return true;    /* still offline: keep it, stop */
+              console.warn('[outbox] dropping a refused write:', row.table, r.error.message);
+              return del(row.id).then(function(){ return false; });
+            }
+            sentSome = true;
+            return del(row.id).then(function(){ return false; });
+          })
+          .catch(function(e){
+            if(networkish(e)) return true;            /* network dropped mid-flush */
+            console.warn('[outbox] dropping a write that threw:', row.table, e && e.message);
+            return del(row.id).then(function(){ return false; });
+          });
+      });
+    });
+    return chain;
+  }).then(function(){
+    flushing = false;
+    badge();
+    if(sentSome){
+      try{ window.dispatchEvent(new CustomEvent('cr-outbox-flushed')); }catch(_){}
+      /* the punch cache is the one this phase feeds; refresh it so a synced
+         card shows the confirmed state next time it is opened. */
+      try{ if(window.CardinalPunch && window.CardinalPunch.reload) window.CardinalPunch.reload(); }catch(_){}
+    }
+  }).catch(function(){ flushing = false; badge(); });
+}
+
+function queue(entry){
+  entry.at = entry.at || new Date().toISOString();
+  return add(entry).then(function(){ badge(); flush(); });
+}
+
+/* a small "N waiting to sync" indicator, sibling to the Offline badge */
+var el;
+function ensure(){
+  if(el) return el;
+  el = document.createElement('div');
+  el.id = 'cr-outbox-badge';
+  el.style.cssText = 'display:none;position:fixed;left:50%;transform:translateX(-50%);' +
+    'bottom:calc(env(safe-area-inset-bottom,0px) + 70px);background:#3a2d0a;color:#ffd54a;' +
+    'border:1px solid #ffd54a;padding:5px 13px;border-radius:14px;z-index:10000;cursor:pointer;' +
+    "font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;" +
+    'box-shadow:0 2px 10px rgba(0,0,0,.4)';
+  el.title = 'Changes saved on this device, waiting to sync';
+  el.addEventListener('click', function(){ flush(); });
+  document.body.appendChild(el);
+  return el;
+}
+function badge(){
+  pending().then(function(n){
+    var b = ensure();
+    if(n > 0){ b.textContent = n + ' waiting to sync'; b.style.display = 'block'; }
+    else b.style.display = 'none';
+  });
+}
+
+window.addEventListener('online', flush);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) flush(); });
+setInterval(flush, 30000);
+if(document.readyState !== 'loading') badge();
+else document.addEventListener('DOMContentLoaded', badge);
+
+window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
+  queue: queue, flush: flush, pending: pending, networkish: networkish
+});
 })();
 </script>
 
