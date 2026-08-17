@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 875 &#8212; A &#8220;Send a test alert to myself&#8221; button confirms push, email and text are each working</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 876 &#8212; Dark mode no longer leaks white cards: the Inspections/Reports list, its filters, Graphs &amp; Reports and Settings rows are dark on the dark theme</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39825,6 +39825,52 @@ window.CardinalCsv = { download: download, toCsv: toCsv, exportClients: exportCl
    Needed because the view is appended to body AFTER the button moves, so an
    equal z-index loses on DOM order. */
 #cr-dark-toggle.afloat{z-index:9550}#cr-dark-toggle:hover{transform:scale(1.06)}#cr-dark-toggle:active{transform:scale(.94)}:root[data-theme="rb-light"] #cr-dark-toggle{background:rgba(255,255,255,.94);color:#161616;border-color:#c8202e}@media print{#cr-dark-toggle{display:none !important}}</style>
+<style id="cr-darkleak-fix">
+/* 876 — dark-mode leak repair. A handful of legacy "paper-era" primitives never
+   got a dark twin, so on the DEFAULT dark theme they painted white cards and
+   white form controls: the Inspections/Reports list cards + its salesman filter,
+   .chipbtn action buttons, the whole Graphs & Reports screen, and the Settings
+   rows. Found in a real Chromium render across every main view (audit_darkmode.mjs);
+   Clients, Leads, Activity, Team and the client profile already themed clean and
+   are deliberately left alone.
+   Scoped entirely to :root:not([data-theme="rb-light"]), so the LIGHT theme is
+   byte-for-byte unchanged — this block does nothing at all when the retail switch
+   is on. Dark values match the app's existing --rbe-* dark surfaces. projrow is
+   excluded on purpose (build 487 keeps the group-header band light by design). */
+:root:not([data-theme="rb-light"]) .chipbtn{background:#1b1b22;color:#e6e9ee;border-color:#33333d;}
+:root:not([data-theme="rb-light"]) .chipbtn:hover{border-color:var(--red);color:#ff7b82;}
+
+/* Inspections / Reports document list (listView, and the client-profile doc mounts) */
+:root:not([data-theme="rb-light"]) table.reports{background:transparent;border-color:#2a2a32;}
+:root:not([data-theme="rb-light"]) table.reports tr:not(.projrow) td{color:#cfd6df;}
+:root:not([data-theme="rb-light"]) table.reports tr:not(.projrow) td small,
+:root:not([data-theme="rb-light"]) table.reports tr:not(.projrow) td.dates,
+:root:not([data-theme="rb-light"]) table.reports tr:not(.projrow) td .ref{color:#9aa0a8;}
+:root:not([data-theme="rb-light"]) table.reports td{border-top-color:#2a2a32;}
+:root:not([data-theme="rb-light"]) table.reports tr:not(.projrow):hover td{background:rgba(255,255,255,.05);}
+:root:not([data-theme="rb-light"]) .projcount{background:#1b1b22;border-color:#33333d;color:#c7b3ac;}
+@media (max-width:640px){
+  :root:not([data-theme="rb-light"]) table.reports tr:not(.projrow){background:#15151b;border-color:#2a2a32;}
+}
+:root:not([data-theme="rb-light"]) .controls input[type=search],
+:root:not([data-theme="rb-light"]) .listctl select,
+:root:not([data-theme="rb-light"]) .filterbtn:not(.active){background:#15151b;border-color:#2a2a32;color:#cfd6df;}
+:root:not([data-theme="rb-light"]) .listctl{color:#c7b3ac;}
+
+/* Settings rows */
+:root:not([data-theme="rb-light"]) .setrow{background:#15151b;border-color:#2a2a32;border-left-color:var(--red);color:#e6e9ee;}
+
+/* Graphs & Reports — a whole legacy-light screen */
+:root:not([data-theme="rb-light"]) .rptfilters select,
+:root:not([data-theme="rb-light"]) .rptfilters input{background:#15151b;border-color:#2a2a32;color:#cfd6df;}
+:root:not([data-theme="rb-light"]) .rptkpi{background:#15151b;border-color:#2a2a32;}
+:root:not([data-theme="rb-light"]) .rptkpi b{color:#e6e9ee;}
+:root:not([data-theme="rb-light"]) .rpttable td{background:transparent;color:#cfd6df;border-bottom-color:#2a2a32;}
+:root:not([data-theme="rb-light"]) .rpttable tr:nth-child(even) td{background:rgba(255,255,255,.03);}
+:root:not([data-theme="rb-light"]) .rpttable th{color:#9aa0a8;}
+:root:not([data-theme="rb-light"]) .rptstale{color:#cfd6df;border-bottom-color:#2a2a32;}
+:root:not([data-theme="rb-light"]) .rptconv{color:#c7b3ac;}
+</style>
 <script id="cr-rbtheme-toggle-script">
 (function(){
 'use strict';
@@ -39923,6 +39969,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:876, d:'2026-08-17', t:'Dark mode no longer leaks white screens',
+s:'A few older screens were still painting themselves white while the rest of the app was in dark mode \u2014 most obviously the Inspections/Reports list, whose cards showed up as bright white boxes with faint, hard-to-read titles. Audited every main screen in a real browser render: the Inspections/Reports list and its salesman filter, the action buttons on those cards, the whole Graphs & Reports screen and the Settings rows now sit dark on the dark theme, matching everything else. Clients, Leads & Jobs, the Activity Feed, Team and the client profile were already correct and were left untouched. The light (sun) theme is completely unchanged \u2014 this fix only applies while you are in dark mode.' },
 { b:875, d:'2026-08-17', t:'\u201CSend a test alert to myself\u201D button',
 s:'On the notifications screen there is now a \u201CSend a test alert to myself\u201D button. Tap it and Cardinal fires a test through all three channels \u2014 push, email and text \u2014 to YOU only, then shows a line for each saying whether it went out or what still needs setting up (for example \u201CEmail: not set up yet\u201D or \u201Cadd your mobile number in the Team Directory\u201D). It is the quickest way to check the email and text setup end to end without bothering the rest of the team.' },
 { b:874, d:'2026-08-17', t:'Team alerts by text message (SMS)',
