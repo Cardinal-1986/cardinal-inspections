@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 887 &#8212; A signed estimate or contract now reads SIGNED, not UNSENT; the job-menu dropdown text is readable; the crew work order shows on the Community card; and signing asks who with buttons, not by typing a number</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 888 &#8212; Punch-out photos actually save now &#8212; they were uploading an empty placeholder instead of the picture</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40048,6 +40048,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:888, d:'2026-08-17', t:'Punch-out photos save for real (were uploading blank)',
+s:'A real fix: punch-out photos were not actually saving. Behind the scenes the card was uploading an empty internal placeholder instead of the picture you took, so every punch photo came out blank/broken \u2014 an 11-byte file, not an image. It is fixed now: the real photo is uploaded (and it still resizes large ones, works offline, and syncs when you are back). \u26A0\uFE0F Photos taken before this update did not save and will need to be retaken.' },
 { b:887, d:'2026-08-17', t:'Signing asks who with buttons, not by typing a number',
 s:'At the kitchen table, tapping Sign on a contract used to pop up a box asking you to TYPE 1, 2 or 3 to say whether the Buyer, Co-buyer or Contractor was signing — awkward on an iPad in front of a client, and easy to fumble. It now shows big tappable buttons for only the signature lines the document actually has, and if there is just one it skips the question entirely and goes straight to the pad. Nothing about how the signature is captured or stored changed. Found by the end-to-end workflow audit.' },
 { b:886, d:'2026-08-17', t:'The crew work order shows on the Community client card',
@@ -50707,7 +50709,13 @@ function pickPhoto(i){
     if(!f) return;
     try{
       if(window.CardinalSolUpload && window.CardinalSolUpload.prepare){
-        try{ f = await window.CardinalSolUpload.prepare(f); }catch(_){}
+        /* 888: prepare() returns a WRAPPER { file } (or { url } / null), NOT the
+           file itself. This used to do `f = await prepare(f)` and upload `f`, so
+           it uploaded the wrapper OBJECT \u2014 which serialised to the 11-byte string
+           {"file":{}} \u2014 and every punch photo in the private bucket was an 11-byte
+           non-image. Unwrap to the real File; if prepare returns no file (over the
+           cap / non-image) keep the camera File rather than upload a broken wrapper. */
+        try{ var _pp = await window.CardinalSolUpload.prepare(f); if(_pp && _pp.file) f = _pp.file; }catch(_){}
       }
       if(typeof navigator !== 'undefined' && navigator.onLine === false){
         await queuePhoto(it.id, f); flushPhotos(); return;
