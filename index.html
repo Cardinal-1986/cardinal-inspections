@@ -165,6 +165,9 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 }
 .chip.sent{background:var(--sent);}
 .chip.unsent{background:var(--slate);}
+/* 884: a signed estimate/contract is a stronger state than sent — green, so it
+   never reads as UNSENT once the client has put their name on it. */
+.chip.signed{background:#2e7d32;}
 
 .chipbtn{
   font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
@@ -707,6 +710,12 @@ body.claim-insurance #leadCard .llrow b{color:var(--ct-ink);}
 #brandTitle{min-width:0;overflow:hidden;}
 #brandTitle h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .jobmenu:focus{outline:2px solid var(--red);outline-offset:1px;}
+/* 885: the closed control is white-on-#4a4a4a and readable, but the OPTION popup
+   inherited only the white color onto the OS's default white popup ground —
+   white-on-white, "can't read the text". Pin the popup dark. This control only
+   renders >560px (the namebar replaces it on phones), where browsers honour
+   option styling, so this is the whole fix — no custom menu needed. */
+.jobmenu option, .jobmenu optgroup{background:#2a2a2a;color:#fff;}
 .ptabs{display:flex;gap:6px;margin:18px 0 0;border-bottom:2px solid var(--red);flex-wrap:wrap;}
 .ptab{border:1px solid var(--line);border-bottom:0;background:#f3ecea;color:#6b5a54;
   padding:10px 18px;border-radius:9px 9px 0 0;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
@@ -3515,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 883 &#8212; The stage banner on a client updates the moment you advance the stage, instead of waiting until you reopen the client</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 887 &#8212; A signed estimate or contract now reads SIGNED, not UNSENT; the job-menu dropdown text is readable; the crew work order shows on the Community card; and signing asks who with buttons, not by typing a number</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10802,10 +10811,21 @@ function docKind(title){
   return { type:'Inspection', trade:'Roofing' };
 }
 function docRowHtml(r){
-  var statusCell = r.status === 'sent'
-    ? '<span class="chip sent">SENT</span>' +
-      (r.sent_at ? '<small>Sent ' + fmtDay(r.sent_at) + '</small>' : '')
-    : '<span class="chip unsent">UNSENT</span>';
+  /* 884: a signed document is a stronger state than sent/unsent — the client has
+     accepted it. It had been reading UNSENT because the status column only ever
+     moves to 'sent' on the "Mark sent" toggle, and a signature writes signed_at,
+     not status. Surface signed_at as its own green SIGNED chip. */
+  var statusCell;
+  if(r.signed_at){
+    statusCell = '<span class="chip signed">SIGNED</span>' +
+      '<small>Signed ' + fmtDay(r.signed_at) + '</small>' +
+      (r.status === 'sent' && r.sent_at ? '<small>Sent ' + fmtDay(r.sent_at) + '</small>' : '');
+  }else if(r.status === 'sent'){
+    statusCell = '<span class="chip sent">SENT</span>' +
+      (r.sent_at ? '<small>Sent ' + fmtDay(r.sent_at) + '</small>' : '');
+  }else{
+    statusCell = '<span class="chip unsent">UNSENT</span>';
+  }
   /* 723: a crew work order also carries a dispatch/completion state on its
      crew_work_orders row — surfaced here so a dispatched or finished job reads
      as such, not just "sent". */
@@ -21852,10 +21872,18 @@ var toggleBtn  = document.getElementById('toggleStatusBtn');
 var savedFlash = document.getElementById('savedFlash');
 var current = null; /* {id, status, sent_at} */
 
-function setEditorStatus(status, sentAt){
-  statusChip.textContent = status.toUpperCase();
-  statusChip.className = 'chip ' + status;
-  sentDateEl.textContent = (status === 'sent' && sentAt) ? 'Sent ' + fmtDay(sentAt) : '';
+function setEditorStatus(status, sentAt, signedAt){
+  /* 884: a signed document reads SIGNED (green), not the sent/unsent it never
+     leaves — signing writes signed_at, not status. */
+  if(signedAt){
+    statusChip.textContent = 'SIGNED';
+    statusChip.className = 'chip signed';
+    sentDateEl.textContent = 'Signed ' + fmtDay(signedAt);
+  }else{
+    statusChip.textContent = status.toUpperCase();
+    statusChip.className = 'chip ' + status;
+    sentDateEl.textContent = (status === 'sent' && sentAt) ? 'Sent ' + fmtDay(sentAt) : '';
+  }
   toggleBtn.textContent = status === 'sent' ? 'Mark unsent' : 'Mark sent';
 }
 
@@ -23202,7 +23230,7 @@ async function openEditor(id){
      signing a contract in person never moved the job to Approved and never
      notified Curtis - the alert promising both could not fire. The row is
      already in hand as `r`; it simply was not carried. */
-  current = { id: r.id, status: r.status, sent_at: r.sent_at, project_id: r.project_id };
+  current = { id: r.id, status: r.status, sent_at: r.sent_at, signed_at: r.signed_at, project_id: r.project_id };
   titleInput.value = r.title || '';
   /* 851: a Work Order goes to the CREW, not the homeowner, so the Email button
      must not say "client" on one. Context-aware label, stored on the button so
@@ -23234,7 +23262,7 @@ async function openEditor(id){
       else{ rc.style.display = 'none'; }
     }
   })();
-  setEditorStatus(r.status, r.sent_at);
+  setEditorStatus(r.status, r.sent_at, r.signed_at);
   savedFlash.textContent = '';
   rccGate();
   frame.srcdoc = r.html;
@@ -23604,6 +23632,31 @@ sigPad.addEventListener('touchstart', sigStart, { passive: false });
 sigPad.addEventListener('touchmove', sigMove, { passive: false });
 sigPad.addEventListener('touchend', sigEnd);
 
+/* 887: a client-facing signature must never ask a homeowner to TYPE a number.
+   The old flow was prompt("Type 1, 2 or 3") — this replaces it with a tapped
+   chooser of only the roles the document actually has. One role auto-selects. */
+function pickSigner(doc, cb){
+  var names = { buyer:'Buyer', cobuyer:'Co-buyer', contractor:'Contractor (you)' };
+  var order = ['buyer','cobuyer','contractor'];
+  var avail = order.filter(function(k){ return doc && doc.querySelector('[data-sig="' + k + '"]'); });
+  if(avail.length <= 1){ cb(avail[0] || null); return; }
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:240;background:rgba(20,10,8,.62);display:flex;align-items:center;justify-content:center;padding:20px;';
+  ov.innerHTML =
+    '<div style="background:#fff;border-radius:16px;padding:22px 20px;max-width:360px;width:100%;box-shadow:0 18px 60px rgba(0,0,0,.4);">' +
+    '<h3 style="margin:0 0 4px;font:800 18px \'Segoe UI\',Arial,sans-serif;color:#1b1b1b;">Who is signing?</h3>' +
+    '<p style="margin:0 0 16px;font:600 13px \'Segoe UI\',Arial,sans-serif;color:#6b5a54;">Tap a name to place their signature.</p>' +
+    avail.map(function(k){ return '<button type="button" data-who="' + k + '" style="display:block;width:100%;margin:0 0 10px;padding:15px 16px;min-height:48px;border-radius:11px;border:1px solid #c8202e;background:#fff;color:#8f1620;font:800 16px \'Segoe UI\',Arial,sans-serif;cursor:pointer;text-align:left;">' + esc(names[k]) + '</button>'; }).join('') +
+    '<button type="button" data-who="" style="display:block;width:100%;margin:6px 0 0;padding:13px 16px;min-height:44px;border-radius:11px;border:1px solid #c9c2bf;background:none;color:#6b5a54;font:700 14px \'Segoe UI\',Arial,sans-serif;cursor:pointer;">Cancel</button>' +
+    '</div>';
+  document.body.appendChild(ov);
+  function done(who){ ov.remove(); cb(who || null); }
+  ov.addEventListener('click', function(e){
+    if(e.target === ov){ done(null); return; }              /* backdrop = cancel */
+    var t = e.target.closest('[data-who]');
+    if(t) done(t.getAttribute('data-who'));
+  });
+}
 document.getElementById('sigBtn').addEventListener('click', function(){
   window.__ceSigner = null;   /* 722: inspection_reports signing, never a contract */
   /* 781: an agreement has three signature rows. Ask WHOSE signature this is
@@ -23613,21 +23666,16 @@ document.getElementById('sigBtn').addEventListener('click', function(){
   __sigWho = null;
   var doc = frame.contentDocument;
   var slots = doc ? doc.querySelectorAll('[data-sig]') : [];
+  function openPad(){ sigReset(); sigModal.style.display = 'block'; }
   if(slots.length){
-    var names = { buyer:'Buyer', cobuyer:'Co-buyer', contractor:'Contractor' };
-    var pick = prompt('Who is signing?\n\n' +
-      '1 = Buyer\n2 = Co-buyer\n3 = Contractor (you)\n\nType 1, 2 or 3.', '1');
-    if(pick === null) return;
-    var key = ({ '1':'buyer', '2':'cobuyer', '3':'contractor' })[String(pick).trim()];
-    if(!key){ alert('Type 1, 2 or 3.'); return; }
-    if(!doc.querySelector('[data-sig="' + key + '"]')){
-      alert('This document has no ' + names[key] + ' signature line.');
-      return;
-    }
-    __sigWho = key;
+    pickSigner(doc, function(key){
+      if(!key) return;            /* cancelled — nothing opens */
+      __sigWho = key;
+      openPad();
+    });
+    return;
   }
-  sigReset();
-  sigModal.style.display = 'block';
+  openPad();
 });
 var __sigWho = null;
 document.getElementById('sigClear').addEventListener('click', sigReset);
@@ -23667,7 +23715,10 @@ document.getElementById('sigApply').addEventListener('click', async function(){
         /* Only the BUYER accepting is the deal being struck — a contractor
            countersignature must not advance anyone's pipeline. */
         if(_who === 'buyer'){
-          await db.update(current.id, { signed_at: new Date().toISOString() });
+          var _sAt = new Date().toISOString();
+          await db.update(current.id, { signed_at: _sAt });
+          current.signed_at = _sAt;
+          setEditorStatus(current.status, current.sent_at, _sAt);
           var _t = (titleInput.value || '').trim();
           if(/^contract/i.test(_t) && current.project_id){ await setStage(current.project_id, 'Approved'); }
         }
@@ -23695,7 +23746,10 @@ document.getElementById('sigApply').addEventListener('click', async function(){
   await saveCurrent();
   /* workflow: record the signature as data */
   try{
-    await db.update(current.id, { signed_at: new Date().toISOString() });
+    var _sAt2 = new Date().toISOString();
+    await db.update(current.id, { signed_at: _sAt2 });
+    current.signed_at = _sAt2;
+    setEditorStatus(current.status, current.sent_at, _sAt2);
     var t = (titleInput.value || '').trim();
     if(/^contract/i.test(t) && current.project_id){
       await setStage(current.project_id, 'Approved');
@@ -23875,7 +23929,7 @@ toggleBtn.addEventListener('click', async function(){
         try{ await setStage(trow.project_id, 'Invoiced'); }catch(e){}
       }
     }
-    setEditorStatus(current.status, sentAt);
+    setEditorStatus(current.status, sentAt, current.signed_at);
     reload();
   }catch(err){ showError('Could not update status: ' + (err.message || err)); }
 });
@@ -39994,6 +40048,14 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:887, d:'2026-08-17', t:'Signing asks who with buttons, not by typing a number',
+s:'At the kitchen table, tapping Sign on a contract used to pop up a box asking you to TYPE 1, 2 or 3 to say whether the Buyer, Co-buyer or Contractor was signing — awkward on an iPad in front of a client, and easy to fumble. It now shows big tappable buttons for only the signature lines the document actually has, and if there is just one it skips the question entirely and goes straight to the pad. Nothing about how the signature is captured or stored changed. Found by the end-to-end workflow audit.' },
+{ b:886, d:'2026-08-17', t:'The crew work order shows on the Community client card',
+s:'On a Community (non-profit / property-manager) client, the black profile card had a Work Orders section that only ever showed work orders a partner uploaded TO us — the crew work order we issue OUT to a subcontractor was invisible there, even after it had been dispatched. It now lists each crew work order with its state (Draft / Dispatched / Completed) and a one-tap "Open Work Orders" button to manage them. Retail clients already showed these; this brings Community in line. Found by the end-to-end workflow audit.' },
+{ b:885, d:'2026-08-17', t:'The job-menu dropdown text is readable again',
+s:'On desktop, the section dropdown inside an open client (Overview, Checklists, Punch Outs, Estimates…) opened its list as white text on a white background — unreadable. The closed control was always fine; only the opened list was affected. The list is now dark with white text. Phones were never affected (they use the tab strip, not this dropdown). Found by the end-to-end workflow audit.' },
+{ b:884, d:'2026-08-17', t:'A signed estimate or contract reads SIGNED, not UNSENT',
+s:'Once a client signed an estimate or contract in person, the document still showed a grey "UNSENT" chip in the Documents list and the editor — because signing records the signature but never flips the sent/unsent status. A signed document now wears its own green SIGNED chip (with the date), so accepted paperwork never reads as if nobody has touched it. A document that was never signed still reads UNSENT until you mark it sent. Found by the end-to-end workflow audit.' },
 { b:883, d:'2026-08-17', t:'The stage banner updates the instant you change the stage',
 s:'On a client profile, advancing the stage — for example tapping "Contacted → Prospect", or changing the stage dropdown — updated the little dropdown but left the big stage banner (and its "in status" day counter) showing the OLD stage until you left the client and reopened it. It now repaints immediately, so the banner and the age you see always match the stage the job is actually in. Found by the end-to-end workflow audit.' },
 { b:882, d:'2026-08-17', t:'Set a time for punch-outs, not just a date',
@@ -54658,6 +54720,18 @@ background:linear-gradient(var(--ccm-wash,rgba(4,120,87,.18)),var(--ccm-wash,rgb
 #cr-cc .cc-pp .ppacts{display:flex;gap:7px;margin-top:7px;flex-wrap:wrap}
 #cr-cc .cc-pp .ppacts button{background:transparent;border:1px solid var(--ccm-line,#2a2f2c);color:var(--ccm-ink,#f2f4f3);border-radius:7px;padding:7px 11px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
 #cr-cc .cc-pp .ppacts button:active{background:var(--ccm-line,#2a2f2c)}
+/* 886: the OUTBOUND crew work order, surfaced on the black card. It lives as an
+   inspection_reports doc (isWorkOrderTitle) with dispatch/completion on
+   woByReport, and had never rendered here — only the inbound partner-upload
+   module did. Read-only rows + one tap-through to the Work Orders tab. */
+#cr-cc .cc-wo-crew{display:flex;flex-direction:column;gap:7px;padding:2px}
+#cr-cc .cc-wo-crew .ccwo-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border-radius:9px;background:linear-gradient(var(--ccm-card,#161918),var(--ccm-card,#161918)) padding-box,var(--ccm-edge2,#2a2f2c) border-box;border:1px solid transparent}
+#cr-cc .cc-wo-crew .ccwo-t{font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#cr-cc .cc-wo-crew .ccwo-st{flex:0 0 auto;font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:3px 9px;border-radius:8px;border:1px solid var(--ccm-line,#2a2f2c);color:var(--ccm-dim,#828c86)}
+#cr-cc .cc-wo-crew .ccwo-st.disp{color:#7fb4ff;border-color:#2b4a70}
+#cr-cc .cc-wo-crew .ccwo-st.done{color:#7fd69a;border-color:#2e6d43}
+#cr-cc .cc-wo-crew .cc-wo-manage{margin-top:3px;background:transparent;border:1px solid var(--ccm-line,#2a2f2c);color:var(--ccm-ink,#f2f4f3);border-radius:7px;padding:8px 11px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
+#cr-cc .cc-wo-crew .cc-wo-manage:active{background:var(--ccm-line,#2a2f2c)}
 /* 709: the Recorded line on the Bid pane (ported from the cream strip) */
 #cr-cc .sheet .recline{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:9px 0 0;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:var(--ccm-dim,#828c86)}
 #cr-cc .sheet .recline button{background:transparent;border:1px solid var(--ccm-line,#2a2f2c);color:var(--ccm-ink,#f2f4f3);border-radius:7px;padding:5px 9px;cursor:pointer;font:800 9px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase}
@@ -55571,11 +55645,46 @@ function woSync(){
 var box = document.getElementById('cr-cc-wo');
 var head = document.getElementById('cr-cc-wo-h');
 if(!box) return;
+var pr = window.currentProject;
 var WO = window.CardinalWorkOrders || null;
 var see = !!(WO && WO.canSee && WO.canSee());
-if(head) head.style.display = see ? '' : 'none';
-box.style.display = see ? '' : 'none';
-if(see && WO.render){ try{ WO.render(box); }catch(_){ } }
+/* 886: the outbound crew work order — an inspection_reports doc, not a partner
+   upload — was invisible on this card because only the inbound module rendered
+   here. List it too, with its dispatch/completion state from woByReport. */
+var isWOt = (typeof isWorkOrderTitle === 'function') ? isWorkOrderTitle : function(t){ return /^work order/i.test((t||'').trim()); };
+var crewWos = (pr && Array.isArray(window.cacheRows))
+  ? window.cacheRows.filter(function(r){ return r.project_id === pr.id && isWOt(r.title); })
+  : [];
+var show = see || crewWos.length > 0;
+if(head) head.style.display = show ? '' : 'none';
+box.style.display = show ? '' : 'none';
+if(!show) return;
+box.innerHTML = '';
+if(crewWos.length){
+  var wm = document.createElement('div');
+  wm.className = 'cc-wo-crew';
+  var wbr = window.woByReport || {};
+  wm.innerHTML = crewWos.map(function(r){
+    var w = wbr[r.id];
+    var cls = '', txt = 'Draft';
+    if(w && w.completed_on){ cls = ' done'; txt = 'Completed'; }
+    else if((w && (w.status === 'sent' || w.sent_at)) || r.status === 'sent'){ cls = ' disp'; txt = 'Dispatched'; }
+    return '<div class="ccwo-row"><span class="ccwo-t">' + esc(r.title || 'Work Order') +
+      '</span><span class="ccwo-st' + cls + '">' + txt + '</span></div>';
+  }).join('') +
+  '<button type="button" class="cc-wo-manage" data-cc-wo-manage="1">Open Work Orders</button>';
+  box.appendChild(wm);
+  var mb = box.querySelector('[data-cc-wo-manage]');
+  if(mb) mb.onclick = function(){
+    try{ suspendForTab(); }catch(_){}
+    if(typeof showTab === 'function') showTab('workorders');
+  };
+}
+if(see && WO.render){
+  var host = document.createElement('div');
+  box.appendChild(host);
+  try{ WO.render(host); }catch(_){ }
+}
 }
 /* 706: Partner & Property — the first-build attach rows re-homed on the card
    (Phase 2 of the settled (a) decision). Reads the MASKED roster on purpose —

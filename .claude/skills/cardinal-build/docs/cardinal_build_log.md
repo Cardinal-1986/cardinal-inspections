@@ -18362,3 +18362,42 @@ async patch persists the same values.
 
 Gate render_stagebanner883.mjs: v883 banner LEAD→PROSPECT immediately, v882 banner stays LEAD (negative
 control). check_build green (882 -> 883). No SQL.
+
+## Builds 884–887 — E2E audit follow-ups (one PR, span), plus one verified false positive
+Second pass on the drive_lifecycle audit findings. All four shipped together (app stamp 887); each has
+its own negative-controlled Chromium gate. No SQL.
+
+**884 — a signed document reads SIGNED, not UNSENT.** docRowHtml's status cell (and the editor's
+setEditorStatus) only ever checked `status === 'sent'`, but signing writes `signed_at`, never touches
+status — so a signed estimate/contract kept a grey UNSENT chip. Added a green `.chip.signed`; docRowHtml
+and setEditorStatus now prefer signed_at, and both sigApply branches refresh the editor chip + carry
+signed_at on `current`. signed_at was already in the docRowHtml select. Gate render_signedchip884.mjs
+(list + editor); control 883 shows UNSENT.
+
+**885 — job-menu dropdown readable.** `#jobMenuSel` (.jobmenu) is white-on-#4a4a4a closed, but the
+OPTION popup inherited only the white color onto the OS default white ground — white-on-white. Pinned
+`.jobmenu option{background:#2a2a2a;color:#fff}`. This select only renders >560px (the namebar replaces
+it on phones), where option styling is honoured — no custom menu needed. Control 883: option bg
+`rgba(0,0,0,0)`; patched: `rgb(42,42,42)`.
+
+**886 — the crew work order shows on the Community card.** `#cr-cc-wo` (woSync) rendered only the
+INBOUND partner-upload module (CardinalWorkOrders). The OUTBOUND crew WO — an inspection_reports doc
+(isWorkOrderTitle) with dispatch/completion on woByReport — was invisible there. woSync now lists the
+project's crew WOs (Draft/Dispatched/Completed) with a tap-through that reuses the existing
+suspendForTab()+showTab('workorders') path; the inbound module still renders below. New `.cc-wo-crew`
+styles use the card's --ccm-* tokens with literal fallbacks. Gate render_ccwo886.mjs; control 883 lists
+no crew rows.
+
+**887 — signing asks who with buttons.** The client-facing sign flow was `prompt("Who is signing? Type
+1, 2 or 3")` + `alert("Type 1,2,3")` — a homeowner typing a number on an iPad. Replaced with
+pickSigner(): a tapped chooser of only the roles the document has (≥48px targets), auto-selecting when
+there is one. Gate render_signpicker887.mjs asserts the chooser appears and NO native dialog fires;
+control 883 fires a prompt.
+
+**Not a bug — the intake form (S1 "44 fields, 0 required").** Verified false positive. render_intake_census.mjs:
+only 15 fields are visible on open (not 44), 7 are starred required, and the insurance block is hidden
+until claim type = insurance; the rest are under the existing "More detail" expander. The audit driver's
+census used `getComputedStyle(el).display` (which ignores hidden ANCESTORS, so it counted the collapsed
+.ldmore fields and the display:none insurance box) and looked for an HTML `required` attribute this
+JS-validated form never uses. Fixed the driver's census (offsetParent + visual "*") so the re-run won't
+re-report it. No app change.
