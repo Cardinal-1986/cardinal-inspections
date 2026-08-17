@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 865 &#8212; Offline-first phase 2 &#8212; punch-out saves are kept on the phone and sync when you&#8217;re back</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 866 &#8212; Offline-first phase 4 &#8212; photos taken with no signal are kept on the phone and upload when you&#8217;re back</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39744,6 +39744,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:866, d:'2026-08-17', t:'Offline-first, phase 4 \u2014 photos survive no signal',
+s:'Photos now work in a dead zone too. Take a photo on a punch-out with no signal and it is held on the phone \u2014 the card shows \u201cN photos saved on your phone, uploading when you are back\u201d \u2014 then it uploads and attaches itself the moment you have a connection (or next time you open the app). Nothing is lost. Each held photo uploads to its own fixed spot and is de-duplicated on the way in, so it can never post twice.' },
 { b:865, d:'2026-08-17', t:'Offline-first, phase 2 \u2014 saves survive no signal',
 s:'The second phase of offline support: saving. A punch-out change made with no signal \u2014 a message, a step, closing it out \u2014 is now saved on the phone instead of failing, and syncs itself the moment you are back online (or next time you open the app). A small \u201cN waiting to sync\u201d badge shows how many changes are queued, and tapping it tries now. Nothing is lost in a dead zone. Photos in a dead zone are the next phase. A real permission error still tells you right away \u2014 only lost-signal saves are held.' },
 { b:864, d:'2026-08-17', t:'Offline-first, phase 1 \u2014 screens work with no signal',
@@ -49530,6 +49532,9 @@ window.CardinalProduction = {
 @media (min-width:900px){
   #cr-pk .pksplit{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr); gap:18px; align-items:start; }
 }
+/* 866: photos held on the device, waiting to upload */
+#cr-pk .pkpnote{ display:flex; align-items:center; gap:7px; margin-top:9px; padding:8px 11px; border-radius:9px; background:#3a2d0a; color:#ffd54a; border:1px solid rgba(255,213,74,.5); font:700 10.5px 'Segoe UI',Arial,sans-serif; letter-spacing:.02em; }
+#cr-pk .pkpnote svg{ width:14px; height:14px; flex:none; }
 /* 859: the separate, scrollable photo gallery */
 #cr-pk .pkgalbtn{ display:flex; align-items:center; justify-content:center; gap:7px; width:100%; margin-top:9px; background:var(--pk-c2,#1b1e22); color:var(--pk-ink,#eceef0); border:1px solid var(--pk-line,rgba(230,235,240,.11)); border-radius:9px; padding:10px 12px; cursor:pointer; font:700 11px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.05em; }
 #cr-pk .pkgalbtn:hover{ border-color:var(--pk-acc,#e35c63); }
@@ -49822,9 +49827,11 @@ function photosHtml(){
   var gal = '<button class="pkgalbtn" data-act="gallery" type="button">' + svg('cam') +
       (ph.length ? ' View all <b>' + ph.length + '</b> photo' + (ph.length === 1 ? '' : 's')
                  : ' Photo gallery') + '</button>';
+  var _pend = photoPendFor(it && it.id);
+  var pnote = _pend ? '<div class="pkpnote">' + svg('cam') + esc(_pend + ' photo' + (_pend === 1 ? '' : 's') + ' saved on your phone \u2014 uploading when you\u2019re back') + '</div>' : '';
   return '<div class="pksec"><div class="pkh">' + svg('cam') + 'Photos' +
     '<span class="rt"><b>' + ph.length + '</b> of ' + PHOTO_MIN + ' to close</span></div>' +
-    '<div class="pkslots">' + cells + '</div>' + gal + '</div>';
+    '<div class="pkslots">' + cells + '</div>' + gal + pnote + '</div>';
 }
 function galleryHtml(){
   var ph = photos();
@@ -50182,6 +50189,84 @@ async function notifyClosed(){
     outMsg = outcomeText(res, to, 'the office');
   }catch(_){}
 }
+/* 866: OFFLINE PHOTO capture. When there's no signal the resized image bytes
+   are held on the device (IndexedDB) and uploaded + appended when we're back.
+   The punch_items.photos array only ever gets a real URL, never a local id, so
+   nothing breaks for anyone else. Idempotent: a stable storage path per queued
+   photo (upsert) + dedupe-on-append means a re-run can't duplicate. */
+var PDB = 'cardinal-photo-outbox', PSTORE = 'q';
+function pdbOpen(){
+  return new Promise(function(res, rej){
+    var r = indexedDB.open(PDB, 1);
+    r.onupgradeneeded = function(){ if(!r.result.objectStoreNames.contains(PSTORE)) r.result.createObjectStore(PSTORE, { keyPath:'id', autoIncrement:true }); };
+    r.onsuccess = function(){ res(r.result); };
+    r.onerror   = function(){ rej(r.error); };
+  });
+}
+function pTx(mode, run){
+  return pdbOpen().then(function(d){
+    return new Promise(function(res, rej){
+      var t = d.transaction(PSTORE, mode), st = t.objectStore(PSTORE), rq = run(st);
+      t.oncomplete = function(){ res(rq && ('result' in rq) ? rq.result : undefined); };
+      t.onerror = function(){ rej(t.error); };
+      t.onabort = function(){ rej(t.error); };
+    });
+  });
+}
+function pAll(){ return pTx('readonly', function(st){ return st.getAll(); }).catch(function(){ return []; }); }
+function pDel(id){ return pTx('readwrite', function(st){ return st.delete(id); }); }
+var _photoPend = {}, _flushingPhotos = false;
+function refreshPhotoPend(){ return pAll().then(function(rows){ var m={}; rows.forEach(function(r){ m[r.itemId]=(m[r.itemId]||0)+1; }); _photoPend=m; return rows.length; }); }
+function photoPendFor(id){ return _photoPend[id] || 0; }
+function queuePhoto(itemId, blob){
+  var me = myEmail();
+  return pTx('readwrite', function(st){ return st.add({ itemId:itemId, blob:blob, by:me, name:nameOf(me), at:new Date().toISOString() }); })
+    .then(function(){ return refreshPhotoPend(); })
+    .then(function(){ lastSig=''; render(); });
+}
+function _pNet(e){ var m = String((e && e.message) || e); return /load failed|failed to fetch|networkerror|network request failed|timed? ?out|fetch/i.test(m); }
+async function flushPhotos(){
+  if(_flushingPhotos) return;
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  var cx = window.sb || window.supa; if(!cx || !cx.storage) return;
+  _flushingPhotos = true;
+  try{
+    var rows = await pAll();
+    for(var i=0;i<rows.length;i++){
+      var row = rows[i];
+      try{
+        var path = 'punch/' + row.itemId + '/offline-' + row.id + '.jpg';
+        var up = await cx.storage.from('photos').upload(path, row.blob, { upsert:true, contentType:'image/jpeg' });
+        if(up && up.error) throw up.error;
+        var pub = cx.storage.from('photos').getPublicUrl(path);
+        var url = (pub && pub.data && pub.data.publicUrl) || '';
+        if(!url) throw new Error('no url back from storage');
+        var cur = await cx.from('punch_items').select('photos').eq('id', row.itemId).single();
+        if(cur && cur.error) throw cur.error;
+        var arr = (cur && cur.data && Array.isArray(cur.data.photos)) ? cur.data.photos.slice() : [];
+        if(!arr.some(function(p){ return pUrl(p) === url; })){
+          arr.push({ u:url, by:row.by, name:row.name, at:row.at });
+          var ur = await cx.from('punch_items').update({ photos: arr }).eq('id', row.itemId);
+          if(ur && ur.error) throw ur.error;
+        }
+        await pDel(row.id);
+      }catch(e){
+        if(_pNet(e)) break;   /* still offline: keep it, try later */
+        console.warn('[photo-outbox] dropping a photo that was refused:', String((e && e.message) || e));
+        await pDel(row.id);
+      }
+    }
+  }catch(_){}
+  _flushingPhotos = false;
+  await refreshPhotoPend();
+  try{ if(window.CardinalPunch && window.CardinalPunch.reload) await window.CardinalPunch.reload(); }catch(_){}
+  lastSig=''; render();
+}
+window.addEventListener('online', flushPhotos);
+window.addEventListener('cr-outbox-flushed', flushPhotos);
+document.addEventListener('visibilitychange', function(){ if(!document.hidden) flushPhotos(); });
+setInterval(flushPhotos, 35000);
+refreshPhotoPend();
 function pickPhoto(i){
   var inp = document.createElement('input');
   inp.type = 'file';
@@ -50196,6 +50281,9 @@ function pickPhoto(i){
       if(window.CardinalSolUpload && window.CardinalSolUpload.prepare){
         try{ f = await window.CardinalSolUpload.prepare(f); }catch(_){}
       }
+      if(typeof navigator !== 'undefined' && navigator.onLine === false){
+        await queuePhoto(it.id, f); flushPhotos(); return;
+      }
       var path = 'punch/' + it.id + '/' + Date.now() + '-' + (SLOTS[i] ? SLOTS[i].k : 'extra') + '.jpg';
       var up = await window.supa.storage.from('photos').upload(path, f, { upsert:true, contentType:'image/jpeg' });
       if(up.error) throw up.error;
@@ -50207,7 +50295,10 @@ function pickPhoto(i){
       var me = myEmail();
       list[i] = { u:url, by:me, name:nameOf(me), at:new Date().toISOString() };
       await save({ photos: list.filter(function(x){ return !!pUrl(x); }) });
-    }catch(e){ alert('Could not attach the photo: ' + (e.message || e)); }
+    }catch(e){
+      if(_pNet(e)){ try{ await queuePhoto(it.id, f); }catch(_){} flushPhotos(); return; }
+      alert('Could not attach the photo: ' + (e.message || e));
+    }
   };
   inp.click();
 }
@@ -50352,6 +50443,9 @@ window.CardinalPunchCard = {
   close : close,
   isOpen: function(){ return !!(el && el.classList.contains('open')); },
   TEMPLATES : TEMPLATES,
+  _queuePhoto: function(id, blob){ return queuePhoto(id, blob); },
+  _flushPhotos: function(){ return flushPhotos(); },
+  _pendingPhotos: function(){ return refreshPhotoPend(); },
 };
 })();
 </script>
