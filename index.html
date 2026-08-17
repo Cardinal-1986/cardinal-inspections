@@ -3515,7 +3515,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 879 &#8212; Leads &amp; Jobs map: the Map/Satellite/Communications toggle no longer sits on top of the map, and the map is bigger</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 880 &#8212; A retail client no longer shows the red Insurance header just because Insurance was the last portal you were in</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39983,6 +39983,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:880, d:'2026-08-17', t:'Retail clients stop wearing the Insurance header',
+s:'Open a retail or brand-new lead client right after you had been in the Insurance portal, and its profile painted the red “Insurance” header — as if the client were a claim. The header was falling back to whichever portal you were last in whenever the client’s type wasn’t the exact word “retail” (a new lead has no type set yet), so it borrowed Insurance. Now, whenever a client profile is open, the header follows THAT client — insurance clients get the insurance header, everyone else gets the normal retail one — and only the shared screens (Leads, Photos, Reports) still follow the portal you picked. The Convert-to-Insurance card was right all along; the header was the thing lying.' },
 { b:879, d:'2026-08-17', t:'Leads & Jobs: map toggle no longer covers the map',
 s:'On the Leads & Jobs screen, the job summary on the right shows a map of the property. The little Map / Satellite / Communications switcher was floating on top of the map, overlapping it and bumping into Google’s own map controls. It is now a clean bar directly above the map instead of sitting on it, and the map itself is taller so you can see more of the property. Nothing else about that screen changed.' },
 { b:878, d:'2026-08-17', t:'E2E Smoke Walk stops crying wolf too',
@@ -56105,14 +56107,14 @@ else if(typeof window.showHome === 'function'){ window.showHome(); }
 function crmHead(){
 var k = crmNow();
 if(k !== 'retail') return k;
-var pr = window.currentProject;
-if(pr){
-var t = claimTypeOf(pr);
-if(!t && typeof window.projClaimType === 'function'){
-try{ t = window.projClaimType(pr) || ''; }catch(e){}
-}
-if(t === 'retail') return 'retail';
-}
+/* 880: crmNow() already returns insurance/community for an open project of that
+   type (above), so reaching here with a client profile OPEN means the open
+   client is retail/untyped — and the header must be retail. The old guard
+   required claim_type to be the literal 'retail'; a lead/blank-type client
+   failed it and fell through to stickyCrm(), which painted the LAST portal's
+   header (insurance red) onto a retail client — the reported bug. Only shared
+   screens (no profile open) follow the sticky portal, which is the 754 design. */
+if(document.body.classList.contains('projopen')) return 'retail';
 return stickyCrm();
 }
 function skin(){

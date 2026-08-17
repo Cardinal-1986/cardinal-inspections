@@ -18288,3 +18288,26 @@ Gate render_ljmap879.mjs is negative-controlled: v878 -> tabs overlap the map (t
 frameTop 464), v879 -> tabs above the map (tabsBottom == frameTop 509, no overlap), map 380px.
 Before/after rendered from the real app and shown to Theo. check_build green (stamp 878 -> 879,
 138/138 style tags). No SQL.
+
+## Build 880 — retail client no longer shows the Insurance header (sticky-portal leak)
+Theo's screenshot: a retail/lead test client rendered the red "Insurance" header while ALSO showing
+the "Convert to Insurance" card (which only appears on non-insurance clients) — proof the header was
+lying. Root cause in crmHead() (index.html ~56105): when crmNow() returned 'retail' and a client
+profile was open, the code only returned 'retail' if the client's claim_type was the LITERAL string
+'retail'. A brand-new lead has a blank claim_type (projClaimType -> 'unknown'), failed that exact
+match, and fell through to stickyCrm(), which returns the last portal the user was in — insurance —
+so the header painted insurance-red on a retail client.
+
+Fix: crmNow() already returns insurance/community for an open project of that type, so reaching the
+retail branch with a profile OPEN means the client is retail/untyped and the header must be retail.
+Replaced the `t === 'retail'` guard with `if(document.body.classList.contains('projopen')) return
+'retail';`. Only shared screens (no profile open) still follow the sticky portal — the 754 design,
+preserved. claimTypeOf/projClaimType dead code in this function removed.
+
+Gate render_crmhead880.mjs (real-app render, sticky portal forced to insurance): v879 -> retail
+client gets 'insurance' header (bug reproduced), v880 -> retail client gets 'retail', insurance
+client still 'insurance' (no regression). check_build green (stamp 879 -> 880). No SQL.
+
+Part of the Theo-screenshot batch on branch claude/light-dark-mode-audit-nxei27 (879 leads-map, 880
+this). Still open: unreadable native job-menu dropdown (needs custom menu), line-item library dark
+mode + disappearing nav, crew work order not reachable on the community profile.
