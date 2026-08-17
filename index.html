@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 860 &#8212; The punch-out photo gallery button always shows, even before any photos are added</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 861 &#8212; Punch-out saves retry a dropped connection instead of failing on the first blip</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39723,6 +39723,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:861, d:'2026-08-17', t:'Punch-out saves survive a weak signal',
+s:'Saving on the punch-out card \u2014 a message, a photo, a step, closing it \u2014 no longer fails the moment the phone drops a request. On a roof with a weak signal iOS reports a dropped connection as \u201cTypeError: Load failed\u201d; the save now quietly retries a couple of times before it gives up, so a brief blip recovers on its own. A real permission refusal still surfaces immediately, and retrying can never double-post \u2014 each save writes the whole value, not an addition.' },
 { b:860, d:'2026-08-17', t:'Punch-out gallery button always visible',
 s:'The \u201cPhoto gallery\u201d button on the punch-out card now shows even when there are no photos yet, so you can open the gallery and add photos from there. Before, it only appeared once a punch-out already had at least one photo. Reads \u201cPhoto gallery\u201d when empty and \u201cView all N photos\u201d once there are some.' },
 { b:859, d:'2026-08-17', t:'Punch-out card \u2014 a real photo gallery',
@@ -49897,13 +49899,30 @@ async function save(patch){
   Object.assign(it, patch);
   lastSig = ''; render();
   try{
-    var P = window.CardinalPunch;
-    if(P && typeof P.update === 'function'){
-      var r = await P.update(it.id, patch);
-      if(r && r.ok === false) throw new Error(r.error || 'write refused');
-    }else{
-      var d = await window.supa.from('punch_items').update(patch).eq('id', it.id);
-      if(d.error) throw d.error;
+    /* 861: a punch-out is filled on a roof with weak signal. iOS Safari reports
+       a dropped fetch as "TypeError: Load failed"; retry those a couple of times
+       before failing. A real refusal (RLS / write refused) is NOT retried. The
+       patch is a full-value replace, so a retry after a request that already
+       reached the server is idempotent \u2014 no duplicate. */
+    var _attempt = 0;
+    while(true){
+      try{
+        var P = window.CardinalPunch;
+        if(P && typeof P.update === 'function'){
+          var r = await P.update(it.id, patch);
+          if(r && r.ok === false) throw new Error(r.error || 'write refused');
+        }else{
+          var d = await window.supa.from('punch_items').update(patch).eq('id', it.id);
+          if(d.error) throw d.error;
+        }
+        break;
+      }catch(_we){
+        _attempt++;
+        var _m = String((_we && _we.message) || _we);
+        var _net = /load failed|failed to fetch|networkerror|network request failed|timed? ?out/i.test(_m);
+        if(!_net || _attempt >= 3) throw _we;
+        await new Promise(function(res){ setTimeout(res, 400 * _attempt); });
+      }
     }
   }catch(e){
     alert('Could not save: ' + (e.message || e));
