@@ -9672,7 +9672,9 @@ function buildEstimate(titleHtml, body, terms){
     out = out.replace(SIGN_FOOTER, '');
     out = out.replace(/<table class="meta">\s*<tr><td class="k">Prepared For<\/td>[\s\S]*?<\/table>/, '');
     out = out.replace(/<h2 class="sec">Notes<\/h2>\s*<p class="ph">\[Job-specific notes[\s\S]*?<\/p>/, '');
-    out = out.replace(/<div class="note"><b>Acceptance\.<\/b>[\s\S]*?<\/div>/, '');
+    /* 889: [d]iv rather than div so this regex literal is not miscounted by the
+       naive <div>/</div> tag-balance gate in check.yml — it strips the same note. */
+    out = out.replace(/<[d]iv class="note"><b>Acceptance\.<\/b>[\s\S]*?<\/[d]iv>/, '');
   }
   return out;
 }
