@@ -279,11 +279,11 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
   .toolbar .edbtns{order:2;flex:1 1 100%;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0;}
   .toolbar .edbtns .btn{width:100%;justify-content:flex-start;padding:11px 14px;font-size:13px;}
 }
-#reportFrame{flex:1;width:100%;border:0;background:#3d3d3d;}
+#reportFrameWrap{flex:1;min-width:0;min-height:0;position:relative;background:#3d3d3d;}#reportFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#3d3d3d;}
 
 /* ---------- assistant chat panel ---------- */
 .editor-body{flex:1;display:flex;min-height:0;}
-.editor-body #reportFrame{flex:1;min-width:0;}
+.editor-body #reportFrameWrap{flex:1;min-width:0;}
 #assistantPanel{
   display:none;width:340px;flex:none;background:#fff;border-left:4px solid var(--red);
   flex-direction:column;min-height:0;
@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 857 &#8212; Fixed the Production hub opening the retail home behind Punch &amp; Repairs, Dispatch and Crews</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 858 &#8212; Fixed the Work Order / document editor scrolling the background instead of the document on iPhone</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8049,7 +8049,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <span id="savedFlash"></span>
   </div>
   <div class="editor-body">
-    <iframe id="reportFrame" title="Inspection report editor"></iframe>
+    <div id="reportFrameWrap"><iframe id="reportFrame" title="Inspection report editor"></iframe></div>
     <div id="rccPanel">
       <div class="rcc-head">
         Photographs from CompanyCam
@@ -23110,7 +23110,8 @@ async function openEditor(id){
           '@media screen and (max-width:640px){.figrow{flex-direction:column;}.fig .frame{height:auto;aspect-ratio:4/3;}' +
           '.cover-photo{height:auto;aspect-ratio:4/3;}table{font-size:10.5pt;}body{font-size:11.5pt;line-height:1.65;}}' +
           '@media screen{body{background:#fff;}table.facts td,table.concerns td,table.meta td,table.items td,.cover-meta td{border-color:#1b1b1b !important;}}' +
-          '@media screen{.howto{display:block !important;}}';
+          '@media screen{.howto{display:block !important;}}' +
+          '@media screen{html,body{overscroll-behavior:contain;}}';
         doc.head.appendChild(sfx);
       }
       doc.body.setAttribute('spellcheck','true');
@@ -39722,6 +39723,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:858, d:'2026-08-17', t:'Work Order editor scrolls the document, not the background',
+s:'On the iPhone, scrolling inside the Work Order (and any estimate / contract / report) editor moved the app behind it instead of the document. iOS does not give an &lt;iframe&gt; its own scroll when the height comes from a flex layout \u2014 it lets the frame grow to the whole document and the page behind takes the scroll. The document frame now has a fixed, definite height that iOS respects, so it scrolls inside itself and the background stays put. Best tested on the phone.' },
 { b:857, d:'2026-08-17', t:'Hub Punch/Dispatch/Crews no longer flash the retail home',
 s:'Opening Punch &amp; Repairs (and Crew Dispatch or Crews) from the Production hub was leaving the retail home screen showing behind it. The hub closes through its own close(), which by default also sends you Home; when the destination page then ran its own screen-reset it re-triggered that Home jump. The hub now closes itself quietly before opening any of those three, so you land straight on the page you tapped. No change to the pages themselves.' },
 { b:856, d:'2026-08-16', t:'Hub Punch-outs opens the full Punch &amp; Repairs page',
