@@ -18140,3 +18140,22 @@ payload (DataCloneError, standing in for a real quota failure) fires a visible w
 silently queued; a photo that cannot be stored warns; a normal write raises NO false warning.
 Negative-controlled **RED (5)** against v871. Regression: 866/868/870/871 harnesses stay GREEN.
 `check_build` green (117 inline scripts, stamp 871 -> 872). No SQL.
+
+## Build 873 — Offline-first, phase 5 (part 4): the sync indicator gets real states
+
+The `#cr-outbox-badge` chip had one message ('N waiting to sync') and vanished silently on drain;
+it also said 'waiting to sync' while OFFLINE, when it cannot sync. Now four states, each an ink
+PAIR contrast-checked >=8.7:1 on its own painted ground (the badge is theme-independent):
+**offline** (amber, 'N saved \u2014 offline'), **waiting** (amber, 'N waiting to sync', tap to try),
+**syncing** (blue, 'Syncing\u2026', painted at flush start), **done** (green, 'All changes synced' \u2014 a
+2.6s flash on a real drain, then hides). `badge()` is now a small state machine keyed on pending
+count + `navigator.onLine` + the `flushing` flag + a `_lastPending` edge; a 200ms colour transition
+smooths the changes. The 'synced' flash fires only on a drain-by-sync: `clearAll()` (the 871 logout
+wipe) resets `_lastPending = 0` first so a discard never reads as a successful sync.
+
+Gate: `render_syncbadge873.mjs` drives the real app \u2014 **GREEN 10/10** across all four states
+(text AND the exact painted rgb, read after the transition settles), the auto-hide, and the
+logout-no-flash case. Negative-controlled **RED (6)** against v872 (one text, no states).
+Regression: 870/871/872 harnesses GREEN; `render_outbox865.mjs`'s 'badge cleared' assertion was
+updated (not the app) to wait out the new confirmation flash before checking hidden \u2014 it now
+passes on both 872 and 873. `check_build` green (117 inline scripts, stamp 872 -> 873). No SQL.

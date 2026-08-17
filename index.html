@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 872 &#8212; Offline-first polish &#8212; the phone protects your pending changes from being cleared, and warns you if it runs out of room to save them</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 873 &#8212; Offline-first polish &#8212; the sync indicator now shows offline, syncing and a &#8220;synced&#8221; confirmation, not just a silent counter</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39885,6 +39885,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:873, d:'2026-08-17', t:'Offline-first, polish \u2014 a clearer sync indicator',
+s:'The little \u201cwaiting to sync\u201d chip is smarter now. It tells you which state you are in: OFFLINE (amber \u2014 saved on your phone, will send when you are back), SYNCING (blue \u2014 sending now), and a brief green \u201cAll changes synced\u201d confirmation when everything has gone through, instead of just disappearing with no word. Before, it said \u201cwaiting to sync\u201d even when you had no signal and it could not sync at all. Tapping it still forces a sync attempt. Purely a clarity improvement \u2014 nothing about how your data is saved or sent has changed.' },
 { b:872, d:'2026-08-17', t:'Offline-first, polish \u2014 protect the pending queue, warn if storage is full',
 s:'Two safeguards for offline mode. First, the app now asks the phone NOT to clear its store of pending offline changes when the phone is low on space \u2014 so a long stretch with no signal can no longer quietly wipe your queued work. Second, if the phone genuinely runs out of room to hold a change or a photo, you now get a clear warning to connect and sync, instead of it failing silently while the screen still says saved. Everyday use is unchanged \u2014 these only matter when a device is offline for a long time or nearly full.' },
 { b:871, d:'2026-08-17', t:'Offline-first, polish \u2014 signing out clears pending changes',
@@ -72216,7 +72218,7 @@ function del(id){   return op('readwrite', function(st){ return st.delete(id); }
 function put(entry){ return op('readwrite', function(st){ return st.put(entry); }); }  /* 870: update-in-place by id */
 /* 871: drop every queued write. Used on sign-out so one person's offline edits
    never flush under the next person to sign in on a shared device. */
-function clearAll(){ return getAll().then(function(rows){ return Promise.all(rows.map(function(r){ return del(r.id); })); }).then(function(){ badge(); }).catch(function(){}); }
+function clearAll(){ return getAll().then(function(rows){ return Promise.all(rows.map(function(r){ return del(r.id); })); }).then(function(){ _lastPending = 0; badge(); }).catch(function(){}); }
 /* 870: a stable identity for an entry's TARGET — same target folds together. */
 function entryKey(e){
   if(!e || !e.table) return null;
@@ -72251,6 +72253,7 @@ function flush(){
   var cx = client();
   if(!cx) return Promise.resolve();
   flushing = true; sentSome = false;
+  badge();   /* 873: paint the 'Syncing\u2026' state while the flush runs */
   return getAll().then(function(rows){
     rows.sort(function(a, b){ return a.id - b.id; });   /* FIFO */
     var chain = Promise.resolve();
@@ -72330,20 +72333,52 @@ function ensure(){
   el = document.createElement('div');
   el.id = 'cr-outbox-badge';
   el.style.cssText = 'display:none;position:fixed;left:50%;transform:translateX(-50%);' +
-    'bottom:calc(env(safe-area-inset-bottom,0px) + 70px);background:#3a2d0a;color:#ffd54a;' +
-    'border:1px solid #ffd54a;padding:5px 13px;border-radius:14px;z-index:10000;cursor:pointer;' +
+    'bottom:calc(env(safe-area-inset-bottom,0px) + 70px);' +
+    'border:1px solid transparent;padding:5px 13px;border-radius:14px;z-index:10000;cursor:pointer;' +
     "font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;" +
-    'box-shadow:0 2px 10px rgba(0,0,0,.4)';
-  el.title = 'Changes saved on this device, waiting to sync';
+    'box-shadow:0 2px 10px rgba(0,0,0,.4);transition:background .2s ease,color .2s ease,border-color .2s ease;';
   el.addEventListener('click', function(){ flush(); });
   document.body.appendChild(el);
   return el;
 }
+/* 873: each state carries an INK PAIR (fg on its own bg), all contrast-checked
+   >= 8.7:1 with scripts/contrast.py, plus the tooltip. The badge paints its own
+   ground, so these are self-contained and immune to the app's themes. */
+var _bStates = {
+  offline: { bg:'#3a2d0a', fg:'#ffd54a', tip:'Saved on this device \u2014 will sync when you are back online' },
+  waiting: { bg:'#3a2d0a', fg:'#ffd54a', tip:'Saved on this device, waiting to sync \u2014 tap to try now' },
+  syncing: { bg:'#0e2733', fg:'#7fd1ff', tip:'Syncing your changes\u2026' },
+  done:    { bg:'#123322', fg:'#63e6a2', tip:'All your changes have synced' }
+};
+function setBadgeState(b, state, text){
+  var s = _bStates[state] || _bStates.waiting;
+  b.style.background = s.bg; b.style.color = s.fg; b.style.borderColor = s.fg;
+  b.title = s.tip; b.textContent = text;
+  b.style.display = 'block';
+}
+var _lastPending = 0, _doneTimer = null;
 function badge(){
   pending().then(function(n){
     var b = ensure();
-    if(n > 0){ b.textContent = n + ' waiting to sync'; b.style.display = 'block'; }
-    else b.style.display = 'none';
+    var offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
+    if(n > 0){
+      if(_doneTimer){ clearTimeout(_doneTimer); _doneTimer = null; }
+      if(flushing && !offline) setBadgeState(b, 'syncing', 'Syncing\u2026');
+      else if(offline)         setBadgeState(b, 'offline', n + ' saved \u2014 offline');
+      else                     setBadgeState(b, 'waiting', n + ' waiting to sync');
+    }else{
+      /* the queue just drained. If it was non-empty a moment ago AND we did the
+         draining by syncing (not by a logout wipe, which resets _lastPending to
+         0 first), flash a confirmation, then hide. */
+      if(_lastPending > 0){
+        setBadgeState(b, 'done', 'All changes synced');
+        if(_doneTimer) clearTimeout(_doneTimer);
+        _doneTimer = setTimeout(function(){ b.style.display = 'none'; _doneTimer = null; }, 2600);
+      }else if(!_doneTimer){
+        b.style.display = 'none';
+      }
+    }
+    _lastPending = n;
   });
 }
 
