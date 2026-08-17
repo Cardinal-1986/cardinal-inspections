@@ -18100,3 +18100,26 @@ target syncs exactly once with the merged value. Negative-controlled **RED (10)*
 (entries stack, no merged write exists). Regression: the 867/868/869 phase harnesses stay GREEN
 on 870 (single-write behavior intact). `check_build` green (117 inline scripts, stamp 869 -> 870).
 No SQL.
+
+## Build 871 — Offline-first, phase 5 (part 2): sign-out clears the write outboxes (multi-user safety)
+
+864 wiped the offline READ cache on sign-out but left the queued offline WRITES (and held
+photos) behind, so on a shared device the next person to sign in would flush the previous
+person's edits under THEIR session. Fixed: `CardinalOutbox.clear()` (delete every queued write)
+and `CardinalPunchCard._clearPhotos()` (delete every held photo) added; the sign-out handler now
+(1) syncs what it can while still authenticated + online, (2) `confirm()`s a warning if anything
+is still unsynced ("N changes have not synced and will be lost"), then (3) wipes BOTH the write
+outbox and the photo outbox after `signOut()`. A security fix, not a feature.
+
+Gate: `render_logoutclear871.mjs` drives the real app offline — **GREEN 10/10** (clear()/
+_clearPhotos() exist and empty their stores; a cleared queue does NOT resurrect the cleared
+writes when back online — filtered to the specific cleared writes so the app's own
+audit_sessions reconnect-heartbeat is ignored; the real Sign-out button empties the outbox with
+pending writes). Stable across repeated runs. Negative-controlled **RED (6)** against v870 (no
+clear; sign-out leaves the queue; the cleared writes flush under the next session). Regression:
+865/866/870 harnesses stay GREEN (photo + outbox modules intact). `check_build` green (117 inline
+scripts, stamp 870 -> 871). No SQL.
+
+NB: a first pass had the resurrect assertion count ANY write, which caught the app's own
+`audit_sessions` insert on reconnect and read as a flaky 1-write leak; scoping it to the
+specific cleared writes made it deterministic (BUG_CLASSES: an over-broad assertion).
