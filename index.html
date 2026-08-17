@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 888 &#8212; Punch-out photos actually save now &#8212; they were uploading an empty placeholder instead of the picture</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 889 &#8212; The crew Work Order for roofing is rebuilt — Roofr measurements, tear-off, decking &amp; wood replacement, colors and notes, all filled in for you</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9661,6 +9661,18 @@ function buildEstimate(titleHtml, body, terms){
     /* ...and it is an Agreement, not an estimate, once it is one. */
     out = out.replace('<b>Acceptance.</b> This estimate is valid through the date shown above. Signature below',
                       '<b>Acceptance.</b> Signature below');
+  }
+  /* 889: a crew WORK ORDER is not an estimate. Strip the estimate cover (Prepared
+     For / Estimate # / Valid Through), the property photo, the generic Notes
+     placeholder and the client-acceptance footer \u2014 woBody carries its own
+     header, notes and crew sign-off. */
+  var isWO = /\bWORK\s+ORDER\b/i.test(plain);
+  if(isWO){
+    out = out.replace('<div class="cover-photo">PROPERTY PHOTO</div>\n\n', '');
+    out = out.replace(SIGN_FOOTER, '');
+    out = out.replace(/<table class="meta">\s*<tr><td class="k">Prepared For<\/td>[\s\S]*?<\/table>/, '');
+    out = out.replace(/<h2 class="sec">Notes<\/h2>\s*<p class="ph">\[Job-specific notes[\s\S]*?<\/p>/, '');
+    out = out.replace(/<div class="note"><b>Acceptance\.<\/b>[\s\S]*?<\/div>/, '');
   }
   return out;
 }
@@ -20482,33 +20494,118 @@ function woRow(k, v){
   return '<tr><td class="k">' + k + '</td><td>' + v + '</td></tr>';
 }
 
-/* The roof block only earns its place on a roofing job, and only once the roof
-   has actually been inspected — getChecklist() returns null until then. */
+/* 889: the roof facts a crew needs, as an "Existing roof" mini-table. Roofing
+   only, and only once the roof has been inspected. The measurement board, tear-off,
+   decking and colours are their own builders below. */
 function woSpecRows(pr, trade){
   var out = '';
   var cl = (typeof getChecklist === 'function') ? getChecklist(pr) : null;
   if(trade === 'Roofing' && cl){
     out += woRow('Existing roof type', woVal(cl.rooftype));
-    out += woRow('Number of layers',   woVal(cl.layers));
-    out += woRow('Decking',            woVal(cl.decking) +
+    out += woRow('Decking', woVal(cl.decking) +
              (cl.deckcond ? ' &#183; condition ' + woEsc(cl.deckcond) : ''));
-    out += woRow('Pitch',              woVal(cl.pitch));
-    if(cl.sat) out += woRow('Satellite dish', woEsc(cl.sat) +
-             ' &#8212; <b>remove and set aside before tear-off</b>');
     if(cl.structure) out += woRow('Structure', woEsc(cl.structure));
-  }
-  var ms = (typeof parseCkAll === 'function' ? (parseCkAll(pr).meas || {}) : {});
-  var mparts = [];
-  [['sq','squares'],['ridge','ridge LF'],['hip','hip LF'],['valley','valley LF'],
-   ['eave','eave LF'],['rake','rake LF']].forEach(function(p){
-    if(ms[p[0]]) mparts.push(woEsc(ms[p[0]]) + ' ' + p[1]);
-  });
-  if(mparts.length){
-    out += woRow('Measurements', mparts.join(' &#183; ') +
-             (ms.source ? ' <span class="mut">(' + woEsc(ms.source) + ')</span>' : ''));
   }
   return out;
 }
+
+/* 889: a checkbox the crew can tap in the editor — openEditor() runs
+   wireCheckboxes() over every .cbx. data-group makes a set act like radio buttons
+   (exactly one on); omit it for independent ticks. ☑ checked / ☐ empty,
+   matching wireCheckboxes. */
+function woCbx(on, label, group){
+  return '<span class="cbx"' + (group ? ' data-group="' + group + '"' : '') + '>' +
+    (on ? '☑' : '☐') + '</span> ' + woEsc(label);
+}
+
+/* 889: the Roofr board — squares called out big, the rest as a facts table. */
+function woMeasBoard(pr){
+  var ms = (typeof parseCkAll === 'function' ? (parseCkAll(pr).meas || {}) : {});
+  if(!['sq','pitch','ridge','hip','valley','eave','rake'].some(function(k){ return ms[k]; })) return '';
+  var rows = '';
+  [['Pitch','pitch',''],['Ridge','ridge',' lf'],['Hip','hip',' lf'],
+   ['Valley','valley',' lf'],['Eave','eave',' lf'],['Rake','rake',' lf']].forEach(function(p){
+    if(ms[p[1]]) rows += woRow(p[0], woEsc(ms[p[1]]) + p[2]);
+  });
+  if(ms.source) rows += woRow('Source', woEsc(ms.source));
+  var big = ms.sq
+    ? '<div style="border:2px solid #C8202E;border-radius:8px;padding:10px 18px;text-align:center;min-width:108px;">' +
+      '<div style="font-size:30pt;font-weight:800;color:#9c1822;line-height:1;">' + woEsc(ms.sq) + '</div>' +
+      '<div style="font-size:8pt;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#666;margin-top:6px;">Squares</div></div>'
+    : '';
+  return '<div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin:6px 0 4px;">' +
+    big + '<table class="meta" style="flex:1;min-width:230px;margin:0;">' + rows + '</table></div>';
+}
+
+/* 889: tear-off — which buildings, how many layers (auto), and is there a dish
+   to pull first (auto from the inspection's sat field). */
+function woTearOff(pr){
+  var cl = (typeof getChecklist === 'function') ? getChecklist(pr) : null;
+  var layers = (cl && cl.layers) ? woEsc(cl.layers) : '<span class="ph">[&nbsp;&nbsp;]</span>';
+  var hasSat = !!(cl && cl.sat);
+  return '<table class="meta">' +
+    woRow('Structures', woCbx(true, 'Home', '') + ' &nbsp;&nbsp; ' +
+      woCbx(false, 'Garage', '') + ' &nbsp;&nbsp; ' + woCbx(false, 'Shed', '')) +
+    woRow('Existing layers to remove', layers) +
+    woRow('Satellite dish', woCbx(hasSat, 'Yes', 'wo-sat') + ' &nbsp;&nbsp; ' +
+      woCbx(!hasSat, 'No', 'wo-sat') +
+      (hasSat ? ' &#8212; <b>remove &amp; set aside before tear-off, reset after</b>' : '')) +
+  '</table>';
+}
+
+/* 889: decking type from the inspection pre-ticked; re-deck and sheets are the
+   on-site call. */
+var WO_DECK_TYPES = ['OSB', 'Plywood', 'T&G', 'Plank', 'Spaced', 'Cedar shake'];
+function woDeckType(deck){
+  var d = String(deck || '').toLowerCase();
+  if(/osb/.test(d)) return 'OSB';
+  if(/ply/.test(d)) return 'Plywood';
+  if(/t&g|t & g|tongue/.test(d)) return 'T&G';
+  if(/plank/.test(d)) return 'Plank';
+  if(/spac/.test(d)) return 'Spaced';
+  if(/cedar|shake/.test(d)) return 'Cedar shake';
+  return '';
+}
+function woDecking(pr){
+  var cl = (typeof getChecklist === 'function') ? getChecklist(pr) : null;
+  var type = woDeckType(cl && cl.decking);
+  var cond = (cl && cl.deckcond) ? woEsc(cl.deckcond) : '';
+  var types = WO_DECK_TYPES.map(function(t){ return woCbx(t === type, t, 'wo-deck'); }).join(' &nbsp; ');
+  return '<table class="meta">' +
+    woRow('Full re-deck?', woCbx(false, 'Yes', 'wo-redeck') + ' &nbsp;&nbsp; ' + woCbx(false, 'No', 'wo-redeck')) +
+    woRow('Decking type', types) +
+    woRow('Condition at inspection', cond ? '<b>' + cond + '</b>' : '<span class="ph">[&nbsp;&nbsp;]</span>') +
+    woRow('Sheets replaced', '<span class="ph">[&nbsp;&nbsp;&nbsp;]</span> sheets') +
+  '</table>';
+}
+
+/* 889: shingle + drip-edge colour. opts.shingle / opts.drip carry the signed
+   contract's selections when the picker found them; blank renders a fill-in so
+   the right colour is written on the ticket either way. */
+function woColors(opts){
+  function line(lbl, val){
+    return woRow(lbl, val ? '<b>' + woEsc(val) + '</b>' : '<span class="ph">[ color ]</span>');
+  }
+  return '<table class="meta">' +
+    line('Shingle color', opts.shingle) +
+    line('Drip edge color', opts.drip) +
+  '</table>' +
+  '<p style="font-size:9pt;color:#666;margin:4px 0 0;">Confirm against the signed contract before ordering — the wrong color is a tear-off.</p>';
+}
+
+/* 889: notes carried from the inspection + the measurement note; editable. */
+function woNotes(pr){
+  var cl = (typeof getChecklist === 'function') ? getChecklist(pr) : null;
+  var all = (typeof parseCkAll === 'function') ? parseCkAll(pr) : {};
+  var bits = [];
+  if(cl && cl.notes) bits.push(woEsc(cl.notes));
+  if(all.meas && all.meas.note) bits.push(woEsc(all.meas.note));
+  var txt = bits.join('<br>');
+  return '<div class="descbox">' +
+    (txt || '<span class="ph">[notes for the crew — access, pets, staging, special conditions]</span>') +
+    '</div>';
+}
+
 
 function woLaborRows(rates, catalog){
   /* 556: production does not need crew rates — Theo writes the checks. So this is
@@ -20540,15 +20637,16 @@ function woLaborRows(rates, catalog){
 function woBody(pr, crew, rates, catalog, opts){
   opts = opts || {};
   var lab = woLaborRows(rates, catalog);
-  var specs = woSpecRows(pr, crew.trade);
-  return '' +
+  var isRoof = crew.trade === 'Roofing';
+  var n = 0;
+  function nsec(t){ n++; return '<h2 class="sec"><span class="num">' + n + '</span>' + t + '</h2>'; }
+  var out = '' +
   '<h2 class="sec">Work Order</h2>' +
   '<table class="meta">' +
     woRow('Work order #', woEsc(opts.wo_number || '')) +
     woRow('Issued', woEsc(opts.issued || '')) +
     woRow('Trade', woEsc(crew.trade)) +
-    /* 744: was the raw stored string on a document handed to a crew. commDate()
-       is the main block's already-timezone-safe formatter. */
+    /* 744: commDate() is the timezone-safe formatter, not the raw stored string. */
     woRow('Scheduled', woVal(opts.scheduled_on ? commDate(opts.scheduled_on) : '')) +
   '</table>' +
   '<h2 class="sec">Job</h2>' +
@@ -20563,17 +20661,29 @@ function woBody(pr, crew, rates, catalog, opts){
     woRow('Contact', woVal(crew.contact_name)) +
     woRow('Phone', woVal(crew.contact_phone)) +
     woRow('Email', woVal(crew.contact_email)) +
-  '</table>' +
-  (specs ? '<h2 class="sec">Job Specifications</h2><table class="meta">' + specs + '</table>' : '') +
-  '<h2 class="sec">Scope of Work</h2>' +
+  '</table>';
+
+  if(isRoof){
+    var board = woMeasBoard(pr);
+    if(board) out += nsec('Measurements') + board;
+    out += nsec('Tear-Off') + woTearOff(pr);
+    out += nsec('Decking &amp; Wood Replacement') + woDecking(pr);
+    out += nsec('Colors &#8212; confirm before install') + woColors(opts);
+    var specs = woSpecRows(pr, crew.trade);
+    if(specs) out += nsec('Existing Roof') + '<table class="meta">' + specs + '</table>';
+  }
+
+  out += '<h2 class="sec">Scope of Work</h2>' +
   '<div class="descbox">' + (opts.scope ? woEsc(opts.scope).replace(/\n/g, '<br>')
      : '<span class="ph">[describe exactly what this crew is to do]</span>') + '</div>' +
   '<h2 class="sec">Labor</h2>' + lab.html +
+  '<h2 class="sec">Notes to Crew</h2>' + woNotes(pr) +
   '<h2 class="sec">Sign-off</h2>' +
   '<table class="meta">' +
     woRow('Crew accepted by', '<span class="ph">[signature]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span>') +
     woRow('Cardinal', '<span class="ph">[signature]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span>') +
   '</table>';
+  return out;
 }
 
 var WO_TERMS = '<li>This work order authorises the scope described above and nothing beyond it. ' +
@@ -20602,6 +20712,30 @@ async function woNextNumber(){
            String(d.getDate()).padStart(2,'0') + '-' +
            String(d.getHours()).padStart(2,'0') + String(d.getMinutes()).padStart(2,'0');
   }
+}
+
+/* 889: best-effort read of the job's signed roofing contract for its shingle
+   and drip-edge colour selections. Colours persist as an <option selected>
+   ATTRIBUTE in the saved contract HTML (see wireColorSelects). Everything is
+   guarded \u2014 a miss just leaves the picker fields blank to fill in. */
+async function woReadContractColors(pr){
+  var res = { shingle:'', drip:'' };
+  try{
+    var r = await sb.from('inspection_reports').select('title,content,created_at')
+      .eq('project_id', pr.id).order('created_at', { ascending:false });
+    if(r.error || !r.data) return res;
+    var isC = (typeof isContractTitle === 'function') ? isContractTitle : function(t){ return /^contract/i.test((t||'').trim()); };
+    var doc = r.data.find(function(x){ return isC(x.title) && /roof/i.test(x.title || ''); })
+           || r.data.find(function(x){ return isC(x.title); });
+    if(!doc || !doc.content) return res;
+    var d = new DOMParser().parseFromString(doc.content, 'text/html');
+    var occ = d.querySelector('select[data-crsel="occ"] option[selected]');
+    if(occ) res.shingle = (occ.getAttribute('value') || occ.textContent || '').trim();
+    /* the first trim select in the roofing agreement is the drip edge (section 3A) */
+    var trim = d.querySelector('select[data-crsel="trim"] option[selected]');
+    if(trim) res.drip = (trim.getAttribute('value') || trim.textContent || '').trim();
+  }catch(_){}
+  return res;
 }
 
 async function openWorkOrderPicker(project){
@@ -20646,17 +20780,29 @@ async function openWorkOrderPicker(project){
     '<input type="date" id="woWhen" ' + inp + '>' +
     '<label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Scope &#8212; what this crew is to do</label>' +
     '<textarea id="woScope" rows="4" ' + inp + ' placeholder="Tear off to deck, replace rotten sheathing, ice &amp; water at eaves and valleys, OC Duration in Estate Gray…"></textarea>' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Shingle color <span style="font-weight:600;color:#b0a49b;">&#8212; carried from the signed contract, edit if needed</span></label>' +
+    '<input type="text" id="woShingle" ' + inp + ' placeholder="e.g. Estate Gray">' +
+    '<label style="display:block;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8a7a72;margin:12px 0 3px;">Drip edge color</label>' +
+    '<input type="text" id="woDrip" ' + inp + ' placeholder="e.g. White">' +
     '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px;">' +
       '<button class="chipbtn" id="woCancel">Cancel</button>' +
       '<button class="axbtn" id="woGo">Create</button></div>' +
     '<div id="woErr" style="color:#c8202e;font-size:12.5px;margin-top:8px;"></div>';
   document.getElementById('woCancel').addEventListener('click', function(){ m.style.display = 'none'; });
+  /* 889: prefill the colour fields from the signed contract, if there is one */
+  woReadContractColors(pr).then(function(c){
+    var sEl = document.getElementById('woShingle'), dEl = document.getElementById('woDrip');
+    if(sEl && !sEl.value && c.shingle) sEl.value = c.shingle;
+    if(dEl && !dEl.value && c.drip) dEl.value = c.drip;
+  });
   document.getElementById('woGo').addEventListener('click', function(){
     var crew = crews.find(function(c){ return String(c.id) === document.getElementById('woCrew').value; });
     if(!crew) return;
     createWorkOrder(pr, crew, {
       scheduled_on: document.getElementById('woWhen').value || null,
       scope: document.getElementById('woScope').value.trim() || null,
+      shingle: document.getElementById('woShingle').value.trim() || null,
+      drip: document.getElementById('woDrip').value.trim() || null,
     });
   });
 }
@@ -20687,7 +20833,8 @@ async function createWorkOrder(pr, crew, opts){
     var lab = woLaborRows(rates, catalog);
     var tpl = buildEstimate('WORK <span>ORDER</span>',
       woBody(pr, crew, rates, catalog,
-             { wo_number:num, issued:issued, scheduled_on:opts.scheduled_on, scope:opts.scope }),
+             { wo_number:num, issued:issued, scheduled_on:opts.scheduled_on, scope:opts.scope,
+               shingle:opts.shingle, drip:opts.drip }),
       WO_TERMS);
     if(typeof prefillUserInfo === 'function') tpl = prefillUserInfo(tpl);
 
@@ -40048,6 +40195,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:889, d:'2026-08-17', t:'Crew Roofing Work Order, rebuilt',
+s:'The work order you hand a roofing crew is rebuilt and now fills itself in from the inspection and the Roofr report. It carries a measurement board (squares called out big, plus ridges, hips, valleys, eaves and rakes), a Tear-Off section with Home / Garage / Shed, the number of existing layers, and a Satellite dish Yes/No (ticked automatically when the inspection found one). A Decking & Wood Replacement section pre-ticks the decking type from the inspection and leaves full re-deck Yes/No and sheets-replaced for the crew. A Colors section prints the shingle color and drip edge color \u2014 carried from the signed contract when there is one, editable otherwise \u2014 so the wrong color never gets installed. Plus a Notes-to-crew section from the inspection notes. Every tick box can be tapped in the editor, and the old \u201CEstimate #\u201D / \u201CValid Through\u201D header (left over from the estimate template) is gone. Roofing work orders only; other trades are unchanged.' },
 { b:888, d:'2026-08-17', t:'Punch-out photos save for real (were uploading blank)',
 s:'A real fix: punch-out photos were not actually saving. Behind the scenes the card was uploading an empty internal placeholder instead of the picture you took, so every punch photo came out blank/broken \u2014 an 11-byte file, not an image. It is fixed now: the real photo is uploaded (and it still resizes large ones, works offline, and syncs when you are back). \u26A0\uFE0F Photos taken before this update did not save and will need to be retaken.' },
 { b:887, d:'2026-08-17', t:'Signing asks who with buttons, not by typing a number',
