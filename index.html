@@ -3515,7 +3515,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 882 &#8212; Punch-outs can now be scheduled for a time of day, not just a date</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 883 &#8212; The stage banner on a client updates the moment you advance the stage, instead of waiting until you reopen the client</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18359,8 +18359,19 @@ async function setStage(prId, v){
   patchProjectCk(pr, _ckPatch).catch(function(){});
   if(currentProject && currentProject.id === pr.id){
     currentProject.stage = v;
+    /* 883: the stage dropdown updated but the big stage BANNER on the profile did
+       not — it kept showing the old stage until you left and reopened the client
+       (audit finding). Optimistically fold the new stage_since into the local
+       checklist so the banner AND its "in status" age repaint immediately; the
+       async patchProjectCk above persists the same values. */
+    try{
+      var _cc = JSON.parse(currentProject.checklist || '{}') || {};
+      _cc.stage_since = _now; _cc['t_' + v] = _now;
+      currentProject.checklist = JSON.stringify(_cc);
+    }catch(_ccE){}
     var ss = document.getElementById('stageSel');
     if(ss) ss.value = normStage(v);
+    try{ if(typeof renderAcxOverview === 'function') renderAcxOverview(); }catch(_roE){}
   }
   renderHome();
   /* workflow notifications */
@@ -39983,6 +39994,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:883, d:'2026-08-17', t:'The stage banner updates the instant you change the stage',
+s:'On a client profile, advancing the stage — for example tapping "Contacted → Prospect", or changing the stage dropdown — updated the little dropdown but left the big stage banner (and its "in status" day counter) showing the OLD stage until you left the client and reopened it. It now repaints immediately, so the banner and the age you see always match the stage the job is actually in. Found by the end-to-end workflow audit.' },
 { b:882, d:'2026-08-17', t:'Set a time for punch-outs, not just a date',
 s:'When you add or schedule a punch-out / repair, the "Schedule for" field now has a time box next to the date, so you can say "Aug 17 at 2:30 PM" instead of just the day. The time is optional — leave it blank and nothing changes. Where a punch-out shows its schedule (its card and its detail sheet) the time now shows alongside the date. Existing punch-outs are untouched.' },
 { b:881, d:'2026-08-17', t:'The Line Item Library gets a dark mode',
