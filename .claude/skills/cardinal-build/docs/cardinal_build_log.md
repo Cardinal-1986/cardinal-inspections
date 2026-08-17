@@ -18404,6 +18404,34 @@ census used `getComputedStyle(el).display` (which ignores hidden ANCESTORS, so i
 JS-validated form never uses. Fixed the driver's census (offsetParent + visual "*") so the re-run won't
 re-report it. No app change.
 
+## Build 890 — Work Order: New Roof components list + optional post-job closeout
+
+Folds the rest of Theo's paper "Take Off / Post Job" form into the 889 work order (roofing only).
+Theo sent the old PDF and asked what to keep and whether it was too much; settled: keep the dispatch
+half, drop the money block entirely (his "no sale price" + the standing no-money-on-crew-WO rule),
+and make the post-job closeout optional. Changes in `index.html`:
+
+- **Satellite dish → three states** (`woTearOff`): Detach & Reset / Remove / None (radio `wo-sat`),
+  replacing 889's Yes/No. Autofill: a dish the inspection found is flagged "dish present …" with the
+  choice left to the crew; an inspection that recorded none pre-ticks **None**; **no inspection leaves
+  it blank** (never assume). ⚠️ Caught in the gate: the label `'Detach & Reset'` must be passed to
+  `woCbx` with a plain `&` — `woCbx` runs `woEsc()`, so `'&amp;'` would double-escape and print
+  literally.
+- **New Roof — Components** (`woComponents`): pipe jacks (count), pipe boots, box vents, power vent,
+  ridge vent (+ length from the ridge measurement), gable vents, bath/kitchen vents, step/wall
+  flashing, chimney cricket, chimney flashing S/M/L. Autofilled from the inspection where it knows —
+  `jacks`, `vent_types` (Ridge/Box/Power/Gable), `bathvents`, `kitchvents`, `boot`, `flash` — blank
+  `.cbx`/`.ph` to fill otherwise. Every box is a real `.cbx` the editor wires.
+- **Optional Post-Job Closeout** (`woCloseout`): leftover materials returnable / non-returnable, Lot#,
+  date completed. Off by default; a `#woCloseCk` checkbox in the picker turns it on (`opts.closeout`).
+  **No money** — deliberately, per settled rule.
+- A "start and completion dates are weather permitting" note on the schedule.
+
+Gates: `check_build` GREEN (stamp 889→890, div balance 3956/3956). `render_wo890.mjs` (Chromium, three
+scenarios — dish+closeout, no-dish, no-inspection) GREEN 19/19, RED 12 on the v889 control.
+`render_wo889.mjs` re-run GREEN 24/24 (its stale Yes/No satellite assertion updated to the new
+three-state). Roofing only; other trades unchanged.
+
 ## Build 889 — the crew Roofing Work Order, rebuilt (Field Ticket)
 
 Theo asked to redesign the Production→crew Work Order (build 555's document) for roofing.

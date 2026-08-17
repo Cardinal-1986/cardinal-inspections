@@ -79,7 +79,9 @@ try {
   ok('squares called out big (24.3)', doc.includes('>24.3</div>') && doc.includes('Squares</div>'));
   ok('measurement rows carry LF values', doc.includes('42 lf') && doc.includes('96 lf'));
   ok('existing layers autofilled (2)', /Existing layers to remove<\/td><td[^>]*>2</.test(doc), doc.match(/Existing layers to remove[\s\S]{0,60}/));
-  ok('satellite dish Yes pre-ticked', /☑<\/span> Yes/.test(doc) && doc.includes('data-group="wo-sat"'));
+  /* 890 replaced the Yes/No satellite with Detach & Reset / Remove / None; a dish
+     from the inspection is now flagged "dish present" rather than pre-ticking Yes. */
+  ok('satellite dish flagged from inspection', /dish present/.test(doc) && doc.includes('data-group="wo-sat"'));
   ok('inspected decking type (OSB) pre-ticked', /☑<\/span> OSB/.test(doc) && doc.includes('data-group="wo-deck"'));
   ok('condition autofilled (Fair)', doc.includes('<b>Fair</b>'));
   ok('re-deck and sheets are fill-in', doc.includes('data-group="wo-redeck"') && /Sheets replaced/.test(doc));
