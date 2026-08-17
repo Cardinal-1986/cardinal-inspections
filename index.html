@@ -2233,15 +2233,19 @@ body.restoring #restoreVeil{display:flex;}
 .ljfact{background:var(--rbe-panel);border:1px solid var(--rbe-line);border-radius:10px;padding:8px 10px;}
 .ljfact span{display:block;font:700 8.5px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--rbe-mute);}
 .ljfact b{display:block;font:800 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-fact-fg);margin-top:2px;}
-.ljmap{position:relative;margin:0 16px 16px;border:1px solid var(--rbe-line);border-radius:12px;overflow:hidden;}
-.ljmaptabs{position:absolute;top:9px;left:9px;display:flex;border:1px solid var(--rbe-line);border-radius:8px;overflow:hidden;background:rgba(16,18,24,.85);z-index:2;}
-.ljmaptabs button{background:none;border:0;color:#aab1ba;font:700 10.5px 'Segoe UI',Arial,sans-serif;padding:6px 11px;cursor:pointer;}
+.ljmap{position:relative;display:flex;flex-direction:column;margin:0 16px 16px;border:1px solid var(--rbe-line);border-radius:12px;overflow:hidden;}
+/* 879: was position:absolute over the map — a floating pill that sat on top of
+   the Google map and collided with the map's own Map/Satellite controls (Theo's
+   overlap screenshot). Now a clean full-width bar ABOVE the map: no overlay, and
+   the map below it is unobstructed. */
+.ljmaptabs{display:flex;border:0;border-bottom:1px solid var(--rbe-line);overflow:hidden;background:rgba(16,18,24,.92);}
+.ljmaptabs button{flex:1;text-align:center;background:none;border:0;color:#aab1ba;font:700 10.5px 'Segoe UI',Arial,sans-serif;padding:6px 11px;cursor:pointer;}
 .ljmaptabs button.on{background:var(--rbe-acc);color:var(--rbe-checkfg);}
-.ljmapframe{width:100%;height:300px;border:0;display:block;}
+.ljmapframe{width:100%;height:380px;border:0;display:block;}
 .ljmap.cms{border-color:transparent;background:none;overflow:visible;}
 .ljmap.cms .ljmapframe{display:none;}
 .ljcomms{display:none;}
-.ljmap.cms .ljcomms{display:block;padding:46px 0 0;}
+.ljmap.cms .ljcomms{display:block;padding:12px 12px 0;/* 879: tabs are a real bar now, not an overlay — no 46px clearance needed */}
 .ljcmsg{background:var(--rbe-panel);border:1px solid var(--rbe-line);border-radius:10px;padding:8px 10px;margin-bottom:7px;
   font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);line-height:1.5;}
 .ljcmsg .who{font-weight:800;color:var(--rbe-acclt);font-size:11px;}
@@ -3511,7 +3515,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 878 &#8212; E2E Smoke Walk is honest too: it no longer reports Estimates, Claims, Pricing and Coach as unreachable when they opened fine (the check couldn&#8217;t see full-screen panels)</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 881 &#8212; The Line Item Library now has a dark mode instead of always showing as a bright white page</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39979,6 +39983,12 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:881, d:'2026-08-17', t:'The Line Item Library gets a dark mode',
+s:'The Line Item Library (Tools → Line Item Library) was the last screen still stuck in light mode — it opened as a bright cream page in the otherwise dark app, which also made it look like the app had lost its navigation. Its whole body now matches the dark app: the search bar, the category tabs, the list of items and the add/edit box are all dark and readable. It is still a full-screen tool with a Close button up top, so it takes the screen over on purpose. The light (sun) theme keeps the original cream look unchanged.' },
+{ b:880, d:'2026-08-17', t:'Retail clients stop wearing the Insurance header',
+s:'Open a retail or brand-new lead client right after you had been in the Insurance portal, and its profile painted the red “Insurance” header — as if the client were a claim. The header was falling back to whichever portal you were last in whenever the client’s type wasn’t the exact word “retail” (a new lead has no type set yet), so it borrowed Insurance. Now, whenever a client profile is open, the header follows THAT client — insurance clients get the insurance header, everyone else gets the normal retail one — and only the shared screens (Leads, Photos, Reports) still follow the portal you picked. The Convert-to-Insurance card was right all along; the header was the thing lying.' },
+{ b:879, d:'2026-08-17', t:'Leads & Jobs: map toggle no longer covers the map',
+s:'On the Leads & Jobs screen, the job summary on the right shows a map of the property. The little Map / Satellite / Communications switcher was floating on top of the map, overlapping it and bumping into Google’s own map controls. It is now a clean bar directly above the map instead of sitting on it, and the map itself is taller so you can see more of the property. Nothing else about that screen changed.' },
 { b:878, d:'2026-08-17', t:'E2E Smoke Walk stops crying wolf too',
 s:'Same story as build 877, on the other built-in test. The E2E Smoke Walk (Tools) was reporting Estimates, Claims, Pricing and Coach as "mount never visible" even though they opened perfectly — you could see the very next step tap a button inside the panel and pass. The walk was asking the browser a question that full-screen panels can never answer "yes" to, so it declared four working screens broken. It now checks whether the panel actually fills the screen, which it does, so those four false failures are gone. Nothing about those plugins changed — they were never broken.' },
 { b:877, d:'2026-08-17', t:'Self Check stops crying wolf',
@@ -43132,6 +43142,48 @@ window.CardinalPO = { from: from, next: nextNumber, ensure: ensure };
 </script>
 
 <style id="cr-lil-styles">#cr-lil-view{display:none;position:fixed;inset:0;background:#fdfcf7;color:#2c2c2c;z-index:9400;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-lil-view.open{display:flex}.cr-lil-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-head h2{margin:0;flex:1;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.02em}.cr-lil-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;padding:6px 12px;border-radius:6px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit}.cr-lil-head button:hover{background:rgba(200,32,46,.14)}.cr-lil-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}.cr-lil-head button.primary:hover{background:#e8ba15}.cr-lil-search{padding:10px 16px;background:#fdfcf7;border-bottom:1px solid #e8dfc8;flex:0 0 auto}.cr-lil-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center;font-family:inherit}.cr-lil-search input:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-tabs{padding:0 12px 12px;background:#fdfcf7;display:flex;gap:6px;flex:0 0 auto;border-bottom:1px solid #e8dfc8;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-lil-tabs::-webkit-scrollbar{display:none}.cr-lil-tabs button{background:#f0e8d0;color:#6b6b6b;border:0;padding:8px 14px;border-radius:8px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}.cr-lil-tabs button.active{background:#c8202e;color:#fff}.cr-lil-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:9.5px}.cr-lil-tabs button.active .count{background:rgba(0,0,0,.22);color:#1a1a1a}.cr-lil-list{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;background:#fff}.cr-lil-row{padding:14px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}.cr-lil-row:hover{background:#f4f2f1}.cr-lil-row .top{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}.cr-lil-row .name{flex:1;font:800 14.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis}.cr-lil-row .price{flex:0 0 auto;font:800 14px 'Segoe UI',Arial,sans-serif;color:#8f1620;white-space:nowrap}.cr-lil-row .desc{font:400 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4;max-height:2.8em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.cr-lil-row .meta{margin-top:6px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;letter-spacing:.06em}.cr-lil-row .meta .cat{display:inline-block;padding:2px 8px;background:#f4f2f1;border:1px solid #d9cfaf;border-radius:10px;margin-right:6px;color:#8f1620;text-transform:uppercase}.cr-lil-row .meta .unit{color:#6b6b6b}.cr-lil-empty{padding:40px 20px;text-align:center;color:#6b6b6b;font:600 13.5px 'Segoe UI',Arial,sans-serif}.cr-lil-empty small{display:block;margin-top:8px;font-weight:400;color:#a89e88}.cr-lil-editor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9410;justify-content:center;align-items:center;padding:20px;padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}.cr-lil-editor.open{display:flex}.cr-lil-editor .box{background:#fdfcf7;border-radius:12px;width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}.cr-lil-editor .box-head{padding:14px 18px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-editor .box-head h3{margin:0;flex:1;font:800 14px Georgia,'Times New Roman',serif;color:#2c2c2c}.cr-lil-editor .box-head button{background:transparent;border:0;cursor:pointer;font-size:22px;line-height:1;color:#6b6b6b;padding:2px 6px}.cr-lil-editor .box-body{padding:16px 18px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}.cr-lil-editor label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-lil-editor label:first-child{margin-top:0}.cr-lil-editor input[type=text],.cr-lil-editor input[type=number],.cr-lil-editor select,.cr-lil-editor textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}.cr-lil-editor input:focus,.cr-lil-editor select:focus,.cr-lil-editor textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-editor textarea{min-height:120px;resize:vertical;line-height:1.5;font-size:13.5px}.cr-lil-editor .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.cr-lil-editor .box-foot{padding:12px 18px;background:#f4f2f1;border-top:1px solid #e8d9a8;display:flex;gap:8px;justify-content:space-between;flex:0 0 auto}.cr-lil-editor .box-foot .right{display:flex;gap:8px}.cr-lil-editor .box-foot button{padding:9px 16px;border-radius:6px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;font-family:inherit;border:0}.cr-lil-editor .box-foot .cancel{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}.cr-lil-editor .box-foot .save{background:#c8202e;color:#fff}.cr-lil-editor .box-foot .save:hover{background:#e8ba15}.cr-lil-editor .box-foot .save:disabled{opacity:.5;cursor:wait}.cr-lil-editor .box-foot .delete{background:transparent;color:var(--red-dk);border:1px solid #e8b8ba}.cr-lil-editor .box-foot .delete:hover{background:#fdecec}.cr-lil-locked{padding:40px 24px;text-align:center}.cr-lil-locked h3{font:800 15px Georgia,serif;color:#2c2c2c;margin:0 0 8px}.cr-lil-locked p{font:400 13px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin:0}</style>
+<style id="cr-lil-dark">
+/* 881: the Line Item Library shipped light-only — a cream full-screen page in an
+   otherwise dark app (Theo: "only has a light mode"). Its header was already dark;
+   this darkens the body/search/tabs/list/rows and the editor modal to match.
+   Scoped to :root:not([data-theme="rb-light"]) so the retail LIGHT theme keeps the
+   original cream palette byte-for-byte — this block is a no-op when the sun switch
+   is on. The library is a full-screen tool with its own Close button in the header,
+   so it takes the screen over by design; dark makes that read as a modal rather
+   than "the app went white and the nav vanished". Uses background-color (not the
+   background shorthand) on the search input so its magnifier icon survives. */
+:root:not([data-theme="rb-light"]) #cr-lil-view{background:#0e0e12;color:#cfd6df;}
+:root:not([data-theme="rb-light"]) .cr-lil-search{background:#0e0e12;border-bottom-color:#23232b;}
+:root:not([data-theme="rb-light"]) .cr-lil-search input{background-color:#16161b;border-color:#2a2a32;color:#e6e9ee;}
+:root:not([data-theme="rb-light"]) .cr-lil-tabs{background:#0e0e12;border-bottom-color:#23232b;}
+:root:not([data-theme="rb-light"]) .cr-lil-tabs button{background:#1b1b22;color:#aab1ba;}
+:root:not([data-theme="rb-light"]) .cr-lil-tabs .count{background:rgba(255,255,255,.14);}
+:root:not([data-theme="rb-light"]) .cr-lil-list{background:#0b0b0e;}
+:root:not([data-theme="rb-light"]) .cr-lil-row{border-bottom-color:#20202a;}
+:root:not([data-theme="rb-light"]) .cr-lil-row:hover{background:rgba(255,255,255,.05);}
+:root:not([data-theme="rb-light"]) .cr-lil-row .name{color:#e6e9ee;}
+:root:not([data-theme="rb-light"]) .cr-lil-row .price{color:#ff8a8f;}
+:root:not([data-theme="rb-light"]) .cr-lil-row .desc,
+:root:not([data-theme="rb-light"]) .cr-lil-row .meta,
+:root:not([data-theme="rb-light"]) .cr-lil-row .meta .unit{color:#9aa0a8;}
+:root:not([data-theme="rb-light"]) .cr-lil-row .meta .cat{background:#1b1b22;border-color:#33333d;color:#ff8a8f;}
+:root:not([data-theme="rb-light"]) .cr-lil-empty{color:#9aa0a8;}
+:root:not([data-theme="rb-light"]) .cr-lil-empty small{color:#6d747e;}
+/* editor modal */
+:root:not([data-theme="rb-light"]) .cr-lil-editor .box{background:#15151b;}
+:root:not([data-theme="rb-light"]) .cr-lil-editor .box-head{background:#1b1b22;border-bottom-color:#2a2a32;}
+:root:not([data-theme="rb-light"]) .cr-lil-editor .box-head h3{color:#e6e9ee;}
+:root:not([data-theme="rb-light"]) .cr-lil-editor .box-head button{color:#9aa0a8;}
+:root:not([data-theme="rb-light"]) .cr-lil-editor label{color:#9aa0a8;}
+:root:not([data-theme="rb-light"]) .cr-lil-editor input[type=text],
+:root:not([data-theme="rb-light"]) .cr-lil-editor input[type=number],
+:root:not([data-theme="rb-light"]) .cr-lil-editor select,
+:root:not([data-theme="rb-light"]) .cr-lil-editor textarea{background-color:#101015;border-color:#2a2a32;color:#e6e9ee;}
+:root:not([data-theme="rb-light"]) .cr-lil-editor .box-foot{background:#1b1b22;border-top-color:#2a2a32;}
+:root:not([data-theme="rb-light"]) .cr-lil-editor .box-foot .cancel{color:#aab1ba;border-color:#33333d;}
+:root:not([data-theme="rb-light"]) .cr-lil-locked h3{color:#e6e9ee;}
+:root:not([data-theme="rb-light"]) .cr-lil-locked p{color:#9aa0a8;}
+</style>
 <script id="cr-lil-script">
 (function(){
 'use strict';
@@ -56099,14 +56151,14 @@ else if(typeof window.showHome === 'function'){ window.showHome(); }
 function crmHead(){
 var k = crmNow();
 if(k !== 'retail') return k;
-var pr = window.currentProject;
-if(pr){
-var t = claimTypeOf(pr);
-if(!t && typeof window.projClaimType === 'function'){
-try{ t = window.projClaimType(pr) || ''; }catch(e){}
-}
-if(t === 'retail') return 'retail';
-}
+/* 880: crmNow() already returns insurance/community for an open project of that
+   type (above), so reaching here with a client profile OPEN means the open
+   client is retail/untyped — and the header must be retail. The old guard
+   required claim_type to be the literal 'retail'; a lead/blank-type client
+   failed it and fell through to stickyCrm(), which painted the LAST portal's
+   header (insurance red) onto a retail client — the reported bug. Only shared
+   screens (no profile open) follow the sticky portal, which is the 754 design. */
+if(document.body.classList.contains('projopen')) return 'retail';
 return stickyCrm();
 }
 function skin(){

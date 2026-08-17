@@ -18269,3 +18269,67 @@ which is correct for fixed elements. One module-scoped function; nothing else us
 Gates: the REAL CardinalWalk.run() driven in Chromium — 4 "mount never visible" failures on v877
 (reproduces Theo's screenshot exactly, Tap+New AI passing) → 0 on v878, all 8 steps PASS.
 `check_build` green (stamp 877 -> 878, 138/138 style tags). No SQL.
+
+## Build 879 — Leads & Jobs map: toggle no longer overlaps the map, map enlarged
+Theo's screenshot: on the Leads & Jobs desktop summary pane (#ljPane / renderLjPane), the
+Map/Satellite/Communications switcher (.ljmaptabs) was position:absolute over the map, floating on
+top of the Google iframe and colliding with the iframe's own map-type controls. Reproduced the exact
+pane in a real Chromium boot (render_ljmap879.mjs) — matched the photo.
+
+Fix (CSS only, scoped to the lj* leads classes):
+- .ljmaptabs: dropped position:absolute/top/left/z-index — now a full-width segmented bar (buttons
+  flex:1) with a bottom border, sitting ABOVE the map in normal flow.
+- .ljmap: display:flex; flex-direction:column so tabs (child 1) and the iframe (child 2) stack
+  cleanly and the bar can never overlay the map.
+- .ljmapframe: height 300px -> 380px (Theo: "make the map bigger").
+- .ljmap.cms .ljcomms: 46px top padding -> 12px (the 46px only existed to clear the old overlay).
+
+Gate render_ljmap879.mjs is negative-controlled: v878 -> tabs overlap the map (tabsBottom 519 >
+frameTop 464), v879 -> tabs above the map (tabsBottom == frameTop 509, no overlap), map 380px.
+Before/after rendered from the real app and shown to Theo. check_build green (stamp 878 -> 879,
+138/138 style tags). No SQL.
+
+## Build 880 — retail client no longer shows the Insurance header (sticky-portal leak)
+Theo's screenshot: a retail/lead test client rendered the red "Insurance" header while ALSO showing
+the "Convert to Insurance" card (which only appears on non-insurance clients) — proof the header was
+lying. Root cause in crmHead() (index.html ~56105): when crmNow() returned 'retail' and a client
+profile was open, the code only returned 'retail' if the client's claim_type was the LITERAL string
+'retail'. A brand-new lead has a blank claim_type (projClaimType -> 'unknown'), failed that exact
+match, and fell through to stickyCrm(), which returns the last portal the user was in — insurance —
+so the header painted insurance-red on a retail client.
+
+Fix: crmNow() already returns insurance/community for an open project of that type, so reaching the
+retail branch with a profile OPEN means the client is retail/untyped and the header must be retail.
+Replaced the `t === 'retail'` guard with `if(document.body.classList.contains('projopen')) return
+'retail';`. Only shared screens (no profile open) still follow the sticky portal — the 754 design,
+preserved. claimTypeOf/projClaimType dead code in this function removed.
+
+Gate render_crmhead880.mjs (real-app render, sticky portal forced to insurance): v879 -> retail
+client gets 'insurance' header (bug reproduced), v880 -> retail client gets 'retail', insurance
+client still 'insurance' (no regression). check_build green (stamp 879 -> 880). No SQL.
+
+Part of the Theo-screenshot batch on branch claude/light-dark-mode-audit-nxei27 (879 leads-map, 880
+this). Still open: unreadable native job-menu dropdown (needs custom menu), line-item library dark
+mode + disappearing nav, crew work order not reachable on the community profile.
+
+## Build 881 — Line Item Library dark mode
+Theo: "The line item library only has a light mode. The left side nav bar disappears as well." The
+admin Line Item Library (cr-lil, #cr-lil-view — full-screen position:fixed inset:0 overlay, its own
+dark header with a Close button) shipped light-only: cream body/search/tabs/list/rows + a cream
+editor modal, no dark handling. Opening it in the dark app read as a bright white page with the nav
+gone.
+
+Fix: appended <style id="cr-lil-dark"> scoped entirely to :root:not([data-theme="rb-light"]) that
+darkens every light surface under #cr-lil-view and .cr-lil-editor (view #0e0e12, list #0b0b0e,
+search/tabs/editor #16-1b, borders #2a2a32, ink #e6e9ee/#cfd6df, muted #9aa0a8, price/cat kept red).
+background-color (not the background shorthand) on the search input so its magnifier SVG survives.
+The light (rb-light) theme is byte-for-byte unchanged. The "disappearing nav" is inherent to the
+full-screen tool (it has its own Close button); dark makes it read as a modal, not a broken page.
+
+Gate render_lildark881.mjs (real render, computed view luminance): v881 dark PASS (lum 0.005),
+v881 light PASS (cream, lum 0.972, unchanged), v880 dark FAIL (cream, lum 0.972 — the bug). Element
+screenshot hangs on the fixed full-screen overlay so the gate asserts on computed style, not pixels
+— Theo's eyes are the final visual check. check_build green (stamp 880 -> 881). No SQL.
+
+Batch on branch (879 leads-map, 880 header, 881 library). Still open: unreadable native job-menu
+dropdown (custom-menu rewrite), crew work order on the community profile card.
