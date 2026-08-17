@@ -31,6 +31,7 @@
  * The activate handler still evicts every other version when you do.
  */
 var CACHE = 'cardinal-shell-v1';
+var DATA_CACHE = 'cardinal-data-v1';
 var SHELL = [
   '/',
   '/manifest.json',
@@ -53,7 +54,7 @@ self.addEventListener('activate', function(e){
     caches.keys()
       .then(function(keys){
         return Promise.all(keys.map(function(k){
-          return k === CACHE ? null : caches.delete(k);
+          return (k === CACHE || k === DATA_CACHE) ? null : caches.delete(k);
         }));
       })
       .then(function(){ return self.clients.claim(); })
@@ -69,8 +70,31 @@ self.addEventListener('fetch', function(e){
   var url;
   try{ url = new URL(req.url); }catch(err){ return; }
 
-  /* Cross-origin auth/data and our own functions: always live network. */
-  if(url.hostname.indexOf('.supabase.co') !== -1) return;
+  /* Cross-origin auth/data and our own functions.
+     864 (offline-first, phase 1): Supabase REST *reads* are cached so screens
+     you have already opened come back with no signal. NETWORK-FIRST — online is
+     always live; the cache is only the offline fallback. Auth, storage and
+     realtime stay live. The cache is a SEPARATE bucket, wiped on logout (message
+     handler below) so one person's data can never show for the next. */
+  if(url.hostname.indexOf('.supabase.co') !== -1){
+    if(url.pathname.indexOf('/rest/v1/') === 0){
+      e.respondWith(
+        fetch(req).then(function(res){
+          if(res && res.ok){
+            var copy = res.clone();
+            caches.open(DATA_CACHE).then(function(c){ c.put(req, copy); }).catch(function(){});
+          }
+          return res;
+        }).catch(function(){
+          return caches.open(DATA_CACHE).then(function(c){ return c.match(req); }).then(function(hit){
+            return hit || new Response('{"offline":true}', { status: 503, headers:{ 'Content-Type':'application/json' } });
+          });
+        })
+      );
+      return;
+    }
+    return;
+  }
   if(url.pathname.indexOf('/api/') === 0) return;
 
   /* ---- how the app opens ------------------------------------------------
@@ -241,6 +265,13 @@ self.addEventListener('fetch', function(e){
       return net;
     })
   );
+});
+
+/* ---------- 864: clear the offline data cache on logout ---------- */
+self.addEventListener('message', function(e){
+  if(e && e.data && e.data.type === 'cr-clear-data-cache'){
+    e.waitUntil(caches.delete(DATA_CACHE).catch(function(){}));
+  }
 });
 
 /* ---------- push (unchanged) ---------- */

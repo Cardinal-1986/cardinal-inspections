@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 863 &#8212; The notify message says what to actually do, instead of the confusing &#8220;no phone registered&#8221;</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 864 &#8212; Offline-first phase 1 &#8212; screens you have opened come back with no signal</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -24744,6 +24744,9 @@ async function doLogin(){
 }
 signOutBtn.addEventListener('click', async function(){
   try{ await sb.auth.signOut(); }catch(e){}
+  /* 864: wipe the offline data cache so the next person to sign in on this
+     device cannot see the last person's cached rows. */
+  try{ if(navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type:'cr-clear-data-cache' }); }catch(_){}
   showLogin();
 });
 
@@ -39741,6 +39744,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:864, d:'2026-08-17', t:'Offline-first, phase 1 \u2014 screens work with no signal',
+s:'First piece of real offline support: the app now keeps a copy of the data you load, so any screen you have already opened comes back even with no signal at all \u2014 no more blank app in a dead zone. It stays live when you have a connection (you always see fresh data online; the saved copy is only used when you are offline), it is kept separate and wiped when you sign out so it can never show the next person\u2019s data, and a screen you have never opened will still wait for signal. Next phases: saving offline (an outbox that syncs when you are back) and offline photos.' },
 { b:863, d:'2026-08-17', t:'Clearer \u201ccould not notify\u201d message',
 s:'The \u201cCould NOT notify \u2014 no phone registered, and email is off\u201d line was misleading: it read as if the person\u2019s phone NUMBER was missing. It never meant that \u2014 the app notifies by in-app push (which each person turns on in Settings \u2192 Enable Notifications) and by email (a server setting), not by text. The message now says \u201cthey haven\u2019t turned on notifications on a device, and team email isn\u2019t set up,\u201d which is what to actually do about it.' },
 { b:862, d:'2026-08-17', t:'Team Directory saves survive a weak signal',
