@@ -18311,3 +18311,25 @@ client still 'insurance' (no regression). check_build green (stamp 879 -> 880). 
 Part of the Theo-screenshot batch on branch claude/light-dark-mode-audit-nxei27 (879 leads-map, 880
 this). Still open: unreadable native job-menu dropdown (needs custom menu), line-item library dark
 mode + disappearing nav, crew work order not reachable on the community profile.
+
+## Build 881 — Line Item Library dark mode
+Theo: "The line item library only has a light mode. The left side nav bar disappears as well." The
+admin Line Item Library (cr-lil, #cr-lil-view — full-screen position:fixed inset:0 overlay, its own
+dark header with a Close button) shipped light-only: cream body/search/tabs/list/rows + a cream
+editor modal, no dark handling. Opening it in the dark app read as a bright white page with the nav
+gone.
+
+Fix: appended <style id="cr-lil-dark"> scoped entirely to :root:not([data-theme="rb-light"]) that
+darkens every light surface under #cr-lil-view and .cr-lil-editor (view #0e0e12, list #0b0b0e,
+search/tabs/editor #16-1b, borders #2a2a32, ink #e6e9ee/#cfd6df, muted #9aa0a8, price/cat kept red).
+background-color (not the background shorthand) on the search input so its magnifier SVG survives.
+The light (rb-light) theme is byte-for-byte unchanged. The "disappearing nav" is inherent to the
+full-screen tool (it has its own Close button); dark makes it read as a modal, not a broken page.
+
+Gate render_lildark881.mjs (real render, computed view luminance): v881 dark PASS (lum 0.005),
+v881 light PASS (cream, lum 0.972, unchanged), v880 dark FAIL (cream, lum 0.972 — the bug). Element
+screenshot hangs on the fixed full-screen overlay so the gate asserts on computed style, not pixels
+— Theo's eyes are the final visual check. check_build green (stamp 880 -> 881). No SQL.
+
+Batch on branch (879 leads-map, 880 header, 881 library). Still open: unreadable native job-menu
+dropdown (custom-menu rewrite), crew work order on the community profile card.
