@@ -18404,6 +18404,38 @@ census used `getComputedStyle(el).display` (which ignores hidden ANCESTORS, so i
 JS-validated form never uses. Fixed the driver's census (offsetParent + visual "*") so the re-run won't
 re-report it. No app change.
 
+## Build 889 — the crew Roofing Work Order, rebuilt (Field Ticket)
+
+Theo asked to redesign the Production→crew Work Order (build 555's document) for roofing.
+Picked "Field Ticket" from three previewed designs. The WO had been reusing the ESTIMATE
+template, so it carried a nonsensical "Estimate #" / "Valid Through 30 days" cover on a crew
+document. Changes, all in `index.html`:
+
+- **`buildEstimate()` gains an `isWO` branch** (title contains "WORK ORDER"): strips the estimate
+  cover meta (`Prepared For` / `Estimate #` / `Valid Through`, regex-anchored on `Prepared For`),
+  the `PROPERTY PHOTO` block, the generic `Notes` placeholder and the client-acceptance footer
+  (`SIGN_FOOTER` + the "valid through" note). Gated on the WORK ORDER title only, so estimates and
+  contracts are byte-for-byte unchanged.
+- **`woSpecRows` + `woBody` rewritten** into sectioned roofing content using the document's OWN
+  classes (`h2.sec .num`, `table.meta`, `.descbox`, `.ph`, `.cbx`) so it prints on the same paper:
+  a **Measurements** board (squares called out big + ridge/hip/valley/eave/rake from
+  `checklist.meas`), **Tear-Off** (Home/Garage/Shed structures, existing layers auto, satellite
+  dish Yes/No auto from `checklist.sat`), **Decking & Wood Replacement** (full re-deck Yes/No,
+  decking type with the inspected type pre-ticked via `woDeckType()`, condition auto, sheets
+  fill-in), **Colors — confirm before install** (shingle + drip edge), and **Notes to Crew** (auto
+  from inspection notes + measurement note). Checkboxes are real `.cbx` — `openEditor()` already
+  runs `wireCheckboxes()`, so the crew taps them on screen (Yes/No + decking are `data-group`
+  radios; structures are independent). Non-roofing trades skip the roof sections.
+- **Colors carry from the signed contract or fill in.** New picker inputs (`#woShingle`/`#woDrip`)
+  are prefilled best-effort by `woReadContractColors(pr)`, which reads the job's newest roofing
+  contract and pulls the `select[data-crsel="occ"]`/`[data-crsel="trim"]` `<option selected>`
+  attributes (how `wireColorSelects` persists them). Fully guarded — a miss leaves the fields blank
+  to type. Left blank on the document, colors render as a `.ph` fill-in.
+
+Gates: `check_build` GREEN (117 inline scripts parse, stamp 888→889). `render_wo889.mjs` (Chromium,
+drives the shipped `woBody`/`buildEstimate` + the picker) GREEN 24/24, RED 0/24 on the v888 control.
+Roofing-only; other trades unchanged. Best verified on the phone — Theo's eyes are the print gate.
+
 ## Build 888 — punch-out photos actually save (were uploading an 11-byte wrapper)
 
 (Originally cut as 876 off main@875; main advanced to 887 while it was in review, so it was
