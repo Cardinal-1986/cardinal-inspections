@@ -18403,3 +18403,21 @@ census used `getComputedStyle(el).display` (which ignores hidden ANCESTORS, so i
 .ldmore fields and the display:none insurance box) and looked for an HTML `required` attribute this
 JS-validated form never uses. Fixed the driver's census (offsetParent + visual "*") so the re-run won't
 re-report it. No app change.
+
+## Build 888 — punch-out photos actually save (were uploading an 11-byte wrapper)
+
+(Originally cut as 876 off main@875; main advanced to 887 while it was in review, so it was
+rebased and renumbered 888 — same one-line fix.) Theo reported a broken punch-out photo.
+Root-caused against production: `photos/punch/*` objects were **11 bytes** each and the `photos`
+bucket is `public:false`. `CardinalSolUpload.prepare()` returns a WRAPPER `{ file }` (or `{ url }`
+/ null) — its real contract, used correctly by the scope reader — but the punch card did
+`f = await prepare(f)` and uploaded `f`, i.e. the wrapper OBJECT, which serialises to the 11-byte
+string `{"file":{}}`. Every punch photo was an 11-byte non-image. (Display was already fine:
+`paintPhotos` signs `/object/public/photos/` via `paintSignedPhotoImgs`.) Fix: unwrap to the real
+File (`if(_pp && _pp.file) f = _pp.file`); if prepare returns no file, keep the camera File. Fixes
+online upload AND the offline queue. A 'shape is not a contract' bug.
+
+Gate: `render_punchphoto888.mjs` drives the real `pickPhoto` via the filechooser and captures what
+reaches `storage.upload`: **GREEN 5/5** (a 5000-byte Blob, not the wrapper). Negative-controlled
+**RED (3)** against main@887 (body is a plain Object → the 11-byte bug). `check_build` green (stamp
+887 -> 888). No SQL. NB: photos taken before 888 did not save and must be retaken.
