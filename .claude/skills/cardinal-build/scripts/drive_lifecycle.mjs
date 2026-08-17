@@ -318,6 +318,11 @@ await clearWrites();
   // sign the contract in the editor
   await page.evaluate(() => { const b = document.getElementById('sigBtn'); if (b) b.click(); });
   await page.waitForTimeout(500);
+  /* 887: a contract has multiple signature lines, so signing now shows an in-app
+     role chooser (buttons) instead of prompt("type 1/2/3"). Tap "buyer" — the
+     acceptance that advances the pipeline. No-op on single-slot docs. */
+  await page.evaluate(() => { const b = document.querySelector('[data-who="buyer"]'); if (b) b.click(); });
+  await page.waitForTimeout(300);
   const box = await page.evaluate(() => {
     const c = document.getElementById('sigPad'); if (!c) return null;
     const r = c.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height };
