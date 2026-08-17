@@ -18350,3 +18350,15 @@ date-based consumers (Crew Dispatch day cells) already slice(0,10), so a time ne
 Gate render_punchtime882.mjs (real render, recording mock): v882 -> time input present, insert writes
 scheduled_at + scheduled_time='14:30'; v881 -> no time input, no scheduled_time (negative control).
 check_build green (881 -> 882). SQL: punch_scheduled_time.sql (applied).
+
+## Build 883 — stage banner repaints on stage change (E2E audit finding)
+The E2E lifecycle audit caught it: advancing the stage on a client profile (contactedBtn Lead→Prospect,
+or the stageSel dropdown) updated the dropdown and renderHome() but never re-rendered the profile's big
+stage BANNER (.dbstgmid) — it kept showing the old stage, and its "in status" age, until you left and
+reopened the client. setStage() also fires patchProjectCk() (stage_since) fire-and-forget, so a naive
+synchronous re-render would still show a stale age. Fix: in setStage, for the open project, optimistically
+fold stage_since + t_<stage> into the local currentProject.checklist, then call renderAcxOverview(). The
+async patch persists the same values.
+
+Gate render_stagebanner883.mjs: v883 banner LEAD→PROSPECT immediately, v882 banner stays LEAD (negative
+control). check_build green (882 -> 883). No SQL.
