@@ -18198,3 +18198,29 @@ response shows Push/Email/Text sent; an unconfigured response says each channel 
 yet'; a no-push-device response says 'no device enabled here yet'. Negative-controlled **RED
 (0/12)** against v874 (no button). `check_build` green (stamp 874 -> 875). No SQL. NB: email/text
 still require RESEND_API_KEY / TWILIO_* in Vercel and a Verified Resend domain to actually deliver.
+
+## Build 876 — Dark-mode leak repair (app-wide audit): white cards on the dark theme
+Reported from a phone screenshot: the Inspections/Reports list rendered as bright white cards with
+faint, near-unreadable titles while the app was in dark mode. Root cause is the recurring "paper-era
+primitive with no dark twin" class — `table.reports tr{background:#fff}` (the mobile card rule),
+`.chipbtn`, the list/report filter form controls, `.setrow`, and the whole Graphs & Reports screen
+carried unconditional light backgrounds that only looked right on a white page.
+
+Audited EVERY main view in a real Chromium render (`scripts/audit_darkmode.mjs` — boots the real
+index.html against the e2e mock, forces the default dark theme, walks Home, Clients, Leads, Inspections,
+Graphs & Reports, Activity, Settings, Team and a client profile, and flags any sizeable surface whose
+COMPOSITED background reads light). Ground truth: leaks were confined to **Home** (a chipbtn),
+**Inspections/Reports list** (the `tr` cards + salesman `select` + chipbtns), **Graphs & Reports**
+(filters/KPIs/table) and **Settings** (`.setrow`). Clients, Leads & Jobs, Activity, Team and the client
+profile already themed clean and were left untouched.
+
+Fix is one appended `<style id="cr-darkleak-fix">` block scoped ENTIRELY to
+`:root:not([data-theme="rb-light"])`, so the light (sun) retail theme is byte-for-byte unchanged — the
+block is a no-op when the switch is on. Dark values match the app's existing `--rbe-*` dark surfaces;
+`.projrow` group-header bands stay light by design (the build 487 decision); `.filterbtn.active` and
+`.chipbtn.danger` semantics are preserved (`:not(.active)` scoping).
+
+Gates: `audit_darkmode.mjs` GREEN on v876 (0 real light surfaces; the lone `span.dbring` hit is a
+transparent decorative progress ring), negative-controlled RED on v875 (13 light surfaces across Home/
+Inspections/Reports/Settings). Both-theme spot check: chipbtn/setrow compute dark in the default theme
+and white under `rb-light`. `check_build` green (stamp 875 -> 876, 137/137 style tags). No SQL.
