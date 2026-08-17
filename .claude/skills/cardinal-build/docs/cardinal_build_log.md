@@ -18181,3 +18181,20 @@ Twilio call and `texted:0`. Negative-controlled **RED (9)** against v873's notif
 repo tree so `web-push` resolves \u2014 a clean red, not a crash). `node --check` + ESM check pass;
 `normPhone` unit-tested 10/10. `check_build` green (stamp 873 -> 874, index.html changelog only).
 No SQL. NB: staff phone numbers must be in the Team Directory for a text to reach them.
+
+## Build 875 — "Send a test alert to myself" button (notifications setup verification)
+
+A `#testAlertBtn` under the Phone Notifications section (below the push-enable control). It fires
+push + email + text to the CURRENT user ONLY \u2014 `notifyTeam([currentUser.email], ...)` \u2014 then
+renders a per-channel readout from the route's own response: push (sent / no-device / failed),
+email (sent / not-configured via `env.resend` / failed with detail), text (sent / not-configured via
+`env.sms` / add-your-number). Reuses the existing notifyTeam()/api/notify path (612/874), so it
+exposes no secret \u2014 only the presence flags the route already returns. The fastest way to confirm
+the Resend + Twilio setup end to end without alerting the whole team.
+
+Gate: `render_testalert875.mjs` drives the real app \u2014 **GREEN 12/12**: the button + status line
+exist; a click calls notifyTeam with ONLY the current user's email (never anyone else); an all-ok
+response shows Push/Email/Text sent; an unconfigured response says each channel is 'not set up
+yet'; a no-push-device response says 'no device enabled here yet'. Negative-controlled **RED
+(0/12)** against v874 (no button). `check_build` green (stamp 874 -> 875). No SQL. NB: email/text
+still require RESEND_API_KEY / TWILIO_* in Vercel and a Verified Resend domain to actually deliver.
