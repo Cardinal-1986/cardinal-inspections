@@ -18333,3 +18333,20 @@ screenshot hangs on the fixed full-screen overlay so the gate asserts on compute
 
 Batch on branch (879 leads-map, 880 header, 881 library). Still open: unreadable native job-menu
 dropdown (custom-menu rewrite), crew work order on the community profile card.
+
+## Build 882 — punch-outs can carry a time of day (not just a date)
+Theo: "Please allow us to set a time as well as the date for punch outs." punch_items.scheduled_at is
+a DATE column, so it can't hold a time. Migration punch_scheduled_time.sql adds a nullable
+`scheduled_time time` column (applied to prod via MCP before this HTML ships — SQL-before-HTML).
+
+Wired end to end in the punch modules: the "Add an item" sheet and the detail-sheet reschedule field
+each gain a <input type="time"> beside the date; saveAdd sends scheduled_time only when a date+time
+are both set, and RETRIES the insert without it if the column is missing (graceful deploy-order
+fallback); the reschedule onchange saves date+time together (clearing the date clears the time). New
+fmtSchedule()/fmtClock() (detail module) and fmtSchedClock() (cr-punch card) render "Aug 17 · 2:30 PM"
+wherever a punch shows its schedule. Existing punch-outs (date-only or unscheduled) unchanged. The
+date-based consumers (Crew Dispatch day cells) already slice(0,10), so a time never disturbs them.
+
+Gate render_punchtime882.mjs (real render, recording mock): v882 -> time input present, insert writes
+scheduled_at + scheduled_time='14:30'; v881 -> no time input, no scheduled_time (negative control).
+check_build green (881 -> 882). SQL: punch_scheduled_time.sql (applied).
