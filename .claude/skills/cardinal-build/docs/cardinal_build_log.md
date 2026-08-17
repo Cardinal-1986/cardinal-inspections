@@ -18023,3 +18023,21 @@ Second phase of offline support (Theo: full offline for migration). New `cr-outb
 ## Build 866 — Offline-first, Phase 4: offline PHOTOS (punch card)
 
 Field-first pick over the office-module sweep: photos are what the crew captures on roofs with no signal. Punch-card photo capture now works offline. A separate IndexedDB store (`cardinal-photo-outbox`) holds the resized image BLOB on the device when `navigator.onLine === false` (or a storage upload throws networkish); `pickPhoto` routes to `queuePhoto` instead of uploading, and the Photos section shows `N photos saved on your phone \u2014 uploading when you're back`. `flushPhotos` (on `online` / `cr-outbox-flushed` / visible / 35s) uploads each blob to a STABLE path (`punch/<item>/offline-<localId>.jpg`, upsert), reads the CURRENT photos array, appends an attributed `{u,by,name,at}` only if that url isn't already there (dedupe), updates, deletes the local blob, reloads. **The DB array only ever receives a real URL** \u2014 never a local marker \u2014 so other devices never see a broken pending entry; the stable-path + dedupe make a re-run idempotent. Test hooks (`_queuePhoto/_flushPhotos/_pendingPhotos`) on `CardinalPunchCard`. Gated: `check_build` green (117 scripts); `render_offphoto866.mjs` drives the real app 6/6 GREEN (offline queues + note shows; online uploads + APPENDS to the item + note clears), negative-controlled RED (6) on v865. Airplane-mode is the on-device gate. **4 of 5 phases done; phase 3 (other modules) and phase 5 (polish) remain.**
+
+## Build 867 — Offline-first, phase 3 (part 1): Team Directory saves offline
+
+Phase 3 begins routing the office screens through the same write outbox the punch-out
+card uses (865). First the **Team Directory** — the exact screen that surfaced
+“TypeError: Load failed” (862). Extended `CardinalOutbox` to replay **upserts** as well
+as field updates (entry shape `{ table, op:'upsert', row, onConflict }`; idempotent on the
+conflict key). Wired the team_profiles profile-save and photo-upload: `navigator.onLine
+=== false` OR a networkish throw → `tmQueueOffline()` queues the upsert, updates
+`cacheTeam` optimistically, re-renders the card, and toasts “Saved on your phone —
+syncing when you’re back.” A real RLS refusal still surfaces at once. On flush, a quiet
+`loadTeamProfiles()` refreshes the roster cache (no re-render, to not disturb an open edit).
+
+Gate: `render_teamoff867.mjs` drives the real app — **GREEN 11/11** (offline the edit is
+queued, no direct DB write, badge shown, card shows the new name; online the queue drains
+to 0 and a team_profiles upsert with the new name is actually sent). Negative-controlled
+**RED (3)** against v866 (offline it writes directly / never queues). `check_build` green
+(117 inline scripts, stamp 866 → 867). No SQL.

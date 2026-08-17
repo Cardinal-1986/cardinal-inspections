@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 866 &#8212; Offline-first phase 4 &#8212; photos taken with no signal are kept on the phone and upload when you&#8217;re back</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 867 &#8212; Offline-first phase 3 &#8212; Team Directory edits save on the phone with no signal and sync when you&#8217;re back</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -25358,6 +25358,19 @@ function tmRetryWrite(fn){
     }
   })();
 }
+/* 867: no signal -> hold a team_profiles upsert on the phone and update the
+   roster card now. The global 'N waiting to sync' badge is the receipt; the
+   outbox replays it (idempotent on email) when we're back. */
+function tmQueueOffline(row, em, card){
+  try{ if(window.CardinalOutbox) window.CardinalOutbox.queue({ table:'team_profiles', op:'upsert', row: row, onConflict:'email' }); }catch(_tq){}
+  cacheTeam[em] = Object.assign({}, cacheTeam[em] || { email: em }, row);
+  if(card) card.classList.remove('editing');
+  try{ renderTeamView(); renderActivity(); renderPipeline(); }catch(_tr){}
+  try{ if(window.crToastOk) window.crToastOk('Saved on your phone \u2014 syncing when you\u2019re back'); }catch(_tt){}
+}
+/* when the outbox drains, refresh the roster cache quietly so a later render
+   shows the server-confirmed values (no re-render, to not disturb an open edit). */
+window.addEventListener('cr-outbox-flushed', function(){ try{ loadTeamProfiles(); }catch(_tf){} });
 document.getElementById('tmMount').addEventListener('click', async function(e){
   var card = e.target.closest('.tmcard');
   if(!card) return;
@@ -25380,14 +25393,21 @@ document.getElementById('tmMount').addEventListener('click', async function(e){
       phone: card.querySelector('.tmPhone').value.trim() || null,
       updated_at: new Date().toISOString()
     };
+    if(typeof navigator !== 'undefined' && navigator.onLine === false && window.CardinalOutbox){
+      tmQueueOffline(row, em, card); return;
+    }
     try{
       var r = await tmRetryWrite(function(){ return sb.from('team_profiles').upsert(row, { onConflict: 'email' }); });
       if(r.error) throw r.error;
       auditLog('team', 'Profile edited \u2014 ' + (row.name || em), null);
       await loadTeamProfiles(); renderTeamView(); renderActivity(); renderPipeline();
     }catch(err){
-      showError('Could not save: ' + (err.message || err) +
-        ' \u2014 if this mentions a missing table, run the team_profiles SQL.');
+      if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(err)){
+        tmQueueOffline(row, em, card);
+      }else{
+        showError('Could not save: ' + (err.message || err) +
+          ' \u2014 if this mentions a missing table, run the team_profiles SQL.');
+      }
     }
   }
 });
@@ -25396,12 +25416,21 @@ document.getElementById('tmMount').addEventListener('change', async function(e){
   if(!f || !f.files || !f.files[0]) return;
   var card = e.target.closest('.tmcard');
   var em = card.getAttribute('data-em');
+  var prow = null;
   try{
     var dataUrl = await tmResize(f.files[0]);
-    var r = await tmRetryWrite(function(){ return sb.from('team_profiles').upsert({ email: em, photo: dataUrl, updated_at: new Date().toISOString() }, { onConflict: 'email' }); });
+    prow = { email: em, photo: dataUrl, updated_at: new Date().toISOString() };
+    if(typeof navigator !== 'undefined' && navigator.onLine === false && window.CardinalOutbox){
+      tmQueueOffline(prow, em, card); return;
+    }
+    var r = await tmRetryWrite(function(){ return sb.from('team_profiles').upsert(prow, { onConflict: 'email' }); });
     if(r.error) throw r.error;
     await loadTeamProfiles(); renderTeamView(); renderActivity();
-  }catch(err){ showError('Could not upload: ' + (err.message || err)); }
+  }catch(err){
+    if(prow && window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(err)){
+      tmQueueOffline(prow, em, card);
+    }else{ showError('Could not upload: ' + (err.message || err)); }
+  }
 });
 
 /* =========================================================================
@@ -39744,6 +39773,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:867, d:'2026-08-17', t:'Offline-first, phase 3 \u2014 Team Directory edits survive no signal',
+s:'Phase 3 starts routing the office screens through the same offline outbox the punch-out card already uses. First up is the Team Directory \u2014 the exact screen that showed you \u201cLoad failed.\u201d Edit a teammate\u2019s name, title, phone or photo with no signal and it is now saved on the phone, the card updates right away, and it syncs itself the moment you are back (the small \u201cN waiting to sync\u201d badge shows what is still queued). Nothing is lost. Saves key on the email address, so a re-sync can never create a duplicate, and a real permission error still tells you at once. More office screens follow.' },
 { b:866, d:'2026-08-17', t:'Offline-first, phase 4 \u2014 photos survive no signal',
 s:'Photos now work in a dead zone too. Take a photo on a punch-out with no signal and it is held on the phone \u2014 the card shows \u201cN photos saved on your phone, uploading when you are back\u201d \u2014 then it uploads and attaches itself the moment you have a connection (or next time you open the app). Nothing is lost. Each held photo uploads to its own fixed spot and is de-duplicated on the way in, so it can never post twice.' },
 { b:865, d:'2026-08-17', t:'Offline-first, phase 2 \u2014 saves survive no signal',
@@ -72073,7 +72104,13 @@ function flush(){
     rows.forEach(function(row){
       chain = chain.then(function(stop){
         if(stop) return true;
-        return Promise.resolve(cx.from(row.table).update(row.patch).eq(row.match.col, row.match.val))
+        /* 867: two entry shapes now. op:'upsert' -> a full-row upsert keyed on
+           onConflict (Team Directory, etc); default -> the 865 field patch. Both
+           are idempotent, so a replay after a partial flush can't duplicate. */
+        var q = (row.op === 'upsert')
+          ? cx.from(row.table).upsert(row.row, row.onConflict ? { onConflict: row.onConflict } : undefined)
+          : cx.from(row.table).update(row.patch).eq(row.match.col, row.match.val);
+        return Promise.resolve(q)
           .then(function(r){
             if(r && r.error){
               if(networkish(r.error)) return true;    /* still offline: keep it, stop */
