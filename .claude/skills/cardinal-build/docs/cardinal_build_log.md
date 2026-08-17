@@ -18007,3 +18007,7 @@ Theo, on a job-site screenshot: "Could not save: TypeError: Load failed." That i
 ## Build 862 — Team Directory saves retry a dropped connection
 
 Theo, on the Team Directory: "Could not save: TypeError: Load failed — if this mentions a missing table, run the team_profiles SQL." Same class as 861 — a dropped fetch on a weak signal, NOT a missing table (the directory had loaded, so team_profiles exists and reads work; it's the upsert that dropped). Adds a shared `tmRetryWrite(fn)` helper (up to 3 tries, 400/800ms backoff, transient-network only) and routes the profile save and the portrait upload through it. RLS refusals come back as `r.error` (not a thrown network error) and are surfaced immediately, never retried; upserts key on email so a retry can't duplicate. Gated: `check_build` green; `gate_teamretry862.mjs` executes the SHIPPED `tmRetryWrite` — 4/4 GREEN (transient recovers, RLS returned once, persistent gives up after 3, non-network not retried); negative control on v861 reports the function absent.
+
+## Build 863 — clearer "could not notify" message
+
+Theo: "Could NOT notify Scottie — no phone registered" but "Scottie's info is in tho." The message was misleading — "no phone registered" meant no PUSH subscription (Settings → Enable Notifications), not a missing phone number; the app notifies by push + email (RESEND), never SMS. Reworded no_subscriptions and subscriptions_expired in `notifyOutcomeText` (the one place, 612). Copy-only; check_build green, shipped fn executed 4/4.

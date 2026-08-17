@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 862 &#8212; Team Directory saves retry a dropped connection too, like the punch-out card</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 863 &#8212; The notify message says what to actually do, instead of the confusing &#8220;no phone registered&#8221;</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18125,8 +18125,8 @@ function notifyOutcomeText(res, to){
   else if(r === 'signed_out')      why = 'you are signed out';
   else if(r === 'network')         why = 'the request never reached the server';
   else if(r === 'no_recipients')   why = 'no one was tagged';
-  else if(r === 'no_subscriptions')why = 'no phone registered, and email is off';
-  else if(r === 'subscriptions_expired') why = 'their phone registration had expired';
+  else if(r === 'no_subscriptions')why = 'they haven\u2019t turned on notifications on a device, and team email isn\u2019t set up';
+  else if(r === 'subscriptions_expired') why = 'their notifications sign-up on that device expired \u2014 they can re-enable it in the app';
   else if(r === 'vapid_mismatch')  why = 'the server\u2019s push keys are wrong (VAPID_PRIVATE_KEY)';
   else if(r === 'push_rejected')   why = 'the phone service refused it' +
                                          (res.detail ? ' \u2014 ' + res.detail : '');
@@ -39741,6 +39741,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:863, d:'2026-08-17', t:'Clearer \u201ccould not notify\u201d message',
+s:'The \u201cCould NOT notify \u2014 no phone registered, and email is off\u201d line was misleading: it read as if the person\u2019s phone NUMBER was missing. It never meant that \u2014 the app notifies by in-app push (which each person turns on in Settings \u2192 Enable Notifications) and by email (a server setting), not by text. The message now says \u201cthey haven\u2019t turned on notifications on a device, and team email isn\u2019t set up,\u201d which is what to actually do about it.' },
 { b:862, d:'2026-08-17', t:'Team Directory saves survive a weak signal',
 s:'Editing a teammate\u2019s profile \u2014 name, title, phone, or portrait \u2014 no longer fails the moment the phone drops a request. Like the punch-out card (861), the Team Directory now quietly retries a dropped connection a couple of times before giving up. The \u201cLoad failed\u201d you saw was a weak-signal blip, not a missing table \u2014 the directory had already loaded, so the table is there. A real permission error still shows right away.' },
 { b:861, d:'2026-08-17', t:'Punch-out saves survive a weak signal',
