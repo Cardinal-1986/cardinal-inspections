@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 858 &#8212; Fixed the Work Order / document editor scrolling the background instead of the document on iPhone</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 859 &#8212; The punch-out card gets a separate photo gallery, and new photos are tagged with who added them</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39723,6 +39723,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:859, d:'2026-08-17', t:'Punch-out card \u2014 a real photo gallery',
+s:'The punch-out card now has a proper photo gallery. Before, only the first five photos showed in the labelled slots and any others were counted as \u201c+N more\u201d but could not be opened at all. Tap \u201cView all N photos\u201d and a separate, scrollable gallery opens with every photo on the punch-out \u2014 the ones the rep took, the tech\u2019s, the completion shots \u2014 as a grid you tap to see full size, with a remove button on each and an Add photo tile. New photos are now stamped with who added them and when, shown under the thumbnail; older photos just show \u201cAdded earlier.\u201d The five guided slots stay for capture.' },
 { b:858, d:'2026-08-17', t:'Work Order editor scrolls the document, not the background',
 s:'On the iPhone, scrolling inside the Work Order (and any estimate / contract / report) editor moved the app behind it instead of the document. iOS does not give an &lt;iframe&gt; its own scroll when the height comes from a flex layout \u2014 it lets the frame grow to the whole document and the page behind takes the scroll. The document frame now has a fixed, definite height that iOS respects, so it scrolls inside itself and the background stays put. Best tested on the phone.' },
 { b:857, d:'2026-08-17', t:'Hub Punch/Dispatch/Crews no longer flash the retail home',
@@ -49495,6 +49497,26 @@ window.CardinalProduction = {
 @media (min-width:900px){
   #cr-pk .pksplit{ display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr); gap:18px; align-items:start; }
 }
+/* 859: the separate, scrollable photo gallery */
+#cr-pk .pkgalbtn{ display:flex; align-items:center; justify-content:center; gap:7px; width:100%; margin-top:9px; background:var(--pk-c2,#1b1e22); color:var(--pk-ink,#eceef0); border:1px solid var(--pk-line,rgba(230,235,240,.11)); border-radius:9px; padding:10px 12px; cursor:pointer; font:700 11px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.05em; }
+#cr-pk .pkgalbtn:hover{ border-color:var(--pk-acc,#e35c63); }
+#cr-pk .pkgalbtn svg{ width:15px; height:15px; flex:none; }
+#cr-pk .pkgalbtn b{ color:var(--pk-acc,#e35c63); margin:0 2px; }
+#cr-pk .pkgal{ position:fixed; inset:0; z-index:6; background:var(--pk-g,#0c0d0f); display:flex; flex-direction:column; overscroll-behavior:contain; }
+#cr-pk .pkgtop{ display:flex; align-items:center; gap:10px; padding:16px 15px 12px; border-bottom:1px solid var(--pk-line2,rgba(230,235,240,.06)); flex:0 0 auto; }
+#cr-pk .pkgttl{ font:800 15px -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pk-ink,#eceef0); }
+#cr-pk .pkgn{ margin-left:auto; font:700 10px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em; color:var(--pk-dim,#848c94); }
+#cr-pk .pkgbody{ flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:14px 15px calc(30px + env(safe-area-inset-bottom,0px)); }
+#cr-pk .pkgrid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; }
+@media (min-width:620px){ #cr-pk .pkgrid{ grid-template-columns:repeat(3,minmax(0,1fr)); } }
+#cr-pk .pkgtile{ position:relative; min-width:0; }
+#cr-pk .pkgimg{ display:block; width:100%; aspect-ratio:1/1; padding:0; border:1px solid var(--pk-line2,rgba(230,235,240,.06)); border-radius:11px; overflow:hidden; cursor:pointer; background:var(--pk-c,#15171a); }
+#cr-pk .pkgimg img{ width:100%; height:100%; object-fit:cover; display:block; }
+#cr-pk .pkgcap{ display:block; margin-top:5px; font:600 10.5px -apple-system,'Segoe UI',Roboto,sans-serif; color:var(--pk-mut,#9aa3ab); line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#cr-pk .pkgcap.dim{ color:var(--pk-dim,#848c94); font-style:italic; }
+#cr-pk .pkgadd{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; aspect-ratio:1/1; border:1px dashed var(--pk-line,rgba(230,235,240,.11)); border-radius:11px; background:var(--pk-c,#15171a); color:var(--pk-dim,#848c94); cursor:pointer; font:700 10px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.05em; }
+#cr-pk .pkgadd:hover{ border-color:var(--pk-acc,#e35c63); color:var(--pk-ink,#eceef0); }
+#cr-pk .pkgadd svg{ width:22px; height:22px; }
 </style>
 <script id="cr-pk-script">
 (function(){
@@ -49514,6 +49536,7 @@ window.CardinalProduction = {
 var it = null;              /* the row on screen */
 var el = null, back = null; /* back = where close() should return to */
 var lastSig = '', busy = false, outMsg = '';
+var galleryOpen = false;
 
 var PHOTO_MIN = 5;
 var SLOTS = [
@@ -49612,6 +49635,11 @@ function portalOf(pr){
 }
 function steps(){ return Array.isArray(it && it.steps) ? it.steps : []; }
 function photos(){ return Array.isArray(it && it.photos) ? it.photos : []; }
+/* 859: a photo is a URL string (legacy) or { u, by, name, at }. pUrl() is the
+   one reader every photo site goes through, so both shapes render. */
+function pUrl(p){ return (p && typeof p === 'object') ? (p.u || '') : (p || ''); }
+function pName(p){ return (p && typeof p === 'object') ? (p.name || nameOf(p.by) || '') : ''; }
+function pAt(p){ return (p && typeof p === 'object') ? (p.at || '') : ''; }
 function comments(){ return Array.isArray(it && it.comments) ? it.comments : []; }
 function stepsDone(){ return steps().filter(function(s){ return s && s.d; }).length; }
 function readyToClose(){
@@ -49639,7 +49667,7 @@ function ensure(){
 }
 function render(){
   if(!el || !it) return;
-  var html = cardHtml();
+  var html = cardHtml() + (galleryOpen ? galleryHtml() : '');
   if(html === lastSig) return;      /* the 606 stored-signature guard */
   lastSig = html;
   el.innerHTML = html;
@@ -49747,7 +49775,7 @@ function checklistHtml(){
 function photosHtml(){
   var ph = photos();
   var cells = SLOTS.map(function(s, i){
-    var u = ph[i];
+    var u = pUrl(ph[i]);
     /* 771: a wrong photo could not be taken off an item anywhere in the app
        once 768 stopped opening the sheet that owned the remove control. */
     return '<div class="pkslotwrap">' +
@@ -49758,10 +49786,34 @@ function photosHtml(){
       (u ? '<button class="pkrm" data-rmphoto="' + i + '" type="button" aria-label="Remove this photo">&times;</button>' : '') +
       '</div>';
   }).join('');
-  var extra = ph.length > SLOTS.length ? ' · +' + (ph.length - SLOTS.length) + ' more' : '';
+  var gal = ph.length ? '<button class="pkgalbtn" data-act="gallery" type="button">' + svg('cam') +
+      ' View all <b>' + ph.length + '</b> photo' + (ph.length === 1 ? '' : 's') + '</button>' : '';
   return '<div class="pksec"><div class="pkh">' + svg('cam') + 'Photos' +
-    '<span class="rt"><b>' + ph.length + '</b> of ' + PHOTO_MIN + ' to close' + esc(extra) + '</span></div>' +
-    '<div class="pkslots">' + cells + '</div></div>';
+    '<span class="rt"><b>' + ph.length + '</b> of ' + PHOTO_MIN + ' to close</span></div>' +
+    '<div class="pkslots">' + cells + '</div>' + gal + '</div>';
+}
+function galleryHtml(){
+  var ph = photos();
+  var tiles = ph.map(function(p, i){
+    var u = pUrl(p), nm = pName(p), at = pAt(p);
+    var when = at ? fmtWhen(at) : '';
+    var cap = [nm, when].filter(Boolean).map(esc).join(' · ');
+    return '<div class="pkgtile">' +
+      '<button class="pkgimg" data-gview="' + i + '" type="button">' +
+        (u ? '<img data-src="' + esc(u) + '" alt="Photo ' + (i + 1) + '">' : '') + '</button>' +
+      '<button class="pkrm" data-rmphoto="' + i + '" type="button" aria-label="Remove this photo">&times;</button>' +
+      '<span class="pkgcap' + (cap ? '' : ' dim') + '">' + (cap || 'Added earlier') + '</span>' +
+      '</div>';
+  }).join('');
+  var add = '<button class="pkgadd" data-act="galadd" type="button">' + svg('cam') + 'Add photo</button>';
+  return '<div class="pkgal">' +
+    '<div class="pkgtop">' +
+      '<button class="pkback" data-act="galback" type="button" aria-label="Back">' + svg('chev') + '</button>' +
+      '<span class="pkgttl">Photo gallery</span>' +
+      '<span class="pkgn">' + ph.length + ' photo' + (ph.length === 1 ? '' : 's') + '</span>' +
+    '</div>' +
+    '<div class="pkgbody"><div class="pkgrid">' + tiles + add + '</div></div>' +
+    '</div>';
 }
 function msgsHtml(){
   var me = myEmail();
@@ -50088,8 +50140,9 @@ function pickPhoto(i){
       if(!url) throw new Error('no url back from storage');
       var list = photos().slice();
       while(list.length < i) list.push(null);
-      list[i] = url;
-      await save({ photos: list.filter(function(x){ return !!x; }) });
+      var me = myEmail();
+      list[i] = { u:url, by:me, name:nameOf(me), at:new Date().toISOString() };
+      await save({ photos: list.filter(function(x){ return !!pUrl(x); }) });
     }catch(e){ alert('Could not attach the photo: ' + (e.message || e)); }
   };
   inp.click();
@@ -50124,6 +50177,17 @@ function wire(){
     inp.focus();
   }; });
   q('[data-act="send"]', function(b){ b.onclick = send; });
+  q('[data-act="gallery"]', function(b){ b.onclick = function(){ galleryOpen = true; lastSig = ''; render(); }; });
+  q('[data-act="galback"]', function(b){ b.onclick = function(){ galleryOpen = false; lastSig = ''; render(); }; });
+  q('[data-act="galadd"]', function(b){ b.onclick = function(){ pickPhoto(photos().length); }; });
+  q('[data-gview]', function(b){ b.onclick = function(){
+    var i = Number(b.getAttribute('data-gview'));
+    var p = photos()[i], u = pUrl(p);
+    if(!u || !window.CardinalResourceImages || !window.CardinalResourceImages.open) return;
+    var who = pName(p), when = pAt(p) ? fmtWhen(pAt(p)) : '';
+    var cap = [it.title || '', [who, when].filter(Boolean).join(' · ')].filter(Boolean).join(' — ');
+    try{ window.CardinalResourceImages.open(u, cap); }catch(_){}
+  }; });
   q('[data-act="editdesc"]', function(b){ b.onclick = function(){
     var v = prompt('Description', it.detail || '');
     if(v === null) return;
@@ -50205,6 +50269,7 @@ function close(navigate){
   if(el) el.classList.remove('open');
   it = null;
   lastSig = '';
+  galleryOpen = false;
   if(navigate !== true) return;
   if(back === 'none') return;                       /* opened from a page that stays put */
   if(window.CardinalProduction){
