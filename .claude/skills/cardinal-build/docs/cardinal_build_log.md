@@ -18081,3 +18081,22 @@ html via the overlay; a forced-stale offline reload keeps the new title; online 
 and an `inspection_reports` UPDATE{title} is actually sent). Negative-controlled **RED (6)**
 against v868 (offline it writes directly / never queues; both overlays revert to the old title).
 `check_build` green (117 inline scripts, stamp 868 -> 869). No SQL.
+
+## Build 870 — Offline-first, phase 5 (part 1): the outbox coalesces same-target writes
+
+`CardinalOutbox.queue()` now folds a new write into an existing queued entry for the SAME
+target instead of stacking a second copy. `entryKey(e)` gives a target identity — `table|u|col=val`
+for updates, `table|x|<onConflict-value>` for upserts; a matching queued entry has its `patch`
+(update) or `row` (upsert) `Object.assign`-merged and is `put()` back in place, keeping its
+original id (so FIFO across DIFFERENT targets is preserved). A null key (unidentifiable shape)
+always falls through to `add`, never mis-merges. Fixes IndexedDB bloat — a document's full html
+was stored once PER save (flagged in 869) — and cuts redundant replay. Still idempotent: the
+merged entry is the latest full value.
+
+Gate: `render_coalesce870.mjs` drives the real app offline — **GREEN 13/13**: two updates to the
+same job fold to one entry with both fields; a different job stays separate; two upserts to the
+same teammate fold (merged row); two big-html document saves fold to the latest; online, each
+target syncs exactly once with the merged value. Negative-controlled **RED (10)** against v869
+(entries stack, no merged write exists). Regression: the 867/868/869 phase harnesses stay GREEN
+on 870 (single-write behavior intact). `check_build` green (117 inline scripts, stamp 869 -> 870).
+No SQL.

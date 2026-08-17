@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 869 &#8212; Offline-first phase 3 &#8212; inspection reports &amp; documents save on the phone with no signal and sync when you&#8217;re back</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 870 &#8212; Offline-first polish &#8212; multiple offline edits to the same thing now fold into one, so nothing piles up on your phone</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39865,6 +39865,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:870, d:'2026-08-17', t:'Offline-first, polish \u2014 offline edits fold together',
+s:'A quiet but important tidy-up to offline mode. When you make several changes to the same thing with no signal \u2014 nudging a job\u2019s stage then adding a note, or saving a report five times \u2014 they now fold into a single pending change on your phone instead of piling up. That keeps the phone from filling with copies (a report\u2019s full contents used to be stored once per save) and makes the sync quicker when you are back. The result on the server is exactly the same as before \u2014 your latest version \u2014 it just gets there more efficiently. Changes to different things still queue separately and sync in order.' },
 { b:869, d:'2026-08-17', t:'Offline-first, phase 3 \u2014 inspection reports & documents survive no signal',
 s:'Phase 3 continues: the document editor now saves offline too \u2014 the roof-inspection report you fill out on the roof, plus contracts and work orders. Save one with no signal and it is kept on the phone and syncs itself when you are back (the \u201cN waiting to sync\u201d badge shows what is queued). Reopen it while still offline and your edits are there \u2014 they are re-applied on top of whatever loaded, so nothing is lost in a dead zone. Because every document save goes through one path, this covers reports, contracts and work orders at once. Edits key on the document, so a re-sync can never duplicate, and a real permission error still tells you at once.' },
 { b:868, d:'2026-08-17', t:'Offline-first, phase 3 \u2014 client & job edits survive no signal',
@@ -72179,6 +72181,17 @@ function op(mode, run){
 function add(entry){ return op('readwrite', function(st){ return st.add(entry); }); }
 function getAll(){ return op('readonly',  function(st){ return st.getAll(); }); }
 function del(id){   return op('readwrite', function(st){ return st.delete(id); }); }
+function put(entry){ return op('readwrite', function(st){ return st.put(entry); }); }  /* 870: update-in-place by id */
+/* 870: a stable identity for an entry's TARGET — same target folds together. */
+function entryKey(e){
+  if(!e || !e.table) return null;
+  if(e.op === 'upsert'){
+    var k = e.onConflict ? (e.row && e.row[e.onConflict]) : null;
+    return e.table + '|x|' + (k != null ? String(k) : JSON.stringify(e.row || {}));
+  }
+  if(e.match) return e.table + '|u|' + e.match.col + '=' + String(e.match.val);
+  return null;
+}
 
 function client(){ return window.sb || window.supa || null; }
 function networkish(e){
@@ -72247,7 +72260,26 @@ function flush(){
 
 function queue(entry){
   entry.at = entry.at || new Date().toISOString();
-  return add(entry).then(function(){ badge(); flush(); });
+  /* 870: fold into an existing queued write for the SAME target (job, teammate,
+     document) rather than stacking a second copy. The merged entry is the latest
+     full value and keeps its original id, so FIFO order across DIFFERENT targets
+     is preserved and a big html blob is never stored twice. A null key (an entry
+     shape we can't identify) always falls through to add, never mis-merges. */
+  var key = entryKey(entry);
+  var write = key
+    ? getAll().then(function(rows){
+        var hit = null;
+        for(var i=0;i<rows.length;i++){ if(entryKey(rows[i]) === key){ hit = rows[i]; break; } }
+        if(hit){
+          if(entry.op === 'upsert') hit.row = Object.assign({}, hit.row, entry.row);
+          else hit.patch = Object.assign({}, hit.patch, entry.patch);
+          hit.at = entry.at;
+          return put(hit);
+        }
+        return add(entry);
+      })
+    : add(entry);
+  return write.then(function(){ badge(); flush(); });
 }
 
 /* a small "N waiting to sync" indicator, sibling to the Offline badge */
