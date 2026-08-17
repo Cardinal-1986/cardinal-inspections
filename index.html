@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 873 &#8212; Offline-first polish &#8212; the sync indicator now shows offline, syncing and a &#8220;synced&#8221; confirmation, not just a silent counter</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 874 &#8212; Team alerts can now go out by TEXT too (once Twilio is set up), alongside push and email</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39885,6 +39885,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:874, d:'2026-08-17', t:'Team alerts by text message (SMS)',
+s:'Team alerts can now reach people three ways instead of two: a push notification, an email, and now a TEXT message. When an alert goes out, anyone on the team with a phone number saved in the Team Directory also gets a text \u2014 which is the one that actually reaches a phone that never turned notifications on. Each channel is independent, so one being off never stops the others. This needs a one-time setup (a Twilio account and its keys added to the server) before texts start going out; until then it simply does nothing, exactly like email did before its key was added. Nothing sensitive is ever put in the app itself.' },
 { b:873, d:'2026-08-17', t:'Offline-first, polish \u2014 a clearer sync indicator',
 s:'The little \u201cwaiting to sync\u201d chip is smarter now. It tells you which state you are in: OFFLINE (amber \u2014 saved on your phone, will send when you are back), SYNCING (blue \u2014 sending now), and a brief green \u201cAll changes synced\u201d confirmation when everything has gone through, instead of just disappearing with no word. Before, it said \u201cwaiting to sync\u201d even when you had no signal and it could not sync at all. Tapping it still forces a sync attempt. Purely a clarity improvement \u2014 nothing about how your data is saved or sent has changed.' },
 { b:872, d:'2026-08-17', t:'Offline-first, polish \u2014 protect the pending queue, warn if storage is full',
