@@ -3515,7 +3515,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 881 &#8212; The Line Item Library now has a dark mode instead of always showing as a bright white page</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 882 &#8212; Punch-outs can now be scheduled for a time of day, not just a date</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39983,6 +39983,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:882, d:'2026-08-17', t:'Set a time for punch-outs, not just a date',
+s:'When you add or schedule a punch-out / repair, the "Schedule for" field now has a time box next to the date, so you can say "Aug 17 at 2:30 PM" instead of just the day. The time is optional — leave it blank and nothing changes. Where a punch-out shows its schedule (its card and its detail sheet) the time now shows alongside the date. Existing punch-outs are untouched.' },
 { b:881, d:'2026-08-17', t:'The Line Item Library gets a dark mode',
 s:'The Line Item Library (Tools → Line Item Library) was the last screen still stuck in light mode — it opened as a bright cream page in the otherwise dark app, which also made it look like the app had lost its navigation. Its whole body now matches the dark app: the search bar, the category tabs, the list of items and the add/edit box are all dark and readable. It is still a full-screen tool with a Close button up top, so it takes the screen over on purpose. The light (sun) theme keeps the original cream look unchanged.' },
 { b:880, d:'2026-08-17', t:'Retail clients stop wearing the Insurance header',
@@ -49345,7 +49347,10 @@ function openAdd(presetProjectId){
     '</div>' +
     '<div class="row">' +
     '<div><label>Assign to</label><select data-f="assigned">' + who + '</select></div>' +
-    '<div><label>Schedule for</label><input type="date" data-f="when"></div>' +
+    '<div><label>Schedule for</label><div style="display:flex;gap:8px">' +
+      '<input type="date" data-f="when" style="flex:1;min-width:0">' +
+      '<input type="time" data-f="whentime" style="flex:0 0 42%;min-width:0" aria-label="Time (optional)">' +
+    '</div></div>' +
     '</div>' +
     '<label>Detail</label>' +
     '<textarea data-f="detail" placeholder="Optional"></textarea>' +
@@ -49385,7 +49390,17 @@ async function saveAdd(){
     };
     var when = g('when');
     if(when) row.scheduled_at = when;
+    /* 882: optional time-of-day. Only meaningful with a date. */
+    var wtime = g('whentime');
+    if(when && wtime) row.scheduled_time = wtime;
     var r = await window.supa.from('punch_items').insert(row).select().single();
+    /* 882: if the scheduled_time migration hasn't run yet, don't let the whole
+       add fail — drop the column and retry so the punch still saves (without a
+       time). Belt-and-suspenders for the SQL-before-HTML deploy order. */
+    if(r.error && row.scheduled_time != null && /scheduled_time/.test(String(r.error.message || ''))){
+      delete row.scheduled_time;
+      r = await window.supa.from('punch_items').insert(row).select().single();
+    }
     if(r.error) throw r.error;
     items.unshift(r.data);
     /* rows() hands back a copy, so pushing into it would be a no-op — ask the
@@ -50005,6 +50020,22 @@ function fmtTime(v){
   if(isNaN(d)) return '';
   return d.toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
 }
+/* 882: a scheduled date (day only) plus an optional scheduled_time ("14:30").
+   Returns "Aug 17" or "Aug 17 · 2:30 PM". */
+function fmtClock(t){
+  if(!t) return '';
+  var p = String(t).split(':'); if(p.length < 2) return '';
+  var h = parseInt(p[0], 10), m = p[1].slice(0,2);
+  if(isNaN(h)) return '';
+  var ap = h >= 12 ? 'PM' : 'AM', h12 = (h % 12) || 12;
+  return h12 + ':' + m + ' ' + ap;
+}
+function fmtSchedule(dateStr, timeStr){
+  if(!dateStr) return '';
+  var lbl = fmtWhen(dateStr);
+  var t = fmtClock(timeStr);
+  return t ? (lbl + ' · ' + t) : lbl;
+}
 
 /* -------------------------------------------------------------- rendering */
 function ensure(){
@@ -50068,9 +50099,13 @@ function metaHtml(){
         }).join('') + '</select>'
     : '<div class="w">' + esc(nameOf(who)) + '</div>';
   var when = it.scheduled_at ? String(it.scheduled_at).slice(0, 10) : '';
+  var whenT = it.scheduled_time ? String(it.scheduled_time).slice(0, 5) : '';
   var sch = mgr
-    ? '<input type="date" data-f="when" value="' + esc(when) + '">'
-    : '<div class="w">' + esc(when ? fmtWhen(when) : 'not scheduled') + '</div>';
+    ? '<div style="display:flex;gap:6px">' +
+        '<input type="date" data-f="when" value="' + esc(when) + '" style="flex:1;min-width:0">' +
+        '<input type="time" data-f="whentime" value="' + esc(whenT) + '" style="flex:0 0 42%;min-width:0" aria-label="Time (optional)">' +
+      '</div>'
+    : '<div class="w">' + esc(when ? fmtSchedule(it.scheduled_at, it.scheduled_time) : 'not scheduled') + '</div>';
   return '<div class="pkmeta">' +
     '<div class="pkm"><div class="k">Assigned</div>' + sel + '</div>' +
     '<div class="pkm"><div class="k">Scheduled</div>' + sch + '</div>' +
@@ -50481,7 +50516,7 @@ async function notifyAssigned(email){
       'Assigned to you: ' + (it.title || 'a punch-out'),
       '<p><b>' + esc(nameOf(me)) + '</b> assigned you a punch-out at <b>' +
       esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(it.title || '') + '</p>' +
-      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtWhen(it.scheduled_at)) + '</p>' : ''));
+      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtSchedule(it.scheduled_at, it.scheduled_time)) + '</p>' : ''));
     outMsg = outcomeText(res, [email]);
     lastSig = ''; render();
   }catch(_){}
@@ -50705,7 +50740,15 @@ function wire(){
     await notifyAssigned(to);
   };
   var wh = el.querySelector('[data-f="when"]');
-  if(wh) wh.onchange = function(){ save({ scheduled_at: wh.value || null }); };
+  var wt = el.querySelector('[data-f="whentime"]');
+  /* 882: date and time save together — a time with no date is meaningless, so
+     clearing the date clears the time too. */
+  function saveWhen(){
+    var d = wh && wh.value ? wh.value : null;
+    save({ scheduled_at: d, scheduled_time: (d && wt && wt.value) ? wt.value : null });
+  }
+  if(wh) wh.onchange = saveWhen;
+  if(wt) wt.onchange = saveWhen;
 }
 
 /* ------------------------------------------------------------ open / close */
@@ -58480,7 +58523,7 @@ function cardHtml(it, showCrm){
         (ph ? '<span class="pu-tag">' + ph + '/' + PHOTO_MIN + ' photos</span>' : '') +
         '<span class="pu-who">' + esc(it.assigned_to || 'Unassigned') + '</span>' +
       '</div>' +
-      (it.scheduled_at && !done ? '<div class="pu-sched">\uD83D\uDCC5 scheduled ' + fmtDate(it.scheduled_at) + '</div>' : '') +
+      (it.scheduled_at && !done ? '<div class="pu-sched">\uD83D\uDCC5 scheduled ' + fmtDate(it.scheduled_at) + fmtSchedClock(it.scheduled_time) + '</div>' : '') +
     '</div></div>';
 }
 function whoList(){
@@ -58618,6 +58661,14 @@ function fmtDate(iso){
   var d = window.crDate ? window.crDate(iso) : new Date(iso);
   if(isNaN(d)) return '\u2014';
   return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+}
+/* 882: optional punch scheduled_time ("14:30") -> " \u00b7 2:30 PM" for the card. */
+function fmtSchedClock(t){
+  if(!t) return '';
+  var p = String(t).split(':'); if(p.length < 2) return '';
+  var h = parseInt(p[0], 10), m = p[1].slice(0,2);
+  if(isNaN(h)) return '';
+  return ' \u00b7 ' + ((h % 12) || 12) + ':' + m + ' ' + (h >= 12 ? 'PM' : 'AM');
 }
 function repName(email){
   if(!email) return 'Unassigned';
