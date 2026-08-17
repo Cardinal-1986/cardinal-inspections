@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 868 &#8212; Offline-first phase 3 &#8212; client &amp; job edits (stage, contact, notes) save on the phone with no signal and sync when you&#8217;re back</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 869 &#8212; Offline-first phase 3 &#8212; inspection reports &amp; documents save on the phone with no signal and sync when you&#8217;re back</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10275,6 +10275,19 @@ var LKEY = 'cardinal_inspection_reports_v1';
 function lsLoad(){ try{ return JSON.parse(localStorage.getItem(LKEY) || '[]'); }catch(e){ return []; } }
 function lsSave(list){ try{ localStorage.setItem(LKEY, JSON.stringify(list)); }catch(e){} }
 
+/* 869: apply a document/report patch to the in-memory metadata list so the
+   file list reflects an offline edit right away. The open editor keeps the
+   edited html in `current` itself, so it needs no touch here. */
+function dbApplyLocal(id, fields){
+  try{
+    var row = (cacheRows || []).find(function(x){ return String(x.id) === String(id); });
+    if(row) Object.assign(row, fields);
+  }catch(_){}
+}
+function dbQueueOffline(id, fields){
+  dbApplyLocal(id, fields);
+  try{ if(window.CardinalOutbox) window.CardinalOutbox.queue({ table:'inspection_reports', match:{ col:'id', val:id }, patch: fields }); }catch(_dq){}
+}
 var db = {
   list: async function(){
     if(TEAM){
@@ -10292,7 +10305,18 @@ var db = {
     if(TEAM){
       var r = await sb.from(TABLE).select('*').eq('id', id).single();
       if(r.error) throw r.error;
-      return r.data;
+      var row = r.data;
+      /* 869: offline the read is a stale cached copy (864) — re-apply any edit
+         still waiting in the outbox for this report so a reopen shows it. */
+      try{
+        if(row && window.CardinalOutbox && window.CardinalOutbox.patchesFor){
+          var _ps = await window.CardinalOutbox.patchesFor('inspection_reports');
+          _ps.forEach(function(e){
+            if(e && e.match && e.patch && String(e.match.val) === String(id) && (!e.op || e.op === 'update')) Object.assign(row, e.patch);
+          });
+        }
+      }catch(_og){}
+      return row;
     }
     return lsLoad().find(function(x){ return x.id === id; });
   },
@@ -10321,8 +10345,22 @@ var db = {
   update: async function(id, fields){
     fields.updated_at = new Date().toISOString();
     if(TEAM){
-      var r = await sb.from(TABLE).update(fields).eq('id', id);
-      if(r.error) throw r.error;
+      /* 869: no signal — hold the change in the outbox and apply it locally now,
+         then sync when we're back. A real RLS refusal (returned r.error, not a
+         thrown network error) still throws so the caller can react. */
+      if(typeof navigator !== 'undefined' && navigator.onLine === false && window.CardinalOutbox){
+        dbQueueOffline(id, fields); return;
+      }
+      var r;
+      try{ r = await sb.from(TABLE).update(fields).eq('id', id); }
+      catch(e){
+        if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(e)){ dbQueueOffline(id, fields); return; }
+        throw e;
+      }
+      if(r.error){
+        if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(r.error)){ dbQueueOffline(id, fields); return; }
+        throw r.error;
+      }
       return;
     }
     var list = lsLoad();
@@ -10698,6 +10736,18 @@ async function reload(){
       }
     }catch(_ov){}
     cacheRows = res[1];
+    /* 869: same overlay for the document/report metadata list. */
+    try{
+      if(window.CardinalOutbox && window.CardinalOutbox.patchesFor){
+        var _pd = await window.CardinalOutbox.patchesFor('inspection_reports');
+        _pd.forEach(function(e){
+          if(e && e.match && e.patch && (!e.op || e.op === 'update')){
+            var _drow = cacheRows.find(function(x){ return String(x.id) === String(e.match.val); });
+            if(_drow) Object.assign(_drow, e.patch);
+          }
+        });
+      }
+    }catch(_ov2){}
     cacheAppts = res[2];
     indexMoney(res[3], res[4]);
     indexCollections(res[5]);
@@ -39815,6 +39865,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:869, d:'2026-08-17', t:'Offline-first, phase 3 \u2014 inspection reports & documents survive no signal',
+s:'Phase 3 continues: the document editor now saves offline too \u2014 the roof-inspection report you fill out on the roof, plus contracts and work orders. Save one with no signal and it is kept on the phone and syncs itself when you are back (the \u201cN waiting to sync\u201d badge shows what is queued). Reopen it while still offline and your edits are there \u2014 they are re-applied on top of whatever loaded, so nothing is lost in a dead zone. Because every document save goes through one path, this covers reports, contracts and work orders at once. Edits key on the document, so a re-sync can never duplicate, and a real permission error still tells you at once.' },
 { b:868, d:'2026-08-17', t:'Offline-first, phase 3 \u2014 client & job edits survive no signal',
 s:'Phase 3 continues: the whole client profile now saves offline. Change a job\u2019s stage, edit a client\u2019s name, address, phone or email, add a note, tick an inspection item \u2014 with no signal it is saved on the phone, the profile updates right away, and it syncs itself when you are back (the \u201cN waiting to sync\u201d badge shows what is still queued). Because every one of these edits goes through a single save path, this one change covers the entire profile at once. A refresh while offline no longer wipes a pending edit \u2014 queued changes are re-applied on top of whatever loaded. Edits key on the job, so a re-sync can never duplicate, and a real permission error still tells you at once.' },
 { b:867, d:'2026-08-17', t:'Offline-first, phase 3 \u2014 Team Directory edits survive no signal',

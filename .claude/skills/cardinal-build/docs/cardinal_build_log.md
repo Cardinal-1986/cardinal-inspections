@@ -18061,3 +18061,23 @@ stage via the overlay; online the queue drains and a `projects` UPDATE{stage} is
 sent). Negative-controlled **RED (5)** against v867 (offline it writes directly / never
 queues, and the stale reload reverts to Lead). `check_build` green (117 inline scripts,
 stamp 867 → 868). No SQL.
+
+## Build 869 — Offline-first, phase 3 (part 3): document/inspection editor saves offline
+
+Routes `db.update()` — the chokepoint every `inspection_reports` edit funnels through (the
+roof-inspection report, contracts, work orders) — through the outbox, the same shape as 868's
+`pdb.update`. `navigator.onLine === false` OR a networkish throw/`r.error` -> `dbQueueOffline()`
+applies the patch to `cacheRows` now and queues `{ table:'inspection_reports', match:{col:'id'},
+patch }`; a real RLS refusal still throws. `db.get()` (which reads the full row incl. html on
+its own) now overlays any still-queued edit for that id, so REOPENING a report offline shows
+the change; `reload()` overlays the metadata list the same way. `saveCurrent()` keeps the edited
+html in `current`, so the open editor stays optimistic with no change there. Idempotent: full-
+field patch keyed on id. NB: the checklist (inspection DATA) was already offline via 868; this
+adds the DOCUMENTS.
+
+Gate: `render_docoff869.mjs` drives the real app — **GREEN 14/14** (offline edit queued, no
+direct write, optimistic list, badge; a forced-stale `db.get` still returns the edited title AND
+html via the overlay; a forced-stale offline reload keeps the new title; online the queue drains
+and an `inspection_reports` UPDATE{title} is actually sent). Negative-controlled **RED (6)**
+against v868 (offline it writes directly / never queues; both overlays revert to the old title).
+`check_build` green (117 inline scripts, stamp 868 -> 869). No SQL.
