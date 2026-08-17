@@ -3017,10 +3017,37 @@ left behind per the 11 Aug decision). Nothing has been written to Cardinal.
 `400 invalid_credentials`. The email is right and there is no whitespace/quoting problem. Refresh
 it and gates 3 (dry run) → 4 (5-client pilot) → 5 (real run) proceed exactly as the runbook says.
 
-✅ **Files are a confirmed NO-GO** — all six candidate read routes 404 on every job, matching
-AccuLynx's public docs. Measured now, not predicted. Records migrate; documents and photographs
-need the fallback decision (manual pull for jobs Theo names, or a browser-automation pass — still
-deliberately not built).
+✅ **Files AND notes are a confirmed NO-GO — one gap, one decision (13 Aug).** AccuLynx's API is
+upload-and-audit, not read. All six file read routes 404 on every job. And **806 job messages across
+156 of the 166 jobs (94%)** are equally unreachable — twelve endpoint spellings tried, all 404, no
+v1/v3, no swagger spec. `/jobs/{id}/history` answers (6,191 actions) but records only *that* a note
+happened, never the words; `custom_fields` is one `Policy Number` field with zero values.
+⚠️ **`lead.notes` is therefore empty on all 166 imports** — `map_job()` reads
+`detail.description`/`detail.notes`, neither of which exists here, and unlike the address bug there
+is nothing to map from.
+
+### ✅ SETTLED (Theo, 13 Aug): front door only — no scraping, no browser automation
+Theo read the terms and ruled it out. Standard SaaS agreements restrict automated bulk extraction,
+bypassing what the reporting UI exposes, and unthrottled loops — **and rate-limiting a scraper does
+not move it out of that category.** The stronger argument is practical: an extraction that trips
+AccuLynx's security flags **locks the account**, destroying the only copy of those 806 messages
+mid-migration. ⚠️ **The runbook previously RECOMMENDED a browser-automation pass; that text is now
+corrected. Do not propose it again.**
+
+Permitted routes, in order: (1) an **offboarding data-export request** — "we are migrating off, I
+need a complete export including job messages and files"; (2) **ask for written permission** to
+extract programmatically, since a contractual restriction can be waived by the counterparty, and a
+yes makes the fetcher legitimate; (3) ask whether **another API tier** exposes message/file reads;
+(4) **AccuLynx's own Reports/CSV exports**, which are sanctioned by definition. If permission is
+granted, build it at their documented rate limit, resumable, at a pace that cannot trip a flag.
+
+**Manual fallback, scoped so it is tractable:** live work (Approved+Completed+Invoiced) is 61 jobs /
+378 messages; the realistic scope is the **41 Approved jobs = 249 messages, an afternoon**. Prospects
+are 81 jobs / 317 messages and mostly never became work. A person reading their own screen is fully
+permitted.
+
+⛔ **Do not cancel the AccuLynx subscription until this is settled** — the messages and files exist
+nowhere else.
 
 ⚠️ **Running the pipeline for real found FIVE faults that would have wrecked the migration**, all
 fixed and negative-controlled (PR #281; `BUG_CLASSES.md` 44–45): pagination sent a parameter
