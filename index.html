@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 874 &#8212; Team alerts can now go out by TEXT too (once Twilio is set up), alongside push and email</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 875 &#8212; A &#8220;Send a test alert to myself&#8221; button confirms push, email and text are each working</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7462,6 +7462,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       </div>
       <button class="btn" id="pushEnableBtn">&#128276; Enable notifications on this device</button>
       <span id="pushStatus" style="display:block;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-top:9px;color:#555;"></span>
+      <button class="btn ghost" id="testAlertBtn" style="margin-top:12px;">&#128233; Send a test alert to myself</button>
+      <span id="testAlertStatus" style="display:block;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-top:9px;color:#555;white-space:pre-line;line-height:1.5;"></span>
     </div>
   </div>
 </div>
@@ -21137,6 +21139,42 @@ document.getElementById('pushEnableBtn').addEventListener('click', async functio
     st.textContent = 'Could not enable: ' + (err.message || err);
     st.style.color = '#C8202E';
   }
+});
+/* 875: a one-tap test that fires push + email + text to the CURRENT user ONLY
+   and reports which channels actually went out \u2014 the fastest way to confirm the
+   Resend and Twilio setup end to end without alerting anyone else. */
+document.getElementById('testAlertBtn').addEventListener('click', async function(){
+  var st = document.getElementById('testAlertStatus');
+  var btn = this;
+  var me = (typeof currentUser !== 'undefined' && currentUser && currentUser.email) || '';
+  if(!me){ st.style.color = '#C8202E'; st.textContent = 'Sign in first.'; return; }
+  btn.disabled = true; var _lbl = btn.textContent; btn.textContent = 'Sending\u2026';
+  st.style.color = '#555'; st.textContent = 'Sending a test to ' + me + '\u2026';
+  try{
+    var j = await notifyTeam([me], 'Cardinal test alert',
+      '<p>This is a <b>test alert</b> from Cardinal. If you received this, the channel is working.</p>');
+    j = j || {};
+    var env = j.env || {};
+    var lines = [];
+    /* push */
+    if((j.subs || 0) === 0) lines.push('\uD83D\uDD15 Push: no device enabled here yet \u2014 tap \u201CEnable notifications\u201D above first');
+    else if((j.sent || 0) > 0) lines.push('\u2705 Push sent to ' + j.sent + ' device' + (j.sent === 1 ? '' : 's'));
+    else lines.push('\u26A0\uFE0F Push failed' + (j.reason ? ' (' + j.reason + ')' : ''));
+    /* email */
+    if(!env.resend) lines.push('\u2709\uFE0F Email: not set up yet \u2014 add RESEND_API_KEY in Vercel');
+    else if((j.mailed || 0) > 0) lines.push('\u2705 Email sent to ' + me);
+    else lines.push('\u26A0\uFE0F Email failed' + (j.detail ? ' \u2014 ' + j.detail : ''));
+    /* text */
+    if(!env.sms) lines.push('\uD83D\uDCAC Text: not set up yet \u2014 add the TWILIO_* keys in Vercel');
+    else if((j.texted || 0) > 0) lines.push('\u2705 Text sent');
+    else lines.push('\u26A0\uFE0F Text not sent \u2014 add your mobile number in the Team Directory, then retry');
+    st.style.color = (j.ok ? '#2e7d32' : '#8a5a00');
+    st.textContent = lines.join('\n');
+  }catch(err){
+    st.style.color = '#C8202E';
+    st.textContent = 'Could not send the test: ' + (err.message || err);
+  }
+  btn.disabled = false; btn.textContent = _lbl;
 });
 /* collapsible sections */
 document.getElementById('actToggle').addEventListener('click', function(){
@@ -39885,6 +39923,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:875, d:'2026-08-17', t:'\u201CSend a test alert to myself\u201D button',
+s:'On the notifications screen there is now a \u201CSend a test alert to myself\u201D button. Tap it and Cardinal fires a test through all three channels \u2014 push, email and text \u2014 to YOU only, then shows a line for each saying whether it went out or what still needs setting up (for example \u201CEmail: not set up yet\u201D or \u201Cadd your mobile number in the Team Directory\u201D). It is the quickest way to check the email and text setup end to end without bothering the rest of the team.' },
 { b:874, d:'2026-08-17', t:'Team alerts by text message (SMS)',
 s:'Team alerts can now reach people three ways instead of two: a push notification, an email, and now a TEXT message. When an alert goes out, anyone on the team with a phone number saved in the Team Directory also gets a text \u2014 which is the one that actually reaches a phone that never turned notifications on. Each channel is independent, so one being off never stops the others. This needs a one-time setup (a Twilio account and its keys added to the server) before texts start going out; until then it simply does nothing, exactly like email did before its key was added. Nothing sensitive is ever put in the app itself.' },
 { b:873, d:'2026-08-17', t:'Offline-first, polish \u2014 a clearer sync indicator',
