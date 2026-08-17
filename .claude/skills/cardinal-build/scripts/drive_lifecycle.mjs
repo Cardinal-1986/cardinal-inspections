@@ -143,8 +143,16 @@ await clearWrites();
   const formCensus = await page.evaluate(() => {
     const m = document.getElementById('leadFormModal');
     if (!m || getComputedStyle(m).display === 'none') return null;
-    const fields = [...m.querySelectorAll('input,select,textarea')].filter(el => el.type !== 'hidden' && getComputedStyle(el).display !== 'none');
-    const required = fields.filter(el => el.required || el.getAttribute('aria-required') === 'true');
+    /* offsetParent!==null is the honest visibility test — getComputedStyle(el).display
+       ignores hidden ANCESTORS, so it counts collapsed "More detail" fields and the
+       display:none insurance box as visible (that produced the bogus "44 fields"). */
+    const fields = [...m.querySelectorAll('input,select,textarea')].filter(el => el.type !== 'hidden' && el.offsetParent !== null);
+    /* this form marks required with a visual "*" in the label + JS validation, not the
+       HTML required attribute — count both so the census reflects what the user sees. */
+    const required = fields.filter(el => {
+      if (el.required || el.getAttribute('aria-required') === 'true') return true;
+      const l = el.closest('label'); return l && /\*/.test(l.textContent);
+    });
     return { total: fields.length, required: required.length,
       names: fields.map(f => f.id || f.name || f.placeholder || f.type).slice(0, 40) };
   });
