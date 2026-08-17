@@ -18269,3 +18269,22 @@ which is correct for fixed elements. One module-scoped function; nothing else us
 Gates: the REAL CardinalWalk.run() driven in Chromium — 4 "mount never visible" failures on v877
 (reproduces Theo's screenshot exactly, Tap+New AI passing) → 0 on v878, all 8 steps PASS.
 `check_build` green (stamp 877 -> 878, 138/138 style tags). No SQL.
+
+## Build 879 — Leads & Jobs map: toggle no longer overlaps the map, map enlarged
+Theo's screenshot: on the Leads & Jobs desktop summary pane (#ljPane / renderLjPane), the
+Map/Satellite/Communications switcher (.ljmaptabs) was position:absolute over the map, floating on
+top of the Google iframe and colliding with the iframe's own map-type controls. Reproduced the exact
+pane in a real Chromium boot (render_ljmap879.mjs) — matched the photo.
+
+Fix (CSS only, scoped to the lj* leads classes):
+- .ljmaptabs: dropped position:absolute/top/left/z-index — now a full-width segmented bar (buttons
+  flex:1) with a bottom border, sitting ABOVE the map in normal flow.
+- .ljmap: display:flex; flex-direction:column so tabs (child 1) and the iframe (child 2) stack
+  cleanly and the bar can never overlay the map.
+- .ljmapframe: height 300px -> 380px (Theo: "make the map bigger").
+- .ljmap.cms .ljcomms: 46px top padding -> 12px (the 46px only existed to clear the old overlay).
+
+Gate render_ljmap879.mjs is negative-controlled: v878 -> tabs overlap the map (tabsBottom 519 >
+frameTop 464), v879 -> tabs above the map (tabsBottom == frameTop 509, no overlap), map 380px.
+Before/after rendered from the real app and shown to Theo. check_build green (stamp 878 -> 879,
+138/138 style tags). No SQL.
