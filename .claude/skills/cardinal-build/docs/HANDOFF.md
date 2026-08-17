@@ -4,6 +4,60 @@
 
 ---
 
+# Session of 17 August 2026 — offline-first (builds 864–873), team alerts by text (874), a test button (875), and the notifications setup
+
+**Two arcs this session, both shipped and merged to `main`: a ten-build offline-first program, then the notification channels.** Everything below is on `main`. No `index.html` regressions; every build was gated with a real-app Chromium harness plus a negative control against its predecessor, and merged via `gate_ship.py` on CI green.
+
+## 1) Offline-first — builds 864–873 (the whole program)
+
+The ask (Theo, verbatim): *"If I'm getting ready to migrate to this crm I need a solution. Cant always have a fully charged phone and a perfect network."* Answer: a read cache + a write outbox, extended one surface at a time.
+
+| Build | Works with NO signal now | Where it lives |
+|---|---|---|
+| 864 | **Reads** — any screen you've opened comes back offline | `sw.js` (`DATA_CACHE`, network-first for `/rest/v1/` GETs); wiped on logout |
+| 865 | **Punch-out saves** | `CardinalOutbox` — `cr-outbox-script` at the bottom of `index.html` (IndexedDB `cardinal-outbox`) |
+| 866 | **Photos** taken with no signal | photo outbox in `cr-pk-script` (IndexedDB `cardinal-photo-outbox`) |
+| 867 | **Team Directory** edits | outbox `op:'upsert'` + `patchesFor` overlay in `loadTeamProfiles` |
+| 868 | **Client / job profile** — stage, contact, notes, checklist | `pdb.update` chokepoint + `reload()` overlay |
+| 869 | **Documents** — inspection reports, contracts, work orders | `db.update` chokepoint + `db.get` overlay |
+| 870 | **Coalescing** — repeated same-target edits fold into one entry | `entryKey()` + `put()` inside `queue()` |
+| 871 | **Sign-out clears the outboxes** (multi-user safety) | `CardinalOutbox.clear()` + `CardinalPunchCard._clearPhotos()` |
+| 872 | **Eviction protection + storage-full warning** | `navigator.storage.persist()` + a catch on `queue()`/`queuePhoto()` |
+| 873 | **Sync indicator** — offline / waiting / syncing / synced states | `badge()` state machine, `#cr-outbox-badge` |
+
+**Architecture in one paragraph.** *Reads:* the service worker caches Supabase `/rest/v1/` GETs **network-first** into a **separate `DATA_CACHE`**, wiped on logout so one account never sees another's cached rows. *Writes:* a per-write IndexedDB outbox (`CardinalOutbox`) that each data-layer chokepoint routes to when `navigator.onLine === false` **or** the write throws/returns a `networkish` error — it applies the patch to the in-memory cache **optimistically**, queues a **full-value idempotent** entry, and flushes on `online`/visibility/30s. `reload()` and `db.get()` **re-overlay** still-queued patches on top of freshly-loaded (possibly stale-cached) rows, so an offline refresh can't revert an optimistic edit. A real **RLS refusal is NOT networkish**, so it still throws and surfaces. The photo outbox is a parallel store in `cr-pk-script`.
+
+**The chokepoints — one pipeline per concept, do NOT add a second:**
+- `pdb.update(id, fields)` — every project/client edit (stage, contact, notes, checklist, cover, sales_rep).
+- `db.update(id, fields)` — every `inspection_reports` edit (reports, contracts, work orders).
+- the `team_profiles` save (~line 25384) — the Team Directory.
+- the punch card's `save()` + `pickPhoto()` — punch-outs + photos.
+
+**Gates added** (each takes an optional path arg → run against the previous build as a negative control): `gate_offline864.mjs`, `render_outbox865.mjs`, `render_offphoto866.mjs`, `render_teamoff867.mjs`, `render_projoff868.mjs`, `render_docoff869.mjs`, `render_coalesce870.mjs`, `render_logoutclear871.mjs`, `render_storage872.mjs`, `render_syncbadge873.mjs`. The mock (`e2e_mock_supa.js`) records writes to `window.__WRITES__`; CDP `Network.emulateNetworkConditions {offline:true}` drives the offline legs.
+
+**⚠ SETTLED DECISION (Theo, 17 Aug) — offline CREATE is deferred, deliberately.** Editing existing records offline is done (867–869). Creating a BRAND-NEW estimate or community partner offline is **not built and is left on purpose** — its id/`estimate_number` is **server-generated**, so it needs a client-side numbering scheme. Asked directly (approach *and* scope), Theo chose **"Neither — leave as-is."** **If it is ever revisited, the chosen approach is "draft on device → number on sync"** (a clearly-labelled local draft that becomes a real numbered record the moment it syncs) — never a fake placeholder number. Do not re-litigate; do not build offline-create without a fresh ask.
+
+## 2) Notifications — builds 874–875, and the live CONFIG state
+
+**Build 874 — team alerts by SMS (Twilio), in `api/notify.js`.** `notify.js` already fanned a team alert to **push + email** (Resend, best-effort). 874 adds a **third channel — SMS via Twilio**, gated on `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM` exactly as email is gated on `RESEND_API_KEY` (no keys → `texted:0`, never a failure). Recipient phones come from `team_profiles`, normalised to E.164 by `normPhone()` (skips malformed numbers, never guesses a country code), de-duped. Channels are independent; a dead one never blocks the others. Response reports `texted` + `env.sms` — **presence only, no key is ever returned/logged**. The 642 session gate is untouched. Gate: `gate_smsnotify874.mjs` imports the REAL handler with a throwaway `web-push` stub under the gitignored `node_modules`.
+
+**Build 875 — "Send a test alert to myself" button.** `#testAlertBtn` under **Phone Notifications** (below the push-enable control). Fires push + email + text to **`currentUser.email` ONLY** (can't message the team) via the existing `notifyTeam()` → `/api/notify` path, then renders a per-channel readout from the route's own flags (`sent` / `mailed` / `texted`, and `env.resend` / `env.sms` presence). Gate: `render_testalert875.mjs`.
+
+**⚠ KNOWN-OPEN / "bug list" — all CONFIG on Theo's side, NOT code (nothing to fix in the repo):**
+1. **Email is 403-ing.** Resend Domains shows `cardinalrenovations.net` as **"Not Started"** (unverified). Every send 403s until Verified. Fix path: add Resend's DNS records at the DNS host → click Verify → set `DIGEST_FROM` to an address at that domain in Vercel → redeploy. **No code change possible — the mail is rejected before it leaves.**
+2. **SMS not live yet.** Needs (a) the three `TWILIO_*` vars in Vercel + redeploy, (b) A2P **10DLC** brand+campaign approval (Theo chose **Business Profile** — Cardinal is an LLC; submitted ~17 Aug, approval takes a day or a few), and (c) staff **phone numbers in the Team Directory**. Wiring is ready; texts flow the moment those land.
+3. **Push works today** — per-device "Enable notifications"; iOS requires Add-to-Home-Screen first.
+
+**Env vars the app now reads (all in Vercel env, none in code):** `RESEND_API_KEY`, `DIGEST_FROM` (email); `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` (SMS). Existing: `VAPID_PRIVATE_KEY` (push), service-role + `GEMINI_API_KEY` + `ANTHROPIC_API_KEY`.
+
+## State of the tree at hand-off
+- **`main` tip is build 875.** `index.html` app stamp = `v2026-08-17 build 875`. `api/notify.js` carries the 874 SMS path.
+- Working branch `claude/claude-md-docs-9qyu0f` **== main**. No open PRs of mine. No scheduled check-ins outstanding.
+- **Deploy reminder for any of the above:** close & reopen the PWA **twice** (SW is network-first, but an installed app can hold the old document in memory).
+- **Pre-existing open item, untouched:** Studio still logs in separately (its own `storageKey`) — recorded in CLAUDE.md, out of scope this session.
+
+---
+
 # Session of 14–15 August 2026 — the Visualizer surface picker, builds 813–826 · **the picker does not work, and the reason is structural**
 
 **Read this section before touching the Visualizer.** Twenty-three hours, seventeen PRs

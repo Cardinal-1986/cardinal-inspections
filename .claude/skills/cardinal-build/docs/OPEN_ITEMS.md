@@ -1,5 +1,28 @@
 # Cardinal Resource App — Open Items
 
+---
+
+## ⚡ NEWEST LAYER — 17 Aug 2026, builds 864–875 (read HANDOFF for the full session)
+
+**Offline-first (864–873) shipped and merged.** The field surfaces all work with no signal now
+(reads, punch saves, photos, Team, client/job profile, documents) plus durability (coalescing,
+sign-out clear, eviction protection, a four-state sync badge). Chokepoints: `pdb.update`,
+`db.update`, the team_profiles save, the punch card. **One pipeline per concept — do not add a
+second outbox.**
+
+**SETTLED — offline CREATE is deferred (do NOT re-litigate).** Editing existing records offline is
+done. Creating a NEW estimate / community partner offline is not built — the number is
+server-generated. Theo chose **"Neither — leave as-is"** on 17 Aug. If revisited, the approach is
+**"draft on device → number on sync"**, never a fake placeholder number.
+
+**OPEN — notification channels are code-complete but need CONFIG (Theo's side, not code):**
+- **Email 403** — Resend domain `cardinalrenovations.net` is **"Not Started"**. Verify the domain
+  (add its DNS records → Verify) and set `DIGEST_FROM` at that domain in Vercel. No code fix exists.
+- **SMS (874) not live** — needs `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_FROM` in Vercel,
+  **A2P 10DLC** approval (Business Profile, in progress), and staff **phones in the Team Directory**.
+- **Verify with the 875 button:** Phone Notifications → "Send a test alert to myself" reads each
+  channel's real status.
+
 *⚠️ **This file is layered, and each layer carries its own date.** The newest material — the live
 queue and the two questions standing with Theo — is the **last section**, worked **10 Aug 2026 at
 build 691**; the bundle-splitting verdict and the deferred `showroom.html` sit above it at build 627
