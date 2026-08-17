@@ -94,10 +94,15 @@ try {
     await new Promise(r => setTimeout(r, 300));
     var pend = window.CardinalOutbox ? await window.CardinalOutbox.pending() : -1;
     var badge = document.getElementById('cr-outbox-badge');
-    return { pending: pend, badgeHidden: !!(badge && getComputedStyle(badge).display === 'none') };
+    // 873: the badge shows a brief "All changes synced" confirmation before hiding,
+    // so right after a drain it is EITHER that confirmation OR already hidden.
+    var midText = badge ? badge.textContent : '';
+    await new Promise(r => setTimeout(r, 2800));   // let the confirmation flash finish
+    var finalHidden = !!(badge && getComputedStyle(badge).display === 'none');
+    return { pending: pend, midText: midText, finalHidden: finalHidden };
   });
   ok('back online: the queue flushed to 0', drained.pending === 0, drained.pending);
-  ok('the sync badge cleared', drained.badgeHidden);
+  ok('the sync badge cleared (after the synced confirmation)', drained.finalHidden, drained);
 
   console.log(`\n${fail === 0 ? 'GREEN' : 'RED'} — ${pass} passed, ${fail} failed   ${errs.length ? '(pageerrors: ' + errs.slice(0,2).join(' | ') + ')' : ''}`);
 } catch (e) { console.log('HARNESS ERROR: ' + String(e).slice(0,200)); console.log(errs.slice(0,3).join(' | ')); fail++; } finally { await browser.close(); }
