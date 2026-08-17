@@ -3511,7 +3511,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 859 &#8212; The punch-out card gets a separate photo gallery, and new photos are tagged with who added them</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 860 &#8212; The punch-out photo gallery button always shows, even before any photos are added</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -39723,6 +39723,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:860, d:'2026-08-17', t:'Punch-out gallery button always visible',
+s:'The \u201cPhoto gallery\u201d button on the punch-out card now shows even when there are no photos yet, so you can open the gallery and add photos from there. Before, it only appeared once a punch-out already had at least one photo. Reads \u201cPhoto gallery\u201d when empty and \u201cView all N photos\u201d once there are some.' },
 { b:859, d:'2026-08-17', t:'Punch-out card \u2014 a real photo gallery',
 s:'The punch-out card now has a proper photo gallery. Before, only the first five photos showed in the labelled slots and any others were counted as \u201c+N more\u201d but could not be opened at all. Tap \u201cView all N photos\u201d and a separate, scrollable gallery opens with every photo on the punch-out \u2014 the ones the rep took, the tech\u2019s, the completion shots \u2014 as a grid you tap to see full size, with a remove button on each and an Add photo tile. New photos are now stamped with who added them and when, shown under the thumbnail; older photos just show \u201cAdded earlier.\u201d The five guided slots stay for capture.' },
 { b:858, d:'2026-08-17', t:'Work Order editor scrolls the document, not the background',
@@ -49786,8 +49788,9 @@ function photosHtml(){
       (u ? '<button class="pkrm" data-rmphoto="' + i + '" type="button" aria-label="Remove this photo">&times;</button>' : '') +
       '</div>';
   }).join('');
-  var gal = ph.length ? '<button class="pkgalbtn" data-act="gallery" type="button">' + svg('cam') +
-      ' View all <b>' + ph.length + '</b> photo' + (ph.length === 1 ? '' : 's') + '</button>' : '';
+  var gal = '<button class="pkgalbtn" data-act="gallery" type="button">' + svg('cam') +
+      (ph.length ? ' View all <b>' + ph.length + '</b> photo' + (ph.length === 1 ? '' : 's')
+                 : ' Photo gallery') + '</button>';
   return '<div class="pksec"><div class="pkh">' + svg('cam') + 'Photos' +
     '<span class="rt"><b>' + ph.length + '</b> of ' + PHOTO_MIN + ' to close</span></div>' +
     '<div class="pkslots">' + cells + '</div>' + gal + '</div>';
