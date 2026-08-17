@@ -46,6 +46,21 @@ async function requireSession(req, res){
   }
 }
 
+/* 874: staff phone -> E.164 for Twilio. team_profiles.phone is free-form
+   ("(937) 555-1212", "937-555-1212", "+19375551212"). Best-effort: anything we
+   cannot make sense of returns '' and is SKIPPED rather than sent to a bad
+   number — a text to a malformed number is a wasted send, not a delivery. We
+   never guess a country code for an unknown shape. */
+function normPhone(p){
+  if(!p) return '';
+  var s = String(p).trim();
+  if(s.charAt(0) === '+'){ var t = s.slice(1).replace(/[^\d]/g, ''); return t ? '+' + t : ''; }
+  var d = s.replace(/[^\d]/g, '');
+  if(d.length === 10) return '+1' + d;             /* US 10-digit */
+  if(d.length === 11 && d.charAt(0) === '1') return '+' + d;
+  return '';
+}
+
 export default async function handler(req, res){
   if(req.method !== 'POST'){ res.status(405).json({ ok:false, error:'POST only' }); return; }
   if(!(await requireSession(req, res))) return;
@@ -77,9 +92,10 @@ export default async function handler(req, res){
       ).slice(0, 300);
     var url = String(body.url || '/');
     if(!emails.length){
-      res.status(200).json({ ok:true, sent:0, failed:0, mailed:0, subs:0,
+      res.status(200).json({ ok:true, sent:0, failed:0, mailed:0, texted:0, subs:0,
         reason:'no_recipients', env:{ vapid_from_env:VAPID_FROM_ENV,
-        resend:!!process.env.RESEND_API_KEY } });
+        resend:!!process.env.RESEND_API_KEY,
+        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) } });
       return;
     }
 
@@ -91,10 +107,11 @@ export default async function handler(req, res){
       /* 612: this returned sent:0 and looked identical to "nobody is
          subscribed". A refused or errored query is a different problem and
          has to say so. */
-      res.status(200).json({ ok:false, sent:0, failed:0, mailed:0, subs:0,
+      res.status(200).json({ ok:false, sent:0, failed:0, mailed:0, texted:0, subs:0,
         reason:'subs_query_failed',
         detail:String((subs && (subs.message || subs.error)) || 'non-array response').slice(0,140),
-        env:{ vapid_from_env:VAPID_FROM_ENV, resend:!!process.env.RESEND_API_KEY } });
+        env:{ vapid_from_env:VAPID_FROM_ENV, resend:!!process.env.RESEND_API_KEY,
+        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) } });
       return;
     }
 
@@ -144,6 +161,41 @@ export default async function handler(req, res){
       }catch(e3){ mailErr = String((e3 && e3.message) || e3).slice(0, 120); }
     }
 
+    /* 874: SMS via Twilio, best-effort and gated on TWILIO_* exactly like email
+       is gated on RESEND_API_KEY — no keys simply means texted:0, never a failure.
+       Recipient phones come from team_profiles (the Team Directory), matched to
+       the same recipient emails. A push, an email and a text can all fire for one
+       alert; each channel is independent, so a dead one never blocks the others. */
+    var texted = 0, smsErr = null;
+    var twSid = process.env.TWILIO_ACCOUNT_SID, twTok = process.env.TWILIO_AUTH_TOKEN, twFrom = process.env.TWILIO_FROM;
+    if(twSid && twTok && twFrom && text){
+      try{
+        var pq = SUPA_URL + '/rest/v1/team_profiles?select=email,phone&email=in.(' +
+          emails.map(function(e){ return '"' + e.replace(/"/g, '') + '"'; }).join(',') + ')';
+        var pfr = await fetch(pq, { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } });
+        var profs = await pfr.json();
+        var phones = Array.isArray(profs)
+          ? profs.map(function(p){ return normPhone(p.phone); }).filter(Boolean)
+          : [];
+        phones = phones.filter(function(v, i){ return phones.indexOf(v) === i; });   /* de-dupe */
+        if(phones.length){
+          var smsBody = ((title ? title + ': ' : '') + text).slice(0, 320);
+          var twUrl = 'https://api.twilio.com/2010-04-01/Accounts/' + encodeURIComponent(twSid) + '/Messages.json';
+          var twAuth = 'Basic ' + Buffer.from(twSid + ':' + twTok).toString('base64');
+          await Promise.all(phones.map(async function(to){
+            try{
+              var form = new URLSearchParams({ To: to, From: twFrom, Body: smsBody }).toString();
+              var sr = await fetch(twUrl, { method: 'POST',
+                headers: { Authorization: twAuth, 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: form });
+              if(sr.ok) texted++;
+              else if(!smsErr) smsErr = 'HTTP ' + sr.status + ' ' + (await sr.text()).slice(0, 90);
+            }catch(e4){ if(!smsErr) smsErr = String((e4 && e4.message) || e4).slice(0, 120); }
+          }));
+        }
+      }catch(e5){ smsErr = String((e5 && e5.message) || e5).slice(0, 120); }
+    }
+
     /* 612: name the cause, in the order that is actionable. */
     var reason = null;
     if(!subs.length)                    reason = 'no_subscriptions';
@@ -155,14 +207,14 @@ export default async function handler(req, res){
     if(sent === 0 && mailed === 0 && mailErr)    reason = reason || 'email_failed';
 
     res.status(200).json({
-      ok: (sent > 0 || mailed > 0),
-      sent: sent, failed: failed, gone: gone, mailed: mailed, subs: subs.length,
+      ok: (sent > 0 || mailed > 0 || texted > 0),
+      sent: sent, failed: failed, gone: gone, mailed: mailed, texted: texted, subs: subs.length,
       reason: reason,
       detail: firstErr ? (firstErr.status ? ('HTTP ' + firstErr.status + ' ' + firstErr.msg)
                                           : firstErr.msg)
-            : (mailErr || undefined),
+            : (mailErr || smsErr || undefined),
       /* presence only — never the values */
-      env: { vapid_from_env: VAPID_FROM_ENV, resend: !!resendKey }
+      env: { vapid_from_env: VAPID_FROM_ENV, resend: !!resendKey, sms: !!(twSid && twTok && twFrom) }
     });
   }catch(err){
     res.status(200).json({ ok:false, error: String(err && err.message || err) });

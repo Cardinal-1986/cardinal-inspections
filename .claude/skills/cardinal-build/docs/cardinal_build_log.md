@@ -18159,3 +18159,25 @@ logout-no-flash case. Negative-controlled **RED (6)** against v872 (one text, no
 Regression: 870/871/872 harnesses GREEN; `render_outbox865.mjs`'s 'badge cleared' assertion was
 updated (not the app) to wait out the new confirmation flash before checking hidden \u2014 it now
 passes on both 872 and 873. `check_build` green (117 inline scripts, stamp 872 -> 873). No SQL.
+
+## Build 874 — Team alerts by SMS (Twilio) in api/notify.js
+
+`notify.js` already fanned a team alert to web-push AND email (Resend, best-effort). 874 adds a
+THIRD channel: SMS via Twilio, gated on `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_FROM`
+exactly as email is gated on `RESEND_API_KEY` \u2014 no keys means `texted:0`, never a failure.
+Recipient phones come from `team_profiles` (the Team Directory), matched to the same recipient
+emails, normalised to E.164 by `normPhone()` (skips anything malformed rather than texting a bad
+number \u2014 never guesses a country code), de-duped. Each channel is independent so a dead one never
+blocks the others. Response now reports `texted` and `env.sms` (presence only, never the keys).
+The 642 session gate is untouched.
+
+EMAIL needed NO code \u2014 it has worked since 611; it only needs `RESEND_API_KEY` set in Vercel.
+
+Gate: `gate_smsnotify874.mjs` imports the REAL handler (throwaway `web-push` stub under the
+gitignored `node_modules`) and drives it with a recording `fetch` \u2014 **GREEN 11/11**: with Twilio
+configured one alert POSTs to Twilio per staff phone (junk skipped, duplicate de-duped), with the
+right To/From/Body and HTTP Basic auth, `texted>=1`, `env.sms:true`; with Twilio unset there is no
+Twilio call and `texted:0`. Negative-controlled **RED (9)** against v873's notify.js (run from the
+repo tree so `web-push` resolves \u2014 a clean red, not a crash). `node --check` + ESM check pass;
+`normPhone` unit-tested 10/10. `check_build` green (stamp 873 -> 874, index.html changelog only).
+No SQL. NB: staff phone numbers must be in the Team Directory for a text to reach them.
