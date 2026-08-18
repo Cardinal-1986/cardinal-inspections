@@ -18701,3 +18701,19 @@ countdown, a REAL file upload (Playwright setInputFiles) writes a storage object
 owner_docs insert, open signs the stored path and hands it to window.open, delete removes row + object.
 Negative-controlled **RED** vs v899. 895-899 harnesses + digest test still green. `check_build` green
 (899 -> 900, div 4015/4015). **All six Owner Console modules are now shipped.**
+
+## Build 901 — a rep is notified when a lead is assigned to them
+
+Theo: "Can it send when a new lead is assigned." The notify system (notifyTeam -> api/notify.js,
+push/email/text) was fully built and already fired on tasks-assigned and estimate-signed, but lead
+assignment was never wired to it — a buried gap. Wired TWO sites (Theo's pick: both moments, rep only,
+skip self-assignment):
+  - new-lead create (after pdb.create succeeds): ping assigned[0] if it isn't the creator.
+  - the reassign dropdown (dbAssignSel change, after the audit log): ping asg.value if it isn't self.
+Both guard `assignee && assignee !== me && window.notifyTeam`, mirror the existing task-notify shape,
+and are try/catch fire-and-forget so a notify failure never blocks the create/reassign.
+
+Gate `test_leadnotify901.mjs`: EXTRACTS both shipped try-blocks from index.html and EXECUTES them
+(real source, not a reimplementation) across scenarios — assign-to-other pings once addressed to that
+rep, self-assign and no-assignee stay silent, on both create and reassign: **GREEN 11/11**.
+Negative-controlled **RED** vs v900 (blocks absent). `check_build` green (900 -> 901). No SQL.
