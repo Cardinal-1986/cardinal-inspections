@@ -5359,3 +5359,5 @@ Gate `render_owner895.mjs` (Chromium, 20 assertions, negative-controlled). **Pha
 reminders (modules 4-6), not yet built.**
 
 **Build 896** made owner-created entries editable: tap a task, obligation or renewal to edit its title/note (and date, for items) inline — Save/Cancel, Enter/Escape. The tax calendar and crew certificates stay read-only.
+
+**Build 897** added a **Reminders** section (module 5): add a reminder with an optional date and a repeat of none/weekly/monthly/yearly; tap to edit, check to complete a one-time or roll a repeating one to its next date. Table `owner_reminders` (`is_cardinal_admin()`), with a reserved `notify` column for future daily-digest delivery. Modules 4 (Money) and 6 (Vault) remain.

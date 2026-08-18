@@ -18621,3 +18621,24 @@ the row's text, Save writes an `owner_tasks` / `owner_items` UPDATE carrying the
 for items) and re-renders, and Cancel writes nothing: **GREEN 11/11**. Negative-controlled **RED**
 against v895 (no edit affordance). `render_owner895.mjs` still GREEN on 896 (add/check/delete
 unregressed). `check_build` green (895 -> 896; div balance 3985/3985). No SQL.
+
+## Build 897 — Owner Console Quick Reminders (phase 2 begins)
+
+Theo, picking phase-2 order: "Quick Reminders." A new Reminders section in the console: add a
+reminder with an optional date and repeat (none/weekly/monthly/yearly), tap to edit (reuses the 896
+inline-editor pattern with reminder-shaped fields), check to complete a one-time or **roll a repeating
+one forward to its next occurrence** (`advanceYMD` steps weekly/monthly/yearly past today, so every
+control acts — no dead toggle). Shown in the brief; that is the delivery for now.
+
+New table `owner_reminders` (`owner_reminders_schema.sql`, applied first, `is_cardinal_admin()` RLS).
+A `notify` column is reserved for the follow-up that will surface due reminders in the daily digest
+(`api/digest.js`) — deliberately **no UI toggle yet**, so nothing renders that does nothing. That
+digest wiring is the clearly-scoped next build; Money (module 4) still needs Theo's data-source input
+and was explicitly deferred.
+
+Gate `render_owner897.mjs`: **GREEN 14/14** — section renders, add writes an insert (one-time default
++ weekly-with-date), one-time check completes, repeating check rolls remind_on forward with no done_at,
+edit writes an update, delete removes. Negative-controlled **RED** vs v896. 895/896 harnesses still
+green (no regression). One harness assertion was case-sensitive against a CSS-uppercased label
+(`innerText` reflects `text-transform`) — fixed the test, not the app. `check_build` green (896 -> 897,
+div 3993/3993). Ships in PR #400 as the phase-2 span (896-897).
