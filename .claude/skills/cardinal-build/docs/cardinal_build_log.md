@@ -18946,3 +18946,27 @@ places it, no note), **lost** (both fail → no pin, "couldn't be located"), **n
 `puMapMiss`). Regression: `gate_purun909.mjs` and `gate_puassign910.mjs` re-run GREEN on the 911 tree
 (their Leaflet map stubs gained `.on`, which real Leaflet has — the app was never wrong). `check_build`
 green (910 -> 911, marker "911: geocode Google-first"). No SQL.
+
+## Build 912 — Punch & Repairs: a Completed tab of its own
+
+From a phone screenshot (Theo): a finished repair moved from Scheduled into a **"Completed" group at the
+bottom of the Active tab** — Active then read "1 of 1 items · 0 urgent · 0 open" with a struck-through
+card under it. Ask: "Can you make a spot for completed."
+
+Added a third tab beside Active / Scheduled. All in the punch list render (`#puList`, `render()`),
+all viewports (not ultrawide-scoped — this is the phone list):
+- Markup: `<button data-putab="completed">Completed <span id="puNDone">` after the Scheduled tab.
+- `render()`'s tab filter is now three-way: `scheduled` → `isScheduled`; `completed` → `status==='done'`;
+  `active` → `!isScheduled && status!=='done'` (**Active no longer carries done items**, which is the fix).
+- New `#puNDone` count (all done, unfiltered, like the other two badge counts). Body: a dedicated
+  Completed branch renders the done group; the Active branch's old `if(done.length)` Completed group is
+  removed. Subtitle reads "N completed" on the Completed tab instead of "0 urgent · 0 open".
+- CSS: `.pu-tabs` gains `overflow-x:auto` + hidden scrollbar and `.pu-tab` `white-space:nowrap;flex:0 0 auto`,
+  padding 18→15px, so three tabs scroll rather than wrap on a phone. Verified at 414px — all three fit.
+
+Gate `gate_pucompleted912.mjs` (Chromium, 414px, one open + one scheduled + one done): Completed tab
+present; counts 1/1/1; Active shows the open card and **not** the done card and has no Completed group;
+Completed tab shows only the done card in a "Completed 1" group with a "1 completed" subtitle; Scheduled
+unchanged. All GREEN, negative-controlled vs v911 (no `data-putab="completed"`). Rendered both tabs at
+414px to confirm layout. `check_build` green (911 -> 912, marker "active / scheduled / completed tabs (912)").
+No SQL.

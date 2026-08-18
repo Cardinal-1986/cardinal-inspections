@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 911 &#8212; The Punch &amp; Repairs map now finds more addresses (it asks Google first, like the rest of the app) and tells you when a repair can\u2019t be placed instead of silently leaving it off</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 912 &#8212; Punch &amp; Repairs now has its own Completed tab, so finished repairs live in their own spot instead of sitting under Active</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3826,6 +3826,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="pu-tabs" id="puTabs">
       <button class="pu-tab on" data-putab="active">Active <span class="n" id="puNActive">0</span></button>
       <button class="pu-tab" data-putab="scheduled">Scheduled <span class="n" id="puNSched">0</span></button>
+      <button class="pu-tab" data-putab="completed">Completed <span class="n" id="puNDone">0</span></button>
     </div>
     <div class="pu-lay">
       <aside class="pu-rail-wrap"><div class="pu-rail" id="puRail"></div>
@@ -40389,6 +40390,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:912, d:'2026-08-18', t:'Punch \u0026 Repairs: a Completed tab of its own',
+s:'Finished repairs used to show up as a \u201cCompleted\u201d group at the bottom of the Active tab. They now have their own Completed tab beside Active and Scheduled, with its own count, so Active shows only open work and Scheduled only what\u2019s dated. Checking an item off moves it into Completed; the tab strip scrolls sideways if the three don\u2019t fit. Nothing else about the list changed.' },
 { b:911, d:'2026-08-18', t:'Dispatch map: find more addresses, and say when one can\u2019t be placed',
 s:'On the Punch \u0026 Repairs map (ultrawide) a repair could be counted in the stat strip yet never appear as a pin \u2014 because the map geocoded only through the free open-source service, which places about two addresses in three. It now asks Google first (the same path the rest of the app switched to), which placed 40 of 42 real addresses in testing versus 29, and falls back to the old service if Google is unavailable, so it can only find more, never fewer. When a repair still can\u2019t be placed \u2014 no address on the job, or an address nothing can locate \u2014 the map now says so with a small note instead of silently dropping it, and a pin that resolves a moment later is brought into view unless you\u2019ve already panned the map. Ultrawide only.' },
 { b:910, d:'2026-08-18', t:'Assign a repair from the dispatch map',
@@ -58850,9 +58853,11 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 .pu-card.prio-high::before{background:#e2574a;box-shadow:0 0 7px rgba(226,87,74,.6);}
 .pu-card.prio-normal::before{background:#d98324;}
 .pu-card.prio-low::before{background:#c8202e;}
-/* scheduled / active tabs */
-.pu-tabs{display:flex;align-items:center;gap:0;border-bottom:1px solid var(--rbe-line);margin:0 0 13px;}
-.pu-tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 18px;cursor:pointer;
+/* active / scheduled / completed tabs (912) */
+.pu-tabs{display:flex;align-items:center;gap:0;border-bottom:1px solid var(--rbe-line);margin:0 0 13px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.pu-tabs::-webkit-scrollbar{display:none;}
+.pu-tab{background:none;border:0;border-bottom:3px solid transparent;padding:10px 15px;cursor:pointer;white-space:nowrap;flex:0 0 auto;
   font:800 13.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin-bottom:-1px;}
 .pu-tab.on{color:var(--rbe-acclt);border-bottom-color:var(--rbe-acc);}
 .pu-tab .n{font:700 10px ui-monospace,Menlo,monospace;background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;
@@ -59093,11 +59098,14 @@ function render(){
   var all = rows();
   var schedAll = all.filter(isScheduled);
   var vis = sorted(all.filter(match).filter(function(it){
-    return PU.tab === 'scheduled' ? isScheduled(it) : !isScheduled(it);
+    if(PU.tab === 'scheduled') return isScheduled(it);
+    if(PU.tab === 'completed') return it.status === 'done';
+    return !isScheduled(it) && it.status !== 'done';
   }));
-  var na = document.getElementById('puNActive'), ns = document.getElementById('puNSched');
+  var na = document.getElementById('puNActive'), ns = document.getElementById('puNSched'), ndn = document.getElementById('puNDone');
   if(na) na.textContent = all.filter(function(it){ return !isScheduled(it) && it.status !== 'done'; }).length;
   if(ns) ns.textContent = schedAll.length;
+  if(ndn) ndn.textContent = all.filter(function(it){ return it.status === 'done'; }).length;
   document.querySelectorAll('#puTabs .pu-tab').forEach(function(b){
     b.classList.toggle('on', b.getAttribute('data-putab') === PU.tab);
   });
@@ -59107,7 +59115,9 @@ function render(){
   var normal = open.filter(function(i){ return !isUrgent(i); });
 
   document.getElementById('puSub').textContent =
-    vis.length + ' of ' + all.length + ' items \u00b7 ' + urgent.length + ' urgent \u00b7 ' + open.length + ' open';
+    vis.length + ' of ' + all.length + ' items \u00b7 ' + (PU.tab === 'completed'
+      ? (done.length + ' completed')
+      : (urgent.length + ' urgent \u00b7 ' + open.length + ' open'));
   var html = '';
   if(PU.tab === 'scheduled'){
     var byDate = vis.slice().sort(function(a, b){ return String(a.scheduled_at).localeCompare(String(b.scheduled_at)); });
@@ -59115,10 +59125,13 @@ function render(){
       byDate.map(function(i){ return cardHtml(i, true); }).join('') : '';
     document.getElementById('puList').innerHTML = html ||
       '<div class="pu-empty">Nothing scheduled yet \u2014 set a date on an item and it lands here.</div>';
+  } else if(PU.tab === 'completed'){
+    html += done.length ? '<div class="pu-grp">Completed <span class="n">' + done.length + '</span></div>' + done.map(function(i){ return cardHtml(i, true); }).join('') : '';
+    document.getElementById('puList').innerHTML = html ||
+      '<div class="pu-empty">Nothing completed yet \u2014 check an item off and it lands here.</div>';
   } else {
     if(urgent.length) html += '<div class="pu-grp">Urgent <span class="n">' + urgent.length + '</span></div>' + urgent.map(function(i){ return cardHtml(i, true); }).join('');
     if(normal.length) html += '<div class="pu-grp">Open <span class="n">' + normal.length + '</span></div>' + normal.map(function(i){ return cardHtml(i, true); }).join('');
-    if(done.length)   html += '<div class="pu-grp">Completed <span class="n">' + done.length + '</span></div>' + done.map(function(i){ return cardHtml(i, true); }).join('');
     document.getElementById('puList').innerHTML = html ||
       '<div class="pu-empty">' + (all.length ? 'Nothing matches these filters.' : 'No punch items or repairs yet.') + '</div>';
   }
