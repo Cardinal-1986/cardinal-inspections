@@ -18404,6 +18404,35 @@ census used `getComputedStyle(el).display` (which ignores hidden ANCESTORS, so i
 JS-validated form never uses. Fixed the driver's census (offsetParent + visual "*") so the re-run won't
 re-report it. No app change.
 
+## Build 892 — Work Order: the blank homeowner/address, root-caused
+
+Theo: "Address still doesn't populate," with a screen recording, after 891 shipped the `woClient`
+resolver. Reproduced against the real DB (all 43 projects have a populated `address` column) and by
+rendering the shipped `woBody` with a real project row — **the document filled correctly**. So the
+resolver was never the problem; it was being fed garbage.
+
+**Root cause (regression from build 843).** The profile's **+ New work order** button is wired
+`__pNewWorkOrderBtn.addEventListener('click', openWorkOrderPicker)` (line ~21053). Before 843
+`openWorkOrderPicker` took no arguments, so the click Event it received was ignored. Build 843 added
+a `project` parameter for the Crew Dispatch board — and from then on the **click Event arrived as
+`project`**, and `var pr = project || currentProject` used the Event (truthy) instead of the open
+client. The Event has no `id/name/address/phone`, so every work order issued from the client page
+since 843 printed a blank Job block **and** was created with `project_id: undefined` (untied to the
+client). Work orders made from the Dispatch board passed a real `projById(...)` row and were fine —
+which is why it looked intermittent. The 843 comment even claims "the button passes none"; the wiring
+didn't match the comment.
+
+**Fix.** Harden the guard to require a real project — `var pr = (project && project.id) ? project :
+currentProject` — so an Event (or any non-project) falls back to `currentProject`; and wrap the
+listener `function(){ openWorkOrderPicker(); }` so it passes nothing. Two layers.
+
+Old work orders already saved with a blank Job block are frozen documents — they need the details
+typed in or the order re-issued. Gates: `check_build` GREEN (stamp 891→892). `render_wo892.mjs`
+drives the real picker with a no-arg call, a click-Event call, and a real button click, capturing the
+`pr` handed to `createWorkOrder`: **GREEN 7/7**, and **RED 4** on the v891 control (the Event shadows
+the client). Lesson logged: the 889–891 harnesses all called `woBody` with a real `pr`, so they were
+green while the app was broken — the bug lived in the *caller*, not the function under test.
+
 ## Build 891 — Work Order field polish (from on-site testing)
 
 Theo tested 890 on a real job and asked for six fixes; all roofing-only, in `index.html`:
