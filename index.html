@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 906 &#8212; On an ultrawide monitor Punch &amp; Repairs gains a live map: every open repair pinned and colour-coded, tap a repair to find it on the map and back; phones, iPads and normal monitors are unchanged</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 907 &#8212; OC Colors photos load much faster: the colour cover images are now served at a smaller size instead of the full-resolution original, so the Showroom colour hub opens quickly</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40389,6 +40389,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:907, d:'2026-08-18', t:'OC Colors covers load fast in the Showroom',
+s:'The colour cover photos in OC Colors (the shingle-colour hub on the Showroom) were loading the full-resolution original image everywhere \u2014 on the line hero, on every colour tile and on the colour detail \u2014 about 284KB each, which is why the Showroom felt slow to open. They are now served through an on-the-fly resize (about 55KB each, roughly five times lighter) with no change to what is stored, so the hub opens quickly. The customer \u201Cour roofs\u201D photos already loaded small thumbnails and are unchanged. If the resize ever fails it quietly falls back to the original, so nothing goes blank.' },
 { b:906, d:'2026-08-18', t:'Punch \u0026 Repairs gains a dispatch map (ultrawide)',
 s:'On a very wide monitor (1600px and up) Punch \u0026 Repairs now shows a live map beside the list instead of empty space. Every open repair is pinned on a real map of the Dayton area, colour-coded by urgency (red urgent, amber normal, blue low) \u2014 so you can see at a glance where the work clusters and plan a crew\u2019s loop. Tap a repair in the list to fly to its pin; tap a pin to jump to its card and Open it. A By urgency / By crew toggle recolours the pins, a strip across the top shows Open / Urgent / Unassigned / Today counts, and the list\u2019s own filters, tabs and search also filter the pins. The map uses the same map and address data the client Location cards already use \u2014 nothing new is stored. Nothing changes on phones, iPads or a normal-width monitor; this only appears past 1600px wide. Third screen in the ultrawide set (after Production and the client list).' },
 { b:905, d:'2026-08-18', t:'Client list fills an ultrawide screen',
@@ -69711,6 +69713,27 @@ function filters(){
   });
 }
 
+/* 907: covers had no rendition and every hub hero, line tile and detail hero
+   loaded the ~284KB ORIGINAL \u2014 the "pictures load super slow in the showroom"
+   report. The photos bucket has Supabase image transforms enabled (verified
+   against the render endpoint), so sign each cover with a width/quality
+   transform: ~284KB \u2192 ~55KB, no backfill and nothing new stored. Only the
+   SINGULAR createSignedUrl takes a transform (the batch signMany does not), so
+   these fire in parallel. Any cover whose transform sign fails falls back to a
+   plain signed original via signMany, so a hiccup degrades to the old behaviour
+   rather than a blank card. 'our roofs' photos already load 150KB -t thumbs. */
+async function signCoversSmall(paths, w){
+  var cl = sb(); if(!cl || !cl.storage) return {};
+  var list = (paths || []).filter(Boolean), out = {};
+  await Promise.all(list.map(async function(p){
+    try{
+      var r = await cl.storage.from('photos').createSignedUrl(p, 3600,
+        { transform:{ width:(w || 800), quality:72, resize:'contain' } });
+      if(r && !r.error && r.data && r.data.signedUrl) out[p] = r.data.signedUrl;
+    }catch(e){}
+  }));
+  return out;
+}
 async function load(){
   var cl = sb(); if(!cl) return;
   var r = await cl.from('oc_colors')
@@ -69719,7 +69742,10 @@ async function load(){
     .order('sort_order', { ascending:true });
   if(r.error || !r.data){ COLORS = []; return; }
   COLORS = r.data;
-  var map = await signMany(COLORS.map(function(c){ return c.cover_image_path; }));
+  var _paths = COLORS.map(function(c){ return c.cover_image_path; });
+  var map = await signCoversSmall(_paths, 800);
+  var _missing = _paths.filter(function(p){ return p && !map[p]; });
+  if(_missing.length){ var _orig = await signMany(_missing); Object.assign(map, _orig); }
   COLORS.forEach(function(c){ c._src = c.cover_image_path ? map[c.cover_image_path] : null; });
   /* A line's hero is one of its OWN colours' covers — already signed above, so
      no second round trip and nothing new written anywhere.
@@ -69773,7 +69799,7 @@ async function openColor(slug){
 
   var d = VIEW.querySelector('#occDetail');
   var hero = c._src
-    ? '<div class="occ-hero"><img src="' + esc(c._src) + '" alt="' + esc(c.name) + '">' +
+    ? '<div class="occ-hero"><img src="' + esc(c._src) + '" alt="' + esc(c.name) + '" loading="lazy" decoding="async">' +
       (c.cover_credit ? '<div class="occ-credit">' + esc(c.cover_credit) + '</div>' : '') + '</div>'
     : '<div class="occ-hero"><div class="occ-swatch" style="background:' + esc(c.hex || '#333') + ';">' +
       '<div class="occ-unver">Approximate colour — not a verified swatch</div></div></div>';

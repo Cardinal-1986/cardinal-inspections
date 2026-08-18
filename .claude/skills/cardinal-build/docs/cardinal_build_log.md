@@ -18826,3 +18826,28 @@ negative-controlled against v905 (no pane at 3440). `check_build` green (905 -> 
 `cr-pumap-script`). No SQL. Next: Plan-a-Run (route a loop) + assign-from-map on top, then the same
 map console onto Crew Dispatch. NOTE: the map is a real Leaflet tile map in production; the preview
 Theo approved used a stylized stand-in because tiles are external.
+
+## Build 907 — OC Colors covers load fast (Showroom slowness)
+
+Theo: "the pictures load super slow in the oc colors for showroom." Root-caused with the DB, not
+guessed: the 63 customer "our roofs" photos already load 150KB `-t` thumbnails (fine), but the **23
+colour COVER images had no rendition at all** and were signed as the full original (~284KB avg, up
+to 350KB) and painted on every hub line-hero, every colour tile and the colour detail — so the
+Showroom colour hub downloaded several MB of full-size JPEGs to open.
+
+Verified the `photos` bucket has **Supabase image transforms enabled** by probing the render
+endpoint (a bogus `resize=` returned "must be equal to one of the allowed values" — the transform
+service validating params; a project without the add-on would not). So the fix is resize-on-read,
+no backfill and nothing new stored: new `signCoversSmall(paths, w)` signs each cover with
+`createSignedUrl(p, 3600, { transform:{ width:800, quality:72, resize:'contain' } })` (the SINGULAR
+call is the one that takes a transform; the batch `signMany` does not, so they fire in parallel).
+`load()` uses it, and any cover whose transform sign fails falls back to a plain `signMany` original
+so a hiccup degrades to the old behaviour, never a blank card. ~284KB → ~55KB per cover (~5×). The
+line heroes inherit the smaller URL (`L._hero` derives from `c._src`); the detail hero also gained
+`loading="lazy" decoding="async"`.
+
+Gate `gate_occ907.mjs` (Chromium, storage spied, `oc_colors` seeded incl. a deliberate FAIL cover):
+every cover signed WITH `{w800,q72,contain}`, the FAIL cover falls back to the batch original, a
+good cover does not, detail hero carries lazy/async, no page errors. **GREEN**, negative-controlled
+against v906 (covers signed via batch `signMany`, no transform). `check_build` green (906 -> 907,
+marker `signCoversSmall`). No SQL. "our roofs" thumbnails untouched.
