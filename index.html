@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 894 &#8212; Tidied the client-list filter bar (All / Retail / Claims / Community) — one clean row that sits right above the bottom nav, no more wrap or gap</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 895 &#8212; New admin-only Owner Console (Menu → Admin) — a daily owner’s brief: Today’s Top 10, the tax/BWC/1099 calendar, and what’s about to expire</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17620,6 +17620,10 @@ function hideAllViews(){
      leave it covering the next screen (the 570-572 class). */
   var _occ = document.getElementById('cr-occ');
   if(_occ) _occ.style.display = 'none';
+  /* 895: the Owner Console is a fixed inset:0 view, DISPLAY-shown like cr-occ,
+     so display:none is the correct lever. */
+  var _own = document.getElementById('cr-owner');
+  if(_own) _own.style.display = 'none';
   /* Self-heal: whenever we're about to show a main-app view, make sure the
      site header is visible. Anything upstream that left it hidden gets fixed here. */
   var _hd = document.querySelector('header.site');
@@ -25408,6 +25412,7 @@ function __histPush(st){
         case 'claims':          if(typeof window.crOpenClaims === 'function') window.crOpenClaims(); break;
         case 'crews':           if(window.CardinalCrews) window.CardinalCrews.open(); break;
         case 'pay':             if(window.CardinalPay) window.CardinalPay.open(); break;
+        case 'owner':           if(window.CardinalOwner) window.CardinalOwner.open(); break;
       }
     }catch(_e){}
     setTimeout(function(){ _navRestoring = false; }, 30);
@@ -25544,6 +25549,18 @@ function __histPush(st){
         };
         wDisp.__crNav = true;
         disp.open = wDisp;
+      }
+      /* 895: the Owner Console records history the same way. */
+      var own = window.CardinalOwner;
+      if(own && typeof own.open === 'function' && !own.open.__crNav){
+        var origOwnOpen = own.open;
+        var wOwn = function(){
+          var out = origOwnOpen.apply(this, arguments);
+          try{ window.navSetView('owner'); }catch(_e){}
+          return out;
+        };
+        wOwn.__crNav = true;
+        own.open = wOwn;
       }
     })();
   }, 400);
@@ -40325,6 +40342,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:895, d:'2026-08-18', t:'New — the Owner Console (admin only)',
+s:'A new owner-level dashboard for the things that live outside any one customer. Open it from Menu → Admin → Owner Console (admins only). It opens as a calm morning brief with three parts: Today’s Top 10 (a running to-do list you check off), On the horizon (the tax and compliance calendar — quarterly estimated taxes, the annual return, 1099-NEC to your subs, and the Ohio BWC true-up, each counting down to its date), and Renewals & Expirations (your subcontractors’ certificates from Crews plus any renewals you add, like insurance or plates). Dates are the standard federal/Ohio deadlines for a single-member LLC paid through 1099s — confirm your exact filing dates with your accountant. This is phase one; money and quick reminders come next.' },
 { b:894, d:'2026-08-18', t:'Client list \u2014 the filter bar is one clean row',
 s:'The All / Retail / Claims / Community filter bar at the bottom of the client list was wrapping onto two rows (Community dropped to a lonely second line) and floated with a dead gap above the bottom nav. It is now a single tidy row that sits right on top of the nav \u2014 tighter chips, no wrap, and the gap is gone. If it is ever too wide for a small phone it scrolls sideways instead of stacking.' },
 { b:893, d:'2026-08-18', t:'Home screen \u2014 the duplicate Production Calendar is gone',
@@ -41541,9 +41560,11 @@ if(window.CardinalAdminHealth && typeof window.CardinalAdminHealth.show === 'fun
 window.CardinalAdminHealth.show();
 }
 });
+var ownerOpt = makeOpt('cr-nav-owner', '\uD83D\uDCCB Owner Console', function(){ if(window.CardinalOwner && typeof window.CardinalOwner.open === 'function') window.CardinalOwner.open(); });
 var anchor = acctSec || document.getElementById('signOutBtn');
 if(anchor){
 anchor.parentNode.insertBefore(adminSec, anchor);
+anchor.parentNode.insertBefore(ownerOpt, anchor);
 if(reports)  { reports.style.display  = ''; anchor.parentNode.insertBefore(reports, anchor); }
 if(feed)     { feed.style.display     = ''; anchor.parentNode.insertBefore(feed, anchor); }
 anchor.parentNode.insertBefore(health, anchor);
@@ -73055,5 +73076,379 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
 })();
 </script>
 
+<style id="cr-owner-styles">
+/* ═══════════════════════════════════════════════════════════════════════════
+   The Owner Console — v2026-08-18 · build 895
+   Theo's morning brief. Owner-level things that live outside any one customer:
+   the day's Top 10, the tax/BWC/1099 calendar, and what's about to expire.
+   ADMIN ONLY — open() refuses a non-admin, and owner_tasks / owner_items are
+   is_cardinal_admin() at the RLS layer, so Production and Sales never reach it.
+
+   PALETTE: the "Daily Brief" editorial look Theo picked — cream paper, Georgia
+   serif, cardinal red. Every colour is a literal, declared nowhere as a token,
+   exactly like the Showcase (574) and Crews (547) modules. That makes this
+   surface immune to the 448-449 class by construction: no other module can
+   strip a background token out from under it, because there is none.
+
+   SCROLL LOCK: this module does NOT write document.body.style.overflow. That
+   global has 13 writers and no reconciler; overscroll-behavior:contain on the
+   fixed overlay gives the scroll containment a lock would, without becoming the
+   14th writer.
+
+   GEOMETRY: fixed inset:0, DISPLAY-shown at z-index 9500 (matching the other
+   full-screen views), so display:none is the correct lever in hideAllViews().
+   ═══════════════════════════════════════════════════════════════════════════ */
+#cr-owner{display:none;position:fixed;inset:0;z-index:9500;background:#f5f2ec;color:#231d18;
+  overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  font-family:Georgia,"Times New Roman",serif;-webkit-text-size-adjust:100%;}
+#cr-owner .ow-wrap{max-width:640px;margin:0 auto;padding:0 0 120px;min-height:100%;}
+#cr-owner .ow-x{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:14px;z-index:3;
+  width:38px;height:38px;border-radius:50%;border:1px solid #d9cfc2;background:#fffdf9;color:#6b5f54;
+  font:700 20px/1 "Segoe UI",Arial,sans-serif;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;box-shadow:0 2px 8px rgba(60,45,30,.10);}
+#cr-owner .ow-x:active{background:#f0e8df;}
+/* header */
+#cr-owner .ow-hd{padding:calc(24px + env(safe-area-inset-top,0px)) 22px 17px;border-bottom:2px solid #c8202e;}
+#cr-owner .ow-hk{font:700 9.5px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.24em;text-transform:uppercase;
+  color:#9a8b7e;margin-bottom:11px;}
+#cr-owner .ow-ht{font:400 30px/1.03 Georgia,serif;letter-spacing:.01em;margin:0;}
+#cr-owner .ow-ht b{color:#c8202e;font-weight:700;}
+#cr-owner .ow-hs{font:400 14.5px/1.42 Georgia,serif;color:#6b5f54;margin:10px 0 0;}
+#cr-owner .ow-hs em{font-style:normal;color:#c8202e;font-weight:700;}
+/* section */
+#cr-owner .ow-sec{padding:19px 22px 6px;}
+#cr-owner .ow-sl{font:700 10px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.16em;text-transform:uppercase;
+  color:#c8202e;margin:0 0 13px;display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+#cr-owner .ow-sl .ow-ct{color:#b3a494;font-weight:700;letter-spacing:.10em;}
+/* Top 10 agenda rows */
+#cr-owner .ow-ag{display:flex;gap:13px;padding:10px 0;border-bottom:1px solid #e5ded3;align-items:baseline;}
+#cr-owner .ow-ag .nn{font:400 15px/1 Georgia,serif;color:#b9a99a;width:17px;flex:none;text-align:right;}
+#cr-owner .ow-ag .bx{width:19px;height:19px;flex:none;border:1.5px solid #c2b4a4;border-radius:5px;
+  background:#fffdf9;cursor:pointer;position:relative;top:2px;}
+#cr-owner .ow-ag.done .bx{background:#c8202e;border-color:#c8202e;}
+#cr-owner .ow-ag.done .bx:after{content:"\2713";position:absolute;inset:0;color:#fff;font:700 13px/19px "Segoe UI",Arial,sans-serif;text-align:center;}
+#cr-owner .ow-ag .tt{flex:1;font-size:15.5px;line-height:1.36;cursor:pointer;}
+#cr-owner .ow-ag.done .tt{color:#a99c8e;text-decoration:line-through;}
+#cr-owner .ow-ag .tt small{display:block;font-family:"Segoe UI",Arial,sans-serif;font-size:11.5px;
+  color:#8a7d6f;margin-top:2px;text-decoration:none;}
+#cr-owner .ow-ag .del{flex:none;border:0;background:none;color:#c9b8a8;font:400 19px/1 "Segoe UI",Arial,sans-serif;
+  cursor:pointer;padding:0 2px;align-self:flex-start;}
+#cr-owner .ow-ag .del:active{color:#c8202e;}
+/* obligation / renewal rows */
+#cr-owner .ow-obl{padding:12px 0;border-bottom:1px solid #e5ded3;display:flex;justify-content:space-between;
+  align-items:baseline;gap:12px;}
+#cr-owner .ow-obl .ot{font-size:15px;font-weight:700;flex:1;}
+#cr-owner .ow-obl .ot small{display:block;font-family:"Segoe UI",Arial,sans-serif;font-size:11.5px;
+  color:#8a7d6f;margin-top:3px;font-weight:400;line-height:1.4;}
+#cr-owner .ow-obl.done .ot{color:#a99c8e;text-decoration:line-through;}
+#cr-owner .ow-obl .od{font:700 12.5px/1.25 "Segoe UI",Arial,sans-serif;text-align:right;white-space:nowrap;
+  flex:none;color:#9a8b7e;}
+#cr-owner .ow-obl .od b{display:block;font-size:11px;font-weight:400;color:#b3a494;margin-top:2px;}
+#cr-owner .ow-obl .od.red{color:#c8202e;} #cr-owner .ow-obl .od.red b{color:#cf6a70;}
+#cr-owner .ow-obl .od.warn{color:#b06a12;} #cr-owner .ow-obl .od.warn b{color:#c39152;}
+#cr-owner .ow-obl .rt{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none;}
+#cr-owner .ow-obl .del{border:0;background:none;color:#c9b8a8;font:400 18px/1 "Segoe UI",Arial,sans-serif;cursor:pointer;padding:0;}
+#cr-owner .ow-obl .bx{width:18px;height:18px;flex:none;border:1.5px solid #c2b4a4;border-radius:5px;
+  background:#fffdf9;cursor:pointer;position:relative;}
+#cr-owner .ow-obl.done .bx{background:#8a7d6f;border-color:#8a7d6f;}
+#cr-owner .ow-obl.done .bx:after{content:"\2713";position:absolute;inset:0;color:#fff;font:700 12px/18px "Segoe UI",Arial,sans-serif;text-align:center;}
+#cr-owner .ow-ref{font:700 8.5px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;
+  color:#b3a494;padding:9px 0 3px;}
+#cr-owner .ow-note{font:400 12px/1.5 "Segoe UI",Arial,sans-serif;color:#9a8b7e;margin:9px 0 2px;font-style:italic;}
+#cr-owner .ow-empty{font:400 13.5px/1.5 Georgia,serif;color:#a99c8e;padding:6px 0 10px;font-style:italic;}
+/* add row */
+#cr-owner .ow-add{display:flex;gap:8px;padding:12px 0 4px;flex-wrap:wrap;align-items:center;}
+#cr-owner .ow-add input[type=text]{flex:1;min-width:140px;border:1px solid #ddd2c4;border-radius:8px;
+  background:#fffdf9;padding:9px 12px;font:400 14.5px/1.2 Georgia,serif;color:#231d18;}
+#cr-owner .ow-add input[type=date]{border:1px solid #ddd2c4;border-radius:8px;background:#fffdf9;
+  padding:8px 10px;font:400 12.5px/1.2 "Segoe UI",Arial,sans-serif;color:#4d443b;}
+#cr-owner .ow-add input:focus{outline:none;border-color:#c8202e;}
+#cr-owner .ow-add button{border:0;border-radius:8px;background:#231d18;color:#fff;
+  font:700 12px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.04em;padding:11px 15px;cursor:pointer;}
+#cr-owner .ow-add button:active{background:#c8202e;}
+#cr-owner .ow-foot{padding:26px 22px 40px;text-align:center;}
+#cr-owner .ow-foot .fl{font:700 8.5px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#c2b4a4;}
+</style>
+<script id="cr-owner-script">
+/* The Owner Console — build 895. window.CardinalOwner = { open, close }. */
+(function(){
+  var view = null, built = false;
+  var TASKS = [], OITEMS = [], DOCS = [];
+
+  function cl(){ return window.sb || window.supa || null; }
+  function me(){ return (window.currentUser && window.currentUser.email) || null; }
+  function amAdmin(){ try{ return typeof isAdminUser === 'function' ? !!isAdminUser() : false; }catch(_){ return false; } }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  var MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var WD  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  function today0(){ var d = new Date(); d.setHours(0,0,0,0); return d; }
+  /* next calendar occurrence of month (1-12) / day, today or later */
+  function nextDate(mon, day){
+    var now = today0(), y = now.getFullYear();
+    var d = new Date(y, mon-1, day);
+    if(d < now) d = new Date(y+1, mon-1, day);
+    return d;
+  }
+  function daysTo(d){ return Math.round((d - today0()) / 86400000); }
+  function dstr(d){ return MON[d.getMonth()].slice(0,3) + ' ' + d.getDate() + (d.getFullYear() !== today0().getFullYear() ? ', ' + d.getFullYear() : ''); }
+  function parseDate(s){ if(!s) return null; var p = String(s).slice(0,10).split('-'); if(p.length !== 3) return null; var d = new Date(+p[0], +p[1]-1, +p[2]); d.setHours(0,0,0,0); return isNaN(d) ? null : d; }
+  function dueClass(n){ return n <= 30 ? 'red' : (n <= 60 ? 'warn' : ''); }
+  function dueWord(n){ return n < 0 ? (-n) + ' days ago' : (n === 0 ? 'today' : n + ' day' + (n===1?'':'s')); }
+
+  /* The recurring tax / compliance calendar for a single-member LLC paid through
+     1099s, no payroll. Computed every open from today — never a stored row, so it
+     cannot go stale. Reference only; acting on one is a Top-10 task. */
+  function taxCalendar(){
+    var q = [[4,15],[6,15],[9,15],[1,15]].map(function(md){ return nextDate(md[0], md[1]); });
+    q.sort(function(a,b){ return a - b; });
+    var nextQ = q[0];
+    var rows = [
+      { title:'Estimated income tax — next quarter', note:'Federal 1040-ES + Ohio IT-1040ES (city if you owe one) · self-employment tax included', date:nextQ },
+      { title:'Annual return — Form 1040 + Schedule C', note:'The LLC’s profit flows onto your personal return', date:nextDate(4,15) },
+      { title:'1099-NEC to every subcontractor', note:'Anyone paid ≥ $600 · you need their W-9 on file first', date:nextDate(1,31) },
+      { title:'Ohio BWC — true-up & sub coverage', note:'True up last year’s payroll and collect each sub’s certificate of coverage', date:nextDate(8,15) }
+    ];
+    rows.sort(function(a,b){ return a.date - b.date; });
+    return rows;
+  }
+
+  async function loadAll(){
+    var c = cl();
+    if(!c) throw new Error('not signed in');
+    var res = await Promise.all([
+      c.from('owner_tasks').select('*').order('done').order('position').order('created_at'),
+      c.from('owner_items').select('*').order('due_date', { ascending:true, nullsFirst:false }).order('created_at'),
+      c.from('crew_docs').select('id,crew_id,kind,file_name,carrier,expires_on'),
+      c.from('crews').select('id,name,trade').eq('archived', false)
+    ]);
+    TASKS  = (res[0] && res[0].data) || [];
+    OITEMS = (res[1] && res[1].data) || [];
+    var cd  = (res[2] && res[2].data) || [];
+    var crews = (res[3] && res[3].data) || [];
+    var cmap = {}; crews.forEach(function(c){ cmap[c.id] = c; });
+    /* only docs that carry an expiry are a "renewal"; keep the newest per crew+kind */
+    var seen = {};
+    DOCS = cd.filter(function(d){ return d.expires_on; }).map(function(d){
+      var cw = cmap[d.crew_id] || {};
+      return { id:d.id, crew:cw.name || 'Crew', kind:d.kind, carrier:d.carrier, expires:parseDate(d.expires_on) };
+    }).filter(function(d){ return d.expires; });
+    DOCS.sort(function(a,b){ return a.expires - b.expires; });
+  }
+
+  function greeting(){ var h = new Date().getHours(); return h < 12 ? 'Good morning' : (h < 17 ? 'Good afternoon' : 'Good evening'); }
+  function firstName(){ var e = me() || ''; var n = e.split('@')[0].split('.')[0]; return n ? n.charAt(0).toUpperCase() + n.slice(1) : 'there'; }
+
+  function headHTML(){
+    var now = new Date();
+    var open = TASKS.filter(function(t){ return !t.done; }).length;
+    var cal = taxCalendar();
+    var soon = cal[0];
+    var lead;
+    var openTxt = open === 0 ? 'Your list is clear' : (open + ' thing' + (open===1?'':'s') + ' on today’s list');
+    lead = '<em>' + esc(openTxt) + '</em> — ' + esc(soon.title.replace(' — next quarter','').toLowerCase().indexOf('estimated') === 0 ? 'estimated taxes are' : 'the next filing is') +
+      ' due in ' + daysTo(soon.date) + ' day' + (daysTo(soon.date)===1?'':'s') + '.';
+    return '<div class="ow-hd">' +
+      '<div class="ow-hk">Cardinal · Owner Brief</div>' +
+      '<div class="ow-ht">' + WD[now.getDay()] + ', <b>' + MON[now.getMonth()] + ' ' + now.getDate() + '</b></div>' +
+      '<div class="ow-hs">' + greeting() + ', ' + esc(firstName()) + '. ' + lead + '</div>' +
+    '</div>';
+  }
+
+  function top10HTML(){
+    var open = TASKS.filter(function(t){ return !t.done; });
+    var done = TASKS.filter(function(t){ return t.done; });
+    var h = '<div class="ow-sec"><div class="ow-sl">Today · Top 10<span class="ow-ct">' + open.length + ' open</span></div>';
+    var n = 0;
+    if(!open.length && !done.length){
+      h += '<div class="ow-empty">Nothing yet. Add the first thing you don’t want to forget today.</div>';
+    }
+    open.forEach(function(t){
+      n++;
+      h += '<div class="ow-ag" data-id="' + t.id + '">' +
+        '<span class="nn">' + n + '</span>' +
+        '<span class="bx" data-act="task-done"></span>' +
+        '<span class="tt" data-act="task-done">' + esc(t.title) + (t.note ? '<small>' + esc(t.note) + '</small>' : '') + '</span>' +
+        '<button class="del" data-act="task-del" type="button" aria-label="Remove">×</button>' +
+      '</div>';
+    });
+    done.forEach(function(t){
+      h += '<div class="ow-ag done" data-id="' + t.id + '">' +
+        '<span class="nn">✓</span>' +
+        '<span class="bx" data-act="task-done"></span>' +
+        '<span class="tt" data-act="task-done">' + esc(t.title) + '</span>' +
+        '<button class="del" data-act="task-del" type="button" aria-label="Remove">×</button>' +
+      '</div>';
+    });
+    h += '<div class="ow-add">' +
+      '<input type="text" id="ow-task-in" placeholder="Add to today’s list…" maxlength="200">' +
+      '<button type="button" data-act="task-add">Add</button>' +
+    '</div></div>';
+    return h;
+  }
+
+  function oblHTML(){
+    var cal = taxCalendar();
+    var mine = OITEMS.filter(function(i){ return i.kind === 'obligation'; });
+    var h = '<div class="ow-sec"><div class="ow-sl">On the horizon</div>';
+    h += '<div class="ow-ref">Tax &amp; compliance calendar</div>';
+    cal.forEach(function(r){
+      var n = daysTo(r.date);
+      h += '<div class="ow-obl">' +
+        '<span class="ot">' + esc(r.title) + '<small>' + esc(r.note) + '</small></span>' +
+        '<span class="od ' + dueClass(n) + '">' + dueWord(n) + '<b>' + dstr(r.date) + '</b></span>' +
+      '</div>';
+    });
+    if(mine.length){
+      h += '<div class="ow-ref">Your deadlines</div>';
+      mine.forEach(function(i){ h += itemRowHTML(i); });
+    }
+    h += '<div class="ow-add">' +
+      '<input type="text" id="ow-obl-in" placeholder="Add a deadline…" maxlength="160">' +
+      '<input type="date" id="ow-obl-date" aria-label="Due date">' +
+      '<button type="button" data-act="obl-add">Add</button>' +
+    '</div>';
+    h += '<div class="ow-note">Dates are the standard federal &amp; Ohio deadlines for a single-member LLC paid through 1099s — confirm your exact filing dates with your accountant.</div>';
+    h += '</div>';
+    return h;
+  }
+
+  function renewHTML(){
+    var mine = OITEMS.filter(function(i){ return i.kind === 'renewal'; });
+    var h = '<div class="ow-sec"><div class="ow-sl">Renewals &amp; expirations</div>';
+    h += '<div class="ow-ref">Subcontractor certificates</div>';
+    if(!DOCS.length){
+      h += '<div class="ow-empty">No certificates with an expiry on file yet. They’ll appear here as you add COI, W-9 and license dates under Crews.</div>';
+    } else {
+      DOCS.forEach(function(d){
+        var n = daysTo(d.expires);
+        var lbl = ({ coi:'Certificate of insurance', w9:'W-9', license:'License', bond:'Bond' }[String(d.kind||'').toLowerCase()]) || (d.kind || 'Document');
+        h += '<div class="ow-obl">' +
+          '<span class="ot">' + esc(d.crew) + ' — ' + esc(lbl) + (d.carrier ? '<small>' + esc(d.carrier) + '</small>' : '') + '</span>' +
+          '<span class="od ' + dueClass(n) + '">' + (n < 0 ? 'expired' : dueWord(n)) + '<b>' + dstr(d.expires) + '</b></span>' +
+        '</div>';
+      });
+    }
+    if(mine.length){
+      h += '<div class="ow-ref">Your renewals</div>';
+      mine.forEach(function(i){ h += itemRowHTML(i); });
+    }
+    h += '<div class="ow-add">' +
+      '<input type="text" id="ow-ren-in" placeholder="Add a renewal (insurance, plates…)" maxlength="160">' +
+      '<input type="date" id="ow-ren-date" aria-label="Renews on">' +
+      '<button type="button" data-act="ren-add">Add</button>' +
+    '</div></div>';
+    return h;
+  }
+
+  function itemRowHTML(i){
+    var d = parseDate(i.due_date), done = !!i.done_at, n = d ? daysTo(d) : null;
+    var od = d ? ('<span class="od ' + (done ? '' : dueClass(n)) + '">' + (done ? 'done' : dueWord(n)) + '<b>' + dstr(d) + '</b></span>') : '<span class="od">no date</span>';
+    return '<div class="ow-obl' + (done ? ' done' : '') + '" data-id="' + i.id + '">' +
+      '<span class="bx" data-act="item-done"></span>' +
+      '<span class="ot">' + esc(i.title) + (i.note ? '<small>' + esc(i.note) + '</small>' : '') + '</span>' +
+      '<span class="rt">' + od + '<button class="del" data-act="item-del" type="button" aria-label="Remove">×</button></span>' +
+    '</div>';
+  }
+
+  function render(){
+    if(!view) return;
+    var body = view.querySelector('.ow-wrap');
+    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() +
+      '<div class="ow-foot"><div class="fl">Cardinal Roofing &amp; Renovations · Owner</div></div>';
+  }
+
+  function rowId(el){ var r = el.closest('[data-id]'); return r ? r.getAttribute('data-id') : null; }
+
+  async function onClick(e){
+    var t = e.target.closest('[data-act]');
+    if(!t) return;
+    var act = t.getAttribute('data-act'), c = cl(), id = rowId(t);
+    try{
+      if(act === 'task-add'){
+        var inp = view.querySelector('#ow-task-in'), v = (inp.value || '').trim();
+        if(!v) return;
+        var pos = TASKS.reduce(function(m,x){ return Math.max(m, x.position || 0); }, 0) + 1;
+        var r = await c.from('owner_tasks').insert({ title:v, position:pos, created_by:me() }).select().single();
+        if(r && r.data) TASKS.push(r.data);
+        render();
+      } else if(act === 'task-done'){
+        var tk = TASKS.find(function(x){ return String(x.id) === String(id); });
+        if(!tk) return;
+        var nd = !tk.done;
+        await c.from('owner_tasks').update({ done:nd, done_at: nd ? new Date().toISOString() : null }).eq('id', tk.id);
+        tk.done = nd; tk.done_at = nd ? new Date().toISOString() : null;
+        render();
+      } else if(act === 'task-del'){
+        await c.from('owner_tasks').delete().eq('id', id);
+        TASKS = TASKS.filter(function(x){ return String(x.id) !== String(id); });
+        render();
+      } else if(act === 'obl-add' || act === 'ren-add'){
+        var kind = act === 'obl-add' ? 'obligation' : 'renewal';
+        var pfx = act === 'obl-add' ? '#ow-obl' : '#ow-ren';
+        var ti = view.querySelector(pfx + '-in'), da = view.querySelector(pfx + '-date');
+        var tv = (ti.value || '').trim(); if(!tv) return;
+        var payload = { kind:kind, title:tv, due_date: da.value || null, created_by:me() };
+        var r2 = await c.from('owner_items').insert(payload).select().single();
+        if(r2 && r2.data) OITEMS.push(r2.data);
+        render();
+      } else if(act === 'item-done'){
+        var it = OITEMS.find(function(x){ return String(x.id) === String(id); });
+        if(!it) return;
+        var was = !!it.done_at, val = was ? null : new Date().toISOString();
+        await c.from('owner_items').update({ done_at: val }).eq('id', it.id);
+        it.done_at = val;
+        render();
+      } else if(act === 'item-del'){
+        await c.from('owner_items').delete().eq('id', id);
+        OITEMS = OITEMS.filter(function(x){ return String(x.id) !== String(id); });
+        render();
+      }
+    }catch(err){ console.warn('owner-console', err); alert('Could not save — ' + (err && err.message ? err.message : 'try again')); }
+  }
+
+  function onKey(e){
+    if(e.key !== 'Enter') return;
+    var id = e.target && e.target.id;
+    if(id === 'ow-task-in'){ e.preventDefault(); var b = view.querySelector('[data-act="task-add"]'); if(b) b.click(); }
+    else if(id === 'ow-obl-in'){ e.preventDefault(); var b2 = view.querySelector('[data-act="obl-add"]'); if(b2) b2.click(); }
+    else if(id === 'ow-ren-in'){ e.preventDefault(); var b3 = view.querySelector('[data-act="ren-add"]'); if(b3) b3.click(); }
+  }
+
+  function ensureView(){
+    if(built) return;
+    view = document.createElement('div');
+    view.id = 'cr-owner';
+    view.innerHTML = '<button class="ow-x" type="button" data-act="owner-close" aria-label="Close">×</button><div class="ow-wrap"></div>';
+    document.body.appendChild(view);
+    view.addEventListener('click', function(e){
+      if(e.target.closest('[data-act="owner-close"]')){ close(); return; }
+      onClick(e);
+    });
+    view.addEventListener('keydown', onKey);
+    built = true;
+  }
+
+  async function open(){
+    if(!amAdmin()){ try{ alert('Owner Console is admin only.'); }catch(_){ } return; }
+    ensureView();
+    if(typeof hideAllViews === 'function') try{ hideAllViews(); }catch(_){ }
+    var hdr = document.querySelector('header.site'); if(hdr) hdr.style.display = 'none';
+    view.style.display = 'block';
+    view.scrollTop = 0;
+    render();          /* paint immediately from whatever we have, then refresh */
+    try{ await loadAll(); render(); }
+    catch(err){ console.warn('owner-console load', err); }
+  }
+
+  function close(){
+    if(view) view.style.display = 'none';
+    var hdr = document.querySelector('header.site'); if(hdr) hdr.style.display = '';
+    if(typeof showHome === 'function'){ try{ showHome(); return; }catch(_){ } }
+  }
+
+  window.CardinalOwner = Object.assign(window.CardinalOwner || {}, { open: open, close: close, reload: async function(){ await loadAll(); render(); } });
+})();
+</script>
 </body>
 </html>

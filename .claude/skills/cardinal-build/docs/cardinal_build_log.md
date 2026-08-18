@@ -18571,3 +18571,37 @@ Gate: `render_punchphoto888.mjs` drives the real `pickPhoto` via the filechooser
 reaches `storage.upload`: **GREEN 5/5** (a 5000-byte Blob, not the wrapper). Negative-controlled
 **RED (3)** against main@887 (body is a plain Object → the 11-byte bug). `check_build` green (stamp
 887 -> 888). No SQL. NB: photos taken before 888 did not save and must be retaken.
+
+## Build 895 — the Owner Console (admin-only Daily Brief), phase 1
+
+Theo asked for "an owner console/dashboard" for the owner-level things outside any one customer —
+taxes, BWC, "a top ten to do list for the day." He picked **Design 2 (Daily Brief)** from three
+mockups (cream paper, Georgia serif, cardinal red) and asked to "build 3 at a time." Phase 1 =
+modules 1-3.
+
+New full-screen view `#cr-owner` + `window.CardinalOwner` (`<style id="cr-owner-styles">` +
+`<script id="cr-owner-script">`, appended before the real `</body>` via rfind). **Admin only**:
+`open()` refuses a non-admin, the menu entry is built by `addAdminSection()` (which returns early
+for non-admins), and both tables are `is_cardinal_admin()` at the RLS layer — Production and Sales
+never reach it. No CRM/scroll-lock coupling: overscroll-behavior:contain, not a 14th `body.overflow`
+writer. Palette is all-literal (Showcase/Crews pattern), immune to the 448-449 strip class.
+
+Three modules:
+- **Today's Top 10** — `owner_tasks` (add / tap-to-check / delete), numbered agenda, open first then done.
+- **On the horizon** — the tax/compliance calendar computed in JS from a static config (next quarterly
+  1040-ES, annual 1040+Sch C, 1099-NEC Jan 31, Ohio BWC true-up Aug 15), each counting down and turning
+  red inside 30 days. Reference-only; owner-added obligations live in `owner_items` (kind='obligation').
+  Carries an "confirm exact dates with your accountant" note.
+- **Renewals & Expirations** — reads `crew_docs` with an `expires_on` (COI/W-9/license, newest per
+  crew+kind) plus owner-added renewals (`owner_items` kind='renewal'). Empty state when no certs on file.
+
+SQL (applied BEFORE the HTML, idempotent): `owner_console_schema.sql` — `owner_tasks` and `owner_items`,
+both `is_cardinal_admin()` RLS. Wired into `hideAllViews()` (display lever), `navRestore` (`case 'owner'`)
+and the deferred `__crNav` wrap (`navSetView('owner')`), so Back walks it correctly.
+
+Gate: `render_owner895.mjs` — Chromium, boots as admin against the mock, opens the console and proves
+all three sections + the four tax rows + countdowns + seeded rows render, adding a task writes
+`owner_tasks` insert and re-renders, checking a task writes an update, and a non-admin `open()` is
+refused: **GREEN 20/20**. Negative-controlled **RED** against v894 (module absent, node exit 1).
+`check_build` green (stamp 894 -> 895; 118 inline scripts, 121/121 script tags, 140/140 style tags,
+div balance 3980/3980). Phase 2 (money + quick reminders) next.
