@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 893 &#8212; Removed the duplicate Production Calendar card from the home screen — the Team Calendar above it stays</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 894 &#8212; Tidied the client-list filter bar (All / Retail / Claims / Community) — one clean row that sits right above the bottom nav, no more wrap or gap</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40325,6 +40325,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:894, d:'2026-08-18', t:'Client list \u2014 the filter bar is one clean row',
+s:'The All / Retail / Claims / Community filter bar at the bottom of the client list was wrapping onto two rows (Community dropped to a lonely second line) and floated with a dead gap above the bottom nav. It is now a single tidy row that sits right on top of the nav \u2014 tighter chips, no wrap, and the gap is gone. If it is ever too wide for a small phone it scrolls sideways instead of stacking.' },
 { b:893, d:'2026-08-18', t:'Home screen \u2014 the duplicate Production Calendar is gone',
 s:'The home dashboard had two mini calendars stacked \u2014 Cardinal Team Calendar and, right under it, a Production Calendar. They ran on the same calendar engine and were effectively a duplicate, so the Production Calendar card is removed and the Team Calendar stays. Nothing else changed: the \u201CJobs Today\u201D shortcut in the Production strip now jumps to the Team Calendar, and the full Production schedule is still under Production \u2192 Full calendar / Schedule Board.' },
 { b:892, d:'2026-08-18', t:'Work Order fills the homeowner/address again',
@@ -57788,7 +57790,7 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
 <style id="cr-cdir-styles">
 /* ── Client Directory — Brass (retail-B, build 341). Matte black, thin lines, no gradients, no glow. ── */
 #clientsView{background:#141517;min-height:100vh;}
-.cd-wrap{padding-bottom:150px;}
+.cd-wrap{padding-bottom:120px;}
 .cd-head{display:flex;align-items:center;gap:10px;margin:0 0 2px;flex-wrap:wrap;}
 .cd-title{margin:0;flex:1;font:700 21px Georgia,'Times New Roman',serif;color:#f2ede3;}
 #clientsView .btn.ghost{background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;}
@@ -57830,8 +57832,10 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
 .cd-selmode .cd-selck{display:flex;}
 .cd-card.selon .cd-selck{background:#e2574a;border-color:#e2574a;font-weight:800;}
 .cd-empty{border:1px dashed #3a3d42;border-radius:11px;padding:14px;text-align:center;color:#8f8a80;font:600 12.5px 'Segoe UI',Arial,sans-serif;margin-bottom:12px;}
-.cd-crmbar{position:fixed;left:0;right:0;bottom:calc(104px + env(safe-area-inset-bottom,0px));display:flex;gap:7px;flex-wrap:wrap;justify-content:center;padding:10px 12px;background:rgba(16,17,19,.95);border-top:1px solid #26282c;backdrop-filter:blur(4px);z-index:9995;}
-.cd-crmchip{display:inline-flex;align-items:center;gap:6px;background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;border-radius:999px;padding:6px 13px;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.cd-crmbar{position:fixed;left:0;right:0;bottom:calc(62px + env(safe-area-inset-bottom,0px));display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;justify-content:center;padding:8px 10px;background:rgba(16,17,19,.95);border-top:1px solid #26282c;backdrop-filter:blur(4px);z-index:9995;}
+.cd-crmbar::-webkit-scrollbar{display:none;}
+.cd-crmchip{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;white-space:nowrap;background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;border-radius:999px;padding:5px 11px;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.cd-crmchip .cd-dot{margin:0 3px 0 0;}
 .cd-crmchip b{font:800 10px ui-monospace,Menlo,monospace;opacity:.7;}
 .cd-crmchip.on{border-color:#c9a227;color:#c9a227;background:transparent;}
 .cd-delbar{position:fixed;left:0;right:0;bottom:calc(152px + env(safe-area-inset-bottom,0px));display:none;gap:9px;justify-content:center;align-items:center;padding:9px 12px;background:rgba(20,16,15,.95);border-top:1px solid #4a2c26;z-index:9996;}

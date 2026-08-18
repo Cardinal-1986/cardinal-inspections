@@ -18404,6 +18404,25 @@ census used `getComputedStyle(el).display` (which ignores hidden ANCESTORS, so i
 JS-validated form never uses. Fixed the driver's census (offsetParent + visual "*") so the re-run won't
 re-report it. No app change.
 
+## Build 894 — Client list: the CRM filter bar tidied
+
+Theo: the bottom filter bar (All / Retail / Claims / Community) on the client list "has a gap when you
+scroll and looks cluttered." Two causes, both in `.cd-crmbar`:
+- `flex-wrap:wrap` + four chips (the three CRM chips each carry a `.cd-dot`) overflowed ~390px, so
+  **Community wrapped to a lonely second row**.
+- `bottom:calc(104px + safe-area)` while `#pwaNav` is only ~62px tall — a **~42px dead gap** between the
+  bar and the phone nav (measured 41px in Chromium on the v893 control).
+
+Fix (CSS only): the bar drops to `bottom:calc(62px + safe-area)` (flush on the nav), goes
+`flex-wrap:nowrap` with `overflow-x:auto` (scrolls sideways on a very narrow phone instead of stacking,
+scrollbar hidden), chips tightened (`padding:5px 11px`, `gap:5px`, `flex:0 0 auto`, `white-space:nowrap`,
+dot margin trimmed), and `.cd-wrap` bottom padding 150px→120px to match the lower bar. Desktop is
+unaffected (`body.cr-lnav-on .cd-crmbar{display:none}`).
+
+Gates: `check_build` GREEN (stamp 893→894, CSS braces balanced). `render_crmbar894.mjs` measures the real
+bar at 390px: **GREEN 6/6** (4 chips one row, `flex-wrap:nowrap`, bar ~62px above bottom, ≤6px gap to nav),
+**RED 4** on the v893 control (2 rows, wrap, 104px, 41px gap).
+
 ## Build 893 — Home screen: the duplicate Production Calendar removed
 
 Theo: the home dashboard stacked two mini calendars — Cardinal Team Calendar and, directly under it,
