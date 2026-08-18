@@ -18889,3 +18889,26 @@ plan button present; empty hint; a polyline is drawn; **nearest-neighbour order 
 Open-in-Maps URL; panel shows 4 stops + mileage; pins numbered 1..4; Clear resets; no page errors.
 **GREEN**, negative-controlled vs v908 (no plan button). `check_build` green (908 -> 909, marker
 "Plan a run (909)"). No SQL.
+
+## Build 910 — Assign a repair from the dispatch map
+
+Follow-up to the Punch & Repairs dispatch map (906/908/909). Tapping a pin now shows an **Assign**
+row in the popup — **Curtis / Scottie / Unassign** — so a manager reassigns a repair without opening
+the card. Ultrawide-only (the map is 1600px+). All in `cr-pumap-script` (`window.CardinalPunchMap`).
+
+- `canAssign()` gates the row on `isAdminUser() || isProductionUser()` — reps never see it (matches
+  the app's manager fence; `PRODUCTION_EMAILS` = Curtis, Scottie). `asgBtn()` renders each button and
+  marks the current assignee `.on`.
+- The write reuses the canonical path: `CardinalPunch.update(id, { assigned_to: email||null })` —
+  DB write + optimistic cache + rollback on RLS refusal. On `ok` it updates the local map item,
+  closes the popup, calls `window.renderPunchView()` (list re-render → the map's `#puList` observer
+  re-syncs), and re-syncs pins; on refusal it `alert()`s and nothing changes (no silent failure).
+- The existing-marker sync branch now also `setPopupContent(popupHTML(...))` so the assignee
+  highlight and By-crew pin colour refresh in place.
+- Document-delegated click handler catches `[data-puassign]` before `[data-pumopen]`.
+
+Gate `gate_puassign910.mjs` (Chromium, Leaflet stub, 2 unassigned items, Theo/admin): popup gated on
+`canAssign()`; assign routes `update(x0,{assigned_to:curtis})`; list re-rendered; local cache updated;
+popup closed; Unassign sends `assigned_to:null`; a refused write alerts. **GREEN**, negative-controlled
+vs v909 (no `data-puassign` in source). `check_build` green (909 -> 910, marker
+"910: managers (admin/production)"). No SQL.
