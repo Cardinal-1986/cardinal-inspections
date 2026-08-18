@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 897 &#8212; Owner Console gains Quick Reminders — one-time or repeating reminders that show in your brief; check a repeating one and it rolls to its next date</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 898 &#8212; Owner Console reminders can now ping you — tick “Ping me” on a dated reminder and it lands in your morning digest email on the day it’s due</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40342,6 +40342,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:898, d:'2026-08-18', t:'Owner Console reminders can ping you',
+s:'Reminders in the Owner Console can now reach you, not just sit in the brief. Tick \u201CPing me\u201D when you add or edit a reminder that has a date, and it will be included in your daily morning digest email on the day it is due (repeating reminders ping on each occurrence; a one-time reminder keeps showing until you check it off). Reminders with no date, or without \u201CPing me\u201D, stay in the console only. Admin only, and it uses the same daily email that already sends your schedule.' },
 { b:897, d:'2026-08-18', t:'Owner Console — Quick Reminders',
 s:'A new Reminders section in the Owner Console for the small things you want in front of you each day. Add a reminder with an optional date and set it to repeat weekly, monthly or yearly (or leave it one-time). Tap a reminder to edit it, or check it off: a one-time reminder completes, and a repeating one rolls forward to its next date so it comes back around. Admin only, like the rest of the console. (Getting reminders to also ping your phone through the daily digest is the next step.)' },
 { b:896, d:'2026-08-18', t:'Owner Console — entries are editable',
@@ -73171,6 +73173,8 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   font:700 12px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.04em;padding:11px 15px;cursor:pointer;}
 #cr-owner .ow-add button:active{background:#c8202e;}
 #cr-owner .ow-add select,#cr-owner .ow-ef select{border:1px solid #ddd2c4;border-radius:8px;background:#fffdf9;padding:8px 10px;font:400 12.5px/1.2 "Segoe UI",Arial,sans-serif;color:#4d443b;cursor:pointer;}
+#cr-owner .ow-chk{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 "Segoe UI",Arial,sans-serif;color:#6b5f54;cursor:pointer;white-space:nowrap;}
+#cr-owner .ow-chk input{width:16px;height:16px;accent-color:#c8202e;cursor:pointer;}
 #cr-owner .ow-ag .tt,#cr-owner .ow-obl .ot{cursor:pointer;}
 #cr-owner .ow-editing{display:block;padding:12px 0;border-bottom:1px solid #e5ded3;}
 #cr-owner .ow-ef{display:flex;flex-direction:column;gap:8px;}
@@ -73410,7 +73414,10 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
       return '<div class="ow-obl ow-editing" data-id="' + r.id + '">' + remEditFormHTML(r) + '</div>';
     }
     var d = parseDate(r.remind_on), done = !!r.done_at, n = d ? daysTo(d) : null;
-    var meta = (r.repeat && r.repeat !== 'none') ? ('<small>' + esc(REP_LBL[r.repeat] || r.repeat) + '</small>') : '';
+    var mparts = [];
+    if(r.repeat && r.repeat !== 'none') mparts.push(esc(REP_LBL[r.repeat] || r.repeat));
+    if(r.notify) mparts.push('pings you');
+    var meta = mparts.length ? ('<small>' + mparts.join(' \u00b7 ') + '</small>') : '';
     var od = d
       ? ('<span class="od ' + (done ? '' : dueClass(n)) + '">' + (done ? 'done' : dueWord(n)) + '<b>' + dstr(d) + '</b></span>')
       : ('<span class="od">' + (done ? 'done' : (r.repeat && r.repeat !== 'none' ? esc(REP_LBL[r.repeat]) : 'standing')) + '</span>');
@@ -73427,6 +73434,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
       '<input type="text" id="ow-edit-rtext" maxlength="200" placeholder="Reminder" value="' + esc(r.text) + '">' +
       '<input type="date" id="ow-edit-rdate" value="' + esc(String(r.remind_on || '').slice(0, 10)) + '">' +
       '<select id="ow-edit-rrep">' + opt('none', 'One-time') + opt('weekly', 'Weekly') + opt('monthly', 'Monthly') + opt('yearly', 'Yearly') + '</select>' +
+      '<label class="ow-chk"><input type="checkbox" id="ow-edit-rnotify"' + (r.notify ? ' checked' : '') + '> Ping me on the day</label>' +
       '<div class="ow-efb"><button type="button" data-act="edit-save">Save</button><button type="button" data-act="edit-cancel">Cancel</button></div>' +
     '</div>';
   }
@@ -73443,6 +73451,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
       '<input type="text" id="ow-rem-in" placeholder="Add a reminder…" maxlength="200">' +
       '<input type="date" id="ow-rem-date" aria-label="Remind on">' +
       '<select id="ow-rem-rep" aria-label="Repeat"><option value="none">One-time</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="yearly">Yearly</option></select>' +
+      '<label class="ow-chk"><input type="checkbox" id="ow-rem-notify"> Ping me</label>' +
       '<button type="button" data-act="rem-add">Add</button>' +
     '</div></div>';
     return h;
@@ -73501,8 +73510,8 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
         render();
       } else if(act === 'rem-add'){
         var rin = view.querySelector('#ow-rem-in'), rv = (rin.value || '').trim(); if(!rv) return;
-        var rdate = view.querySelector('#ow-rem-date'), rrep = view.querySelector('#ow-rem-rep');
-        var rr = await c.from('owner_reminders').insert({ text:rv, remind_on:(rdate && rdate.value) || null, repeat:(rrep && rrep.value) || 'none', created_by:me() }).select().single();
+        var rdate = view.querySelector('#ow-rem-date'), rrep = view.querySelector('#ow-rem-rep'), rnot = view.querySelector('#ow-rem-notify');
+        var rr = await c.from('owner_reminders').insert({ text:rv, remind_on:(rdate && rdate.value) || null, repeat:(rrep && rrep.value) || 'none', notify: !!(rnot && rnot.checked), created_by:me() }).select().single();
         if(rr && rr.data) REMINDERS.push(rr.data);
         render();
       } else if(act === 'rem-done'){
@@ -73534,12 +73543,12 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
         if(!editing){ return; }
         var eid = editing.id, ety = editing.type;
         if(ety === 'reminder'){
-          var rti = view.querySelector('#ow-edit-rtext'), rdi = view.querySelector('#ow-edit-rdate'), rri = view.querySelector('#ow-edit-rrep');
+          var rti = view.querySelector('#ow-edit-rtext'), rdi = view.querySelector('#ow-edit-rdate'), rri = view.querySelector('#ow-edit-rrep'), rni = view.querySelector('#ow-edit-rnotify');
           var rtx = (rti && rti.value || '').trim(); if(!rtx){ return; }
-          var rd2 = (rdi && rdi.value) || null, rr2 = (rri && rri.value) || 'none';
+          var rd2 = (rdi && rdi.value) || null, rr2 = (rri && rri.value) || 'none', rn2 = !!(rni && rni.checked);
           var rm3 = REMINDERS.find(function(x){ return String(x.id) === String(eid); });
-          await c.from('owner_reminders').update({ text:rtx, remind_on:rd2, repeat:rr2 }).eq('id', eid);
-          if(rm3){ rm3.text = rtx; rm3.remind_on = rd2; rm3.repeat = rr2; }
+          await c.from('owner_reminders').update({ text:rtx, remind_on:rd2, repeat:rr2, notify:rn2 }).eq('id', eid);
+          if(rm3){ rm3.text = rtx; rm3.remind_on = rd2; rm3.repeat = rr2; rm3.notify = rn2; }
           editing = null; render(); return;
         }
         var tin = view.querySelector('#ow-edit-title'), nin = view.querySelector('#ow-edit-note'), din = view.querySelector('#ow-edit-date');

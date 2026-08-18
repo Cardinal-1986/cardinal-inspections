@@ -81,6 +81,23 @@ function staleHtml(list, names) {
       over ${STALE_DAYS} days ago, ${esc(money(total))} in total</span></p>
     <table style="border-collapse:collapse;width:100%;font-size:14px;border:1px solid #ddd;">${rows}</table>`;
 }
+// 898: Owner Console reminders opted into the daily ping (notify=true), due today
+// or an overdue one-time. Admin-only content; joins nothing, no client data.
+function remindersHtml(list) {
+  if (!list.length) return '';
+  const rows = list.map(r => {
+    const when = r.remind_on ? niceDate(r.remind_on) : '';
+    const rep = r.repeat && r.repeat !== 'none' ? ` &middot; ${esc(r.repeat)}` : '';
+    return `<tr>
+      <td style="padding:6px 10px;">
+        <b>${esc(r.text)}</b>
+        ${when ? `<br><span style="color:#666;">${esc(when)}${rep}</span>` : ''}
+      </td></tr>`;
+  }).join('');
+  return `<p style="font-size:15px;margin:22px 0 6px;"><b>Reminders</b>
+      <span style="color:#666;font-size:13px;">&mdash; ${list.length} for today</span></p>
+    <table style="border-collapse:collapse;width:100%;font-size:14px;border:1px solid #ddd;">${rows}</table>`;
+}
 function emailBody(heading, rowsHtml, extraHtml) {
   // 784: rowsHtml is empty on a day with nothing booked. An empty <table> reads
   // as a broken email, so say it in words instead.
@@ -97,11 +114,12 @@ function emailBody(heading, rowsHtml, extraHtml) {
 }
 // 784: one place that names the email, so the three cases cannot drift apart.
 // No emoji — this is an outbound subject line, same rule as builds 772/773.
-function subjectFor(appts, stale, teamWide) {
+function subjectFor(appts, stale, teamWide, rem) {
   const a = appts ? `${appts} appointment${appts === 1 ? '' : 's'} today` : '';
   const s = stale ? `${stale} estimate${stale === 1 ? '' : 's'} waiting` : '';
+  const r = rem ? `${rem} reminder${rem === 1 ? '' : 's'}` : '';
   const lead = teamWide ? 'Team schedule' : '';
-  const parts = [lead, a, s].filter(Boolean);
+  const parts = [lead, a, s, r].filter(Boolean);
   return (parts.join(' · ') || 'Nothing today') + ' — Cardinal';
 }
 
@@ -143,9 +161,22 @@ export default async function handler(req, res) {
       }
     } catch (e) { /* the schedule half must still send if this query fails */ }
 
-    if (!appts.length && !stale.length) {
-      res.status(200).json({ date: today, appointments: 0, stale_estimates: 0, emails_sent: 0,
-        note: 'Nothing scheduled today and nothing waiting on an answer.' });
+    // 898: Owner Console reminders the owner opted to be pinged about. Due today
+    // (any repeat) or an overdue one-time; undated/standing reminders never ping.
+    let reminders = [];
+    try {
+      const remRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/owner_reminders?notify=eq.true&done_at=is.null&remind_on=lte.${today}` +
+        `&select=text,remind_on,repeat&order=remind_on.asc`,
+        { headers: sbHeaders });
+      if (remRes.ok) {
+        reminders = (await remRes.json()).filter(r => r.remind_on === today || r.repeat === 'none');
+      }
+    } catch (e) { /* reminders are a bonus; never block the schedule email */ }
+
+    if (!appts.length && !stale.length && !reminders.length) {
+      res.status(200).json({ date: today, appointments: 0, stale_estimates: 0, reminders: 0, emails_sent: 0,
+        note: 'Nothing scheduled today, nothing waiting on an answer, and no reminders due.' });
       return;
     }
 
@@ -185,12 +216,14 @@ export default async function handler(req, res) {
       sends.push({ to: rep, subject: subjectFor(list.length, mine.length, false),
                    html: emailBody(heading, rows, staleHtml(mine, names)) });
     }
-    // admin gets the whole team's day too (when there is more than their own)
+    // admin gets the whole team's day too (when there is more than their own),
+    // and always when a reminder is due — reminders only ride on the admin email.
     const allRows = appts.map(a => apptHtml(a, names[a.project_id], true)).join('');
+    const remHtml = remindersHtml(reminders);
     for (const adm of ADMINS) {
-      if (!byRep[adm] || Object.keys(byRep).length > 1) {
-        sends.push({ to: adm, subject: subjectFor(appts.length, stale.length, true),
-                     html: emailBody(`Team schedule for ${niceDate(today)}`, allRows, staleHtml(stale, names)) });
+      if (!byRep[adm] || Object.keys(byRep).length > 1 || reminders.length) {
+        sends.push({ to: adm, subject: subjectFor(appts.length, stale.length, true, reminders.length),
+                     html: emailBody(`Team schedule for ${niceDate(today)}`, allRows, remHtml + staleHtml(stale, names)) });
       }
     }
 
@@ -205,7 +238,7 @@ export default async function handler(req, res) {
     }
 
     res.status(200).json({ date: today, appointments: appts.length, stale_estimates: stale.length,
-      stale_days: STALE_DAYS, emails_sent: results.filter(x => x.ok).length, results });
+      reminders: reminders.length, stale_days: STALE_DAYS, emails_sent: results.filter(x => x.ok).length, results });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }

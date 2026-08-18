@@ -18642,3 +18642,20 @@ edit writes an update, delete removes. Negative-controlled **RED** vs v896. 895/
 green (no regression). One harness assertion was case-sensitive against a CSS-uppercased label
 (`innerText` reflects `text-transform`) — fixed the test, not the app. `check_build` green (896 -> 897,
 div 3993/3993). Ships in PR #400 as the phase-2 span (896-897).
+
+## Build 898 — Owner Console reminders ping you through the daily digest
+
+Follow-on to 897 (Theo: "reminders"). A **notify** ("Ping me") toggle on the reminder add and edit
+forms, persisted to `owner_reminders.notify` (the column 897 reserved — so no migration). Rows show
+"pings you" when on. `api/digest.js` (the daily 11:00 UTC cron) now fetches
+`owner_reminders?notify=eq.true&done_at=is.null&remind_on=lte.today`, keeps those that are **due today
+(any repeat) or an overdue one-time**, and includes them in the ADMIN email — undated/standing and
+overdue-repeating reminders never ping (the latter only fires on its day, so a rolled-forward weekly
+doesn't nag daily). Reminders now also defeat the "nothing today" early return, and the subject names
+them (`subjectFor` gained a `rem` arg).
+
+Gates: `render_owner898.mjs` (Chromium, console half) **GREEN 5/5**, neg-controlled RED vs v897.
+`test_digest898.mjs` (mocks fetch + Resend, invokes the REAL handler with no appts/estimates) proves
+due-today + overdue-one-time land in the email, overdue-repeating does not, subject names reminders,
+response counts 2: **GREEN 7/7**, neg-controlled RED vs digest_v897.js. 896/897 harnesses still green.
+`check_build` green (897 -> 898, div 3993/3993); `api/digest.js` parses, 0 module.exports. No SQL.
