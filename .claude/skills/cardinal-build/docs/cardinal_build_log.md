@@ -18789,3 +18789,40 @@ cross-contamination)**, no page errors; filtered to Claims → 1 section of 4; a
 class, flat list, single column, all 17 cards. **GREEN**, negative-controlled against v904 (no class,
 no sections, single 2600px column). `check_build` green (904 -> 905, marker `cd-crmcols`, negative
 control clean). No SQL. Owner Console is the next screen for the same treatment.
+
+## Build 906 — the Dispatch Map on Punch & Repairs (ultrawide, three CRM… no: map)
+
+Third screen in the ultrawide set (after Production 904 and the client list 905), and the answer to
+Theo's "stretching boxes leaves emptiness — give me a screen-filler with useful info." The insight:
+only three kinds of content fill an arbitrary rectangle with no voids — a map, a feed, or a photo
+wall. Theo picked the map. On Punch & Repairs at >=1600px the repair list stays a comfortable width
+(~520px) on the left and the freed screen becomes a live Leaflet map with a pin for every OPEN
+repair, colour-coded (red urgent / amber normal / blue low), two-way linked to the list. A map never
+looks empty and is a real routing tool (see where the work clusters, plan a crew's loop).
+
+New module `cr-pumap-styles` + `cr-pumap-script`, `window.CardinalPunchMap`. Reuses existing
+machinery, invents nothing: `qiLoadLeaflet` (the Quick-Inspection loader), OSM tiles, and the
+`'geo:'+addr` localStorage geocode cache the Nearby row already fills (shared cache, so pins the app
+has seen before place instantly; misses go to Nominatim throttled 1.1s). Pins are `L.divIcon`
+teardrops. Popup carries title/client/address/urgency/assignee + an Open button that routes to the
+existing `CardinalPunchCard.open(id,{back:'none'})`. A By-urgency / By-crew toggle recolours; a stat
+strip across the top shows Open / Urgent / Unassigned / Today; a legend keys the colours.
+
+Gating is strict and the reason it's structural (not CSS-only, like 904): the pane is injected into
+`.pu-lay` and the map instance built ONLY when `punchView` is visible AND innerWidth>=1600. A
+MutationObserver on `#punchView`'s style shows/tears-down; a resize listener re-evaluates on crossing
+1600; the grid + `body.pumap-on` are also media-gated as a second net. Below 1600px nothing exists —
+no pane, no class, list byte-for-byte unchanged. Filters/tabs/search mirror to the pins via a
+MutationObserver on `#puList` (the map pins exactly the currently-visible cards by their `data-pu`
+id — no duplicated filter logic). Invariant-safe: no `document.body` observer (watches #punchView and
+#puList only), no scroll-lock writer, nothing registered in `hideAllViews` (it lives inside
+punchView). Offline/Leaflet-fail path shows a "Map unavailable" note and the list still works.
+
+Gate `gate_pumap906.mjs` (Chromium; Leaflet stubbed since unpkg is external, geocode cache
+pre-seeded): at 3440 — body.pumap-on, pane injected, map created, 4 stat cells, Open=9, toggle
+present + switches mode + relegends, pin Open routes to CardinalPunchCard.open, list-click pans the
+map, no page errors; at 1440 and 1194 — no pane, no class, list still renders. **GREEN**,
+negative-controlled against v905 (no pane at 3440). `check_build` green (905 -> 906, marker
+`cr-pumap-script`). No SQL. Next: Plan-a-Run (route a loop) + assign-from-map on top, then the same
+map console onto Crew Dispatch. NOTE: the map is a real Leaflet tile map in production; the preview
+Theo approved used a stylized stand-in because tiles are external.
