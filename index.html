@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 907 &#8212; OC Colors photos load much faster: the colour cover images are now served at a smaller size instead of the full-resolution original, so the Showroom colour hub opens quickly</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 908 &#8212; The dispatch map in Punch &amp; Repairs no longer runs off the bottom of an ultrawide screen \u2014 it is shorter now so it always fits, and still fills the width</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40389,6 +40389,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:908, d:'2026-08-18', t:'Dispatch map fits the screen (shorter, still fills the width)',
+s:'The live map in Punch \u0026 Repairs (ultrawide, 1600px and up) was too tall \u2014 it was sized to almost the full screen height but starts below the search and tab bar, so its bottom ran off the bottom of the screen. It is now shorter, capped to the space below the header, so it always fits on screen with no scrolling past it. It still fills the width beside the list. Nothing else about the map changed.' },
 { b:907, d:'2026-08-18', t:'OC Colors covers load fast in the Showroom',
 s:'The colour cover photos in OC Colors (the shingle-colour hub on the Showroom) were loading the full-resolution original image everywhere \u2014 on the line hero, on every colour tile and on the colour detail \u2014 about 284KB each, which is why the Showroom felt slow to open. They are now served through an on-the-fly resize (about 55KB each, roughly five times lighter) with no change to what is stored, so the hub opens quickly. The customer \u201Cour roofs\u201D photos already loaded small thumbnails and are unchanged. If the resize ever fails it quietly falls back to the original, so nothing goes blank.' },
 { b:906, d:'2026-08-18', t:'Punch \u0026 Repairs gains a dispatch map (ultrawide)',
@@ -73971,8 +73973,12 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
 @media (min-width:1600px){
   body.pumap-on #punchView .pu-wrap{ max-width:3040px; margin:0 auto; padding-left:40px; padding-right:40px; }
   body.pumap-on #punchView .pu-lay{ grid-template-columns:206px minmax(480px,560px) minmax(0,1fr) !important; gap:16px; align-items:start; }
-  #puMapPane{ position:sticky; top:112px; height:calc(100vh - 128px); border-radius:16px; overflow:hidden;
-    border:1px solid #232a31; background:#0b1116; }
+  /* 908: the map sits ~320px down the page (title, search, controls, tabs
+     above it), so height:calc(100vh - 128px) ran ~190px BELOW the fold. Keep
+     it filling the width (NOT squared \u2014 Theo's call) and just cap the height
+     to the space actually below the header so it always fits on screen. */
+  #puMapPane{ position:sticky; top:112px; height:calc(100vh - 360px); min-height:460px;
+    border-radius:16px; overflow:hidden; border:1px solid #232a31; background:#0b1116; }
   #puMap{ position:absolute; inset:0; z-index:1; }
   #puMap .leaflet-container{ background:#0b1116; font-family:'Segoe UI',Arial,sans-serif; }
   .pumap-bar{ position:absolute; top:12px; left:12px; right:12px; z-index:5; display:flex; align-items:center; gap:10px; pointer-events:none; }

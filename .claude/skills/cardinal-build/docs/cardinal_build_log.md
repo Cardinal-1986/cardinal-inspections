@@ -18851,3 +18851,19 @@ every cover signed WITH `{w800,q72,contain}`, the FAIL cover falls back to the b
 good cover does not, detail hero carries lazy/async, no page errors. **GREEN**, negative-controlled
 against v906 (covers signed via batch `signMany`, no transform). `check_build` green (906 -> 907,
 marker `signCoversSmall`). No SQL. "our roofs" thumbnails untouched.
+
+## Build 908 — dispatch map fits the screen (shorter, still fills the width)
+
+Theo: "The map is also to big in punch outs. Make it less tall so it doesn't go below screen." (And,
+after a squared experiment: "Don't square it.") Reproduced with `measure_pane.mjs`: the pane sits
+~320px down the page (title, search, controls, tabs above it) but was `height:calc(100vh - 128px)`,
+so its bottom ran **~190px below the fold** at every width. Fixed by capping the height to the space
+actually below the header — `height:calc(100vh - 360px)` (min-height:460px) — while KEEPING the map
+filling the width (the `minmax(0,1fr)` map track and centred 3040px wrap are unchanged). Re-measured:
+fits with ~40px bottom margin at 3440/2560/1920, and still fills the column (2162px wide at 3440),
+landscape rather than squared. CSS-only, inside the existing `@media (min-width:1600px)`; below 1600
+nothing changes. (An earlier squared version — briefly pushed as 908/909 on this branch, never merged
+— was reversed on Theo's call and discarded by resetting the branch.)
+
+check_build green (907 -> 908, marker "NOT squared", negative control clean). gate_pumap906 still
+green. No SQL.
