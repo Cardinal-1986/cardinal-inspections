@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 912 &#8212; Punch &amp; Repairs now has its own Completed tab, so finished repairs live in their own spot instead of sitting under Active</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 913 &#8212; Crew Dispatch has a Map button now — see this week’s jobs on a map coloured by crew, with the jobs that still need a crew flagged so you can assign one right from the pin</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40390,6 +40390,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:913, d:'2026-08-18', t:'Crew Dispatch: a map of the week',
+s:'Crew Dispatch has a new Map button in the top bar (works on the phone too). It flips the week grid to a map of this week\u2019s jobs, each pin coloured by the crew it\u2019s booked to, with a legend. Jobs that are scheduled but still need a crew show as amber pins \u2014 tap one and it opens the crew picker so you can assign a crew right there, the same picker the grid\u2019s Needs-a-crew rail uses. Tap a booked job\u2019s pin to open the client. Addresses are looked up Google-first (falling back to the free geocoder), the same as the rest of the app, and anything that can\u2019t be placed is called out instead of quietly dropped. The week arrows and trade filters update the map live. No money appears anywhere, same as the grid.' },
 { b:912, d:'2026-08-18', t:'Punch \u0026 Repairs: a Completed tab of its own',
 s:'Finished repairs used to show up as a \u201cCompleted\u201d group at the bottom of the Active tab. They now have their own Completed tab beside Active and Scheduled, with its own count, so Active shows only open work and Scheduled only what\u2019s dated. Checking an item off moves it into Completed; the tab strip scrolls sideways if the three don\u2019t fit. Nothing else about the list changed.' },
 { b:911, d:'2026-08-18', t:'Dispatch map: find more addresses, and say when one can\u2019t be placed',
@@ -72705,6 +72707,28 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .rep .a{ font-size:7.5px; color:var(--disp-mute,#5c636e); margin-top:1px; }
 #cr-disp .dspmsg{ padding:40px 16px; text-align:center; color:var(--disp-dim,#9aa1ac); font-size:14px; }
 #cr-disp .dspnote{ margin-top:12px; font-size:11.5px; color:var(--disp-mute,#5c636e); line-height:1.5; }
+/* 913: Crew Dispatch map (toggle) */
+#cr-disp .dspmapbtn{ margin-left:auto; background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34);
+  color:var(--disp-ink,#fff); border-radius:8px; padding:6px 14px; font:700 12px 'Segoe UI',Arial,sans-serif; cursor:pointer; }
+#cr-disp .dspmapview{ position:relative; }
+#cr-disp .dspleg{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px; }
+#cr-disp .dspleg span{ font:700 11px 'Segoe UI',Arial,sans-serif; color:var(--disp-dim,#9aa1ac); display:flex; align-items:center; gap:6px; }
+#cr-disp .dspleg i{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+#cr-disp .dspleg .none{ color:var(--disp-mute,#5c636e); }
+#cr-disp .dspmiss{ background:#3a2410f2; border:1px solid #7a5a2a; color:#f5c377; font:700 12px 'Segoe UI',Arial,sans-serif; padding:7px 12px; border-radius:9px; margin-bottom:10px; }
+#cr-disp .dspmap{ height:calc(100vh - 230px); min-height:420px; border-radius:12px; overflow:hidden; border:1px solid var(--disp-line,#282c34); background:var(--disp-panel,#101216); }
+#cr-disp .dspmap .leaflet-container{ background:var(--disp-panel,#101216); font-family:'Segoe UI',Arial,sans-serif; }
+#cr-disp .leaflet-popup-content-wrapper{ background:var(--disp-card,#171a1f); color:var(--disp-ink,#fff); border:1px solid var(--disp-line,#282c34); border-radius:12px; }
+#cr-disp .leaflet-popup-tip{ background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); }
+#cr-disp .leaflet-popup-close-button{ color:var(--disp-dim,#9aa1ac); }
+#cr-disp .dmk{ width:16px; height:16px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid var(--disp-bg,#08090b); box-shadow:0 2px 6px #0008; cursor:pointer; }
+#cr-disp .dmk.need{ border-style:dashed; border-color:var(--disp-ink,#fff); }
+#cr-disp .dmap-pop .t{ font:800 14px 'Segoe UI',Arial,sans-serif; color:var(--disp-ink,#fff); }
+#cr-disp .dmap-pop .a{ font:500 12px 'Segoe UI',Arial,sans-serif; color:var(--disp-dim,#9aa1ac); margin-top:1px; }
+#cr-disp .dmap-pop .r{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:9px; }
+#cr-disp .dmap-pop .chip{ font:800 10px ui-monospace,Menlo,monospace; letter-spacing:.05em; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+#cr-disp .dmap-pop .dpop-go{ background:var(--disp-repair,#ff3b46); color:#fff; border:0; border-radius:8px; padding:6px 13px; font:800 12px 'Segoe UI',Arial,sans-serif; cursor:pointer; font-family:inherit; white-space:nowrap; }
+#cr-disp .dmap-pop .dpop-go.need{ background:#f5a623; color:#1a1204; }
 </style>
 <script id="cr-disp-script">
 /* Crew Dispatch (build 841). Read-only week grid over crews + crew_work_orders,
@@ -72712,6 +72736,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 (function(){
   var el, crews = [], wos = [], punches = [], weekOffset = 0, filter = 'All', showIdle = {};
   var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs'];
+  /* 913: the dispatch Map toggle — its own Leaflet map of this week's jobs by crew */
+  var mapOn=false, dmap=null, dlayer=null, dmarkers={}, dgeoQueue=[], dgeoBusy=false, dUserMoved=false, dFitT=null, dMissT=null;
+  var CPAL=['#5f9fd8','#7ec99a','#c98fe0','#e0913a','#e2574a','#5bc0be','#c9a227','#9aa0f5','#e08fb0','#6fd0c0'];
 
   function two(n){ return (n<10?'0':'') + n; }
   function who(e){ var x = String(e||'').split('@')[0]; return x ? x.charAt(0).toUpperCase() + x.slice(1) : String(e||''); }
@@ -72819,15 +72846,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       }).join('') + '</div>';
 
     /* unassigned rail: Scheduled projects with no active crew work order. */
-    var woProjIds = {}; wos.forEach(function(w){ if(w.project_id) woProjIds[w.project_id] = 1; });
-    var needCrew = (window.cacheProjects || []).filter(function(p){
-      return p && p.stage === 'Scheduled' && !woProjIds[p.id];
-    });
-    /* Habitat first, same rule as the partner lists. */
-    needCrew.sort(function(a,b){
-      var ha = /habitat/i.test(a.name||'') ? 0 : 1, hb = /habitat/i.test(b.name||'') ? 0 : 1;
-      return ha - hb || String(a.name||'').localeCompare(String(b.name||''));
-    });
+    var needCrew = needCrewList();
     var railInner = needCrew.length
       ? needCrew.map(function(p){
           return '<div class="uch" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
@@ -72943,18 +72962,24 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
           '<span class="dspwk"><button class="dspprev" aria-label="Previous week">&#8249;</button>' +
             '<span class="dspwklab">this week</span>' +
             '<button class="dspnext" aria-label="Next week">&#8250;</button></span>' +
+          '<button class="dspmapbtn" data-dspmap>Map</button>' +
         '</div>' +
         '<div class="dspfilt">' + tradeChips + '</div>' +
         '<div class="dspbody"><div class="dspmsg">Loading crews…</div></div>' +
+        '<div class="dspmapview" style="display:none">' +
+          '<div class="dspleg"></div>' +
+          '<div class="dspmiss" style="display:none"></div>' +
+          '<div class="dspmap"></div>' +
+        '</div>' +
       '</div>';
     document.body.appendChild(el);
 
     el.querySelector('.dspback').addEventListener('click', close);
-    el.querySelector('.dspprev').addEventListener('click', function(){ weekOffset--; render(); });
-    el.querySelector('.dspnext').addEventListener('click', function(){ weekOffset++; render(); });
+    el.querySelector('.dspprev').addEventListener('click', function(){ weekOffset--; render(); if(mapOn) syncMap(); });
+    el.querySelector('.dspnext').addEventListener('click', function(){ weekOffset++; render(); if(mapOn) syncMap(); });
     el.addEventListener('click', function(e){
       var f = e.target.closest('.dspfilt .fc');
-      if(f){ filter = f.getAttribute('data-f'); render(); return; }
+      if(f){ filter = f.getAttribute('data-f'); render(); if(mapOn) syncMap(); return; }
       var idle = e.target.closest('.idle[data-idle]');
       if(idle){ showIdle[idle.getAttribute('data-idle')] = 1; render(); return; }
       var uch = e.target.closest('.uch[data-pid]');
@@ -72965,6 +72990,14 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         else if(typeof window.openProject === 'function') window.openProject(upid);
         return;
       }
+      var mb = e.target.closest('[data-dspmap]');
+      if(mb){ setMapMode(!mapOn); return; }
+      var dop = e.target.closest('[data-dopen]');
+      if(dop){ close(); if(typeof window.openProject === 'function') window.openProject(dop.getAttribute('data-dopen')); return; }
+      var dnd = e.target.closest('[data-dneed]');
+      if(dnd){ var npid = dnd.getAttribute('data-dneed'), nproj = projById(npid); close();
+        if(nproj && typeof window.openWorkOrderPicker === 'function') window.openWorkOrderPicker(nproj);
+        else if(typeof window.openProject === 'function') window.openProject(npid); return; }
       var pel = e.target.closest('[data-pid]');
       if(pel && typeof window.openProject === 'function'){ close(); window.openProject(pel.getAttribute('data-pid')); }
     });
@@ -72976,6 +73009,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     el.classList.add('open');
     try{ el.scrollTop = 0; }catch(_e){}
     weekOffset = 0; filter = 'All'; showIdle = {};
+    setMapMode(false);
     render();                 /* paint immediately with whatever is cached */
     await load();
     render();                 /* repaint with fresh crews + work orders */
@@ -72986,6 +73020,133 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     if(typeof window.showHome === 'function') window.showHome();
   }
 
+  /* ---------- Crew Dispatch map (913) ---------- */
+  function crewById(id){ for(var i=0;i<crews.length;i++){ if(String(crews[i].id)===String(id)) return crews[i]; } return null; }
+  function crewColorById(cid){ for(var i=0;i<crews.length;i++){ if(String(crews[i].id)===String(cid)) return CPAL[i%CPAL.length]; } return '#8b95a1'; }
+  function needCrewList(){
+    var woProjIds = {}; wos.forEach(function(w){ if(w.project_id) woProjIds[w.project_id] = 1; });
+    var arr = (window.cacheProjects || []).filter(function(p){ return p && p.stage === 'Scheduled' && !woProjIds[p.id]; });
+    arr.sort(function(a,b){ var ha=/habitat/i.test(a.name||'')?0:1, hb=/habitat/i.test(b.name||'')?0:1;
+      return ha - hb || String(a.name||'').localeCompare(String(b.name||'')); });
+    return arr;
+  }
+  function mapItems(){
+    var days = weekDays().map(ymd), out = [], seen = {};
+    wos.forEach(function(w){
+      if(!w.scheduled_on || days.indexOf(w.scheduled_on) < 0) return;
+      var c = crewById(w.crew_id); if(!c) return;
+      if(filter !== 'All' && (c.trade||'General') !== filter) return;
+      if(seen['j'+w.project_id]) return; seen['j'+w.project_id] = 1;
+      var p = projById(w.project_id); if(!p) return;
+      out.push({ key:'j'+w.project_id, kind:'job', pid:String(w.project_id), name:p.name||'Job',
+                 addr:p.address||'', color:crewColorById(w.crew_id), crew:(c.legal_name||c.name||'Crew') });
+    });
+    needCrewList().forEach(function(p){ if(seen['j'+p.id]) return;
+      out.push({ key:'n'+p.id, kind:'need', pid:String(p.id), name:p.name||'Job', addr:p.address||'', color:'#f5c045', crew:'Needs a crew' }); });
+    return out;
+  }
+  /* geocode Google-first (like build 911 / the rest of the app), Nominatim fallback, shared geo: cache */
+  function cachedGeo(a){ try{ return JSON.parse(localStorage.getItem('geo:'+a)||'null'); }catch(e){ return null; } }
+  function queueGeo(a, cb){ dgeoQueue.push({ a:a, cb:cb }); pumpGeo(); }
+  function pumpGeo(){
+    if(dgeoBusy || !dgeoQueue.length) return; dgeoBusy=true; var j=dgeoQueue.shift();
+    var h=cachedGeo(j.a); if(h){ dgeoBusy=false; j.cb(h); pumpGeo(); return; }
+    fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=us&q='+encodeURIComponent(j.a))
+      .then(function(r){ return r.json(); })
+      .then(function(js){ if(js && js[0]){ var pt={lat:+js[0].lat, lon:+js[0].lon}; try{ localStorage.setItem('geo:'+j.a, JSON.stringify(pt)); }catch(e){} j.cb(pt); } else j.cb(null);
+        setTimeout(function(){ dgeoBusy=false; pumpGeo(); }, 1100); })
+      .catch(function(){ j.cb(null); setTimeout(function(){ dgeoBusy=false; pumpGeo(); }, 1100); });
+  }
+  function googleGeo(addr){
+    try{ if(typeof qiGoogleGeo !== 'function') return Promise.resolve(null); }catch(e){ return Promise.resolve(null); }
+    return qiGoogleGeo('address='+encodeURIComponent(addr)+'&components=country:US').then(function(g){
+      var loc=g&&g.geometry&&g.geometry.location; if(!loc) return null;
+      var la=(typeof loc.lat==='function')?loc.lat():loc.lat, lo=(typeof loc.lng==='function')?loc.lng():loc.lng;
+      if(la==null||lo==null||isNaN(+la)||isNaN(+lo)) return null; return { lat:+la, lon:+lo };
+    }, function(){ return null; });
+  }
+  function resolveGeo(addr, cb){
+    var h=cachedGeo(addr); if(h){ cb(h); return; }
+    googleGeo(addr).then(function(pt){
+      if(pt){ try{ localStorage.setItem('geo:'+addr, JSON.stringify(pt)); }catch(e){} cb(pt); scheduleFit(); }
+      else queueGeo(addr, function(p){ cb(p); if(p) scheduleFit(); });
+    });
+  }
+  function popupHTML(it){
+    var addr=firstLine(it.addr);
+    var act = it.kind==='need'
+      ? '<button class="dpop-go need" data-dneed="'+esc(it.pid)+'">Assign crew</button>'
+      : '<button class="dpop-go" data-dopen="'+esc(it.pid)+'">Open</button>';
+    return '<div class="dmap-pop"><div class="t">'+esc(it.name)+'</div>'+
+      (addr?'<div class="a">'+esc(addr)+'</div>':'')+
+      '<div class="r"><span class="chip" style="background:'+it.color+'22;color:'+it.color+'">'+esc(it.crew)+'</span>'+act+'</div></div>';
+  }
+  function pinFor(it){
+    if(!dmap || !window.L) return;
+    function place(pt){ if(!pt || !dmap) return;
+      var m=dmarkers[it.key];
+      if(m){ m.setLatLng([pt.lat, pt.lon]); m.__it=it; if(m.setPopupContent) m.setPopupContent(popupHTML(it)); return; }
+      var cls = it.kind==='need' ? 'dmk need' : 'dmk';
+      var icon=L.divIcon({ className:'', html:'<div class="'+cls+'" style="background:'+it.color+'"></div>', iconSize:[16,16], iconAnchor:[8,16], popupAnchor:[0,-14] });
+      m=L.marker([pt.lat, pt.lon], { icon:icon }); m.__it=it;
+      m.bindPopup(popupHTML(it), { closeButton:true });
+      m.on('click', function(){ if(dmap) dmap.panTo(m.getLatLng()); });
+      m.addTo(dlayer); dmarkers[it.key]=m;
+    }
+    var addr=String(it.addr||'').trim(); if(!addr) return;
+    var h=cachedGeo(addr); if(h) place(h); else resolveGeo(addr, place);
+  }
+  function updateLegend(){
+    var lg=el.querySelector('.dspleg'); if(!lg) return;
+    var items=mapItems(), seen={}, html='';
+    items.forEach(function(it){ if(it.kind==='job' && !seen[it.crew]){ seen[it.crew]=1; html+='<span><i style="background:'+it.color+'"></i>'+esc(it.crew)+'</span>'; } });
+    if(items.some(function(it){ return it.kind==='need'; })) html+='<span><i style="background:#f5c045"></i>Needs a crew</span>';
+    lg.innerHTML = html || '<span class="none">No jobs booked this week</span>';
+  }
+  function updateMiss(final){
+    var mn=el.querySelector('.dspmiss'); if(!mn) return;
+    var items=mapItems(), noAddr=0, lost=0;
+    items.forEach(function(it){ if(!String(it.addr||'').trim()) noAddr++; else if(final && !dmarkers[it.key]) lost++; });
+    var msgs=[]; if(noAddr) msgs.push(noAddr+(noAddr>1?' jobs have':' job has')+' no address'); if(lost) msgs.push(lost+" couldn’t be located");
+    if(msgs.length){ mn.textContent=msgs.join(' · ')+' — not on the map'; mn.style.display='block'; } else mn.style.display='none';
+  }
+  function fitAll(){
+    if(!dmap || dUserMoved) return; var pts=[]; for(var k in dmarkers){ pts.push(dmarkers[k].getLatLng()); }
+    if(pts.length>=2){ try{ dmap.fitBounds(L.latLngBounds(pts).pad(0.2)); }catch(e){} }
+    else if(pts.length===1){ dmap.setView(pts[0], 13); }
+  }
+  function scheduleFit(){ if(dUserMoved) return; clearTimeout(dFitT); dFitT=setTimeout(function(){ fitAll(); updateMiss(true); }, 300); }
+  function buildMap(){
+    var host=el.querySelector('.dspmap'); if(!host || dmap) return;
+    dmap=L.map(host, { zoomControl:true, attributionControl:false }).setView([39.7589,-84.1916], 11);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(dmap);
+    dlayer=L.layerGroup().addTo(dmap);
+    dUserMoved=false; dmap.on('dragstart zoomstart', function(){ dUserMoved=true; });
+    setTimeout(function(){ if(dmap) dmap.invalidateSize(); }, 120);
+  }
+  function syncMap(){
+    if(!dmap) return; var items=mapItems(), keep={};
+    items.forEach(function(it){ keep[it.key]=true; pinFor(it); });
+    for(var k in dmarkers){ if(!keep[k]){ dlayer.removeLayer(dmarkers[k]); delete dmarkers[k]; } }
+    updateLegend(); updateMiss(false); clearTimeout(dMissT); dMissT=setTimeout(function(){ updateMiss(true); }, 3000);
+    fitAll();
+  }
+  async function ensureLeafletThenMap(){
+    if(!window.L){ try{ if(typeof qiLoadLeaflet==='function') await qiLoadLeaflet(); }catch(e){} }
+    var host=el.querySelector('.dspmap');
+    if(!window.L){ if(host) host.innerHTML='<div class="dspmsg">Map unavailable (offline?) — the grid still works.</div>'; return; }
+    buildMap(); dUserMoved=false; setTimeout(function(){ if(dmap) dmap.invalidateSize(); syncMap(); }, 60);
+  }
+  function setMapMode(on){
+    if(!el) return;
+    mapOn=!!on;
+    var body=el.querySelector('.dspbody'), mv=el.querySelector('.dspmapview'), btn=el.querySelector('[data-dspmap]');
+    if(body) body.style.display = mapOn ? 'none' : '';
+    if(mv) mv.style.display = mapOn ? 'block' : 'none';
+    if(btn) btn.textContent = mapOn ? 'Grid' : 'Map';
+    if(mapOn) ensureLeafletThenMap();
+  }
+  /* ---------- end Crew Dispatch map ---------- */
   window.CardinalDispatch = Object.assign(window.CardinalDispatch || {}, { open: open, close: close });
 })();
 </script>
