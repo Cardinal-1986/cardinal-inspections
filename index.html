@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 900 &#8212; The Owner Console is complete: The Vault — keep your EIN letter, insurance, licenses and formation papers in one private, admin-only place with expiry reminders</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 901 &#8212; A rep now gets a notification (push/email/text) the moment a lead is assigned to them — on a new lead or a reassignment; self-assignments stay quiet</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11595,6 +11595,14 @@ function renderAcxOverview(){
     try{
       await patchProjectCk(pr, { lead: L });
       auditLog('assign', 'Job reassigned to ' + (rptRepName(asg.value) || asg.value) + ' \u2014 ' + (pr.name || ''), pr.id);
+      /* 901: notify the newly-assigned rep (skip self-assignment). */
+      try{
+        var __rme = (window.currentUser && window.currentUser.email) || '';
+        if(asg.value && asg.value !== __rme && window.notifyTeam){
+          window.notifyTeam([asg.value], 'Lead assigned to you \u2014 ' + (pr.name || 'client'),
+            '<p>' + esc(rptRepName(__rme) || __rme || 'Someone') + ' assigned you <b>' + esc(pr.name || 'a lead') + '</b>' + (pr.address ? ' \u2014 ' + esc(pr.address) : '') + '.</p><p>Open Cardinal to see it.</p>');
+        }
+      }catch(_){}
       /* 650: keep the commission rep in step while it is still unlocked —
          only when the assignee is Sales (or Theo) and no money is logged yet;
          the DB sales_rep_lock trigger guards regardless. */
@@ -15209,6 +15217,16 @@ document.getElementById('ldSave').addEventListener('click', async function(){
       stage: 'Lead',
       checklist: JSON.stringify({ lead: lead, po: nextPo(), stage_since: new Date().toISOString() })
     });
+    /* 901: a new lead assigned to a rep pings them (push/email/text via notifyTeam).
+       Self-assignment is skipped — a rep creating their own lead needs no alert. */
+    try{
+      var __la = (assigned && assigned[0]) || '';
+      var __me = (window.currentUser && window.currentUser.email) || '';
+      if(__la && __la !== __me && window.notifyTeam){
+        window.notifyTeam([__la], 'New lead assigned — ' + (first + ' ' + last),
+          '<p>' + esc(rptRepName(__me) || __me || 'Someone') + ' assigned you a new lead: <b>' + esc(first + ' ' + last) + '</b>' + (addr ? ' — ' + esc(addr) : '') + '.</p><p>Open Cardinal to see it.</p>');
+      }
+    }catch(_){}
     var ad = document.getElementById('ldApptDate').value;
     if(ad){
       var st = document.getElementById('ldApptStart').value;
@@ -40342,6 +40360,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:901, d:'2026-08-18', t:'Reps get pinged when a lead lands on them',
+s:'When a lead is assigned to a rep \u2014 either a brand-new lead created with them on it, or an existing job reassigned to them \u2014 they now get a notification through whichever channels they have on (push, email, text). It uses the same alert system that already tells someone about a task or a signed estimate. If you assign a lead to yourself there is no ping, and only the rep is notified, not the whole office.' },
 { b:900, d:'2026-08-18', t:'Owner Console \u2014 The Vault (module 6, complete)',
 s:'The last piece of the Owner Console: The Vault, a private place to keep your key business documents \u2014 EIN letter, insurance, licenses, formation papers, banking. Upload a file with a label, a category and an optional expiry date; it files itself under the right heading, and anything with an expiry counts down (and turns red when it is close). Tap a document to open it, or remove it. Everything is admin only and stored privately \u2014 the files are fenced off from the rest of the app and never touch the customer side. That completes all six Owner Console modules.' },
 { b:899, d:'2026-08-18', t:'Owner Console \u2014 The Ledger',

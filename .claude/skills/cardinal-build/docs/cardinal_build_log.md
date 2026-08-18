@@ -18701,3 +18701,35 @@ countdown, a REAL file upload (Playwright setInputFiles) writes a storage object
 owner_docs insert, open signs the stored path and hands it to window.open, delete removes row + object.
 Negative-controlled **RED** vs v899. 895-899 harnesses + digest test still green. `check_build` green
 (899 -> 900, div 4015/4015). **All six Owner Console modules are now shipped.**
+
+## Build 901 — a rep is notified when a lead is assigned to them
+
+Theo: "Can it send when a new lead is assigned." The notify system (notifyTeam -> api/notify.js,
+push/email/text) was fully built and already fired on tasks-assigned and estimate-signed, but lead
+assignment was never wired to it — a buried gap. Wired TWO sites (Theo's pick: both moments, rep only,
+skip self-assignment):
+  - new-lead create (after pdb.create succeeds): ping assigned[0] if it isn't the creator.
+  - the reassign dropdown (dbAssignSel change, after the audit log): ping asg.value if it isn't self.
+Both guard `assignee && assignee !== me && window.notifyTeam`, mirror the existing task-notify shape,
+and are try/catch fire-and-forget so a notify failure never blocks the create/reassign.
+
+Gate `test_leadnotify901.mjs`: EXTRACTS both shipped try-blocks from index.html and EXECUTES them
+(real source, not a reimplementation) across scenarios — assign-to-other pings once addressed to that
+rep, self-assign and no-assignee stay silent, on both create and reassign: **GREEN 11/11**.
+Negative-controlled **RED** vs v900 (blocks absent). `check_build` green (900 -> 901). No SQL.
+
+## Build 902 — SMS/A2P 10DLC compliance pages (public)
+
+Theo is registering the Twilio A2P 10DLC campaign for the text channel (notify.js SMS). Carrier
+campaign registration requires publicly reachable privacy-policy and terms URLs carrying the mandated
+disclosures. Added two self-contained public pages at the repo root — `sms-privacy.html` and
+`sms-terms.html` — served at app.cardinalroster.com/sms-privacy.html and /sms-terms.html (no login,
+noindex, Cardinal-styled). Both carry: the non-sharing-of-mobile-info statement, message frequency,
+"Message and data rates may apply", STOP/HELP opt-out, and cross-links. `.vercelignore` header updated
+to record them as deliberately public (like drivewaytest.html).
+
+Does NOT touch index.html, so no app-stamp bump (a non-index build, like the visualizer/spark span).
+Validated: tag balance (6/6, 5/5 div), fully self-contained (no external scripts/styles/fonts/refs),
+all required clauses present, rendered in Chromium. CI check.yml validates the HTML on push. No SQL.
+These pages are standard SMS-compliance boilerplate — Theo/counsel should review wording before it
+matters.
