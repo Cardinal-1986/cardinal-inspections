@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 914 &#8212; You can rename a job document now — tap the pencil next to it (handy for naming a scanned contract, a signed form, and so on)</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 915 &#8212; The Crew Dispatch and Punch maps have a Rain button now — tap it to lay live weather radar over the map so you can plan around the rain</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19170,6 +19170,27 @@ function qiLoadLeaflet(){
     document.head.appendChild(sc);
   });
 }
+/* 915: RainViewer radar tiles (free, no key) — shared by the Punch and Crew
+   Dispatch maps. Returns a Leaflet tile URL template for the most recent frame,
+   cached ~5 min; null on any failure so the toggle just no-ops (offline, blocked). */
+var __crRadar = { at: 0, url: null };
+async function crRadarTemplate(){
+  try{
+    var now = Date.now();
+    if(__crRadar.url && (now - __crRadar.at) < 300000) return __crRadar.url;
+    var r = await fetch('https://api.rainviewer.com/public/weather-maps.json', { cache:'no-store' });
+    if(!r.ok) return null;
+    var j = await r.json();
+    var host = j.host || 'https://tilecache.rainviewer.com';
+    var frames = ((j.radar && j.radar.past) || []).concat((j.radar && j.radar.nowcast) || []);
+    if(!frames.length) return null;
+    var f = frames[frames.length - 1];
+    var url = host + f.path + '/256/{z}/{x}/{y}/4/1_1.png';
+    __crRadar = { at: now, url: url };
+    return url;
+  }catch(e){ return null; }
+}
+window.CardinalRadar = Object.assign(window.CardinalRadar || {}, { template: crRadarTemplate });
 async function qiInitMap(){
   var mapEl = document.getElementById('qiMap');
   try{ await qiLoadLeaflet(); }
@@ -40414,6 +40435,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:915, d:'2026-08-18', t:'Rain radar on the maps',
+s:'Both map views \u2014 Crew Dispatch and Punch \u0026 Repairs \u2014 now have a Rain button. Tap it and live precipitation radar lays over the map (from RainViewer, a free public source, no account or key), so you can see what\u2019s coming and plan roofing work around it. Tap again to turn it off. It sits under the job pins so nothing is hidden, and if the radar can\u2019t be reached the button just flags red and the map is unchanged. The Dispatch map\u2019s Rain button is available on the phone too.' },
 { b:914, d:'2026-08-18', t:'Rename a job document',
 s:'Job Documents now has a pencil next to each file. Tap it to rename the document \u2014 handy when a scan comes in as \u201cAug 17, 2026 Doc.pdf\u201d and you want it to read \u201cSigned Contract.\u201d It just renames the label everyone sees; the file itself opens exactly as before, so a name without a .pdf on the end still works. Insurance documents keep their slot. Visible to the whole team, same as the file.' },
 { b:913, d:'2026-08-18', t:'Crew Dispatch: a map of the week',
@@ -72736,6 +72759,10 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 /* 913: Crew Dispatch map (toggle) */
 #cr-disp .dspmapbtn{ margin-left:auto; background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34);
   color:var(--disp-ink,#fff); border-radius:8px; padding:6px 14px; font:700 12px 'Segoe UI',Arial,sans-serif; cursor:pointer; }
+#cr-disp .dsprain{ position:absolute; top:10px; right:10px; z-index:5; background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34);
+  color:var(--disp-ink,#fff); border-radius:8px; padding:6px 13px; font:700 12px 'Segoe UI',Arial,sans-serif; cursor:pointer; box-shadow:0 2px 8px #0006; }
+#cr-disp .dsprain.on{ background:#2f6fb0; color:#eaf3fb; border-color:#2f6fb0; }
+#cr-disp .dsprain.err{ border-color:var(--disp-repair,#ff3b46); color:var(--disp-repair,#ff3b46); }
 #cr-disp .dspmapview{ position:relative; }
 #cr-disp .dspleg{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px; }
 #cr-disp .dspleg span{ font:700 11px 'Segoe UI',Arial,sans-serif; color:var(--disp-dim,#9aa1ac); display:flex; align-items:center; gap:6px; }
@@ -72764,6 +72791,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs'];
   /* 913: the dispatch Map toggle — its own Leaflet map of this week's jobs by crew */
   var mapOn=false, dmap=null, dlayer=null, dmarkers={}, dgeoQueue=[], dgeoBusy=false, dUserMoved=false, dFitT=null, dMissT=null;
+  var dRadarOn=false, dRadarLayer=null;   /* 915: rain radar overlay */
   var CPAL=['#5f9fd8','#7ec99a','#c98fe0','#e0913a','#e2574a','#5bc0be','#c9a227','#9aa0f5','#e08fb0','#6fd0c0'];
 
   function two(n){ return (n<10?'0':'') + n; }
@@ -72994,6 +73022,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         '<div class="dspbody"><div class="dspmsg">Loading crews…</div></div>' +
         '<div class="dspmapview" style="display:none">' +
           '<div class="dspleg"></div>' +
+          '<button class="dsprain" data-dsprain>Rain</button>' +
           '<div class="dspmiss" style="display:none"></div>' +
           '<div class="dspmap"></div>' +
         '</div>' +
@@ -73018,6 +73047,8 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       }
       var mb = e.target.closest('[data-dspmap]');
       if(mb){ setMapMode(!mapOn); return; }
+      var rr = e.target.closest('[data-dsprain]');
+      if(rr){ toggleDRadar(); return; }
       var dop = e.target.closest('[data-dopen]');
       if(dop){ close(); if(typeof window.openProject === 'function') window.openProject(dop.getAttribute('data-dopen')); return; }
       var dnd = e.target.closest('[data-dneed]');
@@ -73171,6 +73202,15 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     if(mv) mv.style.display = mapOn ? 'block' : 'none';
     if(btn) btn.textContent = mapOn ? 'Grid' : 'Map';
     if(mapOn) ensureLeafletThenMap();
+  }
+  async function toggleDRadar(){
+    if(!dmap) return;
+    var b=el.querySelector('.dsprain');
+    if(dRadarOn){ if(dRadarLayer){ try{ dmap.removeLayer(dRadarLayer); }catch(e){} dRadarLayer=null; } dRadarOn=false; if(b) b.classList.remove('on'); return; }
+    var url=(window.CardinalRadar && window.CardinalRadar.template) ? await window.CardinalRadar.template() : null;
+    if(!url || !dmap){ if(b){ b.classList.add('err'); setTimeout(function(){ b.classList.remove('err'); }, 1600); } return; }
+    try{ dRadarLayer=L.tileLayer(url, { opacity:0.55, zIndex:250 }); dRadarLayer.addTo(dmap); dRadarOn=true; if(b) b.classList.add('on'); }
+    catch(e){ dRadarLayer=null; }
   }
   /* ---------- end Crew Dispatch map ---------- */
   window.CardinalDispatch = Object.assign(window.CardinalDispatch || {}, { open: open, close: close });
@@ -74210,6 +74250,9 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   .pumk.inrun::after{ content:attr(data-seq); position:absolute; inset:0; transform:rotate(45deg); display:flex; align-items:center; justify-content:center; color:#1a1204; font:800 11px 'Segoe UI',Arial; }
   .pumap-plan{ pointer-events:auto; background:#12181ee6; backdrop-filter:blur(4px); border:1px solid #232a31; border-radius:11px; color:#cfd6de; font:700 12px 'Segoe UI',Arial; padding:8px 14px; cursor:pointer; font-family:inherit; }
   .pumap-plan.on{ background:#f5a623; color:#1a1204; border-color:#f5a623; }
+  .pumap-rain{ pointer-events:auto; background:#12181ee6; backdrop-filter:blur(4px); border:1px solid #232a31; border-radius:11px; color:#cfd6de; font:700 12px 'Segoe UI',Arial; padding:8px 14px; cursor:pointer; font-family:inherit; }
+  .pumap-rain.on{ background:#2f6fb0; color:#eaf3fb; border-color:#2f6fb0; }
+  .pumap-rain.err{ border-color:#e2574a; color:#e2574a; }
   .pumap-run{ position:absolute; right:12px; bottom:12px; z-index:6; display:none; background:#12181ef2; backdrop-filter:blur(6px); border:1px solid #232a31; border-radius:12px; padding:12px 14px; min-width:190px; }
   .pumap-run.show{ display:block; }
   .pumap-run .hint{ color:#8b95a1; font:600 12.5px 'Segoe UI',Arial; max-width:180px; }
@@ -74239,6 +74282,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
 (function(){
   var UW = 1600;
   var map=null, layer=null, markers={}, mode='urgency', selId=null, built=false;
+  var radarOn=false, radarLayer=null;   /* 915: rain radar overlay */
   var geoQueue=[], geoBusy=false;
   var planMode=false, run=[], routeLine=null;   /* 909: Plan a run */
   var userMoved=false, fitT=null, missT=null;   /* 911: keep late-geocoded pins in view; surface un-mappable repairs */
@@ -74449,10 +74493,20 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   }
   function setPlanMode(on){ planMode=!!on; var b=document.getElementById('puMapPlanBtn'); if(b) b.classList.toggle('on', planMode); if(!planMode) run=[]; drawRoute(); }
 
+  async function toggleRadar(){
+    if(!map) return;
+    var b=document.getElementById('puMapRainBtn');
+    if(radarOn){ if(radarLayer){ try{ map.removeLayer(radarLayer); }catch(e){} radarLayer=null; } radarOn=false; if(b) b.classList.remove('on'); return; }
+    var url=(window.CardinalRadar && window.CardinalRadar.template) ? await window.CardinalRadar.template() : null;
+    if(!url || !map){ if(b){ b.classList.add('err'); setTimeout(function(){ b.classList.remove('err'); }, 1600); } return; }
+    try{ radarLayer=L.tileLayer(url, { opacity:0.55, zIndex:250 }); radarLayer.addTo(map); radarOn=true; if(b) b.classList.add('on'); }
+    catch(e){ radarLayer=null; }
+  }
   function paneHTML(){
     return '<div id="puMap"></div>'+
       '<div class="pumap-bar"><div class="pumap-stat" id="puMapStat"></div>'+
         '<button class="pumap-plan" id="puMapPlanBtn" data-puplan>Plan a run</button>'+
+        '<button class="pumap-rain" id="puMapRainBtn" data-purain>Rain</button>'+
         '<div class="pumap-seg"><button data-pumode="urgency" class="on">By urgency</button><button data-pumode="crew">By crew</button></div></div>'+
       '<div class="pumap-leg" id="puMapLeg"></div>'+
       '<div class="pumap-miss" id="puMapMiss" style="display:none"></div>'+
@@ -74484,7 +74538,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   function teardown(){
     var pane=document.getElementById('puMapPane');
     if(map){ try{ map.remove(); }catch(e){} map=null; layer=null; }
-    markers={}; built=false; planMode=false; run=[]; routeLine=null;
+    markers={}; built=false; planMode=false; run=[]; routeLine=null; radarOn=false; radarLayer=null;
     if(pane && pane.parentNode) pane.parentNode.removeChild(pane);
     document.body.classList.remove('pumap-on');
   }
@@ -74507,6 +74561,8 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     document.addEventListener('click', function(e){
       var pb=e.target.closest && e.target.closest('[data-puplan]');
       if(pb){ setPlanMode(!planMode); return; }
+      var rnb=e.target.closest && e.target.closest('[data-purain]');
+      if(rnb){ toggleRadar(); return; }
       var cr=e.target.closest && e.target.closest('[data-purun="clear"]');
       if(cr){ run=[]; drawRoute(); return; }
       var ap=e.target.closest && e.target.closest('[data-puassign]');
