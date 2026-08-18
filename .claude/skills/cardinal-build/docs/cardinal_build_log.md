@@ -18404,6 +18404,19 @@ census used `getComputedStyle(el).display` (which ignores hidden ANCESTORS, so i
 JS-validated form never uses. Fixed the driver's census (offsetParent + visual "*") so the re-run won't
 re-report it. No app change.
 
+## Build 893 — Home screen: the duplicate Production Calendar removed
+
+Theo: the home dashboard stacked two mini calendars — Cardinal Team Calendar and, directly under it,
+a Production Calendar — and they ran the same `makeMiniCal` engine, effectively a duplicate. Removed
+the Production Calendar card (`.pipecard.prodcal`, `#prodCalMount`) and its JS instance (`prodCalInst`
++ the `prodCalWho` block in `renderTeamCal`). The Team Calendar and the shared `makeMiniCal` factory
+are untouched. The Production strip's "Jobs Today" shortcut (`data-opsnav="today"`) repoints from the
+removed `#prodCalMount` to `#teamCalMount` (title updated); the handler was already null-guarded.
+`prodVisibleAppt` is left defined but unused (harmless). The full production schedule still lives under
+Production → Full calendar / Schedule Board. Gates: `check_build` GREEN (stamp 892→893, tags balanced).
+`render_prodcal893.mjs` GREEN 6/6 (Team card present, prod mount/card gone, `prodCalInst` undefined,
+`renderTeamCal()` doesn't throw, no page errors), RED 3 on the v892 control.
+
 ## Build 892 — Work Order: the blank homeowner/address, root-caused
 
 Theo: "Address still doesn't populate," with a screen recording, after 891 shipped the `woClient`
