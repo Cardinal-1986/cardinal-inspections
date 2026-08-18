@@ -18970,3 +18970,58 @@ Completed tab shows only the done card in a "Completed 1" group with a "1 comple
 unchanged. All GREEN, negative-controlled vs v911 (no `data-putab="completed"`). Rendered both tabs at
 414px to confirm layout. `check_build` green (911 -> 912, marker "active / scheduled / completed tabs (912)").
 No SQL.
+
+## Build 913 — Crew Dispatch: a map of the week
+
+Follow-up feature (Theo picked it off the map roadmap). Crew Dispatch (`cr-disp-script`,
+`window.CardinalDispatch`) was a read-only week grid; it now has a **Map** button in the top bar that
+flips the grid to a Leaflet map of **this week's jobs**. Theo's two calls (via AskUserQuestion): a
+**toggle that works everywhere** (not an ultrawide-only side pane like the Punch map — so it's on the
+phone too), pinning **jobs by crew + the Needs-a-crew jobs with tap-to-assign**.
+
+All inside `cr-disp-script` — its own small map subsystem, no dependency on the Punch map module:
+- **Pins.** `mapItems()` = this week's `crew_work_orders` (deduped one pin per project, honoring the
+  trade filter) colored by crew via a fixed palette indexed on the crews list, PLUS `needCrewList()`
+  (Scheduled projects with no active WO) as amber "need" pins. `needCrewList()` was extracted and the
+  grid's inline copy now calls it — one pipeline, not two.
+- **Actions.** Tap a booked pin → **Open** the client (`openProject`); tap a needs-crew pin →
+  **Assign crew** (`openWorkOrderPicker(project)` — the exact picker the grid's Needs-a-crew rail uses,
+  closing the view first as that path does). Popup buttons are delegated on the `#cr-disp` root
+  (`[data-dopen]` / `[data-dneed]`), ahead of the grid's generic `[data-pid]` handler.
+- **Geocode** is the build-911 approach copied in: Google-first (`qiGoogleGeo`), Nominatim fallback,
+  shared `geo:` cache; an amber "not on the map" note (`updateMiss`) for jobs with no address or that
+  won't resolve; `scheduleFit`/`fitAll` frame the pins and follow late async pins until the user pans.
+- **Live.** The week arrows and trade chips call `syncMap()` when the map is showing. `open()` resets
+  to the grid (`setMapMode(false)`) each time. Money never appears (WOs load without `amount`, same as
+  the grid).
+- Own CSS under `#cr-disp` using the module's `--disp-*` tokens (both themes); Leaflet popup restyled
+  to the dark card. Crew colors are a 10-entry palette; the legend names only the crews on the map.
+
+Gate `gate_dispmap913.mjs` (Chromium, Leaflet stubbed, 2 crews + 2 booked WOs this week + 2 needs-crew
+one of which has no address): Map toggle flips grid↔map; 3 pins (2 booked + 1 needs, the needs pin
+distinct); legend lists both crews + Needs a crew; the addressless job raises the note; Open routes to
+`openProject(pb1)`; Assign routes to `openWorkOrderPicker(pn1)`; toggling back restores the grid. All
+GREEN, negative-controlled vs v912 (no `data-dspmap`). `check_build` green (912 -> 913, marker
+"913: Crew Dispatch map"). No SQL. (Tiles need the live network — Theo's eyes are the visual gate,
+same Leaflet look as the Punch map.)
+
+## Build 914 — Rename a job document
+
+From a phone screenshot (Theo): a Job Documents file named "Aug 17, 2026 Doc.pdf" that is actually a
+signed printed contract — "Can you make the document name editable." Job docs are `inspection_reports`
+rows whose display name is `fileDocName(title)`; a plain upload stores `title = 'File: <name>'`, an
+insurance document `'Insurance Doc [slot]: <name>'`.
+
+Added a pencil (`✏️`, `&#9999;&#65039;`) to each row in `renderDocsPage()`, before the delete X, and a
+`renameJobDoc(id)`: it `prompt()`s (prefilled with the current human name), and on a real change writes
+`db.update(id, { title })` → `reload()` → `renderDocsPage()`. It preserves an `Insurance Doc [slot]:`
+prefix so an insurance doc stays in its slot, and only touches the title — opening still uses the stored
+mime/bytes, so a name without a `.pdf` never breaks the file. Cancel / empty / unchanged all no-op.
+All viewports; same team visibility as the file. `#jdMount` click handler routes `[data-jdren]` ahead of
+`[data-jddel]`.
+
+Gate `gate_jdren914.mjs` (Node — extracts and executes the shipped `renameJobDoc` against controlled
+rows, plus source-structural checks): file doc → `'File: Signed Contract'`; insurance doc keeps its
+`[roof_photos]` slot; cancel/empty/unchanged/unknown-id all write nothing; the row renders the pencil
+before the X and the handler routes it. All GREEN, negative-controlled vs v913 (no `data-jdren`, no
+`renameJobDoc`). `check_build` green (913 -> 914, marker "914: rename a job document"). No SQL.
