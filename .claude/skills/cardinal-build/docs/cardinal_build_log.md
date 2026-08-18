@@ -19101,3 +19101,17 @@ counts 2/1/1; next drop "Tomorrow"; needs-a-date = the approved job; clicking an
 panel; row→openProject, edit→openApptDay, need→openProject. Negative-controlled vs v916. **Rendered in
 BOTH themes** (dark + rb-light) at 1720px — contrast correct in both (the whole reason for class reuse).
 `check_build` green (916 -> 917, marker "cr-sbwide-script"). No SQL.
+
+## Build 918 — Punch & Repairs: a back button in the header
+Screenshot report: the Production board's box screens (Needs ordered, etc.) carry a `‹` back
+button in their header (`.pbback`), but the top-level **Punch & Repairs** page (`#punchView`) had
+none — you relied on the global `#pwaBack` chevron, which isn't obviously part of the page. Added a
+matching back chevron as the first child of `.pu-head` (`#puBackBtn`, drawn SVG chevron, `.pu-back`
+34×34 rounded ghost). Styled with the punch view's already-themed `--rbe-*` tokens (`--rbe-line2`,
+`--rbe-mute`) so it flips in dark / rb-light / the two claim CRMs with no new palette. Wired to
+`history.back()` — the app's designed back (same as `#pwaBack`), so it returns through `navRestore`
+to wherever Punch was opened from (the burger menu, or the Production hub via `close(false)`).
+Gate `gate_puback918.mjs`: 9 assertions GREEN (button in `.pu-head`, first/before title, 34×34
+visible, drawn SVG not emoji, aria-label, click calls `history.back()` exactly once). Negative-
+controlled vs v917 (button absent). Rendered on a 412px phone — chevron reads clean on the dark
+header. `check_build` green (917 -> 918, marker `id="puBackBtn"`). No SQL.
