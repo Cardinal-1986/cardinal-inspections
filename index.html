@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 904 &#8212; Production now uses the whole screen on an ultrawide monitor — the calendar sits on the left with the stats, cards and day agenda on the right; phones, iPads and normal monitors are unchanged</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 905 &#8212; On an ultrawide monitor the client list now lays out as three columns — Retail, Claims and Community side by side — so you see all three books at once; phones, iPads and normal monitors are unchanged</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18682,9 +18682,29 @@ function renderClientDirectory(){
   mount.innerHTML = railHtml;
 
   /* cards */
-  document.getElementById('cliList').innerHTML = list.length
-    ? list.map(cdCardHtml).join('')
-    : '<div class="cd-empty">No clients match these filters.</div>';
+  /* 905: on a true ultrawide (>=1600px) the single 1fr column stretched each
+     card to ~2600px with a dead middle. Group into three CRM columns
+     (Retail | Claims | Community), each with its own header + count, so the
+     big screen shows all three books of business at once. Structural, so it
+     is gated on innerWidth and re-rendered when the 1600px line is crossed
+     (listener below); below 1600 the flat list is byte-for-byte unchanged. */
+  var cliEl = document.getElementById('cliList');
+  if(window.innerWidth >= 1600 && list.length){
+    cliEl.classList.add('cd-crmcols');
+    cliEl.innerHTML = CD_CRMS.map(function(c){
+      var seg = list.filter(function(pr){ return cdCrmOf(pr) === c.key; });
+      if(!seg.length) return '';
+      return '<div class="cd-crmsec" style="--csc:' + c.color + ';--cscl:' + (c.colorLight || c.color) + '">' +
+        '<div class="cd-crmsec-h"><span class="cd-crmsec-dot"></span>' + esc(c.label) +
+        '<span class="cd-crmsec-n">' + seg.length + '</span></div>' +
+        seg.map(cdCardHtml).join('') + '</div>';
+    }).join('');
+  } else {
+    cliEl.classList.remove('cd-crmcols');
+    cliEl.innerHTML = list.length
+      ? list.map(cdCardHtml).join('')
+      : '<div class="cd-empty">No clients match these filters.</div>';
+  }
 
   /* sheets */
   document.getElementById('cdSortList').innerHTML = CD_SORTS.map(function(s){
@@ -18702,6 +18722,15 @@ function renderClientDirectory(){
   cdSyncSel();
 }
 renderClientDirectory.__crPortal = true; /* opt out of the portal pre-filter — this directory owns its CRM switcher */
+/* 905: the CRM-column layout is structural, so a resize across the 1600px
+   line needs a re-render (CSS alone cannot regroup the cards). Fires only
+   when the boundary is actually crossed AND the directory is open. */
+(function(){ var lastUW = window.innerWidth >= 1600;
+  window.addEventListener('resize', function(){
+    var uw = window.innerWidth >= 1600; if(uw === lastUW) return; lastUW = uw;
+    var cv = document.getElementById('clientsView');
+    if(cv && cv.style.display !== 'none' && typeof renderClientDirectory === 'function') renderClientDirectory();
+  }); })();
 function cdSyncSel(){
   document.getElementById('clientsView').classList.toggle('cd-selmode', cdState.selMode);
   document.getElementById('cdDelBar').classList.toggle('has', cdState.selMode && cdState.sel.length > 0);
@@ -40360,6 +40389,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:905, d:'2026-08-18', t:'Client list fills an ultrawide screen',
+s:'On a very wide monitor (1600px and up) the client list no longer stretches each client into one card ~2600px wide with a dead empty middle. It becomes three columns side by side \u2014 Retail, Claims and Community, each with its own header and a count \u2014 so you can see all three books of business at once. The CRM chips, search, sort and filters all still work and filter within the columns. Nothing changes on phones, iPads or a normal-width monitor; this only kicks in past 1600px wide. Second screen (after Production) to get the ultrawide treatment.' },
 { b:904, d:'2026-08-18', t:'Production fills an ultrawide screen',
 s:'On a very wide monitor (1600px and up) the Production screen no longer sits as a narrow centered column with big empty margins. It becomes a two-column dashboard: the month calendar on the left, and the stat boxes, the Closed-repairs banner, the Crew Dispatch / Crews cards and the day agenda stacked on the right \u2014 so you can see the whole thing at once. Nothing changes on phones, iPads or a normal-width monitor; this only kicks in past 1600px wide. First of a few screens getting the ultrawide treatment.' },
 { b:901, d:'2026-08-18', t:'Reps get pinged when a lead lands on them',
@@ -57949,6 +57980,20 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
   #cdFunnelBtn{display:none;}
   .cd-lay{display:grid;grid-template-columns:215px 1fr;gap:14px;align-items:start;}
   .cd-rail{display:block;background:#101113;border:1px solid #26282c;border-radius:12px;padding:13px;position:sticky;top:calc(var(--headh,110px) + 10px);max-height:calc(100vh - var(--headh,110px) - 30px);overflow-y:auto;}
+}
+/* 905: client list — three CRM columns on a true ultrawide. The .cd-crmcols
+   class and the .cd-crmsec markup only exist in the DOM at >=1600px (see the
+   render), and the grid is gated here too as a second safety net for a
+   resize that outraces the re-render. Below 1600px: nothing here applies. */
+@media (min-width:1600px){
+  #clientsView #cliList.cd-crmcols{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 22px; align-items:start; }
+  #cliList .cd-crmsec{ min-width:0; }
+  #cliList .cd-crmsec-h{ font:800 11px ui-monospace,Menlo,monospace; letter-spacing:.16em; text-transform:uppercase; color:var(--csc,#c9a227); display:flex; align-items:center; gap:9px; padding:4px 2px 10px; border-bottom:1px solid #26282c; margin-bottom:11px; }
+  #cliList .cd-crmsec-dot{ width:9px; height:9px; border-radius:50%; background:var(--csc,#c9a227); flex:0 0 auto; }
+  #cliList .cd-crmsec-n{ margin-left:auto; background:#26282c; color:#b9bec6; border-radius:999px; padding:2px 9px; font-size:10px; }
+  :root[data-theme="rb-light"] #cliList .cd-crmsec-h{ color:var(--cscl,#8a6a12); border-bottom-color:#efefef; }
+  :root[data-theme="rb-light"] #cliList .cd-crmsec-dot{ background:var(--cscl,#8a6a12); }
+  :root[data-theme="rb-light"] #cliList .cd-crmsec-n{ background:#f2efe6; color:#6b5a2e; }
 }
 
 /* ── Brass in daylight (build 391) · Option C, "matte white" ──────────────
