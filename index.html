@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 890 &#8212; The roofing Work Order gains a New Roof components list and an optional post-job closeout, and the satellite dish now reads Detach &amp; Reset / Remove / None</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 891 &#8212; Work Order polish — the address fills in reliably, layers / condition / colors are dropdowns, the schedule has a date picker, and the crew sign-off line is gone (Cardinal signs)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20543,7 +20543,7 @@ function woMeasBoard(pr){
    to pull first (auto from the inspection's sat field). */
 function woTearOff(pr){
   var cl = (typeof getChecklist === 'function') ? getChecklist(pr) : null;
-  var layers = (cl && cl.layers) ? woEsc(cl.layers) : '<span class="ph">[&nbsp;&nbsp;]</span>';
+  var layers = woSelect(['1', '2', '3', '4'], cl && cl.layers);
   var hasInsp = !!cl;
   var hasSat = !!(cl && cl.sat);
   /* 890: three states, matching the paper form. A dish found in the inspection is
@@ -20579,12 +20579,12 @@ function woDeckType(deck){
 function woDecking(pr){
   var cl = (typeof getChecklist === 'function') ? getChecklist(pr) : null;
   var type = woDeckType(cl && cl.decking);
-  var cond = (cl && cl.deckcond) ? woEsc(cl.deckcond) : '';
+  var cond = (cl && cl.deckcond) ? cl.deckcond : '';
   var types = WO_DECK_TYPES.map(function(t){ return woCbx(t === type, t, 'wo-deck'); }).join(' &nbsp; ');
   return '<table class="meta">' +
     woRow('Full re-deck?', woCbx(false, 'Yes', 'wo-redeck') + ' &nbsp;&nbsp; ' + woCbx(false, 'No', 'wo-redeck')) +
     woRow('Decking type', types) +
-    woRow('Condition at inspection', cond ? '<b>' + cond + '</b>' : '<span class="ph">[&nbsp;&nbsp;]</span>') +
+    woRow('Condition at inspection', woSelect(['Good', 'Fair', 'Poor'], cond)) +
     woRow('Sheets replaced', '<span class="ph">[&nbsp;&nbsp;&nbsp;]</span> sheets') +
   '</table>';
 }
@@ -20593,12 +20593,9 @@ function woDecking(pr){
    contract's selections when the picker found them; blank renders a fill-in so
    the right colour is written on the ticket either way. */
 function woColors(opts){
-  function line(lbl, val){
-    return woRow(lbl, val ? '<b>' + woEsc(val) + '</b>' : '<span class="ph">[ color ]</span>');
-  }
   return '<table class="meta">' +
-    line('Shingle color', opts.shingle) +
-    line('Drip edge color', opts.drip) +
+    woRow('Shingle color', woColorSelect('occ', opts.shingle)) +
+    woRow('Drip edge color', woColorSelect('trim', opts.drip)) +
   '</table>' +
   '<p style="font-size:9pt;color:#666;margin:4px 0 0;">Confirm against the signed contract before ordering — the wrong color is a tear-off.</p>';
 }
@@ -20694,10 +20691,59 @@ function woLaborRows(rates, catalog){
   };
 }
 
+/* 891: resolve the homeowner name/address/phone the way the rest of the app does —
+   top-level columns first, then the lead object and the Location card. A lead-created
+   client keeps its address in pr.location (or checklist.lead.location), which is why
+   the Job block used to print blank. */
+function woClient(pr){
+  var lead = {};
+  try{ lead = (typeof parseCkAll === 'function' ? (parseCkAll(pr).lead || {}) : {}); }catch(_){}
+  var name = '';
+  try{ name = (typeof projHomeowner === 'function' ? projHomeowner(pr) : '') || (pr && pr.name) || ''; }
+  catch(_){ name = (pr && pr.name) || ''; }
+  var addr = (pr && pr.address) || '';
+  if(!addr){
+    var loc = (pr && pr.location) || lead.location;
+    if(loc && loc.street){
+      addr = loc.street + (loc.suite ? ', ' + loc.suite : '') +
+        (loc.city ? ', ' + loc.city : '') + (loc.state ? ', ' + loc.state : '') +
+        (loc.zip ? ' ' + loc.zip : '');
+    }
+  }
+  var phone = (pr && pr.phone) || (lead.phones && lead.phones[0]) || lead.homeowner_phone || '';
+  return { name: name, address: addr, phone: phone };
+}
+
+/* 891: a plain document dropdown. contenteditable=false so a tap opens it inside the
+   editable cell; class crsel so it prints flat; data-wo so wireWoFields persists a
+   change on save. Pre-selects `value`, adding it as an option if it is off-list. */
+function woSelect(options, value){
+  var v = (value == null) ? '' : String(value).trim();
+  var list = options.slice();
+  if(v && list.indexOf(v) === -1) list.unshift(v);
+  var html = '<select data-wo class="crsel" contenteditable="false">' +
+    '<option value=""' + (v === '' ? ' selected' : '') + '>&#8212; select &#8212;</option>';
+  list.forEach(function(o){
+    if(o === '') return;
+    html += '<option value="' + woEsc(o) + '"' + (o === v ? ' selected' : '') + '>' + woEsc(o) + '</option>';
+  });
+  return html + '</select>';
+}
+
+/* 891: a colour dropdown that reuses the contract's crsel machinery — wireColorSelects
+   fills occ/trim with the live catalogue in the editor and (891) pre-selects the carried
+   contract colour via data-crsel-value. */
+function woColorSelect(kind, value){
+  return '<select class="crsel" data-crsel="' + kind + '" contenteditable="false"' +
+    (value ? ' data-crsel-value="' + woEsc(value) + '"' : '') + '>' +
+    '<option value="">&#8212; select &#8212;</option></select>';
+}
+
 function woBody(pr, crew, rates, catalog, opts){
   opts = opts || {};
   var lab = woLaborRows(rates, catalog);
   var isRoof = crew.trade === 'Roofing';
+  var _c = woClient(pr);
   var n = 0;
   function nsec(t){ n++; return '<h2 class="sec"><span class="num">' + n + '</span>' + t + '</h2>'; }
   var out = '' +
@@ -20707,14 +20753,15 @@ function woBody(pr, crew, rates, catalog, opts){
     woRow('Issued', woEsc(opts.issued || '')) +
     woRow('Trade', woEsc(crew.trade)) +
     /* 744: commDate() is the timezone-safe formatter, not the raw stored string. */
-    woRow('Scheduled', woVal(opts.scheduled_on ? commDate(opts.scheduled_on) : '')) +
+    woRow('Scheduled', opts.scheduled_on ? woEsc(commDate(opts.scheduled_on))
+      : '<input type="date" data-wo contenteditable="false" class="crsel" style="font:inherit;">') +
   '</table>' +
   '<p style="font-size:9pt;color:#666;margin:2px 0 8px;">Start and completion dates are <b>weather permitting</b>.</p>' +
   '<h2 class="sec">Job</h2>' +
   '<table class="meta">' +
-    woRow('Homeowner', woVal(pr.name)) +
-    woRow('Address', woVal(pr.address)) +
-    woRow('Phone', woVal(pr.phone)) +
+    woRow('Homeowner', woVal(_c.name)) +
+    woRow('Address', woVal(_c.address)) +
+    woRow('Phone', woVal(_c.phone)) +
   '</table>' +
   '<h2 class="sec">Crew</h2>' +
   '<table class="meta">' +
@@ -20743,7 +20790,6 @@ function woBody(pr, crew, rates, catalog, opts){
   ((isRoof && opts.closeout) ? '<h2 class="sec">Post-Job Closeout</h2>' + woCloseout() : '') +
   '<h2 class="sec">Sign-off</h2>' +
   '<table class="meta">' +
-    woRow('Crew accepted by', '<span class="ph">[signature]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span>') +
     woRow('Cardinal', '<span class="ph">[signature]</span> &nbsp;&nbsp; Date <span class="ph">[date]</span>') +
   '</table>';
   return out;
@@ -23370,6 +23416,17 @@ async function wireColorSelects(doc){
     /* Restore the saved choice: the ATTRIBUTE is the record, the property is not. */
     var chosen = sel.querySelector('option[selected]');
     if(chosen) sel.value = chosen.value;
+    /* 891: a generated Work Order pre-selects a carried contract colour by attribute
+       rather than a baked <option selected>. Apply it, then write the selected
+       attribute so serializeFrame keeps it on save. */
+    else {
+      var pv = sel.getAttribute('data-crsel-value');
+      if(pv){
+        sel.value = pv;
+        var po = sel.options[sel.selectedIndex];
+        if(po && po.value) po.setAttribute('selected', 'selected');
+      }
+    }
 
     if(sel.getAttribute('data-crsel-wired')) return;
     sel.setAttribute('data-crsel-wired', '1');
@@ -23384,6 +23441,25 @@ async function wireColorSelects(doc){
   });
 }
 
+/* 891: plain <select data-wo> and <input data-wo> in a generated document need their
+   live value mirrored to an ATTRIBUTE on change, or serializeFrame (cloneNode) drops
+   the choice on save — the same reason wireColorSelects writes the selected attribute.
+   Additive: only elements carrying data-wo are touched. */
+function wireWoFields(doc){
+  doc.querySelectorAll('select[data-wo]').forEach(function(sel){
+    if(sel.getAttribute('data-wo-wired')) return;
+    sel.setAttribute('data-wo-wired', '1');
+    sel.addEventListener('change', function(){
+      for(var i = 0; i < sel.options.length; i++) sel.options[i].removeAttribute('selected');
+      if(sel.selectedIndex >= 0 && sel.value) sel.options[sel.selectedIndex].setAttribute('selected', 'selected');
+    });
+  });
+  doc.querySelectorAll('input[data-wo]').forEach(function(inp){
+    if(inp.getAttribute('data-wo-wired')) return;
+    inp.setAttribute('data-wo-wired', '1');
+    inp.addEventListener('change', function(){ inp.setAttribute('value', inp.value); });
+  });
+}
 function wireCheckboxes(doc){
   doc.querySelectorAll('.cbx').forEach(function(el){
     if(el.getAttribute('data-cbx')) return;
@@ -23520,6 +23596,7 @@ async function openEditor(id){
       wireRoofrUpload(doc);
       wireCheckboxes(doc);
       wireColorSelects(doc);
+      wireWoFields(doc);
       document.getElementById('sigBtn').style.display = (doc.querySelector('.sign') || doc.querySelector('[data-sig]')) ? 'inline-block' : 'none';
     }catch(e){}
   };
@@ -40261,6 +40338,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:891, d:'2026-08-17', t:'Work Order polish — dropdowns, address fill, date picker',
+s:'Fixes and polish on the roofing work order from field testing. The homeowner name, address and phone now fill in reliably even for clients whose address lives on the Location card or the lead rather than the top of the profile (that is why an address could come up blank). Existing layers is now a dropdown (1\u20134), Condition at inspection is a dropdown using the inspection\u2019s own wording (Good / Fair / Poor), and Shingle color and Drip edge color are dropdowns off the same Owens Corning and trim lists the contract uses \u2014 each pre-selected from the signed contract when there is one. If no schedule date was set when the work order was made, Scheduled shows a date picker. And the Crew sign-off line is removed \u2014 most crews have no email on file and it was a bottleneck; the Cardinal sign-off stays for Curtis / production. Roofing work orders only.' },
 { b:890, d:'2026-08-17', t:'Roofing Work Order — components list + post-job closeout',
 s:'The crew roofing work order picks up the rest of Cardinal\u2019s old paper take-off. A New Roof \u2014 Components section lists pipe jacks, pipe boots, box vents, power vent, ridge vent (with length), gable vents, bath/kitchen vents, step/wall flashing, chimney cricket and chimney flashing (S/M/L) \u2014 filled in from the inspection where it knows the count, blank to tick otherwise. The Satellite dish now reads Detach & Reset / Remove / None (instead of Yes/No): a dish the inspection found is flagged for the crew to decide, an inspection that found none pre-ticks None, and with no inspection it stays blank. And when you create the work order you can tick \u201CInclude a post-job closeout checklist\u201D to add a leftover-materials return sheet (returnable / non-returnable, Lot#, date completed) to the bottom \u2014 off by default. No money anywhere, as before. Roofing work orders only.' },
 { b:889, d:'2026-08-17', t:'Crew Roofing Work Order, rebuilt',
