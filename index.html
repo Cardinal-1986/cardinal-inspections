@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 909 &#8212; New on the Punch &amp; Repairs map: Plan a run \u2014 tap several repairs and it orders them into an efficient loop with the mileage, then opens turn-by-turn directions in Google Maps</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 910 &#8212; On the Punch &amp; Repairs map you can now reassign a repair straight from its pin \u2014 tap the pin and send it to Curtis or Scottie (or unassign)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40389,6 +40389,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:910, d:'2026-08-18', t:'Assign a repair from the dispatch map',
+s:'On the Punch \u0026 Repairs map (ultrawide, 1600px and up) tapping a pin now shows Assign buttons \u2014 send that repair to Curtis or Scottie, or unassign it, without opening the card. It saves immediately and the map and list update. Only admins and production (Curtis, Scottie) see the buttons; if a save is ever refused it says so and nothing changes. The pin recolours to the assignee in By crew mode. Ultrawide only; phones, iPads and normal monitors are unchanged.' },
 { b:909, d:'2026-08-18', t:'Plan a run on the dispatch map',
 s:'The live map in Punch \u0026 Repairs (ultrawide, 1600px and up) gains Plan a run. Tap \u201CPlan a run,\u201D then tap the repairs you want to do in one trip \u2014 on the map or in the list. The map numbers them in an efficient nearest-first order, draws the loop and shows the total mileage, and an Open in Maps button hands the whole route to Google Maps for real turn-by-turn directions. It is a planning tool only \u2014 nothing is saved or changed, and Clear resets it. Ultrawide only; phones, iPads and normal monitors are unchanged.' },
 { b:908, d:'2026-08-18', t:'Dispatch map fits the screen (shorter, still fills the width)',
@@ -74021,6 +74023,10 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   .pumap-pop .r{ display:flex; align-items:center; justify-content:space-between; margin-top:9px; gap:10px; }
   .pumap-pop .chip{ font:800 10px ui-monospace,Menlo; letter-spacing:.08em; text-transform:uppercase; padding:3px 8px; border-radius:999px; }
   .pumap-pop .opn{ background:#c8202e; color:#fff; border:0; border-radius:8px; padding:6px 14px; font:800 12px 'Segoe UI',Arial; cursor:pointer; font-family:inherit; }
+  .pumap-pop .asg{ display:flex; align-items:center; gap:6px; margin-top:9px; flex-wrap:wrap; }
+  .pumap-pop .asg .lbl{ font:700 10px ui-monospace,Menlo; letter-spacing:.08em; text-transform:uppercase; color:#7f8894; margin-right:2px; }
+  .pumap-pop .asgb{ background:#1c242c; color:#cfd6de; border:1px solid #2b333c; border-radius:7px; padding:5px 10px; font:700 11.5px 'Segoe UI',Arial; cursor:pointer; font-family:inherit; }
+  .pumap-pop .asgb.on{ background:#5f9fd8; color:#0b1116; border-color:#5f9fd8; }
 }
 </style>
 <script id="cr-pumap-script">
@@ -74069,6 +74075,10 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     return out;
   }
 
+  /* 910: managers (admin/production) can reassign a repair straight from the pin */
+  function canAssign(){ try{ return (typeof isAdminUser==='function' && isAdminUser()) || (typeof isProductionUser==='function' && isProductionUser()); }catch(e){ return false; } }
+  function asgBtn(it, email, label){ var on=String(it.assigned_to||'')===email;
+    return '<button class="asgb'+(on?' on':'')+'" data-puassign="'+esc(email)+'" data-puassignid="'+esc(String(it.id))+'">'+esc(label)+'</button>'; }
   function popupHTML(it, pr){
     var col=URG[it.priority]||URG[it.urgency]||'#8b95a1';
     var pl=(it.priority||it.urgency||''); var plab=pl==='high'?'Urgent':(pl?pl.charAt(0).toUpperCase()+pl.slice(1):'');
@@ -74076,8 +74086,20 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     return '<div class="pumap-pop"><div class="t">'+esc(it.title)+'</div>'+
       '<div class="c">'+esc(pr?pr.name:'')+'</div>'+
       (pr&&pr.address?'<div class="a">'+esc(pr.address)+'</div>':'')+
+      (canAssign()?('<div class="asg"><span class="lbl">Assign</span>'+
+        asgBtn(it,'curtis@cardinalrenovations.net','Curtis')+asgBtn(it,'scottie@cardinalrenovations.net','Scottie')+asgBtn(it,'','Unassign')+'</div>'):'')+
       '<div class="r"><span class="chip" style="background:'+col+'22;color:'+col+'">'+esc(plab)+' &middot; '+esc(who)+'</span>'+
       '<button class="opn" data-pumopen="'+esc(String(it.id))+'">Open</button></div></div>';
+  }
+  async function assignFrom(id, email){
+    var P=window.CardinalPunch; if(!(P && P.update)) return;
+    var r=await P.update(id, { assigned_to: email||null });
+    if(r && r.ok){
+      var it=itemById(id); if(it) it.assigned_to=email||null;
+      if(map && map.closePopup) map.closePopup();
+      if(typeof window.renderPunchView==='function'){ try{ window.renderPunchView(); }catch(e){} }
+      setTimeout(function(){ if(built) sync(); }, 80);
+    } else { try{ alert('Could not reassign: '+((r&&r.error)||'write refused')); }catch(_){} }
   }
 
   function setPin(it){
@@ -74088,7 +74110,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
       if(!pt || !map) return;
       var col=itColor(it);
       var m=markers[it.id];
-      if(m){ m.setLatLng([pt.lat, pt.lon]); if(m._icon){ var d=m._icon.querySelector('.pumk'); if(d) d.style.background=col; } m.__it=it; return; }
+      if(m){ m.setLatLng([pt.lat, pt.lon]); if(m._icon){ var d=m._icon.querySelector('.pumk'); if(d) d.style.background=col; } m.__it=it; if(m.setPopupContent) m.setPopupContent(popupHTML(it, pr)); return; }
       var icon=L.divIcon({ className:'', html:'<div class="pumk" data-pu="'+esc(String(it.id))+'" style="background:'+col+'"></div>', iconSize:[16,16], iconAnchor:[8,16], popupAnchor:[0,-14] });
       m=L.marker([pt.lat, pt.lon], { icon:icon }); m.__it=it;
       m.bindPopup(popupHTML(it, pr), { closeButton:true });
@@ -74245,6 +74267,8 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
       if(pb){ setPlanMode(!planMode); return; }
       var cr=e.target.closest && e.target.closest('[data-purun="clear"]');
       if(cr){ run=[]; drawRoute(); return; }
+      var ap=e.target.closest && e.target.closest('[data-puassign]');
+      if(ap){ e.preventDefault(); assignFrom(ap.getAttribute('data-puassignid'), ap.getAttribute('data-puassign')); return; }
       var o=e.target.closest && e.target.closest('[data-pumopen]');
       if(o){ var id=o.getAttribute('data-pumopen'); if(window.CardinalPunchCard && window.CardinalPunchCard.open) window.CardinalPunchCard.open(id, { back:'none' }); return; }
       var sg=e.target.closest && e.target.closest('[data-pumode]');
