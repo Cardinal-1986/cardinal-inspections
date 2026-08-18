@@ -18404,6 +18404,63 @@ census used `getComputedStyle(el).display` (which ignores hidden ANCESTORS, so i
 JS-validated form never uses. Fixed the driver's census (offsetParent + visual "*") so the re-run won't
 re-report it. No app change.
 
+## Build 891 — Work Order field polish (from on-site testing)
+
+Theo tested 890 on a real job and asked for six fixes; all roofing-only, in `index.html`:
+
+- **Address (and name/phone) autofill reliably.** The Job block used `pr.name/address/phone`
+  directly, so a **lead-created client** — whose address lives in `pr.location`
+  `{street,suite,city,state,zip}` or `checklist.lead.location`, not the top-level column — printed
+  a blank address. New `woClient(pr)` resolves each field the way the rest of the app does: column
+  first, then `projHomeowner()` / the lead / the Location card. (This shape also affects contracts,
+  which still read the column directly — noted, not touched here.)
+- **Existing layers → a dropdown (1–4)**, pre-selected from the inspection.
+- **Condition at inspection → a dropdown** (Good / Fair / Poor — the inspection's own
+  `ck_deckcond` wording), pre-selected.
+- **Shingle & drip-edge colors → dropdowns** reusing the contract's `data-crsel` occ / trim
+  machinery (`woColorSelect`); the carried contract colour pre-selects via a new
+  **`data-crsel-value`** hook in `wireColorSelects` (applied, then written to the `selected`
+  attribute so it persists on save).
+- **Scheduled → a date `<input>`** when no date was set at creation; formatted text when it was.
+- **Crew sign-off line removed** (most crews have no email on file; it bottlenecked). Cardinal
+  sign-off kept for Curtis / production.
+
+Mechanics: in-document `<select data-wo>` / `<input data-wo>` get their live value mirrored to an
+attribute on change (**`wireWoFields`**, called in `openEditor` beside `wireCheckboxes`/`wireColorSelects`)
+so `serializeFrame` (cloneNode) keeps the choice on save; every control carries
+`contenteditable="false"` so a tap opens the picker inside the editable cell (the contract crsel
+pattern). Gates: `check_build` GREEN (stamp 890→891). `render_wo891.mjs` GREEN 19/19, RED 13 on the
+v890 control. `render_wo890.mjs` GREEN 19/19, `render_wo889.mjs` GREEN 24/24 (its stale text-layers /
+condition / colour assertions updated to the dropdown shapes).
+
+## Build 890 — Work Order: New Roof components list + optional post-job closeout
+
+Folds the rest of Theo's paper "Take Off / Post Job" form into the 889 work order (roofing only).
+Theo sent the old PDF and asked what to keep and whether it was too much; settled: keep the dispatch
+half, drop the money block entirely (his "no sale price" + the standing no-money-on-crew-WO rule),
+and make the post-job closeout optional. Changes in `index.html`:
+
+- **Satellite dish → three states** (`woTearOff`): Detach & Reset / Remove / None (radio `wo-sat`),
+  replacing 889's Yes/No. Autofill: a dish the inspection found is flagged "dish present …" with the
+  choice left to the crew; an inspection that recorded none pre-ticks **None**; **no inspection leaves
+  it blank** (never assume). ⚠️ Caught in the gate: the label `'Detach & Reset'` must be passed to
+  `woCbx` with a plain `&` — `woCbx` runs `woEsc()`, so `'&amp;'` would double-escape and print
+  literally.
+- **New Roof — Components** (`woComponents`): pipe jacks (count), pipe boots, box vents, power vent,
+  ridge vent (+ length from the ridge measurement), gable vents, bath/kitchen vents, step/wall
+  flashing, chimney cricket, chimney flashing S/M/L. Autofilled from the inspection where it knows —
+  `jacks`, `vent_types` (Ridge/Box/Power/Gable), `bathvents`, `kitchvents`, `boot`, `flash` — blank
+  `.cbx`/`.ph` to fill otherwise. Every box is a real `.cbx` the editor wires.
+- **Optional Post-Job Closeout** (`woCloseout`): leftover materials returnable / non-returnable, Lot#,
+  date completed. Off by default; a `#woCloseCk` checkbox in the picker turns it on (`opts.closeout`).
+  **No money** — deliberately, per settled rule.
+- A "start and completion dates are weather permitting" note on the schedule.
+
+Gates: `check_build` GREEN (stamp 889→890, div balance 3956/3956). `render_wo890.mjs` (Chromium, three
+scenarios — dish+closeout, no-dish, no-inspection) GREEN 19/19, RED 12 on the v889 control.
+`render_wo889.mjs` re-run GREEN 24/24 (its stale Yes/No satellite assertion updated to the new
+three-state). Roofing only; other trades unchanged.
+
 ## Build 889 — the crew Roofing Work Order, rebuilt (Field Ticket)
 
 Theo asked to redesign the Production→crew Work Order (build 555's document) for roofing.

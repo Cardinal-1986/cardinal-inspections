@@ -78,16 +78,18 @@ try {
   // autofill
   ok('squares called out big (24.3)', doc.includes('>24.3</div>') && doc.includes('Squares</div>'));
   ok('measurement rows carry LF values', doc.includes('42 lf') && doc.includes('96 lf'));
-  ok('existing layers autofilled (2)', /Existing layers to remove<\/td><td[^>]*>2</.test(doc), doc.match(/Existing layers to remove[\s\S]{0,60}/));
-  ok('satellite dish Yes pre-ticked', /☑<\/span> Yes/.test(doc) && doc.includes('data-group="wo-sat"'));
+  ok('existing layers autofilled (2)', /Existing layers to remove<\/td><td[^>]*><select[\s\S]*?<option value="2" selected>/.test(doc)); /* 891: dropdown */
+  /* 890 replaced the Yes/No satellite with Detach & Reset / Remove / None; a dish
+     from the inspection is now flagged "dish present" rather than pre-ticking Yes. */
+  ok('satellite dish flagged from inspection', /dish present/.test(doc) && doc.includes('data-group="wo-sat"'));
   ok('inspected decking type (OSB) pre-ticked', /☑<\/span> OSB/.test(doc) && doc.includes('data-group="wo-deck"'));
-  ok('condition autofilled (Fair)', doc.includes('<b>Fair</b>'));
+  ok('condition autofilled (Fair)', /<option value="Fair" selected>/.test(doc)); /* 891: dropdown */
   ok('re-deck and sheets are fill-in', doc.includes('data-group="wo-redeck"') && /Sheets replaced/.test(doc));
   ok('structures Home/Garage/Shed present', doc.includes('Home') && doc.includes('Garage') && doc.includes('Shed'));
 
   // colors carried
-  ok('shingle color carried (Estate Gray)', /Shingle color<\/td><td[^>]*><b>Estate Gray<\/b>/.test(doc));
-  ok('drip edge color carried (White)', /Drip edge color<\/td><td[^>]*><b>White<\/b>/.test(doc));
+  ok('shingle color carried (Estate Gray)', /data-crsel="occ"[^>]*data-crsel-value="Estate Gray"/.test(doc)); /* 891: dropdown */
+  ok('drip edge color carried (White)', /data-crsel="trim"[^>]*data-crsel-value="White"/.test(doc)); /* 891: dropdown */
 
   // notes autofill
   ok('notes carried from inspection', doc.includes('Dogs on site'));
