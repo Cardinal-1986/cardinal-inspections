@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-17 build 891 &#8212; Work Order polish — the address fills in reliably, layers / condition / colors are dropdowns, the schedule has a date picker, and the crew sign-off line is gone (Cardinal signs)</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 892 &#8212; Fixed: a new work order from the client page now fills in the homeowner, address and phone (the button was handing the work order the tap instead of the client)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20848,8 +20848,12 @@ async function woReadContractColors(pr){
 }
 
 async function openWorkOrderPicker(project){
-  /* 843: Crew Dispatch passes the job to crew here; the New-work-order button passes none. */
-  var pr = project || currentProject;
+  /* 843: Crew Dispatch passes the job to crew here; the profile button passes none.
+     892: it was wired as addEventListener('click', openWorkOrderPicker), so the CLICK
+     EVENT arrived here as `project` — an object with no id/name/address, which then
+     shadowed currentProject and printed a blank Job block on every profile-issued work
+     order since 843. Require a real project (has an id); anything else falls back. */
+  var pr = (project && project.id) ? project : currentProject;
   if(!pr) return;
   var m = document.getElementById('tskModal');
   var body = document.getElementById('tskModalBody');
@@ -21050,7 +21054,7 @@ if(__pNewContractBtn && __pContractMenu){
 var __contractDocsMount = document.getElementById('contractDocsMount');
 if(__contractDocsMount) __contractDocsMount.addEventListener('click', handleDocAction);
 var __pNewWorkOrderBtn = document.getElementById('pNewWorkOrderBtn');
-if(__pNewWorkOrderBtn) __pNewWorkOrderBtn.addEventListener('click', openWorkOrderPicker);
+if(__pNewWorkOrderBtn) __pNewWorkOrderBtn.addEventListener('click', function(){ openWorkOrderPicker(); });
 var __woDocsMount = document.getElementById('woDocsMount');
 if(__woDocsMount) __woDocsMount.addEventListener('click', handleDocAction);
 var __commMount = document.getElementById('commMount');
@@ -40338,6 +40342,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:892, d:'2026-08-18', t:'Work Order fills the homeowner/address again',
+s:'A real bug: creating a work order from a client\u2019s + New work order button left the Homeowner, Address and Phone blank (and did not tie the work order to the client). The button was handing the work-order builder the tap itself instead of the open client, so it had no name or address to fill in. It now correctly uses the open client, so the job details fill in automatically. This affected work orders made from the client page since the Crew Dispatch board was added; ones made from the dispatch board were fine. Old work orders already saved blank need the details typed in or can be re-issued.' },
 { b:891, d:'2026-08-17', t:'Work Order polish — dropdowns, address fill, date picker',
 s:'Fixes and polish on the roofing work order from field testing. The homeowner name, address and phone now fill in reliably even for clients whose address lives on the Location card or the lead rather than the top of the profile (that is why an address could come up blank). Existing layers is now a dropdown (1\u20134), Condition at inspection is a dropdown using the inspection\u2019s own wording (Good / Fair / Poor), and Shingle color and Drip edge color are dropdowns off the same Owens Corning and trim lists the contract uses \u2014 each pre-selected from the signed contract when there is one. If no schedule date was set when the work order was made, Scheduled shows a date picker. And the Crew sign-off line is removed \u2014 most crews have no email on file and it was a bottleneck; the Cardinal sign-off stays for Curtis / production. Roofing work orders only.' },
 { b:890, d:'2026-08-17', t:'Roofing Work Order — components list + post-job closeout',
