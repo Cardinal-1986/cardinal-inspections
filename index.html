@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 895 &#8212; New admin-only Owner Console (Menu → Admin) — a daily owner’s brief: Today’s Top 10, the tax/BWC/1099 calendar, and what’s about to expire</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 896 &#8212; Owner Console — you can now edit an entry, not just add or delete it: tap any task, deadline or renewal you added to fix its wording, note or date</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40342,6 +40342,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:896, d:'2026-08-18', t:'Owner Console — entries are editable',
+s:'In the Owner Console you could add, check off and delete entries, but not fix one after the fact. Now you can: tap any task on Today’s Top 10, or any deadline or renewal you added, and it opens inline so you can correct the wording, change the note, or move the date — Save or Cancel. (The tax-calendar rows and the subcontractor certificates from Crews stay read-only, as before.) Enter saves, Escape cancels.' },
 { b:895, d:'2026-08-18', t:'New — the Owner Console (admin only)',
 s:'A new owner-level dashboard for the things that live outside any one customer. Open it from Menu → Admin → Owner Console (admins only). It opens as a calm morning brief with three parts: Today’s Top 10 (a running to-do list you check off), On the horizon (the tax and compliance calendar — quarterly estimated taxes, the annual return, 1099-NEC to your subs, and the Ohio BWC true-up, each counting down to its date), and Renewals & Expirations (your subcontractors’ certificates from Crews plus any renewals you add, like insurance or plates). Dates are the standard federal/Ohio deadlines for a single-member LLC paid through 1099s — confirm your exact filing dates with your accountant. This is phase one; money and quick reminders come next.' },
 { b:894, d:'2026-08-18', t:'Client list \u2014 the filter bar is one clean row',
@@ -73166,6 +73168,17 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
 #cr-owner .ow-add button{border:0;border-radius:8px;background:#231d18;color:#fff;
   font:700 12px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.04em;padding:11px 15px;cursor:pointer;}
 #cr-owner .ow-add button:active{background:#c8202e;}
+#cr-owner .ow-ag .tt,#cr-owner .ow-obl .ot{cursor:pointer;}
+#cr-owner .ow-editing{display:block;padding:12px 0;border-bottom:1px solid #e5ded3;}
+#cr-owner .ow-ef{display:flex;flex-direction:column;gap:8px;}
+#cr-owner .ow-ef input{border:1px solid #ddd2c4;border-radius:8px;background:#fffdf9;padding:9px 12px;font:400 14.5px/1.2 Georgia,serif;color:#231d18;}
+#cr-owner .ow-ef input[type=date]{font:400 12.5px/1.2 "Segoe UI",Arial,sans-serif;color:#4d443b;align-self:flex-start;}
+#cr-owner .ow-ef input:focus{outline:none;border-color:#c8202e;}
+#cr-owner .ow-efb{display:flex;gap:8px;}
+#cr-owner .ow-efb button{border:0;border-radius:8px;font:700 12px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.04em;padding:10px 15px;cursor:pointer;}
+#cr-owner .ow-efb button[data-act=edit-save]{background:#231d18;color:#fff;}
+#cr-owner .ow-efb button[data-act=edit-save]:active{background:#c8202e;}
+#cr-owner .ow-efb button[data-act=edit-cancel]{background:#eadfd2;color:#6b5f54;}
 #cr-owner .ow-foot{padding:26px 22px 40px;text-align:center;}
 #cr-owner .ow-foot .fl{font:700 8.5px/1 "Segoe UI",Arial,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#c2b4a4;}
 </style>
@@ -73174,6 +73187,17 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
 (function(){
   var view = null, built = false;
   var TASKS = [], OITEMS = [], DOCS = [];
+  var editing = null;   /* 896: {type:'task'|'item', id} — one row edited at a time */
+  function editFormHTML(title, note, due){
+    /* due === null omits the date field (tasks); '' or 'YYYY-MM-DD' shows it (items) */
+    return '<div class="ow-ef">' +
+      '<input type="text" id="ow-edit-title" maxlength="200" placeholder="Title" value="' + esc(title) + '">' +
+      '<input type="text" id="ow-edit-note" maxlength="200" placeholder="Note (optional)" value="' + esc(note || '') + '">' +
+      (due !== null ? '<input type="date" id="ow-edit-date" value="' + esc(due || '') + '">' : '') +
+      '<div class="ow-efb"><button type="button" data-act="edit-save">Save</button>' +
+      '<button type="button" data-act="edit-cancel">Cancel</button></div>' +
+    '</div>';
+  }
 
   function cl(){ return window.sb || window.supa || null; }
   function me(){ return (window.currentUser && window.currentUser.email) || null; }
@@ -73263,20 +73287,29 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     if(!open.length && !done.length){
       h += '<div class="ow-empty">Nothing yet. Add the first thing you don’t want to forget today.</div>';
     }
+    function isEdit(t){ return editing && editing.type === 'task' && String(editing.id) === String(t.id); }
     open.forEach(function(t){
       n++;
+      if(isEdit(t)){
+        h += '<div class="ow-ag ow-editing" data-id="' + t.id + '"><span class="nn">' + n + '</span>' + editFormHTML(t.title, t.note, null) + '</div>';
+        return;
+      }
       h += '<div class="ow-ag" data-id="' + t.id + '">' +
         '<span class="nn">' + n + '</span>' +
         '<span class="bx" data-act="task-done"></span>' +
-        '<span class="tt" data-act="task-done">' + esc(t.title) + (t.note ? '<small>' + esc(t.note) + '</small>' : '') + '</span>' +
+        '<span class="tt" data-act="task-edit">' + esc(t.title) + (t.note ? '<small>' + esc(t.note) + '</small>' : '') + '</span>' +
         '<button class="del" data-act="task-del" type="button" aria-label="Remove">×</button>' +
       '</div>';
     });
     done.forEach(function(t){
+      if(isEdit(t)){
+        h += '<div class="ow-ag done ow-editing" data-id="' + t.id + '"><span class="nn">✓</span>' + editFormHTML(t.title, t.note, null) + '</div>';
+        return;
+      }
       h += '<div class="ow-ag done" data-id="' + t.id + '">' +
         '<span class="nn">✓</span>' +
         '<span class="bx" data-act="task-done"></span>' +
-        '<span class="tt" data-act="task-done">' + esc(t.title) + '</span>' +
+        '<span class="tt" data-act="task-edit">' + esc(t.title) + '</span>' +
         '<button class="del" data-act="task-del" type="button" aria-label="Remove">×</button>' +
       '</div>';
     });
@@ -73342,11 +73375,14 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   }
 
   function itemRowHTML(i){
+    if(editing && editing.type === 'item' && String(editing.id) === String(i.id)){
+      return '<div class="ow-obl ow-editing" data-id="' + i.id + '">' + editFormHTML(i.title, i.note, String(i.due_date || '').slice(0, 10)) + '</div>';
+    }
     var d = parseDate(i.due_date), done = !!i.done_at, n = d ? daysTo(d) : null;
     var od = d ? ('<span class="od ' + (done ? '' : dueClass(n)) + '">' + (done ? 'done' : dueWord(n)) + '<b>' + dstr(d) + '</b></span>') : '<span class="od">no date</span>';
     return '<div class="ow-obl' + (done ? ' done' : '') + '" data-id="' + i.id + '">' +
       '<span class="bx" data-act="item-done"></span>' +
-      '<span class="ot">' + esc(i.title) + (i.note ? '<small>' + esc(i.note) + '</small>' : '') + '</span>' +
+      '<span class="ot" data-act="item-edit">' + esc(i.title) + (i.note ? '<small>' + esc(i.note) + '</small>' : '') + '</span>' +
       '<span class="rt">' + od + '<button class="del" data-act="item-del" type="button" aria-label="Remove">×</button></span>' +
     '</div>';
   }
@@ -73403,13 +73439,39 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
         await c.from('owner_items').delete().eq('id', id);
         OITEMS = OITEMS.filter(function(x){ return String(x.id) !== String(id); });
         render();
+      } else if(act === 'task-edit'){
+        editing = { type:'task', id:id }; render(); focusEdit();
+      } else if(act === 'item-edit'){
+        editing = { type:'item', id:id }; render(); focusEdit();
+      } else if(act === 'edit-cancel'){
+        editing = null; render();
+      } else if(act === 'edit-save'){
+        if(!editing){ return; }
+        var eid = editing.id, ety = editing.type;
+        var tin = view.querySelector('#ow-edit-title'), nin = view.querySelector('#ow-edit-note'), din = view.querySelector('#ow-edit-date');
+        var nt = (tin && tin.value || '').trim(); if(!nt) return;
+        var nn = (nin && nin.value || '').trim() || null;
+        if(ety === 'task'){
+          var tk2 = TASKS.find(function(x){ return String(x.id) === String(eid); });
+          await c.from('owner_tasks').update({ title:nt, note:nn }).eq('id', eid);
+          if(tk2){ tk2.title = nt; tk2.note = nn; }
+        } else {
+          var nd2 = (din && din.value) || null;
+          var it2 = OITEMS.find(function(x){ return String(x.id) === String(eid); });
+          await c.from('owner_items').update({ title:nt, note:nn, due_date:nd2 }).eq('id', eid);
+          if(it2){ it2.title = nt; it2.note = nn; it2.due_date = nd2; }
+        }
+        editing = null; render();
       }
     }catch(err){ console.warn('owner-console', err); alert('Could not save — ' + (err && err.message ? err.message : 'try again')); }
   }
 
+  function focusEdit(){ try{ var el = view.querySelector('#ow-edit-title'); if(el){ el.focus(); el.select && el.select(); } }catch(_){ } }
   function onKey(e){
-    if(e.key !== 'Enter') return;
     var id = e.target && e.target.id;
+    if(e.key === 'Escape' && editing && /^ow-edit-/.test(id || '')){ e.preventDefault(); editing = null; render(); return; }
+    if(e.key !== 'Enter') return;
+    if(id === 'ow-edit-title' || id === 'ow-edit-note' || id === 'ow-edit-date'){ e.preventDefault(); var bs = view.querySelector('[data-act="edit-save"]'); if(bs) bs.click(); return; }
     if(id === 'ow-task-in'){ e.preventDefault(); var b = view.querySelector('[data-act="task-add"]'); if(b) b.click(); }
     else if(id === 'ow-obl-in'){ e.preventDefault(); var b2 = view.querySelector('[data-act="obl-add"]'); if(b2) b2.click(); }
     else if(id === 'ow-ren-in'){ e.preventDefault(); var b3 = view.querySelector('[data-act="ren-add"]'); if(b3) b3.click(); }
@@ -73442,6 +73504,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   }
 
   function close(){
+    editing = null;
     if(view) view.style.display = 'none';
     var hdr = document.querySelector('header.site'); if(hdr) hdr.style.display = '';
     if(typeof showHome === 'function'){ try{ showHome(); return; }catch(_){ } }

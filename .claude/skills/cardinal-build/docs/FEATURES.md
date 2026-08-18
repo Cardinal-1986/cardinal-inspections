@@ -5357,3 +5357,5 @@ Phase 1 = three modules, `<style id="cr-owner-styles">` + `<script id="cr-owner-
 Tables `owner_tasks` / `owner_items` (`owner_console_schema.sql`, applied, `is_cardinal_admin()` RLS).
 Gate `render_owner895.mjs` (Chromium, 20 assertions, negative-controlled). **Phase 2 = money + quick
 reminders (modules 4-6), not yet built.**
+
+**Build 896** made owner-created entries editable: tap a task, obligation or renewal to edit its title/note (and date, for items) inline — Save/Cancel, Enter/Escape. The tax calendar and crew certificates stay read-only.

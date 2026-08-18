@@ -18605,3 +18605,19 @@ all three sections + the four tax rows + countdowns + seeded rows render, adding
 refused: **GREEN 20/20**. Negative-controlled **RED** against v894 (module absent, node exit 1).
 `check_build` green (stamp 894 -> 895; 118 inline scripts, 121/121 script tags, 140/140 style tags,
 div balance 3980/3980). Phase 2 (money + quick reminders) next.
+
+## Build 896 — Owner Console entries are editable
+
+Theo: "Make entries editable and continue on." The console let you add / check / delete but not
+correct an entry after the fact. Now tapping a title opens an inline editor: tasks edit title+note,
+owner obligations/renewals edit title+note+date. One row edits at a time (single `editing` state +
+one set of `#ow-edit-*` ids, so no duplicate-id trap). Enter saves, Escape cancels; `close()` clears
+`editing`. Read-only rows are untouched — the computed tax calendar and the crew certificates carry
+no edit affordance (no data-id / no `*-edit` act). Title tap moved from `task-done` to `task-edit`;
+the checkbox still toggles done.
+
+Gate: `render_owner896.mjs` — Chromium, edits a seeded task and item, proving the editor opens with
+the row's text, Save writes an `owner_tasks` / `owner_items` UPDATE carrying the new title (+ due_date
+for items) and re-renders, and Cancel writes nothing: **GREEN 11/11**. Negative-controlled **RED**
+against v895 (no edit affordance). `render_owner895.mjs` still GREEN on 896 (add/check/delete
+unregressed). `check_build` green (895 -> 896; div balance 3985/3985). No SQL.
