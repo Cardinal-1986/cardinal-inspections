@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 898 &#8212; Owner Console reminders can now ping you — tick “Ping me” on a dated reminder and it lands in your morning digest email on the day it’s due</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 899 &#8212; New in the Owner Console: The Ledger — your private book of money owed and advanced (loans you’ve taken, sales draws, money you’ve lent), each with a running balance</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40342,6 +40342,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:899, d:'2026-08-18', t:'Owner Console \u2014 The Ledger',
+s:'A new section, The Ledger, for the money that moves outside the jobs: loans you have taken (from your crew, an industry peer, a bank), sales draws you have advanced a rep, and money you have lent out. The top shows your net position \u2014 what you owe and what is owed to you. Add an account with a starting amount, tap it open to see a dated history, and record a payment or another draw against it any time; the running balance updates itself. Mark an account settled when it clears. Admin only, and completely private \u2014 none of it touches the customer side. Sales draws are entered by hand for now; the data is built so they can later recoup automatically from commissions.' },
 { b:898, d:'2026-08-18', t:'Owner Console reminders can ping you',
 s:'Reminders in the Owner Console can now reach you, not just sit in the brief. Tick \u201CPing me\u201D when you add or edit a reminder that has a date, and it will be included in your daily morning digest email on the day it is due (repeating reminders ping on each occurrence; a one-time reminder keeps showing until you check it off). Reminders with no date, or without \u201CPing me\u201D, stay in the console only. Admin only, and it uses the same daily email that already sends your schedule.' },
 { b:897, d:'2026-08-18', t:'Owner Console — Quick Reminders',
@@ -73175,6 +73177,23 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
 #cr-owner .ow-add select,#cr-owner .ow-ef select{border:1px solid #ddd2c4;border-radius:8px;background:#fffdf9;padding:8px 10px;font:400 12.5px/1.2 "Segoe UI",Arial,sans-serif;color:#4d443b;cursor:pointer;}
 #cr-owner .ow-chk{display:inline-flex;align-items:center;gap:6px;font:600 12px/1 "Segoe UI",Arial,sans-serif;color:#6b5f54;cursor:pointer;white-space:nowrap;}
 #cr-owner .ow-chk input{width:16px;height:16px;accent-color:#c8202e;cursor:pointer;}
+#cr-owner .ow-add input[type=number]{flex:0 0 auto;max-width:120px;border:1px solid #ddd2c4;border-radius:8px;background:#fffdf9;padding:9px 12px;font:400 14px/1.2 Georgia,serif;color:#231d18;}
+#cr-owner .ow-add input[type=number]:focus{outline:none;border-color:#c8202e;}
+#cr-owner .ow-net{display:flex;justify-content:space-between;gap:14px;font:400 14px/1.4 Georgia,serif;color:#6b5f54;margin:0 0 14px;padding-bottom:13px;border-bottom:2px solid #c8202e;}
+#cr-owner .ow-net b{font-family:ui-monospace,Menlo,monospace;color:#231d18;font-weight:700;}
+#cr-owner .ow-net b.red{color:#c8202e;}
+#cr-owner .ow-acct .od{font-family:ui-monospace,Menlo,monospace;}
+#cr-owner .ow-adetail{padding:2px 0 14px;border-bottom:1px solid #e5ded3;}
+#cr-owner .ow-ltxns{margin:2px 0 10px;}
+#cr-owner .ow-ltxn{display:flex;align-items:baseline;gap:10px;padding:5px 0;font-family:"Segoe UI",Arial,sans-serif;font-size:12.5px;color:#6b5f54;}
+#cr-owner .ow-ltxn .lt-d{width:56px;flex:none;color:#9a8b7e;font-size:11.5px;white-space:nowrap;}
+#cr-owner .ow-ltxn .lt-w{flex:1;}
+#cr-owner .ow-ltxn .lt-a{font-family:ui-monospace,Menlo,monospace;font-weight:700;white-space:nowrap;}
+#cr-owner .ow-ltxn .lt-a.up{color:#b06a12;} #cr-owner .ow-ltxn .lt-a.dn{color:#3f7d53;}
+#cr-owner .ow-ltxn .del{border:0;background:none;color:#c9b8a8;font:400 15px/1 "Segoe UI",Arial,sans-serif;cursor:pointer;padding:0 2px;}
+#cr-owner .ow-arow{display:flex;gap:8px;margin-top:6px;}
+#cr-owner .ow-mini{border:1px solid #ddd2c4;border-radius:8px;background:#fffdf9;color:#6b5f54;font:700 11px/1 "Segoe UI",Arial,sans-serif;padding:8px 12px;cursor:pointer;}
+#cr-owner .ow-mini.ow-danger{color:#c8202e;border-color:#e6c9c9;}
 #cr-owner .ow-ag .tt,#cr-owner .ow-obl .ot{cursor:pointer;}
 #cr-owner .ow-editing{display:block;padding:12px 0;border-bottom:1px solid #e5ded3;}
 #cr-owner .ow-ef{display:flex;flex-direction:column;gap:8px;}
@@ -73194,6 +73213,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
 (function(){
   var view = null, built = false;
   var TASKS = [], OITEMS = [], DOCS = [], REMINDERS = [];
+  var LEDGER = [], LTXNS = [], openAcct = null;   /* 899: The Ledger */
   var editing = null;   /* 896: {type:'task'|'item', id} — one row edited at a time */
   function editFormHTML(title, note, due){
     /* due === null omits the date field (tasks); '' or 'YYYY-MM-DD' shows it (items) */
@@ -73252,7 +73272,9 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
       c.from('owner_items').select('*').order('due_date', { ascending:true, nullsFirst:false }).order('created_at'),
       c.from('crew_docs').select('id,crew_id,kind,file_name,carrier,expires_on'),
       c.from('crews').select('id,name,trade').eq('archived', false),
-      c.from('owner_reminders').select('*').order('done_at', { ascending:true, nullsFirst:true }).order('remind_on', { ascending:true, nullsFirst:false })
+      c.from('owner_reminders').select('*').order('done_at', { ascending:true, nullsFirst:true }).order('remind_on', { ascending:true, nullsFirst:false }),
+      c.from('owner_ledger').select('*').order('created_at'),
+      c.from('owner_ledger_txns').select('*')
     ]);
     TASKS  = (res[0] && res[0].data) || [];
     OITEMS = (res[1] && res[1].data) || [];
@@ -73267,6 +73289,8 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     }).filter(function(d){ return d.expires; });
     DOCS.sort(function(a,b){ return a.expires - b.expires; });
     REMINDERS = (res[4] && res[4].data) || [];
+    LEDGER = (res[5] && res[5].data) || [];
+    LTXNS  = (res[6] && res[6].data) || [];
   }
 
   function greeting(){ var h = new Date().getHours(); return h < 12 ? 'Good morning' : (h < 17 ? 'Good afternoon' : 'Good evening'); }
@@ -73456,10 +73480,81 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     '</div></div>';
     return h;
   }
+  var KIND_LBL = { borrowed:'You owe', draw:'Sales draw', lent:'You lent' };
+  var PT_LBL = { coworker:'Team', industry:'Industry', bank:'Bank', other:'Other' };
+  function fmtMoney(n){ var v = Number(n) || 0; return '$' + v.toLocaleString('en-US', { minimumFractionDigits:0, maximumFractionDigits:2 }); }
+  function acctTxns(id){ return LTXNS.filter(function(t){ return String(t.ledger_id) === String(id); }); }
+  function balanceOf(id){
+    return acctTxns(id).reduce(function(s, t){ return s + (t.direction === 'advance' ? Number(t.amount || 0) : -Number(t.amount || 0)); }, 0);
+  }
+  function acctDetailHTML(a){
+    var txns = acctTxns(a.id).slice().sort(function(x, y){ return String(y.txn_date || y.created_at).localeCompare(String(x.txn_date || x.created_at)); });
+    var rows = txns.map(function(t){
+      var adv = t.direction === 'advance';
+      var word = adv ? (a.kind === 'borrowed' ? 'borrowed' : (a.kind === 'draw' ? 'drew' : 'lent')) : (a.kind === 'borrowed' ? 'paid back' : 'received');
+      return '<div class="ow-ltxn" data-tid="' + t.id + '">' +
+        '<span class="lt-d">' + (t.txn_date ? esc(dstr(parseDate(t.txn_date))) : '') + '</span>' +
+        '<span class="lt-w">' + word + (t.note ? ' · ' + esc(t.note) : '') + '</span>' +
+        '<span class="lt-a ' + (adv ? 'up' : 'dn') + '">' + (adv ? '+' : '−') + fmtMoney(t.amount) + '</span>' +
+        '<button class="del" data-act="ltxn-del" type="button" aria-label="Remove">×</button>' +
+      '</div>';
+    }).join('');
+    return '<div class="ow-adetail" data-id="' + a.id + '">' +
+      '<div class="ow-ltxns">' + (rows || '<div class="ow-empty" style="padding:6px 0">No entries yet.</div>') + '</div>' +
+      '<div class="ow-add ow-payadd">' +
+        '<input type="number" step="0.01" min="0" id="ow-pay-amt" placeholder="Amount" inputmode="decimal">' +
+        '<input type="date" id="ow-pay-date" aria-label="Date">' +
+        '<select id="ow-pay-dir"><option value="payment">' + (a.kind === 'borrowed' ? 'I paid' : 'Received') + '</option>' +
+          '<option value="advance">' + (a.kind === 'borrowed' ? 'Borrowed more' : (a.kind === 'draw' ? 'Another draw' : 'Lent more')) + '</option></select>' +
+        '<button type="button" data-act="led-pay">Add</button>' +
+      '</div>' +
+      '<div class="ow-arow">' +
+        '<button type="button" class="ow-mini" data-act="led-settle">' + (a.settled_at ? 'Reopen' : 'Mark settled') + '</button>' +
+        '<button type="button" class="ow-mini ow-danger" data-act="led-del">Delete</button>' +
+      '</div>' +
+    '</div>';
+  }
+  function acctRowHTML(a){
+    var bal = balanceOf(a.id), settled = !!a.settled_at, opened = String(openAcct) === String(a.id);
+    var sub = [PT_LBL[a.party_type] || 'Other'];
+    if(a.kind === 'draw') sub.push('Sales draw'); else if(a.kind === 'lent') sub.push('You lent');
+    var h = '<div class="ow-obl ow-acct' + (settled ? ' done' : '') + '" data-id="' + a.id + '">' +
+      '<span class="ot" data-act="led-open">' + esc(a.party) + '<small>' + esc(sub.join(' · ')) + (a.note ? ' · ' + esc(a.note) : '') + '</small></span>' +
+      '<span class="rt"><span class="od' + (!settled && a.kind === 'borrowed' ? ' red' : '') + '">' + (settled ? 'settled' : fmtMoney(bal)) + '</span></span>' +
+    '</div>';
+    if(opened) h += acctDetailHTML(a);
+    return h;
+  }
+  function ledgerHTML(){
+    var open = LEDGER.filter(function(a){ return !a.settled_at; });
+    var settled = LEDGER.filter(function(a){ return a.settled_at; });
+    var owe = open.filter(function(a){ return a.kind === 'borrowed'; });
+    var owed = open.filter(function(a){ return a.kind === 'draw' || a.kind === 'lent'; });
+    var oweTot = owe.reduce(function(s, a){ return s + balanceOf(a.id); }, 0);
+    var owedTot = owed.reduce(function(s, a){ return s + balanceOf(a.id); }, 0);
+    var h = '<div class="ow-sec"><div class="ow-sl">The Ledger</div>';
+    h += '<div class="ow-net"><span>You owe <b class="red">' + fmtMoney(oweTot) + '</b></span>' +
+         '<span>Owed to you <b>' + fmtMoney(owedTot) + '</b></span></div>';
+    if(!LEDGER.length){
+      h += '<div class="ow-empty">Nothing tracked yet. Add a loan you’ve taken, a sales draw, or money you’ve lent.</div>';
+    }
+    if(owe.length){ h += '<div class="ow-ref">Money you owe</div>'; owe.forEach(function(a){ h += acctRowHTML(a); }); }
+    if(owed.length){ h += '<div class="ow-ref">Owed to you</div>'; owed.forEach(function(a){ h += acctRowHTML(a); }); }
+    if(settled.length){ h += '<div class="ow-ref">Settled</div>'; settled.forEach(function(a){ h += acctRowHTML(a); }); }
+    h += '<div class="ow-add ow-ledadd">' +
+      '<input type="text" id="ow-led-name" placeholder="Who / what…" maxlength="120">' +
+      '<input type="number" step="0.01" min="0" id="ow-led-amt" placeholder="Amount" inputmode="decimal">' +
+      '<select id="ow-led-kind"><option value="borrowed">I owe them</option><option value="draw">Sales draw</option><option value="lent">I lent them</option></select>' +
+      '<select id="ow-led-pt"><option value="coworker">Team</option><option value="industry">Industry</option><option value="bank">Bank</option><option value="other">Other</option></select>' +
+      '<input type="date" id="ow-led-date" aria-label="Date">' +
+      '<button type="button" data-act="led-add">Add</button>' +
+    '</div></div>';
+    return h;
+  }
   function render(){
     if(!view) return;
     var body = view.querySelector('.ow-wrap');
-    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() +
+    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() + ledgerHTML() +
       '<div class="ow-foot"><div class="fl">Cardinal Roofing &amp; Renovations · Owner</div></div>';
   }
 
@@ -73531,6 +73626,51 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
         await c.from('owner_reminders').delete().eq('id', id);
         REMINDERS = REMINDERS.filter(function(x){ return String(x.id) !== String(id); });
         render();
+      } else if(act === 'led-add'){
+        var nel = view.querySelector('#ow-led-name'), nm = (nel.value || '').trim(); if(!nm) return;
+        var amt = Math.max(0, Number((view.querySelector('#ow-led-amt') || {}).value) || 0);
+        var kd = (view.querySelector('#ow-led-kind') || {}).value || 'borrowed';
+        var pt = (view.querySelector('#ow-led-pt') || {}).value || 'other';
+        var dt = (view.querySelector('#ow-led-date') || {}).value || null;
+        var ins = await c.from('owner_ledger').insert({ kind:kd, party:nm, party_type:pt, opened_on:dt, created_by:me() }).select().single();
+        if(ins && ins.data){
+          LEDGER.push(ins.data);
+          if(amt > 0){
+            var tx0 = await c.from('owner_ledger_txns').insert({ ledger_id:ins.data.id, direction:'advance', amount:amt, txn_date:dt, created_by:me() }).select().single();
+            if(tx0 && tx0.data) LTXNS.push(tx0.data);
+          }
+          openAcct = ins.data.id;
+        }
+        render();
+      } else if(act === 'led-open'){
+        openAcct = (String(openAcct) === String(id)) ? null : id;
+        render();
+      } else if(act === 'led-pay'){
+        var pamt = Math.max(0, Number((view.querySelector('#ow-pay-amt') || {}).value) || 0);
+        if(!(pamt > 0)) return;
+        var pdir = (view.querySelector('#ow-pay-dir') || {}).value || 'payment';
+        var pdate = (view.querySelector('#ow-pay-date') || {}).value || null;
+        var txp = await c.from('owner_ledger_txns').insert({ ledger_id:id, direction:pdir, amount:pamt, txn_date:pdate, created_by:me() }).select().single();
+        if(txp && txp.data) LTXNS.push(txp.data);
+        render();
+      } else if(act === 'led-settle'){
+        var la = LEDGER.find(function(x){ return String(x.id) === String(id); });
+        if(!la) return;
+        var sv = la.settled_at ? null : new Date().toISOString();
+        await c.from('owner_ledger').update({ settled_at:sv }).eq('id', id); la.settled_at = sv;
+        render();
+      } else if(act === 'led-del'){
+        await c.from('owner_ledger').delete().eq('id', id);
+        LEDGER = LEDGER.filter(function(x){ return String(x.id) !== String(id); });
+        LTXNS  = LTXNS.filter(function(x){ return String(x.ledger_id) !== String(id); });
+        if(String(openAcct) === String(id)) openAcct = null;
+        render();
+      } else if(act === 'ltxn-del'){
+        var tn = t.closest('[data-tid]'); var tid = tn ? tn.getAttribute('data-tid') : null;
+        if(!tid) return;
+        await c.from('owner_ledger_txns').delete().eq('id', tid);
+        LTXNS = LTXNS.filter(function(x){ return String(x.id) !== String(tid); });
+        render();
       } else if(act === 'rem-edit'){
         editing = { type:'reminder', id:id }; render(); focusEdit();
       } else if(act === 'task-edit'){
@@ -73577,6 +73717,8 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     if(/^ow-edit-/.test(id || '')){ e.preventDefault(); var bs = view.querySelector('[data-act="edit-save"]'); if(bs) bs.click(); return; }
     if(id === 'ow-task-in'){ e.preventDefault(); var b = view.querySelector('[data-act="task-add"]'); if(b) b.click(); }
     else if(id === 'ow-rem-in'){ e.preventDefault(); var br = view.querySelector('[data-act="rem-add"]'); if(br) br.click(); }
+    else if(id === 'ow-led-name' || id === 'ow-led-amt'){ e.preventDefault(); var bl = view.querySelector('[data-act="led-add"]'); if(bl) bl.click(); }
+    else if(id === 'ow-pay-amt'){ e.preventDefault(); var bp = view.querySelector('[data-act="led-pay"]'); if(bp) bp.click(); }
     else if(id === 'ow-obl-in'){ e.preventDefault(); var b2 = view.querySelector('[data-act="obl-add"]'); if(b2) b2.click(); }
     else if(id === 'ow-ren-in'){ e.preventDefault(); var b3 = view.querySelector('[data-act="ren-add"]'); if(b3) b3.click(); }
   }
