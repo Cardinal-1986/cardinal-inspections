@@ -19050,3 +19050,26 @@ negative-controlled vs v914 (no `data-purain`/`data-dsprain`/`crRadarTemplate`).
 punch gates and 913 dispatch gate re-run GREEN. `check_build` green (914 -> 915, marker
 "915: rain radar overlay"). No SQL. (RainViewer is a new third-party tile source — the first non-OSM
 map data in the app; radar tiles need the live network, so Theo's eyes are the visual gate.)
+
+## Build 916 — Rain radar: shows its time, and stays fresh
+
+Self-picked follow-up to 915 (no design decision needed): the radar grabbed one frame and could go
+stale while the map sat open. Now it timestamps itself and auto-refreshes.
+
+- The shared helper gained **`crRadarFrame(force)`** returning `{url, time}` (RainViewer frame time),
+  **`crRadarClock(t)`** (unix → "2:40pm"), both on `window.CardinalRadar` alongside `template` (kept as
+  a thin `.url` wrapper for back-compat). `force` bypasses the 5-min cache for a real refresh.
+- Each map now: on toggle-on paints the layer via `applyRadar`/`applyDRadar`, shows a caption
+  ("Radar · as of <time>"), and arms `setInterval(refresh…, 300000)`; `refresh…` calls `frame(true)`
+  and repaints. `stop…` clears the interval, removes the layer, hides the caption.
+- Lifecycle: Punch clears the timer in `teardown()`; Dispatch calls `stopDRadar()` from
+  `setMapMode(false)` (leaving the map view) so a hidden map isn't refreshing. Punch caption is a
+  bottom-center pill; Dispatch caption sits under its top-right Rain button. Own `--disp-*`/pumap CSS.
+
+Gate `gate_radarts916.mjs` (Chromium; RainViewer stubbed with a fixed frame time; fetch counted): both
+maps arm a 300000ms refresh (source); `CardinalRadar.clock` formats the time (TZ-computed expectation);
+`frame` returns `{url,time}`; **`frame(false)` is cached, `frame(true)` forces a fetch**; the caption
+shows "Radar · as of <time>" on toggle; turning it off (Punch) / leaving the map (Dispatch) hides the
+caption and removes the layer. GREEN for punch and disp, negative-controlled vs v915 (no `crRadarFrame`/
+caption). Regression: 915 radar gate (both maps) + 913/910 gates re-run GREEN. `check_build` green
+(915 -> 916, marker "916: format a RainViewer frame"). No SQL.
