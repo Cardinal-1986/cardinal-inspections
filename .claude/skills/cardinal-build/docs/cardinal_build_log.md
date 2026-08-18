@@ -18763,3 +18763,29 @@ of and level with the calendar, calendar stays 7-col; at 1440 and 390 it's still
 (unchanged). **GREEN 7/7**, negative-controlled RED vs v903. `check_build` green (901 -> 904; note 902/903
 were the non-index SMS builds, so index.html went 901 -> 904). CSS-only, no SQL. More screens (client
 list, Owner Console) to get the same >=1600px treatment next, each previewed first.
+
+## Build 905 — client list fills an ultrawide screen (>=1600px, three CRM columns)
+
+Second screen to get the >=1600px treatment (after Production 904). On a 34" ultrawide the client
+directory stretched each card to ~2600px with a dead empty middle. Theo was offered a flat 2-col vs
+3-col grid, then asked for a CRM-organized layout instead ("1st column retail and insurance, 2nd
+community — or flow Retail, Insurance, Community"). Previewed both; he picked **B — three columns:
+Retail | Claims | Community side by side**, each with its own colored header dot + count.
+
+Unlike 904 (pure CSS), this is **structural** — the cards must be regrouped by CRM, which CSS cannot
+do to a flat name-sorted list. So the grouping is gated on `window.innerWidth >= 1600` inside
+`renderClientDirectory`: at ultrawide it emits three `.cd-crmsec` sections (built from `CD_CRMS`,
+each filtering `list` by `cdCrmOf`), and adds `.cd-crmcols` to `#cliList`; below 1600 the flat list
+is byte-for-byte unchanged. A resize listener re-renders **only** when the 1600px line is crossed
+AND the directory is open (CSS can't regroup, so a plain media query isn't enough). The grid itself
+is also gated `@media (min-width:1600px)` as a second safety net. Empty CRMs hide their section, so
+filtering to one CRM chip shows just that column. Delegated click/favstar/select handlers use
+`closest('.cd-card')`, unaffected by the section wrappers. Light-theme (`rb-light`) header inks use
+each CRM's `colorLight`.
+
+Gate `gate_cliwide905.mjs` (Chromium, seeded 10 retail / 4 insurance / 3 community): at 3440 —
+cd-crmcols present, 3 sections, cols=3, counts 10/4/3, **every card sits in its own CRM section (no
+cross-contamination)**, no page errors; filtered to Claims → 1 section of 4; at 1440 and 1194 — no
+class, flat list, single column, all 17 cards. **GREEN**, negative-controlled against v904 (no class,
+no sections, single 2600px column). `check_build` green (904 -> 905, marker `cd-crmcols`, negative
+control clean). No SQL. Owner Console is the next screen for the same treatment.
