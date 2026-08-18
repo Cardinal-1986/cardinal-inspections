@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 899 &#8212; New in the Owner Console: The Ledger — your private book of money owed and advanced (loans you’ve taken, sales draws, money you’ve lent), each with a running balance</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 900 &#8212; The Owner Console is complete: The Vault — keep your EIN letter, insurance, licenses and formation papers in one private, admin-only place with expiry reminders</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40342,6 +40342,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:900, d:'2026-08-18', t:'Owner Console \u2014 The Vault (module 6, complete)',
+s:'The last piece of the Owner Console: The Vault, a private place to keep your key business documents \u2014 EIN letter, insurance, licenses, formation papers, banking. Upload a file with a label, a category and an optional expiry date; it files itself under the right heading, and anything with an expiry counts down (and turns red when it is close). Tap a document to open it, or remove it. Everything is admin only and stored privately \u2014 the files are fenced off from the rest of the app and never touch the customer side. That completes all six Owner Console modules.' },
 { b:899, d:'2026-08-18', t:'Owner Console \u2014 The Ledger',
 s:'A new section, The Ledger, for the money that moves outside the jobs: loans you have taken (from your crew, an industry peer, a bank), sales draws you have advanced a rep, and money you have lent out. The top shows your net position \u2014 what you owe and what is owed to you. Add an account with a starting amount, tap it open to see a dated history, and record a payment or another draw against it any time; the running balance updates itself. Mark an account settled when it clears. Admin only, and completely private \u2014 none of it touches the customer side. Sales draws are entered by hand for now; the data is built so they can later recoup automatically from commissions.' },
 { b:898, d:'2026-08-18', t:'Owner Console reminders can ping you',
@@ -73194,6 +73196,10 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
 #cr-owner .ow-arow{display:flex;gap:8px;margin-top:6px;}
 #cr-owner .ow-mini{border:1px solid #ddd2c4;border-radius:8px;background:#fffdf9;color:#6b5f54;font:700 11px/1 "Segoe UI",Arial,sans-serif;padding:8px 12px;cursor:pointer;}
 #cr-owner .ow-mini.ow-danger{color:#c8202e;border-color:#e6c9c9;}
+#cr-owner .ow-file{flex:1 1 100%;font:400 12.5px/1.3 "Segoe UI",Arial,sans-serif;color:#6b5f54;}
+#cr-owner .ow-file::-webkit-file-upload-button,#cr-owner .ow-file::file-selector-button{border:1px solid #ddd2c4;border-radius:8px;background:#fffdf9;color:#4d443b;font:700 11px/1 "Segoe UI",Arial,sans-serif;padding:8px 12px;margin-right:10px;cursor:pointer;}
+#cr-owner .ow-doc .ot{cursor:pointer;} #cr-owner .ow-doc .ot small{color:#8a7d6f;}
+#cr-owner .ow-add button[disabled]{opacity:.6;cursor:default;}
 #cr-owner .ow-ag .tt,#cr-owner .ow-obl .ot{cursor:pointer;}
 #cr-owner .ow-editing{display:block;padding:12px 0;border-bottom:1px solid #e5ded3;}
 #cr-owner .ow-ef{display:flex;flex-direction:column;gap:8px;}
@@ -73214,6 +73220,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   var view = null, built = false;
   var TASKS = [], OITEMS = [], DOCS = [], REMINDERS = [];
   var LEDGER = [], LTXNS = [], openAcct = null;   /* 899: The Ledger */
+  var VAULT = [], vaultBusy = false;   /* 900: The Vault */
   var editing = null;   /* 896: {type:'task'|'item', id} — one row edited at a time */
   function editFormHTML(title, note, due){
     /* due === null omits the date field (tasks); '' or 'YYYY-MM-DD' shows it (items) */
@@ -73274,7 +73281,8 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
       c.from('crews').select('id,name,trade').eq('archived', false),
       c.from('owner_reminders').select('*').order('done_at', { ascending:true, nullsFirst:true }).order('remind_on', { ascending:true, nullsFirst:false }),
       c.from('owner_ledger').select('*').order('created_at'),
-      c.from('owner_ledger_txns').select('*')
+      c.from('owner_ledger_txns').select('*'),
+      c.from('owner_docs').select('*').order('category').order('created_at')
     ]);
     TASKS  = (res[0] && res[0].data) || [];
     OITEMS = (res[1] && res[1].data) || [];
@@ -73291,6 +73299,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     REMINDERS = (res[4] && res[4].data) || [];
     LEDGER = (res[5] && res[5].data) || [];
     LTXNS  = (res[6] && res[6].data) || [];
+    VAULT  = (res[7] && res[7].data) || [];
   }
 
   function greeting(){ var h = new Date().getHours(); return h < 12 ? 'Good morning' : (h < 17 ? 'Good afternoon' : 'Good evening'); }
@@ -73551,10 +73560,48 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     '</div></div>';
     return h;
   }
+  var CAT_LBL = { formation:'Formation', insurance:'Insurance', license:'Licenses', tax:'Tax', banking:'Banking', other:'Other' };
+  var CAT_ORDER = ['formation','insurance','license','tax','banking','other'];
+  function fmtSize(b){ b = Number(b) || 0; if(b < 1024) return b + ' B'; if(b < 1048576) return (b / 1024).toFixed(0) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; }
+  function docRowHTML(d){
+    var exp = parseDate(d.expires_on), n = exp ? daysTo(exp) : null;
+    var meta = [];
+    if(d.file_name) meta.push(esc(d.file_name));
+    if(d.size_bytes) meta.push(fmtSize(d.size_bytes));
+    var right = exp
+      ? '<span class="od ' + dueClass(n) + '">' + (n < 0 ? 'expired' : dueWord(n)) + '<b>' + dstr(exp) + '</b></span>'
+      : '';
+    return '<div class="ow-obl ow-doc" data-id="' + d.id + '">' +
+      '<span class="ot" data-act="vault-open">' + esc(d.label) + (meta.length ? '<small>' + meta.join(' · ') + (d.note ? ' · ' + esc(d.note) : '') + '</small>' : (d.note ? '<small>' + esc(d.note) + '</small>' : '')) + '</span>' +
+      '<span class="rt">' + right + '<button class="del" data-act="vault-del" type="button" aria-label="Remove">×</button></span>' +
+    '</div>';
+  }
+  function vaultHTML(){
+    var h = '<div class="ow-sec"><div class="ow-sl">The Vault<span class="ow-ct">' + VAULT.length + '</span></div>';
+    if(!VAULT.length){
+      h += '<div class="ow-empty">Nothing filed yet. Keep your EIN letter, insurance, licenses and formation papers here — admin only.</div>';
+    }
+    CAT_ORDER.forEach(function(cat){
+      var docs = VAULT.filter(function(d){ return (d.category || 'other') === cat; });
+      if(!docs.length) return;
+      h += '<div class="ow-ref">' + CAT_LBL[cat] + '</div>';
+      docs.forEach(function(d){ h += docRowHTML(d); });
+    });
+    h += '<div class="ow-add ow-vaultadd">' +
+      '<input type="file" id="ow-vault-file" class="ow-file">' +
+      '<input type="text" id="ow-vault-label" placeholder="Label (e.g. EIN letter)" maxlength="120">' +
+      '<select id="ow-vault-cat"><option value="formation">Formation</option><option value="insurance">Insurance</option><option value="license">License</option><option value="tax">Tax</option><option value="banking">Banking</option><option value="other" selected>Other</option></select>' +
+      '<input type="date" id="ow-vault-exp" aria-label="Expires (optional)">' +
+      '<button type="button" data-act="vault-add"' + (vaultBusy ? ' disabled' : '') + '>' + (vaultBusy ? 'Uploading…' : 'Add') + '</button>' +
+    '</div>';
+    h += '<div class="ow-note">Files are stored privately and are visible to admins only — nothing here is on the customer side.</div>';
+    h += '</div>';
+    return h;
+  }
   function render(){
     if(!view) return;
     var body = view.querySelector('.ow-wrap');
-    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() + ledgerHTML() +
+    body.innerHTML = headHTML() + top10HTML() + oblHTML() + renewHTML() + remindHTML() + ledgerHTML() + vaultHTML() +
       '<div class="ow-foot"><div class="fl">Cardinal Roofing &amp; Renovations · Owner</div></div>';
   }
 
@@ -73625,6 +73672,43 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
       } else if(act === 'rem-del'){
         await c.from('owner_reminders').delete().eq('id', id);
         REMINDERS = REMINDERS.filter(function(x){ return String(x.id) !== String(id); });
+        render();
+      } else if(act === 'vault-add'){
+        if(vaultBusy) return;
+        var fin = view.querySelector('#ow-vault-file'), f = fin && fin.files && fin.files[0];
+        if(!f){ alert('Choose a file first.'); return; }
+        if(f.size > 26214400){ alert('That file is over 25 MB — too large for the vault.'); return; }
+        var lin = view.querySelector('#ow-vault-label'), lbl = (lin && lin.value || '').trim() || f.name.replace(/\.[^.]+$/, '');
+        var cat = (view.querySelector('#ow-vault-cat') || {}).value || 'other';
+        var exp = (view.querySelector('#ow-vault-exp') || {}).value || null;
+        var safe = f.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 80);
+        var path = 'owner-vault/' + Date.now() + '_' + safe;
+        vaultBusy = true; render();
+        try{
+          var up = await c.storage.from('photos').upload(path, f, { cacheControl:'3600', upsert:false, contentType:f.type || undefined });
+          if(up.error) throw up.error;
+          var ins = await c.from('owner_docs').insert({ label:lbl, category:cat, storage_path:path, file_name:f.name, mime:f.type || null, size_bytes:f.size, expires_on:exp, created_by:me() }).select().single();
+          if(ins && ins.error) throw ins.error;
+          if(ins && ins.data) VAULT.push(ins.data);
+          vaultBusy = false; render();
+        }catch(err){
+          vaultBusy = false; render();
+          try{ await c.storage.from('photos').remove([path]); }catch(_){ }
+          alert('Upload failed — ' + (err && err.message ? err.message : 'try again'));
+        }
+      } else if(act === 'vault-open'){
+        var dv = VAULT.find(function(x){ return String(x.id) === String(id); });
+        if(!dv) return;
+        var w = window.open('about:blank', '_blank');
+        var sig = await c.storage.from('photos').createSignedUrl(dv.storage_path, 3600);
+        var u = (sig && !sig.error && sig.data && sig.data.signedUrl) || null;
+        if(u){ if(w) w.location = u; else window.location = u; }
+        else { if(w) w.close(); alert('Could not open ' + (dv.label || 'the document')); }
+      } else if(act === 'vault-del'){
+        var dd = VAULT.find(function(x){ return String(x.id) === String(id); });
+        await c.from('owner_docs').delete().eq('id', id);
+        if(dd && dd.storage_path){ try{ await c.storage.from('photos').remove([dd.storage_path]); }catch(_){ } }
+        VAULT = VAULT.filter(function(x){ return String(x.id) !== String(id); });
         render();
       } else if(act === 'led-add'){
         var nel = view.querySelector('#ow-led-name'), nm = (nel.value || '').trim(); if(!nm) return;
@@ -73719,6 +73803,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     else if(id === 'ow-rem-in'){ e.preventDefault(); var br = view.querySelector('[data-act="rem-add"]'); if(br) br.click(); }
     else if(id === 'ow-led-name' || id === 'ow-led-amt'){ e.preventDefault(); var bl = view.querySelector('[data-act="led-add"]'); if(bl) bl.click(); }
     else if(id === 'ow-pay-amt'){ e.preventDefault(); var bp = view.querySelector('[data-act="led-pay"]'); if(bp) bp.click(); }
+    else if(id === 'ow-vault-label'){ e.preventDefault(); var bv = view.querySelector('[data-act="vault-add"]'); if(bv && !bv.disabled) bv.click(); }
     else if(id === 'ow-obl-in'){ e.preventDefault(); var b2 = view.querySelector('[data-act="obl-add"]'); if(b2) b2.click(); }
     else if(id === 'ow-ren-in'){ e.preventDefault(); var b3 = view.querySelector('[data-act="ren-add"]'); if(b3) b3.click(); }
   }
