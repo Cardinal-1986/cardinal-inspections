@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 910 &#8212; On the Punch &amp; Repairs map you can now reassign a repair straight from its pin \u2014 tap the pin and send it to Curtis or Scottie (or unassign)</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 911 &#8212; The Punch &amp; Repairs map now finds more addresses (it asks Google first, like the rest of the app) and tells you when a repair can\u2019t be placed instead of silently leaving it off</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40389,6 +40389,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:911, d:'2026-08-18', t:'Dispatch map: find more addresses, and say when one can\u2019t be placed',
+s:'On the Punch \u0026 Repairs map (ultrawide) a repair could be counted in the stat strip yet never appear as a pin \u2014 because the map geocoded only through the free open-source service, which places about two addresses in three. It now asks Google first (the same path the rest of the app switched to), which placed 40 of 42 real addresses in testing versus 29, and falls back to the old service if Google is unavailable, so it can only find more, never fewer. When a repair still can\u2019t be placed \u2014 no address on the job, or an address nothing can locate \u2014 the map now says so with a small note instead of silently dropping it, and a pin that resolves a moment later is brought into view unless you\u2019ve already panned the map. Ultrawide only.' },
 { b:910, d:'2026-08-18', t:'Assign a repair from the dispatch map',
 s:'On the Punch \u0026 Repairs map (ultrawide, 1600px and up) tapping a pin now shows Assign buttons \u2014 send that repair to Curtis or Scottie, or unassign it, without opening the card. It saves immediately and the map and list update. Only admins and production (Curtis, Scottie) see the buttons; if a save is ever refused it says so and nothing changes. The pin recolours to the assignee in By crew mode. Ultrawide only; phones, iPads and normal monitors are unchanged.' },
 { b:909, d:'2026-08-18', t:'Plan a run on the dispatch map',
@@ -73999,6 +74001,9 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   .pumap-leg span{ font:700 11px 'Segoe UI',Arial; color:#cfd6de; display:flex; align-items:center; gap:6px; }
   .pumap-leg i{ width:9px; height:9px; border-radius:50%; display:inline-block; }
   .pumap-note{ position:absolute; left:0; right:0; bottom:0; z-index:4; padding:9px 14px; background:#12181ee6; color:#8b95a1; font:600 12px 'Segoe UI',Arial; text-align:center; }
+  .pumap-miss{ position:absolute; top:58px; left:50%; transform:translateX(-50%); z-index:5; max-width:70%;
+    background:#3a2410f2; border:1px solid #7a5a2a; color:#f5c377; font:700 12px 'Segoe UI',Arial;
+    padding:7px 14px; border-radius:10px; box-shadow:0 3px 10px #0007; text-align:center; }
   .pumk{ position:relative; width:16px; height:16px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #0b1116; box-shadow:0 2px 6px #0008; cursor:pointer; }
   .pumk.sel{ width:20px; height:20px; box-shadow:0 0 0 5px #ffffff33,0 3px 8px #000a; }
   .pumk.inrun{ background:#f5a623 !important; width:23px; height:23px; }
@@ -74036,6 +74041,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   var map=null, layer=null, markers={}, mode='urgency', selId=null, built=false;
   var geoQueue=[], geoBusy=false;
   var planMode=false, run=[], routeLine=null;   /* 909: Plan a run */
+  var userMoved=false, fitT=null, missT=null;   /* 911: keep late-geocoded pins in view; surface un-mappable repairs */
   var URG={ high:'#e2574a', normal:'#f5a623', low:'#5f9fd8' };
   function isUW(){ return window.innerWidth >= UW; }
   function punchOpen(){ var v=document.getElementById('punchView'); return !!(v && v.style.display!=='none' && getComputedStyle(v).display!=='none'); }
@@ -74102,6 +74108,39 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     } else { try{ alert('Could not reassign: '+((r&&r.error)||'write refused')); }catch(_){} }
   }
 
+  /* 911: geocode Google-first (the rest of the app moved to Google at 840 —
+     measured 40/42 placed vs Nominatim's 29/42), Nominatim as the fallback,
+     same 'geo:' cache. A counted-open repair whose address will not resolve is
+     surfaced by updateMiss() instead of silently vanishing from the map. */
+  function googleGeo(addr){
+    try{ if(typeof qiGoogleGeo!=='function') return Promise.resolve(null); }catch(e){ return Promise.resolve(null); }
+    return qiGoogleGeo('address='+encodeURIComponent(addr)+'&components=country:US').then(function(g){
+      var loc=g&&g.geometry&&g.geometry.location; if(!loc) return null;
+      var la=(typeof loc.lat==='function')?loc.lat():loc.lat, lo=(typeof loc.lng==='function')?loc.lng():loc.lng;
+      if(la==null||lo==null||isNaN(+la)||isNaN(+lo)) return null;
+      return { lat:+la, lon:+lo };
+    }, function(){ return null; });
+  }
+  function resolve(addr, cb){
+    var hit=cachedGeo(addr); if(hit){ cb(hit); return; }
+    googleGeo(addr).then(function(pt){
+      if(pt){ try{ localStorage.setItem('geo:'+addr, JSON.stringify(pt)); }catch(e){} cb(pt); scheduleFit(); }
+      else queueGeo(addr, function(p){ cb(p); if(p) scheduleFit(); });
+    });
+  }
+  function scheduleFit(){ if(userMoved) return; clearTimeout(fitT); fitT=setTimeout(function(){ fitAll(); updateMiss(true); }, 300); }
+  function placeableAddr(it){ var pr=projOf(it.project_id); return (pr&&pr.address)?String(pr.address).trim():''; }
+  function updateMiss(final){
+    var el=document.getElementById('puMapMiss'); if(!el) return;
+    var vis=visibleItems(), noAddr=0, lost=0;
+    for(var i=0;i<vis.length;i++){ var it=vis[i]; if((it.status||'open')!=='open') continue;
+      if(!placeableAddr(it)) noAddr++; else if(final && !markers[it.id]) lost++; }
+    var msgs=[];
+    if(noAddr) msgs.push(noAddr+(noAddr>1?' repairs have':' repair has')+' no address');
+    if(lost) msgs.push(lost+(lost>1?" couldn\u2019t be located":" couldn\u2019t be located"));
+    if(msgs.length){ el.textContent=msgs.join(' \u00b7 ')+' \u2014 not on the map'; el.style.display='block'; }
+    else el.style.display='none';
+  }
   function setPin(it){
     if(!map || !window.L) return;
     var pr=projOf(it.project_id); var addr=pr&&pr.address?String(pr.address).trim():'';
@@ -74117,7 +74156,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
       m.on('click', function(){ onPinClick(it.id); });
       m.addTo(layer); markers[it.id]=m;
     }
-    var hit=cachedGeo(addr); if(hit) place(hit); else queueGeo(addr, place);
+    resolve(addr, place);
   }
 
   function recolor(){ for(var id in markers){ var m=markers[id]; if(m && m._icon){ var d=m._icon.querySelector('.pumk'); if(d) d.style.background=itColor(m.__it); } } }
@@ -74147,6 +74186,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     updateStats();
     var leg=document.getElementById('puMapLeg'); if(leg) leg.innerHTML=legendHTML();
     if(planMode){ run=run.filter(function(id){ return markers[id]; }); drawRoute(); }
+    updateMiss(false); clearTimeout(missT); missT=setTimeout(function(){ updateMiss(true); }, 3000);
   }
 
   function selectFromMap(id){
@@ -74215,6 +74255,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
         '<button class="pumap-plan" id="puMapPlanBtn" data-puplan>Plan a run</button>'+
         '<div class="pumap-seg"><button data-pumode="urgency" class="on">By urgency</button><button data-pumode="crew">By crew</button></div></div>'+
       '<div class="pumap-leg" id="puMapLeg"></div>'+
+      '<div class="pumap-miss" id="puMapMiss" style="display:none"></div>'+
       '<div class="pumap-run" id="puMapRun"></div>';
   }
 
@@ -74229,12 +74270,13 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     map=L.map('puMap',{ zoomControl:true, attributionControl:false }).setView([39.7589,-84.1916], 11);
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19 }).addTo(map);
     layer=L.layerGroup().addTo(map);
+    userMoved=false; map.on('dragstart zoomstart', function(){ userMoved=true; });
     setTimeout(function(){ if(map) map.invalidateSize(); }, 120);
     sync();
     fitAll();
   }
   function fitAll(){
-    if(!map) return; var pts=[]; for(var id in markers){ pts.push(markers[id].getLatLng()); }
+    if(!map || userMoved) return; var pts=[]; for(var id in markers){ pts.push(markers[id].getLatLng()); }
     if(pts.length>=2){ try{ map.fitBounds(L.latLngBounds(pts).pad(0.2)); }catch(e){} }
     else if(pts.length===1){ map.setView(pts[0], 13); }
   }

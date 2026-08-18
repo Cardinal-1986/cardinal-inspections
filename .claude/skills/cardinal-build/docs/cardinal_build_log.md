@@ -18912,3 +18912,37 @@ Gate `gate_puassign910.mjs` (Chromium, Leaflet stub, 2 unassigned items, Theo/ad
 popup closed; Unassign sends `assigned_to:null`; a refused write alerts. **GREEN**, negative-controlled
 vs v909 (no `data-puassign` in source). `check_build` green (909 -> 910, marker
 "910: managers (admin/production)"). No SQL.
+
+## Build 911 — Dispatch map: find more addresses, and say when one can't be placed
+
+Bug from a screenshot (Theo, ultrawide): the stat strip counted **1 Open / 1 Urgent / 1 Unassigned**
+but **no pin** showed, and the map sat at the default Dayton zoom (→ zero markers placed). Reproduced
+four ways in Chromium: a repair pins fine when its project address is cached or resolves, but when the
+project **address is blank OR the geocoder returns nothing**, `setPin` bails on `if(!addr) return` /
+a null geocode — while `updateStats()` counts the row regardless. Counted, never placed, nothing said.
+
+The bigger cause is the geocoder itself. `cr-pumap-script` used **Nominatim only**, and the app moved
+off Nominatim at build 840 precisely because it places ~29/42 real addresses vs Google's ~40/42. So a
+repair whose address Nominatim can't resolve is silently absent.
+
+Fix, all in `cr-pumap-script` (`window.CardinalPunchMap`), ultrawide-only:
+- **Google-first geocode, Nominatim fallback**, same `geo:` cache. New `resolve(addr,cb)` tries
+  `qiGoogleGeo('address='+enc(addr)+'&components=country:US')` (the global the app already uses since
+  840), caches + places on success, else falls through to the existing Nominatim `queueGeo`. Can only
+  find more, never fewer. Blank addresses skip geocoding entirely.
+- **`updateMiss()`** surfaces the residue: any counted-**open** item that is visible in the list but
+  has no address (definitive, immediate) or still has no marker after geocoding settles (3s backstop +
+  a 300ms recheck after each async placement) shows a small amber note — "N repair(s) … not on the
+  map" — instead of vanishing. `#puMapMiss` element + `.pumap-miss` CSS.
+- **Auto-fit follows late pins.** Google/Nominatim are async, so a pin can arrive after the one-shot
+  `fitAll()`. `scheduleFit()` re-frames shortly after each async placement, **guarded by `userMoved`**
+  (set from a Leaflet `dragstart zoomstart` handler) so it never yanks the map after the user pans.
+  `fitAll()` now early-returns when `userMoved`.
+
+Gate `gate_pumiss911.mjs` (Chromium; `/api/config` + `maps.googleapis.com` + Nominatim all stubbed),
+four scenarios: **google** (Google places it, no note), **fallback** (Google ZERO_RESULTS → Nominatim
+places it, no note), **lost** (both fail → no pin, "couldn't be located"), **noaddr** (blank → no pin,
+"no address", no geocode attempted). All GREEN, negative-controlled vs v910 (no `googleGeo`, no
+`puMapMiss`). Regression: `gate_purun909.mjs` and `gate_puassign910.mjs` re-run GREEN on the 911 tree
+(their Leaflet map stubs gained `.on`, which real Leaflet has — the app was never wrong). `check_build`
+green (910 -> 911, marker "911: geocode Google-first"). No SQL.
