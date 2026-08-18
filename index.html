@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 917 &#8212; On a wide monitor the Schedule Board is now a two-week calendar grid with a side panel — click a day to see it in full, plus counts, the next material drop and jobs still needing a date</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 918 &#8212; Punch &amp; Repairs now has a back button in its header, like the other full-screen pages</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3813,7 +3813,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 <!-- ============ PUNCH & REPAIRS (build 361) ============ -->
 <div id="punchView" style="display:none;">
   <div class="pu-wrap">
-    <div class="pu-head"><h2 class="pu-title">&#128296; Punch &amp; Repairs</h2></div>
+    <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">&#128296; Punch &amp; Repairs</h2></div>
     <p class="pu-sub" id="puSub">&mdash;</p>
     <div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Search item, client, address&#8230;" aria-label="Search punch items"></div>
     <div class="pu-ctl"><span class="sl">Sort by</span>
@@ -40439,6 +40439,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:918, d:'2026-08-18', t:'Punch & Repairs: a back button in the header',
+s:'The Punch \u0026 Repairs page now has a back arrow at the top-left of its header, the same one the other full-screen pages use. Tap it to go back to wherever you opened Punch from \u2014 the menu, or the Production hub. Nothing else on the page changed.' },
 { b:917, d:'2026-08-18', t:'Schedule Board: a two-week grid on wide monitors',
 s:'On a wide monitor (1600px and up) the Schedule Board stops being one tall column and becomes a proper two-week calendar grid, seven days across, with a panel down the right. Click any day and the panel shows that whole day \u2014 each job, material drop and appointment with its time, client and address; a button there adds or edits the day. Below the day panel is a planning strip: how many jobs, drops and appointments are in the fortnight, the next material drop, and the approved jobs that still have no date (tap one to open it and schedule). Tap a day in the grid to load it; tap a row to open the client. Phones, iPads and normal monitors keep the same list as before \u2014 this only appears past 1600px. Latest of the ultrawide screens, after Production, the client list, Punch and Crew Dispatch.' },
 { b:916, d:'2026-08-18', t:'Rain radar: shows its time, and stays fresh',
@@ -58814,7 +58816,7 @@ if(typeof _origOLF === 'function'){
       spine and the insurance/community skins stay fixed — semantic, see FEATURES.md. ── */
 #punchView{display:none;min-height:100vh;background:var(--bg);}
 .pu-wrap{max-width:1320px;margin:0 auto;padding:16px 16px 150px;}
-.pu-head{display:flex;align-items:center;gap:10px;margin:0 0 2px;flex-wrap:wrap;}
+.pu-head{display:flex;align-items:center;gap:10px;margin:0 0 2px;flex-wrap:wrap;}.pu-back{flex:none;width:34px;height:34px;border-radius:10px;cursor:pointer;border:1px solid var(--rbe-line2,#2b2b33);background:transparent;color:var(--rbe-mute,#9aa0a8);display:flex;align-items:center;justify-content:center;padding:0;}.pu-back svg{width:16px;height:16px;}.pu-back:hover{background:rgba(255,255,255,.06);}
 .pu-title{margin:0;flex:1;font:800 21px Georgia,'Times New Roman',serif;color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
 .pu-sub{margin:1px 0 11px;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
 .pu-srch{display:flex;align-items:center;gap:8px;background:var(--rbe-panel);border:1px solid var(--rbe-line);border-radius:6px;
@@ -59333,6 +59335,7 @@ document.getElementById('puTabs').addEventListener('click', function(e){
   PU.tab = b.getAttribute('data-putab');
   render();
 });
+document.getElementById('puBackBtn').addEventListener('click', function(){ history.back(); });
 document.getElementById('puSearch').addEventListener('input', function(){
   PU.q = this.value.trim().toLowerCase();
   clearTimeout(this.__t); this.__t = setTimeout(render, 200);
