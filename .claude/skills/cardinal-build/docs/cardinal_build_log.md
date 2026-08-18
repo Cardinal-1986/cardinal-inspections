@@ -19025,3 +19025,28 @@ rows, plus source-structural checks): file doc → `'File: Signed Contract'`; in
 `[roof_photos]` slot; cancel/empty/unchanged/unknown-id all write nothing; the row renders the pencil
 before the X and the handler routes it. All GREEN, negative-controlled vs v913 (no `data-jdren`, no
 `renameJobDoc`). `check_build` green (913 -> 914, marker "914: rename a job document"). No SQL.
+
+## Build 915 — Rain radar on the maps
+
+Roadmap follow-up (Theo picked it): a live weather-radar overlay on both map views. Source is
+**RainViewer** — free public API, no key, no account. `crRadarTemplate()` (a global beside
+`qiLoadLeaflet`, exported as `window.CardinalRadar.template`) fetches
+`api.rainviewer.com/public/weather-maps.json`, takes the newest `radar.past`/`nowcast` frame, and
+returns a Leaflet tile template `host + path + '/256/{z}/{x}/{y}/4/1_1.png'`, cached ~5 min. Returns
+**null on any failure**, so the toggle no-ops offline/blocked rather than throwing.
+
+Both maps got a **Rain** toggle that adds/removes an `L.tileLayer(url, {opacity:0.55, zIndex:250})` —
+z 250 puts it above the base tiles (200) and below the markers (overlayPane 600), so no pin is hidden:
+- **Punch** (`cr-pumap-script`): `Rain` button in the map bar; `radarOn`/`radarLayer` state; `toggleRadar()`;
+  reset in `teardown()`; delegated `[data-purain]` handler.
+- **Dispatch** (`cr-disp-script`): `Rain` button absolutely-positioned top-right of the map view;
+  `dRadarOn`/`dRadarLayer`; `toggleDRadar()`; `[data-dsprain]` branch in the el click handler. Phone too.
+- A failed fetch flags the button red (`.err`) for 1.6s and leaves the map unchanged.
+
+Gate `gate_radar915.mjs` (Chromium; `api.rainviewer.com` stubbed, `L.tileLayer` recorded), run for both
+`punch` and `disp`: Rain button present; tapping adds exactly one radar layer whose URL is RainViewer,
+at opacity 0.55 / z 250; button goes active; tapping again removes it; button inactive. All GREEN,
+negative-controlled vs v914 (no `data-purain`/`data-dsprain`/`crRadarTemplate`). Regression: 909/910/911
+punch gates and 913 dispatch gate re-run GREEN. `check_build` green (914 -> 915, marker
+"915: rain radar overlay"). No SQL. (RainViewer is a new third-party tile source — the first non-OSM
+map data in the app; radar tiles need the live network, so Theo's eyes are the visual gate.)
