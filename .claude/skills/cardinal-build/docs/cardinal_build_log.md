@@ -19050,3 +19050,54 @@ negative-controlled vs v914 (no `data-purain`/`data-dsprain`/`crRadarTemplate`).
 punch gates and 913 dispatch gate re-run GREEN. `check_build` green (914 -> 915, marker
 "915: rain radar overlay"). No SQL. (RainViewer is a new third-party tile source — the first non-OSM
 map data in the app; radar tiles need the live network, so Theo's eyes are the visual gate.)
+
+## Build 916 — Rain radar: shows its time, and stays fresh
+
+Self-picked follow-up to 915 (no design decision needed): the radar grabbed one frame and could go
+stale while the map sat open. Now it timestamps itself and auto-refreshes.
+
+- The shared helper gained **`crRadarFrame(force)`** returning `{url, time}` (RainViewer frame time),
+  **`crRadarClock(t)`** (unix → "2:40pm"), both on `window.CardinalRadar` alongside `template` (kept as
+  a thin `.url` wrapper for back-compat). `force` bypasses the 5-min cache for a real refresh.
+- Each map now: on toggle-on paints the layer via `applyRadar`/`applyDRadar`, shows a caption
+  ("Radar · as of <time>"), and arms `setInterval(refresh…, 300000)`; `refresh…` calls `frame(true)`
+  and repaints. `stop…` clears the interval, removes the layer, hides the caption.
+- Lifecycle: Punch clears the timer in `teardown()`; Dispatch calls `stopDRadar()` from
+  `setMapMode(false)` (leaving the map view) so a hidden map isn't refreshing. Punch caption is a
+  bottom-center pill; Dispatch caption sits under its top-right Rain button. Own `--disp-*`/pumap CSS.
+
+Gate `gate_radarts916.mjs` (Chromium; RainViewer stubbed with a fixed frame time; fetch counted): both
+maps arm a 300000ms refresh (source); `CardinalRadar.clock` formats the time (TZ-computed expectation);
+`frame` returns `{url,time}`; **`frame(false)` is cached, `frame(true)` forces a fetch**; the caption
+shows "Radar · as of <time>" on toggle; turning it off (Punch) / leaving the map (Dispatch) hides the
+caption and removes the layer. GREEN for punch and disp, negative-controlled vs v915 (no `crRadarFrame`/
+caption). Regression: 915 radar gate (both maps) + 913/910 gates re-run GREEN. `check_build` green
+(915 -> 916, marker "916: format a RainViewer frame"). No SQL.
+
+## Build 917 — Schedule Board: a two-week grid on wide monitors (the "1+2" mix)
+
+Theo picked the combined day-panel + cockpit from the preview ("do what you recommend"). The Schedule
+Board was a 14-day vertical list — one narrow column with dead margins on an ultrawide. Now, at
+**≥1600px only**, it becomes a two-week calendar grid + a right rail; below 1600 the list is untouched.
+
+New module `cr-sbwide-styles` + `cr-sbwide-script` (`window.CardinalScheduleWide`), appended at EOF,
+rendered from `openScheduleBoard()` (one hooked line) on every board open. Reads `cacheAppts` /
+`cacheProjects` in memory; **writes nothing**.
+
+- **Grid:** Monday-of-this-week + 13 days = a clean 2×7. Each cell reuses the board's **already-themed**
+  `.bday/.bhead/.bitem/.btime/.btitle/.bcli/.bnone` classes (so light and dark both stay correct — the
+  recurring light-on-dark trap sidestepped by reuse); only layout CSS + semantic dot colours + white-on-
+  colour chips are new. Past days dimmed, today tagged, selected day outlined.
+- **Right rail, top — the day panel:** click any grid day → the panel shows that day in full (each item's
+  time, client, address; a `+ Add or edit this day` button → `openApptDay(sel)`; a row → `openProject`).
+- **Right rail, below — the cockpit:** counts for the fortnight (jobs / drops / appts), the next material
+  drop (unbounded future), and **needs-a-date** — projects at stage `Approved` with no future appointment
+  (tap → `openProject` to schedule).
+- Wrap widened to 2100px at ≥1600 (beats the `1700` / `--lnav-cap` caps, later source wins).
+
+Gate `gate_sbwide917.mjs` (Chromium, 1720px; seeded appts today/tom/+2 + an Approved-no-date project),
+13 assertions GREEN: wide shows / list hidden; 14 cells + 7 DOW; today tagged; day panel shows today;
+counts 2/1/1; next drop "Tomorrow"; needs-a-date = the approved job; clicking another day updates the
+panel; row→openProject, edit→openApptDay, need→openProject. Negative-controlled vs v916. **Rendered in
+BOTH themes** (dark + rb-light) at 1720px — contrast correct in both (the whole reason for class reuse).
+`check_build` green (916 -> 917, marker "cr-sbwide-script"). No SQL.

@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 915 &#8212; The Crew Dispatch and Punch maps have a Rain button now — tap it to lay live weather radar over the map so you can plan around the rain</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 917 &#8212; On a wide monitor the Schedule Board is now a two-week calendar grid with a side panel — click a day to see it in full, plus counts, the next material drop and jobs still needing a date</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19173,11 +19173,11 @@ function qiLoadLeaflet(){
 /* 915: RainViewer radar tiles (free, no key) — shared by the Punch and Crew
    Dispatch maps. Returns a Leaflet tile URL template for the most recent frame,
    cached ~5 min; null on any failure so the toggle just no-ops (offline, blocked). */
-var __crRadar = { at: 0, url: null };
-async function crRadarTemplate(){
+var __crRadar = { at: 0, url: null, time: 0 };
+async function crRadarFrame(force){
   try{
     var now = Date.now();
-    if(__crRadar.url && (now - __crRadar.at) < 300000) return __crRadar.url;
+    if(!force && __crRadar.url && (now - __crRadar.at) < 300000) return { url: __crRadar.url, time: __crRadar.time };
     var r = await fetch('https://api.rainviewer.com/public/weather-maps.json', { cache:'no-store' });
     if(!r.ok) return null;
     var j = await r.json();
@@ -19186,11 +19186,14 @@ async function crRadarTemplate(){
     if(!frames.length) return null;
     var f = frames[frames.length - 1];
     var url = host + f.path + '/256/{z}/{x}/{y}/4/1_1.png';
-    __crRadar = { at: now, url: url };
-    return url;
+    __crRadar = { at: now, url: url, time: (f.time || 0) };
+    return { url: url, time: (f.time || 0) };
   }catch(e){ return null; }
 }
-window.CardinalRadar = Object.assign(window.CardinalRadar || {}, { template: crRadarTemplate });
+async function crRadarTemplate(){ var fr = await crRadarFrame(false); return fr ? fr.url : null; }
+/* 916: format a RainViewer frame's unix time as a wall clock, e.g. 2:40pm */
+function crRadarClock(t){ if(!t) return ''; try{ var d = new Date(t * 1000); var h = d.getHours(), m = d.getMinutes(), ap = h < 12 ? 'am' : 'pm'; h = h % 12; if(h === 0) h = 12; return h + ':' + (m < 10 ? '0' : '') + m + ap; }catch(e){ return ''; } }
+window.CardinalRadar = Object.assign(window.CardinalRadar || {}, { template: crRadarTemplate, frame: crRadarFrame, clock: crRadarClock });
 async function qiInitMap(){
   var mapEl = document.getElementById('qiMap');
   try{ await qiLoadLeaflet(); }
@@ -21455,6 +21458,7 @@ function openScheduleBoard(){
       '</div>';
   }
   document.getElementById('boardMount').innerHTML = out;
+  try{ if(window.CardinalScheduleWide) window.CardinalScheduleWide.render(); }catch(_e){}
   window.scrollTo(0,0);
 }
 document.getElementById('boardMount').addEventListener('click', function(e){
@@ -40435,6 +40439,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:917, d:'2026-08-18', t:'Schedule Board: a two-week grid on wide monitors',
+s:'On a wide monitor (1600px and up) the Schedule Board stops being one tall column and becomes a proper two-week calendar grid, seven days across, with a panel down the right. Click any day and the panel shows that whole day \u2014 each job, material drop and appointment with its time, client and address; a button there adds or edits the day. Below the day panel is a planning strip: how many jobs, drops and appointments are in the fortnight, the next material drop, and the approved jobs that still have no date (tap one to open it and schedule). Tap a day in the grid to load it; tap a row to open the client. Phones, iPads and normal monitors keep the same list as before \u2014 this only appears past 1600px. Latest of the ultrawide screens, after Production, the client list, Punch and Crew Dispatch.' },
+{ b:916, d:'2026-08-18', t:'Rain radar: shows its time, and stays fresh',
+s:'A small follow-up to the map rain radar. When it\u2019s on, a caption now tells you how recent the picture is (\u201cRadar \u00b7 as of 2:40pm\u201d), and it quietly refreshes itself every few minutes so it doesn\u2019t go stale while the map sits open. Turning the radar off, closing the map, or leaving the Dispatch map stops the refresh. Nothing else changed.' },
 { b:915, d:'2026-08-18', t:'Rain radar on the maps',
 s:'Both map views \u2014 Crew Dispatch and Punch \u0026 Repairs \u2014 now have a Rain button. Tap it and live precipitation radar lays over the map (from RainViewer, a free public source, no account or key), so you can see what\u2019s coming and plan roofing work around it. Tap again to turn it off. It sits under the job pins so nothing is hidden, and if the radar can\u2019t be reached the button just flags red and the map is unchanged. The Dispatch map\u2019s Rain button is available on the phone too.' },
 { b:914, d:'2026-08-18', t:'Rename a job document',
@@ -72763,6 +72771,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   color:var(--disp-ink,#fff); border-radius:8px; padding:6px 13px; font:700 12px 'Segoe UI',Arial,sans-serif; cursor:pointer; box-shadow:0 2px 8px #0006; }
 #cr-disp .dsprain.on{ background:#2f6fb0; color:#eaf3fb; border-color:#2f6fb0; }
 #cr-disp .dsprain.err{ border-color:var(--disp-repair,#ff3b46); color:var(--disp-repair,#ff3b46); }
+#cr-disp .dsprainar-ts{ position:absolute; top:44px; right:10px; z-index:5; background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); border-radius:8px; padding:4px 10px; color:var(--disp-dim,#9aa1ac); font:700 11px 'Segoe UI',Arial,sans-serif; box-shadow:0 2px 8px #0006; }
 #cr-disp .dspmapview{ position:relative; }
 #cr-disp .dspleg{ display:flex; flex-wrap:wrap; gap:12px; margin-bottom:10px; }
 #cr-disp .dspleg span{ font:700 11px 'Segoe UI',Arial,sans-serif; color:var(--disp-dim,#9aa1ac); display:flex; align-items:center; gap:6px; }
@@ -72791,7 +72800,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs'];
   /* 913: the dispatch Map toggle — its own Leaflet map of this week's jobs by crew */
   var mapOn=false, dmap=null, dlayer=null, dmarkers={}, dgeoQueue=[], dgeoBusy=false, dUserMoved=false, dFitT=null, dMissT=null;
-  var dRadarOn=false, dRadarLayer=null;   /* 915: rain radar overlay */
+  var dRadarOn=false, dRadarLayer=null, dRadarTimer=null;   /* 915/916: rain radar overlay + auto-refresh */
   var CPAL=['#5f9fd8','#7ec99a','#c98fe0','#e0913a','#e2574a','#5bc0be','#c9a227','#9aa0f5','#e08fb0','#6fd0c0'];
 
   function two(n){ return (n<10?'0':'') + n; }
@@ -73023,6 +73032,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         '<div class="dspmapview" style="display:none">' +
           '<div class="dspleg"></div>' +
           '<button class="dsprain" data-dsprain>Rain</button>' +
+          '<div class="dsprainar-ts" style="display:none"></div>' +
           '<div class="dspmiss" style="display:none"></div>' +
           '<div class="dspmap"></div>' +
         '</div>' +
@@ -73201,16 +73211,36 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     if(body) body.style.display = mapOn ? 'none' : '';
     if(mv) mv.style.display = mapOn ? 'block' : 'none';
     if(btn) btn.textContent = mapOn ? 'Grid' : 'Map';
+    if(!mapOn) stopDRadar();
     if(mapOn) ensureLeafletThenMap();
+  }
+  function applyDRadar(fr){
+    if(!dmap || !fr || !fr.url) return;
+    if(dRadarLayer){ try{ dmap.removeLayer(dRadarLayer); }catch(e){} dRadarLayer=null; }
+    try{ dRadarLayer=L.tileLayer(fr.url, { opacity:0.55, zIndex:250 }); dRadarLayer.addTo(dmap); }catch(e){ dRadarLayer=null; return; }
+    var ts=el.querySelector('.dsprainar-ts');
+    if(ts){ var c=(window.CardinalRadar && window.CardinalRadar.clock) ? window.CardinalRadar.clock(fr.time) : ''; ts.textContent = c ? ('Radar \u00b7 as of ' + c) : 'Radar'; ts.style.display='block'; }
+  }
+  async function refreshDRadar(){
+    if(!dRadarOn || !dmap) return;
+    var fr=(window.CardinalRadar && window.CardinalRadar.frame) ? await window.CardinalRadar.frame(true) : null;
+    if(fr && fr.url) applyDRadar(fr);
+  }
+  function stopDRadar(){
+    if(dRadarTimer){ clearInterval(dRadarTimer); dRadarTimer=null; }
+    if(dRadarLayer && dmap){ try{ dmap.removeLayer(dRadarLayer); }catch(e){} } dRadarLayer=null;
+    dRadarOn=false;
+    var b=el?el.querySelector('.dsprain'):null; if(b) b.classList.remove('on');
+    var ts=el?el.querySelector('.dsprainar-ts'):null; if(ts) ts.style.display='none';
   }
   async function toggleDRadar(){
     if(!dmap) return;
+    if(dRadarOn){ stopDRadar(); return; }
     var b=el.querySelector('.dsprain');
-    if(dRadarOn){ if(dRadarLayer){ try{ dmap.removeLayer(dRadarLayer); }catch(e){} dRadarLayer=null; } dRadarOn=false; if(b) b.classList.remove('on'); return; }
-    var url=(window.CardinalRadar && window.CardinalRadar.template) ? await window.CardinalRadar.template() : null;
-    if(!url || !dmap){ if(b){ b.classList.add('err'); setTimeout(function(){ b.classList.remove('err'); }, 1600); } return; }
-    try{ dRadarLayer=L.tileLayer(url, { opacity:0.55, zIndex:250 }); dRadarLayer.addTo(dmap); dRadarOn=true; if(b) b.classList.add('on'); }
-    catch(e){ dRadarLayer=null; }
+    var fr=(window.CardinalRadar && window.CardinalRadar.frame) ? await window.CardinalRadar.frame(false) : null;
+    if(!fr || !fr.url || !dmap){ if(b){ b.classList.add('err'); setTimeout(function(){ b.classList.remove('err'); }, 1600); } return; }
+    applyDRadar(fr); dRadarOn=true; if(b) b.classList.add('on');
+    dRadarTimer=setInterval(refreshDRadar, 300000);
   }
   /* ---------- end Crew Dispatch map ---------- */
   window.CardinalDispatch = Object.assign(window.CardinalDispatch || {}, { open: open, close: close });
@@ -74253,6 +74283,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   .pumap-rain{ pointer-events:auto; background:#12181ee6; backdrop-filter:blur(4px); border:1px solid #232a31; border-radius:11px; color:#cfd6de; font:700 12px 'Segoe UI',Arial; padding:8px 14px; cursor:pointer; font-family:inherit; }
   .pumap-rain.on{ background:#2f6fb0; color:#eaf3fb; border-color:#2f6fb0; }
   .pumap-rain.err{ border-color:#e2574a; color:#e2574a; }
+  .pumap-radarts{ position:absolute; bottom:12px; left:50%; transform:translateX(-50%); z-index:5; background:#12181ee6; backdrop-filter:blur(4px); border:1px solid #232a31; border-radius:9px; padding:5px 12px; color:#9fb6cc; font:700 11px 'Segoe UI',Arial; letter-spacing:.02em; }
   .pumap-run{ position:absolute; right:12px; bottom:12px; z-index:6; display:none; background:#12181ef2; backdrop-filter:blur(6px); border:1px solid #232a31; border-radius:12px; padding:12px 14px; min-width:190px; }
   .pumap-run.show{ display:block; }
   .pumap-run .hint{ color:#8b95a1; font:600 12.5px 'Segoe UI',Arial; max-width:180px; }
@@ -74282,7 +74313,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
 (function(){
   var UW = 1600;
   var map=null, layer=null, markers={}, mode='urgency', selId=null, built=false;
-  var radarOn=false, radarLayer=null;   /* 915: rain radar overlay */
+  var radarOn=false, radarLayer=null, radarTimer=null;   /* 915/916: rain radar overlay + auto-refresh */
   var geoQueue=[], geoBusy=false;
   var planMode=false, run=[], routeLine=null;   /* 909: Plan a run */
   var userMoved=false, fitT=null, missT=null;   /* 911: keep late-geocoded pins in view; surface un-mappable repairs */
@@ -74493,14 +74524,33 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   }
   function setPlanMode(on){ planMode=!!on; var b=document.getElementById('puMapPlanBtn'); if(b) b.classList.toggle('on', planMode); if(!planMode) run=[]; drawRoute(); }
 
+  function applyRadar(fr){
+    if(!map || !fr || !fr.url) return;
+    if(radarLayer){ try{ map.removeLayer(radarLayer); }catch(e){} radarLayer=null; }
+    try{ radarLayer=L.tileLayer(fr.url, { opacity:0.55, zIndex:250 }); radarLayer.addTo(map); }catch(e){ radarLayer=null; return; }
+    var ts=document.getElementById('puMapRadarTs');
+    if(ts){ var c=(window.CardinalRadar && window.CardinalRadar.clock) ? window.CardinalRadar.clock(fr.time) : ''; ts.textContent = c ? ('Radar \u00b7 as of ' + c) : 'Radar'; ts.style.display='block'; }
+  }
+  async function refreshRadar(){
+    if(!radarOn || !map) return;
+    var fr=(window.CardinalRadar && window.CardinalRadar.frame) ? await window.CardinalRadar.frame(true) : null;
+    if(fr && fr.url) applyRadar(fr);
+  }
+  function stopRadar(){
+    if(radarTimer){ clearInterval(radarTimer); radarTimer=null; }
+    if(radarLayer && map){ try{ map.removeLayer(radarLayer); }catch(e){} } radarLayer=null;
+    radarOn=false;
+    var b=document.getElementById('puMapRainBtn'); if(b) b.classList.remove('on');
+    var ts=document.getElementById('puMapRadarTs'); if(ts) ts.style.display='none';
+  }
   async function toggleRadar(){
     if(!map) return;
+    if(radarOn){ stopRadar(); return; }
     var b=document.getElementById('puMapRainBtn');
-    if(radarOn){ if(radarLayer){ try{ map.removeLayer(radarLayer); }catch(e){} radarLayer=null; } radarOn=false; if(b) b.classList.remove('on'); return; }
-    var url=(window.CardinalRadar && window.CardinalRadar.template) ? await window.CardinalRadar.template() : null;
-    if(!url || !map){ if(b){ b.classList.add('err'); setTimeout(function(){ b.classList.remove('err'); }, 1600); } return; }
-    try{ radarLayer=L.tileLayer(url, { opacity:0.55, zIndex:250 }); radarLayer.addTo(map); radarOn=true; if(b) b.classList.add('on'); }
-    catch(e){ radarLayer=null; }
+    var fr=(window.CardinalRadar && window.CardinalRadar.frame) ? await window.CardinalRadar.frame(false) : null;
+    if(!fr || !fr.url || !map){ if(b){ b.classList.add('err'); setTimeout(function(){ b.classList.remove('err'); }, 1600); } return; }
+    applyRadar(fr); radarOn=true; if(b) b.classList.add('on');
+    radarTimer=setInterval(refreshRadar, 300000);
   }
   function paneHTML(){
     return '<div id="puMap"></div>'+
@@ -74510,6 +74560,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
         '<div class="pumap-seg"><button data-pumode="urgency" class="on">By urgency</button><button data-pumode="crew">By crew</button></div></div>'+
       '<div class="pumap-leg" id="puMapLeg"></div>'+
       '<div class="pumap-miss" id="puMapMiss" style="display:none"></div>'+
+      '<div class="pumap-radarts" id="puMapRadarTs" style="display:none"></div>'+
       '<div class="pumap-run" id="puMapRun"></div>';
   }
 
@@ -74538,7 +74589,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   function teardown(){
     var pane=document.getElementById('puMapPane');
     if(map){ try{ map.remove(); }catch(e){} map=null; layer=null; }
-    markers={}; built=false; planMode=false; run=[]; routeLine=null; radarOn=false; radarLayer=null;
+    markers={}; built=false; planMode=false; run=[]; routeLine=null; if(radarTimer){ clearInterval(radarTimer); radarTimer=null; } radarOn=false; radarLayer=null;
     if(pane && pane.parentNode) pane.parentNode.removeChild(pane);
     document.body.classList.remove('pumap-on');
   }
@@ -74584,5 +74635,183 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
 })();
 </script>
 
+<style id="cr-sbwide-styles">
+/* 917: Schedule Board — ultrawide (>=1600px) two-week grid + day/cockpit rail.
+   Reuses the board's already-themed .bday/.bhead/.bitem/.btime/.btitle/.bcli/.bnone
+   so light and dark stay correct; everything added here is layout, plus semantic
+   dot colours and white-on-colour chips that are safe in both themes. Below 1600px
+   nothing changes — the phone/iPad/normal list is untouched. */
+#boardWide{ display:none; }
+@media (min-width:1600px){
+  #boardView .wrap{ max-width:2100px; }
+  body.cr-lnav-on #boardView .wrap{ max-width:2100px; }
+  #boardView #boardMount{ display:none; }
+  #boardWide{ display:block; }
+}
+#boardWide .sbw-lay{ display:grid; grid-template-columns:minmax(0,1fr) 400px; gap:22px; align-items:start; }
+#boardWide .sbw-dows{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin:0 0 5px; }
+#boardWide .sbw-dow{ font:700 9.5px ui-monospace,Menlo,Consolas,monospace; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--rbe-mute,#9aa0a8); padding:0 3px; }
+#boardWide .sbw-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+#boardWide .sbw-grid .bday{ margin:0; min-height:116px; padding:8px 9px; display:flex; flex-direction:column; gap:4px; overflow:hidden; }
+#boardWide .sbw-past{ opacity:.5; }
+#boardWide .sbw-sel{ outline:2px solid #5f9fd8; outline-offset:-1px; }
+#boardWide .sbw-ch{ font-size:12.5px; border-bottom:0; padding-bottom:0; margin-bottom:2px; display:flex; align-items:baseline; gap:5px; }
+#boardWide .sbw-ch b{ font-size:14px; font-variant-numeric:tabular-nums; }
+#boardWide .sbw-todaytag{ margin-left:auto; font:800 8.5px ui-monospace,Menlo,monospace; letter-spacing:.06em;
+  color:#0a0a0d; background:#5f9fd8; border-radius:4px; padding:1px 5px; }
+#boardWide .sbw-ev{ display:flex; align-items:center; gap:6px; min-width:0; font-size:11px; }
+#boardWide .sbw-dot{ width:7px; height:7px; border-radius:50%; flex:0 0 auto; display:inline-block; background:#8b95a1; }
+#boardWide .sbw-dot.job{ background:#5f9fd8; } #boardWide .sbw-dot.drop{ background:#e0913a; }
+#boardWide .sbw-dot.appt{ background:#7ec99a; } #boardWide .sbw-dot.team{ background:#c98fe0; }
+#boardWide .sbw-dot.need{ background:#e2574a; }
+#boardWide .sbw-ev .btime{ flex:0 0 auto; font-size:9.5px; }
+#boardWide .sbw-ev .btitle{ font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#boardWide .sbw-more{ font:700 10px 'Segoe UI',Arial,sans-serif; color:var(--rbe-mute,#9aa0a8); padding-left:13px; }
+#boardWide .sbw-grid .bnone{ margin-top:auto; opacity:.7; }
+
+#boardWide .sbw-rail{ display:flex; flex-direction:column; gap:14px; }
+#boardWide .sbw-card{ margin:0; cursor:default; padding:14px 15px; }
+#boardWide .sbw-rh{ font-size:15px; display:flex; align-items:center; gap:8px; margin-bottom:11px; }
+#boardWide .sbw-edit{ display:block; width:100%; background:transparent; border:1px solid var(--rbe-line2,#2b2b33);
+  color:var(--rbe-acclt,#b9d3ec); border-radius:9px; padding:7px 12px; font:700 12.5px 'Segoe UI',Arial,sans-serif;
+  cursor:pointer; margin:0 0 10px; font-family:inherit; }
+#boardWide .sbw-row{ display:flex; gap:10px; padding:9px 0; border-top:1px solid var(--rbe-line2,#2b2b33); cursor:pointer; align-items:flex-start; }
+#boardWide .sbw-row:first-of-type{ border-top:0; }
+#boardWide .sbw-row .sbw-dot{ margin-top:5px; }
+#boardWide .sbw-rbody{ flex:1; min-width:0; }
+#boardWide .sbw-rt{ font-weight:700; font-size:13.5px; }
+#boardWide .sbw-rc{ font-size:12px; color:var(--rbe-mute,#9aa0a8); }
+#boardWide .sbw-rc .bcli{ font-weight:700; }
+#boardWide .sbw-ra{ font-size:11.5px; margin-top:1px; }
+#boardWide .sbw-rtime{ flex:0 0 auto; text-align:right; }
+
+#boardWide .sbw-stats{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; }
+#boardWide .sbw-stat{ background:var(--rbe-bg2,#262a31); border:1px solid var(--rbe-line2,#2b2b33); border-radius:10px; padding:9px 6px; text-align:center; }
+#boardWide .sbw-stat b{ display:block; font:800 21px 'Segoe UI',Arial,sans-serif; line-height:1; font-variant-numeric:tabular-nums; color:var(--rbe-ink,#cfd6df); }
+#boardWide .sbw-stat small{ font:700 8.5px ui-monospace,Menlo,monospace; letter-spacing:.08em; text-transform:uppercase; color:var(--rbe-mute,#9aa0a8); }
+#boardWide .sbw-stat.j b{ color:#5f9fd8; } #boardWide .sbw-stat.d b{ color:#e0913a; } #boardWide .sbw-stat.a b{ color:#7ec99a; }
+#boardWide .sbw-mini{ background:var(--rbe-bg2,#262a31); border:1px solid var(--rbe-line2,#2b2b33); border-radius:10px; padding:10px 12px; margin-bottom:9px; }
+#boardWide .sbw-mini:last-child{ margin-bottom:0; }
+#boardWide .sbw-lbl{ font:700 9px ui-monospace,Menlo,monospace; letter-spacing:.12em; text-transform:uppercase; color:var(--rbe-mute,#9aa0a8); }
+#boardWide .sbw-big{ font-weight:700; font-size:14px; margin-top:3px; color:var(--rbe-ink,#cfd6df); }
+#boardWide .sbw-accent{ color:#e0913a; }
+#boardWide .sbw-need{ display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px solid var(--rbe-line2,#2b2b33); cursor:pointer; }
+#boardWide .sbw-need:first-of-type{ border-top:0; }
+#boardWide .sbw-nn{ flex:1; min-width:0; font-size:12.5px; color:var(--rbe-ink,#cfd6df); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#boardWide .sbw-set{ font:800 9px ui-monospace,Menlo,monospace; letter-spacing:.04em; color:#0a0a0d; background:#e0913a; border-radius:5px; padding:3px 8px; flex:0 0 auto; }
+</style>
+<script id="cr-sbwide-script">
+/* 917: ultrawide Schedule Board — grid + selected-day panel + planning cockpit.
+   Reads cacheAppts / cacheProjects already in memory; writes nothing. Rebuilt
+   from openScheduleBoard() on every board open. */
+(function(){
+  var SB_SEL = null;
+  var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var DOWS = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+  function p2(n){ return (n<10?'0':'')+n; }
+  function dstr(dt){ return dt.getFullYear()+'-'+p2(dt.getMonth()+1)+'-'+p2(dt.getDate()); }
+  function esc2(s){ return (typeof esc==='function') ? esc(s) : String(s==null?'':s); }
+  function tfmt(t){ return (typeof fmtApptTime==='function' && t) ? fmtApptTime(t) : (t||'—'); }
+  function line1(a){ return String(a||'').split(/[\n,]/)[0].trim(); }
+  function kmName(k){ try{ return (KIND_META[k||'appt']||KIND_META.appt).nm; }catch(e){ return 'Item'; } }
+  function projOf(pid){ var a=window.cacheProjects||[]; for(var i=0;i<a.length;i++){ if(String(a[i].id)===String(pid)) return a[i]; } return null; }
+  function apptsOn(ds){ return (window.cacheAppts||[]).filter(function(a){ return a.appt_date===ds; })
+    .sort(function(a,b){ return String(a.appt_time||'').localeCompare(String(b.appt_time||'')); }); }
+  function fmtLong(ds){ var p=ds.split('-'); var d=new Date(+p[0],+p[1]-1,+p[2]);
+    return d.toLocaleDateString('en-US',{ weekday:'long', month:'short', day:'numeric' }); }
+
+  function ensureHost(){
+    var m=document.getElementById('boardMount'); if(!m) return null;
+    var h=document.getElementById('boardWide');
+    if(!h){ h=document.createElement('div'); h.id='boardWide'; m.parentNode.insertBefore(h, m.nextSibling); }
+    return h;
+  }
+
+  function evLine(it){
+    var k=it.kind||'appt';
+    return '<div class="sbw-ev"><i class="sbw-dot '+k+'"></i><span class="btime">'+tfmt(it.appt_time)+
+      '</span><span class="btitle">'+esc2(it.title||kmName(k))+'</span></div>';
+  }
+  function rowHTML(it){
+    var k=it.kind||'appt'; var pr=it.project_id?projOf(it.project_id):null;
+    return '<div class="sbw-row"'+(pr?' data-pid="'+esc2(pr.id)+'"':'')+'>'+
+      '<i class="sbw-dot '+k+'"></i><div class="sbw-rbody">'+
+      '<div class="btitle sbw-rt">'+esc2(it.title||kmName(k))+'</div>'+
+      '<div class="sbw-rc">'+(pr?'<span class="bcli">'+esc2(pr.name||'')+'</span> · ':'')+esc2(kmName(k))+'</div>'+
+      (pr&&pr.address?'<div class="bnone sbw-ra">'+esc2(line1(pr.address))+'</div>':'')+
+      '</div><div class="sbw-rtime"><span class="btime">'+tfmt(it.appt_time)+'</span></div></div>';
+  }
+
+  function render(){
+    var host=ensureHost(); if(!host) return;
+    var now=new Date(); var t0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+    var todayDs=dstr(t0);
+    if(!SB_SEL) SB_SEL=todayDs;
+    /* two calendar weeks: Monday of this week + 13 days */
+    var mon=new Date(t0); mon.setDate(t0.getDate()-((t0.getDay()+6)%7));
+    var days=[]; for(var i=0;i<14;i++){ var d=new Date(mon); d.setDate(mon.getDate()+i); days.push(d); }
+    var winSet={}; days.forEach(function(d){ winSet[dstr(d)]=1; });
+
+    var dowH=DOWS.map(function(x){ return '<div class="sbw-dow">'+x+'</div>'; }).join('');
+    var cells=days.map(function(d){
+      var ds=dstr(d), items=apptsOn(ds), isToday=ds===todayDs, isPast=d<t0, isSel=ds===SB_SEL;
+      var cls='bday sbw-cell'+(items.length?'':' bempty')+(isPast?' sbw-past':'')+(isSel?' sbw-sel':'');
+      var head='<div class="bhead sbw-ch"><b>'+d.getDate()+'</b> '+MON[d.getMonth()]+
+        (isToday?'<span class="sbw-todaytag">TODAY</span>':'')+'</div>';
+      var body;
+      if(items.length){ body=items.slice(0,2).map(evLine).join(''); if(items.length>2) body+='<div class="sbw-more">+'+(items.length-2)+' more</div>'; }
+      else body='<div class="bnone">—</div>';
+      return '<div class="'+cls+'" data-ds="'+ds+'">'+head+body+'</div>';
+    }).join('');
+
+    var selItems=apptsOn(SB_SEL);
+    var railDay='<div class="bday sbw-card"><div class="bhead sbw-rh">'+fmtLong(SB_SEL)+
+      (SB_SEL===todayDs?'<span class="sbw-todaytag">TODAY</span>':'')+'</div>'+
+      '<button class="sbw-edit" data-sbwedit>+ Add or edit this day</button>'+
+      (selItems.length?selItems.map(rowHTML).join(''):'<div class="bnone">Nothing scheduled — tap Add or edit.</div>')+
+      '</div>';
+
+    var win=(window.cacheAppts||[]).filter(function(a){ return winSet[a.appt_date]; });
+    var cJob=win.filter(function(a){ return (a.kind||'appt')==='job'; }).length;
+    var cDrop=win.filter(function(a){ return a.kind==='drop'; }).length;
+    var cAppt=win.filter(function(a){ var k=a.kind||'appt'; return k==='appt'||k==='team'; }).length;
+    var drops=(window.cacheAppts||[]).filter(function(a){ return a.kind==='drop' && String(a.appt_date)>=todayDs; })
+      .sort(function(a,b){ return String(a.appt_date+ (a.appt_time||'')).localeCompare(String(b.appt_date+(b.appt_time||''))); });
+    var nd=drops[0]||null; var ndP=nd&&nd.project_id?projOf(nd.project_id):null;
+    function relDay(ds){ if(ds===todayDs) return 'Today'; var p=ds.split('-'); var dd=new Date(+p[0],+p[1]-1,+p[2]);
+      var diff=Math.round((dd-t0)/86400000); if(diff===1) return 'Tomorrow';
+      return dd.toLocaleDateString('en-US',{ weekday:'short', month:'short', day:'numeric' }); }
+    var needs=(window.cacheProjects||[]).filter(function(p){
+      return p && p.stage==='Approved' && !(window.cacheAppts||[]).some(function(a){ return String(a.project_id)===String(p.id) && String(a.appt_date)>=todayDs; });
+    });
+
+    var cockpit='<div class="bday sbw-card"><div class="bhead sbw-rh">Next two weeks</div>'+
+      '<div class="sbw-stats"><div class="sbw-stat j"><b>'+cJob+'</b><small>Jobs</small></div>'+
+        '<div class="sbw-stat d"><b>'+cDrop+'</b><small>Drops</small></div>'+
+        '<div class="sbw-stat a"><b>'+cAppt+'</b><small>Appts</small></div></div>'+
+      '<div class="sbw-mini"><div class="sbw-lbl">Next material drop</div>'+
+        (nd?('<div class="sbw-big"><span class="sbw-accent">'+relDay(nd.appt_date)+' '+tfmt(nd.appt_time)+'</span> — '+esc2(nd.title||'Drop')+'</div>'+(ndP?'<div class="bnone">→ '+esc2(ndP.name||'')+'</div>':''))
+            :'<div class="sbw-big">None scheduled</div>')+'</div>'+
+      '<div class="sbw-mini"><div class="sbw-lbl">Needs a date ('+needs.length+')</div>'+
+        (needs.length?needs.slice(0,5).map(function(p){ return '<div class="sbw-need" data-pid="'+esc2(p.id)+'"><i class="sbw-dot need"></i><span class="sbw-nn">'+esc2(p.name||'Job')+'</span><span class="sbw-set">Schedule</span></div>'; }).join('')
+            :'<div class="bnone">Every approved job has a date.</div>')+'</div>'+
+      '</div>';
+
+    host.innerHTML='<div class="sbw-lay"><div class="sbw-cal"><div class="sbw-dows">'+dowH+'</div>'+
+      '<div class="sbw-grid">'+cells+'</div></div><div class="sbw-rail">'+railDay+cockpit+'</div></div>';
+  }
+
+  document.addEventListener('click', function(e){
+    var host=document.getElementById('boardWide'); if(!host || !host.contains(e.target)) return;
+    var ed=e.target.closest('[data-sbwedit]'); if(ed){ if(typeof openApptDay==='function') openApptDay(SB_SEL); return; }
+    var rw=e.target.closest('.sbw-row[data-pid]'); if(rw){ if(typeof openProject==='function') openProject(rw.getAttribute('data-pid')); return; }
+    var ndl=e.target.closest('.sbw-need[data-pid]'); if(ndl){ if(typeof openProject==='function') openProject(ndl.getAttribute('data-pid')); return; }
+    var c=e.target.closest('.sbw-cell[data-ds]'); if(c){ SB_SEL=c.getAttribute('data-ds'); render(); return; }
+  });
+
+  window.CardinalScheduleWide = Object.assign(window.CardinalScheduleWide || {}, { render: render });
+})();
+</script>
 </body>
 </html>
