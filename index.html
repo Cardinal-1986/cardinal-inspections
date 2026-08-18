@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 901 &#8212; A rep now gets a notification (push/email/text) the moment a lead is assigned to them — on a new lead or a reassignment; self-assignments stay quiet</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 904 &#8212; Production now uses the whole screen on an ultrawide monitor — the calendar sits on the left with the stats, cards and day agenda on the right; phones, iPads and normal monitors are unchanged</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40360,6 +40360,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:904, d:'2026-08-18', t:'Production fills an ultrawide screen',
+s:'On a very wide monitor (1600px and up) the Production screen no longer sits as a narrow centered column with big empty margins. It becomes a two-column dashboard: the month calendar on the left, and the stat boxes, the Closed-repairs banner, the Crew Dispatch / Crews cards and the day agenda stacked on the right \u2014 so you can see the whole thing at once. Nothing changes on phones, iPads or a normal-width monitor; this only kicks in past 1600px wide. First of a few screens getting the ultrawide treatment.' },
 { b:901, d:'2026-08-18', t:'Reps get pinged when a lead lands on them',
 s:'When a lead is assigned to a rep \u2014 either a brand-new lead created with them on it, or an existing job reassigned to them \u2014 they now get a notification through whichever channels they have on (push, email, text). It uses the same alert system that already tells someone about a task or a signed estimate. If you assign a lead to yourself there is no ping, and only the rep is notified, not the whole office.' },
 { b:900, d:'2026-08-18', t:'Owner Console \u2014 The Vault (module 6, complete)',
@@ -48668,6 +48670,22 @@ objections : OBJECTIONS,
    the page sits under the bar and cannot be scrolled free. */
 #cr-pb .pbwrap{ max-width:1180px; margin:0 auto;
   padding:18px 15px calc(96px + env(safe-area-inset-bottom,0px)); }
+/* 904: ultrawide only (>=1600px). The centered 1180px column leaves a 34" screen
+   mostly empty. Lay it out as a dashboard: calendar on the left, the stat tiles /
+   Closed-repairs banner / Crew-Dispatch+Crews cards / day agenda stacked on the
+   right. Placement is by grid cell only — the JS builder and DOM are unchanged,
+   and below 1600px nothing about mobile / iPad / a normal monitor changes.
+   The right rail is selected by DIRECT child (> *) so the calendar's inner
+   .pbday cells (a name collision) are never touched. */
+@media (min-width:1600px){
+  #cr-pb .pbwrap{ max-width:2160px; display:grid;
+    grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);
+    column-gap:36px; row-gap:14px; align-items:start; }
+  #cr-pb .pbwrap > *{ grid-column:2; }
+  #cr-pb .pbwrap > .pbtop{ grid-column:1 / -1; }
+  #cr-pb .pbwrap > .pbsub{ grid-column:1 / -1; }
+  #cr-pb .pbwrap > .pbmonth{ grid-column:1; grid-row:3 / span 6; align-self:start; }
+}
 
 /* ---- header ------------------------------------------------------------- */
 #cr-pb .pbtop{ display:flex; align-items:center; gap:10px; margin-bottom:3px; }

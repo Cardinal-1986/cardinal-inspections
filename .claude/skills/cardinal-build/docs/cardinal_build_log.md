@@ -18743,3 +18743,23 @@ pages (sms-privacy.html, sms-terms.html) from "Cardinal Roofing & Renovations, L
 throughout — title, header, body, contact. (The Twilio Brand/Campaign legal-name field is the field
 that actually gets vetted; these pages are branding, but matched for consistency.) Structure unchanged,
 still self-contained, no index.html touch, no SQL.
+
+## Build 904 — Production fills an ultrawide screen (>=1600px two-column)
+
+Theo, on his 34" ultrawide: the Production screen (and others) sat as a centered 1180px column with big
+empty side margins. Approved the two-column dashboard from a preview. Added a media query GATED at
+min-width:1600px so mobile/iPad/normal-monitor are byte-for-byte unchanged; only true ultrawide changes.
+`.pbwrap` becomes a 2-col grid (calendar left, stats/closed-banner/Crew-Dispatch+Crews/agenda stacked
+right). Placement is CSS-only — no builder/DOM change.
+
+⚠️ First attempt broke the calendar: I listed `.pbday` in the right-rail selector, but `.pbday` is ALSO
+the calendar day-cell class (name collision), so every date got grid-column:2 and stacked into one
+column. Fix: select the right rail by DIRECT child (`#cr-pb .pbwrap > *`), which can't reach the inner
+`.pbday` cells; only pbtop/pbsub (full width) and pbmonth (left) are overridden. (A stray `*/` from a
+two-part comment also briefly unbalanced the CSS — caught by check_build's brace gate.)
+
+Gate `gate_prodwide904.mjs` (Chromium, seeded): at 3440 pbwrap is grid with two tracks, tiles sit right
+of and level with the calendar, calendar stays 7-col; at 1440 and 390 it's still block/single-column
+(unchanged). **GREEN 7/7**, negative-controlled RED vs v903. `check_build` green (901 -> 904; note 902/903
+were the non-index SMS builds, so index.html went 901 -> 904). CSS-only, no SQL. More screens (client
+list, Owner Console) to get the same >=1600px treatment next, each previewed first.
