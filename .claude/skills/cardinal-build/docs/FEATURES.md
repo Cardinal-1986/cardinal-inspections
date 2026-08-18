@@ -5333,3 +5333,27 @@ reports `texted` + `env.sms` (presence only, no keys). Build 875 adds **"Send a 
 (`#testAlertBtn`, under Phone Notifications) — fires all three channels to the current user ONLY and shows
 a per-channel readout, the fastest way to confirm the Resend + Twilio setup end to end. Email/SMS require
 their Vercel env vars (and a Verified Resend domain / approved A2P 10DLC) to actually deliver — see HANDOFF.
+
+### The Owner Console (build 895) — `#cr-owner` / `window.CardinalOwner`, ADMIN ONLY
+
+Theo's owner-level dashboard for things outside any one customer. Reached from **Menu → Admin →
+Owner Console** (the Admin section only exists for admins; `open()` also refuses a non-admin, and the
+two tables are `is_cardinal_admin()` in RLS). Full-screen `#cr-owner` view, display-shown at z-index
+9500, registered in `hideAllViews()` / `navRestore` (`case 'owner'`) / the `__crNav` wrap. "Daily
+Brief" editorial style Theo picked from three mockups: cream `#f5f2ec`, Georgia serif, cardinal red;
+every colour a literal (no tokens), no `body.overflow` writer (overscroll-behavior:contain).
+
+Phase 1 = three modules, `<style id="cr-owner-styles">` + `<script id="cr-owner-script">`:
+1. **Today's Top 10** — `owner_tasks` (title/note/done/position). Quick-add, tap to check, × to delete;
+   open tasks numbered first, then done (struck).
+2. **On the horizon** — the tax/compliance calendar computed from a static JS config each open (never a
+   stored row, so it can't go stale): next quarterly estimated tax (1040-ES Apr/Jun/Sep/Jan 15), annual
+   return (1040 + Sch C, Apr 15), 1099-NEC to subs (Jan 31), Ohio BWC true-up + sub coverage (Aug 15) —
+   each with a countdown, red inside 30 days, amber inside 60. Plus owner-added obligations
+   (`owner_items` kind='obligation'). Carries a "confirm exact dates with your accountant" note.
+3. **Renewals & Expirations** — `crew_docs` rows carrying an `expires_on` (COI/W-9/license, newest per
+   crew+kind, status + countdown) plus owner-added renewals (`owner_items` kind='renewal').
+
+Tables `owner_tasks` / `owner_items` (`owner_console_schema.sql`, applied, `is_cardinal_admin()` RLS).
+Gate `render_owner895.mjs` (Chromium, 20 assertions, negative-controlled). **Phase 2 = money + quick
+reminders (modules 4-6), not yet built.**
