@@ -19004,3 +19004,24 @@ distinct); legend lists both crews + Needs a crew; the addressless job raises th
 GREEN, negative-controlled vs v912 (no `data-dspmap`). `check_build` green (912 -> 913, marker
 "913: Crew Dispatch map"). No SQL. (Tiles need the live network — Theo's eyes are the visual gate,
 same Leaflet look as the Punch map.)
+
+## Build 914 — Rename a job document
+
+From a phone screenshot (Theo): a Job Documents file named "Aug 17, 2026 Doc.pdf" that is actually a
+signed printed contract — "Can you make the document name editable." Job docs are `inspection_reports`
+rows whose display name is `fileDocName(title)`; a plain upload stores `title = 'File: <name>'`, an
+insurance document `'Insurance Doc [slot]: <name>'`.
+
+Added a pencil (`✏️`, `&#9999;&#65039;`) to each row in `renderDocsPage()`, before the delete X, and a
+`renameJobDoc(id)`: it `prompt()`s (prefilled with the current human name), and on a real change writes
+`db.update(id, { title })` → `reload()` → `renderDocsPage()`. It preserves an `Insurance Doc [slot]:`
+prefix so an insurance doc stays in its slot, and only touches the title — opening still uses the stored
+mime/bytes, so a name without a `.pdf` never breaks the file. Cancel / empty / unchanged all no-op.
+All viewports; same team visibility as the file. `#jdMount` click handler routes `[data-jdren]` ahead of
+`[data-jddel]`.
+
+Gate `gate_jdren914.mjs` (Node — extracts and executes the shipped `renameJobDoc` against controlled
+rows, plus source-structural checks): file doc → `'File: Signed Contract'`; insurance doc keeps its
+`[roof_photos]` slot; cancel/empty/unchanged/unknown-id all write nothing; the row renders the pencil
+before the X and the handler routes it. All GREEN, negative-controlled vs v913 (no `data-jdren`, no
+`renameJobDoc`). `check_build` green (913 -> 914, marker "914: rename a job document"). No SQL.

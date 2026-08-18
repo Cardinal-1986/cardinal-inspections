@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 913 &#8212; Crew Dispatch has a Map button now — see this week’s jobs on a map coloured by crew, with the jobs that still need a crew flagged so you can assign one right from the pin</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 914 &#8212; You can rename a job document now — tap the pencil next to it (handy for naming a scanned contract, a signed form, and so on)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14398,8 +14398,30 @@ function renderDocsPage(){
       '<span style="flex:1;cursor:pointer;font-weight:700;" data-jdopen="' + r.id + '">' + esc(nm) +
       '<small style="display:block;font-weight:400;">' + acxDate(r.created_at) +
       (r.created_by ? ' \u00b7 ' + esc(rptRepName(r.created_by) || r.created_by) : '') + '</small></span>' +
+      '<button class="chipbtn" data-jdren="' + r.id + '" aria-label="Rename" title="Rename">&#9999;&#65039;</button>' +
       '<button class="chipbtn" data-jddel="' + r.id + '">&#10005;</button></div>';
   }).join('');
+}
+/* 914: rename a job document. The visible name is fileDocName(title); a plain
+   upload stores it as 'File: <name>', an insurance document as
+   'Insurance Doc [slot]: <name>'. Rename only the human part and keep the
+   prefix, so an insurance doc stays in its slot. Opening still uses the stored
+   mime/bytes, so a name without an extension never breaks the file. */
+function renameJobDoc(id){
+  var row = cacheRows.filter(function(r){ return r.id === id; })[0];
+  if(!row) return;
+  var t = String(row.title || '');
+  var m = t.match(/^Insurance Doc \[([a-z_]+)\]:\s*([\s\S]*)$/i);
+  var current = m ? m[2] : t.replace(/^file:\s*/i, '');
+  var next = prompt('Rename document', current);
+  if(next == null) return;
+  next = next.trim();
+  if(!next || next === current) return;
+  var newTitle = m ? ('Insurance Doc [' + m[1] + ']: ' + next) : ('File: ' + next);
+  db.update(id, { title: newTitle })
+    .then(function(){ return reload(); })
+    .then(renderDocsPage)
+    .catch(function(err){ showError('Could not rename: ' + (err.message || err)); });
 }
 /* 673 — ONE way to put a stored file on screen, because there were three and
    one of them was broken.
@@ -14520,6 +14542,8 @@ document.getElementById('jdFileInput').addEventListener('change', function(){
 document.getElementById('jdMount').addEventListener('click', function(e){
   var op = e.target.closest('[data-jdopen]');
   if(op){ openJobFile(op.getAttribute('data-jdopen')); return; }
+  var ren = e.target.closest('[data-jdren]');
+  if(ren){ renameJobDoc(ren.getAttribute('data-jdren')); return; }
   var del = e.target.closest('[data-jddel]');
   if(del){
     if(!confirm('Delete this file for everyone?')) return;
@@ -40390,6 +40414,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:914, d:'2026-08-18', t:'Rename a job document',
+s:'Job Documents now has a pencil next to each file. Tap it to rename the document \u2014 handy when a scan comes in as \u201cAug 17, 2026 Doc.pdf\u201d and you want it to read \u201cSigned Contract.\u201d It just renames the label everyone sees; the file itself opens exactly as before, so a name without a .pdf on the end still works. Insurance documents keep their slot. Visible to the whole team, same as the file.' },
 { b:913, d:'2026-08-18', t:'Crew Dispatch: a map of the week',
 s:'Crew Dispatch has a new Map button in the top bar (works on the phone too). It flips the week grid to a map of this week\u2019s jobs, each pin coloured by the crew it\u2019s booked to, with a legend. Jobs that are scheduled but still need a crew show as amber pins \u2014 tap one and it opens the crew picker so you can assign a crew right there, the same picker the grid\u2019s Needs-a-crew rail uses. Tap a booked job\u2019s pin to open the client. Addresses are looked up Google-first (falling back to the free geocoder), the same as the rest of the app, and anything that can\u2019t be placed is called out instead of quietly dropped. The week arrows and trade filters update the map live. No money appears anywhere, same as the grid.' },
 { b:912, d:'2026-08-18', t:'Punch \u0026 Repairs: a Completed tab of its own',
