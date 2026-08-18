@@ -18659,3 +18659,24 @@ Gates: `render_owner898.mjs` (Chromium, console half) **GREEN 5/5**, neg-control
 due-today + overdue-one-time land in the email, overdue-repeating does not, subject names reminders,
 response counts 2: **GREEN 7/7**, neg-controlled RED vs digest_v897.js. 896/897 harnesses still green.
 `check_build` green (897 -> 898, div 3993/3993); `api/digest.js` parses, 0 module.exports. No SQL.
+
+## Build 899 — Owner Console module 4: The Ledger
+
+Theo defined Module 4 not as receivables (the app has little of that data) but as money in motion he
+alone tracks: loans he's taken (crew / industry peer / bank), sales draws advanced to reps, money he's
+lent. His choices: running balance PLUS a dated payment log; sales draws manual for now but built to
+later recoup from commissions; parties = team / industry / bank. Name: "The Ledger."
+
+Two admin-only tables (`owner_ledger_schema.sql`, applied first): `owner_ledger` (accounts — kind
+borrowed/draw/lent, party, party_type, settled_at; NO principal column) and `owner_ledger_txns` (dated
+moves — direction advance/payment, amount, FK cascade). Balance = Σadvance − Σpayment, so the log is the
+single source of truth; adding an account writes the opening amount as its first advance txn. Net line
+at the top (You owe / Owed to you). Accounts group into "Money you owe" and "Owed to you"; tap expands an
+inline detail with the log, a record-payment/-advance form, settle/reopen and delete; one detail open at
+a time (`openAcct`). All is_cardinal_admin(); nothing touches the customer side.
+
+Gate `render_owner899.mjs`: **GREEN 15/15** — section + net render, seeded accounts in the right groups
+with correct balances, add writes ledger + opening advance txn, expand shows the log, payment writes a
+txn and drops the balance, settle updates + reads "settled", txn delete and account delete both write.
+Negative-controlled **RED** vs v898. 895-898 harnesses + digest test still green. `check_build` green
+(898 -> 899, div 4008/4008). Phase-2 complete bar the Vault (module 6).

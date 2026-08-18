@@ -5363,3 +5363,5 @@ reminders (modules 4-6), not yet built.**
 **Build 897** added a **Reminders** section (module 5): add a reminder with an optional date and a repeat of none/weekly/monthly/yearly; tap to edit, check to complete a one-time or roll a repeating one to its next date. Table `owner_reminders` (`is_cardinal_admin()`). Modules 4 (Money) and 6 (Vault) remain.
 
 **Build 898** wired reminder delivery: a **Ping me** toggle on a dated reminder includes it in the daily digest email (`api/digest.js`) on the day it's due — due-today (any repeat) or an overdue one-time; undated and overdue-repeating reminders never ping. Rows show "pings you" when on.
+
+**Build 899** added **The Ledger** (module 4): a private admin-only book of money owed and advanced — loans taken (crew/industry/bank), sales draws, money lent — each account with a running balance and a dated payment log, a net-position line, settle/reopen, and inline detail. Tables `owner_ledger` + `owner_ledger_txns` (`is_cardinal_admin()`). Draws are manual, structured to later recoup from commissions. Only module 6 (Vault) remains.
