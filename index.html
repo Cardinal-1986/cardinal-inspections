@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 892 &#8212; Fixed: a new work order from the client page now fills in the homeowner, address and phone (the button was handing the work order the tap instead of the client)</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 893 &#8212; Removed the duplicate Production Calendar card from the home screen — the Team Calendar above it stays</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3630,7 +3630,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path d="M9.4 1.8h5.2a1.6 1.6 0 0 1 1.6 1.6v.9H7.8v-.9a1.6 1.6 0 0 1 1.6-1.6z"/><path fill-rule="evenodd" d="M6.2 3.6h1.6v2.8h8.4V3.6h1.6a2 2 0 0 1 2 2v13.8a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM6.6 9.4h10.8v9.6H6.6z"/><rect x="8.4" y="11" width="7.2" height="1.9" rx=".95"/><rect x="8.4" y="14.4" width="5" height="1.9" rx=".95"/></g><g class="i5"><path d="M8.6 4.2H6.4a2 2 0 0 0-2 2v13.4a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2V6.2a2 2 0 0 0-2-2h-2.2"/><rect x="8.4" y="2.4" width="7.2" height="3.6" rx="1.4" class="m"/><path d="M8.2 11.6h7.6" class="m"/><path d="M8.2 15.4h5" class="m"/></g></svg>Work Schedule</div>
             <div class="opsstats">
               <div class="opsstat" data-opsnav="completed" style="cursor:pointer;" title="View completed jobs"><span class="opsc" style="background:#2f7fd0;" id="opsDone">0</span><small>Completed<br>Today</small></div>
-              <div class="opsstat" data-opsnav="today" style="cursor:pointer;" title="Jump to Production Calendar"><span class="opsc" style="background:#8b5fd6;" id="opsToday">0</span><small>Jobs<br>Today</small></div>
+              <div class="opsstat" data-opsnav="today" style="cursor:pointer;" title="Jump to Team Calendar"><span class="opsc" style="background:#8b5fd6;" id="opsToday">0</span><small>Jobs<br>Today</small></div>
               <div class="opsstat" data-opsnav="outlook" style="cursor:pointer;" title="Open Schedule Board"><span class="opsc" style="background:#2f6b3f;" id="opsOutlook">0</span><small>30 Day<br>Outlook</small></div>
             </div>
           </div>
@@ -3654,14 +3654,6 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             </div>
             <div class="minical" id="teamCalMount"></div>
             <div class="callegend"><span class="ldot" style="background:#141414;"></span> team events &#8212; tap a day to add</div>
-          </div>
-          <div class="pipecard teamcal prodcal">
-            <div class="pipetitle" style="display:flex;justify-content:space-between;align-items:center;">
-              <span><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path fill-rule="evenodd" d="M4.8 4.6h14.4a2 2 0 0 1 2 2v12.4a2 2 0 0 1-2 2H4.8a2 2 0 0 1-2-2V6.6a2 2 0 0 1 2-2zM5.2 11h13.6v7.4H5.2z"/><rect x="7" y="12.6" width="7.6" height="1.9" rx=".95"/><rect x="9.4" y="15.4" width="7.6" height="1.9" rx=".95"/></g><g class="i5"><rect x="2.8" y="4.6" width="18.4" height="16" rx="2"/><path d="M2.8 10h18.4"/><path d="M7 13.4h7.4" class="m"/><path d="M9.6 16.6h7.4" class="m"/></g></svg>Production Calendar</span>
-              <small id="prodCalWho" style="font:700 11px 'Segoe UI',Arial,sans-serif;color:#9a8c85;"></small>
-            </div>
-            <div class="minical" id="prodCalMount"></div>
-            <div class="callegend"><span class="ldot" style="background:#141414;"></span> jobs &nbsp; <span class="ldot" style="background:var(--red);"></span> material drops</div>
           </div>
         </div>
         <div class="hero-left" style="margin-top:14px;">
@@ -11097,7 +11089,7 @@ function renderOps(){
         } else if(nav === 'outlook'){
           openScheduleBoard();
         } else if(nav === 'today'){
-          var pc = document.getElementById('prodCalMount');
+          var pc = document.getElementById('teamCalMount');
           var card = pc ? pc.closest('.pipecard') : null;
           if(card){ card.scrollIntoView({ behavior:'smooth', block:'start' }); }
         }
@@ -21798,19 +21790,10 @@ function kindsFor(y, m, filter){
 var teamCalInst = makeMiniCal('teamCalMount',
   function(y,m){ return kindsFor(y, m, function(a){ return a.kind === 'team'; }); },
   function(ds){ openApptDay(ds); var k = document.getElementById('apptKind'); if(k) k.value = 'team'; });
-var prodCalInst = makeMiniCal('prodCalMount',
-  function(y,m){ return kindsFor(y, m, prodVisibleAppt); },
-  function(ds){ openApptDay(ds); });
-
+/* 893: the Production Calendar mini-card was removed from the home screen — the
+   Team Calendar above it runs the same makeMiniCal engine, so nothing was lost. */
 function renderTeamCal(){
   teamCalInst.render();
-  prodCalInst.render();
-  var who = document.getElementById('prodCalWho');
-  if(who){
-    var me = (currentUser && currentUser.email) || '';
-    who.textContent = (ADMIN_EMAILS.indexOf(me) !== -1 || PRODUCTION_EMAILS.indexOf(me) !== -1)
-      ? 'all jobs' : 'your jobs';
-  }
 }
 document.getElementById('teamAddBtn').addEventListener('click', function(){
   var t = new Date();
@@ -40342,6 +40325,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:893, d:'2026-08-18', t:'Home screen \u2014 the duplicate Production Calendar is gone',
+s:'The home dashboard had two mini calendars stacked \u2014 Cardinal Team Calendar and, right under it, a Production Calendar. They ran on the same calendar engine and were effectively a duplicate, so the Production Calendar card is removed and the Team Calendar stays. Nothing else changed: the \u201CJobs Today\u201D shortcut in the Production strip now jumps to the Team Calendar, and the full Production schedule is still under Production \u2192 Full calendar / Schedule Board.' },
 { b:892, d:'2026-08-18', t:'Work Order fills the homeowner/address again',
 s:'A real bug: creating a work order from a client\u2019s + New work order button left the Homeowner, Address and Phone blank (and did not tie the work order to the client). The button was handing the work-order builder the tap itself instead of the open client, so it had no name or address to fill in. It now correctly uses the open client, so the job details fill in automatically. This affected work orders made from the client page since the Crew Dispatch board was added; ones made from the dispatch board were fine. Old work orders already saved blank need the details typed in or can be re-issued.' },
 { b:891, d:'2026-08-17', t:'Work Order polish — dropdowns, address fill, date picker',
