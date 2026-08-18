@@ -18680,3 +18680,24 @@ with correct balances, add writes ledger + opening advance txn, expand shows the
 txn and drops the balance, settle updates + reads "settled", txn delete and account delete both write.
 Negative-controlled **RED** vs v898. 895-898 harnesses + digest test still green. `check_build` green
 (898 -> 899, div 4008/4008). Phase-2 complete bar the Vault (module 6).
+
+## Build 900 — Owner Console module 6: The Vault (console complete)
+
+The last Owner Console module. A private store for key business documents — EIN letter, insurance,
+licenses, formation papers, banking — grouped by category, each with an optional expiry that counts
+down (red when close). Upload a file (≤25 MB) with a label + category; tap to open (signed URL in a new
+tab, opened synchronously to survive iOS popup rules); delete removes the row AND the storage object.
+
+Files live in the `photos` bucket under an `owner-vault/` prefix, fenced to admins TWO ways: the
+`owner_docs` row is is_cardinal_admin() RLS, and the storage object is admin-only — `owner_vault_schema.sql`
+(table) + `owner_vault_storage.sql` (storage policies), both applied first. The storage file follows the
+Studio precedent exactly: it EXCLUDES `owner-vault/%` from the general `photos_read` (recreated with one
+more clause, verified a normal projects/ path still reads and the vault prefix does not) and adds admin-only
+read/write/update/delete for the prefix. Broad insert stays permissive but confidentiality (read) is the
+fence, and a non-admin can't create an owner_docs row anyway.
+
+Gate `render_owner900.mjs`: **GREEN 12/12** — section + category grouping render, expiring doc shows a
+countdown, a REAL file upload (Playwright setInputFiles) writes a storage object under owner-vault/ + an
+owner_docs insert, open signs the stored path and hands it to window.open, delete removes row + object.
+Negative-controlled **RED** vs v899. 895-899 harnesses + digest test still green. `check_build` green
+(899 -> 900, div 4015/4015). **All six Owner Console modules are now shipped.**
