@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 908 &#8212; The dispatch map in Punch &amp; Repairs no longer runs off the bottom of an ultrawide screen \u2014 it is shorter now so it always fits, and still fills the width</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 909 &#8212; New on the Punch &amp; Repairs map: Plan a run \u2014 tap several repairs and it orders them into an efficient loop with the mileage, then opens turn-by-turn directions in Google Maps</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40389,6 +40389,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:909, d:'2026-08-18', t:'Plan a run on the dispatch map',
+s:'The live map in Punch \u0026 Repairs (ultrawide, 1600px and up) gains Plan a run. Tap \u201CPlan a run,\u201D then tap the repairs you want to do in one trip \u2014 on the map or in the list. The map numbers them in an efficient nearest-first order, draws the loop and shows the total mileage, and an Open in Maps button hands the whole route to Google Maps for real turn-by-turn directions. It is a planning tool only \u2014 nothing is saved or changed, and Clear resets it. Ultrawide only; phones, iPads and normal monitors are unchanged.' },
 { b:908, d:'2026-08-18', t:'Dispatch map fits the screen (shorter, still fills the width)',
 s:'The live map in Punch \u0026 Repairs (ultrawide, 1600px and up) was too tall \u2014 it was sized to almost the full screen height but starts below the search and tab bar, so its bottom ran off the bottom of the screen. It is now shorter, capped to the space below the header, so it always fits on screen with no scrolling past it. It still fills the width beside the list. Nothing else about the map changed.' },
 { b:907, d:'2026-08-18', t:'OC Colors covers load fast in the Showroom',
@@ -73995,8 +73997,20 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   .pumap-leg span{ font:700 11px 'Segoe UI',Arial; color:#cfd6de; display:flex; align-items:center; gap:6px; }
   .pumap-leg i{ width:9px; height:9px; border-radius:50%; display:inline-block; }
   .pumap-note{ position:absolute; left:0; right:0; bottom:0; z-index:4; padding:9px 14px; background:#12181ee6; color:#8b95a1; font:600 12px 'Segoe UI',Arial; text-align:center; }
-  .pumk{ width:16px; height:16px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #0b1116; box-shadow:0 2px 6px #0008; cursor:pointer; }
+  .pumk{ position:relative; width:16px; height:16px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #0b1116; box-shadow:0 2px 6px #0008; cursor:pointer; }
   .pumk.sel{ width:20px; height:20px; box-shadow:0 0 0 5px #ffffff33,0 3px 8px #000a; }
+  .pumk.inrun{ background:#f5a623 !important; width:23px; height:23px; }
+  .pumk.inrun::after{ content:attr(data-seq); position:absolute; inset:0; transform:rotate(45deg); display:flex; align-items:center; justify-content:center; color:#1a1204; font:800 11px 'Segoe UI',Arial; }
+  .pumap-plan{ pointer-events:auto; background:#12181ee6; backdrop-filter:blur(4px); border:1px solid #232a31; border-radius:11px; color:#cfd6de; font:700 12px 'Segoe UI',Arial; padding:8px 14px; cursor:pointer; font-family:inherit; }
+  .pumap-plan.on{ background:#f5a623; color:#1a1204; border-color:#f5a623; }
+  .pumap-run{ position:absolute; right:12px; bottom:12px; z-index:6; display:none; background:#12181ef2; backdrop-filter:blur(6px); border:1px solid #232a31; border-radius:12px; padding:12px 14px; min-width:190px; }
+  .pumap-run.show{ display:block; }
+  .pumap-run .hint{ color:#8b95a1; font:600 12.5px 'Segoe UI',Arial; max-width:180px; }
+  .pumap-run .sum{ color:#eef2f6; font:700 14px 'Segoe UI',Arial; margin-bottom:10px; }
+  .pumap-run .sum b{ color:#f5a623; font-size:16px; }
+  .pumap-run .act{ display:flex; gap:8px; }
+  .pumap-run .go{ background:#c8202e; color:#fff; text-decoration:none; border-radius:8px; padding:7px 13px; font:800 12px 'Segoe UI',Arial; }
+  .pumap-run .clr{ background:#1c242c; color:#cfd6de; border:1px solid #2b333c; border-radius:8px; padding:7px 12px; font:700 12px 'Segoe UI',Arial; cursor:pointer; font-family:inherit; }
   .pu-card.pumap-hi{ outline:2px solid #e2574a; outline-offset:1px; border-radius:13px; }
   .leaflet-popup-content-wrapper{ background:#161b21; color:#dfe4ea; border:1px solid #2b333c; border-radius:12px; }
   .leaflet-popup-tip{ background:#161b21; border:1px solid #2b333c; }
@@ -74015,6 +74029,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   var UW = 1600;
   var map=null, layer=null, markers={}, mode='urgency', selId=null, built=false;
   var geoQueue=[], geoBusy=false;
+  var planMode=false, run=[], routeLine=null;   /* 909: Plan a run */
   var URG={ high:'#e2574a', normal:'#f5a623', low:'#5f9fd8' };
   function isUW(){ return window.innerWidth >= UW; }
   function punchOpen(){ var v=document.getElementById('punchView'); return !!(v && v.style.display!=='none' && getComputedStyle(v).display!=='none'); }
@@ -74074,10 +74089,10 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
       var col=itColor(it);
       var m=markers[it.id];
       if(m){ m.setLatLng([pt.lat, pt.lon]); if(m._icon){ var d=m._icon.querySelector('.pumk'); if(d) d.style.background=col; } m.__it=it; return; }
-      var icon=L.divIcon({ className:'', html:'<div class="pumk" style="background:'+col+'"></div>', iconSize:[16,16], iconAnchor:[8,16], popupAnchor:[0,-14] });
+      var icon=L.divIcon({ className:'', html:'<div class="pumk" data-pu="'+esc(String(it.id))+'" style="background:'+col+'"></div>', iconSize:[16,16], iconAnchor:[8,16], popupAnchor:[0,-14] });
       m=L.marker([pt.lat, pt.lon], { icon:icon }); m.__it=it;
       m.bindPopup(popupHTML(it, pr), { closeButton:true });
-      m.on('click', function(){ selectFromMap(it.id); });
+      m.on('click', function(){ onPinClick(it.id); });
       m.addTo(layer); markers[it.id]=m;
     }
     var hit=cachedGeo(addr); if(hit) place(hit); else queueGeo(addr, place);
@@ -74109,6 +74124,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     for(var id in markers){ if(!keep[id]){ layer.removeLayer(markers[id]); delete markers[id]; } }
     updateStats();
     var leg=document.getElementById('puMapLeg'); if(leg) leg.innerHTML=legendHTML();
+    if(planMode){ run=run.filter(function(id){ return markers[id]; }); drawRoute(); }
   }
 
   function selectFromMap(id){
@@ -74127,11 +74143,57 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     for(var k in markers){ if(markers[k]._icon){ var d=markers[k]._icon.querySelector('.pumk'); if(d) d.classList.toggle('sel', k===String(id)); } }
   }
 
+  /* ---- Plan a run (909): tick repairs, order them nearest-neighbour into a
+     loop, preview the order on the map, and hand off to Google Maps for real
+     turn-by-turn. READ-ONLY \u2014 nothing is written to any table. ---- */
+  function itemById(id){ var a=rows(); for(var i=0;i<a.length;i++){ if(String(a[i].id)===String(id)) return a[i]; } return null; }
+  function coordOf(id){ var m=markers[id]; return (m && m.getLatLng) ? m.getLatLng() : null; }
+  function havMi(a,b){ if(!a||!b) return 0; var R=3958.8, la1=a.lat*Math.PI/180, la2=b.lat*Math.PI/180,
+    dla=(b.lat-a.lat)*Math.PI/180, alo=(a.lng!=null?a.lng:a.lon), blo=(b.lng!=null?b.lng:b.lon), dlo=(blo-alo)*Math.PI/180;
+    var x=Math.sin(dla/2)*Math.sin(dla/2)+Math.cos(la1)*Math.cos(la2)*Math.sin(dlo/2)*Math.sin(dlo/2);
+    return 2*R*Math.asin(Math.min(1,Math.sqrt(x))); }
+  function orderRun(ids){ var pts=ids.map(function(id){ return { id:String(id), ll:coordOf(id) }; }).filter(function(x){ return x.ll; });
+    if(pts.length<=2) return pts.map(function(x){ return x.id; });
+    var out=[pts.shift()];
+    while(pts.length){ var last=out[out.length-1].ll, bi=0, bd=Infinity;
+      for(var i=0;i<pts.length;i++){ var d=havMi(last, pts[i].ll); if(d<bd){ bd=d; bi=i; } }
+      out.push(pts.splice(bi,1)[0]); }
+    return out.map(function(x){ return x.id; }); }
+  function runMiles(ordered){ var t=0; for(var i=1;i<ordered.length;i++){ t+=havMi(coordOf(ordered[i-1]), coordOf(ordered[i])); } return t; }
+  function mapsUrl(ordered){ var addrs=ordered.map(function(id){ var it=itemById(id); var pr=it?projOf(it.project_id):null; return (pr&&pr.address)?pr.address:null; }).filter(Boolean);
+    if(addrs.length<2) return ''; return 'https://www.google.com/maps/dir/'+addrs.map(encodeURIComponent).join('/'); }
+  function onPinClick(id){ if(planMode) toggleRun(id); else selectFromMap(id); }
+  function toggleRun(id){ id=String(id); var i=run.indexOf(id); if(i>=0) run.splice(i,1); else run.push(id); if(map && map.closePopup) map.closePopup(); drawRoute(); }
+  function markRun(ordered){ for(var k in markers){ var m=markers[k]; if(!m || !m._icon) continue; var d=m._icon.querySelector('.pumk'); if(!d) continue;
+    var pos=ordered.indexOf(String(k)); if(pos>=0){ d.classList.add('inrun'); d.setAttribute('data-seq', pos+1); } else { d.classList.remove('inrun'); d.removeAttribute('data-seq'); } } }
+  function drawRoute(){
+    if(!map) return;
+    var ordered=orderRun(run.slice());
+    if(routeLine){ try{ layer.removeLayer(routeLine); }catch(e){} routeLine=null; }
+    var lls=ordered.map(coordOf).filter(Boolean);
+    if(window.L && lls.length>=2){ routeLine=L.polyline(lls, { color:'#f5a623', weight:4, opacity:0.9, dashArray:'3,9' }); routeLine.addTo(layer); }
+    markRun(ordered);
+    updateRunPanel(ordered);
+  }
+  function updateRunPanel(ordered){
+    var el=document.getElementById('puMapRun'); if(!el) return;
+    el.classList.toggle('show', planMode);
+    if(!planMode){ el.innerHTML=''; return; }
+    if(!ordered || !ordered.length){ el.innerHTML='<div class="hint">Tap repairs on the map to add stops to a run.</div>'; return; }
+    var mi=runMiles(ordered), url=mapsUrl(ordered);
+    el.innerHTML='<div class="sum"><b>'+ordered.length+'</b> stop'+(ordered.length>1?'s':'')+(ordered.length>1?(' &middot; ~'+mi.toFixed(1)+' mi'):'')+'</div>'+
+      '<div class="act">'+(url?'<a class="go" href="'+esc(url)+'" target="_blank" rel="noopener">Open in Maps</a>':'')+
+      '<button class="clr" data-purun="clear">Clear</button></div>';
+  }
+  function setPlanMode(on){ planMode=!!on; var b=document.getElementById('puMapPlanBtn'); if(b) b.classList.toggle('on', planMode); if(!planMode) run=[]; drawRoute(); }
+
   function paneHTML(){
     return '<div id="puMap"></div>'+
       '<div class="pumap-bar"><div class="pumap-stat" id="puMapStat"></div>'+
+        '<button class="pumap-plan" id="puMapPlanBtn" data-puplan>Plan a run</button>'+
         '<div class="pumap-seg"><button data-pumode="urgency" class="on">By urgency</button><button data-pumode="crew">By crew</button></div></div>'+
-      '<div class="pumap-leg" id="puMapLeg"></div>';
+      '<div class="pumap-leg" id="puMapLeg"></div>'+
+      '<div class="pumap-run" id="puMapRun"></div>';
   }
 
   async function build(){
@@ -74158,7 +74220,7 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
   function teardown(){
     var pane=document.getElementById('puMapPane');
     if(map){ try{ map.remove(); }catch(e){} map=null; layer=null; }
-    markers={}; built=false;
+    markers={}; built=false; planMode=false; run=[]; routeLine=null;
     if(pane && pane.parentNode) pane.parentNode.removeChild(pane);
     document.body.classList.remove('pumap-on');
   }
@@ -74176,9 +74238,13 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     if(pl){ var t=null; new MutationObserver(function(){ if(!built) return; clearTimeout(t); t=setTimeout(sync, 60); }).observe(pl, { childList:true, subtree:false }); }
     var rt=window.innerWidth>=UW; window.addEventListener('resize', function(){ var u=window.innerWidth>=UW; if(u!==rt){ rt=u; evaluate(); } });
     /* list card click -> focus its pin (in addition to the existing open handler) */
-    if(pl){ pl.addEventListener('click', function(e){ if(!built) return; var c=e.target.closest && e.target.closest('.pu-card'); if(c && c.dataset.pu) selectFromList(c.dataset.pu); }); }
+    if(pl){ pl.addEventListener('click', function(e){ if(!built || planMode) return; var c=e.target.closest && e.target.closest('.pu-card'); if(c && c.dataset.pu) selectFromList(c.dataset.pu); }); }
     /* pin popup Open button + segmented toggle (delegated on document) */
     document.addEventListener('click', function(e){
+      var pb=e.target.closest && e.target.closest('[data-puplan]');
+      if(pb){ setPlanMode(!planMode); return; }
+      var cr=e.target.closest && e.target.closest('[data-purun="clear"]');
+      if(cr){ run=[]; drawRoute(); return; }
       var o=e.target.closest && e.target.closest('[data-pumopen]');
       if(o){ var id=o.getAttribute('data-pumopen'); if(window.CardinalPunchCard && window.CardinalPunchCard.open) window.CardinalPunchCard.open(id, { back:'none' }); return; }
       var sg=e.target.closest && e.target.closest('[data-pumode]');

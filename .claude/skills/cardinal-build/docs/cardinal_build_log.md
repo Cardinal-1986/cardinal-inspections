@@ -18867,3 +18867,25 @@ nothing changes. (An earlier squared version — briefly pushed as 908/909 on th
 
 check_build green (907 -> 908, marker "NOT squared", negative control clean). gate_pumap906 still
 green. No SQL.
+
+## Build 909 — Plan a run on the dispatch map
+
+Follow-up to the Punch & Repairs dispatch map (906/908). Adds a "Plan a run" mode to the map module
+(`cr-pumap-script`, `window.CardinalPunchMap`), ultrawide-only. Tap "Plan a run," then tap repair
+PINS on the map to add them to a run; the module orders them nearest-neighbour from the first tapped
+(greedy), draws the loop as a dashed amber polyline, numbers each pin (1..N via a `data-seq` badge),
+and a bottom-right panel shows the stop count + total straight-line mileage with **Open in Maps**
+(hands the ordered addresses to `google.com/maps/dir/` for real turn-by-turn) and **Clear**.
+READ-ONLY — no table is written; routing is delegated to Google Maps rather than an in-app engine.
+
+⚠️ First render caught a real UX bug: adding stops via LIST rows also fired the punch module's own
+card-open handler (two listeners, can't cancel theirs), so a list tap opened the punch-out detail
+and covered the map. Fixed by making stops add via PIN taps only (`onPinClick` routes to `toggleRun`
+in plan mode; the list click handler early-returns while planning). Pins carry `data-pu` so the
+gate can target them; popup is suppressed on a plan-mode tap (`map.closePopup()`).
+
+Gate `gate_purun909.mjs` (Chromium, Leaflet+polyline stub, 4 items on a line with unequal spacing):
+plan button present; empty hint; a polyline is drawn; **nearest-neighbour order x2→x1→x0→x3** in the
+Open-in-Maps URL; panel shows 4 stops + mileage; pins numbered 1..4; Clear resets; no page errors.
+**GREEN**, negative-controlled vs v908 (no plan button). `check_build` green (908 -> 909, marker
+"Plan a run (909)"). No SQL.
