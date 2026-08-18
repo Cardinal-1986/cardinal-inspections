@@ -18733,3 +18733,13 @@ Validated: tag balance (6/6, 5/5 div), fully self-contained (no external scripts
 all required clauses present, rendered in Chromium. CI check.yml validates the HTML on push. No SQL.
 These pages are standard SMS-compliance boilerplate — Theo/counsel should review wording before it
 matters.
+
+## Build 903 — SMS policy pages use the legal name spelling ("and", not "&")
+
+The Ohio Secretary of State record (authoritative) shows the LLC's registered name as CARDINAL ROOFING
+AND RENOVATIONS, LLC — "and" spelled out. The `&` form we'd been using is what tripped Twilio's A2P
+pre-check (brand vetting matches legal name + EIN against SoS/IRS records). Switched both compliance
+pages (sms-privacy.html, sms-terms.html) from "Cardinal Roofing & Renovations, LLC" to "...and..."
+throughout — title, header, body, contact. (The Twilio Brand/Campaign legal-name field is the field
+that actually gets vetted; these pages are branding, but matched for consistency.) Structure unchanged,
+still self-contained, no index.html touch, no SQL.
