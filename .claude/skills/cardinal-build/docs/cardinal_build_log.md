@@ -18717,3 +18717,19 @@ Gate `test_leadnotify901.mjs`: EXTRACTS both shipped try-blocks from index.html 
 (real source, not a reimplementation) across scenarios — assign-to-other pings once addressed to that
 rep, self-assign and no-assignee stay silent, on both create and reassign: **GREEN 11/11**.
 Negative-controlled **RED** vs v900 (blocks absent). `check_build` green (900 -> 901). No SQL.
+
+## Build 902 — SMS/A2P 10DLC compliance pages (public)
+
+Theo is registering the Twilio A2P 10DLC campaign for the text channel (notify.js SMS). Carrier
+campaign registration requires publicly reachable privacy-policy and terms URLs carrying the mandated
+disclosures. Added two self-contained public pages at the repo root — `sms-privacy.html` and
+`sms-terms.html` — served at app.cardinalroster.com/sms-privacy.html and /sms-terms.html (no login,
+noindex, Cardinal-styled). Both carry: the non-sharing-of-mobile-info statement, message frequency,
+"Message and data rates may apply", STOP/HELP opt-out, and cross-links. `.vercelignore` header updated
+to record them as deliberately public (like drivewaytest.html).
+
+Does NOT touch index.html, so no app-stamp bump (a non-index build, like the visualizer/spark span).
+Validated: tag balance (6/6, 5/5 div), fully self-contained (no external scripts/styles/fonts/refs),
+all required clauses present, rendered in Chromium. CI check.yml validates the HTML on push. No SQL.
+These pages are standard SMS-compliance boilerplate — Theo/counsel should review wording before it
+matters.

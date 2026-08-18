@@ -7,6 +7,13 @@
 # NOT ignored, deliberately: docs/ (the contract PDFs are referenced 6x by the
 # app as print masters), every image asset (all referenced), bulk_assign.html
 # (referenced 2x), api/ (serverless functions).
+#
+# Also deliberately public (build 902): sms-privacy.html and sms-terms.html —
+# the SMS/A2P 10DLC compliance pages. Carrier campaign registration REQUIRES a
+# publicly reachable privacy policy + terms with the mandated disclosures
+# (non-sharing of mobile numbers, message frequency, "message and data rates may
+# apply", STOP/HELP). They must load for anyone (no login), like drivewaytest.html.
+# Served at app.cardinalroster.com/sms-privacy.html and /sms-terms.html; noindex.
 
 # --- Development context. Not referenced by any shipped code. ---
 # .claude/ contains the build skill: BUG_CLASSES.md, OPEN_ITEMS.md, HANDOFF.md,
