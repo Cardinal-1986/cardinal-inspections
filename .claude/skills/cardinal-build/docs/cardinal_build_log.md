@@ -19158,3 +19158,18 @@ present, footer white). Footer computes `rgba(0,0,0,0)` in Chromium; options ren
 values preserved. `check_build` green (919 → 920, marker `<option value="Inspection">Inspection`). No SQL.
 Remaining from the batch: measurements panel is a light-authored island (921), and the Punch Outs
 job-menu count reads "—" while an open punch exists (922).
+
+## Build 921 — Measurements tab themed to match the dark client page
+Screenshot batch item: "the measurements section don't look right." `.matcard` was authored white
+(`background:#fff`, line 855) and never tokenised — bright slabs down the near-black profile, the same
+class as the Schedule Board (527). Themed identically: retail-scoped
+(`body:not(.claim-insurance):not(.claim-community) #projectView .matcard`), `--rbe-bg1/bg2` gradient,
+`--rbe-line2` border, `--rbe-ink`/`--rbe-mute` inks — all tokens that flip in `rb-light`, so light
+mode restores a white card with dark text on its own. The 522 raise had put a WHITE bevel on `.matcard`
+(63145) back when it was white; ridge retuned dark (`#454552`/`#050507`) exactly as `.bday` was. Themed
+`.mathead b`, `#tab-measure .subnote`, `.matempty`, `.mattable td`/`td.u`. The cream value inputs
+(`#FFF9C4`) and the dark `.mattable th` are the app's fill-in / table-header conventions — left as-is.
+Rendered in Chromium BOTH themes: dark card gradient 46/51/59→38/42/49, header 9.83:1, subnote 5.47:1,
+td 9.83:1; light card 255→250, header 17.34:1, subnote 5.11:1, td 17.34:1. Negative-controlled vs v920
+(RED: white card, header 1.20:1 dark — the exact bug). `check_build` green (920 → 921). No SQL.
+Theo's eyes are the final visual gate.

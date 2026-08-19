@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 920 &#8212; Cleaned up the client area: dropped the Communications sub-line, removed the emoji from the appointment type picker, and the page footer no longer shows as a white band in dark mode</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 921 &#8212; The Measurements tab’s cards were white slabs on the dark profile — they’re now themed to match the rest of the client page, in both light and dark</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40438,6 +40438,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:921, d:'2026-08-18', t:'Measurements tab themed to match the dark client page',
+s:'The Measurements tab (Measurement Values, Satellite estimate, Roofr, Hover, Field) drew its cards on a white background \u2014 bright slabs down the near-black client page. They now use the same dark card treatment as the rest of the profile (the Schedule Board pattern), with the text recoloured to stay readable, and they flip to light cards in light mode automatically. Only the look changed \u2014 the buttons, the report lists and the value entry all work exactly as before.' },
 { b:920, d:'2026-08-18', t:'Client-area cleanup: Comms sub-line, appointment emoji, white footer',
 s:'Three small readability fixes on the client area. (1) The Communications page had a grey sub-line under the title (\u201CNotes, call logs, and document activity\u2026\u201D) \u2014 removed, the title says it. (2) The appointment Type picker listed each type with an emoji in front (\uD83D\uDD0D Inspection, \uD83E\uDD1D Client meeting\u2026); the emoji are gone, just the words now. (3) The page footer (\u201CCardinal Roofing \u0026 Renovations \u2014 Client Resources\u2026\u201D) was painted on a white strip that showed as a bright band across the bottom of the dark app; it now blends into the page in both light and dark. Nothing changed about what any of these do.' },
 { b:919, d:'2026-08-18', t:'Estimate measurements slimmed; work order gains the flashing/waste rows',
@@ -63238,6 +63240,33 @@ border-top-color:var(--rbe-line2,#2b2b33);
 }
 body:not(.claim-insurance):not(.claim-community) #boardView .subnote{
 color:var(--rbe-mute,#9aa0a8);
+}
+/* ── Build 921 · the Measurements tab ──────────────────────────
+   .matcard was authored white (background:#fff, line 855) and never tokenised,
+   so the cards showed as white slabs on the near-black profile — the same
+   class as the Schedule Board above. Themed here, retail only, with the --rbe-*
+   tokens so light mode flips on its own; Claims and Community keep what they
+   have. The 522 raise put a WHITE bevel on .matcard (63145) back when the card
+   was white; the card is not any more, so the ridge is retuned dark with it,
+   exactly as .bday was. */
+body:not(.claim-insurance):not(.claim-community) #projectView .matcard{
+--rbe-ridge-t:#454552;--rbe-ridge-b:#050507;--rbe-ridge-hl:rgba(255,255,255,.09);
+background:linear-gradient(180deg,var(--rbe-bg1,#2e333b),var(--rbe-bg2,#262a31));
+border:1px solid var(--rbe-line2,#2b2b33);
+color:var(--rbe-ink,#cfd6df);
+}
+body:not(.claim-insurance):not(.claim-community) #tab-measure .mathead b{
+color:var(--rbe-ink,#cfd6df);
+}
+body:not(.claim-insurance):not(.claim-community) #tab-measure .subnote{
+color:var(--rbe-mute,#9aa0a8);
+}
+body:not(.claim-insurance):not(.claim-community) #tab-measure .matempty,
+body:not(.claim-insurance):not(.claim-community) #tab-measure .mattable td.u{
+color:var(--rbe-mute,#9aa0a8);
+}
+body:not(.claim-insurance):not(.claim-community) #tab-measure .mattable td{
+border-bottom-color:var(--rbe-line2,#2b2b33);color:var(--rbe-ink,#cfd6df);
 }
 /* The width, moved out of the inline attribute rather than deleted. Deleting it
    outright dropped the board to .wrap's 1180 whenever the sidebar is off - a
