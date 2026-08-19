@@ -19519,3 +19519,63 @@ rows (Storm Data) are inside the count and the fold, the choice is written to th
 again closes and records that too, section textContent is still the plain label, and at rail width **no
 drawer attribute is left on any row**. Negative control vs v929: **11 red, no crash.** `check_build`
 green (929 → 930). No SQL.
+
+## Build 931 — An Unassigned bucket on Leads & Jobs
+Theo: *"Can you create an unassigned leads bucket"*.
+
+**The bucket mechanism already existed.** `LJ_GROUPS` drives the "Assigned To" chip strip
+(`#ljRepChips`, added 691) and `ljMatches()` already honours its filter set. Nothing new was built —
+one group's `get()` was wrong, and fixing it makes the bucket appear.
+
+⚠️ **The defect underneath: "Assigned To" was reading `created_by`.** Both the group
+(`get:function(p){ return rptRepName(p.created_by || '') }`) and the `'rep'` sort read **who made the
+lead**, not who it is assigned to. Those coincide often enough that nobody noticed — but an Unassigned
+bucket computed off `created_by` would be wrong in **exactly** the case it exists for: a lead imported
+or typed in by one person and handed to nobody still shows that person's name, so it can never be
+unassigned. The card's own `.ljrep` line had the same bug and would have contradicted the chip.
+
+- **`ljAssignedEmail()` mirrors the DATABASE's answer.** `project_assigned_rep()` reads
+  `checklist->lead->assigned[0]`, and `projects_select` RLS also honours `sales_rep` — so what the
+  bucket says matches what the row actually **is**. Measured before writing: **36 of 39 rows carry
+  both fields and they agree on every one; 3 carry neither** and are the bucket. `unassigned_leads` in
+  Lead/Prospect is **0 today** — the 3 are Approved/Completed/OnHold — so this is a net for what
+  arrives, not a backlog. Said plainly rather than shipped as a mystery empty control.
+- ⚠️ **Deliberately NOT `assignedRepOf()`**, which exists and falls back to `created_by`. That
+  fallback is right where it is used (someone owns every job) and fatal here — it would report every
+  unassigned lead as assigned to whoever typed it in. `assignedRepOf` is untouched; it has other
+  callers.
+- The chip **leads the strip** (`ljGroupKeys` unshifts it) rather than filing under U, and the `'rep'`
+  sort floats unassigned to the top — it is a to-do list, not another rep.
+- ⚠️ **One same-class site left ALONE and recorded:** `cr-kphome-script` (~59009) renders
+  `rptRepName(p.created_by)` in its recent-leads list. Same defect, different screen, not what Theo
+  asked about. Flagged, not quietly widened — the assertion pins the count at exactly 1 so it cannot
+  drift unnoticed.
+
+⚠️ **The colour cost two rounds, and both were the measuring rig rather than the palette.**
+1. The gate's contrast probe returned **null** in both themes and printed as a colour failure.
+   `color-mix()` computes as **`color(srgb r g b)`** with 0–1 floats, which an `/rgba?\(/` regex cannot
+   read. Parse both forms.
+2. With the rig fixed it reported **4.29:1 in light — under the floor — where my hand arithmetic said
+   5.24**. The arithmetic used `#ffffff`, but **the chip paints its own 10% wash**, so the real ground
+   is a pale amber. *"background-color is not the background"*: composite the element's own wash over
+   the first opaque ancestor and score against **that**. Deepened to `#7d5200` on an 8% wash →
+   **5.91:1**, measured in Chromium. Dark is **7.22:1**.
+   ⚠️ Not `#8a5a00`, which is one of the three dead legacy golds — though note it is **no longer at
+   zero**: one occurrence exists at ~21635 in a notification status line, so CLAUDE.md's "all three
+   asserted at 0" is now stale. Not introduced here.
+   Amber is this app's settled *needs attention* (punch urgency, Storm Data wind damage) and
+   deliberately **not** the red that means an objection or a lost lead. Same amber deepened for light,
+   not a hue swap — the 557 obsidian-tile rule, so both themes read as one component.
+
+⚠️ **Worth stating: a rep will usually see an empty bucket, and that is RLS working.**
+`projects_select` is `is_full_access() OR created_by = me OR assigned_rep = me OR sales_rep = me`, so
+an unassigned lead is visible only to admins, Production, and whoever created it. The bucket is an
+office triage tool. **No RLS was changed** — that is a permissions decision and Theo's to make.
+
+Gate `gate_unassigned931.mjs`: **18 assertions GREEN** on six seeded rows shaped like production —
+an imported-by-Theo-assigned-to-nobody lead reads Unassigned rather than "Theo", an empty `assigned[]`
+and a missing lead block both count, a **`sales_rep`-only lead is correctly NOT in the bucket**, the
+chip is first with the right count and its own style, tapping it shows exactly those three, each card
+also says Unassigned, sorting by Representative floats them, and contrast clears 4.5:1 in **both**
+themes measured in the browser. Negative control vs v930: **18 red, no crash.** `check_build` green
+(930 → 931). No SQL.
