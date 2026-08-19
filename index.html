@@ -3531,7 +3531,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 928 &#8212; The Sales Floor is now a hub: the wall of objection cards is gone and the page is a grid of doors — Objection Coach, a new Door Knocking page, Storm Data, the Pricing Guide, Talk Tracks, Proof, Showcase and the Pop-Up Roof. Nothing was lost: the cards that only lived on that page moved into the Coach’s deck, which now has 33 including three for the door</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 929 &#8212; Fixed the slide-out phone menu: the dark sheet behind it was painting on top of it instead, which is why nothing you tapped worked, why it would not scroll, and why it looked so dark. The menu is now in front of it, as it should have been</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40450,6 +40450,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:929, d:'2026-08-19', t:'The slide-out phone menu works again',
+s:'The slide-out menu had three faults that were all the same fault. The dark sheet that dims the page behind the menu was being drawn ON TOP of the menu instead of behind it \u2014 so the menu looked far too dark, every row you tapped was really tapping the sheet (which just closed the menu, so nothing appeared to work), and the sheet ate the scroll, so the list would not move even though there was plenty more below. The menu now sits in front of the sheet, which is where it was always meant to be. Tapping a row opens that page, the list scrolls the whole way down, and the colours are the ones picked in build 925 rather than those colours under a black veil. Nothing else changed, and the desktop menu was never affected.' },
 { b:928, d:'2026-08-19', t:'The Sales Floor becomes a hub of tools',
 s:'The Sales Floor was a wall of objection cards with a few buttons on top. It is now a page of doors. Up top is still today\u2019s objection, then the Objection Coach across the full width \u2014 that is where every objection lives now \u2014 with Practice a drill, Leaderboard and Log a real one under it. Below that, eight tiles: a new Door Knocking page, Storm Data, the Pricing Guide, Talk Tracks, Proof, Showcase, the Pop-Up Roof and the Resource Library. Every tile opens something that already exists; nothing was rebuilt. Door Knocking is new \u2014 six things to do in order when you work a street, the three objections you hear at the door with an answer for each, and the knock itself word for word. Nothing was lost in the move: the cards that used to live only on the Sales Floor are now in the Coach\u2019s deck, which went from 27 to 33 and has an At the Door section it never had before. There was quietly a second copy of the objection list; now there is one.' },
 { b:927, d:'2026-08-19', t:'Storm Data \u2014 which neighbourhoods got hit, and when',
@@ -75144,6 +75146,33 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
    animates both ways, and this sheet forces display:block on mobile so the
    panel stays present to slide OUT. Desktop (cr-lnav-on) keeps the dropdown. */
 #navBackdrop{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .3s ease-in-out;}
+/* ── 929 · the backdrop was painting OVER the drawer ───────────────────────
+   Theo: "no button or scroll works and it's too dark" — three symptoms, ONE
+   cause, and it is a stacking-context trap rather than a z-index one.
+
+   `header.site` is `position:fixed; z-index:90`, so it CREATES A STACKING
+   CONTEXT. #navMenu lives inside it, so its z-index:100000 competes only with
+   the header's other children; against the rest of the page the whole drawer
+   paints at **90**. #navBackdrop is a child of <body> at 99998 — a sibling of
+   the header in the root context — so it out-painted the drawer entirely:
+     · it veiled the panel in 50% black          → "it's too dark"
+     · it became the hit target for every row    → "no button works"
+       (elementFromPoint at the centre of every visible .navopt returned
+        #navBackdrop, whose own handler then CLOSED the menu)
+     · it swallowed the touch/wheel gesture      → "scroll doesn't work"
+       (the panel itself could scroll: scrollHeight 1858 vs client 844)
+
+   Fix: lift the header above the backdrop while the drawer is open. Moving
+   the backdrop INTO the header was the other candidate and is worse — the
+   backdrop would inherit the header's depth of 90 and stop covering #pwaNav
+   (z 9990) and #cr-dark-toggle (9500), leaving the bottom nav tappable behind
+   an open drawer, which is the one thing a backdrop exists to prevent.
+
+   Specificity here is (0,3,2) against the two `header.site` rules at (0,1,1)
+   — including the one inside `@media (max-width:640px)`, which wins on a
+   phone by source order. Proved in Chromium, not from the audit tool: 926
+   shipped an override the audit called the winner and the browser did not. */
+body.cr-drawer-lift:not(.cr-lnav-on) header.site{z-index:99999;}
 #navBackdrop.on{opacity:1;pointer-events:auto;}
 body.cr-lnav-on #navBackdrop{display:none !important;}
 .cr-drawer-head{display:none;}
@@ -75224,11 +75253,25 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
       var nm = ''; try{ if(typeof meName === 'function') nm = meName(); }catch(_){}
       el.textContent = nm || 'Cardinal';
     }
+    /* 929: see the stylesheet. The lift is REMOVED LATE on purpose — the panel
+       takes 300ms to slide out, and dropping the header back to z-index 90 the
+       instant it closes would put the still-visible drawer back under the
+       fading backdrop, so it would darken on its way out. */
+    var liftT = null;
+    function lift(on){
+      if(liftT){ clearTimeout(liftT); liftT = null; }
+      if(on){ document.body.classList.add('cr-drawer-lift'); return; }
+      liftT = setTimeout(function(){
+        liftT = null;
+        document.body.classList.remove('cr-drawer-lift');
+      }, 340);
+    }
     function sync(){
       var open = menu.style.display === 'block' && isDrawer();
       if(open) fillUser();
       menu.classList.toggle('cr-drawer-open', open);
       bd.classList.toggle('on', open);
+      lift(open);
     }
     /* mirror every style.display change (navBtn, link-click, outside-click). */
     try{ new MutationObserver(sync).observe(menu, { attributes:true, attributeFilter:['style'] }); }catch(_){}
