@@ -19628,3 +19628,57 @@ green. `check_build` green (931 → 932). No SQL.
 `is_full_access() OR created_by = me OR assigned_rep = me OR sales_rep = me`), so the bucket is an
 office triage queue — Joan takes the call, somebody in the office hands it on. Letting reps see and
 claim from the bucket is an RLS change and has not been made.
+
+## Build 933 — CompanyCam keeps itself up to date
+Theo: *"company cam has not been updated."* He was right, and the record says exactly why.
+
+**It was never broken — it was only ever manual, and it has been run once.** The backfill
+**completed** on 31 Jul 2026: `companycam_sync` shows `synced 60,485 + skipped 1,164 = 61,649 =
+total`, cursor cleared, `finished_at 08:38`. Newest photo in the mirror is **30 Jul**; **zero rows
+have a `synced_at` inside the last seven days**. Nothing schedules it — `vercel.json` carried two
+crons, `/api/digest` and `/api/commissions-digest`, and this was not one of them.
+
+⚠️ **And it could not simply be added to the cron list.** Every path in `api/companycam-sync.js`
+authenticates by resolving a signed-in ADMIN's Supabase session token; a cron has no session and
+would have collected a 403 nightly forever. It also refuses anything but POST, and Vercel crons issue
+**GET with no body**. Two blockers, neither visible without reading the route.
+
+- **A second door, the one `api/digest` already uses** — `Authorization: Bearer <CRON_SECRET>` — plus
+  GET as the cron's only shape, and GET may mean nothing except "top up".
+- ⚠️ **One deliberate difference from `digest`, and it matters.** Its guard is
+  `if (secret && req.headers.authorization !== …)` — which leaves the route **wide open when
+  CRON_SECRET is unset**. Copying that here would expose a route holding the CompanyCam key and the
+  service-role key. **The secret is REQUIRED: no secret configured closes the door rather than
+  opening it.** Asserted in both directions.
+- **`topUp()` is not the backfill and never touches `companycam_sync`.** That state row is shared
+  with the manual full-index button, and the code around it already carries a comment about counters
+  going wrong when runs overlap; a 3am firing must not be able to reset a cursor Theo is part-way
+  through. Asserted.
+- **Nightly cron at `0 3 * * *`** (11pm ET), so it lands after the working day. Third cron on the
+  project.
+
+⚠️ **The one thing I could not verify from here, and did not guess.** A cheap top-up walks the FRONT
+pages, which is only correct if the newest photos are at the front. `/photos` takes **no sort
+parameter** — `after, archived, assigned_user_ids, include, include_total, limit, status` is the whole
+list — the reference never states the order, and **no CompanyCam host is reachable from this sandbox**
+(the `companycam-status` route exists because of exactly that). So the route **decides at runtime**:
+page one's first and last `captured_at` settle the direction, and if the feed turns out to run
+oldest-first it **writes nothing and says `feed_is_oldest_first`** rather than re-reading 2019
+photographs every night and never noticing. Both branches are covered by the gate.
+
+**Politeness is structural, per the reference** — *"CompanyCam sends no rate-limit headers… sequential
+pages, treat a 429 as the only warning."* A nightly re-walk of all 617 pages would not be polite, so
+`topUp` stops the moment a page brings back nothing the mirror lacks. **A quiet day costs one API
+call.** Measured in the gate.
+
+Gate `gate_ccsync933.mjs`: **14 assertions GREEN**, running the **shipped handler** against a stubbed
+fetch (the pattern used to price the librarian at 806) — the door refuses an unsigned GET, a wrong
+secret, and an unset secret; a signed GET tops up and counts only the 2 genuinely new photos of 5;
+the direction is derived from the bytes; it stops after 2 pages rather than walking the feed; an
+oldest-first feed is refused by name and writes nothing; a quiet day is 0 new photos and 1 call;
+`companycam_sync` is never touched; POST-without-session and PUT still refuse. Negative control vs the
+pre-933 route: **12 red, no crash.** All `api/*.js` parse, no `module.exports`, JSON valid. **No SQL,
+and `index.html` is untouched** — so no app stamp bump, the same as builds 809–836.
+
+**Needs Theo, once:** `CRON_SECRET` must be set in Vercel or the nightly run will 401 — by design.
+Until then, the Resource Library's CompanyCam panel still catches up by hand.
