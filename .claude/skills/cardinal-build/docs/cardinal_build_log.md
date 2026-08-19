@@ -19237,3 +19237,36 @@ amber, Claims/Sales red. Rendered all five CRMs (Insurance in both header states
 accent differs across retail/community/production, section labels share the accent; negative-controlled
 vs v924 (icon colour fixed blue across CRMs). `gate_drawer924.mjs` mechanics still green (open/close/
 backdrop/swipe unchanged). `check_build` green (924 → 925). No SQL.
+
+## Build 926 — Desktop rail collapses; one nav on desktop; Production/Sales colours
+Theo asked whether the drawer pattern should go to desktop "for better designs with full screen".
+Answered no — measured, the rail is 238px and `--lnav-cap` is already `min(2900px,95%)`, so the rail
+was never the constraint (column layout is, which is what 923 and the other wide screens actually
+did); and hiding persistent nav behind a burger is a desktop regression. He picked collapse + the
+double-nav fix instead, "same color themes per section".
+- **Collapse (1).** `body.cr-lnav-mini` flips `--lnav-w` 238px → 58px. That token is the module's
+  single source of truth — `body{padding-left}` and every full-screen view's offset are calc()'d off
+  it — so the whole layout follows with no second width. Icon-only rather than hidden: one click to
+  anywhere is the reason a desktop rail exists. Persisted in the module's EXISTING `readState()`
+  store (`__mini`), not a second key. Collapsed sections are force-shown in mini (`[hidden]` override)
+  or their items would be unreachable with no header to reopen.
+- **One nav (2).** ⚠️ `scrape()` deliberately skips `signOutBtn`, the palette hint and the build stamp
+  — so hiding the burger first would have **stranded sign-out on desktop**. Added a rail footer
+  carrying Sign out (mirrored: it clicks the real `#signOutBtn`, the CRM switcher's rule) and the
+  version, THEN hid the burger. Gate asserts the mirror and that the rail survives the click.
+- **Colours (3).** The rail was already CRM-aware (`--lnav-crmc`/`--lnav-wash` from `activeCrm()`,
+  which reads `data-crmHead` and so already yielded 'production'/'sales'); only the MAP was short, so
+  both fell back to retail red. Added `production:#f5a623` and `sales:#e8544f` — the same header
+  accents the drawer uses (924/925), so rail, header and drawer agree.
+⚠️ **`selector_audit.py` got the winner WRONG and a render caught it.** cr-hd2 ships
+`header.site #cr-hd2-bar #navBtn{display:flex !important}` (2,1,1); my first
+`body.cr-lnav-on #navBtn` (1,1,1) lost and the burger stayed visible in Chromium while the audit
+named my rule the winner (it appears to order !important rules by source, not specificity). Fixed by
+matching its shape at (2,2,2). **The render is the gate for an override, not the audit tool.**
+⚠️ Gate self-inflicted failure worth recording: the sign-out mirror test really signed out, tearing
+the rail down mid-run so later assertions crashed on a null `#cr-lnav`. Now clones `#signOutBtn`
+(same id, no app listeners) to prove the wiring without firing it.
+Gate `gate_rail926.mjs`: 19 assertions GREEN — 238→58px, body padding follows, 180px returned, labels
+hidden but icons clickable, state survives a re-render, expands again, burger hidden on desktop and
+BACK on a phone, Production amber / Sales red / Community unchanged. Negative-controlled vs v925.
+`check_build` green (925 → 926). No SQL.
