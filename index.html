@@ -3531,7 +3531,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 925 &#8212; The slide-out phone menu now wears each CRM’s colours — steel on Retail, green on Community, amber on Production, red on Claims and Sales — header, icons and accents all follow the CRM you’re in</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 926 &#8212; On a desktop the left menu now collapses to icons with one click, giving the page back 180px, and it carries Sign out and the version so the old burger menu — a second copy of the same list — is gone from desktop</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40445,6 +40445,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:926, d:'2026-08-18', t:'Desktop menu collapses, and there is only one of it now',
+s:'Three things on the desktop left menu. (1) It collapses: a Collapse button at the top shrinks it to a strip of icons, giving the page back about 180 pixels for the wide layouts, and expands again with the same button \u2014 it remembers which way you left it. (2) Sign out and the version number now sit at the bottom of the menu, where they were only ever in the burger before. (3) Because of that, the burger button is gone on desktop \u2014 it was opening a second copy of the very same list the menu on the left already shows. It comes back automatically on a phone or tablet, where it is the slide-out drawer. The menu also now takes the Production amber and Sales red, which it had been showing in retail red.' },
 { b:925, d:'2026-08-18', t:'The phone menu drawer takes on each CRM\u2019s colours',
 s:'The slide-out phone menu now matches whichever CRM you\u2019re in, instead of one fixed dark scheme. Retail is steel-blue, Community green, Production amber, and Claims and Sales red \u2014 the header band, the icons, the section labels and the row you\u2019re on all follow the CRM\u2019s own colour, and the drawer body picks up a faint tint of it. On the Claims (Insurance) side, whose header is light, the name and company text flips to dark so it stays readable. It reads off the same header colours the app already uses, so it stays in step automatically. Desktop is unchanged.' },
 { b:924, d:'2026-08-18', t:'The phone menu is now a slide-out drawer',
@@ -62514,6 +62516,48 @@ window.CardinalSortPhotos = Object.assign(window.CardinalSortPhotos || {}, {
   overscroll-behavior:contain;
 }
 body.cr-lnav-on{padding-left:var(--lnav-w)}
+/* ── 926 · collapse, the rail footer, and one nav on desktop ────────────────
+   Collapsing flips --lnav-w, the single source of truth the whole module is
+   calc()'d off, so every offset follows for free — no second width to fall out
+   of step. Icon-only rather than gone: the point of a desktop rail is one click
+   to anywhere, and 58px keeps that while returning 180px to the page. */
+@media (min-width:1100px){ body.cr-lnav-mini{--lnav-w:58px} }
+body.cr-lnav-mini #cr-lnav .lnav-tx,
+body.cr-lnav-mini #cr-lnav .lnav-crm,
+body.cr-lnav-mini #cr-lnav .lnav-sec,
+body.cr-lnav-mini #cr-lnav .lnav-ver{display:none}
+/* a collapsed section would otherwise hide its items with no header to reopen */
+body.cr-lnav-mini #cr-lnav .lnav-body[hidden]{display:block !important}
+body.cr-lnav-mini #cr-lnav .lnav-item,
+body.cr-lnav-mini #cr-lnav .lnav-mini,
+body.cr-lnav-mini #cr-lnav .lnav-out{justify-content:center;gap:0;padding-left:0;padding-right:0}
+body.cr-lnav-mini #cr-lnav .lnav-mini .lnav-mini-ic{transform:rotate(180deg)}
+#cr-lnav .lnav-mini{display:flex;align-items:center;gap:10px;width:100%;background:none;
+  border:0;border-bottom:1px solid var(--rbe-panelbd,#24242c);cursor:pointer;
+  padding:10px 14px;color:var(--rbe-mute,#8b9199);
+  font:700 10px/1 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
+#cr-lnav .lnav-mini:hover{color:var(--rbe-head,#fff);background:var(--rbe-line,#232329)}
+#cr-lnav .lnav-mini-ic{flex:0 0 auto;width:17px;text-align:center;font-size:13px;line-height:1}
+#cr-lnav .lnav-foot{margin-top:10px;border-top:1px solid var(--rbe-panelbd,#24242c);padding-top:6px}
+#cr-lnav .lnav-out{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;
+  cursor:pointer;padding:9px 14px;color:var(--lnav-crmc,#c8202e);
+  font:600 13px/1.2 'Segoe UI',Arial,sans-serif;text-align:left}
+#cr-lnav .lnav-out:hover{background:var(--lnav-wash,rgba(200,32,46,.14))}
+#cr-lnav .lnav-out .lnav-ic svg{width:16px;height:16px}
+#cr-lnav .lnav-out .lnav-ic .i2{fill:var(--lnav-crmc,#c8202e)}
+#cr-lnav .lnav-out .lnav-ic .i5{stroke:var(--lnav-crmc,#c8202e)}
+#cr-lnav .lnav-ver{padding:2px 14px 4px;color:var(--rbe-mute,#8b9199);
+  font:600 9.5px/1.35 'Segoe UI',Arial,sans-serif;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* 926: ONE nav on desktop. The rail mirrors #navMenu, and with sign-out and the
+   build stamp now in the footer above it carries everything the dropdown did,
+   so the burger is a second copy of the same menu. It returns the moment the
+   rail is not mounted (phone, login, print), because that gate is the class. */
+/* ⚠ 926: cr-hd2 ships `header.site #cr-hd2-bar #navBtn{display:flex !important}`
+   — (2,1,1) with !important, so a `body.cr-lnav-on #navBtn` (1,1,1) loses and the
+   burger stayed visible. Found in a Chromium render; selector_audit.py called the
+   short rule the winner, which is why the render is the gate for an override.
+   This matches its shape and adds the state class, so it out-specifies at (2,2,2). */
+body.cr-lnav-on header.site #cr-hd2-bar #navBtn{display:none !important}
 /* ── 558: the same offset, for the views padding cannot reach ──────────────
    `padding-left` on <body> does nothing for a `position:fixed` child — it is
    laid out against the viewport, not the padding box. So every full-screen view
@@ -62697,11 +62741,14 @@ var MOUNT = 'cr-lnav';
    collapsible because it is a lot - so the two he named open, the rest fold. */
 var OPEN_BY_DEFAULT = { 'daily':1, 'sell':1 };
 
-var CRM_COLOR = { retail:'#c8202e', insurance:'#2dd4bf', community:'#34D399' };
+var CRM_COLOR = { retail:'#c8202e', insurance:'#2dd4bf', community:'#34D399',
+                  production:'#f5a623', sales:'#e8544f' };
 var CRM_WASH  = {
 retail    : 'rgba(200,32,46,.14)',
 insurance : 'rgba(45,212,191,.14)',
-community : 'rgba(52,211,153,.14)'
+community : 'rgba(52,211,153,.14)',
+production: 'rgba(245,166,35,.14)',
+sales     : 'rgba(232,84,79,.14)'
 };
 
 function on(){ return window.matchMedia('(min-width:' + W + 'px)').matches; }
@@ -62716,6 +62763,25 @@ function writeState(st){
 try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(_){}
 }
 function slug(s){ return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+
+/* 926: just the version out of the app stamp — the stamp also carries a long
+   plain-English summary, which is not what a 238px rail wants. */
+function railVersion(){
+  try{
+    var f = document.querySelector('[data-cr-footer]');
+    var m = /v[\d-]+\s*build\s*\d+/i.exec((f && f.textContent) || '');
+    return m ? m[0] : '';
+  }catch(_){ return ''; }
+}
+/* 926: collapsed (icon-only) rail. Kept in the module's EXISTING state store
+   rather than a second key — one store for this module. The class lives on
+   <body> so the CSS can flip --lnav-w, which is the single source of truth for
+   the rail's width and every offset calc()'d off it. */
+function readMini(){ return !!readState().__mini; }
+function applyMini(v){
+  try{ document.body.classList.toggle('cr-lnav-mini', !!v); }catch(_){}
+  var st = readState(); st.__mini = v ? 1 : 0; writeState(st);
+}
 
 /* Where it must NOT appear, using the app's own signals rather than new ones.
    Checking only the header was not enough: on the post-login LANDING the header
@@ -62941,6 +63007,8 @@ h.style.setProperty('--lnav-crmc', CRM_COLOR[crm] || CRM_COLOR.retail);
 h.style.setProperty('--lnav-wash', CRM_WASH[crm] || CRM_WASH.retail);
 
 h.innerHTML =
+'<button type="button" class="lnav-mini" aria-label="Collapse menu" title="Collapse menu">' +
+'<span class="lnav-mini-ic">\u00AB</span><span class="lnav-tx">Collapse</span></button>' +
 (cs.length
 ? '<div class="lnav-crm" role="group" aria-label="Switch CRM">' + cs.map(function(c){
 return '<button type="button" data-crm="' + esc(c.key) + '" class="' +
@@ -62965,12 +63033,35 @@ return '<button type="button" class="lnav-item' +
 }).join('') +
 '</div>';
 }).join('') +
-'';
+/* 926: the rail footer. scrape() deliberately skips signOutBtn and the build
+   stamp, so before the burger could be hidden on desktop those two had to have
+   a home here — otherwise hiding it STRANDS sign-out. Mirrored, not duplicated:
+   the button clicks the real #signOutBtn, the same rule the CRM switcher follows. */
+'<div class="lnav-foot">' +
+'<button type="button" class="lnav-out" title="Sign out">' +
+'<span class="lnav-ic">' + (window.CardinalIcons ? window.CardinalIcons.get('lock') : '') + '</span>' +
+'<span class="lnav-tx">Sign out</span></button>' +
+'<div class="lnav-ver">' + esc(railVersion()) + '</div>' +
+'</div>';
 
 wire(h, secs, cs);
 }
 
 function wire(h, secs, cs){
+/* 926 */
+try{ document.body.classList.toggle('cr-lnav-mini', readMini()); }catch(_){}
+var mb = h.querySelector('.lnav-mini');
+if(mb) mb.onclick = function(){
+var now = !readMini();
+applyMini(now);
+mb.setAttribute('aria-label', now ? 'Expand menu' : 'Collapse menu');
+mb.setAttribute('title', now ? 'Expand menu' : 'Collapse menu');
+};
+var ob = h.querySelector('.lnav-out');
+if(ob) ob.onclick = function(){
+var real = document.getElementById('signOutBtn');
+if(real) real.click();
+};
 h.querySelectorAll('.lnav-sec').forEach(function(b){
 b.onclick = function(){
 var body = document.getElementById(b.getAttribute('aria-controls'));
