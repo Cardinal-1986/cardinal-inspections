@@ -19682,3 +19682,66 @@ and `index.html` is untouched** — so no app stamp bump, the same as builds 809
 
 **Needs Theo, once:** `CRON_SECRET` must be set in Vercel or the nightly run will 401 — by design.
 Until then, the Resource Library's CompanyCam panel still catches up by hand.
+
+## Build 934 — Job numbers move to the database; the last created_by-as-rep site
+Theo: *"do whats open"* — the two items 931 and the PO audit left flagged.
+
+### 1. PO numbers could be handed out twice, and were, four times
+`1002`, `1007`, `1008` and **`1051` — that last one on 19 Aug at 15:46, while this session was
+running.** Not a race. `nextPo()` is
+
+```js
+var mx = 1001; cacheProjects.forEach(...); return mx + 1;
+```
+
+— the highest PO **in the browser's cache**, plus one. A session whose cache predates the newest jobs
+computes a number that is already taken. The 19 Aug collision is exactly that: Joey's browser held a
+cache from before six days of new leads and handed out 1051 a second time.
+
+⚠️ **Fixed in SQL, not in the app, and the reason is a standing rule here.** `nextPo()` is
+**synchronous** and called inline inside object literals (`po: nextPo()`) at six sites, two of them
+delegating copies (`function nextPo(){ try{ return window.nextPo(); }… }` at 52478 and 52764 — the
+copies trap, already handled by delegation). Making it ask the server would make it **async**, and
+*"adding `await` to a synchronous function is never a local change"* — it would touch every creation
+path in the file. `project_po_sequence_934.sql` (**APPLIED**) gives Postgres a sequence and a
+`BEFORE INSERT` trigger that overwrites `checklist->po` with the authoritative value. **No app change
+at all**: the client may keep computing whatever it likes and the server corrects it on the way in,
+for every writer including any future one.
+
+- The four newer rows were renumbered to 1068–1071; **in each pair the OLDER job keeps the number it
+  has been quoted under.**
+- **Proved, not assumed:** two inserts both claiming the stale `po:1051` came back **1074 and 1075**.
+  Duplicates across the table: **0** (54 rows, 54 distinct). Test rows deleted.
+- ⚠️ The trigger overwrites `po` on **INSERT only**, always — so editing a job never renumbers it, and
+  a future import cannot choose its own numbers (it must set the sequence instead).
+- ⚠️ My trigger guards a malformed `checklist` rather than casting blindly, but the guard is
+  belt-and-braces: **a pre-existing trigger, `default_sales_rep()`, already casts `new.checklist` to
+  json with no guard**, so a non-JSON checklist has never been insertable. Found by testing the case
+  rather than reasoning about it.
+
+⚠️ **`default_sales_rep()` turned out to matter to the Unassigned bucket, and it was worth checking.**
+It sets `sales_rep := created_by` when the creator has **`role='sales'`** — which would have taken an
+"unassigned" lead straight back out of the bucket. It is safe **because Joan is `role='admin'`**
+(verified in `team_profiles`: theo, joan, audit = admin; curtis, scottie = production; nick, joey,
+jacob, jerry, clarkie022 = sales). So 932's flow holds end to end: Joan's intake call stays
+unassigned, and a rep's own lead is stamped to that rep — which is what the client does anyway. **If
+Joan's role is ever changed to `sales`, the bucket silently stops receiving her calls.**
+
+### 2. The last screen showing the creator as the rep
+`cr-kphome-script`'s recent-leads list still rendered `rptRepName(p.created_by)`. 931 fixed the same
+bug on Leads & Jobs and **deliberately left this one flagged rather than quietly widening scope**;
+this is the follow-through. Same single resolver (`ljRepLabel`), `typeof`-guarded exactly as `LJ_SPINE`
+is a few lines above, since it is a different inline block. **Asserted file-wide: zero screens still
+print the creator as the rep.**
+
+⚠️ **The 929 gate went red and the GATE was wrong, not the app.** Build 930 made the drawer open with
+every section **collapsed**, so there are no rows to tap, nothing to scroll, and its hardcoded pixel
+sample fell below the short panel onto the backdrop. Confirmed 934 touched **zero** drawer lines
+before touching the gate. It now expands a section first and samples the drawer's **computed own box**;
+the luminance threshold was **re-measured at the new point** (veiled 9.2 / fixed 30.4 → threshold 20)
+rather than nudged, the same discipline that caught the first version passing at 18 against a veiled
+19.2. Still red on v928 (6 failures), so it can still catch the bug it was written for.
+
+Gates: `check_build` green (932 → **934**; 933 took no stamp, `index.html` untouched there). The 929,
+930, 931 and 932 gates all re-run **green**. SQL applied and verified before the HTML change, per the
+deploy rule.

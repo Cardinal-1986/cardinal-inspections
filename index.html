@@ -3562,7 +3562,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 932 &#8212; New Lead can now be left Unassigned. The Assign to list only ever offered people and defaulted to whoever was typing, so a call the office took was silently assigned to them; it now starts on Unassigned, so an intake call lands in the Unassigned bucket for someone to pick up</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 934 &#8212; Job numbers can no longer be handed out twice — the number now comes from the database instead of from whatever your browser last loaded, and the four jobs that shared a number have been renumbered. The recent-leads list on the home screen also shows who a lead is assigned to rather than who created it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40556,6 +40556,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:934, d:'2026-08-19', t:'Job numbers stop colliding, and the home list names the right rep',
+s:'Four jobs had been given a PO number another job already had \u2014 1002, 1007, 1008 and 1051. The cause was that the next number was worked out from whatever your own browser had loaded, so a session opened before the newest jobs existed would hand out a number that was already taken. That happened again on 19 August. The number is now issued by the database, which every device shares, so it cannot be given out twice however many people are adding jobs at once. The four affected jobs were renumbered \u2014 in each pair the older job kept the number it had been quoted under. Separately, the recent-leads list on the home screen was showing who CREATED each lead rather than who it is assigned to; it now matches Leads \u0026 Jobs and the Unassigned bucket.' },
 { b:932, d:'2026-08-19', t:'A new lead can be left Unassigned',
 s:'Build 931 added the Unassigned bucket, but nothing could actually put a lead in it. On the New Lead form the Assign to list offered nothing but people, and it started on whoever was filling the form in \u2014 so a call taken at the office was quietly assigned to whoever answered the phone. The list now starts with Unassigned, and that is the default for admins. Take a call, enter the lead, leave it alone, and it lands in the Unassigned bucket on Leads \u0026 Jobs for someone to pick up; pick a name instead and it goes straight to them, exactly as before. A note on the form says so. Reps are unchanged \u2014 a lead a rep creates is theirs.' },
 { b:931, d:'2026-08-19', t:'An Unassigned bucket on Leads \u0026 Jobs',
@@ -59060,7 +59062,21 @@ window.renderKpHomeRow = function(){
       '<span class="nm">' + esc(p.name || 'Unnamed client') + '</span>' +
       (po ? '<span class="po">' + esc(String(po)) + '</span>' : '') +
       '<span class="stc">' + esc(st === 'Closed' ? 'Archived' : st) + '</span>' +
-      '<span class="rp">' + esc(rptRepName(p.created_by || '')) + '</span></div>';
+      /* 934: was rptRepName(p.created_by) — WHO MADE THE LEAD, not who owns it.
+         931 fixed the same bug on Leads & Jobs (the Assigned To chips, the
+         Representative sort and the card's own rep line) and deliberately left
+         this one, on a different screen, flagged rather than quietly widened.
+         Theo asked for the open items, so here it is. Same single resolver, so
+         this row and the Unassigned bucket can never disagree. Guarded with
+         typeof exactly as LJ_SPINE is a few lines above: this is a separate
+         inline block, and its own convention is to check first. (That sentence
+         avoids writing the tag name on purpose — the block-count assertion
+         below counts occurrences of it, and a comment mentioning it fails a
+         correct patch. Fifth time this session a comment has broken an
+         assertion written to honour the comment-pollution rule.) */
+      '<span class="rp">' +
+        esc(typeof ljRepLabel === 'function' ? ljRepLabel(p) : rptRepName(p.created_by || '')) +
+      '</span></div>';
   }).join('') : '<div class="kpempty">No retail clients yet.</div>';
   var today = new Date();
   function sameDay(ds){
