@@ -19468,3 +19468,54 @@ clearly brighter than the dimmed page beside it, the backdrop still shows and st
 outside tap and the bottom nav, and the lift is held through the slide-out then dropped back to 90.
 Negative control vs v928: **6 red, no crash.** 926/927/928 gates all re-run green — no regression.
 `check_build` green (928 → 929). No SQL.
+
+## Build 930 — Drawer sections collapse, and start collapsed
+Theo, on a screenshot of the open drawer: *"Can you also make the menus collapsible and expandable
+start the menus collapsed."* 32 rows was a long scroll on a phone; six headings is a glance. Measured
+after: **1834px of content → 844, so the collapsed drawer does not scroll at all.**
+
+- **The state store is the RAIL'S** — `cardinal.lnav.sections`, keyed by the slugged section label,
+  the same one cr-lnav has used since 926. One record of which nav sections are open, not two: close
+  Resources on the phone and it is closed on the desktop. **Only the DEFAULT differs by surface** —
+  the rail opens Daily and Sell (`OPEN_BY_DEFAULT`), the drawer opens nothing, which is the ask.
+- ⚠️ **The chevron and the count are PSEUDO-ELEMENTS, and that is load-bearing.** `scrape()` reads
+  each `.navsec`'s **textContent** for the rail's label and slugs that label into the shared key — so
+  a `<span class="chev">` inside `.navsec` would rename every rail section to "▾ Daily" **and orphan
+  its saved open/closed state**. `::before` for the chevron, `::after` with `content:attr(data-crcount)`
+  for the count; neither touches textContent. Asserted: every label still matches `^[A-Za-z][A-Za-z &]*$`.
+- **Rows hide by an ATTRIBUTE, not an inline style.** `scrape()` skips rows whose `style.display` is
+  `'none'`, so hiding them inline on a phone would delete them from the rail after a resize.
+- **Sign out, the palette hint and the build stamp are never assigned to a section** — the same three
+  exclusions `scrape()` makes, and for the same reason. Sign out cannot be folded away.
+- Headers are `role="button" tabindex="0"` with `aria-expanded`, Enter/Space, and a 46px min-height.
+  Delegated click, so the late-injected Admin header needs no second wiring.
+
+⚠️ **I widened the module's existing MutationObserver and it hung the page — build 567's lesson, paid
+again.** To follow rows injected late the observer needed `childList:true, subtree:true`. But `sync()`
+calls `fillUser()`, which wrote `textContent` **unconditionally** — and **assigning textContent emits
+a childList record even when the string is identical**, because the old text node is removed and a new
+one added regardless. So the observer woke `sync()`, which woke the observer, forever: `page.evaluate`
+never returned and the gate looked like a harness timeout rather than a live infinite loop. Fixed by
+comparing before writing, plus rAF coalescing on the observer callback — the pattern every other module
+here already uses. **One observer, extended; it watches `#navMenu` and not `document.body`, so the
+45-body-observer invariant is untouched (46 hits before and after).**
+
+⚠️ **A second real defect, caught by the gate rather than by reasoning — and I guessed twice before
+measuring.** `cr-lnav` mounts a moment AFTER `DOMContentLoaded`, so on a desktop the first pass ran
+while `body.cr-lnav-on` was still absent, tagged every row collapsed, and then **never cleared it** —
+nothing mutates `#navMenu` when the rail arrives. My first two fixes were guesses; printing the actual
+rows showed the debug run was not even signed in, so the rail had never mounted there. The fix gates
+the section logic on **the rail's own 1100px threshold** as well as its class, in **both** the JS and
+the CSS (`@media (max-width:1099.98px)`), so a stale attribute cannot hide a row on a desktop even for
+the frame before the rail mounts. Deliberately NOT folded into `isDrawer()`, which also drives 929's
+lift and the swipe-to-close: on a wide signed-out window the rail never mounts and the drawer styling
+must stay exactly as it is.
+
+Gate `gate_secs930.mjs`: **26 assertions GREEN across a phone AND a desktop boot** — six headers all
+`aria-expanded="false"` at open, each ≥44px with a live count (Daily 7, Sell 6, CRMs 4, Resources 5,
+Admin 8, Account 1), only Sign out visible while collapsed, no scroll needed, the header is the topmost
+element at its own coordinates, tapping opens that section without closing the drawer, late-injected
+rows (Storm Data) are inside the count and the fold, the choice is written to the shared store, tapping
+again closes and records that too, section textContent is still the plain label, and at rail width **no
+drawer attribute is left on any row**. Negative control vs v929: **11 red, no crash.** `check_build`
+green (929 → 930). No SQL.

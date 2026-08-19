@@ -3531,7 +3531,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 929 &#8212; Fixed the slide-out phone menu: the dark sheet behind it was painting on top of it instead, which is why nothing you tapped worked, why it would not scroll, and why it looked so dark. The menu is now in front of it, as it should have been</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 930 &#8212; The phone menu now opens as a short list of headings — Daily, Sell, CRMs, Resources, Admin, Account — all closed. Tap one to open it, tap it again to close, and each carries a count of what is inside. What you leave open is remembered, and it matches the desktop menu</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40450,6 +40450,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:930, d:'2026-08-19', t:'The phone menu opens collapsed, and every section folds',
+s:'The slide-out menu was 32 rows long and always fully open, so finding anything meant scrolling. It now opens as six headings \u2014 Daily, Sell, CRMs, Resources, Admin, Account \u2014 all closed, with a count beside each one telling you how many items are inside. Tap a heading to open that section, tap it again to close it. Whatever you leave open is remembered for next time, and it is the same setting the desktop menu uses, so a section you close on your phone is closed on the desktop too. Sign out and the version stay where they are and are never folded away. The desktop menu already worked this way and is unchanged.' },
 { b:929, d:'2026-08-19', t:'The slide-out phone menu works again',
 s:'The slide-out menu had three faults that were all the same fault. The dark sheet that dims the page behind the menu was being drawn ON TOP of the menu instead of behind it \u2014 so the menu looked far too dark, every row you tapped was really tapping the sheet (which just closed the menu, so nothing appeared to work), and the sheet ate the scroll, so the list would not move even though there was plenty more below. The menu now sits in front of the sheet, which is where it was always meant to be. Tapping a row opens that page, the list scrolls the whole way down, and the colours are the ones picked in build 925 rather than those colours under a black veil. Nothing else changed, and the desktop menu was never affected.' },
 { b:928, d:'2026-08-19', t:'The Sales Floor becomes a hub of tools',
@@ -75227,6 +75229,48 @@ body:not(.cr-lnav-on) #navMenu .navopt:hover,
 body:not(.cr-lnav-on) #navMenu .navopt:active{background:color-mix(in srgb,var(--hac,#8fb4d8) 14%,transparent) !important;color:#fff !important;}
 body:not(.cr-lnav-on) #navMenu .navopt::after{content:'\203A';margin-left:auto;color:#5a626e;font-size:18px;line-height:1;flex:none;}
 body:not(.cr-lnav-on) #navMenu #signOutBtn{color:#e35c63 !important;border-top:1px solid rgba(255,255,255,.09) !important;}
+/* ── 930 · collapsible sections in the drawer, closed by default ───────────
+   Theo: "make the menus collapsible and expandable start the menus collapsed."
+   32 rows is a long scroll on a phone; six headers is a glance.
+
+   ⚠ THE CHEVRON AND THE COUNT ARE PSEUDO-ELEMENTS, DELIBERATELY. The desktop
+   rail's scrape() reads each .navsec's textContent for its label AND slugs
+   that label into the shared state key — so putting a <span class="chev"> or
+   a count inside .navsec would rename every rail section to "▾ Daily" and
+   orphan its saved open/closed state. ::before/::after do not touch
+   textContent. The count comes through attr(data-crcount) for the same reason.
+
+   Rows are hidden by an ATTRIBUTE the script sets per row, not by an inline
+   style: scrape() skips rows whose style.display is 'none', so hiding them
+   inline on a phone would delete them from the rail after a resize. And the
+   rule is scoped to body:not(.cr-lnav-on), so on desktop it does not apply at
+   all even if the attributes are still sitting there. */
+body:not(.cr-lnav-on) #navMenu .navsec{
+  display:flex !important; align-items:center; gap:9px;
+  min-height:46px; box-sizing:border-box;          /* a control, so >=44px */
+  padding:12px 16px !important; cursor:pointer;
+  user-select:none; -webkit-user-select:none; -webkit-tap-highlight-color:transparent;
+  border-top:1px solid color-mix(in srgb,var(--hac,#8fb4d8) 12%,transparent) !important;
+}
+body:not(.cr-lnav-on) #navMenu .cr-drawer-head + .navsec{border-top:0 !important;}
+body:not(.cr-lnav-on) #navMenu .navsec:active{background:color-mix(in srgb,var(--hac,#8fb4d8) 12%,transparent) !important;}
+body:not(.cr-lnav-on) #navMenu .navsec:focus-visible{outline:2px solid var(--hac,#8fb4d8);outline-offset:-2px;}
+body:not(.cr-lnav-on) #navMenu .navsec::before{
+  content:'\25BE'; flex:none; font-size:11px; line-height:1;
+  color:var(--hac,#8fb4d8); transition:transform .18s ease;
+}
+body:not(.cr-lnav-on) #navMenu .navsec[aria-expanded="false"]::before{transform:rotate(-90deg);}
+body:not(.cr-lnav-on) #navMenu .navsec::after{
+  content:attr(data-crcount); margin-left:auto; flex:none;
+  font:700 10px ui-monospace,Menlo,monospace; letter-spacing:0;
+  color:var(--hin,#cfd6df); opacity:.45;
+}
+/* Width-gated as well as class-gated, so a stale attribute can never hide a
+   row on a desktop even for the moment before the rail mounts. 1100px is
+   cr-lnav's own threshold; the two must not drift apart. */
+@media (max-width:1099.98px){
+  body:not(.cr-lnav-on) #navMenu .navopt[data-crhide="1"]{display:none !important;}
+}
 body:not(.cr-lnav-on) #navMenu #cr-nav-sec-admin{background:transparent !important;color:#e35c63 !important;border-top:1px dashed rgba(255,255,255,.12) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint{background:transparent !important;color:#9aa0a8 !important;border-top:1px solid rgba(255,255,255,.07) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint kbd{background:rgba(255,255,255,.1) !important;color:#cfd6df !important;}
@@ -75251,8 +75295,120 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     function fillUser(){
       var el = document.getElementById('crDrawerUser'); if(!el) return;
       var nm = ''; try{ if(typeof meName === 'function') nm = meName(); }catch(_){}
-      el.textContent = nm || 'Cardinal';
+      var want = nm || 'Cardinal';
+      /* 930: compare before writing. Assigning textContent emits a childList
+         mutation record even when the string is IDENTICAL (the old text node is
+         removed and a new one added regardless), and this module's observer now
+         watches childList — so an unconditional write here calls sync(), which
+         calls this, forever. Build 567 paid for this lesson once already. */
+      if(el.textContent !== want) el.textContent = want;
     }
+    /* ── 930 · collapsible sections, closed by default ────────────────────
+       State lives in the SAME store the desktop rail already uses
+       (`cardinal.lnav.sections`, keyed by the slugged section label), so
+       collapsing Office on the phone collapses it on the desktop too — one
+       record of which nav sections are open, not two. Only the DEFAULT
+       differs by surface: the rail opens Daily and Sell, the drawer opens
+       nothing, which is what Theo asked for. */
+    var SEC_KEY = 'cardinal.lnav.sections';
+    function readSecs(){
+      try{ return JSON.parse(localStorage.getItem(SEC_KEY) || '{}') || {}; }
+      catch(_){ return {}; }
+    }
+    function writeSecs(st){ try{ localStorage.setItem(SEC_KEY, JSON.stringify(st)); }catch(_){} }
+    function secSlug(s){ return String(s || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+    /* Never bury these in a section: sign-out and the build stamp sit after the
+       last header, and scrape() skips them for the same reason. */
+    function isChrome(el){
+      return el.id === 'signOutBtn' || el.id === 'cr-nav-palette-hint' ||
+             (el.hasAttribute && el.hasAttribute('data-cr-footer'));
+    }
+    var applying = false;
+    /* The rail mounts a moment AFTER DOMContentLoaded, so the first pass on a
+       desktop runs while body.cr-lnav-on is not set yet and tags every row.
+       The CSS is scoped to body:not(.cr-lnav-on) so nothing is hidden once the
+       rail arrives — but leaving the attributes lying about means anything
+       later reading them has to know that. Clear them instead. */
+    function clearSections(){
+      Array.prototype.forEach.call(menu.querySelectorAll('[data-crhide]'), function(el){
+        el.removeAttribute('data-crhide');
+      });
+      Array.prototype.forEach.call(menu.querySelectorAll('.navsec[data-crsec]'), function(el){
+        el.removeAttribute('data-crcount');
+        el.removeAttribute('aria-expanded');
+        el.removeAttribute('role');
+        el.removeAttribute('tabindex');
+      });
+    }
+    /* cr-lnav mounts a moment AFTER DOMContentLoaded, so body.cr-lnav-on is not
+       set yet on the first pass and a desktop would tag every row as collapsed
+       and then never clear it — nothing mutates #navMenu when the rail arrives.
+       Gate on the rail's OWN threshold as well, so the answer is right from the
+       first pass. Deliberately NOT folded into isDrawer(): that also drives the
+       929 lift and the swipe-to-close, and on a wide signed-out window (where
+       the rail never mounts) the drawer styling should stay exactly as it is. */
+    var RAIL_W = 1100;
+    function railWidth(){
+      try{ return window.matchMedia('(min-width:' + RAIL_W + 'px)').matches; }
+      catch(_){ return false; }
+    }
+    function applySections(){
+      if(applying) return;
+      if(!isDrawer() || railWidth()){
+        applying = true; try{ clearSections(); }catch(_){ } applying = false; return;
+      }
+      applying = true;
+      try{
+        var st = readSecs(), sec = null, open = true, count = 0;
+        function stamp(){ if(sec) sec.setAttribute('data-crcount', String(count)); }
+        Array.prototype.forEach.call(menu.children, function(el){
+          if(!el.classList) return;
+          if(el.classList.contains('navsec')){
+            stamp();
+            sec = el; count = 0;
+            var id = secSlug(el.textContent);
+            /* == null means "never chosen", which on the drawer means CLOSED. */
+            open = (st[id] == null) ? false : !!st[id];
+            if(el.getAttribute('data-crsec') !== id) el.setAttribute('data-crsec', id);
+            el.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if(el.getAttribute('role') !== 'button'){
+              el.setAttribute('role', 'button');
+              el.setAttribute('tabindex', '0');
+            }
+            return;
+          }
+          if(!el.classList.contains('navopt') || isChrome(el)) return;
+          if(!sec) return;                       /* rows above the first header stay put */
+          count++;
+          var want = open ? null : '1';
+          if(want){ if(el.getAttribute('data-crhide') !== '1') el.setAttribute('data-crhide','1'); }
+          else if(el.hasAttribute('data-crhide')) el.removeAttribute('data-crhide');
+        });
+        stamp();
+      }catch(_){ }
+      applying = false;
+    }
+    function toggleSection(el){
+      var id = el.getAttribute('data-crsec') || secSlug(el.textContent);
+      var st = readSecs();
+      st[id] = (el.getAttribute('aria-expanded') === 'true') ? 0 : 1;
+      writeSecs(st);
+      applySections();
+    }
+    /* Delegated, so headers injected later (Admin) need no second wiring. */
+    menu.addEventListener('click', function(e){
+      if(!isDrawer()) return;
+      var s = e.target && e.target.closest ? e.target.closest('.navsec') : null;
+      if(!s || !menu.contains(s)) return;
+      e.stopPropagation();          /* not an outside-click; must not close */
+      toggleSection(s);
+    });
+    menu.addEventListener('keydown', function(e){
+      if(!isDrawer() || (e.key !== 'Enter' && e.key !== ' ')) return;
+      var s = e.target && e.target.closest ? e.target.closest('.navsec') : null;
+      if(!s || !menu.contains(s)) return;
+      e.preventDefault(); toggleSection(s);
+    });
     /* 929: see the stylesheet. The lift is REMOVED LATE on purpose — the panel
        takes 300ms to slide out, and dropping the header back to z-index 90 the
        instant it closes would put the still-visible drawer back under the
@@ -75273,8 +75429,22 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
       bd.classList.toggle('on', open);
       lift(open);
     }
-    /* mirror every style.display change (navBtn, link-click, outside-click). */
-    try{ new MutationObserver(sync).observe(menu, { attributes:true, attributeFilter:['style'] }); }catch(_){}
+    /* mirror every style.display change (navBtn, link-click, outside-click),
+       and — 930 — every row that arrives late, so a section's count and its
+       collapsed rows follow the nine modules that inject items over the first
+       few seconds. ONE observer, extended, not a second one beside it. It
+       watches #navMenu and not document.body, so the 45-body-observer
+       invariant is untouched. applySections() only ever writes data-* and
+       aria-*, which attributeFilter:['style'] does not report, so it cannot
+       re-trigger itself; `applying` guards the case anyway. */
+    var moQueued = false;
+    function onMutate(){
+      if(moQueued) return;
+      moQueued = true;
+      requestAnimationFrame(function(){ moQueued = false; sync(); applySections(); });
+    }
+    try{ new MutationObserver(onMutate).observe(menu,
+      { attributes:true, attributeFilter:['style'], childList:true, subtree:true }); }catch(_){}
     /* tapping the dark backdrop closes — same close path the app already uses. */
     bd.addEventListener('click', function(){ menu.style.display = 'none'; });
     /* tapping inside the header must not bubble to the document outside-close. */
@@ -75289,6 +75459,9 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     menu.addEventListener('touchmove', function(e){ if(sx==null) return; var t=e.touches[0], dx=t.clientX-sx, dy=Math.abs(t.clientY-sy); if(dx < -55 && Math.abs(dx) > dy){ sx=null; menu.style.display='none'; } }, { passive:true });
     menu.addEventListener('touchend', function(){ sx=sy=null; }, { passive:true });
     sync();
+    applySections();
+    /* crossing the rail threshold re-decides; onMutate coalesces on a frame */
+    window.addEventListener('resize', onMutate, { passive:true });
   });
 })();
 </script>
