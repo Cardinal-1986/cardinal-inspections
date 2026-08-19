@@ -336,8 +336,8 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 }
 
 footer.site{
-  border-top:1px solid var(--line);background:var(--paper);
-  padding:18px 0;font-size:12.5px;color:var(--muted);
+  border-top:1px solid var(--rbe-line2,#2b2b33);background:transparent;
+  padding:18px 0;font-size:12.5px;color:var(--rbe-mute,#9aa0a8);
 }
 @media (max-width:680px){
   .brand h1{font-size:24px;}
@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 919 &#8212; The roofing estimate’s measurement table is slimmed to area and pitch (the per-edge figures repeat in the priced items), and the crew work order now shows step &amp; wall flashing, penetrations and waste from the Roofr import</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 922 &#8212; The Punch Outs tile in the job menu now shows the open count (it was reading a dash even when the job had an open punch out)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4307,14 +4307,14 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="acxsec"><div class="acxbody" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
       <label style="font:700 12px 'Segoe UI',Arial,sans-serif;color:#6b5f58;">Type<br>
         <select id="apKind" class="acxsel">
-          <option value="Inspection">&#128269; Inspection</option>
-          <option value="Client meeting">&#129309; Client meeting</option>
-          <option value="Adjuster appointment">&#128188; Adjuster appointment</option>
-          <option value="Material delivery">&#128666; Material delivery</option>
-          <option value="Job start">&#128296; Job start</option>
-          <option value="Final walk-around">&#9989; Final walk-around</option>
-          <option value="Follow-up">&#9200; Follow-up</option>
-          <option value="Other">&#128197; Other</option>
+          <option value="Inspection">Inspection</option>
+          <option value="Client meeting">Client meeting</option>
+          <option value="Adjuster appointment">Adjuster appointment</option>
+          <option value="Material delivery">Material delivery</option>
+          <option value="Job start">Job start</option>
+          <option value="Final walk-around">Final walk-around</option>
+          <option value="Follow-up">Follow-up</option>
+          <option value="Other">Other</option>
         </select></label>
       <label style="font:700 12px 'Segoe UI',Arial,sans-serif;color:#6b5f58;">Date<br>
         <input type="date" id="apDate" class="acxsel"></label>
@@ -7539,7 +7539,6 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <div class="wrap" style="padding-top:18px;max-width:900px;">
     <button class="btn dark" id="commsBackBtn">&larr; Back</button>
     <h2 class="viewhead" data-cri="chat lg">Communications <span id="commsCli" style="color:#9c1822;"></span></h2>
-    <p class="subnote">Notes, call logs, and document activity for this client. Tag a teammate with @name.</p>
     <div class="chatbox">
       <div class="chatthread" id="chatThread"></div>
       <div id="chatTagRow" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px 0;"></div>
@@ -11404,7 +11403,7 @@ function renderAcxOverview(){
          the exact trap 604 was about. 607 also removed the overview card, so
          punch had no reachable entry point at all. data-jm="punch" falls through
          the router's else branch to showTab('punch'), which 607 already wired. */
-      jt(dbIc('tasks'), 'Punch Outs', punchOpenCount(pr), 'punch') +
+      jt(dbIc('tasks'), 'Punch Outs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
       /* 652: the tab always existed; the menu is where fingers go.
          'contracts' rides the router's else-branch to showTab, like punch. */
       jt(dbIc('docs'), 'Contracts', '', 'contracts') +
@@ -40439,6 +40438,12 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:922, d:'2026-08-18', t:'Job-menu Punch Outs tile shows its open count',
+s:'On the client\u2019s Job Menu, the Punch Outs tile showed a dash even when the job had an open punch out on file. The count is loaded a moment after the menu is drawn, and the tile wasn\u2019t picking it up \u2014 it now shows \u201C\u2026\u201D until the punch list loads, then fills in the number of open items (the same way Photos, Measurements and Estimates already do). Tapping it still opens the Punch Outs page as before.' },
+{ b:921, d:'2026-08-18', t:'Measurements tab themed to match the dark client page',
+s:'The Measurements tab (Measurement Values, Satellite estimate, Roofr, Hover, Field) drew its cards on a white background \u2014 bright slabs down the near-black client page. They now use the same dark card treatment as the rest of the profile (the Schedule Board pattern), with the text recoloured to stay readable, and they flip to light cards in light mode automatically. Only the look changed \u2014 the buttons, the report lists and the value entry all work exactly as before.' },
+{ b:920, d:'2026-08-18', t:'Client-area cleanup: Comms sub-line, appointment emoji, white footer',
+s:'Three small readability fixes on the client area. (1) The Communications page had a grey sub-line under the title (\u201CNotes, call logs, and document activity\u2026\u201D) \u2014 removed, the title says it. (2) The appointment Type picker listed each type with an emoji in front (\uD83D\uDD0D Inspection, \uD83E\uDD1D Client meeting\u2026); the emoji are gone, just the words now. (3) The page footer (\u201CCardinal Roofing \u0026 Renovations \u2014 Client Resources\u2026\u201D) was painted on a white strip that showed as a bright band across the bottom of the dark app; it now blends into the page in both light and dark. Nothing changed about what any of these do.' },
 { b:919, d:'2026-08-18', t:'Estimate measurements slimmed; work order gains the flashing/waste rows',
 s:'Two changes to the roofing paperwork. (1) On the client ESTIMATE, the Roof Measurements table used to list every edge \u2014 ridges, hips, valleys, eaves, rakes, step and wall flashing, penetrations, waste \u2014 right above the priced line items, which already carry those same quantities. It now shows just the total area and the pitch; the line-item quantities still auto-fill from the Roofr PDF exactly as before, and the Upload Roofr PDF button still works. (2) On the crew WORK ORDER, the Measurements section already pulled squares, pitch, ridge, hip, valley, eave and rake from the same Roofr (or Hover) import \u2014 it now also shows step flashing, wall/apron flashing, penetrations and the waste factor when the report provides them, so the crew sees the full set. Nothing about how measurements are stored changed.' },
 { b:918, d:'2026-08-18', t:'Punch & Repairs: a back button in the header',
@@ -51510,7 +51515,19 @@ rows = [];
 rows = r.data || [];
 }
 loadedFor = pid;
+syncMenuCount();
 }catch(e){ console.warn('[punch] load failed:', e); rows = []; }
+}
+/* 922: the job-menu "Punch Outs" tile renders its count synchronously, but the
+   rows load on the observer's schedule AFTER the menu is drawn, so the tile read
+   "—" even with an open item on file. Photos/Measurements/Estimates solve this
+   with a "…" placeholder filled late; this is that fill for punch. */
+function syncMenuCount(){
+var el = document.getElementById('dbPunchN');
+if(!el || loadedFor === null) return;
+var open = rows.filter(function(i){ return i.status !== 'done'; }).length;
+el.textContent = open;
+el.classList.toggle('zero', open === 0);
 }
 function itemHtml(i){
 return '<div class="cr-pp-item' + (i.status === 'done' ? ' done' : '') +
@@ -51910,7 +51927,7 @@ lastHtml = '';
 loadedFor = null;
 return;
 }
-if(loadedFor === pr.id){ render(); return; }
+if(loadedFor === pr.id){ render(); syncMenuCount(); return; }
 if(busy) return;
 busy = true;
 histOpen = false;
@@ -63237,6 +63254,33 @@ border-top-color:var(--rbe-line2,#2b2b33);
 }
 body:not(.claim-insurance):not(.claim-community) #boardView .subnote{
 color:var(--rbe-mute,#9aa0a8);
+}
+/* ── Build 921 · the Measurements tab ──────────────────────────
+   .matcard was authored white (background:#fff, line 855) and never tokenised,
+   so the cards showed as white slabs on the near-black profile — the same
+   class as the Schedule Board above. Themed here, retail only, with the --rbe-*
+   tokens so light mode flips on its own; Claims and Community keep what they
+   have. The 522 raise put a WHITE bevel on .matcard (63145) back when the card
+   was white; the card is not any more, so the ridge is retuned dark with it,
+   exactly as .bday was. */
+body:not(.claim-insurance):not(.claim-community) #projectView .matcard{
+--rbe-ridge-t:#454552;--rbe-ridge-b:#050507;--rbe-ridge-hl:rgba(255,255,255,.09);
+background:linear-gradient(180deg,var(--rbe-bg1,#2e333b),var(--rbe-bg2,#262a31));
+border:1px solid var(--rbe-line2,#2b2b33);
+color:var(--rbe-ink,#cfd6df);
+}
+body:not(.claim-insurance):not(.claim-community) #tab-measure .mathead b{
+color:var(--rbe-ink,#cfd6df);
+}
+body:not(.claim-insurance):not(.claim-community) #tab-measure .subnote{
+color:var(--rbe-mute,#9aa0a8);
+}
+body:not(.claim-insurance):not(.claim-community) #tab-measure .matempty,
+body:not(.claim-insurance):not(.claim-community) #tab-measure .mattable td.u{
+color:var(--rbe-mute,#9aa0a8);
+}
+body:not(.claim-insurance):not(.claim-community) #tab-measure .mattable td{
+border-bottom-color:var(--rbe-line2,#2b2b33);color:var(--rbe-ink,#cfd6df);
 }
 /* The width, moved out of the inline attribute rather than deleted. Deleting it
    outright dropped the board to .wrap's 1180 whenever the sidebar is off - a

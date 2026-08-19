@@ -19139,3 +19139,49 @@ through `aerialMerge`, so one change covers both. `harness_674` stays green (70 
 `gate_estwo919.mjs`: 18 assertions GREEN, negative-controlled vs v918 (edge rows present + fields
 not persisted). `check_build` green (918 → 919, marker `put('waste', d.waste_pct)`). No SQL —
 `checklist.meas` is JSON, additive keys only.
+
+## Build 920 — Client-area cleanup: Comms sub-line, appointment emoji, white footer
+Screenshot batch (Theo). Three of the five items — the quick, safe ones:
+- **Communications** — removed the grey `.subnote` under the title ("Notes, call logs, and document
+  activity for this client. Tag a teammate with @name."). Theo: "that description really doesn't
+  need to be there." The title carries it.
+- **Appointment Type picker** — stripped the leading emoji from all 8 `<option>` labels (🔍 Inspection
+  → Inspection, etc.). Native `<select>` can't hold a drawn icon, so plain text. `value=` attributes
+  untouched (dispatch reads `kind === 'Material delivery'` etc.).
+- **Footer** — `footer.site` was `background:var(--paper)` (#ffffff, never themed) with dark
+  `--muted` text, so it rendered as a bright white band across the bottom of the dark app on retail
+  mobile (already hidden for Community/Insurance/hub/desktop). Flipped to `background:transparent`
+  + `color:var(--rbe-mute)` / `border:var(--rbe-line2)` so it blends into either theme. Contrast
+  7.55:1 dark, 6.24:1 light.
+Gate `gate_cleanup920.mjs`: 15 assertions GREEN, negative-controlled vs v919 (emoji present, subtitle
+present, footer white). Footer computes `rgba(0,0,0,0)` in Chromium; options render emoji-free with
+values preserved. `check_build` green (919 → 920, marker `<option value="Inspection">Inspection`). No SQL.
+Remaining from the batch: measurements panel is a light-authored island (921), and the Punch Outs
+job-menu count reads "—" while an open punch exists (922).
+
+## Build 921 — Measurements tab themed to match the dark client page
+Screenshot batch item: "the measurements section don't look right." `.matcard` was authored white
+(`background:#fff`, line 855) and never tokenised — bright slabs down the near-black profile, the same
+class as the Schedule Board (527). Themed identically: retail-scoped
+(`body:not(.claim-insurance):not(.claim-community) #projectView .matcard`), `--rbe-bg1/bg2` gradient,
+`--rbe-line2` border, `--rbe-ink`/`--rbe-mute` inks — all tokens that flip in `rb-light`, so light
+mode restores a white card with dark text on its own. The 522 raise had put a WHITE bevel on `.matcard`
+(63145) back when it was white; ridge retuned dark (`#454552`/`#050507`) exactly as `.bday` was. Themed
+`.mathead b`, `#tab-measure .subnote`, `.matempty`, `.mattable td`/`td.u`. The cream value inputs
+(`#FFF9C4`) and the dark `.mattable th` are the app's fill-in / table-header conventions — left as-is.
+Rendered in Chromium BOTH themes: dark card gradient 46/51/59→38/42/49, header 9.83:1, subnote 5.47:1,
+td 9.83:1; light card 255→250, header 17.34:1, subnote 5.11:1, td 17.34:1. Negative-controlled vs v920
+(RED: white card, header 1.20:1 dark — the exact bug). `check_build` green (920 → 921). No SQL.
+Theo's eyes are the final visual gate.
+
+## Build 922 — Job-menu Punch Outs tile shows its open count
+Screenshot batch item: "There is a punch out but it doesn't show as having any." The Job Menu's
+Punch Outs tile rendered `punchOpenCount(pr)` synchronously with NO id, so when the punch rows loaded
+on `CardinalPunchProfile`'s observer schedule AFTER the menu was drawn, the tile stayed at "—"
+(openCountFor returns '' until `loadedFor === pid`). Photos/Measurements/Estimates already solve this
+with a "…" placeholder + an id filled late. Applied the same: tile gets `id="dbPunchN"` and shows "…"
+until loaded; `syncMenuCount()` (new helper in the punch module) sets it after `load()` and on every
+`check()` re-render once `loadedFor` matches — `el.textContent = openCount; el.classList.toggle('zero', open===0)`,
+the exact `dbMeasN` pattern. Gate `gate_punch922.mjs`: opens a seeded project with 1 open + 1 done punch,
+tile fills to "1", not dimmed; negative-controlled vs v921 (no id, no helper). `check_build` green
+(921 → 922). No SQL.
