@@ -5387,3 +5387,19 @@ Deliberate departures, both in the module banner: **no scroll lock** (there are 
 **Door Knocking** (`view='door'`) is the one new page, and it is a pane *of* the Sales Floor rather than a new full-screen view — six things to do in order when you work a street, the three objections you hear at the door, and the knock word for word. Talk Tracks and Proof became panes the same way, so the writing that used to sit under the tabs is intact. **Back goes up one level** — a pane returns to the hub, only the hub's back leaves the screen.
 
 **One deck, not two.** The Coach reads `objections` from Supabase; the Sales Floor had its own hardcoded 13. `sales_floor_objections_928.sql` (**applied**) moved the six that existed only in the file into the table — a new **"At the Door"** category (3 cards, sorted 1–3 so it leads) plus three near-misses the deck lacked. The deck went **27 → 33 across 7 categories**. The in-file lists are now fallbacks for a failed read, never a parallel source: `loadDeck()` reads the table and the table always wins, and `todaysObjection()` rotates the DB deck once it has. There are exactly **two readers of `objections`** in the file — the Coach and the hub — and that is asserted.
+
+**Build 937 — the client signature pad, reachable on every screen.** `#sigModal` was the second
+fixed overlay in the file with no `overflow` (595's comment names five siblings and misses this one),
+so on any short viewport in the **installed** app — phone landscape measured at 844×390 — Clear,
+Cancel and **Apply signature** rendered underneath `#pwaNav` with nothing to scroll. Two lines:
+`overflow:auto` to join the siblings, and the `88px + env(safe-area-inset-bottom)` clearance as
+**`padding-bottom` on the overlay**, because the card's margin is an inline style a normal
+stylesheet declaration cannot beat.
+
+**The gate is the reusable part — `scripts/gate_sheets937.mjs`.** It opens **17 surfaces** through
+their real openers (the ten markup modals, `cr-pb-modal`, and `cr-abc` / `cr-storm` / `cr-occ` /
+`crewsView` / `cr-estimates-mount` / `cr-sf` / `cr-pb`) across **four viewports**, and asks of every
+interactive control: scrolled into view, does a tap at its centre actually land on it?
+`elementFromPoint`, not arithmetic. Run it whenever a screen gains a bottom-anchored control —
+`node gate_sheets937.mjs [path]`, the path argument being the negative control. It has been seen
+red on **two** builds for two different modals (v934 → the 935 add-sheet; v936 → this one).
