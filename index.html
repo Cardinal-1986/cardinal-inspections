@@ -3562,7 +3562,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 934 &#8212; Job numbers can no longer be handed out twice — the number now comes from the database instead of from whatever your browser last loaded, and the four jobs that shared a number have been renumbered. The recent-leads list on the home screen also shows who a lead is assigned to rather than who created it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 935 &#8212; The Add an item sheet no longer hides its Add it and Cancel buttons behind the bottom bar. In the installed app the bar sits on top of that sheet, so the buttons were being covered and were hard to tap; the sheet now leaves room for it</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40556,6 +40556,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:935, d:'2026-08-19', t:'The Add an item sheet stops hiding its own buttons',
+s:'Adding a punch out, ticket or callback put the Add it and Cancel buttons right under the bottom bar \u2014 and in the installed app that bar is drawn ON TOP of the sheet, so the buttons were partly covered and took several attempts to hit. The sheet now leaves room for the bar and the phone\u2019s own home indicator, so both buttons sit clear of it. Measured: the Add it button was overlapping the bar by 40 of its 44 pixels. Nothing else about the sheet changed, and it still sits flush to the bottom of the screen.' },
 { b:934, d:'2026-08-19', t:'Job numbers stop colliding, and the home list names the right rep',
 s:'Four jobs had been given a PO number another job already had \u2014 1002, 1007, 1008 and 1051. The cause was that the next number was worked out from whatever your own browser had loaded, so a session opened before the newest jobs existed would hand out a number that was already taken. That happened again on 19 August. The number is now issued by the database, which every device shares, so it cannot be given out twice however many people are adding jobs at once. The four affected jobs were renumbered \u2014 in each pair the older job kept the number it had been quoted under. Separately, the recent-leads list on the home screen was showing who CREATED each lead rather than who it is assigned to; it now matches Leads \u0026 Jobs and the Unassigned bucket.' },
 { b:932, d:'2026-08-19', t:'A new lead can be left Unassigned',
@@ -49349,7 +49351,26 @@ objections : OBJECTIONS,
   width:100%; max-width:520px; max-height:88vh; overflow-y:auto; overflow-x:hidden;
   overscroll-behavior:contain;
   background:#15171a; border:1px solid rgba(230,235,240,.11); border-radius:18px 18px 0 0;
-  padding:18px 16px 22px; color:#eceef0;
+  /* 935: Theo, on a phone screenshot of this sheet: "Can't barely hit save
+     button". Measured at 430x932 — the Add it / Cancel row spans 865-909 and
+     #pwaNav's top edge is at 869, so 40 of the button's 44px sit inside the
+     bar's band. And in the INSTALLED app it is worse than crowded: the rule
+       body.standalone #pwaNav{z-index:9990 !important}
+     puts the bar ABOVE this modal's z-index:9600, so the bar paints over the
+     buttons and takes the taps. His screenshot is the installed app — status
+     bar, home indicator — which is why it reads as barely hittable there and
+     merely tight in a browser.
+
+     Clearance, NOT a bigger z-index, because build 595 already answered this
+     exact question for #projModal a few blocks below and one mechanism per
+     concept is the rule here. 88px is ITS constant, and the 451 note is
+     explicit that #pwaNav clearance is a fixed amount reused verbatim rather
+     than a gap recomputed per surface. The sheet stays flush to the bottom
+     edge — only its contents move up, so the bottom-sheet shape is unchanged. */
+  padding:18px 16px calc(22px + env(safe-area-inset-bottom,0px)); color:#eceef0;
+}
+body.standalone #cr-pb-modal .sheet{
+  padding-bottom:calc(88px + env(safe-area-inset-bottom,0px));
 }
 :root[data-theme="rb-light"] #cr-pb-modal .sheet{ background:#fff; border-color:#e2e4e8; color:#17191c; }
 #cr-pb-modal h3{ margin:0 0 14px; font:700 18px Georgia,serif; }

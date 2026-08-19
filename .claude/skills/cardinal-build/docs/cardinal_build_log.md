@@ -19745,3 +19745,46 @@ rather than nudged, the same discipline that caught the first version passing at
 Gates: `check_build` green (932 → **934**; 933 took no stamp, `index.html` untouched there). The 929,
 930, 931 and 932 gates all re-run **green**. SQL applied and verified before the HTML change, per the
 deploy rule.
+
+## Build 935 — The Add an item sheet stops hiding its own buttons
+Theo, on a phone screenshot of the punch-out add sheet: *"Can't barely hit save button."*
+
+**Measured at 430×932 before touching anything:** the Add it / Cancel row spans **865–909** and
+`#pwaNav`'s top edge is at **869** — so **40 of the button's 44px sit inside the bar's band**.
+
+⚠️ **And in the INSTALLED app it is not merely crowded, it is covered.**
+`body.standalone #pwaNav{z-index:9990 !important}` (cr-pnc-styles) puts the bar **above** this modal's
+`z-index:9600`, so the bar paints over the buttons **and takes the taps**. The negative control proves
+it: on v934, `elementFromPoint` at the centre of **both** buttons returns **`pwaNav`**. Theo's
+screenshot is the installed app — status bar, home indicator — which is exactly why it reads as
+barely hittable there and merely tight in a browser.
+
+**Fixed with CLEARANCE, not a bigger z-index**, because **build 595 already answered this exact
+question** for `#projModal` a few blocks below:
+`body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-inset-bottom,0px))}`,
+whose own comment says *"the installed nav is z-index:9990 and paints over this z-index:200 modal, so
+without it Save scrolls under the bar."* One mechanism per concept. **88px is its constant, reused
+verbatim** — the 451 note is explicit that `#pwaNav` clearance is a fixed amount every stacked surface
+repeats, *"not a recomputed gap"*. Padding rather than margin, so the sheet stays flush to the bottom
+edge and only its contents move: the bottom-sheet shape is unchanged.
+
+⚠️ **The gate's first version produced a FALSE RED, and it was the gate.** It forced `#pwaNav` visible
+in both runs — but the bar is `display:none` outside the installed app (`#pwaNav{display:none}` at
+~1745, flipped by `body.standalone`), so the browser-tab overlap assertion was measuring a state that
+cannot occur. **Second time in this session a gate has staged an impossible configuration and read as
+a defect** (the other was 929's, after 930 made the drawer open collapsed). Let the browser decide the
+configuration; do not stage it.
+
+Gate `gate_sheet935.mjs`: **9 assertions GREEN across BOTH modes** — in the installed app the bar
+really is at 9990 above the 9600 modal (the condition that makes this bite), overlap is **0px**, a tap
+at each button's centre reaches **that button and not the bar**, both are fully in the viewport, and
+the sheet is still flush to the bottom; in a browser the bar is not rendered at all, so there is
+nothing to clear. Negative control vs v934: **3 red**, with `pwaNav` named as the thing intercepting
+both buttons. `check_build` green (934 → 935). No SQL.
+
+**Flagged, not fixed:** only **eight** surfaces in the file carry `body.standalone` clearance
+(`#cr-dark-toggle`, `#cr-nachi-mgr-btn`, `#cr-rlhome-btn`, `#cr-rltheme-btn`, `#cr-rltoc-btn`,
+`#crToasts`, `#landingView .cr-lr`, `#projModal .projform`) — now nine. The other bottom-anchored
+modals (`#leadFormModal`, `#ckModal`, `#gcModal`, `#leadModal`, `#apptModal`, `#cr-abc .sheet`) have
+**not** been measured and may carry the same fault. A sweep is one build; it was not done here because
+one screen was reported and widening it silently is how a bug fix becomes a restyle.
