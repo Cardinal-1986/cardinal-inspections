@@ -2912,3 +2912,30 @@ HEAD`, which marks `-` any commit whose patch is already upstream. **Negative-
 controlled against the real artifacts**, not a fixture: against `main` as it
 stood at decision time (`20c23af`), the broken head `50b366f` reports 1 duplicate
 (`d774def`) and blocks; the rebased head `839f879` reports 0 and passes.
+
+## Class 50 — a z-index that cannot compete, because an ancestor made a stacking context
+**Cost: build 929, and it shipped broken through 924, 925, 926, 927 and 928.**
+
+`header.site` is `position:fixed; z-index:90`. That makes it a **stacking context**, so `#navMenu`'s
+`z-index:100000` ranks it only among the header's own children — against the rest of the page the
+drawer paints at **90**. `#navBackdrop`, a `<body>` child at 99998, therefore painted over it: the
+panel was veiled 50% black, `elementFromPoint` returned the backdrop over every row, and the backdrop
+ate the scroll gesture. One fault, three separate-looking bug reports.
+
+**The tell:** a big z-index that visibly loses. Before raising it further, walk the ancestor chain and
+ask which of them creates a context — `position` + a `z-index` that is not `auto`, or any `transform`,
+`filter`, `opacity < 1`, `will-change`, `contain:paint`, `backdrop-filter`, `isolation:isolate`. The
+element's own number is meaningless outside the nearest such ancestor.
+
+**Fixing it:** lift the context (`header.site`) above the competitor, or move the competitor into the
+same context. Those are not equivalent — moving `#navBackdrop` into the header would have dropped it
+to depth 90 and stopped it covering `#pwaNav` (9990) and `#cr-dark-toggle` (9500), leaving the bottom
+nav live behind an open drawer. **Check what sits above the context's own z-index before moving
+anything into it.**
+
+**Mechanically checkable, and now checked** — `gate_drawer929.mjs` and the sentinel's hit-testing:
+- `elementFromPoint` at the centre of every interactive element must return that element or a child.
+- Drive controls by **coordinate**, never `.click()` — a programmatic click succeeds on a fully
+  obscured element, which is why five builds of gates stayed green.
+- Read **painted pixels** off a screenshot for anything describable as "too dark"; `getComputedStyle`
+  reports an element's own background and cannot see what is drawn over it.

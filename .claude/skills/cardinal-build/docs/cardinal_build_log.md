@@ -19416,3 +19416,55 @@ hub rather than leaving, Talk Tracks and Proof kept their writing, and the Storm
 tiles each open the real screen (proved by stubbing the opener, not by reading markup). Negative
 control vs v927: **20 red, no crash.** `check_build` green (927 → 928). Scroll-lock writers still
 **13**; body observers still **46 hits**.
+
+## Build 929 — The slide-out phone menu: the backdrop was painting OVER it
+Theo: *"Fix the slide out nav, no button or scroll works and it's too dark"* — **three symptoms, one
+cause**, and the cause is a stacking-context trap rather than a z-index one. Reproduced in Chromium
+before anything was theorised.
+
+**`header.site` is `position:fixed; z-index:90`, so it CREATES A STACKING CONTEXT.** `#navMenu` lives
+inside it, so its `z-index:100000` competes only with the header's other children; against the rest of
+the page **the whole drawer paints at 90**. `#navBackdrop` is a child of `<body>` at **99998** — a
+sibling of the header in the ROOT context — so it out-painted the drawer completely:
+
+| Theo's words | what was measured |
+|---|---|
+| "it's too dark" | `rgba(0,0,0,.5)` drawn over the panel. Painted luminance **19.2**; correct is **68.5** |
+| "no button works" | `elementFromPoint` at the centre of **every** visible `.navopt` returned `#navBackdrop` — 15 of 15 — whose own handler then CLOSED the menu |
+| "scroll doesn't work" | the gesture landed on the backdrop. **The panel could always scroll**: `scrollHeight` 1858 vs `clientHeight` 844 |
+
+**The fix is two lines:** `body.cr-drawer-lift:not(.cr-lnav-on) header.site{z-index:99999}`, plus a
+class toggled in the drawer script's existing `sync()`. Specificity (0,3,2) against the two
+`header.site` rules at (0,1,1) — including the one inside `@media (max-width:640px)` that wins on a
+phone by source order. **Proved in Chromium, not from `selector_audit.py`** — 926 shipped an override
+the audit named the winner and the browser did not.
+
+⚠️ **The other candidate was moving `#navBackdrop` INTO the header, and it is worse.** The backdrop
+would inherit the header's depth of 90 and stop covering `#pwaNav` (z 9990) and `#cr-dark-toggle`
+(9500) — leaving the bottom nav tappable behind an open drawer, which is the one thing a backdrop
+exists to prevent. Checked those z-indexes before choosing; the gate now asserts the bottom nav stays
+blocked, so the wrong fix would go red.
+
+**The lift is removed LATE (340ms) on purpose.** The panel takes 300ms to slide out; dropping the
+header back to 90 the instant it closes would put the still-visible drawer back under the fading
+backdrop and it would darken on its way out. Asserted in both directions.
+
+⚠️ **Why 924/925's gates were green on a drawer nobody could use — two blind instruments, both named
+in this doc set.** `gate_drawercrm925.mjs` read colours with `getComputedStyle`, which reports an
+element's OWN background and is **blind to anything painted over it**; and rows were driven with
+`.click()`, which **succeeds on a fully obscured element**. Neither can see a sheet on top. The new
+gate therefore: hit-tests with `elementFromPoint`, taps by **coordinate** via the topmost element,
+scrolls with a **real wheel** and asserts `scrollTop` moved, and reads **painted pixels** back off a
+CDP screenshot through a canvas in the page — the only instrument that can see "too dark".
+
+⚠️ **And the negative control caught a weak threshold in the new gate.** "Painted at full strength"
+first used `luminance > 18`, and the **veiled** drawer measures 19.2 — so it PASSED on the broken
+build. A threshold that does not separate the two cases it exists to distinguish is no better than no
+check. Recalibrated to 40, which sits clear of both measured states (19.2 veiled / 68.5 fixed).
+
+Gate `gate_drawer929.mjs`: **14 assertions GREEN** — every visible row is its own hit target, a
+coordinate tap reaches the row, a wheel scrolls the panel, painted luminance is full strength and
+clearly brighter than the dimmed page beside it, the backdrop still shows and still blocks both the
+outside tap and the bottom nav, and the lift is held through the slide-out then dropped back to 90.
+Negative control vs v928: **6 red, no crash.** 926/927/928 gates all re-run green — no regression.
+`check_build` green (928 → 929). No SQL.
