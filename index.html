@@ -977,6 +977,11 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .ldbox{border:1px solid var(--line);border-radius:10px;background:#fcfaf9;padding:12px 14px;margin:0 0 12px;}
 .ldhead{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:var(--red-dk);border-bottom:2px solid var(--red);
   padding-bottom:4px;margin-bottom:8px;}
+/* 932: note under Assign to. Cream ground, so dark ink — see the comment in
+   the patch. 8.03:1 body, 6.55:1 on the amber the bucket chip uses. */
+.ldnote{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;line-height:1.55;
+  color:#5c4a42;}
+.ldnote b{color:#7d5200;}
 .ldreq{float:right;font:600 11px 'Segoe UI',Arial,sans-serif;color:#9a8c85;}
 /* 782: progressive disclosure on the New Lead form. Mailing/Billing are NOT in
    this set on purpose — cr-lac-script already discloses that pair with its own
@@ -3557,7 +3562,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 931 &#8212; Leads &amp; Jobs now has an Unassigned bucket: an amber chip at the top of Assigned To collecting every lead nobody has been given, so none of them sit unnoticed. Assigned To and the Representative sort were showing who CREATED a lead rather than who it is assigned to — both now read the real assignment</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 932 &#8212; New Lead can now be left Unassigned. The Assign to list only ever offered people and defaulted to whoever was typing, so a call the office took was silently assigned to them; it now starts on Unassigned, so an intake call lands in the Unassigned bucket for someone to pick up</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7973,6 +7978,13 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <div class="ldhead">Assign Lead</div>
         <label>Assign to
           <select id="ldAssignSel"></select></label>
+        <!-- 932: a correct state with no explanation is its own defect. Leaving
+             this alone is the right answer for a call taken at the office, and
+             the note says where the lead then shows up so nobody assumes it
+             fell down a hole. -->
+        <div class="ldnote" id="ldAssignNote">Leave this as <b>Unassigned</b> for a call
+          you have taken but not handed to anyone &#8212; it collects in the
+          <b>Unassigned</b> bucket on Leads &amp; Jobs.</div>
       </div>
 
       <div class="ldbox ldmore">
@@ -14976,11 +14988,24 @@ function openLeadForm(){
   var assignBox = document.getElementById('ldAssignBox');
   if(isAdminUser()){
     assignBox.style.display = 'block';
-    var mySel = TEAM && currentUser ? currentUser.email : '';
-    document.getElementById('ldAssignSel').innerHTML = TEAM_ROSTER.map(function(m){
-      return '<option value="' + esc(m.email) + '"' + (m.email === mySel ? ' selected' : '') + '>' +
-        esc(m.name) + '</option>';
-    }).join('');
+    /* ── 932 · a call the office takes belongs to nobody yet ────────────────
+       Theo: "It would go unassigned leads if my admin takes a call."
+       It could not. Every option in this list was a PERSON, and the list
+       defaulted to whoever was filling the form in — so a call Joan took was
+       silently assigned to Joan, and 931's Unassigned bucket could never fill
+       from the front door. It had no way to say "nobody yet".
+
+       Unassigned is now the DEFAULT for an admin, and that direction is
+       deliberate: the two mistakes are not symmetrical. Forgetting to pick a
+       rep now drops the lead into a visible bucket somebody works; before, it
+       silently parked on the person doing intake, where nothing marks it as
+       needing an owner. An admin who does want it on themselves is one tap
+       away. Reps are unchanged — a rep who creates a lead owns it. */
+    document.getElementById('ldAssignSel').innerHTML =
+      '<option value="" selected>\u2014 Unassigned \u2014</option>' +
+      TEAM_ROSTER.map(function(m){
+        return '<option value="' + esc(m.email) + '">' + esc(m.name) + '</option>';
+      }).join('');
   }else{
     assignBox.style.display = 'none';
   }
@@ -15253,7 +15278,14 @@ document.getElementById('ldSave').addEventListener('click', async function(){
   var addr = street + (suite ? ', ' + suite : '') + ', ' + city + ', ' + state + ' ' + zip;
   var assigned;
   if(isAdminUser()){
-    assigned = [document.getElementById('ldAssignSel').value];
+    /* ⚠ [] and never ['']. project_assigned_rep() is
+         (checklist::jsonb #>> '{lead,assigned,0}')
+       so an empty STRING in slot 0 makes that function return '' rather than
+       NULL — the row would read as assigned to nobody-in-particular in SQL,
+       and every `project_assigned_rep(checklist) is null` count (including the
+       one behind this bucket) would silently miss it. */
+    var _asg = document.getElementById('ldAssignSel').value;
+    assigned = _asg ? [_asg] : [];
   }else{
     assigned = TEAM && currentUser ? [currentUser.email] : [];
   }
@@ -40524,6 +40556,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:932, d:'2026-08-19', t:'A new lead can be left Unassigned',
+s:'Build 931 added the Unassigned bucket, but nothing could actually put a lead in it. On the New Lead form the Assign to list offered nothing but people, and it started on whoever was filling the form in \u2014 so a call taken at the office was quietly assigned to whoever answered the phone. The list now starts with Unassigned, and that is the default for admins. Take a call, enter the lead, leave it alone, and it lands in the Unassigned bucket on Leads \u0026 Jobs for someone to pick up; pick a name instead and it goes straight to them, exactly as before. A note on the form says so. Reps are unchanged \u2014 a lead a rep creates is theirs.' },
 { b:931, d:'2026-08-19', t:'An Unassigned bucket on Leads \u0026 Jobs',
 s:'Leads \u0026 Jobs now collects every lead nobody has been given into an Unassigned bucket \u2014 an amber chip that sits FIRST in the Assigned To row, with a count, so a lead that came in and was never handed to anyone cannot sit there unnoticed. Tap it to see just those, tap a lead to open it and assign it. Sorting by Representative also puts the unassigned ones at the top. While building this I found that Assigned To and the Representative sort were both showing who CREATED a lead rather than who it is assigned to \u2014 usually the same person, but not always, and never the same for an imported lead. Both now read the real assignment, the same one the app uses to decide who can see a job. Note that a rep only sees jobs assigned to them or that they created, so the bucket is mainly a tool for the office.' },
 { b:930, d:'2026-08-19', t:'The phone menu opens collapsed, and every section folds',

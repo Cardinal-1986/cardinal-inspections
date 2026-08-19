@@ -19579,3 +19579,52 @@ chip is first with the right count and its own style, tapping it shows exactly t
 also says Unassigned, sorting by Representative floats them, and contrast clears 4.5:1 in **both**
 themes measured in the browser. Negative control vs v930: **18 red, no crash.** `check_build` green
 (930 → 931). No SQL.
+
+## Build 932 — A new lead can be left Unassigned
+Theo, on 931: *"It would go unassigned leads if my admin takes a call."*
+
+⚠️ **It could not.** 931 added the bucket; nothing could put a lead in it from the front door. On the
+New Lead form the admin-only "Assign to" list was built from `TEAM_ROSTER`, so **every option was a
+person**, and it was pre-selected to `currentUser.email` — **a call Joan took was silently assigned to
+Joan**. There was no way to say "nobody yet", and the bucket could only ever hold the 3 legacy rows.
+Confirmed by the negative control, which on v931 shows the select defaulting to **"Joan Hunt"** and
+writing `assigned: ["joan@cardinalrenovations.net"]`.
+
+- **An `— Unassigned —` option, valued `''`, first in the list and the DEFAULT for admins.** The
+  direction is deliberate and the two mistakes are not symmetrical: forgetting to pick a rep now drops
+  the lead into a visible bucket somebody works, where before it parked silently on whoever did the
+  intake and nothing marked it as needing an owner. One tap to assign it instead. **Reps unchanged** —
+  a rep who creates a lead owns it, and the box is not shown to them at all.
+- ⚠️ **`[]` and never `['']`.** `project_assigned_rep()` is
+  `(checklist::jsonb #>> '{lead,assigned,0}')`, so an empty STRING in slot 0 makes it return `''`
+  rather than NULL — RLS still denies, but every `project_assigned_rep(checklist) is null` count,
+  including the one behind this bucket, would silently miss the row. `assigned = _asg ? [_asg] : []`.
+- **A note on the form says where the lead goes** — "a correct state with no explanation is its own
+  defect". ⚠️ `.ldbox` is **cream (`#fcfaf9`) with no dark twin** — the New Lead form is a deliberately
+  light surface, so the ink here is dark-on-light, the reverse of the rest of the app. A reflexive
+  `var(--rbe-mute)` grey would have been ~1.4:1. Measured: `#5c4a42` **8.03:1** body, `#7d5200`
+  **6.55:1** on the emphasis — the same amber the bucket chip uses in light mode, so the form and the
+  bucket speak one colour.
+- `sales_rep` is **not** written on insert (only by the client-page reassign at ~11637 / ~20470), so a
+  row created this way is unassigned by both fields the RLS policy reads. Asserted.
+- The 901 notify is already guarded (`if(__la && __la !== __me && …)`), so an unassigned lead pings
+  nobody. No change needed, verified rather than assumed.
+
+⚠️ **Two gate faults, both mine, both found by running it.** (1) The payload spy watched
+`sb.from('projects').insert` and captured nothing — this form writes through **`pdb.create`**, the
+offline-first chokepoint from the 864–873 arc, so the spy read as "the form did not save". Spy the
+chokepoint, not the transport. (2) "no sales_rep is written" **passed vacuously** while no row had been
+captured at all, because `!undefined` is true; now guarded on `hasRow`. Same family as 930's
+`.every()`-over-an-empty-list.
+
+Gate `gate_newlead932.mjs`: **15 assertions GREEN** driving the real form as an admin — Unassigned is
+offered, is first, and is the default; all 8 people still selectable; the note is present, names the
+bucket, and clears 4.5:1 on the cream ground; the saved payload carries `assigned: []` and **not
+`['']`**; no `sales_rep`; still stage `Lead`; and 931's own resolver reads that row as Unassigned
+rather than "Joan". Negative control vs v931: **7 red, no crash.** `gate_unassigned931.mjs` re-run
+green. `check_build` green (931 → 932). No SQL.
+
+**Still open, and Theo's call:** a rep cannot see an unassigned lead (`projects_select` is
+`is_full_access() OR created_by = me OR assigned_rep = me OR sales_rep = me`), so the bucket is an
+office triage queue — Joan takes the call, somebody in the office hands it on. Letting reps see and
+claim from the bucket is an RLS change and has not been made.
