@@ -19139,3 +19139,22 @@ through `aerialMerge`, so one change covers both. `harness_674` stays green (70 
 `gate_estwo919.mjs`: 18 assertions GREEN, negative-controlled vs v918 (edge rows present + fields
 not persisted). `check_build` green (918 → 919, marker `put('waste', d.waste_pct)`). No SQL —
 `checklist.meas` is JSON, additive keys only.
+
+## Build 920 — Client-area cleanup: Comms sub-line, appointment emoji, white footer
+Screenshot batch (Theo). Three of the five items — the quick, safe ones:
+- **Communications** — removed the grey `.subnote` under the title ("Notes, call logs, and document
+  activity for this client. Tag a teammate with @name."). Theo: "that description really doesn't
+  need to be there." The title carries it.
+- **Appointment Type picker** — stripped the leading emoji from all 8 `<option>` labels (🔍 Inspection
+  → Inspection, etc.). Native `<select>` can't hold a drawn icon, so plain text. `value=` attributes
+  untouched (dispatch reads `kind === 'Material delivery'` etc.).
+- **Footer** — `footer.site` was `background:var(--paper)` (#ffffff, never themed) with dark
+  `--muted` text, so it rendered as a bright white band across the bottom of the dark app on retail
+  mobile (already hidden for Community/Insurance/hub/desktop). Flipped to `background:transparent`
+  + `color:var(--rbe-mute)` / `border:var(--rbe-line2)` so it blends into either theme. Contrast
+  7.55:1 dark, 6.24:1 light.
+Gate `gate_cleanup920.mjs`: 15 assertions GREEN, negative-controlled vs v919 (emoji present, subtitle
+present, footer white). Footer computes `rgba(0,0,0,0)` in Chromium; options render emoji-free with
+values preserved. `check_build` green (919 → 920, marker `<option value="Inspection">Inspection`). No SQL.
+Remaining from the batch: measurements panel is a light-authored island (921), and the Punch Outs
+job-menu count reads "—" while an open punch exists (922).

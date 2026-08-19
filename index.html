@@ -336,8 +336,8 @@ td.status small{display:block;color:var(--muted);font-size:12px;margin-top:3px;w
 }
 
 footer.site{
-  border-top:1px solid var(--line);background:var(--paper);
-  padding:18px 0;font-size:12.5px;color:var(--muted);
+  border-top:1px solid var(--rbe-line2,#2b2b33);background:transparent;
+  padding:18px 0;font-size:12.5px;color:var(--rbe-mute,#9aa0a8);
 }
 @media (max-width:680px){
   .brand h1{font-size:24px;}
@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 919 &#8212; The roofing estimate’s measurement table is slimmed to area and pitch (the per-edge figures repeat in the priced items), and the crew work order now shows step &amp; wall flashing, penetrations and waste from the Roofr import</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 920 &#8212; Cleaned up the client area: dropped the Communications sub-line, removed the emoji from the appointment type picker, and the page footer no longer shows as a white band in dark mode</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4307,14 +4307,14 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <div class="acxsec"><div class="acxbody" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
       <label style="font:700 12px 'Segoe UI',Arial,sans-serif;color:#6b5f58;">Type<br>
         <select id="apKind" class="acxsel">
-          <option value="Inspection">&#128269; Inspection</option>
-          <option value="Client meeting">&#129309; Client meeting</option>
-          <option value="Adjuster appointment">&#128188; Adjuster appointment</option>
-          <option value="Material delivery">&#128666; Material delivery</option>
-          <option value="Job start">&#128296; Job start</option>
-          <option value="Final walk-around">&#9989; Final walk-around</option>
-          <option value="Follow-up">&#9200; Follow-up</option>
-          <option value="Other">&#128197; Other</option>
+          <option value="Inspection">Inspection</option>
+          <option value="Client meeting">Client meeting</option>
+          <option value="Adjuster appointment">Adjuster appointment</option>
+          <option value="Material delivery">Material delivery</option>
+          <option value="Job start">Job start</option>
+          <option value="Final walk-around">Final walk-around</option>
+          <option value="Follow-up">Follow-up</option>
+          <option value="Other">Other</option>
         </select></label>
       <label style="font:700 12px 'Segoe UI',Arial,sans-serif;color:#6b5f58;">Date<br>
         <input type="date" id="apDate" class="acxsel"></label>
@@ -7539,7 +7539,6 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <div class="wrap" style="padding-top:18px;max-width:900px;">
     <button class="btn dark" id="commsBackBtn">&larr; Back</button>
     <h2 class="viewhead" data-cri="chat lg">Communications <span id="commsCli" style="color:#9c1822;"></span></h2>
-    <p class="subnote">Notes, call logs, and document activity for this client. Tag a teammate with @name.</p>
     <div class="chatbox">
       <div class="chatthread" id="chatThread"></div>
       <div id="chatTagRow" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px 0;"></div>
@@ -40439,6 +40438,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:920, d:'2026-08-18', t:'Client-area cleanup: Comms sub-line, appointment emoji, white footer',
+s:'Three small readability fixes on the client area. (1) The Communications page had a grey sub-line under the title (\u201CNotes, call logs, and document activity\u2026\u201D) \u2014 removed, the title says it. (2) The appointment Type picker listed each type with an emoji in front (\uD83D\uDD0D Inspection, \uD83E\uDD1D Client meeting\u2026); the emoji are gone, just the words now. (3) The page footer (\u201CCardinal Roofing \u0026 Renovations \u2014 Client Resources\u2026\u201D) was painted on a white strip that showed as a bright band across the bottom of the dark app; it now blends into the page in both light and dark. Nothing changed about what any of these do.' },
 { b:919, d:'2026-08-18', t:'Estimate measurements slimmed; work order gains the flashing/waste rows',
 s:'Two changes to the roofing paperwork. (1) On the client ESTIMATE, the Roof Measurements table used to list every edge \u2014 ridges, hips, valleys, eaves, rakes, step and wall flashing, penetrations, waste \u2014 right above the priced line items, which already carry those same quantities. It now shows just the total area and the pitch; the line-item quantities still auto-fill from the Roofr PDF exactly as before, and the Upload Roofr PDF button still works. (2) On the crew WORK ORDER, the Measurements section already pulled squares, pitch, ridge, hip, valley, eave and rake from the same Roofr (or Hover) import \u2014 it now also shows step flashing, wall/apron flashing, penetrations and the waste factor when the report provides them, so the crew sees the full set. Nothing about how measurements are stored changed.' },
 { b:918, d:'2026-08-18', t:'Punch & Repairs: a back button in the header',
