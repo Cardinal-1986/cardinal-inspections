@@ -3562,7 +3562,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 935 &#8212; The Add an item sheet no longer hides its Add it and Cancel buttons behind the bottom bar. In the installed app the bar sits on top of that sheet, so the buttons were being covered and were hard to tap; the sheet now leaves room for it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 936 &#8212; Adding a punch out from a client page no longer shows a red error after it has already saved &#8212; that false failure is why a couple of items got added twice. The time box on that sheet is also full width now, so it stops cutting off the PM</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40556,6 +40556,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:936, d:'2026-08-20', t:'Adding a punch out from a client page stops reporting a false failure',
+s:'Adding a punch out, ticket or callback from a client\u2019s page ended with a red \u201CCould not add\u201D message \u2014 but the item had ALREADY been saved. The message came from drawing the Production calendar afterwards, which had never been set up because you came in from the client page rather than from the Production board. So the save worked and the app said it had not, which is why one or two items got entered twice. Fixed at the one place every screen draws through, so it cannot come back on another route. Also on that sheet: the time box was sharing half a row with the date and was too narrow to show the PM, so it now takes the full width on a phone.' },
 { b:935, d:'2026-08-19', t:'The Add an item sheet stops hiding its own buttons',
 s:'Adding a punch out, ticket or callback put the Add it and Cancel buttons right under the bottom bar \u2014 and in the installed app that bar is drawn ON TOP of the sheet, so the buttons were partly covered and took several attempts to hit. The sheet now leaves room for the bar and the phone\u2019s own home indicator, so both buttons sit clear of it. Measured: the Add it button was overlapping the bar by 40 of its 44 pixels. Nothing else about the sheet changed, and it still sits flush to the bottom of the screen.' },
 { b:934, d:'2026-08-19', t:'Job numbers stop colliding, and the home list names the right rep',
@@ -49389,6 +49391,25 @@ body.standalone #cr-pb-modal .sheet{
 #cr-pb-modal textarea{ min-height:78px; resize:vertical; }
 #cr-pb-modal .row{ display:flex; gap:10px; }
 #cr-pb-modal .row > div{ flex:1; min-width:0; }
+/* 936: Theo, on the same screenshot — "the time flows over". The date and time
+   shared HALF a row: on a 430px phone that is ~194px for the pair, so the time
+   box came out about 81px and "7:19 PM" was clipped to "7:19 P". A 12-hour time
+   with a meridiem needs the room, and it was the one control in the sheet that
+   could not show its own value.
+   Below 560px they stack instead of splitting a half-row, so each gets the full
+   width of that cell; above it they stay side by side, where the pair has room.
+   Deliberately UNSCOPED and prefixed: the punch-out card's metaHtml() carries
+   the identical pair, and one class used twice beats the same fix written out
+   twice and drifting. */
+.cr-when2{ display:flex; gap:8px; }
+.cr-when2 > input{ min-width:0; }
+.cr-when2 > input[type="date"]{ flex:1; }
+.cr-when2 > input[type="time"]{ flex:0 0 42%; }
+@media (max-width:560px){
+  .cr-when2{ display:block; }
+  .cr-when2 > input{ width:100%; }
+  .cr-when2 > input[type="time"]{ flex:none; }
+}
 #cr-pb-modal .btns{ display:flex; gap:10px; margin-top:4px; }
 #cr-pb-modal button{
   flex:1; padding:13px; border-radius:11px; font:700 12px ui-monospace,Menlo,monospace;
@@ -49706,6 +49727,28 @@ function eventsFor(d){
 /* ------------------------------------------------------------------ render */
 function render(){
   ensure();
+  /* ── 936 · "Could not add: null is not an object (evaluating 'm.getFullYear')"
+     ────────────────────────────────────────────────────────────────────────
+     calMonth and selDay were set in ONE place — open(), the board's own opener.
+     But addFor(projectId) is a second, equally supported entrance: cr-pp-script
+     calls it from the client profile's Punch Outs card, and it opens the MODAL
+     ONLY, never the board. So on that path both were still null, and the render
+     at the end of saveAdd walked into homeMonthHtml()'s
+         var m = calMonth, first = new Date(m.getFullYear(), ...)
+     and threw. (calHtml() at the next pane and head()'s month label are the
+     same shape — three sites, one missing precondition.)
+
+     ⚠ THE ITEM HAD ALREADY SAVED. The insert, the reload, the audit line and
+     closeAdd() all run BEFORE this render, so the punch was in the database and
+     the catch still told Theo "Could not add". He re-added it, which is how
+     Kathy May ended up with a "Chinney" and a "Chimney" forty seconds apart.
+     A false failure on a write that succeeded is worse than a visible one.
+
+     Fixed HERE rather than in saveAdd, because render() is the single
+     chokepoint every pane and every entrance passes through — guarding the
+     caller would have left calHtml() and head() to be found later. */
+  if(!selDay)   selDay   = today();
+  if(!calMonth) calMonth = monthOf(selDay);
   var html = pane === 'cal' ? calHtml() : pane === 'list' ? listPaneHtml() : homeHtml();
   /* 606: an unguarded innerHTML write inside a module whose own observer
      watches document.body repainted 54x/sec and destroyed the button under
@@ -50200,9 +50243,9 @@ function openAdd(presetProjectId){
     '</div>' +
     '<div class="row">' +
     '<div><label>Assign to</label><select data-f="assigned">' + who + '</select></div>' +
-    '<div><label>Schedule for</label><div style="display:flex;gap:8px">' +
-      '<input type="date" data-f="when" style="flex:1;min-width:0">' +
-      '<input type="time" data-f="whentime" style="flex:0 0 42%;min-width:0" aria-label="Time (optional)">' +
+    '<div><label>Schedule for</label><div class="cr-when2">' +
+      '<input type="date" data-f="when">' +
+      '<input type="time" data-f="whentime" aria-label="Time (optional)">' +
     '</div></div>' +
     '</div>' +
     '<label>Detail</label>' +
@@ -50954,9 +50997,9 @@ function metaHtml(){
   var when = it.scheduled_at ? String(it.scheduled_at).slice(0, 10) : '';
   var whenT = it.scheduled_time ? String(it.scheduled_time).slice(0, 5) : '';
   var sch = mgr
-    ? '<div style="display:flex;gap:6px">' +
-        '<input type="date" data-f="when" value="' + esc(when) + '" style="flex:1;min-width:0">' +
-        '<input type="time" data-f="whentime" value="' + esc(whenT) + '" style="flex:0 0 42%;min-width:0" aria-label="Time (optional)">' +
+    ? '<div class="cr-when2">' +
+        '<input type="date" data-f="when" value="' + esc(when) + '">' +
+        '<input type="time" data-f="whentime" value="' + esc(whenT) + '" aria-label="Time (optional)">' +
       '</div>'
     : '<div class="w">' + esc(when ? fmtSchedule(it.scheduled_at, it.scheduled_time) : 'not scheduled') + '</div>';
   return '<div class="pkmeta">' +

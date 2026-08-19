@@ -19788,3 +19788,59 @@ both buttons. `check_build` green (934 → 935). No SQL.
 modals (`#leadFormModal`, `#ckModal`, `#gcModal`, `#leadModal`, `#apptModal`, `#cr-abc .sheet`) have
 **not** been measured and may carry the same fault. A sweep is one build; it was not done here because
 one screen was reported and widening it silently is how a bug fix becomes a restyle.
+
+## Build 936 — A false failure on a punch that had already saved, and the time field
+Theo, two screenshots: *"Error in screen also the time flows over."*
+The error: **`Could not add: null is not an object (evaluating 'm.getFullYear')`**.
+
+### 1. The save worked and the app said it had not
+`calMonth` and `selDay` are set in **one** place — `open()`, the board's own opener. But
+`addFor(projectId)` is a **second, equally supported entrance**: `cr-pp-script` calls it from the
+client profile's Punch Outs card, and it opens the **modal only**, never the board. On that route both
+were still `null`, so the `render()` at the end of `saveAdd` walked into
+
+```js
+var m = calMonth, first = new Date(m.getFullYear(), m.getMonth(), 1);   // homeMonthHtml()
+```
+
+and threw. `calHtml()` and `head()`'s month label are the same shape — **three sites, one missing
+precondition**. Theo was on Kathy May's page, which is exactly that route.
+
+⚠️ **THE ITEM HAD ALREADY SAVED.** The insert, the reload, the audit line and `closeAdd()` all run
+**before** that render; only the redraw threw, and the `catch` reported *"Could not add"*. **Confirmed
+in the database, not inferred** — all six punches from that hour are present, including a
+**"Chinney"** at 23:19:06 and a **"Chimney"** at 23:19:46 on the same job, forty seconds apart: the
+false failure and the retry. *A write that succeeded and reports failure is worse than one that
+fails loudly, because the user does it again.*
+
+**Fixed in `render()`**, not in `saveAdd`, because render is the single chokepoint every pane and
+every entrance passes through — guarding the caller would have left `calHtml()` and `head()` to be
+found later by someone else.
+
+### 2. "the time flows over"
+The date and time shared **half a row**: on a 430px phone that is ~194px for the pair, so the time box
+came out **81px** and `7:19 PM` clipped to `7:19 P`. It was the one control in the sheet that could not
+show its own value. They now stack below 560px — measured after: **193px**, unclipped.
+
+⚠️ **The same pair exists TWICE**, and a file-wide assertion is what surfaced it: the punch-out card's
+`metaHtml()` (`cr-pk-script`) carries an identical `flex:0 0 42%` time input. Fixing one and leaving
+the other is the partial pass this project keeps paying for — *thirteen of fourteen right reads as
+done*. One shared, prefixed class `.cr-when2`, defined once, used once in each sheet.
+
+⚠️ **Two assertion faults of my own, both about WHERE rather than what.** A file-wide
+`style="flex:1;min-width:0"` count expected 0 and found 3 — two are community spans and none of this
+build's business, but the third was the second date/time pair, so the over-broad check was **useful
+here even though it was wrong**. Then the corrected version sliced `cr-pb-script` alone and expected
+both `.cr-when2` sites in it; the card's is in **`cr-pk-script`**, so it found 1 of 2 and read as a
+missed edit. Slice the blocks the code is actually in.
+
+Gate `gate_addfor936.mjs`: **10 assertions GREEN** — the board is confirmed NOT open (the client-page
+route, not the board), the sheet opens, saving raises **no alert at all**, the sheet closes, no page
+error escapes, re-opening does not throw, and the time box is **193px**, stacked under the date, and
+unclipped. Negative control vs v935: **3 red**, and it reproduces Theo's message verbatim —
+`Could not add: Cannot read properties of null (reading 'getFullYear')` — with the time box measuring
+exactly **81px**. `gate_sheet935.mjs` re-run **green**: the taller stacked sheet still keeps both
+buttons clear of the installed bottom bar. `check_build` green (935 → 936). No SQL.
+
+**Left for Theo:** the stray **"Chinney"** punch on Kathy May (23:19:06, no date) is the orphan from
+the false failure. Not deleted — his data, his call.
