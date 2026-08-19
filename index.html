@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 921 &#8212; The Measurements tab’s cards were white slabs on the dark profile — they’re now themed to match the rest of the client page, in both light and dark</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 922 &#8212; The Punch Outs tile in the job menu now shows the open count (it was reading a dash even when the job had an open punch out)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11403,7 +11403,7 @@ function renderAcxOverview(){
          the exact trap 604 was about. 607 also removed the overview card, so
          punch had no reachable entry point at all. data-jm="punch" falls through
          the router's else branch to showTab('punch'), which 607 already wired. */
-      jt(dbIc('tasks'), 'Punch Outs', punchOpenCount(pr), 'punch') +
+      jt(dbIc('tasks'), 'Punch Outs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
       /* 652: the tab always existed; the menu is where fingers go.
          'contracts' rides the router's else-branch to showTab, like punch. */
       jt(dbIc('docs'), 'Contracts', '', 'contracts') +
@@ -40438,6 +40438,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:922, d:'2026-08-18', t:'Job-menu Punch Outs tile shows its open count',
+s:'On the client\u2019s Job Menu, the Punch Outs tile showed a dash even when the job had an open punch out on file. The count is loaded a moment after the menu is drawn, and the tile wasn\u2019t picking it up \u2014 it now shows \u201C\u2026\u201D until the punch list loads, then fills in the number of open items (the same way Photos, Measurements and Estimates already do). Tapping it still opens the Punch Outs page as before.' },
 { b:921, d:'2026-08-18', t:'Measurements tab themed to match the dark client page',
 s:'The Measurements tab (Measurement Values, Satellite estimate, Roofr, Hover, Field) drew its cards on a white background \u2014 bright slabs down the near-black client page. They now use the same dark card treatment as the rest of the profile (the Schedule Board pattern), with the text recoloured to stay readable, and they flip to light cards in light mode automatically. Only the look changed \u2014 the buttons, the report lists and the value entry all work exactly as before.' },
 { b:920, d:'2026-08-18', t:'Client-area cleanup: Comms sub-line, appointment emoji, white footer',
@@ -51513,7 +51515,19 @@ rows = [];
 rows = r.data || [];
 }
 loadedFor = pid;
+syncMenuCount();
 }catch(e){ console.warn('[punch] load failed:', e); rows = []; }
+}
+/* 922: the job-menu "Punch Outs" tile renders its count synchronously, but the
+   rows load on the observer's schedule AFTER the menu is drawn, so the tile read
+   "—" even with an open item on file. Photos/Measurements/Estimates solve this
+   with a "…" placeholder filled late; this is that fill for punch. */
+function syncMenuCount(){
+var el = document.getElementById('dbPunchN');
+if(!el || loadedFor === null) return;
+var open = rows.filter(function(i){ return i.status !== 'done'; }).length;
+el.textContent = open;
+el.classList.toggle('zero', open === 0);
 }
 function itemHtml(i){
 return '<div class="cr-pp-item' + (i.status === 'done' ? ' done' : '') +
@@ -51913,7 +51927,7 @@ lastHtml = '';
 loadedFor = null;
 return;
 }
-if(loadedFor === pr.id){ render(); return; }
+if(loadedFor === pr.id){ render(); syncMenuCount(); return; }
 if(busy) return;
 busy = true;
 histOpen = false;

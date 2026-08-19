@@ -19173,3 +19173,15 @@ Rendered in Chromium BOTH themes: dark card gradient 46/51/59→38/42/49, header
 td 9.83:1; light card 255→250, header 17.34:1, subnote 5.11:1, td 17.34:1. Negative-controlled vs v920
 (RED: white card, header 1.20:1 dark — the exact bug). `check_build` green (920 → 921). No SQL.
 Theo's eyes are the final visual gate.
+
+## Build 922 — Job-menu Punch Outs tile shows its open count
+Screenshot batch item: "There is a punch out but it doesn't show as having any." The Job Menu's
+Punch Outs tile rendered `punchOpenCount(pr)` synchronously with NO id, so when the punch rows loaded
+on `CardinalPunchProfile`'s observer schedule AFTER the menu was drawn, the tile stayed at "—"
+(openCountFor returns '' until `loadedFor === pid`). Photos/Measurements/Estimates already solve this
+with a "…" placeholder + an id filled late. Applied the same: tile gets `id="dbPunchN"` and shows "…"
+until loaded; `syncMenuCount()` (new helper in the punch module) sets it after `load()` and on every
+`check()` re-render once `loadedFor` matches — `el.textContent = openCount; el.classList.toggle('zero', open===0)`,
+the exact `dbMeasN` pattern. Gate `gate_punch922.mjs`: opens a seeded project with 1 open + 1 done punch,
+tile fills to "1", not dimmed; negative-controlled vs v921 (no id, no helper). `check_build` green
+(921 → 922). No SQL.
