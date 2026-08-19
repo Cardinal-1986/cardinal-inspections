@@ -2169,6 +2169,32 @@ body.restoring #restoreVeil{display:flex;}
   font:700 12.5px 'Segoe UI',Arial,sans-serif;white-space:nowrap;}
 .ljchip i{width:8px;height:8px;border-radius:50%;display:block;flex:0 0 auto;}
 .ljchip b{font-weight:800;opacity:.75;}
+/* 931: the unassigned bucket reads as a job to do, not as a person. Amber is
+   this app's settled 'needs attention' (punch urgency, wind damage on Storm
+   Data), and it is NOT the red that means an objection or a lost lead. Ink
+   computed against the ground it sits on, both themes. */
+.ljchip-unassigned{border-color:#c8862b !important;color:#e0973a !important;
+  background:color-mix(in srgb,#c8862b 12%,transparent) !important;font-weight:800;}
+.ljchip-unassigned.on{background:#c8862b !important;color:#15171b !important;border-color:#c8862b !important;}
+.ljchip-unassigned b{opacity:.9;}
+/* ⚠ THE LIGHT TWIN, and it is not optional. #e0973a is 7.22:1 on the dark chip
+   and 2.43:1 on the light one — the single most repeated defect on this
+   project, a dark fix that breaks light.
+
+   ⚠ AND THE HAND ARITHMETIC WAS WRONG, which is the more useful half. #96610a
+   is 5.24:1 against #ffffff on paper, so it looked fine — but the chip paints
+   its OWN 10% wash, so the real ground is a pale amber, and Chromium measured
+   4.29:1. Under the floor. "background-color is not the background": composite
+   the element's own wash over the first opaque ancestor and score against THAT.
+   #7d5200 on an 8% wash measures 5.91:1, checked in the browser, not by hand.
+
+   Same amber deepened rather than a switch to another hue, so the two themes
+   read as one component (the 557 obsidian-tile rule). Base rule dark, twin
+   scoped under rb-light — exactly the shape .ljchip above already uses. */
+:root[data-theme="rb-light"] .ljchip-unassigned{border-color:#8f5f12 !important;color:#7d5200 !important;
+  background:color-mix(in srgb,#c8862b 8%,transparent) !important;}
+:root[data-theme="rb-light"] .ljchip-unassigned.on{background:#7d5200 !important;color:#ffffff !important;
+  border-color:#7d5200 !important;}
 .ljchip.on{background:#233043;border-color:#4d7fb8;color:#ffffff;}
 .ljchip.on b{opacity:.95;}
 :root[data-theme="rb-light"] .ljchip{background:#ffffff;border-color:#d5d8dd;color:#3c4652;}
@@ -3531,7 +3557,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 930 &#8212; The phone menu now opens as a short list of headings — Daily, Sell, CRMs, Resources, Admin, Account — all closed. Tap one to open it, tap it again to close, and each carries a count of what is inside. What you leave open is remembered, and it matches the desktop menu</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 931 &#8212; Leads &amp; Jobs now has an Unassigned bucket: an amber chip at the top of Assigned To collecting every lead nobody has been given, so none of them sit unnoticed. Assigned To and the Representative sort were showing who CREATED a lead rather than who it is assigned to — both now read the real assignment</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12242,9 +12268,41 @@ var LJ_SORTS = [
   { key:'trade',    label:'Trade' },
   { key:'worktype', label:'Work Type' }
 ];
+/* ── 931 · the unassigned bucket ───────────────────────────────────────────
+   Theo: "Can you create an unassigned leads bucket".
+
+   ⚠ The bucket needed a BUG FIXED first. The 'Assigned To' chip strip and the
+   'Representative' sort both read p.created_by — WHO MADE THE LEAD, not who it
+   is assigned to. Those coincide often enough that nobody noticed, but they are
+   different fields, and an Unassigned bucket computed off created_by would be
+   wrong in exactly the case it exists for: a lead imported or entered by one
+   person and handed to nobody still shows that person's name.
+
+   ljAssignedEmail() mirrors the DATABASE's own answer — project_assigned_rep()
+   reads checklist->lead->assigned[0], and projects_select RLS also honours
+   sales_rep — so what the bucket says matches what the row actually is.
+   Measured before writing: 36 of 39 rows carry BOTH fields and they agree on
+   every one; 3 carry neither and are the bucket.
+
+   ⚠ Deliberately NOT assignedRepOf(), which falls back to created_by. That
+   fallback is right where it is used (someone owns every job) and fatal here:
+   it would report every unassigned lead as assigned to whoever typed it in,
+   and the bucket would always be empty. */
+var LJ_UNASSIGNED = 'Unassigned';
+function ljAssignedEmail(p){
+  try{
+    var L = parseCkAll(p).lead;
+    if(L && L.assigned && L.assigned.length && L.assigned[0]) return String(L.assigned[0]);
+  }catch(_){ }
+  return (p && p.sales_rep) ? String(p.sales_rep) : '';
+}
+function ljRepLabel(p){
+  var e = ljAssignedEmail(p);
+  return e ? rptRepName(e) : LJ_UNASSIGNED;
+}
 var LJ_GROUPS = [
   { key:'stage',    label:'Milestone',    get:function(p){ return normStage(p.stage); } },
-  { key:'rep',      label:'Assigned To',  get:function(p){ return rptRepName(p.created_by || ''); } },
+  { key:'rep',      label:'Assigned To',  get:ljRepLabel },
   { key:'priority', label:'Job Priority', get:function(p){ return parseCkAll(p).priority || 'Normal'; } },
   { key:'category', label:'Job Category', get:function(p){ return parseCkAll(p).job_category || ''; } },
   { key:'worktype', label:'Work Type',    get:function(p){ return parseCkAll(p).work_type || ''; } },
@@ -12318,7 +12376,13 @@ function ljCmp(a, b){
   else if(s === 'touched'){ r = alpha(b.updated_at || b.created_at, a.updated_at || a.created_at); }
   else if(s === 'source'){ r = alpha(ca.lead_source, cb.lead_source); }
   else if(s === 'stage'){ r = STAGES.indexOf(normStage(a.stage)) - STAGES.indexOf(normStage(b.stage)); }
-  else if(s === 'rep'){ r = alpha(rptRepName(a.created_by||''), rptRepName(b.created_by||'')); }
+  else if(s === 'rep'){
+    /* 931: same resolver as the group, so the sort and the chips cannot
+       disagree — and Unassigned sorts FIRST, because it is a to-do list. */
+    var ra = ljRepLabel(a), rb = ljRepLabel(b);
+    if(ra !== rb && (ra === LJ_UNASSIGNED || rb === LJ_UNASSIGNED)) return ra === LJ_UNASSIGNED ? -1 : 1;
+    r = alpha(ra, rb);
+  }
   else if(s === 'trade'){ r = alpha(ljTrades(a)[0], ljTrades(b)[0]); }
   else if(s === 'worktype'){ r = alpha(ca.work_type, cb.work_type); }
   return r || alpha(a.name, b.name);
@@ -12351,6 +12415,13 @@ function ljGroupKeys(g, counts){
   if(g.key === 'stage') return STAGES.filter(function(s){ return counts[s]; });
   if(g.key === 'priority') return ['Urgent','High','Normal'].filter(function(s){ return counts[s]; });
   keys.sort();
+  /* 931: the bucket leads the Assigned To strip. A lead nobody owns is the
+     one thing on this screen that needs doing, so it must not sort down
+     under the U's where it would be read as just another rep. */
+  if(g.key === 'rep' && counts[LJ_UNASSIGNED]){
+    keys = keys.filter(function(k){ return k !== LJ_UNASSIGNED; });
+    keys.unshift(LJ_UNASSIGNED);
+  }
   return keys;
 }
 function ljPhoneSvg(){
@@ -12382,7 +12453,9 @@ function ljCardHtml(p){
       '<div>' + (ck.po ? '<span class="ljpo">' + esc(String(ck.po)) + ':</span> ' : '') + '<span class="ljnm">' + esc(p.name || 'Unnamed') + '</span></div>' +
       (p.address ? '<div class="ljad">' + esc(p.address) + '</div>' : '') +
       (cat ? '<div class="ljct">' + esc(cat) + '</div>' : '') +
-      '<div class="ljrep">' + esc(rptRepName(p.created_by || '')) + '</div>' +
+      /* 931: the same resolver as the chip, or a card sitting in the
+         Unassigned bucket would print the name of whoever typed it in. */
+      '<div class="ljrep">' + esc(ljRepLabel(p)) + '</div>' +
     '</div>' +
     ((tel || eml) ? '<div class="ljcta">' +
       (tel ? '<a class="ljbtn" href="tel:' + tel + '" title="Call">' + ljPhoneSvg() + '</a>' : '') +
@@ -12619,6 +12692,7 @@ function ljChipStrip(gkey, mountId, wrapId){
       cacheProjects.length + '</b></button>' +
     keys.map(function(k){
       return '<button type="button" class="ljchip' + (set.indexOf(k) !== -1 ? ' on' : '') +
+        (gkey === 'rep' && k === LJ_UNASSIGNED ? ' ljchip-unassigned' : '') +
         '" data-v="' + esc(k) + '">' +
         (dots ? '<i style="background:' + (LJ_SOLID[k] || '#8a93a1') + '"></i>' : '') +
         esc(k) + ' <b>' + counts[k] + '</b></button>';
@@ -40450,6 +40524,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:931, d:'2026-08-19', t:'An Unassigned bucket on Leads \u0026 Jobs',
+s:'Leads \u0026 Jobs now collects every lead nobody has been given into an Unassigned bucket \u2014 an amber chip that sits FIRST in the Assigned To row, with a count, so a lead that came in and was never handed to anyone cannot sit there unnoticed. Tap it to see just those, tap a lead to open it and assign it. Sorting by Representative also puts the unassigned ones at the top. While building this I found that Assigned To and the Representative sort were both showing who CREATED a lead rather than who it is assigned to \u2014 usually the same person, but not always, and never the same for an imported lead. Both now read the real assignment, the same one the app uses to decide who can see a job. Note that a rep only sees jobs assigned to them or that they created, so the bucket is mainly a tool for the office.' },
 { b:930, d:'2026-08-19', t:'The phone menu opens collapsed, and every section folds',
 s:'The slide-out menu was 32 rows long and always fully open, so finding anything meant scrolling. It now opens as six headings \u2014 Daily, Sell, CRMs, Resources, Admin, Account \u2014 all closed, with a count beside each one telling you how many items are inside. Tap a heading to open that section, tap it again to close it. Whatever you leave open is remembered for next time, and it is the same setting the desktop menu uses, so a section you close on your phone is closed on the desktop too. Sign out and the version stay where they are and are never folded away. The desktop menu already worked this way and is unchanged.' },
 { b:929, d:'2026-08-19', t:'The slide-out phone menu works again',
