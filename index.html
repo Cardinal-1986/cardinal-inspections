@@ -3531,7 +3531,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 927 &#8212; New Storm Data screen in the menu: every hail and wind report near the yard from the National Weather Service, grouped by the day it fell, with the towns named, the largest hail size, and a map — so you can see which neighbourhoods got hit and when before you go knock them</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 928 &#8212; The Sales Floor is now a hub: the wall of objection cards is gone and the page is a grid of doors — Objection Coach, a new Door Knocking page, Storm Data, the Pricing Guide, Talk Tracks, Proof, Showcase and the Pop-Up Roof. Nothing was lost: the cards that only lived on that page moved into the Coach’s deck, which now has 33 including three for the door</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40450,6 +40450,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:928, d:'2026-08-19', t:'The Sales Floor becomes a hub of tools',
+s:'The Sales Floor was a wall of objection cards with a few buttons on top. It is now a page of doors. Up top is still today\u2019s objection, then the Objection Coach across the full width \u2014 that is where every objection lives now \u2014 with Practice a drill, Leaderboard and Log a real one under it. Below that, eight tiles: a new Door Knocking page, Storm Data, the Pricing Guide, Talk Tracks, Proof, Showcase, the Pop-Up Roof and the Resource Library. Every tile opens something that already exists; nothing was rebuilt. Door Knocking is new \u2014 six things to do in order when you work a street, the three objections you hear at the door with an answer for each, and the knock itself word for word. Nothing was lost in the move: the cards that used to live only on the Sales Floor are now in the Coach\u2019s deck, which went from 27 to 33 and has an At the Door section it never had before. There was quietly a second copy of the objection list; now there is one.' },
 { b:927, d:'2026-08-19', t:'Storm Data \u2014 which neighbourhoods got hit, and when',
 s:'A new Storm Data screen in the menu. It reads the National Weather Service\u2019s own storm reports for Ohio, Indiana and Kentucky and shows every hail and wind report near the yard: how many, the largest hail that fell, and every storm day listed newest first with the towns named on it. Tap a day to see each report \u2014 the hail size or the gust speed, the town and county, and how far out it is. There is a map you can turn on, with hail in red, wind damage in amber and gusts in steel. Set the search to 25, 60 or 100 miles and to the last 30 days, four months or a year. These are spotter and gauge reports at points, not a paid hail swath \u2014 they tell you which neighbourhoods were hit and when, not which parcels. If the weather service cannot be reached the screen says so plainly instead of showing you an empty list.' },
 { b:926, d:'2026-08-18', t:'Desktop menu collapses, and there is only one of it now',
@@ -48396,6 +48398,64 @@ figureHtml : figureHtml,
 .cr-sf-links button b{flex:1;font:700 13px inherit}
 .cr-sf-links button .go{color:var(--sf-mute,#8b8781);font-size:14px}
 .cr-sf-foot{margin-top:36px;padding-top:16px;border-top:1px solid var(--sf-hair,rgba(255,255,255,.10));font:600 10px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--sf-mute,#8b8781);text-align:center}
+/* ── 928 · the hub ─────────────────────────────────────────────────────────
+   Theo: "the objection cards should not be the main focus of this page.
+   Should really just be a portal to the objections coach. As a sales training
+   page we should have other modules filling that space where the cards are at."
+
+   So the six-tab objection wall is gone from this page and the space is a grid
+   of module tiles, each one a door to something that already exists. The cards
+   themselves were not deleted — they live in the `objections` table the Coach
+   already reads, and sales_floor_objections_928.sql moved the six that were
+   only ever here (a whole "At the Door" category the deck never had, plus
+   three near-misses) into it. One deck, not two.
+
+   Colours stay this screen's own rule — red is the objection, navy is your
+   answer — so tiles are navy-accented and nothing decorative takes the red. */
+.cr-sf-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:6px 0 4px}
+.cr-sf-tile{display:flex;align-items:flex-start;gap:11px;text-align:left;cursor:pointer;
+  background:var(--sf-card,#151517);border:1px solid var(--sf-hair,rgba(255,255,255,.10));
+  border-radius:11px;padding:15px 14px;font-family:inherit;color:var(--sf-ink,#f0ede7);
+  transition:border-color .15s,background .15s,transform .15s}
+.cr-sf-tile:hover{border-color:#4A7FC1;background:var(--sf-card2,#191a1d)}
+@media (prefers-reduced-motion:no-preference){.cr-sf-tile:active{transform:scale(.985)}}
+.cr-sf-tile .i{flex:0 0 auto;width:20px;height:20px;color:#8FB8E6;margin-top:1px}
+.cr-sf-tile .i svg{width:20px;height:20px;display:block}
+.cr-sf-tile .x{flex:1;min-width:0}
+.cr-sf-tile .x b{display:block;font:700 13.5px inherit;line-height:1.25}
+.cr-sf-tile .x small{display:block;font-size:11.5px;margin-top:3px;color:var(--sf-mute,#8b8781);line-height:1.45}
+/* The hero is the Coach — it is the answer to "should really just be a portal
+   to the objections coach", so it gets the whole row and the navy ground. */
+.cr-sf-tile.hero{grid-column:1 / -1;background:#1F3A6E;border-color:#2C5FA8;color:#eaf1fb}
+.cr-sf-tile.hero:hover{background:#254680;border-color:#4A7FC1}
+.cr-sf-tile.hero .i{color:#eaf1fb}
+.cr-sf-tile.hero .x small{color:rgba(234,241,251,.80)}
+.cr-sf-tile .go{flex:0 0 auto;color:var(--sf-mute,#8b8781);font-size:15px;line-height:1;margin-top:2px}
+.cr-sf-tile.hero .go{color:rgba(234,241,251,.7)}
+/* A compact row of the Coach's other three doors, under the hero rather than
+   as three more tiles — they are modes of one destination, not destinations. */
+.cr-sf-sub{display:flex;gap:8px;flex-wrap:wrap;margin:-2px 0 2px}
+.cr-sf-sub button{flex:1 1 auto;min-width:104px;cursor:pointer;font-family:inherit;
+  background:transparent;border:1px solid var(--sf-hair4,rgba(255,255,255,.18));border-radius:9px;
+  padding:9px 11px;color:var(--sf-mute2,#a5a19a);font:700 11.5px inherit;
+  display:flex;align-items:center;gap:7px;justify-content:center}
+.cr-sf-sub button:hover{border-color:#4A7FC1;color:var(--sf-ink,#f0ede7)}
+.cr-sf-sub button svg{width:14px;height:14px;flex:none}
+/* ── the sub-panes (Door Knocking, Talk Tracks, Proof) ─────────────────────
+   Shown inside #cr-sf rather than as new full-screen views: they are pages OF
+   the Sales Floor, and a fourth, fifth and sixth entry in hideAllViews() for
+   three read-only text panes would be three more things to keep registered. */
+.cr-sf-pane{margin-top:2px}
+.cr-sf-pane .lede{font-size:13.5px;line-height:1.6;color:var(--sf-mute2,#a5a19a);margin:0 0 18px}
+.cr-sf-dk{display:flex;flex-direction:column;gap:9px;margin:0 0 8px}
+.cr-sf-dk .step{display:flex;gap:12px;align-items:flex-start;background:var(--sf-card,#151517);
+  border:1px solid var(--sf-hair,rgba(255,255,255,.10));border-radius:11px;padding:14px 15px}
+.cr-sf-dk .n{flex:0 0 auto;width:23px;height:23px;border-radius:50%;background:#1F3A6E;color:#eaf1fb;
+  font:800 11px ui-monospace,'SF Mono',Menlo,monospace;display:flex;align-items:center;justify-content:center}
+.cr-sf-dk .t{flex:1;min-width:0}
+.cr-sf-dk .t b{display:block;font:700 13.5px inherit;margin-bottom:4px}
+.cr-sf-dk .t p{margin:0;font-size:13px;line-height:1.6;color:var(--sf-mute2,#a5a19a)}
+.cr-sf-loading{padding:22px 2px;font-size:13px;color:var(--sf-mute,#8b8781)}
 @media (prefers-reduced-motion:no-preference){#cr-sf.open .cr-sf-today,#cr-sf.open .cr-sf-coach{animation:crSfIn .4s cubic-bezier(.22,.9,.3,1) backwards}#cr-sf.open .cr-sf-coach{animation-delay:.07s}@keyframes crSfIn{from{opacity:0;transform:translateY(8px)}to{opacity:1}}}
 
 /* 693: the light twin. Same geometry, same semantics — only the neutral
@@ -48461,15 +48521,8 @@ you:'That\u2019s fine. Can I ask \u2014 if you woke up tomorrow feeling good abo
 why:'Surfaces the actual hesitation, which is almost never sleep.' },
 ],
 };
-var TABS = [
-{ id:'door',  label:'At the door' },
-{ id:'table', label:'At the table' },
-{ id:'claim', label:'Insurance' },
-{ id:'close', label:'Closing' },
-{ id:'talk',  label:'Talk tracks' },
-{ id:'proof', label:'Proof' },
-];
-var activeTab = 'door';
+/* 928: the six-tab objection strip is gone — see the hub banner in
+   cr-sf-styles. TABS and activeTab went with it. */
 function esc(s){
 return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
 return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
@@ -48486,7 +48539,9 @@ OBJECTIONS[k].forEach(function(o){ out.push(o); });
 return out;
 }
 function todaysObjection(){
-var all = allObjections();
+/* 928: prefers the DB deck (33 cards) and falls back to this file's 13 only
+   while the read is in flight or if it failed. Same rotation either way. */
+var all = (deck && deck.length) ? deck : allObjections();
 return all[dayOfYear(new Date()) % all.length];
 }
 function talkTracks(){
@@ -48548,17 +48603,144 @@ return '' +
 '<p>Bring it up yourself. Saying it first is worth more than the three days cost you.</p>' +
 '</div>';
 }
-function renderTab(){
-if(activeTab === 'talk')  return talkTracks();
-if(activeTab === 'proof') return proof();
-var list = OBJECTIONS[activeTab] || [];
-return list.map(function(o){
-return '<div class="cr-sf-cr">' +
-'<span class="them">\u201C' + esc(o.them) + '\u201D</span>' +
-'<span class="you">' + esc(o.you) + '</span>' +
-'<span class="why"><b>Why:</b> ' + esc(o.why) + '</span>' +
-'</div>';
-}).join('');
+/* ── 928 · the hub ─────────────────────────────────────────────────────────
+   `view` is which page of the Sales Floor is showing: the hub, or one of the
+   three read-only panes. Not a router — three text pages inside one screen. */
+var view = 'hub';
+var DOOR_FALLBACK = [
+{ them:'I already had someone look at it.',
+you:'Good — then you’ve got a second opinion coming for free. What did they tell you they found?',
+why:'Doesn’t fight the other contractor. Gets them talking, and most can’t answer specifically.' },
+{ them:'I’m not interested.',
+you:'Fair enough. I’m only knocking because the wind came through here on the 14th and I’ve pulled shingles off three roofs on this street. Two minutes and I’ll tell you if yours is fine.',
+why:'Gives a reason you’re there that isn’t about selling, and a defined end point.' },
+{ them:'My roof is fine, it doesn’t leak.',
+you:'Most of the ones I condemn don’t leak yet. By the time it’s inside, the deck is already gone. Storm damage shows on the surface a year or two before it shows on the ceiling.',
+why:'Reframes leaking as the last symptom, not the first.' },
+];
+var deck = null;           /* the DB deck, once read. null = not read yet */
+var doorCards = null;      /* the "At the Door" slice of it */
+/* ONE DECK. This reads the SAME `objections` table the Objection Coach reads —
+   928's migration moved the six cards that used to live only in this file into
+   it, including the whole "At the Door" category the deck never had. The
+   hardcoded lists in this module are FALLBACKS for a failed read, not a
+   parallel source: whenever the table answers, the table wins. That is the
+   whole point of the build — there were two decks of the same thing. */
+var loading = false;
+async function loadDeck(){
+  if(loading || deck) return;
+  loading = true;
+  try{
+    var r = await window.supa.from('objections')
+      .select('category,objection,response,pro_tip,sort_order')
+      .eq('enabled', true)
+      .order('sort_order', { ascending:true });
+    if(r.error || !r.data || !r.data.length) throw new Error('empty');
+    deck = r.data.map(function(o){
+      return { cat:o.category, them:o.objection, you:o.response, why:o.pro_tip || '' };
+    });
+    doorCards = deck.filter(function(o){ return o.cat === 'At the Door'; });
+    if(!doorCards.length) doorCards = DOOR_FALLBACK.slice();
+  }catch(_){
+    deck = null;                       /* stays null so a later open retries */
+    doorCards = DOOR_FALLBACK.slice();
+  }
+  loading = false;
+  if(el && el.classList.contains('open')) render();
+}
+var DOOR_STEPS = [
+['Pick the street, not the house','Knock the block the storm actually crossed. Storm Data will tell you which one and on what day — open it before you park.'],
+['Lead with the storm, not the roof','Name the date and the street. You are there because of something that happened, not because you are selling anything.'],
+['Give it an end point','"Ten minutes from the ground." A defined ask is far easier to say yes to than an open one.'],
+['Three findings, then stop','One sounds thin. Five sounds like padding. Show the photos before you say a number.'],
+['Book the next thing before you leave','A time on the calendar beats a card in the door. Even "I’ll text you the manufacturer sheet tonight" is a next thing.'],
+['Log what you heard','Anything that stopped you goes in the Coach. That is how it ends up in the deck for everybody else.'],
+];
+function doorPane(){
+  var cards = doorCards;
+  return '<div class="cr-sf-pane">' +
+    '<div class="cr-sf-rule">How to work a street</div>' +
+    '<p class="lede">Six things, in order. The first one is the difference between a good day and a wasted one.</p>' +
+    '<div class="cr-sf-dk">' + DOOR_STEPS.map(function(s, i){
+      return '<div class="step"><div class="n">' + (i + 1) + '</div><div class="t"><b>' +
+        esc(s[0]) + '</b><p>' + esc(s[1]) + '</p></div></div>';
+    }).join('') + '</div>' +
+    '<div class="cr-sf-rule">What they say at the door</div>' +
+    '<p class="lede">The three you will hear most. Every other objection lives in the Coach.</p>' +
+    (cards === null
+      ? '<div class="cr-sf-loading">Loading…</div>'
+      : cards.map(function(o){
+          return '<div class="cr-sf-cr">' +
+            '<span class="them">“' + esc(o.them) + '”</span>' +
+            '<span class="you">' + esc(o.you) + '</span>' +
+            (o.why ? '<span class="why"><b>Why:</b> ' + esc(o.why) + '</span>' : '') +
+            '</div>';
+        }).join('')) +
+    '<div class="cr-sf-block" style="margin-top:14px">' +
+    '<h4>The knock</h4>' +
+    '<div class="say">"Hi — Nick with Cardinal Roofing, we’re out of Dayton. The wind that came through on the 14th took shingles off three houses on this block. I’m checking the rest of the street. Takes me about ten minutes from the ground — want me to look at yours while I’m here?"</div>' +
+    '<p>Then stop talking. The first person to speak after the ask usually loses.</p>' +
+    '</div></div>';
+}
+var PANES = {
+  door : { title:'Door Knocking', sub:'Working a street', body:doorPane },
+  talk : { title:'Talk Tracks',   sub:'Word for word',    body:function(){
+             return '<div class="cr-sf-pane"><p class="lede">Four moments in the sale, and what to say in each. ' +
+               'Read them until they are yours — a script you are reciting is worse than no script.</p>' +
+               talkTracks() + '</div>'; } },
+  proof: { title:'Proof',         sub:'What backs it up',  body:function(){
+             return '<div class="cr-sf-pane"><p class="lede">The facts you should be able to give without ' +
+               'looking anything up.</p>' + proof() + '</div>'; } },
+};
+function tile(go, icon, title, sub, cls){
+  return '<button class="cr-sf-tile' + (cls ? ' ' + cls : '') + '" data-go="' + go + '" type="button">' +
+    '<span class="i">' + ICO(icon) + '</span>' +
+    '<span class="x"><b>' + title + '</b><small>' + sub + '</small></span>' +
+    '<span class="go">›</span></button>';
+}
+function hubBody(){
+  var t = todaysObjection();
+  return '' +
+  '<div class="cr-sf-today">' +
+    '<div class="k">Today’s objection</div>' +
+    '<div class="q">“' + esc(t.them) + '”</div>' +
+    '<div class="a"><b>' + esc(t.you) + '</b></div>' +
+  '</div>' +
+  '<div class="cr-sf-rule">Training</div>' +
+  '<p class="cr-sf-lede">Everything here is a door to a tool. Nothing lives only on this page.</p>' +
+  '<div class="cr-sf-tiles">' +
+    tile('deck','target','Objection Coach','Every objection, an answer, and a drill that grades you','hero') +
+  '</div>' +
+  '<div class="cr-sf-sub">' +
+    '<button data-go="drill" type="button">' + ICO('bolt') + ' Practice a drill</button>' +
+    '<button data-go="board" type="button">' + ICO('trophy') + ' Leaderboard</button>' +
+    '<button data-go="log" type="button">' + ICO('pencil') + ' Log a real one</button>' +
+  '</div>' +
+  '<div class="cr-sf-tiles" style="margin-top:12px">' +
+    tile('door','houses','Door Knocking','How to work a street, and the three you hear at the door') +
+    tile('storm','bolt','Storm Data','Which neighbourhoods got hit, and when') +
+    tile('pricing','tag','Pricing Guide','Roof, siding, gutters, windows — what everything costs') +
+    tile('talk','chat','Talk Tracks','What to say at the door, off the roof, and at the table') +
+    tile('proof','shield','Proof','Licence, warranty, scope, and their three-day right') +
+    tile('showcase','image','Showcase','Before and after, for the kitchen table') +
+    tile('popup','books','The Pop-Up Roof','A tap-through book of how a roof gets built') +
+    tile('library','page','Resource Library','Code, manufacturer specs, and the AI librarian') +
+  '</div>' +
+  '<div class="cr-sf-rule">Reference</div>' +
+  '<p class="cr-sf-lede">The technical pages that come up mid-pitch.</p>' +
+  '<div class="cr-sf-links">' +
+    '<button data-rl="Do &amp; Don\'t" type="button"><span class="i">' + ICO('scales') + '</span>' +
+    '<b>Do &amp; Don’t</b><span class="go">→</span></button>' +
+    '<button data-rl="Claim Tips" type="button"><span class="i">' + ICO('bulb') + '</span>' +
+    '<b>Claim Tips</b><span class="go">→</span></button>' +
+    '<button data-rl="Ohio Insurance Law" type="button"><span class="i">' + ICO('scales') + '</span>' +
+    '<b>Ohio Insurance Law</b><span class="go">→</span></button>' +
+    '<button data-rl="Policy Provisions" type="button"><span class="i">' + ICO('page') + '</span>' +
+    '<b>Policy Provisions</b><span class="go">→</span></button>' +
+    '<button data-rl="Manufacturer Guidelines" type="button"><span class="i">' + ICO('factory') + '</span>' +
+    '<b>Manufacturer Guidelines</b><span class="go">→</span></button>' +
+  '</div>' +
+  '<div class="cr-sf-foot">You can’t sell from the truck</div>';
 }
 var el = null;
 function ensure(){
@@ -48570,81 +48752,33 @@ return el;
 }
 function render(){
 ensure();
-var t = todaysObjection();
+var P = PANES[view];
 el.innerHTML =
 '<div class="cr-sf-wrap">' +
 '<div class="cr-sf-top">' +
 '<button class="cr-sf-back" data-act="back" type="button">\u2190</button>' +
 '<div class="cr-sf-ttl">' +
-'<h1>Sales <span>Floor</span></h1>' +
-'<p>Cardinal Roofing \u00b7 Field Guide</p>' +
+'<h1>' + (P ? P.title.replace(/^(\S+)\s+(.*)$/, '$1 <span>$2</span>') : 'Sales <span>Floor</span>') + '</h1>' +
+'<p>' + (P ? esc(P.sub) : 'Cardinal Roofing \u00b7 Field Guide') + '</p>' +
 '</div>' +
 '</div>' +
-'<div class="cr-sf-today">' +
-'<div class="k">Today\u2019s objection</div>' +
-'<div class="q">\u201C' + esc(t.them) + '\u201D</div>' +
-'<div class="a"><b>' + esc(t.you) + '</b></div>' +
-'</div>' +
-'<div class="cr-sf-coach">' +
-'<button class="hero" data-go="drill" type="button"><span class="i">' + ICO('target') + '</span>' +
-'<span class="x"><b>Practice a drill</b>' +
-'<small>Random objection, you answer, the AI grades it</small></span></button>' +
-'<button data-go="deck" type="button"><span class="i">' + ICO('cards') + '</span>' +
-'<span class="x"><b>The deck</b><small>Browse every card</small></span></button>' +
-'<button data-go="board" type="button"><span class="i">' + ICO('trophy') + '</span>' +
-'<span class="x"><b>Leaderboard</b><small>How the team scores</small></span></button>' +
-'<button data-go="log" type="button"><span class="i">' + ICO('pencil') + '</span>' +
-'<span class="x"><b>Log a real one</b><small>Something you heard today</small></span></button>' +
-'<button data-go="showcase" type="button"><span class="i">' + ICO('home') + '</span>' +
-'<span class="x"><b>Showcase</b><small>Before and after, for the kitchen table</small></span></button>' +
-'<button data-go="popup" type="button"><span class="i">' + ICO('books') + '</span>' +
-'<span class="x"><b>The Pop-Up Roof</b><small>A tap-through book of how a roof gets built \u2014 hand them your phone</small></span></button>' +
-'</div>' +
-'<div class="cr-sf-rule">Objections</div>' +
-'<p class="cr-sf-lede">What they say, what you say, and why it lands.</p>' +
-'<div class="cr-sf-tabs">' +
-TABS.map(function(tb){
-return '<button data-tab="' + tb.id + '"' +
-(tb.id === activeTab ? ' class="on"' : '') + ' type="button">' +
-tb.label + '</button>';
-}).join('') +
-'</div>' +
-'<div data-slot="tab">' + renderTab() + '</div>' +
-'<div class="cr-sf-rule">Reference</div>' +
-'<p class="cr-sf-lede">The technical pages that come up mid-pitch.</p>' +
-'<div class="cr-sf-links">' +
-'<button data-rl="Do &amp; Don\'t" type="button"><span class="i">' + ICO('scales') + '</span>' +
-'<b>Do &amp; Don\u2019t</b><span class="go">\u2192</span></button>' +
-'<button data-rl="Claim Tips" type="button"><span class="i">' + ICO('bulb') + '</span>' +
-'<b>Claim Tips</b><span class="go">\u2192</span></button>' +
-'<button data-rl="Ohio Insurance Law" type="button"><span class="i">' + ICO('scales') + '</span>' +
-'<b>Ohio Insurance Law</b><span class="go">\u2192</span></button>' +
-'<button data-rl="Policy Provisions" type="button"><span class="i">' + ICO('page') + '</span>' +
-'<b>Policy Provisions</b><span class="go">\u2192</span></button>' +
-'<button data-rl="Manufacturer Guidelines" type="button"><span class="i">' + ICO('factory') + '</span>' +
-'<b>Manufacturer Guidelines</b><span class="go">\u2192</span></button>' +
-'<button data-go="library" type="button"><span class="i">' + ICO('books') + '</span>' +
-'<b>Full Resource Library</b><span class="go">\u2192</span></button>' +
-'</div>' +
-'<div class="cr-sf-foot">You can\u2019t sell from the truck</div>' +
+(P ? P.body() : hubBody()) +
 '</div>';
 wire();
 }
 function wire(){
-el.querySelector('[data-act="back"]').onclick = close;
-el.querySelectorAll('[data-tab]').forEach(function(b){
-b.onclick = function(){
-activeTab = b.dataset.tab;
-el.querySelectorAll('[data-tab]').forEach(function(x){
-x.classList.toggle('on', x === b);
-});
-var slot = el.querySelector('[data-slot="tab"]');
-if(slot) slot.innerHTML = renderTab();
+/* Back goes UP one level, never straight out — a pane's back returns to the
+   hub, and only the hub's back leaves the screen. Same rule the Production
+   board uses, so the two full-screen hubs behave alike. */
+el.querySelector('[data-act="back"]').onclick = function(){
+  if(view !== 'hub'){ view = 'hub'; render(); el.scrollTop = 0; return; }
+  close();
 };
-});
 el.querySelectorAll('[data-go]').forEach(function(b){
 b.onclick = function(){
 var d = b.dataset.go;
+/* the three panes stay on this screen */
+if(PANES[d]){ view = d; render(); el.scrollTop = 0; return; }
 var C = window.CardinalCoach;
 if(C && (d === 'drill' || d === 'deck' || d === 'board' || d === 'log')){
 window.__crCoachReturn = open;
@@ -48660,6 +48794,15 @@ close(false); window.showResourceLibrary(); return;
 }
 if(d === 'showcase' && window.CardinalShowcase){
 close(false); window.CardinalShowcase.open(); return;
+}
+/* 928: the two tiles Theo named that already had screens of their own —
+   pointed at, never rebuilt. Storm Data is 927; Pricing is the catalog,
+   which already carries roof, siding, gutters and windows. */
+if(d === 'storm' && window.CardinalStorm){
+close(false); window.CardinalStorm.open(); return;
+}
+if(d === 'pricing' && typeof window.crOpenPricing === 'function'){
+close(false); window.crOpenPricing(); return;
 }
 if(d === 'popup'){ window.open('/popup.html', '_blank', 'noopener'); return; }
 alert('That isn\u2019t available yet.');
@@ -48684,7 +48827,9 @@ page.scrollIntoView({ block:'start' });
 });
 }
 function open(){
+view = 'hub';          /* 928: always land on the hub, never on a stale pane */
 render();
+try{ loadDeck(); }catch(_){}
 if(typeof window.hideAllViews === 'function'){
 try{ window.hideAllViews(); }catch(_){}
 }
