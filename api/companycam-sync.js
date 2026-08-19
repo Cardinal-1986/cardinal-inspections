@@ -165,8 +165,142 @@ async function aiFallback(parts, geminiRes) {
   }
 }
 
+/* ── 933 · the nightly top-up ───────────────────────────────────────────────
+   Theo: "company cam has not been updated." It had not — the backfill FINISHED
+   on 31 Jul 2026 (60,485 synced + 1,164 skipped = 61,649 = the account total,
+   cursor cleared) and nothing has run since, because nothing schedules it.
+
+   It could not be scheduled as written, either: every path here authenticates
+   by resolving a signed-in ADMIN's Supabase session token, and a cron has no
+   session. So this adds the second door api/digest already uses — a CRON_SECRET
+   bearer — plus a GET entry point, because Vercel crons issue GET with no body.
+
+   ⚠ ONE DELIBERATE DIFFERENCE FROM digest. Its guard is
+        if (secret && req.headers.authorization !== 'Bearer ' + secret)
+   which leaves the route WIDE OPEN when CRON_SECRET is unset. That is a bad
+   trade here: this route holds the CompanyCam key and the service-role key. The
+   secret is REQUIRED — no secret configured means the cron door is refused, not
+   opened. */
+function cronAuthorised(req) {
+  const secret = (process.env.CRON_SECRET || '').trim();
+  if (!secret) return { ok: false, why: 'CRON_SECRET is not configured in Vercel, so the ' +
+    'scheduled door is closed. Set it, and give the cron the same value.' };
+  const auth = req.headers.authorization || '';
+  if (auth !== 'Bearer ' + secret) return { ok: false, why: 'Bad cron secret' };
+  return { ok: true };
+}
+
+/* ── 933 · topUp ────────────────────────────────────────────────────────────
+   Catches the mirror up on what has been shot since the last run. It is NOT the
+   backfill: it never touches the companycam_sync cursor or counters, so the
+   manual full-index button keeps its own state and cannot be reset by a cron
+   firing at 3am. (That state is shared, and the code below it already carries a
+   comment about counters going wrong — this stays out of its way entirely.)
+
+   ⚠ WHY IT WORKS OUT THE ORDER INSTEAD OF ASSUMING IT. /photos takes no sort
+   parameter — after, archived, assigned_user_ids, include, include_total, limit,
+   status, and that is the whole list — and the reference never states which end
+   the feed starts from. From this sandbox no CompanyCam host is reachable, so it
+   cannot be checked here. A top-up that walks the front pages is only correct if
+   the newest photos ARE at the front; if they are at the back it would re-read
+   ancient photos nightly and never see a new one, silently. So page one decides:
+   compare the first and last captured_at, and if the feed turns out to run
+   oldest-first, do nothing and SAY SO rather than run a no-op forever.
+
+   ⚠ AND IT STOPS EARLY, because the reference is explicit that CompanyCam sends
+   no rate-limit headers: "be polite by construction — sequential pages, treat a
+   429 as the only warning." Re-walking all 617 pages nightly is not polite. This
+   walks until a page brings nothing the mirror has not already got, which on a
+   quiet day is one call. */
+async function topUp(key, service, pagesWanted) {
+  const cap = Math.min(Math.max(parseInt(pagesWanted, 10) || 4, 1), MAX_PAGES);
+  let cursor = null, wrote = 0, skipped = 0, pagesDone = 0, total = null, hasNext = true;
+  let direction = null;
+
+  for (let i = 0; i < cap && hasNext; i++) {
+    const params = { limit: PAGE_SIZE };
+    if (cursor) params.after = cursor;
+    if (i === 0) params.include_total = 'true';
+
+    const r = await cc('/photos', key, params);
+    if (!r.ok) {
+      return { http: 502, body: { error: 'CompanyCam refused the photo list', status: r.status,
+                                  detail: scrub(r.raw, key), wrote, pages: pagesDone } };
+    }
+    pagesDone++;
+    const data = (r.body && r.body.data) || [];
+    const meta = (r.body && r.body.meta) || {};
+    if (typeof meta.total === 'number') total = meta.total;
+    if (!data.length) break;
+
+    /* Which end of the feed is this? Decided once, on real bytes. */
+    if (i === 0 && data.length > 1) {
+      const first = Date.parse(data[0].captured_at || data[0].created_at || '');
+      const last  = Date.parse(data[data.length - 1].captured_at || data[data.length - 1].created_at || '');
+      if (isFinite(first) && isFinite(last) && first !== last) {
+        direction = first > last ? 'newest_first' : 'oldest_first';
+      }
+      if (direction === 'oldest_first') {
+        return { http: 200, body: {
+          ok: false, action: 'topup', reason: 'feed_is_oldest_first',
+          detail: 'CompanyCam returned this page oldest-first, so walking the front pages ' +
+                  'would never reach new photographs. Nothing was written. Run the full ' +
+                  'index from the Resource Library instead, and this route needs a rethink.',
+          pages: pagesDone, total } };
+      }
+    }
+
+    const keep = data.filter(usable);
+    skipped += data.length - keep.length;
+
+    /* Which of these does the mirror already hold? */
+    const ids = keep.map(p => String(p.id));
+    let known = new Set();
+    if (ids.length) {
+      const q = await sb(service, 'companycam_photos?select=id&id=in.(' +
+        ids.map(encodeURIComponent).join(',') + ')');
+      if (q.ok) { for (const rw of await q.json()) known.add(String(rw.id)); }
+    }
+    const fresh = keep.filter(p => !known.has(String(p.id)));
+
+    if (keep.length) {
+      const up = await sb(service, 'companycam_photos?on_conflict=id', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(keep.map(row))
+      });
+      if (!up.ok) {
+        const why = await up.text();
+        return { http: 502, body: { error: 'Could not write to the index', status: up.status,
+                                    detail: scrub(why, service), wrote, pages: pagesDone } };
+      }
+      wrote += fresh.length;
+    }
+
+    /* Nothing new on this page: everything from here back is older and already
+       held, so stop. This is the whole reason a nightly run costs one call. */
+    if (!fresh.length) { hasNext = false; break; }
+
+    hasNext = meta.has_next === true && !!meta.next_cursor;
+    cursor = hasNext ? meta.next_cursor : null;
+  }
+
+  /* Names onto any photo that arrived without one, exactly as a manual run
+     ends — otherwise tonight's photos are unsearchable by job until someone
+     presses the button. */
+  let stamped = 0;
+  try { const st = await stampNames(service); stamped = (st && st.stamped) || 0; } catch (_) {}
+
+  return { http: 200, body: {
+    ok: true, action: 'topup', new_photos: wrote, skipped, pages: pagesDone,
+    stamped, total, direction, hit_page_cap: pagesDone >= cap && hasNext } };
+}
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
+  /* GET is the cron's only shape, and it may only ever mean "top up". Every
+     other action still requires POST and an admin session. */
+  const isCron = req.method === 'GET';
+  if (!isCron && req.method !== 'POST') { res.status(405).json({ error: 'POST only' }); return; }
 
   const key = (process.env.COMPANYCAM_API_KEY || '').trim();
   const service = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
@@ -176,6 +310,15 @@ export default async function handler(req, res) {
     if (!service) { res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured in Vercel' }); return; }
 
     // ---- who ----
+    /* 933: the cron proves itself with the shared secret instead of a session.
+       It is granted the top-up and nothing else — see the dispatch below. */
+    if (isCron) {
+      const c = cronAuthorised(req);
+      if (!c.ok) { res.status(401).json({ error: 'Unauthorized', detail: c.why }); return; }
+      const out = await topUp(key, service, req.query && req.query.pages);
+      res.status(out.http || 200).json(out.body);
+      return;
+    }
     const auth = req.headers.authorization || '';
     const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
     if (!token) { res.status(401).json({ error: 'Sign in required' }); return; }
@@ -219,6 +362,13 @@ export default async function handler(req, res) {
         projects: isNaN(nprj) ? null : nprj,
         photos_with_project_name: isNaN(nnamed) ? null : nnamed
       });
+      return;
+    }
+
+    // ---- 933: the top-up, by hand. Same code the cron runs. ----
+    if (b.action === 'topup') {
+      const out = await topUp(key, service, b.pages);
+      res.status(out.http || 200).json(out.body);
       return;
     }
 
