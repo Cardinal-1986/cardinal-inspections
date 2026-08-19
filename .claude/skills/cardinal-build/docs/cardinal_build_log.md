@@ -19270,3 +19270,73 @@ Gate `gate_rail926.mjs`: 19 assertions GREEN — 238→58px, body padding follow
 hidden but icons clickable, state survives a re-render, expands again, burger hidden on desktop and
 BACK on a phone, Production amber / Sales red / Community unchanged. Negative-controlled vs v925.
 `check_build` green (925 → 926). No SQL.
+
+## Build 927 — Storm Data: which neighbourhoods got hit, and when
+Theo: *"Build all tiles and use hail swath, wind damage?"* — from the Sales Floor rework, where the
+page is to become a hub of sales-training modules rather than a wall of objection cards. This is the
+one tile of that set that is genuinely new software; the rest (Objection Coach, Pricing Catalog,
+Showcase, Pop-Up Roof) already exist as full screens and the hub will point at them, not rebuild them.
+
+⚠️ **"Hail swath" is a paid vendor product and this is NOT one.** A true swath — the interpolated
+polygon of where hail actually fell — is HailTrace and the like: an account, a subscription, and a
+bill that recurs whether anyone knocks a door that month. `api/storm.js` uses the free official
+alternative instead: **NWS Local Storm Reports**, served as GeoJSON by the Iowa State Mesonet. Those
+are **points, not polygons** — a trained spotter or a gauge said "1.75in hail here at 18:40" — so
+they answer *which neighbourhoods got hit and when* without answering *which parcels*. Measured
+against the live feed before a line of UI was written: **355 hail/wind reports inside 60 miles of
+Dayton across five months**, naming Kettering, Beavercreek, West Carrollton and Northridge. The
+difference is stated in the route's banner AND in the screen's own footer, so nobody sells it
+internally as a swath. If a swath vendor is ever bought, the route is where the second source goes —
+the front end reads normalised rows and does not care who measured.
+
+- **`api/storm.js` (new, 30th function).** Filters the feed to three event types and no others:
+  `H` hail (magnitude in inches), `G` gust (knots or mph, unit carried with it), `D` wind damage
+  (no magnitude — the damage *is* the report). Rain, flood, snow, fog and tornado are dropped: this
+  screen exists to find roofs to look at. Radius-filters from the yard, groups by day, returns
+  counts / worst hail / grouped days / normalised reports. `radius` clamps 5–250 (default 60),
+  `days` 1–730 (default 120). Cached `s-maxage=1800`. **Public deliberately** — every byte is US
+  government weather data about the sky, no key, no session, nothing from Supabase. A dead feed
+  returns 502 with the failure NAMED, which is what lets the screen refuse honestly.
+- **`cr-storm-styles` + `cr-storm-script`.** Copies the Sales Floor module's shape exactly —
+  class-shown overlay, `open()` calling `hideAllViews()` + `navSetView()`, self-registered menu row,
+  popstate close — because that is the app's convention for a full-screen tool and a second shape
+  would be a second pipeline. Own `--st-*` palette, **every reference carrying a literal fallback**
+  (the 448/449 habit). Registered in `hideAllViews()` *and* given a `case 'storm'` in `navRestore()`,
+  both halves of the convention.
+- **Two deliberate departures, both written into the module banner.** (1) **No scroll lock** — the
+  invariant is thirteen writers of `document.body.style.overflow` with no reconciler and this is not
+  the fourteenth; the panel is `position:fixed inset:0` with its own scroller and
+  `overscroll-behavior:contain`, so there is nothing behind it to grab. Re-verified with the lexer
+  after the splice: still **13 modules / 35 CODE sites**. (2) **Severity colours, not the Sales Floor
+  red/navy rule** — that rule (red = objection, navy = your answer) belongs to that screen's content
+  and would say nothing true about weather. Hail red, wind damage amber, gusts steel, and nothing
+  else on the screen is allowed those three.
+- ⚠️ **No 46th `document.body` observer.** The Sales Floor pattern this module otherwise copies ends
+  in a `subtree:true` observer, and copying it would have pushed the count past the documented 45
+  (cr-home-btn's was removed at 757 for being exactly that). `#navMenu` is **static markup**, so the
+  row inserts on the first call; the bounded retry behind it is cr-menu-script's own convention and
+  stops after 12s. Observer hits measured before and after: **46 both times** (45 real + 1 prose).
+- `close(goHome)` takes the argument for a reason: `hideAllViews()` calls it while navigating
+  somewhere else and must not also fire `showHome()`. That loop now passes `false` — it had been
+  calling `close()` bare for four modules, all of which happened to tolerate it.
+
+**Contrast computed, not eyeballed** — worst ink on its own darkest ground is hail red at **4.58:1**,
+every other pairing 6.2–16.8:1, against a 4.5 floor.
+
+⚠️ **Two instrument faults caught in this build, both mine.** (1) My patch script asserted
+`'MutationObserver' not in mod` to prove no observer was added — and the WORD is in the comment
+explaining why there is none, so a correct module failed its own gate. Assert on the CALL
+(`.observe(document.body`), which is the file's own comment-pollution rule biting the assertion that
+was written to honour it. (2) The render script reported the desktop rail did NOT pick up the row;
+it was querying a node matched by a loose `[id*=lnav]` fallback, not the rail. `CardinalLeftNav.scrape()`
+returned `Sell: Sales Floor / Storm Data / Quick Inspection` all along, and the 1440px render shows it
+in place. **The gate now asserts the scrape's output — the actual contract — instead of a node I guessed at.**
+
+Gate `gate_storm927.mjs`: 37 assertions GREEN — the row lands in Sell (not the "More" bucket), the
+screen opens by class, the KPI numbers are the route's numbers, the day accordion opens with that
+day's reports and real height, the radius re-queries, `hideAllViews()` closes it without sending the
+user home and without writing an inline `display:none`, popstate closes it, no scroll lock is written,
+and **a failed feed says so by name rather than rendering as "no storms"**. Date labels are built from
+regex parts, asserted against `Fri 7 Aug` — `new Date('2026-08-07')` parses as UTC and prints a day
+early in Ohio (the 718 bug). Negative control vs v926: **31 red, no crash.** `check_build` green
+(926 → 927). No SQL.

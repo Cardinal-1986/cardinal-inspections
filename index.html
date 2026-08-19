@@ -3531,7 +3531,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 926 &#8212; On a desktop the left menu now collapses to icons with one click, giving the page back 180px, and it carries Sign out and the version so the old burger menu — a second copy of the same list — is gone from desktop</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-19 build 927 &#8212; New Storm Data screen in the menu: every hail and wind report near the yard from the National Weather Service, grouped by the day it fell, with the towns named, the largest hail size, and a map — so you can see which neighbourhoods got hit and when before you go knock them</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17746,10 +17746,14 @@ function hideAllViews(){
    /* 768: the punch-out card. Class-shown like its neighbours, so it closes
       through the module's own close() and hideAllViews confirms the class went. */
    { id:'cr-pk', api:window.CardinalPunchCard },
-   { id:'cr-show', api:window.CardinalShowcase }].forEach(function(o){
+   { id:'cr-show', api:window.CardinalShowcase },
+   /* 927: Storm Data. Same shape again — created at runtime, shown by a
+      class, closed through its own close(false) so it does not send the
+      user home while hideAllViews is on its way somewhere else. */
+   { id:'cr-storm', api:window.CardinalStorm }].forEach(function(o){
     var el = document.getElementById(o.id);
     if(!el || !el.classList.contains('open')) return;
-    if(o.api && typeof o.api.close === 'function'){ try{ o.api.close(); }catch(_){} }
+    if(o.api && typeof o.api.close === 'function'){ try{ o.api.close(false); }catch(_){} }
     if(el.classList.contains('open')) el.classList.remove('open');
   });
   var _ev = document.getElementById('cr-est-view');
@@ -25500,6 +25504,7 @@ function __histPush(st){
         case 'punchcard':       if(window.CardinalPunchCard && window.__crPunchCardLast)
                                   window.CardinalPunchCard.open(window.__crPunchCardLast); break;
         case 'showcase':        if(window.CardinalShowcase) window.CardinalShowcase.open(); break;
+        case 'storm':           if(window.CardinalStorm) window.CardinalStorm.open(); break;
         /* Build 367: views added after this switch was written. */
         case 'communityHub':    if(window.CardinalCommunityHub) window.CardinalCommunityHub.show(); break;
         case 'punch':           if(typeof window.openPunchView === 'function') window.openPunchView(); break;
@@ -40445,6 +40450,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:927, d:'2026-08-19', t:'Storm Data \u2014 which neighbourhoods got hit, and when',
+s:'A new Storm Data screen in the menu. It reads the National Weather Service\u2019s own storm reports for Ohio, Indiana and Kentucky and shows every hail and wind report near the yard: how many, the largest hail that fell, and every storm day listed newest first with the towns named on it. Tap a day to see each report \u2014 the hail size or the gust speed, the town and county, and how far out it is. There is a map you can turn on, with hail in red, wind damage in amber and gusts in steel. Set the search to 25, 60 or 100 miles and to the last 30 days, four months or a year. These are spotter and gauge reports at points, not a paid hail swath \u2014 they tell you which neighbourhoods were hit and when, not which parcels. If the weather service cannot be reached the screen says so plainly instead of showing you an empty list.' },
 { b:926, d:'2026-08-18', t:'Desktop menu collapses, and there is only one of it now',
 s:'Three things on the desktop left menu. (1) It collapses: a Collapse button at the top shrinks it to a strip of icons, giving the page back about 180 pixels for the wide layouts, and expands again with the same button \u2014 it remembers which way you left it. (2) Sign out and the version number now sit at the bottom of the menu, where they were only ever in the burger before. (3) Because of that, the burger button is gone on desktop \u2014 it was opening a second copy of the very same list the menu on the left already shows. It comes back automatically on a phone or tablet, where it is the slide-out drawer. The menu also now takes the Production amber and Sales red, which it had been showing in retail red.' },
 { b:925, d:'2026-08-18', t:'The phone menu drawer takes on each CRM\u2019s colours',
@@ -75095,6 +75102,367 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
     menu.addEventListener('touchend', function(){ sx=sy=null; }, { passive:true });
     sync();
   });
+})();
+</script>
+
+
+<style id="cr-storm-styles">
+/* ── Storm Data (927) ──────────────────────────────────────────────────────
+   Which neighbourhoods got hit, and when. Reads api/storm.js — free NWS
+   Local Storm Reports, not a paid swath vendor (the route's banner explains
+   the trade). Own palette, every reference carrying a literal fallback, the
+   Crews/Showcase habit.
+
+   COLOUR IS SEVERITY HERE, and it deliberately does NOT borrow the Sales
+   Floor's red/navy rule (red = objection, navy = your answer) — that rule
+   belongs to that screen's content and would say nothing true about weather.
+   Hail is red because hail is what sells a roof, wind damage amber, gusts
+   steel. Nothing else on the screen is allowed those three.
+
+   NO SCROLL LOCK. The invariant is thirteen modules writing
+   document.body.style.overflow with no reconciler, and this is not the
+   fourteenth. The panel is position:fixed inset:0 with its own scroller and
+   overscroll-behavior:contain, so there is nothing behind it to grab. */
+#cr-storm{
+  --st-bg:#0e1013; --st-card:#16191e; --st-card2:#1b1f25; --st-ink:#eef1f5;
+  --st-mute:#98a0aa; --st-mute2:#b9c0c9; --st-line:rgba(255,255,255,.10);
+  --st-line2:rgba(255,255,255,.06); --st-hail:#e8544f; --st-dmg:#f5a623; --st-gust:#8fb4d8;
+  display:none; position:fixed; inset:0; z-index:9480; overflow-y:auto;
+  -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  background:var(--st-bg,#0e1013); color:var(--st-ink,#eef1f5);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+}
+#cr-storm.open{display:block}
+#cr-storm .stw{max-width:1180px;margin:0 auto;
+  padding:max(18px,env(safe-area-inset-top)) 18px calc(70px + env(safe-area-inset-bottom,0px))}
+#cr-storm .sttop{display:flex;align-items:flex-start;gap:12px;margin-bottom:6px}
+#cr-storm .stback{flex:0 0 auto;width:36px;height:36px;border-radius:9px;cursor:pointer;
+  background:transparent;border:1px solid var(--st-line,rgba(255,255,255,.10));
+  color:var(--st-mute2,#b9c0c9);font-size:17px;line-height:1;margin-top:3px}
+#cr-storm .stback:hover{border-color:var(--st-gust,#8fb4d8);color:var(--st-ink,#eef1f5)}
+#cr-storm h1{margin:0;font:700 clamp(26px,6vw,34px)/1 Georgia,'Times New Roman',serif;letter-spacing:-.02em}
+#cr-storm h1 span{color:var(--st-hail,#e8544f)}
+#cr-storm .stsub{margin:7px 0 0;font:600 9.5px ui-monospace,'SF Mono',Menlo,monospace;
+  letter-spacing:.24em;text-transform:uppercase;color:var(--st-mute,#98a0aa)}
+#cr-storm .stctl{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 4px;align-items:center}
+/* A label and the segment it names wrap as ONE unit — caught in a phone
+   render, where "LAST" orphaned onto the end of the previous line. */
+#cr-storm .stgrp{display:flex;align-items:center;gap:8px}
+#cr-storm .stseg{display:flex;border:1px solid var(--st-line,rgba(255,255,255,.10));border-radius:9px;overflow:hidden}
+#cr-storm .stseg button{background:transparent;border:0;border-right:1px solid var(--st-line,rgba(255,255,255,.10));
+  color:var(--st-mute,#98a0aa);cursor:pointer;padding:9px 13px;font:700 12px inherit;font-family:inherit;min-height:40px}
+#cr-storm .stseg button:last-child{border-right:0}
+#cr-storm .stseg button.on{background:var(--st-gust,#8fb4d8);color:#10151b}
+#cr-storm .stseg button:hover:not(.on){background:rgba(255,255,255,.06);color:var(--st-ink,#eef1f5)}
+#cr-storm .stlbl{font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--st-mute,#98a0aa)}
+#cr-storm .stkpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin:16px 0 6px}
+#cr-storm .stk{background:var(--st-card,#16191e);border:1px solid var(--st-line,rgba(255,255,255,.10));
+  border-radius:11px;padding:13px 14px}
+#cr-storm .stk .n{font:800 25px/1 'Segoe UI',Arial,sans-serif;font-variant-numeric:tabular-nums}
+#cr-storm .stk .t{font:700 10px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--st-mute,#98a0aa);margin-top:5px}
+#cr-storm .stk.hail .n{color:var(--st-hail,#e8544f)}
+#cr-storm .stk.dmg  .n{color:var(--st-dmg,#f5a623)}
+#cr-storm .stk.gust .n{color:var(--st-gust,#8fb4d8)}
+#cr-storm .stmapwrap{margin:14px 0 0;border:1px solid var(--st-line,rgba(255,255,255,.10));
+  border-radius:12px;overflow:hidden;display:none}
+#cr-storm.mapon .stmapwrap{display:block}
+#cr-storm .stmap{height:340px;background:var(--st-card,#16191e)}
+#cr-storm .strule{display:flex;align-items:baseline;gap:12px;margin:26px 0 8px;
+  font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--st-mute,#98a0aa)}
+#cr-storm .strule::after{content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,rgba(143,180,216,.4),transparent)}
+#cr-storm .stday{background:var(--st-card,#16191e);border:1px solid var(--st-line,rgba(255,255,255,.10));
+  border-radius:11px;margin-bottom:9px;overflow:hidden}
+#cr-storm .stdh{display:flex;align-items:center;gap:11px;width:100%;background:none;border:0;
+  cursor:pointer;padding:13px 14px;color:inherit;font:inherit;text-align:left}
+#cr-storm .stdh:hover{background:var(--st-card2,#1b1f25)}
+#cr-storm .stdate{font:700 14px inherit;flex:0 0 auto;min-width:96px}
+#cr-storm .sttags{display:flex;gap:6px;flex-wrap:wrap;flex:1;min-width:0}
+#cr-storm .sttag{font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.08em;
+  padding:3px 7px;border-radius:5px;white-space:nowrap}
+#cr-storm .sttag.hail{color:var(--st-hail,#e8544f);background:rgba(232,84,79,.14);border:1px solid rgba(232,84,79,.4)}
+#cr-storm .sttag.dmg{color:var(--st-dmg,#f5a623);background:rgba(245,166,35,.13);border:1px solid rgba(245,166,35,.4)}
+#cr-storm .sttag.gust{color:var(--st-gust,#8fb4d8);background:rgba(143,180,216,.13);border:1px solid rgba(143,180,216,.4)}
+#cr-storm .stwhere{font-size:12.5px;color:var(--st-mute,#98a0aa);line-height:1.45;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+#cr-storm .stchev{flex:0 0 auto;color:var(--st-mute,#98a0aa);font-size:15px;transition:transform .15s}
+#cr-storm .stday.open .stchev{transform:rotate(90deg)}
+#cr-storm .stbody{display:none;border-top:1px solid var(--st-line2,rgba(255,255,255,.06))}
+#cr-storm .stday.open .stbody{display:block}
+#cr-storm .strep{display:flex;gap:11px;align-items:baseline;padding:11px 14px;
+  border-bottom:1px solid var(--st-line2,rgba(255,255,255,.06))}
+#cr-storm .strep:last-child{border-bottom:0}
+#cr-storm .strep .mag{flex:0 0 auto;min-width:62px;font:800 12.5px 'Segoe UI',Arial,sans-serif;
+  font-variant-numeric:tabular-nums}
+#cr-storm .strep.hail .mag{color:var(--st-hail,#e8544f)}
+#cr-storm .strep.damage .mag{color:var(--st-dmg,#f5a623)}
+#cr-storm .strep.gust .mag{color:var(--st-gust,#8fb4d8)}
+#cr-storm .strep .pl{flex:1;min-width:0}
+#cr-storm .strep .pl b{display:block;font:700 13px inherit}
+#cr-storm .strep .pl small{display:block;font-size:11.5px;color:var(--st-mute,#98a0aa);
+  margin-top:2px;line-height:1.45}
+#cr-storm .strep .mi{flex:0 0 auto;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;
+  color:var(--st-mute,#98a0aa);font-variant-numeric:tabular-nums}
+#cr-storm .stnote{padding:22px 16px;text-align:center;color:var(--st-mute,#98a0aa);font-size:13.5px;line-height:1.6}
+#cr-storm .stfoot{margin-top:26px;padding-top:14px;border-top:1px solid var(--st-line2,rgba(255,255,255,.06));
+  color:var(--st-mute,#98a0aa);font-size:11.5px;line-height:1.55}
+@media (min-width:1100px){ body.cr-lnav-on #cr-storm{left:var(--lnav-w,0px)} }
+</style>
+<script id="cr-storm-script">
+/* 927: Storm Data — hail and wind reports near the yard, from api/storm.js.
+   Follows the Sales Floor module's shape exactly (class-shown overlay,
+   self-registered menu row, popstate close), because that is the app's
+   convention for a full-screen tool and a second shape would be a second
+   pipeline. See the stylesheet banner for the two deliberate departures:
+   no scroll lock, and severity colours rather than the sales red/navy. */
+(function(){
+'use strict';
+var MOUNT = 'cr-storm';
+var el = null, data = null, busy = false, mapped = false, map = null, layer = null;
+var st = { radius:60, days:120, map:false };
+var openDays = {};
+
+function ICO(n){ try{ return window.CardinalIcons.get(n); }catch(_){ return ''; } }
+function esc(s){
+  return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function host(){
+  if(el && el.isConnected) return el;
+  el = document.getElementById(MOUNT);
+  if(!el){
+    el = document.createElement('div');
+    el.id = MOUNT;
+    document.body.appendChild(el);
+  }
+  return el;
+}
+/* "2026-08-07" -> "Fri 7 Aug". Built from parts, never new Date('YYYY-MM-DD'),
+   which is parsed as UTC and lands a day early in Ohio — the 718 bug. */
+var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function dayLabel(iso){
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+  if(!m) return String(iso || '');
+  var d = new Date(+m[1], +m[2] - 1, +m[3]);
+  return DOW[d.getDay()] + ' ' + (+m[3]) + ' ' + MON[+m[2] - 1];
+}
+function magText(r){
+  if(r.kind === 'hail') return r.magnitude != null ? r.magnitude + '"' : 'hail';
+  if(r.kind === 'gust') return r.magnitude != null ? Math.round(r.magnitude) + (r.unit === 'MPH' ? ' mph' : ' kt') : 'gust';
+  return 'damage';
+}
+async function load(){
+  busy = true; paint();
+  try{
+    var r = await fetch('/api/storm?radius=' + st.radius + '&days=' + st.days,
+                        { headers:{ accept:'application/json' } });
+    var j = await r.json();
+    if(!r.ok || !j.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
+    data = j; data.__err = null;
+  }catch(e){
+    data = { __err: String((e && e.message) || e) };
+  }
+  busy = false; mapped = false; paint();
+}
+function seg(name, opts, cur){
+  return '<div class="stseg" data-seg="' + name + '">' + opts.map(function(o){
+    return '<button type="button" data-v="' + o[0] + '"' +
+      (String(o[0]) === String(cur) ? ' class="on"' : '') + '>' + esc(o[1]) + '</button>';
+  }).join('') + '</div>';
+}
+function paint(){
+  var h = host();
+  var body;
+  if(busy){
+    body = '<div class="stnote">Reading the National Weather Service reports…</div>';
+  }else if(data && data.__err){
+    /* Name the failure. "No storms" when the feed was unreachable is a lie. */
+    body = '<div class="stnote"><b>Could not reach the weather service.</b><br>' +
+           esc(data.__err) + '<br><br>Nothing is wrong with the app — try again in a minute.</div>';
+  }else if(!data || !data.total){
+    body = '<div class="stnote">No hail or wind reports inside ' + st.radius +
+           ' miles in the last ' + st.days + ' days.<br>Widen the search above.</div>';
+  }else{
+    var c = data.counts || {};
+    body =
+      '<div class="stkpi">' +
+        '<div class="stk hail"><div class="n">' + (c.hail || 0) + '</div><div class="t">Hail reports</div></div>' +
+        '<div class="stk dmg"><div class="n">' + (c.damage || 0) + '</div><div class="t">Wind damage</div></div>' +
+        '<div class="stk gust"><div class="n">' + (c.gust || 0) + '</div><div class="t">Wind gusts</div></div>' +
+        '<div class="stk hail"><div class="n">' + (data.worstHail != null ? data.worstHail + '"' : '—') +
+          '</div><div class="t">Largest hail</div></div>' +
+      '</div>' +
+      '<div class="stmapwrap"><div class="stmap" id="cr-storm-map"></div></div>' +
+      '<div class="strule">Storm days</div>' +
+      (data.days_grouped || []).map(function(d){
+        var reps = (data.reports || []).filter(function(r){ return String(r.at).slice(0,10) === d.day; });
+        return '<div class="stday' + (openDays[d.day] ? ' open' : '') + '" data-day="' + d.day + '">' +
+          '<button class="stdh" type="button">' +
+            '<span class="stdate">' + esc(dayLabel(d.day)) + '</span>' +
+            '<span class="sttags">' +
+              (d.hail   ? '<span class="sttag hail">' + d.hail + ' hail' +
+                          (d.worstHail != null ? ' · ' + d.worstHail + '"' : '') + '</span>' : '') +
+              (d.damage ? '<span class="sttag dmg">' + d.damage + ' damage</span>' : '') +
+              (d.gust   ? '<span class="sttag gust">' + d.gust + ' gusts</span>' : '') +
+              '<span class="stwhere">' + esc((d.places || []).slice(0,3).join(' · ')) + '</span>' +
+            '</span>' +
+            '<span class="stchev">›</span>' +
+          '</button>' +
+          '<div class="stbody">' + reps.map(function(r){
+            return '<div class="strep ' + r.kind + '">' +
+              '<span class="mag">' + esc(magText(r)) + '</span>' +
+              '<span class="pl"><b>' + esc(r.city || r.county) + '</b>' +
+                '<small>' + esc(r.county) + ' Co' + (r.remark ? ' · ' + r.remark : '') + '</small></span>' +
+              '<span class="mi">' + r.miles + ' mi</span>' +
+            '</div>';
+          }).join('') + '</div>' +
+        '</div>';
+      }).join('') +
+      '<p class="stfoot">' + esc(data.source || '') + ' · ' + data.total +
+      ' reports within ' + data.radius + ' miles of the yard. These are spotter and gauge ' +
+      'reports at points, not an interpolated hail swath — they tell you which ' +
+      'neighbourhoods were hit and when, not which parcels.</p>';
+  }
+  h.innerHTML =
+    '<div class="stw">' +
+      '<div class="sttop">' +
+        '<button class="stback" type="button" data-act="back">←</button>' +
+        '<div><h1>Storm <span>Data</span></h1>' +
+        '<p class="stsub">Hail &amp; wind · near the yard</p></div>' +
+      '</div>' +
+      '<div class="stctl">' +
+        '<div class="stgrp"><span class="stlbl">Within</span>' +
+        seg('radius', [[25,'25 mi'],[60,'60 mi'],[100,'100 mi']], st.radius) + '</div>' +
+        '<div class="stgrp"><span class="stlbl">Last</span>' +
+        seg('days', [[30,'30 days'],[120,'4 months'],[365,'1 year']], st.days) + '</div>' +
+        '<div class="stseg" data-seg="map"><button type="button" data-v="t"' +
+          (st.map ? ' class="on"' : '') + '>Map</button></div>' +
+      '</div>' + body +
+    '</div>';
+  h.classList.toggle('mapon', !!st.map);
+  wire();
+  if(st.map && data && data.total && !mapped) drawMap();
+}
+function wire(){
+  var h = host();
+  var back = h.querySelector('[data-act="back"]');
+  if(back) back.onclick = function(){ close(); };
+  h.querySelectorAll('.stseg').forEach(function(box){
+    box.onclick = function(e){
+      var b = e.target.closest('button'); if(!b) return;
+      var k = box.getAttribute('data-seg');
+      if(k === 'map'){ st.map = !st.map; paint(); return; }
+      st[k] = Number(b.getAttribute('data-v'));
+      load();
+    };
+  });
+  h.querySelectorAll('.stday .stdh').forEach(function(b){
+    b.onclick = function(){
+      var card = b.closest('.stday'); if(!card) return;
+      var d = card.getAttribute('data-day');
+      openDays[d] = !openDays[d];
+      card.classList.toggle('open', !!openDays[d]);
+    };
+  });
+}
+/* The map is the app's existing Leaflet loader — the same one the punch and
+   dispatch maps use. No second mapping pipeline. */
+async function drawMap(){
+  if(typeof window.qiLoadLeaflet !== 'function') return;
+  try{ await window.qiLoadLeaflet(); }catch(_){ return; }
+  var node = document.getElementById('cr-storm-map');
+  if(!node || !window.L || !data) return;
+  mapped = true;
+  try{ if(map){ map.remove(); map = null; } }catch(_){}
+  map = window.L.map(node, { scrollWheelZoom:false })
+    .setView([data.center.lat, data.center.lon], st.radius > 80 ? 8 : 9);
+  window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    { maxZoom:18, attribution:'&copy; OpenStreetMap' }).addTo(map);
+  layer = window.L.layerGroup().addTo(map);
+  var COL = { hail:'#e8544f', damage:'#f5a623', gust:'#8fb4d8' };
+  (data.reports || []).forEach(function(r){
+    window.L.circleMarker([r.lat, r.lon], {
+      radius: r.kind === 'hail' ? 7 : 5,
+      color: COL[r.kind] || '#8fb4d8', weight: 2,
+      fillColor: COL[r.kind] || '#8fb4d8', fillOpacity: .45,
+    }).bindPopup('<b>' + esc(magText(r)) + '</b><br>' + esc(r.city || '') +
+                 '<br>' + esc(dayLabel(r.at))).addTo(layer);
+  });
+  window.L.marker([data.center.lat, data.center.lon]).addTo(layer).bindPopup('Cardinal');
+  setTimeout(function(){ try{ map.invalidateSize(); }catch(_){} }, 60);
+}
+function open(){
+  var h = host();
+  if(typeof window.hideAllViews === 'function'){ try{ window.hideAllViews(); }catch(_){} }
+  h.classList.add('open');
+  h.scrollTop = 0;
+  if(typeof window.navSetView === 'function'){ try{ window.navSetView('storm'); }catch(_){} }
+  if(!data) load(); else paint();
+}
+/* close(goHome): hideAllViews() calls this to put the screen away while it is
+   navigating somewhere else, so it MUST be able to close without also sending
+   the user home. Same signature as CardinalSalesFloor.close for that reason. */
+function close(goHome){
+  var h = host();
+  h.classList.remove('open');
+  if(goHome !== false && typeof window.showHome === 'function') window.showHome();
+}
+/* Self-registers into #navMenu, which is also what the desktop rail scrapes —
+   so one insertion puts it in the drawer AND the rail. */
+function addMenuItem(){
+  if(document.getElementById('cr-nav-storm')) return true;
+  var menu = document.getElementById('navMenu');
+  if(!menu) return false;
+  var anchor = Array.prototype.slice.call(menu.querySelectorAll('.navopt'))
+    .find(function(b){ return /quick inspection/i.test(b.textContent || ''); });
+  var btn = document.createElement('button');
+  btn.className = 'navopt';
+  btn.id = 'cr-nav-storm';
+  btn.type = 'button';
+  btn.innerHTML = ICO('bolt') + ' Storm Data';
+  btn.onclick = function(e){
+    e.stopPropagation();
+    var m = document.getElementById('navMenu');
+    if(m) m.style.display = 'none';
+    open();
+  };
+  if(anchor && anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor);
+  else menu.appendChild(btn);
+  return true;
+}
+/* NO document.body MutationObserver here, deliberately. The invariant is 45
+   of them across 45 blocks and "do not add a 46th without written cause", and
+   a subtree observer is the expensive kind — cr-home-btn's was removed at 757
+   for exactly that. This module has nothing to watch for: #navMenu is STATIC
+   markup (it ships in the document), so the row can be inserted the moment the
+   DOM is ready. The bounded retry below is cr-menu-script's own convention and
+   only exists because the menu is rebuilt on sign-in; it stops after 12s
+   rather than leaving a timer running for the session. */
+function start(){
+  if(addMenuItem()) return;
+  var n = 0, iv = setInterval(function(){
+    var done = false;
+    try{ done = addMenuItem(); }catch(_){}
+    if(done || ++n > 60) clearInterval(iv);
+  }, 200);
+}
+window.addEventListener('popstate', function(ev){
+  var v = ev.state && ev.state.view;
+  var h = document.getElementById(MOUNT);
+  if(v !== 'storm' && h && h.classList.contains('open')) h.classList.remove('open');
+});
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+else start();
+window.CardinalStorm = Object.assign(window.CardinalStorm || {}, {
+  open : open,
+  close: close,
+  data : function(){ return data; },
+});
 })();
 </script>
 
