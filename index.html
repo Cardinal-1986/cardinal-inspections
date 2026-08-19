@@ -3531,7 +3531,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 924 &#8212; The phone menu is now a slide-out drawer: the burger slides it in from the left over a dark backdrop, with your name and company up top; tap the backdrop, swipe left, or pick an item to close it</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 925 &#8212; The slide-out phone menu now wears each CRM’s colours — steel on Retail, green on Community, amber on Production, red on Claims and Sales — header, icons and accents all follow the CRM you’re in</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40445,6 +40445,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:925, d:'2026-08-18', t:'The phone menu drawer takes on each CRM\u2019s colours',
+s:'The slide-out phone menu now matches whichever CRM you\u2019re in, instead of one fixed dark scheme. Retail is steel-blue, Community green, Production amber, and Claims and Sales red \u2014 the header band, the icons, the section labels and the row you\u2019re on all follow the CRM\u2019s own colour, and the drawer body picks up a faint tint of it. On the Claims (Insurance) side, whose header is light, the name and company text flips to dark so it stays readable. It reads off the same header colours the app already uses, so it stays in step automatically. Desktop is unchanged.' },
 { b:924, d:'2026-08-18', t:'The phone menu is now a slide-out drawer',
 s:'On a phone the menu button used to drop a small panel down from the top-left. It is now a proper slide-out drawer: tapping the menu button slides it in from the left over a dark dimmed backdrop, with your name and \u201CCardinal Roofing \u0026 Renovations\u201D across the top and a switch-portal button beside them. Every destination is still there, grouped the same way, now with an icon on the left and a \u203A on the right. Close it by tapping the dark area, swiping left, or picking where you want to go. On a desktop with the side rail nothing changed \u2014 this is the phone/tablet menu only.' },
 { b:923, d:'2026-08-18', t:'Client profile lays out side-by-side on a wide monitor',
@@ -74910,7 +74912,7 @@ body:not(.cr-lnav-on) #navMenu{
   height:100dvh !important; max-height:100dvh !important;
   margin:0 !important; border:0 !important; border-radius:0 !important;
   padding:0 0 calc(24px + env(safe-area-inset-bottom,0px)) !important;
-  background:#15171e !important;
+  background:color-mix(in srgb,var(--hac,#8fb4d8) 9%,#0e1014) !important;
   box-shadow:2px 0 30px rgba(0,0,0,.5) !important;
   transform:translateX(-100%);
   transition:transform .3s ease-in-out;
@@ -74925,18 +74927,18 @@ body:not(.cr-lnav-on) #navMenu:not(.cr-drawer-open){pointer-events:none;}
 body:not(.cr-lnav-on) #navMenu .cr-drawer-head{
   display:flex; align-items:center; gap:12px;
   padding:calc(18px + env(safe-area-inset-top,0px)) 16px 15px;
-  background:linear-gradient(160deg,#1c2029,#141720);
+  background:var(--hbg,linear-gradient(160deg,#1c2029,#141720));
   border-bottom:1px solid rgba(255,255,255,.08);
   position:sticky; top:0; z-index:2;
 }
 body:not(.cr-lnav-on) #navMenu .cr-dh-txt{flex:1;min-width:0;}
-body:not(.cr-lnav-on) #navMenu .cr-dh-name{font:800 18px Georgia,'Times New Roman',serif;color:#fff;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-body:not(.cr-lnav-on) #navMenu .cr-dh-co{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#9aa0a8;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-body:not(.cr-lnav-on) #navMenu .cr-dh-switch{flex:none;width:40px;height:40px;border-radius:11px;cursor:pointer;background:rgba(200,32,46,.12);border:1px solid #c8202e;color:#e35c63;display:flex;align-items:center;justify-content:center;padding:0;}
+body:not(.cr-lnav-on) #navMenu .cr-dh-name{font:800 18px Georgia,'Times New Roman',serif;color:var(--hin,#fff);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body:not(.cr-lnav-on) #navMenu .cr-dh-co{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:var(--hin,#cfd6df);opacity:.72;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body:not(.cr-lnav-on) #navMenu .cr-dh-switch{flex:none;width:40px;height:40px;border-radius:11px;cursor:pointer;background:color-mix(in srgb,var(--hac,#c8202e) 16%,transparent);border:1px solid var(--hac,#c8202e);color:var(--hac,#e35c63);display:flex;align-items:center;justify-content:center;padding:0;}
 body:not(.cr-lnav-on) #navMenu .cr-dh-switch svg{width:19px;height:19px;}
 
 body:not(.cr-lnav-on) #navMenu .navsec{
-  background:transparent !important;color:#7f8792 !important;
+  background:transparent !important;color:var(--hac,#7f8792) !important;
   font:800 10px 'Segoe UI',Arial,sans-serif !important;letter-spacing:.14em;text-transform:uppercase;
   padding:16px 16px 6px !important;border:0 !important;
 }
@@ -74946,11 +74948,11 @@ body:not(.cr-lnav-on) #navMenu .navopt{
   padding:13px 16px !important;font:600 14.5px 'Segoe UI',Arial,sans-serif !important;
   border:0 !important;position:relative;
 }
-body:not(.cr-lnav-on) #navMenu .navopt + .navopt{border-top:1px solid rgba(255,255,255,.05) !important;}
+body:not(.cr-lnav-on) #navMenu .navopt + .navopt{border-top:1px solid color-mix(in srgb,var(--hac,#8fb4d8) 12%,transparent) !important;}
 body:not(.cr-lnav-on) #navMenu .navsec + .navopt{border-top:0 !important;}
-body:not(.cr-lnav-on) #navMenu .navopt svg{width:19px;height:19px;flex:none;color:#b9d3ec;opacity:.92;}
+body:not(.cr-lnav-on) #navMenu .navopt svg{width:19px;height:19px;flex:none;color:var(--hac,#b9d3ec);opacity:.95;}
 body:not(.cr-lnav-on) #navMenu .navopt:hover,
-body:not(.cr-lnav-on) #navMenu .navopt:active{background:rgba(255,255,255,.06) !important;color:#fff !important;}
+body:not(.cr-lnav-on) #navMenu .navopt:active{background:color-mix(in srgb,var(--hac,#8fb4d8) 14%,transparent) !important;color:#fff !important;}
 body:not(.cr-lnav-on) #navMenu .navopt::after{content:'\203A';margin-left:auto;color:#5a626e;font-size:18px;line-height:1;flex:none;}
 body:not(.cr-lnav-on) #navMenu #signOutBtn{color:#e35c63 !important;border-top:1px solid rgba(255,255,255,.09) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-sec-admin{background:transparent !important;color:#e35c63 !important;border-top:1px dashed rgba(255,255,255,.12) !important;}

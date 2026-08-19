@@ -19222,3 +19222,18 @@ runtime-added ones. Gate `gate_drawer924.mjs`: closed off-screen (−320) → op
 0.5; header shown; backdrop-click AND nav-link-click close it; at 1200px cr-lnav-on active, NO backdrop,
 header hidden, drawer-open class not applied (dropdown untouched). Negative-controlled vs v923.
 `check_build` green (923 → 924). No SQL.
+
+## Build 925 — The phone drawer takes on each CRM's colours (Style 3)
+Follow-up to 924 (Theo previewed 3 styles, picked "full CRM tint", asked to see Insurance first).
+The drawer lives inside `<header class="site">`, so it inherits the per-CRM header tokens the app
+already switches (`--hbg` header ground, `--hin` header ink, `--hac` accent, `--hdm` dim). Swapped
+the fixed dark/steel literals in `cr-drawer-styles` for those tokens (at source, no override layer):
+body = `color-mix(--hac 9%, #0e1014)` faint tint; header band = `var(--hbg)`; name/company = `var(--hin)`
+(so they flip DARK on the light Claims/"docket" header and stay white on the red "siren" one — the
+bug the Insurance preview caught); switch, section labels, item icons = `var(--hac)`; dividers +
+active row = `color-mix(--hac 12–14%)`. Result per CRM: Retail steel-blue, Community green, Production
+amber, Claims/Sales red. Rendered all five CRMs (Insurance in both header states readable). Gate
+`gate_drawercrm925.mjs`: Production icons amber rgb(245,166,35), Community mint rgb(167,243,208),
+accent differs across retail/community/production, section labels share the accent; negative-controlled
+vs v924 (icon colour fixed blue across CRMs). `gate_drawer924.mjs` mechanics still green (open/close/
+backdrop/swipe unchanged). `check_build` green (924 → 925). No SQL.
