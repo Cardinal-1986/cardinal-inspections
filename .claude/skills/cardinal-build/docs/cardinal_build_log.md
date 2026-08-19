@@ -19202,3 +19202,23 @@ to v922 (171768 bytes), so nothing changed below 1600. Gate `gate_profwide923.mj
 wrapper; columnCount 2 at 1720 / auto at 1400; band spans; wide shorter than narrow; negative-controlled
 vs v922. `check_build` green (922 → 923). No SQL. Sixth ultrawide screen after Production, the client
 list, Punch, Crew Dispatch and the Schedule Board.
+
+## Build 924 — The phone menu is now a slide-out drawer
+Theo's spec (with the AccuLynx drawer as the reference): replace the burger dropdown with a left
+off-canvas drawer on mobile — slide in over a dark backdrop, branded header (name/company/switch),
+grouped links with icons + chevrons, close on backdrop/swipe-left/link. ONE `#navMenu` serves every
+page (its extra items are role/portal-added at runtime), so re-skinning it covers the whole app.
+Mechanism (the tricky part): `#navMenu` is toggled by `style.display`, which can't animate. Rather than
+rewrite the 3 close-sites or the dynamic content, `cr-drawer-script` mirrors `style.display` onto a
+`.cr-drawer-open` class via a MutationObserver, and the sheet forces `display:block` on mobile so the
+panel stays present to slide OUT; the transform (`translateX(-100%)`→`0`, .3s ease-in-out) animates both
+ways. Backdrop is created in JS and appended to body; backdrop-click and swipe-left both route through
+the app's existing `display='none'` close; the header switch calls `CardinalPortal.pick()`; the header
+name fills from `meName()`. Everything scoped `body:not(.cr-lnav-on)` (the app sets the rail only ≥1100px),
+so desktop keeps the untouched dropdown. Dark theme to match the app + reference; `.navopt` becomes flex
+(icon · label · `›`).
+Rendered at 390px: slides in, 320px, backdrop rgba(0,0,0,.5), branded header, all 31 items incl. the
+runtime-added ones. Gate `gate_drawer924.mjs`: closed off-screen (−320) → open translateX(0); backdrop
+0.5; header shown; backdrop-click AND nav-link-click close it; at 1200px cr-lnav-on active, NO backdrop,
+header hidden, drawer-open class not applied (dropdown untouched). Negative-controlled vs v923.
+`check_build` green (923 → 924). No SQL.
