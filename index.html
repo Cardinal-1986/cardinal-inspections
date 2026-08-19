@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 918 &#8212; Punch &amp; Repairs now has a back button in its header, like the other full-screen pages</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 919 &#8212; The roofing estimate’s measurement table is slimmed to area and pitch (the per-edge figures repeat in the priced items), and the crew work order now shows step &amp; wall flashing, penetrations and waste from the Roofr import</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9147,21 +9147,12 @@ table.units td.pr{text-align:right;white-space:nowrap;width:22%;}
 
 <!-- ======================= 1. ROOFR MEASUREMENTS ======================= -->
 <h2 class="sec"><span class="num">1</span>Roof Measurements (Roofr Report)</h2>
-<p>Measurements below are taken from the Roofr aerial measurement report for this property.
-Quantities in the line items are derived from these figures plus the stated waste factor.</p>
+<p>Total area and pitch are taken from the Roofr aerial measurement report for this property.
+The line-item quantities below are derived from the full Roofr figures plus the stated waste factor.</p>
 
 <table class="facts">
   <tr><td class="k">Total Roof Area</td><td><span class="ph" data-roofr="area">[e.g. 2,847 sq ft — 28.5 squares]</span></td></tr>
   <tr><td class="k">Predominant Pitch</td><td><span class="ph" data-roofr="pitch">[e.g. 6/12; porch 4/12]</span></td></tr>
-  <tr><td class="k">Ridges</td><td><span class="ph" data-roofr="ridge_lf">[e.g. 64 LF]</span></td></tr>
-  <tr><td class="k">Hips</td><td><span class="ph" data-roofr="hip_lf">[e.g. 38 LF]</span></td></tr>
-  <tr><td class="k">Valleys</td><td><span class="ph" data-roofr="valley_lf">[e.g. 52 LF]</span></td></tr>
-  <tr><td class="k">Eaves</td><td><span class="ph" data-roofr="eave_lf">[e.g. 148 LF]</span></td></tr>
-  <tr><td class="k">Rakes</td><td><span class="ph" data-roofr="rake_lf">[e.g. 96 LF]</span></td></tr>
-  <tr><td class="k">Step Flashing</td><td><span class="ph" data-roofr="step_lf">[e.g. 24 LF]</span></td></tr>
-  <tr><td class="k">Wall / Apron Flashing</td><td><span class="ph" data-roofr="wall_lf">[e.g. 18 LF]</span></td></tr>
-  <tr><td class="k">Penetrations</td><td><span class="ph" data-roofr="penetrations">[e.g. 4 pipe jacks, 1 furnace vent, 1 chimney]</span></td></tr>
-  <tr><td class="k">Waste Factor Applied</td><td><span class="ph" data-roofr="waste_pct">[e.g. 12% (hips/valleys)]</span></td></tr>
 </table>
 
 
@@ -20618,7 +20609,9 @@ function woMeasBoard(pr){
   if(!['sq','pitch','ridge','hip','valley','eave','rake'].some(function(k){ return ms[k]; })) return '';
   var rows = '';
   [['Pitch','pitch',''],['Ridge','ridge',' lf'],['Hip','hip',' lf'],
-   ['Valley','valley',' lf'],['Eave','eave',' lf'],['Rake','rake',' lf']].forEach(function(p){
+   ['Valley','valley',' lf'],['Eave','eave',' lf'],['Rake','rake',' lf'],
+   ['Step flashing','stepflash',' lf'],['Wall / apron flashing','wall',' lf'],
+   ['Penetrations','penetrations',''],['Waste factor','waste','%']].forEach(function(p){
     if(ms[p[1]]) rows += woRow(p[0], woEsc(ms[p[1]]) + p[2]);
   });
   if(ms.source) rows += woRow('Source', woEsc(ms.source));
@@ -23362,7 +23355,14 @@ function aerialMerge(all, d, source){
   putLen('eave',   d.eave_lf);
   putLen('rake',   d.rake_lf);
   putLen('drip',   d.drip_edge_lf);
-  putLen('stepflash', d.step_flashing_lf);
+  /* 919: step flashing is step_flashing_lf on a Hover report and step_lf on a
+     Roofr one; wall/apron, penetrations and waste are Roofr-only. Persisted here
+     so the crew work order can render the full set, not just the seven keys the
+     estimate always carried. Additive keys — existing meas consumers ignore them. */
+  putLen('stepflash', d.step_flashing_lf != null ? d.step_flashing_lf : d.step_lf);
+  putLen('wall',   d.wall_lf);
+  put('penetrations', d.penetrations);
+  put('waste', d.waste_pct);
   /* the pitch TABLE, kept whole. Gunn's roof is 9/12 over 81%, 5/12 over 15%
      and 2/12 over 3% — and that last 58 sqft is low-slope, which needs a
      different underlayment under RCO R905.1.1 and is already a Supplement Desk
@@ -40439,6 +40439,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:919, d:'2026-08-18', t:'Estimate measurements slimmed; work order gains the flashing/waste rows',
+s:'Two changes to the roofing paperwork. (1) On the client ESTIMATE, the Roof Measurements table used to list every edge \u2014 ridges, hips, valleys, eaves, rakes, step and wall flashing, penetrations, waste \u2014 right above the priced line items, which already carry those same quantities. It now shows just the total area and the pitch; the line-item quantities still auto-fill from the Roofr PDF exactly as before, and the Upload Roofr PDF button still works. (2) On the crew WORK ORDER, the Measurements section already pulled squares, pitch, ridge, hip, valley, eave and rake from the same Roofr (or Hover) import \u2014 it now also shows step flashing, wall/apron flashing, penetrations and the waste factor when the report provides them, so the crew sees the full set. Nothing about how measurements are stored changed.' },
 { b:918, d:'2026-08-18', t:'Punch & Repairs: a back button in the header',
 s:'The Punch \u0026 Repairs page now has a back arrow at the top-left of its header, the same one the other full-screen pages use. Tap it to go back to wherever you opened Punch from \u2014 the menu, or the Production hub. Nothing else on the page changed.' },
 { b:917, d:'2026-08-18', t:'Schedule Board: a two-week grid on wide monitors',

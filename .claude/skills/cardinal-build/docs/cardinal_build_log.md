@@ -19115,3 +19115,27 @@ Gate `gate_puback918.mjs`: 9 assertions GREEN (button in `.pu-head`, first/befor
 visible, drawn SVG not emoji, aria-label, click calls `history.back()` exactly once). Negative-
 controlled vs v917 (button absent). Rendered on a 412px phone — chevron reads clean on the dark
 header. `check_build` green (917 -> 918, marker `id="puBackBtn"`). No SQL.
+
+## Build 919 — Estimate measurements slimmed; work order gains flashing/waste rows
+Screenshot report (Theo): the roofing estimate lists every roof measurement (area, pitch, ridges,
+hips, valleys, eaves, rakes, step/wall flashing, penetrations, waste) right above the priced line
+items, which already carry those quantities — "seems redundant" — and those numbers "should be in
+the work order, pulled from Roofr like estimates."
+AUDIT FIRST: the crew work order (555) ALREADY pulls squares/pitch/ridge/hip/valley/eave/rake from
+`checklist.meas` via `woMeasBoard()` — the same Roofr/Hover import (554/674) that feeds the estimate.
+So half the ask was already built. Theo picked: (2) slim the estimate table to area+pitch, and
+(A) add the four missing rows to the work order.
+- **Part 2** — estimate Section 1 dropped from 11 rows to 2 (Total Roof Area + Predominant Pitch).
+  The per-edge rows repeated in the priced items. Safe because `fillRoofrFields` derives every
+  `[data-rq]` line-item quantity from the API RESPONSE object, not from the DOM measurement rows,
+  and `wireRoofrUpload` still finds a `[data-roofr]` anchor (area/pitch survive). Intro `<p>` reworded.
+- **Part A** — `aerialMerge` now persists `wall` (wall/apron flashing), `penetrations` (text) and
+  `waste` from a Roofr import, and reads step flashing from `step_flashing_lf` (Hover) OR `step_lf`
+  (Roofr) so both sources land it. `woMeasBoard` renders the four new rows after Rake. Additive meas
+  keys — existing consumers (Measurements panel, contract pitch line, Supplement Desk) ignore them.
+Both persist paths (estimate Roofr bar → `roofrMerge`, Measurements panel → `importMeasFrom`) funnel
+through `aerialMerge`, so one change covers both. `harness_674` stays green (70 real assertions; its
+`put('ridge|…')`-negation guard untouched — new keys use `putLen`/non-listed `put`). Gate
+`gate_estwo919.mjs`: 18 assertions GREEN, negative-controlled vs v918 (edge rows present + fields
+not persisted). `check_build` green (918 → 919, marker `put('waste', d.waste_pct)`). No SQL —
+`checklist.meas` is JSON, additive keys only.
