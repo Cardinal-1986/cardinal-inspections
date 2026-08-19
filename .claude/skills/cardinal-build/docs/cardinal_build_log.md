@@ -19340,3 +19340,79 @@ and **a failed feed says so by name rather than rendering as "no storms"**. Date
 regex parts, asserted against `Fri 7 Aug` — `new Date('2026-08-07')` parses as UTC and prints a day
 early in Ohio (the 718 bug). Negative control vs v926: **31 red, no crash.** `check_build` green
 (926 → 927). No SQL.
+
+## Build 928 — The Sales Floor becomes a hub; one objection deck, not two
+Theo, rejecting the previous ultrawide attempt on its premise rather than its layout: *"the objection
+cards should not be the main focus of this page. Should really just be a portal to the objections
+coach. As a sales training page we should have other modules filling that space where the cards are
+at. For instance portal for door knocking with tips and objection handling, maybe a storm data report
+with areas affected portal, a pricing guide for roof, siding, gutters, windows, etc"* — then
+*"Build all tiles"*. Two builds answer it: 927 built the one tile that did not exist, this one builds
+the hub.
+
+⚠️ **The audit found a duplicate pipeline nobody had noticed, and it is why this build is not just
+CSS.** The Objection Coach reads a **Supabase `objections` table**; the Sales Floor carried its **own
+hardcoded 13 cards** in `cr-sf-script`. Two stores of one concept — the bug class this project calls
+its most expensive. Measured before deleting anything: the DB deck had **27 cards in 6 categories**,
+and **ten of the Sales Floor's thirteen were already in it**. The other three were near-misses, not
+duplicates ("more than I expected" is not "higher than the other guy"; wear-and-tear is a different
+denial from partial-scope; "sleep on it" is not "I need to think about it") — and the DB deck had
+**no door-knock category at all**, which is exactly the gap Theo named.
+
+- **`sales_floor_objections_928.sql` — APPLIED and verified before the HTML change.** Adds six rows:
+  a new **"At the Door"** category (3 cards, `sort_order` 1–3 so it leads the deck — it is the first
+  conversation of the sale) and the three top-ups at 14/25/35, following the table's existing
+  ten-per-category convention. Wording carried across verbatim. **Idempotent, and proved so** — every
+  insert is guarded on the objection text; a second run with deliberately different response text
+  inserted nothing. Deck is now **33 cards across 7 categories**. Purely additive: nothing updated,
+  nothing deleted, the 27 untouched.
+- **The page.** The six-tab strip and the card wall are gone. What replaces them: today's objection
+  (kept — it was the good part), then the **Objection Coach as a full-width hero** because that is
+  literally the ask, with Practice a drill / Leaderboard / Log a real one as a compact row beneath it
+  (they are modes of one destination, not three more destinations), then **eight tiles** — Door
+  Knocking, Storm Data, Pricing Guide, Talk Tracks, Proof, Showcase, The Pop-Up Roof, Resource
+  Library — then the five Reference pages, unchanged.
+- **Every tile points at something that already exists.** Storm Data → `CardinalStorm.open()` (927).
+  Pricing Guide → `crOpenPricing()`; checked the catalog actually carries the trades Theo named
+  before promising it — Field Shingles / Underlayment / Decking / Ventilation / Hip & Ridge / Tearoff
+  / Flashings, **Siding, Gutters, Windows**, Trim. **Nothing was rebuilt.**
+- **Door Knocking is the only new page**, and it is a pane *of* the Sales Floor, not a new
+  full-screen view — three read-only text pages do not need three more `hideAllViews()` +
+  `navRestore()` registrations. Six things to do in order when you work a street (step 1 sends you to
+  Storm Data, step 6 sends you to the Coach — the hub pointing at itself), the three door objections
+  **read from the `objections` table**, and the knock word for word.
+- **Back goes UP one level.** A pane's back returns to the hub; only the hub's back leaves the
+  screen. Same rule the Production board uses, so the two full-screen hubs behave alike.
+- **The hardcoded lists are now FALLBACKS, not a parallel source** — `loadDeck()` reads the table and
+  the table always wins; the in-file copy only paints while the read is in flight or if it failed.
+  `todaysObjection()` rotates the DB deck once loaded. **Two readers of `objections` in the whole
+  file, asserted** — the Coach and this module.
+
+⚠️ **Three assertion faults in this build, all mine, all the same family — and the family is one this
+document already names.** (1) `'renderTab' not in src` and `'activeTab' not in src` failed **correct**
+code, because the photo gallery has its own `renderTabs()`/`activeTab` and the estimate builder has
+`renderTabStrip()`; the check must be scoped to the `cr-sf-script` slice. (2) Scoped, it *still*
+failed — **my own replacement comment says "TABS and activeTab went with it"**, so the word is in the
+prose explaining its own absence. Assert on the declaration (`var activeTab`, `function renderTab(`),
+never the word. (3) `count("view = 'hub'") == 2` failed at 3, because the **declaration reads the same
+as the two assignments** — the hardcoded-number assertion this file warns about. Now asserted by
+context, one site at a time. **That is three builds running where a comment has broken an assertion
+written to honour the comment-pollution rule.**
+
+⚠️ **And one check that could not fail.** The gate asserted the door cards "came from the table" by
+matching the real wording — which the hardcoded fallback also contains, so it would have passed with
+the fallback rendering. Reseeded with `SEEDED-DB-DOOR-*` text the fallback does not contain, plus the
+inverse assertion that the fallback wording is **absent**. Two more passed vacuously on the control
+tree, where `.every()` over an empty tile list is `true` (one printed "min Infinitypx").
+
+**A phone render changed the layout, as usual.** `minmax(158px,1fr)` gave two ~172px columns at 390px,
+breaking "Door Knocking" across two lines and every subtitle across four. 210px forces one column on a
+phone and still gives two inside the 640px wrap, four on a desktop with the rail.
+
+Gate `gate_sfhub928.mjs`: **29 assertions GREEN** — no tab strip, no card wall, nine tiles all with a
+drawn icon and clearing 44px, no sideways scroll at 390px, every named tile present, the Coach is the
+hero, Door Knocking opens in place with six steps and three table-sourced cards, back returns to the
+hub rather than leaving, Talk Tracks and Proof kept their writing, and the Storm/Pricing/Showcase/Coach
+tiles each open the real screen (proved by stubbing the opener, not by reading markup). Negative
+control vs v927: **20 red, no crash.** `check_build` green (927 → 928). Scroll-lock writers still
+**13**; body observers still **46 hits**.
