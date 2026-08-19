@@ -19185,3 +19185,20 @@ until loaded; `syncMenuCount()` (new helper in the punch module) sets it after `
 the exact `dbMeasN` pattern. Gate `gate_punch922.mjs`: opens a seeded project with 1 open + 1 done punch,
 tile fills to "1", not dimmed; negative-controlled vs v921 (no id, no helper). `check_build` green
 (921 → 922). No SQL.
+
+## Build 923 — Client profile lays out side-by-side above 1600px (ultrawide)
+Theo picked this from a menu of next steps. On a wide monitor the Overview was one ~1130px column
+with a ~330px dead strip and a ~2358px scroll. The profile's ≤560 order lives in that media block, so
+above 560 `#acxMount` is plain block flow — which made a pure-CSS multicol the low-risk lever.
+Above 1600px: the status band (`.dbstage`, `.dbmoney`, `#dbPayRow`, `#dbMoneyRow`) gets
+`column-span:all` (stays full width), `#acxMount` becomes `column-count:2`, `break-inside:avoid` on
+children + `break-after:avoid` on `.projsec` keeps each heading with its card, and the Job Menu is
+wrapped in a new `.ja-menu` div (`break-inside:avoid`) so it stays whole. Result: full-width band on
+top, then Location+Job Menu | History+Job Details+Reviews+Assigned+Convert. Retail only, scoped
+`body:not(.claim-insurance):not(.claim-community)`; the `.wrap` cap lifted from `--lnav-cap` to 1600px
+under the desktop nav, mirroring the Schedule Board (74696).
+Rendered at 1720px (2358 → 1554px, columns balanced) AND at 390px — phone PNG byte-for-byte identical
+to v922 (171768 bytes), so nothing changed below 1600. Gate `gate_profwide923.mjs`: 13 tiles in the
+wrapper; columnCount 2 at 1720 / auto at 1400; band spans; wide shorter than narrow; negative-controlled
+vs v922. `check_build` green (922 → 923). No SQL. Sixth ultrawide screen after Production, the client
+list, Punch, Crew Dispatch and the Schedule Board.

@@ -3524,7 +3524,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 922 &#8212; The Punch Outs tile in the job menu now shows the open count (it was reading a dash even when the job had an open punch out)</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-18 build 923 &#8212; On a wide monitor the client profile now lays out side by side — the status band stays full width and Location, the Job Menu and the details sit in two columns instead of one tall scroll</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11384,7 +11384,7 @@ function renderAcxOverview(){
       ? '<span class="dbaddr">&#128205; ' + esc(pr.address) + '</span>'
       : '<span class="axnote">No address on file \u2014 tap the pencil to add one.</span>') + '</div>' +
   '</div></div>';
-  html += '<h3 class="projsec" style="margin:18px 0 10px;">' + ICO('menu') + 'Job Menu</h3>' +
+  html += '<div class="ja-menu"><h3 class="projsec" style="margin:18px 0 10px;">' + ICO('menu') + 'Job Menu</h3>' +
     '<div class="jaboxrow">' +
       jt(dbIc('comms'), 'Communication', commsCount(pr), 'comms') +
       jt(dbIc('bell'), 'Notifications', mentions, 'notifs') +
@@ -11416,7 +11416,7 @@ function renderAcxOverview(){
        showTab, the same section the header button and the dropdown open. */
     '<div class="jaboxrow" style="grid-template-columns:1fr">' +
       jt(dbIc('workorder'), 'Work Orders', '', 'workorders') +
-    '</div>';
+    '</div></div>';
   /* ---- contacts: retired to the hero name row (Keeper, build 348). dbSwitchPrimary + add-contact live there now. ---- */
   var extra = ck.contacts || [];
   /* ---- payments + history pills (Keeper 3/3, build 349) \u2014 retail + community; insurance keeps its own cards ---- */
@@ -40438,6 +40438,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:923, d:'2026-08-18', t:'Client profile lays out side-by-side on a wide monitor',
+s:'On a wide monitor (1600px and up) the client profile stops being one tall single column. The status band at the top \u2014 the stage bar, Job Value, Payment Information and Money In \u0026 Commissions \u2014 stays full width, and everything below it (Location and its map, the Job Menu, Job Details, Google Reviews, Assigned To) flows into two side-by-side columns, so far less scrolling. The Job Menu stays together as one block. Phones, iPads and normal monitors keep the exact same single-column layout as before \u2014 this only appears past 1600px. Latest of the ultrawide screens, after Production, the client list, Punch, Crew Dispatch and the Schedule Board.' },
 { b:922, d:'2026-08-18', t:'Job-menu Punch Outs tile shows its open count',
 s:'On the client\u2019s Job Menu, the Punch Outs tile showed a dash even when the job had an open punch out on file. The count is loaded a moment after the menu is drawn, and the tile wasn\u2019t picking it up \u2014 it now shows \u201C\u2026\u201D until the punch list loads, then fills in the number of open items (the same way Photos, Measurements and Estimates already do). Tapping it still opens the Punch Outs page as before.' },
 { b:921, d:'2026-08-18', t:'Measurements tab themed to match the dark client page',
@@ -71885,6 +71887,24 @@ select{min-height:44px;}
     border:1px solid var(--rbe-line2,#2b2b33);
   }
 }
+  /* ── Build 923 · the client profile, side-by-side above 1600px ─────────
+     The Overview is one tall phone column (its ≤560 order lives in that media
+     block; above 560 it is plain block flow), so on an ultrawide it left a
+     ~330px dead strip and scrolled ~2300px. Here the status band (stage, job
+     value, payment, commissions) stays full width and everything below it flows
+     into two balanced columns — the Job Menu kept whole by its .ja-menu wrapper.
+     Retail only, past 1600px; phones, tablets and the claim CRMs are untouched. */
+  @media (min-width:1600px){
+    body.cr-lnav-on:not(.claim-insurance):not(.claim-community) #projectView .wrap:not(.masthead){ max-width:1600px; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount{ column-count:2; column-gap:34px; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbstage,
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .dbmoney,
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbPayRow,
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > #dbMoneyRow{ column-span:all; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > *{ break-inside:avoid; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount > .projsec{ break-after:avoid; }
+    body:not(.claim-insurance):not(.claim-community) #projectView #acxMount .ja-menu{ break-inside:avoid; }
+  }
 </style>
 <script id="cr-namebar-script">
 (function(){
