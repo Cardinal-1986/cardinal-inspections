@@ -1,11 +1,26 @@
 /* sentinel setup — the CRM (index.html), signed in, walked through its screens.
  *
  *   node sentinel.js index.html \
- *        --setup .../e2e_mock_supa.js,.../sentinel_setup_cardinal.js \
+ *        --setup .../sentinel_setup_cardinal.js,.../e2e_mock_supa.js \
  *        --since <previous artifact>
  *
- * ORDER MATTERS: the mock must come first — it defines window.supabase, which
- * the app calls during boot. This file only seeds it and declares the walk.
+ * ⚠ ORDER MATTERS, AND IT IS THE OPPOSITE OF WHAT IT LOOKS LIKE. THIS FILE
+ * GOES FIRST. The mock reads `var STORE = (window.__SEED__ || {})` at its own
+ * execution time, so a seed assigned after it lands in a variable nothing
+ * reads — the store stays EMPTY and every screen renders its empty state.
+ * Nothing errors. The walk completes. The report looks like a real sweep of a
+ * populated app and is a sweep of nothing, which is the worst possible
+ * failure for an instrument: confident, quiet and wrong.
+ *
+ * The first CRM run made exactly this mistake — mock first, seed second — and
+ * swept twelve empty screens while reporting twelve screens. The three ink
+ * findings it produced were real (they are chrome, present either way), but
+ * the lists, cards and tables where small text actually lives were never
+ * rendered at all.
+ *
+ * Putting this file first is safe: nothing here touches window.supabase, and
+ * the app does not call createClient until boot, long after both init scripts
+ * have run. seedLanded() below turns a repeat of this into a loud failure.
  *
  * WITHOUT THIS THE SENTINEL ONLY EVER SEES THE LOGIN SCREEN, and a sweep of a
  * login form reports CLEAN and means nothing by it. Every class this thing
@@ -24,6 +39,14 @@
 (function () {
   'use strict';
 
+  /* SENTINEL_AS=scottie sweeps as Curtis/Scottie's production role instead of
+     admin. Read from the page URL so it can be driven without editing a file. */
+  try {
+    var who = (location.search.match(/[?&]as=([\w.]+)/) || [])[1];
+    if (who === 'scottie') window.__AS__ = { email:'scottie@cardinalrenovations.net', name:'Scottie' };
+    else if (who === 'nick') window.__AS__ = { email:'nick@cardinalrenovations.net', name:'Nick' };
+  } catch (e) {}
+
   var LONG = 'Chimney flashing, step flashing and counter flashing all need replacing on the ' +
              'north elevation; the drip edge is undersized and the valley metal is rusted through.';
 
@@ -38,6 +61,7 @@
       { email:'theo@cardinalrenovations.net',    name:'Theo Dorion',   role:'admin',      phone:'937-555-0101' },
       { email:'joan@cardinalrenovations.net',    name:'Joan Dorion',   role:'admin',      phone:null },
       { email:'curtis@cardinalrenovations.net',  name:'Curtis',        role:'production', phone:null },
+      { email:'scottie@cardinalrenovations.net', name:'Scottie',       role:'production', phone:null },
       { email:'nick@cardinalrenovations.net',    name:'Nick',          role:'sales',      phone:null }
     ],
     projects: [
@@ -130,8 +154,24 @@
     return b.width > 2 && b.height > 2;
   }
 
+  /* ⚠ A silent empty store is what this guards. If the seed did not land, the
+     walk must FAIL — not quietly probe a dozen empty states and call it a
+     sweep. `seen` is checked against the fixtures this file actually declares,
+     so it cannot pass vacuously. */
+  function seedLanded() {
+    var n = (window.__SEED__ && window.__SEED__.projects || []).length;
+    if (n < 3) throw new Error('seed missing: __SEED__.projects has ' + n + ', expected 3');
+    var rows = document.querySelectorAll(
+      '[data-pid],[data-project],[data-open-project],.clirow,.ljrow,.pcard,.cr-pcard');
+    if (!rows.length) throw new Error(
+      'the store is EMPTY at render time — put sentinel_setup_cardinal.js BEFORE ' +
+      'e2e_mock_supa.js in --setup, or the mock reads __SEED__ before it exists');
+    return rows.length;
+  }
+
   window.__sentinelStates = [
-    { name:'home',        run: async function () { leaveLanding(); closeAll(); await pause(600); } },
+    { name:'home',        run: async function () {
+        leaveLanding(); closeAll(); await pause(700); seedLanded(); } },
     { name:'client',      run: async function () {
         leaveLanding(); closeAll();
         if (typeof openProject === 'function') openProject('p1');

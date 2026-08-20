@@ -19971,3 +19971,66 @@ New: `sentinel_setup_cardinal.js` (twelve states, real-shaped fixtures, one deli
 project) and `--setup a.js,b.js` so the CRM reuses the shared `e2e_mock_supa.js` instead of growing
 a second copy that drifts. `--selftest` GREEN, all 7 checks fire. `check_build` green (937 → 938).
 No SQL.
+
+## Build 939 — Text size: three steps, remembered per phone
+
+**Theo, relaying Scottie:** *"Scottie says he has a hard time reading the screen, maybe the font size
+or contrast?"* Measured as **Scottie's own production login**, not admin, on the screens he works in.
+He was right, and it is size:
+
+| | |
+|---|---:|
+| distinct text styles rendering **under 12px** | **47 of 155** |
+| `font-size` declarations below 12px in the file | **847** (202 at 11px, 184 at 10px, down to **6.5px**) |
+| styles failing the contrast floor | **4** |
+
+⚠️ **A contrast sweep would have answered the wrong question.** 938 had just closed INK to zero and
+the app still could not be read. Size and contrast both present as "I can't read this" and the fixes
+share nothing.
+
+**The lever is `zoom` on `:root`, and the reason is the 847.** Every size in this file is a px
+LITERAL, so no custom property can reach them and rem would be a rewrite of the stylesheet.
+`:root[data-cr-text="lg"]{zoom:1.15}` / `xl{zoom:1.30}` scales the rendered box without touching one
+declaration. Steps chosen from the measurement: the smallest text in the app goes **10px → 11 → 12**,
+median rendered line **29 → 38.7 → 44.4**.
+
+⚠️ **This matters far more than it looks because he is in the INSTALLED app.** iOS disables
+pinch-zoom in standalone mode — no browser chrome, no gesture. In a Safari tab this is a nicety;
+installed, it was his only way to read the screen and it did not exist.
+
+Resolved in the **same pre-paint IIFE as the theme** (`localStorage['cr-textsize']`), or the app
+visibly jumps on every load. Control sits in the drawer **below Sign out**, in the chrome zone —
+`applySections()` skips anything that is not `.navsec`/`.navopt`, so it is never collapsed away with
+a section. `window.CardinalTextSize` via `Object.assign`. **No scroll-lock writer (still 13), no
+`document.body` observer (still 45).**
+
+### What was measured before it was designed
+
+**Four levers were tested in Chromium before anything was written** — `html{zoom}`, `body{zoom}`,
+`html{font-size:125%}`, and a control. ⚠️ **The first run reported that ALL FOUR did nothing,
+including the control**, which is what a lever that is not being applied looks like. It was the
+*measurement*: **`getComputedStyle().fontSize` does not reflect `zoom`** — it returns an identical
+`10px` at every level, while the rendered box goes 11px → 15px. Everything here is measured by
+`getBoundingClientRect()` because of it, and the gate carries the warning.
+
+The thing actually worth proving was the installed chrome, since `zoom` moves the coordinate space
+under `position:fixed`: at **both** steps `#pwaNav` stays flush (bottom 844) at full width (390/390),
+and horizontal overflow is **0px**.
+
+Gate `gate_textsize939.mjs`: **23 assertions GREEN** — starts at Normal, three steps, the button is
+reachable **in the really-opened drawer** at a 34×34 target, text is genuinely bigger by rendered
+box, the bar stays flush and full width at both steps, nothing runs off the side, the control
+reflects its own state, the choice is stored, Normal returns the layout exactly (29 → 29), and it
+survives a **reload** applied before first paint.
+
+⚠️ **The negative control CRASHED before it reported** — BUG_CLASSES 37, on a tree where the control
+does not exist and every `querySelector(...).click()` is a null dereference. A stack trace reads as
+"not green" while proving nothing. Every tap now goes through `tap()`, and v938 reports **RED with
+10 named failures**, including *"there is no 'lg' control on this build to tap"*.
+
+`check_build` green (938 → 939). No SQL.
+
+**Not done, and deliberately:** the 4 contrast failures the same sweep found — the `APPROVED` stage
+chip is white on `#7cb342` at **2.5:1** against a floor of 3. That is a real defect and it is a
+**stage colour**, which this project treats as semantic and app-wide (15 uses of that green). It is
+its own build with its own preview, not a rider on this one.

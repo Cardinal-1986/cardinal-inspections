@@ -5423,3 +5423,21 @@ node sentinel.js index.html \
 `--since` is what keeps it usable — it subtracts the carried debt so the report is what *this* build
 did. The current baseline is **11 DEAD findings, all triaged as benign** (touch-target residue, one
 documented hide-early-restore-later); see the 938 build-log entry before re-triaging any of them.
+
+**Build 939 — Text size (Menu → bottom of the drawer).** Three steps: Normal / Large / Larger, as
+`A A A`. Scales the whole app via `zoom` on `:root` (`data-cr-text="lg"|"xl"`, 1.15 / 1.30), stored
+in `localStorage['cr-textsize']` and resolved in the same pre-paint script as the theme, so it never
+flashes. **Per device — turning it up does not change anyone else's screen.**
+
+Built for Scottie, who could not read the screen. Measured on his production login it was **size, not
+contrast**: 47 of 155 rendered text styles sit under 12px, and the file carries **847 font-size
+declarations below 12px** (down to 6.5px). `zoom` is the lever precisely because those 847 are px
+literals no token can reach. **It matters most in the installed app, where iOS disables pinch-zoom
+entirely** — there is no gesture to fall back on.
+
+`window.CardinalTextSize.set('md'|'lg'|'xl')` / `.get()`. Gate: `scripts/gate_textsize939.mjs`
+(23 assertions, negative-controlled). ⚠️ **Measure text with `getBoundingClientRect()`, never
+`getComputedStyle().fontSize`** — the latter ignores `zoom` and will tell you nothing changed.
+
+**Still open from the same sweep:** the `APPROVED` stage chip is white on green at **2.5:1**
+(floor 3). Stage colours are semantic and app-wide — its own build, with a preview.

@@ -3016,3 +3016,45 @@ visible in a browser tab where it is `display:none`, and it has now cost a round
 ⚠️ **And a state must hand back the screen it names.** `hideAllViews()` does not close the drawer,
 so without an explicit `closeDrawer()` every later state was probed through an open menu. A leaked
 state is worse than a missing one: it reports the wrong screen under the right name.
+
+## Class 53 — a fixture that never loaded, in an instrument that reported a full sweep (20 Aug, build 939)
+
+**Shape.** A harness seeds a mock database and walks the app. The seed is assigned *after* the mock
+has already read it. The store stays empty, every screen renders its empty state, nothing throws, the
+walk completes, and the report names twelve screens it never actually saw populated.
+
+**Where it bit.** `e2e_mock_supa.js` does `var STORE = (window.__SEED__ || {})` **at its own
+execution time**. The sentinel's `--setup` list was `mock,setup` — mock first — so
+`sentinel_setup_cardinal.js` set `window.__SEED__` into a variable nothing would ever read again.
+The first CRM sweep therefore swept **twelve empty screens** and reported twelve screens. Its three
+ink findings were real only because they are *chrome*, present either way; the lists, cards and
+tables where small text actually lives were never rendered at all.
+
+**Why it is worse than a crash.** It is confident, quiet and wrong. There is no error, no empty
+result, no zero to notice — the numbers look exactly like a real sweep of a real app. It was caught
+only by reading the mock's source while adding an unrelated feature, and the very next run with the
+order corrected immediately surfaced **four findings the empty sweep never saw**, including the
+`APPROVED` stage chip at 2.5:1 on the client profile.
+
+**The rule.** Order matters wherever one init script reads what another writes, and **the reader
+decides the order, not the writer's importance.** Where a fixture can silently fail to load, the
+harness must assert it landed and fail loudly:
+
+```js
+function seedLanded(){
+  var n = (window.__SEED__ && window.__SEED__.projects || []).length;
+  if (n < 3) throw new Error('seed missing: projects has ' + n);
+  var rows = document.querySelectorAll('[data-pid],.clirow,.ljrow,.pcard');
+  if (!rows.length) throw new Error('the store is EMPTY at render time — setup must precede the mock');
+}
+```
+
+**Negative-controlled**: run with the wrong order and the guard fires —
+`RUN state "home" threw: the store is EMPTY at render time`. A guard for a silent failure that has
+never been seen to fire is itself a silent failure.
+
+⚠️ **Same family, different instrument, same day:** `getComputedStyle().fontSize` does **not**
+reflect `zoom` — it returns an identical `10px` at every zoom level while the rendered box goes
+11px → 15px. A lever test built on it reported that all four levers, *including the control*, did
+nothing. **When every arm of an experiment agrees — the control included — suspect the instrument,
+not the world.**
