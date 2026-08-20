@@ -19844,3 +19844,64 @@ buttons clear of the installed bottom bar. `check_build` green (935 → 936). No
 
 **Left for Theo:** the stray **"Chinney"** punch on Kathy May (23:19:06, no date) is the orphan from
 the false failure. Not deleted — his data, his call.
+
+## Build 937 — The signature pad, reachable on every screen
+
+**"Check every one."** 935 fixed the Production add sheet's clearance and 936 the punch save; the
+standing offer was to sweep the *other* bottom-anchored surfaces for the same fault. This is that
+sweep, and it found one — the worst one available.
+
+**`#sigModal` — the client signature pad — was unusable on any short screen in the installed app.**
+Card 12vh from the top, a 170px canvas under it, `position:fixed; inset:0` and **no `overflow`
+whatsoever**, so at 844×390 (phone landscape) Clear / Cancel / **Apply signature** rendered at
+`344..388` with `#pwaNav` owning everything from `327` down. With no scroller there was nothing to
+scroll. Measured, not inferred: `elementFromPoint` at Apply's centre returned **`pwaNav`**. A
+homeowner could sign and then have no way to apply it.
+
+⚠️ **595's own comment is what hid this for the whole life of the pad.** It reads: *"#projModal was
+the ONE fixed overlay in this file with no overflow — #ckModal, #gcModal, #leadModal, #leadFormModal
+and #apptModal all carry overflow:auto."* `#sigModal` is the **second**, and it was never in that
+list. An audit that names its own completeness is trusted exactly as far as its enumeration went.
+
+**The fix is two lines, both existing conventions.** `overflow:auto` joins the five siblings.
+⚠️ **The clearance goes on the OVERLAY as `padding-bottom`, not on the card as `margin-bottom`,**
+because the card's margin is an **inline** `style="…margin:12vh auto 0"` and a normal stylesheet
+declaration loses to it — the `#tab-overview` trap, in its other form. Same `88px + safe-area`
+constant as 595 and 935.
+
+### The instrument — `gate_sheets937.mjs`, 17 surfaces × 4 screens
+
+A control passes only if **a tap at its centre lands on it**: scroll it into view, then
+`elementFromPoint`. That cannot be fooled by z-index, a transform, or a bar that is transparent
+where it overlaps, and it is why one build closes this class rather than one modal. Surfaces:
+the ten markup modals, `cr-pb-modal`, and the module views (`cr-abc`, `cr-storm`, `cr-occ`,
+`crewsView`, `cr-estimates-mount`, `cr-sf`, `cr-pb`). **68/68 staged; a surface that will not open
+is counted as a FAILURE, never a pass.**
+
+⚠️ **The probe was wrong twice before it was right, and both faults FLATTERED nothing — they
+invented bugs.** (1) Judging every control with its scroller forced to the **end** pushes the top of
+a list under a sticky header: it reported `cr-abc`, `cr-occ`, `cr-sf` and 14 `cr-pb` controls as
+blocked by `hd` / `occ-head` / `crBanner` / `cr-hd2-bar`, all reachable by scrolling back up. (2) The
+same forcing reported `leadFormModal`'s "＋ Add Another" at `-31..13` as unreachable when it had
+merely scrolled off the top. Fixed by measuring what a person does — `scrollIntoView` per control,
+*then* hit test. A control still covered after that is covered at **every** scroll position, which
+is exactly what a fixed bottom bar does and a sticky header does not.
+
+**Result: GREEN, 17 surfaces × {430×932, 375×667, 844×390, 1194×834}.** Negative control vs v936:
+**RED on `sigModal` at 844×390**, naming `pwaNav` as the blocker on all three buttons — and the
+older `gate_sheets937.mjs` run against **v934** independently reproduces 935's defect
+("Cancel" and "Add it" at `865..909`, blocked by `pwaNav`), so the instrument has been seen to fail
+on two different builds for two different modals. Direct measurement of Apply signature:
+**v936 `344..388`, hit `pwaNav`, unreachable → 937 `234..278`, hit `sigApply`, reachable.**
+`check_build` green (936 → 937). No SQL.
+
+**Everything else is clean.** The other sixteen surfaces pass on all four screens, including the
+five 595 named and `projModal` itself — the control that proves the probe can see the thing it is
+looking for.
+
+**Correction to 936's hand-over note.** The stray **"Chinney"** punch on Kathy May is *not* a bare
+orphan: it carries a comment — `@Scottie yo`, 23:19:06 + 2m43s. Deleting it deletes that message.
+The full residue of the 936 fault is three punches on that one client inside 70 seconds
+(`Remove rear chimney, patch damaged shingles` 23:18:36 · `Chinney` 23:19:06 · `Chimney` 23:19:46,
+the last carrying the date and time). Checked across the whole `punch_items` table, all time —
+**no other client is affected.** Still Theo's call.

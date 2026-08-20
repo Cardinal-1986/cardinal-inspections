@@ -2939,3 +2939,40 @@ anything into it.**
   obscured element, which is why five builds of gates stayed green.
 - Read **painted pixels** off a screenshot for anything describable as "too dark"; `getComputedStyle`
   reports an element's own background and cannot see what is drawn over it.
+
+## Class 51 — an audit that NAMES its own completeness, and enumerated one short (19 Aug, build 937)
+
+**Shape.** A previous build writes a comment asserting a survey: *"X was the ONE thing in this file
+with property P — A, B, C, D and E all have it."* The list becomes the record. Nobody re-derives it,
+because it reads like it was already derived. It was — just incompletely.
+
+**Where it bit.** Build 595 fixed `#projModal`'s bottom clearance and left this in the stylesheet:
+
+> `/* 595: #projModal was the ONE fixed overlay in this file with no overflow -`
+> `   #ckModal, #gcModal, #leadModal, #leadFormModal and #apptModal all carry overflow:auto. */`
+
+**`#sigModal` is the second one, and it was never in that list.** It is `position:fixed; inset:0`
+with no `overflow` at all — the client signature pad. On any short viewport the three buttons,
+including **Apply signature**, rendered underneath the installed bottom bar with no scroller to
+bring them up. 342 builds between the pad shipping and anyone noticing.
+
+**Why the list was believed.** It is specific, it names five files, and it is *mostly right*. The
+same tell as the partial theming pass: **five of six correct reads as done**, and the sixth reads as
+a deliberate exception rather than an omission.
+
+**The rule.** A comment that asserts a survey is a **claim with a date on it**, not an index. When
+you rely on one, re-run the enumeration — it costs one regex. And when you write one, write the
+query beside it so the next person can re-run it instead of trusting it:
+
+```
+/* every fixed overlay with inset/bottom:0 and no overflow:
+   grep 'position:fixed' + 'inset:0|bottom:0', minus those declaring overflow */
+```
+
+⚠️ **The related trap, in the instrument rather than the prose.** The first two versions of
+`gate_sheets937.mjs` judged every control with its scroller forced to the **end**, which pushes the
+top of a list under a sticky header — and duly reported 19 perfectly reachable controls as blocked
+by `hd`, `occ-head`, `crBanner` and `cr-hd2-bar`. **A probe must model what a person does**
+(`scrollIntoView`, *then* hit test), or it manufactures findings. A control still covered after
+being scrolled into view is covered at every scroll position — which is exactly what a fixed bottom
+bar does and a sticky header does not. That distinction *is* the check.

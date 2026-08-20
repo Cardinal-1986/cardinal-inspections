@@ -3562,7 +3562,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 936 &#8212; Adding a punch out from a client page no longer shows a red error after it has already saved &#8212; that false failure is why a couple of items got added twice. The time box on that sheet is also full width now, so it stops cutting off the PM</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 937 &#8212; The client signature pad works sideways. Held in landscape on the installed app, Clear, Cancel and Apply signature were hidden behind the bottom bar with no way to scroll to them &#8212; so a client could sign and nobody could apply it. Every screen with buttons at the bottom was checked the same way</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40556,6 +40556,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:937, d:'2026-08-20', t:'The signature pad, reachable on every screen', s:'Holding the phone or the tablet sideways put Clear, Cancel and Apply signature underneath the bottom bar of the installed app, with nothing to scroll \u2014 so the client could sign and then had no way to apply it. The pad now scrolls like every other form in the app and keeps the bar\u2019s worth of room under its buttons. Found by checking every bottom-anchored screen the way a finger checks one: asking what a tap at each button would actually hit.' },
 { b:936, d:'2026-08-20', t:'Adding a punch out from a client page stops reporting a false failure',
 s:'Adding a punch out, ticket or callback from a client\u2019s page ended with a red \u201CCould not add\u201D message \u2014 but the item had ALREADY been saved. The message came from drawing the Production calendar afterwards, which had never been set up because you came in from the client page rather than from the Production board. So the save worked and the app said it had not, which is why one or two items got entered twice. Fixed at the one place every screen draws through, so it cannot come back on another route. Also on that sheet: the time box was sharing half a row with the date and was too narrow to show the PM, so it now takes the full width on a phone.' },
 { b:935, d:'2026-08-19', t:'The Add an item sheet stops hiding its own buttons',
@@ -69068,6 +69069,26 @@ window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
    over this z-index:200 modal, so without it Save scrolls under the bar. */
 #projModal .projform{margin-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
 body.standalone #projModal .projform{margin-bottom:calc(88px + env(safe-area-inset-bottom,0px));}
+
+/* 937: 595's audit above missed one. #sigModal is the SECOND fixed overlay
+   with no overflow, and it is the worse of the two - the client signature pad,
+   the surface a homeowner touches at the kitchen table. Its card is 12vh from
+   the top with a 170px canvas under it, so on any SHORT viewport (phone
+   landscape at 390px tall, measured) Clear / Cancel / Apply signature render
+   at 344..388 with the installed bar owning everything below ~328. With no
+   scroller there is nothing to scroll: the three buttons were simply gone.
+   A hit test found it - elementFromPoint at each button's centre returned
+   #pwaNav - and one viewport would never have: at 932px tall it is clean,
+   which is why it survived from the day the pad shipped.
+
+   Two lines, both already this file's conventions. overflow:auto joins the
+   five siblings 595 named. The clearance goes on the OVERLAY as padding, not
+   on the card as margin, because the card's margin is an INLINE style
+   (margin:12vh auto 0) and a normal stylesheet declaration loses to it -
+   the trap #tab-overview's five dead cards are named for. Same 88px + safe
+   area constant as 595 and 935. */
+#sigModal{overflow:auto;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));}
+body.standalone #sigModal{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px));}
 </style>
 
 
