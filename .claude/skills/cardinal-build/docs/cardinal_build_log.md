@@ -20115,3 +20115,33 @@ was one.* Corrected to assert the opposite, with the reasoning in place.
 
 Negative control vs v939: **RED, 6 named failures, no crash** (BUG_CLASSES 37 — every tap goes
 through `tap()`). `check_build` green (939 → 940).
+
+## Build 941 — Suppliers stops trapping the app
+
+**Found by the readability audit, whose own first five runs were its victim** — every screen after
+Suppliers in the walk order was being measured through the stuck panel. `#cr-abc` (z-index 9600) was
+registered NOWHERE: not in `hideAllViews()` (so Clients/Crews/anything opened afterwards rendered
+underneath it — confirmed by driving the real drawer handler), not in `navRestore()` (so the phone's
+back gesture walked straight past it). Its own ✕ was the only exit. **All 23 menu destinations were
+given the same test — open X, then demand Clients reach the front — and Suppliers was the only trap.**
+(Portal's picker is a modal doing modal things; Landing is the hub by design; Settings passed once
+the probe read it properly.)
+
+Three sites, the 570-572 checklist run forward:
+- `open()` gains the **belt**: `hideAllViews()` on the way in, `navSetView('suppliers')` so back works
+  — copied from storm/showcase/punchcard.
+- `hideAllViews()` closes it — **in the DISPLAY-shown group**, see below.
+- `navRestore()` gains `case 'suppliers'`, beside storm's.
+
+⚠️ **The first draft put cr-abc in the class-gated api list and the gate caught it before it
+shipped.** That loop's own guard — `if(!el.classList.contains('open')) return;` — skipped Suppliers
+silently, because its open() sets `display:flex` and never touches a class. `hideAllViews()` still
+reported `display:flex` under test. *The close lever must match how the screen is shown* — the
+doctrine's own table, and the comment I wrote calling the guard "a harmless no-op" was the mistake
+naming itself. Moved to the display-shown list beside `crewsView` and the mounts.
+
+Gate `gate_suppliers941.mjs`: **9 assertions GREEN** driving the real drawer — Suppliers in front,
+then Clients genuinely reaching the front, Crews too, `history.state` recording the view, and
+`hideAllViews()` closing it directly. Negative control vs v940: **RED on 4** — including
+`navSetView` null and `display:flex` surviving `hideAllViews()`. `check_build` green (940 → 941).
+No SQL.
