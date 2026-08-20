@@ -2976,3 +2976,43 @@ by `hd`, `occ-head`, `crBanner` and `cr-hd2-bar`. **A probe must model what a pe
 (`scrollIntoView`, *then* hit test), or it manufactures findings. A control still covered after
 being scrolled into view is covered at every scroll position — which is exactly what a fixed bottom
 bar does and a sticky header does not. That distinction *is* the check.
+
+## Class 52 — a probe that stages a screen the app can never show (19 Aug, build 938)
+
+**Shape.** A harness opens a surface by calling the thing that opens it — clicking the button,
+setting the class — without first asking whether that control is *reachable at this configuration*.
+The surface renders, the probe measures it, and every number is real. The screen just cannot happen.
+
+**Where it bit.** `sentinel_setup_cardinal.js` opened the nav by clicking `#navBtn`. At 1194px build
+926 hides that button on purpose — `body.cr-lnav-on header.site #cr-hd2-bar #navBtn{display:none
+!important}`, because the left rail is the nav at desktop and Theo picked one nav, not two. Clicking
+it anyway opened a `#navMenu` that still carries its pre-925 WHITE ground, and the probe dutifully
+scored its light-era inks at 2.31:1 and 2.65:1. **Two invented findings — and because the drawer
+does not close with `hideAllViews()`, that one screen leaked into three later states, making four.**
+
+**The tell I nearly missed.** My first diagnostic said the burger *was* visible at 1194px, and I was
+one step from reporting that 926 had regressed. It had not: I measured the burger **before**
+`leaveLanding()`, and `body.cr-lnav-on` is only set once the app is actually shown. **A measurement
+taken at the wrong moment in the boot is not a measurement of the app.**
+
+**The rule.** Before a harness operates a control, assert the control is *on screen* — computed
+`display`/`visibility` plus a non-zero box — not merely present in the DOM. When it is legitimately
+absent, drive the surface that replaces it at that width rather than forcing the one that is gone.
+And **name states for the job, not the mechanism**: the state is `nav`, and it means "whichever nav
+this width actually has".
+
+```js
+function onScreen(el){ if(!el) return false;
+  var cs = getComputedStyle(el);
+  if (cs.display==='none' || cs.visibility==='hidden') return false;
+  var b = el.getBoundingClientRect(); return b.width > 2 && b.height > 2; }
+```
+
+**Related, and the reason this class is expensive rather than merely wrong:** the findings it
+invents are *indistinguishable from real ones* — correct ratios, correct selectors, a real element.
+Nothing about them looks staged. This is the same family as build 935's gate forcing `#pwaNav`
+visible in a browser tab where it is `display:none`, and it has now cost a round twice.
+
+⚠️ **And a state must hand back the screen it names.** `hideAllViews()` does not close the drawer,
+so without an explicit `closeDrawer()` every later state was probed through an open menu. A leaked
+state is worse than a missing one: it reports the wrong screen under the right name.
