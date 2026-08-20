@@ -5403,3 +5403,41 @@ interactive control: scrolled into view, does a tap at its centre actually land 
 `elementFromPoint`, not arithmetic. Run it whenever a screen gains a bottom-anchored control —
 `node gate_sheets937.mjs [path]`, the path argument being the negative control. It has been seen
 red on **two** builds for two different modals (v934 → the 935 add-sheet; v936 → this one).
+
+**Build 938 — the first contrast sweep of the CRM.** Three pieces of text under the 4.5:1 floor,
+found by the sentinel and fixed from measured options: the drawer's build stamp (3.39 → 6.39:1), the
+banner's selected CRM chip (3.51 → 4.81:1, by darkening the CHIP so every CRM colour survives) and
+`Sign out` in the desktop rail (3.40 → 5.50:1, via a new `CRM_INK` map published as `--lnav-ink`).
+The chip fix is **dark-mode-scoped on purpose** — in `rb-light` the same change measures 5.67 → 3.18.
+
+**The reusable part is `scripts/sentinel_setup_cardinal.js`.** It signs the sentinel in and walks
+twelve screens (home, client, Production, Sales Floor, Storm, OC Colors, Crews, Estimates, the nav,
+New Project, the checklist, the signature pad). Run it whenever a screen changes colour:
+
+```
+node sentinel.js index.html \
+  --setup .../e2e_mock_supa.js,.../sentinel_setup_cardinal.js \
+  --since <previous artifact>
+```
+
+`--since` is what keeps it usable — it subtracts the carried debt so the report is what *this* build
+did. The current baseline is **11 DEAD findings, all triaged as benign** (touch-target residue, one
+documented hide-early-restore-later); see the 938 build-log entry before re-triaging any of them.
+
+**Build 939 — Text size (Menu → bottom of the drawer).** Three steps: Normal / Large / Larger, as
+`A A A`. Scales the whole app via `zoom` on `:root` (`data-cr-text="lg"|"xl"`, 1.15 / 1.30), stored
+in `localStorage['cr-textsize']` and resolved in the same pre-paint script as the theme, so it never
+flashes. **Per device — turning it up does not change anyone else's screen.**
+
+Built for Scottie, who could not read the screen. Measured on his production login it was **size, not
+contrast**: 47 of 155 rendered text styles sit under 12px, and the file carries **847 font-size
+declarations below 12px** (down to 6.5px). `zoom` is the lever precisely because those 847 are px
+literals no token can reach. **It matters most in the installed app, where iOS disables pinch-zoom
+entirely** — there is no gesture to fall back on.
+
+`window.CardinalTextSize.set('md'|'lg'|'xl')` / `.get()`. Gate: `scripts/gate_textsize939.mjs`
+(23 assertions, negative-controlled). ⚠️ **Measure text with `getBoundingClientRect()`, never
+`getComputedStyle().fontSize`** — the latter ignores `zoom` and will tell you nothing changed.
+
+**Still open from the same sweep:** the `APPROVED` stage chip is white on green at **2.5:1**
+(floor 3). Stage colours are semantic and app-wide — its own build, with a preview.

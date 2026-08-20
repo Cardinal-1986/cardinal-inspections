@@ -11,13 +11,20 @@
    backend proves (RLS acceptance, trigger effects — validated separately). */
 (function () {
   'use strict';
-  var ADMIN_EMAIL = 'theo@cardinalrenovations.net';
+  /* Who is signed in. Defaults to theo@ (admin) so every gate written against
+     this mock behaves exactly as before. A setup file that runs BEFORE this
+     one may set window.__AS__ = {email, name} to sign in as somebody else —
+     which is the only way to see what a production or sales user sees, since
+     half this app's surfaces are gated on role. Scottie reported text he
+     could not read; an admin-only sweep cannot answer that. */
+  var AS = window.__AS__ || null;
+  var ADMIN_EMAIL = (AS && AS.email) || 'theo@cardinalrenovations.net';
   var USER = {
     id: '00000000-0000-4000-8000-0000000000aa',
     email: ADMIN_EMAIL,
     role: 'authenticated',
     aud: 'authenticated',
-    user_metadata: { full_name: 'Theo Dorion' },
+    user_metadata: { full_name: (AS && AS.name) || 'Theo Dorion' },
     app_metadata: { provider: 'email' }
   };
   var SESSION = {

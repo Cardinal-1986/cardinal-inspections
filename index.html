@@ -5,6 +5,49 @@
 (function(){var t;try{t=localStorage.getItem('cr-mode');}catch(e){}
 if(!t)t=(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';
 document.documentElement.setAttribute('data-mode',t);})();
+/* 939: text size, resolved in the SAME pre-paint pass as the theme and for the
+   same reason - applying it after first paint means the app visibly jumps.
+   Scottie (production, installed app on a phone): "hard time reading the
+   screen". Measured as his login: 47 of 155 text styles render under 12px and
+   there are 847 font-size declarations below 12px in this file, down to 7.5px.
+   Only 4 styles fail contrast. It is size, and he said so himself.
+
+   ⚠ WHY zoom AND NOT A TOKEN. Every size in this file is a px LITERAL - 847 of
+   them under 12px alone - so no custom property can reach them and rem would
+   be a rewrite of the whole stylesheet. zoom scales the rendered box without
+   touching one declaration.
+
+   ⚠ AND WHY IT MATTERS THAT HE IS IN THE INSTALLED APP: iOS disables
+   pinch-zoom in standalone mode, so he has no browser chrome and no gesture to
+   fall back on. In a Safari tab this would be a nicety; installed it is his
+   only way to read the screen.
+
+   Measured in Chromium at 390x844 with body.standalone before this shipped -
+   at BOTH steps the installed bottom bar stays flush (bottom 844, full 390px
+   width) and the body does not scroll sideways by a single pixel. Median
+   rendered line 23.8px -> 30.9 -> 37.5; smallest text 10px -> 11 -> 12. */
+(function(){var z;try{z=localStorage.getItem('cr-textsize');}catch(e){}
+if(z==='lg'||z==='xl')document.documentElement.setAttribute('data-cr-text',z);})();
+function crTextSize(v){var r=document.documentElement;
+if(v==='md')r.removeAttribute('data-cr-text');else r.setAttribute('data-cr-text',v);
+try{localStorage.setItem('cr-textsize',v);}catch(e){}
+try{var bs=document.querySelectorAll('[data-cr-text-set]');
+for(var i=0;i<bs.length;i++)bs[i].setAttribute('aria-pressed',
+  bs[i].getAttribute('data-cr-text-set')===v);}catch(e){}}
+document.addEventListener('click',function(e){
+var b=e.target&&e.target.closest&&e.target.closest('[data-cr-text-set]');
+if(b){e.preventDefault();crTextSize(b.getAttribute('data-cr-text-set'));}});
+/* the buttons are in static markup further down, so paint the stored choice
+   onto them once the document exists. Without this the control always reads
+   "Normal" even when the app is already zoomed - a control that lies about
+   its own state is worse than no control. */
+document.addEventListener('DOMContentLoaded',function(){
+var v=document.documentElement.getAttribute('data-cr-text')||'md';
+try{var bs=document.querySelectorAll('[data-cr-text-set]');
+for(var i=0;i<bs.length;i++)bs[i].setAttribute('aria-pressed',
+  bs[i].getAttribute('data-cr-text-set')===v);}catch(e){}});
+window.CardinalTextSize=Object.assign(window.CardinalTextSize||{},{
+set:crTextSize,get:function(){return document.documentElement.getAttribute('data-cr-text')||'md';}});
 function crFlip(){var r=document.documentElement;
 var next=r.getAttribute('data-mode')==='light'?'dark':'light';
 r.setAttribute('data-mode',next);
@@ -15,6 +58,42 @@ try{var bs=document.querySelectorAll('[data-cr-theme]');for(var i=0;i<bs.length;
 try{var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',next==='light'?'#f7f5f2':'#170f11');}catch(e){}}
 document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-cr-theme]');if(b){e.preventDefault();crFlip();}});
 </script>
+<style id="cr-textsize-styles">
+/* 939: two steps, chosen from the measurement rather than picked by eye -
+   1.15 lifts the smallest text in the app from 10px to 11px and 1.30 to 12px,
+   which is the floor this app's own body copy sits at. Applied to :root
+   because that is the closest thing CSS has to browser zoom: fixed chrome
+   keeps its viewport-relative position, which body-level zoom also does but
+   with the bottom bar's safe-area calc() living one level further away. */
+:root[data-cr-text="lg"]{zoom:1.15;}
+:root[data-cr-text="xl"]{zoom:1.30;}
+#navMenu .cr-ts{display:flex;align-items:center;gap:6px;padding:9px 14px;
+  border-top:1px solid rgba(255,255,255,.08);}
+#navMenu .cr-ts .lb{font:700 11px 'Segoe UI',Arial,sans-serif;color:#9aa2ae;
+  letter-spacing:.02em;margin-right:auto;}
+#navMenu .cr-ts button{min-width:34px;min-height:34px;padding:0 9px;cursor:pointer;
+  border:1px solid rgba(255,255,255,.16);border-radius:8px;
+  background:rgba(255,255,255,.05);color:#cfd6df;
+  font-family:'Segoe UI',Arial,sans-serif;font-weight:700;line-height:1;}
+#navMenu .cr-ts button[data-cr-text-set="md"]{font-size:12px;}
+#navMenu .cr-ts button[data-cr-text-set="lg"]{font-size:15px;}
+#navMenu .cr-ts button[data-cr-text-set="xl"]{font-size:18px;}
+#navMenu .cr-ts button[aria-pressed="true"]{background:var(--lnav-crmc,#c8202e);
+  border-color:var(--lnav-crmc,#c8202e);color:#fff;}
+/* ⚠ There was a light twin here scoped on html[data-mode="light"] and it was
+   MY OWN bug, caught by the sentinel before this shipped. data-mode is the
+   LANDING/LOGIN theme - CLAUDE.md says so in as many words, "not an app-wide
+   dark mode, do not wire app surfaces to it" - and it follows the OS, so on a
+   phone set to light it painted #6b6b6b onto this permanently-dark drawer at
+   3.09:1. A light-mode rule winning on a dark ground, on the build whose whole
+   point was readability.
+
+   No twin is needed: the drawer is dark in every CRM (925 gave it their
+   colours) and #9aa2ae clears the floor on all three grounds at 6.39 / 6.70 /
+   7.12:1. Deleted at source rather than out-specified. If this drawer ever
+   does get a light mode it takes :root[data-theme="rb-light"], which is the
+   APP theme, and it gets measured on both. */
+</style>
 <meta charset="utf-8">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1b1b1b">
@@ -3562,7 +3641,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 937 &#8212; The client signature pad works sideways. Held in landscape on the installed app, Clear, Cancel and Apply signature were hidden behind the bottom bar with no way to scroll to them &#8212; so a client could sign and nobody could apply it. Every screen with buttons at the bottom was checked the same way</div>
+          <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 939 &#8212; Text size. Menu &#8594; Text size at the bottom, three steps: A / A / A. It is remembered on that phone only, so setting it bigger does not change anybody else&#8217;s screen. Built because Scottie could not read the screen &#8212; and in the installed app iPhone gives you no way to pinch-zoom</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40556,6 +40636,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:939, d:'2026-08-20', t:'Text size \u2014 three steps, remembered per phone', s:'Scottie said he had a hard time reading the screen. Measured on his login it is size rather than colour: 47 of the app\u2019s 155 text styles render under 12px, some as small as 7.5px. There is now a Text size control at the bottom of the menu \u2014 Normal, Large, Larger \u2014 which scales the whole app and is remembered on that device only, so turning it up does not change anyone else\u2019s screen. This matters most in the INSTALLED app, where iPhone gives you no way to pinch-zoom at all. Checked at both steps: the bottom bar stays put and nothing runs off the side of the screen.' },
+{ b:938, d:'2026-08-20', t:'Three faint bits of text, measured and fixed', s:'A first full contrast sweep of the app \u2014 twelve screens, phone and desktop \u2014 found three pieces of text under the readable floor. The version line at the foot of the slide-out menu (3.4:1 \u2192 6.4:1), the highlighted CRM chip in the top banner (3.5:1 \u2192 4.8:1) and Sign out on the desktop side menu (3.4:1 \u2192 5.5:1). No colour was invented: Sign out uses the lighter cardinal red already in the app and stays red, and the CRM chip keeps every CRM\u2019s own colour \u2014 the chip behind it was darkened instead. That last one is deliberately dark-mode only: in light mode the same change would have made it harder to read, which the measurement caught before it shipped.' },
 { b:937, d:'2026-08-20', t:'The signature pad, reachable on every screen', s:'Holding the phone or the tablet sideways put Clear, Cancel and Apply signature underneath the bottom bar of the installed app, with nothing to scroll \u2014 so the client could sign and then had no way to apply it. The pad now scrolls like every other form in the app and keeps the bar\u2019s worth of room under its buttons. Found by checking every bottom-anchored screen the way a finger checks one: asking what a tap at each button would actually hit.' },
 { b:936, d:'2026-08-20', t:'Adding a punch out from a client page stops reporting a false failure',
 s:'Adding a punch out, ticket or callback from a client\u2019s page ended with a red \u201CCould not add\u201D message \u2014 but the item had ALREADY been saved. The message came from drawing the Production calendar afterwards, which had never been set up because you came in from the client page rather than from the Production board. So the save worked and the app said it had not, which is why one or two items got entered twice. Fixed at the one place every screen draws through, so it cannot come back on another route. Also on that sheet: the time box was sharing half a row with the date and was too narrow to show the PM, so it now takes the full width on a phone.' },
@@ -58562,6 +58644,18 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
   color:#aab1ba;padding:5px 11px;border-radius:6px;cursor:pointer;user-select:none;}
 #crBanner .cbcrm b:hover{color:var(--bacclt);}
 #crBanner .cbcrm b.on{background:rgba(255,255,255,.07);color:var(--bacclt);}
+/* 938: the selected CRM chip was 3.51:1 on retail (and 3.41 on sales) because
+   a WHITE wash lifts the ground toward the ink. Darkening the chip instead of
+   lightening the ink keeps every CRM colour exactly as it is - the settled
+   rule that CRM colours are semantic - and fixes all of them in one rule:
+   retail 3.51 -> 4.81, insurance 6.74 -> 8.32, community 8.28 -> 10.09.
+
+   ⚠ SCOPED TO DARK, and that is not caution - it is a measured regression.
+   In rb-light this same chip has --bink:#ffffff with a DARK ink (#c8202e),
+   where a black wash runs the wrong way: 5.67 -> 3.18. Light already passes,
+   so light is not touched. This is the "half of these bugs are a dark fix
+   that broke light" rule, caught by computing before writing. */
+:root:not([data-theme="rb-light"]) #crBanner .cbcrm b.on{background:rgba(0,0,0,.24);}
 #crBanner .cbcrm i{width:8px;height:8px;border-radius:50%;display:inline-block;}
 @media (max-width:900px){
   #crBanner .cbcrm{display:none;}
@@ -62887,12 +62981,12 @@ body.cr-lnav-mini #cr-lnav .lnav-mini .lnav-mini-ic{transform:rotate(180deg)}
 #cr-lnav .lnav-mini-ic{flex:0 0 auto;width:17px;text-align:center;font-size:13px;line-height:1}
 #cr-lnav .lnav-foot{margin-top:10px;border-top:1px solid var(--rbe-panelbd,#24242c);padding-top:6px}
 #cr-lnav .lnav-out{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;
-  cursor:pointer;padding:9px 14px;color:var(--lnav-crmc,#c8202e);
+  cursor:pointer;padding:9px 14px;color:var(--lnav-ink,var(--lnav-crmc,#c8202e));
   font:600 13px/1.2 'Segoe UI',Arial,sans-serif;text-align:left}
 #cr-lnav .lnav-out:hover{background:var(--lnav-wash,rgba(200,32,46,.14))}
 #cr-lnav .lnav-out .lnav-ic svg{width:16px;height:16px}
-#cr-lnav .lnav-out .lnav-ic .i2{fill:var(--lnav-crmc,#c8202e)}
-#cr-lnav .lnav-out .lnav-ic .i5{stroke:var(--lnav-crmc,#c8202e)}
+#cr-lnav .lnav-out .lnav-ic .i2{fill:var(--lnav-ink,var(--lnav-crmc,#c8202e))}
+#cr-lnav .lnav-out .lnav-ic .i5{stroke:var(--lnav-ink,var(--lnav-crmc,#c8202e))}
 #cr-lnav .lnav-ver{padding:2px 14px 4px;color:var(--rbe-mute,#8b9199);
   font:600 9.5px/1.35 'Segoe UI',Arial,sans-serif;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* 926: ONE nav on desktop. The rail mirrors #navMenu, and with sign-out and the
@@ -63090,6 +63184,22 @@ var OPEN_BY_DEFAULT = { 'daily':1, 'sell':1 };
 
 var CRM_COLOR = { retail:'#c8202e', insurance:'#2dd4bf', community:'#34D399',
                   production:'#f5a623', sales:'#e8544f' };
+/* 938: the accent at TEXT contrast. Sign out is the only label in this rail
+   painted in the CRM accent, and on the rail's #0a0e16 ground retail's
+   #c8202e is 3.40:1 - the only one of the five that fails (sales 5.35,
+   production 9.53, community 10.05, insurance 10.38). #e35c63 is this app's
+   existing lighter cardinal, not a colour invented by arithmetic, and it
+   stays unmistakably red so the danger reading survives: 5.50:1.
+   ⚠ The other four are deliberately IDENTICAL to CRM_COLOR. That is not
+   duplication to tidy away - it is the map saying "this one already clears
+   the floor as text", and it is where a sixth CRM declares its text twin. */
+var CRM_INK   = {
+retail    : '#e35c63',
+insurance : '#2dd4bf',
+community : '#34D399',
+production: '#f5a623',
+sales     : '#e8544f'
+};
 var CRM_WASH  = {
 retail    : 'rgba(200,32,46,.14)',
 insurance : 'rgba(45,212,191,.14)',
@@ -63352,6 +63462,7 @@ var st = readState();
 var crm = activeCrm();
 h.style.setProperty('--lnav-crmc', CRM_COLOR[crm] || CRM_COLOR.retail);
 h.style.setProperty('--lnav-wash', CRM_WASH[crm] || CRM_WASH.retail);
+    h.style.setProperty('--lnav-ink',  CRM_INK[crm]  || CRM_INK.retail);
 
 h.innerHTML =
 '<button type="button" class="lnav-mini" aria-label="Collapse menu" title="Collapse menu">' +
@@ -75485,7 +75596,7 @@ body:not(.cr-lnav-on) #navMenu .navsec::after{
 body:not(.cr-lnav-on) #navMenu #cr-nav-sec-admin{background:transparent !important;color:#e35c63 !important;border-top:1px dashed rgba(255,255,255,.12) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint{background:transparent !important;color:#9aa0a8 !important;border-top:1px solid rgba(255,255,255,.07) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint kbd{background:rgba(255,255,255,.1) !important;color:#cfd6df !important;}
-body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !important;color:#6b727c !important;border-top:1px solid rgba(255,255,255,.06) !important;margin-top:4px;}
+body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !important;color:#9aa2ae !important;border-top:1px solid rgba(255,255,255,.06) !important;margin-top:4px;}
 </style>
 <script id="cr-drawer-script">
 /* 924: turns the burger dropdown into a left slide-out drawer on mobile. Does

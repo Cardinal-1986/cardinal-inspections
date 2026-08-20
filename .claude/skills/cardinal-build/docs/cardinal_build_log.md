@@ -19905,3 +19905,156 @@ The full residue of the 936 fault is three punches on that one client inside 70 
 (`Remove rear chimney, patch damaged shingles` 23:18:36 · `Chinney` 23:19:06 · `Chimney` 23:19:46,
 the last carrying the date and time). Checked across the whole `punch_items` table, all time —
 **no other client is affected.** Still Theo's call.
+
+## Build 938 — Three faint bits of text, measured and fixed
+
+**The first contrast sweep the CRM has ever had.** The sentinel — the standing countermeasure Theo
+asked for (*"can't you make a countermeasure to having to fix things more than twice"*) — has only
+ever been pointed at the Visualizer. `index.html` had never been swept. Twelve screens × two widths,
+signed in, and INK is the class that has bitten this project **seven** times.
+
+| where | ink → ground | before | after |
+|---|---|---:|---:|
+| the drawer's build stamp (3 CRM grounds) | `#6b727c` → `#9aa2ae` | 3.39 / 3.55 / 3.78 | **6.39 / 6.70 / 7.12** |
+| the banner's selected CRM chip | ground `#31353c` → `#1a1d22` | 3.51 (retail) | **4.81** |
+| `Sign out` in the desktop rail | `#c8202e` → `#e35c63` | 3.40 | **5.50** |
+
+Theo picked all three, from measured options.
+
+⚠️ **The CRM chip is the one worth reading.** The fix darkens the CHIP, not the ink — every CRM
+colour is semantic and stays exactly as it is, and one rule fixes all of them (insurance 6.74 →
+8.32, community 8.28 → 10.09). **And it is scoped `:root:not([data-theme="rb-light"])` because of a
+measured regression, not caution:** in light mode that same chip is `--bink:#ffffff` with a DARK ink
+(`#c8202e`), where a black wash runs the wrong way — **5.67 → 3.18**. Light already passes and is
+untouched. That is the file's own "half of these bugs are a dark fix that broke light" rule, caught
+by arithmetic *before* the edit rather than by Theo afterwards.
+
+⚠️ **`Sign out` is the only TEXT in that rail painted in the CRM accent**, and measured across all
+five, **only retail fails** (sales 5.35, production 9.53, community 10.05, insurance 10.38). New
+`CRM_INK` map, published as `--lnav-ink`, mirroring the two maps already there (`CRM_COLOR`,
+`CRM_WASH`) rather than inventing a mechanism. Four of its five entries are **deliberately identical**
+to `CRM_COLOR` — that is the map recording "this one already clears the floor as text", and it is
+where a sixth CRM declares its twin. Label and icon move together or they read as two different reds.
+`--lnav-crmc` is untouched at its other 14 sites (outlines, washes, active edges — not text).
+
+### What the sweep cost to make trustworthy — two of my own faults, both of which INVENTED bugs
+
+The first run said 22 findings. **Five were real.** Both suppressions are narrow and
+negative-controlled; neither weakens what the check catches.
+
+1. **A staged-impossible configuration, in my own setup.** The `drawer` state clicked `#navBtn` at
+   1194px — which **926 deliberately hides** (`body.cr-lnav-on … #navBtn{display:none!important}`,
+   one nav on desktop) — opening a `#navMenu` that renders WHITE and that no desktop user can reach,
+   then scoring its light-era inks. Worse, the drawer does **not** close with `hideAllViews()`, so
+   that one screen bled into three later states. **Four phantom INK findings.** My first probe also
+   measured the burger *before* `cr-lnav-on` was set and concluded 926 had regressed — it had not.
+   Fixed: `onScreen()` before clicking, fall back to the rail, `closeDrawer()` in every state.
+2. **The DEAD check could not see mobile-first.** Six base rules — `.cre-lay`, `.cre-rail`,
+   `.cre-sum` and three more — reported for losing at 1194px to an equally-specific rule inside a
+   matching `@media (min-width:901px)`. That is the responsive idiom. Specificity cannot separate it
+   from a real source-order accident because **both selectors are identical**; the tiebreaker is the
+   media query. Fixed in `sentinel_probe.js`. ⚠️ **The converse still reports, deliberately** —
+   build 817 was a rule INSIDE a media query beaten by a later unconditional one, and an exemption
+   written the lazy way ("either side conditional") would have silenced the exact bug the check
+   exists for while looking correct in review. Both directions are now fixtures (`.mf-base`,
+   `.mf-loser`) with an assertion each.
+
+**The 11 surviving DEAD findings are triaged and none is a defect** — six are `#cr-touch44-styles`
+residue (`min-width:44px` superseding `width:34px`, comment `/* was 34×34 */`), `#navMenu`'s white
+is correctly beaten by 925's CRM colours, and `#crBanner{display:none}` is a **documented**
+hide-early-restore-later whose own comment says so. ⚠️ **That last shape is byte-identical to a real
+source-order accident and no check can separate them — only the comment can.** It will keep
+reporting; that is correct, and it is why the sentinel has `--since`. Known-benign, not to be
+silenced by weakening the check.
+
+New: `sentinel_setup_cardinal.js` (twelve states, real-shaped fixtures, one deliberately empty
+project) and `--setup a.js,b.js` so the CRM reuses the shared `e2e_mock_supa.js` instead of growing
+a second copy that drifts. `--selftest` GREEN, all 7 checks fire. `check_build` green (937 → 938).
+No SQL.
+
+## Build 939 — Text size: three steps, remembered per phone
+
+**Theo, relaying Scottie:** *"Scottie says he has a hard time reading the screen, maybe the font size
+or contrast?"* Measured as **Scottie's own production login**, not admin, on the screens he works in.
+He was right, and it is size:
+
+| | |
+|---|---:|
+| distinct text styles rendering **under 12px** | **47 of 155** |
+| `font-size` declarations below 12px in the file | **847** (202 at 11px, 184 at 10px, down to **6.5px**) |
+| styles failing the contrast floor | **4** |
+
+⚠️ **A contrast sweep would have answered the wrong question.** 938 had just closed INK to zero and
+the app still could not be read. Size and contrast both present as "I can't read this" and the fixes
+share nothing.
+
+**The lever is `zoom` on `:root`, and the reason is the 847.** Every size in this file is a px
+LITERAL, so no custom property can reach them and rem would be a rewrite of the stylesheet.
+`:root[data-cr-text="lg"]{zoom:1.15}` / `xl{zoom:1.30}` scales the rendered box without touching one
+declaration. Steps chosen from the measurement: the smallest text in the app goes **10px → 11 → 12**,
+median rendered line **29 → 38.7 → 44.4**.
+
+⚠️ **This matters far more than it looks because he is in the INSTALLED app.** iOS disables
+pinch-zoom in standalone mode — no browser chrome, no gesture. In a Safari tab this is a nicety;
+installed, it was his only way to read the screen and it did not exist.
+
+Resolved in the **same pre-paint IIFE as the theme** (`localStorage['cr-textsize']`), or the app
+visibly jumps on every load. Control sits in the drawer **below Sign out**, in the chrome zone —
+`applySections()` skips anything that is not `.navsec`/`.navopt`, so it is never collapsed away with
+a section. `window.CardinalTextSize` via `Object.assign`. **No scroll-lock writer (still 13), no
+`document.body` observer (still 45).**
+
+### What was measured before it was designed
+
+**Four levers were tested in Chromium before anything was written** — `html{zoom}`, `body{zoom}`,
+`html{font-size:125%}`, and a control. ⚠️ **The first run reported that ALL FOUR did nothing,
+including the control**, which is what a lever that is not being applied looks like. It was the
+*measurement*: **`getComputedStyle().fontSize` does not reflect `zoom`** — it returns an identical
+`10px` at every level, while the rendered box goes 11px → 15px. Everything here is measured by
+`getBoundingClientRect()` because of it, and the gate carries the warning.
+
+The thing actually worth proving was the installed chrome, since `zoom` moves the coordinate space
+under `position:fixed`: at **both** steps `#pwaNav` stays flush (bottom 844) at full width (390/390),
+and horizontal overflow is **0px**.
+
+Gate `gate_textsize939.mjs`: **23 assertions GREEN** — starts at Normal, three steps, the button is
+reachable **in the really-opened drawer** at a 34×34 target, text is genuinely bigger by rendered
+box, the bar stays flush and full width at both steps, nothing runs off the side, the control
+reflects its own state, the choice is stored, Normal returns the layout exactly (29 → 29), and it
+survives a **reload** applied before first paint.
+
+⚠️ **The negative control CRASHED before it reported** — BUG_CLASSES 37, on a tree where the control
+does not exist and every `querySelector(...).click()` is a null dereference. A stack trace reads as
+"not green" while proving nothing. Every tap now goes through `tap()`, and v938 reports **RED with
+10 named failures**, including *"there is no 'lg' control on this build to tap"*.
+
+`check_build` green (938 → 939). No SQL.
+
+### ⚠ The sentinel caught a regression IN THIS BUILD, before it shipped
+
+The `--since` run against v938 came back with **3 new INK findings, all mine**: the control's own
+`Text size` label at **3.09 / 3.24 / 3.44:1**. On the build whose entire point was readability.
+
+**Cause, and it is a trap this doc set names in as many words.** The light twin was scoped
+`html[data-mode="light"]`. `data-mode` is the **LANDING/LOGIN theme** — CLAUDE.md: *"It is not an
+app-wide dark mode. Do not wire app surfaces to it without a decision from Theo."* It follows the OS,
+so on a phone set to light it painted `#6b6b6b` onto a drawer that is dark in every CRM. **Both
+`data-mode` rules touching `#navMenu` in the whole file were mine; there were zero before**, which is
+the tell I should have read before writing them.
+
+**Fixed by deletion at source, not out-specification.** No twin is needed — the drawer is dark in
+every CRM (925 gave it their colours) and `#9aa2ae` clears the floor on all three grounds at
+6.39 / 6.70 / 7.12:1. If it ever gains a light mode it takes `:root[data-theme="rb-light"]`, the APP
+theme, measured in both.
+
+⚠️ **And the run before that one TIMED OUT — exit 2, `SENTINEL TIMEOUT — treat as UNKNOWN, not as
+clean`.** `zoom` forces a full relayout on every state, which pushed a 12-state × 2-viewport sweep
+past the budget. **The finding above only exists because the timeout was re-run narrower instead of
+read as green.** An instrument that says "I could not tell you" is doing its job; treating that as a
+pass is how the regression would have shipped. Narrow the scope (`--only`, one viewport) rather than
+trusting a partial run.
+
+**Not done, and deliberately:** the 4 contrast failures the same sweep found — the `APPROVED` stage
+chip is white on `#7cb342` at **2.5:1** against a floor of 3. That is a real defect and it is a
+**stage colour**, which this project treats as semantic and app-wide (15 uses of that green). It is
+its own build with its own preview, not a rider on this one.

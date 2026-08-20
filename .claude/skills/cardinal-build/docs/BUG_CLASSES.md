@@ -2976,3 +2976,85 @@ by `hd`, `occ-head`, `crBanner` and `cr-hd2-bar`. **A probe must model what a pe
 (`scrollIntoView`, *then* hit test), or it manufactures findings. A control still covered after
 being scrolled into view is covered at every scroll position — which is exactly what a fixed bottom
 bar does and a sticky header does not. That distinction *is* the check.
+
+## Class 52 — a probe that stages a screen the app can never show (19 Aug, build 938)
+
+**Shape.** A harness opens a surface by calling the thing that opens it — clicking the button,
+setting the class — without first asking whether that control is *reachable at this configuration*.
+The surface renders, the probe measures it, and every number is real. The screen just cannot happen.
+
+**Where it bit.** `sentinel_setup_cardinal.js` opened the nav by clicking `#navBtn`. At 1194px build
+926 hides that button on purpose — `body.cr-lnav-on header.site #cr-hd2-bar #navBtn{display:none
+!important}`, because the left rail is the nav at desktop and Theo picked one nav, not two. Clicking
+it anyway opened a `#navMenu` that still carries its pre-925 WHITE ground, and the probe dutifully
+scored its light-era inks at 2.31:1 and 2.65:1. **Two invented findings — and because the drawer
+does not close with `hideAllViews()`, that one screen leaked into three later states, making four.**
+
+**The tell I nearly missed.** My first diagnostic said the burger *was* visible at 1194px, and I was
+one step from reporting that 926 had regressed. It had not: I measured the burger **before**
+`leaveLanding()`, and `body.cr-lnav-on` is only set once the app is actually shown. **A measurement
+taken at the wrong moment in the boot is not a measurement of the app.**
+
+**The rule.** Before a harness operates a control, assert the control is *on screen* — computed
+`display`/`visibility` plus a non-zero box — not merely present in the DOM. When it is legitimately
+absent, drive the surface that replaces it at that width rather than forcing the one that is gone.
+And **name states for the job, not the mechanism**: the state is `nav`, and it means "whichever nav
+this width actually has".
+
+```js
+function onScreen(el){ if(!el) return false;
+  var cs = getComputedStyle(el);
+  if (cs.display==='none' || cs.visibility==='hidden') return false;
+  var b = el.getBoundingClientRect(); return b.width > 2 && b.height > 2; }
+```
+
+**Related, and the reason this class is expensive rather than merely wrong:** the findings it
+invents are *indistinguishable from real ones* — correct ratios, correct selectors, a real element.
+Nothing about them looks staged. This is the same family as build 935's gate forcing `#pwaNav`
+visible in a browser tab where it is `display:none`, and it has now cost a round twice.
+
+⚠️ **And a state must hand back the screen it names.** `hideAllViews()` does not close the drawer,
+so without an explicit `closeDrawer()` every later state was probed through an open menu. A leaked
+state is worse than a missing one: it reports the wrong screen under the right name.
+
+## Class 53 — a fixture that never loaded, in an instrument that reported a full sweep (20 Aug, build 939)
+
+**Shape.** A harness seeds a mock database and walks the app. The seed is assigned *after* the mock
+has already read it. The store stays empty, every screen renders its empty state, nothing throws, the
+walk completes, and the report names twelve screens it never actually saw populated.
+
+**Where it bit.** `e2e_mock_supa.js` does `var STORE = (window.__SEED__ || {})` **at its own
+execution time**. The sentinel's `--setup` list was `mock,setup` — mock first — so
+`sentinel_setup_cardinal.js` set `window.__SEED__` into a variable nothing would ever read again.
+The first CRM sweep therefore swept **twelve empty screens** and reported twelve screens. Its three
+ink findings were real only because they are *chrome*, present either way; the lists, cards and
+tables where small text actually lives were never rendered at all.
+
+**Why it is worse than a crash.** It is confident, quiet and wrong. There is no error, no empty
+result, no zero to notice — the numbers look exactly like a real sweep of a real app. It was caught
+only by reading the mock's source while adding an unrelated feature, and the very next run with the
+order corrected immediately surfaced **four findings the empty sweep never saw**, including the
+`APPROVED` stage chip at 2.5:1 on the client profile.
+
+**The rule.** Order matters wherever one init script reads what another writes, and **the reader
+decides the order, not the writer's importance.** Where a fixture can silently fail to load, the
+harness must assert it landed and fail loudly:
+
+```js
+function seedLanded(){
+  var n = (window.__SEED__ && window.__SEED__.projects || []).length;
+  if (n < 3) throw new Error('seed missing: projects has ' + n);
+  var rows = document.querySelectorAll('[data-pid],.clirow,.ljrow,.pcard');
+  if (!rows.length) throw new Error('the store is EMPTY at render time — setup must precede the mock');
+}
+```
+
+**Negative-controlled**: run with the wrong order and the guard fires —
+`RUN state "home" threw: the store is EMPTY at render time`. A guard for a silent failure that has
+never been seen to fire is itself a silent failure.
+
+⚠️ **Same family, different instrument, same day:** `getComputedStyle().fontSize` does **not**
+reflect `zoom` — it returns an identical `10px` at every zoom level while the rendered box goes
+11px → 15px. A lever test built on it reported that all four levers, *including the control*, did
+nothing. **When every arm of an experiment agrees — the control included — suspect the instrument,
+not the world.**

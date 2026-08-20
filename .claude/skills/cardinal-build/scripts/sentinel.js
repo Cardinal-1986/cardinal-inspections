@@ -204,7 +204,14 @@ const PROBE = readFileSync(new URL('./sentinel_probe.js', import.meta.url), 'utf
 
 /* ── run it ────────────────────────────────────────────────────────────── */
 const APP = readFileSync(TARGET, 'utf8');
-const SETUP_JS = SETUP && existsSync(SETUP) ? readFileSync(SETUP, 'utf8') : '';
+/* --setup takes a COMMA-SEPARATED list, concatenated in order. The CRM needs
+   two: the shared supabase mock (e2e_mock_supa.js, used by every other gate
+   in this folder) and the app-specific seed + states. One file would have
+   meant a second copy of the mock, and a second copy is a copy that drifts. */
+const SETUP_JS = SETUP.split(',').map(s => s.trim()).filter(Boolean)
+  .map(p => { if (!existsSync(p)) { console.error('sentinel: --setup file not found: ' + p); process.exit(2); }
+              return readFileSync(p, 'utf8'); })
+  .join('\n;\n');
 
 const browser = await chromium.launch({
   executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
@@ -453,6 +460,16 @@ if (SELFTEST) {
   console.log((wrongly ? '  FAIL  ' : '  PASS  ') +
     'a deliberately overridden rule is NOT reported as DEAD');
   if (wrongly) bad++;
+  /* The mobile-first pair, asserted in BOTH directions. One alone would pass
+     for a check that had simply gone silent on every media query. */
+  const mfWrong = all.some(r => r.id === 'DEAD' && /mf-base/.test(r.detail));
+  console.log((mfWrong ? '  FAIL  ' : '  PASS  ') +
+    'a base rule beaten by a MATCHING @media rule is NOT reported as DEAD');
+  if (mfWrong) bad++;
+  const mfMissed = !all.some(r => r.id === 'DEAD' && /mf-loser/.test(r.detail));
+  console.log((mfMissed ? '  FAIL  ' : '  PASS  ') +
+    'but a @media rule beaten by a later unconditional one STILL is (build 817)');
+  if (mfMissed) bad++;
   const inert = all.some(r => r.id === 'UNWIRED' && /#wired/.test(r.detail));
   console.log((inert ? '  FAIL  ' : '  PASS  ') + 'a WIRED button is not reported as unwired');
   if (inert) bad++;
