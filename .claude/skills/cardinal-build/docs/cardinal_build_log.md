@@ -20440,6 +20440,39 @@ fixture both ways (fixture → icons + 80% wet blue computed; route aborted → 
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
 
+## Build 951 — the Insurance tools join the slide-out menu (20 Aug 2026)
+
+Theo: "Can you put all those menu boxes into the slide out drawer menu, take out the sell
+menu and replace with insurance menu? Or will that mess with everything else?" Options
+offered with costs; his pick was **2 — add, don't swap** (an unconditional swap would have
+taken Quick Inspection / Inspections / Estimates / Suppliers away from retail reps).
+
+A new **Insurance** section in `#navMenu` between Sell and CRMs with seven rows — Scope of
+Loss, Resource Library, Supplement Templates, Insurance Resources, Adjuster Directory,
+Claims Tracker, Supplement Desk — each dispatched in the main-block navopt handler **exactly
+the way the hub's Tools rail routes** (`cr-cth-script wire()`): one behaviour per
+destination, two doors. The Desk row navigates (`location.href='/supplement.html'`, 679's
+rule). Schedule Board deliberately NOT repeated — it is already under Daily.
+
+**The order of the two "Insurance" headings is load-bearing**: `cr-menu-script`'s
+`renameSec()` renames the LAST heading matching "insurance" to "CRMs", so the new section
+sits ABOVE the original (Cardinal Truth) one. Asserted in the gate: Cardinal Truth still
+lives under CRMs.
+
+Everything else arrived free, by design of the 930-era scrape modules: the phone drawer
+folds the new section closed with a count badge of 7, the desktop rail scrapes it in, and
+fold state shares `cardinal.lnav.sections`. The one thing that was NOT free: the rail's
+icons key on the **slugged label** (`I2`/`I5` maps), and six of the seven labels would have
+fallen to the `generic` circle — six drawn entries added per map (resourcelibrary already
+existed).
+
+Gates: `check_build.py` green 950 → 951 · **`gate_951.mjs` 22/22** (structure, rename
+ordering, fold + count, 44px floors on every row, routing spied on the real globals,
+Desk navigation, rail scrape + no-generic-icon) · **red on the 950 control with 17 named
+failures, no crash**. Two instrument rounds before green, both matcher bugs mine: the rail
+heading's textContent is chevron+label+count ("▼Insurance7"), which beat two anchored
+regexes before a strip-to-letters compare.
+
 ## Build 950 — sideways scrolling repaired everywhere (20 Aug 2026)
 
 Theo, with a screenshot of the Punch page at phone width: *"The horizontal scroll is broke

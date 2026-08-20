@@ -5539,3 +5539,14 @@ scrollers lacked `overscroll-behavior-x:contain` and now have it — `.pu-tabs`,
 two-digit badges (945's promise, measured broken at 373px/358px). Gate:
 `scripts/gate_950.mjs` (fit incl. forced "88" badges, computed containment, board-still-pans;
 control red 6 named).
+
+## Insurance tools in the slide-out menu (951)
+
+`#navMenu` carries an **Insurance** section (between Sell and CRMs) with seven rows
+mirroring the Cardinal Truth hub's Tools rail: sol / library / supplements / insresources /
+adjusters / claimstracker / desk, dispatched in the main block's navopt handler with the
+same behaviour as `cr-cth-script wire()`. Present in every portal (Theo's pick: add, don't
+swap — Sell untouched). The ORIGINAL "Insurance" heading (Cardinal Truth) sits BELOW the
+new one so `renameSec()` still renames it to CRMs — do not reorder them. Rail icons for the
+seven labels live in the `I2`/`I5` maps (six added at 951). Schedule Board is deliberately
+not repeated in the section. Gate: `gate_951.mjs`.

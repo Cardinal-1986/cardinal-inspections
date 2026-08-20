@@ -3627,6 +3627,23 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="suppliers" data-cri="warehouse lg">Suppliers</button>
           <button class="navopt" data-nav="coach" data-cri="target lg">Objection Coach</button>
 
+          <!-- 951: the Insurance hub's tools, mirrored into the drawer (Theo's
+               pick: add, don't swap - Sell stays). The heading BELOW this block
+               is the ORIGINAL "Insurance" section (Cardinal Truth):
+               cr-menu-script's renameSec() renames the LAST section matching
+               "insurance" to "CRMs", so this new section must stay ABOVE it or
+               the wrong heading gets renamed. Schedule Board is deliberately
+               absent here - it is already in Daily; two rows one screen apart
+               is the defect 913-era dedup exists to prevent. -->
+          <div class="navsec">Insurance</div>
+          <button class="navopt" data-nav="sol" data-cri="page lg">Scope of Loss</button>
+          <button class="navopt" data-nav="library" data-cri="books lg">Resource Library</button>
+          <button class="navopt" data-nav="supplements" data-cri="paperclip lg">Supplement Templates</button>
+          <button class="navopt" data-nav="insresources" data-cri="compass lg">Insurance Resources</button>
+          <button class="navopt" data-nav="adjusters" data-cri="group lg">Adjuster Directory</button>
+          <button class="navopt" data-nav="claimstracker" data-cri="clipboard lg">Claims Tracker</button>
+          <button class="navopt" data-nav="desk" data-cri="calculator lg">Supplement Desk</button>
+
           <div class="navsec">Insurance</div>
           <button class="navopt" data-nav="cardinaltruth" data-cri="shield lg">Cardinal Truth</button>
 
@@ -3644,7 +3661,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 950 &#8212; sideways scrolling repaired everywhere: the four tab strips and boards that pan (Punch tabs, client-profile tabs, the directory CRM bar, the Magnet Board) no longer hand the swipe to the page or the back gesture, and the four Punch tabs now genuinely fit a phone screen instead of hiding one off the edge</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 951 &#8212; the Insurance tools join the menu: Scope of Loss, the Resource Library, Supplement Templates, Insurance Resources, the Adjuster Directory, the Claims Tracker and the Supplement Desk now have their own Insurance section in the slide-out menu, in every portal &#8212; the hub keeps its tiles; the menu is simply a faster door to the same places</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19241,6 +19258,28 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'pricing'){ if(window.crOpenPricing) window.crOpenPricing('roofing'); }
   else if(nav === 'coach'){ if(window.CardinalCoach) window.CardinalCoach.open(); }
   else if(nav === 'cardinaltruth'){ if(typeof showCardinalTruth === 'function') showCardinalTruth(); else if(typeof showResourceLibrary === 'function') showResourceLibrary(); }
+  /* 951: the Insurance section's rows - each routes exactly the way the hub's
+     Tools rail does (cr-cth-script wire()), so there is ONE behaviour per
+     destination, reached from two doors. */
+  else if(nav === 'sol'){
+    if(window.CardinalSolIntake && typeof window.CardinalSolIntake.open === 'function') window.CardinalSolIntake.open();
+    else if(typeof window.showInsuranceClients === 'function'){ window.icStageFilter = ''; window.showInsuranceClients(); }
+  }
+  else if(nav === 'library'){ if(typeof showResourceLibrary === 'function') showResourceLibrary(); }
+  else if(nav === 'supplements'){
+    if(typeof showResourceLibrary === 'function'){ showResourceLibrary(); if(window._rlShowPage) window._rlShowPage('rlPageSup'); }
+  }
+  else if(nav === 'insresources'){
+    if(typeof showResourceLibrary === 'function'){ showResourceLibrary(); if(window._rlShowPage) window._rlShowPage('rlPageInsHub'); }
+  }
+  else if(nav === 'adjusters'){ if(window.CardinalAdjusters && typeof window.CardinalAdjusters.open === 'function') window.CardinalAdjusters.open(true); }
+  else if(nav === 'claimstracker'){
+    if(typeof window.crOpenClaimsFromHub === 'function') window.crOpenClaimsFromHub();
+    else if(window.crOpenClaims) window.crOpenClaims();
+  }
+  /* 679's rule: the Desk is a standalone page with its own sign-in -
+     location.href, not window.open (no tab inside an installed PWA). */
+  else if(nav === 'desk'){ window.location.href = '/supplement.html'; }
   else if(nav === 'backup'){ exportBackup(); }
   else { openList(nav); }
 });
@@ -40665,6 +40704,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:951, d:'2026-08-20', t:'The Insurance tools join the slide-out menu', s:'The menu now has an Insurance section with the seven tools from the Cardinal Truth hub: Scope of Loss, the Resource Library, Supplement Templates, Insurance Resources, the Adjuster Directory, the Claims Tracker and the Supplement Desk. Each row goes to exactly the same place as its tile on the hub \u2014 nothing moved, the menu is simply a second, faster door, available from any portal. Sell and everything else in the menu is untouched, and the section folds closed like the others. Schedule Board is not repeated in the new section because it is already two headings up, under Daily.' },
 { b:950, d:'2026-08-20', t:'Sideways scrolling repaired everywhere', s:'Theo: \u201cthe horizontal scroll is broke again.\u201d It was the same defect in four places: a row that scrolls sideways, without the rule that keeps the swipe inside it \u2014 so on the phone the gesture fell through to the page or the back-swipe and the row felt stuck. Fixed on the Punch & Repairs tabs, the client-profile (Cardinal Truth) tabs, the Client Directory\u2019s bottom CRM bar, and the Crew Dispatch board itself. And the four Punch tabs (Active / Assigned / Scheduled / Closed) were wider than a phone screen even with small counts, so one always hid off the edge \u2014 they now fit at phone width with room for two-digit counts.' },
 { b:949, d:'2026-08-20', t:'Dispatch: weather, free days, tap-to-book', s:'The Magnet Board now works for you. Each day header carries the 7-day forecast \u2014 a drawn icon plus the rain chance when it matters, blue when the day looks wet \u2014 from a free public source, cached half an hour, and the board is unchanged if the forecast can\u2019t be reached. Every crew\u2019s dog tag says its next free day at a glance (\u201cfree today\u201d, \u201cfree Thu 21\u201d, or \u201cbooked all 7\u201d, Sundays skipped). And assigning is now two taps: tap a Needs-a-crew job to arm it, then tap the day on the crew\u2019s row you want \u2014 the work-order form opens with that crew and day already filled in. Tap the armed job again for the full picker, exactly as before.' },
 { b:948, d:'2026-08-20', t:'Crew Dispatch becomes the Magnet Board', s:'The dispatch board is the shop wall now. The window is the next seven days starting today \u2014 not a Monday-to-Saturday week \u2014 so Thursday afternoon shows you through next Wednesday, with Sunday hatched until something is booked on it. Every trade sits on its own riveted steel strip with a crew count on the end and a chevron that folds the whole trade to one quiet line. Crews became stamped dog tags \u2014 Curtis in his blue, Scottie in his purple \u2014 and booked jobs are raised magnets with the job and address readable at full size on every screen: the iPad and desktop fit all seven days across, and the phone keeps the same full-size magnets and simply pans. The map, the Rain button, the trade filters and the Needs-a-crew tray all work exactly as before.' },
@@ -64004,6 +64044,12 @@ settings:'<path d="M12 8.4a3.6 3.6 0 1 0 0 7.2 3.6 3.6 0 0 0 0-7.2zm9 4.7v-2.2l-
 team:'<circle cx="12" cy="7" r="3.6"/><path d="M4.6 20a7.4 7.4 0 0 1 14.8 0z"/>',
 objectioncoach:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.4" fill="#0d0d10"/><circle cx="12" cy="12" r="1.7"/>',
 photos:'<path d="M9 3h6l1.4 2.2H21a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6.2a1 1 0 0 1 1-1h4.6z"/><circle cx="12" cy="13" r="4" fill="#0d0d10"/>',
+scopeofloss:'<path d="M6 2.5h8.5L19 7v14.5H6z"/><rect x="8.6" y="11" width="6.8" height="1.8" fill="#0d0d10"/><rect x="8.6" y="14.6" width="4.8" height="1.8" fill="#0d0d10"/>',
+supplementtemplates:'<path d="M6 2.5h12A1.5 1.5 0 0 1 19.5 4v16a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V4A1.5 1.5 0 0 1 6 2.5z"/><rect x="7.6" y="7" width="8.8" height="1.8" fill="#0d0d10"/><rect x="7.6" y="10.6" width="8.8" height="1.8" fill="#0d0d10"/><rect x="7.6" y="14.2" width="6" height="1.8" fill="#0d0d10"/>',
+insuranceresources:'<circle cx="12" cy="12" r="9"/><path d="M15.9 8.1l-2.5 5.3-5.3 2.5 2.5-5.3z" fill="#0d0d10"/>',
+adjusterdirectory:'<rect x="3" y="4.5" width="18" height="15" rx="2"/><circle cx="9" cy="10.8" r="2.3" fill="#0d0d10"/><path d="M5.7 16.4a3.4 3.4 0 0 1 6.6 0z" fill="#0d0d10"/><rect x="13.8" y="9.2" width="4.8" height="1.7" fill="#0d0d10"/><rect x="13.8" y="12.6" width="4.8" height="1.7" fill="#0d0d10"/>',
+claimstracker:'<path d="M9.4 1.8h5.2a1.6 1.6 0 0 1 1.6 1.6v.9H7.8v-.9a1.6 1.6 0 0 1 1.6-1.6z"/><path fill-rule="evenodd" d="M6.2 3.6h1.6v2.8h8.4V3.6h1.6a2 2 0 0 1 2 2v13.8a2 2 0 0 1-2 2H6.2a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2z"/><path d="m8 13.4 1.5-1.5 1.8 1.8 3.7-3.7 1.5 1.5-5.2 5.2z" fill="#0d0d10"/>',
+supplementdesk:'<rect x="5" y="2.5" width="14" height="19" rx="2"/><rect x="7.4" y="5" width="9.2" height="3.2" fill="#0d0d10"/><circle cx="9.2" cy="12" r="1.2" fill="#0d0d10"/><circle cx="12" cy="12" r="1.2" fill="#0d0d10"/><circle cx="14.8" cy="12" r="1.2" fill="#0d0d10"/><circle cx="9.2" cy="15.4" r="1.2" fill="#0d0d10"/><circle cx="12" cy="15.4" r="1.2" fill="#0d0d10"/><circle cx="14.8" cy="15.4" r="1.2" fill="#0d0d10"/><circle cx="9.2" cy="18.8" r="1.2" fill="#0d0d10"/><circle cx="12" cy="18.8" r="1.2" fill="#0d0d10"/><circle cx="14.8" cy="18.8" r="1.2" fill="#0d0d10"/>',
 generic:'<circle cx="12" cy="12" r="4.6"/>'
 };
 var I5 = {
@@ -64032,6 +64078,12 @@ settings:'<circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12
 team:'<circle cx="12" cy="8" r="3.2" class="m"/><path d="M5 19h14"/>',
 objectioncoach:'<circle cx="12" cy="12" r="7" class="m"/><path d="M12 5v14"/>',
 photos:'<path d="M4 7h16v12H4z" class="m"/><path d="M8 19l5-6 3 3.4"/>',
+scopeofloss:'<path d="M7 3h7l4 4v14H7z" class="m"/><path d="M10 12h5M10 16h4"/>',
+supplementtemplates:'<path d="M6 3h12v18H6z" class="m"/><path d="M9 8h6M9 12h6M9 16h4"/>',
+insuranceresources:'<circle cx="12" cy="12" r="7" class="m"/><path d="m15 9-2 4-4 2 2-4z"/>',
+adjusterdirectory:'<rect x="3.5" y="5" width="17" height="14" rx="2" class="m"/><circle cx="9" cy="11" r="2"/><path d="M13.6 10h4M13.6 13.5h4" class="m"/>',
+claimstracker:'<path d="M8.6 4.2H6.4a2 2 0 0 0-2 2v13.4a2 2 0 0 0 2 2h11.2a2 2 0 0 0 2-2V6.2a2 2 0 0 0-2-2h-2.2" class="m"/><rect x="8.4" y="2.4" width="7.2" height="3.6" rx="1.4" class="m"/><path d="m8.6 13.2 2.3 2.3 4.5-4.5"/>',
+supplementdesk:'<rect x="5.5" y="3" width="13" height="18" rx="2" class="m"/><path d="M8.5 6.8h7"/><circle cx="9" cy="12.4" r="1" class="m"/><circle cx="12" cy="12.4" r="1" class="m"/><circle cx="15" cy="12.4" r="1" class="m"/><circle cx="9" cy="16.4" r="1" class="m"/><circle cx="12" cy="16.4" r="1" class="m"/><circle cx="15" cy="16.4" r="1" class="m"/>',
 generic:'<path d="M6 12h12"/>'
 };
 /* the label carries its emoji ("📅 Schedule Board") because the rows
