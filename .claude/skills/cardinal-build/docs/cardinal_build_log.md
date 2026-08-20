@@ -20145,3 +20145,29 @@ then Clients genuinely reaching the front, Crews too, `history.state` recording 
 `hideAllViews()` closing it directly. Negative control vs v940: **RED on 4** — including
 `navSetView` null and `display:flex` surviving `hideAllViews()`. `check_build` green (940 → 941).
 No SQL.
+
+## Build 942 — The readability audit's worst nine, fixed
+
+The ≤3:1 half of the audit's 18 failing styles (46 light-mode failures collapsing to 18 styles; the
+3.1–4.0 remainder is 943). **Every replacement computed on its measured ground in BOTH themes**, from
+the audit's own pixel data — no colour picked by eye.
+
+| style | was | now | how |
+|---|---:|---|---|
+| `#listView #listNote` (Inspections/Recents) | **1.07 light** | 7.55 / 4.92 | was `color:#fff` — a dark-era ink, WHITE on light's `#f7f7f7`. → `var(--rbe-mute,#9aa0a8)`, the flipping pair |
+| `#activityView`/`#companyDocsView .subnote` | 2.97 dark | 7.55 / 4.92 | the same element's OTHER failure: base ink is `var(--muted)` = `#5c5c5c`, an unthemed light-era token, dark ground. Same pair |
+| `span.lnav-tx` Sign out, light rail | **1.68 light** | 4.94–5.43 | 938's `CRM_INK` was measured on the dark rail only. New `CRM_INK_LT` — same hue deepened per CRM (the 557 rule), published as `--lnav-ink-dk/-lt`; **the stylesheet resolves the pair**, because an inline `--lnav-ink` would beat any theme override |
+| `.cd-fsec` CRM section labels | 2.09 light | 4.89–5.01 | **CD_CRMS carried per-CRM `colorLight` twins all along and the label never read them.** Emitted as `--fc`/`--fcl`; no new colour |
+| `.cd-clr` Clear all | 2.51 light | 4.99 | the action red the module's own light rules already use (`.cd-rep`) |
+| `#crewsView .crw-empty` | 2.64 light | 5.81 | 550's light pass covered `.crw-mut` and `label` but not the empty state — same value 550 chose |
+| `#cr-abc .sect` + `label` | 2.95 both | 6.96 | single-theme dark panel; `#c8202e` → `#f08a90`, the app's established dark-ground red ink |
+| `--cr-muted-2` light (coach footer) | 2.38 light | 5.02 | **all FOUR copies of the shared `--cr-*` light palette moved together** (`#a8a8a8`→`#6b6b6b`) — the five-module family is identical by design and forking one copy would start the drift the design exists to prevent |
+| `#cr-pricing-mount .lock` | 2.96 light | 5.46 | scoped light override, deepened amber — changing light `--cr-amber` itself would restyle unknown users |
+
+Three of nine needed **no invented colour**: the right value already existed and wasn't wired.
+
+Verification: `check_build` green (941 → 942); the FULL audit re-run against the patched file (both
+themes × both widths, pixel-truth contrast, self-test against the adjudicated values) — all nine
+targeted styles must vanish with **zero new failures**. ⚠️ My own count assertions misfired twice
+during the build (guessed totals instead of derived — `CRM_INK_LT` is 3 sites not 2, `#f08a90` is 15
+file-wide because it already exists); the file was right both times, the expectations were wrong.
