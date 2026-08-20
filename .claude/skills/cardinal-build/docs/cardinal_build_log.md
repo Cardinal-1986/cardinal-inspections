@@ -20314,3 +20314,52 @@ sheet closes), 44px floor on the new controls — and **RED on the 944 control w
 failures, no crash** (one gate read fixed: the mock logs patches as `payload`, the test was
 wrong, not the app). Sentinel state `punch` added so future sweeps walk this screen. Renders
 eyeballed dark + light + sheet + assigned tab.
+
+## Build 946 — the invisible Check out button (20 Aug 2026)
+
+Found by the punch-card audit, render-measured: in rb-light the check-in strip kept its dark
+ground (`--pk-card2` is declared NOWHERE — the `#15181c` fallback IS the ground in both themes)
+while its inks ride tokens that flip. The Check out label painted `#17191c` on `#15181c` —
+**1.02:1, an invisible control**, on the one button the crew taps from a roof. The strip is a
+dark chip in both themes, so its inks are now pinned inside `.pkvis` (the obsidian-tile rule: a
+theme-independent surface pins its own inks). Re-measured after: **13.5:1** in light mode.
+
+## Build 947 — the punch-out card, tightened (20 Aug 2026)
+
+The audit's package, all of it, Theo: *"Do all you recommend in your order."*
+
+- **The card leads with its moment.** Once work has started (any visit on the row), the
+  check-in strip, checklist and photos rise to the top and Assigned/Scheduled/Priority fold to
+  one line — "Curtis · Aug 20 ›" — that expands on tap. A manager on a not-started item still
+  gets dispatch open. Measured: Scottie's card **1441 → 1142px** (−21%), Theo's **1798 →
+  1337px** (−26%).
+- **Close is GREEN when ready** — Theo's pick of green/orange/red. `#1b7d49` carries white at
+  **5.15:1** and the subtitle ink at 4.59:1, computed (the label is 12px bold — NOT large, so
+  the 4.5 floor applies; `#1f8a52` at 4.36 failed it and was rejected). While blocked, the
+  subtitle's "3 photos · 2 steps left" pieces are **tappable jumps** that scroll to the section
+  (stopPropagation so a jump never trips the not-ready alert).
+- **The card's tap-floor pass** — the one 752/944 never reached (the card opens by tap, not
+  [data-nav]): `.pkbtn`/`.pkadd`/`.pkgalbtn`/`.pkback`/`.pktag` floored in cr-touch44-styles;
+  the checklist ticks and photo ×s keep their small visuals and grow their TAP area with
+  `::after` pads at source (the `.pu-box` shape).
+- **Quiet the loud, hide the rare:** Delete moved behind a header ⋯ menu (same mayDelete gate,
+  same confirm — the always-on Remove section whose own prose said "should be CLOSED instead"
+  is gone); the supplement flag became a quiet **⚑ Extra scope** chip in the checklist header
+  (it was the loudest thing on the field card, louder than Check out); the seven @-chips appear
+  when the message box is focused; an empty description is one tappable line.
+- **The supplement flag becomes findable:** rows it files now carry a **SUPPLEMENT** badge on
+  the board's cards and in The Line's queue (option (a) of the three put to Theo).
+- **Dead things buried:** the ≡ reorder handle (never wired; its guard read `it.status_done`,
+  a field that does not exist) is removed and the module banner corrected — it had promised
+  "reorder steps" since 768. If reordering is ever wanted: up/down arrows, not drag.
+- **Back-after-restore stays put:** the card now remembers its back target beside
+  `__crPunchCardLast`, so reopening after a navRestore no longer dumps every back-tap onto
+  Production.
+- **Two new checklist templates:** Window repair and General repair join the three trades —
+  Bob Deaton is a windows crew and Curtis was hand-typing five steps every time.
+
+Verification: check_build green (945 → 947 across the two builds); **gate_947.mjs 23/23 GREEN**
+on the shipped file, **RED on the 945 control with 17 named failures, no crash** (the first
+control run DID crash on a missing `.pkfold` — class 37 in my own gate, fixed with guards
+before trusting it); renders eyeballed as Scottie (working item) and Theo (not-started);
+946's fix re-measured 1.02 → 13.5:1.

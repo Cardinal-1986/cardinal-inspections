@@ -5492,3 +5492,16 @@ readers (`bucketOf`, `puOpenVisit`, `puDaysOn`) copied from the pbDays shape —
 IIFE-bound helpers. Gate: `scripts/gate_945.mjs` (26 assertions, negative-controlled, red on
 944 in both halves). ⚠ `.pu-sheet.open` was born in this build — the sort/filter sheets had
 been silently unopenable since 361; do not remove it.
+
+## The punch-out card, tightened (builds 946–947, 20 Aug 2026)
+
+The card is **moment-aware**: once any visit exists, check-in strip → checklist → photos lead
+and dispatch folds to one tappable line; before work starts, managers see dispatch open. Close
+turns **green (#1b7d49, computed)** only when ready; blocked, its "N photos · M steps left"
+pieces jump to the section. Delete lives behind the header ⋯ menu; the supplement flag is a
+quiet ⚑ Extra scope chip whose filed rows carry a SUPPLEMENT badge on the board and queue;
+@-chips show on message focus; empty description is one line. Five templates (roofing, siding,
+gutters, **windows**, **general**). The card's controls meet the 44px floor (ticks and photo ×s
+via ::after pads — rect audits must read the pseudo box). 946 pinned the check-in strip's inks
+(dark chip in both themes — its Check out label was 1.02:1 in light). Gate:
+`scripts/gate_947.mjs` (23 assertions, control red with named failures).
