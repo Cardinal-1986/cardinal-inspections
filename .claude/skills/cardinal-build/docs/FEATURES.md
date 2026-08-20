@@ -5517,3 +5517,16 @@ the sticky rail (settled: "non compressed"). Map/Rain/filters/idle/tray behaviou
 All colours ride `--disp-*` tokens — both themes flip whole. Gate: `scripts/gate_948.mjs`
 (18 assertions, seeded crews/WOs incl. the worked-Sunday case, control red with named
 failures). Sentinel state: `dispatch`.
+
+## Crew Dispatch — the workflow layer (build 949, 20 Aug 2026)
+
+Three additions to the Magnet Board: **7-day forecast on the day headers** (Open-Meteo, free/
+no-key like RainViewer; drawn SVG icons; rain chance ≥30% shown; wet days in the new
+`--disp-wx` token pair, computed for both themes; 30-min cache; failed fetch = no icons, board
+intact), **free-day chip on every dog tag** ("free today" / "free Thu 21" / "booked all 7",
+Sundays skipped per the nextWorkDay rule), and **arm-and-place assign** (tap a Needs-a-crew
+chip to arm, tap a day cell on a crew's row → the build-555 Work-Order picker opens with crew
++ day preselected via a new optional `preset` arg on `openWorkOrderPicker`; second tap on the
+armed chip = classic picker; the picker stays the one write path — the board writes nothing).
+Gate: `scripts/gate_949.mjs` (19 assertions incl. routed Open-Meteo fixture + abort case;
+control red 12 named).
