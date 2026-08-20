@@ -5530,3 +5530,12 @@ chip to arm, tap a day cell on a crew's row → the build-555 Work-Order picker 
 armed chip = classic picker; the picker stays the one write path — the board writes nothing).
 Gate: `scripts/gate_949.mjs` (19 assertions incl. routed Open-Meteo fixture + abort case;
 control red 12 named).
+
+## Sideways-scroll containment sweep (build 950, 20 Aug 2026)
+
+BUG_CLASSES 30 swept mechanically across all 50 `overflow[-x]:auto` sites: four horizontal
+scrollers lacked `overscroll-behavior-x:contain` and now have it — `.pu-tabs`, `.cr-cth-tabs`,
+`.cd-crmbar`, `#cr-disp .dspscroll`. The four Punch tabs also now genuinely fit 390px with
+two-digit badges (945's promise, measured broken at 373px/358px). Gate:
+`scripts/gate_950.mjs` (fit incl. forced "88" badges, computed containment, board-still-pans;
+control red 6 named).

@@ -342,7 +342,17 @@ async function sweep(HTML, findings) {
              delegates either — this app leans on delegation heavily. */
           const delegated = await page.evaluate(`(() => {
             const el = document.querySelector('[data-sentinel-id="${cand.id}"]');
-            return !!(el && el.closest('[data-cr-delegate], form, a, label'));
+            if (!el) return false;
+            if (el.closest('[data-cr-delegate], form, a, label')) return true;
+            /* 950: this app's dispatchers are DOCUMENT-level and key on data-*
+               attributes (data-putab, data-puassign-open, ...). A parentElement
+               walk can never reach document — document is not an Element — so
+               a data-hooked button is presumed delegated. A dead button with
+               no data hook still fires (the selftest holds both directions). */
+            for (const a of el.attributes) {
+              if (a.name.indexOf('data-') === 0 && a.name !== 'data-sentinel-id') return true;
+            }
+            return false;
           })()`);
           if (delegated) continue;
           let hasAncestorListener = false;
@@ -490,6 +500,12 @@ if (SELFTEST) {
   const inert = all.some(r => r.id === 'UNWIRED' && /#wired/.test(r.detail));
   console.log((inert ? '  FAIL  ' : '  PASS  ') + 'a WIRED button is not reported as unwired');
   if (inert) bad++;
+  /* 950: a button reached only through a DOCUMENT-level dispatcher keyed on
+     its data-* attribute is wired — the parentElement walk cannot see it. */
+  const dataDel = all.some(r => r.id === 'UNWIRED' && /#data-delegated/.test(r.detail));
+  console.log((dataDel ? '  FAIL  ' : '  PASS  ') +
+    'a data-hooked, document-delegated button is NOT reported as unwired');
+  if (dataDel) bad++;
   console.log(bad ? `SELFTEST RED — ${bad} check(s) cannot be trusted`
                   : `SELFTEST GREEN — all ${EXPECT.length} checks fire, and neither look-alike is misreported`);
   process.exit(bad ? 1 : 0);

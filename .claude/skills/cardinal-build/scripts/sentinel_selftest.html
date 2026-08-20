@@ -134,12 +134,17 @@
 <div class="case">
   <button type="button" id="wired">this one is wired</button>
   <button type="button" id="dead-button">this one does nothing</button>
+  <button type="button" id="data-delegated" data-st-act="go">wired only through a document-level data hook</button>
 </div>
 
 <script>
   /* Only the first button gets a handler. The second is BUG_CLASSES 16:
      drawn, enabled, and inert — the Studio Archive button, 614 to 632. */
   document.getElementById('wired').addEventListener('click', function () {});
+  /* 950: the document-level dispatcher shape this app uses everywhere */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('[data-st-act]')) { /* handled */ }
+  });
   /* the FLOOR fixtures are wired so they do not ALSO trip UNWIRED — a case
      that fires two checks makes a broken check look alive */
   document.getElementById('floor-btn').addEventListener('click', function () {});
