@@ -3058,3 +3058,33 @@ reflect `zoom` — it returns an identical `10px` at every zoom level while the 
 11px → 15px. A lever test built on it reported that all four levers, *including the control*, did
 nothing. **When every arm of an experiment agrees — the control included — suspect the instrument,
 not the world.**
+
+## Class 54 — a floor that is law everywhere except the screens that break it (20 Aug, build 944)
+
+**The shape.** `cr-touch44-styles` (752) floors touch targets with CLASSLESS `min-*` rules —
+`.pay-chip{min-height:44px}`, `select{min-height:44px}` — relying on `min-*` never competing with
+the modules' `width`/`height`. That assumption held until a module declared **its own `min-height`**:
+`#payView .pay-chip{min-height:34px}` outranks the floor by id-specificity, and the chip rendered
+34px tall **for 192 builds** while the floor sat green in the stylesheet. Found at 944 in FOUR
+modules: `#payView` chips (34) and inputs (40), `#cr-pk .pkm` fields (36), `#cr-storm .stseg` (40).
+
+**Why nothing saw it.** To the sentinel's OVERRIDDEN check, a more-specific rule winning IS the
+cascade working — correctly suppressed as noise. The touch44 sheet is the one family where losing
+to higher specificity is the defect. And the block's own header said "min-* only: min-width/
+min-height do not compete with width/height" — true, and irrelevant the day a module writes
+`min-height` itself. **A gate comment describing why a strategy is safe outlives the conditions
+that made it safe.** (Sibling truth, same build: the 752 gate's "the block is the LAST stylesheet"
+fence was also false by 943 — fourteen blocks now follow it.)
+
+**The standing fixes.**
+1. **Raise at source, don't out-specify** — the module rule keeps its padding/borders; deletion
+   can regress (deleting `#payView`'s input rule would have dropped those inputs to ~32px, since
+   the block carries no input floor).
+2. **The sentinel FLOOR check (944)** — for every rule in the `cr-touch44-styles` sheet declaring
+   `min-height:44px`/`min-width:44px`, the matched elements' COMPUTED `min-*` must be ≥44, unless a
+   ≥44px `::before`/`::after` pad covers it (class 40, the `.pu-box` shape). The beating selector
+   is named in the finding. Selftest fixture pair: the beaten case fires, the padded twin must not.
+
+**The tell** for future audits: a control measuring under 44 whose class appears in the touch44
+block. That is never "the floor is missing" — it is this class. Grep the module's own styles for
+`min-height` before adding anything to the block.

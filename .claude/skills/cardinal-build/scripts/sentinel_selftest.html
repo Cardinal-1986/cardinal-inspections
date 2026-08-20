@@ -116,6 +116,20 @@
 <h2>BUILD 817 — a @media rule beaten by a later unconditional one (IS a defect)</h2>
 <div class="case"><div class="mf-loser">this one must still be reported</div></div>
 
+<h2>FLOOR — the 44px floor beaten by an id-scoped min-height (the #payView shape)</h2>
+<div class="case" id="floorHost">
+  <button type="button" id="floor-btn" class="floor-ctl">beaten floor — must be reported</button>
+  <button type="button" id="floor-pad-btn" class="floor-pad">beaten floor with a 44px ::after pad — must NOT be</button>
+</div>
+<!-- the floor sheet: the check keys on this exact style id -->
+<style id="cr-touch44-styles">.floor-ctl{min-height:44px}.floor-pad{min-height:44px}</style>
+<style>
+  /* the beaters — id-scoped, the #payView shape */
+  #floorHost .floor-ctl { min-height: 30px; }
+  #floorHost .floor-pad { min-height: 30px; position: relative; }
+  #floorHost .floor-pad::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 44px; }
+</style>
+
 <h2>UNWIRED — a button nothing listens to</h2>
 <div class="case">
   <button type="button" id="wired">this one is wired</button>
@@ -126,6 +140,10 @@
   /* Only the first button gets a handler. The second is BUG_CLASSES 16:
      drawn, enabled, and inert — the Studio Archive button, 614 to 632. */
   document.getElementById('wired').addEventListener('click', function () {});
+  /* the FLOOR fixtures are wired so they do not ALSO trip UNWIRED — a case
+     that fires two checks makes a broken check look alive */
+  document.getElementById('floor-btn').addEventListener('click', function () {});
+  document.getElementById('floor-pad-btn').addEventListener('click', function () {});
 </script>
 </body>
 </html>

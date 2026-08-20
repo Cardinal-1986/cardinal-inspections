@@ -159,7 +159,7 @@ let   ALL    = argv.includes('--all');
    it reported build 817's FIX as the defect). Silence from an instrument
    that has never been seen to speak is not evidence of anything. */
 const SELFTEST = argv.includes('--selftest');
-const EXPECT = ['INK', 'COLLAPSE', 'OVERLAP', 'OVERFLOW', 'DEAD', 'OVERRIDDEN', 'UNWIRED'];
+const EXPECT = ['INK', 'COLLAPSE', 'OVERLAP', 'OVERFLOW', 'DEAD', 'OVERRIDDEN', 'FLOOR', 'UNWIRED'];
 const on = id => !ONLY.length || ONLY.includes(id);
 
 if (SINCE && !existsSync(SINCE)) {
@@ -316,6 +316,16 @@ async function sweep(HTML, findings) {
         add({ id: f.outranked ? 'OVERRIDDEN' : 'DEAD', where: at,
               detail: `${f.selector} { ${f.prop}: ${f.declared} } never wins on any of the ${f.matched} element(s) it matches` });
 
+    /* FLOOR — the touch-target floor beaten by a module's own min-*. To
+       OVERRIDDEN this is the cascade working, which is exactly why it has
+       its own id: the cr-touch44-styles sheet is the one place where losing
+       to higher specificity IS the defect (the #payView shape, build 944). */
+    if (on('FLOOR'))
+      for (const f of (res.floor || []).slice(0, 20))
+        add({ id: 'FLOOR', where: at,
+              key: `${f.selector}|${f.prop}|${f.el}`,
+              detail: `${f.selector} floors ${f.prop}:44px but ${f.el} computes ${f.computed}px${f.winner ? ' — beaten by ' + f.winner : ''}` });
+
     /* UNWIRED needs CDP — the page cannot list its own listeners. */
     if (on('UNWIRED') && res.unwired.length) {
       const cdp = await ctx.newCDPSession(page);
@@ -421,7 +431,7 @@ if (JSON_OUT) {
   console.log(JSON.stringify({ file: FILE, since: SINCE || null, ran,
     findings: rows, carried: carried.length }, null, 2));
 } else {
-  const ORDER = ['RUN', 'PAGEERROR', 'INK', 'COLLAPSE', 'OVERLAP', 'OVERFLOW', 'DEAD', 'OVERRIDDEN', 'UNWIRED'];
+  const ORDER = ['RUN', 'PAGEERROR', 'INK', 'COLLAPSE', 'OVERLAP', 'OVERFLOW', 'DEAD', 'OVERRIDDEN', 'FLOOR', 'UNWIRED'];
   const sortRows = a => a.sort((x, y) => ORDER.indexOf(x.id) - ORDER.indexOf(y.id));
   for (const r of sortRows(rows))
     console.log(`  ${r.id.padEnd(9)} ${r.detail}   [${r.at.join(', ')}]`);
@@ -466,6 +476,13 @@ if (SELFTEST) {
   console.log((mfWrong ? '  FAIL  ' : '  PASS  ') +
     'a base rule beaten by a MATCHING @media rule is NOT reported as DEAD');
   if (mfWrong) bad++;
+  /* The FLOOR pair: the pad twin must NOT fire — a 44px ::after pad is the
+     .pu-box shape and satisfies the floor invisibly (class 40). The firing
+     side is covered by EXPECT above. */
+  const floorPadWrong = all.some(r => r.id === 'FLOOR' && /floor-pad/.test(r.detail));
+  console.log((floorPadWrong ? '  FAIL  ' : '  PASS  ') +
+    'a beaten floor with a 44px ::after pad is NOT reported as FLOOR');
+  if (floorPadWrong) bad++;
   const mfMissed = !all.some(r => r.id === 'DEAD' && /mf-loser/.test(r.detail));
   console.log((mfMissed ? '  FAIL  ' : '  PASS  ') +
     'but a @media rule beaten by a later unconditional one STILL is (build 817)');

@@ -20206,3 +20206,57 @@ Verification: `check_build` green (942 → 943); the full pixel-truth audit re-r
 **ZERO contrast failures anywhere** — both themes × both widths, self-test against the adjudicated
 values intact. 942's own verification came back first: self-test PASS, all nine targeted styles gone,
 **zero new failures introduced**.
+
+## Build 944 — every tappable control meets the 44px touch floor (20 Aug 2026)
+
+The readability audit's second half. The audit's walk measured **67 distinct controls under 44px**
+(406 style×screen hits across 32 selectors, rendered rects at 390 and 1194): the worst were the
+three 59×18 "Clear all" buttons, two 20px sort chips, a 268×20 search input and the 15×15 leads
+stage checkboxes. After this build the same walk reports **zero**.
+
+**The mechanism is build 752's own convention, extended, not a new one:** ~21 grouped `min-*`
+floors appended inside `<style id="cr-touch44-styles">`, each carrying its measured size. Notable
+calls, each written in the block:
+
+- **The desktop rail (`cr-lnav`)** was absent from the 752 pass because that pass measured at
+  390px, where the rail never mounts. All five row kinds floored; the rail is its own scroll
+  container, so rows only add scroll — the default rail starts scrolling ~160px earlier on the
+  tablet, which Theo may notice.
+- **The leads stage checkboxes:** floored the **label** (`.ljopt`), never `.cbx` — the label is the
+  real hit area, `.cbx` is app-wide, and `#projectView` hides its copies at 1×1, which `min-*`
+  would clamp to 44 through any specificity.
+- **`#crBanner .cbcrm b` (CRM switcher chips) did NOT grow** — fixed header chrome; growing them
+  costs 22px of banner on every screen. They got a 44px `::after` pad at source (the `.pu-box`
+  shape). `gate_944.mjs` proves it with a **real mouse click 9px above the chip's box**: the CRM
+  switches on 944 and misses on 943.
+- **Never floor `.btn` or `.x` classless** — 42 and 26 live rules; `.headactions .btn{height:40px}`
+  and the docked repstrip's 40×34 collapse are deliberate, and in the Sales Floor tiles `.x` is a
+  flex TEXT SPAN. Scoped floors instead (`.cdocrow .btn`, `#cr-abc .hd .x`).
+
+**Four modules were quietly beating the floor the app has had since 752 — the `#payView` shape,
+now BUG_CLASSES 54:** an id-scoped rule declaring its own `min-height` outranks the block's
+classless floor, so the floor is law everywhere except the screens that break it.
+`#payView .pay-chip` carried **34px over the 44px floor for 192 builds**; `#payView` inputs 40px,
+`#cr-pk .pkm` fields 36px, `#cr-storm .stseg` 40px. All four raised **at source** (the module rules
+keep their padding/borders; deletion would have regressed the pay inputs to ~32px since the block
+carries no input floor). **The sentinel now has a FLOOR check** for recurrences: rules in the
+touch44 sheet whose computed `min-*` lands under 44 are reported with the beating selector named —
+to the OVERRIDDEN check this is just the cascade working, which is exactly why it needed its own
+id. Selftest fixture pair proves it fires on the beaten case and stays silent when a 44px
+`::after` pad covers the deficit (class 40). `--selftest`: all 8 checks fire.
+
+**One at-source visual trim:** `.cd-search` (clients) padding 9px→1px so the floored input lands
+the bar at ~48px instead of 64.
+
+**Deliberately not floored, named in the block:** `#projectView .acxjd .acxtrs` inputs (34px) —
+the 788–804 job-details card is deliberately dense; growing every row is a redesign and Theo's
+call. Also found, not fixed (out of scope): `.cr-cth-tabs button`'s `font:700 13px inherit` is an
+invalid shorthand (family can't be `inherit` there), so the strip renders in the UA button font.
+
+Verification: `check_build` green (943 → 944, 122 inline scripts parse, 145 styles balanced);
+the tap walk **406 → 0** with the same instrument that was red on 943; the pad proof green on 944
+and **red on the 943 control** (both directions); five-screen Chromium renders eyeballed (clients,
+leads, pay, suppliers, cardinaltruth) — labels centered, nothing clipped; sentinel selftest green
+(8/8 incl. the new FLOOR); full sentinel 944-vs-943 run for regressions. Recon was a six-agent
+parallel sweep of all 32 selector groups before any edit — markup origin, competing rules, hidden
+hit areas, layout risk per group.
