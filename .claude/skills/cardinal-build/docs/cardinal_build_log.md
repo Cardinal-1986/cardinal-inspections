@@ -20171,3 +20171,38 @@ themes × both widths, pixel-truth contrast, self-test against the adjudicated v
 targeted styles must vanish with **zero new failures**. ⚠️ My own count assertions misfired twice
 during the build (guessed totals instead of derived — `CRM_INK_LT` is 3 sites not 2, `#f08a90` is 15
 file-wide because it already exists); the file was right both times, the expectations were wrong.
+
+## Build 943 — The rest of the readability audit
+
+The 3.1–4.0 half — nine styles, closing the audit's contrast list entirely (with 942). Same method:
+every replacement computed on its measured ground in both themes, existing app colours reused where
+one already cleared the floor.
+
+| style | was | now |
+|---|---:|---|
+| `.cdoccat .cdsub` + `.cdocrow .cdname small` | 2.21–3.98 | 5.61 — `#6e6663`, the screen's own deeper mute; cards are white in both themes so one value serves both |
+| `.ljrailnote` (Leads) | 3.11 | dark 6.54 (the override was already dark-scoped — deepened in place), light 4.89 via a new rb-light rule |
+| `.cd-note` (Clients) | 3.13 | 5.21 / 4.86 |
+| `#listView .listctl` "Salesman:" | 3.21 **dark only** | 5.18–5.66 dark; **light restored explicitly to the byte** — changing the base alone would have been the dark-fix-breaks-light class |
+| `.cd-addr` | 3.23 | 5.48 / 5.02 |
+| `.afrow .afav .tm` feed timestamps | 3.25 | 5.61 both — the cards are white in both themes |
+| `.lnav-sec` labels, light | 3.97 | 5.41 |
+| `.cdsoon` COMING SOON, light | 4.01 | 6.59 — the CHIP deepened (`#b3222e`), the white ink untouched |
+
+**Deliberately not chased:** `cdsub`'s 2.21 reading on the DISABLED "coming soon" card — the card is
+dimmed at `opacity:.75` because dimming IS the disabled affordance, and WCAG exempts disabled
+elements. The enabled cards carry the real fix. **The COMING SOON chip's own light reading of 4.3:1
+is the same exemption, PROVEN arithmetically:** the measured ground `#c45760` is exactly
+`#b3222e × .75 + white × .25` to the byte — the fix applied and the card's dimming composited over
+it. The chip exists only on the disabled card.
+
+**And the verification re-run earned its keep:** the first pass of the section-label fix caught one
+of the TWO rules carrying `#6f7683` — the rail's — and missed `#leadsView .ljgroup>b`, the leads
+screen's own copy ("Milestone" headers, 3.97 light). *A partial pass removes the tell.* The re-run
+found it; `color:#6f7683` is now at **zero** sites, asserted. Final sweep: **51 failures → 1, and
+the 1 is the disabled-card exemption.** Self-test PASS throughout.
+
+Verification: `check_build` green (942 → 943); the full pixel-truth audit re-run with the bar at
+**ZERO contrast failures anywhere** — both themes × both widths, self-test against the adjudicated
+values intact. 942's own verification came back first: self-test PASS, all nine targeted styles gone,
+**zero new failures introduced**.
