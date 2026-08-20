@@ -100,8 +100,34 @@
     });
   }
   function api(name) { return window[name] && window[name].open ? window[name] : null; }
+
+  /* ⚠ The drawer does NOT close with hideAllViews(), so without this every
+     state AFTER the nav state was probed with the menu still over it — the
+     first run reported four contrast failures that were really one screen
+     bleeding into three others. A state must hand back the screen it names. */
+  function closeDrawer() {
+    document.body.classList.remove('cr-drawer-open', 'cr-drawer-lift');
+    var m = document.getElementById('navMenu');
+    if (m) m.classList.remove('open', 'show');
+  }
   function closeAll() {
+    closeDrawer();
     try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (e) {}
+  }
+
+  /* ⚠ Visible means VISIBLE, not present. Build 926 hides #navBtn on desktop
+     (body.cr-lnav-on ... #navBtn{display:none!important}) because the left
+     rail is the nav at that width — one nav, deliberately. Clicking it anyway
+     opens a #navMenu that renders WHITE and that no desktop user can ever
+     reach, and scoring its light-era inks manufactures findings. That is the
+     staged-impossible-configuration trap, and this setup fell into it on its
+     first run. */
+  function onScreen(el) {
+    if (!el) return false;
+    var cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    var b = el.getBoundingClientRect();
+    return b.width > 2 && b.height > 2;
   }
 
   window.__sentinelStates = [
@@ -136,12 +162,18 @@
         leaveLanding(); closeAll();
         var m = api('CardinalEstimates'); if (!m) throw new Error('CardinalEstimates.open missing');
         m.open(); await pause(700); } },
-    { name:'drawer',      run: async function () {
+    /* "the navigation, whichever one this width actually has" — the phone
+       drawer below the rail breakpoint, the left rail above it. Named for the
+       job rather than the mechanism, so it stays honest at both widths. */
+    { name:'nav',         run: async function () {
         leaveLanding(); closeAll();
-        var b = document.getElementById('burger') ||
-                document.querySelector('[data-cr-burger],.burger,#navBtn');
-        if (!b) throw new Error('no burger button found');
-        b.click(); await pause(600); } },
+        var b = document.getElementById('navBtn') ||
+                document.querySelector('[data-cr-burger],.burger,#burger');
+        if (onScreen(b)) { b.click(); await pause(600); return; }
+        var rail = document.getElementById('cr-lnav');
+        if (!onScreen(rail))
+          throw new Error('neither the burger nor the rail is on screen — this width has no nav');
+        await pause(400); } },
     { name:'newproject',  run: async function () {
         leaveLanding(); closeAll();
         if (typeof openProjModal !== 'function') throw new Error('openProjModal missing');
