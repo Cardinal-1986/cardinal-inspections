@@ -3644,7 +3644,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 947 &#8212; The punch-out card, tightened: it leads with the work once work has started, dispatch folds to one line, every control meets the touch floor, Close turns green when everything is done and its &#8220;3 photos &#183; 2 steps left&#8221; jumps you to what&#8217;s missing, Delete moves behind the &#8942; menu, and windows and general repairs get checklists of their own</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 948 &#8212; Crew Dispatch becomes the Magnet Board: the next seven days from today instead of a fixed week (Sunday hatched until it&#8217;s worked), every trade on its own riveted steel strip with a chevron that folds it away, crews on stamped dog tags, and jobs as raised magnets &#8212; full size on every screen, panning on the phone</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40658,6 +40658,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:948, d:'2026-08-20', t:'Crew Dispatch becomes the Magnet Board', s:'The dispatch board is the shop wall now. The window is the next seven days starting today \u2014 not a Monday-to-Saturday week \u2014 so Thursday afternoon shows you through next Wednesday, with Sunday hatched until something is booked on it. Every trade sits on its own riveted steel strip with a crew count on the end and a chevron that folds the whole trade to one quiet line. Crews became stamped dog tags \u2014 Curtis in his blue, Scottie in his purple \u2014 and booked jobs are raised magnets with the job and address readable at full size on every screen: the iPad and desktop fit all seven days across, and the phone keeps the same full-size magnets and simply pans. The map, the Rain button, the trade filters and the Needs-a-crew tray all work exactly as before.' },
 { b:947, d:'2026-08-20', t:'The punch-out card, tightened', s:'The card now leads with its moment: once work has started, the check-in strip, checklist and photos rise to the top and the assign/schedule controls fold into one line \u2014 tap it to open them. The Close button turns green the moment everything is done, and while it is not, \u201C3 photos \u00b7 2 steps left\u201D is tappable and scrolls you straight to what is missing. Every button on the card now meets the 44-pixel touch floor \u2014 the checklist ticks and photo \u00d7s keep their size but their tap area grows invisibly. Delete moved behind the \u22EF menu in the corner, the supplement flag became a quiet Extra scope chip that badges its request wherever it lands, the @ chips appear when you start writing, an empty description is one line instead of a section, and windows and general repairs join roofing, siding and gutters with checklists of their own.' },
 { b:946, d:'2026-08-20', t:'The invisible Check out button', s:'In light mode, the Check out button on a punch-out card had dark letters on the dark check-in strip \u2014 1.02 to 1, effectively invisible, on the one control the crew taps from a roof. The strip is deliberately dark in both themes; its text colours now come with it, pinned, so light mode shows the same readable strip dark mode always had.' },
 { b:945, d:'2026-08-20', t:'Punch \u0026 Repairs becomes The Line', s:'The punch page now works the way dispatch actually happens. Punch-outs with nobody assigned sit pinned at the very top in amber \u2014 oldest first, each with an Assign button that opens a sheet showing every person with their real load (2 open \u00b7 day-2 carry) and four day chips, and the assignee gets notified the moment you hit Assign. Below that, four tabs that each mean exactly one thing: Active is started or due today \u2014 with the check-in truth right on the board (on site since 9:40, day 2, not checked in); Assigned has a person but needs a day; Scheduled has a day that has not come; Closed is done. The one-tap tick, the search, the filters and the map all work exactly as before.' },
@@ -74065,92 +74066,143 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); color:var(--disp-dim,#9aa1ac); cursor:pointer; }
 #cr-disp .dspfilt .fc.on{ border-color:var(--disp-ink,#fff); color:var(--disp-ink,#fff); }
 
-#cr-disp .dspframe{ background:var(--disp-bg,#08090b); border:1px solid var(--disp-line,#282c34);
-  border-radius:12px; overflow:hidden; }
-#cr-disp .dspscroll{ overflow-x:auto; }
-#cr-disp .dspgrid{ min-width:730px; }
-#cr-disp .drow{ display:grid; grid-template-columns:154px repeat(var(--dcols,6),minmax(66px,1fr)); }
+/* ── 948: THE MAGNET BOARD (Theo's 4C pick) ─────────────────────────────
+   The shop-wall dispatch board in Cardinal Steel: riveted trade strips with
+   chevrons that FOLD a trade to one line, dog-tag crew cards, jobs as raised
+   magnets, a rolling NEXT-7-DAYS window (Sunday hatched until it is worked).
+   Wide (>=1100px) fits all seven columns with full magnets; the phone keeps
+   full-size magnets and PANS — Theo: "phone was fine non compressed".
+   Every ground/edge rides the --disp-* tokens so both themes flip whole. */
+#cr-disp .dspframe{ background:linear-gradient(180deg,var(--disp-panel,#101216),var(--disp-bg,#08090b));
+  border:1px solid var(--disp-line,#282c34); border-radius:14px; overflow:hidden; padding:8px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05); }
+#cr-disp .dspscroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+#cr-disp .dspgrid{ min-width:820px; }
+@media (min-width:1100px){ #cr-disp .dspgrid{ min-width:0; } }
+#cr-disp .drow{ display:grid; grid-template-columns:118px repeat(var(--dcols,7),minmax(96px,1fr)); }
+@media (min-width:1100px){ #cr-disp .drow{ grid-template-columns:170px repeat(var(--dcols,7),minmax(0,1fr)); } }
 
-#cr-disp .drail{ background:var(--disp-panel,#101216); border-bottom:2px solid var(--disp-line,#282c34); }
-#cr-disp .drail .rl{ padding:7px 10px; border-right:1px solid var(--disp-line,#282c34);
-  position:sticky; left:0; z-index:4; background:var(--disp-panel,#101216); }
-#cr-disp .drail .rl .t{ font:750 11px 'Segoe UI',Arial,sans-serif; color:var(--disp-need,#f5c045);
-  display:flex; align-items:center; gap:5px; }
-#cr-disp .drail .rl .s{ font-size:8.5px; color:var(--disp-dim,#9aa1ac); margin-top:1px; }
-#cr-disp .drail .runrow{ grid-column:2 / -1; border-left:1px solid var(--disp-line,#282c34);
-  padding:6px; display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
-#cr-disp .uch{ border:1px solid var(--disp-need,#f5c045); border-radius:6px; padding:3px 7px;
-  background:rgba(0,0,0,.14); cursor:pointer; }
-#cr-disp .uch .c{ font:700 10px 'Segoe UI',Arial,sans-serif; color:var(--disp-need,#f5c045); }
-#cr-disp .uch .a{ font-size:8px; color:var(--disp-mute,#5c636e); margin-top:1px; }
-#cr-disp .runrow .none{ font:600 9px var(--disp-mono,monospace); color:var(--disp-mute,#5c636e); font-style:italic; }
+/* the Needs-a-crew TRAY */
+#cr-disp .drail{ display:block; background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
+  border:1px solid var(--disp-line,#282c34); border-radius:10px; margin:2px 2px 10px; padding:9px 12px;
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.35); }
+#cr-disp .drail .rl{ position:static; background:none; border:0; padding:0; }
+#cr-disp .drail .rl .t{ font:750 13px 'Segoe UI',Arial,sans-serif; color:var(--disp-need,#f5c045);
+  display:flex; align-items:center; gap:6px; }
+#cr-disp .drail .rl .s{ font-size:11px; color:var(--disp-dim,#9aa1ac); margin-top:1px; }
+#cr-disp .drail .runrow{ border:0; padding:7px 0 0; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+#cr-disp .uch{ border:1px solid var(--disp-need,#f5c045); border-radius:8px; padding:8px 11px;
+  min-height:44px; display:flex; flex-direction:column; justify-content:center;
+  background:rgba(245,192,69,.05); cursor:pointer; }
+#cr-disp .uch .c{ font:700 12.5px 'Segoe UI',Arial,sans-serif; color:var(--disp-need,#f5c045); }
+#cr-disp .uch .a{ font-size:11px; color:var(--disp-dim,#9aa1ac); margin-top:1px; }
+#cr-disp .runrow .none{ font:600 11.5px var(--disp-mono,monospace); color:var(--disp-dim,#9aa1ac); font-style:italic; }
 
+/* day headers — rolling 7, today lit, Sunday hatched until worked */
 #cr-disp .dcol{ background:var(--disp-panel,#101216); border-bottom:1px solid var(--disp-line,#282c34); }
-#cr-disp .dcol .c{ padding:6px 2px; text-align:center; border-left:1px solid var(--disp-line,#282c34);
-  font:600 8.5px var(--disp-mono,monospace); color:var(--disp-mute,#5c636e); }
-#cr-disp .dcol .c b{ display:block; color:var(--disp-dim,#9aa1ac); font-size:12px; margin-top:1px; }
-#cr-disp .dcol .c.rail{ border-left:none; text-align:left; padding-left:12px;
-  position:sticky; left:0; z-index:4; background:var(--disp-panel,#101216); }
-#cr-disp .dcol .c.today{ background:var(--disp-today,#15171c); border-top:2px solid var(--disp-tline,#fff); }
-#cr-disp .dcol .c.today b{ color:var(--disp-ink,#fff); }
+#cr-disp .dcol .c{ padding:7px 2px; text-align:center; border-left:1px solid var(--disp-line,#282c34);
+  font:600 10.5px var(--disp-mono,monospace); color:var(--disp-dim,#9aa1ac); }
+#cr-disp .dcol .c b{ display:block; color:var(--disp-ink,#fff); font-size:15px; margin-top:1px; }
+#cr-disp .dcol .c.rail{ border-left:none; text-align:left; padding-left:12px; letter-spacing:.1em; font-size:10px;
+  position:sticky; left:0; z-index:4; background:var(--disp-panel,#101216); display:flex; align-items:center; }
+#cr-disp .dcol .c.today{ background:var(--disp-today,#15171c); border-top:2.5px solid var(--disp-tline,#fff); }
 #cr-disp .dcol .c.today::after{ content:"TODAY"; display:block; font:700 6.5px var(--disp-mono,monospace);
-  letter-spacing:.1em; color:var(--disp-tline,#fff); margin-top:1px; }
+  letter-spacing:.12em; color:var(--disp-tline,#fff); margin-top:1px; }
+#cr-disp .dcol .c.sun{ color:var(--disp-mute,#5c636e); }
+#cr-disp .dcol .c.sun b{ color:var(--disp-mute,#5c636e); }
 
-#cr-disp .dband{ padding:5px 0; font:700 9px var(--disp-mono,monospace); letter-spacing:.14em;
-  text-transform:uppercase; background:var(--disp-panel,#101216);
-  border-top:1px solid var(--disp-line,#282c34); border-bottom:1px solid var(--disp-line,#282c34); }
-#cr-disp .dband .bl{ position:sticky; left:0; z-index:5; display:inline-flex; align-items:center; gap:6px;
-  padding:0 12px; color:var(--disp-band,#8b97a8); }
-#cr-disp .dband .bl::before{ content:""; width:7px; height:7px; border-radius:2px;
-  background:var(--disp-band,#8b97a8); opacity:.55; flex:none; }
+/* riveted trade strips — tap to fold */
+#cr-disp .dband{ display:flex; align-items:center; gap:8px; padding:5px 2px; background:transparent;
+  border:0; cursor:pointer; }
+#cr-disp .dband::before,#cr-disp .dband::after{ content:""; flex:none; width:6px; height:6px; border-radius:50%;
+  background:var(--disp-accent,#6b7280); box-shadow:inset 0 -1px 1px rgba(0,0,0,.7),0 1px 0 rgba(255,255,255,.08); }
+#cr-disp .dband .bl{ position:static; flex:1; min-height:34px; display:flex; align-items:center; gap:9px; padding:0 11px;
+  background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
+  border:1px solid var(--disp-line,#282c34); border-radius:5px;
+  font:800 11.5px var(--disp-mono,monospace); letter-spacing:.18em; text-transform:uppercase;
+  color:var(--disp-ink,#e5eaf1); text-shadow:0 1px 1px rgba(0,0,0,.6);
+  box-shadow:0 2px 4px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1); }
+#cr-disp .dband .bl::before{ content:none; }
+#cr-disp .dband .chev{ flex:none; width:12px; font-size:11px; color:var(--disp-band,#8b97a8); }
+#cr-disp .dband .cnt{ margin-left:auto; font:700 10px var(--disp-mono,monospace); letter-spacing:.05em;
+  color:var(--disp-band,#8b97a8); }
+#cr-disp .dband.repband .bl{ color:var(--disp-repair,#ff3b46); }
+#cr-disp .dband.repband .chev{ color:var(--disp-repair,#ff3b46); }
+#cr-disp .dsum{ padding:2px 14px 8px; font:600 11.5px var(--disp-mono,monospace); color:var(--disp-mute,#5c636e); }
+#cr-disp .dsum b{ color:var(--disp-dim,#9aa1ac); }
 
-#cr-disp .dlane{ border-bottom:1px solid var(--disp-line,#282c34); }
-#cr-disp .crewc{ padding:7px 10px; border-right:1px solid var(--disp-line,#282c34);
-  display:flex; align-items:center; background:var(--disp-bg,#08090b);
+/* crew rows — DOG TAGS on the rail */
+#cr-disp .dlane{ border-bottom:0; }
+#cr-disp .crewc{ padding:4px 6px 4px 2px; display:flex; align-items:center; background:transparent;
   position:sticky; left:0; z-index:4; cursor:default; }
-#cr-disp .crewc .cn{ font-size:10px; font-weight:700; color:var(--disp-ink,#fff); line-height:1.2; }
-#cr-disp .crewc .cc{ font-size:8px; font-weight:600; color:var(--disp-mute,#5c636e); line-height:1.2; margin-top:1px; }
+#cr-disp .crewc > div, #cr-disp .crewc .tagbox{ width:100%; }
+#cr-disp .crewc .tag, #cr-disp .crewc > div{ background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
+  border:1px solid var(--disp-accent,#6b7280); border-radius:9px; padding:7px 8px 7px 20px; position:relative;
+  min-height:44px; display:flex; flex-direction:column; justify-content:center;
+  box-shadow:0 2px 5px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.09); }
+#cr-disp .crewc > div::before{ content:""; position:absolute; left:7px; top:50%; transform:translateY(-50%);
+  width:6px; height:6px; border-radius:50%; background:var(--disp-bg,#08090b);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.12); }
+#cr-disp .crewc .cn{ font:750 11px var(--disp-mono,monospace); letter-spacing:.03em; text-transform:uppercase;
+  color:var(--disp-ink,#fff); line-height:1.3; }
+#cr-disp .crewc .cc{ font:600 10.5px 'Segoe UI',Arial,sans-serif; color:var(--disp-dim,#9aa1ac);
+  line-height:1.2; margin-top:1px; text-transform:none; letter-spacing:0; }
+@media (min-width:1100px){
+  #cr-disp .crewc .cn{ font-size:12px; }
+  #cr-disp .crewc .cc{ font-size:11px; }
+}
 
-#cr-disp .idle{ padding:5px 0; background:var(--disp-bg,#08090b); border-bottom:1px solid var(--disp-line,#282c34); }
-#cr-disp .idle .il{ position:sticky; left:0; z-index:3; padding:0 12px; display:inline-flex; align-items:center; gap:6px;
-  font:600 8.5px var(--disp-mono,monospace); letter-spacing:.03em; color:var(--disp-mute,#5c636e); cursor:pointer; }
-#cr-disp .idle .il::before{ content:"+"; font:800 10px var(--disp-mono,monospace); color:var(--disp-band,#8b97a8); }
-#cr-disp .idle .il b{ color:var(--disp-dim,#9aa1ac); font-weight:700; }
+/* idle collapse row */
+#cr-disp .idle{ padding:6px 0; background:transparent; border-bottom:0; }
+#cr-disp .idle .il{ position:sticky; left:0; z-index:3; padding:8px 12px; min-height:44px;
+  display:inline-flex; align-items:center; gap:6px;
+  font:600 11.5px var(--disp-mono,monospace); letter-spacing:.03em; color:var(--disp-dim,#9aa1ac); cursor:pointer; }
+#cr-disp .idle .il::before{ content:"+"; font:800 12px var(--disp-mono,monospace); color:var(--disp-band,#8b97a8); }
+#cr-disp .idle .il b{ color:var(--disp-ink,#fff); font-weight:700; }
 
-#cr-disp .dcell{ border-left:1px solid var(--disp-line,#282c34); padding:4px; min-height:46px;
-  display:flex; flex-direction:column; gap:3px; }
-#cr-disp .dcell.today{ background:var(--disp-today,#15171c); }
-/* 848: the empty-day cell uses a PREFIXED class (demp), never the bare `empty`.
-   The global .empty at ~177 is a dashed 8px card with a folder ::before mark,
-   and a bare `empty` here inherited the whole illustration in every idle cell. */
-#cr-disp .dcell.demp{ background:repeating-linear-gradient(135deg,transparent 0,transparent 6px,var(--disp-hatch,rgba(255,255,255,.05)) 6px,var(--disp-hatch,rgba(255,255,255,.05)) 7px); }
-#cr-disp .dcell.week{ grid-column:2 / -1; display:flex; align-items:center; justify-content:center;
-  font:600 9px var(--disp-mono,monospace); font-style:italic; color:var(--disp-mute,#5c636e);
-  border-left:1px solid var(--disp-line,#282c34);
-  background:repeating-linear-gradient(135deg,transparent 0,transparent 6px,var(--disp-hatch,rgba(255,255,255,.05)) 6px,var(--disp-hatch,rgba(255,255,255,.05)) 7px); }
-#cr-disp .job{ border-radius:6px; padding:4px 6px; background:var(--disp-card,#171a1f);
-  border:1px solid var(--disp-line,#282c34); border-left:3px solid var(--disp-accent,#6b7280); cursor:pointer; }
-#cr-disp .job .t{ font:700 8.5px 'Segoe UI',Arial,sans-serif; color:var(--disp-ink,#fff);
-  display:flex; align-items:center; gap:4px; }
+/* cells: flat when empty, hatched only on an unworked Sunday, today lit */
+#cr-disp .dcell{ border-left:1px solid var(--disp-line,#282c34); padding:4px; min-height:52px;
+  display:flex; flex-direction:column; gap:4px; justify-content:center; }
+#cr-disp .dcell.demp{ background:transparent; }
+#cr-disp .dcell.sun.demp{ background:repeating-linear-gradient(135deg,transparent 0,transparent 6px,var(--disp-hatch,rgba(255,255,255,.05)) 6px,var(--disp-hatch,rgba(255,255,255,.05)) 7px); }
+#cr-disp .dcell.today{ background:var(--disp-today,#15171c);
+  border-left:1px solid rgba(255,255,255,.18); box-shadow:inset -1px 0 0 rgba(255,255,255,.18); }
+
+/* jobs as MAGNETS */
+#cr-disp .job{ border-radius:8px; padding:6px 8px; cursor:pointer; position:relative;
+  background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
+  border:1px solid var(--disp-line,#282c34); border-top:2.5px solid var(--disp-accent,#6b7280); border-left:1px solid var(--disp-line,#282c34);
+  box-shadow:0 3px 8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08); }
+#cr-disp .job .t{ font:700 12px 'Segoe UI',Arial,sans-serif; color:var(--disp-ink,#fff);
+  display:flex; align-items:center; gap:4px; line-height:1.25; }
 #cr-disp .job .t .pip{ margin-left:auto; width:7px; height:7px; border-radius:50%; flex:none; background:var(--disp-mute,#5c636e); }
 #cr-disp .job .t .pip.sent{ background:var(--disp-dim,#9aa1ac); }
 #cr-disp .job .t .pip.done{ background:var(--disp-band,#8b97a8); }
-#cr-disp .job .a{ font-size:7.5px; color:var(--disp-mute,#5c636e); margin-top:1px; }
-#cr-disp .more{ font:700 8px 'Segoe UI',Arial,sans-serif; color:var(--disp-dim,#9aa1ac); text-align:center;
-  border:1px dashed var(--disp-line,#282c34); border-radius:5px; padding:2px; cursor:pointer; }
+#cr-disp .job .a{ font-size:10.5px; color:var(--disp-dim,#9aa1ac); margin-top:2px; line-height:1.25; }
+@media (min-width:1100px){
+  #cr-disp .job .t{ font-size:13px; }
+  #cr-disp .job .a{ font-size:11.5px; }
+}
+#cr-disp .more{ font:700 10px 'Segoe UI',Arial,sans-serif; color:var(--disp-dim,#9aa1ac); text-align:center;
+  border:1px dashed var(--disp-line,#282c34); border-radius:6px; padding:4px; cursor:pointer; }
 
-#cr-disp .dband.repband .bl{ color:var(--disp-repair,#ff3b46); }
-#cr-disp .dband.repband .bl::before{ background:var(--disp-repair,#ff3b46); opacity:.7; }
+/* the punch band: red magnets, owner-coloured tags */
 #cr-disp .crewc.own-curtis .cn{ color:var(--disp-curtis,#3fb8c9); }
 #cr-disp .crewc.own-scottie .cn{ color:var(--disp-scottie,#a98bec); }
-#cr-disp .repbdg{ margin-left:auto; font:700 7px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46);
-  border:1px solid var(--disp-repair,#ff3b46); border-radius:4px; padding:1px 5px; white-space:nowrap; }
-#cr-disp .rep{ border-radius:6px; padding:4px 6px; border:1px solid var(--disp-repair,#ff3b46);
-  border-left:3px solid var(--disp-repair,#ff3b46); background:rgba(0,0,0,.14); cursor:pointer; }
-#cr-disp .rep .t{ font:700 8.5px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46); }
-#cr-disp .rep .a{ font-size:7.5px; color:var(--disp-mute,#5c636e); margin-top:1px; }
+#cr-disp .repbdg{ margin-top:3px; align-self:flex-start; font:700 10px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46);
+  border:1px solid var(--disp-repair,#ff3b46); border-radius:5px; padding:1px 6px; white-space:nowrap; }
+#cr-disp .rep{ border-radius:8px; padding:6px 8px; cursor:pointer;
+  background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
+  border:1px solid var(--disp-repair,#ff3b46); border-top:2.5px solid var(--disp-repair,#ff3b46);
+  box-shadow:0 3px 8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08); }
+#cr-disp .rep .t{ font:700 12px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46); line-height:1.25; }
+#cr-disp .rep .a{ font-size:10.5px; color:var(--disp-dim,#9aa1ac); margin-top:2px; }
+@media (min-width:1100px){
+  #cr-disp .rep .t{ font-size:13px; }
+  #cr-disp .rep .a{ font-size:11.5px; }
+}
 #cr-disp .dspmsg{ padding:40px 16px; text-align:center; color:var(--disp-dim,#9aa1ac); font-size:14px; }
-#cr-disp .dspnote{ margin-top:12px; font-size:11.5px; color:var(--disp-mute,#5c636e); line-height:1.5; }
+#cr-disp .dspnote{ margin-top:12px; font-size:12px; color:var(--disp-dim,#9aa1ac); line-height:1.5; }
 /* 913: Crew Dispatch map (toggle) */
 #cr-disp .dspmapbtn{ margin-left:auto; background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34);
   color:var(--disp-ink,#fff); border-radius:8px; padding:6px 14px; font:700 12px 'Segoe UI',Arial,sans-serif; cursor:pointer; }
@@ -74183,7 +74235,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 /* Crew Dispatch (build 841). Read-only week grid over crews + crew_work_orders,
    rendered against cacheProjects already in memory. window.CardinalDispatch. */
 (function(){
-  var el, crews = [], wos = [], punches = [], weekOffset = 0, filter = 'All', showIdle = {};
+  var el, crews = [], wos = [], punches = [], weekOffset = 0, filter = 'All', showIdle = {}, foldTrade = {};
   var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs'];
   /* 913: the dispatch Map toggle — its own Leaflet map of this week's jobs by crew */
   var mapOn=false, dmap=null, dlayer=null, dmarkers={}, dgeoQueue=[], dgeoBusy=false, dUserMoved=false, dFitT=null, dMissT=null;
@@ -74196,18 +74248,15 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
-  function mondayOf(base){
-    var d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
-    var dow = (d.getDay() + 6) % 7;         /* 0 = Monday */
-    d.setDate(d.getDate() - dow);
-    return d;
-  }
+  /* 948: the window is the NEXT SEVEN DAYS from today, not a fixed Mon-Sun —
+     Theo: "I'd like to see the next 7 days instead". The arrows still move a
+     week at a time. Sunday is always rendered, hatched until it is worked. */
   function weekDays(){
-    var m = mondayOf(new Date());
+    var m = new Date(); m = new Date(m.getFullYear(), m.getMonth(), m.getDate());
     m.setDate(m.getDate() + weekOffset * 7);
     var out = [];
     for(var i=0;i<7;i++){ var d = new Date(m); d.setDate(m.getDate()+i); out.push(d); }
-    return out;                              /* [Mon..Sun] */
+    return out;                              /* [today .. today+6] */
   }
 
   function projById(id){
@@ -74265,10 +74314,11 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     var days = weekDays();
     var dayStr = days.map(ymd);
     var todayStr = ymd(new Date());
-    /* Sunday (index 6) shows if it is worked, or if today IS that Sunday — so the
-       current day is never hidden on a Sunday with nothing booked. */
-    var hasSun = dayStr[6] === todayStr || wos.some(function(w){ return w.scheduled_on === dayStr[6]; });
-    var nDays = hasSun ? 7 : 6;
+    /* 948: all seven days always — Sunday renders hatched (class .sun) until
+       something is booked on it, instead of being dropped. */
+    var nDays = 7;
+    var sunSet = {};
+    days.forEach(function(d,i){ if(d.getDay() === 0) sunSet[i] = 1; });
 
     var byCrewDay = {};
     wos.forEach(function(w){
@@ -74288,10 +74338,10 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       return ia - ib || a.localeCompare(b);
     });
 
-    var colH = '<div class="drow dcol"><div class="c rail">CREW &middot; WEEK</div>' +
-      days.slice(0, nDays).map(function(d){
-        var s = ymd(d), t = (s === todayStr) ? ' today' : '';
-        var dn = ['MON','TUE','WED','THU','FRI','SAT','SUN'][(d.getDay()+6)%7];
+    var colH = '<div class="drow dcol"><div class="c rail">CREW &middot; NEXT 7</div>' +
+      days.slice(0, nDays).map(function(d, i){
+        var s = ymd(d), t = (s === todayStr) ? ' today' : (sunSet[i] ? ' sun' : '');
+        var dn = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
         return '<div class="c' + t + '">' + dn + '<b>' + d.getDate() + '</b></div>';
       }).join('') + '</div>';
 
@@ -74319,7 +74369,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         var cells = '';
         for(var di=0; di<nDays; di++){
           var list = (byCrewDay[c.id] && byCrewDay[c.id][di]) || [];
-          var s = dayStr[di], tcls = (s === todayStr) ? ' today' : '';
+          var s = dayStr[di], tcls = (s === todayStr) ? ' today' : (sunSet[di] ? ' sun' : '');
           if(!list.length){ cells += '<div class="dcell demp' + tcls + '"></div>'; continue; }
           var shown = list.slice(0,2).map(jobChip).join('');
           if(list.length > 2) shown += '<div class="more">+' + (list.length-2) + ' more</div>';
@@ -74342,7 +74392,18 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         else idleRow = '<div class="idle" data-idle="' + esc(tr) + '"><span class="il"><b>' +
           idle.length + ' idle ' + esc(tr.toLowerCase()) + (idle.length===1?' crew':' crews') + '</b> &middot; tap to show</span></div>';
       }
-      return '<div class="dband"><span class="bl">' + esc(tr) + '</span></div>' + lanes + idleRow;
+      /* 948: the strip is a control — chevron folds the trade to one line */
+      var nAll = inTrade.length;
+      var strip = '<div class="dband" data-band="' + esc(tr) + '"><span class="bl">' +
+        '<span class="chev">' + (foldTrade[tr] ? '\u25B8' : '\u25BE') + '</span>' + esc(tr) +
+        '<span class="cnt">' + nAll + (nAll === 1 ? ' CREW' : ' CREWS') + '</span></span></div>';
+      if(foldTrade[tr]){
+        var names = inTrade.map(function(c){ return c.legal_name || c.name || 'Crew'; }).slice(0, 4).join(' \u00b7 ');
+        var booked = active.length;
+        return strip + '<div class="dsum"><b>' + esc(names) + (nAll > 4 ? ' \u00b7 \u2026' : '') + '</b> \u2014 ' +
+          (booked ? booked + ' booked this week' : 'free next 7 days') + '</div>';
+      }
+      return strip + lanes + idleRow;
     }).join('');
 
     /* 842: Repairs band — punch-outs/repairs, one lane per assignee, red label. */
@@ -74368,7 +74429,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         var name = k==='__none__' ? 'Unassigned' : who(k);
         var cells = '';
         for(var di=0; di<nDays; di++){
-          var day = dayStr[di], tcls = (day === todayStr) ? ' today' : '';
+          var day = dayStr[di], tcls = (day === todayStr) ? ' today' : (sunSet[di] ? ' sun' : '');
           var onDay = items.filter(function(pi){ return pi.scheduled_at && String(pi.scheduled_at).slice(0,10) === day; });
           cells += onDay.length ? '<div class="dcell' + tcls + '">' + onDay.map(repChip).join('') + '</div>'
                                 : '<div class="dcell demp' + tcls + '"></div>';
@@ -74378,7 +74439,14 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         var bdg = backlog ? '<span class="repbdg">' + backlog + ' open</span>' : '';
         return '<div class="drow dlane"><div class="crewc' + oc + '"><div class="cn">' + esc(name) + '</div>' + bdg + '</div>' + cells + '</div>';
       }).join('');
-      return '<div class="dband repband"><span class="bl">Punch-outs &amp; Repairs</span></div>' + lanes;
+      var strip = '<div class="dband repband" data-band="__rep__"><span class="bl">' +
+        '<span class="chev">' + (foldTrade['__rep__'] ? '\u25B8' : '\u25BE') + '</span>Punch-outs &amp; Repairs' +
+        '<span class="cnt">' + punches.length + '</span></span></div>';
+      if(foldTrade['__rep__']){
+        return strip + '<div class="dsum"><b>' + order.map(function(k){ return k === '__none__' ? 'Unassigned' : who(k); }).join(' \u00b7 ') +
+          '</b> \u2014 ' + punches.length + ' open</div>';
+      }
+      return strip + lanes;
     }
     var repsH = repairsBand();
 
@@ -74392,7 +74460,8 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     var lab = el.querySelector('.dspwklab');
     if(lab){ var a = days[0], b = days[nDays-1];
       var mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      lab.textContent = mo[a.getMonth()] + ' ' + a.getDate() + ' – ' + b.getDate(); }
+      lab.textContent = (weekOffset === 0 ? 'Next 7 \u00b7 ' : '') +
+        mo[a.getMonth()] + ' ' + a.getDate() + ' \u2013 ' + mo[b.getMonth()] + ' ' + b.getDate(); }
     Array.prototype.forEach.call(el.querySelectorAll('.dspfilt .fc'), function(f){
       f.classList.toggle('on', f.getAttribute('data-f') === filter);
     });
@@ -74432,6 +74501,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     el.addEventListener('click', function(e){
       var f = e.target.closest('.dspfilt .fc');
       if(f){ filter = f.getAttribute('data-f'); render(); if(mapOn) syncMap(); return; }
+      var band = e.target.closest('.dband[data-band]');
+      if(band){ var bk = band.getAttribute('data-band');
+        foldTrade[bk] = !foldTrade[bk]; render(); return; }
       var idle = e.target.closest('.idle[data-idle]');
       if(idle){ showIdle[idle.getAttribute('data-idle')] = 1; render(); return; }
       var uch = e.target.closest('.uch[data-pid]');
@@ -74462,7 +74534,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     if(typeof window.hideAllViews === 'function') window.hideAllViews();
     el.classList.add('open');
     try{ el.scrollTop = 0; }catch(_e){}
-    weekOffset = 0; filter = 'All'; showIdle = {};
+    weekOffset = 0; filter = 'All'; showIdle = {}; foldTrade = {};
     setMapMode(false);
     render();                 /* paint immediately with whatever is cached */
     await load();

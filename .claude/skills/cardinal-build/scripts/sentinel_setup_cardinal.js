@@ -127,7 +127,27 @@
     /* honestly empty — the app must render these states, and it has shipped
        bugs in exactly this direction before */
     estimates: [], insurance_claims: [], project_photos: [], inspection_reports: [],
-    crews: [], crew_work_orders: [], crew_docs: [], crew_notes: [], crew_rates: [],
+    /* 948: the Magnet Board renders crews x the next 7 days - an empty crews
+       seed sweeps an empty grid and proves nothing (the 945 lesson). Dates are
+       COMPUTED so the rolling window always contains them: +1 day, +5 days,
+       and the next Sunday (the worked-Sunday case). */
+    crews: [
+      { id:'c1', name:'Betos Home Improvements', legal_name:null, trade:'Roofing',  archived:false, contact_name:'Alberto Campuzano' },
+      { id:'c2', name:'Pineda Siding',           legal_name:null, trade:'Siding',   archived:false, contact_name:'Jamie & Robin' },
+      { id:'c3', name:'Bob The Beast Deaton',    legal_name:null, trade:'Windows',  archived:false, contact_name:'Robert W Deaton' },
+      { id:'c4', name:'Jiminez Gutters',         legal_name:null, trade:'Gutters',  archived:false, contact_name:'Francisco Ramirez' },
+      { id:'c5', name:'Amanda Hoskins',          legal_name:null, trade:'General',  archived:false, contact_name:null }
+    ],
+    crew_work_orders: (function(){
+      function key(off){ var d=new Date(); d=new Date(d.getFullYear(),d.getMonth(),d.getDate()); d.setDate(d.getDate()+off);
+        return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+      var sunOff=(7-new Date().getDay())%7; if(sunOff===0) sunOff=7;
+      return [
+        { id:'w1', crew_id:'c1', project_id:'p1', report_id:null, status:'sent',  scheduled_on:key(1), sent_at:'2026-08-19T12:00:00Z', completed_on:null },
+        { id:'w2', crew_id:'c1', project_id:'p1', report_id:null, status:'draft', scheduled_on:key(5), sent_at:null, completed_on:null },
+        { id:'w3', crew_id:'c2', project_id:'p1', report_id:null, status:'sent',  scheduled_on:key(sunOff), sent_at:'2026-08-19T12:00:00Z', completed_on:null }
+      ];
+    })(), crew_docs: [], crew_notes: [], crew_rates: [],
     owner_tasks: [], owner_items: [], owner_reminders: [], owner_ledger: [], owner_ledger_txns: [],
     owner_docs: [], pricing_items: [], commissions: [], community_partners: [], punch_steps: []
   };
@@ -235,6 +255,11 @@
         if (!onScreen(rail))
           throw new Error('neither the burger nor the rail is on screen — this width has no nav');
         await pause(400); } },
+    { name:'dispatch',  run: async function () {
+        leaveLanding(); closeAll();
+        var dm = api('CardinalDispatch'); if (!dm) throw new Error('CardinalDispatch.open missing');
+        await dm.open(); await pause(800); } },
+
     { name:'punch',  run: async function () {
         leaveLanding(); closeAll();
         if (typeof window.openPunchView !== 'function') throw new Error('openPunchView missing');

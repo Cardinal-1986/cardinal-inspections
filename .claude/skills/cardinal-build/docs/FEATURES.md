@@ -5505,3 +5505,15 @@ gutters, **windows**, **general**). The card's controls meet the 44px floor (tic
 via ::after pads — rect audits must read the pseudo box). 946 pinned the check-in strip's inks
 (dark chip in both themes — its Check out label was 1.02:1 in light). Gate:
 `scripts/gate_947.mjs` (23 assertions, control red with named failures).
+
+## Crew Dispatch — the Magnet Board (build 948, 20 Aug 2026)
+
+The dispatch grid restyled as the shop wall: **rolling next-7-days window** (starts today;
+Sunday always renders, hatched until worked), riveted per-trade strips with chevrons that
+**fold a trade to one line** (`data-band` + `foldTrade{}`), dog-tag crew cards (uppercase mono +
+punched hole; `own-curtis`/`own-scottie` colours kept), jobs as raised magnets with readable
+job + address at every width. ≥1100px fits all seven columns; the phone pans full-size behind
+the sticky rail (settled: "non compressed"). Map/Rain/filters/idle/tray behaviour unchanged.
+All colours ride `--disp-*` tokens — both themes flip whole. Gate: `scripts/gate_948.mjs`
+(18 assertions, seeded crews/WOs incl. the worked-Sunday case, control red with named
+failures). Sentinel state: `dispatch`.
