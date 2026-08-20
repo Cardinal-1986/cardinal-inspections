@@ -1011,7 +1011,7 @@ header.site .btn.ghost:hover{background:rgba(255,255,255,.12);}
 .afrow .afav{flex:0 0 44px;text-align:center;}
 .afrow .afav .circ{width:40px;height:40px;border-radius:50%;background:#ece5e2;color:#7a4a3e;
   display:flex;align-items:center;justify-content:center;font:800 14px 'Segoe UI',Arial,sans-serif;margin:0 auto;}
-.afrow .afav .tm{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#9a8c85;margin-top:3px;display:block;}
+.afrow .afav .tm{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#6e6663;/* 943: was #9a8c85, 3.25:1 on the white card in both themes */margin-top:3px;display:block;}
 .afrow .afbd{flex:1;min-width:0;font:14px 'Segoe UI',Arial,sans-serif;}
 .afrow .aflabel{font-weight:800;color:var(--red);}
 .afrow .afwho{font-weight:800;color:#2b2b2b;}
@@ -1801,11 +1801,12 @@ html, body{overflow-x:hidden;max-width:100%;}
 .cdocscats{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 6px;}
 .cdoccat{position:relative;flex:1;min-width:200px;background:#fff;border:1px solid var(--line);border-radius:12px;
   padding:14px 16px;cursor:pointer;text-align:left;font:700 15px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
-.cdoccat .cdsub{display:block;font:400 12px 'Segoe UI',Arial,sans-serif;color:#8a7d75;margin-top:3px;}
+.cdoccat .cdsub{display:block;font:400 12px 'Segoe UI',Arial,sans-serif;color:#6e6663;/* 943: was #8a7d75 at 3.98:1; #6e6663 is this screen's own deeper mute, 5.61 — cards are white in both themes so one value serves both */margin-top:3px;}
 .cdoccat.active{border-color:var(--red);box-shadow:0 0 0 2px rgba(200,32,46,.12);}
 .cdoccat.disabled{cursor:default;opacity:.75;}
 .cdsoon{position:absolute;top:10px;right:10px;background:var(--red);color:#fff;border-radius:20px;
   padding:3px 10px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.6px;}
+:root[data-theme="rb-light"] .cdsoon{background:#b3222e;}/* 943: light --red left white ink at 4.01:1; deepened chip, 6.59 — the ink stays white, the CHIP moves */
 .cdtrades{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px;}
 .cdtrade{border:1px solid var(--line);background:#fff;border-radius:20px;padding:7px 14px;cursor:pointer;
   font:600 13px 'Segoe UI',Arial,sans-serif;color:#5a5049;}
@@ -1815,7 +1816,7 @@ html, body{overflow-x:hidden;max-width:100%;}
   padding:12px 14px;margin-bottom:8px;}
 .cdocrow .cdicon{font-size:20px;}
 .cdocrow .cdname{flex:1;font:600 14px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;}
-.cdocrow .cdname small{display:block;font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#8a7d75;margin-top:2px;}
+.cdocrow .cdname small{display:block;font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6e6663;margin-top:2px;}
 .cdocrow .btn{padding:7px 13px;font-size:12.5px;}
 .cdsoonpanel{background:#fff;border:1px dashed #c9b8ad;border-radius:12px;padding:26px 18px;text-align:center;
   font:600 14px 'Segoe UI',Arial,sans-serif;color:#8a7d75;margin-top:12px;}
@@ -2317,6 +2318,7 @@ body.restoring #restoreVeil{display:flex;}
 .ljselbtn:hover{border-color:var(--rbe-acc);color:var(--rbe-acclt);}
 .ljclearbtn{background:none;border:0;color:var(--rbe-clr);font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:2px 6px;}
 .ljrailnote{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute2);margin:0 0 10px;line-height:1.45;}
+:root[data-theme="rb-light"] #leadsView .ljrailnote{color:#6b6b6b;}/* 943: light's --rbe-mute2 put this at 3.11:1; the rbe-mute light value is 4.89 on the rail */
 .ljgroup{margin-top:10px;border-top:1px solid var(--rbe-hair);padding-top:8px;}
 .ljgroup>b{display:flex;align-items:center;gap:7px;font:800 10.5px ui-monospace,Menlo,monospace;
   letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-acclt);cursor:pointer;}
@@ -3642,7 +3644,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 940 &#8212; Check in and check out on a punch-out. Tap Check in when you get to the repair; tap Check out when you leave. If it is not finished it asks whether you are back on it tomorrow and moves the date for you. Anything that has taken more than one day shows a Day 2 mark on the card and on the Production board</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 943 &#8212; The rest of the readability audit: the helper notes on Clients and Leads, client addresses in the directory, the Salesman row on document lists, feed timestamps, the side menu&#8217;s section labels in light mode, Company Docs subtitles and the COMING SOON chip. Same method as 942 &#8212; every colour computed on its measured background, both themes</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -17905,8 +17907,15 @@ function hideAllViews(){
      on the second visit. */
   /* 572: cr-coach-mount and cr-adjusters-mount are in the markup and shown by
      display, exactly like the four above, so they belong in the same list. */
+  /* 941: cr-abc (Suppliers) joins the DISPLAY-shown group. The first draft of
+     this fix put it in the class-gated api list above — where the loop's own
+     `!el.classList.contains('open')` guard skipped it silently, because
+     Suppliers never carries .open: its open() sets display:flex. The close
+     lever must match how the screen is shown — the doctrine's table, learned
+     again. The gate caught it before it shipped: hideAllViews() still
+     reported display:flex. */
   ['payView','crewsView','cr-estimates-mount','cr-pricing-mount','cr-claims-mount',
-   'cr-coach-mount','cr-adjusters-mount']
+   'cr-coach-mount','cr-adjusters-mount','cr-abc']
     .forEach(function(id){
       var el = document.getElementById(id);
       if(el) el.style.display = 'none';
@@ -18869,7 +18878,7 @@ function renderClientDirectory(){
   var msOn = cdState.sets.stage || [];
   var railHtml = '<div class="cd-grp"><div class="ft">Milestone' + (msOn.length ? ' <span class="n">' + msOn.length + '</span>' : '') + '</div>';
   CD_CRMS.forEach(function(c){
-    railHtml += '<div class="cd-fsec" style="color:' + c.color + '"><span class="cd-dot" style="background:' + c.color + '"></span>' + c.label + '</div>';
+    railHtml += '<div class="cd-fsec" style="--fc:' + c.color + ';--fcl:' + (c.colorLight || c.color) + '"><span class="cd-dot" style="background:' + c.color + '"></span>' + c.label + '</div>';
     STAGES.forEach(function(st){
       var key = c.key + '|' + st;
       var cnt = cacheProjects.filter(function(pr){ return cdCrmOf(pr) === c.key && normStage(pr.stage) === st; }).length;
@@ -25691,6 +25700,7 @@ function __histPush(st){
                                   window.CardinalPunchCard.open(window.__crPunchCardLast); break;
         case 'showcase':        if(window.CardinalShowcase) window.CardinalShowcase.open(); break;
         case 'storm':           if(window.CardinalStorm) window.CardinalStorm.open(); break;
+        case 'suppliers':       if(window.CardinalABC) window.CardinalABC.open(); break;
         /* Build 367: views added after this switch was written. */
         case 'communityHub':    if(window.CardinalCommunityHub) window.CardinalCommunityHub.show(); break;
         case 'punch':           if(typeof window.openPunchView === 'function') window.openPunchView(); break;
@@ -28546,7 +28556,7 @@ function showList() {
   --cr-black:#1a1a1a;
   --cr-text:#2a2a2a;
   --cr-muted:#6b6b6b;
-  --cr-muted-2:#a8a8a8;
+  --cr-muted-2:#6b6b6b;
   --cr-border:#e5e5e5;
   --cr-border-2:#efefef;
   --cr-bg:#ffffff;
@@ -30045,7 +30055,7 @@ function showList() {
   --cr-black:#1a1a1a;
   --cr-text:#2a2a2a;
   --cr-muted:#6b6b6b;
-  --cr-muted-2:#a8a8a8;
+  --cr-muted-2:#6b6b6b;
   --cr-border:#e5e5e5;
   --cr-border-2:#efefef;
   --cr-bg:#ffffff;
@@ -32376,7 +32386,7 @@ function showList() {
   --cr-black:#1a1a1a;
   --cr-text:#2a2a2a;
   --cr-muted:#6b6b6b;
-  --cr-muted-2:#a8a8a8;
+  --cr-muted-2:#6b6b6b;
   --cr-border:#e5e5e5;
   --cr-border-2:#efefef;
   --cr-bg:#fff;
@@ -32909,7 +32919,7 @@ function showList() {
   --cr-black:#1a1a1a;
   --cr-text:#2a2a2a;
   --cr-muted:#6b6b6b;
-  --cr-muted-2:#a8a8a8;
+  --cr-muted-2:#6b6b6b;
   --cr-border:#e5e5e5;
   --cr-border-2:#efefef;
   --cr-bg:#fff;
@@ -40636,6 +40646,9 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:943, d:'2026-08-20', t:'The rest of the readability audit', s:'The remaining nine faint-text styles from the audit, all between 2.2:1 and 4:1 against a 4.5 floor: the \u201CNothing checked\u201D helper notes on Clients and Leads, client addresses in the directory, the Salesman row on Inspections and Recents, the feed\u2019s \u201C7h ago\u201D timestamps, the side menu\u2019s section labels in light mode, Company Docs\u2019 subtitles and the COMING SOON chip. Same discipline as 942: every replacement computed against the exact measured background in both themes, existing app colours reused wherever one already cleared the floor, and where only one theme failed the other keeps its original to the byte.' },
+{ b:942, d:'2026-08-20', t:'The readability audit\u2019s worst nine, fixed', s:'A full sweep of the app measured every piece of text against the exact pixels behind it, and nine styles sat below the readable floor \u2014 the worst being the explainer line under Inspections and Recents, which was WHITE text on light mode\u2019s white page: invisible. Also fixed: Sign out in the light side menu (each CRM\u2019s colour deepened, never swapped), the client directory\u2019s CRM section labels (which had carried proper light colours all along and never used them), Clear all, the empty Crews page, Suppliers\u2019 own field labels, the Objection Coach footer and the Read-only chip. Every new colour was computed against its measured background in BOTH themes before it shipped.' },
+{ b:941, d:'2026-08-20', t:'Suppliers stops trapping the app', s:'Opening Suppliers from the menu left it painted over the whole app: tapping Clients, Crews or anything else afterwards did nothing visible, and the phone\u2019s back button walked straight past it \u2014 the only way out was its own \u2715. Suppliers is now registered with the navigation like every other full screen: other destinations close it on their way in, and the back gesture returns from it properly. Found by the readability audit, whose own first runs were measuring every screen through the stuck Suppliers panel.' },
 { b:940, d:'2026-08-20', t:'Check in and check out on a repair', s:'Punch-outs now record who was on site and when. Tap Check in when you get to the repair and Check out when you leave; if it is not finished it asks whether you are back on it tomorrow, and only moves the date if you say yes \u2014 nothing reschedules itself behind you. Anything that has taken more than one day carries a Day 2 mark on the card AND on the Production board, so a repair that is dragging is visible without anybody being pinged about it. If somebody forgets to check out, the card says so plainly the next day rather than quietly assuming. Works with no signal \u2014 it saves on the phone and syncs later.' },
 { b:939, d:'2026-08-20', t:'Text size \u2014 three steps, remembered per phone', s:'Scottie said he had a hard time reading the screen. Measured on his login it is size rather than colour: 47 of the app\u2019s 155 text styles render under 12px, some as small as 7.5px. There is now a Text size control at the bottom of the menu \u2014 Normal, Large, Larger \u2014 which scales the whole app and is remembered on that device only, so turning it up does not change anyone else\u2019s screen. This matters most in the INSTALLED app, where iPhone gives you no way to pinch-zoom at all. Checked at both steps: the bottom bar stays put and nothing runs off the side of the screen.' },
 { b:938, d:'2026-08-20', t:'Three faint bits of text, measured and fixed', s:'A first full contrast sweep of the app \u2014 twelve screens, phone and desktop \u2014 found three pieces of text under the readable floor. The version line at the foot of the slide-out menu (3.4:1 \u2192 6.4:1), the highlighted CRM chip in the top banner (3.5:1 \u2192 4.8:1) and Sign out on the desktop side menu (3.4:1 \u2192 5.5:1). No colour was invented: Sign out uses the lighter cardinal red already in the app and stays red, and the CRM chip keeps every CRM\u2019s own colour \u2014 the chip behind it was darkened instead. That last one is deliberately dark-mode only: in light mode the same change would have made it harder to read, which the measurement caught before it shipped.' },
@@ -57145,7 +57158,17 @@ body[data-crm-head="community"] .site{--hbg:#047857;--hln:#0a9268;--hin:#fff;--h
    the other 23 now carry the same property. Without it a strip that reaches
    its left end passes the rest of the swipe to the page, and the browser
    reads that as a back navigation \u2014 Theo hit it on the leads chips and the
-   whole screen exited. Any new overflow-x:auto row needs this. */#projectView .subnote{color:#fff}#listView #listTitle{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#listView #listTitle .chipbtn{-webkit-text-fill-color:#2c2c2c}#listView #listNote{color:#fff}#listView label,#listView .listlbl{color:#c8202e}#listView #listBody,#listView .cards,#listView .doclist{background:transparent}#listView .card{margin-bottom:12px;border-radius:12px}#listView .listctl{color:#c8202e}#galleryView .subnote{color:#fff}#listView table.reports,#listView .reports thead,#listView .reports tbody{background:transparent;border:none;box-shadow:none}#listView .reports tr{border-radius:12px;overflow:hidden;margin-bottom:12px}/*cr-lv-readable-487: 44310 made this table transparent over --bg:#09090C but left the cells on their paper-theme colours - #333 read 1.57:1 and var(--muted) 2.97:1 at >700px. Retail token pair, so rb-light flips with it. .projrow sets its own light band and is excluded.*/#listView table.reports tr:not(.projrow) td{color:var(--rbe-ink)}#listView table.reports tr:not(.projrow) td small,#listView table.reports tr:not(.projrow) td .ref{color:var(--rbe-mute)}#listView table.reports tr:not(.projrow):hover td{background:rgba(255,255,255,.06)}.projhead{align-items:stretch}.projinfo{padding:11px 13px 12px}#projName{line-height:1.2;margin:2px 0 4px;overflow-wrap:anywhere}.cr-est-saved-list{background:#202329;border-radius:12px;padding:8px 8px 2px}.ljpo{color:#B57EDC;font-weight:800}#projectView .projsec{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#projectView .projsec a{-webkit-text-fill-color:#e35c63;color:#e35c63}.hero-hi,.hero-hi *,.acthead{color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}#mainView{background:transparent}#pwaNav #cr-ahc-badge{margin-right:0}body[data-crm-head="insurance"] #cr-hd2-ribbon{--racc:var(--ct-red);--rb1:var(--ct-bg);--rb2:var(--ct-surface-2);--rb3:var(--ct-surface);--rh1:var(--ct-red);--rh2:var(--ct-red-deep)}body[data-crm-head="community"] #cr-hd2-ribbon{--racc:#047857;--rb1:#04150f;--rb2:#061c14;--rb3:#08211a;--rh1:#047857;--rh2:#34D399}body[data-crm-head="production"] #cr-hd2-ribbon{--racc:#f5a623;--rb1:#14171b;--rb2:#181b20;--rb3:#1b1710;--rh1:#f5a623;--rh2:#ffd27a}body[data-crm-head="sales"] #cr-hd2-ribbon{--racc:#C8202E;--rb1:#1a1310;--rb2:#17120f;--rb3:#221407;--rh1:#e8544f;--rh2:#e35c63}#cr-hd2-mid #brandTitle{display:block !important}#cr-hd2-mid #brandCtx{display:none !important}#mainView .dashcard{display:none}</style>
+   whole screen exited. Any new overflow-x:auto row needs this. */#projectView .subnote{color:#fff}#listView #listTitle{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#listView #listTitle .chipbtn{-webkit-text-fill-color:#2c2c2c}#listView #listNote{color:var(--rbe-mute,#9aa0a8);/* 942: was #fff — a dark-era
+   ink that survived into light and painted white on #f7f7f7 at 1.07:1,
+   literally invisible. The rbe pair flips by itself: #9aa0a8 on the dark page
+   is 7.55:1, light's #6b6b6b on #f7f7f7 is 4.92:1. Adjudicated from rendered
+   pixels before and after. */}
+/* 942: the SAME element's other failure, in the other theme. .subnote's base
+   ink is var(--muted), and --muted is #5c5c5c — an unthemed light-era token —
+   so on the dark page these two view headers sat at 2.97:1. Same flipping
+   pair; both themes measured. */
+#activityView .subnote,#companyDocsView .subnote{color:var(--rbe-mute,#9aa0a8)}#listView label,#listView .listlbl{color:#c8202e}#listView #listBody,#listView .cards,#listView .doclist{background:transparent}#listView .card{margin-bottom:12px;border-radius:12px}#listView .listctl{color:#e35c63/* 943: #c8202e was 3.21:1 on the dark page; the lighter cardinal is 5.18–5.66 */}
+:root[data-theme="rb-light"] #listView .listctl{color:#c8202e}/* and light keeps the original, which passes at 5.67 on white — changing the base alone would have been the dark-fix-breaks-light class */#galleryView .subnote{color:#fff}#listView table.reports,#listView .reports thead,#listView .reports tbody{background:transparent;border:none;box-shadow:none}#listView .reports tr{border-radius:12px;overflow:hidden;margin-bottom:12px}/*cr-lv-readable-487: 44310 made this table transparent over --bg:#09090C but left the cells on their paper-theme colours - #333 read 1.57:1 and var(--muted) 2.97:1 at >700px. Retail token pair, so rb-light flips with it. .projrow sets its own light band and is excluded.*/#listView table.reports tr:not(.projrow) td{color:var(--rbe-ink)}#listView table.reports tr:not(.projrow) td small,#listView table.reports tr:not(.projrow) td .ref{color:var(--rbe-mute)}#listView table.reports tr:not(.projrow):hover td{background:rgba(255,255,255,.06)}.projhead{align-items:stretch}.projinfo{padding:11px 13px 12px}#projName{line-height:1.2;margin:2px 0 4px;overflow-wrap:anywhere}.cr-est-saved-list{background:#202329;border-radius:12px;padding:8px 8px 2px}.ljpo{color:#B57EDC;font-weight:800}#projectView .projsec{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#projectView .projsec a{-webkit-text-fill-color:#e35c63;color:#e35c63}.hero-hi,.hero-hi *,.acthead{color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}#mainView{background:transparent}#pwaNav #cr-ahc-badge{margin-right:0}body[data-crm-head="insurance"] #cr-hd2-ribbon{--racc:var(--ct-red);--rb1:var(--ct-bg);--rb2:var(--ct-surface-2);--rb3:var(--ct-surface);--rh1:var(--ct-red);--rh2:var(--ct-red-deep)}body[data-crm-head="community"] #cr-hd2-ribbon{--racc:#047857;--rb1:#04150f;--rb2:#061c14;--rb3:#08211a;--rh1:#047857;--rh2:#34D399}body[data-crm-head="production"] #cr-hd2-ribbon{--racc:#f5a623;--rb1:#14171b;--rb2:#181b20;--rb3:#1b1710;--rh1:#f5a623;--rh2:#ffd27a}body[data-crm-head="sales"] #cr-hd2-ribbon{--racc:#C8202E;--rb1:#1a1310;--rb2:#17120f;--rb3:#221407;--rh1:#e8544f;--rh2:#e35c63}#cr-hd2-mid #brandTitle{display:block !important}#cr-hd2-mid #brandCtx{display:none !important}#mainView .dashcard{display:none}</style>
 <script id="cr-hd2-script">
 (function(){
 'use strict';
@@ -58157,7 +58180,7 @@ placeChip  : placeChip,
 #cr-abc .more{color:#9aa4b0;font-size:12.5px;line-height:1.5;padding:2px 2px 6px}
 #cr-abc .note{background:#fff;color:#2c2c2c;border:1px solid #c8202e;border-radius:11px;padding:12px 13px;font-size:13px;line-height:1.5;margin-bottom:12px}
 #cr-abc .note b{color:#8f1620}
-#cr-abc label{display:block;margin:10px 0 4px;font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#c8202e}
+#cr-abc label{display:block;margin:10px 0 4px;font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:#f08a90}
 #cr-abc input{width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid rgba(200,32,46,.45);border-radius:9px;background:#fff;color:#2c2c2c;font:inherit}
 #cr-abc .row2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
 #cr-abc .row2>div{min-width:0}
@@ -58175,7 +58198,7 @@ placeChip  : placeChip,
 color:#8f1620;line-height:1.5;word-break:break-word;overflow-wrap:anywhere}
 #cr-abc .item .prmsg:empty{display:none}
 #cr-abc .quiet{color:#9aa4b0;font-size:12.5px;padding:8px 2px}
-#cr-abc .sect{margin:16px 0 7px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.22em;text-transform:uppercase;color:#c8202e}
+#cr-abc .sect{margin:16px 0 7px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.22em;text-transform:uppercase;color:#f08a90/* 942: was #c8202e at 2.95:1 on this single-theme dark panel; #f08a90 is the app's established dark-ground red ink, 6.96 here */}
 </style>
 <script id="cr-abc-script">
 (function(){
@@ -58350,7 +58373,21 @@ var j = await api({ action:'frequents', billTo:c.billTo, branchNumber:c.branch |
 rows(j.items || (Array.isArray(j) ? j : []));
 }catch(e){ ensure().querySelector('[data-results]').innerHTML = '<div class="quiet">' + esc(e.message || e) + '</div>'; }
 }
-function open(){ ensure().style.display = 'flex'; refreshStatus(); }
+function open(){
+  /* 941: Suppliers was a NAVIGATION TRAP — the 570-572 class, found because it
+     corrupted the readability audit's own first five runs. This view sits at
+     z-index 9600 and was registered NOWHERE: not in hideAllViews(), so any
+     destination opened afterwards rendered underneath it (confirmed by driving
+     the real drawer handler — after Suppliers, Clients/Crews/Insurance never
+     reached the front); not in navRestore(), so the phone's back gesture
+     walked straight past it. Its own ✕ was the only way out.
+     The belt pattern, copied from storm/showcase/punchcard: close everything
+     on the way in, record the view so back works. */
+  if(typeof window.hideAllViews === 'function'){ try{ window.hideAllViews(); }catch(_){} }
+  ensure().style.display = 'flex';
+  if(typeof window.navSetView === 'function'){ try{ window.navSetView('suppliers'); }catch(_){} }
+  refreshStatus();
+}
 function close(){ if(el) el.style.display = 'none'; }
 /* 774: the estimate editor prices line items through these. They are the
    same api() calls the Suppliers screen uses — one code path, so a fix
@@ -58592,7 +58629,7 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
 .cd-star{cursor:pointer;user-select:none;font-size:15px;line-height:1;color:#5a5145;padding:2px;}
 .cd-star.on{color:#e8a900;}
 .cd-crmtag{margin-left:auto;font:800 8.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--cc,#c9a227);}
-.cd-addr{font-size:11.5px;color:#77726a;}
+.cd-addr{font-size:11.5px;color:#98928a;/* 943: was #77726a, 3.54:1 dark */}
 .cd-meta{display:flex;gap:7px;align-items:center;margin-top:5px;flex-wrap:wrap;}
 .cd-stchip{display:inline-block;font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;padding:2.5px 9px;border-radius:999px;background:transparent;border:1px solid var(--sc,#4a4d52);color:var(--sc,#b5ad9e);}
 .cd-tch{font-size:10px;color:#8f8a80;}
@@ -58620,12 +58657,17 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
 .cd-selall{flex:1;border:1px solid #2e3136;background:#1b1d20;color:#d9d2c4;border-radius:9px;padding:7px 6px;font:700 11.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;text-align:center;}
 .cd-selall:hover{border-color:#c9a227;color:#c9a227;}
 .cd-clr{background:none;border:0;color:#e08a7a;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;padding:2px 6px;}
-.cd-note{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#6d6a63;margin:0 0 10px;line-height:1.45;}
+.cd-note{font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#8a867e;/* 943: was #6d6a63, 3.50:1 dark */margin:0 0 10px;line-height:1.45;}
 .cd-grp{margin-top:10px;border-top:1px solid #26282c;padding-top:8px;}
 .cd-grp .ft{font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:#c9a227;margin-bottom:7px;display:flex;align-items:center;gap:7px;}
 .cd-grp .ft .n{background:#3a2f22;color:#d8c9a8;border-radius:999px;padding:1px 7px;font-size:9.5px;}
 .cd-fsec{font:800 9px ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;margin:8px 0 3px;display:flex;align-items:center;gap:6px;}
 .cd-fsec .cd-dot{margin:0;}
+.cd-fsec{color:var(--fc,#c9a227);}
+/* 942: CD_CRMS has carried per-CRM colorLight twins all along (#8a6a12 gold,
+   #1f7a6b teal, #2f6491 blue) and the section label ignored them — the gold
+   sat at 2.09:1 on the light card. Same data, finally read. */
+:root[data-theme="rb-light"] .cd-fsec{color:var(--fcl,#8a6a12);}
 .cd-frow{display:flex;align-items:center;gap:8px;padding:5px 2px;color:#c9c3b6;font-size:12.5px;cursor:pointer;}
 .cd-frow .bx{width:15px;height:15px;border:1.4px solid #4a4d52;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#15171b;flex:0 0 auto;}
 .cd-frow.on .bx{background:#3fae6a;border-color:#3fae6a;font-weight:800;}
@@ -58698,7 +58740,7 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
 :root[data-theme="rb-light"] .cd-name{color:#141414;}
 :root[data-theme="rb-light"] .cd-crmtag{color:var(--ccl,var(--cc,#8a6a12));}
 :root[data-theme="rb-light"] .cd-star{color:#cfcfcf;}
-:root[data-theme="rb-light"] .cd-addr{color:#8f8f8f;}
+:root[data-theme="rb-light"] .cd-addr{color:#6f6f6f;}
 :root[data-theme="rb-light"] .cd-tch{color:#767676;}
 :root[data-theme="rb-light"] .cd-rep{color:#c8202e;}
 :root[data-theme="rb-light"] .cd-abtn{border-color:#e6e6e6;background:#ffffff;}
@@ -58713,7 +58755,9 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
 :root[data-theme="rb-light"] .cd-sortsel{background:#ffffff;border-color:#e6e6e6;color:#141414;}
 :root[data-theme="rb-light"] .cd-selall{border-color:#e6e6e6;background:#ffffff;color:#141414;}
 :root[data-theme="rb-light"] .cd-selall:hover{border-color:#8a6a12;color:#8a6a12;}
-:root[data-theme="rb-light"] .cd-note{color:#8f8f8f;}
+:root[data-theme="rb-light"] .cd-note{color:#6f6f6f;}/* 943: was #8f8f8f, 3.13:1 */
+:root[data-theme="rb-light"] .cd-clr{color:#c8202e;}/* 942: was #e08a7a, 2.51:1 on the light card; the action red is 4.99 and already this module's light convention (.cd-rep uses it) */
+:root[data-theme="rb-light"] #cr-pricing-mount .lock{color:#8a5500;}/* 942: light --cr-amber was 2.96:1 on its own tint; deepened amber, 5.46 */
 :root[data-theme="rb-light"] .cd-grp{border-top-color:#efefef;}
 :root[data-theme="rb-light"] .cd-grp .ft{color:#8a6a12;}
 :root[data-theme="rb-light"] .cd-grp .ft .n{background:#f2efe6;color:#6b5a2e;}
@@ -63280,6 +63324,8 @@ body.cr-lnav-on .wrap:not(.masthead){max-width:var(--lnav-cap)}
   border:0;cursor:pointer;padding:15px 15px 7px;text-align:left;
   font:800 8.5px ui-monospace,Menlo,monospace;letter-spacing:.19em;text-transform:uppercase;
   color:var(--rbe-mute,#9aa0a8)}
+#cr-lnav{--lnav-ink:var(--lnav-ink-dk,#e35c63)}
+:root[data-theme="rb-light"] #cr-lnav{--lnav-ink:var(--lnav-ink-lt,#8f1620)}
 #cr-lnav .lnav-sec .cnt{margin-left:auto;font-weight:700;letter-spacing:.04em;
   color:var(--rbe-mute2,#6d747e)}
 #cr-lnav .lnav-sec .chev{font-size:9px;line-height:1;transition:transform .14s;
@@ -63346,6 +63392,21 @@ insurance : '#2dd4bf',
 community : '#34D399',
 production: '#f5a623',
 sales     : '#e8544f'
+};
+/* 942: the LIGHT twins. 938's map was measured on the dark rail only, and in
+   rb-light the rail ground goes #f2f3f5 where the bright accents collapse —
+   insurance teal to 1.68:1 on Sign out. Each twin is the same hue deepened
+   (the 557 obsidian-tile rule: never a hue swap), computed on #f2f3f5:
+   retail 5.11 · insurance 5.22 · community 4.94 · production 5.21 ·
+   sales 5.43. Published beside the dark value; the STYLESHEET picks per theme
+   — an inline --lnav-ink would beat any theme override, which is why the
+   element no longer sets it directly. */
+var CRM_INK_LT = {
+retail    : '#c8202e',
+insurance : '#0e7268',
+community : '#047857',
+production: '#96560c',
+sales     : '#b23730'
 };
 var CRM_WASH  = {
 retail    : 'rgba(200,32,46,.14)',
@@ -63609,7 +63670,8 @@ var st = readState();
 var crm = activeCrm();
 h.style.setProperty('--lnav-crmc', CRM_COLOR[crm] || CRM_COLOR.retail);
 h.style.setProperty('--lnav-wash', CRM_WASH[crm] || CRM_WASH.retail);
-    h.style.setProperty('--lnav-ink',  CRM_INK[crm]  || CRM_INK.retail);
+    h.style.setProperty('--lnav-ink-dk', CRM_INK[crm]    || CRM_INK.retail);
+    h.style.setProperty('--lnav-ink-lt', CRM_INK_LT[crm] || CRM_INK_LT.retail);
 
 h.innerHTML =
 '<button type="button" class="lnav-mini" aria-label="Collapse menu" title="Collapse menu">' +
@@ -64165,7 +64227,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #cr-lnav .lnav-sec{
   background:linear-gradient(180deg,#e9ebee,#f2f3f5);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 #dcdee2;
-  color:#6f7683;padding-top:8px;padding-bottom:7px;margin-top:6px;
+  color:#5a6170;/* 943: was #6f7683, 3.97:1 */padding-top:8px;padding-bottom:7px;margin-top:6px;
 }
 :root[data-theme="rb-light"] #cr-lnav .lnav-item{color:#3f3f46}
 :root[data-theme="rb-light"] #cr-lnav .lnav-item:hover{background:#e7e9ec;color:#161616}
@@ -64540,11 +64602,13 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt{color:#c2cbd8;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljopt:hover{background:#111927;color:#ffffff;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrhead{color:#dfe5ee;}
-:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrailnote{color:#6b7688;}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #leadsView .ljrailnote{color:#8d97a6;/* 943: was #6b7688 at 4.20:1 on the rail; 6.54 */}
 :root[data-theme="rb-light"] #leadsView .ljgroup>b{
   background:linear-gradient(180deg,#e9ebee,#f2f3f5);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 #dcdee2;
-  color:#6f7683;
+  color:#5a6170;/* 943: was #6f7683, 3.97:1 — the same ink the rail's section
+    labels carried, in a second rule the first sweep of the fix missed. The
+    verification re-run is what found it. 5.41 on this gradient's stops */
 }
 :root[data-theme="rb-light"] #leadsView .ljopt{color:#3f3f46;}
 :root[data-theme="rb-light"] #leadsView .ljopt:hover{background:#e7e9ec;color:#161616;}
@@ -64976,6 +65040,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 :root[data-theme="rb-light"] #crewsView .crw-rt .crw-neg{ color:#8a5200; }
 #crewsView .crw-mini{ padding:2px 8px;font-size:14px;line-height:1.2; }
 #crewsView .crw-empty{ padding:26px 14px;text-align:center;color:var(--crw-mut,#9aa0a8);font-size:13px; }
+:root[data-theme="rb-light"] #crewsView .crw-empty{ color:var(--crw-mut,#5f666e); }/* 942: 550's light pass covered .crw-mut and label but not the empty state — #9aa0a8 on white was 2.64:1. Same value 550 chose, 5.81 on white */
 
 /* ══ Build 550 · light mode for Crews, in the app's own light language ══════
    Read off Theo's two screenshots (Landing + Insurance home): a WARM off-white

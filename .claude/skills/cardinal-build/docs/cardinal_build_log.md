@@ -20115,3 +20115,94 @@ was one.* Corrected to assert the opposite, with the reasoning in place.
 
 Negative control vs v939: **RED, 6 named failures, no crash** (BUG_CLASSES 37 — every tap goes
 through `tap()`). `check_build` green (939 → 940).
+
+## Build 941 — Suppliers stops trapping the app
+
+**Found by the readability audit, whose own first five runs were its victim** — every screen after
+Suppliers in the walk order was being measured through the stuck panel. `#cr-abc` (z-index 9600) was
+registered NOWHERE: not in `hideAllViews()` (so Clients/Crews/anything opened afterwards rendered
+underneath it — confirmed by driving the real drawer handler), not in `navRestore()` (so the phone's
+back gesture walked straight past it). Its own ✕ was the only exit. **All 23 menu destinations were
+given the same test — open X, then demand Clients reach the front — and Suppliers was the only trap.**
+(Portal's picker is a modal doing modal things; Landing is the hub by design; Settings passed once
+the probe read it properly.)
+
+Three sites, the 570-572 checklist run forward:
+- `open()` gains the **belt**: `hideAllViews()` on the way in, `navSetView('suppliers')` so back works
+  — copied from storm/showcase/punchcard.
+- `hideAllViews()` closes it — **in the DISPLAY-shown group**, see below.
+- `navRestore()` gains `case 'suppliers'`, beside storm's.
+
+⚠️ **The first draft put cr-abc in the class-gated api list and the gate caught it before it
+shipped.** That loop's own guard — `if(!el.classList.contains('open')) return;` — skipped Suppliers
+silently, because its open() sets `display:flex` and never touches a class. `hideAllViews()` still
+reported `display:flex` under test. *The close lever must match how the screen is shown* — the
+doctrine's own table, and the comment I wrote calling the guard "a harmless no-op" was the mistake
+naming itself. Moved to the display-shown list beside `crewsView` and the mounts.
+
+Gate `gate_suppliers941.mjs`: **9 assertions GREEN** driving the real drawer — Suppliers in front,
+then Clients genuinely reaching the front, Crews too, `history.state` recording the view, and
+`hideAllViews()` closing it directly. Negative control vs v940: **RED on 4** — including
+`navSetView` null and `display:flex` surviving `hideAllViews()`. `check_build` green (940 → 941).
+No SQL.
+
+## Build 942 — The readability audit's worst nine, fixed
+
+The ≤3:1 half of the audit's 18 failing styles (46 light-mode failures collapsing to 18 styles; the
+3.1–4.0 remainder is 943). **Every replacement computed on its measured ground in BOTH themes**, from
+the audit's own pixel data — no colour picked by eye.
+
+| style | was | now | how |
+|---|---:|---|---|
+| `#listView #listNote` (Inspections/Recents) | **1.07 light** | 7.55 / 4.92 | was `color:#fff` — a dark-era ink, WHITE on light's `#f7f7f7`. → `var(--rbe-mute,#9aa0a8)`, the flipping pair |
+| `#activityView`/`#companyDocsView .subnote` | 2.97 dark | 7.55 / 4.92 | the same element's OTHER failure: base ink is `var(--muted)` = `#5c5c5c`, an unthemed light-era token, dark ground. Same pair |
+| `span.lnav-tx` Sign out, light rail | **1.68 light** | 4.94–5.43 | 938's `CRM_INK` was measured on the dark rail only. New `CRM_INK_LT` — same hue deepened per CRM (the 557 rule), published as `--lnav-ink-dk/-lt`; **the stylesheet resolves the pair**, because an inline `--lnav-ink` would beat any theme override |
+| `.cd-fsec` CRM section labels | 2.09 light | 4.89–5.01 | **CD_CRMS carried per-CRM `colorLight` twins all along and the label never read them.** Emitted as `--fc`/`--fcl`; no new colour |
+| `.cd-clr` Clear all | 2.51 light | 4.99 | the action red the module's own light rules already use (`.cd-rep`) |
+| `#crewsView .crw-empty` | 2.64 light | 5.81 | 550's light pass covered `.crw-mut` and `label` but not the empty state — same value 550 chose |
+| `#cr-abc .sect` + `label` | 2.95 both | 6.96 | single-theme dark panel; `#c8202e` → `#f08a90`, the app's established dark-ground red ink |
+| `--cr-muted-2` light (coach footer) | 2.38 light | 5.02 | **all FOUR copies of the shared `--cr-*` light palette moved together** (`#a8a8a8`→`#6b6b6b`) — the five-module family is identical by design and forking one copy would start the drift the design exists to prevent |
+| `#cr-pricing-mount .lock` | 2.96 light | 5.46 | scoped light override, deepened amber — changing light `--cr-amber` itself would restyle unknown users |
+
+Three of nine needed **no invented colour**: the right value already existed and wasn't wired.
+
+Verification: `check_build` green (941 → 942); the FULL audit re-run against the patched file (both
+themes × both widths, pixel-truth contrast, self-test against the adjudicated values) — all nine
+targeted styles must vanish with **zero new failures**. ⚠️ My own count assertions misfired twice
+during the build (guessed totals instead of derived — `CRM_INK_LT` is 3 sites not 2, `#f08a90` is 15
+file-wide because it already exists); the file was right both times, the expectations were wrong.
+
+## Build 943 — The rest of the readability audit
+
+The 3.1–4.0 half — nine styles, closing the audit's contrast list entirely (with 942). Same method:
+every replacement computed on its measured ground in both themes, existing app colours reused where
+one already cleared the floor.
+
+| style | was | now |
+|---|---:|---|
+| `.cdoccat .cdsub` + `.cdocrow .cdname small` | 2.21–3.98 | 5.61 — `#6e6663`, the screen's own deeper mute; cards are white in both themes so one value serves both |
+| `.ljrailnote` (Leads) | 3.11 | dark 6.54 (the override was already dark-scoped — deepened in place), light 4.89 via a new rb-light rule |
+| `.cd-note` (Clients) | 3.13 | 5.21 / 4.86 |
+| `#listView .listctl` "Salesman:" | 3.21 **dark only** | 5.18–5.66 dark; **light restored explicitly to the byte** — changing the base alone would have been the dark-fix-breaks-light class |
+| `.cd-addr` | 3.23 | 5.48 / 5.02 |
+| `.afrow .afav .tm` feed timestamps | 3.25 | 5.61 both — the cards are white in both themes |
+| `.lnav-sec` labels, light | 3.97 | 5.41 |
+| `.cdsoon` COMING SOON, light | 4.01 | 6.59 — the CHIP deepened (`#b3222e`), the white ink untouched |
+
+**Deliberately not chased:** `cdsub`'s 2.21 reading on the DISABLED "coming soon" card — the card is
+dimmed at `opacity:.75` because dimming IS the disabled affordance, and WCAG exempts disabled
+elements. The enabled cards carry the real fix. **The COMING SOON chip's own light reading of 4.3:1
+is the same exemption, PROVEN arithmetically:** the measured ground `#c45760` is exactly
+`#b3222e × .75 + white × .25` to the byte — the fix applied and the card's dimming composited over
+it. The chip exists only on the disabled card.
+
+**And the verification re-run earned its keep:** the first pass of the section-label fix caught one
+of the TWO rules carrying `#6f7683` — the rail's — and missed `#leadsView .ljgroup>b`, the leads
+screen's own copy ("Milestone" headers, 3.97 light). *A partial pass removes the tell.* The re-run
+found it; `color:#6f7683` is now at **zero** sites, asserted. Final sweep: **51 failures → 1, and
+the 1 is the disabled-card exemption.** Self-test PASS throughout.
+
+Verification: `check_build` green (942 → 943); the full pixel-truth audit re-run with the bar at
+**ZERO contrast failures anywhere** — both themes × both widths, self-test against the adjudicated
+values intact. 942's own verification came back first: self-test PASS, all nine targeted styles gone,
+**zero new failures introduced**.
