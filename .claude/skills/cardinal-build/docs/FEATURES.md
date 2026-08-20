@@ -5475,3 +5475,20 @@ select–clear–sort controls, the leads stage-filter **labels** (`.ljopt` — 
 Deliberately not floored (named in the block): `#projectView .acxjd .acxtrs` inputs — the
 job-details card is deliberately dense; Theo's call. Gate: `scripts/gate_944.mjs` (the 22-screen
 walk + the pad click proof; red on 943 in both halves).
+
+## Punch & Repairs — The Line (build 945, 20 Aug 2026)
+
+The board's layout: an amber **unassigned queue pinned above the tabs** (oldest first, hot ≥5
+days, Assign button for admins+production), then **four tabs with one rule each** — Active
+(started or due today, carrying the 940 check-in truth: ON SITE since / stale open check-in /
+NOT CHECKED IN / Day N), Assigned (person, no day, ⚠ stuck flag at 3d no activity), Scheduled
+(future day), Closed (done, newest first). Dated-but-unassigned stays in the queue.
+
+**The Assign sheet** (`#puShAssign`, the fourth `.pu-sheet`): roster production-first with real
+load per person, four workday chips (Sunday skipped) + NO DAY, notify on by default through
+`notifyTeam`. Writes ride `CardinalPunch.update`; `CardinalPunch.notifyAssigned` is the one
+notify path — the map's pin-assign uses it too now. Buckets derive via row-parameterised
+readers (`bucketOf`, `puOpenVisit`, `puDaysOn`) copied from the pbDays shape — never the card's
+IIFE-bound helpers. Gate: `scripts/gate_945.mjs` (26 assertions, negative-controlled, red on
+944 in both halves). ⚠ `.pu-sheet.open` was born in this build — the sort/filter sheets had
+been silently unopenable since 361; do not remove it.

@@ -20260,3 +20260,57 @@ leads, pay, suppliers, cardinaltruth) — labels centered, nothing clipped; sent
 (8/8 incl. the new FLOOR); full sentinel 944-vs-943 run for regressions. Recon was a six-agent
 parallel sweep of all 32 selector groups before any edit — markup origin, competing rules, hidden
 hit areas, layout risk per group.
+
+## Build 945 — Punch & Repairs becomes The Line (20 Aug 2026)
+
+Theo's pick from the punch design round, refined live: *"Punch = design 1 with Active/Assigned/
+Closed and check-in truth"*, then *"active assigned closed I feel would be better as tabs …
+active, assigned, scheduled, closed?"* Both landed in one build.
+
+**The page now works the way dispatch happens.** The unassigned queue is **pinned above the
+tabs in amber** — oldest first, hot past five days, one Assign button each — because the choke
+point must never hide behind a tab. Below it, **four tabs, one rule each** (extending the page's
+existing three-tab machinery, not replacing it): ACTIVE = started or due today; ASSIGNED = has a
+person, needs a day; SCHEDULED = has a future day; CLOSED = done, newest first. A dated-but-
+unassigned item stays in the QUEUE — a date without a person is still blocked on a person.
+
+**The check-in truth reaches the board.** ON SITE since (green, live clock), a stale open
+check-in stated in amber ("On site since Tue — not checked out", never assumed away), NOT
+CHECKED IN on due-today work, Day N in 940's own amber. Derived by tiny **row-parameterised
+readers copied from cr-pb's pbDays shape** — the sanctioned reuse (the card's helpers are
+IIFE-bound to the open card's row) — same visits array, same LOCAL day keys, no second count.
+
+**The Assign sheet** is the fourth `.pu-sheet`: full roster production-first (the openAdd sort;
+never truncated — the 51349 lesson), each person with their **real load** ("2 open · day-2
+carry"), four workday chips (Sunday skipped, nothing else) + NO DAY, notify **on by default**.
+The write goes through `CardinalPunch.update` — the one pipeline — honoring the 882 invariant
+(a changed date drops the old time). Notify rides `notifyTeam` exactly like the card's 769
+`notifyAssigned` (never yourself, honest outcome line via `notifyOutcomeText`), exported as
+`CardinalPunch.notifyAssigned` so **the map's assignFrom now notifies too** — it had been the
+one assign surface that stayed silent. The gate is the map's (admins + production), UX-only;
+RLS (`punch_update` = any authenticated) is unchanged and stated plainly: no DB change needed.
+
+**Two pre-existing defects found and fixed in passing:**
+- **`.pu-sheet.open` NEVER EXISTED.** Every sort/filter sheet open() since build 361 added a
+  class to a `display:none` element and nothing happened — the clients twin `.cd-sheet.open`
+  always had its rule. Verified broken on the 944 control. One rule fixes all four sheets.
+- **`.pbtag.day2` had no ink** since 940 shipped it — the Production board's Day-N chip rendered
+  with inherited colour and no background. Given the card's amber.
+
+Also: `.pu-tab` was 38px tall — the board opens via `data-go`, not `[data-nav]`, so build 944's
+walk never reached this screen; floored in cr-touch44-styles with that reason written, and four
+tabs now FIT at 390px (a specificity bump — the base rule sits later in the block and wins a
+same-specificity fight by source order, which cost one render round).
+
+**Untouched on purpose:** the one-tap tick (727, settled), the card handoff
+(`CardinalPunchCard.open(id,{back:'none'})`), search/sort/filters, the ultrawide map (its
+`#puList .pu-card[data-pu]` contract held — asserted), no money anywhere (settled).
+
+Verification: `check_build` green (944 → 945); **`gate_945.mjs` 26/26 GREEN** on the shipped
+file — queue order, four buckets against seeded fixtures (one per bucket added to the sentinel
+seed, which had none for the queue), ON SITE chip from a today-stamped open visit, the Assign
+flow end to end (write through the mock's `__WRITES__`, notify exactly once, queue shrinks,
+sheet closes), 44px floor on the new controls — and **RED on the 944 control with named
+failures, no crash** (one gate read fixed: the mock logs patches as `payload`, the test was
+wrong, not the app). Sentinel state `punch` added so future sweeps walk this screen. Renders
+eyeballed dark + light + sheet + assigned tab.
