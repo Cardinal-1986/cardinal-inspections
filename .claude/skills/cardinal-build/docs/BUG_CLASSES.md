@@ -1909,6 +1909,17 @@ stylesheet); `overflow:auto` written as PROSE inside a CSS comment; and inline
 edge of the glass is handled before the page sees it. This class covers swipes
 that begin on the element.
 
+**RECURRED at 950 — four new scrollers had shipped without it since 697.**
+`.pu-tabs` (945), `.cr-cth-tabs`, `.cd-crmbar`, and `#cr-disp .dspscroll`
+(948 — the Magnet Board's own pan container, TWO builds old). The class keeps
+recurring because containment is remembered per-row, not per-pattern: every
+NEW `overflow[-x]:auto` element starts life uncontained. Standing rule from
+950: **any edit that adds `overflow-x:auto` (or `overflow:auto` on a wide
+element) adds `overscroll-behavior-x:contain` in the same declaration** — and
+`gate_950.mjs`'s stylesheet walk is the copyable check. The 950 sweep of all
+50 `overflow[-x]:auto` sites is in the build log; the four vertical modal
+scrolls (595 convention) were left uncontained deliberately.
+
 ---
 
 ## 31 — a rule remover that walks to a brace can cut a COMMENT in half

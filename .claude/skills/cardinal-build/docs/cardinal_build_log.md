@@ -20439,3 +20439,46 @@ the control — caught and fixed before commit). Weather asserted through a rout
 fixture both ways (fixture → icons + 80% wet blue computed; route aborted → zero `.wx`, seven
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
+
+## Build 950 — sideways scrolling repaired everywhere (20 Aug 2026)
+
+Theo, with a screenshot of the Punch page at phone width: *"The horizontal scroll is broke
+again. Please audit site wide scrolling and button presses."* The screenshot showed the four
+945 tabs shifted left with the Active tab's badge orphaned at the screen edge.
+
+**"Again" was exact — this is BUG_CLASSES 30 recurring** (a horizontal scroller with no
+`overscroll-behavior-x:contain` hands the swipe to the page or the iOS back gesture; first
+struck at 697). A mechanical sweep of every `overflow[-x]:auto` rule in the file — 50 sites —
+found **four horizontal scrollers missing containment**, and every other panning row already
+carrying it:
+
+| Site | What |
+|---|---|
+| `.pu-tabs` | the 945 punch tab strip — the reported one |
+| `.cr-cth-tabs` | the client-profile (Cardinal Truth) tab strip |
+| `.cd-crmbar` | the Client Directory's fixed bottom CRM bar |
+| `#cr-disp .dspscroll` | **the Magnet Board's own pan container** — 948's board pans on the phone by design, shipped two builds ago without containment |
+
+All four now carry `overscroll-behavior-x:contain`. The other four sweep hits are vertical
+modal `overflow:auto` scrolls (the 595 convention) — left deliberately.
+
+**And the second defect his screenshot exposed: the four punch tabs never actually fit.**
+945's own CSS comment promises *"four tabs must FIT at 390px"* — measured on the shipped
+tree: **373px of tabs in a 358px box with single-digit badges** (397px with two-digit), so
+one tab always hid off the edge and the strip depended on exactly the pan that class 30 had
+broken. The ≤430px rule tightens (padding 10px 6px, font 12px, badge 9.5px/2px 4px):
+**358px in 358px with every badge at "88"** — fits with two-digit headroom, verified in
+Chromium, all four tabs readable.
+
+Verification: check_build green (949 → 950); **gate_950.mjs 8/8 GREEN** on the shipped file,
+**RED on the 949 control with 6 named failures, no crash** — and the control's failures
+narrate the defect exactly ("373 > 358", "397 > 358", "auto" on all four sites). The
+containment gate reads computed style on live elements for the two cheap screens and walks
+Chromium's parsed rules for the two heavy ones (examine-then-descend, the 685 trap avoided).
+Board still pans after containment (asserted — containment that killed the scroll would be
+worse than the bug). Site-wide sentinel sweep (OVERFLOW / UNWIRED / FLOOR, all states, 390px)
+run alongside — result recorded below when it landed.
+
+What I could NOT reproduce from the screenshot: the vertical half-clipping of the strip. The
+mechanical causes fixed here (overflow + broken pan) are the measurable defects at that
+screen; if the clipping reproduces on the phone after this build, it is a new report.
