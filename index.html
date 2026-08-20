@@ -3644,7 +3644,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 946 &#8212; The Check out button on a punch-out was invisible in light mode &#8212; its letters painted dark on the strip&#8217;s dark ground, 1.02:1. The check-in strip is a dark chip in both themes now, with its own inks pinned so no future theme change can hide it again</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 947 &#8212; The punch-out card, tightened: it leads with the work once work has started, dispatch folds to one line, every control meets the touch floor, Close turns green when everything is done and its &#8220;3 photos &#183; 2 steps left&#8221; jumps you to what&#8217;s missing, Delete moves behind the &#8942; menu, and windows and general repairs get checklists of their own</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40658,6 +40658,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:947, d:'2026-08-20', t:'The punch-out card, tightened', s:'The card now leads with its moment: once work has started, the check-in strip, checklist and photos rise to the top and the assign/schedule controls fold into one line \u2014 tap it to open them. The Close button turns green the moment everything is done, and while it is not, \u201C3 photos \u00b7 2 steps left\u201D is tappable and scrolls you straight to what is missing. Every button on the card now meets the 44-pixel touch floor \u2014 the checklist ticks and photo \u00d7s keep their size but their tap area grows invisibly. Delete moved behind the \u22EF menu in the corner, the supplement flag became a quiet Extra scope chip that badges its request wherever it lands, the @ chips appear when you start writing, an empty description is one line instead of a section, and windows and general repairs join roofing, siding and gutters with checklists of their own.' },
 { b:946, d:'2026-08-20', t:'The invisible Check out button', s:'In light mode, the Check out button on a punch-out card had dark letters on the dark check-in strip \u2014 1.02 to 1, effectively invisible, on the one control the crew taps from a roof. The strip is deliberately dark in both themes; its text colours now come with it, pinned, so light mode shows the same readable strip dark mode always had.' },
 { b:945, d:'2026-08-20', t:'Punch \u0026 Repairs becomes The Line', s:'The punch page now works the way dispatch actually happens. Punch-outs with nobody assigned sit pinned at the very top in amber \u2014 oldest first, each with an Assign button that opens a sheet showing every person with their real load (2 open \u00b7 day-2 carry) and four day chips, and the assignee gets notified the moment you hit Assign. Below that, four tabs that each mean exactly one thing: Active is started or due today \u2014 with the check-in truth right on the board (on site since 9:40, day 2, not checked in); Assigned has a person but needs a day; Scheduled has a day that has not come; Closed is done. The one-tap tick, the search, the filters and the map all work exactly as before.' },
 { b:944, d:'2026-08-20', t:'Bigger tap targets across the app', s:'The readability audit\u2019s other half: thirty-odd kinds of buttons, chips, tick boxes and search fields measured smaller than a fingertip \u2014 the worst were 18 pixels tall \u2014 and every one is now at least 44 pixels, the size a thumb can reliably hit. The stage tick boxes and Clear all buttons on Clients, Leads and Estimates, the Company Docs chips and View and Download buttons, the Pricing, Coach, Crews, Suppliers and Estimates toolbars, the New Lead form fields, the pay screen\u2019s chips and date pickers, the desktop side rail and the CRM switcher chips. Four screens had rules quietly capping their own controls below the app\u2019s existing floor \u2014 those are fixed at the source. Nothing moves or changes colour; the same controls simply got easier to hit.' },
@@ -50607,8 +50608,9 @@ window.CardinalProduction = {
 
    Two hats off the same markup:
      FIELD (Scottie)  — big targets, camera first, no configuration
-     MANAGER (Theo, Joan, CURTIS — Scottie's boss) — dispatch, reorder steps,
-                        set note-required, urgency, gallery review
+     MANAGER (Theo, Joan, CURTIS — Scottie's boss) — dispatch, add/remove
+                        steps (note-required set at creation), urgency, gallery
+                        review. 947: no reorder — the old ≡ handle was never wired
 
    Inks are the module's own tokens with literal fallbacks; both themes computed.
    ========================================================================== */
@@ -50840,9 +50842,51 @@ window.CardinalProduction = {
   margin-top:3px; text-transform:none; color:var(--pk-dim,#848c94);
 }
 #cr-pk .pkclose.ready{
-  background:var(--pk-accd,#c8202e); border-color:var(--pk-accd,#c8202e); color:var(--pk-accink,#fff);
+  /* 947: Theo's pick — READY is green, the one colour that says go. Red
+     stays punch/urgent, amber stays warning. #1b7d49 carries white at
+     5.15:1 (12px bold, 4.5 floor), computed. */
+  background:#1b7d49; border-color:#1b7d49; color:#fff;
 }
-#cr-pk .pkclose.ready b{ color:rgba(255,255,255,.78); }
+#cr-pk .pkclose.ready b{ color:#e4f6ec; }
+#cr-pk .pkclose .jump{ text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+/* 947: the fold line — dispatch or the empty description as ONE tappable row */
+#cr-pk .pkfold{ display:flex; align-items:center; gap:9px; width:100%; min-height:48px; margin:10px 0 2px;
+  padding:10px 13px; border-radius:11px; text-align:left; cursor:pointer;
+  background:var(--pk-c,#15171a); border:1px solid var(--pk-line,rgba(230,235,240,.11));
+  font:700 13px 'Segoe UI',Arial,sans-serif; color:var(--pk-ink,#eceef0); }
+#cr-pk .pkfold svg{ width:15px; height:15px; flex:none; }
+#cr-pk .pkfold .tx{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#cr-pk .pkfold .ch{ color:var(--pk-dim,#848c94); font-size:15px; }
+#cr-pk .pkfold.dim{ color:var(--pk-dim,#848c94); font-weight:600; }
+/* 947: the header \u22EF menu (Delete lives here now) */
+#cr-pk .pkmenu{ margin-left:6px; min-width:44px; min-height:44px; border-radius:10px; cursor:pointer;
+  background:transparent; border:1px solid var(--pk-line,rgba(230,235,240,.11));
+  color:var(--pk-dim,#848c94); font:800 16px 'Segoe UI',Arial,sans-serif; }
+#cr-pk .pktop{ position:relative; }
+#cr-pk .pkmenu-dd{ position:absolute; right:0; top:calc(100% + 6px); z-index:7; width:min(300px,86vw);
+  background:var(--pk-c2,#1b1e22); border:1px solid var(--pk-line2,#3a424c); border-radius:12px;
+  padding:8px; box-shadow:0 10px 30px rgba(0,0,0,.5); }
+#cr-pk .pkmenu-it{ display:block; width:100%; min-height:44px; text-align:left; padding:10px 12px;
+  background:transparent; border:0; border-radius:8px; cursor:pointer;
+  font:700 13.5px 'Segoe UI',Arial,sans-serif; color:var(--pk-acc,#e35c63); }
+/* 947: the supplement chip — quiet until it is used */
+#cr-pk .pksupc{ background:transparent; border:1px solid var(--pk-line,rgba(230,235,240,.11));
+  border-radius:7px; padding:4px 9px; margin-right:8px; cursor:pointer; position:relative;
+  font:700 10px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.06em;
+  color:var(--pk-dim,#848c94); text-transform:uppercase; }
+#cr-pk .pksupc::after{ content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:100%; min-width:44px; height:44px; }
+/* 947: tag chips hide until the message box is focused */
+#cr-pk .pktags.hide{ display:none; }
+/* 947: the card's tap-floor leftovers — small visuals keep their size, the
+   TAP area grows via ::after pads (the .pu-box shape). Rect audits: read the
+   pseudo box, not the rect. */
+#cr-pk .pkck .bx{ position:relative; }
+#cr-pk .pkck .bx::after{ content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:44px; height:44px; }
+#cr-pk .pkrm{ z-index:2; }
+#cr-pk .pkrm::after{ content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:40px; height:40px; }
 #cr-pk .pkclose.reopen{ border-color:var(--pk-ok,#6cb98f); color:var(--pk-ok,#6cb98f); }
 /* ---- NARROW SCREEN: the same roomy layout, for whoever is holding it (786) ----
    The .field block below is keyed to the USER (crew, not office). That is a
@@ -50952,6 +50996,8 @@ var it = null;              /* the row on screen */
 var el = null, back = null; /* back = where close() should return to */
 var lastSig = '', busy = false, outMsg = '';
 var galleryOpen = false;
+/* 947: per-open UI state — the dispatch fold and the header menu */
+var dispOpen = false, menuOpen = false;
 
 var PHOTO_MIN = 5;
 var SLOTS = [
@@ -50965,6 +51011,20 @@ var SLOTS = [
    and a manager can add, retitle or drop any of them on the card. Hardcoded at
    768 on purpose; a template manager screen is a later build, not silent scope. */
 var TEMPLATES = {
+  /* 947: windows and general joined — Bob Deaton is a windows crew and Curtis
+     was hand-typing five steps for every trade the three templates missed. */
+  windows: { label:'Window repair', steps:[
+    { t:'Remove the damaged sash / unit', d:false, req:false, note:'', by:null, at:null },
+    { t:'Inspect flashing, sill and framing for rot', d:false, req:true, note:'', by:null, at:null },
+    { t:'Install and seal the replacement', d:false, req:false, note:'', by:null, at:null },
+    { t:'Insulate, trim and caulk the interior', d:false, req:false, note:'', by:null, at:null },
+    { t:'Clean the glass and the site', d:false, req:false, note:'', by:null, at:null } ] },
+  general: { label:'General repair', steps:[
+    { t:'Photo the problem before touching it', d:false, req:false, note:'', by:null, at:null },
+    { t:'Check surrounding material for hidden damage', d:false, req:true, note:'', by:null, at:null },
+    { t:'Complete the repair', d:false, req:false, note:'', by:null, at:null },
+    { t:'Seal, paint or match the finish', d:false, req:false, note:'', by:null, at:null },
+    { t:'Final walkthrough photos', d:false, req:false, note:'', by:null, at:null } ] },
   roofing: { label:'Roofing punch', steps:[
     { t:'Confirm the complaint from the ground' },
     { t:'Inspect decking / substrate for rot', req:true },
@@ -51220,19 +51280,40 @@ function cardHtml(){
   var pr = projectFor(it.project_id);
   var done = it.status === 'done';
   var urgent = it.priority === 'high' && !done;
+  /* 947: the card leads with its MOMENT. Once work has started (any visit on
+     the row) the tools — check-in strip, checklist, photos — rise to the top
+     and the dispatch furniture folds to one line. Before anyone starts, a
+     manager sees dispatch open; the field always gets the folded line. */
+  var working = !done && dayCount() > 0;
+  var disp = (dispOpen || (isManager() && !working && !done)) ? metaHtml() : dispatchLine();
+  var left = working
+    ? jobHtml(pr) + visitHtml() + checklistHtml() + photosHtml() + disp + descHtml()
+    : jobHtml(pr) + disp + visitHtml() + descHtml() + checklistHtml() + photosHtml();
   return '<div class="pkwrap">' +
     '<div class="pktop">' +
       '<button class="pkback" data-act="back" type="button" aria-label="Back">' + svg('chev') + '</button>' +
       '<span class="pkey">' + esc(it.kind === 'callback' ? 'Callback' : it.kind === 'ticket' ? 'Ticket' : 'Punch-Out') + '</span>' +
       '<span class="pkchip ' + (done ? 'done' : 'open') + '" style="margin-left:auto;">' + (done ? 'Closed' : 'Open') + '</span>' + (!done && dayCount() > 1 ? '<span class="pkchip day2">Day ' + dayCount() + '</span>' : '') +
+      (mayDelete() ? '<button class="pkmenu" data-act="menu" type="button" aria-label="More">\u22EF</button>' : '') +
+      (menuOpen ? '<div class="pkmenu-dd"><button class="pkmenu-it" data-act="del" type="button">Delete this punch-out\u2026</button>' +
+        '<div class="pknote">A finished repair should be CLOSED instead \u2014 closed work stays in the client\u2019s history.</div></div>' : '') +
     '</div>' +
     (urgent ? '<div class="pkurg">' + svg('flag') + 'Urgent — do first</div>' : '') +
     '<h1>' + esc(it.title || 'Punch-out') + '</h1>' +
     '<div class="pksplit"><div>' +
-      jobHtml(pr) + metaHtml() + visitHtml() + descHtml() + checklistHtml() + photosHtml() +
+      left +
     '</div><div>' +
-      msgsHtml() + closeHtml(done) + dangerHtml() +
+      msgsHtml() + closeHtml(done) +
     '</div></div></div>';
+}
+/* 947: dispatch, folded to the one line that answers who/when/how-urgent.
+   Tap expands to the full controls (managers) or the read-only tiles. */
+function dispatchLine(){
+  var whoTxt = it.assigned_to ? nameOf(it.assigned_to) : 'Unassigned';
+  var whenTxt = it.scheduled_at ? fmtSchedule(it.scheduled_at, it.scheduled_time) : 'no day set';
+  return '<button class="pkfold" data-act="dispatch" type="button">' + svg('user') +
+    '<span class="tx">' + esc(whoTxt) + ' \u00b7 ' + esc(whenTxt) +
+    (it.priority === 'high' ? ' \u00b7 Urgent' : '') + '</span><span class="ch">\u203A</span></button>';
 }
 function jobHtml(pr){
   var addr = pr ? (pr.address || '') : '';
@@ -51279,19 +51360,24 @@ function metaHtml(){
       '</div>' : '');
 }
 function descHtml(){
-  /* 771: the description was render-only, and the only editor for it lived in
-     the #puDetail sheet that 768 stopped opening — so notes became read-only
-     app-wide. It renders even when empty now, so there is somewhere to write. */
+  /* 771: the description was render-only … there is somewhere to write.
+     947: an EMPTY description is one tappable line, not a section plus an
+     Edit button — two elements were spending a section on nothing. */
+  if(!it.detail)
+    return '<button class="pkfold dim" data-act="editdesc" type="button">' + svg('doc') +
+      '<span class="tx">Add a description\u2026</span><span class="ch">\u203A</span></button>';
   return '<div class="pksec"><div class="pkh">' + svg('doc') + 'Description' +
     '<span class="rt"><button class="pkbtn" data-act="editdesc" type="button">Edit</button></span></div>' +
-    '<div class="pkdesc">' + (it.detail ? esc(it.detail) : 'No description yet.') + '</div></div>';
+    '<div class="pkdesc">' + esc(it.detail) + '</div></div>';
 }
 function checklistHtml(){
   var st = steps(), mgr = isManager();
   var tplName = it.template && TEMPLATES[it.template] ? TEMPLATES[it.template].label : '';
   var body = st.map(function(s, i){
+    /* 947: the ≡ reorder handle is gone — reordering was never built (the
+       handle had no wiring, and its guard read a field that does not exist).
+       If reordering is ever wanted, build up/down arrows; drag lies on a phone. */
     return '<div class="pkck' + (s.d ? ' d' : '') + '">' +
-      (mgr && !it.status_done ? '<span class="hnd" aria-hidden="true">≡</span>' : '') +
       '<button class="bx" data-step="' + i + '" type="button" aria-label="' +
         (s.d ? 'Untick' : 'Tick') + ' step">' + svg('tick') + '</button>' +
       '<span class="bd"><span class="st">' + esc(s.t || '') +
@@ -51308,13 +51394,15 @@ function checklistHtml(){
         return '<button class="pkbtn" data-tpl="' + k + '" type="button">' + esc(TEMPLATES[k].label) + '</button>';
       }).join('') + '</div>';
   }
-  return '<div class="pksec"><div class="pkh">' + svg('list') + 'Checklist' +
+  /* 947: the supplement flag is an occasional action, not an alarm — it was
+     the loudest thing on the field card, louder than Check out. A quiet chip
+     in the header now; red stays reserved for urgent. */
+  return '<div class="pksec" id="pkSecCk"><div class="pkh">' + svg('list') + 'Checklist' +
     (tplName ? '<span class="pktpl">' + esc(tplName) + '</span>' : '') +
-    (st.length ? '<span class="rt"><b>' + stepsDone() + '</b> / ' + st.length + '</span>' : '') +
+    '<span class="rt"><button class="pksupc" data-act="supp" type="button">\u2691 Extra scope</button>' +
+    (st.length ? '<b>' + stepsDone() + '</b> / ' + st.length : '') + '</span>' +
     '</div>' + pick + body +
     (mgr ? '<button class="pkadd" data-act="addstep" type="button">+ Add step</button>' : '') +
-    '<button class="pksup" data-act="supp" type="button">' + svg('flag') +
-      'Flag supplement / material request</button>' +
     '</div>';
 }
 function photosHtml(){
@@ -51336,7 +51424,7 @@ function photosHtml(){
                  : ' Photo gallery') + '</button>';
   var _pend = photoPendFor(it && it.id);
   var pnote = _pend ? '<div class="pkpnote">' + svg('cam') + esc(_pend + ' photo' + (_pend === 1 ? '' : 's') + ' saved on your phone \u2014 uploading when you\u2019re back') + '</div>' : '';
-  return '<div class="pksec"><div class="pkh">' + svg('cam') + 'Photos' +
+  return '<div class="pksec" id="pkSecPh"><div class="pkh">' + svg('cam') + 'Photos' +
     '<span class="rt"><b>' + ph.length + '</b> of ' + PHOTO_MIN + ' to close</span></div>' +
     '<div class="pkslots">' + cells + '</div>' + gal + pnote + '</div>';
 }
@@ -51382,7 +51470,7 @@ function msgsHtml(){
   return '<div class="pksec"><div class="pkh">' + svg('chat') + 'Messages' +
     '<span class="rt">@ tags notify</span></div>' +
     (body || '<div class="pkdesc">No messages yet. Tag someone with @ and only they are notified.</div>') +
-    '<div class="pktags">' + chips + '</div>' +
+    '<div class="pktags hide">' + chips + '</div>' +
     '<div class="pkin"><input type="text" data-f="msg" placeholder="Message…">' +
     '<button class="snd" data-act="send" type="button" aria-label="Send">' + svg('send') + '</button></div>' +
     (outMsg ? '<div class="pkout' + (/not|no one|failed/i.test(outMsg) ? ' bad' : '') + '">' + esc(outMsg) + '</div>' : '') +
@@ -51398,15 +51486,10 @@ function mayDelete(){
   }
   return isManager();
 }
-function dangerHtml(){
-  if(!mayDelete()) return '';
-  return '<div class="pksec" style="margin-top:10px;">' +
-    '<div class="pkh">' + svg('flag') + 'Remove</div>' +
-    '<button class="pkbtn" data-act="del" type="button">Delete this punch-out</button>' +
-    '<div class="pknote">Deletes the item and its thread for everyone. A finished ' +
-    'repair should be CLOSED instead — closed work stays in the client\u2019s history.</div>' +
-    '</div>';
-}
+/* 947: the always-on Remove section retired — Delete lives behind the header
+   \u22EF menu (same mayDelete gate, same confirm). A destructive control was
+   the last thing seen on every open, and its own prose admitted it is almost
+   never the right choice. */
 function closeHtml(done){
   if(done){
     return '<button class="pkclose reopen" data-act="reopen" type="button">Reopen punch-out' +
@@ -51414,12 +51497,12 @@ function closeHtml(done){
   }
   var ph = photos().length, st = steps(), left = st.length - stepsDone();
   var want = [];
-  if(ph < PHOTO_MIN) want.push((PHOTO_MIN - ph) + ' photo' + (PHOTO_MIN - ph === 1 ? '' : 's'));
-  if(left > 0) want.push(left + ' step' + (left === 1 ? '' : 's'));
+  if(ph < PHOTO_MIN) want.push('<span class="jump" data-jump="pkSecPh">' + (PHOTO_MIN - ph) + ' photo' + (PHOTO_MIN - ph === 1 ? '' : 's') + '</span>');
+  if(left > 0) want.push('<span class="jump" data-jump="pkSecCk">' + left + ' step' + (left === 1 ? '' : 's') + '</span>');
   var ready = readyToClose();
   return '<button class="pkclose' + (ready ? ' ready' : '') + '" data-act="close" type="button">' +
     'Close punch-out' +
-    '<b>' + (ready ? 'everything is done' : esc(want.join(' · ') + ' left')) + '</b></button>';
+    '<b>' + (ready ? 'everything is done' : want.join(' \u00b7 ') + ' left') + '</b></button>';
 }
 function paintPhotos(){
   if(typeof window.paintSignedPhotoImgs === 'function'){
@@ -51841,6 +51924,18 @@ function wire(){
   q('[data-tpl]', function(b){ b.onclick = function(){ useTemplate(b.getAttribute('data-tpl')); }; });
   q('[data-act="addstep"]', function(b){ b.onclick = addStep; });
   q('[data-act="supp"]', function(b){ b.onclick = flagSupplement; });
+  q('[data-act="dispatch"]', function(b){ b.onclick = function(){ dispOpen = !dispOpen; lastSig = ''; render(); }; });
+  q('[data-act="menu"]', function(b){ b.onclick = function(){ menuOpen = !menuOpen; lastSig = ''; render(); }; });
+  /* 947: the shortfall pieces on the Close button scroll to their section
+     instead of letting the tap fall through to the not-ready alert */
+  q('[data-jump]', function(s){ s.onclick = function(ev){
+    ev.stopPropagation();
+    var t = el.querySelector('#' + s.getAttribute('data-jump'));
+    if(t) t.scrollIntoView({ behavior:'smooth', block:'start' });
+  }; });
+  q('[data-f="msg"]', function(inp){ inp.addEventListener('focus', function(){
+    var tg = el.querySelector('.pktags'); if(tg) tg.classList.remove('hide');
+  }); });
   q('[data-slot]', function(b){ b.onclick = function(){
     var i = Number(b.getAttribute('data-slot'));
     var u = photos()[i];
@@ -51925,7 +52020,13 @@ function wire(){
 /* ------------------------------------------------------------ open / close */
 async function open(itemId, opts){
   ensure();
-  back = (opts && opts.back) || null;
+  /* 947: after a navRestore reopen there are no opts, so the card used to
+     forget where it came from and back always landed on Production. The
+     target is remembered beside __crPunchCardLast now. */
+  back = (opts && opts.back) ||
+    (String(itemId) === String(window.__crPunchCardLast) ? (window.__crPunchCardBack || null) : null);
+  window.__crPunchCardBack = back;
+  dispOpen = false; menuOpen = false;
   outMsg = '';
   var row = rowFor(itemId);
   if(!row && window.CardinalPunch && typeof window.CardinalPunch.reload === 'function'){
@@ -59544,6 +59645,8 @@ if(typeof _origOLF === 'function'){
 .pu-st.warn{color:#f0a24a;border:1px solid rgba(240,162,74,.5);}
 .pu-st.idle{color:var(--rbe-mute);border:1px solid var(--rbe-line);}
 .pu-st.d2{background:rgba(240,162,74,.16);color:#f0a24a;border:0;}
+/* 947: rows the field flagged as extra scope say so wherever they appear */
+.pu-tag.supp{border-color:rgba(240,162,74,.55);color:#f0a24a;}
 .pu-who.own-curtis{color:#3fb8c9;}
 .pu-who.own-scottie{color:#a98bec;}
 /* the Assign sheet */
@@ -59968,6 +60071,7 @@ function cardHtml(it, showCrm){
       '<div class="pu-cl">' + esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') + '</div>' +
       (it.detail ? '<div class="pu-m">' + esc(it.detail) + '</div>' : '') +
       '<div class="pu-tags">' +
+        (String(it.title || '').indexOf('SUPPLEMENT / MATERIAL REQUEST') === 0 ? '<span class="pu-tag supp">SUPPLEMENT</span>' : '') +
         '<span class="pu-tag">' + esc(kindOf(it)) + '</span>' +
         '<span class="pu-tag prio-' + prio + '">' + prioLabel(prio) + '</span>' +
         (showCrm ? '<span class="pu-tag crm-' + crm + '">' + CRM_LABEL[crm] + '</span>' : '') +
@@ -60020,7 +60124,8 @@ function render(){
             '<div class="pu-qt">' + esc(it.title || 'Untitled item') + '</div>' +
             '<div class="pu-qa">' + esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') +
               (pr && pr.address ? ' · ' + esc(pr.address) : '') + '</div>' +
-            '<div class="pu-qm"><span class="pu-age' + (age >= 5 ? ' hot' : '') + '">waiting ' + (age || 0) + ' day' + (age === 1 ? '' : 's') + '</span></div>' +
+            '<div class="pu-qm"><span class="pu-age' + (age >= 5 ? ' hot' : '') + '">waiting ' + (age || 0) + ' day' + (age === 1 ? '' : 's') + '</span>' +
+              (String(it.title || '').indexOf('SUPPLEMENT / MATERIAL REQUEST') === 0 ? '<span class="pu-st warn">SUPPLEMENT</span>' : '') + '</div>' +
           '</div>' + (mayAsg ? '<button class="pu-asgbtn" type="button" data-puassign-open="' + esc(String(it.id)) + '">Assign ›</button>' : '') + '</div>';
         }).join('') + '</div>' : '');
   }
@@ -72646,6 +72751,14 @@ select{min-height:44px;}
    siblings. The board opens via data-go, not [data-nav], so the 944 walk
    never reached this screen — gate_945 probes its floor instead. */
 .pu-tab{min-height:44px;}
+/* was 36px (Directions / Call / Open job / Edit / step-remove ×s /
+   templates), 40 (+ Add step), ~41 (gallery), 34 (back, desktop), 30 (tag
+   chips, desktop) — the punch-out card never had the 752 pass; its own
+   stylesheet said so. The checklist ticks and photo-remove ×s keep their
+   small visuals and grow their TAP area with ::after pads at source. */
+#cr-pk .pkbtn,#cr-pk .pkadd,#cr-pk .pkgalbtn{min-height:44px;}
+#cr-pk .pkback{min-width:44px;min-height:44px;}
+#cr-pk .pktag{min-height:44px;}
 /* was 318×38 (phone) / 836×35 (tablet) — #ljSearch, the Leads search bar.
    The recon predicted its own 9px padding saved it; the render measured 35.
    A render outranks a prediction. */
