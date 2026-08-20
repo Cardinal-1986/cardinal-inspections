@@ -5453,3 +5453,25 @@ Stored as `punch_items.visits` jsonb: `{in, out, by, name, day}`, `out:null` whi
 offline outbox — a check-in with no signal syncs later. `punch_visits_940.sql` is **applied**.
 Board-side count is `pbDays(i)` in `cr-pb-script`, reading the same array — one source, no second
 count. Gate: `scripts/gate_visits940.mjs` (15 assertions, negative-controlled).
+
+## The 44px touch floor, completed (build 944 — 20 Aug 2026)
+
+The readability audit's tap-target half. Build 752's `<style id="cr-touch44-styles">` block is
+still THE mechanism — one block is the whole pass, `min-*` only, every selector carries its
+measured size — and 944 extended it with ~21 grouped floors covering the 67 controls the audit
+measured under 44px: the desktop rail (absent from 752's 390px pass — the rail mounts ≥1100px
+only), Cardinal Truth's tab strip, Company Docs chips and row buttons, the Clients/Leads/Estimates
+select–clear–sort controls, the leads stage-filter **labels** (`.ljopt` — never `.cbx`, which
+`#projectView` hides at 1×1), both search bars, the New Lead form fields (`:not()` guards keep the
+18×18 checkboxes), the Pricing/Coach/Crews/Suppliers/Estimates toolbars and both modal close X's.
+
+**Two shapes worth knowing before touching any of it:**
+- **`#crBanner .cbcrm b` did not grow** — fixed chrome; a 44px `::after` pad at source carries the
+  tap (the `.pu-box` shape). `gate_944.mjs` proves it with a real click 9px above the chip.
+- **Four modules declared their own sub-44 `min-height`, beating the floor by specificity**
+  (BUG_CLASSES 54): `#payView`, `#cr-pk .pkm`, `#cr-storm .stseg` — raised at source. The
+  sentinel's **FLOOR** check now reports any recurrence, naming the beating selector.
+
+Deliberately not floored (named in the block): `#projectView .acxjd .acxtrs` inputs — the
+job-details card is deliberately dense; Theo's call. Gate: `scripts/gate_944.mjs` (the 22-screen
+walk + the pad click proof; red on 943 in both halves).

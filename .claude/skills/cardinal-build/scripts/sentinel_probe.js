@@ -12,7 +12,7 @@
  * anything outside the page.
  */
 globalThis.__sentinelProbe = () => {
-  const out = { ink: [], collapse: [], overlap: [], dead: [], unwired: [], overflow: null };
+  const out = { ink: [], collapse: [], overlap: [], dead: [], unwired: [], floor: [], overflow: null };
 
   /* ── colour ─────────────────────────────────────────────────────────── */
   function parse(c) {
@@ -373,6 +373,56 @@ globalThis.__sentinelProbe = () => {
           declared: raw.slice(0, 30), matched: seen, outranked });
     }
   }
+
+  /* ── FLOOR ────────────────────────────────────────────────────────────
+     The 44px touch floor beaten by a module's own min-*. To the OVERRIDDEN
+     check that is just the cascade working — which is exactly why it needs
+     its own id: the cr-touch44-styles sheet is the one place where losing to
+     higher specificity IS the defect. #payView .pay-chip carried 34px over
+     the 44px floor for 192 builds before build 944 found it, along with the
+     same shape in #cr-pk (36px) and #cr-storm (40px).
+     Class-40 discrimination: an element whose >=44px ::before/::after pad
+     covers the deficit (the .pu-box shape) is CORRECT and must not fire. */
+  for (const sheet of document.styleSheets) {
+    const idn = sheet.ownerNode && sheet.ownerNode.id;
+    if (idn !== 'cr-touch44-styles') continue;
+    let frules = null;
+    try { frules = sheet.cssRules; } catch (e) {}
+    if (!frules) continue;
+    for (const r of frules) {
+      if (r.type !== 1 || !r.selectorText) continue;
+      for (const prop of ['min-height', 'min-width']) {
+        const raw = r.style.getPropertyValue(prop);
+        if (String(raw).trim() !== '44px') continue;
+        let fels = [];
+        try { fels = [...document.querySelectorAll(r.selectorText)]; } catch (e) { continue; }
+        for (const el of fels.slice(0, 30)) {
+          if (!visible(el)) continue;
+          const got = parseFloat(getComputedStyle(el).getPropertyValue(prop)) || 0;
+          if (got >= 44) continue;
+          let padded = false;
+          for (const pe of ['::after', '::before']) {
+            const ps = getComputedStyle(el, pe);
+            if (ps.content !== 'none' && parseFloat(ps.height) >= 44) { padded = true; break; }
+          }
+          if (padded) continue;
+          let winner = '';
+          for (const w of live) {
+            if (w === r || !w.style.getPropertyValue(prop)) continue;
+            let m = false;
+            try { m = el.matches(w.selectorText); } catch (e) {}
+            if (!m) continue;
+            const v = parseFloat(w.style.getPropertyValue(prop));
+            if (v && v < 44) { winner = w.selectorText.slice(0, 70); break; }
+          }
+          out.floor.push({ selector: r.selectorText.slice(0, 70), prop,
+            computed: Math.round(got), winner, el: where(el) });
+          break;   /* one exemplar per rule+prop is enough */
+        }
+      }
+    }
+  }
+
   probe.remove();
 
   /* ── UNWIRED ──────────────────────────────────────────────────────────

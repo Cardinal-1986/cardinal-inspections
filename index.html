@@ -3644,7 +3644,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 943 &#8212; The rest of the readability audit: the helper notes on Clients and Leads, client addresses in the directory, the Salesman row on document lists, feed timestamps, the side menu&#8217;s section labels in light mode, Company Docs subtitles and the COMING SOON chip. Same method as 942 &#8212; every colour computed on its measured background, both themes</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 944 &#8212; Every tappable control now meets the 44-pixel touch floor: the audit&#8217;s 67 undersized buttons, chips, tick boxes and fields across fifteen screens, plus four module rules that were quietly beating the floor the app has had since build 752</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40646,6 +40646,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:944, d:'2026-08-20', t:'Bigger tap targets across the app', s:'The readability audit\u2019s other half: thirty-odd kinds of buttons, chips, tick boxes and search fields measured smaller than a fingertip \u2014 the worst were 18 pixels tall \u2014 and every one is now at least 44 pixels, the size a thumb can reliably hit. The stage tick boxes and Clear all buttons on Clients, Leads and Estimates, the Company Docs chips and View and Download buttons, the Pricing, Coach, Crews, Suppliers and Estimates toolbars, the New Lead form fields, the pay screen\u2019s chips and date pickers, the desktop side rail and the CRM switcher chips. Four screens had rules quietly capping their own controls below the app\u2019s existing floor \u2014 those are fixed at the source. Nothing moves or changes colour; the same controls simply got easier to hit.' },
 { b:943, d:'2026-08-20', t:'The rest of the readability audit', s:'The remaining nine faint-text styles from the audit, all between 2.2:1 and 4:1 against a 4.5 floor: the \u201CNothing checked\u201D helper notes on Clients and Leads, client addresses in the directory, the Salesman row on Inspections and Recents, the feed\u2019s \u201C7h ago\u201D timestamps, the side menu\u2019s section labels in light mode, Company Docs\u2019 subtitles and the COMING SOON chip. Same discipline as 942: every replacement computed against the exact measured background in both themes, existing app colours reused wherever one already cleared the floor, and where only one theme failed the other keeps its original to the byte.' },
 { b:942, d:'2026-08-20', t:'The readability audit\u2019s worst nine, fixed', s:'A full sweep of the app measured every piece of text against the exact pixels behind it, and nine styles sat below the readable floor \u2014 the worst being the explainer line under Inspections and Recents, which was WHITE text on light mode\u2019s white page: invisible. Also fixed: Sign out in the light side menu (each CRM\u2019s colour deepened, never swapped), the client directory\u2019s CRM section labels (which had carried proper light colours all along and never used them), Clear all, the empty Crews page, Suppliers\u2019 own field labels, the Objection Coach footer and the Read-only chip. Every new colour was computed against its measured background in BOTH themes before it shipped.' },
 { b:941, d:'2026-08-20', t:'Suppliers stops trapping the app', s:'Opening Suppliers from the menu left it painted over the whole app: tapping Clients, Crews or anything else afterwards did nothing visible, and the phone\u2019s back button walked straight past it \u2014 the only way out was its own \u2715. Suppliers is now registered with the navigation like every other full screen: other destinations close it on their way in, and the back gesture returns from it properly. Found by the readability audit, whose own first runs were measuring every screen through the stuck Suppliers panel.' },
@@ -50695,7 +50696,7 @@ window.CardinalProduction = {
 }
 #cr-pk .pkm .w{ font:600 12px -apple-system,'Segoe UI',Roboto,sans-serif; margin-top:4px; }
 #cr-pk .pkm select,#cr-pk .pkm input{
-  width:100%; box-sizing:border-box; margin-top:4px; padding:7px 8px; font-size:13px; min-height:36px;
+  width:100%; box-sizing:border-box; margin-top:4px; padding:7px 8px; font-size:13px; min-height:44px;
   background:var(--pk-g,#0c0d0f); color:var(--pk-ink,#eceef0);
   border:1px solid var(--pk-line,rgba(230,235,240,.11)); border-radius:8px;
 }
@@ -58605,7 +58606,7 @@ window.CardinalCommunityAnalytics = { open: open, close: close, render: render }
 #clientsView .btn.ghost{background:#1b1d20;border:1px solid #2e3136;color:#b5ad9e;}
 .cd-sub{margin:1px 0 11px;font:600 12px 'Segoe UI',Arial,sans-serif;color:#8f8a80;}
 .cd-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin:0 4px 0 10px;vertical-align:middle;}
-.cd-search{display:flex;align-items:center;gap:8px;background:#1b1d20;border:1px solid #2e3136;border-radius:11px;padding:9px 12px;margin-bottom:10px;color:#8f8a80;font-size:13px;}
+.cd-search{display:flex;align-items:center;gap:8px;background:#1b1d20;border:1px solid #2e3136;border-radius:11px;padding:1px 12px;margin-bottom:10px;color:#8f8a80;font-size:13px;}
 .cd-search input{flex:1;background:none;border:0;outline:0;color:#e9e6df;font:600 13.5px 'Segoe UI',Arial,sans-serif;}
 .cd-ctl{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
 .cd-ctl .sl{font:600 12px 'Segoe UI',Arial,sans-serif;color:#8f8a80;}
@@ -58832,7 +58833,11 @@ body[data-crm-head="community"] #crBanner{--bacc:#047857;--bacclt:#34D399;--bink
 #crBanner .cbcrm{margin-left:auto;display:flex;align-items:center;gap:4px;background:var(--bink);
   border:1px solid var(--bline);border-radius:8px;padding:3px;margin-top:5px;margin-bottom:5px;}
 #crBanner .cbcrm b{display:flex;align-items:center;gap:6px;font:700 11px 'Segoe UI',Arial,sans-serif;
-  color:#aab1ba;padding:5px 11px;border-radius:6px;cursor:pointer;user-select:none;}
+  color:#aab1ba;padding:5px 11px;border-radius:6px;cursor:pointer;user-select:none;position:relative;z-index:1;}
+/* 944: the chips are 22px tall inside fixed header chrome that must not grow
+   22px on every screen - so the tap target is a 44px ::after pad, the .pu-box
+   shape. A rect audit cannot see this; gate_touch944 reads the pseudo box. */
+#crBanner .cbcrm b::after{content:"";position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:44px;}
 #crBanner .cbcrm b:hover{color:var(--bacclt);}
 #crBanner .cbcrm b.on{background:rgba(255,255,255,.07);color:var(--bacclt);}
 /* 938: the selected CRM chip was 3.51:1 on retail (and 3.41 on sales) because
@@ -71187,7 +71192,7 @@ window.CardinalColors = Object.assign(window.CardinalColors || {}, {
   background:var(--pay-acc,#c8202e);color:#fff;font:700 14px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
 #payView .pay-btn.ghost{background:transparent;color:var(--pay-ink,#e8e5df);}
 #payView .pay-btn[disabled]{opacity:.5;cursor:default;}
-#payView .pay-chip{min-height:34px;padding:5px 12px;border-radius:9px;border:1px solid var(--pay-line,#262b30);
+#payView .pay-chip{min-height:44px;padding:5px 12px;border-radius:9px;border:1px solid var(--pay-line,#262b30);
   background:transparent;color:var(--pay-ink,#e8e5df);font:600 12.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
 #payView .pay-stat{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 16px;}
 #payView .pay-stat .s{flex:1 1 150px;background:var(--pay-card,#171a1d);border:1px solid var(--pay-line,#262b30);
@@ -71198,7 +71203,7 @@ window.CardinalColors = Object.assign(window.CardinalColors || {}, {
 #payView .pay-choice{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
 #payView .pay-row-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 14px;}
 #payView input[type=date],#payView input[type=text],#payView select{
-  min-height:40px;box-sizing:border-box;border:1px solid var(--pay-line,#262b30);border-radius:9px;
+  min-height:44px;box-sizing:border-box;border:1px solid var(--pay-line,#262b30);border-radius:9px;
   background:var(--pay-bg,#101214);color:var(--pay-ink,#e8e5df);
   padding:7px 10px;font:600 13.5px 'Segoe UI',Arial,sans-serif;}
 #payView .pay-empty{padding:18px 6px;color:var(--pay-mut,#9aa2ab);}
@@ -72227,7 +72232,9 @@ a.hem,a.hph,#dbAddContact,#dbSwitchPrim{display:inline-flex;align-items:center;m
 /* ---- chip buttons, app-wide (money actions included) -------------------- */
 /* was 34–40 tall: ＋ Add, See all, Remove, Mark repaid, ‹ Overview, cover 📷 */
 .chipbtn{min-height:44px;min-width:44px;}
-/* was 38 tall — Mark Paid / Pay net / Pay full / Confirm */
+/* was 38 tall — Mark Paid / Pay net / Pay full / Confirm. 944: the module's
+   id-scoped 34px chip rule was raised to 44 AT SOURCE (it out-specified this
+   floor for 192 builds); kept here as the census. */
 .pay-btn,.pay-chip{min-height:44px;}
 /* was 139×36 — ＋ Add a punch out. NOT a .chipbtn, its own class; the first
    gate run caught the census assuming otherwise. */
@@ -72237,6 +72244,92 @@ a.hem,a.hph,#dbAddContact,#dbSwitchPrim{display:inline-flex;align-items:center;m
 /* was 31 tall (Activity Count and friends). Printed documents are in the
    #reportFrame iframe and cannot inherit this. */
 select{min-height:44px;}
+
+/* ============================================================================
+   build 944 — the readability audit’s tap-target pass. Same conventions:
+   min-* only, measured size per selector (audit rig, rendered rects, 390 and
+   1194). NEW HAZARD since 752: this block is no longer the last stylesheet,
+   so an id-scoped min-height in a LATER module beats these floors by
+   specificity — #payView chips (34px) and inputs (40px), #cr-pk .pkm (36px)
+   and #cr-storm .stseg (40px) were all doing exactly that and are raised AT
+   SOURCE this build. The sentinel’s FLOOR check now catches recurrences.
+   NOT here on purpose: .cbcrm b (fixed header chrome — 44px ::after pad at
+   source, the .pu-box shape, so the banner does not grow on every screen);
+   #projectView .acxjd .acxtrs inputs (34px — the 788–804 job-details card is
+   deliberately dense; growing every row is a redesign and Theo’s call).
+   ========================================================================== */
+/* was 237×35 (.lnav-item) / 237×25 (.lnav-sec) / 237×34 (.lnav-mini) /
+   237×35 (.lnav-out) / ~43×28 (.lnav-crm button) at 1194×834 — the desktop
+   rail; absent from the 752 pass, which measured at 390px where the rail
+   never mounts. The rail is its own scroll container, so rows only add
+   scroll (the default rail starts scrolling ~160px earlier on the tablet). */
+#cr-lnav .lnav-item,#cr-lnav .lnav-sec,#cr-lnav .lnav-mini,#cr-lnav .lnav-out,#cr-lnav .lnav-crm button{min-height:44px;}
+/* was 54–93×27 — Cardinal Truth’s Overview / Active Claims / Supplements /
+   Closed tab strip */
+.cr-cth-tabs button{min-height:44px;}
+/* was 66–99×31 — Company Docs trade filter chips */
+.cdtrade{min-height:44px;}
+/* was 55×33 (View) / 90×35 (Download) — Company Docs rows. Scoped: a global
+   .btn floor would beat .headactions’ height:40 and the docked repstrip’s
+   40×34 icon collapse. inline-flex because base .btn is inline-block. */
+.cdocrow .btn{min-height:44px;display:inline-flex;align-items:center;}
+/* was 88×38 — the Clients screen Home button (inline padding, floor by id) */
+#cliHomeBtn{min-height:44px;}
+/* was 36×36 ×2 per card — Client Directory call/text icons. The module rule
+   is width/height:36px; min-* wins by property mechanics, not the cascade. */
+.cd-abtn{min-width:44px;min-height:44px;}
+/* was 80–114×34 (Categories / History / Import) and 222×40 (search) — the
+   Pricing toolbar */
+.cr-p-tool-btn,.cr-p-search{min-height:44px;}
+/* was 121–140×37 — Suppliers sheet actions. Scoped to #cr-abc: .btn2 is
+   module-local today but generic-sounding. */
+#cr-abc .btn2{min-height:44px;display:inline-flex;align-items:center;}
+/* was 24×28 — Suppliers close. NEVER floor .x classless: 26 rules app-wide,
+   and in the Sales Floor tiles .x is a flex TEXT SPAN. */
+#cr-abc .hd .x{min-width:44px;min-height:44px;}
+/* was 108×32 (+ New crew) and the 3px-padded table minis — Crews. The Labor
+   Rates and Payments table rows grow; that is the floor working. */
+.crw-btn{min-height:44px;}
+/* was 25×24 — Crews close (a flex child in .crw-top, not absolute) */
+.crw-x{min-width:44px;min-height:44px;}
+/* was 97–264×40 — Estimates list actions (.cr-btn lives only in the
+   estimates module, verified 26979–27272) */
+.cr-btn{min-height:44px;}
+/* was 133–346×40 — Coach action rows (module min-width:120 stays) */
+.cr-k-btn{min-height:44px;}
+/* was 108×36 — Continue on the Quick Inspection map step; .axbtn app-wide,
+   already inline-flex so the floor self-centers */
+.axbtn{min-height:44px;}
+/* was 126×30 / 120×30 / 143×30 / 120×30 — the Select buttons on the three
+   list screens */
+.cd-selbtn,.cd-selall,.ljselbtn,.cre-selbtn{min-height:44px;}
+/* was 59×18 ×3 (rails) and ~37 (funnel sheet) — four byte-similar but
+   SEPARATE Clear-all rules; one grouped floor */
+.cd-clr,.ljclearbtn,.cre-clr,.cd-clearall{min-height:44px;}
+/* was 78×20 / 83×20 — the cd-/cre- twins of .ljsortchip (752 fixed the
+   original and missed the twins) */
+.cd-chip,.cre-chip{min-height:44px;display:inline-flex;align-items:center;}
+/* was a 15×15 box in a ~210×27 label — the LABEL is the hit area (change
+   fires via #ljRailMount delegation). Never floor .cbx itself: app-wide
+   class, and #projectView hides its copies at 1×1, which min-* would clamp
+   to 44 through any specificity. */
+.ljopt{min-height:44px;}
+/* was 268×20 — #cliFilter; .cd-search is a DIV, so its padding is not
+   tappable (the leads twin passes because .ljtop input carries its own
+   padding). Wrapper padding trimmed 9px→1px at source in the same build so
+   the bar lands ~48px instead of 64. */
+.cd-search input{min-height:44px;}
+/* was 318×38 / 159×40 — the New Lead form and the Reports custom range.
+   The :not() guards are load-bearing: .projform sizes its checkboxes and
+   radios to 18×18 on purpose, and min-height would beat that height. */
+.projform input:not([type=checkbox]):not([type=radio]):not([type=file]),#rptFrom,#rptTo{min-height:44px;}
+/* was 84×32 (#rptMin / #rptMax) — the Reports filter bar’s number inputs;
+   its selects already ride the bare select floor above */
+.rptfilters input{min-height:44px;}
+/* was 318×38 (phone) / 836×35 (tablet) — #ljSearch, the Leads search bar.
+   The recon predicted its own 9px padding saved it; the render measured 35.
+   A render outranks a prediction. */
+.ljtop input[type=search]{min-height:44px;}
 </style>
 <style id="cr-clientcard-styles">
 /* ==========================================================================
@@ -76045,7 +76138,7 @@ body:not(.cr-lnav-on) #navMenu [data-cr-footer]{background:transparent !importan
 #cr-storm .stgrp{display:flex;align-items:center;gap:8px}
 #cr-storm .stseg{display:flex;border:1px solid var(--st-line,rgba(255,255,255,.10));border-radius:9px;overflow:hidden}
 #cr-storm .stseg button{background:transparent;border:0;border-right:1px solid var(--st-line,rgba(255,255,255,.10));
-  color:var(--st-mute,#98a0aa);cursor:pointer;padding:9px 13px;font:700 12px inherit;font-family:inherit;min-height:40px}
+  color:var(--st-mute,#98a0aa);cursor:pointer;padding:9px 13px;font:700 12px inherit;font-family:inherit;min-height:44px}
 #cr-storm .stseg button:last-child{border-right:0}
 #cr-storm .stseg button.on{background:var(--st-gust,#8fb4d8);color:#10151b}
 #cr-storm .stseg button:hover:not(.on){background:rgba(255,255,255,.06);color:var(--st-ink,#eef1f5)}
