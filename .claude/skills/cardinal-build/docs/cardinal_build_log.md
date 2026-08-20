@@ -20030,6 +20030,30 @@ does not exist and every `querySelector(...).click()` is a null dereference. A s
 
 `check_build` green (938 → 939). No SQL.
 
+### ⚠ The sentinel caught a regression IN THIS BUILD, before it shipped
+
+The `--since` run against v938 came back with **3 new INK findings, all mine**: the control's own
+`Text size` label at **3.09 / 3.24 / 3.44:1**. On the build whose entire point was readability.
+
+**Cause, and it is a trap this doc set names in as many words.** The light twin was scoped
+`html[data-mode="light"]`. `data-mode` is the **LANDING/LOGIN theme** — CLAUDE.md: *"It is not an
+app-wide dark mode. Do not wire app surfaces to it without a decision from Theo."* It follows the OS,
+so on a phone set to light it painted `#6b6b6b` onto a drawer that is dark in every CRM. **Both
+`data-mode` rules touching `#navMenu` in the whole file were mine; there were zero before**, which is
+the tell I should have read before writing them.
+
+**Fixed by deletion at source, not out-specification.** No twin is needed — the drawer is dark in
+every CRM (925 gave it their colours) and `#9aa2ae` clears the floor on all three grounds at
+6.39 / 6.70 / 7.12:1. If it ever gains a light mode it takes `:root[data-theme="rb-light"]`, the APP
+theme, measured in both.
+
+⚠️ **And the run before that one TIMED OUT — exit 2, `SENTINEL TIMEOUT — treat as UNKNOWN, not as
+clean`.** `zoom` forces a full relayout on every state, which pushed a 12-state × 2-viewport sweep
+past the budget. **The finding above only exists because the timeout was re-run narrower instead of
+read as green.** An instrument that says "I could not tell you" is doing its job; treating that as a
+pass is how the regression would have shipped. Narrow the scope (`--only`, one viewport) rather than
+trusting a partial run.
+
 **Not done, and deliberately:** the 4 contrast failures the same sweep found — the `APPROVED` stage
 chip is white on `#7cb342` at **2.5:1** against a floor of 3. That is a real defect and it is a
 **stage colour**, which this project treats as semantic and app-wide (15 uses of that green). It is

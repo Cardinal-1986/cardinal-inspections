@@ -80,8 +80,19 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
 #navMenu .cr-ts button[data-cr-text-set="xl"]{font-size:18px;}
 #navMenu .cr-ts button[aria-pressed="true"]{background:var(--lnav-crmc,#c8202e);
   border-color:var(--lnav-crmc,#c8202e);color:#fff;}
-html[data-mode="light"] #navMenu .cr-ts .lb{color:#6b6b6b;}
-html[data-mode="light"] #navMenu .cr-ts button{border-color:#d8d0ca;background:#fff;color:#3a3a3a;}
+/* ⚠ There was a light twin here scoped on html[data-mode="light"] and it was
+   MY OWN bug, caught by the sentinel before this shipped. data-mode is the
+   LANDING/LOGIN theme - CLAUDE.md says so in as many words, "not an app-wide
+   dark mode, do not wire app surfaces to it" - and it follows the OS, so on a
+   phone set to light it painted #6b6b6b onto this permanently-dark drawer at
+   3.09:1. A light-mode rule winning on a dark ground, on the build whose whole
+   point was readability.
+
+   No twin is needed: the drawer is dark in every CRM (925 gave it their
+   colours) and #9aa2ae clears the floor on all three grounds at 6.39 / 6.70 /
+   7.12:1. Deleted at source rather than out-specified. If this drawer ever
+   does get a light mode it takes :root[data-theme="rb-light"], which is the
+   APP theme, and it gets measured on both. */
 </style>
 <meta charset="utf-8">
 <link rel="manifest" href="/manifest.json">
