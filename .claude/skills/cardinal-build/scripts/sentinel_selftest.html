@@ -65,6 +65,23 @@
         the cascade working, and must NOT be reported as DEAD. ─────────── */
   .over-base { height: 30px; background-color: #202a16; }
   #overHost .over-base { height: 64px; background-color: #1a2230; }
+
+  /* ── MOBILE-FIRST: a base rule beaten by an EQUALLY specific rule inside a
+        MATCHING @media block. Specificity cannot tell this from the .dead-a
+        case above — both are (0,1,0) and both lose to a later rule — but one
+        is the responsive idiom and the other is a source-order accident. The
+        first CRM sweep raised six of these in one run and they buried the
+        real findings. Must NOT be reported as DEAD.                       */
+  .mf-base { height: 30px; background-color: #2a2016; }
+  @media (min-width: 600px) { .mf-base { height: 72px; background-color: #16162a; } }
+
+  /* ── AND THE CONVERSE, which IS build 817 and MUST still be reported: the
+        rule inside the media query is the one that LOSES, to a later
+        unconditional rule. If the mobile-first exemption were written the
+        lazy way — "either side conditional" — this would go quiet and the
+        check would stop catching the bug it was written for.             */
+  @media (min-width: 600px) { .mf-loser { height: 44px; background-color: #2a1616; } }
+  .mf-loser { height: 88px; background-color: #162a2a; }
 </style>
 </head>
 <body>
@@ -92,6 +109,12 @@
 
 <h2>OVERRIDDEN — a base rule beaten by a more specific one (not a defect)</h2>
 <div class="case" id="overHost"><div class="over-base">normal cascade</div></div>
+
+<h2>MOBILE-FIRST — a base rule beaten by a matching @media rule (not a defect)</h2>
+<div class="case"><div class="mf-base">responsive override, equal specificity</div></div>
+
+<h2>BUILD 817 — a @media rule beaten by a later unconditional one (IS a defect)</h2>
+<div class="case"><div class="mf-loser">this one must still be reported</div></div>
 
 <h2>UNWIRED — a button nothing listens to</h2>
 <div class="case">

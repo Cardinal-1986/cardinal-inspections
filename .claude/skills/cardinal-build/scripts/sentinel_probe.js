@@ -290,10 +290,15 @@ globalThis.__sentinelProbe = () => {
      for CSS nesting, so descending BEFORE examining skips every style rule
      and reports a clean zero. Examine, then descend. */
   const live = [];
-  function walk(rules, depth) {
+  /* Which rules sit inside a MATCHING @media / @supports block. See the
+     mobile-first note in pass 2 — this one flag is the difference between a
+     responsive override and a source-order accident, and specificity cannot
+     tell them apart because in the mobile-first idiom they are identical. */
+  const conditional = new WeakSet();
+  function walk(rules, depth, inCond) {
     if (depth > 5) return;
     for (const r of rules) {
-      if (r.type === 1 && r.selectorText) live.push(r);
+      if (r.type === 1 && r.selectorText) { live.push(r); if (inCond) conditional.add(r); }
       if (r.media && typeof r.media.mediaText === 'string') {
         let ok = true;
         try { ok = matchMedia(r.media.mediaText).matches; } catch (e) {}
@@ -304,13 +309,15 @@ globalThis.__sentinelProbe = () => {
         try { ok = CSS.supports(r.conditionText); } catch (e) {}
         if (!ok) continue;
       }
-      if (r.cssRules && r.cssRules.length) walk(r.cssRules, depth + 1);
+      const isCond = (r.type === 4 || r.type === 12) ||
+                     (r.media && typeof r.media.mediaText === 'string' && r.media.mediaText);
+      if (r.cssRules && r.cssRules.length) walk(r.cssRules, depth + 1, inCond || !!isCond);
     }
   }
   for (const sheet of document.styleSheets) {
     let rules = null;
     try { rules = sheet.cssRules; } catch (e) { continue; }   /* cross-origin */
-    if (rules) walk(rules, 0);
+    if (rules) walk(rules, 0, false);
   }
 
   /* Pass 2 — did the rule win anywhere, and if not, what beat it?
@@ -348,6 +355,17 @@ globalThis.__sentinelProbe = () => {
           if (!m) continue;
           if (w.style.getPropertyPriority(prop) === 'important') { outranked = true; break; }
           if (specFor(w.selectorText, el) > mine) { outranked = true; break; }
+          /* ⚠ MOBILE-FIRST. A base rule beaten by an equally-specific rule
+             inside a MATCHING @media block is the responsive idiom, not an
+             accident — `.cre-lay{display:block}` losing to
+             `@media (min-width:901px){.cre-lay{display:grid}}` at 1194px is
+             the cascade doing exactly what was intended, and it is dead at
+             this width only. Reporting those buries the real ones: the first
+             CRM sweep raised six of them in one run.
+             The converse stays DEAD, and that is deliberate — build 817 was a
+             rule INSIDE a media query beaten by a later unconditional one, so
+             the historical case this check exists for still fires. */
+          if (conditional.has(w) && !conditional.has(r)) { outranked = true; break; }
         }
       }
       if (seen >= 1 && won === 0)

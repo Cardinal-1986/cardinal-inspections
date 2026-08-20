@@ -460,6 +460,16 @@ if (SELFTEST) {
   console.log((wrongly ? '  FAIL  ' : '  PASS  ') +
     'a deliberately overridden rule is NOT reported as DEAD');
   if (wrongly) bad++;
+  /* The mobile-first pair, asserted in BOTH directions. One alone would pass
+     for a check that had simply gone silent on every media query. */
+  const mfWrong = all.some(r => r.id === 'DEAD' && /mf-base/.test(r.detail));
+  console.log((mfWrong ? '  FAIL  ' : '  PASS  ') +
+    'a base rule beaten by a MATCHING @media rule is NOT reported as DEAD');
+  if (mfWrong) bad++;
+  const mfMissed = !all.some(r => r.id === 'DEAD' && /mf-loser/.test(r.detail));
+  console.log((mfMissed ? '  FAIL  ' : '  PASS  ') +
+    'but a @media rule beaten by a later unconditional one STILL is (build 817)');
+  if (mfMissed) bad++;
   const inert = all.some(r => r.id === 'UNWIRED' && /#wired/.test(r.detail));
   console.log((inert ? '  FAIL  ' : '  PASS  ') + 'a WIRED button is not reported as unwired');
   if (inert) bad++;
