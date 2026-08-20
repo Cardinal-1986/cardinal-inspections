@@ -20476,8 +20476,21 @@ narrate the defect exactly ("373 > 358", "397 > 358", "auto" on all four sites).
 containment gate reads computed style on live elements for the two cheap screens and walks
 Chromium's parsed rules for the two heavy ones (examine-then-descend, the 685 trap avoided).
 Board still pans after containment (asserted — containment that killed the scroll would be
-worse than the bug). Site-wide sentinel sweep (OVERFLOW / UNWIRED / FLOOR, all states, 390px)
-run alongside — result recorded below when it landed.
+worse than the bug).
+
+**The site-wide sweep Theo asked for (OVERFLOW / UNWIRED / FLOOR, all 14 sentinel states,
+390px).** The single full run hit the sentinel's 240s deadline — **TIMEOUT = UNKNOWN, not
+clean** — so it ran again as four state batches, all four inside the deadline: **CLEAN,
+nothing new, across all 14 screens.** One carried finding surfaced and was run down:
+`button.pu-asgbtn "Assign ›" has no click handler, and nothing above it delegates`. **The
+instrument was wrong, not the app** — the button is dispatched from a DOCUMENT-level click
+listener (the app's standard shape), and UNWIRED's ancestor walk climbs six `parentElement`
+hops, which can never reach `document` because document is not an Element. gate_945 had
+already proven the button end-to-end. The judge now treats a button carrying any `data-*`
+attribute (other than the sentinel's own tag) as delegated — this app's dispatchers key on
+exactly those — and the selftest holds BOTH directions: a new `#data-delegated` fixture
+(document-dispatched via data hook) must NOT fire, while the dead `#dead-button` still must.
+`--selftest` GREEN, 13 assertions. Batch 2 re-run after the fix: CLEAN, zero carried.
 
 What I could NOT reproduce from the screenshot: the vertical half-clipping of the strip. The
 mechanical causes fixed here (overflow + broken pan) are the measurable defects at that
