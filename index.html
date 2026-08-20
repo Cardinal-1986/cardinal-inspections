@@ -3642,7 +3642,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 939 &#8212; Text size. Menu &#8594; Text size at the bottom, three steps: A / A / A. It is remembered on that phone only, so setting it bigger does not change anybody else&#8217;s screen. Built because Scottie could not read the screen &#8212; and in the installed app iPhone gives you no way to pinch-zoom</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 940 &#8212; Check in and check out on a punch-out. Tap Check in when you get to the repair; tap Check out when you leave. If it is not finished it asks whether you are back on it tomorrow and moves the date for you. Anything that has taken more than one day shows a Day 2 mark on the card and on the Production board</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40636,6 +40636,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:940, d:'2026-08-20', t:'Check in and check out on a repair', s:'Punch-outs now record who was on site and when. Tap Check in when you get to the repair and Check out when you leave; if it is not finished it asks whether you are back on it tomorrow, and only moves the date if you say yes \u2014 nothing reschedules itself behind you. Anything that has taken more than one day carries a Day 2 mark on the card AND on the Production board, so a repair that is dragging is visible without anybody being pinged about it. If somebody forgets to check out, the card says so plainly the next day rather than quietly assuming. Works with no signal \u2014 it saves on the phone and syncs later.' },
 { b:939, d:'2026-08-20', t:'Text size \u2014 three steps, remembered per phone', s:'Scottie said he had a hard time reading the screen. Measured on his login it is size rather than colour: 47 of the app\u2019s 155 text styles render under 12px, some as small as 7.5px. There is now a Text size control at the bottom of the menu \u2014 Normal, Large, Larger \u2014 which scales the whole app and is remembered on that device only, so turning it up does not change anyone else\u2019s screen. This matters most in the INSTALLED app, where iPhone gives you no way to pinch-zoom at all. Checked at both steps: the bottom bar stays put and nothing runs off the side of the screen.' },
 { b:938, d:'2026-08-20', t:'Three faint bits of text, measured and fixed', s:'A first full contrast sweep of the app \u2014 twelve screens, phone and desktop \u2014 found three pieces of text under the readable floor. The version line at the foot of the slide-out menu (3.4:1 \u2192 6.4:1), the highlighted CRM chip in the top banner (3.5:1 \u2192 4.8:1) and Sign out on the desktop side menu (3.4:1 \u2192 5.5:1). No colour was invented: Sign out uses the lighter cardinal red already in the app and stays red, and the CRM chip keeps every CRM\u2019s own colour \u2014 the chip behind it was darkened instead. That last one is deliberately dark-mode only: in light mode the same change would have made it harder to read, which the measurement caught before it shipped.' },
 { b:937, d:'2026-08-20', t:'The signature pad, reachable on every screen', s:'Holding the phone or the tablet sideways put Clear, Cancel and Apply signature underneath the bottom bar of the installed app, with nothing to scroll \u2014 so the client could sign and then had no way to apply it. The pad now scrolls like every other form in the app and keeps the bar\u2019s worth of room under its buttons. Found by checking every bottom-anchored screen the way a finger checks one: asking what a tap at each button would actually hit.' },
@@ -50037,6 +50038,16 @@ function jobHtml(j){
     '<div class="pbrow2">' + acts + '</div>' +
     '</div>';
 }
+/* 940: distinct LOCAL days somebody has been on this item. Reads the same
+   visits array the punch card writes — one source, no second count. */
+function pbDays(i){
+  var v = (i && Array.isArray(i.visits)) ? i.visits : [], seen = {}, n = 0;
+  for(var k = 0; k < v.length; k++){
+    var d = v[k] && v[k].day;
+    if(d && !seen[d]){ seen[d] = 1; n++; }
+  }
+  return n;
+}
 function itemHtml(i){
   var pr = projectFor(i.project_id);
   var when = i.status === 'done'
@@ -50048,7 +50059,12 @@ function itemHtml(i){
       (i.status === 'done' ? 'Reopen' : 'Close') + '">' + svg('tick') + '</button>' +
     '<span class="tx"><b>' + esc(i.title || 'Punch-out') + '</b>' +
     '<small>' + esc((pr && pr.name ? pr.name + ' · ' : '') + when) + '</small></span>' +
-    (i.priority === 'high' && i.status !== 'done' ? '<span class="pbtag blocked">Urgent</span>' : '') +
+    (i.priority === 'high' && i.status !== 'done' ? '<span class="pbtag blocked">Urgent</span>' : '')
+    /* 940: a repair that has taken more than one day says so here, where
+       Curtis and Theo actually look. A mark on the board, not a push — a
+       repair running long is usually ordinary, and an alert for the
+       ordinary case is one people learn to ignore. */
+    + (i.status !== 'done' && pbDays(i) > 1 ? '<span class="pbtag day2">Day ' + pbDays(i) + '</span>' : '') +
     '</div>';
 }
 var BOX_TITLE = {
@@ -50860,6 +50876,25 @@ window.CardinalProduction = {
 #cr-pk .pkgadd{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; aspect-ratio:1/1; border:1px dashed var(--pk-line,rgba(230,235,240,.11)); border-radius:11px; background:var(--pk-c,#15171a); color:var(--pk-dim,#848c94); cursor:pointer; font:700 10px var(--pk-mono,ui-monospace,Menlo,monospace); letter-spacing:.05em; }
 #cr-pk .pkgadd:hover{ border-color:var(--pk-acc,#e35c63); color:var(--pk-ink,#eceef0); }
 #cr-pk .pkgadd svg{ width:22px; height:22px; }
+/* 940: the check in / check out strip. Every colour carries a literal
+   fallback, and the two states are told apart by WORDS as well as colour —
+   "On site since 7:40 AM" against "Not checked in" — so it still reads if the
+   accent is ever restyled. Buttons are 44px because this is tapped on a roof. */
+#cr-pk .pkvis{ display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  margin:10px 0 2px; padding:11px 13px; border-radius:11px;
+  background:var(--pk-card2,#15181c); border:1px solid var(--pk-line,#252a30); }
+#cr-pk .pkvon,#cr-pk .pkvstale,#cr-pk .pkvwas,#cr-pk .pkvnone{
+  font:700 12.5px 'Segoe UI',Arial,sans-serif; margin-right:auto; }
+#cr-pk .pkvon{ color:#5fd08a; }
+#cr-pk .pkvstale{ color:#f0a24a; }
+#cr-pk .pkvwas{ color:var(--pk-ink,#eceef0); }
+#cr-pk .pkvnone{ color:var(--pk-dim,#9aa2ae); }
+#cr-pk .pkvb{ min-height:44px; padding:0 18px; border-radius:10px; cursor:pointer;
+  font:800 13px 'Segoe UI',Arial,sans-serif; border:1px solid transparent; }
+#cr-pk .pkvb.in{ background:var(--pk-acc,#e35c63); color:#fff; }
+#cr-pk .pkvb.out{ background:transparent; color:var(--pk-ink,#eceef0);
+  border-color:var(--pk-line2,#3a424c); }
+#cr-pk .pkchip.day2{ background:rgba(240,162,74,.16); color:#f0a24a; margin-left:6px; }
 </style>
 <script id="cr-pk-script">
 (function(){
@@ -50984,6 +51019,116 @@ function pUrl(p){ return (p && typeof p === 'object') ? (p.u || '') : (p || '');
 function pName(p){ return (p && typeof p === 'object') ? (p.name || nameOf(p.by) || '') : ''; }
 function pAt(p){ return (p && typeof p === 'object') ? (p.at || '') : ''; }
 function comments(){ return Array.isArray(it && it.comments) ? it.comments : []; }
+/* ── 940 · check in / check out ───────────────────────────────────────────
+   Theo: "check in when he gets to the repair and check out if it doesn't get
+   completed that day and moves on to the next day."
+
+   Kept as ONE jsonb array on the row — the shape punch_items already uses for
+   comments, photos and steps — so it rides save()'s single chokepoint and
+   therefore the offline outbox. Scottie checks in at a house with no signal
+   and it syncs when he has one. A punch_visits TABLE would have needed its own
+   read, its own RLS and its own offline path: three things to keep in step
+   with the row they describe. There is no second pipeline here.
+
+   `day` is the LOCAL calendar day, not a UTC slice off the timestamp. A 7pm
+   check-in in Ohio is 23:00Z the SAME day and 00:00Z the NEXT one, so slicing
+   the ISO string would have called a single evening two days and flagged a
+   one-visit repair as "Day 2". Counting the way a person counts days is the
+   whole point of the feature. */
+function visits(){ return Array.isArray(it.visits) ? it.visits : []; }
+function dayKey(d){
+  return d.getFullYear() + '-' +
+    ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+/* the visit he is standing in, if any — searched from the END so an older
+   unclosed visit can never shadow today's */
+function openVisit(){
+  var v = visits();
+  for(var i = v.length - 1; i >= 0; i--){ if(v[i] && !v[i].out) return { i:i, v:v[i] }; }
+  return null;
+}
+function dayCount(){
+  var v = visits(), seen = {}, n = 0;
+  for(var i = 0; i < v.length; i++){
+    var d = v[i] && v[i].day;
+    if(d && !seen[d]){ seen[d] = 1; n++; }
+  }
+  return n;
+}
+/* Sunday is skipped and nothing else is. Cardinal works Saturdays, so a
+   five-day week would put half the carried repairs on the wrong date; a
+   holiday calendar is a guess this does not need to make, and the date is
+   editable on the card either way. */
+function nextWorkDay(from){
+  var d = new Date(from.getTime());
+  d.setDate(d.getDate() + 1);
+  if(d.getDay() === 0) d.setDate(d.getDate() + 1);
+  return dayKey(d);
+}
+function visitClock(v){
+  if(!v) return '';
+  var d = new Date(v);
+  if(isNaN(d)) return '';
+  return d.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+}
+function visitDayLabel(k){
+  if(!k) return '';
+  var p = String(k).split('-');
+  var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  if(isNaN(d)) return k;
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
+
+function checkIn(){
+  if(openVisit()) return;                       /* already on site — no double */
+  var now = new Date();
+  save({ visits: visits().concat([{
+    in: now.toISOString(), out: null,
+    by: myEmail(), name: nameOf(myEmail()), day: dayKey(now)
+  }]) });
+}
+
+function checkOut(){
+  var o = openVisit();
+  if(!o) return;
+  var now = new Date();
+  var v = visits().slice();
+  v[o.i] = { in:o.v.in, out:now.toISOString(), by:o.v.by, name:o.v.name, day:o.v.day };
+  var patch = { visits: v };
+  /* Theo's call: ASK, then move. Nothing reschedules itself behind him — he
+     may be checking out because he is waiting on a part, and then tomorrow is
+     the wrong date and nobody was consulted. */
+  if(it.status !== 'done'){
+    var back = window.confirm('Not finished yet.\n\nBack on this tomorrow?');
+    if(back) patch.scheduled_at = nextWorkDay(now);
+  }
+  save(patch);
+}
+
+function visitHtml(){
+  var o = openVisit(), n = dayCount(), done = it.status === 'done';
+  if(done && !visits().length) return '';
+  var today = dayKey(new Date());
+  var stale = o && o.v.day && o.v.day !== today;
+  var right = '';
+  if(o){
+    right = '<button class="pkvb out" data-act="cout" type="button">Check out</button>';
+  }else if(!done){
+    right = '<button class="pkvb in" data-act="cin" type="button">Check in</button>';
+  }
+  var line = o
+    ? (stale
+        /* An open check-in from an earlier day is stated, never assumed away:
+           if he forgot to check out, day 2 would otherwise never count and the
+           date would never move. Worded as a fact, not a telling-off. */
+        ? '<span class="pkvstale">On site since ' + esc(visitDayLabel(o.v.day)) +
+          ', ' + esc(visitClock(o.v.in)) + ' \u2014 not checked out</span>'
+        : '<span class="pkvon">On site since ' + esc(visitClock(o.v.in)) + '</span>')
+    : (n
+        ? '<span class="pkvwas">' + n + (n === 1 ? ' day' : ' days') + ' on site</span>'
+        : '<span class="pkvnone">Not checked in</span>');
+  return '<div class="pkvis">' + line + right + '</div>';
+}
 function stepsDone(){ return steps().filter(function(s){ return s && s.d; }).length; }
 function readyToClose(){
   return photos().length >= PHOTO_MIN && (!steps().length || stepsDone() === steps().length);
@@ -51042,12 +51187,12 @@ function cardHtml(){
     '<div class="pktop">' +
       '<button class="pkback" data-act="back" type="button" aria-label="Back">' + svg('chev') + '</button>' +
       '<span class="pkey">' + esc(it.kind === 'callback' ? 'Callback' : it.kind === 'ticket' ? 'Ticket' : 'Punch-Out') + '</span>' +
-      '<span class="pkchip ' + (done ? 'done' : 'open') + '" style="margin-left:auto;">' + (done ? 'Closed' : 'Open') + '</span>' +
+      '<span class="pkchip ' + (done ? 'done' : 'open') + '" style="margin-left:auto;">' + (done ? 'Closed' : 'Open') + '</span>' + (!done && dayCount() > 1 ? '<span class="pkchip day2">Day ' + dayCount() + '</span>' : '') +
     '</div>' +
     (urgent ? '<div class="pkurg">' + svg('flag') + 'Urgent — do first</div>' : '') +
     '<h1>' + esc(it.title || 'Punch-out') + '</h1>' +
     '<div class="pksplit"><div>' +
-      jobHtml(pr) + metaHtml() + descHtml() + checklistHtml() + photosHtml() +
+      jobHtml(pr) + metaHtml() + visitHtml() + descHtml() + checklistHtml() + photosHtml() +
     '</div><div>' +
       msgsHtml() + closeHtml(done) + dangerHtml() +
     '</div></div></div>';
@@ -51652,6 +51797,8 @@ function wire(){
   }; });
   q('[data-step]', function(b){ b.onclick = function(){ tickStep(Number(b.getAttribute('data-step'))); }; });
   q('[data-delstep]', function(b){ b.onclick = function(){ delStep(Number(b.getAttribute('data-delstep'))); }; });
+  q('[data-act="cin"]',  function(b){ b.onclick = function(){ checkIn();  }; });
+  q('[data-act="cout"]', function(b){ b.onclick = function(){ checkOut(); }; });
   q('[data-tpl]', function(b){ b.onclick = function(){ useTemplate(b.getAttribute('data-tpl')); }; });
   q('[data-act="addstep"]', function(b){ b.onclick = addStep; });
   q('[data-act="supp"]', function(b){ b.onclick = flagSupplement; });

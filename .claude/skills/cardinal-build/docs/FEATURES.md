@@ -5441,3 +5441,15 @@ entirely** — there is no gesture to fall back on.
 
 **Still open from the same sweep:** the `APPROVED` stage chip is white on green at **2.5:1**
 (floor 3). Stage colours are semantic and app-wide — its own build, with a preview.
+
+**Build 940 — Check in / check out on a punch-out.** A strip on the punch card: **Check in** when
+you reach the repair, **Check out** when you leave. If the item is not closed, check-out asks *"Back
+on this tomorrow?"* and moves `scheduled_at` **only on yes** (next day, skipping Sunday). A repair
+spanning more than one calendar day shows **Day N** on the card and on the Production board. An open
+check-in from an earlier day is shown in amber — *"not checked out"* — rather than silently assumed.
+
+Stored as `punch_items.visits` jsonb: `{in, out, by, name, day}`, `out:null` while on site, `day` the
+**local** calendar day. Written only through `cr-pk-script`'s `save()` chokepoint, so it rides the
+offline outbox — a check-in with no signal syncs later. `punch_visits_940.sql` is **applied**.
+Board-side count is `pbDays(i)` in `cr-pb-script`, reading the same array — one source, no second
+count. Gate: `scripts/gate_visits940.mjs` (15 assertions, negative-controlled).

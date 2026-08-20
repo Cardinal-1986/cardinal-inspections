@@ -20058,3 +20058,60 @@ trusting a partial run.
 chip is white on `#7cb342` at **2.5:1** against a floor of 3. That is a real defect and it is a
 **stage colour**, which this project treats as semantic and app-wide (15 uses of that green). It is
 its own build with its own preview, not a rider on this one.
+
+## Build 940 — Check in and check out on a repair
+
+**Theo:** *"Also maybe check in when he gets to the repair and check out if it doesn't get completed
+that day and moves on to the next day."*
+
+**Audited first, and it did not exist.** ⚠️ A grep for `checkin` returns **22 hits** and every one is
+the word "check**ing**" in prose — the file's own *read what your extractor captured* rule, in the
+direction that would have wasted a build looking for a feature that was never there. `punch_items`
+had `scheduled_at`, `done_at`, `done_by`; nothing recorded anybody **arriving**.
+
+**SQL first: `punch_visits_940.sql` — APPLIED and verified** (column present, all 8 rows defaulted
+to `[]`). One `visits` jsonb array on the row, the shape `comments` / `photos` / `steps` already use.
+
+⚠️ **Deliberately NOT a `punch_visits` table.** `cr-pk-script`'s `save(patch)` is a single chokepoint
+that already routes to `CardinalOutbox`, so a visit recorded at a house with no signal syncs later
+**for free**. A second table needed its own read, its own RLS and its own offline path — three things
+to keep in step with the row they describe. One pipeline per concept.
+
+⚠️ **`day` is the LOCAL calendar day, not a slice off the ISO timestamp.** A 7pm check-in in Ohio is
+`23:00Z` the same day and `00:00Z` the next; slicing the string would have called one evening two
+days and flagged a single-visit repair as "Day 2". Counting the way a person counts days *is* the
+feature.
+
+**Theo's two calls, both taken:**
+- **Check out ASKS** — *"Not finished yet. Back on this tomorrow?"* — and moves `scheduled_at` only
+  on yes. Nothing reschedules itself behind him: he may be checking out because he is waiting on a
+  part, and then tomorrow is the wrong date and nobody was consulted.
+- **Day 2 is a MARK, not a message** — a chip on the card and a `pbtag` on the Production board,
+  where Curtis and Theo already look. No push, no email. A repair running long is usually ordinary,
+  and an alert for the ordinary case is one people learn to ignore.
+
+**Sunday is skipped and nothing else is.** Cardinal works Saturdays, so a five-day week would put
+half the carried repairs on the wrong date; a holiday calendar is a guess this does not need to
+make, and the date stays editable on the card.
+
+**An open check-in from an earlier day is STATED, not assumed away** — *"On site since Tue, 7:40 AM
+— not checked out"* in amber. If he forgets, day 2 would otherwise never count and the date would
+never move. Worded as a fact, not a telling-off.
+
+⚠️ **`itemHtml` is defined THREE times** (`cr-pb`, `cr-pp`, `cr-lib`) and `pl.sub` splices
+**file-wide**, so the bare name aborted the patch — correctly. Anchored on `cr-pb`'s own first two
+lines instead. *Scoping the assertion is not enough when the substitution is global.*
+
+Gate `gate_visits940.mjs`: **15 assertions GREEN**, driving the real card as Scottie and reading the
+app's actual writes — one visit written, `out` null while on site, a local day key, stamped with
+who, the control flipping in→out and back, **a second check-in while already on site writing
+nothing**, "yes" moving the date to a non-Sunday, and **"no" leaving `scheduled_at` completely
+untouched** (patch keys: `visits` only).
+
+⚠️ **One assertion was written BACKWARDS and failed correct code:** it demanded a "Day 2" chip after
+two check-ins on the *same* day. One day worked twice is one day — that is precisely why `dayCount()`
+counts distinct days rather than visits. *Half the reds on this project are the test's fault; this
+was one.* Corrected to assert the opposite, with the reasoning in place.
+
+Negative control vs v939: **RED, 6 named failures, no crash** (BUG_CLASSES 37 — every tap goes
+through `tap()`). `check_build` green (939 → 940).
