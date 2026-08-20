@@ -84,6 +84,27 @@
         kind:'ticket', priority:'high', status:'open', assigned_to:'curtis@cardinalrenovations.net',
         created_by:'theo@cardinalrenovations.net', created_at:'2026-08-18T23:18:36Z',
         scheduled_at:'2026-08-27', scheduled_time:'09:00:00', photos:[], comments:[], steps:[], template:null },
+      /* 945: The Line renders four buckets + a pinned queue — a seed where every
+         punch item is assigned and dated sweeps an EMPTY queue and proves
+         nothing. i3 = the queue (unassigned, no day, old); i4 = Assigned
+         (person, no day); i5 = Active (open visit stamped with TODAY'S local
+         day key, computed so the ON SITE chip can actually light). */
+      { id:'i3', project_id:'p1', title:'Downspout came loose', detail:null,
+        kind:'punch', priority:'normal', status:'open', assigned_to:null,
+        created_by:'theo@cardinalrenovations.net', created_at:'2026-08-13T12:00:00Z',
+        scheduled_at:null, scheduled_time:null, photos:[], comments:[], steps:[], template:null, visits:[] },
+      { id:'i4', project_id:'p1', title:'Soffit vent swap', detail:null,
+        kind:'punch', priority:'normal', status:'open', assigned_to:'scottie@cardinalrenovations.net',
+        created_by:'theo@cardinalrenovations.net', created_at:'2026-08-16T12:00:00Z',
+        scheduled_at:null, scheduled_time:null, photos:[], comments:[], steps:[], template:null, visits:[] },
+      { id:'i5', project_id:'p1', title:'Fix storm door', detail:null,
+        kind:'punch', priority:'normal', status:'open', assigned_to:'curtis@cardinalrenovations.net',
+        created_by:'theo@cardinalrenovations.net', created_at:'2026-08-19T12:00:00Z',
+        scheduled_at:(function(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); })(),
+        scheduled_time:null, photos:[], comments:[], steps:[], template:null,
+        visits:[{ in:new Date(Date.now()-3600000).toISOString(), out:null,
+                  by:'curtis@cardinalrenovations.net', name:'Curtis',
+                  day:(function(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); })() }] },
       { id:'i2', project_id:'p1', title:'Gutter re-hang, north run', detail:null,
         kind:'punch', priority:'normal', status:'done', assigned_to:'curtis@cardinalrenovations.net',
         created_by:'theo@cardinalrenovations.net', created_at:'2026-08-17T14:00:00Z',
@@ -214,6 +235,11 @@
         if (!onScreen(rail))
           throw new Error('neither the burger nor the rail is on screen — this width has no nav');
         await pause(400); } },
+    { name:'punch',  run: async function () {
+        leaveLanding(); closeAll();
+        if (typeof window.openPunchView !== 'function') throw new Error('openPunchView missing');
+        await window.openPunchView(); await pause(700); } },
+
     { name:'newproject',  run: async function () {
         leaveLanding(); closeAll();
         if (typeof openProjModal !== 'function') throw new Error('openProjModal missing');

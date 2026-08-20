@@ -3644,7 +3644,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 944 &#8212; Every tappable control now meets the 44-pixel touch floor: the audit&#8217;s 67 undersized buttons, chips, tick boxes and fields across fifteen screens, plus four module rules that were quietly beating the floor the app has had since build 752</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 945 &#8212; Punch &amp; Repairs becomes The Line: punch-outs with nobody on them sit pinned at the top with an Assign button, four tabs (Active, Assigned, Scheduled, Closed) each mean one thing, and the check-in truth &#8212; on site since, day 2, not checked in &#8212; shows on the board, not just the card</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3935,6 +3935,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <div class="pu-wrap">
     <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">&#128296; Punch &amp; Repairs</h2></div>
     <p class="pu-sub" id="puSub">&mdash;</p>
+    <div id="puQueue"></div>
     <div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Search item, client, address&#8230;" aria-label="Search punch items"></div>
     <div class="pu-ctl"><span class="sl">Sort by</span>
       <button class="pu-chip" id="puSortChip">Urgency</button>
@@ -3945,8 +3946,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     </div>
     <div class="pu-tabs" id="puTabs">
       <button class="pu-tab on" data-putab="active">Active <span class="n" id="puNActive">0</span></button>
+      <button class="pu-tab" data-putab="assigned">Assigned <span class="n" id="puNAssigned">0</span></button>
       <button class="pu-tab" data-putab="scheduled">Scheduled <span class="n" id="puNSched">0</span></button>
-      <button class="pu-tab" data-putab="completed">Completed <span class="n" id="puNDone">0</span></button>
+      <button class="pu-tab" data-putab="completed">Closed <span class="n" id="puNDone">0</span></button>
     </div>
     <div class="pu-lay">
       <aside class="pu-rail-wrap"><div class="pu-rail" id="puRail"></div>
@@ -3967,6 +3969,16 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
   <div class="pu-sheet" id="puShSub"><div class="panel">
     <div class="ph"><button id="puSubBack">&#8249; Back</button><span class="t" id="puSubTitle"></span><button class="ap" id="puSubApply">Apply</button></div>
     <div id="puSubList"></div>
+  </div></div>
+  <div class="pu-sheet" id="puShAssign"><div class="panel">
+    <div class="ph"><span class="t">Assign</span><button id="puAsgClose">Close</button></div>
+    <div class="pu-asghead" id="puAsgHead"></div>
+    <div id="puAsgWho"></div>
+    <div class="pu-asgdays" id="puAsgDays"></div>
+    <div class="pu-asgfoot">
+      <button class="pu-asggo" id="puAsgGo" type="button" disabled>Pick a person</button>
+      <button class="pu-asgntf on" id="puAsgNtf" type="button" aria-pressed="true"><span class="tg"></span>notify</button>
+    </div>
   </div></div>
 </div>
 
@@ -40646,6 +40658,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:945, d:'2026-08-20', t:'Punch \u0026 Repairs becomes The Line', s:'The punch page now works the way dispatch actually happens. Punch-outs with nobody assigned sit pinned at the very top in amber \u2014 oldest first, each with an Assign button that opens a sheet showing every person with their real load (2 open \u00b7 day-2 carry) and four day chips, and the assignee gets notified the moment you hit Assign. Below that, four tabs that each mean exactly one thing: Active is started or due today \u2014 with the check-in truth right on the board (on site since 9:40, day 2, not checked in); Assigned has a person but needs a day; Scheduled has a day that has not come; Closed is done. The one-tap tick, the search, the filters and the map all work exactly as before.' },
 { b:944, d:'2026-08-20', t:'Bigger tap targets across the app', s:'The readability audit\u2019s other half: thirty-odd kinds of buttons, chips, tick boxes and search fields measured smaller than a fingertip \u2014 the worst were 18 pixels tall \u2014 and every one is now at least 44 pixels, the size a thumb can reliably hit. The stage tick boxes and Clear all buttons on Clients, Leads and Estimates, the Company Docs chips and View and Download buttons, the Pricing, Coach, Crews, Suppliers and Estimates toolbars, the New Lead form fields, the pay screen\u2019s chips and date pickers, the desktop side rail and the CRM switcher chips. Four screens had rules quietly capping their own controls below the app\u2019s existing floor \u2014 those are fixed at the source. Nothing moves or changes colour; the same controls simply got easier to hit.' },
 { b:943, d:'2026-08-20', t:'The rest of the readability audit', s:'The remaining nine faint-text styles from the audit, all between 2.2:1 and 4:1 against a 4.5 floor: the \u201CNothing checked\u201D helper notes on Clients and Leads, client addresses in the directory, the Salesman row on Inspections and Recents, the feed\u2019s \u201C7h ago\u201D timestamps, the side menu\u2019s section labels in light mode, Company Docs\u2019 subtitles and the COMING SOON chip. Same discipline as 942: every replacement computed against the exact measured background in both themes, existing app colours reused wherever one already cleared the floor, and where only one theme failed the other keeps its original to the byte.' },
 { b:942, d:'2026-08-20', t:'The readability audit\u2019s worst nine, fixed', s:'A full sweep of the app measured every piece of text against the exact pixels behind it, and nine styles sat below the readable floor \u2014 the worst being the explainer line under Inspections and Recents, which was WHITE text on light mode\u2019s white page: invisible. Also fixed: Sign out in the light side menu (each CRM\u2019s colour deepened, never swapped), the client directory\u2019s CRM section labels (which had carried proper light colours all along and never used them), Clear all, the empty Crews page, Suppliers\u2019 own field labels, the Objection Coach footer and the Read-only chip. Every new colour was computed against its measured background in BOTH themes before it shipped.' },
@@ -49400,6 +49413,8 @@ objections : OBJECTIONS,
   font:700 8.5px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.1em; border-radius:5px; padding:3px 7px;
   text-transform:uppercase;
 }
+/* 945: the Day-N mark had no ink of its own since 940 — the card's amber */
+#cr-pb .pbtag.day2{ background:rgba(240,162,74,.16); color:#f0a24a; }
 #cr-pb .pbtag.blocked{ background:rgba(224,122,95,.14); color:var(--pb-hot,#e07a5f); }
 #cr-pb .pbtag.soon{ background:rgba(200,32,46,.15); color:var(--pb-acc,#e35c63); }
 #cr-pb .pbtag.clear,#cr-pb .pbtag.done{ background:rgba(108,185,143,.14); color:var(--pb-ok,#6cb98f); }
@@ -51473,6 +51488,8 @@ function refreshOthers(){
      every write from this card silently failed to repaint the home strips.
      window.renderPunchStrips is the real entry point. */
   try{ if(typeof window.renderPunchStrips === 'function') window.renderPunchStrips(); }catch(_){}
+  /* 945: The Line's ACTIVE/ASSIGNED buckets read the row this card just wrote */
+  try{ if(typeof window.renderPunchView === 'function') window.renderPunchView(); }catch(_){}
 }
 async function tickStep(i){
   var st = steps().slice();
@@ -59485,6 +59502,78 @@ if(typeof _origOLF === 'function'){
 /* ── Punch & Repairs: unified page + per-CRM home strip (build 361, retail iron+gold).
       Tokenized for rb-light (build 390). Priority colours, CRM tag colours, the urgent
       spine and the insurance/community skins stay fixed — semantic, see FEATURES.md. ── */
+
+/* ── 945: THE LINE — the queue pinned above four tabs, check-in truth on the
+      cards, and the Assign sheet. All colours ride the --rbe-* tokens with
+      explicit rb-light twins below (the 942 discipline: computed, both
+      themes). Day-N amber is build 940's #f0a24a mark, not a new colour. ── */
+/* four tabs must FIT at 390px — a tab hidden behind a pan reads as missing */
+@media (max-width:430px){
+  /* .pu-tabs .pu-tab: the base rule sits LATER in this block and would win a
+     same-specificity fight by source order */
+  .pu-tabs .pu-tab{padding:10px 9px;font-size:12.5px;}
+  .pu-tabs .pu-tab .n{margin-left:4px;padding:2px 6px;}
+}
+#puQueue .pu-hero{border:1.5px solid #f5c045;background:rgba(245,192,69,.06);border-radius:13px;padding:11px 12px;margin:0 0 12px;}
+#puQueue .ph2{display:flex;align-items:baseline;gap:9px;margin:0 0 9px;}
+#puQueue .ph2 b{font:800 16px 'Segoe UI',Arial,sans-serif;color:#f5c045;}
+#puQueue .ph2 span{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa0a8);}
+#puQueue .pu-card{display:flex;align-items:center;gap:11px;margin-bottom:8px;}
+#puQueue .pu-card:last-child{margin-bottom:2px;}
+#puQueue .pu-qmain{flex:1;min-width:0;}
+#puQueue .pu-qt{font:750 14.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
+#puQueue .pu-qa{font:500 12.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin-top:1px;}
+#puQueue .pu-qm{display:flex;gap:9px;margin-top:5px;align-items:center;flex-wrap:wrap;}
+.pu-age{font:700 11px 'Segoe UI',Arial,sans-serif;color:#c98f16;}
+.pu-age.hot{color:var(--rbe-acc,#c8202e);}
+.pu-asgbtn{flex:none;background:#f5c045;color:#1a1204;border:0;border-radius:10px;padding:10px 14px;
+  font:800 13px 'Segoe UI',Arial,sans-serif;min-height:44px;display:inline-flex;align-items:center;cursor:pointer;}
+.pu-note{font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);margin:0 0 10px;}
+/* the check-in truth chips — derived from the visits array build 940 writes */
+.pu-live{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;}
+.pu-st{font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.06em;border-radius:6px;padding:3.5px 8px;white-space:nowrap;}
+.pu-st.on{color:var(--rbe-ok,#4fc98a);border:1px solid rgba(79,201,138,.5);}
+.pu-st.warn{color:#f0a24a;border:1px solid rgba(240,162,74,.5);}
+.pu-st.idle{color:var(--rbe-mute);border:1px solid var(--rbe-line);}
+.pu-st.d2{background:rgba(240,162,74,.16);color:#f0a24a;border:0;}
+.pu-who.own-curtis{color:#3fb8c9;}
+.pu-who.own-scottie{color:#a98bec;}
+/* the Assign sheet */
+.pu-asghead{padding:11px 16px 2px;font:600 12.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
+.pu-asghead b{display:block;font:750 15px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);margin-bottom:2px;}
+.pu-asgrow{display:flex;align-items:center;gap:10px;margin:8px 16px 0;padding:11px 13px;min-height:52px;
+  background:var(--rbe-panel);border:1px solid var(--rbe-line);border-radius:11px;cursor:pointer;}
+.pu-asgrow.sel{border:1.5px solid var(--rbe-ok,#4fc98a);}
+.pu-asgrow .nm{font:750 14.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);}
+.pu-asgrow .nm.own-curtis{color:#3fb8c9;}
+.pu-asgrow .nm.own-scottie{color:#a98bec;}
+.pu-asgrow .load{margin-left:auto;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);text-align:right;}
+.pu-asgrow .load.warn{color:#f0a24a;font-weight:700;}
+.pu-asgrow .tick{font:800 15px inherit;color:var(--rbe-ok,#4fc98a);width:16px;}
+.pu-asgdays{display:flex;gap:6px;margin:12px 16px 0;}
+.pu-dayb{flex:1;text-align:center;border:1px solid var(--rbe-line);border-radius:9px;min-height:44px;background:none;cursor:pointer;
+  font:600 11px ui-monospace,Menlo,monospace;color:var(--rbe-mute);display:flex;flex-direction:column;justify-content:center;gap:1px;}
+.pu-dayb b{font-size:13px;color:var(--rbe-ink);}
+.pu-dayb.sel{border-color:var(--rbe-ok,#4fc98a);}
+.pu-dayb.sel,.pu-dayb.sel b{color:var(--rbe-ok,#4fc98a);}
+.pu-asgfoot{display:flex;gap:10px;align-items:center;padding:14px 16px 16px;}
+.pu-asggo{flex:1;background:var(--rbe-acc,#c8202e);color:#fff;border:0;border-radius:11px;min-height:48px;
+  font:800 14.5px 'Segoe UI',Arial,sans-serif;cursor:pointer;}
+.pu-asggo[disabled]{opacity:.5;cursor:default;}
+.pu-asgntf{display:inline-flex;align-items:center;gap:7px;background:none;border:0;cursor:pointer;
+  font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);padding:6px;min-height:44px;}
+.pu-asgntf .tg{width:34px;height:20px;border-radius:10px;background:var(--rbe-line);position:relative;transition:background .15s;}
+.pu-asgntf .tg::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;}
+.pu-asgntf.on .tg{background:var(--rbe-ok,#4fc98a);}
+.pu-asgntf.on .tg::after{left:16px;}
+/* rb-light twins — every literal above that fails on paper gets its light ink */
+:root[data-theme="rb-light"] #puQueue .ph2 b{color:#8a5500;}
+:root[data-theme="rb-light"] .pu-st.warn{color:#8a5500;border-color:rgba(138,85,0,.45);}
+:root[data-theme="rb-light"] .pu-st.d2{color:#8a5500;background:rgba(240,162,74,.22);}
+:root[data-theme="rb-light"] .pu-asgrow .load.warn{color:#8a5500;}
+:root[data-theme="rb-light"] .pu-who.own-curtis,:root[data-theme="rb-light"] .pu-asgrow .nm.own-curtis{color:#0f7c8b;}
+:root[data-theme="rb-light"] .pu-who.own-scottie,:root[data-theme="rb-light"] .pu-asgrow .nm.own-scottie{color:#6a4db0;}
+:root[data-theme="rb-light"] .pu-age{color:#8a5500;}
 #punchView{display:none;min-height:100vh;background:var(--bg);}
 .pu-wrap{max-width:1320px;margin:0 auto;padding:16px 16px 150px;}
 .pu-head{display:flex;align-items:center;gap:10px;margin:0 0 2px;flex-wrap:wrap;}.pu-back{flex:none;width:34px;height:34px;border-radius:10px;cursor:pointer;border:1px solid var(--rbe-line2,#2b2b33);background:transparent;color:var(--rbe-mute,#9aa0a8);display:flex;align-items:center;justify-content:center;padding:0;}.pu-back svg{width:16px;height:16px;}.pu-back:hover{background:rgba(255,255,255,.06);}
@@ -59534,7 +59623,12 @@ if(typeof _origOLF === 'function'){
   margin:16px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--rbe-line);display:flex;align-items:center;gap:8px;}
 .pu-grp .n{background:var(--rbe-line);color:var(--rbe-ink);border-radius:999px;padding:1px 8px;font-size:9.5px;}
 .pu-sheet{position:fixed;inset:0;background:rgba(8,9,11,.7);display:none;z-index:9997;
-  overscroll-behavior:contain;}.pu-sheet .panel{background:var(--rbe-panel);border:1px solid var(--rbe-line);border-top:0;border-radius:0 0 16px 16px;width:100%;
+  overscroll-behavior:contain;}
+/* 945: this rule NEVER EXISTED — every .pu-sheet open() since build 361 added
+   the class to a display:none element and nothing happened. The clients twin
+   (.cd-sheet.open, 58694) always had it. Found when the Assign sheet inherited
+   the same silence; verified broken on the 944 control. */
+.pu-sheet.open{display:flex;align-items:flex-start;justify-content:center;}.pu-sheet .panel{background:var(--rbe-panel);border:1px solid var(--rbe-line);border-top:0;border-radius:0 0 16px 16px;width:100%;
   max-width:560px;max-height:86%;overflow:auto;overscroll-behavior-x:contain;}
 .pu-sheet .ph{display:flex;align-items:center;padding:13px 15px;border-bottom:1px solid var(--rbe-hair);position:sticky;top:0;background:var(--rbe-panel);}
 .pu-sheet .ph .t{font:800 14px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink);flex:1;text-align:center;}
@@ -59667,6 +59761,7 @@ async function update(id, patch){
 }
 window.CardinalPunch = Object.assign(window.CardinalPunch || {}, {
   rows   : function(){ return _rows.slice(); },
+  notifyAssigned : notifyAssignedBoard,   /* 945: one notify path for every assign surface */
   reload : reload,
   toggle : toggle,
   update : update,
@@ -59743,6 +59838,71 @@ function ageDays(iso){
   if(!iso) return null;
   return Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
 }
+/* 945: the check-in truth, derived from the SAME visits array the punch card
+   (build 940) writes — the pbDays shape: tiny row-parameterised readers, one
+   source, no second count. `day` is the LOCAL calendar key (never an ISO
+   slice — an Ohio evening is one day, not two) and out:null means ON SITE. */
+function puVisits(it){ return (it && Array.isArray(it.visits)) ? it.visits : []; }
+function puOpenVisit(it){
+  var v = puVisits(it);
+  for(var i = v.length - 1; i >= 0; i--){ if(v[i] && !v[i].out) return v[i]; }
+  return null;
+}
+function puDaysOn(it){
+  var v = puVisits(it), seen = {}, n = 0;
+  for(var i = 0; i < v.length; i++){
+    var d = v[i] && v[i].day;
+    if(d && !seen[d]){ seen[d] = 1; n++; }
+  }
+  return n;
+}
+function puTodayKey(){
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function puClock(iso){
+  var d = new Date(iso); if(isNaN(d)) return '';
+  var h = d.getHours(), m = ('0' + d.getMinutes()).slice(-2), ap = h >= 12 ? 'PM' : 'AM';
+  return (h % 12 || 12) + ':' + m + ' ' + ap;
+}
+/* 945: The Line's buckets — every open item lands in exactly ONE tab, and the
+   unassigned queue is pinned ABOVE the tabs, not a tab (the choke point must
+   never hide behind one). A dated-but-unassigned item stays in the QUEUE: a
+   date without a person is still blocked on a person. */
+function bucketOf(it){
+  if(it.status === 'done') return 'completed';
+  if(!it.assigned_to) return 'queue';
+  if(puVisits(it).length || (it.scheduled_at && String(it.scheduled_at).slice(0, 10) <= puTodayKey())) return 'active';
+  if(it.scheduled_at) return 'scheduled';
+  return 'assigned';
+}
+function puWho(e){
+  if(!e) return '<span class="pu-who">Unassigned</span>';
+  var n = String(e).split('@')[0]; n = n.charAt(0).toUpperCase() + n.slice(1);
+  var cls = e === 'curtis@cardinalrenovations.net' ? ' own-curtis'
+          : e === 'scottie@cardinalrenovations.net' ? ' own-scottie' : '';
+  return '<span class="pu-who' + cls + '">' + esc(n) + '</span>';
+}
+function puStateChips(it){
+  if(it.status === 'done') return '';
+  var b = bucketOf(it), out = '';
+  var o = puOpenVisit(it), days = puDaysOn(it);
+  if(days > 1) out += '<span class="pu-st d2">Day ' + days + '</span>';
+  if(o){
+    /* an open check-in from an earlier day is STATED, never assumed away (940) */
+    out += (o.day === puTodayKey())
+      ? '<span class="pu-st on">On site since ' + esc(puClock(o.in)) + '</span>'
+      : '<span class="pu-st warn">On site since ' + esc(fmtDate(o.day)) + ' — not checked out</span>';
+  } else if(b === 'active'){
+    out += '<span class="pu-st warn">Not checked in</span>';
+  } else if(b === 'assigned'){
+    var age = ageDays(it.created_at);
+    out += '<span class="pu-st idle">No day set</span>' +
+      (age != null && age >= 3 ? '<span class="pu-st warn">\u26A0 ' + age + 'd \u00b7 no activity</span>' : '');
+  }
+  return out ? '<div class="pu-live">' + out + '</div>' : '';
+}
+
 function match(it){
   var pr = projOf(it.project_id);
   var crm = crmOf(pr);
@@ -59805,8 +59965,9 @@ function cardHtml(it, showCrm){
         (showCrm ? '<span class="pu-tag crm-' + crm + '">' + CRM_LABEL[crm] + '</span>' : '') +
         (done ? '<span class="pu-tag">done</span>' : (age != null ? '<span class="pu-tag">' + age + 'd open</span>' : '')) +
         (ph ? '<span class="pu-tag">' + ph + '/' + PHOTO_MIN + ' photos</span>' : '') +
-        '<span class="pu-who">' + esc(it.assigned_to || 'Unassigned') + '</span>' +
+        puWho(it.assigned_to) +
       '</div>' +
+      puStateChips(it) +
       (it.scheduled_at && !done ? '<div class="pu-sched">\uD83D\uDCC5 scheduled ' + fmtDate(it.scheduled_at) + fmtSchedClock(it.scheduled_time) + '</div>' : '') +
     '</div></div>';
 }
@@ -59828,44 +59989,72 @@ function count(){ var n = 0; for(var k in PU.sets) n += PU.sets[k].length; retur
 
 function render(){
   var all = rows();
-  var schedAll = all.filter(isScheduled);
-  var vis = sorted(all.filter(match).filter(function(it){
-    if(PU.tab === 'scheduled') return isScheduled(it);
-    if(PU.tab === 'completed') return it.status === 'done';
-    return !isScheduled(it) && it.status !== 'done';
-  }));
-  var na = document.getElementById('puNActive'), ns = document.getElementById('puNSched'), ndn = document.getElementById('puNDone');
-  if(na) na.textContent = all.filter(function(it){ return !isScheduled(it) && it.status !== 'done'; }).length;
-  if(ns) ns.textContent = schedAll.length;
-  if(ndn) ndn.textContent = all.filter(function(it){ return it.status === 'done'; }).length;
+  /* 945: The Line — one pass, every item in exactly one bucket */
+  var B = { queue:[], active:[], assigned:[], scheduled:[], completed:[] };
+  all.forEach(function(it){ B[bucketOf(it)].push(it); });
+
+  /* the pinned queue — oldest first, above the tabs on every tab */
+  var qEl = document.getElementById('puQueue');
+  if(qEl){
+    var queue = B.queue.filter(match).sort(function(a, b){
+      return String(a.created_at || '').localeCompare(String(b.created_at || ''));
+    });
+    var mayAsg = false;
+    try{ mayAsg = (typeof isAdminUser === 'function' && isAdminUser()) ||
+                  (typeof isProductionUser === 'function' && isProductionUser()); }catch(_){}
+    qEl.innerHTML = (puMsg ? '<div class="pu-note">' + esc(puMsg) + '</div>' : '') +
+      (queue.length ? '<div class="pu-hero"><div class="ph2"><b>' + queue.length +
+        ' need' + (queue.length === 1 ? 's' : '') + ' assigned</b><span>oldest first</span></div>' +
+        queue.map(function(it){
+          var pr = projOf(it.project_id);
+          var age = ageDays(it.created_at);
+          return '<div class="pu-card" data-pu="' + esc(String(it.id)) + '"><div class="pu-qmain">' +
+            '<div class="pu-qt">' + esc(it.title || 'Untitled item') + '</div>' +
+            '<div class="pu-qa">' + esc(pr ? (pr.name || 'Unknown client') : 'Unknown client') +
+              (pr && pr.address ? ' · ' + esc(pr.address) : '') + '</div>' +
+            '<div class="pu-qm"><span class="pu-age' + (age >= 5 ? ' hot' : '') + '">waiting ' + (age || 0) + ' day' + (age === 1 ? '' : 's') + '</span></div>' +
+          '</div>' + (mayAsg ? '<button class="pu-asgbtn" type="button" data-puassign-open="' + esc(String(it.id)) + '">Assign ›</button>' : '') + '</div>';
+        }).join('') + '</div>' : '');
+  }
+
+  var na = document.getElementById('puNActive'), nas = document.getElementById('puNAssigned'),
+      ns = document.getElementById('puNSched'), ndn = document.getElementById('puNDone');
+  if(na)  na.textContent  = B.active.length;
+  if(nas) nas.textContent = B.assigned.length;
+  if(ns)  ns.textContent  = B.scheduled.length;
+  if(ndn) ndn.textContent = B.completed.length;
   document.querySelectorAll('#puTabs .pu-tab').forEach(function(b){
     b.classList.toggle('on', b.getAttribute('data-putab') === PU.tab);
   });
-  var open = vis.filter(function(i){ return i.status !== 'done'; });
-  var done = vis.filter(function(i){ return i.status === 'done'; });
-  var urgent = open.filter(isUrgent);
-  var normal = open.filter(function(i){ return !isUrgent(i); });
+  var tabRows = B[PU.tab === 'completed' ? 'completed' : PU.tab] || B.active;
+  var vis = sorted(tabRows.filter(match));
+  var urgent = vis.filter(isUrgent);
+  var normal = vis.filter(function(i){ return !isUrgent(i); });
 
   document.getElementById('puSub').textContent =
-    vis.length + ' of ' + all.length + ' items \u00b7 ' + (PU.tab === 'completed'
-      ? (done.length + ' completed')
-      : (urgent.length + ' urgent \u00b7 ' + open.length + ' open'));
+    vis.length + ' of ' + all.length + ' items \u00b7 ' + B.queue.length + ' need assigned \u00b7 ' +
+    (B.active.length + B.assigned.length + B.scheduled.length) + ' open';
   var html = '';
   if(PU.tab === 'scheduled'){
     var byDate = vis.slice().sort(function(a, b){ return String(a.scheduled_at).localeCompare(String(b.scheduled_at)); });
     html += byDate.length ? '<div class="pu-grp">On the schedule <span class="n">' + byDate.length + '</span></div>' +
       byDate.map(function(i){ return cardHtml(i, true); }).join('') : '';
     document.getElementById('puList').innerHTML = html ||
-      '<div class="pu-empty">Nothing scheduled yet \u2014 set a date on an item and it lands here.</div>';
+      '<div class="pu-empty">Nothing scheduled ahead \u2014 give an assigned item a day and it lands here.</div>';
   } else if(PU.tab === 'completed'){
-    html += done.length ? '<div class="pu-grp">Completed <span class="n">' + done.length + '</span></div>' + done.map(function(i){ return cardHtml(i, true); }).join('') : '';
+    var byDone = vis.slice().sort(function(a, b){ return String(b.done_at || '').localeCompare(String(a.done_at || '')); });
+    html += byDone.length ? '<div class="pu-grp">Closed <span class="n">' + byDone.length + '</span></div>' + byDone.map(function(i){ return cardHtml(i, true); }).join('') : '';
     document.getElementById('puList').innerHTML = html ||
-      '<div class="pu-empty">Nothing completed yet \u2014 check an item off and it lands here.</div>';
+      '<div class="pu-empty">Nothing closed yet \u2014 check an item off and it lands here.</div>';
+  } else if(PU.tab === 'assigned'){
+    html += vis.length ? '<div class="pu-grp">Waiting for a day <span class="n">' + vis.length + '</span></div>' + vis.map(function(i){ return cardHtml(i, true); }).join('') : '';
+    document.getElementById('puList').innerHTML = html ||
+      '<div class="pu-empty">Nothing waiting \u2014 everything assigned has a day.</div>';
   } else {
     if(urgent.length) html += '<div class="pu-grp">Urgent <span class="n">' + urgent.length + '</span></div>' + urgent.map(function(i){ return cardHtml(i, true); }).join('');
-    if(normal.length) html += '<div class="pu-grp">Open <span class="n">' + normal.length + '</span></div>' + normal.map(function(i){ return cardHtml(i, true); }).join('');
+    if(normal.length) html += '<div class="pu-grp">On the board <span class="n">' + normal.length + '</span></div>' + normal.map(function(i){ return cardHtml(i, true); }).join('');
     document.getElementById('puList').innerHTML = html ||
-      '<div class="pu-empty">' + (all.length ? 'Nothing matches these filters.' : 'No punch items or repairs yet.') + '</div>';
+      '<div class="pu-empty">' + (all.length ? 'Nothing matches these filters.' : 'Nothing active today.') + '</div>';
   }
 
   var n = count();
@@ -59913,6 +60102,123 @@ function paintSub(){
       '<span class="ck">\u2713</span><span>' + esc(g.lab(v)) + '</span></div>';
   }).join('');
 }
+var puMsg = '';
+var puAsg = { id:null, who:'', day:'', notify:true };
+/* 945: the Assign sheet. Person list is the openAdd roster sort (production
+   first), the write goes through CardinalPunch.update — the ONE punch
+   pipeline — and notify rides notifyTeam exactly like the card's 769
+   notifyAssigned: never yourself, honest outcome line. The assign gate is the
+   map's (admins + production) and it is UX only — RLS is the authority. */
+function puAsgDayOpts(){
+  var out = [], d = new Date();
+  for(var i = 0; out.length < 4 && i < 7; i++){
+    if(d.getDay() !== 0){                       /* Sunday skipped, nothing else (940) */
+      var key = d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+      out.push({ key:key, lab: out.length === 0 ? 'TODAY' : ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()],
+                 sub: (d.getMonth() + 1) + '/' + d.getDate() });
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+function paintAssign(){
+  var it = rows().filter(function(r){ return String(r.id) === String(puAsg.id); })[0];
+  if(!it) return;
+  var pr = projOf(it.project_id);
+  var age = ageDays(it.created_at);
+  document.getElementById('puAsgHead').innerHTML = '<b>' + esc(it.title || 'Untitled item') + '</b>' +
+    esc(pr ? (pr.name || '') : '') + (pr && pr.address ? ' \u00b7 ' + esc(pr.address) : '') +
+    (age != null ? ' \u00b7 waiting ' + age + ' day' + (age === 1 ? '' : 's') : '');
+  var roster = window.TEAM_ROSTER;
+  var prod = ['curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
+  var emails = Array.isArray(roster) ? roster.map(function(m){ return m && m.email; }).filter(Boolean) : prod.slice();
+  emails.sort(function(a, b){
+    var pa = prod.indexOf(a), pb = prod.indexOf(b);
+    if(pa !== pb) return (pa < 0 ? 99 : pa) - (pb < 0 ? 99 : pb);
+    return a.localeCompare(b);
+  });
+  if(!emails.length) emails = prod.slice();
+  var open = rows().filter(function(r){ return r.status !== 'done'; });
+  document.getElementById('puAsgWho').innerHTML = emails.map(function(em){
+    var mine = open.filter(function(r){ return r.assigned_to === em; });
+    var carry = mine.some(function(r){ return puDaysOn(r) > 1; });
+    var nm = (Array.isArray(roster) ? (roster.filter(function(m){ return m && m.email === em; })[0] || {}).name : '') ||
+             em.split('@')[0].charAt(0).toUpperCase() + em.split('@')[0].slice(1);
+    var cls = em === prod[0] ? ' own-curtis' : em === prod[1] ? ' own-scottie' : '';
+    return '<div class="pu-asgrow' + (puAsg.who === em ? ' sel' : '') + '" data-asg-who="' + esc(em) + '">' +
+      '<span class="nm' + cls + '">' + esc(nm) + '</span>' +
+      '<span class="load' + (carry ? ' warn' : '') + '">' + mine.length + ' open' + (carry ? ' \u00b7 day-2 carry' : '') + '</span>' +
+      '<span class="tick">' + (puAsg.who === em ? '\u2713' : '') + '</span></div>';
+  }).join('');
+  document.getElementById('puAsgDays').innerHTML = puAsgDayOpts().map(function(o){
+    return '<button class="pu-dayb' + (puAsg.day === o.key ? ' sel' : '') + '" type="button" data-asg-day="' + esc(o.key) + '">' +
+      '<b>' + o.lab + '</b>' + o.sub + '</button>';
+  }).join('') + '<button class="pu-dayb' + (puAsg.day === '' ? ' sel' : '') + '" type="button" data-asg-day=""><b>NO DAY</b>yet</button>';
+  var go = document.getElementById('puAsgGo');
+  go.disabled = !puAsg.who;
+  go.textContent = puAsg.who
+    ? 'Assign to ' + (puAsg.who.split('@')[0].charAt(0).toUpperCase() + puAsg.who.split('@')[0].slice(1)) +
+      (puAsg.day ? ' \u00b7 ' + fmtDate(puAsg.day) : '')
+    : 'Pick a person';
+  var nb = document.getElementById('puAsgNtf');
+  nb.classList.toggle('on', !!puAsg.notify);
+  nb.setAttribute('aria-pressed', puAsg.notify ? 'true' : 'false');
+}
+function openAssign(id){
+  puAsg = { id:id, who:'', day:'', notify:true };
+  paintAssign();
+  document.getElementById('puShAssign').classList.add('open');
+}
+async function notifyAssignedBoard(id, email){
+  if(!email) return '';
+  var it = rows().filter(function(r){ return String(r.id) === String(id); })[0];
+  if(!it) return '';
+  var me = '';
+  try{ me = (window.currentUser && window.currentUser.email) || ''; }catch(_){}
+  if(String(email).toLowerCase() === String(me).toLowerCase()) return '';
+  if(typeof window.notifyTeam !== 'function') return '';
+  var pr = projOf(it.project_id);
+  try{
+    var res = await window.notifyTeam([email],
+      'Assigned to you: ' + (it.title || 'a punch-out'),
+      '<p>You were assigned a punch-out at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p>' +
+      '<p>' + esc(it.title || '') + '</p>' +
+      (it.scheduled_at ? '<p>Scheduled ' + esc(fmtDate(it.scheduled_at)) + fmtSchedClock(it.scheduled_time) + '</p>' : ''));
+    return (typeof window.notifyOutcomeText === 'function') ? window.notifyOutcomeText(res, [email]) : '';
+  }catch(_){ return ''; }
+}
+document.getElementById('puShAssign').addEventListener('click', async function(e){
+  if(e.target === this || e.target.closest('#puAsgClose')){ this.classList.remove('open'); return; }
+  var w = e.target.closest('[data-asg-who]');
+  if(w){ puAsg.who = w.getAttribute('data-asg-who'); paintAssign(); return; }
+  var dbtn = e.target.closest('[data-asg-day]');
+  if(dbtn){ puAsg.day = dbtn.getAttribute('data-asg-day'); paintAssign(); return; }
+  if(e.target.closest('#puAsgNtf')){ puAsg.notify = !puAsg.notify; paintAssign(); return; }
+  if(e.target.closest('#puAsgGo') && puAsg.who){
+    var go = document.getElementById('puAsgGo');
+    go.disabled = true; go.textContent = 'Saving\u2026';
+    var it = rows().filter(function(r){ return String(r.id) === String(puAsg.id); })[0] || {};
+    /* 882 invariant: a time with no date is meaningless; a changed date drops
+       the old time too */
+    var patch = { assigned_to: puAsg.who,
+                  scheduled_at: puAsg.day || null,
+                  scheduled_time: (puAsg.day && it.scheduled_at === puAsg.day) ? (it.scheduled_time || null) : null };
+    var r = window.CardinalPunch && window.CardinalPunch.update
+      ? await window.CardinalPunch.update(puAsg.id, patch) : { ok:false };
+    if(r && r.ok){
+      document.getElementById('puShAssign').classList.remove('open');
+      puMsg = '';
+      if(puAsg.notify){
+        var line = await notifyAssignedBoard(puAsg.id, puAsg.who);
+        if(line) puMsg = line;
+      }
+      render();
+    } else {
+      go.disabled = false; paintAssign();
+      alert('Could not save the assignment \u2014 check the connection and try again.');
+    }
+  }
+});
 async function openPunchView(preset){
   if(typeof hideAllViews === 'function') hideAllViews();
   document.getElementById('punchView').style.display = 'block';
@@ -59973,6 +60279,8 @@ document.addEventListener('click', function(e){
   
   var all = e.target.closest('[data-puall]');
   if(all){ openPunchView({ crm: all.getAttribute('data-puall') }); return; }
+  var ao = e.target.closest('[data-puassign-open]');
+  if(ao){ e.stopPropagation(); openAssign(ao.getAttribute('data-puassign-open')); return; }
   var tg = e.target.closest('[data-putoggle]');
   if(tg){
     e.stopPropagation();
@@ -59991,7 +60299,7 @@ document.addEventListener('click', function(e){
     }
     return;
   }
-  var card = e.target.closest('#puList .pu-card, .pu-strip .pu-card');
+  var card = e.target.closest('#puList .pu-card, #puQueue .pu-card, .pu-strip .pu-card');
   if(card && window.CardinalPunchCard && window.CardinalPunchCard.open){
     /* 837: one detail screen — the card, same as Production and the client
        profile. back:'none' closes back to whatever page the strip is on. */
@@ -72326,6 +72634,10 @@ select{min-height:44px;}
 /* was 84×32 (#rptMin / #rptMax) — the Reports filter bar’s number inputs;
    its selects already ride the bare select floor above */
 .rptfilters input{min-height:44px;}
+/* was ~38px tall — the Punch & Repairs tab strip (.pu-tab) and its 945
+   siblings. The board opens via data-go, not [data-nav], so the 944 walk
+   never reached this screen — gate_945 probes its floor instead. */
+.pu-tab{min-height:44px;}
 /* was 318×38 (phone) / 836×35 (tablet) — #ljSearch, the Leads search bar.
    The recon predicted its own 9px padding saved it; the render measured 35.
    A render outranks a prediction. */
@@ -75330,6 +75642,9 @@ window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
     var P=window.CardinalPunch; if(!(P && P.update)) return;
     var r=await P.update(id, { assigned_to: email||null });
     if(r && r.ok){
+      /* 945: assignment means telling somebody the work is theirs (769) — the
+         map path had been the one assign surface that stayed silent */
+      try{ if(email && P.notifyAssigned) P.notifyAssigned(id, email); }catch(_){}
       var it=itemById(id); if(it) it.assigned_to=email||null;
       if(map && map.closePopup) map.closePopup();
       if(typeof window.renderPunchView==='function'){ try{ window.renderPunchView(); }catch(e){} }
