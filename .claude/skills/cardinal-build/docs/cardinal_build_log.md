@@ -20363,3 +20363,39 @@ on the shipped file, **RED on the 945 control with 17 named failures, no crash**
 control run DID crash on a missing `.pkfold` — class 37 in my own gate, fixed with guards
 before trusting it); renders eyeballed as Scottie (working item) and Theo (not-started);
 946's fix re-measured 1.02 → 13.5:1.
+
+## Build 948 — Crew Dispatch becomes the Magnet Board (20 Aug 2026)
+
+Theo's dispatch redesign, locked across three preview rounds: *"C for crew card then 4B, I'd
+like to see the next 7 days tho instead of the 4"*, then *"full 7 days on iPad and desktop,
+phone was fine non compressed"*, with the 4B revision round adding *"separate rows for the
+siding window and gutters … make those titles stand out a bit more … add a chevron"*.
+
+**The window is the NEXT SEVEN DAYS from today**, not a fixed Mon–Sat — `mondayOf()` is gone;
+`weekDays()` starts at today and the arrows still move seven at a time. **All seven days always
+render**: Sunday is no longer dropped when unworked — it carries `.sun` (dim header, hatched
+empty cells) and a booked Sunday shows its magnet full-size over no hatch (the seed's
+next-Sunday work order proves it).
+
+**The look is the shop wall in Cardinal Steel**, all inside the existing `--disp-*` tokens so
+both themes flip whole: every trade on its own riveted strip (`data-band`, chevron, crew count
+on the right end) that **folds to a one-line summary on tap** — chevron turns, "PINEDA · … —
+free next 7 days"; the punch band folds the same way. Crews are **stamped dog tags** (uppercase
+mono, the punched hole as a `::before`), Curtis cyan / Scottie purple preserved. Jobs are
+**raised magnets** with the job and address readable — 12px/10.5px on the phone, 13px/11.5px
+wide — replacing the 8.5px/7.5px chips the readability audit condemned. Empty cells went from
+all-over hatching to flat quiet, so booked work is the only thing with weight; the hatch now
+means exactly one thing (unworked Sunday).
+
+**Layout split per the spec:** ≥1100px fits all seven columns (grid min-width drops to 0, rail
+170px); the phone keeps **full-size magnets and PANS** (grid min-width 820px behind the sticky
+rail) — deliberately not compressed. The map view, Rain button, trade filters, idle-crew
+collapse and the Needs-a-crew tray (restyled as the tray, 44px chips) are untouched in
+behaviour. Strips, tray chips and idle rows all meet the 944 floor.
+
+Verification: check_build green (947 → 948); **gate_948.mjs 18/18 GREEN** on the shipped file
+against a NEW seed (5 crews + work orders at +1d/+5d/next-Sunday — the crews seed was EMPTY,
+the 945 lesson again), **RED on the 947 control with 10 named failures, no crash** — and the
+control's failures narrate the old board exactly ("first column 17 vs 20", "8.5px"). Sentinel
+gained a `dispatch` state so future sweeps walk this screen. Renders eyeballed phone + iPad,
+dark + light.
