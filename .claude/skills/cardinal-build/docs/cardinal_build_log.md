@@ -20399,3 +20399,43 @@ the 945 lesson again), **RED on the 947 control with 10 named failures, no crash
 control's failures narrate the old board exactly ("first column 17 vs 20", "8.5px"). Sentinel
 gained a `dispatch` state so future sweeps walk this screen. Renders eyeballed phone + iPad,
 dark + light.
+
+## Build 949 — the Magnet Board learns the workflow (20 Aug 2026)
+
+Theo's pick from the what's-next list: the workflow layer he greenlit when the board shipped —
+*"weather/rain on the day headers … next-free-day chip on the crew tags … assign straight from
+the Needs-a-crew tray."* Three pieces, all inside `cr-disp`, plus one optional argument on the
+build-555 picker.
+
+**Weather on the day headers.** The app had NO daily forecast source — the landing weather
+panel died at 701 and RainViewer (915) is live radar tiles, not a forecast. Open-Meteo now
+fills the gap under the same rule that admitted RainViewer: free public source, no key, no
+account. Dayton coordinates (the map's own default center), `weather_code` +
+`precipitation_probability_max` for 14 days, cached 30 min in `localStorage['cr-dispwx']`.
+Each header gets a drawn-SVG icon (sun/cloud/rain/snow/storm — the emoji rule holds) plus the
+rain chance when ≥30%; a wet day (≥50% or any precip code) paints in `--disp-wx`, a NEW token
+pair computed for both themes: `#6db3f2` dark (8.4:1 on the header panel), `#155f9e` light
+(6.6:1 on white, 5.8:1 on the light today cell). **A failed fetch changes nothing** — no
+icons, no error, board intact, and the gate proves it by aborting the route.
+
+**Free-day chip on every dog tag.** First day in the rendered window with nothing booked,
+Sundays skipped (the `nextWorkDay` rule): "free today", "free Thu 21", or "booked all 7".
+Bookings, not availability — the note under the board already carries that caveat.
+
+**Arm-and-place assign.** Tap a Needs-a-crew chip → it ARMS (`#cr-disp.arm`, chip glows, the
+hint line switches to "now tap a day on a crew's row"); every crew day cell carries
+`data-dc="crewId|dayIndex"` and empty cells get a dashed amber OUTLINE (zero layout cost).
+Tap a cell → board closes and `openWorkOrderPicker(project, {crew_id, scheduled_on})` opens
+with crew and day already filled — **the preset is a new optional second argument; the picker
+stays the ONE write path** (the board itself still writes nothing). Tap the armed chip again →
+the classic full picker, byte-for-byte the pre-949 flow. Back disarms; a chip whose job got
+assigned elsewhere disarms on the next render.
+
+Verification: check_build green (948 → 949); **gate_949.mjs 19/19 GREEN** on the shipped file,
+**RED on the 948 control with 12 named failures, no crash** — including the crew-preset probe
+deliberately aimed at Pineda (`c2`, NOT the select's default first option, so the control
+cannot pass it by coincidence; its first version aimed at Betos/`c1` and passed vacuously on
+the control — caught and fixed before commit). Weather asserted through a routed Open-Meteo
+fixture both ways (fixture → icons + 80% wet blue computed; route aborted → zero `.wx`, seven
+headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
+eyeballed phone + iPad, dark + light + armed.

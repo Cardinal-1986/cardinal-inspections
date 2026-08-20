@@ -3644,7 +3644,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 948 &#8212; Crew Dispatch becomes the Magnet Board: the next seven days from today instead of a fixed week (Sunday hatched until it&#8217;s worked), every trade on its own riveted steel strip with a chevron that folds it away, crews on stamped dog tags, and jobs as raised magnets &#8212; full size on every screen, panning on the phone</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-20 build 949 &#8212; the Magnet Board learns the workflow: the 7-day forecast on every day header (rain chance in blue when a day looks wet), each crew&#8217;s next free day on its dog tag, and two-tap booking &#8212; arm a Needs-a-crew job, tap the day on a crew&#8217;s row, and the work order opens filled in</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21149,7 +21149,7 @@ async function woReadContractColors(pr){
   return res;
 }
 
-async function openWorkOrderPicker(project){
+async function openWorkOrderPicker(project, preset){
   /* 843: Crew Dispatch passes the job to crew here; the profile button passes none.
      892: it was wired as addEventListener('click', openWorkOrderPicker), so the CLICK
      EVENT arrived here as `project` — an object with no id/name/address, which then
@@ -21206,6 +21206,13 @@ async function openWorkOrderPicker(project){
       '<button class="axbtn" id="woGo">Create</button></div>' +
     '<div id="woErr" style="color:#c8202e;font-size:12.5px;margin-top:8px;"></div>';
   document.getElementById('woCancel').addEventListener('click', function(){ m.style.display = 'none'; });
+  /* 949: the Magnet Board's arm-and-place passes the crew and day it landed
+     on; this picker stays the ONE write path (build 555). A preset naming a
+     crew not in the list simply leaves the select untouched. */
+  if(preset){
+    if(preset.crew_id){ var pSel = document.getElementById('woCrew'); if(pSel) pSel.value = String(preset.crew_id); }
+    if(preset.scheduled_on){ var pWhen = document.getElementById('woWhen'); if(pWhen) pWhen.value = preset.scheduled_on; }
+  }
   /* 889: prefill the colour fields from the signed contract, if there is one */
   woReadContractColors(pr).then(function(c){
     var sEl = document.getElementById('woShingle'), dEl = document.getElementById('woDrip');
@@ -40658,6 +40665,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:949, d:'2026-08-20', t:'Dispatch: weather, free days, tap-to-book', s:'The Magnet Board now works for you. Each day header carries the 7-day forecast \u2014 a drawn icon plus the rain chance when it matters, blue when the day looks wet \u2014 from a free public source, cached half an hour, and the board is unchanged if the forecast can\u2019t be reached. Every crew\u2019s dog tag says its next free day at a glance (\u201cfree today\u201d, \u201cfree Thu 21\u201d, or \u201cbooked all 7\u201d, Sundays skipped). And assigning is now two taps: tap a Needs-a-crew job to arm it, then tap the day on the crew\u2019s row you want \u2014 the work-order form opens with that crew and day already filled in. Tap the armed job again for the full picker, exactly as before.' },
 { b:948, d:'2026-08-20', t:'Crew Dispatch becomes the Magnet Board', s:'The dispatch board is the shop wall now. The window is the next seven days starting today \u2014 not a Monday-to-Saturday week \u2014 so Thursday afternoon shows you through next Wednesday, with Sunday hatched until something is booked on it. Every trade sits on its own riveted steel strip with a crew count on the end and a chevron that folds the whole trade to one quiet line. Crews became stamped dog tags \u2014 Curtis in his blue, Scottie in his purple \u2014 and booked jobs are raised magnets with the job and address readable at full size on every screen: the iPad and desktop fit all seven days across, and the phone keeps the same full-size magnets and simply pans. The map, the Rain button, the trade filters and the Needs-a-crew tray all work exactly as before.' },
 { b:947, d:'2026-08-20', t:'The punch-out card, tightened', s:'The card now leads with its moment: once work has started, the check-in strip, checklist and photos rise to the top and the assign/schedule controls fold into one line \u2014 tap it to open them. The Close button turns green the moment everything is done, and while it is not, \u201C3 photos \u00b7 2 steps left\u201D is tappable and scrolls you straight to what is missing. Every button on the card now meets the 44-pixel touch floor \u2014 the checklist ticks and photo \u00d7s keep their size but their tap area grows invisibly. Delete moved behind the \u22EF menu in the corner, the supplement flag became a quiet Extra scope chip that badges its request wherever it lands, the @ chips appear when you start writing, an empty description is one line instead of a section, and windows and general repairs join roofing, siding and gutters with checklists of their own.' },
 { b:946, d:'2026-08-20', t:'The invisible Check out button', s:'In light mode, the Check out button on a punch-out card had dark letters on the dark check-in strip \u2014 1.02 to 1, effectively invisible, on the one control the crew taps from a roof. The strip is deliberately dark in both themes; its text colours now come with it, pinned, so light mode shows the same readable strip dark mode always had.' },
@@ -74022,8 +74030,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
    A read-only week grid of every crew's booked work orders. Rows are crews
    grouped under trade bands; columns are the build days (Mon–Sun, Sunday only
    when it is worked). A crew shows only when it has work this week; idle crews
-   collapse. Assigning is unchanged — tap a job to open the client, where the
-   existing build-555 Work-Order picker lives. NO money renders here; the read
+   collapse. 949: tap a Needs-a-crew chip to ARM it, then tap a day on a
+   crew's row — the build-555 Work-Order picker opens with that crew and day
+   already filled in. NO money renders here; the read
    never selects crew_work_orders.amount.
 
    Greyscale board, red reserved for action. Own --disp-* tokens, both themes,
@@ -74034,7 +74043,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-hatch:rgba(255,255,255,.05);
   --disp-ink:#ffffff; --disp-dim:#9aa1ac; --disp-mute:#5c636e; --disp-accent:#6b7280;
   --disp-today:#15171c; --disp-tline:#ffffff; --disp-need:#f5c045; --disp-band:#8b97a8;
-  --disp-repair:#ff3b46; --disp-curtis:#3fb8c9; --disp-scottie:#a98bec;
+  --disp-repair:#ff3b46; --disp-curtis:#3fb8c9; --disp-scottie:#a98bec; --disp-wx:#6db3f2;
   --disp-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   display:none; position:fixed; inset:0; z-index:9550;
   overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain;
@@ -74047,7 +74056,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-hatch:rgba(0,0,0,.05);
   --disp-ink:#14171c; --disp-dim:#5a616c; --disp-mute:#767d88; --disp-accent:#7b828d;
   --disp-today:#eef0f3; --disp-tline:#14171c; --disp-need:#9a6410; --disp-band:#5f6b7d;
-  --disp-repair:#d81b28; --disp-curtis:#0f7c8b; --disp-scottie:#6a4db0;
+  --disp-repair:#d81b28; --disp-curtis:#0f7c8b; --disp-scottie:#6a4db0; --disp-wx:#155f9e;
 }
 #cr-disp .dspwrap{ max-width:1180px; margin:0 auto;
   padding:16px 14px calc(60px + env(safe-area-inset-bottom,0px)); }
@@ -74203,6 +74212,21 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 }
 #cr-disp .dspmsg{ padding:40px 16px; text-align:center; color:var(--disp-dim,#9aa1ac); font-size:14px; }
 #cr-disp .dspnote{ margin-top:12px; font-size:12px; color:var(--disp-dim,#9aa1ac); line-height:1.5; }
+/* ── 949: the workflow layer — weather headers, free-day tags, arm-and-place.
+   Wet-day ink is --disp-wx, computed for BOTH themes (8.4:1 dark, 6.6:1 light,
+   5.8:1 on the light today cell — floors 4.5). The drop-target ring is an
+   OUTLINE so it costs zero layout. */
+#cr-disp .dcol .c .wx{ display:flex; align-items:center; justify-content:center; gap:3px; margin-top:2px;
+  font:700 9.5px var(--disp-mono,monospace); color:var(--disp-dim,#9aa1ac); }
+#cr-disp .dcol .c .wx svg{ width:11px; height:11px; flex:none; }
+#cr-disp .dcol .c .wx i{ font-style:normal; }
+#cr-disp .dcol .c .wx.wet{ color:var(--disp-wx,#6db3f2); }
+#cr-disp .crewc .cf{ font:700 9.5px var(--disp-mono,monospace); letter-spacing:.04em; text-transform:uppercase;
+  color:var(--disp-band,#8b97a8); line-height:1.3; margin-top:2px; }
+#cr-disp .crewc .cf.full{ color:var(--disp-mute,#5c636e); }
+#cr-disp .uch.armed{ background:rgba(245,192,69,.18); box-shadow:0 0 0 2px var(--disp-need,#f5c045); }
+#cr-disp.arm .dlane .dcell{ cursor:pointer; }
+#cr-disp.arm .dlane .dcell.demp{ outline:1.5px dashed var(--disp-need,#f5c045); outline-offset:-5px; }
 /* 913: Crew Dispatch map (toggle) */
 #cr-disp .dspmapbtn{ margin-left:auto; background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34);
   color:var(--disp-ink,#fff); border-radius:8px; padding:6px 14px; font:700 12px 'Segoe UI',Arial,sans-serif; cursor:pointer; }
@@ -74232,10 +74256,14 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .dmap-pop .dpop-go.need{ background:#f5a623; color:#1a1204; }
 </style>
 <script id="cr-disp-script">
-/* Crew Dispatch (build 841). Read-only week grid over crews + crew_work_orders,
-   rendered against cacheProjects already in memory. window.CardinalDispatch. */
+/* Crew Dispatch (build 841; 949 adds the workflow layer). Week grid over
+   crews + crew_work_orders, rendered against cacheProjects already in memory.
+   The board itself still writes nothing — arm-and-place routes into the
+   build-555 Work-Order picker, which stays the one write path.
+   window.CardinalDispatch. */
 (function(){
   var el, crews = [], wos = [], punches = [], weekOffset = 0, filter = 'All', showIdle = {}, foldTrade = {};
+  var armed = null, wxDays = null, wxT = 0;   /* 949: armed tray chip + Open-Meteo day cache */
   var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs'];
   /* 913: the dispatch Map toggle — its own Leaflet map of this week's jobs by crew */
   var mapOn=false, dmap=null, dlayer=null, dmarkers={}, dgeoQueue=[], dgeoBusy=false, dUserMoved=false, dFitT=null, dMissT=null;
@@ -74257,6 +74285,55 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     var out = [];
     for(var i=0;i<7;i++){ var d = new Date(m); d.setDate(m.getDate()+i); out.push(d); }
     return out;                              /* [today .. today+6] */
+  }
+
+  /* 949: seven-day forecast on the day headers — Open-Meteo, free, no key,
+     the same "free public source" rule as the RainViewer radar (915). Dayton
+     coordinates, the map's own default center. Cached 30 min in localStorage.
+     A failed fetch changes nothing: no icons, no error, board intact. */
+  function wxKind(c){
+    c = +c;
+    if(c >= 95) return 'storm';
+    if((c >= 71 && c <= 77) || c === 85 || c === 86) return 'snow';
+    if((c >= 51 && c <= 67) || (c >= 80 && c <= 82)) return 'rain';
+    if(c === 0 || c === 1) return 'sun';
+    return 'cloud';
+  }
+  function wxIcon(k){
+    if(k === 'sun')   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4.4"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>';
+    if(k === 'rain')  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 8.5 4 4 0 0 1 18 15z"/><path d="M8.5 18.2l-1 2.2M13 18.2l-1 2.2M17.5 18.2l-1 2.2"/></svg>';
+    if(k === 'storm') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 7.5 4 4 0 0 1 18 14z"/><path d="M12.5 15.5l-2.5 4h3l-1.5 3.5"/></svg>';
+    if(k === 'snow')  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 14a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 7.5 4 4 0 0 1 18 14z"/><path d="M8.5 18.5h.01M12.5 20h.01M16.5 18.5h.01"/></svg>';
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 18a4.5 4.5 0 1 1 .8-8.9A6 6 0 0 1 19 11a3.5 3.5 0 0 1-1 7z"/></svg>';
+  }
+  function loadWx(){
+    var now = Date.now();
+    if(wxDays && now - wxT < 1800000) return;
+    try{
+      var c = JSON.parse(localStorage.getItem('cr-dispwx') || 'null');
+      if(c && c.at && now - c.at < 1800000 && c.days){ wxDays = c.days; wxT = c.at; return; }
+    }catch(_e){}
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=39.7589&longitude=-84.1916' +
+          '&daily=weather_code,precipitation_probability_max&forecast_days=14&timezone=auto')
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var d = j && j.daily; if(!d || !d.time) return;
+        var out = {};
+        d.time.forEach(function(t, i){
+          out[t] = { c:(d.weather_code || [])[i], p:(d.precipitation_probability_max || [])[i] };
+        });
+        wxDays = out; wxT = Date.now();
+        try{ localStorage.setItem('cr-dispwx', JSON.stringify({ at:wxT, days:out })); }catch(_e2){}
+        if(el && el.classList.contains('open') && !mapOn) render();
+      })
+      .catch(function(){});                    /* silent — the board never blocks on weather */
+  }
+  function wxCell(s){
+    var d = wxDays && wxDays[s]; if(!d) return '';
+    var k = wxKind(d.c), p = +d.p || 0;
+    var wet = (p >= 50) || k === 'rain' || k === 'storm' || k === 'snow';
+    return '<span class="wx' + (wet ? ' wet' : '') + '">' + wxIcon(k) +
+      (p >= 30 ? '<i>' + p + '%</i>' : '') + '</span>';
   }
 
   function projById(id){
@@ -74342,21 +74419,24 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       days.slice(0, nDays).map(function(d, i){
         var s = ymd(d), t = (s === todayStr) ? ' today' : (sunSet[i] ? ' sun' : '');
         var dn = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
-        return '<div class="c' + t + '">' + dn + '<b>' + d.getDate() + '</b></div>';
+        return '<div class="c' + t + '">' + dn + '<b>' + d.getDate() + '</b>' + wxCell(s) + '</div>';
       }).join('') + '</div>';
 
     /* unassigned rail: Scheduled projects with no active crew work order. */
     var needCrew = needCrewList();
+    /* 949: a chip armed on a previous render may have been assigned since */
+    if(armed && !needCrew.some(function(p){ return String(p.id) === String(armed); })) armed = null;
+    el.classList.toggle('arm', !!armed);
     var railInner = needCrew.length
       ? needCrew.map(function(p){
-          return '<div class="uch" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
+          return '<div class="uch' + (String(p.id) === String(armed) ? ' armed' : '') + '" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
             '</div><div class="a">' + esc(firstLine(p.address)) + '</div></div>';
         }).join('')
       : '<span class="none">every scheduled job has a crew</span>';
     var railH = '<div class="drow drail"><div class="rl"><div class="t">' +
       '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>' +
       'Needs a crew (' + needCrew.length + ')</div>' +
-      '<div class="s">tap to assign</div></div><div class="runrow">' + railInner + '</div></div>';
+      '<div class="s">' + (armed ? 'now tap a day on a crew\u2019s row to book it \u2014 tap the job again for the full picker' : 'tap to assign') + '</div></div><div class="runrow">' + railInner + '</div></div>';
 
     var bandsH = trades.map(function(tr){
       if(filter !== 'All' && filter !== tr) return '';
@@ -74370,16 +74450,27 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
         for(var di=0; di<nDays; di++){
           var list = (byCrewDay[c.id] && byCrewDay[c.id][di]) || [];
           var s = dayStr[di], tcls = (s === todayStr) ? ' today' : (sunSet[di] ? ' sun' : '');
-          if(!list.length){ cells += '<div class="dcell demp' + tcls + '"></div>'; continue; }
+          if(!list.length){ cells += '<div class="dcell demp' + tcls + '" data-dc="' + esc(c.id) + '|' + di + '"></div>'; continue; }
           var shown = list.slice(0,2).map(jobChip).join('');
           if(list.length > 2) shown += '<div class="more">+' + (list.length-2) + ' more</div>';
-          cells += '<div class="dcell' + tcls + '">' + shown + '</div>';
+          cells += '<div class="dcell' + tcls + '" data-dc="' + esc(c.id) + '|' + di + '">' + shown + '</div>';
         }
         var _main = c.legal_name || c.name || 'Crew';
         var _sub = c.legal_name ? (c.name || c.contact_name) : c.contact_name;
         var sub = (_sub && _sub !== _main) ? '<div class="cc">' + esc(_sub) + '</div>' : '';
+        /* 949: first day in the window with nothing booked (Sundays skipped,
+           same rule as nextWorkDay). Bookings, not availability — the note
+           below the board already says so. */
+        var free = -1;
+        for(var fi = 0; fi < nDays; fi++){
+          if(sunSet[fi]) continue;
+          if(!((byCrewDay[c.id] || {})[fi] || []).length){ free = fi; break; }
+        }
+        var cf = free < 0 ? '<div class="cf full">booked all 7</div>'
+          : '<div class="cf">free ' + (dayStr[free] === todayStr ? 'today'
+              : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][days[free].getDay()] + ' ' + days[free].getDate()) + '</div>';
         return '<div class="drow dlane"><div class="crewc"><div><div class="cn">' + esc(_main) +
-          '</div>' + sub + '</div></div>' + cells + '</div>';
+          '</div>' + sub + cf + '</div></div>' + cells + '</div>';
       }
 
       var lanes = active.map(lane).join('');
@@ -74454,7 +74545,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       '<div class="dspframe"><div class="dspscroll"><div class="dspgrid" style="--dcols:' + nDays + '">' +
       railH + colH + bandsH + repsH + '</div></div></div>' +
       '<p class="dspnote">Shows <b>bookings, not availability</b> — an empty cell means no job is booked that day, not that the crew is free. ' +
-      'Tap a job to open its client; tap a <b>Needs-a-crew</b> job to assign a crew right away. No dollar figures appear on this board.</p>';
+      'Tap a job to open its client. Tap a <b>Needs-a-crew</b> job, then a day on a crew\u2019s row, to book that crew \u2014 the work order opens with both filled in. No dollar figures appear on this board.</p>';
 
     /* week label + filter active state */
     var lab = el.querySelector('.dspwklab');
@@ -74508,10 +74599,17 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       if(idle){ showIdle[idle.getAttribute('data-idle')] = 1; render(); return; }
       var uch = e.target.closest('.uch[data-pid]');
       if(uch){
-        var upid = uch.getAttribute('data-pid'), proj = projById(upid);
-        close();   /* the picker modal is z-index 210 — must not open behind the grid */
-        if(proj && typeof window.openWorkOrderPicker === 'function') window.openWorkOrderPicker(proj);
-        else if(typeof window.openProject === 'function') window.openProject(upid);
+        var upid = uch.getAttribute('data-pid');
+        if(String(armed) === String(upid)){
+          /* 949: second tap on the armed chip = the classic flow, unchanged */
+          armed = null;
+          var proj = projById(upid);
+          close();   /* the picker modal is z-index 210 — must not open behind the grid */
+          if(proj && typeof window.openWorkOrderPicker === 'function') window.openWorkOrderPicker(proj);
+          else if(typeof window.openProject === 'function') window.openProject(upid);
+          return;
+        }
+        armed = upid; render();   /* 949: first tap ARMS — day cells become targets */
         return;
       }
       var mb = e.target.closest('[data-dspmap]');
@@ -74524,6 +74622,22 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       if(dnd){ var npid = dnd.getAttribute('data-dneed'), nproj = projById(npid); close();
         if(nproj && typeof window.openWorkOrderPicker === 'function') window.openWorkOrderPicker(nproj);
         else if(typeof window.openProject === 'function') window.openProject(npid); return; }
+      /* 949: while a tray chip is armed, a tap on any crew day cell books it —
+         the build-555 picker opens with that crew and day already filled. */
+      if(armed){
+        var tcell = e.target.closest('.dcell[data-dc]');
+        if(tcell){
+          var dc = tcell.getAttribute('data-dc').split('|');
+          var apid = armed, aproj = projById(apid);
+          var when = weekDays().map(ymd)[+dc[1]] || null;
+          armed = null;
+          close();
+          if(aproj && typeof window.openWorkOrderPicker === 'function')
+            window.openWorkOrderPicker(aproj, { crew_id: dc[0], scheduled_on: when });
+          else if(typeof window.openProject === 'function') window.openProject(apid);
+          return;
+        }
+      }
       var pel = e.target.closest('[data-pid]');
       if(pel && typeof window.openProject === 'function'){ close(); window.openProject(pel.getAttribute('data-pid')); }
     });
@@ -74534,8 +74648,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     if(typeof window.hideAllViews === 'function') window.hideAllViews();
     el.classList.add('open');
     try{ el.scrollTop = 0; }catch(_e){}
-    weekOffset = 0; filter = 'All'; showIdle = {}; foldTrade = {};
+    weekOffset = 0; filter = 'All'; showIdle = {}; foldTrade = {}; armed = null;
     setMapMode(false);
+    loadWx();                 /* 949: forecast for the day headers, cached 30 min */
     render();                 /* paint immediately with whatever is cached */
     await load();
     render();                 /* repaint with fresh crews + work orders */
@@ -74543,6 +74658,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 
   function close(){
     if(el) el.classList.remove('open');
+    armed = null;
     if(typeof window.showHome === 'function') window.showHome();
   }
 
