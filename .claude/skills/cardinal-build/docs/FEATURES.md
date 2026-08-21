@@ -6261,9 +6261,9 @@ value, never as one component of a shorthand**, so Chromium discards the entire 
 weight and size with it — and the element renders at whatever it inherits. Inside one card, half
 the labels were the designed voice and half were the browser's.
 
-**94 such declarations exist file-wide; 83 of the 88 attributable to a selector were verified
-dropped in a real render.** 980 fixes the 30 in Community. The largest remaining cluster is
-**`cr-show-styles` with 24 — the Showcase**, and it is its own build.
+**94 such declarations existed file-wide; 83 of the 88 attributable to a selector were verified
+dropped in a real render.** 980 fixed the 30 in Community; **build 983 swept the remaining 64.**
+✅ **The file-wide count is now 0** — see the section below.
 
 ⚠️ **The repair is longhands, not a family.** `font-weight:700;font-size:13px` says exactly what
 the author meant — inherit the family, set weight and size. Choosing a family would invent a
@@ -6280,6 +6280,42 @@ carries other declarations, so only the font line vanishes; that question return
 
 Gate: `gate_980.mjs` — 10 assertions, control red 7 named. It walks the parsed rules, and
 **builds a copy of the artifact with the invalid shorthand put back** to prove that test can fail.
+
+## The rest of the app gets its type back (build 983) — thirteen stylesheets
+
+The other 64. **58 stylesheet rules across thirteen blocks plus 6 inline `style=` attributes** in
+JS-generated markup, every one of them `font:<weight> <size> inherit` and every one discarded whole
+by the parser. Same defect as 980, same repair, wider blast radius:
+
+| block | rules | | block | rules |
+|---|---:|---|---|---:|
+| `cr-show-styles` (the Showcase) | 25 | | `cr-sc-styles` | 3 |
+| `cr-sf-styles` (Sales Floor) | 7 | | `cr-storm-styles` | 3 |
+| `cr-ci-styles` | 4 | | `cr-punch-styles` | 2 |
+| `cr-cth-styles` | 4 | | `cr-lib-styles` | 2 |
+| `cr-ic-styles` | 3 | | `cr-lnav-styles` | 2 |
+| | | | `cr-sol` / `cr-hd2` / `cr-abc` | 1 each |
+
+The Showcase's 25 matter most — it is the **client-facing** presentation surface, the one Theo
+opens at a kitchen table, and half its labels were rendering in the browser's default rather than
+the designed voice.
+
+⚠️ **`font:700 13px var(--lb-sans,inherit)` is the same bug wearing a wrapper.** Two rules in
+`cr-lib-styles` used it. That form is *valid when the token is declared* — the fallback is only
+reached if it is not. `--lb-sans` has **0 declarations and 2 references**, so the fallback is always
+taken and the declaration is always dropped. Proven in a three-case Chromium control, not argued.
+**A `var()` fallback does not validate an invalid value; it only hides it from a grep.**
+
+Gate: `gate_983.mjs` — 9 assertions, control red 5 named. ⚠️ **Its assertion 6 measured adjacency,
+not invention, on the first run** — it flagged 26 rules because a `font-family` sat *near* the
+converted declaration. Re-aimed at a delta: file-wide `font-family` **277 before, 277 after**.
+
+⚠️ **983 also rewrote two of `gate_980`'s assertions**, which had pinned a file-wide snapshot total
+(*"exactly 64 must remain"*). 983 swept those 64 deliberately, so a correct app turned a correct
+gate red. Measured across 979 / 982 / 983 the invalid count went 94 → 64 → 0 while **plain
+`font:inherit` stayed 27 and valid `font:` stayed 1291 in all three** — so no valid declaration was
+ever consumed, and that is the contract those assertions now state. *Assert the contract over a
+region, never the number you measured it at.*
 
 ## The preview rig (build 980) — `scripts/preview.mjs`
 

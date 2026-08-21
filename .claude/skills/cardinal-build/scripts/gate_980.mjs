@@ -22,7 +22,12 @@
      5  no font-family was invented: the repair is weight/size(/line-height) only
      6  a `/line-height` in the old shorthand became a real line-height
      7  the plain, VALID `font:inherit` was left alone
-     8  the 53 outside Community were deliberately NOT swept in
+     8  the sweep was not greedy — untargeted Community font rules survive
+
+   ⚠ 2 and 8 were REWRITTEN AT BUILD 983. Both pinned a file-wide SNAPSHOT
+   total ("64 invalid must remain"), and 983 swept those 64 deliberately — so a
+   correct app turned a correct gate red. Each now asserts the contract it was
+   actually guarding rather than the number it was measured at. See them inline.
 
    Usage: node gate_980.mjs [path] — previous build = negative control; must go
    RED with named failures and MUST NOT crash (BUG_CLASSES 37). */
@@ -75,17 +80,35 @@ need('1 no invalid `font:<w> <s> inherit` survives in Community',
      (ccF.invalid[0] ? '  e.g. font:' + ccF.invalid[0] : ''));
 
 const all = fontDecls(strip(APP));
-need('2 the file-wide count is exactly 30 lower than build 979',
-     all.invalid.length === 64,
-     'file-wide invalid shorthands: ' + all.invalid.length + ' (979 had 94, so 980 must show 64)');
+/* ⚠ THIS ASSERTION WAS REWRITTEN AT BUILD 983, AND THE REASON MATTERS.
+   It used to read `all.invalid.length === 64` — "979 had 94, 980 removed
+   Community's 30". That is a SNAPSHOT TOTAL, and build 983 swept the remaining
+   64 deliberately, so a correct app made a correct gate go red. Measured across
+   all three trees: 979 invalid=94, 982 invalid=64, 983 invalid=0 — while
+   wholeInherit stayed 27 and other stayed 1291 in EVERY one of them.
+   So the contract this assertion was really guarding is "no VALID font
+   declaration was consumed", and that is what it now says. It is still
+   falsifiable and still RED on 979 (94 > 64). */
+need('2 the sweep only ever removed invalid shorthands, never valid ones',
+     all.invalid.length <= 64 && all.wholeInherit.length === 27 && all.other.length === 1291,
+     'file-wide invalid ' + all.invalid.length + ' (must be <=64), plain font:inherit ' +
+     all.wholeInherit.length + ' (must be 27), valid font: ' + all.other.length + ' (must be 1291)');
 
 need('7 the plain, VALID `font:inherit` was left alone',
      all.wholeInherit.length >= 20,
      'only ' + all.wholeInherit.length + ' plain font:inherit left — the sweep was too greedy');
 
-need('8 the rules outside Community were NOT swept in',
-     all.invalid.length >= 50,
-     'file-wide invalid is ' + all.invalid.length + '; build 980 is scoped to Community and must leave ~64');
+/* ⚠ ALSO REWRITTEN AT 983, same cause. This asked `all.invalid.length >= 50`
+   — "980 is Community-scoped, so ~64 must survive elsewhere". After 983 swept
+   those 64 on purpose there is no tree on which that can be true, and a check
+   whose premise a later build retired is not a check. What it was really
+   guarding is a GREEDY sweep eating declarations it was not aimed at; a greedy
+   sweep shows up as the Community blocks losing font rules they should still
+   have. That is measurable forever, and it is what it now says. */
+const ccKept = ccF.other.length + ccF.wholeInherit.length + ch2F.other.length + ch2F.wholeInherit.length;
+need('8 the sweep was not greedy — Community keeps its untargeted font rules',
+     ccKept >= 25,
+     'only ' + ccKept + ' valid font: declarations left in the two Community blocks');
 
 /* 5,6 — shape of the repair, scoped to the two blocks */
 const both = strip(CC || '') + strip(CH2 || '');

@@ -39,9 +39,8 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
   a tool-screen branch in the same build or the gold house would have jumped to retail home
 
 - **980** thirty Community rules declared `font:<weight> <size> inherit` — invalid CSS, so the
-  browser discarded weight and size and used its own default. Repaired with longhands. ⚠️ **64 of
-  these remain elsewhere in the app, 24 of them in the Showcase** — that is a separate build and
-  it is worth doing
+  browser discarded weight and size and used its own default. Repaired with longhands. ✅ **The
+  other 64 were swept at 983; the file-wide count is now 0**
 
 - **981** item 7 done. The community job menu mirrored a grid retired at 348, so Contracts opened
   Estimates and Appointments opened the Schedule Board; and `#jobMenuSel` / `#woQuick` were visible
@@ -52,9 +51,14 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
   funding-partner cell stopped flooding (BILL TO 2.70 → 7.90:1 dark). **The seven-item Community
   program is complete.**
 
+- **983** ✅ **the other 64 are gone.** 58 stylesheet rules across thirteen blocks (25 of them the
+  Showcase, the client-facing surface) plus 6 inline `style=` attributes. ⚠️ Two hid behind
+  `var(--lb-sans,inherit)` — valid CSS *only if the token exists*, and `--lb-sans` has 0
+  declarations against 2 references, so the fallback was always taken and always dropped.
+  ⚠️ 983 also rewrote two `gate_980` assertions that had pinned a file-wide snapshot total and
+  therefore went red on correct code
+
 **STILL OPEN, both worth doing, neither started:**
-- **64 invalid `font:<w> <s> inherit` declarations outside Community — 24 of them in the Showcase**,
-  the client-facing presentation surface. Same defect 980 fixed; same one-line-per-rule repair.
 - **Retiring `#jaGrid`** — 5 of its 11 references are functional (markup, writer, router,
   `cr-pp-script`'s punch anchor, the old scrape). Needs its own build.
 - `--cr-amber`'s light half `#C87A00` measures **3.37:1** on white — under the floor, on the

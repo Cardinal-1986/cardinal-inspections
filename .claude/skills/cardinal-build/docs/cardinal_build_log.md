@@ -20497,6 +20497,77 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 983 — the rest of the app gets its type back (21 Aug 2026)
+
+Build 980 fixed thirty invalid `font:` shorthands inside Community. This is the same defect
+everywhere else: **64 declarations across thirteen stylesheets and six inline `style=` attributes**,
+all written `font:<weight> <size> inherit`.
+
+**`inherit` is a CSS-wide keyword.** It is legal as an *entire* value and never as one component of
+a shorthand, so `font:700 13px inherit` is not "inherit the family, set weight and size" — it is a
+parse error, and the browser discards the **whole declaration**. The weight and the size go with
+it, and the element renders at whatever it happened to inherit. The Showcase carried 25 of them;
+Sales Floor 7; Insurance Clients, Cardinal Truth 4 each; three blocks 3 each; five more 1–2.
+
+The repair is the same one 980 used and for the same reason: **longhands, not an invented family.**
+`font-weight:700;font-size:13px` says exactly what the shorthand was trying to say, and a family
+cannot be chosen without changing what the element inherits. It also avoids the shorthand's reset
+of line-height, style and variant — which today never happens, because the declaration is thrown
+away, so longhands are the minimal change rather than the conservative one.
+
+### The two the assert caught, and why they are a different bug
+
+The patch aborted with two declarations still standing. Both were in `cr-lib-styles`:
+
+```css
+font:700 13px var(--lb-sans,inherit)
+```
+
+That form is **valid CSS when the token exists** — the fallback is only reached if it does not.
+`--lb-sans` has **0 declarations and 2 references** in the file, so the fallback is always reached,
+and it fails identically to the bare form. Proven in a three-case Chromium control rather than
+argued: declared token → declaration kept; undeclared token → declaration dropped; bare `inherit` →
+dropped. *A `var()` wrapper does not make an invalid fallback valid; it only hides it from a grep.*
+
+### Gates
+
+**`gate_983.mjs` 9/9 GREEN**, **RED on the 982 control with 5 named failures.** Assertion 3 is the
+one that matters: it loads the real document in Chromium and asks whether each converted rule
+**survives the parse**, and assertion 4 puts the invalid form back to prove assertion 3 can fail.
+
+⚠ **Assertion 6 was measuring the wrong thing on its first run.** It flagged 26 rules as having
+gained a font-family, because it tested *adjacency* — a `font-family` anywhere near the converted
+declaration — rather than invention. Re-aimed at a delta: file-wide `font-family` count **277
+before, 277 after**. Nothing was invented, and now the gate says so in a form that cannot drift.
+
+⚠ **An unbounded regex hung the recon for 120s.** `[^{}]*#commsCli[^{}]*\{[^}]*\}` backtracks
+without terminating on a 5 MB file. Replaced with bounded string finds. This file's own rule —
+*recon regexes need bounds* — earning its place again.
+
+### `gate_980` was rewritten by this build, and that is worth reading
+
+The 967–983 sweep came back with **`gate_980` RED on HEAD**, which reads as a regression. It was
+not one. Two of its assertions pinned a **file-wide snapshot total** — *"979 had 94, so 980 must
+show exactly 64"* and *"980 is Community-scoped, so ~64 must survive elsewhere"*. Build 983 swept
+those 64 on purpose, so **a correct app turned a correct gate red.**
+
+Measured across all three trees before touching anything:
+
+| tree | `font:` invalid | plain `font:inherit` | valid `font:` |
+|---|---:|---:|---:|
+| 979 | 94 | 27 | 1291 |
+| 982 | 64 | 27 | 1291 |
+| **983** | **0** | **27** | **1291** |
+
+Only the invalid column ever moved. **No valid declaration was consumed by either sweep** — which
+is the contract those two assertions were really guarding, and it is now what they say:
+assertion 2 asserts the valid populations are untouched and invalid never rose; assertion 8 asserts
+Community keeps its untargeted font rules, which is what a greedy sweep would have destroyed.
+Both stay falsifiable and both are still **RED on the 979 control**, now with 7 named failures.
+
+*This is the file's own rule biting the file itself: assert the contract over a region, never the
+number you measured it at. A snapshot total is a check with an expiry date on it.*
+
 ## Build 982 — Community reads properly on the light theme (21 Aug 2026)
 
 The second half of **item 6, option 1**. Era A was built dark-first, and ten inks were declared
