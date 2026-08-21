@@ -20497,6 +20497,49 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 966 — a contract that says what is still blank (21 Aug 2026)
+
+Theo's option 5, and the one with the plainest job: a contract goes out with an empty box in it
+because **nobody can see the empty box from the top of a three-page document**.
+
+A chip beside ＋ Field counts them, red while anything is blank and green at zero. Tap it and it
+scrolls to the next one and outlines it.
+
+**Every counting rule is a decision about noise, and the ones NOT counted matter most.**
+
+| Counted | Why |
+|---|---|
+| a `.ph` still showing its bracketed prompt | all 275 placeholders across the three templates are written `[like this]` — the template's own convention, not a guess about what a rep types |
+| an unchosen `select[data-crsel]` | |
+| a `data-group` checkbox set with nothing ticked | 28 sets, all behaving as radios |
+
+**Not counted:** signatures — filled by the signing flow, not by typing, and telling a rep three
+things are missing before anyone has signed is exactly the false alarm that gets a counter
+ignored. And ungrouped checkboxes: gutter guards, the closeout checklist, genuinely optional.
+Counting those would report ten "missing" items on a finished contract.
+
+⚠️ **It counts; it does not block.** A field can legitimately be N/A, and being stopped by your own
+paperwork is a worse failure than seeing a number — people route around a block, and then the
+block is the thing that is broken. Red is what prevents the mistake.
+
+⚠️ **The highlight is injected into the LIVE document rather than shipped in the skeleton.** A
+contract saved before today carries its own copy of the skeleton CSS and would have no rule for a
+class added now. Recounts are delegated on the document in the capture phase and debounced, so
+they survive a re-render and pick up a field added by hand at 965 with no second registration.
+
+Verification: `check_build.py` green 965 → 966 · **`gate_966.mjs` 12/12 GREEN**, **RED on the 965
+control with 11 named failures and no crash** · `gate_965.mjs` 12/12 and `gate_964.mjs` 9/9 re-run.
+Rendered: a blank siding agreement reads **61 to fill**, and the jump outlines `[Client name]`.
+
+⚠️ **The gate's first run went red for the harness's reasons, not the app's.** Its fill-everything
+loop hit a dropdown with nothing to choose — the seeded catalogue was too thin — and **`break`
+abandoned the whole loop**, leaving 23 and reporting a working feature as broken. It now seeds
+every list a dropdown can read and *skips* what it cannot fill, stopping when a pass makes no
+progress. *A loop that gives up on the first obstacle is not a measurement.*
+
+**Next, and last in Theo's order:** 6 — print fidelity. He dropped 4 (drawings) after three
+attempts that did not land; that is recorded rather than left implied.
+
 ## Build 965 — a field you can add yourself (21 Aug 2026)
 
 Theo's option 3, and his pick of three placements: **at the caret**.
