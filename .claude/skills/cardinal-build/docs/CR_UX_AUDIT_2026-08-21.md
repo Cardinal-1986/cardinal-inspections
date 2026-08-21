@@ -8,6 +8,52 @@
 
 **Live-data baseline at audit time:** 55 projects · **15 community jobs, all at stage `Lead`** (was 16/16 on 10 Aug — one deleted, none advanced) · collections **0** · commissions **0** · draws **0** · crew_payments **0** (twelve days after 650–652 shipped) · showcase_pairs **1** · workmanship_pairs **1** · walks **0** · community_contacts **0** · community_properties **0** · 17 of 55 projects have no CRM classification.
 
+---
+
+## ✅ STATUS — nine builds shipped against this audit, 21 Aug 2026 (added after the report was written)
+
+**This document is a snapshot at build 965 and is deliberately not rewritten.** What follows is
+the only status layer; the live record is `cardinal_build_log.md`, and `OPEN_ITEMS.md` carries the
+dated strike list.
+
+| Build | Item | Gate control on the previous build |
+|---|---|---|
+| **967** | offline outbox deleted every refused write, then said "All changes synced" | the row gone from IndexedDB, chip painting `#123322` |
+| **968** | the Supplement Desk signed a rep out of the **whole CRM, every device** | `signOut called 1x`, `session present=false` |
+| **969** | Claims/Coach/auto-stage messages painted **under** the bottom bar | `pwaNav` measured as the element composited on top |
+| **970** | Publish / → Contract / Save acted on **another client's** estimate | `pickEstimate` returning `e-OTHER-newest` |
+| **971** | Community program **item 1** — unfreeze the pipeline | a hand-typed \$14,330 bid reading *"Bid needs pricing"* |
+| **972** | Community program **item 2** — finish the stage story | `generic or missing: ["Scheduled","Invoiced","Closed","Lost"]` |
+| **973** | Community program **item 3** — one partner identity *(writer half)* | the hub answering `"No partner recorded"` for a partner just attached |
+| **974** | Community program **item 4** — one amount | `card=18425 (builder)  hub=14330` — one job |
+| **975** | Community program **item 5** — hub numbers become doors | `tile=3px .k=3px .v=3px` — three nested cards per tile |
+
+**Open from the program: item 6 (one design era) and item 7 (one Job Menu).**
+
+⚠️ **Two of this report's Community recommendations were CORRECTED during the build**, and the
+corrections matter more than the originals:
+
+- **Item 4's $0 bid lines.** The report says the Bid tab "reads a field the builder never writes",
+  which is right — but the obvious repair is also wrong. **14 of the 18 live estimate rows are
+  non-itemized**, and on those `unit_price` is 0 while `amount` carries the money (on one row the
+  two disagree, and `amount` is the truth). Swapping the field name would have shipped a *new*
+  wrong number. 974 uses the rule the shipped estimate document already uses.
+- **Item 5 had an unstated prerequisite.** No hub number could become a door until fold state
+  survived a render: the All-bids filter bar lives **inside** the All-bids fold, and `render()`
+  destroyed the DOM class holding it open — so tapping Apply closed the table being filtered.
+
+⚠️ **And the report's own suggested fix for the Claims toasts (969) was wrong.** "Raise the
+toast's z-index" is a **silent no-op** for two of the three: they are appended into a mount that is
+`position:fixed` at `z-index:60 !important`, which is a stacking context, so no z-index on a
+descendant escapes it. Recon caught it before a line was written.
+
+**Item 3 is half-shipped on purpose.** The read-resolver needs two decisions that are Theo's, and
+zero live rows are affected by either: what to do about the four DHRN name-drifted rows, and what
+happens to `partner_id` when someone free-types a referral. Both are recorded in `OPEN_ITEMS.md`
+as numbered options.
+
+---
+
 **Item ids here are `CR-UX-***`.** They deliberately do not reuse CR-AUD/CR-COM numbers; where an item is a still-open CR-COM item re-verified at 965, the old id is cited.
 
 ---
