@@ -20497,6 +20497,73 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 972 — a community job stops going quiet once it is awarded (21 Aug 2026)
+
+**The bug behind the bug.** `threadHtml` had arms for Lead / Prospect / OnHold /
+Approved / Completed only, so **Scheduled, Invoiced, Closed and Lost rendered no
+state and no next action** — the card went silent for the entire second half of a
+job. `gate_972`'s floor names them on the 971 control:
+`generic or missing: ["Scheduled","Invoiced","Closed","Lost"]`.
+
+Worse, and only found by measuring: **the Completed arm was itself unreachable.**
+Nothing the community card exposes could produce `Completed` — the only file-wide
+producers (`#stageSel`, `acxAdvance`, `#stageBanner .stgarrow`) all sit inside
+`#projectView` children that `#projectView.cr-cc-own > *:not(#cr-cc):not(#dangerZone)`
+hides. So 971's "Ready to invoice" arm could never fire from the card, which means
+the invoice step could never be reached either. A `complete` act fixes the whole
+chain with one `window.setStage` call — the same one every other act uses.
+
+**"Get on the calendar" now books a real day, and adds no new stage-move path.**
+It used to be `confirm('Mark this job SCHEDULED?')` + `setStage` — it touched no
+calendar at all, and live data confirms it: **0 appointments have ever existed on
+any community job.** The act now opens the app's ONE appointment composer
+(`openApptDay`, prefilled kind=job / client / title). The stage then moves itself,
+because **build 783's `__apptMayAdvanceStage` already advances Approved → Scheduled**
+whenever a `kind:'job'` appointment carrying a `project_id` is created. The old
+direct `setStage(pr.id,'Scheduled')` was **removed** in the same edit — two paths to
+one stage is the second-pipeline this project forbids, and assertion 10 pins it.
+
+⚠️ **Two premises in my own brief were wrong, and the recon measured them rather
+than repeating them:**
+- I assumed a CHECK constraint on `appointments.kind`. **There is none** —
+  `pg_constraint` returns only the PK and the `project_id` FK.
+- More importantly, **`appointments` RLS is per-creator** (`created_by = auth.email()`,
+  plus theo@ and joan@). A booked build day is therefore **not a shared fact**, so the
+  Scheduled arm must never say "nothing is booked". It says *"No build day on your
+  calendar. Whoever booked it may be the only one who can see it."* Assertion 3 fails
+  any wording that claims the stronger thing.
+
+**Closed and Lost are deliberately QUIET** — they omit `now:true`, so they take the
+calm accent dot instead of the amber urgent halo, and carry no actions. Lost reads
+`loss_reason` **defensively only and never prompts**: `setStage` skips `LOSS_REASONS`
+for community by design (Theo: *"Dont need the why we didn't get it"*) and the column
+is empty database-wide.
+
+**Adjacent, one line, in scope:** the pin's Due cell fired `hot` on `due <= 3`, and
+for every stage past Lead the bid deadline is already in the past — so the pin sat in
+**permanent amber on awarded work**, and rendered "-120d". It now paints hot only for
+a deadline still ahead (or a parked job's check-back) and reads "120d ago". Same shape
+as 971's thread fix, in the other half of the card.
+
+⚠️ **My own error again, same class as 971's:** the A1 anchor spanned the Completed
+arm *including* its closing brace, so my new arms landed outside the if-chain.
+`node --check` caught it. Two builds in a row lost a round to misreading how far an
+anchor reaches — the lesson is to print the anchor's last 40 characters before
+deciding where the replacement joins.
+
+⚠️ **And a weakness in my own gate, fixed before it shipped:** the floor assertion
+first checked only "does a card render", which **passed on the control** — `threadHtml`
+falls back to a generic "Bid requested" entry when no arm matches. A vanished arm would
+have stayed green. The floor now asserts each stage **names its own state**.
+
+**Deliberately not done:** no `Closed` action was added. Closed is a filing state;
+leave it produced only by the existing controls until Theo asks.
+
+Gates: `gate_972.mjs` **13/13 on 972; RED with 9 named failures on the 971 control** ·
+`check_build.py` green with marker + negative control · `sentinel.js` clean. One new
+export (`CardinalProduction.schedFor`, read-only) so the card asks the app's existing
+build-day resolver instead of copying its filter.
+
 ## Build 971 — a community bid can finally be marked submitted (21 Aug 2026)
 
 **The audit asked why 15 of 15 community jobs sit at Lead. This is the mechanism.**

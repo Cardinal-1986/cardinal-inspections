@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 971 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 972 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41127,6 +41127,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:972, d:'2026-08-21', t:'A community job stops going quiet once it is awarded',
+  s:'The community card only had something to say up to the point a bid was awarded. After that \u2014 scheduled, invoiced, closed, lost \u2014 it showed no state and no next step, and there was no way to mark a build complete at all, which meant the invoice step could never be reached either. Every stage now has its own card: Scheduled shows the build day and lets you mark it complete, Invoiced shows what went out and opens Payment Information, and Closed and Lost read as quietly finished instead of urgent. "Get on the calendar" also books a real day now \u2014 it opens the calendar with the job filled in, instead of just changing the label and touching nothing.' },
 { b:971, d:'2026-08-21', t:'Community bids can finally be marked submitted',
   s:'Every community job was stuck at Bid Requested, and this is why: the card only offered "Mark it submitted" when the bid had been priced in the estimate builder. Most of them are priced by typing the amount into the bid form instead, so 14 of 15 jobs were offered "Price it" and nothing else \u2014 while the one job that did have estimates had two $0 drafts, so it got the button. The card now reads any recorded price: the builder total, the amount typed on the bid form, or an amount you logged. It also says which of those it is showing, and how long the bid has been overdue instead of counting down past zero. And logging a submitted amount now offers to move the job, since it was already recording the date you sent it.' },
 { b:970, d:'2026-08-21', t:'Publish always acts on the estimate you have open',
@@ -51354,6 +51356,11 @@ else start();
 
 window.CardinalProduction = {
   open      : open,
+  /* 972: the community card needs "which day is this build booked for" and
+     schedFor() is already the app's named answer ("the REAL schedule:
+     appointments of kind 'job'", 766). Exported read-only so the card asks the
+     one resolver rather than growing a second copy of the filter. */
+  schedFor  : schedFor,
   close     : close,
   addFor    : function(projectId){ openAdd(projectId); },
   refresh   : async function(){ await load(); lastSig = ''; render(); },
@@ -57261,6 +57268,32 @@ try{
    'won' and 'lost' stay routed below: the hub and any older markup still
    dispatch them, and one pipeline is the rule. */
 if(a === 'outcome'){ ocOpen(pr); return; }
+/* 972: "Get on the calendar" used to flip the stage and touch no calendar. It
+   now opens the app's ONE appointment composer, prefilled for this job. The
+   stage then moves itself: build 783's __apptMayAdvanceStage already advances
+   Approved -> Scheduled when a kind:'job' appointment carrying a project_id is
+   created, so this adds no second stage-move path. A day the user did not
+   choose would be worse than no day at all. */
+if(a === 'schedule'){
+  if(typeof window.openApptDay !== 'function'){
+    alert('The calendar is not loaded \u2014 reload the app and try again.');
+    return;
+  }
+  try{
+    window.openApptDay(todayIso());
+    var k972 = document.getElementById('apptKind');   if(k972) k972.value = 'job';
+    var c972a = document.getElementById('apptClient'); if(c972a) c972a.value = pr.id;
+    var t972 = document.getElementById('apptTitle');  if(t972) t972.value = 'Build day \u2014 ' + (pr.name || '');
+  }catch(_s972){}
+  return;
+}
+/* 972: the same door 705 put on the Job Menu. No suspendForTab — openPaymentsPage
+   swaps #projectView wholesale and dbCloseTo() restores the black card. */
+if(a === 'pay'){
+  if(typeof window.openPaymentsPage === 'function') window.openPaymentsPage();
+  else alert('Payments are not loaded \u2014 reload the app and try again.');
+  return;
+}
 /* 438: the bid form already edits homeowner / renter / no_homeowner, and
    CardinalNewBid.edit() already existed with zero callers. This just makes it
    reachable from the client page - no second editor. */
@@ -57361,9 +57394,9 @@ if(!confirm('Mark this bid AWARDED by ' + (lead(pr).partner_name || 'the partner
 await window.setStage(pr.id, 'Approved');
 }else if(a === 'lost'){
 await window.setStage(pr.id, 'Lost');
-}else if(a === 'schedule'){
-if(!confirm('Mark this job SCHEDULED?')) return;
-await window.setStage(pr.id, 'Scheduled');
+}else if(a === 'complete'){
+if(!confirm('Mark this build COMPLETE?')) return;
+await window.setStage(pr.id, 'Completed');
 }else if(a === 'invoice'){
 if(!confirm('Mark this job INVOICED to ' + (lead(pr).partner_name || 'the partner') + '?')) return;
 await window.setStage(pr.id, 'Invoiced');
@@ -57380,6 +57413,19 @@ function threadHtml(pr){
 var st = normStage(pr.stage), l = lead(pr), est = liveEstimate();
 var due = daysTo(l.bid_due_at);
 var out = [];
+/* 972: the second half of the job. `due` above is the BID deadline and is
+   months stale once a job is awarded — the new arms must never read it. */
+var c972 = ck(pr) || {}, b972 = bidOf(pr);
+var sched972 = null;
+try{
+  var P972 = window.CardinalProduction;
+  if(P972 && typeof P972.schedFor === 'function') sched972 = P972.schedFor(pr);
+}catch(_972){}
+function when972(d){
+  if(d == null) return '';
+  return d < 0 ? (Math.abs(d) + ' days ago') : d === 0 ? 'today' : ('in ' + d + ' days');
+}
+function money972(v){ return (Number(v) > 0) ? usd(Number(v)) : ''; }
 if(st === 'Lead'){
 /* 971: the affordance is keyed on ANY recorded price, not on the estimate ROW
    alone. 7 of the 15 live community jobs are priced outside the builder (a
@@ -57439,11 +57485,41 @@ out.push({ now:true, title:'Awarded \u2014 needs scheduling', when:'now',
 txt:'Won' + (est ? ' at ' + usd(est.total) : '') +
 (l.funded_by ? ', funded by ' + l.funded_by : '') +
 (l.tarped_at ? '. Tarped ' + fmtDay(l.tarped_at) : '') +
-'. No crew or date set.', acts:[{ label:'Get on the calendar', how:'schedule' }] });
+'. Book the day so the crew and the board agree.', acts:[{ label:'Book the build day', how:'schedule' }] });
 }else if(st === 'Completed'){
 out.push({ now:true, title:'Ready to invoice', when:'now',
 txt:'Build complete. The partner hasn\u2019t been invoiced yet.',
 acts:[{ label:'Invoice the partner', how:'invoice' }] });
+/* 972: Scheduled / Invoiced / Closed / Lost had no arm at all, so the card went
+   silent from the moment a job was awarded. Closed and Lost deliberately omit
+   `now` — a finished job gets the calm accent dot, not the amber urgent halo. */
+}else if(st === 'Scheduled'){
+out.push({ now:true, title:'Build scheduled', when:'now',
+txt: (sched972
+  ? ('Build day ' + fmtDay(isoDay(sched972)) + ' \u2014 ' + when972(daysTo(isoDay(sched972))) + '.')
+  /* appointments are readable only by whoever created them, so "nothing is
+     booked" is a claim this screen cannot make. Say what it can see. */
+  : 'No build day on your calendar. Whoever booked it may be the only one who can see it.')
+  + (money972(b972.awarded_amount) ? ' Awarded ' + money972(b972.awarded_amount) + '.' : ''),
+acts: sched972
+  ? [{ label:'Mark the build complete', how:'complete' }]
+  : [{ label:'Mark the build complete', how:'complete' },
+     { label:'Book the build day', how:'schedule', alt:true }] });
+}else if(st === 'Invoiced'){
+out.push({ now:true, title:'Invoiced \u2014 waiting on the partner', when:'now',
+txt:(money972(b972.awarded_amount) ? money972(b972.awarded_amount) + ' invoiced' : 'Invoiced')
+  + (c972.t_Invoiced ? ' on ' + fmtDay(c972.t_Invoiced) : '') + '.',
+acts:[{ label:'Payment Information', how:'pay' }] });
+}else if(st === 'Closed'){
+out.push({ title:'Closed', when: ago(c972.t_Closed || c972.stage_since || pr.created_at),
+txt:'This job is finished and filed.'
+  + (money972(b972.awarded_amount) ? ' Awarded ' + money972(b972.awarded_amount) + '.' : '') });
+}else if(st === 'Lost'){
+out.push({ title:(LABEL['Lost'] || 'Not Awarded'),
+when: ago(c972.lost_at || c972.t_Lost || c972.stage_since || pr.created_at),
+/* defensive only: community deliberately records no loss reason (setStage skips
+   LOSS_REASONS for community), and loss_reason is empty database-wide. Never prompt. */
+txt:'This bid did not come our way.' + (c972.loss_reason ? ' ' + c972.loss_reason : '') });
 }
 events.forEach(function(e){
 out.push({
@@ -57966,6 +58042,10 @@ var st  = normStage(pr.stage);
    would make held silently false rather than throwing. */
 var held = (st === 'OnHold' && !!l.check_back_at);
 var due = daysTo(held ? l.check_back_at : l.bid_due_at);
+/* 972: `hot` fired on due <= 3, and for every stage past Lead the bid deadline is
+   already in the past — so the pin sat in permanent amber on awarded work. Only a
+   deadline still ahead of us (or a parked job's check-back) can be urgent. */
+var dueLive972 = (normStage(pr.stage) === 'Lead' || held);
 mount.innerHTML =
 /* 679: a way OUT. #cr-cc-return exists but only appears after a sub-tab tap and
    returns you TO this card — nothing led back to the Community hub, so the card
@@ -57980,8 +58060,8 @@ mount.innerHTML =
 '</div>' +
 '<div class="facts">' +
 '<div><div class="k">' + (held ? 'Check back' : 'Due') + '</div><div class="v' +
-(!held && due != null && due <= 3 ? ' hot' : '') + '">' +
-(due == null ? '\u2014' : due + 'd') + '</div></div>' +
+(dueLive972 && due != null && due >= 0 && due <= 3 ? ' hot' : '') + '">' +
+(due == null ? '\u2014' : (due < 0 ? Math.abs(due) + 'd ago' : due + 'd')) + '</div></div>' +
 '<div><div class="k">Stage</div><div class="v">' +
 esc(SHORT[st] || LABEL[st] || st || '') + '</div></div>' +
 '<div><div class="k">Work</div><div class="v">' +
