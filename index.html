@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 970 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 971 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41127,6 +41127,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:971, d:'2026-08-21', t:'Community bids can finally be marked submitted',
+  s:'Every community job was stuck at Bid Requested, and this is why: the card only offered "Mark it submitted" when the bid had been priced in the estimate builder. Most of them are priced by typing the amount into the bid form instead, so 14 of 15 jobs were offered "Price it" and nothing else \u2014 while the one job that did have estimates had two $0 drafts, so it got the button. The card now reads any recorded price: the builder total, the amount typed on the bid form, or an amount you logged. It also says which of those it is showing, and how long the bid has been overdue instead of counting down past zero. And logging a submitted amount now offers to move the job, since it was already recording the date you sent it.' },
 { b:970, d:'2026-08-21', t:'Publish always acts on the estimate you have open',
   s:'If you opened a saved estimate from Menu \u2192 Estimates rather than from a client, Publish, \u2192 Contract and Mark as Sent were looking up the last client you had open instead of the one the estimate belongs to \u2014 and when they could not find it, they quietly took that client\u2019s newest estimate instead. That could publish or contract the wrong homeowner\u2019s estimate. They now ask the open estimate which job it is on, and if anything still does not line up they stop and say so rather than guessing. Saving an estimate that way was also moving the wrong client\u2019s stage; that is fixed too.' },
 { b:969, d:'2026-08-21', t:'Claims messages you could not see on a phone',
@@ -56663,9 +56665,12 @@ isOpen : isOpen,
 #cr-cc .ev.now .txt{color:#d8cfc9}#cr-cc .ev .eh{display:flex;align-items:baseline;gap:9px}#cr-cc .ev .eh b{flex:1;font:700 13px inherit}#cr-cc .ev .eh .when{font:700 10px var(--mono);color:var(--dim);white-space:nowrap}#cr-cc .ev .txt{font-size:12.5px;color:var(--mute);line-height:1.55;margin-top:5px}#cr-cc .ev .who{font-size:10.5px;color:var(--dim);margin-top:6px}/* two actions side by side, so the Prospect state can say Awarded / Not
    awarded instead of one button that could mean either */
 #cr-cc .doits{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
-#cr-cc .doit.alt{background:none;border:1px solid var(--line);color:var(--mute)}
 #cr-cc .ev .doit{margin-top:0}
-#cr-cc .ev .doit{margin-top:9px;background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 8px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:12px;color:var(--accent)}
+#cr-cc .ev .doit{margin-top:9px;background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit}
+/* 971: this rule used to sit ABOVE the two above it at equal specificity, so the
+   later one re-set background/border/color and the secondary button rendered
+   identical to the primary. Moved last and scoped into .ev so it can win. */
+#cr-cc .ev .doit.alt{background:none;border:1px solid var(--line);color:var(--mute)}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 8px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:12px;color:var(--accent)}
 #cr-cc .pin .t .nm .rl{display:block;font:800 7px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
 /* .ct paints its border with a gradient in border-box and its fill in
    padding-box, so the fill has to be swapped in the same two-layer form or the
@@ -56850,6 +56855,22 @@ referred : 'Referred to another partner',
 lost     : 'Bid not awarded',
 };
 function bidOf(pr){ return (ck(pr) || {}).bid || {}; }
+/* 971: every place a community bid's price can legitimately live, in order of
+   authority — what actually went to the partner, then the builder's live total,
+   then the number typed into the bid form. It answers with a NUMBER, which is the
+   only thing that tells a real price from a $0.00 draft: the one live job that has
+   estimate rows at all has two drafts totalling 0.00, and the old `est ?` test read
+   that as priced while offering nothing to the 7 jobs priced by hand. */
+function priceOf(pr){
+var b = bidOf(pr), l = lead(pr), e = liveEstimate();
+var sub = Number(b.submitted_amount) || 0;
+if(sub > 0) return { amt:sub, src:'logged', at:b.submitted_at || '' };
+var et = e ? (Number(e.total) || 0) : 0;
+if(et > 0) return { amt:et, src:'builder', lines:(e.line_items || []).length || 0 };
+var typed = Number(l.bid_amount) || 0;
+if(typed > 0) return { amt:typed, src:'typed' };
+return { amt:0, src:'none' };
+}
 /* Date-only strings must be built and read at LOCAL midnight. Parsing
    '2026-07-27' with new Date() gives UTC midnight, which is the evening before
    in EDT - the same day-early bug daysTo() above documents. */
@@ -57279,10 +57300,12 @@ if(a === 'submitted'){
    starts by itself. */
 var l710 = lead(pr);
 if(!confirm('Mark this bid SUBMITTED to ' + (l710.partner_name || 'the partner') + '?')) return;
-var b710 = bidOf(pr), e710 = liveEstimate();
+var b710 = bidOf(pr), p971b = priceOf(pr);
+/* 971: was `e710 && e710.total` — a builder total only, so marking a hand-priced
+   bid submitted recorded an empty amount. priceOf() is the one resolver. */
 var amt710 = (b710.submitted_amount != null && b710.submitted_amount !== '')
 ? b710.submitted_amount
-: (e710 && e710.total ? e710.total : '');
+: (p971b.amt > 0 ? p971b.amt : '');
 var patch710 = mergeCk(pr, 'bid', {
 submitted_at     : b710.submitted_at || todayIso(),
 submitted_amount : amt710,
@@ -57315,6 +57338,21 @@ if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, 
 if(typeof window.auditLog === 'function'){
 try{ window.auditLog('lead', 'Bid info updated', pr.id); }catch(_){ }
 }
+/* 971: this act already stamps submitted_at — the date the bid went to the partner
+   — and then left the job reading Bid Requested, which is a large part of why 15 of
+   15 live community jobs sit at Lead. The move is OFFERED, never forced (an amount
+   is often corrected long after the fact), never offered on the blank-clear path
+   (mergeCk DELETES a key set to '', so clearing must not push the job forward), and
+   only from Lead. It goes through the SAME window.setStage call the 'submitted' arm
+   uses — no second stage-move path. The bid patch is awaited FIRST because
+   setStage's own checklist patch is fire-and-forget. */
+if(v0 !== '' && normStage(pr.stage) === 'Lead' &&
+confirm('Amount saved. Also move this job to ' + (LABEL['Prospect'] || 'Bid Submitted') + '?')){
+await window.setStage(pr.id, 'Prospect');
+if(typeof window.auditLog === 'function'){
+try{ window.auditLog('lead', 'Bid marked submitted', pr.id); }catch(_){ }
+}
+}
 render();
 return;
 }
@@ -57343,22 +57381,40 @@ var st = normStage(pr.stage), l = lead(pr), est = liveEstimate();
 var due = daysTo(l.bid_due_at);
 var out = [];
 if(st === 'Lead'){
-out.push({ now:true, title: est ? 'Bid ready to submit' : 'Bid needs pricing',
-when:'now',
-txt: est
-? 'Priced at ' + usd(est.total) + ' across ' +
-((est.line_items || []).length || 0) + ' line items.' +
-(due != null ? ' Due in ' + due + ' days.' : '')
-: 'Invited to bid' + (due != null ? ', due in ' + due + ' days' : '') +
-'. Nothing priced yet.',
-/* 710 (CR-COM-004): "Submit the bid" only ever OPENED the estimate editor —
-   the stage moved solely if you then marked the estimate Sent in there, which
-   nothing said. 16 of 16 jobs sat at Lead, 3 past due. The act now does what
-   it says; the editor keeps its own door beside it. */
-acts: est
-? [{ label:'Mark it submitted', how:'submitted' },
-{ label:'Open the bid', how:'open', alt:true }]
-: [{ label:'Price it', how:'estimate' }] });
+/* 971: the affordance is keyed on ANY recorded price, not on the estimate ROW
+   alone. 7 of the 15 live community jobs are priced outside the builder (a
+   hand-typed checklist.lead.bid_amount) and 710's `est ?` test offered every one
+   of them "Price it" and no way out of Lead — which is most of why 15 of 15 sat
+   at Lead. The one job that DOES carry estimates carries two $0.00 drafts, so
+   object-truthiness handed the only "Mark it submitted" button to the job with no
+   price. priceOf() answers with a number, which is what tells those apart. */
+var p971 = priceOf(pr);
+var due971 = due == null ? ''
+: due < 0 ? ' Due to the partner ' + Math.abs(due) + ' days ago.'
+: due === 0 ? ' Due to the partner today.'
+: ' Due in ' + due + ' days.';
+if(p971.src === 'logged'){
+out.push({ now:true, title:'Submitted \u2014 stage not moved', when:'now',
+txt:'Logged at ' + usd(p971.amt) + (p971.at ? ' on ' + fmtDay(p971.at) : '') +
+', but this job still reads ' + (LABEL['Lead'] || 'Bid Requested') + '.' + due971,
+acts:[{ label:'Mark it submitted', how:'submitted' },
+{ label:'Edit the amount', how:'logsub', alt:true }] });
+}else if(p971.amt > 0){
+out.push({ now:true, title:'Bid ready to submit', when:'now',
+txt:'Priced at ' + usd(p971.amt) +
+(p971.src === 'builder'
+? ' across ' + p971.lines + ' line items.'
+: ' on the bid form \u2014 not in the estimate builder.') + due971,
+acts:[{ label:'Mark it submitted', how:'submitted' },
+(p971.src === 'builder'
+? { label:'Open the bid', how:'open', alt:true }
+: { label:'Price it in the builder', how:'estimate', alt:true })] });
+}else{
+out.push({ now:true, title:'Bid needs pricing', when:'now',
+txt:'Invited to bid.' + due971 + ' Nothing priced yet.',
+acts:[{ label:'Price it', how:'estimate' },
+{ label:'Log a submitted amount', how:'logsub', alt:true }] });
+}
 }else if(st === 'Prospect'){
 out.push({ now:true, title:'Waiting on a decision', when:'now',
 txt:'Submitted' + (est ? ' at ' + usd(est.total) : '') +

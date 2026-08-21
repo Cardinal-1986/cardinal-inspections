@@ -20497,6 +20497,65 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 971 — a community bid can finally be marked submitted (21 Aug 2026)
+
+**The audit asked why 15 of 15 community jobs sit at Lead. This is the mechanism.**
+`threadHtml`'s Lead arm was `acts: est ? [Mark it submitted, Open the bid] : [Price it]`
+— keyed on the estimate OBJECT returned by `liveEstimate()`, which reads only the
+`estimates` table. The live shape at audit time:
+
+- **15** community projects, all at `Lead`
+- **7** priced by a hand-typed `checklist.lead.bid_amount` (16,360 · 10,770 · 12,010 ·
+  18,425 · 14,330 · 14,787 · 29,460) — every one of them offered **"Price it" and
+  nothing else**, with no way out of Lead
+- `checklist.bid.submitted_amount` **NULL on all 15** — `logsub` has never once been used
+- and the **one** job carrying estimate rows carries **two `status:'draft'` rows totalling
+  `0.00`**, so object-truthiness handed the only "Mark it submitted" button to the job
+  with no price. `gate_971` reproduces that inversion on the 970 control verbatim:
+  **"Bid ready to submit — Priced at $0 across 0 line items."**
+
+**`priceOf(pr)` answers with a NUMBER**, which is the only thing that tells a real price
+from a $0.00 draft, in order of authority: what was logged as submitted → the builder's
+live total → the number typed on the bid form. It is a superset of the expression
+`ocStep2` already uses, so it is the one resolver rather than a fourth ad-hoc copy.
+
+The Lead state now has **three** truths instead of two: *ready to submit* (naming which
+source the price came from — "on the bid form — not in the estimate builder"), *needs
+pricing* (which can now also log an amount by hand), and *submitted — stage not moved*
+for a job whose amount was logged but which still reads Bid Requested.
+
+**Logging an amount now offers the move it was already stamping the date for.**
+`ccDoAct('logsub')` wrote `submitted_at` — the date the bid went to the partner — and then
+left the job at Lead. It now offers `setStage(pr.id,'Prospect')` through the **same call
+the 'submitted' arm uses** (no second stage-move path). Guarded three ways: only from
+Lead, never on the blank-clear path (`mergeCk` DELETES a key set to `''`, so clearing an
+amount must not push the job forward — the exact inverse of the bug), and the bid patch is
+awaited BEFORE `setStage`, whose own checklist patch is fire-and-forget.
+
+**Two adjacent defects found while measuring, both fixed here:**
+- `#cr-cc .doit.alt` was **inert** — equal specificity (1 id, 2 classes) to
+  `#cr-cc .ev .doit`, which sits later in source and re-declares background/border/color,
+  so the secondary button rendered identical to the primary. Measured on the control:
+  both `rgb(255, 207, 107)`. Moved last and scoped into `.ev` so it can win.
+- an overdue bid rendered **"Due in -10 days."** It now reads "Due to the partner 10 days
+  ago." — and 3 of the 15 live jobs are past due.
+
+⚠️ **My own error, caught by the gate.** The `LEAD_BRANCH` anchor was the *inside* of the
+`if(st === 'Lead'){` block, and I wrapped my replacement in a second `if`, adding an
+unbalanced brace; the repair then deleted the *original* opener because my search string
+had absorbed it. `node --check` caught both. Two rounds lost to not reading what the
+anchor actually spanned.
+
+**Deliberately out of scope, so it is a decision and not an oversight:** the Bid pane still
+says "No bid priced yet." for the 7 hand-priced jobs, and the pin/outcome-header amounts
+still ignore `bid.submitted_amount`. All three are one `priceOf()` call away and belong in
+the same follow-up as CR-UX-004 (one amount, four definitions).
+
+Gates: `gate_971.mjs` **12/12 on 971; RED with 9 named failures on the 970 control**,
+including both halves of the inversion and the inert button measured by colour · shipped
+`threadHtml` and `priceOf` extracted and executed, never re-implemented · `check_build.py`
+green with marker + negative control · `sentinel.js` clean.
+
 ## Build 970 — Publish acts on the estimate you have open (21 Aug 2026)
 
 **The failure this prevents, reproduced on the 969 control:** ask `pickEstimate`
