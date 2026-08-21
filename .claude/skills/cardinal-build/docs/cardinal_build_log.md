@@ -20497,6 +20497,81 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 982 — Community reads properly on the light theme (21 Aug 2026)
+
+The second half of **item 6, option 1**. Era A was built dark-first, and ten inks were declared
+once and never given a light value. Values computed by a five-agent measure pass, then each put in
+front of a skeptic told to refute it. **All five defects reproduced; the skeptic corrected three
+things that mattered.**
+
+### The reconciliation the skeptic caught
+
+Two agents independently wanted to declare `--ccm-warn` in the light block — one at `#8f6000`, one
+at `#8a6420`. **Declaring it twice is a duplicate; picking either silently is a coin toss.**
+Resolved to **`#805500`** — the value build 981 already shipped for the count badge and Theo has
+already seen, rather than inventing a second amber 981 builds later. Measured on every light
+ground it reaches:
+
+| ground | #805500 | #8f6000 | #8a6420 |
+|---|---:|---:|---:|
+| `--ccm-card` #ffffff | **6.53** | 5.47 | 5.35 |
+| #f7f8f7 | **6.13** | 5.14 | 5.03 |
+| `--ccm-ground` #f1f2f1 | **5.82** | 4.87 | 4.77 |
+| `--ccm-rdw` #fdecec (binding) | **5.71** | 4.79 | 4.69 |
+
+⚠️ **The badge fix was INERT without a second edit.** Re-pointing the base rule to `var(--warn)`
+does nothing while 981's `[data-theme="rb-light"]` override still wins. Both had to move in the
+same edit — and because the token's light half IS `#805500`, the badge renders the identical colour
+it rendered yesterday. A pure re-pointing.
+
+### The three grounds, and why they do not all behave the same
+
+⚠️ **The gate found a third amber ground nobody's proposal mentioned**, and it split the rule:
+
+| ground | carries | treatment |
+|---|---|---|
+| `.ev .doit`, `.sheet .duebar button` | near-black `--ccm-onwarn` text | **must NOT flip** — `--warnsolid`. Flipping would drop the ink to 3.35:1 |
+| `.ev.now::before` | nothing — a 9px marker dot | **SHOULD flip** — keeps `var(--warn)`. `#805500` on white is 6.53:1 where bright amber is 1.46:1 and all but vanishes |
+
+The first version of assertion 3 forbade *all* `background:var(--warn)` and failed correct code —
+which is how the third ground was found at all.
+
+### What else moved
+
+- **`--ccm-nowfill` was referenced once and declared nowhere**, so its `#321a1c` fallback *was* the
+  palette. Declared as a real pair; `#cr-cc .ev.now .txt`'s single-theme grey was **deleted** rather
+  than twinned, because with the band flipping the text inherits `--ccm-mute` at 6.24:1 and needs no
+  rule.
+- **Three light twins**, dark rules byte-identical: `.pin .facts .k` 1.44 → **7.46**, `.ccwo-st.disp`
+  2.13 → **5.49**, `.ccwo-st.done` 1.55 → **5.48**. ⚠️ Stated plainly: `.done` **shifts hue 24°**
+  (green → teal) because it adopts `--ccm-ac`; the other two hold hue. A token pair beats a computed
+  literal, but it is not the same move and should not be described as one.
+- **`.ct.bill` — the headline.** The funding-partner cell filled padding-box with a *translucent*
+  wash over an opaque gradient border-box, so in dark the border flooded the cell. New
+  `--ccm-washfill` pair; the two-layer form is kept, because swapping the fill any other way loses
+  the gradient border. **Measured in the gate: BILL TO 2.70:1 on 979 → 7.90:1 now.**
+- **Community Analytics: all five inks, or none.** The skeptic rejected doing two —
+  *"fixing two of five leaves the overdue marker less legible than the merely-due one."*
+
+Verification: check_build green (981 → 982). **gate_982.mjs 10/10 GREEN, RED on the 979 control
+with 7 named failures**, and the control prints the real defect (BILL TO at 2.70:1 dark).
+gate_sweep 967–982. Sentinel 13, unchanged.
+
+⚠️ **THE MEASURING RIG WAS WRONG TWICE, and both are the traps this file already records.**
+1. The first version walked the ancestors, collected every gradient stop and scored the ink against
+   the **worst**. But `.ct.bill` paints `<fill> padding-box, <ring> border-box`, and
+   `.ct.bill .k`'s ink **is one of the ring's stops** — so it reported **1.00:1 in both themes** for
+   text that is perfectly legible. *A border gradient is not the ground under the glyph.*
+2. The replacement sampled a real pixel — at the element's own left edge, which for a text node is
+   **full of glyph**. It reported BILL TO at 2.00:1 by measuring the letters.
+   Fixed by walking up to the nearest ancestor that actually paints a fill, then probing its padding
+   box with `elementFromPoint` for a spot with nothing drawn on it. The numbers then matched the
+   independent agent renders **to two decimals** (`.ct.bill .k` light 5.21:1 in both).
+
+⚠️ **And the harness does not mount all six surfaces on every run** — which tab is open, and whether
+a crew work order exists, vary. Requiring all six made the gate flap. It now requires the pair that
+IS this build's defect and **reports the rest as unmeasurable** rather than passing over them.
+
 ## Build 981 — one job menu (21 Aug 2026)
 
 Item 7 of the Community program. Theo's picks: **A1 B1 C1 D1.**

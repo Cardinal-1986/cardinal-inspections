@@ -2,7 +2,7 @@
 
 ---
 
-## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–981 (the UX audit follow-through)
+## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–982 (the UX audit follow-through)
 
 Source: `CR_UX_AUDIT_2026-08-21.md` / `.csv` — an end-to-end design and ease-of-use audit across
 every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60 P2, 55 P3.
@@ -47,6 +47,18 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
   Estimates and Appointments opened the Schedule Board; and `#jobMenuSel` / `#woQuick` were visible
   and inert on every community job at every width. ⚠️ **Still open: retiring `#jaGrid`** — 5 of its
   11 references are functional, so it is its own build
+
+- **982** item 6 done. Ten single-theme inks got light values; five new `--ccm-*` pairs; the
+  funding-partner cell stopped flooding (BILL TO 2.70 → 7.90:1 dark). **The seven-item Community
+  program is complete.**
+
+**STILL OPEN, both worth doing, neither started:**
+- **64 invalid `font:<w> <s> inherit` declarations outside Community — 24 of them in the Showcase**,
+  the client-facing presentation surface. Same defect 980 fixed; same one-line-per-rule repair.
+- **Retiring `#jaGrid`** — 5 of its 11 references are functional (markup, writer, router,
+  `cr-pp-script`'s punch anchor, the old scrape). Needs its own build.
+- `--cr-amber`'s light half `#C87A00` measures **3.37:1** on white — under the floor, on the
+  coach/pricing/claims/adjusters mounts. Found while choosing 981's badge colour; not investigated.
 
 **SETTLED, 21 Aug — item 6 is option 1 and item 7 is A1/B1/C1/D1.** Theo picked both. Option 1 is
 shipping in two halves: 980 the typography, 981 the colour (`--warn` as a theme pair,

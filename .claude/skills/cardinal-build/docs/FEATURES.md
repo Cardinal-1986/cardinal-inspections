@@ -6334,3 +6334,29 @@ Gate: `gate_981.mjs` — 13 assertions, control red 8 named. ⚠️ **It seeds i
 the harness has none, so `#cr-cc` never mounts and an unseeded drive passes vacuously against a
 retail profile. It asserts the card mounted before believing anything else, and asserts
 `wasSuspended` before claiming Overview restored it.
+
+## Community's light theme, finished (build 982) — `cr-ch2-styles`, `cr-cc-styles`, `cr-can-styles`
+
+The second half of item 6 option 1. Five new `--ccm-*` pairs — `--ccm-warn`, `--ccm-warnsolid`,
+`--ccm-onwarn`, `--ccm-nowfill`, `--ccm-washfill` — declared in **both** theme blocks, so the
+namespace's no-orphans invariant holds (32 names → 37 in each).
+
+⚠️ **`--ccm-warn` light is `#805500`** — the value 981 already shipped, not a second amber. Worst
+light ground `--ccm-rdw` #fdecec at **5.71:1**.
+
+⚠️ **Three amber grounds, two behaviours.** A ground that CARRIES TEXT must not flip or its ink
+breaks (`--warnsolid`); a ground that carries nothing SHOULD flip to stay visible (the `.ev.now`
+marker dot keeps `var(--warn)`: 6.53:1 in light where bright amber is 1.46:1).
+
+⚠️ **`--ccm-nowfill` was referenced once and declared nowhere** — the fallback was the palette.
+
+⚠️ **`.ct.bill`'s two-layer `padding-box` / `border-box` form is load-bearing.** Swap the FILL in the
+same shape or the gradient border disappears. Fix it LOCALLY — `--ccm-wash` has 7 references and
+only one is this fill.
+
+Gate: `gate_982.mjs` — 10 assertions, control red 7 named, and the control prints the defect
+(BILL TO 2.70:1 dark). ⚠️ **It reads a REAL PIXEL**, not a computed composite: two earlier versions
+scored the ink against the border gradient (1.00:1 for legible text) and then against the glyph
+itself (2.00:1). It walks to the nearest fill-painting ancestor and probes with `elementFromPoint`
+for an unobstructed spot. It also reports surfaces the harness did not mount rather than skipping
+them silently.

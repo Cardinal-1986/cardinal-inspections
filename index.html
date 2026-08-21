@@ -3690,7 +3690,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 981 &#8212; one job menu. The community card was mirroring a menu retired three years of builds ago, so Contracts opened Estimates and Appointments opened the company Schedule Board. It now mirrors the real one &#8212; same list, same icons, and the two dead controls in the header work again</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 982 &#8212; Community reads properly on the light theme. Ten colours were set once and never given a light version, so on the white card they ran from washed out to invisible &#8212; the due countdown, the crew status chips, the analytics figures. And the funding partner cell no longer floods green in dark mode</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41221,6 +41221,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:982, d:'2026-08-21', t:'Community reads properly on the light theme',
+s:'The Community screens were built dark first, and ten colours were set once and never given a light version. On the white card they ran from washed out to effectively invisible: the due-date countdown and the amber figures measured 1.5:1 where 4.5:1 is the readable floor, the key labels on the pinned job card 1.4:1, and the Dispatched and Completed chips on a crew work order 2.1:1. All of them now have a light value chosen by arithmetic rather than by eye, and every dark colour is untouched \u2014 nothing you see today changes. One amber is used everywhere it is needed instead of four near-copies, and the same goes for the greens and the overdue red, so a colour changed once is changed everywhere. Two other things went with it. The \u201Cnow\u201D band on a job\u2019s activity had a colour it could never flip, because the value only existed as a fallback; it flips now. And the funding partner cell \u2014 the one that says who is being billed \u2014 was letting its green border bleed across the whole cell in dark mode, which left BILL TO and the partner\u2019s name sitting at 1.2:1. It has a solid fill now and reads at full strength. Community Analytics is included, all five of its figures, rather than half.' },
 { b:981, d:'2026-08-21', t:'One job menu',
 s:'The job menu on a community card was a copy of a menu that was retired at build 348 and has not been on screen since. Nobody could see the original, so nobody could see it had gone stale \u2014 which is why Contracts opened the Estimates tab, Appointments opened the company Schedule Board instead of the job\u2019s own appointments, and nine of the ten labels still carried the old emoji. It now mirrors the menu the rest of the app uses: same entries, same drawn icons, and the counts are the real ones. Seven destinations that had no working door on a community job \u2014 Tasks, Documents, this job\u2019s Appointments, Measurements, Contracts, Commissions and Work Orders \u2014 open now. Checklists was only reachable through the old copy, so it has been added to the shared menu rather than lost; retail gets it too. Two controls in the client header, the job dropdown and the Work Orders button, have been visible and completely inert on every community job at every screen size: they now work, and they were fixed at the one place every screen already goes through rather than one at a time. Tapping \u2039 Overview brings the black card back instead of dropping you onto the full retail page, which had stage arrows that could move a bid\u2019s stage without recording any of the bid. And the little count badge on each button, which was invisible on the light theme, is readable.' },
 { b:980, d:'2026-08-21', t:'Community looks the way it was drawn',
@@ -55474,6 +55476,16 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
 --ccm-line:#2a2f2c;--ccm-line2:#232725;
 --ccm-ac:#34D399;--ccm-ac2:#6EE7B7;--ccm-wash:rgba(4,120,87,.18);--ccm-washln:#047857;
 --ccm-rd:#ff6b78;--ccm-rdw:rgba(200,32,46,.16);--ccm-rdln:rgba(255,107,120,.34);
+/* 982: three pairs the Community palette was missing.
+   --ccm-warn is the caution INK and flips. --ccm-warnsolid is the amber GROUND
+   and deliberately does NOT flip: near-black on light amber is already correct
+   in both themes (12.55:1), and flipping it would drop --ccm-onwarn to 3.35:1.
+   --ccm-nowfill was REFERENCED once and DECLARED NOWHERE, so its #321a1c
+   fallback was the palette and could not flip. --ccm-washfill is the opaque
+   fill for .ct.bill, whose translucent wash let the gradient border flood the
+   funding-partner cell in dark. */
+--ccm-warn:#ffcf6b;--ccm-warnsolid:#ffcf6b;--ccm-onwarn:#1a1405;
+--ccm-nowfill:#321a1c;--ccm-washfill:#132A23;
 --ccm-chip:#242927;--ccm-chipink:#b8c1bd;
 --ccm-program:#c4ccc8;--ccm-programbg:#252a27;
 --ccm-pm:#e8c874;--ccm-pmbg:#332b16;
@@ -55497,6 +55509,14 @@ window.CardinalInsClients = { render: render, sort: function(k){ sortBy = k; ren
 --ccm-line:#d9d9d9;--ccm-line2:#e8e9e8;
 --ccm-ac:#047857;--ccm-ac2:#065F46;--ccm-wash:#ECFDF5;--ccm-washln:#a7d9c6;
 --ccm-rd:#C8202E;--ccm-rdw:#fdecec;--ccm-rdln:#f2c9cc;
+/* 982: the light halves. #805500 is the SAME amber deepened (H 39.8 vs 40.5),
+   and it is the value build 981 already shipped for the count badge — one
+   amber across Community rather than a second one invented 981 builds later.
+   Computed on every light ground it reaches: 6.53 on --ccm-card #ffffff,
+   6.13 on #f7f8f7, 5.82 on --ccm-ground #f1f2f1, and 5.71 on --ccm-rdw
+   #fdecec, which is the binding one. Worst case 5.71:1. */
+--ccm-warn:#805500;--ccm-warnsolid:#ffcf6b;--ccm-onwarn:#1a1405;
+--ccm-nowfill:#fff1f1;--ccm-washfill:#ECFDF5;
 --ccm-chip:#ececec;--ccm-chipink:#4a5350;
 --ccm-program:#454b48;--ccm-programbg:#ececec;
 --ccm-pm:#8a6420;--ccm-pmbg:#faf0d8;
@@ -56981,16 +57001,24 @@ estTotal : function(pid){ return Number(estTot[pid]) || 0; },
    --warn stays amber: it is not blue, and it is the only non-red caution. */
 #cr-cc{--ground:var(--ccm-ground);--card:var(--ccm-card);--raise:var(--ccm-raise);
 --ink:var(--ccm-ink);--mute:var(--ccm-mute);--dim:var(--ccm-dim);
---a1:var(--ccm-ac);--a2:var(--ccm-ac2);--accent:var(--ccm-ac);--warn:#ffcf6b;
+--a1:var(--ccm-ac);--a2:var(--ccm-ac2);--accent:var(--ccm-ac);--warn:var(--ccm-warn,#ffcf6b);--warnsolid:var(--ccm-warnsolid,#ffcf6b);
 --good:var(--ccm-ac);--bad:var(--ccm-rd);
 --heroA:var(--ccm-raise);--urgent:var(--ccm-rdw);--nowfill:var(--ccm-nowfill,#321a1c);--line:var(--ccm-line);
---glow:var(--ccm-glow);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;margin:18px 0 14px;color:var(--ink);position:relative;z-index:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-cc .pin{border-radius:13px;overflow:hidden;margin-bottom:12px;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .pin .t{display:flex;align-items:flex-start;gap:12px;padding:15px 16px 12px}#cr-cc .pin .t .nm{flex:1;min-width:0}#cr-cc .pin .t .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.18}#cr-cc .pin .t .nm small{display:block;font-size:11.5px;color:var(--mute);margin-top:4px}#cr-cc .pin .t .amt{flex:0 0 auto;text-align:right}#cr-cc .pin .t .amt b{display:block;font:700 20px var(--mono);color:var(--good);line-height:1}#cr-cc .pin .t .amt small{display:block;font:700 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}#cr-cc .pin .facts{display:flex;border-top:1px solid var(--line)}#cr-cc .pin .facts div{flex:1;padding:11px 8px;text-align:center;border-right:1px solid var(--line)}#cr-cc .pin .facts div:last-child{border-right:0}#cr-cc .pin .facts .k{font:800 9.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#c8d3cd}#cr-cc .pin .facts .v{font:800 16px var(--mono);margin-top:5px;color:var(--ink)}#cr-cc .pin .facts .v.hot{color:var(--warn)}#cr-cc .tabbar{display:flex;border-bottom:1px solid var(--line);margin-bottom:14px}#cr-cc .tabbar button{flex:1;position:relative;background:transparent;border:0;cursor:pointer;padding:11px 8px 12px;font-family:inherit;color:var(--dim);font-weight:700;font-size:12.5px}#cr-cc .tabbar button.on{color:var(--ink)}#cr-cc .tabbar button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2))}#cr-cc [data-cpane]{display:none}#cr-cc [data-cpane].on{display:block}#cr-cc .thread{position:relative;padding-left:22px}#cr-cc .thread::before{content:'';position:absolute;left:5px;top:6px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--a1),var(--a2));opacity:.35}#cr-cc .ev{position:relative;margin-bottom:9px}#cr-cc .ev::before{content:'';position:absolute;left:-21px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ground);border:2px solid var(--accent)}#cr-cc .ev.now::before{background:var(--warn);border-color:var(--warn);box-shadow:0 0 0 4px var(--urgent)}#cr-cc .ev .box{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ev.now .box{background:linear-gradient(var(--nowfill),var(--nowfill)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box}
+--glow:var(--ccm-glow);--mono:ui-monospace,'SF Mono',Menlo,monospace;--serif:Georgia,'Times New Roman',serif;margin:18px 0 14px;color:var(--ink);position:relative;z-index:1;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-cc .pin{border-radius:13px;overflow:hidden;margin-bottom:12px;box-shadow:var(--glow);background:linear-gradient(160deg,var(--heroA),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .pin .t{display:flex;align-items:flex-start;gap:12px;padding:15px 16px 12px}#cr-cc .pin .t .nm{flex:1;min-width:0}#cr-cc .pin .t .nm b{display:block;font-family:var(--serif);font-weight:700;font-size:19px;line-height:1.18}#cr-cc .pin .t .nm small{display:block;font-size:11.5px;color:var(--mute);margin-top:4px}#cr-cc .pin .t .amt{flex:0 0 auto;text-align:right}#cr-cc .pin .t .amt b{display:block;font:700 20px var(--mono);color:var(--good);line-height:1}#cr-cc .pin .t .amt small{display:block;font:700 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-top:4px}#cr-cc .pin .facts{display:flex;border-top:1px solid var(--line)}#cr-cc .pin .facts div{flex:1;padding:11px 8px;text-align:center;border-right:1px solid var(--line)}#cr-cc .pin .facts div:last-child{border-right:0}#cr-cc .pin .facts .k{font:800 9.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#c8d3cd}
+/* 982: #c8d3cd is 10.46:1 dark and 1.44:1 light. Light twin only. */
+[data-theme="rb-light"] #cr-cc .pin .facts .k{color:var(--ccm-chipink,#4a5350)}#cr-cc .pin .facts .v{font:800 16px var(--mono);margin-top:5px;color:var(--ink)}#cr-cc .pin .facts .v.hot{color:var(--warn)}#cr-cc .tabbar{display:flex;border-bottom:1px solid var(--line);margin-bottom:14px}#cr-cc .tabbar button{flex:1;position:relative;background:transparent;border:0;cursor:pointer;padding:11px 8px 12px;font-family:inherit;color:var(--dim);font-weight:700;font-size:12.5px}#cr-cc .tabbar button.on{color:var(--ink)}#cr-cc .tabbar button.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--a1),var(--a2))}#cr-cc [data-cpane]{display:none}#cr-cc [data-cpane].on{display:block}#cr-cc .thread{position:relative;padding-left:22px}#cr-cc .thread::before{content:'';position:absolute;left:5px;top:6px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--a1),var(--a2));opacity:.35}#cr-cc .ev{position:relative;margin-bottom:9px}#cr-cc .ev::before{content:'';position:absolute;left:-21px;top:14px;width:9px;height:9px;border-radius:50%;background:var(--ground);border:2px solid var(--accent)}#cr-cc .ev.now::before{background:var(--warn);border-color:var(--warn);box-shadow:0 0 0 4px var(--urgent)}#cr-cc .ev .box{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ev.now .box{background:linear-gradient(var(--nowfill),var(--nowfill)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box}
 #cr-cc .ev.now .eh b{color:var(--ink)}
-#cr-cc .ev.now .txt{color:#d8cfc9}#cr-cc .ev .eh{display:flex;align-items:baseline;gap:9px}#cr-cc .ev .eh b{flex:1;font-weight:700;font-size:13px}#cr-cc .ev .eh .when{font:700 10px var(--mono);color:var(--dim);white-space:nowrap}#cr-cc .ev .txt{font-size:12.5px;color:var(--mute);line-height:1.55;margin-top:5px}#cr-cc .ev .who{font-size:10.5px;color:var(--dim);margin-top:6px}/* two actions side by side, so the Prospect state can say Awarded / Not
+/* 982: this rule pinned a single-theme grey that read 10.53:1 dark and
+   inverted in light. Deleted rather than twinned: with --ccm-nowfill declared
+   as a real pair the band flips on its own and the text inherits --ccm-mute,
+   which is 6.24:1 on the light band and needs no rule of its own.
+   ⚠ The old value is deliberately NOT spelled out here — a comment quoting the
+   literal it retires is exactly what makes a later count come back non-zero,
+   and this build's own verification tripped on it. */#cr-cc .ev .eh{display:flex;align-items:baseline;gap:9px}#cr-cc .ev .eh b{flex:1;font-weight:700;font-size:13px}#cr-cc .ev .eh .when{font:700 10px var(--mono);color:var(--dim);white-space:nowrap}#cr-cc .ev .txt{font-size:12.5px;color:var(--mute);line-height:1.55;margin-top:5px}#cr-cc .ev .who{font-size:10.5px;color:var(--dim);margin-top:6px}/* two actions side by side, so the Prospect state can say Awarded / Not
    awarded instead of one button that could mean either */
 #cr-cc .doits{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 #cr-cc .ev .doit{margin-top:0}
-#cr-cc .ev .doit{margin-top:9px;background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font-weight:800;font-size:11.5px;font-family:inherit}
+#cr-cc .ev .doit{margin-top:9px;background:var(--warnsolid,#ffcf6b);color:var(--ccm-onwarn,#1a1405);border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font-weight:800;font-size:11.5px;font-family:inherit}
 /* 971: this rule used to sit ABOVE the two above it at equal specificity, so the
    later one re-set background/border/color and the secondary button rendered
    identical to the primary. Moved last and scoped into .ev so it can win. */
@@ -57004,7 +57032,7 @@ estTotal : function(pid){ return Number(estTot[pid]) || 0; },
    scope - the value was invalid, so the browser dropped the whole
    declaration and the gradient border went with it. --ccm-wash is what
    --goodbg resolves to in the hub; the literal is per the 448-449 rule. */
-background:linear-gradient(var(--ccm-wash,rgba(4,120,87,.18)),var(--ccm-wash,rgba(4,120,87,.18))) padding-box,var(--ccm-edge2,linear-gradient(125deg,#047857,#34D399)) border-box}
+background:linear-gradient(var(--ccm-washfill,#132A23),var(--ccm-washfill,#132A23)) padding-box,var(--ccm-edge2,linear-gradient(125deg,#047857,#34D399)) border-box}
 #cr-cc .ct.bill .k{color:var(--a1)}
 #cr-cc .k.b{color:var(--a1)}
 #cr-cc .ct .k{display:flex;align-items:center;gap:6px}
@@ -57012,7 +57040,7 @@ background:linear-gradient(var(--ccm-wash,rgba(4,120,87,.18)),var(--ccm-wash,rgb
   border-radius:7px;border:1px solid var(--line);background:var(--heroA);
   color:var(--a1);font-size:13px;line-height:1;cursor:pointer;padding:0;
   display:flex;align-items:center;justify-content:center}
-#cr-cc .ct-edit:active{background:var(--card)}#cr-cc .sheet .lines{padding:5px 7px}#cr-cc .sheet .ln{display:flex;align-items:baseline;gap:11px;padding:10px 10px;border-radius:7px}#cr-cc .sheet .ln:nth-child(odd){background:rgba(255,255,255,.02)}#cr-cc .sheet .ln .d{flex:1;min-width:0}#cr-cc .sheet .ln .d b{display:block;font-weight:600;font-size:13px}#cr-cc .sheet .ln .d small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}#cr-cc .sheet .ln .q{flex:0 0 auto;font:700 11.5px var(--mono);color:var(--dim)}#cr-cc .sheet .ln .p{flex:0 0 auto;min-width:72px;text-align:right;font:700 12.5px var(--mono);color:var(--mute)}#cr-cc .sheet .tot{display:flex;align-items:baseline;gap:12px;padding:14px 16px;border-top:1px solid var(--line);background:var(--raise)}#cr-cc .sheet .tot .k{flex:1;font:800 9px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .tot .v{font:700 24px var(--mono);letter-spacing:-.02em;color:var(--good)}#cr-cc .sheet .duebar{display:flex;align-items:center;gap:11px;padding:12px 16px;background:var(--urgent);border-top:1px solid var(--line)}#cr-cc .sheet .duebar .d{font:700 19px var(--mono);color:var(--warn);line-height:1}#cr-cc .sheet .duebar .x{flex:1;font-size:11.5px;color:var(--mute);line-height:1.4}#cr-cc .sheet .duebar button{background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:9px 13px;cursor:pointer;font-weight:800;font-size:11.5px;font-family:inherit;white-space:nowrap}#cr-cc .nobid{padding:26px 18px;text-align:center}#cr-cc .nobid p{font-size:13px;color:var(--dim);line-height:1.6;margin:0 0 14px}#cr-cc .nobid button{background:linear-gradient(120deg,var(--a1),var(--a2));color:var(--ccm-onac);border:0;border-radius:8px;padding:11px 18px;cursor:pointer;font-weight:800;font-size:12.5px;font-family:inherit}#cr-cc .cts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}#cr-cc .ct{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ct .k{font:800 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}#cr-cc .ct .v{font-weight:700;font-size:13px;margin-top:5px}#cr-cc .ct .v a{color:var(--accent);text-decoration:none;font-weight:400;font-size:11.5px;display:block;margin-top:2px}#cr-cc .ct .held{font-weight:400;font-size:11.5px;color:var(--dim);margin-top:5px;line-height:1.45}#cr-cc .ct.none .v{color:var(--dim);opacity:.6}#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none !important}#projectView.cr-cc-own{background:var(--ccm-ground) !important}body.cr-cc-open{background:var(--ccm-ground)}body.cr-cc-open footer.site{display:none}@media (min-width:900px){
+#cr-cc .ct-edit:active{background:var(--card)}#cr-cc .sheet .lines{padding:5px 7px}#cr-cc .sheet .ln{display:flex;align-items:baseline;gap:11px;padding:10px 10px;border-radius:7px}#cr-cc .sheet .ln:nth-child(odd){background:rgba(255,255,255,.02)}#cr-cc .sheet .ln .d{flex:1;min-width:0}#cr-cc .sheet .ln .d b{display:block;font-weight:600;font-size:13px}#cr-cc .sheet .ln .d small{display:block;font-size:10.5px;color:var(--dim);margin-top:2px}#cr-cc .sheet .ln .q{flex:0 0 auto;font:700 11.5px var(--mono);color:var(--dim)}#cr-cc .sheet .ln .p{flex:0 0 auto;min-width:72px;text-align:right;font:700 12.5px var(--mono);color:var(--mute)}#cr-cc .sheet .tot{display:flex;align-items:baseline;gap:12px;padding:14px 16px;border-top:1px solid var(--line);background:var(--raise)}#cr-cc .sheet .tot .k{flex:1;font:800 9px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .tot .v{font:700 24px var(--mono);letter-spacing:-.02em;color:var(--good)}#cr-cc .sheet .duebar{display:flex;align-items:center;gap:11px;padding:12px 16px;background:var(--urgent);border-top:1px solid var(--line)}#cr-cc .sheet .duebar .d{font:700 19px var(--mono);color:var(--warn);line-height:1}#cr-cc .sheet .duebar .x{flex:1;font-size:11.5px;color:var(--mute);line-height:1.4}#cr-cc .sheet .duebar button{background:var(--warnsolid,#ffcf6b);color:var(--ccm-onwarn,#1a1405);border:0;border-radius:7px;padding:9px 13px;cursor:pointer;font-weight:800;font-size:11.5px;font-family:inherit;white-space:nowrap}#cr-cc .nobid{padding:26px 18px;text-align:center}#cr-cc .nobid p{font-size:13px;color:var(--dim);line-height:1.6;margin:0 0 14px}#cr-cc .nobid button{background:linear-gradient(120deg,var(--a1),var(--a2));color:var(--ccm-onac);border:0;border-radius:8px;padding:11px 18px;cursor:pointer;font-weight:800;font-size:12.5px;font-family:inherit}#cr-cc .cts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}#cr-cc .ct{border-radius:10px;padding:11px 13px;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .ct .k{font:800 7.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}#cr-cc .ct .v{font-weight:700;font-size:13px;margin-top:5px}#cr-cc .ct .v a{color:var(--accent);text-decoration:none;font-weight:400;font-size:11.5px;display:block;margin-top:2px}#cr-cc .ct .held{font-weight:400;font-size:11.5px;color:var(--dim);margin-top:5px;line-height:1.45}#cr-cc .ct.none .v{color:var(--dim);opacity:.6}#projectView.cr-cc-own>*:not(#cr-cc):not(#dangerZone){display:none !important}#projectView.cr-cc-own{background:var(--ccm-ground) !important}body.cr-cc-open{background:var(--ccm-ground)}body.cr-cc-open footer.site{display:none}@media (min-width:900px){
   /* 440: this module had no @media and no max-width at all, so on a monitor
      every row stretched the full viewport. Cap and centre; phones unaffected. */
   #cr-cc{max-width:1040px;margin-left:auto;margin-right:auto}
@@ -57030,15 +57058,11 @@ background:linear-gradient(var(--ccm-wash,rgba(4,120,87,.18)),var(--ccm-wash,rgb
    text. ⚠ Deliberately a SEPARATE rule — the neighbouring
    `#cr-cc .cc-jmb .l{...}` was repaired at 980 and is not this build's. */
 #cr-cc .cc-jmb svg{width:17px;height:17px;flex:0 0 auto;fill:currentColor;opacity:.85}
-#cr-cc .cc-jmb .l{flex:1 1 auto}#cr-cc .cc-jmb .l{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:#ffcf6b}
-/* 981 (Theo's C1): that amber is 12.13:1 on the dark card and 1.46:1 on the
-   white one — the badge was effectively invisible in light mode. Light twin
-   only; the dark rule above is untouched byte-for-byte, which is the shape
-   545/557 set. #805500 is the SAME hue deepened (39.8 vs 40.5) rather than a
-   different colour, so the two themes read as one component: 6.53:1 on
-   --ccm-card #ffffff. ⚠ Not --cr-amber's light half (#C87A00) — measured
-   3.37:1 on white, under the floor, and scoped to module mounts anyway. */
-:root[data-theme="rb-light"] #cr-cc .cc-jmb .n{color:#805500}#cr-cc .cc-jmb .n.z{color:var(--ccm-dim);opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:var(--ccm-dim)}
+#cr-cc .cc-jmb .l{flex:1 1 auto}#cr-cc .cc-jmb .l{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#cr-cc .cc-jmb .n{font:700 13px ui-monospace,Menlo,monospace;color:var(--warn,#ffcf6b)}
+/* 981 shipped this as a one-rule light twin; 982 promoted the value into
+   --ccm-warn, so the override is retired and the badge reads the token like
+   every neighbour. Same rendered colour, #805500 / 6.53:1 — a re-pointing,
+   not a change. */#cr-cc .cc-jmb .n.z{color:var(--ccm-dim);opacity:.6}#cr-cc .cc-loc{border-radius:12px;overflow:hidden;background:linear-gradient(var(--ccm-card),var(--ccm-card)) padding-box,var(--ccm-edge2) border-box;border:1px solid transparent;padding:10px}#cr-cc .cc-loc .acxsec{background:transparent !important;border:none !important;color:var(--ccm-ink) !important}#cr-cc .cc-rev .rvsec{background:transparent !important;border:none !important}#cr-cc .cc-loc .dbmap{border-radius:9px;overflow:hidden}#cr-cc .cc-quiet{padding:16px;font-size:12.5px;color:var(--ccm-dim)}
 /* 706: Partner & Property */
 #cr-cc .cc-pp{display:flex;flex-direction:column;padding:4px 6px}
 #cr-cc .cc-pp .pprow{padding:9px 8px;display:flex;flex-direction:column;gap:3px}
@@ -57059,7 +57083,14 @@ background:linear-gradient(var(--ccm-wash,rgba(4,120,87,.18)),var(--ccm-wash,rgb
 #cr-cc .cc-wo-crew .ccwo-t{font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--ccm-ink,#f2f4f3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #cr-cc .cc-wo-crew .ccwo-st{flex:0 0 auto;font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;padding:3px 9px;border-radius:8px;border:1px solid var(--ccm-line,#2a2f2c);color:var(--ccm-dim,#828c86)}
 #cr-cc .cc-wo-crew .ccwo-st.disp{color:#7fb4ff;border-color:#2b4a70}
+/* 982: holds hue to 0.1 degrees (215.2 -> 215.1). 2.13:1 -> 5.49:1 light. */
+[data-theme="rb-light"] #cr-cc .cc-wo-crew .ccwo-st.disp{color:#0060e7}
 #cr-cc .cc-wo-crew .ccwo-st.done{color:#7fd69a;border-color:#2e6d43}
+/* 982: ⚠ stated plainly — this one SHIFTS HUE (138.6 -> 162.9, green toward
+   teal), unlike the others which hold it. Still the right call: --ccm-ac is
+   already this module's own accent in light, and a token pair beats a
+   computed literal. Border left byte-identical, deliberately. */
+[data-theme="rb-light"] #cr-cc .cc-wo-crew .ccwo-st.done{color:var(--ccm-ac,#047857)}
 #cr-cc .cc-wo-crew .cc-wo-manage{margin-top:3px;background:transparent;border:1px solid var(--ccm-line,#2a2f2c);color:var(--ccm-ink,#f2f4f3);border-radius:7px;padding:8px 11px;cursor:pointer;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}
 #cr-cc .cc-wo-crew .cc-wo-manage:active{background:var(--ccm-line,#2a2f2c)}
 /* 709: the Recorded line on the Bid pane (ported from the cream strip) */
@@ -59986,16 +60017,16 @@ body.standalone #cr-can{padding-bottom:calc(88px + env(safe-area-inset-bottom,0p
 #cr-can .stat{background:linear-gradient(var(--ccm-card,#161918),var(--ccm-card,#161918)) padding-box,linear-gradient(125deg,var(--ccm-ac,#34D399),var(--ccm-ink,#f2f4f3)) border-box;border:1px solid transparent;border-radius:12px;padding:12px 13px}
 #cr-can .stat .k{font:800 9.5px ui-monospace,Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--ccm-dim,#7d8781)}
 #cr-can .stat .v{font:800 22px ui-monospace,Menlo,monospace;margin-top:4px}
-#cr-can .stat .v.good{color:#7fe3b0}
-#cr-can .stat .v.warn{color:#ffcf6b}
+#cr-can .stat .v.good{color:var(--ccm-ac,#34D399)}
+#cr-can .stat .v.warn{color:var(--ccm-warn,#ffcf6b)}
 #cr-can .sect{display:flex;align-items:center;gap:10px;margin:20px 0 8px;font:800 10px ui-monospace,Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ccm-dim,#7d8781)}
 #cr-can .sect::after{content:"";flex:1;height:1px;background:rgba(4,120,87,.18)}
 #cr-can .prow{display:flex;align-items:center;gap:10px;background:var(--ccm-card,#161918);border:1px solid rgba(4,120,87,.16);border-radius:11px;padding:11px 13px;margin-bottom:7px}
 #cr-can .prow b{flex:1;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #cr-can .prow small{color:var(--ccm-dim,#7d8781);font-size:11.5px}
-#cr-can .prow .m{font:800 13px ui-monospace,Menlo,monospace;color:#7fe3b0}
-#cr-can .prow .d{font:800 12px ui-monospace,Menlo,monospace;color:#ffcf6b;min-width:34px;text-align:right}
-#cr-can .prow .d.hot{color:#ff8f8f}
+#cr-can .prow .m{font:800 13px ui-monospace,Menlo,monospace;color:var(--ccm-ac,#34D399)}
+#cr-can .prow .d{font:800 12px ui-monospace,Menlo,monospace;color:var(--ccm-warn,#ffcf6b);min-width:34px;text-align:right}
+#cr-can .prow .d.hot{color:var(--ccm-rd,#ff6b78)}
 #cr-can .bar{display:flex;align-items:center;gap:10px;margin-bottom:7px}
 #cr-can .bar .lb{width:64px;font:700 11px ui-monospace,Menlo,monospace;color:var(--ccm-dim,#7d8781)}
 #cr-can .bar .tr{flex:1;height:20px;background:var(--ccm-card,#161918);border:1px solid rgba(4,120,87,.14);border-radius:7px;overflow:hidden}
