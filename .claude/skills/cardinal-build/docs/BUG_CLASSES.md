@@ -3232,9 +3232,24 @@ in the bar's band with no way to move it out"*. A sheet can sit under the bar an
 - `scripts/sweep_navclear.py index.html` — lists overlays below the bar in z-order **and** every
   element carrying an explicit `body.standalone` clearance, because the first list alone misleads.
 
-Cleared so far: `#projModal .projform` (595), `#sigModal`, `#cr-pb-modal .sheet` (935),
-`#cr-abc .bd` (120px, its own), and at 962 `#cr-est-picker .box-list`, `.cr-psheet`,
-`.paymodal-bd`, `.cr-cadj-bd`. **Not done:** the full-height panes — `#cr-est-view`, `#cr-show`,
-`#cr-owner`, `#cr-ped`, `#cr-can`, `#cr-sc-panel`, `#cr-ce-view`, `#solModal`, `#cr-lil-view`,
-`#cr-itellab`, `#cr-epub-preview`. Each needs its own scrolling element identified; padding the
-wrong box does nothing at all.
+Cleared: `#projModal .projform` (595), `#sigModal`, `#cr-pb-modal .sheet` (935), `#cr-abc .bd`
+(120px, its own), `#cr-est-body` (150px, its own); at **962** `#cr-est-picker .box-list`,
+`.cr-psheet`, `.paymodal-bd`, `.cr-cadj-bd`; at **963** `#cr-owner`, `#cr-can`, `#cr-sc-panel`,
+`#cr-ce-view`, `#solModal`, `.cr-lil-list`, `.cr-itellab-body`, `#cr-epub-preview .pv-body`,
+`.cr-ped-tools`.
+
+⚠ **963's lesson: the padding belongs on the box that SCROLLS.** Five of those panes scroll
+themselves (`overflow-y:auto` on the pane) and take it directly. Four are `flex-direction:column`
+panes whose scroller is a BODY child — `.cr-lil-list`, `.cr-itellab-body`, `.pv-body` — and padding
+the pane there does nothing at all: a flex container is not the scrollport. `#cr-est-view`'s body
+(`.cr-est-body`) already carried 150px and needed nothing, which is only knowable by looking.
+
+⚠ **And one of them is not a scroller at all.** `.cr-ped-tools` is the photo editor's tool row:
+its 30px swatches simply *sat* in the bar's band, so the bar took the taps. Same shape as 935's
+*"Can't barely hit save button"*. Clearance still works — the toolbar's own background carries on
+behind the bar and only the controls move up — but nothing about scrolling was involved, so a
+scroll-shaped diagnosis would have missed it.
+
+**Deliberately excluded: `#cr-show`.** The client-facing Showcase is a presentation surface with
+`min-height:100vh` slides and settled design decisions; an 88px band at the bottom is a visual
+change to something already approved. Excluded on purpose, not overlooked.
