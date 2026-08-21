@@ -6309,3 +6309,28 @@ half works. Three real harness bugs were fixed on the way — a chain hidden by 
 `getComputedStyle` called on a **detached** node (which reports nothing, so the first repair
 silently did nothing), and `position:fixed` stacking 28 samples on top of each other — and the
 card-rooted half is still open.
+
+## One job menu (build 981) — `cr-cc-script` + the `.ja-menu` tail
+
+The community card's menu was a screen-scrape of `#jaGrid`, **retired at build 348** and painted
+out by `#tab-overview` on every profile. Invisible original, so nobody saw the copy go stale:
+Contracts opened Estimates, Appointments opened the company Schedule Board, and 9 of 10 labels
+carried pre-686 emoji. Driven before/after: **10 → 15 buttons, 0 → 14 drawn icons, 9 → 0 emoji.**
+
+**The real prize was two controls that render, update themselves and do nothing.** `#jobMenuSel`
+and `#woQuick` call `showTab`, which reveals `#tab-<x>` inside `.wrap` — hidden by the community
+takeover — and neither calls `suspendForTab()`. Inert at 390px *and* 1194px, so it was never the
+phone rule. Fixed by wrapping `showTab` at the chokepoint both already use, which also lets the
+mirror's dispatch delete its own suspend rule: one place owns "which acts suspend".
+
+⚠️ **ADOPT was tested and REJECTED.** Moving the live `.ja-menu` into the card duplicates four ids
+that async count-fills reach by `getElementById` (measured 1 → 2, no self-heal), because the next
+`renderOverview()` rebuilds it in place. Keep the mirror; re-point it; re-query at click time.
+
+⚠️ **`#jaGrid` is not deleted** — 5 of its 11 references are functional (markup, writer, router,
+`cr-pp-script`'s punch anchor, the old scrape). Retiring it is its own build.
+
+Gate: `gate_981.mjs` — 13 assertions, control red 8 named. ⚠️ **It seeds its own community job**:
+the harness has none, so `#cr-cc` never mounts and an unseeded drive passes vacuously against a
+retail profile. It asserts the card mounted before believing anything else, and asserts
+`wasSuspended` before claiming Overview restored it.

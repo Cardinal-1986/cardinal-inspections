@@ -20497,6 +20497,94 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 981 — one job menu (21 Aug 2026)
+
+Item 7 of the Community program. Theo's picks: **A1 B1 C1 D1.**
+
+### The name was misleading and the defect was worse
+
+"One Job Menu" reads as though the community card lacks one. **It has one** — ten buttons,
+rendering fine. The defect is where it gets them: `syncJobMenu()` is a DOM screen-scrape of
+`#jaGrid`, the Job Activity grid Keeper **retired at build 348**, which `#tab-overview` paints out
+with `display:none` on every profile. Nobody could see the original, so nobody could see the copy
+had gone stale while the real menu grew through 609, 652 and 849.
+
+Driven in Chromium on a seeded community job, before and after:
+
+| | 979 | 981 |
+|---|---:|---:|
+| mirror buttons | 10 | **15** |
+| carrying a drawn icon | 0 | **14** |
+| carrying pre-686 emoji | **9** | **0** |
+| Contracts / Work Orders / Measurements / Commissions | **all hidden** | **all visible** |
+
+Confirmed by clicking, on 979: **Contracts opened the Estimates tab** (the dead tile carries
+`data-ja="estimates"`) and **Appointments opened the company Schedule Board**, not the job's own.
+
+### Bigger than briefed: two controls that render, update themselves and do nothing
+
+`#jobMenuSel` and `#woQuick` are wired straight to `showTab`, which reveals `#tab-<x>` inside
+`.wrap` — hidden by the community takeover — and **neither calls `suspendForTab()`**. Worse,
+`showTab` does `if(sel.value !== name) sel.value = name`, so the dropdown moves its own label to
+"Contracts" while nothing happens. Measured inert at 390px **and** 1194px, so this was never the
+phone rule everyone suspected.
+
+**That is why the fix is a wrapper on `showTab` rather than three patches.** Both controls already
+go through it; so does any future caller. It also lets the mirror's dispatch delete its own
+`['comms','board','photos']` rule, so "which acts suspend" is answered in exactly one place.
+
+⚠️ **Three load-bearing details, each measured before it was designed on:**
+- **suspend AFTER `_showTab`** — it sets `#tab-<x>` to `display:block`, and `suspendForTab()` then
+  calls `takeOver(false)` which un-hides `.wrap` so that tab can paint. Same synchronous turn.
+- **the `getElementById('cr-cc')` guard is not decoration** — `suspendForTab()` calls
+  `ensurePill()` unconditionally, so a suspend fired before the card mounts leaves a "Back to bid
+  view" pill over a card that can now never mount.
+- **`overview` → `resumeFromTab()`** is Theo's D1. That chip used to drop a community job onto the
+  full retail profile — Convert to Insurance, Lead Source, and stage arrows that move the stage
+  **without writing any of the bid bookkeeping the black card writes**.
+
+### The shape that was tested and REJECTED
+
+The doctrine answer is ADOPT: the module already owns `adoptLocation()` / `adoptReviews()`, so
+move the live `.ja-menu` into the card. Tested in Chromium rather than reasoned about, and
+refuted — the next `renderOverview()` rebuilds `.ja-menu` in `#acxMount` while the adopted copy
+sits in `#cr-cc`, **duplicating four ids that async count-fills reach by `getElementById`**
+(measured 1 → 2, and it does not self-heal). Keep the mirror, re-point it, stop capturing nodes.
+
+⚠️ **`#jaGrid` is NOT deleted.** 11 bare hits: 5 functional (markup, the `innerHTML` writer, the
+click router, `cr-pp-script`'s anchor fallback, the old scrape) and 6 prose. Removing the grid
+without unpicking the router and the punch anchor is four dangling references. Retirement is its
+own build; the gate asserts the markup still exists.
+
+**A1** — Checklists existed only on the retired grid, so a straight re-point would have lost it.
+Added to the **one shared menu** (retail gains it too) rather than to the card alone, which is the
+fork this build exists to end. **B1** — the drawn icon is carried by `cloneNode`, never
+`outerHTML`, so the renderer stays escape-only. **C1** — the count badge measured 12.13:1 dark and
+**1.46:1 light**; it now has a light twin, `#805500` at 6.53:1, the same hue deepened (39.8° vs
+40.5°) rather than a different colour, with the dark rule untouched byte-for-byte. ⚠️ Not
+`--cr-amber`'s light half `#C87A00` — measured **3.37:1** on white, under the floor, and scoped to
+module mounts anyway.
+
+Verification: check_build green (980 → 981). **gate_981.mjs 13/13 GREEN, RED on the 979 control
+with 8 named failures and no crash.** gate_sweep 967–981 green. Sentinel 13, unchanged.
+
+⚠️ **The drive would have passed VACUOUSLY.** The sentinel harness seeds **no community project**,
+so `#cr-cc` never mounts, the mirror is never built, and the first run reported the header controls
+"VISIBLE" — from a *retail* job, where they always were. The gate now seeds a community job itself
+and asserts the card mounted before believing anything else. *A check that cannot fail is worse
+than no check, and this one was two lines from shipping as exactly that.*
+
+⚠️ **Assertion 7b only discriminates from a SUSPENDED state.** "Overview restores the card" passes
+trivially on 979, because nothing ever suspended there. The gate asserts `wasSuspended` first, so
+the control fails it honestly with *"never suspended, so this proved nothing"* rather than passing.
+
+### Correction to CLAUDE.md, found while choosing the badge colour
+
+CLAUDE.md states the three retired gold values *"(#d4a017, #f5d061, #8a5a00) are still at 0,
+asserted."* Measured: `#d4a017` 0 ✅, `#f5d061` 0 ✅, **`#8a5a00` is 1** — and it is live code, not
+prose: `st.style.color = (j.ok ? '#2e7d32' : '#8a5a00')`. The assertion is stale for that one
+value. Not touched here; recorded so the next colour sweep does not trust it.
+
 ## Build 980 — Community looks the way it was drawn (21 Aug 2026)
 
 Theo picked **item 6, option 1** ("repair Era A in place") and said *"start 6"*. This is the first

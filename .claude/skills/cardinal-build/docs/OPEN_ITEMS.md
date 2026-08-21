@@ -2,7 +2,7 @@
 
 ---
 
-## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–980 (the UX audit follow-through)
+## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–981 (the UX audit follow-through)
 
 Source: `CR_UX_AUDIT_2026-08-21.md` / `.csv` — an end-to-end design and ease-of-use audit across
 every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60 P2, 55 P3.
@@ -42,6 +42,11 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
   browser discarded weight and size and used its own default. Repaired with longhands. ⚠️ **64 of
   these remain elsewhere in the app, 24 of them in the Showcase** — that is a separate build and
   it is worth doing
+
+- **981** item 7 done. The community job menu mirrored a grid retired at 348, so Contracts opened
+  Estimates and Appointments opened the Schedule Board; and `#jobMenuSel` / `#woQuick` were visible
+  and inert on every community job at every width. ⚠️ **Still open: retiring `#jaGrid`** — 5 of its
+  11 references are functional, so it is its own build
 
 **SETTLED, 21 Aug — item 6 is option 1 and item 7 is A1/B1/C1/D1.** Theo picked both. Option 1 is
 shipping in two halves: 980 the typography, 981 the colour (`--warn` as a theme pair,
