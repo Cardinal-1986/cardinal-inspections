@@ -3129,3 +3129,12 @@ If a breakpoint removes the scrollport, it must reset the containment too.**
 declaration-level check stays red after a correct fix whenever a later rule resets the
 value, and it cannot see a scrollport that only exists at some widths. `gate_957.mjs` is
 the shape.
+
+✅ **This class now has a SENTINEL check (`CONTAIN`), so it is not prose any more.** Theo
+confirmed the cure on his phone ("Yes"), which is what promoted it: a class that has cost
+real usability and is invisible to Chromium gets the standing instrument, per the rule at
+the top of this file. `sentinel_probe.js` walks computed style per element every build;
+`sentinel_selftest.html` carries the firing/non-firing pair (`#contain-bad` must fire,
+`#contain-ok` — a genuine scroller that contains — must not). **Negative-controlled against
+the 956 tree, where it reports `div#pipeRow` across four screens**, so its silence on 957
+means something.

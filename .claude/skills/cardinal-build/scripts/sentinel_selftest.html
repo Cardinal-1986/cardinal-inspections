@@ -130,6 +130,16 @@
   #floorHost .floor-pad::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); height: 44px; }
 </style>
 
+<h2>CONTAIN — containment on a box with no scrollport (BUG_CLASSES 56)</h2>
+<div class="case">
+  <!-- fires: contains, but nothing to scroll -->
+  <div id="contain-bad" style="overscroll-behavior:contain;height:40px">dead to a finger on iOS</div>
+  <!-- must NOT fire: a real scroller that contains is correct -->
+  <div id="contain-ok" style="overscroll-behavior:contain;overflow-y:auto;height:40px">
+    <div style="height:200px">a genuine scrollport</div>
+  </div>
+</div>
+
 <h2>UNWIRED — a button nothing listens to</h2>
 <div class="case">
   <button type="button" id="wired">this one is wired</button>

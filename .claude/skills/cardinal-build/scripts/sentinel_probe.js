@@ -12,7 +12,7 @@
  * anything outside the page.
  */
 globalThis.__sentinelProbe = () => {
-  const out = { ink: [], collapse: [], overlap: [], dead: [], unwired: [], floor: [], overflow: null };
+  const out = { ink: [], collapse: [], overlap: [], dead: [], unwired: [], floor: [], contain: [], overflow: null };
 
   /* ── colour ─────────────────────────────────────────────────────────── */
   function parse(c) {
@@ -424,6 +424,35 @@ globalThis.__sentinelProbe = () => {
   }
 
   probe.remove();
+
+  /* ── CONTAIN ──────────────────────────────────────────────────────────
+     BUG_CLASSES 56, confirmed on Theo's phone at 957: overscroll containment
+     on a box with NO scrollport. It means nothing on such a box — but on iOS,
+     when that box sits between the finger and the real scroller, it stops the
+     gesture chaining up and the pane goes completely dead to touch while
+     behaving perfectly under a mouse. Three instances existed in one sweep
+     (a wrapper inside the scroller, a modal backdrop, and a scroller a
+     breakpoint had turned off). Chromium cannot reproduce the symptom, so
+     this is the only instrument that can see the CAUSE.
+
+     ⚠ Judged on COMPUTED style, per element — never by matching rules to
+     selectors. A declaration-level version stays red after a correct fix
+     whenever a later rule resets the value, and it cannot see a scrollport
+     that only exists at some widths. That mistake cost a round at 957. */
+  for (const el of document.querySelectorAll('*')) {
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none') continue;
+    const yC = /contain|none/.test(cs.overscrollBehaviorY);
+    const xC = /contain|none/.test(cs.overscrollBehaviorX);
+    if (!yC && !xC) continue;
+    /* `hidden` still creates a scrollport, so it counts as one */
+    const yS = /auto|scroll|hidden/.test(cs.overflowY);
+    const xS = /auto|scroll|hidden/.test(cs.overflowX);
+    if ((yC && !yS) || (xC && !xS)) {
+      out.contain.push({ el: where(el), overflow: cs.overflowY + '/' + cs.overflowX,
+        behavior: cs.overscrollBehaviorY + '/' + cs.overscrollBehaviorX });
+    }
+  }
 
   /* ── UNWIRED ──────────────────────────────────────────────────────────
      BUG_CLASSES 16 — the Studio Archive button was drawn and dead from build
