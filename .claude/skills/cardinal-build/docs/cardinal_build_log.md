@@ -20497,6 +20497,57 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 967 — the printed contract shows all of its own words
+
+**The defect.** The slim grey running header (`.runhead`, build 747) is `position:fixed`, which
+does repeat on every printed page — in the same strip the flowed text occupies. Its background is
+white, so it paints over whatever the previous page pushed into that strip. Measured on the four
+shipped contract templates by printing them through Chromium and reading the PDF's own text layer
+against its own geometry: **12 pieces of contract wording sit fully inside the painted band and
+cannot be read on paper.** Among them the sentence naming the Terms and Conditions form as part of
+the agreement (all four contracts), `Payment Structure`, `Acknowledgement & Right to Cancel`, and
+the ORC 1345.23 line *"and was orally advised of his/her right to cancel this transaction"*. The
+words are present, selectable and searchable in the file. They are invisible.
+
+**Why `body{padding-top:0.40in}` never fixed it.** 747 knew the failure mode — its comment says
+"the body has to make room for it or page 2 onwards prints text underneath it" — and reached for
+body padding, which applies to the **first fragment only**. It clears page 1 and nothing else.
+
+**The mechanism, and a correction to 747.** The only box that repeats on every page is the page
+margin, so the header moves into it: `@page{margin-top:0.88in; @top-left{content:"…"}}`. 747's
+comment in both skeletons says @page margin boxes "are not implemented in either engine" — that is
+false in current Chromium and was **already** false when written, because the `@bottom-center`
+address footer beside it has been printing all along. Both comments are corrected in place.
+
+**Where it lives, and why.** `ensurePrintFix(d)` is injected at print time, not shipped in the
+skeleton, because every contract already saved carries its own frozen copy of the skeleton CSS —
+the same reason 966's highlight is injected. **The Download button now calls it too**, so the
+`.html` a client is emailed prints the same as the copy we print here. On 966 that downloaded file
+had no print furniture at all: no page rules, and no address footer.
+
+⚠️ **Two false greens on the way, both mine, both the same shape.** The first two attempts pulled
+the header up with `top:-0.34in`; Chromium clamps a fixed element to the page area, so it landed at
+the **bottom** of the page (y≈707) and off page 5 entirely. Collisions read **zero** — because the
+header had left, not because the text was clear. *Absence of a collision is not the goal; a header
+above readable text is.* `gate_967` assertion 4 exists solely to catch that, and it is the
+assertion the first two attempts would have failed.
+
+⚠️ **A measurement that returned nonsense was believed for one round.** The collision detector
+matched any text block containing the nbsp-middot and reported `head@706.6` and `head@None`. Those
+are not app states; they are a broken instrument. Read the numbers before reading the verdict.
+
+**Cost, stated plainly:** a gutter agreement gains one page — the reclaimed strip pushes the
+acceptance block onto a fifth sheet. Roof (5), siding (4) and the service contract (2) are
+unchanged. The full-width hairline under the old header does not survive the move to a margin box.
+
+**Gates.** `check_build.py` green 966 → 967. **`gate_967.mjs` 31/31 GREEN · RED on the 966 control
+with 15 named failures**, no crash — it presses the real Download button, prints those exact bytes,
+and measures the pages. `gate_964` 9/9, `gate_965` 12/12, `gate_966` 12/12 re-run.
+
+⚠️ **Untested on WebKit.** Playwright can only print through Chromium. If iOS Safari does not
+implement margin boxes the header is absent there rather than overlapping — a decoration lost
+instead of contract text. The address footer already depended on the same mechanism.
+
 ## Build 966 — a contract that says what is still blank (21 Aug 2026)
 
 Theo's option 5, and the one with the plainest job: a contract goes out with an empty box in it

@@ -3253,3 +3253,28 @@ scroll-shaped diagnosis would have missed it.
 **Deliberately excluded: `#cr-show`.** The client-facing Showcase is a presentation surface with
 `min-height:100vh` slides and settled design decisions; an 88px band at the bottom is a visual
 change to something already approved. Excluded on purpose, not overlooked.
+
+## 59 — a repeating page element that paints over the text it repeats above
+
+**Seen: build 967, on all four contract templates at once, invisible since 747.**
+
+`position:fixed` genuinely repeats on every printed page — that part of 747's note is right. What
+it does **not** do is reserve space. The element repeats in the same strip the flowed text
+occupies, and an opaque background then hides that text on every page after the first. Twelve
+pieces of contract wording were unreadable on paper, including a statutory right-to-cancel line.
+
+**The tell that hides it:** page 1 is always perfect, because `body{padding-top}` clears the first
+fragment. Anyone checking page 1 sees a correct document.
+
+**The mechanism that actually works** is the `@page` margin box (`@top-left`, `@bottom-center`),
+which is the one place a repeating box does not overlap content. Margin boxes DO work in Chromium —
+767's claim otherwise was already contradicted by the address footer sitting three lines below it.
+
+**And the trap in fixing it — this cost two rounds.** Pulling the element up with a negative `top`
+does not move it into the margin: Chromium clamps a fixed box to the page area, so it reappears at
+the **bottom** of the page. Every collision metric then reads zero, because the element left the
+strip. **A gate that counts collisions must also assert the element is still where it belongs on
+every page**, or it certifies its own deletion as a fix.
+
+**Instrument:** print to PDF and read the text layer's geometry against the painted band — do not
+read CSS, and do not trust a screenshot of page 1. `gate_967.mjs`.
