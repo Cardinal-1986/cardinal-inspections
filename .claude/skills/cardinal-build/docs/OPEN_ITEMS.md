@@ -58,7 +58,25 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
   ⚠️ 983 also rewrote two `gate_980` assertions that had pinned a file-wide snapshot total and
   therefore went red on correct code
 
-**STILL OPEN, both worth doing, neither started:**
+**STILL OPEN, all three worth doing, none started:**
+- **Two Community greens that 982 missed — light theme only.** Verified present verbatim in the
+  shipped file at 983, both raw `#34D399` on a near-white ground:
+
+  | site | light | dark |
+  |---|---:|---:|
+  | `.cr-pcard.community .t{ color:#34D399; }` | **1.81:1** | 8.37:1 |
+  | `body[data-crm="community"] #commsView #commsCli{…}` | **1.71:1** | 9.93:1 |
+
+  Their sibling `.viewhead` one line away already does this correctly — `var(--ccm-ac,#34D399)`,
+  which flips to `#047857` at 4.89:1 — so the repair is to adopt the token pair, not to invent a
+  colour. ⚠️ **Two traps, both of which make a naive fix ship inert or break something:**
+  `-webkit-text-fill-color` is the property actually inking `#commsCli`, so **changing `color`
+  alone does nothing**; and its `!important` exists to beat an inline `style="color:#9c1822"`, so
+  it must stay. ⚠️ There are **18 raw `#34D399` occurrences** outside `var()` fallbacks and most
+  are legitimate — the `--ccm-ac` declaration itself, the `--bnac` banner token, `CRM_COLOR` /
+  `CRM_ICON`, the `.crm-community` chips and a comment explaining the emerald. **Only these two
+  carry body text on a light ground.** Do not sweep the hex.
+
 - **Retiring `#jaGrid`** — 5 of its 11 references are functional (markup, writer, router,
   `cr-pp-script`'s punch anchor, the old scrape). Needs its own build.
 - `--cr-amber`'s light half `#C87A00` measures **3.37:1** on white — under the floor, on the
