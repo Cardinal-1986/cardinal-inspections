@@ -5608,3 +5608,11 @@ anchored on `secOfNav`). 956 changed only the Insurance rule (`p !== 'insurance'
 `p === 'retail'`). ⚠ Gate note: `gate_956.mjs` owns the full five-portal matrix;
 `gate_955.mjs`'s matrix was corrected in place at 956 so it does not assert retired
 behaviour.
+
+## Scroll containment placement (957)
+
+`#cardinalTruthView` (the fixed pane) and `.pu-sheet .panel` (the sheet's scrolling card)
+carry `overscroll-behavior:contain`; their non-scrolling children/backdrops do not.
+`#pipeRow` resets containment inside `@media (max-width:900px)`, where it stops being a
+scroller. See BUG_CLASSES 56 — containment on a box with no scrollport kills touch
+scrolling on iOS while looking perfect in Chromium. Gate: `gate_957.mjs`.
