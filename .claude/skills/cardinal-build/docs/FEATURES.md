@@ -5956,3 +5956,171 @@ Gate: `gate_966.mjs` (12 assertions on the real editor and a real siding agreeme
 counts and what it refuses to count, each of the three kinds dropping the count when filled, the
 green "All filled" state reached by filling everything, the jump outlining a blank and moving on,
 and a hand-added field being counted; control red 11 named).
+
+---
+
+# The 21 Aug 2026 audit follow-through — builds 967–975
+
+An end-to-end design and ease-of-use audit ran across every workflow on 21 Aug 2026
+(`CR_UX_AUDIT_2026-08-21.md`, 142 deduplicated findings — 4 P0, ~23 P1). These nine builds are
+the top of that list. **967–970 are the app-wide P0/P1s; 971–975 are the first five items of the
+seven-item Community program**, which exists because Theo's verdict on Community was *"it's the
+third time I changed it, it just doesn't feel right"* — four redesigns changed the paint, and
+five structural invariants survived every one.
+
+## Offline changes the server refuses (build 967) — `cr-outbox-script`
+
+The outbox retried a queued write, and **deleted it on any failure that was not a network
+error** — a refusal, an expired session, a validation error, all silently thrown away, with the
+badge then reporting "All changes synced". Refusals are **kept** now, in a fifth badge state
+(`stuck`, 9.79:1), and `openPanel()` shows what is stuck, why, and offers Bury for the one you
+genuinely want gone. `_justSynced` is `sentSome && !droppedSome`, so the green message means what
+it says.
+
+⚠️ **`droppedSome` was never reset per flush in my first cut** — one refusal would have gagged
+the green message forever. My own gate assertion caught it before it shipped.
+
+Gate: `gate_967.mjs` (15 assertions, driving the real `CardinalOutbox` through a scriptable
+transport; control red 11 named, including `text="All changes synced"`).
+
+## The Supplement Desk stops signing you out (build 968) — `supplement.html`
+
+`index.html`, `studio.html` and `supplement.html` all build their Supabase client with the
+**default `storageKey`** against the same project on the same origin, so all three read **one**
+stored session. The Desk's admin check called `sb.auth.signOut()`, which in supabase-js v2
+defaults to scope `'global'` — **a rep who tapped "Supplement Desk" was signed out of the entire
+CRM, on every device.** The refusal is now in-page and touches no session, 671's rule is honoured
+(a failed *check* and a *no* are different sentences, and only the failed check offers Try again),
+and the Desk finally has a way back to Cardinal.
+
+⚠️ **The menu row is deliberately NOT hidden.** The menu's `isAdmin()` is the hardcoded
+theo@/joan@ pair; the Desk's real gate is the database's `is_cardinal_admin()`. Hiding the row on
+the weaker test would hide the Desk from a real admin.
+
+Gate: `gate_968.mjs` (12 assertions; the stub Supabase **records** `signOut` instead of performing
+it, because "was it called" is the whole question. Control: `signOut called 1x`,
+`session present=false`).
+
+## Claims / Coach / auto-stage messages you could not read (build 969)
+
+Three modules' own `toast()` appended **into** `#cr-claims-mount` / `#cr-coach-mount`, which are
+`position:fixed` with a pinned `z-index:60` — **a stacking context**. `#pwaNav` is 9990 in the
+**root** context. So the obvious fix (a bigger z-index on the toast) is a **silent no-op**; only
+leaving the mount works. All three now delegate to the shared `window.toast`, keeping their own
+path as a fallback.
+
+⚠️ **The gate's first version could not fail.** It called `window.toast` directly — testing the
+channel that already worked — and went green on the control. It now **extracts each module's own
+shipped `toast()` by brace-matching and executes it**. Control red 5 named, all naming `pwaNav` as
+the element composited on top, plus ink at 2.07:1.
+
+## Publish acts on the estimate you have open (build 970)
+
+Publish, → Contract, Mark-as-Sent and the plain Save all read `window.currentProject`, which
+**only `openProject()` sets**. Open a saved estimate from Menu → Estimates and that global still
+points at the last client opened — so `pickEstimate()`'s id match failed and `rows[0]` handed back
+**a different client's newest estimate**. One shared `estProjectNow()` prefers the open editor's
+own project; `pickEstimate` **refuses** rather than substituting; both publish paths guard a null.
+
+⚠️ **The audit found three sites; recon found a fourth** — the plain Save was moving the wrong
+client's stage.
+
+Gate: `gate_970.mjs` (11 assertions; control returns `e-OTHER-newest`).
+
+---
+
+# The Community program — builds 971–975 (five of seven)
+
+**The diagnosis, stated once.** Four redesigns changed how Community looked. These five
+invariants survived all four, and they are what "doesn't feel right" actually is:
+
+| # | The invariant | Fixed at |
+|---|---|---|
+| 1 | the retail stage machine's story stops in the middle of a community job | 971, 972 |
+| 2 | partner identity lives in three storage shapes and nothing reconciles them | 973 |
+| 3 | two opposite amount-precedence rules, six definitions of "the amount" | 974 |
+| 4 | the hub is a wall of counters, not a set of doors | 975 |
+| 5 | one design era per redesign, layered rather than replaced | **item 6, open** |
+
+Live data at audit time: **15 of 15 community jobs at stage `Lead`**. Not a coincidence — the
+pipeline could not be advanced from the card.
+
+## The pipeline unfreezes (build 971) — `cr-cc-script`
+
+`threadHtml`'s Lead arm keyed its buttons on the estimate **object**, so the **7 jobs priced by a
+hand-typed `checklist.lead.bid_amount`** were offered only "Price it" and never "Mark it
+submitted" — while the one job carrying two **$0.00 draft** estimates got the submit button.
+`priceOf(pr)` answers with a **number**, which is the only thing that tells a real price from a
+$0.00 draft. Logging an amount now offers the stage move it stamps a date for, and never when the
+amount was cleared. The `.alt` secondary-button rule had been inert at equal specificity.
+
+## The stage story finishes (build 972) — `cr-cc-script` + `cr-pb-script`
+
+`threadHtml` had arms for Lead, Prospect, OnHold, Approved and Completed **and nothing else** —
+so a community job went **silent from the moment it was scheduled**. Scheduled, Invoiced, Closed
+and Lost now have arms; "Get on the calendar" opens the real day sheet prefilled
+(`CardinalProduction.schedFor`) instead of writing the stage behind your back.
+
+⚠️ **The gate's floor was too weak at first** — it passed on the control because `threadHtml`
+falls back to a generic "Bid requested" card. Tightened so **each stage must name its own state**;
+the control then read `generic or missing: ["Scheduled","Invoiced","Closed","Lost"]`.
+
+## One partner identity (build 973) — `cr-cpartners-script` + `cr-nbid-script`
+
+`cr-cpartners` wrote `checklist.lead.partner_id`; the hub's `partnerOf()` reads `partner_name`;
+the referral path writes a free-typed name with no id. Attaching a partner on the card left the
+hub saying **"No partner recorded"**; clearing one left a **ghost name**. The pair is written and
+cleared together now.
+
+⚠️ **A confidential partner is stored by id ONLY** — denormalising its real name into the project
+row would leak it into the hub, the search haystack and every print path, which is exactly what
+`get()`'s mask exists to prevent. And **the New Bid picker was reading the unmasked roster**
+(`load()` rather than `list()`), so a confidential partner's real name was shown to every user and
+written into the job.
+
+**Half of this item is deliberately deferred** — the read-resolver needs two decisions from Theo
+(the DHRN name drift; what happens to `partner_id` on a free-typed referral). Zero live rows are
+affected either way.
+
+## One bid amount (build 974) — main block + `cr-cc` + `cr-ch2` + `cr-can`
+
+**Six definitions**, two with **opposite precedence**: the card preferred the estimate builder and
+fell back to the typed figure; the hub's `bidAmt` preferred the typed figure and fell back to the
+estimate. One job, two screens, two numbers. Analytics read a seventh answer and counted **every
+builder-priced bid as $0** in the win rate.
+
+`commBidAmount(pr, est)` at depth 0 in the main block is the only ladder now: **awarded →
+submitted → builder → typed → none**. It takes the estimate row as a **parameter**, because
+`liveEstimate()` is per-open-job state and a shared helper that called it would hand the open job's
+total to every row of a list.
+
+⚠️ **The Bid tab printed $0.00 on every line** — it multiplied `it.qty * it.price`, and no
+production line object carries a `price` key. **The obvious swap to `unit_price` ships a NEW wrong
+number**: 14 of the 18 live estimate rows are non-itemized, where `unit_price` is 0 and `amount`
+carries the money. It uses the rule the shipped estimate document already uses.
+
+**CR-COM-009 closed**: recording who funded an award now moves the bill-to — guarded, because
+`mergeCk` deletes a key set to `''` and an unguarded write on a blank select would have wiped it.
+
+## The numbers become doors (build 975) — `cr-ch2-script` + `cr-ch2-styles`
+
+**Ten dead ends**: five KPI tiles, three "waiting on you" rows, two tally lists — all wearing
+`.cc-prow`'s `cursor:pointer`, none of them doing anything. Each is now a door onto exactly the
+rows it counted, through one `applyDoor(spec)`, with the number and its destination coming from a
+**single declaration** so they cannot drift. A zero-valued tile stays a plain `<div>`.
+
+⚠️ **A prerequisite had to land first.** The All-bids filter bar lives **inside** the All-bids
+fold, and fold state was a DOM class `render()` destroyed — **so tapping Apply closed the table
+you were filtering.** `folds{}` now outranks the default, the same shape as the existing
+`closed{}` + `closedStamp`.
+
+Four adjacent defects went with it: "Open bids" counted every job ever including closed and lost;
+`.cc-kpi div` is a **descendant** selector so every tile drew **three nested cards** (measured:
+`tile=3px .k=3px .v=3px`); `queue()` dropped its closing `</div>` for `role === 'prod'`; and a
+parked job's **overdue check-back could never go red** and never reached Due soon at all.
+
+Gate: `gate_975.mjs` — 13 assertions, and a **real drive**: it seeds an eight-job community book,
+opens the hub, **taps the tiles** and reads what the table then shows. Control red 12 named.
+
+**Still open in the program: item 6 (one design era — the cream dialogs, light-mode literals, a
+second green and 7px labels left by four layered redesigns) and item 7 (one Job Menu).**

@@ -2,6 +2,54 @@
 
 ---
 
+## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–975 (the UX audit follow-through)
+
+Source: `CR_UX_AUDIT_2026-08-21.md` / `.csv` — an end-to-end design and ease-of-use audit across
+every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60 P2, 55 P3.
+
+**SHIPPED, struck — do not re-report:**
+- **967** offline outbox deleted every write the server refused, then said "All changes synced"
+- **968** the Supplement Desk signed a rep out of the **whole CRM, on every device** (one shared
+  `storageKey`, and v2's `signOut()` defaults to scope `'global'`)
+- **969** Claims / Coach / auto-stage messages painted **under** the bottom bar. ⚠️ A bigger
+  z-index is a **silent no-op** — the mounts are stacking contexts; only leaving the mount works
+- **970** Publish / → Contract / Mark-as-Sent / Save acted on **another client's estimate**
+- **971** the community pipeline could not be advanced from the card (15 of 15 jobs at `Lead`)
+- **972** a community job went **silent from the moment it was scheduled**
+- **973** partner identity — attaching left the hub saying "No partner recorded"; the New Bid
+  picker read the **unmasked** roster
+- **974** six definitions of the bid amount, two with opposite precedence; the Bid tab printed
+  **$0.00 on every line**; analytics counted every builder-priced bid as $0
+- **975** ten dead-end numbers on the hub become doors; the fold you were filtering in used to
+  close itself on Apply
+
+**OPEN — the Community program, items 6 and 7 of seven:**
+- **Item 6 — one design era.** Four redesigns layered rather than replaced: cream dialogs left
+  over from the pre-black-card era, hardcoded light-mode literals, a **second green** beside
+  `--ccm-acc`, and 7px labels below the legible floor. This is the invariant Theo actually feels
+  and the only one of the five still standing.
+- **Item 7 — one Job Menu.** A community job's actions live in two places with different
+  contents depending on how you arrived.
+
+**OPEN — two decisions standing with Theo (build 973's read-resolver is blocked on them; ZERO
+live rows are affected either way, so there is no urgency and no data at risk):**
+- **A. The DHRN name drift.** Four jobs carry a partner name that no longer matches the roster
+  row. (1) rename the roster row to "Dayton Home Repair Network" — smallest, no code; (2) keep
+  "DHRN" and let the four jobs start reading it; (3) add a short-name column.
+- **B. A free-typed referral.** What happens to `partner_id` when someone types a funder that is
+  not on the roster? (1) clear it; (2) keep the stale id and prefer the stored name; (3) add
+  `referred_from_id` and clear `partner_id`. **Recon recommends (3), fallback (1).**
+
+**OFFERED, deliberately not slipped in (974/975):**
+- provenance in the hub's dense **All-bids** table — that Amount cell collapses to a flex row
+  below 900px and would need a matching rule; the designed slots (card pin, Bid tab total,
+  analytics rows) carry it today
+- repainting **Analytics** when `loadEst()` lands — one line in that callback. Analytics opened
+  in the second before that fetch returns shows zeros until reopened. **That is pre-975 behaviour
+  too, so it is not a regression.**
+
+---
+
 ## ⚡ NEWEST LAYER — 17 Aug 2026, builds 864–875 (read HANDOFF for the full session)
 
 **Offline-first (864–873) shipped and merged.** The field surfaces all work with no signal now
