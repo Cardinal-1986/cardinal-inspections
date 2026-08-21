@@ -5563,3 +5563,15 @@ teal elsewhere untouched); community green; production yellow (themes via
 four, published as host custom properties. ⚠ `.lnav-sec` must stay
 `width:calc(100% - 20px)` — full-width plus margins overflows the band past the card
 body. Phone drawer deliberately untouched. Gate: `gate_952.mjs`.
+
+## Portal-aware menu sections (953)
+
+`#navMenu` carries Production (prodboard / dispatch / punch / suppliers — Suppliers moved
+OUT of Sell; admins still get it relocated under Admin by reorg) and Community (injected
+Hub/Partners/Prospects re-anchored from CRMs + static newbid) sections, 951's pattern.
+**Sell hides in the Insurance / Production / Community portals** via `syncSell()` in
+cr-menu-script: inline display + `data-cr-sellhid` attribute together — the attribute
+because `cr-drawer-styles` paints rows `display:flex !important` (the #tab-overview
+class), the inline because the rail's scrape() keys on it. Restore only touches rows
+syncSell itself hid. Re-synced by a body attribute observer (data-crm/data-crm-head).
+⚠ Emulate portal switches in tests by writing BOTH crm attributes. Gate: `gate_953.mjs`.

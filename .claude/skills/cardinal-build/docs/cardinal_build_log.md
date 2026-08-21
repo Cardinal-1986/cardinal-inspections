@@ -20440,6 +20440,51 @@ fixture both ways (fixture → icons + 80% wet blue computed; route aborted → 
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
 
+## Build 953 — the menu learns the portals (21 Aug 2026)
+
+Theo: "Just as the insurance rail added the insurance menus, can you do the same for
+productions on desktop but also leave the menus in the productions hub page, make it a
+shortcut and hide sales like you did with insurance. Same for community." One correction
+stated to him up front: Sell was NOT actually hidden in Insurance (951 was his
+add-don't-swap pick) — 953 makes reality match his description: **Sell hides in the
+Insurance, Production and Community portals and returns in Retail.**
+
+What shipped:
+- **Production section** (951's pattern): Production Board, Crew Dispatch, Punch &
+  Repairs — routed exactly as the banner's own data-go switch routes them — plus
+  **Suppliers, MOVED from Sell** (a materials door must not vanish with Sell; for admins
+  `reorg()` still relocates it under Admin, unchanged 508 behavior).
+- **Community section**: the three injected rows (Hub / Partners / Prospects) re-anchor
+  here from CRMs — `addCommunityItems()` anchors on the new heading with Cardinal Truth
+  as fallback — plus a static **New Bid** row (`CardinalNewBid.open`). CRMs keeps
+  Cardinal Truth.
+- **`syncSell()`** in cr-menu-script: hides the Sell heading + rows per portal; rows it
+  hid are tagged `data-cr-sellhid` so restoring never un-hides a row some OTHER rule hid
+  (reorg's `hideOpt('coach')` survives the round-trip — asserted). Re-synced by apply(),
+  the reorg poll, and a **new body ATTRIBUTE observer** (attributeFilter
+  `data-crm`/`data-crm-head`, no subtree — written cause in place; it rewrites nothing
+  when state matches). Observer census: 45 → 46, the safe kind.
+- Four rail icons (`productionboard`/`crewdispatch`/`punchrepairs`/`newbid`) in both maps.
+
+**Two instrument lessons, both caught before ship:**
+1. **A stylesheet `!important` beat the inline hide — the #tab-overview class, again.**
+   `cr-drawer-styles` paints `.navsec`/`.navopt` `display:flex !important`, so on the
+   phone the inline `display:none` was invisible: `style.display === 'none'` AND a
+   46px rendered box, simultaneously. The fix copies the drawer's own `data-crhide`
+   mechanism — an attribute rule inside the same block, same width gate. The first gate
+   assert read `style.display` and PASSED against the broken phone — a check that could
+   not fail — now it opens the drawer and asserts the rendered box is 0px.
+2. **Faking portal state with one attribute reports the wrong app.** `data-crm-head` is
+   the authoritative CRM mirror and stays 'retail' unless the real switch runs; a debug
+   render setting only `data-crm` showed Sell "still visible" in a state no user can
+   reach. Emulate portal switches by writing BOTH attributes (the gate does).
+
+Gates: `check_build.py` green 952 → 953 · **`gate_953.mjs` 27/27** (structure, seven
+routing spies, Sell per-portal on desktop AND the rendered phone drawer, coach-survives
+restore, rail scrape in Insurance has Production+Community and no Sell, icons non-generic,
+Suppliers-in-Production proven in a scottie boot) · **red on the 952 control, 19+ named
+failures, no crash.**
+
 ## Build 952 — the desktop menu becomes the Card Stack (21 Aug 2026)
 
 Six preview rounds to a spec, and the design conversation is the story. Four rounds of
