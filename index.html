@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 972 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 973 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -34992,8 +34992,29 @@ try{
 var raw = pr.checklist || '{}';
 var ck; try{ ck = JSON.parse(raw); }catch(_){ ck = {}; }
 if(!ck.lead) ck.lead = {};
-if(partnerId) ck.lead.partner_id = partnerId;
-else          delete ck.lead.partner_id;
+/* 973: this wrote the id and NOTHING else, while the hub reads partner_name —
+   so attaching a partner here left the hub saying "No partner recorded", and
+   clearing one left a ghost name behind on every name-reading screen. The pair
+   is now written and cleared together.
+   A CONFIDENTIAL partner is stored as an id ONLY: denormalising its real name
+   into the project row would leak it into the hub, the search haystack and every
+   print path, which is exactly what get()'s mask exists to prevent. getRaw() is
+   module-private for this reason — the resolution has to happen in here. */
+if(partnerId){
+  ck.lead.partner_id = partnerId;
+  var row973 = null;
+  try{ row973 = getRaw(partnerId); }catch(_973){}
+  if(!row973){
+    try{ await load(); row973 = getRaw(partnerId); }catch(_973b){}
+  }
+  if(row973 && row973.confidential) delete ck.lead.partner_name;
+  else if(row973 && row973.name)    ck.lead.partner_name = row973.name;
+  /* roster still unreachable: keep the id, leave any existing name alone rather
+     than blanking a fact we simply could not confirm. */
+}else{
+  delete ck.lead.partner_id;
+  delete ck.lead.partner_name;
+}
 var next = JSON.stringify(ck);
 var r = await client.from('projects').update({ checklist: next }).eq('id', pr.id);
 if(r.error){ console.warn('[cpartners] setPartner', r.error.message); return false; }
@@ -35554,9 +35575,19 @@ return document.body.classList.contains('viewing-community-hub') ||
 async function loadPartners(){
 if(!window.CardinalCommunityPartners) return [];
 try{
-var all = await window.CardinalCommunityPartners.load();
+/* 973: this read load()'s raw CACHE, so both confidential partners rendered by
+   their real names in the required first field of every bid — and the save then
+   wrote that name into the project. list() is the masked view every other picker
+   already uses (pickPartner made this exact change). */
+await window.CardinalCommunityPartners.load();
+var all = window.CardinalCommunityPartners.list();
 var filtered = (all || []).filter(function(p){ return !p.archived; });
 filtered.sort(function(a,b){
+/* 973: "Habitat sorts first in every partner list" is load-bearing (CLAUDE.md —
+   they do most of the community volume and share the annual TV commercial), and
+   this is the required FIRST field of every bid. It was sorting them mid-list. */
+var ah = /habitat/i.test(a.name || '') ? 0 : 1, bh = /habitat/i.test(b.name || '') ? 0 : 1;
+if(ah !== bh) return ah - bh;
 return String(a.name || '').localeCompare(String(b.name || ''));
 });
 return filtered;
@@ -35792,6 +35823,10 @@ partnerSel.focus();
 return;
 }
 var partner = partners.find(function(p){ return p.id === partnerId; });
+/* 973: partners is now the MASKED list, so a confidential row's .name is the
+   placeholder. Storing it would write "Confidential Partner" into the job as if
+   it were the real name — keep the id and let display resolve it. */
+var masked973 = !!(partner && (partner.confidential || /^confidential/i.test(String(partner.name || ''))));
 var addrInput = bg.querySelector('[data-field="address"]');
 var propSel   = bg.querySelector('[data-field="property_id"]');
 var propId    = propSel ? propSel.value : '';
@@ -35824,7 +35859,8 @@ if(editPr){
   var mergedLead = Object.assign({}, editLead, {
     claim_type      : 'community',
     partner_id      : partner.id,
-    partner_name    : partner.name,
+    /* 973: never store a masked placeholder as if it were the real name */
+    partner_name    : masked973 ? undefined : partner.name,
     property_id     : propId && propId !== '__other__' ? propId : null,
     homeowner_name  : hoName,
     no_homeowner    : !!(bg.querySelector('[data-field="no_homeowner"]') || {}).checked,
@@ -35859,7 +35895,8 @@ stage_since     : new Date().toISOString(),
 lead: {
 claim_type      : 'community',
 partner_id      : partner.id,
-partner_name    : partner.name,
+/* 973: never store a masked placeholder as if it were the real name */
+partner_name    : masked973 ? undefined : partner.name,
 property_id     : propId && propId !== '__other__' ? propId : null,
 homeowner_name  : hoName,
 no_homeowner    : !!(bg.querySelector('[data-field="no_homeowner"]') || {}).checked,
@@ -36346,7 +36383,7 @@ return;
 await window.updateProjectLead(pr, function(L){
 L.claim_type = newType;
 L.retail = (newType === 'retail');
-if(current === 'community' && L.partner_id) delete L.partner_id;
+if(current === 'community' && (L.partner_id || L.partner_name)){ delete L.partner_id; delete L.partner_name; }   /* 973: the name was left behind */
 if(leavingIns) L.insurance = null;
 });
 if(typeof window.auditLog === 'function'){
@@ -41127,6 +41164,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:973, d:'2026-08-21', t:'Attaching a partner now shows up everywhere',
+  s:'Attaching a funding partner on a community job saved only an internal reference, not the name \u2014 so the job would still read "No partner recorded" on the Community hub even though the card showed the partner correctly. Removing a partner had the opposite problem: it left the old name behind. Both now save and clear together. Two more fixes to the same screen: the partner list in New Bid was showing the real names of partners marked confidential to everyone, and was sorting Habitat into the middle of the list instead of the top, on the one field every bid has to fill in.' },
 { b:972, d:'2026-08-21', t:'A community job stops going quiet once it is awarded',
   s:'The community card only had something to say up to the point a bid was awarded. After that \u2014 scheduled, invoiced, closed, lost \u2014 it showed no state and no next step, and there was no way to mark a build complete at all, which meant the invoice step could never be reached either. Every stage now has its own card: Scheduled shows the build day and lets you mark it complete, Invoiced shows what went out and opens Payment Information, and Closed and Lost read as quietly finished instead of urgent. "Get on the calendar" also books a real day now \u2014 it opens the calendar with the job filled in, instead of just changing the label and touching nothing.' },
 { b:971, d:'2026-08-21', t:'Community bids can finally be marked submitted',

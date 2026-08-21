@@ -20497,6 +20497,42 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 973 — one partner identity (21 Aug 2026)
+
+Third of the Community program's seven items. A partner had **three storage shapes** and
+nothing reconciled them: `cr-cpartners-script` wrote `checklist.lead.partner_id`,
+`cr-ch2-script`'s `partnerOf()` read `checklist.lead.partner_name`, and the referral path
+writes a free-typed `partner_name` with no id at all. So attaching a partner on the client
+card left the hub saying **"No partner recorded"**, and detaching one left a **ghost name**
+behind on every name-reading screen.
+
+**`setPartnerForProject()` now writes and clears the pair together.** Attaching resolves the
+roster row and stores `partner_id` + `partner_name`; clearing deletes both. Leaving Community
+(`cr-cct-script`) clears both as well.
+
+**A confidential partner is stored by id ONLY.** Denormalising its real name into the project
+row would leak it into the hub, the search haystack and every print path — which is exactly
+what `get()`'s mask exists to prevent. The resolution therefore happens inside the module,
+against the module-private `getRaw()`; the name is never written.
+
+**The New Bid picker was reading the unmasked roster.** It consumed `load()`'s raw return
+rather than `list()`, so a confidential partner's real name was shown to every user *and*
+written into the job. It now reads `list()`, and both `partner_name: partner.name` writes are
+guarded by `masked973` so a masked placeholder can never become the stored name. Habitat sorts
+first, as it does in every other partner list.
+
+**Deliberately deferred — the read-resolver half.** Two decisions belong to Theo before a
+resolver can prefer one shape over another: what the 4 DHRN-drifted rows should be called, and
+what happens to `partner_id` when someone free-types a referral. Zero live rows are affected by
+either. The writer half above is unambiguous and ships alone.
+
+**Gate:** `gate_973.mjs`, 9 assertions, runs the **shipped** `setPartnerForProject` against a
+recording client and the shipped `partnerOf()` against what it wrote. Control on 972: **RED, 7
+named failures** — including the hub literally answering `"No partner recorded"` for a partner
+that had just been attached, and `{"claim_type":"community","partner_name":"Habitat For
+Humanity"}` left behind after a clear. `check_build.py` green (marker `masked973`, negative
+control clean); sentinel clean against the 972 baseline.
+
 ## Build 972 — a community job stops going quiet once it is awarded (21 Aug 2026)
 
 **The bug behind the bug.** `threadHtml` had arms for Lead / Prospect / OnHold /
