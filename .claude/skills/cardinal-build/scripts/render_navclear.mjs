@@ -1,4 +1,6 @@
-/* render_libnav961.mjs — the library sheet clears the installed app's nav (961).
+/* render_navclear.mjs — content clears the installed app's bottom bar.
+   (Was render_libnav961.mjs. Renamed at 962: it is a CLASS check now, not a
+   one-build gate — see BUG_CLASSES 58.)
 
    Theo, on an installed iPhone PWA: "Scrolling hell again", with the sheet's
    last trade cut off behind the round button bar.
@@ -11,22 +13,36 @@
      section folded the list no longer overflows, so it cannot scroll, and the
      covered rows went from awkward to unreachable.
 
+   ⚠ 962 CHANGED THE MECHANISM, AND THIS GATE NO LONGER NAMES ONE.
+   961 raised a z-index. The app had already answered this twice — 595 for
+   #projModal, 935 for #cr-pb-modal — with CLEARANCE and a fixed 88px constant,
+   and 935 wrote down that clearance is the rule and a bigger z-index is not.
+   962 reverted to that. So every assertion below tests the OUTCOME — is the
+   last real content reachable, above the bar — which passes under either
+   mechanism and would survive the next one. A gate pinned to the technique
+   fails correct code the moment the technique changes.
+
    Runs at 390x844 with body.standalone forced, in BOTH states:
-     1  the nav really is above 9510 (the premise — if this stops being true
-        the rest of this gate is measuring nothing)
-     2  the picker now outranks it
+     1  the bar is really there and really above the sheet (the premise — if
+        this stops being true the rest of this gate is measuring nothing)
+     2  the sheet's own scroller carries the standalone clearance
      3  FOLDED: the list does not scroll (short) — the condition that made this
         fatal, asserted so the gate is testing the real situation
-     4  FOLDED: nothing of the sheet is behind the nav — elementFromPoint at
-        the list's bottom is a sheet element, not #pwaNav
+     4  FOLDED: the last real CONTENT sits above the bar's top edge (the
+        padding below it may not, and need not — it is empty on purpose)
      5  FOLDED: a touch on the last section reaches the last section — an
         occlusion test, not an overlap test: the fix is z-order, so the two
         boxes still share a rectangle and always will
-     6  OPEN: the list scrolls, and its bottom is still not the nav
-     7  OPEN: scrolled to the end, the final row is reachable and visible
-     8  the sheet still sits below the app's alert-level sheets (< 9996)
+     6  OPEN: the list scrolls
+     7  OPEN: scrolled to the end, the final ROW clears the bar and answers a
+        touch
+     8  the three other bottom-flush sheets carry the same 88px clearance —
+        .cr-psheet, .paymodal-bd, .cr-cadj-bd. ⚠ Read off computed style on a
+        synthesized element, so it proves the RULE resolves, not that the live
+        screen is right; each of those sheets needs its own trigger and none is
+        opened here. Said plainly rather than implied.
 
-   Usage: node render_libnav961.mjs [path] — previous build = negative control,
+   Usage: node render_navclear.mjs [path] — previous build = negative control,
    must go RED with named failures and MUST NOT crash. */
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
@@ -97,6 +113,7 @@ const READ = () => {
   return {
     open: !!(pk && pk.classList.contains('open')),
     pickerZ: z(pk), navZ: z(nav), navShown: nav?getComputedStyle(nav).display!=='none':false,
+    listPadBottom: list? (parseFloat(getComputedStyle(list).paddingBottom)||0) : null,
     navRect: nr, listRect: R(list),
     scrollable: list? list.scrollHeight > list.clientHeight+1 : null,
     atListBottom: list? at(Math.min(innerHeight-2, R(list).bottom-6)) : null,
@@ -121,25 +138,23 @@ const READ = () => {
 {
   const page=await boot(true);
   const f=await page.evaluate(READ);
-  need('1 the installed nav really does outrank 9510 (the premise)',
-       !!(f && f.navShown && Number(f.navZ) > 9510),
-       f?('#pwaNav z='+f.navZ+' shown='+f.navShown):'nothing rendered');
-  need('2 the picker now outranks the nav',
-       !!(f && Number(f.pickerZ) > Number(f.navZ)),
-       f?('picker z='+f.pickerZ+' vs nav z='+f.navZ):'nothing rendered');
+  need('1 the installed bar is present and above the sheet (the premise)',
+       !!(f && f.navShown && f.navRect && f.navRect.h > 0 && Number(f.navZ) > Number(f.pickerZ)),
+       f?('#pwaNav z='+f.navZ+' shown='+f.navShown+' vs sheet z='+f.pickerZ):'nothing rendered');
+  need('2 the list carries the standalone clearance',
+       !!(f && f.listPadBottom >= 88),
+       f?('.box-list padding-bottom = '+f.listPadBottom+'px (need >= 88)'):'nothing rendered');
   need('3 folded: the list is short and does not scroll (the fatal condition)',
        !!(f && f.open && f.scrollable === false),
        f?('open='+f.open+' scrollable='+f.scrollable):'nothing rendered');
-  need('4 folded: the bottom of the list is sheet, not the nav',
-       !!(f && f.listBottomInSheet && f.atListBottom !== '#pwaNav'),
-       f?('elementFromPoint at list bottom = '+f.atListBottom):'nothing rendered');
+  need('4 folded: the last real content sits above the bar',
+       !!(f && f.lastRect && f.navRect && f.lastRect.bottom <= f.navRect.top),
+       f?('last content ends at '+(f.lastRect&&f.lastRect.bottom)+', bar starts at '+
+          (f.navRect&&f.navRect.top)):'nothing rendered');
   need('5 folded: a touch on the last section reaches the last section',
        !!(f && f.lastName && f.lastHit && f.lastHit.inSheet && f.lastHit.inLastCat && f.lastHit.tag !== '#pwaNav'),
        f?(f.lastName+' hit='+JSON.stringify(f.lastHit)+' rect='+JSON.stringify(f.lastRect)+
           ' nav='+JSON.stringify(f.navRect)):'nothing rendered');
-  need('8 the sheet stays below the app’s alert-level sheets',
-       !!(f && Number(f.pickerZ) < 9996),
-       f?('picker z='+f.pickerZ):'nothing rendered');
   await page.context().close();
 }
 
@@ -147,9 +162,9 @@ const READ = () => {
 {
   const page=await boot(false);
   const f=await page.evaluate(READ);
-  need('6 open: the list scrolls, and its bottom is not the nav',
-       !!(f && f.scrollable === true && f.listBottomInSheet && f.atListBottom !== '#pwaNav'),
-       f?('scrollable='+f.scrollable+' bottom='+f.atListBottom):'nothing rendered');
+  need('6 open: the list scrolls',
+       !!(f && f.scrollable === true),
+       f?('scrollable='+f.scrollable):'nothing rendered');
 
   const g=await page.evaluate(()=>{
     const pk=document.getElementById('cr-est-picker');
@@ -160,19 +175,39 @@ const READ = () => {
     const last=items[items.length-1];
     if(!last) return { noItems:true };
     const b=last.getBoundingClientRect();
+    const nav=document.getElementById('pwaNav');
     const el=document.elementFromPoint(195, Math.min(innerHeight-2, b.bottom-6));
     return { bottom:Math.round(b.bottom), vh:innerHeight,
+      navTop: nav? Math.round(nav.getBoundingClientRect().top) : null,
       hit: el? (el.id?'#'+el.id:el.tagName+'.'+String(el.className||'').split(' ')[0]) : null,
       inSheet: !!(el && pk.contains(el)) };
   });
-  need('7 open: scrolled to the end, the final row is reachable',
-       !!(g && !g.noItems && g.inSheet && g.hit !== '#pwaNav' && g.bottom <= g.vh + 1),
+  need('7 open: scrolled to the end, the final row clears the bar',
+       !!(g && !g.noItems && g.navTop && g.bottom <= g.navTop && g.inSheet && g.hit !== '#pwaNav'),
        g?JSON.stringify(g):'no list');
+
+  /* 8: the sibling sheets. Computed style on a synthesized element — this
+     proves the RULE resolves under body.standalone, not that each live screen
+     is right. Each needs its own trigger; none is opened here. */
+  const sib = await page.evaluate(()=>{
+    const out = {};
+    for(const cls of ['cr-psheet','paymodal-bd','cr-cadj-bd']){
+      const d=document.createElement('div');
+      d.className=cls; d.style.position='fixed'; d.style.left='-9999px';
+      document.body.appendChild(d);
+      out[cls]=parseFloat(getComputedStyle(d).paddingBottom)||0;
+      d.remove();
+    }
+    return out;
+  });
+  need('8 the three sibling bottom sheets carry the same 88px clearance',
+       !!(sib && sib['cr-psheet']>=88 && sib['paymodal-bd']>=88 && sib['cr-cadj-bd']>=88),
+       JSON.stringify(sib));
   await page.context().close();
 }
 
 await browser.close();
-console.log('\nrender_libnav961 ['+LABEL+'] '+FILE);
+console.log('\nrender_navclear ['+LABEL+'] '+FILE);
 console.log('  passed: '+passes+'   failed: '+fails.length);
 fails.forEach(f=>console.log('  FAIL  '+f));
 console.log(fails.length? '\nRED' : '\nGREEN — 8/8');
