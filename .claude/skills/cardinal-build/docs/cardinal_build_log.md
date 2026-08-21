@@ -20544,6 +20544,43 @@ than twelve hours into today, a date 14 calendar days back rounds to **15**, so 
 *"waiting 15 days"* about something logged on the 7th when today is the 21st. Elapsed days floor,
 and the date the user picked is a **local** calendar day, not a UTC instant.
 
+### 977 follow-up — `gate_sweep.py` caught two regressions on the very next build
+
+**This is why it exists, and it earned its keep one build after being written.** The sweep over
+967–977 came back:
+
+```
+gate_971  index.html   RED   8 named failure(s)
+gate_972  index.html   RED   5 named failure(s)
+```
+
+Both said `waitlisted is not defined`. **Neither was an app defect** — 977 gave `threadHtml` two
+new helpers, and those two gates extract `threadHtml` and run it against **hand-written shim
+lists** that did not have them. It is the third time this exact thing has happened (972 broke
+gate_971 with `ck()`, 974 broke it again with `commBidAmount`, 977 with `waitlisted`), and the
+lesson is finally taken: **a hand-written shim list rots every time the shipped function grows.**
+
+Both gates now do what `gate_976`/`gate_977` do:
+1. **grab the REAL helpers** out of the artifact by brace-matching, so the behaviour tested is the
+   shipped behaviour; and
+2. keep a **`with(new Proxy(…))` backstop**, so a name nobody stubbed degrades to a no-op and the
+   gate REPORTS instead of dying (BUG_CLASSES 37).
+
+⚠️ **The backstop has a trap of its own and it bit immediately.** The proxy answers `has()` for
+every name, so inside `with()` it shadows **the shim's own variables too** — `events` came back as
+the fallback *function* and `events.forEach` threw. The proxy target has to be **seeded** with the
+shim's real values first, so genuine stubs win and the fallback only ever catches names nobody
+defined.
+
+**Both repaired gates were then re-run against their own controls and are still RED** — 971 on the
+970 tree (3 named failures), 972 on the 971 tree (3 named failures). A gate repaired into always
+passing would be worse than the regression.
+
+⚠️ **A second gap in `gate_sweep.py` itself, found in its own output.** A **squash merge names a
+RANGE** — `Builds 967–975 — …` — so the exact `\bbuild\s+NNN\b` lookup found nothing for
+968–974 and the whole control column went dark (`n/a — no commit names build 970`) the moment the
+span merged. Honest, but a control you cannot run proves nothing. It reads the range now.
+
 ⚠️ **And an assertion of mine scoped to the FILE instead of the region** — a file-wide search for
 the word `Waitlist` found the KPI tile's label and the filter facet's label, both legitimate, and
 failed a correct patch. This project's own *"scope the count"* rule, and the second time today a

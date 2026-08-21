@@ -87,6 +87,7 @@ need('9 the secondary button is visually distinct from the primary',
 const cases = await page.evaluate(({BLOCK, RESOLVER})=>{
   const out = { err:null, res:{} };
   try{
+    const PROXY971 = "\n        /* 977: hand-written shim lists ROT. Every build that gives threadHtml a\n           new helper breaks every earlier gate that extracts it — this is the\n           second time (972 did it with ck(), 977 with waitlisted()). The real\n           helpers are grabbed from the artifact just below; this proxy is the\n           backstop, so an unstubbed name degrades to a no-op instead of\n           throwing and taking the whole gate down with it (BUG_CLASSES 37). */\n        var __base = {};\n        var __stub = new Proxy(__base, {\n          has: function(){ return true; },\n          get: function(t,k){\n            if(k === Symbol.unscopables) return undefined;\n            if(k in t) return t[k];\n            if(typeof window !== 'undefined' && k in window){\n              var v = window[k];\n              return (typeof v === 'function' && /^[a-z]/.test(String(k))) ? v.bind(window) : v;\n            }\n            return function(){ return ''; };\n          }\n        });\n";
     const DAY = 86400000;
     const iso = d => new Date(Date.now() + d*DAY).toISOString().slice(0,10);
     /* stub only what threadHtml closes over; everything else is the shipped code */
@@ -128,8 +129,22 @@ const cases = await page.evaluate(({BLOCK, RESOLVER})=>{
       };
       const priceOf = grab('function priceOf(pr){');
       const threadHtml = grab('function threadHtml(pr){');
+      /* 977 added these to threadHtml's Lead arm — grab the REAL ones */
+      const waitlisted = grab('function waitlisted(pr){');
+      const waitDays = grab('function waitDays(pr){');
       if(!threadHtml) return null;
-      return new Function(shim + '\n' + priceOf + '\n' + threadHtml + '\n; return threadHtml;')();
+      /* ⚠ the proxy answers has() for EVERY name, so inside with() it shadows the
+         shim's own vars too — `events` came back as the no-op FUNCTION and
+         `events.forEach` threw. Copy the shim's real values onto the proxy
+         TARGET first, so genuine stubs win and the fallback only ever catches
+         names nobody defined. */
+      const SEED = ['__EST__','liveEstimate','lead','bidOf','normStage','usd','fmtDay',
+        'daysTo','esc','LABEL','auditRows','events','ago','ck','since','todayIso',
+        'homeownerOf','partnerOf','parseCkAll','commBidAmount','commBidSource']
+        .map(n => "try{ __base['" + n + "'] = " + n + "; }catch(e){}").join('\n');
+      return new Function(shim + PROXY971 + SEED +
+        '\nwith(__stub){\n' + priceOf + '\n' + waitlisted + '\n' + waitDays +
+        '\n' + threadHtml + '\n; return threadHtml; }')();
     };
     const proj = (checklist, stage) => ({ id:'p1', stage: stage||'Lead', checklist: JSON.stringify(checklist) });
 

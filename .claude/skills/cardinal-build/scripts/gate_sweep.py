@@ -71,11 +71,20 @@ def commit_for_build(n):
         ['git', 'log', '--format=%H|%s', '-400'],
         cwd=REPO, capture_output=True, text=True).stdout
     pat = re.compile(r'\bbuild\s+' + str(n) + r'\b', re.I)
+    # ⚠ a SQUASH MERGE names a RANGE — "Builds 967-975 — ..." — and the exact
+    # match above then finds nothing for 968..974, so the whole control column
+    # goes dark the moment a span merges. That is not a false pass (it reports
+    # n/a), but a control you cannot run proves nothing either. Read the range.
+    rng = re.compile(r'\bbuilds?\s+(\d+)\s*[\u2010-\u2015-]\s*(\d+)', re.I)
+    fallback = (None, None)
     for line in out.splitlines():
         sha, _, subj = line.partition('|')
         if pat.search(subj):
             return sha, subj
-    return None, None
+        m = rng.search(subj)
+        if m and int(m.group(1)) <= n <= int(m.group(2)) and fallback[0] is None:
+            fallback = (sha, subj)
+    return fallback
 
 
 def materialise(sha, filename, tmpdir):
@@ -219,7 +228,13 @@ def main():
         print(f'{BAD}{bad} problem(s).{END} A gate red on HEAD is a regression; a control '
               f'that is GREEN, CRASH or TIMEOUT proves nothing and must be repaired.')
     else:
-        print(f'{OK}All gates green on HEAD and red on their own control.{END}')
+        # ⚠ only claim the half that actually ran. Without --controls this said
+        # "and red on their own control" having run no control at all — a tool
+        # that overclaims is the same failure as a check that cannot fail.
+        print(f'{OK}All gates green on HEAD'
+              + (' and red on their own control.' if a.controls
+                 else '. Controls NOT run — pass --controls to prove they can fail.')
+              + f'{END}')
     return 1 if bad else 0
 
 
