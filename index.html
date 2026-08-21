@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 976 &#8212; a tarp is its own kind of punch-out now. Add an item, pick Tarp, and it reads as a Tarp everywhere &#8212; on the card, in the activity feed and in the Type filter &#8212; instead of being filed as a repair. It is the job we go and do straight away so the house stops taking water, and on a community job it is often done for free before anything is bid</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 977 &#8212; a community job can sit on a waitlist now. When we tarp a house for free before anything is bid, the card stops asking for a price and says what it really is: tarped free, no bid yet, waiting. The hub counts them separately and Waitlist is a door onto exactly those jobs &#8212; and because a waitlisted job has no bid, it no longer counts as an open one</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41198,6 +41198,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:977, d:'2026-08-21', t:'A community job can sit on a waitlist',
+    s:'With some of these organisations we tarp a house for free before anything has been bid, and the job then waits for funding to open. There was nowhere to say that: the card kept asking for a price, and the job counted as an open bid it had never been. Now there is a Waitlist. On an unpriced community job, \u201cTarped it free \u2014 waitlist\u201d records the tarp date and parks it; the card then reads \u201cOn the waitlist \u2014 tarped free on the 20th, no bid yet, waiting 14 days\u201d instead of nagging. The hub counts them on their own tile, and tapping it shows exactly those jobs. \u26a0 Open bids will drop by however many are waitlisted \u2014 that is the point: they are not bids. Taking a job back off the waitlist keeps the tarp date on the record. The stage does not change, so nothing else in the pipeline moves.' },
 { b:976, d:'2026-08-21', t:'A tarp is its own kind of punch-out',
     s:'Punch outs could be a Punch, a Ticket or a Callback. A tarp is none of those \u2014 it is the thing we go and do straight away so the house stops taking water, and on a community job it is often done for free before anything has been bid. Pick Tarp when you add an item and it reads as a Tarp everywhere: on the card, in the activity feed (\u201cTarp done\u201d, not \u201cRepair closed\u201d) and in the Type filter, so you can pull up every tarp we owe someone in one tap. Nothing already logged changes.' },
 { b:975, d:'2026-08-21', t:'Community: the numbers are doors now',
@@ -55880,6 +55882,9 @@ return l.bid_due_at;
 function chOnHold(pr){
 return normStage(pr.stage) === 'OnHold' && !!lead(pr).check_back_at;
 }
+/* 977: free tarp done, nothing bid yet. Per-module like chOnHold above — the
+   hub reads the checklist for every other fact the same way. */
+function chWaiting(pr){ return !!lead(pr).waitlist_at; }
 /* Bands, not raw dates - 'Overdue' is the filter you actually want at 7am. */
 function chDueBand(pr){
 var dd = days(chDueIso(pr));
@@ -55904,7 +55909,10 @@ var CH_GROUPS = [
    have no homeowner recorded, which is exactly the ambiguity the two-party
    header was meant to remove. This makes those two findable in one tap. */
 { key:'ho',      label:'Homeowner',     get:function(pr){ return homeownerOf(pr) ? 'Recorded' : 'Not recorded'; } },
-{ key:'rep',     label:'Assigned to',   get:chRepName }
+{ key:'rep',     label:'Assigned to',   get:chRepName },
+/* 977: the facet exists so the Waitlist TILE has somewhere to route — 975's
+   applyDoor writes chState.sets keyed by these, and chMatches reads them. */
+{ key:'waitlist', label:'Waitlist',     get:function(pr){ return chWaiting(pr) ? 'On the waitlist' : 'Not waitlisted'; } }
 ];
 function chActiveCount(){
 var n = 0;
@@ -56086,13 +56094,16 @@ el.onclick = function(e){ if(e.target === el) el.classList.remove('open'); };
 function compute(){
 var all = projects();
 var out = 0, owed = 0, won = 0, lost = 0, parked = 0;
-var open = 0, openAmt = 0;
+var open = 0, openAmt = 0, wait = 0;
 var OPENSET = {};
 openKeys().forEach(function(k){ OPENSET[k] = 1; });
 var due = [], chase = [], sched = [], inv = [];
 all.forEach(function(pr){
 var st = normStage(pr.stage), l = lead(pr), amt = bidAmt(pr);
-if(OPENSET[st]){ open++; openAmt += amt; }
+/* 977: a waitlisted job has NO bid, so it is not an open bid. 975 made that
+   tile mean what it says; this keeps it true. It gets its own count instead. */
+if(chWaiting(pr)){ wait++; }
+else if(OPENSET[st]){ open++; openAmt += amt; }
 if(st === 'Lead'){
 out += amt;
 }
@@ -56129,7 +56140,7 @@ inv.sort(function(a,b){ return (b.d||0) - (a.d||0); });
 var decided = won + lost;
 return {
 all:all, out:out, owed:owed, parked:parked,
-open:open, openAmt:openAmt,
+open:open, openAmt:openAmt, wait:wait,
 win: decided ? Math.round(won / decided * 100) : null,
 won:won, decided:decided,
 due:due, chase:chase, sched:sched, inv:inv,
@@ -56430,7 +56441,10 @@ sets:{ stage: stageLabels(['OnHold']) }, pane:'bids', fold:'allbids' },
 { key:'awarded',label:'Awarded',          text:usd(awarded),   n:awarded,
 sets:{ stage: stageLabels(wonKeys()) }, pane:'bids', fold:'allbids', sort:'amount' },
 { key:'due7',   label:'Due &le; 7 days',  text:String(dueSoon975), n:dueSoon975,
-sets:{ due: ['Overdue','Due today','Due this week'] }, pane:'bids', fold:'allbids' }
+sets:{ due: ['Overdue','Due today','Due this week'] }, pane:'bids', fold:'allbids' },
+/* 977: only when there is one — a tile reading 0 is not a door (975's rule). */
+{ key:'wait',   label:'Waitlist',         text:String(d.wait), n:d.wait, when:!!d.wait,
+sets:{ waitlist: ['On the waitlist'] }, pane:'bids', fold:'allbids' }
 ];
 doors = {};
 var kpi = (role === 'prod') ? '' :
@@ -57113,6 +57127,24 @@ referred : 'Referred to another partner',
 lost     : 'Bid not awarded',
 };
 function bidOf(pr){ return (ck(pr) || {}).bid || {}; }
+/* 977: a job we tarped for free and have not bid yet. Stage stays Lead — see
+   the build note: STAGES is shared with retail and insurance, so a
+   Community-only stage would leak into both pipelines. */
+function waitlisted(pr){ return !!lead(pr).waitlist_at; }
+function waitDays(pr){
+/* 977 ⚠ this first used daysTo(), which is Math.round on the difference. That is
+   right for a FUTURE deadline and wrong for ELAPSED days: once you are more than
+   twelve hours into today, a date 14 calendar days back rounds to 15, and the
+   card says "waiting 15 days" about something logged on the 7th when today is
+   the 21st. Caught by gate_977 assertion 3. Elapsed days FLOOR, and the date the
+   user picked is a local calendar day, not a UTC instant. */
+var w = lead(pr).waitlist_at;
+if(!w) return null;
+var t = new Date(String(w) + 'T00:00:00');
+if(isNaN(t.getTime())) return null;
+var d = Math.floor((Date.now() - t.getTime()) / 86400000);
+return d < 0 ? 0 : d;
+}
 /* 971: every place a community bid's price can legitimately live, in order of
    authority — what actually went to the partner, then the builder's live total,
    then the number typed into the bid form. It answers with a NUMBER, which is the
@@ -57617,6 +57649,32 @@ try{ window.auditLog('lead', 'Bid marked submitted', pr.id); }catch(_){ }
 render();
 return;
 }
+/* 977: both arms write through mergeCk + patchProjectCk, the same pipeline
+   logsub uses. mergeCk DELETES a key set to '', which is what takes a job back
+   off the waitlist without leaving a ghost date behind. */
+if(a === 'waitlist'){
+var t977 = prompt('Tarped for free on which date?\n(YYYY-MM-DD, or leave as-is)', todayIso());
+if(t977 === null) return;
+t977 = String(t977).trim();
+if(t977 && !/^\d{4}-\d{2}-\d{2}$/.test(t977)){ alert('Use YYYY-MM-DD.'); return; }
+var w977 = mergeCk(pr, 'lead', { waitlist_at: todayIso(), tarped_at: t977 || todayIso() });
+if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { lead: w977 });
+if(typeof window.auditLog === 'function'){
+try{ window.auditLog('lead', 'Put on the waitlist \u2014 tarped free', pr.id); }catch(_977){ }
+}
+render();
+return;
+}
+if(a === 'unwait'){
+if(!confirm('Take this job OFF the waitlist? The tarp date stays on the record.')) return;
+var u977 = mergeCk(pr, 'lead', { waitlist_at: '' });
+if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { lead: u977 });
+if(typeof window.auditLog === 'function'){
+try{ window.auditLog('lead', 'Taken off the waitlist', pr.id); }catch(_977b){ }
+}
+render();
+return;
+}
 if(a === 'logsub'){
 /* 709: ported from the deleted cream bid strip — blank clears both fields
    (the strip's semantics, and mergeCk deletes empty keys by design). */
@@ -57701,6 +57759,20 @@ if(st === 'Lead'){
    object-truthiness handed the only "Mark it submitted" button to the job with no
    price. priceOf() answers with a number, which is what tells those apart. */
 var p971 = priceOf(pr);
+/* 977: a waitlisted job is not a bid that needs pricing — it is work we have
+   already done for free, waiting for funding to open. It answers first, so the
+   card stops nagging for a price nobody is going to give it. */
+if(waitlisted(pr)){
+var wd977 = waitDays(pr);
+var tarp977 = l.tarped_at;
+out.push({ now:true, title:'On the waitlist', when:'now',
+txt:(tarp977 ? 'Tarped free on ' + fmtDay(tarp977) + '. ' : 'Tarped free. ') +
+'No bid yet' +
+(wd977 == null ? '.' : wd977 === 0 ? ' \u2014 added today.'
+: ' \u2014 waiting ' + wd977 + ' day' + (wd977 === 1 ? '' : 's') + '.'),
+acts:[{ label:'Start the bid', how:'estimate' },
+{ label:'Off the waitlist', how:'unwait', alt:true }] });
+}else{
 var due971 = due == null ? ''
 : due < 0 ? ' Due to the partner ' + Math.abs(due) + ' days ago.'
 : due === 0 ? ' Due to the partner today.'
@@ -57725,7 +57797,11 @@ acts:[{ label:'Mark it submitted', how:'submitted' },
 out.push({ now:true, title:'Bid needs pricing', when:'now',
 txt:'Invited to bid.' + due971 + ' Nothing priced yet.',
 acts:[{ label:'Price it', how:'estimate' },
-{ label:'Log a submitted amount', how:'logsub', alt:true }] });
+{ label:'Log a submitted amount', how:'logsub', alt:true },
+/* 977: the way ON to the waitlist, offered only where it makes sense — an
+   unpriced job we may have tarped for free. */
+{ label:'Tarped it free \u2014 waitlist', how:'waitlist', alt:true }] });
+}
 }
 }else if(st === 'Prospect'){
 out.push({ now:true, title:'Waiting on a decision', when:'now',

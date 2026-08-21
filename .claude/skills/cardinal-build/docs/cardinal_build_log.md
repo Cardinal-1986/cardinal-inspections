@@ -20497,6 +20497,58 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 977 — a community job can sit on a waitlist (21 Aug 2026)
+
+Theo, verbatim: *"with some of these organizations we help communities by doing tarps for free
+without bidding yet so they stay on a waitlist."*
+
+There was nowhere to say that. The card kept asking for a price, and the job counted as an **open
+bid it had never been**.
+
+⚠️ **NO NEW STAGE, and that is the whole design.** `STAGES` is the whitelist `normStage()` enforces
+and it is **shared with retail and insurance** — a Community-only `Waitlist` entry would appear in
+both other pipelines, and by this file's own invariant *"`STAGES` must contain a stage value before
+any row is given it"*, any row given it early would silently become a **Lead**. The job stays at
+Lead and carries a **flag**, which is the shape every other community fact already uses
+(`bid_due_at`, `check_back_at`, `award_cycle`, `referred_to`). `gate_977` assertion 1 is that fence.
+
+**`tarped_at` already existed — this reuses it.** `ocSave` writes it on every outcome, but the
+outcome form is only reachable from Prospect/OnHold, i.e. **after a bid**. A free tarp before any
+bid could not reach it, which is exactly the gap. Live: **0 of 16** community jobs have it set. No
+second tarp-date field was invented; the gate asserts that too.
+
+**What it does.** On an unpriced community job the Lead arm offers *"Tarped it free — waitlist"*.
+That stamps `waitlist_at` and `tarped_at` through the same `mergeCk` + `patchProjectCk` pipeline
+`logsub` uses. The card then reads **"On the waitlist — tarped free on the 7th. No bid yet —
+waiting 14 days"** with *Start the bid* and *Off the waitlist*, instead of nagging for a price.
+Coming off keeps the tarp date: `mergeCk` deletes a key set to `''`, so only `waitlist_at` goes.
+
+**The hub.** A waitlisted job is **no longer an open bid** — 975 made that tile mean what it says
+and this keeps it true. It gets its own **Waitlist** tile, which is a door (975's `applyDoor`),
+routed through a new `waitlist` facet in `CH_GROUPS` because that is the mechanism a door needs.
+The tile is hidden at zero, per 975's rule that a door onto an empty list is the same lie in
+reverse.
+
+⚠️ **Stated rather than hidden: Open bids will DROP** by however many jobs are waitlisted. That is
+the point — they are not bids — but it is a number Theo watches.
+
+**Gate:** `gate_977.mjs`, 11 assertions. It runs the **shipped** `threadHtml` against a waitlisted
+job, an unpriced one and a priced one, then seeds a five-job book, opens the hub and **taps the
+Waitlist tile**. Control on 976: **RED, 7 named failures** — a tarped, waitlisted job reading
+*"Bid needs pricing … Nothing priced yet"*, `Open bids reads "5"` when two of the five are
+waitlisted, and no Waitlist tile to tap at all.
+
+⚠️ **An off-by-one of mine, caught by the gate.** `waitDays()` first used `daysTo()`, which is
+`Math.round` on the difference — right for a **future deadline**, wrong for **elapsed days**. More
+than twelve hours into today, a date 14 calendar days back rounds to **15**, so the card said
+*"waiting 15 days"* about something logged on the 7th when today is the 21st. Elapsed days floor,
+and the date the user picked is a **local** calendar day, not a UTC instant.
+
+⚠️ **And an assertion of mine scoped to the FILE instead of the region** — a file-wide search for
+the word `Waitlist` found the KPI tile's label and the filter facet's label, both legitimate, and
+failed a correct patch. This project's own *"scope the count"* rule, and the second time today a
+correct patch was failed by a lazily-scoped check.
+
 ## Build 976 — a tarp is its own kind of punch-out (21 Aug 2026)
 
 Theo, verbatim: *"Can we have a tarp only in the punch outs."* A tarp is not a repair, not a
