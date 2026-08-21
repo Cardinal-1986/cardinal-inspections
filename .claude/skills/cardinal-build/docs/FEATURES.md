@@ -6253,3 +6253,59 @@ Gate: `gate_979.mjs` — 12 assertions, control red 5 named. It **clicks the rea
 the three destinations spied (`goHome` is module-scoped; re-deriving its mapping would test
 nothing), and it **builds a copy of its own artifact with the guard removed** to prove that check
 can fail — at least four destinations must move without it.
+
+## Community's type actually applies now (build 980) — `cr-cc-styles` + `cr-ch2-styles`
+
+Thirty rules were written `font:<weight> <size> inherit`. **`inherit` is legal only as a whole
+value, never as one component of a shorthand**, so Chromium discards the entire declaration —
+weight and size with it — and the element renders at whatever it inherits. Inside one card, half
+the labels were the designed voice and half were the browser's.
+
+**94 such declarations exist file-wide; 83 of the 88 attributable to a selector were verified
+dropped in a real render.** 980 fixes the 30 in Community. The largest remaining cluster is
+**`cr-show-styles` with 24 — the Showcase**, and it is its own build.
+
+⚠️ **The repair is longhands, not a family.** `font-weight:700;font-size:13px` says exactly what
+the author meant — inherit the family, set weight and size. Choosing a family would invent a
+decision nobody made, and longhands also avoid the shorthand's reset of `line-height` /
+`font-style` / `font-variant`, which today never happens because the declaration is discarded.
+Three rules carried a `/line-height` and got a real `line-height`.
+
+⚠️ **Nothing in the gate ladder can see this class.** It is BUG_CLASSES' *"a rule that parses,
+balances and never applies"* — brace balance, `node --check`, duplicate-id, marker and negative
+control are all green while the screen is wrong. **The only instrument that settles it is
+Chromium's own parsed rules**: read each rule's `style.cssText` and ask whether `font-size` and
+`font-weight` are present. ⚠️ Do NOT ask whether the declaration block is *empty* — a real rule
+carries other declarations, so only the font line vanishes; that question returns a confident zero.
+
+Gate: `gate_980.mjs` — 10 assertions, control red 7 named. It walks the parsed rules, and
+**builds a copy of the artifact with the invalid shorthand put back** to prove that test can fail.
+
+## The preview rig (build 980) — `scripts/preview.mjs`
+
+CLAUDE.md's standing instruction to preview visual changes had been unfollowable: **every
+screenshot in this harness timed out**, and three attempts blamed fonts and animation.
+
+**Neither was the cause.** The app has zero `@font-face` rules and zero webfont URLs. The harness
+answered non-app requests with an empty body and **no content-type**, so an `<img>` never
+completed, `readyState` stuck at `interactive`, and `document.fonts.ready` — which cannot resolve
+until the document finishes loading — stayed pending forever. Playwright's screenshot waits on
+that promise. **Serve by `resourceType()` with a real 1×1 PNG for images: the same shot takes
+67ms.**
+
+```
+node preview.mjs --before <a.html> --after <b.html> --surface community-card \
+                 [--widths 390,1194,1680] [--themes dark,light] [--out dir]
+```
+
+Width comes **only** from `setViewportSize` and theme **only** from the `data-theme` attribute the
+app's own toggle writes — `@media (max-width:560px)` keys off the browser window, so an iframe
+grid would confidently show a phone layout that is really a desktop one. Surfaces are named
+recipes in the file; add one rather than passing selectors, so a recipe that lands on the wrong
+screen fails once, in there.
+
+⚠️ **Known gap: the `type-specimen` recipe renders blank for `#cr-cc`-rooted selectors.** The hub
+half works. Three real harness bugs were fixed on the way — a chain hidden by the app's own rules,
+`getComputedStyle` called on a **detached** node (which reports nothing, so the first repair
+silently did nothing), and `position:fixed` stacking 28 samples on top of each other — and the
+card-rooted half is still open.

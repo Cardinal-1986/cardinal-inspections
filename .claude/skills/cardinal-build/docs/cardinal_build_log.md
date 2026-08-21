@@ -20497,6 +20497,98 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 980 — Community looks the way it was drawn (21 Aug 2026)
+
+Theo picked **item 6, option 1** ("repair Era A in place") and said *"start 6"*. This is the first
+half of that option — the typography — shipped on its own, because its stated risk was that it
+visibly changes ~30 elements at once and deserves to be seen in isolation. The colour half is 981.
+
+### The defect: 94 rules declare a font that never applies
+
+Thirty rules in `cr-cc-styles` and `cr-ch2-styles` are written `font:700 13px inherit`. **That is
+invalid CSS.** `inherit` is a CSS-wide keyword: legal as an entire value, never as one component
+of a shorthand. Chromium therefore discards the **whole declaration** — the weight and the size
+with it — and the element renders at whatever it inherits.
+
+**Nothing in the ladder can see this.** Braces balance, `node --check` passes, the duplicate-id
+check passes, the marker is present, the negative control is clean, and the screen is quietly
+wrong. It is BUG_CLASSES' *"a rule that parses, balances and never applies"*, at scale.
+
+**A recon agent reported it; I did not relay it.** Re-measured three ways before believing it:
+
+| method | answer |
+|---|---:|
+| source count of `font:<v> inherit` where the value is not bare `inherit` | **94 file-wide, 30 in Community** |
+| minimal Chromium control — `.zzA{font:800 12.5px inherit}` | `cssText` is `""`; the sibling with a real family survives intact |
+| each of the app's own 88 attributable selectors, checked against Chromium's parse | **83 lose both weight and size** |
+
+⚠️ **The first attempt to measure it in the live app returned a confident ZERO.** I looked for
+rules whose parsed declaration block was **empty** — but a real rule carries other declarations,
+so only the `font` line vanishes and the block is never empty. The right question is whether
+`font-size` and `font-weight` are present at all. *An extractor that asks the wrong question
+answers it perfectly.*
+
+### The repair is LONGHANDS, not a family
+
+`font:700 13px inherit` was trying to say *"inherit the family, set weight and size"*.
+`font-weight:700;font-size:13px` says exactly that. Picking a family instead would change what
+the element inherits — inventing a decision nobody made. It also sidesteps the shorthand's reset
+of `line-height`/`font-style`/`font-variant`, which today never happens (the declaration is
+thrown away), so longhands are the strictly minimal change. Three rules carried a
+`/line-height` and got a real `line-height`.
+
+Scoped to Community: **30 converted, 64 left elsewhere**, deliberately. The biggest remaining
+cluster is **`cr-show-styles` with 24 — the Showcase, the client-facing presentation surface.**
+That is its own build and it is worth doing.
+
+**What visibly moves:** sizes now range 10px–16px where the elements previously inherited. Eight
+of the thirty land below 12px. That is what the design asked for; if any reads too small on the
+phone it is now a one-line change in a rule that finally works.
+
+Verification: check_build green (979 → 980). **gate_980.mjs 10/10 GREEN, RED on the 979 control
+with 7 named failures and no crash.** Its load-bearing assertion is not a source count — it walks
+Chromium's own parsed rules and requires every converted rule to keep its size and weight, and it
+**builds a copy of the artifact with the invalid shorthand put BACK** and requires that test to go
+red on it (at least 30 rules must drop). gate_sweep 967–980 green. Sentinel: 13 findings,
+identical on 979.
+
+⚠️ **Four gate faults, all mine, all this project's named traps.** A marker that already existed
+in the previous build (caught by the negative control — working as designed). A regex requiring a
+trailing `;` on a declaration that **closed its block** with `}`, so it found 29 of 30 and failed
+correct code — twice, once in the assertion and once in the revert control. A hardcoded `=== 3`
+for the line-height conversions when two such trios **already existed**, which is a number read
+off my own patch rather than off the app. And a control assertion of `kept === 0` when five rules
+legitimately survive because their longhands are not adjacent. *Roughly half of all reds on this
+project are the test's fault, and this build was four for four.*
+
+### 980 also builds the instrument: `scripts/preview.mjs`
+
+CLAUDE.md has always said *"preview visual changes before shipping — labelled options, dark and
+light, desktop and mobile."* **That instruction has been unfollowable, because every screenshot in
+this harness timed out**, and three separate attempts across two sessions blamed fonts and
+animation.
+
+**Neither was the cause.** Measured: `readyState` **"interactive"** — never `complete`;
+`fonts.status` `loaded`; `fonts.size` **0** (the app has zero `@font-face` rules and zero webfont
+URLs); **0** running animations; 62 rAF ticks/sec. A perfectly healthy page that could not be
+photographed. The harnesses answered every non-app request with `fulfill({status:200, body:''})`
+and **no content-type**, so an `<img>` request never completed, the document never finished
+loading, and `document.fonts.ready` — which per spec cannot resolve until it does — stayed pending
+forever. Playwright's screenshot waits on exactly that promise. **Serving by `resourceType()` with
+a real 1×1 PNG for images takes the same shot in 67ms.**
+
+The rig captures one frame per width per theme — width only from `setViewportSize`, theme only
+from the same `data-theme` attribute the app's own toggle writes — because `@media
+(max-width:560px)` keys off the browser window and an iframe grid would show a phone layout that
+is really a desktop one. It produced a real before/after for this build's hub rules.
+
+⚠️ **Stated plainly: the `#cr-cc`-rooted specimens still render blank and I did not finish
+chasing it.** Three repairs went in on the way (reveal a chain hidden by the app's own rules; call
+`getComputedStyle` **after** attaching, because a detached node reports nothing and the first
+repair silently did nothing; neutralise `position:fixed` so 28 samples stop stacking) and each was
+a real harness bug, but the card-rooted half is still not showing. The hub half works and the
+instrument is a net gain; finishing it is open.
+
 ## Build 979 — Punch & Repairs and the Team Directory get the Production header (21 Aug 2026)
 
 Theo: *"Can you make productions have its own header or will that break anything?"* — a question
