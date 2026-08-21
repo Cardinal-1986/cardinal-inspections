@@ -20440,6 +20440,45 @@ fixture both ways (fixture → icons + 80% wet blue computed; route aborted → 
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
 
+## Build 955 — one menu section per portal (21 Aug 2026)
+
+Theo: "yes productions only productions, community only community" — answering the offer
+made when 954 shipped. Each portal-specific section now shows only in its own portal:
+
+| section | shows in |
+|---|---|
+| Sell | retail **and sales** |
+| Insurance | everywhere except retail (954's rule, unchanged — he asked only for retail) |
+| Production | production only |
+| Community | community only |
+
+- **A regression of MINE, found and repaired here.** 954 rewrote the Sell rule as
+  `p !== 'retail'`, which also hid Sell while the **Sales Floor** was open — `crmNow()`
+  returns `'sales'` for `#cr-sf.open`, a fifth portal value 954 did not account for. 953's
+  explicit list had been correct. The rule is now `!(p === 'retail' || p === 'sales')`
+  and the gate's control fires on it (`in sales: Sell is shown — hidden=true`).
+- **Suppliers moves from the Production section to Daily.** 953 moved it out of Sell so
+  hiding Sell could not take the materials door from the crew; scoping Production would
+  have taken it from everyone *else*. Its real job (774: build an estimate from the ABC
+  catalog) is a retail-desk job, so it belongs in the section that never hides. For admins
+  `reorg()` still relocates it under Admin — unchanged 508 behaviour.
+- **The doors survive, and the gate proves it**: the Production row in Daily is injected by
+  `cr-pb` (`#cr-nav-production`, before Schedule Board) and never hides; the CRM switcher
+  sits above every section; Cardinal Truth stays in retail's CRMs. **Verified `crmNow()`
+  really returns `'production'`** (`#cr-pb.open`) before relying on it — a section scoped
+  to a portal state that never occurs would simply never appear.
+
+⚠ **The comment-pollution trap fired a FOURTH time across 954–955**: the new rule's comment
+quotes the old rule verbatim, so a bare-fragment count found the prose. The standing fix,
+now used throughout: count the **call** (`findSec('sell'), p !== 'retail')`), never the
+words around it.
+
+Gates: `check_build.py` green 954 → 955 · **`gate_955.mjs` 37/37** — a five-portal × four-
+section matrix (20 assertions), Suppliers reachable in every portal, Daily never hides, the
+three doors survive, coach stays hidden through a round-trip, plus a **non-admin (scottie)
+boot** proving Suppliers sits in Daily where reorg leaves it alone · **red on the 954
+control with 10 named failures, no crash.**
+
 ## Build 954 — the Insurance tools move into the menu (21 Aug 2026)
 
 Theo: "on insurance, can you please keep the insurance menu expanded and take away from the

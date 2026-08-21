@@ -3619,6 +3619,14 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="clients" data-cri="people lg">Clients</button>
           <button class="navopt" data-nav="leads" data-cri="clipboard lg">Leads &amp; Jobs</button>
           <button class="navopt" data-nav="board" data-cri="calendar lg">Schedule Board</button>
+          <!-- 955: Suppliers lives in DAILY, not in a portal section. 953 moved
+               it out of Sell so hiding Sell could not take the materials door
+               from the crew; 955 scopes Production to the production portal,
+               which would have taken it away from everyone else instead. Its
+               real job (774: build an estimate from the ABC catalog) is a
+               retail-desk job, so it belongs in the section that never hides.
+               Admins still get it relocated under Admin by reorg(). -->
+          <button class="navopt" data-nav="suppliers" data-cri="warehouse lg">Suppliers</button>
 
           <div class="navsec">Sell</div>
           <button class="navopt" data-nav="quickinsp" data-cri="bolt lg">Quick Inspection</button>
@@ -3644,10 +3652,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="desk" data-cri="calculator lg">Supplement Desk</button>
 
           <!-- 953: the 951 pattern twice more. Shortcuts - the Production and
-               Community hubs keep their own tiles. Suppliers MOVED here from
-               Sell (Sell hides in the specialty portals and the crew must not
-               lose the materials door; for admins reorg() still relocates it
-               under Admin, same as before). The Community rows below its
+               Community hubs keep their own tiles. (Suppliers passed through
+               here at 953 and moved on to Daily at 955 - a portal-scoped
+               section is the wrong home for a tool every desk needs.) The Community rows below its
                heading are INJECTED by addCommunityItems() - only New Bid is
                static markup. The LAST "Insurance" heading is still the one
                renameSec() turns into "CRMs" - keep these sections above it. -->
@@ -3655,7 +3662,6 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="prodboard" data-cri="hardhat lg">Production Board</button>
           <button class="navopt" data-nav="dispatch" data-cri="calendar lg">Crew Dispatch</button>
           <button class="navopt" data-nav="punch" data-cri="ladder lg">Punch &amp; Repairs</button>
-          <button class="navopt" data-nav="suppliers" data-cri="warehouse lg">Suppliers</button>
 
           <div class="navsec">Community</div>
           <button class="navopt" data-nav="newbid" data-cri="money lg">New Bid</button>
@@ -3677,7 +3683,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 954 &#8212; the Insurance tools live in the menu now: the Tools buttons come off the Cardinal Truth screen, the menu&#39;s Insurance section opens itself the moment you switch to Insurance, and that section stays out of the way in Retail &#8212; where Sell is the one that shows</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 955 &#8212; one section per portal: Production shows only while you are in Production and Community only in Community, the way Insurance and Sell already work &#8212; and Suppliers moves up into Daily so the materials door is there from every desk</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40727,6 +40733,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:955, d:'2026-08-21', t:'One menu section per portal', s:'The menu now shows only the section you are actually working in: Production appears while you are on the Production board, Community while you are in the Community portal, Insurance in Insurance, and Sell in Retail (and on the Sales Floor). Everything else folds away, so the menu is short and about where you are. Nothing is lost \u2014 the door into each portal is always there: Production sits in Daily, and the Retail / Insurance / Community switcher is at the top of the menu. Suppliers has moved up into Daily, so the materials catalogue is reachable from every desk instead of only from Production. And a small repair: since yesterday the Sell section had been hiding itself while the Sales Floor was open, which was never intended.' },
 { b:954, d:'2026-08-21', t:'The Insurance tools move into the menu', s:'On the Cardinal Truth screen the row of Tools buttons at the bottom \u2014 Scope of Loss, Resource Library, Schedule Board, Supplement Templates, Insurance Resources, the Adjuster Directory, the Claims Tracker and the Supplement Desk \u2014 is gone from the screen. Every one of them lives in the slide-out menu instead, and the menu\u2019s Insurance section now opens itself the moment you switch into the Insurance portal, so the whole list is in front of you without a tap. Nothing was lost: the seven tools are in that Insurance section and Schedule Board has always been under Daily. The menu also keeps itself tidy \u2014 Sell shows only in Retail, and the Insurance section stays out of the way while you are in Retail. The Cardinal Truth dashboard itself is unchanged: the money cards, the pipeline, carriers, this week and the chase list are all still there. The phone menu looks exactly as it did.' },
 { b:953, d:'2026-08-21', t:'The menu learns the portals', s:'Two more sections in the menu, built the same way as the Insurance one: a Production card with Production Board, Crew Dispatch, Punch & Repairs and Suppliers (Suppliers moved here from Sell \u2014 it is a materials door, not a sales tool), and a Community card with the Community Hub, Community Partners, Prospective Partners and New Bid. Each row is a shortcut to a place that already exists \u2014 the hubs keep all their own tiles. And the Sell section now knows where you are: in the Insurance, Community or Production portal it folds itself away entirely, and the moment you switch back to Retail it returns. Nothing was deleted; it only hides.' },
 { b:952, d:'2026-08-21', t:'The desktop menu becomes the Card Stack', s:'The left-hand desktop menu is rebuilt as a stack of the app\u2019s own cards: every section (Daily, Sell, Insurance, CRMs\u2026) is a dark card with a colored strip across its top and icons in the same color, so the menu finally looks like the rest of Cardinal instead of a plain list. The colors follow where you are \u2014 brushed steel with slate-blue accents in Retail, red in Insurance (no more teal there), green in Community, yellow in Production \u2014 and the menu is a bit wider so nothing feels cramped. Folding sections open and closed, the counts, and every destination work exactly as before; this is a new coat on the same machinery. The phone menu is untouched.' },
@@ -42238,9 +42245,16 @@ var menu = document.getElementById('navMenu');
 if(!menu) return;
 var p = portalNow();
 var changed = false;
-/* Sell belongs to retail; the Insurance tools belong to insurance. */
-if(setSectionHidden(findSec('sell'), p !== 'retail')) changed = true;
+/* 955, Theo: "productions only productions, community only community" -
+   each portal-specific section shows only where it belongs. Anchored on a ROW
+   each section owns (secOfNav), never on heading text - see the note above.
+   ⚠ Sell keeps the SALES FLOOR as well as retail: crmNow() returns 'sales'
+   while #cr-sf is open, and 954's `p !== 'retail'` had quietly started hiding
+   Sell there - a regression this line also repairs. */
+if(setSectionHidden(findSec('sell'), !(p === 'retail' || p === 'sales'))) changed = true;
 if(setSectionHidden(secOfNav('sol'), p === 'retail')) changed = true;
+if(setSectionHidden(secOfNav('prodboard'), p !== 'production')) changed = true;
+if(setSectionHidden(secOfNav('newbid'), p !== 'community')) changed = true;
 if(p === 'insurance' && lastPortal !== 'insurance' && openInsuranceSection()) changed = true;
 lastPortal = p;
 if(changed){
