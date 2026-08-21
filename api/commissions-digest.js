@@ -15,7 +15,10 @@
 //   RESEND_API_KEY             — resend.com → API Keys
 // Optional:
 //   DIGEST_FROM   — sender, e.g. "Cardinal <schedule@cardinalrenovations.net>"
-//   CRON_SECRET   — if set, requests must carry  Authorization: Bearer <secret>
+//   CRON_SECRET   — REQUIRED. Requests must carry  Authorization: Bearer <secret>
+//                   (Vercel Cron sends it automatically once the var exists).
+//                   Unset means this route refuses everything, cron included —
+//                   fail-closed on purpose. Was optional until this build.
 //   ADMIN_EMAIL   — defaults to theo@cardinalrenovations.net
 
 const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
@@ -76,10 +79,38 @@ export function groupOwed(commissions, draws) {
   return { owed, drawn, reps };
 }
 
+/* FAIL-CLOSED, and it did not used to be. The guard here read
+       if (secret && req.headers.authorization !== 'Bearer ' + secret)
+   which is no guard at all when CRON_SECRET is unset: the route answered
+   anybody who knew the URL. api/companycam-sync.js already refused that trade
+   in its own comment ("no secret configured means the cron door is refused,
+   not opened") because it holds keys \u2014 but THIS route sends mail, and the
+   commissions one names what every rep is owed. An unauthenticated stranger
+   could not read the reply, but they could make it arrive, over and over.
+
+   Measured on the live site before changing anything: CRON_SECRET was unset,
+   so both digests were open at the time of writing.
+
+   The consequence is deliberate and immediate: with no secret configured, the
+   digest does not send. That is the correct failure \u2014 a cron that silently
+   does nothing beats a public endpoint that emails on demand. Vercel Cron
+   sends the header by itself once the variable exists.
+
+   The refusal SAYS WHY, like companycam-sync's does. Nothing is leaked by it,
+   and being able to read the reason off the live route is what identified this
+   in the first place. */
+function cronAuthorised(req) {
+  const secret = (process.env.CRON_SECRET || '').trim();
+  if (!secret) return { ok: false, why: 'CRON_SECRET is not configured in Vercel, so the ' +
+    'scheduled door is closed. Set it, and give the cron the same value.' };
+  if ((req.headers.authorization || '') !== 'Bearer ' + secret) return { ok: false, why: 'Bad cron secret' };
+  return { ok: true };
+}
+
 export default async function handler(req, res) {
-  const secret = process.env.CRON_SECRET;
-  if (secret && req.headers.authorization !== `Bearer ${secret}`) {
-    res.status(401).json({ error: 'Unauthorized' });
+  const cron = cronAuthorised(req);
+  if (!cron.ok) {
+    res.status(401).json({ error: 'Unauthorized', detail: cron.why });
     return;
   }
   const srk = process.env.SUPABASE_SERVICE_ROLE_KEY;

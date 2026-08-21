@@ -20440,6 +20440,63 @@ fixture both ways (fixture → icons + 80% wet blue computed; route aborted → 
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
 
+## The cron routes fail CLOSED (21 Aug 2026) — no build number, `index.html` untouched
+
+Theo: "Yes make those routes fail-closed," answering the finding below.
+
+**The defect.** `api/digest.js` and `api/commissions-digest.js` both guarded with
+
+```js
+if (secret && req.headers.authorization !== `Bearer ${secret}`) { 401 }
+```
+
+which is **no guard at all when `CRON_SECRET` is unset** — the route answers anybody who knows
+the URL. And it *was* unset: measured on the live site, not assumed. `/api/companycam-sync`
+answers its own refusal in words —
+
+> `CRON_SECRET is not configured in Vercel, so the scheduled door is closed.`
+
+— and that route had already refused this exact trade in a comment written at 933 ("no secret
+configured means the cron door is refused, not opened") because it holds keys. The digests were
+never revisited. `api/digest` emails the day's schedule; `api/commissions-digest` names **what
+every rep is owed**. A stranger could not read the reply, but could make it arrive, repeatedly.
+
+I did **not** confirm by calling them — confirming means actually sending Theo the mail. The
+finding is the guard (read) plus the secret being unset (measured through a sibling route).
+
+**The fix** is `companycam-sync`'s `cronAuthorised(req)`, copied into both, refusal reason
+included. **Consequence, stated because it is immediate and deliberate: with no `CRON_SECRET`
+set, the digests now do not send at all.** That is the correct failure — a cron that silently
+does nothing beats a public endpoint that emails on demand. Vercel Cron supplies the header by
+itself once the variable exists. Neither route has any in-app caller (zero references in
+`index.html`), so nothing else is affected.
+
+**Scope was swept, not assumed:** three routes in `api/` read `CRON_SECRET`. Two were open, one
+was already closed. That is the whole class.
+
+**No build number and no stamp bump** — `index.html` is untouched, the same rule `gate_ship.py`
+applies. Docs and gate only.
+
+Gate: **`gate_960.mjs` 11/11 GREEN**, **RED on the pre-fix copies with 4 named failures**. It
+drives each handler in-process with a fake req/res and `fetch` replaced by a counting stub, so
+"it refused" means *nothing left the box*. The assertion that matters is **f**: give the route
+the environment production actually has — service key and Resend key present, only `CRON_SECRET`
+withheld — and on the control `digest` made **1** call to Supabase and `commissions-digest` made
+**3**, for an anonymous caller. That is the open door, seen rather than argued. Case **d** stops
+the gate passing a route that refuses everything: with the right secret it must get past.
+
+⚠ **The comment-pollution trap fired again, on the first run of the patch script.** The assert
+`'if (secret && req.headers.authorization' not in s` failed against correct code, because the
+explanatory comment I had just written quotes the old guard. Re-aimed at the code form
+(`` `Bearer ${secret}` ``, the backtick template the real line used). Nothing was written — the
+assert aborts before `write_atomic`. *This repo has now paid for that trap five times in two
+days; the rule is assert on a form your own prose cannot contain.*
+
+⚠ **And the gate's first run was red for the gate's own reason:** `companycam-sync` checks
+`COMPANYCAM_API_KEY` **before** the cron guard, so with a bare env it 500s two checks earlier
+and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
+broken route.
+
 ## Build 959 — the weather comes to the calendar Curtis actually uses (21 Aug 2026)
 
 Theo: "Do the weather on the productions calendar." The forecast had lived on Crew Dispatch

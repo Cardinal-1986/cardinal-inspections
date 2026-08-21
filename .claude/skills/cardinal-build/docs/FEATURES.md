@@ -5704,3 +5704,23 @@ Gate: `gate_959.mjs` (15 assertions incl. the wet/dry inks computed in both them
 percentage thresholds, the past-day-14 blank, the full calendar, **one fetch serving both
 screens**, the forecast-down case and the layout of both grids; control red 11 named, no crash). `gate_949` and
 `gate_958` re-run green as regression checks.
+
+## Cron routes fail closed (21 Aug 2026, no build number)
+
+`api/digest.js` and `api/commissions-digest.js` now use `companycam-sync`'s `cronAuthorised(req)`:
+**`CRON_SECRET` is REQUIRED, and unset means the route refuses everything, cron included.** They
+previously guarded with `if (secret && …)`, which is no guard when the variable is unset — and it
+was unset in production, so both were answering anyone with the URL. `commissions-digest` names
+what every rep is owed.
+
+⚠ **Immediate consequence: until `CRON_SECRET` is set in Vercel, the daily digest and the Friday
+commissions email do not send.** Deliberate — a cron that does nothing beats a public endpoint
+that emails on demand. Vercel Cron sends the header automatically once the variable exists.
+
+The refusal carries a `detail` naming what is wrong (nothing sensitive), the same property that
+let the problem be identified from outside in the first place. Three routes in `api/` read
+`CRON_SECRET`; that is the whole class, swept. `index.html` untouched, so no build number.
+
+Gate: `gate_960.mjs` (11 assertions, in-process with `fetch` stubbed and counted so "refused"
+means nothing left the box; control red 4 named — on the pre-fix copies an anonymous call with
+production-shaped env reached Supabase 1× and 3×).
