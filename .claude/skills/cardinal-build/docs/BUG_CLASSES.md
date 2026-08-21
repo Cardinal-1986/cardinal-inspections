@@ -3110,3 +3110,22 @@ phone" — it was, in a state that cannot occur). Emulate a portal switch by wri
 attributes, or click the real switcher. Sibling of class 30/#tab-overview on the same
 build: the drawer's `display:flex !important` on menu rows silently defeats inline
 hides — hide menu rows by attribute + the drawer's own rule, never inline alone.
+
+
+## Class 56 — scroll containment on a box that has no scrollport (dead pane on iOS)
+
+`overscroll-behavior:contain` / `-webkit-overflow-scrolling:touch` mean nothing on an
+element whose computed overflow is `visible` — but on iOS, such a box sitting BETWEEN the
+touch target and the real scroller can stop the gesture chaining up, and the pane goes
+completely dead to a finger while behaving perfectly on a desktop (957: Cardinal Truth,
+"the finger does nothing at all"). Three instances found in one sweep: a wrapper inside the
+scroller, a modal BACKDROP whose panel does the scrolling, and a scroller that a breakpoint
+turns into a non-scroller while leaving the declarations behind.
+
+**Rule: containment goes on the element that has `overflow:auto|scroll`, and nowhere else.
+If a breakpoint removes the scrollport, it must reset the containment too.**
+
+⚠ Detect at the COMPUTED level, per element — not by matching rules to selectors. A
+declaration-level check stays red after a correct fix whenever a later rule resets the
+value, and it cannot see a scrollport that only exists at some widths. `gate_957.mjs` is
+the shape.

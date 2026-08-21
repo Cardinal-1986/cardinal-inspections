@@ -20440,6 +20440,50 @@ fixture both ways (fixture → icons + 80% wet blue computed; route aborted → 
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
 
+## Build 957 — scroll containment belongs on the box that scrolls (21 Aug 2026)
+
+Theo: "the scroll gets stuck here" + "the finger does nothing at all", on the Cardinal
+Truth screen, phone only.
+
+**The cause.** `overscroll-behavior:contain` (and `-webkit-overflow-scrolling:touch`) sat on
+`#cardinalTruthView .ins-body.cr-cth` — which has `overflow:visible` and therefore **no
+scrollport**. The real scroller is its PARENT, `#cardinalTruthView` (`position:fixed;
+overflow-y:auto`). A non-scrolling box that declares containment cannot consume the gesture
+and, on iOS, stops it chaining up to the box that can: the finger lands in a container that
+neither scrolls nor passes the touch along. Dead pane. Both declarations moved to the real
+scroller, where they mean what they say and still hold the page behind.
+
+**Two more instances of the same shape, found by audit, fixed in the same pass:**
+- `.pu-sheet` — the Punch assign sheet's **backdrop** declared containment; the scrolling
+  box is `.pu-sheet .panel` (`max-height:86%;overflow:auto`), which only had the X axis.
+  Containment moved onto the panel, both axes.
+- `#pipeRow` — the base rule is a real horizontal scroller, but `@media (max-width:900px)`
+  turns it into fitted buttons (`overflow:visible`), orphaning the containment on a
+  phone — i.e. a swipe on the pipeline row could fail to scroll the page. The breakpoint
+  now resets both declarations.
+
+⚠ **Chromium cannot reproduce the symptom** — it scrolls the pane on wheel input in both
+trees, and the touch-gesture instrument available here is inert (proved with a control: a
+known-good screen did not move either, and zero touch events fired). So this build fixes a
+**measured cause**, not a reproduced failure, and says so. Theo's phone is the gate for the
+cure.
+
+**Two instrument corrections earned along the way:**
+1. The first audit sampled one element per rule and missed `#pipeRow` entirely because the
+   sampled element differed by screen state.
+2. The gate's first version checked the **declaration** level — "does a rule that declares
+   containment match a non-scrolling element" — and stayed RED after the fix, because the
+   base `.piperow` rule still exists and still matches; a later breakpoint resets it. What
+   matters is whether containment is **in effect** on a box with no scrollport, and only the
+   computed value knows that. Rewritten to walk computed style on elements. *A check aimed
+   at the wrong level fails correct code just as confidently as it passes broken code.*
+
+Gates: `check_build.py` green 956 → 957 · **`gate_957.mjs` 7/7** (zero boxes with
+containment in effect and no scrollport; containment present on both real scrollers; absent
+from both non-scrollers; the panel is genuinely a scroller; the pane still reaches its full
+scroll range) · **red on the 956 control with 5 named failures**, naming `#pipeRow` and
+`.ins-body.cr-cth` directly.
+
 ## Build 956 — the menu is symmetric (21 Aug 2026)
 
 Theo: "yes make insurance symmetric too", answering the asymmetry 955 flagged. One rule
