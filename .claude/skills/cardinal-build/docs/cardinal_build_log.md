@@ -20497,6 +20497,81 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 984 — the Cardinal Truth tabs stop hiding the last one (21 Aug 2026)
+
+Theo's option **4** of four offered. On a phone the Cardinal Truth tab strip was cutting off
+"Closed" with nothing to show it was there.
+
+### It was two defects wearing one symptom, and only one of them was mine
+
+`.cr-cth-tabs` is a nowrap flex row, `overflow-x:auto`, `scrollbar-width:none`. Measured at 390px by
+driving the app's own `showCardinalTruth()` — no injected markup:
+
+| counts | 982 | 983 (shipped) | 984 |
+|---|---|---|---|
+| 1 digit | fits, **0px spare** | CLIPPED 11px | **fits** |
+| 2 digits | CLIPPED 21px | CLIPPED 32px | **fits** |
+| 3 digits | CLIPPED 43px | CLIPPED 54px | **fits** |
+
+**983 is responsible for 11px of it.** Converting `font:700 13px inherit` (discarded whole) into
+real longhands meant `font-weight:700` finally applied, and bold text is wider than the 0.333px
+saved on size. Reported as mine.
+
+**The other row is the real story: 982 fitted with EXACTLY zero slack.** A strip whose scrollWidth
+equals its clientWidth is not fitting — it is one character away from hiding something. Cardinal has
+more than nine claims, so this has been clipping the last tab in production since long before 983.
+*The fixture's single-digit counts were the one case the broken strip could still fit, which is why
+no gate ever caught it.*
+
+### Why wrap, and why no media query
+
+Four options were measured before one was picked, because the obvious fix does not work:
+
+| | 1-digit | 2-digit | 3-digit | cost |
+|---|---|---|---|---|
+| as shipped | −11px | −32px | −54px | — |
+| gap 20→13px | fits | −11px | −33px | nothing |
+| count badge 13→11px | −7px | −26px | −44px | smaller counts |
+| both | fits | −5px | −23px | both |
+| **wrap to two rows** | **fits** | **fits** | **fits** | +47px tall |
+
+The verification agent had proposed `gap:13px`. **Measured, it buys back the 983 regression and
+nothing else** — it still clips at two digits, which is every real screen. Only wrapping is a fix
+rather than a postponement.
+
+**`flex-wrap:wrap` needs NO media query**, and that is the neat part: flex only wraps when the
+content actually overflows. Measured 2 rows at 360/390/414 and **1 row, 46px, byte-identical** at
+430/480/768/1194. The strip self-adjusts.
+
+⚠️ **`gap:20px` sets BOTH axes in flexbox**, so wrapping alone gave 20px rows on top of each
+button's 10px bottom padding — a loose, floating second line. `row-gap:4px` is declared **after** the
+shorthand, which is load-bearing: declared before it, the shorthand wins and the fix ships ugly.
+Chosen by rendering 0/4/8px and looking at them.
+
+⚠️ **A scroll-fade affordance was considered and rejected.** There are **27** `overflow-x:auto`
+scrollers in this app and **not one** has a fade or mask — inventing one here would be a new
+mechanism beside 27 that share none. `flex-wrap:wrap` is already used in four places. *Grep for the
+convention before inventing a mechanism.*
+
+### Gate
+
+**`gate_984.mjs` 10/10 GREEN**, **RED on the 983 control with 4 named failures**, no crash.
+Assertion 4 is the load-bearing one and it is deliberately not a CSS-text check: it drives the real
+entry point at 390px, sets a **two-digit** count, and requires every tab's right edge to sit inside
+the strip's client box. On the control it names the symptom — `clipped: ["Closed12"], overflow 32px`.
+Assertion 5 is its own negative control: it restores `nowrap` on the live element and requires the
+same check to go red, so 4 cannot pass vacuously.
+
+⚠️ **The gate tests with two-digit counts on purpose.** Testing the fixture's single digits would
+have been a check that could not fail — that is the exact blind spot that let this ship.
+
+### How it was found
+
+The 983 verification workflow, which failed on **my own script bug**: an agent hit a 529, `parallel()`
+resolved it to `null`, and the synthesis read a property off it without the `.filter(Boolean)` the
+tool documents. Four of five agents had finished, so their results were recovered from
+`journal.jsonl` rather than lost. Two surfaces clean, two flagged risk; this was the real one.
+
 ## Build 983 — the rest of the app gets its type back (21 Aug 2026)
 
 Build 980 fixed thirty invalid `font:` shorthands inside Community. This is the same defect

@@ -58,6 +58,19 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
   ⚠️ 983 also rewrote two `gate_980` assertions that had pinned a file-wide snapshot total and
   therefore went red on correct code
 
+- **984** ✅ the Cardinal Truth tab strip stopped hiding "Closed" on a phone. Theo picked option 4
+  (wrap) of four measured. ⚠️ **983 caused 11px of it and 982 caused the rest** — the strip had
+  fitted with EXACTLY 0px slack, so any real claim count clipped the last tab silently. The
+  `gap:13px` fix that was first proposed was measured and rejected: it buys back only the 983
+  regression and still clips at two digits
+
+**STILL OPEN — a sweep nobody has run.** `.cr-cth-tabs` is the FIRST of this app's **27**
+`overflow-x:auto` scrollers anyone has measured for silent clipping, and it was clipping. Every one
+of them hides its scrollbar, so a person gets no signal that content is off-screen. The check is
+mechanical — for each such element, compare `scrollWidth` to `clientWidth` **with realistic data,
+not the fixture's zeroes** — and it belongs in `sentinel` as a new probe rather than in prose (the
+BUG_CLASSES header's own rule). Expect more than one hit.
+
 **STILL OPEN, all three worth doing, none started:**
 - **Two Community greens that 982 missed — light theme only.** Verified present verbatim in the
   shipped file at 983, both raw `#34D399` on a near-white ground:
