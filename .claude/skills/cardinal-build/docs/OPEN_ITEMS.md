@@ -2,7 +2,7 @@
 
 ---
 
-## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–978 (the UX audit follow-through)
+## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–982 (the UX audit follow-through)
 
 Source: `CR_UX_AUDIT_2026-08-21.md` / `.csv` — an end-to-end design and ease-of-use audit across
 every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60 P2, 55 P3.
@@ -32,6 +32,63 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
 - **978** filing a punch-out meant finding the Production board first, and the search never
   matched a **PO number**. Two doors onto the ONE composer (global ＋ menu, ＋ New in the Punch &
   Repairs head) — not a second form; PO now matches bare (`1042`) and hashed (`#1042`)
+
+- **979** Punch & Repairs and the Team Directory were the last two full-screen views the header
+  could not name — both fell to `stickyCrm()` and wore whichever portal you had last used. Theo
+  picked scope **2** (both screens). ⚠️ The head moved, `data-crm` did not; and `goHome()` needed
+  a tool-screen branch in the same build or the gold house would have jumped to retail home
+
+- **980** thirty Community rules declared `font:<weight> <size> inherit` — invalid CSS, so the
+  browser discarded weight and size and used its own default. Repaired with longhands. ✅ **The
+  other 64 were swept at 983; the file-wide count is now 0**
+
+- **981** item 7 done. The community job menu mirrored a grid retired at 348, so Contracts opened
+  Estimates and Appointments opened the Schedule Board; and `#jobMenuSel` / `#woQuick` were visible
+  and inert on every community job at every width. ⚠️ **Still open: retiring `#jaGrid`** — 5 of its
+  11 references are functional, so it is its own build
+
+- **982** item 6 done. Ten single-theme inks got light values; five new `--ccm-*` pairs; the
+  funding-partner cell stopped flooding (BILL TO 2.70 → 7.90:1 dark). **The seven-item Community
+  program is complete.**
+
+- **983** ✅ **the other 64 are gone.** 58 stylesheet rules across thirteen blocks (25 of them the
+  Showcase, the client-facing surface) plus 6 inline `style=` attributes. ⚠️ Two hid behind
+  `var(--lb-sans,inherit)` — valid CSS *only if the token exists*, and `--lb-sans` has 0
+  declarations against 2 references, so the fallback was always taken and always dropped.
+  ⚠️ 983 also rewrote two `gate_980` assertions that had pinned a file-wide snapshot total and
+  therefore went red on correct code
+
+**STILL OPEN, all three worth doing, none started:**
+- **Two Community greens that 982 missed — light theme only.** Verified present verbatim in the
+  shipped file at 983, both raw `#34D399` on a near-white ground:
+
+  | site | light | dark |
+  |---|---:|---:|
+  | `.cr-pcard.community .t{ color:#34D399; }` | **1.81:1** | 8.37:1 |
+  | `body[data-crm="community"] #commsView #commsCli{…}` | **1.71:1** | 9.93:1 |
+
+  Their sibling `.viewhead` one line away already does this correctly — `var(--ccm-ac,#34D399)`,
+  which flips to `#047857` at 4.89:1 — so the repair is to adopt the token pair, not to invent a
+  colour. ⚠️ **Two traps, both of which make a naive fix ship inert or break something:**
+  `-webkit-text-fill-color` is the property actually inking `#commsCli`, so **changing `color`
+  alone does nothing**; and its `!important` exists to beat an inline `style="color:#9c1822"`, so
+  it must stay. ⚠️ There are **18 raw `#34D399` occurrences** outside `var()` fallbacks and most
+  are legitimate — the `--ccm-ac` declaration itself, the `--bnac` banner token, `CRM_COLOR` /
+  `CRM_ICON`, the `.crm-community` chips and a comment explaining the emerald. **Only these two
+  carry body text on a light ground.** Do not sweep the hex.
+
+- **Retiring `#jaGrid`** — 5 of its 11 references are functional (markup, writer, router,
+  `cr-pp-script`'s punch anchor, the old scrape). Needs its own build.
+- `--cr-amber`'s light half `#C87A00` measures **3.37:1** on white — under the floor, on the
+  coach/pricing/claims/adjusters mounts. Found while choosing 981's badge colour; not investigated.
+
+**SETTLED, 21 Aug — item 6 is option 1 and item 7 is A1/B1/C1/D1.** Theo picked both. Option 1 is
+shipping in two halves: 980 the typography, 981 the colour (`--warn` as a theme pair,
+`--ccm-nowfill` declared, the frozen light twins, and `.ct.bill`'s dark flood).
+
+**SETTLED, 21 Aug — do not re-litigate:** the Production-header scope question is answered.
+Theo picked **2**: Punch & Repairs *and* the Team Directory. Production/Sales are TOOL screens,
+not portals — home from one of them returns to YOUR CRM.
 
 **OPEN — the Community program, items 6 and 7 of seven:**
 - **Item 6 — one design era.** Four redesigns layered rather than replaced: cream dialogs left

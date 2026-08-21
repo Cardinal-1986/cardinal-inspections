@@ -20497,6 +20497,427 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 983 — the rest of the app gets its type back (21 Aug 2026)
+
+Build 980 fixed thirty invalid `font:` shorthands inside Community. This is the same defect
+everywhere else: **64 declarations across thirteen stylesheets and six inline `style=` attributes**,
+all written `font:<weight> <size> inherit`.
+
+**`inherit` is a CSS-wide keyword.** It is legal as an *entire* value and never as one component of
+a shorthand, so `font:700 13px inherit` is not "inherit the family, set weight and size" — it is a
+parse error, and the browser discards the **whole declaration**. The weight and the size go with
+it, and the element renders at whatever it happened to inherit. The Showcase carried 25 of them;
+Sales Floor 7; Insurance Clients, Cardinal Truth 4 each; three blocks 3 each; five more 1–2.
+
+The repair is the same one 980 used and for the same reason: **longhands, not an invented family.**
+`font-weight:700;font-size:13px` says exactly what the shorthand was trying to say, and a family
+cannot be chosen without changing what the element inherits. It also avoids the shorthand's reset
+of line-height, style and variant — which today never happens, because the declaration is thrown
+away, so longhands are the minimal change rather than the conservative one.
+
+### The two the assert caught, and why they are a different bug
+
+The patch aborted with two declarations still standing. Both were in `cr-lib-styles`:
+
+```css
+font:700 13px var(--lb-sans,inherit)
+```
+
+That form is **valid CSS when the token exists** — the fallback is only reached if it does not.
+`--lb-sans` has **0 declarations and 2 references** in the file, so the fallback is always reached,
+and it fails identically to the bare form. Proven in a three-case Chromium control rather than
+argued: declared token → declaration kept; undeclared token → declaration dropped; bare `inherit` →
+dropped. *A `var()` wrapper does not make an invalid fallback valid; it only hides it from a grep.*
+
+### Gates
+
+**`gate_983.mjs` 9/9 GREEN**, **RED on the 982 control with 5 named failures.** Assertion 3 is the
+one that matters: it loads the real document in Chromium and asks whether each converted rule
+**survives the parse**, and assertion 4 puts the invalid form back to prove assertion 3 can fail.
+
+⚠ **Assertion 6 was measuring the wrong thing on its first run.** It flagged 26 rules as having
+gained a font-family, because it tested *adjacency* — a `font-family` anywhere near the converted
+declaration — rather than invention. Re-aimed at a delta: file-wide `font-family` count **277
+before, 277 after**. Nothing was invented, and now the gate says so in a form that cannot drift.
+
+⚠ **An unbounded regex hung the recon for 120s.** `[^{}]*#commsCli[^{}]*\{[^}]*\}` backtracks
+without terminating on a 5 MB file. Replaced with bounded string finds. This file's own rule —
+*recon regexes need bounds* — earning its place again.
+
+### `gate_980` was rewritten by this build, and that is worth reading
+
+The 967–983 sweep came back with **`gate_980` RED on HEAD**, which reads as a regression. It was
+not one. Two of its assertions pinned a **file-wide snapshot total** — *"979 had 94, so 980 must
+show exactly 64"* and *"980 is Community-scoped, so ~64 must survive elsewhere"*. Build 983 swept
+those 64 on purpose, so **a correct app turned a correct gate red.**
+
+Measured across all three trees before touching anything:
+
+| tree | `font:` invalid | plain `font:inherit` | valid `font:` |
+|---|---:|---:|---:|
+| 979 | 94 | 27 | 1291 |
+| 982 | 64 | 27 | 1291 |
+| **983** | **0** | **27** | **1291** |
+
+Only the invalid column ever moved. **No valid declaration was consumed by either sweep** — which
+is the contract those two assertions were really guarding, and it is now what they say:
+assertion 2 asserts the valid populations are untouched and invalid never rose; assertion 8 asserts
+Community keeps its untargeted font rules, which is what a greedy sweep would have destroyed.
+Both stay falsifiable and both are still **RED on the 979 control**, now with 7 named failures.
+
+*This is the file's own rule biting the file itself: assert the contract over a region, never the
+number you measured it at. A snapshot total is a check with an expiry date on it.*
+
+## Build 982 — Community reads properly on the light theme (21 Aug 2026)
+
+The second half of **item 6, option 1**. Era A was built dark-first, and ten inks were declared
+once and never given a light value. Values computed by a five-agent measure pass, then each put in
+front of a skeptic told to refute it. **All five defects reproduced; the skeptic corrected three
+things that mattered.**
+
+### The reconciliation the skeptic caught
+
+Two agents independently wanted to declare `--ccm-warn` in the light block — one at `#8f6000`, one
+at `#8a6420`. **Declaring it twice is a duplicate; picking either silently is a coin toss.**
+Resolved to **`#805500`** — the value build 981 already shipped for the count badge and Theo has
+already seen, rather than inventing a second amber 981 builds later. Measured on every light
+ground it reaches:
+
+| ground | #805500 | #8f6000 | #8a6420 |
+|---|---:|---:|---:|
+| `--ccm-card` #ffffff | **6.53** | 5.47 | 5.35 |
+| #f7f8f7 | **6.13** | 5.14 | 5.03 |
+| `--ccm-ground` #f1f2f1 | **5.82** | 4.87 | 4.77 |
+| `--ccm-rdw` #fdecec (binding) | **5.71** | 4.79 | 4.69 |
+
+⚠️ **The badge fix was INERT without a second edit.** Re-pointing the base rule to `var(--warn)`
+does nothing while 981's `[data-theme="rb-light"]` override still wins. Both had to move in the
+same edit — and because the token's light half IS `#805500`, the badge renders the identical colour
+it rendered yesterday. A pure re-pointing.
+
+### The three grounds, and why they do not all behave the same
+
+⚠️ **The gate found a third amber ground nobody's proposal mentioned**, and it split the rule:
+
+| ground | carries | treatment |
+|---|---|---|
+| `.ev .doit`, `.sheet .duebar button` | near-black `--ccm-onwarn` text | **must NOT flip** — `--warnsolid`. Flipping would drop the ink to 3.35:1 |
+| `.ev.now::before` | nothing — a 9px marker dot | **SHOULD flip** — keeps `var(--warn)`. `#805500` on white is 6.53:1 where bright amber is 1.46:1 and all but vanishes |
+
+The first version of assertion 3 forbade *all* `background:var(--warn)` and failed correct code —
+which is how the third ground was found at all.
+
+### What else moved
+
+- **`--ccm-nowfill` was referenced once and declared nowhere**, so its `#321a1c` fallback *was* the
+  palette. Declared as a real pair; `#cr-cc .ev.now .txt`'s single-theme grey was **deleted** rather
+  than twinned, because with the band flipping the text inherits `--ccm-mute` at 6.24:1 and needs no
+  rule.
+- **Three light twins**, dark rules byte-identical: `.pin .facts .k` 1.44 → **7.46**, `.ccwo-st.disp`
+  2.13 → **5.49**, `.ccwo-st.done` 1.55 → **5.48**. ⚠️ Stated plainly: `.done` **shifts hue 24°**
+  (green → teal) because it adopts `--ccm-ac`; the other two hold hue. A token pair beats a computed
+  literal, but it is not the same move and should not be described as one.
+- **`.ct.bill` — the headline.** The funding-partner cell filled padding-box with a *translucent*
+  wash over an opaque gradient border-box, so in dark the border flooded the cell. New
+  `--ccm-washfill` pair; the two-layer form is kept, because swapping the fill any other way loses
+  the gradient border. **Measured in the gate: BILL TO 2.70:1 on 979 → 7.90:1 now.**
+- **Community Analytics: all five inks, or none.** The skeptic rejected doing two —
+  *"fixing two of five leaves the overdue marker less legible than the merely-due one."*
+
+Verification: check_build green (981 → 982). **gate_982.mjs 10/10 GREEN, RED on the 979 control
+with 7 named failures**, and the control prints the real defect (BILL TO at 2.70:1 dark).
+gate_sweep 967–982. Sentinel 13, unchanged.
+
+⚠️ **THE MEASURING RIG WAS WRONG TWICE, and both are the traps this file already records.**
+1. The first version walked the ancestors, collected every gradient stop and scored the ink against
+   the **worst**. But `.ct.bill` paints `<fill> padding-box, <ring> border-box`, and
+   `.ct.bill .k`'s ink **is one of the ring's stops** — so it reported **1.00:1 in both themes** for
+   text that is perfectly legible. *A border gradient is not the ground under the glyph.*
+2. The replacement sampled a real pixel — at the element's own left edge, which for a text node is
+   **full of glyph**. It reported BILL TO at 2.00:1 by measuring the letters.
+   Fixed by walking up to the nearest ancestor that actually paints a fill, then probing its padding
+   box with `elementFromPoint` for a spot with nothing drawn on it. The numbers then matched the
+   independent agent renders **to two decimals** (`.ct.bill .k` light 5.21:1 in both).
+
+⚠️ **And the harness does not mount all six surfaces on every run** — which tab is open, and whether
+a crew work order exists, vary. Requiring all six made the gate flap. It now requires the pair that
+IS this build's defect and **reports the rest as unmeasurable** rather than passing over them.
+
+## Build 981 — one job menu (21 Aug 2026)
+
+Item 7 of the Community program. Theo's picks: **A1 B1 C1 D1.**
+
+### The name was misleading and the defect was worse
+
+"One Job Menu" reads as though the community card lacks one. **It has one** — ten buttons,
+rendering fine. The defect is where it gets them: `syncJobMenu()` is a DOM screen-scrape of
+`#jaGrid`, the Job Activity grid Keeper **retired at build 348**, which `#tab-overview` paints out
+with `display:none` on every profile. Nobody could see the original, so nobody could see the copy
+had gone stale while the real menu grew through 609, 652 and 849.
+
+Driven in Chromium on a seeded community job, before and after:
+
+| | 979 | 981 |
+|---|---:|---:|
+| mirror buttons | 10 | **15** |
+| carrying a drawn icon | 0 | **14** |
+| carrying pre-686 emoji | **9** | **0** |
+| Contracts / Work Orders / Measurements / Commissions | **all hidden** | **all visible** |
+
+Confirmed by clicking, on 979: **Contracts opened the Estimates tab** (the dead tile carries
+`data-ja="estimates"`) and **Appointments opened the company Schedule Board**, not the job's own.
+
+### Bigger than briefed: two controls that render, update themselves and do nothing
+
+`#jobMenuSel` and `#woQuick` are wired straight to `showTab`, which reveals `#tab-<x>` inside
+`.wrap` — hidden by the community takeover — and **neither calls `suspendForTab()`**. Worse,
+`showTab` does `if(sel.value !== name) sel.value = name`, so the dropdown moves its own label to
+"Contracts" while nothing happens. Measured inert at 390px **and** 1194px, so this was never the
+phone rule everyone suspected.
+
+**That is why the fix is a wrapper on `showTab` rather than three patches.** Both controls already
+go through it; so does any future caller. It also lets the mirror's dispatch delete its own
+`['comms','board','photos']` rule, so "which acts suspend" is answered in exactly one place.
+
+⚠️ **Three load-bearing details, each measured before it was designed on:**
+- **suspend AFTER `_showTab`** — it sets `#tab-<x>` to `display:block`, and `suspendForTab()` then
+  calls `takeOver(false)` which un-hides `.wrap` so that tab can paint. Same synchronous turn.
+- **the `getElementById('cr-cc')` guard is not decoration** — `suspendForTab()` calls
+  `ensurePill()` unconditionally, so a suspend fired before the card mounts leaves a "Back to bid
+  view" pill over a card that can now never mount.
+- **`overview` → `resumeFromTab()`** is Theo's D1. That chip used to drop a community job onto the
+  full retail profile — Convert to Insurance, Lead Source, and stage arrows that move the stage
+  **without writing any of the bid bookkeeping the black card writes**.
+
+### The shape that was tested and REJECTED
+
+The doctrine answer is ADOPT: the module already owns `adoptLocation()` / `adoptReviews()`, so
+move the live `.ja-menu` into the card. Tested in Chromium rather than reasoned about, and
+refuted — the next `renderOverview()` rebuilds `.ja-menu` in `#acxMount` while the adopted copy
+sits in `#cr-cc`, **duplicating four ids that async count-fills reach by `getElementById`**
+(measured 1 → 2, and it does not self-heal). Keep the mirror, re-point it, stop capturing nodes.
+
+⚠️ **`#jaGrid` is NOT deleted.** 11 bare hits: 5 functional (markup, the `innerHTML` writer, the
+click router, `cr-pp-script`'s anchor fallback, the old scrape) and 6 prose. Removing the grid
+without unpicking the router and the punch anchor is four dangling references. Retirement is its
+own build; the gate asserts the markup still exists.
+
+**A1** — Checklists existed only on the retired grid, so a straight re-point would have lost it.
+Added to the **one shared menu** (retail gains it too) rather than to the card alone, which is the
+fork this build exists to end. **B1** — the drawn icon is carried by `cloneNode`, never
+`outerHTML`, so the renderer stays escape-only. **C1** — the count badge measured 12.13:1 dark and
+**1.46:1 light**; it now has a light twin, `#805500` at 6.53:1, the same hue deepened (39.8° vs
+40.5°) rather than a different colour, with the dark rule untouched byte-for-byte. ⚠️ Not
+`--cr-amber`'s light half `#C87A00` — measured **3.37:1** on white, under the floor, and scoped to
+module mounts anyway.
+
+Verification: check_build green (980 → 981). **gate_981.mjs 13/13 GREEN, RED on the 979 control
+with 8 named failures and no crash.** gate_sweep 967–981 green. Sentinel 13, unchanged.
+
+⚠️ **The drive would have passed VACUOUSLY.** The sentinel harness seeds **no community project**,
+so `#cr-cc` never mounts, the mirror is never built, and the first run reported the header controls
+"VISIBLE" — from a *retail* job, where they always were. The gate now seeds a community job itself
+and asserts the card mounted before believing anything else. *A check that cannot fail is worse
+than no check, and this one was two lines from shipping as exactly that.*
+
+⚠️ **Assertion 7b only discriminates from a SUSPENDED state.** "Overview restores the card" passes
+trivially on 979, because nothing ever suspended there. The gate asserts `wasSuspended` first, so
+the control fails it honestly with *"never suspended, so this proved nothing"* rather than passing.
+
+### Correction to CLAUDE.md, found while choosing the badge colour
+
+CLAUDE.md states the three retired gold values *"(#d4a017, #f5d061, #8a5a00) are still at 0,
+asserted."* Measured: `#d4a017` 0 ✅, `#f5d061` 0 ✅, **`#8a5a00` is 1** — and it is live code, not
+prose: `st.style.color = (j.ok ? '#2e7d32' : '#8a5a00')`. The assertion is stale for that one
+value. Not touched here; recorded so the next colour sweep does not trust it.
+
+## Build 980 — Community looks the way it was drawn (21 Aug 2026)
+
+Theo picked **item 6, option 1** ("repair Era A in place") and said *"start 6"*. This is the first
+half of that option — the typography — shipped on its own, because its stated risk was that it
+visibly changes ~30 elements at once and deserves to be seen in isolation. The colour half is 981.
+
+### The defect: 94 rules declare a font that never applies
+
+Thirty rules in `cr-cc-styles` and `cr-ch2-styles` are written `font:700 13px inherit`. **That is
+invalid CSS.** `inherit` is a CSS-wide keyword: legal as an entire value, never as one component
+of a shorthand. Chromium therefore discards the **whole declaration** — the weight and the size
+with it — and the element renders at whatever it inherits.
+
+**Nothing in the ladder can see this.** Braces balance, `node --check` passes, the duplicate-id
+check passes, the marker is present, the negative control is clean, and the screen is quietly
+wrong. It is BUG_CLASSES' *"a rule that parses, balances and never applies"*, at scale.
+
+**A recon agent reported it; I did not relay it.** Re-measured three ways before believing it:
+
+| method | answer |
+|---|---:|
+| source count of `font:<v> inherit` where the value is not bare `inherit` | **94 file-wide, 30 in Community** |
+| minimal Chromium control — `.zzA{font:800 12.5px inherit}` | `cssText` is `""`; the sibling with a real family survives intact |
+| each of the app's own 88 attributable selectors, checked against Chromium's parse | **83 lose both weight and size** |
+
+⚠️ **The first attempt to measure it in the live app returned a confident ZERO.** I looked for
+rules whose parsed declaration block was **empty** — but a real rule carries other declarations,
+so only the `font` line vanishes and the block is never empty. The right question is whether
+`font-size` and `font-weight` are present at all. *An extractor that asks the wrong question
+answers it perfectly.*
+
+### The repair is LONGHANDS, not a family
+
+`font:700 13px inherit` was trying to say *"inherit the family, set weight and size"*.
+`font-weight:700;font-size:13px` says exactly that. Picking a family instead would change what
+the element inherits — inventing a decision nobody made. It also sidesteps the shorthand's reset
+of `line-height`/`font-style`/`font-variant`, which today never happens (the declaration is
+thrown away), so longhands are the strictly minimal change. Three rules carried a
+`/line-height` and got a real `line-height`.
+
+Scoped to Community: **30 converted, 64 left elsewhere**, deliberately. The biggest remaining
+cluster is **`cr-show-styles` with 24 — the Showcase, the client-facing presentation surface.**
+That is its own build and it is worth doing.
+
+**What visibly moves:** sizes now range 10px–16px where the elements previously inherited. Eight
+of the thirty land below 12px. That is what the design asked for; if any reads too small on the
+phone it is now a one-line change in a rule that finally works.
+
+Verification: check_build green (979 → 980). **gate_980.mjs 10/10 GREEN, RED on the 979 control
+with 7 named failures and no crash.** Its load-bearing assertion is not a source count — it walks
+Chromium's own parsed rules and requires every converted rule to keep its size and weight, and it
+**builds a copy of the artifact with the invalid shorthand put BACK** and requires that test to go
+red on it (at least 30 rules must drop). gate_sweep 967–980 green. Sentinel: 13 findings,
+identical on 979.
+
+⚠️ **Four gate faults, all mine, all this project's named traps.** A marker that already existed
+in the previous build (caught by the negative control — working as designed). A regex requiring a
+trailing `;` on a declaration that **closed its block** with `}`, so it found 29 of 30 and failed
+correct code — twice, once in the assertion and once in the revert control. A hardcoded `=== 3`
+for the line-height conversions when two such trios **already existed**, which is a number read
+off my own patch rather than off the app. And a control assertion of `kept === 0` when five rules
+legitimately survive because their longhands are not adjacent. *Roughly half of all reds on this
+project are the test's fault, and this build was four for four.*
+
+### 980 also builds the instrument: `scripts/preview.mjs`
+
+CLAUDE.md has always said *"preview visual changes before shipping — labelled options, dark and
+light, desktop and mobile."* **That instruction has been unfollowable, because every screenshot in
+this harness timed out**, and three separate attempts across two sessions blamed fonts and
+animation.
+
+**Neither was the cause.** Measured: `readyState` **"interactive"** — never `complete`;
+`fonts.status` `loaded`; `fonts.size` **0** (the app has zero `@font-face` rules and zero webfont
+URLs); **0** running animations; 62 rAF ticks/sec. A perfectly healthy page that could not be
+photographed. The harnesses answered every non-app request with `fulfill({status:200, body:''})`
+and **no content-type**, so an `<img>` request never completed, the document never finished
+loading, and `document.fonts.ready` — which per spec cannot resolve until it does — stayed pending
+forever. Playwright's screenshot waits on exactly that promise. **Serving by `resourceType()` with
+a real 1×1 PNG for images takes the same shot in 67ms.**
+
+The rig captures one frame per width per theme — width only from `setViewportSize`, theme only
+from the same `data-theme` attribute the app's own toggle writes — because `@media
+(max-width:560px)` keys off the browser window and an iframe grid would show a phone layout that
+is really a desktop one. It produced a real before/after for this build's hub rules.
+
+⚠️ **Stated plainly: the `#cr-cc`-rooted specimens still render blank and I did not finish
+chasing it.** Three repairs went in on the way (reveal a chain hidden by the app's own rules; call
+`getComputedStyle` **after** attaching, because a detached node reports nothing and the first
+repair silently did nothing; neutralise `position:fixed` so 28 samples stop stacking) and each was
+a real harness bug, but the card-rooted half is still not showing. The hub half works and the
+instrument is a net gain; finishing it is open.
+
+## Build 979 — Punch & Repairs and the Team Directory get the Production header (21 Aug 2026)
+
+Theo: *"Can you make productions have its own header or will that break anything?"* — a question
+with a risk clause in it, and the risk clause is the build.
+
+**The first half of the answer was already no work.** Production HAS its own header and has had
+one for a long time: `body[data-crm-head="production"] .site` (steel `#181b20`, amber `#f5a623`),
+its own `#cr-hd2-ribbon` rule, its own `#cr-hd2-bar` border and `TITLES.production`. Nothing
+needed inventing.
+
+**The actual defect is that two screens could not name themselves.** `crmNow()` checks five views
+— `cardinalTruthView`, `communityHubView`, `cr-pb`, `cr-sf`, `insClientsView`. `punchView` and
+`teamView` are not among them, so both answer `retail`, and `crmHead()` then falls to
+`stickyCrm()`. Measured in Chromium on the 978 tree, all three portals × both screens:
+
+| portal | Punch & Repairs and Team wore | `--hbg` |
+|---|---|---|
+| community | the Community green | `#047857` |
+| insurance | the Insurance white | `#FFFFFF` |
+| retail | the Retail steel | `linear-gradient(180deg,#243342,#16202b)` |
+
+**The same page, three different headers, decided by where you had been.** After: `#181b20` and
+the title `Production` in all six.
+
+⚠️ **The head moved; the PAGE did not, and that is deliberate.** `data-crm` stays `retail` on both.
+Punch & Repairs is cross-CRM by construction — it lists items from all three and carries a CRM
+filter facet — so a production-tinted ground would be a lie. 754 drew exactly that line: *"grounds
+and module gates deliberately do NOT follow the portal"*, because the naive version painted white
+ink on the light insurance ground across every shared screen.
+
+⚠️ **The check goes LAST in `crmHead()`**, after `crmNow()` and after the `projopen` guard, so an
+open project and a real CRM view both still outrank it. The only two screens it can reach are the
+two it names.
+
+### The risk clause — and it was real
+
+`crmHead()` feeds three other consumers, and one of them would have broken quietly.
+
+**`goHome()` reads `crmHead()`.** Give the punch page a production head and `goHome` falls through
+its insurance/community branches to `showHome()` — **retail home**. So a community user tapping the
+gold house on Punch & Repairs would have gone from the Community hub to the retail dashboard, with
+nothing on screen to explain it. That is the whole of *"or will that break anything"*.
+
+The fix is one line, and it repairs an older wart in the same stroke: **production and sales are
+TOOL screens, not portals.** There is no "production home" to land on, which is why that branch has
+always dropped Production-board and Sales-Floor users on retail whatever CRM they were in.
+
+```js
+if(crm === 'production' || crm === 'sales') crm = stickyCrm();
+```
+
+Verified by **clicking the real gold house** in Chromium with the three destinations spied — not by
+re-deriving the mapping, because `goHome` is module-scoped and a re-derivation tests nothing. All
+six combinations land exactly where they landed on 978. And the check is **proved able to fail**:
+`gate_979` builds a copy of its own artifact with that line removed and asserts that **at least
+four** destinations move (they do — community and insurance, both screens).
+
+**`portalNow()` reads `document.body.dataset.crmHead`,** so `syncPortalSections()` follows too and
+the burger menu goes Production-shaped on these screens: the Production section unhides, Sell and
+the community/insurance sections hide. That is coherent — it is what the Production board already
+does — and it is the one change Theo will notice. Rendered-verified for the insurance portal (the
+Scope of Loss row goes `shown → hidden`); the rest is asserted from `syncPortalSections`' own
+expressions, evaluated at `p='production'`, because in the sentinel harness those nav rows are
+hidden by resolve-or-hide anyway and a client-rect measurement there would have proved nothing.
+
+**`paintCrmPills(k)`** has no `production` set, so it falls to `PILL_HOME` — Contacts / Leads.
+Neutral, and right for a cross-CRM page.
+
+Header ink on the steel ground, computed: `--hin` #ffffff **17.26:1**, `--hmt` #b9c0c9 **9.41:1**,
+`--hdm` #7d8794 **4.74:1**, `--hac` #f5a623 **8.52:1**. All four clear 4.5:1.
+
+Verification: check_build green (978 → 979). **gate_979.mjs 12/12 GREEN, RED on the 978 control
+with 5 named failures and no crash** — and the control's failures narrate the defect exactly,
+printing the three different `--hbg` values the same page used to wear. gate_sweep 967–979:
+**13/13 green on HEAD**. Sentinel: 13 findings, **identical on 978**.
+
+⚠️ **The comment-pollution trap fired for the FIFTH time in three days, again inside the gate.**
+The order assertion used `CRMHEAD.indexOf('stickyCrm()')`, whose first hit is my own explanatory
+comment — *"Reaching stickyCrm() meant the header wore..."* — so it reported the fallback as coming
+BEFORE the checks and failed correct code. Anchored on `return stickyCrm()` instead. **The rule is
+assert on a form your own prose cannot contain**, and I keep having to relearn it.
+
+⚠️ **And a regex that could not cross a paren.** The menu assertion pulled
+`setSectionHidden(findSec('sell'), …)`'s second argument with `[^)]*?`, which cannot get past the
+`(` in `!(p === 'retail' || p === 'sales')`. It returned `null`, and the gate read a **parse
+failure as a behaviour failure**. Replaced with a paren walk. Both faults were the gate's, not the
+app's — which is this project's own standing question, *"is the test or the app wrong?"*, answered
+the usual way.
+
+**Could not capture:** a before/after screenshot of the header. Playwright's screenshot waits on
+`document.fonts.ready` and then on the element being motionless; in this harness fonts are aborted
+and the header carries an animated gradient border, so three approaches all timed out with the page
+correctly rendered. The hex values above are exact and rendered-verified; the Vercel preview is the
+picture.
+
 ## Build 978 — start a punch-out from anywhere, and find one by PO (21 Aug 2026)
 
 Theo, verbatim: *"Can you do a plus new punch out and make it to where you can search by name
