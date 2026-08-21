@@ -5575,3 +5575,16 @@ because `cr-drawer-styles` paints rows `display:flex !important` (the #tab-overv
 class), the inline because the rail's scrape() keys on it. Restore only touches rows
 syncSell itself hid. Re-synced by a body attribute observer (data-crm/data-crm-head).
 ⚠ Emulate portal switches in tests by writing BOTH crm attributes. Gate: `gate_953.mjs`.
+
+## The Insurance tools live in the menu (954)
+
+The Cardinal Truth hub renders **no Tools rail** — retired at 954 after verifying all eight
+destinations have menu doors (seven in the menu's Insurance section, Schedule Board under
+Daily). ⚠ `.cr-cth-tools.lead` (the Insurance Clients tile, 675) is NOT part of that rail
+and stays; `wire()`'s `[data-go]` handlers stay too (the terminal "All claims" button uses
+them). The menu's Insurance section **auto-opens on entering the insurance portal** — one
+write per switch into `cardinal.lnav.sections`, never re-forced, so a manual collapse
+sticks. `syncPortalSections()` (was `syncSell`) hides Sell outside Retail and the Insurance
+section inside Retail, tagging rows `data-cr-pohid`. ⚠ That section is located by
+`secOfNav('sol')`, never by heading text — `renameSec()` makes the last "Insurance" heading
+"CRMs", and a label lookup would hide Cardinal Truth. Gate: `gate_954.mjs`.
