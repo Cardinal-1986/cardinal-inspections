@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 968 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 969 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -30768,6 +30768,18 @@ function showList() {
   function today() { return new Date().toISOString().slice(0, 10); }
 
   function toast(msg, cls = '') {
+    /* 969: this toast was appended INTO #cr-claims-mount, which styleMounts()
+       makes position:fixed with a non-auto z-index and cr-mounthead-styles pins
+       at z-index:60 !important — a stacking context. body.standalone #pwaNav is
+       9990 in the ROOT context, so this painted behind the installed bottom bar
+       at any z-index it was given; raising 300 higher would have been a silent
+       no-op. Route it through the channel 733 built and 735 named: it appends to
+       document.body, so it escapes the mount, and body.standalone #crToasts
+       already clears the bar. It also retires an unreadable ink — --cr-black is
+       #f2f4f7 in the DARK theme, so 'Deleted' was white-on-near-white at 1.10:1.
+       The 'error'/'success' vocabulary here is exactly what window.toast speaks,
+       so no call site moves. */
+    if (typeof window.toast === 'function') { window.toast(msg, cls); return; }
     document.querySelectorAll('#cr-claims-mount .cr-c-toast').forEach(t => t.remove());
     const el = document.createElement('div');
     el.className = 'cr-c-toast ' + cls;
@@ -33496,6 +33508,10 @@ function showList() {
     return dd===1?'yesterday':dd+'d ago';
   }
   function toast(msg,cls){
+    /* 969: same fix as cr-claims — see the note there. #cr-coach-mount is made
+       position:fixed with a z-index by show() and pinned to 60 !important by
+       cr-mounthead-styles, so this could never paint over #pwaNav (9990). */
+    if (typeof window.toast === 'function') { window.toast(msg, cls); return; }
     M.querySelectorAll('.cr-k-toast').forEach(function(t){t.remove();});
     var e=document.createElement('div'); e.className='cr-k-toast '+(cls||''); e.textContent=msg;
     M.appendChild(e); setTimeout(function(){e.remove();},2600);
@@ -41090,6 +41106,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:969, d:'2026-08-21', t:'Claims messages you could not see on a phone',
+  s:'Every Saved, Deleted, Claim created and Could not delete in the Claims section \u2014 and the notice that says the pipeline moved a job by itself \u2014 was being painted underneath the bottom bar in the installed app. On a phone you tapped Save and nothing appeared to happen, whether it worked or not. They now come up through the same message strip the rest of the app uses, above the bar. They were also near-invisible white-on-white in dark mode; that is fixed by the same change.' },
 { b:968, d:'2026-08-21', t:'The Supplement Desk stops signing you out',
   s:'If you were not an admin and you tapped Supplement Desk, the desk signed you out \u2014 not just of the desk, but of Cardinal itself, on every device you were signed in on. It shares one sign-in with the app, and it was cancelling that sign-in to turn you away. Now it just says so, tells you to ask Theo or Joan, and leaves you signed in. It also finally has a way back: a Cardinal link in the desk header, so the desk is no longer a dead end on a phone.' },
 { b:967, d:'2026-08-21', t:'A change the server refuses is no longer thrown away',
@@ -47940,6 +47958,14 @@ return stage;
 }
 var toastEl = null;
 function toast(html, ms){
+/* 969: this one is NOT trapped in a mount — it appends to document.body — but it
+   sat at z-index 9700, under body.standalone #pwaNav's 9990, and at
+   bottom:calc(24px + safe-area), inside the bar's own band. Rather than invent a
+   fourth bottom-offset constant and land it exactly on top of #crToasts, route it
+   through the same stack. 733 chose textContent deliberately and named THIS toast
+   as the HTML one; the three call sites now pass plain text, so nothing is lost
+   but the bold. */
+if (typeof window.toast === 'function') { window.toast(html); return; }
 if(!toastEl){
 toastEl = document.createElement('div');
 toastEl.className = 'cr-ess-toast';
@@ -47969,7 +47995,7 @@ displayStage('Lost') + '?'
 if(!ok) return;
 try{
 await window.setStage(project.id, 'Lost');
-toast('Moved to <b>' + displayStage('Lost') + '</b>');
+toast('Moved to ' + displayStage('Lost'));
 }catch(e){
 console.warn('[ess] setStage Lost failed:', e);
 }
@@ -47982,7 +48008,7 @@ if(current === 'Lost') return;
 if(rank(current) >= rank(target)) return;
 try{
 await window.setStage(project.id, target);
-toast('Pipeline moved to <b>' + displayStage(target) + '</b>');
+toast('Pipeline moved to ' + displayStage(target));
 }catch(e){
 console.warn('[ess] setStage failed:', e);
 }
@@ -48077,7 +48103,7 @@ return;
 /* 780: the write landed and NOTHING said so — the list still read draft, which
    is exactly what "it does not go out of draft" looked like from his side. */
 if(_wrote){
-toast('Estimate marked <b>Sent</b>');
+toast('Estimate marked Sent');
 try{
   if(window.CardinalEstimates && typeof window.CardinalEstimates.refreshSavedList === 'function'){
     window.CardinalEstimates.refreshSavedList(project.id);

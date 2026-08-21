@@ -20497,6 +20497,48 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 969 — the Claims messages you could not see on a phone (21 Aug 2026)
+
+**The audit's own suggested fix was wrong, and the recon proved it before a line
+was written.** The finding said "raise these three toasts above `#pwaNav`, or route
+them through `crToast`". The first half is a **silent no-op for two of the three**:
+`.cr-c-toast` and `.cr-k-toast` are appended INTO `#cr-claims-mount` /
+`#cr-coach-mount`, which `styleMounts()` makes `position:fixed` with a non-auto
+z-index and `cr-mounthead-styles` pins at `z-index:60 !important` at every width.
+Positioned + non-auto z-index is a **stacking context**, so a z-index on a
+descendant reorders it only against its siblings inside that box — it can never
+rise over `#pwaNav`, which is 9990 in the ROOT context. A CSS-only build would have
+gone green on every mechanical gate and changed nothing on the phone. Raising the
+MOUNT instead would put the whole Claims screen over the bottom bar, contradicting
+the settled 935/962 rule ("Clearance, NOT a bigger z-index").
+
+**So: route, don't raise.** Build 735 already adopted the `window.toast` NAME with
+the `(msg, type)` signature and the 'error'/'success' vocabulary that claims and
+coach already pass at all 16 call sites — so this is **one function body per module
+and zero call-site edits**. Each keeps its old path behind
+`if (typeof window.toast === 'function')`, so nothing becomes dead markup and no
+`<style>` block changed size. `cr-ess` additionally dropped three `<b>` wrappers,
+because the shared channel is `textContent` by design (733) — the only content
+decision in the build.
+
+**A second defect went with it, for free.** `--cr-black` is `#f2f4f7` in the DARK
+base rule, so the plain claims/coach toast was white-on-near-white at **1.10:1**;
+`.success` measured **2.07:1**. Even a working z-index would have left them
+unreadable in the app's default theme. `gate_969` measures the success ink on the
+966-era body at 2.07:1 and on the new path above the floor.
+
+⚠️ **The gate's first version could not fail** — it called `window.toast` directly,
+so it was testing `crToast` (which already worked) and went GREEN on the control.
+Rewritten to **extract each module's own `toast()` source from the artifact by
+brace-matching and execute it** against the real mounts. That is the CLAUDE.md rule
+"extract the shipped function text and execute it, never a re-implementation", and
+it is what turned the control red.
+
+Gates: `gate_969.mjs` **10/10 on 969; RED with 5 named failures on the 968 control**,
+every one naming `pwaNav` as the element actually composited on top at the toast's
+own centre point · `check_build.py` green with marker + negative control ·
+`sentinel.js` clean.
+
 ## Build 968 — the Supplement Desk stops signing you out of Cardinal (21 Aug 2026)
 
 **Blast radius first, because it is bigger than "this tab".** `index.html`,
