@@ -20497,6 +20497,92 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 978 — start a punch-out from anywhere, and find one by PO (21 Aug 2026)
+
+Theo, verbatim: *"Can you do a plus new punch out and make it to where you can search by name
+address or po"*, on a screenshot of Punch & Repairs.
+
+Two asks, one build, and the interesting half is the one he did not spell out.
+
+**The + .** Filing a punch-out meant finding the Production board first — the composer had exactly
+one door, `openAdd()` behind the board's own "+ Add". The obvious move is a form on the Punch &
+Repairs page. **That is the bug this project keeps re-buying**, and `openAdd`/`saveAdd` are 190
+lines carrying the 605 off-stage job tail, the 767 roster sort, the 882 date-without-time
+invariant and the SQL-before-HTML retry. A second one starts identical and drifts. So 978 adds
+**doors, not forms**: `data-new="punch"` in the global + menu, `#puNewBtn` in the Punch & Repairs
+head, both landing on the same sheet.
+
+`CardinalProduction.newPunch()` is the outside door. It exists beside `addFor()` rather than
+replacing it because they answer different questions: `addFor(pid)` is called with a job already
+on screen, so that job's row is in the list by construction; `newPunch()` is called from anywhere,
+where nothing guarantees the punch layer has loaded — and the job list is `boardJobs()`, which is
+*active-stage jobs PLUS every job that already carries an item*. That second half is silently
+empty on a cold layer, which is the 605 defect wearing a new hat. So `newPunch()` reloads first.
+
+⚠️ **Deliberately NOT folded into `openAdd()`.** That would turn a synchronous modal opener into an
+async one for its three existing callers, and this file's own rule is that *adding `await` to a
+synchronous function is never a local change.*
+
+**And the consumer nobody told.** `saveAdd()` already refreshed the Production board and the client
+profile's Punch Outs tab. Punch & Repairs was the third surface reading the same pipeline and the
+only one never notified — add an item with the page open and it stayed hidden until a reload. Now
+it repaints, **guarded on the page actually being on screen**, because the shared layer was already
+reloaded above and repainting a hidden view is work nobody sees.
+
+**The PO.** The search box promised *"item, client, address"* and delivered exactly that: title,
+detail, assignee, project name, project address. The PO number — how this office actually refers to
+a job — matched nothing. The fix is four tokens of hay in the shape the client list and the header
+search already use, `'#' + po + ' ' + po`, so **1042** and **#1042** both find it. Placeholder now
+says so. `poOf()` is asked for defensively (`typeof poOf === 'function'`) because this is a
+different script block.
+
+⚠️ **A stubbed helper is not a reachable one.** The gate supplies its own `poOf`, so a green gate
+would say nothing about whether the real one resolves from inside `cr-punch-script`. Checked in a
+live Chromium render instead: `typeof poOf === 'function'` → true, `poOf({po:1042})` → 1042,
+absent → null. Without that the PO search could have shipped completely inert with every assertion
+green — the `{path, url}` fixture failure this project already paid for once.
+
+Verification: check_build green (977 → 978, 123 inline scripts, div balance 4152/4152).
+**gate_978.mjs 17/17 GREEN on the shipped file, RED on the 977 control with 11 named failures and
+no crash.** It runs the shipped `match()` over a job with a real PO (bare hit, hashed hit, a
+*different* PO must MISS — a hay that always matches is a search that has stopped filtering, and
+name/address must still match so the extension is proved additive), runs the shipped `newPunch()`
+against a recording shim to prove the reload happens **before** the job list is drawn, and measures
+`+ New` in a real render at the 44px touch floor in both themes. Sentinel: 13 findings, **identical
+on 977** — this build adds none. A real click drive confirms the sheet opens over the page
+(z-index 9600), carries all four kinds including Tarp, and its "Add it" button is hit-testable
+rather than covered.
+
+⚠️ **The comment-pollution trap fired for the fourth time in two days — this time inside the
+gate.** `PB.indexOf('newPunch')` found the *explanatory comment above the export*, and the slice
+then began at the word "async" inside that prose: `Unexpected identifier 'one'`. Fixed in the
+extractor, not the comment — a gate that only works while nobody documents the code is not a gate.
+It now matches the property **shape** (`/newPunch\s*:\s*(async\s+)?function\s*\(/`).
+
+⚠️ **And the `with(Proxy)` trap again:** `with(__stub){ __fn = ... }` assigns onto the proxy
+**target**, because `has()` answers true for every name. The outer `var __fn` never saw it —
+"__fn is not a function". Read it back off `__real`. gate_976's comment says this in so many words
+and I still walked into it.
+
+### 978 follow-up — `gate_sweep.py` was calling a squash merge a broken gate
+
+The sweep's control column went **GREEN on eight of twelve gates**, and green-on-a-control is
+supposed to mean *this gate cannot fail*. It meant nothing of the kind. Builds 967–975 were
+squash-merged as one commit, `d5bffef` — so "the commit that names build 967" is also the commit
+that carries 975, and asking it to be the control for build 968 hands the gate **a tree that
+already contains the change**.
+
+The trees those controls need no longer exist in git. That is a coverage gap, not a defect to
+chase, and the sweep now says which: `n/a — squashed, that tree already carries build N`, with a
+footer counting them. `subject_covers()` recognises a range subject; `--selftest` case 4 holds it
+in **both** directions across five subject forms, so a function that always answered true or
+always false would fail.
+
+⚠️ **And the summary line has now had to be narrowed twice.** It once claimed *"red on their own
+control"* having run no control at all; it then claimed it again while **8 of 12 controls were
+unavailable**. It now says *"red on every control that could be run (N could not)"*. A tool that
+overclaims is the same failure as a check that cannot fail — and this one is mine, twice.
+
 ## Build 977 — a community job can sit on a waitlist (21 Aug 2026)
 
 Theo, verbatim: *"with some of these organizations we help communities by doing tarps for free

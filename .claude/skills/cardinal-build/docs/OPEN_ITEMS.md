@@ -2,7 +2,7 @@
 
 ---
 
-## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–975 (the UX audit follow-through)
+## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–978 (the UX audit follow-through)
 
 Source: `CR_UX_AUDIT_2026-08-21.md` / `.csv` — an end-to-end design and ease-of-use audit across
 every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60 P2, 55 P3.
@@ -22,6 +22,16 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
   **$0.00 on every line**; analytics counted every builder-priced bid as $0
 - **975** ten dead-end numbers on the hub become doors; the fold you were filtering in used to
   close itself on Apply
+
+- **976** a tarp had no name of its own — it was filed as a Ticket or a Callback. Five blocks
+  own the kind (dropdown, card label chain, Type facet, activity feed, chip); the label chain
+  ends by calling anything it does not recognise a punch, so a partial add is silent
+- **977** a community job doing a **free tarp before any bid** had nowhere to say so — it counted
+  as an open bid it had never been. `ck.lead.waitlist_at`, **no new `STAGES` entry** (that
+  whitelist is shared with retail and insurance)
+- **978** filing a punch-out meant finding the Production board first, and the search never
+  matched a **PO number**. Two doors onto the ONE composer (global ＋ menu, ＋ New in the Punch &
+  Repairs head) — not a second form; PO now matches bare (`1042`) and hashed (`#1042`)
 
 **OPEN — the Community program, items 6 and 7 of seven:**
 - **Item 6 — one design era.** Four redesigns layered rather than replaced: cream dialogs left

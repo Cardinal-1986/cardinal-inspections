@@ -6124,3 +6124,98 @@ opens the hub, **taps the tiles** and reads what the table then shows. Control r
 
 **Still open in the program: item 6 (one design era — the cream dialogs, light-mode literals, a
 second green and 7px labels left by four layered redesigns) and item 7 (one Job Menu).**
+
+---
+
+# Punch-outs — the tarp kind, the waitlist, and two more doors (builds 976–978)
+
+Three builds off Theo's own working session on the punch screen. Together they close the
+free-tarp loop the Community program left dangling: a tarp is now nameable, a job doing one for
+free can sit on a waitlist instead of pretending to be an open bid, and either can be filed
+without going to find the Production board first.
+
+## Tarp is its own kind of punch-out (build 976)
+
+Punch-outs were **Punch / Ticket / Callback**. A tarp is none of those: it is the thing we go and
+do straight away so the house stops taking water, and on a community job it is often done **free,
+before anything is bid**.
+
+⚠️ **Five blocks own the kind, and this is the `normStage()` shape.** The card's label chain ENDS
+by calling anything it does not recognise a punch, so a kind added to the dropdown and nowhere
+else is silently mislabelled everywhere it appears. All five moved together:
+
+| Block | What |
+|---|---|
+| `cr-pb-script` | the Add-an-item sheet offers **Tarp** |
+| `cr-pk-script` | the card's label chain names it, **before** the Punch-Out fallback |
+| `cr-punch-script` | `vals:['punch','ticket','callback','tarp']` — the Type facet can pull up every tarp |
+| main block | the activity feed says *"Tarp done:"*, not *"Repair closed"* |
+| `cr-ppg-styles` | its own chip, distinct in **both** themes |
+
+Gate: `gate_976.mjs` — 11 assertions. Runs the **shipped** label chain (a tarp reads `Tarp`; an
+unrecognised kind still falls back to `Punch-Out` — the fence), and measures the chip's ink
+against the ground it really composites over, both themes. Control red, 6 named.
+
+## A community job can sit on a waitlist (build 977) — `cr-cc-script` + `cr-ch2-script`
+
+Theo: *"with some of these organizations we help communities by doing tarps for free without
+bidding yet so they stay on a waitlist."* There was nowhere to say that — the card kept asking
+for a price and the job counted as an **open bid it had never been**.
+
+⚠️ **NO NEW STAGE, and that is the whole design.** `STAGES` is the whitelist `normStage()`
+enforces and it is **shared with retail and insurance**; a Community-only `Waitlist` entry would
+appear in both other pipelines. The waitlist is `ck.lead.waitlist_at` — a date on the job, read by
+`waitlisted(pr)` / `waitDays(pr)`, with `waitlist` / `unwait` acts on the card's Lead arm.
+
+⚠️ **`waitDays()` floors on a local calendar day** and does not use `daysTo()`. `daysTo` rounds,
+which is right for a future deadline and wrong for elapsed days: 14 days back read as 15 after
+midday. That was my own off-by-one, caught by the gate.
+
+The hub counts them **separately** — `chWaiting(pr)` is checked before `OPENSET[st]`, so a
+waitlisted job leaves the open-bid count and its amount leaves the open total — and **Waitlist** is
+a KPI tile (`when:!!d.wait`) and a `CH_GROUPS` facet, so the number is a door like the rest of 975.
+
+Gate: `gate_977.mjs` — 11 assertions, control red 7 named.
+
+## Start a punch-out from anywhere, and find one by PO (build 978)
+
+Theo: *"Can you do a plus new punch out and make it to where you can search by name address or
+po"*.
+
+**Two doors, not a second form.** `openAdd()`/`saveAdd()` in `cr-pb-script` are the ONE add
+pipeline, and they carry the 605 off-stage job tail, the 767 roster sort, the 882
+date-without-time invariant and the SQL-before-HTML retry. So 978 adds entry points:
+
+| Door | Where |
+|---|---|
+| `data-new="punch"` → **Punch-out** | the global ＋ menu, with the `ladder` glyph the nav already uses for this page |
+| `#puNewBtn` → **＋ New** | the Punch & Repairs head, beside the title |
+
+Both land on `CardinalProduction.newPunch(pid)`, which **reloads the shared punch layer first**.
+That is not defensive padding: the job list is `boardJobs()` — active-stage jobs **plus every job
+that already carries an item** — and that second half is silently empty on a cold layer, which is
+the 605 defect wearing a new hat.
+
+⚠️ **`newPunch()` sits beside `addFor()` rather than replacing it.** `addFor(pid)` is the
+in-context door (a job is already on screen, so its row is in the list by construction);
+`newPunch()` is the door from anywhere else. And it is **deliberately not folded into `openAdd()`**
+— that would turn a synchronous modal opener into an async one for its three existing callers.
+
+**The third consumer, finally told.** `saveAdd()` refreshed the Production board and the client
+profile's Punch Outs tab. Punch & Repairs read the same pipeline and was never notified, so an
+item added with the page open stayed hidden until a reload. It now repaints, **guarded on the page
+being on screen**.
+
+**PO search.** The box promised *"item, client, address"* and delivered exactly that. The PO
+number matched nothing. The hay gains it in the shape the client list and header search already
+use — `'#' + po + ' ' + po` — so **1042** and **#1042** both find it; placeholder updated.
+
+⚠️ **A stubbed helper is not a reachable one.** The gate supplies its own `poOf`, so green there
+says nothing about the real one resolving from inside `cr-punch-script`. Verified in a live
+Chromium render: `typeof poOf === 'function'` → true, `poOf({po:1042})` → 1042. Without that the
+PO search could have shipped inert with every assertion green.
+
+Gate: `gate_978.mjs` — 17 assertions. Runs the shipped `match()` over a job with a real PO (bare
+hit, hashed hit, **a different PO must MISS**, name/address still match), runs the shipped
+`newPunch()` against a recording shim to prove the reload precedes the job list, and measures
+＋ New at the 44px touch floor in a real render, both themes. Control red, 11 named.

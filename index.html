@@ -3589,6 +3589,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-new="contact" data-cri="person lg">Contact</button>
           <button class="navopt" data-new="lead" data-cri="flag lg">Lead</button>
           <button class="navopt" data-new="reminder" data-cri="alarm lg">Reminder</button>
+          <button class="navopt" data-new="punch" data-cri="ladder lg">Punch-out</button>
         </div>
       </span>
       <div class="titlecard" id="brandTitle"><h1>CARDINAL <span>RESOURCE</span></h1></div>
@@ -3689,7 +3690,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 977 &#8212; a community job can sit on a waitlist now. When we tarp a house for free before anything is bid, the card stops asking for a price and says what it really is: tarped free, no bid yet, waiting. The hub counts them separately and Waitlist is a door onto exactly those jobs &#8212; and because a waitlisted job has no bid, it no longer counts as an open one</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 978 &#8212; you can start a punch-out from anywhere. The &#65291; in the header has a Punch-out row, and Punch &amp; Repairs has its own &#65291; New beside the title &#8212; both open the same form the Production board already used. The search on that page now finds a PO number too, typed either way: 1042 or #1042</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3978,10 +3979,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 <!-- ============ PUNCH & REPAIRS (build 361) ============ -->
 <div id="punchView" style="display:none;">
   <div class="pu-wrap">
-    <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">&#128296; Punch &amp; Repairs</h2></div>
+    <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">&#128296; Punch &amp; Repairs</h2><button class="pu-new" id="puNewBtn" type="button">&#65291; New</button></div>
     <p class="pu-sub" id="puSub">&mdash;</p>
     <div id="puQueue"></div>
-    <div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Search item, client, address&#8230;" aria-label="Search punch items"></div>
+    <div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Search name, address, PO # or item&#8230;" aria-label="Search punch items"></div>
     <div class="pu-ctl"><span class="sl">Sort by</span>
       <button class="pu-chip" id="puSortChip">Urgency</button>
       <div class="right">
@@ -15037,6 +15038,17 @@ newMenu.addEventListener('click', function(e){
     var t = new Date();
     if(mainView.style.display === 'none') showHome();
     openApptDay(dateStr(t.getFullYear(), t.getMonth(), t.getDate()));
+  }
+  /* 978: a punch-out from the global + . It opens the SAME composer the
+     Production board's "+ Add" opens (cr-pb-script's openAdd) rather than a
+     second one — one pipeline per concept. newPunch() refreshes the shared
+     punch layer first, because the job list is boardJobs(): active-stage jobs
+     PLUS any job that already carries an item, and that second half is stale
+     if the layer has never loaded on this session. */
+  else if(kind === 'punch'){
+    var _pb = window.CardinalProduction;
+    if(_pb && typeof _pb.newPunch === 'function'){ _pb.newPunch(null); }
+    else { alert('The punch-out composer is still loading \u2014 try again in a moment.'); }
   }
   else if(kind === 'reminder'){
     var title = prompt('Remind me about:');
@@ -41198,6 +41210,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:978, d:'2026-08-21', t:'Start a punch-out from anywhere, and find one by PO',
+s:'Filing a punch-out no longer means finding the Production board first. The \u002B in the app header has a Punch-out row, and the Punch \u0026 Repairs page has its own \u002B New button beside the title. Both open the same Add-an-item form the Production board has always used \u2014 same job list, same kinds (including Tarp), same assign and schedule fields \u2014 so there is one form to learn and one place a fix lands. Add one while Punch \u0026 Repairs is open and the list updates behind the form instead of waiting for a reload. And the search box on that page now matches the client\u2019s PO number as well as their name, the address, the item and the person it is assigned to; type it bare (1042) or with a hash (#1042), either finds it.' },
 { b:977, d:'2026-08-21', t:'A community job can sit on a waitlist',
     s:'With some of these organisations we tarp a house for free before anything has been bid, and the job then waits for funding to open. There was nowhere to say that: the card kept asking for a price, and the job counted as an open bid it had never been. Now there is a Waitlist. On an unpriced community job, \u201cTarped it free \u2014 waitlist\u201d records the tarp date and parks it; the card then reads \u201cOn the waitlist \u2014 tarped free on the 20th, no bid yet, waiting 14 days\u201d instead of nagging. The hub counts them on their own tile, and tapping it shows exactly those jobs. \u26a0 Open bids will drop by however many are waitlisted \u2014 that is the point: they are not bids. Taking a job back off the waitlist keeps the tarp date on the record. The stage does not change, so nothing else in the pipeline moves.' },
 { b:976, d:'2026-08-21', t:'A tarp is its own kind of punch-out',
@@ -51300,6 +51314,14 @@ async function saveAdd(){
     if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){
       try{ window.CardinalPunchProfile.refresh(); }catch(_){}
     }
+    /* 978: Punch & Repairs is the THIRD surface reading this one add pipeline,
+       and it was the only one never told. The shared layer was reloaded above,
+       so this is a repaint, not a second fetch. Only when it is on screen —
+       the page renders from rows() on open anyway. */
+    var _pv = document.getElementById('punchView');
+    if(_pv && _pv.style.display !== 'none' && typeof window.renderPunchView === 'function'){
+      try{ window.renderPunchView(); }catch(_){}
+    }
   }catch(e){
     alert('Could not add: ' + (e.message || e));
     btn.disabled = false; btn.textContent = 'Add it';
@@ -51448,6 +51470,19 @@ window.CardinalProduction = {
   schedFor  : schedFor,
   close     : close,
   addFor    : function(projectId){ openAdd(projectId); },
+  /* 978: addFor() is the IN-CONTEXT door — a job is already on screen, so its
+     row is in the list by construction. newPunch() is the door from anywhere
+     else (the global + , the Punch & Repairs page), where nothing guarantees
+     the punch layer has loaded, so it refreshes before drawing the job list.
+     Deliberately NOT folded into openAdd(): that would turn a synchronous
+     modal opener into an async one for its three existing callers, which is
+     never a local change. */
+  newPunch  : async function(presetProjectId){
+    if(window.CardinalPunch && typeof window.CardinalPunch.reload === 'function'){
+      try{ await window.CardinalPunch.reload(); items = punchRows(); }catch(_){}
+    }
+    openAdd(presetProjectId || null);
+  },
   refresh   : async function(){ await load(); lastSig = ''; render(); },
   openCount : function(){ return punchRows().filter(function(i){ return i.status === 'open'; }).length; },
 };
@@ -60981,6 +61016,12 @@ if(typeof _origOLF === 'function'){
 #punchView{display:none;min-height:100vh;background:var(--bg);}
 .pu-wrap{max-width:1320px;margin:0 auto;padding:16px 16px 150px;}
 .pu-head{display:flex;align-items:center;gap:10px;margin:0 0 2px;flex-wrap:wrap;}.pu-back{flex:none;width:34px;height:34px;border-radius:10px;cursor:pointer;border:1px solid var(--rbe-line2,#2b2b33);background:transparent;color:var(--rbe-mute,#9aa0a8);display:flex;align-items:center;justify-content:center;padding:0;}.pu-back svg{width:16px;height:16px;}.pu-back:hover{background:rgba(255,255,255,.06);}
+/* 978: + New, in the head beside the title. Cardinal red because filing a
+   punch-out is the one action this page exists to start; 44px min height
+   is the touch floor 592 set for every control Theo taps on the iPad. */
+.pu-new{flex:none;min-height:44px;padding:0 15px;border-radius:10px;cursor:pointer;border:0;background:#c8202e;color:#fff;font:800 14px 'Segoe UI',Arial,sans-serif;letter-spacing:.2px;}
+.pu-new:hover{background:#a8121f;}
+.pu-new:focus-visible{outline:2px solid #fff;outline-offset:2px;}
 .pu-title{margin:0;flex:1;font:800 21px Georgia,'Times New Roman',serif;color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
 .pu-sub{margin:1px 0 11px;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
 .pu-srch{display:flex;align-items:center;gap:8px;background:var(--rbe-panel);border:1px solid var(--rbe-line);border-radius:6px;
@@ -61325,7 +61366,13 @@ function match(it){
     if(s.who.indexOf(w) === -1) return false;
   }
   if(PU.q){
-    var hay = [it.title, it.detail, it.assigned_to, pr && pr.name, pr && pr.address].join(' ').toLowerCase();
+    /* 978: the PO number, in the shape the client list and the header search
+       already use — the bare number AND the number with a hash, so "1042" and
+       "#1042" both find it. poOf() is the main block's one resolver; asked for
+       defensively because this is a different script block. */
+    var po978 = (typeof poOf === 'function') ? poOf(pr) : null;
+    var hay = [it.title, it.detail, it.assigned_to, pr && pr.name, pr && pr.address,
+      po978 ? '#' + po978 + ' ' + po978 : ''].join(' ').toLowerCase();
     if(hay.indexOf(PU.q) === -1) return false;
   }
   return true;
@@ -61724,6 +61771,13 @@ document.getElementById('puTabs').addEventListener('click', function(e){
   render();
 });
 document.getElementById('puBackBtn').addEventListener('click', function(){ history.back(); });
+/* 978: + New. Routes to cr-pb-script's composer through CardinalProduction —
+   this page does not grow an add form of its own. */
+document.getElementById('puNewBtn').addEventListener('click', function(){
+  var P = window.CardinalProduction;
+  if(P && typeof P.newPunch === 'function'){ P.newPunch(null); }
+  else { alert('The punch-out composer is still loading \u2014 try again in a moment.'); }
+});
 document.getElementById('puSearch').addEventListener('input', function(){
   PU.q = this.value.trim().toLowerCase();
   clearTimeout(this.__t); this.__t = setTimeout(render, 200);
