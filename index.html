@@ -3677,7 +3677,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 953 &#8212; the menu learns the portals: new Production and Community sections with shortcuts to each hub&#39;s tools (the hubs keep their own tiles), Suppliers moves from Sell into Production, and the Sell section now hides while you are in the Insurance, Production or Community portal &#8212; it comes straight back in Retail</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 954 &#8212; the Insurance tools live in the menu now: the Tools buttons come off the Cardinal Truth screen, the menu&#39;s Insurance section opens itself the moment you switch to Insurance, and that section stays out of the way in Retail &#8212; where Sell is the one that shows</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4620,8 +4620,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
            render() in cr-cth-script does host.innerHTML = ... where host is
            '#cardinalTruthView .ins-body', and this grid is inside it, so every
            card below is replaced before it can be seen. Measured: zero .ins-card
-           in the DOM. 679 put the working tile in the TOOLS rail, reached by
-           data-go="desk" like its neighbours; that one is the only way in.
+           in the DOM. 679 put the working tile in the TOOLS rail — and 954
+           RETIRED that rail: the Desk is now reached from the slide-out menu's
+           Insurance section (951), which is the only way in.
            Do not add a link to /supplement.html here again — it cannot work.
            (The rest of this grid is dead for the same reason and is kept, for
            now, as what the hub would show if cr-cth-script ever failed to run.) -->
@@ -40726,6 +40727,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:954, d:'2026-08-21', t:'The Insurance tools move into the menu', s:'On the Cardinal Truth screen the row of Tools buttons at the bottom \u2014 Scope of Loss, Resource Library, Schedule Board, Supplement Templates, Insurance Resources, the Adjuster Directory, the Claims Tracker and the Supplement Desk \u2014 is gone from the screen. Every one of them lives in the slide-out menu instead, and the menu\u2019s Insurance section now opens itself the moment you switch into the Insurance portal, so the whole list is in front of you without a tap. Nothing was lost: the seven tools are in that Insurance section and Schedule Board has always been under Daily. The menu also keeps itself tidy \u2014 Sell shows only in Retail, and the Insurance section stays out of the way while you are in Retail. The Cardinal Truth dashboard itself is unchanged: the money cards, the pipeline, carriers, this week and the chase list are all still there. The phone menu looks exactly as it did.' },
 { b:953, d:'2026-08-21', t:'The menu learns the portals', s:'Two more sections in the menu, built the same way as the Insurance one: a Production card with Production Board, Crew Dispatch, Punch & Repairs and Suppliers (Suppliers moved here from Sell \u2014 it is a materials door, not a sales tool), and a Community card with the Community Hub, Community Partners, Prospective Partners and New Bid. Each row is a shortcut to a place that already exists \u2014 the hubs keep all their own tiles. And the Sell section now knows where you are: in the Insurance, Community or Production portal it folds itself away entirely, and the moment you switch back to Retail it returns. Nothing was deleted; it only hides.' },
 { b:952, d:'2026-08-21', t:'The desktop menu becomes the Card Stack', s:'The left-hand desktop menu is rebuilt as a stack of the app\u2019s own cards: every section (Daily, Sell, Insurance, CRMs\u2026) is a dark card with a colored strip across its top and icons in the same color, so the menu finally looks like the rest of Cardinal instead of a plain list. The colors follow where you are \u2014 brushed steel with slate-blue accents in Retail, red in Insurance (no more teal there), green in Community, yellow in Production \u2014 and the menu is a bit wider so nothing feels cramped. Folding sections open and closed, the counts, and every destination work exactly as before; this is a new coat on the same machinery. The phone menu is untouched.' },
 { b:951, d:'2026-08-20', t:'The Insurance tools join the slide-out menu', s:'The menu now has an Insurance section with the seven tools from the Cardinal Truth hub: Scope of Loss, the Resource Library, Supplement Templates, Insurance Resources, the Adjuster Directory, the Claims Tracker and the Supplement Desk. Each row goes to exactly the same place as its tile on the hub \u2014 nothing moved, the menu is simply a second, faster door, available from any portal. Sell and everything else in the menu is untouched, and the section folds closed like the others. Schedule Board is not repeated in the new section because it is already two headings up, under Daily.' },
@@ -42155,31 +42157,47 @@ hideAdminItemsForNonAdmin();
 }
 addPaletteHint();
 reorg();
-syncSell();
+syncPortalSections();
 return true;
 }
 /* ── 953: Sell is a RETAIL section. Theo: "hide sales like you did with
    insurance" - in the Insurance, Production and Community portals the Sell
    heading and its rows hide; back in Retail they return. Hide, never remove
    (this module's own convention). Rows this function hid are tagged
-   data-cr-sellhid so restoring never un-hides a row some OTHER rule hid -
+   data-cr-pohid so restoring never un-hides a row some OTHER rule hid -
    reorg()'s hideOpt('coach') must survive a portal round-trip. */
-function sellPortalHidden(){
+function portalNow(){
 var p = '';
 try{ p = document.body.dataset.crmHead || document.body.dataset.crm || 'retail'; }catch(_){ }
-return p === 'insurance' || p === 'community' || p === 'production';
+return p || 'retail';
 }
-function syncSell(){
+/* 954: find a section by a ROW it contains, never by its heading text.
+   findSec('insurance') is unsafe for this one: renameSec() turns the LAST
+   "Insurance" heading into "CRMs", so before that has run the label matches
+   the CRMs section - and hiding THAT would take Cardinal Truth off the menu
+   in retail, which is the one door back into the insurance portal. */
+function secOfNav(navKey){
 var menu = document.getElementById('navMenu');
-if(!menu) return;
-var sec = findSec('sell');
-if(!sec) return;
-var hide = sellPortalHidden();
+if(!menu) return null;
+var row = menu.querySelector('.navopt[data-nav="' + navKey + '"]');
+if(!row) return null;
+var w = row.previousElementSibling;
+while(w){
+if(w.classList && w.classList.contains('navsec')) return w;
+w = w.previousElementSibling;
+}
+return null;
+}
+/* Hide, never remove (this module's convention), and tag what THIS function
+   hid so a restore can never un-hide a row some other rule hid - reorg()'s
+   hideOpt('coach') has to survive a portal round-trip. */
+function setSectionHidden(sec, hide){
+if(!sec) return false;
 var changed = false;
 if((sec.style.display === 'none') !== hide){
 sec.style.display = hide ? 'none' : '';
-if(hide) sec.setAttribute('data-cr-sellhid', '1');
-else sec.removeAttribute('data-cr-sellhid');
+if(hide) sec.setAttribute('data-cr-pohid', '1');
+else sec.removeAttribute('data-cr-pohid');
 changed = true;
 }
 var w = sec.nextElementSibling;
@@ -42187,16 +42205,44 @@ while(w && !(w.classList && w.classList.contains('navsec'))){
 if(w.classList && w.classList.contains('navopt')){
 if(hide && w.style.display !== 'none'){
 w.style.display = 'none';
-w.setAttribute('data-cr-sellhid', '1');
+w.setAttribute('data-cr-pohid', '1');
 changed = true;
-}else if(!hide && w.getAttribute('data-cr-sellhid') === '1'){
+}else if(!hide && w.getAttribute('data-cr-pohid') === '1'){
 w.style.display = '';
-w.removeAttribute('data-cr-sellhid');
+w.removeAttribute('data-cr-pohid');
 changed = true;
 }
 }
 w = w.nextElementSibling;
 }
+return changed;
+}
+/* 954: the Insurance section opens itself when you ENTER the insurance portal.
+   One shot per switch, written into the fold store both surfaces already share
+   (cardinal.lnav.sections) rather than forced every pass - so you can still
+   collapse it and it stays collapsed. A state re-asserted on a timer is the
+   567/569 repaint loop with a nicer name. */
+var SEC_KEY = 'cardinal.lnav.sections';
+function openInsuranceSection(){
+try{
+var st = JSON.parse(localStorage.getItem(SEC_KEY) || '{}') || {};
+if(st.insurance === 1) return false;
+st.insurance = 1;
+localStorage.setItem(SEC_KEY, JSON.stringify(st));
+return true;
+}catch(_){ return false; }
+}
+var lastPortal = null;
+function syncPortalSections(){
+var menu = document.getElementById('navMenu');
+if(!menu) return;
+var p = portalNow();
+var changed = false;
+/* Sell belongs to retail; the Insurance tools belong to insurance. */
+if(setSectionHidden(findSec('sell'), p !== 'retail')) changed = true;
+if(setSectionHidden(secOfNav('sol'), p === 'retail')) changed = true;
+if(p === 'insurance' && lastPortal !== 'insurance' && openInsuranceSection()) changed = true;
+lastPortal = p;
 if(changed){
 /* wake the two scrape modules: the rail keys its rebuild on a signature,
    and both re-read on a childList mutation of the menu. */
@@ -42217,17 +42263,17 @@ if(apply() || ++n > 60) clearInterval(iv);
    about six seconds and cr-cpartners-script's to about six as well, so keep
    re-checking past both, then stop rather than leave a timer running. */
 var rn = 0, riv = setInterval(function(){
-try{ reorg(); syncSell(); }catch(_){ }
+try{ reorg(); syncPortalSections(); }catch(_){ }
 if(++rn > 60) clearInterval(riv);
 }, 300);
 /* 953: the portal can change long after every poll above has stopped, so a
    body ATTRIBUTE observer (filtered to the two CRM attributes, no subtree)
-   re-syncs Sell. Written cause for the observer census: no existing observer
+   re-syncs the portal sections. Written cause for the observer census: no existing observer
    lives where this module can reach it, and a plain event does not exist for
    skin()'s attribute write. It fires only on portal switches and rewrites
    nothing when the state already matches. */
 try{
-new MutationObserver(function(){ try{ syncSell(); }catch(_){ } })
+new MutationObserver(function(){ try{ syncPortalSections(); }catch(_){ } })
 .observe(document.body, { attributes:true, attributeFilter:['data-crm','data-crm-head'] });
 }catch(_){ }
 var btn = document.getElementById('navBtn');
@@ -54268,35 +54314,15 @@ host.innerHTML =
    no longer spends the fold on an empty state. Same markup, same wiring. */
 '<div class="cr-cth-rule">Chase list</div>' +
 '<div class="cr-cth-chase">' + chaseHtml + '</div>' +
-'<div class="cr-cth-rule">Tools</div>' +
-'<div class="cr-cth-tools">' +
-'<button data-go="sol" type="button"><span class="i">' + ICO('page') + '</span>' +
-'<span class="x"><b>Scope of Loss</b><small>Extract a carrier scope</small></span></button>' +
-'<button data-go="library" type="button"><span class="i">' + ICO('books') + '</span>' +
-'<span class="x"><b>Resource Library</b><small>Ohio code &amp; carrier rules</small></span></button>' +
-'<button data-go="board" type="button"><span class="i">' + ICO('calendar') + '</span>' +
-'<span class="x"><b>Schedule Board</b><small>Crews and material drops</small></span></button>' +
-/* 655 (CR-AUD-010): render() replaces the hub's static grid, which held
-   these four destinations — re-render them here so the rail stops eating
-   its own navigation. */
-'<button data-go="supplements" type="button"><span class="i">' + ICO('paperclip') + '</span>' +
-'<span class="x"><b>Supplement Templates</b><small>Letters that get supplements paid</small></span></button>' +
-'<button data-go="insresources" type="button"><span class="i">' + ICO('compass') + '</span>' +
-'<span class="x"><b>Insurance Resources</b><small>Playbooks, code cites, carrier rules</small></span></button>' +
-'<button data-go="adjusters" type="button"><span class="i">' + ICO('person') + '</span>' +
-'<span class="x"><b>Adjuster Directory</b><small>Everyone who has adjusted a Cardinal claim</small></span></button>' +
-'<button data-go="claims" type="button"><span class="i">' + ICO('clipboard') + '</span>' +
-'<span class="x"><b>Claims Tracker</b><small>Payments, supplements, timelines</small></span></button>' +
-/* 679: the Supplement Desk. It was added at 668 to the STATIC .ins-grid in
-   #cardinalTruthView — which render() overwrites, because host IS .ins-body
-   and the grid is inside it. So the card has never once been on screen.
-   655 fixed exactly this for four other destinations and left a note; the
-   Desk still went in the wrong grid. It lives here now, through the same
-   data-go mechanism as its neighbours rather than a second one. */
-'<button data-go="desk" type="button"><span class="i">' + ICO('calculator') + '</span>' +
-'<span class="x"><b>Supplement Desk</b><small>Read the carrier&#39;s scope, draft the response</small></span></button>' +
-'</div>' +
-'</div>' +
+/* 954, Theo: "take away from the screen or hide the buttons on the insurance
+   main screen. Everything in tools goes in the menu expanded." The TOOLS rail
+   that lived here is retired - all eight destinations are reachable from the
+   slide-out menu: the seven in its Insurance section (951) plus Schedule
+   Board, which has always been under Daily. Verified before the cut, not
+   assumed; gate_954 asserts the coverage so nobody can retire a door that has
+   no twin. wire()'s [data-go] handlers stay - the terminal block's "All
+   claims" button still uses them, and a future tile would route with no
+   second mechanism. */'</div>' +
 '</div></div>';
 wire(host);
 return true;
@@ -76727,11 +76753,11 @@ body:not(.cr-lnav-on) #navMenu .navsec::after{
   body:not(.cr-lnav-on) #navMenu .navopt[data-crhide="1"]{display:none !important;}
   /* 953: Sell hides per portal. Same mechanism as data-crhide directly above,
      and for the same reason: this block's display:flex !important on .navsec
-     and .navopt beats any NORMAL inline style, so syncSell()'s inline hide is
+     and .navopt beats any NORMAL inline style, so syncPortalSections()'s inline hide is
      invisible here without the attribute rule. The inline style still matters
      - the rail's scrape() keys on it - so both are written together. */
-  body:not(.cr-lnav-on) #navMenu .navsec[data-cr-sellhid]{display:none !important;}
-  body:not(.cr-lnav-on) #navMenu .navopt[data-cr-sellhid]{display:none !important;}
+  body:not(.cr-lnav-on) #navMenu .navsec[data-cr-pohid]{display:none !important;}
+  body:not(.cr-lnav-on) #navMenu .navopt[data-cr-pohid]{display:none !important;}
 }
 body:not(.cr-lnav-on) #navMenu #cr-nav-sec-admin{background:transparent !important;color:#e35c63 !important;border-top:1px dashed rgba(255,255,255,.12) !important;}
 body:not(.cr-lnav-on) #navMenu #cr-nav-palette-hint{background:transparent !important;color:#9aa0a8 !important;border-top:1px solid rgba(255,255,255,.07) !important;}

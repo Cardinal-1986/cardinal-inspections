@@ -20440,6 +20440,46 @@ fixture both ways (fixture → icons + 80% wet blue computed; route aborted → 
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
 
+## Build 954 — the Insurance tools move into the menu (21 Aug 2026)
+
+Theo: "on insurance, can you please keep the insurance menu expanded and take away from the
+screen or hide the buttons on the insurance main screen. Everything in tools goes in the menu
+expanded. Hide Sell. On retail crm hide insurance please." (Phone menu style: explicitly no
+change — none made.)
+
+- **The hub's TOOLS rail is RETIRED**, 2,290 characters cut from `cr-cth-script`'s render().
+  **The coverage was verified BEFORE the cut, not after**: the rail carried eight
+  destinations, and all eight have menu doors — the seven in the Insurance section (951)
+  plus Schedule Board, which 951 deliberately left under Daily. `gate_954`'s FIRST assert
+  is that coverage, so the licence for the cut is a gate, not a memory.
+  ⚠ The **Insurance Clients LEAD tile stays** — it is `.cr-cth-tools.lead` (675), not part
+  of the Tools row, and it is the hub's main door to the client list. The dashboard (owed
+  card, stats, pipeline, carriers, this week, chase list) is untouched.
+- **The Insurance section opens itself on entering the insurance portal** — written once
+  per switch into `cardinal.lnav.sections`, the fold store the rail and drawer already
+  share. **Not re-asserted every pass**: a manual collapse sticks, and the gate proves it.
+  A state re-forced on a timer is the 567/569 repaint loop with a nicer name.
+- **`syncSell()` generalised to `syncPortalSections()`**; `data-cr-sellhid` →
+  `data-cr-pohid`. Sell shows only in Retail; the Insurance section hides in Retail.
+  ⚠ The Insurance section is found by a ROW it contains (`secOfNav('sol')`), never by its
+  heading text: `renameSec()` turns the LAST "Insurance" heading into "CRMs", so a
+  label lookup that ran first would have hidden **Cardinal Truth** — the one door back into
+  the insurance portal from retail. The gate asserts that door survives.
+
+**The comment-pollution trap fired THREE times in one build, all mine, all caught by asserts
+before any write:** a patch comment quoting the CSS value being counted; the file's last
+`data-go="desk"` being prose in the 704 comment (which itself claimed the retired rail was
+"the only way in" — corrected in the same edit); and my own new comment quoting
+`syncPortalSections()`. The standing fix is in the script now: count CALLS (`name();`) and
+the DEF separately, never the bare name. A fourth failure was a real bug and not pollution —
+a `\n` escaping error put a literal backslash-n into the CHANGELOG array; `node --check`
+caught it, the file was restored from the control and re-patched.
+
+Gates: `check_build.py` green 953 → 954 · **`gate_954.mjs` 15/15** (coverage-before-cut, no
+tool tiles but dashboard + lead tile intact, auto-open on portal entry, manual collapse
+sticks, Insurance hidden in retail with Cardinal Truth surviving, Sell retail-only, rail
+scrape) · **red on the 953 control with 7 named failures, no crash.**
+
 ## Build 953 — the menu learns the portals (21 Aug 2026)
 
 Theo: "Just as the insurance rail added the insurance menus, can you do the same for
