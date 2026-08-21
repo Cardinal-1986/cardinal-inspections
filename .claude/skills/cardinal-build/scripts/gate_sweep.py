@@ -71,11 +71,37 @@ def commit_for_build(n):
         ['git', 'log', '--format=%H|%s', '-400'],
         cwd=REPO, capture_output=True, text=True).stdout
     pat = re.compile(r'\bbuild\s+' + str(n) + r'\b', re.I)
+    # ⚠ a SQUASH MERGE names a RANGE — "Builds 967-975 — ..." — and the exact
+    # match above then finds nothing for 968..974, so the whole control column
+    # goes dark the moment a span merges. That is not a false pass (it reports
+    # n/a), but a control you cannot run proves nothing either. Read the range.
+    rng = re.compile(r'\bbuilds?\s+(\d+)\s*[\u2010-\u2015-]\s*(\d+)', re.I)
+    fallback = (None, None)
     for line in out.splitlines():
         sha, _, subj = line.partition('|')
         if pat.search(subj):
             return sha, subj
-    return None, None
+        m = rng.search(subj)
+        if m and int(m.group(1)) <= n <= int(m.group(2)) and fallback[0] is None:
+            fallback = (sha, subj)
+    return fallback
+
+
+def subject_covers(subj, n):
+    """Does this commit subject CLAIM build n — by naming it, or by a range that
+    contains it?
+
+    ⚠ This is the squash-merge blind spot, and without it the sweep lies. A
+    squash writes one commit subject "Builds 967-975", so the commit that names
+    build 967 is also the commit that carries 975. Asking it to be the control
+    for build 968 hands the gate a tree that ALREADY CONTAINS the change: the
+    gate goes green, and green-on-a-control reads as "this gate cannot fail"
+    when the truth is "that intermediate tree no longer exists in git". The
+    honest answer is n/a, not a defect to chase."""
+    if re.search(r'\bbuild\s+' + str(n) + r'\b', subj, re.I):
+        return True
+    m = re.search(r'\bbuilds?\s+(\d+)\s*[\u2010-\u2015-]\s*(\d+)', subj, re.I)
+    return bool(m and int(m.group(1)) <= n <= int(m.group(2)))
 
 
 def materialise(sha, filename, tmpdir):
@@ -153,6 +179,23 @@ def selftest(timeout):
     if not supp:
         print('    FAIL: expected at least gate_968 to name supplement.html')
 
+    # 4. the squash-merge rule. A range subject must be recognised as covering
+    #    every build inside it — otherwise the sweep hands build 968 a control
+    #    tree that already contains build 968 and calls the green a defect.
+    cases = [
+        ('Builds 967\u2013975 \u2014 the audit\'s fixes', 968, True),
+        ('Builds 967-975 \u2014 hyphen form',               975, True),
+        ('Builds 967\u2013975 \u2014 the audit\'s fixes', 976, False),
+        ('Build 977 \u2014 a community job can wait',       978, False),
+        ('Build 977 \u2014 a community job can wait',       977, True),
+    ]
+    got = [(subj[:22], n, subject_covers(subj, n) == want, want) for subj, n, want in cases]
+    bad4 = [g for g in got if not g[2]]
+    print(f'  4 squash-range detection: {len(cases)-len(bad4)}/{len(cases)} correct')
+    for subj, n, _, want in bad4:
+        print(f'    FAIL: {subj!r} vs build {n} — expected {want}')
+    ok &= not bad4
+
     print('\nselftest ' + ('PASS' if ok else 'FAIL'))
     return 0 if ok else 1
 
@@ -186,6 +229,7 @@ def main():
     print('-' * (len(hdr) + 24))
 
     bad = 0
+    squashed = 0
     tmp = tempfile.mkdtemp(prefix='gate_sweep_')
     for n, path in gates:
         art = artifact_for(path)
@@ -197,6 +241,10 @@ def main():
             sha, subj = commit_for_build(n - 1)
             if not sha:
                 row += f'{WARN}{"n/a":<10}{END}{DIM}no commit names build {n-1}{END}'
+            elif subject_covers(subj, n):
+                squashed += 1
+                row += (f'{WARN}{"n/a":<10}{END}{DIM}{sha[:8]} squashed \u2014 that '
+                        f'tree already carries build {n}{END}')
             else:
                 ctrl = materialise(sha, art, tmp)
                 if not ctrl:
@@ -219,7 +267,27 @@ def main():
         print(f'{BAD}{bad} problem(s).{END} A gate red on HEAD is a regression; a control '
               f'that is GREEN, CRASH or TIMEOUT proves nothing and must be repaired.')
     else:
-        print(f'{OK}All gates green on HEAD and red on their own control.{END}')
+        # ⚠ only claim the half that actually ran. Without --controls this said
+        # "and red on their own control" having run no control at all — a tool
+        # that overclaims is the same failure as a check that cannot fail.
+        # ⚠ Second time this line has had to be narrowed. It once claimed
+        # "red on their own control" having run no control at all; it then
+        # claimed it again while 8 of 12 controls were unavailable. Claim only
+        # what ran.
+        if not a.controls:
+            tail = '. Controls NOT run — pass --controls to prove they can fail.'
+        elif squashed:
+            tail = f' and red on every control that could be run ({squashed} could not).'
+        else:
+            tail = ' and red on their own control.'
+        print(f'{OK}All gates green on HEAD{tail}{END}')
+    if a.controls and squashed:
+        # say the coverage gap out loud rather than letting a clean summary
+        # imply every gate was proved able to fail
+        print(f'{WARN}{squashed} control(s) unavailable: a squash merge collapsed '
+              f'those builds into one commit, so the tree just before each of '
+              f'them no longer exists. Each was verified red on its own '
+              f'predecessor when it was written.{END}')
     return 1 if bad else 0
 
 

@@ -103,9 +103,39 @@ const cases = await page.evaluate((BLOCK)=>{
         var events = [];
         window.CardinalProduction = ${schedDay ? `{ schedFor: function(){ return new Date('${schedDay}T12:00:00Z'); } }` : 'null'};
       `;
-      const fns = grab('function priceOf(pr){') + '\n' + grab('function threadHtml(pr){');
+      /* 977: threadHtml's Lead arm gained waitlisted()/waitDays(), and a
+         hand-written shim list rots the moment it does — grab the REAL helpers,
+         and keep a proxy as the backstop so an unstubbed name degrades to a
+         no-op instead of taking the whole gate down (BUG_CLASSES 37).
+         ⚠ The proxy answers has() for EVERY name, so it shadows the shim's own
+         vars too; seed the target first or `events` comes back as a function
+         and events.forEach throws. */
+      const fns = grab('function priceOf(pr){') + '\n' +
+                  grab('function waitlisted(pr){') + '\n' +
+                  grab('function waitDays(pr){') + '\n' +
+                  grab('function threadHtml(pr){');
       if(!fns.trim()) return null;
-      return new Function(shim + '\n' + fns + '\n; return threadHtml;')();
+      const PROXY = `
+        var __base = {};
+        var __stub = new Proxy(__base, {
+          has: function(){ return true; },
+          get: function(t,k){
+            if(k === Symbol.unscopables) return undefined;
+            if(k in t) return t[k];
+            if(typeof window !== 'undefined' && k in window){
+              var v = window[k];
+              return (typeof v === 'function' && /^[a-z]/.test(String(k))) ? v.bind(window) : v;
+            }
+            return function(){ return ''; };
+          }
+        });
+      `;
+      const SEED = ['__EST__','liveEstimate','lead','bidOf','normStage','usd','fmtDay',
+        'daysTo','esc','LABEL','SHORT','events','ago','ck','since','todayIso',
+        'homeownerOf','partnerOf','parseCkAll','commBidAmount','commBidSource']
+        .map(n => "try{ __base['" + n + "'] = " + n + "; }catch(e){}").join('\n');
+      return new Function(shim + PROXY + SEED +
+        '\nwith(__stub){\n' + fns + '\n; return threadHtml; }')();
     };
     const proj = (stage, checklist) => ({ id:'p1', name:'Test Job', stage: stage,
       created_at:'2026-06-01', checklist: JSON.stringify(checklist||{ lead:{} }) });

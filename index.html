@@ -3589,6 +3589,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-new="contact" data-cri="person lg">Contact</button>
           <button class="navopt" data-new="lead" data-cri="flag lg">Lead</button>
           <button class="navopt" data-new="reminder" data-cri="alarm lg">Reminder</button>
+          <button class="navopt" data-new="punch" data-cri="ladder lg">Punch-out</button>
         </div>
       </span>
       <div class="titlecard" id="brandTitle"><h1>CARDINAL <span>RESOURCE</span></h1></div>
@@ -3689,7 +3690,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 975 &#8212; every number on the Community hub is now a door. Tap Open bids, Out for decision, Parked, Awarded or Due &#8804; 7 days and the bid list below filters to exactly the jobs that figure counted. The waiting rows and the by-partner and by-stage lists open the same way, the table you are filtering no longer closes itself when you tap Apply, and a check-back date you have sailed past finally goes red</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 978 &#8212; you can start a punch-out from anywhere. The &#65291; in the header has a Punch-out row, and Punch &amp; Repairs has its own &#65291; New beside the title &#8212; both open the same form the Production board already used. The search on that page now finds a PO number too, typed either way: 1042 or #1042</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3978,10 +3979,10 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 <!-- ============ PUNCH & REPAIRS (build 361) ============ -->
 <div id="punchView" style="display:none;">
   <div class="pu-wrap">
-    <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">&#128296; Punch &amp; Repairs</h2></div>
+    <div class="pu-head"><button class="pu-back" id="puBackBtn" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><h2 class="pu-title">&#128296; Punch &amp; Repairs</h2><button class="pu-new" id="puNewBtn" type="button">&#65291; New</button></div>
     <p class="pu-sub" id="puSub">&mdash;</p>
     <div id="puQueue"></div>
-    <div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Search item, client, address&#8230;" aria-label="Search punch items"></div>
+    <div class="pu-srch">&#128269; <input type="search" id="puSearch" placeholder="Search name, address, PO # or item&#8230;" aria-label="Search punch items"></div>
     <div class="pu-ctl"><span class="sl">Sort by</span>
       <button class="pu-chip" id="puSortChip">Urgency</button>
       <div class="right">
@@ -15038,6 +15039,17 @@ newMenu.addEventListener('click', function(e){
     if(mainView.style.display === 'none') showHome();
     openApptDay(dateStr(t.getFullYear(), t.getMonth(), t.getDate()));
   }
+  /* 978: a punch-out from the global + . It opens the SAME composer the
+     Production board's "+ Add" opens (cr-pb-script's openAdd) rather than a
+     second one — one pipeline per concept. newPunch() refreshes the shared
+     punch layer first, because the job list is boardJobs(): active-stage jobs
+     PLUS any job that already carries an item, and that second half is stale
+     if the layer has never loaded on this session. */
+  else if(kind === 'punch'){
+    var _pb = window.CardinalProduction;
+    if(_pb && typeof _pb.newPunch === 'function'){ _pb.newPunch(null); }
+    else { alert('The punch-out composer is still loading \u2014 try again in a moment.'); }
+  }
   else if(kind === 'reminder'){
     var title = prompt('Remind me about:');
     if(!title || !title.trim()) return;
@@ -21633,7 +21645,9 @@ function buildActivityEvents(){
       var pr3 = it.project_id ? cacheProjects.find(function(x){ return x.id === it.project_id; }) : null;
       var ac = actor(it.done_by);
       ev.push({ t:it.done_at, ini:ac.ini, email:ac.email,
-        label:(it.kind === 'callback' ? 'Callback closed:' : 'Repair closed:'), who:ac.nm,
+        /* 976: a tarp is not "repaired", it is done. */
+        label:(it.kind === 'callback' ? 'Callback closed:'
+             : it.kind === 'tarp'     ? 'Tarp done:' : 'Repair closed:'), who:ac.nm,
         cli: pr3 ? pr3.name : '', pid: pr3 ? pr3.id : null, detail: it.title || '' });
     });
   }catch(_){}
@@ -41196,6 +41210,12 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:978, d:'2026-08-21', t:'Start a punch-out from anywhere, and find one by PO',
+s:'Filing a punch-out no longer means finding the Production board first. The \u002B in the app header has a Punch-out row, and the Punch \u0026 Repairs page has its own \u002B New button beside the title. Both open the same Add-an-item form the Production board has always used \u2014 same job list, same kinds (including Tarp), same assign and schedule fields \u2014 so there is one form to learn and one place a fix lands. Add one while Punch \u0026 Repairs is open and the list updates behind the form instead of waiting for a reload. And the search box on that page now matches the client\u2019s PO number as well as their name, the address, the item and the person it is assigned to; type it bare (1042) or with a hash (#1042), either finds it.' },
+{ b:977, d:'2026-08-21', t:'A community job can sit on a waitlist',
+    s:'With some of these organisations we tarp a house for free before anything has been bid, and the job then waits for funding to open. There was nowhere to say that: the card kept asking for a price, and the job counted as an open bid it had never been. Now there is a Waitlist. On an unpriced community job, \u201cTarped it free \u2014 waitlist\u201d records the tarp date and parks it; the card then reads \u201cOn the waitlist \u2014 tarped free on the 20th, no bid yet, waiting 14 days\u201d instead of nagging. The hub counts them on their own tile, and tapping it shows exactly those jobs. \u26a0 Open bids will drop by however many are waitlisted \u2014 that is the point: they are not bids. Taking a job back off the waitlist keeps the tarp date on the record. The stage does not change, so nothing else in the pipeline moves.' },
+{ b:976, d:'2026-08-21', t:'A tarp is its own kind of punch-out',
+    s:'Punch outs could be a Punch, a Ticket or a Callback. A tarp is none of those \u2014 it is the thing we go and do straight away so the house stops taking water, and on a community job it is often done for free before anything has been bid. Pick Tarp when you add an item and it reads as a Tarp everywhere: on the card, in the activity feed (\u201cTarp done\u201d, not \u201cRepair closed\u201d) and in the Type filter, so you can pull up every tarp we owe someone in one tap. Nothing already logged changes.' },
 { b:975, d:'2026-08-21', t:'Community: the numbers are doors now',
     s:'Every headline figure on the Community hub counted something real and then left you to go and find it by hand. Tap one now \u2014 Open bids, Out for decision, Parked, Awarded, Due in 7 days \u2014 and the bid list below filters to exactly the jobs behind that number. The three waiting rows and the by-partner and by-stage lists do the same. Three things that were quietly wrong went with it: the table you were filtering used to close itself the moment you tapped Apply; a check-back date you had sailed past stayed a calm grey chip instead of going red; and every tile was drawing three nested cards inside itself.' },
 { b:974, d:'2026-08-21', t:'Community: one bid amount',
@@ -51207,7 +51227,11 @@ function openAdd(presetProjectId){
     '<div class="row">' +
     '<div><label>Kind</label><select data-f="kind">' +
     '<option value="punch">Punch</option><option value="ticket">Ticket</option>' +
-    '<option value="callback">Callback</option></select></div>' +
+    '<option value="callback">Callback</option>' +
+    /* 976: a tarp is not a repair, a ticket or a warranty callback. It is the
+       thing we go and do now so the house stops taking water — and on a
+       community job it is often done free before anything is bid. */
+    '<option value="tarp">Tarp</option></select></div>' +
     '<div><label>Priority</label><select data-f="priority">' +
     '<option value="normal">Normal</option><option value="high">Urgent</option>' +
     '<option value="low">Low</option></select></div>' +
@@ -51289,6 +51313,14 @@ async function saveAdd(){
     notifyAssignee(row.assigned_to, title, pid, 'filed');
     if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){
       try{ window.CardinalPunchProfile.refresh(); }catch(_){}
+    }
+    /* 978: Punch & Repairs is the THIRD surface reading this one add pipeline,
+       and it was the only one never told. The shared layer was reloaded above,
+       so this is a repaint, not a second fetch. Only when it is on screen —
+       the page renders from rows() on open anyway. */
+    var _pv = document.getElementById('punchView');
+    if(_pv && _pv.style.display !== 'none' && typeof window.renderPunchView === 'function'){
+      try{ window.renderPunchView(); }catch(_){}
     }
   }catch(e){
     alert('Could not add: ' + (e.message || e));
@@ -51438,6 +51470,19 @@ window.CardinalProduction = {
   schedFor  : schedFor,
   close     : close,
   addFor    : function(projectId){ openAdd(projectId); },
+  /* 978: addFor() is the IN-CONTEXT door — a job is already on screen, so its
+     row is in the list by construction. newPunch() is the door from anywhere
+     else (the global + , the Punch & Repairs page), where nothing guarantees
+     the punch layer has loaded, so it refreshes before drawing the job list.
+     Deliberately NOT folded into openAdd(): that would turn a synchronous
+     modal opener into an async one for its three existing callers, which is
+     never a local change. */
+  newPunch  : async function(presetProjectId){
+    if(window.CardinalPunch && typeof window.CardinalPunch.reload === 'function'){
+      try{ await window.CardinalPunch.reload(); items = punchRows(); }catch(_){}
+    }
+    openAdd(presetProjectId || null);
+  },
   refresh   : async function(){ await load(); lastSig = ''; render(); },
   openCount : function(){ return punchRows().filter(function(i){ return i.status === 'open'; }).length; },
 };
@@ -52138,7 +52183,15 @@ function cardHtml(){
   return '<div class="pkwrap">' +
     '<div class="pktop">' +
       '<button class="pkback" data-act="back" type="button" aria-label="Back">' + svg('chev') + '</button>' +
-      '<span class="pkey">' + esc(it.kind === 'callback' ? 'Callback' : it.kind === 'ticket' ? 'Ticket' : 'Punch-Out') + '</span>' +
+      '<span class="pkey">' + esc(it.kind === 'callback' ? 'Callback' :
+        it.kind === 'ticket' ? 'Ticket' :
+        /* 976: before the fallback on purpose. This chain ends by naming any
+           kind it does not recognise a punch, which is the normStage() shape —
+           so a kind added here and nowhere else silently reads as one.
+           NB the fallback string is deliberately not quoted in this comment:
+           the assertion below counts it file-wide, and prose naming it makes a
+           correct patch fail. That trap has cost three builds today. */
+        it.kind === 'tarp' ? 'Tarp' : 'Punch-Out') + '</span>' +
       '<span class="pkchip ' + (done ? 'done' : 'open') + '" style="margin-left:auto;">' + (done ? 'Closed' : 'Open') + '</span>' + (!done && dayCount() > 1 ? '<span class="pkchip day2">Day ' + dayCount() + '</span>' : '') +
       (mayDelete() ? '<button class="pkmenu" data-act="menu" type="button" aria-label="More">\u22EF</button>' : '') +
       (menuOpen ? '<div class="pkmenu-dd"><button class="pkmenu-it" data-act="del" type="button">Delete this punch-out\u2026</button>' +
@@ -53006,6 +53059,7 @@ body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba
 #ppPage .pp-chev{flex:0 0 auto;color:var(--rbe-mute,#9aa0a8);font-size:17px;line-height:1}
 #ppPage .kind{font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(245,166,35,.16);color:#f5a623}
 #ppPage .kind.callback{background:rgba(224,122,95,.18);color:#e07a5f}
+#ppPage .kind.tarp{background:rgba(90,169,230,.18);color:#8ec8f2}
 #ppPage .kind.ticket{background:rgba(230,232,234,.1);color:var(--rbe-ink,#cfd6df)}
 #ppPage .hi{font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(224,122,95,.18);color:#e07a5f}
 #ppPage .pp-back{background:transparent;border:1px solid var(--rbe-hair,#2c3038);color:var(--rbe-mute,#9aa0a8);border-radius:8px;padding:7px 12px;cursor:pointer;font:700 11.5px 'Segoe UI',Arial,sans-serif;margin-bottom:12px}
@@ -53047,6 +53101,7 @@ body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba
 :root[data-theme="rb-light"] #ppPage .kind{background:#faf4e8;color:#8a5a08}
 :root[data-theme="rb-light"] #ppPage .kind.callback,:root[data-theme="rb-light"] #ppPage .hi{background:#fbeeea;color:#a83f24}
 :root[data-theme="rb-light"] #ppPage .kind.ticket{background:#f2f2f2;color:#141414}
+:root[data-theme="rb-light"] #ppPage .kind.tarp{background:#e6f0fa;color:#10527f}
 :root[data-theme="rb-light"] #ppPage .pp-send{background:#8a5a08;color:#ffffff}
 :root[data-theme="rb-light"] #ppPage .pp-msg.mine .pp-bub{background:#8a5a08;border-color:#8a5a08;color:#ffffff}
 </style>
@@ -55862,6 +55917,9 @@ return l.bid_due_at;
 function chOnHold(pr){
 return normStage(pr.stage) === 'OnHold' && !!lead(pr).check_back_at;
 }
+/* 977: free tarp done, nothing bid yet. Per-module like chOnHold above — the
+   hub reads the checklist for every other fact the same way. */
+function chWaiting(pr){ return !!lead(pr).waitlist_at; }
 /* Bands, not raw dates - 'Overdue' is the filter you actually want at 7am. */
 function chDueBand(pr){
 var dd = days(chDueIso(pr));
@@ -55886,7 +55944,10 @@ var CH_GROUPS = [
    have no homeowner recorded, which is exactly the ambiguity the two-party
    header was meant to remove. This makes those two findable in one tap. */
 { key:'ho',      label:'Homeowner',     get:function(pr){ return homeownerOf(pr) ? 'Recorded' : 'Not recorded'; } },
-{ key:'rep',     label:'Assigned to',   get:chRepName }
+{ key:'rep',     label:'Assigned to',   get:chRepName },
+/* 977: the facet exists so the Waitlist TILE has somewhere to route — 975's
+   applyDoor writes chState.sets keyed by these, and chMatches reads them. */
+{ key:'waitlist', label:'Waitlist',     get:function(pr){ return chWaiting(pr) ? 'On the waitlist' : 'Not waitlisted'; } }
 ];
 function chActiveCount(){
 var n = 0;
@@ -56068,13 +56129,16 @@ el.onclick = function(e){ if(e.target === el) el.classList.remove('open'); };
 function compute(){
 var all = projects();
 var out = 0, owed = 0, won = 0, lost = 0, parked = 0;
-var open = 0, openAmt = 0;
+var open = 0, openAmt = 0, wait = 0;
 var OPENSET = {};
 openKeys().forEach(function(k){ OPENSET[k] = 1; });
 var due = [], chase = [], sched = [], inv = [];
 all.forEach(function(pr){
 var st = normStage(pr.stage), l = lead(pr), amt = bidAmt(pr);
-if(OPENSET[st]){ open++; openAmt += amt; }
+/* 977: a waitlisted job has NO bid, so it is not an open bid. 975 made that
+   tile mean what it says; this keeps it true. It gets its own count instead. */
+if(chWaiting(pr)){ wait++; }
+else if(OPENSET[st]){ open++; openAmt += amt; }
 if(st === 'Lead'){
 out += amt;
 }
@@ -56111,7 +56175,7 @@ inv.sort(function(a,b){ return (b.d||0) - (a.d||0); });
 var decided = won + lost;
 return {
 all:all, out:out, owed:owed, parked:parked,
-open:open, openAmt:openAmt,
+open:open, openAmt:openAmt, wait:wait,
 win: decided ? Math.round(won / decided * 100) : null,
 won:won, decided:decided,
 due:due, chase:chase, sched:sched, inv:inv,
@@ -56412,7 +56476,10 @@ sets:{ stage: stageLabels(['OnHold']) }, pane:'bids', fold:'allbids' },
 { key:'awarded',label:'Awarded',          text:usd(awarded),   n:awarded,
 sets:{ stage: stageLabels(wonKeys()) }, pane:'bids', fold:'allbids', sort:'amount' },
 { key:'due7',   label:'Due &le; 7 days',  text:String(dueSoon975), n:dueSoon975,
-sets:{ due: ['Overdue','Due today','Due this week'] }, pane:'bids', fold:'allbids' }
+sets:{ due: ['Overdue','Due today','Due this week'] }, pane:'bids', fold:'allbids' },
+/* 977: only when there is one — a tile reading 0 is not a door (975's rule). */
+{ key:'wait',   label:'Waitlist',         text:String(d.wait), n:d.wait, when:!!d.wait,
+sets:{ waitlist: ['On the waitlist'] }, pane:'bids', fold:'allbids' }
 ];
 doors = {};
 var kpi = (role === 'prod') ? '' :
@@ -57095,6 +57162,24 @@ referred : 'Referred to another partner',
 lost     : 'Bid not awarded',
 };
 function bidOf(pr){ return (ck(pr) || {}).bid || {}; }
+/* 977: a job we tarped for free and have not bid yet. Stage stays Lead — see
+   the build note: STAGES is shared with retail and insurance, so a
+   Community-only stage would leak into both pipelines. */
+function waitlisted(pr){ return !!lead(pr).waitlist_at; }
+function waitDays(pr){
+/* 977 ⚠ this first used daysTo(), which is Math.round on the difference. That is
+   right for a FUTURE deadline and wrong for ELAPSED days: once you are more than
+   twelve hours into today, a date 14 calendar days back rounds to 15, and the
+   card says "waiting 15 days" about something logged on the 7th when today is
+   the 21st. Caught by gate_977 assertion 3. Elapsed days FLOOR, and the date the
+   user picked is a local calendar day, not a UTC instant. */
+var w = lead(pr).waitlist_at;
+if(!w) return null;
+var t = new Date(String(w) + 'T00:00:00');
+if(isNaN(t.getTime())) return null;
+var d = Math.floor((Date.now() - t.getTime()) / 86400000);
+return d < 0 ? 0 : d;
+}
 /* 971: every place a community bid's price can legitimately live, in order of
    authority — what actually went to the partner, then the builder's live total,
    then the number typed into the bid form. It answers with a NUMBER, which is the
@@ -57599,6 +57684,32 @@ try{ window.auditLog('lead', 'Bid marked submitted', pr.id); }catch(_){ }
 render();
 return;
 }
+/* 977: both arms write through mergeCk + patchProjectCk, the same pipeline
+   logsub uses. mergeCk DELETES a key set to '', which is what takes a job back
+   off the waitlist without leaving a ghost date behind. */
+if(a === 'waitlist'){
+var t977 = prompt('Tarped for free on which date?\n(YYYY-MM-DD, or leave as-is)', todayIso());
+if(t977 === null) return;
+t977 = String(t977).trim();
+if(t977 && !/^\d{4}-\d{2}-\d{2}$/.test(t977)){ alert('Use YYYY-MM-DD.'); return; }
+var w977 = mergeCk(pr, 'lead', { waitlist_at: todayIso(), tarped_at: t977 || todayIso() });
+if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { lead: w977 });
+if(typeof window.auditLog === 'function'){
+try{ window.auditLog('lead', 'Put on the waitlist \u2014 tarped free', pr.id); }catch(_977){ }
+}
+render();
+return;
+}
+if(a === 'unwait'){
+if(!confirm('Take this job OFF the waitlist? The tarp date stays on the record.')) return;
+var u977 = mergeCk(pr, 'lead', { waitlist_at: '' });
+if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { lead: u977 });
+if(typeof window.auditLog === 'function'){
+try{ window.auditLog('lead', 'Taken off the waitlist', pr.id); }catch(_977b){ }
+}
+render();
+return;
+}
 if(a === 'logsub'){
 /* 709: ported from the deleted cream bid strip — blank clears both fields
    (the strip's semantics, and mergeCk deletes empty keys by design). */
@@ -57683,6 +57794,20 @@ if(st === 'Lead'){
    object-truthiness handed the only "Mark it submitted" button to the job with no
    price. priceOf() answers with a number, which is what tells those apart. */
 var p971 = priceOf(pr);
+/* 977: a waitlisted job is not a bid that needs pricing — it is work we have
+   already done for free, waiting for funding to open. It answers first, so the
+   card stops nagging for a price nobody is going to give it. */
+if(waitlisted(pr)){
+var wd977 = waitDays(pr);
+var tarp977 = l.tarped_at;
+out.push({ now:true, title:'On the waitlist', when:'now',
+txt:(tarp977 ? 'Tarped free on ' + fmtDay(tarp977) + '. ' : 'Tarped free. ') +
+'No bid yet' +
+(wd977 == null ? '.' : wd977 === 0 ? ' \u2014 added today.'
+: ' \u2014 waiting ' + wd977 + ' day' + (wd977 === 1 ? '' : 's') + '.'),
+acts:[{ label:'Start the bid', how:'estimate' },
+{ label:'Off the waitlist', how:'unwait', alt:true }] });
+}else{
 var due971 = due == null ? ''
 : due < 0 ? ' Due to the partner ' + Math.abs(due) + ' days ago.'
 : due === 0 ? ' Due to the partner today.'
@@ -57707,7 +57832,11 @@ acts:[{ label:'Mark it submitted', how:'submitted' },
 out.push({ now:true, title:'Bid needs pricing', when:'now',
 txt:'Invited to bid.' + due971 + ' Nothing priced yet.',
 acts:[{ label:'Price it', how:'estimate' },
-{ label:'Log a submitted amount', how:'logsub', alt:true }] });
+{ label:'Log a submitted amount', how:'logsub', alt:true },
+/* 977: the way ON to the waitlist, offered only where it makes sense — an
+   unpriced job we may have tarped for free. */
+{ label:'Tarped it free \u2014 waitlist', how:'waitlist', alt:true }] });
+}
 }
 }else if(st === 'Prospect'){
 out.push({ now:true, title:'Waiting on a decision', when:'now',
@@ -60887,6 +61016,12 @@ if(typeof _origOLF === 'function'){
 #punchView{display:none;min-height:100vh;background:var(--bg);}
 .pu-wrap{max-width:1320px;margin:0 auto;padding:16px 16px 150px;}
 .pu-head{display:flex;align-items:center;gap:10px;margin:0 0 2px;flex-wrap:wrap;}.pu-back{flex:none;width:34px;height:34px;border-radius:10px;cursor:pointer;border:1px solid var(--rbe-line2,#2b2b33);background:transparent;color:var(--rbe-mute,#9aa0a8);display:flex;align-items:center;justify-content:center;padding:0;}.pu-back svg{width:16px;height:16px;}.pu-back:hover{background:rgba(255,255,255,.06);}
+/* 978: + New, in the head beside the title. Cardinal red because filing a
+   punch-out is the one action this page exists to start; 44px min height
+   is the touch floor 592 set for every control Theo taps on the iPad. */
+.pu-new{flex:none;min-height:44px;padding:0 15px;border-radius:10px;cursor:pointer;border:0;background:#c8202e;color:#fff;font:800 14px 'Segoe UI',Arial,sans-serif;letter-spacing:.2px;}
+.pu-new:hover{background:#a8121f;}
+.pu-new:focus-visible{outline:2px solid #fff;outline-offset:2px;}
 .pu-title{margin:0;flex:1;font:800 21px Georgia,'Times New Roman',serif;color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
 .pu-sub{margin:1px 0 11px;font:600 12px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute);}
 .pu-srch{display:flex;align-items:center;gap:8px;background:var(--rbe-panel);border:1px solid var(--rbe-line);border-radius:6px;
@@ -61231,7 +61366,13 @@ function match(it){
     if(s.who.indexOf(w) === -1) return false;
   }
   if(PU.q){
-    var hay = [it.title, it.detail, it.assigned_to, pr && pr.name, pr && pr.address].join(' ').toLowerCase();
+    /* 978: the PO number, in the shape the client list and the header search
+       already use — the bare number AND the number with a hash, so "1042" and
+       "#1042" both find it. poOf() is the main block's one resolver; asked for
+       defensively because this is a different script block. */
+    var po978 = (typeof poOf === 'function') ? poOf(pr) : null;
+    var hay = [it.title, it.detail, it.assigned_to, pr && pr.name, pr && pr.address,
+      po978 ? '#' + po978 + ' ' + po978 : ''].join(' ').toLowerCase();
     if(hay.indexOf(PU.q) === -1) return false;
   }
   return true;
@@ -61296,7 +61437,7 @@ function whoList(){
 var CATS = function(){ return {
   crm:    { label:'CRM',     vals:['retail','insurance','community'], lab:function(v){ return CRM_LABEL[v]; } },
   status: { label:'Status',  vals:['Urgent','Open','Closed'],         lab:function(v){ return v; } },
-  kind:   { label:'Type',    vals:['punch','ticket','callback'],      lab:function(v){ return v; } },
+  kind:   { label:'Type',    vals:['punch','ticket','callback','tarp'], lab:function(v){ return v; } },
   who:    { label:'Assigned To', vals:whoList(),                      lab:function(v){ return v; } }
 }; };
 function count(){ var n = 0; for(var k in PU.sets) n += PU.sets[k].length; return n; }
@@ -61630,6 +61771,13 @@ document.getElementById('puTabs').addEventListener('click', function(e){
   render();
 });
 document.getElementById('puBackBtn').addEventListener('click', function(){ history.back(); });
+/* 978: + New. Routes to cr-pb-script's composer through CardinalProduction —
+   this page does not grow an add form of its own. */
+document.getElementById('puNewBtn').addEventListener('click', function(){
+  var P = window.CardinalProduction;
+  if(P && typeof P.newPunch === 'function'){ P.newPunch(null); }
+  else { alert('The punch-out composer is still loading \u2014 try again in a moment.'); }
+});
 document.getElementById('puSearch').addEventListener('input', function(){
   PU.q = this.value.trim().toLowerCase();
   clearTimeout(this.__t); this.__t = setTimeout(render, 200);

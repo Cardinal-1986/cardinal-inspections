@@ -20497,6 +20497,237 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 978 — start a punch-out from anywhere, and find one by PO (21 Aug 2026)
+
+Theo, verbatim: *"Can you do a plus new punch out and make it to where you can search by name
+address or po"*, on a screenshot of Punch & Repairs.
+
+Two asks, one build, and the interesting half is the one he did not spell out.
+
+**The + .** Filing a punch-out meant finding the Production board first — the composer had exactly
+one door, `openAdd()` behind the board's own "+ Add". The obvious move is a form on the Punch &
+Repairs page. **That is the bug this project keeps re-buying**, and `openAdd`/`saveAdd` are 190
+lines carrying the 605 off-stage job tail, the 767 roster sort, the 882 date-without-time
+invariant and the SQL-before-HTML retry. A second one starts identical and drifts. So 978 adds
+**doors, not forms**: `data-new="punch"` in the global + menu, `#puNewBtn` in the Punch & Repairs
+head, both landing on the same sheet.
+
+`CardinalProduction.newPunch()` is the outside door. It exists beside `addFor()` rather than
+replacing it because they answer different questions: `addFor(pid)` is called with a job already
+on screen, so that job's row is in the list by construction; `newPunch()` is called from anywhere,
+where nothing guarantees the punch layer has loaded — and the job list is `boardJobs()`, which is
+*active-stage jobs PLUS every job that already carries an item*. That second half is silently
+empty on a cold layer, which is the 605 defect wearing a new hat. So `newPunch()` reloads first.
+
+⚠️ **Deliberately NOT folded into `openAdd()`.** That would turn a synchronous modal opener into an
+async one for its three existing callers, and this file's own rule is that *adding `await` to a
+synchronous function is never a local change.*
+
+**And the consumer nobody told.** `saveAdd()` already refreshed the Production board and the client
+profile's Punch Outs tab. Punch & Repairs was the third surface reading the same pipeline and the
+only one never notified — add an item with the page open and it stayed hidden until a reload. Now
+it repaints, **guarded on the page actually being on screen**, because the shared layer was already
+reloaded above and repainting a hidden view is work nobody sees.
+
+**The PO.** The search box promised *"item, client, address"* and delivered exactly that: title,
+detail, assignee, project name, project address. The PO number — how this office actually refers to
+a job — matched nothing. The fix is four tokens of hay in the shape the client list and the header
+search already use, `'#' + po + ' ' + po`, so **1042** and **#1042** both find it. Placeholder now
+says so. `poOf()` is asked for defensively (`typeof poOf === 'function'`) because this is a
+different script block.
+
+⚠️ **A stubbed helper is not a reachable one.** The gate supplies its own `poOf`, so a green gate
+would say nothing about whether the real one resolves from inside `cr-punch-script`. Checked in a
+live Chromium render instead: `typeof poOf === 'function'` → true, `poOf({po:1042})` → 1042,
+absent → null. Without that the PO search could have shipped completely inert with every assertion
+green — the `{path, url}` fixture failure this project already paid for once.
+
+Verification: check_build green (977 → 978, 123 inline scripts, div balance 4152/4152).
+**gate_978.mjs 17/17 GREEN on the shipped file, RED on the 977 control with 11 named failures and
+no crash.** It runs the shipped `match()` over a job with a real PO (bare hit, hashed hit, a
+*different* PO must MISS — a hay that always matches is a search that has stopped filtering, and
+name/address must still match so the extension is proved additive), runs the shipped `newPunch()`
+against a recording shim to prove the reload happens **before** the job list is drawn, and measures
+`+ New` in a real render at the 44px touch floor in both themes. Sentinel: 13 findings, **identical
+on 977** — this build adds none. A real click drive confirms the sheet opens over the page
+(z-index 9600), carries all four kinds including Tarp, and its "Add it" button is hit-testable
+rather than covered.
+
+⚠️ **The comment-pollution trap fired for the fourth time in two days — this time inside the
+gate.** `PB.indexOf('newPunch')` found the *explanatory comment above the export*, and the slice
+then began at the word "async" inside that prose: `Unexpected identifier 'one'`. Fixed in the
+extractor, not the comment — a gate that only works while nobody documents the code is not a gate.
+It now matches the property **shape** (`/newPunch\s*:\s*(async\s+)?function\s*\(/`).
+
+⚠️ **And the `with(Proxy)` trap again:** `with(__stub){ __fn = ... }` assigns onto the proxy
+**target**, because `has()` answers true for every name. The outer `var __fn` never saw it —
+"__fn is not a function". Read it back off `__real`. gate_976's comment says this in so many words
+and I still walked into it.
+
+### 978 follow-up — `gate_sweep.py` was calling a squash merge a broken gate
+
+The sweep's control column went **GREEN on eight of twelve gates**, and green-on-a-control is
+supposed to mean *this gate cannot fail*. It meant nothing of the kind. Builds 967–975 were
+squash-merged as one commit, `d5bffef` — so "the commit that names build 967" is also the commit
+that carries 975, and asking it to be the control for build 968 hands the gate **a tree that
+already contains the change**.
+
+The trees those controls need no longer exist in git. That is a coverage gap, not a defect to
+chase, and the sweep now says which: `n/a — squashed, that tree already carries build N`, with a
+footer counting them. `subject_covers()` recognises a range subject; `--selftest` case 4 holds it
+in **both** directions across five subject forms, so a function that always answered true or
+always false would fail.
+
+⚠️ **And the summary line has now had to be narrowed twice.** It once claimed *"red on their own
+control"* having run no control at all; it then claimed it again while **8 of 12 controls were
+unavailable**. It now says *"red on every control that could be run (N could not)"*. A tool that
+overclaims is the same failure as a check that cannot fail — and this one is mine, twice.
+
+## Build 977 — a community job can sit on a waitlist (21 Aug 2026)
+
+Theo, verbatim: *"with some of these organizations we help communities by doing tarps for free
+without bidding yet so they stay on a waitlist."*
+
+There was nowhere to say that. The card kept asking for a price, and the job counted as an **open
+bid it had never been**.
+
+⚠️ **NO NEW STAGE, and that is the whole design.** `STAGES` is the whitelist `normStage()` enforces
+and it is **shared with retail and insurance** — a Community-only `Waitlist` entry would appear in
+both other pipelines, and by this file's own invariant *"`STAGES` must contain a stage value before
+any row is given it"*, any row given it early would silently become a **Lead**. The job stays at
+Lead and carries a **flag**, which is the shape every other community fact already uses
+(`bid_due_at`, `check_back_at`, `award_cycle`, `referred_to`). `gate_977` assertion 1 is that fence.
+
+**`tarped_at` already existed — this reuses it.** `ocSave` writes it on every outcome, but the
+outcome form is only reachable from Prospect/OnHold, i.e. **after a bid**. A free tarp before any
+bid could not reach it, which is exactly the gap. Live: **0 of 16** community jobs have it set. No
+second tarp-date field was invented; the gate asserts that too.
+
+**What it does.** On an unpriced community job the Lead arm offers *"Tarped it free — waitlist"*.
+That stamps `waitlist_at` and `tarped_at` through the same `mergeCk` + `patchProjectCk` pipeline
+`logsub` uses. The card then reads **"On the waitlist — tarped free on the 7th. No bid yet —
+waiting 14 days"** with *Start the bid* and *Off the waitlist*, instead of nagging for a price.
+Coming off keeps the tarp date: `mergeCk` deletes a key set to `''`, so only `waitlist_at` goes.
+
+**The hub.** A waitlisted job is **no longer an open bid** — 975 made that tile mean what it says
+and this keeps it true. It gets its own **Waitlist** tile, which is a door (975's `applyDoor`),
+routed through a new `waitlist` facet in `CH_GROUPS` because that is the mechanism a door needs.
+The tile is hidden at zero, per 975's rule that a door onto an empty list is the same lie in
+reverse.
+
+⚠️ **Stated rather than hidden: Open bids will DROP** by however many jobs are waitlisted. That is
+the point — they are not bids — but it is a number Theo watches.
+
+**Gate:** `gate_977.mjs`, 11 assertions. It runs the **shipped** `threadHtml` against a waitlisted
+job, an unpriced one and a priced one, then seeds a five-job book, opens the hub and **taps the
+Waitlist tile**. Control on 976: **RED, 7 named failures** — a tarped, waitlisted job reading
+*"Bid needs pricing … Nothing priced yet"*, `Open bids reads "5"` when two of the five are
+waitlisted, and no Waitlist tile to tap at all.
+
+⚠️ **An off-by-one of mine, caught by the gate.** `waitDays()` first used `daysTo()`, which is
+`Math.round` on the difference — right for a **future deadline**, wrong for **elapsed days**. More
+than twelve hours into today, a date 14 calendar days back rounds to **15**, so the card said
+*"waiting 15 days"* about something logged on the 7th when today is the 21st. Elapsed days floor,
+and the date the user picked is a **local** calendar day, not a UTC instant.
+
+### 977 follow-up — `gate_sweep.py` caught two regressions on the very next build
+
+**This is why it exists, and it earned its keep one build after being written.** The sweep over
+967–977 came back:
+
+```
+gate_971  index.html   RED   8 named failure(s)
+gate_972  index.html   RED   5 named failure(s)
+```
+
+Both said `waitlisted is not defined`. **Neither was an app defect** — 977 gave `threadHtml` two
+new helpers, and those two gates extract `threadHtml` and run it against **hand-written shim
+lists** that did not have them. It is the third time this exact thing has happened (972 broke
+gate_971 with `ck()`, 974 broke it again with `commBidAmount`, 977 with `waitlisted`), and the
+lesson is finally taken: **a hand-written shim list rots every time the shipped function grows.**
+
+Both gates now do what `gate_976`/`gate_977` do:
+1. **grab the REAL helpers** out of the artifact by brace-matching, so the behaviour tested is the
+   shipped behaviour; and
+2. keep a **`with(new Proxy(…))` backstop**, so a name nobody stubbed degrades to a no-op and the
+   gate REPORTS instead of dying (BUG_CLASSES 37).
+
+⚠️ **The backstop has a trap of its own and it bit immediately.** The proxy answers `has()` for
+every name, so inside `with()` it shadows **the shim's own variables too** — `events` came back as
+the fallback *function* and `events.forEach` threw. The proxy target has to be **seeded** with the
+shim's real values first, so genuine stubs win and the fallback only ever catches names nobody
+defined.
+
+**Both repaired gates were then re-run against their own controls and are still RED** — 971 on the
+970 tree (3 named failures), 972 on the 971 tree (3 named failures). A gate repaired into always
+passing would be worse than the regression.
+
+⚠️ **A second gap in `gate_sweep.py` itself, found in its own output.** A **squash merge names a
+RANGE** — `Builds 967–975 — …` — so the exact `\bbuild\s+NNN\b` lookup found nothing for
+968–974 and the whole control column went dark (`n/a — no commit names build 970`) the moment the
+span merged. Honest, but a control you cannot run proves nothing. It reads the range now.
+
+⚠️ **And an assertion of mine scoped to the FILE instead of the region** — a file-wide search for
+the word `Waitlist` found the KPI tile's label and the filter facet's label, both legitimate, and
+failed a correct patch. This project's own *"scope the count"* rule, and the second time today a
+correct patch was failed by a lazily-scoped check.
+
+## Build 976 — a tarp is its own kind of punch-out (21 Aug 2026)
+
+Theo, verbatim: *"Can we have a tarp only in the punch outs."* A tarp is not a repair, not a
+ticket and not a warranty callback — it is the thing we go and do straight away so the house stops
+taking water, and on a community job it is often done **free before anything is bid**. It had no
+way to be recorded as itself.
+
+**No SQL.** `punch_items.kind` has **no CHECK constraint** — verified on production
+(`pg_constraint … relname='punch_items' and contype='c'` returns `[]`), so this is front-end only
+and there is no migration to sequence. Live kinds today: **6 punch, 4 ticket, 0 callback**.
+
+⚠️ **FIVE blocks own the kind, and this is the `normStage()` shape again — one grows, all grow.**
+Each measured at exactly one site:
+
+| block | what it owns | miss it and… |
+|---|---|---|
+| `cr-pb-script` | the Add-an-item `<select>` | nobody can choose it |
+| `cr-pk-script` | the card's label chain | **it renders as "Punch-Out"** — the chain ends by naming anything it does not recognise a punch |
+| `cr-punch-script` | the Type filter's `vals` | you cannot pull up every tarp |
+| the main block | the activity-feed label | it reads *"Repair closed"* |
+| `cr-ppg-styles` | the chip colour, **dark and light** | it wears the punch amber |
+
+The label chain is the dangerous one and the control proves it: on 975 a tarp item renders as
+**`"Punch-Out"`**, silently filed as a repair.
+
+**Colour.** Punch is amber, callback terracotta, ticket neutral; tarp takes a blue — weather and
+protection. Both inks are **measured against the ground they actually composite over** (the chip's
+`rgba()` over `.pp-row`, not over the page) in both themes, by the gate. Not chosen by eye.
+
+**Gate:** `gate_976.mjs`, 11 assertions. It runs the **shipped** `openAdd()` to build a real sheet
+and reads its real `<select>`, runs the **shipped** card-row builder and reads the label it
+printed, and measures the chips in a real render in both themes. Control on 975: **RED, 6 named
+failures** — `offers: ["punch:Punch","ticket:Ticket","callback:Callback"]`, `a tarp renders as
+"Punch-Out"`, `tarp="Repair closed:"`, and the chip byte-identical to punch in both themes.
+`check_build.py` green; sentinel clean.
+
+⚠️ **The comment-pollution trap bit for the THIRD time today**, and this time my own assertion
+caught it before the write: the comment I wrote to explain the fallback **quoted the fallback
+string**, so a file-wide count of it read 2 instead of 1 and failed a correct patch. Reworded, with
+a note in the source saying why it is not spelled out.
+
+⚠️ **Four harness faults, all mine, all in `gate_976.mjs` and none in the app** — recorded because
+each is a reusable trap:
+1. **Regex surgery on an expression cut a string literal in half** (`Invalid or unexpected token`).
+   Extract the **function** by brace-matching and execute it; never regex a fragment out.
+2. **Stubbing one `ReferenceError` at a time is how a gate ends up crashing instead of reporting.**
+   The runner now uses `with(new Proxy(…))` so every unstubbed name resolves to a no-op — the
+   shipped function runs to completion and the assertion measures what it produced.
+3. **A native resolved through a `with` scope is called with the scope as its receiver** →
+   `Illegal invocation` on `setTimeout`. Bind host functions back to `window` — **but not
+   constructors**: `Array.bind(window)` has no `.isArray`, which was the very next error. The rule
+   is bind lowercase host functions, leave constructors and namespaces alone.
+4. **Inside `with()`, the proxy answers `has()` for every name, so the function's assignment to
+   `modal` landed on the proxy TARGET**, not on the outer local — which read back as null.
+   And a backtick in a comment *inside a template literal* terminated the literal.
+
 ## Build 975 — the hub's numbers are doors (21 Aug 2026)
 
 Fifth of the Community program's seven items, and the one Theo will feel first. **Ten numbers
