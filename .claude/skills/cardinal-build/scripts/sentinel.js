@@ -159,7 +159,7 @@ let   ALL    = argv.includes('--all');
    it reported build 817's FIX as the defect). Silence from an instrument
    that has never been seen to speak is not evidence of anything. */
 const SELFTEST = argv.includes('--selftest');
-const EXPECT = ['INK', 'COLLAPSE', 'OVERLAP', 'OVERFLOW', 'DEAD', 'OVERRIDDEN', 'FLOOR', 'UNWIRED'];
+const EXPECT = ['INK', 'COLLAPSE', 'OVERLAP', 'OVERFLOW', 'DEAD', 'OVERRIDDEN', 'FLOOR', 'CONTAIN', 'UNWIRED'];
 const on = id => !ONLY.length || ONLY.includes(id);
 
 if (SINCE && !existsSync(SINCE)) {
@@ -325,6 +325,12 @@ async function sweep(HTML, findings) {
         add({ id: 'FLOOR', where: at,
               key: `${f.selector}|${f.prop}|${f.el}`,
               detail: `${f.selector} floors ${f.prop}:44px but ${f.el} computes ${f.computed}px${f.winner ? ' — beaten by ' + f.winner : ''}` });
+
+    if (on('CONTAIN') && (res.contain || []).length)
+      for (const f of res.contain.slice(0, 20))
+        add({ id: 'CONTAIN', where: at,
+              key: `${f.el}|${f.behavior}`,
+              detail: `${f.el} sets overscroll-behavior ${f.behavior} but has no scrollport (overflow ${f.overflow}) — on iOS this can swallow the swipe` });
 
     /* UNWIRED needs CDP — the page cannot list its own listeners. */
     if (on('UNWIRED') && res.unwired.length) {
@@ -497,6 +503,12 @@ if (SELFTEST) {
   console.log((mfMissed ? '  FAIL  ' : '  PASS  ') +
     'but a @media rule beaten by a later unconditional one STILL is (build 817)');
   if (mfMissed) bad++;
+  /* 957: a scroller that legitimately contains must NOT be reported — the
+     check is about the missing scrollport, not the property. */
+  const containWrong = all.some(r => r.id === 'CONTAIN' && /#contain-ok/.test(r.detail));
+  console.log((containWrong ? '  FAIL  ' : '  PASS  ') +
+    'a real scroller that contains is NOT reported as CONTAIN');
+  if (containWrong) bad++;
   const inert = all.some(r => r.id === 'UNWIRED' && /#wired/.test(r.detail));
   console.log((inert ? '  FAIL  ' : '  PASS  ') + 'a WIRED button is not reported as unwired');
   if (inert) bad++;
