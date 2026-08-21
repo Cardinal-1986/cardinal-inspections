@@ -42,6 +42,22 @@ const j = APP.indexOf('</script>', i);
 const BLOCK = i === -1 ? '' : APP.slice(APP.indexOf('>', i)+1, j);
 need('0 cr-cc-script block found', !!BLOCK, 'module missing');
 
+/* 974 moved the price ladder out of this module into the main block as
+   commBidAmount, and priceOf became an adapter that calls it through window.
+   This gate serves a stub page, not the whole app, so the resolver has to be
+   handed in — otherwise priceOf answers "none" for every case and the gate
+   reports an app defect that is really a harness gap. */
+function fnFrom(src, marker){
+  const s = src.indexOf(marker); if(s === -1) return '';
+  const o = src.indexOf('{', s); let d = 0;
+  for(let k=o;k<src.length;k++){ if(src[k]==='{')d++; else if(src[k]==='}'){d--; if(!d) return src.slice(s,k+1);} }
+  return '';
+}
+const RESOLVER = fnFrom(APP, 'function commBidAmount(pr, est){') + '\n' +
+                 fnFrom(APP, 'function commBidSource(s){');
+need('0b the shared resolver was found in the artifact', /function commBidAmount/.test(RESOLVER),
+     'commBidAmount missing from the main block');
+
 const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:390,height:844}});
 await page.route('**/*', async r=>{
@@ -68,7 +84,7 @@ need('9 the secondary button is visually distinct from the primary',
      alt ? ('primary=' + alt.primaryBg + ' alt=' + alt.altBg) : 'buttons not found');
 
 /* run the shipped threadHtml against real row shapes */
-const cases = await page.evaluate((BLOCK)=>{
+const cases = await page.evaluate(({BLOCK, RESOLVER})=>{
   const out = { err:null, res:{} };
   try{
     const DAY = 86400000;
@@ -80,6 +96,14 @@ const cases = await page.evaluate((BLOCK)=>{
         function liveEstimate(){ return __EST__; }
         function lead(pr){ try{ return (JSON.parse(pr.checklist||'{}').lead)||{}; }catch(e){ return {}; } }
         function bidOf(pr){ try{ return (JSON.parse(pr.checklist||'{}').bid)||{}; }catch(e){ return {}; } }
+        /* 975: 972 gave threadHtml four new stage arms that read ck(pr).stage_since,
+           and this shim did not define ck — so every case threw and this gate had
+           been RED since 972 for the harness's own reason. */
+        function ck(pr){ try{ return JSON.parse(pr.checklist||'{}') || {}; }catch(e){ return {}; } }
+        function since(){ return 4; }
+        function todayIso(){ return '2026-08-21'; }
+        function homeownerOf(){ return 'Homeowner'; }
+        function partnerOf(pr){ return lead(pr).partner_name || 'No partner recorded'; }
         function normStage(s){ return s || 'Lead'; }
         function usd(n){ return '$' + (Number(n)||0).toLocaleString('en-US'); }
         function fmtDay(d){ return String(d||''); }
@@ -89,6 +113,9 @@ const cases = await page.evaluate((BLOCK)=>{
         var auditRows = [];
         var events = [];
         function ago(iso){ return iso ? 'a while ago' : ''; }
+        function parseCkAll(pr){ try{ return JSON.parse((pr&&pr.checklist)||'{}')||{}; }catch(e){ return {}; } }
+        ${RESOLVER}
+        window.commBidAmount = commBidAmount; window.commBidSource = commBidSource;
       `;
       /* pull just the two functions we need out of the module text */
       const grab = (marker) => {
@@ -126,7 +153,7 @@ const cases = await page.evaluate((BLOCK)=>{
     out.res.overdue = fn ? fn(proj({ lead:{ bid_amount: 9000, bid_due_at: iso(-10) } })) : null;
   }catch(e){ out.err = String(e && e.message || e); }
   return out;
-}, BLOCK);
+}, {BLOCK, RESOLVER});
 
 const R = (cases && cases.res) || {};
 const txt = v => {

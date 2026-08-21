@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 974 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 975 &#8212; every number on the Community hub is now a door. Tap Open bids, Out for decision, Parked, Awarded or Due &#8804; 7 days and the bid list below filters to exactly the jobs that figure counted. The waiting rows and the by-partner and by-stage lists open the same way, the table you are filtering no longer closes itself when you tap Apply, and a check-back date you have sailed past finally goes red</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41196,6 +41196,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:975, d:'2026-08-21', t:'Community: the numbers are doors now',
+    s:'Every headline figure on the Community hub counted something real and then left you to go and find it by hand. Tap one now \u2014 Open bids, Out for decision, Parked, Awarded, Due in 7 days \u2014 and the bid list below filters to exactly the jobs behind that number. The three waiting rows and the by-partner and by-stage lists do the same. Three things that were quietly wrong went with it: the table you were filtering used to close itself the moment you tapped Apply; a check-back date you had sailed past stayed a calm grey chip instead of going red; and every tile was drawing three nested cards inside itself.' },
 { b:974, d:'2026-08-21', t:'Community: one bid amount',
     s:'A community bid had six separate definitions of its own amount, and two of them ranked the same two sources in opposite orders \u2014 so the job card and the hub could show different money for the same job. There is one answer now: awarded, then submitted, then the estimate builder, then the figure you typed on the bid form. Every screen says which of those it is showing you. The Bid tab used to print $0.00 against every line; it now uses the same rule the estimate document does. Analytics counted a builder-priced bid as $0 in the win rate \u2014 it does not any more. And recording who funded an award now moves the bill-to, so the invoice goes to the party that paid.' },
 { b:973, d:'2026-08-21', t:'Attaching a partner now shows up everywhere',
@@ -55483,9 +55485,17 @@ border-bottom:3px solid transparent;margin-bottom:-1px}
 .cc-tabs button.on{border-bottom-color:var(--acc);background:var(--card);border-radius:7px 7px 0 0}
 .cc-sep{font:800 21px Georgia,serif;color:var(--bar);padding:0 2px;line-height:1}
 .cc-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
-.cc-kpi div{background:var(--ccm-grad);border:1px solid var(--line);
+/* 975: this was a DESCENDANT selector, so .k and .v — both divs — each drew
+   their own bordered, radiused, green-edged card INSIDE the tile. Measured in
+   Chromium at 1194px: three nested cards per tile, all reporting the same 3px
+   left edge. `>*` also keeps the rule working now the live tiles are buttons. */
+.cc-kpi>*{background:var(--ccm-grad);border:1px solid var(--line);
 border-left:3px solid var(--acc);border-radius:8px;padding:10px 13px;min-width:0;
 box-shadow:var(--ccm-sh-sm)}
+.cc-kpi>button.cc-tile{font:inherit;color:inherit;text-align:left;width:100%;
+display:block;cursor:pointer}
+.cc-kpi>button.cc-tile:hover,.cc-kpi>button.cc-tile:focus-visible{box-shadow:var(--ccm-glow);outline:none}
+.cc-due b.hot{color:var(--warnink)}
 .cc-kpi .k{font:800 8.5px var(--mono);letter-spacing:.15em;text-transform:uppercase;color:var(--mute)}
 .cc-kpi .v{font:700 19px var(--mono);color:var(--ink);margin-top:2px}
 .cc-mine{font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:-8px 2px 10px;text-align:right}
@@ -55628,7 +55638,7 @@ box-shadow:var(--ccm-shadow)}
 .cc-due{border-left:0;padding-left:0;border-top:1px solid var(--line2)}
 .cc-due:first-child{border-top:0}
 .cc-kpi{grid-template-columns:repeat(2,1fr);gap:8px}
-.cc-kpi div{padding:8px 10px}
+.cc-kpi>*{padding:8px 10px}
 .cc-kpi .v{font-size:15px}
 .cc-tabs button{padding:10px 12px;font-size:13px}
 .cc-sep{font-size:18px}
@@ -55788,6 +55798,36 @@ return hoText(pr) + (a ? '<div class="cc-mini">' + esc(a) + '</div>' : '');
    days(), since(), bidAmt(), partnerOf(), homeownerOf(), metaOf(), normStage()
    - so there is no second source of truth for any field. */
 var chState = { sort:'due', dir:1, sets:{} };
+/* 975: fold open/closed was DOM-only — a class toggled on .cc-fh's parent that
+   render() threw away. So Apply closed the All-bids table the filter bar lives
+   inside, and the only evidence a filter was live became invisible. This is the
+   same shape as `closed{}` + `closedStamp` above, which is how the partner-card
+   collapse already survives a repaint. */
+var folds = {};
+var chStamp = 0;
+var doors = {};
+/* the stage sets a tile routes to, read from cr-can's single declaration with a
+   literal fallback (the module's own fallback doctrine — cr-can loads after this
+   block, but these are only ever called at render time). */
+function openKeys(){
+try{
+var A = window.CardinalCommunityAnalytics;
+if(A && A.OPEN) return Object.keys(A.OPEN);
+}catch(_975){}
+return ['Lead','Prospect','OnHold'];
+}
+function wonKeys(){
+try{
+var A = window.CardinalCommunityAnalytics;
+if(A && A.WON) return Object.keys(A.WON);
+}catch(_975b){}
+return ['Approved','Scheduled','Completed','Invoiced','Closed'];
+}
+/* the filter stores DISPLAY strings, so derive them from LABEL rather than
+   retyping 'Bid Requested' anywhere. */
+function stageLabels(keys){
+return (keys || []).map(function(k){ return LABEL[k] || k; });
+}
 var chSheet = { cat:null, pend:[] };
 var CH_SORTS = [
 { key:'due',       label:'Due / check back' },
@@ -56028,12 +56068,23 @@ el.onclick = function(e){ if(e.target === el) el.classList.remove('open'); };
 function compute(){
 var all = projects();
 var out = 0, owed = 0, won = 0, lost = 0, parked = 0;
+var open = 0, openAmt = 0;
+var OPENSET = {};
+openKeys().forEach(function(k){ OPENSET[k] = 1; });
 var due = [], chase = [], sched = [], inv = [];
 all.forEach(function(pr){
 var st = normStage(pr.stage), l = lead(pr), amt = bidAmt(pr);
+if(OPENSET[st]){ open++; openAmt += amt; }
 if(st === 'Lead'){
 out += amt;
-due.push({ pr:pr, d:days(l.bid_due_at), amt:amt });
+}
+/* 975: this read l.bid_due_at RAW and sat inside the Lead-only branch, so the
+   second clock never reached the fold or the tile — a parked job's check-back
+   date, the one thing the module's own banner calls "worth shouting about",
+   could not appear in Due soon at any distance past it. chDueIso() is the
+   function that already answers "which clock is this job on". */
+if(st === 'Lead' || chOnHold(pr)){
+due.push({ pr:pr, d:days(chDueIso(pr)), amt:amt, held:chOnHold(pr) });
 }
 if(st === 'Prospect'){
 out += amt;
@@ -56060,6 +56111,7 @@ inv.sort(function(a,b){ return (b.d||0) - (a.d||0); });
 var decided = won + lost;
 return {
 all:all, out:out, owed:owed, parked:parked,
+open:open, openAmt:openAmt,
 win: decided ? Math.round(won / decided * 100) : null,
 won:won, decided:decided,
 due:due, chase:chase, sched:sched, inv:inv,
@@ -56198,7 +56250,9 @@ return list;
 }
 function signature(){
 var d = compute();
-return [pane, query, closedStamp, metaStamp, roleOf(),
+/* 975: filter and fold state were absent, so a background scan() could decide
+   nothing had changed a moment after a door fired and repaint the pre-door view. */
+return [pane, query, closedStamp, metaStamp, chStamp, chActiveCount(), roleOf(),
 d.out, d.owed, d.parked, d.win, d.due.length, d.chase.length,
 d.sched.length, d.inv.length, d.all.length,
 (window.cacheProjects || []).length].join('|');
@@ -56301,7 +56355,11 @@ var rows = clientList();
 var awarded = ps.reduce(function(a,p){ return a + (p.awarded||0); }, 0);
 
 function fold(id, title, count, body, open){
-return '<div class="cc-card cc-fold' + (open === false ? '' : ' open') + '" data-fold="' + id + '">' +
+/* 975: folds{} is the user's own choice and outranks the default. Without it a
+   render() — which Apply, Clear and every door trigger — reset the All-bids fold
+   to closed, taking the filter bar that lives inside it with it. */
+var op975 = (folds[id] != null) ? !!folds[id] : (open !== false);
+return '<div class="cc-card cc-fold' + (op975 ? ' open' : '') + '" data-fold="' + id + '">' +
 '<div class="cc-fh"><b>' + title + '</b>' +
 (count == null ? '' : '<span class="cc-cnt">' + count + '</span>') +
 '<span class="cc-chev">\u203A</span></div>' +
@@ -56335,14 +56393,39 @@ return String(name || '?').trim().split(/\s+/).map(function(w){ return w.charAt(
 }
 
 /* ---- KPI strip (presentation-gated exactly as before) ---- */
+/* 975: every one of these counted something real and then left you to go and
+   find it by hand. Each is now a door onto exactly the rows it counted — the
+   number and the destination come from ONE declaration, so they cannot drift.
+   "Open bids" reads d.open rather than d.all.length: it was every community job
+   including the closed and the lost, which happens to be right today only
+   because all 15 are still at Lead.
+   A tile whose figure is zero stays a plain div: a door onto an empty list is
+   the same lie in the other direction. */
+var dueSoon975 = d.due.filter(function(x){ return x.d != null && x.d <= 7; }).length;
+var KPI975 = [
+{ key:'open',   label:'Open bids',        text:String(d.open), n:d.open,
+sets:{ stage: stageLabels(openKeys()) }, pane:'bids', fold:'allbids' },
+{ key:'out',    label:'Out for decision', text:usd(d.out),     n:d.out,
+sets:{ stage: stageLabels(['Lead','Prospect']) }, pane:'bids', fold:'allbids', sort:'amount' },
+{ key:'parked', label:'Parked',           text:usd(d.parked),  n:d.parked, when:!!d.parked,
+sets:{ stage: stageLabels(['OnHold']) }, pane:'bids', fold:'allbids' },
+{ key:'awarded',label:'Awarded',          text:usd(awarded),   n:awarded,
+sets:{ stage: stageLabels(wonKeys()) }, pane:'bids', fold:'allbids', sort:'amount' },
+{ key:'due7',   label:'Due &le; 7 days',  text:String(dueSoon975), n:dueSoon975,
+sets:{ due: ['Overdue','Due today','Due this week'] }, pane:'bids', fold:'allbids' }
+];
+doors = {};
 var kpi = (role === 'prod') ? '' :
 '<div class="cc-kpi">' +
-'<div><div class="k">Open bids</div><div class="v">' + d.all.length + '</div></div>' +
-'<div><div class="k">Out for decision</div><div class="v">' + usd(d.out) + '</div></div>' +
-(d.parked ? '<div><div class="k">Parked</div><div class="v">' + usd(d.parked) + '</div></div>' : '') +
-'<div><div class="k">Awarded</div><div class="v">' + usd(awarded) + '</div></div>' +
-'<div><div class="k">Due &le; 7 days</div><div class="v">' +
-d.due.filter(function(x){ return x.d != null && x.d <= 7; }).length + '</div></div>' +
+KPI975.filter(function(t){ return t.when !== false; }).map(function(t){
+var live = !!t.n;
+if(live) doors['kpi:' + t.key] = t;
+return (live
+? '<button type="button" class="cc-tile" data-cckpi="' + t.key + '">'
+: '<div>') +
+'<div class="k">' + t.label + '</div><div class="v">' + t.text + '</div>' +
+(live ? '</button>' : '</div>');
+}).join('') +
 '</div>' +
 (role === 'sales' ? '<div class="cc-mine">Your pipeline \u2014 your bids only</div>' : '');
 
@@ -56350,7 +56433,8 @@ d.due.filter(function(x){ return x.d != null && x.d <= 7; }).length + '</div></d
 var dueBody = d.due.length
 ? '<div class="cc-duegrid">' + d.due.slice(0, 8).map(function(x){
 return '<div class="cc-due" data-open="' + esc(x.pr.id) + '">' +
-'<b>' + (x.d == null ? '\u2013' : x.d) + '</b>' +
+'<b' + (x.d != null && x.d < 0 ? ' class="hot"' : '') + '>' +
+(x.d == null ? '\u2013' : x.d) + '</b>' +
 '<div class="cc-idp">' +
 '<div class="k b">Bill to</div><div class="v">' + pName(partnerOf(x.pr)) + '</div>' +
 '<div class="k">Serving</div><div class="v">' + hoCell(x.pr) + '</div></div>' +
@@ -56376,15 +56460,24 @@ return '<div class="cc-prow" data-go="partners">' +
 }).join('')
 : '<div class="cc-empty">No partners yet.</div>';
 
-function queue(label, list){
+/* 975: two faults in four lines. data-q had NO handler anywhere, so the row
+   inherited .cc-prow's cursor:pointer and did nothing; and the closing </div>
+   sat inside the non-prod arm, so a Production user got three nested unclosed
+   rows. The row now names the stage it counts and opens it. */
+function queue(label, list, stageKey){
 if(!list.length) return '';
-return '<div class="cc-prow" data-q="1"><span style="flex:1">' + label +
+if(stageKey) doors['q:' + stageKey] = { sets:{ stage: stageLabels([stageKey]) },
+pane:'bids', fold:'allbids' };
+return '<div class="cc-prow"' + (stageKey ? ' data-queue="' + stageKey + '"' : '') +
+'><span style="flex:1">' + label +
 '<div class="cc-mini">' + list.length + ' waiting</div></span>' +
 (role === 'prod' ? '' : '<span class="cc-money">' +
-usd(list.reduce(function(a,x){ return a + (x.amt||0); }, 0)) + '</span></div>');
+usd(list.reduce(function(a,x){ return a + (x.amt||0); }, 0)) + '</span>') +
+'</div>';
 }
-var weekBody = (queue('Chase a decision', d.chase) + queue('Get on the calendar', d.sched) +
-queue('Invoice the partner', d.inv)) ||
+var weekBody = (queue('Chase a decision', d.chase, 'Prospect') +
+queue('Get on the calendar', d.sched, 'Approved') +
+queue('Invoice the partner', d.inv, 'Completed')) ||
 '<div class="cc-empty">Nothing waiting on you.</div>';
 
 /* The filter and sort apply to THIS table only. The Due-soon block and the
@@ -56404,7 +56497,11 @@ return '<tr data-open="' + esc(pr.id) + '">' +
 /* .cc-pill.due is the red one. A parked job counting down to its own
    check-back is not urgent, so it takes the neutral chip - that is the
    whole payoff of the second clock, visible in one glance. */
-'<span class="cc-pill' + (held ? '' : ' due') + '">' + dd + ' d' +
+/* 975: `held ? '' : ' due'` meant a parked row could never go red at any
+   distance — including a check-back sailed past weeks ago, which this module's
+   own banner calls the one thing on a parked job worth shouting about. Overdue
+   is overdue on either clock; a check-back still ahead keeps the neutral chip. */
+'<span class="cc-pill' + ((dd < 0 || !held) ? ' due' : '') + '">' + dd + ' d' +
 (held ? ' hold' : '') + '</span>') + '</td>' +
 '<td data-l="Homeowner">' + hoCell(pr) + '</td>' +
 '<td data-l="Bill to">' + pName(l.partner_name) + '</td>' +
@@ -56452,16 +56549,29 @@ return fold('pg-' + g.key, g.label, members.length,
 var cRows = chSorted(rows.filter(chMatches));
 var byPartner = {}, byStage = {};
 cRows.forEach(function(pr){
-var pn = lead(pr).partner_name || 'No partner';
+/* 975: this said 'No partner' where every other surface says 'No partner
+   recorded', so the tally key did not match the filter value and the row could
+   not become a door. partnerOf() is the one spelling. */
+var pn = partnerOf(pr);
 byPartner[pn] = (byPartner[pn] || 0) + 1;
 var st = LABEL[normStage(pr.stage)] || normStage(pr.stage);
 byStage[st] = (byStage[st] || 0) + 1;
 });
-function tally(obj, avatars){
+/* 975: these rows carried .cc-prow's cursor:pointer and no attribute at all —
+   the only truly dead tappable on the hub. `kind` names which CH_GROUPS facet
+   the row belongs to, so By-partner and By-stage route through the same filter
+   the funnel writes. */
+function tally(obj, avatars, kind){
 var keys = Object.keys(obj).sort(function(a,b){ return obj[b] - obj[a]; });
 if(!keys.length) return '<div class="cc-empty">Nothing yet.</div>';
 return keys.map(function(k){
-return '<div class="cc-prow">' +
+if(kind){
+var spec975 = { sets:{}, pane:'clients' };
+spec975.sets[kind] = [k];
+doors['t:' + kind + ':' + k] = spec975;
+}
+return '<div class="cc-prow"' +
+(kind ? ' data-tally="' + kind + '" data-val="' + esc(k) + '"' : '') + '>' +
 (avatars ? '<span class="cc-av ' + pClass(k) + '">' + initials(k) + '</span>' : '') +
 '<span style="flex:1;min-width:0">' + (avatars ? pName(k) : esc(k)) + '</span>' +
 '<span class="cc-money">' + obj[k] + '</span></div>';
@@ -56488,8 +56598,8 @@ var clientsPane = '<div data-pane="clients" class="' + (pane === 'clients' ? 'on
 chBar(cRows.length, rows.length) +
 fold('clist', 'Community clients', cRows.length, clientsBody) +
 '<div class="cc-g2">' +
-fold('bypartner', 'By partner', Object.keys(byPartner).length, tally(byPartner, true)) +
-fold('bystage', 'By stage', Object.keys(byStage).length, tally(byStage, false)) +
+fold('bypartner', 'By partner', Object.keys(byPartner).length, tally(byPartner, true, 'partner')) +
+fold('bystage', 'By stage', Object.keys(byStage).length, tally(byStage, false, 'stage')) +
 '</div></div>';
 
 host.innerHTML =
@@ -56529,7 +56639,9 @@ clientsPane + bidsPane + partnersPane +
 host.querySelectorAll('.cc-fh').forEach(function(h){
 h.onclick = function(e){
 if(e.target.closest('[data-open]')) return;
-h.parentNode.classList.toggle('open');
+var on975 = h.parentNode.classList.toggle('open');
+var id975 = h.parentNode.getAttribute('data-fold');
+if(id975){ folds[id975] = on975; chStamp++; }
 };
 });
 clock(host);
@@ -56581,6 +56693,42 @@ render();
 host.querySelectorAll('[data-open]').forEach(function(el){
 el.onclick = function(){
 if(typeof window.openProject === 'function') window.openProject(el.dataset.open);
+};
+});
+/* 975: the doors. A door means "show me exactly this", so it REPLACES
+   chState.sets rather than adding to whatever was already there — otherwise two
+   taps in a row silently intersect to nothing. It opens the fold it is sending
+   you to (folds{} survives the render, which is the whole point of the fold-state
+   change) and scrolls it into view, because a filter applied to a table below the
+   fold looks like nothing happened. */
+function applyDoor(spec){
+if(!spec) return;
+chState.sets = {};
+Object.keys(spec.sets || {}).forEach(function(k){
+chState.sets[k] = (spec.sets[k] || []).slice();
+});
+if(spec.sort) chState.sort = spec.sort;
+if(spec.pane) pane = spec.pane;
+if(spec.fold) folds[spec.fold] = true;
+chStamp++;
+render();
+if(spec.fold){
+try{
+var h2 = document.getElementById('cr-ch2');
+var t2 = h2 && h2.querySelector('[data-fold="' + spec.fold + '"]');
+if(t2 && t2.scrollIntoView) t2.scrollIntoView({ behavior:'smooth', block:'start' });
+}catch(_975c){}
+}
+}
+host.querySelectorAll('[data-cckpi]').forEach(function(el){
+el.onclick = function(){ applyDoor(doors['kpi:' + el.getAttribute('data-cckpi')]); };
+});
+host.querySelectorAll('[data-queue]').forEach(function(el){
+el.onclick = function(){ applyDoor(doors['q:' + el.getAttribute('data-queue')]); };
+});
+host.querySelectorAll('[data-tally]').forEach(function(el){
+el.onclick = function(){
+applyDoor(doors['t:' + el.getAttribute('data-tally') + ':' + el.getAttribute('data-val')]);
 };
 });
 host.querySelectorAll('[data-go]').forEach(function(el){
@@ -59764,7 +59912,11 @@ host.querySelector('[data-x]').onclick = close;
 }
 function open(){ render(); ensure().style.display = 'block'; try{ window.scrollTo(0, 0); }catch(_){} }
 function close(){ if(el) el.style.display = 'none'; }
-window.CardinalCommunityAnalytics = { open: open, close: close, render: render };
+/* 975: OPEN and WON are exported so the hub's KPI tiles can route to exactly
+   the stages a figure counts, instead of a second list of stage names drifting
+   beside this one. The three existing keys are unchanged. */
+window.CardinalCommunityAnalytics = { open: open, close: close, render: render,
+OPEN: OPEN, WON: WON };
 })();
 </script>
 <style id="cr-cdir-styles">

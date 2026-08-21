@@ -20497,6 +20497,81 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 975 — the hub's numbers are doors (21 Aug 2026)
+
+Fifth of the Community program's seven items, and the one Theo will feel first. **Ten numbers
+on the hub counted something real and then left you to go and find it by hand** — five KPI
+tiles, three "waiting on you" rows and two tally lists. All ten wore `.cc-prow`'s
+`cursor:pointer`; none of them did anything.
+
+**The thing that made a door impossible had to go first.** The All-bids filter bar lives
+*inside* the All-bids fold, and fold state was a DOM class that `render()` threw away. So
+tapping Apply re-rendered, the fold snapped back to its `open=false` default, and **the table
+you were filtering closed itself**. `folds{}` now holds the user's own choice and outranks the
+default — the same shape as the `closed{}` + `closedStamp` pair the partner cards already use.
+
+**Every door goes through one `applyDoor(spec)`**, and a door **replaces** `chState.sets`
+rather than adding to it: two taps in a row would otherwise intersect to nothing. It sets the
+pane, opens the fold it is sending you to, bumps `chStamp` and scrolls the fold into view — a
+filter applied to a table below the fold looks like nothing happened.
+
+**The number and the destination come from one declaration.** `KPI975` is a five-row table of
+`{ key, label, text, n, sets, pane, fold, sort }`; the tile and its door are built from the same
+row, so they cannot drift. **A tile whose figure is zero stays a plain `<div>`** — a door onto
+an empty list is the same lie in the other direction.
+
+**Reuse, not a second list.** `cr-can-script` already declares `OPEN = { Lead, Prospect, OnHold }`
+with its own build-710 reasoning about why parked counts as open. It is now **exported** and read
+by the hub, so the stage names exist once. Display strings come from the module's own `LABEL`.
+
+**Four things that were quietly wrong, all inside the blast radius:**
+
+1. **"Open bids" read `d.all.length`** — every community job ever, including the closed and the
+   lost. Right today only because all 15 live jobs are still at Lead. It reads `d.open` now.
+2. **`.cc-kpi div` is a DESCENDANT selector**, and `.k`/`.v` are divs — so every tile drew
+   **three nested cards**, each with its own border, radius and 3px green left edge. Measured in
+   Chromium: `tile=3px  .k=3px  .v=3px`. Now `.cc-kpi>*`, which also keeps working now the live
+   tiles are `<button>`s. The mobile twin moved in the same edit.
+3. **`queue()` dropped its closing `</div>` when `role === 'prod'`** — the tag sat inside the
+   non-prod arm — so Curtis and Scottie got three nested unclosed rows. Latent only because all
+   15 jobs are Lead; 972 would have made it live.
+4. **A parked job's check-back could never go red.** The pill read `held ? '' : ' due'`, so a
+   check-back sailed past weeks ago stayed a calm grey chip — the one thing this module's own
+   banner calls "worth shouting about". And it never reached Due soon at all: the push sat inside
+   `if(st === 'Lead')` and read `l.bid_due_at` raw instead of `chDueIso()`, the function that
+   already answers which clock a job is on.
+
+⚠️ **`byPartner` keyed on `'No partner'` where every other surface says `'No partner recorded'`**,
+so that tally row could not have become a door — the key did not match the filter value.
+`partnerOf()` is the one spelling now.
+
+⚠️ **`signature()` could not see any of this.** Filter and fold state were absent from the
+repaint signature, so a background `scan()` could conclude nothing had changed a moment after a
+door fired and repaint the pre-door view. `chStamp` and `chActiveCount()` are in it now.
+
+**The app stamp's PROSE was nine builds stale** — it still described build 966's contract chip
+while the number had been bumped by 967 through 974. `check_build.py` gates the number only.
+Rewritten.
+
+**Gate:** `gate_975.mjs`, 13 assertions, and it is a **real drive**, not a source read: it seeds
+an eight-job community book covering every state the doors separate, opens the hub, **taps the
+tiles** and reads what the table then shows. Control on 974: **RED, 12 named failures** — among
+them `tiles: ["DIV:null:Open bids", …]`, `tile=3px  .k=3px  .v=3px`, `Due soon shows:
+["c1","c2","c3"]` with the parked job absent, `the held chip reads "-5 d hold" and red=false`,
+and `top-level rows=1  nested=1` for the Production user. `check_build.py` green (marker
+`data-cckpi`, negative control clean); sentinel clean.
+
+⚠️ **My own miss, found while re-running the earlier gates: `gate_971.mjs` had been RED since
+build 972 for its OWN reason, and I did not notice because I never re-ran it.** Two harness gaps,
+both introduced by later builds touching the same function: 972 gave `threadHtml` four new stage
+arms that read `ck(pr).stage_since`, which the shim did not define (`ck is not defined`, every
+case threw); and 974 moved the price ladder into the main block, so `priceOf`'s
+`window.commBidAmount` was undefined on this gate's stub page and every case answered "needs
+pricing". Neither was an app defect — `gate_972` and `gate_974` were green on the same code the
+whole time. Both are fixed, `gate_971` is green at 975 (13 assertions) **and still RED with 9
+named failures on its own 970 control**. *The lesson is the cheap one: when a build changes a
+function an earlier gate executes, re-run that gate in the same session.*
+
 ## Build 974 — one bid amount (21 Aug 2026)
 
 Fourth of the Community program's seven items, and the one that explains why the numbers
