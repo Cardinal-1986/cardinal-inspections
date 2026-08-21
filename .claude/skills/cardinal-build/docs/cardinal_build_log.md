@@ -20497,6 +20497,62 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 976 — a tarp is its own kind of punch-out (21 Aug 2026)
+
+Theo, verbatim: *"Can we have a tarp only in the punch outs."* A tarp is not a repair, not a
+ticket and not a warranty callback — it is the thing we go and do straight away so the house stops
+taking water, and on a community job it is often done **free before anything is bid**. It had no
+way to be recorded as itself.
+
+**No SQL.** `punch_items.kind` has **no CHECK constraint** — verified on production
+(`pg_constraint … relname='punch_items' and contype='c'` returns `[]`), so this is front-end only
+and there is no migration to sequence. Live kinds today: **6 punch, 4 ticket, 0 callback**.
+
+⚠️ **FIVE blocks own the kind, and this is the `normStage()` shape again — one grows, all grow.**
+Each measured at exactly one site:
+
+| block | what it owns | miss it and… |
+|---|---|---|
+| `cr-pb-script` | the Add-an-item `<select>` | nobody can choose it |
+| `cr-pk-script` | the card's label chain | **it renders as "Punch-Out"** — the chain ends by naming anything it does not recognise a punch |
+| `cr-punch-script` | the Type filter's `vals` | you cannot pull up every tarp |
+| the main block | the activity-feed label | it reads *"Repair closed"* |
+| `cr-ppg-styles` | the chip colour, **dark and light** | it wears the punch amber |
+
+The label chain is the dangerous one and the control proves it: on 975 a tarp item renders as
+**`"Punch-Out"`**, silently filed as a repair.
+
+**Colour.** Punch is amber, callback terracotta, ticket neutral; tarp takes a blue — weather and
+protection. Both inks are **measured against the ground they actually composite over** (the chip's
+`rgba()` over `.pp-row`, not over the page) in both themes, by the gate. Not chosen by eye.
+
+**Gate:** `gate_976.mjs`, 11 assertions. It runs the **shipped** `openAdd()` to build a real sheet
+and reads its real `<select>`, runs the **shipped** card-row builder and reads the label it
+printed, and measures the chips in a real render in both themes. Control on 975: **RED, 6 named
+failures** — `offers: ["punch:Punch","ticket:Ticket","callback:Callback"]`, `a tarp renders as
+"Punch-Out"`, `tarp="Repair closed:"`, and the chip byte-identical to punch in both themes.
+`check_build.py` green; sentinel clean.
+
+⚠️ **The comment-pollution trap bit for the THIRD time today**, and this time my own assertion
+caught it before the write: the comment I wrote to explain the fallback **quoted the fallback
+string**, so a file-wide count of it read 2 instead of 1 and failed a correct patch. Reworded, with
+a note in the source saying why it is not spelled out.
+
+⚠️ **Four harness faults, all mine, all in `gate_976.mjs` and none in the app** — recorded because
+each is a reusable trap:
+1. **Regex surgery on an expression cut a string literal in half** (`Invalid or unexpected token`).
+   Extract the **function** by brace-matching and execute it; never regex a fragment out.
+2. **Stubbing one `ReferenceError` at a time is how a gate ends up crashing instead of reporting.**
+   The runner now uses `with(new Proxy(…))` so every unstubbed name resolves to a no-op — the
+   shipped function runs to completion and the assertion measures what it produced.
+3. **A native resolved through a `with` scope is called with the scope as its receiver** →
+   `Illegal invocation` on `setTimeout`. Bind host functions back to `window` — **but not
+   constructors**: `Array.bind(window)` has no `.isArray`, which was the very next error. The rule
+   is bind lowercase host functions, leave constructors and namespaces alone.
+4. **Inside `with()`, the proxy answers `has()` for every name, so the function's assignment to
+   `modal` landed on the proxy TARGET**, not on the outer local — which read back as null.
+   And a backtick in a comment *inside a template literal* terminated the literal.
+
 ## Build 975 — the hub's numbers are doors (21 Aug 2026)
 
 Fifth of the Community program's seven items, and the one Theo will feel first. **Ten numbers

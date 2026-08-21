@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 975 &#8212; every number on the Community hub is now a door. Tap Open bids, Out for decision, Parked, Awarded or Due &#8804; 7 days and the bid list below filters to exactly the jobs that figure counted. The waiting rows and the by-partner and by-stage lists open the same way, the table you are filtering no longer closes itself when you tap Apply, and a check-back date you have sailed past finally goes red</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 976 &#8212; a tarp is its own kind of punch-out now. Add an item, pick Tarp, and it reads as a Tarp everywhere &#8212; on the card, in the activity feed and in the Type filter &#8212; instead of being filed as a repair. It is the job we go and do straight away so the house stops taking water, and on a community job it is often done for free before anything is bid</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21633,7 +21633,9 @@ function buildActivityEvents(){
       var pr3 = it.project_id ? cacheProjects.find(function(x){ return x.id === it.project_id; }) : null;
       var ac = actor(it.done_by);
       ev.push({ t:it.done_at, ini:ac.ini, email:ac.email,
-        label:(it.kind === 'callback' ? 'Callback closed:' : 'Repair closed:'), who:ac.nm,
+        /* 976: a tarp is not "repaired", it is done. */
+        label:(it.kind === 'callback' ? 'Callback closed:'
+             : it.kind === 'tarp'     ? 'Tarp done:' : 'Repair closed:'), who:ac.nm,
         cli: pr3 ? pr3.name : '', pid: pr3 ? pr3.id : null, detail: it.title || '' });
     });
   }catch(_){}
@@ -41196,6 +41198,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:976, d:'2026-08-21', t:'A tarp is its own kind of punch-out',
+    s:'Punch outs could be a Punch, a Ticket or a Callback. A tarp is none of those \u2014 it is the thing we go and do straight away so the house stops taking water, and on a community job it is often done for free before anything has been bid. Pick Tarp when you add an item and it reads as a Tarp everywhere: on the card, in the activity feed (\u201cTarp done\u201d, not \u201cRepair closed\u201d) and in the Type filter, so you can pull up every tarp we owe someone in one tap. Nothing already logged changes.' },
 { b:975, d:'2026-08-21', t:'Community: the numbers are doors now',
     s:'Every headline figure on the Community hub counted something real and then left you to go and find it by hand. Tap one now \u2014 Open bids, Out for decision, Parked, Awarded, Due in 7 days \u2014 and the bid list below filters to exactly the jobs behind that number. The three waiting rows and the by-partner and by-stage lists do the same. Three things that were quietly wrong went with it: the table you were filtering used to close itself the moment you tapped Apply; a check-back date you had sailed past stayed a calm grey chip instead of going red; and every tile was drawing three nested cards inside itself.' },
 { b:974, d:'2026-08-21', t:'Community: one bid amount',
@@ -51207,7 +51211,11 @@ function openAdd(presetProjectId){
     '<div class="row">' +
     '<div><label>Kind</label><select data-f="kind">' +
     '<option value="punch">Punch</option><option value="ticket">Ticket</option>' +
-    '<option value="callback">Callback</option></select></div>' +
+    '<option value="callback">Callback</option>' +
+    /* 976: a tarp is not a repair, a ticket or a warranty callback. It is the
+       thing we go and do now so the house stops taking water — and on a
+       community job it is often done free before anything is bid. */
+    '<option value="tarp">Tarp</option></select></div>' +
     '<div><label>Priority</label><select data-f="priority">' +
     '<option value="normal">Normal</option><option value="high">Urgent</option>' +
     '<option value="low">Low</option></select></div>' +
@@ -52138,7 +52146,15 @@ function cardHtml(){
   return '<div class="pkwrap">' +
     '<div class="pktop">' +
       '<button class="pkback" data-act="back" type="button" aria-label="Back">' + svg('chev') + '</button>' +
-      '<span class="pkey">' + esc(it.kind === 'callback' ? 'Callback' : it.kind === 'ticket' ? 'Ticket' : 'Punch-Out') + '</span>' +
+      '<span class="pkey">' + esc(it.kind === 'callback' ? 'Callback' :
+        it.kind === 'ticket' ? 'Ticket' :
+        /* 976: before the fallback on purpose. This chain ends by naming any
+           kind it does not recognise a punch, which is the normStage() shape —
+           so a kind added here and nowhere else silently reads as one.
+           NB the fallback string is deliberately not quoted in this comment:
+           the assertion below counts it file-wide, and prose naming it makes a
+           correct patch fail. That trap has cost three builds today. */
+        it.kind === 'tarp' ? 'Tarp' : 'Punch-Out') + '</span>' +
       '<span class="pkchip ' + (done ? 'done' : 'open') + '" style="margin-left:auto;">' + (done ? 'Closed' : 'Open') + '</span>' + (!done && dayCount() > 1 ? '<span class="pkchip day2">Day ' + dayCount() + '</span>' : '') +
       (mayDelete() ? '<button class="pkmenu" data-act="menu" type="button" aria-label="More">\u22EF</button>' : '') +
       (menuOpen ? '<div class="pkmenu-dd"><button class="pkmenu-it" data-act="del" type="button">Delete this punch-out\u2026</button>' +
@@ -53006,6 +53022,7 @@ body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba
 #ppPage .pp-chev{flex:0 0 auto;color:var(--rbe-mute,#9aa0a8);font-size:17px;line-height:1}
 #ppPage .kind{font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.12em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(245,166,35,.16);color:#f5a623}
 #ppPage .kind.callback{background:rgba(224,122,95,.18);color:#e07a5f}
+#ppPage .kind.tarp{background:rgba(90,169,230,.18);color:#8ec8f2}
 #ppPage .kind.ticket{background:rgba(230,232,234,.1);color:var(--rbe-ink,#cfd6df)}
 #ppPage .hi{font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:rgba(224,122,95,.18);color:#e07a5f}
 #ppPage .pp-back{background:transparent;border:1px solid var(--rbe-hair,#2c3038);color:var(--rbe-mute,#9aa0a8);border-radius:8px;padding:7px 12px;cursor:pointer;font:700 11.5px 'Segoe UI',Arial,sans-serif;margin-bottom:12px}
@@ -53047,6 +53064,7 @@ body.cr-cc-open .cr-pp-card{background:var(--ccm-card,#161918);border-color:rgba
 :root[data-theme="rb-light"] #ppPage .kind{background:#faf4e8;color:#8a5a08}
 :root[data-theme="rb-light"] #ppPage .kind.callback,:root[data-theme="rb-light"] #ppPage .hi{background:#fbeeea;color:#a83f24}
 :root[data-theme="rb-light"] #ppPage .kind.ticket{background:#f2f2f2;color:#141414}
+:root[data-theme="rb-light"] #ppPage .kind.tarp{background:#e6f0fa;color:#10527f}
 :root[data-theme="rb-light"] #ppPage .pp-send{background:#8a5a08;color:#ffffff}
 :root[data-theme="rb-light"] #ppPage .pp-msg.mine .pp-bub{background:#8a5a08;border-color:#8a5a08;color:#ffffff}
 </style>
@@ -61296,7 +61314,7 @@ function whoList(){
 var CATS = function(){ return {
   crm:    { label:'CRM',     vals:['retail','insurance','community'], lab:function(v){ return CRM_LABEL[v]; } },
   status: { label:'Status',  vals:['Urgent','Open','Closed'],         lab:function(v){ return v; } },
-  kind:   { label:'Type',    vals:['punch','ticket','callback'],      lab:function(v){ return v; } },
+  kind:   { label:'Type',    vals:['punch','ticket','callback','tarp'], lab:function(v){ return v; } },
   who:    { label:'Assigned To', vals:whoList(),                      lab:function(v){ return v; } }
 }; };
 function count(){ var n = 0; for(var k in PU.sets) n += PU.sets[k].length; return n; }
