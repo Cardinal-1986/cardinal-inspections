@@ -20497,6 +20497,74 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 974 — one bid amount (21 Aug 2026)
+
+Fourth of the Community program's seven items, and the one that explains why the numbers
+never matched. **A community bid had SIX definitions of its own amount**, in three blocks —
+and two of them ranked the same two sources in **opposite orders**:
+
+| | first | then |
+|---|---|---|
+| the job card (`cr-cc`) | the estimate builder's total | the figure typed on the bid form |
+| the hub (`cr-ch2`'s `bidAmt`) | the figure typed on the bid form | the estimate builder's total |
+
+One job, two screens, two numbers, and neither screen said which it was showing. Analytics
+(`cr-can`) read a seventh answer — `checklist.lead.bid_amount` alone — so **every bid priced in
+the estimate builder counted as $0** in the win rate, the averages and the per-partner totals.
+
+**One resolver now, `commBidAmount(pr, est)`**, at depth 0 in the main block beside
+`pickEstimate` and `projHomeowner`. Rungs: **awarded → submitted → builder → typed → none**.
+It takes the estimate row as a **parameter** rather than reading one: `cr-cc`'s `liveEstimate()`
+is per-open-job module state, so a shared helper that called it would hand the open job's total
+to every row of a list. 971's `priceOf` is now a one-line adapter — **not** a second copy of the
+ladder — and `bidAmt` keeps its name and its six call sites.
+
+`awarded` is a new rung. `bid.awarded_amount` is written only by `ocSave`'s awarded arm, in the
+same call that sets stage Approved, so it is absent on every Lead job and cannot perturb 971's
+Lead arm. That is asserted, not argued.
+
+**The Bid tab was printing $0.00 against every line.** It multiplied `it.qty * it.price`, and
+**no line object in production carries a `price` key** — every one is
+`{qty,name,unit,amount,library_id,unit_price,description}`. ⚠️ **The obvious swap to
+`unit_price` ships a NEW wrong number**: 14 of the 18 live estimate rows are non-itemized, where
+`unit_price` is 0 and `amount` carries the money (and on row `b49d7638` the two disagree —
+`amount` is the truth). The rule the shipped document builder already uses was copied instead,
+including dropping the qty cell on a lump sum. **Live impact today is zero** — only one
+community job has estimate rows, both $0.00 drafts — so this was latent and would have fired the
+first time anyone priced a community bid in the builder.
+
+**Provenance is now on the screen**, in slots that already existed: the card pin's
+`.amt small` caption (styled since the black-card port, never once used) and the Bid tab's
+`.tot .k` label. No new CSS.
+
+**CR-COM-009 closed.** Recording who funded an award never moved the bill-to, so an awarded job
+kept invoicing whoever the bid went to. It now mirrors the referred arm — and `ocOpen`'s
+`funded_id` seed was changed from `l.partner_id` to `''` first, because `ocPartnerField` falls
+back to a free-text input when the roster is empty and never touches `funded_id`, so the old
+seed would have re-bound the bill-to to the **old** row. The `if(lp.funded_by)` guard is not
+decoration: `mergeCk` deletes a key set to `''`, so an unguarded assignment on a blank
+"— select —" would have wiped the bill-to on 13 of the 15 live jobs.
+
+⚠️ **My own counting trap, caught by my own assertion.** The self-computing check
+`count(patched,'it.price') == count(orig,'it.price') - 1` failed at 3 → 3: the explanatory
+comment I had just written *quoted the token it was documenting*. This file's comment-pollution
+rule, biting the build that cites it. The comment was reworded; the assertion was not weakened.
+
+**Two things deliberately NOT done, both offered rather than slipped in:**
+1. **Provenance in the hub's dense All-bids table.** That Amount cell collapses to a flex row
+   below 900px and a second line needs a matching rule. The designed slots (card pin, Bid tab
+   total, analytics rows) carry it; the table shows the number alone.
+2. **Repainting Analytics when `loadEst()` lands.** `loadEst`'s `.then` calls `scan()`, which
+   repaints the hub but not Analytics — so Analytics opened in the second before that fetch
+   returns shows zeros until reopened. **That is 973's behaviour too, so it is not a
+   regression**, and the fix is one line in that callback. Not slipped in.
+
+**Gate:** `gate_974.mjs`, 15 assertions, extracts and runs the shipped `priceOf`, `bidAmt`,
+`bidHtml`, `compute` and `ocSave` (with the shipped `mergeCk`, so the blank-funder guard is
+tested for real). Control on 973: **RED, 11 named failures** — the headline one being
+`card=18425 (builder)  hub=14330` for a single job, and `["$0","$12,000"]` for a single lump-sum
+line. `check_build.py` green (marker `commBidAmount`, negative control clean); sentinel clean.
+
 ## Build 973 — one partner identity (21 Aug 2026)
 
 Third of the Community program's seven items. A partner had **three storage shapes** and

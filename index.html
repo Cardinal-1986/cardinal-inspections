@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 973 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 974 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -15996,6 +15996,38 @@ function estProjectNow(){
     }
   }catch(e){}
   return window.currentProject || null;
+}
+/* 974: THE community bid amount. Six definitions of this lived in three blocks
+   and two of them had OPPOSITE precedence (cr-cc preferred the builder estimate,
+   cr-ch2's bidAmt preferred the hand-typed figure), so one job showed two numbers
+   on two screens. This is the only ladder now.
+   It takes the estimate ROW as a parameter rather than reading it: cr-cc's
+   liveEstimate() is per-open-job module state, so a shared helper that called it
+   would hand the open job's total to every row of a list. Callers with no
+   estimate loaded pass { total: n } or nothing.
+   `awarded` is the top rung and is new. bid.awarded_amount is written only by
+   ocSave's awarded arm, in the same call that sets stage Approved, so it is
+   absent on every Lead job and cannot perturb 971's Lead arm. */
+function commBidAmount(pr, est){
+  var C = (typeof parseCkAll === 'function') ? parseCkAll(pr) : {};
+  var b = C.bid || {}, l = C.lead || {};
+  var aw = Number(b.awarded_amount) || 0;
+  if(aw > 0) return { amt:aw, src:'awarded', at:b.awarded_at || '' };
+  var sub = Number(b.submitted_amount) || 0;
+  if(sub > 0) return { amt:sub, src:'logged', at:b.submitted_at || '' };
+  var et = est ? (Number(est.total) || 0) : 0;
+  if(et > 0) return { amt:et, src:'builder', lines:((est && est.line_items) || []).length || 0 };
+  var typed = Number(l.bid_amount) || 0;
+  if(typed > 0) return { amt:typed, src:'typed' };
+  return { amt:0, src:'none' };
+}
+/* the words a person sees. Deliberately short — these render into label slots
+   that are already uppercase mono, not into sentences. */
+function commBidSource(s){
+  return s === 'awarded' ? 'approved'
+       : s === 'logged'  ? 'submitted'
+       : s === 'builder' ? 'from estimate'
+       : s === 'typed'   ? 'quoted' : '';
 }
 function pickEstimate(rows, id){
   if(!rows || !rows.length) return null;
@@ -41164,6 +41196,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:974, d:'2026-08-21', t:'Community: one bid amount',
+    s:'A community bid had six separate definitions of its own amount, and two of them ranked the same two sources in opposite orders \u2014 so the job card and the hub could show different money for the same job. There is one answer now: awarded, then submitted, then the estimate builder, then the figure you typed on the bid form. Every screen says which of those it is showing you. The Bid tab used to print $0.00 against every line; it now uses the same rule the estimate document does. Analytics counted a builder-priced bid as $0 in the win rate \u2014 it does not any more. And recording who funded an award now moves the bill-to, so the invoice goes to the party that paid.' },
 { b:973, d:'2026-08-21', t:'Attaching a partner now shows up everywhere',
   s:'Attaching a funding partner on a community job saved only an internal reference, not the name \u2014 so the job would still read "No partner recorded" on the Community hub even though the card showed the partner correctly. Removing a partner had the opposite problem: it left the old name behind. Both now save and clear together. Two more fixes to the same screen: the partner list in New Bid was showing the real names of partners marked confidential to everyone, and was sorting Habitat into the middle of the list instead of the top, on the one field every bid has to fill in.' },
 { b:972, d:'2026-08-21', t:'A community job stops going quiet once it is awarded',
@@ -55719,10 +55753,16 @@ if(typeof window.projClaimType !== 'function') return false;
 return window.projClaimType(pr) === 'community';
 });
 }
-function bidAmt(pr){
-var l = lead(pr);
-return Number(l.bid_amount) || Number(estTot[pr.id]) || 0;
+/* 974: this had the OPPOSITE precedence to the job card — hand-typed first,
+   estimate second — so one job read two different numbers on two screens.
+   Both now ask the same resolver. A missing resolver answers zero rather than
+   falling back to a second ladder: no money is invented. */
+function bidPrice(pr){
+return (typeof window.commBidAmount === 'function')
+? window.commBidAmount(pr, { total: Number(estTot[pr.id]) || 0 })
+: { amt:0, src:'none' };
 }
+function bidAmt(pr){ return bidPrice(pr).amt; }
 function partnerOf(pr){
 var l = lead(pr);
 return l.partner_name || 'No partner recorded';
@@ -56695,6 +56735,9 @@ show   : show,
 hide   : hide,
 render : render,
 isOpen : isOpen,
+/* 974: Analytics is fully synchronous and has no Supabase call of its own, so
+   the estimate totals the hub already fetched are the only source it can have. */
+estTotal : function(pid){ return Number(estTot[pid]) || 0; },
 };
 })();
 </script>
@@ -56907,15 +56950,18 @@ function bidOf(pr){ return (ck(pr) || {}).bid || {}; }
    only thing that tells a real price from a $0.00 draft: the one live job that has
    estimate rows at all has two drafts totalling 0.00, and the old `est ?` test read
    that as priced while offering nothing to the 7 jobs priced by hand. */
+/* 974: 971's ladder moved to the main block as commBidAmount, which every
+   community screen now shares. This is the adapter that supplies THIS job's
+   loaded estimate; keeping a local copy of the ladder as a fallback would be
+   two pipelines again, which is the thing 974 exists to end. */
 function priceOf(pr){
-var b = bidOf(pr), l = lead(pr), e = liveEstimate();
-var sub = Number(b.submitted_amount) || 0;
-if(sub > 0) return { amt:sub, src:'logged', at:b.submitted_at || '' };
-var et = e ? (Number(e.total) || 0) : 0;
-if(et > 0) return { amt:et, src:'builder', lines:(e.line_items || []).length || 0 };
-var typed = Number(l.bid_amount) || 0;
-if(typed > 0) return { amt:typed, src:'typed' };
-return { amt:0, src:'none' };
+return (typeof window.commBidAmount === 'function')
+? window.commBidAmount(pr, liveEstimate())
+: { amt:0, src:'none' };
+}
+function priceSrc(pr){
+var p = priceOf(pr);
+return (typeof window.commBidSource === 'function') ? window.commBidSource(p.src) : '';
 }
 /* Date-only strings must be built and read at LOCAL midnight. Parsing
    '2026-07-27' with new Date() gives UTC midnight, which is the evening before
@@ -56980,7 +57026,11 @@ busy      : false,
 amount    : (b.awarded_amount != null ? String(b.awarded_amount) : ''),
 decided   : (b.awarded_at ? isoDay(new Date(b.awarded_at)) : todayIso()) || todayIso(),
 funded_by : l.funded_by || l.partner_name || '',
-funded_id : l.partner_id || '',
+/* 974: this seeded the CURRENT partner's id, so a free-typed funder on an
+   empty roster (where ocPartnerField falls back to a text input that never
+   touches funded_id) would have re-bound the bill-to to the OLD row. The
+   referred arm seeds '' for exactly this reason; mirror it. */
+funded_id : '',
 months    : OC_DEFAULT_MONTHS,
 check_back_at : l.check_back_at || plusMonths(OC_DEFAULT_MONTHS),
 award_cycle   : l.award_cycle || '',
@@ -56992,8 +57042,8 @@ tarped_at     : l.tarped_at || '',
 render();
 }
 function ocHead(pr){
-var l = lead(pr), est = liveEstimate();
-var amt = est ? est.total : (Number(l.bid_amount) || 0);
+var l = lead(pr);
+var amt = priceOf(pr).amt;
 return '<div class="hd">' + esc(homeownerOf(pr) || pr.name || 'This job') + '</div>' +
 '<div class="sub">' + esc(pr.address || 'No address') +
 (amt ? ' · bid ' + usd(amt) : '') +
@@ -57052,7 +57102,7 @@ return '<div class="cc-oc">' +
 function ocStep2(pr){
 var l = lead(pr), est = liveEstimate();
 var body = '', title = '', save = 'Save outcome';
-var submitted = Number(bidOf(pr).submitted_amount || 0) || (est ? Number(est.total) || 0 : 0);
+var submitted = priceOf(pr).amt;
 if(oc.kind === 'awarded'){
 title = 'Step 2 · awarded';
 var appr = ocMoney(oc.amount);
@@ -57187,6 +57237,14 @@ var n = ocMoney(oc.amount);
 if(n === null){ alert('That doesn\'t look like a dollar amount.'); return; }
 bp = { awarded_amount: n, awarded_at: (n === '' ? '' : (oc.decided || todayIso())) };
 lp.funded_by = String(oc.funded_by || '').trim();
+/* 974 (CR-COM-009): recording who funded the award never moved the BILL-TO,
+   so an awarded job kept invoicing whoever the bid went to. Same shape as the
+   referred arm. The guard is not decoration: mergeCk deletes a key set to '',
+   so an unguarded assignment on a blank "select" would wipe the bill-to. */
+if(lp.funded_by){
+lp.partner_name = lp.funded_by;
+if(oc.funded_id) lp.partner_id = oc.funded_id;
+}
 stage = 'Approved';
 }else if(kind === 'waiting'){
 if(!oc.check_back_at){ alert('Pick a date to check back — that is what parks it.'); return; }
@@ -57449,7 +57507,7 @@ alert('That did not save \u2014 ' + (e.message || e));
 }
 }
 function threadHtml(pr){
-var st = normStage(pr.stage), l = lead(pr), est = liveEstimate();
+var st = normStage(pr.stage), l = lead(pr), pq = priceOf(pr);
 var due = daysTo(l.bid_due_at);
 var out = [];
 /* 972: the second half of the job. `due` above is the BID deadline and is
@@ -57502,7 +57560,7 @@ acts:[{ label:'Price it', how:'estimate' },
 }
 }else if(st === 'Prospect'){
 out.push({ now:true, title:'Waiting on a decision', when:'now',
-txt:'Submitted' + (est ? ' at ' + usd(est.total) : '') +
+txt:'Submitted' + (pq.amt ? ' at ' + usd(pq.amt) : '') +
 '. Nothing back from the partner yet.',
 acts:[{ label:'Record the outcome', how:'outcome' }] });
 }else if(st === 'OnHold'){
@@ -57521,7 +57579,8 @@ txt:(l.award_cycle ? l.award_cycle + '. ' : '') +
 acts:[{ label:'Record the outcome', how:'outcome' }] });
 }else if(st === 'Approved'){
 out.push({ now:true, title:'Awarded \u2014 needs scheduling', when:'now',
-txt:'Won' + (est ? ' at ' + usd(est.total) : '') +
+txt:'Won' + (pq.amt ? ' at ' + usd(pq.amt) +
+(pq.src === 'awarded' ? '' : ' (' + commBidSource(pq.src) + ')') : '') +
 (l.funded_by ? ', funded by ' + l.funded_by : '') +
 (l.tarped_at ? '. Tarped ' + fmtDay(l.tarped_at) : '') +
 '. Book the day so the crew and the board agree.', acts:[{ label:'Book the build day', how:'schedule' }] });
@@ -57609,14 +57668,32 @@ rec = '<div class="recline">Recorded · ' +
 rec = '<div class="recline">No amounts recorded with the partner yet' +
 '<button data-act="logsub" type="button">Log submitted</button></div>';
 }
+/* 974: this said "No bid priced yet" to every job priced on the bid form —
+   7 of the 15 live community jobs — because it tested the estimate OBJECT.
+   The estimate still decides whether there is a LINES TABLE to draw; the
+   resolver decides what the sheet says when there isn't one. Same wording as
+   971's Lead arm, deliberately: one phrasing per fact. */
+var pq = priceOf(pr);
 if(!est){
 return '<div class="sheet"><div class="nobid">' +
-'<p>No bid priced yet.<br>Bids use the estimate builder \u2014 same ' +
+(pq.amt > 0
+? '<p><b>' + usd(pq.amt) + '</b> \u2014 ' + commBidSource(pq.src) + '.<br>' +
+'This came off the bid form, not the estimate builder, so there are no ' +
+'line items behind it.</p>' +
+'<button data-act="newbid" type="button">Price it in the builder</button>'
+: '<p>No bid priced yet.<br>Bids use the estimate builder \u2014 same ' +
 'line-item catalog as everything else, so your numbers stay consistent.</p>' +
-'<button data-act="newbid" type="button">Build the bid</button>' +
+'<button data-act="newbid" type="button">Build the bid</button>') +
 '</div>' + rec + '</div>';
 }
 var items = est.line_items || [];
+/* 974: the line objects carry no `price` key at ALL in production — each one is
+   {qty,name,unit,amount,library_id,unit_price,description}, so the multiply
+   that used to be here rendered $0 on every line. The swap to unit_price alone would be a NEW wrong number: on a
+   non-itemized row (14 of 18 live) unit_price is 0 and `amount` carries the
+   money. This is computeTotals' rule and the print document's rule, copied
+   rather than re-derived, including hiding the qty cell on a lump sum. */
+var itm974 = est.itemized !== false;
 return '<div class="sheet">' +
 '<div class="lh">' +
 '<div class="for">Bid goes to \u00b7 for approval</div>' +
@@ -57631,13 +57708,18 @@ return '<div class="ln">' +
 '<span class="d"><b>' + esc(it.name || it.title || 'Item') + '</b>' +
 (it.description ? '<small>' + esc(it.description) + '</small>' : '') +
 '</span>' +
-'<span class="q">' + esc((it.qty || 1) + ' ' + (it.unit || '')) + '</span>' +
-'<span class="p">' + usd((it.qty || 1) * (it.price || 0)) + '</span>' +
+(itm974
+? '<span class="q">' + esc((Number(it.qty) || 0) + ' ' + (it.unit || '')) + '</span>'
+: '') +
+'<span class="p">' + usd(itm974
+? (Number(it.qty) || 0) * (Number(it.unit_price) || 0)
+: (Number(it.amount) || 0)) + '</span>' +
 '</div>';
 }).join('') + '</div>'
 : '') +
-'<div class="tot"><span class="k">Bid total</span>' +
-'<span class="v">' + usd(est.total) + '</span></div>' +
+'<div class="tot"><span class="k">Bid total' +
+(commBidSource(pq.src) ? ' \u00b7 ' + commBidSource(pq.src) : '') + '</span>' +
+'<span class="v">' + usd(pq.amt || est.total) + '</span></div>' +
 rec +
 (normStage(pr.stage) === 'Lead'
 ? '<div class="duebar">' +
@@ -58071,9 +58153,9 @@ takeOver(mount.childNodes.length > 0 && mount.offsetParent !== null);
 lastSig = signature();
 return;
 }
-var l = lead(pr), est = liveEstimate();
+var l = lead(pr);
 var hoNm = homeownerOf(pr);
-var amt = est ? est.total : (Number(l.bid_amount) || 0);
+var pq974 = priceOf(pr), amt = pq974.amt;
 var st  = normStage(pr.stage);
 /* Same second clock as the hub: a parked job counts to its check-back,
    and says so, rather than ageing against a bid deadline that has passed.
@@ -58095,7 +58177,9 @@ mount.innerHTML =
 '<div class="t"><span class="nm"><span class="rl">Serving</span>' +
 '<b>' + (hoNm ? esc(hoNm) : 'No homeowner recorded') + '</b>' +
 '<small>' + esc(pr.address || 'No address') + '</small></span>' +
-(amt ? '<span class="amt"><b>' + usd(amt) + '</b></span>' : '') +
+(amt ? '<span class="amt"><b>' + usd(amt) + '</b>' +
+(commBidSource(pq974.src) ? '<small>' + commBidSource(pq974.src) + '</small>' : '') +
+'</span>' : '') +
 '</div>' +
 '<div class="facts">' +
 '<div><div class="k">' + (held ? 'Check back' : 'Due') + '</div><div class="v' +
@@ -59535,12 +59619,20 @@ var open = [], won = [], lost = [], partners = {}, amts = [];
 rows.forEach(function(p){
 var c = ck(p) || {}, l = c.lead || {};
 var s = stg(p);
-var amt = Number(l.bid_amount) || 0;
+/* 974: this read the hand-typed figure ONLY, so every bid priced in the
+   estimate builder counted as $0 — in the win rate, in the averages and in the
+   per-partner totals. */
+var eT974 = 0;
+try{ if(window.CardinalCommunityHub && window.CardinalCommunityHub.estTotal) eT974 = window.CardinalCommunityHub.estTotal(p.id); }catch(_974){}
+var pq974 = (typeof window.commBidAmount === 'function')
+? window.commBidAmount(p, { total: eT974 })
+: { amt:0, src:'none' };
+var amt = pq974.amt;
 if(amt > 0) amts.push(amt);
 var pn = l.partner_name || '\u2014';
 partners[pn] = partners[pn] || { bids:0, won:0, lost:0, wonAmt:0 };
 partners[pn].bids++;
-var rec = { p:p, amt:amt, partner:pn, due:l.bid_due_at || null,
+var rec = { p:p, amt:amt, src:pq974.src, partner:pn, due:l.bid_due_at || null,
 since:c.stage_since || l.stage_since || p.updated_at || p.created_at };
 if(WON[s]){ won.push(rec); partners[pn].won++; partners[pn].wonAmt += amt; }
 else if(s === 'Lost'){ lost.push(rec); partners[pn].lost++; }
