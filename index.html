@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 963 &#8212; the full-height screens now stop above the bottom row of buttons too: the Outbox, Self Check, the client editor, Scope of Loss, the Line Item Library, iTel Lab, the estimate preview and the Community canvas. The photo editor&#8217;s colour swatches move up with them &#8212; the bar had been taking those taps</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 964 &#8212; the siding and gutter agreements now have real dropdowns like the roofing one: brand, profile and colour come from the catalog instead of being typed. Seventeen fields that were blank boxes are now pickers &#8212; siding colours grouped by manufacturer and line so 84 of them are actually usable at a kitchen table</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10104,13 +10104,13 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <tr><td class="k">1. Removal &amp; preparation</td><td>A. Remove existing siding &#8212; <span class="ph">[layers]</span> layer(s)<br>B. Inspect &amp; replace damaged sheathing as needed &#8212; $<span class="ph">[rate]</span> per sheet</td></tr>
 <tr><td class="k">&nbsp;&nbsp;&nbsp;Existing exterior</td><td><span class="cbx" data-group="sex">&#9744;</span> A. Vinyl &nbsp; <span class="cbx" data-group="sex">&#9744;</span> B. Wood &nbsp; <span class="cbx" data-group="sex">&#9744;</span> C. Aluminum / steel &nbsp; <span class="cbx" data-group="sex">&#9744;</span> D. Fiber cement / other</td></tr>
 <tr><td class="k">2. House wrap / moisture barrier</td><td><span class="cbx" data-group="swrap">&#9744;</span> A. Standard house wrap &nbsp; <span class="cbx" data-group="swrap">&#9744;</span> B. Premium house wrap &nbsp; <span class="cbx" data-group="swrap">&#9744;</span> C. Fanfold insulation board</td></tr>
-<tr><td class="k">3. Siding <span style="font-weight:400;font-size:9pt;">(per manufacturer specs)</span></td><td>A. Brand <span class="ph">[brand]</span><br>B. Profile / style <span class="ph">[profile]</span><br>C. Colour <span class="ph">[colour]</span></td></tr>
-<tr><td class="k">4. Corner posts &amp; trim</td><td>A. Corner post colour <span class="ph">[colour]</span><br>B. Window / door trim colour <span class="ph">[colour]</span><br>C. Wrap windows &amp; doors (aluminum coil) &nbsp; <span class="ph">[yes / no]</span></td></tr>
-<tr><td class="k">5. Soffit</td><td><span class="cbx" data-group="ssof">&#9744;</span> A. Vented &nbsp; <span class="cbx" data-group="ssof">&#9744;</span> B. Solid &nbsp;&#183;&nbsp; C. Colour <span class="ph">[colour]</span></td></tr>
-<tr><td class="k">6. Fascia</td><td>A. Colour <span class="ph">[colour]</span></td></tr>
-<tr><td class="k">7. Shutters</td><td><span class="cbx" data-group="sshut">&#9744;</span> A. Remove &amp; reinstall existing &nbsp; <span class="cbx" data-group="sshut">&#9744;</span> B. New shutters &#8212; colour <span class="ph">[colour]</span></td></tr>
-<tr><td class="k">8. Accessories</td><td>A. Light blocks <span class="ph">[qty]</span> &nbsp; B. Vent / utility blocks <span class="ph">[qty]</span> &nbsp; C. Dryer &amp; exhaust vents <span class="ph">[qty]</span><br>Extra structure: A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; <span class="ph">[if any]</span></td></tr>
-<tr><td class="k">9. Gutters &amp; downspouts</td><td>A. Remove &amp; replace &nbsp; <span class="ph">[yes / no]</span><br>B. Size 5&#8243; &nbsp; 6&#8243; &nbsp; C. Colour <span class="ph">[colour]</span> &nbsp; D. Gutter guards <span class="ph">[yes / no]</span></td></tr>
+<tr><td class="k">3. Siding <span style="font-weight:400;font-size:9pt;">(per manufacturer specs)</span></td><td>A. Brand <select class="crsel" data-crsel="sbrand" contenteditable="false" aria-label="Siding brand"><option value="">— select —</option></select><br>B. Profile / style <select class="crsel" data-crsel="sline" contenteditable="false" aria-label="Siding profile or style"><option value="">— select —</option></select><br>C. Colour <select class="crsel" data-crsel="scolor" contenteditable="false" aria-label="Siding colour"><option value="">— select —</option></select></td></tr>
+<tr><td class="k">4. Corner posts &amp; trim</td><td>A. Corner post colour <select class="crsel" data-crsel="trim" contenteditable="false" aria-label="Corner post colour"><option value="">— select —</option></select><br>B. Window / door trim colour <select class="crsel" data-crsel="trim" contenteditable="false" aria-label="Window and door trim colour"><option value="">— select —</option></select><br>C. Wrap windows &amp; doors (aluminum coil) &nbsp; <span class="ph">[yes / no]</span></td></tr>
+<tr><td class="k">5. Soffit</td><td><span class="cbx" data-group="ssof">&#9744;</span> A. Vented &nbsp; <span class="cbx" data-group="ssof">&#9744;</span> B. Solid &nbsp;&#183;&nbsp; C. Colour <select class="crsel" data-crsel="trim" contenteditable="false" aria-label="Soffit colour"><option value="">— select —</option></select></td></tr>
+<tr><td class="k">6. Fascia</td><td>A. Colour <select class="crsel" data-crsel="trim" contenteditable="false" aria-label="Fascia colour"><option value="">— select —</option></select></td></tr>
+<tr><td class="k">7. Shutters</td><td><span class="cbx" data-group="sshut">&#9744;</span> A. Remove &amp; reinstall existing &nbsp; <span class="cbx" data-group="sshut">&#9744;</span> B. New shutters &#8212; colour <select class="crsel" data-crsel="trim" contenteditable="false" aria-label="Shutter colour"><option value="">— select —</option></select></td></tr>
+<tr><td class="k">8. Accessories</td><td>A. Light blocks <select class="crsel" data-crsel="qty" contenteditable="false" aria-label="Light blocks"><option value="">— select —</option></select> &nbsp; B. Vent / utility blocks <select class="crsel" data-crsel="qty" contenteditable="false" aria-label="Vent or utility blocks"><option value="">— select —</option></select> &nbsp; C. Dryer &amp; exhaust vents <select class="crsel" data-crsel="qty" contenteditable="false" aria-label="Dryer and exhaust vents"><option value="">— select —</option></select><br>Extra structure: A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; <span class="ph">[if any]</span></td></tr>
+<tr><td class="k">9. Gutters &amp; downspouts</td><td>A. Remove &amp; replace &nbsp; <span class="ph">[yes / no]</span><br>B. Size 5&#8243; &nbsp; 6&#8243; &nbsp; C. Colour <select class="crsel" data-crsel="gcolor" contenteditable="false" aria-label="Gutter colour"><option value="">— select —</option></select> &nbsp; D. Gutter guards <span class="ph">[yes / no]</span></td></tr>
 <tr><td class="k">10. Existing layers</td><td><span class="opts" data-opts="layers">Number / type of existing layers</span></td></tr>
 <tr><td class="k">11. Stories / height</td><td><span class="cbx" data-group="sst">&#9744;</span> 1 &nbsp; <span class="cbx" data-group="sst">&#9744;</span> 1.5 &nbsp; <span class="cbx" data-group="sst">&#9744;</span> 2 &nbsp; <span class="cbx" data-group="sst">&#9744;</span> 2+</td></tr>
 </table>
@@ -10205,16 +10205,16 @@ in accordance with the terms and conditions described in this Agreement, the acc
 <tr><td class="k">1. Removal &amp; disposal</td><td>A. Remove existing gutters &nbsp; <span class="ph">[yes / no]</span><br>B. Remove existing downspouts &nbsp; <span class="ph">[yes / no]</span><br>C. Haul away &amp; dispose debris &nbsp; <span class="ph">[yes / no]</span></td></tr>
 <tr><td class="k">2. Gutter profile &amp; size</td><td><span class="cbx" data-group="gprof">&#9744;</span> A. K-style &nbsp; <span class="cbx" data-group="gprof">&#9744;</span> B. Half-round &nbsp; <span class="cbx" data-group="gprof">&#9744;</span> C. Box<br><span class="cbx" data-group="gsize">&#9744;</span> 5&nbsp;in. &nbsp; <span class="cbx" data-group="gsize">&#9744;</span> 6&nbsp;in. &nbsp; <span class="cbx" data-group="gsize">&#9744;</span> 7&nbsp;in.</td></tr>
 <tr><td class="k">3. Gutter material</td><td>A. Aluminum .027 &nbsp; B. Aluminum .032 &nbsp; C. Steel &nbsp; D. Copper &nbsp; E. Other <span class="ph">[other]</span></td></tr>
-<tr><td class="k">4. Gutter colour</td><td><span class="ph">[colour]</span></td></tr>
+<tr><td class="k">4. Gutter colour</td><td><select class="crsel" data-crsel="gcolor" contenteditable="false" aria-label="Gutter colour"><option value="">— select —</option></select></td></tr>
 <tr><td class="k">5. Hangers</td><td>Hidden hangers &nbsp; <span class="ph">[yes / no]</span></td></tr>
 <tr><td class="k">6. Miters &amp; seams</td><td><span class="cbx">&#9744;</span> A. Strip miters &nbsp; <span class="cbx">&#9744;</span> B. Box miters &nbsp; <span class="cbx">&#9744;</span> C. Hand-mitered &nbsp; <span class="cbx">&#9744;</span> D. Sealed</td></tr>
-<tr><td class="k">7. Downspouts</td><td><span class="cbx" data-group="gds">&#9744;</span> A. 2&#215;3 &nbsp; <span class="cbx" data-group="gds">&#9744;</span> B. 3&#215;4 &nbsp; <span class="cbx" data-group="gds">&#9744;</span> C. Round<br>Colour <span class="ph">[colour]</span> &nbsp;&#183;&nbsp; Qty <span class="ph">[qty]</span></td></tr>
+<tr><td class="k">7. Downspouts</td><td><span class="cbx" data-group="gds">&#9744;</span> A. 2&#215;3 &nbsp; <span class="cbx" data-group="gds">&#9744;</span> B. 3&#215;4 &nbsp; <span class="cbx" data-group="gds">&#9744;</span> C. Round<br>Colour <select class="crsel" data-crsel="gcolor" contenteditable="false" aria-label="Downspout colour"><option value="">— select —</option></select> &nbsp;&#183;&nbsp; Qty <select class="crsel" data-crsel="qty" contenteditable="false" aria-label="Downspout quantity"><option value="">— select —</option></select></td></tr>
 <tr><td class="k">8. Downspout discharge</td><td><span class="cbx" data-group="gdis">&#9744;</span> A. Splash blocks &nbsp; <span class="cbx" data-group="gdis">&#9744;</span> B. Extensions &nbsp; <span class="cbx" data-group="gdis">&#9744;</span> C. Tie to existing<br>Notes <span class="ph">[notes]</span></td></tr>
 <tr><td class="k">9. Gutter protection &#8212; ShurFlo</td><td><span class="cbx" data-group="ggp">&#9744;</span> A. ShurFlo Flat &nbsp; <span class="cbx" data-group="ggp">&#9744;</span> B. ShurFlo X (ventilation) &nbsp; <span class="cbx" data-group="ggp">&#9744;</span> C. ShurFlo Step-Down (Quick-Screw hangers)<br>Finish: <span class="cbx" data-group="ggpf">&#9744;</span> mill &nbsp; <span class="cbx" data-group="ggpf">&#9744;</span> black &nbsp; <span class="cbx" data-group="ggpf">&#9744;</span> white &nbsp; <span class="cbx" data-group="ggpf">&#9744;</span> copper &nbsp;&#183;&nbsp; <span class="cbx" data-group="ggps">&#9744;</span> 5&nbsp;in. &nbsp; <span class="cbx" data-group="ggps">&#9744;</span> 6&nbsp;in.<br><span style="font-size:9pt;color:#666;">Panels install into the gutter, not under the roof shingles, and do not void the roof warranty. Carries a 25-year transferable manufacturer warranty from US Aluminum.</span><br><span class="cbx" data-group="ggp">&#9744;</span> No gutter protection on this job</td></tr>
-<tr><td class="k">10. Fascia &amp; soffit</td><td>A. Fascia wrap &#8212; colour <span class="ph">[colour]</span><br>B. Replace fascia board &nbsp; <span class="ph">[yes / no]</span> &nbsp; C. Soffit repair / replace &nbsp; <span class="ph">[yes / no]</span></td></tr>
+<tr><td class="k">10. Fascia &amp; soffit</td><td>A. Fascia wrap &#8212; colour <select class="crsel" data-crsel="trim" contenteditable="false" aria-label="Fascia wrap colour"><option value="">— select —</option></select><br>B. Replace fascia board &nbsp; <span class="ph">[yes / no]</span> &nbsp; C. Soffit repair / replace &nbsp; <span class="ph">[yes / no]</span></td></tr>
 <tr><td class="k">11. Wood replacement</td><td>Inspect fascia and replace rotted wood as needed &#8212; rate $<span class="ph">[rate]</span> per board (billed as an extra)</td></tr>
 <tr><td class="k">12. Extra structure</td><td>A. Garage &nbsp; B. Shed &nbsp; C. Barn &nbsp; D. Porch / patio cover &nbsp; <span class="ph">[if any]</span></td></tr>
-<tr><td class="k">13. Access &amp; height</td><td>Stories <span class="ph">[n]</span> &nbsp;&#183;&nbsp; Steep / limited access &nbsp; <span class="ph">[yes / no]</span><br><span style="font-size:9pt;color:#666;">Not responsible for pre-existing fascia rot or damage concealed behind existing gutters, or for re-attachment of satellite dishes and wiring.</span></td></tr>
+<tr><td class="k">13. Access &amp; height</td><td>Stories <select class="crsel" data-crsel="qty" contenteditable="false" aria-label="Stories"><option value="">— select —</option></select> &nbsp;&#183;&nbsp; Steep / limited access &nbsp; <span class="ph">[yes / no]</span><br><span style="font-size:9pt;color:#666;">Not responsible for pre-existing fascia rot or damage concealed behind existing gutters, or for re-attachment of satellite dishes and wiring.</span></td></tr>
 </table>
 
 <h2 class="sec">Warranty</h2>
@@ -23803,13 +23803,51 @@ async function wireColorSelects(doc){
   var QTY = ['0','1','2','3','4','5','6','7','8','9','10','11','12','13+'];
   var BRANDS = ['Owens Corning', 'Other (see notes)'];
 
+  /* 964: siding and gutter colours, from `materials` \u2014 the same table the
+     Visualizer reads, whose category CHECK deliberately excludes roofing so the
+     two catalogues can never disagree about a shingle. This is the table's first
+     reader inside index.html, and like the oc_colors one it is fetched ONCE per
+     document and only when a select actually needs filling.
+
+     ⚠️ status is 'current', NOT 'active'. Measured before the filter was written:
+     all 84 siding / 28 gutter / 4 trim rows are 'current', so filtering on
+     'active' would have shipped four empty dropdowns and looked like a working
+     build. That is the shape of the photo-signing bug CLAUDE.md records. */
+  var MAT_KINDS = { sbrand:1, sline:1, scolor:1, gcolor:1 };
+  var mats = null;
+  for(var mi = 0; mi < sels.length; mi++){
+    if(MAT_KINDS[sels[mi].getAttribute('data-crsel')] && sels[mi].options.length <= 1){
+      try{
+        var mr = await (window.sb || window.supa).from('materials')
+          .select('category,manufacturer,product_line,color_name,status,sort_order')
+          .eq('status','current')
+          .order('manufacturer').order('product_line').order('sort_order').order('color_name');
+        mats = (mr && !mr.error && mr.data) ? mr.data : [];
+      }catch(_){ mats = []; }
+      break;
+    }
+  }
+  function matsFor(cat){ return (mats || []).filter(function(m){ return m.category === cat; }); }
+  /* Grouped by manufacturer and line, because 84 siding colours in one flat list
+     is not a thing anyone can use on an iPad at a kitchen table. An <optgroup> is
+     markup, so it clones on save exactly like an <option>. */
+  function grouped(rows){
+    var out = [], seen = {};
+    rows.forEach(function(m){
+      var g = (m.manufacturer || 'Other') + ' \u00b7 ' + (m.product_line || '');
+      if(!seen[g]){ seen[g] = []; out.push({ label:g.replace(/ \u00b7 $/, ''), items:seen[g] }); }
+      if(m.color_name) seen[g].push(m.color_name);
+    });
+    return out;
+  }
+
   sels.forEach(function(sel){
     /* Populate ONLY an empty one. A saved contract already carries its own
        options, frozen as they were offered on the day it was signed, and
        refilling would silently restate today's catalogue on an old record. */
     if(sel.options.length <= 1){
       var kind = sel.getAttribute('data-crsel');
-      var list;
+      var list, groups = null;
       if(kind === 'occ'){
         list = (occ || []).map(function(c){
           return c.status === 'discontinued' ? c.name + ' (discontinued)' : c.name;
@@ -23820,13 +23858,34 @@ async function wireColorSelects(doc){
         list = BRANDS;
       }else if(kind === 'qty'){
         list = QTY;
+      }else if(kind === 'sbrand'){
+        list = matsFor('siding').map(function(m){ return m.manufacturer; })
+                 .filter(function(v, i, a){ return v && a.indexOf(v) === i; })
+                 .concat(['Other (see notes)']);
+      }else if(kind === 'sline'){
+        list = matsFor('siding').map(function(m){ return (m.manufacturer || '') + ' \u00b7 ' + (m.product_line || ''); })
+                 .filter(function(v, i, a){ return v.trim() !== '\u00b7' && a.indexOf(v) === i; });
+      }else if(kind === 'scolor'){
+        groups = grouped(matsFor('siding'));
+      }else if(kind === 'gcolor'){
+        groups = grouped(matsFor('gutters'));
       }else{
         list = TRIM_COLORS;
       }
+      function opt(v){
+        var e = String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+        return '<option value="' + e + '">' + e + '</option>';
+      }
       var html = '<option value="">\u2014 select \u2014</option>';
-      for(var k = 0; k < list.length; k++){
-        var v = String(list[k]).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
-        html += '<option value="' + v + '">' + v + '</option>';
+      if(groups){
+        for(var g = 0; g < groups.length; g++){
+          if(!groups[g].items.length) continue;
+          html += '<optgroup label="' + String(groups[g].label).replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">';
+          for(var gi = 0; gi < groups[g].items.length; gi++) html += opt(groups[g].items[gi]);
+          html += '</optgroup>';
+        }
+      }else{
+        for(var k = 0; k < list.length; k++) html += opt(list[k]);
       }
       sel.innerHTML = html;
     }
@@ -40775,6 +40834,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:964, d:'2026-08-21', t:'The siding and gutter agreements get real dropdowns', s:'The roofing agreement has had proper pickers for a while \u2014 you choose a shingle colour, a drip edge, a gutter apron. Siding and gutters had none: ninety-one blank boxes between them, so you typed everything and they read like a form rather than a contract. Seventeen of those fields are now dropdowns, fed from the same materials catalog the Visualizer uses: siding brand, profile and colour, corner post, window and door trim, soffit, fascia, shutters, gutter and downspout colour, and the counts. The 84 siding colours are grouped by manufacturer and product line so the list is usable on an iPad. Nothing changes on a contract that was already saved \u2014 those keep the fields, and the wording, they were signed with.' },
 { b:963, d:'2026-08-21', t:'The full-height screens clear the button bar too', s:'962 did the sheets that slide up from the bottom. This does the screens that fill the whole phone: the Outbox, Self Check, the client editor, Scope of Loss, the Line Item Library, iTel Lab, the estimate preview and the Community canvas. Each one ended flush against the bottom of the screen, so its last line sat behind the row of round buttons even after you scrolled as far as it would go. The photo editor is in here for a different reason \u2014 its row of colour swatches is not a list that scrolls, it just sat in the bar\u2019s band, so the bar was taking those taps. The Showcase is deliberately left alone: it is the client-facing presentation and its slides are built to fill the screen exactly.' },
 { b:962, d:'2026-08-21', t:'Four more sheets stop above the button bar', s:'The row of round buttons at the bottom of the installed app covers the last inch of any sheet that runs flush to the bottom of the screen. Add from Library, the payment sheet, the adjuster sheet and the partner sheet all did, so their last row \u2014 and in two cases the Delete button \u2014 sat underneath it. All four now leave the same 88px of clearance the New Project sheet and the punch sheet have used for a while. 961 fixed the library one by stacking it over the bar instead; that worked but it was a second way of doing the same thing, and it hid the bar while the sheet was open. This replaces it, so there is one way.' },
 { b:961, d:'2026-08-21', t:'The library sheet is no longer stuck under the button bar', s:'On the installed app the Add-from-Library sheet was sitting UNDERNEATH the row of round buttons at the bottom of the screen, so the last inch of the list was covered. It had been that way since the sheet was built, but it only became impossible yesterday: once sections could be folded, a folded list is short enough that there is nothing left to scroll, so the covered rows could not be brought into view at all \u2014 you could scroll and scroll and nothing moved. The sheet now sits above that bar. Nothing else about it changed.' },

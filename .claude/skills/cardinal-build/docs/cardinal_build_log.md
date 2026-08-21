@@ -20497,6 +20497,51 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 964 — the siding and gutter agreements stop being forms (21 Aug 2026)
+
+Theo: *"For the contracts, I've had you change them several times, something about them feels and
+looks off. Can't they look like the master roof contract when filling out?"*
+
+**The feeling had a number behind it, and finding it took one measurement.** Roofing carries 12
+dropdowns. Siding and gutters carried **zero** — 91 free-text boxes between them. On the roofing
+agreement you *pick* a shingle colour; on siding you type one. Same company, two different
+documents. That is what "feels off" was.
+
+Seventeen fields converted, so siding now has 12 pickers and gutters 5.
+
+**One new table reader, and the filter is the whole risk.** `sbrand` / `sline` / `scolor` /
+`gcolor` read `materials` — the Visualizer's table, whose `category` CHECK excludes roofing so
+the two catalogues cannot disagree about a shingle. ⚠️ Its `status` is **`'current'`**, not
+`'active'`: checked against production first, where all 84 siding / 28 gutter / 4 trim rows are
+`'current'`. A filter on `'active'` would have matched **nothing**, shipped four empty dropdowns,
+passed every mechanical gate and looked like a working build. That is precisely the photo-signing
+failure CLAUDE.md records, and the only thing that avoided it was querying before writing.
+
+**84 colours needed grouping.** `<optgroup>` by `manufacturer · product_line` — and an optgroup
+is markup, so it survives the clone that saves a contract without inventing a second persistence
+rule. The 750 discipline still governs: a choice writes the `selected` **attribute**, because
+`cloneNode(true)` copies attributes and not a form control's live value.
+
+**Nothing happens to a signed contract.** `wireColorSelects` fills only an empty select, and
+documents saved before today carry `.ph` spans, not selects. They keep the fields and the wording
+they were signed with — asserted.
+
+Verification: `check_build.py` green 963 → 964 · **`gate_964.mjs` 9/9 GREEN**, **RED on the 963
+control with 7 named failures** — and the control is instructive: on 963 every unknown kind fell
+through to `TRIM_COLORS`, so `scolor`, `gcolor`, `sbrand` and `sline` would all have offered the
+same eleven trim colours. The gate drives the **shipped** `wireColorSelects` against the real row
+shape, not a re-implementation. Rendered at 816px and eyeballed.
+
+⚠️ **Two of my own asserts failed correct code before the write.** Four anchors were ambiguous
+(`C. Colour <span class="ph">[colour]</span>` appears three times — siding colour, soffit, gutter
+row) and needed real context; and `assert s.count("MAT_KINDS") == 1` failed because the code I was
+adding uses the name twice. *Count what you actually wrote, not what you meant.* Both aborted
+before `write_atomic`, so the file was never touched.
+
+**Next in Theo's order:** 3 (insert a field by hand while filling), then 4 (a siding/gutter
+diagram), 5 (fill progress), 6 (print fidelity). The `[yes / no]` fields are still free text and
+want checkboxes rather than dropdowns — a separate small pass.
+
 ## Build 963 — the full-height panes (21 Aug 2026)
 
 Theo: *"Do the full height panes too."* 962 did the sheets that slide up from the bottom; these

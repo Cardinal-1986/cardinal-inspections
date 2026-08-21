@@ -5836,3 +5836,47 @@ Gate: `render_navclear.mjs` assertion 9 — measured on the real element where i
 (`#solModal`, `.cr-itellab-body`), read from the CSSOM where the module builds it at runtime, and
 **which of the two answered is printed on pass as well as fail**, so a CSSOM-only result is never
 mistaken for a rendered one. Control red on the 962 tree, naming every pane and its value.
+
+## Siding and gutter agreements get catalog dropdowns (build 964, 21 Aug 2026)
+
+Theo: *"something about them feels and looks off … can't they look like the master roof contract
+when filling out?"* Measured first — that feeling has a number behind it:
+
+| | Roofing | Siding | Gutters |
+|---|---:|---:|---:|
+| dropdowns **before** | 12 | **0** | **0** |
+| free-text boxes | 30 | 47 | 44 |
+| dropdowns **after** | 12 | **12** | **5** |
+
+Seventeen `.ph` spans became `<select class="crsel">`: siding brand / profile / colour, corner
+post, window-and-door trim, soffit, fascia, shutters, the three accessory counts, the gutter
+colour on the siding sheet; and on the gutter sheet the gutter colour, downspout colour and
+count, fascia wrap colour and stories.
+
+**Four new kinds, one new table reader.** `sbrand` · `sline` · `scolor` · `gcolor` read
+`materials` — the same table the Visualizer uses, whose `category` CHECK excludes roofing so the
+two catalogues can never disagree about a shingle. **This is that table's first reader inside
+`index.html`**; it is fetched once per document and only when a select actually needs filling,
+exactly like the `oc_colors` one.
+
+⚠️ **`status` is `'current'`, not `'active'`.** Checked against production before the filter was
+written: all 84 siding / 28 gutters / 4 trim rows are `'current'`. Filtering on `'active'` would
+have matched nothing and shipped four empty dropdowns that looked like a working build — the
+shape of the photo-signing bug CLAUDE.md records.
+
+**84 siding colours are grouped by `manufacturer · product_line` with `<optgroup>`.** A flat list
+of 84 is unusable at a kitchen table, and an `<optgroup>` is markup, so it clones on save exactly
+like an `<option>` — no new persistence rule.
+
+**Saved contracts are untouched.** `wireColorSelects` fills only an empty select, and documents
+saved before 964 carry `.ph` spans rather than selects, so they keep the fields *and the
+wording* they were signed with.
+
+Gate: `gate_964.mjs` (9 assertions — the kinds present, one reader, the `current` filter, grouped
+siding and gutter lists, de-duplicated brand/line lists, trim and qty undisturbed, the `selected`
+attribute surviving a clone, and a pre-filled select left alone; control red 7 named). The
+shipped `wireColorSelects` is driven directly against the real row shape rather than a
+re-implementation.
+
+**Still free text, deliberately:** the `[yes / no]` fields. Those want checkboxes, not dropdowns —
+a separate pass.
