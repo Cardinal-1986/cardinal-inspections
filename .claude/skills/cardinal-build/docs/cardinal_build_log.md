@@ -20497,6 +20497,51 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 968 — the Supplement Desk stops signing you out of Cardinal (21 Aug 2026)
+
+**Blast radius first, because it is bigger than "this tab".** `index.html`,
+`studio.html` and `supplement.html` all call `createClient(URL, ANON)` with **no
+options** against the same project on the same origin, so all three read ONE
+stored session under the default `sb-yipslubcptjoarblzbpl-auth-token`. Only
+`visualizer/index.html` has its own key (`cr-viz-auth`). The Desk's `showApp()`
+ran `is_cardinal_admin()` and on a failed check called `sb.auth.signOut()` —
+which in supabase-js v2 defaults to **scope 'global'**, POSTing `/logout?scope=global`
+and revoking the refresh token *everywhere*. So a rep tapping the Supplement Desk
+row (visible to everyone in the insurance portal since 954) was signed out of the
+whole CRM, on every device. `gate_968` reproduces it on the 966 control:
+**`signOut called 1x`, `session present=false`**.
+
+**The refusal is now in-page and touches nothing.** A third view (`#deniedView`)
+says which of the two things happened — 671's rule that *a failed question and a NO
+are different words*: a refusal reads "Ask Theo or Joan to file the supplement" and
+offers no retry; a check that did not come back reads "That is this desk, not you"
+and does. Both say "You are still signed in", both carry **← Back to Cardinal**, and
+neither goes near the session. `adm.data !== true` is kept exactly — `is_cardinal_admin()`
+returns NULL for anon (BUG_CLASSES §12) and `!== true` is what makes NULL a refusal.
+
+**And the Desk finally has a way back.** It had none: header was Theme / Sign out, and
+`href="/"` appeared **zero** times in the file, so in the installed PWA (no browser
+chrome) it was a dead end for admins too — the only exits were an edge-swipe or the
+Sign out that killed the shared session. There is now a `← Cardinal` link in the
+header. The real Sign out is untouched and still correctly signs out everywhere.
+
+⚠️ **Deliberately NOT done: hiding the menu row for non-admins.** The audit suggested
+it; the recon found the cost. `cr-menu-script`'s `isAdmin()` is the hardcoded
+theo@/joan@ pair, but the Desk's real gate is the DB's `is_cardinal_admin()`, which
+`audit@cardinalrenovations.net` also passes — so hiding would strip the door from a
+legitimate admin while still letting them in by URL. Worse, `apply()` runs once at
+DOMContentLoaded and reads `window.currentUser` at that instant, so a token refresh
+that needs the network can hide admin rows for the whole session (a pre-existing race
+that already governs reports/feed/settings). With the refusal panel in place the row
+is harmless and teaches something; hidden, it would sometimes lie. **Do not widen
+`ADMIN_EMAILS` to "fix" this.**
+
+Gates: `gate_968.mjs` **12/12 on 968, RED with 9 named failures on the 966 control**
+(including the two that name the bug) and no crash · `node --check` on all 3 script
+blocks · `check_build.py` green on `index.html` for the stamp/CHANGELOG half.
+⚠️ `check_build.py` cannot gate `supplement.html` — it has no `data-cr-footer` stamp
+and the tool fails closed on that. Parse its blocks separately, as here.
+
 ## Build 967 — a change the server refuses is no longer thrown away (21 Aug 2026)
 
 **The defect, reproduced live before it was fixed.** `gate_967.mjs` run against the
