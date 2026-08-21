@@ -5539,3 +5539,27 @@ scrollers lacked `overscroll-behavior-x:contain` and now have it — `.pu-tabs`,
 two-digit badges (945's promise, measured broken at 373px/358px). Gate:
 `scripts/gate_950.mjs` (fit incl. forced "88" badges, computed containment, board-still-pans;
 control red 6 named).
+
+## Insurance tools in the slide-out menu (951)
+
+`#navMenu` carries an **Insurance** section (between Sell and CRMs) with seven rows
+mirroring the Cardinal Truth hub's Tools rail: sol / library / supplements / insresources /
+adjusters / claimstracker / desk, dispatched in the main block's navopt handler with the
+same behaviour as `cr-cth-script wire()`. Present in every portal (Theo's pick: add, don't
+swap — Sell untouched). The ORIGINAL "Insurance" heading (Cardinal Truth) sits BELOW the
+new one so `renameSec()` still renames it to CRMs — do not reorder them. Rail icons for the
+seven labels live in the `I2`/`I5` maps (six added at 951). Schedule Board is deliberately
+not repeated in the section. Gate: `gate_951.mjs`.
+
+## The Card Stack desktop menu (952)
+
+The desktop rail (`cr-lnav-styles` + `cr-lnav-script`) renders each menu section as one
+of the app's cards: `.lnav-sec` is the card header with a 3.5px `--lnav-strip` across its
+top, `.lnav-body` the card body. 288px wide (`--lnav-w`). Per-portal: retail =
+brushed-steel strip + steel icons + slate-blue accent (`#3e6ca8` — retail's red is GONE
+from the rail); insurance = red end to end (its teal is GONE from the rail — semantic
+teal elsewhere untouched); community green; production yellow (themes via
+`body.dataset.crmHead`). Maps: `CRM_STRIP`/`CRM_ICON`/`CRM_ICON_LT` beside the existing
+four, published as host custom properties. ⚠ `.lnav-sec` must stay
+`width:calc(100% - 20px)` — full-width plus margins overflows the band past the card
+body. Phone drawer deliberately untouched. Gate: `gate_952.mjs`.
