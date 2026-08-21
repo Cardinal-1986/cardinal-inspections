@@ -20497,6 +20497,50 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 961 — the library sheet was under the button bar (21 Aug 2026)
+
+Theo, three screenshots from the installed app: *"Scrolling hell again"* — the Add-from-Library
+sheet with every section folded and the last trade cut off behind the row of round buttons.
+
+**Reproduced by measurement, not guessed.** Force `body.standalone` at 390×844 and
+`document.elementFromPoint` at the bottom of `.box-list` returns **`#pwaNav`**. The installed
+app's nav is authored at `z-index:160` and raised to **9990 `!important`** under
+`body.standalone`; `#cr-est-picker` was **9510**. The sheet has been painting under that bar
+since it was written.
+
+**960 is what made it fatal, and that part is mine.** Before collapsible sections the list always
+overflowed, so the covered strip was merely awkward — you scrolled past it. Folded, the list is
+308px in a 308px box: `scrollHeight === clientHeight`, nothing to scroll, and the covered rows
+became unreachable however hard he swiped. *"Scrolling hell"* is exactly right, and the gate now
+asserts that unscrollable condition so it is testing the real situation rather than a
+convenient one.
+
+Fix: **9510 → 9995**. Above the nav, below the app's alert-level sheets (9996/9997). Nothing
+opens on top of this sheet — ABC mode renders into this very list, and tapping an item closes it.
+
+**It is a class, and it is the third encounter.** `sweep_navclear.py` (new) reads the real
+`!important` value and lists every `position:fixed; inset:0` overlay beneath it: **42 today, 10
+already clear.** Two in-file comments already work around this for one element each — *"Sit ABOVE
+the installed app's bottom nav"* and *"#pwaNav (z-index 9990) cannot trap it"* — and neither
+generalised. Written up as **BUG_CLASSES 58**. The other 41 are NOT fixed here: they carry a
+deliberate ladder (9400 → 9900) and raising them wholesale would collide with 9996/9997. That is
+Theo's call, with a number attached.
+
+⚠ **The gate's first version failed correct code, and the reason is the lesson.** It asserted the
+last section's rectangle did not intersect the nav's. But the fix is **z-order** — the sheet
+still shares that rectangle and always will. Rewritten as an **occlusion** test: hit-test the
+middle of the last section and require the element returned to be inside that section. *Overlap
+is not occlusion; only a hit test knows who answers a touch.*
+
+Verification: `check_build.py` green 960 → 961 · **`render_libnav961.mjs` 8/8 GREEN**, **RED on
+the 960 control with 5 named failures** — the control reports a touch on the Windows section
+landing on `#pwaNav`, which is Theo's bug stated as a measurement. `render_libpicker960.mjs`
+re-run **13/13**.
+
+⚠ **The first `check_build` run went red on the negative control** because the marker
+`z-index:9995` already exists elsewhere in the file. A marker has to be unique to the change, not
+merely present in it.
+
 ## Build 960 — the estimate library reads like a catalog (21 Aug 2026)
 
 Theo, with a screenshot of the Add-from-Library sheet: *"Can you make the different sections like

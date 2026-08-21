@@ -5762,3 +5762,20 @@ is **not** this build — it belongs to the cron fail-closed change, which took 
 **The sentinel now sweeps this sheet.** A new `estlibrary` state opens the editor *and* the
 picker — opening the editor alone never opened the sheet, which is how a 2.16:1 price survived
 every previous sweep.
+
+## The library sheet clears the installed nav (build 961, 21 Aug 2026)
+
+`#cr-est-picker` moved **9510 → 9995**. `body.standalone #pwaNav{z-index:9990 !important}` raises
+the installed app's button bar from its authored 160, so the sheet had been painting *underneath*
+it since it was written — the bottom ~63px of `.box-list` covered. 9995 clears the nav and stays
+**below** the app's alert-level sheets (9996/9997); nothing opens on top of this sheet (ABC mode
+renders into this very list, and tapping an item closes it).
+
+⚠ **960 is what made it fatal, not what caused it.** With sections collapsible, a fully folded
+list no longer overflows — so it cannot scroll, and the covered rows went from awkward to
+unreachable. See **BUG_CLASSES 58**: `sweep_navclear.py` counts **42** full-screen overlays still
+below the installed nav.
+
+Gate: `render_libnav961.mjs` (8 assertions at 390×844 with `body.standalone` forced, folded and
+open; hit-tests rather than rectangles; control red 5 named — it reports a touch on the last
+section landing on `#pwaNav`). `render_libpicker960.mjs` re-run green.

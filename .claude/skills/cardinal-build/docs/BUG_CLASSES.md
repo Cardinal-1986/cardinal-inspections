@@ -3173,3 +3173,34 @@ enumerates its routes by hand, so a route it does not name is a route it does no
 ⚠ **Diagnosing this from outside needs no credentials and no side effects**, provided the
 refusal says why. `companycam-sync`'s spoken 401 is what identified the unset secret; the two
 digests could not be probed at all, because on that path a probe *is* the damage.
+
+## Class 58 — the installed app's bottom nav is at 9990, and 42 overlays sit under it (21 Aug 2026)
+
+`#pwaNav` is authored `z-index:160`. Under `body.standalone` — **the installed PWA, which is how
+Theo uses this app** — two rules raise it to **9990 `!important`**. Every `position:fixed;
+inset:0` overlay below that has its bottom ~63px **covered**, and nothing in the ordinary
+toolchain can see it: a browser tab never sets `body.standalone`, jsdom has no compositing, and
+a desktop render shows a perfect sheet.
+
+**It is usually survivable and occasionally fatal.** Survivable when the overlay's own content
+scrolls — you scroll past the covered strip and only the last row is ever awkward. **Fatal the
+moment the content is shorter than its box**, because then there is nothing to scroll and the
+covered rows cannot be brought into view at all. Build 960 made the estimate library's sections
+collapsible; with every section folded the list stopped overflowing, and Theo could not reach the
+last trade however hard he scrolled — *"Scrolling hell again."*
+
+**The measurement, and the only one that settles it:** force `body.standalone`, then
+`document.elementFromPoint(x, listBottom - 6)`. On 960 it returned **`#pwaNav`**. Rectangles are
+NOT the test — after the fix the sheet still shares the nav's rectangle and always will, because
+the fix is z-order. *A gate written against overlap fails correct code; a gate written against
+occlusion does not.* (That is exactly what happened here, on the first run.)
+
+**This is the third encounter.** Two in-file comments already work around it for one element
+each: *"Sit ABOVE the installed app's bottom nav, not on top of it"* and *"#pwaNav (z-index 9990)
+cannot trap it"*. Neither generalised, and 961 met it again from a different direction.
+
+**The check:** `scripts/sweep_navclear.py index.html` reads the real `!important` value and lists
+every overlay under it — **42 today, 10 already clear**. Run it with `--fail-under N` to hold the
+line while the debt is worked down. Fixing all 42 blind is not safe: they carry a deliberate
+internal ladder (9400 → 9900) and raising them wholesale would collide with the alert-level
+sheets at 9996/9997. Raise the one you are working on, and keep it **below 9996**.
