@@ -20572,6 +20572,47 @@ whole time. Both are fixed, `gate_971` is green at 975 (13 assertions) **and sti
 named failures on its own 970 control**. *The lesson is the cheap one: when a build changes a
 function an earlier gate executes, re-run that gate in the same session.*
 
+### ⚠ LIVE BUILD-NUMBER COLLISION on 967 — and the tool that could not see it
+
+**Two unmerged branches both claim build 967.** Measured 21 Aug 2026, 17:35 UTC:
+
+| branch | commit | what it calls 967 |
+|---|---|---|
+| `claude/claude-md-docs-9qyu0f` | `6f15566` · **14:19:21 UTC** | the printed contract shows all of its own words |
+| `claude/cardinal-design-usability-audit-qn9fc9` | `14ca30d` · **15:03:44 UTC** | a change the server refuses is no longer thrown away |
+
+Both branch from `d0cd727` (build 966). **`git merge-tree` says four files conflict** —
+`index.html`, `FEATURES.md`, `cardinal_build_log.md`, and an **add/add clash on
+`.claude/skills/cardinal-build/scripts/gate_967.mjs`**, which is two entirely different gates at
+one path.
+
+**This is mine.** The contract-print branch was pushed **44 minutes before** my 967 commit, and
+`CLAUDE.md` says to run `scripts/next_build.py` **before the first patch of a session**. Run at
+15:00 it would have folded that branch's stamp into `highest` and answered **968**. I did not run
+it, and nine builds are now stamped on top of the wrong starting number.
+
+⚠️ **And the tool that exists to prevent exactly this could not see it.** `next_build.py` compared
+each branch against **main** only — so it caught *"this branch reuses a number already shipped"*
+(the live 584 case) and completely missed *"two unmerged branches claim the same number"*, which is
+the 574-span disaster it was written for. It had both facts in hand and never crossed them:
+`claimed` has always been a number → **list** of branches, nothing ever tested `len() > 1`, and the
+summary line printed `claimed[n][0]` — **so a number claimed twice printed as though claimed
+once.** Its own output named both branches three lines apart and drew no conclusion.
+
+**Fixed.** `cross_branch_collisions()` is its own function so `--self-test` exercises the real
+rule; the summary line now lists every claimant. Negative control on the live remote: the pre-fix
+script reports **1 collision** and never mentions 967; the fixed script reports **2** and names
+both branches, both notes, and the `gate_967.mjs` clash.
+
+**Not resolved here — it is not this session's branch to renumber, and the choice is Theo's.**
+Renumbering the contract-print branch costs one build (~10 sites); renumbering this branch costs
+nine, including nine gate filenames and every build-numbered identifier in the shipped source
+(`masked973`, `pq974`, `itm974`, `KPI975`, `dueSoon975` …), against `CLAUDE.md`'s standing
+*"never renumber history; source comments cite build numbers."* The next safe number is **976**.
+
+⚠️ **A second collision is latent in the same pair:** both branches append a `## 59` class to
+`BUG_CLASSES.md`. This entry deliberately adds none.
+
 ### 975 follow-up — `gate_sweep.py`, the durable fix for a gate that rots quietly
 
 `gate_971.mjs` went red at build **972** and stayed red through 973 and 974 without anyone
