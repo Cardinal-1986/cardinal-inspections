@@ -20440,6 +20440,72 @@ fixture both ways (fixture → icons + 80% wet blue computed; route aborted → 
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
 
+## Build 958 — a magnet you can move (21 Aug 2026)
+
+Theo picked "the dispatch workflow layer" off the what's-next list. **That layer shipped at
+949** — weather on the day headers, free-day chips, assign-from-the-tray, all three verified
+present in the file. The list was stale and I said so. What is genuinely missing is the other
+half of the same idea: the board could **place** an unassigned job and could not **move** a
+placed one.
+
+**The gap under it was bigger than the board.** `scheduled_on` is written in exactly one place
+in this app — `createWorkOrder` — and **nothing anywhere could change it afterwards**. Moving a
+job to a different day meant issuing a second work order, which supersedes the first (844) and
+spends a WO number and a whole document on a date. So 958 is the app's first reschedule, not
+just a new gesture.
+
+**The grip.** Every unfinished magnet carries a small drawn-SVG grip in its title row, with a
+`::after` pad giving it a hit area far larger than its 15px. A finished job keeps none — there
+is nothing left to move, and `rescheduleWorkOrder` would refuse it anyway. Tap it: the board
+takes `.armmv`, the magnet takes `.moving`, and every legal cell takes `.tgt` (the 949 amber
+dashed outline, reused rather than reinvented).
+
+**The two landings are deliberately different operations.**
+
+| Landing | What happens |
+|---|---|
+| same crew, new day | `rescheduleWorkOrder(woId, ymd)` — one `scheduled_on` update on the existing row. No new number, no second document, history intact |
+| a different crew | the build-555 picker with `{crew_id, scheduled_on}` preset — the 949 path unchanged, because a new crew needs its own paper |
+
+`rescheduleWorkOrder` lives beside `createWorkOrder` in the main block rather than inside the
+board, so the Work Orders tab can reuse it without a second copy — one pipeline per concept. It
+returns `{ok, msg}`: it neither throws nor swallows, so a refusal can be **shown** instead of
+guessed at. It guards with `.neq('status','superseded').is('completed_on', null)`. **No SQL** —
+`crew_work_orders` is already `is_full_access()` in RLS (admins + production), the same fence
+the board already reads through, so Curtis and Scottie can move a job and nobody else can.
+
+**The trade fence is not cosmetic.** Only crews in the moving job's own trade are legal targets,
+because `createWorkOrder` supersedes *same-trade* rows only. A roofing job dropped on a siding
+crew would leave that job booked twice, on two boards, with nothing marking either stale. A tap
+on any other cell just puts the job down.
+
+**Optimistic, and honest about it.** The magnet moves the moment you tap and moves **back** if
+the write is refused, with `showError` naming the reason. The board never shows a date the
+database did not accept. Paging the week while holding a job pushes it into next week — that
+falls out of `armedMove` surviving a render, and is the only way to move a job past day seven.
+
+**One thing in the hand, and it took a diff review to notice.** Arming a move dropped an
+armed tray chip, but arming a tray chip left a held magnet held — so `.arm` and `.armmv`
+could both be on, outlining two sets of cells that mean different things. My own comment
+claimed the rule was enforced. Fixed in both directions and asserted (21).
+
+Verification: `check_build.py` green 957 → 958 (122 inline scripts, marker `data-dmove`,
+negative control clean) · **`gate_958.mjs` 21/21 GREEN**, **RED on the 957 control with 13
+named failures and no crash**. The gate asserts the write's own **filters** — not just that an
+update fired but that it named `id=w1` and carried both refusal guards — plus **zero inserts**
+(the whole point: no new WO number), the read-after-write render, the refusal revert, and the
+trade fence in both directions. Two seed rows are added by the gate itself: a second roofing
+crew, and a completed work order so "a finished job keeps no grip" is measured rather than
+assumed. ⚠ The first run went red on three assertions because the second roofing crew had no
+work and the board correctly **collapsed it into the idle row** — the gate was wrong, not the
+app.
+
+⚠ **The sentinel's first run TIMED OUT**, which its own output calls UNKNOWN, not clean — a
+full-state run with `--since` walks every screen of both trees. Re-run against a gate-local
+setup that trims `window.__sentinelStates` to `dispatch` alone: **CLEAN, nothing new**, 29
+findings carried from 957. Narrowing is what build 950 had to do for the same reason; there
+is still no `--states` flag, so trimming the setup file is the way.
+
 ## Build 957 — scroll containment belongs on the box that scrolls (21 Aug 2026)
 
 Theo: "the scroll gets stuck here" + "the finger does nothing at all", on the Cardinal

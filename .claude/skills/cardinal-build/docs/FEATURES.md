@@ -5616,3 +5616,44 @@ carry `overscroll-behavior:contain`; their non-scrolling children/backdrops do n
 `#pipeRow` resets containment inside `@media (max-width:900px)`, where it stops being a
 scroller. See BUG_CLASSES 56 — containment on a box with no scrollport kills touch
 scrolling on iOS while looking perfect in Chromium. Gate: `gate_957.mjs`.
+
+## Crew Dispatch — move a magnet (build 958, 21 Aug 2026)
+
+The Magnet Board could **place** an unassigned job (949) but never **move** a placed one.
+Every booked magnet now carries a small grip (drawn SVG, `--disp-dim` — 6.70:1 dark /
+6.25:1 light; `--disp-mute` was the obvious pick and fails the 3:1 non-text floor in dark
+at 2.88:1). Tap it to pick the job up: `#cr-disp.armmv`, the magnet gets `.moving`, and
+every legal day cell gets `.tgt` with the 949 amber dashed outline. Tap the day you want.
+
+**The two landings are different operations on purpose:**
+
+| Landing | What happens | Why |
+|---|---|---|
+| **Same crew, new day** | `rescheduleWorkOrder(woId, ymd)` — one `scheduled_on` update on the row that already exists | a date change is not a new work order: the WO number, the document and its history stay put |
+| **A different crew** | the build-555 picker, `{crew_id, scheduled_on}` preset (the 949 path, untouched) | a new crew has to be given its own paper — that is the 844 supersede path |
+
+**`rescheduleWorkOrder` is the app's FIRST reschedule.** Before 958 `scheduled_on` was
+written exactly once, by `createWorkOrder`, and **nothing anywhere could change it** — the
+only way to move a job was to issue a second work order, which superseded the first. It
+lives beside `createWorkOrder` in the main block (not inside the board) so the Work Orders
+tab can reuse it without a second copy, returns `{ok,msg}` rather than throwing or
+swallowing, and guards with `.neq('status','superseded').is('completed_on',null)`.
+No schema change — `crew_work_orders` RLS is already `is_full_access()` (admins +
+production), the same fence the board reads through.
+
+**The trade fence.** Only crews in the moving job's own trade are legal targets.
+`createWorkOrder` supersedes *same-trade* rows only (844), so a roofing job landing on a
+siding crew would leave the job booked twice. A tap on any other cell simply puts the job
+back down.
+
+**Optimistic, but honest.** The magnet moves the instant you tap and **moves back** if the
+write is refused, with `showError` saying why — the board never shows a date the database
+did not accept. Paging the week while holding a job moves it into next week.
+
+**One thing in the hand.** Arming a move drops an armed tray chip and arming a tray chip
+drops a held magnet — otherwise `.arm` and `.armmv` both outline cells that mean different
+things.
+
+Gate: `gate_958.mjs` (21 assertions incl. the write's own filters, zero-inserts, the
+read-after-write render, the refusal revert, and the trade fence; control red 13 named,
+no crash). Sentinel: `dispatch` state clean.

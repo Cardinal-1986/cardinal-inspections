@@ -3688,7 +3688,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 957 &#8212; the Insurance screen scrolls with a finger again: the rule that traps a swipe had been sitting on a box that does not scroll, so the gesture never reached the one that does &#8212; fixed there and on the Punch assign sheet, which had the same fault waiting</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 958 &#8212; jobs move on the Crew Dispatch board: tap the grip on a booked job to pick it up, tap the day you want. Same crew and it is a straight reschedule &#8212; the date changes on the work order that already exists, no new number and no second document; a different crew still opens the picker, because a new crew needs its own paper</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -21375,6 +21375,38 @@ async function createWorkOrder(pr, crew, opts){
     if(err) err.textContent = 'Could not create the work order: ' + (e.message || e);
     if(go){ go.disabled = false; go.textContent = 'Create'; }
   }
+}
+
+/* 958: move a work order to another day \u2014 the app's FIRST reschedule.
+   Until now scheduled_on was written exactly once, by createWorkOrder above,
+   and nothing anywhere could change it: moving a job to a different day meant
+   issuing a NEW work order, which supersedes the old one (844) and spends a WO
+   number and a whole document on what is only a date.
+
+   This is deliberately the ONE reschedule path, and it lives here beside
+   createWorkOrder rather than inside its caller so the Work Orders tab can reuse
+   it without a second copy. It changes the DATE and nothing else \u2014 a different
+   CREW still goes through the picker, because a new crew needs its own document.
+
+   It never throws and never swallows: the caller is told WHICH failure it was,
+   so a refusal can be shown rather than guessed at. */
+async function rescheduleWorkOrder(woId, ymd){
+  if(!woId || !ymd) return { ok:false, msg:'Nothing to move.' };
+  if(!/^\d{4}-\d\d-\d\d$/.test(String(ymd))) return { ok:false, msg:'That is not a date.' };
+  var sbx = window.sb || window.supa;
+  if(!sbx) return { ok:false, msg:'Not signed in.' };
+  try{
+    var r = await sbx.from('crew_work_orders')
+      .update({ scheduled_on: ymd })
+      .eq('id', woId)
+      .neq('status', 'superseded')
+      .is('completed_on', null)
+      .select('id,scheduled_on');
+    if(r.error) return { ok:false, msg:r.error.message };
+    if(!r.data || !r.data.length)
+      return { ok:false, msg:'That work order is finished or superseded \u2014 it cannot be moved.' };
+    return { ok:true, scheduled_on:ymd };
+  }catch(e){ return { ok:false, msg:(e && e.message) || String(e) }; }
 }
 
 /* 730: the trade registry, deliberately the same shape as EST_TYPES above -
@@ -40738,6 +40770,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:958, d:'2026-08-21', t:'Move a job on the dispatch board', s:'Every booked job on Crew Dispatch now carries a small grip. Tap it to pick the job up \u2014 the legal days light up on every crew in that trade \u2014 then tap the day you want. Landing it on the SAME crew is a straight reschedule: the date changes on the work order that is already there, so the WO number, the document and its history all stay put. Landing it on a DIFFERENT crew opens the usual work-order picker with the crew and day already filled, because a new crew has to be given its own paper. Page the week forward before you drop it to push a job into next week. The job moves on screen the moment you tap, and moves back if the database refuses it, so the board never shows a date that did not save. Until now nothing anywhere in the app could change a work order\u2019s date \u2014 the only way to move a job was to issue a second work order, which retired the first one.' },
 { b:957, d:'2026-08-21', t:'The Insurance screen scrolls with a finger again', s:'Theo: \u201cthe scroll gets stuck here\u2026 the finger does nothing at all.\u201d On the Cardinal Truth screen the rule that keeps a swipe from dragging the page behind had been placed on a box that does not scroll, one level inside the box that does \u2014 so on the phone the swipe landed somewhere that could neither scroll nor hand the gesture on, and nothing moved. The rule now sits on the screen itself. The Punch assign sheet had exactly the same fault waiting on it and was fixed in the same pass. Nothing else changed: on a desktop both screens behaved normally before and after, which is why this needed the phone to find it.' },
 { b:956, d:'2026-08-21', t:'The menu is symmetric', s:'The last exception is gone: the Insurance section now appears only while you are in the Insurance portal, the same way Sell, Production and Community already worked. So each portal shows exactly one section of its own, and the menu stays short and about where you are standing. Getting between portals is unchanged and always available \u2014 the Retail / Insurance / Community switcher sits at the top of the menu, Cardinal Truth is in CRMs, and Production is in Daily.' },
 { b:955, d:'2026-08-21', t:'One menu section per portal', s:'The menu now shows only the section you are actually working in: Production appears while you are on the Production board, Community while you are in the Community portal, Insurance in Insurance, and Sell in Retail (and on the Sales Floor). Everything else folds away, so the menu is short and about where you are. Nothing is lost \u2014 the door into each portal is always there: Production sits in Daily, and the Retail / Insurance / Community switcher is at the top of the menu. Suppliers has moved up into Daily, so the materials catalogue is reachable from every desk instead of only from Production. And a small repair: since yesterday the Sell section had been hiding itself while the Sales Floor was open, which was never intended.' },
@@ -74492,6 +74525,19 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .uch.armed{ background:rgba(245,192,69,.18); box-shadow:0 0 0 2px var(--disp-need,#f5c045); }
 #cr-disp.arm .dlane .dcell{ cursor:pointer; }
 #cr-disp.arm .dlane .dcell.demp{ outline:1.5px dashed var(--disp-need,#f5c045); outline-offset:-5px; }
+/* 958: the grip. Small on purpose on a dense board, with a hit area far larger
+   than it looks (the ::after pad) so a thumb still finds it. Rides --disp-dim,
+   which computes 6.70:1 on the dark card and 6.25:1 on the light one \u2014 --disp-mute
+   was the obvious pick and fails the 3:1 non-text floor in dark at 2.88:1. */
+#cr-disp .job .mv{ margin-left:4px; flex:none; width:15px; height:15px; padding:0; border:0;
+  border-radius:4px; background:transparent; color:var(--disp-dim,#9aa1ac);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
+#cr-disp .job .mv::after{ content:""; position:absolute; inset:-9px; }
+#cr-disp .job .mv:hover{ color:var(--disp-ink,#fff); }
+#cr-disp .job.moving{ box-shadow:0 0 0 2px var(--disp-need,#f5c045); }
+#cr-disp .job.moving .mv{ color:var(--disp-need,#f5c045); }
+#cr-disp.armmv .dlane .dcell{ cursor:pointer; }
+#cr-disp.armmv .dlane .dcell.tgt{ outline:1.5px dashed var(--disp-need,#f5c045); outline-offset:-5px; }
 /* 913: Crew Dispatch map (toggle) */
 #cr-disp .dspmapbtn{ margin-left:auto; background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34);
   color:var(--disp-ink,#fff); border-radius:8px; padding:6px 14px; font:700 12px 'Segoe UI',Arial,sans-serif; cursor:pointer; }
@@ -74529,6 +74575,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 (function(){
   var el, crews = [], wos = [], punches = [], weekOffset = 0, filter = 'All', showIdle = {}, foldTrade = {};
   var armed = null, wxDays = null, wxT = 0;   /* 949: armed tray chip + Open-Meteo day cache */
+  var armedMove = null;   /* 958: the booked work order currently picked up */
   var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs'];
   /* 913: the dispatch Map toggle — its own Leaflet map of this week's jobs by crew */
   var mapOn=false, dmap=null, dlayer=null, dmarkers={}, dgeoQueue=[], dgeoBusy=false, dUserMoved=false, dFitT=null, dMissT=null;
@@ -74601,6 +74648,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       (p >= 30 ? '<i>' + p + '%</i>' : '') + '</span>';
   }
 
+  function woById(id){ for(var i=0;i<wos.length;i++){ if(String(wos[i].id) === String(id)) return wos[i]; } return null; }
   function projById(id){
     var arr = window.cacheProjects || [];
     for(var i=0;i<arr.length;i++){ if(String(arr[i].id) === String(id)) return arr[i]; }
@@ -74640,8 +74688,15 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     var p = projById(w.project_id);
     var nm = p ? (p.name || 'Job') : 'Job';
     var ad = p ? firstLine(p.address) : '';
-    return '<div class="job" data-pid="' + esc(w.project_id) + '">' +
-      '<div class="t">' + esc(nm) + '<span class="pip ' + statusPip(w) + '"></span></div>' +
+    /* 958: the grip picks the job up. A finished job keeps none \u2014 there is
+       nothing left to move, and rescheduleWorkOrder would refuse it anyway. */
+    var grip = statusPip(w) === 'done' ? '' :
+      '<button class="mv" type="button" data-dmove="' + esc(w.id) + '" aria-label="Move this job">' +
+      '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" '+
+      'stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M19 9l3 3-3 3M9 5l3-3 3 3M9 19l3 3 3-3"/>'+
+      '</svg></button>';
+    return '<div class="job' + (String(armedMove) === String(w.id) ? ' moving' : '') + '" data-pid="' + esc(w.project_id) + '">' +
+      '<div class="t">' + esc(nm) + '<span class="pip ' + statusPip(w) + '"></span>' + grip + '</div>' +
       (ad ? '<div class="a">' + esc(ad) + '</div>' : '') + '</div>';
   }
 
@@ -74692,6 +74747,13 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     /* 949: a chip armed on a previous render may have been assigned since */
     if(armed && !needCrew.some(function(p){ return String(p.id) === String(armed); })) armed = null;
     el.classList.toggle('arm', !!armed);
+    /* 958: a magnet whose work order has since vanished \u2014 superseded from the
+       profile, finished by the crew \u2014 cannot still be in the hand. */
+    if(armedMove && !woById(armedMove)) armedMove = null;
+    var mvWo = armedMove ? woById(armedMove) : null;
+    var mvCrew = mvWo ? crewById(mvWo.crew_id) : null;
+    var mvTrade = mvCrew ? (mvCrew.trade || 'General') : null;
+    el.classList.toggle('armmv', !!mvWo);
     var railInner = needCrew.length
       ? needCrew.map(function(p){
           return '<div class="uch' + (String(p.id) === String(armed) ? ' armed' : '') + '" data-pid="' + esc(p.id) + '"><div class="c">' + esc(p.name||'Job') +
@@ -74701,7 +74763,9 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     var railH = '<div class="drow drail"><div class="rl"><div class="t">' +
       '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/></svg>' +
       'Needs a crew (' + needCrew.length + ')</div>' +
-      '<div class="s">' + (armed ? 'now tap a day on a crew\u2019s row to book it \u2014 tap the job again for the full picker' : 'tap to assign') + '</div></div><div class="runrow">' + railInner + '</div></div>';
+      '<div class="s">' + (armed ? 'now tap a day on a crew\u2019s row to book it \u2014 tap the job again for the full picker'
+        : mvWo ? 'holding a job \u2014 tap any outlined day to move it (page the week to move it further out), or tap the grip again to put it down'
+        : 'tap to assign') + '</div></div><div class="runrow">' + railInner + '</div></div>';
 
     var bandsH = trades.map(function(tr){
       if(filter !== 'All' && filter !== tr) return '';
@@ -74712,9 +74776,16 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 
       function lane(c){
         var cells = '';
+        /* 958: while a magnet is held, only crews in ITS OWN trade can take it.
+           A roofing job landing on a siding crew is not a move \u2014 createWorkOrder
+           supersedes same-trade rows only (844), so it would leave the job booked
+           twice. The cell it already sits in is not a target either. */
+        var canTake = !!mvWo && (c.trade || 'General') === mvTrade;
         for(var di=0; di<nDays; di++){
           var list = (byCrewDay[c.id] && byCrewDay[c.id][di]) || [];
           var s = dayStr[di], tcls = (s === todayStr) ? ' today' : (sunSet[di] ? ' sun' : '');
+          var home = canTake && String(mvWo.crew_id) === String(c.id) && mvWo.scheduled_on === s;
+          tcls += (canTake && !home) ? ' tgt' : '';
           if(!list.length){ cells += '<div class="dcell demp' + tcls + '" data-dc="' + esc(c.id) + '|' + di + '"></div>'; continue; }
           var shown = list.slice(0,2).map(jobChip).join('');
           if(list.length > 2) shown += '<div class="more">+' + (list.length-2) + ' more</div>';
@@ -74874,7 +74945,19 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
           else if(typeof window.openProject === 'function') window.openProject(upid);
           return;
         }
-        armed = upid; render();   /* 949: first tap ARMS — day cells become targets */
+        /* 949 arms the chip; 958: and empties the hand — one thing at a time,
+           or both .arm and .armmv outline cells that mean different things. */
+        armed = upid; armedMove = null; render();
+        return;
+      }
+      /* 958: the grip picks a booked job up, or puts it back down. Only one
+         thing is ever in the hand \u2014 arming a move drops an armed tray chip. */
+      var mvb = e.target.closest('[data-dmove]');
+      if(mvb){
+        var mid = mvb.getAttribute('data-dmove');
+        armedMove = (String(armedMove) === String(mid)) ? null : mid;
+        armed = null;
+        render();
         return;
       }
       var mb = e.target.closest('[data-dspmap]');
@@ -74903,6 +74986,49 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
           return;
         }
       }
+      /* 958: with a magnet in the hand, a tap on an outlined cell MOVES it.
+         Same crew, new day = a real reschedule \u2014 the date changes on the work
+         order that already exists, no new number and no second document. A
+         different crew = the build-555 picker with crew and day preset, which is
+         the 844 supersede path untouched: a new crew gets its own paper.
+         A tap anywhere else in the grid simply puts the job back down. */
+      if(armedMove){
+        var mcell = e.target.closest('.dcell[data-dc]');
+        if(mcell){
+          if(!mcell.classList.contains('tgt')){ armedMove = null; render(); return; }
+          var mdc = mcell.getAttribute('data-dc').split('|');
+          var mw = woById(armedMove), mwhen = weekDays().map(ymd)[+mdc[1]] || null;
+          armedMove = null;
+          if(!mw || !mwhen){ render(); return; }
+          if(String(mdc[0]) !== String(mw.crew_id)){
+            var mproj = projById(mw.project_id);
+            close();
+            if(mproj && typeof window.openWorkOrderPicker === 'function')
+              window.openWorkOrderPicker(mproj, { crew_id: mdc[0], scheduled_on: mwhen });
+            else if(typeof window.openProject === 'function') window.openProject(mw.project_id);
+            return;
+          }
+          /* the magnet moves at once, and moves BACK if the write is refused \u2014
+             the board never shows a date the database did not accept. */
+          var mprev = mw.scheduled_on;
+          mw.scheduled_on = mwhen;
+          render(); if(mapOn) syncMap();
+          (function(){
+            Promise.resolve(
+              typeof window.rescheduleWorkOrder === 'function'
+                ? window.rescheduleWorkOrder(mw.id, mwhen)
+                : { ok:false, msg:'Rescheduling is not available in this build.' }
+            ).then(function(res){
+              if(res && res.ok) return load().then(function(){ render(); if(mapOn) syncMap(); });
+              mw.scheduled_on = mprev;
+              render(); if(mapOn) syncMap();
+              if(typeof window.showError === 'function')
+                window.showError('Could not move that job: ' + ((res && res.msg) || 'unknown error'));
+            });
+          })();
+          return;
+        }
+      }
       var pel = e.target.closest('[data-pid]');
       if(pel && typeof window.openProject === 'function'){ close(); window.openProject(pel.getAttribute('data-pid')); }
     });
@@ -74914,6 +75040,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
     el.classList.add('open');
     try{ el.scrollTop = 0; }catch(_e){}
     weekOffset = 0; filter = 'All'; showIdle = {}; foldTrade = {}; armed = null;
+    armedMove = null;
     setMapMode(false);
     loadWx();                 /* 949: forecast for the day headers, cached 30 min */
     render();                 /* paint immediately with whatever is cached */
@@ -74923,7 +75050,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 
   function close(){
     if(el) el.classList.remove('open');
-    armed = null;
+    armed = null; armedMove = null;
     if(typeof window.showHome === 'function') window.showHome();
   }
 
