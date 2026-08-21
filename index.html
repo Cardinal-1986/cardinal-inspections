@@ -56461,9 +56461,12 @@ return '<div class="cc-prow" data-go="partners">' +
 : '<div class="cc-empty">No partners yet.</div>';
 
 /* 975: two faults in four lines. data-q had NO handler anywhere, so the row
-   inherited .cc-prow's cursor:pointer and did nothing; and the closing </div>
-   sat inside the non-prod arm, so a Production user got three nested unclosed
-   rows. The row now names the stage it counts and opens it. */
+   inherited .cc-prow's cursor:pointer and did nothing; and the row's closing
+   tag sat inside the non-prod arm, so a Production user got three nested
+   unclosed rows. The row now names the stage it counts and opens it.
+   NB the tag is spelled out nowhere in this comment on purpose: CI counts div
+   tags with a bare regex over the whole file, so prose naming one fails the
+   build. That is this repo's comment-pollution trap, wearing a CI hat. */
 function queue(label, list, stageKey){
 if(!list.length) return '';
 if(stageKey) doors['q:' + stageKey] = { sets:{ stage: stageLabels([stageKey]) },

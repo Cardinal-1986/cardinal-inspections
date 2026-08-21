@@ -20572,6 +20572,23 @@ whole time. Both are fixed, `gate_971` is green at 975 (13 assertions) **and sti
 named failures on its own 970 control**. *The lesson is the cheap one: when a build changes a
 function an earlier gate executes, re-run that gate in the same session.*
 
+### 975 follow-up — CI went red on a COMMENT, and `check_build.py` could not see it
+
+`.github/workflows/check.yml` counts `<div` against `</div>` **with a bare regex over the whole
+file**. Build 975's first push failed it: `div tags unbalanced: 4152 vs 4153`. The extra tag was
+**prose** — a comment I had just written to explain the `queue()` fix, which spelled out the
+closing div tag it was describing.
+
+**This repo's comment-pollution trap, wearing a CI hat** — and the second time in two builds it
+bit me (974's `it.price` assertion failed 3 → 3 for exactly the same reason). The comment was
+reworded; no markup changed.
+
+**The real defect is that the local ladder was laxer than CI.** `check_build.py` balanced
+`<script>` and `<style>` but not `<div>`, so a build could be green locally and red on push. It
+checks div balance now, **with the same regex `check.yml` uses on purpose** — a local gate that is
+laxer than the remote one is not a gate. Negative-controlled against the broken tree, where it
+reports `✗ <div> tag balance (4152 open / 4153 close)`.
+
 ## Build 974 — one bid amount (21 Aug 2026)
 
 Fourth of the Community program's seven items, and the one that explains why the numbers

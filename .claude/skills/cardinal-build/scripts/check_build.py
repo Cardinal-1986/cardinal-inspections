@@ -100,6 +100,16 @@ def gate_tag_balance(src):
     yc = len(re.findall(r"</style\s*>", src, re.I))
     report(so == sc, f"<script> tag balance ({so} open / {sc} close)")
     report(yo == yc, f"<style> tag balance ({yo} open / {yc} close)")
+    # 975: CI counts <div> with a bare regex over the WHOLE file and fails the
+    # build on an imbalance; this ladder did not, so a build could be green here
+    # and red there. It cost a round: a source COMMENT that spelled out a closing
+    # div tag counted as one. Same regex as .github/workflows/check.yml on
+    # purpose — a local gate that is laxer than CI is not a gate.
+    do = len(re.findall(r"<div", src, re.I))
+    dc = len(re.findall(r"</div>", src, re.I))
+    report(do == dc, f"<div> tag balance ({do} open / {dc} close)"
+           + ("" if do == dc else "  \u2014 CI counts these with a bare regex, so"
+              " prose naming a div tag counts too"))
 
 
 def gate_css_braces(src):
