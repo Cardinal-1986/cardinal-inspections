@@ -3099,3 +3099,14 @@ fence was also false by 943 — fourteen blocks now follow it.)
 **The tell** for future audits: a control measuring under 44 whose class appears in the touch44
 block. That is never "the floor is missing" — it is this class. Grep the module's own styles for
 `min-height` before adding anything to the block.
+
+
+## Class 55 — a "portal state" faked with one attribute reports an app no user can reach
+
+`data-crm-head` is the authoritative CRM mirror (skin() maintains it); `data-crm` alone
+is not the state. A render or test that sets only `data-crm` shows behavior of an
+impossible state and reads as a bug in correct code (953: "Sell still visible on the
+phone" — it was, in a state that cannot occur). Emulate a portal switch by writing BOTH
+attributes, or click the real switcher. Sibling of class 30/#tab-overview on the same
+build: the drawer's `display:flex !important` on menu rows silently defeats inline
+hides — hide menu rows by attribute + the drawer's own rule, never inline alone.
