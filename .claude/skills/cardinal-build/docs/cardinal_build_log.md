@@ -20572,6 +20572,38 @@ whole time. Both are fixed, `gate_971` is green at 975 (13 assertions) **and sti
 named failures on its own 970 control**. *The lesson is the cheap one: when a build changes a
 function an earlier gate executes, re-run that gate in the same session.*
 
+### 975 follow-up — `gate_sweep.py`, the durable fix for a gate that rots quietly
+
+`gate_971.mjs` went red at build **972** and stayed red through 973 and 974 without anyone
+noticing, because nothing re-ran it. Both causes were **harness** gaps rather than app defects
+(972 gave `threadHtml` arms that read a symbol its shim did not define; 974 moved the price
+ladder into the main block, so the gate's stub page no longer had it) — which is precisely why
+it was invisible: `gate_972` and `gate_974` were green on the same code the whole time.
+
+`scripts/gate_sweep.py` runs a **range** of per-build gates two ways:
+
+- **on HEAD** — catches a later build breaking an earlier gate, which is the exact miss above;
+- **on the previous build**, materialised with `git show <sha>:<file>` — catches a gate that has
+  stopped being able to fail.
+
+Three details that make it worth having rather than a `for` loop:
+
+1. **A CRASH is reported as CRASH, never as RED.** BUG_CLASSES 37 — a control that dies before
+   printing a line has proved nothing, and reading it as "not green" has cost this project five
+   rounds in one session.
+2. **It reads which artifact each gate gates** out of the gate's own `FILE=` line rather than
+   assuming `index.html` — that is how it correctly points `gate_968` at `supplement.html`.
+3. **It resolves the control commit case-insensitively** (`\bbuild\s+NNN\b`), because this log's
+   own headings alternate between `Build NNN` and `build NNN`, and a case-sensitive grep here
+   reads like 142 missing builds.
+
+`--selftest` proves it can report a problem, three ways: a gate pointed at its own artifact comes
+back GREEN (which the sweep flags, because a passing control proves nothing); a gate pointed at an
+empty page comes back **CRASH**, not RED; and the artifact sniffer really does find `gate_968`.
+
+Full sweep at 975: **9 gates, all green on HEAD, all red on their own control**, controls resolved
+to `e6e06ea 14ca30d b38fc85 86de529 5127717 106dcec 5a67bdd 476acff 75fa11b`.
+
 ### 975 follow-up — CI went red on a COMMENT, and `check_build.py` could not see it
 
 `.github/workflows/check.yml` counts `<div` against `</div>` **with a bare regex over the whole
