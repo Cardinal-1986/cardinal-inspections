@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 964 &#8212; the siding and gutter agreements now have real dropdowns like the roofing one: brand, profile and colour come from the catalog instead of being typed. Seventeen fields that were blank boxes are now pickers &#8212; siding colours grouped by manufacturer and line so 84 of them are actually usable at a kitchen table</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 965 &#8212; you can add a field to a contract by hand now: tap where you want it, tap &#65291; Field, and drop in a text box, a checkbox, a dropdown, a signature line or an initials line. It only lets you put one where the contract is meant to be filled in, and a field you added can be taken back out</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8233,6 +8233,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="btn dark" id="dlBtn" data-cri="save"><span class="bl">Download</span></button>
       <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>
       <button class="btn dark" id="sigBtn" style="display:none;" data-cri="pencil"><span class="bl">Client signature</span></button>
+      <button class="btn dark" id="addFieldBtn" data-cri="plus"><span class="bl">&#65291; Field</span></button>
       <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
       <button class="btn dark" id="assistantBtn" data-cri="sparkle"><span class="bl">Assistant</span></button>
       <button class="btn dark" id="rccBtn" style="display:none;" data-cri="camera"><span class="bl">CompanyCam</span></button>
@@ -23858,6 +23859,8 @@ async function wireColorSelects(doc){
         list = BRANDS;
       }else if(kind === 'qty'){
         list = QTY;
+      }else if(kind === 'yesno'){
+        list = ['Yes', 'No', 'N/A'];
       }else if(kind === 'sbrand'){
         list = matsFor('siding').map(function(m){ return m.manufacturer; })
                  .filter(function(v, i, a){ return v && a.indexOf(v) === i; })
@@ -24074,7 +24077,7 @@ async function openEditor(id){
       wireCheckboxes(doc);
       wireColorSelects(doc);
       wireWoFields(doc);
-      document.getElementById('sigBtn').style.display = (doc.querySelector('.sign') || doc.querySelector('[data-sig]')) ? 'inline-block' : 'none';
+      refreshSigBtn();
     }catch(e){}
   };
   editor.classList.add('open');
@@ -24402,10 +24405,156 @@ sigPad.addEventListener('touchend', sigEnd);
 /* 887: a client-facing signature must never ask a homeowner to TYPE a number.
    The old flow was prompt("Type 1, 2 or 3") — this replaces it with a tapped
    chooser of only the roles the document actually has. One role auto-selects. */
+/* ══ 965 · add a field by hand, where the cursor is ═════════════════════════
+   Theo: "fillable sections? Manually adding text box, checkmarks, dropdowns,
+   signature and initial lines."
+
+   Almost none of this is new machinery, and that is the point. Fields are wired
+   by CLASS — .ph is already in EDITABLE_SELECTOR, .cbx is claimed by
+   wireCheckboxes, select[data-crsel] by wireColorSelects — and both wire passes
+   already guard against double-binding (`data-cbx`, `data-crsel-wired`), so
+   re-running them after an insert is safe by design rather than by luck.
+
+   TWO RULES, both of which this app has already paid to learn:
+
+   1. THE VALUE LIVES IN THE MARKUP. serializeFrame() saves a contract by
+      cloning the document, and cloneNode(true) copies attributes, not a form
+      control's live state. That is why a ticked box is literally the character
+      \u2611 and a chosen colour is a `selected` ATTRIBUTE. Anything inserted
+      here obeys the same rule or it saves blank.
+   2. IT GOES WHERE THE DOCUMENT IS EDITABLE, NOWHERE ELSE. A field dropped into
+      a heading, the roof diagram or a signature block would print as damage.
+      The caret is checked against EDITABLE_SELECTOR before anything is written,
+      and the refusal says why.
+
+   Inserted fields carry data-added="1" so one can be taken out again — a
+   misplaced field on a contract must not be permanent. */
+var FIELD_KINDS = [
+  { id:'text',  label:'Text box',       hint:'a line to type on' },
+  { id:'check', label:'Checkbox',       hint:'tap to tick' },
+  { id:'list',  label:'Dropdown',       hint:'choose from a list' },
+  { id:'sign',  label:'Signature line',  hint:'adds a name to the signing list' },
+  { id:'init',  label:'Initials line',   hint:'initials, signed the same way' },
+  { id:'del',   label:'Remove the field here', hint:'undo one you added' }
+];
+var LIST_KINDS = [
+  { id:'yesno',  label:'Yes / No' },
+  { id:'trim',   label:'Trim colours' },
+  { id:'scolor', label:'Siding colours' },
+  { id:'gcolor', label:'Gutter colours' },
+  { id:'occ',    label:'Shingle colours' },
+  { id:'qty',    label:'Numbers' }
+];
+function refreshSigBtn(){
+  var doc = frame && frame.contentDocument;
+  var b = document.getElementById('sigBtn');
+  if(!b) return;
+  b.style.display = (doc && (doc.querySelector('.sign') || doc.querySelector('[data-sig]'))) ? 'inline-block' : 'none';
+}
+/* The caret, and whether the document allows a field there. Returns null with a
+   reason rather than a bare false — "nothing happened" is the worst answer a
+   button can give. */
+function fieldTarget(doc){
+  var selo = doc.getSelection && doc.getSelection();
+  if(!selo || !selo.rangeCount) return { ok:false, why:'Tap where you want the field first.' };
+  var node = selo.anchorNode;
+  var el = node && (node.nodeType === 1 ? node : node.parentNode);
+  if(!el) return { ok:false, why:'Tap where you want the field first.' };
+  var host = el.closest && el.closest(EDITABLE_SELECTOR);
+  if(!host) return { ok:false, why:'That part of the contract is fixed. Tap inside a box you can type in.' };
+  return { ok:true, range:selo.getRangeAt(0), host:host };
+}
+function nextSigKey(doc){
+  var n = 1;
+  while(doc.querySelector('[data-sig="x' + n + '"]')) n++;
+  return 'x' + n;
+}
+function fieldHTML(doc, kind, listKind){
+  if(kind === 'text')  return '<span class="ph" data-added="1">[text]</span>';
+  if(kind === 'check') return '<span class="cbx" data-added="1">\u2610</span>';
+  if(kind === 'list')  return '<select class="crsel" data-added="1" data-crsel="' + listKind +
+                              '" contenteditable="false" aria-label="Added field">' +
+                              '<option value="">\u2014 select \u2014</option></select>';
+  if(kind === 'sign')  return '<span class="sigslot" data-added="1" data-sig="' + nextSigKey(doc) +
+                              '" data-sig-label="Signature"><span class="ph">[sign]</span></span>';
+  if(kind === 'init')  return '<span class="sigslot" data-added="1" data-sig="' + nextSigKey(doc) +
+                              '" data-sig-label="Initials"><span class="ph">[__]</span></span>';
+  return '';
+}
+async function insertField(kind, listKind){
+  var doc = frame && frame.contentDocument;
+  if(!doc) return;
+  if(kind === 'del'){
+    var t0 = fieldTarget(doc);
+    var from = t0.ok ? t0.host : null;
+    var el = from && (from.closest('[data-added="1"]') || from.querySelector('[data-added="1"]'));
+    if(!el){ alert('Tap the field you added, then try again. Only fields added by hand can be removed \u2014 the printed ones stay.'); return; }
+    el.remove();
+    refreshSigBtn();
+    return;
+  }
+  var t = fieldTarget(doc);
+  if(!t.ok){ alert(t.why); return; }
+  var frag = doc.createRange().createContextualFragment(' ' + fieldHTML(doc, kind, listKind) + ' ');
+  t.range.deleteContents();
+  t.range.insertNode(frag);
+  /* Both passes are idempotent by their own guards, so this re-wires the new
+     one and leaves every existing one exactly as it was. */
+  try{ wireCheckboxes(doc); }catch(_){}
+  try{ await wireColorSelects(doc); }catch(_){}
+  refreshSigBtn();
+}
+function openFieldMenu(){
+  var doc = frame && frame.contentDocument;
+  if(!doc) return;
+  var ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9994;background:rgba(20,10,8,.62);display:flex;align-items:center;justify-content:center;padding:20px;';
+  function sheet(title, sub, items){
+    return '<div style="background:#fff;border-radius:16px;padding:22px 20px;max-width:380px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 18px 60px rgba(0,0,0,.4);">' +
+      '<h3 style="margin:0 0 4px;font:800 18px \'Segoe UI\',Arial,sans-serif;color:#1b1b1b;">' + title + '</h3>' +
+      '<p style="margin:0 0 16px;font:600 13px \'Segoe UI\',Arial,sans-serif;color:#6b5a54;">' + sub + '</p>' +
+      items.map(function(k){
+        return '<button type="button" data-pick="' + k.id + '" style="display:block;width:100%;margin:0 0 10px;padding:14px 16px;min-height:48px;border-radius:11px;border:1px solid #c8202e;background:#fff;color:#8f1620;font:800 15px \'Segoe UI\',Arial,sans-serif;cursor:pointer;text-align:left;">' +
+          esc(k.label) + (k.hint ? '<span style="display:block;font:600 12px \'Segoe UI\',Arial,sans-serif;color:#6b5a54;margin-top:2px;">' + esc(k.hint) + '</span>' : '') +
+          '</button>';
+      }).join('') +
+      '<button type="button" data-pick="" style="display:block;width:100%;margin:6px 0 0;padding:13px 16px;min-height:44px;border-radius:11px;border:1px solid #c9c2bf;background:none;color:#6b5a54;font:700 14px \'Segoe UI\',Arial,sans-serif;cursor:pointer;">Cancel</button></div>';
+  }
+  ov.innerHTML = sheet('Add a field', 'It lands where you last tapped in the contract.', FIELD_KINDS);
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e){
+    if(e.target === ov){ ov.remove(); return; }
+    var t = e.target.closest('[data-pick]');
+    if(!t) return;
+    var pick = t.getAttribute('data-pick');
+    if(!pick){ ov.remove(); return; }
+    if(pick === 'list'){
+      ov.innerHTML = sheet('Which list?', 'The dropdown reads the same catalogue the printed fields do.', LIST_KINDS);
+      return;
+    }
+    if(LIST_KINDS.some(function(L){ return L.id === pick; })){ ov.remove(); insertField('list', pick); return; }
+    ov.remove();
+    insertField(pick);
+  });
+}
 function pickSigner(doc, cb){
   var names = { buyer:'Buyer', cobuyer:'Co-buyer', contractor:'Contractor (you)' };
   var order = ['buyer','cobuyer','contractor'];
   var avail = order.filter(function(k){ return doc && doc.querySelector('[data-sig="' + k + '"]'); });
+  /* 965: `order` was a WHITELIST, and a signature line added by hand carries a
+     key that is not in it \u2014 so the slot would render, sit there, and never be
+     offered. That is the STAGES / normStage() shape: a value the whitelist has
+     never heard of is silently dropped. Any [data-sig] the document actually
+     contains is now offered, the three known ones first so the order a rep is
+     used to does not move, each extra labelled by its own data-sig-label. */
+  if(doc){
+    Array.prototype.forEach.call(doc.querySelectorAll('[data-sig]'), function(el){
+      var k = el.getAttribute('data-sig');
+      if(!k || avail.indexOf(k) !== -1) return;
+      avail.push(k);
+      names[k] = el.getAttribute('data-sig-label') || 'Signature';
+    });
+  }
   if(avail.length <= 1){ cb(avail[0] || null); return; }
   var ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;inset:0;z-index:240;background:rgba(20,10,8,.62);display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -24445,6 +24594,7 @@ document.getElementById('sigBtn').addEventListener('click', function(){
   openPad();
 });
 var __sigWho = null;
+document.getElementById('addFieldBtn').addEventListener('click', openFieldMenu);
 document.getElementById('sigClear').addEventListener('click', sigReset);
 document.getElementById('sigCancel').addEventListener('click', function(){ window.__ceSigner = null; sigModal.style.display = 'none'; });
 document.getElementById('sigApply').addEventListener('click', async function(){
@@ -40834,6 +40984,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:965, d:'2026-08-21', t:'Add a field to a contract by hand', s:'Tap where you want it, tap the \u2795 Field button, and choose: a text box, a checkbox, a dropdown, a signature line or an initials line. The field lands where you tapped. Dropdowns can read any of the lists the printed fields use \u2014 yes/no, trim, siding, gutter or shingle colours, or numbers. A signature or initials line you add joins the list you get when you tap Client signature, so it can actually be signed rather than just printed. It will only let you put a field where the contract is meant to be filled in \u2014 tap a heading or the roof diagram and it says so instead of quietly doing nothing. Anything you add can be removed again; the printed fields cannot, on purpose.' },
 { b:964, d:'2026-08-21', t:'The siding and gutter agreements get real dropdowns', s:'The roofing agreement has had proper pickers for a while \u2014 you choose a shingle colour, a drip edge, a gutter apron. Siding and gutters had none: ninety-one blank boxes between them, so you typed everything and they read like a form rather than a contract. Seventeen of those fields are now dropdowns, fed from the same materials catalog the Visualizer uses: siding brand, profile and colour, corner post, window and door trim, soffit, fascia, shutters, gutter and downspout colour, and the counts. The 84 siding colours are grouped by manufacturer and product line so the list is usable on an iPad. Nothing changes on a contract that was already saved \u2014 those keep the fields, and the wording, they were signed with.' },
 { b:963, d:'2026-08-21', t:'The full-height screens clear the button bar too', s:'962 did the sheets that slide up from the bottom. This does the screens that fill the whole phone: the Outbox, Self Check, the client editor, Scope of Loss, the Line Item Library, iTel Lab, the estimate preview and the Community canvas. Each one ended flush against the bottom of the screen, so its last line sat behind the row of round buttons even after you scrolled as far as it would go. The photo editor is in here for a different reason \u2014 its row of colour swatches is not a list that scrolls, it just sat in the bar\u2019s band, so the bar was taking those taps. The Showcase is deliberately left alone: it is the client-facing presentation and its slides are built to fill the screen exactly.' },
 { b:962, d:'2026-08-21', t:'Four more sheets stop above the button bar', s:'The row of round buttons at the bottom of the installed app covers the last inch of any sheet that runs flush to the bottom of the screen. Add from Library, the payment sheet, the adjuster sheet and the partner sheet all did, so their last row \u2014 and in two cases the Delete button \u2014 sat underneath it. All four now leave the same 88px of clearance the New Project sheet and the punch sheet have used for a while. 961 fixed the library one by stacking it over the bar instead; that worked but it was a second way of doing the same thing, and it hid the bar while the sheet was open. This replaces it, so there is one way.' },

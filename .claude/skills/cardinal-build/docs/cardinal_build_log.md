@@ -20497,6 +20497,54 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 965 — a field you can add yourself (21 Aug 2026)
+
+Theo's option 3, and his pick of three placements: **at the caret**.
+
+**＋ Field** opens a sheet — text box, checkbox, dropdown, signature line, initials line, or remove
+the one here — and the field lands where he last tapped.
+
+**The audit was the build.** Fields in this app are wired by CLASS, and both wire passes already
+guard against double-binding (`data-cbx`, `data-crsel-wired`). So inserting a field and re-running
+them is safe *by design*, not by luck — the machinery for a hand-placed field had been sitting
+there since 748/750. What this build actually adds is a menu, a fence, and one repair.
+
+**The repair is the interesting part, and it would have shipped a dead control.**
+`pickSigner` filtered a hard whitelist — `['buyer','cobuyer','contractor']` — against the document.
+A signature line added by hand carries a key that list has never heard of, so it would have
+rendered, sat on the page, and **never been offered when you tap Client signature**. That is the
+`normStage()` shape precisely: a value the whitelist does not know is silently dropped. It now
+appends whatever `[data-sig]` the document actually contains, the three known ones first so the
+order a rep is used to does not move, each extra labelled by its own `data-sig-label`.
+
+**Two rules the inserted fields obey, both already paid for here.** The value lives in the markup,
+because `serializeFrame()` clones and `cloneNode(true)` copies attributes rather than live state —
+so a ticked box is the character `\u2611` and a chosen option is a `selected` attribute. And a
+field can only land where `EDITABLE_SELECTOR` says the document is fillable; a heading, the roof
+diagram and the signature block refuse, **and say why**, because silent refusal on a legal document
+is the worst possible answer.
+
+Anything added carries `data-added="1"` and can be taken back out. A printed field cannot — a
+contract's own wording is not something to delete by accident.
+
+Verification: `check_build.py` green 964 → 965 · **`gate_965.mjs` 12/12 GREEN**, **RED on the 964
+control with 10 named failures** · `gate_964.mjs` re-run 9/9. The gate drives the **real** editor
+on a **real** siding agreement rather than a fixture, and the assertions that matter are the ones
+about wiring: the inserted checkbox is *clicked* and must tick, the inserted dropdown is *chosen
+from* and the choice must survive a `cloneNode`.
+
+⚠️ **The negative control CRASHED twice before it ever reported, which is BUG_CLASSES 37 twice in
+one build.** First `window.insertField is not a function`; then, once that was guarded,
+`caretIn(null)` — because the element the test clicks into only exists after a field has been
+added. *Guarding the new SYMBOL is not enough; the INTERACTION has to be guarded too.* A control
+that throws proves nothing, and a crash reads as "not green" rather than as "no evidence".
+
+⚠️ **And assertion 8 could not fail.** `newKeys.every(...)` over an empty array is `true`, so on any
+tree where nothing was inserted — including the control — it passed. Now it also requires two keys.
+
+**Next in Theo's order:** 4 (a siding / gutter diagram, which means drawing one — the master PDFs
+have none), then 5 (fill progress), then 6 (print fidelity).
+
 ## Build 964 — the siding and gutter agreements stop being forms (21 Aug 2026)
 
 Theo: *"For the contracts, I've had you change them several times, something about them feels and
