@@ -105,8 +105,10 @@ def gate_tag_balance(src):
     # and red there. It cost a round: a source COMMENT that spelled out a closing
     # div tag counted as one. Same regex as .github/workflows/check.yml on
     # purpose — a local gate that is laxer than CI is not a gate.
-    do = len(re.findall(r"<div", src, re.I))
-    dc = len(re.findall(r"</div>", src, re.I))
+    # case-SENSITIVE, because check.yml's JS regexes carry no /i flag and the
+    # claim "the same regex" has to be literally true to be worth anything
+    do = len(re.findall(r"<div", src))
+    dc = len(re.findall(r"</div>", src))
     report(do == dc, f"<div> tag balance ({do} open / {dc} close)"
            + ("" if do == dc else "  \u2014 CI counts these with a bare regex, so"
               " prose naming a div tag counts too"))
