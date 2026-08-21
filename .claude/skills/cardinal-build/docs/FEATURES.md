@@ -6219,3 +6219,37 @@ Gate: `gate_978.mjs` — 17 assertions. Runs the shipped `match()` over a job wi
 hit, hashed hit, **a different PO must MISS**, name/address still match), runs the shipped
 `newPunch()` against a recording shim to prove the reload precedes the job list, and measures
 ＋ New at the 44px touch floor in a real render, both themes. Control red, 11 named.
+
+## The header can name every screen now (build 979) — `crmHead()` + `goHome()`
+
+`crmNow()` names five views. `punchView` and `teamView` were not among them, so both answered
+`retail`, fell through to `stickyCrm()`, and wore whichever portal you had last used — the same
+page under the Community green (`#047857`), the Insurance white (`#FFFFFF`) or the Retail steel,
+decided by where you had been. Both now resolve to `production`.
+
+**Nothing was designed.** `body[data-crm-head="production"] .site`, its `#cr-hd2-ribbon` rule, its
+`#cr-hd2-bar` border and `TITLES.production` all already existed for the Production board.
+
+⚠️ **`data-crm` is untouched — the head moved, the PAGE did not.** Punch & Repairs is cross-CRM by
+construction (it lists items from all three and carries a CRM filter facet), so a
+production-tinted ground would be a lie. This is 754's line: grounds and module gates do not follow
+the portal, only the header does.
+
+⚠️ **The check is LAST in `crmHead()`**, after `crmNow()` and after the `projopen` guard — an open
+project and a real CRM view both still outrank it.
+
+**`crmHead()` has three other consumers, and one of them would have broken quietly:**
+
+| consumer | effect |
+|---|---|
+| **`goHome()`** | ⚠️ would have moved the gold house from your CRM's home to **retail home**. Fixed in the same build: `if(crm === 'production' \|\| crm === 'sales') crm = stickyCrm();` — production and sales are TOOL screens, not portals. This also repairs the older wart on the Production board and the Sales Floor |
+| **`portalNow()`** → `syncPortalSections()` | the burger menu goes Production-shaped on these screens (Production section unhides; Sell, newbid and sol hide). Coherent — it is what the Production board already does — and the one visible change |
+| **`paintCrmPills(k)`** | no `production` set, so it falls to `PILL_HOME` (Contacts / Leads). Neutral, right for a cross-CRM page |
+
+Header ink on the steel ground, computed: `#ffffff` 17.26:1 · `#b9c0c9` 9.41:1 · `#7d8794` 4.74:1
+· `#f5a623` 8.52:1. All clear 4.5:1.
+
+Gate: `gate_979.mjs` — 12 assertions, control red 5 named. It **clicks the real gold house** with
+the three destinations spied (`goHome` is module-scoped; re-deriving its mapping would test
+nothing), and it **builds a copy of its own artifact with the guard removed** to prove that check
+can fail — at least four destinations must move without it.

@@ -3690,7 +3690,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 978 &#8212; you can start a punch-out from anywhere. The &#65291; in the header has a Punch-out row, and Punch &amp; Repairs has its own &#65291; New beside the title &#8212; both open the same form the Production board already used. The search on that page now finds a PO number too, typed either way: 1042 or #1042</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 979 &#8212; Punch &amp; Repairs and the Team Directory wear the Production header now. They were the last two screens the header could not name, so they came up green, white or steel depending only on which CRM you had been in last. The gold house still goes exactly where it went before</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41210,6 +41210,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:979, d:'2026-08-21', t:'Punch \u0026 Repairs and the Team Directory get the Production header',
+s:'Two screens never told the header what they were. Punch \u0026 Repairs and the Team Directory fell through to whichever CRM you had used last, so the same page came up under the Community green, the Insurance white or the Retail steel depending only on where you had been \u2014 and none of those is what either screen is. Both now wear the Production header: steel with the amber line, titled Production, the same one the Production board has always used. The page itself is unchanged: Punch \u0026 Repairs lists items from all three CRMs and has a CRM filter, so its background stays neutral rather than claiming to be one CRM. And the gold house still goes exactly where it went before \u2014 from either screen it returns you to YOUR CRM\u2019s home, not to retail. That was the part that would have broken quietly, so it was fixed in the same build; the Production board and the Sales Floor, which had always dropped you on retail home whatever CRM you were in, now do the same correct thing. One change you will notice: on these screens the burger menu is the Production one, so it offers the Production board, Crew Dispatch and the Schedule Board rather than the sales or insurance rows.' },
 { b:978, d:'2026-08-21', t:'Start a punch-out from anywhere, and find one by PO',
 s:'Filing a punch-out no longer means finding the Production board first. The \u002B in the app header has a Punch-out row, and the Punch \u0026 Repairs page has its own \u002B New button beside the title. Both open the same Add-an-item form the Production board has always used \u2014 same job list, same kinds (including Tarp), same assign and schedule fields \u2014 so there is one form to learn and one place a fix lands. Add one while Punch \u0026 Repairs is open and the list updates behind the form instead of waiting for a reload. And the search box on that page now matches the client\u2019s PO number as well as their name, the address, the item and the person it is assigned to; type it bare (1042) or with a hash (#1042), either finds it.' },
 { b:977, d:'2026-08-21', t:'A community job can sit on a waitlist',
@@ -58842,6 +58844,16 @@ function goHome(){
    hides the CRM title and the burger on every screen that follows. */
 document.body.classList.remove('projopen');
 var crm = crmHead(); /* 754: from a shared screen, home returns to YOUR CRM */
+/* 979: ...and production and sales are TOOL screens, not portals — there is no
+   "production home" to land on, which is why this branch has always fallen
+   through to showHome() and dropped you on RETAIL whatever portal you were in.
+   Harmless while only the Production board and the Sales Floor could reach it;
+   the moment 979 gave Punch & Repairs the production head it would have moved
+   that page's gold house from the Community hub to retail home. That is the
+   "will this break anything" this build had to answer, and the answer is no
+   because of this line. It repairs the older wart on the board and the floor
+   in the same stroke — same concept, one place. */
+if(crm === 'production' || crm === 'sales') crm = stickyCrm();
 if(crm === 'insurance' && typeof window.showCardinalTruth === 'function'){ window.showCardinalTruth(); }
 else if(crm === 'community' && window.CardinalCommunityHub && typeof window.CardinalCommunityHub.show === 'function'){ window.CardinalCommunityHub.show(); }
 else if(typeof window.showHome === 'function'){ window.showHome(); }
@@ -58857,6 +58869,25 @@ if(k !== 'retail') return k;
    header (insurance red) onto a retail client — the reported bug. Only shared
    screens (no profile open) follow the sticky portal, which is the 754 design. */
 if(document.body.classList.contains('projopen')) return 'retail';
+/* 979: Punch & Repairs and the Team Directory were the last two full-screen
+   views the header could not name, so they fell through to stickyCrm() and
+   wore whichever portal you had last used. Measured in Chromium before the
+   fix: the SAME page came up under the community green, the insurance white
+   or the retail steel depending only on where you had been.
+
+   Checked LAST on purpose. An open project (projopen) and a real CRM view
+   both still outrank this, so the only screens it can reach are the two
+   named here.
+
+   And it moves the HEAD only. data-crm stays 'retail' on both — the punch
+   page is cross-CRM by construction (it carries a CRM filter facet and
+   lists items from all three), so a production-tinted PAGE ground would be
+   a lie. 754 drew that line deliberately: grounds and module gates do not
+   follow the portal, only the header does. */
+var pv979 = document.getElementById('punchView');
+if(pv979 && pv979.style.display !== 'none') return 'production';
+var tv979 = document.getElementById('teamView');
+if(tv979 && tv979.style.display !== 'none') return 'production';
 return stickyCrm();
 }
 function skin(){

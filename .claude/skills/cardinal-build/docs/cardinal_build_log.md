@@ -20497,6 +20497,101 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 979 — Punch & Repairs and the Team Directory get the Production header (21 Aug 2026)
+
+Theo: *"Can you make productions have its own header or will that break anything?"* — a question
+with a risk clause in it, and the risk clause is the build.
+
+**The first half of the answer was already no work.** Production HAS its own header and has had
+one for a long time: `body[data-crm-head="production"] .site` (steel `#181b20`, amber `#f5a623`),
+its own `#cr-hd2-ribbon` rule, its own `#cr-hd2-bar` border and `TITLES.production`. Nothing
+needed inventing.
+
+**The actual defect is that two screens could not name themselves.** `crmNow()` checks five views
+— `cardinalTruthView`, `communityHubView`, `cr-pb`, `cr-sf`, `insClientsView`. `punchView` and
+`teamView` are not among them, so both answer `retail`, and `crmHead()` then falls to
+`stickyCrm()`. Measured in Chromium on the 978 tree, all three portals × both screens:
+
+| portal | Punch & Repairs and Team wore | `--hbg` |
+|---|---|---|
+| community | the Community green | `#047857` |
+| insurance | the Insurance white | `#FFFFFF` |
+| retail | the Retail steel | `linear-gradient(180deg,#243342,#16202b)` |
+
+**The same page, three different headers, decided by where you had been.** After: `#181b20` and
+the title `Production` in all six.
+
+⚠️ **The head moved; the PAGE did not, and that is deliberate.** `data-crm` stays `retail` on both.
+Punch & Repairs is cross-CRM by construction — it lists items from all three and carries a CRM
+filter facet — so a production-tinted ground would be a lie. 754 drew exactly that line: *"grounds
+and module gates deliberately do NOT follow the portal"*, because the naive version painted white
+ink on the light insurance ground across every shared screen.
+
+⚠️ **The check goes LAST in `crmHead()`**, after `crmNow()` and after the `projopen` guard, so an
+open project and a real CRM view both still outrank it. The only two screens it can reach are the
+two it names.
+
+### The risk clause — and it was real
+
+`crmHead()` feeds three other consumers, and one of them would have broken quietly.
+
+**`goHome()` reads `crmHead()`.** Give the punch page a production head and `goHome` falls through
+its insurance/community branches to `showHome()` — **retail home**. So a community user tapping the
+gold house on Punch & Repairs would have gone from the Community hub to the retail dashboard, with
+nothing on screen to explain it. That is the whole of *"or will that break anything"*.
+
+The fix is one line, and it repairs an older wart in the same stroke: **production and sales are
+TOOL screens, not portals.** There is no "production home" to land on, which is why that branch has
+always dropped Production-board and Sales-Floor users on retail whatever CRM they were in.
+
+```js
+if(crm === 'production' || crm === 'sales') crm = stickyCrm();
+```
+
+Verified by **clicking the real gold house** in Chromium with the three destinations spied — not by
+re-deriving the mapping, because `goHome` is module-scoped and a re-derivation tests nothing. All
+six combinations land exactly where they landed on 978. And the check is **proved able to fail**:
+`gate_979` builds a copy of its own artifact with that line removed and asserts that **at least
+four** destinations move (they do — community and insurance, both screens).
+
+**`portalNow()` reads `document.body.dataset.crmHead`,** so `syncPortalSections()` follows too and
+the burger menu goes Production-shaped on these screens: the Production section unhides, Sell and
+the community/insurance sections hide. That is coherent — it is what the Production board already
+does — and it is the one change Theo will notice. Rendered-verified for the insurance portal (the
+Scope of Loss row goes `shown → hidden`); the rest is asserted from `syncPortalSections`' own
+expressions, evaluated at `p='production'`, because in the sentinel harness those nav rows are
+hidden by resolve-or-hide anyway and a client-rect measurement there would have proved nothing.
+
+**`paintCrmPills(k)`** has no `production` set, so it falls to `PILL_HOME` — Contacts / Leads.
+Neutral, and right for a cross-CRM page.
+
+Header ink on the steel ground, computed: `--hin` #ffffff **17.26:1**, `--hmt` #b9c0c9 **9.41:1**,
+`--hdm` #7d8794 **4.74:1**, `--hac` #f5a623 **8.52:1**. All four clear 4.5:1.
+
+Verification: check_build green (978 → 979). **gate_979.mjs 12/12 GREEN, RED on the 978 control
+with 5 named failures and no crash** — and the control's failures narrate the defect exactly,
+printing the three different `--hbg` values the same page used to wear. gate_sweep 967–979:
+**13/13 green on HEAD**. Sentinel: 13 findings, **identical on 978**.
+
+⚠️ **The comment-pollution trap fired for the FIFTH time in three days, again inside the gate.**
+The order assertion used `CRMHEAD.indexOf('stickyCrm()')`, whose first hit is my own explanatory
+comment — *"Reaching stickyCrm() meant the header wore..."* — so it reported the fallback as coming
+BEFORE the checks and failed correct code. Anchored on `return stickyCrm()` instead. **The rule is
+assert on a form your own prose cannot contain**, and I keep having to relearn it.
+
+⚠️ **And a regex that could not cross a paren.** The menu assertion pulled
+`setSectionHidden(findSec('sell'), …)`'s second argument with `[^)]*?`, which cannot get past the
+`(` in `!(p === 'retail' || p === 'sales')`. It returned `null`, and the gate read a **parse
+failure as a behaviour failure**. Replaced with a paren walk. Both faults were the gate's, not the
+app's — which is this project's own standing question, *"is the test or the app wrong?"*, answered
+the usual way.
+
+**Could not capture:** a before/after screenshot of the header. Playwright's screenshot waits on
+`document.fonts.ready` and then on the element being motionless; in this harness fonts are aborted
+and the header carries an animated gradient border, so three approaches all timed out with the page
+correctly rendered. The hex values above are exact and rendered-verified; the Vercel preview is the
+picture.
+
 ## Build 978 — start a punch-out from anywhere, and find one by PO (21 Aug 2026)
 
 Theo, verbatim: *"Can you do a plus new punch out and make it to where you can search by name
