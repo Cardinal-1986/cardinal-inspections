@@ -5599,3 +5599,12 @@ by a row each owns (`secOfNav('sol' | 'prodboard' | 'newbid')`), never by headin
 needs the catalog; admins still get it relocated under Admin by `reorg()`. The doors into
 each portal never hide: `#cr-nav-production` in Daily, the CRM switcher, Cardinal Truth.
 Gate: `gate_955.mjs` (five-portal matrix + a non-admin boot).
+
+## Menu symmetry completed (956)
+
+All four portal sections are now scoped the same way: Sell → retail + sales, Insurance →
+insurance, Production → production, Community → community (`syncPortalSections()`, rules
+anchored on `secOfNav`). 956 changed only the Insurance rule (`p !== 'insurance'`, was
+`p === 'retail'`). ⚠ Gate note: `gate_956.mjs` owns the full five-portal matrix;
+`gate_955.mjs`'s matrix was corrected in place at 956 so it does not assert retired
+behaviour.

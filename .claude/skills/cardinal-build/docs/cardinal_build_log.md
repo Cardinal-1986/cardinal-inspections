@@ -20440,6 +20440,35 @@ fixture both ways (fixture → icons + 80% wet blue computed; route aborted → 
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
 
+## Build 956 — the menu is symmetric (21 Aug 2026)
+
+Theo: "yes make insurance symmetric too", answering the asymmetry 955 flagged. One rule
+changed — `secOfNav('sol')` now hides unless `p === 'insurance'`, where it used to hide only
+in retail. The set is complete:
+
+| section | shows in |
+|---|---|
+| Sell | retail + sales |
+| Insurance | insurance |
+| Production | production |
+| Community | community |
+
+**The gate matrix is the deliverable, not the one-line diff.** A symmetry claim is only worth
+what its least-checked cell is worth, so `gate_956.mjs` runs the whole five-portal ×
+four-section matrix (20 cells) plus the doors, Suppliers-everywhere, Daily-never-hides,
+coach-survives-round-trip and the non-admin boot — 37 assertions. **The 955 control fails on
+exactly the three cells 956 changed** (insurance shown in production / community / sales),
+which is what a precise control looks like.
+
+⚠ **`gate_955.mjs`'s MATRIX was corrected in place, not left to rot.** Its Insurance column
+described behaviour 956 replaced; a gate that lies about current behaviour is worse than no
+gate, and the next session would have inherited a red run with no explanation. It now tracks
+current behaviour (37/37 on the 956 tree) and carries a header note saying 956 owns the
+Insurance column.
+
+Gates: `check_build.py` green 955 → 956 · **`gate_956.mjs` 37/37**, red on the 955 control
+with 3 named failures · `gate_955.mjs` re-run green on the same tree after its correction.
+
 ## Build 955 — one menu section per portal (21 Aug 2026)
 
 Theo: "yes productions only productions, community only community" — answering the offer
