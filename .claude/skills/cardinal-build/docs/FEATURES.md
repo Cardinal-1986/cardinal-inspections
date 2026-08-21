@@ -5880,3 +5880,45 @@ re-implementation.
 
 **Still free text, deliberately:** the `[yes / no]` fields. Those want checkboxes, not dropdowns —
 a separate pass.
+
+## Add a field to a contract by hand (build 965, 21 Aug 2026)
+
+Theo: *"fillable sections? Manually adding text box, checkmarks, dropdowns, signature and initial
+lines."* Placement is **at the caret**, his pick from three offered.
+
+**＋ Field** in `.edbtns` opens a sheet: Text box · Checkbox · Dropdown · Signature line ·
+Initials line · Remove the field here. A dropdown asks which list — `yesno` (new) · trim · siding ·
+gutter · shingle · numbers.
+
+**Almost none of this is new machinery, which is the point.** Fields are wired by CLASS — `.ph` is
+already in `EDITABLE_SELECTOR`, `.cbx` is claimed by `wireCheckboxes`, `select[data-crsel]` by
+`wireColorSelects` — and **both wire passes already guard against double-binding** (`data-cbx`,
+`data-crsel-wired`), so re-running them after an insert is safe by design rather than by luck.
+
+**Two rules, both already paid for here:**
+
+1. **The value lives in the markup.** `serializeFrame()` clones, and `cloneNode(true)` copies
+   attributes, not a control's live state. A ticked box is the character `☑`; a chosen option is a
+   `selected` **attribute**. Anything inserted obeys the same rule or it saves blank.
+2. **It goes only where the document is editable.** The caret is checked against
+   `EDITABLE_SELECTOR` first, and **the refusal says why** — a heading, the roof diagram and the
+   signature block are all fixed.
+
+⚠️ **`pickSigner` was a WHITELIST and this build had to open it.** `order =
+['buyer','cobuyer','contractor']`, filtered against the document — so a signature line added by
+hand carried a key the list had never heard of and would have rendered, sat there, and **never
+been offered**. That is the `normStage()` shape exactly. It now appends any `[data-sig]` the
+document actually contains, the three known ones first so the familiar order does not move, each
+extra labelled from its own `data-sig-label`.
+
+Inserted fields carry `data-added="1"` and can be removed again; printed ones refuse, and say so.
+
+Gate: `gate_965.mjs` (12 assertions, driving the **real** editor on a **real** siding agreement:
+the fence refuses a heading with a reason, each type lands at the caret, the checkbox is *wired*
+and its tick survives a clone, the dropdown is populated and its choice survives a clone, two
+signature keys do not collide, `pickSigner` offers them, and remove works only on added fields;
+control red 10 named).
+
+⚠️ **The control CRASHED twice before it reported.** First on `window.insertField is not a
+function`, then on `caretIn(null)`. BUG_CLASSES 37, twice in one build — guard the **interaction**,
+not just the symbol. And assertion 8 passed vacuously at first, because `[].every()` is `true`.
