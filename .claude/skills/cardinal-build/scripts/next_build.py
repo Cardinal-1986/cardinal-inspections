@@ -113,6 +113,17 @@ def index_at(ref):
     }
 
 
+def cross_branch_collisions(claimed):
+    """Build numbers claimed by MORE THAN ONE unmerged branch.
+
+    `claimed` maps a build number to a list of (branch, note). Neither branch is
+    on main, so the branch-vs-main check that this script has always done cannot
+    see them — and that is the 574-span collision exactly. Kept as its own
+    function so self_test() exercises the real rule rather than a copy of it.
+    """
+    return [(n, claimed[n]) for n in sorted(claimed) if len(claimed[n]) > 1]
+
+
 def self_test():
     """Prove prose() separates a repaired note from a reused number.
 
@@ -157,6 +168,29 @@ def self_test():
         ok = False
     else:
         print("ok: BOTH changelog entry shapes parse — { build, note } and { b, d, t, s }")
+
+    # THE GAP FOUND LIVE ON 21 AUG 2026. Two unmerged branches both claimed
+    # build 967 (the UX-audit branch and the contract-print branch) and this
+    # script printed both, three lines apart, without crossing them — because
+    # collision detection only ever compared a branch against MAIN. That is the
+    # 574-span disaster it was written to prevent, happening in its own output.
+    # Against the pre-fix version there is no cross_branch_collisions() at all,
+    # so this check cannot pass by accident.
+    fixture = {
+        967: [("origin/claude/a", "a refused write is held"),
+              ("origin/claude/b", "the printed contract shows its words")],
+        968: [("origin/claude/a", "the desk stops signing you out")],
+    }
+    hits = cross_branch_collisions(fixture)
+    if [n for n, _ in hits] != [967]:
+        print("FAIL: two branches claiming one number must be a collision — got %s"
+              % [n for n, _ in hits])
+        ok = False
+    elif len(hits[0][1]) != 2:
+        print("FAIL: the collision must name BOTH claimants")
+        ok = False
+    else:
+        print("ok: a number claimed by two UNMERGED branches is a COLLISION")
 
     # THE REGRESSION THAT MADE THIS SCRIPT ANSWER 810 ON 15 AUG 2026, when
     # builds 810-822 had already shipped in visualizer/index.html. Reading one
@@ -257,7 +291,7 @@ def main():
         for n, note in info["entries"].items():
             if n not in base["entries"]:
                 new.append(n)
-                claimed.setdefault(n, []).append(b)
+                claimed.setdefault(n, []).append((b, note))
             elif prose(note) != prose(base["entries"][n]):
                 bad.append(n)
                 collisions.append((b, n, base["entries"][n], note))
@@ -306,8 +340,15 @@ def main():
     print("  highest seen anywhere (main + every pushed branch): %d" % highest)
     if claimed:
         pending = sorted(claimed.keys())
+        # ⚠ 975: this printed claimed[n][0] and nothing else. `claimed` has ALWAYS
+        # been a number -> LIST of branches, so a number claimed twice printed as
+        # if it were claimed once, and the tool that exists to prevent the 574
+        # collision could not see one happening in front of it. Print every
+        # claimant.
         print("  unmerged but already claimed: %s"
-              % ", ".join("%d (%s)" % (n, claimed[n][0].replace("origin/", "")) for n in pending))
+              % ", ".join("%d (%s)" % (n, ", ".join(x[0].replace("origin/", "")
+                                                    for x in claimed[n]))
+                          for n in pending))
     if stale_only:
         top = sorted(stale_only, key=lambda x: -(x[1] or 0))[:3]
         print("  %d other pushed branch(es) are stamped at or below main's %s and"
@@ -315,13 +356,30 @@ def main():
               % (len(stale_only), base["stamp"],
                  ", ".join("%s %s" % (b.replace("origin/", ""), s) for b, s in top)))
 
-    if collisions:
+    # ⚠ 975: the collision this tool was BUILT for, and could not see. Until now
+    # it only compared each branch against MAIN — so it caught "this branch
+    # reuses a number already shipped" and missed "two unmerged branches claim
+    # the same number", which is precisely the 574-span disaster CLAUDE.md
+    # records. It had both facts in hand the whole time and never crossed them:
+    # `claimed` is a number -> list, and nothing ever tested len() > 1.
+    # Found live on 21 Aug 2026: 967 claimed by both the UX-audit branch and the
+    # contract-print branch, with an add/add clash on gate_967.mjs.
+    cross = cross_branch_collisions(claimed)
+
+    if collisions or cross:
         print("\n*** %d COLLISION(S) — these must be renumbered before merging ***\n"
-              % len(collisions))
+              % (len(collisions) + len(cross)))
         for b, n, mine, theirs in collisions:
             print("  build %d on %s" % (n, b.replace("origin/", "")))
             print("      main says   : %s" % mine[:58])
             print("      branch says : %s" % theirs[:58])
+        for n, who in cross:
+            print("  build %d claimed by %d UNMERGED branches — neither is on main yet"
+                  % (n, len(who)))
+            for b, note in who:
+                print("      %-46s : %s" % (b.replace("origin/", "")[:46], prose(note)[:52]))
+            print("      whichever merges first, the other conflicts: same app stamp,")
+            print("      same CHANGELOG head, and a gate_%d.mjs add/add clash." % n)
         print("\n  Merging one of these writes conflict markers into index.html and")
         print("  leaves two build stamps in one file. Renumber from %d upward first." % nxt)
         return 1

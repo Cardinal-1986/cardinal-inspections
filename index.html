@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 966 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 975 &#8212; every number on the Community hub is now a door. Tap Open bids, Out for decision, Parked, Awarded or Due &#8804; 7 days and the bid list below filters to exactly the jobs that figure counted. The waiting rows and the by-partner and by-stage lists open the same way, the table you are filtering no longer closes itself when you tap Apply, and a check-back date you have sailed past finally goes red</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -15981,6 +15981,54 @@ function openEstimateId(){
   }catch(e){}
   return null;
 }
+/* 970: WHICH project is this estimate on? The satellites (Publish, -> Contract,
+   Mark-as-Sent, and the plain Save) each used to read window.currentProject, which
+   only openProject() ever sets. Open a saved estimate from Menu -> Estimates and
+   that global still points at whatever client was open last — or is null — so the
+   id match below failed and rows[0] handed back a DIFFERENT client's newest
+   estimate. The editor knows its own project; ask it first. openPreview() already
+   did exactly this, so this is that one answer, shared. */
+function estProjectNow(){
+  try{
+    if(window.CardinalEstimates && typeof window.CardinalEstimates.currentProject === 'function'){
+      var p = window.CardinalEstimates.currentProject();
+      if(p && p.id) return p;
+    }
+  }catch(e){}
+  return window.currentProject || null;
+}
+/* 974: THE community bid amount. Six definitions of this lived in three blocks
+   and two of them had OPPOSITE precedence (cr-cc preferred the builder estimate,
+   cr-ch2's bidAmt preferred the hand-typed figure), so one job showed two numbers
+   on two screens. This is the only ladder now.
+   It takes the estimate ROW as a parameter rather than reading it: cr-cc's
+   liveEstimate() is per-open-job module state, so a shared helper that called it
+   would hand the open job's total to every row of a list. Callers with no
+   estimate loaded pass { total: n } or nothing.
+   `awarded` is the top rung and is new. bid.awarded_amount is written only by
+   ocSave's awarded arm, in the same call that sets stage Approved, so it is
+   absent on every Lead job and cannot perturb 971's Lead arm. */
+function commBidAmount(pr, est){
+  var C = (typeof parseCkAll === 'function') ? parseCkAll(pr) : {};
+  var b = C.bid || {}, l = C.lead || {};
+  var aw = Number(b.awarded_amount) || 0;
+  if(aw > 0) return { amt:aw, src:'awarded', at:b.awarded_at || '' };
+  var sub = Number(b.submitted_amount) || 0;
+  if(sub > 0) return { amt:sub, src:'logged', at:b.submitted_at || '' };
+  var et = est ? (Number(est.total) || 0) : 0;
+  if(et > 0) return { amt:et, src:'builder', lines:((est && est.line_items) || []).length || 0 };
+  var typed = Number(l.bid_amount) || 0;
+  if(typed > 0) return { amt:typed, src:'typed' };
+  return { amt:0, src:'none' };
+}
+/* the words a person sees. Deliberately short — these render into label slots
+   that are already uppercase mono, not into sentences. */
+function commBidSource(s){
+  return s === 'awarded' ? 'approved'
+       : s === 'logged'  ? 'submitted'
+       : s === 'builder' ? 'from estimate'
+       : s === 'typed'   ? 'quoted' : '';
+}
 function pickEstimate(rows, id){
   if(!rows || !rows.length) return null;
   if(id){
@@ -15992,6 +16040,11 @@ function pickEstimate(rows, id){
       if(window.report) window.report(new Error('open estimate ' + id + ' not in reloaded rows'),
                                      'Estimates', 'publish id match');
     }catch(e2){}
+    /* 970: the open estimate was asked for by id and is not in these rows, so
+       these rows belong to a different project. Falling through to rows[0] here
+       is how a publish could land on another client's estimate. A refusal the
+       user can read beats a wrong contract nobody notices. */
+    return null;
   }
   return rows[0];
 }
@@ -30768,6 +30821,18 @@ function showList() {
   function today() { return new Date().toISOString().slice(0, 10); }
 
   function toast(msg, cls = '') {
+    /* 969: this toast was appended INTO #cr-claims-mount, which styleMounts()
+       makes position:fixed with a non-auto z-index and cr-mounthead-styles pins
+       at z-index:60 !important — a stacking context. body.standalone #pwaNav is
+       9990 in the ROOT context, so this painted behind the installed bottom bar
+       at any z-index it was given; raising 300 higher would have been a silent
+       no-op. Route it through the channel 733 built and 735 named: it appends to
+       document.body, so it escapes the mount, and body.standalone #crToasts
+       already clears the bar. It also retires an unreadable ink — --cr-black is
+       #f2f4f7 in the DARK theme, so 'Deleted' was white-on-near-white at 1.10:1.
+       The 'error'/'success' vocabulary here is exactly what window.toast speaks,
+       so no call site moves. */
+    if (typeof window.toast === 'function') { window.toast(msg, cls); return; }
     document.querySelectorAll('#cr-claims-mount .cr-c-toast').forEach(t => t.remove());
     const el = document.createElement('div');
     el.className = 'cr-c-toast ' + cls;
@@ -33496,6 +33561,10 @@ function showList() {
     return dd===1?'yesterday':dd+'d ago';
   }
   function toast(msg,cls){
+    /* 969: same fix as cr-claims — see the note there. #cr-coach-mount is made
+       position:fixed with a z-index by show() and pinned to 60 !important by
+       cr-mounthead-styles, so this could never paint over #pwaNav (9990). */
+    if (typeof window.toast === 'function') { window.toast(msg, cls); return; }
     M.querySelectorAll('.cr-k-toast').forEach(function(t){t.remove();});
     var e=document.createElement('div'); e.className='cr-k-toast '+(cls||''); e.textContent=msg;
     M.appendChild(e); setTimeout(function(){e.remove();},2600);
@@ -34955,8 +35024,29 @@ try{
 var raw = pr.checklist || '{}';
 var ck; try{ ck = JSON.parse(raw); }catch(_){ ck = {}; }
 if(!ck.lead) ck.lead = {};
-if(partnerId) ck.lead.partner_id = partnerId;
-else          delete ck.lead.partner_id;
+/* 973: this wrote the id and NOTHING else, while the hub reads partner_name —
+   so attaching a partner here left the hub saying "No partner recorded", and
+   clearing one left a ghost name behind on every name-reading screen. The pair
+   is now written and cleared together.
+   A CONFIDENTIAL partner is stored as an id ONLY: denormalising its real name
+   into the project row would leak it into the hub, the search haystack and every
+   print path, which is exactly what get()'s mask exists to prevent. getRaw() is
+   module-private for this reason — the resolution has to happen in here. */
+if(partnerId){
+  ck.lead.partner_id = partnerId;
+  var row973 = null;
+  try{ row973 = getRaw(partnerId); }catch(_973){}
+  if(!row973){
+    try{ await load(); row973 = getRaw(partnerId); }catch(_973b){}
+  }
+  if(row973 && row973.confidential) delete ck.lead.partner_name;
+  else if(row973 && row973.name)    ck.lead.partner_name = row973.name;
+  /* roster still unreachable: keep the id, leave any existing name alone rather
+     than blanking a fact we simply could not confirm. */
+}else{
+  delete ck.lead.partner_id;
+  delete ck.lead.partner_name;
+}
 var next = JSON.stringify(ck);
 var r = await client.from('projects').update({ checklist: next }).eq('id', pr.id);
 if(r.error){ console.warn('[cpartners] setPartner', r.error.message); return false; }
@@ -35517,9 +35607,19 @@ return document.body.classList.contains('viewing-community-hub') ||
 async function loadPartners(){
 if(!window.CardinalCommunityPartners) return [];
 try{
-var all = await window.CardinalCommunityPartners.load();
+/* 973: this read load()'s raw CACHE, so both confidential partners rendered by
+   their real names in the required first field of every bid — and the save then
+   wrote that name into the project. list() is the masked view every other picker
+   already uses (pickPartner made this exact change). */
+await window.CardinalCommunityPartners.load();
+var all = window.CardinalCommunityPartners.list();
 var filtered = (all || []).filter(function(p){ return !p.archived; });
 filtered.sort(function(a,b){
+/* 973: "Habitat sorts first in every partner list" is load-bearing (CLAUDE.md —
+   they do most of the community volume and share the annual TV commercial), and
+   this is the required FIRST field of every bid. It was sorting them mid-list. */
+var ah = /habitat/i.test(a.name || '') ? 0 : 1, bh = /habitat/i.test(b.name || '') ? 0 : 1;
+if(ah !== bh) return ah - bh;
 return String(a.name || '').localeCompare(String(b.name || ''));
 });
 return filtered;
@@ -35755,6 +35855,10 @@ partnerSel.focus();
 return;
 }
 var partner = partners.find(function(p){ return p.id === partnerId; });
+/* 973: partners is now the MASKED list, so a confidential row's .name is the
+   placeholder. Storing it would write "Confidential Partner" into the job as if
+   it were the real name — keep the id and let display resolve it. */
+var masked973 = !!(partner && (partner.confidential || /^confidential/i.test(String(partner.name || ''))));
 var addrInput = bg.querySelector('[data-field="address"]');
 var propSel   = bg.querySelector('[data-field="property_id"]');
 var propId    = propSel ? propSel.value : '';
@@ -35787,7 +35891,8 @@ if(editPr){
   var mergedLead = Object.assign({}, editLead, {
     claim_type      : 'community',
     partner_id      : partner.id,
-    partner_name    : partner.name,
+    /* 973: never store a masked placeholder as if it were the real name */
+    partner_name    : masked973 ? undefined : partner.name,
     property_id     : propId && propId !== '__other__' ? propId : null,
     homeowner_name  : hoName,
     no_homeowner    : !!(bg.querySelector('[data-field="no_homeowner"]') || {}).checked,
@@ -35822,7 +35927,8 @@ stage_since     : new Date().toISOString(),
 lead: {
 claim_type      : 'community',
 partner_id      : partner.id,
-partner_name    : partner.name,
+/* 973: never store a masked placeholder as if it were the real name */
+partner_name    : masked973 ? undefined : partner.name,
 property_id     : propId && propId !== '__other__' ? propId : null,
 homeowner_name  : hoName,
 no_homeowner    : !!(bg.querySelector('[data-field="no_homeowner"]') || {}).checked,
@@ -36309,7 +36415,7 @@ return;
 await window.updateProjectLead(pr, function(L){
 L.claim_type = newType;
 L.retail = (newType === 'retail');
-if(current === 'community' && L.partner_id) delete L.partner_id;
+if(current === 'community' && (L.partner_id || L.partner_name)){ delete L.partner_id; delete L.partner_name; }   /* 973: the name was left behind */
 if(leavingIns) L.insurance = null;
 });
 if(typeof window.auditLog === 'function'){
@@ -41090,6 +41196,24 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:975, d:'2026-08-21', t:'Community: the numbers are doors now',
+    s:'Every headline figure on the Community hub counted something real and then left you to go and find it by hand. Tap one now \u2014 Open bids, Out for decision, Parked, Awarded, Due in 7 days \u2014 and the bid list below filters to exactly the jobs behind that number. The three waiting rows and the by-partner and by-stage lists do the same. Three things that were quietly wrong went with it: the table you were filtering used to close itself the moment you tapped Apply; a check-back date you had sailed past stayed a calm grey chip instead of going red; and every tile was drawing three nested cards inside itself.' },
+{ b:974, d:'2026-08-21', t:'Community: one bid amount',
+    s:'A community bid had six separate definitions of its own amount, and two of them ranked the same two sources in opposite orders \u2014 so the job card and the hub could show different money for the same job. There is one answer now: awarded, then submitted, then the estimate builder, then the figure you typed on the bid form. Every screen says which of those it is showing you. The Bid tab used to print $0.00 against every line; it now uses the same rule the estimate document does. Analytics counted a builder-priced bid as $0 in the win rate \u2014 it does not any more. And recording who funded an award now moves the bill-to, so the invoice goes to the party that paid.' },
+{ b:973, d:'2026-08-21', t:'Attaching a partner now shows up everywhere',
+  s:'Attaching a funding partner on a community job saved only an internal reference, not the name \u2014 so the job would still read "No partner recorded" on the Community hub even though the card showed the partner correctly. Removing a partner had the opposite problem: it left the old name behind. Both now save and clear together. Two more fixes to the same screen: the partner list in New Bid was showing the real names of partners marked confidential to everyone, and was sorting Habitat into the middle of the list instead of the top, on the one field every bid has to fill in.' },
+{ b:972, d:'2026-08-21', t:'A community job stops going quiet once it is awarded',
+  s:'The community card only had something to say up to the point a bid was awarded. After that \u2014 scheduled, invoiced, closed, lost \u2014 it showed no state and no next step, and there was no way to mark a build complete at all, which meant the invoice step could never be reached either. Every stage now has its own card: Scheduled shows the build day and lets you mark it complete, Invoiced shows what went out and opens Payment Information, and Closed and Lost read as quietly finished instead of urgent. "Get on the calendar" also books a real day now \u2014 it opens the calendar with the job filled in, instead of just changing the label and touching nothing.' },
+{ b:971, d:'2026-08-21', t:'Community bids can finally be marked submitted',
+  s:'Every community job was stuck at Bid Requested, and this is why: the card only offered "Mark it submitted" when the bid had been priced in the estimate builder. Most of them are priced by typing the amount into the bid form instead, so 14 of 15 jobs were offered "Price it" and nothing else \u2014 while the one job that did have estimates had two $0 drafts, so it got the button. The card now reads any recorded price: the builder total, the amount typed on the bid form, or an amount you logged. It also says which of those it is showing, and how long the bid has been overdue instead of counting down past zero. And logging a submitted amount now offers to move the job, since it was already recording the date you sent it.' },
+{ b:970, d:'2026-08-21', t:'Publish always acts on the estimate you have open',
+  s:'If you opened a saved estimate from Menu \u2192 Estimates rather than from a client, Publish, \u2192 Contract and Mark as Sent were looking up the last client you had open instead of the one the estimate belongs to \u2014 and when they could not find it, they quietly took that client\u2019s newest estimate instead. That could publish or contract the wrong homeowner\u2019s estimate. They now ask the open estimate which job it is on, and if anything still does not line up they stop and say so rather than guessing. Saving an estimate that way was also moving the wrong client\u2019s stage; that is fixed too.' },
+{ b:969, d:'2026-08-21', t:'Claims messages you could not see on a phone',
+  s:'Every Saved, Deleted, Claim created and Could not delete in the Claims section \u2014 and the notice that says the pipeline moved a job by itself \u2014 was being painted underneath the bottom bar in the installed app. On a phone you tapped Save and nothing appeared to happen, whether it worked or not. They now come up through the same message strip the rest of the app uses, above the bar. They were also near-invisible white-on-white in dark mode; that is fixed by the same change.' },
+{ b:968, d:'2026-08-21', t:'The Supplement Desk stops signing you out',
+  s:'If you were not an admin and you tapped Supplement Desk, the desk signed you out \u2014 not just of the desk, but of Cardinal itself, on every device you were signed in on. It shares one sign-in with the app, and it was cancelling that sign-in to turn you away. Now it just says so, tells you to ask Theo or Joan, and leaves you signed in. It also finally has a way back: a Cardinal link in the desk header, so the desk is no longer a dead end on a phone.' },
+{ b:967, d:'2026-08-21', t:'A change the server refuses is no longer thrown away',
+  s:'Before: if a change you made offline was refused by the server when it tried to sync \u2014 a permission rule, a value the database would not take \u2014 the app quietly deleted it and then flashed a green "All changes synced". Now it keeps it. The sync chip turns red, says how many changes could not sync, and stays red until you deal with them; tapping it lists each one with what you changed, the reason the server gave, and a Try again or Discard button. Photos held back from a punch-out show there too. And an expired login is no longer mistaken for a refusal \u2014 the app refreshes and tries once more first.' },
 { b:966, d:'2026-08-21', t:'A contract tells you what is still blank', s:'A contract goes out with an empty box in it because nobody can see the empty box from the top of a three-page document. There is now a chip beside \u2795 Field: it counts every placeholder still showing its prompt, every dropdown nobody has chosen from, and every tick-one-of-these set with nothing ticked. It is red while anything is blank and green when nothing is, and tapping it jumps to the next blank and outlines it. Optional boxes \u2014 gutter guards, the closeout checklist \u2014 are not counted, because a counter that reports ten things missing on a finished contract is a counter everyone learns to ignore. Signatures are not counted either: that is the Client signature button and its own step. It counts, it does not block \u2014 a field can legitimately be N/A, and being stopped by your own paperwork is worse than seeing a number.' },
 { b:965, d:'2026-08-21', t:'Add a field to a contract by hand', s:'Tap where you want it, tap the \u2795 Field button, and choose: a text box, a checkbox, a dropdown, a signature line or an initials line. The field lands where you tapped. Dropdowns can read any of the lists the printed fields use \u2014 yes/no, trim, siding, gutter or shingle colours, or numbers. A signature or initials line you add joins the list you get when you tap Client signature, so it can actually be signed rather than just printed. It will only let you put a field where the contract is meant to be filled in \u2014 tap a heading or the roof diagram and it says so instead of quietly doing nothing. Anything you add can be removed again; the printed fields cannot, on purpose.' },
 { b:964, d:'2026-08-21', t:'The siding and gutter agreements get real dropdowns', s:'The roofing agreement has had proper pickers for a while \u2014 you choose a shingle colour, a drip edge, a gutter apron. Siding and gutters had none: ninety-one blank boxes between them, so you typed everything and they read like a form rather than a contract. Seventeen of those fields are now dropdowns, fed from the same materials catalog the Visualizer uses: siding brand, profile and colour, corner post, window and door trim, soffit, fascia, shutters, gutter and downspout colour, and the counts. The 84 siding colours are grouped by manufacturer and product line so the list is usable on an iPad. Nothing changes on a contract that was already saved \u2014 those keep the fields, and the wording, they were signed with.' },
@@ -47637,7 +47761,7 @@ if(!btn) return;
 var saveBtn = document.querySelector('#cr-est-view [data-act="save"]');
 if(!saveBtn){ alert('Editor not ready.'); return; }
 btn.disabled = true; btn.textContent = 'Publishing\u2026';
-var projectBefore = window.currentProject;
+var projectBefore = estProjectNow();   /* 970 */
 var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 try{
 saveBtn.click();
@@ -47659,6 +47783,10 @@ alert('Could not find the saved estimate to publish.');
 return;
 }
 var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
+
+/* 970: pickEstimate returns null when the open estimate is not in these rows —
+   i.e. they belong to a different client. Say so; never publish the other one. */
+if(!est){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
 var docId = await publish(est, projectBefore);
 if(!docId){ return; }
 if(!openDoc(docId)){
@@ -47826,8 +47954,8 @@ var go = confirm(
 );
 if(!go) return;
 }
-var project = window.currentProject;
-if(!project || !project.id){ alert('No client loaded.'); return; }
+var project = estProjectNow();   /* 970 */
+if(!project || !project.id){ alert('Open an estimate first.'); return; }
 btn.disabled = true; btn.textContent = 'Working\u2026';
 var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 try{
@@ -47842,6 +47970,10 @@ return;
 var rows = await window.CardinalEstimates.loadForProject(project.id);
 if(!rows.length){ alert('Could not find the saved estimate.'); return; }
 var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
+
+/* 970: pickEstimate returns null when the open estimate is not in these rows —
+   i.e. they belong to a different client. Say so; never contract the other one. */
+if(!est){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
 var docId = await generate(est, project);
 if(!docId) return;
 if(typeof window.reload === 'function'){
@@ -47936,6 +48068,14 @@ return stage;
 }
 var toastEl = null;
 function toast(html, ms){
+/* 969: this one is NOT trapped in a mount — it appends to document.body — but it
+   sat at z-index 9700, under body.standalone #pwaNav's 9990, and at
+   bottom:calc(24px + safe-area), inside the bar's own band. Rather than invent a
+   fourth bottom-offset constant and land it exactly on top of #crToasts, route it
+   through the same stack. 733 chose textContent deliberately and named THIS toast
+   as the HTML one; the three call sites now pass plain text, so nothing is lost
+   but the bold. */
+if (typeof window.toast === 'function') { window.toast(html); return; }
 if(!toastEl){
 toastEl = document.createElement('div');
 toastEl.className = 'cr-ess-toast';
@@ -47965,7 +48105,7 @@ displayStage('Lost') + '?'
 if(!ok) return;
 try{
 await window.setStage(project.id, 'Lost');
-toast('Moved to <b>' + displayStage('Lost') + '</b>');
+toast('Moved to ' + displayStage('Lost'));
 }catch(e){
 console.warn('[ess] setStage Lost failed:', e);
 }
@@ -47978,7 +48118,7 @@ if(current === 'Lost') return;
 if(rank(current) >= rank(target)) return;
 try{
 await window.setStage(project.id, target);
-toast('Pipeline moved to <b>' + displayStage(target) + '</b>');
+toast('Pipeline moved to ' + displayStage(target));
 }catch(e){
 console.warn('[ess] setStage failed:', e);
 }
@@ -47993,7 +48133,7 @@ saveBtn.dataset.crEssHooked = '1';
 saveBtn.addEventListener('click', function(){
 var statusSel = view.querySelector('[data-f="status"]');
 var status = statusSel ? statusSel.value : null;
-var project = window.currentProject;
+var project = estProjectNow();   /* 970: the plain Save path moved the WRONG client's stage */
 if(!status || !project) return;
 var elapsed = 0;
 var iv = setInterval(function(){
@@ -48017,7 +48157,7 @@ var view = document.getElementById('cr-est-view');
 if(!view) return;
 var statusSel = view.querySelector('[data-f="status"]');
 if(!statusSel || statusSel.value !== 'draft') return;
-var project = window.currentProject;
+var project = estProjectNow();   /* 970 */
 var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 var elapsed = 0;
 var iv = setInterval(function(){
@@ -48073,7 +48213,7 @@ return;
 /* 780: the write landed and NOTHING said so — the list still read draft, which
    is exactly what "it does not go out of draft" looked like from his side. */
 if(_wrote){
-toast('Estimate marked <b>Sent</b>');
+toast('Estimate marked Sent');
 try{
   if(window.CardinalEstimates && typeof window.CardinalEstimates.refreshSavedList === 'function'){
     window.CardinalEstimates.refreshSavedList(project.id);
@@ -51291,6 +51431,11 @@ else start();
 
 window.CardinalProduction = {
   open      : open,
+  /* 972: the community card needs "which day is this build booked for" and
+     schedFor() is already the app's named answer ("the REAL schedule:
+     appointments of kind 'job'", 766). Exported read-only so the card asks the
+     one resolver rather than growing a second copy of the filter. */
+  schedFor  : schedFor,
   close     : close,
   addFor    : function(projectId){ openAdd(projectId); },
   refresh   : async function(){ await load(); lastSig = ''; render(); },
@@ -52508,10 +52653,22 @@ function pTx(mode, run){
 }
 function pAll(){ return pTx('readonly', function(st){ return st.getAll(); }).catch(function(){ return []; }); }
 function pDel(id){ return pTx('readwrite', function(st){ return st.delete(id); }); }
-function pClear(){ return pAll().then(function(rows){ return Promise.all(rows.map(function(r){ return pDel(r.id); })); }).then(function(){ _photoPend = {}; lastSig=''; try{ render(); }catch(_){} }).catch(function(){}); }  /* 871: drop every held photo on sign-out */
-var _photoPend = {}, _flushingPhotos = false;
-function refreshPhotoPend(){ return pAll().then(function(rows){ var m={}; rows.forEach(function(r){ m[r.itemId]=(m[r.itemId]||0)+1; }); _photoPend=m; return rows.length; }); }
+function pClear(){ return pAll().then(function(rows){ return Promise.all(rows.map(function(r){ return pDel(r.id); })); }).then(function(){ _photoPend = {}; _photoStuck = {}; lastSig=''; try{ render(); }catch(_){} }).catch(function(){}); }  /* 871: drop every held photo on sign-out */
+var _photoPend = {}, _photoStuck = {}, _flushingPhotos = false;
+function refreshPhotoPend(){ return pAll().then(function(rows){ var m={}, s={}; rows.forEach(function(r){ if(r && r.dead) s[r.itemId]=(s[r.itemId]||0)+1; else m[r.itemId]=(m[r.itemId]||0)+1; }); _photoPend=m; _photoStuck=s; return rows.length; }); }
 function photoPendFor(id){ return _photoPend[id] || 0; }
+/* 967: held-because-refused, counted separately from still-uploading. */
+function photoStuckFor(id){ return _photoStuck[id] || 0; }
+function stuckPhotos(){ return pAll().then(function(rows){ return rows.filter(function(r){ return !!(r && r.dead); }); }).catch(function(){ return []; }); }
+function retryPhoto(id){
+  return pAll().then(function(rows){
+    var hit = rows.filter(function(r){ return r.id === id; })[0];
+    if(!hit) return null;
+    hit.dead = 0; hit.err = null;
+    return pTx('readwrite', function(st){ return st.put(hit); }).then(function(){ return flushPhotos(); });
+  });
+}
+function discardPhoto(id){ return pDel(id).then(function(){ return refreshPhotoPend(); }); }
 function queuePhoto(itemId, blob){
   var me = myEmail();
   return pTx('readwrite', function(st){ return st.add({ itemId:itemId, blob:blob, by:me, name:nameOf(me), at:new Date().toISOString() }); })
@@ -52525,6 +52682,9 @@ function queuePhoto(itemId, blob){
     });
 }
 function _pNet(e){ var m = String((e && e.message) || e); return /load failed|failed to fetch|networkerror|network request failed|timed? ?out|fetch/i.test(m); }
+/* 967: the photo half asks the outbox whether an error was really a refusal or
+   just an expired token, so the two halves can never drift apart. */
+function _pAuth(e){ try{ return !!(window.CardinalOutbox && window.CardinalOutbox.authish && window.CardinalOutbox.authish(e)); }catch(_){ return false; } }
 async function flushPhotos(){
   if(_flushingPhotos) return;
   if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
@@ -52532,6 +52692,7 @@ async function flushPhotos(){
   _flushingPhotos = true;
   try{
     var rows = await pAll();
+    rows = rows.filter(function(r){ return !r.dead; });   /* 967: a held photo waits for a person */
     for(var i=0;i<rows.length;i++){
       var row = rows[i];
       try{
@@ -52552,8 +52713,12 @@ async function flushPhotos(){
         await pDel(row.id);
       }catch(e){
         if(_pNet(e)) break;   /* still offline: keep it, try later */
-        console.warn('[photo-outbox] dropping a photo that was refused:', String((e && e.message) || e));
-        await pDel(row.id);
+        if(_pAuth(e) && !row._retried){ row._retried = 1; try{ var _cx = window.sb || window.supa; if(_cx && _cx.auth && _cx.auth.getSession) await _cx.auth.getSession(); }catch(_a){} i--; continue; }
+        /* 967: a refused photo is KEPT and named, never deleted. */
+        console.warn('[photo-outbox] a photo was REFUSED and is being held:', String((e && e.message) || e));
+        try{ if(window.report) window.report(e, 'photo-outbox', 'refused'); }catch(_){}
+        row.dead = 1; row.err = String((e && e.message) || e); row.errAt = new Date().toISOString();
+        try{ await pTx('readwrite', function(st){ return st.put(row); }); }catch(_p){}
       }
     }
   }catch(_){}
@@ -52781,6 +52946,9 @@ window.CardinalPunchCard = {
   _flushPhotos: function(){ return flushPhotos(); },
   _pendingPhotos: function(){ return refreshPhotoPend(); },
   _clearPhotos: function(){ return pClear(); },
+  _stuckPhotos: function(){ return stuckPhotos(); },
+  _retryPhoto: function(id){ return retryPhoto(id); },
+  _discardPhoto: function(id){ return discardPhoto(id); },
 };
 })();
 </script>
@@ -55317,9 +55485,17 @@ border-bottom:3px solid transparent;margin-bottom:-1px}
 .cc-tabs button.on{border-bottom-color:var(--acc);background:var(--card);border-radius:7px 7px 0 0}
 .cc-sep{font:800 21px Georgia,serif;color:var(--bar);padding:0 2px;line-height:1}
 .cc-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
-.cc-kpi div{background:var(--ccm-grad);border:1px solid var(--line);
+/* 975: this was a DESCENDANT selector, so .k and .v — both divs — each drew
+   their own bordered, radiused, green-edged card INSIDE the tile. Measured in
+   Chromium at 1194px: three nested cards per tile, all reporting the same 3px
+   left edge. `>*` also keeps the rule working now the live tiles are buttons. */
+.cc-kpi>*{background:var(--ccm-grad);border:1px solid var(--line);
 border-left:3px solid var(--acc);border-radius:8px;padding:10px 13px;min-width:0;
 box-shadow:var(--ccm-sh-sm)}
+.cc-kpi>button.cc-tile{font:inherit;color:inherit;text-align:left;width:100%;
+display:block;cursor:pointer}
+.cc-kpi>button.cc-tile:hover,.cc-kpi>button.cc-tile:focus-visible{box-shadow:var(--ccm-glow);outline:none}
+.cc-due b.hot{color:var(--warnink)}
 .cc-kpi .k{font:800 8.5px var(--mono);letter-spacing:.15em;text-transform:uppercase;color:var(--mute)}
 .cc-kpi .v{font:700 19px var(--mono);color:var(--ink);margin-top:2px}
 .cc-mine{font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:-8px 2px 10px;text-align:right}
@@ -55462,7 +55638,7 @@ box-shadow:var(--ccm-shadow)}
 .cc-due{border-left:0;padding-left:0;border-top:1px solid var(--line2)}
 .cc-due:first-child{border-top:0}
 .cc-kpi{grid-template-columns:repeat(2,1fr);gap:8px}
-.cc-kpi div{padding:8px 10px}
+.cc-kpi>*{padding:8px 10px}
 .cc-kpi .v{font-size:15px}
 .cc-tabs button{padding:10px 12px;font-size:13px}
 .cc-sep{font-size:18px}
@@ -55587,10 +55763,16 @@ if(typeof window.projClaimType !== 'function') return false;
 return window.projClaimType(pr) === 'community';
 });
 }
-function bidAmt(pr){
-var l = lead(pr);
-return Number(l.bid_amount) || Number(estTot[pr.id]) || 0;
+/* 974: this had the OPPOSITE precedence to the job card — hand-typed first,
+   estimate second — so one job read two different numbers on two screens.
+   Both now ask the same resolver. A missing resolver answers zero rather than
+   falling back to a second ladder: no money is invented. */
+function bidPrice(pr){
+return (typeof window.commBidAmount === 'function')
+? window.commBidAmount(pr, { total: Number(estTot[pr.id]) || 0 })
+: { amt:0, src:'none' };
 }
+function bidAmt(pr){ return bidPrice(pr).amt; }
 function partnerOf(pr){
 var l = lead(pr);
 return l.partner_name || 'No partner recorded';
@@ -55616,6 +55798,36 @@ return hoText(pr) + (a ? '<div class="cc-mini">' + esc(a) + '</div>' : '');
    days(), since(), bidAmt(), partnerOf(), homeownerOf(), metaOf(), normStage()
    - so there is no second source of truth for any field. */
 var chState = { sort:'due', dir:1, sets:{} };
+/* 975: fold open/closed was DOM-only — a class toggled on .cc-fh's parent that
+   render() threw away. So Apply closed the All-bids table the filter bar lives
+   inside, and the only evidence a filter was live became invisible. This is the
+   same shape as `closed{}` + `closedStamp` above, which is how the partner-card
+   collapse already survives a repaint. */
+var folds = {};
+var chStamp = 0;
+var doors = {};
+/* the stage sets a tile routes to, read from cr-can's single declaration with a
+   literal fallback (the module's own fallback doctrine — cr-can loads after this
+   block, but these are only ever called at render time). */
+function openKeys(){
+try{
+var A = window.CardinalCommunityAnalytics;
+if(A && A.OPEN) return Object.keys(A.OPEN);
+}catch(_975){}
+return ['Lead','Prospect','OnHold'];
+}
+function wonKeys(){
+try{
+var A = window.CardinalCommunityAnalytics;
+if(A && A.WON) return Object.keys(A.WON);
+}catch(_975b){}
+return ['Approved','Scheduled','Completed','Invoiced','Closed'];
+}
+/* the filter stores DISPLAY strings, so derive them from LABEL rather than
+   retyping 'Bid Requested' anywhere. */
+function stageLabels(keys){
+return (keys || []).map(function(k){ return LABEL[k] || k; });
+}
 var chSheet = { cat:null, pend:[] };
 var CH_SORTS = [
 { key:'due',       label:'Due / check back' },
@@ -55856,12 +56068,23 @@ el.onclick = function(e){ if(e.target === el) el.classList.remove('open'); };
 function compute(){
 var all = projects();
 var out = 0, owed = 0, won = 0, lost = 0, parked = 0;
+var open = 0, openAmt = 0;
+var OPENSET = {};
+openKeys().forEach(function(k){ OPENSET[k] = 1; });
 var due = [], chase = [], sched = [], inv = [];
 all.forEach(function(pr){
 var st = normStage(pr.stage), l = lead(pr), amt = bidAmt(pr);
+if(OPENSET[st]){ open++; openAmt += amt; }
 if(st === 'Lead'){
 out += amt;
-due.push({ pr:pr, d:days(l.bid_due_at), amt:amt });
+}
+/* 975: this read l.bid_due_at RAW and sat inside the Lead-only branch, so the
+   second clock never reached the fold or the tile — a parked job's check-back
+   date, the one thing the module's own banner calls "worth shouting about",
+   could not appear in Due soon at any distance past it. chDueIso() is the
+   function that already answers "which clock is this job on". */
+if(st === 'Lead' || chOnHold(pr)){
+due.push({ pr:pr, d:days(chDueIso(pr)), amt:amt, held:chOnHold(pr) });
 }
 if(st === 'Prospect'){
 out += amt;
@@ -55888,6 +56111,7 @@ inv.sort(function(a,b){ return (b.d||0) - (a.d||0); });
 var decided = won + lost;
 return {
 all:all, out:out, owed:owed, parked:parked,
+open:open, openAmt:openAmt,
 win: decided ? Math.round(won / decided * 100) : null,
 won:won, decided:decided,
 due:due, chase:chase, sched:sched, inv:inv,
@@ -56026,7 +56250,9 @@ return list;
 }
 function signature(){
 var d = compute();
-return [pane, query, closedStamp, metaStamp, roleOf(),
+/* 975: filter and fold state were absent, so a background scan() could decide
+   nothing had changed a moment after a door fired and repaint the pre-door view. */
+return [pane, query, closedStamp, metaStamp, chStamp, chActiveCount(), roleOf(),
 d.out, d.owed, d.parked, d.win, d.due.length, d.chase.length,
 d.sched.length, d.inv.length, d.all.length,
 (window.cacheProjects || []).length].join('|');
@@ -56129,7 +56355,11 @@ var rows = clientList();
 var awarded = ps.reduce(function(a,p){ return a + (p.awarded||0); }, 0);
 
 function fold(id, title, count, body, open){
-return '<div class="cc-card cc-fold' + (open === false ? '' : ' open') + '" data-fold="' + id + '">' +
+/* 975: folds{} is the user's own choice and outranks the default. Without it a
+   render() — which Apply, Clear and every door trigger — reset the All-bids fold
+   to closed, taking the filter bar that lives inside it with it. */
+var op975 = (folds[id] != null) ? !!folds[id] : (open !== false);
+return '<div class="cc-card cc-fold' + (op975 ? ' open' : '') + '" data-fold="' + id + '">' +
 '<div class="cc-fh"><b>' + title + '</b>' +
 (count == null ? '' : '<span class="cc-cnt">' + count + '</span>') +
 '<span class="cc-chev">\u203A</span></div>' +
@@ -56163,14 +56393,39 @@ return String(name || '?').trim().split(/\s+/).map(function(w){ return w.charAt(
 }
 
 /* ---- KPI strip (presentation-gated exactly as before) ---- */
+/* 975: every one of these counted something real and then left you to go and
+   find it by hand. Each is now a door onto exactly the rows it counted — the
+   number and the destination come from ONE declaration, so they cannot drift.
+   "Open bids" reads d.open rather than d.all.length: it was every community job
+   including the closed and the lost, which happens to be right today only
+   because all 15 are still at Lead.
+   A tile whose figure is zero stays a plain div: a door onto an empty list is
+   the same lie in the other direction. */
+var dueSoon975 = d.due.filter(function(x){ return x.d != null && x.d <= 7; }).length;
+var KPI975 = [
+{ key:'open',   label:'Open bids',        text:String(d.open), n:d.open,
+sets:{ stage: stageLabels(openKeys()) }, pane:'bids', fold:'allbids' },
+{ key:'out',    label:'Out for decision', text:usd(d.out),     n:d.out,
+sets:{ stage: stageLabels(['Lead','Prospect']) }, pane:'bids', fold:'allbids', sort:'amount' },
+{ key:'parked', label:'Parked',           text:usd(d.parked),  n:d.parked, when:!!d.parked,
+sets:{ stage: stageLabels(['OnHold']) }, pane:'bids', fold:'allbids' },
+{ key:'awarded',label:'Awarded',          text:usd(awarded),   n:awarded,
+sets:{ stage: stageLabels(wonKeys()) }, pane:'bids', fold:'allbids', sort:'amount' },
+{ key:'due7',   label:'Due &le; 7 days',  text:String(dueSoon975), n:dueSoon975,
+sets:{ due: ['Overdue','Due today','Due this week'] }, pane:'bids', fold:'allbids' }
+];
+doors = {};
 var kpi = (role === 'prod') ? '' :
 '<div class="cc-kpi">' +
-'<div><div class="k">Open bids</div><div class="v">' + d.all.length + '</div></div>' +
-'<div><div class="k">Out for decision</div><div class="v">' + usd(d.out) + '</div></div>' +
-(d.parked ? '<div><div class="k">Parked</div><div class="v">' + usd(d.parked) + '</div></div>' : '') +
-'<div><div class="k">Awarded</div><div class="v">' + usd(awarded) + '</div></div>' +
-'<div><div class="k">Due &le; 7 days</div><div class="v">' +
-d.due.filter(function(x){ return x.d != null && x.d <= 7; }).length + '</div></div>' +
+KPI975.filter(function(t){ return t.when !== false; }).map(function(t){
+var live = !!t.n;
+if(live) doors['kpi:' + t.key] = t;
+return (live
+? '<button type="button" class="cc-tile" data-cckpi="' + t.key + '">'
+: '<div>') +
+'<div class="k">' + t.label + '</div><div class="v">' + t.text + '</div>' +
+(live ? '</button>' : '</div>');
+}).join('') +
 '</div>' +
 (role === 'sales' ? '<div class="cc-mine">Your pipeline \u2014 your bids only</div>' : '');
 
@@ -56178,7 +56433,8 @@ d.due.filter(function(x){ return x.d != null && x.d <= 7; }).length + '</div></d
 var dueBody = d.due.length
 ? '<div class="cc-duegrid">' + d.due.slice(0, 8).map(function(x){
 return '<div class="cc-due" data-open="' + esc(x.pr.id) + '">' +
-'<b>' + (x.d == null ? '\u2013' : x.d) + '</b>' +
+'<b' + (x.d != null && x.d < 0 ? ' class="hot"' : '') + '>' +
+(x.d == null ? '\u2013' : x.d) + '</b>' +
 '<div class="cc-idp">' +
 '<div class="k b">Bill to</div><div class="v">' + pName(partnerOf(x.pr)) + '</div>' +
 '<div class="k">Serving</div><div class="v">' + hoCell(x.pr) + '</div></div>' +
@@ -56204,15 +56460,27 @@ return '<div class="cc-prow" data-go="partners">' +
 }).join('')
 : '<div class="cc-empty">No partners yet.</div>';
 
-function queue(label, list){
+/* 975: two faults in four lines. data-q had NO handler anywhere, so the row
+   inherited .cc-prow's cursor:pointer and did nothing; and the row's closing
+   tag sat inside the non-prod arm, so a Production user got three nested
+   unclosed rows. The row now names the stage it counts and opens it.
+   NB the tag is spelled out nowhere in this comment on purpose: CI counts div
+   tags with a bare regex over the whole file, so prose naming one fails the
+   build. That is this repo's comment-pollution trap, wearing a CI hat. */
+function queue(label, list, stageKey){
 if(!list.length) return '';
-return '<div class="cc-prow" data-q="1"><span style="flex:1">' + label +
+if(stageKey) doors['q:' + stageKey] = { sets:{ stage: stageLabels([stageKey]) },
+pane:'bids', fold:'allbids' };
+return '<div class="cc-prow"' + (stageKey ? ' data-queue="' + stageKey + '"' : '') +
+'><span style="flex:1">' + label +
 '<div class="cc-mini">' + list.length + ' waiting</div></span>' +
 (role === 'prod' ? '' : '<span class="cc-money">' +
-usd(list.reduce(function(a,x){ return a + (x.amt||0); }, 0)) + '</span></div>');
+usd(list.reduce(function(a,x){ return a + (x.amt||0); }, 0)) + '</span>') +
+'</div>';
 }
-var weekBody = (queue('Chase a decision', d.chase) + queue('Get on the calendar', d.sched) +
-queue('Invoice the partner', d.inv)) ||
+var weekBody = (queue('Chase a decision', d.chase, 'Prospect') +
+queue('Get on the calendar', d.sched, 'Approved') +
+queue('Invoice the partner', d.inv, 'Completed')) ||
 '<div class="cc-empty">Nothing waiting on you.</div>';
 
 /* The filter and sort apply to THIS table only. The Due-soon block and the
@@ -56232,7 +56500,11 @@ return '<tr data-open="' + esc(pr.id) + '">' +
 /* .cc-pill.due is the red one. A parked job counting down to its own
    check-back is not urgent, so it takes the neutral chip - that is the
    whole payoff of the second clock, visible in one glance. */
-'<span class="cc-pill' + (held ? '' : ' due') + '">' + dd + ' d' +
+/* 975: `held ? '' : ' due'` meant a parked row could never go red at any
+   distance — including a check-back sailed past weeks ago, which this module's
+   own banner calls the one thing on a parked job worth shouting about. Overdue
+   is overdue on either clock; a check-back still ahead keeps the neutral chip. */
+'<span class="cc-pill' + ((dd < 0 || !held) ? ' due' : '') + '">' + dd + ' d' +
 (held ? ' hold' : '') + '</span>') + '</td>' +
 '<td data-l="Homeowner">' + hoCell(pr) + '</td>' +
 '<td data-l="Bill to">' + pName(l.partner_name) + '</td>' +
@@ -56280,16 +56552,29 @@ return fold('pg-' + g.key, g.label, members.length,
 var cRows = chSorted(rows.filter(chMatches));
 var byPartner = {}, byStage = {};
 cRows.forEach(function(pr){
-var pn = lead(pr).partner_name || 'No partner';
+/* 975: this said 'No partner' where every other surface says 'No partner
+   recorded', so the tally key did not match the filter value and the row could
+   not become a door. partnerOf() is the one spelling. */
+var pn = partnerOf(pr);
 byPartner[pn] = (byPartner[pn] || 0) + 1;
 var st = LABEL[normStage(pr.stage)] || normStage(pr.stage);
 byStage[st] = (byStage[st] || 0) + 1;
 });
-function tally(obj, avatars){
+/* 975: these rows carried .cc-prow's cursor:pointer and no attribute at all —
+   the only truly dead tappable on the hub. `kind` names which CH_GROUPS facet
+   the row belongs to, so By-partner and By-stage route through the same filter
+   the funnel writes. */
+function tally(obj, avatars, kind){
 var keys = Object.keys(obj).sort(function(a,b){ return obj[b] - obj[a]; });
 if(!keys.length) return '<div class="cc-empty">Nothing yet.</div>';
 return keys.map(function(k){
-return '<div class="cc-prow">' +
+if(kind){
+var spec975 = { sets:{}, pane:'clients' };
+spec975.sets[kind] = [k];
+doors['t:' + kind + ':' + k] = spec975;
+}
+return '<div class="cc-prow"' +
+(kind ? ' data-tally="' + kind + '" data-val="' + esc(k) + '"' : '') + '>' +
 (avatars ? '<span class="cc-av ' + pClass(k) + '">' + initials(k) + '</span>' : '') +
 '<span style="flex:1;min-width:0">' + (avatars ? pName(k) : esc(k)) + '</span>' +
 '<span class="cc-money">' + obj[k] + '</span></div>';
@@ -56316,8 +56601,8 @@ var clientsPane = '<div data-pane="clients" class="' + (pane === 'clients' ? 'on
 chBar(cRows.length, rows.length) +
 fold('clist', 'Community clients', cRows.length, clientsBody) +
 '<div class="cc-g2">' +
-fold('bypartner', 'By partner', Object.keys(byPartner).length, tally(byPartner, true)) +
-fold('bystage', 'By stage', Object.keys(byStage).length, tally(byStage, false)) +
+fold('bypartner', 'By partner', Object.keys(byPartner).length, tally(byPartner, true, 'partner')) +
+fold('bystage', 'By stage', Object.keys(byStage).length, tally(byStage, false, 'stage')) +
 '</div></div>';
 
 host.innerHTML =
@@ -56357,7 +56642,9 @@ clientsPane + bidsPane + partnersPane +
 host.querySelectorAll('.cc-fh').forEach(function(h){
 h.onclick = function(e){
 if(e.target.closest('[data-open]')) return;
-h.parentNode.classList.toggle('open');
+var on975 = h.parentNode.classList.toggle('open');
+var id975 = h.parentNode.getAttribute('data-fold');
+if(id975){ folds[id975] = on975; chStamp++; }
 };
 });
 clock(host);
@@ -56409,6 +56696,42 @@ render();
 host.querySelectorAll('[data-open]').forEach(function(el){
 el.onclick = function(){
 if(typeof window.openProject === 'function') window.openProject(el.dataset.open);
+};
+});
+/* 975: the doors. A door means "show me exactly this", so it REPLACES
+   chState.sets rather than adding to whatever was already there — otherwise two
+   taps in a row silently intersect to nothing. It opens the fold it is sending
+   you to (folds{} survives the render, which is the whole point of the fold-state
+   change) and scrolls it into view, because a filter applied to a table below the
+   fold looks like nothing happened. */
+function applyDoor(spec){
+if(!spec) return;
+chState.sets = {};
+Object.keys(spec.sets || {}).forEach(function(k){
+chState.sets[k] = (spec.sets[k] || []).slice();
+});
+if(spec.sort) chState.sort = spec.sort;
+if(spec.pane) pane = spec.pane;
+if(spec.fold) folds[spec.fold] = true;
+chStamp++;
+render();
+if(spec.fold){
+try{
+var h2 = document.getElementById('cr-ch2');
+var t2 = h2 && h2.querySelector('[data-fold="' + spec.fold + '"]');
+if(t2 && t2.scrollIntoView) t2.scrollIntoView({ behavior:'smooth', block:'start' });
+}catch(_975c){}
+}
+}
+host.querySelectorAll('[data-cckpi]').forEach(function(el){
+el.onclick = function(){ applyDoor(doors['kpi:' + el.getAttribute('data-cckpi')]); };
+});
+host.querySelectorAll('[data-queue]').forEach(function(el){
+el.onclick = function(){ applyDoor(doors['q:' + el.getAttribute('data-queue')]); };
+});
+host.querySelectorAll('[data-tally]').forEach(function(el){
+el.onclick = function(){
+applyDoor(doors['t:' + el.getAttribute('data-tally') + ':' + el.getAttribute('data-val')]);
 };
 });
 host.querySelectorAll('[data-go]').forEach(function(el){
@@ -56563,6 +56886,9 @@ show   : show,
 hide   : hide,
 render : render,
 isOpen : isOpen,
+/* 974: Analytics is fully synchronous and has no Supabase call of its own, so
+   the estimate totals the hub already fetched are the only source it can have. */
+estTotal : function(pid){ return Number(estTot[pid]) || 0; },
 };
 })();
 </script>
@@ -56579,9 +56905,12 @@ isOpen : isOpen,
 #cr-cc .ev.now .txt{color:#d8cfc9}#cr-cc .ev .eh{display:flex;align-items:baseline;gap:9px}#cr-cc .ev .eh b{flex:1;font:700 13px inherit}#cr-cc .ev .eh .when{font:700 10px var(--mono);color:var(--dim);white-space:nowrap}#cr-cc .ev .txt{font-size:12.5px;color:var(--mute);line-height:1.55;margin-top:5px}#cr-cc .ev .who{font-size:10.5px;color:var(--dim);margin-top:6px}/* two actions side by side, so the Prospect state can say Awarded / Not
    awarded instead of one button that could mean either */
 #cr-cc .doits{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
-#cr-cc .doit.alt{background:none;border:1px solid var(--line);color:var(--mute)}
 #cr-cc .ev .doit{margin-top:0}
-#cr-cc .ev .doit{margin-top:9px;background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 8px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:12px;color:var(--accent)}
+#cr-cc .ev .doit{margin-top:9px;background:var(--warn);color:#1a1405;border:0;border-radius:7px;padding:8px 13px;cursor:pointer;font:800 11.5px inherit;font-family:inherit}
+/* 971: this rule used to sit ABOVE the two above it at equal specificity, so the
+   later one re-set background/border/color and the secondary button rendered
+   identical to the primary. Moved last and scoped into .ev so it can win. */
+#cr-cc .ev .doit.alt{background:none;border:1px solid var(--line);color:var(--mute)}#cr-cc .sheet{border-radius:13px;overflow:hidden;background:linear-gradient(var(--card),var(--card)) padding-box,linear-gradient(125deg,var(--a1),var(--a2)) border-box;border:1px solid transparent}#cr-cc .sheet .lh{padding:15px 16px 13px;border-bottom:1px solid var(--line);background:linear-gradient(160deg,var(--heroA),transparent)}#cr-cc .sheet .lh .for{font:800 8px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}#cr-cc .sheet .lh h4{margin:6px 0 0;font-family:var(--serif);font-weight:700;font-size:18px;line-height:1.15}#cr-cc .sheet .lh .via{margin-top:8px;font-size:12px;color:var(--accent)}
 #cr-cc .pin .t .nm .rl{display:block;font:800 7px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
 /* .ct paints its border with a gradient in border-box and its fill in
    padding-box, so the fill has to be swapped in the same two-layer form or the
@@ -56766,6 +57095,25 @@ referred : 'Referred to another partner',
 lost     : 'Bid not awarded',
 };
 function bidOf(pr){ return (ck(pr) || {}).bid || {}; }
+/* 971: every place a community bid's price can legitimately live, in order of
+   authority — what actually went to the partner, then the builder's live total,
+   then the number typed into the bid form. It answers with a NUMBER, which is the
+   only thing that tells a real price from a $0.00 draft: the one live job that has
+   estimate rows at all has two drafts totalling 0.00, and the old `est ?` test read
+   that as priced while offering nothing to the 7 jobs priced by hand. */
+/* 974: 971's ladder moved to the main block as commBidAmount, which every
+   community screen now shares. This is the adapter that supplies THIS job's
+   loaded estimate; keeping a local copy of the ladder as a fallback would be
+   two pipelines again, which is the thing 974 exists to end. */
+function priceOf(pr){
+return (typeof window.commBidAmount === 'function')
+? window.commBidAmount(pr, liveEstimate())
+: { amt:0, src:'none' };
+}
+function priceSrc(pr){
+var p = priceOf(pr);
+return (typeof window.commBidSource === 'function') ? window.commBidSource(p.src) : '';
+}
 /* Date-only strings must be built and read at LOCAL midnight. Parsing
    '2026-07-27' with new Date() gives UTC midnight, which is the evening before
    in EDT - the same day-early bug daysTo() above documents. */
@@ -56829,7 +57177,11 @@ busy      : false,
 amount    : (b.awarded_amount != null ? String(b.awarded_amount) : ''),
 decided   : (b.awarded_at ? isoDay(new Date(b.awarded_at)) : todayIso()) || todayIso(),
 funded_by : l.funded_by || l.partner_name || '',
-funded_id : l.partner_id || '',
+/* 974: this seeded the CURRENT partner's id, so a free-typed funder on an
+   empty roster (where ocPartnerField falls back to a text input that never
+   touches funded_id) would have re-bound the bill-to to the OLD row. The
+   referred arm seeds '' for exactly this reason; mirror it. */
+funded_id : '',
 months    : OC_DEFAULT_MONTHS,
 check_back_at : l.check_back_at || plusMonths(OC_DEFAULT_MONTHS),
 award_cycle   : l.award_cycle || '',
@@ -56841,8 +57193,8 @@ tarped_at     : l.tarped_at || '',
 render();
 }
 function ocHead(pr){
-var l = lead(pr), est = liveEstimate();
-var amt = est ? est.total : (Number(l.bid_amount) || 0);
+var l = lead(pr);
+var amt = priceOf(pr).amt;
 return '<div class="hd">' + esc(homeownerOf(pr) || pr.name || 'This job') + '</div>' +
 '<div class="sub">' + esc(pr.address || 'No address') +
 (amt ? ' · bid ' + usd(amt) : '') +
@@ -56901,7 +57253,7 @@ return '<div class="cc-oc">' +
 function ocStep2(pr){
 var l = lead(pr), est = liveEstimate();
 var body = '', title = '', save = 'Save outcome';
-var submitted = Number(bidOf(pr).submitted_amount || 0) || (est ? Number(est.total) || 0 : 0);
+var submitted = priceOf(pr).amt;
 if(oc.kind === 'awarded'){
 title = 'Step 2 · awarded';
 var appr = ocMoney(oc.amount);
@@ -57036,6 +57388,14 @@ var n = ocMoney(oc.amount);
 if(n === null){ alert('That doesn\'t look like a dollar amount.'); return; }
 bp = { awarded_amount: n, awarded_at: (n === '' ? '' : (oc.decided || todayIso())) };
 lp.funded_by = String(oc.funded_by || '').trim();
+/* 974 (CR-COM-009): recording who funded the award never moved the BILL-TO,
+   so an awarded job kept invoicing whoever the bid went to. Same shape as the
+   referred arm. The guard is not decoration: mergeCk deletes a key set to '',
+   so an unguarded assignment on a blank "select" would wipe the bill-to. */
+if(lp.funded_by){
+lp.partner_name = lp.funded_by;
+if(oc.funded_id) lp.partner_id = oc.funded_id;
+}
 stage = 'Approved';
 }else if(kind === 'waiting'){
 if(!oc.check_back_at){ alert('Pick a date to check back — that is what parks it.'); return; }
@@ -57156,6 +57516,32 @@ try{
    'won' and 'lost' stay routed below: the hub and any older markup still
    dispatch them, and one pipeline is the rule. */
 if(a === 'outcome'){ ocOpen(pr); return; }
+/* 972: "Get on the calendar" used to flip the stage and touch no calendar. It
+   now opens the app's ONE appointment composer, prefilled for this job. The
+   stage then moves itself: build 783's __apptMayAdvanceStage already advances
+   Approved -> Scheduled when a kind:'job' appointment carrying a project_id is
+   created, so this adds no second stage-move path. A day the user did not
+   choose would be worse than no day at all. */
+if(a === 'schedule'){
+  if(typeof window.openApptDay !== 'function'){
+    alert('The calendar is not loaded \u2014 reload the app and try again.');
+    return;
+  }
+  try{
+    window.openApptDay(todayIso());
+    var k972 = document.getElementById('apptKind');   if(k972) k972.value = 'job';
+    var c972a = document.getElementById('apptClient'); if(c972a) c972a.value = pr.id;
+    var t972 = document.getElementById('apptTitle');  if(t972) t972.value = 'Build day \u2014 ' + (pr.name || '');
+  }catch(_s972){}
+  return;
+}
+/* 972: the same door 705 put on the Job Menu. No suspendForTab — openPaymentsPage
+   swaps #projectView wholesale and dbCloseTo() restores the black card. */
+if(a === 'pay'){
+  if(typeof window.openPaymentsPage === 'function') window.openPaymentsPage();
+  else alert('Payments are not loaded \u2014 reload the app and try again.');
+  return;
+}
 /* 438: the bid form already edits homeowner / renter / no_homeowner, and
    CardinalNewBid.edit() already existed with zero callers. This just makes it
    reachable from the client page - no second editor. */
@@ -57195,10 +57581,12 @@ if(a === 'submitted'){
    starts by itself. */
 var l710 = lead(pr);
 if(!confirm('Mark this bid SUBMITTED to ' + (l710.partner_name || 'the partner') + '?')) return;
-var b710 = bidOf(pr), e710 = liveEstimate();
+var b710 = bidOf(pr), p971b = priceOf(pr);
+/* 971: was `e710 && e710.total` — a builder total only, so marking a hand-priced
+   bid submitted recorded an empty amount. priceOf() is the one resolver. */
 var amt710 = (b710.submitted_amount != null && b710.submitted_amount !== '')
 ? b710.submitted_amount
-: (e710 && e710.total ? e710.total : '');
+: (p971b.amt > 0 ? p971b.amt : '');
 var patch710 = mergeCk(pr, 'bid', {
 submitted_at     : b710.submitted_at || todayIso(),
 submitted_amount : amt710,
@@ -57231,6 +57619,21 @@ if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, 
 if(typeof window.auditLog === 'function'){
 try{ window.auditLog('lead', 'Bid info updated', pr.id); }catch(_){ }
 }
+/* 971: this act already stamps submitted_at — the date the bid went to the partner
+   — and then left the job reading Bid Requested, which is a large part of why 15 of
+   15 live community jobs sit at Lead. The move is OFFERED, never forced (an amount
+   is often corrected long after the fact), never offered on the blank-clear path
+   (mergeCk DELETES a key set to '', so clearing must not push the job forward), and
+   only from Lead. It goes through the SAME window.setStage call the 'submitted' arm
+   uses — no second stage-move path. The bid patch is awaited FIRST because
+   setStage's own checklist patch is fire-and-forget. */
+if(v0 !== '' && normStage(pr.stage) === 'Lead' &&
+confirm('Amount saved. Also move this job to ' + (LABEL['Prospect'] || 'Bid Submitted') + '?')){
+await window.setStage(pr.id, 'Prospect');
+if(typeof window.auditLog === 'function'){
+try{ window.auditLog('lead', 'Bid marked submitted', pr.id); }catch(_){ }
+}
+}
 render();
 return;
 }
@@ -57239,9 +57642,9 @@ if(!confirm('Mark this bid AWARDED by ' + (lead(pr).partner_name || 'the partner
 await window.setStage(pr.id, 'Approved');
 }else if(a === 'lost'){
 await window.setStage(pr.id, 'Lost');
-}else if(a === 'schedule'){
-if(!confirm('Mark this job SCHEDULED?')) return;
-await window.setStage(pr.id, 'Scheduled');
+}else if(a === 'complete'){
+if(!confirm('Mark this build COMPLETE?')) return;
+await window.setStage(pr.id, 'Completed');
 }else if(a === 'invoice'){
 if(!confirm('Mark this job INVOICED to ' + (lead(pr).partner_name || 'the partner') + '?')) return;
 await window.setStage(pr.id, 'Invoiced');
@@ -57255,29 +57658,60 @@ alert('That did not save \u2014 ' + (e.message || e));
 }
 }
 function threadHtml(pr){
-var st = normStage(pr.stage), l = lead(pr), est = liveEstimate();
+var st = normStage(pr.stage), l = lead(pr), pq = priceOf(pr);
 var due = daysTo(l.bid_due_at);
 var out = [];
+/* 972: the second half of the job. `due` above is the BID deadline and is
+   months stale once a job is awarded — the new arms must never read it. */
+var c972 = ck(pr) || {}, b972 = bidOf(pr);
+var sched972 = null;
+try{
+  var P972 = window.CardinalProduction;
+  if(P972 && typeof P972.schedFor === 'function') sched972 = P972.schedFor(pr);
+}catch(_972){}
+function when972(d){
+  if(d == null) return '';
+  return d < 0 ? (Math.abs(d) + ' days ago') : d === 0 ? 'today' : ('in ' + d + ' days');
+}
+function money972(v){ return (Number(v) > 0) ? usd(Number(v)) : ''; }
 if(st === 'Lead'){
-out.push({ now:true, title: est ? 'Bid ready to submit' : 'Bid needs pricing',
-when:'now',
-txt: est
-? 'Priced at ' + usd(est.total) + ' across ' +
-((est.line_items || []).length || 0) + ' line items.' +
-(due != null ? ' Due in ' + due + ' days.' : '')
-: 'Invited to bid' + (due != null ? ', due in ' + due + ' days' : '') +
-'. Nothing priced yet.',
-/* 710 (CR-COM-004): "Submit the bid" only ever OPENED the estimate editor —
-   the stage moved solely if you then marked the estimate Sent in there, which
-   nothing said. 16 of 16 jobs sat at Lead, 3 past due. The act now does what
-   it says; the editor keeps its own door beside it. */
-acts: est
-? [{ label:'Mark it submitted', how:'submitted' },
-{ label:'Open the bid', how:'open', alt:true }]
-: [{ label:'Price it', how:'estimate' }] });
+/* 971: the affordance is keyed on ANY recorded price, not on the estimate ROW
+   alone. 7 of the 15 live community jobs are priced outside the builder (a
+   hand-typed checklist.lead.bid_amount) and 710's `est ?` test offered every one
+   of them "Price it" and no way out of Lead — which is most of why 15 of 15 sat
+   at Lead. The one job that DOES carry estimates carries two $0.00 drafts, so
+   object-truthiness handed the only "Mark it submitted" button to the job with no
+   price. priceOf() answers with a number, which is what tells those apart. */
+var p971 = priceOf(pr);
+var due971 = due == null ? ''
+: due < 0 ? ' Due to the partner ' + Math.abs(due) + ' days ago.'
+: due === 0 ? ' Due to the partner today.'
+: ' Due in ' + due + ' days.';
+if(p971.src === 'logged'){
+out.push({ now:true, title:'Submitted \u2014 stage not moved', when:'now',
+txt:'Logged at ' + usd(p971.amt) + (p971.at ? ' on ' + fmtDay(p971.at) : '') +
+', but this job still reads ' + (LABEL['Lead'] || 'Bid Requested') + '.' + due971,
+acts:[{ label:'Mark it submitted', how:'submitted' },
+{ label:'Edit the amount', how:'logsub', alt:true }] });
+}else if(p971.amt > 0){
+out.push({ now:true, title:'Bid ready to submit', when:'now',
+txt:'Priced at ' + usd(p971.amt) +
+(p971.src === 'builder'
+? ' across ' + p971.lines + ' line items.'
+: ' on the bid form \u2014 not in the estimate builder.') + due971,
+acts:[{ label:'Mark it submitted', how:'submitted' },
+(p971.src === 'builder'
+? { label:'Open the bid', how:'open', alt:true }
+: { label:'Price it in the builder', how:'estimate', alt:true })] });
+}else{
+out.push({ now:true, title:'Bid needs pricing', when:'now',
+txt:'Invited to bid.' + due971 + ' Nothing priced yet.',
+acts:[{ label:'Price it', how:'estimate' },
+{ label:'Log a submitted amount', how:'logsub', alt:true }] });
+}
 }else if(st === 'Prospect'){
 out.push({ now:true, title:'Waiting on a decision', when:'now',
-txt:'Submitted' + (est ? ' at ' + usd(est.total) : '') +
+txt:'Submitted' + (pq.amt ? ' at ' + usd(pq.amt) : '') +
 '. Nothing back from the partner yet.',
 acts:[{ label:'Record the outcome', how:'outcome' }] });
 }else if(st === 'OnHold'){
@@ -57296,14 +57730,45 @@ txt:(l.award_cycle ? l.award_cycle + '. ' : '') +
 acts:[{ label:'Record the outcome', how:'outcome' }] });
 }else if(st === 'Approved'){
 out.push({ now:true, title:'Awarded \u2014 needs scheduling', when:'now',
-txt:'Won' + (est ? ' at ' + usd(est.total) : '') +
+txt:'Won' + (pq.amt ? ' at ' + usd(pq.amt) +
+(pq.src === 'awarded' ? '' : ' (' + commBidSource(pq.src) + ')') : '') +
 (l.funded_by ? ', funded by ' + l.funded_by : '') +
 (l.tarped_at ? '. Tarped ' + fmtDay(l.tarped_at) : '') +
-'. No crew or date set.', acts:[{ label:'Get on the calendar', how:'schedule' }] });
+'. Book the day so the crew and the board agree.', acts:[{ label:'Book the build day', how:'schedule' }] });
 }else if(st === 'Completed'){
 out.push({ now:true, title:'Ready to invoice', when:'now',
 txt:'Build complete. The partner hasn\u2019t been invoiced yet.',
 acts:[{ label:'Invoice the partner', how:'invoice' }] });
+/* 972: Scheduled / Invoiced / Closed / Lost had no arm at all, so the card went
+   silent from the moment a job was awarded. Closed and Lost deliberately omit
+   `now` — a finished job gets the calm accent dot, not the amber urgent halo. */
+}else if(st === 'Scheduled'){
+out.push({ now:true, title:'Build scheduled', when:'now',
+txt: (sched972
+  ? ('Build day ' + fmtDay(isoDay(sched972)) + ' \u2014 ' + when972(daysTo(isoDay(sched972))) + '.')
+  /* appointments are readable only by whoever created them, so "nothing is
+     booked" is a claim this screen cannot make. Say what it can see. */
+  : 'No build day on your calendar. Whoever booked it may be the only one who can see it.')
+  + (money972(b972.awarded_amount) ? ' Awarded ' + money972(b972.awarded_amount) + '.' : ''),
+acts: sched972
+  ? [{ label:'Mark the build complete', how:'complete' }]
+  : [{ label:'Mark the build complete', how:'complete' },
+     { label:'Book the build day', how:'schedule', alt:true }] });
+}else if(st === 'Invoiced'){
+out.push({ now:true, title:'Invoiced \u2014 waiting on the partner', when:'now',
+txt:(money972(b972.awarded_amount) ? money972(b972.awarded_amount) + ' invoiced' : 'Invoiced')
+  + (c972.t_Invoiced ? ' on ' + fmtDay(c972.t_Invoiced) : '') + '.',
+acts:[{ label:'Payment Information', how:'pay' }] });
+}else if(st === 'Closed'){
+out.push({ title:'Closed', when: ago(c972.t_Closed || c972.stage_since || pr.created_at),
+txt:'This job is finished and filed.'
+  + (money972(b972.awarded_amount) ? ' Awarded ' + money972(b972.awarded_amount) + '.' : '') });
+}else if(st === 'Lost'){
+out.push({ title:(LABEL['Lost'] || 'Not Awarded'),
+when: ago(c972.lost_at || c972.t_Lost || c972.stage_since || pr.created_at),
+/* defensive only: community deliberately records no loss reason (setStage skips
+   LOSS_REASONS for community), and loss_reason is empty database-wide. Never prompt. */
+txt:'This bid did not come our way.' + (c972.loss_reason ? ' ' + c972.loss_reason : '') });
 }
 events.forEach(function(e){
 out.push({
@@ -57354,14 +57819,32 @@ rec = '<div class="recline">Recorded · ' +
 rec = '<div class="recline">No amounts recorded with the partner yet' +
 '<button data-act="logsub" type="button">Log submitted</button></div>';
 }
+/* 974: this said "No bid priced yet" to every job priced on the bid form —
+   7 of the 15 live community jobs — because it tested the estimate OBJECT.
+   The estimate still decides whether there is a LINES TABLE to draw; the
+   resolver decides what the sheet says when there isn't one. Same wording as
+   971's Lead arm, deliberately: one phrasing per fact. */
+var pq = priceOf(pr);
 if(!est){
 return '<div class="sheet"><div class="nobid">' +
-'<p>No bid priced yet.<br>Bids use the estimate builder \u2014 same ' +
+(pq.amt > 0
+? '<p><b>' + usd(pq.amt) + '</b> \u2014 ' + commBidSource(pq.src) + '.<br>' +
+'This came off the bid form, not the estimate builder, so there are no ' +
+'line items behind it.</p>' +
+'<button data-act="newbid" type="button">Price it in the builder</button>'
+: '<p>No bid priced yet.<br>Bids use the estimate builder \u2014 same ' +
 'line-item catalog as everything else, so your numbers stay consistent.</p>' +
-'<button data-act="newbid" type="button">Build the bid</button>' +
+'<button data-act="newbid" type="button">Build the bid</button>') +
 '</div>' + rec + '</div>';
 }
 var items = est.line_items || [];
+/* 974: the line objects carry no `price` key at ALL in production — each one is
+   {qty,name,unit,amount,library_id,unit_price,description}, so the multiply
+   that used to be here rendered $0 on every line. The swap to unit_price alone would be a NEW wrong number: on a
+   non-itemized row (14 of 18 live) unit_price is 0 and `amount` carries the
+   money. This is computeTotals' rule and the print document's rule, copied
+   rather than re-derived, including hiding the qty cell on a lump sum. */
+var itm974 = est.itemized !== false;
 return '<div class="sheet">' +
 '<div class="lh">' +
 '<div class="for">Bid goes to \u00b7 for approval</div>' +
@@ -57376,13 +57859,18 @@ return '<div class="ln">' +
 '<span class="d"><b>' + esc(it.name || it.title || 'Item') + '</b>' +
 (it.description ? '<small>' + esc(it.description) + '</small>' : '') +
 '</span>' +
-'<span class="q">' + esc((it.qty || 1) + ' ' + (it.unit || '')) + '</span>' +
-'<span class="p">' + usd((it.qty || 1) * (it.price || 0)) + '</span>' +
+(itm974
+? '<span class="q">' + esc((Number(it.qty) || 0) + ' ' + (it.unit || '')) + '</span>'
+: '') +
+'<span class="p">' + usd(itm974
+? (Number(it.qty) || 0) * (Number(it.unit_price) || 0)
+: (Number(it.amount) || 0)) + '</span>' +
 '</div>';
 }).join('') + '</div>'
 : '') +
-'<div class="tot"><span class="k">Bid total</span>' +
-'<span class="v">' + usd(est.total) + '</span></div>' +
+'<div class="tot"><span class="k">Bid total' +
+(commBidSource(pq.src) ? ' \u00b7 ' + commBidSource(pq.src) : '') + '</span>' +
+'<span class="v">' + usd(pq.amt || est.total) + '</span></div>' +
 rec +
 (normStage(pr.stage) === 'Lead'
 ? '<div class="duebar">' +
@@ -57816,9 +58304,9 @@ takeOver(mount.childNodes.length > 0 && mount.offsetParent !== null);
 lastSig = signature();
 return;
 }
-var l = lead(pr), est = liveEstimate();
+var l = lead(pr);
 var hoNm = homeownerOf(pr);
-var amt = est ? est.total : (Number(l.bid_amount) || 0);
+var pq974 = priceOf(pr), amt = pq974.amt;
 var st  = normStage(pr.stage);
 /* Same second clock as the hub: a parked job counts to its check-back,
    and says so, rather than ageing against a bid deadline that has passed.
@@ -57826,6 +58314,10 @@ var st  = normStage(pr.stage);
    would make held silently false rather than throwing. */
 var held = (st === 'OnHold' && !!l.check_back_at);
 var due = daysTo(held ? l.check_back_at : l.bid_due_at);
+/* 972: `hot` fired on due <= 3, and for every stage past Lead the bid deadline is
+   already in the past — so the pin sat in permanent amber on awarded work. Only a
+   deadline still ahead of us (or a parked job's check-back) can be urgent. */
+var dueLive972 = (normStage(pr.stage) === 'Lead' || held);
 mount.innerHTML =
 /* 679: a way OUT. #cr-cc-return exists but only appears after a sub-tab tap and
    returns you TO this card — nothing led back to the Community hub, so the card
@@ -57836,12 +58328,14 @@ mount.innerHTML =
 '<div class="t"><span class="nm"><span class="rl">Serving</span>' +
 '<b>' + (hoNm ? esc(hoNm) : 'No homeowner recorded') + '</b>' +
 '<small>' + esc(pr.address || 'No address') + '</small></span>' +
-(amt ? '<span class="amt"><b>' + usd(amt) + '</b></span>' : '') +
+(amt ? '<span class="amt"><b>' + usd(amt) + '</b>' +
+(commBidSource(pq974.src) ? '<small>' + commBidSource(pq974.src) + '</small>' : '') +
+'</span>' : '') +
 '</div>' +
 '<div class="facts">' +
 '<div><div class="k">' + (held ? 'Check back' : 'Due') + '</div><div class="v' +
-(!held && due != null && due <= 3 ? ' hot' : '') + '">' +
-(due == null ? '\u2014' : due + 'd') + '</div></div>' +
+(dueLive972 && due != null && due >= 0 && due <= 3 ? ' hot' : '') + '">' +
+(due == null ? '\u2014' : (due < 0 ? Math.abs(due) + 'd ago' : due + 'd')) + '</div></div>' +
 '<div><div class="k">Stage</div><div class="v">' +
 esc(SHORT[st] || LABEL[st] || st || '') + '</div></div>' +
 '<div><div class="k">Work</div><div class="v">' +
@@ -59276,12 +59770,20 @@ var open = [], won = [], lost = [], partners = {}, amts = [];
 rows.forEach(function(p){
 var c = ck(p) || {}, l = c.lead || {};
 var s = stg(p);
-var amt = Number(l.bid_amount) || 0;
+/* 974: this read the hand-typed figure ONLY, so every bid priced in the
+   estimate builder counted as $0 — in the win rate, in the averages and in the
+   per-partner totals. */
+var eT974 = 0;
+try{ if(window.CardinalCommunityHub && window.CardinalCommunityHub.estTotal) eT974 = window.CardinalCommunityHub.estTotal(p.id); }catch(_974){}
+var pq974 = (typeof window.commBidAmount === 'function')
+? window.commBidAmount(p, { total: eT974 })
+: { amt:0, src:'none' };
+var amt = pq974.amt;
 if(amt > 0) amts.push(amt);
 var pn = l.partner_name || '\u2014';
 partners[pn] = partners[pn] || { bids:0, won:0, lost:0, wonAmt:0 };
 partners[pn].bids++;
-var rec = { p:p, amt:amt, partner:pn, due:l.bid_due_at || null,
+var rec = { p:p, amt:amt, src:pq974.src, partner:pn, due:l.bid_due_at || null,
 since:c.stage_since || l.stage_since || p.updated_at || p.created_at };
 if(WON[s]){ won.push(rec); partners[pn].won++; partners[pn].wonAmt += amt; }
 else if(s === 'Lost'){ lost.push(rec); partners[pn].lost++; }
@@ -59413,7 +59915,11 @@ host.querySelector('[data-x]').onclick = close;
 }
 function open(){ render(); ensure().style.display = 'block'; try{ window.scrollTo(0, 0); }catch(_){} }
 function close(){ if(el) el.style.display = 'none'; }
-window.CardinalCommunityAnalytics = { open: open, close: close, render: render };
+/* 975: OPEN and WON are exported so the hub's KPI tiles can route to exactly
+   the stages a figure counts, instead of a second list of stage names drifting
+   beside this one. The three existing keys are unchanged. */
+window.CardinalCommunityAnalytics = { open: open, close: close, render: render,
+OPEN: OPEN, WON: WON };
 })();
 </script>
 <style id="cr-cdir-styles">
@@ -75714,25 +76220,69 @@ function networkish(e){
   return /load failed|failed to fetch|networkerror|network request failed|timed? ?out|fetch/i.test(m);
 }
 function pending(){ return getAll().then(function(r){ return r.length; }).catch(function(){ return 0; }); }
+/* 967: an EXPIRED SESSION is not a refusal. After a long offline stretch the
+   first flush can race supabase-js's own token refresh and come back 401 /
+   PGRST301; that is a retry, not a dead letter. 42501 (RLS) and PGRST116 are
+   deliberately NOT here — those are real refusals a person has to see. */
+function authish(e){
+  if(!e) return false;
+  var c = String(e.code || ''), s = String(e.status || e.statusCode || '');
+  if(c === 'PGRST301' || s === '401') return true;
+  return /jwt|token .*expired|unauthorized|not authenticated|invalid claim/i.test(String((e && e.message) || e));
+}
+function refreshAuth(){
+  try{
+    var cx = client();
+    if(cx && cx.auth && cx.auth.getSession) return Promise.resolve(cx.auth.getSession()).then(function(){}, function(){});
+  }catch(_){}
+  return Promise.resolve();
+}
+/* 967: one getAll, split into what is still going to sync and what the server
+   refused. pending() deliberately still counts BOTH — the sign-out guard asks
+   "what will be lost", and a held refusal is lost too. */
+function counts(){
+  return getAll().then(function(rows){
+    var live = 0, dead = 0;
+    rows.forEach(function(r){ if(r && r.dead) dead++; else live++; });
+    return { live: live, dead: dead };
+  }).catch(function(){ return { live: 0, dead: 0 }; });
+}
+function stuckRows(){
+  return getAll().then(function(rows){
+    return rows.filter(function(r){ return !!(r && r.dead); }).sort(function(a, b){ return a.id - b.id; });
+  }).catch(function(){ return []; });
+}
+/* 967: a refused write is KEPT, flagged and named instead of deleted. */
+function bury(row, err){
+  droppedSome = true;
+  row.dead  = 1;
+  row.err   = String((err && (err.message || err.details || err.hint)) || err || 'refused');
+  row.code  = String((err && err.code) || '');
+  row.errAt = new Date().toISOString();
+  try{ if(window.report) window.report(err, 'outbox', 'refused:' + row.table); }catch(_){}
+  console.warn('[outbox] a write was REFUSED and is being held:', row.table, row.err);
+  return put(row).then(function(){ return false; }, function(){ return false; });
+}
 /* 868: the queued entries for one table, oldest first — a reload overlays
    these on top of freshly-loaded (maybe stale-cached) rows so an offline edit
    survives a refresh until it syncs. */
 function patchesFor(table){
   return getAll().then(function(rows){
-    return rows.filter(function(r){ return r.table === table; })
+    return rows.filter(function(r){ return r.table === table && !r.dead; })
                .sort(function(a, b){ return a.id - b.id; });
   }).catch(function(){ return []; });
 }
 
-var flushing = false, sentSome = false;
+var flushing = false, sentSome = false, droppedSome = false;
 function flush(){
   if(flushing) return Promise.resolve();
   if(typeof navigator !== 'undefined' && navigator.onLine === false) return Promise.resolve();
   var cx = client();
   if(!cx) return Promise.resolve();
-  flushing = true; sentSome = false;
+  flushing = true; sentSome = false; droppedSome = false;   /* 967: per-flush, or one refusal would gag the green forever */
   badge();   /* 873: paint the 'Syncing\u2026' state while the flush runs */
   return getAll().then(function(rows){
+    rows = rows.filter(function(r){ return !r.dead; });   /* 967: a held refusal waits for a person, not for the next tick */
     rows.sort(function(a, b){ return a.id - b.id; });   /* FIFO */
     var chain = Promise.resolve();
     rows.forEach(function(row){
@@ -75741,30 +76291,37 @@ function flush(){
         /* 867: two entry shapes now. op:'upsert' -> a full-row upsert keyed on
            onConflict (Team Directory, etc); default -> the 865 field patch. Both
            are idempotent, so a replay after a partial flush can't duplicate. */
-        var q = (row.op === 'upsert')
-          ? cx.from(row.table).upsert(row.row, row.onConflict ? { onConflict: row.onConflict } : undefined)
-          : cx.from(row.table).update(row.patch).eq(row.match.col, row.match.val);
-        return Promise.resolve(q)
-          .then(function(r){
-            if(r && r.error){
-              if(networkish(r.error)) return true;    /* still offline: keep it, stop */
-              console.warn('[outbox] dropping a refused write:', row.table, r.error.message);
+        var attempt = function(retried){
+          var qq = (row.op === 'upsert')
+            ? cx.from(row.table).upsert(row.row, row.onConflict ? { onConflict: row.onConflict } : undefined)
+            : cx.from(row.table).update(row.patch).eq(row.match.col, row.match.val);
+          return Promise.resolve(qq)
+            .then(function(r){
+              if(r && r.error){
+                if(networkish(r.error)) return true;    /* still offline: keep it, stop */
+                if(authish(r.error) && !retried) return refreshAuth().then(function(){ return attempt(true); });
+                return bury(row, r.error);
+              }
+              sentSome = true;
               return del(row.id).then(function(){ return false; });
-            }
-            sentSome = true;
-            return del(row.id).then(function(){ return false; });
-          })
-          .catch(function(e){
-            if(networkish(e)) return true;            /* network dropped mid-flush */
-            console.warn('[outbox] dropping a write that threw:', row.table, e && e.message);
-            return del(row.id).then(function(){ return false; });
-          });
+            })
+            .catch(function(e){
+              if(networkish(e)) return true;            /* network dropped mid-flush */
+              if(authish(e) && !retried) return refreshAuth().then(function(){ return attempt(true); });
+              return bury(row, e);
+            });
+        };
+        return attempt(false);
       });
     });
     return chain;
   }).then(function(){
     flushing = false;
+    _justSynced = (sentSome && !droppedSome);   /* 967: only a clean, real send earns the green */
     badge();
+    if(droppedSome){
+      try{ if(window.crToastErr) window.crToastErr('Some changes were refused by the server and are still on this device \u2014 tap the red chip to review them.'); }catch(_){}
+    }
     if(sentSome){
       try{ window.dispatchEvent(new CustomEvent('cr-outbox-flushed')); }catch(_){}
       /* the punch cache is the one this phase feeds; refresh it so a synced
@@ -75790,6 +76347,9 @@ function queue(entry){
           if(entry.op === 'upsert') hit.row = Object.assign({}, hit.row, entry.row);
           else hit.patch = Object.assign({}, hit.patch, entry.patch);
           hit.at = entry.at;
+          /* 967: editing the same target again is the person answering the
+             refusal — let it try once more instead of staying buried. */
+          if(hit.dead){ hit.dead = 0; hit.err = null; hit.code = null; }
           return put(hit);
         }
         return add(entry);
@@ -75815,7 +76375,9 @@ function ensure(){
     'border:1px solid transparent;padding:5px 13px;border-radius:14px;z-index:10000;cursor:pointer;' +
     "font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;" +
     'box-shadow:0 2px 10px rgba(0,0,0,.4);transition:background .2s ease,color .2s ease,border-color .2s ease;';
-  el.addEventListener('click', function(){ flush(); });
+  el.addEventListener('click', function(){
+    stuckRows().then(function(rows){ if(rows.length) openPanel(); else flush(); });
+  });
   document.body.appendChild(el);
   return el;
 }
@@ -75826,7 +76388,11 @@ var _bStates = {
   offline: { bg:'#3a2d0a', fg:'#ffd54a', tip:'Saved on this device \u2014 will sync when you are back online' },
   waiting: { bg:'#3a2d0a', fg:'#ffd54a', tip:'Saved on this device, waiting to sync \u2014 tap to try now' },
   syncing: { bg:'#0e2733', fg:'#7fd1ff', tip:'Syncing your changes\u2026' },
-  done:    { bg:'#123322', fg:'#63e6a2', tip:'All your changes have synced' }
+  done:    { bg:'#123322', fg:'#63e6a2', tip:'All your changes have synced' },
+  /* 967: red, and it does NOT clear itself. 9.79:1 (scripts/contrast.py), the
+     same >=8.7 floor as the other four, and self-painted so it is identical in
+     both themes. */
+  stuck:   { bg:'#3a0f12', fg:'#ffb3ad', tip:'These changes were refused by the server \u2014 tap to see why' }
 };
 function setBadgeState(b, state, text){
   var s = _bStates[state] || _bStates.waiting;
@@ -75834,21 +76400,24 @@ function setBadgeState(b, state, text){
   b.title = s.tip; b.textContent = text;
   b.style.display = 'block';
 }
-var _lastPending = 0, _doneTimer = null;
+var _lastPending = 0, _doneTimer = null, _justSynced = false, _panel = null;
 function badge(){
-  pending().then(function(n){
+  counts().then(function(c){
+    var n = c.live;
     var b = ensure();
     var offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
-    if(n > 0){
+    if(c.dead > 0){
+      /* 967: red WINS. A refusal that needs a person must not be masked by an
+         amber "waiting" chip, and it must never auto-hide. */
+      if(_doneTimer){ clearTimeout(_doneTimer); _doneTimer = null; }
+      setBadgeState(b, 'stuck', c.dead + ' change' + (c.dead === 1 ? '' : 's') + ' could not sync \u2014 tap to see');
+    }else if(n > 0){
       if(_doneTimer){ clearTimeout(_doneTimer); _doneTimer = null; }
       if(flushing && !offline) setBadgeState(b, 'syncing', 'Syncing\u2026');
       else if(offline)         setBadgeState(b, 'offline', n + ' saved \u2014 offline');
       else                     setBadgeState(b, 'waiting', n + ' waiting to sync');
     }else{
-      /* the queue just drained. If it was non-empty a moment ago AND we did the
-         draining by syncing (not by a logout wipe, which resets _lastPending to
-         0 first), flash a confirmation, then hide. */
-      if(_lastPending > 0){
+      if(_lastPending > 0 && _justSynced){
         setBadgeState(b, 'done', 'All changes synced');
         if(_doneTimer) clearTimeout(_doneTimer);
         _doneTimer = setTimeout(function(){ b.style.display = 'none'; _doneTimer = null; }, 2600);
@@ -75856,7 +76425,123 @@ function badge(){
         b.style.display = 'none';
       }
     }
+    _justSynced = false;
     _lastPending = n;
+    if(_panel && _panel.parentNode) drawPanel();
+  });
+}
+
+/* 967: the held-refusal panel. A bounded card, not a full-screen view, so it
+   needs no hideAllViews()/navRestore() registration; it never writes
+   document.body.style.overflow (no 14th scroll-lock writer); every string goes
+   in through textContent. */
+function openPanel(){
+  if(!_panel){
+    _panel = document.createElement('div');
+    _panel.id = 'cr-outbox-stuck';
+    _panel.style.cssText = 'position:fixed;left:12px;right:12px;max-width:520px;margin:0 auto;' +
+      'bottom:calc(env(safe-area-inset-bottom,0px) + 110px);max-height:min(60vh,460px);overflow:auto;' +
+      'background:#161a22;color:#e9eef6;border:1px solid #3a0f12;border-radius:12px;z-index:10001;' +
+      "font:600 12.5px/1.45 'Segoe UI',Arial,sans-serif;box-shadow:0 10px 34px rgba(0,0,0,.55);padding:12px 13px;";
+  }
+  if(!_panel.parentNode) document.body.appendChild(_panel);
+  drawPanel();
+}
+function closePanel(){ if(_panel && _panel.parentNode) _panel.parentNode.removeChild(_panel); }
+var STUCK_TBL = { punch_items:'Punch-out', projects:'Job', inspection_reports:'Document',
+                  team_profiles:'Teammate', estimates:'Estimate', insurance_claims:'Claim',
+                  commissions:'Commission', appointments:'Appointment' };
+function fieldsOf(row){
+  var o = (row.op === 'upsert') ? row.row : row.patch;
+  return Object.keys(o || {}).filter(function(k){ return k !== 'id'; }).join(', ') || 'no fields';
+}
+function stuckBtn(label, ink){
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.style.cssText = 'background:transparent;border:1px solid ' + ink + ';color:' + ink +
+    ';border-radius:8px;min-height:44px;padding:0 14px;font:700 12px inherit;cursor:pointer;';
+  btn.textContent = label;
+  return btn;
+}
+function rowCard(r){
+  var card = document.createElement('div');
+  card.style.cssText = 'border-top:1px solid #262b36;padding:10px 0 12px;';
+  var l1 = document.createElement('div');
+  l1.textContent = (STUCK_TBL[r.table] || r.table) + ' \u00b7 ' + (r.match ? (r.match.col + ' ' + r.match.val) : 'new');
+  var l2 = document.createElement('div');
+  l2.style.cssText = 'color:#a8b3c4;font-weight:600;margin-top:2px;';
+  l2.textContent = 'Changed: ' + fieldsOf(r);
+  var l3 = document.createElement('div');
+  l3.style.cssText = 'color:#ffb3ad;font-weight:600;margin-top:4px;';
+  l3.textContent = r.err + (r.code ? ' (' + r.code + ')' : '');
+  var acts = document.createElement('div');
+  acts.style.cssText = 'display:flex;gap:8px;margin-top:9px;';
+  var retry = stuckBtn('Try again', '#7fd1ff');
+  retry.addEventListener('click', function(){
+    r.dead = 0; r.err = null; r.code = null;
+    put(r).then(function(){ return flush(); }).then(badge, badge);
+  });
+  var drop = stuckBtn('Discard', '#ffb3ad');
+  drop.addEventListener('click', function(){
+    if(!window.confirm('Discard this change? It will not be saved anywhere.')) return;
+    del(r.id).then(function(){ badge(); drawPanel(); });
+  });
+  acts.appendChild(retry); acts.appendChild(drop);
+  card.appendChild(l1); card.appendChild(l2); card.appendChild(l3); card.appendChild(acts);
+  return card;
+}
+function photoCard(p){
+  var card = document.createElement('div');
+  card.style.cssText = 'border-top:1px solid #262b36;padding:10px 0 12px;';
+  var l1 = document.createElement('div');
+  l1.textContent = 'Photo \u00b7 ' + (p.name || 'from a punch-out');
+  var l3 = document.createElement('div');
+  l3.style.cssText = 'color:#ffb3ad;font-weight:600;margin-top:4px;';
+  l3.textContent = String(p.err || 'refused');
+  var acts = document.createElement('div');
+  acts.style.cssText = 'display:flex;gap:8px;margin-top:9px;';
+  var retry = stuckBtn('Try again', '#7fd1ff');
+  retry.addEventListener('click', function(){
+    try{ window.CardinalPunchCard._retryPhoto(p.id).then(function(){ badge(); drawPanel(); }); }catch(_){}
+  });
+  var drop = stuckBtn('Discard', '#ffb3ad');
+  drop.addEventListener('click', function(){
+    if(!window.confirm('Discard this photo? It will not be uploaded.')) return;
+    try{ window.CardinalPunchCard._discardPhoto(p.id).then(function(){ badge(); drawPanel(); }); }catch(_){}
+  });
+  acts.appendChild(retry); acts.appendChild(drop);
+  card.appendChild(l1); card.appendChild(l3); card.appendChild(acts);
+  return card;
+}
+function drawPanel(){
+  if(!_panel) return;
+  stuckRows().then(function(rows){
+    var photos = [];
+    try{
+      if(window.CardinalPunchCard && window.CardinalPunchCard._stuckPhotos)
+        return Promise.resolve(window.CardinalPunchCard._stuckPhotos()).then(function(ps){
+          return { rows: rows, photos: ps || [] };
+        }, function(){ return { rows: rows, photos: [] }; });
+    }catch(_){}
+    return { rows: rows, photos: photos };
+  }).then(function(d){
+    if(!d.rows.length && !d.photos.length){ closePanel(); return; }
+    while(_panel.firstChild) _panel.removeChild(_panel.firstChild);
+    var total = d.rows.length + d.photos.length;
+    var h = document.createElement('div');
+    h.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
+    var t = document.createElement('span');
+    t.style.cssText = "flex:1;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#ffb3ad;";
+    t.textContent = total + ' change' + (total === 1 ? '' : 's') + ' the server refused';
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.setAttribute('aria-label', 'Close');
+    x.style.cssText = 'background:transparent;border:0;color:#a8b3c4;font-size:20px;line-height:1;cursor:pointer;font-family:inherit;min-width:44px;min-height:44px;';
+    x.textContent = '\u00d7';
+    x.addEventListener('click', closePanel);
+    h.appendChild(t); h.appendChild(x); _panel.appendChild(h);
+    d.rows.forEach(function(r){ _panel.appendChild(rowCard(r)); });
+    d.photos.forEach(function(p){ _panel.appendChild(photoCard(p)); });
   });
 }
 
@@ -75881,7 +76566,8 @@ if(document.readyState !== 'loading') badge();
 else document.addEventListener('DOMContentLoaded', badge);
 
 window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
-  queue: queue, flush: flush, pending: pending, networkish: networkish, patchesFor: patchesFor, clear: clearAll, requestPersist: requestPersist
+  queue: queue, flush: flush, pending: pending, networkish: networkish, patchesFor: patchesFor, clear: clearAll, requestPersist: requestPersist,
+  counts: counts, stuck: stuckRows, authish: authish, openStuck: openPanel
 });
 })();
 </script>

@@ -20497,6 +20497,573 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 975 — the hub's numbers are doors (21 Aug 2026)
+
+Fifth of the Community program's seven items, and the one Theo will feel first. **Ten numbers
+on the hub counted something real and then left you to go and find it by hand** — five KPI
+tiles, three "waiting on you" rows and two tally lists. All ten wore `.cc-prow`'s
+`cursor:pointer`; none of them did anything.
+
+**The thing that made a door impossible had to go first.** The All-bids filter bar lives
+*inside* the All-bids fold, and fold state was a DOM class that `render()` threw away. So
+tapping Apply re-rendered, the fold snapped back to its `open=false` default, and **the table
+you were filtering closed itself**. `folds{}` now holds the user's own choice and outranks the
+default — the same shape as the `closed{}` + `closedStamp` pair the partner cards already use.
+
+**Every door goes through one `applyDoor(spec)`**, and a door **replaces** `chState.sets`
+rather than adding to it: two taps in a row would otherwise intersect to nothing. It sets the
+pane, opens the fold it is sending you to, bumps `chStamp` and scrolls the fold into view — a
+filter applied to a table below the fold looks like nothing happened.
+
+**The number and the destination come from one declaration.** `KPI975` is a five-row table of
+`{ key, label, text, n, sets, pane, fold, sort }`; the tile and its door are built from the same
+row, so they cannot drift. **A tile whose figure is zero stays a plain `<div>`** — a door onto
+an empty list is the same lie in the other direction.
+
+**Reuse, not a second list.** `cr-can-script` already declares `OPEN = { Lead, Prospect, OnHold }`
+with its own build-710 reasoning about why parked counts as open. It is now **exported** and read
+by the hub, so the stage names exist once. Display strings come from the module's own `LABEL`.
+
+**Four things that were quietly wrong, all inside the blast radius:**
+
+1. **"Open bids" read `d.all.length`** — every community job ever, including the closed and the
+   lost. Right today only because all 15 live jobs are still at Lead. It reads `d.open` now.
+2. **`.cc-kpi div` is a DESCENDANT selector**, and `.k`/`.v` are divs — so every tile drew
+   **three nested cards**, each with its own border, radius and 3px green left edge. Measured in
+   Chromium: `tile=3px  .k=3px  .v=3px`. Now `.cc-kpi>*`, which also keeps working now the live
+   tiles are `<button>`s. The mobile twin moved in the same edit.
+3. **`queue()` dropped its closing `</div>` when `role === 'prod'`** — the tag sat inside the
+   non-prod arm — so Curtis and Scottie got three nested unclosed rows. Latent only because all
+   15 jobs are Lead; 972 would have made it live.
+4. **A parked job's check-back could never go red.** The pill read `held ? '' : ' due'`, so a
+   check-back sailed past weeks ago stayed a calm grey chip — the one thing this module's own
+   banner calls "worth shouting about". And it never reached Due soon at all: the push sat inside
+   `if(st === 'Lead')` and read `l.bid_due_at` raw instead of `chDueIso()`, the function that
+   already answers which clock a job is on.
+
+⚠️ **`byPartner` keyed on `'No partner'` where every other surface says `'No partner recorded'`**,
+so that tally row could not have become a door — the key did not match the filter value.
+`partnerOf()` is the one spelling now.
+
+⚠️ **`signature()` could not see any of this.** Filter and fold state were absent from the
+repaint signature, so a background `scan()` could conclude nothing had changed a moment after a
+door fired and repaint the pre-door view. `chStamp` and `chActiveCount()` are in it now.
+
+**The app stamp's PROSE was nine builds stale** — it still described build 966's contract chip
+while the number had been bumped by 967 through 974. `check_build.py` gates the number only.
+Rewritten.
+
+**Gate:** `gate_975.mjs`, 13 assertions, and it is a **real drive**, not a source read: it seeds
+an eight-job community book covering every state the doors separate, opens the hub, **taps the
+tiles** and reads what the table then shows. Control on 974: **RED, 12 named failures** — among
+them `tiles: ["DIV:null:Open bids", …]`, `tile=3px  .k=3px  .v=3px`, `Due soon shows:
+["c1","c2","c3"]` with the parked job absent, `the held chip reads "-5 d hold" and red=false`,
+and `top-level rows=1  nested=1` for the Production user. `check_build.py` green (marker
+`data-cckpi`, negative control clean); sentinel clean.
+
+⚠️ **My own miss, found while re-running the earlier gates: `gate_971.mjs` had been RED since
+build 972 for its OWN reason, and I did not notice because I never re-ran it.** Two harness gaps,
+both introduced by later builds touching the same function: 972 gave `threadHtml` four new stage
+arms that read `ck(pr).stage_since`, which the shim did not define (`ck is not defined`, every
+case threw); and 974 moved the price ladder into the main block, so `priceOf`'s
+`window.commBidAmount` was undefined on this gate's stub page and every case answered "needs
+pricing". Neither was an app defect — `gate_972` and `gate_974` were green on the same code the
+whole time. Both are fixed, `gate_971` is green at 975 (13 assertions) **and still RED with 9
+named failures on its own 970 control**. *The lesson is the cheap one: when a build changes a
+function an earlier gate executes, re-run that gate in the same session.*
+
+### ⚠ LIVE BUILD-NUMBER COLLISION on 967 — and the tool that could not see it
+
+**Two unmerged branches both claim build 967.** Measured 21 Aug 2026, 17:35 UTC:
+
+| branch | commit | what it calls 967 |
+|---|---|---|
+| `claude/claude-md-docs-9qyu0f` | `6f15566` · **14:19:21 UTC** | the printed contract shows all of its own words |
+| `claude/cardinal-design-usability-audit-qn9fc9` | `14ca30d` · **15:03:44 UTC** | a change the server refuses is no longer thrown away |
+
+Both branch from `d0cd727` (build 966). **`git merge-tree` says four files conflict** —
+`index.html`, `FEATURES.md`, `cardinal_build_log.md`, and an **add/add clash on
+`.claude/skills/cardinal-build/scripts/gate_967.mjs`**, which is two entirely different gates at
+one path.
+
+**This is mine.** The contract-print branch was pushed **44 minutes before** my 967 commit, and
+`CLAUDE.md` says to run `scripts/next_build.py` **before the first patch of a session**. Run at
+15:00 it would have folded that branch's stamp into `highest` and answered **968**. I did not run
+it, and nine builds are now stamped on top of the wrong starting number.
+
+⚠️ **And the tool that exists to prevent exactly this could not see it.** `next_build.py` compared
+each branch against **main** only — so it caught *"this branch reuses a number already shipped"*
+(the live 584 case) and completely missed *"two unmerged branches claim the same number"*, which is
+the 574-span disaster it was written for. It had both facts in hand and never crossed them:
+`claimed` has always been a number → **list** of branches, nothing ever tested `len() > 1`, and the
+summary line printed `claimed[n][0]` — **so a number claimed twice printed as though claimed
+once.** Its own output named both branches three lines apart and drew no conclusion.
+
+**Fixed.** `cross_branch_collisions()` is its own function so `--self-test` exercises the real
+rule; the summary line now lists every claimant. Negative control on the live remote: the pre-fix
+script reports **1 collision** and never mentions 967; the fixed script reports **2** and names
+both branches, both notes, and the `gate_967.mjs` clash.
+
+**Not resolved here — it is not this session's branch to renumber, and the choice is Theo's.**
+Renumbering the contract-print branch costs one build (~10 sites); renumbering this branch costs
+nine, including nine gate filenames and every build-numbered identifier in the shipped source
+(`masked973`, `pq974`, `itm974`, `KPI975`, `dueSoon975` …), against `CLAUDE.md`'s standing
+*"never renumber history; source comments cite build numbers."* The next safe number is **976**.
+
+⚠️ **A second collision is latent in the same pair:** both branches append a `## 59` class to
+`BUG_CLASSES.md`. This entry deliberately adds none.
+
+### 975 follow-up — `gate_sweep.py`, the durable fix for a gate that rots quietly
+
+`gate_971.mjs` went red at build **972** and stayed red through 973 and 974 without anyone
+noticing, because nothing re-ran it. Both causes were **harness** gaps rather than app defects
+(972 gave `threadHtml` arms that read a symbol its shim did not define; 974 moved the price
+ladder into the main block, so the gate's stub page no longer had it) — which is precisely why
+it was invisible: `gate_972` and `gate_974` were green on the same code the whole time.
+
+`scripts/gate_sweep.py` runs a **range** of per-build gates two ways:
+
+- **on HEAD** — catches a later build breaking an earlier gate, which is the exact miss above;
+- **on the previous build**, materialised with `git show <sha>:<file>` — catches a gate that has
+  stopped being able to fail.
+
+Three details that make it worth having rather than a `for` loop:
+
+1. **A CRASH is reported as CRASH, never as RED.** BUG_CLASSES 37 — a control that dies before
+   printing a line has proved nothing, and reading it as "not green" has cost this project five
+   rounds in one session.
+2. **It reads which artifact each gate gates** out of the gate's own `FILE=` line rather than
+   assuming `index.html` — that is how it correctly points `gate_968` at `supplement.html`.
+3. **It resolves the control commit case-insensitively** (`\bbuild\s+NNN\b`), because this log's
+   own headings alternate between `Build NNN` and `build NNN`, and a case-sensitive grep here
+   reads like 142 missing builds.
+
+`--selftest` proves it can report a problem, three ways: a gate pointed at its own artifact comes
+back GREEN (which the sweep flags, because a passing control proves nothing); a gate pointed at an
+empty page comes back **CRASH**, not RED; and the artifact sniffer really does find `gate_968`.
+
+Full sweep at 975: **9 gates, all green on HEAD, all red on their own control**, controls resolved
+to `e6e06ea 14ca30d b38fc85 86de529 5127717 106dcec 5a67bdd 476acff 75fa11b`.
+
+### 975 follow-up — CI went red on a COMMENT, and `check_build.py` could not see it
+
+`.github/workflows/check.yml` counts `<div` against `</div>` **with a bare regex over the whole
+file**. Build 975's first push failed it: `div tags unbalanced: 4152 vs 4153`. The extra tag was
+**prose** — a comment I had just written to explain the `queue()` fix, which spelled out the
+closing div tag it was describing.
+
+**This repo's comment-pollution trap, wearing a CI hat** — and the second time in two builds it
+bit me (974's `it.price` assertion failed 3 → 3 for exactly the same reason). The comment was
+reworded; no markup changed.
+
+**The real defect is that the local ladder was laxer than CI.** `check_build.py` balanced
+`<script>` and `<style>` but not `<div>`, so a build could be green locally and red on push. It
+checks div balance now, **with the same regex `check.yml` uses on purpose** — a local gate that is
+laxer than the remote one is not a gate. Negative-controlled against the broken tree, where it
+reports `✗ <div> tag balance (4152 open / 4153 close)`.
+
+## Build 974 — one bid amount (21 Aug 2026)
+
+Fourth of the Community program's seven items, and the one that explains why the numbers
+never matched. **A community bid had SIX definitions of its own amount**, in three blocks —
+and two of them ranked the same two sources in **opposite orders**:
+
+| | first | then |
+|---|---|---|
+| the job card (`cr-cc`) | the estimate builder's total | the figure typed on the bid form |
+| the hub (`cr-ch2`'s `bidAmt`) | the figure typed on the bid form | the estimate builder's total |
+
+One job, two screens, two numbers, and neither screen said which it was showing. Analytics
+(`cr-can`) read a seventh answer — `checklist.lead.bid_amount` alone — so **every bid priced in
+the estimate builder counted as $0** in the win rate, the averages and the per-partner totals.
+
+**One resolver now, `commBidAmount(pr, est)`**, at depth 0 in the main block beside
+`pickEstimate` and `projHomeowner`. Rungs: **awarded → submitted → builder → typed → none**.
+It takes the estimate row as a **parameter** rather than reading one: `cr-cc`'s `liveEstimate()`
+is per-open-job module state, so a shared helper that called it would hand the open job's total
+to every row of a list. 971's `priceOf` is now a one-line adapter — **not** a second copy of the
+ladder — and `bidAmt` keeps its name and its six call sites.
+
+`awarded` is a new rung. `bid.awarded_amount` is written only by `ocSave`'s awarded arm, in the
+same call that sets stage Approved, so it is absent on every Lead job and cannot perturb 971's
+Lead arm. That is asserted, not argued.
+
+**The Bid tab was printing $0.00 against every line.** It multiplied `it.qty * it.price`, and
+**no line object in production carries a `price` key** — every one is
+`{qty,name,unit,amount,library_id,unit_price,description}`. ⚠️ **The obvious swap to
+`unit_price` ships a NEW wrong number**: 14 of the 18 live estimate rows are non-itemized, where
+`unit_price` is 0 and `amount` carries the money (and on row `b49d7638` the two disagree —
+`amount` is the truth). The rule the shipped document builder already uses was copied instead,
+including dropping the qty cell on a lump sum. **Live impact today is zero** — only one
+community job has estimate rows, both $0.00 drafts — so this was latent and would have fired the
+first time anyone priced a community bid in the builder.
+
+**Provenance is now on the screen**, in slots that already existed: the card pin's
+`.amt small` caption (styled since the black-card port, never once used) and the Bid tab's
+`.tot .k` label. No new CSS.
+
+**CR-COM-009 closed.** Recording who funded an award never moved the bill-to, so an awarded job
+kept invoicing whoever the bid went to. It now mirrors the referred arm — and `ocOpen`'s
+`funded_id` seed was changed from `l.partner_id` to `''` first, because `ocPartnerField` falls
+back to a free-text input when the roster is empty and never touches `funded_id`, so the old
+seed would have re-bound the bill-to to the **old** row. The `if(lp.funded_by)` guard is not
+decoration: `mergeCk` deletes a key set to `''`, so an unguarded assignment on a blank
+"— select —" would have wiped the bill-to on 13 of the 15 live jobs.
+
+⚠️ **My own counting trap, caught by my own assertion.** The self-computing check
+`count(patched,'it.price') == count(orig,'it.price') - 1` failed at 3 → 3: the explanatory
+comment I had just written *quoted the token it was documenting*. This file's comment-pollution
+rule, biting the build that cites it. The comment was reworded; the assertion was not weakened.
+
+**Two things deliberately NOT done, both offered rather than slipped in:**
+1. **Provenance in the hub's dense All-bids table.** That Amount cell collapses to a flex row
+   below 900px and a second line needs a matching rule. The designed slots (card pin, Bid tab
+   total, analytics rows) carry it; the table shows the number alone.
+2. **Repainting Analytics when `loadEst()` lands.** `loadEst`'s `.then` calls `scan()`, which
+   repaints the hub but not Analytics — so Analytics opened in the second before that fetch
+   returns shows zeros until reopened. **That is 973's behaviour too, so it is not a
+   regression**, and the fix is one line in that callback. Not slipped in.
+
+**Gate:** `gate_974.mjs`, 15 assertions, extracts and runs the shipped `priceOf`, `bidAmt`,
+`bidHtml`, `compute` and `ocSave` (with the shipped `mergeCk`, so the blank-funder guard is
+tested for real). Control on 973: **RED, 11 named failures** — the headline one being
+`card=18425 (builder)  hub=14330` for a single job, and `["$0","$12,000"]` for a single lump-sum
+line. `check_build.py` green (marker `commBidAmount`, negative control clean); sentinel clean.
+
+## Build 973 — one partner identity (21 Aug 2026)
+
+Third of the Community program's seven items. A partner had **three storage shapes** and
+nothing reconciled them: `cr-cpartners-script` wrote `checklist.lead.partner_id`,
+`cr-ch2-script`'s `partnerOf()` read `checklist.lead.partner_name`, and the referral path
+writes a free-typed `partner_name` with no id at all. So attaching a partner on the client
+card left the hub saying **"No partner recorded"**, and detaching one left a **ghost name**
+behind on every name-reading screen.
+
+**`setPartnerForProject()` now writes and clears the pair together.** Attaching resolves the
+roster row and stores `partner_id` + `partner_name`; clearing deletes both. Leaving Community
+(`cr-cct-script`) clears both as well.
+
+**A confidential partner is stored by id ONLY.** Denormalising its real name into the project
+row would leak it into the hub, the search haystack and every print path — which is exactly
+what `get()`'s mask exists to prevent. The resolution therefore happens inside the module,
+against the module-private `getRaw()`; the name is never written.
+
+**The New Bid picker was reading the unmasked roster.** It consumed `load()`'s raw return
+rather than `list()`, so a confidential partner's real name was shown to every user *and*
+written into the job. It now reads `list()`, and both `partner_name: partner.name` writes are
+guarded by `masked973` so a masked placeholder can never become the stored name. Habitat sorts
+first, as it does in every other partner list.
+
+**Deliberately deferred — the read-resolver half.** Two decisions belong to Theo before a
+resolver can prefer one shape over another: what the 4 DHRN-drifted rows should be called, and
+what happens to `partner_id` when someone free-types a referral. Zero live rows are affected by
+either. The writer half above is unambiguous and ships alone.
+
+**Gate:** `gate_973.mjs`, 9 assertions, runs the **shipped** `setPartnerForProject` against a
+recording client and the shipped `partnerOf()` against what it wrote. Control on 972: **RED, 7
+named failures** — including the hub literally answering `"No partner recorded"` for a partner
+that had just been attached, and `{"claim_type":"community","partner_name":"Habitat For
+Humanity"}` left behind after a clear. `check_build.py` green (marker `masked973`, negative
+control clean); sentinel clean against the 972 baseline.
+
+## Build 972 — a community job stops going quiet once it is awarded (21 Aug 2026)
+
+**The bug behind the bug.** `threadHtml` had arms for Lead / Prospect / OnHold /
+Approved / Completed only, so **Scheduled, Invoiced, Closed and Lost rendered no
+state and no next action** — the card went silent for the entire second half of a
+job. `gate_972`'s floor names them on the 971 control:
+`generic or missing: ["Scheduled","Invoiced","Closed","Lost"]`.
+
+Worse, and only found by measuring: **the Completed arm was itself unreachable.**
+Nothing the community card exposes could produce `Completed` — the only file-wide
+producers (`#stageSel`, `acxAdvance`, `#stageBanner .stgarrow`) all sit inside
+`#projectView` children that `#projectView.cr-cc-own > *:not(#cr-cc):not(#dangerZone)`
+hides. So 971's "Ready to invoice" arm could never fire from the card, which means
+the invoice step could never be reached either. A `complete` act fixes the whole
+chain with one `window.setStage` call — the same one every other act uses.
+
+**"Get on the calendar" now books a real day, and adds no new stage-move path.**
+It used to be `confirm('Mark this job SCHEDULED?')` + `setStage` — it touched no
+calendar at all, and live data confirms it: **0 appointments have ever existed on
+any community job.** The act now opens the app's ONE appointment composer
+(`openApptDay`, prefilled kind=job / client / title). The stage then moves itself,
+because **build 783's `__apptMayAdvanceStage` already advances Approved → Scheduled**
+whenever a `kind:'job'` appointment carrying a `project_id` is created. The old
+direct `setStage(pr.id,'Scheduled')` was **removed** in the same edit — two paths to
+one stage is the second-pipeline this project forbids, and assertion 10 pins it.
+
+⚠️ **Two premises in my own brief were wrong, and the recon measured them rather
+than repeating them:**
+- I assumed a CHECK constraint on `appointments.kind`. **There is none** —
+  `pg_constraint` returns only the PK and the `project_id` FK.
+- More importantly, **`appointments` RLS is per-creator** (`created_by = auth.email()`,
+  plus theo@ and joan@). A booked build day is therefore **not a shared fact**, so the
+  Scheduled arm must never say "nothing is booked". It says *"No build day on your
+  calendar. Whoever booked it may be the only one who can see it."* Assertion 3 fails
+  any wording that claims the stronger thing.
+
+**Closed and Lost are deliberately QUIET** — they omit `now:true`, so they take the
+calm accent dot instead of the amber urgent halo, and carry no actions. Lost reads
+`loss_reason` **defensively only and never prompts**: `setStage` skips `LOSS_REASONS`
+for community by design (Theo: *"Dont need the why we didn't get it"*) and the column
+is empty database-wide.
+
+**Adjacent, one line, in scope:** the pin's Due cell fired `hot` on `due <= 3`, and
+for every stage past Lead the bid deadline is already in the past — so the pin sat in
+**permanent amber on awarded work**, and rendered "-120d". It now paints hot only for
+a deadline still ahead (or a parked job's check-back) and reads "120d ago". Same shape
+as 971's thread fix, in the other half of the card.
+
+⚠️ **My own error again, same class as 971's:** the A1 anchor spanned the Completed
+arm *including* its closing brace, so my new arms landed outside the if-chain.
+`node --check` caught it. Two builds in a row lost a round to misreading how far an
+anchor reaches — the lesson is to print the anchor's last 40 characters before
+deciding where the replacement joins.
+
+⚠️ **And a weakness in my own gate, fixed before it shipped:** the floor assertion
+first checked only "does a card render", which **passed on the control** — `threadHtml`
+falls back to a generic "Bid requested" entry when no arm matches. A vanished arm would
+have stayed green. The floor now asserts each stage **names its own state**.
+
+**Deliberately not done:** no `Closed` action was added. Closed is a filing state;
+leave it produced only by the existing controls until Theo asks.
+
+Gates: `gate_972.mjs` **13/13 on 972; RED with 9 named failures on the 971 control** ·
+`check_build.py` green with marker + negative control · `sentinel.js` clean. One new
+export (`CardinalProduction.schedFor`, read-only) so the card asks the app's existing
+build-day resolver instead of copying its filter.
+
+## Build 971 — a community bid can finally be marked submitted (21 Aug 2026)
+
+**The audit asked why 15 of 15 community jobs sit at Lead. This is the mechanism.**
+`threadHtml`'s Lead arm was `acts: est ? [Mark it submitted, Open the bid] : [Price it]`
+— keyed on the estimate OBJECT returned by `liveEstimate()`, which reads only the
+`estimates` table. The live shape at audit time:
+
+- **15** community projects, all at `Lead`
+- **7** priced by a hand-typed `checklist.lead.bid_amount` (16,360 · 10,770 · 12,010 ·
+  18,425 · 14,330 · 14,787 · 29,460) — every one of them offered **"Price it" and
+  nothing else**, with no way out of Lead
+- `checklist.bid.submitted_amount` **NULL on all 15** — `logsub` has never once been used
+- and the **one** job carrying estimate rows carries **two `status:'draft'` rows totalling
+  `0.00`**, so object-truthiness handed the only "Mark it submitted" button to the job
+  with no price. `gate_971` reproduces that inversion on the 970 control verbatim:
+  **"Bid ready to submit — Priced at $0 across 0 line items."**
+
+**`priceOf(pr)` answers with a NUMBER**, which is the only thing that tells a real price
+from a $0.00 draft, in order of authority: what was logged as submitted → the builder's
+live total → the number typed on the bid form. It is a superset of the expression
+`ocStep2` already uses, so it is the one resolver rather than a fourth ad-hoc copy.
+
+The Lead state now has **three** truths instead of two: *ready to submit* (naming which
+source the price came from — "on the bid form — not in the estimate builder"), *needs
+pricing* (which can now also log an amount by hand), and *submitted — stage not moved*
+for a job whose amount was logged but which still reads Bid Requested.
+
+**Logging an amount now offers the move it was already stamping the date for.**
+`ccDoAct('logsub')` wrote `submitted_at` — the date the bid went to the partner — and then
+left the job at Lead. It now offers `setStage(pr.id,'Prospect')` through the **same call
+the 'submitted' arm uses** (no second stage-move path). Guarded three ways: only from
+Lead, never on the blank-clear path (`mergeCk` DELETES a key set to `''`, so clearing an
+amount must not push the job forward — the exact inverse of the bug), and the bid patch is
+awaited BEFORE `setStage`, whose own checklist patch is fire-and-forget.
+
+**Two adjacent defects found while measuring, both fixed here:**
+- `#cr-cc .doit.alt` was **inert** — equal specificity (1 id, 2 classes) to
+  `#cr-cc .ev .doit`, which sits later in source and re-declares background/border/color,
+  so the secondary button rendered identical to the primary. Measured on the control:
+  both `rgb(255, 207, 107)`. Moved last and scoped into `.ev` so it can win.
+- an overdue bid rendered **"Due in -10 days."** It now reads "Due to the partner 10 days
+  ago." — and 3 of the 15 live jobs are past due.
+
+⚠️ **My own error, caught by the gate.** The `LEAD_BRANCH` anchor was the *inside* of the
+`if(st === 'Lead'){` block, and I wrapped my replacement in a second `if`, adding an
+unbalanced brace; the repair then deleted the *original* opener because my search string
+had absorbed it. `node --check` caught both. Two rounds lost to not reading what the
+anchor actually spanned.
+
+**Deliberately out of scope, so it is a decision and not an oversight:** the Bid pane still
+says "No bid priced yet." for the 7 hand-priced jobs, and the pin/outcome-header amounts
+still ignore `bid.submitted_amount`. All three are one `priceOf()` call away and belong in
+the same follow-up as CR-UX-004 (one amount, four definitions).
+
+Gates: `gate_971.mjs` **12/12 on 971; RED with 9 named failures on the 970 control**,
+including both halves of the inversion and the inert button measured by colour · shipped
+`threadHtml` and `priceOf` extracted and executed, never re-implemented · `check_build.py`
+green with marker + negative control · `sentinel.js` clean.
+
+## Build 970 — Publish acts on the estimate you have open (21 Aug 2026)
+
+**The failure this prevents, reproduced on the 969 control:** ask `pickEstimate`
+for the estimate you have open, against rows belonging to a different client, and
+it returns **`e-OTHER-newest`** — that client's newest estimate. Publish it and the
+wrong homeowner gets a document; run → Contract and the wrong homeowner gets a
+contract. Nothing on screen says so.
+
+`window.currentProject` is written in exactly four places, and `openProject()` is
+the only one that sets it to a real job. `CardinalEstimates.openEditor()` never
+touches it, and `cr-estimates-script` — the standalone Menu → Estimates screen —
+contains **zero** occurrences of the string: `creOpenSaved(id)` re-reads the row and
+calls `est.openEditor(r.data.project_id, r.data)` with a bare id. So opening a saved
+estimate from that screen leaves the global pointing at whatever client was open
+last, or null. The id match in `pickEstimate` then fails and `return rows[0]` hands
+back a stranger.
+
+**The recon found a fourth site the audit had not named:** `cr-ess-script`
+**`hookEditor`** — the plain **Save** path, which drives `syncStageFor`. Saving an
+estimate opened that way moved the **wrong client's pipeline stage**. Same root
+cause, quieter symptom, and it would have survived a fix aimed only at the three
+publish paths.
+
+**One resolver, not four copies.** `estProjectNow()` sits beside `openEstimateId()`
+and asks the editor which project it is on before falling back to the global —
+which is exactly what `openPreview()` in `cr-epub` already did correctly, so this is
+that one answer, shared. All four capture sites now call it; a raw
+`= window.currentProject;` capture count of **0** in each of the three blocks is
+asserted by the gate.
+
+**And the fallback is gone.** `pickEstimate` now returns **null** when the estimate
+it was asked for is not in the rows, because that means the rows belong to somebody
+else. Both publish paths refuse with a sentence rather than acting — a refusal you
+can read beats a wrong contract nobody notices. The `rows[0]` path is unchanged when
+no id was asked for, and assertion 6 pins that so the legacy behaviour cannot drift.
+
+Gates: `gate_970.mjs` **11/11 on 970; RED with 9 named failures on the 969 control**,
+including the wrong-client row returned by name · `check_build.py` green with marker
++ negative control.
+
+## Build 969 — the Claims messages you could not see on a phone (21 Aug 2026)
+
+**The audit's own suggested fix was wrong, and the recon proved it before a line
+was written.** The finding said "raise these three toasts above `#pwaNav`, or route
+them through `crToast`". The first half is a **silent no-op for two of the three**:
+`.cr-c-toast` and `.cr-k-toast` are appended INTO `#cr-claims-mount` /
+`#cr-coach-mount`, which `styleMounts()` makes `position:fixed` with a non-auto
+z-index and `cr-mounthead-styles` pins at `z-index:60 !important` at every width.
+Positioned + non-auto z-index is a **stacking context**, so a z-index on a
+descendant reorders it only against its siblings inside that box — it can never
+rise over `#pwaNav`, which is 9990 in the ROOT context. A CSS-only build would have
+gone green on every mechanical gate and changed nothing on the phone. Raising the
+MOUNT instead would put the whole Claims screen over the bottom bar, contradicting
+the settled 935/962 rule ("Clearance, NOT a bigger z-index").
+
+**So: route, don't raise.** Build 735 already adopted the `window.toast` NAME with
+the `(msg, type)` signature and the 'error'/'success' vocabulary that claims and
+coach already pass at all 16 call sites — so this is **one function body per module
+and zero call-site edits**. Each keeps its old path behind
+`if (typeof window.toast === 'function')`, so nothing becomes dead markup and no
+`<style>` block changed size. `cr-ess` additionally dropped three `<b>` wrappers,
+because the shared channel is `textContent` by design (733) — the only content
+decision in the build.
+
+**A second defect went with it, for free.** `--cr-black` is `#f2f4f7` in the DARK
+base rule, so the plain claims/coach toast was white-on-near-white at **1.10:1**;
+`.success` measured **2.07:1**. Even a working z-index would have left them
+unreadable in the app's default theme. `gate_969` measures the success ink on the
+966-era body at 2.07:1 and on the new path above the floor.
+
+⚠️ **The gate's first version could not fail** — it called `window.toast` directly,
+so it was testing `crToast` (which already worked) and went GREEN on the control.
+Rewritten to **extract each module's own `toast()` source from the artifact by
+brace-matching and execute it** against the real mounts. That is the CLAUDE.md rule
+"extract the shipped function text and execute it, never a re-implementation", and
+it is what turned the control red.
+
+Gates: `gate_969.mjs` **10/10 on 969; RED with 5 named failures on the 968 control**,
+every one naming `pwaNav` as the element actually composited on top at the toast's
+own centre point · `check_build.py` green with marker + negative control ·
+`sentinel.js` clean.
+
+## Build 968 — the Supplement Desk stops signing you out of Cardinal (21 Aug 2026)
+
+**Blast radius first, because it is bigger than "this tab".** `index.html`,
+`studio.html` and `supplement.html` all call `createClient(URL, ANON)` with **no
+options** against the same project on the same origin, so all three read ONE
+stored session under the default `sb-yipslubcptjoarblzbpl-auth-token`. Only
+`visualizer/index.html` has its own key (`cr-viz-auth`). The Desk's `showApp()`
+ran `is_cardinal_admin()` and on a failed check called `sb.auth.signOut()` —
+which in supabase-js v2 defaults to **scope 'global'**, POSTing `/logout?scope=global`
+and revoking the refresh token *everywhere*. So a rep tapping the Supplement Desk
+row (visible to everyone in the insurance portal since 954) was signed out of the
+whole CRM, on every device. `gate_968` reproduces it on the 966 control:
+**`signOut called 1x`, `session present=false`**.
+
+**The refusal is now in-page and touches nothing.** A third view (`#deniedView`)
+says which of the two things happened — 671's rule that *a failed question and a NO
+are different words*: a refusal reads "Ask Theo or Joan to file the supplement" and
+offers no retry; a check that did not come back reads "That is this desk, not you"
+and does. Both say "You are still signed in", both carry **← Back to Cardinal**, and
+neither goes near the session. `adm.data !== true` is kept exactly — `is_cardinal_admin()`
+returns NULL for anon (BUG_CLASSES §12) and `!== true` is what makes NULL a refusal.
+
+**And the Desk finally has a way back.** It had none: header was Theme / Sign out, and
+`href="/"` appeared **zero** times in the file, so in the installed PWA (no browser
+chrome) it was a dead end for admins too — the only exits were an edge-swipe or the
+Sign out that killed the shared session. There is now a `← Cardinal` link in the
+header. The real Sign out is untouched and still correctly signs out everywhere.
+
+⚠️ **Deliberately NOT done: hiding the menu row for non-admins.** The audit suggested
+it; the recon found the cost. `cr-menu-script`'s `isAdmin()` is the hardcoded
+theo@/joan@ pair, but the Desk's real gate is the DB's `is_cardinal_admin()`, which
+`audit@cardinalrenovations.net` also passes — so hiding would strip the door from a
+legitimate admin while still letting them in by URL. Worse, `apply()` runs once at
+DOMContentLoaded and reads `window.currentUser` at that instant, so a token refresh
+that needs the network can hide admin rows for the whole session (a pre-existing race
+that already governs reports/feed/settings). With the refusal panel in place the row
+is harmless and teaches something; hidden, it would sometimes lie. **Do not widen
+`ADMIN_EMAILS` to "fix" this.**
+
+Gates: `gate_968.mjs` **12/12 on 968, RED with 9 named failures on the 966 control**
+(including the two that name the bug) and no crash · `node --check` on all 3 script
+blocks · `check_build.py` green on `index.html` for the stamp/CHANGELOG half.
+⚠️ `check_build.py` cannot gate `supplement.html` — it has no `data-cr-footer` stamp
+and the tool fails closed on that. Parse its blocks separately, as here.
+
+## Build 967 — a change the server refuses is no longer thrown away (21 Aug 2026)
+
+**The defect, reproduced live before it was fixed.** `gate_967.mjs` run against the
+build-966 artifact queues one offline write, has the server refuse it with a real RLS
+message, and reads the badge: the row is **gone from IndexedDB** and the chip paints
+`#123322` — the green *"All changes synced."* That is the whole bug as evidence rather
+than assertion, and it is why the audit put this first: the offline program is what
+Theo is migrating the business onto.
+
+`cr-outbox-script` `flush()` had two error branches that both ended in `del(row.id)`
+after a `console.warn` nobody reads. `networkish()` only matches network-shaped
+messages, so an RLS refusal, a CHECK violation **and a `PGRST301` 'JWT expired'**
+(plausible on the first flush after a long offline stretch, racing supabase-js's own
+token refresh) were all classified as "refused" and deleted. `badge()` then saw an
+empty queue and, because `_lastPending > 0`, painted the 873 `done` state. The punch
+card's photo outbox (`flushPhotos`) had the identical shape.
+
+**What changed.** A refused write is **kept and flagged** (`dead`/`err`/`code`/`errAt`
+on the existing row — `put()` has existed since 870, so no schema change, no `VER` bump,
+no second store). `counts()` splits live from held; `pending()` deliberately still counts
+BOTH, because the sign-out guard asks "what will be lost" and a held refusal is lost too.
+A **fifth badge state** — `stuck`, `#3a0f12`/`#ffb3ad`, **9.79:1**, inside the existing
+8.78–9.53 band and self-painted so it is identical in both themes — reads "N changes
+could not sync — tap to see" and **never auto-hides**. Tapping opens a bounded panel
+(not a full-screen view, so no `hideAllViews()` registration; **no
+`document.body.style.overflow` write — the no-14th-writer rule held, re-verified at 13
+with the lexer**) listing each held change: what record, which fields, the server's own
+reason, and **Try again** / **Discard** at the 44px floor. Editing the same target again
+revives a held row — that is the person answering the refusal.
+
+**An expired token is no longer a refusal.** `authish()` recognises `PGRST301`/401 and
+retries **once** after `getSession()` (which refreshes in supabase-js v2) before anything
+is buried. `42501` and `PGRST116` are deliberately NOT in it — those are real refusals a
+person has to see.
+
+⚠️ **One bug of my own, caught by the gate and recorded as mine:** the first cut reset
+`sentSome` per flush but not `droppedSome`, so a single refusal would have gagged the
+green "All changes synced" **forever**. `gate_967` assertion 5 ("a clean flush still
+earns it") is what failed, and it exists precisely because a one-way state machine is
+the easy mistake here.
+
+Gates: `check_build.py` green with the marker + negative control · `gate_967.mjs`
+**15/15 on 967, RED with 11 named failures on the 966 control and no crash**
+(BUG_CLASSES 37) · `sentinel.js` CLEAN, nothing new (35 findings carried from 966).
+
 ## Build 966 — a contract that says what is still blank (21 Aug 2026)
 
 Theo's option 5, and the one with the plainest job: a contract goes out with an empty box in it

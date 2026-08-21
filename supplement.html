@@ -85,6 +85,16 @@
   #loginView .err{ color:var(--sd-crit); font-size:12.5px; margin:-6px 0 14px; min-height:1em; }
 
   #appView{ display:none; min-height:100vh; }
+  /* 968: the refusal panel and the way back. Same card geometry as the sign-in;
+     every colour is an --sd-* token that already has a light twin. */
+  #deniedView{ display:none; min-height:100vh; align-items:center; justify-content:center; padding:20px; }
+  #deniedView .card{ width:100%; max-width:380px; background:var(--sd-panel);
+    border:1px solid var(--sd-line); border-radius:10px; padding:28px 26px; }
+  #deniedView .wordmark{ font:700 11px/1 inherit; letter-spacing:3px; text-transform:uppercase; color:var(--sd-red); margin-bottom:6px; }
+  #deniedView h1{ font-size:19px; margin:0 0 8px; }
+  #deniedView p{ color:var(--sd-ink2); font-size:13px; margin:0 0 14px; }
+  #deniedView .btnrow{ display:flex; gap:10px; flex-wrap:wrap; }
+  a.sd-back{ display:inline-flex; align-items:center; gap:6px; text-decoration:none; }
   header.sd-hd{ display:flex; align-items:center; gap:12px; padding:10px 16px;
     border-bottom:1px solid var(--sd-line); background:var(--sd-panel); position:sticky; top:0; z-index:5; }
   header.sd-hd .wordmark{ font:700 11px/1 inherit; letter-spacing:3px; text-transform:uppercase; color:var(--sd-red); }
@@ -92,6 +102,9 @@
   header.sd-hd .sp{ flex:1; }
   header.sd-hd button{ background:none; border:1px solid var(--sd-line); color:var(--sd-ink2);
     border-radius:6px; padding:6px 10px; font-size:12px; }
+  header.sd-hd a.sd-back{ border:1px solid var(--sd-line); color:var(--sd-ink2);
+    border-radius:6px; padding:6px 10px; font-size:12px; }
+  header.sd-hd a.sd-back:hover{ color:var(--sd-ink); border-color:var(--sd-ink3); }
   main{ max-width:1060px; margin:0 auto; padding:18px 16px 80px; }
 
   .sd-card{ background:var(--sd-panel); border:1px solid var(--sd-line); border-radius:10px; padding:16px; margin:0 0 14px; }
@@ -225,11 +238,24 @@
   </div>
 </div>
 
+<div id="deniedView">
+  <div class="card">
+    <div class="wordmark">Cardinal</div>
+    <h1 id="denyTtl">The Supplement Desk is admin-only</h1>
+    <p id="denyMsg"></p>
+    <div class="btnrow">
+      <a class="btn sd-back" href="/">&larr; Back to Cardinal</a>
+      <button class="btn ghost" id="denyRetry" type="button" style="display:none;">Try again</button>
+    </div>
+  </div>
+</div>
+
 <div id="appView">
   <header class="sd-hd">
     <span class="wordmark">Cardinal</span>
     <span class="ttl">Supplement Desk</span>
     <span class="sp"></span>
+    <a class="sd-back" id="homeLink" href="/" title="Back to the Cardinal app">&larr; Cardinal</a>
     <button id="themeBtn" type="button">Theme</button>
     <button id="backBtn" type="button" style="display:none;">&larr; Claims</button>
     <button id="outBtn" type="button">Sign out</button>
@@ -390,17 +416,40 @@ var S = {
 };
 
 /* ── auth ─────────────────────────────────────────────────────────────────── */
-function showLogin(){ el('loginView').style.display = 'flex'; el('appView').style.display = 'none'; }
+function showLogin(){ el('loginView').style.display = 'flex'; el('appView').style.display = 'none'; el('deniedView').style.display = 'none'; }
+/* 968: the third view. Non-destructive by construction — it shows a sentence and
+   a way back, and never calls signOut(). retry re-runs the same check. */
+function showDenied(title, body, retry){
+  el('denyTtl').textContent = title;
+  el('denyMsg').textContent = body;
+  el('denyRetry').style.display = retry ? '' : 'none';
+  el('loginView').style.display = 'none'; el('appView').style.display = 'none';
+  el('deniedView').style.display = 'flex';
+}
 async function showApp(){
   /* the UI gate; api/supplement.js re-checks server-side, RLS is the fence */
+  /* the UI gate; api/supplement.js re-checks server-side and RLS is the real
+     fence. 968: this used to call sb.auth.signOut() on a failed check.
+     index.html, studio.html and this file all create their Supabase client with
+     the DEFAULT storageKey against the same project on the same origin, so all
+     three read ONE stored session — and v2's signOut() defaults to scope
+     'global', which revokes the refresh token everywhere. A rep who tapped
+     Supplement Desk was signed out of the whole CRM, on every device.
+     671's rule again: a failed QUESTION and a NO are different words. */
   var adm = await sb.rpc('is_cardinal_admin');
-  if(adm.error || adm.data !== true){
-    el('loginErr').textContent = 'The Supplement Desk is admin-only.';
-    await sb.auth.signOut();
-    showLogin();
+  if(adm.error){
+    showDenied('We could not check your access just now',
+      'That is this desk, not you \u2014 the check itself did not come back. Try again, or go back to Cardinal. You are still signed in.',
+      true);
     return;
   }
-  el('loginView').style.display = 'none'; el('appView').style.display = 'block';
+  if(adm.data !== true){
+    showDenied('The Supplement Desk is admin-only',
+      'Ask Theo or Joan to file the supplement \u2014 they can pull the claim up here in a minute. You are still signed in to Cardinal.',
+      false);
+    return;
+  }
+  el('loginView').style.display = 'none'; el('deniedView').style.display = 'none'; el('appView').style.display = 'block';
   loadClaims();
 }
 el('liBtn').addEventListener('click', doLogin);
@@ -413,6 +462,7 @@ async function doLogin(){
   S.user = r.data.user; showApp();
 }
 el('outBtn').addEventListener('click', async function(){ await sb.auth.signOut(); location.reload(); });
+  el('denyRetry').addEventListener('click', function(){ el('denyMsg').textContent = 'Checking\u2026'; showApp(); });
 el('themeBtn').addEventListener('click', function(){
   var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', cur);
