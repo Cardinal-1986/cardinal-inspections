@@ -3138,3 +3138,38 @@ the top of this file. `sentinel_probe.js` walks computed style per element every
 `#contain-ok` — a genuine scroller that contains — must not). **Negative-controlled against
 the 956 tree, where it reports `div#pipeRow` across four screens**, so its silence on 957
 means something.
+
+## Class 57 — a guard that is only a guard when it is configured (21 Aug 2026)
+
+```js
+if (secret && req.headers.authorization !== `Bearer ${secret}`) { return 401; }
+```
+
+Reads as authentication. Is authentication **only while the environment variable exists**. Unset,
+the condition short-circuits and the route answers everybody — and an unset variable is the
+default state of every environment nobody has finished configuring.
+
+**Instances.** `/api/notify` was outright public until 642. `api/digest.js` and
+`api/commissions-digest.js` carried the form above until 21 Aug, with `CRON_SECRET` unset in
+production the whole time; the commissions one emails what every rep is owed.
+`api/companycam-sync.js` refused the same trade at 933 *in a written comment* — and the two
+digests were never revisited, which is the real lesson: **fixing the instance is not fixing the
+class.**
+
+**The tell** is that the secret appears on both sides of the condition — as the thing being
+compared *and* as the condition for comparing at all. A guard must never take its own presence
+as a reason to stand down. Fail closed:
+
+```js
+const secret = (process.env.CRON_SECRET || '').trim();
+if (!secret) return { ok:false, why:'CRON_SECRET is not configured …' };
+```
+
+**The check:** `scripts/gate_960.mjs` drives every `CRON_SECRET` route in-process with `fetch`
+stubbed and counted, and asserts a refusal with **zero outbound calls** under a
+production-shaped environment. **Extend it whenever a new secret-guarded route is added** — it
+enumerates its routes by hand, so a route it does not name is a route it does not check.
+
+⚠ **Diagnosing this from outside needs no credentials and no side effects**, provided the
+refusal says why. `companycam-sync`'s spoken 401 is what identified the unset secret; the two
+digests could not be probed at all, because on that path a probe *is* the damage.
