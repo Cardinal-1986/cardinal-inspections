@@ -20440,6 +20440,46 @@ fixture both ways (fixture → icons + 80% wet blue computed; route aborted → 
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
 
+## Build 952 — the desktop menu becomes the Card Stack (21 Aug 2026)
+
+Six preview rounds to a spec, and the design conversation is the story. Four rounds of
+recolored rails (24 options) all missed and Theo could not say why — the diagnosis that
+landed: **they were the same menu in different paint; the rail's bones were stock
+admin-sidebar bones while the app looks like built hardware.** Three structurally
+different designs followed; his pick was the Card Stack — every section is one of the
+app's own cards. Then by iteration: strip colors per portal (his mapping), theme-colored
+icons (his idea), retail's red replaced ("can you change the red to anything else?" →
+slate blue from three offered), 288px width.
+
+**Two preview-round defects he caught, both mine, both now assertions in the gate:**
+the heading band overflowed ~20px past the card body (`.lnav-sec` is `width:100%` PLUS
+side margins — the FLUSH assert); and one render batch claimed "brushed steel" that a
+`border-image` had silently erased while the Production frame showed the Retail chip
+active (state was faked; the gate themes production via `crmHead`, the honest path).
+
+What shipped, all in `cr-lnav-styles` + `cr-lnav-script`:
+- `--lnav-w` 238 → **288** at ≥1100px (mini 58 untouched; every offset follows the variable).
+- `.lnav-sec` = card header (12px top radii, rbe-token gradient, 3.5px `::before` strip
+  from `--lnav-strip`); `.lnav-body` = card body (rbe panel, side/bottom borders, shadow).
+  Mini mode strips the card chrome. rb-light flips via the tokens + a lighter shadow.
+- **Maps:** `CRM_COLOR` retail `#c8202e`→`#3e6ca8` (white on it 5.31:1), insurance
+  `#2dd4bf`→`#c8202e`; `CRM_INK` retail→`#8fb8e8` (9.4:1 dark), insurance→`#e35c63`
+  (5.50:1, 938's own twin); `CRM_INK_LT` retail→`#3e6ca8` (4.79:1 on #f2f3f5),
+  insurance→`#c8202e` (5.11:1). New `CRM_STRIP` / `CRM_ICON` / `CRM_ICON_LT` maps
+  published as `--lnav-strip` / `--lnav-icon` / `--lnav-icon-lt`. The 938 comment
+  claiming four inks identical to CRM_COLOR corrected in place.
+- **The teal is gone from the rail only** — the banner's #cbCrm chips and every semantic
+  insurance badge elsewhere are untouched.
+
+Gates: `check_build.py` green 951 → 952 · **`gate_952.mjs` 19/19** (width, card radii +
+strip, FLUSH band, per-portal strip/chip/icon colors live-switched, no-teal sweep on the
+insurance rail, production via crmHead, chip + row label contrast computed ≥4.5, rb-light
+icon twin) · **red on the 951 control with 15 named failures, no crash** — the control
+narrates the old rail exactly (238px, 0px radius, no strip, teal chip, red retail chip).
+The phone drawer is deliberately untouched. One patch-script abort before any write:
+my own explanatory comment quoted the CSS value the assert counted — the file's
+comment-pollution trap, caught by the assert doing its job.
+
 ## Build 951 — the Insurance tools join the slide-out menu (20 Aug 2026)
 
 Theo: "Can you put all those menu boxes into the slide out drawer menu, take out the sell
