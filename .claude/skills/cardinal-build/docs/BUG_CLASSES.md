@@ -3199,8 +3199,42 @@ occlusion does not.* (That is exactly what happened here, on the first run.)
 each: *"Sit ABOVE the installed app's bottom nav, not on top of it"* and *"#pwaNav (z-index 9990)
 cannot trap it"*. Neither generalised, and 961 met it again from a different direction.
 
-**The check:** `scripts/sweep_navclear.py index.html` reads the real `!important` value and lists
-every overlay under it — **42 today, 10 already clear**. Run it with `--fail-under N` to hold the
-line while the debt is worked down. Fixing all 42 blind is not safe: they carry a deliberate
-internal ladder (9400 → 9900) and raising them wholesale would collide with the alert-level
-sheets at 9996/9997. Raise the one you are working on, and keep it **below 9996**.
+### ⚠ CORRECTION, 962 — the fix above is the WRONG mechanism, and the app already had the right one
+
+The paragraph originally here said to raise the z-index. **Do not.** Build **595** (`#projModal`)
+and build **935** (`#cr-pb-modal .sheet`) had both already solved this, and 935 wrote the reasoning
+into the file:
+
+> *"Clearance, NOT a bigger z-index, because build 595 already answered this exact question … and
+> one mechanism per concept is the rule here. 88px is ITS constant"* — and the 451 note is explicit
+> that `#pwaNav` clearance is **a fixed amount reused verbatim**, never a gap recomputed per surface.
+
+961 raised a z-index without reading that. It worked, and it was a second mechanism beside an
+existing one — which this project's own doctrine calls a bug with a delay on it. **962 reverted it
+and used the clearance.**
+
+```css
+body.standalone <the scrolling element>{ padding-bottom: calc(88px + env(safe-area-inset-bottom,0px)); }
+```
+
+**Clearance is also simply better.** The bar stays visible and usable instead of being covered; and
+because the padding makes the scroller taller than its box, **a list too short to scroll becomes
+scrollable** — precisely the case that stranded the last trade at 960.
+
+**The right question is never "is this overlay below 9990".** It is *"does this overlay put CONTENT
+in the bar's band with no way to move it out"*. A sheet can sit under the bar and be perfectly fine.
+
+**The checks:**
+- `scripts/render_navclear.mjs` — a real render at 390×844 with `body.standalone` forced, asserting
+  the **outcome** (last real content above the bar's top edge; final row reachable after scrolling)
+  rather than either mechanism, so it survives the next change of technique. Red on both the 960
+  and 961 trees, with named failures.
+- `scripts/sweep_navclear.py index.html` — lists overlays below the bar in z-order **and** every
+  element carrying an explicit `body.standalone` clearance, because the first list alone misleads.
+
+Cleared so far: `#projModal .projform` (595), `#sigModal`, `#cr-pb-modal .sheet` (935),
+`#cr-abc .bd` (120px, its own), and at 962 `#cr-est-picker .box-list`, `.cr-psheet`,
+`.paymodal-bd`, `.cr-cadj-bd`. **Not done:** the full-height panes — `#cr-est-view`, `#cr-show`,
+`#cr-owner`, `#cr-ped`, `#cr-can`, `#cr-sc-panel`, `#cr-ce-view`, `#solModal`, `#cr-lil-view`,
+`#cr-itellab`, `#cr-epub-preview`. Each needs its own scrolling element identified; padding the
+wrong box does nothing at all.

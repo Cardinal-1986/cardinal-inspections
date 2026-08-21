@@ -20497,6 +20497,65 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 962 — the clearance, done the way this app already does it (21 Aug 2026)
+
+Theo: *"Do the ones that could get stuck."*
+
+**Before touching anything else I read how the app already solves this, and found that 961 had
+solved it the wrong way.** Build **595** (`#projModal`) and build **935** (`#cr-pb-modal .sheet`)
+had each already met this bar, and 935's comment is unambiguous:
+
+> *"Clearance, NOT a bigger z-index, because build 595 already answered this exact question … and
+> one mechanism per concept is the rule here. 88px is ITS constant."*
+
+961 raised a z-index. It worked and its gate was green, and it was **a second mechanism beside an
+existing one** — the thing this project's own doctrine names as a bug with a delay on it. Reverted
+here: `#cr-est-picker` goes back to 9510 and gets the clearance instead.
+
+**Clearance is also the better answer on its merits.** The bar stays visible and usable rather than
+being covered; and because the padding makes the scroller taller than its box, **a list too short
+to scroll becomes scrollable** — which is exactly the case that stranded the last trade at 960.
+Measured: folded, the last section now ends at **756** with the bar starting at **781**.
+
+**Which ones could actually get stuck.** Not "everything below 9990" — that list is 43 long and
+most of it is fine, because a centred dialog's content stops well short of the bar. The ones that
+can strand content are the sheets **flush to the bottom edge**. Of those:
+
+| Sheet | Had | Now |
+|---|---|---|
+| `#cr-est-picker .box-list` | safe-area only | 88px |
+| `.cr-psheet` | 30px | 88px |
+| `.paymodal-bd` | `calc(20px + safe-area)` — its Delete button was under the bar | 88px |
+| `.cr-cadj-bd` | `calc(20px + safe-area)` — same shape | 88px |
+| `#cr-abc .bd` | already 120px of its own | untouched |
+| `#cr-pb-modal .sheet` | already 88px (935) | untouched |
+
+**Deliberately not done:** the eleven full-height panes (`#cr-est-view`, `#cr-show`, `#cr-owner`,
+`#cr-ped`, `#cr-can`, `#cr-sc-panel`, `#cr-ce-view`, `#solModal`, `#cr-lil-view`, `#cr-itellab`,
+`#cr-epub-preview`). Each needs its own scrolling element identified first — padding the wrong box
+does nothing at all — and a blind sweep is how you ship eleven no-ops that look like a fix.
+
+**The gate was rewritten to test the OUTCOME, and renamed.** `render_libnav961.mjs` →
+`render_navclear.mjs`, because it is a class check now. Its assertions had been pinned to
+z-order — the mechanism — so 962's correct change would have failed them. They now ask only
+whether the last real content clears the bar and answers a touch, which passes under either
+mechanism and would survive the next one. *A gate pinned to the technique fails correct code the
+moment the technique changes; this is the second time that has bitten in two builds.*
+
+`sweep_navclear.py` was misleading in the same way — it listed z-order and called it the defect. It
+now prints the clearance list beside it and says in its own output that being under the bar is not
+by itself a fault.
+
+Verification: `check_build.py` green 961 → 962 · **`render_navclear.mjs` 8/8 GREEN**, **RED on the
+960 tree** (a touch on the last section lands on `#pwaNav`) **and RED on the 961 tree** (content
+still ends at 844 with the bar starting at 781 — the z-bump made it touchable, not clear), each
+with named failures and no crash · `render_libpicker960.mjs` re-run **13/13**.
+
+⚠ **Two shell traps paid for in this build, both mine.** A `cd … && python3` compound left the
+shell's cwd inside `scripts/` for the next call, so a relative path failed; and the first
+BUG_CLASSES edit asserted against text missing ` index.html`, which is the anchor-must-match-real-
+bytes rule again. Both aborted before writing.
+
 ## Build 961 — the library sheet was under the button bar (21 Aug 2026)
 
 Theo, three screenshots from the installed app: *"Scrolling hell again"* — the Add-from-Library

@@ -5779,3 +5779,37 @@ below the installed nav.
 Gate: `render_libnav961.mjs` (8 assertions at 390×844 with `body.standalone` forced, folded and
 open; hit-tests rather than rectangles; control red 5 named — it reports a touch on the last
 section landing on `#pwaNav`). `render_libpicker960.mjs` re-run green.
+
+## Bottom-bar clearance, done the app's own way (build 962, 21 Aug 2026)
+
+⚠ **This supersedes 961's mechanism.** 961 raised `#cr-est-picker` to 9995. Builds **595**
+(`#projModal`) and **935** (`#cr-pb-modal .sheet`) had already answered this with **clearance**,
+and 935 wrote down why: *"Clearance, NOT a bigger z-index … one mechanism per concept is the rule
+here. 88px is ITS constant."* 962 reverts the z-index to 9510 and uses the constant.
+
+Four sheets that run flush to the bottom edge now carry
+`body.standalone { padding-bottom: calc(88px + env(safe-area-inset-bottom,0px)) }`:
+
+| Surface | Was |
+|---|---|
+| `#cr-est-picker .box-list` | `env(safe-area-inset-bottom)` only |
+| `.cr-psheet` | 30px |
+| `.paymodal-bd` | `calc(20px + safe-area)` — its Delete button sat under the bar |
+| `.cr-cadj-bd` | `calc(20px + safe-area)` — same |
+
+(`#cr-abc .bd` already had 120px of its own; `#cr-pb-modal .sheet` had 88 from 935.)
+
+**Clearance beats the z-bump on its merits, not just on consistency:** the bar stays visible and
+usable, and because the padding makes the scroller taller than its box, **a list too short to
+scroll becomes scrollable** — the exact case that stranded the last trade at 960.
+
+Gate: `render_navclear.mjs` (renamed from `render_libnav961.mjs` — it is a class check now).
+8 assertions, and **every one now tests the outcome rather than the mechanism**, so it passes
+under either and survives the next change of technique. Red on both the 960 tree (a touch on the
+last section lands on `#pwaNav`) and the 961 tree (content still ends at 844 with the bar starting
+at 781). `render_libpicker960.mjs` re-run 13/13.
+
+**Not done, deliberately:** the full-height panes (`#cr-est-view`, `#cr-show`, `#cr-owner`,
+`#cr-ped`, `#cr-can`, `#cr-sc-panel`, `#cr-ce-view`, `#solModal`, `#cr-lil-view`, `#cr-itellab`,
+`#cr-epub-preview`). Each needs its own scrolling element identified; padding the wrong box does
+nothing. See BUG_CLASSES 58.
