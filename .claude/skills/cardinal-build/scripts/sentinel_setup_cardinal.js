@@ -243,6 +243,21 @@
         leaveLanding(); closeAll();
         var m = api('CardinalEstimates'); if (!m) throw new Error('CardinalEstimates.open missing');
         m.open(); await pause(700); } },
+    /* 960: the Add-from-Library sheet is a real screen with its own palette and
+       its own dark override, and nothing was ever sweeping it — which is how a
+       price sat at 2.16:1 on it. Opening the editor alone does not open the
+       sheet, so a sweep that stopped at 'estimates' reported CLEAN and meant
+       nothing by it. Best-effort: if the editor or the button is not there this
+       state simply contributes no renders rather than throwing (BUG_CLASSES 37
+       — a control that crashes proves nothing). */
+    { name:'estlibrary',  run: async function () {
+        leaveLanding(); closeAll();
+        var m = api('CardinalEstimates');
+        var p = (window.cacheProjects || [])[0];
+        if (m && m.openEditor && p) { try { await m.openEditor(p); } catch (e) {} }
+        await pause(600);
+        var b = document.querySelector('[data-act="add-lib"]');
+        if (b) { b.click(); await pause(600); } } },
     /* "the navigation, whichever one this width actually has" — the phone
        drawer below the rail breakpoint, the left rail above it. Named for the
        job rather than the mechanism, so it stays honest at both widths. */

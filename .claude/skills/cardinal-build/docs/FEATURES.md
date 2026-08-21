@@ -5724,3 +5724,41 @@ let the problem be identified from outside in the first place. Three routes in `
 Gate: `gate_960.mjs` (11 assertions, in-process with `fetch` stubbed and counted so "refused"
 means nothing left the box; control red 4 named — on the pre-fix copies an anonymous call with
 production-shaped env reached Supabase 1× and 3×).
+
+## Add from Library — sections that look different and fold (build 960, 21 Aug 2026)
+
+The estimate line-item picker (`#cr-est-picker`, `cr-est-script`) listed every trade under the
+same 10px grey caps on a ground barely apart from the rows, so GUTTERS and ROOFING read as the
+same thing. Each `.cat-header` is now a **button** carrying a left stripe, the category name in
+**its own colour**, an item **count**, and a **chevron**; items live in a `.cat-body` that
+`.cat.closed` hides.
+
+**The colour comes from the category NAME, never from sort position** (`catHue()` — an explicit
+map for roofing/siding/gutters/windows/repair/general, a string hash for anything else, both
+mod 6). Adding a trade must not repaint the others. The six values are a fixed, measured set —
+light on `#f4f2f1` and dark on `#141419`, **all twelve ≥ 5.37:1** — so an unknown category lands
+on a vetted colour rather than an invented hue nothing has checked.
+
+- **Fold state persists** in `localStorage['cr-est-libfold']`, keyed by category name.
+- ⚠ **A search force-opens every section** — otherwise the query filters items into a section
+  folded last week and the sheet reads "no results". And a fold made *during* a search is **not
+  recorded**, or a section tidied away mid-search would come back collapsed for good.
+
+⚠ **`cr-nvl-styles` paints this sheet, not `cr-est-styles`.** `selector_audit.py` names it the
+winner on `.cat-header`. The structure and the light palette live in `cr-est-styles`; the dark
+twins live in `cr-nvl-styles`. Anything colour-bearing added to `cr-est-styles` alone here is a
+**silent no-op**.
+
+**Also fixed, found while here, not part of the ask:** `.p-item .price` still rode `#8f1620`,
+chosen when this sheet was cream. On the dark sheet that measured **2.16:1** — the recurring
+light-ink defect, and this override had themed the name, the description and the empty state but
+not the price. Now `#e35c63`, the app's own accent red: **5.59:1** (5.09:1 on hover).
+
+Gate: `render_libpicker960.mjs` (13 assertions in Chromium — computed colours, the 4.5:1 floor
+per section, the name→colour map, fold/unfold/persist, search force-open, the not-recorded rule,
+the price, and that tapping an item still adds the line; control red 11 named). ⚠ `gate_960.mjs`
+is **not** this build — it belongs to the cron fail-closed change, which took no build number.
+
+**The sentinel now sweeps this sheet.** A new `estlibrary` state opens the editor *and* the
+picker — opening the editor alone never opened the sheet, which is how a 2.16:1 price survived
+every previous sweep.

@@ -20497,6 +20497,60 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 960 — the estimate library reads like a catalog (21 Aug 2026)
+
+Theo, with a screenshot of the Add-from-Library sheet: *"Can you make the different sections like
+gutters, roofing, siding, etc stand out more to be different? And also collapsible."*
+
+**The header is now a control, not a caption.** A left stripe, the category name in its own
+colour, an item count, a chevron, and a 44px minimum. Items moved into a `.cat-body` so folding
+is one class.
+
+**The colour comes from the NAME, not the sort order.** `catHue()` maps the six known trades
+explicitly and hashes anything else, both mod 6. Take the index from sort position instead and
+adding one trade repaints every category below it. The six values are fixed and measured — light
+on `#f4f2f1`, dark on `#141419`, **all twelve ≥ 5.37:1** — so an unknown category lands on a
+vetted colour instead of an invented hue nothing has checked.
+
+**Two rules about folding that are the whole difference between this working and annoying:**
+a search **force-opens** every section, or the query filters matches into a section folded last
+week and the sheet says "no results" while holding them; and a fold made **during** a search is
+**not recorded**, or a section tidied away mid-search comes back collapsed for good. Both are
+asserted, the second aimed at a section that was never folded — the first version of that
+assertion looked at Roofing, which had been legitimately folded earlier, and failed correct code.
+
+⚠ **`cr-nvl-styles` paints this sheet, not `cr-est-styles` — and I checked before writing a
+line.** `selector_audit.py` names it the winner on `.cat-header`: the picker's own stylesheet is
+still the cream one it was born with, and everything visible is a dark override 20,000 lines
+later. Structure and the light palette went in `cr-est-styles`; the dark twins in
+`cr-nvl-styles`. Had the colours gone only where they "belong", the build would have shipped
+inert and green.
+
+**A light-era ink found while in there, not part of the ask.** `.p-item .price` still rode
+`#8f1620`, chosen for the cream sheet. On the dark sheet: **2.16:1**. The partial-theming shape
+exactly as this project keeps meeting it — the override had done the name, the description and
+the empty state and stopped. Now `#e35c63`, the app's own accent red, 5.59:1.
+
+**The sentinel had never seen this screen.** Its `estimates` state opens the editor, and the
+editor does not open the picker — so every sweep reported CLEAN over a 2.16:1 price. A new
+`estlibrary` state opens both. *A checker that stops one click short of the defect is not a
+checker.*
+
+Verification: `check_build.py` green 959 → 960 · **`render_libpicker960.mjs` 13/13 GREEN**,
+**RED on the 959 control with 11 named failures, no crash** — and the control reports the price
+at exactly **2.16:1**, which is the hand calculation confirmed by the engine. Sentinel on
+`estimates` + `estlibrary`, both viewports: **CLEAN, nothing new**. Renders captured at 414px,
+open and folded.
+
+⚠ **Naming:** `gate_960.mjs` is **not** this build — it is the cron fail-closed change, which
+took no build number because `index.html` was untouched. This build's instrument is a `render_*`
+because only a real engine settles a colour and a cascade.
+
+⚠ **Two gate faults, both mine, both caught by the first run:** the mid-search assertion aimed at
+an already-folded section (above), and `currentState()` publishes `line_items` while the module's
+internal array is `lines` — reading the exported object with the internal name reported a working
+feature as broken. *A name is not a contract, again.*
+
 ## Build 959 — the weather comes to the calendar Curtis actually uses (21 Aug 2026)
 
 Theo: "Do the weather on the productions calendar." The forecast had lived on Crew Dispatch
