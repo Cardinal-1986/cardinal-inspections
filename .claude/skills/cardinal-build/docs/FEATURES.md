@@ -5922,3 +5922,37 @@ control red 10 named).
 ⚠️ **The control CRASHED twice before it reported.** First on `window.insertField is not a
 function`, then on `caretIn(null)`. BUG_CLASSES 37, twice in one build — guard the **interaction**,
 not just the symbol. And assertion 8 passed vacuously at first, because `[].every()` is `true`.
+
+## The fill counter (build 966, 21 Aug 2026)
+
+Theo's option 5. A chip beside **＋ Field** counts what is still blank, red while anything is,
+green at zero, and jumps to the next blank when tapped (outlining it in the live document).
+
+**What counts as blank, and why each rule is what it is:**
+
+| Counted | Rule |
+|---|---|
+| a `.ph` still showing its own bracketed prompt | 275 placeholders ship across the three templates and **every one** is written `[like this]`, so the test is the template's own convention rather than a guess |
+| `select[data-crsel]` with `value === ''` | nobody has chosen |
+| a `data-group` checkbox **set** with nothing ticked | 28 such sets; they behave as radios |
+
+**Not counted, deliberately:**
+- **Signatures.** Filled by the signing flow, not by typing. A rep filling this in before anyone
+  has signed must not be told three things are missing — Client signature is its own button.
+- **Ungrouped checkboxes.** Gutter guards, the closeout checklist — genuinely optional. Counting
+  them would report ten things "missing" on a finished contract, which is how a counter earns
+  being ignored.
+
+⚠️ **It counts; it does not block.** A field can legitimately be N/A, and a hard stop on a legal
+document is a worse failure than a visible number — it teaches people to work around it. The chip
+being red is the part that prevents the mistake.
+
+⚠️ **The highlight is injected into the LIVE document, not shipped in the skeleton**, because a
+contract saved before this build carries its own copy of the skeleton CSS and would have no rule
+for it. Recounts are delegated on the document (`input`/`change`/`click`, capture, debounced), so
+they survive a re-render and cover a field added by hand at 965 with no second registration.
+
+Gate: `gate_966.mjs` (12 assertions on the real editor and a real siding agreement — what it
+counts and what it refuses to count, each of the three kinds dropping the count when filled, the
+green "All filled" state reached by filling everything, the jump outlining a blank and moving on,
+and a hand-added field being counted; control red 11 named).

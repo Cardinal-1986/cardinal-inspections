@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 965 &#8212; you can add a field to a contract by hand now: tap where you want it, tap &#65291; Field, and drop in a text box, a checkbox, a dropdown, a signature line or an initials line. It only lets you put one where the contract is meant to be filled in, and a field you added can be taken back out</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 966 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8234,6 +8234,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="btn dark" id="emailDocBtn" data-cri="mail"><span class="bl">Email to client</span></button>
       <button class="btn dark" id="sigBtn" style="display:none;" data-cri="pencil"><span class="bl">Client signature</span></button>
       <button class="btn dark" id="addFieldBtn" data-cri="plus"><span class="bl">&#65291; Field</span></button>
+      <button class="btn dark" id="fillChipBtn" style="display:none;"><span class="bl" id="fillChipTxt">&#8212;</span></button>
       <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
       <button class="btn dark" id="assistantBtn" data-cri="sparkle"><span class="bl">Assistant</span></button>
       <button class="btn dark" id="rccBtn" style="display:none;" data-cri="camera"><span class="bl">CompanyCam</span></button>
@@ -24078,6 +24079,19 @@ async function openEditor(id){
       wireColorSelects(doc);
       wireWoFields(doc);
       refreshSigBtn();
+      __fillIdx = 0;
+      refreshFillChip();
+      /* Delegated on the document, so it survives every re-render and covers a
+         field added by hand at 965 without a second registration. */
+      if(!doc.__crFillWired){
+        doc.__crFillWired = 1;
+        ['input','change','click'].forEach(function(ev){
+          doc.addEventListener(ev, function(){
+            clearTimeout(doc.__crFillT);
+            doc.__crFillT = setTimeout(refreshFillChip, 180);
+          }, true);
+        });
+      }
     }catch(e){}
   };
   editor.classList.add('open');
@@ -24445,6 +24459,96 @@ var LIST_KINDS = [
   { id:'occ',    label:'Shingle colours' },
   { id:'qty',    label:'Numbers' }
 ];
+/* ══ 966 · what is still blank, and where ══════════════════════════════════
+   Theo's option 5. A contract goes out with an empty box in it because nobody
+   can see the empty box from the top of a three-page document.
+
+   WHAT COUNTS AS BLANK, and why each rule is what it is:
+     · a .ph whose text is still its own bracketed prompt \u2014 [Date], [colour],
+       [yes / no]. 275 of those ship across the three templates and every one is
+       written that way, so the test is the template's own convention rather
+       than a guess about what a rep might type.
+     · a select[data-crsel] whose value is ''.
+     · a data-group checkbox SET with nothing ticked. Ungrouped boxes are
+       genuinely optional \u2014 gutter guards, a closeout checklist \u2014 and counting
+       them would report ten things "missing" on a finished contract, which is
+       how a counter gets ignored.
+
+   ⚠️ SIGNATURES ARE DELIBERATELY NOT COUNTED. A signature is filled by the
+   signing flow, not by typing, and a rep filling this in at a kitchen table
+   before anyone has signed should not be told three things are missing. Client
+   signature is its own button and its own step.
+
+   ⚠️ IT COUNTS, IT DOES NOT BLOCK. A field can legitimately be N/A, and a hard
+   stop on a legal document is a worse failure than a visible number \u2014 it
+   teaches people to work around it. The chip is red while anything is blank,
+   which is the part that actually prevents the mistake. */
+function fillBlanks(doc){
+  if(!doc) return [];
+  var out = [];
+  Array.prototype.forEach.call(doc.querySelectorAll('.ph'), function(el){
+    if(el.closest('[data-sig]')) return;                 /* signing is its own step */
+    var t = (el.textContent || '').trim();
+    if(/^\[[^\]]*\]$/.test(t)) out.push(el);
+  });
+  Array.prototype.forEach.call(doc.querySelectorAll('select[data-crsel]'), function(el){
+    if(!el.value) out.push(el);
+  });
+  var seen = {};
+  Array.prototype.forEach.call(doc.querySelectorAll('.cbx[data-group]'), function(el){
+    var g = el.getAttribute('data-group');
+    if(!g || seen[g]) return;
+    seen[g] = 1;
+    var any = false;
+    Array.prototype.forEach.call(doc.querySelectorAll('.cbx[data-group="' + g + '"]'), function(x){
+      if((x.textContent || '').indexOf('\u2611') !== -1) any = true;
+    });
+    if(!any) out.push(el);
+  });
+  /* document order, so "next" means the next one down the page */
+  return out.sort(function(a, b){
+    var p = a.compareDocumentPosition(b);
+    if(p & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+    if(p & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+    return 0;
+  });
+}
+var __fillIdx = 0;
+function refreshFillChip(){
+  var btn = document.getElementById('fillChipBtn');
+  var txt = document.getElementById('fillChipTxt');
+  if(!btn || !txt) return;
+  var doc = frame && frame.contentDocument;
+  if(!doc || !doc.querySelector('.ph')){ btn.style.display = 'none'; return; }
+  var n = fillBlanks(doc).length;
+  btn.style.display = 'inline-block';
+  btn.style.borderColor = n ? '#c8202e' : '#2a6b3c';
+  btn.style.color = n ? '#e35c63' : '#6cb98f';
+  txt.textContent = n ? (n + (n === 1 ? ' to fill' : ' to fill')) : 'All filled';
+  btn.title = n ? 'Tap to jump to the next blank' : 'Nothing left blank';
+}
+function jumpNextBlank(){
+  var doc = frame && frame.contentDocument;
+  if(!doc) return;
+  var list = fillBlanks(doc);
+  if(!list.length){ refreshFillChip(); return; }
+  if(__fillIdx >= list.length) __fillIdx = 0;
+  var el = list[__fillIdx];
+  __fillIdx++;
+  /* The highlight is injected into the LIVE document rather than shipped in the
+     skeleton, because a contract saved before this build carries its own copy of
+     the skeleton CSS and would have no rule for it. */
+  if(!doc.getElementById('cr-fill-css')){
+    var st = doc.createElement('style');
+    st.id = 'cr-fill-css';
+    st.textContent = '.crfill-hi{outline:2px solid #c8202e;outline-offset:2px;border-radius:2px;}';
+    (doc.head || doc.documentElement).appendChild(st);
+  }
+  Array.prototype.forEach.call(doc.querySelectorAll('.crfill-hi'), function(x){ x.classList.remove('crfill-hi'); });
+  el.classList.add('crfill-hi');
+  try{ el.scrollIntoView({ block:'center', behavior:'smooth' }); }catch(_){ try{ el.scrollIntoView(); }catch(_e){} }
+  setTimeout(function(){ el.classList.remove('crfill-hi'); }, 2200);
+}
 function refreshSigBtn(){
   var doc = frame && frame.contentDocument;
   var b = document.getElementById('sigBtn');
@@ -24503,6 +24607,7 @@ async function insertField(kind, listKind){
   try{ wireCheckboxes(doc); }catch(_){}
   try{ await wireColorSelects(doc); }catch(_){}
   refreshSigBtn();
+  refreshFillChip();
 }
 function openFieldMenu(){
   var doc = frame && frame.contentDocument;
@@ -24595,6 +24700,7 @@ document.getElementById('sigBtn').addEventListener('click', function(){
 });
 var __sigWho = null;
 document.getElementById('addFieldBtn').addEventListener('click', openFieldMenu);
+document.getElementById('fillChipBtn').addEventListener('click', jumpNextBlank);
 document.getElementById('sigClear').addEventListener('click', sigReset);
 document.getElementById('sigCancel').addEventListener('click', function(){ window.__ceSigner = null; sigModal.style.display = 'none'; });
 document.getElementById('sigApply').addEventListener('click', async function(){
@@ -40984,6 +41090,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:966, d:'2026-08-21', t:'A contract tells you what is still blank', s:'A contract goes out with an empty box in it because nobody can see the empty box from the top of a three-page document. There is now a chip beside \u2795 Field: it counts every placeholder still showing its prompt, every dropdown nobody has chosen from, and every tick-one-of-these set with nothing ticked. It is red while anything is blank and green when nothing is, and tapping it jumps to the next blank and outlines it. Optional boxes \u2014 gutter guards, the closeout checklist \u2014 are not counted, because a counter that reports ten things missing on a finished contract is a counter everyone learns to ignore. Signatures are not counted either: that is the Client signature button and its own step. It counts, it does not block \u2014 a field can legitimately be N/A, and being stopped by your own paperwork is worse than seeing a number.' },
 { b:965, d:'2026-08-21', t:'Add a field to a contract by hand', s:'Tap where you want it, tap the \u2795 Field button, and choose: a text box, a checkbox, a dropdown, a signature line or an initials line. The field lands where you tapped. Dropdowns can read any of the lists the printed fields use \u2014 yes/no, trim, siding, gutter or shingle colours, or numbers. A signature or initials line you add joins the list you get when you tap Client signature, so it can actually be signed rather than just printed. It will only let you put a field where the contract is meant to be filled in \u2014 tap a heading or the roof diagram and it says so instead of quietly doing nothing. Anything you add can be removed again; the printed fields cannot, on purpose.' },
 { b:964, d:'2026-08-21', t:'The siding and gutter agreements get real dropdowns', s:'The roofing agreement has had proper pickers for a while \u2014 you choose a shingle colour, a drip edge, a gutter apron. Siding and gutters had none: ninety-one blank boxes between them, so you typed everything and they read like a form rather than a contract. Seventeen of those fields are now dropdowns, fed from the same materials catalog the Visualizer uses: siding brand, profile and colour, corner post, window and door trim, soffit, fascia, shutters, gutter and downspout colour, and the counts. The 84 siding colours are grouped by manufacturer and product line so the list is usable on an iPad. Nothing changes on a contract that was already saved \u2014 those keep the fields, and the wording, they were signed with.' },
 { b:963, d:'2026-08-21', t:'The full-height screens clear the button bar too', s:'962 did the sheets that slide up from the bottom. This does the screens that fill the whole phone: the Outbox, Self Check, the client editor, Scope of Loss, the Line Item Library, iTel Lab, the estimate preview and the Community canvas. Each one ended flush against the bottom of the screen, so its last line sat behind the row of round buttons even after you scrolled as far as it would go. The photo editor is in here for a different reason \u2014 its row of colour swatches is not a list that scrolls, it just sat in the bar\u2019s band, so the bar was taking those taps. The Showcase is deliberately left alone: it is the client-facing presentation and its slides are built to fill the screen exactly.' },
