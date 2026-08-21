@@ -36,6 +36,9 @@
      6  OPEN: the list scrolls
      7  OPEN: scrolled to the end, the final ROW clears the bar and answers a
         touch
+     9  every full-height pane carries the same clearance — measured on the real
+        element where it exists, read from the CSSOM where the module builds it
+        at runtime; which of the two answered is printed
      8  the three other bottom-flush sheets carry the same 88px clearance —
         .cr-psheet, .paymodal-bd, .cr-cadj-bd. ⚠ Read off computed style on a
         synthesized element, so it proves the RULE resolves, not that the live
@@ -203,6 +206,55 @@ const READ = () => {
   need('8 the three sibling bottom sheets carry the same 88px clearance',
        !!(sib && sib['cr-psheet']>=88 && sib['paymodal-bd']>=88 && sib['cr-cadj-bd']>=88),
        JSON.stringify(sib));
+
+  /* 9 (963): the full-height panes. Where the element exists in the document
+     it is measured for real with body.standalone on; where the module builds it
+     at runtime the rule is read out of the CSSOM instead. Which of the two
+     answered is printed, so a CSSOM-only pass is never mistaken for a rendered
+     one. A selector that is missing from BOTH is a failure, not a skip. */
+  const panes = await page.evaluate(()=>{
+    const WANT = ['#cr-owner','#cr-can','#cr-sc-panel','#cr-ce-view','#solModal',
+                  '.cr-lil-list','.cr-itellab-body','#cr-epub-preview .pv-body','.cr-ped-tools'];
+    function fromCssom(sel){
+      const want = 'body.standalone ' + sel;
+      let best = null;
+      for(const sheet of document.styleSheets){
+        let rules; try{ rules = sheet.cssRules; }catch(e){ continue; }
+        if(!rules) continue;
+        for(const r of rules){
+          if(!r.selectorText || r.selectorText.replace(/\s+/g,' ').trim() !== want) continue;
+          const v = r.style && r.style.getPropertyValue('padding-bottom');
+          if(!v) continue;
+          const m = /(\d+(?:\.\d+)?)px/.exec(v);
+          if(m) best = Math.max(best === null ? 0 : best, parseFloat(m[1]));
+        }
+      }
+      return best;
+    }
+    const out = {};
+    for(const sel of WANT){
+      const el = document.querySelector(sel);
+      if(el){
+        out[sel] = { px: parseFloat(getComputedStyle(el).paddingBottom)||0, how:'rendered' };
+      } else {
+        const v = fromCssom(sel);
+        out[sel] = { px: v === null ? -1 : v, how:'cssom' };
+      }
+    }
+    return out;
+  });
+  const paneBad = Object.entries(panes).filter(([,v]) => !(v.px >= 88));
+  /* Printed on PASS as well as on fail: the claim "measured on the real element
+     where it exists, read from the CSSOM where it does not" is only honest if
+     you can see which one answered for each. need() keeps detail on failure
+     only, so this line carries it either way. */
+  console.log('  panes: ' + Object.entries(panes)
+    .map(([k,v]) => k.split(' ').pop() + '=' + v.px + 'px(' + v.how + ')').join('  '));
+  need('9 every full-height pane carries the 88px clearance',
+       paneBad.length === 0,
+       paneBad.length
+         ? paneBad.map(([k,v]) => k+'='+v.px+'px('+v.how+')').join(' · ')
+         : Object.entries(panes).map(([k,v]) => k.split(' ').pop()+':'+v.how).join(' '));
   await page.context().close();
 }
 
@@ -210,5 +262,5 @@ await browser.close();
 console.log('\nrender_navclear ['+LABEL+'] '+FILE);
 console.log('  passed: '+passes+'   failed: '+fails.length);
 fails.forEach(f=>console.log('  FAIL  '+f));
-console.log(fails.length? '\nRED' : '\nGREEN — 8/8');
+console.log(fails.length? '\nRED' : '\nGREEN — 9/9');
 process.exit(fails.length?1:0);

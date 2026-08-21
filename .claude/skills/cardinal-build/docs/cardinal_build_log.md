@@ -20497,6 +20497,53 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 963 — the full-height panes (21 Aug 2026)
+
+Theo: *"Do the full height panes too."* 962 did the sheets that slide up from the bottom; these
+are the screens that fill the phone.
+
+**Nine surfaces, one constant, three different shapes — and the shape is the whole job.**
+
+| Shape | Surfaces | Where the padding goes |
+|---|---|---|
+| the pane IS the scroller (`overflow-y:auto` on it) | `#cr-owner`, `#cr-can`, `#cr-sc-panel`, `#cr-ce-view`, `#solModal` | the pane |
+| `flex-direction:column` pane, a BODY child scrolls | `.cr-lil-list`, `.cr-itellab-body`, `#cr-epub-preview .pv-body` | **the body, never the pane** |
+| not a scroller at all | `.cr-ped-tools` | the toolbar |
+
+⚠ **A flex container is not a scrollport.** Padding `#cr-lil-view` or `#cr-itellab` would have
+done nothing whatsoever while looking exactly like a fix — which is why 962 refused to sweep these
+blind. Each scroller was found by reading its module's stylesheet for the `flex:1` + `overflow-y`
+rule, not by assuming.
+
+⚠ **`.cr-ped-tools` is in here for a different reason and it is worth naming.** It does not scroll.
+Its 30px colour swatches simply *sat* in the bar's band, so in the installed app the bar took the
+taps — the same defect as 935's *"Can't barely hit save button"*, on a surface nobody had connected
+to it. Clearance still works, because the toolbar's own background carries on behind the bar and
+only the controls move up. **A scroll-shaped diagnosis would have missed this one entirely.**
+
+**Two surfaces needed nothing, and only looking told me so.** `#cr-est-view`'s body already carried
+**150px**, and `#cr-abc .bd` **120px**. Adding to either would have been churn presented as a fix.
+
+**`#cr-show` is excluded on purpose.** The Showcase is the client-facing presentation: its slides
+are `min-height:100vh` by design and it is fenced by settled decisions. An 88px band at the bottom
+of it is a visual change to something Theo already approved, not a bug fix. Stated rather than
+skipped.
+
+Verification: `check_build.py` green 962 → 963 · **`render_navclear.mjs` 9/9 GREEN**, **RED on the
+962 control** naming all nine with their measured values (`#solModal` 33.76px, `.cr-itellab-body`
+24px, the rest absent) · `render_libpicker960.mjs` re-run 13/13.
+
+**The new assertion says how it knows.** Two of the nine exist in the static document and are
+measured for real with `body.standalone` on; the other seven are built at runtime by their modules,
+so their rule is read out of the CSSOM instead. **Which of the two answered is printed on pass as
+well as on failure** — otherwise a green line would let a CSSOM-only result pass for a rendered
+one, which is the same self-flattery as a check that cannot fail.
+
+⚠ **The sentinel was NOT run for this build, deliberately.** Every rule here is scoped to
+`body.standalone`, which the sentinel does not set, so it would render an identical tree and report
+CLEAN without having looked at anything. A green run that cannot see the change is worse than no
+run, because it reads as coverage.
+
 ## Build 962 — the clearance, done the way this app already does it (21 Aug 2026)
 
 Theo: *"Do the ones that could get stuck."*

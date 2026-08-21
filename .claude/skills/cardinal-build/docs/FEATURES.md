@@ -5813,3 +5813,26 @@ at 781). `render_libpicker960.mjs` re-run 13/13.
 `#cr-ped`, `#cr-can`, `#cr-sc-panel`, `#cr-ce-view`, `#solModal`, `#cr-lil-view`, `#cr-itellab`,
 `#cr-epub-preview`). Each needs its own scrolling element identified; padding the wrong box does
 nothing. See BUG_CLASSES 58.
+
+## Full-height panes clear the bar (build 963, 21 Aug 2026)
+
+962 did the bottom sheets; this does the panes that fill the screen. Nine surfaces gained
+`body.standalone { padding-bottom: calc(88px + env(safe-area-inset-bottom,0px)) }`:
+
+| Surface | Shape | Was |
+|---|---|---|
+| `#cr-owner`, `#cr-can`, `#cr-sc-panel`, `#cr-ce-view`, `#solModal` | the pane **is** the scroller | none / `4vh` |
+| `.cr-lil-list`, `.cr-itellab-body`, `#cr-epub-preview .pv-body` | flex-column pane, the **body** scrolls | none / 24px / 14px |
+| `.cr-ped-tools` | **not a scroller** — a toolbar whose swatches sat in the bar's band | 10px |
+
+⚠ **The padding belongs on the box that scrolls.** A `flex-direction:column` pane is not the
+scrollport; padding it does nothing. `#cr-est-view` needed nothing at all — its `.cr-est-body`
+already carried 150px.
+
+**`#cr-show` is deliberately excluded** — the client-facing Showcase is a presentation surface with
+`min-height:100vh` slides and settled design decisions.
+
+Gate: `render_navclear.mjs` assertion 9 — measured on the real element where it exists
+(`#solModal`, `.cr-itellab-body`), read from the CSSOM where the module builds it at runtime, and
+**which of the two answered is printed on pass as well as fail**, so a CSSOM-only result is never
+mistaken for a rendered one. Control red on the 962 tree, naming every pane and its value.
