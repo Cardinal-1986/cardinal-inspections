@@ -20497,6 +20497,51 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 967 — a change the server refuses is no longer thrown away (21 Aug 2026)
+
+**The defect, reproduced live before it was fixed.** `gate_967.mjs` run against the
+build-966 artifact queues one offline write, has the server refuse it with a real RLS
+message, and reads the badge: the row is **gone from IndexedDB** and the chip paints
+`#123322` — the green *"All changes synced."* That is the whole bug as evidence rather
+than assertion, and it is why the audit put this first: the offline program is what
+Theo is migrating the business onto.
+
+`cr-outbox-script` `flush()` had two error branches that both ended in `del(row.id)`
+after a `console.warn` nobody reads. `networkish()` only matches network-shaped
+messages, so an RLS refusal, a CHECK violation **and a `PGRST301` 'JWT expired'**
+(plausible on the first flush after a long offline stretch, racing supabase-js's own
+token refresh) were all classified as "refused" and deleted. `badge()` then saw an
+empty queue and, because `_lastPending > 0`, painted the 873 `done` state. The punch
+card's photo outbox (`flushPhotos`) had the identical shape.
+
+**What changed.** A refused write is **kept and flagged** (`dead`/`err`/`code`/`errAt`
+on the existing row — `put()` has existed since 870, so no schema change, no `VER` bump,
+no second store). `counts()` splits live from held; `pending()` deliberately still counts
+BOTH, because the sign-out guard asks "what will be lost" and a held refusal is lost too.
+A **fifth badge state** — `stuck`, `#3a0f12`/`#ffb3ad`, **9.79:1**, inside the existing
+8.78–9.53 band and self-painted so it is identical in both themes — reads "N changes
+could not sync — tap to see" and **never auto-hides**. Tapping opens a bounded panel
+(not a full-screen view, so no `hideAllViews()` registration; **no
+`document.body.style.overflow` write — the no-14th-writer rule held, re-verified at 13
+with the lexer**) listing each held change: what record, which fields, the server's own
+reason, and **Try again** / **Discard** at the 44px floor. Editing the same target again
+revives a held row — that is the person answering the refusal.
+
+**An expired token is no longer a refusal.** `authish()` recognises `PGRST301`/401 and
+retries **once** after `getSession()` (which refreshes in supabase-js v2) before anything
+is buried. `42501` and `PGRST116` are deliberately NOT in it — those are real refusals a
+person has to see.
+
+⚠️ **One bug of my own, caught by the gate and recorded as mine:** the first cut reset
+`sentSome` per flush but not `droppedSome`, so a single refusal would have gagged the
+green "All changes synced" **forever**. `gate_967` assertion 5 ("a clean flush still
+earns it") is what failed, and it exists precisely because a one-way state machine is
+the easy mistake here.
+
+Gates: `check_build.py` green with the marker + negative control · `gate_967.mjs`
+**15/15 on 967, RED with 11 named failures on the 966 control and no crash**
+(BUG_CLASSES 37) · `sentinel.js` CLEAN, nothing new (35 findings carried from 966).
+
 ## Build 966 — a contract that says what is still blank (21 Aug 2026)
 
 Theo's option 5, and the one with the plainest job: a contract goes out with an empty box in it

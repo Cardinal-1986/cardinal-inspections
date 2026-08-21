@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 966 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 967 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41090,6 +41090,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:967, d:'2026-08-21', t:'A change the server refuses is no longer thrown away',
+  s:'Before: if a change you made offline was refused by the server when it tried to sync \u2014 a permission rule, a value the database would not take \u2014 the app quietly deleted it and then flashed a green "All changes synced". Now it keeps it. The sync chip turns red, says how many changes could not sync, and stays red until you deal with them; tapping it lists each one with what you changed, the reason the server gave, and a Try again or Discard button. Photos held back from a punch-out show there too. And an expired login is no longer mistaken for a refusal \u2014 the app refreshes and tries once more first.' },
 { b:966, d:'2026-08-21', t:'A contract tells you what is still blank', s:'A contract goes out with an empty box in it because nobody can see the empty box from the top of a three-page document. There is now a chip beside \u2795 Field: it counts every placeholder still showing its prompt, every dropdown nobody has chosen from, and every tick-one-of-these set with nothing ticked. It is red while anything is blank and green when nothing is, and tapping it jumps to the next blank and outlines it. Optional boxes \u2014 gutter guards, the closeout checklist \u2014 are not counted, because a counter that reports ten things missing on a finished contract is a counter everyone learns to ignore. Signatures are not counted either: that is the Client signature button and its own step. It counts, it does not block \u2014 a field can legitimately be N/A, and being stopped by your own paperwork is worse than seeing a number.' },
 { b:965, d:'2026-08-21', t:'Add a field to a contract by hand', s:'Tap where you want it, tap the \u2795 Field button, and choose: a text box, a checkbox, a dropdown, a signature line or an initials line. The field lands where you tapped. Dropdowns can read any of the lists the printed fields use \u2014 yes/no, trim, siding, gutter or shingle colours, or numbers. A signature or initials line you add joins the list you get when you tap Client signature, so it can actually be signed rather than just printed. It will only let you put a field where the contract is meant to be filled in \u2014 tap a heading or the roof diagram and it says so instead of quietly doing nothing. Anything you add can be removed again; the printed fields cannot, on purpose.' },
 { b:964, d:'2026-08-21', t:'The siding and gutter agreements get real dropdowns', s:'The roofing agreement has had proper pickers for a while \u2014 you choose a shingle colour, a drip edge, a gutter apron. Siding and gutters had none: ninety-one blank boxes between them, so you typed everything and they read like a form rather than a contract. Seventeen of those fields are now dropdowns, fed from the same materials catalog the Visualizer uses: siding brand, profile and colour, corner post, window and door trim, soffit, fascia, shutters, gutter and downspout colour, and the counts. The 84 siding colours are grouped by manufacturer and product line so the list is usable on an iPad. Nothing changes on a contract that was already saved \u2014 those keep the fields, and the wording, they were signed with.' },
@@ -52508,10 +52510,22 @@ function pTx(mode, run){
 }
 function pAll(){ return pTx('readonly', function(st){ return st.getAll(); }).catch(function(){ return []; }); }
 function pDel(id){ return pTx('readwrite', function(st){ return st.delete(id); }); }
-function pClear(){ return pAll().then(function(rows){ return Promise.all(rows.map(function(r){ return pDel(r.id); })); }).then(function(){ _photoPend = {}; lastSig=''; try{ render(); }catch(_){} }).catch(function(){}); }  /* 871: drop every held photo on sign-out */
-var _photoPend = {}, _flushingPhotos = false;
-function refreshPhotoPend(){ return pAll().then(function(rows){ var m={}; rows.forEach(function(r){ m[r.itemId]=(m[r.itemId]||0)+1; }); _photoPend=m; return rows.length; }); }
+function pClear(){ return pAll().then(function(rows){ return Promise.all(rows.map(function(r){ return pDel(r.id); })); }).then(function(){ _photoPend = {}; _photoStuck = {}; lastSig=''; try{ render(); }catch(_){} }).catch(function(){}); }  /* 871: drop every held photo on sign-out */
+var _photoPend = {}, _photoStuck = {}, _flushingPhotos = false;
+function refreshPhotoPend(){ return pAll().then(function(rows){ var m={}, s={}; rows.forEach(function(r){ if(r && r.dead) s[r.itemId]=(s[r.itemId]||0)+1; else m[r.itemId]=(m[r.itemId]||0)+1; }); _photoPend=m; _photoStuck=s; return rows.length; }); }
 function photoPendFor(id){ return _photoPend[id] || 0; }
+/* 967: held-because-refused, counted separately from still-uploading. */
+function photoStuckFor(id){ return _photoStuck[id] || 0; }
+function stuckPhotos(){ return pAll().then(function(rows){ return rows.filter(function(r){ return !!(r && r.dead); }); }).catch(function(){ return []; }); }
+function retryPhoto(id){
+  return pAll().then(function(rows){
+    var hit = rows.filter(function(r){ return r.id === id; })[0];
+    if(!hit) return null;
+    hit.dead = 0; hit.err = null;
+    return pTx('readwrite', function(st){ return st.put(hit); }).then(function(){ return flushPhotos(); });
+  });
+}
+function discardPhoto(id){ return pDel(id).then(function(){ return refreshPhotoPend(); }); }
 function queuePhoto(itemId, blob){
   var me = myEmail();
   return pTx('readwrite', function(st){ return st.add({ itemId:itemId, blob:blob, by:me, name:nameOf(me), at:new Date().toISOString() }); })
@@ -52525,6 +52539,9 @@ function queuePhoto(itemId, blob){
     });
 }
 function _pNet(e){ var m = String((e && e.message) || e); return /load failed|failed to fetch|networkerror|network request failed|timed? ?out|fetch/i.test(m); }
+/* 967: the photo half asks the outbox whether an error was really a refusal or
+   just an expired token, so the two halves can never drift apart. */
+function _pAuth(e){ try{ return !!(window.CardinalOutbox && window.CardinalOutbox.authish && window.CardinalOutbox.authish(e)); }catch(_){ return false; } }
 async function flushPhotos(){
   if(_flushingPhotos) return;
   if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
@@ -52532,6 +52549,7 @@ async function flushPhotos(){
   _flushingPhotos = true;
   try{
     var rows = await pAll();
+    rows = rows.filter(function(r){ return !r.dead; });   /* 967: a held photo waits for a person */
     for(var i=0;i<rows.length;i++){
       var row = rows[i];
       try{
@@ -52552,8 +52570,12 @@ async function flushPhotos(){
         await pDel(row.id);
       }catch(e){
         if(_pNet(e)) break;   /* still offline: keep it, try later */
-        console.warn('[photo-outbox] dropping a photo that was refused:', String((e && e.message) || e));
-        await pDel(row.id);
+        if(_pAuth(e) && !row._retried){ row._retried = 1; try{ var _cx = window.sb || window.supa; if(_cx && _cx.auth && _cx.auth.getSession) await _cx.auth.getSession(); }catch(_a){} i--; continue; }
+        /* 967: a refused photo is KEPT and named, never deleted. */
+        console.warn('[photo-outbox] a photo was REFUSED and is being held:', String((e && e.message) || e));
+        try{ if(window.report) window.report(e, 'photo-outbox', 'refused'); }catch(_){}
+        row.dead = 1; row.err = String((e && e.message) || e); row.errAt = new Date().toISOString();
+        try{ await pTx('readwrite', function(st){ return st.put(row); }); }catch(_p){}
       }
     }
   }catch(_){}
@@ -52781,6 +52803,9 @@ window.CardinalPunchCard = {
   _flushPhotos: function(){ return flushPhotos(); },
   _pendingPhotos: function(){ return refreshPhotoPend(); },
   _clearPhotos: function(){ return pClear(); },
+  _stuckPhotos: function(){ return stuckPhotos(); },
+  _retryPhoto: function(id){ return retryPhoto(id); },
+  _discardPhoto: function(id){ return discardPhoto(id); },
 };
 })();
 </script>
@@ -75714,25 +75739,69 @@ function networkish(e){
   return /load failed|failed to fetch|networkerror|network request failed|timed? ?out|fetch/i.test(m);
 }
 function pending(){ return getAll().then(function(r){ return r.length; }).catch(function(){ return 0; }); }
+/* 967: an EXPIRED SESSION is not a refusal. After a long offline stretch the
+   first flush can race supabase-js's own token refresh and come back 401 /
+   PGRST301; that is a retry, not a dead letter. 42501 (RLS) and PGRST116 are
+   deliberately NOT here — those are real refusals a person has to see. */
+function authish(e){
+  if(!e) return false;
+  var c = String(e.code || ''), s = String(e.status || e.statusCode || '');
+  if(c === 'PGRST301' || s === '401') return true;
+  return /jwt|token .*expired|unauthorized|not authenticated|invalid claim/i.test(String((e && e.message) || e));
+}
+function refreshAuth(){
+  try{
+    var cx = client();
+    if(cx && cx.auth && cx.auth.getSession) return Promise.resolve(cx.auth.getSession()).then(function(){}, function(){});
+  }catch(_){}
+  return Promise.resolve();
+}
+/* 967: one getAll, split into what is still going to sync and what the server
+   refused. pending() deliberately still counts BOTH — the sign-out guard asks
+   "what will be lost", and a held refusal is lost too. */
+function counts(){
+  return getAll().then(function(rows){
+    var live = 0, dead = 0;
+    rows.forEach(function(r){ if(r && r.dead) dead++; else live++; });
+    return { live: live, dead: dead };
+  }).catch(function(){ return { live: 0, dead: 0 }; });
+}
+function stuckRows(){
+  return getAll().then(function(rows){
+    return rows.filter(function(r){ return !!(r && r.dead); }).sort(function(a, b){ return a.id - b.id; });
+  }).catch(function(){ return []; });
+}
+/* 967: a refused write is KEPT, flagged and named instead of deleted. */
+function bury(row, err){
+  droppedSome = true;
+  row.dead  = 1;
+  row.err   = String((err && (err.message || err.details || err.hint)) || err || 'refused');
+  row.code  = String((err && err.code) || '');
+  row.errAt = new Date().toISOString();
+  try{ if(window.report) window.report(err, 'outbox', 'refused:' + row.table); }catch(_){}
+  console.warn('[outbox] a write was REFUSED and is being held:', row.table, row.err);
+  return put(row).then(function(){ return false; }, function(){ return false; });
+}
 /* 868: the queued entries for one table, oldest first — a reload overlays
    these on top of freshly-loaded (maybe stale-cached) rows so an offline edit
    survives a refresh until it syncs. */
 function patchesFor(table){
   return getAll().then(function(rows){
-    return rows.filter(function(r){ return r.table === table; })
+    return rows.filter(function(r){ return r.table === table && !r.dead; })
                .sort(function(a, b){ return a.id - b.id; });
   }).catch(function(){ return []; });
 }
 
-var flushing = false, sentSome = false;
+var flushing = false, sentSome = false, droppedSome = false;
 function flush(){
   if(flushing) return Promise.resolve();
   if(typeof navigator !== 'undefined' && navigator.onLine === false) return Promise.resolve();
   var cx = client();
   if(!cx) return Promise.resolve();
-  flushing = true; sentSome = false;
+  flushing = true; sentSome = false; droppedSome = false;   /* 967: per-flush, or one refusal would gag the green forever */
   badge();   /* 873: paint the 'Syncing\u2026' state while the flush runs */
   return getAll().then(function(rows){
+    rows = rows.filter(function(r){ return !r.dead; });   /* 967: a held refusal waits for a person, not for the next tick */
     rows.sort(function(a, b){ return a.id - b.id; });   /* FIFO */
     var chain = Promise.resolve();
     rows.forEach(function(row){
@@ -75741,30 +75810,37 @@ function flush(){
         /* 867: two entry shapes now. op:'upsert' -> a full-row upsert keyed on
            onConflict (Team Directory, etc); default -> the 865 field patch. Both
            are idempotent, so a replay after a partial flush can't duplicate. */
-        var q = (row.op === 'upsert')
-          ? cx.from(row.table).upsert(row.row, row.onConflict ? { onConflict: row.onConflict } : undefined)
-          : cx.from(row.table).update(row.patch).eq(row.match.col, row.match.val);
-        return Promise.resolve(q)
-          .then(function(r){
-            if(r && r.error){
-              if(networkish(r.error)) return true;    /* still offline: keep it, stop */
-              console.warn('[outbox] dropping a refused write:', row.table, r.error.message);
+        var attempt = function(retried){
+          var qq = (row.op === 'upsert')
+            ? cx.from(row.table).upsert(row.row, row.onConflict ? { onConflict: row.onConflict } : undefined)
+            : cx.from(row.table).update(row.patch).eq(row.match.col, row.match.val);
+          return Promise.resolve(qq)
+            .then(function(r){
+              if(r && r.error){
+                if(networkish(r.error)) return true;    /* still offline: keep it, stop */
+                if(authish(r.error) && !retried) return refreshAuth().then(function(){ return attempt(true); });
+                return bury(row, r.error);
+              }
+              sentSome = true;
               return del(row.id).then(function(){ return false; });
-            }
-            sentSome = true;
-            return del(row.id).then(function(){ return false; });
-          })
-          .catch(function(e){
-            if(networkish(e)) return true;            /* network dropped mid-flush */
-            console.warn('[outbox] dropping a write that threw:', row.table, e && e.message);
-            return del(row.id).then(function(){ return false; });
-          });
+            })
+            .catch(function(e){
+              if(networkish(e)) return true;            /* network dropped mid-flush */
+              if(authish(e) && !retried) return refreshAuth().then(function(){ return attempt(true); });
+              return bury(row, e);
+            });
+        };
+        return attempt(false);
       });
     });
     return chain;
   }).then(function(){
     flushing = false;
+    _justSynced = (sentSome && !droppedSome);   /* 967: only a clean, real send earns the green */
     badge();
+    if(droppedSome){
+      try{ if(window.crToastErr) window.crToastErr('Some changes were refused by the server and are still on this device \u2014 tap the red chip to review them.'); }catch(_){}
+    }
     if(sentSome){
       try{ window.dispatchEvent(new CustomEvent('cr-outbox-flushed')); }catch(_){}
       /* the punch cache is the one this phase feeds; refresh it so a synced
@@ -75790,6 +75866,9 @@ function queue(entry){
           if(entry.op === 'upsert') hit.row = Object.assign({}, hit.row, entry.row);
           else hit.patch = Object.assign({}, hit.patch, entry.patch);
           hit.at = entry.at;
+          /* 967: editing the same target again is the person answering the
+             refusal — let it try once more instead of staying buried. */
+          if(hit.dead){ hit.dead = 0; hit.err = null; hit.code = null; }
           return put(hit);
         }
         return add(entry);
@@ -75815,7 +75894,9 @@ function ensure(){
     'border:1px solid transparent;padding:5px 13px;border-radius:14px;z-index:10000;cursor:pointer;' +
     "font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;" +
     'box-shadow:0 2px 10px rgba(0,0,0,.4);transition:background .2s ease,color .2s ease,border-color .2s ease;';
-  el.addEventListener('click', function(){ flush(); });
+  el.addEventListener('click', function(){
+    stuckRows().then(function(rows){ if(rows.length) openPanel(); else flush(); });
+  });
   document.body.appendChild(el);
   return el;
 }
@@ -75826,7 +75907,11 @@ var _bStates = {
   offline: { bg:'#3a2d0a', fg:'#ffd54a', tip:'Saved on this device \u2014 will sync when you are back online' },
   waiting: { bg:'#3a2d0a', fg:'#ffd54a', tip:'Saved on this device, waiting to sync \u2014 tap to try now' },
   syncing: { bg:'#0e2733', fg:'#7fd1ff', tip:'Syncing your changes\u2026' },
-  done:    { bg:'#123322', fg:'#63e6a2', tip:'All your changes have synced' }
+  done:    { bg:'#123322', fg:'#63e6a2', tip:'All your changes have synced' },
+  /* 967: red, and it does NOT clear itself. 9.79:1 (scripts/contrast.py), the
+     same >=8.7 floor as the other four, and self-painted so it is identical in
+     both themes. */
+  stuck:   { bg:'#3a0f12', fg:'#ffb3ad', tip:'These changes were refused by the server \u2014 tap to see why' }
 };
 function setBadgeState(b, state, text){
   var s = _bStates[state] || _bStates.waiting;
@@ -75834,21 +75919,24 @@ function setBadgeState(b, state, text){
   b.title = s.tip; b.textContent = text;
   b.style.display = 'block';
 }
-var _lastPending = 0, _doneTimer = null;
+var _lastPending = 0, _doneTimer = null, _justSynced = false, _panel = null;
 function badge(){
-  pending().then(function(n){
+  counts().then(function(c){
+    var n = c.live;
     var b = ensure();
     var offline = (typeof navigator !== 'undefined' && navigator.onLine === false);
-    if(n > 0){
+    if(c.dead > 0){
+      /* 967: red WINS. A refusal that needs a person must not be masked by an
+         amber "waiting" chip, and it must never auto-hide. */
+      if(_doneTimer){ clearTimeout(_doneTimer); _doneTimer = null; }
+      setBadgeState(b, 'stuck', c.dead + ' change' + (c.dead === 1 ? '' : 's') + ' could not sync \u2014 tap to see');
+    }else if(n > 0){
       if(_doneTimer){ clearTimeout(_doneTimer); _doneTimer = null; }
       if(flushing && !offline) setBadgeState(b, 'syncing', 'Syncing\u2026');
       else if(offline)         setBadgeState(b, 'offline', n + ' saved \u2014 offline');
       else                     setBadgeState(b, 'waiting', n + ' waiting to sync');
     }else{
-      /* the queue just drained. If it was non-empty a moment ago AND we did the
-         draining by syncing (not by a logout wipe, which resets _lastPending to
-         0 first), flash a confirmation, then hide. */
-      if(_lastPending > 0){
+      if(_lastPending > 0 && _justSynced){
         setBadgeState(b, 'done', 'All changes synced');
         if(_doneTimer) clearTimeout(_doneTimer);
         _doneTimer = setTimeout(function(){ b.style.display = 'none'; _doneTimer = null; }, 2600);
@@ -75856,7 +75944,123 @@ function badge(){
         b.style.display = 'none';
       }
     }
+    _justSynced = false;
     _lastPending = n;
+    if(_panel && _panel.parentNode) drawPanel();
+  });
+}
+
+/* 967: the held-refusal panel. A bounded card, not a full-screen view, so it
+   needs no hideAllViews()/navRestore() registration; it never writes
+   document.body.style.overflow (no 14th scroll-lock writer); every string goes
+   in through textContent. */
+function openPanel(){
+  if(!_panel){
+    _panel = document.createElement('div');
+    _panel.id = 'cr-outbox-stuck';
+    _panel.style.cssText = 'position:fixed;left:12px;right:12px;max-width:520px;margin:0 auto;' +
+      'bottom:calc(env(safe-area-inset-bottom,0px) + 110px);max-height:min(60vh,460px);overflow:auto;' +
+      'background:#161a22;color:#e9eef6;border:1px solid #3a0f12;border-radius:12px;z-index:10001;' +
+      "font:600 12.5px/1.45 'Segoe UI',Arial,sans-serif;box-shadow:0 10px 34px rgba(0,0,0,.55);padding:12px 13px;";
+  }
+  if(!_panel.parentNode) document.body.appendChild(_panel);
+  drawPanel();
+}
+function closePanel(){ if(_panel && _panel.parentNode) _panel.parentNode.removeChild(_panel); }
+var STUCK_TBL = { punch_items:'Punch-out', projects:'Job', inspection_reports:'Document',
+                  team_profiles:'Teammate', estimates:'Estimate', insurance_claims:'Claim',
+                  commissions:'Commission', appointments:'Appointment' };
+function fieldsOf(row){
+  var o = (row.op === 'upsert') ? row.row : row.patch;
+  return Object.keys(o || {}).filter(function(k){ return k !== 'id'; }).join(', ') || 'no fields';
+}
+function stuckBtn(label, ink){
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.style.cssText = 'background:transparent;border:1px solid ' + ink + ';color:' + ink +
+    ';border-radius:8px;min-height:44px;padding:0 14px;font:700 12px inherit;cursor:pointer;';
+  btn.textContent = label;
+  return btn;
+}
+function rowCard(r){
+  var card = document.createElement('div');
+  card.style.cssText = 'border-top:1px solid #262b36;padding:10px 0 12px;';
+  var l1 = document.createElement('div');
+  l1.textContent = (STUCK_TBL[r.table] || r.table) + ' \u00b7 ' + (r.match ? (r.match.col + ' ' + r.match.val) : 'new');
+  var l2 = document.createElement('div');
+  l2.style.cssText = 'color:#a8b3c4;font-weight:600;margin-top:2px;';
+  l2.textContent = 'Changed: ' + fieldsOf(r);
+  var l3 = document.createElement('div');
+  l3.style.cssText = 'color:#ffb3ad;font-weight:600;margin-top:4px;';
+  l3.textContent = r.err + (r.code ? ' (' + r.code + ')' : '');
+  var acts = document.createElement('div');
+  acts.style.cssText = 'display:flex;gap:8px;margin-top:9px;';
+  var retry = stuckBtn('Try again', '#7fd1ff');
+  retry.addEventListener('click', function(){
+    r.dead = 0; r.err = null; r.code = null;
+    put(r).then(function(){ return flush(); }).then(badge, badge);
+  });
+  var drop = stuckBtn('Discard', '#ffb3ad');
+  drop.addEventListener('click', function(){
+    if(!window.confirm('Discard this change? It will not be saved anywhere.')) return;
+    del(r.id).then(function(){ badge(); drawPanel(); });
+  });
+  acts.appendChild(retry); acts.appendChild(drop);
+  card.appendChild(l1); card.appendChild(l2); card.appendChild(l3); card.appendChild(acts);
+  return card;
+}
+function photoCard(p){
+  var card = document.createElement('div');
+  card.style.cssText = 'border-top:1px solid #262b36;padding:10px 0 12px;';
+  var l1 = document.createElement('div');
+  l1.textContent = 'Photo \u00b7 ' + (p.name || 'from a punch-out');
+  var l3 = document.createElement('div');
+  l3.style.cssText = 'color:#ffb3ad;font-weight:600;margin-top:4px;';
+  l3.textContent = String(p.err || 'refused');
+  var acts = document.createElement('div');
+  acts.style.cssText = 'display:flex;gap:8px;margin-top:9px;';
+  var retry = stuckBtn('Try again', '#7fd1ff');
+  retry.addEventListener('click', function(){
+    try{ window.CardinalPunchCard._retryPhoto(p.id).then(function(){ badge(); drawPanel(); }); }catch(_){}
+  });
+  var drop = stuckBtn('Discard', '#ffb3ad');
+  drop.addEventListener('click', function(){
+    if(!window.confirm('Discard this photo? It will not be uploaded.')) return;
+    try{ window.CardinalPunchCard._discardPhoto(p.id).then(function(){ badge(); drawPanel(); }); }catch(_){}
+  });
+  acts.appendChild(retry); acts.appendChild(drop);
+  card.appendChild(l1); card.appendChild(l3); card.appendChild(acts);
+  return card;
+}
+function drawPanel(){
+  if(!_panel) return;
+  stuckRows().then(function(rows){
+    var photos = [];
+    try{
+      if(window.CardinalPunchCard && window.CardinalPunchCard._stuckPhotos)
+        return Promise.resolve(window.CardinalPunchCard._stuckPhotos()).then(function(ps){
+          return { rows: rows, photos: ps || [] };
+        }, function(){ return { rows: rows, photos: [] }; });
+    }catch(_){}
+    return { rows: rows, photos: photos };
+  }).then(function(d){
+    if(!d.rows.length && !d.photos.length){ closePanel(); return; }
+    while(_panel.firstChild) _panel.removeChild(_panel.firstChild);
+    var total = d.rows.length + d.photos.length;
+    var h = document.createElement('div');
+    h.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:4px;';
+    var t = document.createElement('span');
+    t.style.cssText = "flex:1;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#ffb3ad;";
+    t.textContent = total + ' change' + (total === 1 ? '' : 's') + ' the server refused';
+    var x = document.createElement('button');
+    x.type = 'button';
+    x.setAttribute('aria-label', 'Close');
+    x.style.cssText = 'background:transparent;border:0;color:#a8b3c4;font-size:20px;line-height:1;cursor:pointer;font-family:inherit;min-width:44px;min-height:44px;';
+    x.textContent = '\u00d7';
+    x.addEventListener('click', closePanel);
+    h.appendChild(t); h.appendChild(x); _panel.appendChild(h);
+    d.rows.forEach(function(r){ _panel.appendChild(rowCard(r)); });
+    d.photos.forEach(function(p){ _panel.appendChild(photoCard(p)); });
   });
 }
 
@@ -75881,7 +76085,8 @@ if(document.readyState !== 'loading') badge();
 else document.addEventListener('DOMContentLoaded', badge);
 
 window.CardinalOutbox = Object.assign(window.CardinalOutbox || {}, {
-  queue: queue, flush: flush, pending: pending, networkish: networkish, patchesFor: patchesFor, clear: clearAll, requestPersist: requestPersist
+  queue: queue, flush: flush, pending: pending, networkish: networkish, patchesFor: patchesFor, clear: clearAll, requestPersist: requestPersist,
+  counts: counts, stuck: stuckRows, authish: authish, openStuck: openPanel
 });
 })();
 </script>
