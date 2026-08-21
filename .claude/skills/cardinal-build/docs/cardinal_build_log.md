@@ -20440,6 +20440,71 @@ fixture both ways (fixture → icons + 80% wet blue computed; route aborted → 
 headers intact). Sentinel narrow run on the `dispatch` state: CLEAN, nothing new. Renders
 eyeballed phone + iPad, dark + light + armed.
 
+## Build 959 — the weather comes to the calendar Curtis actually uses (21 Aug 2026)
+
+Theo: "Do the weather on the productions calendar." The forecast had lived on Crew Dispatch
+since 949 and nowhere else — and Production's month grid is where the scheduling happens.
+
+**What shows.** Every day cell in both month grids — the mini calendar on the Production
+landing and the full five-week one — carries its forecast beside the date, and so does the
+heading over the day's agenda. Wet days paint `--pb-wx`, a new token pair computed for both
+themes: **#6db3f2** dark (8.02:1 on the day card) / **#155f9e** light (6.64:1 on the white
+one). Rain chance at ≥30%, the same threshold the Dispatch headers use. `.pbday .dn` went
+from `display:block` to a flex row — number left, forecast right — and because both grids
+share that rule, one change covered both.
+
+**The real work was underneath: the forecast is now ONE module.** 949 put the fetch, the
+30-minute cache and the five drawn icons inside `cr-disp-script`, correctly, because Dispatch
+was the only consumer. Production is the second, and a second copy would have been two
+forecasts able to disagree about the same Tuesday — *a new mechanism beside an existing one is
+a bug with a delay on it.* So it moved to `<script id="cr-wx-script">` / `window.CardinalWx`,
+and **`cr-disp-script` now delegates**: `loadWx()` and `wxCell()` are the entire seam and emit
+byte-identical markup. The proof is that **`gate_949` still passes 19/19 with no edit** — the
+build that shipped the feature is the regression test for moving it.
+
+The cache key is unchanged (`cr-dispwx`), so a forecast already sitting on a device carries
+straight over.
+
+**Two things in `load(cb)` that are not decoration.** The callback fires only when a NETWORK
+fetch lands, never on a cache hit — every caller renders right after calling `load()`, so
+firing on the cache path would re-enter the caller's own render from inside it. And the
+callback is registered only when a fetch is actually about to happen, or the queue would grow
+on every repaint. Production's `render()` then relies on its existing `lastSig` guard: icons
+change the markup so the repaint happens, and nothing else does so it does not.
+
+⚠ **Open-Meteo returns fourteen days; the calendar shows thirty-five.** Days past the window
+carry no icon at all, and that is the honest answer — **an empty square means there is no
+forecast, not that it will be fine.** The gate asserts it directly rather than trusting it.
+
+⚠ **THE SENTINEL EARNED ITS PLACE HERE, and the gate did not catch this.** The first version
+of the layout rule was `#cr-pb .pbday .dn{display:flex}` — two classes — and
+`#cr-pb .pbmonth .pbday .dn{display:block;text-align:center}` above it is **three**. It
+**never won on any of the 30 elements it matched**: the layout was inert on the mini calendar
+while every assertion about the icon, its colour and its percentage stayed green, because
+those assertions were about the span and not about where it sat. `OVERRIDDEN` reported it by
+name at both viewports. Fixed at source rather than by out-specifying: the base rule went
+back to `display:block` byte-for-byte, and the flex layout is now scoped to
+`#cr-pb .pbcal .pbday .dn` — the full calendar, which has the room for it. The mini grid
+keeps its centred number with the icon inline beside it. **Both grids are now laid out
+deliberately and differently instead of one of them accidentally.** Assertions 14 and 15 were
+added so it cannot go quiet again. *This is BUG_CLASSES' "a rule can parse, balance and never
+apply" — the standing checker found in one run what a purpose-built gate had missed.*
+
+Verification: `check_build.py` green 958 → 959 (123 inline scripts) · **`gate_959.mjs` 15/15
+GREEN**, **RED on the 958 control with 11 named failures, no crash** — inks computed in both
+themes against the real card, the 30% threshold in both directions, the past-day-14 blank,
+the full calendar, the forecast-down case, and **one fetch serving both screens**, which is
+the whole architectural claim made measurable. `gate_949` (19/19) and `gate_958` (21/21)
+re-run green. **Sentinel on the `production` and `dispatch` states, both viewports: CLEAN**
+after the fix, 35 findings carried from 958.
+
+⚠ **I broke `cr-disp-script` mid-build and the gate caught it in one run.** Cutting the four
+old functions out by index arithmetic left a stray `}` at two sites — `s[k+3:]` where the
+matched delimiter `"\n  }\n"` is five characters. `node --check` went red inside
+`check_build`, gate_949 went to 0/11, and the repair was one exact-match edit. *Index
+arithmetic is not exact-match patching; the assert that would have caught it is the one
+`pl.sub` does for free.*
+
 ## Build 958 — a magnet you can move (21 Aug 2026)
 
 Theo picked "the dispatch workflow layer" off the what's-next list. **That layer shipped at

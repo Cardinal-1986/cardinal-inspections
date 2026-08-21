@@ -3688,7 +3688,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 958 &#8212; jobs move on the Crew Dispatch board: tap the grip on a booked job to pick it up, tap the day you want. Same crew and it is a straight reschedule &#8212; the date changes on the work order that already exists, no new number and no second document; a different crew still opens the picker, because a new crew needs its own paper</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 959 &#8212; the weather is on the Production calendar: every day in the month grid and the day heading carries its forecast, wet days in blue, on the mini calendar and the full one. It is the same forecast Crew Dispatch has been showing since 949 &#8212; now fetched once for the whole app instead of twice, so the two screens can never disagree about a Tuesday</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40770,6 +40770,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:959, d:'2026-08-21', t:'The weather comes to the Production calendar', s:'Curtis schedules from the Production calendar, and until now the forecast only existed on Crew Dispatch. Every day in the month grid \u2014 the mini calendar on the Production landing and the full five-week one \u2014 now carries its own weather beside the date, and so does the heading over the day\u2019s agenda. Wet days paint blue and show the rain chance. Open-Meteo gives fourteen days, so days beyond that carry no icon at all: an empty square means there is no forecast yet, never that it will be fine. Underneath, the forecast moved out of the Crew Dispatch module into one shared place used by both screens, so there is one fetch, one cache and no way for the board and the calendar to disagree about a Tuesday. If the forecast cannot be reached, nothing appears and nothing breaks.' },
 { b:958, d:'2026-08-21', t:'Move a job on the dispatch board', s:'Every booked job on Crew Dispatch now carries a small grip. Tap it to pick the job up \u2014 the legal days light up on every crew in that trade \u2014 then tap the day you want. Landing it on the SAME crew is a straight reschedule: the date changes on the work order that is already there, so the WO number, the document and its history all stay put. Landing it on a DIFFERENT crew opens the usual work-order picker with the crew and day already filled, because a new crew has to be given its own paper. Page the week forward before you drop it to push a job into next week. The job moves on screen the moment you tap, and moves back if the database refuses it, so the board never shows a date that did not save. Until now nothing anywhere in the app could change a work order\u2019s date \u2014 the only way to move a job was to issue a second work order, which retired the first one.' },
 { b:957, d:'2026-08-21', t:'The Insurance screen scrolls with a finger again', s:'Theo: \u201cthe scroll gets stuck here\u2026 the finger does nothing at all.\u201d On the Cardinal Truth screen the rule that keeps a swipe from dragging the page behind had been placed on a box that does not scroll, one level inside the box that does \u2014 so on the phone the swipe landed somewhere that could neither scroll nor hand the gesture on, and nothing moved. The rule now sits on the screen itself. The Punch assign sheet had exactly the same fault waiting on it and was fixed in the same pass. Nothing else changed: on a desktop both screens behaved normally before and after, which is why this needed the phone to find it.' },
 { b:956, d:'2026-08-21', t:'The menu is symmetric', s:'The last exception is gone: the Insurance section now appears only while you are in the Insurance portal, the same way Sell, Production and Community already worked. So each portal shows exactly one section of its own, and the menu stays short and about where you are standing. Getting between portals is unchanged and always available \u2014 the Retail / Insurance / Community switcher sits at the top of the menu, Cardinal Truth is in CRMs, and Production is in Daily.' },
@@ -49406,6 +49407,9 @@ objections : OBJECTIONS,
   --pb-acc:#e35c63; --pb-accd:#c8202e; --pb-accink:#ffffff;
   --pb-hot:#e07a5f; --pb-ok:#6cb98f;
   --pb-line:rgba(230,235,240,.11); --pb-line2:rgba(230,235,240,.06);
+  /* 959: the wet-day ink. 8.02:1 on the dark day card, and its light twin
+     6.64:1 on the white one \u2014 computed, not eyeballed. */
+  --pb-wx:#6db3f2;
   --pb-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   display:none; position:fixed; inset:0; z-index:9500; overflow-y:auto;
   overflow-x:hidden; overscroll-behavior:contain;
@@ -49421,6 +49425,7 @@ objections : OBJECTIONS,
   --pb-acc:#8f1620; --pb-accd:#8f1620; --pb-accink:#ffffff;
   --pb-hot:#a83f24; --pb-ok:#2f7d55;
   --pb-line:#e2e4e8; --pb-line2:#eef0f2;
+  --pb-wx:#155f9e;
 }
 /* The installed PWA paints #pwaNav over everything at z-index 9990 and it is
    ~96px tall with the home-indicator inset. Clear it, or the last control on
@@ -49605,6 +49610,29 @@ objections : OBJECTIONS,
 }
 :root[data-theme="rb-light"] #cr-pb .pbday{ box-shadow:0 1px 4px rgba(25,28,40,.05); }
 #cr-pb .pbday .dn{ display:block; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); color:var(--pb-ink,#eceef0); }
+/* 959 \u2014 CAUGHT BY THE SENTINEL, not by the gate: this was first written as
+   `#cr-pb .pbday .dn{display:flex}`, two classes, and
+   `#cr-pb .pbmonth .pbday .dn{display:block;text-align:center}` above is THREE.
+   It never won on any of the 30 elements it matched and the layout was inert
+   while every assertion about the icon stayed green. So the two grids are now
+   laid out deliberately and separately: the full calendar has room for number
+   left / forecast right, and the mini keeps its centred number with the icon
+   sitting inline beside it. */
+#cr-pb .pbcal .pbday .dn{ display:flex; align-items:center; justify-content:space-between; }
+/* 959: the forecast, on the calendar Curtis actually schedules from. Same
+   markup the Crew Dispatch headers use \u2014 one span from CardinalWx, coloured
+   here in Production's own tokens, so neither module knows about the other.
+   Past day 14 Open-Meteo has nothing and the span is simply absent: no icon
+   means no forecast, NOT fair weather. */
+#cr-pb .pbday .dn .wx{ display:inline-flex; align-items:center; gap:2px; flex:none;
+  margin-left:3px; color:var(--pb-dim,#848c94); }
+#cr-pb .pbday .dn .wx svg{ width:11px; height:11px; }
+#cr-pb .pbday .dn .wx i{ font:700 8.5px var(--pb-mono,ui-monospace,Menlo,monospace); font-style:normal; }
+#cr-pb .pbday .dn .wx.wet{ color:var(--pb-wx,#6db3f2); }
+#cr-pb .pbrule .wx{ display:inline-flex; align-items:center; gap:3px; color:var(--pb-dim,#848c94); }
+#cr-pb .pbrule .wx svg{ width:13px; height:13px; }
+#cr-pb .pbrule .wx i{ font-style:normal; font-size:9px; letter-spacing:.06em; }
+#cr-pb .pbrule .wx.wet{ color:var(--pb-wx,#6db3f2); }
 #cr-pb .pbday.out{ opacity:.45; }
 #cr-pb .pbday.today{ border-color:var(--pb-acc,#e35c63); border-width:1.5px; }
 #cr-pb .pbday.today .dn{ color:var(--pb-acc,#e35c63); }
@@ -49896,6 +49924,10 @@ function keyOf(d){
 }
 /* A Postgres date column is date-ONLY: new Date('2026-08-21') is UTC midnight
    and renders as the 20th west of Greenwich. crDate() is the app's fix (744). */
+/* 959: Production's one line to the shared forecast. Absent module, absent
+   forecast and a day past Open-Meteo's fourteen all return the same empty
+   string, so nothing here can ever depend on the weather being there. */
+function wxc(ymd){ return window.CardinalWx ? window.CardinalWx.cell(ymd) : ''; }
 function apptDay(v){
   if(!v) return null;
   var d = null;
@@ -50107,6 +50139,11 @@ function render(){
      caller would have left calHtml() and head() to be found later. */
   if(!selDay)   selDay   = today();
   if(!calMonth) calMonth = monthOf(selDay);
+  /* 959: the callback fires only when a NETWORK fetch lands \u2014 never on a
+     cache hit \u2014 so this cannot re-enter the render it was called from. The
+     lastSig guard below then does the rest: icons change the markup, so the
+     repaint happens; nothing else does, so it does not. */
+  if(window.CardinalWx) window.CardinalWx.load(function(){ render(); });
   var html = pane === 'cal' ? calHtml() : pane === 'list' ? listPaneHtml() : homeHtml();
   /* 606: an unguarded innerHTML write inside a module whose own observer
      watches document.body repainted 54x/sec and destroyed the button under
@@ -50215,7 +50252,7 @@ function homeMonthHtml(){
       (keyOf(day) === keyOf(today()) ? ' today' : '') +
       (keyOf(day) === keyOf(d) ? ' sel' : '') +
       '" data-day="' + keyOf(day) + '" type="button">' +
-      '<span class="dn">' + day.getDate() + '</span>' +
+      '<span class="dn">' + day.getDate() + wxc(keyOf(day)) + '</span>' +
       '<span class="pbpips">' + pips + '</span></button>';
   }
   return '<div class="pbmonth">' +
@@ -50237,7 +50274,7 @@ function homeHtml(){
     homeMonthHtml() +
     tilesHtml() +
     crewNavHtml() +
-    '<div class="pbrule">' + esc(keyOf(d) === keyOf(today()) ? 'Today' : pbFull(d)) +
+    '<div class="pbrule">' + esc(keyOf(d) === keyOf(today()) ? 'Today' : pbFull(d)) + wxc(keyOf(d)) +
       '<span class="sp">' +
       '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
       '<button class="pbchip" data-go="cal" type="button">Full calendar ›</button>' +
@@ -50263,7 +50300,7 @@ function calHtml(){
       (keyOf(day) === keyOf(today()) ? ' today' : '') +
       (keyOf(day) === keyOf(d) ? ' sel' : '') +
       '" data-day="' + keyOf(day) + '" type="button">' +
-      '<span class="dn">' + day.getDate() + '</span>' + chips + '</button>';
+      '<span class="dn">' + day.getDate() + wxc(keyOf(day)) + '</span>' + chips + '</button>';
   }
   return '<div class="pbwrap">' +
     head('Calendar', 'home') +
@@ -50271,7 +50308,7 @@ function calHtml(){
     '<div class="pbdow"><span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span></div>' +
     '<div class="pbgrid">' + cells + '</div></div>' +
     '<div class="pbsheet"><div class="hd"></div>' +
-    '<div class="pbrule">' + esc(pbFull(d)) +
+    '<div class="pbrule">' + esc(pbFull(d)) + wxc(keyOf(d)) +
       '<span class="sp"><button class="pbchip" data-add="1" type="button">+ Add</button></span></div>' +
     agendaHtml(d) + unscheduledHtml() +
     '</div></div></div>';
@@ -74574,7 +74611,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
    window.CardinalDispatch. */
 (function(){
   var el, crews = [], wos = [], punches = [], weekOffset = 0, filter = 'All', showIdle = {}, foldTrade = {};
-  var armed = null, wxDays = null, wxT = 0;   /* 949: armed tray chip + Open-Meteo day cache */
+  var armed = null;   /* 949: the armed tray chip (the forecast moved to CardinalWx at 959) */
   var armedMove = null;   /* 958: the booked work order currently picked up */
   var TRADE_ORDER = ['Roofing','Siding','Windows','Gutters','General','General Repairs'];
   /* 913: the dispatch Map toggle — its own Leaflet map of this week's jobs by crew */
@@ -74603,50 +74640,17 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
      the same "free public source" rule as the RainViewer radar (915). Dayton
      coordinates, the map's own default center. Cached 30 min in localStorage.
      A failed fetch changes nothing: no icons, no error, board intact. */
-  function wxKind(c){
-    c = +c;
-    if(c >= 95) return 'storm';
-    if((c >= 71 && c <= 77) || c === 85 || c === 86) return 'snow';
-    if((c >= 51 && c <= 67) || (c >= 80 && c <= 82)) return 'rain';
-    if(c === 0 || c === 1) return 'sun';
-    return 'cloud';
-  }
-  function wxIcon(k){
-    if(k === 'sun')   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4.4"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>';
-    if(k === 'rain')  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 8.5 4 4 0 0 1 18 15z"/><path d="M8.5 18.2l-1 2.2M13 18.2l-1 2.2M17.5 18.2l-1 2.2"/></svg>';
-    if(k === 'storm') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 7.5 4 4 0 0 1 18 14z"/><path d="M12.5 15.5l-2.5 4h3l-1.5 3.5"/></svg>';
-    if(k === 'snow')  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 14a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 7.5 4 4 0 0 1 18 14z"/><path d="M8.5 18.5h.01M12.5 20h.01M16.5 18.5h.01"/></svg>';
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 18a4.5 4.5 0 1 1 .8-8.9A6 6 0 0 1 19 11a3.5 3.5 0 0 1-1 7z"/></svg>';
-  }
+  /* 959: the forecast lives in window.CardinalWx now \u2014 one fetch, one cache,
+     one icon set, because Production's calendars became a second consumer and a
+     second copy would have been two forecasts disagreeing on one screen. These
+     two functions are the whole seam, and they emit exactly what 949 emitted. */
   function loadWx(){
-    var now = Date.now();
-    if(wxDays && now - wxT < 1800000) return;
-    try{
-      var c = JSON.parse(localStorage.getItem('cr-dispwx') || 'null');
-      if(c && c.at && now - c.at < 1800000 && c.days){ wxDays = c.days; wxT = c.at; return; }
-    }catch(_e){}
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=39.7589&longitude=-84.1916' +
-          '&daily=weather_code,precipitation_probability_max&forecast_days=14&timezone=auto')
-      .then(function(r){ return r.json(); })
-      .then(function(j){
-        var d = j && j.daily; if(!d || !d.time) return;
-        var out = {};
-        d.time.forEach(function(t, i){
-          out[t] = { c:(d.weather_code || [])[i], p:(d.precipitation_probability_max || [])[i] };
-        });
-        wxDays = out; wxT = Date.now();
-        try{ localStorage.setItem('cr-dispwx', JSON.stringify({ at:wxT, days:out })); }catch(_e2){}
-        if(el && el.classList.contains('open') && !mapOn) render();
-      })
-      .catch(function(){});                    /* silent — the board never blocks on weather */
+    if(!window.CardinalWx) return;
+    window.CardinalWx.load(function(){
+      if(el && el.classList.contains('open') && !mapOn) render();
+    });
   }
-  function wxCell(s){
-    var d = wxDays && wxDays[s]; if(!d) return '';
-    var k = wxKind(d.c), p = +d.p || 0;
-    var wet = (p >= 50) || k === 'rain' || k === 'storm' || k === 'snow';
-    return '<span class="wx' + (wet ? ' wet' : '') + '">' + wxIcon(k) +
-      (p >= 30 ? '<i>' + p + '%</i>' : '') + '</span>';
-  }
+  function wxCell(s){ return window.CardinalWx ? window.CardinalWx.cell(s) : ''; }
 
   function woById(id){ for(var i=0;i<wos.length;i++){ if(String(wos[i].id) === String(id)) return wos[i]; } return null; }
   function projById(id){
@@ -77477,5 +77481,100 @@ window.CardinalStorm = Object.assign(window.CardinalStorm || {}, {
 })();
 </script>
 
+<script id="cr-wx-script">
+/* Cardinal weather \u2014 v2026-08-21 build 959
+   ONE forecast for the whole app. Build 949 put this inside the Crew Dispatch
+   module because Dispatch was the only consumer. Production's calendars are the
+   second, and a second copy of a fetch, a cache and five drawn icons is a bug
+   with a delay on it \u2014 so it moved here and cr-disp now delegates, emitting
+   exactly the markup it emitted before (which is why gate_949 still holds).
+
+   Open-Meteo, admitted under the same rule as RainViewer: free public source,
+   no key, no account. Dayton coordinates \u2014 the map's own default centre.
+
+   It returns FOURTEEN days. A calendar showing five weeks therefore has no icon
+   past day 14, and that is correct rather than broken: no icon means no
+   forecast, not fair weather. The cache key is unchanged ('cr-dispwx') so a
+   forecast already sitting on the device carries straight over.
+
+   A failed fetch changes nothing anywhere \u2014 no icons, no error, no blocked
+   render. Nothing in this app waits on the weather. */
+(function(){
+  var DAYS = null, AT = 0, PENDING = false, CBS = [];
+  var TTL = 1800000;                                   /* 30 minutes */
+
+  function kind(c){
+    c = +c;
+    if(c >= 95) return 'storm';
+    if((c >= 71 && c <= 77) || c === 85 || c === 86) return 'snow';
+    if((c >= 51 && c <= 67) || (c >= 80 && c <= 82)) return 'rain';
+    if(c === 0 || c === 1) return 'sun';
+    return 'cloud';
+  }
+  function icon(k){
+    if(k === 'sun')   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4.4"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5 5l1.7 1.7M17.3 17.3L19 19M19 5l-1.7 1.7M6.7 17.3L5 19"/></svg>';
+    if(k === 'rain')  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 15a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 8.5 4 4 0 0 1 18 15z"/><path d="M8.5 18.2l-1 2.2M13 18.2l-1 2.2M17.5 18.2l-1 2.2"/></svg>';
+    if(k === 'storm') return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 14a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 7.5 4 4 0 0 1 18 14z"/><path d="M12.5 15.5l-2.5 4h3l-1.5 3.5"/></svg>';
+    if(k === 'snow')  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 14a5 5 0 1 1 .9-9.9A6 6 0 0 1 19 7.5 4 4 0 0 1 18 14z"/><path d="M8.5 18.5h.01M12.5 20h.01M16.5 18.5h.01"/></svg>';
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 18a4.5 4.5 0 1 1 .8-8.9A6 6 0 0 1 19 11a3.5 3.5 0 0 1-1 7z"/></svg>';
+  }
+
+  function fresh(){ return !!DAYS && Date.now() - AT < TTL; }
+  function fromCache(){
+    try{
+      var c = JSON.parse(localStorage.getItem('cr-dispwx') || 'null');
+      if(c && c.at && Date.now() - c.at < TTL && c.days){ DAYS = c.days; AT = c.at; return true; }
+    }catch(_e){}
+    return false;
+  }
+  /* The callback fires ONLY when a network fetch fills the cache. It is
+     deliberately not called on the cache-hit path: every caller renders
+     immediately after calling load(), so firing it there would re-enter the
+     caller's own render from inside that render. Registering only when a fetch
+     is actually about to happen also stops the queue growing on every repaint. */
+  function load(cb){
+    if(fresh() || fromCache()) return;
+    if(typeof cb === 'function') CBS.push(cb);
+    if(PENDING) return;
+    PENDING = true;
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=39.7589&longitude=-84.1916' +
+          '&daily=weather_code,precipitation_probability_max&forecast_days=14&timezone=auto')
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        var d = j && j.daily;
+        if(!d || !d.time){ PENDING = false; return; }
+        var out = {};
+        d.time.forEach(function(t, i){
+          out[t] = { c:(d.weather_code || [])[i], p:(d.precipitation_probability_max || [])[i] };
+        });
+        DAYS = out; AT = Date.now(); PENDING = false;
+        try{ localStorage.setItem('cr-dispwx', JSON.stringify({ at:AT, days:out })); }catch(_e2){}
+        var l = CBS; CBS = [];
+        l.forEach(function(f){ try{ f(); }catch(_e3){} });
+      })
+      .catch(function(){ PENDING = false; });          /* silent, always */
+  }
+
+  function day(s){ return (DAYS && DAYS[s]) || null; }
+  function wet(s){
+    var d = day(s); if(!d) return false;
+    var k = kind(d.c);
+    return (+d.p || 0) >= 50 || k === 'rain' || k === 'storm' || k === 'snow';
+  }
+  /* The markup 949 shipped, unchanged: <span class="wx[ wet]">ICON[<i>NN%</i>]</span>.
+     Each host colours `.wx` inside its own scope, so Dispatch keeps --disp-wx
+     and Production gets --pb-wx without either knowing about the other. */
+  function cell(s, minPct){
+    var d = day(s); if(!d) return '';
+    var p = +d.p || 0, m = (minPct == null) ? 30 : minPct;
+    return '<span class="wx' + (wet(s) ? ' wet' : '') + '">' + icon(kind(d.c)) +
+      (p >= m ? '<i>' + p + '%</i>' : '') + '</span>';
+  }
+
+  window.CardinalWx = Object.assign(window.CardinalWx || {}, {
+    load: load, day: day, kind: kind, icon: icon, wet: wet, cell: cell
+  });
+})();
+</script>
 </body>
 </html>

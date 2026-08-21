@@ -5657,3 +5657,50 @@ things.
 Gate: `gate_958.mjs` (21 assertions incl. the write's own filters, zero-inserts, the
 read-after-write render, the refusal revert, and the trade fence; control red 13 named,
 no crash). Sentinel: `dispatch` state clean.
+
+## The forecast on the Production calendar (build 959, 21 Aug 2026)
+
+Curtis schedules from Production, and the forecast only existed on Crew Dispatch. Every day
+cell in **both** month grids — the mini calendar on the Production landing and the full
+five-week one — now carries its forecast beside the date, and so does the `.pbrule` heading
+over the day's agenda. Wet days paint `--pb-wx` (**#6db3f2** dark, 8.02:1 on the day card /
+**#155f9e** light, 6.64:1 — computed, both themes). Rain chance shows at ≥30%, the same rule
+the Dispatch headers use.
+
+⚠ **The two grids are laid out separately, on purpose — do not "unify" them.**
+`#cr-pb .pbcal .pbday .dn` is a flex row (date left, forecast right) for the **full**
+calendar; the **mini** grid keeps its pre-existing centred number with the icon inline beside
+it. The first version of this was one two-class rule for both, and
+`#cr-pb .pbmonth .pbday .dn` (three classes) beat it — **it never won on any of the 30
+elements it matched.** The sentinel's `OVERRIDDEN` check found it; `gate_959`'s thirteen
+assertions about the icon all stayed green through it, because they were about the span and
+not about where it sat. Assertions 14/15 now cover the layout.
+
+### The forecast is now ONE module — `<script id="cr-wx-script">`, `window.CardinalWx`
+
+949 built the fetch, the 30-minute cache and the five drawn icons inside `cr-disp-script`
+because Dispatch was the only consumer. Production is the second, and a second copy would
+have been two forecasts able to disagree about the same Tuesday. Extracted, and
+**`cr-disp-script` now delegates** — `loadWx()` and `wxCell()` are the whole seam, and they
+emit byte-identical markup, which is why `gate_949` still passes 19/19 untouched.
+
+| | |
+|---|---|
+| API | `load(cb)` · `day(ymd)` · `kind(code)` · `icon(kind)` · `wet(ymd)` · `cell(ymd[,minPct])` |
+| Cache key | **unchanged** (`cr-dispwx`) so a forecast already on the device carries over |
+| Markup | `<span class="wx[ wet]">ICON[<i>NN%</i>]</span>` — each host colours `.wx` in its own scope, so Dispatch keeps `--disp-wx` and Production gets `--pb-wx` with neither knowing about the other |
+
+⚠ **`load(cb)` fires its callback only when a NETWORK fetch lands — never on a cache hit**, and
+registers the callback only when a fetch is actually about to happen. Both matter: every caller
+renders immediately after calling `load()`, so firing on the cache path would re-enter the
+caller's own render from inside it, and registering unconditionally would grow the queue on
+every repaint.
+
+⚠ **Open-Meteo returns FOURTEEN days; the calendar shows five weeks.** Days past the window
+carry no icon at all — **an empty square means there is no forecast, never that it will be
+fine.** Asserted in the gate.
+
+Gate: `gate_959.mjs` (15 assertions incl. the wet/dry inks computed in both themes, the
+percentage thresholds, the past-day-14 blank, the full calendar, **one fetch serving both
+screens**, the forecast-down case and the layout of both grids; control red 11 named, no crash). `gate_949` and
+`gate_958` re-run green as regression checks.
