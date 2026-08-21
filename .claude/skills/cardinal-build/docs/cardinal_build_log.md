@@ -20497,6 +20497,46 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 970 — Publish acts on the estimate you have open (21 Aug 2026)
+
+**The failure this prevents, reproduced on the 969 control:** ask `pickEstimate`
+for the estimate you have open, against rows belonging to a different client, and
+it returns **`e-OTHER-newest`** — that client's newest estimate. Publish it and the
+wrong homeowner gets a document; run → Contract and the wrong homeowner gets a
+contract. Nothing on screen says so.
+
+`window.currentProject` is written in exactly four places, and `openProject()` is
+the only one that sets it to a real job. `CardinalEstimates.openEditor()` never
+touches it, and `cr-estimates-script` — the standalone Menu → Estimates screen —
+contains **zero** occurrences of the string: `creOpenSaved(id)` re-reads the row and
+calls `est.openEditor(r.data.project_id, r.data)` with a bare id. So opening a saved
+estimate from that screen leaves the global pointing at whatever client was open
+last, or null. The id match in `pickEstimate` then fails and `return rows[0]` hands
+back a stranger.
+
+**The recon found a fourth site the audit had not named:** `cr-ess-script`
+**`hookEditor`** — the plain **Save** path, which drives `syncStageFor`. Saving an
+estimate opened that way moved the **wrong client's pipeline stage**. Same root
+cause, quieter symptom, and it would have survived a fix aimed only at the three
+publish paths.
+
+**One resolver, not four copies.** `estProjectNow()` sits beside `openEstimateId()`
+and asks the editor which project it is on before falling back to the global —
+which is exactly what `openPreview()` in `cr-epub` already did correctly, so this is
+that one answer, shared. All four capture sites now call it; a raw
+`= window.currentProject;` capture count of **0** in each of the three blocks is
+asserted by the gate.
+
+**And the fallback is gone.** `pickEstimate` now returns **null** when the estimate
+it was asked for is not in the rows, because that means the rows belong to somebody
+else. Both publish paths refuse with a sentence rather than acting — a refusal you
+can read beats a wrong contract nobody notices. The `rows[0]` path is unchanged when
+no id was asked for, and assertion 6 pins that so the legacy behaviour cannot drift.
+
+Gates: `gate_970.mjs` **11/11 on 970; RED with 9 named failures on the 969 control**,
+including the wrong-client row returned by name · `check_build.py` green with marker
++ negative control.
+
 ## Build 969 — the Claims messages you could not see on a phone (21 Aug 2026)
 
 **The audit's own suggested fix was wrong, and the recon proved it before a line

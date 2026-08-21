@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 969 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 970 &#8212; a contract now tells you what is still blank. The chip beside &#65291; Field counts every empty box, dropdown and unticked set, turns red while anything is left, and jumps you to the next one when you tap it. Signatures are not counted &#8212; that is its own button and its own step</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -15981,6 +15981,22 @@ function openEstimateId(){
   }catch(e){}
   return null;
 }
+/* 970: WHICH project is this estimate on? The satellites (Publish, -> Contract,
+   Mark-as-Sent, and the plain Save) each used to read window.currentProject, which
+   only openProject() ever sets. Open a saved estimate from Menu -> Estimates and
+   that global still points at whatever client was open last — or is null — so the
+   id match below failed and rows[0] handed back a DIFFERENT client's newest
+   estimate. The editor knows its own project; ask it first. openPreview() already
+   did exactly this, so this is that one answer, shared. */
+function estProjectNow(){
+  try{
+    if(window.CardinalEstimates && typeof window.CardinalEstimates.currentProject === 'function'){
+      var p = window.CardinalEstimates.currentProject();
+      if(p && p.id) return p;
+    }
+  }catch(e){}
+  return window.currentProject || null;
+}
 function pickEstimate(rows, id){
   if(!rows || !rows.length) return null;
   if(id){
@@ -15992,6 +16008,11 @@ function pickEstimate(rows, id){
       if(window.report) window.report(new Error('open estimate ' + id + ' not in reloaded rows'),
                                      'Estimates', 'publish id match');
     }catch(e2){}
+    /* 970: the open estimate was asked for by id and is not in these rows, so
+       these rows belong to a different project. Falling through to rows[0] here
+       is how a publish could land on another client's estimate. A refusal the
+       user can read beats a wrong contract nobody notices. */
+    return null;
   }
   return rows[0];
 }
@@ -41106,6 +41127,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:970, d:'2026-08-21', t:'Publish always acts on the estimate you have open',
+  s:'If you opened a saved estimate from Menu \u2192 Estimates rather than from a client, Publish, \u2192 Contract and Mark as Sent were looking up the last client you had open instead of the one the estimate belongs to \u2014 and when they could not find it, they quietly took that client\u2019s newest estimate instead. That could publish or contract the wrong homeowner\u2019s estimate. They now ask the open estimate which job it is on, and if anything still does not line up they stop and say so rather than guessing. Saving an estimate that way was also moving the wrong client\u2019s stage; that is fixed too.' },
 { b:969, d:'2026-08-21', t:'Claims messages you could not see on a phone',
   s:'Every Saved, Deleted, Claim created and Could not delete in the Claims section \u2014 and the notice that says the pipeline moved a job by itself \u2014 was being painted underneath the bottom bar in the installed app. On a phone you tapped Save and nothing appeared to happen, whether it worked or not. They now come up through the same message strip the rest of the app uses, above the bar. They were also near-invisible white-on-white in dark mode; that is fixed by the same change.' },
 { b:968, d:'2026-08-21', t:'The Supplement Desk stops signing you out',
@@ -47659,7 +47682,7 @@ if(!btn) return;
 var saveBtn = document.querySelector('#cr-est-view [data-act="save"]');
 if(!saveBtn){ alert('Editor not ready.'); return; }
 btn.disabled = true; btn.textContent = 'Publishing\u2026';
-var projectBefore = window.currentProject;
+var projectBefore = estProjectNow();   /* 970 */
 var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 try{
 saveBtn.click();
@@ -47681,6 +47704,10 @@ alert('Could not find the saved estimate to publish.');
 return;
 }
 var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
+
+/* 970: pickEstimate returns null when the open estimate is not in these rows —
+   i.e. they belong to a different client. Say so; never publish the other one. */
+if(!est){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
 var docId = await publish(est, projectBefore);
 if(!docId){ return; }
 if(!openDoc(docId)){
@@ -47848,8 +47875,8 @@ var go = confirm(
 );
 if(!go) return;
 }
-var project = window.currentProject;
-if(!project || !project.id){ alert('No client loaded.'); return; }
+var project = estProjectNow();   /* 970 */
+if(!project || !project.id){ alert('Open an estimate first.'); return; }
 btn.disabled = true; btn.textContent = 'Working\u2026';
 var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 try{
@@ -47864,6 +47891,10 @@ return;
 var rows = await window.CardinalEstimates.loadForProject(project.id);
 if(!rows.length){ alert('Could not find the saved estimate.'); return; }
 var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
+
+/* 970: pickEstimate returns null when the open estimate is not in these rows —
+   i.e. they belong to a different client. Say so; never contract the other one. */
+if(!est){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
 var docId = await generate(est, project);
 if(!docId) return;
 if(typeof window.reload === 'function'){
@@ -48023,7 +48054,7 @@ saveBtn.dataset.crEssHooked = '1';
 saveBtn.addEventListener('click', function(){
 var statusSel = view.querySelector('[data-f="status"]');
 var status = statusSel ? statusSel.value : null;
-var project = window.currentProject;
+var project = estProjectNow();   /* 970: the plain Save path moved the WRONG client's stage */
 if(!status || !project) return;
 var elapsed = 0;
 var iv = setInterval(function(){
@@ -48047,7 +48078,7 @@ var view = document.getElementById('cr-est-view');
 if(!view) return;
 var statusSel = view.querySelector('[data-f="status"]');
 if(!statusSel || statusSel.value !== 'draft') return;
-var project = window.currentProject;
+var project = estProjectNow();   /* 970 */
 var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 var elapsed = 0;
 var iv = setInterval(function(){
