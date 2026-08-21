@@ -3683,7 +3683,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 955 &#8212; one section per portal: Production shows only while you are in Production and Community only in Community, the way Insurance and Sell already work &#8212; and Suppliers moves up into Daily so the materials door is there from every desk</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 956 &#8212; the menu is now symmetric: each of the four sections &#8212; Sell, Insurance, Production, Community &#8212; appears only in its own portal, so the menu is always about where you are standing</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -40733,6 +40733,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:956, d:'2026-08-21', t:'The menu is symmetric', s:'The last exception is gone: the Insurance section now appears only while you are in the Insurance portal, the same way Sell, Production and Community already worked. So each portal shows exactly one section of its own, and the menu stays short and about where you are standing. Getting between portals is unchanged and always available \u2014 the Retail / Insurance / Community switcher sits at the top of the menu, Cardinal Truth is in CRMs, and Production is in Daily.' },
 { b:955, d:'2026-08-21', t:'One menu section per portal', s:'The menu now shows only the section you are actually working in: Production appears while you are on the Production board, Community while you are in the Community portal, Insurance in Insurance, and Sell in Retail (and on the Sales Floor). Everything else folds away, so the menu is short and about where you are. Nothing is lost \u2014 the door into each portal is always there: Production sits in Daily, and the Retail / Insurance / Community switcher is at the top of the menu. Suppliers has moved up into Daily, so the materials catalogue is reachable from every desk instead of only from Production. And a small repair: since yesterday the Sell section had been hiding itself while the Sales Floor was open, which was never intended.' },
 { b:954, d:'2026-08-21', t:'The Insurance tools move into the menu', s:'On the Cardinal Truth screen the row of Tools buttons at the bottom \u2014 Scope of Loss, Resource Library, Schedule Board, Supplement Templates, Insurance Resources, the Adjuster Directory, the Claims Tracker and the Supplement Desk \u2014 is gone from the screen. Every one of them lives in the slide-out menu instead, and the menu\u2019s Insurance section now opens itself the moment you switch into the Insurance portal, so the whole list is in front of you without a tap. Nothing was lost: the seven tools are in that Insurance section and Schedule Board has always been under Daily. The menu also keeps itself tidy \u2014 Sell shows only in Retail, and the Insurance section stays out of the way while you are in Retail. The Cardinal Truth dashboard itself is unchanged: the money cards, the pipeline, carriers, this week and the chase list are all still there. The phone menu looks exactly as it did.' },
 { b:953, d:'2026-08-21', t:'The menu learns the portals', s:'Two more sections in the menu, built the same way as the Insurance one: a Production card with Production Board, Crew Dispatch, Punch & Repairs and Suppliers (Suppliers moved here from Sell \u2014 it is a materials door, not a sales tool), and a Community card with the Community Hub, Community Partners, Prospective Partners and New Bid. Each row is a shortcut to a place that already exists \u2014 the hubs keep all their own tiles. And the Sell section now knows where you are: in the Insurance, Community or Production portal it folds itself away entirely, and the moment you switch back to Retail it returns. Nothing was deleted; it only hides.' },
@@ -42245,14 +42246,15 @@ var menu = document.getElementById('navMenu');
 if(!menu) return;
 var p = portalNow();
 var changed = false;
-/* 955, Theo: "productions only productions, community only community" -
-   each portal-specific section shows only where it belongs. Anchored on a ROW
-   each section owns (secOfNav), never on heading text - see the note above.
+/* 955-956: one section per portal, all four symmetric now - Theo asked for
+   Insurance in retail first (954), then production/community (955), then
+   "make insurance symmetric too" (956). Anchored on a ROW each section owns
+   (secOfNav), never on heading text - see the note above.
    ⚠ Sell keeps the SALES FLOOR as well as retail: crmNow() returns 'sales'
    while #cr-sf is open, and 954's `p !== 'retail'` had quietly started hiding
    Sell there - a regression this line also repairs. */
 if(setSectionHidden(findSec('sell'), !(p === 'retail' || p === 'sales'))) changed = true;
-if(setSectionHidden(secOfNav('sol'), p === 'retail')) changed = true;
+if(setSectionHidden(secOfNav('sol'), p !== 'insurance')) changed = true;
 if(setSectionHidden(secOfNav('prodboard'), p !== 'production')) changed = true;
 if(setSectionHidden(secOfNav('newbid'), p !== 'community')) changed = true;
 if(p === 'insurance' && lastPortal !== 'insurance' && openInsuranceSection()) changed = true;

@@ -1,7 +1,10 @@
-/* gate_955.mjs — one menu section per portal (build 955).
+/* gate_956.mjs — the menu is symmetric (build 956).
+   956 is one rule: the Insurance section is hidden unless the portal IS
+   insurance (it used to hide only in retail). The whole five-portal x
+   four-section matrix rides along, because a symmetry claim is only worth
+   anything if every cell is checked — the control proves the three cells
+   that changed (insurance shown in production / community / sales).
      1. SCOPING — Production shows ONLY in the production portal, Community
-        (⚠ the Insurance column of MATRIX was updated by 956, which made that
-         section symmetric too — this gate tracks CURRENT behaviour)
         ONLY in community, Insurance not in retail, Sell in retail AND on the
         Sales Floor (the 954 regression this build repairs)
      2. THE DOORS SURVIVE — every portal stays reachable when its section is
@@ -9,7 +12,7 @@
      3. SUPPLIERS — lives in Daily now, visible in EVERY portal
      4. NO COLLATERAL — Daily/Resources never hide; hiding a section never
         un-hides a row some other rule hid (coach stays hidden)
-   Usage: node gate_955.mjs [path] — previous build = negative control (must
+   Usage: node gate_956.mjs [path] — previous build = negative control (must
    FAIL named, not crash — interactions guarded, BUG_CLASSES 37). */
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
@@ -150,6 +153,6 @@ need('for the crew, Suppliers stays reachable in the community portal', !crewSup
 await p2.close();
 
 await browser.close();
-console.log('gate_955 ['+LABEL+']: '+passes+' passed, '+fails.length+' failed');
+console.log('gate_956 ['+LABEL+']: '+passes+' passed, '+fails.length+' failed');
 fails.forEach(f=>console.log('  FAIL  '+f));
 process.exit(fails.length?1:0);
