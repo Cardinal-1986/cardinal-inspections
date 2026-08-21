@@ -5588,3 +5588,14 @@ sticks. `syncPortalSections()` (was `syncSell`) hides Sell outside Retail and th
 section inside Retail, tagging rows `data-cr-pohid`. ⚠ That section is located by
 `secOfNav('sol')`, never by heading text — `renameSec()` makes the last "Insurance" heading
 "CRMs", and a label lookup would hide Cardinal Truth. Gate: `gate_954.mjs`.
+
+## One menu section per portal (955)
+
+`syncPortalSections()` scopes four sections: Sell → retail **and sales** (`crmNow()` returns
+`'sales'` for `#cr-sf.open` — 954's `p !== 'retail'` wrongly hid Sell there), Insurance →
+not in retail, Production → production only, Community → community only. Sections are found
+by a row each owns (`secOfNav('sol' | 'prodboard' | 'newbid')`), never by heading text.
+**Suppliers lives in Daily** (955) — never in a portal-scoped section — because every desk
+needs the catalog; admins still get it relocated under Admin by `reorg()`. The doors into
+each portal never hide: `#cr-nav-production` in Daily, the CRM switcher, Cardinal Truth.
+Gate: `gate_955.mjs` (five-portal matrix + a non-admin boot).
