@@ -3690,7 +3690,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 987 &#8212; the amber warning colour is readable again. Status pills across Pricing, Claims, Adjusters and Coach were painting a light-mode amber that sat at about 3 to 1 against their own background, and Estimates had never been given a dark value at all</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 988 &#8212; the little status pills that say Saving, Saved and Error were invisible on the dark theme. They painted white text on a near-white pill, which is the theme almost everyone uses. The text now flips to dark on the light pill and stays white on the dark one</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29054,7 +29054,7 @@ function showList() {
 <style id="cr-pricing-styles">
   #cr-pricing-mount {
     --cr-red:#ff6b6b; --cr-red-dark:#ff8e8e; --cr-red-tint:#3a1f22; --cr-red-tint-2:#2a1a1c;
-    --cr-amber:#e0a13a; --cr-amber-tint:#3a2f18;
+    --cr-amber:#e0a13a;--cr-onsolid:#1a1a1a; --cr-amber-tint:#3a2f18;
     --cr-green:#5ec97f; --cr-green-tint:#1c3324;
     --cr-blue:#5fa8ea; --cr-blue-tint:#172a3a;
     --cr-black:#f2f4f7; --cr-text:#e6e9ee; --cr-muted:#9aa3ad; --cr-muted-2:#858d97;
@@ -29074,7 +29074,7 @@ function showList() {
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
   --cr-red-tint-2:#FEF7F7;
-  --cr-amber:#8a5500;/* 987: was #C87A00 — 2.96:1 as ink on --cr-amber-tint #FBEFDA and 3.37:1 on white, both under the floor. #8a5500 is build 942's own value, already shipped on #cr-pricing-mount .lock, so no colour is invented here: 5.46:1 on the tint, 6.21:1 on white. Same hue, deepened — never a hue swap, or the two themes read as two components (557). */
+  --cr-amber:#8a5500;--cr-onsolid:#ffffff;/* 987: was #C87A00 — 2.96:1 as ink on --cr-amber-tint #FBEFDA and 3.37:1 on white, both under the floor. #8a5500 is build 942's own value, already shipped on #cr-pricing-mount .lock, so no colour is invented here: 5.46:1 on the tint, 6.21:1 on white. Same hue, deepened — never a hue swap, or the two themes read as two components (557). */
   --cr-amber-tint:#FBEFDA;
   --cr-green:#2E7D32;
   --cr-green-tint:#E7F2E7;
@@ -29159,7 +29159,7 @@ function showList() {
   #cr-pricing-mount .cr-p-delete { background: none; border: none; color: var(--cr-muted-2); cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; width: 28px; height: 28px; }
   #cr-pricing-mount .cr-p-delete:hover { color: var(--cr-red); background: var(--cr-red-tint-2); }
 
-  #cr-pricing-mount .cr-p-save-status { position: fixed; bottom: 24px; right: 24px; background: var(--cr-black); color: white; padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; z-index: 100; opacity: 0; transform: translateY(10px); transition: opacity .2s, transform .2s; pointer-events: none; }
+  #cr-pricing-mount .cr-p-save-status { position: fixed; bottom: 24px; right: 24px; background: var(--cr-black); color: var(--cr-onsolid,#fff);/* 988: --cr-black is a SURFACE token — it goes near-white (#f2f4f7) in the dark theme, which is correct for a card and wrong for a solid pill. Three floating status pills used it as a GROUND under hardcoded white ink, so in dark they painted white on #f2f4f7 = 1.10:1. Invisible, in the app's DEFAULT theme. The ink now flips with the ground, which is the shape 982 shipped as --ccm-onwarn. */ padding: 8px 16px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; z-index: 100; opacity: 0; transform: translateY(10px); transition: opacity .2s, transform .2s; pointer-events: none; }
   #cr-pricing-mount .cr-p-save-status.show { opacity: 1; transform: translateY(0); }
   #cr-pricing-mount .cr-p-save-status.saving { background: var(--cr-amber); }
   #cr-pricing-mount .cr-p-save-status.saved { background: var(--cr-green); }
@@ -30545,7 +30545,7 @@ function showList() {
 <style id="cr-claims-styles">
   #cr-claims-mount {
     --cr-red:#ff6b6b; --cr-red-dark:#ff8e8e; --cr-red-tint:#3a1f22; --cr-red-tint-2:#2a1a1c;
-    --cr-amber:#e0a13a; --cr-amber-tint:#3a2f18;
+    --cr-amber:#e0a13a;--cr-onsolid:#1a1a1a; --cr-amber-tint:#3a2f18;
     --cr-green:#5ec97f; --cr-green-tint:#1c3324;
     --cr-blue:#5fa8ea; --cr-blue-tint:#172a3a;
     --cr-purple:#b28ae8; --cr-purple-tint:#2b2140;
@@ -30571,7 +30571,7 @@ function showList() {
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
   --cr-red-tint-2:#FEF7F7;
-  --cr-amber:#8a5500;/* 987: was #C87A00 — 2.96:1 as ink on --cr-amber-tint #FBEFDA and 3.37:1 on white, both under the floor. #8a5500 is build 942's own value, already shipped on #cr-pricing-mount .lock, so no colour is invented here: 5.46:1 on the tint, 6.21:1 on white. Same hue, deepened — never a hue swap, or the two themes read as two components (557). */
+  --cr-amber:#8a5500;--cr-onsolid:#ffffff;/* 987: was #C87A00 — 2.96:1 as ink on --cr-amber-tint #FBEFDA and 3.37:1 on white, both under the floor. #8a5500 is build 942's own value, already shipped on #cr-pricing-mount .lock, so no colour is invented here: 5.46:1 on the tint, 6.21:1 on white. Same hue, deepened — never a hue swap, or the two themes read as two components (557). */
   --cr-amber-tint:#FBEFDA;
   --cr-green:#2E7D32;
   --cr-green-tint:#E7F2E7;
@@ -30778,7 +30778,7 @@ function showList() {
   #cr-claims-mount .cr-c-modal-err { color: var(--cr-red); font-size: 12px; margin-top: 8px; font-weight: 600; }
 
   /* Toast */
-  #cr-claims-mount .cr-c-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--cr-black); color: white; padding: 10px 18px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; z-index: 300; }
+  #cr-claims-mount .cr-c-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--cr-black); color: var(--cr-onsolid,#fff);/* 988 — see cr-pricing-styles */ padding: 10px 18px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; z-index: 300; }
   #cr-claims-mount .cr-c-toast.error { background: var(--cr-red); }
   #cr-claims-mount .cr-c-toast.success { background: var(--cr-green); }
 
@@ -33428,7 +33428,7 @@ function showList() {
 <style id="cr-coach-styles">
   #cr-coach-mount{
     --cr-red:#ff6b6b; --cr-red-dark:#ff8e8e; --cr-red-tint:#3a1f22; --cr-red-tint-2:#2a1a1c;
-    --cr-amber:#e0a13a; --cr-amber-tint:#3a2f18;
+    --cr-amber:#e0a13a;--cr-onsolid:#1a1a1a; --cr-amber-tint:#3a2f18;
     --cr-green:#5ec97f; --cr-green-tint:#1c3324;
     --cr-blue:#5fa8ea;  --cr-blue-tint:#172a3a;
     --cr-purple:#b28ae8; --cr-purple-tint:#2b2140;
@@ -33447,7 +33447,7 @@ function showList() {
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
   --cr-red-tint-2:#FEF7F7;
-  --cr-amber:#8a5500;/* 987: was #C87A00 — 2.96:1 as ink on --cr-amber-tint #FBEFDA and 3.37:1 on white, both under the floor. #8a5500 is build 942's own value, already shipped on #cr-pricing-mount .lock, so no colour is invented here: 5.46:1 on the tint, 6.21:1 on white. Same hue, deepened — never a hue swap, or the two themes read as two components (557). */
+  --cr-amber:#8a5500;--cr-onsolid:#ffffff;/* 987: was #C87A00 — 2.96:1 as ink on --cr-amber-tint #FBEFDA and 3.37:1 on white, both under the floor. #8a5500 is build 942's own value, already shipped on #cr-pricing-mount .lock, so no colour is invented here: 5.46:1 on the tint, 6.21:1 on white. Same hue, deepened — never a hue swap, or the two themes read as two components (557). */
   --cr-amber-tint:#FBEFDA;
   --cr-green:#2E7D32;
   --cr-green-tint:#E7F2E7;
@@ -33567,7 +33567,7 @@ function showList() {
   #cr-coach-mount .cr-k-modal-btn.primary{ background:var(--cr-red); color:#fff; border-color:var(--cr-red); }
   #cr-coach-mount .cr-k-err{ color:var(--cr-red); font-size:12px; margin-top:8px; font-weight:600; }
 
-  #cr-coach-mount .cr-k-toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--cr-black); color:#fff; padding:10px 18px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; z-index:300; }
+  #cr-coach-mount .cr-k-toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--cr-black); color:var(--cr-onsolid,#fff);/* 988 — see cr-pricing-styles */ padding:10px 18px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; z-index:300; }
   #cr-coach-mount .cr-k-toast.error{ background:var(--cr-red); }
   #cr-coach-mount .cr-k-toast.success{ background:var(--cr-green); }
 </style>
@@ -41230,7 +41230,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:987, d:'2026-08-22', t:'The amber warning colour is readable again', s:'The amber used for warnings and \u201cin progress\u201d status was chosen for the dark screen and never properly adjusted for the light one, so pills across Pricing, Claims, Adjusters and Coach were sitting at about 3 to 1 against their own background \u2014 under the readability floor. Estimates was worse: it had only ever been given one amber, so it used the light one on the dark screen too. Both are fixed. The one place amber is a background rather than text keeps its old shade, because there it works the other way round.' },
+{ b:988, d:'2026-08-22', t:'The Saving / Saved / Error pills were invisible on the dark theme', s:'The little floating pills that report Saving, Saved and Error sat on a surface colour that turns near-white on the dark theme, but their text was pinned to white \u2014 so on the theme almost everyone uses they were white on white, at about 1.1 to 1. Three of them, in Pricing, Claims and Coach. The text now flips with the pill: dark on the pale one, white on the deep one, and every state clears the readability floor in both themes.' },
+      { b:987, d:'2026-08-22', t:'The amber warning colour is readable again', s:'The amber used for warnings and \u201cin progress\u201d status was chosen for the dark screen and never properly adjusted for the light one, so pills across Pricing, Claims, Adjusters and Coach were sitting at about 3 to 1 against their own background \u2014 under the readability floor. Estimates was worse: it had only ever been given one amber, so it used the light one on the dark screen too. Both are fixed. The one place amber is a background rather than text keeps its old shade, because there it works the other way round.' },
       { b:986, d:'2026-08-21', t:'The retired Job Activity grid is gone', s:'Keeper replaced the old Job Activity grid back at build 348, but the panel itself was never removed \u2014 so every time you opened a client the app rebuilt all nine of its tiles and re-attached their click handling to something the stylesheet had been hiding for hundreds of builds. It is gone now. The job menu you actually use is unchanged, and so is the punch-out card.' },
       { b:985, d:'2026-08-21', t:'Two more Community greens made readable on the light theme', s:'The Community project card title and the client name beside \u201cCommunications\u201d were painting a bright green chosen for the dark screen. On the light theme they measured about 1.8 and 1.7 to 1 against the page, well under the 4.5 readability floor. Both now use the Community accent that already flips with the theme, so the dark screens look exactly as they did and the light ones are legible.' },
       { b:984, d:'2026-08-21', t:'Cardinal Truth tabs stop hiding the last one', s:'On a phone the Cardinal Truth tab strip had exactly no room to spare, so as soon as a real claim count appeared the last tab slid off the edge \u2014 and because the strip hides its scrollbar, nothing showed there was more to swipe to. It now wraps onto a second line at phone width and is unchanged on a tablet or desktop.' },

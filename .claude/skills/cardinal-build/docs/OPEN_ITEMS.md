@@ -109,7 +109,16 @@ BUG_CLASSES header's own rule). Expect more than one hit.
   ⚠️ **`cr-bpa-script` declares ZERO `--cr-*` tokens** — CLAUDE.md's "five modules share this
   palette" does not hold for amber.
 
-**STILL OPEN — one amber failure, needs Theo's design call, NOT a measurement question.**
+- ✅ **DONE at 988, and it was bigger than recorded.** Not one site needing taste — **three** sites
+  and **twelve** failing state/theme combinations. `--cr-black` is a SURFACE token that goes
+  near-white (`#f2f4f7`) in dark, and three floating pills used it as a GROUND under hardcoded white
+  ink: base **1.10** (invisible), `.saving` 2.25, `.saved` 2.07, `.error` 2.78 — all in the DEFAULT
+  theme. Fixed with one flipping ink token, `--cr-onsolid`, the shape 982 already shipped as
+  `--ccm-onwarn`. Worst case now 6.27. ⚠️ `.cr-chrome-top/.cr-chrome-bottom` carries the identical
+  declaration text and is CORRECT — the patch splices per style block so a file-wide sub could not
+  touch it.
+
+*Superseded — the original note read:*
 `.cr-p-save-status.saving` is white ink on `var(--cr-amber)`: **6.21 in light after 987, but 2.25 in
 dark** and unchanged. Fixing it means flipping the INK with the theme — dark ink on the pale
 dark-theme amber, white ink on the deep light-theme amber — which is inverted from intuition and
