@@ -2547,15 +2547,19 @@ time (it had **none, ever** — display-only since the module shipped), Cause of
 Loss is read off the Scope of Loss, and the Job tab stopped rendering the
 Contract tab.
 
-**STILL OPEN — the horizontal pan.** Theo: *"please fix where the screen goes
-left to right when scrolling. On all 3 pictures."* **Measured twice and NOT
-reproduced in the claim pane:** `render_claimpane.js` reports
-`scrollWidth == clientWidth` at both 390 and 430px, and the tab strip scrolls
-inside its own `overflow-x:auto` as designed. So the offender is **outside that
-mount** and the next attempt must instrument the whole app rather than one
-screen — mount the real document, walk every element, and report anything whose
-`right` exceeds `documentElement.clientWidth`. Do not re-open this by re-testing
-the claim pane; that answer is already in.
+**✅ CLOSED — the horizontal pan was FIXED AT BUILD 950, and this note outlived it by ten days.**
+This entry sits in the **10 Aug** layer. Build **950 (20 Aug)** — *"sideways scrolling repaired
+everywhere"* — swept all 50 `overflow[-x]:auto` sites off Theo's Punch-page screenshot and found
+**four** horizontal scrollers missing `overscroll-behavior-x:contain`: `.pu-tabs`, `.cr-cth-tabs`,
+`.cd-crmbar` and `#cr-disp .dspscroll`. Re-verified on main at build 990: **all four still carry
+it.** `sentinel`'s `OVERFLOW` probe also reports nothing at 390/1194/1440/2000px, and Theo
+confirmed on 22 Aug it has not recurred — he assumed he had misremembered it. **He had not. It was
+real, it was fixed, and this note was stale.**
+
+⚠️ **This entry was actively harmful while it stood**: it instructed the next session to go
+instrument the whole app for a bug that no longer existed. *A stale "STILL OPEN" costs more than no
+note at all, because it looks like evidence.* Kept here rather than deleted so nobody re-opens it
+cold from the build log.
 
 **Worth a look while nearby, not yet asked for:**
 - `filed_at` is **null on all 5 claims** in the database even though the form has

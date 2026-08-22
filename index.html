@@ -3690,7 +3690,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 988 &#8212; the little status pills that say Saving, Saved and Error were invisible on the dark theme. They painted white text on a near-white pill, which is the theme almost everyone uses. The text now flips to dark on the light pill and stays white on the dark one</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 991 &#8212; a long job or repair title no longer stretches its row on the Magnet Board. &#8220;Needs new aluminum gable vent installed&#8221; was running to four lines and making its card twice the height of the row. Titles now stop at two lines</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41230,7 +41230,9 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:988, d:'2026-08-22', t:'The Saving / Saved / Error pills were invisible on the dark theme', s:'The little floating pills that report Saving, Saved and Error sat on a surface colour that turns near-white on the dark theme, but their text was pinned to white \u2014 so on the theme almost everyone uses they were white on white, at about 1.1 to 1. Three of them, in Pricing, Claims and Coach. The text now flips with the pill: dark on the pale one, white on the deep one, and every state clears the readability floor in both themes.' },
+{ b:991, d:'2026-08-22', t:'Magnet Board: a long title no longer stretches its row', s:'A repair called \u201cneeds new aluminum gable vent installed\u201d was wrapping to four lines, making its card 88 pixels tall against a 52 pixel row \u2014 so one long title stretched the whole row and pushed the board about. Job and repair titles now stop at two lines with an ellipsis; tap the card to see the rest. Ordinary titles are unaffected.' },
+      { b:990, d:'2026-08-22', t:'Magnet Board: jobs no longer show through the crew column', s:'The crew names down the left of the Magnet Board stay put while the days pan sideways. But nothing was painted behind them, so a job card sliding past appeared to sit on top of the crew name with its text cut off at the edge \u2014 the \u201cNeeds a crew\u201d cards were the worst of it. The column now has a background, so jobs pass behind it cleanly. Nothing looks different until you pan.' },
+      { b:988, d:'2026-08-22', t:'The Saving / Saved / Error pills were invisible on the dark theme', s:'The little floating pills that report Saving, Saved and Error sat on a surface colour that turns near-white on the dark theme, but their text was pinned to white \u2014 so on the theme almost everyone uses they were white on white, at about 1.1 to 1. Three of them, in Pricing, Claims and Coach. The text now flips with the pill: dark on the pale one, white on the deep one, and every state clears the readability floor in both themes.' },
       { b:987, d:'2026-08-22', t:'The amber warning colour is readable again', s:'The amber used for warnings and \u201cin progress\u201d status was chosen for the dark screen and never properly adjusted for the light one, so pills across Pricing, Claims, Adjusters and Coach were sitting at about 3 to 1 against their own background \u2014 under the readability floor. Estimates was worse: it had only ever been given one amber, so it used the light one on the dark screen too. Both are fixed. The one place amber is a background rather than text keeps its old shade, because there it works the other way round.' },
       { b:986, d:'2026-08-21', t:'The retired Job Activity grid is gone', s:'Keeper replaced the old Job Activity grid back at build 348, but the panel itself was never removed \u2014 so every time you opened a client the app rebuilt all nine of its tiles and re-attached their click handling to something the stylesheet had been hiding for hundreds of builds. It is gone now. The job menu you actually use is unchanged, and so is the punch-out card.' },
       { b:985, d:'2026-08-21', t:'Two more Community greens made readable on the light theme', s:'The Community project card title and the client name beside \u201cCommunications\u201d were painting a bright green chosen for the dark screen. On the light theme they measured about 1.8 and 1.7 to 1 against the page, well under the 4.5 readability floor. Both now use the Community accent that already flips with the theme, so the dark screens look exactly as they did and the light ones are legible.' },
@@ -75748,7 +75750,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 
 /* crew rows — DOG TAGS on the rail */
 #cr-disp .dlane{ border-bottom:0; }
-#cr-disp .crewc{ padding:4px 6px 4px 2px; display:flex; align-items:center; background:transparent;
+#cr-disp .crewc{ padding:4px 6px 4px 2px; display:flex; align-items:center; background:var(--disp-panel,#101216)/* 990: was transparent. A position:sticky cell pinned at left:0 slides OVER the columns as the board pans, but it only MASKS them if it paints something — with a transparent background the job cards underneath show straight through, which is why a "Needs a crew" card appeared to sit on top of the Curtis and Scottie chips with its text clipped off the left edge. Its sibling #cr-disp .dcol .c.rail is the same sticky-left-z4 construction and has always carried this exact value, so this copies the convention rather than inventing one. The board ground (.dspmap) is the same token, so nothing changes at rest — it only bites once the board is panned. ⚠ Proven in a render, not read: a synthetic pair showed the transparent cell letting "Needs new crew · 149 Harriet" run under the chip and clip at the edge, and the opaque one masking it. */;
   position:sticky; left:0; z-index:4; cursor:default; }
 #cr-disp .crewc > div, #cr-disp .crewc .tagbox{ width:100%; }
 #cr-disp .crewc .tag, #cr-disp .crewc > div{ background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
@@ -75788,7 +75790,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
   border:1px solid var(--disp-line,#282c34); border-top:2.5px solid var(--disp-accent,#6b7280); border-left:1px solid var(--disp-line,#282c34);
   box-shadow:0 3px 8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08); }
-#cr-disp .job .t{ font:700 12px 'Segoe UI',Arial,sans-serif; color:var(--disp-ink,#fff);
+#cr-disp .job .t .nm{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere; min-width:0;/* 991: the clamp lives on .nm, NOT on .t. .t is display:flex so the pip and grip can sit right via margin-left:auto; -webkit-box on .t would throw that away. min-width:0 because a flex item will not shrink below its content without it, which would let a long title widen the track rather than wrap. Same 2-line rule as .rep .t — the two cards measured within 2px of each other at every title length, so clamping only one would have been the partial pass this repo keeps paying for. */}#cr-disp .job .t{ font:700 12px 'Segoe UI',Arial,sans-serif; color:var(--disp-ink,#fff);
   display:flex; align-items:center; gap:4px; line-height:1.25; }
 #cr-disp .job .t .pip{ margin-left:auto; width:7px; height:7px; border-radius:50%; flex:none; background:var(--disp-mute,#5c636e); }
 #cr-disp .job .t .pip.sent{ background:var(--disp-dim,#9aa1ac); }
@@ -75810,7 +75812,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   background:linear-gradient(180deg,var(--disp-card,#171a1f),var(--disp-panel,#101216));
   border:1px solid var(--disp-repair,#ff3b46); border-top:2.5px solid var(--disp-repair,#ff3b46);
   box-shadow:0 3px 8px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08); }
-#cr-disp .rep .t{ font:700 12px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46); line-height:1.25; }
+#cr-disp .rep .t{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; overflow-wrap:anywhere;/* 991: measured in the real grid track (minmax(96px,1fr), .dcell padding 4px, so ~104px of text): a one-word title is 1 line and 43px, but Theo's real punch title "needs new aluminum gable vent installed" ran to 4 lines and 88px against a 52px row minimum — nearly double — and a slightly longer one hit 6 lines and 118px. One long title inflated its whole row. Two lines is the floor that still fits an ordinary title: "Replace fascia board" already needed 2. overflow-wrap:anywhere so a single long word cannot push the track wider instead of wrapping. */ font:700 12px 'Segoe UI',Arial,sans-serif; color:var(--disp-repair,#ff3b46); line-height:1.25; }
 #cr-disp .rep .a{ font-size:10.5px; color:var(--disp-dim,#9aa1ac); margin-top:2px; }
 @media (min-width:1100px){
   #cr-disp .rep .t{ font-size:13px; }
@@ -75971,7 +75973,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
       'stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M19 9l3 3-3 3M9 5l3-3 3 3M9 19l3 3 3-3"/>'+
       '</svg></button>';
     return '<div class="job' + (String(armedMove) === String(w.id) ? ' moving' : '') + '" data-pid="' + esc(w.project_id) + '">' +
-      '<div class="t">' + esc(nm) + '<span class="pip ' + statusPip(w) + '"></span>' + grip + '</div>' +
+      '<div class="t"><span class="nm">' + esc(nm) + '</span><span class="pip ' + statusPip(w) + '"></span>' + grip + '</div>' +
       (ad ? '<div class="a">' + esc(ad) + '</div>' : '') + '</div>';
   }
 

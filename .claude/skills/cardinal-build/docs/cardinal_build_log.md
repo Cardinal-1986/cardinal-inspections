@@ -20553,6 +20553,100 @@ proven, and it cannot finish this sweep on its own.**
 realistic data. The remaining work is not another checker — it is teaching the harness to open those
 nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
 
+## Build 991 — Magnet Board: a long title no longer stretches its row (22 Aug 2026)
+
+Theo, looking at the same screenshot as 990: *"Maybe just a rule about how long the title is? It
+says needs new aluminum gable vent installed."*
+
+He was right, and it is a **separate defect from 990** — that one stopped jobs bleeding through the
+crew column; this one is why the card was oversized in the first place.
+
+### Measured in the real grid track, not guessed
+
+`.drow` is `grid-template-columns:118px repeat(var(--dcols,7),minmax(96px,1fr))` and `.dcell` pads
+4px, so ~104px of text. The row minimum is **52px**:
+
+| title | `.rep` | `.job` | lines |
+|---|---:|---:|---:|
+| `Repair` | 43 | 45 | 1 |
+| `Replace fascia board` | 58 | 60 | 2 |
+| **`needs new aluminum gable vent installed`** | **88** | **90** | **4** |
+| …`and flashing resealed` | **118** | **120** | **6** |
+
+**One long title inflated its whole row to more than double.** Neither `#cr-disp .rep .t` nor
+`#cr-disp .job .t` carried any constraint — no clamp, no `max-height`, no `text-overflow`.
+
+Two lines is the floor that still fits an ordinary title: `Replace fascia board` already needed 2.
+After: **58 / 60 for every long title, and 43 / 45 for the short ones, byte-identical.**
+
+### ⚠ Both cards, because they measured the same
+
+`.rep` and `.job` landed within 2px of each other at every length. Fixing only the repair card —
+the one Theo pointed at — would have been the **partial pass** this file keeps paying for: half
+fixed reads as done and removes the tell.
+
+### ⚠ The clamp CANNOT go on `.job .t`
+
+That element is `display:flex` so the pip and the drag grip sit right via `margin-left:auto`;
+`-webkit-box` would throw the layout away. The name was a **bare text node** with nothing to hang a
+rule on, so 991 wraps it in `<span class="nm">` and clamps that — with **`min-width:0`**, without
+which a flex item will not shrink below its content and a long title widens the track instead of
+wrapping.
+
+**Not a new mechanism:** the app already had **six** `-webkit-line-clamp` rules. `check_build.py`'s
+negative control is what surfaced that — the first marker was already present in 990.
+
+### Gate
+
+**`gate_991.mjs` 7/7 GREEN**, **RED on the 990 control with 3 named failures**, no crash.
+Assertion 4 measures a long title in the shipped stylesheet and the real grid track; on the control
+it reports **`repair 118px, job 120px`**. Assertion 5 is the one that stops this being a blanket
+shrink — short titles must stay at 43/45. Assertion 6 strips the clamp back out and requires the
+tall card to return.
+
+⚠️ Assertion 0 exists because `#cr-disp` is `display:none` without `.open` — a probe that forgets it
+measures **0 for everything and reads as a pass**. The first measurement run did exactly that.
+
+## Build 990 — Magnet Board: jobs stop showing through the crew column (22 Aug 2026)
+
+Theo, with a screenshot of the board panned sideways: a **"Needs a crew"** card sitting on top of
+the Curtis and Scottie chips, its text clipped off the left edge — *"Veeds new"*, and an address
+reading *"49 Harriet"* with the leading digit gone.
+
+### One declaration, and its own sibling proves it was a defect
+
+```css
+#cr-disp .dcol .c.rail { position:sticky; left:0; z-index:4; background:var(--disp-panel,#101216) }
+#cr-disp .crewc       { position:sticky; left:0; z-index:4; background:transparent }
+```
+
+Both are the same construction — a cell pinned to the left edge so it stays put while the days pan.
+**A sticky cell slides OVER the columns, but it only MASKS them if it paints something.** The header
+rail has always painted; the crew cells never did, so every job card panning past showed straight
+through them.
+
+The fix copies the sibling's exact value rather than inventing a colour, and the board ground
+(`.dspmap`) is that same token — so **nothing changes at rest**. It only bites once the board is
+panned, which is why it survived: at `scrollLeft:0` there is nothing underneath to show through.
+
+### ⚠ The render proof took two tries, and the first one lied
+
+The first synthetic pair reported **"masked correctly" for BOTH** the transparent and opaque cases.
+The reason is the whole mechanism: **a sticky cell does not overlap anything until the container is
+actually scrolled.** At `scrollLeft:0` it sits in its natural position with nothing beneath it.
+
+The second attempt panned first — and the screenshot showed the red card running under the chip and
+clipping at the edge, exactly matching Theo's. *A green result from an unscrolled probe would have
+"proved" there was no bug at all.* `gate_990` assertion 4 pans before it measures, and says so.
+
+### Gate
+
+**`gate_990.mjs` 6/6 GREEN**, **RED on the 988 control with 3 named failures**, no crash.
+Assertion 4 builds the sticky construction from the **shipped declarations** (lifted out of the
+artifact, never re-typed), pans it, and samples the pixel. On the control it reports
+`painted rgb(58, 13, 18)` — the job card's own red, seen rather than argued. Assertion 5 puts
+`transparent` back and requires the bleed to return.
+
 ## Build 988 — the Saving / Saved / Error pills were invisible in dark (22 Aug 2026)
 
 Chasing 987's one leftover — `.cr-p-save-status.saving` at 2.25:1 in dark — turned up something
