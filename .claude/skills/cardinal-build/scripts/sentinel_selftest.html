@@ -140,6 +140,24 @@
   </div>
 </div>
 
+<h2>CLIPPED — a strip hiding content with no scrollbar</h2>
+<style>
+  .clipstrip{display:flex;gap:20px;width:200px;overflow-x:auto;white-space:nowrap}
+  /* the silent one: BOTH hiding mechanisms, exactly as the app does it */
+  #clip-silent{scrollbar-width:none}
+  #clip-silent::-webkit-scrollbar{display:none}
+  /* the control: same overflow, same content, but the bar is left visible */
+  #clip-hasbar{scrollbar-width:auto}
+  /* the second control: bar hidden, but nothing overflows */
+  #clip-fits{scrollbar-width:none;width:600px}
+  #clip-fits::-webkit-scrollbar{display:none}
+</style>
+<div class="case">
+  <div class="clipstrip" id="clip-silent"><b>One</b><b>Two</b><b>Three</b><b>Four</b><b>Five</b></div>
+  <div class="clipstrip" id="clip-hasbar"><b>One</b><b>Two</b><b>Three</b><b>Four</b><b>Five</b></div>
+  <div class="clipstrip" id="clip-fits"><b>One</b><b>Two</b></div>
+</div>
+
 <h2>UNWIRED — a button nothing listens to</h2>
 <div class="case">
   <button type="button" id="wired">this one is wired</button>

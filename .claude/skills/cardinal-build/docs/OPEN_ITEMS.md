@@ -64,7 +64,23 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
   `gap:13px` fix that was first proposed was measured and rejected: it buys back only the 983
   regression and still clips at two digits
 
-**STILL OPEN — a sweep nobody has run.** `.cr-cth-tabs` is the FIRST of this app's **27**
+- ✅ **The CHECK now exists** (tooling, no build number). `sentinel` gained a `CLIPPED` probe: fires
+  on a scroller that is overflowing AND hides its bar, names what is off the edge, and is proven by
+  three self-test cases (one that must fire, two look-alikes that must not). ⚠️ Its first version
+  inferred "no scrollbar" from layout and reported EVERY scroller, because headless Chromium uses
+  overlay scrollbars — the self-test caught it; it now reads `scrollbar-width` and the real
+  `::-webkit-scrollbar` rule.
+
+**STILL OPEN — the sweep itself, and the checker cannot finish it alone.** 30 rules declare
+`overflow-x:auto|scroll` and **10 hide the scrollbar**. `.cr-cth-tabs` was fixed at 984; the other
+nine were measured at boot and **none is reachable** — six are not in the DOM (`.cr-lil-tabs`,
+`#cr-pae-tabs`, `.cr-ped-row`, `.cr-sf-tabs`, `.cr-ic-chips`, `.cr-sh-tabs`) and three are present at
+zero size (`.ljchips`, `.cd-crmbar`, `.pu-tabs`). They are built on demand behind navigation the
+harness does not drive. **The remaining work is teaching the harness to open and populate those nine
+surfaces — not another checker.** *This is the same blind spot that let `.cr-cth-tabs` clip for
+months.*
+
+*Superseded — the original note read:* `.cr-cth-tabs` is the FIRST of this app's **27**
 `overflow-x:auto` scrollers anyone has measured for silent clipping, and it was clipping. Every one
 of them hides its scrollbar, so a person gets no signal that content is off-screen. The check is
 mechanical — for each such element, compare `scrollWidth` to `clientWidth` **with realistic data,
@@ -109,7 +125,16 @@ BUG_CLASSES header's own rule). Expect more than one hit.
   ⚠️ **`cr-bpa-script` declares ZERO `--cr-*` tokens** — CLAUDE.md's "five modules share this
   palette" does not hold for amber.
 
-**STILL OPEN — one amber failure, needs Theo's design call, NOT a measurement question.**
+- ✅ **DONE at 988, and it was bigger than recorded.** Not one site needing taste — **three** sites
+  and **twelve** failing state/theme combinations. `--cr-black` is a SURFACE token that goes
+  near-white (`#f2f4f7`) in dark, and three floating pills used it as a GROUND under hardcoded white
+  ink: base **1.10** (invisible), `.saving` 2.25, `.saved` 2.07, `.error` 2.78 — all in the DEFAULT
+  theme. Fixed with one flipping ink token, `--cr-onsolid`, the shape 982 already shipped as
+  `--ccm-onwarn`. Worst case now 6.27. ⚠️ `.cr-chrome-top/.cr-chrome-bottom` carries the identical
+  declaration text and is CORRECT — the patch splices per style block so a file-wide sub could not
+  touch it.
+
+*Superseded — the original note read:*
 `.cr-p-save-status.saving` is white ink on `var(--cr-amber)`: **6.21 in light after 987, but 2.25 in
 dark** and unchanged. Fixing it means flipping the INK with the theme — dark ink on the pale
 dark-theme amber, white ink on the deep light-theme amber — which is inverted from intuition and

@@ -332,6 +332,18 @@ async function sweep(HTML, findings) {
               key: `${f.el}|${f.behavior}`,
               detail: `${f.el} sets overscroll-behavior ${f.behavior} but has no scrollport (overflow ${f.overflow}) — on iOS this can swallow the swipe` });
 
+    /* 989: CLIPPED — a hidden-scrollbar scroller that is overflowing RIGHT NOW.
+       Distinct from OVERFLOW, which watches the page: a strip like this scrolls
+       INSTEAD of breaking the page, so the document width never moves and
+       OVERFLOW cannot see it. .cr-cth-tabs (984) was the first of 30 such
+       scrollers anyone measured, and it was hiding a tab. */
+    if (on('CLIPPED') && (res.clipped || []).length)
+      for (const f of res.clipped.slice(0, 20))
+        add({ id: 'CLIPPED', where: at,
+              key: `${f.el}`,
+              detail: `${f.el} hides ${f.over}px with no scrollbar (${f.bar})` +
+                      (f.hidden && f.hidden.length ? ` — off the edge: ${f.hidden.join(', ')}` : '') });
+
     /* UNWIRED needs CDP — the page cannot list its own listeners. */
     if (on('UNWIRED') && res.unwired.length) {
       const cdp = await ctx.newCDPSession(page);
@@ -509,6 +521,21 @@ if (SELFTEST) {
   console.log((containWrong ? '  FAIL  ' : '  PASS  ') +
     'a real scroller that contains is NOT reported as CONTAIN');
   if (containWrong) bad++;
+  /* 989: CLIPPED must FIRE on a silent clipper... */
+  const clipMissed = !all.some(r => r.id === 'CLIPPED' && /#clip-silent/.test(r.detail));
+  console.log((clipMissed ? '  FAIL  ' : '  PASS  ') +
+    'a hidden-scrollbar strip that is overflowing IS reported as CLIPPED');
+  if (clipMissed) bad++;
+  /* ...and must NOT fire on a scroller whose bar is visible (the person can see
+     it and swipe — a design choice, not a defect), nor on one that fits. */
+  const clipBar = all.some(r => r.id === 'CLIPPED' && /#clip-hasbar/.test(r.detail));
+  console.log((clipBar ? '  FAIL  ' : '  PASS  ') +
+    'a scroller with a VISIBLE scrollbar is not reported as CLIPPED');
+  if (clipBar) bad++;
+  const clipFits = all.some(r => r.id === 'CLIPPED' && /#clip-fits/.test(r.detail));
+  console.log((clipFits ? '  FAIL  ' : '  PASS  ') +
+    'a hidden-scrollbar strip that FITS is not reported as CLIPPED');
+  if (clipFits) bad++;
   const inert = all.some(r => r.id === 'UNWIRED' && /#wired/.test(r.detail));
   console.log((inert ? '  FAIL  ' : '  PASS  ') + 'a WIRED button is not reported as unwired');
   if (inert) bad++;

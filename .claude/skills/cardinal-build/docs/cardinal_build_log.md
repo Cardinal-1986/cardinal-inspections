@@ -20497,6 +20497,115 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Tooling — `sentinel` learns to see silent clipping (22 Aug 2026)
+
+**No build number and no stamp bump** — `index.html` is untouched, the same rule `gate_ship.py`
+applies. Gate and docs only.
+
+Build 984 found `.cr-cth-tabs` hiding a tab behind a hidden scrollbar. `BUG_CLASSES`'s own header
+says a class that recurs gets **a check, not another paragraph** — so this is the check.
+
+### The new probe
+
+`CLIPPED` fires on an element that is **overflowing right now** AND **hides its scrollbar**. It names
+what is off the edge, not just a number:
+
+```
+div#clip-silent hides 56px with no scrollbar (scrollbar-width:none) — off the edge: Four, Five
+```
+
+⚠️ **It is deliberately not `OVERFLOW`.** `OVERFLOW` watches the *page* scrolling sideways and
+**cannot see this**: a strip like this scrolls *instead of* breaking the page, so the document width
+never moves. That is why the existing check slept through 984's bug.
+
+⚠️ **A visible scrollbar is not reported.** A person can see a bar and swipe — a design choice, not a
+defect. Three self-test cases enforce the boundary: one silent clipper that must fire, one
+visible-bar scroller that must not, one hidden-bar strip that fits and must not.
+
+### ⚠ The self-test caught a probe that would have reported everything
+
+The first version inferred "no scrollbar" from layout — `offsetHeight - clientHeight === 0`. **In
+headless Chromium scrollbars are OVERLAY and take zero space even when perfectly visible**, so that
+test reports EVERY scroller as silent. The visible-bar control fired, and the self-test went red.
+
+Replaced with two deterministic signals: computed `scrollbar-width: none`, or a real
+`::-webkit-scrollbar{display:none}` rule found by walking `document.styleSheets` and matching the
+element against it. *This app uses both mechanisms, which is why one signal is not enough.*
+
+⚠️ That walk carries the CSS-nesting trap this repo already records: **in modern Chromium every
+`CSSStyleRule` exposes an empty `.cssRules`**, so `if (r.cssRules) { walk(r.cssRules); continue; }`
+skips every style rule and returns a clean zero. Examine the rule, *then* descend.
+
+### What it found on the app: nothing — and that is the finding
+
+**30 rules declare `overflow-x:auto|scroll`; 10 hide the scrollbar.** `.cr-cth-tabs` was fixed at
+984. The other nine were measured at boot and **not one is reachable**:
+
+| state | selectors |
+|---|---|
+| **not in the DOM at all** | `.cr-lil-tabs`, `#cr-pae-tabs`, `.cr-ped-row`, `.cr-sf-tabs`, `.cr-ic-chips`, `.cr-sh-tabs` |
+| **present, zero-sized** | `.ljchips`, `.cd-crmbar`, `.pu-tabs` |
+
+They are built on demand, behind navigation `sentinel` does not drive. **So the check is correct and
+proven, and it cannot finish this sweep on its own.**
+
+*That is the same reason `.cr-cth-tabs` survived for so long: nothing renders those surfaces with
+realistic data. The remaining work is not another checker — it is teaching the harness to open those
+nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
+
+## Build 988 — the Saving / Saved / Error pills were invisible in dark (22 Aug 2026)
+
+Chasing 987's one leftover — `.cr-p-save-status.saving` at 2.25:1 in dark — turned up something
+much worse in the same rule. **The pill was invisible in the app's default theme, in all four
+states, in three modules.**
+
+`--cr-black` is a **surface** token: `#1a1a1a` in light and **`#f2f4f7` — near-white — in dark**.
+Correct for a card, wrong for a solid pill. Three floating status pills used it as a **ground**
+under a hardcoded `color: white`.
+
+Measured in Chromium on the 987 tree (this is the gate's own control output):
+
+| state | dark | light |
+|---|---:|---:|
+| base (`--cr-black`) | **1.10 ❌** | 17.40 ✅ |
+| `.saving` | **2.25 ❌** | 6.21 ✅ |
+| `.saved` | **2.07 ❌** | 5.13 ✅ |
+| `.error` | **2.78 ❌** | 4.90 ✅ |
+
+**All four fail in dark, and the base state is literally invisible.** In pricing the state classes
+only swap the *ground*, so the single hardcoded white ink broke every one of them at once.
+Three sites: `#cr-pricing-mount .cr-p-save-status`, `#cr-claims-mount .cr-c-toast`, and coach's
+toast.
+
+### The fix, and why it is not "flip the ink with the theme, which reads oddly"
+
+That was my own objection when I left this open at 987, and it was wrong. **All four grounds flip
+together** — pale in dark, deep in light — so ONE ink token that flips with them covers every state:
+`#1a1a1a` in dark, `#ffffff` in light. Worst case after: **6.27:1**. That is exactly the shape build
+**982** shipped as `--ccm-onwarn`, so it is this app's own convention, not a new mechanism.
+
+### ⚠ One site carries the IDENTICAL declaration text and had to NOT move
+
+`.cr-chrome-top, .cr-chrome-bottom` in `cr-estimates-styles` is also
+`background: var(--cr-black); color: white;` — and it is **correct**, because estimates' `--cr-black`
+is `#1a1a1a` in *both* themes (17.40:1). A file-wide substitution would have changed a passing
+element. **The patch splices per `<style id=>` block for exactly that reason, and assertion 4 guards
+the survivor.**
+
+### Gate
+
+**`gate_988.mjs` 6/6 GREEN**, **RED on the 987 control with 5 named failures**, no crash.
+Assertion 3 resolves the computed ink in both themes; assertion 6 scores all four states against
+their real painted grounds; assertion 5 is the control for both — it pins the ink back to white on a
+copy and requires dark to fail again.
+
+### The lesson worth keeping
+
+**987 recorded this as "one site, needs a design call". It was three sites, twelve failing state /
+theme combinations, and no design call at all** — the answer was already in the codebase as
+`--ccm-onwarn`. *When a fix looks like it needs taste, check whether the repo has already made the
+decision somewhere else.*
+
 ## Build 987 — the amber warning colour is readable again (22 Aug 2026)
 
 The open item read *"`--cr-amber`'s light half `#C87A00` measures 3.37:1 on white."* **Measured,
