@@ -1,5 +1,41 @@
 # Cardinal Resource App — Open Items
 
+
+---
+
+## ⚠️ STALENESS SWEEP, 22 Aug 2026 (at build 991) — half of this file's "open" claims were already fixed
+
+Theo asked for this after the horizontal-pan entry turned out to have been fixed at build 950 and to
+have outlived its fix by ten days, telling every later session to chase a bug that no longer existed.
+
+**36 claims checked against the artifact by six agents plus a reconciling pass** (which re-verified 12
+of the 14 strikes itself rather than trusting the agents' prose):
+
+| verdict | count |
+|---|---:|
+| **STALE — already fixed** | **18** |
+| genuinely still open | 9 |
+| a decision waiting on Theo | 9 |
+| unknown | 0 |
+
+**The failure mode is not forgetfulness — it is that the summary above a list never gets rewritten
+when the list does.** Three of the strikes were contradicted *inside this file*: one heading said
+"all three worth doing, none started" over four bullets that already read ✅ DONE; another said the
+Community program was open 100 lines below a line saying it was complete; a third was struck by its
+own next layer 24 lines down. **When updating an item, re-read the heading above it.**
+
+⚠️ **The sweep also found a LIVE defect the stale note was hiding** — see the client-profile entry:
+`.dbic1` and `.dbrow .dbgo` measure **1.52:1 and 1.73:1** on the dark ground build 790 moved them to.
+The note said the work was blocked on a ground that had already moved; what it was actually hiding
+was a shipped contrast failure.
+
+⚠️ **Stale prose in `index.html` will keep re-raising two of these**: `reorg()`'s comment still says
+Suppliers is "flagged for Theo rather than decided here" (settled at 953/955), and the Self Check
+comment still names Sales Floor (moved at 517). Struck notes do not help if the code still argues
+the other way.
+
+---
+
 ---
 
 ## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–982 (the UX audit follow-through)
@@ -44,7 +80,7 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
 
 - **981** item 7 done. The community job menu mirrored a grid retired at 348, so Contracts opened
   Estimates and Appointments opened the Schedule Board; and `#jobMenuSel` / `#woQuick` were visible
-  and inert on every community job at every width. ⚠️ **Still open: retiring `#jaGrid`** — 5 of its
+  and inert on every community job at every width. ⚠️ ✅ **STRUCK — shipped at 986.** Measured on the tree at 991: `id="jaGrid"` = 0, `getElementById('jaGrid')` = 0; the 6 surviving strings are all comment prose. `gate_986.mjs` exists. *The original note read:* **retiring `#jaGrid`** — 5 of its
   11 references are functional, so it is its own build
 
 - **982** item 6 done. Ten single-theme inks got light values; five new `--ccm-*` pairs; the
@@ -87,7 +123,7 @@ mechanical — for each such element, compare `scrollWidth` to `clientWidth` **w
 not the fixture's zeroes** — and it belongs in `sentinel` as a new probe rather than in prose (the
 BUG_CLASSES header's own rule). Expect more than one hit.
 
-**STILL OPEN, all three worth doing, none started:**
+✅ **STRUCK — this heading contradicted its own body.** All four bullets beneath it already read ✅ DONE (985, 986, 987, 988), each confirmed in the artifact. **Only the heading was never rewritten** — which is exactly how a stale note survives: the detail gets updated and the summary above it does not. *Original heading:* ~~STILL OPEN, all three worth doing, none started~~
 - ✅ **DONE at 985.** Both adopted `var(--ccm-ac,#34D399)`: 1.81 → 5.15 and 1.71 → 4.89 in light,
   dark unchanged. ⚠️ Both properties moved on `#commsCli` — `-webkit-text-fill-color` paints the
   glyphs and `color` does not, even with `!important` (4-case Chromium control), so a `color`-only
@@ -148,7 +184,7 @@ shipping in two halves: 980 the typography, 981 the colour (`--warn` as a theme 
 Theo picked **2**: Punch & Repairs *and* the Team Directory. Production/Sales are TOOL screens,
 not portals — home from one of them returns to YOUR CRM.
 
-**OPEN — the Community program, items 6 and 7 of seven:**
+✅ ✅ **STRUCK — shipped at 980+982 (item 6) and 981 (item 7).** Contradicted **100 lines above in the same layer** — line 50 already says *"982 item 6 done… The seven-item Community program is complete."* *Original heading:* ~~OPEN — the Community program, items 6 and 7 of seven~~
 - **Item 6 — one design era.** Four redesigns layered rather than replaced: cream dialogs left
   over from the pre-black-card era, hardcoded light-mode literals, a **second green** beside
   `--ccm-acc`, and 7px labels below the legible floor. This is the invariant Theo actually feels
@@ -156,9 +192,9 @@ not portals — home from one of them returns to YOUR CRM.
 - **Item 7 — one Job Menu.** A community job's actions live in two places with different
   contents depending on how you arrived.
 
-**OPEN — two decisions standing with Theo (build 973's read-resolver is blocked on them; ZERO
+**OPEN — ONE decision standing with Theo.** ⚠️ *Was "two" — A (the DHRN name) was answered and shipped at 976–978, so only **B** stands and 973's read-resolver is blocked on B alone.* (build 973's read-resolver is blocked on them; ZERO
 live rows are affected either way, so there is no urgency and no data at risk):**
-- **A. The DHRN name drift.** Four jobs carry a partner name that no longer matches the roster
+- ✅ ✅ **STRUCK — shipped at 976–978.** Answered by Theo verbatim in `dhrn_partner_name.sql`: *"DHRN is fine, but Dayton Home Repair Network is correct as the name."* ⚠️ Stamped APPLIED in the file; **not re-verified against the live DB**, so trust the stamp, not a query. *Original:* **A. The DHRN name drift.** Four jobs carry a partner name that no longer matches the roster
   row. (1) rename the roster row to "Dayton Home Repair Network" — smallest, no code; (2) keep
   "DHRN" and let the four jobs start reading it; (3) add a short-name column.
 - **B. A free-typed referral.** What happens to `partner_id` when someone types a funder that is
@@ -1044,7 +1080,7 @@ section — but that human is not necessarily Theo. He was told this plainly and
 - CI note: `.github/workflows/check.yml` has **no `npm ci`**, so its "every API function parses" step
   is **syntax-only** — an undeclared dependency ships permanently dead. Diff every `import` against
   `api/package.json` by hand. Never write `module.exports` even in a comment; check.yml greps text.
-- **Theo, unresolved:** whether the new route is signed-in or admin-only. Every CompanyCam-touching
+- ✅ ✅ **STRUCK — shipped at 490.** `api/sortphotos.js` gates on `requireSession(req,res)` with **no** role check — signed-in, as Theo settled. ⚠️ The doc already records this **51 lines above**, at the line-996 entry. *Original:* **Theo, unresolved:** whether the new route is signed-in or admin-only. Every CompanyCam-touching
   route is admin-only; every "caption the photo I just took" route is merely signed-in. Nothing in
   the repo settles it.
 - Harness must assert `placed + setAside == submitted` — **a silent drop is the failure mode** — and
@@ -1716,7 +1752,15 @@ darkening fixes it. Six surfaces, all low-risk.
    estimate page and `#reportsView` pipe cards went obsidian, and all three now carry a real hover
    lift. **Giving those cards a darker ground is exactly the move this item described**, taken with
    his instruction rather than unilaterally.
-   **Still open for the rest of retail.** The client profile was NOT moved and the audit below still
+   ⚠️ **REWRITTEN — this got WORSE, not better, and it is now a LIVE defect rather than a blocked one.**
+   Build **790 DID** move the client profile to a dark ground and tokenised three of these five selectors.
+   **`.dbic1` and `.dbrow .dbgo` were missed.** Both still resolve `var(--ct-red-deep)` = `#23507e`, a
+   navy chosen for the old **white** card, and both now paint on `linear-gradient(#2e333b,#262a31)`:
+   **1.52:1 and 1.73:1** against a 3.0 large-text floor. They were **8.33:1** on the ground they were
+   designed for. Both elements render — `#dbPayRow` and `#dbMoneyRow` are each in the markup once.
+   *This is the partial-theming-pass shape CLAUDE.md warns about: thirteen of fifteen right, so the page
+   reads as done and the two wrong ones read as a stylistic choice.* **Not blocked on anything — build it.**
+   *Original note, kept because its selector list is still the right list:* The client profile was NOT moved and the audit below still
    stands, unchanged: `.ackv div` and `.acxtrs label` carry `#2b2b2b`, `.axnote` `#5c4a42`,
    `.dbrow .dbgo` and `.dbic1` `#23507e` — every one needs a token before that ground moves, or the
    profile goes unreadable. 546 did not touch them.
@@ -2021,7 +2065,11 @@ simply muddy it. **Ask before building it.**
   **Was live**: 2 of 10 partners confidential, so every rep hit it every time.
 - ~~Client error reports render as job-thread notes~~ — `THREAD_SKIP`.
 
-### 📌 Found and deliberately NOT fixed — read before "finishing" it
+### ✅ 📌 STRUCK — closed at 635, hardened at 712 and 714
+
+⚠️ **The doc's own next layer strikes this 24 lines below** ("closed on Theo's *Close it*"), so this heading has been contradicted in-file the whole time. Edit is now conditional on `p.__masked`, a CONFIDENTIAL chip renders in its place, and the real fence is `openEditor()` refusing to unmask for a non-privileged caller.
+
+*Original heading:* ~~Found and deliberately NOT fixed — read before "finishing" it~~
 
 **`renderProspects()` bypasses the mask.** It calls `getRaw(row.dataset.id)` and
 always renders an Edit button, so a partner that was **both `prospective` and
@@ -2393,18 +2441,18 @@ jurisdiction match is a **sort hint**: it never filters the list and never ticks
 a letter, because the addresses misspell their own city and a neighbouring
 official is persuasive where he is not binding.
 
-**Open, in the order they were offered:**
+**Open, in the order they were offered** — ⚠️ *two of these five are struck below (send-from-the-desk shipped at 672, Hover at 674). The remaining three are genuinely open:*
 - **Carrier-response reading (the `read_response` mode, still 501).** Upload
   the denial → per-item approve/deny mapped onto the filed row's `items` →
   rebuttal draft → the thread lives on the row. Also the PWI/COC completion
   path (certificate + photos → depreciation release).
-- **Send from the desk.** Recipient shown, one explicit tap, exhibits as
+- ✅ ✅ **STRUCK — shipped at 672.** `supplement.html` carries `#sendBtn` ("Send to the carrier"), `syncSend()`, `renderForSend()`, `EXHIBIT_TTL`, `recordSend()` and the `sent_at` writeback. ⚠️ The note predicted build **669**, which became something else — grepping for 669 makes it read unbuilt. The doc already says so at line 2454. *Original:* **Send from the desk.** Recipient shown, one explicit tap, exhibits as
   long-lived signed URLs (the `PHOTO_DOC_URL_TTL` shape). Theo's pick was
   "send from the desk"; the Desk currently files, prints and copies.
 - **A metal-over-cedar-shake substrate template** for the pack, if the Gunn
   argument recurs. `tear_off` covers it today; a dedicated card would carry the
   attic/skip-sheathing documentation list.
-- **Hover → `checklist.meas`.** `/api/hover` is the SIDING order flow only;
+- ✅ ✅ **STRUCK — shipped at 674, extended at 919.** `importMeasFrom()` fetches `/api/hover` and calls `aerialMerge()`, which writes `all.meas`. Verified in the artifact, not just the log. *Original:* **Hover → `checklist.meas`.** `/api/hover` is the SIDING order flow only;
   Roofr's numbers reach `meas`, Hover's do not. Small build if wanted.
 - **The register has no browser outside the Desk.** Letters are admin-authored
   and all-staff readable by RLS, but only the Desk renders them. If production
@@ -2950,7 +2998,7 @@ overselling it, and the next person will trust it further than it goes.
 - two jobs reading "Not recorded" while every other screen showed the name
 
 **Still open, unchanged:**
-- **CR-COM-014** — `cr-nbid`'s `loadPartners()` consumes `load()` rather than
+- ✅ ✅ **STRUCK — shipped at 973.** `index.html` carries the fix and names the item in its own comment; the save half refuses to store a masked placeholder. *Original:* **CR-COM-014** — `cr-nbid`'s `loadPartners()` consumes `load()` rather than
   `list()`, so a *confidential* partner's real NAME still shows in the New Bid
   payer select. 714 does not touch it (a name is not a contact column) and it is
   its own item.
