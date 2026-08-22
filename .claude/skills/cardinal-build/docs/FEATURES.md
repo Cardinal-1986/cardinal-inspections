@@ -5957,6 +5957,19 @@ counts and what it refuses to count, each of the three kinds dropping the count 
 green "All filled" state reached by filling everything, the jump outlining a blank and moving on,
 and a hand-added field being counted; control red 11 named).
 
+### Print fidelity on contracts and estimates (994)
+
+`ensurePrintFix(d)` in the report-editor block is the single place the printed page's furniture is
+decided: which editing chrome is dropped, where the page breaks may not fall, the running header
+(`@page{@top-left}`) and the address footer (`@page{@bottom-center}`). **Both the Print button
+and the Download button call it**, so the `.html` a client is emailed prints the same as the copy
+printed in the office. It is injected into the live document rather than shipped in the skeleton,
+because a document saved earlier carries its own frozen copy of that skeleton's CSS.
+
+The old `.runhead` element is still in every template and still in every saved document — it is
+`display:none` **in print only**. Do not delete it and do not restore it to the printed page; see
+BUG_CLASSES 59.
+
 ---
 
 # The 21 Aug 2026 audit follow-through — builds 967–975
