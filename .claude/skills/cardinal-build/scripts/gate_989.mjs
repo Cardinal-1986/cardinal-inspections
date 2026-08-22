@@ -1,4 +1,4 @@
-/* gate_967.mjs — the printed contract shows all of its own words (build 967).
+/* gate_989.mjs — the printed contract shows all of its own words (build 989).
 
    This gate does not read CSS. It opens a REAL contract in the REAL editor,
    presses the REAL Download button (the artifact a client is actually emailed),
@@ -18,7 +18,7 @@
      8  the .runhead element is hidden in print, not deleted — documents saved
         before today still carry it and must keep rendering on screen
 
-   Usage: node gate_967.mjs [path] — previous build = negative control; must go
+   Usage: node gate_989.mjs [path] — previous build = negative control; must go
    RED with named failures and MUST NOT crash (BUG_CLASSES 37). */
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
@@ -108,7 +108,7 @@ clearTimeout(TO);
 import { writeFileSync, mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 import { execFileSync } from 'child_process';
-const dir=mkdtempSync(join(tmpdir(),'g967-'));
+const dir=mkdtempSync(join(tmpdir(),'g989-'));
 const wanted=[];
 for(const k of Object.keys(grabbed)) if(k.endsWith('__pdf')){ const n=k.replace('__pdf',''); writeFileSync(join(dir,n+'.pdf'),grabbed[k]); wanted.push(n); }
 let measured={};
@@ -145,7 +145,7 @@ for(const n of wanted){
 }
 need('floor: every contract was actually measured', wanted.length===3, wanted.length+' of 3');
 
-console.log('--- gate_967 ('+LABEL+') ---');
+console.log('--- gate_989 ('+LABEL+') ---');
 for(const f of fails) console.log('  FAIL  '+f);
 console.log(`${passes} passed, ${fails.length} failed`);
 console.log(fails.length? 'RED' : 'GREEN');

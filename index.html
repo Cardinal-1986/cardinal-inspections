@@ -3689,7 +3689,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 967 &#8212; the printed contract now shows all of its own words. The grey running header along the top of each page was painting over the text underneath it, hiding twelve pieces of contract wording on paper &#8212; including the right-to-cancel line. The header moves up into the page margin, where it belongs</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 989 &#8212; the printed contract now shows all of its own words. The grey running header along the top of each page was painting over the text underneath it, hiding twelve pieces of contract wording on paper &#8212; including the right-to-cancel line. The header moves up into the page margin, where it belongs</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9276,7 +9276,7 @@ table.units td.pr{text-align:right;white-space:nowrap;width:22%;}
 .page-break{break-before:page;}
 /* 747: the slim running header. position:fixed repeats on every printed page —
    measured, 5 of 5 pages.
-   ⚠ 967 CORRECTION, measured on the shipped templates: it repeats in the same
+   ⚠ 989 CORRECTION, measured on the shipped templates: it repeats in the same
    strip the flowed text occupies, and its white background HIDES that text on
    every page after the first. 12 pieces of contract text were invisible. The
    claim below that @page margin boxes are unimplemented is also false in current
@@ -9585,7 +9585,7 @@ table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weig
 .page-break{break-before:page;}
 /* 747: the slim running header. position:fixed repeats on every printed page —
    measured, 5 of 5 pages.
-   ⚠ 967 CORRECTION, measured on the shipped templates: it repeats in the same
+   ⚠ 989 CORRECTION, measured on the shipped templates: it repeats in the same
    strip the flowed text occupies, and its white background HIDES that text on
    every page after the first. 12 pieces of contract text were invisible. The
    claim below that @page margin boxes are unimplemented is also false in current
@@ -24915,12 +24915,12 @@ document.getElementById('dlBtn').addEventListener('click', async function(){
   await saveCurrent();
   var t = (document.getElementById('docTitle') && document.getElementById('docTitle').value) ||
           (window.currentDoc && window.currentDoc.title) || 'Cardinal document';
-  /* 967: the downloaded .html is what a client is emailed and prints at home.
+  /* 989: the downloaded .html is what a client is emailed and prints at home.
      It must carry the same page furniture as the copy we print from here. */
   try{ ensurePrintFix(frame.contentDocument); }catch(_){}
   if(window.CardinalDownload) window.CardinalDownload.frame(frame, t);
 });
-/* 967: the running header used to be a position:fixed .runhead element. On paper
+/* 989: the running header used to be a position:fixed .runhead element. On paper
    that repeats correctly on every page \u2014 and paints its white background over
    whatever the previous page pushed into that strip. Measured on the shipped
    templates: 12 pieces of contract text were fully invisible, among them the
@@ -41131,7 +41131,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b:967, d:'2026-08-21', t:'The printed contract shows all of its own words',
+  { b:989, d:'2026-08-21', t:'The printed contract shows all of its own words',
     s:'The grey line along the top of every printed page \u2014 Cardinal Roofing & Renovations \u00b7 ROOFING CONSTRUCTION AGREEMENT \u2014 was sitting in the same strip as the contract text and painting its white background straight over it. On a five-page roof agreement that hid four separate pieces of wording; across the four contracts it hid twelve, including the sentence that names the Terms and Conditions form, the Payment Structure heading, and the right-to-cancel line. The words were in the file the whole time \u2014 you could select them \u2014 they just could not be read. The header now prints up in the page margin instead. Nothing else about the contract changed; a gutter agreement gains one page because the reclaimed strip pushes the acceptance block over. Applies to contracts already saved, and to the copy a client is emailed.' },
 { b:966, d:'2026-08-21', t:'A contract tells you what is still blank', s:'A contract goes out with an empty box in it because nobody can see the empty box from the top of a three-page document. There is now a chip beside \u2795 Field: it counts every placeholder still showing its prompt, every dropdown nobody has chosen from, and every tick-one-of-these set with nothing ticked. It is red while anything is blank and green when nothing is, and tapping it jumps to the next blank and outlines it. Optional boxes \u2014 gutter guards, the closeout checklist \u2014 are not counted, because a counter that reports ten things missing on a finished contract is a counter everyone learns to ignore. Signatures are not counted either: that is the Client signature button and its own step. It counts, it does not block \u2014 a field can legitimately be N/A, and being stopped by your own paperwork is worse than seeing a number.' },
 { b:965, d:'2026-08-21', t:'Add a field to a contract by hand', s:'Tap where you want it, tap the \u2795 Field button, and choose: a text box, a checkbox, a dropdown, a signature line or an initials line. The field lands where you tapped. Dropdowns can read any of the lists the printed fields use \u2014 yes/no, trim, siding, gutter or shingle colours, or numbers. A signature or initials line you add joins the list you get when you tap Client signature, so it can actually be signed rather than just printed. It will only let you put a field where the contract is meant to be filled in \u2014 tap a heading or the roof diagram and it says so instead of quietly doing nothing. Anything you add can be removed again; the printed fields cannot, on purpose.' },

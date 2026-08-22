@@ -5957,7 +5957,7 @@ counts and what it refuses to count, each of the three kinds dropping the count 
 green "All filled" state reached by filling everything, the jump outlining a blank and moving on,
 and a hand-added field being counted; control red 11 named).
 
-### Print fidelity on contracts and estimates (967)
+### Print fidelity on contracts and estimates (989)
 
 `ensurePrintFix(d)` in the report-editor block is the single place the printed page's furniture is
 decided: which editing chrome is dropped, where the page breaks may not fall, the running header

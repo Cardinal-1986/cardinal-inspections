@@ -20497,7 +20497,7 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
-## Build 967 — the printed contract shows all of its own words
+## Build 989 — the printed contract shows all of its own words
 
 **The defect.** The slim grey running header (`.runhead`, build 747) is `position:fixed`, which
 does repeat on every printed page — in the same strip the flowed text occupies. Its background is
@@ -20529,7 +20529,7 @@ had no print furniture at all: no page rules, and no address footer.
 the header up with `top:-0.34in`; Chromium clamps a fixed element to the page area, so it landed at
 the **bottom** of the page (y≈707) and off page 5 entirely. Collisions read **zero** — because the
 header had left, not because the text was clear. *Absence of a collision is not the goal; a header
-above readable text is.* `gate_967` assertion 4 exists solely to catch that, and it is the
+above readable text is.* `gate_989` assertion 4 exists solely to catch that, and it is the
 assertion the first two attempts would have failed.
 
 ⚠️ **A measurement that returned nonsense was believed for one round.** The collision detector
@@ -20540,7 +20540,7 @@ are not app states; they are a broken instrument. Read the numbers before readin
 acceptance block onto a fifth sheet. Roof (5), siding (4) and the service contract (2) are
 unchanged. The full-width hairline under the old header does not survive the move to a margin box.
 
-**Gates.** `check_build.py` green 966 → 967. **`gate_967.mjs` 31/31 GREEN · RED on the 966 control
+**Gates.** `check_build.py` green 988 → 989. **`gate_989.mjs` 31/31 GREEN · RED on the 966 control
 with 15 named failures**, no crash — it presses the real Download button, prints those exact bytes,
 and measures the pages. `gate_964` 9/9, `gate_965` 12/12, `gate_966` 12/12 re-run.
 
