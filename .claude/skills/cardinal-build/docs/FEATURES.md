@@ -6396,3 +6396,46 @@ scored the ink against the border gradient (1.00:1 for legible text) and then ag
 itself (2.00:1). It walks to the nearest fill-painting ancestor and probes with `elementFromPoint`
 for an unobstructed spot. It also reports surfaces the harness did not mount rather than skipping
 them silently.
+
+## The hidden-scrollbar strips, reached and unclipped (build 993) — seven `<style>` blocks + the sentinel walk
+
+**Eleven** strips in this app scroll sideways with their scrollbar hidden (`scrollbar-width:none`
+and/or `::-webkit-scrollbar{display:none}`). When one is wider than the screen there is no
+affordance at all — no bar, no fade, nothing — so a phone user simply cannot tell the rest is there.
+
+Build 984 fixed the first (`.cr-cth-tabs`) and added the sentinel's **CLIPPED** probe. The probe was
+correct and had been measuring **one surface out of eleven**, because the other ten are built on
+demand behind navigation the walk never drove. *An unmeasured scroller reads in the report exactly
+like a clean one.*
+
+**Where they live, and who opens each:**
+
+| strip | screen | opened by |
+|---|---|---|
+| `.cr-lil-tabs` | Line Item Library | `window.CardinalLineItems.open()` — **admin-only**, on the module's own hardcoded list |
+| `#cr-pae-tabs` | Photo Album | `openProject(id)` then `window.openGalleryMode('all')` — **`galMode` must be `'all'`** |
+| `.cr-ped-row` ×2 | photo editor toolbar + colour row | `window.CardinalPhotoEditor.open(photo, opts)` |
+| `.cr-ic-chips` | Insurance Clients | `window.showInsuranceClients()` — renders one rAF late, behind a style observer |
+| `.cr-c-tabs.detail` | Claim Detail | `window.CardinalClaims.openOne(id)` — needs a claim row |
+| `.cr-cth-tabs` | Cardinal Truth | `showCardinalTruth()` |
+| `.cr-sh-tabs` | the Showcase | `window.CardinalShowcase.open()` — **no argument**; `{showroom:true}` drops a button |
+| `.ljchips` ×3 | Leads (Milestone, Assigned To) + Photo Activity (CRM) | `openLeadsView()` · `window.openPhotosView()` |
+| `.cd-crmbar` | Client Directory | `openClientsDirectory()` — **absent ≥1100px by design** (`body.cr-lnav-on`) |
+| `.pu-tabs` | Punch & Repairs | `await window.openPunchView()` |
+
+⚠️ **Shown by a CLASS, not `display`:** `#cr-lil-view`, `#cr-ped`, `#cr-show`. Writing
+`style.display` onto any of them is permanent damage — their open paths never clear an inline style.
+⚠️ **`hideAllViews()` does not know about `#cr-lil-view` or `#cr-ped`** — `closeStragglers()` in the
+setup file is what dismisses them, and removing it lets either cover every later state.
+
+**Seven were clipping at 390px** and now wrap: `.cr-lil-tabs` (525px hidden, 5 of 8 categories),
+`.cr-ic-chips` (481), `#cr-pae-tabs` (414), `.cr-ped-row` (261 — **Undo and Clear**),
+`.cr-c-tabs.detail` (245 — Documents, iTel, Record), `.ljchips` (87, and **94 at 1194px**),
+`.cr-sh-tabs` (55 — **Inspections ↗, the way out**). Desktop is byte-identical; they already fitted.
+
+⚠️ **`.cr-sf-tabs` was the eleventh and is gone.** The Sales Floor's category tabs went at build 928;
+five CSS rules outlived them by 65 builds.
+
+Gate: `gate_993.mjs` — reach **derived** from `document.styleSheets` (so a new scroller is covered
+without editing the gate) plus a **hardcoded ten-name floor** (so the count cannot shrink silently),
+and a fifth assertion that fails if the floor is ever emptied. Control on 991: PASS 15 · FAIL 8.

@@ -126,7 +126,70 @@
     ],
     /* honestly empty — the app must render these states, and it has shipped
        bugs in exactly this direction before */
-    estimates: [], insurance_claims: [], project_photos: [], inspection_reports: [],
+    estimates: [], project_photos: [], inspection_reports: [],
+    /* 992: the Line Item Library's category strip. The eight TABS are static —
+       seeding cannot add or remove one — so this is here for the COUNT PILLS
+       and for the estimates "Add from Library" sheet, which reads the same
+       table through CardinalLineItems.all(). ⚠ `category` must match the
+       module's own CATEGORIES array EXACTLY, capitalised: a lowercase
+       'roofing' renders eight zero pills over a populated-looking list, and
+       looks like a load failure. `active:true` is mandatory — loadItems()
+       filters .eq('active', true) and the mock compares strictly. */
+    estimate_line_items: [
+      { id:'l1', category:'Roofing', name:'Architectural shingles, installed',
+        description:'OC Duration per square, incl. synthetic underlayment and starter.',
+        default_price:385, unit:'SQ', active:true, sort_order:1 },
+      { id:'l2', category:'Roofing', name:'Tear-off, one layer',
+        description:'Remove and haul one layer of three-tab.',
+        default_price:65, unit:'SQ', active:true, sort_order:2 },
+      { id:'l3', category:'Roofing', name:'Ridge vent',
+        description:'Cut in and install ridge vent with shingle-over cap.',
+        default_price:12, unit:'LF', active:true, sort_order:3 },
+      { id:'l4', category:'Roofing', name:'Ice and water shield, valleys',
+        description:null, default_price:2.4, unit:'LF', active:true, sort_order:4 },
+      { id:'l5', category:'Siding', name:'Vinyl siding, D4 double-4',
+        description:'Installed over house wrap.', default_price:6.5, unit:'SQ',
+        active:true, sort_order:1 },
+      { id:'l6', category:'Siding', name:'Soffit and fascia wrap',
+        description:null, default_price:14, unit:'LF', active:true, sort_order:2 },
+      { id:'l7', category:'Windows', name:'Double-hung replacement window',
+        description:'White vinyl, low-E, installed and trimmed.',
+        default_price:640, unit:'EA', active:true, sort_order:1 },
+      { id:'l8', category:'Windows', name:'Window wrap, aluminium',
+        description:null, default_price:55, unit:'EA', active:true, sort_order:2 },
+      { id:'l9', category:'Gutters', name:'6" K-style seamless gutter',
+        description:'.032 aluminium, hidden hangers 24" on centre.',
+        default_price:9.5, unit:'LF', active:true, sort_order:1 },
+      { id:'l10', category:'Gutters', name:'Downspout, 3x4',
+        description:null, default_price:11, unit:'LF', active:true, sort_order:2 },
+      { id:'l11', category:'Codes', name:'Drip edge to code, all eaves and rakes',
+        description:'ORC / local amendment — undersized drip edge is the common failure.',
+        default_price:3.1, unit:'LF', active:true, sort_order:1 },
+      { id:'l12', category:'Repair', name:'Chimney flashing, step and counter',
+        description:null, default_price:850, unit:'LS', active:true, sort_order:1 },
+      { id:'l13', category:'Repair', name:'Decking replacement, per sheet',
+        description:null, default_price:78, unit:'EA', active:true, sort_order:2 },
+      { id:'l14', category:'General', name:'Dumpster and site protection',
+        description:null, default_price:475, unit:'LS', active:true, sort_order:1 }
+    ],
+    /* 992: ONE claim, so the seven-tab Claim Detail strip (Settle / Client /
+       Job / Contract / Documents / iTel / Record) can be rendered and measured.
+       Columns are loadClaims()'s own select list; loadClaim() then takes
+       select('*'), so anything absent is simply undefined, never an error. */
+    insurance_claims: [
+      { id:'cl1', project_id:'p1', homeowner_name:'Mark Diamond',
+        property_address:'7990 Germantown Pike, Dayton OH 45418',
+        carrier:'State Farm', claim_number:'55-4H29-118', cause_of_loss:'Hail',
+        approved_rcv:24180.44, approved_acv:18922.10, approved_depreciation:5258.34,
+        deductible:1000, status:'approved', filed_at:'2026-07-06T10:00:00Z',
+        created_by:'theo@cardinalrenovations.net',
+        created_at:'2026-07-06T10:00:00Z', updated_at:'2026-08-14T10:00:00Z' }
+    ],
+    insurance_payments: [
+      { id:'ip1', claim_id:'cl1', amount:18922.10, kind:'acv',
+        received_at:'2026-07-22', note:'ACV cheque, endorsed by the mortgage company',
+        created_by:'theo@cardinalrenovations.net', created_at:'2026-07-22T10:00:00Z' }
+    ],
     /* 948: the Magnet Board renders crews x the next 7 days - an empty crews
        seed sweeps an empty grid and proves nothing (the 945 lesson). Dates are
        COMPUTED so the rolling window always contains them: +1 day, +5 days,
@@ -175,8 +238,27 @@
     var m = document.getElementById('navMenu');
     if (m) m.classList.remove('open', 'show');
   }
+  /* ⚠ 992: hideAllViews() does NOT know about these two. Both were brace-match
+     checked against the shipped function and neither name occurs in it, and
+     both were confirmed empirically to survive a hideAllViews() call still
+     carrying their .open class. A state that opens either one and does not
+     close it leaves it covering EVERY LATER STATE — the same shape as the
+     drawer bug this file's banner records, where one open menu bled into three
+     screens and manufactured four contrast findings.
+
+     Both close() calls are null-safe before their view has ever been built.
+     ⚠ CardinalShowcase.close() takes an argument and it is load-bearing:
+     close() with no argument calls window.showHome(), so a bare close()
+     NAVIGATES rather than merely dismissing. hideAllViews() already closes
+     that one correctly with close(false); it is listed here only so nobody
+     "completes" the list by adding a bare close() for it. */
+  function closeStragglers() {
+    try { if (window.CardinalLineItems  && window.CardinalLineItems.close)  window.CardinalLineItems.close();  } catch (e) {}
+    try { if (window.CardinalPhotoEditor && window.CardinalPhotoEditor.close) window.CardinalPhotoEditor.close(); } catch (e) {}
+  }
   function closeAll() {
     closeDrawer();
+    closeStragglers();
     try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (e) {}
   }
 
@@ -293,6 +375,168 @@
         leaveLanding(); closeAll();
         var m = document.getElementById('sigModal'); if (!m) throw new Error('sigModal missing');
         try { if (typeof sigReset === 'function') sigReset(); } catch (e) {}
-        m.style.display = 'block'; await pause(500); } }
+        m.style.display = 'block'; await pause(500); } },
+    /* ── 992: the hidden-scrollbar surfaces ─────────────────────────────────
+       Build 984 found that `.cr-cth-tabs` had been silently clipping "Closed"
+       off its right edge, and added the CLIPPED check to catch the next one.
+       It could not: a reach sweep of the walk as it stood measured ONE of the
+       app's eleven hidden-scrollbar scrollers. The other ten were never in the
+       DOM, or were in it at 0x0 — and an unmeasured scroller reads in the
+       report exactly like a clean one.
+
+       Each state below opens one such surface. They are ordinary states and
+       they sweep the whole screen, not just the strip; the strip is only why
+       they were written. What they must not do is fail quietly, so every one
+       asserts its own strip is ON SCREEN and throws a NAMED error otherwise —
+       the sentinel reports a throwing state, and a state that opened nothing
+       would otherwise hand back the previous screen dressed as a feature. */
+
+    /* .ljchips x2 — the Milestone and Assigned To filter strips.
+       ⚠ ljChipStrip() HIDES its whole group when fewer than two values exist
+       (`if(keys.length < 2){ wrap.style.display='none'; ... }`), so this strip
+       is only measurable because the seed spans three stages and two reps. */
+    { name:'leads',        run: async function () {
+        leaveLanding(); closeAll();
+        if (typeof openLeadsView !== 'function') throw new Error('openLeadsView missing');
+        openLeadsView(); await pause(700);
+        var st = document.getElementById('ljStageChips');
+        if (!onScreen(st)) throw new Error(
+          'the Milestone strip is not on screen — ljChipStrip() hides its group ' +
+          'below two values, so the seed has stopped spanning stages');
+        await pause(150); } },
+
+    /* .cd-crmbar — the Client Directory's fixed CRM bar.
+       ⚠ It is DELIBERATELY absent above 1100px: body.cr-lnav-on .cd-crmbar
+       {display:none}, because the left rail is the navigation at that width.
+       Asserting it on screen at every viewport would stage a configuration the
+       app never has and manufacture a finding. Assert the VIEW, then the strip
+       only where the app actually draws it. */
+    { name:'clientdir',    run: async function () {
+        leaveLanding(); closeAll();
+        if (typeof openClientsDirectory !== 'function') throw new Error('openClientsDirectory missing');
+        openClientsDirectory(); await pause(700);
+        var v = document.getElementById('clientsView');
+        if (!onScreen(v)) throw new Error('clientsView did not open — display is ' +
+          (v ? getComputedStyle(v).display : 'no element'));
+        var rail = document.body.classList.contains('cr-lnav-on');
+        if (!rail && !onScreen(document.getElementById('cdCrmBar')))
+          throw new Error('.cd-crmbar is missing at a width with no left rail'); } },
+
+    /* the THIRD .ljchips — Photo Activity's CRM strip, a different screen. */
+    { name:'photoactivity', run: async function () {
+        leaveLanding(); closeAll();
+        if (typeof window.openPhotosView !== 'function') throw new Error('openPhotosView missing');
+        window.openPhotosView(); await pause(800);
+        var v = document.getElementById('photosView');
+        if (!onScreen(v)) throw new Error('photosView did not open'); } },
+
+    /* #cr-pae-tabs — the Photo Album's section chips.
+       ⚠ TWO prerequisites, and the second is easy to miss: a current project,
+       AND galMode === 'all'. The cr-pae renderGallery wrapper returns to the
+       ORIGINAL renderer for any other mode, so openGalleryMode('insp') builds
+       no strip at all. The strip is also created lazily by ensureTabs(), which
+       needs #galGrid to already exist. */
+    { name:'album',        run: async function () {
+        leaveLanding(); closeAll();
+        if (typeof openProject !== 'function') throw new Error('openProject missing');
+        openProject('p1'); await pause(800);
+        if (typeof window.openGalleryMode !== 'function') throw new Error('openGalleryMode missing');
+        window.openGalleryMode('all'); await pause(900);
+        var t = document.getElementById('cr-pae-tabs');
+        if (!onScreen(t)) throw new Error(
+          'the album section strip is not on screen — galMode is ' +
+          (window.galMode || 'all') + ' and #galGrid is ' +
+          (document.getElementById('galGrid') ? 'present' : 'MISSING')); } },
+
+    /* .cr-ped-row x2 — the photo editor's tool row and colour row.
+       ⚠ #cr-ped is shown by a CLASS and is NOT registered in hideAllViews(),
+       so closeAll() cannot dismiss it. closeStragglers() above is what does;
+       do not "simplify" that away or this editor covers every later state. */
+    { name:'photoeditor',  run: async function () {
+        leaveLanding(); closeAll();
+        var m = window.CardinalPhotoEditor;
+        if (!m || !m.open) throw new Error('CardinalPhotoEditor.open missing');
+        m.open({ section:'Post-Inspection',
+                 _src:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==' });
+        await pause(700);
+        var el = document.getElementById('cr-ped');
+        if (!el || !el.classList.contains('open'))
+          throw new Error('#cr-ped did not open — it is shown by .open, never by display');
+        var rows = el.querySelectorAll('.cr-ped-row');
+        if (rows.length !== 2) throw new Error('.cr-ped-row count is ' + rows.length + ', expected 2'); } },
+
+    /* .cr-lil-tabs — the Line Item Library's category strip.
+       ⚠ Admin-gated on the module's OWN hardcoded list, not is_cardinal_admin().
+       Under SENTINEL_AS=scottie / =nick, open() alerts and builds nothing —
+       and that is CORRECT behaviour, so this state contributes no renders
+       rather than throwing. A correct refusal must never report as a break.
+       ⚠ Shown by a CLASS; not in hideAllViews(); see closeStragglers(). */
+    { name:'lineitems',    run: async function () {
+        leaveLanding(); closeAll();
+        var m = window.CardinalLineItems;
+        if (!m || !m.open) throw new Error('CardinalLineItems.open missing');
+        var admin = ['theo@cardinalrenovations.net','joan@cardinalrenovations.net']
+          .indexOf(((window.currentUser && window.currentUser.email) || '').toLowerCase()) !== -1;
+        if (!admin) { await pause(120); return; }
+        m.open(); await pause(800);
+        var v = document.getElementById('cr-lil-view');
+        if (!v || !v.classList.contains('open'))
+          throw new Error('#cr-lil-view did not open as an admin — it is shown by .open');
+        var tabs = v.querySelectorAll('.cr-lil-tabs button');
+        if (tabs.length !== 8)
+          throw new Error('.cr-lil-tabs has ' + tabs.length + ' buttons, expected All + 7 categories'); } },
+
+    /* .cr-ic-chips — Insurance Clients' stage filter.
+       ⚠ Rendering is one animation frame late, behind a MutationObserver on
+       #insClientsView[style] that defers through requestAnimationFrame. Measure
+       too early and the strip is not there yet. */
+    { name:'insclients',   run: async function () {
+        leaveLanding(); closeAll();
+        if (typeof window.showInsuranceClients !== 'function')
+          throw new Error('showInsuranceClients missing');
+        window.icStageFilter = '';
+        window.showInsuranceClients(); await pause(900);
+        var strip = document.querySelector('#insClientsView .cr-ic-chips');
+        if (!onScreen(strip)) throw new Error(
+          'the insurance stage strip is not on screen — its render defers through ' +
+          'requestAnimationFrame behind a style MutationObserver'); } },
+
+    /* .cr-cth-tabs — Cardinal Truth's own tab strip. This is the strip build
+       984 fixed, and NOTHING has been measuring it since: the walk never
+       opened this screen, so the fix has stood unguarded. */
+    { name:'truth',        run: async function () {
+        leaveLanding(); closeAll();
+        if (typeof showCardinalTruth !== 'function') throw new Error('showCardinalTruth missing');
+        showCardinalTruth(); await pause(800);
+        var strip = document.querySelector('#cardinalTruthView .cr-cth-tabs');
+        if (!onScreen(strip)) throw new Error('the Cardinal Truth tab strip is not on screen'); } },
+
+    /* .cr-c-tabs.detail — the seven-tab Claim Detail strip. Needs a claim row;
+       the seed carries exactly one (cl1) for this. */
+    { name:'claimdetail',  run: async function () {
+        leaveLanding(); closeAll();
+        var m = window.CardinalClaims;
+        if (!m || !m.openOne) throw new Error('CardinalClaims.openOne missing');
+        await m.openOne('cl1'); await pause(900);
+        var strip = document.querySelector('#cr-claims-mount .cr-c-tabs.detail');
+        if (!onScreen(strip)) throw new Error(
+          'the claim detail tab strip is not on screen — showDetail() falls back ' +
+          'to the list when loadClaim() finds nothing, so __SEED__.insurance_claims ' +
+          'has stopped carrying cl1'); } },
+
+    /* .cr-sh-tabs — the Showcase's pill tabs.
+       ⚠ open() takes NO argument here. open({showroom:true}) is the Vision hub's
+       call and it REMOVES the fourth button, so copying that line measures a
+       different strip. And close() with no argument navigates home; hideAllViews()
+       already closes this one correctly with close(false). */
+    { name:'showcase',     run: async function () {
+        leaveLanding(); closeAll();
+        var m = api('CardinalShowcase'); if (!m) throw new Error('CardinalShowcase.open missing');
+        m.open(); await pause(900);
+        var el = document.getElementById('cr-show');
+        if (!el || !el.classList.contains('open'))
+          throw new Error('#cr-show did not open — it is shown by .open, never by display');
+        var strip = el.querySelector('.cr-sh-tabs');
+        if (!onScreen(strip)) throw new Error('the Showcase tab strip is not on screen'); } }
   ];
 })();

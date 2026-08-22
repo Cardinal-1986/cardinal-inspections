@@ -178,11 +178,40 @@ if (!TARGET || !existsSync(TARGET)) {
 }
 
 /* A hard deadline. A sentinel that hangs reads as a sentinel that passed,
-   which is the worst failure mode a gate can have. */
+   which is the worst failure mode a gate can have.
+
+   ⚠ 993: this was a FLAT 240s, and ten new states walked straight through it.
+   The walk grew 16 states -> 26 when the hidden-scrollbar surfaces were finally
+   given openers, and a single-viewport sweep then reported SENTINEL TIMEOUT.
+   That is not a false pass — but a standing gate that always answers UNKNOWN
+   is a gate nobody runs, so the next person to add a state would have retired
+   the instrument without noticing.
+
+   Budgeted per RENDER (one state, one viewport, one theme; --since doubles it,
+   because the previous artifact is swept through the identical probe). The
+   per-render allowance is deliberately generous: the probe walks every element
+   on a 5 MB page for INK, DEAD and CLIPPED, so a slow render is the normal case
+   here rather than the alarming one. A genuine hang still trips this — later,
+   and against a number that says what it was waiting for. --deadline <seconds>
+   overrides. */
+const budgetRenders = () => {
+  let states = 1;
+  try {
+    for (const f of SETUP.split(',').map(x => x.trim()).filter(Boolean)) {
+      if (!existsSync(f)) continue;
+      const m = readFileSync(f, 'utf8').match(/\{\s*name\s*:\s*['"]/g);
+      if (m && m.length > states) states = m.length;
+    }
+  } catch (e) {}
+  return states * VIEWPORTS.length * THEMES.length * (SINCE ? 2 : 1);
+};
+const RENDERS     = budgetRenders();
+const DEADLINE_MS = Number(opt('deadline', 0)) * 1000 || Math.max(240000, 60000 + RENDERS * 14000);
 const DEADLINE = setTimeout(() => {
-  console.log('SENTINEL TIMEOUT — treat as UNKNOWN, not as clean');
+  console.log('SENTINEL TIMEOUT after ' + Math.round(DEADLINE_MS / 1000) + 's ' +
+              '(budgeted for ' + RENDERS + ' render(s)) — treat as UNKNOWN, not as clean');
   process.exit(2);
-}, 240000);
+}, DEADLINE_MS);
 
 const findings = [];
 const add = f => findings.push(f);
