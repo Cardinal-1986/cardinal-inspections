@@ -20553,6 +20553,78 @@ proven, and it cannot finish this sweep on its own.**
 realistic data. The remaining work is not another checker — it is teaching the harness to open those
 nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
 
+## Build 996 — money received has one door, and it is the one that pays the rep (22 Aug 2026)
+
+Second pick off the build queue, and the one Theo had already asked for. **Build 796, his words:**
+*"get rid of payments and money in… Or move payment in into payment information."* 796 answered the
+layout half and left the two writers in place.
+
+Two rows sat directly under each other on the job menu — `#dbPayRow` "Payment Information" and
+`#dbMoneyRow` "Money In & Commissions". They look like the same thing. Only the second books
+anything: `collections` fires the 10% commission trigger, fills the Friday owed email, and **since
+721 it outranks the legacy log in `jobFinance()`**. Every dollar Cardinal has recorded went through
+the other one and was invisible to all three.
+
+### ⚠ Why the migration cannot come second
+
+```js
+if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id];
+```
+
+That **replaces** rather than adds — 721's own comment says so, deliberately, so the two ledgers can
+never double-count. The consequence is a landmine: on a job carrying legacy money, the **first**
+collection logged makes every earlier payment vanish from Balance Due at once. Measured: exactly one
+job in the database has legacy `dir:'in'` rows — **Dan Thompson, two Zelle payments totalling
+$8,008.94** — so logging one collection there would have dropped `paid` to that single amount.
+The door change therefore ships **with** the way across, never before one.
+
+### What shipped
+
+- `data-payadd="in"` now calls `payGoLogCollection()`. **`out` and `exp` are job COSTS, not
+  collections, and keep the legacy row modal** — the only place they have ever lived.
+- The Received section says where money-in lives now, and — only when legacy rows exist — names the
+  total and offers a one-tap move.
+- `payMigrateLegacyIn()` inserts them into `collections`, then clears them from the checklist.
+  **Insert first, delete second:** if the insert fails the money is still recorded in exactly one
+  place, which is the state we started in.
+
+⚠ **Migrating is a money write, so it is a button a person presses**, never something that runs on
+its own, and the confirm names every amount.
+
+⚠ **Commission-safe here, and that was checked rather than assumed.** `make_commission()` returns
+early when the job's rep is null or is Theo; Dan Thompson's rep is Theo, so moving those two rows
+creates no commission. On a rep's job it would — correctly — and the confirm says so.
+
+⚠ **`dbCloseTo()`, not a hand-rolled close.** Payment Information is a SUB-PAGE: it hides
+`#projectView` and shows `#paymentsView`. Switching tabs without coming back first moves the tab
+strip underneath a page nobody can see. `dbCloseTo()` is the app's own way back — the same function
+the page's own Back button uses. My first draft guarded a `closePaymentsPage()` that **does not
+exist**, so the `typeof` guard would have made it a silent no-op.
+
+⚠ **`fmtMoney(n, true)`, not `payMoney`.** `payMoney` rounds to whole dollars (`Math.round`), so a
+$3,008.94 cheque reads **$3,009** — wrong on a screen someone checks against a bank statement.
+`fmtMoney(n, cents)` already existed in the same block and already puts the sign outside the
+currency symbol. *Grep for the convention before inventing one.* The gate now pins `$8,008.94`
+exactly, so a regression to the rounding formatter goes red.
+
+### `gate_996.mjs` — 12 assertions
+
+Drives the real screen: opens Payment Information, reads the three section buttons, taps the
+Received door, and asserts it **closed the sub-page**, **landed on Money In**, and **opened the
+collection form** (which only happens if `commUi.collForm` is set *before* `showTab`, since
+`showTab` calls `renderCommissions()` first). Then runs the migration and checks the money moved,
+the old rows were cleared, and **the Paid-out row was left alone** — without that last one the fix
+could have been "delete every payment row" and the gate would still be green.
+
+Control on 995: **PASS 4 · FAIL 8**, exit 1, named. The two job-cost assertions still pass, so it is
+not vacuously red.
+
+### Still open on this item
+
+The build queue sized this as "a few builds" and this is the first. Not done: retiring Payment
+Information as a money-in *reader* (it still lists the legacy rows as history, correctly), and the
+`insurance_payments` ledger, which has no trigger of any kind and is a separate arc.
+
 ## Build 995 — a 0% deposit stops becoming 30% on reopen (22 Aug 2026)
 
 Theo picked this off the build queue. **One expression, and it was about to put money on signed

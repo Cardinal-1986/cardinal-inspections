@@ -3690,7 +3690,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 995 &#8212; a nought per cent deposit stays at nought. Reopening an estimate you had deliberately set to no deposit was quietly putting it back to 30%, and then saving that number onto the estimate. Both of the estimates Cardinal has had accepted are set to nought, so this was about to add several thousand pounds of down payment to paperwork a client had already agreed to. The contract side already had this right.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 996 &#8212; money received has one door now. Payment Information and Money In &amp; Commissions sat one under the other and only the second one counted &#8212; it is what pays the rep, feeds the Friday email and sets Balance Due. Logging a payment received now takes you straight there, and any payments recorded the old way can be moved across in one tap without changing the total. Paid out and expenses are unchanged.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -14287,8 +14287,15 @@ function renderPayments(){
             '<span>' + (bits.length ? bits.join(' \u00b7 ') : 'Payment') + '</span>' +
             '<b>' + payMoney(Number(x.p.amt) || 0) + '</b></div>';
         }).join('') : (extra ? '' : '<div class="payrow empty">No data to display</div>')) +
-        '<button class="payadd" data-payadd="' + sec.dir + '" type="button">' +
-          '+ Add new row to ' + sec.label + '</button>' +
+        (sec.dir === 'in'
+          ? '<button class="payadd" data-payadd="in" type="button">' +
+              '+ Log a payment received &#8250;</button>' +
+            '<div class="payrow empty" style="border:0;">' +
+              'Money received is recorded in Money In &amp; Commissions, where it counts ' +
+              'toward Balance Due and the rep&#8217;s commission.</div>' +
+            payLegacyInNote()
+          : '<button class="payadd" data-payadd="' + sec.dir + '" type="button">' +
+              '+ Add new row to ' + sec.label + '</button>') +
       '</div>';
     }).join('') +
     '<div class="paynet">Job Net (Received &#8722; (Paid + Additional Job Expenses))<br><b>' +
@@ -14481,10 +14488,124 @@ function openContractPaid(){
     }
   });
 }
+/* ══ 996: money in has ONE door, and the old one is drained ═══════════════
+   `collections` is the money-in ledger. It fires the 10% commission trigger,
+   feeds the Friday owed email, and since 721 it OUTRANKS the legacy log in
+   jobFinance():
+
+       if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id];
+
+   ⚠ THAT LINE IS WHY THE MIGRATION CANNOT COME SECOND. It REPLACES rather than
+   adds, so on a job carrying legacy money the FIRST collection logged makes
+   every earlier payment vanish from Balance Due at once. Measured: exactly one
+   job in the database has legacy `dir:'in'` rows — Dan Thompson, two Zelle
+   payments totalling $8,008.94 — and logging a single collection there would
+   have dropped `paid` to that one amount and jumped Balance Due by the rest.
+   So the door change ships WITH a way to move the old rows across, never
+   before one.
+
+   ⚠ Migrating is a MONEY WRITE, so it is a button a person presses, never
+   something that runs on its own. It names the amounts in the confirm.
+   ⚠ It is also commission-safe here, and that was checked rather than assumed:
+   make_commission() returns early when the job's rep is null or is Theo, and
+   Dan Thompson's rep is Theo — so moving those two rows creates no commission.
+   On a REP's job it would, correctly, and the confirm says so. */
+function payLegacyIn(){
+  if(!currentProject) return [];
+  return (parseCkAll(currentProject).payments || [])
+    .map(function(p, i){ return { p: p, i: i }; })
+    .filter(function(x){ return x.p.dir === 'in'; });
+}
+function payGoLogCollection(){
+  /* The collection form lives in the commissions tab, so this is a navigation
+     rather than a second form. showTab('commissions') calls renderCommissions()
+     itself, so the flag has to be set BEFORE the call or the form paints shut. */
+  try{ commUi.collForm = true; commUi.editColl = null; }catch(_){ }
+  /* ⚠ Payment Information is a SUB-PAGE: it hides #projectView and shows
+     #paymentsView. Switching tabs without coming back first would move the tab
+     strip underneath a page nobody can see. dbCloseTo() is the app's own way
+     back — the same function the page's Back button uses — and it restores the
+     header job menu and the overview on the way. */
+  try{ dbCloseTo(); }catch(_){ }
+  try{ showTab('commissions'); }catch(_){ }
+}
+function payLegacyInNote(){
+  var legacy = payLegacyIn();
+  if(!legacy.length) return '';
+  var sum = legacy.reduce(function(a, x){ return a + (Number(x.p.amt) || 0); }, 0);
+  return '<div class="payrow empty" style="border:0;text-align:left;line-height:1.5;">' +
+    /* ⚠ fmtMoney(n, true), NOT payMoney: payMoney rounds to whole dollars
+       (Math.round), so a $3,008.94 cheque would read $3,009 on a screen someone
+       is checking against a bank statement. */
+    '<b>' + legacy.length + ' payment' + (legacy.length === 1 ? '' : 's') + ' totalling ' +
+    fmtMoney(sum, true) + '</b> ' + (legacy.length === 1 ? 'was' : 'were') +
+    ' recorded here before Money In existed, so ' + (legacy.length === 1 ? 'it counts' : 'they count') +
+    ' toward Balance Due but not toward commission. Moving ' +
+    (legacy.length === 1 ? 'it' : 'them') + ' keeps the total the same.' +
+    '<br><button class="payadd" data-paymigrate="1" type="button" style="margin-top:8px;">' +
+    'Move ' + (legacy.length === 1 ? 'it' : 'them') + ' into Money In &#8250;</button></div>';
+}
+async function payMigrateLegacyIn(){
+  if(!currentProject) return;
+  var legacy = payLegacyIn();
+  if(!legacy.length) return;
+  var sum = legacy.reduce(function(a, x){ return a + (Number(x.p.amt) || 0); }, 0);
+  var rep = currentProject.sales_rep || null;
+  var pays = rep && rep !== 'theo@cardinalrenovations.net';
+  if(!confirm('Move ' + legacy.length + ' payment' + (legacy.length === 1 ? '' : 's') +
+      ' totalling ' + fmtMoney(sum, true) + ' into Money In?\n\n' +
+      legacy.map(function(x){
+        return '  ' + fmtMoney(Number(x.p.amt) || 0, true) + (x.p.date ? '  ' + x.p.date : '') +
+               (x.p.note ? '  ' + x.p.note : '');
+      }).join('\n') +
+      '\n\nBalance Due does not change.' +
+      (pays ? '\n\nThis job is assigned to ' + rep + ', so a 10% commission will be created.' : ''))) return;
+  var rows = legacy.map(function(x){
+    return {
+      project_id  : currentProject.id,
+      collected_at: x.p.date || (x.p.at ? String(x.p.at).slice(0, 10) : null),
+      amount      : Number(x.p.amt) || 0,
+      /* the CHECK on this column allows deposit/final/supplemental/pwi/other —
+         a legacy row records no type, and inventing one would be a guess on a
+         money record. */
+      type        : 'other',
+      source      : null,
+      notes       : 'Moved from Payment Information' + (x.p.note ? ' \u00b7 ' + x.p.note : ''),
+      created_by  : (currentUser && currentUser.email) || null
+    };
+  });
+  var r = await sb.from('collections').insert(rows).select('id');
+  if(r.error){ alert('Could not move them: ' + r.error.message); return; }
+  /* Only now drop the originals — if the insert failed the money is still
+     recorded in exactly one place, which is the state we started in. */
+  var keep = (parseCkAll(currentProject).payments || []).filter(function(p){ return p.dir !== 'in'; });
+  try{ await patchProjectCk(currentProject, { payments: keep }); }
+  catch(e){ alert('Moved into Money In, but the old rows could not be cleared: ' +
+                  ((e && e.message) || e) + '\nRemove them by hand so the total is not counted twice.'); }
+  try{ renderPayments(); }catch(_){ }
+  payGoLogCollection();
+}
 document.getElementById('paySummary').addEventListener('click', function(e){
   if(e.target.closest('[data-paycontracts]')){ openContractPaid(); return; }
   var add = e.target.closest('[data-payadd]');
-  if(add){ openPayRow(add.getAttribute('data-payadd'), null); return; }
+  if(add){
+    /* 996: money IN has one door, and this is not it. Two rows sat directly
+       under each other on the job menu — Payment Information and Money In &
+       Commissions — and only the second books anything: `collections` is what
+       drives the 10% trigger, the Friday owed email and (since 721) Balance
+       Due itself. Every dollar Cardinal had recorded went through this one,
+       so it was invisible to all three.
+       Theo asked for exactly this at 796 — "get rid of payments and money in…
+       Or move payment in into payment information" — and 796 answered only
+       the layout half.
+       ⚠ 'out' and 'exp' are job COSTS, not collections. They keep the legacy
+       row modal, which is the only place they have ever lived. */
+    var _dir = add.getAttribute('data-payadd');
+    if(_dir === 'in'){ payGoLogCollection(); return; }
+    openPayRow(_dir, null); return;
+  }
+  var mig = e.target.closest('[data-paymigrate]');
+  if(mig){ payMigrateLegacyIn(); return; }
   var edit = e.target.closest('[data-payedit]');
   if(edit){ openPayRow(null, parseInt(edit.getAttribute('data-payedit'), 10)); return; }
   var head = e.target.closest('.paysec');
@@ -41230,7 +41351,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:995, d:'2026-08-22', t:'A 0% deposit stays 0% when you reopen the estimate', s:'If you set an estimate\u2019s deposit to nought \u2014 an insurance job where the carrier pays, or a customer you have agreed to bill at the end \u2014 reopening that estimate to change anything else quietly put the deposit back to 30%, and saving wrote that number onto the estimate. Both of the estimates Cardinal has had accepted are set to nought, so on those two it would have added $4,428 and $3,765 of down payment to paperwork the client had already signed off. Nought is now treated as a real answer and kept, which is what the contract side has always done.' },
+{ b:996, d:'2026-08-22', t:'Money received has one door, and it is the one that pays the rep', s:'Two rows sat directly under each other on a job: Payment Information and Money In \u0026 Commissions. They looked like the same thing and they were not \u2014 only the second one books anything. It is what writes the rep\u2019s 10%, what fills the Friday owed email, and since build 721 it is what sets Balance Due. Every payment recorded through the first one was invisible to all three. Tapping to log a payment received now takes you straight to Money In. Payments recorded the old way are still counted, and there is a one-tap way to move them across that names every amount first and leaves the total exactly where it was. Paid out and additional expenses are job costs, not collections, and are untouched.' },
+      { b:995, d:'2026-08-22', t:'A 0% deposit stays 0% when you reopen the estimate', s:'If you set an estimate\u2019s deposit to nought \u2014 an insurance job where the carrier pays, or a customer you have agreed to bill at the end \u2014 reopening that estimate to change anything else quietly put the deposit back to 30%, and saving wrote that number onto the estimate. Both of the estimates Cardinal has had accepted are set to nought, so on those two it would have added $4,428 and $3,765 of down payment to paperwork the client had already signed off. Nought is now treated as a real answer and kept, which is what the contract side has always done.' },
       { b:993, d:'2026-08-22', t:'Seven strips of chips and tabs stop hiding things off the edge', s:'Several rows of filter chips and tabs scroll sideways on a phone, and they were built to hide their own scrollbar \u2014 so when a row was wider than the screen there was nothing at all to say the rest of it was there. Measured on a 390 pixel phone: the photo editor was hiding \u201cUndo\u201d and \u201cClear\u201d, a claim was hiding Documents, iTel and Record, the Showcase was hiding the button that gets you back out of it, Insurance Clients was hiding four of its seven stages, the photo album was hiding four of six sections, and the Line Item Library was hiding five of its eight categories. All seven now wrap onto a second line instead of running off the edge. Nothing moves on a tablet or a desktop, where they already fitted.' },
       { b:991, d:'2026-08-22', t:'Magnet Board: a long title no longer stretches its row', s:'A repair called \u201cneeds new aluminum gable vent installed\u201d was wrapping to four lines, making its card 88 pixels tall against a 52 pixel row \u2014 so one long title stretched the whole row and pushed the board about. Job and repair titles now stop at two lines with an ellipsis; tap the card to see the rest. Ordinary titles are unaffected.' },
       { b:990, d:'2026-08-22', t:'Magnet Board: jobs no longer show through the crew column', s:'The crew names down the left of the Magnet Board stay put while the days pan sideways. But nothing was painted behind them, so a job card sliding past appeared to sit on top of the crew name with its text cut off at the edge \u2014 the \u201cNeeds a crew\u201d cards were the worst of it. The column now has a background, so jobs pass behind it cleanly. Nothing looks different until you pan.' },
