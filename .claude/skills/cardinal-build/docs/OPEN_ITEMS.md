@@ -29,10 +29,23 @@ own next layer 24 lines down. **When updating an item, re-read the heading above
 The note said the work was blocked on a ground that had already moved; what it was actually hiding
 was a shipped contrast failure.
 
-⚠️ **Stale prose in `index.html` will keep re-raising two of these**: `reorg()`'s comment still says
-Suppliers is "flagged for Theo rather than decided here" (settled at 953/955), and the Self Check
-comment still names Sales Floor (moved at 517). Struck notes do not help if the code still argues
-the other way.
+⚠️ **THE SWEEP'S OWN ACCURACY, stated plainly, because it is the point of the exercise.** The
+**strikes hold** — three were spot-checked independently against the artifact and all three passed
+(`jaGrid` 0 functional refs; `sortphotos.js` session-only with no role check; the Community-complete
+line really is 100 lines above the note calling it open). **The supporting detail did not.** Three
+claims were acted on and *all three were wrong*:
+
+- a contrast failure at `.dbic1` / `.dbrow .dbgo` quoting four hex values **that are not in the file**
+  (retracted in place below — both skins measure 9.94 and 5.08);
+- a Self Check comment "still naming Sales Floor" — **no such comment exists**;
+- `reorg()`'s "Flagged for Theo rather than decided here" called stale — it is **not**. The markup
+  comment two lines away already records the settled part (*"955: Suppliers lives in DAILY… 953
+  moved"*), and `reorg()`'s flag is about a **different, still-live** question: whether an admin gets
+  it relocated under Admin.
+
+**So: trust a strike, re-measure a number.** An agent that correctly finds *which* note is stale can
+still invent the evidence for it, and a hex value is exactly the kind of detail that reads as
+authoritative and costs a build to disprove.
 
 ---
 
@@ -1752,14 +1765,25 @@ darkening fixes it. Six surfaces, all low-risk.
    estimate page and `#reportsView` pipe cards went obsidian, and all three now carry a real hover
    lift. **Giving those cards a darker ground is exactly the move this item described**, taken with
    his instruction rather than unilaterally.
-   ⚠️ **REWRITTEN — this got WORSE, not better, and it is now a LIVE defect rather than a blocked one.**
-   Build **790 DID** move the client profile to a dark ground and tokenised three of these five selectors.
-   **`.dbic1` and `.dbrow .dbgo` were missed.** Both still resolve `var(--ct-red-deep)` = `#23507e`, a
-   navy chosen for the old **white** card, and both now paint on `linear-gradient(#2e333b,#262a31)`:
-   **1.52:1 and 1.73:1** against a 3.0 large-text floor. They were **8.33:1** on the ground they were
-   designed for. Both elements render — `#dbPayRow` and `#dbMoneyRow` are each in the markup once.
-   *This is the partial-theming-pass shape CLAUDE.md warns about: thirteen of fifteen right, so the page
-   reads as done and the two wrong ones read as a stylistic choice.* **Not blocked on anything — build it.**
+   ⚠️ **RETRACTED, 22 Aug — I published a contrast failure here that DOES NOT EXIST.** The sweep
+   reported `.dbic1` and `.dbrow .dbgo` at **1.52:1 / 1.73:1**, quoting ink `#23507e` on a
+   `#2e333b`/`#262a31` gradient. **None of those four values is in the file.** Measured on the tree:
+
+   | skin | ink | ground | worst |
+   |---|---|---|---:|
+   | `docket` | `#7E1410` | `#FFFFFF` → `#FAF8F7` | **9.94 ✅** |
+   | `siren` | `#FF3B30` | `#16161B` → `#09090C` | **5.08 ✅** |
+
+   Both pass comfortably. ⚠️ **And the premise was wrong in a second way:** `--ct-red-deep`,
+   `--ct-surface` and `--ct-bg` are **not** light/dark theme tokens at all — they are scoped by
+   `[data-rltheme="docket"]` and `[data-rltheme="siren"]`, two named *skins*, each pairing its own ink
+   with its own ground. **There is nothing to fix here.**
+
+   *How it got published:* I confirmed the two selectors existed and used `var(--ct-red-deep)`, then
+   computed ratios **from the hex values the agent supplied** without checking those against the token
+   declarations. The arithmetic was right and the inputs were invented. **Verifying that a selector
+   exists is not verifying the colour it resolves to.**
+
    *Original note, kept because its selector list is still the right list:* The client profile was NOT moved and the audit below still
    stands, unchanged: `.ackv div` and `.acxtrs label` carry `#2b2b2b`, `.axnote` `#5c4a42`,
    `.dbrow .dbgo` and `.dbic1` `#23507e` — every one needs a token before that ground moves, or the
