@@ -20497,6 +20497,58 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 986 — the retired Job Activity grid is gone (21 Aug 2026)
+
+Keeper replaced the Job Activity grid at build **348**. The element was never removed, and
+`#tab-overview`'s allow-list has painted it out on every profile since — so for hundreds of builds
+the app rebuilt **nine tiles** into it on every client open and, at script **top level**, attached a
+click router to it. All of it for a panel nobody could see.
+
+**Four functional references, now zero:** the markup element, the `innerHTML` writer (600 chars),
+the boot-time click router (348 chars), and `cr-pp-script`'s anchor. **Seven prose mentions are
+kept** — the build-348/604/609/796/981 notes are the record of why the trap existed, and
+`gate_986` assertion 2 requires them to survive so nobody "tidies" them away.
+
+### The two things that could actually have broken
+
+**1. A boot throw.** The router ran at top level and dereferenced `getElementById(...)` unguarded.
+Remove the markup without removing that line and the script throws during boot, killing every
+statement after it in a **1.39 MB** block. *The markup's own comment beside `contactRow`/`locRow`
+names this hazard in so many words* — "kept in the DOM because boot-time listeners attach to them
+unguarded" — which is why those two are still there and why this one had to go in the same edit.
+
+**2. The punch card silently not mounting.** `cr-pp-script` anchored `#cr-pp-mount` to the grid —
+`jaGrid || insDocsCard || insCard || solCard` — and inserted itself after it. With the grid gone the
+chain falls through to `insDocsCard`, **moving the card**; and if none resolved it would `return`
+with the card vanishing and **no error at all**. Re-anchored to **`#acxMount`**, which is hardcoded
+as the first child of `#tab-overview`, is on the allow-list, and is already referenced 45 times.
+
+⚠️ **Stated plainly: the punch card's position changes.** It was inserted after a hidden element
+sitting just above `#solCard`; it is now inserted after `#acxMount`, near the top of the overview.
+The gate proves the anchor is present and inside `#tab-overview`; it does **not** prove the card
+renders, because that needs a project with punch rows. **Theo's eyes are the gate on the position.**
+
+### Gate
+
+**`gate_986.mjs` 7/7 GREEN**, **RED on the 985 control with 3 named failures**, no crash.
+Assertion 4 loads the real document and requires **zero page errors**; assertion 5 proves that check
+can fail by putting the unguarded listener back on a copy without the element — it produces a boot
+error, as designed. On the control assertion 5 reports *"could not build the broken copy"*, which is
+an honest non-run rather than a false pass.
+
+### ⚠ Three assertion faults on the way in, all mine, none reached the file
+
+Every one aborted before `write_atomic`, which is the whole point of the assert-first discipline.
+
+1. **`jaGrid` count 11 → expected 6, got 11.** My four *replacement comments* each mentioned the
+   identifier. **The comment-pollution trap, fired inside my own assertion.** Comments rewritten to
+   avoid the name so the counts stay honest.
+2. **Comment-stripping ate a real code site** — 4 became 3. `/*` inside a string literal is not a
+   comment, exactly as this file warns. Replaced with assertions on the *functional forms*
+   (`id="jaGrid"`, `getElementById('jaGrid')`), which need no stripping at all.
+3. **`assert count("getElementById('acxMount')") == 1`** — it was already 3. *A number read off my
+   own patch rather than off the app.* Replaced with a delta: exactly one lookup added.
+
 ## Build 985 — two more Community greens read on the light theme (21 Aug 2026)
 
 The two 982 missed, both raw `#34D399` with no light value:
