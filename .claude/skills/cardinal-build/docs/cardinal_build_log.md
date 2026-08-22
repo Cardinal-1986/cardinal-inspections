@@ -20553,6 +20553,64 @@ proven, and it cannot finish this sweep on its own.**
 realistic data. The remaining work is not another checker — it is teaching the harness to open those
 nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
 
+## Tooling — gate_951 and gate_953 repaired; nothing was lost (22 Aug 2026, no build number)
+
+I reported these to Theo as an open question — *"either the rail was restructured and the gates were
+never updated, or those sections were lost, I didn't want to pick a side"* — and he pushed back.
+**He was right: it was answerable from the code, and I should not have asked.**
+
+### What was actually happening
+
+`syncPortalSections()` shows **one section per portal**, and its own comment carries Theo's request:
+
+```js
+/* 955-956: one section per portal, all four symmetric now - Theo asked for
+   Insurance in retail first (954), then production/community (955), then
+   "make insurance symmetric too" (956). */
+if(setSectionHidden(secOfNav('sol'),       p !== 'insurance')) …
+if(setSectionHidden(secOfNav('prodboard'), p !== 'production')) …
+if(setSectionHidden(secOfNav('newbid'),    p !== 'community')) …
+```
+
+Both gates were written **before** that rule (951 and 953) and boot into **retail**, where those
+sections are now *correctly* hidden. They reported `Daily,Sell,CRMs,Resources,Admin` and read as six
+lost tools.
+
+**Proved rather than reasoned:** switching to the insurance portal brings the section back with all
+seven rows *in the exact order the gate expects* — `sol, library, supplements, insresources,
+adjusters, claimstracker, desk`. Nothing is lost.
+
+### Three separate faults, not one
+
+1. **Mis-navigation** — both gates assert in retail. Fixed by driving `body.dataset.crm(Head)` and
+   calling `syncPortalSections()`, the app's own lever. ⚠ `gate_951` opens a **second** page for the
+   desktop rail, and that one needed the portal too — the phone page's switch does not carry over,
+   which is why the menu checks passed while the rail checks still failed.
+2. **A superseded expectation** — `gate_953` required Production AND Community visible *in the
+   Insurance portal*. True at 953, wrong from 955. Rewritten to the symmetric rule and asserted in
+   **both directions**, so a regression that stops hiding them is caught as well as one that stops
+   showing Insurance.
+3. **A deliberate move, read as a loss** — `gate_953` required Suppliers under Production. The
+   markup's own comment says why it is not: 774's job is *"a retail-desk job, so it belongs in the
+   section that never hides. Admins still get it relocated under Admin by reorg()."* Once sections
+   hid per portal, leaving it under Production would have taken it from a retail desk. Measured:
+   **admin → Admin, crew → Daily, visible for both.** The contract is REACHABILITY, not a parent, so
+   that is what it now asserts — printing the parent so a future move is visible rather than silent.
+
+### ⚠ Proved they can still fail
+
+A gate rewritten until it passes is worthless. Two constructed controls:
+
+- **three Insurance rows deleted from the markup** → `gate_951` red, naming them: *"all seven items
+  are in the rail — supplementtemplates, claimstracker, supplementdesk"*.
+- **`prodboard`'s hide forced off** → `gate_953` red on the new both-directions check:
+  *"and NOT Production or Community — Daily,Insurance,Production,CRMs,Resources,Admin"*.
+
+`gate_951` **22/0**, `gate_953` **30/0**. No `index.html` change, so no build number.
+
+**`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
+one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
+
 ## Build 998 — a build day on the calendar names its job (22 Aug 2026)
 
 Fourth pick off the build queue, and **the missing precondition for code that already shipped.**
