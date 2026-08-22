@@ -20553,6 +20553,51 @@ proven, and it cannot finish this sweep on its own.**
 realistic data. The remaining work is not another checker — it is teaching the harness to open those
 nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
 
+## Build 995 — a 0% deposit stops becoming 30% on reopen (22 Aug 2026)
+
+Theo picked this off the build queue. **One expression, and it was about to put money on signed
+paperwork.**
+
+`openEditor`'s reopen path read `deposit_pct : Number(existing.deposit_pct) || 30`, and `|| 30`
+cannot tell *"the customer chose nought"* from *"there is no value"*. Reopen a 0% estimate to fix a
+line, and the deposit silently became 30%; `computeTotals` then wrote that straight back on save.
+
+### The contract side has had this right since 781, and said so
+
+```js
+if(row.deposit_pct != null) pct = Math.max(0, Math.min(100, Number(row.deposit_pct) || 0));
+```
+
+with its own comment: *"A deliberate 0% estimate is a real answer and is kept."* **Two halves of one
+file disagreed about the same column.** 995 gives the editor the contract side's null-check.
+
+### Measured, not supposed
+
+Live: **6 of 18 estimates carry `deposit_pct` 0.00 — including BOTH of the two Cardinal has ever
+had accepted.** Annette Wright $14,760 and Vandalyn Robinson $12,550, so reopening either would
+have added **$4,428** and **$3,765** of down payment to paperwork the client had already agreed to.
+
+⚠ **PostgREST returns `numeric` as a STRING.** A stored `0.00` arrives as `"0.00"` — truthy as a
+string, falsy through `Number()`. Guard on the value being **present**, never on its truthiness.
+
+### `gate_995.mjs` — a real Chromium round trip, because jsdom cannot settle this
+
+Eight assertions: the control shows 0, the module persists 0, the **document** asks for $0.00, and
+— the one a single pass would miss — **0 survives being saved and reopened a second time**. Plus
+three look-alikes that must NOT move: an absent deposit still defaults to 30, an ordinary 15.5%
+is untouched, and 140% is still clamped to 100. Without those three the fix could have been
+"always 0" and the gate would still have been green.
+
+Control on 993: **PASS 4 · FAIL 4**, exit 1, and it prints the defect in the client's own currency —
+*"the deposit line on the document reads $3,000.00 on a 0% estimate"*.
+
+⚠ **The control caught a fault in the GATE, not the app.** The first fixture used `price:` on the
+line item; `computeTotals` reads `unit_price`. Subtotal was therefore 0, the deposit rendered
+`$0.00` on **both** builds, and the "asks the client for nothing" assertion could not fail. That is
+BUG_CLASSES 45 — a fixture invented rather than observed — and it survived until the negative
+control printed the same number on both sides. **Read what the control prints, not just its
+verdict.**
+
 ## Build 993 — seven strips of chips and tabs stop hiding things off the edge (22 Aug 2026)
 
 Build 984 found that `.cr-cth-tabs` had been quietly scrolling "Closed" off its right edge, fixed
