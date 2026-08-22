@@ -100,8 +100,20 @@ BUG_CLASSES header's own rule). Expect more than one hit.
   ⚠️ **The punch card's position changed** — re-anchored from the grid to `#acxMount`, so it now
   sits near the top of the overview instead of just above `#solCard`. The gate cannot judge that;
   Theo's eyes are the gate. One line to move if he dislikes it.
-- `--cr-amber`'s light half `#C87A00` measures **3.37:1** on white — under the floor, on the
-  coach/pricing/claims/adjusters mounts. Found while choosing 981's badge colour; not investigated.
+- ✅ **DONE at 987, and the item was wrong.** "Light half at 3.37 on white" described ONE site;
+  there were **five** failures. Fixed four: six pill inks on tint 2.96 → 5.46, claims ink 3.37 →
+  6.21, save-status light 3.37 → 6.21, and **estimates in DARK** 3.93 → 5.88 (it had no pair at all
+  — one unscoped literal used in both themes). ⚠️ `.cr-chrome-badge` is pinned at `#C87A00`
+  per-site, because it is the one place amber is a GROUND under dark ink and deepening takes it to
+  2.80. `#8a5500` is build 942's own value, already shipped on `.lock` — no colour invented.
+  ⚠️ **`cr-bpa-script` declares ZERO `--cr-*` tokens** — CLAUDE.md's "five modules share this
+  palette" does not hold for amber.
+
+**STILL OPEN — one amber failure, needs Theo's design call, NOT a measurement question.**
+`.cr-p-save-status.saving` is white ink on `var(--cr-amber)`: **6.21 in light after 987, but 2.25 in
+dark** and unchanged. Fixing it means flipping the INK with the theme — dark ink on the pale
+dark-theme amber, white ink on the deep light-theme amber — which is inverted from intuition and
+reads oddly. Alternatives are giving the pill a fixed ground, or a different status colour.
 
 **SETTLED, 21 Aug — item 6 is option 1 and item 7 is A1/B1/C1/D1.** Theo picked both. Option 1 is
 shipping in two halves: 980 the typography, 981 the colour (`--warn` as a theme pair,
