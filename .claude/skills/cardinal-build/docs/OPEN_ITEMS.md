@@ -72,8 +72,12 @@ not the fixture's zeroes** — and it belongs in `sentinel` as a new probe rathe
 BUG_CLASSES header's own rule). Expect more than one hit.
 
 **STILL OPEN, all three worth doing, none started:**
-- **Two Community greens that 982 missed — light theme only.** Verified present verbatim in the
-  shipped file at 983, both raw `#34D399` on a near-white ground:
+- ✅ **DONE at 985.** Both adopted `var(--ccm-ac,#34D399)`: 1.81 → 5.15 and 1.71 → 4.89 in light,
+  dark unchanged. ⚠️ Both properties moved on `#commsCli` — `-webkit-text-fill-color` paints the
+  glyphs and `color` does not, even with `!important` (4-case Chromium control), so a `color`-only
+  patch would have shipped inert; `gate_985` proves it by pixel and was run red against exactly that
+  naive patch. `.pu-strip .sh b` turned out to already set both properties to the pair — precedent,
+  not invention. *Original finding, kept for the record:*
 
   | site | light | dark |
   |---|---:|---:|
@@ -90,8 +94,12 @@ BUG_CLASSES header's own rule). Expect more than one hit.
   `CRM_ICON`, the `.crm-community` chips and a comment explaining the emerald. **Only these two
   carry body text on a light ground.** Do not sweep the hex.
 
-- **Retiring `#jaGrid`** — 5 of its 11 references are functional (markup, writer, router,
-  `cr-pp-script`'s punch anchor, the old scrape). Needs its own build.
+- ✅ **DONE at 986.** Four functional references removed (markup, writer, boot-time router,
+  punch anchor); seven prose mentions kept as history. ⚠️ The router had to go in the SAME edit —
+  it dereferenced unguarded at script top level, so removing the markup alone throws at boot.
+  ⚠️ **The punch card's position changed** — re-anchored from the grid to `#acxMount`, so it now
+  sits near the top of the overview instead of just above `#solCard`. The gate cannot judge that;
+  Theo's eyes are the gate. One line to move if he dislikes it.
 - `--cr-amber`'s light half `#C87A00` measures **3.37:1** on white — under the floor, on the
   coach/pricing/claims/adjusters mounts. Found while choosing 981's badge colour; not investigated.
 
