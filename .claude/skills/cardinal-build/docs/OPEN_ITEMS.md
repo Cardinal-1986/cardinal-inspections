@@ -120,14 +120,63 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
   overlay scrollbars — the self-test caught it; it now reads `scrollbar-width` and the real
   `::-webkit-scrollbar` rule.
 
-**STILL OPEN — the sweep itself, and the checker cannot finish it alone.** 30 rules declare
-`overflow-x:auto|scroll` and **10 hide the scrollbar**. `.cr-cth-tabs` was fixed at 984; the other
-nine were measured at boot and **none is reachable** — six are not in the DOM (`.cr-lil-tabs`,
-`#cr-pae-tabs`, `.cr-ped-row`, `.cr-sf-tabs`, `.cr-ic-chips`, `.cr-sh-tabs`) and three are present at
-zero size (`.ljchips`, `.cd-crmbar`, `.pu-tabs`). They are built on demand behind navigation the
-harness does not drive. **The remaining work is teaching the harness to open and populate those nine
-surfaces — not another checker.** *This is the same blind spot that let `.cr-cth-tabs` clip for
-months.*
+✅ **DONE at 993 — the sweep is finished, and it found seven.** The harness was taught to open
+them: `sentinel_setup_cardinal.js` gained **ten states** (`leads`, `clientdir`, `photoactivity`,
+`album`, `photoeditor`, `lineitems`, `insclients`, `truth`, `claimdetail`, `showcase`). Reach went
+**1 of 11 → 10 of 10**. `gate_993.mjs` is the standing proof: reach **derived** from the artifact's
+own stylesheets so tomorrow's scroller is covered automatically, plus a **hardcoded ten-name floor**
+so the count cannot shrink silently. Negative control on 991: PASS 15 · FAIL 8, exit 1, no crash.
+
+⚠️ **The count in the note below was one short, and the one it missed was clipping 245px.** There
+are **eleven** hidden-scrollbar selectors, not ten — `#cr-claims-mount .cr-c-tabs.detail` was never
+on the list, and it was hiding Documents, iTel and Record on a phone. Derive the list from
+`document.styleSheets`; do not maintain it by hand.
+
+Measured at 390px, then fixed with 984's `flex-wrap:wrap`: `.cr-lil-tabs` **525px** hidden ·
+`.cr-ic-chips` **481** · `#cr-pae-tabs` **414** · `.cr-ped-row` **261** (**Undo and Clear**) ·
+`.cr-c-tabs.detail` **245** · `.ljchips` **87**, and **94px at 1194px** · `.cr-sh-tabs` **55**
+(**the way out of the Showcase**). Clean and left alone: `.pu-tabs`, `.cd-crmbar`, `.cr-cth-tabs`.
+`.cr-sf-tabs` was **deleted** — its strip went at build 928 and five orphan rules outlived it.
+
+⚠️ **STILL OPEN — debt the reach exposed, none of it this build's.** The walk went 15 states → 25,
+and screens nothing had ever rendered came with findings attached: a plain sweep at 390px reports
+**51 (31 INK · 20 DEAD)** across the 25 states. Run through the identical probe against 991,
+`--since` says **SENTINEL CLEAN — 50 renders, nothing new, 185 carried** at 390 + 1194px. So **993
+introduced none of it** and the seven wrapped strips cost nothing in ink, overlap or collapse — but
+185 is now the honest standing number, and it was ~half that when half the app was invisible to the
+instrument. Working it down is its own arc.
+
+⚠️ **Three gates are red on `main` and were red before 993 — proved by running them against the 991
+artifact and with the pre-993 setup; identical failures in all three configurations.** Reported, not
+absorbed:
+
+- **`gate_944`** — two `<input>` controls on the **Crews** screen measure **289×35 and 289×33**
+  against the 44px touch floor. A real, shipped defect; 944's own arc, not this one.
+- **`gate_951` (6 fails) and `gate_953` (3 fails)** — both assert the left rail has **Insurance**,
+  **Production** and **Community** sections. The shipped rail has `Daily · Sell · CRMs · Resources ·
+  Admin`. **Either the rail was restructured and both gates were never updated, or the sections were
+  lost.** That is a question for Theo before anyone "fixes" either side — the gates encode seven
+  Insurance rows and four Production rows that a person may still be looking for.
+
+✅ **`gate_981`'s assertion 9 was the fourth, and it was mine.** Written at 981 it required
+`id="jaGrid"` to still be PRESENT, because 5 of the grid's 11 references were functional then. **Build
+986 retired the grid properly** and the assertion has been asserting the opposite of the shipped
+truth ever since — red on main, unnoticed. Re-measured: **7 occurrences, all seven prose**, zero
+functional. Rewritten at 993 to assert the retirement is complete, on the FUNCTIONAL forms rather
+than the bare name, and **run red against a tree with the markup re-inserted** so it has been seen to
+fail. *Fix the gate when the gate is wrong.*
+
+⚠️ **Also new:** the sentinel's watchdog was a flat 240s and the longer walk went straight through
+it. Now budgeted per render with a `--deadline` override. The walk is ~60% longer — the honest price
+of measuring ten more surfaces.
+
+*Superseded, kept because its list is still the map:* ~~30 rules declare `overflow-x:auto|scroll`
+and **10 hide the scrollbar**. `.cr-cth-tabs` was fixed at 984; the other nine were measured at boot
+and **none is reachable** — six are not in the DOM (`.cr-lil-tabs`, `#cr-pae-tabs`, `.cr-ped-row`,
+`.cr-sf-tabs`, `.cr-ic-chips`, `.cr-sh-tabs`) and three are present at zero size (`.ljchips`,
+`.cd-crmbar`, `.pu-tabs`). They are built on demand behind navigation the harness does not drive.
+**The remaining work is teaching the harness to open and populate those nine surfaces — not another
+checker.** This is the same blind spot that let `.cr-cth-tabs` clip for months.~~
 
 *Superseded — the original note read:* `.cr-cth-tabs` is the FIRST of this app's **27**
 `overflow-x:auto` scrollers anyone has measured for silent clipping, and it was clipping. Every one

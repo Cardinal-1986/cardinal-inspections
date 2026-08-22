@@ -3255,9 +3255,10 @@ scroll-shaped diagnosis would have missed it.
 `min-height:100vh` slides and settled design decisions; an 88px band at the bottom is a visual
 change to something already approved. Excluded on purpose, not overlooked.
 
+<<<<<<< HEAD
 ## 59 — a repeating page element that paints over the text it repeats above
 
-**Seen: build 992, on all four contract templates at once, invisible since 747.**
+**Seen: build 994, on all four contract templates at once, invisible since 747.**
 
 `position:fixed` genuinely repeats on every printed page — that part of 747's note is right. What
 it does **not** do is reserve space. The element repeats in the same strip the flowed text
@@ -3278,4 +3279,51 @@ strip. **A gate that counts collisions must also assert the element is still whe
 every page**, or it certifies its own deletion as a fix.
 
 **Instrument:** print to PDF and read the text layer's geometry against the painted band — do not
-read CSS, and do not trust a screenshot of page 1. `gate_992.mjs`.
+read CSS, and do not trust a screenshot of page 1. `gate_994.mjs`.
+=======
+## Class 59 — a probe pointed at one surface out of eleven, reporting green about ten it never rendered
+
+**Cost: nine builds of false confidence, then seven real defects in one sweep (993).**
+
+Build 984 found `.cr-cth-tabs` silently scrolling "Closed" off its edge, fixed it, and — correctly,
+by this file's own rule — added a **CLIPPED** probe to the sentinel instead of writing another
+paragraph. The probe was right. It had three self-test cases, one that must fire and two look-alikes
+that must not. It was green for nine builds.
+
+It was measuring **one scroller out of eleven.** Six of the others were never in the DOM; four were
+in it at 0×0. All ten are built on demand behind navigation the walk did not drive.
+
+> **A surface nobody rendered produces exactly the same silence as a surface that is fine.**
+
+When the walk was finally taught to open them, **seven of the ten were clipping** — up to 525px, and
+two of them hiding controls a person actually needs: **Undo and Clear in the photo editor**, and
+**the button that gets you out of the Showcase**. `.cr-cth-tabs` itself — the strip 984 fixed — was
+among the ten unreached, so that fix had stood unverified since the day it shipped.
+
+### The tell, and it is cheap
+
+**Ask any probe how many candidates it actually painted, not how many findings it produced.** That
+is one query — collect the selectors the probe cares about, and report `painted / eligible`. At 991
+it answered `1 / 11` and the whole blind spot fell out in one line. Nobody had asked.
+
+### The rules that came out of it
+
+1. **A new check needs a REACH number beside its finding count**, and the reach number belongs in
+   the report. `0 findings` is meaningless without `n surfaces measured` next to it.
+2. **Derive the candidate list from the artifact, never maintain it by hand.** The hand-kept list in
+   `OPEN_ITEMS` said ten; there are eleven. The one it missed —
+   `#cr-claims-mount .cr-c-tabs.detail` — was hiding Documents, iTel and Record on a phone.
+3. **But a derived list still needs a hardcoded floor** (class 43's shape): a check that computes
+   its own count loses checks silently and stays green. `gate_993.mjs` carries both, plus a fifth
+   assertion that fails if the floor is ever emptied.
+4. **Reaching costs time, and the watchdog must be told.** Ten new states walked straight through
+   the sentinel's flat 240s deadline. A gate that always answers UNKNOWN is a gate nobody runs —
+   which would have retired the instrument as surely as never writing it. Budget the watchdog
+   against the work.
+
+### Related, and different
+
+Class 37 is *a negative control that crashes instead of reporting red*. This is its quieter sibling:
+**a positive control that never ran at all**, and therefore reported clean. Class 37 is loud and
+gets noticed. This one congratulates you.
+>>>>>>> origin/main

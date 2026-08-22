@@ -63,9 +63,24 @@ need('5 showTab is wrapped, and suspend/resume EXTEND the existing export',
      /var _showTab981 = window\.showTab/.test(CC) &&
      /suspend\s*:\s*suspendForTab/.test(exportBlock) && /resume\s*:\s*resumeFromTab/.test(exportBlock),
      !/_showTab981/.test(CC) ? 'no showTab wrapper' : 'suspend/resume are not on CardinalCommunityJob');
-need('9 the retired grid is NOT deleted — other references still need it',
-     /id="jaGrid"/.test(APP),
-     '#jaGrid markup was removed; its router and the punch anchor still reference it');
+/* ⚠ 993: this assertion was STALE and had been red on main since 986.
+   As written at 981 it required `id="jaGrid"` to still be PRESENT, because at
+   that time 5 of the grid's 11 references were functional and deleting the
+   markup would have orphaned them. Build 986 then retired the grid properly —
+   markup, writer and router all went, and the anchor moved to #acxMount — so
+   the assertion has been asserting the opposite of the shipped truth ever
+   since, and nobody looked. Fix the gate when the gate is wrong; never bend
+   the artifact back to satisfy an old assumption.
+
+   Re-measured on the shipped file: 7 occurrences of the string, and ALL SEVEN
+   ARE PROSE — module banners explaining the retirement. Asserted on the
+   FUNCTIONAL forms rather than the bare name, because a comment that quotes
+   the identifier it documents is exactly what breaks a file-wide count. The
+   two `#jaGrid [data-ja=...]` hits are inside backticks in those comments. */
+need('9 the retired grid is GONE — no markup, no lookup, only prose',
+     !/id="jaGrid"/.test(APP) && !/getElementById\('jaGrid'\)/.test(APP) &&
+     !/querySelector(?:All)?\(\s*['"`][^'"`]*#jaGrid/.test(APP),
+     'a functional #jaGrid reference is back — 986 retired it and the anchor is #acxMount');
 
 /* ── the drive: a REAL community job, both themes ─────────────────────────── */
 const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']});
