@@ -20548,6 +20548,1588 @@ and measures the pages. `gate_964` 9/9, `gate_965` 12/12, `gate_966` 12/12 re-ru
 implement margin boxes the header is absent there rather than overlapping — a decoration lost
 instead of contract text. The address footer already depended on the same mechanism.
 
+## Tooling — `sentinel` learns to see silent clipping (22 Aug 2026)
+
+**No build number and no stamp bump** — `index.html` is untouched, the same rule `gate_ship.py`
+applies. Gate and docs only.
+
+Build 984 found `.cr-cth-tabs` hiding a tab behind a hidden scrollbar. `BUG_CLASSES`'s own header
+says a class that recurs gets **a check, not another paragraph** — so this is the check.
+
+### The new probe
+
+`CLIPPED` fires on an element that is **overflowing right now** AND **hides its scrollbar**. It names
+what is off the edge, not just a number:
+
+```
+div#clip-silent hides 56px with no scrollbar (scrollbar-width:none) — off the edge: Four, Five
+```
+
+⚠️ **It is deliberately not `OVERFLOW`.** `OVERFLOW` watches the *page* scrolling sideways and
+**cannot see this**: a strip like this scrolls *instead of* breaking the page, so the document width
+never moves. That is why the existing check slept through 984's bug.
+
+⚠️ **A visible scrollbar is not reported.** A person can see a bar and swipe — a design choice, not a
+defect. Three self-test cases enforce the boundary: one silent clipper that must fire, one
+visible-bar scroller that must not, one hidden-bar strip that fits and must not.
+
+### ⚠ The self-test caught a probe that would have reported everything
+
+The first version inferred "no scrollbar" from layout — `offsetHeight - clientHeight === 0`. **In
+headless Chromium scrollbars are OVERLAY and take zero space even when perfectly visible**, so that
+test reports EVERY scroller as silent. The visible-bar control fired, and the self-test went red.
+
+Replaced with two deterministic signals: computed `scrollbar-width: none`, or a real
+`::-webkit-scrollbar{display:none}` rule found by walking `document.styleSheets` and matching the
+element against it. *This app uses both mechanisms, which is why one signal is not enough.*
+
+⚠️ That walk carries the CSS-nesting trap this repo already records: **in modern Chromium every
+`CSSStyleRule` exposes an empty `.cssRules`**, so `if (r.cssRules) { walk(r.cssRules); continue; }`
+skips every style rule and returns a clean zero. Examine the rule, *then* descend.
+
+### What it found on the app: nothing — and that is the finding
+
+**30 rules declare `overflow-x:auto|scroll`; 10 hide the scrollbar.** `.cr-cth-tabs` was fixed at
+984. The other nine were measured at boot and **not one is reachable**:
+
+| state | selectors |
+|---|---|
+| **not in the DOM at all** | `.cr-lil-tabs`, `#cr-pae-tabs`, `.cr-ped-row`, `.cr-sf-tabs`, `.cr-ic-chips`, `.cr-sh-tabs` |
+| **present, zero-sized** | `.ljchips`, `.cd-crmbar`, `.pu-tabs` |
+
+They are built on demand, behind navigation `sentinel` does not drive. **So the check is correct and
+proven, and it cannot finish this sweep on its own.**
+
+*That is the same reason `.cr-cth-tabs` survived for so long: nothing renders those surfaces with
+realistic data. The remaining work is not another checker — it is teaching the harness to open those
+nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
+
+## Build 988 — the Saving / Saved / Error pills were invisible in dark (22 Aug 2026)
+
+Chasing 987's one leftover — `.cr-p-save-status.saving` at 2.25:1 in dark — turned up something
+much worse in the same rule. **The pill was invisible in the app's default theme, in all four
+states, in three modules.**
+
+`--cr-black` is a **surface** token: `#1a1a1a` in light and **`#f2f4f7` — near-white — in dark**.
+Correct for a card, wrong for a solid pill. Three floating status pills used it as a **ground**
+under a hardcoded `color: white`.
+
+Measured in Chromium on the 987 tree (this is the gate's own control output):
+
+| state | dark | light |
+|---|---:|---:|
+| base (`--cr-black`) | **1.10 ❌** | 17.40 ✅ |
+| `.saving` | **2.25 ❌** | 6.21 ✅ |
+| `.saved` | **2.07 ❌** | 5.13 ✅ |
+| `.error` | **2.78 ❌** | 4.90 ✅ |
+
+**All four fail in dark, and the base state is literally invisible.** In pricing the state classes
+only swap the *ground*, so the single hardcoded white ink broke every one of them at once.
+Three sites: `#cr-pricing-mount .cr-p-save-status`, `#cr-claims-mount .cr-c-toast`, and coach's
+toast.
+
+### The fix, and why it is not "flip the ink with the theme, which reads oddly"
+
+That was my own objection when I left this open at 987, and it was wrong. **All four grounds flip
+together** — pale in dark, deep in light — so ONE ink token that flips with them covers every state:
+`#1a1a1a` in dark, `#ffffff` in light. Worst case after: **6.27:1**. That is exactly the shape build
+**982** shipped as `--ccm-onwarn`, so it is this app's own convention, not a new mechanism.
+
+### ⚠ One site carries the IDENTICAL declaration text and had to NOT move
+
+`.cr-chrome-top, .cr-chrome-bottom` in `cr-estimates-styles` is also
+`background: var(--cr-black); color: white;` — and it is **correct**, because estimates' `--cr-black`
+is `#1a1a1a` in *both* themes (17.40:1). A file-wide substitution would have changed a passing
+element. **The patch splices per `<style id=>` block for exactly that reason, and assertion 4 guards
+the survivor.**
+
+### Gate
+
+**`gate_988.mjs` 6/6 GREEN**, **RED on the 987 control with 5 named failures**, no crash.
+Assertion 3 resolves the computed ink in both themes; assertion 6 scores all four states against
+their real painted grounds; assertion 5 is the control for both — it pins the ink back to white on a
+copy and requires dark to fail again.
+
+### The lesson worth keeping
+
+**987 recorded this as "one site, needs a design call". It was three sites, twelve failing state /
+theme combinations, and no design call at all** — the answer was already in the codebase as
+`--ccm-onwarn`. *When a fix looks like it needs taste, check whether the repo has already made the
+decision somewhere else.*
+
+## Build 987 — the amber warning colour is readable again (22 Aug 2026)
+
+The open item read *"`--cr-amber`'s light half `#C87A00` measures 3.37:1 on white."* **Measured,
+that describes exactly one site.** There were **five** failures and they pull in opposite
+directions.
+
+| # | site | theme | before | after |
+|---|---|---|---:|---:|
+| 1 | six pill inks on `--cr-amber-tint` `#FBEFDA` | light | 2.96 ❌ | **5.46 ✅** |
+| 2 | claims `partial` ink on white | light | 3.37 ❌ | **6.21 ✅** |
+| 3 | `.cr-p-save-status.saving`, white ink on amber | light | 3.37 ❌ | **6.21 ✅** |
+| 4 | estimates ink on its dark tint | **dark** | 3.93 ❌ | **5.88 ✅** |
+| 5 | `.cr-p-save-status.saving`, white on amber | **dark** | 2.25 ❌ | **2.25 — OPEN** |
+
+**The recorded 3.37 was the *least* bad of them.** The common case — ink on the module's own amber
+tint — sat at **2.96**, and #4 was a **dark**-theme failure the "light half" framing hid completely.
+
+### Two structural findings the one-liner missed
+
+**Estimates had no pair at all.** `cr-estimates-styles` declared `--cr-amber: #C87A00` **once,
+unscoped**, so it used the *light* value in both themes — while its own `--cr-amber-tint` delegated
+to `--rbe-ambertint` and flipped correctly. An asymmetry, not a design. Proven in the gate's negative
+control, which resolves the token in a real engine and reports **`light "#C87A00", dark "#C87A00"`**.
+
+**`cr-bpa-script` declares zero `--cr-*` tokens** — measured, 0 occurrences in its 7,595-char block.
+CLAUDE.md's "five modules share one identical palette" does **not** hold for amber. Nine declarations
+across five blocks, not four.
+
+### ⚠ Why this was not a one-line token change
+
+Deepening helps every site where amber is **ink on a pale ground** and hurts the one where it is the
+**ground under dark ink**:
+
+| | `#C87A00` | `#8a5500` |
+|---|---:|---:|
+| six pill inks on tint | 2.96 ❌ | **5.46 ✅** |
+| claims ink on white | 3.37 ❌ | **6.21 ✅** |
+| **`.cr-chrome-badge`, `#1a1a1a` ink ON amber** | **5.17 ✅** | **2.80 ❌** |
+
+The badge is pinned **per-site**, following build **942**'s precedent — which had already done
+exactly this for `#cr-pricing-mount .lock`, at the same `#8a5500`. **No colour was invented here**;
+942 chose it and shipped it.
+
+Same hue, deepened — never a hue swap, which is the 557 rule: a hue change makes the two themes read
+as two different components.
+
+### Gate
+
+**`gate_987.mjs` 8/8 GREEN**, **RED on the 986 control with 7 named failures**, no crash.
+Assertions 5 and 6 resolve the tokens in Chromium rather than reading the stylesheet, because a
+token can be declared and still not reach the element. Assertion 7 is 6's own control: it strips the
+badge pin from a copy and requires the paint to change to `rgb(138, 85, 0)`.
+
+⚠️ **Assertion 1 was wrong on its first run and the gate caught it** — it expected **4** light
+declarations when the correct answer is **5** (four siblings, plus the light-scoped rule estimates
+never had). *A number from my mental model of the change rather than from the change itself.* Light
+and dark both come to 5 now, symmetric.
+
+### Left open, deliberately
+
+**#5 — `.cr-p-save-status.saving`, white ink on amber, 2.25:1 in dark.** Fixing it means flipping the
+ink with the theme (dark ink on the light dark-theme amber, white ink on the deep light-theme amber),
+which is inverted from intuition and reads oddly. **That is a design call, not a measurement**, and
+it is Theo's.
+
+## Build 986 — the retired Job Activity grid is gone (21 Aug 2026)
+
+Keeper replaced the Job Activity grid at build **348**. The element was never removed, and
+`#tab-overview`'s allow-list has painted it out on every profile since — so for hundreds of builds
+the app rebuilt **nine tiles** into it on every client open and, at script **top level**, attached a
+click router to it. All of it for a panel nobody could see.
+
+**Four functional references, now zero:** the markup element, the `innerHTML` writer (600 chars),
+the boot-time click router (348 chars), and `cr-pp-script`'s anchor. **Seven prose mentions are
+kept** — the build-348/604/609/796/981 notes are the record of why the trap existed, and
+`gate_986` assertion 2 requires them to survive so nobody "tidies" them away.
+
+### The two things that could actually have broken
+
+**1. A boot throw.** The router ran at top level and dereferenced `getElementById(...)` unguarded.
+Remove the markup without removing that line and the script throws during boot, killing every
+statement after it in a **1.39 MB** block. *The markup's own comment beside `contactRow`/`locRow`
+names this hazard in so many words* — "kept in the DOM because boot-time listeners attach to them
+unguarded" — which is why those two are still there and why this one had to go in the same edit.
+
+**2. The punch card silently not mounting.** `cr-pp-script` anchored `#cr-pp-mount` to the grid —
+`jaGrid || insDocsCard || insCard || solCard` — and inserted itself after it. With the grid gone the
+chain falls through to `insDocsCard`, **moving the card**; and if none resolved it would `return`
+with the card vanishing and **no error at all**. Re-anchored to **`#acxMount`**, which is hardcoded
+as the first child of `#tab-overview`, is on the allow-list, and is already referenced 45 times.
+
+⚠️ **Stated plainly: the punch card's position changes.** It was inserted after a hidden element
+sitting just above `#solCard`; it is now inserted after `#acxMount`, near the top of the overview.
+The gate proves the anchor is present and inside `#tab-overview`; it does **not** prove the card
+renders, because that needs a project with punch rows. **Theo's eyes are the gate on the position.**
+
+### Gate
+
+**`gate_986.mjs` 7/7 GREEN**, **RED on the 985 control with 3 named failures**, no crash.
+Assertion 4 loads the real document and requires **zero page errors**; assertion 5 proves that check
+can fail by putting the unguarded listener back on a copy without the element — it produces a boot
+error, as designed. On the control assertion 5 reports *"could not build the broken copy"*, which is
+an honest non-run rather than a false pass.
+
+### ⚠ Three assertion faults on the way in, all mine, none reached the file
+
+Every one aborted before `write_atomic`, which is the whole point of the assert-first discipline.
+
+1. **`jaGrid` count 11 → expected 6, got 11.** My four *replacement comments* each mentioned the
+   identifier. **The comment-pollution trap, fired inside my own assertion.** Comments rewritten to
+   avoid the name so the counts stay honest.
+2. **Comment-stripping ate a real code site** — 4 became 3. `/*` inside a string literal is not a
+   comment, exactly as this file warns. Replaced with assertions on the *functional forms*
+   (`id="jaGrid"`, `getElementById('jaGrid')`), which need no stripping at all.
+3. **`assert count("getElementById('acxMount')") == 1`** — it was already 3. *A number read off my
+   own patch rather than off the app.* Replaced with a delta: exactly one lookup added.
+
+## Build 985 — two more Community greens read on the light theme (21 Aug 2026)
+
+The two 982 missed, both raw `#34D399` with no light value:
+
+| site | ground | before | after |
+|---|---|---:|---:|
+| `.cr-pcard.community .t` (project card title) | light `#f7f8f7` | **1.81** | **5.15** |
+| `#commsCli` (client name by "Communications") | light `#f1f2f1` | **1.71** | **4.89** |
+| both | dark `#161918` / `#1e2220` | 9.21 / 8.37 | **unchanged** |
+
+### Why a token pair, and why a computed literal could not have worked
+
+| ground | `#34D399` | `#047857` |
+|---|---:|---:|
+| light `#f7f8f7` | 1.81 ❌ | 5.15 ✅ |
+| light `#f1f2f1` | 1.71 ❌ | 4.89 ✅ |
+| dark `#161918` | 9.21 ✅ | 3.23 ❌ |
+
+**Neither literal clears the floor in both themes.** Only `--ccm-ac` does, because it *is* `#34D399`
+in dark and `#047857` in light. Here the repo's "prefer an existing token PAIR to a computed
+literal" rule is not a style preference — it is the only thing that works.
+
+### ⚠ The trap: `-webkit-text-fill-color` beats `color`, even `!important`
+
+`#commsCli` sets both properties. Proven in a 4-case Chromium control, pixel-sampled:
+
+| case | painted |
+|---|---|
+| `color` alone | `#047857` — the color property |
+| `color` + `-webkit-text-fill-color` | **`#34D399` — the fill wins** |
+| reversed source order | **`#34D399` — still the fill** |
+| **`color:#047857 !important` + fill** | **`#34D399` — inert** |
+
+So a patch changing `color` alone would have passed every CSS-text check and rendered **exactly as
+before**. Both properties move.
+
+**And the `!important` had to stay** — it beats an inline `style="color:#9c1822;"` on the span,
+which is the *retail* red. Assertion 6 guards it.
+
+### The negative control found a precedent, not a bug
+
+`check_build.py` went RED on its first run: the marker
+`-webkit-text-fill-color:var(--ccm-ac,#34D399)` was **already present in 984**. Not a mistake —
+`.pu-strip .sh b` has been setting **both** properties to the token pair all along. *Setting both is
+this app's existing convention; 985 follows it rather than inventing it.* Marker re-aimed at
+`color:var(--ccm-ac,#34D399) !important`, which is genuinely new.
+
+### Gate
+
+**`gate_985.mjs` 9/9 GREEN**, **RED on the 984 control with 4 named failures**, no crash.
+
+⚠️ **Assertion 4 samples the PAINTED PIXEL, not the declaration**, and it was proved against a
+deliberately-broken copy of the artifact carrying the *naive* fix (`color` only). That copy goes
+**RED with the diagnostic that matters**: `pcard painted #047857, commsCli painted #34d399` — the
+card repaired itself because it has no fill property, and the client name did not move at all.
+*A CSS-text gate would have called that patch green.*
+
+### ⚠ Note for whoever reads this next
+
+`--marker` cannot take a value starting with `-`; argparse eats it as a flag. Use `--marker=…`.
+Cost two runs.
+
+## Build 984 — the Cardinal Truth tabs stop hiding the last one (21 Aug 2026)
+
+Theo's option **4** of four offered. On a phone the Cardinal Truth tab strip was cutting off
+"Closed" with nothing to show it was there.
+
+### It was two defects wearing one symptom, and only one of them was mine
+
+`.cr-cth-tabs` is a nowrap flex row, `overflow-x:auto`, `scrollbar-width:none`. Measured at 390px by
+driving the app's own `showCardinalTruth()` — no injected markup:
+
+| counts | 982 | 983 (shipped) | 984 |
+|---|---|---|---|
+| 1 digit | fits, **0px spare** | CLIPPED 11px | **fits** |
+| 2 digits | CLIPPED 21px | CLIPPED 32px | **fits** |
+| 3 digits | CLIPPED 43px | CLIPPED 54px | **fits** |
+
+**983 is responsible for 11px of it.** Converting `font:700 13px inherit` (discarded whole) into
+real longhands meant `font-weight:700` finally applied, and bold text is wider than the 0.333px
+saved on size. Reported as mine.
+
+**The other row is the real story: 982 fitted with EXACTLY zero slack.** A strip whose scrollWidth
+equals its clientWidth is not fitting — it is one character away from hiding something. Cardinal has
+more than nine claims, so this has been clipping the last tab in production since long before 983.
+*The fixture's single-digit counts were the one case the broken strip could still fit, which is why
+no gate ever caught it.*
+
+### Why wrap, and why no media query
+
+Four options were measured before one was picked, because the obvious fix does not work:
+
+| | 1-digit | 2-digit | 3-digit | cost |
+|---|---|---|---|---|
+| as shipped | −11px | −32px | −54px | — |
+| gap 20→13px | fits | −11px | −33px | nothing |
+| count badge 13→11px | −7px | −26px | −44px | smaller counts |
+| both | fits | −5px | −23px | both |
+| **wrap to two rows** | **fits** | **fits** | **fits** | +47px tall |
+
+The verification agent had proposed `gap:13px`. **Measured, it buys back the 983 regression and
+nothing else** — it still clips at two digits, which is every real screen. Only wrapping is a fix
+rather than a postponement.
+
+**`flex-wrap:wrap` needs NO media query**, and that is the neat part: flex only wraps when the
+content actually overflows. Measured 2 rows at 360/390/414 and **1 row, 46px, byte-identical** at
+430/480/768/1194. The strip self-adjusts.
+
+⚠️ **`gap:20px` sets BOTH axes in flexbox**, so wrapping alone gave 20px rows on top of each
+button's 10px bottom padding — a loose, floating second line. `row-gap:4px` is declared **after** the
+shorthand, which is load-bearing: declared before it, the shorthand wins and the fix ships ugly.
+Chosen by rendering 0/4/8px and looking at them.
+
+⚠️ **A scroll-fade affordance was considered and rejected.** There are **27** `overflow-x:auto`
+scrollers in this app and **not one** has a fade or mask — inventing one here would be a new
+mechanism beside 27 that share none. `flex-wrap:wrap` is already used in four places. *Grep for the
+convention before inventing a mechanism.*
+
+### Gate
+
+**`gate_984.mjs` 10/10 GREEN**, **RED on the 983 control with 4 named failures**, no crash.
+Assertion 4 is the load-bearing one and it is deliberately not a CSS-text check: it drives the real
+entry point at 390px, sets a **two-digit** count, and requires every tab's right edge to sit inside
+the strip's client box. On the control it names the symptom — `clipped: ["Closed12"], overflow 32px`.
+Assertion 5 is its own negative control: it restores `nowrap` on the live element and requires the
+same check to go red, so 4 cannot pass vacuously.
+
+⚠️ **The gate tests with two-digit counts on purpose.** Testing the fixture's single digits would
+have been a check that could not fail — that is the exact blind spot that let this ship.
+
+### How it was found
+
+The 983 verification workflow, which failed on **my own script bug**: an agent hit a 529, `parallel()`
+resolved it to `null`, and the synthesis read a property off it without the `.filter(Boolean)` the
+tool documents. Four of five agents had finished, so their results were recovered from
+`journal.jsonl` rather than lost. Two surfaces clean, two flagged risk; this was the real one.
+
+## Build 983 — the rest of the app gets its type back (21 Aug 2026)
+
+Build 980 fixed thirty invalid `font:` shorthands inside Community. This is the same defect
+everywhere else: **64 declarations across thirteen stylesheets and six inline `style=` attributes**,
+all written `font:<weight> <size> inherit`.
+
+**`inherit` is a CSS-wide keyword.** It is legal as an *entire* value and never as one component of
+a shorthand, so `font:700 13px inherit` is not "inherit the family, set weight and size" — it is a
+parse error, and the browser discards the **whole declaration**. The weight and the size go with
+it, and the element renders at whatever it happened to inherit. The Showcase carried 25 of them;
+Sales Floor 7; Insurance Clients, Cardinal Truth 4 each; three blocks 3 each; five more 1–2.
+
+The repair is the same one 980 used and for the same reason: **longhands, not an invented family.**
+`font-weight:700;font-size:13px` says exactly what the shorthand was trying to say, and a family
+cannot be chosen without changing what the element inherits. It also avoids the shorthand's reset
+of line-height, style and variant — which today never happens, because the declaration is thrown
+away, so longhands are the minimal change rather than the conservative one.
+
+### The two the assert caught, and why they are a different bug
+
+The patch aborted with two declarations still standing. Both were in `cr-lib-styles`:
+
+```css
+font:700 13px var(--lb-sans,inherit)
+```
+
+That form is **valid CSS when the token exists** — the fallback is only reached if it does not.
+`--lb-sans` has **0 declarations and 2 references** in the file, so the fallback is always reached,
+and it fails identically to the bare form. Proven in a three-case Chromium control rather than
+argued: declared token → declaration kept; undeclared token → declaration dropped; bare `inherit` →
+dropped. *A `var()` wrapper does not make an invalid fallback valid; it only hides it from a grep.*
+
+### Gates
+
+**`gate_983.mjs` 9/9 GREEN**, **RED on the 982 control with 5 named failures.** Assertion 3 is the
+one that matters: it loads the real document in Chromium and asks whether each converted rule
+**survives the parse**, and assertion 4 puts the invalid form back to prove assertion 3 can fail.
+
+⚠ **Assertion 6 was measuring the wrong thing on its first run.** It flagged 26 rules as having
+gained a font-family, because it tested *adjacency* — a `font-family` anywhere near the converted
+declaration — rather than invention. Re-aimed at a delta: file-wide `font-family` count **277
+before, 277 after**. Nothing was invented, and now the gate says so in a form that cannot drift.
+
+⚠ **An unbounded regex hung the recon for 120s.** `[^{}]*#commsCli[^{}]*\{[^}]*\}` backtracks
+without terminating on a 5 MB file. Replaced with bounded string finds. This file's own rule —
+*recon regexes need bounds* — earning its place again.
+
+### `gate_980` was rewritten by this build, and that is worth reading
+
+The 967–983 sweep came back with **`gate_980` RED on HEAD**, which reads as a regression. It was
+not one. Two of its assertions pinned a **file-wide snapshot total** — *"979 had 94, so 980 must
+show exactly 64"* and *"980 is Community-scoped, so ~64 must survive elsewhere"*. Build 983 swept
+those 64 on purpose, so **a correct app turned a correct gate red.**
+
+Measured across all three trees before touching anything:
+
+| tree | `font:` invalid | plain `font:inherit` | valid `font:` |
+|---|---:|---:|---:|
+| 979 | 94 | 27 | 1291 |
+| 982 | 64 | 27 | 1291 |
+| **983** | **0** | **27** | **1291** |
+
+Only the invalid column ever moved. **No valid declaration was consumed by either sweep** — which
+is the contract those two assertions were really guarding, and it is now what they say:
+assertion 2 asserts the valid populations are untouched and invalid never rose; assertion 8 asserts
+Community keeps its untargeted font rules, which is what a greedy sweep would have destroyed.
+Both stay falsifiable and both are still **RED on the 979 control**, now with 7 named failures.
+
+*This is the file's own rule biting the file itself: assert the contract over a region, never the
+number you measured it at. A snapshot total is a check with an expiry date on it.*
+
+## Build 982 — Community reads properly on the light theme (21 Aug 2026)
+
+The second half of **item 6, option 1**. Era A was built dark-first, and ten inks were declared
+once and never given a light value. Values computed by a five-agent measure pass, then each put in
+front of a skeptic told to refute it. **All five defects reproduced; the skeptic corrected three
+things that mattered.**
+
+### The reconciliation the skeptic caught
+
+Two agents independently wanted to declare `--ccm-warn` in the light block — one at `#8f6000`, one
+at `#8a6420`. **Declaring it twice is a duplicate; picking either silently is a coin toss.**
+Resolved to **`#805500`** — the value build 981 already shipped for the count badge and Theo has
+already seen, rather than inventing a second amber 981 builds later. Measured on every light
+ground it reaches:
+
+| ground | #805500 | #8f6000 | #8a6420 |
+|---|---:|---:|---:|
+| `--ccm-card` #ffffff | **6.53** | 5.47 | 5.35 |
+| #f7f8f7 | **6.13** | 5.14 | 5.03 |
+| `--ccm-ground` #f1f2f1 | **5.82** | 4.87 | 4.77 |
+| `--ccm-rdw` #fdecec (binding) | **5.71** | 4.79 | 4.69 |
+
+⚠️ **The badge fix was INERT without a second edit.** Re-pointing the base rule to `var(--warn)`
+does nothing while 981's `[data-theme="rb-light"]` override still wins. Both had to move in the
+same edit — and because the token's light half IS `#805500`, the badge renders the identical colour
+it rendered yesterday. A pure re-pointing.
+
+### The three grounds, and why they do not all behave the same
+
+⚠️ **The gate found a third amber ground nobody's proposal mentioned**, and it split the rule:
+
+| ground | carries | treatment |
+|---|---|---|
+| `.ev .doit`, `.sheet .duebar button` | near-black `--ccm-onwarn` text | **must NOT flip** — `--warnsolid`. Flipping would drop the ink to 3.35:1 |
+| `.ev.now::before` | nothing — a 9px marker dot | **SHOULD flip** — keeps `var(--warn)`. `#805500` on white is 6.53:1 where bright amber is 1.46:1 and all but vanishes |
+
+The first version of assertion 3 forbade *all* `background:var(--warn)` and failed correct code —
+which is how the third ground was found at all.
+
+### What else moved
+
+- **`--ccm-nowfill` was referenced once and declared nowhere**, so its `#321a1c` fallback *was* the
+  palette. Declared as a real pair; `#cr-cc .ev.now .txt`'s single-theme grey was **deleted** rather
+  than twinned, because with the band flipping the text inherits `--ccm-mute` at 6.24:1 and needs no
+  rule.
+- **Three light twins**, dark rules byte-identical: `.pin .facts .k` 1.44 → **7.46**, `.ccwo-st.disp`
+  2.13 → **5.49**, `.ccwo-st.done` 1.55 → **5.48**. ⚠️ Stated plainly: `.done` **shifts hue 24°**
+  (green → teal) because it adopts `--ccm-ac`; the other two hold hue. A token pair beats a computed
+  literal, but it is not the same move and should not be described as one.
+- **`.ct.bill` — the headline.** The funding-partner cell filled padding-box with a *translucent*
+  wash over an opaque gradient border-box, so in dark the border flooded the cell. New
+  `--ccm-washfill` pair; the two-layer form is kept, because swapping the fill any other way loses
+  the gradient border. **Measured in the gate: BILL TO 2.70:1 on 979 → 7.90:1 now.**
+- **Community Analytics: all five inks, or none.** The skeptic rejected doing two —
+  *"fixing two of five leaves the overdue marker less legible than the merely-due one."*
+
+Verification: check_build green (981 → 982). **gate_982.mjs 10/10 GREEN, RED on the 979 control
+with 7 named failures**, and the control prints the real defect (BILL TO at 2.70:1 dark).
+gate_sweep 967–982. Sentinel 13, unchanged.
+
+⚠️ **THE MEASURING RIG WAS WRONG TWICE, and both are the traps this file already records.**
+1. The first version walked the ancestors, collected every gradient stop and scored the ink against
+   the **worst**. But `.ct.bill` paints `<fill> padding-box, <ring> border-box`, and
+   `.ct.bill .k`'s ink **is one of the ring's stops** — so it reported **1.00:1 in both themes** for
+   text that is perfectly legible. *A border gradient is not the ground under the glyph.*
+2. The replacement sampled a real pixel — at the element's own left edge, which for a text node is
+   **full of glyph**. It reported BILL TO at 2.00:1 by measuring the letters.
+   Fixed by walking up to the nearest ancestor that actually paints a fill, then probing its padding
+   box with `elementFromPoint` for a spot with nothing drawn on it. The numbers then matched the
+   independent agent renders **to two decimals** (`.ct.bill .k` light 5.21:1 in both).
+
+⚠️ **And the harness does not mount all six surfaces on every run** — which tab is open, and whether
+a crew work order exists, vary. Requiring all six made the gate flap. It now requires the pair that
+IS this build's defect and **reports the rest as unmeasurable** rather than passing over them.
+
+## Build 981 — one job menu (21 Aug 2026)
+
+Item 7 of the Community program. Theo's picks: **A1 B1 C1 D1.**
+
+### The name was misleading and the defect was worse
+
+"One Job Menu" reads as though the community card lacks one. **It has one** — ten buttons,
+rendering fine. The defect is where it gets them: `syncJobMenu()` is a DOM screen-scrape of
+`#jaGrid`, the Job Activity grid Keeper **retired at build 348**, which `#tab-overview` paints out
+with `display:none` on every profile. Nobody could see the original, so nobody could see the copy
+had gone stale while the real menu grew through 609, 652 and 849.
+
+Driven in Chromium on a seeded community job, before and after:
+
+| | 979 | 981 |
+|---|---:|---:|
+| mirror buttons | 10 | **15** |
+| carrying a drawn icon | 0 | **14** |
+| carrying pre-686 emoji | **9** | **0** |
+| Contracts / Work Orders / Measurements / Commissions | **all hidden** | **all visible** |
+
+Confirmed by clicking, on 979: **Contracts opened the Estimates tab** (the dead tile carries
+`data-ja="estimates"`) and **Appointments opened the company Schedule Board**, not the job's own.
+
+### Bigger than briefed: two controls that render, update themselves and do nothing
+
+`#jobMenuSel` and `#woQuick` are wired straight to `showTab`, which reveals `#tab-<x>` inside
+`.wrap` — hidden by the community takeover — and **neither calls `suspendForTab()`**. Worse,
+`showTab` does `if(sel.value !== name) sel.value = name`, so the dropdown moves its own label to
+"Contracts" while nothing happens. Measured inert at 390px **and** 1194px, so this was never the
+phone rule everyone suspected.
+
+**That is why the fix is a wrapper on `showTab` rather than three patches.** Both controls already
+go through it; so does any future caller. It also lets the mirror's dispatch delete its own
+`['comms','board','photos']` rule, so "which acts suspend" is answered in exactly one place.
+
+⚠️ **Three load-bearing details, each measured before it was designed on:**
+- **suspend AFTER `_showTab`** — it sets `#tab-<x>` to `display:block`, and `suspendForTab()` then
+  calls `takeOver(false)` which un-hides `.wrap` so that tab can paint. Same synchronous turn.
+- **the `getElementById('cr-cc')` guard is not decoration** — `suspendForTab()` calls
+  `ensurePill()` unconditionally, so a suspend fired before the card mounts leaves a "Back to bid
+  view" pill over a card that can now never mount.
+- **`overview` → `resumeFromTab()`** is Theo's D1. That chip used to drop a community job onto the
+  full retail profile — Convert to Insurance, Lead Source, and stage arrows that move the stage
+  **without writing any of the bid bookkeeping the black card writes**.
+
+### The shape that was tested and REJECTED
+
+The doctrine answer is ADOPT: the module already owns `adoptLocation()` / `adoptReviews()`, so
+move the live `.ja-menu` into the card. Tested in Chromium rather than reasoned about, and
+refuted — the next `renderOverview()` rebuilds `.ja-menu` in `#acxMount` while the adopted copy
+sits in `#cr-cc`, **duplicating four ids that async count-fills reach by `getElementById`**
+(measured 1 → 2, and it does not self-heal). Keep the mirror, re-point it, stop capturing nodes.
+
+⚠️ **`#jaGrid` is NOT deleted.** 11 bare hits: 5 functional (markup, the `innerHTML` writer, the
+click router, `cr-pp-script`'s anchor fallback, the old scrape) and 6 prose. Removing the grid
+without unpicking the router and the punch anchor is four dangling references. Retirement is its
+own build; the gate asserts the markup still exists.
+
+**A1** — Checklists existed only on the retired grid, so a straight re-point would have lost it.
+Added to the **one shared menu** (retail gains it too) rather than to the card alone, which is the
+fork this build exists to end. **B1** — the drawn icon is carried by `cloneNode`, never
+`outerHTML`, so the renderer stays escape-only. **C1** — the count badge measured 12.13:1 dark and
+**1.46:1 light**; it now has a light twin, `#805500` at 6.53:1, the same hue deepened (39.8° vs
+40.5°) rather than a different colour, with the dark rule untouched byte-for-byte. ⚠️ Not
+`--cr-amber`'s light half `#C87A00` — measured **3.37:1** on white, under the floor, and scoped to
+module mounts anyway.
+
+Verification: check_build green (980 → 981). **gate_981.mjs 13/13 GREEN, RED on the 979 control
+with 8 named failures and no crash.** gate_sweep 967–981 green. Sentinel 13, unchanged.
+
+⚠️ **The drive would have passed VACUOUSLY.** The sentinel harness seeds **no community project**,
+so `#cr-cc` never mounts, the mirror is never built, and the first run reported the header controls
+"VISIBLE" — from a *retail* job, where they always were. The gate now seeds a community job itself
+and asserts the card mounted before believing anything else. *A check that cannot fail is worse
+than no check, and this one was two lines from shipping as exactly that.*
+
+⚠️ **Assertion 7b only discriminates from a SUSPENDED state.** "Overview restores the card" passes
+trivially on 979, because nothing ever suspended there. The gate asserts `wasSuspended` first, so
+the control fails it honestly with *"never suspended, so this proved nothing"* rather than passing.
+
+### Correction to CLAUDE.md, found while choosing the badge colour
+
+CLAUDE.md states the three retired gold values *"(#d4a017, #f5d061, #8a5a00) are still at 0,
+asserted."* Measured: `#d4a017` 0 ✅, `#f5d061` 0 ✅, **`#8a5a00` is 1** — and it is live code, not
+prose: `st.style.color = (j.ok ? '#2e7d32' : '#8a5a00')`. The assertion is stale for that one
+value. Not touched here; recorded so the next colour sweep does not trust it.
+
+## Build 980 — Community looks the way it was drawn (21 Aug 2026)
+
+Theo picked **item 6, option 1** ("repair Era A in place") and said *"start 6"*. This is the first
+half of that option — the typography — shipped on its own, because its stated risk was that it
+visibly changes ~30 elements at once and deserves to be seen in isolation. The colour half is 981.
+
+### The defect: 94 rules declare a font that never applies
+
+Thirty rules in `cr-cc-styles` and `cr-ch2-styles` are written `font:700 13px inherit`. **That is
+invalid CSS.** `inherit` is a CSS-wide keyword: legal as an entire value, never as one component
+of a shorthand. Chromium therefore discards the **whole declaration** — the weight and the size
+with it — and the element renders at whatever it inherits.
+
+**Nothing in the ladder can see this.** Braces balance, `node --check` passes, the duplicate-id
+check passes, the marker is present, the negative control is clean, and the screen is quietly
+wrong. It is BUG_CLASSES' *"a rule that parses, balances and never applies"*, at scale.
+
+**A recon agent reported it; I did not relay it.** Re-measured three ways before believing it:
+
+| method | answer |
+|---|---:|
+| source count of `font:<v> inherit` where the value is not bare `inherit` | **94 file-wide, 30 in Community** |
+| minimal Chromium control — `.zzA{font:800 12.5px inherit}` | `cssText` is `""`; the sibling with a real family survives intact |
+| each of the app's own 88 attributable selectors, checked against Chromium's parse | **83 lose both weight and size** |
+
+⚠️ **The first attempt to measure it in the live app returned a confident ZERO.** I looked for
+rules whose parsed declaration block was **empty** — but a real rule carries other declarations,
+so only the `font` line vanishes and the block is never empty. The right question is whether
+`font-size` and `font-weight` are present at all. *An extractor that asks the wrong question
+answers it perfectly.*
+
+### The repair is LONGHANDS, not a family
+
+`font:700 13px inherit` was trying to say *"inherit the family, set weight and size"*.
+`font-weight:700;font-size:13px` says exactly that. Picking a family instead would change what
+the element inherits — inventing a decision nobody made. It also sidesteps the shorthand's reset
+of `line-height`/`font-style`/`font-variant`, which today never happens (the declaration is
+thrown away), so longhands are the strictly minimal change. Three rules carried a
+`/line-height` and got a real `line-height`.
+
+Scoped to Community: **30 converted, 64 left elsewhere**, deliberately. The biggest remaining
+cluster is **`cr-show-styles` with 24 — the Showcase, the client-facing presentation surface.**
+That is its own build and it is worth doing.
+
+**What visibly moves:** sizes now range 10px–16px where the elements previously inherited. Eight
+of the thirty land below 12px. That is what the design asked for; if any reads too small on the
+phone it is now a one-line change in a rule that finally works.
+
+Verification: check_build green (979 → 980). **gate_980.mjs 10/10 GREEN, RED on the 979 control
+with 7 named failures and no crash.** Its load-bearing assertion is not a source count — it walks
+Chromium's own parsed rules and requires every converted rule to keep its size and weight, and it
+**builds a copy of the artifact with the invalid shorthand put BACK** and requires that test to go
+red on it (at least 30 rules must drop). gate_sweep 967–980 green. Sentinel: 13 findings,
+identical on 979.
+
+⚠️ **Four gate faults, all mine, all this project's named traps.** A marker that already existed
+in the previous build (caught by the negative control — working as designed). A regex requiring a
+trailing `;` on a declaration that **closed its block** with `}`, so it found 29 of 30 and failed
+correct code — twice, once in the assertion and once in the revert control. A hardcoded `=== 3`
+for the line-height conversions when two such trios **already existed**, which is a number read
+off my own patch rather than off the app. And a control assertion of `kept === 0` when five rules
+legitimately survive because their longhands are not adjacent. *Roughly half of all reds on this
+project are the test's fault, and this build was four for four.*
+
+### 980 also builds the instrument: `scripts/preview.mjs`
+
+CLAUDE.md has always said *"preview visual changes before shipping — labelled options, dark and
+light, desktop and mobile."* **That instruction has been unfollowable, because every screenshot in
+this harness timed out**, and three separate attempts across two sessions blamed fonts and
+animation.
+
+**Neither was the cause.** Measured: `readyState` **"interactive"** — never `complete`;
+`fonts.status` `loaded`; `fonts.size` **0** (the app has zero `@font-face` rules and zero webfont
+URLs); **0** running animations; 62 rAF ticks/sec. A perfectly healthy page that could not be
+photographed. The harnesses answered every non-app request with `fulfill({status:200, body:''})`
+and **no content-type**, so an `<img>` request never completed, the document never finished
+loading, and `document.fonts.ready` — which per spec cannot resolve until it does — stayed pending
+forever. Playwright's screenshot waits on exactly that promise. **Serving by `resourceType()` with
+a real 1×1 PNG for images takes the same shot in 67ms.**
+
+The rig captures one frame per width per theme — width only from `setViewportSize`, theme only
+from the same `data-theme` attribute the app's own toggle writes — because `@media
+(max-width:560px)` keys off the browser window and an iframe grid would show a phone layout that
+is really a desktop one. It produced a real before/after for this build's hub rules.
+
+⚠️ **Stated plainly: the `#cr-cc`-rooted specimens still render blank and I did not finish
+chasing it.** Three repairs went in on the way (reveal a chain hidden by the app's own rules; call
+`getComputedStyle` **after** attaching, because a detached node reports nothing and the first
+repair silently did nothing; neutralise `position:fixed` so 28 samples stop stacking) and each was
+a real harness bug, but the card-rooted half is still not showing. The hub half works and the
+instrument is a net gain; finishing it is open.
+
+## Build 979 — Punch & Repairs and the Team Directory get the Production header (21 Aug 2026)
+
+Theo: *"Can you make productions have its own header or will that break anything?"* — a question
+with a risk clause in it, and the risk clause is the build.
+
+**The first half of the answer was already no work.** Production HAS its own header and has had
+one for a long time: `body[data-crm-head="production"] .site` (steel `#181b20`, amber `#f5a623`),
+its own `#cr-hd2-ribbon` rule, its own `#cr-hd2-bar` border and `TITLES.production`. Nothing
+needed inventing.
+
+**The actual defect is that two screens could not name themselves.** `crmNow()` checks five views
+— `cardinalTruthView`, `communityHubView`, `cr-pb`, `cr-sf`, `insClientsView`. `punchView` and
+`teamView` are not among them, so both answer `retail`, and `crmHead()` then falls to
+`stickyCrm()`. Measured in Chromium on the 978 tree, all three portals × both screens:
+
+| portal | Punch & Repairs and Team wore | `--hbg` |
+|---|---|---|
+| community | the Community green | `#047857` |
+| insurance | the Insurance white | `#FFFFFF` |
+| retail | the Retail steel | `linear-gradient(180deg,#243342,#16202b)` |
+
+**The same page, three different headers, decided by where you had been.** After: `#181b20` and
+the title `Production` in all six.
+
+⚠️ **The head moved; the PAGE did not, and that is deliberate.** `data-crm` stays `retail` on both.
+Punch & Repairs is cross-CRM by construction — it lists items from all three and carries a CRM
+filter facet — so a production-tinted ground would be a lie. 754 drew exactly that line: *"grounds
+and module gates deliberately do NOT follow the portal"*, because the naive version painted white
+ink on the light insurance ground across every shared screen.
+
+⚠️ **The check goes LAST in `crmHead()`**, after `crmNow()` and after the `projopen` guard, so an
+open project and a real CRM view both still outrank it. The only two screens it can reach are the
+two it names.
+
+### The risk clause — and it was real
+
+`crmHead()` feeds three other consumers, and one of them would have broken quietly.
+
+**`goHome()` reads `crmHead()`.** Give the punch page a production head and `goHome` falls through
+its insurance/community branches to `showHome()` — **retail home**. So a community user tapping the
+gold house on Punch & Repairs would have gone from the Community hub to the retail dashboard, with
+nothing on screen to explain it. That is the whole of *"or will that break anything"*.
+
+The fix is one line, and it repairs an older wart in the same stroke: **production and sales are
+TOOL screens, not portals.** There is no "production home" to land on, which is why that branch has
+always dropped Production-board and Sales-Floor users on retail whatever CRM they were in.
+
+```js
+if(crm === 'production' || crm === 'sales') crm = stickyCrm();
+```
+
+Verified by **clicking the real gold house** in Chromium with the three destinations spied — not by
+re-deriving the mapping, because `goHome` is module-scoped and a re-derivation tests nothing. All
+six combinations land exactly where they landed on 978. And the check is **proved able to fail**:
+`gate_979` builds a copy of its own artifact with that line removed and asserts that **at least
+four** destinations move (they do — community and insurance, both screens).
+
+**`portalNow()` reads `document.body.dataset.crmHead`,** so `syncPortalSections()` follows too and
+the burger menu goes Production-shaped on these screens: the Production section unhides, Sell and
+the community/insurance sections hide. That is coherent — it is what the Production board already
+does — and it is the one change Theo will notice. Rendered-verified for the insurance portal (the
+Scope of Loss row goes `shown → hidden`); the rest is asserted from `syncPortalSections`' own
+expressions, evaluated at `p='production'`, because in the sentinel harness those nav rows are
+hidden by resolve-or-hide anyway and a client-rect measurement there would have proved nothing.
+
+**`paintCrmPills(k)`** has no `production` set, so it falls to `PILL_HOME` — Contacts / Leads.
+Neutral, and right for a cross-CRM page.
+
+Header ink on the steel ground, computed: `--hin` #ffffff **17.26:1**, `--hmt` #b9c0c9 **9.41:1**,
+`--hdm` #7d8794 **4.74:1**, `--hac` #f5a623 **8.52:1**. All four clear 4.5:1.
+
+Verification: check_build green (978 → 979). **gate_979.mjs 12/12 GREEN, RED on the 978 control
+with 5 named failures and no crash** — and the control's failures narrate the defect exactly,
+printing the three different `--hbg` values the same page used to wear. gate_sweep 967–979:
+**13/13 green on HEAD**. Sentinel: 13 findings, **identical on 978**.
+
+⚠️ **The comment-pollution trap fired for the FIFTH time in three days, again inside the gate.**
+The order assertion used `CRMHEAD.indexOf('stickyCrm()')`, whose first hit is my own explanatory
+comment — *"Reaching stickyCrm() meant the header wore..."* — so it reported the fallback as coming
+BEFORE the checks and failed correct code. Anchored on `return stickyCrm()` instead. **The rule is
+assert on a form your own prose cannot contain**, and I keep having to relearn it.
+
+⚠️ **And a regex that could not cross a paren.** The menu assertion pulled
+`setSectionHidden(findSec('sell'), …)`'s second argument with `[^)]*?`, which cannot get past the
+`(` in `!(p === 'retail' || p === 'sales')`. It returned `null`, and the gate read a **parse
+failure as a behaviour failure**. Replaced with a paren walk. Both faults were the gate's, not the
+app's — which is this project's own standing question, *"is the test or the app wrong?"*, answered
+the usual way.
+
+**Could not capture:** a before/after screenshot of the header. Playwright's screenshot waits on
+`document.fonts.ready` and then on the element being motionless; in this harness fonts are aborted
+and the header carries an animated gradient border, so three approaches all timed out with the page
+correctly rendered. The hex values above are exact and rendered-verified; the Vercel preview is the
+picture.
+
+## Build 978 — start a punch-out from anywhere, and find one by PO (21 Aug 2026)
+
+Theo, verbatim: *"Can you do a plus new punch out and make it to where you can search by name
+address or po"*, on a screenshot of Punch & Repairs.
+
+Two asks, one build, and the interesting half is the one he did not spell out.
+
+**The + .** Filing a punch-out meant finding the Production board first — the composer had exactly
+one door, `openAdd()` behind the board's own "+ Add". The obvious move is a form on the Punch &
+Repairs page. **That is the bug this project keeps re-buying**, and `openAdd`/`saveAdd` are 190
+lines carrying the 605 off-stage job tail, the 767 roster sort, the 882 date-without-time
+invariant and the SQL-before-HTML retry. A second one starts identical and drifts. So 978 adds
+**doors, not forms**: `data-new="punch"` in the global + menu, `#puNewBtn` in the Punch & Repairs
+head, both landing on the same sheet.
+
+`CardinalProduction.newPunch()` is the outside door. It exists beside `addFor()` rather than
+replacing it because they answer different questions: `addFor(pid)` is called with a job already
+on screen, so that job's row is in the list by construction; `newPunch()` is called from anywhere,
+where nothing guarantees the punch layer has loaded — and the job list is `boardJobs()`, which is
+*active-stage jobs PLUS every job that already carries an item*. That second half is silently
+empty on a cold layer, which is the 605 defect wearing a new hat. So `newPunch()` reloads first.
+
+⚠️ **Deliberately NOT folded into `openAdd()`.** That would turn a synchronous modal opener into an
+async one for its three existing callers, and this file's own rule is that *adding `await` to a
+synchronous function is never a local change.*
+
+**And the consumer nobody told.** `saveAdd()` already refreshed the Production board and the client
+profile's Punch Outs tab. Punch & Repairs was the third surface reading the same pipeline and the
+only one never notified — add an item with the page open and it stayed hidden until a reload. Now
+it repaints, **guarded on the page actually being on screen**, because the shared layer was already
+reloaded above and repainting a hidden view is work nobody sees.
+
+**The PO.** The search box promised *"item, client, address"* and delivered exactly that: title,
+detail, assignee, project name, project address. The PO number — how this office actually refers to
+a job — matched nothing. The fix is four tokens of hay in the shape the client list and the header
+search already use, `'#' + po + ' ' + po`, so **1042** and **#1042** both find it. Placeholder now
+says so. `poOf()` is asked for defensively (`typeof poOf === 'function'`) because this is a
+different script block.
+
+⚠️ **A stubbed helper is not a reachable one.** The gate supplies its own `poOf`, so a green gate
+would say nothing about whether the real one resolves from inside `cr-punch-script`. Checked in a
+live Chromium render instead: `typeof poOf === 'function'` → true, `poOf({po:1042})` → 1042,
+absent → null. Without that the PO search could have shipped completely inert with every assertion
+green — the `{path, url}` fixture failure this project already paid for once.
+
+Verification: check_build green (977 → 978, 123 inline scripts, div balance 4152/4152).
+**gate_978.mjs 17/17 GREEN on the shipped file, RED on the 977 control with 11 named failures and
+no crash.** It runs the shipped `match()` over a job with a real PO (bare hit, hashed hit, a
+*different* PO must MISS — a hay that always matches is a search that has stopped filtering, and
+name/address must still match so the extension is proved additive), runs the shipped `newPunch()`
+against a recording shim to prove the reload happens **before** the job list is drawn, and measures
+`+ New` in a real render at the 44px touch floor in both themes. Sentinel: 13 findings, **identical
+on 977** — this build adds none. A real click drive confirms the sheet opens over the page
+(z-index 9600), carries all four kinds including Tarp, and its "Add it" button is hit-testable
+rather than covered.
+
+⚠️ **The comment-pollution trap fired for the fourth time in two days — this time inside the
+gate.** `PB.indexOf('newPunch')` found the *explanatory comment above the export*, and the slice
+then began at the word "async" inside that prose: `Unexpected identifier 'one'`. Fixed in the
+extractor, not the comment — a gate that only works while nobody documents the code is not a gate.
+It now matches the property **shape** (`/newPunch\s*:\s*(async\s+)?function\s*\(/`).
+
+⚠️ **And the `with(Proxy)` trap again:** `with(__stub){ __fn = ... }` assigns onto the proxy
+**target**, because `has()` answers true for every name. The outer `var __fn` never saw it —
+"__fn is not a function". Read it back off `__real`. gate_976's comment says this in so many words
+and I still walked into it.
+
+### 978 follow-up — `gate_sweep.py` was calling a squash merge a broken gate
+
+The sweep's control column went **GREEN on eight of twelve gates**, and green-on-a-control is
+supposed to mean *this gate cannot fail*. It meant nothing of the kind. Builds 967–975 were
+squash-merged as one commit, `d5bffef` — so "the commit that names build 967" is also the commit
+that carries 975, and asking it to be the control for build 968 hands the gate **a tree that
+already contains the change**.
+
+The trees those controls need no longer exist in git. That is a coverage gap, not a defect to
+chase, and the sweep now says which: `n/a — squashed, that tree already carries build N`, with a
+footer counting them. `subject_covers()` recognises a range subject; `--selftest` case 4 holds it
+in **both** directions across five subject forms, so a function that always answered true or
+always false would fail.
+
+⚠️ **And the summary line has now had to be narrowed twice.** It once claimed *"red on their own
+control"* having run no control at all; it then claimed it again while **8 of 12 controls were
+unavailable**. It now says *"red on every control that could be run (N could not)"*. A tool that
+overclaims is the same failure as a check that cannot fail — and this one is mine, twice.
+
+## Build 977 — a community job can sit on a waitlist (21 Aug 2026)
+
+Theo, verbatim: *"with some of these organizations we help communities by doing tarps for free
+without bidding yet so they stay on a waitlist."*
+
+There was nowhere to say that. The card kept asking for a price, and the job counted as an **open
+bid it had never been**.
+
+⚠️ **NO NEW STAGE, and that is the whole design.** `STAGES` is the whitelist `normStage()` enforces
+and it is **shared with retail and insurance** — a Community-only `Waitlist` entry would appear in
+both other pipelines, and by this file's own invariant *"`STAGES` must contain a stage value before
+any row is given it"*, any row given it early would silently become a **Lead**. The job stays at
+Lead and carries a **flag**, which is the shape every other community fact already uses
+(`bid_due_at`, `check_back_at`, `award_cycle`, `referred_to`). `gate_977` assertion 1 is that fence.
+
+**`tarped_at` already existed — this reuses it.** `ocSave` writes it on every outcome, but the
+outcome form is only reachable from Prospect/OnHold, i.e. **after a bid**. A free tarp before any
+bid could not reach it, which is exactly the gap. Live: **0 of 16** community jobs have it set. No
+second tarp-date field was invented; the gate asserts that too.
+
+**What it does.** On an unpriced community job the Lead arm offers *"Tarped it free — waitlist"*.
+That stamps `waitlist_at` and `tarped_at` through the same `mergeCk` + `patchProjectCk` pipeline
+`logsub` uses. The card then reads **"On the waitlist — tarped free on the 7th. No bid yet —
+waiting 14 days"** with *Start the bid* and *Off the waitlist*, instead of nagging for a price.
+Coming off keeps the tarp date: `mergeCk` deletes a key set to `''`, so only `waitlist_at` goes.
+
+**The hub.** A waitlisted job is **no longer an open bid** — 975 made that tile mean what it says
+and this keeps it true. It gets its own **Waitlist** tile, which is a door (975's `applyDoor`),
+routed through a new `waitlist` facet in `CH_GROUPS` because that is the mechanism a door needs.
+The tile is hidden at zero, per 975's rule that a door onto an empty list is the same lie in
+reverse.
+
+⚠️ **Stated rather than hidden: Open bids will DROP** by however many jobs are waitlisted. That is
+the point — they are not bids — but it is a number Theo watches.
+
+**Gate:** `gate_977.mjs`, 11 assertions. It runs the **shipped** `threadHtml` against a waitlisted
+job, an unpriced one and a priced one, then seeds a five-job book, opens the hub and **taps the
+Waitlist tile**. Control on 976: **RED, 7 named failures** — a tarped, waitlisted job reading
+*"Bid needs pricing … Nothing priced yet"*, `Open bids reads "5"` when two of the five are
+waitlisted, and no Waitlist tile to tap at all.
+
+⚠️ **An off-by-one of mine, caught by the gate.** `waitDays()` first used `daysTo()`, which is
+`Math.round` on the difference — right for a **future deadline**, wrong for **elapsed days**. More
+than twelve hours into today, a date 14 calendar days back rounds to **15**, so the card said
+*"waiting 15 days"* about something logged on the 7th when today is the 21st. Elapsed days floor,
+and the date the user picked is a **local** calendar day, not a UTC instant.
+
+### 977 follow-up — `gate_sweep.py` caught two regressions on the very next build
+
+**This is why it exists, and it earned its keep one build after being written.** The sweep over
+967–977 came back:
+
+```
+gate_971  index.html   RED   8 named failure(s)
+gate_972  index.html   RED   5 named failure(s)
+```
+
+Both said `waitlisted is not defined`. **Neither was an app defect** — 977 gave `threadHtml` two
+new helpers, and those two gates extract `threadHtml` and run it against **hand-written shim
+lists** that did not have them. It is the third time this exact thing has happened (972 broke
+gate_971 with `ck()`, 974 broke it again with `commBidAmount`, 977 with `waitlisted`), and the
+lesson is finally taken: **a hand-written shim list rots every time the shipped function grows.**
+
+Both gates now do what `gate_976`/`gate_977` do:
+1. **grab the REAL helpers** out of the artifact by brace-matching, so the behaviour tested is the
+   shipped behaviour; and
+2. keep a **`with(new Proxy(…))` backstop**, so a name nobody stubbed degrades to a no-op and the
+   gate REPORTS instead of dying (BUG_CLASSES 37).
+
+⚠️ **The backstop has a trap of its own and it bit immediately.** The proxy answers `has()` for
+every name, so inside `with()` it shadows **the shim's own variables too** — `events` came back as
+the fallback *function* and `events.forEach` threw. The proxy target has to be **seeded** with the
+shim's real values first, so genuine stubs win and the fallback only ever catches names nobody
+defined.
+
+**Both repaired gates were then re-run against their own controls and are still RED** — 971 on the
+970 tree (3 named failures), 972 on the 971 tree (3 named failures). A gate repaired into always
+passing would be worse than the regression.
+
+⚠️ **A second gap in `gate_sweep.py` itself, found in its own output.** A **squash merge names a
+RANGE** — `Builds 967–975 — …` — so the exact `\bbuild\s+NNN\b` lookup found nothing for
+968–974 and the whole control column went dark (`n/a — no commit names build 970`) the moment the
+span merged. Honest, but a control you cannot run proves nothing. It reads the range now.
+
+⚠️ **And an assertion of mine scoped to the FILE instead of the region** — a file-wide search for
+the word `Waitlist` found the KPI tile's label and the filter facet's label, both legitimate, and
+failed a correct patch. This project's own *"scope the count"* rule, and the second time today a
+correct patch was failed by a lazily-scoped check.
+
+## Build 976 — a tarp is its own kind of punch-out (21 Aug 2026)
+
+Theo, verbatim: *"Can we have a tarp only in the punch outs."* A tarp is not a repair, not a
+ticket and not a warranty callback — it is the thing we go and do straight away so the house stops
+taking water, and on a community job it is often done **free before anything is bid**. It had no
+way to be recorded as itself.
+
+**No SQL.** `punch_items.kind` has **no CHECK constraint** — verified on production
+(`pg_constraint … relname='punch_items' and contype='c'` returns `[]`), so this is front-end only
+and there is no migration to sequence. Live kinds today: **6 punch, 4 ticket, 0 callback**.
+
+⚠️ **FIVE blocks own the kind, and this is the `normStage()` shape again — one grows, all grow.**
+Each measured at exactly one site:
+
+| block | what it owns | miss it and… |
+|---|---|---|
+| `cr-pb-script` | the Add-an-item `<select>` | nobody can choose it |
+| `cr-pk-script` | the card's label chain | **it renders as "Punch-Out"** — the chain ends by naming anything it does not recognise a punch |
+| `cr-punch-script` | the Type filter's `vals` | you cannot pull up every tarp |
+| the main block | the activity-feed label | it reads *"Repair closed"* |
+| `cr-ppg-styles` | the chip colour, **dark and light** | it wears the punch amber |
+
+The label chain is the dangerous one and the control proves it: on 975 a tarp item renders as
+**`"Punch-Out"`**, silently filed as a repair.
+
+**Colour.** Punch is amber, callback terracotta, ticket neutral; tarp takes a blue — weather and
+protection. Both inks are **measured against the ground they actually composite over** (the chip's
+`rgba()` over `.pp-row`, not over the page) in both themes, by the gate. Not chosen by eye.
+
+**Gate:** `gate_976.mjs`, 11 assertions. It runs the **shipped** `openAdd()` to build a real sheet
+and reads its real `<select>`, runs the **shipped** card-row builder and reads the label it
+printed, and measures the chips in a real render in both themes. Control on 975: **RED, 6 named
+failures** — `offers: ["punch:Punch","ticket:Ticket","callback:Callback"]`, `a tarp renders as
+"Punch-Out"`, `tarp="Repair closed:"`, and the chip byte-identical to punch in both themes.
+`check_build.py` green; sentinel clean.
+
+⚠️ **The comment-pollution trap bit for the THIRD time today**, and this time my own assertion
+caught it before the write: the comment I wrote to explain the fallback **quoted the fallback
+string**, so a file-wide count of it read 2 instead of 1 and failed a correct patch. Reworded, with
+a note in the source saying why it is not spelled out.
+
+⚠️ **Four harness faults, all mine, all in `gate_976.mjs` and none in the app** — recorded because
+each is a reusable trap:
+1. **Regex surgery on an expression cut a string literal in half** (`Invalid or unexpected token`).
+   Extract the **function** by brace-matching and execute it; never regex a fragment out.
+2. **Stubbing one `ReferenceError` at a time is how a gate ends up crashing instead of reporting.**
+   The runner now uses `with(new Proxy(…))` so every unstubbed name resolves to a no-op — the
+   shipped function runs to completion and the assertion measures what it produced.
+3. **A native resolved through a `with` scope is called with the scope as its receiver** →
+   `Illegal invocation` on `setTimeout`. Bind host functions back to `window` — **but not
+   constructors**: `Array.bind(window)` has no `.isArray`, which was the very next error. The rule
+   is bind lowercase host functions, leave constructors and namespaces alone.
+4. **Inside `with()`, the proxy answers `has()` for every name, so the function's assignment to
+   `modal` landed on the proxy TARGET**, not on the outer local — which read back as null.
+   And a backtick in a comment *inside a template literal* terminated the literal.
+
+## Build 975 — the hub's numbers are doors (21 Aug 2026)
+
+Fifth of the Community program's seven items, and the one Theo will feel first. **Ten numbers
+on the hub counted something real and then left you to go and find it by hand** — five KPI
+tiles, three "waiting on you" rows and two tally lists. All ten wore `.cc-prow`'s
+`cursor:pointer`; none of them did anything.
+
+**The thing that made a door impossible had to go first.** The All-bids filter bar lives
+*inside* the All-bids fold, and fold state was a DOM class that `render()` threw away. So
+tapping Apply re-rendered, the fold snapped back to its `open=false` default, and **the table
+you were filtering closed itself**. `folds{}` now holds the user's own choice and outranks the
+default — the same shape as the `closed{}` + `closedStamp` pair the partner cards already use.
+
+**Every door goes through one `applyDoor(spec)`**, and a door **replaces** `chState.sets`
+rather than adding to it: two taps in a row would otherwise intersect to nothing. It sets the
+pane, opens the fold it is sending you to, bumps `chStamp` and scrolls the fold into view — a
+filter applied to a table below the fold looks like nothing happened.
+
+**The number and the destination come from one declaration.** `KPI975` is a five-row table of
+`{ key, label, text, n, sets, pane, fold, sort }`; the tile and its door are built from the same
+row, so they cannot drift. **A tile whose figure is zero stays a plain `<div>`** — a door onto
+an empty list is the same lie in the other direction.
+
+**Reuse, not a second list.** `cr-can-script` already declares `OPEN = { Lead, Prospect, OnHold }`
+with its own build-710 reasoning about why parked counts as open. It is now **exported** and read
+by the hub, so the stage names exist once. Display strings come from the module's own `LABEL`.
+
+**Four things that were quietly wrong, all inside the blast radius:**
+
+1. **"Open bids" read `d.all.length`** — every community job ever, including the closed and the
+   lost. Right today only because all 15 live jobs are still at Lead. It reads `d.open` now.
+2. **`.cc-kpi div` is a DESCENDANT selector**, and `.k`/`.v` are divs — so every tile drew
+   **three nested cards**, each with its own border, radius and 3px green left edge. Measured in
+   Chromium: `tile=3px  .k=3px  .v=3px`. Now `.cc-kpi>*`, which also keeps working now the live
+   tiles are `<button>`s. The mobile twin moved in the same edit.
+3. **`queue()` dropped its closing `</div>` when `role === 'prod'`** — the tag sat inside the
+   non-prod arm — so Curtis and Scottie got three nested unclosed rows. Latent only because all
+   15 jobs are Lead; 972 would have made it live.
+4. **A parked job's check-back could never go red.** The pill read `held ? '' : ' due'`, so a
+   check-back sailed past weeks ago stayed a calm grey chip — the one thing this module's own
+   banner calls "worth shouting about". And it never reached Due soon at all: the push sat inside
+   `if(st === 'Lead')` and read `l.bid_due_at` raw instead of `chDueIso()`, the function that
+   already answers which clock a job is on.
+
+⚠️ **`byPartner` keyed on `'No partner'` where every other surface says `'No partner recorded'`**,
+so that tally row could not have become a door — the key did not match the filter value.
+`partnerOf()` is the one spelling now.
+
+⚠️ **`signature()` could not see any of this.** Filter and fold state were absent from the
+repaint signature, so a background `scan()` could conclude nothing had changed a moment after a
+door fired and repaint the pre-door view. `chStamp` and `chActiveCount()` are in it now.
+
+**The app stamp's PROSE was nine builds stale** — it still described build 966's contract chip
+while the number had been bumped by 967 through 974. `check_build.py` gates the number only.
+Rewritten.
+
+**Gate:** `gate_975.mjs`, 13 assertions, and it is a **real drive**, not a source read: it seeds
+an eight-job community book covering every state the doors separate, opens the hub, **taps the
+tiles** and reads what the table then shows. Control on 974: **RED, 12 named failures** — among
+them `tiles: ["DIV:null:Open bids", …]`, `tile=3px  .k=3px  .v=3px`, `Due soon shows:
+["c1","c2","c3"]` with the parked job absent, `the held chip reads "-5 d hold" and red=false`,
+and `top-level rows=1  nested=1` for the Production user. `check_build.py` green (marker
+`data-cckpi`, negative control clean); sentinel clean.
+
+⚠️ **My own miss, found while re-running the earlier gates: `gate_971.mjs` had been RED since
+build 972 for its OWN reason, and I did not notice because I never re-ran it.** Two harness gaps,
+both introduced by later builds touching the same function: 972 gave `threadHtml` four new stage
+arms that read `ck(pr).stage_since`, which the shim did not define (`ck is not defined`, every
+case threw); and 974 moved the price ladder into the main block, so `priceOf`'s
+`window.commBidAmount` was undefined on this gate's stub page and every case answered "needs
+pricing". Neither was an app defect — `gate_972` and `gate_974` were green on the same code the
+whole time. Both are fixed, `gate_971` is green at 975 (13 assertions) **and still RED with 9
+named failures on its own 970 control**. *The lesson is the cheap one: when a build changes a
+function an earlier gate executes, re-run that gate in the same session.*
+
+### ⚠ LIVE BUILD-NUMBER COLLISION on 967 — and the tool that could not see it
+
+**Two unmerged branches both claim build 967.** Measured 21 Aug 2026, 17:35 UTC:
+
+| branch | commit | what it calls 967 |
+|---|---|---|
+| `claude/claude-md-docs-9qyu0f` | `6f15566` · **14:19:21 UTC** | the printed contract shows all of its own words |
+| `claude/cardinal-design-usability-audit-qn9fc9` | `14ca30d` · **15:03:44 UTC** | a change the server refuses is no longer thrown away |
+
+Both branch from `d0cd727` (build 966). **`git merge-tree` says four files conflict** —
+`index.html`, `FEATURES.md`, `cardinal_build_log.md`, and an **add/add clash on
+`.claude/skills/cardinal-build/scripts/gate_967.mjs`**, which is two entirely different gates at
+one path.
+
+**This is mine.** The contract-print branch was pushed **44 minutes before** my 967 commit, and
+`CLAUDE.md` says to run `scripts/next_build.py` **before the first patch of a session**. Run at
+15:00 it would have folded that branch's stamp into `highest` and answered **968**. I did not run
+it, and nine builds are now stamped on top of the wrong starting number.
+
+⚠️ **And the tool that exists to prevent exactly this could not see it.** `next_build.py` compared
+each branch against **main** only — so it caught *"this branch reuses a number already shipped"*
+(the live 584 case) and completely missed *"two unmerged branches claim the same number"*, which is
+the 574-span disaster it was written for. It had both facts in hand and never crossed them:
+`claimed` has always been a number → **list** of branches, nothing ever tested `len() > 1`, and the
+summary line printed `claimed[n][0]` — **so a number claimed twice printed as though claimed
+once.** Its own output named both branches three lines apart and drew no conclusion.
+
+**Fixed.** `cross_branch_collisions()` is its own function so `--self-test` exercises the real
+rule; the summary line now lists every claimant. Negative control on the live remote: the pre-fix
+script reports **1 collision** and never mentions 967; the fixed script reports **2** and names
+both branches, both notes, and the `gate_967.mjs` clash.
+
+**Not resolved here — it is not this session's branch to renumber, and the choice is Theo's.**
+Renumbering the contract-print branch costs one build (~10 sites); renumbering this branch costs
+nine, including nine gate filenames and every build-numbered identifier in the shipped source
+(`masked973`, `pq974`, `itm974`, `KPI975`, `dueSoon975` …), against `CLAUDE.md`'s standing
+*"never renumber history; source comments cite build numbers."* The next safe number is **976**.
+
+⚠️ **A second collision is latent in the same pair:** both branches append a `## 59` class to
+`BUG_CLASSES.md`. This entry deliberately adds none.
+
+### 975 follow-up — `gate_sweep.py`, the durable fix for a gate that rots quietly
+
+`gate_971.mjs` went red at build **972** and stayed red through 973 and 974 without anyone
+noticing, because nothing re-ran it. Both causes were **harness** gaps rather than app defects
+(972 gave `threadHtml` arms that read a symbol its shim did not define; 974 moved the price
+ladder into the main block, so the gate's stub page no longer had it) — which is precisely why
+it was invisible: `gate_972` and `gate_974` were green on the same code the whole time.
+
+`scripts/gate_sweep.py` runs a **range** of per-build gates two ways:
+
+- **on HEAD** — catches a later build breaking an earlier gate, which is the exact miss above;
+- **on the previous build**, materialised with `git show <sha>:<file>` — catches a gate that has
+  stopped being able to fail.
+
+Three details that make it worth having rather than a `for` loop:
+
+1. **A CRASH is reported as CRASH, never as RED.** BUG_CLASSES 37 — a control that dies before
+   printing a line has proved nothing, and reading it as "not green" has cost this project five
+   rounds in one session.
+2. **It reads which artifact each gate gates** out of the gate's own `FILE=` line rather than
+   assuming `index.html` — that is how it correctly points `gate_968` at `supplement.html`.
+3. **It resolves the control commit case-insensitively** (`\bbuild\s+NNN\b`), because this log's
+   own headings alternate between `Build NNN` and `build NNN`, and a case-sensitive grep here
+   reads like 142 missing builds.
+
+`--selftest` proves it can report a problem, three ways: a gate pointed at its own artifact comes
+back GREEN (which the sweep flags, because a passing control proves nothing); a gate pointed at an
+empty page comes back **CRASH**, not RED; and the artifact sniffer really does find `gate_968`.
+
+Full sweep at 975: **9 gates, all green on HEAD, all red on their own control**, controls resolved
+to `e6e06ea 14ca30d b38fc85 86de529 5127717 106dcec 5a67bdd 476acff 75fa11b`.
+
+### 975 follow-up — CI went red on a COMMENT, and `check_build.py` could not see it
+
+`.github/workflows/check.yml` counts `<div` against `</div>` **with a bare regex over the whole
+file**. Build 975's first push failed it: `div tags unbalanced: 4152 vs 4153`. The extra tag was
+**prose** — a comment I had just written to explain the `queue()` fix, which spelled out the
+closing div tag it was describing.
+
+**This repo's comment-pollution trap, wearing a CI hat** — and the second time in two builds it
+bit me (974's `it.price` assertion failed 3 → 3 for exactly the same reason). The comment was
+reworded; no markup changed.
+
+**The real defect is that the local ladder was laxer than CI.** `check_build.py` balanced
+`<script>` and `<style>` but not `<div>`, so a build could be green locally and red on push. It
+checks div balance now, **with the same regex `check.yml` uses on purpose** — a local gate that is
+laxer than the remote one is not a gate. Negative-controlled against the broken tree, where it
+reports `✗ <div> tag balance (4152 open / 4153 close)`.
+
+## Build 974 — one bid amount (21 Aug 2026)
+
+Fourth of the Community program's seven items, and the one that explains why the numbers
+never matched. **A community bid had SIX definitions of its own amount**, in three blocks —
+and two of them ranked the same two sources in **opposite orders**:
+
+| | first | then |
+|---|---|---|
+| the job card (`cr-cc`) | the estimate builder's total | the figure typed on the bid form |
+| the hub (`cr-ch2`'s `bidAmt`) | the figure typed on the bid form | the estimate builder's total |
+
+One job, two screens, two numbers, and neither screen said which it was showing. Analytics
+(`cr-can`) read a seventh answer — `checklist.lead.bid_amount` alone — so **every bid priced in
+the estimate builder counted as $0** in the win rate, the averages and the per-partner totals.
+
+**One resolver now, `commBidAmount(pr, est)`**, at depth 0 in the main block beside
+`pickEstimate` and `projHomeowner`. Rungs: **awarded → submitted → builder → typed → none**.
+It takes the estimate row as a **parameter** rather than reading one: `cr-cc`'s `liveEstimate()`
+is per-open-job module state, so a shared helper that called it would hand the open job's total
+to every row of a list. 971's `priceOf` is now a one-line adapter — **not** a second copy of the
+ladder — and `bidAmt` keeps its name and its six call sites.
+
+`awarded` is a new rung. `bid.awarded_amount` is written only by `ocSave`'s awarded arm, in the
+same call that sets stage Approved, so it is absent on every Lead job and cannot perturb 971's
+Lead arm. That is asserted, not argued.
+
+**The Bid tab was printing $0.00 against every line.** It multiplied `it.qty * it.price`, and
+**no line object in production carries a `price` key** — every one is
+`{qty,name,unit,amount,library_id,unit_price,description}`. ⚠️ **The obvious swap to
+`unit_price` ships a NEW wrong number**: 14 of the 18 live estimate rows are non-itemized, where
+`unit_price` is 0 and `amount` carries the money (and on row `b49d7638` the two disagree —
+`amount` is the truth). The rule the shipped document builder already uses was copied instead,
+including dropping the qty cell on a lump sum. **Live impact today is zero** — only one
+community job has estimate rows, both $0.00 drafts — so this was latent and would have fired the
+first time anyone priced a community bid in the builder.
+
+**Provenance is now on the screen**, in slots that already existed: the card pin's
+`.amt small` caption (styled since the black-card port, never once used) and the Bid tab's
+`.tot .k` label. No new CSS.
+
+**CR-COM-009 closed.** Recording who funded an award never moved the bill-to, so an awarded job
+kept invoicing whoever the bid went to. It now mirrors the referred arm — and `ocOpen`'s
+`funded_id` seed was changed from `l.partner_id` to `''` first, because `ocPartnerField` falls
+back to a free-text input when the roster is empty and never touches `funded_id`, so the old
+seed would have re-bound the bill-to to the **old** row. The `if(lp.funded_by)` guard is not
+decoration: `mergeCk` deletes a key set to `''`, so an unguarded assignment on a blank
+"— select —" would have wiped the bill-to on 13 of the 15 live jobs.
+
+⚠️ **My own counting trap, caught by my own assertion.** The self-computing check
+`count(patched,'it.price') == count(orig,'it.price') - 1` failed at 3 → 3: the explanatory
+comment I had just written *quoted the token it was documenting*. This file's comment-pollution
+rule, biting the build that cites it. The comment was reworded; the assertion was not weakened.
+
+**Two things deliberately NOT done, both offered rather than slipped in:**
+1. **Provenance in the hub's dense All-bids table.** That Amount cell collapses to a flex row
+   below 900px and a second line needs a matching rule. The designed slots (card pin, Bid tab
+   total, analytics rows) carry it; the table shows the number alone.
+2. **Repainting Analytics when `loadEst()` lands.** `loadEst`'s `.then` calls `scan()`, which
+   repaints the hub but not Analytics — so Analytics opened in the second before that fetch
+   returns shows zeros until reopened. **That is 973's behaviour too, so it is not a
+   regression**, and the fix is one line in that callback. Not slipped in.
+
+**Gate:** `gate_974.mjs`, 15 assertions, extracts and runs the shipped `priceOf`, `bidAmt`,
+`bidHtml`, `compute` and `ocSave` (with the shipped `mergeCk`, so the blank-funder guard is
+tested for real). Control on 973: **RED, 11 named failures** — the headline one being
+`card=18425 (builder)  hub=14330` for a single job, and `["$0","$12,000"]` for a single lump-sum
+line. `check_build.py` green (marker `commBidAmount`, negative control clean); sentinel clean.
+
+## Build 973 — one partner identity (21 Aug 2026)
+
+Third of the Community program's seven items. A partner had **three storage shapes** and
+nothing reconciled them: `cr-cpartners-script` wrote `checklist.lead.partner_id`,
+`cr-ch2-script`'s `partnerOf()` read `checklist.lead.partner_name`, and the referral path
+writes a free-typed `partner_name` with no id at all. So attaching a partner on the client
+card left the hub saying **"No partner recorded"**, and detaching one left a **ghost name**
+behind on every name-reading screen.
+
+**`setPartnerForProject()` now writes and clears the pair together.** Attaching resolves the
+roster row and stores `partner_id` + `partner_name`; clearing deletes both. Leaving Community
+(`cr-cct-script`) clears both as well.
+
+**A confidential partner is stored by id ONLY.** Denormalising its real name into the project
+row would leak it into the hub, the search haystack and every print path — which is exactly
+what `get()`'s mask exists to prevent. The resolution therefore happens inside the module,
+against the module-private `getRaw()`; the name is never written.
+
+**The New Bid picker was reading the unmasked roster.** It consumed `load()`'s raw return
+rather than `list()`, so a confidential partner's real name was shown to every user *and*
+written into the job. It now reads `list()`, and both `partner_name: partner.name` writes are
+guarded by `masked973` so a masked placeholder can never become the stored name. Habitat sorts
+first, as it does in every other partner list.
+
+**Deliberately deferred — the read-resolver half.** Two decisions belong to Theo before a
+resolver can prefer one shape over another: what the 4 DHRN-drifted rows should be called, and
+what happens to `partner_id` when someone free-types a referral. Zero live rows are affected by
+either. The writer half above is unambiguous and ships alone.
+
+**Gate:** `gate_973.mjs`, 9 assertions, runs the **shipped** `setPartnerForProject` against a
+recording client and the shipped `partnerOf()` against what it wrote. Control on 972: **RED, 7
+named failures** — including the hub literally answering `"No partner recorded"` for a partner
+that had just been attached, and `{"claim_type":"community","partner_name":"Habitat For
+Humanity"}` left behind after a clear. `check_build.py` green (marker `masked973`, negative
+control clean); sentinel clean against the 972 baseline.
+
+## Build 972 — a community job stops going quiet once it is awarded (21 Aug 2026)
+
+**The bug behind the bug.** `threadHtml` had arms for Lead / Prospect / OnHold /
+Approved / Completed only, so **Scheduled, Invoiced, Closed and Lost rendered no
+state and no next action** — the card went silent for the entire second half of a
+job. `gate_972`'s floor names them on the 971 control:
+`generic or missing: ["Scheduled","Invoiced","Closed","Lost"]`.
+
+Worse, and only found by measuring: **the Completed arm was itself unreachable.**
+Nothing the community card exposes could produce `Completed` — the only file-wide
+producers (`#stageSel`, `acxAdvance`, `#stageBanner .stgarrow`) all sit inside
+`#projectView` children that `#projectView.cr-cc-own > *:not(#cr-cc):not(#dangerZone)`
+hides. So 971's "Ready to invoice" arm could never fire from the card, which means
+the invoice step could never be reached either. A `complete` act fixes the whole
+chain with one `window.setStage` call — the same one every other act uses.
+
+**"Get on the calendar" now books a real day, and adds no new stage-move path.**
+It used to be `confirm('Mark this job SCHEDULED?')` + `setStage` — it touched no
+calendar at all, and live data confirms it: **0 appointments have ever existed on
+any community job.** The act now opens the app's ONE appointment composer
+(`openApptDay`, prefilled kind=job / client / title). The stage then moves itself,
+because **build 783's `__apptMayAdvanceStage` already advances Approved → Scheduled**
+whenever a `kind:'job'` appointment carrying a `project_id` is created. The old
+direct `setStage(pr.id,'Scheduled')` was **removed** in the same edit — two paths to
+one stage is the second-pipeline this project forbids, and assertion 10 pins it.
+
+⚠️ **Two premises in my own brief were wrong, and the recon measured them rather
+than repeating them:**
+- I assumed a CHECK constraint on `appointments.kind`. **There is none** —
+  `pg_constraint` returns only the PK and the `project_id` FK.
+- More importantly, **`appointments` RLS is per-creator** (`created_by = auth.email()`,
+  plus theo@ and joan@). A booked build day is therefore **not a shared fact**, so the
+  Scheduled arm must never say "nothing is booked". It says *"No build day on your
+  calendar. Whoever booked it may be the only one who can see it."* Assertion 3 fails
+  any wording that claims the stronger thing.
+
+**Closed and Lost are deliberately QUIET** — they omit `now:true`, so they take the
+calm accent dot instead of the amber urgent halo, and carry no actions. Lost reads
+`loss_reason` **defensively only and never prompts**: `setStage` skips `LOSS_REASONS`
+for community by design (Theo: *"Dont need the why we didn't get it"*) and the column
+is empty database-wide.
+
+**Adjacent, one line, in scope:** the pin's Due cell fired `hot` on `due <= 3`, and
+for every stage past Lead the bid deadline is already in the past — so the pin sat in
+**permanent amber on awarded work**, and rendered "-120d". It now paints hot only for
+a deadline still ahead (or a parked job's check-back) and reads "120d ago". Same shape
+as 971's thread fix, in the other half of the card.
+
+⚠️ **My own error again, same class as 971's:** the A1 anchor spanned the Completed
+arm *including* its closing brace, so my new arms landed outside the if-chain.
+`node --check` caught it. Two builds in a row lost a round to misreading how far an
+anchor reaches — the lesson is to print the anchor's last 40 characters before
+deciding where the replacement joins.
+
+⚠️ **And a weakness in my own gate, fixed before it shipped:** the floor assertion
+first checked only "does a card render", which **passed on the control** — `threadHtml`
+falls back to a generic "Bid requested" entry when no arm matches. A vanished arm would
+have stayed green. The floor now asserts each stage **names its own state**.
+
+**Deliberately not done:** no `Closed` action was added. Closed is a filing state;
+leave it produced only by the existing controls until Theo asks.
+
+Gates: `gate_972.mjs` **13/13 on 972; RED with 9 named failures on the 971 control** ·
+`check_build.py` green with marker + negative control · `sentinel.js` clean. One new
+export (`CardinalProduction.schedFor`, read-only) so the card asks the app's existing
+build-day resolver instead of copying its filter.
+
+## Build 971 — a community bid can finally be marked submitted (21 Aug 2026)
+
+**The audit asked why 15 of 15 community jobs sit at Lead. This is the mechanism.**
+`threadHtml`'s Lead arm was `acts: est ? [Mark it submitted, Open the bid] : [Price it]`
+— keyed on the estimate OBJECT returned by `liveEstimate()`, which reads only the
+`estimates` table. The live shape at audit time:
+
+- **15** community projects, all at `Lead`
+- **7** priced by a hand-typed `checklist.lead.bid_amount` (16,360 · 10,770 · 12,010 ·
+  18,425 · 14,330 · 14,787 · 29,460) — every one of them offered **"Price it" and
+  nothing else**, with no way out of Lead
+- `checklist.bid.submitted_amount` **NULL on all 15** — `logsub` has never once been used
+- and the **one** job carrying estimate rows carries **two `status:'draft'` rows totalling
+  `0.00`**, so object-truthiness handed the only "Mark it submitted" button to the job
+  with no price. `gate_971` reproduces that inversion on the 970 control verbatim:
+  **"Bid ready to submit — Priced at $0 across 0 line items."**
+
+**`priceOf(pr)` answers with a NUMBER**, which is the only thing that tells a real price
+from a $0.00 draft, in order of authority: what was logged as submitted → the builder's
+live total → the number typed on the bid form. It is a superset of the expression
+`ocStep2` already uses, so it is the one resolver rather than a fourth ad-hoc copy.
+
+The Lead state now has **three** truths instead of two: *ready to submit* (naming which
+source the price came from — "on the bid form — not in the estimate builder"), *needs
+pricing* (which can now also log an amount by hand), and *submitted — stage not moved*
+for a job whose amount was logged but which still reads Bid Requested.
+
+**Logging an amount now offers the move it was already stamping the date for.**
+`ccDoAct('logsub')` wrote `submitted_at` — the date the bid went to the partner — and then
+left the job at Lead. It now offers `setStage(pr.id,'Prospect')` through the **same call
+the 'submitted' arm uses** (no second stage-move path). Guarded three ways: only from
+Lead, never on the blank-clear path (`mergeCk` DELETES a key set to `''`, so clearing an
+amount must not push the job forward — the exact inverse of the bug), and the bid patch is
+awaited BEFORE `setStage`, whose own checklist patch is fire-and-forget.
+
+**Two adjacent defects found while measuring, both fixed here:**
+- `#cr-cc .doit.alt` was **inert** — equal specificity (1 id, 2 classes) to
+  `#cr-cc .ev .doit`, which sits later in source and re-declares background/border/color,
+  so the secondary button rendered identical to the primary. Measured on the control:
+  both `rgb(255, 207, 107)`. Moved last and scoped into `.ev` so it can win.
+- an overdue bid rendered **"Due in -10 days."** It now reads "Due to the partner 10 days
+  ago." — and 3 of the 15 live jobs are past due.
+
+⚠️ **My own error, caught by the gate.** The `LEAD_BRANCH` anchor was the *inside* of the
+`if(st === 'Lead'){` block, and I wrapped my replacement in a second `if`, adding an
+unbalanced brace; the repair then deleted the *original* opener because my search string
+had absorbed it. `node --check` caught both. Two rounds lost to not reading what the
+anchor actually spanned.
+
+**Deliberately out of scope, so it is a decision and not an oversight:** the Bid pane still
+says "No bid priced yet." for the 7 hand-priced jobs, and the pin/outcome-header amounts
+still ignore `bid.submitted_amount`. All three are one `priceOf()` call away and belong in
+the same follow-up as CR-UX-004 (one amount, four definitions).
+
+Gates: `gate_971.mjs` **12/12 on 971; RED with 9 named failures on the 970 control**,
+including both halves of the inversion and the inert button measured by colour · shipped
+`threadHtml` and `priceOf` extracted and executed, never re-implemented · `check_build.py`
+green with marker + negative control · `sentinel.js` clean.
+
+## Build 970 — Publish acts on the estimate you have open (21 Aug 2026)
+
+**The failure this prevents, reproduced on the 969 control:** ask `pickEstimate`
+for the estimate you have open, against rows belonging to a different client, and
+it returns **`e-OTHER-newest`** — that client's newest estimate. Publish it and the
+wrong homeowner gets a document; run → Contract and the wrong homeowner gets a
+contract. Nothing on screen says so.
+
+`window.currentProject` is written in exactly four places, and `openProject()` is
+the only one that sets it to a real job. `CardinalEstimates.openEditor()` never
+touches it, and `cr-estimates-script` — the standalone Menu → Estimates screen —
+contains **zero** occurrences of the string: `creOpenSaved(id)` re-reads the row and
+calls `est.openEditor(r.data.project_id, r.data)` with a bare id. So opening a saved
+estimate from that screen leaves the global pointing at whatever client was open
+last, or null. The id match in `pickEstimate` then fails and `return rows[0]` hands
+back a stranger.
+
+**The recon found a fourth site the audit had not named:** `cr-ess-script`
+**`hookEditor`** — the plain **Save** path, which drives `syncStageFor`. Saving an
+estimate opened that way moved the **wrong client's pipeline stage**. Same root
+cause, quieter symptom, and it would have survived a fix aimed only at the three
+publish paths.
+
+**One resolver, not four copies.** `estProjectNow()` sits beside `openEstimateId()`
+and asks the editor which project it is on before falling back to the global —
+which is exactly what `openPreview()` in `cr-epub` already did correctly, so this is
+that one answer, shared. All four capture sites now call it; a raw
+`= window.currentProject;` capture count of **0** in each of the three blocks is
+asserted by the gate.
+
+**And the fallback is gone.** `pickEstimate` now returns **null** when the estimate
+it was asked for is not in the rows, because that means the rows belong to somebody
+else. Both publish paths refuse with a sentence rather than acting — a refusal you
+can read beats a wrong contract nobody notices. The `rows[0]` path is unchanged when
+no id was asked for, and assertion 6 pins that so the legacy behaviour cannot drift.
+
+Gates: `gate_970.mjs` **11/11 on 970; RED with 9 named failures on the 969 control**,
+including the wrong-client row returned by name · `check_build.py` green with marker
++ negative control.
+
+## Build 969 — the Claims messages you could not see on a phone (21 Aug 2026)
+
+**The audit's own suggested fix was wrong, and the recon proved it before a line
+was written.** The finding said "raise these three toasts above `#pwaNav`, or route
+them through `crToast`". The first half is a **silent no-op for two of the three**:
+`.cr-c-toast` and `.cr-k-toast` are appended INTO `#cr-claims-mount` /
+`#cr-coach-mount`, which `styleMounts()` makes `position:fixed` with a non-auto
+z-index and `cr-mounthead-styles` pins at `z-index:60 !important` at every width.
+Positioned + non-auto z-index is a **stacking context**, so a z-index on a
+descendant reorders it only against its siblings inside that box — it can never
+rise over `#pwaNav`, which is 9990 in the ROOT context. A CSS-only build would have
+gone green on every mechanical gate and changed nothing on the phone. Raising the
+MOUNT instead would put the whole Claims screen over the bottom bar, contradicting
+the settled 935/962 rule ("Clearance, NOT a bigger z-index").
+
+**So: route, don't raise.** Build 735 already adopted the `window.toast` NAME with
+the `(msg, type)` signature and the 'error'/'success' vocabulary that claims and
+coach already pass at all 16 call sites — so this is **one function body per module
+and zero call-site edits**. Each keeps its old path behind
+`if (typeof window.toast === 'function')`, so nothing becomes dead markup and no
+`<style>` block changed size. `cr-ess` additionally dropped three `<b>` wrappers,
+because the shared channel is `textContent` by design (733) — the only content
+decision in the build.
+
+**A second defect went with it, for free.** `--cr-black` is `#f2f4f7` in the DARK
+base rule, so the plain claims/coach toast was white-on-near-white at **1.10:1**;
+`.success` measured **2.07:1**. Even a working z-index would have left them
+unreadable in the app's default theme. `gate_969` measures the success ink on the
+966-era body at 2.07:1 and on the new path above the floor.
+
+⚠️ **The gate's first version could not fail** — it called `window.toast` directly,
+so it was testing `crToast` (which already worked) and went GREEN on the control.
+Rewritten to **extract each module's own `toast()` source from the artifact by
+brace-matching and execute it** against the real mounts. That is the CLAUDE.md rule
+"extract the shipped function text and execute it, never a re-implementation", and
+it is what turned the control red.
+
+Gates: `gate_969.mjs` **10/10 on 969; RED with 5 named failures on the 968 control**,
+every one naming `pwaNav` as the element actually composited on top at the toast's
+own centre point · `check_build.py` green with marker + negative control ·
+`sentinel.js` clean.
+
+## Build 968 — the Supplement Desk stops signing you out of Cardinal (21 Aug 2026)
+
+**Blast radius first, because it is bigger than "this tab".** `index.html`,
+`studio.html` and `supplement.html` all call `createClient(URL, ANON)` with **no
+options** against the same project on the same origin, so all three read ONE
+stored session under the default `sb-yipslubcptjoarblzbpl-auth-token`. Only
+`visualizer/index.html` has its own key (`cr-viz-auth`). The Desk's `showApp()`
+ran `is_cardinal_admin()` and on a failed check called `sb.auth.signOut()` —
+which in supabase-js v2 defaults to **scope 'global'**, POSTing `/logout?scope=global`
+and revoking the refresh token *everywhere*. So a rep tapping the Supplement Desk
+row (visible to everyone in the insurance portal since 954) was signed out of the
+whole CRM, on every device. `gate_968` reproduces it on the 966 control:
+**`signOut called 1x`, `session present=false`**.
+
+**The refusal is now in-page and touches nothing.** A third view (`#deniedView`)
+says which of the two things happened — 671's rule that *a failed question and a NO
+are different words*: a refusal reads "Ask Theo or Joan to file the supplement" and
+offers no retry; a check that did not come back reads "That is this desk, not you"
+and does. Both say "You are still signed in", both carry **← Back to Cardinal**, and
+neither goes near the session. `adm.data !== true` is kept exactly — `is_cardinal_admin()`
+returns NULL for anon (BUG_CLASSES §12) and `!== true` is what makes NULL a refusal.
+
+**And the Desk finally has a way back.** It had none: header was Theme / Sign out, and
+`href="/"` appeared **zero** times in the file, so in the installed PWA (no browser
+chrome) it was a dead end for admins too — the only exits were an edge-swipe or the
+Sign out that killed the shared session. There is now a `← Cardinal` link in the
+header. The real Sign out is untouched and still correctly signs out everywhere.
+
+⚠️ **Deliberately NOT done: hiding the menu row for non-admins.** The audit suggested
+it; the recon found the cost. `cr-menu-script`'s `isAdmin()` is the hardcoded
+theo@/joan@ pair, but the Desk's real gate is the DB's `is_cardinal_admin()`, which
+`audit@cardinalrenovations.net` also passes — so hiding would strip the door from a
+legitimate admin while still letting them in by URL. Worse, `apply()` runs once at
+DOMContentLoaded and reads `window.currentUser` at that instant, so a token refresh
+that needs the network can hide admin rows for the whole session (a pre-existing race
+that already governs reports/feed/settings). With the refusal panel in place the row
+is harmless and teaches something; hidden, it would sometimes lie. **Do not widen
+`ADMIN_EMAILS` to "fix" this.**
+
+Gates: `gate_968.mjs` **12/12 on 968, RED with 9 named failures on the 966 control**
+(including the two that name the bug) and no crash · `node --check` on all 3 script
+blocks · `check_build.py` green on `index.html` for the stamp/CHANGELOG half.
+⚠️ `check_build.py` cannot gate `supplement.html` — it has no `data-cr-footer` stamp
+and the tool fails closed on that. Parse its blocks separately, as here.
+
+## Build 967 — a change the server refuses is no longer thrown away (21 Aug 2026)
+
+**The defect, reproduced live before it was fixed.** `gate_967.mjs` run against the
+build-966 artifact queues one offline write, has the server refuse it with a real RLS
+message, and reads the badge: the row is **gone from IndexedDB** and the chip paints
+`#123322` — the green *"All changes synced."* That is the whole bug as evidence rather
+than assertion, and it is why the audit put this first: the offline program is what
+Theo is migrating the business onto.
+
+`cr-outbox-script` `flush()` had two error branches that both ended in `del(row.id)`
+after a `console.warn` nobody reads. `networkish()` only matches network-shaped
+messages, so an RLS refusal, a CHECK violation **and a `PGRST301` 'JWT expired'**
+(plausible on the first flush after a long offline stretch, racing supabase-js's own
+token refresh) were all classified as "refused" and deleted. `badge()` then saw an
+empty queue and, because `_lastPending > 0`, painted the 873 `done` state. The punch
+card's photo outbox (`flushPhotos`) had the identical shape.
+
+**What changed.** A refused write is **kept and flagged** (`dead`/`err`/`code`/`errAt`
+on the existing row — `put()` has existed since 870, so no schema change, no `VER` bump,
+no second store). `counts()` splits live from held; `pending()` deliberately still counts
+BOTH, because the sign-out guard asks "what will be lost" and a held refusal is lost too.
+A **fifth badge state** — `stuck`, `#3a0f12`/`#ffb3ad`, **9.79:1**, inside the existing
+8.78–9.53 band and self-painted so it is identical in both themes — reads "N changes
+could not sync — tap to see" and **never auto-hides**. Tapping opens a bounded panel
+(not a full-screen view, so no `hideAllViews()` registration; **no
+`document.body.style.overflow` write — the no-14th-writer rule held, re-verified at 13
+with the lexer**) listing each held change: what record, which fields, the server's own
+reason, and **Try again** / **Discard** at the 44px floor. Editing the same target again
+revives a held row — that is the person answering the refusal.
+
+**An expired token is no longer a refusal.** `authish()` recognises `PGRST301`/401 and
+retries **once** after `getSession()` (which refreshes in supabase-js v2) before anything
+is buried. `42501` and `PGRST116` are deliberately NOT in it — those are real refusals a
+person has to see.
+
+⚠️ **One bug of my own, caught by the gate and recorded as mine:** the first cut reset
+`sentSome` per flush but not `droppedSome`, so a single refusal would have gagged the
+green "All changes synced" **forever**. `gate_967` assertion 5 ("a clean flush still
+earns it") is what failed, and it exists precisely because a one-way state machine is
+the easy mistake here.
+
+Gates: `check_build.py` green with the marker + negative control · `gate_967.mjs`
+**15/15 on 967, RED with 11 named failures on the 966 control and no crash**
+(BUG_CLASSES 37) · `sentinel.js` CLEAN, nothing new (35 findings carried from 966).
+
 ## Build 966 — a contract that says what is still blank (21 Aug 2026)
 
 Theo's option 5, and the one with the plainest job: a contract goes out with an empty box in it

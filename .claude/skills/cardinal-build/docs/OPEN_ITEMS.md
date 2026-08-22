@@ -2,6 +2,179 @@
 
 ---
 
+## ⚡ NEWEST LAYER — 21 Aug 2026, builds 967–982 (the UX audit follow-through)
+
+Source: `CR_UX_AUDIT_2026-08-21.md` / `.csv` — an end-to-end design and ease-of-use audit across
+every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60 P2, 55 P3.
+
+**SHIPPED, struck — do not re-report:**
+- **967** offline outbox deleted every write the server refused, then said "All changes synced"
+- **968** the Supplement Desk signed a rep out of the **whole CRM, on every device** (one shared
+  `storageKey`, and v2's `signOut()` defaults to scope `'global'`)
+- **969** Claims / Coach / auto-stage messages painted **under** the bottom bar. ⚠️ A bigger
+  z-index is a **silent no-op** — the mounts are stacking contexts; only leaving the mount works
+- **970** Publish / → Contract / Mark-as-Sent / Save acted on **another client's estimate**
+- **971** the community pipeline could not be advanced from the card (15 of 15 jobs at `Lead`)
+- **972** a community job went **silent from the moment it was scheduled**
+- **973** partner identity — attaching left the hub saying "No partner recorded"; the New Bid
+  picker read the **unmasked** roster
+- **974** six definitions of the bid amount, two with opposite precedence; the Bid tab printed
+  **$0.00 on every line**; analytics counted every builder-priced bid as $0
+- **975** ten dead-end numbers on the hub become doors; the fold you were filtering in used to
+  close itself on Apply
+
+- **976** a tarp had no name of its own — it was filed as a Ticket or a Callback. Five blocks
+  own the kind (dropdown, card label chain, Type facet, activity feed, chip); the label chain
+  ends by calling anything it does not recognise a punch, so a partial add is silent
+- **977** a community job doing a **free tarp before any bid** had nowhere to say so — it counted
+  as an open bid it had never been. `ck.lead.waitlist_at`, **no new `STAGES` entry** (that
+  whitelist is shared with retail and insurance)
+- **978** filing a punch-out meant finding the Production board first, and the search never
+  matched a **PO number**. Two doors onto the ONE composer (global ＋ menu, ＋ New in the Punch &
+  Repairs head) — not a second form; PO now matches bare (`1042`) and hashed (`#1042`)
+
+- **979** Punch & Repairs and the Team Directory were the last two full-screen views the header
+  could not name — both fell to `stickyCrm()` and wore whichever portal you had last used. Theo
+  picked scope **2** (both screens). ⚠️ The head moved, `data-crm` did not; and `goHome()` needed
+  a tool-screen branch in the same build or the gold house would have jumped to retail home
+
+- **980** thirty Community rules declared `font:<weight> <size> inherit` — invalid CSS, so the
+  browser discarded weight and size and used its own default. Repaired with longhands. ✅ **The
+  other 64 were swept at 983; the file-wide count is now 0**
+
+- **981** item 7 done. The community job menu mirrored a grid retired at 348, so Contracts opened
+  Estimates and Appointments opened the Schedule Board; and `#jobMenuSel` / `#woQuick` were visible
+  and inert on every community job at every width. ⚠️ **Still open: retiring `#jaGrid`** — 5 of its
+  11 references are functional, so it is its own build
+
+- **982** item 6 done. Ten single-theme inks got light values; five new `--ccm-*` pairs; the
+  funding-partner cell stopped flooding (BILL TO 2.70 → 7.90:1 dark). **The seven-item Community
+  program is complete.**
+
+- **983** ✅ **the other 64 are gone.** 58 stylesheet rules across thirteen blocks (25 of them the
+  Showcase, the client-facing surface) plus 6 inline `style=` attributes. ⚠️ Two hid behind
+  `var(--lb-sans,inherit)` — valid CSS *only if the token exists*, and `--lb-sans` has 0
+  declarations against 2 references, so the fallback was always taken and always dropped.
+  ⚠️ 983 also rewrote two `gate_980` assertions that had pinned a file-wide snapshot total and
+  therefore went red on correct code
+
+- **984** ✅ the Cardinal Truth tab strip stopped hiding "Closed" on a phone. Theo picked option 4
+  (wrap) of four measured. ⚠️ **983 caused 11px of it and 982 caused the rest** — the strip had
+  fitted with EXACTLY 0px slack, so any real claim count clipped the last tab silently. The
+  `gap:13px` fix that was first proposed was measured and rejected: it buys back only the 983
+  regression and still clips at two digits
+
+- ✅ **The CHECK now exists** (tooling, no build number). `sentinel` gained a `CLIPPED` probe: fires
+  on a scroller that is overflowing AND hides its bar, names what is off the edge, and is proven by
+  three self-test cases (one that must fire, two look-alikes that must not). ⚠️ Its first version
+  inferred "no scrollbar" from layout and reported EVERY scroller, because headless Chromium uses
+  overlay scrollbars — the self-test caught it; it now reads `scrollbar-width` and the real
+  `::-webkit-scrollbar` rule.
+
+**STILL OPEN — the sweep itself, and the checker cannot finish it alone.** 30 rules declare
+`overflow-x:auto|scroll` and **10 hide the scrollbar**. `.cr-cth-tabs` was fixed at 984; the other
+nine were measured at boot and **none is reachable** — six are not in the DOM (`.cr-lil-tabs`,
+`#cr-pae-tabs`, `.cr-ped-row`, `.cr-sf-tabs`, `.cr-ic-chips`, `.cr-sh-tabs`) and three are present at
+zero size (`.ljchips`, `.cd-crmbar`, `.pu-tabs`). They are built on demand behind navigation the
+harness does not drive. **The remaining work is teaching the harness to open and populate those nine
+surfaces — not another checker.** *This is the same blind spot that let `.cr-cth-tabs` clip for
+months.*
+
+*Superseded — the original note read:* `.cr-cth-tabs` is the FIRST of this app's **27**
+`overflow-x:auto` scrollers anyone has measured for silent clipping, and it was clipping. Every one
+of them hides its scrollbar, so a person gets no signal that content is off-screen. The check is
+mechanical — for each such element, compare `scrollWidth` to `clientWidth` **with realistic data,
+not the fixture's zeroes** — and it belongs in `sentinel` as a new probe rather than in prose (the
+BUG_CLASSES header's own rule). Expect more than one hit.
+
+**STILL OPEN, all three worth doing, none started:**
+- ✅ **DONE at 985.** Both adopted `var(--ccm-ac,#34D399)`: 1.81 → 5.15 and 1.71 → 4.89 in light,
+  dark unchanged. ⚠️ Both properties moved on `#commsCli` — `-webkit-text-fill-color` paints the
+  glyphs and `color` does not, even with `!important` (4-case Chromium control), so a `color`-only
+  patch would have shipped inert; `gate_985` proves it by pixel and was run red against exactly that
+  naive patch. `.pu-strip .sh b` turned out to already set both properties to the pair — precedent,
+  not invention. *Original finding, kept for the record:*
+
+  | site | light | dark |
+  |---|---:|---:|
+  | `.cr-pcard.community .t{ color:#34D399; }` | **1.81:1** | 8.37:1 |
+  | `body[data-crm="community"] #commsView #commsCli{…}` | **1.71:1** | 9.93:1 |
+
+  Their sibling `.viewhead` one line away already does this correctly — `var(--ccm-ac,#34D399)`,
+  which flips to `#047857` at 4.89:1 — so the repair is to adopt the token pair, not to invent a
+  colour. ⚠️ **Two traps, both of which make a naive fix ship inert or break something:**
+  `-webkit-text-fill-color` is the property actually inking `#commsCli`, so **changing `color`
+  alone does nothing**; and its `!important` exists to beat an inline `style="color:#9c1822"`, so
+  it must stay. ⚠️ There are **18 raw `#34D399` occurrences** outside `var()` fallbacks and most
+  are legitimate — the `--ccm-ac` declaration itself, the `--bnac` banner token, `CRM_COLOR` /
+  `CRM_ICON`, the `.crm-community` chips and a comment explaining the emerald. **Only these two
+  carry body text on a light ground.** Do not sweep the hex.
+
+- ✅ **DONE at 986.** Four functional references removed (markup, writer, boot-time router,
+  punch anchor); seven prose mentions kept as history. ⚠️ The router had to go in the SAME edit —
+  it dereferenced unguarded at script top level, so removing the markup alone throws at boot.
+  ⚠️ **The punch card's position changed** — re-anchored from the grid to `#acxMount`, so it now
+  sits near the top of the overview instead of just above `#solCard`. The gate cannot judge that;
+  Theo's eyes are the gate. One line to move if he dislikes it.
+- ✅ **DONE at 987, and the item was wrong.** "Light half at 3.37 on white" described ONE site;
+  there were **five** failures. Fixed four: six pill inks on tint 2.96 → 5.46, claims ink 3.37 →
+  6.21, save-status light 3.37 → 6.21, and **estimates in DARK** 3.93 → 5.88 (it had no pair at all
+  — one unscoped literal used in both themes). ⚠️ `.cr-chrome-badge` is pinned at `#C87A00`
+  per-site, because it is the one place amber is a GROUND under dark ink and deepening takes it to
+  2.80. `#8a5500` is build 942's own value, already shipped on `.lock` — no colour invented.
+  ⚠️ **`cr-bpa-script` declares ZERO `--cr-*` tokens** — CLAUDE.md's "five modules share this
+  palette" does not hold for amber.
+
+- ✅ **DONE at 988, and it was bigger than recorded.** Not one site needing taste — **three** sites
+  and **twelve** failing state/theme combinations. `--cr-black` is a SURFACE token that goes
+  near-white (`#f2f4f7`) in dark, and three floating pills used it as a GROUND under hardcoded white
+  ink: base **1.10** (invisible), `.saving` 2.25, `.saved` 2.07, `.error` 2.78 — all in the DEFAULT
+  theme. Fixed with one flipping ink token, `--cr-onsolid`, the shape 982 already shipped as
+  `--ccm-onwarn`. Worst case now 6.27. ⚠️ `.cr-chrome-top/.cr-chrome-bottom` carries the identical
+  declaration text and is CORRECT — the patch splices per style block so a file-wide sub could not
+  touch it.
+
+*Superseded — the original note read:*
+`.cr-p-save-status.saving` is white ink on `var(--cr-amber)`: **6.21 in light after 987, but 2.25 in
+dark** and unchanged. Fixing it means flipping the INK with the theme — dark ink on the pale
+dark-theme amber, white ink on the deep light-theme amber — which is inverted from intuition and
+reads oddly. Alternatives are giving the pill a fixed ground, or a different status colour.
+
+**SETTLED, 21 Aug — item 6 is option 1 and item 7 is A1/B1/C1/D1.** Theo picked both. Option 1 is
+shipping in two halves: 980 the typography, 981 the colour (`--warn` as a theme pair,
+`--ccm-nowfill` declared, the frozen light twins, and `.ct.bill`'s dark flood).
+
+**SETTLED, 21 Aug — do not re-litigate:** the Production-header scope question is answered.
+Theo picked **2**: Punch & Repairs *and* the Team Directory. Production/Sales are TOOL screens,
+not portals — home from one of them returns to YOUR CRM.
+
+**OPEN — the Community program, items 6 and 7 of seven:**
+- **Item 6 — one design era.** Four redesigns layered rather than replaced: cream dialogs left
+  over from the pre-black-card era, hardcoded light-mode literals, a **second green** beside
+  `--ccm-acc`, and 7px labels below the legible floor. This is the invariant Theo actually feels
+  and the only one of the five still standing.
+- **Item 7 — one Job Menu.** A community job's actions live in two places with different
+  contents depending on how you arrived.
+
+**OPEN — two decisions standing with Theo (build 973's read-resolver is blocked on them; ZERO
+live rows are affected either way, so there is no urgency and no data at risk):**
+- **A. The DHRN name drift.** Four jobs carry a partner name that no longer matches the roster
+  row. (1) rename the roster row to "Dayton Home Repair Network" — smallest, no code; (2) keep
+  "DHRN" and let the four jobs start reading it; (3) add a short-name column.
+- **B. A free-typed referral.** What happens to `partner_id` when someone types a funder that is
+  not on the roster? (1) clear it; (2) keep the stale id and prefer the stored name; (3) add
+  `referred_from_id` and clear `partner_id`. **Recon recommends (3), fallback (1).**
+
+**OFFERED, deliberately not slipped in (974/975):**
+- provenance in the hub's dense **All-bids** table — that Amount cell collapses to a flex row
+  below 900px and would need a matching rule; the designed slots (card pin, Bid tab total,
+  analytics rows) carry it today
+- repainting **Analytics** when `loadEst()` lands — one line in that callback. Analytics opened
+  in the second before that fetch returns shows zeros until reopened. **That is pre-975 behaviour
+  too, so it is not a regression.**
+
+---
+
 ## ⚡ NEWEST LAYER — 17 Aug 2026, builds 864–875 (read HANDOFF for the full session)
 
 **Offline-first (864–873) shipped and merged.** The field surfaces all work with no signal now
