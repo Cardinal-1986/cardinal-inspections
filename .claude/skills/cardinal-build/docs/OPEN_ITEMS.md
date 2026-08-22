@@ -64,7 +64,23 @@ every workflow including Production. 142 deduplicated findings: 4 P0, ~23 P1, 60
   `gap:13px` fix that was first proposed was measured and rejected: it buys back only the 983
   regression and still clips at two digits
 
-**STILL OPEN — a sweep nobody has run.** `.cr-cth-tabs` is the FIRST of this app's **27**
+- ✅ **The CHECK now exists** (tooling, no build number). `sentinel` gained a `CLIPPED` probe: fires
+  on a scroller that is overflowing AND hides its bar, names what is off the edge, and is proven by
+  three self-test cases (one that must fire, two look-alikes that must not). ⚠️ Its first version
+  inferred "no scrollbar" from layout and reported EVERY scroller, because headless Chromium uses
+  overlay scrollbars — the self-test caught it; it now reads `scrollbar-width` and the real
+  `::-webkit-scrollbar` rule.
+
+**STILL OPEN — the sweep itself, and the checker cannot finish it alone.** 30 rules declare
+`overflow-x:auto|scroll` and **10 hide the scrollbar**. `.cr-cth-tabs` was fixed at 984; the other
+nine were measured at boot and **none is reachable** — six are not in the DOM (`.cr-lil-tabs`,
+`#cr-pae-tabs`, `.cr-ped-row`, `.cr-sf-tabs`, `.cr-ic-chips`, `.cr-sh-tabs`) and three are present at
+zero size (`.ljchips`, `.cd-crmbar`, `.pu-tabs`). They are built on demand behind navigation the
+harness does not drive. **The remaining work is teaching the harness to open and populate those nine
+surfaces — not another checker.** *This is the same blind spot that let `.cr-cth-tabs` clip for
+months.*
+
+*Superseded — the original note read:* `.cr-cth-tabs` is the FIRST of this app's **27**
 `overflow-x:auto` scrollers anyone has measured for silent clipping, and it was clipping. Every one
 of them hides its scrollbar, so a person gets no signal that content is off-screen. The check is
 mechanical — for each such element, compare `scrollWidth` to `clientWidth` **with realistic data,

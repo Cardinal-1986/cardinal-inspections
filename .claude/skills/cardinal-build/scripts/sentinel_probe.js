@@ -12,7 +12,7 @@
  * anything outside the page.
  */
 globalThis.__sentinelProbe = () => {
-  const out = { ink: [], collapse: [], overlap: [], dead: [], unwired: [], floor: [], contain: [], overflow: null };
+  const out = { clipped: [], ink: [], collapse: [], overlap: [], dead: [], unwired: [], floor: [], contain: [], overflow: null };
 
   /* ── colour ─────────────────────────────────────────────────────────── */
   function parse(c) {
@@ -452,6 +452,85 @@ globalThis.__sentinelProbe = () => {
       out.contain.push({ el: where(el), overflow: cs.overflowY + '/' + cs.overflowX,
         behavior: cs.overscrollBehaviorY + '/' + cs.overscrollBehaviorX });
     }
+  }
+
+  /* ── CLIPPED ──────────────────────────────────────────────────────────
+     Build 984. A horizontal scroller that HIDES ITS SCROLLBAR and is currently
+     overflowing is hiding content with no affordance that anything is there.
+     `.cr-cth-tabs` was the first of this app's 30 such scrollers anyone
+     measured: scrollWidth 386 against clientWidth 354, so "Closed" sat off the
+     edge and nothing said so. It had been that way since long before anyone
+     noticed, because the FIXTURE's single-digit counts were the one case it
+     could still fit.
+
+     ⚠ Distinct from OVERFLOW, which watches the PAGE scrolling sideways. This
+     cannot be seen there: the strip legitimately scrolls INSTEAD of breaking
+     the page, so the document width never moves.
+
+     ⚠ A visible scrollbar is NOT reported. A person can see a bar and swipe;
+     that is a design choice, not a defect. Only the silent ones count.
+
+     ⚠ Judged on COMPUTED style per element, never by matching rules — the same
+     reason CONTAIN is, and the mistake that cost a round at 957. */
+  /* Collect every selector whose ::-webkit-scrollbar is display:none, once.
+     ⚠ In modern Chromium EVERY CSSStyleRule exposes an empty .cssRules for CSS
+     nesting, so the obvious `if (r.cssRules) { walk(r.cssRules); continue; }`
+     skips every style rule without examining it and returns a clean zero.
+     Examine the rule, THEN descend. */
+  const webkitHidden = [];
+  (function collect(sheets) {
+    for (const sheet of sheets) {
+      let rules; try { rules = sheet.cssRules; } catch (e) { continue; }
+      if (!rules) continue;
+      (function walk(list) {
+        for (const r of list) {
+          const sel = r.selectorText;
+          if (sel && /::-webkit-scrollbar\b/.test(sel) &&
+              r.style && /none/.test(r.style.display || '')) {
+            for (const part of sel.split(','))
+              webkitHidden.push(part.replace(/::-webkit-scrollbar.*$/, '').trim());
+          }
+          if (r.cssRules && r.cssRules.length) walk(r.cssRules);
+        }
+      })(list_of(rules));
+    }
+    function list_of(x) { return Array.prototype.slice.call(x); }
+  })(Array.prototype.slice.call(document.styleSheets));
+
+  function hidesWebkitBar(el) {
+    for (const sel of webkitHidden) {
+      if (!sel) continue;
+      try { if (el.matches(sel)) return true; } catch (e) { /* bad selector */ }
+    }
+    return false;
+  }
+
+  for (const el of document.querySelectorAll('*')) {
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none') continue;
+    if (!/auto|scroll/.test(cs.overflowX)) continue;
+    const over = el.scrollWidth - el.clientWidth;
+    if (over <= 1) continue;                       /* not overflowing: fine */
+    /* ⚠ DO NOT infer "no scrollbar" from layout. Headless Chromium uses OVERLAY
+       scrollbars, which take zero space even when perfectly visible — so an
+       `offsetHeight - clientHeight === 0` test reports EVERY scroller as
+       silent. The selftest caught exactly that: the visible-bar control fired.
+       Two deterministic signals instead, because `scrollbar-width` and the
+       -webkit pseudo-element are different mechanisms and this app uses both. */
+    const declaredNone = cs.scrollbarWidth === 'none';
+    const webkitNone = hidesWebkitBar(el);
+    if (!declaredNone && !webkitNone) continue;    /* a bar is visible: not silent */
+    /* name what is actually off the edge — a number alone is not actionable */
+    let hidden = [];
+    const box = el.getBoundingClientRect();
+    for (const kid of el.children) {
+      const k = kid.getBoundingClientRect();
+      if (k.right > box.left + el.clientWidth + 0.5)
+        hidden.push((kid.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 24));
+    }
+    out.clipped.push({ el: where(el), over: Math.round(over),
+      bar: declaredNone ? 'scrollbar-width:none' : '::-webkit-scrollbar{display:none}',
+      hidden: hidden.slice(0, 4) });
   }
 
   /* ── UNWIRED ──────────────────────────────────────────────────────────

@@ -20497,6 +20497,62 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Tooling — `sentinel` learns to see silent clipping (22 Aug 2026)
+
+**No build number and no stamp bump** — `index.html` is untouched, the same rule `gate_ship.py`
+applies. Gate and docs only.
+
+Build 984 found `.cr-cth-tabs` hiding a tab behind a hidden scrollbar. `BUG_CLASSES`'s own header
+says a class that recurs gets **a check, not another paragraph** — so this is the check.
+
+### The new probe
+
+`CLIPPED` fires on an element that is **overflowing right now** AND **hides its scrollbar**. It names
+what is off the edge, not just a number:
+
+```
+div#clip-silent hides 56px with no scrollbar (scrollbar-width:none) — off the edge: Four, Five
+```
+
+⚠️ **It is deliberately not `OVERFLOW`.** `OVERFLOW` watches the *page* scrolling sideways and
+**cannot see this**: a strip like this scrolls *instead of* breaking the page, so the document width
+never moves. That is why the existing check slept through 984's bug.
+
+⚠️ **A visible scrollbar is not reported.** A person can see a bar and swipe — a design choice, not a
+defect. Three self-test cases enforce the boundary: one silent clipper that must fire, one
+visible-bar scroller that must not, one hidden-bar strip that fits and must not.
+
+### ⚠ The self-test caught a probe that would have reported everything
+
+The first version inferred "no scrollbar" from layout — `offsetHeight - clientHeight === 0`. **In
+headless Chromium scrollbars are OVERLAY and take zero space even when perfectly visible**, so that
+test reports EVERY scroller as silent. The visible-bar control fired, and the self-test went red.
+
+Replaced with two deterministic signals: computed `scrollbar-width: none`, or a real
+`::-webkit-scrollbar{display:none}` rule found by walking `document.styleSheets` and matching the
+element against it. *This app uses both mechanisms, which is why one signal is not enough.*
+
+⚠️ That walk carries the CSS-nesting trap this repo already records: **in modern Chromium every
+`CSSStyleRule` exposes an empty `.cssRules`**, so `if (r.cssRules) { walk(r.cssRules); continue; }`
+skips every style rule and returns a clean zero. Examine the rule, *then* descend.
+
+### What it found on the app: nothing — and that is the finding
+
+**30 rules declare `overflow-x:auto|scroll`; 10 hide the scrollbar.** `.cr-cth-tabs` was fixed at
+984. The other nine were measured at boot and **not one is reachable**:
+
+| state | selectors |
+|---|---|
+| **not in the DOM at all** | `.cr-lil-tabs`, `#cr-pae-tabs`, `.cr-ped-row`, `.cr-sf-tabs`, `.cr-ic-chips`, `.cr-sh-tabs` |
+| **present, zero-sized** | `.ljchips`, `.cd-crmbar`, `.pu-tabs` |
+
+They are built on demand, behind navigation `sentinel` does not drive. **So the check is correct and
+proven, and it cannot finish this sweep on its own.**
+
+*That is the same reason `.cr-cth-tabs` survived for so long: nothing renders those surfaces with
+realistic data. The remaining work is not another checker — it is teaching the harness to open those
+nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
+
 ## Build 988 — the Saving / Saved / Error pills were invisible in dark (22 Aug 2026)
 
 Chasing 987's one leftover — `.cr-p-save-status.saving` at 2.25:1 in dark — turned up something
