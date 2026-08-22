@@ -20553,6 +20553,46 @@ proven, and it cannot finish this sweep on its own.**
 realistic data. The remaining work is not another checker — it is teaching the harness to open those
 nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
 
+## Build 990 — Magnet Board: jobs stop showing through the crew column (22 Aug 2026)
+
+Theo, with a screenshot of the board panned sideways: a **"Needs a crew"** card sitting on top of
+the Curtis and Scottie chips, its text clipped off the left edge — *"Veeds new"*, and an address
+reading *"49 Harriet"* with the leading digit gone.
+
+### One declaration, and its own sibling proves it was a defect
+
+```css
+#cr-disp .dcol .c.rail { position:sticky; left:0; z-index:4; background:var(--disp-panel,#101216) }
+#cr-disp .crewc       { position:sticky; left:0; z-index:4; background:transparent }
+```
+
+Both are the same construction — a cell pinned to the left edge so it stays put while the days pan.
+**A sticky cell slides OVER the columns, but it only MASKS them if it paints something.** The header
+rail has always painted; the crew cells never did, so every job card panning past showed straight
+through them.
+
+The fix copies the sibling's exact value rather than inventing a colour, and the board ground
+(`.dspmap`) is that same token — so **nothing changes at rest**. It only bites once the board is
+panned, which is why it survived: at `scrollLeft:0` there is nothing underneath to show through.
+
+### ⚠ The render proof took two tries, and the first one lied
+
+The first synthetic pair reported **"masked correctly" for BOTH** the transparent and opaque cases.
+The reason is the whole mechanism: **a sticky cell does not overlap anything until the container is
+actually scrolled.** At `scrollLeft:0` it sits in its natural position with nothing beneath it.
+
+The second attempt panned first — and the screenshot showed the red card running under the chip and
+clipping at the edge, exactly matching Theo's. *A green result from an unscrolled probe would have
+"proved" there was no bug at all.* `gate_990` assertion 4 pans before it measures, and says so.
+
+### Gate
+
+**`gate_990.mjs` 6/6 GREEN**, **RED on the 988 control with 3 named failures**, no crash.
+Assertion 4 builds the sticky construction from the **shipped declarations** (lifted out of the
+artifact, never re-typed), pans it, and samples the pixel. On the control it reports
+`painted rgb(58, 13, 18)` — the job card's own red, seen rather than argued. Assertion 5 puts
+`transparent` back and requires the bleed to return.
+
 ## Build 988 — the Saving / Saved / Error pills were invisible in dark (22 Aug 2026)
 
 Chasing 987's one leftover — `.cr-p-save-status.saving` at 2.25:1 in dark — turned up something
