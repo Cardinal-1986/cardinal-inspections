@@ -20553,6 +20553,60 @@ proven, and it cannot finish this sweep on its own.**
 realistic data. The remaining work is not another checker — it is teaching the harness to open those
 nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
 
+## Build 997 — accepting an estimate makes it the number (22 Aug 2026)
+
+Third pick off the build queue. `indexMoney()` took a plain **MAX** over every live estimate:
+
+```js
+if(t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
+```
+
+So a job carrying two — the ordinary shape when a homeowner is shown options — kept reporting the
+**bigger** one as Job Value after the smaller had been accepted. **Balance Due, the AR chart,
+pipeline dollars and the invoice all inherit that figure**, so one wrong precedence moved five
+surfaces at once, and the only correction available was remembering to archive every losing estimate
+by hand, on every job, forever. Theo already does that by hand — James Tiege's $10,890 sits archived
+beside $13,250.
+
+### Tiers, not a second MAX
+
+`ACCEPTED_EST = { accepted:1, signed:1 }` is tier 2, the rest of `SENT_EST` is tier 1. The highest
+tier present wins, and **within it the largest still leads** — which is what keeps a job legitimately
+carrying two accepted estimates (a roof and a siding job on one property) reporting its real top
+line rather than whichever was written last.
+
+### ⚠ Measured before shipping: NO job changes value today
+
+The build queue warned that "a job with a smaller accepted estimate will see Job Value drop on
+deploy" and asked for that to be said out loud. **It does not happen.** Queried live: only two jobs
+carry an accepted estimate — Annette Wright $14,760 and Vandalyn Robinson $12,550 — and each has
+exactly one live estimate, so neither moves. Kimberly Guy has two live estimates ($21,451 and
+$36,654) but **neither is accepted yet**, so she is unchanged too.
+
+This build is therefore **purely preventive**. It is what stops the wrong number the day that
+$21,451 is accepted while the $36,654 is still live.
+
+### `gate_997.mjs` — runs the SHIPPED function
+
+Brace-matches `indexMoney` out of the artifact and executes it, along with the artifact's own
+`SENT_EST` literal, against real row shapes. **A harness that re-implements the rule agrees with
+itself and proves nothing** — this project has been bitten by that three times.
+
+Nine assertions: the defect itself, `signed` counting as accepted, and **five look-alikes that must
+not move** — nothing-accepted still takes the max, two accepted still take the larger, an archived
+accepted is still ignored, a draft is still not money, and `estRows` still lists **both** live
+estimates (the saved-estimates list reads it, and narrowing it would empty that screen). Without
+those five the fix could have been "always take the smallest" and assertion 1 would still pass.
+
+Control on 996: **PASS 7 · FAIL 2**, naming both — *"Job Value reports 36654, but 21451 is the
+accepted one"*.
+
+### Option B was not built
+
+The queue offered a second option: prompt on accept and offer to archive the losers, naming the
+money. That is a UX addition rather than a correctness fix, they are not mutually exclusive, and
+Theo picked "4" without choosing between them. **A is shipped; B is still open.**
+
 ## Build 996 — money received has one door, and it is the one that pays the rep (22 Aug 2026)
 
 Second pick off the build queue, and the one Theo had already asked for. **Build 796, his words:**

@@ -3690,7 +3690,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 996 &#8212; money received has one door now. Payment Information and Money In &amp; Commissions sat one under the other and only the second one counted &#8212; it is what pays the rep, feeds the Friday email and sets Balance Due. Logging a payment received now takes you straight there, and any payments recorded the old way can be moved across in one tap without changing the total. Paid out and expenses are unchanged.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 997 &#8212; accepting an estimate now makes it the number. If a job carried two live estimates &#8212; options you showed at the kitchen table &#8212; Job Value quoted the bigger one even after the smaller had been accepted, and Balance Due, the invoice and the pipeline total all followed it. An accepted estimate now wins whatever its size. Nothing changes on any job today; this stops it happening the next time you accept the smaller of two.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -20359,16 +20359,38 @@ var PIPE_SKIP = { retail:{ 'OnHold':1 }, insurance:{ 'OnHold':1 } };
    circle must not move on its own while Theo is typing. */
 var SENT_EST = { sent:1, approved:1, accepted:1, signed:1 };
 
+/* 997: an ACCEPTED estimate is the number, whatever its size.
+   This took the plain MAX over every live estimate, so a job carrying two —
+   the common shape when a homeowner is shown options — reported the biggest
+   one as Job Value even after the smaller had been accepted. Balance Due, the
+   AR chart, pipeline dollars and the invoice all inherit that figure from
+   here, so one wrong precedence moved five surfaces at once. The only
+   correction available was remembering to archive every loser by hand, on
+   every job, forever.
+   ⚠ TIERS, not a second MAX. Within the winning tier the largest still wins,
+   which is what keeps a job that legitimately carries two accepted estimates
+   — a roof and a siding job on one property — reporting their real top line
+   rather than whichever was written last.
+   ⚠ MEASURED BEFORE SHIPPING: this changes NO job's Job Value today. Only two
+   jobs carry an accepted estimate and neither has a larger live sibling. It is
+   preventive — the day the $21,451 on Kimberly Guy is accepted while the
+   $36,654 is still live, this is what stops the wrong number. */
+var ACCEPTED_EST = { accepted:1, signed:1 };
 function indexMoney(estimates, contracts){
   estBest = {};
   estRows = {};
+  var estTier = {};
   (estimates || []).forEach(function(e){
     if(!e || !e.project_id) return;
     if(e.archived) return;
-    if(!SENT_EST[String(e.status || '').toLowerCase()]) return;
+    var st = String(e.status || '').toLowerCase();
+    if(!SENT_EST[st]) return;
     (estRows[e.project_id] = estRows[e.project_id] || []).push(e);
     var t = Number(e.total) || 0;
-    if(t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
+    var tier = ACCEPTED_EST[st] ? 2 : 1;
+    var cur = estTier[e.project_id] || 0;
+    if(tier > cur){ estTier[e.project_id] = tier; estBest[e.project_id] = t; }
+    else if(tier === cur && t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
   });
   ctrSigned = {};
   (contracts || []).forEach(function(c){
@@ -41351,7 +41373,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:996, d:'2026-08-22', t:'Money received has one door, and it is the one that pays the rep', s:'Two rows sat directly under each other on a job: Payment Information and Money In \u0026 Commissions. They looked like the same thing and they were not \u2014 only the second one books anything. It is what writes the rep\u2019s 10%, what fills the Friday owed email, and since build 721 it is what sets Balance Due. Every payment recorded through the first one was invisible to all three. Tapping to log a payment received now takes you straight to Money In. Payments recorded the old way are still counted, and there is a one-tap way to move them across that names every amount first and leaves the total exactly where it was. Paid out and additional expenses are job costs, not collections, and are untouched.' },
+{ b:997, d:'2026-08-22', t:'Accepting an estimate makes it the number', s:'When a job carried two live estimates \u2014 the options you show at a kitchen table \u2014 Job Value quoted whichever was biggest, even after you had accepted the smaller one. Balance Due, the invoice, the AR chart and the pipeline total all read that same figure, so one job could be wrong in five places at once, and the only fix was remembering to archive the losing estimate by hand every single time. An accepted estimate now wins whatever its size. If a job genuinely has two accepted \u2014 a roof and a siding job on one property \u2014 the larger still leads. No job in the system changes value today; this is here so it does not happen the next time.' },
+      { b:996, d:'2026-08-22', t:'Money received has one door, and it is the one that pays the rep', s:'Two rows sat directly under each other on a job: Payment Information and Money In \u0026 Commissions. They looked like the same thing and they were not \u2014 only the second one books anything. It is what writes the rep\u2019s 10%, what fills the Friday owed email, and since build 721 it is what sets Balance Due. Every payment recorded through the first one was invisible to all three. Tapping to log a payment received now takes you straight to Money In. Payments recorded the old way are still counted, and there is a one-tap way to move them across that names every amount first and leaves the total exactly where it was. Paid out and additional expenses are job costs, not collections, and are untouched.' },
       { b:995, d:'2026-08-22', t:'A 0% deposit stays 0% when you reopen the estimate', s:'If you set an estimate\u2019s deposit to nought \u2014 an insurance job where the carrier pays, or a customer you have agreed to bill at the end \u2014 reopening that estimate to change anything else quietly put the deposit back to 30%, and saving wrote that number onto the estimate. Both of the estimates Cardinal has had accepted are set to nought, so on those two it would have added $4,428 and $3,765 of down payment to paperwork the client had already signed off. Nought is now treated as a real answer and kept, which is what the contract side has always done.' },
       { b:993, d:'2026-08-22', t:'Seven strips of chips and tabs stop hiding things off the edge', s:'Several rows of filter chips and tabs scroll sideways on a phone, and they were built to hide their own scrollbar \u2014 so when a row was wider than the screen there was nothing at all to say the rest of it was there. Measured on a 390 pixel phone: the photo editor was hiding \u201cUndo\u201d and \u201cClear\u201d, a claim was hiding Documents, iTel and Record, the Showcase was hiding the button that gets you back out of it, Insurance Clients was hiding four of its seven stages, the photo album was hiding four of six sections, and the Line Item Library was hiding five of its eight categories. All seven now wrap onto a second line instead of running off the edge. Nothing moves on a tablet or a desktop, where they already fitted.' },
       { b:991, d:'2026-08-22', t:'Magnet Board: a long title no longer stretches its row', s:'A repair called \u201cneeds new aluminum gable vent installed\u201d was wrapping to four lines, making its card 88 pixels tall against a 52 pixel row \u2014 so one long title stretched the whole row and pushed the board about. Job and repair titles now stop at two lines with an ellipsis; tap the card to see the rest. Ordinary titles are unaffected.' },
