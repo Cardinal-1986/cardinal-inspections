@@ -72,8 +72,12 @@ not the fixture's zeroes** — and it belongs in `sentinel` as a new probe rathe
 BUG_CLASSES header's own rule). Expect more than one hit.
 
 **STILL OPEN, all three worth doing, none started:**
-- **Two Community greens that 982 missed — light theme only.** Verified present verbatim in the
-  shipped file at 983, both raw `#34D399` on a near-white ground:
+- ✅ **DONE at 985.** Both adopted `var(--ccm-ac,#34D399)`: 1.81 → 5.15 and 1.71 → 4.89 in light,
+  dark unchanged. ⚠️ Both properties moved on `#commsCli` — `-webkit-text-fill-color` paints the
+  glyphs and `color` does not, even with `!important` (4-case Chromium control), so a `color`-only
+  patch would have shipped inert; `gate_985` proves it by pixel and was run red against exactly that
+  naive patch. `.pu-strip .sh b` turned out to already set both properties to the pair — precedent,
+  not invention. *Original finding, kept for the record:*
 
   | site | light | dark |
   |---|---:|---:|

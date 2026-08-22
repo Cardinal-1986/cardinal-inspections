@@ -20497,6 +20497,68 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 985 — two more Community greens read on the light theme (21 Aug 2026)
+
+The two 982 missed, both raw `#34D399` with no light value:
+
+| site | ground | before | after |
+|---|---|---:|---:|
+| `.cr-pcard.community .t` (project card title) | light `#f7f8f7` | **1.81** | **5.15** |
+| `#commsCli` (client name by "Communications") | light `#f1f2f1` | **1.71** | **4.89** |
+| both | dark `#161918` / `#1e2220` | 9.21 / 8.37 | **unchanged** |
+
+### Why a token pair, and why a computed literal could not have worked
+
+| ground | `#34D399` | `#047857` |
+|---|---:|---:|
+| light `#f7f8f7` | 1.81 ❌ | 5.15 ✅ |
+| light `#f1f2f1` | 1.71 ❌ | 4.89 ✅ |
+| dark `#161918` | 9.21 ✅ | 3.23 ❌ |
+
+**Neither literal clears the floor in both themes.** Only `--ccm-ac` does, because it *is* `#34D399`
+in dark and `#047857` in light. Here the repo's "prefer an existing token PAIR to a computed
+literal" rule is not a style preference — it is the only thing that works.
+
+### ⚠ The trap: `-webkit-text-fill-color` beats `color`, even `!important`
+
+`#commsCli` sets both properties. Proven in a 4-case Chromium control, pixel-sampled:
+
+| case | painted |
+|---|---|
+| `color` alone | `#047857` — the color property |
+| `color` + `-webkit-text-fill-color` | **`#34D399` — the fill wins** |
+| reversed source order | **`#34D399` — still the fill** |
+| **`color:#047857 !important` + fill** | **`#34D399` — inert** |
+
+So a patch changing `color` alone would have passed every CSS-text check and rendered **exactly as
+before**. Both properties move.
+
+**And the `!important` had to stay** — it beats an inline `style="color:#9c1822;"` on the span,
+which is the *retail* red. Assertion 6 guards it.
+
+### The negative control found a precedent, not a bug
+
+`check_build.py` went RED on its first run: the marker
+`-webkit-text-fill-color:var(--ccm-ac,#34D399)` was **already present in 984**. Not a mistake —
+`.pu-strip .sh b` has been setting **both** properties to the token pair all along. *Setting both is
+this app's existing convention; 985 follows it rather than inventing it.* Marker re-aimed at
+`color:var(--ccm-ac,#34D399) !important`, which is genuinely new.
+
+### Gate
+
+**`gate_985.mjs` 9/9 GREEN**, **RED on the 984 control with 4 named failures**, no crash.
+
+⚠️ **Assertion 4 samples the PAINTED PIXEL, not the declaration**, and it was proved against a
+deliberately-broken copy of the artifact carrying the *naive* fix (`color` only). That copy goes
+**RED with the diagnostic that matters**: `pcard painted #047857, commsCli painted #34d399` — the
+card repaired itself because it has no fill property, and the client name did not move at all.
+*A CSS-text gate would have called that patch green.*
+
+### ⚠ Note for whoever reads this next
+
+`--marker` cannot take a value starting with `-`; argparse eats it as a flag. Use `--marker=…`.
+Cost two runs.
+
 ## Build 984 — the Cardinal Truth tabs stop hiding the last one (21 Aug 2026)
 
 Theo's option **4** of four offered. On a phone the Cardinal Truth tab strip was cutting off
