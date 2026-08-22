@@ -138,10 +138,33 @@ Measured at 390px, then fixed with 984's `flex-wrap:wrap`: `.cr-lil-tabs` **525p
 (**the way out of the Showcase**). Clean and left alone: `.pu-tabs`, `.cd-crmbar`, `.cr-cth-tabs`.
 `.cr-sf-tabs` was **deleted** — its strip went at build 928 and five orphan rules outlived it.
 
-⚠️ **STILL OPEN, and it is new debt, not this build's:** the ten new states swept twenty-one screens
-nothing had ever rendered, and reported **51 findings — 31 INK, 20 DEAD** — at 390px alone. None was
-introduced by 993; all of it has been shipped and unmeasured for months. It is carried, not hidden.
-Working it down is its own arc.
+⚠️ **STILL OPEN — debt the reach exposed, none of it this build's.** The walk went 15 states → 25,
+and screens nothing had ever rendered came with findings attached: a plain sweep at 390px reports
+**51 (31 INK · 20 DEAD)** across the 25 states. Run through the identical probe against 991,
+`--since` says **SENTINEL CLEAN — 50 renders, nothing new, 185 carried** at 390 + 1194px. So **993
+introduced none of it** and the seven wrapped strips cost nothing in ink, overlap or collapse — but
+185 is now the honest standing number, and it was ~half that when half the app was invisible to the
+instrument. Working it down is its own arc.
+
+⚠️ **Three gates are red on `main` and were red before 993 — proved by running them against the 991
+artifact and with the pre-993 setup; identical failures in all three configurations.** Reported, not
+absorbed:
+
+- **`gate_944`** — two `<input>` controls on the **Crews** screen measure **289×35 and 289×33**
+  against the 44px touch floor. A real, shipped defect; 944's own arc, not this one.
+- **`gate_951` (6 fails) and `gate_953` (3 fails)** — both assert the left rail has **Insurance**,
+  **Production** and **Community** sections. The shipped rail has `Daily · Sell · CRMs · Resources ·
+  Admin`. **Either the rail was restructured and both gates were never updated, or the sections were
+  lost.** That is a question for Theo before anyone "fixes" either side — the gates encode seven
+  Insurance rows and four Production rows that a person may still be looking for.
+
+✅ **`gate_981`'s assertion 9 was the fourth, and it was mine.** Written at 981 it required
+`id="jaGrid"` to still be PRESENT, because 5 of the grid's 11 references were functional then. **Build
+986 retired the grid properly** and the assertion has been asserting the opposite of the shipped
+truth ever since — red on main, unnoticed. Re-measured: **7 occurrences, all seven prose**, zero
+functional. Rewritten at 993 to assert the retirement is complete, on the FUNCTIONAL forms rather
+than the bare name, and **run red against a tree with the markup re-inserted** so it has been seen to
+fail. *Fix the gate when the gate is wrong.*
 
 ⚠️ **Also new:** the sentinel's watchdog was a flat 240s and the longer walk went straight through
 it. Now budgeted per render with a `--deadline` override. The walk is ~60% longer — the honest price

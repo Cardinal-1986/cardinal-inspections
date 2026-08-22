@@ -20661,8 +20661,31 @@ A single-viewport sweep reported `SENTINEL TIMEOUT`. Not a false pass — but **
 always answers UNKNOWN is a gate nobody runs**, and the next person to add a state would have retired
 the instrument without noticing. The deadline is now budgeted per render (states × viewports ×
 themes, doubled by `--since`) with a `--deadline <seconds>` override, and the timeout line prints
-what it was budgeted for. The walk is ~60% longer than it was; that is the honest price of measuring
-ten more surfaces.
+what it was budgeted for. The walk is ~60% longer than it was (15 states → 25, ~10.5s a render);
+that is the honest price of measuring ten more surfaces.
+
+### What the sweep proved, and what it turned up that is not ours
+
+`--since` against 991 through the identical probe: **SENTINEL CLEAN — 50 renders, nothing new, 185
+carried** at 390 + 1194px. The seven wrapped strips introduce **no** ink, overlap, collapse or dead
+rule. A plain sweep at 390px reports **51 findings (31 INK · 20 DEAD)** across the 25 states — all of
+it shipped and unmeasured for months, now carried rather than hidden.
+
+**37 gates share `__SEED__`; all 37 were re-run.** 33 green. The four reds were each run again
+against the **991 artifact** and against the **pre-993 setup**, and failed identically in all three
+configurations — so none is this build's:
+
+- `gate_944` — two `<input>`s on **Crews** at 289×35 and 289×33 against the 44px floor. Real, and
+  944's arc, not this one.
+- `gate_951` / `gate_953` — both expect **Insurance**, **Production** and **Community** sections in
+  the left rail; the shipped rail is `Daily · Sell · CRMs · Resources · Admin`. Question for Theo
+  before either side is "fixed".
+- `gate_981` assertion 9 — **stale, and mine.** It required `id="jaGrid"` to be PRESENT, which was
+  true at 981 and stopped being true at **986**, when the grid was properly retired. Red on main
+  since, unnoticed. Re-measured: 7 occurrences, **all seven prose**, zero functional. Rewritten to
+  assert the retirement is complete — on the functional forms, not the bare name, because a comment
+  quoting its own identifier is what breaks a file-wide count — and **run red against a tree with the
+  markup re-inserted**, so it has been seen to fail.
 
 ## Build 991 — Magnet Board: a long title no longer stretches its row (22 Aug 2026)
 
