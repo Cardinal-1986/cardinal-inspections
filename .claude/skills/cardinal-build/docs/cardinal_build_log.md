@@ -20553,6 +20553,59 @@ proven, and it cannot finish this sweep on its own.**
 realistic data. The remaining work is not another checker — it is teaching the harness to open those
 nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
 
+## Build 998 — a build day on the calendar names its job (22 Aug 2026)
+
+Fourth pick off the build queue, and **the missing precondition for code that already shipped.**
+
+The client box read `Client (optional)` for every kind, so Curtis books a build by typing an address
+and leaves it blank. `__apptMayAdvanceStage` then returns early:
+
+```js
+if(!fields || fields.kind !== 'job' || !fields.project_id) return;
+```
+
+No project id, no advance to `Scheduled`. No `Scheduled`, no Needs-a-crew rail. **So the whole
+arm-and-place workflow built at 949 has had an empty tray in production since the day it shipped.**
+
+Measured live: **zero projects at stage Scheduled**, and **both** of the two `job` appointments in
+the database are orphans — *"2805 aerial ave"* and *"Inspect the Formunda Under Cheese"*.
+
+### ⚠ Scoped to job and drop, and that scoping is the build
+
+**Ten of the fifteen appointments in the database have no client and are perfectly correct** — they
+are Theo's own diary: *"Hair cut"*, *"Higgins Tax Guy"*, *"Chase"*. Requiring a client on those
+would break a working screen to fix a different one. The label now changes with the kind (`Job *`
+against `Client (optional)`), so it warns before the refusal does, and the refusal says what it
+costs rather than just "required".
+
+### The two already in the calendar are repaired, not deleted
+
+`apptAttachJob()` lists the jobs and attaches one, reusing the same project list the form's own
+select is built from.
+
+⚠ **`adb` had no `update`** — only `list`, `create`, `remove`. The first draft called
+`adb.update(...)` and would have thrown at runtime; every mechanical gate was green, because it is
+syntactically perfect. `adb.update` now mirrors `create`'s two paths **and its call to
+`__apptMayAdvanceStage`** — attaching the job IS the moment the stage should advance, so leaving
+that out would have repaired the row and still left the job off the crew board, which is the entire
+defect.
+
+### `gate_998.mjs` — 12 assertions
+
+⚠ **The first draft opened the wrong screen.** `openApptsPage()` is the per-client sub-page;
+`openApptDay(ds)` is the calendar day modal that actually carries `#apptSave`, `#apptKind` and
+`#apptClient`. Because `#apptSave` is static markup, the "form opened" assertion passed
+**vacuously** while the client select was never filled — which made a correctly-filled build day
+look refused and sent me hunting a bug that did not exist. The gate now navigates the way the app
+navigates and **asserts the job list is actually populated**, so that vacuity is closed.
+
+Two look-alikes carry the build: an ordinary appointment still saves with no client, and a job WITH
+a job saves. Without them the fix could have been "refuse everything" and the first assertion would
+still pass.
+
+Control on 997: **PASS 5 · FAIL 7**, exit 1, named — including *"adb.update does not exist, so the
+attach button would throw"*.
+
 ## Build 997 — accepting an estimate makes it the number (22 Aug 2026)
 
 Third pick off the build queue. `indexMoney()` took a plain **MAX** over every live estimate:

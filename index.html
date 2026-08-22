@@ -3690,7 +3690,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 997 &#8212; accepting an estimate now makes it the number. If a job carried two live estimates &#8212; options you showed at the kitchen table &#8212; Job Value quoted the bigger one even after the smaller had been accepted, and Balance Due, the invoice and the pipeline total all followed it. An accepted estimate now wins whatever its size. Nothing changes on any job today; this stops it happening the next time you accept the smaller of two.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 998 &#8212; a build day on the calendar has to say which job it is. Booking a build by typing an address and leaving the client box blank made an appointment attached to nothing, so the job never moved to Scheduled and never reached the crew board &#8212; which is why the &#8220;needs a crew&#8221; rail has always been empty. Job and Material Drop now ask for the job; ordinary appointments are unchanged, and the two build days already booked without one can be attached rather than redone.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8182,7 +8182,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <option value="team">&#127970; Team &#8212; meeting / vacation / PTO</option>
         </select></label>
       <label>Time<input type="time" id="apptTime"></label>
-      <label>Client (optional)
+      <label id="apptClientLbl">Client (optional)
         <select id="apptClient"><option value="">&#8212; none &#8212;</option></select></label>
     </div>
     <label>Notes<input type="text" id="apptNotes" autocomplete="off"></label>
@@ -10851,6 +10851,23 @@ var adb = {
     fields.id = uid(); fields.created_by = null;
     var l = alsLoad(); l.push(fields); alsSave(l);
     await __apptMayAdvanceStage(fields);     /* 783 */
+  },
+  /* 998: attaching a job to a build day already in the calendar. It mirrors
+     create()'s two paths AND its call to __apptMayAdvanceStage — attaching the
+     job IS the moment the stage should advance, so leaving that out would
+     repair the row and still leave the job off the crew board, which is the
+     whole defect. */
+  update: async function(id, fields){
+    if(TEAM){
+      var r = await sb.from('appointments').update(fields).eq('id', id);
+      if(r.error) throw r.error;
+    }else{
+      var l = alsLoad();
+      l.forEach(function(x){ if(x.id === id) Object.assign(x, fields); });
+      alsSave(l);
+    }
+    var row = (cacheAppts || []).filter(function(x){ return String(x.id) === String(id); })[0] || {};
+    await __apptMayAdvanceStage(Object.assign({}, row, fields));
   },
   remove: async function(id){
     if(TEAM){
@@ -22295,10 +22312,39 @@ function renderApptList(){
           (a.notes ? (pr ? ' \u00b7 ' : '') + esc(a.notes) : '') +
           (a.created_by ? ' \u00b7 ' + esc(a.created_by.split('@')[0]) : '') + '</small>' : '') +
       '</span>' +
+      ((!pr && (a.kind === 'job' || a.kind === 'drop'))
+        ? '<button class="chipbtn" data-apptattach="' + a.id + '" ' +
+            'style="margin-left:8px;">Attach to a job</button>'
+        : '') +
       '<button class="del" title="Delete">\u2715</button></div>';
   }).join('');
 }
+/* 998: the two job days already in the calendar carry no job, and deleting
+   them would lose a real booking. This attaches one instead, reusing the same
+   project list the form's own select is filled from. */
+async function apptAttachJob(id){
+  var a = cacheAppts.filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!a) return;
+  var opts = (cacheProjects || []).slice().sort(function(x, y){
+    return String(x.name || '').localeCompare(String(y.name || ''));
+  });
+  if(!opts.length){ alert('No jobs to attach to yet.'); return; }
+  var pick = prompt('Which job is "' + a.title + '" for?\n\n' +
+    opts.map(function(p, i){ return (i + 1) + '. ' + (p.name || '(no name)') +
+      (p.address ? ' \u2014 ' + p.address : ''); }).join('\n') +
+    '\n\nType the number:');
+  if(pick === null) return;
+  var n = parseInt(String(pick).trim(), 10);
+  if(!(n >= 1 && n <= opts.length)){ alert('That is not one of the numbers listed.'); return; }
+  try{
+    await adb.update(a.id, { project_id: opts[n - 1].id });
+    cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
+    renderApptList(); renderCalendar();
+  }catch(e){ alert('Could not attach it: ' + ((e && e.message) || e)); }
+}
 document.getElementById('apptList').addEventListener('click', async function(e){
+  var att = e.target.closest('[data-apptattach]');
+  if(att){ apptAttachJob(att.getAttribute('data-apptattach')); return; }
   var del = e.target.closest('.del');
   if(!del) return;
   var row = del.closest('.apptrow');
@@ -22312,9 +22358,48 @@ document.getElementById('apptList').addEventListener('click', async function(e){
 });
 document.getElementById('apptClose').addEventListener('click', function(){ apptModal.style.display = 'none'; });
 apptModal.addEventListener('click', function(e){ if(e.target === apptModal) apptModal.style.display = 'none'; });
+/* 998: the label is the first thing that says a job day needs its job, so it
+   changes with the kind rather than reading "(optional)" and then refusing. */
+function apptSyncClientLabel(){
+  var k = (document.getElementById('apptKind') || {}).value || 'appt';
+  var lbl = document.getElementById('apptClientLbl');
+  var sel = document.getElementById('apptClient');
+  if(!lbl || !sel) return;
+  var needs = (k === 'job' || k === 'drop');
+  var first = sel.querySelector('option[value=""]');
+  if(first) first.textContent = needs ? '\u2014 pick a job \u2014' : '\u2014 none \u2014';
+  lbl.childNodes[0].nodeValue = needs ? 'Job *' : 'Client (optional)';
+}
+(function(){
+  var k = document.getElementById('apptKind');
+  if(k) k.addEventListener('change', apptSyncClientLabel);
+})();
 document.getElementById('apptSave').addEventListener('click', async function(){
   var title = document.getElementById('apptTitle').value.trim();
   if(!title){ document.getElementById('apptError').textContent = 'Enter what the appointment is.'; return; }
+  /* 998: a job day has to name its job.
+     The client box was optional for every kind, so a build booked by typing an
+     address and leaving it blank produced an appointment attached to nothing —
+     and __apptMayAdvanceStage returns early unless the appointment is kind
+     'job' AND carries a project_id. The job therefore never reached Scheduled,
+     never reached the Needs-a-crew rail, and the whole arm-and-place workflow
+     built at 949 had an empty tray in production. Measured: ZERO projects at
+     stage Scheduled, and both of the two 'job' appointments in the database
+     are orphans.
+     ⚠ Scoped to job and drop ONLY. An ordinary appointment legitimately has no
+     client — ten of the fifteen in the database are Theo's own diary ("Hair
+     cut", "Higgins Tax Guy") — and requiring one there would break a working
+     screen to fix a different one. */
+  var _kind = document.getElementById('apptKind').value || 'appt';
+  var _needsJob = (_kind === 'job' || _kind === 'drop');
+  var _cli = document.getElementById('apptClient');
+  if(_needsJob && !_cli.value){
+    document.getElementById('apptError').textContent =
+      'Pick the job this ' + (_kind === 'job' ? 'build day' : 'delivery') +
+      ' is for \u2014 without it the job never reaches Scheduled and no crew can be put on it.';
+    try{ if(window.crValid && crValid.shake) crValid.shake(_cli); else _cli.focus(); }catch(_){ _cli.focus(); }
+    return;
+  }
   var f = {
     title: title,
     appt_date: apptDay,
@@ -41373,7 +41458,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:997, d:'2026-08-22', t:'Accepting an estimate makes it the number', s:'When a job carried two live estimates \u2014 the options you show at a kitchen table \u2014 Job Value quoted whichever was biggest, even after you had accepted the smaller one. Balance Due, the invoice, the AR chart and the pipeline total all read that same figure, so one job could be wrong in five places at once, and the only fix was remembering to archive the losing estimate by hand every single time. An accepted estimate now wins whatever its size. If a job genuinely has two accepted \u2014 a roof and a siding job on one property \u2014 the larger still leads. No job in the system changes value today; this is here so it does not happen the next time.' },
+{ b:998, d:'2026-08-22', t:'A build day on the calendar has to say which job it is', s:'Booking a build meant typing an address and picking \u201CJob\u201D \u2014 and the client box said \u201Coptional\u201D, so it usually stayed empty. An appointment attached to no job cannot move that job to Scheduled, which means it never reaches the crew board, which is why the \u201Cneeds a crew\u201D rail has been empty since it was built. Job and Material Drop now ask for the job, and say why if you skip it. Ordinary appointments are untouched \u2014 a haircut has no client. The two build days already in the calendar without a job can be attached to one instead of being deleted and booked again.' },
+      { b:997, d:'2026-08-22', t:'Accepting an estimate makes it the number', s:'When a job carried two live estimates \u2014 the options you show at a kitchen table \u2014 Job Value quoted whichever was biggest, even after you had accepted the smaller one. Balance Due, the invoice, the AR chart and the pipeline total all read that same figure, so one job could be wrong in five places at once, and the only fix was remembering to archive the losing estimate by hand every single time. An accepted estimate now wins whatever its size. If a job genuinely has two accepted \u2014 a roof and a siding job on one property \u2014 the larger still leads. No job in the system changes value today; this is here so it does not happen the next time.' },
       { b:996, d:'2026-08-22', t:'Money received has one door, and it is the one that pays the rep', s:'Two rows sat directly under each other on a job: Payment Information and Money In \u0026 Commissions. They looked like the same thing and they were not \u2014 only the second one books anything. It is what writes the rep\u2019s 10%, what fills the Friday owed email, and since build 721 it is what sets Balance Due. Every payment recorded through the first one was invisible to all three. Tapping to log a payment received now takes you straight to Money In. Payments recorded the old way are still counted, and there is a one-tap way to move them across that names every amount first and leaves the total exactly where it was. Paid out and additional expenses are job costs, not collections, and are untouched.' },
       { b:995, d:'2026-08-22', t:'A 0% deposit stays 0% when you reopen the estimate', s:'If you set an estimate\u2019s deposit to nought \u2014 an insurance job where the carrier pays, or a customer you have agreed to bill at the end \u2014 reopening that estimate to change anything else quietly put the deposit back to 30%, and saving wrote that number onto the estimate. Both of the estimates Cardinal has had accepted are set to nought, so on those two it would have added $4,428 and $3,765 of down payment to paperwork the client had already signed off. Nought is now treated as a real answer and kept, which is what the contract side has always done.' },
       { b:993, d:'2026-08-22', t:'Seven strips of chips and tabs stop hiding things off the edge', s:'Several rows of filter chips and tabs scroll sideways on a phone, and they were built to hide their own scrollbar \u2014 so when a row was wider than the screen there was nothing at all to say the rest of it was there. Measured on a 390 pixel phone: the photo editor was hiding \u201cUndo\u201d and \u201cClear\u201d, a claim was hiding Documents, iTel and Record, the Showcase was hiding the button that gets you back out of it, Insurance Clients was hiding four of its seven stages, the photo album was hiding four of six sections, and the Line Item Library was hiding five of its eight categories. All seven now wrap onto a second line instead of running off the edge. Nothing moves on a tablet or a desktop, where they already fitted.' },
