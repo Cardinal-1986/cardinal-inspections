@@ -20497,6 +20497,71 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 987 — the amber warning colour is readable again (22 Aug 2026)
+
+The open item read *"`--cr-amber`'s light half `#C87A00` measures 3.37:1 on white."* **Measured,
+that describes exactly one site.** There were **five** failures and they pull in opposite
+directions.
+
+| # | site | theme | before | after |
+|---|---|---|---:|---:|
+| 1 | six pill inks on `--cr-amber-tint` `#FBEFDA` | light | 2.96 ❌ | **5.46 ✅** |
+| 2 | claims `partial` ink on white | light | 3.37 ❌ | **6.21 ✅** |
+| 3 | `.cr-p-save-status.saving`, white ink on amber | light | 3.37 ❌ | **6.21 ✅** |
+| 4 | estimates ink on its dark tint | **dark** | 3.93 ❌ | **5.88 ✅** |
+| 5 | `.cr-p-save-status.saving`, white on amber | **dark** | 2.25 ❌ | **2.25 — OPEN** |
+
+**The recorded 3.37 was the *least* bad of them.** The common case — ink on the module's own amber
+tint — sat at **2.96**, and #4 was a **dark**-theme failure the "light half" framing hid completely.
+
+### Two structural findings the one-liner missed
+
+**Estimates had no pair at all.** `cr-estimates-styles` declared `--cr-amber: #C87A00` **once,
+unscoped**, so it used the *light* value in both themes — while its own `--cr-amber-tint` delegated
+to `--rbe-ambertint` and flipped correctly. An asymmetry, not a design. Proven in the gate's negative
+control, which resolves the token in a real engine and reports **`light "#C87A00", dark "#C87A00"`**.
+
+**`cr-bpa-script` declares zero `--cr-*` tokens** — measured, 0 occurrences in its 7,595-char block.
+CLAUDE.md's "five modules share one identical palette" does **not** hold for amber. Nine declarations
+across five blocks, not four.
+
+### ⚠ Why this was not a one-line token change
+
+Deepening helps every site where amber is **ink on a pale ground** and hurts the one where it is the
+**ground under dark ink**:
+
+| | `#C87A00` | `#8a5500` |
+|---|---:|---:|
+| six pill inks on tint | 2.96 ❌ | **5.46 ✅** |
+| claims ink on white | 3.37 ❌ | **6.21 ✅** |
+| **`.cr-chrome-badge`, `#1a1a1a` ink ON amber** | **5.17 ✅** | **2.80 ❌** |
+
+The badge is pinned **per-site**, following build **942**'s precedent — which had already done
+exactly this for `#cr-pricing-mount .lock`, at the same `#8a5500`. **No colour was invented here**;
+942 chose it and shipped it.
+
+Same hue, deepened — never a hue swap, which is the 557 rule: a hue change makes the two themes read
+as two different components.
+
+### Gate
+
+**`gate_987.mjs` 8/8 GREEN**, **RED on the 986 control with 7 named failures**, no crash.
+Assertions 5 and 6 resolve the tokens in Chromium rather than reading the stylesheet, because a
+token can be declared and still not reach the element. Assertion 7 is 6's own control: it strips the
+badge pin from a copy and requires the paint to change to `rgb(138, 85, 0)`.
+
+⚠️ **Assertion 1 was wrong on its first run and the gate caught it** — it expected **4** light
+declarations when the correct answer is **5** (four siblings, plus the light-scoped rule estimates
+never had). *A number from my mental model of the change rather than from the change itself.* Light
+and dark both come to 5 now, symmetric.
+
+### Left open, deliberately
+
+**#5 — `.cr-p-save-status.saving`, white ink on amber, 2.25:1 in dark.** Fixing it means flipping the
+ink with the theme (dark ink on the light dark-theme amber, white ink on the deep light-theme amber),
+which is inverted from intuition and reads oddly. **That is a design call, not a measurement**, and
+it is Theo's.
+
 ## Build 986 — the retired Job Activity grid is gone (21 Aug 2026)
 
 Keeper replaced the Job Activity grid at build **348**. The element was never removed, and

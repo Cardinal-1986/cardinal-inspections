@@ -3690,7 +3690,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-21 build 986 &#8212; the retired Job Activity grid is finally gone. Keeper replaced it back at build 348 and the app has been rebuilding and re-wiring all nine of its tiles on every client profile ever since, for a panel nobody could see. The job menu you actually use is unchanged</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 987 &#8212; the amber warning colour is readable again. Status pills across Pricing, Claims, Adjusters and Coach were painting a light-mode amber that sat at about 3 to 1 against their own background, and Estimates had never been given a dark value at all</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -27434,7 +27434,12 @@ body.claim-insurance #brandLogo{
     --cr-red-dark: #B01F21;
     --cr-red-tint: var(--rbe-redtint);
     --cr-red-tint-2: var(--rbe-redtint2);
-    --cr-amber: #C87A00;
+    /* 987: was #C87A00 declared ONCE and unscoped, so estimates used the LIGHT value
+       in both themes and its ink measured 3.93:1 on the dark tint. Its sibling
+       --cr-amber-tint already delegated to --rbe-ambertint and flipped correctly, so
+       this was an asymmetry, not a design. Base is the dark value now, like the other
+       four modules; the light half is at the end of this block. */
+    --cr-amber: #e0a13a;
     --cr-amber-tint: var(--rbe-ambertint);
     --cr-green: #2E7D32;
     --cr-green-tint: var(--rbe-greentint);
@@ -27765,6 +27770,18 @@ body.claim-insurance #brandLogo{
   .cre-sum{display:flex;justify-content:flex-end;gap:12px;border-top:1px solid var(--rbe-line);margin-top:10px;padding-top:10px;font:700 12px ui-monospace,Menlo,monospace;color:var(--rbe-mute);flex-wrap:wrap;}
   .cre-sum b{color:var(--rbe-money);font-size:14px;}
 }
+
+/* 987 — the light half, shaped like the four sibling modules
+   (:root[data-theme="rb-light"] #cr-<x>-mount). This block had no mount-scoped light
+   rule at all; it themed by delegating to --rbe-* tokens, and --cr-amber was the one
+   token left behind. */
+:root[data-theme="rb-light"] #cr-estimates-mount{--cr-amber:#8a5500}
+/* ⚠ 987 — THE BADGE MOVES THE OPPOSITE WAY, and it is the reason this build is not a
+   one-line token change. Everywhere else --cr-amber is INK on a pale ground, so
+   deepening it helps. Here it is the GROUND under #1a1a1a ink, so deepening HURTS:
+   #1a1a1a on #8a5500 is 2.80:1, against 5.17:1 on #C87A00. Pinned to the old value,
+   per-site, following build 942's precedent rather than sweeping the token. */
+:root[data-theme="rb-light"] .cr-chrome-badge{background:#C87A00}
 </style>
 
 <!-- ═══ Mount point ═══════════════════════════════════════════ -->
@@ -29057,7 +29074,7 @@ function showList() {
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
   --cr-red-tint-2:#FEF7F7;
-  --cr-amber:#C87A00;
+  --cr-amber:#8a5500;/* 987: was #C87A00 — 2.96:1 as ink on --cr-amber-tint #FBEFDA and 3.37:1 on white, both under the floor. #8a5500 is build 942's own value, already shipped on #cr-pricing-mount .lock, so no colour is invented here: 5.46:1 on the tint, 6.21:1 on white. Same hue, deepened — never a hue swap, or the two themes read as two components (557). */
   --cr-amber-tint:#FBEFDA;
   --cr-green:#2E7D32;
   --cr-green-tint:#E7F2E7;
@@ -30554,7 +30571,7 @@ function showList() {
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
   --cr-red-tint-2:#FEF7F7;
-  --cr-amber:#C87A00;
+  --cr-amber:#8a5500;/* 987: was #C87A00 — 2.96:1 as ink on --cr-amber-tint #FBEFDA and 3.37:1 on white, both under the floor. #8a5500 is build 942's own value, already shipped on #cr-pricing-mount .lock, so no colour is invented here: 5.46:1 on the tint, 6.21:1 on white. Same hue, deepened — never a hue swap, or the two themes read as two components (557). */
   --cr-amber-tint:#FBEFDA;
   --cr-green:#2E7D32;
   --cr-green-tint:#E7F2E7;
@@ -32897,7 +32914,7 @@ function showList() {
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
   --cr-red-tint-2:#FEF7F7;
-  --cr-amber:#C87A00;
+  --cr-amber:#8a5500;/* 987: was #C87A00 — 2.96:1 as ink on --cr-amber-tint #FBEFDA and 3.37:1 on white, both under the floor. #8a5500 is build 942's own value, already shipped on #cr-pricing-mount .lock, so no colour is invented here: 5.46:1 on the tint, 6.21:1 on white. Same hue, deepened — never a hue swap, or the two themes read as two components (557). */
   --cr-amber-tint:#FBEFDA;
   --cr-green:#2E7D32;
   --cr-green-tint:#E7F2E7;
@@ -33430,7 +33447,7 @@ function showList() {
   --cr-red-dark:#B01F21;
   --cr-red-tint:#FDECEC;
   --cr-red-tint-2:#FEF7F7;
-  --cr-amber:#C87A00;
+  --cr-amber:#8a5500;/* 987: was #C87A00 — 2.96:1 as ink on --cr-amber-tint #FBEFDA and 3.37:1 on white, both under the floor. #8a5500 is build 942's own value, already shipped on #cr-pricing-mount .lock, so no colour is invented here: 5.46:1 on the tint, 6.21:1 on white. Same hue, deepened — never a hue swap, or the two themes read as two components (557). */
   --cr-amber-tint:#FBEFDA;
   --cr-green:#2E7D32;
   --cr-green-tint:#E7F2E7;
@@ -41213,7 +41230,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:986, d:'2026-08-21', t:'The retired Job Activity grid is gone', s:'Keeper replaced the old Job Activity grid back at build 348, but the panel itself was never removed \u2014 so every time you opened a client the app rebuilt all nine of its tiles and re-attached their click handling to something the stylesheet had been hiding for hundreds of builds. It is gone now. The job menu you actually use is unchanged, and so is the punch-out card.' },
+{ b:987, d:'2026-08-22', t:'The amber warning colour is readable again', s:'The amber used for warnings and \u201cin progress\u201d status was chosen for the dark screen and never properly adjusted for the light one, so pills across Pricing, Claims, Adjusters and Coach were sitting at about 3 to 1 against their own background \u2014 under the readability floor. Estimates was worse: it had only ever been given one amber, so it used the light one on the dark screen too. Both are fixed. The one place amber is a background rather than text keeps its old shade, because there it works the other way round.' },
+      { b:986, d:'2026-08-21', t:'The retired Job Activity grid is gone', s:'Keeper replaced the old Job Activity grid back at build 348, but the panel itself was never removed \u2014 so every time you opened a client the app rebuilt all nine of its tiles and re-attached their click handling to something the stylesheet had been hiding for hundreds of builds. It is gone now. The job menu you actually use is unchanged, and so is the punch-out card.' },
       { b:985, d:'2026-08-21', t:'Two more Community greens made readable on the light theme', s:'The Community project card title and the client name beside \u201cCommunications\u201d were painting a bright green chosen for the dark screen. On the light theme they measured about 1.8 and 1.7 to 1 against the page, well under the 4.5 readability floor. Both now use the Community accent that already flips with the theme, so the dark screens look exactly as they did and the light ones are legible.' },
       { b:984, d:'2026-08-21', t:'Cardinal Truth tabs stop hiding the last one', s:'On a phone the Cardinal Truth tab strip had exactly no room to spare, so as soon as a real claim count appeared the last tab slid off the edge \u2014 and because the strip hides its scrollbar, nothing showed there was more to swipe to. It now wraps onto a second line at phone width and is unchanged on a tablet or desktop.' },
       { b:983, d:'2026-08-21', t:'The rest of the app gets the typography fix',
