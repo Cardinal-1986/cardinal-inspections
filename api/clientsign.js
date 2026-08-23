@@ -55,13 +55,49 @@ export default async function handler(req, res) {
         body: JSON.stringify({ html: newHtml, updated_at: new Date().toISOString() }) });
     if (!up.ok) throw new Error('save failed: ' + (await up.text()).slice(0, 200));
 
-    // advance the client's pipeline stage to Signed (best-effort)
+    // advance the pipeline to Approved AND reach the team the way an in-person
+    // signature does. 1007: setStage (the in-person path) emails/pushes Curtis
+    // "schedule + order materials" on the move to Approved; a remote signature
+    // only ever emailed the rep, so Curtis never heard a remotely-signed job was
+    // ready to build. clientsign is unauthenticated (the share token is the
+    // credential) and so cannot call the session-gated /api/notify — it sends the
+    // same alert directly through the Resend account it already uses below.
     if (doc.project_id) {
       try {
-        await fetch(`${SUPABASE_URL}/rest/v1/projects?id=eq.${doc.project_id}`,
-          { method: 'PATCH',
-            headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
-            body: JSON.stringify({ stage: 'Approved', updated_at: new Date().toISOString() }) });
+        const pr0 = await fetch(
+          `${SUPABASE_URL}/rest/v1/projects?id=eq.${doc.project_id}&select=stage,name,address&limit=1`,
+          { headers: sbHeaders });
+        const projRows = pr0.ok ? await pr0.json() : [];
+        const proj = (Array.isArray(projRows) && projRows[0]) || {};
+        // forward-only: never pull a job that is already scheduled/built back to
+        // Approved, and only buzz Curtis on the real transition.
+        const PAST_APPROVED = ['Approved', 'Scheduled', 'Completed', 'Invoiced', 'Closed'];
+        const alreadyApproved = PAST_APPROVED.indexOf(String(proj.stage || '')) !== -1;
+        if (!alreadyApproved) {
+          await fetch(`${SUPABASE_URL}/rest/v1/projects?id=eq.${doc.project_id}`,
+            { method: 'PATCH',
+              headers: { ...sbHeaders, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+              body: JSON.stringify({ stage: 'Approved', updated_at: new Date().toISOString() }) });
+          const rk = process.env.RESEND_API_KEY;
+          if (rk) {
+            try {
+              const from = process.env.DIGEST_FROM || 'Cardinal Client Resources <onboarding@resend.dev>';
+              const crew = [...new Set(['curtis@cardinalrenovations.net', ...ADMINS].filter(Boolean))];
+              await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${rk}` },
+                body: JSON.stringify({
+                  from, to: crew,
+                  subject: `APPROVED \u2014 schedule + order materials: ${proj.name || doc.title}`,
+                  html: `<div style="font-family:'Segoe UI',Arial,sans-serif;">
+                    <p><b>${esc(proj.name || doc.title)}</b>${proj.address ? ' (' + esc(proj.address) + ')' : ''} is now <b>APPROVED</b> \u2014 signed by the client via secure link.</p>
+                    <p><b>Curtis:</b> please schedule the job and the material drop on the Schedule Board, and order materials (see the client\u2019s Materials tab).</p>
+                  </div>`
+                })
+              });
+            } catch (e) {}
+          }
+        }
       } catch (e) {}
     }
 
