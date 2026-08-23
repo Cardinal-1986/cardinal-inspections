@@ -54,24 +54,42 @@ stage-defer drop-on-supersede, 1006 stage-defer lost-on-close). The rest, still 
   send `window.aiHeaders()`. Survey confirms these were the last AI routes without an `authorization`
   check. Proven by `gate_1013.mjs` (drives the shipped handlers; RED ×5 on the pre-fix files).
   (CONFIRMED)
-- **DB: 5 estimates point at deleted documents** ($71,845.99, 4 status='sent') — deleting a document
-  never clears `estimates.doc_id`/`contract_doc_id`. Fix the document-delete path to null the referring
-  columns; consider a one-time cleanup. (DB-1, CONFIRMED live)
+- ✅ **RESOLVED at build 1014 — DB: 5 estimates pointed at deleted documents** ($71,845.99, 4
+  status='sent'). `db.remove` (the one delete pipeline) now nulls referring
+  `estimates.doc_id`/`contract_doc_id`; publish verifies the doc exists (`db.get` throws → create
+  path → write-back re-links, self-healing any future dangle); one-time cleanup
+  `estimates_dangling_docids.sql` **applied to production 23 Aug** (0 dangles remain; old values in
+  the migration header). (DB-1)
 
-### 🟡 MEDIUM / LOW (from finders; NOT individually verified unless noted)
-- **Push reaches only Theo** — `push_subs` = 3 rows, all `theo@` (verified live). Curtis/Joan/reps have
-  none, so web-push notifications reach nobody else. *(This is why 1007 used email for Curtis — correct
-  call. But the team needs to subscribe for push to matter.)*
-- 1001 pending-supplement line uses `--cr-amber` → `#8a5500` on a theme-fixed dark card → unreadable in
-  rb-light.
-- 1002 iTel buttons reference `--ct-red`/`--ct-green` scoped to the Resource Library (`--ct-green`
-  declared nowhere else) → likely invisible/!important-wrong outside it.
-- 1000 `lossAge` UTC-parses a date-only value → "N days ago" reads one day high on Ohio evenings.
-- 996 `payMigrateLegacyIn` confirm says "Balance Due does not change" — false on a job with worksheet
-  contract payments and no prior collection (migrating makes collections the sole source). (F2 CONFIRMED)
-- `config.js` serves an unrestricted Google Maps key; `design.js`/`coach.js` missing from `vercel.json`
-  `maxDuration`; 1003 per-job Appointments page (`#apMount`) has an ungated `✕` delete.
-- Full detail: `/tmp/.../tasks/wbapw9i8p.output` (session-local) and the workflow journal.
+### 🟡 MEDIUM / LOW — all re-verified against the 1013 tree by a 9-agent pass (build 1014)
+- ✅ **RESOLVED at 1014 — push reaches only Theo.** Not a code gate on subscribing (both upsert paths
+  take any signed-in user) but a door problem: the `nav==='notify'` handler had NO button and Settings
+  is admin-hidden. Now: an all-desks "Enable Notifications" burger row + a one-time dismissible nudge
+  (only when permission === 'default'). **The team still has to actually tap it** — watch `push_subs`
+  grow past theo@.
+- ✅ **RESOLVED at 1014 — 1001 pending-supplement amber** (was 2.31:1 in rb-light on the theme-fixed
+  dark card; pinned `#e0a13a`, 6.38:1 both themes).
+- ❌ **REFUTED (1014 verification) — 1002 iTel `--ct` tokens.** Both references carry literal
+  fallbacks (`var(--ct-red,#c8202e)` / `var(--ct-green,#2f7d55)`), and `data-rltheme` is kept on
+  `<body>` so `--ct-*` resolve app-wide. The buttons render correctly; false positive. (Optional tidy
+  only: `--ct-green` is declared nowhere, so its reference always paints the fallback.)
+- ✅ **RESOLVED at 1014 — 1000 `lossAge` UTC off-by-one** (now uses `crDate`, the file's own
+  local-midnight parser, same as its neighboring `fmtDate`).
+- ✅ **RESOLVED at 1014 — 996 migrate confirm's false "Balance Due does not change."** New
+  `payMigrateDrop()` computes the real wsPaid delta; note + confirm state the dollar consequence when
+  it applies, keep the original sentence only when true. (F2)
+- ⚠️ **OPERATOR ACTION (Theo, ~5 min) — the Google Maps key is still unrestricted** (re-verified: the
+  build-840 measurement stands; gating `/api/config` was deliberately rejected — the key is in the
+  Maps script src anyway). In Google Cloud Console: Credentials → the browser key → HTTP referrers
+  `app.cardinalroster.com/*` (+ showroom/presentation hosts if they need maps); API restrictions:
+  Maps JavaScript, Places, Static Maps, **and Geocoding** (Quick Inspection geocodes through it since
+  840 — omit it and the pin silently falls back to Nominatim). Verify: a no-Referer Geocoding call
+  should answer REQUEST_DENIED.
+- ✅ **RESOLVED at 1014 — `design.js`/`coach.js` added to `vercel.json` maxDuration** (60s;
+  `ai-status.js` deliberately not — a 10-token health probe).
+- ✅ **RESOLVED at 1014 — the 1003 per-job Appointments page's ungated ✕** (rendered on teammates'
+  rows the shared-calendar SELECT shows, while RLS silently refused the delete — confirm-then-nothing.
+  Now behind `apptCanEdit`, render + handler).
 
 
 ---

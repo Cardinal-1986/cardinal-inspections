@@ -42,7 +42,13 @@
     "api/caption.js": {
       "maxDuration": 60
     },
+    "api/coach.js": {
+      "maxDuration": 60
+    },
     "api/companycam-sync.js": {
+      "maxDuration": 60
+    },
+    "api/design.js": {
       "maxDuration": 60
     },
     "api/detect.js": {

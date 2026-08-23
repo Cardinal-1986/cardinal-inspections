@@ -20611,6 +20611,80 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1014 — six fixes closing out the 23 Aug audit (23 Aug 2026)
+
+**The audit remainder, re-verified against the 1013 tree by a 9-agent pass before anything was
+touched** (findings were filed at 1007; the staleness sweep's lesson). Verdicts: 6 CONFIRMED and
+fixed here, **1 REFUTED** (M3, the iTel `--ct` tokens — both references carry literal fallbacks and
+`data-rltheme` is kept on `<body>` so the tokens resolve app-wide; reported as a false positive,
+nothing patched), **1 NOT_A_CODE_FIX** (M6, the Google Maps key — restriction is a Google Cloud
+Console operator action, recorded in OPEN_ITEMS for Theo).
+
+**DB-1 — deleting a document orphans estimates (CONFIRMED, fixed twice + cleaned).**
+`db.remove` (the ONE inspection_reports delete pipeline, 524, four callers) deleted the row and
+nothing else; the only doc_id writes in the file are the publish write-backs. Worse: publishing an
+estimate with a dangling doc_id silently wrote NOTHING — `db.update` has no `.select()`, so zero
+rows matched returns 204 with no error, the create-fallback never fires, and the stale id survives.
+Fixes: (a) `db.remove`'s TEAM branch now best-effort nulls `estimates.doc_id`/`contract_doc_id`
+referencing the deleted id — all four delete callers covered at the chokepoint; (b) publish
+(`cr-epub`) calls `db.get(est.doc_id)` before the update — `.single()` throws on a missing row,
+dropping into the existing create path, and the existing `docId !== est.doc_id` write-back
+re-links, so any dangling id self-heals on its next publish. **One-time cleanup applied to
+production** (`estimates_dangling_docids.sql`, idempotent): the 5 danglers (Betty Mann ×2,
+Kimberly Guy ×2, Dan Thompson — the 4 sent = $71,845.99) are nulled; verified 0 dangles remain,
+6 legitimate links intact. Old values recorded in the migration header for revert.
+
+**M1 — push reaches only Theo (CONFIRMED: a discoverability gap authored in code).** Any signed-in
+user can subscribe (both upsert paths ungated; RLS `USING(true)`), but the burger hides Settings
+for non-admins and the `nav === 'notify'` handler existed with **no element pointing at it** — a
+door with no button. Fixes: an **Enable Notifications** burger row (`data-nav="notify"`, in the
+Account section, deliberately absent from `hideAdminItemsForNonAdmin`'s list) wired to the
+existing handler; plus a **one-time dismissible nudge** after sign-in (crUpdateBar shape, z-170
+above `#pwaNav`, below every dialog) shown only when `Notification.permission === 'default'` —
+never on 'denied', which cannot be re-prompted, so no bar that cannot succeed. No observer; a
+bounded retry until sign-in resolves. Dismiss key `cr-push-nudge-dismissed`.
+
+**M2 — 1001's pending-supplement amber (CONFIRMED).** `.cr-c-pending` used `var(--cr-amber)` on
+the theme-FIXED dark `.cr-c-fin` card; rb-light's `#8a5500` painted **2.31:1** on the worst
+gradient stop. Pinned to the literal `#e0a13a` — the convention every other ink in that card
+already follows — 6.38:1 both themes. The rb-light token itself is untouched (correct at its
+pale-ground consumers).
+
+**M4 — lossAge UTC off-by-one (CONFIRMED).** `new Date('YYYY-MM-DD')` is UTC midnight, so the
+count read one high from 8pm EDT. Now `window.crDate ? window.crDate(iso) : new Date(iso)` —
+byte-for-byte the idiom `fmtDate` two lines above already uses (crDate, build 744, exists for
+exactly this failure).
+
+**M5 — the migrate confirm's false sentence (F2, CONFIRMED).** "Balance Due does not change" was
+false on a job with worksheet contract payments and no prior collection — after migrating,
+`collPaid` REPLACES the paid sum and Balance Due rises by wsPaid. New `payMigrateDrop()` computes
+the real delta (payTotals' wsPaid, only when `collPaid[id]` is undefined); both the note and the
+confirm now state the dollar consequence when it applies and keep the original sentence only when
+it is true.
+
+**M7 — vercel.json maxDuration (CONFIRMED).** `api/coach.js` (Gemini + 4.5s of 503 backoff +
+OpenAI fallback) and `api/design.js` (image-model ladder) were missing from the functions block —
+added at 60s. Swept: `ai-status.js` is a 10-token health probe, fine at default; no other AI
+caller is unlisted.
+
+**M8 — #apMount's ungated ✕ (CONFIRMED).** `renderApptsPage` drew the delete cross on every row —
+including teammates' job/drop rows the 1003 shared-calendar SELECT policy makes visible — while
+the own-or-admin DELETE policy silently refused (0 rows, no error): confirm(), nothing, row
+survives. Worse than dead. The ✕ now renders behind `apptCanEdit(a)` (1003's own pattern from
+`renderApptList`), with a defense-in-depth re-check in the click handler.
+
+**Proof.** `gate_1014.mjs` — EXECUTES the shipped `db.remove` (recording sb mock: delete + both
+null-updates), `lossAge` (TZ=America/New_York, Date.now pinned to an Ohio evening: "2 days ago",
+where UTC parse says 3), and `payLegacyInNote` (risky case names $5000 and drops the false
+sentence; collections-ruled case keeps it); structural asserts for publish-get-before-update, the
+notify row + handler + not-hidden, the pinned amber, the apMount gates, vercel.json entries, and
+the nudge. GREEN on the working tree; **negative control against build 1013 goes RED with 15 named
+failures, zero crashes.** `check_build` green (stamp 1013→1014, marker, negative control);
+`vercel.json` still valid JSON.
+
+SQL: `estimates_dangling_docids.sql` — **applied to production 23 Aug** and committed.
+Files: `index.html`, `vercel.json`, the migration, the gate.
+
 ## Build 1013 — the Roofr and Hover readers are no longer open AI relays (23 Aug 2026)
 
 **The remaining security finding from the build-1007 audit.** `api/roofr.js` and `api/hover.js` —
