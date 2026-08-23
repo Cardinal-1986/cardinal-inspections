@@ -20611,6 +20611,44 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1011 — the doc-store leg no longer defeats 997's accepted tier (23 Aug 2026)
+
+**The second HIGH money-correctness finding from the build-1007 audit (F3 + MONEY-2).** Build 997
+made the accepted estimate the Job Value via tiers in `indexMoney` (accepted/signed = tier 2 beats
+sent = tier 1, largest within the winning tier). But `jobFinance` has a second estimate leg 997
+never reached: after `est = estBest[pr.id]`, it scanned `cacheRows` for any `Estimate…`-titled
+inspection_reports doc and took a **flat MAX — any status, archived rows' published copies
+included** — so a bigger stale document overrode the accepted estimate, and Job Value, Balance Due,
+the AR chart, pipeline dollars and the invoice all inherit from there.
+
+**Two rules now, both in `jobFinance`'s doc leg:**
+- **(a) tier-2 skip** — when the job carries an accepted/signed estimate, no doc competes. 997's
+  headline ("an ACCEPTED estimate is the number, whatever its size") now holds across both stores.
+- **(b) linked-doc exclusion** — a doc any estimates row points at via `doc_id` (ANY status,
+  archived and drafts included — collected *before* indexMoney's filters) never competes as a
+  second estimate. The table, with its status/tier/archived logic, is authoritative for a linked
+  estimate; archiving a loser now retires its document too. Only true legacy document-only
+  estimates still feed the leg, and only below tier 2 — so doc-only jobs keep their value.
+
+**The enabling change:** `estTier` was `var`-local inside `indexMoney`, so the tier decision died
+there. It is now a global beside `estBest` (with new global `estDocIds`), and the gate asserts the
+global is actually written — leaving the `var` in place would have silently disabled the whole fix
+(the shadowing trap, guarded, not assumed).
+
+**Measured before shipping, 997's own discipline:** production has 6 `Estimate…`-titled docs and
+**0 carry a total** (the 540 measurement still holds), 18 estimates rows (11 linked via doc_id,
+2 live accepted). **This changes NO job's value today** — preventive, exactly like 997.
+
+**Proof.** `gate_1011.mjs` extracts the SHIPPED `indexMoney`/`jobFinance`/`isEstimateTitle`/
+`SENT_EST`/`ACCEPTED_EST` and **executes them** (no re-implementation) against production-shaped
+fixtures: accepted+unlinked-doc → accepted wins; sent+unlinked-doc → doc still counts; doc-only
+job → doc supplies value; archived row's published doc → excluded; accepted-vs-bigger-sent →
+997 tiers intact; global `estTier` written. GREEN on the working tree; **negative control against
+build 1010 goes RED with 3 named failures** ([1] 35000, [4] 35000, [6] tier 0). `check_build`
+green (stamp 1010→1011, marker, negative control).
+
+No SQL. `index.html` only.
+
 ## Build 1010 — money-in has one door again: the "Received" heading (23 Aug 2026)
 
 **A HIGH money-correctness finding from the build-1007 audit, and it is 996's own residue.** Build
