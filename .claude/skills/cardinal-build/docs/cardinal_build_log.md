@@ -24151,3 +24151,31 @@ exactly those — and the selftest holds BOTH directions: a new `#data-delegated
 What I could NOT reproduce from the screenshot: the vertical half-clipping of the strip. The
 mechanical causes fixed here (overflow + broken pan) are the measurable defects at that
 screen; if the clipping reproduces on the phone after this build, it is a new report.
+
+## Manual-estimates E2E audit + the sentinel's light-mode fix (23 Aug 2026 — docs + scripts only, no build number; index.html untouched at 1023)
+
+Theo asked for an E2E audit of manual estimates, usability deep-research, a plan, and a verdict on
+the dark colors. The full report is `docs/CR_MANUAL_ESTIMATES_AUDIT_2026-08.md` — findings ranked
+(the headline: **accepted estimates render in the UNSENT — DRAFTS lane and the screen's pipeline
+sums are wrong**, live on both production accepted rows; and the obsidian editor's **Total reads at
+1.98:1** because the 546 conversion missed the totals-block inks), the dark-colors verdict
+(obsidian stands — Theo's own 546 pick; finish it rather than repaint), and a four-build plan
+awaiting picks. Nothing shipped to the app.
+
+**What DID ship — the instrument was lying, in the same direction twice:**
+- `scripts/sentinel.js` — `--themes rb-light` injected `document.documentElement.setAttribute(...)`
+  as an init script; `documentElement` is **null** at init-script time in this Chromium, the line
+  threw (every themed render carried a PAGEERROR), the attribute never landed, and **every themed
+  sweep of the CRM silently swept the DARK theme under a light label**. Even landed, the app's own
+  `cr-rbtheme-toggle-script` strips a bare attribute at boot unless `localStorage['cardinal.theme.rb']`
+  says light. Now: null-safe set, runs before setup files, publishes `window.__sentinelTheme`.
+- `scripts/sentinel_setup_cardinal.js` — translates `__sentinelTheme === 'rb-light'` into the app's
+  own localStorage key, so the app themes itself the way it does for a real user.
+- Proof both directions: the old shape probes `attr:null` + pageerror; the new probes
+  `attr:"rb-light"`, no errors — and the repaired run produced six light-only findings
+  (an invisible 1.07:1 profile subnote among them) the old run was structurally incapable of seeing.
+  `--selftest` green before and after.
+- `scripts/sentinel_setup_estimates.js` — NEW: the populated estimates walk (four statuses, five
+  states: eslist/esteditor/estlibrary/estpreview/estprofile). The base walk seeds `estimates:[]`
+  deliberately; these five money screens had never been swept populated, which is how a 1.98:1
+  Total lived unseen in an instrumented app.

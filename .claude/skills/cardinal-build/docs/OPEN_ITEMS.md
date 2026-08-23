@@ -3,6 +3,37 @@
 
 ---
 
+## 📋 Manual-estimates audit, 23 Aug 2026 @ build 1023 — findings + plan AWAITING THEO'S PICKS
+
+Full report: `CR_MANUAL_ESTIMATES_AUDIT_2026-08.md` (E2E map · findings · dark-colors verdict ·
+four-build plan with rendered options). Nothing built into index.html yet. The picks on the table:
+
+1. **Build A — finish the obsidian estimates screens** (CSS + 1 inline ink): the Total is 1.98:1
+   and the deposit 1.89:1 in BOTH themes (546's conversion missed the totals block); six red
+   buttons still hover to pre-migration gold `#e8ba15`; light-mode fails on the lane title /
+   Saved-Estimates heading / `#projectView .subnote{color:#fff}` (unscoped — every profile subnote
+   is invisible in rb-light) / docTable money on dark rows. **Option previews rendered — Theo
+   picks white money (1) or `#f08a90` accent money (2).**
+2. **Build B — the lanes tell the truth:** `CRE_LANES` never learned `accepted`/`declined`
+   (editor vocabulary) — production's two accepted estimates render under **UNSENT — DRAFTS** and
+   the open-pipeline/accepted sums are both wrong. Plus the `state.project_id` (undefined)
+   delete-refresh fix.
+3. **Build C — editor usability:** Save closes the editor every time behind an alert (live tell:
+   5 of 8 drafts are $0 duplicates); no dirty-guard on Cancel; six header actions scroll off a
+   phone. Save-in-place + Done + toasts + phone action bar.
+4. **Build D — dead weight (SQL first, Theo's calls):** `manual_estimates` (0 rows) still carries
+   an any-authenticated `ALL USING(true) WITH CHECK(true)` policy — drop the table or tighten;
+   the never-used AI arm (`ai_estimates` 0 rows ever, still queried every list load, still the
+   screen's PRIMARY button) — keep/demote/retire the door; `isEstimateTitle` robustness (the title
+   placeholder teaches "Roof Replacement — Jane Smith", which dodges the classifier post-publish).
+
+**Shipped with the audit (scripts/docs only):** the sentinel's `--themes rb-light` leg was
+structurally broken (attribute set threw at init; every themed CRM sweep was a dark sweep) — fixed
+and proven both directions; `sentinel_setup_estimates.js` added so the money screens sweep
+populated from now on.
+
+---
+
 ## 🔍 Fresh audit, 23 Aug 2026 @ build 1014 (workflow wf_8568b748-3eb) — 17 CONFIRMED, 0 refuted
 
 9 finders (regressions/money/api-security/rls/ui-dead/contrast/offline/datamodel/flows) → dedupe →
