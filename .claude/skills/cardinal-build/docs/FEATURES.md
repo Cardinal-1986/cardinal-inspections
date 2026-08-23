@@ -2516,6 +2516,15 @@ other); a DB trigger auto-creates the 10% commission row for the project's
 sales rep. Theo's own jobs create no commission. Draws are loans against
 future commission; net payout = owed − outstanding draws. Paid locks.
 
+⚠️ **`collections` is the ONE door for money received — both entry points now agree.**
+On the Payment Information page the "Received" section's + button (996) **and** its
+heading tap (1010) both route to `payGoLogCollection()` → this tab; the legacy
+`dir:'in'` add modal is unreachable from Received. Money logged the old way books no
+commission and, since 721, is ignored by Balance Due whenever any collection exists
+(`jobFinance`: `if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id]`). "Paid" /
+"Additional Job Expenses" are job costs and keep the legacy row modal. **Do not add a
+second money-in writer** — `checklist.payments` `dir:'in'` is legacy-read/migrate only.
+
 **Where it lives:**
 - **SQL:** `commission_system.sql` (root, **applied 9 Aug 2026**) — extends the
   556 `commissions` table (`collection_id` unique, `rate_pct`, `paid_by`,
@@ -3579,6 +3588,15 @@ The menu row is a **category** now: `data-nav="suppliers"`, warehouse icon, and
 the sheet is titled Suppliers with **ABC Supply as a card inside it**. A second
 yard is a second card, not a second menu row. The ABC integration itself is
 unchanged and still switched off until its two keys are set in Vercel.
+
+⚠️ **`/api/abc` is authenticated as of build 1009 — it used to be an open proxy.**
+No auth + wildcard CORS shipped originally, so an anonymous internet caller could
+spend Cardinal's ABC credential and place real orders. Now every call requires a
+signed-in session (the client `api()` wrapper attaches the token like
+`senddoc`/`companycam`); the order actions (`placeOrder`/`getOrder`/`templates`)
+require full access (admin + production). Catalog/pricing/ship-to lookup stay
+open to any signed-in staff. Proven by `gate_1009.mjs`. **Do not remove the
+`Authorization` header from the client wrapper or every ABC call 401s.**
 
 ⚠️ **Two doors lead here** — the main menu row and the Tools dropdown's "Supply"
 entry (`.cbi[data-go="abc"]`). Both carry the name; rename both or the feature
