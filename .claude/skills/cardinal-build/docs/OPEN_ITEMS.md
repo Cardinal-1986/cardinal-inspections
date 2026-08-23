@@ -97,9 +97,12 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
     `from`, rebase, and if the round-trip lands back at origin save nothing); cross-job supersede +
     pagehide/visibilitychange flush keep committing (the deliberate 1008 fix, left intact). Proven
     by `gate_1020.mjs` (same-job round-trip → 0 setStage; cross-job supersede still commits).
-14. **Offline stage moves sync the row but drop the Approved/Completed team notification silently**
-    (setStage, index.html:19116/19125 — bare `notifyTeam()`). **Fix:** on `res.ok===false` reason
-    network/offline, queue an `op:'notify'` outbox entry + a flush() branch.
+14. ✅ **RESOLVED at 1021.** Offline stage moves synced the row but dropped the Approved/Completed
+    team notification silently (setStage — bare fire-and-forget `notifyTeam()`). **Fix:** new
+    `_notifyOrQueue` helper queues an `op:'notify'` outbox entry on a network/offline send failure
+    (not on a real refusal); the outbox `flush()` gained an `op:'notify'` branch that replays via
+    `window.notifyTeam` and never buries a best-effort email. Proven by `gate_1021.mjs` (executes
+    both the flush branch and the helper).
 15. **Blanket `photos_upload` storage policy nullifies all 5 admin-only prefix INSERT policies**
     (studio_private_objects_rls.sql:58) — any authenticated user can upload into showcase/walks/
     owner-vault/materials prefixes. **Fix:** one idempotent `ALTER POLICY` adding the prefix
