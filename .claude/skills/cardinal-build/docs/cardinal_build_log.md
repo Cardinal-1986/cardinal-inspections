@@ -24210,3 +24210,18 @@ honest — open = Unsent+Sent only, `declined $X` prints when non-zero; the edit
 project's saved list refreshed). Gate: `gate_1026.mjs` — seeded walk + bogus-status row injected
 gate-side only; GREEN on 1026, **control RED ×12** (the control names the $32,899 phantom
 pipeline). Chromium renders eyeballed both themes.
+
+## Build 1027 — the client-facing estimate document, redressed (audit Build F; Theo's pick A: clean letterhead, no summary strip)
+
+`buildDocHtml` (cr-epub-script) emits what the homeowner receives from the share link and print.
+Its sheet was the cream-era default: **no viewport meta and a hard `width:8.5in` body — on a phone
+the client read their own quote through a pinch-zoom.** Now: Option A as picked from rendered
+options — Georgia letterhead, hairline `--hair` rules, red held to the brand rule / section-number
+chips / grand total — plus `<meta name=viewport>` and two screen media queries that reflow the SAME
+document under 560px (stacked header, one-field-per-line meta, single-column photos). Print path
+untouched (`@page Letter`, same classes). **The content string is byte-identical — only `<head>`
+changed**, asserted in the patch AND by `gate_1027.mjs`, which slices the SHIPPED builder out of
+the artifact, executes it, diffs everything past `</style>` against the control's output, checks
+the share-wrapper hook selectors survive, and renders both at 390px (control RED: no viewport
+meta, header un-stacked). Old sent estimates keep the copy they were sent with (the HTML is stored
+at publish); everything published from 1027 on wears the new dress.
