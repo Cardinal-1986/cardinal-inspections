@@ -20611,11 +20611,17 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
-## SQL awaiting sign-off — audit findings 10 + 15 (23 Aug 2026, after 1023)
+## SQL APPLIED — audit findings 10 + 15 (23 Aug 2026, after 1023)
 
-Two RLS security migrations written and verified against the live policy set, **not applied** — an
-RLS change to a production DB with real users needs Theo to run it (or authorize an MCP apply). Both
-ship as `.sql` (blanket-excluded from deploy) and touch no `index.html`, so there is no build stamp.
+✅ **Both migrations APPLIED to production 23 Aug 2026, on Theo's explicit instruction ("D the
+sql"), via the Supabase MCP** (`team_profiles_self_edit`, `photos_upload_prefix_exclusions`).
+Verified after apply against pg_policies/pg_trigger: the `team self update` policy and
+`team_profiles_guard_self` trigger exist on `team_profiles` (admin policy untouched), and
+`photos_upload`'s `with_check` carries all six prefix exclusions with the dedicated prefix policies
+untouched. `is_cardinal_admin()` was traced before applying the trigger: false for authenticated
+non-admins (pins role/email), true for admins (no pinning), NULL for a no-JWT/service-role
+connection (no pinning — service flows unaffected). That closes ALL 17 audit findings. The original
+write-up follows for the record.
 
 - **`team_profiles_self_edit.sql` (finding 10, HIGH).** Adds a self-row UPDATE policy so a teammate
   can maintain their own name/title/phone/photo, plus a BEFORE UPDATE trigger that pins `role`/`email`

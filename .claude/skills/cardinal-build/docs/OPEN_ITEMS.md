@@ -77,14 +77,13 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
    +1). 1008 fixed only the New Lead intake. **Fix:** one reader-side normalization in
    `__parseCkAllRaw` (index.html:20444) — if flat `lead_source` is null but `lead.source` exists, lift
    it — which repairs all 28 rows, all 11 readers, and any future nested write in one place.
-10. 🟡 **MIGRATION WRITTEN, AWAITING THEO'S SIGN-OFF + APPLY** — `team_profiles_self_edit.sql`.
-    Team Directory shows non-admins a pencil to edit their own row (index.html ~27031), but
-    `team_profiles` had only an admin UPDATE policy — confirm-then-silent-failure (verified live:
-    admin insert/update/delete + is_staff select, no self row). The migration adds a self-row UPDATE
-    policy (`using/with check lower(email)=lower(my_email())`) plus a BEFORE UPDATE trigger that pins
-    `role` and `email` for non-admins (RLS WITH CHECK can't see OLD, so the trigger is what makes
-    "role unchanged" real). Idempotent; admin behaviour unchanged. **Not applied — RLS change needs
-    Theo to run it (or authorize MCP apply).**
+10. ✅ **RESOLVED — APPLIED to production 23 Aug 2026 on Theo's instruction ("D the sql")** —
+    `team_profiles_self_edit.sql`. Team Directory showed non-admins a pencil to edit their own row
+    (index.html ~27031), but `team_profiles` had only an admin UPDATE policy — confirm-then-silent-
+    failure. Applied: self-row UPDATE policy (`using/with check lower(email)=lower(my_email())`) plus
+    the `team_profiles_guard_self` BEFORE UPDATE trigger pinning `role`/`email` for non-admins
+    (`is_cardinal_admin()` traced: false for non-admins → pins; true for admins → untouched; NULL in
+    a no-JWT/service context → untouched). Verified in pg_policies + pg_trigger after apply.
 
 ### 🟠 MEDIUM
 11. ✅ **RESOLVED at 1019.** Payment Information's "Received"/"Job Net" excluded collections (`payTotals`, index.html:14342)
@@ -107,14 +106,15 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
     (not on a real refusal); the outbox `flush()` gained an `op:'notify'` branch that replays via
     `window.notifyTeam` and never buries a best-effort email. Proven by `gate_1021.mjs` (executes
     both the flush branch and the helper).
-15. 🟡 **MIGRATION WRITTEN, AWAITING THEO'S SIGN-OFF + APPLY** — `photos_upload_prefix_exclusions.sql`.
-    The blanket `photos_upload` INSERT policy (`bucket_id='photos' AND name NOT LIKE 'private/%'`, no
-    staff check) is OR'd with the dedicated prefix policies, so any authenticated user can upload into
-    the admin-only prefixes (showcase/walks/workmanship/owner-vault/materials) and the staff-only
-    visualizer/ (verified live against pg_policies). The migration is one idempotent `ALTER POLICY`
-    carving those six prefixes out of `photos_upload`, so each is governed only by its own stricter
-    policy. **Not applied — needs Theo to run it (or authorize MCP apply). Sign-off note in the file:
-    confirm no non-admin teammate legitimately uploads to these prefixes today.**
+15. ✅ **RESOLVED — APPLIED to production 23 Aug 2026 on Theo's instruction ("D the sql")** —
+    `photos_upload_prefix_exclusions.sql`. The blanket `photos_upload` INSERT policy (no staff check)
+    was OR'd with the dedicated prefix policies, so any authenticated user could upload into the
+    admin-only prefixes (showcase/walks/workmanship/owner-vault/materials) and staff-only
+    visualizer/. Applied: one `ALTER POLICY` carving those six prefixes out; each is now governed
+    only by its own stricter policy. Verified in pg_policies after apply — the `with_check` carries
+    all six exclusions and the dedicated policies are untouched. ⚠️ If a non-admin teammate ever
+    legitimately needed to upload to one of these prefixes, widen that prefix's OWN policy — do not
+    re-blanket `photos_upload`.
 16. ✅ **RESOLVED at 1022.** Community Analytics (cr-can), Line Item Library (cr-lil-view) and the
     contract viewer (cr-ce-view) were full-screen views in neither `hideAllViews()` nor
     `navRestore()` — the 941/Suppliers nav-trap class. **Fix:** all three registered — display-lever
