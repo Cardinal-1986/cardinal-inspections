@@ -1936,6 +1936,17 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 .projform label.tradeopt{display:flex;align-items:center;gap:8px;margin:0;
   font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;min-height:26px;}
 .tradegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin:6px 0 12px;}
+/* 999: lead-source chips. One is required at creation; the row is the same
+   eight values the client-profile editor (acxSrc) offers, kept identical so
+   the vocabulary does not fork. */
+.pf-chips{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 12px;}
+.pf-chip{flex:0 0 auto;padding:9px 13px;border-radius:18px;cursor:pointer;
+  background:#f0e8d0;border:1px solid #d9cfb2;color:#5a5344;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;white-space:nowrap;min-height:38px;
+  transition:background .12s,color .12s,border-color .12s;}
+.pf-chip:hover{border-color:#c9a227;}
+.pf-chip.on{background:#c8202e;border-color:#c8202e;color:#fff;}
+.pf-chips.pf-need{outline:2px solid #c8202e;outline-offset:3px;border-radius:12px;}
 .acxtrs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;padding-top:1px;}
 .acxtrs label{display:flex;align-items:center;gap:7px;min-height:22px;
   font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
@@ -3690,7 +3701,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 998 &#8212; a build day on the calendar has to say which job it is. Booking a build by typing an address and leaving the client box blank made an appointment attached to nothing, so the job never moved to Scheduled and never reached the crew board &#8212; which is why the &#8220;needs a crew&#8221; rail has always been empty. Job and Material Drop now ask for the job; ordinary appointments are unchanged, and the two build days already booked without one can be attached rather than redone.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 999 &#8212; where a lead came from is now a required tap when you add a client. It is the one field that tells you whether door-knocking, referrals or storm canvassing is actually bringing in work, and until now it defaulted to &#8220;not set&#8221; and was blank on every one of your jobs. It is a single tap from eight chips, it remembers your last pick, and it only asks on a new client &#8212; editing an existing one never nags.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7774,12 +7785,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <label>Property address<input type="text" id="pfAddress" autocomplete="off"></label>
     <label>Phone number<input type="tel" id="pfPhone" autocomplete="off"></label>
     <label>Email address<input type="email" id="pfEmail" autocomplete="off"></label>
-    <label>Lead source<select id="pfSource">
-      <option value="">— not set —</option>
-      <option>Door knock</option><option>Referral</option><option>Google / website</option>
-      <option>Yard sign</option><option>Repeat customer</option><option>Storm canvass</option>
-      <option>Facebook / social</option><option>Other</option>
-    </select></label>
+    <label>Lead source *</label>
+    <input type="hidden" id="pfSource">
+    <div class="pf-chips" id="pfSourceChips"><button type="button" class="pf-chip" data-src="Door knock">Door knock</button><button type="button" class="pf-chip" data-src="Referral">Referral</button><button type="button" class="pf-chip" data-src="Google / website">Google / website</button><button type="button" class="pf-chip" data-src="Yard sign">Yard sign</button><button type="button" class="pf-chip" data-src="Repeat customer">Repeat customer</button><button type="button" class="pf-chip" data-src="Storm canvass">Storm canvass</button><button type="button" class="pf-chip" data-src="Facebook / social">Facebook / social</button><button type="button" class="pf-chip" data-src="Other">Other</button></div>
     <label>Job cost (materials + labor, $)<input type="number" id="pfJobCost" min="0" step="0.01" placeholder="for profit reports"></label>
     <label>Job category<select id="pfCategory">
       <option value="">— not set —</option><option>Residential</option><option>Commercial</option><option>Property Management</option>
@@ -15111,6 +15119,31 @@ async function transferPhotosToReport(docId, photos){
    ========================================================================= */
 var projModal = document.getElementById('projModal');
 var pfEditing = null; /* null = adding, else project id */
+var pfLastSource = null; /* 999: remembered lead source for the session, so a
+   canvasser doing twenty doors taps once, not twenty times. */
+function pfSyncSourceChips(){
+  var host = document.getElementById('pfSourceChips');
+  var hid = document.getElementById('pfSource');
+  if(!host || !hid) return;
+  host.querySelectorAll('.pf-chip').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-src') === hid.value);
+  });
+}
+(function(){
+  var host = document.getElementById('pfSourceChips');
+  if(!host) return;
+  host.addEventListener('click', function(e){
+    var b = e.target.closest('.pf-chip'); if(!b) return;
+    var hid = document.getElementById('pfSource');
+    var v = b.getAttribute('data-src');
+    /* tap the active chip again to clear it (edit only ever needs one set) */
+    hid.value = (hid.value === v) ? '' : v;
+    if(hid.value) pfLastSource = hid.value;
+    host.classList.remove('pf-need');
+    var err = document.getElementById('pfError'); if(err) err.textContent = '';
+    pfSyncSourceChips();
+  });
+})();
 
 function openProjModal(pr){
   pfEditing = pr ? pr.id : null;
@@ -15120,7 +15153,9 @@ function openProjModal(pr){
   document.getElementById('pfPhone').value   = pr ? (pr.phone || '')   : '';
   document.getElementById('pfEmail').value   = pr ? (pr.email || '')   : '';
   var _ck = pr ? parseCkAll(pr) : {};
-  document.getElementById('pfSource').value  = _ck.lead_source || '';
+  document.getElementById('pfSource').value  = pr ? (_ck.lead_source || '') : (pfLastSource || '');
+  document.getElementById('pfSourceChips').classList.remove('pf-need');
+  pfSyncSourceChips();
   document.getElementById('pfJobCost').value = (_ck.job_cost != null) ? _ck.job_cost : '';
   document.getElementById('pfCategory').value = _ck.job_category || '';
   document.getElementById('pfWorkType').value = _ck.work_type || '';
@@ -17676,6 +17711,11 @@ document.getElementById('pfSave').addEventListener('click', async function(){
   };
   try{
     var _srcVal = document.getElementById('pfSource').value || null;
+    if(!pfEditing && !_srcVal){
+      document.getElementById('pfError').textContent = 'Pick where this lead came from \u2014 it is the one number that says whether knocking is working.';
+      var _sc = document.getElementById('pfSourceChips'); if(_sc) _sc.classList.add('pf-need');
+      return;
+    }
     var _jcRaw = document.getElementById('pfJobCost').value;
     var _jcVal = _jcRaw === '' ? null : Number(_jcRaw);
     var _catVal = document.getElementById('pfCategory').value || null;
@@ -41458,7 +41498,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:998, d:'2026-08-22', t:'A build day on the calendar has to say which job it is', s:'Booking a build meant typing an address and picking \u201CJob\u201D \u2014 and the client box said \u201Coptional\u201D, so it usually stayed empty. An appointment attached to no job cannot move that job to Scheduled, which means it never reaches the crew board, which is why the \u201Cneeds a crew\u201D rail has been empty since it was built. Job and Material Drop now ask for the job, and say why if you skip it. Ordinary appointments are untouched \u2014 a haircut has no client. The two build days already in the calendar without a job can be attached to one instead of being deleted and booked again.' },
+{ b:999, d:'2026-08-23', t:'Lead source is a required tap when you add a client', s:'Where a lead came from \u2014 door knock, referral, storm canvass, and so on \u2014 is the one field that tells you whether the way you find work is working. It was already wired into the reports chart, the filter and the sort, but it defaulted to \u201Cnot set\u201D and only the client name was required, so it was blank on every job and the chart had no data. Adding a client now asks for it as a single tap from eight chips, and it remembers your last pick so a canvasser doing a street taps once rather than every time. Editing an existing client never nags \u2014 the requirement is only for new ones.' },
+      { b:998, d:'2026-08-22', t:'A build day on the calendar has to say which job it is', s:'Booking a build meant typing an address and picking \u201CJob\u201D \u2014 and the client box said \u201Coptional\u201D, so it usually stayed empty. An appointment attached to no job cannot move that job to Scheduled, which means it never reaches the crew board, which is why the \u201Cneeds a crew\u201D rail has been empty since it was built. Job and Material Drop now ask for the job, and say why if you skip it. Ordinary appointments are untouched \u2014 a haircut has no client. The two build days already in the calendar without a job can be attached to one instead of being deleted and booked again.' },
       { b:997, d:'2026-08-22', t:'Accepting an estimate makes it the number', s:'When a job carried two live estimates \u2014 the options you show at a kitchen table \u2014 Job Value quoted whichever was biggest, even after you had accepted the smaller one. Balance Due, the invoice, the AR chart and the pipeline total all read that same figure, so one job could be wrong in five places at once, and the only fix was remembering to archive the losing estimate by hand every single time. An accepted estimate now wins whatever its size. If a job genuinely has two accepted \u2014 a roof and a siding job on one property \u2014 the larger still leads. No job in the system changes value today; this is here so it does not happen the next time.' },
       { b:996, d:'2026-08-22', t:'Money received has one door, and it is the one that pays the rep', s:'Two rows sat directly under each other on a job: Payment Information and Money In \u0026 Commissions. They looked like the same thing and they were not \u2014 only the second one books anything. It is what writes the rep\u2019s 10%, what fills the Friday owed email, and since build 721 it is what sets Balance Due. Every payment recorded through the first one was invisible to all three. Tapping to log a payment received now takes you straight to Money In. Payments recorded the old way are still counted, and there is a one-tap way to move them across that names every amount first and leaves the total exactly where it was. Paid out and additional expenses are job costs, not collections, and are untouched.' },
       { b:995, d:'2026-08-22', t:'A 0% deposit stays 0% when you reopen the estimate', s:'If you set an estimate\u2019s deposit to nought \u2014 an insurance job where the carrier pays, or a customer you have agreed to bill at the end \u2014 reopening that estimate to change anything else quietly put the deposit back to 30%, and saving wrote that number onto the estimate. Both of the estimates Cardinal has had accepted are set to nought, so on those two it would have added $4,428 and $3,765 of down payment to paperwork the client had already signed off. Nought is now treated as a real answer and kept, which is what the contract side has always done.' },

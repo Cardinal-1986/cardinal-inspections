@@ -20611,6 +20611,38 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 999 — lead source is a required tap when you add a client (23 Aug 2026)
+
+First off the decision list Theo answered "yes to all" on. `lead_source` was **fully wired** — the
+Reports chart, the Leads filter, the sort and a column all read it — and set on **0 of 57 jobs**,
+because the new-project form offered a `— not set —` default in a dropdown and only the client name
+was required. The chart had never had a data point. For a business that canvasses, it is the one
+field that says whether canvassing works.
+
+### What shipped
+
+- The `<select>` becomes **eight chips**, one required. `#pfSource` stays as a **hidden input**, so
+  every existing `.value` read — the populate-on-edit line and the two reads in the save handler —
+  keeps working unchanged. Minimal blast radius.
+- The eight values are **identical to the client-profile editor's** (`acxSrc`), kept in step so the
+  vocabulary does not fork.
+- **Session memory:** `pfLastSource` remembers the last pick, so a canvasser doing a street taps
+  once, not once per door. A new client preselects it.
+- **Required on CREATE only.** Scoped to `!pfEditing`, so editing a client that predates the rule is
+  never nagged — the 998 scoping lesson, applied again.
+
+### `gate_999.mjs` — 11 assertions
+
+Drives the real modal: eight chips exist, `#pfSource` survives as a hidden input, the labels match
+`acxSrc`; a create with no source is refused/named/highlighted; a create WITH a source saves and
+stores the value; the next create preselects the remembered pick; and the **look-alike** — editing
+an old client with no source is NOT refused. Control on 998: **PASS 3 · FAIL 8**.
+
+⚠ **The control crashed before it was made null-safe** — `#pfSourceChips` does not exist on 998, so
+`.classList` threw (class 37). Guarded every control-side read of the chip row so the gate degrades
+to a named failure rather than a crash. The 3 that pass on the control are the look-alikes (editing
+not nagged, no page errors), so it is not vacuously red.
+
 ## Build 998 — a build day on the calendar names its job (22 Aug 2026)
 
 Fourth pick off the build queue, and **the missing precondition for code that already shipped.**
