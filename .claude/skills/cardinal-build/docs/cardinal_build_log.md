@@ -20611,6 +20611,51 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1007 — a phone-signed contract buzzes Curtis too (23 Aug 2026)
+
+Remote-signature parity (OPEN_ITEMS #7). When a client signs a contract from the secure share link,
+`api/clientsign.js` moves the job to Approved and emails the rep+admins a "Document signed" note — but
+the **in-person** path (`setStage`) also emails/pushes **Curtis** "schedule + order materials" on the move
+to Approved, and the remote path never did. So a remotely-signed job could sit with production never told to
+build it.
+
+### Why it's done inside clientsign, not via /api/notify
+
+`/api/notify` requires a user session (the 642 gate, with a "don't remove it to make a script work"
+warning). `clientsign.js` is **unauthenticated** — the unguessable share token is its credential — so it
+cannot call notify. It already sends a Resend email with the service-role key; 1007 adds a second Resend
+email to **Curtis + admins** with the same "schedule + order materials" body `setStage` uses. This matches
+the repo's established pattern (every `api/*.js` is self-contained; there are no shared `api/_*` helpers),
+and does not touch the security-critical notify route.
+
+⚠ **Email parity, deliberately not push/SMS.** In-person goes through notify's push+email+SMS fan-out.
+Reproducing all three in clientsign would duplicate the web-push stack (and spread the VAPID literal), and a
+shared notify core is a new untested mechanism (Vercel `_`-prefix routing, no precedent here) on a
+sensitive path. Email is the channel that actually reaches Curtis (notify's own notes: `push_subs` was one
+stale row). Full push/SMS parity is left as a follow-up in OPEN_ITEMS #7.
+
+### Also fixed: forward-only advance
+
+The old code PATCHed the stage to Approved **unconditionally** — a share-link signature on a job already
+Scheduled/Completed would pull it *backward* to Approved. 1007 reads the current stage first and only
+advances (and only alerts Curtis) when the job is not already at/past Approved.
+
+### Gate
+
+`gate_1007.mjs` imports the shipped handler, stubs `fetch`+env, and drives two shapes: a Lead job (advances
+to Approved, Curtis gets the "schedule + order materials" email addressed to curtis@) and an already-
+Scheduled job (no backward move, no false Curtis buzz). 7 assertions. Control on the pre-1007 handler:
+**FAIL 3**, named, no crash (no Curtis alert; unconditional backward move).
+
+**Change is `api/clientsign.js`** (backend); index.html carries only the stamp bump + CHANGELOG entry so the
+build number stays discoverable to `next_build.py`. No SQL. `check_build` GREEN; `node --check` on the route.
+
+⚠ **Recovery note:** a container reset reverted the local tree to build 971 mid-build (HEAD 106dcec,
+origin/main ref stale at d0cd727); the clientsign patch had landed on the stale tree. Caught by the app
+stamp reading 971, recovered by `git fetch` + `checkout -B <branch> origin/main` (back to c077f9a/1006) and
+re-applying the patch, verified byte-identical to the pre-reset version. Committing the stale tree would
+have reverted 1004–1006 — BUG_CLASSES 49. Verify the stamp on disk after any suspected reset.
+
 ## Build 1006 — stage arrows: one tap, with Undo (23 Aug 2026)
 
 First slice of the **dialog diet** (OPEN_ITEMS #6). The profile's forward/back stage arrows popped a

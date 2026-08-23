@@ -6493,3 +6493,14 @@ runs only when the toast closes — so an undone tap never writes to the record 
 team email (Approved → Curtis "schedule + order materials"; Completed → rep+admins). Gmail Undo-Send
 model. `crStageDefer` is the shared helper; `gate_1006.mjs` (source wiring + Chromium mechanism test;
 control on 1005 FAIL 4). First slice of the dialog diet; alert→toast and prompt→inline remain.
+
+### 1007 — a phone-signed contract buzzes Curtis too (remote signature parity)
+
+When a client signs a contract from the secure share link, `api/clientsign.js` moves the job to Approved.
+In-person signing (setStage) also emails/pushes Curtis "schedule + order materials" on that move; the remote
+path only emailed the rep, so production never heard a remotely-signed job was ready. clientsign is
+unauthenticated (share token = credential) so it can't call the session-gated /api/notify — it now sends the
+same alert to Curtis + admins via the Resend account it already uses. Email parity (not push/SMS — deferred;
+reliable channel is email). Also made the stage advance forward-only (no pulling a scheduled job back to
+Approved, alert only on the real move). `gate_1007.mjs` (imports the handler, stubs fetch+env; control on
+pre-1007 FAIL 3). Backend change; no screen change.

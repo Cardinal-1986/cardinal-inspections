@@ -3447,8 +3447,14 @@ describing code that ships today.
    - ⬜ remaining: **alert() → toast** sweep (218 alerts app-wide; the invoice create success/guard are the
      lifecycle ones), and **prompt() → inline field** (the send-email prompt defaulted to the client's
      email; title prompts). Both want their own build; the send-prompt one is visual (preview first).
-7. **Remote signature buzz parity** — `api/clientsign.js` advances the stage and sends the Resend email, but
-   nothing web-pushes Curtis the way an in-person signature does (the front-end setStage does that half).
+7. ~~**Remote signature buzz parity**~~ — **✅ DONE at 1007.** `api/clientsign.js` advanced the stage and
+   emailed the rep, but never told Curtis to schedule + order materials the way in-person setStage does on
+   the move to Approved. clientsign is unauthenticated (share token = credential) so it can't call the
+   session-gated `/api/notify`; it now sends the same "schedule + order materials" alert to Curtis + admins
+   through the Resend account it already uses. Also made the stage advance forward-only (a job already
+   scheduled is no longer pulled back to Approved, and Curtis is only alerted on the real transition).
+   ⚠ Email parity only — full push/SMS parity would need a shared notify core (deferred; no precedent for
+   `api/_*` shared helpers here, and the reliable channel is email since push_subs is mostly empty).
 
 DONE at 772: emoji removed from the two outbound stage-email subjects; `createContractForCurrent` no longer
 returns in silence when no project is loaded.
