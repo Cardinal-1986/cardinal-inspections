@@ -160,6 +160,7 @@ function parseObj(t) {
   return null;
 }
 
+import { isStaff } from './_staff.js';
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'POST only' });
@@ -176,6 +177,7 @@ export default async function handler(req, res) {
     if (!who.ok) { res.status(401).json({ error: 'Invalid session' }); return; }
     const user = await who.json();
     if (!user || !user.email) { res.status(401).json({ error: 'Invalid session' }); return; }
+    if (!isStaff(user.email)) { res.status(403).json({ error: 'Cardinal staff only' }); return; }
 
     // ---- 2) validate ----
     const body = req.body || {};

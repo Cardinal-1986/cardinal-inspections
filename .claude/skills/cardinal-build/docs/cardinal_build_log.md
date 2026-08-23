@@ -20611,6 +20611,151 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## SQL APPLIED — audit findings 10 + 15 (23 Aug 2026, after 1023)
+
+✅ **Both migrations APPLIED to production 23 Aug 2026, on Theo's explicit instruction ("D the
+sql"), via the Supabase MCP** (`team_profiles_self_edit`, `photos_upload_prefix_exclusions`).
+Verified after apply against pg_policies/pg_trigger: the `team self update` policy and
+`team_profiles_guard_self` trigger exist on `team_profiles` (admin policy untouched), and
+`photos_upload`'s `with_check` carries all six prefix exclusions with the dedicated prefix policies
+untouched. `is_cardinal_admin()` was traced before applying the trigger: false for authenticated
+non-admins (pins role/email), true for admins (no pinning), NULL for a no-JWT/service-role
+connection (no pinning — service flows unaffected). That closes ALL 17 audit findings. The original
+write-up follows for the record.
+
+- **`team_profiles_self_edit.sql` (finding 10, HIGH).** Adds a self-row UPDATE policy so a teammate
+  can maintain their own name/title/phone/photo, plus a BEFORE UPDATE trigger that pins `role`/`email`
+  for non-admins (RLS WITH CHECK can't see OLD, so the trigger is what guarantees no role escalation).
+  Idempotent; admin behaviour unchanged. Fixes the confirm-then-silent-failure the Team Directory shows.
+- **`photos_upload_prefix_exclusions.sql` (finding 15, MEDIUM).** One `ALTER POLICY` carving the six
+  privileged prefixes (showcase/walks/workmanship/owner-vault/materials — admin; visualizer — staff)
+  out of the blanket `photos_upload` INSERT policy, so each is governed only by its own stricter
+  policy instead of being nullified by the OR'd blanket grant. Sign-off note in the file.
+
+That closes the audit's code work: findings 1–9, 11–14, 16, 17 shipped (builds 1015–1023); 10 + 15
+are the two SQL items pending Theo; the remaining opens are operator actions (disable Supabase public
+signup; restrict the Maps key) recorded in OPEN_ITEMS.
+
+## Build 1023 — the "N to fill" contract chip is readable on its own ground (23 Aug 2026)
+
+**Audit finding 17 (medium — the recurring light-ink-on-a-dark-ground class).** `#fillChipBtn` (the chip that counts unfilled blanks on a contract) is a `.btn.dark`, so its label sits on a `#555` grey ground. `refreshFillChip` painted the label `#e35c63` (**2.12:1**) for "N to fill" and `#6cb98f` (**3.19:1**) for "All filled" — both under the 4.5:1 body floor on that ground. **Computed with `scripts/contrast.py`, not eyeballed.**
+
+**Fix.** One line: `btn.style.color = n ? '#ffc2c6' : '#9fdcb4'` — `#ffc2c6` (**4.89:1**) for to-fill and `#9fdcb4` (**4.75:1**, the exact green `#savedFlash` already uses at index.html:352) for all-filled. Same hues deepened toward the ground's light twins, not swapped, so the state colour still reads as red-ish/green-ish. The bright border colours (`#c8202e`/`#2a6b3c`) are unchanged — a border is decoration, not text.
+
+**Proof:** `gate_1023.mjs` — extracts `.btn.dark`'s ground and `refreshFillChip`'s label line, recomputes WCAG ratios itself (self-contained), asserts both states ≥ 4.5:1, and that the old inks are gone. GREEN on tree (4.89 / 4.75); control (1022) → RED naming 2.12 / 3.19. check_build green (1022→1023). No SQL.
+
+## Build 1022 — three full-screen views registered in hideAllViews()/navRestore() (23 Aug 2026)
+
+**Audit finding 16 (medium — the 570-572/941 nav-trap class).** Community Analytics (`cr-can`, `window.CardinalCommunityAnalytics`), the admin Line Item Library (`cr-lil-view`, `window.CardinalLineItems`) and the contract viewer (`cr-ce-view`, `window.openContractEditor`) are each `position:fixed; inset:0` full-screen views, but none was in `hideAllViews()` (which every navigation calls) or in the back-button history (`navRestore`/`wrapNav`). Opening one and then tapping another destination — or Back — left it covering the next screen with no exit but its own Close, and Back walked straight past it.
+
+**Fix — lever matched to how each is shown (the doctrine's table).** `cr-can` is display-shown (`open()`→`display:block`, `close()`→`display:none`), so hideAllViews clears it with `style.display='none'` (its own commented line beside `cr-occ`/`cr-owner`). `cr-lil-view` and `cr-ce-view` are class-shown and write the global scroll lock, so they join the `[{id,api}]` close-through-`close()`-then-confirm array — `cr-lil` via `CardinalLineItems`, `cr-ce` via a `{close}` wrapper around the bare `window.closeContractEditor` global. History: `cr-can`/`cr-lil` are methods → `__crNav` IIFE wraps (Crews/Pay/Owner shape); the contract viewer is a global → `wrapNav('openContractEditor','contract', input=>({contractId:input&&input.id}))`, and navRestore reopens it by that id. New navRestore cases: `communityAnalytics`, `lineitems`, `contract`.
+
+**Proof:** `gate_1022.mjs` — [A] EXECUTES the shipped `hideAllViews()` against a mock DOM (cr-can seeded display:block → none; cr-lil/cr-ce seeded `.open` → removed; cr-ce routes through `closeContractEditor`); [B] EXECUTES `navRestore()` for all three cases (contract reopens by id, and NOT without one); [C] the load-time wrapNav + two `__crNav` wraps are present. GREEN on tree; control (1021) → RED with 11 named failures (executed old hideAllViews and confirmed the views stayed open). check_build green (1021→1022). No SQL.
+
+## Build 1021 — Approved/Completed team emails survive an offline stage move (23 Aug 2026)
+
+**Audit finding 14 (medium).** Moving a job to Approved/Completed offline: `pdb.update` queues the row (868) and `patchProjectCk` merges locally (1017), so the JOB syncs on reconnect — but the workflow email fired from `setStage` (19173/19181) was a **fire-and-forget** `notifyTeam(...)` with no `.then`/`.catch`. `notifyTeam` returns `{ok:false,reason:'network'}` when the `/api/notify` fetch fails offline; nobody read it, so Curtis's "APPROVED — order materials" and the rep's "job complete — walk-around + invoice" were silently dropped and never resent. The crew never heard about a job that had actually moved.
+
+**Fix.** New `_notifyOrQueue(to,subject,html)` helper (after `assignedRepOf`): sends via `notifyTeam` immediately, and **only** on a `network`/`offline` reason queues an `op:'notify'` entry into the existing write outbox (`window.CardinalOutbox.queue`). A real refusal (`signed_out`) is not queued — a present, online person already sees that. Both `setStage` call sites now call `_notifyOrQueue` instead of bare `notifyTeam`. The outbox `flush()` gains an `op:'notify'` branch: it replays through `window.notifyTeam` (top-level fn = window prop, same access the 53295 community path uses), `del`s on a confirmed send, keeps-and-stops on `network`, keeps-and-continues on any other reason, and **never `bury()`s** a notify — a missed email is best-effort, not a red "refused" chip a person must act on. `entryKey` returns null for a notify entry (no `table`), so it never mis-folds; `patchesFor`/stuck-panel ignore it; `clearAll` on sign-out wipes it (one person's queued email never fires under the next).
+
+**Proof:** `gate_1021.mjs` — [A] brace-extracts and EXECUTES the shipped `op:'notify'` flush branch (ok→del+sentSome, network→kept+stop, signed_out→kept+continue, never buried); [B] executes `_notifyOrQueue` (ok→queue nothing, network/offline→one op:'notify' carrying to/subject/html, signed_out→nothing); [C] setStage routes both emails through the helper and calls no bare `notifyTeam`. GREEN on tree; control (1020) → RED (branch/helper absent, 2 bare notifyTeam). check_build green (1020→1021). No SQL.
+
+## Build 1020 — a superseded same-job stage tap no longer fires a phantom crew email (23 Aug 2026)
+
+**Audit finding 13 (high — sends an irreversible email).** `crStageDefer` (the 5s undo window for stage arrows, added 1006, rewritten 1008) keeps exactly one pending move and, on any new tap, **committed the pending move first** — line 11534 `if(_crStagePending) _crStageCommit(_crStagePending)`. That is correct for a move on a *different* job (the 1008 rule: never drop it), but for a **second tap on the SAME job** it locked in the first move before starting the second. So a forward-then-back inside 5s (or the phone locking mid-window) fired `setStage` for a stage the job never really settled on — and for Approved that sends production the irreversible "Approved — order materials" email. The `_crStageCommit` header comment (11493–11495) already warns that Approved/Completed email the team and a rollback can't unsend it.
+
+**Fix.** `crStageDefer` now branches on whether the pending move is the same job: same job → **cancel** the pending move (exactly like the Undo callback: `done=true`, clear timer, null `_crStagePending`, restore `pr.stage` to the pending move's true `from`), rebase `from` to that origin, and if the new target now equals the origin, re-render and `return` with **no** new pending and **no** commit — a clean round-trip saves nothing. A same-job re-target (Sched→Appr→Compl) rebases from the true origin so only the **final** stage commits (intermediate Approved skipped). A **different** job still `_crStageCommit(q)` first. The deliberate `pagehide`/`visibilitychange` flush (11552–11553) is unchanged.
+
+**Proof:** `gate_1020.mjs` executes the shipped `_crStageCommit`+`crStageDefer` with a stubbed `setStage`: [A] same-job forward-then-back → **zero** setStage calls, no pending left, job rests at origin; [B] same-job Sched→Appr→Compl → exactly one setStage, to Completed only; [C] different job supersedes → first job (P→Approved) commits, Q becomes pending; [D] flush still commits a lone pending move. GREEN on tree; control (1019) → RED on [A]/[B] (fires P→Approved, then double-commits Appr+Compl). check_build green (1019→1020). No SQL.
+
+## Build 1019 — two money-display surfaces reconciled with Balance Due (23 Aug 2026)
+
+**Audit findings 11 + 12 (medium).** (11) `payTotals` computed Received/Job Net from worksheet+legacy only, ignoring `collPaid` — since 996 the money-in ledger — so the Payment page contradicted Balance Due on any job with a collection. Now mirrors jobFinance: `if(collPaid[pr.id] !== undefined) recv = collPaid[pr.id]` (unclamped, matching 15964). (12) indexMoney's signed-contract TABLE leg took MAX over rows while jobFinance sums contract DOCS, so a multi-trade job with table contracts under-reported Job Value; the table leg now SUMS (`ctrSigned[id] = (…||0) + t`). Measured: zero jobs carry >1 signed contract-table row today — no value changes now, preventive like 997/1011. **Proof:** `gate_1019.mjs` executes the shipped payTotals (recv=collections when present) and indexMoney (two signed rows sum to 18000; unsigned/voided ignored). GREEN; control -> RED (recv 999 not 500, ctr 10000 not 18000). check_build green (1018->1019). No SQL.
+
+## Build 1018 — the lead-source report sees every lead (23 Aug 2026)
+
+**Audit finding 9 (high).** The source chart/filter/sort/profile read flat `checklist.lead_source` (1008), but three creators still write it nested at `checklist.lead.source` (manual-estimate create, community-bid convert, +1) and 28/57 rows carry it only there — invisible to every reader. Fix: one line in `__parseCkAllRaw` (the single point every reader parses through, cached by `parseCkAll`) — if flat `lead_source` is null but `lead.source` exists, lift it. Repairs all 28 rows, all 11 readers and any future nested write in one place; flat wins where both exist; empty-string nested stays blank. Reader-side only — no DB write, and the writers are left as-is (harmless now). **Proof:** `gate_1018.mjs` executes the shipped function across all four shapes. GREEN; control against 1017 -> RED (nested not lifted). check_build green (1017->1018). No SQL.
+
+## Build 1017 — offline job edits no longer merge onto a stale cached row (23 Aug 2026)
+
+**Audit finding 8 (high — silent data loss).** `patchProjectCk` (the one chokepoint behind every
+checklist-backed edit, 50 call sites) refetches the row before merging (655, to narrow the
+two-device race). Offline that inverted: sw.js serves `/rest/v1` GETs stale-while-revalidate (864),
+so with no signal the refetch returned a STALE row and the just-made offline edit was merged onto it
+and lost on sync. Fix: gate the refetch on `!(navigator.onLine === false)` — the exact idiom
+`pdb.update` uses at 10708 — so offline it merges onto `pr.checklist` (kept current by the outbox);
+online the 655 merge is unchanged.
+
+Finding 14 (offline stage-move notification dropped, medium) is a separate outbox-mechanism change —
+its own build, not folded in here.
+
+**Proof:** `gate_1017.mjs` EXECUTES the shipped `patchProjectCk`: offline → 0 refetches, patch
+merged onto the local row (stale `{z:9}` never pulled); online → 1 refetch, merged onto the fresh
+row. GREEN; negative control against the 1015/1016 tree → RED (offline refetch happens). `check_build`
+green (1016→1017). No SQL.
+
+## Build 1016 — AI/spend + senddoc routes gated on staff identity (23 Aug 2026)
+
+**Audit findings 6 + 7 (both CONFIRMED high).** 1013 closed anonymous access to the AI routes, but
+every one still trusted ANY confirmed Supabase session — and public signup is on — so a
+self-registered outsider could burn Cardinal's paid keys, and `senddoc` (non-carrier) could send
+mail as Cardinal to any recipient. Live check (23 Aug): 10 auth accounts, the only non-domain ones
+are `clarkie022@gmail.com` (sales, in team_profiles) and `theodorion1986@gmail.com` (Theo's owner
+login) — zero hostile accounts today; the exposure is future signups.
+
+**Fix:** new shared `api/_staff.js` — `isStaff(email)` = `@cardinalrenovations.net` domain OR the
+two known non-domain staff (static, no per-call DB lookup; ⚠ a future non-domain teammate must be
+added to `EXTRA_STAFF`). Wired into all 13 routes (analyze, caption, summarize, organize,
+sortphotos, detect, design, measure, sol, roofr, hover, coach, senddoc): a 403 guard immediately
+after the session resolves. A naïve domain-only gate would have locked out Clarkie and Theo's
+gmail — the allowlist prevents that, verified against the full roster.
+
+⚠ **Code half only.** The other half is Theo disabling **public signup** in Supabase Auth — without
+it a stranger can still create an account (they just can't reach these routes). Recorded in
+OPEN_ITEMS.
+
+**No index.html behavior change** — server-only; the stamp/CHANGELOG bump keeps the version record
+coherent (same convention as 806's librarian swap). **Proof:** `gate_1016.mjs` imports `_staff.js`
+and asserts all 10 live accounts pass + fabricated outsiders/empty/null fail (case-insensitive), and
+that all 13 routes import the helper with the guard positioned after the session resolves. GREEN;
+negative control against the build-1014 api dir → RED (40 failures: no `_staff.js`, no guards).
+`check_build` green (1015→1016); `node --check` clean on all 14 files. No SQL.
+
+## Build 1015 — contract signing works end to end again (23 Aug 2026)
+
+**The headline cluster of the build-1014 audit — 5 interlocking signing findings, all CONFIRMED,
+all fixed here.** `index.html` + `api/clientsign.js` + `api/share.js`.
+
+1. **Service Contract had no signature block.** 781's `isDeal` strip (`buildEstimate`, ~9845)
+   removes the base `SIGN_FOOTER` from every AGREEMENT/CONTRACT because the three Construction
+   Agreements carry their own Buyer/Co-buyer/Contractor `data-sig` table — but the plain SERVICE
+   CONTRACT brings no table, so it was left with nowhere to sign (pad discarded the signature; share
+   link view-only). Now the footer is stripped only when `body` contains `data-sig`; the agreements
+   (which do) keep 781 unchanged.
+2. **Remote signing never wrote `signed_at`** (`api/clientsign.js`): PATCH added
+   `signed_at: new Date().toISOString()` — restores the SIGNED chip, the Approvals queue entry and
+   the money-worksheet unlock, all of which read `signed_at`, while the stage advance + Curtis email
+   were already firing.
+3. **Construction Agreements were unsignable remotely** — they sign through a Buyer sigslot, not the
+   footer, and `share.js`/`clientsign.js` only recognized the footer (`SIGN_RX`). Added `SLOT_RX` /
+   `SLOT_FULL_RX`: an unfilled `class="sigslot" data-sig="buyer"` is now signable, and clientsign
+   stamps the PNG + date into the buyer slot the way the in-person pad does (buyer only — the remote
+   signer is the client).
+4. **Published estimates missed `isEstimateTitle`.** publish titles docs `EST-YYYY-NNNN — …`; the
+   leading-word regex never matched, so a signed numbered estimate skipped `renderApprovals`, the
+   "needs approval" email, overview counts and jobFinance's doc leg. Both `isEstimateTitle` and
+   `docKind` now strip a leading `EST-\d{4}-\d+ — ` prefix; all 15+ call sites inherit it. (All live
+   estimate_numbers are `EST-YYYY-NNNN`, verified.)
+5. **Void status mismatch.** The writer writes `status:'void'` (732); two readers checked `'voided'`
+   — the Voided eyebrow never showed and a voided contract kept offering Void. Both now read `'void'`.
+
+**Proof.** `gate_1015.mjs` EXECUTES the shipped `buildEstimate` (footer kept for a no-data-sig
+Service Contract, stripped for an Agreement), `isEstimateTitle`/`docKind` (accept the EST- prefix,
+still accept plain), and the real `clientsign` handler under mocked Supabase (footer AND buyer-slot
+docs both get `signed_at`; slot marked signed; already-signed → 409); plus the shipped `share.js`
+regexes and the void readers. GREEN; **negative control against 1014 → RED with 12 named failures.**
+`check_build` green (1014→1015). No SQL.
+
 ## Build 1014 — six fixes closing out the 23 Aug audit (23 Aug 2026)
 
 **The audit remainder, re-verified against the 1013 tree by a 9-agent pass before anything was

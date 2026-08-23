@@ -63,6 +63,7 @@ async function aiFallback(parts, geminiRes) {
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
 const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
 
+import { isStaff } from './_staff.js';
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -80,6 +81,7 @@ export default async function handler(req, res) {
     if (!who.ok) { res.status(401).json({ error: 'Invalid session' }); return; }
     const user = await who.json();
     if (!user || !user.email) { res.status(401).json({ error: 'Invalid session' }); return; }
+    if (!isStaff(user.email)) { res.status(403).json({ error: 'Cardinal staff only' }); return; }
   } catch (e) {
     res.status(401).json({ error: 'Invalid session' });
     return;
