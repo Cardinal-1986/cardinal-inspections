@@ -77,10 +77,14 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
    +1). 1008 fixed only the New Lead intake. **Fix:** one reader-side normalization in
    `__parseCkAllRaw` (index.html:20444) — if flat `lead_source` is null but `lead.source` exists, lift
    it — which repairs all 28 rows, all 11 readers, and any future nested write in one place.
-10. **Team Directory tells non-admins to edit their own row, but `team_profiles` RLS refuses every
-    such write** (index.html:27031; pencil/save shown when `mine`, RLS allows only `is_cardinal_admin`).
-    Confirm-then-silent-failure. **Fix:** one migration adding a self-row UPDATE policy that cannot
-    escalate `role` (`using lower(email)=lower(my_email()) with check … and role unchanged`).
+10. 🟡 **MIGRATION WRITTEN, AWAITING THEO'S SIGN-OFF + APPLY** — `team_profiles_self_edit.sql`.
+    Team Directory shows non-admins a pencil to edit their own row (index.html ~27031), but
+    `team_profiles` had only an admin UPDATE policy — confirm-then-silent-failure (verified live:
+    admin insert/update/delete + is_staff select, no self row). The migration adds a self-row UPDATE
+    policy (`using/with check lower(email)=lower(my_email())`) plus a BEFORE UPDATE trigger that pins
+    `role` and `email` for non-admins (RLS WITH CHECK can't see OLD, so the trigger is what makes
+    "role unchanged" real). Idempotent; admin behaviour unchanged. **Not applied — RLS change needs
+    Theo to run it (or authorize MCP apply).**
 
 ### 🟠 MEDIUM
 11. ✅ **RESOLVED at 1019.** Payment Information's "Received"/"Job Net" excluded collections (`payTotals`, index.html:14342)
@@ -103,10 +107,14 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
     (not on a real refusal); the outbox `flush()` gained an `op:'notify'` branch that replays via
     `window.notifyTeam` and never buries a best-effort email. Proven by `gate_1021.mjs` (executes
     both the flush branch and the helper).
-15. **Blanket `photos_upload` storage policy nullifies all 5 admin-only prefix INSERT policies**
-    (studio_private_objects_rls.sql:58) — any authenticated user can upload into showcase/walks/
-    owner-vault/materials prefixes. **Fix:** one idempotent `ALTER POLICY` adding the prefix
-    exclusions (needs Theo's sign-off, sequenced under §5).
+15. 🟡 **MIGRATION WRITTEN, AWAITING THEO'S SIGN-OFF + APPLY** — `photos_upload_prefix_exclusions.sql`.
+    The blanket `photos_upload` INSERT policy (`bucket_id='photos' AND name NOT LIKE 'private/%'`, no
+    staff check) is OR'd with the dedicated prefix policies, so any authenticated user can upload into
+    the admin-only prefixes (showcase/walks/workmanship/owner-vault/materials) and the staff-only
+    visualizer/ (verified live against pg_policies). The migration is one idempotent `ALTER POLICY`
+    carving those six prefixes out of `photos_upload`, so each is governed only by its own stricter
+    policy. **Not applied — needs Theo to run it (or authorize MCP apply). Sign-off note in the file:
+    confirm no non-admin teammate legitimately uploads to these prefixes today.**
 16. ✅ **RESOLVED at 1022.** Community Analytics (cr-can), Line Item Library (cr-lil-view) and the
     contract viewer (cr-ce-view) were full-screen views in neither `hideAllViews()` nor
     `navRestore()` — the 941/Suppliers nav-trap class. **Fix:** all three registered — display-lever

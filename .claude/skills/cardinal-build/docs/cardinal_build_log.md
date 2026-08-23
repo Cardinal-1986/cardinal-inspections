@@ -20611,6 +20611,25 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## SQL awaiting sign-off — audit findings 10 + 15 (23 Aug 2026, after 1023)
+
+Two RLS security migrations written and verified against the live policy set, **not applied** — an
+RLS change to a production DB with real users needs Theo to run it (or authorize an MCP apply). Both
+ship as `.sql` (blanket-excluded from deploy) and touch no `index.html`, so there is no build stamp.
+
+- **`team_profiles_self_edit.sql` (finding 10, HIGH).** Adds a self-row UPDATE policy so a teammate
+  can maintain their own name/title/phone/photo, plus a BEFORE UPDATE trigger that pins `role`/`email`
+  for non-admins (RLS WITH CHECK can't see OLD, so the trigger is what guarantees no role escalation).
+  Idempotent; admin behaviour unchanged. Fixes the confirm-then-silent-failure the Team Directory shows.
+- **`photos_upload_prefix_exclusions.sql` (finding 15, MEDIUM).** One `ALTER POLICY` carving the six
+  privileged prefixes (showcase/walks/workmanship/owner-vault/materials — admin; visualizer — staff)
+  out of the blanket `photos_upload` INSERT policy, so each is governed only by its own stricter
+  policy instead of being nullified by the OR'd blanket grant. Sign-off note in the file.
+
+That closes the audit's code work: findings 1–9, 11–14, 16, 17 shipped (builds 1015–1023); 10 + 15
+are the two SQL items pending Theo; the remaining opens are operator actions (disable Supabase public
+signup; restrict the Maps key) recorded in OPEN_ITEMS.
+
 ## Build 1023 — the "N to fill" contract chip is readable on its own ground (23 Aug 2026)
 
 **Audit finding 17 (medium — the recurring light-ink-on-a-dark-ground class).** `#fillChipBtn` (the chip that counts unfilled blanks on a contract) is a `.btn.dark`, so its label sits on a `#555` grey ground. `refreshFillChip` painted the label `#e35c63` (**2.12:1**) for "N to fill" and `#6cb98f` (**3.19:1**) for "All filled" — both under the 4.5:1 body floor on that ground. **Computed with `scripts/contrast.py`, not eyeballed.**
