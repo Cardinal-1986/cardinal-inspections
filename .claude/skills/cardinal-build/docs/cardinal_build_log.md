@@ -20611,6 +20611,48 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1001 — one documented definition of a claim's "outstanding" (23 Aug 2026)
+
+Theo's call on the decision list: *"include deductibles and exclude undecided supplements."*
+
+`claimMoney(claim, payments, supplements)` is now the one named home for that rule:
+
+> **outstanding = RCV + decided supplements − received.** The deductible is counted as owed (it is
+> inside RCV — money still owed to Cardinal until collected). An undecided supplement
+> (draft/submitted) is NOT in the total; it is surfaced on its own pending line, never as $0. A
+> denied/withdrawn supplement contributes nothing and is not pending.
+
+### The research was overstated, and I checked before writing a formula
+
+The audit warned that getting outstanding wrong would "skew every insurance commission by 10% of
+the deductible via a SECURITY DEFINER trigger." **It would not.** `make_commission()` fires on each
+`collections` insert and computes 10% of the amount **received** — there is exactly one client
+commission writer and it never reads "outstanding." So this is **display maths only**. Verified
+against the shipped trigger and the single writer before touching anything.
+
+### And the detail card was already correct — so the honest scope is narrow
+
+The per-claim card already computed `max(0, rcv + Σapproved_supp − paid)`, which is exactly Theo's
+rule. So 1001 does three things, not a five-site rewrite:
+1. **names** the rule in `claimMoney()` with the reasoning attached, and points the card at it;
+2. adds the **pending-supplement line** — a filed-but-undecided supplement is shown as *awaiting a
+   decision*, never folded into the total;
+3. stops a filed-but-unpriced supplement **reading "$0"** in the supplements table (shows "—").
+
+⚠ **Deliberately NOT unified with the claims-list total, the Cardinal Truth dashboard rollup, or
+cr-ic's sort key.** Those are different aggregates computed off the *denormalised* `supplement_*`
+columns, which use a different status vocabulary from the supplements table. Forcing them through one
+helper would mean reconciling two vocabularies and loading the supplements table into hot
+list-render paths — real risk for little gain, and more than the decision asked. The scope note is
+in the code comment so the next person sees why.
+
+`gate_1001.mjs` — 13 assertions. Extracts the shipped `claimMoney` (with its two status maps) and
+unit-tests the rule: deductible owed, approved added, submitted excluded but surfaced, denied
+contributes nothing, partial counts, overpaid floors at 0. Then renders the real card with an
+injected approved + submitted supplement and reads the pending line off it. Control on 1000: **PASS
+3 · FAIL 3**, named, no crash — the shared total passes on both (the card was already right), the
+named helper and pending line fail on 1000.
+
 ## Build 1000 — a claim shows how long since the date of loss (23 Aug 2026)
 
 Theo's pick, my "ship the counter, not the clock". Beside the date of loss the claim card now reads

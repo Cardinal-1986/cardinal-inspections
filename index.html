@@ -3701,7 +3701,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1000 &#8212; a claim now shows how long it has been since the date of loss, right beside the date &#8212; e.g. &#8220;476 days ago.&#8221; It is a plain fact, not a countdown: the app deliberately does not guess a filing deadline, because guessing that wrong is worse than not showing it. Both of your open claims are past a year, which this now makes visible at a glance.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1001 &#8212; a claim now has one clear answer to &#8220;what are we still owed.&#8221; Outstanding counts the full replacement value including the deductible, plus any supplement the carrier has actually approved, minus what has come in. A supplement you have filed but the carrier has not ruled on is shown on its own line as awaiting a decision, never folded into the total or shown as $0 &#8212; so a pending supplement is visible without inflating what you think you are owed.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -31363,14 +31363,56 @@ function showList() {
     renderDetail();
   }
 
+  /* 1001: the one place the "what are we still owed" rule lives, so the number
+     on the claim card has a documented definition rather than an inline formula.
+     Theo's call, 23 Aug: OUTSTANDING = RCV + decided supplements − received.
+       · The DEDUCTIBLE is counted as owed — RCV is the full replacement value,
+         and the homeowner's deductible share is money still owed to Cardinal
+         until it is collected, so it is inside RCV and stays in the total.
+       · An UNDECIDED supplement (draft / submitted) is NOT in the total —
+         nobody can collect it yet. It is surfaced on its own pending line so a
+         filed supplement is never invisible, and never reads as $0 owed.
+       · A denied or withdrawn supplement contributes nothing and is not pending.
+     ⚠ This is display maths, NOT a commission input: make_commission() fires on
+     each COLLECTION (10% of the amount received), never on this number — so the
+     earlier worry that the deductible rule could skew a commission via a trigger
+     does not hold. Verified against the shipped trigger and the single client
+     commission writer.
+     ⚠ Scope: this is the PER-CLAIM card. The claims-list total, the Cardinal
+     Truth dashboard rollup and cr-ic's sort key are different aggregates on the
+     denormalised supplement_* columns; they are deliberately left alone rather
+     than forced through one helper across two status vocabularies. */
+  var CLAIM_SUPP_DECIDED = { approved: 1, partial: 1 };
+  var CLAIM_SUPP_PENDING = { draft: 1, submitted: 1 };
+  function claimMoney(claim, payments, supplements){
+    var c = claim || {}, pays = payments || [], supps = supplements || [];
+    var rcv = Number(c.approved_rcv) || 0;
+    var acv = Number(c.approved_acv) || 0;
+    var depreciation = c.approved_depreciation != null ? Number(c.approved_depreciation) : (rcv - acv);
+    var deductible = Number(c.deductible) || 0;
+    var received = pays.reduce(function(s, p){ return s + (Number(p.amount) || 0); }, 0);
+    var approvedSupp = supps.reduce(function(s, sp){
+      return s + (CLAIM_SUPP_DECIDED[sp.status] ? (Number(sp.amount_approved) || 0) : 0);
+    }, 0);
+    var pend = supps.filter(function(sp){ return CLAIM_SUPP_PENDING[sp.status]; });
+    var pendingReq = pend.reduce(function(s, sp){ return s + (Number(sp.amount_requested) || 0); }, 0);
+    return {
+      rcv: rcv, acv: acv, depreciation: depreciation, deductible: deductible,
+      received: received, approvedSupp: approvedSupp,
+      pendingCount: pend.length, pendingReq: pendingReq,
+      billable: rcv + approvedSupp,
+      outstanding: Math.max(0, rcv + approvedSupp - received)
+    };
+  }
   function renderDetail() {
     const c = state.claim;
-    const paidTotal = state.payments.reduce((s, p) => s + Number(p.amount), 0);
-    const suppTotal = state.supplements.reduce((s, sp) => s + Number(sp.amount_approved || 0), 0);
-    const rcv = Number(c.approved_rcv || 0);
-    const acv = Number(c.approved_acv || 0);
-    const depr = Number(c.approved_depreciation || (rcv - acv));
-    const outstanding = Math.max(0, rcv + suppTotal - paidTotal);
+    const _cm = claimMoney(c, state.payments, state.supplements);
+    const paidTotal = _cm.received;
+    const suppTotal = _cm.approvedSupp;
+    const rcv = _cm.rcv;
+    const acv = _cm.acv;
+    const depr = _cm.depreciation;
+    const outstanding = _cm.outstanding;
     const pct = rcv > 0 ? Math.min(100, Math.round(paidTotal / rcv * 100)) : 0;
 
     MOUNT.innerHTML = `
@@ -31403,6 +31445,7 @@ function showList() {
             <div class="cr-c-fin-progress-lbl">
               <span>Received to date: <strong>$${fmt(paidTotal)}</strong> of $${fmt(rcv + suppTotal)}</span>
               <span>Outstanding: <strong>$${fmt(outstanding)}</strong></span>
+              ${_cm.pendingCount ? `<span class="cr-c-pending" style="font-size:11px;color:var(--cr-amber);">&#9203; ${_cm.pendingCount} supplement${_cm.pendingCount>1?'s':''} awaiting a decision${_cm.pendingReq ? ` &middot; $${fmt(_cm.pendingReq)} requested` : ''} &mdash; not counted above</span>` : ''}
             </div>
           </div>
         </div>
@@ -31737,7 +31780,7 @@ function showList() {
               <td>${esc(sp.reason || '—')}</td>
               <td>${fmtDateShort(sp.filed_at)}</td>
               <td><span style="font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:${statusColor[sp.status]};">${sp.status}</span></td>
-              <td class="amt">$${fmt(sp.amount_requested)}</td>
+              <td class="amt">${sp.amount_requested != null ? `$${fmt(sp.amount_requested)}` : '<span style="color:var(--cr-muted-2);">&mdash;</span>'}</td>
               <td class="amt">${sp.amount_approved != null ? `$${fmt(sp.amount_approved)}` : '<span style="color:var(--cr-muted-2);">—</span>'}</td>
             </tr>
           `).join('')}
@@ -41511,7 +41554,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1000, d:'2026-08-23', t:'A claim shows how long since the date of loss', s:'Next to the date of loss on a claim you now see how long ago it was \u2014 \u201C476 days ago.\u201D It is a plain fact, not a deadline clock: the app will not guess a suit-limitation period, because getting that wrong is the real harm. Both open claims are over a year out, and this makes that obvious without doing the arithmetic in your head. A true countdown would need the limitation date typed in from the policy, which is a later, separate change.' },
+{ b:1001, d:'2026-08-23', t:'A claim has one clear answer to \u201Cwhat are we still owed\u201D', s:'The Outstanding figure on a claim now has a single, documented rule: the full replacement value (which includes the deductible the homeowner still owes) plus any supplement the carrier has actually approved, minus what has been received. A supplement you have filed but the carrier has not yet ruled on is shown on its own line as awaiting a decision \u2014 it is never added into the total and never shows as $0 owed, so it is visible without making it look like money is in hand. This is a display number only; it does not change how commissions are worked out.' },
+      { b:1000, d:'2026-08-23', t:'A claim shows how long since the date of loss', s:'Next to the date of loss on a claim you now see how long ago it was \u2014 \u201C476 days ago.\u201D It is a plain fact, not a deadline clock: the app will not guess a suit-limitation period, because getting that wrong is the real harm. Both open claims are over a year out, and this makes that obvious without doing the arithmetic in your head. A true countdown would need the limitation date typed in from the policy, which is a later, separate change.' },
       { b:999, d:'2026-08-23', t:'Lead source is a required tap when you add a client', s:'Where a lead came from \u2014 door knock, referral, storm canvass, and so on \u2014 is the one field that tells you whether the way you find work is working. It was already wired into the reports chart, the filter and the sort, but it defaulted to \u201Cnot set\u201D and only the client name was required, so it was blank on every job and the chart had no data. Adding a client now asks for it as a single tap from eight chips, and it remembers your last pick so a canvasser doing a street taps once rather than every time. Editing an existing client never nags \u2014 the requirement is only for new ones.' },
       { b:998, d:'2026-08-22', t:'A build day on the calendar has to say which job it is', s:'Booking a build meant typing an address and picking \u201CJob\u201D \u2014 and the client box said \u201Coptional\u201D, so it usually stayed empty. An appointment attached to no job cannot move that job to Scheduled, which means it never reaches the crew board, which is why the \u201Cneeds a crew\u201D rail has been empty since it was built. Job and Material Drop now ask for the job, and say why if you skip it. Ordinary appointments are untouched \u2014 a haircut has no client. The two build days already in the calendar without a job can be attached to one instead of being deleted and booked again.' },
       { b:997, d:'2026-08-22', t:'Accepting an estimate makes it the number', s:'When a job carried two live estimates \u2014 the options you show at a kitchen table \u2014 Job Value quoted whichever was biggest, even after you had accepted the smaller one. Balance Due, the invoice, the AR chart and the pipeline total all read that same figure, so one job could be wrong in five places at once, and the only fix was remembering to archive the losing estimate by hand every single time. An accepted estimate now wins whatever its size. If a job genuinely has two accepted \u2014 a roof and a siding job on one property \u2014 the larger still leads. No job in the system changes value today; this is here so it does not happen the next time.' },
