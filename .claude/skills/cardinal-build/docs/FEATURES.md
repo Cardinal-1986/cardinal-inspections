@@ -6504,3 +6504,15 @@ same alert to Curtis + admins via the Resend account it already uses. Email pari
 reliable channel is email). Also made the stage advance forward-only (no pulling a scheduled job back to
 Approved, alert only on the real move). `gate_1007.mjs` (imports the handler, stubs fetch+env; control on
 pre-1007 FAIL 3). Backend change; no screen change.
+
+### 1008 — four fixes from the fresh audit (23 Aug)
+
+An 8-finder audit at build 1007 caught four regressions in the day's own builds, fixed here: (1) 1005
+Lead Source was written to checklist.lead.source but every report reads checklist.lead_source — the
+intake now writes the flat key; (2) 1005 Claim Type refusal was dead (an 'unknown' radio was
+pre-checked) — no type is pre-selected on a neutral portal now, so the choice is active and the guard
+lives; (3) crStageDefer dropped a superseded move (2nd arrow tap, esp. cross-job) — a superseding tap
+now commits the first move, and the target is captured + committed via setStage() directly (race-free);
+(4) closing the app in the Undo window lost the move — a pagehide/visibilitychange flush commits it.
+gate_1006 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
+findings (incl. the critical api/abc.js open proxy) are logged in OPEN_ITEMS "Audit 2026-08-23".
