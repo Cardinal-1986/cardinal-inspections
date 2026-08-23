@@ -3705,7 +3705,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -28363,7 +28363,7 @@ body.claim-insurance #brandLogo{
   --rbe-gradline:rgba(200,32,46,.5);
   --rbe-uns-col:#aab1ba;--rbe-uns-lg:rgba(120,130,145,.5);--rbe-uns-neon:#dbe7f7;
   --rbe-snt-col:#8ac4f2;--rbe-snt-lg:rgba(138,196,242,.5);--rbe-snt-neon:#6fc3ff;
-  --rbe-acc-col:#8fe0ae;--rbe-acc-lg:rgba(79,174,116,.5);--rbe-acc-neon:#3dff9a;
+  --rbe-acc-col:#8fe0ae;--rbe-acc-lg:rgba(79,174,116,.5);--rbe-acc-neon:#3dff9a;--rbe-dec-col:#e35c63;--rbe-dec-lg:rgba(227,92,99,.4);--rbe-dec-neon:#e35c63;
 }
 :root[data-theme="rb-light"]{
   --rbe-accdk:#2d5578;--rbe-acc:#3d6485;--rbe-acclt:#4f7396;
@@ -28385,7 +28385,7 @@ body.claim-insurance #brandLogo{
   --rbe-gradline:rgba(200,32,46,.3);
   --rbe-uns-col:#6d747d;--rbe-uns-lg:rgba(154,154,154,.35);--rbe-uns-neon:#9a9a9a;
   --rbe-snt-col:#c8202e;--rbe-snt-lg:rgba(200,32,46,.35);--rbe-snt-neon:#c8202e;
-  --rbe-acc-col:#141414;--rbe-acc-lg:rgba(20,20,20,.3);--rbe-acc-neon:#141414;
+  --rbe-acc-col:#141414;--rbe-acc-lg:rgba(20,20,20,.3);--rbe-acc-neon:#141414;--rbe-dec-col:#9c1822;--rbe-dec-lg:rgba(156,24,34,.3);--rbe-dec-neon:#9c1822;
 }
 /* ── retail-B step 3: Estimates status lanes (build 339) ── */
 .cre-h{margin:0;font:800 22px Georgia,'Times New Roman',serif;color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
@@ -28468,6 +28468,12 @@ body.claim-insurance #brandLogo{
    #1a1a1a on #8a5500 is 2.80:1, against 5.17:1 on #C87A00. Pinned to the old value,
    per-site, following build 942's precedent rather than sweeping the token. */
 :root[data-theme="rb-light"] .cr-chrome-badge{background:#C87A00}
+/* ─ build 1026: the Declined lane is deliberately THIN — a full-width strip below
+   the working columns, dimmed. Declined is a terminal state: it must be visible
+   (it was invisible for months) but it does not get a working column's worth of
+   attention. Empty, it collapses to its header line — no dashed placeholder. */
+.cre-lane.thin{grid-column:1/-1;margin-top:2px;}
+.cre-lane.thin .cre-card{opacity:.85;}
 </style>
 
 <!-- ═══ Mount point ═══════════════════════════════════════════ -->
@@ -29122,7 +29128,9 @@ function showList() {
     try { rows = await loadList('all'); }
     catch (e) { if (lanesEl.isConnected) lanesEl.innerHTML = `<div class="cr-empty">Failed to load: ${escape(e.message)}</div>`; return; }
     if (!lanesEl.isConnected) return;
-    cre.rows = rows;
+    /* 1026: a discarded AI draft used to ride creLane's 'Unsent' fallback back
+       into the wall on the next reload. Discards never render anywhere. */
+    cre.rows = rows.filter(r => r.status !== 'discarded');
     renderEst();
   }
 
@@ -29130,7 +29138,15 @@ function showList() {
   const CRE_LANES = [
     { key: 'Unsent',   title: 'UNSENT \u2014 DRAFTS', statuses: ['draft'],                 col: 'var(--rbe-uns-col)', lg: 'var(--rbe-uns-lg)', neon: 'var(--rbe-uns-neon)' },
     { key: 'Sent',     title: 'SENT \u2014 WAITING',  statuses: ['sent', 'viewed'],        col: 'var(--rbe-snt-col)', lg: 'var(--rbe-snt-lg)', neon: 'var(--rbe-snt-neon)' },
-    { key: 'Accepted', title: 'ACCEPTED',             statuses: ['approved', 'converted'], col: 'var(--rbe-acc-col)', lg: 'var(--rbe-acc-lg)', neon: 'var(--rbe-acc-neon)' },
+    { key: 'Accepted', title: 'ACCEPTED',             statuses: ['approved', 'converted', 'accepted'], col: 'var(--rbe-acc-col)', lg: 'var(--rbe-acc-lg)', neon: 'var(--rbe-acc-neon)' },
+    /* 1026: the editor's own status vocabulary is draft/sent/accepted/declined
+       (STATUSES in cr-est-script) while these lanes were built for the AI arc's
+       approved/converted/viewed. The two never met: a hand-set Accepted or
+       Declined matched no lane and rode creLane's fallback into UNSENT — at
+       the time of this build, $27,310 of accepted work was rendering as drafts.
+       Declined is a THIN lane (see cr-estimates-styles): a terminal state stays
+       visible without spending a working column on it. */
+    { key: 'Declined', title: 'DECLINED',             statuses: ['declined'],              col: 'var(--rbe-dec-col)', lg: 'var(--rbe-dec-lg)', neon: 'var(--rbe-dec-neon)', thin: true },
   ];
   const CRE_SORTS = [
     { key: 'days',   label: 'Days waiting' },
@@ -29140,7 +29156,10 @@ function showList() {
   ];
   let cre = { rows: [], sort: 'days', dir: 1, sets: {}, cat: null, pend: [] };
 
-  function creLane(r){ const l = CRE_LANES.find(x => x.statuses.includes(r.status)); return l ? l.key : 'Unsent'; }
+  /* 1026: the fallback was 'Unsent' — which is exactly how accepted, declined and
+     discarded rows masqueraded as drafts. null means "no lane claims this";
+     renderEst gives such rows a labelled safety-net lane instead of a costume. */
+  function creLane(r){ const l = CRE_LANES.find(x => x.statuses.includes(r.status)); return l ? l.key : null; }
   function creDays(r){ return Math.max(0, Math.floor((Date.now() - new Date(r.date).getTime()) / 86400000)); }
   function creProject(r){
     /* 568: was `r.source === 'manual' ? r.id : ...` — correct when a manual row
@@ -29195,6 +29214,8 @@ function showList() {
       const base = d < 1 ? 'today' : d + ' day' + (d === 1 ? '' : 's') + ' out';
       return { t: (r.status === 'viewed' ? 'viewed \u00b7 ' : '') + base + (d >= 5 ? ' \u2691' : ''), flag: d >= 5 };
     }
+    if (lane === 'Declined') return { t: 'declined \u00b7 ' + r.date_label, flag: false };
+    if (!lane) return { t: (r.status || 'no status') + ' \u00b7 ' + r.date_label, flag: false };
     return { t: (r.status === 'converted' ? 'contract signed \u00b7 ' : 'accepted \u00b7 ') + r.date_label, flag: false };
   }
   /* 565: admin-only, same gate as crew rates and payments. Theo's standing rule is
@@ -29244,7 +29265,7 @@ function showList() {
     renderEst();
   }
   function creCardHtml(r){
-    const lane = CRE_LANES.find(l => l.key === creLane(r));
+    const lane = CRE_LANES.find(l => l.key === creLane(r)) || { neon: 'var(--rbe-uns-neon)' };
     const w = creWhen(r);
     const trades = creTrades(r).join(', ');
     const aiBadge = r.source === 'ai' ? ' <span class="cre-ai">\u26a1 AI</span>' : '';
@@ -29274,9 +29295,12 @@ function showList() {
       });
     }
     const vis = creSorted(cre.rows.filter(creMatch));
+    /* 1026: rows whose status no lane recognises — rendered in a labelled
+       safety-net lane below the real ones. Never silently, never as drafts. */
+    const lost = creSorted(cre.rows.filter(r => !creLane(r)));
     const n = creCount();
     const sub = M.querySelector('[data-cre-sub]');
-    if (sub) sub.textContent = vis.length + ' shown of ' + cre.rows.length +
+    if (sub) sub.textContent = (vis.length + lost.length) + ' shown of ' + cre.rows.length +
       (n ? ' \u00b7 ' + n + ' filter' + (n > 1 ? 's' : '') + ' active' : ' \u00b7 grouped by status');
     const chip = M.querySelector('[data-cre-sortchip]');
     if (chip) chip.textContent = (CRE_SORTS.find(s => s.key === cre.sort) || CRE_SORTS[0]).label;
@@ -29300,15 +29324,25 @@ function showList() {
     const lanes = M.querySelector('[data-cre-lanes]');
     lanes.innerHTML = creActiveLanes().map(l => {
       const rows = vis.filter(r => creLane(r) === l.key);
-      return `<div class="cre-lane" style="--lg:${l.lg}"><div class="gh"><span class="gt" style="color:${l.col}">${l.title}</span><span class="gn">${rows.length}</span></div>` +
-        (rows.length ? rows.map(creCardHtml).join('') : '<div class="cre-empty">Nothing here with these filters.</div>') +
+      return `<div class="cre-lane${l.thin ? ' thin' : ''}" style="--lg:${l.lg}"><div class="gh"><span class="gt" style="color:${l.col}">${l.title}</span><span class="gn">${rows.length}</span></div>` +
+        (rows.length ? rows.map(creCardHtml).join('') : (l.thin ? '' : '<div class="cre-empty">Nothing here with these filters.</div>')) +
         `</div>`;
-    }).join('');
+    }).join('') +
+      /* 1026: the safety net. A status no lane claims renders HERE under its raw
+         name instead of masquerading as a draft (how accepted and declined rows
+         hid) or vanishing. It ignores the status filter on purpose: a net with
+         a hole in it is not a net. */
+      (lost.length ? `<div class="cre-lane thin" style="--lg:var(--rbe-uns-lg)"><div class="gh"><span class="gt" style="color:var(--rbe-uns-col)">UNRECOGNIZED STATUS</span><span class="gn">${lost.length}</span></div>` + lost.map(creCardHtml).join('') + `</div>` : '');
 
-    const open = vis.filter(r => creLane(r) !== 'Accepted').reduce((s, r) => s + (r.amount || 0), 0);
+    /* 1026: "open pipeline" is what can still close — Unsent + Sent, by name.
+       It used to be "everything not Accepted", which counted declined deals and
+       unrecognised statuses as money still in play. Declined prints only when
+       it is non-zero. */
+    const open = vis.filter(r => ['Unsent', 'Sent'].includes(creLane(r))).reduce((s, r) => s + (r.amount || 0), 0);
     const acc = vis.filter(r => creLane(r) === 'Accepted').reduce((s, r) => s + (r.amount || 0), 0);
+    const dec = vis.filter(r => creLane(r) === 'Declined').reduce((s, r) => s + (r.amount || 0), 0);
     const sum = M.querySelector('[data-cre-sum]');
-    if (sum) sum.innerHTML = 'showing ' + vis.length + ' \u00b7 open pipeline <b>$' + fmt(open) + '</b> \u00b7 accepted <b>$' + fmt(acc) + '</b>';
+    if (sum) sum.innerHTML = 'showing ' + (vis.length + lost.length) + ' \u00b7 open pipeline <b>$' + fmt(open) + '</b> \u00b7 accepted <b>$' + fmt(acc) + '</b>' + (dec ? ' \u00b7 declined <b>$' + fmt(dec) + '</b>' : '');
 
     const sl = M.querySelector('[data-cre-sortlist]');
     if (sl) sl.innerHTML = CRE_SORTS.map(s => `<div class="cre-srow${s.key === cre.sort ? ' on' : ''}" data-sort="${s.key}"><span class="ck">\u2713</span><span>${s.label}</span></div>`).join('');
@@ -41975,6 +42009,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1026, d:'2026-08-23', t:'The estimate lanes tell the truth', s:'The Estimates walls only knew draft, sent and approved, so an estimate you marked Accepted or Declined in the editor quietly fell into the UNSENT \u2014 DRAFTS column \u2014 at the time of this build, $27,310 of accepted work was parading as drafts and being counted as open pipeline. Accepted estimates now land in ACCEPTED, Declined gets its own thin strip at the bottom of the board, and anything with a status the walls have never heard of shows up under UNRECOGNIZED STATUS instead of hiding. The footer sums are honest now too: open pipeline is only what can still close (drafts + sent), accepted money is counted as accepted, and declined money prints separately when there is any. A discarded AI draft no longer sneaks back into the board after a reload, and deleting a saved estimate from the editor refreshes the right job\u2019s list again.' },
 { b:1025, d:'2026-08-23', t:'The estimate money is readable', s:'On the black estimate builder, the Total and deposit figures were painting in a dark red chosen years ago for a cream design \u2014 measured at under 2:1 contrast, close to invisible \u2014 and are now white. The same pass retired the last of the 2021 gold: six buttons that turned yellow on hover now deepen to dark red, and the two remaining red-to-gold gradient buttons are flat red. The white template menus on the Estimates and Contracts tabs now match the dark app, Balance Due reads clearly on the dark money band, and light mode fixes land for the estimate lane titles, the Saved Estimates heading, profile notes, and the Job Value captions. Estimates-screen emoji were drawn or removed.' },
       { b:1023, d:'2026-08-23', t:'The “N to fill” contract chip is readable in both states', s:'Audit finding 17 — the recurring light-ink-on-a-dark-ground defect, one more instance. The chip that counts unfilled blanks on a contract (#fillChipBtn) is a .btn.dark button, so its label sits on a #555 grey ground — but the label colours from build 966 were #e35c63 (2.12:1) for “N to fill” and #6cb98f (3.19:1) for “All filled”, both under the 4.5:1 body-text floor on that ground, so the count was hard to read. Computed with scripts/contrast.py, not eyeballed: the label is now #ffc2c6 (4.89:1) for the to-fill state and #9fdcb4 (4.75:1) — the exact green savedFlash already uses — for all-filled. The bright border colours are unchanged (a border is decoration, not text). Proven by gate_1023.mjs (recomputes the ratios and asserts the shipped colours clear the floor, with the old ones failing).' },
 { b:1022, d:'2026-08-23', t:'Three full-screen views no longer trap on top of the app', s:'Audit finding 16 — the 570-572/941 nav-trap class, three more of them. Community Analytics (cr-can), the admin Line Item Library (cr-lil-view) and the contract viewer (cr-ce-view) are each position:fixed, inset:0 full-screen views, but none was registered in hideAllViews() (the function every navigation calls to clear the current screen) or in the back-button history (navRestore/wrapNav). So opening one and then tapping another destination — or the back arrow — left it covering the new screen with no exit but its own Close, and Back walked straight past it. All three are now cleared by hideAllViews using the correct lever for how each is shown: cr-can is display-shown (display:none), while cr-lil and cr-ce are class-shown and close through their own close() so the scroll lock they set is released too. All three now record history (cr-can/cr-lil as methods via the __crNav wrap, the contract viewer via wrapNav recording its id), so Back returns you to where you were. Proven by gate_1022.mjs.' },
@@ -47585,7 +47620,11 @@ view.querySelector('[data-act="save"]').onclick = handleSave;
    estimate, and wire() otherwise dereferences querySelector() straight away. */
 var delBtn = view.querySelector('[data-act="del"]');
 if(delBtn) delBtn.onclick = function(){
-deleteEstimate(state.id, { label: state.title, projectId: state.project_id });
+/* 1026: state carries `project` (the object) — state.project_id was always
+   undefined, so deleteEstimate fell back to currentProjectId(): wrong (or no)
+   saved-list refresh and a mis-attributed audit entry when the editor was
+   opened from the standalone walls. */
+deleteEstimate(state.id, { label: state.title, projectId: state.project && state.project.id });
 };
 var titleEl = view.querySelector('[data-f="title"]');
 if(titleEl) titleEl.oninput = function(e){ state.title = e.target.value; };

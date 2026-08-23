@@ -24179,3 +24179,34 @@ awaiting picks. Nothing shipped to the app.
   states: eslist/esteditor/estlibrary/estpreview/estprofile). The base walk seeds `estimates:[]`
   deliberately; these five money screens had never been swept populated, which is how a 1.98:1
   Total lived unseen in an instrumented app.
+
+## Build 1025 — the obsidian estimates screens, finished (audit Build A; Theo's pick 1: white money)
+
+The audit's INK list, built. On the black editor the Total and deposit figures were `#7f1d1d`-era
+dark red (1.98:1, measured) — now white; the DEPOSIT label keeps rose `#f0a3a9`. Six red buttons
+hover-flashed the retired gold (`#e8ba15`/`#c88a0f` now **zero** in the file, asserted); the last
+two red→gold gradient buttons went flat red; the client-tab template menus (`#pEstMenu` **and its
+byte-identical neighbour `#pContractMenu`**) stopped popping up white on the dark app; Balance Due
+was de-inlined into `.db-due` classes (id-scoped so insurance's own selector still wins in its CRM);
+light-mode repairs: UNSENT lane title `#6d747d`, profile subnote `#5c5c5c`, money captions
+`#6c655e`, saved-estimates heading `#9aa0a8` (dark). Emoji in the estimates screens replaced with
+drawn glyphs or dropped. Gates: `check_build` green; **`gate_1026.mjs`-style Chromium gate
+`gate_1025.mjs` 16 checks both themes, control RED ×15**; navhead lesson recorded — an appended
+equal-specificity rule LOSES to an original that sits later in the block; edit in place.
+
+## Build 1026 — the estimate lanes tell the truth (audit Build B; Theo's pick: Declined gets its own thin lane)
+
+The Estimates walls knew `draft/sent/viewed/approved/converted`; the editor writes
+`draft/sent/accepted/declined` (its own `STATUSES` list). The vocabularies never met, and
+`creLane()`'s fallback dressed every stranger as `'Unsent'` — **at build time the live DB held
+$27,310 of `accepted` work rendering as UNSENT drafts and counting as open pipeline.** Now:
+Accepted lane claims `accepted`; new **thin** Declined lane (`--rbe-dec-*` token pairs, computed
+5.5:1 dark / 7.3:1 light; full-width `grid-column:1/-1` strip, dimmed cards, collapses to its
+header when empty); `creLane` fallback → `null` and a labelled **UNRECOGNIZED STATUS** safety-net
+lane renders what no lane claims (it ignores the status filter on purpose); discarded AI drafts
+are filtered at load (they used to ride the fallback back into the wall on reload); footer sums
+honest — open = Unsent+Sent only, `declined $X` prints when non-zero; the editor's Delete passes
+`state.project && state.project.id` (`state.project_id` was always undefined, so the wrong
+project's saved list refreshed). Gate: `gate_1026.mjs` — seeded walk + bogus-status row injected
+gate-side only; GREEN on 1026, **control RED ×12** (the control names the $32,899 phantom
+pipeline). Chromium renders eyeballed both themes.
