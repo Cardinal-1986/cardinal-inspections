@@ -114,9 +114,10 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
     `closeContractEditor` global); history via `__crNav` wraps (cr-can/cr-lil) and
     `wrapNav('openContractEditor')` + navRestore cases. Proven by `gate_1022.mjs` (executes
     hideAllViews and navRestore against a mock DOM).
-17. **Build 966's fill chip fails contrast in both states on its own #555 ground**
-    (index.html:25088). **Fix:** swap to `#ffc2c6` (4.89:1) / `#9fdcb4` (4.75:1, already used by
-    savedFlash).
+17. ✅ **RESOLVED at 1023.** Build 966's fill chip (#fillChipBtn, a .btn.dark on #555) failed
+    contrast in both states — #e35c63 (2.12:1) / #6cb98f (3.19:1), under the 4.5:1 body floor.
+    **Fix:** label is now #ffc2c6 (4.89:1) / #9fdcb4 (4.75:1, the green savedFlash already uses);
+    bright borders unchanged. Proven by `gate_1023.mjs` (recomputes the ratios; old ones fail).
 
 ### 🟡 dropped LOWs (unverified — logged, not chased)
 Moving Invoiced→Completed pops the review prompt · `manual_estimates` USING(true) write policy ·

@@ -20611,6 +20611,14 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1023 — the "N to fill" contract chip is readable on its own ground (23 Aug 2026)
+
+**Audit finding 17 (medium — the recurring light-ink-on-a-dark-ground class).** `#fillChipBtn` (the chip that counts unfilled blanks on a contract) is a `.btn.dark`, so its label sits on a `#555` grey ground. `refreshFillChip` painted the label `#e35c63` (**2.12:1**) for "N to fill" and `#6cb98f` (**3.19:1**) for "All filled" — both under the 4.5:1 body floor on that ground. **Computed with `scripts/contrast.py`, not eyeballed.**
+
+**Fix.** One line: `btn.style.color = n ? '#ffc2c6' : '#9fdcb4'` — `#ffc2c6` (**4.89:1**) for to-fill and `#9fdcb4` (**4.75:1**, the exact green `#savedFlash` already uses at index.html:352) for all-filled. Same hues deepened toward the ground's light twins, not swapped, so the state colour still reads as red-ish/green-ish. The bright border colours (`#c8202e`/`#2a6b3c`) are unchanged — a border is decoration, not text.
+
+**Proof:** `gate_1023.mjs` — extracts `.btn.dark`'s ground and `refreshFillChip`'s label line, recomputes WCAG ratios itself (self-contained), asserts both states ≥ 4.5:1, and that the old inks are gone. GREEN on tree (4.89 / 4.75); control (1022) → RED naming 2.12 / 3.19. check_build green (1022→1023). No SQL.
+
 ## Build 1022 — three full-screen views registered in hideAllViews()/navRestore() (23 Aug 2026)
 
 **Audit finding 16 (medium — the 570-572/941 nav-trap class).** Community Analytics (`cr-can`, `window.CardinalCommunityAnalytics`), the admin Line Item Library (`cr-lil-view`, `window.CardinalLineItems`) and the contract viewer (`cr-ce-view`, `window.openContractEditor`) are each `position:fixed; inset:0` full-screen views, but none was in `hideAllViews()` (which every navigation calls) or in the back-button history (`navRestore`/`wrapNav`). Opening one and then tapping another destination — or Back — left it covering the next screen with no exit but its own Close, and Back walked straight past it.
