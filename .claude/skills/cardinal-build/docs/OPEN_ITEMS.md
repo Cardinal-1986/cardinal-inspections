@@ -67,7 +67,7 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
    on Cardinal-staff identity (same roster check as #6).
 
 ### 🟠 HIGH — data/flow correctness
-8. **Offline checklist edits merge onto a stale SW-cached copy and silently erase the previous
+8. ✅ **RESOLVED at build 1017.** Offline checklist edits merged onto a stale SW-cached copy and silently erased the previous
    edit on sync** (`patchProjectCk`, index.html:18987 — 50 call sites: tasks, payments, worksheet,
    contacts, measurements). The TEAM refetch has no `onLine` guard; sw.js serves the cached row.
    **Fix:** skip the refetch when offline (`if(TEAM && !navigator.onLine===false…)`, the idiom

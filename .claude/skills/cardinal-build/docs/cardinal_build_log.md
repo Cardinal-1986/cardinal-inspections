@@ -20611,6 +20611,24 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1017 — offline job edits no longer merge onto a stale cached row (23 Aug 2026)
+
+**Audit finding 8 (high — silent data loss).** `patchProjectCk` (the one chokepoint behind every
+checklist-backed edit, 50 call sites) refetches the row before merging (655, to narrow the
+two-device race). Offline that inverted: sw.js serves `/rest/v1` GETs stale-while-revalidate (864),
+so with no signal the refetch returned a STALE row and the just-made offline edit was merged onto it
+and lost on sync. Fix: gate the refetch on `!(navigator.onLine === false)` — the exact idiom
+`pdb.update` uses at 10708 — so offline it merges onto `pr.checklist` (kept current by the outbox);
+online the 655 merge is unchanged.
+
+Finding 14 (offline stage-move notification dropped, medium) is a separate outbox-mechanism change —
+its own build, not folded in here.
+
+**Proof:** `gate_1017.mjs` EXECUTES the shipped `patchProjectCk`: offline → 0 refetches, patch
+merged onto the local row (stale `{z:9}` never pulled); online → 1 refetch, merged onto the fresh
+row. GREEN; negative control against the 1015/1016 tree → RED (offline refetch happens). `check_build`
+green (1016→1017). No SQL.
+
 ## Build 1016 — AI/spend + senddoc routes gated on staff identity (23 Aug 2026)
 
 **Audit findings 6 + 7 (both CONFIRMED high).** 1013 closed anonymous access to the AI routes, but
