@@ -313,10 +313,42 @@ Chromium walk of save-edit-save.
 
 **Build D — retire the dead weight (needs Theo's picks, SQL first).**
 (1) `manual_estimates`: **drop** (recommended) or tighten to admin — either closes F-4.
-(2) The AI arm: keep the door, demote it, or retire the door (U-5) — table + routes follow the
-same call. (3) `isEstimateTitle` robustness per F-5 (doc_id-linked docs classify as estimates) +
-the placeholder. (4) cr-eaf dead wiring out. *SQL ships separately, runs before deploy, per
-convention.*
+(2) ~~The AI arm: keep the door, demote it, or retire the door (U-5)~~ **SUPERSEDED 23 Aug — Theo's
+direction, verbatim: "Instead of ai estimates, is there a way for an option to combine the two with
+pictures? So just estimates, click a box for ai and use pictures to supplement the estimate with
+captions and an overview?" → Build E below is that design; the separate AI doors, screens and the
+`ai_estimates`/`contracts` legacy retire once E lands.** (3) `isEstimateTitle` robustness per F-5
+(doc_id-linked docs classify as estimates) + the placeholder. (4) cr-eaf dead wiring out. *SQL
+ships separately, runs before deploy, per convention.*
+
+**Build E — AI assist INSIDE the estimate (Theo's 23 Aug direction; replaces the separate AI arm).**
+One estimates product. In the editor's Photos section, one AI action beside "+ Attach Photos":
+tap it and (a) every attached photo **without a typed caption** gets one through the existing
+`/api/caption` route — the same endpoint, spend-gate and "edit if needed, then save" posture the
+Photo Album's ✨ AI Caption has used since it shipped — and (b) one overview call drafts a short
+scope paragraph from the photos + the line-item names, **proposed into Scope Notes** (appended for
+review, never overwriting typed text). Publish then prints both exactly where they already print:
+the cover large above the pricing, the captioned grid under Photo Documentation, the overview under
+Scope Notes. Nothing touches `ai_estimates`; the row stays an ordinary estimate.
+- **Extend, don't add:** per-photo captioning is the album's existing machinery reused on the
+  estimate's own photo strip; the only genuinely new piece is a small `overview` mode on
+  `api/caption` (multi-image + context → one paragraph). Reusing `api/estimate` instead was
+  considered and rejected: it prices a full estimate to throw most of it away and writes an
+  `ai_estimates` row.
+- **No new data exposure:** these are the client-gallery photos the album already sends to the same
+  AI route today; same staff gate (1016), same keys.
+- **Review-before-print holds** (The Walk's rule): AI text lands in editable fields the rep
+  confirms; nothing AI-written reaches the published document unseen.
+- **Fill-not-overwrite is the contract:** a typed caption is never replaced; Scope Notes is
+  appended, not clobbered. The gate asserts both, against the previous build as control.
+- Open picks for Theo: trigger shape (recommend a tap-to-run button — each run is a paid call, so
+  it should spend visibly — over a checkbox that fires on attach); whether AI may also *suggest
+  line items* from the photos (the machinery exists in `api/estimate`'s catalog prompt; default
+  OFF, its own decision later); and how far the old arm's cleanup goes in the same PR (hide the
+  two "⚡ AI Estimate" doors only, or also delete the AI create/output views and drop
+  `ai_estimates` — SQL).
+- Cost, honest: ~1 build for the editor button + caption fill + overview + states, including the
+  small API mode; door-removal/SQL cleanup rides as the Build-D slice.
 
 **Deliberately NOT in the plan without a fresh ask:** offline estimate creation (settled, 17 Aug);
 option-grouping for multi-quote clients (the Kimberly Guy pattern — two sent + three drafts on one

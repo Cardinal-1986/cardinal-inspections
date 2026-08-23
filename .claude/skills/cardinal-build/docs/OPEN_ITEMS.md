@@ -23,9 +23,18 @@ four-build plan with rendered options). Nothing built into index.html yet. The p
    phone. Save-in-place + Done + toasts + phone action bar.
 4. **Build D — dead weight (SQL first, Theo's calls):** `manual_estimates` (0 rows) still carries
    an any-authenticated `ALL USING(true) WITH CHECK(true)` policy — drop the table or tighten;
-   the never-used AI arm (`ai_estimates` 0 rows ever, still queried every list load, still the
-   screen's PRIMARY button) — keep/demote/retire the door; `isEstimateTitle` robustness (the title
-   placeholder teaches "Roof Replacement — Jane Smith", which dodges the classifier post-publish).
+   `isEstimateTitle` robustness (the title placeholder teaches "Roof Replacement — Jane Smith",
+   which dodges the classifier post-publish). The AI-arm keep/demote/retire question is
+   **superseded by Build E**.
+5. **Build E — AI assist inside the estimate (Theo's 23 Aug direction: "just estimates, click a
+   box for ai and use pictures to supplement the estimate with captions and an overview").**
+   One AI action in the editor's Photos section: attached photos without a typed caption get one
+   via the EXISTING `/api/caption` (the album's ✨ AI Caption machinery, reused), plus one new
+   `overview` mode drafting a scope paragraph into Scope Notes for review. Fill-not-overwrite,
+   review-before-print, no `ai_estimates` write; the separate AI doors/screens/tables retire once
+   it lands. Open picks: button vs checkbox trigger (button recommended — visible spend) · AI
+   line-item suggestions later (default off) · cleanup depth. Design in full in
+   `CR_MANUAL_ESTIMATES_AUDIT_2026-08.md` §5 Build E.
 
 **Shipped with the audit (scripts/docs only):** the sentinel's `--themes rb-light` leg was
 structurally broken (attribute set threw at init; every themed CRM sweep was a dark sweep) — fixed
