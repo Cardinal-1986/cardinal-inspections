@@ -3408,21 +3408,45 @@ also emails rep+admin) each move the job to Approved, and the in-app paths buzz 
 likewise auto-advances to Invoiced (22511). Anyone re-proposing "wire the signature to the stage" is
 describing code that ships today.
 
-1. **Auto-advance Approved → Scheduled when the build day is booked** — the real residue of the old item 1.
-   The appointment (kind='job') exists, Production reads it ("build Aug 20"), but the stage waits for a
-   manual arrow tap + confirm. `blockerFor` already computes the truth; the stage lags it.
-2. **Split the intake form** — measured in the E2E: **43 visible fields, 0 with a required attribute** (the
-   `*` on First/Last/City/State/Zip is label text only). Name · phone · address · work type up front, the
-   rest behind "More detail", and make the starred five actually enforce.
-3. **Stale-estimate line in the daily digest** — nothing watches an estimate after it is sent. The 11:00 cron
-   already runs and already knows each job's rep.
-4. **One writer for the address** — it is stored twice from one form: `projects.address` (flat) AND
-   `checklist.lead.location.*` (parts). They agree at birth and drift on any later edit.
+1. ~~**Auto-advance Approved → Scheduled when the build day is booked**~~ — **✅ STALE, already built
+   at 783 and closed by 998 (verified 23 Aug).** `__apptMayAdvanceStage` advances Approved → Scheduled
+   when a `kind:'job'` appointment carrying a `project_id` is booked, wired into the one appointment
+   writer (`adb.create`, plus `adb.update` since 998) and reached by 972's "Get on the calendar". The
+   historical gap this item describes ("build Aug 20" showing with the stage lagging) was the two job
+   appointments being **orphans with no project_id**, so the guard returned early — 998 closed it by
+   requiring a job on every build-day booking. Proven in a Chromium spy: it fires ONLY for the Approved
+   build day, and stays silent for a drop, an orphan job, a Lead job and a Completed job. Nothing to build.
+2. ~~**Split the intake form**~~ — **✅ split done at 782, enforcement completed at 1005.** The `*` on
+   First/Last/City/State/Zip was label-only when the E2E was run, but 782 had already split the form
+   (essentials up front, the rest behind "More detail") AND made those six + phone-or-email enforce in
+   JS. The two starred questions it still let through were **Claim Type** (defaulted to 'unknown' — 17
+   of 57 leads had none) and **Lead Source** (26 had none); **1005 enforces both.** Work-type stays
+   behind More detail by choice; not a bug.
+3. ~~**Stale-estimate line in the daily digest**~~ — **✅ DONE at 784.** "PHASE 3 — the 11:00 digest
+   chases estimates": each rep gets their own list (client, amount, days since last touched) for
+   anything sent. Already shipping.
+4. ~~**One writer for the address**~~ — **✅ DONE at 1004.** It is stored twice: `projects.address`
+   (flat) AND `checklist.lead.location.*` (parts). The parts are written only at retail creation and
+   never updated on edit, and the **Construction Agreement (542) was the one reader that read them
+   unconditionally** — so an edited address showed new on the map and old on the signed contract.
+   1004 makes `pr.address` the single authority the contract defers to: the split boxes fill only when
+   they reconstruct the current `pr.address`, else the flat address prints on `[STREET]`. Every other
+   reader (map, directions, work order, recents) already preferred `pr.address`, so the parts can no
+   longer surface a different address anywhere. (Also fixed the latent blank-contract-address for
+   profile-created leads, which never had the parts.)
 5. **Invoiced is a silent stage** — fold "invoiced and unpaid past 30 days" into the Friday owed email.
-6. **Dialog diet** — the E2E counted **11 native dialogs** (4 confirm / 3 prompt / 4 alert) on one clean
-   lifecycle; worst is invoice create→send: alert, prompt, confirm back-to-back. Native dialogs in the
-   installed PWA look like system errors. Candidates: title prompts → prefilled inline fields; stage-arrow
-   confirms → one tap + undo toast; the send prompt → a field defaulted to the client's email.
+6. **Dialog diet** — *in progress, first slice done at 1006.* The E2E counted **11 native dialogs** (4
+   confirm / 3 prompt / 4 alert) on one clean lifecycle; worst is invoice create→send: alert, prompt,
+   confirm back-to-back. Native dialogs in the installed PWA look like system errors. The toast + undo
+   machinery already exists (crToastOk/crToastErr, window.CardinalUndo since 186), so each slice is
+   *routing* through it, not new UI.
+   - ✅ **1006 — stage-arrow confirms → one tap + 5s Undo (deferred commit).** The forward/back arrows on
+     the profile no longer confirm; the move is held for the Undo window so an undone tap never writes and
+     never emails the team. ⚠ Note for future slices: `setStage` emails Curtis on Approved/Completed, so a
+     one-tap replacement there must DEFER the commit, not commit-then-revert.
+   - ⬜ remaining: **alert() → toast** sweep (218 alerts app-wide; the invoice create success/guard are the
+     lifecycle ones), and **prompt() → inline field** (the send-email prompt defaulted to the client's
+     email; title prompts). Both want their own build; the send-prompt one is visual (preview first).
 7. **Remote signature buzz parity** — `api/clientsign.js` advances the stage and sends the Resend email, but
    nothing web-pushes Curtis the way an in-person signature does (the front-end setStage does that half).
 

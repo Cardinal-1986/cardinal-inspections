@@ -20611,6 +20611,105 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1006 — stage arrows: one tap, with Undo (23 Aug 2026)
+
+First slice of the **dialog diet** (OPEN_ITEMS #6). The profile's forward/back stage arrows popped a
+`confirm('are you sure?')` on every tap. Now a tap moves the job at once and shows a **5-second Undo
+toast** instead — the existing `window.CardinalUndo` (build 186), no new UI.
+
+### Why the commit is DEFERRED, not committed-then-reverted
+
+`setStage` is not side-effect-free: advancing to **Approved** emails+web-pushes Curtis ("schedule +
+order materials") and **Completed** emails the rep+admins ("walk-around + invoice"). A naive
+one-tap-then-undo would fire that email on every mis-tap and Undo could not unsend it. So
+`crStageDefer` holds the whole transition for the Undo window: the target stage is shown optimistically
+(cache-only, no DB write), and the real commit — `setStage` for the back arrow, `acxAdvance` for the
+forward arrow (which keeps its → Completed review-request prompt) — runs only when the 5s window closes.
+**Undo cancels the timer and reverts the optimistic stage; nothing is ever written and no team email
+fires.** This is Gmail's Undo-Send model, and it is the whole reason the diet's stage slice is safe.
+
+Deliberately narrow: a single active defer at a time (`_crStageDeferTimer` is cleared on a fresh tap);
+`Lost` is never a linear arrow target so its loss-reason prompt is untouched; if `CardinalUndo` is
+somehow unavailable the move commits immediately rather than being lost.
+
+### Gate
+
+`gate_1006.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
+a Chromium mechanism test of the helper in isolation: a tap shows the target stage but does NOT commit,
+raises an Undo toast; Undo reverts and **never commits**; letting the 5s window elapse commits exactly
+once. 11 assertions. Control on 1005: **FAIL 4** (confirm present, helper absent), named, no crash — the
+mechanism assertions are gated on the helper existing, so the control reports absence rather than
+throwing.
+
+**No SQL, no API change.** No markup or CSS changed (the arrows render identically; the undo toast is
+shipped UI), so the sentinel does not apply. The remaining diet slices (alert→toast, prompt→inline) are
+noted in OPEN_ITEMS #6.
+
+## Build 1005 — the New Lead form enforces its starred questions (23 Aug 2026)
+
+The intake form was already split into essentials + "More detail" at **782**, which also made
+First/Last/Street/City/State/Zip and phone-or-email enforce (the E2E's "0 required attributes" was
+literally true of the HTML attribute only — the JS handler blocks the save). Two starred questions
+still slipped through:
+
+- **Claim Type** carried a `*` but defaulted to `'unknown'` on save. Measured live: **17 of 57 leads
+  have no claim type** (14 'unknown' + 3 none).
+- **Lead Source** was optional on this form even though the profile add form has required it since
+  **999**. Measured: **26 leads have no source.**
+
+1005 requires both. Claim Type is always on screen, so a plain refusal. Lead Source lives behind
+"More detail", so when it is the only thing missing the form **opens that section and shakes the
+field** — the 782 no-contact reveal pattern reused. A `*` was added to the Lead Source label so the
+promise matches the enforcement.
+
+**This build only closes the two enforcement gaps** — no layout change, no field moved, the split and
+the essential-field enforcement were already 782's. `gate_1005.mjs` — Chromium, drives the real
+`ldSave`: no-claim-type refused (create not reached), no-source refused + More detail revealed, both
+answered saves. 7 assertions. Control on 1004: **PASS 2 · FAIL 5**, named, no crash (the old handler
+saves a lead with neither answered). **No SQL, no API change.**
+
+⚠ **Prime doctrine, twice in a row:** the two items picked before this — auto-advance (783) and the
+form split (782) — were already built. The E2E audit's OPEN_ITEMS list was written at ~965 but
+describes pre-782/783 state for several items. #2 and #3 struck as done; #1 struck earlier. Verify
+the current file before building the next audit item.
+
+## Build 1004 — one source of truth for the address (23 Aug 2026)
+
+A client's address is stored twice: the flat `projects.address` column, and a structured
+`checklist.lead.location.*` object (street/suite/city/state/zip). Only retail intake writes the
+parts, and **nothing updates them on a later edit** — `pfSave` writes `pr.address` and never touches
+`location`; profile-created leads have no parts at all. The map, directions, work order, recents and
+search all read `pr.address`. **The Construction Agreement (542) was the lone reader that read the
+parts, unconditionally** — so editing the address on the profile left the contract printing the OLD
+address while the map showed the new one. A signed legal document with the wrong address.
+
+### The fix — one authority, single site
+
+`pr.address` is the source of truth. The contract now fills `[STREET]/[CITY]/[STATE]/[ZIP]` from the
+structured parts **only when they reconstruct the current `pr.address`** (compared with punctuation
+and case normalised away); otherwise it puts the flat `pr.address` on `[STREET]` and blanks the rest
+— a correct single line beats a stale split. No writer change, no address parsing that could invent
+wrong parts, no UI change. The parts become a validated cache: used when they still agree, ignored
+when they don't. This also fixes a **latent** bug — profile-created leads had no parts, so the
+contract printed a blank address for them; now it prints their real one.
+
+⚠ **Deliberately reader-side, not a writer sync.** The profile edit form has a single flat address
+field, so keeping structured parts in lockstep would mean parsing a free-typed address into
+street/city/state/zip — unreliable, and able to invent a wrong split. Deferring to `pr.address`
+guarantees the contract == the map without that risk. After an edit the contract prints the address
+on one line rather than in split boxes; re-entering it through the intake form restores the split.
+
+### Gate
+
+`gate_1004.mjs` **extracts the shipped fill block from the artifact and runs it** (not a
+re-implementation) against five shapes: intake-unedited (structured kept), edited (flat wins, no
+stale split), profile-created (flat on STREET, was blank before), address-cleared (blank, consistent
+with the map), and same-address-different-punctuation (structured kept). 12 assertions. Control on
+1003: **PASS 6 · FAIL 6**, named, no crash — the old block prints the stale/blank address.
+
+**No SQL, no API change.** No screen markup or CSS changed, so the sentinel does not apply — this is
+template-fill logic, gated by the extraction harness.
+
 ## Build 1003 — the shared calendar (23 Aug 2026)
 
 The last of the "yes to all" batch, and the sensitive one. An appointment was visible only to the

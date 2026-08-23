@@ -6461,3 +6461,35 @@ that job, while keeping the personal `appt` and `team` kinds private to their cr
 - Verified against the live DB in rolled-back transactions: assigned rep sees the job day (not the
   personal entries), an unassigned rep sees zero rows, the creator/admin can update, a non-owner
   cannot. Gate `gate_1003.mjs` (11 assertions; control on 1002 PASS 6 · FAIL 5).
+
+### 1004 — one source of truth for the address
+
+The address lived in two stores — the flat `projects.address` column (used by the map, directions,
+work order, recents, search) and a structured `checklist.lead.location.*` object (street/suite/city/
+state/zip). Only retail intake wrote the parts and nothing updated them on edit, so the **Construction
+Agreement (542)** — the one reader that read the parts unconditionally — printed the old address after
+an edit while the map showed the new one. 1004 makes `pr.address` the single authority: the contract
+fills its split boxes only when they reconstruct the current `pr.address` (punctuation/case
+normalised), else it prints the flat address on `[STREET]`. Guarantees contract == map; also fixes the
+blank contract address for profile-created leads (which never had the parts). `gate_1004.mjs` runs the
+shipped fill block against five shapes (control on 1003: PASS 6 · FAIL 6).
+
+### 1005 — the New Lead form enforces its starred questions
+
+The intake form was split into essentials + "More detail" at 782 (which also enforced First/Last/
+Street/City/State/Zip and phone-or-email in JS). Two starred questions still saved empty: **Claim
+Type** defaulted to 'unknown' (17 of 57 leads had none) and **Lead Source** was optional here despite
+999 requiring it on the profile add form (26 had none). 1005 requires both — Claim Type with a plain
+refusal (always visible), Lead Source by opening "More detail" and shaking the field when it's the
+blocker (the 782 reveal pattern), plus a `*` added to its label. No layout change. `gate_1005.mjs`
+(Chromium, drives the real ldSave; control on 1004 PASS 2 · FAIL 5).
+
+### 1006 — stage arrows: one tap, with Undo (dialog diet, slice 1)
+
+The profile's forward/back stage arrows no longer confirm on every tap. A tap moves the job at once and
+shows a 5-second Undo toast (window.CardinalUndo, shipped since 186). The transition is DEFERRED for the
+window: the target stage shows optimistically (cache-only), and the real commit (setStage / acxAdvance)
+runs only when the toast closes — so an undone tap never writes to the record and never fires setStage's
+team email (Approved → Curtis "schedule + order materials"; Completed → rep+admins). Gmail Undo-Send
+model. `crStageDefer` is the shared helper; `gate_1006.mjs` (source wiring + Chromium mechanism test;
+control on 1005 FAIL 4). First slice of the dialog diet; alert→toast and prompt→inline remain.
