@@ -2516,6 +2516,15 @@ other); a DB trigger auto-creates the 10% commission row for the project's
 sales rep. Theo's own jobs create no commission. Draws are loans against
 future commission; net payout = owed − outstanding draws. Paid locks.
 
+⚠️ **`collections` is the ONE door for money received — both entry points now agree.**
+On the Payment Information page the "Received" section's + button (996) **and** its
+heading tap (1010) both route to `payGoLogCollection()` → this tab; the legacy
+`dir:'in'` add modal is unreachable from Received. Money logged the old way books no
+commission and, since 721, is ignored by Balance Due whenever any collection exists
+(`jobFinance`: `if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id]`). "Paid" /
+"Additional Job Expenses" are job costs and keep the legacy row modal. **Do not add a
+second money-in writer** — `checklist.payments` `dir:'in'` is legacy-read/migrate only.
+
 **Where it lives:**
 - **SQL:** `commission_system.sql` (root, **applied 9 Aug 2026**) — extends the
   556 `commissions` table (`collection_id` unique, `rate_pct`, `paid_by`,

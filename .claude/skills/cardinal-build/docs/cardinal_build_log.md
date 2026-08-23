@@ -20611,6 +20611,39 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1010 — money-in has one door again: the "Received" heading (23 Aug 2026)
+
+**A HIGH money-correctness finding from the build-1007 audit, and it is 996's own residue.** Build
+996 made `collections` (Money In & Commissions) the single door for money received — it fires the
+10% commission trigger, feeds the Friday owed email, and since 721 is what Balance Due counts
+(`jobFinance`: `if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id]` — collections *replace*
+the legacy paid total whenever any collection exists). 996 re-routed the **+ button** under
+"Received" on the Payment Information page to `payGoLogCollection()`. But the click delegation on
+`#paySummary` has a *second* branch — a tap on a section **heading** (`.payhead`) calls
+`openPayRow(data-paysec, null)` — and for the Received section `data-paysec="in"`, so tapping the
+"Received" heading still opened the legacy `dir:'in'` add modal. Money logged that way writes
+`checklist.payments`, books **no commission**, and on any job that already has a collection is
+**invisible to Balance Due** (the collPaid replace above ignores the legacy log). It looked
+recorded and counted for nothing.
+
+**The fix** mirrors 996's own + button routing exactly (the branch eight lines above it): in the
+`.payhead` handler, route `data-paysec === 'in'` to `payGoLogCollection()` and return; `'out'` and
+`'exp'` are job costs, not collections, so their headings keep the legacy row modal (`openPayRow`) —
+unchanged. Editing an existing legacy `dir:'in'` row (`data-payedit`, checked earlier in the
+delegation and returning first) is untouched, so the one job carrying legacy rows (Dan Thompson) can
+still be inspected and moved via its "Move them into Money In" button (`payMigrateLegacyIn`).
+
+**Proof.** `gate_1010.mjs` extracts the SHIPPED `#paySummary` click handler, mounts the real section
+markup in a real Chromium DOM, and dispatches real clicks (genuine `closest()` traversal, not
+mocked): Received heading → `payGoLogCollection` and never `openPayRow('in')`; Paid/Expenses headings
+→ `openPayRow('out'|'exp', null)`; + button still → `payGoLogCollection`; edit row →
+`openPayRow(null, i)`; contracts row → `openContractPaid`. GREEN on the working tree; **negative
+control against build 1009 goes RED with 2 named failures** (Received heading calls `openPayRow('in')`
+and opens the legacy modal). `check_build` green (app stamp 1009→1010, marker, negative control
+clean).
+
+No SQL. `index.html` only (one 6-line routing change in the `cr-*` payments block).
+
 ## Build 1009 — the ABC Supply route is no longer an open proxy (23 Aug 2026)
 
 **The critical finding from the build-1007 audit.** `api/abc.js` shipped with no auth check and a

@@ -22,10 +22,13 @@ stage-defer drop-on-supersede, 1006 stage-defer lost-on-close). The rest, still 
   by `gate_1009.mjs` (GREEN on the working tree, RED with 4 named failures against build 1008).
 
 ### 🟠 HIGH — money correctness (pre-existing)
-- **996 money-in has a second door.** Tapping the "Received" section *header* (not the + button) opens
-  the legacy `dir:'in'` modal → writes `checklist.payments`, books no commission, and is invisible to
-  Balance Due on any job with a collection. Fix: route the `.payhead` `in` case to `payGoLogCollection`.
-  (F1 + MONEY-1, both CONFIRMED)
+- ✅ **RESOLVED at build 1010 — 996 money-in had a second door.** Tapping the "Received" section
+  *header* (not the + button) opened the legacy `dir:'in'` modal → wrote `checklist.payments`, booked
+  no commission, and was invisible to Balance Due on any job with a collection (jobFinance's collPaid
+  replace). **Fixed:** the `.payhead` handler now routes `data-paysec === 'in'` to
+  `payGoLogCollection()`, exactly as 996 routed the + button; `out`/`exp` headings keep the legacy
+  row modal (they are job costs). Editing/migrating existing legacy rows untouched. Proven by
+  `gate_1010.mjs` (GREEN working tree; RED against build 1009). (F1 + MONEY-1, both CONFIRMED)
 - **`jobFinance` doc-store MAX defeats 997's accepted tier.** A bigger `Estimate…` inspection_reports
   doc (any status, no dedupe) is folded in as a flat MAX after `estBest`, overriding the accepted
   estimate → wrong Job Value/Balance Due. Fix: tier/status-filter the doc-store leg too. (F3 + MONEY-2)
