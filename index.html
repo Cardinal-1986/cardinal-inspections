@@ -3701,7 +3701,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 1006 &#8212; the printed contract now shows all of its own words. The grey running header along the top of each page was painting over the text underneath it, hiding twelve pieces of contract wording on paper &#8212; including the right-to-cancel line. The header moves up into the page margin, where it belongs</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 1010 &#8212; the printed contract now shows all of its own words. The grey running header along the top of each page was painting over the text underneath it, hiding twelve pieces of contract wording on paper &#8212; including the right-to-cancel line. The header moves up into the page margin, where it belongs</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8060,7 +8060,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
               <option>Inspection</option><option>Insurance</option><option>New</option><option>Repair</option>
               <option>Retail</option><option>Service</option><option>Warranty</option></select></label>
         </div>
-        <label class="ldmore">Lead Source
+        <label class="ldmore">Lead Source <span class="ldreq">*</span>
           <select id="ldSource"><option value="">&#8212; select &#8212;</option>
             <option>Canvasser</option><option>Commercial</option><option>Direct Mailings</option>
             <option>Door hanger</option><option>Door Knocking</option><option>Habitat - Dayton</option>
@@ -8074,7 +8074,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="insurance"> &#128737;&#65039; Insurance</label>
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="retail"> &#127968; Retail</label>
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="community"> &#127960;&#65039; Community</label>
-          <label class="ldctopt"><input type="radio" name="ldClaimType" value="unknown" checked> &#10067; Don't know yet</label>
+          <label class="ldctopt"><input type="radio" name="ldClaimType" value="unknown"> &#10067; Don't know yet</label>
         </div>
 
         <div class="ckinline ldmore" style="margin-top:12px;">
@@ -9288,7 +9288,7 @@ table.units td.pr{text-align:right;white-space:nowrap;width:22%;}
 .page-break{break-before:page;}
 /* 747: the slim running header. position:fixed repeats on every printed page —
    measured, 5 of 5 pages.
-   ⚠ 1006 CORRECTION, measured on the shipped templates: it repeats in the same
+   ⚠ 1010 CORRECTION, measured on the shipped templates: it repeats in the same
    strip the flowed text occupies, and its white background HIDES that text on
    every page after the first. 12 pieces of contract text were invisible. The
    claim below that @page margin boxes are unimplemented is also false in current
@@ -9597,7 +9597,7 @@ table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weig
 .page-break{break-before:page;}
 /* 747: the slim running header. position:fixed repeats on every printed page —
    measured, 5 of 5 pages.
-   ⚠ 1006 CORRECTION, measured on the shipped templates: it repeats in the same
+   ⚠ 1010 CORRECTION, measured on the shipped templates: it repeats in the same
    strip the flowed text occupies, and its white background HIDES that text on
    every page after the first. 12 pieces of contract text were invisible. The
    claim below that @page margin boxes are unimplemented is also false in current
@@ -11471,6 +11471,72 @@ async function acxAdvance(pr){
   }
   catch(err){ showError('Could not advance: ' + (err.message || err)); }
 }
+/* 1006: one-tap stage change with a 5s Undo, replacing the up-front confirm on
+   the profile's stage arrows. The move is DEFERRED for the length of the toast:
+   the target stage is shown at once, but nothing is written and no team email
+   fires until the window closes, so an accidental tap undone in time never
+   reaches the database or Curtis's inbox. That is why the whole transition waits
+   out the window rather than committing and rolling back — setStage emails the
+   team on Approved/Completed, and a rollback cannot unsend that. */
+/* 1008: rewritten to fix two regressions from 1006. (a) A single pending slot meant a second arrow
+   tap \u2014 on the SAME job or ANY OTHER \u2014 cleared the first timer with no commit and no revert,
+   silently losing a move the UI had already shown as done. (b) Closing/backgrounding the app inside
+   the window lost the move too. Now there is exactly one pending move, and anything that would abandon
+   it (a new move, or the page hiding) COMMITS it first. The target stage is captured up front and
+   committed via setStage(target) directly \u2014 never recomputed from the optimistic pr.stage \u2014 so
+   overlapping taps cannot race. */
+var _crStagePending = null;
+function _crStageReviewMaybe(pr){
+  try{
+    if(normStage(pr.stage) === 'Completed' && !parseCkAll(pr).review_requested_at && (pr.phone || pr.email)){
+      setTimeout(function(){
+        if(confirm('\uD83C\uDF89 Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?')){
+          sendReviewRequest(pr, pr.phone ? 'sms' : 'email');
+        }
+      }, 300);
+    }
+  }catch(_r){}
+}
+function _crStageCommit(p){
+  if(!p || p.done) return;
+  p.done = true;
+  if(p.timer){ clearTimeout(p.timer); p.timer = null; }
+  if(_crStagePending === p) _crStagePending = null;
+  p.pr.stage = p.from; if(currentProject && currentProject.id === p.pr.id) currentProject.stage = p.from;
+  Promise.resolve()
+    .then(function(){ return setStage(p.pr.id, p.target); })
+    .then(function(){ _crStageReviewMaybe(p.pr); try{ renderOverview(); renderPipeline(); }catch(_){} })
+    .catch(function(err){
+      p.pr.stage = p.from; if(currentProject && currentProject.id === p.pr.id) currentProject.stage = p.from;
+      try{ renderOverview(); renderPipeline(); }catch(_){}
+      if(window.showError) showError('Could not update: ' + ((err && err.message) || err));
+    });
+}
+function crStageDefer(pr, target){
+  if(!pr || !target) return;
+  var from = normStage(pr.stage), tgt = normStage(target);
+  if(tgt === from) return;
+  if(_crStagePending) _crStageCommit(_crStagePending);   /* never drop a pending move */
+  var p = { pr: pr, from: from, target: tgt, timer: null, done: false };
+  pr.stage = tgt; if(currentProject && currentProject.id === pr.id) currentProject.stage = tgt;
+  try{ renderOverview(); renderPipeline(); }catch(_p){}
+  p.timer = setTimeout(function(){ _crStageCommit(p); }, 5000);
+  _crStagePending = p;
+  try{
+    window.CardinalUndo.enqueue('Moved to ' + tgt + ' \u2014 Undo to cancel', function(){
+      if(p.done) return; p.done = true;
+      if(p.timer){ clearTimeout(p.timer); p.timer = null; }
+      if(_crStagePending === p) _crStagePending = null;
+      p.pr.stage = p.from; if(currentProject && currentProject.id === p.pr.id) currentProject.stage = p.from;
+      try{ renderOverview(); renderPipeline(); }catch(_u){}
+    }, 5000);
+  }catch(_e){ _crStageCommit(p); }
+}
+/* commit a pending move rather than lose it when the app is backgrounded or closed */
+try{
+  window.addEventListener('pagehide', function(){ if(_crStagePending) _crStageCommit(_crStagePending); });
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden' && _crStagePending) _crStageCommit(_crStagePending); });
+}catch(_evt){}
 async function acxDead(pr){
   try{ await setStage(pr.id, 'Lost'); renderOverview(); renderPipeline(); }
   catch(err){ showError('Could not update: ' + (err.message || err)); }
@@ -11764,17 +11830,15 @@ function renderAcxOverview(){
     var legacy = document.getElementById('acxPhotoN');
     if(legacy){ legacy.textContent = l.length; }
   }).catch(function(){});
-  /* stage arrows with confirmation */
+  /* 1006: one tap + 5s Undo, not an up-front confirm. crStageDefer shows the
+     move at once and commits only when the Undo window closes. */
   var bk = document.getElementById('dbStgBack');
-  if(bk) bk.addEventListener('click', async function(){
-    if(!confirm('Move ' + (pr.name || 'this job') + ' back to ' + pvStage + '?')) return;
-    try{ await setStage(pr.id, pvStage); renderOverview(); renderPipeline(); }
-    catch(err){ showError('Could not update: ' + (err.message || err)); }
+  if(bk) bk.addEventListener('click', function(){
+    crStageDefer(pr, pvStage);
   });
   var fw = document.getElementById('dbStgFwd');
   if(fw) fw.addEventListener('click', function(){
-    if(!confirm('Advance ' + (pr.name || 'this job') + ' to ' + nx + '?')) return;
-    acxAdvance(pr);
+    crStageDefer(pr, nx);
   });
   /* async: measurement count */
   measDb.list(pr.id).then(function(l){
@@ -15317,7 +15381,10 @@ function openLeadForm(){
     }catch(_){ return 'unknown'; }
   })();
   var radios = document.querySelectorAll('input[name="ldClaimType"]');
-  radios.forEach(function(r){ r.checked = (r.value === __ldDef); });
+  /* 1008: only pre-select when the portal dictates a type; on a neutral portal leave every radio
+     clear so Claim Type is an ACTIVE choice. The 1005 refusal was dead while 'unknown' was the
+     pre-checked default (a radio was always checked, so the !_ct guard never fired). */
+  radios.forEach(function(r){ r.checked = (__ldDef !== 'unknown' && r.value === __ldDef); });
   updateClaimTypeUi();
   /* 782: every lead starts collapsed and with the no-contact escape hatch put
      away, or the previous lead's answer carries into this one. */
@@ -15623,6 +15690,26 @@ document.getElementById('ldSave').addEventListener('click', async function(){
       'neither yet, tick the box in the contact section and save again.';
     return;
   }
+  /* 1005: the two fields this form marks but never enforced. Claim Type is
+     starred yet defaulted to 'unknown' on save — 17 of 57 leads carry no claim
+     type because of it — and Lead Source was optional here even though 999 made
+     it required on the profile add form (26 leads have none). Claim Type is
+     always visible, so a plain refusal is enough; Lead Source lives behind More
+     detail, so reveal that section when it is the blocker (the 782 pattern). */
+  var _ct = '';
+  document.querySelectorAll('input[name="ldClaimType"]').forEach(function(r){ if(r.checked) _ct = r.value; });
+  if(!_ct){ err.textContent = 'Pick a claim type.'; return; }
+  if(!document.getElementById('ldSource').value){
+    var _lm = document.getElementById('leadFormModal');
+    if(_lm && !_lm.classList.contains('ldshow')){
+      _lm.classList.add('ldshow');
+      var _lmb = document.getElementById('ldMoreBtn');
+      if(_lmb){ _lmb.setAttribute('aria-expanded', 'true'); _lmb.innerHTML = '\u2212 Less detail'; }
+    }
+    err.textContent = 'Pick where this lead came from \u2014 it is the one number that says whether knocking is working.';
+    try{ if(window.crValid && crValid.shake) crValid.shake(document.getElementById('ldSource')); else document.getElementById('ldSource').focus(); }catch(_s){ document.getElementById('ldSource').focus(); }
+    return;
+  }
   var suite = document.getElementById('ldSuite').value.trim();
   var addr = street + (suite ? ', ' + suite : '') + ', ' + city + ', ' + state + ' ' + zip;
   var assigned;
@@ -15692,7 +15779,10 @@ document.getElementById('ldSave').addEventListener('click', async function(){
       email: emails.length ? emails[0].v : '',
       notes: document.getElementById('ldNotes').value.trim(),
       stage: 'Lead',
-      checklist: JSON.stringify({ lead: lead, po: nextPo(), stage_since: new Date().toISOString() })
+      /* 1008: the source chart/filter/sort/profile all read checklist.lead_source (flat); the
+         intake had only ever written it nested as lead.source, so the source 1005 made mandatory
+         reached no report. Write the flat key the readers actually use. */
+      checklist: JSON.stringify({ lead: lead, po: nextPo(), stage_since: new Date().toISOString(), lead_source: document.getElementById('ldSource').value || null })
     });
     /* 901: a new lead assigned to a rep pings them (push/email/text via notifyTeam).
        Self-assignment is skipped — a rep creating their own lead needs no alert. */
@@ -22707,11 +22797,35 @@ function prefillClientInfo(tpl, pr){
   put('[BUYER]', recipient);
   put('[EMAIL]', pr.email);
   put('[PHONE NUMBER]', pr.phone);
+  /* 1004: one source of truth for the address. Creation stores it twice — the
+     flat pr.address column AND these structured parts — but only the flat column
+     is updated when the address is edited on the profile (pfSave writes address,
+     never checklist.lead.location), and profile-created leads have no parts at
+     all. The map, directions, work order and every other reader use pr.address,
+     so these parts are the one place that could print a DIFFERENT address on a
+     signed agreement. Fill the split boxes only when they reconstruct the current
+     pr.address; otherwise put the flat address on STREET and leave the rest blank
+     — a correct single line beats a stale split, and the contract can never
+     disagree with the map. */
   var _loc = (parseCkAll(pr).lead || {}).location || {};
-  put('[STREET]', [_loc.street, _loc.suite].filter(Boolean).join(' '));
-  put('[CITY]', _loc.city);
-  put('[STATE]', _loc.state);
-  put('[ZIP]', _loc.zip);
+  var _flatAddr = String(pr.address || '').trim();
+  var _rebuilt = _loc.street
+    ? _loc.street + (_loc.suite ? ', ' + _loc.suite : '') +
+      (_loc.city ? ', ' + _loc.city : '') + (_loc.state ? ', ' + _loc.state : '') +
+      (_loc.zip ? ' ' + _loc.zip : '')
+    : '';
+  var _normAddr = function(s){ return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); };
+  if(_rebuilt && _flatAddr && _normAddr(_rebuilt) === _normAddr(_flatAddr)){
+    put('[STREET]', [_loc.street, _loc.suite].filter(Boolean).join(' '));
+    put('[CITY]', _loc.city);
+    put('[STATE]', _loc.state);
+    put('[ZIP]', _loc.zip);
+  }else{
+    put('[STREET]', _flatAddr);
+    put('[CITY]', '');
+    put('[STATE]', '');
+    put('[ZIP]', '');
+  }
 
   /* Theo's "3": where the roof has already been looked at, the line arrives
      filled and its lettered option row collapses. Where it has not, the
@@ -25266,12 +25380,12 @@ document.getElementById('dlBtn').addEventListener('click', async function(){
   await saveCurrent();
   var t = (document.getElementById('docTitle') && document.getElementById('docTitle').value) ||
           (window.currentDoc && window.currentDoc.title) || 'Cardinal document';
-  /* 1006: the downloaded .html is what a client is emailed and prints at home.
+  /* 1010: the downloaded .html is what a client is emailed and prints at home.
      It must carry the same page furniture as the copy we print from here. */
   try{ ensurePrintFix(frame.contentDocument); }catch(_){}
   if(window.CardinalDownload) window.CardinalDownload.frame(frame, t);
 });
-/* 1006: the running header used to be a position:fixed .runhead element. On paper
+/* 1010: the running header used to be a position:fixed .runhead element. On paper
    that repeats correctly on every page \u2014 and paints its white background over
    whatever the previous page pushed into that strip. Measured on the shipped
    templates: 12 pieces of contract text were fully invisible, among them the
@@ -41608,8 +41722,13 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b:1006, d:'2026-08-21', t:'The printed contract shows all of its own words',
+  { b:1010, d:'2026-08-21', t:'The printed contract shows all of its own words',
     s:'The grey line along the top of every printed page \u2014 Cardinal Roofing & Renovations \u00b7 ROOFING CONSTRUCTION AGREEMENT \u2014 was sitting in the same strip as the contract text and painting its white background straight over it. On a five-page roof agreement that hid four separate pieces of wording; across the four contracts it hid twelve, including the sentence that names the Terms and Conditions form, the Payment Structure heading, and the right-to-cancel line. The words were in the file the whole time \u2014 you could select them \u2014 they just could not be read. The header now prints up in the page margin instead. Nothing else about the contract changed; a gutter agreement gains one page because the reclaimed strip pushes the acceptance block over. Applies to contracts already saved, and to the copy a client is emailed.' },
+{ b:1008, d:'2026-08-23', t:'Four fixes to today\u2019s builds (from the audit)', s:'A fresh audit of everything shipped today caught four real bugs in it, now fixed. (1) Build 1005 made Lead Source required on the New Lead form but saved it to checklist.lead.source, while the source chart, filter, sort and profile all read checklist.lead_source \u2014 so the number that says whether knocking is working got nothing; the intake now writes the field the reports read. (2) Build 1005\u2019s Claim Type requirement never fired because \u201CDon\u2019t know yet\u201D was pre-selected \u2014 a choice was always present, so nothing was ever enforced; the form now starts with none selected (unless the portal dictates one) so you make an active choice. (3) Build 1006\u2019s stage arrows kept a single pending-move slot, so tapping an arrow on one job and then another within the five-second window silently dropped the first move (it showed as done but never saved); a superseding tap now commits the first move instead of discarding it. (4) Closing or backgrounding the app during the Undo window lost the move; it is now committed when the app hides.' },
+{ b:1007, d:'2026-08-23', t:'A phone-signed contract buzzes Curtis too', s:'When a client signs a contract from the secure link, the job moves to Approved \u2014 but the remote-signing route only ever emailed the rep, so Curtis (production) never heard a remotely-signed job was ready to build, the way he does the moment an in-person signature moves a job to Approved. The signing route now sends Curtis the same \u201Cschedule + order materials\u201D alert. It also no longer pulls a job backward to Approved if it is already scheduled or further along, and only alerts on the real move. Backend change in api/clientsign.js; nothing changed on screen.' },
+{ b:1006, d:'2026-08-23', t:'Stage arrows: one tap, with Undo', s:'The forward and back stage arrows on a job used to pop a \u201Care you sure?\u201D confirmation every single time. Now a tap moves the job right away and shows a 5-second Undo toast instead. The move is DEFERRED for those five seconds \u2014 nothing is written to the record and, when the new stage is Approved or Completed, no email/notification goes to the team \u2014 until the toast fades. So an accidental tap you undo in time leaves no trace and never buzzes Curtis to schedule a job that is not really approved. It commits the instant the toast closes. This is the first step of thinning out the app\u2019s native pop-up dialogs (the toast and Undo machinery already existed since build 186).' },
+{ b:1005, d:'2026-08-23', t:'The New Lead form enforces its starred questions', s:'The New Lead form marked Claim Type and (elsewhere) Lead Source as required but never actually enforced them here. Claim Type had a star yet quietly saved as \u201Cunknown\u201D when you skipped it \u2014 17 of 57 leads on file have no claim type because of that \u2014 and Lead Source, the one number that says whether knocking is working, was optional on this form even though the profile add form has required it since build 999 (26 leads have no source). Both are now required to save a lead: Claim Type is already on screen, and if Lead Source is the only thing missing the form opens \u201CMore detail\u201D and points you at it. The essentials (name, address, phone-or-email) have been required since 782, and the form was already split into essentials + More detail then \u2014 this build only closes the two enforcement gaps.' },
+{ b:1004, d:'2026-08-23', t:'The address is written in one place', s:'A client’s address was stored twice — the plain address the map, the directions and the work order all use, and a second copy split into street / city / state / zip that only the Construction Agreement read. The second copy was written when the lead was first created and then never touched again, so editing the address on the profile updated the map but left the contract printing the old address — a signed agreement with the wrong address on it. The contract now takes the SAME address as the map: it uses the split boxes only when they still match that address, and otherwise prints the current address on one line rather than a stale split. Leads created from the profile (which never had the split copy) now get their address on the contract too, where before it printed blank.' },
 { b:1003, d:'2026-08-23', t:'The calendar is shared', s:'A build day or a material drop used to be visible only to the person who booked it — so the rep whose client was getting a roof could not see the day the crew was coming, and neither could production unless they had entered it themselves. Now any job or delivery on the calendar is visible to everyone assigned to that job (the assigned rep, the sales rep, whoever created it, and the admins), because it is the crew’s day, not one person’s note. Your personal appointments are untouched: only the two work kinds — build day and drop — are shared, so a private entry like a haircut or a tax appointment stays yours alone. A shared day you did not create shows as read-only — you can see it, you cannot delete someone else’s booking. (Needs the appointments_shared_calendar.sql migration run in Supabase first.)' },
 { b:1002, d:'2026-08-23', t:'iTel lab results can be attached to a job', s:'The 28 iTel lab results \u2014 the product-match and asbestos verdicts you have paid for \u2014 were sitting linked to nothing, because the only link the app offered was to a claim, and the results worth attaching belong to jobs that have no claim on file. They now attach to the JOB instead: each result has an \u201CAttach to a job\u201D button, and once linked it shows which job it belongs to. Sixteen of the 28 are non-match verdicts \u2014 exactly the evidence a matching argument needs \u2014 so getting them onto their jobs is what makes them usable.' },
       { b:1001, d:'2026-08-23', t:'A claim has one clear answer to \u201Cwhat are we still owed\u201D', s:'The Outstanding figure on a claim now has a single, documented rule: the full replacement value (which includes the deductible the homeowner still owes) plus any supplement the carrier has actually approved, minus what has been received. A supplement you have filed but the carrier has not yet ruled on is shown on its own line as awaiting a decision \u2014 it is never added into the total and never shows as $0 owed, so it is visible without making it look like money is in hand. This is a display number only; it does not change how commissions are worked out.' },

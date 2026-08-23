@@ -20497,7 +20497,7 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
-## Build 1006 — the printed contract shows all of its own words
+## Build 1010 — the printed contract shows all of its own words
 
 **The defect.** The slim grey running header (`.runhead`, build 747) is `position:fixed`, which
 does repeat on every printed page — in the same strip the flowed text occupies. Its background is
@@ -20529,7 +20529,7 @@ had no print furniture at all: no page rules, and no address footer.
 the header up with `top:-0.34in`; Chromium clamps a fixed element to the page area, so it landed at
 the **bottom** of the page (y≈707) and off page 5 entirely. Collisions read **zero** — because the
 header had left, not because the text was clear. *Absence of a collision is not the goal; a header
-above readable text is.* `gate_1006` assertion 4 exists solely to catch that, and it is the
+above readable text is.* `gate_1010` assertion 4 exists solely to catch that, and it is the
 assertion the first two attempts would have failed.
 
 ⚠️ **A measurement that returned nonsense was believed for one round.** The collision detector
@@ -20540,7 +20540,7 @@ are not app states; they are a broken instrument. Read the numbers before readin
 acceptance block onto a fifth sheet. Roof (5), siding (4) and the service contract (2) are
 unchanged. The full-width hairline under the old header does not survive the move to a margin box.
 
-**Gates.** `check_build.py` green 1003 → 1006. **`gate_1006.mjs` 31/31 GREEN · RED on the 966 control
+**Gates.** `check_build.py` green 1008 → 1010. **`gate_1010.mjs` 31/31 GREEN · RED on the 966 control
 with 15 named failures**, no crash — it presses the real Download button, prints those exact bytes,
 and measures the pages. `gate_964` 9/9, `gate_965` 12/12, `gate_966` 12/12 re-run.
 
@@ -20661,6 +20661,194 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
+
+## Build 1008 — four fixes from the fresh audit of today's builds (23 Aug 2026)
+
+A fresh 8-finder + adversarial-verify audit at build 1007 (workflow wf_202d59de-b67) surfaced 38
+findings; 12 verified CONFIRMED. **Four were regressions in code shipped earlier today** — fixed here.
+The rest are logged in OPEN_ITEMS under "Audit 2026-08-23" (the `api/abc.js` open proxy is CRITICAL and
+un-fixed — next up).
+
+### The four fixes
+
+1. **1005 Lead Source reached no report.** The New Lead intake wrote source nested as
+   `checklist.lead.source`, but the source chart/filter/sort/profile all read the flat
+   `checklist.lead_source` (11 read sites; zero read the nested key). So the field 1005 made mandatory
+   fed nothing. The `pdb.create` checklist now also writes the flat `lead_source`. (The mismatch
+   pre-dated 1005; 1005 just made a dead field required.)
+2. **1005 Claim Type check was dead code.** The `unknown` radio was `checked` in markup and
+   `openLeadForm` always checked one (`__ldDef` falls back to `'unknown'`), so `_ct` was never empty and
+   the `if(!_ct)` refusal never fired. Removed the markup default and made `openLeadForm` pre-select a
+   type only when the portal dictates one — so on a neutral portal the choice is active and the guard
+   is live. "Don't know yet" stays a pickable, honest answer (the 782 escape-hatch spirit); what's gone
+   is the *accidental* unknown from never touching the field.
+3. **1006 stage arrows dropped a superseded move.** `crStageDefer` held one global timer slot, so a
+   second arrow tap — same job or **any other** — cleared the first timer with no commit and no revert,
+   silently losing a move the UI had already shown as "Moved to X" (worst case: cross-job). Rewritten:
+   one pending move, and a superseding tap **commits** it first. The target stage is now captured up
+   front and committed via `setStage(target)` directly — never recomputed from the optimistic
+   `pr.stage` — so overlapping taps can't race (the old acxAdvance-recompute could).
+4. **1006 move lost on app close.** Nothing flushed the pending move if the PWA was closed/backgrounded
+   inside the 5s window. Added `pagehide` + `visibilitychange(hidden)` listeners that commit the pending
+   move. Best-effort on hard unload; reliable on backgrounding.
+
+### Gates
+
+`gate_1010.mjs` rewritten for the new race-free contract — 14 assertions incl. supersede-commits-not-
+drops and page-hide-flush; control on 1007 **FAIL 6**, named. `gate_1008.mjs` — the two 1005 fixes
+(flat `lead_source` write; neutral portal pre-selects no claim type; live refusal); control on 1007
+**FAIL 3**, named. `gate_1004/1005/1007` re-run GREEN (no regressions); `check_build` GREEN, stamp 1008.
+No SQL, no API change.
+
+### Note on the audit's confirm rate
+
+12/12 verified came back CONFIRMED — high because the finders were seeded with real suspects and the
+top-severity slice was verified first; the verifiers reproduced each end-to-end (many live). Lower-
+severity findings passed through unverified and are marked as such in OPEN_ITEMS.
+
+## Build 1007 — a phone-signed contract buzzes Curtis too (23 Aug 2026)
+
+Remote-signature parity (OPEN_ITEMS #7). When a client signs a contract from the secure share link,
+`api/clientsign.js` moves the job to Approved and emails the rep+admins a "Document signed" note — but
+the **in-person** path (`setStage`) also emails/pushes **Curtis** "schedule + order materials" on the move
+to Approved, and the remote path never did. So a remotely-signed job could sit with production never told to
+build it.
+
+### Why it's done inside clientsign, not via /api/notify
+
+`/api/notify` requires a user session (the 642 gate, with a "don't remove it to make a script work"
+warning). `clientsign.js` is **unauthenticated** — the unguessable share token is its credential — so it
+cannot call notify. It already sends a Resend email with the service-role key; 1007 adds a second Resend
+email to **Curtis + admins** with the same "schedule + order materials" body `setStage` uses. This matches
+the repo's established pattern (every `api/*.js` is self-contained; there are no shared `api/_*` helpers),
+and does not touch the security-critical notify route.
+
+⚠ **Email parity, deliberately not push/SMS.** In-person goes through notify's push+email+SMS fan-out.
+Reproducing all three in clientsign would duplicate the web-push stack (and spread the VAPID literal), and a
+shared notify core is a new untested mechanism (Vercel `_`-prefix routing, no precedent here) on a
+sensitive path. Email is the channel that actually reaches Curtis (notify's own notes: `push_subs` was one
+stale row). Full push/SMS parity is left as a follow-up in OPEN_ITEMS #7.
+
+### Also fixed: forward-only advance
+
+The old code PATCHed the stage to Approved **unconditionally** — a share-link signature on a job already
+Scheduled/Completed would pull it *backward* to Approved. 1007 reads the current stage first and only
+advances (and only alerts Curtis) when the job is not already at/past Approved.
+
+### Gate
+
+`gate_1007.mjs` imports the shipped handler, stubs `fetch`+env, and drives two shapes: a Lead job (advances
+to Approved, Curtis gets the "schedule + order materials" email addressed to curtis@) and an already-
+Scheduled job (no backward move, no false Curtis buzz). 7 assertions. Control on the pre-1007 handler:
+**FAIL 3**, named, no crash (no Curtis alert; unconditional backward move).
+
+**Change is `api/clientsign.js`** (backend); index.html carries only the stamp bump + CHANGELOG entry so the
+build number stays discoverable to `next_build.py`. No SQL. `check_build` GREEN; `node --check` on the route.
+
+⚠ **Recovery note:** a container reset reverted the local tree to build 971 mid-build (HEAD 106dcec,
+origin/main ref stale at d0cd727); the clientsign patch had landed on the stale tree. Caught by the app
+stamp reading 971, recovered by `git fetch` + `checkout -B <branch> origin/main` (back to c077f9a/1006) and
+re-applying the patch, verified byte-identical to the pre-reset version. Committing the stale tree would
+have reverted 1004–1006 — BUG_CLASSES 49. Verify the stamp on disk after any suspected reset.
+
+## Build 1010 — stage arrows: one tap, with Undo (23 Aug 2026)
+
+First slice of the **dialog diet** (OPEN_ITEMS #6). The profile's forward/back stage arrows popped a
+`confirm('are you sure?')` on every tap. Now a tap moves the job at once and shows a **5-second Undo
+toast** instead — the existing `window.CardinalUndo` (build 186), no new UI.
+
+### Why the commit is DEFERRED, not committed-then-reverted
+
+`setStage` is not side-effect-free: advancing to **Approved** emails+web-pushes Curtis ("schedule +
+order materials") and **Completed** emails the rep+admins ("walk-around + invoice"). A naive
+one-tap-then-undo would fire that email on every mis-tap and Undo could not unsend it. So
+`crStageDefer` holds the whole transition for the Undo window: the target stage is shown optimistically
+(cache-only, no DB write), and the real commit — `setStage` for the back arrow, `acxAdvance` for the
+forward arrow (which keeps its → Completed review-request prompt) — runs only when the 5s window closes.
+**Undo cancels the timer and reverts the optimistic stage; nothing is ever written and no team email
+fires.** This is Gmail's Undo-Send model, and it is the whole reason the diet's stage slice is safe.
+
+Deliberately narrow: a single active defer at a time (`_crStageDeferTimer` is cleared on a fresh tap);
+`Lost` is never a linear arrow target so its loss-reason prompt is untouched; if `CardinalUndo` is
+somehow unavailable the move commits immediately rather than being lost.
+
+### Gate
+
+`gate_1010.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
+a Chromium mechanism test of the helper in isolation: a tap shows the target stage but does NOT commit,
+raises an Undo toast; Undo reverts and **never commits**; letting the 5s window elapse commits exactly
+once. 11 assertions. Control on 1005: **FAIL 4** (confirm present, helper absent), named, no crash — the
+mechanism assertions are gated on the helper existing, so the control reports absence rather than
+throwing.
+
+**No SQL, no API change.** No markup or CSS changed (the arrows render identically; the undo toast is
+shipped UI), so the sentinel does not apply. The remaining diet slices (alert→toast, prompt→inline) are
+noted in OPEN_ITEMS #6.
+
+## Build 1005 — the New Lead form enforces its starred questions (23 Aug 2026)
+
+The intake form was already split into essentials + "More detail" at **782**, which also made
+First/Last/Street/City/State/Zip and phone-or-email enforce (the E2E's "0 required attributes" was
+literally true of the HTML attribute only — the JS handler blocks the save). Two starred questions
+still slipped through:
+
+- **Claim Type** carried a `*` but defaulted to `'unknown'` on save. Measured live: **17 of 57 leads
+  have no claim type** (14 'unknown' + 3 none).
+- **Lead Source** was optional on this form even though the profile add form has required it since
+  **999**. Measured: **26 leads have no source.**
+
+1005 requires both. Claim Type is always on screen, so a plain refusal. Lead Source lives behind
+"More detail", so when it is the only thing missing the form **opens that section and shakes the
+field** — the 782 no-contact reveal pattern reused. A `*` was added to the Lead Source label so the
+promise matches the enforcement.
+
+**This build only closes the two enforcement gaps** — no layout change, no field moved, the split and
+the essential-field enforcement were already 782's. `gate_1005.mjs` — Chromium, drives the real
+`ldSave`: no-claim-type refused (create not reached), no-source refused + More detail revealed, both
+answered saves. 7 assertions. Control on 1004: **PASS 2 · FAIL 5**, named, no crash (the old handler
+saves a lead with neither answered). **No SQL, no API change.**
+
+⚠ **Prime doctrine, twice in a row:** the two items picked before this — auto-advance (783) and the
+form split (782) — were already built. The E2E audit's OPEN_ITEMS list was written at ~965 but
+describes pre-782/783 state for several items. #2 and #3 struck as done; #1 struck earlier. Verify
+the current file before building the next audit item.
+
+## Build 1004 — one source of truth for the address (23 Aug 2026)
+
+A client's address is stored twice: the flat `projects.address` column, and a structured
+`checklist.lead.location.*` object (street/suite/city/state/zip). Only retail intake writes the
+parts, and **nothing updates them on a later edit** — `pfSave` writes `pr.address` and never touches
+`location`; profile-created leads have no parts at all. The map, directions, work order, recents and
+search all read `pr.address`. **The Construction Agreement (542) was the lone reader that read the
+parts, unconditionally** — so editing the address on the profile left the contract printing the OLD
+address while the map showed the new one. A signed legal document with the wrong address.
+
+### The fix — one authority, single site
+
+`pr.address` is the source of truth. The contract now fills `[STREET]/[CITY]/[STATE]/[ZIP]` from the
+structured parts **only when they reconstruct the current `pr.address`** (compared with punctuation
+and case normalised away); otherwise it puts the flat `pr.address` on `[STREET]` and blanks the rest
+— a correct single line beats a stale split. No writer change, no address parsing that could invent
+wrong parts, no UI change. The parts become a validated cache: used when they still agree, ignored
+when they don't. This also fixes a **latent** bug — profile-created leads had no parts, so the
+contract printed a blank address for them; now it prints their real one.
+
+⚠ **Deliberately reader-side, not a writer sync.** The profile edit form has a single flat address
+field, so keeping structured parts in lockstep would mean parsing a free-typed address into
+street/city/state/zip — unreliable, and able to invent a wrong split. Deferring to `pr.address`
+guarantees the contract == the map without that risk. After an edit the contract prints the address
+on one line rather than in split boxes; re-entering it through the intake form restores the split.
+
+### Gate
+
+`gate_1004.mjs` **extracts the shipped fill block from the artifact and runs it** (not a
+re-implementation) against five shapes: intake-unedited (structured kept), edited (flat wins, no
+stale split), profile-created (flat on STREET, was blank before), address-cleared (blank, consistent
+with the map), and same-address-different-punctuation (structured kept). 12 assertions. Control on
+1003: **PASS 6 · FAIL 6**, named, no crash — the old block prints the stale/blank address.
+
+**No SQL, no API change.** No screen markup or CSS changed, so the sentinel does not apply — this is
+template-fill logic, gated by the extraction harness.
 
 ## Build 1003 — the shared calendar (23 Aug 2026)
 

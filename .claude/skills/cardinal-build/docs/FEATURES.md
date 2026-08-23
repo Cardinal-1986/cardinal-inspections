@@ -5957,7 +5957,7 @@ counts and what it refuses to count, each of the three kinds dropping the count 
 green "All filled" state reached by filling everything, the jump outlining a blank and moving on,
 and a hand-added field being counted; control red 11 named).
 
-### Print fidelity on contracts and estimates (1006)
+### Print fidelity on contracts and estimates (1010)
 
 `ensurePrintFix(d)` in the report-editor block is the single place the printed page's furniture is
 decided: which editing chrome is dropped, where the page breaks may not fall, the running header
@@ -6474,3 +6474,58 @@ that job, while keeping the personal `appt` and `team` kinds private to their cr
 - Verified against the live DB in rolled-back transactions: assigned rep sees the job day (not the
   personal entries), an unassigned rep sees zero rows, the creator/admin can update, a non-owner
   cannot. Gate `gate_1003.mjs` (11 assertions; control on 1002 PASS 6 · FAIL 5).
+
+### 1004 — one source of truth for the address
+
+The address lived in two stores — the flat `projects.address` column (used by the map, directions,
+work order, recents, search) and a structured `checklist.lead.location.*` object (street/suite/city/
+state/zip). Only retail intake wrote the parts and nothing updated them on edit, so the **Construction
+Agreement (542)** — the one reader that read the parts unconditionally — printed the old address after
+an edit while the map showed the new one. 1004 makes `pr.address` the single authority: the contract
+fills its split boxes only when they reconstruct the current `pr.address` (punctuation/case
+normalised), else it prints the flat address on `[STREET]`. Guarantees contract == map; also fixes the
+blank contract address for profile-created leads (which never had the parts). `gate_1004.mjs` runs the
+shipped fill block against five shapes (control on 1003: PASS 6 · FAIL 6).
+
+### 1005 — the New Lead form enforces its starred questions
+
+The intake form was split into essentials + "More detail" at 782 (which also enforced First/Last/
+Street/City/State/Zip and phone-or-email in JS). Two starred questions still saved empty: **Claim
+Type** defaulted to 'unknown' (17 of 57 leads had none) and **Lead Source** was optional here despite
+999 requiring it on the profile add form (26 had none). 1005 requires both — Claim Type with a plain
+refusal (always visible), Lead Source by opening "More detail" and shaking the field when it's the
+blocker (the 782 reveal pattern), plus a `*` added to its label. No layout change. `gate_1005.mjs`
+(Chromium, drives the real ldSave; control on 1004 PASS 2 · FAIL 5).
+
+### 1010 — stage arrows: one tap, with Undo (dialog diet, slice 1)
+
+The profile's forward/back stage arrows no longer confirm on every tap. A tap moves the job at once and
+shows a 5-second Undo toast (window.CardinalUndo, shipped since 186). The transition is DEFERRED for the
+window: the target stage shows optimistically (cache-only), and the real commit (setStage / acxAdvance)
+runs only when the toast closes — so an undone tap never writes to the record and never fires setStage's
+team email (Approved → Curtis "schedule + order materials"; Completed → rep+admins). Gmail Undo-Send
+model. `crStageDefer` is the shared helper; `gate_1010.mjs` (source wiring + Chromium mechanism test;
+control on 1005 FAIL 4). First slice of the dialog diet; alert→toast and prompt→inline remain.
+
+### 1007 — a phone-signed contract buzzes Curtis too (remote signature parity)
+
+When a client signs a contract from the secure share link, `api/clientsign.js` moves the job to Approved.
+In-person signing (setStage) also emails/pushes Curtis "schedule + order materials" on that move; the remote
+path only emailed the rep, so production never heard a remotely-signed job was ready. clientsign is
+unauthenticated (share token = credential) so it can't call the session-gated /api/notify — it now sends the
+same alert to Curtis + admins via the Resend account it already uses. Email parity (not push/SMS — deferred;
+reliable channel is email). Also made the stage advance forward-only (no pulling a scheduled job back to
+Approved, alert only on the real move). `gate_1007.mjs` (imports the handler, stubs fetch+env; control on
+pre-1007 FAIL 3). Backend change; no screen change.
+
+### 1008 — four fixes from the fresh audit (23 Aug)
+
+An 8-finder audit at build 1007 caught four regressions in the day's own builds, fixed here: (1) 1005
+Lead Source was written to checklist.lead.source but every report reads checklist.lead_source — the
+intake now writes the flat key; (2) 1005 Claim Type refusal was dead (an 'unknown' radio was
+pre-checked) — no type is pre-selected on a neutral portal now, so the choice is active and the guard
+lives; (3) crStageDefer dropped a superseded move (2nd arrow tap, esp. cross-job) — a superseding tap
+now commits the first move, and the target is captured + committed via setStage() directly (race-free);
+(4) closing the app in the Undo window lost the move — a pagehide/visibilitychange flush commits it.
+gate_1010 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
+findings (incl. the critical api/abc.js open proxy) are logged in OPEN_ITEMS "Audit 2026-08-23".

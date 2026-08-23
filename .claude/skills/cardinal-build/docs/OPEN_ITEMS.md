@@ -3,6 +3,58 @@
 
 ---
 
+## 🔍 Fresh audit, 23 Aug 2026 @ build 1007 (workflow wf_202d59de-b67) — CONFIRMED findings
+
+8 finders + adversarial verify. 38 raw → 12 verified CONFIRMED. **Build 1008 fixed the four that were
+regressions in today's own builds** (1005 lead-source-wrong-field, 1005 claim-type-dead-check, 1006
+stage-defer drop-on-supersede, 1006 stage-defer lost-on-close). The rest, still OPEN, ranked:
+
+### 🔴 CRITICAL — do first
+- **`api/abc.js` is an open proxy.** No auth gate at all + `Access-Control-Allow-Origin: *`. Anonymous
+  callers can `placeOrder` (real orders on Cardinal's ABC account), `accounts` (ship-to names/addresses),
+  and `getOrder` (order/invoice history) once `ABC_CLIENT_ID/SECRET` are set in Vercel (builds 688/774
+  imply they are). Every other credential-spending route (`companycam.js`, `invite.js`) has the standard
+  `requireSession + is_cardinal_admin` gate. **Fix: add that gate; drop the wildcard CORS.** (verified
+  CONFIRMED, corrected severity critical)
+
+### 🟠 HIGH — money correctness (pre-existing)
+- **996 money-in has a second door.** Tapping the "Received" section *header* (not the + button) opens
+  the legacy `dir:'in'` modal → writes `checklist.payments`, books no commission, and is invisible to
+  Balance Due on any job with a collection. Fix: route the `.payhead` `in` case to `payGoLogCollection`.
+  (F1 + MONEY-1, both CONFIRMED)
+- **`jobFinance` doc-store MAX defeats 997's accepted tier.** A bigger `Estimate…` inspection_reports
+  doc (any status, no dedupe) is folded in as a flat MAX after `estBest`, overriding the accepted
+  estimate → wrong Job Value/Balance Due. Fix: tier/status-filter the doc-store leg too. (F3 + MONEY-2)
+- **Contract deposit from newest estimate of any status.** `fillContractMoney` picks `rows[0]` of
+  `loadForProject` (created_at DESC) filtered only on deposit info, and the editor writes `deposit_pct`
+  on every save incl. drafts — so a later 30%-default draft outranks the accepted 0% estimate that set
+  the price → wrong deposit on the signed contract. (F6 + MONEY-3, CONFIRMED)
+
+### 🟠 HIGH — other (pre-existing)
+- **`api/roofr.js` + `api/hover.js` open AI relay** — no session gate; spend Gemini+OpenAI quota on
+  caller-supplied text. Add the standard session gate. (CONFIRMED)
+- **DB: 5 estimates point at deleted documents** ($71,845.99, 4 status='sent') — deleting a document
+  never clears `estimates.doc_id`/`contract_doc_id`. Fix the document-delete path to null the referring
+  columns; consider a one-time cleanup. (DB-1, CONFIRMED live)
+
+### 🟡 MEDIUM / LOW (from finders; NOT individually verified unless noted)
+- **Push reaches only Theo** — `push_subs` = 3 rows, all `theo@` (verified live). Curtis/Joan/reps have
+  none, so web-push notifications reach nobody else. *(This is why 1007 used email for Curtis — correct
+  call. But the team needs to subscribe for push to matter.)*
+- 1001 pending-supplement line uses `--cr-amber` → `#8a5500` on a theme-fixed dark card → unreadable in
+  rb-light.
+- 1002 iTel buttons reference `--ct-red`/`--ct-green` scoped to the Resource Library (`--ct-green`
+  declared nowhere else) → likely invisible/!important-wrong outside it.
+- 1000 `lossAge` UTC-parses a date-only value → "N days ago" reads one day high on Ohio evenings.
+- 996 `payMigrateLegacyIn` confirm says "Balance Due does not change" — false on a job with worksheet
+  contract payments and no prior collection (migrating makes collections the sole source). (F2 CONFIRMED)
+- `config.js` serves an unrestricted Google Maps key; `design.js`/`coach.js` missing from `vercel.json`
+  `maxDuration`; 1003 per-job Appointments page (`#apMount`) has an ungated `✕` delete.
+- Full detail: `/tmp/.../tasks/wbapw9i8p.output` (session-local) and the workflow journal.
+
+
+---
+
 ## ✅ DONE — the audit follow-up batch, builds 995–1003 (23 Aug 2026)
 
 Shipped from the deep-research suggestions, all with named-control gates:
@@ -3408,23 +3460,53 @@ also emails rep+admin) each move the job to Approved, and the in-app paths buzz 
 likewise auto-advances to Invoiced (22511). Anyone re-proposing "wire the signature to the stage" is
 describing code that ships today.
 
-1. **Auto-advance Approved → Scheduled when the build day is booked** — the real residue of the old item 1.
-   The appointment (kind='job') exists, Production reads it ("build Aug 20"), but the stage waits for a
-   manual arrow tap + confirm. `blockerFor` already computes the truth; the stage lags it.
-2. **Split the intake form** — measured in the E2E: **43 visible fields, 0 with a required attribute** (the
-   `*` on First/Last/City/State/Zip is label text only). Name · phone · address · work type up front, the
-   rest behind "More detail", and make the starred five actually enforce.
-3. **Stale-estimate line in the daily digest** — nothing watches an estimate after it is sent. The 11:00 cron
-   already runs and already knows each job's rep.
-4. **One writer for the address** — it is stored twice from one form: `projects.address` (flat) AND
-   `checklist.lead.location.*` (parts). They agree at birth and drift on any later edit.
+1. ~~**Auto-advance Approved → Scheduled when the build day is booked**~~ — **✅ STALE, already built
+   at 783 and closed by 998 (verified 23 Aug).** `__apptMayAdvanceStage` advances Approved → Scheduled
+   when a `kind:'job'` appointment carrying a `project_id` is booked, wired into the one appointment
+   writer (`adb.create`, plus `adb.update` since 998) and reached by 972's "Get on the calendar". The
+   historical gap this item describes ("build Aug 20" showing with the stage lagging) was the two job
+   appointments being **orphans with no project_id**, so the guard returned early — 998 closed it by
+   requiring a job on every build-day booking. Proven in a Chromium spy: it fires ONLY for the Approved
+   build day, and stays silent for a drop, an orphan job, a Lead job and a Completed job. Nothing to build.
+2. ~~**Split the intake form**~~ — **✅ split done at 782, enforcement completed at 1005.** The `*` on
+   First/Last/City/State/Zip was label-only when the E2E was run, but 782 had already split the form
+   (essentials up front, the rest behind "More detail") AND made those six + phone-or-email enforce in
+   JS. The two starred questions it still let through were **Claim Type** (defaulted to 'unknown' — 17
+   of 57 leads had none) and **Lead Source** (26 had none); **1005 enforces both.** Work-type stays
+   behind More detail by choice; not a bug.
+3. ~~**Stale-estimate line in the daily digest**~~ — **✅ DONE at 784.** "PHASE 3 — the 11:00 digest
+   chases estimates": each rep gets their own list (client, amount, days since last touched) for
+   anything sent. Already shipping.
+4. ~~**One writer for the address**~~ — **✅ DONE at 1004.** It is stored twice: `projects.address`
+   (flat) AND `checklist.lead.location.*` (parts). The parts are written only at retail creation and
+   never updated on edit, and the **Construction Agreement (542) was the one reader that read them
+   unconditionally** — so an edited address showed new on the map and old on the signed contract.
+   1004 makes `pr.address` the single authority the contract defers to: the split boxes fill only when
+   they reconstruct the current `pr.address`, else the flat address prints on `[STREET]`. Every other
+   reader (map, directions, work order, recents) already preferred `pr.address`, so the parts can no
+   longer surface a different address anywhere. (Also fixed the latent blank-contract-address for
+   profile-created leads, which never had the parts.)
 5. **Invoiced is a silent stage** — fold "invoiced and unpaid past 30 days" into the Friday owed email.
-6. **Dialog diet** — the E2E counted **11 native dialogs** (4 confirm / 3 prompt / 4 alert) on one clean
-   lifecycle; worst is invoice create→send: alert, prompt, confirm back-to-back. Native dialogs in the
-   installed PWA look like system errors. Candidates: title prompts → prefilled inline fields; stage-arrow
-   confirms → one tap + undo toast; the send prompt → a field defaulted to the client's email.
-7. **Remote signature buzz parity** — `api/clientsign.js` advances the stage and sends the Resend email, but
-   nothing web-pushes Curtis the way an in-person signature does (the front-end setStage does that half).
+6. **Dialog diet** — *in progress, first slice done at 1006.* The E2E counted **11 native dialogs** (4
+   confirm / 3 prompt / 4 alert) on one clean lifecycle; worst is invoice create→send: alert, prompt,
+   confirm back-to-back. Native dialogs in the installed PWA look like system errors. The toast + undo
+   machinery already exists (crToastOk/crToastErr, window.CardinalUndo since 186), so each slice is
+   *routing* through it, not new UI.
+   - ✅ **1006 — stage-arrow confirms → one tap + 5s Undo (deferred commit).** The forward/back arrows on
+     the profile no longer confirm; the move is held for the Undo window so an undone tap never writes and
+     never emails the team. ⚠ Note for future slices: `setStage` emails Curtis on Approved/Completed, so a
+     one-tap replacement there must DEFER the commit, not commit-then-revert.
+   - ⬜ remaining: **alert() → toast** sweep (218 alerts app-wide; the invoice create success/guard are the
+     lifecycle ones), and **prompt() → inline field** (the send-email prompt defaulted to the client's
+     email; title prompts). Both want their own build; the send-prompt one is visual (preview first).
+7. ~~**Remote signature buzz parity**~~ — **✅ DONE at 1007.** `api/clientsign.js` advanced the stage and
+   emailed the rep, but never told Curtis to schedule + order materials the way in-person setStage does on
+   the move to Approved. clientsign is unauthenticated (share token = credential) so it can't call the
+   session-gated `/api/notify`; it now sends the same "schedule + order materials" alert to Curtis + admins
+   through the Resend account it already uses. Also made the stage advance forward-only (a job already
+   scheduled is no longer pulled back to Approved, and Curtis is only alerted on the real transition).
+   ⚠ Email parity only — full push/SMS parity would need a shared notify core (deferred; no precedent for
+   `api/_*` shared helpers here, and the reliable channel is email since push_subs is mostly empty).
 
 DONE at 772: emoji removed from the two outbound stage-email subjects; `createContractForCurrent` no longer
 returns in silence when no project is loaded.
