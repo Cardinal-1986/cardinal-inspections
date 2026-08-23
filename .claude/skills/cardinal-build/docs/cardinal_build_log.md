@@ -20497,7 +20497,7 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
-## Build 1010 — the printed contract shows all of its own words
+## Build 1016 — the printed contract shows all of its own words
 
 **The defect.** The slim grey running header (`.runhead`, build 747) is `position:fixed`, which
 does repeat on every printed page — in the same strip the flowed text occupies. Its background is
@@ -20529,7 +20529,7 @@ had no print furniture at all: no page rules, and no address footer.
 the header up with `top:-0.34in`; Chromium clamps a fixed element to the page area, so it landed at
 the **bottom** of the page (y≈707) and off page 5 entirely. Collisions read **zero** — because the
 header had left, not because the text was clear. *Absence of a collision is not the goal; a header
-above readable text is.* `gate_1010` assertion 4 exists solely to catch that, and it is the
+above readable text is.* `gate_1016` assertion 4 exists solely to catch that, and it is the
 assertion the first two attempts would have failed.
 
 ⚠️ **A measurement that returned nonsense was believed for one round.** The collision detector
@@ -20540,7 +20540,7 @@ are not app states; they are a broken instrument. Read the numbers before readin
 acceptance block onto a fifth sheet. Roof (5), siding (4) and the service contract (2) are
 unchanged. The full-width hairline under the old header does not survive the move to a margin box.
 
-**Gates.** `check_build.py` green 1008 → 1010. **`gate_1010.mjs` 31/31 GREEN · RED on the 966 control
+**Gates.** `check_build.py` green 1014 → 1016. **`gate_1016.mjs` 31/31 GREEN · RED on the 966 control
 with 15 named failures**, no crash — it presses the real Download button, prints those exact bytes,
 and measures the pages. `gate_964` 9/9, `gate_965` 12/12, `gate_966` 12/12 re-run.
 
@@ -20662,6 +20662,257 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1014 — six fixes closing out the 23 Aug audit (23 Aug 2026)
+
+**The audit remainder, re-verified against the 1013 tree by a 9-agent pass before anything was
+touched** (findings were filed at 1007; the staleness sweep's lesson). Verdicts: 6 CONFIRMED and
+fixed here, **1 REFUTED** (M3, the iTel `--ct` tokens — both references carry literal fallbacks and
+`data-rltheme` is kept on `<body>` so the tokens resolve app-wide; reported as a false positive,
+nothing patched), **1 NOT_A_CODE_FIX** (M6, the Google Maps key — restriction is a Google Cloud
+Console operator action, recorded in OPEN_ITEMS for Theo).
+
+**DB-1 — deleting a document orphans estimates (CONFIRMED, fixed twice + cleaned).**
+`db.remove` (the ONE inspection_reports delete pipeline, 524, four callers) deleted the row and
+nothing else; the only doc_id writes in the file are the publish write-backs. Worse: publishing an
+estimate with a dangling doc_id silently wrote NOTHING — `db.update` has no `.select()`, so zero
+rows matched returns 204 with no error, the create-fallback never fires, and the stale id survives.
+Fixes: (a) `db.remove`'s TEAM branch now best-effort nulls `estimates.doc_id`/`contract_doc_id`
+referencing the deleted id — all four delete callers covered at the chokepoint; (b) publish
+(`cr-epub`) calls `db.get(est.doc_id)` before the update — `.single()` throws on a missing row,
+dropping into the existing create path, and the existing `docId !== est.doc_id` write-back
+re-links, so any dangling id self-heals on its next publish. **One-time cleanup applied to
+production** (`estimates_dangling_docids.sql`, idempotent): the 5 danglers (Betty Mann ×2,
+Kimberly Guy ×2, Dan Thompson — the 4 sent = $71,845.99) are nulled; verified 0 dangles remain,
+6 legitimate links intact. Old values recorded in the migration header for revert.
+
+**M1 — push reaches only Theo (CONFIRMED: a discoverability gap authored in code).** Any signed-in
+user can subscribe (both upsert paths ungated; RLS `USING(true)`), but the burger hides Settings
+for non-admins and the `nav === 'notify'` handler existed with **no element pointing at it** — a
+door with no button. Fixes: an **Enable Notifications** burger row (`data-nav="notify"`, in the
+Account section, deliberately absent from `hideAdminItemsForNonAdmin`'s list) wired to the
+existing handler; plus a **one-time dismissible nudge** after sign-in (crUpdateBar shape, z-170
+above `#pwaNav`, below every dialog) shown only when `Notification.permission === 'default'` —
+never on 'denied', which cannot be re-prompted, so no bar that cannot succeed. No observer; a
+bounded retry until sign-in resolves. Dismiss key `cr-push-nudge-dismissed`.
+
+**M2 — 1001's pending-supplement amber (CONFIRMED).** `.cr-c-pending` used `var(--cr-amber)` on
+the theme-FIXED dark `.cr-c-fin` card; rb-light's `#8a5500` painted **2.31:1** on the worst
+gradient stop. Pinned to the literal `#e0a13a` — the convention every other ink in that card
+already follows — 6.38:1 both themes. The rb-light token itself is untouched (correct at its
+pale-ground consumers).
+
+**M4 — lossAge UTC off-by-one (CONFIRMED).** `new Date('YYYY-MM-DD')` is UTC midnight, so the
+count read one high from 8pm EDT. Now `window.crDate ? window.crDate(iso) : new Date(iso)` —
+byte-for-byte the idiom `fmtDate` two lines above already uses (crDate, build 744, exists for
+exactly this failure).
+
+**M5 — the migrate confirm's false sentence (F2, CONFIRMED).** "Balance Due does not change" was
+false on a job with worksheet contract payments and no prior collection — after migrating,
+`collPaid` REPLACES the paid sum and Balance Due rises by wsPaid. New `payMigrateDrop()` computes
+the real delta (payTotals' wsPaid, only when `collPaid[id]` is undefined); both the note and the
+confirm now state the dollar consequence when it applies and keep the original sentence only when
+it is true.
+
+**M7 — vercel.json maxDuration (CONFIRMED).** `api/coach.js` (Gemini + 4.5s of 503 backoff +
+OpenAI fallback) and `api/design.js` (image-model ladder) were missing from the functions block —
+added at 60s. Swept: `ai-status.js` is a 10-token health probe, fine at default; no other AI
+caller is unlisted.
+
+**M8 — #apMount's ungated ✕ (CONFIRMED).** `renderApptsPage` drew the delete cross on every row —
+including teammates' job/drop rows the 1003 shared-calendar SELECT policy makes visible — while
+the own-or-admin DELETE policy silently refused (0 rows, no error): confirm(), nothing, row
+survives. Worse than dead. The ✕ now renders behind `apptCanEdit(a)` (1003's own pattern from
+`renderApptList`), with a defense-in-depth re-check in the click handler.
+
+**Proof.** `gate_1014.mjs` — EXECUTES the shipped `db.remove` (recording sb mock: delete + both
+null-updates), `lossAge` (TZ=America/New_York, Date.now pinned to an Ohio evening: "2 days ago",
+where UTC parse says 3), and `payLegacyInNote` (risky case names $5000 and drops the false
+sentence; collections-ruled case keeps it); structural asserts for publish-get-before-update, the
+notify row + handler + not-hidden, the pinned amber, the apMount gates, vercel.json entries, and
+the nudge. GREEN on the working tree; **negative control against build 1013 goes RED with 15 named
+failures, zero crashes.** `check_build` green (stamp 1013→1014, marker, negative control);
+`vercel.json` still valid JSON.
+
+SQL: `estimates_dangling_docids.sql` — **applied to production 23 Aug** and committed.
+Files: `index.html`, `vercel.json`, the migration, the gate.
+
+## Build 1013 — the Roofr and Hover readers are no longer open AI relays (23 Aug 2026)
+
+**The remaining security finding from the build-1007 audit.** `api/roofr.js` and `api/hover.js` —
+the routes that read a measurement PDF's text with AI — had **no session gate at all**: anyone who
+knew the paths could POST arbitrary text and bill inference to `GEMINI_API_KEY` (and, through the
+505 fallback ladder, `OPENAI_API_KEY`) — a free AI relay. This is the exact class already closed on
+`summarize`/`organize`/`caption`; these two were simply missed. **A survey of `api/` confirms they
+were the only AI routes left without an `authorization` check** (22 other routes carry one).
+
+**Server half:** both routes now carry the same session gate as `api/sol.js` — Bearer token →
+`GET /auth/v1/user` with the publishable anon key; missing/invalid/errored → 401. **The gate runs
+before the `GEMINI_API_KEY` config check**, so an anonymous caller learns nothing about server
+config and spends nothing.
+
+**Client half:** the three import call sites (`importMeasFrom`, the material-order trade picker,
+and the estimate-doc Roofr reader) sent bare `Content-Type` headers; all three now use
+`window.aiHeaders()` — the helper that has existed for exactly this purpose since the summarize
+fix, and falls back to no header (→ clean 401) when the session cannot be read. Importing
+measurements behaves identically on screen.
+
+**Proof.** `gate_1013.mjs` imports both SHIPPED handlers and drives them with mocked Supabase auth
+(GEMINI key deleted so a passed gate short-circuits at config, never reaching a model): anon → 401,
+bad token → 401, valid session → passes the gate, for each route; plus the client assertion that
+all 3 call sites send `aiHeaders()`. GREEN on the working tree; **negative control against the
+pre-fix files goes RED with 5 named failures** (anon/bad-token → 500 config leak ×4, client 0/3).
+`check_build` green (stamp 1012→1013, marker, negative control); `node --check` clean on both
+routes.
+
+No SQL. `api/roofr.js` + `api/hover.js` + `index.html`.
+
+## Build 1012 — the contract's deposit comes from the estimate that set its price (23 Aug 2026)
+
+**The third HIGH money-correctness finding from the build-1007 audit (F6 + MONEY-3), and the last.**
+`fillContractMoney` — 781's single chokepoint for a contract's money — looked up the deposit, when
+no explicit `est` row was passed, as `rows[0]` of `loadForProject` (created_at DESC, non-archived,
+**drafts included**) filtered only on "has deposit info". The editor stamps `deposit_pct` (default
+30, build 781's house rate) on **every** save, drafts included (46943 default / 47481 save), so a
+fresh draft outranked the accepted 0% estimate that set the contract's very price — a wrong deposit
+on a signed legal document.
+
+**The fix**, inside the same chokepoint: the deposit follows the SAME ladder the price does — 997's
+tiers, read through the same `ACCEPTED_EST` / `SENT_EST` vocabulary `indexMoney` uses:
+accepted/signed (2) > sent/approved (1) > draft (0, last resort), **newest within the rung** (the
+order `loadForProject` already returns; strict `>` keeps the first seen at the winning tier). A
+draft is still honored when it is all the job has — a deposit someone actually typed into the only
+estimate beats guessing, and an untouched draft's 30 equals `DEPOSIT_PCT_DEFAULT` anyway. Unchanged
+by design: the estimate→contract path's explicit row governs outright, and an explicit
+`deposit_amount` still outranks the percentage (785).
+
+**Measured before shipping:** across the 10 production jobs carrying deposit-bearing estimates,
+today's pick and the tiered pick agree on **every one** — no contract's prefill changes. But the
+audit's exact scenario is one draft away from live: **Annette Wright and Vandalyn Robinson both
+carry accepted 0% estimates**; opening a fresh draft on either job would have printed a 30%
+deposit on their next contract. Preventive, same class as 997/1011.
+
+**Proof.** `gate_1012.mjs` extracts the SHIPPED `fillContractMoney` + `DEPOSIT_PCT_DEFAULT` +
+`SENT_EST`/`ACCEPTED_EST` and executes them against a template fixture with a mocked
+`loadForProject`: accepted-0%-vs-newer-draft-30% → 0%; draft-only typed 20% → 20%; no estimates →
+30% default; sent-30%-vs-newer-draft-10% → 30% (tier beats recency); explicit est row governs;
+`deposit_amount` $5,000 on $20,000 prints 25%. GREEN on the working tree; **negative control
+against build 1011 goes RED with 2 named failures** ([1] 30%, [4] 10%). `check_build` green
+(stamp 1011→1012, marker, negative control).
+
+No SQL. `index.html` only.
+
+## Build 1011 — the doc-store leg no longer defeats 997's accepted tier (23 Aug 2026)
+
+**The second HIGH money-correctness finding from the build-1007 audit (F3 + MONEY-2).** Build 997
+made the accepted estimate the Job Value via tiers in `indexMoney` (accepted/signed = tier 2 beats
+sent = tier 1, largest within the winning tier). But `jobFinance` has a second estimate leg 997
+never reached: after `est = estBest[pr.id]`, it scanned `cacheRows` for any `Estimate…`-titled
+inspection_reports doc and took a **flat MAX — any status, archived rows' published copies
+included** — so a bigger stale document overrode the accepted estimate, and Job Value, Balance Due,
+the AR chart, pipeline dollars and the invoice all inherit from there.
+
+**Two rules now, both in `jobFinance`'s doc leg:**
+- **(a) tier-2 skip** — when the job carries an accepted/signed estimate, no doc competes. 997's
+  headline ("an ACCEPTED estimate is the number, whatever its size") now holds across both stores.
+- **(b) linked-doc exclusion** — a doc any estimates row points at via `doc_id` (ANY status,
+  archived and drafts included — collected *before* indexMoney's filters) never competes as a
+  second estimate. The table, with its status/tier/archived logic, is authoritative for a linked
+  estimate; archiving a loser now retires its document too. Only true legacy document-only
+  estimates still feed the leg, and only below tier 2 — so doc-only jobs keep their value.
+
+**The enabling change:** `estTier` was `var`-local inside `indexMoney`, so the tier decision died
+there. It is now a global beside `estBest` (with new global `estDocIds`), and the gate asserts the
+global is actually written — leaving the `var` in place would have silently disabled the whole fix
+(the shadowing trap, guarded, not assumed).
+
+**Measured before shipping, 997's own discipline:** production has 6 `Estimate…`-titled docs and
+**0 carry a total** (the 540 measurement still holds), 18 estimates rows (11 linked via doc_id,
+2 live accepted). **This changes NO job's value today** — preventive, exactly like 997.
+
+**Proof.** `gate_1011.mjs` extracts the SHIPPED `indexMoney`/`jobFinance`/`isEstimateTitle`/
+`SENT_EST`/`ACCEPTED_EST` and **executes them** (no re-implementation) against production-shaped
+fixtures: accepted+unlinked-doc → accepted wins; sent+unlinked-doc → doc still counts; doc-only
+job → doc supplies value; archived row's published doc → excluded; accepted-vs-bigger-sent →
+997 tiers intact; global `estTier` written. GREEN on the working tree; **negative control against
+build 1010 goes RED with 3 named failures** ([1] 35000, [4] 35000, [6] tier 0). `check_build`
+green (stamp 1010→1011, marker, negative control).
+
+No SQL. `index.html` only.
+
+## Build 1016 — money-in has one door again: the "Received" heading (23 Aug 2026)
+
+**A HIGH money-correctness finding from the build-1007 audit, and it is 996's own residue.** Build
+996 made `collections` (Money In & Commissions) the single door for money received — it fires the
+10% commission trigger, feeds the Friday owed email, and since 721 is what Balance Due counts
+(`jobFinance`: `if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id]` — collections *replace*
+the legacy paid total whenever any collection exists). 996 re-routed the **+ button** under
+"Received" on the Payment Information page to `payGoLogCollection()`. But the click delegation on
+`#paySummary` has a *second* branch — a tap on a section **heading** (`.payhead`) calls
+`openPayRow(data-paysec, null)` — and for the Received section `data-paysec="in"`, so tapping the
+"Received" heading still opened the legacy `dir:'in'` add modal. Money logged that way writes
+`checklist.payments`, books **no commission**, and on any job that already has a collection is
+**invisible to Balance Due** (the collPaid replace above ignores the legacy log). It looked
+recorded and counted for nothing.
+
+**The fix** mirrors 996's own + button routing exactly (the branch eight lines above it): in the
+`.payhead` handler, route `data-paysec === 'in'` to `payGoLogCollection()` and return; `'out'` and
+`'exp'` are job costs, not collections, so their headings keep the legacy row modal (`openPayRow`) —
+unchanged. Editing an existing legacy `dir:'in'` row (`data-payedit`, checked earlier in the
+delegation and returning first) is untouched, so the one job carrying legacy rows (Dan Thompson) can
+still be inspected and moved via its "Move them into Money In" button (`payMigrateLegacyIn`).
+
+**Proof.** `gate_1016.mjs` extracts the SHIPPED `#paySummary` click handler, mounts the real section
+markup in a real Chromium DOM, and dispatches real clicks (genuine `closest()` traversal, not
+mocked): Received heading → `payGoLogCollection` and never `openPayRow('in')`; Paid/Expenses headings
+→ `openPayRow('out'|'exp', null)`; + button still → `payGoLogCollection`; edit row →
+`openPayRow(null, i)`; contracts row → `openContractPaid`. GREEN on the working tree; **negative
+control against build 1009 goes RED with 2 named failures** (Received heading calls `openPayRow('in')`
+and opens the legacy modal). `check_build` green (app stamp 1009→1010, marker, negative control
+clean).
+
+No SQL. `index.html` only (one 6-line routing change in the `cr-*` payments block).
+
+## Build 1009 — the ABC Supply route is no longer an open proxy (23 Aug 2026)
+
+**The critical finding from the build-1007 audit.** `api/abc.js` shipped with no auth check and a
+wildcard `Access-Control-Allow-Origin: *` — an internet-wide open proxy in front of Cardinal's live
+ABC Supply credential. Once `ABC_CLIENT_ID/SECRET` are set in Vercel (they are, per 688/774), any
+anonymous caller on any origin could drive it: read catalog pricing and the ship-to account list, and
+— through the `order.write` scope in `SCOPE` — **place real material orders on Cardinal's account**.
+Every other credential-spending route (`companycam.js`, `invite.js`) already had the standard
+`requireSession` gate; this one had none.
+
+**The gate (mirrors `api/companycam.js`).** A new `requireAccess(req, res, action)`:
+- **Every action requires a valid signed-in Cardinal session** — Bearer token → `GET
+  /auth/v1/user` with the publishable anon key; no/invalid token → 401. This alone closes the
+  anonymous hole, which was the whole severity.
+- **Order actions are full-access only.** `FULL_ONLY = {placeOrder, getOrder, templates}` (order
+  write + order-history/template reads) additionally require admin **or production** — checked against
+  `team_profiles.role` via the service key, with a hardcoded `FALLBACK_FULL` (theo/joan/curtis/scottie,
+  = `is_full_access()`) for when the service key is absent. Ordering materials is Curtis's/admin's job,
+  not a sales rep's. **None of these three is called by `index.html` today**, so gating them costs the
+  app nothing while locking the money surface.
+- **Catalog/pricing/account-lookup stay session-only** (`status`, `searchItems`, `priceItems`,
+  `frequents`, `recents`, `branches`, `itemAvailability`, `accounts`) so the estimate-from-catalog
+  flow (774) and "Find my Ship-To" still work for any signed-in staff.
+- **The wildcard CORS block is removed entirely.** This is a same-origin route; a same-origin fetch
+  needs no `Access-Control-Allow-Origin` and an `Authorization` header on it triggers no preflight.
+
+**Paired client change (mandatory).** The `cr-abc-script` `api()` wrapper sent no `Authorization`
+header, so gating the server would 401 every one of the app's own ABC calls. It now attaches the
+session token — `session = TEAM ? (await sb.auth.getSession()).data.session : null` then
+`'Authorization': 'Bearer ' + (session ? session.access_token : '')` — the same idiom as
+`senddoc`/`companycam`. Nothing changes on screen.
+
+**Proof.** `gate_1009.mjs` drives the exported handler with mocked Supabase auth and asserts:
+anon→401, bad-token→401, signed-in-sales read→gate passes, sales `placeOrder`→403, admin
+`placeOrder`→gate passes, no wildcard CORS header. GREEN on the working tree; **negative control
+against build 1008's `abc.js` goes RED with 4 named failures** (anon→200, bad-token→200,
+sales-placeOrder→200, wildcard-CORS-set), so the gate is one that has been seen to fail. `check_build`
+green (app stamp 1008→1009, marker present, negative control clean); `node --check api/abc.js` clean.
+
+No SQL. `api/abc.js` + `index.html` only.
+
 ## Build 1008 — four fixes from the fresh audit of today's builds (23 Aug 2026)
 
 A fresh 8-finder + adversarial-verify audit at build 1007 (workflow wf_202d59de-b67) surfaced 38
@@ -20694,7 +20945,7 @@ un-fixed — next up).
 
 ### Gates
 
-`gate_1010.mjs` rewritten for the new race-free contract — 14 assertions incl. supersede-commits-not-
+`gate_1016.mjs` rewritten for the new race-free contract — 14 assertions incl. supersede-commits-not-
 drops and page-hide-flush; control on 1007 **FAIL 6**, named. `gate_1008.mjs` — the two 1005 fixes
 (flat `lead_source` write; neutral portal pre-selects no claim type; live refusal); control on 1007
 **FAIL 3**, named. `gate_1004/1005/1007` re-run GREEN (no regressions); `check_build` GREEN, stamp 1008.
@@ -20751,7 +21002,7 @@ stamp reading 971, recovered by `git fetch` + `checkout -B <branch> origin/main`
 re-applying the patch, verified byte-identical to the pre-reset version. Committing the stale tree would
 have reverted 1004–1006 — BUG_CLASSES 49. Verify the stamp on disk after any suspected reset.
 
-## Build 1010 — stage arrows: one tap, with Undo (23 Aug 2026)
+## Build 1016 — stage arrows: one tap, with Undo (23 Aug 2026)
 
 First slice of the **dialog diet** (OPEN_ITEMS #6). The profile's forward/back stage arrows popped a
 `confirm('are you sure?')` on every tap. Now a tap moves the job at once and shows a **5-second Undo
@@ -20774,7 +21025,7 @@ somehow unavailable the move commits immediately rather than being lost.
 
 ### Gate
 
-`gate_1010.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
+`gate_1016.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
 a Chromium mechanism test of the helper in isolation: a tap shows the target stage but does NOT commit,
 raises an Undo toast; Undo reverts and **never commits**; letting the 5s window elapse commits exactly
 once. 11 assertions. Control on 1005: **FAIL 4** (confirm present, helper absent), named, no crash — the

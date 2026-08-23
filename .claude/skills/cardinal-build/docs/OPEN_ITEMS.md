@@ -10,47 +10,86 @@ regressions in today's own builds** (1005 lead-source-wrong-field, 1005 claim-ty
 stage-defer drop-on-supersede, 1006 stage-defer lost-on-close). The rest, still OPEN, ranked:
 
 ### 🔴 CRITICAL — do first
-- **`api/abc.js` is an open proxy.** No auth gate at all + `Access-Control-Allow-Origin: *`. Anonymous
-  callers can `placeOrder` (real orders on Cardinal's ABC account), `accounts` (ship-to names/addresses),
-  and `getOrder` (order/invoice history) once `ABC_CLIENT_ID/SECRET` are set in Vercel (builds 688/774
-  imply they are). Every other credential-spending route (`companycam.js`, `invite.js`) has the standard
-  `requireSession + is_cardinal_admin` gate. **Fix: add that gate; drop the wildcard CORS.** (verified
-  CONFIRMED, corrected severity critical)
+- ✅ **RESOLVED at build 1009 — `api/abc.js` was an open proxy.** No auth gate at all +
+  `Access-Control-Allow-Origin: *`. Anonymous callers could `placeOrder` (real orders on Cardinal's
+  ABC account), `accounts` (ship-to names/addresses), and `getOrder` (order/invoice history) once
+  `ABC_CLIENT_ID/SECRET` are set in Vercel. **Fixed:** every call now requires a signed-in Cardinal
+  session (mirrors `companycam.js`'s `requireSession`); the order actions (`placeOrder`, `getOrder`,
+  `templates` — none called by index.html) additionally require full access (admin + production);
+  the wildcard CORS header is gone (same-origin route, no preflight). The client `api()` wrapper
+  (`cr-abc-script`) now signs its request the way `senddoc`/`companycam` do — catalog/pricing/ship-to
+  lookup stay open to any signed-in staff so the estimate-from-catalog flow (774) still works. Proven
+  by `gate_1009.mjs` (GREEN on the working tree, RED with 4 named failures against build 1008).
 
 ### 🟠 HIGH — money correctness (pre-existing)
-- **996 money-in has a second door.** Tapping the "Received" section *header* (not the + button) opens
-  the legacy `dir:'in'` modal → writes `checklist.payments`, books no commission, and is invisible to
-  Balance Due on any job with a collection. Fix: route the `.payhead` `in` case to `payGoLogCollection`.
-  (F1 + MONEY-1, both CONFIRMED)
-- **`jobFinance` doc-store MAX defeats 997's accepted tier.** A bigger `Estimate…` inspection_reports
-  doc (any status, no dedupe) is folded in as a flat MAX after `estBest`, overriding the accepted
-  estimate → wrong Job Value/Balance Due. Fix: tier/status-filter the doc-store leg too. (F3 + MONEY-2)
-- **Contract deposit from newest estimate of any status.** `fillContractMoney` picks `rows[0]` of
-  `loadForProject` (created_at DESC) filtered only on deposit info, and the editor writes `deposit_pct`
-  on every save incl. drafts — so a later 30%-default draft outranks the accepted 0% estimate that set
-  the price → wrong deposit on the signed contract. (F6 + MONEY-3, CONFIRMED)
+- ✅ **RESOLVED at build 1010 — 996 money-in had a second door.** Tapping the "Received" section
+  *header* (not the + button) opened the legacy `dir:'in'` modal → wrote `checklist.payments`, booked
+  no commission, and was invisible to Balance Due on any job with a collection (jobFinance's collPaid
+  replace). **Fixed:** the `.payhead` handler now routes `data-paysec === 'in'` to
+  `payGoLogCollection()`, exactly as 996 routed the + button; `out`/`exp` headings keep the legacy
+  row modal (they are job costs). Editing/migrating existing legacy rows untouched. Proven by
+  `gate_1010.mjs` (GREEN working tree; RED against build 1009). (F1 + MONEY-1, both CONFIRMED)
+- ✅ **RESOLVED at build 1011 — `jobFinance` doc-store MAX defeated 997's accepted tier.** A bigger
+  `Estimate…` inspection_reports doc (any status, no dedupe) was folded in as a flat MAX after
+  `estBest`, overriding the accepted estimate → wrong Job Value/Balance Due. **Fixed:** tier-2 skip
+  (an accepted estimate is the number — no doc competes) + linked-doc exclusion (`estDocIds`: a doc
+  any estimates row points at never counts as a second estimate; only legacy doc-only estimates feed
+  the leg, below tier 2). `estTier` promoted from indexMoney-local to global so the leg can read it.
+  Measured: 0 of 6 estimate docs carry a total today — no job's value changes. Proven by
+  `gate_1011.mjs` (executes the shipped functions; RED ×3 against build 1010). (F3 + MONEY-2)
+- ✅ **RESOLVED at build 1012 — contract deposit from newest estimate of any status.**
+  `fillContractMoney` picked `rows[0]` of `loadForProject` (created_at DESC) filtered only on deposit
+  info, and the editor writes `deposit_pct` (default 30) on every save incl. drafts — so a later draft
+  outranked the accepted 0% estimate that set the price. **Fixed:** the deposit now follows 997's tier
+  ladder (accepted/signed > sent/approved > draft last-resort, newest within the rung); the explicit
+  est→contract row and `deposit_amount`-outranks-pct are unchanged. Measured: today's pick and the
+  tiered pick agree on all 10 deposit-bearing jobs — nothing changes now, but two jobs with accepted
+  0% estimates were one fresh draft away from a wrong deposit. Proven by `gate_1012.mjs` (executes the
+  shipped function; RED ×2 against build 1011). (F6 + MONEY-3, CONFIRMED)
 
 ### 🟠 HIGH — other (pre-existing)
-- **`api/roofr.js` + `api/hover.js` open AI relay** — no session gate; spend Gemini+OpenAI quota on
-  caller-supplied text. Add the standard session gate. (CONFIRMED)
-- **DB: 5 estimates point at deleted documents** ($71,845.99, 4 status='sent') — deleting a document
-  never clears `estimates.doc_id`/`contract_doc_id`. Fix the document-delete path to null the referring
-  columns; consider a one-time cleanup. (DB-1, CONFIRMED live)
+- ✅ **RESOLVED at build 1013 — `api/roofr.js` + `api/hover.js` open AI relay.** No session gate;
+  spent Gemini+OpenAI quota on caller-supplied text. **Fixed:** both now carry sol.js's session gate,
+  run BEFORE the config check (anon learns nothing, spends nothing); the three client call sites now
+  send `window.aiHeaders()`. Survey confirms these were the last AI routes without an `authorization`
+  check. Proven by `gate_1013.mjs` (drives the shipped handlers; RED ×5 on the pre-fix files).
+  (CONFIRMED)
+- ✅ **RESOLVED at build 1014 — DB: 5 estimates pointed at deleted documents** ($71,845.99, 4
+  status='sent'). `db.remove` (the one delete pipeline) now nulls referring
+  `estimates.doc_id`/`contract_doc_id`; publish verifies the doc exists (`db.get` throws → create
+  path → write-back re-links, self-healing any future dangle); one-time cleanup
+  `estimates_dangling_docids.sql` **applied to production 23 Aug** (0 dangles remain; old values in
+  the migration header). (DB-1)
 
-### 🟡 MEDIUM / LOW (from finders; NOT individually verified unless noted)
-- **Push reaches only Theo** — `push_subs` = 3 rows, all `theo@` (verified live). Curtis/Joan/reps have
-  none, so web-push notifications reach nobody else. *(This is why 1007 used email for Curtis — correct
-  call. But the team needs to subscribe for push to matter.)*
-- 1001 pending-supplement line uses `--cr-amber` → `#8a5500` on a theme-fixed dark card → unreadable in
-  rb-light.
-- 1002 iTel buttons reference `--ct-red`/`--ct-green` scoped to the Resource Library (`--ct-green`
-  declared nowhere else) → likely invisible/!important-wrong outside it.
-- 1000 `lossAge` UTC-parses a date-only value → "N days ago" reads one day high on Ohio evenings.
-- 996 `payMigrateLegacyIn` confirm says "Balance Due does not change" — false on a job with worksheet
-  contract payments and no prior collection (migrating makes collections the sole source). (F2 CONFIRMED)
-- `config.js` serves an unrestricted Google Maps key; `design.js`/`coach.js` missing from `vercel.json`
-  `maxDuration`; 1003 per-job Appointments page (`#apMount`) has an ungated `✕` delete.
-- Full detail: `/tmp/.../tasks/wbapw9i8p.output` (session-local) and the workflow journal.
+### 🟡 MEDIUM / LOW — all re-verified against the 1013 tree by a 9-agent pass (build 1014)
+- ✅ **RESOLVED at 1014 — push reaches only Theo.** Not a code gate on subscribing (both upsert paths
+  take any signed-in user) but a door problem: the `nav==='notify'` handler had NO button and Settings
+  is admin-hidden. Now: an all-desks "Enable Notifications" burger row + a one-time dismissible nudge
+  (only when permission === 'default'). **The team still has to actually tap it** — watch `push_subs`
+  grow past theo@.
+- ✅ **RESOLVED at 1014 — 1001 pending-supplement amber** (was 2.31:1 in rb-light on the theme-fixed
+  dark card; pinned `#e0a13a`, 6.38:1 both themes).
+- ❌ **REFUTED (1014 verification) — 1002 iTel `--ct` tokens.** Both references carry literal
+  fallbacks (`var(--ct-red,#c8202e)` / `var(--ct-green,#2f7d55)`), and `data-rltheme` is kept on
+  `<body>` so `--ct-*` resolve app-wide. The buttons render correctly; false positive. (Optional tidy
+  only: `--ct-green` is declared nowhere, so its reference always paints the fallback.)
+- ✅ **RESOLVED at 1014 — 1000 `lossAge` UTC off-by-one** (now uses `crDate`, the file's own
+  local-midnight parser, same as its neighboring `fmtDate`).
+- ✅ **RESOLVED at 1014 — 996 migrate confirm's false "Balance Due does not change."** New
+  `payMigrateDrop()` computes the real wsPaid delta; note + confirm state the dollar consequence when
+  it applies, keep the original sentence only when true. (F2)
+- ⚠️ **OPERATOR ACTION (Theo, ~5 min) — the Google Maps key is still unrestricted** (re-verified: the
+  build-840 measurement stands; gating `/api/config` was deliberately rejected — the key is in the
+  Maps script src anyway). In Google Cloud Console: Credentials → the browser key → HTTP referrers
+  `app.cardinalroster.com/*` (+ showroom/presentation hosts if they need maps); API restrictions:
+  Maps JavaScript, Places, Static Maps, **and Geocoding** (Quick Inspection geocodes through it since
+  840 — omit it and the pin silently falls back to Nominatim). Verify: a no-Referer Geocoding call
+  should answer REQUEST_DENIED.
+- ✅ **RESOLVED at 1014 — `design.js`/`coach.js` added to `vercel.json` maxDuration** (60s;
+  `ai-status.js` deliberately not — a 10-token health probe).
+- ✅ **RESOLVED at 1014 — the 1003 per-job Appointments page's ungated ✕** (rendered on teammates'
+  rows the shared-calendar SELECT shows, while RLS silently refused the delete — confirm-then-nothing.
+  Now behind `apptCanEdit`, render + handler).
 
 
 ---

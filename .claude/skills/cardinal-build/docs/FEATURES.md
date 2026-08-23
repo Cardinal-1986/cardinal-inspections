@@ -2516,6 +2516,36 @@ other); a DB trigger auto-creates the 10% commission row for the project's
 sales rep. Theo's own jobs create no commission. Draws are loans against
 future commission; net payout = owed − outstanding draws. Paid locks.
 
+⚠️ **`collections` is the ONE door for money received — both entry points now agree.**
+On the Payment Information page the "Received" section's + button (996) **and** its
+heading tap (1016) both route to `payGoLogCollection()` → this tab; the legacy
+`dir:'in'` add modal is unreachable from Received. Money logged the old way books no
+commission and, since 721, is ignored by Balance Due whenever any collection exists
+(`jobFinance`: `if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id]`). "Paid" /
+"Additional Job Expenses" are job costs and keep the legacy row modal. **Do not add a
+second money-in writer** — `checklist.payments` `dir:'in'` is legacy-read/migrate only.
+
+⚠️ **Job Value precedence (654 → 997 → 1011), all inside `jobFinance()`:** signed
+contract wins outright → else max(manual, best estimate). "Best estimate" is 997's
+tiers over the estimates TABLE (accepted/signed = tier 2 beats sent = tier 1; largest
+within the tier), and since 1011 the `Estimate…`-titled doc leg respects them: at
+tier 2 no doc competes at all, and a doc any estimates row points at via `doc_id`
+(`estDocIds`, any status/archived) never counts as a second estimate — only true
+legacy document-only estimates still feed the leg. `estTier`/`estDocIds` are globals
+filled by `indexMoney()`. **Do not add another estimate-valuing scan anywhere** —
+Balance Due, the AR chart, pipeline dollars and the invoice all inherit from here.
+Gate: `gate_1011.mjs` (executes the shipped functions; RED ×3 on build 1016).
+
+⚠️ **Contract deposit precedence (781 → 785 → 1012), in `fillContractMoney()` — the ONE
+place a contract's money is written:** an explicit `est` row passed in (estimate→contract)
+governs outright; else the deposit follows the SAME tier ladder as the price —
+accepted/signed, then sent/approved, then draft as a last resort — newest within the
+rung (the editor stamps `deposit_pct` 30 on every save, drafts included, so a flat
+"newest with deposit info" pick let a throwaway draft set the deposit on a contract
+whose accepted estimate says 0%). An explicit `deposit_amount` still outranks the
+percentage; `DEPOSIT_PCT_DEFAULT` (30) applies only when no estimate answers.
+Gate: `gate_1012.mjs` (executes the shipped function; RED ×2 on build 1011).
+
 **Where it lives:**
 - **SQL:** `commission_system.sql` (root, **applied 9 Aug 2026**) — extends the
   556 `commissions` table (`collection_id` unique, `rate_pct`, `paid_by`,
@@ -3579,6 +3609,15 @@ The menu row is a **category** now: `data-nav="suppliers"`, warehouse icon, and
 the sheet is titled Suppliers with **ABC Supply as a card inside it**. A second
 yard is a second card, not a second menu row. The ABC integration itself is
 unchanged and still switched off until its two keys are set in Vercel.
+
+⚠️ **`/api/abc` is authenticated as of build 1009 — it used to be an open proxy.**
+No auth + wildcard CORS shipped originally, so an anonymous internet caller could
+spend Cardinal's ABC credential and place real orders. Now every call requires a
+signed-in session (the client `api()` wrapper attaches the token like
+`senddoc`/`companycam`); the order actions (`placeOrder`/`getOrder`/`templates`)
+require full access (admin + production). Catalog/pricing/ship-to lookup stay
+open to any signed-in staff. Proven by `gate_1009.mjs`. **Do not remove the
+`Authorization` header from the client wrapper or every ABC call 401s.**
 
 ⚠️ **Two doors lead here** — the main menu row and the Tools dropdown's "Supply"
 entry (`.cbi[data-go="abc"]`). Both carry the name; rename both or the feature
@@ -5957,7 +5996,7 @@ counts and what it refuses to count, each of the three kinds dropping the count 
 green "All filled" state reached by filling everything, the jump outlining a blank and moving on,
 and a hand-added field being counted; control red 11 named).
 
-### Print fidelity on contracts and estimates (1010)
+### Print fidelity on contracts and estimates (1016)
 
 `ensurePrintFix(d)` in the report-editor block is the single place the printed page's furniture is
 decided: which editing chrome is dropped, where the page breaks may not fall, the running header
@@ -6497,14 +6536,14 @@ refusal (always visible), Lead Source by opening "More detail" and shaking the f
 blocker (the 782 reveal pattern), plus a `*` added to its label. No layout change. `gate_1005.mjs`
 (Chromium, drives the real ldSave; control on 1004 PASS 2 · FAIL 5).
 
-### 1010 — stage arrows: one tap, with Undo (dialog diet, slice 1)
+### 1016 — stage arrows: one tap, with Undo (dialog diet, slice 1)
 
 The profile's forward/back stage arrows no longer confirm on every tap. A tap moves the job at once and
 shows a 5-second Undo toast (window.CardinalUndo, shipped since 186). The transition is DEFERRED for the
 window: the target stage shows optimistically (cache-only), and the real commit (setStage / acxAdvance)
 runs only when the toast closes — so an undone tap never writes to the record and never fires setStage's
 team email (Approved → Curtis "schedule + order materials"; Completed → rep+admins). Gmail Undo-Send
-model. `crStageDefer` is the shared helper; `gate_1010.mjs` (source wiring + Chromium mechanism test;
+model. `crStageDefer` is the shared helper; `gate_1016.mjs` (source wiring + Chromium mechanism test;
 control on 1005 FAIL 4). First slice of the dialog diet; alert→toast and prompt→inline remain.
 
 ### 1007 — a phone-signed contract buzzes Curtis too (remote signature parity)
@@ -6527,5 +6566,5 @@ pre-checked) — no type is pre-selected on a neutral portal now, so the choice 
 lives; (3) crStageDefer dropped a superseded move (2nd arrow tap, esp. cross-job) — a superseding tap
 now commits the first move, and the target is captured + committed via setStage() directly (race-free);
 (4) closing the app in the Undo window lost the move — a pagehide/visibilitychange flush commits it.
-gate_1010 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
+gate_1016 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
 findings (incl. the critical api/abc.js open proxy) are logged in OPEN_ITEMS "Audit 2026-08-23".

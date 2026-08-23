@@ -22,6 +22,65 @@ const API_DEFAULT = {
 };
 const SCOPE = 'location.read product.read account.read pricing.read allOrder.read order.write notification.read notification.write invoice.read invoice.history.read';
 
+/* AUTH — build 1009. This route shipped with NO auth and a wildcard
+   Access-Control-Allow-Origin, i.e. an internet-wide open proxy that spends
+   Cardinal's ABC credential and, through order.write, can PLACE REAL MATERIAL
+   ORDERS. Every call now requires a signed-in Cardinal session; the order
+   actions (place / read history / templates) additionally require full access
+   (admin + production), because ordering materials is Curtis's and admin's job,
+   not a sales rep's. Catalog/pricing/account-lookup stay open to any signed-in
+   staff so the estimate-from-catalog flow (774) still works. Mirrors the gate
+   in api/companycam.js. SUPABASE_ANON_KEY is the publishable key and is safe to
+   ship; nothing else here is. */
+const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
+const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
+/* Hardcoded full-access set, same as is_full_access() in SQL — used only as a
+   fallback when the service key is absent so the DB role cannot be read. */
+const FALLBACK_FULL = ['theo@cardinalrenovations.net', 'joan@cardinalrenovations.net', 'curtis@cardinalrenovations.net', 'scottie@cardinalrenovations.net'];
+/* Actions that write an order or read order history/templates — full access
+   only. None of these is called by index.html today, so gating them costs the
+   app nothing while closing the money surface. */
+const FULL_ONLY = new Set(['placeOrder', 'getOrder', 'templates']);
+
+/* Returns true if the caller may run `action`; otherwise writes the 401/403 and
+   returns false. The network calls are wrapped so a Supabase hiccup is a clean
+   401, never an unhandled throw that leaks a stack. */
+async function requireAccess(req, res, action) {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!token) { res.status(401).json({ error: 'Sign in required' }); return false; }
+  let email = '';
+  try {
+    const who = await fetch(SUPABASE_URL + '/auth/v1/user', {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token },
+    });
+    if (!who.ok) { res.status(401).json({ error: 'Invalid session' }); return false; }
+    const caller = await who.json();
+    email = ((caller && caller.email) || '').toLowerCase();
+  } catch (_) { res.status(401).json({ error: 'Invalid session' }); return false; }
+  if (!email) { res.status(401).json({ error: 'Invalid session' }); return false; }
+  if (!FULL_ONLY.has(action)) return true;               // any signed-in staff
+  let ok = FALLBACK_FULL.includes(email);
+  if (!ok) {
+    const service = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+    if (service) {
+      try {
+        const pr = await fetch(
+          SUPABASE_URL + '/rest/v1/team_profiles?email=eq.' + encodeURIComponent(email) + '&select=role',
+          { headers: { apikey: service, Authorization: 'Bearer ' + service } }
+        );
+        if (pr.ok) {
+          const rows = await pr.json();
+          const role = Array.isArray(rows) && rows[0] ? String(rows[0].role).toLowerCase() : '';
+          ok = role === 'admin' || role === 'production';
+        }
+      } catch (_) { /* ok stays false */ }
+    }
+  }
+  if (!ok) { res.status(403).json({ error: 'Ordering is admin/production only' }); return false; }
+  return true;
+}
+
 let tokenCache = { token: null, exp: 0, env: '' };
 
 function env() { return (process.env.ABC_ENV || 'sandbox').toLowerCase() === 'production' ? 'production' : 'sandbox'; }
@@ -141,13 +200,14 @@ async function abc(method, path, payload) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  /* No CORS header: this is a same-origin route called only by index.html /
+     the estimate editor, which the wildcard turned into a proxy any site could
+     drive. A same-origin request needs no Access-Control-Allow-Origin, and an
+     Authorization header on a same-origin fetch triggers no preflight. */
   if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
   const b = req.body || {};
   const a = String(b.action || '');
+  if (!(await requireAccess(req, res, a))) return;
   try {
     switch (a) {
       case 'status': {

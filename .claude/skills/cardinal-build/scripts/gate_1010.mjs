@@ -1,152 +1,152 @@
-/* gate_1010.mjs — the printed contract shows all of its own words (build 1010).
+// gate_1010.mjs — proves the "Received" heading no longer opens the legacy
+// money-in modal (build 1010 closes 996's missed second door).
+//
+// It extracts the SHIPPED #paySummary click handler from index.html, mounts the
+// real Payment Information section markup in a real Chromium DOM, attaches the
+// handler, and dispatches real clicks — so closest() traversal is genuine, not
+// hand-mocked. Stubs record which routing function each tap calls.
+//
+// Contract:
+//   Received (data-paysec="in") heading tap  -> payGoLogCollection, NOT openPayRow('in')
+//   Paid    (data-paysec="out") heading tap  -> openPayRow('out', null)
+//   Expenses(data-paysec="exp") heading tap  -> openPayRow('exp', null)
+//   + button (data-payadd="in")              -> payGoLogCollection      (996 still holds)
+//   a data-payedit row tap                    -> openPayRow(null, <index>) (edit legacy row)
+//   a data-paycontracts row tap               -> openContractPaid
+//
+// Usage:
+//   node gate_1010.mjs                    # working tree index.html  -> GREEN
+//   node gate_1010.mjs <path/index.html>  # negative control (build 1009) -> RED
+//
+// Negative control: against build 1009 the Received heading tap calls
+// openPayRow('in') and NOT payGoLogCollection, so assertion [1a]/[1b] fail RED.
 
-   This gate does not read CSS. It opens a REAL contract in the REAL editor,
-   presses the REAL Download button (the artifact a client is actually emailed),
-   then prints those exact bytes through Chromium and measures the PAGES.
+import { createRequire } from 'node:module';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-     0  a real agreement is open in the editor
-     1  the downloaded document carries the print fix
-     2  nothing is painted over: no text block sits fully inside the header strip
-     3  the swallowed sentence is visible — "Terms and Conditions form…"
-     4  the running header still appears on EVERY page
-        (the trap this gate exists for: an earlier attempt scored ZERO hidden
-         text by moving the header off the top of the page. Absence of collision
-         is not the goal; a header above readable text is.)
-     5  the address footer still prints
-     6  page count does not run away
-     7  ensurePrintFix is reached from BOTH the print and the download buttons
-     8  the .runhead element is hidden in print, not deleted — documents saved
-        before today still carry it and must keep rendering on screen
+const require = createRequire('/opt/node22/lib/node_modules/x.js');
+const { chromium } = require('playwright');
 
-   Usage: node gate_1010.mjs [path] — previous build = negative control; must go
-   RED with named failures and MUST NOT crash (BUG_CLASSES 37). */
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-let chromium; for (const p of ['playwright','/opt/node22/lib/node_modules/playwright/index.js']){try{chromium=require(p).chromium;break;}catch(e){}}
-import { readFileSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
-const HERE=dirname(fileURLToPath(import.meta.url));
-const FILE=process.argv[2]||join(HERE,'../../../../index.html');
-const LABEL=process.argv[3]||'SHIPPED';
-const APP=readFileSync(FILE,'utf8');
-const SETUP=readFileSync(join(HERE,'sentinel_setup_cardinal.js'),'utf8')+'\n;\n'+readFileSync(join(HERE,'e2e_mock_supa.js'),'utf8');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO = path.resolve(__dirname, '../../../..');
+const TARGET = process.argv[2] || path.join(REPO, 'index.html');
 
-let fails=[], passes=0;
-function need(name, ok, detail){ if(ok){passes++;} else fails.push(name+(detail?' — '+detail:'')); }
-
-const TO=setTimeout(()=>{console.log('GATE TIMEOUT');process.exit(3);}, 180000);
-const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']});
-const page=await browser.newPage({viewport:{width:1194,height:834}});
-const PNG=Buffer.from('iVBORw0KGgoAAAABAAAAAQAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64');
-await page.route('**/*', r=>{const u=r.request().url();
-  if(u.startsWith('https://sentinel.test/')) return r.fulfill({status:200,contentType:'text/html; charset=utf-8',body:APP});
-  if(/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(u)) return r.fulfill({status:200,contentType:'image/png',body:PNG});
-  return r.fulfill({status:200,body:''});});
-await page.addInitScript(SETUP);
-await page.goto('https://sentinel.test/?as=theo',{waitUntil:'domcontentloaded'});
-await page.waitForTimeout(1800);
-
-/* 7 — both buttons reach the fix. Asserted on the SOURCE, because a call site
-   that exists is the contract; the spelling of the call is not. */
-const src = await page.evaluate(()=>[...document.querySelectorAll('script:not([src])')].map(x=>x.textContent).join('\n'));
-const defOK = /function\s+ensurePrintFix\s*\(/.test(src);
-const printSeg = src.slice(src.indexOf("getElementById('printBtn')"), src.indexOf("getElementById('printBtn')")+900);
-const dlSeg    = src.slice(src.indexOf("getElementById('dlBtn')"),    src.indexOf("getElementById('dlBtn')")+900);
-need('7a ensurePrintFix is defined', defOK);
-need('7b the Print button reaches it', /ensurePrintFix\s*\(/.test(printSeg));
-need('7c the Download button reaches it', /ensurePrintFix\s*\(/.test(dlSeg));
-
-const DOCS=[['ROOF_AGREEMENT','rep-r'],['SIDING_AGREEMENT','rep-s'],['GUTTER_AGREEMENT','rep-g']];
-const BAND=[54.0,73.2];      /* the strip the old fixed header painted */
-const grabbed={};
-
-for (const [tplName,id] of DOCS){
-  const opened = await page.evaluate(async ([tplName,id])=>{
-    const tpl=window[tplName]; if(!tpl) return 'no '+tplName;
-    if(typeof window.openEditor!=='function') return 'no openEditor';
-    window.__SEED__.inspection_reports=[{id,title:'Contract — Test',html:tpl,project:'T',project_id:'p1',status:'draft',total:0}];
-    await window.openEditor(id);
-    await new Promise(r=>setTimeout(r,1300));
-    const f=document.getElementById('reportFrame');
-    return (f&&f.contentDocument&&f.contentDocument.body) ? 'ok' : 'no document';
-  },[tplName,id]);
-  need('0 '+tplName+' opens in the editor', opened==='ok', String(opened));
-  if(opened!=='ok') continue;
-
-  /* press the real Download button, with only the file sink stubbed */
-  const html = await page.evaluate(async ()=>{
-    let cap=null;
-    try{ window.CardinalDownload = Object.assign({}, window.CardinalDownload, {
-      html:(h)=>{cap=h;return true;}, frame:(f)=>{const d=f&&f.contentDocument;cap=d?d.documentElement.outerHTML:null;return true;} }); }catch(e){}
-    const b=document.getElementById('dlBtn');
-    if(!b) return null;                       /* BUG_CLASSES 37: report, never throw */
-    b.click();
-    await new Promise(r=>setTimeout(r,900));
-    return cap;
-  });
-  need('1 '+tplName+': the Download button produced a document', !!html);
-  if(!html) continue;
-  grabbed[tplName]=html;
-  need('1b '+tplName+': it carries the print fix', /id="printFix"/.test(html));
-  need('8 '+tplName+': the .runhead element survives in the document', /class="runhead"/.test(html));
-
-  const p2=await browser.newPage();
-  await p2.route('**/*', r=>{const u=r.request().url();
-    if(u.startsWith('https://doc.test/')) return r.fulfill({status:200,contentType:'text/html; charset=utf-8',body:html});
-    if(/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(u)) return r.fulfill({status:200,contentType:'image/png',body:PNG});
-    return r.fulfill({status:200,body:''});});
-  await p2.goto('https://doc.test/',{waitUntil:'domcontentloaded'});
-  const pdf=await p2.pdf({format:'Letter',printBackground:true,preferCSSPageSize:true});
-  await p2.close();
-  grabbed[tplName+'__pdf']=pdf;
+// ---- extract the shipped #paySummary click handler body ---------------------
+function extractHandlerBody(src) {
+  const anchor = "getElementById('paySummary').addEventListener('click', function(e){";
+  const at = src.indexOf(anchor);
+  if (at === -1) throw new Error('paySummary click handler anchor not found in ' + TARGET);
+  // start just after the opening brace of function(e){
+  let i = at + anchor.length - 1;            // points at the '{'
+  let depth = 0, start = i + 1;
+  for (; i < src.length; i++) {
+    const c = src[i];
+    if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) { return src.slice(start, i); } }
+  }
+  throw new Error('could not brace-match the paySummary handler');
 }
+
+const src = fs.readFileSync(TARGET, 'utf8');
+let body;
+try { body = extractHandlerBody(src); }
+catch (e) { console.error('FAILED to extract handler: ' + e.message); process.exit(1); }
+
+// Real section markup, matching renderPayments()'s output closely enough that
+// closest() resolves the same way it does in the app.
+const MARKUP = `
+<div id="paySummary">
+  <div class="paysec" data-paysec="in">
+    <div class="payhead"><span id="in-head-label">Received</span><b>$0</b></div>
+    <div class="payrow" data-paycontracts="1"><span id="contracts-row">From signed contracts</span><b>$0</b></div>
+    <div class="payrow" data-payedit="0"><span id="edit-row">Payment</span><b>$100</b></div>
+    <button class="payadd" id="add-in" data-payadd="in" type="button">+ Log a payment received</button>
+  </div>
+  <div class="paysec" data-paysec="out">
+    <div class="payhead"><span id="out-head-label">Paid</span><b>$0</b></div>
+    <button class="payadd" id="add-out" data-payadd="out" type="button">+ Add new row to Paid</button>
+  </div>
+  <div class="paysec" data-paysec="exp">
+    <div class="payhead"><span id="exp-head-label">Additional Job Expenses</span><b>$0</b></div>
+    <button class="payadd" id="add-exp" data-payadd="exp" type="button">+ Add new row to Additional Job Expenses</button>
+  </div>
+</div>`;
+
+const PAGE = `<!doctype html><html><body>${MARKUP}
+<script>
+  window.__calls = [];
+  function rec(fn){ return function(){ window.__calls.push({ fn: fn, args: Array.prototype.slice.call(arguments) }); }; }
+  var openPayRow        = rec('openPayRow');
+  var payGoLogCollection= rec('payGoLogCollection');
+  var openContractPaid  = rec('openContractPaid');
+  var payMigrateLegacyIn= rec('payMigrateLegacyIn');
+  document.getElementById('paySummary').addEventListener('click', function(e){ ${body} });
+  window.__clickAndRead = function(sel){
+    window.__calls = [];
+    var el = document.querySelector(sel);
+    if(!el){ return { error: 'no element ' + sel }; }
+    el.click();
+    return { calls: window.__calls };
+  };
+<\/script></body></html>`;
+
+const fails = [];
+const ok = (cond, msg) => { if (!cond) fails.push(msg); };
+
+const browser = await chromium.launch({
+  executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+}).catch(() => chromium.launch());
+const page = await browser.newPage();
+await page.setContent(PAGE, { waitUntil: 'load' });
+
+const click = (sel) => page.evaluate((s) => window.__clickAndRead(s), sel);
+const called = (r, fn) => (r.calls || []).some(c => c.fn === fn);
+const calledWith = (r, fn, pred) => (r.calls || []).some(c => c.fn === fn && pred(c.args));
+
+// [1] Received heading -> payGoLogCollection, NOT openPayRow('in')
+{
+  const r = await click('#in-head-label');
+  ok(!r.error, `[1] Received heading: ${r.error || ''}`);
+  ok(called(r, 'payGoLogCollection'), `[1a] Received heading must call payGoLogCollection; calls=${JSON.stringify(r.calls)}`);
+  ok(!calledWith(r, 'openPayRow', a => a[0] === 'in'), `[1b] Received heading must NOT open the legacy dir:in modal; calls=${JSON.stringify(r.calls)}`);
+}
+// [2] Paid heading -> openPayRow('out', null)
+{
+  const r = await click('#out-head-label');
+  ok(calledWith(r, 'openPayRow', a => a[0] === 'out' && a[1] === null),
+     `[2] Paid heading must call openPayRow('out', null); calls=${JSON.stringify(r.calls)}`);
+}
+// [3] Expenses heading -> openPayRow('exp', null)
+{
+  const r = await click('#exp-head-label');
+  ok(calledWith(r, 'openPayRow', a => a[0] === 'exp' && a[1] === null),
+     `[3] Expenses heading must call openPayRow('exp', null); calls=${JSON.stringify(r.calls)}`);
+}
+// [4] + button data-payadd=in -> payGoLogCollection (996 regression guard)
+{
+  const r = await click('#add-in');
+  ok(called(r, 'payGoLogCollection') && !calledWith(r, 'openPayRow', a => a[0] === 'in'),
+     `[4] + Log-payment-received must route to payGoLogCollection; calls=${JSON.stringify(r.calls)}`);
+}
+// [5] edit row -> openPayRow(null, 0) (editing a legacy row still works)
+{
+  const r = await click('#edit-row');
+  ok(calledWith(r, 'openPayRow', a => a[0] === null && a[1] === 0),
+     `[5] edit row must call openPayRow(null, 0); calls=${JSON.stringify(r.calls)}`);
+}
+// [6] contracts row -> openContractPaid
+{
+  const r = await click('#contracts-row');
+  ok(called(r, 'openContractPaid'), `[6] contracts row must call openContractPaid; calls=${JSON.stringify(r.calls)}`);
+}
+
 await browser.close();
-clearTimeout(TO);
 
-/* ---- measure the PDFs ---- */
-import { writeFileSync, mkdtempSync } from 'fs';
-import { tmpdir } from 'os';
-import { execFileSync } from 'child_process';
-const dir=mkdtempSync(join(tmpdir(),'g989-'));
-const wanted=[];
-for(const k of Object.keys(grabbed)) if(k.endsWith('__pdf')){ const n=k.replace('__pdf',''); writeFileSync(join(dir,n+'.pdf'),grabbed[k]); wanted.push(n); }
-let measured={};
-if(wanted.length){
-  const py=`
-import pymupdf, json, sys
-BAND=(${BAND[0]},${BAND[1]}); out={}
-for n in ${JSON.stringify(wanted)}:
-    d=pymupdf.open("${dir}/"+n+".pdf"); hid=[]; heads=0
-    for p in d:
-        t=p.get_text()
-        if 'Cardinal Roofing' in t[:260]: heads+=1
-        for b in p.get_text('blocks'):
-            if 'Cardinal Roofing' in b[4] and b[3]-b[1]<20: continue
-            inter=max(0,min(b[3],BAND[1])-max(b[1],BAND[0]))
-            if inter>0 and inter/(b[3]-b[1])>0.92: hid.append(b[4].strip()[:60])
-    txt=''.join(p.get_text() for p in d)
-    out[n]={'pages':d.page_count,'hidden':hid,'heads':heads,
-            'tcVisible': 'Terms and Conditions form' in txt,
-            'footer': '5735 Webster' in txt}
-print(json.dumps(out))`;
-  try{ measured=JSON.parse(execFileSync('python3',['-c',py],{encoding:'utf8'})); }
-  catch(e){ fails.push('PDF measurement failed — '+String(e.message||e).slice(0,140)); }
+if (fails.length) {
+  console.error('RED — gate_1010 failed (' + fails.length + '):');
+  for (const f of fails) console.error('  ✗ ' + f);
+  process.exit(1);
 }
-const CAP={ROOF_AGREEMENT:6,SIDING_AGREEMENT:5,GUTTER_AGREEMENT:6};
-for(const n of wanted){
-  const m=measured[n];
-  if(!m){ need('2 '+n+': measured', false, 'no measurement'); continue; }
-  need('2 '+n+': no contract text is painted over', m.hidden.length===0, m.hidden.length+' hidden: '+JSON.stringify(m.hidden.slice(0,3)));
-  need('3 '+n+': the Terms-and-Conditions sentence is in the document', m.tcVisible);
-  need('4 '+n+': the running header appears on every page', m.heads===m.pages, m.heads+' of '+m.pages+' pages');
-  need('5 '+n+': the address footer still prints', m.footer);
-  need('6 '+n+': page count has not run away', m.pages<=CAP[n], m.pages+' pages (cap '+CAP[n]+')');
-}
-need('floor: every contract was actually measured', wanted.length===3, wanted.length+' of 3');
-
-console.log('--- gate_1010 ('+LABEL+') ---');
-for(const f of fails) console.log('  FAIL  '+f);
-console.log(`${passes} passed, ${fails.length} failed`);
-console.log(fails.length? 'RED' : 'GREEN');
-process.exit(fails.length?1:0);
+console.log('GREEN — gate_1010: Received heading routes to Money In (payGoLogCollection); Paid/Expenses/edit/contracts unchanged.');
