@@ -72,7 +72,7 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
    contacts, measurements). The TEAM refetch has no `onLine` guard; sw.js serves the cached row.
    **Fix:** skip the refetch when offline (`if(TEAM && !navigator.onLine===false…)`, the idiom
    `pdb.update` already uses at :10708).
-9. **28 of 57 projects' lead source is stored only at `checklist.lead.source`, which zero readers
+9. ✅ **RESOLVED at build 1018.** 28 of 57 projects' lead source is stored only at `checklist.lead.source`, which zero readers
    consume — and 3 writers still produce that shape** (manual-estimate create, community-bid convert,
    +1). 1008 fixed only the New Lead intake. **Fix:** one reader-side normalization in
    `__parseCkAllRaw` (index.html:20444) — if flat `lead_source` is null but `lead.source` exists, lift

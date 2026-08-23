@@ -20611,6 +20611,10 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1018 — the lead-source report sees every lead (23 Aug 2026)
+
+**Audit finding 9 (high).** The source chart/filter/sort/profile read flat `checklist.lead_source` (1008), but three creators still write it nested at `checklist.lead.source` (manual-estimate create, community-bid convert, +1) and 28/57 rows carry it only there — invisible to every reader. Fix: one line in `__parseCkAllRaw` (the single point every reader parses through, cached by `parseCkAll`) — if flat `lead_source` is null but `lead.source` exists, lift it. Repairs all 28 rows, all 11 readers and any future nested write in one place; flat wins where both exist; empty-string nested stays blank. Reader-side only — no DB write, and the writers are left as-is (harmless now). **Proof:** `gate_1018.mjs` executes the shipped function across all four shapes. GREEN; control against 1017 -> RED (nested not lifted). check_build green (1017->1018). No SQL.
+
 ## Build 1017 — offline job edits no longer merge onto a stale cached row (23 Aug 2026)
 
 **Audit finding 8 (high — silent data loss).** `patchProjectCk` (the one chokepoint behind every
