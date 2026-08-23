@@ -3416,11 +3416,15 @@ describing code that ships today.
    appointments being **orphans with no project_id**, so the guard returned early — 998 closed it by
    requiring a job on every build-day booking. Proven in a Chromium spy: it fires ONLY for the Approved
    build day, and stays silent for a drop, an orphan job, a Lead job and a Completed job. Nothing to build.
-2. **Split the intake form** — measured in the E2E: **43 visible fields, 0 with a required attribute** (the
-   `*` on First/Last/City/State/Zip is label text only). Name · phone · address · work type up front, the
-   rest behind "More detail", and make the starred five actually enforce.
-3. **Stale-estimate line in the daily digest** — nothing watches an estimate after it is sent. The 11:00 cron
-   already runs and already knows each job's rep.
+2. ~~**Split the intake form**~~ — **✅ split done at 782, enforcement completed at 1005.** The `*` on
+   First/Last/City/State/Zip was label-only when the E2E was run, but 782 had already split the form
+   (essentials up front, the rest behind "More detail") AND made those six + phone-or-email enforce in
+   JS. The two starred questions it still let through were **Claim Type** (defaulted to 'unknown' — 17
+   of 57 leads had none) and **Lead Source** (26 had none); **1005 enforces both.** Work-type stays
+   behind More detail by choice; not a bug.
+3. ~~**Stale-estimate line in the daily digest**~~ — **✅ DONE at 784.** "PHASE 3 — the 11:00 digest
+   chases estimates": each rep gets their own list (client, amount, days since last touched) for
+   anything sent. Already shipping.
 4. ~~**One writer for the address**~~ — **✅ DONE at 1004.** It is stored twice: `projects.address`
    (flat) AND `checklist.lead.location.*` (parts). The parts are written only at retail creation and
    never updated on edit, and the **Construction Agreement (542) was the one reader that read them

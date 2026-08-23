@@ -3701,7 +3701,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1004 &#8212; the address is written in one place. The Construction Agreement used to fill its address boxes from a second, separate copy of the address that was never updated when you edited the address on the profile &#8212; so the map could show the new address while the signed contract still printed the old one. The contract now takes the same address as the map; if that address was edited, it prints on one line rather than a stale split.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1005 &#8212; the New Lead form now makes you answer the two questions it always marked with a star. Claim Type (Insurance or Retail) was starred but never enforced, so 17 of 57 leads had no claim type on file; and Lead Source — the number that says whether knocking is working — was optional here even though it is required elsewhere, so 26 leads have none. Both are now required to save. (The rest of the form was already split into essentials + More detail at build 782.)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8060,7 +8060,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
               <option>Inspection</option><option>Insurance</option><option>New</option><option>Repair</option>
               <option>Retail</option><option>Service</option><option>Warranty</option></select></label>
         </div>
-        <label class="ldmore">Lead Source
+        <label class="ldmore">Lead Source <span class="ldreq">*</span>
           <select id="ldSource"><option value="">&#8212; select &#8212;</option>
             <option>Canvasser</option><option>Commercial</option><option>Direct Mailings</option>
             <option>Door hanger</option><option>Door Knocking</option><option>Habitat - Dayton</option>
@@ -15613,6 +15613,26 @@ document.getElementById('ldSave').addEventListener('click', async function(){
     err.textContent = 'Add a phone number or an email address \u2014 without one, nothing can be ' +
       'sent to this client: no estimate, no invoice, no signature link. If you genuinely have ' +
       'neither yet, tick the box in the contact section and save again.';
+    return;
+  }
+  /* 1005: the two fields this form marks but never enforced. Claim Type is
+     starred yet defaulted to 'unknown' on save — 17 of 57 leads carry no claim
+     type because of it — and Lead Source was optional here even though 999 made
+     it required on the profile add form (26 leads have none). Claim Type is
+     always visible, so a plain refusal is enough; Lead Source lives behind More
+     detail, so reveal that section when it is the blocker (the 782 pattern). */
+  var _ct = '';
+  document.querySelectorAll('input[name="ldClaimType"]').forEach(function(r){ if(r.checked) _ct = r.value; });
+  if(!_ct){ err.textContent = 'Pick a claim type \u2014 Insurance or Retail.'; return; }
+  if(!document.getElementById('ldSource').value){
+    var _lm = document.getElementById('leadFormModal');
+    if(_lm && !_lm.classList.contains('ldshow')){
+      _lm.classList.add('ldshow');
+      var _lmb = document.getElementById('ldMoreBtn');
+      if(_lmb){ _lmb.setAttribute('aria-expanded', 'true'); _lmb.innerHTML = '\u2212 Less detail'; }
+    }
+    err.textContent = 'Pick where this lead came from \u2014 it is the one number that says whether knocking is working.';
+    try{ if(window.crValid && crValid.shake) crValid.shake(document.getElementById('ldSource')); else document.getElementById('ldSource').focus(); }catch(_s){ document.getElementById('ldSource').focus(); }
     return;
   }
   var suite = document.getElementById('ldSuite').value.trim();
@@ -41591,6 +41611,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1005, d:'2026-08-23', t:'The New Lead form enforces its starred questions', s:'The New Lead form marked Claim Type and (elsewhere) Lead Source as required but never actually enforced them here. Claim Type had a star yet quietly saved as \u201Cunknown\u201D when you skipped it \u2014 17 of 57 leads on file have no claim type because of that \u2014 and Lead Source, the one number that says whether knocking is working, was optional on this form even though the profile add form has required it since build 999 (26 leads have no source). Both are now required to save a lead: Claim Type is already on screen, and if Lead Source is the only thing missing the form opens \u201CMore detail\u201D and points you at it. The essentials (name, address, phone-or-email) have been required since 782, and the form was already split into essentials + More detail then \u2014 this build only closes the two enforcement gaps.' },
 { b:1004, d:'2026-08-23', t:'The address is written in one place', s:'A client’s address was stored twice — the plain address the map, the directions and the work order all use, and a second copy split into street / city / state / zip that only the Construction Agreement read. The second copy was written when the lead was first created and then never touched again, so editing the address on the profile updated the map but left the contract printing the old address — a signed agreement with the wrong address on it. The contract now takes the SAME address as the map: it uses the split boxes only when they still match that address, and otherwise prints the current address on one line rather than a stale split. Leads created from the profile (which never had the split copy) now get their address on the contract too, where before it printed blank.' },
 { b:1003, d:'2026-08-23', t:'The calendar is shared', s:'A build day or a material drop used to be visible only to the person who booked it — so the rep whose client was getting a roof could not see the day the crew was coming, and neither could production unless they had entered it themselves. Now any job or delivery on the calendar is visible to everyone assigned to that job (the assigned rep, the sales rep, whoever created it, and the admins), because it is the crew’s day, not one person’s note. Your personal appointments are untouched: only the two work kinds — build day and drop — are shared, so a private entry like a haircut or a tax appointment stays yours alone. A shared day you did not create shows as read-only — you can see it, you cannot delete someone else’s booking. (Needs the appointments_shared_calendar.sql migration run in Supabase first.)' },
 { b:1002, d:'2026-08-23', t:'iTel lab results can be attached to a job', s:'The 28 iTel lab results \u2014 the product-match and asbestos verdicts you have paid for \u2014 were sitting linked to nothing, because the only link the app offered was to a claim, and the results worth attaching belong to jobs that have no claim on file. They now attach to the JOB instead: each result has an \u201CAttach to a job\u201D button, and once linked it shows which job it belongs to. Sixteen of the 28 are non-match verdicts \u2014 exactly the evidence a matching argument needs \u2014 so getting them onto their jobs is what makes them usable.' },

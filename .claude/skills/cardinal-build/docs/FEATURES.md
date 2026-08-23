@@ -6473,3 +6473,13 @@ fills its split boxes only when they reconstruct the current `pr.address` (punct
 normalised), else it prints the flat address on `[STREET]`. Guarantees contract == map; also fixes the
 blank contract address for profile-created leads (which never had the parts). `gate_1004.mjs` runs the
 shipped fill block against five shapes (control on 1003: PASS 6 · FAIL 6).
+
+### 1005 — the New Lead form enforces its starred questions
+
+The intake form was split into essentials + "More detail" at 782 (which also enforced First/Last/
+Street/City/State/Zip and phone-or-email in JS). Two starred questions still saved empty: **Claim
+Type** defaulted to 'unknown' (17 of 57 leads had none) and **Lead Source** was optional here despite
+999 requiring it on the profile add form (26 had none). 1005 requires both — Claim Type with a plain
+refusal (always visible), Lead Source by opening "More detail" and shaking the field when it's the
+blocker (the 782 reveal pattern), plus a `*` added to its label. No layout change. `gate_1005.mjs`
+(Chromium, drives the real ldSave; control on 1004 PASS 2 · FAIL 5).

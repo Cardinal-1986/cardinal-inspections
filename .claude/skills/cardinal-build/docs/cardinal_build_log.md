@@ -20611,6 +20611,34 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1005 — the New Lead form enforces its starred questions (23 Aug 2026)
+
+The intake form was already split into essentials + "More detail" at **782**, which also made
+First/Last/Street/City/State/Zip and phone-or-email enforce (the E2E's "0 required attributes" was
+literally true of the HTML attribute only — the JS handler blocks the save). Two starred questions
+still slipped through:
+
+- **Claim Type** carried a `*` but defaulted to `'unknown'` on save. Measured live: **17 of 57 leads
+  have no claim type** (14 'unknown' + 3 none).
+- **Lead Source** was optional on this form even though the profile add form has required it since
+  **999**. Measured: **26 leads have no source.**
+
+1005 requires both. Claim Type is always on screen, so a plain refusal. Lead Source lives behind
+"More detail", so when it is the only thing missing the form **opens that section and shakes the
+field** — the 782 no-contact reveal pattern reused. A `*` was added to the Lead Source label so the
+promise matches the enforcement.
+
+**This build only closes the two enforcement gaps** — no layout change, no field moved, the split and
+the essential-field enforcement were already 782's. `gate_1005.mjs` — Chromium, drives the real
+`ldSave`: no-claim-type refused (create not reached), no-source refused + More detail revealed, both
+answered saves. 7 assertions. Control on 1004: **PASS 2 · FAIL 5**, named, no crash (the old handler
+saves a lead with neither answered). **No SQL, no API change.**
+
+⚠ **Prime doctrine, twice in a row:** the two items picked before this — auto-advance (783) and the
+form split (782) — were already built. The E2E audit's OPEN_ITEMS list was written at ~965 but
+describes pre-782/783 state for several items. #2 and #3 struck as done; #1 struck earlier. Verify
+the current file before building the next audit item.
+
 ## Build 1004 — one source of truth for the address (23 Aug 2026)
 
 A client's address is stored twice: the flat `projects.address` column, and a structured
