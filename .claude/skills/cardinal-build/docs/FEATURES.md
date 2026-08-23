@@ -3580,6 +3580,15 @@ the sheet is titled Suppliers with **ABC Supply as a card inside it**. A second
 yard is a second card, not a second menu row. The ABC integration itself is
 unchanged and still switched off until its two keys are set in Vercel.
 
+⚠️ **`/api/abc` is authenticated as of build 1009 — it used to be an open proxy.**
+No auth + wildcard CORS shipped originally, so an anonymous internet caller could
+spend Cardinal's ABC credential and place real orders. Now every call requires a
+signed-in session (the client `api()` wrapper attaches the token like
+`senddoc`/`companycam`); the order actions (`placeOrder`/`getOrder`/`templates`)
+require full access (admin + production). Catalog/pricing/ship-to lookup stay
+open to any signed-in staff. Proven by `gate_1009.mjs`. **Do not remove the
+`Authorization` header from the client wrapper or every ABC call 401s.**
+
 ⚠️ **Two doors lead here** — the main menu row and the Tools dropdown's "Supply"
 entry (`.cbi[data-go="abc"]`). Both carry the name; rename both or the feature
 grows a second identity.

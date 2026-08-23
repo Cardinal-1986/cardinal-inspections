@@ -20611,6 +20611,47 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1009 — the ABC Supply route is no longer an open proxy (23 Aug 2026)
+
+**The critical finding from the build-1007 audit.** `api/abc.js` shipped with no auth check and a
+wildcard `Access-Control-Allow-Origin: *` — an internet-wide open proxy in front of Cardinal's live
+ABC Supply credential. Once `ABC_CLIENT_ID/SECRET` are set in Vercel (they are, per 688/774), any
+anonymous caller on any origin could drive it: read catalog pricing and the ship-to account list, and
+— through the `order.write` scope in `SCOPE` — **place real material orders on Cardinal's account**.
+Every other credential-spending route (`companycam.js`, `invite.js`) already had the standard
+`requireSession` gate; this one had none.
+
+**The gate (mirrors `api/companycam.js`).** A new `requireAccess(req, res, action)`:
+- **Every action requires a valid signed-in Cardinal session** — Bearer token → `GET
+  /auth/v1/user` with the publishable anon key; no/invalid token → 401. This alone closes the
+  anonymous hole, which was the whole severity.
+- **Order actions are full-access only.** `FULL_ONLY = {placeOrder, getOrder, templates}` (order
+  write + order-history/template reads) additionally require admin **or production** — checked against
+  `team_profiles.role` via the service key, with a hardcoded `FALLBACK_FULL` (theo/joan/curtis/scottie,
+  = `is_full_access()`) for when the service key is absent. Ordering materials is Curtis's/admin's job,
+  not a sales rep's. **None of these three is called by `index.html` today**, so gating them costs the
+  app nothing while locking the money surface.
+- **Catalog/pricing/account-lookup stay session-only** (`status`, `searchItems`, `priceItems`,
+  `frequents`, `recents`, `branches`, `itemAvailability`, `accounts`) so the estimate-from-catalog
+  flow (774) and "Find my Ship-To" still work for any signed-in staff.
+- **The wildcard CORS block is removed entirely.** This is a same-origin route; a same-origin fetch
+  needs no `Access-Control-Allow-Origin` and an `Authorization` header on it triggers no preflight.
+
+**Paired client change (mandatory).** The `cr-abc-script` `api()` wrapper sent no `Authorization`
+header, so gating the server would 401 every one of the app's own ABC calls. It now attaches the
+session token — `session = TEAM ? (await sb.auth.getSession()).data.session : null` then
+`'Authorization': 'Bearer ' + (session ? session.access_token : '')` — the same idiom as
+`senddoc`/`companycam`. Nothing changes on screen.
+
+**Proof.** `gate_1009.mjs` drives the exported handler with mocked Supabase auth and asserts:
+anon→401, bad-token→401, signed-in-sales read→gate passes, sales `placeOrder`→403, admin
+`placeOrder`→gate passes, no wildcard CORS header. GREEN on the working tree; **negative control
+against build 1008's `abc.js` goes RED with 4 named failures** (anon→200, bad-token→200,
+sales-placeOrder→200, wildcard-CORS-set), so the gate is one that has been seen to fail. `check_build`
+green (app stamp 1008→1009, marker present, negative control clean); `node --check api/abc.js` clean.
+
+No SQL. `api/abc.js` + `index.html` only.
+
 ## Build 1008 — four fixes from the fresh audit of today's builds (23 Aug 2026)
 
 A fresh 8-finder + adversarial-verify audit at build 1007 (workflow wf_202d59de-b67) surfaced 38

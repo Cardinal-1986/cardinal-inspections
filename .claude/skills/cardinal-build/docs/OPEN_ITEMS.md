@@ -10,12 +10,16 @@ regressions in today's own builds** (1005 lead-source-wrong-field, 1005 claim-ty
 stage-defer drop-on-supersede, 1006 stage-defer lost-on-close). The rest, still OPEN, ranked:
 
 ### 🔴 CRITICAL — do first
-- **`api/abc.js` is an open proxy.** No auth gate at all + `Access-Control-Allow-Origin: *`. Anonymous
-  callers can `placeOrder` (real orders on Cardinal's ABC account), `accounts` (ship-to names/addresses),
-  and `getOrder` (order/invoice history) once `ABC_CLIENT_ID/SECRET` are set in Vercel (builds 688/774
-  imply they are). Every other credential-spending route (`companycam.js`, `invite.js`) has the standard
-  `requireSession + is_cardinal_admin` gate. **Fix: add that gate; drop the wildcard CORS.** (verified
-  CONFIRMED, corrected severity critical)
+- ✅ **RESOLVED at build 1009 — `api/abc.js` was an open proxy.** No auth gate at all +
+  `Access-Control-Allow-Origin: *`. Anonymous callers could `placeOrder` (real orders on Cardinal's
+  ABC account), `accounts` (ship-to names/addresses), and `getOrder` (order/invoice history) once
+  `ABC_CLIENT_ID/SECRET` are set in Vercel. **Fixed:** every call now requires a signed-in Cardinal
+  session (mirrors `companycam.js`'s `requireSession`); the order actions (`placeOrder`, `getOrder`,
+  `templates` — none called by index.html) additionally require full access (admin + production);
+  the wildcard CORS header is gone (same-origin route, no preflight). The client `api()` wrapper
+  (`cr-abc-script`) now signs its request the way `senddoc`/`companycam` do — catalog/pricing/ship-to
+  lookup stay open to any signed-in staff so the estimate-from-catalog flow (774) still works. Proven
+  by `gate_1009.mjs` (GREEN on the working tree, RED with 4 named failures against build 1008).
 
 ### 🟠 HIGH — money correctness (pre-existing)
 - **996 money-in has a second door.** Tapping the "Received" section *header* (not the + button) opens
