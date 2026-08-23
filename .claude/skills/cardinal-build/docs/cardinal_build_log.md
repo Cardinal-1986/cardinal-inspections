@@ -20611,6 +20611,43 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1004 — one source of truth for the address (23 Aug 2026)
+
+A client's address is stored twice: the flat `projects.address` column, and a structured
+`checklist.lead.location.*` object (street/suite/city/state/zip). Only retail intake writes the
+parts, and **nothing updates them on a later edit** — `pfSave` writes `pr.address` and never touches
+`location`; profile-created leads have no parts at all. The map, directions, work order, recents and
+search all read `pr.address`. **The Construction Agreement (542) was the lone reader that read the
+parts, unconditionally** — so editing the address on the profile left the contract printing the OLD
+address while the map showed the new one. A signed legal document with the wrong address.
+
+### The fix — one authority, single site
+
+`pr.address` is the source of truth. The contract now fills `[STREET]/[CITY]/[STATE]/[ZIP]` from the
+structured parts **only when they reconstruct the current `pr.address`** (compared with punctuation
+and case normalised away); otherwise it puts the flat `pr.address` on `[STREET]` and blanks the rest
+— a correct single line beats a stale split. No writer change, no address parsing that could invent
+wrong parts, no UI change. The parts become a validated cache: used when they still agree, ignored
+when they don't. This also fixes a **latent** bug — profile-created leads had no parts, so the
+contract printed a blank address for them; now it prints their real one.
+
+⚠ **Deliberately reader-side, not a writer sync.** The profile edit form has a single flat address
+field, so keeping structured parts in lockstep would mean parsing a free-typed address into
+street/city/state/zip — unreliable, and able to invent a wrong split. Deferring to `pr.address`
+guarantees the contract == the map without that risk. After an edit the contract prints the address
+on one line rather than in split boxes; re-entering it through the intake form restores the split.
+
+### Gate
+
+`gate_1004.mjs` **extracts the shipped fill block from the artifact and runs it** (not a
+re-implementation) against five shapes: intake-unedited (structured kept), edited (flat wins, no
+stale split), profile-created (flat on STREET, was blank before), address-cleared (blank, consistent
+with the map), and same-address-different-punctuation (structured kept). 12 assertions. Control on
+1003: **PASS 6 · FAIL 6**, named, no crash — the old block prints the stale/blank address.
+
+**No SQL, no API change.** No screen markup or CSS changed, so the sentinel does not apply — this is
+template-fill logic, gated by the extraction harness.
+
 ## Build 1003 — the shared calendar (23 Aug 2026)
 
 The last of the "yes to all" batch, and the sensitive one. An appointment was visible only to the

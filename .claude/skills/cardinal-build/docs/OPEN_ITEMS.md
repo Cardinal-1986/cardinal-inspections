@@ -3408,16 +3408,28 @@ also emails rep+admin) each move the job to Approved, and the in-app paths buzz 
 likewise auto-advances to Invoiced (22511). Anyone re-proposing "wire the signature to the stage" is
 describing code that ships today.
 
-1. **Auto-advance Approved → Scheduled when the build day is booked** — the real residue of the old item 1.
-   The appointment (kind='job') exists, Production reads it ("build Aug 20"), but the stage waits for a
-   manual arrow tap + confirm. `blockerFor` already computes the truth; the stage lags it.
+1. ~~**Auto-advance Approved → Scheduled when the build day is booked**~~ — **✅ STALE, already built
+   at 783 and closed by 998 (verified 23 Aug).** `__apptMayAdvanceStage` advances Approved → Scheduled
+   when a `kind:'job'` appointment carrying a `project_id` is booked, wired into the one appointment
+   writer (`adb.create`, plus `adb.update` since 998) and reached by 972's "Get on the calendar". The
+   historical gap this item describes ("build Aug 20" showing with the stage lagging) was the two job
+   appointments being **orphans with no project_id**, so the guard returned early — 998 closed it by
+   requiring a job on every build-day booking. Proven in a Chromium spy: it fires ONLY for the Approved
+   build day, and stays silent for a drop, an orphan job, a Lead job and a Completed job. Nothing to build.
 2. **Split the intake form** — measured in the E2E: **43 visible fields, 0 with a required attribute** (the
    `*` on First/Last/City/State/Zip is label text only). Name · phone · address · work type up front, the
    rest behind "More detail", and make the starred five actually enforce.
 3. **Stale-estimate line in the daily digest** — nothing watches an estimate after it is sent. The 11:00 cron
    already runs and already knows each job's rep.
-4. **One writer for the address** — it is stored twice from one form: `projects.address` (flat) AND
-   `checklist.lead.location.*` (parts). They agree at birth and drift on any later edit.
+4. ~~**One writer for the address**~~ — **✅ DONE at 1004.** It is stored twice: `projects.address`
+   (flat) AND `checklist.lead.location.*` (parts). The parts are written only at retail creation and
+   never updated on edit, and the **Construction Agreement (542) was the one reader that read them
+   unconditionally** — so an edited address showed new on the map and old on the signed contract.
+   1004 makes `pr.address` the single authority the contract defers to: the split boxes fill only when
+   they reconstruct the current `pr.address`, else the flat address prints on `[STREET]`. Every other
+   reader (map, directions, work order, recents) already preferred `pr.address`, so the parts can no
+   longer surface a different address anywhere. (Also fixed the latent blank-contract-address for
+   profile-created leads, which never had the parts.)
 5. **Invoiced is a silent stage** — fold "invoiced and unpaid past 30 days" into the Friday owed email.
 6. **Dialog diet** — the E2E counted **11 native dialogs** (4 confirm / 3 prompt / 4 alert) on one clean
    lifecycle; worst is invoice create→send: alert, prompt, confirm back-to-back. Native dialogs in the

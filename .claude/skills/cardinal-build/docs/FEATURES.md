@@ -6461,3 +6461,15 @@ that job, while keeping the personal `appt` and `team` kinds private to their cr
 - Verified against the live DB in rolled-back transactions: assigned rep sees the job day (not the
   personal entries), an unassigned rep sees zero rows, the creator/admin can update, a non-owner
   cannot. Gate `gate_1003.mjs` (11 assertions; control on 1002 PASS 6 · FAIL 5).
+
+### 1004 — one source of truth for the address
+
+The address lived in two stores — the flat `projects.address` column (used by the map, directions,
+work order, recents, search) and a structured `checklist.lead.location.*` object (street/suite/city/
+state/zip). Only retail intake wrote the parts and nothing updated them on edit, so the **Construction
+Agreement (542)** — the one reader that read the parts unconditionally — printed the old address after
+an edit while the map showed the new one. 1004 makes `pr.address` the single authority: the contract
+fills its split boxes only when they reconstruct the current `pr.address` (punctuation/case
+normalised), else it prints the flat address on `[STREET]`. Guarantees contract == map; also fixes the
+blank contract address for profile-created leads (which never had the parts). `gate_1004.mjs` runs the
+shipped fill block against five shapes (control on 1003: PASS 6 · FAIL 6).
