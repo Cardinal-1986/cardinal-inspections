@@ -83,11 +83,11 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
     escalate `role` (`using lower(email)=lower(my_email()) with check … and role unchanged`).
 
 ### 🟠 MEDIUM
-11. **Payment Information's "Received"/"Job Net" exclude collections** (`payTotals`, index.html:14342)
+11. ✅ **RESOLVED at 1019.** Payment Information's "Received"/"Job Net" excluded collections (`payTotals`, index.html:14342)
     — since 996 all money-in is collections, so this page contradicts Balance Due on any job with a
     collection. **Fix:** mirror jobFinance — `if(collPaid[pr.id]!==undefined) recv = collPaid[pr.id]`
     + a read-only "From Money In" row.
-12. **jobFinance sums signed contract DOCS but takes MAX over the contract TABLE rows**
+12. ✅ **RESOLVED at 1019.** jobFinance summed contract DOCS but took MAX over the contract TABLE rows
     (index.html:15917 / indexMoney:20629) — a multi-trade job whose contracts live in the table
     under-reports Job Value. **Fix:** make the table leg a SUM too (`ctrSigned[id] = (…||0) + t`).
 13. **Stage-defer commits a superseded move → fires the irreversible "APPROVED — order materials"
