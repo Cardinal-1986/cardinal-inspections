@@ -2525,6 +2525,17 @@ commission and, since 721, is ignored by Balance Due whenever any collection exi
 "Additional Job Expenses" are job costs and keep the legacy row modal. **Do not add a
 second money-in writer** — `checklist.payments` `dir:'in'` is legacy-read/migrate only.
 
+⚠️ **Job Value precedence (654 → 997 → 1011), all inside `jobFinance()`:** signed
+contract wins outright → else max(manual, best estimate). "Best estimate" is 997's
+tiers over the estimates TABLE (accepted/signed = tier 2 beats sent = tier 1; largest
+within the tier), and since 1011 the `Estimate…`-titled doc leg respects them: at
+tier 2 no doc competes at all, and a doc any estimates row points at via `doc_id`
+(`estDocIds`, any status/archived) never counts as a second estimate — only true
+legacy document-only estimates still feed the leg. `estTier`/`estDocIds` are globals
+filled by `indexMoney()`. **Do not add another estimate-valuing scan anywhere** —
+Balance Due, the AR chart, pipeline dollars and the invoice all inherit from here.
+Gate: `gate_1011.mjs` (executes the shipped functions; RED ×3 on build 1010).
+
 **Where it lives:**
 - **SQL:** `commission_system.sql` (root, **applied 9 Aug 2026**) — extends the
   556 `commissions` table (`collection_id` unique, `rate_pct`, `paid_by`,

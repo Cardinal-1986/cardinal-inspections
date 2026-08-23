@@ -29,9 +29,14 @@ stage-defer drop-on-supersede, 1006 stage-defer lost-on-close). The rest, still 
   `payGoLogCollection()`, exactly as 996 routed the + button; `out`/`exp` headings keep the legacy
   row modal (they are job costs). Editing/migrating existing legacy rows untouched. Proven by
   `gate_1010.mjs` (GREEN working tree; RED against build 1009). (F1 + MONEY-1, both CONFIRMED)
-- **`jobFinance` doc-store MAX defeats 997's accepted tier.** A bigger `Estimate…` inspection_reports
-  doc (any status, no dedupe) is folded in as a flat MAX after `estBest`, overriding the accepted
-  estimate → wrong Job Value/Balance Due. Fix: tier/status-filter the doc-store leg too. (F3 + MONEY-2)
+- ✅ **RESOLVED at build 1011 — `jobFinance` doc-store MAX defeated 997's accepted tier.** A bigger
+  `Estimate…` inspection_reports doc (any status, no dedupe) was folded in as a flat MAX after
+  `estBest`, overriding the accepted estimate → wrong Job Value/Balance Due. **Fixed:** tier-2 skip
+  (an accepted estimate is the number — no doc competes) + linked-doc exclusion (`estDocIds`: a doc
+  any estimates row points at never counts as a second estimate; only legacy doc-only estimates feed
+  the leg, below tier 2). `estTier` promoted from indexMoney-local to global so the leg can read it.
+  Measured: 0 of 6 estimate docs carry a total today — no job's value changes. Proven by
+  `gate_1011.mjs` (executes the shipped functions; RED ×3 against build 1010). (F3 + MONEY-2)
 - **Contract deposit from newest estimate of any status.** `fillContractMoney` picks `rows[0]` of
   `loadForProject` (created_at DESC) filtered only on deposit info, and the editor writes `deposit_pct`
   on every save incl. drafts — so a later 30%-default draft outranks the accepted 0% estimate that set
