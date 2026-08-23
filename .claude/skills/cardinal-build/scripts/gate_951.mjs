@@ -11,6 +11,17 @@
         /supplement.html (679's location.href rule)
      4. RAIL — at desktop width the left rail scrapes the section in with
         seven items, and none of the six new labels falls to the generic icon
+   ⚠ REPAIRED at 998. This gate was written at 951, when the Insurance section
+   was visible in every portal. Builds 954, 955 and 956 then made each section
+   show ONLY in its own portal — Theo asked for it in three steps ("Insurance in
+   retail first", then production/community, then "make insurance symmetric
+   too"), and syncPortalSections() carries that rule with his words in its
+   comment. The gate kept booting into RETAIL, where the Insurance section is
+   now CORRECTLY hidden, and reported `Daily,Sell,CRMs,Resources,Admin` as if
+   six things had been lost. Nothing was lost: switch to the insurance portal
+   and all seven rows are there, in this exact order. Fix the gate when the
+   gate is wrong; never bend the artifact to satisfy an old assumption.
+
    Usage: node gate_951.mjs [path] — previous build = negative control (must
    FAIL named, not crash — interactions guarded, BUG_CLASSES 37). */
 import { createRequire } from 'module';
@@ -43,6 +54,15 @@ await page.evaluate(()=>{['landingView','loginView'].forEach(id=>{const e=docume
   const w=document.getElementById('navWrap'); if(w) w.style.display='inline-block';
   if(typeof window.showHome==='function') try{window.showHome();}catch(_){}});
 await page.waitForTimeout(1200);
+/* 998: the Insurance section lives in the INSURANCE portal (955-956). portalNow()
+   reads body.dataset.crmHead || body.dataset.crm, and syncPortalSections() is
+   what applies the rule — this is the app's own lever, not a staged state. */
+async function portal(p){
+  await page.evaluate(k=>{ document.body.dataset.crm=k; document.body.dataset.crmHead=k;
+    try{ if(typeof syncPortalSections==='function') syncPortalSections(); }catch(_){ } }, p);
+  await page.waitForTimeout(700);
+}
+await portal('insurance');
 
 function openMenu(){ return page.evaluate(()=>{const m=document.getElementById('navMenu'); const b=document.getElementById('navBtn');
   if(m&&m.style.display!=='block'&&b) b.click();
@@ -118,6 +138,12 @@ await wide.evaluate(()=>{['landingView','loginView'].forEach(id=>{const e=docume
   const w=document.getElementById('navWrap'); if(w) w.style.display='inline-block';
   if(typeof window.showHome==='function') try{window.showHome();}catch(_){}});
 await wide.waitForTimeout(1800);
+/* 998: this is a SECOND page and it needs the portal too — the phone page's
+   switch does not carry over. Booting it in retail is why the rail check
+   reported the Insurance section missing while the menu check passed. */
+await wide.evaluate(()=>{ document.body.dataset.crm='insurance'; document.body.dataset.crmHead='insurance';
+  try{ if(typeof syncPortalSections==='function') syncPortalSections(); }catch(_){ } });
+await wide.waitForTimeout(1000);
 const rail=await wide.evaluate(()=>{
   const h=document.getElementById('cr-lnav'); if(!h) return null;
   /* the heading's textContent is chevron+label+count ("▼Insurance7") —

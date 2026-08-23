@@ -6439,3 +6439,25 @@ five CSS rules outlived them by 65 builds.
 Gate: `gate_993.mjs` — reach **derived** from `document.styleSheets` (so a new scroller is covered
 without editing the gate) plus a **hardcoded ten-name floor** (so the count cannot shrink silently),
 and a fifth assertion that fails if the floor is ever emptied. Control on 991: PASS 15 · FAIL 8.
+
+### 1003 — the shared calendar
+
+An appointment used to be visible only to whoever booked it (plus the two admins). Build 1003 shares
+the two **work** kinds — `job` (build day) and `drop` (material delivery) — with everyone assigned to
+that job, while keeping the personal `appt` and `team` kinds private to their creator.
+
+- **RLS** (`appointments_shared_calendar.sql`): a permissive SELECT policy `kind in ('job','drop')
+  and project_id is not null and exists(select 1 from projects p where p.id=appointments.project_id)`
+  — the EXISTS runs under **projects**' own RLS, so visibility mirrors `projects_select` exactly (full
+  access, creator, assigned rep, sales rep) with no duplicated rule. Plus an **own-or-admin** UPDATE
+  policy that repairs 998's "Attach to a job" (previously joan-only, so silently refused for Theo and
+  the creator).
+- **The guard is the KIND, not the project_id.** Five personal `appt` rows carry a project_id;
+  visibility keys on kind, so a diary entry never leaks even when it has a project attached.
+- **Front end:** `apptCanEdit(a)` (`!TEAM || creator || admin`) gates the delete cross and the
+  "Attach to a job" button in `renderApptList()`. A shared day you did not create is **read-only** —
+  visible, but no button that would only error server-side. `adb.list()` already relies on RLS, so
+  the shared rows appear with no client-query change.
+- Verified against the live DB in rolled-back transactions: assigned rep sees the job day (not the
+  personal entries), an unassigned rep sees zero rows, the creator/admin can update, a non-owner
+  cannot. Gate `gate_1003.mjs` (11 assertions; control on 1002 PASS 6 · FAIL 5).

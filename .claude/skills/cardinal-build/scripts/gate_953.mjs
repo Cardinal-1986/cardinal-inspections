@@ -9,6 +9,16 @@
         WITHOUT un-hiding Objection Coach (reorg's own hide must survive)
      4. RAIL — in Insurance the rail scrape has no Sell section but has
         Production and Community; no new label falls to the generic icon
+   ⚠ ASSERTION 4 REPAIRED at 998, and it is a genuine SUPERSESSION rather than
+   a mis-navigation. As written at 953 it required Production AND Community to
+   be visible in the INSURANCE portal, which was true then. Builds 955 and 956
+   made every section show only in its OWN portal — syncPortalSections() quotes
+   Theo asking for exactly that, in three steps. So in insurance the rail should
+   now carry Insurance and NOT Production, Community or Sell, which is the
+   symmetric rule. The old expectation encoded the pre-955 world and had been
+   red on main ever since. Assertion 5 needed the production portal for the
+   same reason. Nothing was lost; both sections are present in their own portal.
+
    Usage: node gate_953.mjs [path] — previous build = negative control (must
    FAIL named, not crash — interactions guarded, BUG_CLASSES 37). */
 import { createRequire } from 'module';
@@ -134,8 +144,14 @@ const rail=await page.evaluate(()=>{
   return {names, generic};
 });
 need('the rail in Insurance has NO Sell section', !!rail && !rail.names.includes('Sell'), rail?rail.names.join(','):'');
-need('the rail has Production and Community sections', !!rail && rail.names.includes('Production') && rail.names.includes('Community'), rail?rail.names.join(','):'');
-need('no new label falls to the generic icon', !!rail && rail.generic.length===0, rail?rail.generic.join(','):'');
+/* 955-956: one section per portal. In Insurance the rail carries Insurance and
+   NOT the other three — asserting BOTH directions, so a regression that stops
+   hiding them is caught as well as one that stops showing Insurance. */
+need('the rail in Insurance carries the Insurance section',
+  !!rail && rail.names.includes('Insurance'), rail?rail.names.join(','):'');
+need('and NOT Production or Community (each section shows in its own portal)',
+  !!rail && !rail.names.includes('Production') && !rail.names.includes('Community'),
+  rail?rail.names.join(','):'');
 
 await page.close();
 
@@ -150,19 +166,59 @@ await p2.waitForTimeout(2600);
 await p2.evaluate(()=>{['landingView','loginView'].forEach(id=>{const e=document.getElementById(id); if(e){e.style.display='none';}});
   const w=document.getElementById('navWrap'); if(w) w.style.display='inline-block';});
 await p2.waitForTimeout(1600);
+/* 998: the Production section lives in the PRODUCTION portal (955). Scottie
+   boots into retail like everyone else, where it is correctly hidden — booting
+   there and asserting is what made this read as "Suppliers was lost". */
+await p2.evaluate(()=>{ document.body.dataset.crm='production'; document.body.dataset.crmHead='production';
+  try{ if(typeof syncPortalSections==='function') syncPortalSections(); }catch(_){ } });
+await p2.waitForTimeout(800);
 const crew=await p2.evaluate(()=>{
   const m=document.getElementById('navMenu'); if(!m) return null;
   const sec=[...m.querySelectorAll('.navsec')].find(s=>s.textContent.trim()==='Production');
-  if(!sec) return null;
-  const rows=[]; let w=sec.nextElementSibling;
-  while(w&&!(w.classList&&w.classList.contains('navsec'))){
-    if(w.classList&&w.classList.contains('navopt')) rows.push(w.getAttribute('data-nav'));
-    w=w.nextElementSibling;
-  }
-  return rows;
+  const rows=[]; if(sec){ let w=sec.nextElementSibling;
+    while(w&&!(w.classList&&w.classList.contains('navsec'))){
+      if(w.classList&&w.classList.contains('navopt')) rows.push(w.getAttribute('data-nav'));
+      w=w.nextElementSibling; } }
+  const sup=m.querySelector('.navopt[data-nav="suppliers"]');
+  let supSec='(absent)';
+  if(sup){ let x=sup.previousElementSibling;
+    while(x && !(x.classList&&x.classList.contains('navsec'))) x=x.previousElementSibling;
+    supSec = x ? x.textContent.trim() : '(none)'; }
+  return { rows, supPresent:!!sup, supHidden: sup ? sup.style.display==='none' : null, supSec };
 });
-need('for the crew (non-admin) Suppliers lives in the Production section',
-  !!crew && crew.includes('suppliers'), crew?crew.join(','):'no Production section');
+need('the crew (non-admin) sees the Production board rows',
+  !!crew && crew.rows.includes('prodboard'), crew?crew.rows.join(','):'no Production section');
+/* ⚠ 998: this asserted "Suppliers lives in the Production section", which was
+   953's placement and has been DELIBERATELY superseded. The markup's own
+   comment says why: 774's real job — build an estimate from the ABC catalog —
+   "is a retail-desk job, so it belongs in the section that never hides. Admins
+   still get it relocated under Admin by reorg()." Once 955-956 made sections
+   hide per portal, leaving it under Production would have taken it away from a
+   retail desk entirely. Measured: admin -> Admin, crew -> Daily, visible for
+   both. So the contract is REACHABILITY, not a particular parent — asserted
+   that way, with the parent printed so a future move is visible rather than
+   silent. */
+need('and Suppliers is still reachable for the crew',
+  !!crew && crew.supPresent && !crew.supHidden,
+  crew ? ('present=' + crew.supPresent + ' hidden=' + crew.supHidden) : 'no menu');
+need('...from a section that does not hide per portal',
+  !!crew && ['Daily','Admin','Office','Resources'].indexOf(crew.supSec) !== -1,
+  crew ? ('Suppliers sits under "' + crew.supSec + '", which hides in some portal') : '');
+/* 998: the icon check moved here from assertion 4. Those four keys are
+   Production and Community rows, so in the Insurance portal they are hidden
+   and "missing" was being read as "fell to the generic icon". Checked in the
+   portal that actually renders them. */
+const icons=await p2.evaluate(()=>{
+  const h=document.getElementById('cr-lnav');
+  const keys=['productionboard','crewdispatch','punchrepairs'];
+  if(!h) return { norail:true, generic:[] };
+  return { norail:false, generic: keys.filter(k=>{
+    const el=h.querySelector('.lnav-item[data-k="'+k+'"]');
+    if(!el) return false;                 /* absent at this width is not "generic" */
+    const svg=el.querySelector('svg.i2'); return !svg||/r="4\.6"/.test(svg.innerHTML); }) };
+});
+need('no Production label falls to the generic icon',
+  !!icons && icons.generic.length===0, icons?icons.generic.join(','):'');
 /* the phone drawer: a real portal switch writes BOTH crm attributes (skin()
    keeps data-crm-head authoritative) — emulate that, then Sell must hide in
    the raw menu the drawer renders. */

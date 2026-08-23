@@ -1936,6 +1936,17 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 .projform label.tradeopt{display:flex;align-items:center;gap:8px;margin:0;
   font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;min-height:26px;}
 .tradegrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin:6px 0 12px;}
+/* 999: lead-source chips. One is required at creation; the row is the same
+   eight values the client-profile editor (acxSrc) offers, kept identical so
+   the vocabulary does not fork. */
+.pf-chips{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 12px;}
+.pf-chip{flex:0 0 auto;padding:9px 13px;border-radius:18px;cursor:pointer;
+  background:#f0e8d0;border:1px solid #d9cfb2;color:#5a5344;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;white-space:nowrap;min-height:38px;
+  transition:background .12s,color .12s,border-color .12s;}
+.pf-chip:hover{border-color:#c9a227;}
+.pf-chip.on{background:#c8202e;border-color:#c8202e;color:#fff;}
+.pf-chips.pf-need{outline:2px solid #c8202e;outline-offset:3px;border-radius:12px;}
 .acxtrs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;padding-top:1px;}
 .acxtrs label{display:flex;align-items:center;gap:7px;min-height:22px;
   font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
@@ -3690,7 +3701,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 993 &#8212; seven strips of chips and tabs were scrolling sideways on a phone with no scrollbar to say so, hiding things you could not get to: Undo and Clear in the photo editor, Documents, iTel and Record on a claim, the way out of the Showcase, and five of the eight categories in the Line Item Library. They now wrap onto a second line instead.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1003 &#8212; the calendar is shared. A build day or a material drop is now visible to everyone assigned to that job, not only to whoever booked it &#8212; so the rep on the job finally sees the day their crew is coming. Your personal appointments stay private to you: only the two work kinds are shared, never a diary entry. (Run the appointments_shared_calendar.sql migration first.)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -7774,12 +7785,9 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
     <label>Property address<input type="text" id="pfAddress" autocomplete="off"></label>
     <label>Phone number<input type="tel" id="pfPhone" autocomplete="off"></label>
     <label>Email address<input type="email" id="pfEmail" autocomplete="off"></label>
-    <label>Lead source<select id="pfSource">
-      <option value="">— not set —</option>
-      <option>Door knock</option><option>Referral</option><option>Google / website</option>
-      <option>Yard sign</option><option>Repeat customer</option><option>Storm canvass</option>
-      <option>Facebook / social</option><option>Other</option>
-    </select></label>
+    <label>Lead source *</label>
+    <input type="hidden" id="pfSource">
+    <div class="pf-chips" id="pfSourceChips"><button type="button" class="pf-chip" data-src="Door knock">Door knock</button><button type="button" class="pf-chip" data-src="Referral">Referral</button><button type="button" class="pf-chip" data-src="Google / website">Google / website</button><button type="button" class="pf-chip" data-src="Yard sign">Yard sign</button><button type="button" class="pf-chip" data-src="Repeat customer">Repeat customer</button><button type="button" class="pf-chip" data-src="Storm canvass">Storm canvass</button><button type="button" class="pf-chip" data-src="Facebook / social">Facebook / social</button><button type="button" class="pf-chip" data-src="Other">Other</button></div>
     <label>Job cost (materials + labor, $)<input type="number" id="pfJobCost" min="0" step="0.01" placeholder="for profit reports"></label>
     <label>Job category<select id="pfCategory">
       <option value="">— not set —</option><option>Residential</option><option>Commercial</option><option>Property Management</option>
@@ -8182,7 +8190,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <option value="team">&#127970; Team &#8212; meeting / vacation / PTO</option>
         </select></label>
       <label>Time<input type="time" id="apptTime"></label>
-      <label>Client (optional)
+      <label id="apptClientLbl">Client (optional)
         <select id="apptClient"><option value="">&#8212; none &#8212;</option></select></label>
     </div>
     <label>Notes<input type="text" id="apptNotes" autocomplete="off"></label>
@@ -10851,6 +10859,23 @@ var adb = {
     fields.id = uid(); fields.created_by = null;
     var l = alsLoad(); l.push(fields); alsSave(l);
     await __apptMayAdvanceStage(fields);     /* 783 */
+  },
+  /* 998: attaching a job to a build day already in the calendar. It mirrors
+     create()'s two paths AND its call to __apptMayAdvanceStage — attaching the
+     job IS the moment the stage should advance, so leaving that out would
+     repair the row and still leave the job off the crew board, which is the
+     whole defect. */
+  update: async function(id, fields){
+    if(TEAM){
+      var r = await sb.from('appointments').update(fields).eq('id', id);
+      if(r.error) throw r.error;
+    }else{
+      var l = alsLoad();
+      l.forEach(function(x){ if(x.id === id) Object.assign(x, fields); });
+      alsSave(l);
+    }
+    var row = (cacheAppts || []).filter(function(x){ return String(x.id) === String(id); })[0] || {};
+    await __apptMayAdvanceStage(Object.assign({}, row, fields));
   },
   remove: async function(id){
     if(TEAM){
@@ -14287,8 +14312,15 @@ function renderPayments(){
             '<span>' + (bits.length ? bits.join(' \u00b7 ') : 'Payment') + '</span>' +
             '<b>' + payMoney(Number(x.p.amt) || 0) + '</b></div>';
         }).join('') : (extra ? '' : '<div class="payrow empty">No data to display</div>')) +
-        '<button class="payadd" data-payadd="' + sec.dir + '" type="button">' +
-          '+ Add new row to ' + sec.label + '</button>' +
+        (sec.dir === 'in'
+          ? '<button class="payadd" data-payadd="in" type="button">' +
+              '+ Log a payment received &#8250;</button>' +
+            '<div class="payrow empty" style="border:0;">' +
+              'Money received is recorded in Money In &amp; Commissions, where it counts ' +
+              'toward Balance Due and the rep&#8217;s commission.</div>' +
+            payLegacyInNote()
+          : '<button class="payadd" data-payadd="' + sec.dir + '" type="button">' +
+              '+ Add new row to ' + sec.label + '</button>') +
       '</div>';
     }).join('') +
     '<div class="paynet">Job Net (Received &#8722; (Paid + Additional Job Expenses))<br><b>' +
@@ -14481,10 +14513,124 @@ function openContractPaid(){
     }
   });
 }
+/* ══ 996: money in has ONE door, and the old one is drained ═══════════════
+   `collections` is the money-in ledger. It fires the 10% commission trigger,
+   feeds the Friday owed email, and since 721 it OUTRANKS the legacy log in
+   jobFinance():
+
+       if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id];
+
+   ⚠ THAT LINE IS WHY THE MIGRATION CANNOT COME SECOND. It REPLACES rather than
+   adds, so on a job carrying legacy money the FIRST collection logged makes
+   every earlier payment vanish from Balance Due at once. Measured: exactly one
+   job in the database has legacy `dir:'in'` rows — Dan Thompson, two Zelle
+   payments totalling $8,008.94 — and logging a single collection there would
+   have dropped `paid` to that one amount and jumped Balance Due by the rest.
+   So the door change ships WITH a way to move the old rows across, never
+   before one.
+
+   ⚠ Migrating is a MONEY WRITE, so it is a button a person presses, never
+   something that runs on its own. It names the amounts in the confirm.
+   ⚠ It is also commission-safe here, and that was checked rather than assumed:
+   make_commission() returns early when the job's rep is null or is Theo, and
+   Dan Thompson's rep is Theo — so moving those two rows creates no commission.
+   On a REP's job it would, correctly, and the confirm says so. */
+function payLegacyIn(){
+  if(!currentProject) return [];
+  return (parseCkAll(currentProject).payments || [])
+    .map(function(p, i){ return { p: p, i: i }; })
+    .filter(function(x){ return x.p.dir === 'in'; });
+}
+function payGoLogCollection(){
+  /* The collection form lives in the commissions tab, so this is a navigation
+     rather than a second form. showTab('commissions') calls renderCommissions()
+     itself, so the flag has to be set BEFORE the call or the form paints shut. */
+  try{ commUi.collForm = true; commUi.editColl = null; }catch(_){ }
+  /* ⚠ Payment Information is a SUB-PAGE: it hides #projectView and shows
+     #paymentsView. Switching tabs without coming back first would move the tab
+     strip underneath a page nobody can see. dbCloseTo() is the app's own way
+     back — the same function the page's Back button uses — and it restores the
+     header job menu and the overview on the way. */
+  try{ dbCloseTo(); }catch(_){ }
+  try{ showTab('commissions'); }catch(_){ }
+}
+function payLegacyInNote(){
+  var legacy = payLegacyIn();
+  if(!legacy.length) return '';
+  var sum = legacy.reduce(function(a, x){ return a + (Number(x.p.amt) || 0); }, 0);
+  return '<div class="payrow empty" style="border:0;text-align:left;line-height:1.5;">' +
+    /* ⚠ fmtMoney(n, true), NOT payMoney: payMoney rounds to whole dollars
+       (Math.round), so a $3,008.94 cheque would read $3,009 on a screen someone
+       is checking against a bank statement. */
+    '<b>' + legacy.length + ' payment' + (legacy.length === 1 ? '' : 's') + ' totalling ' +
+    fmtMoney(sum, true) + '</b> ' + (legacy.length === 1 ? 'was' : 'were') +
+    ' recorded here before Money In existed, so ' + (legacy.length === 1 ? 'it counts' : 'they count') +
+    ' toward Balance Due but not toward commission. Moving ' +
+    (legacy.length === 1 ? 'it' : 'them') + ' keeps the total the same.' +
+    '<br><button class="payadd" data-paymigrate="1" type="button" style="margin-top:8px;">' +
+    'Move ' + (legacy.length === 1 ? 'it' : 'them') + ' into Money In &#8250;</button></div>';
+}
+async function payMigrateLegacyIn(){
+  if(!currentProject) return;
+  var legacy = payLegacyIn();
+  if(!legacy.length) return;
+  var sum = legacy.reduce(function(a, x){ return a + (Number(x.p.amt) || 0); }, 0);
+  var rep = currentProject.sales_rep || null;
+  var pays = rep && rep !== 'theo@cardinalrenovations.net';
+  if(!confirm('Move ' + legacy.length + ' payment' + (legacy.length === 1 ? '' : 's') +
+      ' totalling ' + fmtMoney(sum, true) + ' into Money In?\n\n' +
+      legacy.map(function(x){
+        return '  ' + fmtMoney(Number(x.p.amt) || 0, true) + (x.p.date ? '  ' + x.p.date : '') +
+               (x.p.note ? '  ' + x.p.note : '');
+      }).join('\n') +
+      '\n\nBalance Due does not change.' +
+      (pays ? '\n\nThis job is assigned to ' + rep + ', so a 10% commission will be created.' : ''))) return;
+  var rows = legacy.map(function(x){
+    return {
+      project_id  : currentProject.id,
+      collected_at: x.p.date || (x.p.at ? String(x.p.at).slice(0, 10) : null),
+      amount      : Number(x.p.amt) || 0,
+      /* the CHECK on this column allows deposit/final/supplemental/pwi/other —
+         a legacy row records no type, and inventing one would be a guess on a
+         money record. */
+      type        : 'other',
+      source      : null,
+      notes       : 'Moved from Payment Information' + (x.p.note ? ' \u00b7 ' + x.p.note : ''),
+      created_by  : (currentUser && currentUser.email) || null
+    };
+  });
+  var r = await sb.from('collections').insert(rows).select('id');
+  if(r.error){ alert('Could not move them: ' + r.error.message); return; }
+  /* Only now drop the originals — if the insert failed the money is still
+     recorded in exactly one place, which is the state we started in. */
+  var keep = (parseCkAll(currentProject).payments || []).filter(function(p){ return p.dir !== 'in'; });
+  try{ await patchProjectCk(currentProject, { payments: keep }); }
+  catch(e){ alert('Moved into Money In, but the old rows could not be cleared: ' +
+                  ((e && e.message) || e) + '\nRemove them by hand so the total is not counted twice.'); }
+  try{ renderPayments(); }catch(_){ }
+  payGoLogCollection();
+}
 document.getElementById('paySummary').addEventListener('click', function(e){
   if(e.target.closest('[data-paycontracts]')){ openContractPaid(); return; }
   var add = e.target.closest('[data-payadd]');
-  if(add){ openPayRow(add.getAttribute('data-payadd'), null); return; }
+  if(add){
+    /* 996: money IN has one door, and this is not it. Two rows sat directly
+       under each other on the job menu — Payment Information and Money In &
+       Commissions — and only the second books anything: `collections` is what
+       drives the 10% trigger, the Friday owed email and (since 721) Balance
+       Due itself. Every dollar Cardinal had recorded went through this one,
+       so it was invisible to all three.
+       Theo asked for exactly this at 796 — "get rid of payments and money in…
+       Or move payment in into payment information" — and 796 answered only
+       the layout half.
+       ⚠ 'out' and 'exp' are job COSTS, not collections. They keep the legacy
+       row modal, which is the only place they have ever lived. */
+    var _dir = add.getAttribute('data-payadd');
+    if(_dir === 'in'){ payGoLogCollection(); return; }
+    openPayRow(_dir, null); return;
+  }
+  var mig = e.target.closest('[data-paymigrate]');
+  if(mig){ payMigrateLegacyIn(); return; }
   var edit = e.target.closest('[data-payedit]');
   if(edit){ openPayRow(null, parseInt(edit.getAttribute('data-payedit'), 10)); return; }
   var head = e.target.closest('.paysec');
@@ -14973,6 +15119,31 @@ async function transferPhotosToReport(docId, photos){
    ========================================================================= */
 var projModal = document.getElementById('projModal');
 var pfEditing = null; /* null = adding, else project id */
+var pfLastSource = null; /* 999: remembered lead source for the session, so a
+   canvasser doing twenty doors taps once, not twenty times. */
+function pfSyncSourceChips(){
+  var host = document.getElementById('pfSourceChips');
+  var hid = document.getElementById('pfSource');
+  if(!host || !hid) return;
+  host.querySelectorAll('.pf-chip').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-src') === hid.value);
+  });
+}
+(function(){
+  var host = document.getElementById('pfSourceChips');
+  if(!host) return;
+  host.addEventListener('click', function(e){
+    var b = e.target.closest('.pf-chip'); if(!b) return;
+    var hid = document.getElementById('pfSource');
+    var v = b.getAttribute('data-src');
+    /* tap the active chip again to clear it (edit only ever needs one set) */
+    hid.value = (hid.value === v) ? '' : v;
+    if(hid.value) pfLastSource = hid.value;
+    host.classList.remove('pf-need');
+    var err = document.getElementById('pfError'); if(err) err.textContent = '';
+    pfSyncSourceChips();
+  });
+})();
 
 function openProjModal(pr){
   pfEditing = pr ? pr.id : null;
@@ -14982,7 +15153,9 @@ function openProjModal(pr){
   document.getElementById('pfPhone').value   = pr ? (pr.phone || '')   : '';
   document.getElementById('pfEmail').value   = pr ? (pr.email || '')   : '';
   var _ck = pr ? parseCkAll(pr) : {};
-  document.getElementById('pfSource').value  = _ck.lead_source || '';
+  document.getElementById('pfSource').value  = pr ? (_ck.lead_source || '') : (pfLastSource || '');
+  document.getElementById('pfSourceChips').classList.remove('pf-need');
+  pfSyncSourceChips();
   document.getElementById('pfJobCost').value = (_ck.job_cost != null) ? _ck.job_cost : '';
   document.getElementById('pfCategory').value = _ck.job_category || '';
   document.getElementById('pfWorkType').value = _ck.work_type || '';
@@ -17538,6 +17711,11 @@ document.getElementById('pfSave').addEventListener('click', async function(){
   };
   try{
     var _srcVal = document.getElementById('pfSource').value || null;
+    if(!pfEditing && !_srcVal){
+      document.getElementById('pfError').textContent = 'Pick where this lead came from \u2014 it is the one number that says whether knocking is working.';
+      var _sc = document.getElementById('pfSourceChips'); if(_sc) _sc.classList.add('pf-need');
+      return;
+    }
     var _jcRaw = document.getElementById('pfJobCost').value;
     var _jcVal = _jcRaw === '' ? null : Number(_jcRaw);
     var _catVal = document.getElementById('pfCategory').value || null;
@@ -20238,16 +20416,38 @@ var PIPE_SKIP = { retail:{ 'OnHold':1 }, insurance:{ 'OnHold':1 } };
    circle must not move on its own while Theo is typing. */
 var SENT_EST = { sent:1, approved:1, accepted:1, signed:1 };
 
+/* 997: an ACCEPTED estimate is the number, whatever its size.
+   This took the plain MAX over every live estimate, so a job carrying two —
+   the common shape when a homeowner is shown options — reported the biggest
+   one as Job Value even after the smaller had been accepted. Balance Due, the
+   AR chart, pipeline dollars and the invoice all inherit that figure from
+   here, so one wrong precedence moved five surfaces at once. The only
+   correction available was remembering to archive every loser by hand, on
+   every job, forever.
+   ⚠ TIERS, not a second MAX. Within the winning tier the largest still wins,
+   which is what keeps a job that legitimately carries two accepted estimates
+   — a roof and a siding job on one property — reporting their real top line
+   rather than whichever was written last.
+   ⚠ MEASURED BEFORE SHIPPING: this changes NO job's Job Value today. Only two
+   jobs carry an accepted estimate and neither has a larger live sibling. It is
+   preventive — the day the $21,451 on Kimberly Guy is accepted while the
+   $36,654 is still live, this is what stops the wrong number. */
+var ACCEPTED_EST = { accepted:1, signed:1 };
 function indexMoney(estimates, contracts){
   estBest = {};
   estRows = {};
+  var estTier = {};
   (estimates || []).forEach(function(e){
     if(!e || !e.project_id) return;
     if(e.archived) return;
-    if(!SENT_EST[String(e.status || '').toLowerCase()]) return;
+    var st = String(e.status || '').toLowerCase();
+    if(!SENT_EST[st]) return;
     (estRows[e.project_id] = estRows[e.project_id] || []).push(e);
     var t = Number(e.total) || 0;
-    if(t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
+    var tier = ACCEPTED_EST[st] ? 2 : 1;
+    var cur = estTier[e.project_id] || 0;
+    if(tier > cur){ estTier[e.project_id] = tier; estBest[e.project_id] = t; }
+    else if(tier === cur && t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
   });
   ctrSigned = {};
   (contracts || []).forEach(function(c){
@@ -22135,6 +22335,18 @@ function openApptDay(ds){
   renderApptList();
   apptModal.style.display = 'block';
 }
+/* 1003: an appointment you can SEE is not one you can necessarily act on.
+   Build 1003 opens job/drop days to everyone assigned to the job (in RLS),
+   so a rep now sees build days they did not create. Deleting or re-attaching
+   those is refused server-side (own-or-admin), and a button that can only
+   ever error is worse than no button — so a row is read-only for anyone who
+   is not its creator or an admin. In local (non-TEAM) mode every row is
+   yours, so it stays fully editable there. */
+function apptCanEdit(a){
+  if(!TEAM) return true;
+  var me = (currentUser && currentUser.email) || '';
+  return !!me && (a.created_by === me || ADMIN_EMAILS.indexOf(me) !== -1);
+}
 function renderApptList(){
   var list = cacheAppts.filter(function(a){ return a.appt_date === apptDay; });
   var m = document.getElementById('apptList');
@@ -22152,10 +22364,40 @@ function renderApptList(){
           (a.notes ? (pr ? ' \u00b7 ' : '') + esc(a.notes) : '') +
           (a.created_by ? ' \u00b7 ' + esc(a.created_by.split('@')[0]) : '') + '</small>' : '') +
       '</span>' +
-      '<button class="del" title="Delete">\u2715</button></div>';
+      ((apptCanEdit(a) && !pr && (a.kind === 'job' || a.kind === 'drop'))
+        ? '<button class="chipbtn" data-apptattach="' + a.id + '" ' +
+            'style="margin-left:8px;">Attach to a job</button>'
+        : '') +
+      (apptCanEdit(a) ? '<button class="del" title="Delete">\u2715</button>' : '') +
+      '</div>';
   }).join('');
 }
+/* 998: the two job days already in the calendar carry no job, and deleting
+   them would lose a real booking. This attaches one instead, reusing the same
+   project list the form's own select is filled from. */
+async function apptAttachJob(id){
+  var a = cacheAppts.filter(function(x){ return String(x.id) === String(id); })[0];
+  if(!a) return;
+  var opts = (cacheProjects || []).slice().sort(function(x, y){
+    return String(x.name || '').localeCompare(String(y.name || ''));
+  });
+  if(!opts.length){ alert('No jobs to attach to yet.'); return; }
+  var pick = prompt('Which job is "' + a.title + '" for?\n\n' +
+    opts.map(function(p, i){ return (i + 1) + '. ' + (p.name || '(no name)') +
+      (p.address ? ' \u2014 ' + p.address : ''); }).join('\n') +
+    '\n\nType the number:');
+  if(pick === null) return;
+  var n = parseInt(String(pick).trim(), 10);
+  if(!(n >= 1 && n <= opts.length)){ alert('That is not one of the numbers listed.'); return; }
+  try{
+    await adb.update(a.id, { project_id: opts[n - 1].id });
+    cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
+    renderApptList(); renderCalendar();
+  }catch(e){ alert('Could not attach it: ' + ((e && e.message) || e)); }
+}
 document.getElementById('apptList').addEventListener('click', async function(e){
+  var att = e.target.closest('[data-apptattach]');
+  if(att){ apptAttachJob(att.getAttribute('data-apptattach')); return; }
   var del = e.target.closest('.del');
   if(!del) return;
   var row = del.closest('.apptrow');
@@ -22169,9 +22411,48 @@ document.getElementById('apptList').addEventListener('click', async function(e){
 });
 document.getElementById('apptClose').addEventListener('click', function(){ apptModal.style.display = 'none'; });
 apptModal.addEventListener('click', function(e){ if(e.target === apptModal) apptModal.style.display = 'none'; });
+/* 998: the label is the first thing that says a job day needs its job, so it
+   changes with the kind rather than reading "(optional)" and then refusing. */
+function apptSyncClientLabel(){
+  var k = (document.getElementById('apptKind') || {}).value || 'appt';
+  var lbl = document.getElementById('apptClientLbl');
+  var sel = document.getElementById('apptClient');
+  if(!lbl || !sel) return;
+  var needs = (k === 'job' || k === 'drop');
+  var first = sel.querySelector('option[value=""]');
+  if(first) first.textContent = needs ? '\u2014 pick a job \u2014' : '\u2014 none \u2014';
+  lbl.childNodes[0].nodeValue = needs ? 'Job *' : 'Client (optional)';
+}
+(function(){
+  var k = document.getElementById('apptKind');
+  if(k) k.addEventListener('change', apptSyncClientLabel);
+})();
 document.getElementById('apptSave').addEventListener('click', async function(){
   var title = document.getElementById('apptTitle').value.trim();
   if(!title){ document.getElementById('apptError').textContent = 'Enter what the appointment is.'; return; }
+  /* 998: a job day has to name its job.
+     The client box was optional for every kind, so a build booked by typing an
+     address and leaving it blank produced an appointment attached to nothing —
+     and __apptMayAdvanceStage returns early unless the appointment is kind
+     'job' AND carries a project_id. The job therefore never reached Scheduled,
+     never reached the Needs-a-crew rail, and the whole arm-and-place workflow
+     built at 949 had an empty tray in production. Measured: ZERO projects at
+     stage Scheduled, and both of the two 'job' appointments in the database
+     are orphans.
+     ⚠ Scoped to job and drop ONLY. An ordinary appointment legitimately has no
+     client — ten of the fifteen in the database are Theo's own diary ("Hair
+     cut", "Higgins Tax Guy") — and requiring one there would break a working
+     screen to fix a different one. */
+  var _kind = document.getElementById('apptKind').value || 'appt';
+  var _needsJob = (_kind === 'job' || _kind === 'drop');
+  var _cli = document.getElementById('apptClient');
+  if(_needsJob && !_cli.value){
+    document.getElementById('apptError').textContent =
+      'Pick the job this ' + (_kind === 'job' ? 'build day' : 'delivery') +
+      ' is for \u2014 without it the job never reaches Scheduled and no crew can be put on it.';
+    try{ if(window.crValid && crValid.shake) crValid.shake(_cli); else _cli.focus(); }catch(_){ _cli.focus(); }
+    return;
+  }
   var f = {
     title: title,
     appt_date: apptDay,
@@ -30848,6 +31129,19 @@ function showList() {
   }
   function money(v) { return (v === null || v === undefined || v === '') ? '\u2014' : '$' + fmt(v); }
   function fmtDate(d) { if (!d) return '—'; var t = window.crDate ? window.crDate(d) : new Date(d); return t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+  /* 1000: days since the date of loss, as a plain fact beside the date. It is
+     arithmetic, not a deadline — the Resource Library card is emphatic that
+     GUESSING a suit-limitation period is itself the harm, so this says how
+     long it has been and nothing about how long is left. A real countdown
+     needs a policy date entered, which needs a column, and is a separate
+     build. */
+  function lossAge(iso){
+    if(!iso) return '';
+    var t = new Date(iso); if(isNaN(t)) return '';
+    var n = Math.floor((Date.now() - t.getTime()) / 86400000);
+    if(n < 0) return '';
+    return ' · ' + n + ' day' + (n === 1 ? '' : 's') + ' ago';
+  }
   function fmtDateShort(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); }
   function statusLabel(s) { return STATUSES.find(x => x.v === s)?.l || s; }
   function causeLabel(c) { return CAUSES.find(x => x.v === c)?.l || c; }
@@ -31082,14 +31376,56 @@ function showList() {
     renderDetail();
   }
 
+  /* 1001: the one place the "what are we still owed" rule lives, so the number
+     on the claim card has a documented definition rather than an inline formula.
+     Theo's call, 23 Aug: OUTSTANDING = RCV + decided supplements − received.
+       · The DEDUCTIBLE is counted as owed — RCV is the full replacement value,
+         and the homeowner's deductible share is money still owed to Cardinal
+         until it is collected, so it is inside RCV and stays in the total.
+       · An UNDECIDED supplement (draft / submitted) is NOT in the total —
+         nobody can collect it yet. It is surfaced on its own pending line so a
+         filed supplement is never invisible, and never reads as $0 owed.
+       · A denied or withdrawn supplement contributes nothing and is not pending.
+     ⚠ This is display maths, NOT a commission input: make_commission() fires on
+     each COLLECTION (10% of the amount received), never on this number — so the
+     earlier worry that the deductible rule could skew a commission via a trigger
+     does not hold. Verified against the shipped trigger and the single client
+     commission writer.
+     ⚠ Scope: this is the PER-CLAIM card. The claims-list total, the Cardinal
+     Truth dashboard rollup and cr-ic's sort key are different aggregates on the
+     denormalised supplement_* columns; they are deliberately left alone rather
+     than forced through one helper across two status vocabularies. */
+  var CLAIM_SUPP_DECIDED = { approved: 1, partial: 1 };
+  var CLAIM_SUPP_PENDING = { draft: 1, submitted: 1 };
+  function claimMoney(claim, payments, supplements){
+    var c = claim || {}, pays = payments || [], supps = supplements || [];
+    var rcv = Number(c.approved_rcv) || 0;
+    var acv = Number(c.approved_acv) || 0;
+    var depreciation = c.approved_depreciation != null ? Number(c.approved_depreciation) : (rcv - acv);
+    var deductible = Number(c.deductible) || 0;
+    var received = pays.reduce(function(s, p){ return s + (Number(p.amount) || 0); }, 0);
+    var approvedSupp = supps.reduce(function(s, sp){
+      return s + (CLAIM_SUPP_DECIDED[sp.status] ? (Number(sp.amount_approved) || 0) : 0);
+    }, 0);
+    var pend = supps.filter(function(sp){ return CLAIM_SUPP_PENDING[sp.status]; });
+    var pendingReq = pend.reduce(function(s, sp){ return s + (Number(sp.amount_requested) || 0); }, 0);
+    return {
+      rcv: rcv, acv: acv, depreciation: depreciation, deductible: deductible,
+      received: received, approvedSupp: approvedSupp,
+      pendingCount: pend.length, pendingReq: pendingReq,
+      billable: rcv + approvedSupp,
+      outstanding: Math.max(0, rcv + approvedSupp - received)
+    };
+  }
   function renderDetail() {
     const c = state.claim;
-    const paidTotal = state.payments.reduce((s, p) => s + Number(p.amount), 0);
-    const suppTotal = state.supplements.reduce((s, sp) => s + Number(sp.amount_approved || 0), 0);
-    const rcv = Number(c.approved_rcv || 0);
-    const acv = Number(c.approved_acv || 0);
-    const depr = Number(c.approved_depreciation || (rcv - acv));
-    const outstanding = Math.max(0, rcv + suppTotal - paidTotal);
+    const _cm = claimMoney(c, state.payments, state.supplements);
+    const paidTotal = _cm.received;
+    const suppTotal = _cm.approvedSupp;
+    const rcv = _cm.rcv;
+    const acv = _cm.acv;
+    const depr = _cm.depreciation;
+    const outstanding = _cm.outstanding;
     const pct = rcv > 0 ? Math.min(100, Math.round(paidTotal / rcv * 100)) : 0;
 
     MOUNT.innerHTML = `
@@ -31103,7 +31439,7 @@ function showList() {
           <div class="cr-c-fact"><div class="lbl">Property</div><div class="val"><strong>${esc(c.property_address || 'TBD')}</strong></div></div>
           <div class="cr-c-fact"><div class="lbl">Status</div><div class="val"><span class="cr-c-pill ${c.status}">${statusLabel(c.status)}</span></div></div>
           <div class="cr-c-fact"><div class="lbl">Carrier · Claim #</div><div class="val"><strong>${esc(c.carrier || 'Unknown')}</strong>${c.claim_number ? ` · ${esc(c.claim_number)}` : ''}</div></div>
-          <div class="cr-c-fact"><div class="lbl">Date of Loss</div><div class="val">${fmtDate(c.date_of_loss)}${c.cause_of_loss ? ` · ${causeLabel(c.cause_of_loss)}` : ''}</div></div>
+          <div class="cr-c-fact"><div class="lbl">Date of Loss</div><div class="val">${fmtDate(c.date_of_loss)}${lossAge(c.date_of_loss)}${c.cause_of_loss ? ` · ${causeLabel(c.cause_of_loss)}` : ''}</div></div>
         </div>
 
         <!-- Financial summary card -->
@@ -31122,6 +31458,7 @@ function showList() {
             <div class="cr-c-fin-progress-lbl">
               <span>Received to date: <strong>$${fmt(paidTotal)}</strong> of $${fmt(rcv + suppTotal)}</span>
               <span>Outstanding: <strong>$${fmt(outstanding)}</strong></span>
+              ${_cm.pendingCount ? `<span class="cr-c-pending" style="font-size:11px;color:var(--cr-amber);">&#9203; ${_cm.pendingCount} supplement${_cm.pendingCount>1?'s':''} awaiting a decision${_cm.pendingReq ? ` &middot; $${fmt(_cm.pendingReq)} requested` : ''} &mdash; not counted above</span>` : ''}
             </div>
           </div>
         </div>
@@ -31456,7 +31793,7 @@ function showList() {
               <td>${esc(sp.reason || '—')}</td>
               <td>${fmtDateShort(sp.filed_at)}</td>
               <td><span style="font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:${statusColor[sp.status]};">${sp.status}</span></td>
-              <td class="amt">$${fmt(sp.amount_requested)}</td>
+              <td class="amt">${sp.amount_requested != null ? `$${fmt(sp.amount_requested)}` : '<span style="color:var(--cr-muted-2);">&mdash;</span>'}</td>
               <td class="amt">${sp.amount_approved != null ? `$${fmt(sp.amount_approved)}` : '<span style="color:var(--cr-muted-2);">—</span>'}</td>
             </tr>
           `).join('')}
@@ -41230,7 +41567,16 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:993, d:'2026-08-22', t:'Seven strips of chips and tabs stop hiding things off the edge', s:'Several rows of filter chips and tabs scroll sideways on a phone, and they were built to hide their own scrollbar \u2014 so when a row was wider than the screen there was nothing at all to say the rest of it was there. Measured on a 390 pixel phone: the photo editor was hiding \u201cUndo\u201d and \u201cClear\u201d, a claim was hiding Documents, iTel and Record, the Showcase was hiding the button that gets you back out of it, Insurance Clients was hiding four of its seven stages, the photo album was hiding four of six sections, and the Line Item Library was hiding five of its eight categories. All seven now wrap onto a second line instead of running off the edge. Nothing moves on a tablet or a desktop, where they already fitted.' },
+{ b:1003, d:'2026-08-23', t:'The calendar is shared', s:'A build day or a material drop used to be visible only to the person who booked it — so the rep whose client was getting a roof could not see the day the crew was coming, and neither could production unless they had entered it themselves. Now any job or delivery on the calendar is visible to everyone assigned to that job (the assigned rep, the sales rep, whoever created it, and the admins), because it is the crew’s day, not one person’s note. Your personal appointments are untouched: only the two work kinds — build day and drop — are shared, so a private entry like a haircut or a tax appointment stays yours alone. A shared day you did not create shows as read-only — you can see it, you cannot delete someone else’s booking. (Needs the appointments_shared_calendar.sql migration run in Supabase first.)' },
+{ b:1002, d:'2026-08-23', t:'iTel lab results can be attached to a job', s:'The 28 iTel lab results \u2014 the product-match and asbestos verdicts you have paid for \u2014 were sitting linked to nothing, because the only link the app offered was to a claim, and the results worth attaching belong to jobs that have no claim on file. They now attach to the JOB instead: each result has an \u201CAttach to a job\u201D button, and once linked it shows which job it belongs to. Sixteen of the 28 are non-match verdicts \u2014 exactly the evidence a matching argument needs \u2014 so getting them onto their jobs is what makes them usable.' },
+      { b:1001, d:'2026-08-23', t:'A claim has one clear answer to \u201Cwhat are we still owed\u201D', s:'The Outstanding figure on a claim now has a single, documented rule: the full replacement value (which includes the deductible the homeowner still owes) plus any supplement the carrier has actually approved, minus what has been received. A supplement you have filed but the carrier has not yet ruled on is shown on its own line as awaiting a decision \u2014 it is never added into the total and never shows as $0 owed, so it is visible without making it look like money is in hand. This is a display number only; it does not change how commissions are worked out.' },
+      { b:1000, d:'2026-08-23', t:'A claim shows how long since the date of loss', s:'Next to the date of loss on a claim you now see how long ago it was \u2014 \u201C476 days ago.\u201D It is a plain fact, not a deadline clock: the app will not guess a suit-limitation period, because getting that wrong is the real harm. Both open claims are over a year out, and this makes that obvious without doing the arithmetic in your head. A true countdown would need the limitation date typed in from the policy, which is a later, separate change.' },
+      { b:999, d:'2026-08-23', t:'Lead source is a required tap when you add a client', s:'Where a lead came from \u2014 door knock, referral, storm canvass, and so on \u2014 is the one field that tells you whether the way you find work is working. It was already wired into the reports chart, the filter and the sort, but it defaulted to \u201Cnot set\u201D and only the client name was required, so it was blank on every job and the chart had no data. Adding a client now asks for it as a single tap from eight chips, and it remembers your last pick so a canvasser doing a street taps once rather than every time. Editing an existing client never nags \u2014 the requirement is only for new ones.' },
+      { b:998, d:'2026-08-22', t:'A build day on the calendar has to say which job it is', s:'Booking a build meant typing an address and picking \u201CJob\u201D \u2014 and the client box said \u201Coptional\u201D, so it usually stayed empty. An appointment attached to no job cannot move that job to Scheduled, which means it never reaches the crew board, which is why the \u201Cneeds a crew\u201D rail has been empty since it was built. Job and Material Drop now ask for the job, and say why if you skip it. Ordinary appointments are untouched \u2014 a haircut has no client. The two build days already in the calendar without a job can be attached to one instead of being deleted and booked again.' },
+      { b:997, d:'2026-08-22', t:'Accepting an estimate makes it the number', s:'When a job carried two live estimates \u2014 the options you show at a kitchen table \u2014 Job Value quoted whichever was biggest, even after you had accepted the smaller one. Balance Due, the invoice, the AR chart and the pipeline total all read that same figure, so one job could be wrong in five places at once, and the only fix was remembering to archive the losing estimate by hand every single time. An accepted estimate now wins whatever its size. If a job genuinely has two accepted \u2014 a roof and a siding job on one property \u2014 the larger still leads. No job in the system changes value today; this is here so it does not happen the next time.' },
+      { b:996, d:'2026-08-22', t:'Money received has one door, and it is the one that pays the rep', s:'Two rows sat directly under each other on a job: Payment Information and Money In \u0026 Commissions. They looked like the same thing and they were not \u2014 only the second one books anything. It is what writes the rep\u2019s 10%, what fills the Friday owed email, and since build 721 it is what sets Balance Due. Every payment recorded through the first one was invisible to all three. Tapping to log a payment received now takes you straight to Money In. Payments recorded the old way are still counted, and there is a one-tap way to move them across that names every amount first and leaves the total exactly where it was. Paid out and additional expenses are job costs, not collections, and are untouched.' },
+      { b:995, d:'2026-08-22', t:'A 0% deposit stays 0% when you reopen the estimate', s:'If you set an estimate\u2019s deposit to nought \u2014 an insurance job where the carrier pays, or a customer you have agreed to bill at the end \u2014 reopening that estimate to change anything else quietly put the deposit back to 30%, and saving wrote that number onto the estimate. Both of the estimates Cardinal has had accepted are set to nought, so on those two it would have added $4,428 and $3,765 of down payment to paperwork the client had already signed off. Nought is now treated as a real answer and kept, which is what the contract side has always done.' },
+      { b:993, d:'2026-08-22', t:'Seven strips of chips and tabs stop hiding things off the edge', s:'Several rows of filter chips and tabs scroll sideways on a phone, and they were built to hide their own scrollbar \u2014 so when a row was wider than the screen there was nothing at all to say the rest of it was there. Measured on a 390 pixel phone: the photo editor was hiding \u201cUndo\u201d and \u201cClear\u201d, a claim was hiding Documents, iTel and Record, the Showcase was hiding the button that gets you back out of it, Insurance Clients was hiding four of its seven stages, the photo album was hiding four of six sections, and the Line Item Library was hiding five of its eight categories. All seven now wrap onto a second line instead of running off the edge. Nothing moves on a tablet or a desktop, where they already fitted.' },
       { b:991, d:'2026-08-22', t:'Magnet Board: a long title no longer stretches its row', s:'A repair called \u201cneeds new aluminum gable vent installed\u201d was wrapping to four lines, making its card 88 pixels tall against a 52 pixel row \u2014 so one long title stretched the whole row and pushed the board about. Job and repair titles now stop at two lines with an ellipsis; tap the card to see the rest. Ordinary titles are unaffected.' },
       { b:990, d:'2026-08-22', t:'Magnet Board: jobs no longer show through the crew column', s:'The crew names down the left of the Magnet Board stay put while the days pan sideways. But nothing was painted behind them, so a job card sliding past appeared to sit on top of the crew name with its text cut off at the edge \u2014 the \u201cNeeds a crew\u201d cards were the worst of it. The column now has a background, so jobs pass behind it cleanly. Nothing looks different until you pan.' },
       { b:988, d:'2026-08-22', t:'The Saving / Saved / Error pills were invisible on the dark theme', s:'The little floating pills that report Saving, Saved and Error sat on a surface colour that turns near-white on the dark theme, but their text was pinned to white \u2014 so on the theme almost everyone uses they were white on white, at about 1.1 to 1. Three of them, in Pricing, Claims and Coach. The text now flips with the pill: dark on the pale one, white on the deep one, and every state clears the readability floor in both themes.' },
@@ -46425,7 +46771,7 @@ return Object.assign({ _lid: newLineId() }, l);
 photos         : (existing.photos || []).slice(),
 itemized       : existing.itemized !== false,
 discount       : Number(existing.discount) || 0,
-deposit_pct    : Number(existing.deposit_pct) || 30,
+deposit_pct    : existing.deposit_pct != null ? Math.max(0, Math.min(100, Number(existing.deposit_pct) || 0)) : 30,
 valid_days     : Number(existing.valid_days) || 30,
 valid_through  : existing.valid_through || todayISO((Number(existing.valid_days) || 30)),
 notes          : existing.notes || '',
@@ -73791,7 +74137,9 @@ window.CardinalMediaMigrate = { showRunner: showRunner };
 })();
 </script>
 <style id="cr-itellab-styles">#cr-itellab{display:none;position:fixed;inset:0;background:#0f0f10;color:#e8e5df;z-index:9500;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-itellab.open{display:flex}.cr-itellab-hd{padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);display:flex;align-items:center;gap:10px;flex:0 0 auto}.cr-itellab-hd h2{margin:0;flex:1;font:800 15px 'Segoe UI',Arial,sans-serif}.cr-itellab-hd button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;padding:7px 13px;border-radius:7px;font:800 11px 'Segoe UI',Arial,sans-serif;cursor:pointer}.cr-itellab-sub{padding:0 16px 12px;font:600 12px 'Segoe UI',Arial,sans-serif;color:#9a9490}.cr-itellab-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 24px}
-body.standalone .cr-itellab-body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* iTel Lab \u2014 was 24px */.cr-itellab-row{border:1px solid #2c2b28;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#171614}.cr-itellab-row .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}.cr-itellab-row .ctrl{font:800 12.5px 'SF Mono',Menlo,Consolas,monospace;color:#e0a83c}.cr-itellab-row .verdict{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:#2c2b28;color:#cfc9c0}.cr-itellab-row .prod{margin-top:4px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#e8e5df}.cr-itellab-row .meta{margin-top:4px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#9a9490}.cr-itellab-row .asb{margin-top:6px;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#ef6a6a}.cr-itellab-row a{color:#e0a83c}.cr-itellab-empty{padding:40px 20px;text-align:center;color:#9a9490;font:600 13px 'Segoe UI',Arial,sans-serif}</style>
+body.standalone .cr-itellab-body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* iTel Lab \u2014 was 24px */.cr-itellab-row{border:1px solid #2c2b28;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#171614}
+.cr-itellab-row .cr-itellab-attach{background:transparent;border:1px solid var(--ct-red,#c8202e);color:var(--ct-red,#c8202e);border-radius:7px;padding:7px 12px;min-height:38px;cursor:pointer;font:700 12px 'Segoe UI',Arial,sans-serif;}
+.cr-itellab-row .itel-linked{color:var(--ct-green,#2f7d55);font-weight:700;}.cr-itellab-row .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}.cr-itellab-row .ctrl{font:800 12.5px 'SF Mono',Menlo,Consolas,monospace;color:#e0a83c}.cr-itellab-row .verdict{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:#2c2b28;color:#cfc9c0}.cr-itellab-row .prod{margin-top:4px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#e8e5df}.cr-itellab-row .meta{margin-top:4px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#9a9490}.cr-itellab-row .asb{margin-top:6px;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#ef6a6a}.cr-itellab-row a{color:#e0a83c}.cr-itellab-empty{padding:40px 20px;text-align:center;color:#9a9490;font:600 13px 'Segoe UI',Arial,sans-serif}</style>
 <div id="cr-itellab">
   <div class="cr-itellab-hd">
     <h2>&#129514; iTel Lab Results</h2>
@@ -73842,6 +74190,14 @@ function rowHtml(r){
     (asb ? '<div class="asb">' + asb + '</div>' : '') +
     (r.report_url ? '<div class="meta"><a href="' + esc(r.report_url) +
       '" target="_blank" rel="noopener">Open report</a></div>' : '') +
+    /* 1002: link to a JOB, not a claim. claim_id was never fillable — every
+       row is NULL and the attachable ones belong to jobs with no claim. The
+       report is about a house's shingle, so it belongs to the job; a claim on
+       that job reads it through the job. */
+    (r.project_id
+      ? '<div class="meta itel-linked">Job: ' + esc(projName(r.project_id)) + '</div>'
+      : '<div class="meta"><button type="button" class="cr-itellab-attach" ' +
+          'data-itel-attach="' + esc(r.id) + '">+ Attach to a job</button></div>') +
   '</div>';
 }
 async function open(){
@@ -73855,11 +74211,12 @@ async function open(){
     var r = await sb.from('itel_lab_reports').select('*').order('report_date', { ascending:false });
     if(r.error) throw r.error;
     var rows = r.data || [];
-    var unlinked = rows.filter(function(x){ return !x.claim_id; }).length;
+    v.__rows = rows;
+    var unlinked = rows.filter(function(x){ return !x.project_id; }).length;
     v.querySelector('.cr-itellab-sub').textContent = rows.length +
       ' lab result' + (rows.length === 1 ? '' : 's') +
-      (unlinked ? ' · ' + unlinked + ' not yet linked to a claim' : '') +
-      ' · read-only';
+      (unlinked ? ' · ' + unlinked + ' not yet linked to a job' : '') +
+      ' · admin';
     v.querySelector('.cr-itellab-body').innerHTML = rows.length
       ? rows.map(rowHtml).join('')
       : '<div class="cr-itellab-empty">No lab results on file.</div>';
@@ -73873,9 +74230,49 @@ function close(){
   if(v) v.classList.remove('open');
   try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
 }
+function projName(id){
+  var list = window.cacheProjects || [];
+  var p = list.filter(function(x){ return String(x.id) === String(id); })[0];
+  return p ? (p.name || '(unnamed job)') : '(job not on this device)';
+}
+/* 1002: attach an orphaned lab report to a job. Reuses the numbered-prompt
+   picker shape from 998's apptAttachJob rather than inventing a second picker.
+   The report's insured name / loss location are shown so the right job is easy
+   to find. Admin-only in fact (the table's write policy is is_cardinal_admin),
+   and open() already refuses a non-admin before any of this is reachable. */
+async function itelAttachJob(id){
+  var v = view(); if(!v) return;
+  var rows = v.__rows || [];
+  var rep = rows.filter(function(x){ return String(x.id) === String(id); })[0] || {};
+  var opts = (window.cacheProjects || []).slice().sort(function(a, b){
+    return String(a.name || '').localeCompare(String(b.name || ''));
+  });
+  if(!opts.length){ alert('No jobs to attach to yet.'); return; }
+  var who = [rep.insured_name, rep.loss_location].filter(Boolean).join(' — ') ||
+            (rep.control_number || 'this report');
+  var pick = prompt('Attach the lab result for "' + who + '" to which job?\n\n' +
+    opts.map(function(p, i){ return (i + 1) + '. ' + (p.name || '(no name)') +
+      (p.address ? ' — ' + p.address : ''); }).join('\n') + '\n\nType the number:');
+  if(pick === null) return;
+  var n = parseInt(String(pick).trim(), 10);
+  if(!(n >= 1 && n <= opts.length)){ alert('That is not one of the numbers listed.'); return; }
+  try{
+    var r = await sb.from('itel_lab_reports').update({ project_id: opts[n - 1].id }).eq('id', id);
+    if(r.error) throw r.error;
+    open();   /* re-fetch and re-render */
+  }catch(e){ alert('Could not attach it: ' + ((e && e.message) || e)); }
+}
 document.addEventListener('DOMContentLoaded', function(){
   var v = view();
-  if(v) v.querySelector('[data-act="close"]').addEventListener('click', close);
+  if(v){
+    v.querySelector('[data-act="close"]').addEventListener('click', close);
+    /* delegated, so it survives the body's innerHTML being replaced each load */
+    var body = v.querySelector('.cr-itellab-body');
+    if(body) body.addEventListener('click', function(e){
+      var b = e.target.closest('[data-itel-attach]');
+      if(b) itelAttachJob(b.getAttribute('data-itel-attach'));
+    });
+  }
 });
 window.CardinalItelLab = { open: open, close: close };
 })();
