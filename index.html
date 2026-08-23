@@ -3701,7 +3701,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1001 &#8212; a claim now has one clear answer to &#8220;what are we still owed.&#8221; Outstanding counts the full replacement value including the deductible, plus any supplement the carrier has actually approved, minus what has come in. A supplement you have filed but the carrier has not ruled on is shown on its own line as awaiting a decision, never folded into the total or shown as $0 &#8212; so a pending supplement is visible without inflating what you think you are owed.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1002 &#8212; the iTel lab results can now be attached to a job. There are 28 of them &#8212; product-match and asbestos verdicts you have paid for &#8212; and none was linked to anything, because the app only ever offered to link them to a claim and the ones worth attaching are on jobs that have no claim. Each result now has an &#8220;Attach to a job&#8221; button; once linked it shows the job it belongs to. (Run the itel_project_link.sql migration first.)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41554,7 +41554,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1001, d:'2026-08-23', t:'A claim has one clear answer to \u201Cwhat are we still owed\u201D', s:'The Outstanding figure on a claim now has a single, documented rule: the full replacement value (which includes the deductible the homeowner still owes) plus any supplement the carrier has actually approved, minus what has been received. A supplement you have filed but the carrier has not yet ruled on is shown on its own line as awaiting a decision \u2014 it is never added into the total and never shows as $0 owed, so it is visible without making it look like money is in hand. This is a display number only; it does not change how commissions are worked out.' },
+{ b:1002, d:'2026-08-23', t:'iTel lab results can be attached to a job', s:'The 28 iTel lab results \u2014 the product-match and asbestos verdicts you have paid for \u2014 were sitting linked to nothing, because the only link the app offered was to a claim, and the results worth attaching belong to jobs that have no claim on file. They now attach to the JOB instead: each result has an \u201CAttach to a job\u201D button, and once linked it shows which job it belongs to. Sixteen of the 28 are non-match verdicts \u2014 exactly the evidence a matching argument needs \u2014 so getting them onto their jobs is what makes them usable.' },
+      { b:1001, d:'2026-08-23', t:'A claim has one clear answer to \u201Cwhat are we still owed\u201D', s:'The Outstanding figure on a claim now has a single, documented rule: the full replacement value (which includes the deductible the homeowner still owes) plus any supplement the carrier has actually approved, minus what has been received. A supplement you have filed but the carrier has not yet ruled on is shown on its own line as awaiting a decision \u2014 it is never added into the total and never shows as $0 owed, so it is visible without making it look like money is in hand. This is a display number only; it does not change how commissions are worked out.' },
       { b:1000, d:'2026-08-23', t:'A claim shows how long since the date of loss', s:'Next to the date of loss on a claim you now see how long ago it was \u2014 \u201C476 days ago.\u201D It is a plain fact, not a deadline clock: the app will not guess a suit-limitation period, because getting that wrong is the real harm. Both open claims are over a year out, and this makes that obvious without doing the arithmetic in your head. A true countdown would need the limitation date typed in from the policy, which is a later, separate change.' },
       { b:999, d:'2026-08-23', t:'Lead source is a required tap when you add a client', s:'Where a lead came from \u2014 door knock, referral, storm canvass, and so on \u2014 is the one field that tells you whether the way you find work is working. It was already wired into the reports chart, the filter and the sort, but it defaulted to \u201Cnot set\u201D and only the client name was required, so it was blank on every job and the chart had no data. Adding a client now asks for it as a single tap from eight chips, and it remembers your last pick so a canvasser doing a street taps once rather than every time. Editing an existing client never nags \u2014 the requirement is only for new ones.' },
       { b:998, d:'2026-08-22', t:'A build day on the calendar has to say which job it is', s:'Booking a build meant typing an address and picking \u201CJob\u201D \u2014 and the client box said \u201Coptional\u201D, so it usually stayed empty. An appointment attached to no job cannot move that job to Scheduled, which means it never reaches the crew board, which is why the \u201Cneeds a crew\u201D rail has been empty since it was built. Job and Material Drop now ask for the job, and say why if you skip it. Ordinary appointments are untouched \u2014 a haircut has no client. The two build days already in the calendar without a job can be attached to one instead of being deleted and booked again.' },
@@ -74122,7 +74123,9 @@ window.CardinalMediaMigrate = { showRunner: showRunner };
 })();
 </script>
 <style id="cr-itellab-styles">#cr-itellab{display:none;position:fixed;inset:0;background:#0f0f10;color:#e8e5df;z-index:9500;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-itellab.open{display:flex}.cr-itellab-hd{padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);display:flex;align-items:center;gap:10px;flex:0 0 auto}.cr-itellab-hd h2{margin:0;flex:1;font:800 15px 'Segoe UI',Arial,sans-serif}.cr-itellab-hd button{background:transparent;border:1px solid rgba(255,255,255,.3);color:#fff;padding:7px 13px;border-radius:7px;font:800 11px 'Segoe UI',Arial,sans-serif;cursor:pointer}.cr-itellab-sub{padding:0 16px 12px;font:600 12px 'Segoe UI',Arial,sans-serif;color:#9a9490}.cr-itellab-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 24px}
-body.standalone .cr-itellab-body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* iTel Lab \u2014 was 24px */.cr-itellab-row{border:1px solid #2c2b28;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#171614}.cr-itellab-row .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}.cr-itellab-row .ctrl{font:800 12.5px 'SF Mono',Menlo,Consolas,monospace;color:#e0a83c}.cr-itellab-row .verdict{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:#2c2b28;color:#cfc9c0}.cr-itellab-row .prod{margin-top:4px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#e8e5df}.cr-itellab-row .meta{margin-top:4px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#9a9490}.cr-itellab-row .asb{margin-top:6px;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#ef6a6a}.cr-itellab-row a{color:#e0a83c}.cr-itellab-empty{padding:40px 20px;text-align:center;color:#9a9490;font:600 13px 'Segoe UI',Arial,sans-serif}</style>
+body.standalone .cr-itellab-body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* iTel Lab \u2014 was 24px */.cr-itellab-row{border:1px solid #2c2b28;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#171614}
+.cr-itellab-row .cr-itellab-attach{background:transparent;border:1px solid var(--ct-red,#c8202e);color:var(--ct-red,#c8202e);border-radius:7px;padding:7px 12px;min-height:38px;cursor:pointer;font:700 12px 'Segoe UI',Arial,sans-serif;}
+.cr-itellab-row .itel-linked{color:var(--ct-green,#2f7d55);font-weight:700;}.cr-itellab-row .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}.cr-itellab-row .ctrl{font:800 12.5px 'SF Mono',Menlo,Consolas,monospace;color:#e0a83c}.cr-itellab-row .verdict{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:#2c2b28;color:#cfc9c0}.cr-itellab-row .prod{margin-top:4px;font:600 13px 'Segoe UI',Arial,sans-serif;color:#e8e5df}.cr-itellab-row .meta{margin-top:4px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#9a9490}.cr-itellab-row .asb{margin-top:6px;font:700 11.5px 'Segoe UI',Arial,sans-serif;color:#ef6a6a}.cr-itellab-row a{color:#e0a83c}.cr-itellab-empty{padding:40px 20px;text-align:center;color:#9a9490;font:600 13px 'Segoe UI',Arial,sans-serif}</style>
 <div id="cr-itellab">
   <div class="cr-itellab-hd">
     <h2>&#129514; iTel Lab Results</h2>
@@ -74173,6 +74176,14 @@ function rowHtml(r){
     (asb ? '<div class="asb">' + asb + '</div>' : '') +
     (r.report_url ? '<div class="meta"><a href="' + esc(r.report_url) +
       '" target="_blank" rel="noopener">Open report</a></div>' : '') +
+    /* 1002: link to a JOB, not a claim. claim_id was never fillable — every
+       row is NULL and the attachable ones belong to jobs with no claim. The
+       report is about a house's shingle, so it belongs to the job; a claim on
+       that job reads it through the job. */
+    (r.project_id
+      ? '<div class="meta itel-linked">Job: ' + esc(projName(r.project_id)) + '</div>'
+      : '<div class="meta"><button type="button" class="cr-itellab-attach" ' +
+          'data-itel-attach="' + esc(r.id) + '">+ Attach to a job</button></div>') +
   '</div>';
 }
 async function open(){
@@ -74186,11 +74197,12 @@ async function open(){
     var r = await sb.from('itel_lab_reports').select('*').order('report_date', { ascending:false });
     if(r.error) throw r.error;
     var rows = r.data || [];
-    var unlinked = rows.filter(function(x){ return !x.claim_id; }).length;
+    v.__rows = rows;
+    var unlinked = rows.filter(function(x){ return !x.project_id; }).length;
     v.querySelector('.cr-itellab-sub').textContent = rows.length +
       ' lab result' + (rows.length === 1 ? '' : 's') +
-      (unlinked ? ' · ' + unlinked + ' not yet linked to a claim' : '') +
-      ' · read-only';
+      (unlinked ? ' · ' + unlinked + ' not yet linked to a job' : '') +
+      ' · admin';
     v.querySelector('.cr-itellab-body').innerHTML = rows.length
       ? rows.map(rowHtml).join('')
       : '<div class="cr-itellab-empty">No lab results on file.</div>';
@@ -74204,9 +74216,49 @@ function close(){
   if(v) v.classList.remove('open');
   try{ if(typeof window.showHome === 'function') window.showHome(); }catch(_){}
 }
+function projName(id){
+  var list = window.cacheProjects || [];
+  var p = list.filter(function(x){ return String(x.id) === String(id); })[0];
+  return p ? (p.name || '(unnamed job)') : '(job not on this device)';
+}
+/* 1002: attach an orphaned lab report to a job. Reuses the numbered-prompt
+   picker shape from 998's apptAttachJob rather than inventing a second picker.
+   The report's insured name / loss location are shown so the right job is easy
+   to find. Admin-only in fact (the table's write policy is is_cardinal_admin),
+   and open() already refuses a non-admin before any of this is reachable. */
+async function itelAttachJob(id){
+  var v = view(); if(!v) return;
+  var rows = v.__rows || [];
+  var rep = rows.filter(function(x){ return String(x.id) === String(id); })[0] || {};
+  var opts = (window.cacheProjects || []).slice().sort(function(a, b){
+    return String(a.name || '').localeCompare(String(b.name || ''));
+  });
+  if(!opts.length){ alert('No jobs to attach to yet.'); return; }
+  var who = [rep.insured_name, rep.loss_location].filter(Boolean).join(' — ') ||
+            (rep.control_number || 'this report');
+  var pick = prompt('Attach the lab result for "' + who + '" to which job?\n\n' +
+    opts.map(function(p, i){ return (i + 1) + '. ' + (p.name || '(no name)') +
+      (p.address ? ' — ' + p.address : ''); }).join('\n') + '\n\nType the number:');
+  if(pick === null) return;
+  var n = parseInt(String(pick).trim(), 10);
+  if(!(n >= 1 && n <= opts.length)){ alert('That is not one of the numbers listed.'); return; }
+  try{
+    var r = await sb.from('itel_lab_reports').update({ project_id: opts[n - 1].id }).eq('id', id);
+    if(r.error) throw r.error;
+    open();   /* re-fetch and re-render */
+  }catch(e){ alert('Could not attach it: ' + ((e && e.message) || e)); }
+}
 document.addEventListener('DOMContentLoaded', function(){
   var v = view();
-  if(v) v.querySelector('[data-act="close"]').addEventListener('click', close);
+  if(v){
+    v.querySelector('[data-act="close"]').addEventListener('click', close);
+    /* delegated, so it survives the body's innerHTML being replaced each load */
+    var body = v.querySelector('.cr-itellab-body');
+    if(body) body.addEventListener('click', function(e){
+      var b = e.target.closest('[data-itel-attach]');
+      if(b) itelAttachJob(b.getAttribute('data-itel-attach'));
+    });
+  }
 });
 window.CardinalItelLab = { open: open, close: close };
 })();

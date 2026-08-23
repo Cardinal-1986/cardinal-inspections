@@ -20611,6 +20611,40 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1002 — iTel lab results attach to a job (23 Aug 2026)
+
+Theo's call: attach by **job**, not claim. 28 lab results — product-match and asbestos verdicts,
+$1,671.79 paid — were linked to nothing. `claim_id` is NULL on every one, and the three attachable
+ones belong to jobs with **no claim at all**, so a claim link is literally unfillable. The report is
+about a house's shingle; the job owns it, and any claim on that job reads it through the job.
+**Sixteen of the 28 are non-match verdicts** — exactly the evidence a matching argument needs.
+
+### SQL first — `itel_project_link.sql`
+
+`alter table itel_lab_reports add column if not exists project_id uuid references projects(id) on
+delete set null;` plus an index. **No RLS change:** the write policy is already
+`ALL / is_cardinal_admin()`, so an admin can set the column; SELECT stays authenticated-read.
+Additive and nullable — changes no existing row; a deleted project unlinks its reports rather than
+deleting them. `projects.id` confirmed `uuid`, so the FK type matches. **Runs before the
+index.html deploy.**
+
+### App side
+
+`cr-itellab-script` gains: each row shows its linked job or an **"Attach to a job"** button;
+`itelAttachJob()` reuses 998's numbered-prompt picker (not a second picker), showing the report's
+insured name / loss location so the right job is easy to find; the sub-line now counts reports **not
+linked to a job** and drops "read-only" for "admin". The delegated click handler lives on
+`.cr-itellab-body` so it survives each re-render.
+
+`gate_1002.mjs` — 8 assertions against the mock (which accepts the new column): the orphan offers an
+attach button, the pre-linked row names its job, the sub-line counts jobs; then it clicks attach,
+auto-answers the picker, and confirms the write persisted (orphan → the picked job) and the attach
+button is gone. Control on 1001: **PASS 3 · FAIL 5**, named, no crash — the control shows the old
+"read-only / not yet linked to a claim" sub-line.
+
+⚠ The **entered-date supplement countdown** (deferred from 1000) and this share a theme: both wanted
+a column. This one got its migration; the suit-limitation date is still deferred.
+
 ## Build 1001 — one documented definition of a claim's "outstanding" (23 Aug 2026)
 
 Theo's call on the decision list: *"include deductibles and exclude undecided supplements."*
