@@ -3,6 +3,142 @@
 
 ---
 
+## 🔍 Fresh audit, 23 Aug 2026 @ build 1014 (workflow wf_8568b748-3eb) — 17 CONFIRMED, 0 refuted
+
+9 finders (regressions/money/api-security/rls/ui-dead/contrast/offline/datamodel/flows) → dedupe →
+adversarial verify (skeptic default-refute). **26 raw → 17 verified → 17 CONFIRMED, 0 refuted**; 9
+lows dropped unverified (listed at the bottom). Every finding read against the build-1014 tree and
+the live DB. Ranked, with the smallest fix each verifier settled on. **None built yet — awaiting
+Theo's pick.**
+
+### ✅ THE HEADLINE — RESOLVED at build 1015. The contract/estimate signing flow is whole again.
+All 5 below fixed in build 1015 (index.html + api/clientsign.js + api/share.js), proven by
+`gate_1015.mjs` (executes buildEstimate/isEstimateTitle/docKind + the real clientsign handler; RED
+×12 against 1014): (1) footer stripped only when the body carries its own slots — Service Contract
+keeps its signature line; (2) clientsign writes `signed_at`; (3) `SLOT_RX` makes agreements signable
+and clientsign stamps the buyer slot; (4) isEstimateTitle/docKind strip the `EST-` prefix; (5) void
+readers check `'void'`. Original detail retained below for the record.
+
+### 🔴 THE HEADLINE (RESOLVED 1015): the contract/estimate signing flow is broken end to end (5 findings)
+These interlock — a genuine "reproduce before theorising" cluster. Read together before fixing.
+1. **Estimate → Contract makes a contract with NO signature block.** 781's `isDeal` strip
+   (`buildEstimate`, index.html:9845–9846) removes the base `SIGN_FOOTER` from every
+   AGREEMENT/CONTRACT — but the plain **Service Contract** brings no `data-sig` slots of its own, so
+   it ends up with nowhere to sign; the in-person pad silently discards the signature and the share
+   link is view-only. **Fix:** strip the footer only when the body carries its own slots —
+   `if(isDeal){ if(body.indexOf('data-sig') !== -1) out = out.replace(SIGN_FOOTER,''); … }`.
+2. **Remote signing writes none of the state in-person signing writes** (`api/clientsign.js:55`):
+   it PATCHes only `{html, updated_at}` — never `inspection_reports.signed_at` — yet it advances the
+   project to Approved and emails Curtis. So the SIGNED chip never shows, the estimate never enters
+   the Approvals queue, the money worksheet stays locked, but production is already told to order.
+   **Fix:** add `signed_at: new Date().toISOString()` to the PATCH body.
+3. **Construction Agreements can't be signed remotely at all** (`api/share.js` SIGN_RX vs the
+   agreements' `data-sig="buyer"` sigslots): the share/sign APIs only treat a doc as signable when
+   `SIGN_RX` matches, which the agreements' slot markup never does. **Fix:** in share.js + clientsign.js
+   treat an unfilled `data-sig="buyer"` sigslot (no `data-clientsigned`) as signable and stamp into it.
+4. **Published estimate titles fail `isEstimateTitle()`** (index.html:15143): publish titles docs
+   `EST-YYYY-NNNN — …`, but the regex needs a leading `estimate`, so a signed estimate never reaches
+   `renderApprovals`, the "needs approval" email, the overview counts, or jobFinance's doc leg. Live:
+   the one signed estimate doc in production (EST-2026-0896) fails the match. **Fix:** strip a leading
+   `EST-\d{4}-\d+ — ` prefix in the one definition; all 15+ call sites inherit it.
+5. **Contract void lifecycle checks `'voided'` but the writer writes `'void'`** (LOW, dropped-list
+   below) — the third of the same family.
+
+### 🔴 SECURITY — code half RESOLVED at build 1016; ONE operator action still open
+✅ **Findings 6 + 7 code fix shipped in build 1016**: all 13 AI/spend routes + senddoc now require
+Cardinal-staff identity (`api/_staff.js` isStaff — domain OR the 2 non-domain staff), guard after the
+session resolves, proven by `gate_1016.mjs` (RED ×40 against 1014).
+⚠️ **STILL OPEN — Theo's action:** disable **public signup** in Supabase Auth (Dashboard →
+Authentication → Providers/Settings → turn off "Allow new users to sign up"). Without it a stranger
+can still create an account; the routes refuse them now, but signup itself should be closed. Also
+add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/_staff.js`.
+
+### 🔴 SECURITY (original detail) — needs a policy call from Theo, then a clear code fix
+6. **AI/spend routes trust ANY confirmed session, and public signup is enabled** (12 routes:
+   analyze/caption/summarize/organize/sortphotos/detect/design/measure/sol/roofr/hover/coach). 1013
+   closed anonymous access, but a self-signed-up outsider with a valid session still burns Cardinal's
+   paid keys — and **two non-roster accounts already exist** (clarkie022@gmail.com is legit sales;
+   the point is the gate is identity-blind). **Fix:** add a roster/domain gate (`@cardinalrenovations.net`
+   or `is_cardinal_staff()`) to the shared session helper — AND disable public signup in Supabase
+   Auth (operator action; disabling signup alone leaves existing outsider sessions valid, so both
+   halves are needed).
+7. **`api/senddoc.js` lets any authenticated session email arbitrary HTML to any recipient** from
+   Cardinal's sender identity (only `variant:'carrier'` is admin-gated). **Fix:** gate all variants
+   on Cardinal-staff identity (same roster check as #6).
+
+### 🟠 HIGH — data/flow correctness
+8. ✅ **RESOLVED at build 1017.** Offline checklist edits merged onto a stale SW-cached copy and silently erased the previous
+   edit on sync** (`patchProjectCk`, index.html:18987 — 50 call sites: tasks, payments, worksheet,
+   contacts, measurements). The TEAM refetch has no `onLine` guard; sw.js serves the cached row.
+   **Fix:** skip the refetch when offline (`if(TEAM && !navigator.onLine===false…)`, the idiom
+   `pdb.update` already uses at :10708).
+9. ✅ **RESOLVED at build 1018.** 28 of 57 projects' lead source is stored only at `checklist.lead.source`, which zero readers
+   consume — and 3 writers still produce that shape** (manual-estimate create, community-bid convert,
+   +1). 1008 fixed only the New Lead intake. **Fix:** one reader-side normalization in
+   `__parseCkAllRaw` (index.html:20444) — if flat `lead_source` is null but `lead.source` exists, lift
+   it — which repairs all 28 rows, all 11 readers, and any future nested write in one place.
+10. ✅ **RESOLVED — APPLIED to production 23 Aug 2026 on Theo's instruction ("D the sql")** —
+    `team_profiles_self_edit.sql`. Team Directory showed non-admins a pencil to edit their own row
+    (index.html ~27031), but `team_profiles` had only an admin UPDATE policy — confirm-then-silent-
+    failure. Applied: self-row UPDATE policy (`using/with check lower(email)=lower(my_email())`) plus
+    the `team_profiles_guard_self` BEFORE UPDATE trigger pinning `role`/`email` for non-admins
+    (`is_cardinal_admin()` traced: false for non-admins → pins; true for admins → untouched; NULL in
+    a no-JWT/service context → untouched). Verified in pg_policies + pg_trigger after apply.
+
+### 🟠 MEDIUM
+11. ✅ **RESOLVED at 1019.** Payment Information's "Received"/"Job Net" excluded collections (`payTotals`, index.html:14342)
+    — since 996 all money-in is collections, so this page contradicts Balance Due on any job with a
+    collection. **Fix:** mirror jobFinance — `if(collPaid[pr.id]!==undefined) recv = collPaid[pr.id]`
+    + a read-only "From Money In" row.
+12. ✅ **RESOLVED at 1019.** jobFinance summed contract DOCS but took MAX over the contract TABLE rows
+    (index.html:15917 / indexMoney:20629) — a multi-trade job whose contracts live in the table
+    under-reports Job Value. **Fix:** make the table leg a SUM too (`ctrSigned[id] = (…||0) + t`).
+13. ✅ **RESOLVED at 1020.** Stage-defer committed a superseded move → fired the irreversible
+    "APPROVED — order materials" email for a job the user immediately corrected (index.html:11534,
+    was 11526). Tap forward then back within 5s (or the phone locks) → Curtis got a phantom order
+    email. **Fix:** a same-project supersede now CANCELS like Undo (restore the pending move's true
+    `from`, rebase, and if the round-trip lands back at origin save nothing); cross-job supersede +
+    pagehide/visibilitychange flush keep committing (the deliberate 1008 fix, left intact). Proven
+    by `gate_1020.mjs` (same-job round-trip → 0 setStage; cross-job supersede still commits).
+14. ✅ **RESOLVED at 1021.** Offline stage moves synced the row but dropped the Approved/Completed
+    team notification silently (setStage — bare fire-and-forget `notifyTeam()`). **Fix:** new
+    `_notifyOrQueue` helper queues an `op:'notify'` outbox entry on a network/offline send failure
+    (not on a real refusal); the outbox `flush()` gained an `op:'notify'` branch that replays via
+    `window.notifyTeam` and never buries a best-effort email. Proven by `gate_1021.mjs` (executes
+    both the flush branch and the helper).
+15. ✅ **RESOLVED — APPLIED to production 23 Aug 2026 on Theo's instruction ("D the sql")** —
+    `photos_upload_prefix_exclusions.sql`. The blanket `photos_upload` INSERT policy (no staff check)
+    was OR'd with the dedicated prefix policies, so any authenticated user could upload into the
+    admin-only prefixes (showcase/walks/workmanship/owner-vault/materials) and staff-only
+    visualizer/. Applied: one `ALTER POLICY` carving those six prefixes out; each is now governed
+    only by its own stricter policy. Verified in pg_policies after apply — the `with_check` carries
+    all six exclusions and the dedicated policies are untouched. ⚠️ If a non-admin teammate ever
+    legitimately needed to upload to one of these prefixes, widen that prefix's OWN policy — do not
+    re-blanket `photos_upload`.
+16. ✅ **RESOLVED at 1022.** Community Analytics (cr-can), Line Item Library (cr-lil-view) and the
+    contract viewer (cr-ce-view) were full-screen views in neither `hideAllViews()` nor
+    `navRestore()` — the 941/Suppliers nav-trap class. **Fix:** all three registered — display-lever
+    for cr-can, module-`close()` for the two class-shown ones (cr-ce via a wrapper on the bare
+    `closeContractEditor` global); history via `__crNav` wraps (cr-can/cr-lil) and
+    `wrapNav('openContractEditor')` + navRestore cases. Proven by `gate_1022.mjs` (executes
+    hideAllViews and navRestore against a mock DOM).
+17. ✅ **RESOLVED at 1023.** Build 966's fill chip (#fillChipBtn, a .btn.dark on #555) failed
+    contrast in both states — #e35c63 (2.12:1) / #6cb98f (3.19:1), under the 4.5:1 body floor.
+    **Fix:** label is now #ffc2c6 (4.89:1) / #9fdcb4 (4.75:1, the green savedFlash already uses);
+    bright borders unchanged. Proven by `gate_1023.mjs` (recomputes the ratios; old ones fail).
+
+### 🟡 dropped LOWs (unverified — logged, not chased)
+Moving Invoiced→Completed pops the review prompt · `manual_estimates` USING(true) write policy ·
+Supabase leaked-password protection off · New Bid property picker reads a never-loaded cache
+(`forPartner`/`byPartner` don't exist) · dead `CardinalCommunityBid.logSubmitted` reference · 947
+SUPPLEMENT tag 2.0:1 in light · SW answers the AI-Field-Manual iframe with the app shell offline ·
+one OnHold project missing `stage_since` · contract void checks `'voided'` vs written `'void'`.
+
+**Full detail:** workflow journal `subagents/workflows/wf_8568b748-3eb/journal.jsonl`; matched
+records in `scratchpad/audit1014.json`.
+
+---
+
 ## 🔍 Fresh audit, 23 Aug 2026 @ build 1007 (workflow wf_202d59de-b67) — CONFIRMED findings
 
 8 finders + adversarial verify. 38 raw → 12 verified CONFIRMED. **Build 1008 fixed the four that were

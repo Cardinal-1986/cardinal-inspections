@@ -2518,7 +2518,7 @@ future commission; net payout = owed − outstanding draws. Paid locks.
 
 ⚠️ **`collections` is the ONE door for money received — both entry points now agree.**
 On the Payment Information page the "Received" section's + button (996) **and** its
-heading tap (1016) both route to `payGoLogCollection()` → this tab; the legacy
+heading tap (1024) both route to `payGoLogCollection()` → this tab; the legacy
 `dir:'in'` add modal is unreachable from Received. Money logged the old way books no
 commission and, since 721, is ignored by Balance Due whenever any collection exists
 (`jobFinance`: `if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id]`). "Paid" /
@@ -2534,7 +2534,7 @@ tier 2 no doc competes at all, and a doc any estimates row points at via `doc_id
 legacy document-only estimates still feed the leg. `estTier`/`estDocIds` are globals
 filled by `indexMoney()`. **Do not add another estimate-valuing scan anywhere** —
 Balance Due, the AR chart, pipeline dollars and the invoice all inherit from here.
-Gate: `gate_1011.mjs` (executes the shipped functions; RED ×3 on build 1016).
+Gate: `gate_1011.mjs` (executes the shipped functions; RED ×3 on build 1024).
 
 ⚠️ **Contract deposit precedence (781 → 785 → 1012), in `fillContractMoney()` — the ONE
 place a contract's money is written:** an explicit `est` row passed in (estimate→contract)
@@ -5996,7 +5996,7 @@ counts and what it refuses to count, each of the three kinds dropping the count 
 green "All filled" state reached by filling everything, the jump outlining a blank and moving on,
 and a hand-added field being counted; control red 11 named).
 
-### Print fidelity on contracts and estimates (1016)
+### Print fidelity on contracts and estimates (1024)
 
 `ensurePrintFix(d)` in the report-editor block is the single place the printed page's furniture is
 decided: which editing chrome is dropped, where the page breaks may not fall, the running header
@@ -6536,14 +6536,14 @@ refusal (always visible), Lead Source by opening "More detail" and shaking the f
 blocker (the 782 reveal pattern), plus a `*` added to its label. No layout change. `gate_1005.mjs`
 (Chromium, drives the real ldSave; control on 1004 PASS 2 · FAIL 5).
 
-### 1016 — stage arrows: one tap, with Undo (dialog diet, slice 1)
+### 1024 — stage arrows: one tap, with Undo (dialog diet, slice 1)
 
 The profile's forward/back stage arrows no longer confirm on every tap. A tap moves the job at once and
 shows a 5-second Undo toast (window.CardinalUndo, shipped since 186). The transition is DEFERRED for the
 window: the target stage shows optimistically (cache-only), and the real commit (setStage / acxAdvance)
 runs only when the toast closes — so an undone tap never writes to the record and never fires setStage's
 team email (Approved → Curtis "schedule + order materials"; Completed → rep+admins). Gmail Undo-Send
-model. `crStageDefer` is the shared helper; `gate_1016.mjs` (source wiring + Chromium mechanism test;
+model. `crStageDefer` is the shared helper; `gate_1024.mjs` (source wiring + Chromium mechanism test;
 control on 1005 FAIL 4). First slice of the dialog diet; alert→toast and prompt→inline remain.
 
 ### 1007 — a phone-signed contract buzzes Curtis too (remote signature parity)
@@ -6566,5 +6566,5 @@ pre-checked) — no type is pre-selected on a neutral portal now, so the choice 
 lives; (3) crStageDefer dropped a superseded move (2nd arrow tap, esp. cross-job) — a superseding tap
 now commits the first move, and the target is captured + committed via setStage() directly (race-free);
 (4) closing the app in the Undo window lost the move — a pagehide/visibilitychange flush commits it.
-gate_1016 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
+gate_1024 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
 findings (incl. the critical api/abc.js open proxy) are logged in OPEN_ITEMS "Audit 2026-08-23".
