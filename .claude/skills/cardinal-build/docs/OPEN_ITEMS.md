@@ -90,12 +90,13 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
 12. ✅ **RESOLVED at 1019.** jobFinance summed contract DOCS but took MAX over the contract TABLE rows
     (index.html:15917 / indexMoney:20629) — a multi-trade job whose contracts live in the table
     under-reports Job Value. **Fix:** make the table leg a SUM too (`ctrSigned[id] = (…||0) + t`).
-13. **Stage-defer commits a superseded move → fires the irreversible "APPROVED — order materials"
-    email for a job the user immediately corrects** (index.html:11526). Tap forward then back within
-    5s (or the phone locks) → Curtis gets a phantom order email. Regression from 1008's
-    commit-don't-drop. **Fix:** a same-project supersede should CANCEL like Undo, not commit;
-    cross-job supersede + pagehide flush keep committing. (The pagehide/visibilitychange commit is
-    the deliberate 1008 fix — leave it.)
+13. ✅ **RESOLVED at 1020.** Stage-defer committed a superseded move → fired the irreversible
+    "APPROVED — order materials" email for a job the user immediately corrected (index.html:11534,
+    was 11526). Tap forward then back within 5s (or the phone locks) → Curtis got a phantom order
+    email. **Fix:** a same-project supersede now CANCELS like Undo (restore the pending move's true
+    `from`, rebase, and if the round-trip lands back at origin save nothing); cross-job supersede +
+    pagehide/visibilitychange flush keep committing (the deliberate 1008 fix, left intact). Proven
+    by `gate_1020.mjs` (same-job round-trip → 0 setStage; cross-job supersede still commits).
 14. **Offline stage moves sync the row but drop the Approved/Completed team notification silently**
     (setStage, index.html:19116/19125 — bare `notifyTeam()`). **Fix:** on `res.ok===false` reason
     network/offline, queue an `op:'notify'` outbox entry + a flush() branch.
