@@ -20497,7 +20497,7 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
-## Build 994 — the printed contract shows all of its own words
+## Build 1006 — the printed contract shows all of its own words
 
 **The defect.** The slim grey running header (`.runhead`, build 747) is `position:fixed`, which
 does repeat on every printed page — in the same strip the flowed text occupies. Its background is
@@ -20529,7 +20529,7 @@ had no print furniture at all: no page rules, and no address footer.
 the header up with `top:-0.34in`; Chromium clamps a fixed element to the page area, so it landed at
 the **bottom** of the page (y≈707) and off page 5 entirely. Collisions read **zero** — because the
 header had left, not because the text was clear. *Absence of a collision is not the goal; a header
-above readable text is.* `gate_994` assertion 4 exists solely to catch that, and it is the
+above readable text is.* `gate_1006` assertion 4 exists solely to catch that, and it is the
 assertion the first two attempts would have failed.
 
 ⚠️ **A measurement that returned nonsense was believed for one round.** The collision detector
@@ -20540,7 +20540,7 @@ are not app states; they are a broken instrument. Read the numbers before readin
 acceptance block onto a fifth sheet. Roof (5), siding (4) and the service contract (2) are
 unchanged. The full-width hairline under the old header does not survive the move to a margin box.
 
-**Gates.** `check_build.py` green 993 → 994. **`gate_994.mjs` 31/31 GREEN · RED on the 966 control
+**Gates.** `check_build.py` green 1003 → 1006. **`gate_1006.mjs` 31/31 GREEN · RED on the 966 control
 with 15 named failures**, no crash — it presses the real Download button, prints those exact bytes,
 and measures the pages. `gate_964` 9/9, `gate_965` 12/12, `gate_966` 12/12 re-run.
 
@@ -20603,6 +20603,470 @@ proven, and it cannot finish this sweep on its own.**
 *That is the same reason `.cr-cth-tabs` survived for so long: nothing renders those surfaces with
 realistic data. The remaining work is not another checker — it is teaching the harness to open those
 nine surfaces and populate them.* Recorded in `OPEN_ITEMS.md`.
+
+## Tooling — gate_951 and gate_953 repaired; nothing was lost (22 Aug 2026, no build number)
+
+I reported these to Theo as an open question — *"either the rail was restructured and the gates were
+never updated, or those sections were lost, I didn't want to pick a side"* — and he pushed back.
+**He was right: it was answerable from the code, and I should not have asked.**
+
+### What was actually happening
+
+`syncPortalSections()` shows **one section per portal**, and its own comment carries Theo's request:
+
+```js
+/* 955-956: one section per portal, all four symmetric now - Theo asked for
+   Insurance in retail first (954), then production/community (955), then
+   "make insurance symmetric too" (956). */
+if(setSectionHidden(secOfNav('sol'),       p !== 'insurance')) …
+if(setSectionHidden(secOfNav('prodboard'), p !== 'production')) …
+if(setSectionHidden(secOfNav('newbid'),    p !== 'community')) …
+```
+
+Both gates were written **before** that rule (951 and 953) and boot into **retail**, where those
+sections are now *correctly* hidden. They reported `Daily,Sell,CRMs,Resources,Admin` and read as six
+lost tools.
+
+**Proved rather than reasoned:** switching to the insurance portal brings the section back with all
+seven rows *in the exact order the gate expects* — `sol, library, supplements, insresources,
+adjusters, claimstracker, desk`. Nothing is lost.
+
+### Three separate faults, not one
+
+1. **Mis-navigation** — both gates assert in retail. Fixed by driving `body.dataset.crm(Head)` and
+   calling `syncPortalSections()`, the app's own lever. ⚠ `gate_951` opens a **second** page for the
+   desktop rail, and that one needed the portal too — the phone page's switch does not carry over,
+   which is why the menu checks passed while the rail checks still failed.
+2. **A superseded expectation** — `gate_953` required Production AND Community visible *in the
+   Insurance portal*. True at 953, wrong from 955. Rewritten to the symmetric rule and asserted in
+   **both directions**, so a regression that stops hiding them is caught as well as one that stops
+   showing Insurance.
+3. **A deliberate move, read as a loss** — `gate_953` required Suppliers under Production. The
+   markup's own comment says why it is not: 774's job is *"a retail-desk job, so it belongs in the
+   section that never hides. Admins still get it relocated under Admin by reorg()."* Once sections
+   hid per portal, leaving it under Production would have taken it from a retail desk. Measured:
+   **admin → Admin, crew → Daily, visible for both.** The contract is REACHABILITY, not a parent, so
+   that is what it now asserts — printing the parent so a future move is visible rather than silent.
+
+### ⚠ Proved they can still fail
+
+A gate rewritten until it passes is worthless. Two constructed controls:
+
+- **three Insurance rows deleted from the markup** → `gate_951` red, naming them: *"all seven items
+  are in the rail — supplementtemplates, claimstracker, supplementdesk"*.
+- **`prodboard`'s hide forced off** → `gate_953` red on the new both-directions check:
+  *"and NOT Production or Community — Daily,Insurance,Production,CRMs,Resources,Admin"*.
+
+`gate_951` **22/0**, `gate_953` **30/0**. No `index.html` change, so no build number.
+
+**`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
+one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
+
+## Build 1003 — the shared calendar (23 Aug 2026)
+
+The last of the "yes to all" batch, and the sensitive one. An appointment was visible only to the
+person who booked it (plus the two admins), so the rep whose client was getting a roof could not see
+the build day their crew was coming — the exact reason 998's job days sat orphaned. Theo's decision:
+**share the two work kinds (`job`, `drop`) with everyone assigned to the job; keep personal `appt`
+and `team` entries private to their creator.**
+
+### SQL first — `appointments_shared_calendar.sql` (RLS; run before deploy)
+
+Two additive, idempotent policies on `public.appointments`:
+
+- **Visibility.** A new permissive SELECT policy: `kind in ('job','drop') and project_id is not
+  null and exists (select 1 from projects p where p.id = appointments.project_id)`. The EXISTS runs
+  under the **projects** table's own RLS (`projects_select`), so it mirrors *exactly* who can see the
+  job — `is_full_access() OR created_by OR assigned rep OR sales_rep` — without re-stating that rule
+  here and risking drift. **One pipeline per concept:** projects_select is the single source of
+  truth for "can see this job," and the appointment policy just asks it.
+- **Write (repairs 998).** The only UPDATE policy was joan's, so 998's "Attach to a job" (an
+  `adb.update`) was silently refused for Theo and for the row's own creator. Added an
+  **own-or-admin** UPDATE policy matching the table's existing DELETE rule. Visibility is not write
+  access: a rep who can now *see* a build day still cannot edit or delete one they did not create.
+
+**The personal-leak guard is the KIND, never the project_id.** Five of the fifteen `appt` (personal)
+rows in the database carry a project_id; keying visibility on `project_id is not null` alone would
+have exposed Theo's diary. The policy gates on `kind in ('job','drop')`, so those five stay private.
+
+**Verified against the live DB, every check inside a rolled-back transaction** (`set local role
+authenticated` + a simulated JWT, real policy created then `rollback` — prod's seven policies
+unchanged after):
+
+| viewer | linked job day | personal entries | update the job day |
+|---|---|---|---|
+| joey (assigned rep, not creator) | **sees it** | sees none | — |
+| jacob (unassigned rep) | 0 rows | 0 rows | **blocked (0)** |
+| theo (creator + admin) | — | — | **succeeds (1)** — the 998 repair |
+
+### App side
+
+`renderApptList()` gains `apptCanEdit(a)` — `!TEAM` (local mode = all yours) or creator or admin.
+The delete cross and the "Attach to a job" button now render only when it returns true, so a shared
+day you did not create shows **read-only**: you see it, you cannot delete someone else's booking or a
+button that would only ever error. No client query changed — `adb.list()` already relies on RLS, so
+the new rows appear on their own.
+
+`gate_1003.mjs` — 11 Chromium assertions driving the shipped `renderApptList` as four viewers
+(unrelated rep, creator, admin, local mode): the unrelated rep gets no delete and no attach on a job
+they did not create and none on a personal entry; the creator keeps both on their own rows but not on
+another rep's; the admin acts on every row; local mode keeps a null-owner row editable. Control on
+1002: **PASS 6 · FAIL 5**, named, no crash (the unconditional delete cross trips every read-only
+assertion; `apptCanEdit` is absent).
+
+## Build 1002 — iTel lab results attach to a job (23 Aug 2026)
+
+Theo's call: attach by **job**, not claim. 28 lab results — product-match and asbestos verdicts,
+$1,671.79 paid — were linked to nothing. `claim_id` is NULL on every one, and the three attachable
+ones belong to jobs with **no claim at all**, so a claim link is literally unfillable. The report is
+about a house's shingle; the job owns it, and any claim on that job reads it through the job.
+**Sixteen of the 28 are non-match verdicts** — exactly the evidence a matching argument needs.
+
+### SQL first — `itel_project_link.sql`
+
+`alter table itel_lab_reports add column if not exists project_id uuid references projects(id) on
+delete set null;` plus an index. **No RLS change:** the write policy is already
+`ALL / is_cardinal_admin()`, so an admin can set the column; SELECT stays authenticated-read.
+Additive and nullable — changes no existing row; a deleted project unlinks its reports rather than
+deleting them. `projects.id` confirmed `uuid`, so the FK type matches. **Runs before the
+index.html deploy.**
+
+### App side
+
+`cr-itellab-script` gains: each row shows its linked job or an **"Attach to a job"** button;
+`itelAttachJob()` reuses 998's numbered-prompt picker (not a second picker), showing the report's
+insured name / loss location so the right job is easy to find; the sub-line now counts reports **not
+linked to a job** and drops "read-only" for "admin". The delegated click handler lives on
+`.cr-itellab-body` so it survives each re-render.
+
+`gate_1002.mjs` — 8 assertions against the mock (which accepts the new column): the orphan offers an
+attach button, the pre-linked row names its job, the sub-line counts jobs; then it clicks attach,
+auto-answers the picker, and confirms the write persisted (orphan → the picked job) and the attach
+button is gone. Control on 1001: **PASS 3 · FAIL 5**, named, no crash — the control shows the old
+"read-only / not yet linked to a claim" sub-line.
+
+⚠ The **entered-date supplement countdown** (deferred from 1000) and this share a theme: both wanted
+a column. This one got its migration; the suit-limitation date is still deferred.
+
+## Build 1001 — one documented definition of a claim's "outstanding" (23 Aug 2026)
+
+Theo's call on the decision list: *"include deductibles and exclude undecided supplements."*
+
+`claimMoney(claim, payments, supplements)` is now the one named home for that rule:
+
+> **outstanding = RCV + decided supplements − received.** The deductible is counted as owed (it is
+> inside RCV — money still owed to Cardinal until collected). An undecided supplement
+> (draft/submitted) is NOT in the total; it is surfaced on its own pending line, never as $0. A
+> denied/withdrawn supplement contributes nothing and is not pending.
+
+### The research was overstated, and I checked before writing a formula
+
+The audit warned that getting outstanding wrong would "skew every insurance commission by 10% of
+the deductible via a SECURITY DEFINER trigger." **It would not.** `make_commission()` fires on each
+`collections` insert and computes 10% of the amount **received** — there is exactly one client
+commission writer and it never reads "outstanding." So this is **display maths only**. Verified
+against the shipped trigger and the single writer before touching anything.
+
+### And the detail card was already correct — so the honest scope is narrow
+
+The per-claim card already computed `max(0, rcv + Σapproved_supp − paid)`, which is exactly Theo's
+rule. So 1001 does three things, not a five-site rewrite:
+1. **names** the rule in `claimMoney()` with the reasoning attached, and points the card at it;
+2. adds the **pending-supplement line** — a filed-but-undecided supplement is shown as *awaiting a
+   decision*, never folded into the total;
+3. stops a filed-but-unpriced supplement **reading "$0"** in the supplements table (shows "—").
+
+⚠ **Deliberately NOT unified with the claims-list total, the Cardinal Truth dashboard rollup, or
+cr-ic's sort key.** Those are different aggregates computed off the *denormalised* `supplement_*`
+columns, which use a different status vocabulary from the supplements table. Forcing them through one
+helper would mean reconciling two vocabularies and loading the supplements table into hot
+list-render paths — real risk for little gain, and more than the decision asked. The scope note is
+in the code comment so the next person sees why.
+
+`gate_1001.mjs` — 13 assertions. Extracts the shipped `claimMoney` (with its two status maps) and
+unit-tests the rule: deductible owed, approved added, submitted excluded but surfaced, denied
+contributes nothing, partial counts, overpaid floors at 0. Then renders the real card with an
+injected approved + submitted supplement and reads the pending line off it. Control on 1000: **PASS
+3 · FAIL 3**, named, no crash — the shared total passes on both (the card was already right), the
+named helper and pending line fail on 1000.
+
+## Build 1000 — a claim shows how long since the date of loss (23 Aug 2026)
+
+Theo's pick, my "ship the counter, not the clock". Beside the date of loss the claim card now reads
+`· 476 days ago`. **It is a plain fact, never a countdown.** The Resource Library card is emphatic
+that guessing a suit-limitation period is itself the harm, so this says how long it has *been* and
+nothing about how long is *left*. Both open claims are past a year (476 and 395 days), now visible
+at a glance.
+
+`lossAge(iso)` is a tiny local helper in `cr-claims-script`, beside that block's own `fmtDate` —
+each insurance block already keeps its own `daysSince` (four copies, all module-local IIFEs), so a
+fifth local is the idiom here, not a new shared mechanism. Returns `''` for a missing, future or
+unparseable date — no guessing, ever.
+
+⚠ **A real countdown is deliberately NOT in this build.** It needs a suit-limitation date typed from
+the policy, which needs a column on `insurance_claims` — SQL, and a separate change. This one is
+app-only.
+
+`gate_1000.mjs` — 8 assertions. Extracts the shipped `lossAge` and unit-tests the edges (100 days →
+"· 100 days ago", 1 → singular, 0 → "0 days ago", null/empty/future/garbage → ''), then renders the
+real claim card with an injected date (an init script, not a mutation of the shared seed) and reads
+"200 days ago" off it. Control on 999: **PASS 1 · FAIL 2**, named, no crash.
+
+## Build 999 — lead source is a required tap when you add a client (23 Aug 2026)
+
+First off the decision list Theo answered "yes to all" on. `lead_source` was **fully wired** — the
+Reports chart, the Leads filter, the sort and a column all read it — and set on **0 of 57 jobs**,
+because the new-project form offered a `— not set —` default in a dropdown and only the client name
+was required. The chart had never had a data point. For a business that canvasses, it is the one
+field that says whether canvassing works.
+
+### What shipped
+
+- The `<select>` becomes **eight chips**, one required. `#pfSource` stays as a **hidden input**, so
+  every existing `.value` read — the populate-on-edit line and the two reads in the save handler —
+  keeps working unchanged. Minimal blast radius.
+- The eight values are **identical to the client-profile editor's** (`acxSrc`), kept in step so the
+  vocabulary does not fork.
+- **Session memory:** `pfLastSource` remembers the last pick, so a canvasser doing a street taps
+  once, not once per door. A new client preselects it.
+- **Required on CREATE only.** Scoped to `!pfEditing`, so editing a client that predates the rule is
+  never nagged — the 998 scoping lesson, applied again.
+
+### `gate_999.mjs` — 11 assertions
+
+Drives the real modal: eight chips exist, `#pfSource` survives as a hidden input, the labels match
+`acxSrc`; a create with no source is refused/named/highlighted; a create WITH a source saves and
+stores the value; the next create preselects the remembered pick; and the **look-alike** — editing
+an old client with no source is NOT refused. Control on 998: **PASS 3 · FAIL 8**.
+
+⚠ **The control crashed before it was made null-safe** — `#pfSourceChips` does not exist on 998, so
+`.classList` threw (class 37). Guarded every control-side read of the chip row so the gate degrades
+to a named failure rather than a crash. The 3 that pass on the control are the look-alikes (editing
+not nagged, no page errors), so it is not vacuously red.
+
+## Build 998 — a build day on the calendar names its job (22 Aug 2026)
+
+Fourth pick off the build queue, and **the missing precondition for code that already shipped.**
+
+The client box read `Client (optional)` for every kind, so Curtis books a build by typing an address
+and leaves it blank. `__apptMayAdvanceStage` then returns early:
+
+```js
+if(!fields || fields.kind !== 'job' || !fields.project_id) return;
+```
+
+No project id, no advance to `Scheduled`. No `Scheduled`, no Needs-a-crew rail. **So the whole
+arm-and-place workflow built at 949 has had an empty tray in production since the day it shipped.**
+
+Measured live: **zero projects at stage Scheduled**, and **both** of the two `job` appointments in
+the database are orphans — *"2805 aerial ave"* and *"Inspect the Formunda Under Cheese"*.
+
+### ⚠ Scoped to job and drop, and that scoping is the build
+
+**Ten of the fifteen appointments in the database have no client and are perfectly correct** — they
+are Theo's own diary: *"Hair cut"*, *"Higgins Tax Guy"*, *"Chase"*. Requiring a client on those
+would break a working screen to fix a different one. The label now changes with the kind (`Job *`
+against `Client (optional)`), so it warns before the refusal does, and the refusal says what it
+costs rather than just "required".
+
+### The two already in the calendar are repaired, not deleted
+
+`apptAttachJob()` lists the jobs and attaches one, reusing the same project list the form's own
+select is built from.
+
+⚠ **`adb` had no `update`** — only `list`, `create`, `remove`. The first draft called
+`adb.update(...)` and would have thrown at runtime; every mechanical gate was green, because it is
+syntactically perfect. `adb.update` now mirrors `create`'s two paths **and its call to
+`__apptMayAdvanceStage`** — attaching the job IS the moment the stage should advance, so leaving
+that out would have repaired the row and still left the job off the crew board, which is the entire
+defect.
+
+### `gate_998.mjs` — 12 assertions
+
+⚠ **The first draft opened the wrong screen.** `openApptsPage()` is the per-client sub-page;
+`openApptDay(ds)` is the calendar day modal that actually carries `#apptSave`, `#apptKind` and
+`#apptClient`. Because `#apptSave` is static markup, the "form opened" assertion passed
+**vacuously** while the client select was never filled — which made a correctly-filled build day
+look refused and sent me hunting a bug that did not exist. The gate now navigates the way the app
+navigates and **asserts the job list is actually populated**, so that vacuity is closed.
+
+Two look-alikes carry the build: an ordinary appointment still saves with no client, and a job WITH
+a job saves. Without them the fix could have been "refuse everything" and the first assertion would
+still pass.
+
+Control on 997: **PASS 5 · FAIL 7**, exit 1, named — including *"adb.update does not exist, so the
+attach button would throw"*.
+
+## Build 997 — accepting an estimate makes it the number (22 Aug 2026)
+
+Third pick off the build queue. `indexMoney()` took a plain **MAX** over every live estimate:
+
+```js
+if(t > (estBest[e.project_id] || 0)) estBest[e.project_id] = t;
+```
+
+So a job carrying two — the ordinary shape when a homeowner is shown options — kept reporting the
+**bigger** one as Job Value after the smaller had been accepted. **Balance Due, the AR chart,
+pipeline dollars and the invoice all inherit that figure**, so one wrong precedence moved five
+surfaces at once, and the only correction available was remembering to archive every losing estimate
+by hand, on every job, forever. Theo already does that by hand — James Tiege's $10,890 sits archived
+beside $13,250.
+
+### Tiers, not a second MAX
+
+`ACCEPTED_EST = { accepted:1, signed:1 }` is tier 2, the rest of `SENT_EST` is tier 1. The highest
+tier present wins, and **within it the largest still leads** — which is what keeps a job legitimately
+carrying two accepted estimates (a roof and a siding job on one property) reporting its real top
+line rather than whichever was written last.
+
+### ⚠ Measured before shipping: NO job changes value today
+
+The build queue warned that "a job with a smaller accepted estimate will see Job Value drop on
+deploy" and asked for that to be said out loud. **It does not happen.** Queried live: only two jobs
+carry an accepted estimate — Annette Wright $14,760 and Vandalyn Robinson $12,550 — and each has
+exactly one live estimate, so neither moves. Kimberly Guy has two live estimates ($21,451 and
+$36,654) but **neither is accepted yet**, so she is unchanged too.
+
+This build is therefore **purely preventive**. It is what stops the wrong number the day that
+$21,451 is accepted while the $36,654 is still live.
+
+### `gate_997.mjs` — runs the SHIPPED function
+
+Brace-matches `indexMoney` out of the artifact and executes it, along with the artifact's own
+`SENT_EST` literal, against real row shapes. **A harness that re-implements the rule agrees with
+itself and proves nothing** — this project has been bitten by that three times.
+
+Nine assertions: the defect itself, `signed` counting as accepted, and **five look-alikes that must
+not move** — nothing-accepted still takes the max, two accepted still take the larger, an archived
+accepted is still ignored, a draft is still not money, and `estRows` still lists **both** live
+estimates (the saved-estimates list reads it, and narrowing it would empty that screen). Without
+those five the fix could have been "always take the smallest" and assertion 1 would still pass.
+
+Control on 996: **PASS 7 · FAIL 2**, naming both — *"Job Value reports 36654, but 21451 is the
+accepted one"*.
+
+### Option B was not built
+
+The queue offered a second option: prompt on accept and offer to archive the losers, naming the
+money. That is a UX addition rather than a correctness fix, they are not mutually exclusive, and
+Theo picked "4" without choosing between them. **A is shipped; B is still open.**
+
+## Build 996 — money received has one door, and it is the one that pays the rep (22 Aug 2026)
+
+Second pick off the build queue, and the one Theo had already asked for. **Build 796, his words:**
+*"get rid of payments and money in… Or move payment in into payment information."* 796 answered the
+layout half and left the two writers in place.
+
+Two rows sat directly under each other on the job menu — `#dbPayRow` "Payment Information" and
+`#dbMoneyRow` "Money In & Commissions". They look like the same thing. Only the second books
+anything: `collections` fires the 10% commission trigger, fills the Friday owed email, and **since
+721 it outranks the legacy log in `jobFinance()`**. Every dollar Cardinal has recorded went through
+the other one and was invisible to all three.
+
+### ⚠ Why the migration cannot come second
+
+```js
+if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id];
+```
+
+That **replaces** rather than adds — 721's own comment says so, deliberately, so the two ledgers can
+never double-count. The consequence is a landmine: on a job carrying legacy money, the **first**
+collection logged makes every earlier payment vanish from Balance Due at once. Measured: exactly one
+job in the database has legacy `dir:'in'` rows — **Dan Thompson, two Zelle payments totalling
+$8,008.94** — so logging one collection there would have dropped `paid` to that single amount.
+The door change therefore ships **with** the way across, never before one.
+
+### What shipped
+
+- `data-payadd="in"` now calls `payGoLogCollection()`. **`out` and `exp` are job COSTS, not
+  collections, and keep the legacy row modal** — the only place they have ever lived.
+- The Received section says where money-in lives now, and — only when legacy rows exist — names the
+  total and offers a one-tap move.
+- `payMigrateLegacyIn()` inserts them into `collections`, then clears them from the checklist.
+  **Insert first, delete second:** if the insert fails the money is still recorded in exactly one
+  place, which is the state we started in.
+
+⚠ **Migrating is a money write, so it is a button a person presses**, never something that runs on
+its own, and the confirm names every amount.
+
+⚠ **Commission-safe here, and that was checked rather than assumed.** `make_commission()` returns
+early when the job's rep is null or is Theo; Dan Thompson's rep is Theo, so moving those two rows
+creates no commission. On a rep's job it would — correctly — and the confirm says so.
+
+⚠ **`dbCloseTo()`, not a hand-rolled close.** Payment Information is a SUB-PAGE: it hides
+`#projectView` and shows `#paymentsView`. Switching tabs without coming back first moves the tab
+strip underneath a page nobody can see. `dbCloseTo()` is the app's own way back — the same function
+the page's own Back button uses. My first draft guarded a `closePaymentsPage()` that **does not
+exist**, so the `typeof` guard would have made it a silent no-op.
+
+⚠ **`fmtMoney(n, true)`, not `payMoney`.** `payMoney` rounds to whole dollars (`Math.round`), so a
+$3,008.94 cheque reads **$3,009** — wrong on a screen someone checks against a bank statement.
+`fmtMoney(n, cents)` already existed in the same block and already puts the sign outside the
+currency symbol. *Grep for the convention before inventing one.* The gate now pins `$8,008.94`
+exactly, so a regression to the rounding formatter goes red.
+
+### `gate_996.mjs` — 12 assertions
+
+Drives the real screen: opens Payment Information, reads the three section buttons, taps the
+Received door, and asserts it **closed the sub-page**, **landed on Money In**, and **opened the
+collection form** (which only happens if `commUi.collForm` is set *before* `showTab`, since
+`showTab` calls `renderCommissions()` first). Then runs the migration and checks the money moved,
+the old rows were cleared, and **the Paid-out row was left alone** — without that last one the fix
+could have been "delete every payment row" and the gate would still be green.
+
+Control on 995: **PASS 4 · FAIL 8**, exit 1, named. The two job-cost assertions still pass, so it is
+not vacuously red.
+
+### Still open on this item
+
+The build queue sized this as "a few builds" and this is the first. Not done: retiring Payment
+Information as a money-in *reader* (it still lists the legacy rows as history, correctly), and the
+`insurance_payments` ledger, which has no trigger of any kind and is a separate arc.
+
+## Build 995 — a 0% deposit stops becoming 30% on reopen (22 Aug 2026)
+
+Theo picked this off the build queue. **One expression, and it was about to put money on signed
+paperwork.**
+
+`openEditor`'s reopen path read `deposit_pct : Number(existing.deposit_pct) || 30`, and `|| 30`
+cannot tell *"the customer chose nought"* from *"there is no value"*. Reopen a 0% estimate to fix a
+line, and the deposit silently became 30%; `computeTotals` then wrote that straight back on save.
+
+### The contract side has had this right since 781, and said so
+
+```js
+if(row.deposit_pct != null) pct = Math.max(0, Math.min(100, Number(row.deposit_pct) || 0));
+```
+
+with its own comment: *"A deliberate 0% estimate is a real answer and is kept."* **Two halves of one
+file disagreed about the same column.** 995 gives the editor the contract side's null-check.
+
+### Measured, not supposed
+
+Live: **6 of 18 estimates carry `deposit_pct` 0.00 — including BOTH of the two Cardinal has ever
+had accepted.** Annette Wright $14,760 and Vandalyn Robinson $12,550, so reopening either would
+have added **$4,428** and **$3,765** of down payment to paperwork the client had already agreed to.
+
+⚠ **PostgREST returns `numeric` as a STRING.** A stored `0.00` arrives as `"0.00"` — truthy as a
+string, falsy through `Number()`. Guard on the value being **present**, never on its truthiness.
+
+### `gate_995.mjs` — a real Chromium round trip, because jsdom cannot settle this
+
+Eight assertions: the control shows 0, the module persists 0, the **document** asks for $0.00, and
+— the one a single pass would miss — **0 survives being saved and reopened a second time**. Plus
+three look-alikes that must NOT move: an absent deposit still defaults to 30, an ordinary 15.5%
+is untouched, and 140% is still clamped to 100. Without those three the fix could have been
+"always 0" and the gate would still have been green.
+
+Control on 993: **PASS 4 · FAIL 4**, exit 1, and it prints the defect in the client's own currency —
+*"the deposit line on the document reads $3,000.00 on a 0% estimate"*.
+
+⚠ **The control caught a fault in the GATE, not the app.** The first fixture used `price:` on the
+line item; `computeTotals` reads `unit_price`. Subtotal was therefore 0, the deposit rendered
+`$0.00` on **both** builds, and the "asks the client for nothing" assertion could not fail. That is
+BUG_CLASSES 45 — a fixture invented rather than observed — and it survived until the negative
+control printed the same number on both sides. **Read what the control prints, not just its
+verdict.**
 
 ## Build 993 — seven strips of chips and tabs stop hiding things off the edge (22 Aug 2026)
 
