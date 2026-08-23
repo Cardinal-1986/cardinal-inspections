@@ -3,6 +3,58 @@
 
 ---
 
+## 🔍 Fresh audit, 23 Aug 2026 @ build 1007 (workflow wf_202d59de-b67) — CONFIRMED findings
+
+8 finders + adversarial verify. 38 raw → 12 verified CONFIRMED. **Build 1008 fixed the four that were
+regressions in today's own builds** (1005 lead-source-wrong-field, 1005 claim-type-dead-check, 1006
+stage-defer drop-on-supersede, 1006 stage-defer lost-on-close). The rest, still OPEN, ranked:
+
+### 🔴 CRITICAL — do first
+- **`api/abc.js` is an open proxy.** No auth gate at all + `Access-Control-Allow-Origin: *`. Anonymous
+  callers can `placeOrder` (real orders on Cardinal's ABC account), `accounts` (ship-to names/addresses),
+  and `getOrder` (order/invoice history) once `ABC_CLIENT_ID/SECRET` are set in Vercel (builds 688/774
+  imply they are). Every other credential-spending route (`companycam.js`, `invite.js`) has the standard
+  `requireSession + is_cardinal_admin` gate. **Fix: add that gate; drop the wildcard CORS.** (verified
+  CONFIRMED, corrected severity critical)
+
+### 🟠 HIGH — money correctness (pre-existing)
+- **996 money-in has a second door.** Tapping the "Received" section *header* (not the + button) opens
+  the legacy `dir:'in'` modal → writes `checklist.payments`, books no commission, and is invisible to
+  Balance Due on any job with a collection. Fix: route the `.payhead` `in` case to `payGoLogCollection`.
+  (F1 + MONEY-1, both CONFIRMED)
+- **`jobFinance` doc-store MAX defeats 997's accepted tier.** A bigger `Estimate…` inspection_reports
+  doc (any status, no dedupe) is folded in as a flat MAX after `estBest`, overriding the accepted
+  estimate → wrong Job Value/Balance Due. Fix: tier/status-filter the doc-store leg too. (F3 + MONEY-2)
+- **Contract deposit from newest estimate of any status.** `fillContractMoney` picks `rows[0]` of
+  `loadForProject` (created_at DESC) filtered only on deposit info, and the editor writes `deposit_pct`
+  on every save incl. drafts — so a later 30%-default draft outranks the accepted 0% estimate that set
+  the price → wrong deposit on the signed contract. (F6 + MONEY-3, CONFIRMED)
+
+### 🟠 HIGH — other (pre-existing)
+- **`api/roofr.js` + `api/hover.js` open AI relay** — no session gate; spend Gemini+OpenAI quota on
+  caller-supplied text. Add the standard session gate. (CONFIRMED)
+- **DB: 5 estimates point at deleted documents** ($71,845.99, 4 status='sent') — deleting a document
+  never clears `estimates.doc_id`/`contract_doc_id`. Fix the document-delete path to null the referring
+  columns; consider a one-time cleanup. (DB-1, CONFIRMED live)
+
+### 🟡 MEDIUM / LOW (from finders; NOT individually verified unless noted)
+- **Push reaches only Theo** — `push_subs` = 3 rows, all `theo@` (verified live). Curtis/Joan/reps have
+  none, so web-push notifications reach nobody else. *(This is why 1007 used email for Curtis — correct
+  call. But the team needs to subscribe for push to matter.)*
+- 1001 pending-supplement line uses `--cr-amber` → `#8a5500` on a theme-fixed dark card → unreadable in
+  rb-light.
+- 1002 iTel buttons reference `--ct-red`/`--ct-green` scoped to the Resource Library (`--ct-green`
+  declared nowhere else) → likely invisible/!important-wrong outside it.
+- 1000 `lossAge` UTC-parses a date-only value → "N days ago" reads one day high on Ohio evenings.
+- 996 `payMigrateLegacyIn` confirm says "Balance Due does not change" — false on a job with worksheet
+  contract payments and no prior collection (migrating makes collections the sole source). (F2 CONFIRMED)
+- `config.js` serves an unrestricted Google Maps key; `design.js`/`coach.js` missing from `vercel.json`
+  `maxDuration`; 1003 per-job Appointments page (`#apMount`) has an ungated `✕` delete.
+- Full detail: `/tmp/.../tasks/wbapw9i8p.output` (session-local) and the workflow journal.
+
+
+---
+
 ## ✅ DONE — the audit follow-up batch, builds 995–1003 (23 Aug 2026)
 
 Shipped from the deep-research suggestions, all with named-control gates:

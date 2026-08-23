@@ -20611,6 +20611,50 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1008 — four fixes from the fresh audit of today's builds (23 Aug 2026)
+
+A fresh 8-finder + adversarial-verify audit at build 1007 (workflow wf_202d59de-b67) surfaced 38
+findings; 12 verified CONFIRMED. **Four were regressions in code shipped earlier today** — fixed here.
+The rest are logged in OPEN_ITEMS under "Audit 2026-08-23" (the `api/abc.js` open proxy is CRITICAL and
+un-fixed — next up).
+
+### The four fixes
+
+1. **1005 Lead Source reached no report.** The New Lead intake wrote source nested as
+   `checklist.lead.source`, but the source chart/filter/sort/profile all read the flat
+   `checklist.lead_source` (11 read sites; zero read the nested key). So the field 1005 made mandatory
+   fed nothing. The `pdb.create` checklist now also writes the flat `lead_source`. (The mismatch
+   pre-dated 1005; 1005 just made a dead field required.)
+2. **1005 Claim Type check was dead code.** The `unknown` radio was `checked` in markup and
+   `openLeadForm` always checked one (`__ldDef` falls back to `'unknown'`), so `_ct` was never empty and
+   the `if(!_ct)` refusal never fired. Removed the markup default and made `openLeadForm` pre-select a
+   type only when the portal dictates one — so on a neutral portal the choice is active and the guard
+   is live. "Don't know yet" stays a pickable, honest answer (the 782 escape-hatch spirit); what's gone
+   is the *accidental* unknown from never touching the field.
+3. **1006 stage arrows dropped a superseded move.** `crStageDefer` held one global timer slot, so a
+   second arrow tap — same job or **any other** — cleared the first timer with no commit and no revert,
+   silently losing a move the UI had already shown as "Moved to X" (worst case: cross-job). Rewritten:
+   one pending move, and a superseding tap **commits** it first. The target stage is now captured up
+   front and committed via `setStage(target)` directly — never recomputed from the optimistic
+   `pr.stage` — so overlapping taps can't race (the old acxAdvance-recompute could).
+4. **1006 move lost on app close.** Nothing flushed the pending move if the PWA was closed/backgrounded
+   inside the 5s window. Added `pagehide` + `visibilitychange(hidden)` listeners that commit the pending
+   move. Best-effort on hard unload; reliable on backgrounding.
+
+### Gates
+
+`gate_1006.mjs` rewritten for the new race-free contract — 14 assertions incl. supersede-commits-not-
+drops and page-hide-flush; control on 1007 **FAIL 6**, named. `gate_1008.mjs` — the two 1005 fixes
+(flat `lead_source` write; neutral portal pre-selects no claim type; live refusal); control on 1007
+**FAIL 3**, named. `gate_1004/1005/1007` re-run GREEN (no regressions); `check_build` GREEN, stamp 1008.
+No SQL, no API change.
+
+### Note on the audit's confirm rate
+
+12/12 verified came back CONFIRMED — high because the finders were seeded with real suspects and the
+top-severity slice was verified first; the verifiers reproduced each end-to-end (many live). Lower-
+severity findings passed through unverified and are marked as such in OPEN_ITEMS.
+
 ## Build 1007 — a phone-signed contract buzzes Curtis too (23 Aug 2026)
 
 Remote-signature parity (OPEN_ITEMS #7). When a client signs a contract from the secure share link,

@@ -3701,7 +3701,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1007 &#8212; a contract signed from the client&#8217;s phone now buzzes Curtis, same as one signed in person. When a customer signs through the secure link, the job moves to Approved &#8212; but only Curtis had been left out of the loop, so a remotely-signed job could sit with nobody told to schedule it or order materials. It now sends Curtis the same &#8220;schedule + order materials&#8221; alert an in-person signature does. (Backend fix in the signing route; also stops a signed job from being pulled backward to Approved if it is already scheduled.)</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1008 &#8212; four fixes to things shipped earlier today. (1) The lead source you are now required to pick on a New Lead was being saved to a field the source report never reads, so it counted for nothing &#8212; it now lands where the report looks. (2) The Claim Type requirement did nothing because &#8220;Don&#8217;t know yet&#8221; was pre-ticked; the form now leaves it blank so you actually choose. (3) Tapping a stage arrow on one job and then another within five seconds no longer silently drops the first move. (4) Closing the app during the five-second Undo window no longer loses the move. All caught by tonight&#8217;s audit.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8074,7 +8074,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="insurance"> &#128737;&#65039; Insurance</label>
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="retail"> &#127968; Retail</label>
           <label class="ldctopt"><input type="radio" name="ldClaimType" value="community"> &#127960;&#65039; Community</label>
-          <label class="ldctopt"><input type="radio" name="ldClaimType" value="unknown" checked> &#10067; Don't know yet</label>
+          <label class="ldctopt"><input type="radio" name="ldClaimType" value="unknown"> &#10067; Don't know yet</label>
         </div>
 
         <div class="ckinline ldmore" style="margin-top:12px;">
@@ -11470,30 +11470,65 @@ async function acxAdvance(pr){
    reaches the database or Curtis's inbox. That is why the whole transition waits
    out the window rather than committing and rolling back — setStage emails the
    team on Approved/Completed, and a rollback cannot unsend that. */
-var _crStageDeferTimer = null;
-function crStageDefer(pr, target, commitFn){
-  if(!pr || !target) return;
-  var from = normStage(pr.stage);
-  if(normStage(target) === from) return;
-  if(_crStageDeferTimer){ clearTimeout(_crStageDeferTimer); _crStageDeferTimer = null; }
-  var committed = false;
-  function paint(){ try{ renderOverview(); renderPipeline(); }catch(_p){} }
-  function revert(){ pr.stage = from; if(currentProject && currentProject.id === pr.id) currentProject.stage = from; paint(); }
-  pr.stage = target; if(currentProject && currentProject.id === pr.id) currentProject.stage = target; paint();
-  _crStageDeferTimer = setTimeout(function(){
-    committed = true; _crStageDeferTimer = null;
-    pr.stage = from; if(currentProject && currentProject.id === pr.id) currentProject.stage = from;
-    Promise.resolve().then(commitFn).catch(function(err){ revert(); if(window.showError) showError('Could not update: ' + ((err && err.message) || err)); });
-  }, 5000);
+/* 1008: rewritten to fix two regressions from 1006. (a) A single pending slot meant a second arrow
+   tap \u2014 on the SAME job or ANY OTHER \u2014 cleared the first timer with no commit and no revert,
+   silently losing a move the UI had already shown as done. (b) Closing/backgrounding the app inside
+   the window lost the move too. Now there is exactly one pending move, and anything that would abandon
+   it (a new move, or the page hiding) COMMITS it first. The target stage is captured up front and
+   committed via setStage(target) directly \u2014 never recomputed from the optimistic pr.stage \u2014 so
+   overlapping taps cannot race. */
+var _crStagePending = null;
+function _crStageReviewMaybe(pr){
   try{
-    window.CardinalUndo.enqueue('Moved to ' + target + ' \u2014 Undo to cancel', function(){
-      if(committed) return; if(_crStageDeferTimer){ clearTimeout(_crStageDeferTimer); _crStageDeferTimer = null; } revert();
-    }, 5000);
-  }catch(_e){
-    if(_crStageDeferTimer){ clearTimeout(_crStageDeferTimer); _crStageDeferTimer = null; }
-    committed = true; pr.stage = from; Promise.resolve().then(commitFn).catch(function(){ revert(); });
-  }
+    if(normStage(pr.stage) === 'Completed' && !parseCkAll(pr).review_requested_at && (pr.phone || pr.email)){
+      setTimeout(function(){
+        if(confirm('\uD83C\uDF89 Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?')){
+          sendReviewRequest(pr, pr.phone ? 'sms' : 'email');
+        }
+      }, 300);
+    }
+  }catch(_r){}
 }
+function _crStageCommit(p){
+  if(!p || p.done) return;
+  p.done = true;
+  if(p.timer){ clearTimeout(p.timer); p.timer = null; }
+  if(_crStagePending === p) _crStagePending = null;
+  p.pr.stage = p.from; if(currentProject && currentProject.id === p.pr.id) currentProject.stage = p.from;
+  Promise.resolve()
+    .then(function(){ return setStage(p.pr.id, p.target); })
+    .then(function(){ _crStageReviewMaybe(p.pr); try{ renderOverview(); renderPipeline(); }catch(_){} })
+    .catch(function(err){
+      p.pr.stage = p.from; if(currentProject && currentProject.id === p.pr.id) currentProject.stage = p.from;
+      try{ renderOverview(); renderPipeline(); }catch(_){}
+      if(window.showError) showError('Could not update: ' + ((err && err.message) || err));
+    });
+}
+function crStageDefer(pr, target){
+  if(!pr || !target) return;
+  var from = normStage(pr.stage), tgt = normStage(target);
+  if(tgt === from) return;
+  if(_crStagePending) _crStageCommit(_crStagePending);   /* never drop a pending move */
+  var p = { pr: pr, from: from, target: tgt, timer: null, done: false };
+  pr.stage = tgt; if(currentProject && currentProject.id === pr.id) currentProject.stage = tgt;
+  try{ renderOverview(); renderPipeline(); }catch(_p){}
+  p.timer = setTimeout(function(){ _crStageCommit(p); }, 5000);
+  _crStagePending = p;
+  try{
+    window.CardinalUndo.enqueue('Moved to ' + tgt + ' \u2014 Undo to cancel', function(){
+      if(p.done) return; p.done = true;
+      if(p.timer){ clearTimeout(p.timer); p.timer = null; }
+      if(_crStagePending === p) _crStagePending = null;
+      p.pr.stage = p.from; if(currentProject && currentProject.id === p.pr.id) currentProject.stage = p.from;
+      try{ renderOverview(); renderPipeline(); }catch(_u){}
+    }, 5000);
+  }catch(_e){ _crStageCommit(p); }
+}
+/* commit a pending move rather than lose it when the app is backgrounded or closed */
+try{
+  window.addEventListener('pagehide', function(){ if(_crStagePending) _crStageCommit(_crStagePending); });
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'hidden' && _crStagePending) _crStageCommit(_crStagePending); });
+}catch(_evt){}
 async function acxDead(pr){
   try{ await setStage(pr.id, 'Lost'); renderOverview(); renderPipeline(); }
   catch(err){ showError('Could not update: ' + (err.message || err)); }
@@ -11791,11 +11826,11 @@ function renderAcxOverview(){
      move at once and commits only when the Undo window closes. */
   var bk = document.getElementById('dbStgBack');
   if(bk) bk.addEventListener('click', function(){
-    crStageDefer(pr, pvStage, function(){ return Promise.resolve(setStage(pr.id, pvStage)).then(function(){ renderOverview(); renderPipeline(); }); });
+    crStageDefer(pr, pvStage);
   });
   var fw = document.getElementById('dbStgFwd');
   if(fw) fw.addEventListener('click', function(){
-    crStageDefer(pr, nx, function(){ return Promise.resolve(acxAdvance(pr)); });
+    crStageDefer(pr, nx);
   });
   /* async: measurement count */
   measDb.list(pr.id).then(function(l){
@@ -15338,7 +15373,10 @@ function openLeadForm(){
     }catch(_){ return 'unknown'; }
   })();
   var radios = document.querySelectorAll('input[name="ldClaimType"]');
-  radios.forEach(function(r){ r.checked = (r.value === __ldDef); });
+  /* 1008: only pre-select when the portal dictates a type; on a neutral portal leave every radio
+     clear so Claim Type is an ACTIVE choice. The 1005 refusal was dead while 'unknown' was the
+     pre-checked default (a radio was always checked, so the !_ct guard never fired). */
+  radios.forEach(function(r){ r.checked = (__ldDef !== 'unknown' && r.value === __ldDef); });
   updateClaimTypeUi();
   /* 782: every lead starts collapsed and with the no-contact escape hatch put
      away, or the previous lead's answer carries into this one. */
@@ -15652,7 +15690,7 @@ document.getElementById('ldSave').addEventListener('click', async function(){
      detail, so reveal that section when it is the blocker (the 782 pattern). */
   var _ct = '';
   document.querySelectorAll('input[name="ldClaimType"]').forEach(function(r){ if(r.checked) _ct = r.value; });
-  if(!_ct){ err.textContent = 'Pick a claim type \u2014 Insurance or Retail.'; return; }
+  if(!_ct){ err.textContent = 'Pick a claim type.'; return; }
   if(!document.getElementById('ldSource').value){
     var _lm = document.getElementById('leadFormModal');
     if(_lm && !_lm.classList.contains('ldshow')){
@@ -15733,7 +15771,10 @@ document.getElementById('ldSave').addEventListener('click', async function(){
       email: emails.length ? emails[0].v : '',
       notes: document.getElementById('ldNotes').value.trim(),
       stage: 'Lead',
-      checklist: JSON.stringify({ lead: lead, po: nextPo(), stage_since: new Date().toISOString() })
+      /* 1008: the source chart/filter/sort/profile all read checklist.lead_source (flat); the
+         intake had only ever written it nested as lead.source, so the source 1005 made mandatory
+         reached no report. Write the flat key the readers actually use. */
+      checklist: JSON.stringify({ lead: lead, po: nextPo(), stage_since: new Date().toISOString(), lead_source: document.getElementById('ldSource').value || null })
     });
     /* 901: a new lead assigned to a rep pings them (push/email/text via notifyTeam).
        Self-assignment is skipped — a rep creating their own lead needs no alert. */
@@ -41640,6 +41681,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1008, d:'2026-08-23', t:'Four fixes to today\u2019s builds (from the audit)', s:'A fresh audit of everything shipped today caught four real bugs in it, now fixed. (1) Build 1005 made Lead Source required on the New Lead form but saved it to checklist.lead.source, while the source chart, filter, sort and profile all read checklist.lead_source \u2014 so the number that says whether knocking is working got nothing; the intake now writes the field the reports read. (2) Build 1005\u2019s Claim Type requirement never fired because \u201CDon\u2019t know yet\u201D was pre-selected \u2014 a choice was always present, so nothing was ever enforced; the form now starts with none selected (unless the portal dictates one) so you make an active choice. (3) Build 1006\u2019s stage arrows kept a single pending-move slot, so tapping an arrow on one job and then another within the five-second window silently dropped the first move (it showed as done but never saved); a superseding tap now commits the first move instead of discarding it. (4) Closing or backgrounding the app during the Undo window lost the move; it is now committed when the app hides.' },
 { b:1007, d:'2026-08-23', t:'A phone-signed contract buzzes Curtis too', s:'When a client signs a contract from the secure link, the job moves to Approved \u2014 but the remote-signing route only ever emailed the rep, so Curtis (production) never heard a remotely-signed job was ready to build, the way he does the moment an in-person signature moves a job to Approved. The signing route now sends Curtis the same \u201Cschedule + order materials\u201D alert. It also no longer pulls a job backward to Approved if it is already scheduled or further along, and only alerts on the real move. Backend change in api/clientsign.js; nothing changed on screen.' },
 { b:1006, d:'2026-08-23', t:'Stage arrows: one tap, with Undo', s:'The forward and back stage arrows on a job used to pop a \u201Care you sure?\u201D confirmation every single time. Now a tap moves the job right away and shows a 5-second Undo toast instead. The move is DEFERRED for those five seconds \u2014 nothing is written to the record and, when the new stage is Approved or Completed, no email/notification goes to the team \u2014 until the toast fades. So an accidental tap you undo in time leaves no trace and never buzzes Curtis to schedule a job that is not really approved. It commits the instant the toast closes. This is the first step of thinning out the app\u2019s native pop-up dialogs (the toast and Undo machinery already existed since build 186).' },
 { b:1005, d:'2026-08-23', t:'The New Lead form enforces its starred questions', s:'The New Lead form marked Claim Type and (elsewhere) Lead Source as required but never actually enforced them here. Claim Type had a star yet quietly saved as \u201Cunknown\u201D when you skipped it \u2014 17 of 57 leads on file have no claim type because of that \u2014 and Lead Source, the one number that says whether knocking is working, was optional on this form even though the profile add form has required it since build 999 (26 leads have no source). Both are now required to save a lead: Claim Type is already on screen, and if Lead Source is the only thing missing the form opens \u201CMore detail\u201D and points you at it. The essentials (name, address, phone-or-email) have been required since 782, and the form was already split into essentials + More detail then \u2014 this build only closes the two enforcement gaps.' },
