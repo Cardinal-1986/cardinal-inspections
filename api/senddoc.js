@@ -6,6 +6,7 @@
 const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
 
+import { isStaff } from './_staff.js';
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
   const resendKey = process.env.RESEND_API_KEY;
@@ -23,6 +24,7 @@ export default async function handler(req, res) {
     });
     if (!who.ok) { res.status(401).json({ error: 'Invalid session' }); return; }
     const user = await who.json();
+    if (!isStaff(user && user.email)) { res.status(403).json({ error: 'Cardinal staff only' }); return; }
 
     // 672: subject / variant / replyTo are ADDITIVE. Both shipped callers send
     // none of them, so each falls back to the exact behaviour that shipped.

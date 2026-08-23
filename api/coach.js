@@ -35,6 +35,7 @@
 const GEMINI_MODEL = 'gemini-3.5-flash';
 const GEMINI_URL   = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+import { isStaff } from './_staff.js';
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'POST only' });
@@ -77,6 +78,7 @@ export default async function handler(req, res) {
     const user = await userResp.json();
     userEmail = user?.email;
     if (!userEmail) return res.status(401).json({ error: 'No email in session' });
+    if (!isStaff(userEmail)) return res.status(403).json({ error: 'Cardinal staff only' });
   } catch (e) {
     return res.status(502).json({ error: 'Auth check failed: ' + e.message });
   }

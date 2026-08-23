@@ -31,6 +31,7 @@ async function requireSession(req, res){
     if (!who.ok) { res.status(401).json({ error: 'Invalid session' }); return null; }
     const user = await who.json();
     if (!user || !user.email) { res.status(401).json({ error: 'Invalid session' }); return null; }
+    if (!isStaff(user.email)) { res.status(403).json({ error: 'Cardinal staff only' }); return null; }
     return user;
   } catch (e) {
     res.status(401).json({ error: 'Could not verify session' });
@@ -82,6 +83,7 @@ async function aiFallback(parts, geminiRes) {
   }
 }
 
+import { isStaff } from './_staff.js';
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });

@@ -44,7 +44,16 @@ These interlock — a genuine "reproduce before theorising" cluster. Read togeth
 5. **Contract void lifecycle checks `'voided'` but the writer writes `'void'`** (LOW, dropped-list
    below) — the third of the same family.
 
-### 🔴 SECURITY — needs a policy call from Theo, then a clear code fix
+### 🔴 SECURITY — code half RESOLVED at build 1016; ONE operator action still open
+✅ **Findings 6 + 7 code fix shipped in build 1016**: all 13 AI/spend routes + senddoc now require
+Cardinal-staff identity (`api/_staff.js` isStaff — domain OR the 2 non-domain staff), guard after the
+session resolves, proven by `gate_1016.mjs` (RED ×40 against 1014).
+⚠️ **STILL OPEN — Theo's action:** disable **public signup** in Supabase Auth (Dashboard →
+Authentication → Providers/Settings → turn off "Allow new users to sign up"). Without it a stranger
+can still create an account; the routes refuse them now, but signup itself should be closed. Also
+add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/_staff.js`.
+
+### 🔴 SECURITY (original detail) — needs a policy call from Theo, then a clear code fix
 6. **AI/spend routes trust ANY confirmed session, and public signup is enabled** (12 routes:
    analyze/caption/summarize/organize/sortphotos/detect/design/measure/sol/roofr/hover/coach). 1013
    closed anonymous access, but a self-signed-up outsider with a valid session still burns Cardinal's

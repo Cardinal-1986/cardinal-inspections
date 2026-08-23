@@ -20611,6 +20611,33 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1016 — AI/spend + senddoc routes gated on staff identity (23 Aug 2026)
+
+**Audit findings 6 + 7 (both CONFIRMED high).** 1013 closed anonymous access to the AI routes, but
+every one still trusted ANY confirmed Supabase session — and public signup is on — so a
+self-registered outsider could burn Cardinal's paid keys, and `senddoc` (non-carrier) could send
+mail as Cardinal to any recipient. Live check (23 Aug): 10 auth accounts, the only non-domain ones
+are `clarkie022@gmail.com` (sales, in team_profiles) and `theodorion1986@gmail.com` (Theo's owner
+login) — zero hostile accounts today; the exposure is future signups.
+
+**Fix:** new shared `api/_staff.js` — `isStaff(email)` = `@cardinalrenovations.net` domain OR the
+two known non-domain staff (static, no per-call DB lookup; ⚠ a future non-domain teammate must be
+added to `EXTRA_STAFF`). Wired into all 13 routes (analyze, caption, summarize, organize,
+sortphotos, detect, design, measure, sol, roofr, hover, coach, senddoc): a 403 guard immediately
+after the session resolves. A naïve domain-only gate would have locked out Clarkie and Theo's
+gmail — the allowlist prevents that, verified against the full roster.
+
+⚠ **Code half only.** The other half is Theo disabling **public signup** in Supabase Auth — without
+it a stranger can still create an account (they just can't reach these routes). Recorded in
+OPEN_ITEMS.
+
+**No index.html behavior change** — server-only; the stamp/CHANGELOG bump keeps the version record
+coherent (same convention as 806's librarian swap). **Proof:** `gate_1016.mjs` imports `_staff.js`
+and asserts all 10 live accounts pass + fabricated outsiders/empty/null fail (case-insensitive), and
+that all 13 routes import the helper with the guard positioned after the session resolves. GREEN;
+negative control against the build-1014 api dir → RED (40 failures: no `_staff.js`, no guards).
+`check_build` green (1015→1016); `node --check` clean on all 14 files. No SQL.
+
 ## Build 1015 — contract signing works end to end again (23 Aug 2026)
 
 **The headline cluster of the build-1014 audit — 5 interlocking signing findings, all CONFIRMED,
