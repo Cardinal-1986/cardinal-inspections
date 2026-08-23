@@ -54,9 +54,34 @@ async function aiFallback(parts, geminiRes) {
   }
 }
 
+/* AUTH — build 1013. This route had NO session gate: anyone who knew the path
+   could POST arbitrary text and bill inference to GEMINI_API_KEY (and, via the
+   505 fallback, OPENAI_API_KEY) — the exact class already closed on
+   summarize/organize/caption, missed here. Same gate as api/sol.js; the client
+   half is window.aiHeaders(), which already existed for exactly this.
+   SUPABASE_ANON_KEY is the publishable key and safe to ship. */
+const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
+const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  // ---- auth first (1013): an anonymous caller learns nothing, spends nothing ----
+  try {
+    const auth = req.headers.authorization || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+    if (!token) { res.status(401).json({ error: 'Sign in required' }); return; }
+    const who = await fetch(SUPABASE_URL + '/auth/v1/user', {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token }
+    });
+    if (!who.ok) { res.status(401).json({ error: 'Invalid session' }); return; }
+    const user = await who.json();
+    if (!user || !user.email) { res.status(401).json({ error: 'Invalid session' }); return; }
+  } catch (e) {
+    res.status(401).json({ error: 'Invalid session' });
     return;
   }
 

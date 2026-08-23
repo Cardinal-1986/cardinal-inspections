@@ -20611,6 +20611,71 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1013 — the Roofr and Hover readers are no longer open AI relays (23 Aug 2026)
+
+**The remaining security finding from the build-1007 audit.** `api/roofr.js` and `api/hover.js` —
+the routes that read a measurement PDF's text with AI — had **no session gate at all**: anyone who
+knew the paths could POST arbitrary text and bill inference to `GEMINI_API_KEY` (and, through the
+505 fallback ladder, `OPENAI_API_KEY`) — a free AI relay. This is the exact class already closed on
+`summarize`/`organize`/`caption`; these two were simply missed. **A survey of `api/` confirms they
+were the only AI routes left without an `authorization` check** (22 other routes carry one).
+
+**Server half:** both routes now carry the same session gate as `api/sol.js` — Bearer token →
+`GET /auth/v1/user` with the publishable anon key; missing/invalid/errored → 401. **The gate runs
+before the `GEMINI_API_KEY` config check**, so an anonymous caller learns nothing about server
+config and spends nothing.
+
+**Client half:** the three import call sites (`importMeasFrom`, the material-order trade picker,
+and the estimate-doc Roofr reader) sent bare `Content-Type` headers; all three now use
+`window.aiHeaders()` — the helper that has existed for exactly this purpose since the summarize
+fix, and falls back to no header (→ clean 401) when the session cannot be read. Importing
+measurements behaves identically on screen.
+
+**Proof.** `gate_1013.mjs` imports both SHIPPED handlers and drives them with mocked Supabase auth
+(GEMINI key deleted so a passed gate short-circuits at config, never reaching a model): anon → 401,
+bad token → 401, valid session → passes the gate, for each route; plus the client assertion that
+all 3 call sites send `aiHeaders()`. GREEN on the working tree; **negative control against the
+pre-fix files goes RED with 5 named failures** (anon/bad-token → 500 config leak ×4, client 0/3).
+`check_build` green (stamp 1012→1013, marker, negative control); `node --check` clean on both
+routes.
+
+No SQL. `api/roofr.js` + `api/hover.js` + `index.html`.
+
+## Build 1012 — the contract's deposit comes from the estimate that set its price (23 Aug 2026)
+
+**The third HIGH money-correctness finding from the build-1007 audit (F6 + MONEY-3), and the last.**
+`fillContractMoney` — 781's single chokepoint for a contract's money — looked up the deposit, when
+no explicit `est` row was passed, as `rows[0]` of `loadForProject` (created_at DESC, non-archived,
+**drafts included**) filtered only on "has deposit info". The editor stamps `deposit_pct` (default
+30, build 781's house rate) on **every** save, drafts included (46943 default / 47481 save), so a
+fresh draft outranked the accepted 0% estimate that set the contract's very price — a wrong deposit
+on a signed legal document.
+
+**The fix**, inside the same chokepoint: the deposit follows the SAME ladder the price does — 997's
+tiers, read through the same `ACCEPTED_EST` / `SENT_EST` vocabulary `indexMoney` uses:
+accepted/signed (2) > sent/approved (1) > draft (0, last resort), **newest within the rung** (the
+order `loadForProject` already returns; strict `>` keeps the first seen at the winning tier). A
+draft is still honored when it is all the job has — a deposit someone actually typed into the only
+estimate beats guessing, and an untouched draft's 30 equals `DEPOSIT_PCT_DEFAULT` anyway. Unchanged
+by design: the estimate→contract path's explicit row governs outright, and an explicit
+`deposit_amount` still outranks the percentage (785).
+
+**Measured before shipping:** across the 10 production jobs carrying deposit-bearing estimates,
+today's pick and the tiered pick agree on **every one** — no contract's prefill changes. But the
+audit's exact scenario is one draft away from live: **Annette Wright and Vandalyn Robinson both
+carry accepted 0% estimates**; opening a fresh draft on either job would have printed a 30%
+deposit on their next contract. Preventive, same class as 997/1011.
+
+**Proof.** `gate_1012.mjs` extracts the SHIPPED `fillContractMoney` + `DEPOSIT_PCT_DEFAULT` +
+`SENT_EST`/`ACCEPTED_EST` and executes them against a template fixture with a mocked
+`loadForProject`: accepted-0%-vs-newer-draft-30% → 0%; draft-only typed 20% → 20%; no estimates →
+30% default; sent-30%-vs-newer-draft-10% → 30% (tier beats recency); explicit est row governs;
+`deposit_amount` $5,000 on $20,000 prints 25%. GREEN on the working tree; **negative control
+against build 1011 goes RED with 2 named failures** ([1] 30%, [4] 10%). `check_build` green
+(stamp 1011→1012, marker, negative control).
+
+No SQL. `index.html` only.
+
 ## Build 1011 — the doc-store leg no longer defeats 997's accepted tier (23 Aug 2026)
 
 **The second HIGH money-correctness finding from the build-1007 audit (F3 + MONEY-2).** Build 997

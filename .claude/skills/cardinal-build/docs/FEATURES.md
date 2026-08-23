@@ -2536,6 +2536,16 @@ filled by `indexMoney()`. **Do not add another estimate-valuing scan anywhere** 
 Balance Due, the AR chart, pipeline dollars and the invoice all inherit from here.
 Gate: `gate_1011.mjs` (executes the shipped functions; RED ×3 on build 1010).
 
+⚠️ **Contract deposit precedence (781 → 785 → 1012), in `fillContractMoney()` — the ONE
+place a contract's money is written:** an explicit `est` row passed in (estimate→contract)
+governs outright; else the deposit follows the SAME tier ladder as the price —
+accepted/signed, then sent/approved, then draft as a last resort — newest within the
+rung (the editor stamps `deposit_pct` 30 on every save, drafts included, so a flat
+"newest with deposit info" pick let a throwaway draft set the deposit on a contract
+whose accepted estimate says 0%). An explicit `deposit_amount` still outranks the
+percentage; `DEPOSIT_PCT_DEFAULT` (30) applies only when no estimate answers.
+Gate: `gate_1012.mjs` (executes the shipped function; RED ×2 on build 1011).
+
 **Where it lives:**
 - **SQL:** `commission_system.sql` (root, **applied 9 Aug 2026**) — extends the
   556 `commissions` table (`collection_id` unique, `rate_pct`, `paid_by`,

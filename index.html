@@ -3701,7 +3701,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1011 &#8212; an accepted estimate stays the Job Value. Build 997 made the accepted estimate the number even when a bigger one was still open, but an old estimate saved as a document could still out-vote it and put the bigger figure back on Job Value, Balance Due and the invoice. Now: once an estimate is accepted, no document competes with it &#8212; and a document that is just the printed copy of an estimate never counts as a second estimate. Checked against every job on file: no number changes today; this stops a wrong one later.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1013 &#8212; security: the Roofr and Hover measurement readers are no longer open to the internet. Both routes read a PDF&#8217;s text with AI, and neither checked who was asking &#8212; anyone who knew the address could spend Cardinal&#8217;s AI budget. They now require a signed-in Cardinal session, exactly like every other AI route in the app. Importing measurements works the same as before; the request just carries your sign-in now.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12455,8 +12455,9 @@ async function importMeasFrom(pr, source, file){
   try{
     var text = await extractPdfText(file, say);
     say('Reading the ' + source + ' measurements\u2026 usually 10\u201330 seconds.');
+    /* 1013: both routes now require a session — aiHeaders() attaches it. */
     var res = await fetch(source === 'Hover' ? '/api/hover' : '/api/roofr', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: await window.aiHeaders(),
       body: JSON.stringify({ text: String(text || '').slice(0, 60000) })
     });
     var data = null; try{ data = await res.json(); }catch(pe){}
@@ -18704,9 +18705,10 @@ function matListText(trade){
       var text = await extractPdfText(file, function(s){ srcEl.textContent = s; });
       srcEl.textContent = 'Extracting measurements with AI\u2026';
       var ep = trade === 'siding' ? '/api/hover' : '/api/roofr';
+      /* 1013: both routes now require a session — aiHeaders() attaches it. */
       var res = await fetch(ep, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await window.aiHeaders(),
         body: JSON.stringify({ text: text })
       });
       var data = null; try{ data = await res.json(); }catch(pe){}
@@ -22901,7 +22903,23 @@ async function fillContractMoney(tpl, pr, price, est){
   try{
     if(!row && pr && window.CardinalEstimates && typeof window.CardinalEstimates.loadForProject === 'function'){
       var rows = await window.CardinalEstimates.loadForProject(pr.id);
-      row = (rows || []).filter(function(e){ return e && (e.deposit_pct != null || Number(e.deposit_amount) > 0); })[0] || null;
+      /* 1012: rows[0] was the NEWEST deposit-bearing estimate, any status — and
+         the editor stamps deposit_pct (default 30) on every save, drafts
+         included, so a later draft outranked the accepted 0% estimate that set
+         the contract's very price. The deposit must come from the same tier the
+         price does: 997's ladder — accepted/signed, then sent/approved, then
+         draft as a last resort (an untouched draft's 30 equals the default
+         anyway; a deposit someone actually typed into the only estimate on the
+         job is still honored). Newest wins within a tier, which is the order
+         loadForProject already returns. */
+      var _tier = function(e){
+        var st = String(e.status || '').toLowerCase();
+        return ACCEPTED_EST[st] ? 2 : (SENT_EST[st] ? 1 : 0);
+      };
+      (rows || []).forEach(function(e){
+        if(!e || (e.deposit_pct == null && !(Number(e.deposit_amount) > 0))) return;
+        if(!row || _tier(e) > _tier(row)) row = e;
+      });
     }
   }catch(_e){}
   if(row){
@@ -24061,9 +24079,10 @@ function wireRoofrUpload(doc){
           tc.items.map(function(it){ return it.str; }).join(' '));
       }
       status.textContent = 'Extracting measurements with AI\u2026';
+      /* 1013: the route now requires a session — aiHeaders() attaches it. */
       var res = await fetch('/api/roofr', {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
+        headers: await window.aiHeaders(),
         body: JSON.stringify({ text: texts.join('\n\n').slice(0, 60000) })
       });
       var data = null;
@@ -41711,6 +41730,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1013, d:'2026-08-23', t:'The Roofr and Hover readers are no longer open to the internet', s:'/api/roofr and /api/hover — the routes that read a measurement report’s text with AI when you import a Roofr or Hover PDF — had no sign-in check at all. Anyone who knew the paths could POST arbitrary text and bill inference to Cardinal’s Gemini key (and, through the fallback, the OpenAI key): a free AI relay. This is the exact class already closed on summarize/organize/caption, missed on these two — a survey of api/ confirms they were the only AI routes left without an authorization check. Both now require a signed-in Cardinal session (the same gate as api/sol.js), checked before anything else, so an anonymous caller learns nothing and spends nothing. The client’s three import call sites now attach the session through window.aiHeaders(), which has existed for exactly this purpose since the summarize fix. Importing measurements behaves identically on screen.' },
+{ b:1012, d:'2026-08-23', t:'The contract’s deposit comes from the estimate that set its price', s:'Creating a contract from the job menu (or Approve → contract) read the deposit off the NEWEST estimate on the job that carried any deposit info — whatever its status. Since build 781 every new estimate starts at the 30% house rate and every save writes it, drafts included, so opening a fresh draft on a job whose ACCEPTED estimate deliberately says 0% would put a 30% deposit on the next contract — the accepted estimate sets the contract’s price, but a throwaway draft was setting its deposit. Now the deposit follows the same ladder the price does (build 997’s tiers): an accepted or signed estimate first, then a sent one, and a draft only when it is all the job has — newest within each rung. The estimate → contract button, which already carries its exact estimate, is unchanged, and an explicit dollar deposit still outranks the percentage. Measured against production before shipping: today’s pick and the new pick agree on all 10 jobs with deposit-bearing estimates, so nothing changes now — but two jobs carry accepted 0% estimates and were one fresh draft away from a wrong deposit on a signed document.' },
 { b:1011, d:'2026-08-23', t:'An accepted estimate stays the Job Value', s:'Build 997 fixed the “biggest estimate wins” problem: when a homeowner is shown options and accepts the smaller one, the accepted estimate is the Job Value — the bigger still-open one no longer out-votes it. But jobFinance had a second leg 997 didn’t reach: after picking the accepted estimate, it also scanned saved documents titled “Estimate…” and took a flat maximum over them — any status, including the printed copies of estimates that were archived or superseded. So a bigger stale document could put the wrong figure right back on Job Value, and Balance Due, the AR chart, pipeline dollars and the invoice all inherit from there. Two rules now: once an estimate is accepted, no document competes with it; and a document that is the published copy of an estimate row never counts as a second estimate (only true legacy document-only estimates still do, on jobs that have no accepted one). Measured against production before shipping: zero estimate documents carry a total today, so no job’s number changes — this is preventive, exactly like 997 was.' },
 { b:1010, d:'2026-08-23', t:'Money-in has one door again (the “Received” heading)', s:'Build 996 made Money In & Commissions the single door for money received — collections there fire the 10% commission and, since 721, are what Balance Due counts. But 996 only re-routed the + button under “Received” on the Payment Information page. Tapping the “Received” HEADING itself still opened the old dir:in payment box, which writes to the legacy checklist.payments log: it books no commission, and on any job that already has a collection it is ignored by Balance Due entirely (jobFinance replaces the legacy paid total with the collections total when any collection exists). So a payment logged through the heading looked recorded but counted for nothing. Tapping “Received” now navigates to Money In & Commissions exactly like the + button. “Paid” and “Additional Job Expenses” are job costs, not collections, so their headings keep the legacy row modal — unchanged. The one job carrying legacy dir:in rows still shows its “Move them into Money In” button.' },
 { b:1009, d:'2026-08-23', t:'The ABC Supply connection is no longer open to the internet', s:'The /api/abc route \u2014 which the Suppliers screen and the estimate catalog use to search ABC, price items and look up ship-to accounts \u2014 shipped with no sign-in check and a wildcard cross-origin header, which made it an open proxy: anyone on the internet could drive Cardinal\u2019s live ABC credential, read our catalog pricing and account list, and (through the order.write scope) place real material orders on our account. It now requires a signed-in Cardinal session on every call, exactly like the rest of the app; the wildcard header is gone. Searching, pricing and finding your ship-to are open to any signed-in staff so building an estimate from the catalog still works; placing an order and reading order history are limited to admin and production (Curtis\u2019s job). Nothing changes on screen \u2014 the Suppliers sheet now signs its requests the way senddoc and CompanyCam already do.' },
