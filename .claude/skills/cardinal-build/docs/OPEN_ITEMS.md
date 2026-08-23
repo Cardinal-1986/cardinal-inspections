@@ -30,7 +30,8 @@ four-build plan with rendered options). Nothing built into index.html yet. The p
    box for ai and use pictures to supplement the estimate with captions and an overview").**
    One AI action in the editor's Photos section: attached photos without a typed caption get one
    via the EXISTING `/api/caption` (the album's ✨ AI Caption machinery, reused), plus one new
-   `overview` mode drafting a scope paragraph into Scope Notes for review. Fill-not-overwrite,
+   `overview` mode drafting a scope paragraph into Scope Notes for review — and (Theo, 23 Aug)
+   **naming the best cover photo**, applied only when no ☆ cover is set. Fill-not-overwrite,
    review-before-print, no `ai_estimates` write; the separate AI doors/screens/tables retire once
    it lands. Open picks: button vs checkbox trigger (button recommended — visible spend) · AI
    line-item suggestions later (default off) · cleanup depth. Design in full in

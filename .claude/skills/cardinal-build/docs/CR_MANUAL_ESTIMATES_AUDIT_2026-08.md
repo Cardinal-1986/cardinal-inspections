@@ -325,9 +325,13 @@ ships separately, runs before deploy, per convention.*
 One estimates product. In the editor's Photos section, one AI action beside "+ Attach Photos":
 tap it and (a) every attached photo **without a typed caption** gets one through the existing
 `/api/caption` route — the same endpoint, spend-gate and "edit if needed, then save" posture the
-Photo Album's ✨ AI Caption has used since it shipped — and (b) one overview call drafts a short
+Photo Album's ✨ AI Caption has used since it shipped — (b) one overview call drafts a short
 scope paragraph from the photos + the line-item names, **proposed into Scope Notes** (appended for
-review, never overwriting typed text). Publish then prints both exactly where they already print:
+review, never overwriting typed text), and (c) — Theo's 23 Aug add — **the same call names the best
+cover photo**: when no photo carries the ☆ cover mark yet, the AI's pick gets it (the shot that
+prints large above the pricing), with a toast saying so; a cover the rep already chose is NEVER
+moved, and the ☆ stays tappable to override. One response shape serves all three:
+`{ overview, captions[], cover_index }`. Publish then prints both exactly where they already print:
 the cover large above the pricing, the captioned grid under Photo Documentation, the overview under
 Scope Notes. Nothing touches `ai_estimates`; the row stays an ordinary estimate.
 - **Extend, don't add:** per-photo captioning is the album's existing machinery reused on the
@@ -340,7 +344,8 @@ Scope Notes. Nothing touches `ai_estimates`; the row stays an ordinary estimate.
 - **Review-before-print holds** (The Walk's rule): AI text lands in editable fields the rep
   confirms; nothing AI-written reaches the published document unseen.
 - **Fill-not-overwrite is the contract:** a typed caption is never replaced; Scope Notes is
-  appended, not clobbered. The gate asserts both, against the previous build as control.
+  appended, not clobbered; an existing ☆ cover is never moved (AI proposes one only where none is
+  set). The gate asserts all three, against the previous build as control.
 - Open picks for Theo: trigger shape (recommend a tap-to-run button — each run is a paid call, so
   it should spend visibly — over a checkbox that fires on attach); whether AI may also *suggest
   line items* from the photos (the machinery exists in `api/estimate`'s catalog prompt; default
