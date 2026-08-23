@@ -3435,10 +3435,18 @@ describing code that ships today.
    longer surface a different address anywhere. (Also fixed the latent blank-contract-address for
    profile-created leads, which never had the parts.)
 5. **Invoiced is a silent stage** — fold "invoiced and unpaid past 30 days" into the Friday owed email.
-6. **Dialog diet** — the E2E counted **11 native dialogs** (4 confirm / 3 prompt / 4 alert) on one clean
-   lifecycle; worst is invoice create→send: alert, prompt, confirm back-to-back. Native dialogs in the
-   installed PWA look like system errors. Candidates: title prompts → prefilled inline fields; stage-arrow
-   confirms → one tap + undo toast; the send prompt → a field defaulted to the client's email.
+6. **Dialog diet** — *in progress, first slice done at 1006.* The E2E counted **11 native dialogs** (4
+   confirm / 3 prompt / 4 alert) on one clean lifecycle; worst is invoice create→send: alert, prompt,
+   confirm back-to-back. Native dialogs in the installed PWA look like system errors. The toast + undo
+   machinery already exists (crToastOk/crToastErr, window.CardinalUndo since 186), so each slice is
+   *routing* through it, not new UI.
+   - ✅ **1006 — stage-arrow confirms → one tap + 5s Undo (deferred commit).** The forward/back arrows on
+     the profile no longer confirm; the move is held for the Undo window so an undone tap never writes and
+     never emails the team. ⚠ Note for future slices: `setStage` emails Curtis on Approved/Completed, so a
+     one-tap replacement there must DEFER the commit, not commit-then-revert.
+   - ⬜ remaining: **alert() → toast** sweep (218 alerts app-wide; the invoice create success/guard are the
+     lifecycle ones), and **prompt() → inline field** (the send-email prompt defaulted to the client's
+     email; title prompts). Both want their own build; the send-prompt one is visual (preview first).
 7. **Remote signature buzz parity** — `api/clientsign.js` advances the stage and sends the Resend email, but
    nothing web-pushes Curtis the way an in-person signature does (the front-end setStage does that half).
 

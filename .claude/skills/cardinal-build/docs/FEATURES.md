@@ -6483,3 +6483,13 @@ Type** defaulted to 'unknown' (17 of 57 leads had none) and **Lead Source** was 
 refusal (always visible), Lead Source by opening "More detail" and shaking the field when it's the
 blocker (the 782 reveal pattern), plus a `*` added to its label. No layout change. `gate_1005.mjs`
 (Chromium, drives the real ldSave; control on 1004 PASS 2 · FAIL 5).
+
+### 1006 — stage arrows: one tap, with Undo (dialog diet, slice 1)
+
+The profile's forward/back stage arrows no longer confirm on every tap. A tap moves the job at once and
+shows a 5-second Undo toast (window.CardinalUndo, shipped since 186). The transition is DEFERRED for the
+window: the target stage shows optimistically (cache-only), and the real commit (setStage / acxAdvance)
+runs only when the toast closes — so an undone tap never writes to the record and never fires setStage's
+team email (Approved → Curtis "schedule + order materials"; Completed → rep+admins). Gmail Undo-Send
+model. `crStageDefer` is the shared helper; `gate_1006.mjs` (source wiring + Chromium mechanism test;
+control on 1005 FAIL 4). First slice of the dialog diet; alert→toast and prompt→inline remain.

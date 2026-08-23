@@ -20611,6 +20611,40 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1006 — stage arrows: one tap, with Undo (23 Aug 2026)
+
+First slice of the **dialog diet** (OPEN_ITEMS #6). The profile's forward/back stage arrows popped a
+`confirm('are you sure?')` on every tap. Now a tap moves the job at once and shows a **5-second Undo
+toast** instead — the existing `window.CardinalUndo` (build 186), no new UI.
+
+### Why the commit is DEFERRED, not committed-then-reverted
+
+`setStage` is not side-effect-free: advancing to **Approved** emails+web-pushes Curtis ("schedule +
+order materials") and **Completed** emails the rep+admins ("walk-around + invoice"). A naive
+one-tap-then-undo would fire that email on every mis-tap and Undo could not unsend it. So
+`crStageDefer` holds the whole transition for the Undo window: the target stage is shown optimistically
+(cache-only, no DB write), and the real commit — `setStage` for the back arrow, `acxAdvance` for the
+forward arrow (which keeps its → Completed review-request prompt) — runs only when the 5s window closes.
+**Undo cancels the timer and reverts the optimistic stage; nothing is ever written and no team email
+fires.** This is Gmail's Undo-Send model, and it is the whole reason the diet's stage slice is safe.
+
+Deliberately narrow: a single active defer at a time (`_crStageDeferTimer` is cleared on a fresh tap);
+`Lost` is never a linear arrow target so its loss-reason prompt is untouched; if `CardinalUndo` is
+somehow unavailable the move commits immediately rather than being lost.
+
+### Gate
+
+`gate_1006.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
+a Chromium mechanism test of the helper in isolation: a tap shows the target stage but does NOT commit,
+raises an Undo toast; Undo reverts and **never commits**; letting the 5s window elapse commits exactly
+once. 11 assertions. Control on 1005: **FAIL 4** (confirm present, helper absent), named, no crash — the
+mechanism assertions are gated on the helper existing, so the control reports absence rather than
+throwing.
+
+**No SQL, no API change.** No markup or CSS changed (the arrows render identically; the undo toast is
+shipped UI), so the sentinel does not apply. The remaining diet slices (alert→toast, prompt→inline) are
+noted in OPEN_ITEMS #6.
+
 ## Build 1005 — the New Lead form enforces its starred questions (23 Aug 2026)
 
 The intake form was already split into essentials + "More detail" at **782**, which also made
