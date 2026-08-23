@@ -20611,6 +20611,28 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1000 — a claim shows how long since the date of loss (23 Aug 2026)
+
+Theo's pick, my "ship the counter, not the clock". Beside the date of loss the claim card now reads
+`· 476 days ago`. **It is a plain fact, never a countdown.** The Resource Library card is emphatic
+that guessing a suit-limitation period is itself the harm, so this says how long it has *been* and
+nothing about how long is *left*. Both open claims are past a year (476 and 395 days), now visible
+at a glance.
+
+`lossAge(iso)` is a tiny local helper in `cr-claims-script`, beside that block's own `fmtDate` —
+each insurance block already keeps its own `daysSince` (four copies, all module-local IIFEs), so a
+fifth local is the idiom here, not a new shared mechanism. Returns `''` for a missing, future or
+unparseable date — no guessing, ever.
+
+⚠ **A real countdown is deliberately NOT in this build.** It needs a suit-limitation date typed from
+the policy, which needs a column on `insurance_claims` — SQL, and a separate change. This one is
+app-only.
+
+`gate_1000.mjs` — 8 assertions. Extracts the shipped `lossAge` and unit-tests the edges (100 days →
+"· 100 days ago", 1 → singular, 0 → "0 days ago", null/empty/future/garbage → ''), then renders the
+real claim card with an injected date (an init script, not a mutation of the shared seed) and reads
+"200 days ago" off it. Control on 999: **PASS 1 · FAIL 2**, named, no crash.
+
 ## Build 999 — lead source is a required tap when you add a client (23 Aug 2026)
 
 First off the decision list Theo answered "yes to all" on. `lead_source` was **fully wired** — the

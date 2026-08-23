@@ -3701,7 +3701,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 999 &#8212; where a lead came from is now a required tap when you add a client. It is the one field that tells you whether door-knocking, referrals or storm canvassing is actually bringing in work, and until now it defaulted to &#8220;not set&#8221; and was blank on every one of your jobs. It is a single tap from eight chips, it remembers your last pick, and it only asks on a new client &#8212; editing an existing one never nags.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1000 &#8212; a claim now shows how long it has been since the date of loss, right beside the date &#8212; e.g. &#8220;476 days ago.&#8221; It is a plain fact, not a countdown: the app deliberately does not guess a filing deadline, because guessing that wrong is worse than not showing it. Both of your open claims are past a year, which this now makes visible at a glance.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -31116,6 +31116,19 @@ function showList() {
   }
   function money(v) { return (v === null || v === undefined || v === '') ? '\u2014' : '$' + fmt(v); }
   function fmtDate(d) { if (!d) return '—'; var t = window.crDate ? window.crDate(d) : new Date(d); return t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+  /* 1000: days since the date of loss, as a plain fact beside the date. It is
+     arithmetic, not a deadline — the Resource Library card is emphatic that
+     GUESSING a suit-limitation period is itself the harm, so this says how
+     long it has been and nothing about how long is left. A real countdown
+     needs a policy date entered, which needs a column, and is a separate
+     build. */
+  function lossAge(iso){
+    if(!iso) return '';
+    var t = new Date(iso); if(isNaN(t)) return '';
+    var n = Math.floor((Date.now() - t.getTime()) / 86400000);
+    if(n < 0) return '';
+    return ' · ' + n + ' day' + (n === 1 ? '' : 's') + ' ago';
+  }
   function fmtDateShort(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); }
   function statusLabel(s) { return STATUSES.find(x => x.v === s)?.l || s; }
   function causeLabel(c) { return CAUSES.find(x => x.v === c)?.l || c; }
@@ -31371,7 +31384,7 @@ function showList() {
           <div class="cr-c-fact"><div class="lbl">Property</div><div class="val"><strong>${esc(c.property_address || 'TBD')}</strong></div></div>
           <div class="cr-c-fact"><div class="lbl">Status</div><div class="val"><span class="cr-c-pill ${c.status}">${statusLabel(c.status)}</span></div></div>
           <div class="cr-c-fact"><div class="lbl">Carrier · Claim #</div><div class="val"><strong>${esc(c.carrier || 'Unknown')}</strong>${c.claim_number ? ` · ${esc(c.claim_number)}` : ''}</div></div>
-          <div class="cr-c-fact"><div class="lbl">Date of Loss</div><div class="val">${fmtDate(c.date_of_loss)}${c.cause_of_loss ? ` · ${causeLabel(c.cause_of_loss)}` : ''}</div></div>
+          <div class="cr-c-fact"><div class="lbl">Date of Loss</div><div class="val">${fmtDate(c.date_of_loss)}${lossAge(c.date_of_loss)}${c.cause_of_loss ? ` · ${causeLabel(c.cause_of_loss)}` : ''}</div></div>
         </div>
 
         <!-- Financial summary card -->
@@ -41498,7 +41511,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:999, d:'2026-08-23', t:'Lead source is a required tap when you add a client', s:'Where a lead came from \u2014 door knock, referral, storm canvass, and so on \u2014 is the one field that tells you whether the way you find work is working. It was already wired into the reports chart, the filter and the sort, but it defaulted to \u201Cnot set\u201D and only the client name was required, so it was blank on every job and the chart had no data. Adding a client now asks for it as a single tap from eight chips, and it remembers your last pick so a canvasser doing a street taps once rather than every time. Editing an existing client never nags \u2014 the requirement is only for new ones.' },
+{ b:1000, d:'2026-08-23', t:'A claim shows how long since the date of loss', s:'Next to the date of loss on a claim you now see how long ago it was \u2014 \u201C476 days ago.\u201D It is a plain fact, not a deadline clock: the app will not guess a suit-limitation period, because getting that wrong is the real harm. Both open claims are over a year out, and this makes that obvious without doing the arithmetic in your head. A true countdown would need the limitation date typed in from the policy, which is a later, separate change.' },
+      { b:999, d:'2026-08-23', t:'Lead source is a required tap when you add a client', s:'Where a lead came from \u2014 door knock, referral, storm canvass, and so on \u2014 is the one field that tells you whether the way you find work is working. It was already wired into the reports chart, the filter and the sort, but it defaulted to \u201Cnot set\u201D and only the client name was required, so it was blank on every job and the chart had no data. Adding a client now asks for it as a single tap from eight chips, and it remembers your last pick so a canvasser doing a street taps once rather than every time. Editing an existing client never nags \u2014 the requirement is only for new ones.' },
       { b:998, d:'2026-08-22', t:'A build day on the calendar has to say which job it is', s:'Booking a build meant typing an address and picking \u201CJob\u201D \u2014 and the client box said \u201Coptional\u201D, so it usually stayed empty. An appointment attached to no job cannot move that job to Scheduled, which means it never reaches the crew board, which is why the \u201Cneeds a crew\u201D rail has been empty since it was built. Job and Material Drop now ask for the job, and say why if you skip it. Ordinary appointments are untouched \u2014 a haircut has no client. The two build days already in the calendar without a job can be attached to one instead of being deleted and booked again.' },
       { b:997, d:'2026-08-22', t:'Accepting an estimate makes it the number', s:'When a job carried two live estimates \u2014 the options you show at a kitchen table \u2014 Job Value quoted whichever was biggest, even after you had accepted the smaller one. Balance Due, the invoice, the AR chart and the pipeline total all read that same figure, so one job could be wrong in five places at once, and the only fix was remembering to archive the losing estimate by hand every single time. An accepted estimate now wins whatever its size. If a job genuinely has two accepted \u2014 a roof and a siding job on one property \u2014 the larger still leads. No job in the system changes value today; this is here so it does not happen the next time.' },
       { b:996, d:'2026-08-22', t:'Money received has one door, and it is the one that pays the rep', s:'Two rows sat directly under each other on a job: Payment Information and Money In \u0026 Commissions. They looked like the same thing and they were not \u2014 only the second one books anything. It is what writes the rep\u2019s 10%, what fills the Friday owed email, and since build 721 it is what sets Balance Due. Every payment recorded through the first one was invisible to all three. Tapping to log a payment received now takes you straight to Money In. Payments recorded the old way are still counted, and there is a one-tap way to move them across that names every amount first and leaves the total exactly where it was. Paid out and additional expenses are job costs, not collections, and are untouched.' },
