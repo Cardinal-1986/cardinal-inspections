@@ -3705,7 +3705,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -18356,6 +18356,12 @@ function hideAllViews(){
      so display:none is the correct lever. */
   var _own = document.getElementById('cr-owner');
   if(_own) _own.style.display = 'none';
+  /* 1022: Community Analytics — a fixed inset:0 view (z-index 9600), DISPLAY-shown
+     (open() sets display:block, close() sets display:none), so display:none is the
+     correct lever. Unregistered until now: opening it then navigating away left it
+     covering the next screen — the 570-572 nav-trap class again. */
+  var _can = document.getElementById('cr-can');
+  if(_can) _can.style.display = 'none';
   /* Self-heal: whenever we're about to show a main-app view, make sure the
      site header is visible. Anything upstream that left it hidden gets fixed here. */
   var _hd = document.querySelector('header.site');
@@ -18449,7 +18455,16 @@ function hideAllViews(){
    /* 927: Storm Data. Same shape again — created at runtime, shown by a
       class, closed through its own close(false) so it does not send the
       user home while hideAllViews is on its way somewhere else. */
-   { id:'cr-storm', api:window.CardinalStorm }].forEach(function(o){
+   { id:'cr-storm', api:window.CardinalStorm },
+   /* 1022: the Line Item Library (admin) and the contract viewer — both are
+      class-shown (.open) full-screen views that write the global scroll lock, and
+      both were registered in neither hideAllViews nor navRestore, so navigating
+      away left them covering the next screen (the 941/Suppliers nav-trap class).
+      Class is the correct lever; each closes through its own close() so the scroll
+      lock is released too. cr-ce-view's close is a bare global (closeContractEditor),
+      wrapped here to the {close} shape this loop expects. */
+   { id:'cr-lil-view', api:window.CardinalLineItems },
+   { id:'cr-ce-view', api:{ close:function(){ if(typeof window.closeContractEditor === 'function') window.closeContractEditor(); } } }].forEach(function(o){
     var el = document.getElementById(o.id);
     if(!el || !el.classList.contains('open')) return;
     if(o.api && typeof o.api.close === 'function'){ try{ o.api.close(false); }catch(_){} }
@@ -26796,6 +26811,13 @@ function __histPush(st){
         case 'crews':           if(window.CardinalCrews) window.CardinalCrews.open(); break;
         case 'pay':             if(window.CardinalPay) window.CardinalPay.open(); break;
         case 'owner':           if(window.CardinalOwner) window.CardinalOwner.open(); break;
+        /* 1022: the three full-screen views 1022 taught hideAllViews about record
+           history too, or Back walks straight past them — the other half of the
+           convention. cr-can and cr-lil are argument-less; the contract viewer
+           reopens by the id we recorded (openContractEditor takes {id}). */
+        case 'communityAnalytics': if(window.CardinalCommunityAnalytics) window.CardinalCommunityAnalytics.open(); break;
+        case 'lineitems':          if(window.CardinalLineItems) window.CardinalLineItems.open(); break;
+        case 'contract':           if(typeof window.openContractEditor === 'function' && state.data && state.data.contractId) window.openContractEditor({ id: state.data.contractId }); break;
       }
     }catch(_e){}
     setTimeout(function(){ _navRestoring = false; }, 30);
@@ -26869,6 +26891,9 @@ function __histPush(st){
     wrapNav('crOpenEstimates',     'estimates');
     wrapNav('crOpenPricing',       'pricing');
     wrapNav('crOpenClaims',        'claims');
+    /* 1022: the contract viewer is a global that takes a contract ({id} or a full
+       row), so wrapNav reaches it and records the id to reopen by. */
+    wrapNav('openContractEditor',  'contract', function(input){ return { contractId: (input && input.id) || null }; });
     /* Crews is a METHOD, and wrapNav reads window[name], so it cannot reach it.
        Same shape as the CardinalCommunityHub wrap below, __crNav guard included
        so a second pass cannot double-wrap it. */
@@ -26944,6 +26969,31 @@ function __histPush(st){
         };
         wOwn.__crNav = true;
         own.open = wOwn;
+      }
+      /* 1022: Community Analytics and the Line Item Library are METHODS, so wrapNav
+         (which reads window[name]) cannot reach them — same method-wrap shape as
+         Crews/Pay/Owner above, __crNav guard so a second pass can't double-wrap. */
+      var can = window.CardinalCommunityAnalytics;
+      if(can && typeof can.open === 'function' && !can.open.__crNav){
+        var origCanOpen = can.open;
+        var wCan = function(){
+          var out = origCanOpen.apply(this, arguments);
+          try{ window.navSetView('communityAnalytics'); }catch(_e){}
+          return out;
+        };
+        wCan.__crNav = true;
+        can.open = wCan;
+      }
+      var lil = window.CardinalLineItems;
+      if(lil && typeof lil.open === 'function' && !lil.open.__crNav){
+        var origLilOpen = lil.open;
+        var wLil = function(){
+          var out = origLilOpen.apply(this, arguments);
+          try{ window.navSetView('lineitems'); }catch(_e){}
+          return out;
+        };
+        wLil.__crNav = true;
+        lil.open = wLil;
       }
     })();
   }, 400);
@@ -41920,6 +41970,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1022, d:'2026-08-23', t:'Three full-screen views no longer trap on top of the app', s:'Audit finding 16 — the 570-572/941 nav-trap class, three more of them. Community Analytics (cr-can), the admin Line Item Library (cr-lil-view) and the contract viewer (cr-ce-view) are each position:fixed, inset:0 full-screen views, but none was registered in hideAllViews() (the function every navigation calls to clear the current screen) or in the back-button history (navRestore/wrapNav). So opening one and then tapping another destination — or the back arrow — left it covering the new screen with no exit but its own Close, and Back walked straight past it. All three are now cleared by hideAllViews using the correct lever for how each is shown: cr-can is display-shown (display:none), while cr-lil and cr-ce are class-shown and close through their own close() so the scroll lock they set is released too. All three now record history (cr-can/cr-lil as methods via the __crNav wrap, the contract viewer via wrapNav recording its id), so Back returns you to where you were. Proven by gate_1022.mjs.' },
 { b:1021, d:'2026-08-23', t:'Approved/Completed team emails now survive an offline stage move', s:'Audit finding 14. Moving a job to Approved (or Completed) with no signal saved the job to the offline outbox and synced it on reconnect — but the team email that goes with it (Curtis’s “Approved — schedule + order materials”, and the rep’s “job complete — walk-around + invoice”) was fired at that moment as a plain fetch to /api/notify with nobody listening for the result. Offline, that fetch failed and the notification was silently discarded, so the crew was never told about a job that had actually moved. setStage now hands those two emails to a new _notifyOrQueue helper: it tries to send immediately, and only if the send fails for a network/offline reason does it queue an op:"notify" entry in the existing write outbox, which replays it (via notifyTeam) the moment you are back online — alongside your other pending edits, shown in the same “waiting to sync” badge. A genuine sign-out is not queued (a present, online person already sees that), and a notify entry is never marked as a red “refused” change, because a missed email is best-effort, not something a person must fix. Proven by gate_1021.mjs (executes the shipped flush op:"notify" branch and _notifyOrQueue: sent → deleted; offline → kept; and the setStage sites route through the helper).' },
 { b:1020, d:'2026-08-23', t:'A quick forward-then-back stage tap no longer sends a phantom crew email', s:'Audit finding 13. Moving a job’s stage has a five-second undo window before it saves, and only one move can be pending at a time. If you tapped a job forward and then back within that window (or the phone locked mid-window), the app committed the first move before starting the second — so a round-trip you meant to cancel actually fired setStage for a stage the job never settled on, and for Approved that sends production an irreversible “order materials” email. crStageDefer now treats a second tap on the SAME job as a replacement: it cancels the pending move, rebases from its true starting stage, and if you have landed back where you started it saves nothing at all. A move on a DIFFERENT job still commits the first one first (the 1008 rule), and the pagehide/visibility flush that saves an in-progress move when you close the app is unchanged. Proven by gate_1020.mjs (executes crStageDefer: same-job round-trip = zero setStage calls; cross-job supersede still commits).' },
 { b:1019, d:'2026-08-23', t:'Two money displays now agree with Balance Due', s:'Two audit findings, both about a money figure shown on screen disagreeing with the real total. (11) The Payment Information page computed Received and Job Net from the old worksheet + legacy payment rows only, ignoring the collections ledger — but since build 996 money received lives in Money In & Commissions, and Balance Due (shown right above) already reads collections. So on any job with a collection, Received/Job Net contradicted Balance Due. payTotals now mirrors jobFinance: when a job has any collection, Received is the collections total. (12) Job Value takes the larger of (all signed contract documents summed) and (the signed-contract TABLE) — but the table side kept only the LARGEST single row, so a job signed as two contracts in the table (e.g. roof + siding) would under-report. The table side now sums too. Measured before shipping: no job carries two signed contracts today, so no Job Value changes now — preventive, like 997/1011. Proven by gate_1019.mjs (executes payTotals and indexMoney).' },

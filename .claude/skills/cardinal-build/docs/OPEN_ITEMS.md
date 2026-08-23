@@ -107,9 +107,13 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
     (studio_private_objects_rls.sql:58) — any authenticated user can upload into showcase/walks/
     owner-vault/materials prefixes. **Fix:** one idempotent `ALTER POLICY` adding the prefix
     exclusions (needs Theo's sign-off, sequenced under §5).
-16. **Community Analytics, Line Item Library, and the contract viewer are full-screen views in
-    neither `hideAllViews()` nor `navRestore()`** (index.html:60869) — the 941/Suppliers nav-trap
-    class. **Fix:** register all three (display-lever for cr-can, module-close for the other two).
+16. ✅ **RESOLVED at 1022.** Community Analytics (cr-can), Line Item Library (cr-lil-view) and the
+    contract viewer (cr-ce-view) were full-screen views in neither `hideAllViews()` nor
+    `navRestore()` — the 941/Suppliers nav-trap class. **Fix:** all three registered — display-lever
+    for cr-can, module-`close()` for the two class-shown ones (cr-ce via a wrapper on the bare
+    `closeContractEditor` global); history via `__crNav` wraps (cr-can/cr-lil) and
+    `wrapNav('openContractEditor')` + navRestore cases. Proven by `gate_1022.mjs` (executes
+    hideAllViews and navRestore against a mock DOM).
 17. **Build 966's fill chip fails contrast in both states on its own #555 ground**
     (index.html:25088). **Fix:** swap to `#ffc2c6` (4.89:1) / `#9fdcb4` (4.75:1, already used by
     savedFlash).
