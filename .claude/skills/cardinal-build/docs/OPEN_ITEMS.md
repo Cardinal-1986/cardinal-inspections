@@ -35,6 +35,12 @@ four-build plan with rendered options). Nothing built into index.html yet. The p
    it lands. Open picks: button vs checkbox trigger (button recommended — visible spend) · AI
    line-item suggestions later (default off) · cleanup depth. Design in full in
    `CR_MANUAL_ESTIMATES_AUDIT_2026-08.md` §5 Build E.
+6. **Build F — the client-facing estimate document (Theo's 23 Aug ask).** The published/shared
+   estimate has NO phone layout (fixed 8.5in body, no viewport meta — the share link renders
+   shrunk-to-unreadable on a homeowner's phone) and a 2021-era dress. Two options rendered in the
+   audit artifact, content byte-identical: **A** clean letterhead (hairlines, small-caps labels,
+   no black header fill) · **B** = A + a Total/Deposit/Valid-through summary strip. Both carry the
+   phone fix. Awaiting A-or-B. Design + share-FIX compatibility notes in the audit doc Build F.
 
 **Shipped with the audit (scripts/docs only):** the sentinel's `--themes rb-light` leg was
 structurally broken (attribute set threw at init; every themed CRM sweep was a dark sweep) — fixed

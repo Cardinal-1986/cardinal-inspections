@@ -350,6 +350,31 @@ Scope Notes. Nothing touches `ai_estimates`; the row stays an ordinary estimate.
 - Cost, honest: ~1 build for the editor button + caption fill + overview + states, including the
   small API mode; door-removal/SQL cleanup rides as the Build-D slice.
 
+**Build F — the client-facing estimate document (Theo's 23 Aug ask: "make the estimate client
+side look better").** The published document (`buildDocHtml`, cr-epub) is what the homeowner
+prints, gets emailed, and opens from the share link. Two problems, both rendered as labelled
+previews for the pick:
+- **The share link has no phone layout at all.** `buildDocHtml` emits a fixed `width:8.5in` body
+  and NO viewport meta, and `api/share.js`'s head-injection adds print fixes only — so a phone
+  lays the page out at 980px and shrinks it to unreadable size. Verified in a true-mobile render.
+- **The dress is 2021-era:** full grid borders on the meta table, a black header fill on the items
+  table, the pink deposit box.
+Two options rendered from the SHIPPED `buildDocHtml` output with content byte-identical (every
+word of scope, payment instructions, ORC-adjacent text, photos and signature lines unchanged):
+- **Option A — clean letterhead:** hairlines instead of grids, small-caps field labels, no header
+  fill (2px charcoal rule), calmer payment blocks, tabular numerals, refined type scale — plus the
+  viewport meta and stacked phone layout.
+- **Option B — A plus a summary strip** under the letterhead: Total (red) · Deposit at signing ·
+  Valid through — the numbers the homeowner looks for, first.
+Implementation notes for the build: one stylesheet swap inside `buildDocHtml` (+ the strip markup
+for B, values from the est row) + the viewport meta; the section-number chips (`h2.sec .num`),
+`table.meta td.k`, `.deposit-box`, `.note`, `.sign` and figure classes all keep their names, so
+`api/share.js`'s FIX (empty-section hiding, renumbering, print footer) keeps working — verified
+against the FIX's selector list. Published documents are frozen snapshots: old docs keep the old
+look until re-published (publish already self-heals onto the current builder, 1014). Preview
+renders live in the audit artifact; the generator (`gen_docs.mjs` pattern — execute the shipped
+builder, replace only the stylesheet) is the gate shape for the build.
+
 **Deliberately NOT in the plan without a fresh ask:** offline estimate creation (settled, 17 Aug);
 option-grouping for multi-quote clients (the Kimberly Guy pattern — two sent + three drafts on one
 job — is real and interesting, but it is scope, and 997 already keeps the accepted one the number);
