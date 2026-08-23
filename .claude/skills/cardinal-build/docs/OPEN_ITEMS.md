@@ -11,7 +11,15 @@ lows dropped unverified (listed at the bottom). Every finding read against the b
 the live DB. Ranked, with the smallest fix each verifier settled on. **None built yet — awaiting
 Theo's pick.**
 
-### 🔴 THE HEADLINE: the contract/estimate signing flow is broken end to end (5 findings)
+### ✅ THE HEADLINE — RESOLVED at build 1015. The contract/estimate signing flow is whole again.
+All 5 below fixed in build 1015 (index.html + api/clientsign.js + api/share.js), proven by
+`gate_1015.mjs` (executes buildEstimate/isEstimateTitle/docKind + the real clientsign handler; RED
+×12 against 1014): (1) footer stripped only when the body carries its own slots — Service Contract
+keeps its signature line; (2) clientsign writes `signed_at`; (3) `SLOT_RX` makes agreements signable
+and clientsign stamps the buyer slot; (4) isEstimateTitle/docKind strip the `EST-` prefix; (5) void
+readers check `'void'`. Original detail retained below for the record.
+
+### 🔴 THE HEADLINE (RESOLVED 1015): the contract/estimate signing flow is broken end to end (5 findings)
 These interlock — a genuine "reproduce before theorising" cluster. Read together before fixing.
 1. **Estimate → Contract makes a contract with NO signature block.** 781's `isDeal` strip
    (`buildEstimate`, index.html:9845–9846) removes the base `SIGN_FOOTER` from every

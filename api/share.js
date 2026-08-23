@@ -7,6 +7,13 @@
 
 const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SIGN_RX = /(<div class="line">)(<\/div>\s*<div class="lbl">\s*Client Acceptance)([^<]*)(<\/div>)/;
+/* 1015: the three Construction Agreements carry a Buyer/Co-buyer/Contractor
+   sigslot table instead of the Client Acceptance footer, so SIGN_RX never
+   matched them and the share page was silently view-only — the app's own
+   share dialog promised remote signing it could not deliver. An UNFILLED
+   buyer slot is exactly class="sigslot" (the in-person pad rewrites it to
+   class="sigslot signed" when filled), so this cannot double-offer signing. */
+const SLOT_RX = /class="sigslot" data-sig="buyer"/;
 
 function signUi(token) {
   return `
@@ -151,7 +158,7 @@ export default async function handler(req, res) {
       'if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",run);else run();' +
       '})();</scr' + 'ipt>';
     html = html.includes('</head>') ? html.replace('</head>', FIX + '\n</head>') : FIX + html;
-    const signable = SIGN_RX.test(html) && !html.includes('data-clientsigned');
+    const signable = (SIGN_RX.test(html) || SLOT_RX.test(html)) && !html.includes('data-clientsigned');
     if (signable) {
       const ui = signUi(t);
       html = html.includes('</body>') ? html.replace('</body>', ui + '\n</body>') : html + ui;

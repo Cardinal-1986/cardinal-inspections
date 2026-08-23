@@ -3705,7 +3705,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1014 &#8212; six fixes closing out the audit. (1) Deleting a document now un-links any estimate that pointed at it, and publishing an estimate whose document was deleted creates a fresh one instead of silently writing nothing. (2) Everyone gets an Enable Notifications row in the menu &#8212; and a one-time nudge &#8212; so job alerts can finally reach the whole team, not just Theo. (3) The &#8220;supplements awaiting a decision&#8221; line on a claim is readable in light mode. (4) &#8220;Days since the loss&#8221; no longer reads one day high in the evening. (5) The move-into-Money-In note tells the truth about Balance Due when worksheet payments exist. (6) The per-job Appointments page only shows a delete &#10005; on rows you can actually delete.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9841,9 +9841,14 @@ function buildEstimate(titleHtml, body, terms){
      table, so the base's two ruled lines were a SECOND signing block on the
      same page — five slots, and the pad filled only the last one. The client
      signed at the bottom while the official-looking Buyer box stayed a yellow
-     [sign]. Estimates keep the footer: it is the only signing block they have. */
+     [sign]. Estimates keep the footer: it is the only signing block they have.
+     1015: 781 over-stripped — the plain SERVICE CONTRACT brings NO data-sig
+     slots of its own, so removing the footer left it with nowhere to sign at
+     all: the in-person pad silently discarded the signature and the share link
+     was view-only. Strip the footer only when the body carries its own slots;
+     the three agreements (which do) keep 781's single-block fix unchanged. */
   if(isDeal){
-    out = out.replace(SIGN_FOOTER, '');
+    if(body && String(body).indexOf('data-sig') !== -1) out = out.replace(SIGN_FOOTER, '');
     /* ...and it is an Agreement, not an estimate, once it is one. */
     out = out.replace('<b>Acceptance.</b> This estimate is valid through the date shown above. Signature below',
                       '<b>Acceptance.</b> Signature below');
@@ -11017,6 +11022,9 @@ async function reload(){
 
 function docKind(title){
   var t = (title || '').trim();
+  /* 1015: same strip as isEstimateTitle — published docs carry an
+     'EST-YYYY-NNNN — ' prefix the leading-word tests below never matched. */
+  t = t.replace(/^EST-\d{4}-\d+\s*—\s*/i, '');
   if(/^siding estimate/i.test(t)) return { type:'Estimate', trade:'Siding' };
   if(/^window estimate/i.test(t)) return { type:'Estimate', trade:'Windows' };
   if(/^andersen estimate/i.test(t)) return { type:'Estimate', trade:'Windows' };
@@ -15141,7 +15149,14 @@ renderAcxOverview = function(){
 /* ---------- transfer checked photos into an inspection report ---------- */
 var galXferMenu = document.getElementById('galXferMenu');
 function isEstimateTitle(t){
-  return /^(estimate|siding estimate|window estimate|andersen estimate|gutter estimate|repair estimate)/i.test((t||'').trim());
+  /* 1015: publish() titles every numbered estimate doc 'EST-YYYY-NNNN — …', so
+     the leading-word regex missed every one of them — a SIGNED published
+     estimate never reached renderApprovals, the "needs approval" email, the
+     overview counts or jobFinance's doc leg (the only signed estimate doc in
+     production, EST-2026-0896, failed this test). Strip the number prefix
+     first; all 15+ call sites inherit the fix through this one definition. */
+  var s = (t||'').trim().replace(/^EST-\d{4}-\d+\s*—\s*/i, '');
+  return /^(estimate|siding estimate|window estimate|andersen estimate|gutter estimate|repair estimate)/i.test(s);
 }
 document.getElementById('galXferBtn').addEventListener('click', function(e){
   e.stopPropagation();
@@ -39021,7 +39036,7 @@ var _s = String(contract.status || 'draft').toLowerCase();
 var _canSend = (_s === 'draft');
 var _canSign = (_s === 'draft' || _s === 'sent') &&
                (typeof window.openSigner === 'function' || document.getElementById('sigModal'));
-var _canVoid = (_s !== 'signed' && _s !== 'executed' && _s !== 'voided');
+var _canVoid = (_s !== 'signed' && _s !== 'executed' && _s !== 'void');   /* 1015: writer writes 'void' (732), not 'voided' — an already-voided contract kept offering Void */
 return '<div class="ce-actions">' +
 '<button data-act="print">\uD83D\uDDA8 Print</button>' +
 '<button data-act="download">\u2B07 Download</button>' +
@@ -39120,7 +39135,7 @@ function lifecycleLine(contract){
 var s = String(contract.status || 'draft').toLowerCase();
 if((s === 'signed' || s === 'executed') && contract.homeowner_signed_at)
 return '<div class="ce-eyebrow">Signed ' + esc(ceFmtDay(contract.homeowner_signed_at)) + '</div>';
-if(s === 'voided')
+if(s === 'void')   /* 1015: writer writes 'void' (732), not 'voided' \u2014 the Voided eyebrow never showed */
 return '<div class="ce-eyebrow">Voided' + (contract.void_reason ? ' \u2014 ' + esc(String(contract.void_reason)) : '') + '</div>';
 if((s === 'sent' || s === 'viewed') && contract.sent_at)
 return '<div class="ce-eyebrow">Sent ' + esc(ceFmtDay(contract.sent_at)) + '</div>';
@@ -41844,6 +41859,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1015, d:'2026-08-23', t:'Contract signing works end to end again', s:'The build-1014 audit found the whole contract/estimate signing path broken in five interlocking ways; all fixed here, verified against the shipped code. (1) A plain Service Contract generated from an estimate had NO signature block at all — build 781 strips the base template’s Client Acceptance footer from every AGREEMENT/CONTRACT because the three Construction Agreements carry their own Buyer/Co-buyer/Contractor table, but the plain Service Contract brings no table, so it was left with nowhere to sign; the in-person pad silently discarded the signature and the share link was view-only. The footer is now stripped only when the document brings its own signature slots. (2) Signing a contract from the secure link never recorded signed_at on the document, so it still showed as unsigned, never entered the Approvals queue, and left the money worksheet locked — even though it had already advanced the job to Approved and emailed Curtis to order materials. The remote signer is always the client, so signed_at is now written, matching in-person signing. (3) The three Construction Agreements sign through a Buyer signature slot, not the footer, and the share/sign pages only recognized the footer — so the app offered remote signing it could not actually perform. The share page now recognizes an unfilled Buyer slot as signable and stamps the signature into it, the same way the in-person pad does. (4) A published estimate is titled “EST-YYYY-NNNN — …”, which failed the estimate-title test, so a signed numbered estimate never reached the Approvals queue, the “needs approval” alert, the overview counts, or the money math; the test now strips the number prefix in the one place every reader shares. (5) A voided contract checked for the status “voided” while the writer writes “void”, so the Voided label never showed and a voided contract kept offering a Void button — both now read “void”.' },
 { b:1014, d:'2026-08-23', t:'Six fixes closing out the audit', s:'The rest of the 23 Aug audit, verified against the current build before anything was touched (one finding — the iTel button colors — turned out to be a false alarm and was left alone). (1) Deleting a document now clears the link on any estimate that pointed at it, at the one delete pipeline all four delete buttons share — five estimates worth $71,845.99 had been left pointing at deleted documents, where publishing silently wrote nothing; publish also now checks the document still exists and creates a fresh one when it does not, which self-heals those five. (2) Notifications for everyone: push alerts only ever reached Theo because nobody else had a door — the menu row existed as a handler with no button, and Settings is admin-only. Every desk now has an Enable Notifications row in the menu, plus a one-time dismissible nudge after sign-in on devices that have never been asked. (3) The amber “supplements awaiting a decision” line on a claim was 2.3:1 in light mode on its always-dark card — now pinned to the readable amber both themes share (6.4:1). (4) “Days since the loss” on a claim ticked over at 8pm Ohio time instead of midnight (UTC parsing) — one day high every evening; it now uses the app’s own local-midnight date parser. (5) The “Move into Money In” note and confirm claimed Balance Due does not change — false on a job with contract worksheet payments and no collection yet, where the move makes Money In the only source and Balance Due rises; both now state the real dollar consequence when it applies. (6) The per-job Appointments page drew a delete ✕ on every row, including teammates’ job days you cannot actually delete (the server refused silently) — the ✕ now appears only on rows you can delete, same rule as the calendar. Also: the two AI routes that were missing from the 60-second timeout list (design, coach) are on it now.' },
 { b:1013, d:'2026-08-23', t:'The Roofr and Hover readers are no longer open to the internet', s:'/api/roofr and /api/hover — the routes that read a measurement report’s text with AI when you import a Roofr or Hover PDF — had no sign-in check at all. Anyone who knew the paths could POST arbitrary text and bill inference to Cardinal’s Gemini key (and, through the fallback, the OpenAI key): a free AI relay. This is the exact class already closed on summarize/organize/caption, missed on these two — a survey of api/ confirms they were the only AI routes left without an authorization check. Both now require a signed-in Cardinal session (the same gate as api/sol.js), checked before anything else, so an anonymous caller learns nothing and spends nothing. The client’s three import call sites now attach the session through window.aiHeaders(), which has existed for exactly this purpose since the summarize fix. Importing measurements behaves identically on screen.' },
 { b:1012, d:'2026-08-23', t:'The contract’s deposit comes from the estimate that set its price', s:'Creating a contract from the job menu (or Approve → contract) read the deposit off the NEWEST estimate on the job that carried any deposit info — whatever its status. Since build 781 every new estimate starts at the 30% house rate and every save writes it, drafts included, so opening a fresh draft on a job whose ACCEPTED estimate deliberately says 0% would put a 30% deposit on the next contract — the accepted estimate sets the contract’s price, but a throwaway draft was setting its deposit. Now the deposit follows the same ladder the price does (build 997’s tiers): an accepted or signed estimate first, then a sent one, and a draft only when it is all the job has — newest within each rung. The estimate → contract button, which already carries its exact estimate, is unchanged, and an explicit dollar deposit still outranks the percentage. Measured against production before shipping: today’s pick and the new pick agree on all 10 jobs with deposit-bearing estimates, so nothing changes now — but two jobs carry accepted 0% estimates and were one fresh draft away from a wrong deposit on a signed document.' },

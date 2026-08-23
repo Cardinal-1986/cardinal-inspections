@@ -20611,6 +20611,41 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1015 — contract signing works end to end again (23 Aug 2026)
+
+**The headline cluster of the build-1014 audit — 5 interlocking signing findings, all CONFIRMED,
+all fixed here.** `index.html` + `api/clientsign.js` + `api/share.js`.
+
+1. **Service Contract had no signature block.** 781's `isDeal` strip (`buildEstimate`, ~9845)
+   removes the base `SIGN_FOOTER` from every AGREEMENT/CONTRACT because the three Construction
+   Agreements carry their own Buyer/Co-buyer/Contractor `data-sig` table — but the plain SERVICE
+   CONTRACT brings no table, so it was left with nowhere to sign (pad discarded the signature; share
+   link view-only). Now the footer is stripped only when `body` contains `data-sig`; the agreements
+   (which do) keep 781 unchanged.
+2. **Remote signing never wrote `signed_at`** (`api/clientsign.js`): PATCH added
+   `signed_at: new Date().toISOString()` — restores the SIGNED chip, the Approvals queue entry and
+   the money-worksheet unlock, all of which read `signed_at`, while the stage advance + Curtis email
+   were already firing.
+3. **Construction Agreements were unsignable remotely** — they sign through a Buyer sigslot, not the
+   footer, and `share.js`/`clientsign.js` only recognized the footer (`SIGN_RX`). Added `SLOT_RX` /
+   `SLOT_FULL_RX`: an unfilled `class="sigslot" data-sig="buyer"` is now signable, and clientsign
+   stamps the PNG + date into the buyer slot the way the in-person pad does (buyer only — the remote
+   signer is the client).
+4. **Published estimates missed `isEstimateTitle`.** publish titles docs `EST-YYYY-NNNN — …`; the
+   leading-word regex never matched, so a signed numbered estimate skipped `renderApprovals`, the
+   "needs approval" email, overview counts and jobFinance's doc leg. Both `isEstimateTitle` and
+   `docKind` now strip a leading `EST-\d{4}-\d+ — ` prefix; all 15+ call sites inherit it. (All live
+   estimate_numbers are `EST-YYYY-NNNN`, verified.)
+5. **Void status mismatch.** The writer writes `status:'void'` (732); two readers checked `'voided'`
+   — the Voided eyebrow never showed and a voided contract kept offering Void. Both now read `'void'`.
+
+**Proof.** `gate_1015.mjs` EXECUTES the shipped `buildEstimate` (footer kept for a no-data-sig
+Service Contract, stripped for an Agreement), `isEstimateTitle`/`docKind` (accept the EST- prefix,
+still accept plain), and the real `clientsign` handler under mocked Supabase (footer AND buyer-slot
+docs both get `signed_at`; slot marked signed; already-signed → 409); plus the shipped `share.js`
+regexes and the void readers. GREEN; **negative control against 1014 → RED with 12 named failures.**
+`check_build` green (1014→1015). No SQL.
+
 ## Build 1014 — six fixes closing out the 23 Aug audit (23 Aug 2026)
 
 **The audit remainder, re-verified against the 1013 tree by a 9-agent pass before anything was
