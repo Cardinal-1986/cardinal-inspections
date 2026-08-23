@@ -3698,10 +3698,14 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <div class="navsec">Account</div>
           <button class="navopt" data-nav="settings" data-cri="gear lg">Settings</button>
-          
+          <!-- 1014: push reaches only Theo because non-admins had no door — Settings is admin-hidden
+               and the nav==='notify' handler existed with NO element pointing at it. This row is
+               deliberately NOT in hideAdminItemsForNonAdmin's list, so every desk sees it. -->
+          <button class="navopt" data-nav="notify" data-cri="bell lg">Enable Notifications</button>
+
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1013 &#8212; security: the Roofr and Hover measurement readers are no longer open to the internet. Both routes read a PDF&#8217;s text with AI, and neither checked who was asking &#8212; anyone who knew the address could spend Cardinal&#8217;s AI budget. They now require a signed-in Cardinal session, exactly like every other AI route in the app. Importing measurements works the same as before; the request just carries your sign-in now.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1014 &#8212; six fixes closing out the audit. (1) Deleting a document now un-links any estimate that pointed at it, and publishing an estimate whose document was deleted creates a fresh one instead of silently writing nothing. (2) Everyone gets an Enable Notifications row in the menu &#8212; and a one-time nudge &#8212; so job alerts can finally reach the whole team, not just Theo. (3) The &#8220;supplements awaiting a decision&#8221; line on a claim is readable in light mode. (4) &#8220;Days since the loss&#8221; no longer reads one day high in the evening. (5) The move-into-Money-In note tells the truth about Balance Due when worksheet payments exist. (6) The per-job Appointments page only shows a delete &#10005; on rows you can actually delete.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10583,6 +10587,15 @@ var db = {
     if(TEAM){
       var r = await sb.from(TABLE).delete().eq('id', id);
       if(r.error) throw r.error;
+      /* 1014 (audit DB-1): deleting a document never cleared the estimates rows
+         pointing at it — 5 estimates ($71,845.99) were left publishing into a
+         nonexistent doc (db.update matches 0 rows, no error, nothing created).
+         This is the ONE delete pipeline (524), so all four delete callers are
+         covered here. Best-effort: a failed clear must not turn a successful
+         delete into an error; the publish path (cr-epub) now also verifies the
+         doc exists before updating, so a missed clear self-heals on publish. */
+      try{ await sb.from('estimates').update({ doc_id: null }).eq('doc_id', id); }catch(_){ }
+      try{ await sb.from('estimates').update({ contract_doc_id: null }).eq('contract_doc_id', id); }catch(_){ }
       return;
     }
     lsSave(lsLoad().filter(function(x){ return x.id !== id; }));
@@ -14621,10 +14634,25 @@ function payGoLogCollection(){
   try{ dbCloseTo(); }catch(_){ }
   try{ showTab('commissions'); }catch(_){ }
 }
+/* 1014 (audit F2): how much Balance Due would actually MOVE if the legacy rows
+   migrate. jobFinance replaces the whole paid sum with the collections total the
+   moment ANY collection exists — so on a job with worksheet contract payments
+   and no prior collection, migrating makes those worksheet dollars stop
+   counting and Balance Due RISES by wsPaid. The old fixed sentence "keeps the
+   total the same" / "Balance Due does not change" was false exactly there.
+   payTotals computes wsPaid with the same filters jobFinance uses. */
+function payMigrateDrop(){
+  try{
+    if(collPaid[currentProject.id] !== undefined) return 0;  /* already collections-ruled */
+    var t = payTotals(currentProject);
+    return Number(t.wsPaid) || 0;
+  }catch(_){ return 0; }
+}
 function payLegacyInNote(){
   var legacy = payLegacyIn();
   if(!legacy.length) return '';
   var sum = legacy.reduce(function(a, x){ return a + (Number(x.p.amt) || 0); }, 0);
+  var drop = payMigrateDrop();
   return '<div class="payrow empty" style="border:0;text-align:left;line-height:1.5;">' +
     /* ⚠ fmtMoney(n, true), NOT payMoney: payMoney rounds to whole dollars
        (Math.round), so a $3,008.94 cheque would read $3,009 on a screen someone
@@ -14632,8 +14660,11 @@ function payLegacyInNote(){
     '<b>' + legacy.length + ' payment' + (legacy.length === 1 ? '' : 's') + ' totalling ' +
     fmtMoney(sum, true) + '</b> ' + (legacy.length === 1 ? 'was' : 'were') +
     ' recorded here before Money In existed, so ' + (legacy.length === 1 ? 'it counts' : 'they count') +
-    ' toward Balance Due but not toward commission. Moving ' +
-    (legacy.length === 1 ? 'it' : 'them') + ' keeps the total the same.' +
+    ' toward Balance Due but not toward commission. ' +
+    (drop > 0
+      ? 'Heads up: after the move, Money In becomes the only source of Balance Due, so the ' +
+        fmtMoney(drop, true) + ' recorded as contract worksheet payments will stop counting until it is also logged in Money In.'
+      : 'Moving ' + (legacy.length === 1 ? 'it' : 'them') + ' keeps the total the same.') +
     '<br><button class="payadd" data-paymigrate="1" type="button" style="margin-top:8px;">' +
     'Move ' + (legacy.length === 1 ? 'it' : 'them') + ' into Money In &#8250;</button></div>';
 }
@@ -14650,7 +14681,15 @@ async function payMigrateLegacyIn(){
         return '  ' + fmtMoney(Number(x.p.amt) || 0, true) + (x.p.date ? '  ' + x.p.date : '') +
                (x.p.note ? '  ' + x.p.note : '');
       }).join('\n') +
-      '\n\nBalance Due does not change.' +
+      /* 1014 (audit F2): the fixed "Balance Due does not change." was FALSE on a
+         job with worksheet contract payments and no prior collection — after the
+         move, collections becomes the sole source of paid and Balance Due rises
+         by wsPaid. Say the real consequence; the old sentence only when true. */
+      ((function(){ var d = payMigrateDrop(); return d > 0
+        ? '\n\nAfter the move, Money In becomes the only source of Balance Due, so the ' +
+          fmtMoney(d, true) + ' recorded as contract worksheet payments will stop counting — ' +
+          'Balance Due will RISE by that amount unless those payments are also logged in Money In.'
+        : '\n\nBalance Due does not change.'; })()) +
       (pays ? '\n\nThis job is assigned to ' + rep + ', so a 10% commission will be created.' : ''))) return;
   var rows = legacy.map(function(x){
     return {
@@ -15032,7 +15071,13 @@ function renderApptsPage(){
       (a.appt_time ? ' \u00b7 ' + esc(a.appt_time) : '') +
       (a.notes ? ' \u00b7 ' + esc(a.notes) : '') +
       (a.created_by ? ' \u00b7 ' + esc(rptRepName(a.created_by) || '') : '') + '</small></span>' +
-      '<button class="chipbtn" data-apdel="' + a.id + '">&#10005;</button></div>';
+      /* 1014: 1003 gated the calendar list's delete behind apptCanEdit but this
+         page kept an ungated ✕ on every row — including job/drop rows the 1003
+         shared-calendar SELECT policy makes visible from other people. RLS
+         already refuses the delete (own-or-admin), so the button was worse than
+         dead: confirm(), no error, and the row silently survives. Render the ✕
+         only when the server would actually allow it — 1003's own pattern. */
+      (apptCanEdit(a) ? '<button class="chipbtn" data-apdel="' + a.id + '">&#10005;</button>' : '') + '</div>';
   }).join('');
 }
 function openApptsPage(){
@@ -15070,6 +15115,10 @@ document.getElementById('apAddBtn').addEventListener('click', async function(){
 document.getElementById('apMount').addEventListener('click', async function(e){
   var del = e.target.closest('[data-apdel]');
   if(!del) return;
+  /* 1014: defense in depth behind the render gate above — a stale DOM or a
+     crafted click still cannot reach adb.remove for a row this user can't edit. */
+  var _apa = (cacheAppts || []).find(function(x){ return String(x.id) === String(del.getAttribute('data-apdel')); });
+  if(_apa && !apptCanEdit(_apa)) return;
   if(!confirm('Delete this appointment?')) return;
   try{
     await adb.remove(del.getAttribute('data-apdel'));
@@ -27342,6 +27391,68 @@ async function enableNotifications(){
       '\n\nIf this mentions a missing table, run the push_subs SQL in Supabase first.');
   }
 }
+/* 1014 (audit M1): push_subs holds three devices, all Theo's — not because code
+   gates subscribing (both upsert paths take any signed-in user) but because no
+   non-admin ever found the door. Beside the new burger row, this shows a small
+   dismissible bar ONCE per device to a signed-in user who has never been asked
+   (Notification.permission === 'default' — 'denied' can't be re-prompted, so no
+   bar that cannot succeed). Copies the crUpdateBar shape: z-index 170, above
+   #pwaNav, below every dialog. No observer — a short bounded retry until
+   sign-in resolves, then it decides once. */
+(function(){
+  var KEY = 'cr-push-nudge-dismissed';
+  var tries = 0;
+  function maybeShow(){
+    try{
+      if(localStorage.getItem(KEY)) return;
+      if(!('PushManager' in window) || !('Notification' in window)) return;
+      if(Notification.permission !== 'default') return;
+      if(!(window.currentUser && window.currentUser.email)){
+        if(++tries < 12) setTimeout(maybeShow, 5000);
+        return;
+      }
+      if(document.getElementById('crPushNudge')) return;
+      var bar = document.createElement('div');
+      bar.id = 'crPushNudge';
+      bar.setAttribute('role', 'status');
+      bar.style.cssText = 'position:fixed;left:12px;right:12px;z-index:170;' +
+        'bottom:calc(76px + env(safe-area-inset-bottom,0px));' +
+        'display:flex;align-items:center;gap:10px;padding:12px 12px 12px 15px;' +
+        'border-radius:14px;background:#15171b;border:1px solid #c8202e;' +
+        'box-shadow:0 8px 28px rgba(0,0,0,.45);' +
+        "font:600 13.5px 'Segoe UI',Arial,sans-serif;color:#e9edf2;" +
+        'max-width:520px;margin:0 auto;';
+      var txt = document.createElement('span');
+      txt.style.cssText = 'flex:1;min-width:0;line-height:1.35';
+      txt.textContent = 'Get a buzz when a job needs you — turn on notifications?';
+      var go = document.createElement('button');
+      go.type = 'button';
+      go.textContent = 'Turn on';
+      go.style.cssText = 'flex:0 0 auto;min-height:44px;padding:0 16px;border:0;' +
+        'border-radius:10px;background:#c8202e;color:#fff;cursor:pointer;' +
+        "font:700 13.5px 'Segoe UI',Arial,sans-serif;";
+      go.onclick = function(){
+        try{ localStorage.setItem(KEY, '1'); }catch(_){ }
+        bar.remove();
+        try{ enableNotifications(); }catch(_){ }
+      };
+      var no = document.createElement('button');
+      no.type = 'button';
+      no.setAttribute('aria-label', 'Not now');
+      no.textContent = '✕';
+      no.style.cssText = 'flex:0 0 auto;width:44px;height:44px;border:0;' +
+        'border-radius:10px;background:transparent;color:#9aa3ad;cursor:pointer;' +
+        'font-size:15px;';
+      no.onclick = function(){
+        try{ localStorage.setItem(KEY, '1'); }catch(_){ }
+        bar.remove();
+      };
+      bar.appendChild(txt); bar.appendChild(go); bar.appendChild(no);
+      (document.body || document.documentElement).appendChild(bar);
+    }catch(_){ }
+  }
+  setTimeout(maybeShow, 8000);
+})();
 /* 642: a wrapper lived here from build 527 that fired its OWN unauthenticated
    request to the notify route and then called the real notifyTeam as well — so
    every team notification went out TWICE, and one of the two carried no
@@ -31300,7 +31411,10 @@ function showList() {
      build. */
   function lossAge(iso){
     if(!iso) return '';
-    var t = new Date(iso); if(isNaN(t)) return '';
+    /* 1014: date_of_loss is a bare DATE. new Date('YYYY-MM-DD') is UTC midnight,
+       so from 8pm EDT every Ohio evening the day count read one high. crDate
+       (744) parses date-only at LOCAL midnight — same idiom as fmtDate above. */
+    var t = window.crDate ? window.crDate(iso) : new Date(iso); if(isNaN(t)) return '';
     var n = Math.floor((Date.now() - t.getTime()) / 86400000);
     if(n < 0) return '';
     return ' · ' + n + ' day' + (n === 1 ? '' : 's') + ' ago';
@@ -31621,7 +31735,7 @@ function showList() {
             <div class="cr-c-fin-progress-lbl">
               <span>Received to date: <strong>$${fmt(paidTotal)}</strong> of $${fmt(rcv + suppTotal)}</span>
               <span>Outstanding: <strong>$${fmt(outstanding)}</strong></span>
-              ${_cm.pendingCount ? `<span class="cr-c-pending" style="font-size:11px;color:var(--cr-amber);">&#9203; ${_cm.pendingCount} supplement${_cm.pendingCount>1?'s':''} awaiting a decision${_cm.pendingReq ? ` &middot; $${fmt(_cm.pendingReq)} requested` : ''} &mdash; not counted above</span>` : ''}
+              ${_cm.pendingCount ? `<span class="cr-c-pending" style="font-size:11px;color:#e0a13a;/* 1014: pinned — this card is theme-fixed dark; rb-light --cr-amber was 2.31:1 here */">&#9203; ${_cm.pendingCount} supplement${_cm.pendingCount>1?'s':''} awaiting a decision${_cm.pendingReq ? ` &middot; $${fmt(_cm.pendingReq)} requested` : ''} &mdash; not counted above</span>` : ''}
             </div>
           </div>
         </div>
@@ -41730,6 +41844,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1014, d:'2026-08-23', t:'Six fixes closing out the audit', s:'The rest of the 23 Aug audit, verified against the current build before anything was touched (one finding — the iTel button colors — turned out to be a false alarm and was left alone). (1) Deleting a document now clears the link on any estimate that pointed at it, at the one delete pipeline all four delete buttons share — five estimates worth $71,845.99 had been left pointing at deleted documents, where publishing silently wrote nothing; publish also now checks the document still exists and creates a fresh one when it does not, which self-heals those five. (2) Notifications for everyone: push alerts only ever reached Theo because nobody else had a door — the menu row existed as a handler with no button, and Settings is admin-only. Every desk now has an Enable Notifications row in the menu, plus a one-time dismissible nudge after sign-in on devices that have never been asked. (3) The amber “supplements awaiting a decision” line on a claim was 2.3:1 in light mode on its always-dark card — now pinned to the readable amber both themes share (6.4:1). (4) “Days since the loss” on a claim ticked over at 8pm Ohio time instead of midnight (UTC parsing) — one day high every evening; it now uses the app’s own local-midnight date parser. (5) The “Move into Money In” note and confirm claimed Balance Due does not change — false on a job with contract worksheet payments and no collection yet, where the move makes Money In the only source and Balance Due rises; both now state the real dollar consequence when it applies. (6) The per-job Appointments page drew a delete ✕ on every row, including teammates’ job days you cannot actually delete (the server refused silently) — the ✕ now appears only on rows you can delete, same rule as the calendar. Also: the two AI routes that were missing from the 60-second timeout list (design, coach) are on it now.' },
 { b:1013, d:'2026-08-23', t:'The Roofr and Hover readers are no longer open to the internet', s:'/api/roofr and /api/hover — the routes that read a measurement report’s text with AI when you import a Roofr or Hover PDF — had no sign-in check at all. Anyone who knew the paths could POST arbitrary text and bill inference to Cardinal’s Gemini key (and, through the fallback, the OpenAI key): a free AI relay. This is the exact class already closed on summarize/organize/caption, missed on these two — a survey of api/ confirms they were the only AI routes left without an authorization check. Both now require a signed-in Cardinal session (the same gate as api/sol.js), checked before anything else, so an anonymous caller learns nothing and spends nothing. The client’s three import call sites now attach the session through window.aiHeaders(), which has existed for exactly this purpose since the summarize fix. Importing measurements behaves identically on screen.' },
 { b:1012, d:'2026-08-23', t:'The contract’s deposit comes from the estimate that set its price', s:'Creating a contract from the job menu (or Approve → contract) read the deposit off the NEWEST estimate on the job that carried any deposit info — whatever its status. Since build 781 every new estimate starts at the 30% house rate and every save writes it, drafts included, so opening a fresh draft on a job whose ACCEPTED estimate deliberately says 0% would put a 30% deposit on the next contract — the accepted estimate sets the contract’s price, but a throwaway draft was setting its deposit. Now the deposit follows the same ladder the price does (build 997’s tiers): an accepted or signed estimate first, then a sent one, and a draft only when it is all the job has — newest within each rung. The estimate → contract button, which already carries its exact estimate, is unchanged, and an explicit dollar deposit still outranks the percentage. Measured against production before shipping: today’s pick and the new pick agree on all 10 jobs with deposit-bearing estimates, so nothing changes now — but two jobs carry accepted 0% estimates and were one fresh draft away from a wrong deposit on a signed document.' },
 { b:1011, d:'2026-08-23', t:'An accepted estimate stays the Job Value', s:'Build 997 fixed the “biggest estimate wins” problem: when a homeowner is shown options and accepts the smaller one, the accepted estimate is the Job Value — the bigger still-open one no longer out-votes it. But jobFinance had a second leg 997 didn’t reach: after picking the accepted estimate, it also scanned saved documents titled “Estimate…” and took a flat maximum over them — any status, including the printed copies of estimates that were archived or superseded. So a bigger stale document could put the wrong figure right back on Job Value, and Balance Due, the AR chart, pipeline dollars and the invoice all inherit from there. Two rules now: once an estimate is accepted, no document competes with it; and a document that is the published copy of an estimate row never counts as a second estimate (only true legacy document-only estimates still do, on jobs that have no accepted one). Measured against production before shipping: zero estimate documents carry a total today, so no job’s number changes — this is preventive, exactly like 997 was.' },
@@ -48220,6 +48335,13 @@ var projName = (project && (project.name || project.client_name)) || '';
 var docId;
 if(est.doc_id && !opts.forceNew){
 try{
+/* 1014 (audit DB-1): db.update with no .select() matches 0 rows on a deleted
+   doc and returns NO error — publish silently wrote nothing and kept the
+   dangling id. db.get throws (.single(), explicit throw) when the row is
+   gone, which drops us into the create path below; the docId !== est.doc_id
+   write-back then re-links automatically. Self-heals the 5 pre-existing
+   danglers on their next publish, whatever deleted their docs. */
+await window.db.get(est.doc_id);
 await window.db.update(est.doc_id, { html: html, title: title });
 docId = est.doc_id;
 }catch(e){
