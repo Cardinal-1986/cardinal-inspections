@@ -3701,7 +3701,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1002 &#8212; the iTel lab results can now be attached to a job. There are 28 of them &#8212; product-match and asbestos verdicts you have paid for &#8212; and none was linked to anything, because the app only ever offered to link them to a claim and the ones worth attaching are on jobs that have no claim. Each result now has an &#8220;Attach to a job&#8221; button; once linked it shows the job it belongs to. (Run the itel_project_link.sql migration first.)</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1003 &#8212; the calendar is shared. A build day or a material drop is now visible to everyone assigned to that job, not only to whoever booked it &#8212; so the rep on the job finally sees the day their crew is coming. Your personal appointments stay private to you: only the two work kinds are shared, never a diary entry. (Run the appointments_shared_calendar.sql migration first.)</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22335,6 +22335,18 @@ function openApptDay(ds){
   renderApptList();
   apptModal.style.display = 'block';
 }
+/* 1003: an appointment you can SEE is not one you can necessarily act on.
+   Build 1003 opens job/drop days to everyone assigned to the job (in RLS),
+   so a rep now sees build days they did not create. Deleting or re-attaching
+   those is refused server-side (own-or-admin), and a button that can only
+   ever error is worse than no button — so a row is read-only for anyone who
+   is not its creator or an admin. In local (non-TEAM) mode every row is
+   yours, so it stays fully editable there. */
+function apptCanEdit(a){
+  if(!TEAM) return true;
+  var me = (currentUser && currentUser.email) || '';
+  return !!me && (a.created_by === me || ADMIN_EMAILS.indexOf(me) !== -1);
+}
 function renderApptList(){
   var list = cacheAppts.filter(function(a){ return a.appt_date === apptDay; });
   var m = document.getElementById('apptList');
@@ -22352,11 +22364,12 @@ function renderApptList(){
           (a.notes ? (pr ? ' \u00b7 ' : '') + esc(a.notes) : '') +
           (a.created_by ? ' \u00b7 ' + esc(a.created_by.split('@')[0]) : '') + '</small>' : '') +
       '</span>' +
-      ((!pr && (a.kind === 'job' || a.kind === 'drop'))
+      ((apptCanEdit(a) && !pr && (a.kind === 'job' || a.kind === 'drop'))
         ? '<button class="chipbtn" data-apptattach="' + a.id + '" ' +
             'style="margin-left:8px;">Attach to a job</button>'
         : '') +
-      '<button class="del" title="Delete">\u2715</button></div>';
+      (apptCanEdit(a) ? '<button class="del" title="Delete">\u2715</button>' : '') +
+      '</div>';
   }).join('');
 }
 /* 998: the two job days already in the calendar carry no job, and deleting
@@ -41554,6 +41567,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1003, d:'2026-08-23', t:'The calendar is shared', s:'A build day or a material drop used to be visible only to the person who booked it — so the rep whose client was getting a roof could not see the day the crew was coming, and neither could production unless they had entered it themselves. Now any job or delivery on the calendar is visible to everyone assigned to that job (the assigned rep, the sales rep, whoever created it, and the admins), because it is the crew’s day, not one person’s note. Your personal appointments are untouched: only the two work kinds — build day and drop — are shared, so a private entry like a haircut or a tax appointment stays yours alone. A shared day you did not create shows as read-only — you can see it, you cannot delete someone else’s booking. (Needs the appointments_shared_calendar.sql migration run in Supabase first.)' },
 { b:1002, d:'2026-08-23', t:'iTel lab results can be attached to a job', s:'The 28 iTel lab results \u2014 the product-match and asbestos verdicts you have paid for \u2014 were sitting linked to nothing, because the only link the app offered was to a claim, and the results worth attaching belong to jobs that have no claim on file. They now attach to the JOB instead: each result has an \u201CAttach to a job\u201D button, and once linked it shows which job it belongs to. Sixteen of the 28 are non-match verdicts \u2014 exactly the evidence a matching argument needs \u2014 so getting them onto their jobs is what makes them usable.' },
       { b:1001, d:'2026-08-23', t:'A claim has one clear answer to \u201Cwhat are we still owed\u201D', s:'The Outstanding figure on a claim now has a single, documented rule: the full replacement value (which includes the deductible the homeowner still owes) plus any supplement the carrier has actually approved, minus what has been received. A supplement you have filed but the carrier has not yet ruled on is shown on its own line as awaiting a decision \u2014 it is never added into the total and never shows as $0 owed, so it is visible without making it look like money is in hand. This is a display number only; it does not change how commissions are worked out.' },
       { b:1000, d:'2026-08-23', t:'A claim shows how long since the date of loss', s:'Next to the date of loss on a claim you now see how long ago it was \u2014 \u201C476 days ago.\u201D It is a plain fact, not a deadline clock: the app will not guess a suit-limitation period, because getting that wrong is the real harm. Both open claims are over a year out, and this makes that obvious without doing the arithmetic in your head. A true countdown would need the limitation date typed in from the policy, which is a later, separate change.' },

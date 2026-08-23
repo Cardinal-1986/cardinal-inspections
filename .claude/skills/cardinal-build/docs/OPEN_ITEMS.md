@@ -3,6 +3,30 @@
 
 ---
 
+## ✅ DONE — the audit follow-up batch, builds 995–1003 (23 Aug 2026)
+
+Shipped from the deep-research suggestions, all with named-control gates:
+
+- **995** — reopening an estimate keeps its real deposit %, clamped 0–100 (was defaulting to 30).
+- **996** — money received has one door (`payGoLogCollection`), the one that pays the rep; legacy
+  `checklist.payments` in-rows migrate into `collections` (cents-exact).
+- **997** — an **accepted/signed** estimate is the number the job shows (`indexMoney` tiering).
+- **998** — a build day on the calendar must name its job; `adb.update` added.
+- **999** — lead source is a required tap (chips) when a client is created.
+- **1000** — a claim shows how long since the date of loss (`lossAge`).
+- **1001** — one documented `claimMoney()` for "outstanding": **deductible in, undecided supplements
+  out** (Theo's call). Corrected the research's overstated "outstanding skews commission" — commission
+  fires on `collections`, never on outstanding.
+- **1002** — iTel lab results attach to a **job** (not a claim); `itel_project_link.sql`.
+- **1003** — the **shared calendar**: job/drop days visible to everyone assigned to the job, personal
+  entries stay private; `appointments_shared_calendar.sql` (RLS, verified in rolled-back txns).
+
+Two SQL migrations ship with this batch and **run before the deploy**: `itel_project_link.sql` and
+`appointments_shared_calendar.sql`.
+
+
+---
+
 ## ⚠️ STALENESS SWEEP, 22 Aug 2026 (at build 991) — half of this file's "open" claims were already fixed
 
 Theo asked for this after the horizontal-pan entry turned out to have been fixed at build 950 and to

@@ -20611,6 +20611,58 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1003 — the shared calendar (23 Aug 2026)
+
+The last of the "yes to all" batch, and the sensitive one. An appointment was visible only to the
+person who booked it (plus the two admins), so the rep whose client was getting a roof could not see
+the build day their crew was coming — the exact reason 998's job days sat orphaned. Theo's decision:
+**share the two work kinds (`job`, `drop`) with everyone assigned to the job; keep personal `appt`
+and `team` entries private to their creator.**
+
+### SQL first — `appointments_shared_calendar.sql` (RLS; run before deploy)
+
+Two additive, idempotent policies on `public.appointments`:
+
+- **Visibility.** A new permissive SELECT policy: `kind in ('job','drop') and project_id is not
+  null and exists (select 1 from projects p where p.id = appointments.project_id)`. The EXISTS runs
+  under the **projects** table's own RLS (`projects_select`), so it mirrors *exactly* who can see the
+  job — `is_full_access() OR created_by OR assigned rep OR sales_rep` — without re-stating that rule
+  here and risking drift. **One pipeline per concept:** projects_select is the single source of
+  truth for "can see this job," and the appointment policy just asks it.
+- **Write (repairs 998).** The only UPDATE policy was joan's, so 998's "Attach to a job" (an
+  `adb.update`) was silently refused for Theo and for the row's own creator. Added an
+  **own-or-admin** UPDATE policy matching the table's existing DELETE rule. Visibility is not write
+  access: a rep who can now *see* a build day still cannot edit or delete one they did not create.
+
+**The personal-leak guard is the KIND, never the project_id.** Five of the fifteen `appt` (personal)
+rows in the database carry a project_id; keying visibility on `project_id is not null` alone would
+have exposed Theo's diary. The policy gates on `kind in ('job','drop')`, so those five stay private.
+
+**Verified against the live DB, every check inside a rolled-back transaction** (`set local role
+authenticated` + a simulated JWT, real policy created then `rollback` — prod's seven policies
+unchanged after):
+
+| viewer | linked job day | personal entries | update the job day |
+|---|---|---|---|
+| joey (assigned rep, not creator) | **sees it** | sees none | — |
+| jacob (unassigned rep) | 0 rows | 0 rows | **blocked (0)** |
+| theo (creator + admin) | — | — | **succeeds (1)** — the 998 repair |
+
+### App side
+
+`renderApptList()` gains `apptCanEdit(a)` — `!TEAM` (local mode = all yours) or creator or admin.
+The delete cross and the "Attach to a job" button now render only when it returns true, so a shared
+day you did not create shows **read-only**: you see it, you cannot delete someone else's booking or a
+button that would only ever error. No client query changed — `adb.list()` already relies on RLS, so
+the new rows appear on their own.
+
+`gate_1003.mjs` — 11 Chromium assertions driving the shipped `renderApptList` as four viewers
+(unrelated rep, creator, admin, local mode): the unrelated rep gets no delete and no attach on a job
+they did not create and none on a personal entry; the creator keeps both on their own rows but not on
+another rep's; the admin acts on every row; local mode keeps a null-owner row editable. Control on
+1002: **PASS 6 · FAIL 5**, named, no crash (the unconditional delete cross trips every read-only
+assertion; `apptCanEdit` is absent).
+
 ## Build 1002 — iTel lab results attach to a job (23 Aug 2026)
 
 Theo's call: attach by **job**, not claim. 28 lab results — product-match and asbestos verdicts,
