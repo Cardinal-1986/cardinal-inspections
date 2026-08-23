@@ -24225,3 +24225,19 @@ the artifact, executes it, diffs everything past `</style>` against the control'
 the share-wrapper hook selectors survive, and renders both at 390px (control RED: no viewport
 meta, header un-stacked). Old sent estimates keep the copy they were sent with (the HTML is stored
 at publish); everything published from 1027 on wears the new dress.
+
+## Build 1028 — the AI moves inside the estimate editor (audit Build E; Theo's picks: button, hide the doors, overview from ALL photos, AI cover only when unstarred)
+
+`api/caption.js` gained an **estimate-assist mode** beside its untouched single-image path: the
+editor sends ALL attached photos (first 14, browser-downscaled to ~1024px) plus existing captions
+and line names in ONE request; Gemini answers under an **enforced `responseSchema`** (the 806
+librarian lesson — no fence-stripping) with `{overview, captions[], cover_index}`, OpenAI JSON-mode
+fallback. In the editor: one quiet ghost button in the Photos head. **The model proposes; the rep
+wins** — captions land ONLY in empty boxes, the overview APPENDS to Scope Notes, the cover moves
+only when nothing is starred. The two **⚡ AI Estimate doors are hidden, not deleted** (Theo:
+"hide") — the walls' primary button and `#pAiEstimateBtn`; `showAICreate` + `ai_estimates` stay
+dormant; the walls' **unguarded `new-ai` wiring is guarded** (it would have thrown and killed every
+wire below it); `+ New estimate` is the primary door now; **Theo's admin App Walk was re-taught**
+(it tapped `new-ai` by name — four references — and would have gone red). Gate: `gate_1028.mjs`,
+mocked route — fill-not-overwrite proven in BOTH sweeps, append vs alone, cover honored vs ignored,
+request wire shape, doors, walk, api branch. GREEN; **control RED ×6**. Renders eyeballed.

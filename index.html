@@ -3705,7 +3705,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1028 &#8212; the AI helps from inside the estimate, and the separate AI door is gone. One button in the estimate’s Photos section reads every attached photo at once: it writes captions for photos that have none (never over yours), adds a short overview to Scope Notes (never replacing what you wrote), and picks a cover only if you haven’t starred one. The two “AI Estimate” buttons (the estimates screen and the client profile) are hidden — estimates are just estimates now. Build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4178,7 +4178,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <button class="estopt" data-tpl="general">General repair estimate</button>
           </div>
         </span>
-        <button class="btn" id="pAiEstimateBtn" style="margin-left:6px;" title="Build this client's estimate from photos with AI">&#9889; AI Estimate</button>
+        <!-- 1028: the profile's AI-Estimate door is closed (its wiring in the main
+             block is guarded and stays). The AI assists inside the editor now. -->
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
     </div>
@@ -28486,8 +28487,10 @@ body.claim-insurance #brandLogo{
     <p class="cre-sub" data-cre-sub></p>
 
     <div class="cr-actions">
-      <button class="cr-btn primary" data-act="new-ai">&#9889; AI Estimate</button>
-      <button class="cr-btn" data-act="new-manual">+ New</button>
+      <!-- 1028: the AI door is CLOSED, not deleted. showAICreate and the
+           ai_estimates table stay dormant; the AI now assists INSIDE the editor
+           (the button in its Photos section). -->
+      <button class="cr-btn primary" data-act="new-manual">+ New estimate</button>
       <button class="cr-btn" data-act="templates">Templates</button>
     </div>
 
@@ -29043,7 +29046,11 @@ function newClientForm(){
 function showList() {
     state.view = 'list';
     mount('cr-tmpl-list');
-    MOUNT.querySelector('[data-act="new-ai"]').onclick = showAICreate;
+    /* 1028: the AI door is hidden and this element no longer renders. Left
+       unguarded, this line would throw and kill every wire below it, taking
+       the whole list screen down with the door. */
+    var _newAiBtn = MOUNT.querySelector('[data-act="new-ai"]');
+    if (_newAiBtn) _newAiBtn.onclick = showAICreate;
     MOUNT.querySelector('[data-act="new-manual"]').onclick = showManualPick;
 
     const q = s => MOUNT.querySelector(s);
@@ -41287,7 +41294,7 @@ return r.width > 0 && r.height > 0;
 var STEPS = [
 {
 name  : 'Open Estimates plugin',
-detail: 'crOpenEstimates() → wait for + New AI',
+detail: 'crOpenEstimates() → wait for + New estimate',
 run   : async function(){
 if(typeof window.crOpenEstimates !== 'function') throw new Error('crOpenEstimates not defined');
 window.crOpenEstimates();
@@ -41296,29 +41303,31 @@ var m = document.getElementById('cr-estimates-mount');
 return visible(m) ? m : null;
 }, 6000);
 if(!mount) throw new Error('Estimates mount never visible');
-var newAi = await waitFor(function(){
-return mount.querySelector('[data-act="new-ai"]');
+var newBtn = await waitFor(function(){
+return mount.querySelector('[data-act="new-manual"]');
 }, 4000);
-if(!newAi) throw new Error('[data-act="new-ai"] never rendered');
+if(!newBtn) throw new Error('[data-act="new-manual"] never rendered');
 },
 },
 {
-name  : 'Tap + New AI',
-detail: 'Enter AI Create view, verify Generate button, back out',
+name  : 'Tap + New estimate',
+detail: 'Enter the client picker, back out',
+/* 1028: this step used to walk the AI-Create door, which is hidden now —
+   the walk follows the same path a rep does. */
 run   : async function(){
 var mount = document.getElementById('cr-estimates-mount');
-var newAi = mount && mount.querySelector('[data-act="new-ai"]');
-if(!newAi) throw new Error('[data-act="new-ai"] missing');
-newAi.click();
-var gen = await waitFor(function(){
-return document.querySelector('[data-act="generate"]');
+var newBtn = mount && mount.querySelector('[data-act="new-manual"]');
+if(!newBtn) throw new Error('[data-act="new-manual"] missing');
+newBtn.click();
+var mq = await waitFor(function(){
+return document.querySelector('#cr-estimates-mount [data-mq]');
 }, 5000);
-if(!gen) throw new Error('AI Create view never rendered [data-act="generate"]');
+if(!mq) throw new Error('Client picker never rendered [data-mq]');
 var back = document.querySelector('#cr-estimates-mount [data-act="back"]');
-if(!back) throw new Error('Back button not rendered on AI Create');
+if(!back) throw new Error('Back button not rendered on the client picker');
 back.click();
 var listAgain = await waitFor(function(){
-return document.querySelector('#cr-estimates-mount [data-act="new-ai"]');
+return document.querySelector('#cr-estimates-mount [data-act="new-manual"]');
 }, 3000);
 if(!listAgain) throw new Error('List did not re-render after Back');
 },
@@ -42009,6 +42018,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1028, d:'2026-08-23', t:'AI assists inside the estimate', s:'Instead of a separate \u201cAI Estimate\u201d door that built a different kind of estimate, the AI now helps from inside the one estimate editor. A new button in the Photos section reads every attached photo in a single pass: photos without a caption get one written (a caption you typed is never touched), a short overview of what the photos show is added to the end of Scope Notes (never replacing what you wrote), and if no photo is starred as the cover the AI nominates the best establishing shot \u2014 your starred pick is never moved. The two old \u26a1 AI Estimate buttons are hidden; the code and its table stay dormant underneath. The \u201c+ New estimate\u201d button is now the main way in, and Theo\u2019s admin App Walk was taught the new path.' },
 { b:1027, d:'2026-08-23', t:'The client\u2019s copy is readable on a phone', s:'The estimate document a homeowner opens from the share link (and the printed copy) was locked to an 8.5-inch page width with no phone handling at all, so on a phone it painted at about a fifth of readable size and clients pinch-zoomed their way through their own quote. The document now reflows on small screens \u2014 the header stacks, the details table goes one field per line, photos go single-column, tables fit the width \u2014 and prints exactly as it always has. It also got a cleaner dress: serif letterhead, hairline rules, and red held back for the brand line, the section numbers and the grand total, so the money reads first. Already-sent estimates keep the copy they were sent with; everything published from now on uses the new look.' },
 { b:1026, d:'2026-08-23', t:'The estimate lanes tell the truth', s:'The Estimates walls only knew draft, sent and approved, so an estimate you marked Accepted or Declined in the editor quietly fell into the UNSENT \u2014 DRAFTS column \u2014 at the time of this build, $27,310 of accepted work was parading as drafts and being counted as open pipeline. Accepted estimates now land in ACCEPTED, Declined gets its own thin strip at the bottom of the board, and anything with a status the walls have never heard of shows up under UNRECOGNIZED STATUS instead of hiding. The footer sums are honest now too: open pipeline is only what can still close (drafts + sent), accepted money is counted as accepted, and declined money prints separately when there is any. A discarded AI draft no longer sneaks back into the board after a reload, and deleting a saved estimate from the editor refreshes the right job\u2019s list again.' },
 { b:1025, d:'2026-08-23', t:'The estimate money is readable', s:'On the black estimate builder, the Total and deposit figures were painting in a dark red chosen years ago for a cream design \u2014 measured at under 2:1 contrast, close to invisible \u2014 and are now white. The same pass retired the last of the 2021 gold: six buttons that turned yellow on hover now deepen to dark red, and the two remaining red-to-gold gradient buttons are flat red. The white template menus on the Estimates and Contracts tabs now match the dark app, Balance Due reads clearly on the dark money band, and light mode fixes land for the estimate lane titles, the Saved Estimates heading, profile notes, and the Job Value captions. Estimates-screen emoji were drawn or removed.' },
@@ -47085,7 +47095,7 @@ body.standalone #cr-est-picker .box-list{padding-bottom:calc(88px + env(safe-are
   padding:2px 7px;border-radius:9px;background:rgba(0,0,0,.07);color:#6b6b6b}
 #cr-est-picker .cat-header .chev{flex:none;display:flex;align-items:center;transition:transform .12s ease}
 #cr-est-picker .cat.closed .cat-header .chev{transform:rotate(-90deg)}
-#cr-est-picker .cat.closed .cat-body{display:none}#cr-est-picker .p-item{padding:12px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}#cr-est-picker .p-item:hover{background:#f4f2f1}#cr-est-picker .p-item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}#cr-est-picker .p-item .name{flex:1;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .p-item .price{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker .p-item .desc{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;max-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#cr-est-picker .empty{padding:32px 20px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}</style>
+#cr-est-picker .cat.closed .cat-body{display:none}#cr-est-picker .p-item{padding:12px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}#cr-est-picker .p-item:hover{background:#f4f2f1}#cr-est-picker .p-item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}#cr-est-picker .p-item .name{flex:1;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .p-item .price{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker .p-item .desc{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;max-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#cr-est-picker .empty{padding:32px 20px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}/* 1028: the AI assist is the quiet button beside the red attach */#cr-est-view .add-lib.ai-assist{background:none;border:1px solid rgba(200,32,46,.5);color:inherit}#cr-est-view .add-lib.ai-assist[disabled]{opacity:.55;cursor:default}</style>
 <script id="cr-est-script">
 (function(){
 'use strict';
@@ -47344,6 +47354,9 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 (s.photos.length ? '(' + s.photos.length + ')' : '') +
 '</span></h3>' +
 '<button class="add-lib"    data-act="pick-photos" type="button">+ Attach Photos</button>' +
+(s.photos.length
+? '<button class="add-lib ai-assist" data-act="ai-assist" type="button" title="AI writes captions for photos without one and drafts an overview from all of them">\u2726 AI captions &amp; overview</button>'
+: '') +
 '</div>' +
 renderPhotos(s.photos) +
 renderTotals(t) +
@@ -47527,6 +47540,103 @@ paintEstPhotoUrls();
 try{ if(window.report) window.report(e, 'Estimates', 'sign strip urls'); }catch(e2){}
 }
 }
+/* ---- 1028: the AI assist ------------------------------------------------
+   One tap, one request, ALL attached photos (first 14, downscaled to ~1024px
+   in the browser so the request stays small). The model proposes; the rep's
+   work always wins: captions land ONLY in empty caption boxes, the overview
+   APPENDS to Scope Notes, and the cover moves only when nothing is starred. */
+async function estAiShrink(url){
+var r = await fetch(url);
+if(!r.ok) throw new Error('photo read failed (' + r.status + ')');
+var blob = await r.blob();
+var bmp, objUrl = null;
+if(typeof createImageBitmap === 'function'){
+bmp = await createImageBitmap(blob);
+}else{
+objUrl = URL.createObjectURL(blob);
+bmp = await new Promise(function(ok, bad){
+var im = new Image();
+im.onload = function(){ ok(im); };
+im.onerror = function(){ bad(new Error('photo decode failed')); };
+im.src = objUrl;
+});
+}
+var W = bmp.width || bmp.naturalWidth, H = bmp.height || bmp.naturalHeight;
+var scale = Math.min(1, 1024 / Math.max(W, H));
+var w = Math.max(1, Math.round(W * scale)), h = Math.max(1, Math.round(H * scale));
+var cv = document.createElement('canvas');
+cv.width = w; cv.height = h;
+cv.getContext('2d').drawImage(bmp, 0, 0, w, h);
+if(bmp.close){ try{ bmp.close(); }catch(_){ } }
+if(objUrl){ try{ URL.revokeObjectURL(objUrl); }catch(_){ } }
+return cv.toDataURL('image/jpeg', 0.78);
+}
+async function runAiAssist(btn){
+if(!state || !state.photos || !state.photos.length) return;
+var oldLabel = btn ? btn.textContent : '';
+if(btn){ btn.disabled = true; btn.textContent = 'Reading photos\u2026'; }
+try{
+var photos = state.photos.slice(0, 14);
+var images = [], kept = [];
+for(var i = 0; i < photos.length; i++){
+var u = estPhotoUrl(photos[i]);
+if(!u) continue;
+try{ images.push(await estAiShrink(u)); kept.push(photos[i]); }catch(_){ }
+}
+if(!images.length){
+alert('No photo could be read back from storage. If they were just attached, give it a moment and retry.');
+return;
+}
+var res = await fetch('/api/caption', {
+method: 'POST',
+headers: await window.aiHeaders(),
+body: JSON.stringify({
+images: images,
+captions: kept.map(function(p){ return p.caption || ''; }),
+context: {
+client: (state.project && state.project.name) || '',
+title: state.title || '',
+items: state.lines.map(function(l){ return l.name || ''; }).filter(Boolean),
+},
+}),
+});
+var j = null;
+try{ j = await res.json(); }catch(_){ j = {}; }
+if(!res.ok){ alert('AI could not read the photos: ' + ((j && j.error) || ('HTTP ' + res.status))); return; }
+var filled = 0;
+kept.forEach(function(p, ki){
+if(!String(p.caption || '').trim() && j.captions && j.captions[ki]){
+p.caption = j.captions[ki];
+filled++;
+}
+});
+var overviewAdded = false;
+if(j.overview){
+state.notes = (state.notes && String(state.notes).trim())
+? String(state.notes).replace(/\s+$/, '') + '\n\n' + j.overview
+: j.overview;
+overviewAdded = true;
+}
+var coverSet = false;
+if(!state.photos.some(function(p){ return p.cover; })){
+var cp = kept[Number(j.cover_index)] || kept[0];
+if(cp){ cp.cover = true; coverSet = true; }
+}
+render();
+var bits = [filled + ' caption' + (filled === 1 ? '' : 's') + ' filled'];
+if(overviewAdded) bits.push('overview added to Scope Notes');
+if(coverSet) bits.push('cover photo set');
+if(state.photos.length > 14) bits.push('first 14 photos read');
+var msg = 'AI: ' + bits.join(' \u00b7 ');
+if(typeof window.toast === 'function'){ try{ window.toast(msg); }catch(_){ alert(msg); } }
+else{ alert(msg); }
+}catch(e){
+alert('AI assist failed: ' + (e && e.message ? e.message : e));
+}finally{
+/* render() replaced the button; this reference may be detached, which is fine */
+if(btn){ btn.disabled = false; btn.textContent = oldLabel; }
+}
+}
 function renderPhotos(photos){
 if(!photos || !photos.length){
 return '<div class="cr-est-empty-items">No photos attached. Tap <b>+ Attach Photos</b> to pick from the client\u2019s gallery.</div>';
@@ -47665,6 +47775,8 @@ amount: 0,
 });
 render();
 };
+var aiAssistBtn = view.querySelector('[data-act="ai-assist"]');
+if(aiAssistBtn) aiAssistBtn.onclick = function(){ runAiAssist(aiAssistBtn); };
 var pickPhotosBtn = view.querySelector('[data-act="pick-photos"]');
 if(pickPhotosBtn) pickPhotosBtn.onclick = function(){
 var picker = (window.CardinalPhotoAlbum && window.CardinalPhotoAlbum.openAsPicker) ||
