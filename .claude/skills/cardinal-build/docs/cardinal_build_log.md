@@ -20611,6 +20611,36 @@ A gate rewritten until it passes is worthless. Two constructed controls:
 **`gate_944` is untouched and still red** — four Crews compliance inputs under the 44px floor. That
 one is a real shipped defect, not a stale gate, and it is item 12 on the build queue.
 
+## Build 1013 — the Roofr and Hover readers are no longer open AI relays (23 Aug 2026)
+
+**The remaining security finding from the build-1007 audit.** `api/roofr.js` and `api/hover.js` —
+the routes that read a measurement PDF's text with AI — had **no session gate at all**: anyone who
+knew the paths could POST arbitrary text and bill inference to `GEMINI_API_KEY` (and, through the
+505 fallback ladder, `OPENAI_API_KEY`) — a free AI relay. This is the exact class already closed on
+`summarize`/`organize`/`caption`; these two were simply missed. **A survey of `api/` confirms they
+were the only AI routes left without an `authorization` check** (22 other routes carry one).
+
+**Server half:** both routes now carry the same session gate as `api/sol.js` — Bearer token →
+`GET /auth/v1/user` with the publishable anon key; missing/invalid/errored → 401. **The gate runs
+before the `GEMINI_API_KEY` config check**, so an anonymous caller learns nothing about server
+config and spends nothing.
+
+**Client half:** the three import call sites (`importMeasFrom`, the material-order trade picker,
+and the estimate-doc Roofr reader) sent bare `Content-Type` headers; all three now use
+`window.aiHeaders()` — the helper that has existed for exactly this purpose since the summarize
+fix, and falls back to no header (→ clean 401) when the session cannot be read. Importing
+measurements behaves identically on screen.
+
+**Proof.** `gate_1013.mjs` imports both SHIPPED handlers and drives them with mocked Supabase auth
+(GEMINI key deleted so a passed gate short-circuits at config, never reaching a model): anon → 401,
+bad token → 401, valid session → passes the gate, for each route; plus the client assertion that
+all 3 call sites send `aiHeaders()`. GREEN on the working tree; **negative control against the
+pre-fix files goes RED with 5 named failures** (anon/bad-token → 500 config leak ×4, client 0/3).
+`check_build` green (stamp 1012→1013, marker, negative control); `node --check` clean on both
+routes.
+
+No SQL. `api/roofr.js` + `api/hover.js` + `index.html`.
+
 ## Build 1012 — the contract's deposit comes from the estimate that set its price (23 Aug 2026)
 
 **The third HIGH money-correctness finding from the build-1007 audit (F6 + MONEY-3), and the last.**

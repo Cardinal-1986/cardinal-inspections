@@ -48,8 +48,12 @@ stage-defer drop-on-supersede, 1006 stage-defer lost-on-close). The rest, still 
   shipped function; RED ×2 against build 1011). (F6 + MONEY-3, CONFIRMED)
 
 ### 🟠 HIGH — other (pre-existing)
-- **`api/roofr.js` + `api/hover.js` open AI relay** — no session gate; spend Gemini+OpenAI quota on
-  caller-supplied text. Add the standard session gate. (CONFIRMED)
+- ✅ **RESOLVED at build 1013 — `api/roofr.js` + `api/hover.js` open AI relay.** No session gate;
+  spent Gemini+OpenAI quota on caller-supplied text. **Fixed:** both now carry sol.js's session gate,
+  run BEFORE the config check (anon learns nothing, spends nothing); the three client call sites now
+  send `window.aiHeaders()`. Survey confirms these were the last AI routes without an `authorization`
+  check. Proven by `gate_1013.mjs` (drives the shipped handlers; RED ×5 on the pre-fix files).
+  (CONFIRMED)
 - **DB: 5 estimates point at deleted documents** ($71,845.99, 4 status='sent') — deleting a document
   never clears `estimates.doc_id`/`contract_doc_id`. Fix the document-delete path to null the referring
   columns; consider a one-time cleanup. (DB-1, CONFIRMED live)
