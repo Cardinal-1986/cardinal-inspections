@@ -20497,7 +20497,7 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
-## Build 1024 — the printed contract shows all of its own words
+## Build 1031 — the printed contract shows all of its own words
 
 **The defect.** The slim grey running header (`.runhead`, build 747) is `position:fixed`, which
 does repeat on every printed page — in the same strip the flowed text occupies. Its background is
@@ -20529,7 +20529,7 @@ had no print furniture at all: no page rules, and no address footer.
 the header up with `top:-0.34in`; Chromium clamps a fixed element to the page area, so it landed at
 the **bottom** of the page (y≈707) and off page 5 entirely. Collisions read **zero** — because the
 header had left, not because the text was clear. *Absence of a collision is not the goal; a header
-above readable text is.* `gate_1024` assertion 4 exists solely to catch that, and it is the
+above readable text is.* `gate_1031` assertion 4 exists solely to catch that, and it is the
 assertion the first two attempts would have failed.
 
 ⚠️ **A measurement that returned nonsense was believed for one round.** The collision detector
@@ -20540,7 +20540,7 @@ are not app states; they are a broken instrument. Read the numbers before readin
 acceptance block onto a fifth sheet. Roof (5), siding (4) and the service contract (2) are
 unchanged. The full-width hairline under the old header does not survive the move to a margin box.
 
-**Gates.** `check_build.py` green 1023 → 1024. **`gate_1024.mjs` 31/31 GREEN · RED on the 966 control
+**Gates.** `check_build.py` green 1030 → 1031. **`gate_1031.mjs` 31/31 GREEN · RED on the 966 control
 with 15 named failures**, no crash — it presses the real Download button, prints those exact bytes,
 and measures the pages. `gate_964` 9/9, `gate_965` 12/12, `gate_966` 12/12 re-run.
 
@@ -20745,7 +20745,7 @@ merged onto the local row (stale `{z:9}` never pulled); online → 1 refetch, me
 row. GREEN; negative control against the 1015/1016 tree → RED (offline refetch happens). `check_build`
 green (1016→1017). No SQL.
 
-## Build 1024 — AI/spend + senddoc routes gated on staff identity (23 Aug 2026)
+## Build 1031 — AI/spend + senddoc routes gated on staff identity (23 Aug 2026)
 
 **Audit findings 6 + 7 (both CONFIRMED high).** 1013 closed anonymous access to the AI routes, but
 every one still trusted ANY confirmed Supabase session — and public signup is on — so a
@@ -20766,7 +20766,7 @@ it a stranger can still create an account (they just can't reach these routes). 
 OPEN_ITEMS.
 
 **No index.html behavior change** — server-only; the stamp/CHANGELOG bump keeps the version record
-coherent (same convention as 806's librarian swap). **Proof:** `gate_1024.mjs` imports `_staff.js`
+coherent (same convention as 806's librarian swap). **Proof:** `gate_1031.mjs` imports `_staff.js`
 and asserts all 10 live accounts pass + fabricated outsiders/empty/null fail (case-insensitive), and
 that all 13 routes import the helper with the guard positioned after the session resolves. GREEN;
 negative control against the build-1014 api dir → RED (40 failures: no `_staff.js`, no guards).
@@ -20984,7 +20984,7 @@ green (stamp 1010→1011, marker, negative control).
 
 No SQL. `index.html` only.
 
-## Build 1024 — money-in has one door again: the "Received" heading (23 Aug 2026)
+## Build 1031 — money-in has one door again: the "Received" heading (23 Aug 2026)
 
 **A HIGH money-correctness finding from the build-1007 audit, and it is 996's own residue.** Build
 996 made `collections` (Money In & Commissions) the single door for money received — it fires the
@@ -21006,7 +21006,7 @@ unchanged. Editing an existing legacy `dir:'in'` row (`data-payedit`, checked ea
 delegation and returning first) is untouched, so the one job carrying legacy rows (Dan Thompson) can
 still be inspected and moved via its "Move them into Money In" button (`payMigrateLegacyIn`).
 
-**Proof.** `gate_1024.mjs` extracts the SHIPPED `#paySummary` click handler, mounts the real section
+**Proof.** `gate_1031.mjs` extracts the SHIPPED `#paySummary` click handler, mounts the real section
 markup in a real Chromium DOM, and dispatches real clicks (genuine `closest()` traversal, not
 mocked): Received heading → `payGoLogCollection` and never `openPayRow('in')`; Paid/Expenses headings
 → `openPayRow('out'|'exp', null)`; + button still → `payGoLogCollection`; edit row →
@@ -21090,7 +21090,7 @@ un-fixed — next up).
 
 ### Gates
 
-`gate_1024.mjs` rewritten for the new race-free contract — 14 assertions incl. supersede-commits-not-
+`gate_1031.mjs` rewritten for the new race-free contract — 14 assertions incl. supersede-commits-not-
 drops and page-hide-flush; control on 1007 **FAIL 6**, named. `gate_1008.mjs` — the two 1005 fixes
 (flat `lead_source` write; neutral portal pre-selects no claim type; live refusal); control on 1007
 **FAIL 3**, named. `gate_1004/1005/1007` re-run GREEN (no regressions); `check_build` GREEN, stamp 1008.
@@ -21147,7 +21147,7 @@ stamp reading 971, recovered by `git fetch` + `checkout -B <branch> origin/main`
 re-applying the patch, verified byte-identical to the pre-reset version. Committing the stale tree would
 have reverted 1004–1006 — BUG_CLASSES 49. Verify the stamp on disk after any suspected reset.
 
-## Build 1024 — stage arrows: one tap, with Undo (23 Aug 2026)
+## Build 1031 — stage arrows: one tap, with Undo (23 Aug 2026)
 
 First slice of the **dialog diet** (OPEN_ITEMS #6). The profile's forward/back stage arrows popped a
 `confirm('are you sure?')` on every tap. Now a tap moves the job at once and shows a **5-second Undo
@@ -21170,7 +21170,7 @@ somehow unavailable the move commits immediately rather than being lost.
 
 ### Gate
 
-`gate_1024.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
+`gate_1031.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
 a Chromium mechanism test of the helper in isolation: a tap shows the target stage but does NOT commit,
 raises an Undo toast; Undo reverts and **never commits**; letting the 5s window elapse commits exactly
 once. 11 assertions. Control on 1005: **FAIL 4** (confirm present, helper absent), named, no crash — the
@@ -24202,3 +24202,134 @@ exactly those — and the selftest holds BOTH directions: a new `#data-delegated
 What I could NOT reproduce from the screenshot: the vertical half-clipping of the strip. The
 mechanical causes fixed here (overflow + broken pan) are the measurable defects at that
 screen; if the clipping reproduces on the phone after this build, it is a new report.
+
+## Manual-estimates E2E audit + the sentinel's light-mode fix (23 Aug 2026 — docs + scripts only, no build number; index.html untouched at 1023)
+
+Theo asked for an E2E audit of manual estimates, usability deep-research, a plan, and a verdict on
+the dark colors. The full report is `docs/CR_MANUAL_ESTIMATES_AUDIT_2026-08.md` — findings ranked
+(the headline: **accepted estimates render in the UNSENT — DRAFTS lane and the screen's pipeline
+sums are wrong**, live on both production accepted rows; and the obsidian editor's **Total reads at
+1.98:1** because the 546 conversion missed the totals-block inks), the dark-colors verdict
+(obsidian stands — Theo's own 546 pick; finish it rather than repaint), and a four-build plan
+awaiting picks. Nothing shipped to the app.
+
+**What DID ship — the instrument was lying, in the same direction twice:**
+- `scripts/sentinel.js` — `--themes rb-light` injected `document.documentElement.setAttribute(...)`
+  as an init script; `documentElement` is **null** at init-script time in this Chromium, the line
+  threw (every themed render carried a PAGEERROR), the attribute never landed, and **every themed
+  sweep of the CRM silently swept the DARK theme under a light label**. Even landed, the app's own
+  `cr-rbtheme-toggle-script` strips a bare attribute at boot unless `localStorage['cardinal.theme.rb']`
+  says light. Now: null-safe set, runs before setup files, publishes `window.__sentinelTheme`.
+- `scripts/sentinel_setup_cardinal.js` — translates `__sentinelTheme === 'rb-light'` into the app's
+  own localStorage key, so the app themes itself the way it does for a real user.
+- Proof both directions: the old shape probes `attr:null` + pageerror; the new probes
+  `attr:"rb-light"`, no errors — and the repaired run produced six light-only findings
+  (an invisible 1.07:1 profile subnote among them) the old run was structurally incapable of seeing.
+  `--selftest` green before and after.
+- `scripts/sentinel_setup_estimates.js` — NEW: the populated estimates walk (four statuses, five
+  states: eslist/esteditor/estlibrary/estpreview/estprofile). The base walk seeds `estimates:[]`
+  deliberately; these five money screens had never been swept populated, which is how a 1.98:1
+  Total lived unseen in an instrumented app.
+
+## Build 1025 — the obsidian estimates screens, finished (audit Build A; Theo's pick 1: white money)
+
+The audit's INK list, built. On the black editor the Total and deposit figures were `#7f1d1d`-era
+dark red (1.98:1, measured) — now white; the DEPOSIT label keeps rose `#f0a3a9`. Six red buttons
+hover-flashed the retired gold (`#e8ba15`/`#c88a0f` now **zero** in the file, asserted); the last
+two red→gold gradient buttons went flat red; the client-tab template menus (`#pEstMenu` **and its
+byte-identical neighbour `#pContractMenu`**) stopped popping up white on the dark app; Balance Due
+was de-inlined into `.db-due` classes (id-scoped so insurance's own selector still wins in its CRM);
+light-mode repairs: UNSENT lane title `#6d747d`, profile subnote `#5c5c5c`, money captions
+`#6c655e`, saved-estimates heading `#9aa0a8` (dark). Emoji in the estimates screens replaced with
+drawn glyphs or dropped. Gates: `check_build` green; **`gate_1026.mjs`-style Chromium gate
+`gate_1025.mjs` 16 checks both themes, control RED ×15**; navhead lesson recorded — an appended
+equal-specificity rule LOSES to an original that sits later in the block; edit in place.
+
+## Build 1026 — the estimate lanes tell the truth (audit Build B; Theo's pick: Declined gets its own thin lane)
+
+The Estimates walls knew `draft/sent/viewed/approved/converted`; the editor writes
+`draft/sent/accepted/declined` (its own `STATUSES` list). The vocabularies never met, and
+`creLane()`'s fallback dressed every stranger as `'Unsent'` — **at build time the live DB held
+$27,310 of `accepted` work rendering as UNSENT drafts and counting as open pipeline.** Now:
+Accepted lane claims `accepted`; new **thin** Declined lane (`--rbe-dec-*` token pairs, computed
+5.5:1 dark / 7.3:1 light; full-width `grid-column:1/-1` strip, dimmed cards, collapses to its
+header when empty); `creLane` fallback → `null` and a labelled **UNRECOGNIZED STATUS** safety-net
+lane renders what no lane claims (it ignores the status filter on purpose); discarded AI drafts
+are filtered at load (they used to ride the fallback back into the wall on reload); footer sums
+honest — open = Unsent+Sent only, `declined $X` prints when non-zero; the editor's Delete passes
+`state.project && state.project.id` (`state.project_id` was always undefined, so the wrong
+project's saved list refreshed). Gate: `gate_1026.mjs` — seeded walk + bogus-status row injected
+gate-side only; GREEN on 1026, **control RED ×12** (the control names the $32,899 phantom
+pipeline). Chromium renders eyeballed both themes.
+
+## Build 1027 — the client-facing estimate document, redressed (audit Build F; Theo's pick A: clean letterhead, no summary strip)
+
+`buildDocHtml` (cr-epub-script) emits what the homeowner receives from the share link and print.
+Its sheet was the cream-era default: **no viewport meta and a hard `width:8.5in` body — on a phone
+the client read their own quote through a pinch-zoom.** Now: Option A as picked from rendered
+options — Georgia letterhead, hairline `--hair` rules, red held to the brand rule / section-number
+chips / grand total — plus `<meta name=viewport>` and two screen media queries that reflow the SAME
+document under 560px (stacked header, one-field-per-line meta, single-column photos). Print path
+untouched (`@page Letter`, same classes). **The content string is byte-identical — only `<head>`
+changed**, asserted in the patch AND by `gate_1027.mjs`, which slices the SHIPPED builder out of
+the artifact, executes it, diffs everything past `</style>` against the control's output, checks
+the share-wrapper hook selectors survive, and renders both at 390px (control RED: no viewport
+meta, header un-stacked). Old sent estimates keep the copy they were sent with (the HTML is stored
+at publish); everything published from 1027 on wears the new dress.
+
+## Build 1028 — the AI moves inside the estimate editor (audit Build E; Theo's picks: button, hide the doors, overview from ALL photos, AI cover only when unstarred)
+
+`api/caption.js` gained an **estimate-assist mode** beside its untouched single-image path: the
+editor sends ALL attached photos (first 14, browser-downscaled to ~1024px) plus existing captions
+and line names in ONE request; Gemini answers under an **enforced `responseSchema`** (the 806
+librarian lesson — no fence-stripping) with `{overview, captions[], cover_index}`, OpenAI JSON-mode
+fallback. In the editor: one quiet ghost button in the Photos head. **The model proposes; the rep
+wins** — captions land ONLY in empty boxes, the overview APPENDS to Scope Notes, the cover moves
+only when nothing is starred. The two **⚡ AI Estimate doors are hidden, not deleted** (Theo:
+"hide") — the walls' primary button and `#pAiEstimateBtn`; `showAICreate` + `ai_estimates` stay
+dormant; the walls' **unguarded `new-ai` wiring is guarded** (it would have thrown and killed every
+wire below it); `+ New estimate` is the primary door now; **Theo's admin App Walk was re-taught**
+(it tapped `new-ai` by name — four references — and would have gone red). Gate: `gate_1028.mjs`,
+mocked route — fill-not-overwrite proven in BOTH sweeps, append vs alone, cover honored vs ignored,
+request wire shape, doors, walk, api branch. GREEN; **control RED ×6**. Renders eyeballed.
+
+## Build 1029 — save stays in the room; the satellites stop guessing (audit Build C)
+
+The editor's Save used to CLOSE the editor — and the close was the SIGNAL three satellites polled
+for: cr-epub (Publish) and cr-e2c (→ Contract) clicked Save and ran `waitForEditorClose(9000)`,
+then re-fetched the project's rows and *picked* the one they hoped was it (970's guard); cr-ess
+(status→stage sync) hooked the Save and Publish **clicks** and ran two more close-polls of its own.
+Save-in-place would have silently broken all four polls — so the choreography moved to
+announcements. Now: **`CardinalEstimates.save()` is an exported promise resolving the saved DB
+row**; the editor **stays open** (toast, number appears, `auto №` until first save, Delete button
+materialises); `cr-est-saved` / `cr-est-published` / `cr-est-status` CustomEvents carry the rest —
+cr-ess listens instead of observing (**its body MutationObserver is retired: 45 → 44 body
+observers**, the healthy direction; the census note in CLAUDE.md is now one lighter), the walls
+reload on save, the open editor mirrors the stage-sync's `sent` write. Publish and → Contract
+consume the returned row directly — **970's guard sharpened**: no lookup, no picking, a
+project-id cross-check is all that remains; on a failed save they stand down silently because
+save() already told the user why (776: never silent, never doubled). Cancel is now **Close** with
+a dirty guard (delegated input/change listener; save clears it). **Phone bottom action bar** —
+Save + Publish fixed under the thumb, obsidian like the editor; the floating theme toggle (which
+deliberately rides above full-screen views, 694) lifts to bottom:96px on phones via `:has` so it
+clears the bar. Gate: `gate_1029.mjs` — in-place save through the mock + event detail, dirty guard
+both directions, clean-close after save, auto №, phonebar both widths, polls retired, observer
+census −1. GREEN; **control RED ×12**.
+
+## Build 1030 — documents classify by their link; the dead table is gone (audit Build D; Theo: "drop it")
+
+**F-5 closed both ways.** A published estimate is `doc_id`-linked to its table row, but the
+Documents tab, the approvals queue and the Job Details card classified by TITLE — rename one and it
+filed under Inspections, and a signed one skipped `renderApprovals` and the "needs approval" email.
+New `isEstimateDoc(r)` classifies by the LINK first (1011's `estDocIds` map), title second; applied
+to `renderProjectDocs` (both buckets), both approvals legs, and the acx card count. The editor's
+title placeholder ("Roof Replacement — Jane Smith") stopped teaching the classifier-dodging shape —
+it reads "Estimate — Jane Smith" now. **F-4 closed:** `manual_estimates` (0 rows, no reader, no
+writer since 568, any-authenticated ALL policy) **DROPPED — applied to production 24 Aug 2026,
+verified 0 rows immediately before and `to_regclass` null after.** `drop_manual_estimates.sql`
+records the schema in its header for revert and refuses to run against a non-empty table. **F-8:**
+cr-eaf's `wireStats`/`wireManualRows` deleted — dead selectors queried on every subtree body-observer
+tick. Gate: `gate_1030.mjs` — a renamed published estimate injected gate-side lands in the
+Estimates bucket (control: misfiled under Inspections, live), helper truth-table, approvals legs
+×2, placeholder, cruft. GREEN; **control RED ×7. All six arc gates (1025–1030) re-run GREEN
+against this final artifact.**

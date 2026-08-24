@@ -3,6 +3,63 @@
 
 ---
 
+## ✅ Manual-estimates audit — PICKED AND BUILT, 23–24 Aug 2026, builds 1025–1030 (PR #482)
+
+Theo's picks, 23 Aug, verbatim: **"1, A, own lane, button, drop it, hide."** All six builds
+shipped on `claude/manual-estimates-audit-design-29udyd`: **1025** (A: obsidian finished, white
+money) · **1026** (B: lanes learn accepted/declined + thin Declined lane + honest sums + the
+safety-net lane) · **1027** (F pick A: client document letterhead + phone reflow) · **1028** (E:
+AI assist inside the editor — captions fill empty only, overview appends, cover only when
+unstarred; both ⚡ AI doors hidden, code/table dormant) · **1029** (C: save-in-place, exported
+save() promise + cr-est-* events, all four satellite close-polls retired, phone action bar) ·
+**1030** (D: isEstimateDoc link-first classification, placeholder fix, cr-eaf cruft out,
+**manual_estimates DROPPED — applied to production 24 Aug**, `drop_manual_estimates.sql`).
+Every build gated (`gate_1025`–`gate_1030.mjs`, each seen RED on its control); all six re-run
+GREEN on the final artifact. The plan below is kept for the record:
+
+1. **Build A — finish the obsidian estimates screens** (CSS + 1 inline ink): the Total is 1.98:1
+   and the deposit 1.89:1 in BOTH themes (546's conversion missed the totals block); six red
+   buttons still hover to pre-migration gold `#e8ba15`; light-mode fails on the lane title /
+   Saved-Estimates heading / `#projectView .subnote{color:#fff}` (unscoped — every profile subnote
+   is invisible in rb-light) / docTable money on dark rows. **Option previews rendered — Theo
+   picks white money (1) or `#f08a90` accent money (2).**
+2. **Build B — the lanes tell the truth:** `CRE_LANES` never learned `accepted`/`declined`
+   (editor vocabulary) — production's two accepted estimates render under **UNSENT — DRAFTS** and
+   the open-pipeline/accepted sums are both wrong. Plus the `state.project_id` (undefined)
+   delete-refresh fix.
+3. **Build C — editor usability:** Save closes the editor every time behind an alert (live tell:
+   5 of 8 drafts are $0 duplicates); no dirty-guard on Cancel; six header actions scroll off a
+   phone. Save-in-place + Done + toasts + phone action bar.
+4. **Build D — dead weight (SQL first, Theo's calls):** `manual_estimates` (0 rows) still carries
+   an any-authenticated `ALL USING(true) WITH CHECK(true)` policy — drop the table or tighten;
+   `isEstimateTitle` robustness (the title placeholder teaches "Roof Replacement — Jane Smith",
+   which dodges the classifier post-publish). The AI-arm keep/demote/retire question is
+   **superseded by Build E**.
+5. **Build E — AI assist inside the estimate (Theo's 23 Aug direction: "just estimates, click a
+   box for ai and use pictures to supplement the estimate with captions and an overview").**
+   One AI action in the editor's Photos section: attached photos without a typed caption get one
+   via the EXISTING `/api/caption` (the album's ✨ AI Caption machinery, reused), plus one new
+   `overview` mode handed ALL attached photos in one request, drafting a scope paragraph that
+   describes the job as the photos collectively show it, into Scope Notes for review — and (Theo, 23 Aug)
+   **naming the best cover photo**, applied only when no ☆ cover is set. Fill-not-overwrite,
+   review-before-print, no `ai_estimates` write; the separate AI doors/screens/tables retire once
+   it lands. Open picks: button vs checkbox trigger (button recommended — visible spend) · AI
+   line-item suggestions later (default off) · cleanup depth. Design in full in
+   `CR_MANUAL_ESTIMATES_AUDIT_2026-08.md` §5 Build E.
+6. **Build F — the client-facing estimate document (Theo's 23 Aug ask).** The published/shared
+   estimate has NO phone layout (fixed 8.5in body, no viewport meta — the share link renders
+   shrunk-to-unreadable on a homeowner's phone) and a 2021-era dress. Two options rendered in the
+   audit artifact, content byte-identical: **A** clean letterhead (hairlines, small-caps labels,
+   no black header fill) · **B** = A + a Total/Deposit/Valid-through summary strip. Both carry the
+   phone fix. Awaiting A-or-B. Design + share-FIX compatibility notes in the audit doc Build F.
+
+**Shipped with the audit (scripts/docs only):** the sentinel's `--themes rb-light` leg was
+structurally broken (attribute set threw at init; every themed CRM sweep was a dark sweep) — fixed
+and proven both directions; `sentinel_setup_estimates.js` added so the money screens sweep
+populated from now on.
+
+---
+
 ## 🔍 Fresh audit, 23 Aug 2026 @ build 1014 (workflow wf_8568b748-3eb) — 17 CONFIRMED, 0 refuted
 
 9 finders (regressions/money/api-security/rls/ui-dead/contrast/offline/datamodel/flows) → dedupe →

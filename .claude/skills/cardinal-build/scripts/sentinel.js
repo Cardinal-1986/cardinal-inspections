@@ -271,9 +271,26 @@ async function sweep(HTML, findings) {
           body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') });
       return r.fulfill({ status: 200, body: '' });
     });
-    if (SETUP_JS) await page.addInitScript(SETUP_JS);
+    /* ⚠ The theme script goes FIRST so setup files can read window.__sentinelTheme.
+       And it must not touch document.documentElement directly at init time:
+       documentElement is NULL when init scripts run in this Chromium, so the old
+       one-liner THREW, the attribute never landed, and every --themes rb-light
+       render of the CRM silently swept the DARK theme under a light label —
+       doubly so for index.html, whose cr-rbtheme-toggle-script strips a bare
+       data-theme at boot unless ITS OWN localStorage key says light (found
+       23 Aug 2026, manual-estimates audit; the CRM translation lives in
+       sentinel_setup_cardinal.js). */
     if (theme !== 'default')
-      await page.addInitScript(`document.documentElement.setAttribute('data-theme', ${JSON.stringify(theme)});`);
+      await page.addInitScript(
+        `window.__sentinelTheme = ${JSON.stringify(theme)};` +
+        `(function put(){` +
+        `  var r = document.documentElement;` +
+        `  if (r) { r.setAttribute('data-theme', ${JSON.stringify(theme)}); return; }` +
+        `  new MutationObserver(function(_, o){` +
+        `    if (document.documentElement) { o.disconnect(); put(); }` +
+        `  }).observe(document, { childList: true });` +
+        `})();`);
+    if (SETUP_JS) await page.addInitScript(SETUP_JS);
     try {
       await page.goto('https://sentinel.test/', { waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(700);

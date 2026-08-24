@@ -2518,7 +2518,7 @@ future commission; net payout = owed − outstanding draws. Paid locks.
 
 ⚠️ **`collections` is the ONE door for money received — both entry points now agree.**
 On the Payment Information page the "Received" section's + button (996) **and** its
-heading tap (1024) both route to `payGoLogCollection()` → this tab; the legacy
+heading tap (1031) both route to `payGoLogCollection()` → this tab; the legacy
 `dir:'in'` add modal is unreachable from Received. Money logged the old way books no
 commission and, since 721, is ignored by Balance Due whenever any collection exists
 (`jobFinance`: `if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id]`). "Paid" /
@@ -2534,7 +2534,7 @@ tier 2 no doc competes at all, and a doc any estimates row points at via `doc_id
 legacy document-only estimates still feed the leg. `estTier`/`estDocIds` are globals
 filled by `indexMoney()`. **Do not add another estimate-valuing scan anywhere** —
 Balance Due, the AR chart, pipeline dollars and the invoice all inherit from here.
-Gate: `gate_1011.mjs` (executes the shipped functions; RED ×3 on build 1024).
+Gate: `gate_1011.mjs` (executes the shipped functions; RED ×3 on build 1031).
 
 ⚠️ **Contract deposit precedence (781 → 785 → 1012), in `fillContractMoney()` — the ONE
 place a contract's money is written:** an explicit `est` row passed in (estimate→contract)
@@ -2856,7 +2856,7 @@ extraction applied); all three now preserve null.
 
 **`maxOutputTokens: 8192` + `responseMimeType: 'application/json'`** on Gemini,
 **`max_tokens: 4096` + `response_format: json_object`** on the OpenAI fallback.
-⚠ **Keep both rungs in step** — 1024/1200 truncated a five-page scope mid-object
+⚠ **Keep both rungs in step** — 1031/1200 truncated a five-page scope mid-object
 and the failure looked like gibberish, not like a limit.
 
 **`/api/sol` is the ONE route that returns a `detail`** (the raw model reply on
@@ -5996,7 +5996,7 @@ counts and what it refuses to count, each of the three kinds dropping the count 
 green "All filled" state reached by filling everything, the jump outlining a blank and moving on,
 and a hand-added field being counted; control red 11 named).
 
-### Print fidelity on contracts and estimates (1024)
+### Print fidelity on contracts and estimates (1031)
 
 `ensurePrintFix(d)` in the report-editor block is the single place the printed page's furniture is
 decided: which editing chrome is dropped, where the page breaks may not fall, the running header
@@ -6536,14 +6536,14 @@ refusal (always visible), Lead Source by opening "More detail" and shaking the f
 blocker (the 782 reveal pattern), plus a `*` added to its label. No layout change. `gate_1005.mjs`
 (Chromium, drives the real ldSave; control on 1004 PASS 2 · FAIL 5).
 
-### 1024 — stage arrows: one tap, with Undo (dialog diet, slice 1)
+### 1031 — stage arrows: one tap, with Undo (dialog diet, slice 1)
 
 The profile's forward/back stage arrows no longer confirm on every tap. A tap moves the job at once and
 shows a 5-second Undo toast (window.CardinalUndo, shipped since 186). The transition is DEFERRED for the
 window: the target stage shows optimistically (cache-only), and the real commit (setStage / acxAdvance)
 runs only when the toast closes — so an undone tap never writes to the record and never fires setStage's
 team email (Approved → Curtis "schedule + order materials"; Completed → rep+admins). Gmail Undo-Send
-model. `crStageDefer` is the shared helper; `gate_1024.mjs` (source wiring + Chromium mechanism test;
+model. `crStageDefer` is the shared helper; `gate_1031.mjs` (source wiring + Chromium mechanism test;
 control on 1005 FAIL 4). First slice of the dialog diet; alert→toast and prompt→inline remain.
 
 ### 1007 — a phone-signed contract buzzes Curtis too (remote signature parity)
@@ -6566,5 +6566,37 @@ pre-checked) — no type is pre-selected on a neutral portal now, so the choice 
 lives; (3) crStageDefer dropped a superseded move (2nd arrow tap, esp. cross-job) — a superseding tap
 now commits the first move, and the target is captured + committed via setStage() directly (race-free);
 (4) closing the app in the Undo window lost the move — a pagehide/visibilitychange flush commits it.
-gate_1024 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
+gate_1031 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
 findings (incl. the critical api/abc.js open proxy) are logged in OPEN_ITEMS "Audit 2026-08-23".
+
+### 1025–1030 — the manual-estimates arc (audit builds A–F; Theo: "1, A, own lane, button, drop it, hide")
+
+Six builds from `CR_MANUAL_ESTIMATES_AUDIT_2026-08.md`, one per audit item, each with its own
+Chromium gate (`gate_1025.mjs`–`gate_1030.mjs`, every one seen RED on its control):
+
+- **1025 — the obsidian estimates screens, finished (pick 1: white money).** Total/deposit white on
+  the black builder (were 1.98:1 dark red); gold hover states retired to zero; template menus dark
+  (`#pEstMenu` + `#pContractMenu`); Balance Due de-inlined to `.db-due`; light-mode ink repairs;
+  emoji out.
+- **1026 — the lanes tell the truth (pick: own thin lane).** The walls knew draft/sent/viewed/
+  approved/converted; the editor writes accepted/declined — Accepted lane claims `accepted`, new
+  full-width THIN Declined lane (`--rbe-dec-*`), `creLane` fallback → null + a labelled
+  UNRECOGNIZED STATUS safety net, discards filtered at load, footer sums honest (open =
+  Unsent+Sent; declined prints when non-zero), editor Delete passes the real project id.
+- **1027 — the client document, Option A + the phone fix.** `buildDocHtml` wears the serif
+  letterhead (red = brand rule / section chips / grand total, no summary strip) + viewport meta +
+  two screen media queries; content byte-identical, print untouched; share-wrapper hooks preserved.
+- **1028 — AI assists inside the estimate (picks: button; hide the doors).** `api/caption.js`
+  estimate-assist mode: ALL photos one request, schema-enforced `{overview, captions[],
+  cover_index}`. Ghost button in the Photos head; captions fill ONLY empty boxes, overview APPENDS
+  to Scope Notes, cover moves only when unstarred. Both ⚡ AI Estimate doors hidden (code +
+  `ai_estimates` dormant); "+ New estimate" is the primary; the admin App Walk re-taught.
+- **1029 — save-in-place + the satellite choreography.** Exported `CardinalEstimates.save()`
+  promise; `cr-est-saved`/`cr-est-published`/`cr-est-status` events replace all four editor-close
+  polls (cr-epub, cr-e2c, cr-ess ×2); cr-ess's body observer retired (45 → 44); Cancel → Close
+  with dirty guard; "auto №" hint; phone bottom action bar (theme FAB lifts clear via :has).
+- **1030 — classification by link; the dead table gone.** `isEstimateDoc()` classifies published
+  estimates by the `doc_id` link first (Documents buckets, both approvals legs, job card);
+  placeholder stops teaching the dodging title; cr-eaf's dead `wireStats`/`wireManualRows` out;
+  **`manual_estimates` dropped in production** (`drop_manual_estimates.sql`, schema recorded for
+  revert, refuses a non-empty table).

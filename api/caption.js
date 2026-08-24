@@ -54,6 +54,16 @@ export default async function handler(req, res) {
     return;
   }
 
+  /* ── build 1028: estimate assist — ALL attached photos in ONE request ──
+     The estimate editor sends { images:[dataURL…], captions:[string|null…],
+     context:{client,title,items} } and gets { overview, captions, cover_index }
+     back. The single-image path below (the inspection report editor's) is
+     untouched. The CLIENT enforces fill-not-overwrite and never moving a
+     rep-starred cover; this route just describes what it is shown. */
+  if (Array.isArray((req.body || {}).images)) {
+    return estimateAssist(req, res, apiKey);
+  }
+
   try {
     const { image } = req.body || {};
     if (!image || typeof image !== 'string' || !image.startsWith('data:image')) {
@@ -142,6 +152,129 @@ export default async function handler(req, res) {
       '[Caption — describe what this photo shows.]';
 
     res.status(200).json({ caption });
+  } catch (err) {
+    res.status(500).json({ error: err.message || String(err) });
+  }
+}
+
+/* ── build 1028: the estimate assist ─────────────────────────────────────────
+   One request, every photo. Returns JSON enforced by responseSchema (the
+   librarian lesson from 806: an enforced shape beats a prose ask — no fence
+   stripping, no partial parses). Falls back to OpenAI in JSON mode the same
+   way the single-image path does. */
+async function estimateAssist(req, res, apiKey) {
+  try {
+    const body = req.body || {};
+    const images = body.images;
+    if (!images.length || images.length > 14) {
+      res.status(400).json({ error: 'Send 1–14 photos (got ' + images.length + ')' });
+      return;
+    }
+    const parsed = [];
+    for (const im of images) {
+      const m = typeof im === 'string' && im.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
+      if (!m) { res.status(400).json({ error: 'Every entry in images[] must be an image data URL' }); return; }
+      parsed.push({ mimeType: m[1], data: m[2] });
+    }
+    const captions = Array.isArray(body.captions) ? body.captions : [];
+    const ctx = body.context || {};
+    const items = Array.isArray(ctx.items) ? ctx.items.filter(s => typeof s === 'string').slice(0, 30) : [];
+
+    let prompt =
+      'You are helping a roofing contractor prepare a written estimate for a homeowner. ' +
+      'You are shown ' + parsed.length + ' photographs of the property, in order (photo 1 first). ' +
+      (ctx.client ? 'The client is ' + String(ctx.client).slice(0, 80) + '. ' : '') +
+      (items.length ? 'The estimate lines are: ' + items.join('; ').slice(0, 1200) + '. ' : '') +
+      'Return JSON with exactly these fields: ' +
+      '"captions": one concise sentence per photo, under 20 words each, plain professional ' +
+      'roofing-inspection language, in the same order as the photos (' + parsed.length + ' entries); ' +
+      '"overview": one plain-language paragraph, 60–120 words, written for the homeowner, that ties ' +
+      'the photos together — what condition the property is in and what the work addresses. ' +
+      'No marketing language, no prices, no greeting; ' +
+      '"cover_index": the 0-based index of the photo that best serves as the document cover — ' +
+      'prefer a wide establishing view of the home or roof over a close-up.';
+    const already = captions
+      .map((c, i) => (c && String(c).trim() ? (i + 1) + ': "' + String(c).trim().slice(0, 120) + '"' : null))
+      .filter(Boolean);
+    if (already.length) {
+      prompt += ' Some photos already have captions written by the rep — keep your captions for those ' +
+        'consistent with them (they will not be replaced): ' + already.join('; ') + '.';
+    }
+
+    const schema = {
+      type: 'object',
+      properties: {
+        captions: { type: 'array', items: { type: 'string' } },
+        overview: { type: 'string' },
+        cover_index: { type: 'integer' },
+      },
+      required: ['captions', 'overview', 'cover_index'],
+    };
+
+    async function askGemini(model) {
+      return fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }].concat(
+              parsed.map(p => ({ inlineData: { mimeType: p.mimeType, data: p.data } }))
+            ) }],
+            generationConfig: { responseMimeType: 'application/json', responseSchema: schema },
+          }),
+        }
+      );
+    }
+
+    const oaKey = (process.env.OPENAI_API_KEY || '').trim();
+    const diag = { openai_key_present: !!oaKey, photos: parsed.length };
+    let r = await askGemini('gemini-3.5-flash');
+    diag.gemini_try1 = r.status;
+    if (r.status === 503 || r.status === 429) {
+      await new Promise(x => setTimeout(x, 1200));
+      r = await askGemini('gemini-3.5-flash');
+      diag.gemini_try2 = r.status;
+    }
+
+    let out = null, via = 'gemini';
+    if (r.ok) {
+      const data = await r.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      try { out = JSON.parse(text); } catch (_) { diag.gemini_parse = 'failed'; }
+    }
+
+    if (!out && oaKey) {
+      const o = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + oaKey },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini', max_tokens: 700, temperature: 0.4,
+          response_format: { type: 'json_object' },
+          messages: [{ role: 'user', content: [{ type: 'text', text: prompt + ' Respond with only the JSON object.' }]
+            .concat(images.map(u => ({ type: 'image_url', image_url: { url: u } }))) }],
+        }),
+      });
+      diag.openai = o.status;
+      const oj = await o.json();
+      if (o.ok) {
+        try { out = JSON.parse(oj?.choices?.[0]?.message?.content || ''); via = 'openai'; }
+        catch (_) { diag.openai_parse = 'failed'; }
+      } else {
+        diag.openai_error = (oj?.error?.message || '').slice(0, 160);
+      }
+    }
+
+    if (!out || !Array.isArray(out.captions) || typeof out.overview !== 'string') {
+      res.status(502).json({ error: 'All AI providers failed', diag });
+      return;
+    }
+
+    /* normalize: exactly one caption per photo, cover_index in range */
+    const caps = parsed.map((_, i) => String(out.captions[i] || '').trim());
+    let cover = Number(out.cover_index);
+    if (!Number.isInteger(cover) || cover < 0 || cover >= parsed.length) cover = 0;
+    res.status(200).json({ overview: String(out.overview).trim(), captions: caps, cover_index: cover, via });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }

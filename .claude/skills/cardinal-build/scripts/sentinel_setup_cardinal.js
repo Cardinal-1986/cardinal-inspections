@@ -39,6 +39,18 @@
 (function () {
   'use strict';
 
+  /* rb-light: the app themes ITSELF at boot — cr-rbtheme-toggle-script reads
+     localStorage['cardinal.theme.rb'] and REMOVES a bare data-theme attribute
+     when that key is not '1'. So the only honest way to sweep the light theme
+     is to set the app's own key and let it apply it. The sentinel publishes
+     the requested theme as window.__sentinelTheme (its own attribute set is
+     kept for artifacts that read the attribute directly). Before this, every
+     --themes rb-light sweep of the CRM was a second dark sweep under a light
+     label (found 23 Aug 2026, manual-estimates audit). */
+  try {
+    if (window.__sentinelTheme === 'rb-light') localStorage.setItem('cardinal.theme.rb', '1');
+  } catch (e) {}
+
   /* SENTINEL_AS=scottie sweeps as Curtis/Scottie's production role instead of
      admin. Read from the page URL so it can be driven without editing a file. */
   try {
