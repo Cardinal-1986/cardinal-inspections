@@ -182,24 +182,32 @@ tap-area growth). These didn't get the same pass:
 
 ## 6 · The plan — numbered for picks
 
+**✅ Items 1–5 SHIPPED 24 Aug 2026 as builds 1036–1040** (Theo: "lets do 1-5 in a batch first").
+Each gated in Chromium with a red control; sentinel clean vs 1035; the fixed inks left the
+carried set. Two H-table rows were false positives — see the strike-notes below. Items 6–9
+remain open picks.
+
 Ordered by what protects Scottie and Curtis most per build. Each is one build, gated, previewed
 where visual.
 
-1. **Back stays in Production (F1).** Board pane changes push history states
+1. ✅ **SHIPPED (build 1036)** — **Back stays in Production (F1).** Board pane changes push history states
    (`production/cal`, `production/list:<box>`), `navRestore` walks them — the browser back then
    matches the chevron exactly: list → home → exit. One mechanism, copied from the profile tabs.
-2. **Untrap the profile back (F2).** Tab flips `replaceState` instead of stacking (one back
+2. ✅ **SHIPPED (build 1037)** — **Untrap the profile back (F2).** Tab flips `replaceState` instead of stacking (one back
    leaves the profile from any tab — simplest, and matches how people think about tabs), and the
    legacy restore path stops rewriting entries it did not own. Alternative if you want back to
    keep walking tabs: single-router ownership of profile states — bigger change, say the word.
-3. **The exit room (F3).** Options: **(a)** board X for production users returns to the
+3. ✅ **SHIPPED (build 1038, option a)** — **The exit room (F3).** Options: **(a)** board X for production users returns to the
    **Landing** (portal picker — no money, and Production is a labeled tile there);
    **(b)** keep retail home but pin a persistent "Production" pill at the top for production
    users; **(c)** leave it, call it intentional. My pick: (a).
-4. **Ink pass (R-table).** Light twins for the punch-list chip family, dispatch weekend ink to
+4. ✅ **SHIPPED (build 1039, plus the family members the seed never rendered)** — **Ink pass (R-table).** Light twins for the punch-list chip family, dispatch weekend ink to
    floor in both themes, Check-in to 4.5:1, nudge the three boundary calendar chips. All
    computed, both themes measured, sentinel re-run as the gate.
-5. **Tap-target pass (H-table).** Dispatch move handle + week arrows, box-list buttons, board
+5. ✅ **SHIPPED (build 1040)** — **Tap-target pass (H-table).** ⚠ Two census rows were false
+   positives, verified live and left alone: the punch list ✕ is `.pu-box`, padded 44×44 since
+   build 418, and the card chevron `.pkback` got real 44px minimums at 947 — a rect census
+   cannot see a pseudo pad, exactly as those builds' comments predicted. Dispatch move handle + week arrows, box-list buttons, board
    +Add/Full-calendar, close-item ✕ — the 947 invisible-growth pattern, no visual change.
 6. **Footer stamp diet (O2).** `data-cr-footer` keeps the current build's line only; the
    patch convention changes to *replace* rather than prepend (check_build's stamp gate reads the

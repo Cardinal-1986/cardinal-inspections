@@ -3708,7 +3708,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1035 &#8212; the Landing label is readable in light mode. The yellow “Landing” row in the left rail was near-invisible on the light theme (no true yellow can read on paper); in light mode it now uses the deep amber originally computed for that rail, while dark mode keeps the yellow exactly as it was — same hue, deepened, the way the Activity Count tiles did it. Build 1034 &#8212; four small fixes from the audit’s low-priority list. Walking a job backward from Invoiced to Completed no longer pops the “job completed — send a review request” celebration; the New Bid property picker actually loads the partner’s properties instead of showing an empty list until some other screen had loaded them; the SUPPLEMENT tag on punch-out cards is readable in light mode; and offline, opening the AI Field Manual shows an honest “no signal” card instead of a second copy of the app. Build 1033 &#8212; the old AI-Estimate machinery is gone for good. Build 1028 hid its buttons; this build deletes the code behind them, and its empty database table is ready to drop (Theo runs drop_ai_estimates.sql) — the separate AI estimate builder, its photo-upload flow, its review screen, and every link into it from claims and the health checks. Estimates are just estimates: one editor, with the AI helping from inside it. Nothing you can see changes. Build 1032 &#8212; the delete-client warning is readable in light mode. The small caption under the Delete Client button (“Permanently removes this client…”) was a grey chosen for the dark theme and nearly vanished on the light one; it now switches with the theme. Build 1030 &#8212; estimate documents are filed by what they are, not what they&#8217;re called. A published estimate is linked to its estimate record, and the app now files it by that link — rename the title and it stays under Estimates, still reaches the approvals list and the &#8220;needs approval&#8221; alert when signed, and still counts on the job card. The title box&#8217;s example text no longer suggests a name that would have misfiled the document. The retired manual_estimates database table (empty, unused since build 568) is dropped, and some dead wiring left over from the old estimates screen was removed. Build 1029 &#8212; saving an estimate no longer throws you out of it. Save keeps the editor open — a toast confirms, the estimate number appears on first save, and you keep working; the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar under your thumb. Publish and → Contract are faster and surer: they used to press Save for you and wait up to nine seconds watching for the editor to close, then go find the saved row and guess which one it was — they now receive the exact saved estimate directly. Build 1028 &#8212; the AI helps from inside the estimate, and the separate AI door is gone. One button in the estimate’s Photos section reads every attached photo at once: it writes captions for photos that have none (never over yours), adds a short overview to Scope Notes (never replacing what you wrote), and picks a cover only if you haven’t starred one. The two “AI Estimate” buttons (the estimates screen and the client profile) are hidden — estimates are just estimates now. Build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1040 &#8212; production tap targets reach the 44px floor. The dispatch board’s move-job grip and week arrows, the box lists’ Mark-ordered and Open-job buttons, the back chevrons, the + Add and Full-calendar chips and the month arrows all gain invisible tap padding — every control looks exactly the same and is far easier to hit with a thumb on a phone. Build 1039 &#8212; the Production ink pass. Every under-floor ink the audit measured is fixed in both themes: the punch list’s chip family gets real light-mode colors (the NORMAL tag was near-invisible on paper), the punch card’s Check-in button deepens so its white label reads, dispatch’s weekend columns are readable without shouting, and three boundary calendar chips clear the floor. All computed, nothing eyeballed. Build 1038 &#8212; leaving the Production board keeps production accounts out of the money. Backing all the way out of the board now lands Curtis and Scottie on the Landing — the portal picker with the Production tile — instead of the retail home with its pipeline totals and receivables figure. Admin and sales exits are unchanged. Build 1037 &#8212; the client-profile back button can’t get stuck any more. Flipping tabs on a client used to pile up history entries and then wedge — after viewing a couple of tabs, pressing back did nothing at all. One back now leaves the profile from any tab and lands exactly where you came from, Production board included. Build 1036 &#8212; the Production board’s back button matches its chevron. Opening the full calendar or a status box now counts as a place you went, so the phone’s back gesture steps calendar → board → exit instead of dropping you straight out of Production onto the retail home. Backing out of a client profile you opened from a box list now returns to that list. Build 1035 &#8212; the Landing label is readable in light mode. The yellow “Landing” row in the left rail was near-invisible on the light theme (no true yellow can read on paper); in light mode it now uses the deep amber originally computed for that rail, while dark mode keeps the yellow exactly as it was — same hue, deepened, the way the Activity Count tiles did it. Build 1034 &#8212; four small fixes from the audit’s low-priority list. Walking a job backward from Invoiced to Completed no longer pops the “job completed — send a review request” celebration; the New Bid property picker actually loads the partner’s properties instead of showing an empty list until some other screen had loaded them; the SUPPLEMENT tag on punch-out cards is readable in light mode; and offline, opening the AI Field Manual shows an honest “no signal” card instead of a second copy of the app. Build 1033 &#8212; the old AI-Estimate machinery is gone for good. Build 1028 hid its buttons; this build deletes the code behind them, and its empty database table is ready to drop (Theo runs drop_ai_estimates.sql) — the separate AI estimate builder, its photo-upload flow, its review screen, and every link into it from claims and the health checks. Estimates are just estimates: one editor, with the AI helping from inside it. Nothing you can see changes. Build 1032 &#8212; the delete-client warning is readable in light mode. The small caption under the Delete Client button (“Permanently removes this client…”) was a grey chosen for the dark theme and nearly vanished on the light one; it now switches with the theme. Build 1030 &#8212; estimate documents are filed by what they are, not what they&#8217;re called. A published estimate is linked to its estimate record, and the app now files it by that link — rename the title and it stays under Estimates, still reaches the approvals list and the &#8220;needs approval&#8221; alert when signed, and still counts on the job card. The title box&#8217;s example text no longer suggests a name that would have misfiled the document. The retired manual_estimates database table (empty, unused since build 568) is dropped, and some dead wiring left over from the old estimates screen was removed. Build 1029 &#8212; saving an estimate no longer throws you out of it. Save keeps the editor open — a toast confirms, the estimate number appears on first save, and you keep working; the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar under your thumb. Publish and → Contract are faster and surer: they used to press Save for you and wait up to nine seconds watching for the editor to close, then go find the saved row and guess which one it was — they now receive the exact saved estimate directly. Build 1028 &#8212; the AI helps from inside the estimate, and the separate AI door is gone. One button in the estimate’s Photos section reads every attached photo at once: it writes captions for photos that have none (never over yours), adds a short overview to Scope Notes (never replacing what you wrote), and picks a cover only if you haven’t starred one. The two “AI Estimate” buttons (the estimates screen and the client profile) are hidden — estimates are just estimates now. Build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -26778,6 +26778,11 @@ function __histPush(st){
   function navRestore(state){
     if(!state || state.app !== 'cardinal-nav') return;
     _navRestoring = true;
+    /* 1037 (audit F2): restoring re-runs view openers whose legacy wrappers
+       __histPush {v:...} entries — during a POP that re-creates the entry just
+       popped and the stack wedges (the profile tab trap's second half).
+       __histPush already honors __histLock; hold it for the restore window. */
+    __histLock = true;
     try{
       switch(state.view){
         case 'landing':         if(typeof goToLanding === 'function') goToLanding(); break;
@@ -26799,7 +26804,12 @@ function __histPush(st){
            arrows walked straight past them — opening one recorded no
            history, so back went wherever the previous real entry was. */
         case 'salesfloor':      if(window.CardinalSalesFloor) window.CardinalSalesFloor.open(); break;
-        case 'production':      if(window.CardinalProduction) window.CardinalProduction.open(); break;
+        case 'production':      if(window.CardinalProduction){
+                                  /* 1036: pane-aware — restore() re-panes an open board
+                                     without open()'s hideAllViews/showHome round-trip. */
+                                  if(window.CardinalProduction.restore) window.CardinalProduction.restore(state.data);
+                                  else window.CardinalProduction.open();
+                                } break;
         case 'dispatch':        if(window.CardinalDispatch) window.CardinalDispatch.open(); break;
         /* 771: registered in hideAllViews since 768 but missing here, which is
            the half-convention this switch's own comment warns about. */
@@ -26833,7 +26843,7 @@ function __histPush(st){
         case 'contract':           if(typeof window.openContractEditor === 'function' && state.data && state.data.contractId) window.openContractEditor({ id: state.data.contractId }); break;
       }
     }catch(_e){}
-    setTimeout(function(){ _navRestoring = false; }, 30);
+    setTimeout(function(){ _navRestoring = false; __histLock = false; }, 30);
   }
   /* Called by wrapped nav functions to record the new state */
   window.navSetView = function(view, data){
@@ -27627,7 +27637,11 @@ async function enableNotifications(){
     var pv = document.getElementById('projectView');
     if(!__histLock && currentProject && pv && pv.style.display !== 'none' && prev && prev !== name){
       try{
-        history.pushState({ v:'project', id: currentProject.id, tab: name }, '',
+        /* 1037 (audit F2): replaceState, not pushState. Stacking one entry per
+           tab flip armed the back-trap (T6) — and people think of tabs as one
+           place, so ONE back should leave the profile from any tab. The entry
+           still records the tab, so returning to it reopens where you were. */
+        history.replaceState({ v:'project', id: currentProject.id, tab: name }, '',
           __hashFor({ v:'project', id: currentProject.id, tab: name }));
       }catch(e){}
     }
@@ -41153,6 +41167,11 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1040, d:'2026-08-24', t:'Production tap targets reach the floor', s:'The audit\u2019s button census, closed out. The dispatch move-job grip measured 15\u00d715 on a screen built for a truck cab; it and the week arrows, the box lists\u2019 Mark-ordered and Open-job buttons, the board and dispatch back chevrons, the + Add and Full-calendar chips and the month arrows all now carry invisible tap padding to the app\u2019s 44-pixel floor \u2014 the same pattern the punch card got at 947 \u2014 with zero visual change. Two census rows turned out to be already correct and were left alone: the punch list\u2019s close tick has had a 44-pixel pad since build 418, and the punch card\u2019s chevron got its 44 at 947 \u2014 a rectangle audit cannot see either, which is exactly what their comments predicted.' },
+{ b:1039, d:'2026-08-24', t:'Production ink pass \u2014 nine fixes, both themes', s:'The audit\u2019s readability sweep, closed out. The punch list\u2019s NORMAL tag measured 1.91:1 in light mode \u2014 effectively invisible \u2014 and the whole chip family now has computed light-mode colors, not just the two chips the audit happened to catch. The RETAIL tag brightens in dark mode too. The punch card\u2019s Check-in button deepens from salmon to the card\u2019s own darker red so its white label clears the floor in both themes. Dispatch\u2019s weekend columns get their own readable gray that still sits quieter than weekdays. And the board calendar\u2019s build, punch and done chips \u2014 all within a whisker of the floor against their tinted washes \u2014 now clear it with margin.' },
+{ b:1038, d:'2026-08-24', t:'Production exits to the Landing', s:'Audit finding F3: the board\u2019s deliberate exit landed everyone on the retail home \u2014 Cardinal Pipeline counts, Recent leads, and the Accounts-Receivable dollar figure \u2014 while the permissions doctrine says production accounts get no stats strips and no partner money. Backing out of the board now sends Curtis and Scottie to the Landing, the clean portal picker where Production is a labeled tile, so leaving the hub never strands them in the retail CRM. Admins and sales still exit to the retail home they came from.' },
+{ b:1037, d:'2026-08-24', t:'The profile tab back-trap is gone', s:'Audit finding T6: open a client from the Production board, flip two tabs, and the back button wedged \u2014 the first presses walked the tabs, then nothing, and the board underneath was unreachable. Two fixes: tab flips no longer stack a history entry each (the profile is one place \u2014 one back now leaves it from any tab, and it still remembers which tab you were on), and the restore machinery no longer re-writes the history entry it is restoring, which was silently re-creating every entry the back button popped.' },
+{ b:1036, d:'2026-08-24', t:'Production: back matches the chevron', s:'The board\u2019s three panes \u2014 home, full calendar, box lists \u2014 are one screen, and switching between them recorded no history. On a phone the back gesture therefore popped the single Production entry and landed Curtis on the retail home (audit findings T7/T8). Pane switches now record a history entry, the board\u2019s own back chevron pops it so the two always agree, and returning to Production restores the exact pane \u2014 including which box list \u2014 without refetching or flashing the home screen behind it.' },
 { b:1035, d:'2026-08-24', t:'The Landing label reads in light mode', s:'The yellow \u201cLanding\u201d row in the desktop left rail measured 1.47:1 on the light theme \u2014 no true yellow can clear the readability floor on paper. On Theo\u2019s delegated call, light mode now uses the deep amber that was originally computed for that exact rail (about 5:1 on all three grounds it sits on), and dark mode keeps the true yellow untouched \u2014 the same hue deepened rather than swapped, the pattern the Activity Count tiles set.' },
 { b:1034, d:'2026-08-24', t:'Four low-priority fixes from the audit', s:'The 23 Aug audit\u2019s unverified low-priority list, checked one by one and the real ones fixed. Correcting a job backward from Invoiced to Completed no longer celebrates with the \u201csend a Google review request\u201d prompt \u2014 that fires only when a job genuinely arrives at Completed. The New Bid form\u2019s property picker was reading a list nothing had loaded, so it usually showed no properties; it now loads them. The amber SUPPLEMENT tag on punch-out cards was near-invisible in light mode and now uses the same readable amber its neighbours use. And with no signal, opening the AI Field Manual from the Library shows a plain \u201cno signal\u201d card instead of loading a second copy of the whole app inside the panel.' },
 { b:1033, d:'2026-08-24', t:'The old AI estimate machinery is deleted', s:'Build 1028 hid the two \u26a1 AI Estimate buttons; on Theo\u2019s call this build removes the machinery behind them entirely \u2014 the separate AI builder screen, its photo upload flow, its review screen, the API route that generated them, and the empty ai_estimates database table is retired (its drop ships as drop_ai_estimates.sql to run by hand, schema recorded for revert). Claims, the health check and the consistency check no longer look for AI estimates, and converting an estimate to a contract now has exactly one path \u2014 the real estimates table. Nothing visible changes: estimates are just estimates, with the AI helping from inside the editor since 1028.' },
@@ -50150,6 +50169,17 @@ objections : OBJECTIONS,
   color:var(--pb-mut,#9aa3ab); display:flex; align-items:center; justify-content:center;
 }
 #cr-pb .pbback svg{ width:15px; height:15px; }
+/* 1040 (audit tap targets): 34px chevron, 30px chips, 30px month arrows and
+   32px list buttons all grow their HIT area to 44 with ::after pads — the
+   418/944/947 pattern; nothing about the look moves. */
+#cr-pb .pbback{ position:relative; }
+#cr-pb .pbback::after{ content:""; position:absolute; inset:-6px; }
+#cr-pb .pbchip{ position:relative; }
+#cr-pb .pbchip::after{ content:""; position:absolute; left:0; right:0; top:-8px; bottom:-8px; }
+#cr-pb .pbmon button{ position:relative; }
+#cr-pb .pbmon button::after{ content:""; position:absolute; inset:-7px; }
+#cr-pb .pbact{ position:relative; }
+#cr-pb .pbact::after{ content:""; position:absolute; left:0; right:0; top:-7px; bottom:-7px; }
 #cr-pb h1{
   margin:0; font:700 26px Georgia,'Times New Roman',serif; letter-spacing:.2px;
   color:var(--pb-ink,#eceef0);
@@ -50334,10 +50364,17 @@ objections : OBJECTIONS,
   display:block; font:700 6.6px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.02em; border-radius:3px;
   padding:1.5px 3px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-#cr-pb .cch.build{ background:rgba(200,32,46,.2);  color:var(--pb-acc,#e35c63); }
-#cr-pb .cch.punch{ background:rgba(224,122,95,.18); color:var(--pb-hot,#e07a5f); }
+/* 1039: chip inks are scored against the chip's COMPOSITED wash over the day
+   cell — the token values sat at 4.2–4.7 there depending on the cell. Dark
+   gets chip-scoped brighter literals (>=4.83 on the worst cell); light keeps
+   the token values, which measure 5+ on the white composite. */
+#cr-pb .cch.build{ background:rgba(200,32,46,.2);  color:#e86d73; }
+#cr-pb .cch.punch{ background:rgba(224,122,95,.18); color:#e5866d; }
 #cr-pb .cch.drop { background:rgba(154,163,171,.16); color:var(--pb-mut,#9aa3ab); }
 #cr-pb .cch.done { background:rgba(108,185,143,.16); color:var(--pb-ok,#6cb98f); }
+:root[data-theme="rb-light"] #cr-pb .cch.build{ color:var(--pb-acc,#8f1620); }
+:root[data-theme="rb-light"] #cr-pb .cch.punch{ color:var(--pb-hot,#a83f24); }
+:root[data-theme="rb-light"] #cr-pb .cch.done{ color:#276b49; }/* 1039: token #2f7d55 was 4.43:1 on the wash */
 #cr-pb .pbsheet{
   background:var(--pb-c2,#1b1e22); border:1px solid var(--pb-line,rgba(230,235,240,.11));
   border-radius:16px; padding:9px 12px 12px; margin-top:12px;
@@ -51110,8 +51147,16 @@ function listPaneHtml(){
 function wire(){
   el.querySelectorAll('[data-back]').forEach(function(b){
     b.onclick = function(){
-      if(pane === 'home') close();          /* one level up from home is Home */
-      else { pane = 'home'; render(); scrollTop(); }
+      if(pane === 'home'){ close(); return; }   /* one level up from home is Home */
+      /* 1036 (audit F1): the pane switch pushed a history entry, so going up a
+         level must POP it — otherwise the next browser back re-opens the pane
+         just left. When the top entry is ours, back does the work (popstate ->
+         navRestore -> restore()); the direct set stays as the fallback. */
+      var st = null; try{ st = history.state; }catch(_){}
+      if(st && st.app === 'cardinal-nav' && st.view === 'production' && st.data && st.data.pane){
+        try{ history.back(); return; }catch(_){}
+      }
+      pane = 'home'; render(); scrollTop();
     };
   });
   el.querySelectorAll('[data-box]').forEach(function(b){
@@ -51130,6 +51175,8 @@ function wire(){
         close(false); window.openPunchView(); return;
       }
       listKey = k; pane = 'list'; render(); scrollTop();
+      /* 1036 (audit F1): same as the calendar — a list is a place back can leave. */
+      if(typeof window.navSetView === 'function'){ try{ window.navSetView('production', { pane:'list', box:k }); }catch(_){} }
     };
   });
   el.querySelectorAll('[data-hub]').forEach(function(b){
@@ -51146,6 +51193,9 @@ function wire(){
     b.onclick = function(){
       calMonth = calMonth || monthOf(selDay || today());
       pane = 'cal'; render(); scrollTop();
+      /* 1036 (audit F1): the pane switch is a navigation — record it, or the
+         phone back-gesture pops the one production state and exits the hub. */
+      if(typeof window.navSetView === 'function'){ try{ window.navSetView('production', { pane:'cal' }); }catch(_){} }
     };
   });
   el.querySelectorAll('[data-mon]').forEach(function(b){
@@ -51519,7 +51569,17 @@ async function open(){
 function close(goHome){
   if(el) el.classList.remove('open');
   document.body.style.overflow = '';
-  if(goHome !== false && typeof window.showHome === 'function') window.showHome();
+  if(goHome === false) return;
+  /* 1038 (audit F3): the exit room. The retail home shows stage counts and an
+     Accounts-Receivable dollar figure — the permissions doctrine says
+     production accounts get "no stats strips or partner money". Curtis and
+     Scottie exit to the LANDING instead (the portal picker: no money, and
+     Production is a labeled tile there). goToLanding() is history-wrapped, so
+     back from the landing returns to the board. Everyone else keeps the
+     retail home. */
+  if(typeof window.isProductionUser === 'function' && window.isProductionUser() &&
+     typeof window.goToLanding === 'function'){ window.goToLanding(); return; }
+  if(typeof window.showHome === 'function') window.showHome();
 }
 
 /* -------------------------------------------------- burger-menu entry point */
@@ -51575,6 +51635,17 @@ else start();
 
 window.CardinalProduction = {
   open      : open,
+  /* 1036 (audit F1): history restore. Reopens a closed board (open()'s sync
+     half mounts and shows it), then applies the popped state's pane WITHOUT
+     open()'s hideAllViews/showHome round-trip or a refetch when it was
+     already up. data is navSetView's {pane:'cal'|'list', box} or null. */
+  restore   : function(data){
+    data = data || {};
+    if(!el || !el.classList.contains('open')) open();
+    pane = data.pane === 'cal' ? 'cal' : (data.pane === 'list' ? 'list' : 'home');
+    if(pane === 'list' && data.box) listKey = data.box;
+    render(); scrollTop();
+  },
   /* 972: the community card needs "which day is this build booked for" and
      schedFor() is already the app's named answer ("the REAL schedule:
      appointments of kind 'job'", 766). Exported read-only so the card asks the
@@ -51975,7 +52046,7 @@ window.CardinalProduction = {
 #cr-pk .pkvnone{ color:var(--pk-dim,#9aa2ae); }
 #cr-pk .pkvb{ min-height:44px; padding:0 18px; border-radius:10px; cursor:pointer;
   font:800 13px 'Segoe UI',Arial,sans-serif; border:1px solid transparent; }
-#cr-pk .pkvb.in{ background:var(--pk-acc,#e35c63); color:#fff; }
+#cr-pk .pkvb.in{ background:var(--pk-accd,#c8202e); color:#fff; }/* 1039: white on the salmon accent was 3.51:1 — the card's own deeper token reads 5.67 dark / 9.12 light */
 #cr-pk .pkvb.out{ background:transparent; color:var(--pk-ink,#eceef0);
   border-color:var(--pk-line2,#3a424c); }
 #cr-pk .pkchip.day2{ background:rgba(240,162,74,.16); color:#f0a24a; margin-left:6px; }
@@ -61267,6 +61338,19 @@ if(typeof _origOLF === 'function'){
 :root[data-theme="rb-light"] #puQueue .ph2 b{color:#8a5500;}
 :root[data-theme="rb-light"] .pu-st.warn{color:#8a5500;border-color:rgba(138,85,0,.45);}/* 1034: .pu-tag.supp (947) had no light twin — 2.0:1 amber on paper */:root[data-theme="rb-light"] .pu-tag.supp{color:#8a5500;border-color:rgba(138,85,0,.45);}
 :root[data-theme="rb-light"] .pu-st.d2{color:#8a5500;background:rgba(240,162,74,.22);}
+/* 1039 (audit ink pass): the REST of the chip family's light twins. The audit
+   measured prio-normal at 1.91:1 and crm-retail at 3.37:1 on paper; the members
+   its seed never rendered were just as bare (the 527 partial-pass lesson — fix
+   the family, not the two that happened to be on screen). Worst-of white /
+   #fafafa / hero-tint, all computed >=4.5. */
+:root[data-theme="rb-light"] .pu-tag.prio-normal{border-color:#8a5500;color:#8a5500;}
+:root[data-theme="rb-light"] .pu-tag.crm-retail{color:#8f1620;}
+:root[data-theme="rb-light"] .pu-tag.prio-low{color:#8f1620;}
+:root[data-theme="rb-light"] .pu-tag.urg{color:#a8221a;}
+:root[data-theme="rb-light"] .pu-tag.prio-high{color:#a8221a;}
+:root[data-theme="rb-light"] .pu-tag.crm-insurance{color:#a4140d;}
+:root[data-theme="rb-light"] .pu-tag.crm-community{color:#047857;}
+:root[data-theme="rb-light"] .pu-st.on{color:#23744a;border-color:rgba(35,116,74,.5);}
 :root[data-theme="rb-light"] .pu-asgrow .load.warn{color:#8a5500;}
 :root[data-theme="rb-light"] .pu-who.own-curtis,:root[data-theme="rb-light"] .pu-asgrow .nm.own-curtis{color:#0f7c8b;}
 :root[data-theme="rb-light"] .pu-who.own-scottie,:root[data-theme="rb-light"] .pu-asgrow .nm.own-scottie{color:#6a4db0;}
@@ -61316,7 +61400,7 @@ if(typeof _origOLF === 'function'){
 .pu-tag{font:700 8.5px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;
   padding:2.5px 8px;border-radius:999px;border:1px solid var(--rbe-line);color:var(--rbe-mute);white-space:nowrap;}
 .pu-tag.urg{border-color:#e2574a;color:#f2a08a;}
-.pu-tag.crm-retail{border-color:#c8202e;color:#e35c63;}
+.pu-tag.crm-retail{border-color:#c8202e;color:#ec7076;}/* 1039: #e35c63 was 4.10:1 on the dark row */
 .pu-tag.crm-insurance{border-color:#c4180f;color:#ff8a7a;}
 .pu-tag.crm-community{border-color:#047857;color:#34D399;}
 .pu-who{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--rbe-rep);}
@@ -61381,7 +61465,7 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 /* priority colours: urgent red · normal orange · low yellow — semantic, fixed in both themes */
 .pu-tag.prio-high{border-color:#e2574a;color:#f2a08a;}
 .pu-tag.prio-normal{border-color:#d98324;color:#f0a962;}
-.pu-tag.prio-low{border-color:#c8202e;color:#e35c63;}
+.pu-tag.prio-low{border-color:#c8202e;color:#ec7076;}/* 1039: same 4.10:1 red, brightened */
 .pu-card.prio-high::before{background:#e2574a;box-shadow:0 0 7px rgba(226,87,74,.6);}
 .pu-card.prio-normal::before{background:#d98324;}
 .pu-card.prio-low::before{background:#c8202e;}
@@ -75789,6 +75873,10 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-bg:#08090b; --disp-panel:#101216; --disp-card:#171a1f; --disp-line:#282c34;
   --disp-hatch:rgba(255,255,255,.05);
   --disp-ink:#ffffff; --disp-dim:#9aa1ac; --disp-mute:#5c636e; --disp-accent:#6b7280;
+  /* 1039: weekend header ink — --disp-mute measured 3.09:1 on the panel; this
+     clears 4.5 in both themes and still sits below --disp-dim, so weekends
+     keep reading quieter than weekdays. */
+  --disp-wkend:#838c99;
   --disp-today:#15171c; --disp-tline:#ffffff; --disp-need:#f5c045; --disp-band:#8b97a8;
   --disp-repair:#ff3b46; --disp-curtis:#3fb8c9; --disp-scottie:#a98bec; --disp-wx:#6db3f2;
   --disp-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -75802,6 +75890,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-bg:#f4f5f7; --disp-panel:#ffffff; --disp-card:#ffffff; --disp-line:#dfe3e9;
   --disp-hatch:rgba(0,0,0,.05);
   --disp-ink:#14171c; --disp-dim:#5a616c; --disp-mute:#767d88; --disp-accent:#7b828d;
+  --disp-wkend:#656c77;
   --disp-today:#eef0f3; --disp-tline:#14171c; --disp-need:#9a6410; --disp-band:#5f6b7d;
   --disp-repair:#d81b28; --disp-curtis:#0f7c8b; --disp-scottie:#6a4db0; --disp-wx:#155f9e;
 }
@@ -75812,11 +75901,18 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   border:1px solid var(--disp-line,#282c34); background:transparent; color:var(--disp-dim,#9aa1ac);
   display:flex; align-items:center; justify-content:center; }
 #cr-disp .dspback svg{ width:15px; height:15px; }
+/* 1040: 34px chevron — invisible growth to 44 (the card's .pkback got its 44
+   at 947; this one and the board's never did) */
+#cr-disp .dspback{ position:relative; }
+#cr-disp .dspback::after{ content:""; position:absolute; inset:-6px; }
 #cr-disp .dsptitle{ font:800 18px 'Segoe UI',Arial,sans-serif; letter-spacing:-.01em; color:var(--disp-ink,#fff); }
 #cr-disp .dspwk{ margin-left:auto; display:flex; align-items:center; gap:8px;
   font:600 12px var(--disp-mono,monospace); color:var(--disp-dim,#9aa1ac); }
 #cr-disp .dspwk button{ background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34);
-  color:var(--disp-dim,#9aa1ac); border-radius:7px; width:26px; height:26px; cursor:pointer; font-size:14px; line-height:1; }
+  color:var(--disp-dim,#9aa1ac); border-radius:7px; width:26px; height:26px; cursor:pointer; font-size:14px; line-height:1; position:relative; }
+/* 1040 (audit tap targets): 26px arrows (21px wide on the phone) — invisible 44px
+   pad. Insets anchor to the PADDING box, so the 1px border costs a pixel per side. */
+#cr-disp .dspwk button::after{ content:""; position:absolute; top:-10px; bottom:-10px; left:-13px; right:-13px; }
 #cr-disp .dspfilt{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
 #cr-disp .dspfilt .fc{ font:600 11px 'Segoe UI',Arial,sans-serif; padding:5px 11px; border-radius:8px;
   background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); color:var(--disp-dim,#9aa1ac); cursor:pointer; }
@@ -75864,8 +75960,8 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .dcol .c.today{ background:var(--disp-today,#15171c); border-top:2.5px solid var(--disp-tline,#fff); }
 #cr-disp .dcol .c.today::after{ content:"TODAY"; display:block; font:700 6.5px var(--disp-mono,monospace);
   letter-spacing:.12em; color:var(--disp-tline,#fff); margin-top:1px; }
-#cr-disp .dcol .c.sun{ color:var(--disp-mute,#5c636e); }
-#cr-disp .dcol .c.sun b{ color:var(--disp-mute,#5c636e); }
+#cr-disp .dcol .c.sun{ color:var(--disp-wkend,#838c99); }
+#cr-disp .dcol .c.sun b{ color:var(--disp-wkend,#838c99); }
 
 /* riveted trade strips — tap to fold */
 #cr-disp .dband{ display:flex; align-items:center; gap:8px; padding:5px 2px; background:transparent;
@@ -75981,7 +76077,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .job .mv{ margin-left:4px; flex:none; width:15px; height:15px; padding:0; border:0;
   border-radius:4px; background:transparent; color:var(--disp-dim,#9aa1ac);
   display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
-#cr-disp .job .mv::after{ content:""; position:absolute; inset:-9px; }
+#cr-disp .job .mv::after{ content:""; position:absolute; inset:-15px; }/* 1040: -9px made 33px effective — under the 44 floor the rest of the app holds */
 #cr-disp .job .mv:hover{ color:var(--disp-ink,#fff); }
 #cr-disp .job.moving{ box-shadow:0 0 0 2px var(--disp-need,#f5c045); }
 #cr-disp .job.moving .mv{ color:var(--disp-need,#f5c045); }
