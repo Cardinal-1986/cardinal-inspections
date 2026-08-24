@@ -20497,6 +20497,57 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
+## Build 1036 — the printed contract shows all of its own words
+
+**The defect.** The slim grey running header (`.runhead`, build 747) is `position:fixed`, which
+does repeat on every printed page — in the same strip the flowed text occupies. Its background is
+white, so it paints over whatever the previous page pushed into that strip. Measured on the four
+shipped contract templates by printing them through Chromium and reading the PDF's own text layer
+against its own geometry: **12 pieces of contract wording sit fully inside the painted band and
+cannot be read on paper.** Among them the sentence naming the Terms and Conditions form as part of
+the agreement (all four contracts), `Payment Structure`, `Acknowledgement & Right to Cancel`, and
+the ORC 1345.23 line *"and was orally advised of his/her right to cancel this transaction"*. The
+words are present, selectable and searchable in the file. They are invisible.
+
+**Why `body{padding-top:0.40in}` never fixed it.** 747 knew the failure mode — its comment says
+"the body has to make room for it or page 2 onwards prints text underneath it" — and reached for
+body padding, which applies to the **first fragment only**. It clears page 1 and nothing else.
+
+**The mechanism, and a correction to 747.** The only box that repeats on every page is the page
+margin, so the header moves into it: `@page{margin-top:0.88in; @top-left{content:"…"}}`. 747's
+comment in both skeletons says @page margin boxes "are not implemented in either engine" — that is
+false in current Chromium and was **already** false when written, because the `@bottom-center`
+address footer beside it has been printing all along. Both comments are corrected in place.
+
+**Where it lives, and why.** `ensurePrintFix(d)` is injected at print time, not shipped in the
+skeleton, because every contract already saved carries its own frozen copy of the skeleton CSS —
+the same reason 966's highlight is injected. **The Download button now calls it too**, so the
+`.html` a client is emailed prints the same as the copy we print here. On 966 that downloaded file
+had no print furniture at all: no page rules, and no address footer.
+
+⚠️ **Two false greens on the way, both mine, both the same shape.** The first two attempts pulled
+the header up with `top:-0.34in`; Chromium clamps a fixed element to the page area, so it landed at
+the **bottom** of the page (y≈707) and off page 5 entirely. Collisions read **zero** — because the
+header had left, not because the text was clear. *Absence of a collision is not the goal; a header
+above readable text is.* `gate_1036` assertion 4 exists solely to catch that, and it is the
+assertion the first two attempts would have failed.
+
+⚠️ **A measurement that returned nonsense was believed for one round.** The collision detector
+matched any text block containing the nbsp-middot and reported `head@706.6` and `head@None`. Those
+are not app states; they are a broken instrument. Read the numbers before reading the verdict.
+
+**Cost, stated plainly:** a gutter agreement gains one page — the reclaimed strip pushes the
+acceptance block onto a fifth sheet. Roof (5), siding (4) and the service contract (2) are
+unchanged. The full-width hairline under the old header does not survive the move to a margin box.
+
+**Gates.** `check_build.py` green 1035 → 1036. **`gate_1036.mjs` 31/31 GREEN · RED on the 966 control
+with 15 named failures**, no crash — it presses the real Download button, prints those exact bytes,
+and measures the pages. `gate_964` 9/9, `gate_965` 12/12, `gate_966` 12/12 re-run.
+
+⚠️ **Untested on WebKit.** Playwright can only print through Chromium. If iOS Safari does not
+implement margin boxes the header is absent there rather than overlapping — a decoration lost
+instead of contract text. The address footer already depended on the same mechanism.
+
 ## Tooling — `sentinel` learns to see silent clipping (22 Aug 2026)
 
 **No build number and no stamp bump** — `index.html` is untouched, the same rule `gate_ship.py`
@@ -20694,7 +20745,7 @@ merged onto the local row (stale `{z:9}` never pulled); online → 1 refetch, me
 row. GREEN; negative control against the 1015/1016 tree → RED (offline refetch happens). `check_build`
 green (1016→1017). No SQL.
 
-## Build 1016 — AI/spend + senddoc routes gated on staff identity (23 Aug 2026)
+## Build 1036 — AI/spend + senddoc routes gated on staff identity (23 Aug 2026)
 
 **Audit findings 6 + 7 (both CONFIRMED high).** 1013 closed anonymous access to the AI routes, but
 every one still trusted ANY confirmed Supabase session — and public signup is on — so a
@@ -20715,7 +20766,7 @@ it a stranger can still create an account (they just can't reach these routes). 
 OPEN_ITEMS.
 
 **No index.html behavior change** — server-only; the stamp/CHANGELOG bump keeps the version record
-coherent (same convention as 806's librarian swap). **Proof:** `gate_1016.mjs` imports `_staff.js`
+coherent (same convention as 806's librarian swap). **Proof:** `gate_1036.mjs` imports `_staff.js`
 and asserts all 10 live accounts pass + fabricated outsiders/empty/null fail (case-insensitive), and
 that all 13 routes import the helper with the guard positioned after the session resolves. GREEN;
 negative control against the build-1014 api dir → RED (40 failures: no `_staff.js`, no guards).
@@ -20933,7 +20984,7 @@ green (stamp 1010→1011, marker, negative control).
 
 No SQL. `index.html` only.
 
-## Build 1010 — money-in has one door again: the "Received" heading (23 Aug 2026)
+## Build 1036 — money-in has one door again: the "Received" heading (23 Aug 2026)
 
 **A HIGH money-correctness finding from the build-1007 audit, and it is 996's own residue.** Build
 996 made `collections` (Money In & Commissions) the single door for money received — it fires the
@@ -20955,7 +21006,7 @@ unchanged. Editing an existing legacy `dir:'in'` row (`data-payedit`, checked ea
 delegation and returning first) is untouched, so the one job carrying legacy rows (Dan Thompson) can
 still be inspected and moved via its "Move them into Money In" button (`payMigrateLegacyIn`).
 
-**Proof.** `gate_1010.mjs` extracts the SHIPPED `#paySummary` click handler, mounts the real section
+**Proof.** `gate_1036.mjs` extracts the SHIPPED `#paySummary` click handler, mounts the real section
 markup in a real Chromium DOM, and dispatches real clicks (genuine `closest()` traversal, not
 mocked): Received heading → `payGoLogCollection` and never `openPayRow('in')`; Paid/Expenses headings
 → `openPayRow('out'|'exp', null)`; + button still → `payGoLogCollection`; edit row →
@@ -21039,7 +21090,7 @@ un-fixed — next up).
 
 ### Gates
 
-`gate_1006.mjs` rewritten for the new race-free contract — 14 assertions incl. supersede-commits-not-
+`gate_1036.mjs` rewritten for the new race-free contract — 14 assertions incl. supersede-commits-not-
 drops and page-hide-flush; control on 1007 **FAIL 6**, named. `gate_1008.mjs` — the two 1005 fixes
 (flat `lead_source` write; neutral portal pre-selects no claim type; live refusal); control on 1007
 **FAIL 3**, named. `gate_1004/1005/1007` re-run GREEN (no regressions); `check_build` GREEN, stamp 1008.
@@ -21096,7 +21147,7 @@ stamp reading 971, recovered by `git fetch` + `checkout -B <branch> origin/main`
 re-applying the patch, verified byte-identical to the pre-reset version. Committing the stale tree would
 have reverted 1004–1006 — BUG_CLASSES 49. Verify the stamp on disk after any suspected reset.
 
-## Build 1006 — stage arrows: one tap, with Undo (23 Aug 2026)
+## Build 1036 — stage arrows: one tap, with Undo (23 Aug 2026)
 
 First slice of the **dialog diet** (OPEN_ITEMS #6). The profile's forward/back stage arrows popped a
 `confirm('are you sure?')` on every tap. Now a tap moves the job at once and shows a **5-second Undo
@@ -21119,7 +21170,7 @@ somehow unavailable the move commits immediately rather than being lost.
 
 ### Gate
 
-`gate_1006.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
+`gate_1036.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
 a Chromium mechanism test of the helper in isolation: a tap shows the target stage but does NOT commit,
 raises an Undo toast; Undo reverts and **never commits**; letting the 5s window elapse commits exactly
 once. 11 assertions. Control on 1005: **FAIL 4** (confirm present, helper absent), named, no crash — the
@@ -24557,3 +24608,40 @@ fails loudly** — asserted, because softening that would hide RLS problems.
 iOS reports a dropped fetch as a THROWN TypeError — the exact shape 861's comment documents, and
 the exact shape a roof with no bars produces. The catch is wired now. A gate that only tested the
 returned shape would have shipped an offline fix that does not work offline.
+
+
+## Build 1050 — the printed contract shows all of its own words (PR #463, landed 24 Aug)
+
+This PR sat as a draft since 21 Aug, renumbering itself **ten times** as main outran it
+(967 → 989 → 992 → 994 → 1006 → 1010 → 1016 → 1024 → 1031 → 1036). It was nearly closed as
+"stale" during a draft cleanup; reading it first showed the opposite — the fix is **not on main**
+and the bug it fixes is live and legally relevant.
+
+**The bug.** The grey running header (`.runhead`, a `position:fixed` element from 747) repeats on
+every printed page but reserves no space, so from page two onward it paints over the flowed text.
+`body{padding-top}` clears page ONE only, which is why anyone checking page 1 saw a perfect
+document. Measured on the shipped templates: **twelve pieces of contract wording invisible on
+paper**, including the ORC 1345.23 right-to-cancel text on the siding and gutter agreements.
+
+**The fix** moves the header into the `@page` margin box — the only box that repeats per page —
+and hides `.runhead` in print only, so documents saved months ago keep rendering on screen.
+`ensurePrintFix(d)` is injected at print time rather than shipped in the skeleton, because every
+saved contract carries its own frozen copy of that CSS; the Download button calls it too, which
+also fixes an emailed `.html` that had no print furniture at all.
+
+**Landing it (this session).** Merged main (1049) in; the two conflicts were the structural pair
+the branch's own `rebase_renumber.py` documents — the app stamp (main's one-line 1041 convention
+wins, restamped) and the CHANGELOG (descending, so both sides are kept). ⚠ **A real
+number collision had to be resolved by hand: their 1036 and my merged 1036 are different builds.**
+Theirs renumbered to **1050** — the CHANGELOG entry, the app stamp, five in-code citations, and
+their `gate_1036.mjs`, which became `gate_1050.mjs` so my board-pane gate keeps its own name. The
+board-pane `/* 1036: pane-aware */` comment was asserted untouched, and the renumber asserted
+byte-length-identical so no digit outside a citation moved.
+
+⚠ **`gate_1050.mjs` needs `pymupdf`** (it prints the real Download output through Chromium and
+measures the PDF's text layer against its geometry). Without it the gate reports "no measurement"
+— which reads like an app failure and is not one. `pip install pymupdf` first.
+
+**Gates: 31/31 GREEN on the merged tree; 15 named failures on the 1049 control**, including the
+gutter agreement hiding "Project Specifications", "HOA / Authorization" and the buyer signature
+line. All six of this session's gates (1044–1049) re-run green on the same tree.

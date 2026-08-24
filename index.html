@@ -3712,7 +3712,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1049 &#8212; punch-out work survives a roof with no bars. Ticking a step, writing a note, checking in or closing an item used to fail and roll back when the phone couldn’t reach the server; now it is held on the phone, the card says so plainly, and it syncs by itself when signal returns — the same device outbox photos have used for months. A write the server actually refuses still fails loudly, as it should.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1050 &#8212; every word of a printed contract is now readable. The grey header line at the top of each printed page was painting over the text beneath it from page two onward — hiding twelve pieces of contract wording across the roof, siding, gutter and service agreements, including the right-to-cancel notice on two of them. The header now sits in the page margin where it belongs. This reaches contracts signed months ago, and the emailed copy gets the same treatment.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -9301,11 +9301,15 @@ table.units td.pr{text-align:right;white-space:nowrap;width:22%;}
 .sign .lbl{font-size:9.5pt;color:var(--muted);margin-top:5px;}
 .avoid-break{break-inside:avoid;}
 .page-break{break-before:page;}
-/* 747: the slim running header. position:fixed is the ONLY mechanism that
-   repeats on every printed page in Chromium and WebKit — measured, 5 of 5
-   pages. @page margin boxes are not implemented in either engine, which is why
-   there is no "page N of M" here: counter(page) only resolves inside one. The
-   browser's own print footer supplies page numbers when they are wanted. */
+/* 747: the slim running header. position:fixed repeats on every printed page —
+   measured, 5 of 5 pages.
+   ⚠ 1050 CORRECTION, measured on the shipped templates: it repeats in the same
+   strip the flowed text occupies, and its white background HIDES that text on
+   every page after the first. 12 pieces of contract text were invisible. The
+   claim below that @page margin boxes are unimplemented is also false in current
+   Chromium — the @bottom-center address has been printing all along — so the
+   header now moves into the page margin at print time (see ensurePrintFix), and
+   this element is display:none in print. Do not restore it. */
 .runhead{display:none;}
 @media print{
   .runhead{
@@ -9606,11 +9610,15 @@ table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weig
 .sign .lbl{font-size:9.5pt;color:var(--muted);margin-top:5px;}
 .avoid-break{break-inside:avoid;}
 .page-break{break-before:page;}
-/* 747: the slim running header. position:fixed is the ONLY mechanism that
-   repeats on every printed page in Chromium and WebKit — measured, 5 of 5
-   pages. @page margin boxes are not implemented in either engine, which is why
-   there is no "page N of M" here: counter(page) only resolves inside one. The
-   browser's own print footer supplies page numbers when they are wanted. */
+/* 747: the slim running header. position:fixed repeats on every printed page —
+   measured, 5 of 5 pages.
+   ⚠ 1050 CORRECTION, measured on the shipped templates: it repeats in the same
+   strip the flowed text occupies, and its white background HIDES that text on
+   every page after the first. 12 pieces of contract text were invisible. The
+   claim below that @page margin boxes are unimplemented is also false in current
+   Chromium — the @bottom-center address has been printing all along — so the
+   header now moves into the page margin at print time (see ensurePrintFix), and
+   this element is display:none in print. Do not restore it. */
 .runhead{display:none;}
 @media print{
   .runhead{
@@ -14815,7 +14823,7 @@ document.getElementById('paySummary').addEventListener('click', function(e){
   if(edit){ openPayRow(null, parseInt(edit.getAttribute('data-payedit'), 10)); return; }
   var head = e.target.closest('.paysec');
   if(head && e.target.closest('.payhead')){
-    /* 1010: the Received header was 996's missed second door. 996 routed the
+    /* 1050: the Received header was 996's missed second door. 996 routed the
        + button for 'in' to payGoLogCollection but left this header tap calling
        openPayRow('in'), which opens the legacy dir:'in' modal — money that books
        no commission and, on any job with a collection, is ignored by Balance Due
@@ -25626,26 +25634,59 @@ document.getElementById('dlBtn').addEventListener('click', async function(){
   await saveCurrent();
   var t = (document.getElementById('docTitle') && document.getElementById('docTitle').value) ||
           (window.currentDoc && window.currentDoc.title) || 'Cardinal document';
+  /* 1050: the downloaded .html is what a client is emailed and prints at home.
+     It must carry the same page furniture as the copy we print from here. */
+  try{ ensurePrintFix(frame.contentDocument); }catch(_){}
   if(window.CardinalDownload) window.CardinalDownload.frame(frame, t);
 });
+/* 1050: the running header used to be a position:fixed .runhead element. On paper
+   that repeats correctly on every page \u2014 and paints its white background over
+   whatever the previous page pushed into that strip. Measured on the shipped
+   templates: 12 pieces of contract text were fully invisible, among them the
+   sentence naming the Terms and Conditions form, the "Payment Structure" and
+   "Acknowledgement & Right to Cancel" headings, and the ORC 1345.23 line "and was
+   orally advised of his/her right to cancel this transaction". The text is in the
+   file \u2014 selectable, searchable \u2014 and cannot be read.
+
+   body{padding-top} cannot fix it: padding applies to the FIRST fragment only, so
+   it clears page 1 and nothing else. The only box that repeats on every page is
+   the page margin, so the header moves into it. Build 747's comment in the
+   skeletons said margin boxes were unimplemented; that was measured false here
+   (the @bottom-center address below has been printing all along), and the comment
+   is corrected in place.
+
+   Injected at PRINT time rather than shipped in the skeleton, because every
+   contract already saved carries its own frozen copy of the skeleton CSS \u2014 the
+   same reason 966's highlight is injected. Download calls this too, so the .html
+   a client is sent prints the same as the one we print here. */
+function ensurePrintFix(d){
+  if(!d || !d.head || d.getElementById('printFix')) return;
+  var rh = d.querySelector('.runhead');
+  var title = rh ? (rh.textContent || '').replace(/\s+/g, ' ').trim() : '';
+  var box = title
+    ? '@top-left{content:"' + title.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '";' +
+      'font-family:Arial,Helvetica,sans-serif;font-size:8.5pt;color:#555;}'
+    : '';
+  var st = d.createElement('style');
+  st.id = 'printFix';
+  st.textContent = '@media print{body{width:auto !important;margin:0 !important;padding:0 !important;}' +
+    '[data-emptyfig],[data-emptyrow],[data-emptyph],[data-emptyblock],[data-emptysec]{display:none !important;}' +
+    '.page-break{display:none !important;}' +
+    'h2.sec{break-after:avoid;}' +
+    '.figrow,.fig,tr{break-inside:avoid;}' +
+    '.runhead{display:none !important;}' +
+    '.reanalyzeBar,.reanalyzeBtn,[data-cardinal-hint],.fig .frame button,.fig .frame input,' +
+    '.cover-photo button,.cover-photo input{display:none !important;}}' +
+    '@page{margin-top:0.88in;' + box +
+    '@bottom-center{content:"5735 Webster St, Dayton OH 45414  \u00b7  937.576.6753  \u00b7  Admin@cardinalrenovations.net";' +
+    'font-family:"Segoe UI",Arial,sans-serif;font-size:8pt;color:#8a8a8a;}}';
+  d.head.appendChild(st);
+}
 document.getElementById('printBtn').addEventListener('click', async function(){
   await saveCurrent(); /* save first, so the stored document stays clean */
   try{
     var d = frame.contentDocument;
-    if(d && d.head && !d.getElementById('printFix')){
-      var st = d.createElement('style');
-      st.id = 'printFix';
-      st.textContent = '@media print{body{width:auto !important;margin:0 !important;padding:0 !important;}' +
-        '[data-emptyfig],[data-emptyrow],[data-emptyph],[data-emptyblock],[data-emptysec]{display:none !important;}' +
-        '.page-break{display:none !important;}' +
-        'h2.sec{break-after:avoid;}' +
-        '.figrow,.fig,tr{break-inside:avoid;}' +
-        '.reanalyzeBar,.reanalyzeBtn,[data-cardinal-hint],.fig .frame button,.fig .frame input,' +
-        '.cover-photo button,.cover-photo input{display:none !important;}}' +
-        '@page{@bottom-center{content:"5735 Webster St, Dayton OH 45414  \u00b7  937.576.6753  \u00b7  Admin@cardinalrenovations.net";' +
-        'font-family:"Segoe UI",Arial,sans-serif;font-size:8pt;color:#8a8a8a;}}';
-      d.head.appendChild(st);
-    }
+    ensurePrintFix(d);
     if(d) compactForPrint(d);
     frame.contentWindow.focus();
     frame.contentWindow.print();
@@ -41271,6 +41312,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:1050, d:'2026-08-24', t:'The printed contract shows all of its own words',
+    s:'The grey line along the top of every printed page \u2014 Cardinal Roofing & Renovations \u00b7 ROOFING CONSTRUCTION AGREEMENT \u2014 was sitting in the same strip as the contract text and painting its white background straight over it. On a five-page roof agreement that hid four separate pieces of wording; across the four contracts it hid twelve, including the sentence that names the Terms and Conditions form, the Payment Structure heading, and the right-to-cancel line. The words were in the file the whole time \u2014 you could select them \u2014 they just could not be read. The header now prints up in the page margin instead. Nothing else about the contract changed; a gutter agreement gains one page because the reclaimed strip pushes the acceptance block over. Applies to contracts already saved, and to the copy a client is emailed.' },
 { b:1049, d:'2026-08-24', t:'Punch-out work survives no signal', s:'On a roof with no bars, ticking a step or writing a note on a punch-out used to fail and quietly undo itself. Those writes now go into the same on-device outbox that photos have used for months: the change stays on screen, the card says \u201csaved on this phone, it will sync by itself\u201d, and it does \u2014 automatically, when signal comes back. Refreshing the list while still offline no longer wipes the queued work either. A write the server genuinely refuses still fails out loud, because that is a real problem and hiding it would be worse.' },
 { b:1048, d:'2026-08-24', t:'Where things stand \u2014 the morning strip', s:'The home page opens with a row of counts for an admin: signed estimates waiting on a contract, approved jobs with no build date, urgent punch-outs, insurance carriers being chased, and how many things are on today. Each chip is a tap through to the screen that already owns that work \u2014 the strip adds no new destination and no new arithmetic: every count is read from the same resolver the destination screen uses, so the two can never tell different stories. When there is nothing waiting, the whole strip disappears.' },
 { b:1047, d:'2026-08-24', t:'Three notification gaps, wired', s:'The notification system already covered assignments, @-tags, signed estimates and completed jobs. Three real gaps were mapped and closed: putting a build day on the calendar now notifies the production crew (from every screen that can book one, including attaching a job to an existing day); marking materials ordered notifies the job\u2019s sales rep, from the profile toggle and the board button alike; and filing a punch-out with nobody assigned notifies production \u2014 until now it told no one at all. The person doing the action is never pinged about it, and saves never wait on a notification.' },

@@ -2518,7 +2518,7 @@ future commission; net payout = owed − outstanding draws. Paid locks.
 
 ⚠️ **`collections` is the ONE door for money received — both entry points now agree.**
 On the Payment Information page the "Received" section's + button (996) **and** its
-heading tap (1010) both route to `payGoLogCollection()` → this tab; the legacy
+heading tap (1036) both route to `payGoLogCollection()` → this tab; the legacy
 `dir:'in'` add modal is unreachable from Received. Money logged the old way books no
 commission and, since 721, is ignored by Balance Due whenever any collection exists
 (`jobFinance`: `if(collPaid[pr.id] !== undefined) paid = collPaid[pr.id]`). "Paid" /
@@ -2534,7 +2534,7 @@ tier 2 no doc competes at all, and a doc any estimates row points at via `doc_id
 legacy document-only estimates still feed the leg. `estTier`/`estDocIds` are globals
 filled by `indexMoney()`. **Do not add another estimate-valuing scan anywhere** —
 Balance Due, the AR chart, pipeline dollars and the invoice all inherit from here.
-Gate: `gate_1011.mjs` (executes the shipped functions; RED ×3 on build 1010).
+Gate: `gate_1011.mjs` (executes the shipped functions; RED ×3 on build 1036).
 
 ⚠️ **Contract deposit precedence (781 → 785 → 1012), in `fillContractMoney()` — the ONE
 place a contract's money is written:** an explicit `est` row passed in (estimate→contract)
@@ -2856,7 +2856,7 @@ extraction applied); all three now preserve null.
 
 **`maxOutputTokens: 8192` + `responseMimeType: 'application/json'`** on Gemini,
 **`max_tokens: 4096` + `response_format: json_object`** on the OpenAI fallback.
-⚠ **Keep both rungs in step** — 1024/1200 truncated a five-page scope mid-object
+⚠ **Keep both rungs in step** — 1036/1200 truncated a five-page scope mid-object
 and the failure looked like gibberish, not like a limit.
 
 **`/api/sol` is the ONE route that returns a `detail`** (the raw model reply on
@@ -5996,6 +5996,19 @@ counts and what it refuses to count, each of the three kinds dropping the count 
 green "All filled" state reached by filling everything, the jump outlining a blank and moving on,
 and a hand-added field being counted; control red 11 named).
 
+### Print fidelity on contracts and estimates (1036)
+
+`ensurePrintFix(d)` in the report-editor block is the single place the printed page's furniture is
+decided: which editing chrome is dropped, where the page breaks may not fall, the running header
+(`@page{@top-left}`) and the address footer (`@page{@bottom-center}`). **Both the Print button
+and the Download button call it**, so the `.html` a client is emailed prints the same as the copy
+printed in the office. It is injected into the live document rather than shipped in the skeleton,
+because a document saved earlier carries its own frozen copy of that skeleton's CSS.
+
+The old `.runhead` element is still in every template and still in every saved document — it is
+`display:none` **in print only**. Do not delete it and do not restore it to the printed page; see
+BUG_CLASSES 59.
+
 ---
 
 # The 21 Aug 2026 audit follow-through — builds 967–975
@@ -6523,14 +6536,14 @@ refusal (always visible), Lead Source by opening "More detail" and shaking the f
 blocker (the 782 reveal pattern), plus a `*` added to its label. No layout change. `gate_1005.mjs`
 (Chromium, drives the real ldSave; control on 1004 PASS 2 · FAIL 5).
 
-### 1006 — stage arrows: one tap, with Undo (dialog diet, slice 1)
+### 1036 — stage arrows: one tap, with Undo (dialog diet, slice 1)
 
 The profile's forward/back stage arrows no longer confirm on every tap. A tap moves the job at once and
 shows a 5-second Undo toast (window.CardinalUndo, shipped since 186). The transition is DEFERRED for the
 window: the target stage shows optimistically (cache-only), and the real commit (setStage / acxAdvance)
 runs only when the toast closes — so an undone tap never writes to the record and never fires setStage's
 team email (Approved → Curtis "schedule + order materials"; Completed → rep+admins). Gmail Undo-Send
-model. `crStageDefer` is the shared helper; `gate_1006.mjs` (source wiring + Chromium mechanism test;
+model. `crStageDefer` is the shared helper; `gate_1036.mjs` (source wiring + Chromium mechanism test;
 control on 1005 FAIL 4). First slice of the dialog diet; alert→toast and prompt→inline remain.
 
 ### 1007 — a phone-signed contract buzzes Curtis too (remote signature parity)
@@ -6553,7 +6566,7 @@ pre-checked) — no type is pre-selected on a neutral portal now, so the choice 
 lives; (3) crStageDefer dropped a superseded move (2nd arrow tap, esp. cross-job) — a superseding tap
 now commits the first move, and the target is captured + committed via setStage() directly (race-free);
 (4) closing the app in the Undo window lost the move — a pagehide/visibilitychange flush commits it.
-gate_1006 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
+gate_1036 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
 findings (incl. the critical api/abc.js open proxy) are logged in OPEN_ITEMS "Audit 2026-08-23".
 
 ### 1025–1030 — the manual-estimates arc (audit builds A–F; Theo: "1, A, own lane, button, drop it, hide")
