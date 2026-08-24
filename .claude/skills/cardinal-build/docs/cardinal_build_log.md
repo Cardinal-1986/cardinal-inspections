@@ -24350,3 +24350,33 @@ the digit (4.99 / 5.54 / 4.55 on rail / active card / hover). Both comment recor
 next reader sees 539 AND its 1035 resolution. Gate: `gate_1035.mjs` computed inks both themes
 (probe lesson: the rail mounts only after a sentinel state runs — the control's identical MISSING
 was the tell, again); GREEN, control RED on exactly the light leg.
+
+## Production hub E2E audit (24 Aug 2026 — docs + scripts only, no build number; index.html untouched at 1035)
+
+Theo asked for a full end-to-end audit of the Production hub — every page, workflow, button,
+readability, accessibility, organization — with one question above the rest: does the back button
+keep Curtis and Scottie in Production, or dump them into the retail CRM? The full report is
+`docs/CR_PRODUCTION_AUDIT_2026-08.md`: a ten-row containment truth table measured on the rig as
+both personas (dark + light, 1194/390), a sentinel ink sweep (24 renders), a button census, and a
+nine-item plan awaiting picks. Nothing shipped to the app.
+
+The headline: **the happy paths hold** (job → profile → back, punch card → back, dispatch → back
+all return to the board; login lands production users on the board per 854; 0 pageerrors anywhere)
+— but **two history-machinery breaks do exactly what Theo feared**: (F1) board pane changes push no
+history entry, so browser/gesture back from the calendar or a box list exits Production onto the
+retail home; (F2) after flipping profile tabs, back wedges at `{v:'project'}` — five presses never
+return to the board (three history writers interleave on that screen: the legacy wrapper's push,
+`wrapNav`'s replace-or-push at 26848, and the profile-open `replaceState` at 25651). Also measured:
+the exit room is the retail home with pipeline counts and an AR money card and `renderHome()` has
+no role gate; the punch list keeps the retail nav row (it is shell-shown, not an overlay); the
+punch-list chip family is missing light twins (`.pu-tag.prio-normal` at **1.91:1**); dispatch's
+"Move this job" handle is **15×15 px**; the `data-cr-footer` stamp has been PREPENDING summaries
+since ~1015 and now carries 21 builds / 9,785 chars into the burger menu.
+
+**What DID ship: `scripts/sentinel_setup_production.js`** — the permanent production walk
+(prodhome / prodcal / prodbox / punchcard / punchlist / dispatch) with a seed that exercises every
+box: materials-ordered, Approved-bare, a `kind:'job'` install two days out, a Completed job, and
+SOP steps on i1 using the card's real `{t, d, req, note}` shape (first draft wrote `done:` and the
+rendered card's unchecked box + "3 steps left" close gate was the tell — read the shape, not the
+guess). Rig lesson for the next drive: cold boots parse the 5.1 MB file slower than any fixed
+pause — wait on `window.CardinalProduction && __sentinelStates`, not a clock.
