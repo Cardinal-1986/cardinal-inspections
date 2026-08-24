@@ -3705,7 +3705,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1029 &#8212; saving an estimate no longer throws you out of it. Save keeps the editor open — a toast confirms, the estimate number appears on first save, and you keep working; the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar under your thumb. Publish and → Contract are faster and surer: they used to press Save for you and wait up to nine seconds watching for the editor to close, then go find the saved row and guess which one it was — they now receive the exact saved estimate directly. Build 1028 &#8212; the AI helps from inside the estimate, and the separate AI door is gone. One button in the estimate’s Photos section reads every attached photo at once: it writes captions for photos that have none (never over yours), adds a short overview to Scope Notes (never replacing what you wrote), and picks a cover only if you haven’t starred one. The two “AI Estimate” buttons (the estimates screen and the client profile) are hidden — estimates are just estimates now. Build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1030 &#8212; estimate documents are filed by what they are, not what they&#8217;re called. A published estimate is linked to its estimate record, and the app now files it by that link — rename the title and it stays under Estimates, still reaches the approvals list and the &#8220;needs approval&#8221; alert when signed, and still counts on the job card. The title box&#8217;s example text no longer suggests a name that would have misfiled the document. The retired manual_estimates database table (empty, unused since build 568) is dropped, and some dead wiring left over from the old estimates screen was removed. Build 1029 &#8212; saving an estimate no longer throws you out of it. Save keeps the editor open — a toast confirms, the estimate number appears on first save, and you keep working; the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar under your thumb. Publish and → Contract are faster and surer: they used to press Save for you and wait up to nine seconds watching for the editor to close, then go find the saved row and guess which one it was — they now receive the exact saved estimate directly. Build 1028 &#8212; the AI helps from inside the estimate, and the separate AI door is gone. One button in the estimate’s Photos section reads every attached photo at once: it writes captions for photos that have none (never over yours), adds a short overview to Scope Notes (never replacing what you wrote), and picks a cover only if you haven’t starred one. The two “AI Estimate” buttons (the estimates screen and the client profile) are hidden — estimates are just estimates now. Build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11625,7 +11625,7 @@ function renderAcxOverview(){
   var stg = normStage(pr.stage);
   var nx = acxNext(stg);
   var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
-  var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
+  var ests = docs.filter(function(r){ return isEstimateDoc(r); });
   var fileDocs = docs.filter(function(r){ return isFileDoc(r.title); });
   var inspN = docs.filter(function(r){
     var tt = (r.title || '').trim();
@@ -13608,9 +13608,11 @@ function isWorkOrderTitle(t){ return /^work order/i.test((t||'').trim()); }
 function renderProjectDocs(){
   var docs = cacheRows.filter(function(r){ return currentProject && r.project_id === currentProject.id; });
   var ctrs = docs.filter(function(r){ return isContractTitle(r.title); });
-  var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
+  /* 1030: by the doc_id link first (isEstimateDoc) — a renamed published
+     estimate stays under Estimates instead of drifting into Inspections. */
+  var ests = docs.filter(function(r){ return isEstimateDoc(r); });
   var wos  = docs.filter(function(r){ return isWorkOrderTitle(r.title); });
-  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title) && !isWorkOrderTitle(r.title) && !isFileDoc(r.title); });
+  var insp = docs.filter(function(r){ return !isEstimateDoc(r) && !isContractTitle(r.title) && !isWorkOrderTitle(r.title) && !isFileDoc(r.title); });
   document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
@@ -15180,6 +15182,16 @@ function isEstimateTitle(t){
      first; all 15+ call sites inherit the fix through this one definition. */
   var s = (t||'').trim().replace(/^EST-\d{4}-\d+\s*—\s*/i, '');
   return /^(estimate|siding estimate|window estimate|andersen estimate|gutter estimate|repair estimate)/i.test(s);
+}
+/* 1030 (audit F-5): a published estimate is doc_id-linked to its table row —
+   classify by the LINK first, the title second, so a renamed title cannot file
+   the document under Inspections or hide a signed one from approvals.
+   estDocIds is indexMoney's map of every doc_id any estimates row points at
+   (1011); before the first money index it is an empty object, and the title
+   test carries those early renders exactly as before. */
+function isEstimateDoc(r){
+  try{ if(r && r.id && estDocIds && estDocIds[r.id]) return true; }catch(_){ }
+  return isEstimateTitle(r && r.title);
 }
 document.getElementById('galXferBtn').addEventListener('click', function(e){
   e.stopPropagation();
@@ -20802,13 +20814,13 @@ function renderApprovals(){
       return r.project_id === pr.id && isContractTitle(r.title);
     })) return false;
     return cacheRows.some(function(r){
-      return r.project_id === pr.id && isEstimateTitle(r.title) && r.signed_at;
+      return r.project_id === pr.id && isEstimateDoc(r) && r.signed_at;
     });
   });
   if(!pend.length){ card.style.display = 'none'; return; }
   card.style.display = 'block';
   document.getElementById('approvalsList').innerHTML = pend.map(function(pr){
-    var est = cacheRows.filter(function(r){ return r.project_id === pr.id && isEstimateTitle(r.title) && r.signed_at; })
+    var est = cacheRows.filter(function(r){ return r.project_id === pr.id && isEstimateDoc(r) && r.signed_at; })
       .sort(function(a,b){ return String(b.signed_at).localeCompare(String(a.signed_at)); })[0];
     var val = projectValue(pr);
     return '<div class="apprrow">' +
@@ -38794,49 +38806,9 @@ return;
 if(tries < 40) setTimeout(go, 75);
 })();
 }
-function wireStats(){
-if(!mountVisible()) return;
-var stats = mount().querySelectorAll('.cr-stat[data-status]');
-if(!stats.length) return;
-var STATUS_TO_TAB = {
-'':          'all',
-'draft':     'pending',
-'sent':      'pending',
-'approved':  'approved',
-'converted': 'converted',
-};
-stats.forEach(function(cell){
-if(cell.dataset.crEafFixed === '1') return;
-cell.dataset.crEafFixed = '1';
-cell.setAttribute('data-cr-clickable', '1');
-cell.onclick = function(e){
-e.stopPropagation();
-var tab = STATUS_TO_TAB[cell.dataset.status] || 'all';
-var target = mount().querySelector('[data-filter="' + tab + '"]');
-if(target){ target.click(); }
-};
-});
-}
-function wireManualRows(){
-if(!mountVisible()) return;
-var rows = mount().querySelectorAll('.cr-row');
-rows.forEach(function(row){
-if(row.dataset.crEafFixed === '1') return;
-if(row.dataset.source === 'ai') return;
-row.dataset.crEafFixed = '1';
-row.onclick = function(e){
-e.stopPropagation();
-var id = row.dataset.id;
-if(!id) return;
-if(typeof window.crCloseAll === 'function'){
-try{ window.crCloseAll(); }catch(err){}
-}
-setTimeout(function(){
-if(typeof window.openProject === 'function') window.openProject(id);
-}, 60);
-};
-});
-}
+/* 1030: wireStats() and wireManualRows() deleted — their selectors
+   (.cr-stat[data-status], .cr-row) stopped rendering with the lanes
+   rebuild, and both dead queries ran on every body-observer tick. */
 function wireSave(){
 if(!mountVisible()) return;
 var btn = mount().querySelector('[data-act="save"]');
@@ -38869,8 +38841,6 @@ if(typeof orig === 'function'){ orig.call(this, e); }
 }
 function tick(){
 try{ wireTemplates();  }catch(e){}
-try{ wireStats();      }catch(e){}
-try{ wireManualRows(); }catch(e){}
 try{ wireSave();       }catch(e){}
 try{ wireSend();       }catch(e){}
 }
@@ -42028,6 +41998,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1030, d:'2026-08-24', t:'Documents filed by what they are', s:'A published estimate document is linked to the estimate record it came from, but the Documents tab, the approvals queue and the job card were classifying it by its TITLE \u2014 rename it and it filed itself under Inspections, and a signed one silently skipped the approvals list and the \u201cneeds approval\u201d email. All of them now recognize the link first and the title second. The estimate title\u2019s example text no longer suggests a wording that would have misfiled the document. Housekeeping underneath: the manual_estimates database table \u2014 empty and unused since build 568, but still writable by any signed-in account \u2014 is dropped, and dead wiring from the old estimates screen was removed.' },
 { b:1029, d:'2026-08-24', t:'Save stays in the estimate', s:'Saving an estimate used to close the editor \u2014 mid-thought, every time. Save now keeps you in the estimate: a toast confirms it saved, the estimate number appears the first time (the header reads \u201cauto \u2116\u201d until then), and the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar at the bottom of the screen. Under the hood, Publish, \u2192 Contract and the pipeline-stage sync used to press Save for you and then watch for up to nine seconds for the editor to close before hunting down the saved row; all three now receive the saved estimate directly, so publishing is faster and can never grab the wrong row. The estimates board also refreshes itself after a save instead of waiting for you to reopen it.' },
 { b:1028, d:'2026-08-23', t:'AI assists inside the estimate', s:'Instead of a separate \u201cAI Estimate\u201d door that built a different kind of estimate, the AI now helps from inside the one estimate editor. A new button in the Photos section reads every attached photo in a single pass: photos without a caption get one written (a caption you typed is never touched), a short overview of what the photos show is added to the end of Scope Notes (never replacing what you wrote), and if no photo is starred as the cover the AI nominates the best establishing shot \u2014 your starred pick is never moved. The two old \u26a1 AI Estimate buttons are hidden; the code and its table stay dormant underneath. The \u201c+ New estimate\u201d button is now the main way in, and Theo\u2019s admin App Walk was taught the new path.' },
 { b:1027, d:'2026-08-23', t:'The client\u2019s copy is readable on a phone', s:'The estimate document a homeowner opens from the share link (and the printed copy) was locked to an 8.5-inch page width with no phone handling at all, so on a phone it painted at about a fifth of readable size and clients pinch-zoomed their way through their own quote. The document now reflows on small screens \u2014 the header stacks, the details table goes one field per line, photos go single-column, tables fit the width \u2014 and prints exactly as it always has. It also got a cleaner dress: serif letterhead, hairline rules, and red held back for the brand line, the section numbers and the grand total, so the money reads first. Already-sent estimates keep the copy they were sent with; everything published from now on uses the new look.' },
@@ -47346,7 +47317,7 @@ estNavHtml(s) +
 : '') +
 '</div>' +
 '<label>Estimate Title</label>' +
-'<input type="text" data-f="title" value="' + esc(s.title) + '" placeholder="Roof Replacement — Jane Smith" />' +
+'<input type="text" data-f="title" value="' + esc(s.title) + '" placeholder="Estimate — Jane Smith" />' +
 '<div class="cr-est-row3">' +
 '<div>' +
 '<label>Status</label>' +

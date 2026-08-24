@@ -24264,3 +24264,21 @@ deliberately rides above full-screen views, 694) lifts to bottom:96px on phones 
 clears the bar. Gate: `gate_1029.mjs` — in-place save through the mock + event detail, dirty guard
 both directions, clean-close after save, auto №, phonebar both widths, polls retired, observer
 census −1. GREEN; **control RED ×12**.
+
+## Build 1030 — documents classify by their link; the dead table is gone (audit Build D; Theo: "drop it")
+
+**F-5 closed both ways.** A published estimate is `doc_id`-linked to its table row, but the
+Documents tab, the approvals queue and the Job Details card classified by TITLE — rename one and it
+filed under Inspections, and a signed one skipped `renderApprovals` and the "needs approval" email.
+New `isEstimateDoc(r)` classifies by the LINK first (1011's `estDocIds` map), title second; applied
+to `renderProjectDocs` (both buckets), both approvals legs, and the acx card count. The editor's
+title placeholder ("Roof Replacement — Jane Smith") stopped teaching the classifier-dodging shape —
+it reads "Estimate — Jane Smith" now. **F-4 closed:** `manual_estimates` (0 rows, no reader, no
+writer since 568, any-authenticated ALL policy) **DROPPED — applied to production 24 Aug 2026,
+verified 0 rows immediately before and `to_regclass` null after.** `drop_manual_estimates.sql`
+records the schema in its header for revert and refuses to run against a non-empty table. **F-8:**
+cr-eaf's `wireStats`/`wireManualRows` deleted — dead selectors queried on every subtree body-observer
+tick. Gate: `gate_1030.mjs` — a renamed published estimate injected gate-side lands in the
+Estimates bucket (control: misfiled under Inspections, live), helper truth-table, approvals legs
+×2, placeholder, cruft. GREEN; **control RED ×7. All six arc gates (1025–1030) re-run GREEN
+against this final artifact.**
