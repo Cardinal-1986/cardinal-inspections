@@ -157,7 +157,7 @@ tap-area growth). These didn't get the same pass:
 | O2 | **The burger menu ends in 9,785 characters of changelog prose** — the `data-cr-footer` stamp has been *prepending* each build's summary since ~1015 and now carries **21 builds** (my own recent patches followed the same convention and fed it). Every user scrolls past it | MED |
 | O3 | Phone home top bar: "Single source of truth" renders truncated ("Single source of") behind the + button at 390px | LOW |
 | O4 | "Production" appears 3–4× on one desktop screen (app header, board header, nav row, rail section) | LOW |
-| O5 | Dispatch job-name line-clamp rule (`#cr-disp .job .t .nm{display:-webkit-box}`) is DEAD — beaten in the cascade — so long client names can overflow the card instead of clamping | LOW |
+| O5 | ~~Dispatch job-name line-clamp rule is DEAD~~ **FALSE POSITIVE, corrected 24 Aug**: the clamp WORKS (a 150-char name renders exactly 2 lines, nothing overflows — proven functionally on the rig). Modern Chromium computes `display:-webkit-box` to `flow-root` when implementing the standardized line-clamp, and the sentinel's DEAD check misread that engine mapping as a cascade loss. Fixed in the INSTRUMENT (`sentinel_probe.js` + a selftest case seen red against the old probe), not the app | ~~LOW~~ |
 | O6 | Sentinel DEAD also lists the punch card's retired pre-947 size rules (34/36/40px) and header-chrome rules losing to later winners — dead code, no user impact; recorded so nobody re-finds them | note |
 
 ## 5 · What measured GOOD (so nobody "fixes" it)
@@ -182,10 +182,11 @@ tap-area growth). These didn't get the same pass:
 
 ## 6 · The plan — numbered for picks
 
-**✅ Items 1–5 SHIPPED 24 Aug 2026 as builds 1036–1040** (Theo: "lets do 1-5 in a batch first").
-Each gated in Chromium with a red control; sentinel clean vs 1035; the fixed inks left the
-carried set. Two H-table rows were false positives — see the strike-notes below. Items 6–9
-remain open picks.
+**✅ ALL NINE ITEMS CLOSED 24 Aug 2026.** Items 1–5 shipped as builds 1036–1040 (merged, PR
+#484); items 6–8 shipped as builds 1041–1043; item 9 closed with no app change (the O5 finding
+was this audit's own instrument misreading Chromium's line-clamp mapping — fixed in
+sentinel_probe.js with a negative-controlled selftest case). Every build gated in Chromium with
+a red control; sentinel walk clean at 390/1194/1440.
 
 Ordered by what protects Scottie and Curtis most per build. Each is one build, gated, previewed
 where visual.
@@ -209,14 +210,13 @@ where visual.
    build 418, and the card chevron `.pkback` got real 44px minimums at 947 — a rect census
    cannot see a pseudo pad, exactly as those builds' comments predicted. Dispatch move handle + week arrows, box-list buttons, board
    +Add/Full-calendar, close-item ✕ — the 947 invisible-growth pattern, no visual change.
-6. **Footer stamp diet (O2).** `data-cr-footer` keeps the current build's line only; the
+6. ✅ **SHIPPED (build 1041)** — **Footer stamp diet (O2).** `data-cr-footer` keeps the current build's line only; the
    patch convention changes to *replace* rather than prepend (check_build's stamp gate reads the
    first line and is unaffected). Menu loses 9.5 KB of scroll.
-7. **Punch list joins the family (F4).** Full-screen treatment (or production-mode chrome hide)
+7. ✅ **SHIPPED (build 1042, production-accounts scope)** — **Punch list joins the family (F4).** Full-screen treatment (or production-mode chrome hide)
    so Punch & Repairs stops showing the retail nav row.
-8. **Desktop board fold (O1).** Boxes above (or beside) the calendar at desktop widths.
-   Preview first — this one is taste.
-9. **Dispatch polish (O5 + H).** Fix the dead name-clamp rule while touching the targets.
+8. ✅ **SHIPPED (build 1043, pick B side-by-side from rendered previews)** — **Desktop board fold (O1).**
+9. ✅ **CLOSED, no app change (24 Aug)** — **Dispatch polish (O5 + H).** H's dispatch targets shipped at 1040; O5 was a false positive of the audit's own instrument (see the corrected O5 row) — the clamp works, and the fix landed in sentinel_probe.js so the misreading cannot recur.
 
 Not proposed: any change to the box logic, the punch card, the role gates, or the login landing —
 they measured right.

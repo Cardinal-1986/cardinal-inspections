@@ -82,6 +82,15 @@
         check would stop catching the bug it was written for.             */
   @media (min-width: 600px) { .mf-loser { height: 44px; background-color: #2a1616; } }
   .mf-loser { height: 88px; background-color: #162a2a; }
+
+  /* ── LINE-CLAMP ENGINE MAPPING: display:-webkit-box with -webkit-line-clamp
+        computes to flow-root in modern Chromium — the engine IMPLEMENTING the
+        standardized clamp, not the cascade losing. The production audit's O5
+        called the dispatch name-clamp DEAD off exactly this mismatch; the
+        clamp measured working (2 lines from a 150-char name). Must NOT be
+        reported as DEAD.                                                  */
+  .clamp-ok { display: -webkit-box; -webkit-box-orient: vertical;
+              -webkit-line-clamp: 2; overflow: hidden; width: 120px; }
 </style>
 </head>
 <body>
@@ -106,6 +115,9 @@
 
 <h2>DEAD — .dead-a loses to .dead-b at equal specificity</h2>
 <div class="case"><div class="dead-a dead-b">both rules match; the later one wins</div></div>
+
+<h2>LINE-CLAMP — -webkit-box computing flow-root is the engine, not a loss</h2>
+<div class="case"><div class="clamp-ok">a name long enough to need clamping to two lines on a narrow card, which must not read as DEAD</div></div>
 
 <h2>OVERRIDDEN — a base rule beaten by a more specific one (not a defect)</h2>
 <div class="case" id="overHost"><div class="over-base">normal cascade</div></div>

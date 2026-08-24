@@ -275,7 +275,17 @@ globalThis.__sentinelProbe = () => {
     if (/[\d.](%|em|rem|ex|ch|vw|vh|vmin|vmax)\b/i.test(v)) return false;
     if (prop === 'color' || prop === 'background-color')
       return /^(#|rgb|hsl|transparent$|[a-z]+$)/i.test(v);
-    if (prop === 'display') return /^[a-z-]+$/i.test(v);
+    if (prop === 'display') {
+      /* 24 Aug 2026 (production audit O5, a false positive this check made):
+         display:-webkit-box is NOT comparable. When -webkit-line-clamp is in
+         play, modern Chromium COMPUTES it to flow-root as part of
+         implementing the standardized line-clamp — the clamp still works
+         (verified functionally on the dispatch card: a 150-char name renders
+         exactly 2 lines), but declared != computed reads as a cascade loss.
+         The bare probe has no clamp, so normalise() cannot see the mapping. */
+      if (/^-webkit-(inline-)?box$/i.test(v)) return false;
+      return /^[a-z-]+$/i.test(v);
+    }
     return /^-?[\d.]+px$/i.test(v);
   }
 
