@@ -6691,3 +6691,20 @@ Chromium-gated with a red control (gate_1036 … gate_1040), sentinel production
   the card says "saved on this phone". Real refusals still fail loudly. ⚠ Both the RETURNED and
   THROWN error shapes are handled — iOS throws (861), and the returned-only first cut would not
   have worked offline at all.
+
+## Two phone fixes (build 1051, 24 Aug 2026)
+
+- **1051A — Job Details trade checkboxes on insurance jobs.** `.acxtrs` is a direct child of a
+  `110px 1fr` grid with no placement of its own, so it auto-places into the **label column** and
+  the six trade words break mid-word ("Roo fing"). The 788–804 rebuild already gives it
+  `grid-column:2 / -1; display:flex; flex-wrap:wrap`, but scoped
+  `body:not(.claim-insurance):not(.claim-community)` — so **only insurance and community jobs were
+  broken**, which is why it went unseen. Added the twin for those two, same geometry, dark-on-light
+  rule colour for the cream pages. 110px → **168px**, labels one line.
+- **1051B — the Contract Worksheet on the Payments page.** Seven `.ws*` rules were still light-era
+  literals (`background:#fff`, `color:#1b1b1b`), rendering white cards on the black app directly
+  below `.paysec` rows themed at 422. Fixed as an **added scoped block** —
+  `:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community)` — with the
+  base rules untouched, **because the insurance and community Payments pages paint their own cream
+  ground and keep these cards light on purpose**. All six new inks 5.47–9.83:1. Light mode
+  byte-identical.

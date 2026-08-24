@@ -24645,3 +24645,99 @@ measures the PDF's text layer against its geometry). Without it the gate reports
 **Gates: 31/31 GREEN on the merged tree; 15 named failures on the 1049 control**, including the
 gutter agreement hiding "Project Specifications", "HOA / Authorization" and the buyer signature
 line. All six of this session's gates (1044–1049) re-run green on the same tree.
+
+---
+
+## Build 1051 — two things from Theo's phone: the broken trade words, the white worksheet
+
+Theo: *"Merge then 463 also fix this"*, with two iPhone screenshots. Two unrelated defects, one
+build. **Both root causes were measured in the rig before anything was written** — and in both
+cases my first fix was wrong and the gate caught it, which is recorded below because the wrongness
+is the reusable part.
+
+### A · the trade-type checkboxes broke words in half
+
+The screenshot shows *"Roo fing"*, *"Sidi ng"*, *"Gutt ers"*, *"Win dow s"*, *"Rep airs"*,
+*"Mis c"*, with Lead Source orphaned from its own dropdown.
+
+`.ackv` is `grid-template-columns:110px 1fr` and `.acxtrs` is a **direct child**, so with no
+placement of its own it auto-places into the next free cell — the **110px label column**. Measured
+on Theo's shape at 390px: panel **110px** wide inside a 288px card, each label **27px wide × 28px
+tall** — two lines, mid-word.
+
+The 788–804 client-profile rebuild already fixed exactly this, giving the panel a proper chip row:
+
+```css
+:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrs{
+  grid-column:2 / -1; display:flex; flex-wrap:wrap; …
+}
+```
+
+⚠ **It is scoped to exclude insurance and community, and Theo's job is an insurance claim.** So the
+rule that fixes it never applied, and the panel fell back into the label column. Retail measures
+188px / 69px and reads correctly — **which is why this survived: it is invisible on the CRM most
+screenshots come from.** Fix is the insurance/community twin of the same geometry (its own
+`--acxjd-rule` fallback, dark-on-light, since those pages are cream). After: **168px, column 2,
+label 47×14 — one line.**
+
+⚠ **My first cut was a generic `.acxjd .acxtrs{grid-column:1 / -1}`.** At (0,2,0) it loses to the
+id-scoped rebuild rule, so it would have done nothing on retail and fought the chip design where it
+did land. **Match the specificity of the rule you are extending, or you are not extending it.**
+
+### B · the Contract Worksheet was white cards on the black app
+
+Measured on the dark page (`rgb(9,9,12)`): `.wsrow` **rgb(255,255,255)**, `.wsempty`
+rgb(251,250,249), `.wstitle` rgb(43,43,43). The `.paysec` family **directly above it in the same
+screenshot** was themed at 422 and measures correctly dark — the partial-pass tell this project
+already has a section about. Seven light-era literals, never touched since.
+
+⚠ **My first cut rewrote the BASE rules to dark, per 573's convention.** That convention is right
+where the ground is always dark, and **wrong here**: the insurance and community Payments pages
+paint their own cream ground (`--ct-bg:#FAF8F7`) and keep these cards light **on purpose** — the
+claim-insurance block says so in a comment. Rewriting the base put a dark card on every insurance
+Payments page. The gate caught it as two failures (`rb-light .wsrow moved: rgb(250,250,250)` and
+`insurance .wsrow went rgb(38,42,49)`), both of which were **one cause**.
+
+⚠ **And the cause survived a round because I "removed" the edit by writing four
+`# (base rule left as-is)` comments beside the `sub()` call instead of deleting it.** The artifact
+carried both fixes at once. **A comment is not a deletion** — re-read the artifact, not the script.
+
+Shipped instead as an **added block, base rules untouched byte-for-byte**, scoped
+`:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community)` — dark only
+where the page itself is dark. All six new inks computed before shipping: **5.47–9.83:1**, floor
+4.5, zero failures.
+
+**Gates.** `check_build.py` green (125 scripts, stamp 1050→1051, marker + negative control).
+`gate_1051.mjs` **GREEN with 7 named failures on the 1050 control**, measuring the panel on an
+insurance client and the worksheet on a retail (dark) one, plus an `insWs` probe proving the
+insurance page's `.wsrow` **stays** white on cream and an rb-light byte-identity check. All seven
+arc gates (1044–1050) re-run green on the same tree.
+
+⚠ **Two gate thresholds were guessed and both false-positived correct code** — `labelH > 24` on a
+legitimately 34px retail chip, then `labelW < 55` on a correct 47px "Roofing". Replaced with
+`lab.getClientRects().length !== 1`, which asks the actual question (*did this label wrap?*) and
+needs no magic number.
+
+**Late addition, measured not assumed.** Reading the diff back raised a question about the
+`.acxtrs[hidden]{display:none}` rule sitting beside the one I extended — it carries the same
+insurance/community exclusion. Probed both artifacts: on 1050 an insurance job carries `hidden=""`
+on load and still paints (`display:grid`), because **an author `display:` declaration beats the UA
+sheet's `[hidden]` rule**. So the panel has never been collapsible on those two CRMs — retail hides
+correctly. That is the second reason the broken words were on screen at all. Shipped the `[hidden]`
+twin with the geometry twin; the gate now measures it and the 1050 control goes red on it
+(8 named failures).
+
+⚠ **The patch script read `/home/user/cardinal-inspections/index.html` as its base**, so the moment
+the artifact was installed the script was reading its own output and every anchor vanished. `SRC`
+is now pinned to a checked-out copy of the base build. Same family as the sentinel-control
+corruption earlier in this session: **a build input must not be a file the build writes.**
+
+⚠ **Sentinel: not a clean result, stated plainly.** The first run was killed because I rewrote its
+input mid-run (again). The re-run on frozen copies reported **12 new findings across 42 renders,
+84 carried** — but **none of the twelve names anything in this diff** (they are `#cr-hd2-bar`,
+`.cre-*`, `#cr-disp`, `#punchView`, `.pu-*`, `#cr-ped`, `#crBanner`, and one INK on the Truth
+screen whose text is byte-identical on main). Nine are OVERRIDDEN on `display` — the shape a view
+opened by JS always produces. **I did not get the same-artifact determinism check to finish, so I
+cannot claim these are noise; I can only say they do not intersect the change.** The INK finding
+(1.07:1, "Waiting on the carrier to assign an adjuster" on `rgb(196,24,15)`) is real and is picked
+up as a finding in the insurance audit that follows.

@@ -1950,6 +1950,17 @@ body.standalone #editorView{padding-bottom:calc(64px + env(safe-area-inset-botto
 .acxtrs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 12px;padding-top:1px;}
 .acxtrs label{display:flex;align-items:center;gap:7px;min-height:22px;
   font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#2b2b2b;cursor:pointer;}
+/* 1051: the Contract Worksheet was still light-era literals — measured pure
+   white on the dark page while the payment rows beside it (themed at 422) were
+   correct. Dark ONLY where the page itself is dark: insurance/community paint
+   cream and deliberately keep these cards light, and rb-light is a light theme. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .wsrow{background:var(--rbe-bg2,#262a31);border-color:var(--rbe-line2,#2b2b33);}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .wstitle{color:var(--rbe-ink,#cfd6df);}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .wsgrid label{color:var(--rbe-mute,#9aa0a8);}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .wsgrid b{color:var(--rbe-ink,#cfd6df);}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .wsgrid input{border-color:var(--rbe-line2,#2b2b33);background:var(--rbe-bg1,#2e333b);color:var(--rbe-ink,#cfd6df);}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .wsempty{color:var(--rbe-mute,#9aa0a8);background:var(--rbe-bg2,#262a31);}
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) .wstitle .unsig{color:#f0a24a;background:rgba(240,162,74,.14);}
 .cbx{width:18px;height:18px;}
 .cbx:checked::before{font-size:12px;}
 
@@ -3712,7 +3723,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1050 &#8212; every word of a printed contract is now readable. The grey header line at the top of each printed page was painting over the text beneath it from page two onward — hiding twelve pieces of contract wording across the roof, siding, gutter and service agreements, including the right-to-cancel notice on two of them. The header now sits in the page margin where it belongs. This reaches contracts signed months ago, and the emailed copy gets the same treatment.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1051 &#8212; two things from your phone. The trade-type checkboxes on Job Details no longer break words in half (&#8220;Roo fing&#8221;) &#8212; they use the full width of the card, and Lead Source lines up with its own box again. And the Contract Worksheet on the Payments page is no longer white cards on a black screen: it reads like the payment rows beside it. Light mode is unchanged.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41312,6 +41323,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1051, d:'2026-08-24', t:'Two phone fixes: trade checkboxes and the payments worksheet', s:'Job Details squeezed the six trade-type checkboxes into the narrow label column, so the words broke in half \u2014 \u201cRoo fing\u201d, \u201cGutt ers\u201d \u2014 and Lead Source drifted away from its own dropdown. The checkbox panel now spans the full width of the card. On the Payments page, the Contract Worksheet was still drawn in the old light colours: white cards and a white \u201cno data\u201d box sitting on the black page, right beside payment rows that were themed properly years ago. The worksheet now matches them. Light mode looks exactly as it did.' },
   { b:1050, d:'2026-08-24', t:'The printed contract shows all of its own words',
     s:'The grey line along the top of every printed page \u2014 Cardinal Roofing & Renovations \u00b7 ROOFING CONSTRUCTION AGREEMENT \u2014 was sitting in the same strip as the contract text and painting its white background straight over it. On a five-page roof agreement that hid four separate pieces of wording; across the four contracts it hid twelve, including the sentence that names the Terms and Conditions form, the Payment Structure heading, and the right-to-cancel line. The words were in the file the whole time \u2014 you could select them \u2014 they just could not be read. The header now prints up in the page margin instead. Nothing else about the contract changed; a gutter agreement gains one page because the reclaimed strip pushes the acceptance block over. Applies to contracts already saved, and to the copy a client is emailed.' },
 { b:1049, d:'2026-08-24', t:'Punch-out work survives no signal', s:'On a roof with no bars, ticking a step or writing a note on a punch-out used to fail and quietly undo itself. Those writes now go into the same on-device outbox that photos have used for months: the change stays on screen, the card says \u201csaved on this phone, it will sync by itself\u201d, and it does \u2014 automatically, when signal comes back. Refreshing the list while still offline no longer wipes the queued work either. A write the server genuinely refuses still fails out loud, because that is a real problem and hiding it would be worse.' },
@@ -75756,6 +75768,26 @@ select{min-height:44px;}
   display:flex; flex-wrap:wrap; gap:7px;
   min-height:0; padding:2px 0 12px 14px;
   border-left:1px solid var(--acxjd-rule,rgba(255,255,255,.14));
+}
+/* 1051: the SAME geometry for the two themes the rule above excludes. Without
+   it an insurance or community client auto-places the panel into the 110px
+   label column and the words break in half ("Roo fing") — measured, and it
+   is what Theo photographed. Colour still follows each theme's own token. */
+:root body.claim-insurance #projectView .acxjd .acxtrs,
+:root body.claim-community #projectView .acxjd .acxtrs{
+  grid-column:2 / -1;
+  display:flex; flex-wrap:wrap; gap:7px;
+  min-height:0; padding:2px 0 12px 14px;
+  border-left:1px solid var(--acxjd-rule,rgba(0,0,0,.14));
+}
+/* and the other half of that rule, which those two CRMs were also missing.
+   MEASURED on 1050: an insurance job carries hidden="" on load and paints
+   anyway (display:grid beats the UA sheet), so the panel could never be
+   collapsed — retail hides correctly. That is the second reason the broken
+   words were on screen at all: on retail this thing starts closed. */
+:root body.claim-insurance #projectView .acxjd .acxtrs[hidden],
+:root body.claim-community #projectView .acxjd .acxtrs[hidden]{
+  display:none;
 }
 :root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxtrs[hidden]{
   display:none;
