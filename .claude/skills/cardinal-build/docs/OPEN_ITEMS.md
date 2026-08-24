@@ -3,10 +3,19 @@
 
 ---
 
-## 📋 Manual-estimates audit, 23 Aug 2026 @ build 1023 — findings + plan AWAITING THEO'S PICKS
+## ✅ Manual-estimates audit — PICKED AND BUILT, 23–24 Aug 2026, builds 1025–1030 (PR #482)
 
-Full report: `CR_MANUAL_ESTIMATES_AUDIT_2026-08.md` (E2E map · findings · dark-colors verdict ·
-four-build plan with rendered options). Nothing built into index.html yet. The picks on the table:
+Theo's picks, 23 Aug, verbatim: **"1, A, own lane, button, drop it, hide."** All six builds
+shipped on `claude/manual-estimates-audit-design-29udyd`: **1025** (A: obsidian finished, white
+money) · **1026** (B: lanes learn accepted/declined + thin Declined lane + honest sums + the
+safety-net lane) · **1027** (F pick A: client document letterhead + phone reflow) · **1028** (E:
+AI assist inside the editor — captions fill empty only, overview appends, cover only when
+unstarred; both ⚡ AI doors hidden, code/table dormant) · **1029** (C: save-in-place, exported
+save() promise + cr-est-* events, all four satellite close-polls retired, phone action bar) ·
+**1030** (D: isEstimateDoc link-first classification, placeholder fix, cr-eaf cruft out,
+**manual_estimates DROPPED — applied to production 24 Aug**, `drop_manual_estimates.sql`).
+Every build gated (`gate_1025`–`gate_1030.mjs`, each seen RED on its control); all six re-run
+GREEN on the final artifact. The plan below is kept for the record:
 
 1. **Build A — finish the obsidian estimates screens** (CSS + 1 inline ink): the Total is 1.98:1
    and the deposit 1.89:1 in BOTH themes (546's conversion missed the totals block); six red
