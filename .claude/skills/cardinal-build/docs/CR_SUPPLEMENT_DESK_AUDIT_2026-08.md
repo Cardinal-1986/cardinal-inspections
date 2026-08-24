@@ -96,11 +96,22 @@ Desk is dead until a scope arrives — week three of a claim. Flip it: open on t
 photos, AI marks, a person confirms (The Walk's rule), and the scope when it lands is
 used to **subtract** what is already funded.
 
-**C · The Desk that chases.** The half nobody in the market has, and the half the
-insurance audit (1052–1054) just found missing: `chaseList()` has ages but no
-thresholds, and **all 31 notification sites in the app are production** — zero on
-insurance. Filed → sent → chased → answered → paid, with per-carrier pace computed
-from Cardinal's own `first_scope_rcv` → `approved_rcv` history.
+**C · The Desk that chases. ⚠ PARTLY SHIPPED at build 1056 — and this entry's own
+premise turned out to be wrong.** The chase clock is built: `chaseList()` now has
+stated thresholds, every row says what it is counting to, the list sorts by how
+overdue a claim is, and `I chased them` records the follow-up.
+
+**But "per-carrier pace computed from Cardinal's own history" is not buildable and
+should not be attempted until there is history.** Measured on production 24 Aug:
+five `insurance_claims` rows, three of them orphans with no project or carrier;
+two real claims; two carriers; ONE `approved_at`, falling on the same day as its
+`first_scope_at`; zero `filed_at`. An average from that is fiction. Build 1056
+uses a stated Cardinal follow-up policy instead, in one named constant
+(`CHASE_POLICY`), which is the single thing to replace later.
+
+**Still open from C:** the notifications. All notify sites in the app remain
+production/retail — **zero on insurance** — so an overdue claim is visible only to
+someone who opens the hub and looks. That is the next piece.
 
 ## Smaller pieces — all already in the repo
 
@@ -124,8 +135,8 @@ from Cardinal's own `first_scope_rcv` → `approved_rcv` history.
 **then C** (the market gap, and it reuses the chase/notification work already scoped),
 **then B** (biggest change; better built on A's evidence model than beside it).
 
-**Status, 24 Aug 2026:** **A is shipped (build 1055).** **C and B are not started** and
-are Theo's call. C is the one I would take next — it is the market gap, and the
-insurance audit already scoped the work it reuses.
+**Status, 24 Aug 2026:** **A is shipped (build 1055).** **C is half shipped (build
+1056)** — the chase clock is in; its notification half is not, and is the next
+piece. **B is not started** and is Theo's call.
 
 ⚠ The six smaller pieces above are all still unstarted.

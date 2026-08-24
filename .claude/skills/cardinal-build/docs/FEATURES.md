@@ -6803,3 +6803,47 @@ on 1055, **27 named failures on the 1054 control**.
 ⚠ **The Desk's theme key is `cr-desk-theme`, not the CRM's `cardinalRLTheme`,
 and its pre-paint head script overwrites whatever an init script set.** A rig
 that sets the wrong key drives one theme twice and reports both as clear.
+
+---
+
+## 1056 — the chase clock (`cr-cth-script`, insurance hub)
+
+*Desk overhaul direction C. Ships with `claim_chase.sql`, which **runs first**.*
+
+The insurance home's **Chase List** used to show a bare day count and turn red
+at a hardcoded 30 — a colour with nothing behind it, on a list sorted by raw age.
+
+| | |
+|---|---|
+| `CHASE_POLICY` | the **one** place a threshold lives. `supplement filed` → first **14** days, then every **7**. `awaiting release` → **21**, then **10**. `CHASE_FALLBACK` covers an unlisted reason |
+| `chaseDue(x)` | returns `{chased, limit, age, over}`, or **null** when the row has no date — a made-up zero would read as "chased today" |
+| row wording | `6 days overdue` · `due in 4` · `chased 2d ago · next in 5` |
+| `.stale` | now means **past the policy**, not past 30. A 40-day claim chased yesterday is no longer red; an 18-day one nobody touched is |
+| sort | **by how overdue**, then by age. The reorder is the point of the build |
+| `I chased them` | prompts for how, then writes `claim_notes` (the record) **and** `last_chased_at` (the state). 44px, and full-width on its own line below 560px |
+
+⚠ **`sigOf()` carries a chase term, and it must keep it.** `build()` repaints
+only when the signature changes, and the signature was counts and dollars only —
+so a recorded chase repainted nothing and the row kept saying "6 days overdue"
+right after you called. Anything new the chase row *shows* has to reach
+`sigOf()` or it will not appear until an unrelated dollar figure moves.
+
+⚠ **The thresholds are deliberately NOT a per-carrier average.** Measured 24 Aug:
+5 claim rows, 3 orphans, 2 carriers, one `approved_at` falling on the same day as
+its `first_scope_at`, zero `filed_at`. There is no history to average yet.
+`CHASE_POLICY` is the single thing to replace when there is.
+
+⚠ **The chase state is on the claim, not on `insurance_supplements`.** That table
+already models filed → sent → answered and has an unused `responses` jsonb, but a
+supplement row exists only for the *supplement filed* half of the list — the
+*awaiting release* half is an Invoiced job with no supplement row at all, and both
+halves need the same clock.
+
+⚠ **`x.days >= 30` still appears once more in the file and it is NOT this.** It is
+build 1045's *Gone quiet* kpqrow, an unrelated retail feature with its own 30-day
+rule. A file-wide assertion on that string fails correct code.
+
+**Gate:** `gate_1056.mjs` — seven checks in Chromium, asserting the chase on the
+**recorded writes**. Includes a `scrollWidth` clipping check, because the new
+button took `.who` from 185px to 70px and fourteen `textContent` assertions could
+not see it.

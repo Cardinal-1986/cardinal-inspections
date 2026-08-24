@@ -24995,3 +24995,98 @@ body** rather than on a disabled attribute. Green on 1055; **27 named failures
 on the 1054 control**, including all three token ratios and all three overflow
 sources. Byte-reproducible on re-run; both inline scripts parse; 125/125 CSS
 braces; 101/101 `<div>`.
+
+## Build 1056 — the chase list counts to something (Desk direction C)
+
+*Theo: "Keep going." Direction C from the Desk audit, the one I recommended
+next. **SQL ships and RUNS FIRST** — `claim_chase.sql`.*
+
+### ⚠ The audit's version of C is not buildable, and this build says so instead of faking it
+
+`CR_SUPPLEMENT_DESK_AUDIT_2026-08.md` scoped C as *"per-carrier pace computed
+from Cardinal's own `first_scope_rcv` → `approved_rcv` history."* Measured on
+production before a line was written:
+
+| | |
+|---|---:|
+| `insurance_claims` rows | **5** |
+| …of which orphans (no project, no carrier, no claim number) | **3** |
+| real claims | **2** |
+| distinct carriers | **2** |
+| rows with `approved_at` | **1** — and it is the **same day** as its `first_scope_at` |
+| rows with `filed_at` | **0** — the column exists and nothing writes it |
+
+"State Farm usually takes N days", computed from one same-day pair, is a number
+with a decimal point and no evidence under it — the exact thing the Desk's own
+honesty core refuses to do with citations. So the thresholds are a **stated
+Cardinal follow-up policy**, in one named place, and the screen says so.
+`CHASE_POLICY` is the single thing to replace when there is real history;
+`chaseDue()` reads nothing else.
+
+### What shipped
+
+**Before:** a bare day count and `days >= 30` adding a CSS class. A red tint
+counting to no particular date, on a list sorted by raw age.
+
+**Now**, every row says what it is counting to — `6 days overdue`,
+`chased 2d ago · next in 5` — and **the list sorts by how overdue a claim is**.
+That reordering is the point: a 40-day claim rung yesterday now falls *below* an
+18-day one nobody has touched. Raw age said the opposite, which is what shipped
+for the last 400 builds.
+
+Policy: supplement filed → **14** days then every **7**; awaiting release →
+**21** then every **10**.
+
+**"I chased them"** on each row asks how, then writes **both halves**:
+`claim_notes` (the human record of what was said, on the claim's existing
+thread) and `last_chased_at` (the state the clock reads). Deriving "when did we
+last chase" by pattern-matching note prose is the fragile version, and prose is
+not a schema. The note write may fail without losing the chase; the toast says
+which half landed.
+
+### ⚠ The prime doctrine, again — and it changed where the state lives
+
+`insurance_supplements` **already models filed → sent → answered**
+(`filed_at`, `sent_at`/`sent_to`, `responded_at`, `amount_approved`, `status`)
+and carries an unused **`responses` jsonb with zero readers and zero writers**.
+I nearly put the chase there and it is the wrong home: a supplement row only
+exists for the *supplement filed* half of the chase list, and the *awaiting
+release* half is an Invoiced job with **no supplement row at all**. Both halves
+need one clock, so the state is on the claim. `claim_chase.sql` says this at the
+schema too.
+
+### Three instrument faults, all caught, none of them by reasoning
+
+1. **A guard that could never succeed — the 567/569 class, exactly.**
+   `build()` repaints only `if(sig2 !== lastSig)`, and `sigOf()` is built from
+   counts and dollar totals. Recording a chase changes neither, so the signature
+   came back identical, `render()` never ran, and the row went on saying
+   *"6 days overdue"* straight after you told it you had called. **The gate
+   caught it**; `sigOf()` now carries a chase term.
+2. **A file-wide assertion that failed correct code.** `x.days >= 30` appears
+   **twice** and only one is mine — the other is build 1045's *Gone quiet*
+   kpqrow, an unrelated retail feature with its own 30-day rule. Replaced with
+   an exact delta plus an assertion that 1045's survivor is untouched. The
+   file's own "scope the assertion to the function, not the file" rule.
+3. **A picture caught what every assertion missed.** The new button takes
+   **116px of a 340px row**, so `.who` went **185px → 70px** and every sub-line
+   and due line clipped — *"6 days ov…"*, *"chased 2d …"*. Fourteen checks read
+   `textContent`, which is the full string however narrow the box is, and all
+   fourteen were happy. The action now drops to its own full-width line below
+   560px. **A `scrollWidth` check is in `gate_1056.mjs` so this class cannot
+   come back silently.**
+
+⚠️ **And the first defect tree for that new check was not a defect tree.** I
+removed only the media query — but `flex-wrap:wrap` sits on the base rule, so
+the button still wrapped and the check reported GREEN on what I had labelled a
+defect. **A negative control that does not reproduce the defect is worse than
+none**, because it certifies the instrument. The real tree removes the wrap too,
+and the check names all nine clipped strings with their pixel widths.
+
+**Gates:** `check_build.py` green (125 inline scripts, stamp 1054 → 1056, marker
++ negative control). `gate_1056.mjs` — seven checks driving the real hub in
+Chromium, asserting the chase on the **recorded writes** rather than on button
+state: **GREEN**, with **16 named failures on the 1055 control**, among them the
+old sort order printed as `Alvarez > Boyd > Renfrew` — precisely inverted.
+Byte-reproducible on re-run. No new `document.body` observer; no 14th
+scroll-lock writer.
