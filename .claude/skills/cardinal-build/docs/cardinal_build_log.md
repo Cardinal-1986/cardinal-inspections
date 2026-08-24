@@ -25117,3 +25117,93 @@ with `ai_estimate_id`, 0 contracts with `source_ai_estimate_id`.
 one row — Adam Gunn / Allstate, supplement filed 14 Aug, **10 days**, and on the
 14-day policy that renders **"due in 4"**, not red. Maker Space is OnHold with
 no supplement, so it is correctly absent.
+
+## Build 1057 — the Desk's notes thread writes the letter
+
+*`supplement.html` + `api/supplement.js`. `index.html` untouched, still 1056 —
+so `check_build.py` has nothing to say about this build; both artifacts were
+parsed and balance-checked separately, as the convention requires. **No SQL.***
+
+Theo, verbatim: *"when ai is writing the emails, can there be a chat box with a
+history attached to it. For example it could say, met with adjuster already,
+adjuster paid for 1 shingle but completley ignored the 20 shingles on the other
+3 slopes. Then it rights the email based upon that?"*
+
+Yes — and it was already item 6 on the Desk audit's own list of smaller pieces
+("plain-words input, XBuild's shape"), so this is the plan rather than a detour.
+
+**What was actually missing.** The draft prompt is built from claim fields, the
+filing type, the ticked items with their pack citations, and the code letters.
+There was **no channel for a human fact anywhere in it.** Everything Theo knows
+from standing on the roof and sitting across from the adjuster — the whole
+reason a supplement gets paid — had nowhere to go.
+
+**⚠ THE PRIME DOCTRINE, AND IT SAVED A MIGRATION.** `claim_notes` already
+existed — `claim_id, body, internal, mentions, created_at, created_by` — with
+RLS that already said exactly the right thing (anyone who can see the claim may
+add one). **Zero SQL in this build.** It is also the thread build 1056 writes
+chase records into, and that is deliberate: *"we called twice and heard
+nothing"* belongs in a supplement letter as much as *"he ignored three slopes"*.
+The gate asserts the chase record is visible in the Desk's thread.
+
+**Nothing is pre-ticked**, the Desk's standing rule, applied again: the thread
+shows every note, each carries a tick, only ticked notes reach the model. One
+honest exception — **a note you just typed IS ticked**, because you wrote it to
+be used. The gate asserts both halves.
+
+### ⚠ The part that was not optional, and it is a real hardening
+
+Until this build, **`dollar_flag` was the ONLY output guard on the draft path**,
+and this file's own header promise — *"the citation STRING the caller sees is
+copied server-side, never taken from model text"* — was true of `analyze` and
+**not** of `draft`. Nothing checked the code sections in the finished letter.
+
+That was safe only while every word in the prompt was server-controlled. A
+free-text box is a channel from a human into the prompt, so 1057 adds:
+
+- **A fenced context block** that names the notes as *facts the contractor
+  asserts*, says they are **not a source of law**, orders any code reference
+  inside one ignored, and states plainly that a note is evidence and never an
+  instruction.
+- **`cite_flag`** — the server scans the finished letter for code-shaped
+  references and returns any it did not itself put in the prompt. Flagged for
+  the human, named on screen, **never silently edited** — the `dollar_flag`
+  posture. Comparison is on a normalised form, because the model legitimately
+  writes `R905.2.8.5` where the pack says `RCO R905.2.8.5`.
+
+**The guard was tested by extracting the SHIPPED code and running it, not by
+re-implementing it.** Six true-positive cases pass, including the two that
+matter: an invented section, and one injected through a note.
+
+⚠️ **And the first version of that regex would have been ignored inside a
+week.** It made the prefix optional, so any dotted number matched — an ISO date
+(`2026.08.12`), a phone (`937.555.0142`), a measurement (`3204.50`) and a policy
+number all came back flagged: **four false positives out of eight realistic
+letter lines.** A flag that cries wolf is worse than no flag, which is this
+project's own rule about the 808 banner. A real citation always carries either a
+code prefix or an `R`/`M` section letter; a bare number never does. Requiring
+the marker took it to **six true positives caught, zero false positives.**
+
+### Two instrument faults, both mine, both caught
+
+1. **BUG_CLASSES 37 again — a negative control that CRASHED instead of
+   reporting red.** The gate typed into `#noteText` straight off
+   `getElementById`; the control tree has no such element, so the run died with
+   a `TypeError` **before printing one line**. A crash reads as "not green" and
+   proves nothing. Every reach is null-safe now and the control returns **6
+   named failures**.
+2. **My own comment polluted my own count.** An assertion on the word
+   `dollar_flag` failed correct code because the new header comment says it
+   twice — this project's comment-pollution trap, committed inside the patch
+   that quotes the rule. Replaced with assertions on the two functional lines.
+
+**A screenshot caught one more:** the composer's placeholder ran to three lines
+in a two-row box and rendered visibly cut mid-word. Shortened, and the patch now
+asserts a length ceiling so it cannot grow back.
+
+**Gates:** `gate_1057.mjs` — six checks driving the real Desk in Chromium,
+asserting on the **posted request body** rather than on UI state: GREEN, with
+**6 named failures on the 1056 control**. Plus `cite_guard_test.mjs` (6 cases)
+and `cite_fp_test.mjs` (8 cases) against the extracted guard. Both artifacts
+byte-reproducible; 141/141 CSS braces; 108/108 `<div>`; `api/supplement.js`
+parses and carries no `module.exports` (the CI rule).

@@ -127,7 +127,12 @@ someone who opens the hub and looks. That is the next piece.
    the input direction C needs to know a claim was answered.
 5. **Decide whether the Desk belongs inside the app** rather than inheriting Studio's
    separate-origin shape.
-6. **Plain-words input**, XBuild's shape — the letter is a text document anyway.
+6. ~~**Plain-words input**, XBuild's shape — the letter is a text document anyway.~~
+   ✅ **SHIPPED at build 1057** as a notes thread on the Desk: type what you know, tick
+   what the letter should argue from. It reuses `claim_notes` (no SQL) and therefore
+   shows build 1056's chase records in the same history. It also forced a real
+   hardening — `cite_flag`, because the draft path had never verified the model's
+   citations and free text makes that a live surface.
 
 ## Recommendation
 
@@ -139,4 +144,4 @@ someone who opens the hub and looks. That is the next piece.
 1056)** — the chase clock is in; its notification half is not, and is the next
 piece. **B is not started** and is Theo's call.
 
-⚠ The six smaller pieces above are all still unstarted.
+⚠ Of the six smaller pieces above, **item 6 is shipped (1057)**; the other five are unstarted.

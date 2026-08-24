@@ -1,6 +1,6 @@
 <!--
   ═══════════════════════════════════════════════════════════════════════════
-  THE SUPPLEMENT DESK · supplement.html · build 1055 (24 Aug 2026)
+  THE SUPPLEMENT DESK · supplement.html · build 1057 (24 Aug 2026)
   (the Desk shipped at build 668 · 10 Aug 2026; the evidence table landed at 1055)
   ═══════════════════════════════════════════════════════════════════════════
 
@@ -189,6 +189,24 @@
   .gap .qtyrow input{ width:90px; background:var(--sd-sunk); border:1px solid var(--sd-line); color:var(--sd-ink);
     border-radius:6px; padding:6px 8px; font-size:13px; }
   .gap .phbtn{ background:none; border:1px dashed var(--sd-line); color:var(--sd-ink2); border-radius:6px; padding:5px 10px; font-size:12px; }
+.notes{ margin:16px 0 4px; padding:14px; border:1px solid var(--sd-line); border-radius:10px;
+    background:var(--sd-panel2); }
+  .notes h3{ margin:0 0 4px; font-size:13.5px; }
+  .notes .sub{ margin:0 0 10px; }
+  #noteList{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+  .nrow{ display:flex; gap:9px; align-items:flex-start; padding:9px 10px; border-radius:8px;
+    border:1px solid var(--sd-line); background:var(--sd-panel); }
+  .nrow.on{ border-color:var(--sd-ok); }
+  .nrow input{ margin:2px 0 0; width:18px; height:18px; flex:0 0 auto; }
+  .nrow .nb{ flex:1; min-width:0; }
+  .nrow .nbody{ font-size:13px; line-height:1.45; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .nrow .nwho{ display:block; margin-top:3px; font-size:11px; color:var(--sd-ink3); }
+  .notecompose{ display:flex; gap:8px; align-items:flex-start; }
+  .notecompose textarea{ flex:1; min-width:0; resize:vertical; font:inherit; font-size:13px;
+    padding:9px 10px; border-radius:8px; border:1px solid var(--sd-line);
+    background:var(--sd-sunk); color:var(--sd-ink); }
+  .notecompose .btn{ flex:0 0 auto; min-height:44px; }
+  @media (max-width:560px){ .notecompose{ flex-wrap:wrap; } .notecompose .btn{ flex:1 0 100%; } }
   .gap .phcount{ color:var(--sd-ok); font-size:12px; }
 
   .btn{ background:var(--sd-red); color:var(--sd-red-ink); border:0; border-radius:7px; padding:11px 18px; font-weight:700; font-size:13.5px; }
@@ -288,7 +306,7 @@
   <header class="sd-hd">
     <span class="wordmark">Cardinal</span>
     <span class="ttl">Supplement Desk</span>
-    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1055</span>
+    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1057</span>
     <span class="sp"></span>
     <a class="sd-back" id="homeLink" href="/" title="Back to the Cardinal app">&larr; Cardinal</a>
     <button id="themeBtn" type="button">Theme</button>
@@ -379,6 +397,22 @@
           Carriers deny on documentation more often than on the damage itself, so an item missing a photograph or a
           number is held back until it has one, or until you override it.</p>
         <div id="gapList"></div>
+
+        <div class="notes" id="notesBox">
+          <h3>What you know that the scope does not say</h3>
+          <p class="sub">Anything you would tell the adjuster out loud &mdash; that you already met, that he
+            paid one shingle and passed over three slopes, that the ridge was walked twice. Tick a note and
+            the letter is written around it. Nothing is ticked by itself, and an un-ticked note is kept but
+            never sent. This is the claim&rsquo;s own note thread, so chases you record on the insurance home
+            show up here too.</p>
+          <div id="noteList"><div class="sd-empty">Loading notes&hellip;</div></div>
+          <div class="notecompose">
+            <textarea id="noteText" rows="2" placeholder="Met the adjuster 12 Aug &mdash; he allowed one shingle and passed over three slopes."></textarea>
+            <button type="button" class="btn ghost" id="noteAdd">Add</button>
+          </div>
+          <span class="note" id="noteMsg"></span>
+        </div>
+
         <div class="btnrow">
           <button class="btn" id="draftBtn" disabled>Draft the letter</button>
           <span class="note" id="draftNote"></span>
@@ -390,6 +424,7 @@
         <p class="sub">Edit anything. Quantities only — the letter asks the carrier to price per their own Xactimate
           list. Photo markers become the actual photographs when printed or sent.</p>
         <div class="warnbar" id="dollarWarn">This draft contains a dollar amount. House rule is quantities-only — take the number out or own it deliberately.</div>
+        <div class="warn" id="citeWarn" style="display:none;">This letter names a code section the Desk did not give it: <b id="citeWarnList"></b>. Cardinal’s templates are the only citations the Desk stands behind — check it against the code before this goes out, or take it out.</div>
         <input id="subjEdit" placeholder="Subject">
         <div id="letterEdit" contenteditable="true"></div>
         <div class="btnrow">
@@ -426,7 +461,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
-var SD_BUILD = 1055; window.SD_BUILD = SD_BUILD;
+var SD_BUILD = 1057; window.SD_BUILD = SD_BUILD;
 /* Same publishable anon key api/*.js falls back to — public by design. */
 var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -446,6 +481,7 @@ var S = {
   scopeDocs: [], scopeDoc: null,        /* chosen inspection_reports row (id/title only until read) */
   photos: [],                            /* project_photos + _src thumbs */
   gaps: [],                              /* the reviewed items */
+  notes: [], noteOn: {},                 /* 1057: claim_notes + which are ticked into the letter */
   letter: null,                          /* {subject, letter_html, dollar_flag} */
   filings: [],
   filedId: null,                         /* 671: the row a send is recorded against */
@@ -561,16 +597,106 @@ async function explainEmpty(){
 }
 
 /* ── the desk ─────────────────────────────────────────────────────────────── */
+el('noteAdd').addEventListener('click', addNote);
 el('backBtn').addEventListener('click', function(){
   el('deskView').style.display = 'none'; el('claimsView').style.display = 'block';
   el('backBtn').style.display = 'none';
   S.claim = null; S.gaps = []; S.letter = null; S.scopeDoc = null;
+  S.notes = []; S.noteOn = {};
   el('gapsCard').style.display = 'none'; el('letterCard').style.display = 'none';
   step(1);
   loadClaims();
 });
 function step(n){
   [1,2,3,4].forEach(function(i){ el('stp' + i).classList.toggle('on', i <= n); });
+}
+/* ── the note thread ──────────────────────────────────────────────────────
+   claim_notes already existed and already had the right RLS (anyone who can
+   see the claim may add one), so this build adds NO SQL. It is the same thread
+   build 1056 writes chase records into — on purpose. */
+async function loadNotes(){
+  S.notes = []; S.noteOn = {};
+  if(!S.claim){ renderNotes(); return; }
+  var r = await sb.from('claim_notes')
+    .select('id, body, created_at, created_by')
+    .eq('claim_id', S.claim.id)
+    .order('created_at', { ascending: false }).limit(50);
+  if(r.error){
+    el('noteList').innerHTML = '<div class="sd-empty">Could not load notes: ' + esc(r.error.message) + '</div>';
+    return;
+  }
+  S.notes = r.data || [];
+  renderNotes();
+}
+function whenTxt(iso){
+  var d = new Date(iso);
+  if(isNaN(d)) return '';
+  var days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if(days <= 0) return 'today';
+  if(days === 1) return 'yesterday';
+  if(days < 30) return days + ' days ago';
+  return d.toISOString().slice(0, 10);
+}
+function renderNotes(){
+  var host = el('noteList');
+  if(!host) return;
+  if(!S.notes.length){
+    host.innerHTML = '<div class="sd-empty">Nothing written down yet. What you type here is what the ' +
+      'letter argues from.</div>';
+    syncDraftBtn();
+    return;
+  }
+  host.innerHTML = S.notes.map(function(n){
+    var on = !!S.noteOn[n.id];
+    return '<label class="nrow' + (on ? ' on' : '') + '" data-note="' + esc(n.id) + '">' +
+      '<input type="checkbox"' + (on ? ' checked' : '') + '>' +
+      '<span class="nb"><span class="nbody">' + esc(n.body || '') + '</span>' +
+      '<small class="nwho">' + esc(n.created_by || 'someone') + ' · ' + esc(whenTxt(n.created_at)) + '</small></span>' +
+      '</label>';
+  }).join('');
+  host.querySelectorAll('.nrow').forEach(function(row){
+    var box = row.querySelector('input');
+    box.onchange = function(){
+      var id = row.dataset.note;
+      if(box.checked) S.noteOn[id] = true; else delete S.noteOn[id];
+      row.classList.toggle('on', box.checked);
+      syncDraftBtn();
+    };
+  });
+  syncDraftBtn();
+}
+/* the notes the human ticked, oldest first — a letter reads better when the
+   history runs forwards even though the thread shows newest at the top */
+function pickedNotes(){
+  return S.notes.filter(function(n){ return S.noteOn[n.id]; })
+    .slice().reverse()
+    .map(function(n){ return String(n.body || '').trim(); })
+    .filter(Boolean);
+}
+async function addNote(){
+  var t = el('noteText');
+  var body = String(t.value || '').trim();
+  if(!body) return;
+  var btn = el('noteAdd');
+  btn.disabled = true; el('noteMsg').textContent = 'Saving…';
+  var r = await sb.from('claim_notes')
+    .insert({ claim_id: S.claim.id, body: body, internal: true })
+    .select('id, body, created_at, created_by');
+  btn.disabled = false;
+  if(r.error){ el('noteMsg').textContent = 'Could not save that note: ' + r.error.message; return; }
+  el('noteMsg').textContent = '';
+  t.value = '';
+  var row = (r.data && r.data[0]) || null;
+  if(row){
+    /* a note you just typed IS ticked — you wrote it to be used. An older one
+       still is not: that is the Desk's nothing-is-pre-ticked rule, and this is
+       the one honest exception to it. */
+    S.notes.unshift(row);
+    S.noteOn[row.id] = true;
+  } else {
+    await loadNotes(); return;
+  }
+  renderNotes();
 }
 async function openDesk(claimId){
   var c = S.claims.find(function(x){ return x.id === claimId; });
@@ -581,6 +707,7 @@ async function openDesk(claimId){
   el('gapsCard').style.display = 'none'; el('letterCard').style.display = 'none';
   step(1);
   el('deskWho').textContent = c.homeowner_name || 'Claim';
+  loadNotes();   /* 1057: fire and forget — the thread fills in beside the scope read */
   el('deskMeta').textContent = (c.carrier || '') + (c.claim_number ? ' · #' + c.claim_number : '') +
     (c.adjuster_name ? ' · Adjuster: ' + c.adjuster_name : '');
   el('deskKv').innerHTML =
@@ -1093,6 +1220,9 @@ async function draft(){
           address: S.claim.property_address || (S.project && S.project.address) || ''
         },
         code_letters: clSelected(),
+        /* 1057: what the human knows. The route fences these as ASSERTED FACTS
+           and never as a source of citations — see api/supplement.js. */
+        context: pickedNotes(),
         items: items.map(function(g){ return { id: g.id, item: g.item, why: g.why, pack_id: g.pack_id, qty: g.qty, unit: g.unit }; })
       })
     });
@@ -1103,6 +1233,14 @@ async function draft(){
     el('subjEdit').value = j.subject || '';
     el('letterEdit').innerHTML = decorateTokens(j.letter_html || '');
     el('dollarWarn').style.display = j.dollar_flag ? 'block' : 'none';
+    /* 1057: a code reference the server did not supply. Never edited out —
+       shown, named, and left for the human, exactly like the dollar flag. */
+    var cw = el('citeWarn');
+    if(cw){
+      var bad = (j.cite_flag && j.cite_flag.length) ? j.cite_flag : null;
+      cw.style.display = bad ? 'block' : 'none';
+      if(bad) el('citeWarnList').textContent = bad.join(', ');
+    }
     step(3);
     el('letterCard').scrollIntoView({ behavior: 'smooth' });
     el('draftNote').textContent = '';
