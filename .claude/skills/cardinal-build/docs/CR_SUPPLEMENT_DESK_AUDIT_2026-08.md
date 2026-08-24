@@ -79,10 +79,16 @@ checks that the quantity is supported.** That is the whole overhaul thesis.
 
 ## Three directions — halves of one Desk, not alternatives
 
-**A · The evidence table.** Every gap item carries three legs — photo, measurement,
-citation — shown as chips, and the Desk refuses to send an item with a hole. Smallest
-of the three: the gap list, the photo picker and the measurement read all exist; what
-is missing is the join and the refusal.
+**A · The evidence table. ✅ SHIPPED at build 1055** — Theo: *"Start the desk."*
+Every gap item carries three legs — photo, measurement, citation — shown as chips, and
+the Desk refuses to send an item with a hole. **Code backing ended up GRADED rather
+than required**, because a trade-practice item has no citation to find and the human
+decides whether it still belongs; photo and quantity are the two that block. The
+refusal is enforced at `syncDraftBtn()`, `draft()` **and** `fileSupplement()` — a
+button's disabled attribute is not a gate. `Include anyway` arms a blocked item and
+leaves an amber marker naming what it went without. See `FEATURES.md` and the build
+log for what else the build repaired on the way (no light twin for three state tokens,
+a phone header that had overflowed since 668, and no build stamp at all).
 
 **B · Start from the photographs, not the PDF.** Theo's own earlier note: *"box for ai
 and use pictures to supplement the estimate with captions and an overview."* Today the
@@ -90,11 +96,22 @@ Desk is dead until a scope arrives — week three of a claim. Flip it: open on t
 photos, AI marks, a person confirms (The Walk's rule), and the scope when it lands is
 used to **subtract** what is already funded.
 
-**C · The Desk that chases.** The half nobody in the market has, and the half the
-insurance audit (1052–1054) just found missing: `chaseList()` has ages but no
-thresholds, and **all 31 notification sites in the app are production** — zero on
-insurance. Filed → sent → chased → answered → paid, with per-carrier pace computed
-from Cardinal's own `first_scope_rcv` → `approved_rcv` history.
+**C · The Desk that chases. ⚠ PARTLY SHIPPED at build 1056 — and this entry's own
+premise turned out to be wrong.** The chase clock is built: `chaseList()` now has
+stated thresholds, every row says what it is counting to, the list sorts by how
+overdue a claim is, and `I chased them` records the follow-up.
+
+**But "per-carrier pace computed from Cardinal's own history" is not buildable and
+should not be attempted until there is history.** Measured on production 24 Aug:
+five `insurance_claims` rows, three of them orphans with no project or carrier;
+two real claims; two carriers; ONE `approved_at`, falling on the same day as its
+`first_scope_at`; zero `filed_at`. An average from that is fiction. Build 1056
+uses a stated Cardinal follow-up policy instead, in one named constant
+(`CHASE_POLICY`), which is the single thing to replace later.
+
+**Still open from C:** the notifications. All notify sites in the app remain
+production/retail — **zero on insurance** — so an overdue claim is visible only to
+someone who opens the hub and looks. That is the next piece.
 
 ## Smaller pieces — all already in the repo
 
@@ -118,4 +135,8 @@ from Cardinal's own `first_scope_rcv` → `approved_rcv` history.
 **then C** (the market gap, and it reuses the chase/notification work already scoped),
 **then B** (biggest change; better built on A's evidence model than beside it).
 
-⚠ **Nothing is started.** Theo asked for previews and ideas, and this is that.
+**Status, 24 Aug 2026:** **A is shipped (build 1055).** **C is half shipped (build
+1056)** — the chase clock is in; its notification half is not, and is the next
+piece. **B is not started** and is Theo's call.
+
+⚠ The six smaller pieces above are all still unstarted.

@@ -3782,7 +3782,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1054 &#8212; the insurance home and the client list now agree. Tapping &#8220;Claim Filed&#8221;, &#8220;Adjuster Pending&#8221; or &#8220;On Hold&#8221; on the hub used to open a filtered list with nothing on screen saying what it was filtered to; those three now have their own buttons. &#8220;Supplement Filed&#8221; used to clear the filter instead of applying it. And the stage buttons use the short wording, so the strip fits a phone.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1056 &#8212; the chase list counts to a deadline, and you can say you chased now agree. Tapping &#8220;Claim Filed&#8221;, &#8220;Adjuster Pending&#8221; or &#8220;On Hold&#8221; on the hub used to open a filtered list with nothing on screen saying what it was filtered to; those three now have their own buttons. &#8220;Supplement Filed&#8221; used to clear the filter instead of applying it. And the stage buttons use the short wording, so the strip fits a phone.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41398,6 +41398,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1056, d:'2026-08-24', t:'The chase list counts to something', s:'The insurance home\u2019s chase list used to show a bare number of days and turn red at thirty \u2014 a colour with nothing behind it, counting to no particular date. Every row now says what it is counting to: \u201C10 days \u00b7 due in 4\u201D, \u201C18 days \u00b7 4 overdue\u201D, or \u201Cchased 3d ago \u00b7 next in 4\u201D. The deadlines are Cardinal\u2019s own follow-up policy, written in one place \u2014 fourteen days on a filed supplement then every seven, twenty-one on money awaiting release then every ten \u2014 and they are deliberately NOT a per-carrier average, because there is not enough claim history yet to compute one that would mean anything (two carriers, one settled date). Each row also gets an \u201CI chased them\u201D button: it asks how you chased them, writes it into the claim\u2019s notes, and resets that claim\u2019s clock to the follow-up interval so the list stops nagging about a call you already made. The list now sorts by how overdue a claim is rather than by raw age, so a thirty-day claim you rang yesterday drops below an eighteen-day one nobody has touched.' },
 { b:1054, d:'2026-08-24', t:'The insurance hub and the client list agree', s:'The pipeline on the insurance home has nine rows and every one of them is tappable, but the client list it opens only had buttons for six. Tapping \u201cClaim Filed\u201d, \u201cAdjuster Pending\u201d or \u201cOn Hold\u201d gave you a correctly filtered list with nothing lit up to say so \u2014 not even \u201cAll\u201d \u2014 so there was no way to tell what you were looking at or how to get back. Those three now have buttons of their own, in pipeline order. \u201cSupplement Filed\u201d, the row that carries the money you are chasing, did the opposite: tapping it cleared the filter and showed every claim. It now opens the supplements you have filed. And the stage buttons use the short wording (\u201cAwaiting Depreciation\u201d rather than the full phrase), which the app has had for months but was not using here \u2014 the long one alone was a 242-pixel button on a phone.' },
 { b:1053, d:'2026-08-24', t:'The insurance screens fit a phone', s:'Three things, all measured on an iPhone-width screen. The title at the top of the page was centred on the whole bar rather than on the gap between the buttons, so on a narrow phone the last letters ran underneath the home button \u2014 13 pixels of overlap at iPhone width and 28 on a smaller Android. It now sits in the space between them and shortens with a \u2026 if it has to. \u201cDEDUCTIBLE\u201d on a claim was breaking across two lines mid-word, the same thing the trade checkboxes were doing; its column is wider now. And eighteen buttons were under the size a finger can reliably hit \u2014 worst of all the two \u201cBack\u201d links out of a claim and the adjuster list, which were seventeen pixels tall and are the only way off those screens. All eighteen are now at least 44 pixels. Nothing moved on the retail or community side.' },
 { b:1052, d:'2026-08-24', t:'The insurance CRM can be read', s:'Open a claim and the client\u2019s name was white on a cream card \u2014 not faint, invisible. The phone number, email, the ADDRESS / CARRIER / CLAIM # / DEDUCTIBLE labels, the PO chip, the money figure and the three buttons on the Payments page were all drawn in the dark app\u2019s colours while the insurance pages are cream, so they ranged from hard to impossible to read. They now take their colour from the insurance theme itself, which means they follow it whichever way you switch it. Two more, both app-wide: the coloured stage banner across the top of a job had white text on light green, yellow or teal \u2014 under the readable limit on every single stage \u2014 and now uses the darker shade of the same colour; and the \u201cno contract yet\u201d box on Payments got a darker caption. Nothing on the retail or community side changed.' },
@@ -55221,7 +55222,7 @@ window.CardinalSupplement = { render: render, open: openModal };
    Chromium never showed this - it scrolls the pane on wheel input either way,
    which is why the audit had to walk the parsed rules instead. */
 #cardinalTruthView{-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-#cardinalTruthView .ins-body.cr-cth{background:var(--ct-bg,#FAF8F7);padding:0}.cr-cth-rail{contain:paint}.cr-cth-wrap{position:relative;max-width:580px;margin:0 auto;padding:22px 18px calc(56px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}.cr-cth-wrap{position:relative}.cr-cth-owed{position:relative;background:linear-gradient(160deg,var(--ct-surface-2),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;box-shadow:0 0 0 1px var(--ct-focus),0 0 22px var(--ct-focus);padding:22px 22px 20px;overflow:hidden}.cr-cth-owed::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ct-warn)}.cr-cth-owed .lbl{font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-warn)}.cr-cth-owed .fig{font:700 clamp(36px,10.5vw,50px)/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.03em;color:var(--ct-ink);margin:10px 0 8px}.cr-cth-owed .note{font-size:13px;line-height:1.5;color:var(--ct-ink-2)}.cr-cth-owed .note b{color:var(--ct-ink);font-weight:700}.cr-cth-owed .split{display:flex;gap:18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--ct-warn-bg)}.cr-cth-owed .split div{flex:1;min-width:0}.cr-cth-owed .split .k{font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-owed .split .v{font:700 16px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn);margin-top:4px}.cr-cth-stats{display:grid;gap:9px;margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.cr-cth-stat{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:14px 15px;min-width:0}.cr-cth-stat .l{font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-stat .v{font:700 21px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.02em;margin-top:6px;color:var(--ct-ink)}.cr-cth-stat.up .v{color:var(--ct-red-deep)}.cr-cth-stat .s{font-size:11px;color:var(--ct-ink-2);margin-top:3px;line-height:1.35}.cr-cth-stat .top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}.cr-cth-stat .ic{font-size:14px;color:var(--ct-ink-2);opacity:.55;line-height:1}.cr-cth-tabs{display:flex;gap:20px;/* 984: WRAP, do not clip. gap:20px sets BOTH axes in flexbox, so row-gap is overridden below. flex-wrap only wraps when the content actually overflows, so this needs no media query: measured 2 rows at 360/390/414 and 1 row unchanged at 430+. Before 984 the strip fitted with EXACTLY 0px slack at one-digit counts, so any real count clipped the last tab, and scrollbar-width:none left no affordance that anything was hidden. 983 made it 11px worse by making font-weight:700 actually apply. */flex-wrap:wrap;row-gap:4px;margin-bottom:18px;padding-bottom:2px;border-bottom:1px solid var(--ct-line);overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-cth-tabs::-webkit-scrollbar{display:none}.cr-cth-tabs button{flex:0 0 auto;background:transparent;border:0;border-bottom:2px solid transparent;padding:0 0 10px;margin-bottom:-1px;font-weight:700;font-size:13px;color:var(--ct-ink-2);cursor:pointer;white-space:nowrap}.cr-cth-tabs button.on{color:var(--ct-ink);border-bottom-color:var(--ct-red)}.cr-cth-tabs button b{font-weight:700;margin-left:5px;opacity:.7}.cr-cth-rule{display:flex;align-items:center;gap:12px;margin:28px 0 4px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ct-line-strong),transparent)}.cr-cth-rail{position:relative;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 6px 12px;box-shadow:0 2px 10px rgba(0,0,0,.28)}.cr-cth-stage{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:15px 14px 15px 30px;background:transparent;border:0;text-align:left;cursor:pointer;font-family:inherit;color:var(--ct-ink);border-radius:10px;transition:background .15s}.cr-cth-stage:hover{background:var(--ct-surface-2)}.cr-cth-stage:focus-visible{outline:2px solid var(--ct-red);outline-offset:-2px}.cr-cth-stage::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--ct-bg);border:2px solid var(--ct-red);z-index:1}.cr-cth-stage::after{content:'';position:absolute;left:10px;top:50%;bottom:-50%;width:1px;background:linear-gradient(180deg,var(--ct-red),var(--ct-red-deep));opacity:.45}.cr-cth-stage:last-of-type::after{display:none}.cr-cth-stage .nm{flex:1;min-width:0}.cr-cth-stage .nm b{display:block;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15.5px;letter-spacing:.01em;line-height:1.25}.cr-cth-stage .nm small{display:block;font-size:11.5px;color:var(--ct-ink-2);margin-top:2px;line-height:1.4}.cr-cth-stage .ct{flex:0 0 auto;min-width:26px;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-cth-stage .amt{flex:0 0 auto;min-width:88px;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);letter-spacing:-.01em}.cr-cth-stage .amt.zero{color:var(--ct-ink-2)}.cr-cth-stage.flag::before{background:var(--ct-warn);border-color:var(--ct-warn);box-shadow:0 0 0 4px var(--ct-line)}.cr-cth-stage.flag{background:var(--ct-surface-3)}.cr-cth-stage.flag .nm b{color:var(--ct-ink)}.cr-cth-stage.flag .amt{color:var(--ct-warn)}.cr-cth-stage.flag.recovered .amt{color:var(--ct-red-deep)}.cr-cth-stage .tag{position:absolute;right:14px;top:8px;font:800 7.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-warn);opacity:.8}.cr-cth-term{display:flex;gap:9px;margin-top:14px;padding-left:6px}.cr-cth-term button{flex:1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink-2);transition:border-color .15s,color .15s}.cr-cth-term button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink)}.cr-cth-term button b{font-weight:700;font-size:12px;letter-spacing:.02em}.cr-cth-term button span{font:700 15px ui-monospace,'SF Mono',Menlo,monospace}.cr-cth-term button.denied b,.cr-cth-term button.denied span{color:var(--ct-red-deep)}.cr-cth-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}/* 675: the lead button under the stats. Same grid, same button styling — one cell spanning both columns, and its entrance pulled forward because it now sits above the fold instead of at the end of the page. */.cr-cth-tools.lead{margin-top:14px}.cr-cth-tools.lead{animation-delay:.14s}.cr-cth-tools button.wide{grid-column:1/-1}.cr-cth-tools button{display:flex;align-items:center;gap:10px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:15px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:border-color .15s,background .15s}.cr-cth-tools button:hover{border-color:var(--ct-line-strong);background:var(--ct-surface-2)}.cr-cth-tools button.primary{border-color:var(--ct-red);background:var(--ct-surface-2)}.cr-cth-tools button .i{font-size:17px;flex:0 0 auto}.cr-cth-tools button .x{flex:1;min-width:0}.cr-cth-tools button .x b{display:block;font-weight:700;font-size:13px}.cr-cth-tools button .x small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px}@media (prefers-reduced-motion:no-preference){.cr-cth-owed,.cr-cth-stats,.cr-cth-stage,.cr-cth-term,.cr-cth-tools{opacity:0;animation:crCthRise .44s cubic-bezier(.22,.9,.3,1) forwards}.cr-cth-owed{animation-delay:.04s}.cr-cth-stats{animation-delay:.10s}.cr-cth-stage:nth-of-type(1){animation-delay:.20s}.cr-cth-stage:nth-of-type(2){animation-delay:.25s}.cr-cth-stage:nth-of-type(3){animation-delay:.30s}.cr-cth-stage:nth-of-type(4){animation-delay:.35s}.cr-cth-stage:nth-of-type(5){animation-delay:.40s}.cr-cth-stage:nth-of-type(6){animation-delay:.45s}.cr-cth-stage:nth-of-type(7){animation-delay:.50s}.cr-cth-stage:nth-of-type(8){animation-delay:.55s}.cr-cth-term{animation-delay:.62s}.cr-cth-tools{animation-delay:.68s}@keyframes crCthRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}#insClientsView{background:var(--ct-bg) !important;color:var(--ct-ink)}#insClientsView .ins-body{background:var(--ct-bg,#FAF8F7) !important}#insClientsView .ins-search input,#insClientsView input[type="search"],#insClientsView input[type="text"]{background:var(--ct-surface) !important;color:var(--ct-ink) !important;border:1px solid var(--ct-line) !important}#insClientsView input::placeholder{color:var(--ct-ink-2) !important}#insClientsView .ins-count{color:var(--ct-ink-2) !important}#insClientsView .card,#insClientsView .ins-card{background:var(--ct-surface) !important;border-color:var(--ct-line) !important;color:var(--ct-ink) !important}#insClientsView .card small,#insClientsView .ins-cardsub{color:var(--ct-ink-2) !important}@media (min-width:900px){.cr-cth-wrap{max-width:1180px;padding-left:26px;padding-right:26px}.cr-cth-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:26px;align-items:start}.cr-cth-b1{grid-column:1;grid-row:1}.cr-cth-b2{grid-column:2;grid-row:1 / span 2}.cr-cth-b3{grid-column:1;grid-row:2}.cr-cth-tools{grid-template-columns:1fr 1fr}}@media (min-width:1240px){.cr-cth-stats{grid-template-columns:repeat(3,1fr)}}.cr-cth-chase{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 10px;margin-top:10px}.cr-cth-chaserow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:transparent;border:0;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:background .15s}.cr-cth-chaserow:hover{background:var(--ct-surface-2)}.cr-cth-chaserow .days{flex:0 0 auto;min-width:52px;text-align:center;border-radius:8px;padding:6px 4px;background:var(--ct-surface-3)}.cr-cth-chaserow .days b{display:block;font:700 17px ui-monospace,'SF Mono',Menlo,monospace;line-height:1;color:var(--ct-warn)}.cr-cth-chaserow .days small{display:block;font:700 7.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink-2);margin-top:3px}.cr-cth-chaserow.stale .days{background:var(--ct-red-wash)}.cr-cth-chaserow.stale .days b{color:var(--ct-red-deep)}.cr-cth-chaserow .who{flex:1;min-width:0}.cr-cth-chaserow .who b{display:block;font-weight:700;font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .who small{display:block;font-size:11.5px;color:var(--ct-ink-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .amt{flex:0 0 auto;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn)}.cr-cth-chaseempty{padding:20px 16px;text-align:center;font-size:13px;line-height:1.55;color:var(--ct-ink-2)}</style>
+#cardinalTruthView .ins-body.cr-cth{background:var(--ct-bg,#FAF8F7);padding:0}.cr-cth-rail{contain:paint}.cr-cth-wrap{position:relative;max-width:580px;margin:0 auto;padding:22px 18px calc(56px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}.cr-cth-wrap{position:relative}.cr-cth-owed{position:relative;background:linear-gradient(160deg,var(--ct-surface-2),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;box-shadow:0 0 0 1px var(--ct-focus),0 0 22px var(--ct-focus);padding:22px 22px 20px;overflow:hidden}.cr-cth-owed::after{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ct-warn)}.cr-cth-owed .lbl{font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-warn)}.cr-cth-owed .fig{font:700 clamp(36px,10.5vw,50px)/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.03em;color:var(--ct-ink);margin:10px 0 8px}.cr-cth-owed .note{font-size:13px;line-height:1.5;color:var(--ct-ink-2)}.cr-cth-owed .note b{color:var(--ct-ink);font-weight:700}.cr-cth-owed .split{display:flex;gap:18px;margin-top:14px;padding-top:13px;border-top:1px solid var(--ct-warn-bg)}.cr-cth-owed .split div{flex:1;min-width:0}.cr-cth-owed .split .k{font:800 8.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-owed .split .v{font:700 16px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn);margin-top:4px}.cr-cth-stats{display:grid;gap:9px;margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.cr-cth-stat{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:14px 15px;min-width:0}.cr-cth-stat .l{font:800 9px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-stat .v{font:700 21px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:-.02em;margin-top:6px;color:var(--ct-ink)}.cr-cth-stat.up .v{color:var(--ct-red-deep)}.cr-cth-stat .s{font-size:11px;color:var(--ct-ink-2);margin-top:3px;line-height:1.35}.cr-cth-stat .top{display:flex;align-items:flex-start;justify-content:space-between;gap:6px}.cr-cth-stat .ic{font-size:14px;color:var(--ct-ink-2);opacity:.55;line-height:1}.cr-cth-tabs{display:flex;gap:20px;/* 984: WRAP, do not clip. gap:20px sets BOTH axes in flexbox, so row-gap is overridden below. flex-wrap only wraps when the content actually overflows, so this needs no media query: measured 2 rows at 360/390/414 and 1 row unchanged at 430+. Before 984 the strip fitted with EXACTLY 0px slack at one-digit counts, so any real count clipped the last tab, and scrollbar-width:none left no affordance that anything was hidden. 983 made it 11px worse by making font-weight:700 actually apply. */flex-wrap:wrap;row-gap:4px;margin-bottom:18px;padding-bottom:2px;border-bottom:1px solid var(--ct-line);overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-cth-tabs::-webkit-scrollbar{display:none}.cr-cth-tabs button{flex:0 0 auto;background:transparent;border:0;border-bottom:2px solid transparent;padding:0 0 10px;margin-bottom:-1px;font-weight:700;font-size:13px;color:var(--ct-ink-2);cursor:pointer;white-space:nowrap}.cr-cth-tabs button.on{color:var(--ct-ink);border-bottom-color:var(--ct-red)}.cr-cth-tabs button b{font-weight:700;margin-left:5px;opacity:.7}.cr-cth-rule{display:flex;align-items:center;gap:12px;margin:28px 0 4px;font:800 9.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.24em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-cth-rule::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--ct-line-strong),transparent)}.cr-cth-rail{position:relative;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 6px 12px;box-shadow:0 2px 10px rgba(0,0,0,.28)}.cr-cth-stage{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:15px 14px 15px 30px;background:transparent;border:0;text-align:left;cursor:pointer;font-family:inherit;color:var(--ct-ink);border-radius:10px;transition:background .15s}.cr-cth-stage:hover{background:var(--ct-surface-2)}.cr-cth-stage:focus-visible{outline:2px solid var(--ct-red);outline-offset:-2px}.cr-cth-stage::before{content:'';position:absolute;left:5px;top:50%;transform:translateY(-50%);width:11px;height:11px;border-radius:50%;background:var(--ct-bg);border:2px solid var(--ct-red);z-index:1}.cr-cth-stage::after{content:'';position:absolute;left:10px;top:50%;bottom:-50%;width:1px;background:linear-gradient(180deg,var(--ct-red),var(--ct-red-deep));opacity:.45}.cr-cth-stage:last-of-type::after{display:none}.cr-cth-stage .nm{flex:1;min-width:0}.cr-cth-stage .nm b{display:block;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:15.5px;letter-spacing:.01em;line-height:1.25}.cr-cth-stage .nm small{display:block;font-size:11.5px;color:var(--ct-ink-2);margin-top:2px;line-height:1.4}.cr-cth-stage .ct{flex:0 0 auto;min-width:26px;text-align:right;font:700 15px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-cth-stage .amt{flex:0 0 auto;min-width:88px;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);letter-spacing:-.01em}.cr-cth-stage .amt.zero{color:var(--ct-ink-2)}.cr-cth-stage.flag::before{background:var(--ct-warn);border-color:var(--ct-warn);box-shadow:0 0 0 4px var(--ct-line)}.cr-cth-stage.flag{background:var(--ct-surface-3)}.cr-cth-stage.flag .nm b{color:var(--ct-ink)}.cr-cth-stage.flag .amt{color:var(--ct-warn)}.cr-cth-stage.flag.recovered .amt{color:var(--ct-red-deep)}.cr-cth-stage .tag{position:absolute;right:14px;top:8px;font:800 7.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.18em;text-transform:uppercase;color:var(--ct-warn);opacity:.8}.cr-cth-term{display:flex;gap:9px;margin-top:14px;padding-left:6px}.cr-cth-term button{flex:1;display:flex;align-items:baseline;justify-content:space-between;gap:8px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:12px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink-2);transition:border-color .15s,color .15s}.cr-cth-term button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink)}.cr-cth-term button b{font-weight:700;font-size:12px;letter-spacing:.02em}.cr-cth-term button span{font:700 15px ui-monospace,'SF Mono',Menlo,monospace}.cr-cth-term button.denied b,.cr-cth-term button.denied span{color:var(--ct-red-deep)}.cr-cth-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}/* 675: the lead button under the stats. Same grid, same button styling — one cell spanning both columns, and its entrance pulled forward because it now sits above the fold instead of at the end of the page. */.cr-cth-tools.lead{margin-top:14px}.cr-cth-tools.lead{animation-delay:.14s}.cr-cth-tools button.wide{grid-column:1/-1}.cr-cth-tools button{display:flex;align-items:center;gap:10px;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:10px;padding:15px 14px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:border-color .15s,background .15s}.cr-cth-tools button:hover{border-color:var(--ct-line-strong);background:var(--ct-surface-2)}.cr-cth-tools button.primary{border-color:var(--ct-red);background:var(--ct-surface-2)}.cr-cth-tools button .i{font-size:17px;flex:0 0 auto}.cr-cth-tools button .x{flex:1;min-width:0}.cr-cth-tools button .x b{display:block;font-weight:700;font-size:13px}.cr-cth-tools button .x small{display:block;font-size:11px;color:var(--ct-ink-2);margin-top:2px}@media (prefers-reduced-motion:no-preference){.cr-cth-owed,.cr-cth-stats,.cr-cth-stage,.cr-cth-term,.cr-cth-tools{opacity:0;animation:crCthRise .44s cubic-bezier(.22,.9,.3,1) forwards}.cr-cth-owed{animation-delay:.04s}.cr-cth-stats{animation-delay:.10s}.cr-cth-stage:nth-of-type(1){animation-delay:.20s}.cr-cth-stage:nth-of-type(2){animation-delay:.25s}.cr-cth-stage:nth-of-type(3){animation-delay:.30s}.cr-cth-stage:nth-of-type(4){animation-delay:.35s}.cr-cth-stage:nth-of-type(5){animation-delay:.40s}.cr-cth-stage:nth-of-type(6){animation-delay:.45s}.cr-cth-stage:nth-of-type(7){animation-delay:.50s}.cr-cth-stage:nth-of-type(8){animation-delay:.55s}.cr-cth-term{animation-delay:.62s}.cr-cth-tools{animation-delay:.68s}@keyframes crCthRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}}#insClientsView{background:var(--ct-bg) !important;color:var(--ct-ink)}#insClientsView .ins-body{background:var(--ct-bg,#FAF8F7) !important}#insClientsView .ins-search input,#insClientsView input[type="search"],#insClientsView input[type="text"]{background:var(--ct-surface) !important;color:var(--ct-ink) !important;border:1px solid var(--ct-line) !important}#insClientsView input::placeholder{color:var(--ct-ink-2) !important}#insClientsView .ins-count{color:var(--ct-ink-2) !important}#insClientsView .card,#insClientsView .ins-card{background:var(--ct-surface) !important;border-color:var(--ct-line) !important;color:var(--ct-ink) !important}#insClientsView .card small,#insClientsView .ins-cardsub{color:var(--ct-ink-2) !important}@media (min-width:900px){.cr-cth-wrap{max-width:1180px;padding-left:26px;padding-right:26px}.cr-cth-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);column-gap:26px;align-items:start}.cr-cth-b1{grid-column:1;grid-row:1}.cr-cth-b2{grid-column:2;grid-row:1 / span 2}.cr-cth-b3{grid-column:1;grid-row:2}.cr-cth-tools{grid-template-columns:1fr 1fr}}@media (min-width:1240px){.cr-cth-stats{grid-template-columns:repeat(3,1fr)}}.cr-cth-chase{background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:20px;padding:6px 6px 10px;margin-top:10px}.cr-cth-chaserow{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:transparent;border:0;border-radius:10px;cursor:pointer;font-family:inherit;color:var(--ct-ink);text-align:left;transition:background .15s}.cr-cth-chaserow:hover{background:var(--ct-surface-2)}.cr-cth-chaserow .days{flex:0 0 auto;min-width:52px;text-align:center;border-radius:8px;padding:6px 4px;background:var(--ct-surface-3)}.cr-cth-chaserow .days b{display:block;font:700 17px ui-monospace,'SF Mono',Menlo,monospace;line-height:1;color:var(--ct-warn)}.cr-cth-chaserow .days small{display:block;font:700 7.5px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--ct-ink-2);margin-top:3px}.cr-cth-chasewrap{display:flex;flex-wrap:wrap;align-items:center;gap:6px;width:100%}.cr-cth-chasewrap>.cr-cth-chaserow{flex:1 1 auto;min-width:0}@media (max-width:560px){.cr-cth-chasewrap>.cr-cth-chasedid{flex:1 0 100%;margin:0 0 2px}.cr-cth-chasewrap{padding-bottom:4px}}.cr-cth-chasewrap.stale .days{background:var(--ct-red-wash)}.cr-cth-chasewrap.stale .days b{color:var(--ct-red-deep)}.cr-cth-chasewrap.stale .duetxt{color:var(--ct-red-deep);font-weight:700}.cr-cth-chaserow .duetxt{display:block;margin-top:1px;color:var(--ct-ink-2)}.cr-cth-chasedid{flex:0 0 auto;min-height:44px;padding:8px 12px;border-radius:9px;border:1px solid var(--ct-line,#E3DCD8);background:var(--ct-surface,#FFFFFF);color:var(--ct-red-deep,#7E1410);font:600 12px inherit;font-family:inherit;cursor:pointer}.cr-cth-chasedid:disabled{opacity:.6;cursor:default}.cr-cth-chaserow .who{flex:1;min-width:0}.cr-cth-chaserow .who b{display:block;font-weight:700;font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .who small{display:block;font-size:11.5px;color:var(--ct-ink-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-cth-chaserow .amt{flex:0 0 auto;text-align:right;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-warn)}.cr-cth-chaseempty{padding:20px 16px;text-align:center;font-size:13px;line-height:1.55;color:var(--ct-ink-2)}</style>
 <script id="cr-cth-script">
 
 (function(){
@@ -55279,7 +55280,8 @@ try{
 var r = await window.supa.from('insurance_claims')
 .select('id, project_id, carrier, approved_rcv, approved_acv, approved_depreciation, ' +
 'first_scope_rcv, deductible, deductible_waived, supplement_status, ' +
-'supplement_filed, supplement_approved, supplement_filed_at');
+'supplement_filed, supplement_approved, supplement_filed_at, ' +
+'last_chased_at, last_chased_by');
 if(!r.error && r.data){
 claimsByProject = {};
 r.data.forEach(function(c){
@@ -55376,6 +55378,80 @@ var d = new Date(iso);
 if(isNaN(d)) return null;
 return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
 }
+/* ── the chase clock ───────────────────────────────────────────────────
+   CARDINAL'S OWN FOLLOW-UP POLICY. Not a legal deadline and not a
+   per-carrier average — see the note below. `first` is how long a carrier
+   gets before the first chase; `again` is the interval after one.
+
+   ⚠ WHY NOT A PER-CARRIER AVERAGE, which is what the Desk audit asked for.
+   Measured on production 24 Aug 2026: five insurance_claims rows, three of
+   them orphans with no project and no carrier; two real claims; two distinct
+   carriers; ONE approved_at, and it falls on the same day as its
+   first_scope_at. There is no history to average. When there is, this table
+   is the single thing to replace — chaseDue() reads nothing else. */
+var CHASE_POLICY = {
+'supplement filed'  : { first:14, again:7  },
+'awaiting release'  : { first:21, again:10 }
+};
+var CHASE_FALLBACK = { first:21, again:10 };
+function chasePolicy(why){ return CHASE_POLICY[why] || CHASE_FALLBACK; }
+/* Returns the row's clock, or null when the row has no age to reason about
+   (daysSince gives null for a missing date, and a made-up zero would read as
+   "chased today"). `over` is positive when the carrier is late. */
+function chaseDue(x){
+if(x.days == null) return null;
+var p = chasePolicy(x.why);
+var chased = daysSince(x.chasedAt);
+var limit  = chased == null ? p.first : p.again;
+var age    = chased == null ? x.days  : chased;
+return { chased:chased, limit:limit, age:age, over:age - limit };
+}
+/* Records that a human chased this carrier. TWO writes, on purpose:
+   · claim_notes is the human record — what was actually said, and it is the
+     claim's existing note thread rather than a second one
+   · last_chased_at/_by is the STATE the clock above reads
+   Deriving "when did we last chase" by pattern-matching note prose is the
+   fragile version of this, and prose is not a schema.
+
+   ⚠ The note write is allowed to fail without losing the chase. RLS lets
+   anyone who can see the claim insert a note and lets the assigned rep, the
+   creator or an admin update the claim, so both normally succeed — but if the
+   note fails and the stamp lands, the clock is still right, which is the half
+   that changes what anyone does next. The toast says which half happened. */
+async function recordChase(btn){
+if(!window.supa) return;
+var claimId = btn.dataset.chased;
+var carrier = btn.dataset.carrier || 'the carrier';
+if(!claimId) return;
+var how = window.prompt('How did you chase ' + carrier +
+  '?\n(called / emailed / portal — add anything worth remembering)', 'called');
+if(how == null) return;                       /* cancelled — write nothing */
+how = String(how).trim();
+if(!how) how = 'chased';
+btn.disabled = true;
+var was = btn.textContent;
+btn.textContent = 'Saving…';
+var stamp = new Date().toISOString();
+var noteOk = false, stampOk = false;
+try{
+var n = await window.supa.from('claim_notes').insert({
+  claim_id: claimId, body: 'Chased ' + carrier + ' — ' + how, internal: true });
+noteOk = !n.error;
+}catch(_){}
+try{
+var u = await window.supa.from('insurance_claims')
+  .update({ last_chased_at: stamp }).eq('id', claimId).select('id');
+stampOk = !u.error && !!(u.data && u.data.length);
+}catch(_){}
+btn.disabled = false;
+btn.textContent = was;
+if(typeof window.toast === 'function'){
+window.toast(stampOk
+  ? (noteOk ? 'Chase recorded.' : 'Chase clock reset — the note did not save.')
+  : 'Could not record that chase.');
+}
+if(stampOk) await build();
+}
 function chaseList(){
 var out = [];
 insuranceProjects().forEach(function(pr){
@@ -55386,17 +55462,27 @@ if(c.supplement_status === 'filed'){
 out.push({ pr:pr, carrier:c.carrier || 'carrier not recorded',
 why:'supplement filed',
 days:daysSince(c.supplement_filed_at),
+claimId:c.id || null, chasedAt:c.last_chased_at || null,
+chasedBy:c.last_chased_by || null,
 amt:Number(c.supplement_filed) || 0 });
 }
 if(st === 'Invoiced'){
 out.push({ pr:pr, carrier:c.carrier || 'carrier not recorded',
 why:'awaiting release',
 days:daysSince(ck2.stage_since || pr.updated_at),
+claimId:c.id || null, chasedAt:c.last_chased_at || null,
+chasedBy:c.last_chased_by || null,
 amt:(Number(c.approved_depreciation) || 0) +
 (Number(c.supplement_approved) || 0) });
 }
 });
-return out.sort(function(a, b){ return (b.days || 0) - (a.days || 0); });
+out.sort(function(a, b){
+var da = chaseDue(a), db = chaseDue(b);
+var oa = da ? da.over : -9999, ob = db ? db.over : -9999;
+if(oa !== ob) return ob - oa;
+return (b.days || 0) - (a.days || 0);
+});
+return out;
 }
 function render(){
 var host = document.querySelector('#cardinalTruthView .ins-body');
@@ -55433,15 +55519,35 @@ host.classList.add('cr-cth');
 var chase = chaseList();
 var chaseHtml = chase.length
 ? chase.slice(0, 6).map(function(x){
-var stale = (x.days != null && x.days >= 30);
-return '<button class="cr-cth-chaserow' + (stale ? ' stale' : '') +
-'" data-chase="' + esc(x.pr.id) + '" type="button">' +
-'<span class="days"><b>' + (x.days == null ? '\u2013' : x.days) + '</b>' +
+var due  = chaseDue(x);
+/* 1056: "stale" now means PAST THE POLICY, not past a hardcoded 30. The old
+   rule tinted a 30-day claim chased yesterday and left a 22-day one nobody
+   had touched plain. */
+var stale = !!due && due.over > 0;
+var dueTxt;
+if(!due)                 dueTxt = 'no date on file';
+else if(due.chased == null)
+  dueTxt = due.over > 0 ? due.over + ' day' + (due.over === 1 ? '' : 's') + ' overdue'
+                        : 'due in ' + (-due.over);
+else
+  dueTxt = 'chased ' + (due.chased === 0 ? 'today' : due.chased + 'd ago') +
+           ' · ' + (due.over > 0
+             ? 'chase again' : 'next in ' + (-due.over));
+return '<div class="cr-cth-chasewrap' + (stale ? ' stale' : '') + '">' +
+'<button class="cr-cth-chaserow" data-chase="' + esc(x.pr.id) + '" type="button">' +
+'<span class="days"><b>' + (x.days == null ? '–' : x.days) + '</b>' +
 '<small>days</small></span>' +
 '<span class="who"><b>' + esc(x.pr.name || 'Unnamed') + '</b>' +
-'<small>' + esc(x.carrier) + ' \u00b7 ' + esc(x.why) + '</small></span>' +
+'<small>' + esc(x.carrier) + ' · ' + esc(x.why) + '</small>' +
+'<small class="duetxt">' + esc(dueTxt) + '</small></span>' +
 '<span class="amt">' + (x.amt > 0 ? usd(x.amt) : '') + '</span>' +
-'</button>';
+'</button>' +
+(x.claimId
+  ? '<button class="cr-cth-chasedid" type="button" data-chased="' + esc(x.claimId) +
+    '" data-pr="' + esc(x.pr.id) + '" data-carrier="' + esc(x.carrier) +
+    '">I chased them</button>'
+  : '') +
+'</div>';
 }).join('')
 : '<div class="cr-cth-chaseempty">Nothing waiting on a carrier right now.</div>';
 var carrierHtml = d.carriers.length
@@ -55611,6 +55717,12 @@ var id = b.dataset.chase;
 if(typeof window.openProject === 'function') window.openProject(id);
 };
 });
+host.querySelectorAll('[data-chased]').forEach(function(b){
+b.onclick = function(ev){
+ev.stopPropagation();
+recordChase(b);
+};
+});
 host.querySelectorAll('[data-go]').forEach(function(b){
 b.onclick = function(){
 var d = b.dataset.go;
@@ -55670,10 +55782,15 @@ return !host || !host.querySelector('.cr-cth-wrap');
 }
 function sigOf(){
 var d = compute();
+/* 1056: the chase term. Without it a recorded chase repaints nothing,
+   because nothing above this line can tell that anything happened. */
+var chaseSig = chaseList().map(function(x){
+return (x.claimId || x.pr.id) + ':' + (x.chasedAt || '') + ':' + (x.days == null ? '-' : x.days);
+}).join(',');
 return [d.total, d.denied, d.owedDep, d.owedSupp, d.acvReleased, d.dedDue,
 Object.keys(d.byKey).map(function(k){
 return k + d.byKey[k].n + d.byKey[k].amt;
-}).join('')].join('|');
+}).join(''), chaseSig].join('|');
 }
 async function build(){
 var view = document.getElementById('cardinalTruthView');

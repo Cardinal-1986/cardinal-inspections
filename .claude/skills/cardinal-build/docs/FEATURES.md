@@ -6738,3 +6738,112 @@ Chromium-gated with a red control (gate_1036 … gate_1040), sentinel production
   on a 390px phone).
   **The WORDS were already one vocabulary (655) and were not touched** — both
   `window.INS_STAGE_LABEL || {…}` fallbacks verified byte-consistent.
+
+---
+
+## 1055 — the Supplement Desk's EVIDENCE TABLE (`supplement.html`)
+
+*Overhaul direction A. `index.html` untouched — it stays at 1054.*
+
+Every gap on the "What the scope is missing" step now shows **three evidence
+legs** as chips, and the letter will not carry an item that fails the required
+two:
+
+| leg | test | required? | chip reads |
+|---|---|---|---|
+| PHOTO | `g.photos.length > 0` | **yes** | `3 photos` / `no photo` |
+| MEASURED | `g.qty` is a positive number | **yes** | `measured` / `your number` / `model count` / `no number` |
+| CODE | `g.basis` is `code` or `manufacturer` | **graded** | `code` / `manufacturer` / `no code backing` |
+
+- **`evidence(g)`** is the single source of the rule; **`sendable(g)`** is what
+  every consumer counts. Enforced at **three** sites — `syncDraftBtn()`,
+  `draft()` and `fileSupplement()` — so the filed record's `reason` names what
+  actually went on the letter, not what was ticked.
+- **Code backing is graded, not required**, deliberately: a trade-practice item
+  has no citation to find and the human decides whether it still belongs.
+- A blocked card is bordered, its checkbox disabled, and it carries
+  *"Needs a photo and a quantity before it can go on the letter."* **Include
+  anyway** arms it and swaps that for an amber *"Included without a photo —
+  your call."*
+- **`refreshGap(g)`** redraws ONE card in place — on quantity entry, on
+  override, on the photo modal closing, and once at wire time. A full
+  `renderGaps()` would lose the caret of a number being typed, which is the
+  commonest way an item becomes sendable.
+- Header line: `5 gaps found · 3 ready to send`, and the number tracks overrides
+  live.
+- ⚠ **Both the `.needs` and `.ovrnote` rows are rendered unconditionally and
+  hidden when they do not apply.** Emitting them conditionally left
+  `refreshGap()` with nothing to reveal — the override marker never appeared,
+  and an item that *lost* its evidence later got no "needs" row either.
+- **The API contract did not change.**
+
+**Four repairs shipped with it, three of them older than this build:**
+
+- `--sd-ok` / `--sd-warn` / `--sd-crit` gained **light twins** (`#2A732E`,
+  `#7A5307`, `#B0281F`). They had none, while the light theme is the default
+  landing: warn **1.84:1**, ok **2.59:1**, crit **3.35:1** on the gap card.
+  `--sd-crit` was also under the floor in **dark** (4.27:1) and is now `#EB5A5F`.
+  Affects seven `.pill.*` states, `.chip.lowconf`, `.gap .phcount`,
+  `#loginView .err`.
+- **The Desk's first screen media query** (`@media (max-width:560px)`) — it had
+  only `@media print`. `header.sd-hd` wraps and `.sp` becomes a row break, so
+  the buttons flow to line two at full size. *Sign out* had been off the right
+  edge of a 390px phone since 668 (scrollWidth 423).
+- **`#filingType`** got `max-width:100%` **and** `box-sizing:border-box` on its
+  inline style — a stylesheet rule cannot beat an inline one, and max-width
+  alone still overflows by the padding and border.
+- **A build stamp, three ways**: the banner, a rendered chip in the header
+  (`#sdBuild`, `--sd-ink2` at 7.01:1 dark / 5.85:1 light), and
+  `window.SD_BUILD`. The Desk had shipped since 668 with none.
+
+**Gate:** `gate_1055.mjs`, seven checks in Chromium against the real Desk with a
+stubbed Supabase and `/api/supplement`, asserting on the **request body**. Green
+on 1055, **27 named failures on the 1054 control**.
+
+⚠ **The Desk's theme key is `cr-desk-theme`, not the CRM's `cardinalRLTheme`,
+and its pre-paint head script overwrites whatever an init script set.** A rig
+that sets the wrong key drives one theme twice and reports both as clear.
+
+---
+
+## 1056 — the chase clock (`cr-cth-script`, insurance hub)
+
+*Desk overhaul direction C. Ships with `claim_chase.sql`, which **runs first**.*
+
+The insurance home's **Chase List** used to show a bare day count and turn red
+at a hardcoded 30 — a colour with nothing behind it, on a list sorted by raw age.
+
+| | |
+|---|---|
+| `CHASE_POLICY` | the **one** place a threshold lives. `supplement filed` → first **14** days, then every **7**. `awaiting release` → **21**, then **10**. `CHASE_FALLBACK` covers an unlisted reason |
+| `chaseDue(x)` | returns `{chased, limit, age, over}`, or **null** when the row has no date — a made-up zero would read as "chased today" |
+| row wording | `6 days overdue` · `due in 4` · `chased 2d ago · next in 5` |
+| `.stale` | now means **past the policy**, not past 30. A 40-day claim chased yesterday is no longer red; an 18-day one nobody touched is |
+| sort | **by how overdue**, then by age. The reorder is the point of the build |
+| `I chased them` | prompts for how, then writes `claim_notes` (the record) **and** `last_chased_at` (the state). 44px, and full-width on its own line below 560px |
+
+⚠ **`sigOf()` carries a chase term, and it must keep it.** `build()` repaints
+only when the signature changes, and the signature was counts and dollars only —
+so a recorded chase repainted nothing and the row kept saying "6 days overdue"
+right after you called. Anything new the chase row *shows* has to reach
+`sigOf()` or it will not appear until an unrelated dollar figure moves.
+
+⚠ **The thresholds are deliberately NOT a per-carrier average.** Measured 24 Aug:
+5 claim rows, 3 orphans, 2 carriers, one `approved_at` falling on the same day as
+its `first_scope_at`, zero `filed_at`. There is no history to average yet.
+`CHASE_POLICY` is the single thing to replace when there is.
+
+⚠ **The chase state is on the claim, not on `insurance_supplements`.** That table
+already models filed → sent → answered and has an unused `responses` jsonb, but a
+supplement row exists only for the *supplement filed* half of the list — the
+*awaiting release* half is an Invoiced job with no supplement row at all, and both
+halves need the same clock.
+
+⚠ **`x.days >= 30` still appears once more in the file and it is NOT this.** It is
+build 1045's *Gone quiet* kpqrow, an unrelated retail feature with its own 30-day
+rule. A file-wide assertion on that string fails correct code.
+
+**Gate:** `gate_1056.mjs` — seven checks in Chromium, asserting the chase on the
+**recorded writes**. Includes a `scrollWidth` clipping check, because the new
+button took `.who` from 185px to 70px and fourteen `textContent` assertions could
+not see it.

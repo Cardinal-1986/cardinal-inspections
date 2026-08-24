@@ -1,6 +1,7 @@
 <!--
   ═══════════════════════════════════════════════════════════════════════════
-  THE SUPPLEMENT DESK · supplement.html · build 668 (10 Aug 2026)
+  THE SUPPLEMENT DESK · supplement.html · build 1055 (24 Aug 2026)
+  (the Desk shipped at build 668 · 10 Aug 2026; the evidence table landed at 1055)
   ═══════════════════════════════════════════════════════════════════════════
 
   Theo's ask, verbatim in spirit: read the scope, find what's missing, know
@@ -53,7 +54,9 @@
     --sd-bg:#0C0D0F; --sd-panel:#15171A; --sd-panel2:#1B1E22; --sd-line:#2A2E33;
     --sd-ink:#F2F3F5; --sd-ink2:#9AA3AB; --sd-ink3:#6C757D;
     --sd-red:#C8202E; --sd-red-ink:#fff;
-    --sd-ok:#46A758; --sd-warn:#E8A33D; --sd-crit:#E5484D;
+    /* 1055: crit lifted from #E5484D, which measured 4.27:1 on the gap card
+       (--sd-panel2 #1B1E22). Same hue, 4.91:1. ok and warn already cleared. */
+    --sd-ok:#46A758; --sd-warn:#E8A33D; --sd-crit:#EB5A5F;
     --sd-code:#7FB5D6; --sd-mfg:#C9A227; --sd-scope:#9AA3AB;
     --sd-sunk:#0E1013;
   }
@@ -62,6 +65,12 @@
     --sd-bg:#F6F5F2; --sd-panel:#FFFFFF; --sd-panel2:#EFEDE8; --sd-line:#E1DED7;
     --sd-ink:#191C1E; --sd-ink2:#5D666D; --sd-ink3:#747D84;
     --sd-code:#2A6485; --sd-mfg:#7A5E0D; --sd-scope:#5D666D;
+    /* 1055: these three had NO light twin while light is the default theme,
+       so on paper they measured warn 1.84:1, ok 2.59:1, crit 3.35:1 on the
+       gap card — hitting seven .pill states, .chip.lowconf, .gap .phcount
+       and #loginView .err. Same hues deepened, per this block's own rule.
+       Worst case across panel / panel2 / sunk / bg: 4.86:1. */
+    --sd-ok:#2A732E; --sd-warn:#7A5307; --sd-crit:#B0281F;
     --sd-sunk:#ECEAE4;
   }
   *{ box-sizing:border-box; }
@@ -99,7 +108,15 @@
     border-bottom:1px solid var(--sd-line); background:var(--sd-panel); position:sticky; top:0; z-index:5; }
   header.sd-hd .wordmark{ font:700 11px/1 inherit; letter-spacing:3px; text-transform:uppercase; color:var(--sd-red); }
   header.sd-hd .ttl{ font-weight:700; }
+  header.sd-hd .sdbuild{ color:var(--sd-ink2,#9AA3AB); font-size:11px; white-space:nowrap;
+    border:1px solid var(--sd-line,#2A2E33); border-radius:5px; padding:2px 6px; }
   header.sd-hd .sp{ flex:1; }
+  @media (max-width:560px){
+    header.sd-hd{ flex-wrap:wrap; row-gap:8px; }
+    /* flex-basis:100% turns the spacer into a row break; the buttons keep
+       their own size and drop to line two rather than overflowing line one */
+    header.sd-hd .sp{ flex:1 0 100%; height:0; }
+  }
   header.sd-hd button{ background:none; border:1px solid var(--sd-line); color:var(--sd-ink2);
     border-radius:6px; padding:6px 10px; font-size:12px; }
   header.sd-hd a.sd-back{ border:1px solid var(--sd-line); color:var(--sd-ink2);
@@ -151,6 +168,23 @@
   .chip.manufacturer{ color:var(--sd-mfg); border-color:var(--sd-mfg); }
   .chip.scope-consistency{ color:var(--sd-scope); border-color:var(--sd-scope); }
   .chip.lowconf{ color:var(--sd-warn); border-color:var(--sd-warn); }
+  /* 1055 — the evidence legs. A line item that reaches a carrier without a
+     photograph, a number and an authority is the item that gets denied, so the
+     three legs are shown per item rather than left for someone to remember. */
+  .gap .ev{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 0; }
+  .gap .ev .chip{ margin-right:0; font-weight:700; letter-spacing:.02em; }
+  .chip.have{ color:var(--sd-ok); border-color:var(--sd-ok); }
+  .chip.miss{ color:var(--sd-crit); border-color:var(--sd-crit); }
+  .chip.soft{ color:var(--sd-warn); border-color:var(--sd-warn); }
+  .gap.blocked{ border-color:var(--sd-crit); }
+  .gap .needs{ color:var(--sd-crit); font-size:12px; margin:8px 0 0; }
+  .gap .needs .ovr{ background:none; border:1px solid var(--sd-line); color:var(--sd-ink2);
+    border-radius:6px; padding:7px 10px; font-size:12px; margin-left:8px; min-height:34px; }
+  .gap .ovrnote{ color:var(--sd-warn); font-size:12px; margin:8px 0 0; }
+  .gap input[type=checkbox]:disabled{ opacity:.4; }
+  .gapsum{ color:var(--sd-ink2); font-size:12.5px; margin:0 0 10px;
+    padding-bottom:9px; border-bottom:1px solid var(--sd-line); }
+  .gapsum b{ color:var(--sd-ink); }
   .gap .qtyrow{ display:flex; gap:8px; align-items:center; font-size:12.5px; color:var(--sd-ink2); flex-wrap:wrap; }
   .gap .qtyrow input{ width:90px; background:var(--sd-sunk); border:1px solid var(--sd-line); color:var(--sd-ink);
     border-radius:6px; padding:6px 8px; font-size:13px; }
@@ -254,6 +288,7 @@
   <header class="sd-hd">
     <span class="wordmark">Cardinal</span>
     <span class="ttl">Supplement Desk</span>
+    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1055</span>
     <span class="sp"></span>
     <a class="sd-back" id="homeLink" href="/" title="Back to the Cardinal app">&larr; Cardinal</a>
     <button id="themeBtn" type="button">Theme</button>
@@ -289,7 +324,7 @@
         <div id="scopeList"><div class="sd-empty">Looking for filed scopes&hellip;</div></div>
         <div class="kv" id="measKv" style="margin-top:10px;"></div>
         <div class="btnrow">
-          <select id="filingType" style="background:var(--sd-sunk);border:1px solid var(--sd-line);color:var(--sd-ink);border-radius:6px;padding:9px 11px;font-size:13px;">
+          <select id="filingType" style="background:var(--sd-sunk);border:1px solid var(--sd-line);color:var(--sd-ink);border-radius:6px;padding:9px 11px;font-size:13px;max-width:100%;box-sizing:border-box;">
             <option value="partial_denial">Partial-denial supplement (before build)</option>
             <option value="backend">Backend supplement</option>
             <option value="pwi_coc" disabled>PWI / COC — depreciation release (needs its own build)</option>
@@ -340,7 +375,9 @@
         <h2>What the scope is missing</h2>
         <p class="sub">Nothing is pre-ticked — every item on the letter is your call. Citations come from Cardinal's own
           Supplement Templates; the AI cannot invent one. Quantities marked "measured" were computed from this job's
-          measurements, not by the model.</p>
+          measurements, not by the model. Each item shows its three legs — a photograph, a quantity and an authority.
+          Carriers deny on documentation more often than on the damage itself, so an item missing a photograph or a
+          number is held back until it has one, or until you override it.</p>
         <div id="gapList"></div>
         <div class="btnrow">
           <button class="btn" id="draftBtn" disabled>Draft the letter</button>
@@ -389,6 +426,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
+var SD_BUILD = 1055; window.SD_BUILD = SD_BUILD;
 /* Same publishable anon key api/*.js falls back to — public by design. */
 var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -842,6 +880,44 @@ async function analyze(){
   el('analyzeBtn').disabled = false;
 }
 
+/* 1055 — the three evidence legs, one place.
+   PHOTO and MEASURED are required: an item missing either is the item a carrier
+   denies for documentation. CODE is GRADED, not required — a trade-practice
+   item has no citation to find, and refusing it would be the Desk overruling a
+   judgement that is Theo's. A model-produced quantity counts but is flagged. */
+function evidence(g){
+  var nPh = (g.photos || []).length;
+  var hasQty = typeof g.qty === 'number' && isFinite(g.qty) && g.qty > 0;
+  var strongCite = g.basis === 'code' || g.basis === 'manufacturer';
+  var photo = nPh
+    ? { cls:'have', txt:nPh + (nPh === 1 ? ' photo' : ' photos') }
+    : { cls:'miss', txt:'no photo' };
+  var meas = !hasQty
+    ? { cls:'miss', txt:'no number' }
+    : (g.qty_src === 'meas'
+        ? { cls:'have', txt:'measured' }
+        : { cls:'soft', txt:(g.qty_src === 'model' ? 'model count' : 'your number') });
+  var cite = strongCite
+    ? { cls:'have', txt:(g.basis === 'code' ? 'code' : 'manufacturer') }
+    : { cls:'soft', txt:'no code backing' };
+  var missing = [];
+  if(!nPh) missing.push('a photo');
+  if(!hasQty) missing.push('a quantity');
+  return { photo:photo, meas:meas, cite:cite, missing:missing, blocked:missing.length > 0 };
+}
+function needTxt(e){
+  return e.missing.length
+    ? 'Needs ' + e.missing.join(' and ') + ' before it can go on the letter.'
+    : '';
+}
+function ovrTxt(e){
+  return e.missing.length
+    ? 'Included without ' + e.missing.join(' or ') + ' — your call.'
+    : '';
+}
+/* an item may only reach the letter when its blocking legs are present, or when
+   a person has explicitly overridden it on this screen. */
+function sendable(g){ return !!g.included && (!evidence(g).blocked || !!g.override); }
 function renderGaps(summary){
   el('gapsCard').style.display = 'block';
   if(!S.gaps.length){
@@ -850,10 +926,13 @@ function renderGaps(summary){
     el('draftBtn').disabled = true;
     return;
   }
-  el('gapList').innerHTML = S.gaps.map(function(g){
-    return '<div class="gap" data-id="' + g.id + '">' +
+  el('gapList').innerHTML =
+    '<div class="gapsum" id="gapSum"></div>' +
+    S.gaps.map(function(g){
+    var e = evidence(g);
+    return '<div class="gap' + (e.blocked && !g.override ? ' blocked' : '') + '" data-id="' + g.id + '">' +
       '<div class="top">' +
-        '<input type="checkbox" class="inc">' +
+        '<input type="checkbox" class="inc"' + (e.blocked && !g.override ? ' disabled' : '') + '>' +
         '<div style="flex:1;">' +
           '<div class="ttl">' + esc(g.item) + '</div>' +
           '<div style="margin:3px 0 0;">' +
@@ -861,13 +940,26 @@ function renderGaps(summary){
             (g.confidence === 'low' ? '<span class="chip lowconf">low confidence</span>' : '') +
           '</div>' +
           '<div class="why">' + esc(g.why) + '</div>' +
+          '<div class="ev">' +
+            '<span class="chip ' + e.photo.cls + '">' + esc(e.photo.txt) + '</span>' +
+            '<span class="chip ' + e.meas.cls  + '">' + esc(e.meas.txt)  + '</span>' +
+            '<span class="chip ' + e.cite.cls  + '">' + esc(e.cite.txt)  + '</span>' +
+          '</div>' +
           '<div class="qtyrow">Qty <input type="number" step="0.1" class="qty" value="' + (g.qty == null ? '' : g.qty) + '">' +
             '<span>' + esc(g.unit || '') + '</span>' +
-            (g.qty_src === 'meas' ? '<span style="color:var(--sd-ok);">measured</span>'
-              : (g.qty_src === 'model' ? '<span style="color:var(--sd-warn);">model — check it</span>' : '<span>enter yours</span>')) +
             '<button type="button" class="phbtn">+ Photos</button>' +
             '<span class="phcount"></span>' +
           '</div>' +
+          /* ⚠ BOTH rows are always rendered, hidden when they do not apply.
+             Emitting them conditionally meant refreshGap() had nothing to
+             reveal when an item's state changed after first paint — the
+             override note never appeared, and an item that LOST its evidence
+             later got no "needs" row either. */
+          '<div class="needs"' + (e.blocked && !g.override ? '' : ' style="display:none;"') + '>' +
+            '<span class="needtxt">' + esc(needTxt(e)) + '</span>' +
+            '<button type="button" class="ovr">Include anyway</button></div>' +
+          '<div class="ovrnote"' + (g.override && e.blocked ? '' : ' style="display:none;"') + '>' +
+            '<span class="ovrtxt">' + esc(ovrTxt(e)) + '</span></div>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -881,15 +973,68 @@ function renderGaps(summary){
       var v = parseFloat(this.value);
       g.qty = isNaN(v) ? null : v;
       if(g.qty_src !== 'manual' && !isNaN(v)) g.qty_src = 'manual';
+      /* 1055: typing a quantity can complete an item's evidence, so the chips
+         and the checkbox have to follow it rather than going stale. */
+      refreshGap(g);
     });
     card.querySelector('.phbtn').addEventListener('click', function(){ openPhotoModal(g); });
+    var ovr = card.querySelector('.ovr');
+    if(ovr) ovr.addEventListener('click', function(){ g.override = true; refreshGap(g); });
+    /* the card is drawn with its rows already correct; this only re-asserts it
+       so a gap that arrives complete and a gap that becomes complete look the
+       same. */
+    refreshGap(g);
   });
   syncDraftBtn();
 }
+/* 1055: redraw ONE card in place. A full renderGaps() would rebuild every card
+   and lose the focus and caret of the number the user is still typing. */
+function refreshGap(g){
+  var card = el('gapList').querySelector('.gap[data-id="' + g.id + '"]');
+  if(!card) return;
+  var e = evidence(g), blocked = e.blocked && !g.override;
+  card.classList.toggle('blocked', blocked);
+  var box = card.querySelector('.inc');
+  if(box){ box.disabled = blocked; if(blocked && box.checked){ box.checked = false; g.included = false; } }
+  var chips = card.querySelectorAll('.ev .chip');
+  if(chips.length === 3){
+    [e.photo, e.meas, e.cite].forEach(function(leg, i){
+      chips[i].className = 'chip ' + leg.cls;
+      chips[i].textContent = leg.txt;
+    });
+  }
+  /* the missing legs can CHANGE, so the sentences are rewritten, not just shown */
+  var needs = card.querySelector('.needs');
+  if(needs){
+    needs.style.display = blocked ? '' : 'none';
+    var nt = needs.querySelector('.needtxt');
+    if(nt) nt.textContent = needTxt(e);
+  }
+  var note = card.querySelector('.ovrnote');
+  if(note){
+    note.style.display = (g.override && e.blocked) ? '' : 'none';
+    var ot = note.querySelector('.ovrtxt');
+    if(ot) ot.textContent = ovrTxt(e);
+  }
+  syncDraftBtn();
+}
 function syncDraftBtn(){
-  var n = S.gaps.filter(function(g){ return g.included; }).length;
+  var n = S.gaps.filter(sendable).length;
+  /* 1055: an item ticked but held back is counted separately and SAID, rather
+     than silently dropped from the letter — a smaller number nobody explains
+     is worse than a refusal. */
+  var held = S.gaps.filter(function(g){ return g.included && !sendable(g); }).length;
+  var ready = S.gaps.filter(function(g){ return !evidence(g).blocked || g.override; }).length;
+  var sum = el('gapSum');
+  if(sum){
+    sum.innerHTML = '<b>' + S.gaps.length + '</b> gap' + (S.gaps.length === 1 ? '' : 's') +
+      ' found \u00b7 <b>' + ready + '</b> ready to send';
+  }
   el('draftBtn').disabled = n === 0;
-  el('draftNote').textContent = n ? (n + ' item' + (n === 1 ? '' : 's') + ' on the letter') : 'Tick the items that belong on the letter.';
+  el('draftNote').textContent = n
+    ? (n + ' item' + (n === 1 ? '' : 's') + ' on the letter' +
+       (held ? ' \u00b7 ' + held + ' held back for missing evidence' : ''))
+    : 'Tick the items that belong on the letter.';
 }
 
 /* ── photos per item ──────────────────────────────────────────────────────── */
@@ -917,6 +1062,9 @@ el('phDone').addEventListener('click', function(){
     });
     var card = el('gapList').querySelector('.gap[data-id="' + g.id + '"]');
     if(card) card.querySelector('.phcount').textContent = g.photos.length ? g.photos.length + ' photo' + (g.photos.length === 1 ? '' : 's') : '';
+    /* 1055: choosing photographs is the commonest way an item BECOMES sendable,
+       so the chips and the checkbox have to follow the modal closing. */
+    refreshGap(g);
   }
   el('photoModal').style.display = 'none';
   S.phTarget = null;
@@ -925,7 +1073,10 @@ el('phDone').addEventListener('click', function(){
 /* ── draft ────────────────────────────────────────────────────────────────── */
 el('draftBtn').addEventListener('click', draft);
 async function draft(){
-  var items = S.gaps.filter(function(g){ return g.included; });
+  /* 1055: sendable(), not included — the evidence gate is enforced HERE too, so
+     it cannot be walked around by a stale checkbox or a disabled attribute that
+     something else cleared. The UI is the explanation; this is the rule. */
+  var items = S.gaps.filter(sendable);
   if(!items.length) return;
   el('draftBtn').disabled = true;
   el('draftNote').textContent = 'Drafting…';
@@ -980,7 +1131,9 @@ el('fileBtn').addEventListener('click', fileSupplement);
 async function fileSupplement(){
   if(!S.claim || !S.letter) return;
   el('fileBtn').disabled = true;
-  var items = S.gaps.filter(function(g){ return g.included; });
+  /* 1055: sendable(), so the filed record's reason names the items that were
+     actually on the letter rather than every item somebody ticked. */
+  var items = S.gaps.filter(sendable);
   var reason = items.slice(0, 2).map(function(g){ return g.item; }).join('; ') +
     (items.length > 2 ? ' +' + (items.length - 2) + ' more' : '');
   var row = {

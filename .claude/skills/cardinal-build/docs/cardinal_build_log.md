@@ -24892,3 +24892,228 @@ alone. What was NOT sound is that the two screens disagreed about which stages
 **Gates.** `check_build` green on all three. `gate_1052` (18 named control
 failures), `gate_1053` (13), `gate_1054` (9) — every one seen RED on its
 predecessor. All ten arc gates 1044–1053 re-run green on the 1054 tree.
+
+## Build 1055 — the Supplement Desk gets an evidence table (overhaul direction A)
+
+*`supplement.html` only. `index.html` is untouched and stays at 1054 — so
+`check_build.py`, which gates one artifact and that artifact is `index.html`,
+says nothing about this build. Its inline scripts, tag balance, CSS braces and
+duplicate style ids were parsed separately, as the convention requires.*
+
+Theo, after the Desk audit: **"Start the desk."** A is the direction I
+recommended first, and this is A.
+
+**The thesis, from the research behind the previews.** *"Most denials trace to
+documentation rather than to the legitimacy of the damage"* — IA Solutions,
+corroborated by BellaFSM. Every line item wants a photograph, a measurement and
+an authority. The Desk already produced the citation and the quantity; the
+photograph was optional, and **nothing checked that the quantity was supported
+at all.** `syncDraftBtn()` counted `g.included` and stopped there, so an item
+with no photograph and no number went onto a carrier letter exactly as readily
+as a fully documented one.
+
+**What shipped.** Every gap now carries three evidence legs, drawn as chips on
+its own card:
+
+| leg | test | required? |
+|---|---|---|
+| PHOTO | `g.photos.length > 0` | **yes** |
+| MEASURED | `g.qty` is a positive number | **yes** |
+| CODE | `g.basis` is `code` or `manufacturer` | **graded, not required** |
+
+Code backing is graded rather than required on purpose: a trade-practice item
+has no citation to find, and the human is the one who decides whether it still
+belongs. A blocked item cannot be ticked; **Include anyway** arms it and leaves
+an amber marker naming what it went out without. The gate is enforced in three
+places — `syncDraftBtn()`, `draft()` and `fileSupplement()` — so the filed
+record's `reason` names what actually went on the letter rather than what was
+ticked. **The API contract did not change.**
+
+`refreshGap(g)` redraws ONE card in place. A full `renderGaps()` would lose the
+caret of a number being typed, which is the commonest way an item becomes
+sendable.
+
+**Four defects fixed on the way, three of them older than this build.**
+
+- **`--sd-ok`/`--sd-warn`/`--sd-crit` had no light twin**, while the Desk's
+  light theme is the one most people land on. Measured on the gap card
+  (`--sd-panel2` `#EFEDE8`): **warn 1.84:1, ok 2.59:1, crit 3.35:1**, against a
+  4.5 floor — affecting seven `.pill.*` states, `.chip.lowconf`, `.gap .phcount`
+  and `#loginView .err`. Line ~176 already carried a comment admitting `--sd-ok`
+  "has no light twin" and patching one call site locally. **`--sd-crit` was
+  also under the floor in DARK, at 4.27:1** — that one nobody had noticed at
+  all.
+- **The header overflowed a phone, and had since 668.** scrollWidth **423 on a
+  390px viewport**, so *Sign out* has been off the right edge for the Desk's
+  whole life. The Desk has **zero screen media queries** — only `@media print`
+  — which is the "capped at one width" tell. Fixed with a flex break (`.sp`
+  gets `flex:1 0 100%` under 560px): nothing hidden, no tap target shrunk.
+- **`#filingType` pushed the driven page to 402.** It carries an inline style,
+  so a stylesheet rule cannot win it — the inline style got `max-width:100%`
+  **and** `box-sizing:border-box`; without the second, the padding and border
+  are added outside the 100% and it still overflows.
+- **The Desk had no build stamp of any kind.** The banner said 668 and nothing
+  on screen said anything, so "the Desk did X" has never been answerable. Now
+  stamped three ways: the banner, a rendered chip in the header, and
+  `window.SD_BUILD`. This is the `WORKER_BUILD` / `achieved._worker` lesson
+  from 829 — **provenance is a query, never an argument.**
+
+### ⚠ Four instrument faults in this build, and every one of them PASSED before it was caught
+
+Recorded because each is a class this project has already paid for, and because
+three of the four were *mine, in this build*.
+
+1. **The gate drove one theme twice.** It set `cardinalRLTheme` — the CRM's key.
+   The Desk reads **`cr-desk-theme`**, and its own pre-paint head script then
+   overwrote the attribute from `prefers-color-scheme`. Caught by noticing that
+   `gaps_dark.png` and `gaps_light.png` were the **same byte size**. Check 6
+   could not fail.
+2. **The contrast check probed classes that exist only in the new build.**
+   `.chip.have/.miss/.soft` have no rule on the 1054 tree, so
+   `getComputedStyle` returned the *inherited* body ink and a comfortable ratio
+   came back for a build whose light theme genuinely failed. Now it probes the
+   **tokens**, which exist in both trees — and the control immediately reported
+   2.59 / 1.84 / 3.35, matching the hand computation exactly. *Coverage derived
+   from what the page happens to define is coverage that shrinks in silence.*
+3. **The overflow check ran on a screen the user never sees.** On the page as
+   loaded it read 390 and reported clean while the driven gaps screen was at
+   402. Moved onto the driven screen, with a `gaps` count so a rig fault is
+   named rather than passing.
+4. **An assertion pinned to the wrong thing failed correct code.**
+   `src.count('display:none') == orig.count(...)` — my own section 5 legitimately
+   added two, for the always-rendered `.needs`/`.ovrnote` rows. Replaced with an
+   exact delta plus the two specific strings.
+
+Also fixed a real bug the gate found: **the `.ovrnote` was only rendered when
+already overridden**, so `refreshGap` had nothing to reveal and the override
+marker never appeared. `.needs` had the same latent fault. Both rows are now
+rendered unconditionally and hidden when they do not apply.
+
+**Gate:** `gate_1055.mjs` — seven checks, driving the real Desk in Chromium with
+a stubbed Supabase and a stubbed `/api/supplement`, asserting on the **request
+body** rather than on a disabled attribute. Green on 1055; **27 named failures
+on the 1054 control**, including all three token ratios and all three overflow
+sources. Byte-reproducible on re-run; both inline scripts parse; 125/125 CSS
+braces; 101/101 `<div>`.
+
+## Build 1056 — the chase list counts to something (Desk direction C)
+
+*Theo: "Keep going." Direction C from the Desk audit, the one I recommended
+next. **SQL ships and RUNS FIRST** — `claim_chase.sql`.*
+
+### ⚠ The audit's version of C is not buildable, and this build says so instead of faking it
+
+`CR_SUPPLEMENT_DESK_AUDIT_2026-08.md` scoped C as *"per-carrier pace computed
+from Cardinal's own `first_scope_rcv` → `approved_rcv` history."* Measured on
+production before a line was written:
+
+| | |
+|---|---:|
+| `insurance_claims` rows | **5** |
+| …of which orphans (no project, no carrier, no claim number) | **3** |
+| real claims | **2** |
+| distinct carriers | **2** |
+| rows with `approved_at` | **1** — and it is the **same day** as its `first_scope_at` |
+| rows with `filed_at` | **0** — the column exists and nothing writes it |
+
+"State Farm usually takes N days", computed from one same-day pair, is a number
+with a decimal point and no evidence under it — the exact thing the Desk's own
+honesty core refuses to do with citations. So the thresholds are a **stated
+Cardinal follow-up policy**, in one named place, and the screen says so.
+`CHASE_POLICY` is the single thing to replace when there is real history;
+`chaseDue()` reads nothing else.
+
+### What shipped
+
+**Before:** a bare day count and `days >= 30` adding a CSS class. A red tint
+counting to no particular date, on a list sorted by raw age.
+
+**Now**, every row says what it is counting to — `6 days overdue`,
+`chased 2d ago · next in 5` — and **the list sorts by how overdue a claim is**.
+That reordering is the point: a 40-day claim rung yesterday now falls *below* an
+18-day one nobody has touched. Raw age said the opposite, which is what shipped
+for the last 400 builds.
+
+Policy: supplement filed → **14** days then every **7**; awaiting release →
+**21** then every **10**.
+
+**"I chased them"** on each row asks how, then writes **both halves**:
+`claim_notes` (the human record of what was said, on the claim's existing
+thread) and `last_chased_at` (the state the clock reads). Deriving "when did we
+last chase" by pattern-matching note prose is the fragile version, and prose is
+not a schema. The note write may fail without losing the chase; the toast says
+which half landed.
+
+### ⚠ The prime doctrine, again — and it changed where the state lives
+
+`insurance_supplements` **already models filed → sent → answered**
+(`filed_at`, `sent_at`/`sent_to`, `responded_at`, `amount_approved`, `status`)
+and carries an unused **`responses` jsonb with zero readers and zero writers**.
+I nearly put the chase there and it is the wrong home: a supplement row only
+exists for the *supplement filed* half of the chase list, and the *awaiting
+release* half is an Invoiced job with **no supplement row at all**. Both halves
+need one clock, so the state is on the claim. `claim_chase.sql` says this at the
+schema too.
+
+### Three instrument faults, all caught, none of them by reasoning
+
+1. **A guard that could never succeed — the 567/569 class, exactly.**
+   `build()` repaints only `if(sig2 !== lastSig)`, and `sigOf()` is built from
+   counts and dollar totals. Recording a chase changes neither, so the signature
+   came back identical, `render()` never ran, and the row went on saying
+   *"6 days overdue"* straight after you told it you had called. **The gate
+   caught it**; `sigOf()` now carries a chase term.
+2. **A file-wide assertion that failed correct code.** `x.days >= 30` appears
+   **twice** and only one is mine — the other is build 1045's *Gone quiet*
+   kpqrow, an unrelated retail feature with its own 30-day rule. Replaced with
+   an exact delta plus an assertion that 1045's survivor is untouched. The
+   file's own "scope the assertion to the function, not the file" rule.
+3. **A picture caught what every assertion missed.** The new button takes
+   **116px of a 340px row**, so `.who` went **185px → 70px** and every sub-line
+   and due line clipped — *"6 days ov…"*, *"chased 2d …"*. Fourteen checks read
+   `textContent`, which is the full string however narrow the box is, and all
+   fourteen were happy. The action now drops to its own full-width line below
+   560px. **A `scrollWidth` check is in `gate_1056.mjs` so this class cannot
+   come back silently.**
+
+⚠️ **And the first defect tree for that new check was not a defect tree.** I
+removed only the media query — but `flex-wrap:wrap` sits on the base rule, so
+the button still wrapped and the check reported GREEN on what I had labelled a
+defect. **A negative control that does not reproduce the defect is worse than
+none**, because it certifies the instrument. The real tree removes the wrap too,
+and the check names all nine clipped strings with their pixel widths.
+
+**Gates:** `check_build.py` green (125 inline scripts, stamp 1054 → 1056, marker
++ negative control). `gate_1056.mjs` — seven checks driving the real hub in
+Chromium, asserting the chase on the **recorded writes** rather than on button
+state: **GREEN**, with **16 named failures on the 1055 control**, among them the
+old sort order printed as `Alvarez > Boyd > Renfrew` — precisely inverted.
+Byte-reproducible on re-run. No new `document.body` observer; no 14th
+scroll-lock writer.
+
+
+### 1056 addendum — the SQL is APPLIED, and two older by-hand items with it
+
+Theo, same evening: *"Can you not run the sql?"* — so I did, through the
+Supabase connector rather than handing him a file.
+
+| file | what | verified after |
+|---|---|---|
+| `claim_chase.sql` | **applied** — the two columns + the index | both columns present and nullable, index exists, and **the app's exact claims select — all fifteen columns `cr-cth-script` names — returns all 5 rows.** That last one is the check that matters: PostgREST 400s on an unknown column, so a passing `information_schema` lookup is not proof the hub will load |
+| `fix_onhold_stage_since.sql` | **applied** — build 1034's audit LOW #8, which had been sitting as a by-hand instruction since the automated write was declined | 1 row updated; Maker Space's `stage_since` is now `2026-08-24T07:41:15.646Z` instead of NULL |
+
+Both are idempotent and both file headers now say APPLIED, so the repo stops
+carrying a stale "run this by hand" instruction.
+
+**`drop_ai_estimates.sql` was NOT run and is still pending on purpose.** It
+drops a table and two FK constraints on the live `contracts` and
+`insurance_claims` tables. "Run the sql" was asked while we were discussing the
+migration that blocks the merge; a DROP on production is a different question
+and wants its own yes. State checked and recorded so the decision is informed:
+**`ai_estimates` exists, holds 0 rows, and nothing points at it** — 0 claims
+with `ai_estimate_id`, 0 contracts with `source_ai_estimate_id`.
+
+**What the live chase list will show on first load** (measured, not guessed):
+one row — Adam Gunn / Allstate, supplement filed 14 Aug, **10 days**, and on the
+14-day policy that renders **"due in 4"**, not red. Maker Space is OnHold with
+no supplement, so it is correctly absent.

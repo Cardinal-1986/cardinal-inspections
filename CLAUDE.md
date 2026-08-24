@@ -32,7 +32,7 @@ The repo now ships **five HTML artifacts plus a second application**, not one:
 | `index.html` | the app — and the **Vision hub** front door when the hostname starts with `showroom.` or `?vision=1` | this whole file |
 | `popup.html` | **The Pop-Up Roof**, the client-facing book behind the `presentation.*` rewrites in `vercel.json` | `ROOF_JOURNEY_BRIEF.md` |
 | `studio.html` | **Cardinal Studio**, the standalone admin curation browser | "Cardinal Studio" below |
-| `supplement.html` | **The Supplement Desk** (668) — the Studio pattern again: public file, own Supabase sign-in, `is_cardinal_admin()`, and `api/supplement.js` enforcing admin server-side | build log 667–673 |
+| `supplement.html` | **The Supplement Desk** (668, **now at build 1055**) — the Studio pattern again: public file, own Supabase sign-in, `is_cardinal_admin()`, and `api/supplement.js` enforcing admin server-side. **It carries its own stamp now** — a header chip and `window.SD_BUILD`; before 1055 it had none, so "which Desk code ran" was unanswerable | build log 667–673 and **1055**; `CR_SUPPLEMENT_DESK_AUDIT_2026-08.md` |
 | `ai-field-manual.html` | the 17-part manual the Resource Library iframes | `.vercelignore`'s header |
 | **`visualizer/index.html`** | **The Exterior Visualizer — a SEPARATE APPLICATION** (807+). No CRM code in it at all. Laid out as a folder so it can become the root of its own Vercel project | **"The Exterior Visualizer" below, and `HANDOFF.md`** |
 
@@ -407,6 +407,8 @@ Covers per-block `node --check` on all inline scripts, tag balance, CSS brace ba
 **It is green on build 808 right now** (exit 0, re-run 16 Aug 2026), reporting: 113 inline scripts parse · 116/116 script tags · **135/135** style tags · CSS braces balanced · no duplicate style ids · no double-assigned `window.Cardinal*` · app stamp `v2026-08-14 build 808` · 38 version strings, 19 distinct builds. Start from green; if your first run is red, you broke it.
 
 ⚠️ **`check_build.py` sees ONE artifact, and there are now six.** It does not see `studio.html`, `popup.html`, `supplement.html`, `ai-field-manual.html` or **`visualizer/index.html`**. When you touch any of them, parse their inline scripts separately (`node --check` on each block). This is the convention, not a courtesy — and it matters more now than at 627, because **builds 809–836 never touched the file `check_build.py` gates.**
+
+**Build 1055 is a worked example of this: it is `supplement.html` ONLY.** `index.html` stayed at 1054 and `check_build.py` had nothing to say about the build. Its two inline scripts, tag balance, CSS braces and duplicate style ids were parsed separately — and each of those five artifacts now needs its own stamp bumped, because none of them is the one `check_build.py` gates.
 
 ### The gate inventory has outgrown a list — the convention is what to learn
 
@@ -1039,7 +1041,7 @@ Everything in this repo is served publicly at `app.cardinalroster.com` **unless 
 | `index.html` | the app — and the host-gated Vision hub front door (`showroom.*`) |
 | `popup.html` | The Pop-Up Roof — public by design; the two `presentation.*` domains rewrite to it |
 | `studio.html` | Cardinal Studio — served publicly, gated by its own Supabase sign-in plus admin-only RLS and storage policies |
-| **`supplement.html`** | **The Supplement Desk (668) — deliberately ships.** Studio's pattern: public file, own Supabase sign-in, `is_cardinal_admin()`, and `api/supplement.js` enforcing admin **server-side** |
+| **`supplement.html`** | **The Supplement Desk (668, at build 1055) — deliberately ships.** Studio's pattern: public file, own Supabase sign-in, `is_cardinal_admin()`, and `api/supplement.js` enforcing admin **server-side**. ⚠ **Its theme key is `cr-desk-theme`, not the CRM's** — and its pre-paint head script overwrites whatever an init script set, so a rig using the wrong key silently drives ONE theme twice |
 | **`visualizer/index.html`** | **The Exterior Visualizer (807) — deliberately ships, and is a FOLDER on purpose** so it can become the root of its own Vercel project. No CRM code in it. Own sign-in (`cr-viz-auth`), every table RLS'd. Carries the publishable anon key and no other secret — **checked by `gate_807.mjs`, not assumed** |
 | `ai-field-manual.html` | **deliberately ships** — the Library iframes it (562); noindex; the decision and its audit are recorded in `.vercelignore` |
 | `drivewaytest.html` | The Driveway Test — **deliberately public and standalone**: no login, no Supabase, no SQL, no token. Handed over at the kerb, reachable at `/drivewaytest.html` on any domain serving this repo |
