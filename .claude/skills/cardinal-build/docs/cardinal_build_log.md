@@ -24440,3 +24440,39 @@ Instrument lesson banked: the first gate demanded ±21px in all four directions 
 correct pads (the two week arrows are 34px apart; a chevron's downward claim is contested by the
 padded list below). The app's own standard — claim measured on the pseudo box + one real hit
 probe — is the right instrument shape for tap targets.
+
+## Builds 1041–1043 — the production audit's plan, items 6–9 (Theo: "Merge then the next 4")
+
+PR #484 merged first (squash 3f7baa3, gate_ship green), branch restarted from main. One build per
+real item; item 9 closed with NO app change — see below. Every gate seen RED on its control; all
+seven prior production gates re-run green on the final artifact; sentinel walk (390/1194/1440)
+CLEAN vs the merged 1040.
+
+**1041 — the footer stamp diet (O2).** The nav-menu stamp had been PREPENDING each build's
+summary since ~1015 — 11,599 chars, 26 builds of prose every user scrolled past. It now carries
+ONE line, and the convention changes to REPLACE (an HTML comment above the div says so). The
+CHANGELOG (What's New) keeps the full history — gate_1041 asserts b:1015 survives and the
+rendered footer is <600 chars / exactly one build number. −10.4 KB.
+
+**1042 — Punch & Repairs joins the full-screen family (F4), production-accounts scope.**
+showMain's 854 branch mirrors the role onto the body (`cr-prod`, toggled so a role change
+clears it); under that class only, #punchView goes position:fixed inset:0 z 9400 (above the
+shell, below the board 9500 and card 9550) with its own scroll and safe-area padding. NO 14th
+scroll-lock writer. Admin/sales layouts byte-identical. gate_1042: Curtis's banner is covered
+(elementFromPoint) and content still hit-tests; admin banner untouched; control red ×3.
+
+**1043 — the desktop board fold (O1), Theo's pick B from rendered previews.** At 1100–1599px
+the board gets the month-left / work-right grid the ≥1600 ultrawide already had — boxes, Closed
+repairs, the hubs and Today's agenda all beside the month, zero scroll. Values shipped are the
+previewed ones verbatim (max-width 1560, 28px gaps); the ≥1600 block is byte-identical; phones
+untouched. gate_1043 proves side-by-side at 1440+1194, ultrawide unregressed, phone single
+column; control red ×4.
+
+**Item 9 (O5) — FALSE POSITIVE, no app change.** The dispatch name-clamp WORKS: a 150-char name
+renders exactly 2 lines, nothing overflows (proven functionally on the rig). Modern Chromium
+computes `display:-webkit-box` to `flow-root` when implementing the standardized line-clamp,
+and the sentinel's DEAD check misread that engine mapping as a cascade loss. Fixed in the
+INSTRUMENT: `comparable()` in sentinel_probe.js now refuses `-webkit-box` as a comparable
+display value, with a selftest case (`.clamp-ok`) that goes RED against the pre-fix probe —
+negative-controlled by swapping the old probe back in and watching the selftest fail on exactly
+the audit's finding shape. H's dispatch targets had already shipped at 1040.

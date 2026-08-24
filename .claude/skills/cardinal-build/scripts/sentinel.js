@@ -561,6 +561,14 @@ if (SELFTEST) {
   console.log((mfMissed ? '  FAIL  ' : '  PASS  ') +
     'but a @media rule beaten by a later unconditional one STILL is (build 817)');
   if (mfMissed) bad++;
+  /* 24 Aug 2026 (audit O5 false positive): display:-webkit-box computes to
+     flow-root when the engine implements the standardized line-clamp — the
+     clamp WORKS and the declared/computed mismatch is the mapping, not a
+     cascade loss. */
+  const clampWrong = all.some(r => r.id === 'DEAD' && /clamp-ok/.test(r.detail));
+  console.log((clampWrong ? '  FAIL  ' : '  PASS  ') +
+    'a working -webkit-box line-clamp (computes flow-root) is NOT reported as DEAD');
+  if (clampWrong) bad++;
   /* 957: a scroller that legitimately contains must NOT be reported — the
      check is about the missing scrollport, not the property. */
   const containWrong = all.some(r => r.id === 'CONTAIN' && /#contain-ok/.test(r.detail));

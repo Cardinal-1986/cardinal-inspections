@@ -6633,3 +6633,21 @@ Chromium-gated with a red control (gate_1036 … gate_1040), sentinel production
   arrows, +Add and Full-calendar chips, Mark-ordered/Open-job. Two audit rows were false
   positives (`.pu-box` padded since 418, `.pkback` 44 since 947) — verified live, left alone.
   ⚠ pads anchor to the padding box: a 1px border costs a pixel per side.
+
+## Production hub — the audit's second batch, items 6–9 (builds 1041–1043, 24 Aug 2026)
+
+- **1041 — the menu footer is one line.** `data-cr-footer` had been prepending every build's
+  summary since ~1015 (11.6 KB, 26 builds); it now holds only the current build's line and the
+  patch convention is REPLACE (the HTML comment above the div is the contract). History lives in
+  the CHANGELOG / What's New, where it always did.
+- **1042 — Punch & Repairs is full-screen for production accounts.** `body.cr-prod` (set in
+  showMain's 854 branch, toggled) scopes a fixed inset:0 z-9400 treatment on #punchView — the
+  retail nav row and desktop rail are covered for Curtis/Scottie, byte-identical for everyone
+  else. A punch-out card opened from the page still lands on top (9550 > 9400). No new
+  scroll-lock writer.
+- **1043 — desktop board: work beside the calendar.** 1100–1599px gets the ultrawide's
+  month-left / work-right grid (Theo's pick B from rendered previews; values shipped verbatim).
+  Phones and ≥1600 untouched.
+- **Item 9 closed with no app change** — the "dead" dispatch name-clamp was the sentinel's DEAD
+  check misreading Chromium's `-webkit-box` → `flow-root` line-clamp mapping; the clamp works.
+  Fixed in sentinel_probe.js with a negative-controlled selftest case.
