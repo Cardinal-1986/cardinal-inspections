@@ -184,7 +184,8 @@ add any future non-`@cardinalrenovations.net` teammate to `EXTRA_STAFF` in `api/
     **Fix:** label is now #ffc2c6 (4.89:1) / #9fdcb4 (4.75:1, the green savedFlash already uses);
     bright borders unchanged. Proven by `gate_1023.mjs` (recomputes the ratios; old ones fail).
 
-### 🟡 dropped LOWs (unverified — logged, not chased)
+### ✅ dropped LOWs — verified and settled at build 1034 (24 Aug; four fixed in code, one in sw.js, two shipped as hand-run SQL, two were already fixed, one is operator-only — leaked-password protection, still off per the advisor). Original list kept below:
+### 🟡 dropped LOWs (original list)
 Moving Invoiced→Completed pops the review prompt · `manual_estimates` USING(true) write policy ·
 Supabase leaked-password protection off · New Bid property picker reads a never-loaded cache
 (`forPartner`/`byPartner` don't exist) · dead `CardinalCommunityBid.logSubmitted` reference · 947

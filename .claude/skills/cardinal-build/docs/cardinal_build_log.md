@@ -20497,7 +20497,7 @@ days; the rule is assert on a form your own prose cannot contain.*
 and never reaches the door being tested. The assertion was aimed at the wrong stage, not at a
 broken route.
 
-## Build 1031 — the printed contract shows all of its own words
+## Build 1036 — the printed contract shows all of its own words
 
 **The defect.** The slim grey running header (`.runhead`, build 747) is `position:fixed`, which
 does repeat on every printed page — in the same strip the flowed text occupies. Its background is
@@ -20529,7 +20529,7 @@ had no print furniture at all: no page rules, and no address footer.
 the header up with `top:-0.34in`; Chromium clamps a fixed element to the page area, so it landed at
 the **bottom** of the page (y≈707) and off page 5 entirely. Collisions read **zero** — because the
 header had left, not because the text was clear. *Absence of a collision is not the goal; a header
-above readable text is.* `gate_1031` assertion 4 exists solely to catch that, and it is the
+above readable text is.* `gate_1036` assertion 4 exists solely to catch that, and it is the
 assertion the first two attempts would have failed.
 
 ⚠️ **A measurement that returned nonsense was believed for one round.** The collision detector
@@ -20540,7 +20540,7 @@ are not app states; they are a broken instrument. Read the numbers before readin
 acceptance block onto a fifth sheet. Roof (5), siding (4) and the service contract (2) are
 unchanged. The full-width hairline under the old header does not survive the move to a margin box.
 
-**Gates.** `check_build.py` green 1030 → 1031. **`gate_1031.mjs` 31/31 GREEN · RED on the 966 control
+**Gates.** `check_build.py` green 1035 → 1036. **`gate_1036.mjs` 31/31 GREEN · RED on the 966 control
 with 15 named failures**, no crash — it presses the real Download button, prints those exact bytes,
 and measures the pages. `gate_964` 9/9, `gate_965` 12/12, `gate_966` 12/12 re-run.
 
@@ -20745,7 +20745,7 @@ merged onto the local row (stale `{z:9}` never pulled); online → 1 refetch, me
 row. GREEN; negative control against the 1015/1016 tree → RED (offline refetch happens). `check_build`
 green (1016→1017). No SQL.
 
-## Build 1031 — AI/spend + senddoc routes gated on staff identity (23 Aug 2026)
+## Build 1036 — AI/spend + senddoc routes gated on staff identity (23 Aug 2026)
 
 **Audit findings 6 + 7 (both CONFIRMED high).** 1013 closed anonymous access to the AI routes, but
 every one still trusted ANY confirmed Supabase session — and public signup is on — so a
@@ -20766,7 +20766,7 @@ it a stranger can still create an account (they just can't reach these routes). 
 OPEN_ITEMS.
 
 **No index.html behavior change** — server-only; the stamp/CHANGELOG bump keeps the version record
-coherent (same convention as 806's librarian swap). **Proof:** `gate_1031.mjs` imports `_staff.js`
+coherent (same convention as 806's librarian swap). **Proof:** `gate_1036.mjs` imports `_staff.js`
 and asserts all 10 live accounts pass + fabricated outsiders/empty/null fail (case-insensitive), and
 that all 13 routes import the helper with the guard positioned after the session resolves. GREEN;
 negative control against the build-1014 api dir → RED (40 failures: no `_staff.js`, no guards).
@@ -20984,7 +20984,7 @@ green (stamp 1010→1011, marker, negative control).
 
 No SQL. `index.html` only.
 
-## Build 1031 — money-in has one door again: the "Received" heading (23 Aug 2026)
+## Build 1036 — money-in has one door again: the "Received" heading (23 Aug 2026)
 
 **A HIGH money-correctness finding from the build-1007 audit, and it is 996's own residue.** Build
 996 made `collections` (Money In & Commissions) the single door for money received — it fires the
@@ -21006,7 +21006,7 @@ unchanged. Editing an existing legacy `dir:'in'` row (`data-payedit`, checked ea
 delegation and returning first) is untouched, so the one job carrying legacy rows (Dan Thompson) can
 still be inspected and moved via its "Move them into Money In" button (`payMigrateLegacyIn`).
 
-**Proof.** `gate_1031.mjs` extracts the SHIPPED `#paySummary` click handler, mounts the real section
+**Proof.** `gate_1036.mjs` extracts the SHIPPED `#paySummary` click handler, mounts the real section
 markup in a real Chromium DOM, and dispatches real clicks (genuine `closest()` traversal, not
 mocked): Received heading → `payGoLogCollection` and never `openPayRow('in')`; Paid/Expenses headings
 → `openPayRow('out'|'exp', null)`; + button still → `payGoLogCollection`; edit row →
@@ -21090,7 +21090,7 @@ un-fixed — next up).
 
 ### Gates
 
-`gate_1031.mjs` rewritten for the new race-free contract — 14 assertions incl. supersede-commits-not-
+`gate_1036.mjs` rewritten for the new race-free contract — 14 assertions incl. supersede-commits-not-
 drops and page-hide-flush; control on 1007 **FAIL 6**, named. `gate_1008.mjs` — the two 1005 fixes
 (flat `lead_source` write; neutral portal pre-selects no claim type; live refusal); control on 1007
 **FAIL 3**, named. `gate_1004/1005/1007` re-run GREEN (no regressions); `check_build` GREEN, stamp 1008.
@@ -21147,7 +21147,7 @@ stamp reading 971, recovered by `git fetch` + `checkout -B <branch> origin/main`
 re-applying the patch, verified byte-identical to the pre-reset version. Committing the stale tree would
 have reverted 1004–1006 — BUG_CLASSES 49. Verify the stamp on disk after any suspected reset.
 
-## Build 1031 — stage arrows: one tap, with Undo (23 Aug 2026)
+## Build 1036 — stage arrows: one tap, with Undo (23 Aug 2026)
 
 First slice of the **dialog diet** (OPEN_ITEMS #6). The profile's forward/back stage arrows popped a
 `confirm('are you sure?')` on every tap. Now a tap moves the job at once and shows a **5-second Undo
@@ -21170,7 +21170,7 @@ somehow unavailable the move commits immediately rather than being lost.
 
 ### Gate
 
-`gate_1031.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
+`gate_1036.mjs` — source wiring (both arrows call `crStageDefer`; the advance `confirm()` is gone) plus
 a Chromium mechanism test of the helper in isolation: a tap shows the target stage but does NOT commit,
 raises an Undo toast; Undo reverts and **never commits**; letting the 5s window elapse commits exactly
 once. 11 assertions. Control on 1005: **FAIL 4** (confirm present, helper absent), named, no crash — the
@@ -24333,3 +24333,71 @@ tick. Gate: `gate_1030.mjs` — a renamed published estimate injected gate-side 
 Estimates bucket (control: misfiled under Inspections, live), helper truth-table, approvals legs
 ×2, placeholder, cruft. GREEN; **control RED ×7. All six arc gates (1025–1030) re-run GREEN
 against this final artifact.**
+
+## Build 1032 — the delete-client caption reads in light mode (audit appendix; Theo: "do 5")
+
+*(1031 is claimed by branch `claude/claude-md-docs-9qyu0f` — `next_build.py` said 1032; gaps are
+normal.)* The Delete Client caption carried inline `color:#a89f9a` — dark-era ink, **2.42:1** on
+the light profile. Same class as 1025's Balance Due (inline beats every stylesheet): de-inlined to
+`.danger-note`, dark keeps `#a89f9a` (7.7/6.8:1 computed), light reuses 1025's caption ink
+`#6c655e` (5.1/5.7:1). **The OTHER half of audit item 5 — the lnav Landing yellow — is deliberately
+NOT touched:** build 539's comment records Theo choosing `#f0c651` with the 1.47:1 measurement in
+front of him ("Do not 'fix' this back to amber without asking him"); the ask goes on his reminder
+list. Gate: `gate_1032.mjs` computed inks both themes on the profile; GREEN, control RED ×3.
+
+## Build 1033 — the AI-estimate arm deleted, whole (item 6; Theo: "truly deleted")
+
+1028 hid the doors; this removes the machinery, per the 807 checklist (every wiring mapped first).
+**Gone (−36.9 KB):** the AI Create + Output views, the photo-session/downscale/upload sections,
+`api()`/`generateEstimate`/`convertToContract`/`normalizeAI`, the ai leg of `loadList`, the lanes'
+ai click branch + ⚡ badge, `creDiscard`'s ai branch, the `openAI`/`openOne` exports, both
+`cr-tmpl-ai-*` templates, `.cre-ai`; cr-shim's `openAI` route (its only project-passing caller was
+the door removed at 1028); the dead `#pAiEstimateBtn` wiring; cr-claims' linked-AI-estimate load +
+card + click; cr-xlinks' `forEstimate`/`linkClaimToEstimate` (**their only "callers" were the
+banner's own install prose** — comment pollution, both directions); cr-ahc's `checkAI()` + its env
+row + table row; cr-inv's `check_4`/`check_5` + registry rows; cr-eaf's `wireSave`/`wireSend`.
+**`api/estimate.js` deleted** + its `vercel.json` entry (an unmatched functions pattern fails the
+deploy); `api/estimate-to-contract.js` refuses `ai_estimate_id` and keeps only the project path.
+⚠️ **`drop_ai_estimates.sql` ships but is NOT yet applied** — the automated apply was declined
+(it drops two FK constraints by name on the live `contracts`/`insurance_claims` tables); Theo runs
+it by hand per convention; 0 rows + 0 FK references verified; the app stopped reading the table
+this build either way. Two lessons banked: **only the runtime gate caught the first xlinks cut
+taking `forContract` and every renderer with it** (it parsed clean — five-state pageerror sweep is
+now the pattern for deletions), and my own tombstone comments tripped my own leftover-reference
+asserts FIVE times (context-checked asserts now). Gate: `gate_1033.mjs` GREEN (five states, zero
+pageerrors, zero live refs, api checks); **control RED ×9**; arc gates 1026/28/29/30/32 all re-run
+GREEN on this artifact.
+
+## Build 1034 — the dropped LOWs, verified then fixed (item 7; Theo: "do 7")
+
+The 23 Aug audit's nine unverified LOWs, each re-verified against the CURRENT tree and live DB
+before touching anything. **Fixed in index.html:** (1) the Google-review confirm fired on a
+BACKWARD Invoiced→Completed correction — `_crStageReviewMaybe` now takes the pending move's true
+`from` and celebrates only a forward arrival (the control probe shows the old 2×-ask live);
+(4) the New Bid property picker tried `forPartner`/`byPartner` — **names that have never
+existed** — and fell through to `list()`, a read of a never-loaded cache, so it usually showed no
+properties; it calls `load()` now; (5) the guarded never-defined `CardinalCommunityBid.logSubmitted`
+call removed; (6) `.pu-tag.supp` (947's SUPPLEMENT chip) got its light twin — same computed
+`#8a5500` its sibling `.pu-st.warn` already used. **Fixed in sw.js:** (7) offline, only the ROOT
+gets the cached app shell — the AI-Field-Manual iframe gets the honest offline card instead of a
+second copy of the CRM. **Shipped for Theo's SQL-editor visit** (automated writes declined by the
+permission classifier): `fix_onhold_stage_since.sql` (8 — the one Maker Space row) and two orphaned
+trigger-function drops appended to `drop_ai_estimates.sql`. **Already fixed, no work:** (2)
+`manual_estimates` dropped at 1030; (9) void readers fixed at 1015. **Operator-only:** (3)
+leaked-password protection confirmed still OFF by the live security advisor — on Theo's reminder
+list beside the signup toggle. Gate: `gate_1034.mjs` — the review truth-table (stub must OUTLIVE
+the 300ms timer — the first probe restored confirm too early and read 0/0 on both trees; the
+control's identical failure was the tell), computed chip inks both themes, picker/dead-call/sw
+statics. GREEN; **control RED ×5**.
+
+## Build 1035 — the Landing label reads in light mode (Theo's delegated call: "I trust you would do it best")
+
+539 chose literal yellow `#f0c651` in BOTH themes with the 1.47:1 measurement in front of him; the
+block's comment said not to change it without asking. 1032 put the ask on his list; the answer
+delegated the call. **Best = the 545/557 obsidian-tiles precedent: the same hue DEEPENED, never
+swapped** — dark keeps the true yellow untouched; light gets `#8a6100`, the amber 538 originally
+computed for this exact rail — and the patch's own arithmetic reproduces 538's recorded numbers to
+the digit (4.99 / 5.54 / 4.55 on rail / active card / hover). Both comment records updated so the
+next reader sees 539 AND its 1035 resolution. Gate: `gate_1035.mjs` computed inks both themes
+(probe lesson: the rail mounts only after a sentinel state runs — the control's identical MISSING
+was the tell, again); GREEN, control RED on exactly the light leg.

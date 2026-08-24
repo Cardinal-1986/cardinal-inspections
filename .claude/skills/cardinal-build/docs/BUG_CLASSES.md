@@ -3258,7 +3258,7 @@ change to something already approved. Excluded on purpose, not overlooked.
 <<<<<<< HEAD
 ## 59 — a repeating page element that paints over the text it repeats above
 
-**Seen: build 1031, on all four contract templates at once, invisible since 747.**
+**Seen: build 1036, on all four contract templates at once, invisible since 747.**
 
 `position:fixed` genuinely repeats on every printed page — that part of 747's note is right. What
 it does **not** do is reserve space. The element repeats in the same strip the flowed text
@@ -3279,7 +3279,7 @@ strip. **A gate that counts collisions must also assert the element is still whe
 every page**, or it certifies its own deletion as a fix.
 
 **Instrument:** print to PDF and read the text layer's geometry against the painted band — do not
-read CSS, and do not trust a screenshot of page 1. `gate_1031.mjs`.
+read CSS, and do not trust a screenshot of page 1. `gate_1036.mjs`.
 =======
 ## Class 59 — a probe pointed at one surface out of eleven, reporting green about ten it never rendered
 
