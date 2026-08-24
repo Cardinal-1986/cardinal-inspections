@@ -1,5 +1,10 @@
 -- claim_chase.sql — build 1056, the chase clock
 --
+-- ✅ APPLIED to production 2026-08-24 (Theo: "Can you not run the sql?").
+--    Verified after: both columns present and nullable, the index exists, and
+--    the app's exact claims select — all fifteen columns named by
+--    cr-cth-script — returns all 5 rows. Idempotent; re-running is a no-op.
+--
 -- Two columns of STATE on the claim: when a carrier was last chased, and by
 -- whom. Run this BEFORE deploying the index.html change; the app's claims
 -- select names last_chased_at explicitly and PostgREST 400s on an unknown

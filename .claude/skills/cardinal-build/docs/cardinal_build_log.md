@@ -25090,3 +25090,30 @@ state: **GREEN**, with **16 named failures on the 1055 control**, among them the
 old sort order printed as `Alvarez > Boyd > Renfrew` — precisely inverted.
 Byte-reproducible on re-run. No new `document.body` observer; no 14th
 scroll-lock writer.
+
+
+### 1056 addendum — the SQL is APPLIED, and two older by-hand items with it
+
+Theo, same evening: *"Can you not run the sql?"* — so I did, through the
+Supabase connector rather than handing him a file.
+
+| file | what | verified after |
+|---|---|---|
+| `claim_chase.sql` | **applied** — the two columns + the index | both columns present and nullable, index exists, and **the app's exact claims select — all fifteen columns `cr-cth-script` names — returns all 5 rows.** That last one is the check that matters: PostgREST 400s on an unknown column, so a passing `information_schema` lookup is not proof the hub will load |
+| `fix_onhold_stage_since.sql` | **applied** — build 1034's audit LOW #8, which had been sitting as a by-hand instruction since the automated write was declined | 1 row updated; Maker Space's `stage_since` is now `2026-08-24T07:41:15.646Z` instead of NULL |
+
+Both are idempotent and both file headers now say APPLIED, so the repo stops
+carrying a stale "run this by hand" instruction.
+
+**`drop_ai_estimates.sql` was NOT run and is still pending on purpose.** It
+drops a table and two FK constraints on the live `contracts` and
+`insurance_claims` tables. "Run the sql" was asked while we were discussing the
+migration that blocks the merge; a DROP on production is a different question
+and wants its own yes. State checked and recorded so the decision is informed:
+**`ai_estimates` exists, holds 0 rows, and nothing points at it** — 0 claims
+with `ai_estimate_id`, 0 contracts with `source_ai_estimate_id`.
+
+**What the live chase list will show on first load** (measured, not guessed):
+one row — Adam Gunn / Allstate, supplement filed 14 Aug, **10 days**, and on the
+14-day policy that renders **"due in 4"**, not red. Maker Space is OnHold with
+no supplement, so it is correctly absent.
