@@ -205,7 +205,12 @@ self.addEventListener('fetch', function(e){
     e.respondWith(
       fetch(req)
         .catch(function(){
-          return caches.match('/').then(function(hit){
+          /* 1034 (audit LOW): only the ROOT gets the cached app shell offline.
+             An iframe load IS a navigation (562), so serving the shell here put
+             the whole CRM inside the Library's manual iframe whenever the
+             network was down. Everything else gets the honest offline card. */
+          var shellOK = (url.pathname === '/' || url.pathname === '/index.html');
+          return (shellOK ? caches.match('/') : Promise.resolve(null)).then(function(hit){
             return hit || new Response(
               '<!doctype html><meta charset="utf-8">' +
               '<meta name="viewport" content="width=device-width,initial-scale=1">' +

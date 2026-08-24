@@ -24316,3 +24316,25 @@ now the pattern for deletions), and my own tombstone comments tripped my own lef
 asserts FIVE times (context-checked asserts now). Gate: `gate_1033.mjs` GREEN (five states, zero
 pageerrors, zero live refs, api checks); **control RED ×9**; arc gates 1026/28/29/30/32 all re-run
 GREEN on this artifact.
+
+## Build 1034 — the dropped LOWs, verified then fixed (item 7; Theo: "do 7")
+
+The 23 Aug audit's nine unverified LOWs, each re-verified against the CURRENT tree and live DB
+before touching anything. **Fixed in index.html:** (1) the Google-review confirm fired on a
+BACKWARD Invoiced→Completed correction — `_crStageReviewMaybe` now takes the pending move's true
+`from` and celebrates only a forward arrival (the control probe shows the old 2×-ask live);
+(4) the New Bid property picker tried `forPartner`/`byPartner` — **names that have never
+existed** — and fell through to `list()`, a read of a never-loaded cache, so it usually showed no
+properties; it calls `load()` now; (5) the guarded never-defined `CardinalCommunityBid.logSubmitted`
+call removed; (6) `.pu-tag.supp` (947's SUPPLEMENT chip) got its light twin — same computed
+`#8a5500` its sibling `.pu-st.warn` already used. **Fixed in sw.js:** (7) offline, only the ROOT
+gets the cached app shell — the AI-Field-Manual iframe gets the honest offline card instead of a
+second copy of the CRM. **Shipped for Theo's SQL-editor visit** (automated writes declined by the
+permission classifier): `fix_onhold_stage_since.sql` (8 — the one Maker Space row) and two orphaned
+trigger-function drops appended to `drop_ai_estimates.sql`. **Already fixed, no work:** (2)
+`manual_estimates` dropped at 1030; (9) void readers fixed at 1015. **Operator-only:** (3)
+leaked-password protection confirmed still OFF by the live security advisor — on Theo's reminder
+list beside the signup toggle. Gate: `gate_1034.mjs` — the review truth-table (stub must OUTLIVE
+the 300ms timer — the first probe restored confirm too early and read 0/0 on both trees; the
+control's identical failure was the tell), computed chip inks both themes, picker/dead-call/sw
+statics. GREEN; **control RED ×5**.

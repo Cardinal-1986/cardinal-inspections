@@ -50,3 +50,8 @@ alter table public.contracts        drop constraint contracts_source_ai_estimate
 alter table public.insurance_claims drop constraint insurance_claims_ai_estimate_id_fkey;
 
 drop table public.ai_estimates;
+
+-- housekeeping while you are here (surfaced by the security advisor): the
+-- trigger FUNCTIONS of the two retired tables outlive their tables — drop them.
+drop function if exists public.tg_ai_estimates_touch();
+drop function if exists public.touch_manual_est_updated_at();
