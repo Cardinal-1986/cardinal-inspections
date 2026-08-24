@@ -3708,7 +3708,11 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-22 build 1036 &#8212; the printed contract now shows all of its own words. The grey running header along the top of each page was painting over the text underneath it, hiding twelve pieces of contract wording on paper &#8212; including the right-to-cancel line. The header moves up into the page margin, where it belongs</div>
+          <!-- 1041 (audit O2): ONE build line only. REPLACE this text each build —
+     never prepend. The prepend convention grew this div to 11.6 KB / 26
+     builds of prose that every user scrolled past; the full history lives
+     in the CHANGELOG (What’s New reads it), not here. -->
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1050 &#8212; every word of a printed contract is now readable. The grey header line at the top of each printed page was painting over the text beneath it from page two onward — hiding twelve pieces of contract wording across the roof, siding, gutter and service agreements, including the right-to-cancel notice on two of them. The header now sits in the page margin where it belongs. This reaches contracts signed months ago, and the emailed copy gets the same treatment.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3800,6 +3804,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <b>Dashboard</b><span id="qClock"></span>
           </div>
         </div>
+        <div id="crMorning" style="display:none;"></div>
         <div class="pipecard" style="margin-top:12px;">
           <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="3" y="12" width="4.4" height="9" rx="1"/><rect x="9.8" y="7" width="4.4" height="14" rx="1"/><rect x="16.6" y="3" width="4.4" height="18" rx="1"/></g><g class="i5"><path d="M4 20V13" class="m"/><path d="M10 20V8"/><path d="M16 20V4" class="m"/><path d="M4 20h16" class="m"/></g></svg>Cardinal Pipeline</div>
           <div class="piperow" id="pipeRow"></div>
@@ -3828,6 +3833,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <div class="kphomerow">
           <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="3" y="5" width="18" height="2.6" rx="1.3"/><rect x="3" y="10.7" width="18" height="2.6" rx="1.3"/><rect x="3" y="16.4" width="11" height="2.6" rx="1.3"/></g><g class="i5"><path d="M4 7h16" class="m"/><path d="M4 12h11"/><path d="M4 17h6" class="m"/></g></svg>Recent leads</div><div id="kpLeadsList"></div></div>
           <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path fill-rule="evenodd" d="M4.8 3.6h14.4a2 2 0 0 1 2 2v12.8a2 2 0 0 1-2 2H4.8a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM5.2 10.2h13.6v7.6H5.2z"/><circle cx="12" cy="14" r="2.2"/></g><g class="i5"><rect x="2.8" y="3.6" width="18.4" height="16.8" rx="2"/><path d="M2.8 9.8h18.4"/><circle cx="12" cy="15" r="2" class="m"/></g></svg>Today</div><div id="kpTodayList"></div></div>
+          <div class="pipecard kpquiet"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.4v5l3.4 2"/></g><g class="i5"><circle cx="12" cy="12" r="8" class="m"/><path d="M12 7.5v4.9l3.2 1.9"/></g></svg>Gone quiet</div><div id="kpQuietList"></div></div>
         </div>
         <div id="kpPunchStrip"></div>
         <div class="herorow" style="margin-top:14px;">
@@ -7745,6 +7751,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <div id="chatTagRow" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px 0;"></div>
       <div class="chatinput">
         <input type="text" id="chatText" placeholder="Write a note&#8230; use @name to tag" autocomplete="off">
+        <button class="cr-snipbtn" type="button" aria-label="Saved snippets" title="Saved snippets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6zM19 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6z"/></svg></button>
         <button class="btn" id="chatSend">Send</button>
       </div>
     </div>
@@ -9296,7 +9303,7 @@ table.units td.pr{text-align:right;white-space:nowrap;width:22%;}
 .page-break{break-before:page;}
 /* 747: the slim running header. position:fixed repeats on every printed page —
    measured, 5 of 5 pages.
-   ⚠ 1036 CORRECTION, measured on the shipped templates: it repeats in the same
+   ⚠ 1050 CORRECTION, measured on the shipped templates: it repeats in the same
    strip the flowed text occupies, and its white background HIDES that text on
    every page after the first. 12 pieces of contract text were invisible. The
    claim below that @page margin boxes are unimplemented is also false in current
@@ -9605,7 +9612,7 @@ table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weig
 .page-break{break-before:page;}
 /* 747: the slim running header. position:fixed repeats on every printed page —
    measured, 5 of 5 pages.
-   ⚠ 1036 CORRECTION, measured on the shipped templates: it repeats in the same
+   ⚠ 1050 CORRECTION, measured on the shipped templates: it repeats in the same
    strip the flowed text occupies, and its white background HIDES that text on
    every page after the first. 12 pieces of contract text were invisible. The
    claim below that @page margin boxes are unimplemented is also false in current
@@ -10863,6 +10870,28 @@ async function __apptMayAdvanceStage(fields){
     }catch(_t){}
   }catch(_){ /* never let a stage courtesy break saving the appointment */ }
 }
+/* 1047 (feature: notification matrix): a BUILD DAY reaching the calendar is
+   news the crew had to discover by opening the board. One helper behind the
+   one appointments write path; fire-and-forget so scheduling never waits on
+   (or fails with) a notification. Actor excluded; notifyTeam dedupes. */
+function __apptNotifyProduction(f){
+  try{
+    if(!f || f.kind !== 'job' || !f.project_id) return;
+    if(typeof window.notifyTeam !== 'function') return;
+    var me = ((window.currentUser && window.currentUser.email) || '').toLowerCase();
+    var to = (Array.isArray(window.PRODUCTION_EMAILS) ? window.PRODUCTION_EMAILS : [])
+      .filter(function(e){ return e && e.toLowerCase() !== me; });
+    if(!to.length) return;
+    var pr = (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(f.project_id); })[0];
+    var nm = (pr && pr.name) || 'a job';
+    window.notifyTeam(to,
+      'Build day set \u2014 ' + nm,
+      '<p><b>' + nm + '</b> is booked for <b>' + (f.appt_date || '') + '</b>' +
+      (f.appt_time ? ' at ' + f.appt_time : '') + '.</p>' +
+      (f.title ? '<p>' + String(f.title).replace(/</g, '&lt;') + '</p>' : ''))
+      .catch(function(){});
+  }catch(_e){}
+}
 var adb = {
   list: async function(){
     if(TEAM){
@@ -10884,6 +10913,7 @@ var adb = {
       var r = await sb.from('appointments').insert(fields);
       if(r.error) throw r.error;
       await __apptMayAdvanceStage(fields);   /* 783 */
+      __apptNotifyProduction(fields);        /* 1047 — fire-and-forget */
       return;
     }
     fields.id = uid(); fields.created_by = null;
@@ -10905,7 +10935,11 @@ var adb = {
       alsSave(l);
     }
     var row = (cacheAppts || []).filter(function(x){ return String(x.id) === String(id); })[0] || {};
-    await __apptMayAdvanceStage(Object.assign({}, row, fields));
+    var merged = Object.assign({}, row, fields);
+    await __apptMayAdvanceStage(merged);
+    /* 1047: 998's attach-job path — a job landing on an existing build day is
+       the same news as a new one. Only when this update ATTACHED the job. */
+    if(fields.project_id) __apptNotifyProduction(merged);
   },
   remove: async function(id){
     if(TEAM){
@@ -14789,7 +14823,7 @@ document.getElementById('paySummary').addEventListener('click', function(e){
   if(edit){ openPayRow(null, parseInt(edit.getAttribute('data-payedit'), 10)); return; }
   var head = e.target.closest('.paysec');
   if(head && e.target.closest('.payhead')){
-    /* 1036: the Received header was 996's missed second door. 996 routed the
+    /* 1050: the Received header was 996's missed second door. 996 routed the
        + button for 'in' to payGoLogCollection but left this header tap calling
        openPayRow('in'), which opens the legacy dir:'in' modal — money that books
        no commission and, on any job with a collection, is ignored by Balance Due
@@ -18708,6 +18742,16 @@ async function setMaterialsOrdered(on){
   try{ auditLog('materials', (on ? 'Marked ordered' : 'Cleared ordered flag'), currentProject.id); }catch(_){}
   /* The board derives its chips from the checklist, so a refresh is all it needs. */
   try{ if(window.CardinalProduction) window.CardinalProduction.refresh(); }catch(_){}
+  /* 1047: the rep learns their deal is moving. Only on SET, only when a rep
+     is on the job and it is not the actor; fire-and-forget. */
+  try{
+    var _rep = on && currentProject.sales_rep;
+    if(_rep && typeof window.notifyTeam === 'function' && String(_rep).toLowerCase() !== me.toLowerCase()){
+      window.notifyTeam([_rep], 'Materials ordered \u2014 ' + (currentProject.name || 'your job'),
+        '<p>Materials were just marked ordered for <b>' + (currentProject.name || 'your job') + '</b>.</p>')
+        .catch(function(){});
+    }
+  }catch(_e){}
 }
 function matListText(trade){
   var all = parseCkAll(currentProject);
@@ -20812,11 +20856,12 @@ function fmtMoney(n, cents){
   if(!n) return '--';
   return '$' + Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
-function renderApprovals(){
-  var card = document.getElementById('approvalsCard');
-  if(!card) return;
-  if(!isAdminUser()){ card.style.display = 'none'; return; }
-  var pend = cacheProjects.filter(function(pr){
+/* 1048: the ONE approvals predicate. The morning strip counts what this card
+   shows, so the chip and the card can never disagree — the alternative was a
+   second copy of the rule, which is how two screens start telling different
+   stories about the same queue. */
+window.crApprovalsPending = function(){
+  return cacheProjects.filter(function(pr){
     var s = normStage(pr.stage);
     /* 652: any live stage can owe a contract — a job whose stage was
        advanced by hand BEFORE the client signed used to vanish from this
@@ -20832,6 +20877,12 @@ function renderApprovals(){
       return r.project_id === pr.id && isEstimateDoc(r) && r.signed_at;
     });
   });
+};
+function renderApprovals(){
+  var card = document.getElementById('approvalsCard');
+  if(!card) return;
+  if(!isAdminUser()){ card.style.display = 'none'; return; }
+  var pend = window.crApprovalsPending();
   if(!pend.length){ card.style.display = 'none'; return; }
   card.style.display = 'block';
   document.getElementById('approvalsList').innerHTML = pend.map(function(pr){
@@ -22178,6 +22229,7 @@ function renderActivity(){
   }).join('') : '<div class="chatempty">No activity yet.</div>';
   if(typeof renderKpHomeRow === 'function') renderKpHomeRow();
   if(typeof renderPunchStrips === 'function') renderPunchStrips();
+  if(typeof window.renderMorningStrip === 'function') window.renderMorningStrip();  /* 1048 */
 }
 var activityView = document.getElementById('activityView');
 function openActivityFeed(){
@@ -25582,12 +25634,12 @@ document.getElementById('dlBtn').addEventListener('click', async function(){
   await saveCurrent();
   var t = (document.getElementById('docTitle') && document.getElementById('docTitle').value) ||
           (window.currentDoc && window.currentDoc.title) || 'Cardinal document';
-  /* 1036: the downloaded .html is what a client is emailed and prints at home.
+  /* 1050: the downloaded .html is what a client is emailed and prints at home.
      It must carry the same page furniture as the copy we print from here. */
   try{ ensurePrintFix(frame.contentDocument); }catch(_){}
   if(window.CardinalDownload) window.CardinalDownload.frame(frame, t);
 });
-/* 1036: the running header used to be a position:fixed .runhead element. On paper
+/* 1050: the running header used to be a position:fixed .runhead element. On paper
    that repeats correctly on every page \u2014 and paints its white background over
    whatever the previous page pushed into that strip. Measured on the shipped
    templates: 12 pieces of contract text were fully invisible, among them the
@@ -26595,6 +26647,11 @@ var hd = document.querySelector('header.site');
      and the other portals from the menu (Landing) — goToLanding() is untouched.
      Guarded: a non-production account, or the module missing, falls back to the
      landing exactly as before. */
+  /* 1042 (audit F4): mirror the production role onto the body so role-scoped
+     CSS can dress screens for the crew (the punch page goes full-screen and
+     stops showing the retail nav row). toggle, not add — a role change on
+     re-login must clear it. */
+  try{ document.body.classList.toggle('cr-prod', typeof isProductionUser === 'function' && !!isProductionUser()); }catch(_cp){}
   if(typeof isProductionUser === 'function' && isProductionUser() &&
      window.CardinalProduction && typeof window.CardinalProduction.open === 'function'){
     try{ var _plv = document.getElementById('landingView'); if(_plv) _plv.style.display = 'none'; }catch(_pl){}
@@ -26819,6 +26876,11 @@ function __histPush(st){
   function navRestore(state){
     if(!state || state.app !== 'cardinal-nav') return;
     _navRestoring = true;
+    /* 1037 (audit F2): restoring re-runs view openers whose legacy wrappers
+       __histPush {v:...} entries — during a POP that re-creates the entry just
+       popped and the stack wedges (the profile tab trap's second half).
+       __histPush already honors __histLock; hold it for the restore window. */
+    __histLock = true;
     try{
       switch(state.view){
         case 'landing':         if(typeof goToLanding === 'function') goToLanding(); break;
@@ -26840,7 +26902,12 @@ function __histPush(st){
            arrows walked straight past them — opening one recorded no
            history, so back went wherever the previous real entry was. */
         case 'salesfloor':      if(window.CardinalSalesFloor) window.CardinalSalesFloor.open(); break;
-        case 'production':      if(window.CardinalProduction) window.CardinalProduction.open(); break;
+        case 'production':      if(window.CardinalProduction){
+                                  /* 1036: pane-aware — restore() re-panes an open board
+                                     without open()'s hideAllViews/showHome round-trip. */
+                                  if(window.CardinalProduction.restore) window.CardinalProduction.restore(state.data);
+                                  else window.CardinalProduction.open();
+                                } break;
         case 'dispatch':        if(window.CardinalDispatch) window.CardinalDispatch.open(); break;
         /* 771: registered in hideAllViews since 768 but missing here, which is
            the half-convention this switch's own comment warns about. */
@@ -26874,7 +26941,7 @@ function __histPush(st){
         case 'contract':           if(typeof window.openContractEditor === 'function' && state.data && state.data.contractId) window.openContractEditor({ id: state.data.contractId }); break;
       }
     }catch(_e){}
-    setTimeout(function(){ _navRestoring = false; }, 30);
+    setTimeout(function(){ _navRestoring = false; __histLock = false; }, 30);
   }
   /* Called by wrapped nav functions to record the new state */
   window.navSetView = function(view, data){
@@ -27668,7 +27735,11 @@ async function enableNotifications(){
     var pv = document.getElementById('projectView');
     if(!__histLock && currentProject && pv && pv.style.display !== 'none' && prev && prev !== name){
       try{
-        history.pushState({ v:'project', id: currentProject.id, tab: name }, '',
+        /* 1037 (audit F2): replaceState, not pushState. Stacking one entry per
+           tab flip armed the back-trap (T6) — and people think of tabs as one
+           place, so ONE back should leave the profile from any tab. The entry
+           still records the tab, so returning to it reopens where you were. */
+        history.replaceState({ v:'project', id: currentProject.id, tab: name }, '',
           __hashFor({ v:'project', id: currentProject.id, tab: name }));
       }catch(e){}
     }
@@ -37060,6 +37131,15 @@ var s = ((p.name || '') + ' ' +
    checklist.lead.phones which this box could not see at all. */
 ((window.phoneHay ? window.phoneHay(p) : '') || '') + ' ' +
 (p.email || '') + ' ' +
+/* 1044: PO number and insurance claim/policy numbers — the identifiers people
+   actually walk in holding. The HOME search learned these at 743; the palette
+   never did. Claim data lives at checklist.lead.insurance (16642's shape). */
+(function(){ try{
+var ck = typeof p.checklist === 'string' ? JSON.parse(p.checklist) : (p.checklist || {});
+var ins = ck.lead && ck.lead.insurance;
+return (ck.po ? '#' + ck.po + ' ' + ck.po : '') + ' ' +
+((ins && ins.claim_number) || '') + ' ' + ((ins && ins.policy_number) || '');
+}catch(_e){ return ''; } })() + ' ' +
 ((p.location && p.location.street) || '')).toLowerCase();
 if(s.indexOf(q) !== -1){
 var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(p) : 'unknown';
@@ -37088,12 +37168,35 @@ partners.push(p);
 partners = partners.slice(0, 5);
 }
 }catch(e){}
-return { clients:clients, docs:docs, partners:partners };
+/* 1044: punch-outs, by title + client name, jumping straight to the card. */
+var punch = [];
+try{
+if(window.CardinalPunch && typeof window.CardinalPunch.rows === 'function'){
+window.CardinalPunch.rows().forEach(function(it){
+var pr = (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(it.project_id); })[0];
+var hay = ((it.title || '') + ' ' + ((pr && pr.name) || '')).toLowerCase();
+if(hay.indexOf(q) !== -1){
+punch.push({ id:it.id, title:it.title || 'Punch-out', who:(pr && pr.name) || '', done:it.status === 'done' });
+}
+});
+punch = punch.slice(0, 8);
+}
+}catch(e){}
+return { clients:clients, docs:docs, partners:partners, punch:punch };
 }
 var currentBg = null;
 var currentActive = -1;
 function open(){
 close();
+/* 1044: on a fresh boot the punch cache is empty until a punch surface has
+   loaded — warm it in the background so a second keystroke can find items.
+   Best-effort; a failed reload just means no punch group, never an error. */
+try{
+if(window.CardinalPunch && typeof window.CardinalPunch.rows === 'function' &&
+!window.CardinalPunch.rows().length && typeof window.CardinalPunch.reload === 'function'){
+window.CardinalPunch.reload();
+}
+}catch(_e){}
 var bg = document.createElement('div');
 bg.className = 'cr-srch-bg';
 bg.innerHTML =
@@ -37127,6 +37230,10 @@ window.openProject(row.dataset.id);
 window.openProject(row.dataset.pid);
 }else if(t === 'p' && window.CardinalCommunityPartners){
 window.CardinalCommunityPartners.openDirectory();
+}else if(t === 'k' && window.CardinalPunchCard && window.CardinalPunchCard.open){
+/* 1044: straight to the card — the 768 contract (one card for every
+   punch-out detail in the app). */
+window.CardinalPunchCard.open(row.dataset.id);
 }
 }
 function render(q){
@@ -37164,10 +37271,21 @@ html += '<div class="cr-srch-row" data-t="p" data-id="' + esc(p.id) + '">' +
 });
 html += '</div>';
 }
+if(r.punch && r.punch.length){
+html += '<div class="cr-srch-grp"><h5>Punch-outs \u00b7 ' + r.punch.length + '</h5>';
+r.punch.forEach(function(k){
+html += '<div class="cr-srch-row" data-t="k" data-id="' + esc(k.id) + '">' +
+'<div class="n">' + esc(k.title) +
+(k.done ? ' <span class="type-badge unknown">CLOSED</span>' : '') + '</div>' +
+(k.who ? '<div class="m">' + esc(k.who) + '</div>' : '') +
+'</div>';
+});
+html += '</div>';
+}
 if(!html){
 html = '<div class="cr-srch-empty">' +
 (q ? 'No matches for &ldquo;' + esc(q) + '&rdquo;' : 'Start typing to search') +
-'<small>Searches names, addresses, phones, emails, document titles, and partner names.</small>' +
+'<small>Searches names, addresses, phones, emails, PO and claim numbers, document titles, partner names, and punch-outs.</small>' +
 '</div>';
 }
 res.innerHTML = html;
@@ -41194,8 +41312,22 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b:1036, d:'2026-08-21', t:'The printed contract shows all of its own words',
+  { b:1050, d:'2026-08-24', t:'The printed contract shows all of its own words',
     s:'The grey line along the top of every printed page \u2014 Cardinal Roofing & Renovations \u00b7 ROOFING CONSTRUCTION AGREEMENT \u2014 was sitting in the same strip as the contract text and painting its white background straight over it. On a five-page roof agreement that hid four separate pieces of wording; across the four contracts it hid twelve, including the sentence that names the Terms and Conditions form, the Payment Structure heading, and the right-to-cancel line. The words were in the file the whole time \u2014 you could select them \u2014 they just could not be read. The header now prints up in the page margin instead. Nothing else about the contract changed; a gutter agreement gains one page because the reclaimed strip pushes the acceptance block over. Applies to contracts already saved, and to the copy a client is emailed.' },
+{ b:1049, d:'2026-08-24', t:'Punch-out work survives no signal', s:'On a roof with no bars, ticking a step or writing a note on a punch-out used to fail and quietly undo itself. Those writes now go into the same on-device outbox that photos have used for months: the change stays on screen, the card says \u201csaved on this phone, it will sync by itself\u201d, and it does \u2014 automatically, when signal comes back. Refreshing the list while still offline no longer wipes the queued work either. A write the server genuinely refuses still fails out loud, because that is a real problem and hiding it would be worse.' },
+{ b:1048, d:'2026-08-24', t:'Where things stand \u2014 the morning strip', s:'The home page opens with a row of counts for an admin: signed estimates waiting on a contract, approved jobs with no build date, urgent punch-outs, insurance carriers being chased, and how many things are on today. Each chip is a tap through to the screen that already owns that work \u2014 the strip adds no new destination and no new arithmetic: every count is read from the same resolver the destination screen uses, so the two can never tell different stories. When there is nothing waiting, the whole strip disappears.' },
+{ b:1047, d:'2026-08-24', t:'Three notification gaps, wired', s:'The notification system already covered assignments, @-tags, signed estimates and completed jobs. Three real gaps were mapped and closed: putting a build day on the calendar now notifies the production crew (from every screen that can book one, including attaching a job to an existing day); marking materials ordered notifies the job\u2019s sales rep, from the profile toggle and the board button alike; and filing a punch-out with nobody assigned notifies production \u2014 until now it told no one at all. The person doing the action is never pinged about it, and saves never wait on a notification.' },
+{ b:1046, d:'2026-08-24', t:'Saved snippets at every composer', s:'A quote-mark button now sits beside the three message boxes \u2014 the client page\u2019s note box, the punch card messenger and the punch page composer. It opens a sheet of saved snippets: tap one and it drops into the message, ready to send or edit. Four starters are included \u2014 on-the-way, materials delayed, job wrapped, and the Google-review ask \u2014 and the same sheet adds or deletes your own. Snippets are kept per device for now.' },
+{ b:1045, d:'2026-08-24', t:'Gone quiet \u2014 stale jobs surface themselves', s:'Insurance has had the chase list for months; retail and community jobs could sit motionless with nobody noticing. The home page now carries a Gone-quiet card: active jobs ranked by days in their current stage \u2014 fourteen days for Prospect and Approved, twenty-one for Scheduled, red at thirty \u2014 with a tap straight to the client. Leads, on-hold grant jobs and insurance claims are deliberately excluded: each already has its own home.' },
+{ b:1044, d:'2026-08-24', t:'Universal search', s:'The search window could find a client by name, address, phone or email \u2014 but not by the numbers people actually walk in holding. It now matches PO numbers, insurance claim numbers and policy numbers straight to the client, and gains a Punch-outs section that searches every punch-out by its name or its client and opens the punch card directly. Opening search also quietly warms the punch list on a fresh start so those results are there by the time you finish typing.' },
+{ b:1043, d:'2026-08-24', t:'Desktop board: work beside the calendar', s:'Audit finding O1: on desktop the board led with a full-viewport month and the four boxes \u2014 the actual work \u2014 started below the fold. From rendered previews Theo picked the side-by-side layout: at 1100px and up the month sits on the left and everything else \u2014 boxes, Closed repairs, Crew Dispatch, Crews and today\u2019s agenda \u2014 stands beside it, all visible without scrolling. It is the same arrangement ultrawide screens already used, now on normal desktops and iPads in landscape. Phones keep their single column.' },
+{ b:1042, d:'2026-08-24', t:'Punch & Repairs joins the full-screen family', s:'Audit finding F4: the punch page was the one production screen still drawn inside the retail shell, so Curtis worked his list with Contacts, Leads, Photos and the whole desktop sidebar one accidental tap away. For production accounts the page now fills the screen the way the board, the punch card and dispatch already do \u2014 same ground, its own scrolling, and a punch-out card opened from it still lands on top. Admins and sales see exactly what they saw before.' },
+{ b:1041, d:'2026-08-24', t:'The menu footer goes on a diet', s:'The version stamp at the bottom of the burger menu had quietly been collecting every build\u2019s summary since about build 1015 \u2014 eleven and a half thousand characters, twenty-six builds of prose that every user scrolled past to reach the end of the menu. It now shows one line: the current build. The full history is still one tap away in What\u2019s New, which has always been the real record.' },
+{ b:1040, d:'2026-08-24', t:'Production tap targets reach the floor', s:'The audit\u2019s button census, closed out. The dispatch move-job grip measured 15\u00d715 on a screen built for a truck cab; it and the week arrows, the box lists\u2019 Mark-ordered and Open-job buttons, the board and dispatch back chevrons, the + Add and Full-calendar chips and the month arrows all now carry invisible tap padding to the app\u2019s 44-pixel floor \u2014 the same pattern the punch card got at 947 \u2014 with zero visual change. Two census rows turned out to be already correct and were left alone: the punch list\u2019s close tick has had a 44-pixel pad since build 418, and the punch card\u2019s chevron got its 44 at 947 \u2014 a rectangle audit cannot see either, which is exactly what their comments predicted.' },
+{ b:1039, d:'2026-08-24', t:'Production ink pass \u2014 nine fixes, both themes', s:'The audit\u2019s readability sweep, closed out. The punch list\u2019s NORMAL tag measured 1.91:1 in light mode \u2014 effectively invisible \u2014 and the whole chip family now has computed light-mode colors, not just the two chips the audit happened to catch. The RETAIL tag brightens in dark mode too. The punch card\u2019s Check-in button deepens from salmon to the card\u2019s own darker red so its white label clears the floor in both themes. Dispatch\u2019s weekend columns get their own readable gray that still sits quieter than weekdays. And the board calendar\u2019s build, punch and done chips \u2014 all within a whisker of the floor against their tinted washes \u2014 now clear it with margin.' },
+{ b:1038, d:'2026-08-24', t:'Production exits to the Landing', s:'Audit finding F3: the board\u2019s deliberate exit landed everyone on the retail home \u2014 Cardinal Pipeline counts, Recent leads, and the Accounts-Receivable dollar figure \u2014 while the permissions doctrine says production accounts get no stats strips and no partner money. Backing out of the board now sends Curtis and Scottie to the Landing, the clean portal picker where Production is a labeled tile, so leaving the hub never strands them in the retail CRM. Admins and sales still exit to the retail home they came from.' },
+{ b:1037, d:'2026-08-24', t:'The profile tab back-trap is gone', s:'Audit finding T6: open a client from the Production board, flip two tabs, and the back button wedged \u2014 the first presses walked the tabs, then nothing, and the board underneath was unreachable. Two fixes: tab flips no longer stack a history entry each (the profile is one place \u2014 one back now leaves it from any tab, and it still remembers which tab you were on), and the restore machinery no longer re-writes the history entry it is restoring, which was silently re-creating every entry the back button popped.' },
+{ b:1036, d:'2026-08-24', t:'Production: back matches the chevron', s:'The board\u2019s three panes \u2014 home, full calendar, box lists \u2014 are one screen, and switching between them recorded no history. On a phone the back gesture therefore popped the single Production entry and landed Curtis on the retail home (audit findings T7/T8). Pane switches now record a history entry, the board\u2019s own back chevron pops it so the two always agree, and returning to Production restores the exact pane \u2014 including which box list \u2014 without refetching or flashing the home screen behind it.' },
 { b:1035, d:'2026-08-24', t:'The Landing label reads in light mode', s:'The yellow \u201cLanding\u201d row in the desktop left rail measured 1.47:1 on the light theme \u2014 no true yellow can clear the readability floor on paper. On Theo\u2019s delegated call, light mode now uses the deep amber that was originally computed for that exact rail (about 5:1 on all three grounds it sits on), and dark mode keeps the true yellow untouched \u2014 the same hue deepened rather than swapped, the pattern the Activity Count tiles set.' },
 { b:1034, d:'2026-08-24', t:'Four low-priority fixes from the audit', s:'The 23 Aug audit\u2019s unverified low-priority list, checked one by one and the real ones fixed. Correcting a job backward from Invoiced to Completed no longer celebrates with the \u201csend a Google review request\u201d prompt \u2014 that fires only when a job genuinely arrives at Completed. The New Bid form\u2019s property picker was reading a list nothing had loaded, so it usually showed no properties; it now loads them. The amber SUPPLEMENT tag on punch-out cards was near-invisible in light mode and now uses the same readable amber its neighbours use. And with no signal, opening the AI Field Manual from the Library shows a plain \u201cno signal\u201d card instead of loading a second copy of the whole app inside the panel.' },
 { b:1033, d:'2026-08-24', t:'The old AI estimate machinery is deleted', s:'Build 1028 hid the two \u26a1 AI Estimate buttons; on Theo\u2019s call this build removes the machinery behind them entirely \u2014 the separate AI builder screen, its photo upload flow, its review screen, the API route that generated them, and the empty ai_estimates database table is retired (its drop ships as drop_ai_estimates.sql to run by hand, schema recorded for revert). Claims, the health check and the consistency check no longer look for AI estimates, and converting an estimate to a contract now has exactly one path \u2014 the real estimates table. Nothing visible changes: estimates are just estimates, with the AI helping from inside the editor since 1028.' },
@@ -50175,6 +50307,20 @@ objections : OBJECTIONS,
    and below 1600px nothing about mobile / iPad / a normal monitor changes.
    The right rail is selected by DIRECT child (> *) so the calendar's inner
    .pbday cells (a name collision) are never touched. */
+/* 1043 (audit O1, Theo's pick B from rendered previews): desktop and
+   iPad-landscape get the same month-left / work-right grid the ultrawide
+   already had — the four boxes, Closed repairs, the hubs and Today's work
+   all sit beside the month instead of below the fold. Values are the
+   previewed ones verbatim; the >=1600 block below is byte-identical. */
+@media (min-width:1100px) and (max-width:1599px){
+  #cr-pb .pbwrap{ max-width:1560px; display:grid;
+    grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);
+    column-gap:28px; row-gap:14px; align-items:start; }
+  #cr-pb .pbwrap > *{ grid-column:2; }
+  #cr-pb .pbwrap > .pbtop{ grid-column:1 / -1; }
+  #cr-pb .pbwrap > .pbsub{ grid-column:1 / -1; }
+  #cr-pb .pbwrap > .pbmonth{ grid-column:1; grid-row:3 / span 6; align-self:start; }
+}
 @media (min-width:1600px){
   #cr-pb .pbwrap{ max-width:2160px; display:grid;
     grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);
@@ -50193,6 +50339,17 @@ objections : OBJECTIONS,
   color:var(--pb-mut,#9aa3ab); display:flex; align-items:center; justify-content:center;
 }
 #cr-pb .pbback svg{ width:15px; height:15px; }
+/* 1040 (audit tap targets): 34px chevron, 30px chips, 30px month arrows and
+   32px list buttons all grow their HIT area to 44 with ::after pads — the
+   418/944/947 pattern; nothing about the look moves. */
+#cr-pb .pbback{ position:relative; }
+#cr-pb .pbback::after{ content:""; position:absolute; inset:-6px; }
+#cr-pb .pbchip{ position:relative; }
+#cr-pb .pbchip::after{ content:""; position:absolute; left:0; right:0; top:-8px; bottom:-8px; }
+#cr-pb .pbmon button{ position:relative; }
+#cr-pb .pbmon button::after{ content:""; position:absolute; inset:-7px; }
+#cr-pb .pbact{ position:relative; }
+#cr-pb .pbact::after{ content:""; position:absolute; left:0; right:0; top:-7px; bottom:-7px; }
 #cr-pb h1{
   margin:0; font:700 26px Georgia,'Times New Roman',serif; letter-spacing:.2px;
   color:var(--pb-ink,#eceef0);
@@ -50377,10 +50534,17 @@ objections : OBJECTIONS,
   display:block; font:700 6.6px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.02em; border-radius:3px;
   padding:1.5px 3px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-#cr-pb .cch.build{ background:rgba(200,32,46,.2);  color:var(--pb-acc,#e35c63); }
-#cr-pb .cch.punch{ background:rgba(224,122,95,.18); color:var(--pb-hot,#e07a5f); }
+/* 1039: chip inks are scored against the chip's COMPOSITED wash over the day
+   cell — the token values sat at 4.2–4.7 there depending on the cell. Dark
+   gets chip-scoped brighter literals (>=4.83 on the worst cell); light keeps
+   the token values, which measure 5+ on the white composite. */
+#cr-pb .cch.build{ background:rgba(200,32,46,.2);  color:#e86d73; }
+#cr-pb .cch.punch{ background:rgba(224,122,95,.18); color:#e5866d; }
 #cr-pb .cch.drop { background:rgba(154,163,171,.16); color:var(--pb-mut,#9aa3ab); }
 #cr-pb .cch.done { background:rgba(108,185,143,.16); color:var(--pb-ok,#6cb98f); }
+:root[data-theme="rb-light"] #cr-pb .cch.build{ color:var(--pb-acc,#8f1620); }
+:root[data-theme="rb-light"] #cr-pb .cch.punch{ color:var(--pb-hot,#a83f24); }
+:root[data-theme="rb-light"] #cr-pb .cch.done{ color:#276b49; }/* 1039: token #2f7d55 was 4.43:1 on the wash */
 #cr-pb .pbsheet{
   background:var(--pb-c2,#1b1e22); border:1px solid var(--pb-line,rgba(230,235,240,.11));
   border-radius:16px; padding:9px 12px 12px; margin-top:12px;
@@ -51153,8 +51317,16 @@ function listPaneHtml(){
 function wire(){
   el.querySelectorAll('[data-back]').forEach(function(b){
     b.onclick = function(){
-      if(pane === 'home') close();          /* one level up from home is Home */
-      else { pane = 'home'; render(); scrollTop(); }
+      if(pane === 'home'){ close(); return; }   /* one level up from home is Home */
+      /* 1036 (audit F1): the pane switch pushed a history entry, so going up a
+         level must POP it — otherwise the next browser back re-opens the pane
+         just left. When the top entry is ours, back does the work (popstate ->
+         navRestore -> restore()); the direct set stays as the fallback. */
+      var st = null; try{ st = history.state; }catch(_){}
+      if(st && st.app === 'cardinal-nav' && st.view === 'production' && st.data && st.data.pane){
+        try{ history.back(); return; }catch(_){}
+      }
+      pane = 'home'; render(); scrollTop();
     };
   });
   el.querySelectorAll('[data-box]').forEach(function(b){
@@ -51173,6 +51345,8 @@ function wire(){
         close(false); window.openPunchView(); return;
       }
       listKey = k; pane = 'list'; render(); scrollTop();
+      /* 1036 (audit F1): same as the calendar — a list is a place back can leave. */
+      if(typeof window.navSetView === 'function'){ try{ window.navSetView('production', { pane:'list', box:k }); }catch(_){} }
     };
   });
   el.querySelectorAll('[data-hub]').forEach(function(b){
@@ -51189,6 +51363,9 @@ function wire(){
     b.onclick = function(){
       calMonth = calMonth || monthOf(selDay || today());
       pane = 'cal'; render(); scrollTop();
+      /* 1036 (audit F1): the pane switch is a navigation — record it, or the
+         phone back-gesture pops the one production state and exits the hub. */
+      if(typeof window.navSetView === 'function'){ try{ window.navSetView('production', { pane:'cal' }); }catch(_){} }
     };
   });
   el.querySelectorAll('[data-mon]').forEach(function(b){
@@ -51272,6 +51449,15 @@ async function markOrdered(pid){
   if(typeof window.auditLog === 'function'){
     try{ window.auditLog('materials', 'Marked ordered', pid); }catch(_){}
   }
+  /* 1047: same wire as the profile toggle — the rep hears their deal moved. */
+  try{
+    if(pr.sales_rep && typeof window.notifyTeam === 'function' &&
+       String(pr.sales_rep).toLowerCase() !== String(me).toLowerCase()){
+      window.notifyTeam([pr.sales_rep], 'Materials ordered \u2014 ' + (pr.name || 'your job'),
+        '<p>Materials were just marked ordered for <b>' + esc(pr.name || 'your job') + '</b>.</p>')
+        .catch(function(){});
+    }
+  }catch(_e){}
   lastSig = '';                                  /* the checklist changed */
   render();
 }
@@ -51466,6 +51652,10 @@ async function saveAdd(){
        whether anything was delivered. Chat stays @-only; an assignment is a
        different act and has its own yes. */
     notifyAssignee(row.assigned_to, title, pid, 'filed');
+    /* 1047: a punch-out with NOBODY on it told nobody at all. Production runs
+       punch, so the crew hears about unassigned ones (actor excluded); the
+       assigned case above is unchanged. */
+    if(!row.assigned_to) notifyProductionUnassigned(title, pid);
     if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){
       try{ window.CardinalPunchProfile.refresh(); }catch(_){}
     }
@@ -51503,6 +51693,20 @@ async function notifyAssignee(email, title, pid, verb){
     if(typeof window.notifyOutcomeText === 'function'){
       try{ console.log('[prod]', window.notifyOutcomeText(res, [email])); }catch(_){}
     }
+  }catch(_){}
+}
+
+async function notifyProductionUnassigned(title, pid){
+  try{
+    if(typeof window.notifyTeam !== 'function') return;
+    var me = myEmail();
+    var to = (Array.isArray(window.PRODUCTION_EMAILS) ? window.PRODUCTION_EMAILS : [])
+      .filter(function(e){ return e && e.toLowerCase() !== me; });
+    if(!to.length) return;
+    var pr = projectFor(pid);
+    await window.notifyTeam(to, 'Unassigned punch-out: ' + title,
+      '<p><b>' + esc(shortName(me) || 'Someone') + '</b> filed a punch-out with no one assigned' +
+      ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(title) + '</p>');
   }catch(_){}
 }
 
@@ -51562,7 +51766,17 @@ async function open(){
 function close(goHome){
   if(el) el.classList.remove('open');
   document.body.style.overflow = '';
-  if(goHome !== false && typeof window.showHome === 'function') window.showHome();
+  if(goHome === false) return;
+  /* 1038 (audit F3): the exit room. The retail home shows stage counts and an
+     Accounts-Receivable dollar figure — the permissions doctrine says
+     production accounts get "no stats strips or partner money". Curtis and
+     Scottie exit to the LANDING instead (the portal picker: no money, and
+     Production is a labeled tile there). goToLanding() is history-wrapped, so
+     back from the landing returns to the board. Everyone else keeps the
+     retail home. */
+  if(typeof window.isProductionUser === 'function' && window.isProductionUser() &&
+     typeof window.goToLanding === 'function'){ window.goToLanding(); return; }
+  if(typeof window.showHome === 'function') window.showHome();
 }
 
 /* -------------------------------------------------- burger-menu entry point */
@@ -51618,6 +51832,17 @@ else start();
 
 window.CardinalProduction = {
   open      : open,
+  /* 1036 (audit F1): history restore. Reopens a closed board (open()'s sync
+     half mounts and shows it), then applies the popped state's pane WITHOUT
+     open()'s hideAllViews/showHome round-trip or a refetch when it was
+     already up. data is navSetView's {pane:'cal'|'list', box} or null. */
+  restore   : function(data){
+    data = data || {};
+    if(!el || !el.classList.contains('open')) open();
+    pane = data.pane === 'cal' ? 'cal' : (data.pane === 'list' ? 'list' : 'home');
+    if(pane === 'list' && data.box) listKey = data.box;
+    render(); scrollTop();
+  },
   /* 972: the community card needs "which day is this build booked for" and
      schedFor() is already the app's named answer ("the REAL schedule:
      appointments of kind 'job'", 766). Exported read-only so the card asks the
@@ -52018,7 +52243,16 @@ window.CardinalProduction = {
 #cr-pk .pkvnone{ color:var(--pk-dim,#9aa2ae); }
 #cr-pk .pkvb{ min-height:44px; padding:0 18px; border-radius:10px; cursor:pointer;
   font:800 13px 'Segoe UI',Arial,sans-serif; border:1px solid transparent; }
-#cr-pk .pkvb.in{ background:var(--pk-acc,#e35c63); color:#fff; }
+#cr-pk .pkvb.in{ background:var(--pk-accd,#c8202e); color:#fff; }
+/* 1049: the held-on-device note. Amber pair, computed on the card's own
+   ground in both themes (#f0a24a on #0c0d0f, #8a5500 on #f4f5f6). */
+#cr-pk .pkqueued{ display:none; position:fixed; left:50%; transform:translateX(-50%);
+  bottom:calc(104px + env(safe-area-inset-bottom,0px)); z-index:9600; max-width:92vw;
+  padding:10px 15px; border-radius:11px; text-align:center;
+  background:var(--pk-c2,#1b1e22); border:1px solid rgba(240,162,74,.5); color:#f0a24a;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif; box-shadow:0 6px 22px rgba(0,0,0,.45); }
+:root[data-theme="rb-light"] #cr-pk .pkqueued{ background:#ffffff; color:#8a5500;
+  border-color:rgba(138,85,0,.45); }/* 1039: white on the salmon accent was 3.51:1 — the card's own deeper token reads 5.67 dark / 9.12 light */
 #cr-pk .pkvb.out{ background:transparent; color:var(--pk-ink,#eceef0);
   border-color:var(--pk-line2,#3a424c); }
 #cr-pk .pkchip.day2{ background:rgba(240,162,74,.16); color:#f0a24a; margin-left:6px; }
@@ -52526,6 +52760,7 @@ function msgsHtml(){
     (body || '<div class="pkdesc">No messages yet. Tag someone with @ and only they are notified.</div>') +
     '<div class="pktags hide">' + chips + '</div>' +
     '<div class="pkin"><input type="text" data-f="msg" placeholder="Message…">' +
+    '<button class="cr-snipbtn" type="button" aria-label="Saved snippets" title="Saved snippets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6zM19 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6z"/></svg></button>' +
     '<button class="snd" data-act="send" type="button" aria-label="Send">' + svg('send') + '</button></div>' +
     (outMsg ? '<div class="pkout' + (/not|no one|failed/i.test(outMsg) ? ' bad' : '') + '">' + esc(outMsg) + '</div>' : '') +
     '</div>';
@@ -52598,6 +52833,8 @@ async function save(patch){
         if(P && typeof P.update === 'function'){
           var r = await P.update(it.id, patch);
           if(r && r.ok === false) throw new Error(r.error || 'write refused');
+          /* 1049: held on the device — say so rather than looking saved. */
+          if(r && r.queued) _queuedNote();
         }else{
           var d = await window.supa.from('punch_items').update(patch).eq('id', it.id);
           if(d.error) throw d.error;
@@ -52783,12 +53020,30 @@ async function doClose(){
   }
   await doToggle();
 }
+/* 1049: one place says "this is on the phone, not the server yet". */
+function _queuedNote(){
+  try{
+    var host = document.getElementById('cr-pk');
+    if(!host) return;
+    var n = host.querySelector('.pkqueued');
+    if(!n){
+      n = document.createElement('div');
+      n.className = 'pkqueued';
+      host.appendChild(n);
+    }
+    n.textContent = 'No signal \u2014 saved on this phone. It will sync by itself.';
+    n.style.display = 'block';
+    clearTimeout(n._t);
+    n._t = setTimeout(function(){ n.style.display = 'none'; }, 6000);
+  }catch(_e){}
+}
 async function doToggle(){
   try{
     var P = window.CardinalPunch;
     if(P && typeof P.toggle === 'function'){
       var r = await P.toggle(it.id);
       if(r && r.ok === false) throw new Error(r.error || 'refused');
+      if(r && r.queued) _queuedNote();
     }else{
       var done = it.status !== 'done';
       var patch = done
@@ -53589,6 +53844,7 @@ return '<div class="pp-page">' +
 '<div class="pp-tags">' + tagChips() + '</div>' +
 '<div class="pp-compose">' +
 '<textarea class="pp-input" data-f="msg" rows="2" placeholder="Write a note…"></textarea>' +
+'<button class="cr-snipbtn" type="button" aria-label="Saved snippets" title="Saved snippets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6zM19 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6z"/></svg></button>' +
 '<button class="pp-send" data-act="send" type="button">Post</button>' +
 '</div>' +
 '</div>';
@@ -55361,6 +55617,10 @@ window.CardinalTruthHome = {
 refresh : async function(){ await build(); },
 stats   : function(){ return stats; },
 compute : compute,
+/* 1048: the morning strip needs "how many carriers are we chasing" and
+   chaseList() is already the app's named answer (the 972 precedent — export
+   the resolver rather than grow a second copy of the filter). Read-only. */
+chase   : chaseList,
 };
 })();
 </script>
@@ -61108,6 +61368,21 @@ document.addEventListener('click', function(e){
 /* ── Home: Recent leads + Today band (build 350) ── */
 .kphomerow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
 @media (max-width:900px){ .kphomerow{grid-template-columns:1fr;} }
+/* 1045: the quiet card spans the row; day-count inks are the proven amber/red
+   pairs, computed against both pipecard gradient stops in both themes. */
+.kphomerow .kpquiet{grid-column:1/-1;}
+.kpqrow{position:relative;display:flex;align-items:center;gap:10px;padding:9px 10px;margin:6px 0;
+  border:1px solid var(--rbe-line2,#2b2b33);border-radius:9px;cursor:pointer;min-height:44px;}
+.kpqrow:hover{border-color:var(--rbe-acc,#c8202e);}
+.kpqrow .qd{flex:none;min-width:52px;text-align:center;font:800 12px ui-monospace,Menlo,monospace;color:#f0a24a;}
+.kpqrow .qd small{display:block;font:700 7.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);}
+.kpqrow.qstale .qd{color:#f07e84;}
+.kpqrow .qn{flex:1;min-width:0;font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#eceef0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kpqrow .qs{flex:none;font:800 8.5px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);}
+.kpqrow .qc{flex:none;font:800 8.5px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#34D399;}
+:root[data-theme="rb-light"] .kpqrow .qd{color:#8a5500;}
+:root[data-theme="rb-light"] .kpqrow.qstale .qd{color:#8f1620;}
+:root[data-theme="rb-light"] .kpqrow .qc{color:#047857;}
 .kplrow{display:flex;align-items:center;gap:9px;background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));
   border:1px solid var(--rbe-line2);border-radius:10px;padding:8px 10px;margin-top:8px;position:relative;cursor:pointer;overflow:hidden;}
 .kplrow:hover{border-color:var(--rbe-acc);}
@@ -61203,9 +61478,43 @@ window.renderKpHomeRow = function(){
       '<span style="flex:1;min-width:0;"><span class="ti2">' + esc(a.title || 'Appointment') + '</span>' +
         (pr ? '<div class="m3">' + esc(pr.name || '') + '</div>' : '') + '</span></div>';
   }).join('') : '<div class="kpempty">Nothing on the calendar today.</div>';
+  /* 1045: Gone quiet — days-in-stage on the active pipeline. Exclusions are
+     each deliberate: Lead belongs to Recent leads; OnHold parks for years by
+     design (grants); insurance already has the Cardinal Truth chase list;
+     Completed and later are done or dead. stage_since is written on every
+     stage move (an invariant since the doc set began). */
+  var qm = document.getElementById('kpQuietList');
+  if(qm){
+    var QUIET_FLOOR = { Prospect:14, Approved:14, Scheduled:21 };
+    var nowMs = Date.now();
+    var quiet = [];
+    (window.cacheProjects || []).forEach(function(p){
+      var st = normStage(p.stage);
+      if(!(st in QUIET_FLOOR)) return;
+      /* insurance detection rides projClaimType (it reads lead.insurance);
+         cdCrmOf answers which directory owns the row, not whether it is a
+         claim — the gate caught an insurance job leaking through it. */
+      var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(p) : 'unknown';
+      if(ct === 'insurance') return;
+      var c = crmOfSafe(p);
+      if(!p.stage_since) return;
+      var days = Math.floor((nowMs - new Date(p.stage_since).getTime()) / 86400000);
+      if(days >= QUIET_FLOOR[st]) quiet.push({ p:p, st:st, days:days, crm:c });
+    });
+    quiet.sort(function(a, b){ return b.days - a.days; });
+    quiet = quiet.slice(0, 6);
+    qm.innerHTML = quiet.length ? quiet.map(function(x){
+      return '<div class="kpqrow' + (x.days >= 30 ? ' qstale' : '') + '" data-proj="' + x.p.id + '">' +
+        '<span class="qd">' + x.days + '<small>days in ' + esc(x.st) + '</small></span>' +
+        '<span class="qn">' + esc(x.p.name || 'Unnamed client') + '</span>' +
+        (x.crm === 'community' ? '<span class="qc">COM</span>' : '') +
+        '<span class="qs">' + esc(x.st) + '</span>' +
+        '</div>';
+    }).join('') : '<div class="kpempty">Nothing has gone quiet.</div>';
+  }
 };
 document.addEventListener('click', function(e){
-  var r = e.target.closest('.kplrow[data-proj], .kptrow[data-proj]');
+  var r = e.target.closest('.kplrow[data-proj], .kptrow[data-proj], .kpqrow[data-proj]');
   if(!r) return;
   if(typeof openProject === 'function') openProject(r.getAttribute('data-proj'));
 });
@@ -61310,11 +61619,33 @@ if(typeof _origOLF === 'function'){
 :root[data-theme="rb-light"] #puQueue .ph2 b{color:#8a5500;}
 :root[data-theme="rb-light"] .pu-st.warn{color:#8a5500;border-color:rgba(138,85,0,.45);}/* 1034: .pu-tag.supp (947) had no light twin — 2.0:1 amber on paper */:root[data-theme="rb-light"] .pu-tag.supp{color:#8a5500;border-color:rgba(138,85,0,.45);}
 :root[data-theme="rb-light"] .pu-st.d2{color:#8a5500;background:rgba(240,162,74,.22);}
+/* 1039 (audit ink pass): the REST of the chip family's light twins. The audit
+   measured prio-normal at 1.91:1 and crm-retail at 3.37:1 on paper; the members
+   its seed never rendered were just as bare (the 527 partial-pass lesson — fix
+   the family, not the two that happened to be on screen). Worst-of white /
+   #fafafa / hero-tint, all computed >=4.5. */
+:root[data-theme="rb-light"] .pu-tag.prio-normal{border-color:#8a5500;color:#8a5500;}
+:root[data-theme="rb-light"] .pu-tag.crm-retail{color:#8f1620;}
+:root[data-theme="rb-light"] .pu-tag.prio-low{color:#8f1620;}
+:root[data-theme="rb-light"] .pu-tag.urg{color:#a8221a;}
+:root[data-theme="rb-light"] .pu-tag.prio-high{color:#a8221a;}
+:root[data-theme="rb-light"] .pu-tag.crm-insurance{color:#a4140d;}
+:root[data-theme="rb-light"] .pu-tag.crm-community{color:#047857;}
+:root[data-theme="rb-light"] .pu-st.on{color:#23744a;border-color:rgba(35,116,74,.5);}
 :root[data-theme="rb-light"] .pu-asgrow .load.warn{color:#8a5500;}
 :root[data-theme="rb-light"] .pu-who.own-curtis,:root[data-theme="rb-light"] .pu-asgrow .nm.own-curtis{color:#0f7c8b;}
 :root[data-theme="rb-light"] .pu-who.own-scottie,:root[data-theme="rb-light"] .pu-asgrow .nm.own-scottie{color:#6a4db0;}
 :root[data-theme="rb-light"] .pu-age{color:#8a5500;}
 #punchView{display:none;min-height:100vh;background:var(--bg);}
+/* 1042 (audit F4): for production accounts the punch page joins the
+   full-screen family — fixed over the retail chrome (nav row + desktop
+   rail), its own scroll, same ground. Everyone else keeps the in-shell
+   layout. z 9400: above the shell, below the board (9500) and the punch
+   card (9550), so a card opened from this page still covers it. */
+body.cr-prod #punchView{ position:fixed; inset:0; z-index:9400; overflow-y:auto;
+  -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:calc(96px + env(safe-area-inset-bottom,0px)); }
 .pu-wrap{max-width:1320px;margin:0 auto;padding:16px 16px 150px;}
 .pu-head{display:flex;align-items:center;gap:10px;margin:0 0 2px;flex-wrap:wrap;}.pu-back{flex:none;width:34px;height:34px;border-radius:10px;cursor:pointer;border:1px solid var(--rbe-line2,#2b2b33);background:transparent;color:var(--rbe-mute,#9aa0a8);display:flex;align-items:center;justify-content:center;padding:0;}.pu-back svg{width:16px;height:16px;}.pu-back:hover{background:rgba(255,255,255,.06);}
 /* 978: + New, in the head beside the title. Cardinal red because filing a
@@ -61359,7 +61690,7 @@ if(typeof _origOLF === 'function'){
 .pu-tag{font:700 8.5px ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase;
   padding:2.5px 8px;border-radius:999px;border:1px solid var(--rbe-line);color:var(--rbe-mute);white-space:nowrap;}
 .pu-tag.urg{border-color:#e2574a;color:#f2a08a;}
-.pu-tag.crm-retail{border-color:#c8202e;color:#e35c63;}
+.pu-tag.crm-retail{border-color:#c8202e;color:#ec7076;}/* 1039: #e35c63 was 4.10:1 on the dark row */
 .pu-tag.crm-insurance{border-color:#c4180f;color:#ff8a7a;}
 .pu-tag.crm-community{border-color:#047857;color:#34D399;}
 .pu-who{margin-left:auto;font-size:10.5px;font-weight:800;color:var(--rbe-rep);}
@@ -61424,7 +61755,7 @@ body.viewing-community-hub .pu-strip .sh .all{color:#8d5231;}
 /* priority colours: urgent red · normal orange · low yellow — semantic, fixed in both themes */
 .pu-tag.prio-high{border-color:#e2574a;color:#f2a08a;}
 .pu-tag.prio-normal{border-color:#d98324;color:#f0a962;}
-.pu-tag.prio-low{border-color:#c8202e;color:#e35c63;}
+.pu-tag.prio-low{border-color:#c8202e;color:#ec7076;}/* 1039: same 4.10:1 red, brightened */
 .pu-card.prio-high::before{background:#e2574a;box-shadow:0 0 7px rgba(226,87,74,.6);}
 .pu-card.prio-normal::before{background:#d98324;}
 .pu-card.prio-low::before{background:#c8202e;}
@@ -61454,6 +61785,21 @@ async function reload(){
       return _rows;
     }
     _rows = r.data || [];
+    /* 1049: replay pending offline writes over the fetched rows — without this
+       a refresh while still offline would wipe the crew's queued work. Once a
+       write syncs it leaves the outbox, so the overlay stops on its own (the
+       869 idiom, already used for projects and inspection_reports). */
+    try{
+      if(window.CardinalOutbox && window.CardinalOutbox.patchesFor){
+        var _pq = await window.CardinalOutbox.patchesFor('punch_items');
+        _pq.forEach(function(e){
+          if(e && e.match && e.patch && (!e.op || e.op === 'update')){
+            var _row = _rows.filter(function(x){ return String(x.id) === String(e.match.val); })[0];
+            if(_row) Object.assign(_row, e.patch);
+          }
+        });
+      }
+    }catch(_ov){}
   }catch(e){ console.warn('[punch] load failed:', e); }
   return _rows;
 }
@@ -61468,6 +61814,10 @@ async function toggle(id){
   Object.assign(it, patch);
   try{
     var r = await window.supa.from('punch_items').update(patch).eq('id', it.id);
+    /* 1049: same fork as update() — a network refusal is held, not lost. */
+    if(r.error && _noSignal(r.error) && _queueOffline(it.id, patch)){
+      return { ok:true, queued:true };
+    }
     if(r.error) throw r.error;
     if(typeof window.auditLog === 'function'){
       try{ window.auditLog('punch', (done ? 'Closed: ' : 'Reopened: ') + it.title, it.project_id); }catch(_){}
@@ -61475,9 +61825,32 @@ async function toggle(id){
     if(window.CardinalProduction && window.CardinalProduction.refresh){ try{ window.CardinalProduction.refresh(); }catch(_){} }
     if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){ try{ window.CardinalPunchProfile.refresh(); }catch(_){} }
   }catch(e){
+    /* 1049: iOS reports a dropped fetch as a THROWN TypeError (861's finding),
+       so the returned-error fork above is not enough — this is the shape a
+       roof with no bars actually produces. Hold it; do not alert, and do not
+       undo the tick. gate_1049 caught this hole in the first cut. */
+    if(_noSignal(e) && _queueOffline(it.id, patch)){
+      return { ok:true, queued:true };
+    }
     Object.assign(it, done ? { status:'open', done_at:null, done_by:null } : { status:'done' });
     alert('Could not save: ' + (e.message || e));
   }
+}
+/* 1049: punch_items joins the write outbox that has existed since 865. A
+   write that cannot REACH the server is held on the device and replayed; a
+   write the server REFUSES still fails loudly. Returns true when it queued. */
+function _queueOffline(id, patch){
+  try{
+    if(!window.CardinalOutbox || typeof window.CardinalOutbox.queue !== 'function') return false;
+    window.CardinalOutbox.queue({ table:'punch_items', match:{ col:'id', val:id }, patch: patch });
+    return true;
+  }catch(_e){ return false; }
+}
+function _noSignal(e){
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  try{
+    return !!(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(e));
+  }catch(_e){ return false; }
 }
 async function update(id, patch){
   var it = _rows.filter(function(x){ return String(x.id) === String(id); })[0];
@@ -61504,6 +61877,12 @@ async function update(id, patch){
     if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){ try{ window.CardinalPunchProfile.refresh(); }catch(_){} }
     return { ok:true };
   }catch(e){
+    /* 1049: no signal — KEEP the local change and queue it. Rolling back is
+       right for a refusal and wrong for a roof with no bars: it threw away
+       the tick the crew just made. */
+    if(_noSignal(e) && _queueOffline(it.id, patch)){
+      return { ok:true, queued:true };
+    }
     Object.assign(it, before);
     return { ok:false, error:(e.message || String(e)) };
   }
@@ -75832,6 +76211,10 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-bg:#08090b; --disp-panel:#101216; --disp-card:#171a1f; --disp-line:#282c34;
   --disp-hatch:rgba(255,255,255,.05);
   --disp-ink:#ffffff; --disp-dim:#9aa1ac; --disp-mute:#5c636e; --disp-accent:#6b7280;
+  /* 1039: weekend header ink — --disp-mute measured 3.09:1 on the panel; this
+     clears 4.5 in both themes and still sits below --disp-dim, so weekends
+     keep reading quieter than weekdays. */
+  --disp-wkend:#838c99;
   --disp-today:#15171c; --disp-tline:#ffffff; --disp-need:#f5c045; --disp-band:#8b97a8;
   --disp-repair:#ff3b46; --disp-curtis:#3fb8c9; --disp-scottie:#a98bec; --disp-wx:#6db3f2;
   --disp-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
@@ -75845,6 +76228,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   --disp-bg:#f4f5f7; --disp-panel:#ffffff; --disp-card:#ffffff; --disp-line:#dfe3e9;
   --disp-hatch:rgba(0,0,0,.05);
   --disp-ink:#14171c; --disp-dim:#5a616c; --disp-mute:#767d88; --disp-accent:#7b828d;
+  --disp-wkend:#656c77;
   --disp-today:#eef0f3; --disp-tline:#14171c; --disp-need:#9a6410; --disp-band:#5f6b7d;
   --disp-repair:#d81b28; --disp-curtis:#0f7c8b; --disp-scottie:#6a4db0; --disp-wx:#155f9e;
 }
@@ -75855,11 +76239,18 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
   border:1px solid var(--disp-line,#282c34); background:transparent; color:var(--disp-dim,#9aa1ac);
   display:flex; align-items:center; justify-content:center; }
 #cr-disp .dspback svg{ width:15px; height:15px; }
+/* 1040: 34px chevron — invisible growth to 44 (the card's .pkback got its 44
+   at 947; this one and the board's never did) */
+#cr-disp .dspback{ position:relative; }
+#cr-disp .dspback::after{ content:""; position:absolute; inset:-6px; }
 #cr-disp .dsptitle{ font:800 18px 'Segoe UI',Arial,sans-serif; letter-spacing:-.01em; color:var(--disp-ink,#fff); }
 #cr-disp .dspwk{ margin-left:auto; display:flex; align-items:center; gap:8px;
   font:600 12px var(--disp-mono,monospace); color:var(--disp-dim,#9aa1ac); }
 #cr-disp .dspwk button{ background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34);
-  color:var(--disp-dim,#9aa1ac); border-radius:7px; width:26px; height:26px; cursor:pointer; font-size:14px; line-height:1; }
+  color:var(--disp-dim,#9aa1ac); border-radius:7px; width:26px; height:26px; cursor:pointer; font-size:14px; line-height:1; position:relative; }
+/* 1040 (audit tap targets): 26px arrows (21px wide on the phone) — invisible 44px
+   pad. Insets anchor to the PADDING box, so the 1px border costs a pixel per side. */
+#cr-disp .dspwk button::after{ content:""; position:absolute; top:-10px; bottom:-10px; left:-13px; right:-13px; }
 #cr-disp .dspfilt{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
 #cr-disp .dspfilt .fc{ font:600 11px 'Segoe UI',Arial,sans-serif; padding:5px 11px; border-radius:8px;
   background:var(--disp-card,#171a1f); border:1px solid var(--disp-line,#282c34); color:var(--disp-dim,#9aa1ac); cursor:pointer; }
@@ -75907,8 +76298,8 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .dcol .c.today{ background:var(--disp-today,#15171c); border-top:2.5px solid var(--disp-tline,#fff); }
 #cr-disp .dcol .c.today::after{ content:"TODAY"; display:block; font:700 6.5px var(--disp-mono,monospace);
   letter-spacing:.12em; color:var(--disp-tline,#fff); margin-top:1px; }
-#cr-disp .dcol .c.sun{ color:var(--disp-mute,#5c636e); }
-#cr-disp .dcol .c.sun b{ color:var(--disp-mute,#5c636e); }
+#cr-disp .dcol .c.sun{ color:var(--disp-wkend,#838c99); }
+#cr-disp .dcol .c.sun b{ color:var(--disp-wkend,#838c99); }
 
 /* riveted trade strips — tap to fold */
 #cr-disp .dband{ display:flex; align-items:center; gap:8px; padding:5px 2px; background:transparent;
@@ -76024,7 +76415,7 @@ window.CardinalAddrCheck = Object.assign(window.CardinalAddrCheck || {}, { open:
 #cr-disp .job .mv{ margin-left:4px; flex:none; width:15px; height:15px; padding:0; border:0;
   border-radius:4px; background:transparent; color:var(--disp-dim,#9aa1ac);
   display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; }
-#cr-disp .job .mv::after{ content:""; position:absolute; inset:-9px; }
+#cr-disp .job .mv::after{ content:""; position:absolute; inset:-15px; }/* 1040: -9px made 33px effective — under the 44 floor the rest of the app holds */
 #cr-disp .job .mv:hover{ color:var(--disp-ink,#fff); }
 #cr-disp .job.moving{ box-shadow:0 0 0 2px var(--disp-need,#f5c045); }
 #cr-disp .job.moving .mv{ color:var(--disp-need,#f5c045); }
@@ -79232,6 +79623,240 @@ window.CardinalStorm = Object.assign(window.CardinalStorm || {}, {
   window.CardinalWx = Object.assign(window.CardinalWx || {}, {
     load: load, day: day, kind: kind, icon: icon, wet: wet, cell: cell
   });
+})();
+</script>
+<style id="cr-snips-styles">
+/* ── 1046 · Saved snippets ── one button shape at three composers; sheet is
+   fixed at z 9700 (above every full-screen surface incl. the punch card 9550).
+   Inks ride --rbe-* pairs; the sheet paints its own ground in both themes. */
+.cr-snipbtn{flex:none;min-width:40px;min-height:40px;border-radius:9px;cursor:pointer;position:relative;
+  border:1px solid var(--rbe-line2,#2b2b33);background:transparent;color:var(--rbe-mute,#9aa0a8);
+  display:inline-flex;align-items:center;justify-content:center;padding:0 8px;}
+.cr-snipbtn::after{content:"";position:absolute;inset:-3px;}
+.cr-snipbtn svg{width:16px;height:16px;fill:currentColor;}
+.cr-snipbtn:hover{color:var(--rbe-ink,#eceef0);border-color:var(--rbe-acc,#c8202e);}
+#cr-pk .pkin .cr-snipbtn{min-height:44px;}
+.pp-compose .cr-snipbtn{align-self:stretch;}
+.cr-snips-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9700;display:flex;
+  align-items:flex-end;justify-content:center;}
+@media (min-width:700px){ .cr-snips-bg{align-items:center;} }
+.cr-snips-box{width:100%;max-width:560px;max-height:70vh;display:flex;flex-direction:column;
+  background:var(--rbe-bg2,#262a31);color:var(--rbe-ink,#eceef0);border:1px solid var(--rbe-line2,#2b2b33);
+  border-radius:16px 16px 0 0;overflow:hidden;}
+@media (min-width:700px){ .cr-snips-box{border-radius:16px;} }
+.cr-snips-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--rbe-line2,#2b2b33);}
+.cr-snips-head b{flex:1;font:800 13px 'Segoe UI',Arial,sans-serif;letter-spacing:.04em;}
+.cr-snips-head button{background:transparent;border:0;cursor:pointer;color:var(--rbe-mute,#9aa0a8);
+  font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;min-height:44px;min-width:44px;}
+.cr-snips-list{overflow-y:auto;flex:1;padding:6px 8px calc(10px + env(safe-area-inset-bottom,0px));}
+.cr-snips-row{display:flex;align-items:center;gap:8px;margin:4px 0;}
+.cr-snips-row .tx{flex:1;text-align:left;background:transparent;cursor:pointer;min-height:44px;
+  border:1px solid var(--rbe-line2,#2b2b33);border-radius:10px;padding:10px 12px;
+  font:600 13px 'Segoe UI',Arial,sans-serif;line-height:1.4;color:var(--rbe-ink,#eceef0);}
+.cr-snips-row .tx:hover{border-color:var(--rbe-acc,#c8202e);}
+.cr-snips-row .rm{flex:none;min-width:44px;min-height:44px;background:transparent;border:0;cursor:pointer;
+  color:var(--rbe-mute,#9aa0a8);font-size:15px;}
+.cr-snips-row .rm:hover{color:#f07e84;}
+.cr-snips-add{display:block;width:calc(100% - 16px);margin:6px 8px 10px;min-height:44px;cursor:pointer;
+  background:transparent;border:1px dashed var(--rbe-line3,#3a3a44);border-radius:10px;
+  color:var(--rbe-mute,#9aa0a8);font:700 12.5px 'Segoe UI',Arial,sans-serif;}
+.cr-snips-add:hover{color:var(--rbe-ink,#eceef0);border-color:var(--rbe-acc,#c8202e);}
+:root[data-theme="rb-light"] .cr-snips-box{background:#ffffff;}
+:root[data-theme="rb-light"] .cr-snips-row .rm:hover{color:#8f1620;}
+</style>
+<script id="cr-snips-script">
+(function(){
+'use strict';
+/* ── 1046 · Saved snippets ─────────────────────────────────────────────────
+   One document-level delegated click serves every .cr-snipbtn — the punch
+   card and punch page re-render their composers freely and nothing needs
+   re-wiring. Storage is localStorage (per device, stated in the PR); the
+   defaults below seed on first read. No body observer, no scroll lock. */
+var KEY = 'cr-snips';
+var DEFAULTS = [
+  "Crew's on the way \u2014 should be there within the hour.",
+  "Materials are delayed \u2014 I'll confirm the new drop date as soon as it lands.",
+  "Job's wrapped up and the site is cleaned. Photos are in the album \u2014 call me with any questions.",
+  "Thanks again for choosing Cardinal! If you were happy with the work, a quick Google review means a lot to a local crew."
+];
+function load(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(raw == null){ localStorage.setItem(KEY, JSON.stringify(DEFAULTS)); return DEFAULTS.slice(); }
+    var v = JSON.parse(raw);
+    return Array.isArray(v) ? v : DEFAULTS.slice();
+  }catch(_e){ return DEFAULTS.slice(); }
+}
+function save(list){ try{ localStorage.setItem(KEY, JSON.stringify(list)); }catch(_e){} }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+  return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+var sheet = null, target = null;
+function close(){ if(sheet){ sheet.remove(); sheet = null; } target = null; }
+function insertInto(el, text){
+  if(!el) return;
+  var cur = el.value || '';
+  el.value = cur + (cur && !/\s$/.test(cur) ? ' ' : '') + text;
+  /* a real input event, so send-button enable states and drafts stay honest */
+  try{ el.dispatchEvent(new Event('input', { bubbles:true })); }catch(_e){}
+  try{ el.focus(); }catch(_e){}
+}
+function render(){
+  var list = load();
+  var rows = list.map(function(t, i){
+    return '<div class="cr-snips-row">' +
+      '<button class="tx" data-snip="' + i + '" type="button">' + esc(t) + '</button>' +
+      '<button class="rm" data-rm="' + i + '" type="button" aria-label="Delete snippet">&#10005;</button>' +
+      '</div>';
+  }).join('');
+  sheet.querySelector('.cr-snips-list').innerHTML =
+    (rows || '<div class="cr-snips-row"><span style="padding:12px;color:var(--rbe-mute,#9aa0a8);font:600 12.5px \'Segoe UI\',Arial,sans-serif;">No snippets yet \u2014 add one below.</span></div>') +
+    '<button class="cr-snips-add" type="button">+ Add a snippet</button>';
+}
+function open(btn){
+  close();
+  /* the composer is the nearest text field in the same row */
+  var row = btn.parentElement;
+  target = row ? row.querySelector('input[type="text"], textarea') : null;
+  if(!target) return;
+  sheet = document.createElement('div');
+  sheet.className = 'cr-snips-bg';
+  sheet.innerHTML = '<div class="cr-snips-box">' +
+    '<div class="cr-snips-head"><b>Saved snippets</b>' +
+    '<button type="button" data-snips-close="1">CLOSE</button></div>' +
+    '<div class="cr-snips-list"></div></div>';
+  document.body.appendChild(sheet);
+  render();
+}
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('.cr-snipbtn');
+  if(b){ e.preventDefault(); e.stopPropagation(); open(b); return; }
+  if(!sheet) return;
+  if(e.target.closest('[data-snips-close]')){ close(); return; }
+  var tx = e.target.closest('.cr-snips-row .tx');
+  if(tx){
+    /* capture the composer BEFORE close() — close() nulls it (the gate caught
+       exactly this ordering the first time around) */
+    var t = load()[Number(tx.dataset.snip)];
+    var el = target;
+    close();
+    if(t && el) insertInto(el, t);
+    return;
+  }
+  var rm = e.target.closest('.cr-snips-row .rm');
+  if(rm){
+    var list = load(); list.splice(Number(rm.dataset.rm), 1); save(list); render(); return;
+  }
+  if(e.target.closest('.cr-snips-add')){
+    var v = prompt('New snippet text:');
+    if(v && v.trim()){ var l2 = load(); l2.push(v.trim()); save(l2); render(); }
+    return;
+  }
+  if(e.target === sheet) close();
+}, true);
+})();
+</script>
+<style id="cr-morning-styles">
+/* ── 1048 · Where things stand ── the admin morning strip. Every chip is a
+   DOOR to a surface that already exists; counts come from the app's own
+   resolvers, never a second copy. Inks: neutral chips ride --rbe-* pairs, the
+   two urgent chips use the computed amber/red pairs (4.5:1+ on both grounds). */
+#crMorning{margin-top:12px;}
+#crMorning .mrow{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;}
+#crMorning .mchip{display:flex;align-items:center;gap:9px;cursor:pointer;min-height:44px;
+  padding:8px 13px;border-radius:11px;background:transparent;
+  border:1px solid var(--rbe-line2,#2b2b33);color:var(--rbe-ink,#eceef0);
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;}
+#crMorning .mchip:hover{border-color:var(--rbe-acc,#c8202e);}
+#crMorning .mchip .n{font:800 16px ui-monospace,Menlo,monospace;line-height:1;}
+#crMorning .mchip .l{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa0a8);
+  letter-spacing:.02em;}
+#crMorning .mchip.warn .n{color:#f0a24a;}
+#crMorning .mchip.hot .n{color:#f07e84;}
+#crMorning .mchip.warn{border-color:rgba(240,162,74,.45);}
+#crMorning .mchip.hot{border-color:rgba(240,126,132,.45);}
+:root[data-theme="rb-light"] #crMorning .mchip.warn .n{color:#8a5500;}
+:root[data-theme="rb-light"] #crMorning .mchip.hot .n{color:#8f1620;}
+:root[data-theme="rb-light"] #crMorning .mchip.warn{border-color:rgba(138,85,0,.4);}
+:root[data-theme="rb-light"] #crMorning .mchip.hot{border-color:rgba(143,22,32,.4);}
+</style>
+<script id="cr-morning-script">
+(function(){
+'use strict';
+/* ── 1048 · Where things stand ─────────────────────────────────────────────
+   Counts only. Every number comes from the resolver that already owns it:
+     approvals   window.crApprovalsPending()      (the card's own predicate)
+     needs date  CardinalProduction.schedFor()    (972's exported answer)
+     punch       CardinalPunch.rows()             (the one punch cache)
+     chase       CardinalTruthHome.chase()        (1048's export)
+     today       cacheAppts, dated today
+   Every chip is a door to a screen that already exists — this strip adds no
+   new destination, and it hides itself entirely when every count is zero. */
+function n(fn){ try{ var v = fn(); return Array.isArray(v) ? v.length : (Number(v) || 0); }catch(_e){ return 0; } }
+function todayKey(){
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function counts(){
+  return {
+    appr: n(function(){ return window.crApprovalsPending(); }),
+    date: n(function(){
+      var sf = window.CardinalProduction && window.CardinalProduction.schedFor;
+      if(typeof sf !== 'function') return 0;
+      return (window.cacheProjects || []).filter(function(p){
+        var st = window.normStage ? window.normStage(p.stage) : p.stage;
+        if(st !== 'Approved' && st !== 'Scheduled') return false;
+        return !sf(p);
+      });
+    }),
+    punch: n(function(){
+      if(!window.CardinalPunch || typeof window.CardinalPunch.rows !== 'function') return 0;
+      return window.CardinalPunch.rows().filter(function(i){
+        return i.status === 'open' && i.priority === 'high';
+      });
+    }),
+    chase: n(function(){
+      if(!window.CardinalTruthHome || typeof window.CardinalTruthHome.chase !== 'function') return 0;
+      return window.CardinalTruthHome.chase();
+    }),
+    today: n(function(){
+      var k = todayKey();
+      return (window.cacheAppts || []).filter(function(a){ return a && a.appt_date === k; });
+    })
+  };
+}
+function chip(cls, num, label, act){
+  return '<button class="mchip' + (cls ? ' ' + cls : '') + '" data-m="' + act + '" type="button">' +
+    '<span class="n">' + num + '</span><span class="l">' + label + '</span></button>';
+}
+function scrollTo(id){
+  var el = document.getElementById(id);
+  if(el) try{ el.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(_e){ el.scrollIntoView(); }
+}
+window.renderMorningStrip = function(){
+  var host = document.getElementById('crMorning');
+  if(!host) return;
+  if(typeof isAdminUser !== 'function' || !isAdminUser()){ host.style.display = 'none'; return; }
+  var c = counts();
+  if(!c.appr && !c.date && !c.punch && !c.chase && !c.today){ host.style.display = 'none'; return; }
+  var html = '';
+  if(c.appr)  html += chip('warn', c.appr,  c.appr === 1 ? 'awaiting contract' : 'awaiting contract', 'appr');
+  if(c.date)  html += chip('warn', c.date,  'need a build date', 'date');
+  if(c.punch) html += chip('hot',  c.punch, 'urgent punch-outs', 'punch');
+  if(c.chase) html += chip('hot',  c.chase, 'carriers to chase', 'chase');
+  if(c.today) html += chip('',     c.today, c.today === 1 ? 'thing today' : 'things today', 'today');
+  host.innerHTML = '<div class="mrow">' + html + '</div>';
+  host.style.display = 'block';
+};
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('#crMorning .mchip');
+  if(!b) return;
+  var a = b.getAttribute('data-m');
+  if(a === 'appr')  return scrollTo('approvalsCard');
+  if(a === 'today') return scrollTo('kpTodayList');
+  if(a === 'date'  && window.CardinalProduction) return window.CardinalProduction.open();
+  if(a === 'punch' && typeof window.openPunchView === 'function') return window.openPunchView();
+  if(a === 'chase' && typeof window.showCardinalTruth === 'function') return window.showCardinalTruth();
+});
 })();
 </script>
 </body>

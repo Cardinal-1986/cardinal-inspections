@@ -24401,3 +24401,247 @@ the digit (4.99 / 5.54 / 4.55 on rail / active card / hover). Both comment recor
 next reader sees 539 AND its 1035 resolution. Gate: `gate_1035.mjs` computed inks both themes
 (probe lesson: the rail mounts only after a sentinel state runs — the control's identical MISSING
 was the tell, again); GREEN, control RED on exactly the light leg.
+
+## Production hub E2E audit (24 Aug 2026 — docs + scripts only, no build number; index.html untouched at 1035)
+
+Theo asked for a full end-to-end audit of the Production hub — every page, workflow, button,
+readability, accessibility, organization — with one question above the rest: does the back button
+keep Curtis and Scottie in Production, or dump them into the retail CRM? The full report is
+`docs/CR_PRODUCTION_AUDIT_2026-08.md`: a ten-row containment truth table measured on the rig as
+both personas (dark + light, 1194/390), a sentinel ink sweep (24 renders), a button census, and a
+nine-item plan awaiting picks. Nothing shipped to the app.
+
+The headline: **the happy paths hold** (job → profile → back, punch card → back, dispatch → back
+all return to the board; login lands production users on the board per 854; 0 pageerrors anywhere)
+— but **two history-machinery breaks do exactly what Theo feared**: (F1) board pane changes push no
+history entry, so browser/gesture back from the calendar or a box list exits Production onto the
+retail home; (F2) after flipping profile tabs, back wedges at `{v:'project'}` — five presses never
+return to the board (three history writers interleave on that screen: the legacy wrapper's push,
+`wrapNav`'s replace-or-push at 26848, and the profile-open `replaceState` at 25651). Also measured:
+the exit room is the retail home with pipeline counts and an AR money card and `renderHome()` has
+no role gate; the punch list keeps the retail nav row (it is shell-shown, not an overlay); the
+punch-list chip family is missing light twins (`.pu-tag.prio-normal` at **1.91:1**); dispatch's
+"Move this job" handle is **15×15 px**; the `data-cr-footer` stamp has been PREPENDING summaries
+since ~1015 and now carries 21 builds / 9,785 chars into the burger menu.
+
+**What DID ship: `scripts/sentinel_setup_production.js`** — the permanent production walk
+(prodhome / prodcal / prodbox / punchcard / punchlist / dispatch) with a seed that exercises every
+box: materials-ordered, Approved-bare, a `kind:'job'` install two days out, a Completed job, and
+SOP steps on i1 using the card's real `{t, d, req, note}` shape (first draft wrote `done:` and the
+rendered card's unchecked box + "3 steps left" close gate was the tell — read the shape, not the
+guess). Rig lesson for the next drive: cold boots parse the 5.1 MB file slower than any fixed
+pause — wait on `window.CardinalProduction && __sentinelStates`, not a clock.
+
+## Builds 1036–1040 — the production audit's plan, items 1–5 (Theo: "lets do 1-5 in a batch first")
+
+One build per item, each Chromium-gated with a RED control, all five gates re-run green on the
+final artifact, sentinel (production walk, both widths) CLEAN vs 1035 with none of the fixed
+selectors left in the carried set.
+
+**1036 — Back matches the chevron (F1).** The board's cal/list pane switches now push
+`{view:'production', data:{pane, box}}` via navSetView; the chevron POPS the pane entry when it
+is on top (stack stays in sync); new `CardinalProduction.restore(data)` re-panes an open board
+with no hideAllViews/showHome round-trip and no refetch, and navRestore's production case uses
+it. Bonus: back from a profile opened out of a box list returns to THAT LIST. gate_1036: T7/T8
+flip to board-home, chevron+back exits clean, T1' restores the list pane; control red on all
+three audit failures.
+
+**1037 — The profile tab back-trap (F2).** showTab's wrapper now replaceState's the
+`{v:'project', id, tab}` entry instead of stacking one per flip — one back leaves the profile
+from any tab, and the entry still remembers the tab. The wedge's other half: navRestore now
+holds `__histLock` for its restore window, so a modern restore can never __histPush legacy
+entries (the re-push that re-created every entry the back button popped — the class, not just
+this case). gate_1037: profile + 2 flips + ONE back lands the board with state view:production;
+control shows the measured wedge (5 backs, never out).
+
+**1038 — The exit room (F3, option a).** `close(goHome)` forks: `isProductionUser()` exits to
+`goToLanding()` (the portal picker — no pipeline counts, no A/R dollar), everyone else keeps the
+retail home. Every other caller passes close(false), so only the board's own exit control hits
+the fork. gate_1038: Curtis lands #landingView with mainView hidden; admin unchanged; control
+red (Curtis in the money room). Rig fix ridden along: `?as=curtis` persona added to
+sentinel_setup_cardinal.js (base setup mapped only scottie/nick — the audit drove Curtis via
+__AS__ directly, and gates 1036/1037 silently ran as admin until this; both re-run green as the
+real Curtis).
+
+**1039 — The ink pass.** Grounds pinned by reproducing the audit's ratios exactly (#262a31 punch
+row, #101216 dispatch panel, the chip washes composited). Punch list: crm-retail + prio-low
+brighten to #ec7076 in dark (were 4.10); the WHOLE chip family gets computed light twins —
+ambers #8a5500, reds #8f1620, hot reds #a8221a, insurance #a4140d, community #047857, st.on
+#23744a (the audit's seed only rendered retail chips; 527's partial-pass lesson says fix the
+family). Check-in button rides --pk-accd (white 5.67 dark / 9.12 light; was 3.51 on --pk-acc).
+Dispatch gains a --disp-wkend token pair (#838c99/#656c77, still dimmer than --disp-dim).
+Board chips: build #e86d73 + punch #e5866d dark literals (≥4.83 on the WORST cell composite,
+light keeps the tokens), done light #276b49. gate_1039: 8 computed-rgb probes on the live
+screens, both themes; control red ×10.
+
+**1040 — The tap-target pass.** Invisible ::after pads (the 418/944/947 pattern), zero visual
+change: dispatch grip -15px (its old -9px pad made 33px effective), week arrows
+(21px wide on the phone) top/bottom -10 left/right -13, dispatch+board chevrons -6, +Add /
+Full-calendar chips ±8 vertical, month arrows -7, Mark-ordered/Open-job ±7 vertical. ⚠ Insets
+anchor to the PADDING box — every 1px border costs a pixel per side, which the first cut missed
+(claims measured exactly 2px short). ⚠ TWO AUDIT ROWS WERE FALSE POSITIVES, verified and left
+alone: the punch list's "Close this item" tick (.pu-box) has carried a 44×44 pad since 418, and
+.pkback got real 44 minimums at 947 — a rect census cannot see either, exactly as their comments
+predicted. gate_1040: per-control tap CLAIM ≥44 (element + used pseudo insets) plus a live
+elementFromPoint outside the visual box (offset chosen past the PREVIOUS pad so the control run
+goes red); a ±21 four-way probe was tried first and rejected — adjacent controls legitimately
+split contested edges.
+
+Instrument lesson banked: the first gate demanded ±21px in all four directions and failed
+correct pads (the two week arrows are 34px apart; a chevron's downward claim is contested by the
+padded list below). The app's own standard — claim measured on the pseudo box + one real hit
+probe — is the right instrument shape for tap targets.
+
+## Builds 1041–1043 — the production audit's plan, items 6–9 (Theo: "Merge then the next 4")
+
+PR #484 merged first (squash 3f7baa3, gate_ship green), branch restarted from main. One build per
+real item; item 9 closed with NO app change — see below. Every gate seen RED on its control; all
+seven prior production gates re-run green on the final artifact; sentinel walk (390/1194/1440)
+CLEAN vs the merged 1040.
+
+**1041 — the footer stamp diet (O2).** The nav-menu stamp had been PREPENDING each build's
+summary since ~1015 — 11,599 chars, 26 builds of prose every user scrolled past. It now carries
+ONE line, and the convention changes to REPLACE (an HTML comment above the div says so). The
+CHANGELOG (What's New) keeps the full history — gate_1041 asserts b:1015 survives and the
+rendered footer is <600 chars / exactly one build number. −10.4 KB.
+
+**1042 — Punch & Repairs joins the full-screen family (F4), production-accounts scope.**
+showMain's 854 branch mirrors the role onto the body (`cr-prod`, toggled so a role change
+clears it); under that class only, #punchView goes position:fixed inset:0 z 9400 (above the
+shell, below the board 9500 and card 9550) with its own scroll and safe-area padding. NO 14th
+scroll-lock writer. Admin/sales layouts byte-identical. gate_1042: Curtis's banner is covered
+(elementFromPoint) and content still hit-tests; admin banner untouched; control red ×3.
+
+**1043 — the desktop board fold (O1), Theo's pick B from rendered previews.** At 1100–1599px
+the board gets the month-left / work-right grid the ≥1600 ultrawide already had — boxes, Closed
+repairs, the hubs and Today's agenda all beside the month, zero scroll. Values shipped are the
+previewed ones verbatim (max-width 1560, 28px gaps); the ≥1600 block is byte-identical; phones
+untouched. gate_1043 proves side-by-side at 1440+1194, ultrawide unregressed, phone single
+column; control red ×4.
+
+**Item 9 (O5) — FALSE POSITIVE, no app change.** The dispatch name-clamp WORKS: a 150-char name
+renders exactly 2 lines, nothing overflows (proven functionally on the rig). Modern Chromium
+computes `display:-webkit-box` to `flow-root` when implementing the standardized line-clamp,
+and the sentinel's DEAD check misread that engine mapping as a cascade loss. Fixed in the
+INSTRUMENT: `comparable()` in sentinel_probe.js now refuses `-webkit-box` as a comparable
+display value, with a selftest case (`.clamp-ok`) that goes RED against the pre-fix probe —
+negative-controlled by swapping the old probe back in and watching the selftest fail on exactly
+the audit's finding shape. H's dispatch targets had already shipped at 1040.
+
+## Builds 1044–1047 — workflow efficiency, features 1–4 (Theo: "let's do all of them. Start with 1-4")
+
+Theo asked for app-wide workflow suggestions; six were offered with costs, he picked all six
+starting with 1–4. Each Chromium-gated with a red control; all four gates green on the final
+artifact; sentinel base + production walks clean vs 1043.
+
+**1044 — universal search.** The Ctrl-K palette's client haystack gains PO #, insurance claim #
+and policy # (checklist.lead.insurance — the fields the HOME search learned at 743 and the
+palette never did), plus a Punch-outs group (CardinalPunch.rows() by title + client name)
+jumping straight to the card. Opening the palette lazily warms the punch cache. Deliberately
+NOT added: crews (no list accessor, five rows one screen away) and estimates (reachable via
+their client) — scope stated rather than widened.
+
+**1045 — "Gone quiet".** A full-width card joins Recent leads / Today: active jobs ranked by
+days-in-stage (stage_since) — Prospect/Approved ≥14d, Scheduled ≥21d, red ≥30d, tap → profile.
+Exclusions each deliberate and gated: Lead (Recent leads owns it), OnHold (grants park for
+years — Theo's domain fact), insurance (the chase list owns it), Completed+. ⚠ Two catches on
+the way: the patch's own arithmetic rejected #ec7076 at 4.32:1 on the LIGHTER pipecard gradient
+stop (#f07e84 ships, 4.85 worst); and the gate caught cdCrmOf passing an insurance job through —
+it answers which directory owns a row, not whether it is a claim; projClaimType (lead.insurance)
+is the resolver. Rig note: the kphome row renders through renderActivity, which the rig's boot
+never fires — the gate enters through the shipped renderKpHomeRow, the same call the app makes.
+
+**1046 — saved snippets.** A quote-mark button at the three composers (#chatText, the punch
+card's .pkin, the punch page's .pp-compose — the two rendered ones served by ONE document-level
+delegation, so re-renders never need re-wiring). Sheet at z 9700: tap inserts into THAT composer
+with a real input event, ✕ deletes, + Add (prompt) appends; four defaults seed on first read.
+localStorage per device — the zero-SQL launch choice, stated plainly; a shared table can follow.
+⚠ The gate caught close() nulling the target before insert read it — the composer is captured
+first now. No new body observer, no 14th scroll-lock writer.
+
+**1047 — the notification matrix, wired.** Recon first: all 15 notifyTeam sites mapped —
+assignments, @-tags, estimate-signed→admins, Completed→rep+admins already covered. Three real
+gaps closed at their chokepoints, all fire-and-forget: a kind:'job' appointment (create AND
+998's attach-job update) → PRODUCTION_EMAILS minus the actor ("Build day set"); materials
+marked ordered (profile toggle AND board button) → the job's sales_rep minus the actor; an
+UNASSIGNED punch-out → production minus the actor (the assigned case already notified since
+769). gate_1047 stubs notifyTeam post-boot with a recorder and drives all three for real,
+including the negative (a kind:'appt' create sends nothing); control silent on all three.
+
+## Builds 1048–1049 — workflow features 5–6 (the doctrine paid twice)
+
+**1048 — "Where things stand", the morning strip (feature 5).** A count-chip row at the top of
+the admin home, each chip a DOOR to a surface that already exists: approvals awaiting a contract
+→ scrolls to the card · jobs with no build date → the Production board · urgent punch-outs →
+Punch & Repairs · carriers to chase → Cardinal Truth · things today → scrolls to Today. Hides
+entirely at zero; admin-only.
+
+⚠ **The strip adds no arithmetic.** Every count is read from the resolver that already owns it,
+because two screens computing the same queue is how they start disagreeing:
+`renderApprovals`'s predicate was LIFTED into `window.crApprovalsPending()` and the card now
+calls it too (gate asserts chip === predicate === rendered rows); `CardinalProduction.schedFor`
+answers "is this booked" (972's export precedent); `chaseList` gained a read-only
+`CardinalTruthHome.chase` export rather than a second copy of the filter.
+
+⚠ **Adjacent surface, NOT duplicated — the Owner Console (895) already exists** and its banner
+calls itself "Theo's morning brief": Top 10, the tax/BWC/1099 calendar, expirations — owner-level
+things outside any one customer, own tables (`owner_tasks`/`owner_items`). 1048 is job-flow
+counts on the home. Different data, different surface; checked before building, recorded so the
+next session does not "discover" one and fold the other into it.
+
+**1049 — punch-out work survives no signal (feature 6).** ⚠ **THE PRIME DOCTRINE, AGAIN, AND IT
+SAVED THE WHOLE BUILD.** Feature 6 was proposed as "build an offline capture queue". It is
+already built: the service worker caches reads (864); `CardinalOutbox` is a generic IndexedDB
+write outbox with replay, pending counts, stuck rows and a panel (865); punch-card PHOTOS have
+their own blob queue that holds and never deletes a refusal (967); projects and
+inspection_reports both queue AND overlay pending patches on reload (869).
+
+The gap was exactly one table. `CardinalPunch.update()`/`.toggle()` — every step tick, note,
+check-in and close on the punch card — rolled back and returned `{ok:false}` when the write
+could not reach the server. Three edits, no new subsystem: both writers queue the FULL-VALUE
+patch and keep the local change on a networkish failure (`{ok:true, queued:true}`); `reload()`
+overlays `patchesFor('punch_items')` so a refresh while offline cannot wipe queued work; the card
+shows a "saved on this phone, it will sync by itself" note. **A real refusal still rolls back and
+fails loudly** — asserted, because softening that would hide RLS problems.
+
+⚠ **gate_1049 caught a hole in my own first cut**: I wired toggle's RETURNED-error path only, and
+iOS reports a dropped fetch as a THROWN TypeError — the exact shape 861's comment documents, and
+the exact shape a roof with no bars produces. The catch is wired now. A gate that only tested the
+returned shape would have shipped an offline fix that does not work offline.
+
+
+## Build 1050 — the printed contract shows all of its own words (PR #463, landed 24 Aug)
+
+This PR sat as a draft since 21 Aug, renumbering itself **ten times** as main outran it
+(967 → 989 → 992 → 994 → 1006 → 1010 → 1016 → 1024 → 1031 → 1036). It was nearly closed as
+"stale" during a draft cleanup; reading it first showed the opposite — the fix is **not on main**
+and the bug it fixes is live and legally relevant.
+
+**The bug.** The grey running header (`.runhead`, a `position:fixed` element from 747) repeats on
+every printed page but reserves no space, so from page two onward it paints over the flowed text.
+`body{padding-top}` clears page ONE only, which is why anyone checking page 1 saw a perfect
+document. Measured on the shipped templates: **twelve pieces of contract wording invisible on
+paper**, including the ORC 1345.23 right-to-cancel text on the siding and gutter agreements.
+
+**The fix** moves the header into the `@page` margin box — the only box that repeats per page —
+and hides `.runhead` in print only, so documents saved months ago keep rendering on screen.
+`ensurePrintFix(d)` is injected at print time rather than shipped in the skeleton, because every
+saved contract carries its own frozen copy of that CSS; the Download button calls it too, which
+also fixes an emailed `.html` that had no print furniture at all.
+
+**Landing it (this session).** Merged main (1049) in; the two conflicts were the structural pair
+the branch's own `rebase_renumber.py` documents — the app stamp (main's one-line 1041 convention
+wins, restamped) and the CHANGELOG (descending, so both sides are kept). ⚠ **A real
+number collision had to be resolved by hand: their 1036 and my merged 1036 are different builds.**
+Theirs renumbered to **1050** — the CHANGELOG entry, the app stamp, five in-code citations, and
+their `gate_1036.mjs`, which became `gate_1050.mjs` so my board-pane gate keeps its own name. The
+board-pane `/* 1036: pane-aware */` comment was asserted untouched, and the renumber asserted
+byte-length-identical so no digit outside a citation moved.
+
+⚠ **`gate_1050.mjs` needs `pymupdf`** (it prints the real Download output through Chromium and
+measures the PDF's text layer against its geometry). Without it the gate reports "no measurement"
+— which reads like an app failure and is not one. `pip install pymupdf` first.
+
+**Gates: 31/31 GREEN on the merged tree; 15 named failures on the 1049 control**, including the
+gutter agreement hiding "Project Specifications", "HOA / Authorization" and the buyer signature
+line. All six of this session's gates (1044–1049) re-run green on the same tree.
