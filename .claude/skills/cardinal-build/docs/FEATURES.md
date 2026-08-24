@@ -6738,3 +6738,68 @@ Chromium-gated with a red control (gate_1036 … gate_1040), sentinel production
   on a 390px phone).
   **The WORDS were already one vocabulary (655) and were not touched** — both
   `window.INS_STAGE_LABEL || {…}` fallbacks verified byte-consistent.
+
+---
+
+## 1055 — the Supplement Desk's EVIDENCE TABLE (`supplement.html`)
+
+*Overhaul direction A. `index.html` untouched — it stays at 1054.*
+
+Every gap on the "What the scope is missing" step now shows **three evidence
+legs** as chips, and the letter will not carry an item that fails the required
+two:
+
+| leg | test | required? | chip reads |
+|---|---|---|---|
+| PHOTO | `g.photos.length > 0` | **yes** | `3 photos` / `no photo` |
+| MEASURED | `g.qty` is a positive number | **yes** | `measured` / `your number` / `model count` / `no number` |
+| CODE | `g.basis` is `code` or `manufacturer` | **graded** | `code` / `manufacturer` / `no code backing` |
+
+- **`evidence(g)`** is the single source of the rule; **`sendable(g)`** is what
+  every consumer counts. Enforced at **three** sites — `syncDraftBtn()`,
+  `draft()` and `fileSupplement()` — so the filed record's `reason` names what
+  actually went on the letter, not what was ticked.
+- **Code backing is graded, not required**, deliberately: a trade-practice item
+  has no citation to find and the human decides whether it still belongs.
+- A blocked card is bordered, its checkbox disabled, and it carries
+  *"Needs a photo and a quantity before it can go on the letter."* **Include
+  anyway** arms it and swaps that for an amber *"Included without a photo —
+  your call."*
+- **`refreshGap(g)`** redraws ONE card in place — on quantity entry, on
+  override, on the photo modal closing, and once at wire time. A full
+  `renderGaps()` would lose the caret of a number being typed, which is the
+  commonest way an item becomes sendable.
+- Header line: `5 gaps found · 3 ready to send`, and the number tracks overrides
+  live.
+- ⚠ **Both the `.needs` and `.ovrnote` rows are rendered unconditionally and
+  hidden when they do not apply.** Emitting them conditionally left
+  `refreshGap()` with nothing to reveal — the override marker never appeared,
+  and an item that *lost* its evidence later got no "needs" row either.
+- **The API contract did not change.**
+
+**Four repairs shipped with it, three of them older than this build:**
+
+- `--sd-ok` / `--sd-warn` / `--sd-crit` gained **light twins** (`#2A732E`,
+  `#7A5307`, `#B0281F`). They had none, while the light theme is the default
+  landing: warn **1.84:1**, ok **2.59:1**, crit **3.35:1** on the gap card.
+  `--sd-crit` was also under the floor in **dark** (4.27:1) and is now `#EB5A5F`.
+  Affects seven `.pill.*` states, `.chip.lowconf`, `.gap .phcount`,
+  `#loginView .err`.
+- **The Desk's first screen media query** (`@media (max-width:560px)`) — it had
+  only `@media print`. `header.sd-hd` wraps and `.sp` becomes a row break, so
+  the buttons flow to line two at full size. *Sign out* had been off the right
+  edge of a 390px phone since 668 (scrollWidth 423).
+- **`#filingType`** got `max-width:100%` **and** `box-sizing:border-box` on its
+  inline style — a stylesheet rule cannot beat an inline one, and max-width
+  alone still overflows by the padding and border.
+- **A build stamp, three ways**: the banner, a rendered chip in the header
+  (`#sdBuild`, `--sd-ink2` at 7.01:1 dark / 5.85:1 light), and
+  `window.SD_BUILD`. The Desk had shipped since 668 with none.
+
+**Gate:** `gate_1055.mjs`, seven checks in Chromium against the real Desk with a
+stubbed Supabase and `/api/supplement`, asserting on the **request body**. Green
+on 1055, **27 named failures on the 1054 control**.
+
+⚠ **The Desk's theme key is `cr-desk-theme`, not the CRM's `cardinalRLTheme`,
+and its pre-paint head script overwrites whatever an init script set.** A rig
+that sets the wrong key drives one theme twice and reports both as clear.

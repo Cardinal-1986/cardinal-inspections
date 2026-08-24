@@ -24892,3 +24892,106 @@ alone. What was NOT sound is that the two screens disagreed about which stages
 **Gates.** `check_build` green on all three. `gate_1052` (18 named control
 failures), `gate_1053` (13), `gate_1054` (9) — every one seen RED on its
 predecessor. All ten arc gates 1044–1053 re-run green on the 1054 tree.
+
+## Build 1055 — the Supplement Desk gets an evidence table (overhaul direction A)
+
+*`supplement.html` only. `index.html` is untouched and stays at 1054 — so
+`check_build.py`, which gates one artifact and that artifact is `index.html`,
+says nothing about this build. Its inline scripts, tag balance, CSS braces and
+duplicate style ids were parsed separately, as the convention requires.*
+
+Theo, after the Desk audit: **"Start the desk."** A is the direction I
+recommended first, and this is A.
+
+**The thesis, from the research behind the previews.** *"Most denials trace to
+documentation rather than to the legitimacy of the damage"* — IA Solutions,
+corroborated by BellaFSM. Every line item wants a photograph, a measurement and
+an authority. The Desk already produced the citation and the quantity; the
+photograph was optional, and **nothing checked that the quantity was supported
+at all.** `syncDraftBtn()` counted `g.included` and stopped there, so an item
+with no photograph and no number went onto a carrier letter exactly as readily
+as a fully documented one.
+
+**What shipped.** Every gap now carries three evidence legs, drawn as chips on
+its own card:
+
+| leg | test | required? |
+|---|---|---|
+| PHOTO | `g.photos.length > 0` | **yes** |
+| MEASURED | `g.qty` is a positive number | **yes** |
+| CODE | `g.basis` is `code` or `manufacturer` | **graded, not required** |
+
+Code backing is graded rather than required on purpose: a trade-practice item
+has no citation to find, and the human is the one who decides whether it still
+belongs. A blocked item cannot be ticked; **Include anyway** arms it and leaves
+an amber marker naming what it went out without. The gate is enforced in three
+places — `syncDraftBtn()`, `draft()` and `fileSupplement()` — so the filed
+record's `reason` names what actually went on the letter rather than what was
+ticked. **The API contract did not change.**
+
+`refreshGap(g)` redraws ONE card in place. A full `renderGaps()` would lose the
+caret of a number being typed, which is the commonest way an item becomes
+sendable.
+
+**Four defects fixed on the way, three of them older than this build.**
+
+- **`--sd-ok`/`--sd-warn`/`--sd-crit` had no light twin**, while the Desk's
+  light theme is the one most people land on. Measured on the gap card
+  (`--sd-panel2` `#EFEDE8`): **warn 1.84:1, ok 2.59:1, crit 3.35:1**, against a
+  4.5 floor — affecting seven `.pill.*` states, `.chip.lowconf`, `.gap .phcount`
+  and `#loginView .err`. Line ~176 already carried a comment admitting `--sd-ok`
+  "has no light twin" and patching one call site locally. **`--sd-crit` was
+  also under the floor in DARK, at 4.27:1** — that one nobody had noticed at
+  all.
+- **The header overflowed a phone, and had since 668.** scrollWidth **423 on a
+  390px viewport**, so *Sign out* has been off the right edge for the Desk's
+  whole life. The Desk has **zero screen media queries** — only `@media print`
+  — which is the "capped at one width" tell. Fixed with a flex break (`.sp`
+  gets `flex:1 0 100%` under 560px): nothing hidden, no tap target shrunk.
+- **`#filingType` pushed the driven page to 402.** It carries an inline style,
+  so a stylesheet rule cannot win it — the inline style got `max-width:100%`
+  **and** `box-sizing:border-box`; without the second, the padding and border
+  are added outside the 100% and it still overflows.
+- **The Desk had no build stamp of any kind.** The banner said 668 and nothing
+  on screen said anything, so "the Desk did X" has never been answerable. Now
+  stamped three ways: the banner, a rendered chip in the header, and
+  `window.SD_BUILD`. This is the `WORKER_BUILD` / `achieved._worker` lesson
+  from 829 — **provenance is a query, never an argument.**
+
+### ⚠ Four instrument faults in this build, and every one of them PASSED before it was caught
+
+Recorded because each is a class this project has already paid for, and because
+three of the four were *mine, in this build*.
+
+1. **The gate drove one theme twice.** It set `cardinalRLTheme` — the CRM's key.
+   The Desk reads **`cr-desk-theme`**, and its own pre-paint head script then
+   overwrote the attribute from `prefers-color-scheme`. Caught by noticing that
+   `gaps_dark.png` and `gaps_light.png` were the **same byte size**. Check 6
+   could not fail.
+2. **The contrast check probed classes that exist only in the new build.**
+   `.chip.have/.miss/.soft` have no rule on the 1054 tree, so
+   `getComputedStyle` returned the *inherited* body ink and a comfortable ratio
+   came back for a build whose light theme genuinely failed. Now it probes the
+   **tokens**, which exist in both trees — and the control immediately reported
+   2.59 / 1.84 / 3.35, matching the hand computation exactly. *Coverage derived
+   from what the page happens to define is coverage that shrinks in silence.*
+3. **The overflow check ran on a screen the user never sees.** On the page as
+   loaded it read 390 and reported clean while the driven gaps screen was at
+   402. Moved onto the driven screen, with a `gaps` count so a rig fault is
+   named rather than passing.
+4. **An assertion pinned to the wrong thing failed correct code.**
+   `src.count('display:none') == orig.count(...)` — my own section 5 legitimately
+   added two, for the always-rendered `.needs`/`.ovrnote` rows. Replaced with an
+   exact delta plus the two specific strings.
+
+Also fixed a real bug the gate found: **the `.ovrnote` was only rendered when
+already overridden**, so `refreshGap` had nothing to reveal and the override
+marker never appeared. `.needs` had the same latent fault. Both rows are now
+rendered unconditionally and hidden when they do not apply.
+
+**Gate:** `gate_1055.mjs` — seven checks, driving the real Desk in Chromium with
+a stubbed Supabase and a stubbed `/api/supplement`, asserting on the **request
+body** rather than on a disabled attribute. Green on 1055; **27 named failures
+on the 1054 control**, including all three token ratios and all three overflow
+sources. Byte-reproducible on re-run; both inline scripts parse; 125/125 CSS
+braces; 101/101 `<div>`.

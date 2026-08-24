@@ -3327,3 +3327,76 @@ Class 37 is *a negative control that crashes instead of reporting red*. This is 
 **a positive control that never ran at all**, and therefore reported clean. Class 37 is loud and
 gets noticed. This one congratulates you.
 >>>>>>> origin/main
+
+---
+
+## Class 60 — a two-theme check that drives ONE theme twice (24 Aug 2026, build 1055)
+
+**The shape.** A gate loops `for (const theme of ['light','dark'])`, sets the
+theme, renders, measures, reports both clear. Neither run was the theme it
+named.
+
+**How it happened.** `gate_1055.mjs` set `localStorage['cardinalRLTheme']` —
+**the CRM's key**. `supplement.html` reads **`cr-desk-theme`**, and its own
+pre-paint head script (the `studio.html` shape) then *overwrote* the
+`data-theme` attribute the init script had set, falling back to
+`prefers-color-scheme`. So both passes rendered whatever the headless default
+was, and check 6 could not fail in either direction.
+
+**How it was caught — and it was not by reasoning.** `gaps_dark.png` and
+`gaps_light.png` came back **the same byte size**. `cmp` said identical.
+
+**The standing fixes:**
+1. **Grep the artifact for its own theme key before writing the rig.** Each of
+   these files has its own: the CRM uses `data-theme`/`cardinalRLTheme`, the
+   landing uses `data-mode`/`cr-mode`, the insurance CRM uses `data-rltheme`,
+   and the Desk uses `cr-desk-theme`. A key copied from a sibling file is a
+   silent no-op.
+2. **Assert the theme actually applied** — read `data-theme` back and fail as a
+   rig fault if it is not what you asked for. `gate_1055` now does.
+3. **Set the media query to agree** (`page.emulateMedia({colorScheme})`), so a
+   missed key lands on the same answer instead of a different one.
+4. **`cmp` the two renders.** Two themes that produce byte-identical output are
+   one theme.
+
+## Class 61 — a check whose coverage is derived from what the page defines, so it shrinks in silence
+
+**The shape.** A probe measures elements selected by a class the *new* build
+introduces. On the control those elements exist but have **no rule**, so
+`getComputedStyle` returns the inherited value — a comfortable number for a
+build that genuinely fails. The negative control reports the defect as absent.
+
+**Build 1055's instance.** Check 6 probed `.chip.have/.miss/.soft`. On the 1054
+tree those spans inherited the body ink and scored fine, while the tokens the
+build actually fixed — `--sd-ok`, `--sd-warn`, `--sd-crit` — were at **2.59,
+1.84 and 3.35:1** in light and `--sd-crit` at **4.27:1 in dark**. Rewritten to
+probe the **tokens**, which exist in both trees, the control named all four
+immediately, matching the hand computation exactly.
+
+**This is the same family as the `test_stale_worker` fault** (a test that
+derived its own check count and quietly fell 15 → 14). **Any probe should
+either measure something present in BOTH trees, or explicitly detect and report
+"this element has no rule of its own here, so any number I read is
+meaningless."** `gate_1055` does the latter for the chips and the former for the
+tokens.
+
+## Class 62 — a viewport check run on a screen the user never sees
+
+**The shape.** An overflow / layout check runs on the page **as loaded**, before
+the app has been driven to the screen under test. It reports the loading screen's
+geometry and calls it clean.
+
+**Build 1055's instance.** The first overflow check read
+`document.documentElement.scrollWidth === 390` on a 390px viewport and passed —
+while the **driven** gaps screen was at 402, pushed there by a `<select>` whose
+intrinsic option text exceeded the card. Only driving the app to that step (claim
+→ analyze → gaps) showed it.
+
+**The fixes:** drive to the screen first, and **assert the screen is actually
+there** (`gate_1055` counts `#gapList .gap` and reports a rig fault when it is
+zero) so an un-driven run is named rather than passing. This is Class 59's rule
+applied to geometry rather than to ink.
+
+**Related, and worth stating once:** a `fullPage` screenshot's **width** is free
+overflow detection. A 390px viewport that captures 570px wide is telling you the
+body scrolls sideways. Build 1055's whole overflow finding started there.

@@ -79,10 +79,16 @@ checks that the quantity is supported.** That is the whole overhaul thesis.
 
 ## Three directions — halves of one Desk, not alternatives
 
-**A · The evidence table.** Every gap item carries three legs — photo, measurement,
-citation — shown as chips, and the Desk refuses to send an item with a hole. Smallest
-of the three: the gap list, the photo picker and the measurement read all exist; what
-is missing is the join and the refusal.
+**A · The evidence table. ✅ SHIPPED at build 1055** — Theo: *"Start the desk."*
+Every gap item carries three legs — photo, measurement, citation — shown as chips, and
+the Desk refuses to send an item with a hole. **Code backing ended up GRADED rather
+than required**, because a trade-practice item has no citation to find and the human
+decides whether it still belongs; photo and quantity are the two that block. The
+refusal is enforced at `syncDraftBtn()`, `draft()` **and** `fileSupplement()` — a
+button's disabled attribute is not a gate. `Include anyway` arms a blocked item and
+leaves an amber marker naming what it went without. See `FEATURES.md` and the build
+log for what else the build repaired on the way (no light twin for three state tokens,
+a phone header that had overflowed since 668, and no build stamp at all).
 
 **B · Start from the photographs, not the PDF.** Theo's own earlier note: *"box for ai
 and use pictures to supplement the estimate with captions and an overview."* Today the
@@ -118,4 +124,8 @@ from Cardinal's own `first_scope_rcv` → `approved_rcv` history.
 **then C** (the market gap, and it reuses the chase/notification work already scoped),
 **then B** (biggest change; better built on A's evidence model than beside it).
 
-⚠ **Nothing is started.** Theo asked for previews and ideas, and this is that.
+**Status, 24 Aug 2026:** **A is shipped (build 1055).** **C and B are not started** and
+are Theo's call. C is the one I would take next — it is the market gap, and the
+insurance audit already scoped the work it reuses.
+
+⚠ The six smaller pieces above are all still unstarted.
