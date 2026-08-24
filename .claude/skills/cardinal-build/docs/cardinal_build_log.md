@@ -24476,3 +24476,43 @@ INSTRUMENT: `comparable()` in sentinel_probe.js now refuses `-webkit-box` as a c
 display value, with a selftest case (`.clamp-ok`) that goes RED against the pre-fix probe —
 negative-controlled by swapping the old probe back in and watching the selftest fail on exactly
 the audit's finding shape. H's dispatch targets had already shipped at 1040.
+
+## Builds 1044–1047 — workflow efficiency, features 1–4 (Theo: "let's do all of them. Start with 1-4")
+
+Theo asked for app-wide workflow suggestions; six were offered with costs, he picked all six
+starting with 1–4. Each Chromium-gated with a red control; all four gates green on the final
+artifact; sentinel base + production walks clean vs 1043.
+
+**1044 — universal search.** The Ctrl-K palette's client haystack gains PO #, insurance claim #
+and policy # (checklist.lead.insurance — the fields the HOME search learned at 743 and the
+palette never did), plus a Punch-outs group (CardinalPunch.rows() by title + client name)
+jumping straight to the card. Opening the palette lazily warms the punch cache. Deliberately
+NOT added: crews (no list accessor, five rows one screen away) and estimates (reachable via
+their client) — scope stated rather than widened.
+
+**1045 — "Gone quiet".** A full-width card joins Recent leads / Today: active jobs ranked by
+days-in-stage (stage_since) — Prospect/Approved ≥14d, Scheduled ≥21d, red ≥30d, tap → profile.
+Exclusions each deliberate and gated: Lead (Recent leads owns it), OnHold (grants park for
+years — Theo's domain fact), insurance (the chase list owns it), Completed+. ⚠ Two catches on
+the way: the patch's own arithmetic rejected #ec7076 at 4.32:1 on the LIGHTER pipecard gradient
+stop (#f07e84 ships, 4.85 worst); and the gate caught cdCrmOf passing an insurance job through —
+it answers which directory owns a row, not whether it is a claim; projClaimType (lead.insurance)
+is the resolver. Rig note: the kphome row renders through renderActivity, which the rig's boot
+never fires — the gate enters through the shipped renderKpHomeRow, the same call the app makes.
+
+**1046 — saved snippets.** A quote-mark button at the three composers (#chatText, the punch
+card's .pkin, the punch page's .pp-compose — the two rendered ones served by ONE document-level
+delegation, so re-renders never need re-wiring). Sheet at z 9700: tap inserts into THAT composer
+with a real input event, ✕ deletes, + Add (prompt) appends; four defaults seed on first read.
+localStorage per device — the zero-SQL launch choice, stated plainly; a shared table can follow.
+⚠ The gate caught close() nulling the target before insert read it — the composer is captured
+first now. No new body observer, no 14th scroll-lock writer.
+
+**1047 — the notification matrix, wired.** Recon first: all 15 notifyTeam sites mapped —
+assignments, @-tags, estimate-signed→admins, Completed→rep+admins already covered. Three real
+gaps closed at their chokepoints, all fire-and-forget: a kind:'job' appointment (create AND
+998's attach-job update) → PRODUCTION_EMAILS minus the actor ("Build day set"); materials
+marked ordered (profile toggle AND board button) → the job's sales_rep minus the actor; an
+UNASSIGNED punch-out → production minus the actor (the assigned case already notified since
+769). gate_1047 stubs notifyTeam post-boot with a recorder and drives all three for real,
+including the negative (a kind:'appt' create sends nothing); control silent on all three.

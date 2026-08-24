@@ -3712,7 +3712,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1043 &#8212; the Production board puts the work beside the calendar on bigger screens. On desktop and iPad landscape the month now sits on the left with the four status boxes, Closed repairs, Crew Dispatch, Crews and today’s work all visible beside it — no more scrolling past a full-screen calendar to reach the boxes. Phones are unchanged.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1047 &#8212; the right people hear about the right events. Booking a build day now pings the production crew; marking materials ordered pings the job’s sales rep; and filing a punch-out with nobody assigned pings production instead of telling no one. Whoever did the thing is never pinged about their own action, and nothing about saving waits on a notification.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3832,6 +3832,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <div class="kphomerow">
           <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="3" y="5" width="18" height="2.6" rx="1.3"/><rect x="3" y="10.7" width="18" height="2.6" rx="1.3"/><rect x="3" y="16.4" width="11" height="2.6" rx="1.3"/></g><g class="i5"><path d="M4 7h16" class="m"/><path d="M4 12h11"/><path d="M4 17h6" class="m"/></g></svg>Recent leads</div><div id="kpLeadsList"></div></div>
           <div class="pipecard"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><path fill-rule="evenodd" d="M4.8 3.6h14.4a2 2 0 0 1 2 2v12.8a2 2 0 0 1-2 2H4.8a2 2 0 0 1-2-2V5.6a2 2 0 0 1 2-2zM5.2 10.2h13.6v7.6H5.2z"/><circle cx="12" cy="14" r="2.2"/></g><g class="i5"><rect x="2.8" y="3.6" width="18.4" height="16.8" rx="2"/><path d="M2.8 9.8h18.4"/><circle cx="12" cy="15" r="2" class="m"/></g></svg>Today</div><div id="kpTodayList"></div></div>
+          <div class="pipecard kpquiet"><div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.4v5l3.4 2"/></g><g class="i5"><circle cx="12" cy="12" r="8" class="m"/><path d="M12 7.5v4.9l3.2 1.9"/></g></svg>Gone quiet</div><div id="kpQuietList"></div></div>
         </div>
         <div id="kpPunchStrip"></div>
         <div class="herorow" style="margin-top:14px;">
@@ -7749,6 +7750,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <div id="chatTagRow" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px 0;"></div>
       <div class="chatinput">
         <input type="text" id="chatText" placeholder="Write a note&#8230; use @name to tag" autocomplete="off">
+        <button class="cr-snipbtn" type="button" aria-label="Saved snippets" title="Saved snippets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6zM19 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6z"/></svg></button>
         <button class="btn" id="chatSend">Send</button>
       </div>
     </div>
@@ -10859,6 +10861,28 @@ async function __apptMayAdvanceStage(fields){
     }catch(_t){}
   }catch(_){ /* never let a stage courtesy break saving the appointment */ }
 }
+/* 1047 (feature: notification matrix): a BUILD DAY reaching the calendar is
+   news the crew had to discover by opening the board. One helper behind the
+   one appointments write path; fire-and-forget so scheduling never waits on
+   (or fails with) a notification. Actor excluded; notifyTeam dedupes. */
+function __apptNotifyProduction(f){
+  try{
+    if(!f || f.kind !== 'job' || !f.project_id) return;
+    if(typeof window.notifyTeam !== 'function') return;
+    var me = ((window.currentUser && window.currentUser.email) || '').toLowerCase();
+    var to = (Array.isArray(window.PRODUCTION_EMAILS) ? window.PRODUCTION_EMAILS : [])
+      .filter(function(e){ return e && e.toLowerCase() !== me; });
+    if(!to.length) return;
+    var pr = (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(f.project_id); })[0];
+    var nm = (pr && pr.name) || 'a job';
+    window.notifyTeam(to,
+      'Build day set \u2014 ' + nm,
+      '<p><b>' + nm + '</b> is booked for <b>' + (f.appt_date || '') + '</b>' +
+      (f.appt_time ? ' at ' + f.appt_time : '') + '.</p>' +
+      (f.title ? '<p>' + String(f.title).replace(/</g, '&lt;') + '</p>' : ''))
+      .catch(function(){});
+  }catch(_e){}
+}
 var adb = {
   list: async function(){
     if(TEAM){
@@ -10880,6 +10904,7 @@ var adb = {
       var r = await sb.from('appointments').insert(fields);
       if(r.error) throw r.error;
       await __apptMayAdvanceStage(fields);   /* 783 */
+      __apptNotifyProduction(fields);        /* 1047 — fire-and-forget */
       return;
     }
     fields.id = uid(); fields.created_by = null;
@@ -10901,7 +10926,11 @@ var adb = {
       alsSave(l);
     }
     var row = (cacheAppts || []).filter(function(x){ return String(x.id) === String(id); })[0] || {};
-    await __apptMayAdvanceStage(Object.assign({}, row, fields));
+    var merged = Object.assign({}, row, fields);
+    await __apptMayAdvanceStage(merged);
+    /* 1047: 998's attach-job path — a job landing on an existing build day is
+       the same news as a new one. Only when this update ATTACHED the job. */
+    if(fields.project_id) __apptNotifyProduction(merged);
   },
   remove: async function(id){
     if(TEAM){
@@ -18704,6 +18733,16 @@ async function setMaterialsOrdered(on){
   try{ auditLog('materials', (on ? 'Marked ordered' : 'Cleared ordered flag'), currentProject.id); }catch(_){}
   /* The board derives its chips from the checklist, so a refresh is all it needs. */
   try{ if(window.CardinalProduction) window.CardinalProduction.refresh(); }catch(_){}
+  /* 1047: the rep learns their deal is moving. Only on SET, only when a rep
+     is on the job and it is not the actor; fire-and-forget. */
+  try{
+    var _rep = on && currentProject.sales_rep;
+    if(_rep && typeof window.notifyTeam === 'function' && String(_rep).toLowerCase() !== me.toLowerCase()){
+      window.notifyTeam([_rep], 'Materials ordered \u2014 ' + (currentProject.name || 'your job'),
+        '<p>Materials were just marked ordered for <b>' + (currentProject.name || 'your job') + '</b>.</p>')
+        .catch(function(){});
+    }
+  }catch(_e){}
 }
 function matListText(trade){
   var all = parseCkAll(currentProject);
@@ -37042,6 +37081,15 @@ var s = ((p.name || '') + ' ' +
    checklist.lead.phones which this box could not see at all. */
 ((window.phoneHay ? window.phoneHay(p) : '') || '') + ' ' +
 (p.email || '') + ' ' +
+/* 1044: PO number and insurance claim/policy numbers — the identifiers people
+   actually walk in holding. The HOME search learned these at 743; the palette
+   never did. Claim data lives at checklist.lead.insurance (16642's shape). */
+(function(){ try{
+var ck = typeof p.checklist === 'string' ? JSON.parse(p.checklist) : (p.checklist || {});
+var ins = ck.lead && ck.lead.insurance;
+return (ck.po ? '#' + ck.po + ' ' + ck.po : '') + ' ' +
+((ins && ins.claim_number) || '') + ' ' + ((ins && ins.policy_number) || '');
+}catch(_e){ return ''; } })() + ' ' +
 ((p.location && p.location.street) || '')).toLowerCase();
 if(s.indexOf(q) !== -1){
 var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(p) : 'unknown';
@@ -37070,12 +37118,35 @@ partners.push(p);
 partners = partners.slice(0, 5);
 }
 }catch(e){}
-return { clients:clients, docs:docs, partners:partners };
+/* 1044: punch-outs, by title + client name, jumping straight to the card. */
+var punch = [];
+try{
+if(window.CardinalPunch && typeof window.CardinalPunch.rows === 'function'){
+window.CardinalPunch.rows().forEach(function(it){
+var pr = (window.cacheProjects || []).filter(function(p){ return String(p.id) === String(it.project_id); })[0];
+var hay = ((it.title || '') + ' ' + ((pr && pr.name) || '')).toLowerCase();
+if(hay.indexOf(q) !== -1){
+punch.push({ id:it.id, title:it.title || 'Punch-out', who:(pr && pr.name) || '', done:it.status === 'done' });
+}
+});
+punch = punch.slice(0, 8);
+}
+}catch(e){}
+return { clients:clients, docs:docs, partners:partners, punch:punch };
 }
 var currentBg = null;
 var currentActive = -1;
 function open(){
 close();
+/* 1044: on a fresh boot the punch cache is empty until a punch surface has
+   loaded — warm it in the background so a second keystroke can find items.
+   Best-effort; a failed reload just means no punch group, never an error. */
+try{
+if(window.CardinalPunch && typeof window.CardinalPunch.rows === 'function' &&
+!window.CardinalPunch.rows().length && typeof window.CardinalPunch.reload === 'function'){
+window.CardinalPunch.reload();
+}
+}catch(_e){}
 var bg = document.createElement('div');
 bg.className = 'cr-srch-bg';
 bg.innerHTML =
@@ -37109,6 +37180,10 @@ window.openProject(row.dataset.id);
 window.openProject(row.dataset.pid);
 }else if(t === 'p' && window.CardinalCommunityPartners){
 window.CardinalCommunityPartners.openDirectory();
+}else if(t === 'k' && window.CardinalPunchCard && window.CardinalPunchCard.open){
+/* 1044: straight to the card — the 768 contract (one card for every
+   punch-out detail in the app). */
+window.CardinalPunchCard.open(row.dataset.id);
 }
 }
 function render(q){
@@ -37146,10 +37221,21 @@ html += '<div class="cr-srch-row" data-t="p" data-id="' + esc(p.id) + '">' +
 });
 html += '</div>';
 }
+if(r.punch && r.punch.length){
+html += '<div class="cr-srch-grp"><h5>Punch-outs \u00b7 ' + r.punch.length + '</h5>';
+r.punch.forEach(function(k){
+html += '<div class="cr-srch-row" data-t="k" data-id="' + esc(k.id) + '">' +
+'<div class="n">' + esc(k.title) +
+(k.done ? ' <span class="type-badge unknown">CLOSED</span>' : '') + '</div>' +
+(k.who ? '<div class="m">' + esc(k.who) + '</div>' : '') +
+'</div>';
+});
+html += '</div>';
+}
 if(!html){
 html = '<div class="cr-srch-empty">' +
 (q ? 'No matches for &ldquo;' + esc(q) + '&rdquo;' : 'Start typing to search') +
-'<small>Searches names, addresses, phones, emails, document titles, and partner names.</small>' +
+'<small>Searches names, addresses, phones, emails, PO and claim numbers, document titles, partner names, and punch-outs.</small>' +
 '</div>';
 }
 res.innerHTML = html;
@@ -41176,6 +41262,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1047, d:'2026-08-24', t:'Three notification gaps, wired', s:'The notification system already covered assignments, @-tags, signed estimates and completed jobs. Three real gaps were mapped and closed: putting a build day on the calendar now notifies the production crew (from every screen that can book one, including attaching a job to an existing day); marking materials ordered notifies the job\u2019s sales rep, from the profile toggle and the board button alike; and filing a punch-out with nobody assigned notifies production \u2014 until now it told no one at all. The person doing the action is never pinged about it, and saves never wait on a notification.' },
+{ b:1046, d:'2026-08-24', t:'Saved snippets at every composer', s:'A quote-mark button now sits beside the three message boxes \u2014 the client page\u2019s note box, the punch card messenger and the punch page composer. It opens a sheet of saved snippets: tap one and it drops into the message, ready to send or edit. Four starters are included \u2014 on-the-way, materials delayed, job wrapped, and the Google-review ask \u2014 and the same sheet adds or deletes your own. Snippets are kept per device for now.' },
+{ b:1045, d:'2026-08-24', t:'Gone quiet \u2014 stale jobs surface themselves', s:'Insurance has had the chase list for months; retail and community jobs could sit motionless with nobody noticing. The home page now carries a Gone-quiet card: active jobs ranked by days in their current stage \u2014 fourteen days for Prospect and Approved, twenty-one for Scheduled, red at thirty \u2014 with a tap straight to the client. Leads, on-hold grant jobs and insurance claims are deliberately excluded: each already has its own home.' },
+{ b:1044, d:'2026-08-24', t:'Universal search', s:'The search window could find a client by name, address, phone or email \u2014 but not by the numbers people actually walk in holding. It now matches PO numbers, insurance claim numbers and policy numbers straight to the client, and gains a Punch-outs section that searches every punch-out by its name or its client and opens the punch card directly. Opening search also quietly warms the punch list on a fresh start so those results are there by the time you finish typing.' },
 { b:1043, d:'2026-08-24', t:'Desktop board: work beside the calendar', s:'Audit finding O1: on desktop the board led with a full-viewport month and the four boxes \u2014 the actual work \u2014 started below the fold. From rendered previews Theo picked the side-by-side layout: at 1100px and up the month sits on the left and everything else \u2014 boxes, Closed repairs, Crew Dispatch, Crews and today\u2019s agenda \u2014 stands beside it, all visible without scrolling. It is the same arrangement ultrawide screens already used, now on normal desktops and iPads in landscape. Phones keep their single column.' },
 { b:1042, d:'2026-08-24', t:'Punch & Repairs joins the full-screen family', s:'Audit finding F4: the punch page was the one production screen still drawn inside the retail shell, so Curtis worked his list with Contacts, Leads, Photos and the whole desktop sidebar one accidental tap away. For production accounts the page now fills the screen the way the board, the punch card and dispatch already do \u2014 same ground, its own scrolling, and a punch-out card opened from it still lands on top. Admins and sales see exactly what they saw before.' },
 { b:1041, d:'2026-08-24', t:'The menu footer goes on a diet', s:'The version stamp at the bottom of the burger menu had quietly been collecting every build\u2019s summary since about build 1015 \u2014 eleven and a half thousand characters, twenty-six builds of prose that every user scrolled past to reach the end of the menu. It now shows one line: the current build. The full history is still one tap away in What\u2019s New, which has always been the real record.' },
@@ -51305,6 +51395,15 @@ async function markOrdered(pid){
   if(typeof window.auditLog === 'function'){
     try{ window.auditLog('materials', 'Marked ordered', pid); }catch(_){}
   }
+  /* 1047: same wire as the profile toggle — the rep hears their deal moved. */
+  try{
+    if(pr.sales_rep && typeof window.notifyTeam === 'function' &&
+       String(pr.sales_rep).toLowerCase() !== String(me).toLowerCase()){
+      window.notifyTeam([pr.sales_rep], 'Materials ordered \u2014 ' + (pr.name || 'your job'),
+        '<p>Materials were just marked ordered for <b>' + esc(pr.name || 'your job') + '</b>.</p>')
+        .catch(function(){});
+    }
+  }catch(_e){}
   lastSig = '';                                  /* the checklist changed */
   render();
 }
@@ -51499,6 +51598,10 @@ async function saveAdd(){
        whether anything was delivered. Chat stays @-only; an assignment is a
        different act and has its own yes. */
     notifyAssignee(row.assigned_to, title, pid, 'filed');
+    /* 1047: a punch-out with NOBODY on it told nobody at all. Production runs
+       punch, so the crew hears about unassigned ones (actor excluded); the
+       assigned case above is unchanged. */
+    if(!row.assigned_to) notifyProductionUnassigned(title, pid);
     if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){
       try{ window.CardinalPunchProfile.refresh(); }catch(_){}
     }
@@ -51536,6 +51639,20 @@ async function notifyAssignee(email, title, pid, verb){
     if(typeof window.notifyOutcomeText === 'function'){
       try{ console.log('[prod]', window.notifyOutcomeText(res, [email])); }catch(_){}
     }
+  }catch(_){}
+}
+
+async function notifyProductionUnassigned(title, pid){
+  try{
+    if(typeof window.notifyTeam !== 'function') return;
+    var me = myEmail();
+    var to = (Array.isArray(window.PRODUCTION_EMAILS) ? window.PRODUCTION_EMAILS : [])
+      .filter(function(e){ return e && e.toLowerCase() !== me; });
+    if(!to.length) return;
+    var pr = projectFor(pid);
+    await window.notifyTeam(to, 'Unassigned punch-out: ' + title,
+      '<p><b>' + esc(shortName(me) || 'Someone') + '</b> filed a punch-out with no one assigned' +
+      ' at <b>' + esc((pr && pr.name) || 'a job') + '</b>:</p><p>' + esc(title) + '</p>');
   }catch(_){}
 }
 
@@ -52580,6 +52697,7 @@ function msgsHtml(){
     (body || '<div class="pkdesc">No messages yet. Tag someone with @ and only they are notified.</div>') +
     '<div class="pktags hide">' + chips + '</div>' +
     '<div class="pkin"><input type="text" data-f="msg" placeholder="Message…">' +
+    '<button class="cr-snipbtn" type="button" aria-label="Saved snippets" title="Saved snippets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6zM19 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6z"/></svg></button>' +
     '<button class="snd" data-act="send" type="button" aria-label="Send">' + svg('send') + '</button></div>' +
     (outMsg ? '<div class="pkout' + (/not|no one|failed/i.test(outMsg) ? ' bad' : '') + '">' + esc(outMsg) + '</div>' : '') +
     '</div>';
@@ -53643,6 +53761,7 @@ return '<div class="pp-page">' +
 '<div class="pp-tags">' + tagChips() + '</div>' +
 '<div class="pp-compose">' +
 '<textarea class="pp-input" data-f="msg" rows="2" placeholder="Write a note…"></textarea>' +
+'<button class="cr-snipbtn" type="button" aria-label="Saved snippets" title="Saved snippets"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6zM19 7c-2.5.6-4 2.4-4 5v5h5v-5h-3c0-1.9 1-3.1 2.7-3.6z"/></svg></button>' +
 '<button class="pp-send" data-act="send" type="button">Post</button>' +
 '</div>' +
 '</div>';
@@ -61162,6 +61281,21 @@ document.addEventListener('click', function(e){
 /* ── Home: Recent leads + Today band (build 350) ── */
 .kphomerow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
 @media (max-width:900px){ .kphomerow{grid-template-columns:1fr;} }
+/* 1045: the quiet card spans the row; day-count inks are the proven amber/red
+   pairs, computed against both pipecard gradient stops in both themes. */
+.kphomerow .kpquiet{grid-column:1/-1;}
+.kpqrow{position:relative;display:flex;align-items:center;gap:10px;padding:9px 10px;margin:6px 0;
+  border:1px solid var(--rbe-line2,#2b2b33);border-radius:9px;cursor:pointer;min-height:44px;}
+.kpqrow:hover{border-color:var(--rbe-acc,#c8202e);}
+.kpqrow .qd{flex:none;min-width:52px;text-align:center;font:800 12px ui-monospace,Menlo,monospace;color:#f0a24a;}
+.kpqrow .qd small{display:block;font:700 7.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);}
+.kpqrow.qstale .qd{color:#f07e84;}
+.kpqrow .qn{flex:1;min-width:0;font:700 13px 'Segoe UI',Arial,sans-serif;color:var(--rbe-ink,#eceef0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.kpqrow .qs{flex:none;font:800 8.5px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);}
+.kpqrow .qc{flex:none;font:800 8.5px ui-monospace,Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:#34D399;}
+:root[data-theme="rb-light"] .kpqrow .qd{color:#8a5500;}
+:root[data-theme="rb-light"] .kpqrow.qstale .qd{color:#8f1620;}
+:root[data-theme="rb-light"] .kpqrow .qc{color:#047857;}
 .kplrow{display:flex;align-items:center;gap:9px;background:linear-gradient(180deg,var(--rbe-bg1),var(--rbe-bg2));
   border:1px solid var(--rbe-line2);border-radius:10px;padding:8px 10px;margin-top:8px;position:relative;cursor:pointer;overflow:hidden;}
 .kplrow:hover{border-color:var(--rbe-acc);}
@@ -61257,9 +61391,43 @@ window.renderKpHomeRow = function(){
       '<span style="flex:1;min-width:0;"><span class="ti2">' + esc(a.title || 'Appointment') + '</span>' +
         (pr ? '<div class="m3">' + esc(pr.name || '') + '</div>' : '') + '</span></div>';
   }).join('') : '<div class="kpempty">Nothing on the calendar today.</div>';
+  /* 1045: Gone quiet — days-in-stage on the active pipeline. Exclusions are
+     each deliberate: Lead belongs to Recent leads; OnHold parks for years by
+     design (grants); insurance already has the Cardinal Truth chase list;
+     Completed and later are done or dead. stage_since is written on every
+     stage move (an invariant since the doc set began). */
+  var qm = document.getElementById('kpQuietList');
+  if(qm){
+    var QUIET_FLOOR = { Prospect:14, Approved:14, Scheduled:21 };
+    var nowMs = Date.now();
+    var quiet = [];
+    (window.cacheProjects || []).forEach(function(p){
+      var st = normStage(p.stage);
+      if(!(st in QUIET_FLOOR)) return;
+      /* insurance detection rides projClaimType (it reads lead.insurance);
+         cdCrmOf answers which directory owns the row, not whether it is a
+         claim — the gate caught an insurance job leaking through it. */
+      var ct = (typeof window.projClaimType === 'function') ? window.projClaimType(p) : 'unknown';
+      if(ct === 'insurance') return;
+      var c = crmOfSafe(p);
+      if(!p.stage_since) return;
+      var days = Math.floor((nowMs - new Date(p.stage_since).getTime()) / 86400000);
+      if(days >= QUIET_FLOOR[st]) quiet.push({ p:p, st:st, days:days, crm:c });
+    });
+    quiet.sort(function(a, b){ return b.days - a.days; });
+    quiet = quiet.slice(0, 6);
+    qm.innerHTML = quiet.length ? quiet.map(function(x){
+      return '<div class="kpqrow' + (x.days >= 30 ? ' qstale' : '') + '" data-proj="' + x.p.id + '">' +
+        '<span class="qd">' + x.days + '<small>days in ' + esc(x.st) + '</small></span>' +
+        '<span class="qn">' + esc(x.p.name || 'Unnamed client') + '</span>' +
+        (x.crm === 'community' ? '<span class="qc">COM</span>' : '') +
+        '<span class="qs">' + esc(x.st) + '</span>' +
+        '</div>';
+    }).join('') : '<div class="kpempty">Nothing has gone quiet.</div>';
+  }
 };
 document.addEventListener('click', function(e){
-  var r = e.target.closest('.kplrow[data-proj], .kptrow[data-proj]');
+  var r = e.target.closest('.kplrow[data-proj], .kptrow[data-proj], .kpqrow[data-proj]');
   if(!r) return;
   if(typeof openProject === 'function') openProject(r.getAttribute('data-proj'));
 });
@@ -79320,6 +79488,136 @@ window.CardinalStorm = Object.assign(window.CardinalStorm || {}, {
   window.CardinalWx = Object.assign(window.CardinalWx || {}, {
     load: load, day: day, kind: kind, icon: icon, wet: wet, cell: cell
   });
+})();
+</script>
+<style id="cr-snips-styles">
+/* ── 1046 · Saved snippets ── one button shape at three composers; sheet is
+   fixed at z 9700 (above every full-screen surface incl. the punch card 9550).
+   Inks ride --rbe-* pairs; the sheet paints its own ground in both themes. */
+.cr-snipbtn{flex:none;min-width:40px;min-height:40px;border-radius:9px;cursor:pointer;position:relative;
+  border:1px solid var(--rbe-line2,#2b2b33);background:transparent;color:var(--rbe-mute,#9aa0a8);
+  display:inline-flex;align-items:center;justify-content:center;padding:0 8px;}
+.cr-snipbtn::after{content:"";position:absolute;inset:-3px;}
+.cr-snipbtn svg{width:16px;height:16px;fill:currentColor;}
+.cr-snipbtn:hover{color:var(--rbe-ink,#eceef0);border-color:var(--rbe-acc,#c8202e);}
+#cr-pk .pkin .cr-snipbtn{min-height:44px;}
+.pp-compose .cr-snipbtn{align-self:stretch;}
+.cr-snips-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9700;display:flex;
+  align-items:flex-end;justify-content:center;}
+@media (min-width:700px){ .cr-snips-bg{align-items:center;} }
+.cr-snips-box{width:100%;max-width:560px;max-height:70vh;display:flex;flex-direction:column;
+  background:var(--rbe-bg2,#262a31);color:var(--rbe-ink,#eceef0);border:1px solid var(--rbe-line2,#2b2b33);
+  border-radius:16px 16px 0 0;overflow:hidden;}
+@media (min-width:700px){ .cr-snips-box{border-radius:16px;} }
+.cr-snips-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--rbe-line2,#2b2b33);}
+.cr-snips-head b{flex:1;font:800 13px 'Segoe UI',Arial,sans-serif;letter-spacing:.04em;}
+.cr-snips-head button{background:transparent;border:0;cursor:pointer;color:var(--rbe-mute,#9aa0a8);
+  font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;min-height:44px;min-width:44px;}
+.cr-snips-list{overflow-y:auto;flex:1;padding:6px 8px calc(10px + env(safe-area-inset-bottom,0px));}
+.cr-snips-row{display:flex;align-items:center;gap:8px;margin:4px 0;}
+.cr-snips-row .tx{flex:1;text-align:left;background:transparent;cursor:pointer;min-height:44px;
+  border:1px solid var(--rbe-line2,#2b2b33);border-radius:10px;padding:10px 12px;
+  font:600 13px 'Segoe UI',Arial,sans-serif;line-height:1.4;color:var(--rbe-ink,#eceef0);}
+.cr-snips-row .tx:hover{border-color:var(--rbe-acc,#c8202e);}
+.cr-snips-row .rm{flex:none;min-width:44px;min-height:44px;background:transparent;border:0;cursor:pointer;
+  color:var(--rbe-mute,#9aa0a8);font-size:15px;}
+.cr-snips-row .rm:hover{color:#f07e84;}
+.cr-snips-add{display:block;width:calc(100% - 16px);margin:6px 8px 10px;min-height:44px;cursor:pointer;
+  background:transparent;border:1px dashed var(--rbe-line3,#3a3a44);border-radius:10px;
+  color:var(--rbe-mute,#9aa0a8);font:700 12.5px 'Segoe UI',Arial,sans-serif;}
+.cr-snips-add:hover{color:var(--rbe-ink,#eceef0);border-color:var(--rbe-acc,#c8202e);}
+:root[data-theme="rb-light"] .cr-snips-box{background:#ffffff;}
+:root[data-theme="rb-light"] .cr-snips-row .rm:hover{color:#8f1620;}
+</style>
+<script id="cr-snips-script">
+(function(){
+'use strict';
+/* ── 1046 · Saved snippets ─────────────────────────────────────────────────
+   One document-level delegated click serves every .cr-snipbtn — the punch
+   card and punch page re-render their composers freely and nothing needs
+   re-wiring. Storage is localStorage (per device, stated in the PR); the
+   defaults below seed on first read. No body observer, no scroll lock. */
+var KEY = 'cr-snips';
+var DEFAULTS = [
+  "Crew's on the way \u2014 should be there within the hour.",
+  "Materials are delayed \u2014 I'll confirm the new drop date as soon as it lands.",
+  "Job's wrapped up and the site is cleaned. Photos are in the album \u2014 call me with any questions.",
+  "Thanks again for choosing Cardinal! If you were happy with the work, a quick Google review means a lot to a local crew."
+];
+function load(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(raw == null){ localStorage.setItem(KEY, JSON.stringify(DEFAULTS)); return DEFAULTS.slice(); }
+    var v = JSON.parse(raw);
+    return Array.isArray(v) ? v : DEFAULTS.slice();
+  }catch(_e){ return DEFAULTS.slice(); }
+}
+function save(list){ try{ localStorage.setItem(KEY, JSON.stringify(list)); }catch(_e){} }
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+  return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+var sheet = null, target = null;
+function close(){ if(sheet){ sheet.remove(); sheet = null; } target = null; }
+function insertInto(el, text){
+  if(!el) return;
+  var cur = el.value || '';
+  el.value = cur + (cur && !/\s$/.test(cur) ? ' ' : '') + text;
+  /* a real input event, so send-button enable states and drafts stay honest */
+  try{ el.dispatchEvent(new Event('input', { bubbles:true })); }catch(_e){}
+  try{ el.focus(); }catch(_e){}
+}
+function render(){
+  var list = load();
+  var rows = list.map(function(t, i){
+    return '<div class="cr-snips-row">' +
+      '<button class="tx" data-snip="' + i + '" type="button">' + esc(t) + '</button>' +
+      '<button class="rm" data-rm="' + i + '" type="button" aria-label="Delete snippet">&#10005;</button>' +
+      '</div>';
+  }).join('');
+  sheet.querySelector('.cr-snips-list').innerHTML =
+    (rows || '<div class="cr-snips-row"><span style="padding:12px;color:var(--rbe-mute,#9aa0a8);font:600 12.5px \'Segoe UI\',Arial,sans-serif;">No snippets yet \u2014 add one below.</span></div>') +
+    '<button class="cr-snips-add" type="button">+ Add a snippet</button>';
+}
+function open(btn){
+  close();
+  /* the composer is the nearest text field in the same row */
+  var row = btn.parentElement;
+  target = row ? row.querySelector('input[type="text"], textarea') : null;
+  if(!target) return;
+  sheet = document.createElement('div');
+  sheet.className = 'cr-snips-bg';
+  sheet.innerHTML = '<div class="cr-snips-box">' +
+    '<div class="cr-snips-head"><b>Saved snippets</b>' +
+    '<button type="button" data-snips-close="1">CLOSE</button></div>' +
+    '<div class="cr-snips-list"></div></div>';
+  document.body.appendChild(sheet);
+  render();
+}
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('.cr-snipbtn');
+  if(b){ e.preventDefault(); e.stopPropagation(); open(b); return; }
+  if(!sheet) return;
+  if(e.target.closest('[data-snips-close]')){ close(); return; }
+  var tx = e.target.closest('.cr-snips-row .tx');
+  if(tx){
+    /* capture the composer BEFORE close() — close() nulls it (the gate caught
+       exactly this ordering the first time around) */
+    var t = load()[Number(tx.dataset.snip)];
+    var el = target;
+    close();
+    if(t && el) insertInto(el, t);
+    return;
+  }
+  var rm = e.target.closest('.cr-snips-row .rm');
+  if(rm){
+    var list = load(); list.splice(Number(rm.dataset.rm), 1); save(list); render(); return;
+  }
+  if(e.target.closest('.cr-snips-add')){
+    var v = prompt('New snippet text:');
+    if(v && v.trim()){ var l2 = load(); l2.push(v.trim()); save(l2); render(); }
+    return;
+  }
+  if(e.target === sheet) close();
+}, true);
 })();
 </script>
 </body>

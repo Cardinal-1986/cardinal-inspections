@@ -6651,3 +6651,17 @@ Chromium-gated with a red control (gate_1036 … gate_1040), sentinel production
 - **Item 9 closed with no app change** — the "dead" dispatch name-clamp was the sentinel's DEAD
   check misreading Chromium's `-webkit-box` → `flow-root` line-clamp mapping; the clamp works.
   Fixed in sentinel_probe.js with a negative-controlled selftest case.
+
+## Workflow efficiency — features 1–4 (builds 1044–1047, 24 Aug 2026)
+
+- **1044 — universal search.** The command palette (Ctrl-K / the header magnifier) finds clients
+  by PO #, claim # and policy #, and gains a Punch-outs group that jumps straight to the punch
+  card. Crews and estimates deliberately out of scope (stated, not forgotten).
+- **1045 — "Gone quiet."** Home card ranking active jobs by days-in-stage (14/14/21-day floors,
+  red at 30), tap → profile. Lead / OnHold / insurance / Completed+ excluded by design — each
+  already has its own home. Resolver note: projClaimType (not cdCrmOf) decides "is insurance".
+- **1046 — saved snippets.** Quote-mark button at the three message composers; sheet inserts
+  with a real input event; add/delete in place; four seeded defaults; localStorage per device.
+- **1047 — notification matrix.** Build day booked → production crew; materials ordered → the
+  job's rep; unassigned punch-out → production. All at chokepoints (adb.create/update,
+  both materials writers, saveAdd), all fire-and-forget, actor never self-pinged.
