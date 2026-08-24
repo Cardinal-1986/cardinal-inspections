@@ -3712,7 +3712,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1047 &#8212; the right people hear about the right events. Booking a build day now pings the production crew; marking materials ordered pings the job’s sales rep; and filing a punch-out with nobody assigned pings production instead of telling no one. Whoever did the thing is never pinged about their own action, and nothing about saving waits on a notification.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1049 &#8212; punch-out work survives a roof with no bars. Ticking a step, writing a note, checking in or closing an item used to fail and roll back when the phone couldn’t reach the server; now it is held on the phone, the card says so plainly, and it syncs by itself when signal returns — the same device outbox photos have used for months. A write the server actually refuses still fails loudly, as it should.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -3804,6 +3804,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
             <b>Dashboard</b><span id="qClock"></span>
           </div>
         </div>
+        <div id="crMorning" style="display:none;"></div>
         <div class="pipecard" style="margin-top:12px;">
           <div class="pipetitle"><svg class="pti" viewBox="0 0 24 24" aria-hidden="true"><g class="i2"><rect x="3" y="12" width="4.4" height="9" rx="1"/><rect x="9.8" y="7" width="4.4" height="14" rx="1"/><rect x="16.6" y="3" width="4.4" height="18" rx="1"/></g><g class="i5"><path d="M4 20V13" class="m"/><path d="M10 20V8"/><path d="M16 20V4" class="m"/><path d="M4 20h16" class="m"/></g></svg>Cardinal Pipeline</div>
           <div class="piperow" id="pipeRow"></div>
@@ -20847,11 +20848,12 @@ function fmtMoney(n, cents){
   if(!n) return '--';
   return '$' + Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
-function renderApprovals(){
-  var card = document.getElementById('approvalsCard');
-  if(!card) return;
-  if(!isAdminUser()){ card.style.display = 'none'; return; }
-  var pend = cacheProjects.filter(function(pr){
+/* 1048: the ONE approvals predicate. The morning strip counts what this card
+   shows, so the chip and the card can never disagree — the alternative was a
+   second copy of the rule, which is how two screens start telling different
+   stories about the same queue. */
+window.crApprovalsPending = function(){
+  return cacheProjects.filter(function(pr){
     var s = normStage(pr.stage);
     /* 652: any live stage can owe a contract — a job whose stage was
        advanced by hand BEFORE the client signed used to vanish from this
@@ -20867,6 +20869,12 @@ function renderApprovals(){
       return r.project_id === pr.id && isEstimateDoc(r) && r.signed_at;
     });
   });
+};
+function renderApprovals(){
+  var card = document.getElementById('approvalsCard');
+  if(!card) return;
+  if(!isAdminUser()){ card.style.display = 'none'; return; }
+  var pend = window.crApprovalsPending();
   if(!pend.length){ card.style.display = 'none'; return; }
   card.style.display = 'block';
   document.getElementById('approvalsList').innerHTML = pend.map(function(pr){
@@ -22213,6 +22221,7 @@ function renderActivity(){
   }).join('') : '<div class="chatempty">No activity yet.</div>';
   if(typeof renderKpHomeRow === 'function') renderKpHomeRow();
   if(typeof renderPunchStrips === 'function') renderPunchStrips();
+  if(typeof window.renderMorningStrip === 'function') window.renderMorningStrip();  /* 1048 */
 }
 var activityView = document.getElementById('activityView');
 function openActivityFeed(){
@@ -41262,6 +41271,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1049, d:'2026-08-24', t:'Punch-out work survives no signal', s:'On a roof with no bars, ticking a step or writing a note on a punch-out used to fail and quietly undo itself. Those writes now go into the same on-device outbox that photos have used for months: the change stays on screen, the card says \u201csaved on this phone, it will sync by itself\u201d, and it does \u2014 automatically, when signal comes back. Refreshing the list while still offline no longer wipes the queued work either. A write the server genuinely refuses still fails out loud, because that is a real problem and hiding it would be worse.' },
+{ b:1048, d:'2026-08-24', t:'Where things stand \u2014 the morning strip', s:'The home page opens with a row of counts for an admin: signed estimates waiting on a contract, approved jobs with no build date, urgent punch-outs, insurance carriers being chased, and how many things are on today. Each chip is a tap through to the screen that already owns that work \u2014 the strip adds no new destination and no new arithmetic: every count is read from the same resolver the destination screen uses, so the two can never tell different stories. When there is nothing waiting, the whole strip disappears.' },
 { b:1047, d:'2026-08-24', t:'Three notification gaps, wired', s:'The notification system already covered assignments, @-tags, signed estimates and completed jobs. Three real gaps were mapped and closed: putting a build day on the calendar now notifies the production crew (from every screen that can book one, including attaching a job to an existing day); marking materials ordered notifies the job\u2019s sales rep, from the profile toggle and the board button alike; and filing a punch-out with nobody assigned notifies production \u2014 until now it told no one at all. The person doing the action is never pinged about it, and saves never wait on a notification.' },
 { b:1046, d:'2026-08-24', t:'Saved snippets at every composer', s:'A quote-mark button now sits beside the three message boxes \u2014 the client page\u2019s note box, the punch card messenger and the punch page composer. It opens a sheet of saved snippets: tap one and it drops into the message, ready to send or edit. Four starters are included \u2014 on-the-way, materials delayed, job wrapped, and the Google-review ask \u2014 and the same sheet adds or deletes your own. Snippets are kept per device for now.' },
 { b:1045, d:'2026-08-24', t:'Gone quiet \u2014 stale jobs surface themselves', s:'Insurance has had the chase list for months; retail and community jobs could sit motionless with nobody noticing. The home page now carries a Gone-quiet card: active jobs ranked by days in their current stage \u2014 fourteen days for Prospect and Approved, twenty-one for Scheduled, red at thirty \u2014 with a tap straight to the client. Leads, on-hold grant jobs and insurance claims are deliberately excluded: each already has its own home.' },
@@ -52189,7 +52200,16 @@ window.CardinalProduction = {
 #cr-pk .pkvnone{ color:var(--pk-dim,#9aa2ae); }
 #cr-pk .pkvb{ min-height:44px; padding:0 18px; border-radius:10px; cursor:pointer;
   font:800 13px 'Segoe UI',Arial,sans-serif; border:1px solid transparent; }
-#cr-pk .pkvb.in{ background:var(--pk-accd,#c8202e); color:#fff; }/* 1039: white on the salmon accent was 3.51:1 — the card's own deeper token reads 5.67 dark / 9.12 light */
+#cr-pk .pkvb.in{ background:var(--pk-accd,#c8202e); color:#fff; }
+/* 1049: the held-on-device note. Amber pair, computed on the card's own
+   ground in both themes (#f0a24a on #0c0d0f, #8a5500 on #f4f5f6). */
+#cr-pk .pkqueued{ display:none; position:fixed; left:50%; transform:translateX(-50%);
+  bottom:calc(104px + env(safe-area-inset-bottom,0px)); z-index:9600; max-width:92vw;
+  padding:10px 15px; border-radius:11px; text-align:center;
+  background:var(--pk-c2,#1b1e22); border:1px solid rgba(240,162,74,.5); color:#f0a24a;
+  font:700 12.5px 'Segoe UI',Arial,sans-serif; box-shadow:0 6px 22px rgba(0,0,0,.45); }
+:root[data-theme="rb-light"] #cr-pk .pkqueued{ background:#ffffff; color:#8a5500;
+  border-color:rgba(138,85,0,.45); }/* 1039: white on the salmon accent was 3.51:1 — the card's own deeper token reads 5.67 dark / 9.12 light */
 #cr-pk .pkvb.out{ background:transparent; color:var(--pk-ink,#eceef0);
   border-color:var(--pk-line2,#3a424c); }
 #cr-pk .pkchip.day2{ background:rgba(240,162,74,.16); color:#f0a24a; margin-left:6px; }
@@ -52770,6 +52790,8 @@ async function save(patch){
         if(P && typeof P.update === 'function'){
           var r = await P.update(it.id, patch);
           if(r && r.ok === false) throw new Error(r.error || 'write refused');
+          /* 1049: held on the device — say so rather than looking saved. */
+          if(r && r.queued) _queuedNote();
         }else{
           var d = await window.supa.from('punch_items').update(patch).eq('id', it.id);
           if(d.error) throw d.error;
@@ -52955,12 +52977,30 @@ async function doClose(){
   }
   await doToggle();
 }
+/* 1049: one place says "this is on the phone, not the server yet". */
+function _queuedNote(){
+  try{
+    var host = document.getElementById('cr-pk');
+    if(!host) return;
+    var n = host.querySelector('.pkqueued');
+    if(!n){
+      n = document.createElement('div');
+      n.className = 'pkqueued';
+      host.appendChild(n);
+    }
+    n.textContent = 'No signal \u2014 saved on this phone. It will sync by itself.';
+    n.style.display = 'block';
+    clearTimeout(n._t);
+    n._t = setTimeout(function(){ n.style.display = 'none'; }, 6000);
+  }catch(_e){}
+}
 async function doToggle(){
   try{
     var P = window.CardinalPunch;
     if(P && typeof P.toggle === 'function'){
       var r = await P.toggle(it.id);
       if(r && r.ok === false) throw new Error(r.error || 'refused');
+      if(r && r.queued) _queuedNote();
     }else{
       var done = it.status !== 'done';
       var patch = done
@@ -55534,6 +55574,10 @@ window.CardinalTruthHome = {
 refresh : async function(){ await build(); },
 stats   : function(){ return stats; },
 compute : compute,
+/* 1048: the morning strip needs "how many carriers are we chasing" and
+   chaseList() is already the app's named answer (the 972 precedent — export
+   the resolver rather than grow a second copy of the filter). Read-only. */
+chase   : chaseList,
 };
 })();
 </script>
@@ -61698,6 +61742,21 @@ async function reload(){
       return _rows;
     }
     _rows = r.data || [];
+    /* 1049: replay pending offline writes over the fetched rows — without this
+       a refresh while still offline would wipe the crew's queued work. Once a
+       write syncs it leaves the outbox, so the overlay stops on its own (the
+       869 idiom, already used for projects and inspection_reports). */
+    try{
+      if(window.CardinalOutbox && window.CardinalOutbox.patchesFor){
+        var _pq = await window.CardinalOutbox.patchesFor('punch_items');
+        _pq.forEach(function(e){
+          if(e && e.match && e.patch && (!e.op || e.op === 'update')){
+            var _row = _rows.filter(function(x){ return String(x.id) === String(e.match.val); })[0];
+            if(_row) Object.assign(_row, e.patch);
+          }
+        });
+      }
+    }catch(_ov){}
   }catch(e){ console.warn('[punch] load failed:', e); }
   return _rows;
 }
@@ -61712,6 +61771,10 @@ async function toggle(id){
   Object.assign(it, patch);
   try{
     var r = await window.supa.from('punch_items').update(patch).eq('id', it.id);
+    /* 1049: same fork as update() — a network refusal is held, not lost. */
+    if(r.error && _noSignal(r.error) && _queueOffline(it.id, patch)){
+      return { ok:true, queued:true };
+    }
     if(r.error) throw r.error;
     if(typeof window.auditLog === 'function'){
       try{ window.auditLog('punch', (done ? 'Closed: ' : 'Reopened: ') + it.title, it.project_id); }catch(_){}
@@ -61719,9 +61782,32 @@ async function toggle(id){
     if(window.CardinalProduction && window.CardinalProduction.refresh){ try{ window.CardinalProduction.refresh(); }catch(_){} }
     if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){ try{ window.CardinalPunchProfile.refresh(); }catch(_){} }
   }catch(e){
+    /* 1049: iOS reports a dropped fetch as a THROWN TypeError (861's finding),
+       so the returned-error fork above is not enough — this is the shape a
+       roof with no bars actually produces. Hold it; do not alert, and do not
+       undo the tick. gate_1049 caught this hole in the first cut. */
+    if(_noSignal(e) && _queueOffline(it.id, patch)){
+      return { ok:true, queued:true };
+    }
     Object.assign(it, done ? { status:'open', done_at:null, done_by:null } : { status:'done' });
     alert('Could not save: ' + (e.message || e));
   }
+}
+/* 1049: punch_items joins the write outbox that has existed since 865. A
+   write that cannot REACH the server is held on the device and replayed; a
+   write the server REFUSES still fails loudly. Returns true when it queued. */
+function _queueOffline(id, patch){
+  try{
+    if(!window.CardinalOutbox || typeof window.CardinalOutbox.queue !== 'function') return false;
+    window.CardinalOutbox.queue({ table:'punch_items', match:{ col:'id', val:id }, patch: patch });
+    return true;
+  }catch(_e){ return false; }
+}
+function _noSignal(e){
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return true;
+  try{
+    return !!(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(e));
+  }catch(_e){ return false; }
 }
 async function update(id, patch){
   var it = _rows.filter(function(x){ return String(x.id) === String(id); })[0];
@@ -61748,6 +61834,12 @@ async function update(id, patch){
     if(window.CardinalPunchProfile && window.CardinalPunchProfile.refresh){ try{ window.CardinalPunchProfile.refresh(); }catch(_){} }
     return { ok:true };
   }catch(e){
+    /* 1049: no signal — KEEP the local change and queue it. Rolling back is
+       right for a refusal and wrong for a roof with no bars: it threw away
+       the tick the crew just made. */
+    if(_noSignal(e) && _queueOffline(it.id, patch)){
+      return { ok:true, queued:true };
+    }
     Object.assign(it, before);
     return { ok:false, error:(e.message || String(e)) };
   }
@@ -79618,6 +79710,110 @@ document.addEventListener('click', function(e){
   }
   if(e.target === sheet) close();
 }, true);
+})();
+</script>
+<style id="cr-morning-styles">
+/* ── 1048 · Where things stand ── the admin morning strip. Every chip is a
+   DOOR to a surface that already exists; counts come from the app's own
+   resolvers, never a second copy. Inks: neutral chips ride --rbe-* pairs, the
+   two urgent chips use the computed amber/red pairs (4.5:1+ on both grounds). */
+#crMorning{margin-top:12px;}
+#crMorning .mrow{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;}
+#crMorning .mchip{display:flex;align-items:center;gap:9px;cursor:pointer;min-height:44px;
+  padding:8px 13px;border-radius:11px;background:transparent;
+  border:1px solid var(--rbe-line2,#2b2b33);color:var(--rbe-ink,#eceef0);
+  font:700 12.5px 'Segoe UI',Arial,sans-serif;}
+#crMorning .mchip:hover{border-color:var(--rbe-acc,#c8202e);}
+#crMorning .mchip .n{font:800 16px ui-monospace,Menlo,monospace;line-height:1;}
+#crMorning .mchip .l{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:var(--rbe-mute,#9aa0a8);
+  letter-spacing:.02em;}
+#crMorning .mchip.warn .n{color:#f0a24a;}
+#crMorning .mchip.hot .n{color:#f07e84;}
+#crMorning .mchip.warn{border-color:rgba(240,162,74,.45);}
+#crMorning .mchip.hot{border-color:rgba(240,126,132,.45);}
+:root[data-theme="rb-light"] #crMorning .mchip.warn .n{color:#8a5500;}
+:root[data-theme="rb-light"] #crMorning .mchip.hot .n{color:#8f1620;}
+:root[data-theme="rb-light"] #crMorning .mchip.warn{border-color:rgba(138,85,0,.4);}
+:root[data-theme="rb-light"] #crMorning .mchip.hot{border-color:rgba(143,22,32,.4);}
+</style>
+<script id="cr-morning-script">
+(function(){
+'use strict';
+/* ── 1048 · Where things stand ─────────────────────────────────────────────
+   Counts only. Every number comes from the resolver that already owns it:
+     approvals   window.crApprovalsPending()      (the card's own predicate)
+     needs date  CardinalProduction.schedFor()    (972's exported answer)
+     punch       CardinalPunch.rows()             (the one punch cache)
+     chase       CardinalTruthHome.chase()        (1048's export)
+     today       cacheAppts, dated today
+   Every chip is a door to a screen that already exists — this strip adds no
+   new destination, and it hides itself entirely when every count is zero. */
+function n(fn){ try{ var v = fn(); return Array.isArray(v) ? v.length : (Number(v) || 0); }catch(_e){ return 0; } }
+function todayKey(){
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function counts(){
+  return {
+    appr: n(function(){ return window.crApprovalsPending(); }),
+    date: n(function(){
+      var sf = window.CardinalProduction && window.CardinalProduction.schedFor;
+      if(typeof sf !== 'function') return 0;
+      return (window.cacheProjects || []).filter(function(p){
+        var st = window.normStage ? window.normStage(p.stage) : p.stage;
+        if(st !== 'Approved' && st !== 'Scheduled') return false;
+        return !sf(p);
+      });
+    }),
+    punch: n(function(){
+      if(!window.CardinalPunch || typeof window.CardinalPunch.rows !== 'function') return 0;
+      return window.CardinalPunch.rows().filter(function(i){
+        return i.status === 'open' && i.priority === 'high';
+      });
+    }),
+    chase: n(function(){
+      if(!window.CardinalTruthHome || typeof window.CardinalTruthHome.chase !== 'function') return 0;
+      return window.CardinalTruthHome.chase();
+    }),
+    today: n(function(){
+      var k = todayKey();
+      return (window.cacheAppts || []).filter(function(a){ return a && a.appt_date === k; });
+    })
+  };
+}
+function chip(cls, num, label, act){
+  return '<button class="mchip' + (cls ? ' ' + cls : '') + '" data-m="' + act + '" type="button">' +
+    '<span class="n">' + num + '</span><span class="l">' + label + '</span></button>';
+}
+function scrollTo(id){
+  var el = document.getElementById(id);
+  if(el) try{ el.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(_e){ el.scrollIntoView(); }
+}
+window.renderMorningStrip = function(){
+  var host = document.getElementById('crMorning');
+  if(!host) return;
+  if(typeof isAdminUser !== 'function' || !isAdminUser()){ host.style.display = 'none'; return; }
+  var c = counts();
+  if(!c.appr && !c.date && !c.punch && !c.chase && !c.today){ host.style.display = 'none'; return; }
+  var html = '';
+  if(c.appr)  html += chip('warn', c.appr,  c.appr === 1 ? 'awaiting contract' : 'awaiting contract', 'appr');
+  if(c.date)  html += chip('warn', c.date,  'need a build date', 'date');
+  if(c.punch) html += chip('hot',  c.punch, 'urgent punch-outs', 'punch');
+  if(c.chase) html += chip('hot',  c.chase, 'carriers to chase', 'chase');
+  if(c.today) html += chip('',     c.today, c.today === 1 ? 'thing today' : 'things today', 'today');
+  host.innerHTML = '<div class="mrow">' + html + '</div>';
+  host.style.display = 'block';
+};
+document.addEventListener('click', function(e){
+  var b = e.target.closest && e.target.closest('#crMorning .mchip');
+  if(!b) return;
+  var a = b.getAttribute('data-m');
+  if(a === 'appr')  return scrollTo('approvalsCard');
+  if(a === 'today') return scrollTo('kpTodayList');
+  if(a === 'date'  && window.CardinalProduction) return window.CardinalProduction.open();
+  if(a === 'punch' && typeof window.openPunchView === 'function') return window.openPunchView();
+  if(a === 'chase' && typeof window.showCardinalTruth === 'function') return window.showCardinalTruth();
+});
 })();
 </script>
 </body>

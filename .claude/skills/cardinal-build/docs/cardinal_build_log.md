@@ -24516,3 +24516,44 @@ marked ordered (profile toggle AND board button) → the job's sales_rep minus t
 UNASSIGNED punch-out → production minus the actor (the assigned case already notified since
 769). gate_1047 stubs notifyTeam post-boot with a recorder and drives all three for real,
 including the negative (a kind:'appt' create sends nothing); control silent on all three.
+
+## Builds 1048–1049 — workflow features 5–6 (the doctrine paid twice)
+
+**1048 — "Where things stand", the morning strip (feature 5).** A count-chip row at the top of
+the admin home, each chip a DOOR to a surface that already exists: approvals awaiting a contract
+→ scrolls to the card · jobs with no build date → the Production board · urgent punch-outs →
+Punch & Repairs · carriers to chase → Cardinal Truth · things today → scrolls to Today. Hides
+entirely at zero; admin-only.
+
+⚠ **The strip adds no arithmetic.** Every count is read from the resolver that already owns it,
+because two screens computing the same queue is how they start disagreeing:
+`renderApprovals`'s predicate was LIFTED into `window.crApprovalsPending()` and the card now
+calls it too (gate asserts chip === predicate === rendered rows); `CardinalProduction.schedFor`
+answers "is this booked" (972's export precedent); `chaseList` gained a read-only
+`CardinalTruthHome.chase` export rather than a second copy of the filter.
+
+⚠ **Adjacent surface, NOT duplicated — the Owner Console (895) already exists** and its banner
+calls itself "Theo's morning brief": Top 10, the tax/BWC/1099 calendar, expirations — owner-level
+things outside any one customer, own tables (`owner_tasks`/`owner_items`). 1048 is job-flow
+counts on the home. Different data, different surface; checked before building, recorded so the
+next session does not "discover" one and fold the other into it.
+
+**1049 — punch-out work survives no signal (feature 6).** ⚠ **THE PRIME DOCTRINE, AGAIN, AND IT
+SAVED THE WHOLE BUILD.** Feature 6 was proposed as "build an offline capture queue". It is
+already built: the service worker caches reads (864); `CardinalOutbox` is a generic IndexedDB
+write outbox with replay, pending counts, stuck rows and a panel (865); punch-card PHOTOS have
+their own blob queue that holds and never deletes a refusal (967); projects and
+inspection_reports both queue AND overlay pending patches on reload (869).
+
+The gap was exactly one table. `CardinalPunch.update()`/`.toggle()` — every step tick, note,
+check-in and close on the punch card — rolled back and returned `{ok:false}` when the write
+could not reach the server. Three edits, no new subsystem: both writers queue the FULL-VALUE
+patch and keep the local change on a networkish failure (`{ok:true, queued:true}`); `reload()`
+overlays `patchesFor('punch_items')` so a refresh while offline cannot wipe queued work; the card
+shows a "saved on this phone, it will sync by itself" note. **A real refusal still rolls back and
+fails loudly** — asserted, because softening that would hide RLS problems.
+
+⚠ **gate_1049 caught a hole in my own first cut**: I wired toggle's RETURNED-error path only, and
+iOS reports a dropped fetch as a THROWN TypeError — the exact shape 861's comment documents, and
+the exact shape a roof with no bars produces. The catch is wired now. A gate that only tested the
+returned shape would have shipped an offline fix that does not work offline.
