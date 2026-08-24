@@ -2040,7 +2040,7 @@ body.restoring #restoreVeil{display:flex;}
   border-radius:8px;padding:14px 14px;margin-bottom:12px;}
 .dbmoney > span{min-width:0;}
 .dbmoney small{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a8078;letter-spacing:.04em;}
-.dbmoney b{font:800 clamp(14px,4.4vw,19px) 'Segoe UI',Arial,sans-serif;overflow-wrap:anywhere;}
+.dbmoney b{font:800 clamp(14px,4.4vw,19px) 'Segoe UI',Arial,sans-serif;overflow-wrap:anywhere;}#projectView .dbmoney b.db-due{color:#C8202E}#projectView .dbmoney b.db-paid{color:#7CB342}
 .dbring{width:76px;height:76px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
 .dbringin{width:58px;height:58px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
   font:800 14px 'Segoe UI',Arial,sans-serif;}
@@ -2063,7 +2063,7 @@ body.restoring #restoreVeil{display:flex;}
 .convertins .cvgo{margin-left:auto;color:#4a6fa5;font-size:22px;font-weight:800;}
 .rt2{float:right;font:700 12.5px 'Segoe UI',Arial,sans-serif;}
 .rt2 a{color:#4a90d9;text-decoration:none;}
-.dbprim small{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a8078;}
+.dbprim small{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a8078;}:root[data-theme="rb-light"] .dbmoney small,:root[data-theme="rb-light"] .dbprim small{color:#6c655e}
 .dbprim b{font:800 17px 'Segoe UI',Arial,sans-serif;}
 .dbcbtns{display:flex;gap:10px;margin-top:11px;flex-wrap:wrap;}
 .dbcb{flex:1;min-width:88px;display:inline-flex;align-items:center;justify-content:center;gap:7px;
@@ -3705,7 +3705,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1030 &#8212; estimate documents are filed by what they are, not what they&#8217;re called. A published estimate is linked to its estimate record, and the app now files it by that link — rename the title and it stays under Estimates, still reaches the approvals list and the &#8220;needs approval&#8221; alert when signed, and still counts on the job card. The title box&#8217;s example text no longer suggests a name that would have misfiled the document. The retired manual_estimates database table (empty, unused since build 568) is dropped, and some dead wiring left over from the old estimates screen was removed. Build 1029 &#8212; saving an estimate no longer throws you out of it. Save keeps the editor open — a toast confirms, the estimate number appears on first save, and you keep working; the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar under your thumb. Publish and → Contract are faster and surer: they used to press Save for you and wait up to nine seconds watching for the editor to close, then go find the saved row and guess which one it was — they now receive the exact saved estimate directly. Build 1028 &#8212; the AI helps from inside the estimate, and the separate AI door is gone. One button in the estimate’s Photos section reads every attached photo at once: it writes captions for photos that have none (never over yours), adds a short overview to Scope Notes (never replacing what you wrote), and picks a cover only if you haven’t starred one. The two “AI Estimate” buttons (the estimates screen and the client profile) are hidden — estimates are just estimates now. Build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4168,17 +4168,18 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <span id="pEstWrap" style="position:relative;">
           <button class="btn" id="pNewEstimateBtn" title="Start from a trade template &#8212; roofing, siding, windows, gutters or repair">&#65291; From a template &#9662;</button>
           <div id="pEstMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
-               background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:250px;
-               box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
-            <button class="estopt" data-tpl="roof">&#127968; Roofing estimate</button>
-            <button class="estopt" data-tpl="siding">&#129521; Mastic vinyl siding</button>
-            <button class="estopt" data-tpl="windows">&#129695; Replacement vinyl windows</button>
-            <button class="estopt" data-tpl="andersen">&#11088; Andersen&#174; windows (high-end)</button>
-            <button class="estopt" data-tpl="gutters">&#127783; Seamless gutters (5&#8243; / 6&#8243;)</button>
-            <button class="estopt" data-tpl="general">&#128295; General repair estimate</button>
+               background:#1e2027;border:1px solid #3a3f4a;border-radius:8px;min-width:250px;
+               box-shadow:0 8px 22px rgba(0,0,0,.55);overflow:hidden;">
+            <button class="estopt" data-tpl="roof">Roofing estimate</button>
+            <button class="estopt" data-tpl="siding">Mastic vinyl siding</button>
+            <button class="estopt" data-tpl="windows">Replacement vinyl windows</button>
+            <button class="estopt" data-tpl="andersen">Andersen&#174; windows (high-end)</button>
+            <button class="estopt" data-tpl="gutters">Seamless gutters (5&#8243; / 6&#8243;)</button>
+            <button class="estopt" data-tpl="general">General repair estimate</button>
           </div>
         </span>
-        <button class="btn" id="pAiEstimateBtn" style="margin-left:6px;" title="Build this client's estimate from photos with AI">&#9889; AI Estimate</button>
+        <!-- 1028: the profile's AI-Estimate door is closed (its wiring in the main
+             block is guarded and stays). The AI assists inside the editor now. -->
       </div>
       <div id="estDocsMount"><div class="loading">Loading…</div></div>
     </div>
@@ -4194,8 +4195,8 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
         <span id="pContractWrap" style="position:relative;">
           <button class="btn" id="pNewContractBtn" title="Start the trade's own Construction Agreement, prefilled from this profile">+ New contract &#9662;</button>
           <div id="pContractMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:60;
-               background:#fff;border:1px solid #c9c2bf;border-radius:8px;min-width:250px;
-               box-shadow:0 6px 18px rgba(0,0,0,.18);overflow:hidden;">
+               background:#1e2027;border:1px solid #3a3f4a;border-radius:8px;min-width:250px;
+               box-shadow:0 8px 22px rgba(0,0,0,.55);overflow:hidden;">
             <button class="estopt" data-ctpl="roof">&#127968; Roofing agreement</button>
             <button class="estopt" data-ctpl="siding">&#129521; Siding agreement</button>
             <button class="estopt" data-ctpl="gutters">&#127783; Gutter agreement</button>
@@ -11624,7 +11625,7 @@ function renderAcxOverview(){
   var stg = normStage(pr.stage);
   var nx = acxNext(stg);
   var docs = cacheRows.filter(function(r){ return r.project_id === pr.id; });
-  var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
+  var ests = docs.filter(function(r){ return isEstimateDoc(r); });
   var fileDocs = docs.filter(function(r){ return isFileDoc(r.title); });
   var inspN = docs.filter(function(r){
     var tt = (r.title || '').trim();
@@ -11672,7 +11673,7 @@ function renderAcxOverview(){
   html += '<div class="dbmoney">' +
     '<span><small>Job Value' + (fin.source === 'estimate' ? ' — from estimate' : '') + '</small><b>' + (fin.value ? fmtMoney(fin.value) : '$0.00') + '</b></span>' +
     '<span class="dbring" style="background:conic-gradient(#7CB342 ' + fin.pct + '%, #d9d9d9 0);"><span class="dbringin">' + fin.pct + '%</span></span>' +
-    '<span style="text-align:right;"><small>Balance Due</small><b style="color:' + (fin.balance > 0 ? '#C8202E' : '#7CB342') + ';">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
+    '<span style="text-align:right;"><small>Balance Due</small><b class="' + (fin.balance > 0 ? 'db-due' : 'db-paid') + '">' + (fin.value ? fmtMoney(fin.balance) : '$0.00') + '</b></span>' +
   '</div>';
   /* ---- payment information + money in ---- */
   /* 796: the two money doors sit together. Money In was a half-width tile
@@ -13607,9 +13608,11 @@ function isWorkOrderTitle(t){ return /^work order/i.test((t||'').trim()); }
 function renderProjectDocs(){
   var docs = cacheRows.filter(function(r){ return currentProject && r.project_id === currentProject.id; });
   var ctrs = docs.filter(function(r){ return isContractTitle(r.title); });
-  var ests = docs.filter(function(r){ return isEstimateTitle(r.title); });
+  /* 1030: by the doc_id link first (isEstimateDoc) — a renamed published
+     estimate stays under Estimates instead of drifting into Inspections. */
+  var ests = docs.filter(function(r){ return isEstimateDoc(r); });
   var wos  = docs.filter(function(r){ return isWorkOrderTitle(r.title); });
-  var insp = docs.filter(function(r){ return !isEstimateTitle(r.title) && !isContractTitle(r.title) && !isWorkOrderTitle(r.title) && !isFileDoc(r.title); });
+  var insp = docs.filter(function(r){ return !isEstimateDoc(r) && !isContractTitle(r.title) && !isWorkOrderTitle(r.title) && !isFileDoc(r.title); });
   document.getElementById('inspDocsMount').innerHTML = insp.length ? docTable(insp)
     : '<div class="empty"><b>No inspection reports yet.</b><br>Create one above, or transfer gallery photos into a new report.</div>';
   document.getElementById('estDocsMount').innerHTML = ests.length ? docTable(ests)
@@ -15179,6 +15182,16 @@ function isEstimateTitle(t){
      first; all 15+ call sites inherit the fix through this one definition. */
   var s = (t||'').trim().replace(/^EST-\d{4}-\d+\s*—\s*/i, '');
   return /^(estimate|siding estimate|window estimate|andersen estimate|gutter estimate|repair estimate)/i.test(s);
+}
+/* 1030 (audit F-5): a published estimate is doc_id-linked to its table row —
+   classify by the LINK first, the title second, so a renamed title cannot file
+   the document under Inspections or hide a signed one from approvals.
+   estDocIds is indexMoney's map of every doc_id any estimates row points at
+   (1011); before the first money index it is an empty object, and the title
+   test carries those early renders exactly as before. */
+function isEstimateDoc(r){
+  try{ if(r && r.id && estDocIds && estDocIds[r.id]) return true; }catch(_){ }
+  return isEstimateTitle(r && r.title);
 }
 document.getElementById('galXferBtn').addEventListener('click', function(e){
   e.stopPropagation();
@@ -20801,13 +20814,13 @@ function renderApprovals(){
       return r.project_id === pr.id && isContractTitle(r.title);
     })) return false;
     return cacheRows.some(function(r){
-      return r.project_id === pr.id && isEstimateTitle(r.title) && r.signed_at;
+      return r.project_id === pr.id && isEstimateDoc(r) && r.signed_at;
     });
   });
   if(!pend.length){ card.style.display = 'none'; return; }
   card.style.display = 'block';
   document.getElementById('approvalsList').innerHTML = pend.map(function(pr){
-    var est = cacheRows.filter(function(r){ return r.project_id === pr.id && isEstimateTitle(r.title) && r.signed_at; })
+    var est = cacheRows.filter(function(r){ return r.project_id === pr.id && isEstimateDoc(r) && r.signed_at; })
       .sort(function(a,b){ return String(b.signed_at).localeCompare(String(a.signed_at)); })[0];
     var val = projectValue(pr);
     return '<div class="apprrow">' +
@@ -28363,7 +28376,7 @@ body.claim-insurance #brandLogo{
   --rbe-gradline:rgba(200,32,46,.5);
   --rbe-uns-col:#aab1ba;--rbe-uns-lg:rgba(120,130,145,.5);--rbe-uns-neon:#dbe7f7;
   --rbe-snt-col:#8ac4f2;--rbe-snt-lg:rgba(138,196,242,.5);--rbe-snt-neon:#6fc3ff;
-  --rbe-acc-col:#8fe0ae;--rbe-acc-lg:rgba(79,174,116,.5);--rbe-acc-neon:#3dff9a;
+  --rbe-acc-col:#8fe0ae;--rbe-acc-lg:rgba(79,174,116,.5);--rbe-acc-neon:#3dff9a;--rbe-dec-col:#e35c63;--rbe-dec-lg:rgba(227,92,99,.4);--rbe-dec-neon:#e35c63;
 }
 :root[data-theme="rb-light"]{
   --rbe-accdk:#2d5578;--rbe-acc:#3d6485;--rbe-acclt:#4f7396;
@@ -28383,9 +28396,9 @@ body.claim-insurance #brandLogo{
   --rbe-cardshadow:0 3px 10px rgba(0,0,0,.06);
   --rbe-spineglow:none;
   --rbe-gradline:rgba(200,32,46,.3);
-  --rbe-uns-col:#9a9a9a;--rbe-uns-lg:rgba(154,154,154,.35);--rbe-uns-neon:#9a9a9a;
+  --rbe-uns-col:#6d747d;--rbe-uns-lg:rgba(154,154,154,.35);--rbe-uns-neon:#9a9a9a;
   --rbe-snt-col:#c8202e;--rbe-snt-lg:rgba(200,32,46,.35);--rbe-snt-neon:#c8202e;
-  --rbe-acc-col:#141414;--rbe-acc-lg:rgba(20,20,20,.3);--rbe-acc-neon:#141414;
+  --rbe-acc-col:#141414;--rbe-acc-lg:rgba(20,20,20,.3);--rbe-acc-neon:#141414;--rbe-dec-col:#9c1822;--rbe-dec-lg:rgba(156,24,34,.3);--rbe-dec-neon:#9c1822;
 }
 /* ── retail-B step 3: Estimates status lanes (build 339) ── */
 .cre-h{margin:0;font:800 22px Georgia,'Times New Roman',serif;color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}
@@ -28468,6 +28481,12 @@ body.claim-insurance #brandLogo{
    #1a1a1a on #8a5500 is 2.80:1, against 5.17:1 on #C87A00. Pinned to the old value,
    per-site, following build 942's precedent rather than sweeping the token. */
 :root[data-theme="rb-light"] .cr-chrome-badge{background:#C87A00}
+/* ─ build 1026: the Declined lane is deliberately THIN — a full-width strip below
+   the working columns, dimmed. Declined is a terminal state: it must be visible
+   (it was invisible for months) but it does not get a working column's worth of
+   attention. Empty, it collapses to its header line — no dashed placeholder. */
+.cre-lane.thin{grid-column:1/-1;margin-top:2px;}
+.cre-lane.thin .cre-card{opacity:.85;}
 </style>
 
 <!-- ═══ Mount point ═══════════════════════════════════════════ -->
@@ -28476,12 +28495,14 @@ body.claim-insurance #brandLogo{
 <!-- ═══ Template: list view ═════════════════════════════════════ -->
 <template id="cr-tmpl-list">
   <div class="cr-app cre-wide">
-    <h1 class="cre-h">&#128176; Estimates</h1>
+    <h1 class="cre-h">Estimates</h1>
     <p class="cre-sub" data-cre-sub></p>
 
     <div class="cr-actions">
-      <button class="cr-btn primary" data-act="new-ai">&#9889; AI Estimate</button>
-      <button class="cr-btn" data-act="new-manual">+ New</button>
+      <!-- 1028: the AI door is CLOSED, not deleted. showAICreate and the
+           ai_estimates table stay dormant; the AI now assists INSIDE the editor
+           (the button in its Photos section). -->
+      <button class="cr-btn primary" data-act="new-manual">+ New estimate</button>
       <button class="cr-btn" data-act="templates">Templates</button>
     </div>
 
@@ -29037,7 +29058,11 @@ function newClientForm(){
 function showList() {
     state.view = 'list';
     mount('cr-tmpl-list');
-    MOUNT.querySelector('[data-act="new-ai"]').onclick = showAICreate;
+    /* 1028: the AI door is hidden and this element no longer renders. Left
+       unguarded, this line would throw and kill every wire below it, taking
+       the whole list screen down with the door. */
+    var _newAiBtn = MOUNT.querySelector('[data-act="new-ai"]');
+    if (_newAiBtn) _newAiBtn.onclick = showAICreate;
     MOUNT.querySelector('[data-act="new-manual"]').onclick = showManualPick;
 
     const q = s => MOUNT.querySelector(s);
@@ -29122,15 +29147,35 @@ function showList() {
     try { rows = await loadList('all'); }
     catch (e) { if (lanesEl.isConnected) lanesEl.innerHTML = `<div class="cr-empty">Failed to load: ${escape(e.message)}</div>`; return; }
     if (!lanesEl.isConnected) return;
-    cre.rows = rows;
+    /* 1026: a discarded AI draft used to ride creLane's 'Unsent' fallback back
+       into the wall on the next reload. Discards never render anywhere. */
+    cre.rows = rows.filter(r => r.status !== 'discarded');
     renderEst();
   }
+
+  /* 1029: an in-place save or publish in the editor refreshes the walls —
+     before, the reload rode on the editor closing, which no longer happens. */
+  ['cr-est-saved', 'cr-est-published'].forEach(function(t){
+    document.addEventListener(t, function(){
+      try{
+        if (state.view === 'list' && MOUNT.querySelector('[data-cre-lanes]')) loadEstRows();
+      }catch(_){ }
+    });
+  });
 
   // ── Status Lanes engine (retail-B step 3) ────────────────────
   const CRE_LANES = [
     { key: 'Unsent',   title: 'UNSENT \u2014 DRAFTS', statuses: ['draft'],                 col: 'var(--rbe-uns-col)', lg: 'var(--rbe-uns-lg)', neon: 'var(--rbe-uns-neon)' },
     { key: 'Sent',     title: 'SENT \u2014 WAITING',  statuses: ['sent', 'viewed'],        col: 'var(--rbe-snt-col)', lg: 'var(--rbe-snt-lg)', neon: 'var(--rbe-snt-neon)' },
-    { key: 'Accepted', title: 'ACCEPTED',             statuses: ['approved', 'converted'], col: 'var(--rbe-acc-col)', lg: 'var(--rbe-acc-lg)', neon: 'var(--rbe-acc-neon)' },
+    { key: 'Accepted', title: 'ACCEPTED',             statuses: ['approved', 'converted', 'accepted'], col: 'var(--rbe-acc-col)', lg: 'var(--rbe-acc-lg)', neon: 'var(--rbe-acc-neon)' },
+    /* 1026: the editor's own status vocabulary is draft/sent/accepted/declined
+       (STATUSES in cr-est-script) while these lanes were built for the AI arc's
+       approved/converted/viewed. The two never met: a hand-set Accepted or
+       Declined matched no lane and rode creLane's fallback into UNSENT — at
+       the time of this build, $27,310 of accepted work was rendering as drafts.
+       Declined is a THIN lane (see cr-estimates-styles): a terminal state stays
+       visible without spending a working column on it. */
+    { key: 'Declined', title: 'DECLINED',             statuses: ['declined'],              col: 'var(--rbe-dec-col)', lg: 'var(--rbe-dec-lg)', neon: 'var(--rbe-dec-neon)', thin: true },
   ];
   const CRE_SORTS = [
     { key: 'days',   label: 'Days waiting' },
@@ -29140,7 +29185,10 @@ function showList() {
   ];
   let cre = { rows: [], sort: 'days', dir: 1, sets: {}, cat: null, pend: [] };
 
-  function creLane(r){ const l = CRE_LANES.find(x => x.statuses.includes(r.status)); return l ? l.key : 'Unsent'; }
+  /* 1026: the fallback was 'Unsent' — which is exactly how accepted, declined and
+     discarded rows masqueraded as drafts. null means "no lane claims this";
+     renderEst gives such rows a labelled safety-net lane instead of a costume. */
+  function creLane(r){ const l = CRE_LANES.find(x => x.statuses.includes(r.status)); return l ? l.key : null; }
   function creDays(r){ return Math.max(0, Math.floor((Date.now() - new Date(r.date).getTime()) / 86400000)); }
   function creProject(r){
     /* 568: was `r.source === 'manual' ? r.id : ...` — correct when a manual row
@@ -29195,6 +29243,8 @@ function showList() {
       const base = d < 1 ? 'today' : d + ' day' + (d === 1 ? '' : 's') + ' out';
       return { t: (r.status === 'viewed' ? 'viewed \u00b7 ' : '') + base + (d >= 5 ? ' \u2691' : ''), flag: d >= 5 };
     }
+    if (lane === 'Declined') return { t: 'declined \u00b7 ' + r.date_label, flag: false };
+    if (!lane) return { t: (r.status || 'no status') + ' \u00b7 ' + r.date_label, flag: false };
     return { t: (r.status === 'converted' ? 'contract signed \u00b7 ' : 'accepted \u00b7 ') + r.date_label, flag: false };
   }
   /* 565: admin-only, same gate as crew rates and payments. Theo's standing rule is
@@ -29244,7 +29294,7 @@ function showList() {
     renderEst();
   }
   function creCardHtml(r){
-    const lane = CRE_LANES.find(l => l.key === creLane(r));
+    const lane = CRE_LANES.find(l => l.key === creLane(r)) || { neon: 'var(--rbe-uns-neon)' };
     const w = creWhen(r);
     const trades = creTrades(r).join(', ');
     const aiBadge = r.source === 'ai' ? ' <span class="cre-ai">\u26a1 AI</span>' : '';
@@ -29274,9 +29324,12 @@ function showList() {
       });
     }
     const vis = creSorted(cre.rows.filter(creMatch));
+    /* 1026: rows whose status no lane recognises — rendered in a labelled
+       safety-net lane below the real ones. Never silently, never as drafts. */
+    const lost = creSorted(cre.rows.filter(r => !creLane(r)));
     const n = creCount();
     const sub = M.querySelector('[data-cre-sub]');
-    if (sub) sub.textContent = vis.length + ' shown of ' + cre.rows.length +
+    if (sub) sub.textContent = (vis.length + lost.length) + ' shown of ' + cre.rows.length +
       (n ? ' \u00b7 ' + n + ' filter' + (n > 1 ? 's' : '') + ' active' : ' \u00b7 grouped by status');
     const chip = M.querySelector('[data-cre-sortchip]');
     if (chip) chip.textContent = (CRE_SORTS.find(s => s.key === cre.sort) || CRE_SORTS[0]).label;
@@ -29300,15 +29353,25 @@ function showList() {
     const lanes = M.querySelector('[data-cre-lanes]');
     lanes.innerHTML = creActiveLanes().map(l => {
       const rows = vis.filter(r => creLane(r) === l.key);
-      return `<div class="cre-lane" style="--lg:${l.lg}"><div class="gh"><span class="gt" style="color:${l.col}">${l.title}</span><span class="gn">${rows.length}</span></div>` +
-        (rows.length ? rows.map(creCardHtml).join('') : '<div class="cre-empty">Nothing here with these filters.</div>') +
+      return `<div class="cre-lane${l.thin ? ' thin' : ''}" style="--lg:${l.lg}"><div class="gh"><span class="gt" style="color:${l.col}">${l.title}</span><span class="gn">${rows.length}</span></div>` +
+        (rows.length ? rows.map(creCardHtml).join('') : (l.thin ? '' : '<div class="cre-empty">Nothing here with these filters.</div>')) +
         `</div>`;
-    }).join('');
+    }).join('') +
+      /* 1026: the safety net. A status no lane claims renders HERE under its raw
+         name instead of masquerading as a draft (how accepted and declined rows
+         hid) or vanishing. It ignores the status filter on purpose: a net with
+         a hole in it is not a net. */
+      (lost.length ? `<div class="cre-lane thin" style="--lg:var(--rbe-uns-lg)"><div class="gh"><span class="gt" style="color:var(--rbe-uns-col)">UNRECOGNIZED STATUS</span><span class="gn">${lost.length}</span></div>` + lost.map(creCardHtml).join('') + `</div>` : '');
 
-    const open = vis.filter(r => creLane(r) !== 'Accepted').reduce((s, r) => s + (r.amount || 0), 0);
+    /* 1026: "open pipeline" is what can still close — Unsent + Sent, by name.
+       It used to be "everything not Accepted", which counted declined deals and
+       unrecognised statuses as money still in play. Declined prints only when
+       it is non-zero. */
+    const open = vis.filter(r => ['Unsent', 'Sent'].includes(creLane(r))).reduce((s, r) => s + (r.amount || 0), 0);
     const acc = vis.filter(r => creLane(r) === 'Accepted').reduce((s, r) => s + (r.amount || 0), 0);
+    const dec = vis.filter(r => creLane(r) === 'Declined').reduce((s, r) => s + (r.amount || 0), 0);
     const sum = M.querySelector('[data-cre-sum]');
-    if (sum) sum.innerHTML = 'showing ' + vis.length + ' \u00b7 open pipeline <b>$' + fmt(open) + '</b> \u00b7 accepted <b>$' + fmt(acc) + '</b>';
+    if (sum) sum.innerHTML = 'showing ' + (vis.length + lost.length) + ' \u00b7 open pipeline <b>$' + fmt(open) + '</b> \u00b7 accepted <b>$' + fmt(acc) + '</b>' + (dec ? ' \u00b7 declined <b>$' + fmt(dec) + '</b>' : '');
 
     const sl = M.querySelector('[data-cre-sortlist]');
     if (sl) sl.innerHTML = CRE_SORTS.map(s => `<div class="cre-srow${s.key === cre.sort ? ' on' : ''}" data-sort="${s.key}"><span class="ck">\u2713</span><span>${s.label}</span></div>`).join('');
@@ -38743,49 +38806,9 @@ return;
 if(tries < 40) setTimeout(go, 75);
 })();
 }
-function wireStats(){
-if(!mountVisible()) return;
-var stats = mount().querySelectorAll('.cr-stat[data-status]');
-if(!stats.length) return;
-var STATUS_TO_TAB = {
-'':          'all',
-'draft':     'pending',
-'sent':      'pending',
-'approved':  'approved',
-'converted': 'converted',
-};
-stats.forEach(function(cell){
-if(cell.dataset.crEafFixed === '1') return;
-cell.dataset.crEafFixed = '1';
-cell.setAttribute('data-cr-clickable', '1');
-cell.onclick = function(e){
-e.stopPropagation();
-var tab = STATUS_TO_TAB[cell.dataset.status] || 'all';
-var target = mount().querySelector('[data-filter="' + tab + '"]');
-if(target){ target.click(); }
-};
-});
-}
-function wireManualRows(){
-if(!mountVisible()) return;
-var rows = mount().querySelectorAll('.cr-row');
-rows.forEach(function(row){
-if(row.dataset.crEafFixed === '1') return;
-if(row.dataset.source === 'ai') return;
-row.dataset.crEafFixed = '1';
-row.onclick = function(e){
-e.stopPropagation();
-var id = row.dataset.id;
-if(!id) return;
-if(typeof window.crCloseAll === 'function'){
-try{ window.crCloseAll(); }catch(err){}
-}
-setTimeout(function(){
-if(typeof window.openProject === 'function') window.openProject(id);
-}, 60);
-};
-});
-}
+/* 1030: wireStats() and wireManualRows() deleted — their selectors
+   (.cr-stat[data-status], .cr-row) stopped rendering with the lanes
+   rebuild, and both dead queries ran on every body-observer tick. */
 function wireSave(){
 if(!mountVisible()) return;
 var btn = mount().querySelector('[data-act="save"]');
@@ -38818,8 +38841,6 @@ if(typeof orig === 'function'){ orig.call(this, e); }
 }
 function tick(){
 try{ wireTemplates();  }catch(e){}
-try{ wireStats();      }catch(e){}
-try{ wireManualRows(); }catch(e){}
 try{ wireSave();       }catch(e){}
 try{ wireSend();       }catch(e){}
 }
@@ -41253,7 +41274,7 @@ return r.width > 0 && r.height > 0;
 var STEPS = [
 {
 name  : 'Open Estimates plugin',
-detail: 'crOpenEstimates() → wait for + New AI',
+detail: 'crOpenEstimates() → wait for + New estimate',
 run   : async function(){
 if(typeof window.crOpenEstimates !== 'function') throw new Error('crOpenEstimates not defined');
 window.crOpenEstimates();
@@ -41262,29 +41283,31 @@ var m = document.getElementById('cr-estimates-mount');
 return visible(m) ? m : null;
 }, 6000);
 if(!mount) throw new Error('Estimates mount never visible');
-var newAi = await waitFor(function(){
-return mount.querySelector('[data-act="new-ai"]');
+var newBtn = await waitFor(function(){
+return mount.querySelector('[data-act="new-manual"]');
 }, 4000);
-if(!newAi) throw new Error('[data-act="new-ai"] never rendered');
+if(!newBtn) throw new Error('[data-act="new-manual"] never rendered');
 },
 },
 {
-name  : 'Tap + New AI',
-detail: 'Enter AI Create view, verify Generate button, back out',
+name  : 'Tap + New estimate',
+detail: 'Enter the client picker, back out',
+/* 1028: this step used to walk the AI-Create door, which is hidden now —
+   the walk follows the same path a rep does. */
 run   : async function(){
 var mount = document.getElementById('cr-estimates-mount');
-var newAi = mount && mount.querySelector('[data-act="new-ai"]');
-if(!newAi) throw new Error('[data-act="new-ai"] missing');
-newAi.click();
-var gen = await waitFor(function(){
-return document.querySelector('[data-act="generate"]');
+var newBtn = mount && mount.querySelector('[data-act="new-manual"]');
+if(!newBtn) throw new Error('[data-act="new-manual"] missing');
+newBtn.click();
+var mq = await waitFor(function(){
+return document.querySelector('#cr-estimates-mount [data-mq]');
 }, 5000);
-if(!gen) throw new Error('AI Create view never rendered [data-act="generate"]');
+if(!mq) throw new Error('Client picker never rendered [data-mq]');
 var back = document.querySelector('#cr-estimates-mount [data-act="back"]');
-if(!back) throw new Error('Back button not rendered on AI Create');
+if(!back) throw new Error('Back button not rendered on the client picker');
 back.click();
 var listAgain = await waitFor(function(){
-return document.querySelector('#cr-estimates-mount [data-act="new-ai"]');
+return document.querySelector('#cr-estimates-mount [data-act="new-manual"]');
 }, 3000);
 if(!listAgain) throw new Error('List did not re-render after Back');
 },
@@ -41975,7 +41998,13 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-{ b:1023, d:'2026-08-23', t:'The “N to fill” contract chip is readable in both states', s:'Audit finding 17 — the recurring light-ink-on-a-dark-ground defect, one more instance. The chip that counts unfilled blanks on a contract (#fillChipBtn) is a .btn.dark button, so its label sits on a #555 grey ground — but the label colours from build 966 were #e35c63 (2.12:1) for “N to fill” and #6cb98f (3.19:1) for “All filled”, both under the 4.5:1 body-text floor on that ground, so the count was hard to read. Computed with scripts/contrast.py, not eyeballed: the label is now #ffc2c6 (4.89:1) for the to-fill state and #9fdcb4 (4.75:1) — the exact green savedFlash already uses — for all-filled. The bright border colours are unchanged (a border is decoration, not text). Proven by gate_1023.mjs (recomputes the ratios and asserts the shipped colours clear the floor, with the old ones failing).' },
+{ b:1030, d:'2026-08-24', t:'Documents filed by what they are', s:'A published estimate document is linked to the estimate record it came from, but the Documents tab, the approvals queue and the job card were classifying it by its TITLE \u2014 rename it and it filed itself under Inspections, and a signed one silently skipped the approvals list and the \u201cneeds approval\u201d email. All of them now recognize the link first and the title second. The estimate title\u2019s example text no longer suggests a wording that would have misfiled the document. Housekeeping underneath: the manual_estimates database table \u2014 empty and unused since build 568, but still writable by any signed-in account \u2014 is dropped, and dead wiring from the old estimates screen was removed.' },
+{ b:1029, d:'2026-08-24', t:'Save stays in the estimate', s:'Saving an estimate used to close the editor \u2014 mid-thought, every time. Save now keeps you in the estimate: a toast confirms it saved, the estimate number appears the first time (the header reads \u201cauto \u2116\u201d until then), and the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar at the bottom of the screen. Under the hood, Publish, \u2192 Contract and the pipeline-stage sync used to press Save for you and then watch for up to nine seconds for the editor to close before hunting down the saved row; all three now receive the saved estimate directly, so publishing is faster and can never grab the wrong row. The estimates board also refreshes itself after a save instead of waiting for you to reopen it.' },
+{ b:1028, d:'2026-08-23', t:'AI assists inside the estimate', s:'Instead of a separate \u201cAI Estimate\u201d door that built a different kind of estimate, the AI now helps from inside the one estimate editor. A new button in the Photos section reads every attached photo in a single pass: photos without a caption get one written (a caption you typed is never touched), a short overview of what the photos show is added to the end of Scope Notes (never replacing what you wrote), and if no photo is starred as the cover the AI nominates the best establishing shot \u2014 your starred pick is never moved. The two old \u26a1 AI Estimate buttons are hidden; the code and its table stay dormant underneath. The \u201c+ New estimate\u201d button is now the main way in, and Theo\u2019s admin App Walk was taught the new path.' },
+{ b:1027, d:'2026-08-23', t:'The client\u2019s copy is readable on a phone', s:'The estimate document a homeowner opens from the share link (and the printed copy) was locked to an 8.5-inch page width with no phone handling at all, so on a phone it painted at about a fifth of readable size and clients pinch-zoomed their way through their own quote. The document now reflows on small screens \u2014 the header stacks, the details table goes one field per line, photos go single-column, tables fit the width \u2014 and prints exactly as it always has. It also got a cleaner dress: serif letterhead, hairline rules, and red held back for the brand line, the section numbers and the grand total, so the money reads first. Already-sent estimates keep the copy they were sent with; everything published from now on uses the new look.' },
+{ b:1026, d:'2026-08-23', t:'The estimate lanes tell the truth', s:'The Estimates walls only knew draft, sent and approved, so an estimate you marked Accepted or Declined in the editor quietly fell into the UNSENT \u2014 DRAFTS column \u2014 at the time of this build, $27,310 of accepted work was parading as drafts and being counted as open pipeline. Accepted estimates now land in ACCEPTED, Declined gets its own thin strip at the bottom of the board, and anything with a status the walls have never heard of shows up under UNRECOGNIZED STATUS instead of hiding. The footer sums are honest now too: open pipeline is only what can still close (drafts + sent), accepted money is counted as accepted, and declined money prints separately when there is any. A discarded AI draft no longer sneaks back into the board after a reload, and deleting a saved estimate from the editor refreshes the right job\u2019s list again.' },
+{ b:1025, d:'2026-08-23', t:'The estimate money is readable', s:'On the black estimate builder, the Total and deposit figures were painting in a dark red chosen years ago for a cream design \u2014 measured at under 2:1 contrast, close to invisible \u2014 and are now white. The same pass retired the last of the 2021 gold: six buttons that turned yellow on hover now deepen to dark red, and the two remaining red-to-gold gradient buttons are flat red. The white template menus on the Estimates and Contracts tabs now match the dark app, Balance Due reads clearly on the dark money band, and light mode fixes land for the estimate lane titles, the Saved Estimates heading, profile notes, and the Job Value captions. Estimates-screen emoji were drawn or removed.' },
+      { b:1023, d:'2026-08-23', t:'The “N to fill” contract chip is readable in both states', s:'Audit finding 17 — the recurring light-ink-on-a-dark-ground defect, one more instance. The chip that counts unfilled blanks on a contract (#fillChipBtn) is a .btn.dark button, so its label sits on a #555 grey ground — but the label colours from build 966 were #e35c63 (2.12:1) for “N to fill” and #6cb98f (3.19:1) for “All filled”, both under the 4.5:1 body-text floor on that ground, so the count was hard to read. Computed with scripts/contrast.py, not eyeballed: the label is now #ffc2c6 (4.89:1) for the to-fill state and #9fdcb4 (4.75:1) — the exact green savedFlash already uses — for all-filled. The bright border colours are unchanged (a border is decoration, not text). Proven by gate_1023.mjs (recomputes the ratios and asserts the shipped colours clear the floor, with the old ones failing).' },
 { b:1022, d:'2026-08-23', t:'Three full-screen views no longer trap on top of the app', s:'Audit finding 16 — the 570-572/941 nav-trap class, three more of them. Community Analytics (cr-can), the admin Line Item Library (cr-lil-view) and the contract viewer (cr-ce-view) are each position:fixed, inset:0 full-screen views, but none was registered in hideAllViews() (the function every navigation calls to clear the current screen) or in the back-button history (navRestore/wrapNav). So opening one and then tapping another destination — or the back arrow — left it covering the new screen with no exit but its own Close, and Back walked straight past it. All three are now cleared by hideAllViews using the correct lever for how each is shown: cr-can is display-shown (display:none), while cr-lil and cr-ce are class-shown and close through their own close() so the scroll lock they set is released too. All three now record history (cr-can/cr-lil as methods via the __crNav wrap, the contract viewer via wrapNav recording its id), so Back returns you to where you were. Proven by gate_1022.mjs.' },
 { b:1021, d:'2026-08-23', t:'Approved/Completed team emails now survive an offline stage move', s:'Audit finding 14. Moving a job to Approved (or Completed) with no signal saved the job to the offline outbox and synced it on reconnect — but the team email that goes with it (Curtis’s “Approved — schedule + order materials”, and the rep’s “job complete — walk-around + invoice”) was fired at that moment as a plain fetch to /api/notify with nobody listening for the result. Offline, that fetch failed and the notification was silently discarded, so the crew was never told about a job that had actually moved. setStage now hands those two emails to a new _notifyOrQueue helper: it tries to send immediately, and only if the send fails for a network/offline reason does it queue an op:"notify" entry in the existing write outbox, which replays it (via notifyTeam) the moment you are back online — alongside your other pending edits, shown in the same “waiting to sync” badge. A genuine sign-out is not queued (a present, online person already sees that), and a notify entry is never marked as a red “refused” change, because a missed email is best-effort, not something a person must fix. Proven by gate_1021.mjs (executes the shipped flush op:"notify" branch and _notifyOrQueue: sent → deleted; offline → kept; and the setStage sites route through the helper).' },
 { b:1020, d:'2026-08-23', t:'A quick forward-then-back stage tap no longer sends a phantom crew email', s:'Audit finding 13. Moving a job’s stage has a five-second undo window before it saves, and only one move can be pending at a time. If you tapped a job forward and then back within that window (or the phone locked mid-window), the app committed the first move before starting the second — so a round-trip you meant to cancel actually fired setStage for a stage the job never settled on, and for Approved that sends production an irreversible “order materials” email. crStageDefer now treats a second tap on the SAME job as a replacement: it cancels the pending move, rebases from its true starting stage, and if you have landed back where you started it saves nothing at all. A move on a DIFFERENT job still commits the first one first (the 1008 rule), and the pagehide/visibility flush that saves an in-progress move when you close the app is unchanged. Proven by gate_1020.mjs (executes crStageDefer: same-job round-trip = zero setStage calls; cross-job supersede still commits).' },
@@ -45004,7 +45033,7 @@ migrateBaseline: migrateBaseline,
 })();
 </script>
 
-<style id="cr-gmap-styles">.pac-container{background:#fdfcf7 !important;border:1px solid #d9cfaf !important;box-shadow:0 8px 24px rgba(0,0,0,.18) !important;border-radius:8px !important;z-index:100000 !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif !important;margin-top:4px}.pac-item{padding:9px 12px !important;cursor:pointer !important;border-top:1px solid #f0e8c9 !important;font-size:13.5px !important;color:#5a4a1a !important}.pac-item:first-child{border-top:0 !important}.pac-item:hover,.pac-item-selected{background:#f4f2f1 !important}.pac-item-query{color:#2c2c2c !important;font-weight:800 !important}.pac-icon{display:none !important}.pac-logo::after{opacity:.4}.cr-gmap-block{background:#fdfcf7;border:1px solid #d9cfaf;border-radius:12px;overflow:hidden;margin:8px 0 14px;box-shadow:0 3px 10px rgba(0,0,0,.06)}.cr-gmap-imgwrap{display:block;background:#f0e8d0;line-height:0}.cr-gmap-imgwrap img{width:100%;height:auto;max-height:240px;object-fit:cover;display:block}.cr-gmap-actions{display:flex;gap:8px;padding:10px 12px;background:#f4f2f1;border-top:1px solid #e8d9a8}.cr-gmap-btn{flex:1;padding:9px 14px;border-radius:6px;background:#c8202e;color:#fff;text-decoration:none;text-align:center;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit}.cr-gmap-btn:hover{background:#e8ba15}.cr-gmap-btn.ghost{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-gmap-btn.ghost:hover{background:rgba(200,32,46,.1)}.cr-gmap-hint{background:#fef7d6;border:1px dashed #c8202e;color:#5a4a1a;padding:10px 14px;border-radius:8px;font:600 12px 'Segoe UI',Arial,sans-serif;margin:8px 0}.cr-gmap-hint b{color:#2c2c2c}</style>
+<style id="cr-gmap-styles">.pac-container{background:#fdfcf7 !important;border:1px solid #d9cfaf !important;box-shadow:0 8px 24px rgba(0,0,0,.18) !important;border-radius:8px !important;z-index:100000 !important;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif !important;margin-top:4px}.pac-item{padding:9px 12px !important;cursor:pointer !important;border-top:1px solid #f0e8c9 !important;font-size:13.5px !important;color:#5a4a1a !important}.pac-item:first-child{border-top:0 !important}.pac-item:hover,.pac-item-selected{background:#f4f2f1 !important}.pac-item-query{color:#2c2c2c !important;font-weight:800 !important}.pac-icon{display:none !important}.pac-logo::after{opacity:.4}.cr-gmap-block{background:#fdfcf7;border:1px solid #d9cfaf;border-radius:12px;overflow:hidden;margin:8px 0 14px;box-shadow:0 3px 10px rgba(0,0,0,.06)}.cr-gmap-imgwrap{display:block;background:#f0e8d0;line-height:0}.cr-gmap-imgwrap img{width:100%;height:auto;max-height:240px;object-fit:cover;display:block}.cr-gmap-actions{display:flex;gap:8px;padding:10px 12px;background:#f4f2f1;border-top:1px solid #e8d9a8}.cr-gmap-btn{flex:1;padding:9px 14px;border-radius:6px;background:#c8202e;color:#fff;text-decoration:none;text-align:center;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;font-family:inherit}.cr-gmap-btn:hover{background:#B01F21}.cr-gmap-btn.ghost{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-gmap-btn.ghost:hover{background:rgba(200,32,46,.1)}.cr-gmap-hint{background:#fef7d6;border:1px dashed #c8202e;color:#5a4a1a;padding:10px 14px;border-radius:8px;font:600 12px 'Segoe UI',Arial,sans-serif;margin:8px 0}.cr-gmap-hint b{color:#2c2c2c}</style>
 <style id="cr-ac-styles">/* v2026-08-11 build 719 · address suggestions. position:fixed so a modal's
    overflow cannot clip it and #pwaNav (z-index 9990) cannot trap it; rows are
    44px minimum, the touch floor 592 set for the showroom. Colours are --rbe-*
@@ -45460,8 +45489,8 @@ window.CardinalPO = { from: from, next: nextNumber, ensure: ensure };
 })();
 </script>
 
-<style id="cr-lil-styles">#cr-lil-view{display:none;position:fixed;inset:0;background:#fdfcf7;color:#2c2c2c;z-index:9400;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-lil-view.open{display:flex}.cr-lil-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-head h2{margin:0;flex:1;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.02em}.cr-lil-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;padding:6px 12px;border-radius:6px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit}.cr-lil-head button:hover{background:rgba(200,32,46,.14)}.cr-lil-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}.cr-lil-head button.primary:hover{background:#e8ba15}.cr-lil-search{padding:10px 16px;background:#fdfcf7;border-bottom:1px solid #e8dfc8;flex:0 0 auto}.cr-lil-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center;font-family:inherit}.cr-lil-search input:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-tabs{padding:0 12px 12px;background:#fdfcf7;display:flex;gap:6px;flex-wrap:wrap;flex:0 0 auto;border-bottom:1px solid #e8dfc8;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-lil-tabs::-webkit-scrollbar{display:none}.cr-lil-tabs button{background:#f0e8d0;color:#6b6b6b;border:0;padding:8px 14px;border-radius:8px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}.cr-lil-tabs button.active{background:#c8202e;color:#fff}.cr-lil-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:9.5px}.cr-lil-tabs button.active .count{background:rgba(0,0,0,.22);color:#1a1a1a}.cr-lil-list{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;background:#fff}
-body.standalone .cr-lil-list{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* the Line Item Library list */.cr-lil-row{padding:14px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}.cr-lil-row:hover{background:#f4f2f1}.cr-lil-row .top{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}.cr-lil-row .name{flex:1;font:800 14.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis}.cr-lil-row .price{flex:0 0 auto;font:800 14px 'Segoe UI',Arial,sans-serif;color:#8f1620;white-space:nowrap}.cr-lil-row .desc{font:400 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4;max-height:2.8em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.cr-lil-row .meta{margin-top:6px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;letter-spacing:.06em}.cr-lil-row .meta .cat{display:inline-block;padding:2px 8px;background:#f4f2f1;border:1px solid #d9cfaf;border-radius:10px;margin-right:6px;color:#8f1620;text-transform:uppercase}.cr-lil-row .meta .unit{color:#6b6b6b}.cr-lil-empty{padding:40px 20px;text-align:center;color:#6b6b6b;font:600 13.5px 'Segoe UI',Arial,sans-serif}.cr-lil-empty small{display:block;margin-top:8px;font-weight:400;color:#a89e88}.cr-lil-editor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9410;justify-content:center;align-items:center;padding:20px;padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}.cr-lil-editor.open{display:flex}.cr-lil-editor .box{background:#fdfcf7;border-radius:12px;width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}.cr-lil-editor .box-head{padding:14px 18px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-editor .box-head h3{margin:0;flex:1;font:800 14px Georgia,'Times New Roman',serif;color:#2c2c2c}.cr-lil-editor .box-head button{background:transparent;border:0;cursor:pointer;font-size:22px;line-height:1;color:#6b6b6b;padding:2px 6px}.cr-lil-editor .box-body{padding:16px 18px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}.cr-lil-editor label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-lil-editor label:first-child{margin-top:0}.cr-lil-editor input[type=text],.cr-lil-editor input[type=number],.cr-lil-editor select,.cr-lil-editor textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}.cr-lil-editor input:focus,.cr-lil-editor select:focus,.cr-lil-editor textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-editor textarea{min-height:120px;resize:vertical;line-height:1.5;font-size:13.5px}.cr-lil-editor .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.cr-lil-editor .box-foot{padding:12px 18px;background:#f4f2f1;border-top:1px solid #e8d9a8;display:flex;gap:8px;justify-content:space-between;flex:0 0 auto}.cr-lil-editor .box-foot .right{display:flex;gap:8px}.cr-lil-editor .box-foot button{padding:9px 16px;border-radius:6px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;font-family:inherit;border:0}.cr-lil-editor .box-foot .cancel{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}.cr-lil-editor .box-foot .save{background:#c8202e;color:#fff}.cr-lil-editor .box-foot .save:hover{background:#e8ba15}.cr-lil-editor .box-foot .save:disabled{opacity:.5;cursor:wait}.cr-lil-editor .box-foot .delete{background:transparent;color:var(--red-dk);border:1px solid #e8b8ba}.cr-lil-editor .box-foot .delete:hover{background:#fdecec}.cr-lil-locked{padding:40px 24px;text-align:center}.cr-lil-locked h3{font:800 15px Georgia,serif;color:#2c2c2c;margin:0 0 8px}.cr-lil-locked p{font:400 13px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin:0}</style>
+<style id="cr-lil-styles">#cr-lil-view{display:none;position:fixed;inset:0;background:#fdfcf7;color:#2c2c2c;z-index:9400;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-lil-view.open{display:flex}.cr-lil-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-head h2{margin:0;flex:1;font:800 15px Georgia,'Times New Roman',serif;letter-spacing:.02em}.cr-lil-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;padding:6px 12px;border-radius:6px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit}.cr-lil-head button:hover{background:rgba(200,32,46,.14)}.cr-lil-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}.cr-lil-head button.primary:hover{background:#B01F21}.cr-lil-search{padding:10px 16px;background:#fdfcf7;border-bottom:1px solid #e8dfc8;flex:0 0 auto}.cr-lil-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center;font-family:inherit}.cr-lil-search input:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-tabs{padding:0 12px 12px;background:#fdfcf7;display:flex;gap:6px;flex-wrap:wrap;flex:0 0 auto;border-bottom:1px solid #e8dfc8;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-lil-tabs::-webkit-scrollbar{display:none}.cr-lil-tabs button{background:#f0e8d0;color:#6b6b6b;border:0;padding:8px 14px;border-radius:8px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}.cr-lil-tabs button.active{background:#c8202e;color:#fff}.cr-lil-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:9.5px}.cr-lil-tabs button.active .count{background:rgba(0,0,0,.22);color:#1a1a1a}.cr-lil-list{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;background:#fff}
+body.standalone .cr-lil-list{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}   /* the Line Item Library list */.cr-lil-row{padding:14px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}.cr-lil-row:hover{background:#f4f2f1}.cr-lil-row .top{display:flex;align-items:baseline;gap:10px;margin-bottom:4px}.cr-lil-row .name{flex:1;font:800 14.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis}.cr-lil-row .price{flex:0 0 auto;font:800 14px 'Segoe UI',Arial,sans-serif;color:#8f1620;white-space:nowrap}.cr-lil-row .desc{font:400 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4;max-height:2.8em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.cr-lil-row .meta{margin-top:6px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;letter-spacing:.06em}.cr-lil-row .meta .cat{display:inline-block;padding:2px 8px;background:#f4f2f1;border:1px solid #d9cfaf;border-radius:10px;margin-right:6px;color:#8f1620;text-transform:uppercase}.cr-lil-row .meta .unit{color:#6b6b6b}.cr-lil-empty{padding:40px 20px;text-align:center;color:#6b6b6b;font:600 13.5px 'Segoe UI',Arial,sans-serif}.cr-lil-empty small{display:block;margin-top:8px;font-weight:400;color:#a89e88}.cr-lil-editor{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9410;justify-content:center;align-items:center;padding:20px;padding-top:max(20px,env(safe-area-inset-top,0px));padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}.cr-lil-editor.open{display:flex}.cr-lil-editor .box{background:#fdfcf7;border-radius:12px;width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}.cr-lil-editor .box-head{padding:14px 18px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:12px;flex:0 0 auto}.cr-lil-editor .box-head h3{margin:0;flex:1;font:800 14px Georgia,'Times New Roman',serif;color:#2c2c2c}.cr-lil-editor .box-head button{background:transparent;border:0;cursor:pointer;font-size:22px;line-height:1;color:#6b6b6b;padding:2px 6px}.cr-lil-editor .box-body{padding:16px 18px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}.cr-lil-editor label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-lil-editor label:first-child{margin-top:0}.cr-lil-editor input[type=text],.cr-lil-editor input[type=number],.cr-lil-editor select,.cr-lil-editor textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}.cr-lil-editor input:focus,.cr-lil-editor select:focus,.cr-lil-editor textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-lil-editor textarea{min-height:120px;resize:vertical;line-height:1.5;font-size:13.5px}.cr-lil-editor .row2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.cr-lil-editor .box-foot{padding:12px 18px;background:#f4f2f1;border-top:1px solid #e8d9a8;display:flex;gap:8px;justify-content:space-between;flex:0 0 auto}.cr-lil-editor .box-foot .right{display:flex;gap:8px}.cr-lil-editor .box-foot button{padding:9px 16px;border-radius:6px;cursor:pointer;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;font-family:inherit;border:0}.cr-lil-editor .box-foot .cancel{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}.cr-lil-editor .box-foot .save{background:#c8202e;color:#fff}.cr-lil-editor .box-foot .save:hover{background:#B01F21}.cr-lil-editor .box-foot .save:disabled{opacity:.5;cursor:wait}.cr-lil-editor .box-foot .delete{background:transparent;color:var(--red-dk);border:1px solid #e8b8ba}.cr-lil-editor .box-foot .delete:hover{background:#fdecec}.cr-lil-locked{padding:40px 24px;text-align:center}.cr-lil-locked h3{font:800 15px Georgia,serif;color:#2c2c2c;margin:0 0 8px}.cr-lil-locked p{font:400 13px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin:0}</style>
 <style id="cr-lil-dark">
 /* 881: the Line Item Library shipped light-only — a cream full-screen page in an
    otherwise dark app (Theo: "only has a light mode"). Its header was already dark;
@@ -45856,7 +45885,7 @@ units       : function(){ return UNITS.slice(); },
 })();
 </script>
 
-<style id="cr-pae-styles">#cr-pae-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 12px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid #e8dfc8;margin:0 0 12px}#cr-pae-tabs::-webkit-scrollbar{display:none}#cr-pae-tabs button{background:#f0e8d0;color:#6b6b6b;border:0;padding:8px 14px;border-radius:8px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}#cr-pae-tabs button.active{background:#c8202e;color:#fff}#cr-pae-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:9.5px}#cr-pae-tabs button.active .count{background:rgba(0,0,0,.22);color:#1a1a1a}#galGrid.galgrid{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;gap:10px !important;align-content:start !important}#galGrid .cr-pae-datehead{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:14px 0 2px;padding:0 2px}#galGrid .cr-pae-datehead:first-child{margin-top:0}#galGrid .gph{position:relative;aspect-ratio:1/1;background:#f0e8d0;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border .1s}#galGrid .gph:hover{border-color:#c8202e}#galGrid .gph.checked{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.3)}#galGrid .gph img{width:100%;height:100%;object-fit:cover;display:block}#galGrid .cr-pae-initials{position:absolute;bottom:6px;left:6px;width:24px;height:24px;border-radius:50%;background:#fdfcf7;color:#1a1a1a;font:800 10.5px 'Segoe UI',Arial,sans-serif;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4);letter-spacing:.02em}#galGrid .cr-pae-secbadge{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.65);color:#e35c63;font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:4px}#galGrid .cr-pae-cap{position:absolute;bottom:0;left:0;right:0;padding:24px 8px 6px 38px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fdfcf7;font:600 10.5px 'Segoe UI',Arial,sans-serif;line-height:1.3;max-height:60%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;pointer-events:none}#galGrid .cr-pae-ai{position:absolute;top:6px;right:38px;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#c8202e,#c88a0f);color:#1a1a1a;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:2}#galGrid .cr-pae-ai:hover{background:linear-gradient(135deg,#e8ba15,#c8202e)}#galGrid .cr-pae-ai:disabled{opacity:.55;cursor:wait}#galGrid .gph .gchk{top:6px !important;left:6px !important;width:22px !important;height:22px !important;border-radius:50% !important;background:rgba(255,255,255,.9) !important;color:transparent !important;border:2px solid #6b6b6b !important;font-size:14px !important;display:none !important;align-items:center !important;justify-content:center !important;box-shadow:0 1px 4px rgba(0,0,0,.25) !important}#galleryView.cr-pae-selectmode #galGrid .gph .gchk,#galleryView.cr-pae-pickermode #galGrid .gph .gchk{display:flex !important}#galGrid .gph.checked .gchk{background:#c8202e !important;border-color:#8f1620 !important;color:#1a1a1a !important}#galleryView[data-cr-tab="Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Post-Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Before"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="After"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="General"] #galGrid .cr-pae-secbadge{display:none}#cr-pae-actionbar{display:none;position:fixed;left:0;right:0;bottom:calc(104px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#1a1a1a,#0a0a0a);color:#f5efe0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid #333;z-index:9995;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 -6px 20px rgba(0,0,0,.35)}#cr-pae-actionbar.show{display:flex}#cr-pae-actionbar .count{flex:1;font:800 12px 'Segoe UI',Arial,sans-serif;color:#e35c63}#cr-pae-actionbar select,#cr-pae-actionbar button{padding:8px 14px;border-radius:6px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;cursor:pointer;font-family:inherit;border:0}#cr-pae-actionbar .move-to{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl:hover{background:#3c3c3c}#cr-pae-actionbar .dl:disabled{opacity:.55;cursor:wait}#cr-pae-actionbar .wf{background:#c8202e;color:#fff;border:1px solid #c8202e}#cr-pae-actionbar .wf:hover{background:#e8ba15}#cr-pae-actionbar .confirm{background:#c8202e;color:#fff}#cr-pae-actionbar .confirm:hover{background:#e8ba15}#cr-pae-actionbar .clear{background:transparent;color:#a89e88;border:1px solid #333}#cr-pae-actionbar .status{color:#e35c63;font-size:12px;font-weight:600;margin-left:8px}#galleryView.cr-pae-pickermode #galInspBtn,#galleryView.cr-pae-pickermode #galInspRmBtn,#galleryView.cr-pae-pickermode #galXferWrap{display:none !important}.cr-pae-pickerbanner{display:none;background:#f4f2f1;border:1px solid #c8202e;border-left:4px solid #c8202e;border-radius:6px;padding:9px 13px;margin:0 0 12px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#5a4a1a}#galleryView.cr-pae-pickermode .cr-pae-pickerbanner{display:block}#cr-pae-cap-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9520;justify-content:center;align-items:center;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}#cr-pae-cap-modal.open{display:flex}#cr-pae-cap-modal .box{background:#fdfcf7;border-radius:12px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}#cr-pae-cap-modal .imgwrap{background:#1a1a1a;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}#cr-pae-cap-modal .imgwrap img{max-width:100%;max-height:100%;object-fit:contain}#cr-pae-cap-modal .form{padding:14px 16px}#cr-pae-cap-modal label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:10px 0 4px}#cr-pae-cap-modal label:first-child{margin-top:0}#cr-pae-cap-modal textarea,#cr-pae-cap-modal select{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}#cr-pae-cap-modal textarea{min-height:70px;resize:vertical;line-height:1.5}#cr-pae-cap-modal textarea:focus,#cr-pae-cap-modal select:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}#cr-pae-cap-modal .actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #e8dfc8}#cr-pae-cap-modal .actions button{padding:8px 14px;border-radius:6px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;font-family:inherit;border:0}#cr-pae-cap-modal .ai{background:linear-gradient(135deg,#c8202e,#c88a0f);color:#1a1a1a}#cr-pae-cap-modal .save{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e;margin-left:auto}#cr-pae-cap-modal .close{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}#cr-pae-cap-modal .ai-status{font:600 12px 'Segoe UI',Arial,sans-serif;color:#8f1620;margin:8px 0 0;min-height:14px}</style>
+<style id="cr-pae-styles">#cr-pae-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0 12px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none;border-bottom:1px solid #e8dfc8;margin:0 0 12px}#cr-pae-tabs::-webkit-scrollbar{display:none}#cr-pae-tabs button{background:#f0e8d0;color:#6b6b6b;border:0;padding:8px 14px;border-radius:8px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .12s,color .12s}#cr-pae-tabs button.active{background:#c8202e;color:#fff}#cr-pae-tabs .count{display:inline-block;margin-left:5px;background:rgba(0,0,0,.15);padding:1px 6px;border-radius:8px;font-size:9.5px}#cr-pae-tabs button.active .count{background:rgba(0,0,0,.22);color:#1a1a1a}#galGrid.galgrid{display:grid !important;grid-template-columns:repeat(auto-fill,minmax(140px,1fr)) !important;gap:10px !important;align-content:start !important}#galGrid .cr-pae-datehead{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:14px 0 2px;padding:0 2px}#galGrid .cr-pae-datehead:first-child{margin-top:0}#galGrid .gph{position:relative;aspect-ratio:1/1;background:#f0e8d0;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent;transition:border .1s}#galGrid .gph:hover{border-color:#c8202e}#galGrid .gph.checked{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.3)}#galGrid .gph img{width:100%;height:100%;object-fit:cover;display:block}#galGrid .cr-pae-initials{position:absolute;bottom:6px;left:6px;width:24px;height:24px;border-radius:50%;background:#fdfcf7;color:#1a1a1a;font:800 10.5px 'Segoe UI',Arial,sans-serif;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.4);letter-spacing:.02em}#galGrid .cr-pae-secbadge{position:absolute;top:6px;left:6px;background:rgba(0,0,0,.65);color:#e35c63;font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:4px}#galGrid .cr-pae-cap{position:absolute;bottom:0;left:0;right:0;padding:24px 8px 6px 38px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));color:#fdfcf7;font:600 10.5px 'Segoe UI',Arial,sans-serif;line-height:1.3;max-height:60%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;pointer-events:none}#galGrid .cr-pae-ai{position:absolute;top:6px;right:38px;width:26px;height:26px;border-radius:50%;background:#c8202e;color:#fff;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.35);z-index:2}#galGrid .cr-pae-ai:hover{background:#B01F21}#galGrid .cr-pae-ai:disabled{opacity:.55;cursor:wait}#galGrid .gph .gchk{top:6px !important;left:6px !important;width:22px !important;height:22px !important;border-radius:50% !important;background:rgba(255,255,255,.9) !important;color:transparent !important;border:2px solid #6b6b6b !important;font-size:14px !important;display:none !important;align-items:center !important;justify-content:center !important;box-shadow:0 1px 4px rgba(0,0,0,.25) !important}#galleryView.cr-pae-selectmode #galGrid .gph .gchk,#galleryView.cr-pae-pickermode #galGrid .gph .gchk{display:flex !important}#galGrid .gph.checked .gchk{background:#c8202e !important;border-color:#8f1620 !important;color:#1a1a1a !important}#galleryView[data-cr-tab="Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Post-Inspection"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="Before"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="After"] #galGrid .cr-pae-secbadge,#galleryView[data-cr-tab="General"] #galGrid .cr-pae-secbadge{display:none}#cr-pae-actionbar{display:none;position:fixed;left:0;right:0;bottom:calc(104px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#1a1a1a,#0a0a0a);color:#f5efe0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid #333;z-index:9995;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 -6px 20px rgba(0,0,0,.35)}#cr-pae-actionbar.show{display:flex}#cr-pae-actionbar .count{flex:1;font:800 12px 'Segoe UI',Arial,sans-serif;color:#e35c63}#cr-pae-actionbar select,#cr-pae-actionbar button{padding:8px 14px;border-radius:6px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;cursor:pointer;font-family:inherit;border:0}#cr-pae-actionbar .move-to{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e}#cr-pae-actionbar .dl:hover{background:#3c3c3c}#cr-pae-actionbar .dl:disabled{opacity:.55;cursor:wait}#cr-pae-actionbar .wf{background:#c8202e;color:#fff;border:1px solid #c8202e}#cr-pae-actionbar .wf:hover{background:#B01F21}#cr-pae-actionbar .confirm{background:#c8202e;color:#fff}#cr-pae-actionbar .confirm:hover{background:#B01F21}#cr-pae-actionbar .clear{background:transparent;color:#a89e88;border:1px solid #333}#cr-pae-actionbar .status{color:#e35c63;font-size:12px;font-weight:600;margin-left:8px}#galleryView.cr-pae-pickermode #galInspBtn,#galleryView.cr-pae-pickermode #galInspRmBtn,#galleryView.cr-pae-pickermode #galXferWrap{display:none !important}.cr-pae-pickerbanner{display:none;background:#f4f2f1;border:1px solid #c8202e;border-left:4px solid #c8202e;border-radius:6px;padding:9px 13px;margin:0 0 12px;font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#5a4a1a}#galleryView.cr-pae-pickermode .cr-pae-pickerbanner{display:block}#cr-pae-cap-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9520;justify-content:center;align-items:center;padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom,0px))}#cr-pae-cap-modal.open{display:flex}#cr-pae-cap-modal .box{background:#fdfcf7;border-radius:12px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.35)}#cr-pae-cap-modal .imgwrap{background:#1a1a1a;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center}#cr-pae-cap-modal .imgwrap img{max-width:100%;max-height:100%;object-fit:contain}#cr-pae-cap-modal .form{padding:14px 16px}#cr-pae-cap-modal label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:10px 0 4px}#cr-pae-cap-modal label:first-child{margin-top:0}#cr-pae-cap-modal textarea,#cr-pae-cap-modal select{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;outline:none}#cr-pae-cap-modal textarea{min-height:70px;resize:vertical;line-height:1.5}#cr-pae-cap-modal textarea:focus,#cr-pae-cap-modal select:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}#cr-pae-cap-modal .actions{display:flex;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #e8dfc8}#cr-pae-cap-modal .actions button{padding:8px 14px;border-radius:6px;cursor:pointer;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;font-family:inherit;border:0}#cr-pae-cap-modal .ai{background:#c8202e;color:#fff}#cr-pae-cap-modal .save{background:#2c2c2c;color:#e35c63;border:1px solid #c8202e;margin-left:auto}#cr-pae-cap-modal .close{background:transparent;color:#6b6b6b;border:1px solid #d9cfaf}#cr-pae-cap-modal .ai-status{font:600 12px 'Segoe UI',Arial,sans-serif;color:#8f1620;margin:8px 0 0;min-height:14px}</style>
 <script id="cr-pae-script">
 (function(){
 'use strict';
@@ -46997,14 +47026,19 @@ window.CardinalPhotoEditor = { open: open, close: close };
 #rccPanel .rcc-foot select{flex:1;min-width:0;padding:8px 10px;border:1px solid #d9cfaf;border-radius:8px;font:600 13px 'Segoe UI',Arial,sans-serif;background:#fff;color:#2c2c2c}
 @media(max-width:900px){#rccPanel{width:100%;height:52%;border-left:0;border-top:4px solid var(--red)}}
 </style>
-<style id="cr-est-styles">#cr-est-new-btn{display:inline-block;background:linear-gradient(135deg,#c8202e,#c88a0f);color:#1a1a1a;border:0;padding:9px 14px;border-radius:6px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;margin-left:6px;margin-bottom:4px;font-family:inherit}#cr-est-new-btn:hover{background:linear-gradient(135deg,#e8ba15,#c8202e)}.cr-est-saved-list{margin:12px 0 4px}.cr-est-saved-list .head{font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);margin:0 0 6px}.cr-est-saved-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f4f2f1;border:1px solid #e8d9a8;border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background .12s}.cr-est-saved-row:hover{background:#f5efd8}.cr-est-saved-row .num{flex:0 0 auto;font:800 11px 'SF Mono',Menlo,Consolas,monospace;color:#8f1620}.cr-est-saved-row .title{flex:1;font:700 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-est-saved-row .status{flex:0 0 auto;padding:2px 8px;border-radius:10px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.cr-est-saved-row .status.draft{background:#e8e0c8;color:#7a6a4a}.cr-est-saved-row .status.sent{background:#cfe0f5;color:#3d5d8c}.cr-est-saved-row .status.accepted{background:#c8e6cc;color:#2a6b3c}.cr-est-saved-row .status.declined{background:#f5cfd0;color:#8c3d3f}.cr-est-saved-row .amount{flex:0 0 auto;font:800 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-view{display:none;position:fixed;inset:0;background:#fdfcf7;color:#2c2c2c;z-index:9500;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-est-view.open{display:flex}.cr-est-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:10px;flex:0 0 auto}.cr-est-head h2{margin:0;flex:1;font:800 14px Georgia,'Times New Roman',serif;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-est-head .estnum{font:800 10.5px 'SF Mono',Menlo,monospace;color:#f08a90;margin-right:8px}.cr-est-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#f08a90;padding:6px 12px;border-radius:6px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}.cr-est-head button:hover{background:rgba(200,32,46,.14)}.cr-est-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}
+<style id="cr-est-styles">#cr-est-new-btn{display:inline-block;background:#c8202e;color:#fff;border:0;padding:9px 14px;border-radius:6px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;margin-left:6px;margin-bottom:4px;font-family:inherit}#cr-est-new-btn:hover{background:#B01F21}.cr-est-saved-list{margin:12px 0 4px}.cr-est-saved-list .head{font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);margin:0 0 6px}.cr-est-saved-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f4f2f1;border:1px solid #e8d9a8;border-radius:8px;margin-bottom:6px;cursor:pointer;transition:background .12s}.cr-est-saved-row:hover{background:#f5efd8}.cr-est-saved-row .num{flex:0 0 auto;font:800 11px 'SF Mono',Menlo,Consolas,monospace;color:#8f1620}.cr-est-saved-row .title{flex:1;font:700 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-est-saved-row .status{flex:0 0 auto;padding:2px 8px;border-radius:10px;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase}.cr-est-saved-row .status.draft{background:#e8e0c8;color:#7a6a4a}.cr-est-saved-row .status.sent{background:#cfe0f5;color:#3d5d8c}.cr-est-saved-row .status.accepted{background:#c8e6cc;color:#2a6b3c}.cr-est-saved-row .status.declined{background:#f5cfd0;color:#8c3d3f}.cr-est-saved-row .amount{flex:0 0 auto;font:800 13px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-view{display:none;position:fixed;inset:0;background:#fdfcf7;color:#2c2c2c;z-index:9500;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif}#cr-est-view.open{display:flex}.cr-est-head{padding:14px 16px 12px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:linear-gradient(120deg,#2c2c2c,#1a1a1a);color:#f5efe0;display:flex;align-items:center;gap:10px;flex:0 0 auto}.cr-est-head h2{margin:0;flex:1;font:800 14px Georgia,'Times New Roman',serif;letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-est-head .estnum{font:800 10.5px 'SF Mono',Menlo,monospace;color:#f08a90;margin-right:8px}.cr-est-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#f08a90;padding:6px 12px;border-radius:6px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}.cr-est-head button:hover{background:rgba(200,32,46,.14)}.cr-est-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}
+/* 1025: the template menus were the last white popovers on the dark profile.
+   Pinned dark in both themes, like the saved-list panel above them. */
+#pEstMenu .estopt,#pContractMenu .estopt{display:block;width:100%;box-sizing:border-box;text-align:left;background:transparent;color:#e8e6e1;border:0;border-top:1px solid #2a2e36;padding:11px 14px;font:700 12.5px 'Segoe UI',Arial,sans-serif;font-family:inherit;cursor:pointer}
+#pEstMenu .estopt:first-child,#pContractMenu .estopt:first-child{border-top:0}
+#pEstMenu .estopt:hover,#pContractMenu .estopt:hover{background:rgba(200,32,46,.18);color:#fff}
 /* 524: Delete reads as neutral until you are on it, so it does not compete with
    Save for the eye. #d8cfc4 is 9.07:1 on this header's gradient; white on
    #c8202e is 5.67:1 on hover. */
 .cr-est-head button.danger{color:#d8cfc4;border-color:rgba(216,207,196,.4)}
 .cr-est-head button.danger:hover{background:#c8202e;color:#fff;border-color:#c8202e}
 .cr-est-saved-row .rowdel{flex:0 0 auto;background:transparent;border:0;cursor:pointer;color:#8f1620;font-size:15px;line-height:1;padding:3px 5px;border-radius:5px;font-family:inherit}
-.cr-est-saved-row .rowdel:hover{background:#c8202e;color:#fff}.cr-est-head button.primary:hover{background:#e8ba15}.cr-est-head button.primary:disabled{opacity:.55;cursor:wait}.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px}.cr-est-clientcard .name{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:7px 12px;border-radius:6px;border:0;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#e8ba15}.cr-est-items-head .add-custom{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-est-items-head .add-abc{background:transparent;color:#2a6b3c;border:1px solid #2a6b3c;margin-left:6px}.cr-est-items-head .add-abc:hover{background:rgba(42,107,60,.1)}.cr-est-items-head .add-custom:hover{background:rgba(200,32,46,.1)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 14px 'Segoe UI',Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-itemchk{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;background:#f4f2f1;border:1px solid #d9cfaf;border-radius:6px;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8f1620;cursor:pointer;white-space:nowrap;flex:0 0 auto}.cr-est-itemchk:hover{background:#f5efd8;border-color:#c8202e}.cr-est-itemchk input{width:15px !important;height:15px;margin:0;accent-color:#c8202e;flex:0 0 auto}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:10px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:10px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:14px 16px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline}.cr-est-totals .lbl{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-est-totals .grand-val{font:800 20px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
+.cr-est-saved-row .rowdel:hover{background:#c8202e;color:#fff}.cr-est-head button.primary:hover{background:#B01F21}.cr-est-head button.primary:disabled{opacity:.55;cursor:wait}.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px}.cr-est-clientcard .name{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:7px 12px;border-radius:6px;border:0;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#B01F21}.cr-est-items-head .add-custom{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-est-items-head .add-abc{background:transparent;color:#2a6b3c;border:1px solid #2a6b3c;margin-left:6px}.cr-est-items-head .add-abc:hover{background:rgba(42,107,60,.1)}.cr-est-items-head .add-custom:hover{background:rgba(200,32,46,.1)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 14px 'Segoe UI',Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-itemchk{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;background:#f4f2f1;border:1px solid #d9cfaf;border-radius:6px;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8f1620;cursor:pointer;white-space:nowrap;flex:0 0 auto}.cr-est-itemchk:hover{background:#f5efd8;border-color:#c8202e}.cr-est-itemchk input{width:15px !important;height:15px;margin:0;accent-color:#c8202e;flex:0 0 auto}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 9.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:10px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:10px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 8.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:14px 16px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline}.cr-est-totals .lbl{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-est-totals .grand-val{font:800 20px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
 /* 962 \u2014 THE APP ALREADY HAD AN ANSWER FOR THIS AND I MISSED IT.
    Build 595 (#projModal), then 935 (#cr-pb-modal .sheet), both solved the
    installed bottom bar the same way and 935 wrote down why: \u201cClearance, NOT a
@@ -47043,7 +47077,7 @@ body.standalone #cr-est-picker .box-list{padding-bottom:calc(88px + env(safe-are
   padding:2px 7px;border-radius:9px;background:rgba(0,0,0,.07);color:#6b6b6b}
 #cr-est-picker .cat-header .chev{flex:none;display:flex;align-items:center;transition:transform .12s ease}
 #cr-est-picker .cat.closed .cat-header .chev{transform:rotate(-90deg)}
-#cr-est-picker .cat.closed .cat-body{display:none}#cr-est-picker .p-item{padding:12px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}#cr-est-picker .p-item:hover{background:#f4f2f1}#cr-est-picker .p-item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}#cr-est-picker .p-item .name{flex:1;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .p-item .price{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker .p-item .desc{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;max-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#cr-est-picker .empty{padding:32px 20px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}</style>
+#cr-est-picker .cat.closed .cat-body{display:none}#cr-est-picker .p-item{padding:12px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}#cr-est-picker .p-item:hover{background:#f4f2f1}#cr-est-picker .p-item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}#cr-est-picker .p-item .name{flex:1;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .p-item .price{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker .p-item .desc{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;max-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#cr-est-picker .empty{padding:32px 20px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}/* 1028: the AI assist is the quiet button beside the red attach */#cr-est-view .add-lib.ai-assist{background:none;border:1px solid rgba(200,32,46,.5);color:inherit}#cr-est-view .add-lib.ai-assist[disabled]{opacity:.55;cursor:default}/* 1029: the phone action bar — Save and Publish under the thumb */.cr-est-phonebar{display:none}@media (max-width:700px){#cr-est-view .cr-est-phonebar{display:flex;gap:10px;position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(10,11,14,.93);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid #23262d;z-index:6}#cr-est-view .cr-est-phonebar button{flex:1;padding:13px 10px;border-radius:11px;border:1px solid rgba(200,32,46,.55);background:none;color:#e8e6e1;font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer}#cr-est-view .cr-est-phonebar button.primary{background:#c8202e;border-color:#c8202e;color:#fff}#cr-est-view .cr-est-body{padding-bottom:88px}body:has(#cr-est-view.open) #cr-dark-toggle{bottom:96px}}</style>
 <script id="cr-est-script">
 (function(){
 'use strict';
@@ -47177,6 +47211,11 @@ if(view) return view;
 view = document.createElement('div');
 view.id = 'cr-est-view';
 document.body.appendChild(view);
+/* 1029: one delegated listener marks the draft dirty; the Close button asks
+   before discarding, and save() clears it. Wired once — render() replaces
+   innerHTML, not this element, so it never stacks. */
+view.addEventListener('input', function(){ if(state) state._dirty = true; }, true);
+view.addEventListener('change', function(){ if(state) state._dirty = true; }, true);
 return view;
 }
 function openEditor(project, existing){
@@ -47223,6 +47262,7 @@ notes          : '',
 payment_instructions: defaultPayInstr(),
 };
 }
+state._dirty = false;
 render();
 view.classList.add('open');
 document.body.style.overflow = 'hidden';
@@ -47232,6 +47272,15 @@ if(view) view.classList.remove('open');
 document.body.style.overflow = '';
 state = null;
 }
+/* 1029: after Publish, the stage sync (cr-ess) writes status:'sent' to the DB
+   and announces it — the open editor keeps its screen honest without a poll. */
+document.addEventListener('cr-est-status', function(ev){
+var d = ev.detail || {};
+if(!state || !d.id || String(state.id) !== String(d.id) || !d.status) return;
+state.status = d.status;
+var sel = view && view.querySelector('[data-f="status"]');
+if(sel) sel.value = d.status;
+});
 function buildDefaultTitle(project){
 var who = (project && (project.name || project.client_name || '')) || 'Client';
 return 'Estimate — ' + who;
@@ -47245,13 +47294,18 @@ var s = state;
 var t = computeTotals(s);
 view.innerHTML =
 '<div class="cr-est-head">' +
-'<button data-act="close" type="button">Cancel</button>' +
+'<button data-act="close" type="button">Close</button>' +
 /* 524: only on a SAVED estimate - there is nothing to delete before the first
    save, and an enabled Delete on a blank draft is a trap. */
 (s.id ? '<button class="danger" data-act="del" type="button">Delete</button>' : '') +
-'<span class="estnum">' + esc(s.estimate_number || (s.id ? '' : 'new')) + '</span>' +
+'<span class="estnum" title="The estimate number is assigned on first save">' + esc(s.estimate_number || (s.id ? '' : 'auto \u2116')) + '</span>' +
 '<h2>' + esc(s.id ? 'Edit Estimate' : 'New Estimate') + '</h2>' +
 '<button class="primary" data-act="save" type="button">' + (s.id ? 'Save' : 'Save Draft') + '</button>' +
+'</div>' +
+/* 1029: fixed under the thumb on a phone; display:none on desktop */
+'<div class="cr-est-phonebar">' +
+'<button data-act="bar-save" type="button">' + (s.id ? 'Save' : 'Save Draft') + '</button>' +
+'<button class="primary" data-act="bar-publish" type="button">Publish</button>' +
 '</div>' +
 '<div class="cr-est-body">' +
 estNavHtml(s) +
@@ -47263,7 +47317,7 @@ estNavHtml(s) +
 : '') +
 '</div>' +
 '<label>Estimate Title</label>' +
-'<input type="text" data-f="title" value="' + esc(s.title) + '" placeholder="Roof Replacement — Jane Smith" />' +
+'<input type="text" data-f="title" value="' + esc(s.title) + '" placeholder="Estimate — Jane Smith" />' +
 '<div class="cr-est-row3">' +
 '<div>' +
 '<label>Status</label>' +
@@ -47302,6 +47356,9 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 (s.photos.length ? '(' + s.photos.length + ')' : '') +
 '</span></h3>' +
 '<button class="add-lib"    data-act="pick-photos" type="button">+ Attach Photos</button>' +
+(s.photos.length
+? '<button class="add-lib ai-assist" data-act="ai-assist" type="button" title="AI writes captions for photos without one and drafts an overview from all of them">\u2726 AI captions &amp; overview</button>'
+: '') +
 '</div>' +
 renderPhotos(s.photos) +
 renderTotals(t) +
@@ -47485,6 +47542,103 @@ paintEstPhotoUrls();
 try{ if(window.report) window.report(e, 'Estimates', 'sign strip urls'); }catch(e2){}
 }
 }
+/* ---- 1028: the AI assist ------------------------------------------------
+   One tap, one request, ALL attached photos (first 14, downscaled to ~1024px
+   in the browser so the request stays small). The model proposes; the rep's
+   work always wins: captions land ONLY in empty caption boxes, the overview
+   APPENDS to Scope Notes, and the cover moves only when nothing is starred. */
+async function estAiShrink(url){
+var r = await fetch(url);
+if(!r.ok) throw new Error('photo read failed (' + r.status + ')');
+var blob = await r.blob();
+var bmp, objUrl = null;
+if(typeof createImageBitmap === 'function'){
+bmp = await createImageBitmap(blob);
+}else{
+objUrl = URL.createObjectURL(blob);
+bmp = await new Promise(function(ok, bad){
+var im = new Image();
+im.onload = function(){ ok(im); };
+im.onerror = function(){ bad(new Error('photo decode failed')); };
+im.src = objUrl;
+});
+}
+var W = bmp.width || bmp.naturalWidth, H = bmp.height || bmp.naturalHeight;
+var scale = Math.min(1, 1024 / Math.max(W, H));
+var w = Math.max(1, Math.round(W * scale)), h = Math.max(1, Math.round(H * scale));
+var cv = document.createElement('canvas');
+cv.width = w; cv.height = h;
+cv.getContext('2d').drawImage(bmp, 0, 0, w, h);
+if(bmp.close){ try{ bmp.close(); }catch(_){ } }
+if(objUrl){ try{ URL.revokeObjectURL(objUrl); }catch(_){ } }
+return cv.toDataURL('image/jpeg', 0.78);
+}
+async function runAiAssist(btn){
+if(!state || !state.photos || !state.photos.length) return;
+var oldLabel = btn ? btn.textContent : '';
+if(btn){ btn.disabled = true; btn.textContent = 'Reading photos\u2026'; }
+try{
+var photos = state.photos.slice(0, 14);
+var images = [], kept = [];
+for(var i = 0; i < photos.length; i++){
+var u = estPhotoUrl(photos[i]);
+if(!u) continue;
+try{ images.push(await estAiShrink(u)); kept.push(photos[i]); }catch(_){ }
+}
+if(!images.length){
+alert('No photo could be read back from storage. If they were just attached, give it a moment and retry.');
+return;
+}
+var res = await fetch('/api/caption', {
+method: 'POST',
+headers: await window.aiHeaders(),
+body: JSON.stringify({
+images: images,
+captions: kept.map(function(p){ return p.caption || ''; }),
+context: {
+client: (state.project && state.project.name) || '',
+title: state.title || '',
+items: state.lines.map(function(l){ return l.name || ''; }).filter(Boolean),
+},
+}),
+});
+var j = null;
+try{ j = await res.json(); }catch(_){ j = {}; }
+if(!res.ok){ alert('AI could not read the photos: ' + ((j && j.error) || ('HTTP ' + res.status))); return; }
+var filled = 0;
+kept.forEach(function(p, ki){
+if(!String(p.caption || '').trim() && j.captions && j.captions[ki]){
+p.caption = j.captions[ki];
+filled++;
+}
+});
+var overviewAdded = false;
+if(j.overview){
+state.notes = (state.notes && String(state.notes).trim())
+? String(state.notes).replace(/\s+$/, '') + '\n\n' + j.overview
+: j.overview;
+overviewAdded = true;
+}
+var coverSet = false;
+if(!state.photos.some(function(p){ return p.cover; })){
+var cp = kept[Number(j.cover_index)] || kept[0];
+if(cp){ cp.cover = true; coverSet = true; }
+}
+render();
+var bits = [filled + ' caption' + (filled === 1 ? '' : 's') + ' filled'];
+if(overviewAdded) bits.push('overview added to Scope Notes');
+if(coverSet) bits.push('cover photo set');
+if(state.photos.length > 14) bits.push('first 14 photos read');
+var msg = 'AI: ' + bits.join(' \u00b7 ');
+if(typeof window.toast === 'function'){ try{ window.toast(msg); }catch(_){ alert(msg); } }
+else{ alert(msg); }
+}catch(e){
+alert('AI assist failed: ' + (e && e.message ? e.message : e));
+}finally{
+/* render() replaced the button; this reference may be detached, which is fine */
+if(btn){ btn.disabled = false; btn.textContent = oldLabel; }
+}
+}
 function renderPhotos(photos){
 if(!photos || !photos.length){
 return '<div class="cr-est-empty-items">No photos attached. Tap <b>+ Attach Photos</b> to pick from the client\u2019s gallery.</div>';
@@ -47546,7 +47700,7 @@ return '<div class="cr-est-totals" data-slot="totals">' +
 '<span class="grand-lbl">Total</span>' +
 '<span class="grand-val" data-t="total">' + money(t.total) + '</span>' +
 '<div class="deposit">' +
-'<span style="font:800 11px \'Segoe UI\',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#8f1620;">Deposit</span>' +
+'<span style="font:800 11px \'Segoe UI\',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#f0a3a9;">Deposit</span>' +
 '<input type="number" class="pct" data-f="deposit_pct" value="' + t.deposit_pct + '" min="0" max="100" step="0.5" />' +
 '<span class="amt" data-t="deposit">' + money(t.deposit) + '</span>' +
 '</div>' +
@@ -47572,14 +47726,29 @@ cell.textContent = money(amt);
 function wire(){
 if(!view) return;
 view.querySelector('[data-act="close"]').onclick = function(){
+/* 1029: Save no longer closes the editor, so this is the one exit — it asks
+   before discarding unsaved work. */
+if(state && state._dirty && !confirm('You have unsaved changes.\n\nClose without saving?')) return;
 close();
 };
 view.querySelector('[data-act="save"]').onclick = handleSave;
+var barSave = view.querySelector('[data-act="bar-save"]');
+if(barSave) barSave.onclick = handleSave;
+var barPub = view.querySelector('[data-act="bar-publish"]');
+if(barPub) barPub.onclick = function(){
+var pb = document.getElementById('cr-epub-btn');
+if(pb) pb.click();
+else alert('Publish is still loading \u2014 give it a second and tap again.');
+};
 /* guarded, unlike its neighbours: the Delete button only exists on a saved
    estimate, and wire() otherwise dereferences querySelector() straight away. */
 var delBtn = view.querySelector('[data-act="del"]');
 if(delBtn) delBtn.onclick = function(){
-deleteEstimate(state.id, { label: state.title, projectId: state.project_id });
+/* 1026: state carries `project` (the object) — state.project_id was always
+   undefined, so deleteEstimate fell back to currentProjectId(): wrong (or no)
+   saved-list refresh and a mis-attributed audit entry when the editor was
+   opened from the standalone walls. */
+deleteEstimate(state.id, { label: state.title, projectId: state.project && state.project.id });
 };
 var titleEl = view.querySelector('[data-f="title"]');
 if(titleEl) titleEl.oninput = function(e){ state.title = e.target.value; };
@@ -47619,6 +47788,8 @@ amount: 0,
 });
 render();
 };
+var aiAssistBtn = view.querySelector('[data-act="ai-assist"]');
+if(aiAssistBtn) aiAssistBtn.onclick = function(){ runAiAssist(aiAssistBtn); };
 var pickPhotosBtn = view.querySelector('[data-act="pick-photos"]');
 if(pickPhotosBtn) pickPhotosBtn.onclick = function(){
 var picker = (window.CardinalPhotoAlbum && window.CardinalPhotoAlbum.openAsPicker) ||
@@ -47728,15 +47899,23 @@ estNavWire();
 autoGrowAll();
 }
 async function handleSave(){
+save().catch(function(_){ });
+}
+/* 1029: the save is a promise the satellites (Publish, \u2192 Contract, the
+   stage sync) consume directly. The old choreography clicked Save and POLLED
+   for the editor to close — which save-in-place would have silently broken.
+   Resolves with the saved DB row; rejects AFTER telling the user why, so a
+   caller must not alert again (776: never silent, never doubled). */
+async function save(){
 var s = state;
-if(!s) return;
+if(!s) throw new Error('No estimate open');
 if(!s.project || !s.project.id){
 alert('Estimate is not attached to a project.');
-return;
+throw new Error('no project');
 }
 if(!s.title.trim()){
 alert('Give the estimate a title.');
-return;
+throw new Error('no title');
 }
 var totals = computeTotals(s);
 var linesForDb = s.lines.map(function(l){
@@ -47761,21 +47940,45 @@ valid_through        : s.valid_through || null,
 notes                : s.notes || null,
 payment_instructions : s.payment_instructions || null,
 };
-var saveBtn = view.querySelector('[data-act="save"]');
-if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Saving\u2026'; }
+['[data-act="save"]', '[data-act="bar-save"]'].forEach(function(sel){
+var b = view.querySelector(sel);
+if(b){ b.disabled = true; b.textContent = 'Saving\u2026'; }
+});
 try{
 var saved = await saveEstimate(payload, s.id);
+var wasNew = !s.id;
+s.id = saved.id;
+s.estimate_number = saved.estimate_number || s.estimate_number;
+s._dirty = false;
 if(typeof window.auditLog === 'function'){
 try{ window.auditLog('estimate_save',
-(s.id ? 'Updated ' : 'Created ') + 'estimate ' + (saved.estimate_number || '') + ': ' + payload.title,
+(wasNew ? 'Created ' : 'Updated ') + 'estimate ' + (saved.estimate_number || '') + ': ' + payload.title,
 s.project.id); }catch(_){ }
 }
-close();
-refreshSavedList(s.project.id);
-alert((s.id ? 'Estimate updated. ' : 'Estimate saved as ' + saved.estimate_number + '. ') + 'Total: ' + money(totals.total));
+/* stay OPEN — re-render so the number, Delete button and totals reflect it
+   (the satellite-injected header buttons re-inject via their own observers) */
+if(state === s) render();
+try{ refreshSavedList(s.project.id); }catch(_){ }
+var msg = (wasNew ? 'Saved as ' + (saved.estimate_number || 'a new estimate') : 'Saved')
++ ' \u00b7 ' + money(totals.total);
+if(typeof window.toast === 'function'){ try{ window.toast(msg); }catch(_){ alert(msg); } }
+else{ alert(msg); }
+try{
+document.dispatchEvent(new CustomEvent('cr-est-saved', { detail: {
+id: saved.id, row: saved, status: saved.status || s.status, project: s.project,
+} }));
+}catch(_){ }
+return saved;
 }catch(e){
 alert('Save failed: ' + (e.message || e));
-if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = s.id ? 'Save' : 'Save Draft'; }
+throw e;
+}finally{
+if(state === s && view){
+['[data-act="save"]', '[data-act="bar-save"]'].forEach(function(sel){
+var b = view.querySelector(sel);
+if(b){ b.disabled = false; b.textContent = s.id ? 'Save' : 'Save Draft'; }
+});
+}
 }
 }
 var pickerQuery = '';
@@ -48066,7 +48269,7 @@ var photoCount = Array.isArray(e.photos) ? e.photos.length : 0;
 return '<div class="cr-est-saved-row" data-eid="' + esc(e.id) + '">' +
 '<span class="num">' + esc(e.estimate_number || '') + '</span>' +
 '<span class="title">' + esc(e.title || 'Untitled') + '</span>' +
-(photoCount ? '<span style="flex:0 0 auto;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8f1620;">\uD83D\uDCF7 ' + photoCount + '</span>' : '') +
+(photoCount ? '<span style="flex:0 0 auto;font:700 11px \'Segoe UI\',Arial,sans-serif;color:#8f1620;"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" style="vertical-align:-1px"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.2"/></svg> ' + photoCount + '</span>' : '') +
 '<span class="status ' + stCls + '">' + esc(st) + '</span>' +
 '<span class="amount">' + money(e.total) + '</span>' +
 '<button class="rowdel" type="button" data-del="' + esc(e.id) + '" ' +
@@ -48103,7 +48306,7 @@ if(!document.getElementById('cr-est-new-btn')){
 var btn = document.createElement('button');
 btn.id = 'cr-est-new-btn';
 btn.type = 'button';
-btn.innerHTML = '\uD83D\uDCC4 Blank estimate';
+btn.innerHTML = 'Blank estimate';
 btn.title = 'Start an empty estimate and add the lines yourself';
 btn.onclick = function(e){
 e.preventDefault(); e.stopPropagation();
@@ -48149,6 +48352,7 @@ window.CardinalEstimates = Object.assign(window.CardinalEstimates || {}, {
 openEditor       : openEditor,
 deleteEstimate   : deleteEstimate,
 close            : close,
+save             : save,
 loadForProject   : loadForProject,
 refreshSavedList : refreshSavedList,
 currentState     : function(){
@@ -48350,56 +48554,78 @@ return '<!DOCTYPE html>\n' +
 '<html lang="en">\n' +
 '<head>\n' +
 '<meta charset="utf-8">\n' +
+/* 1027: without this, a phone renders the 8.5in body at 816 CSS px and the
+   client reads their estimate through a pinch-zoom. The two screen media
+   queries in the sheet below do the actual reflow. Print is untouched. */
+'<meta name="viewport" content="width=device-width, initial-scale=1">\n' +
 '<title>Cardinal Roofing &amp; Renovations \u2014 ' + esc(est.title || 'Estimate') + '</title>\n' +
 '<style>\n' +
-':root{--red:#C8202E;--red-dk:#9c1822;--ink:#1b1b1b;--muted:#666;--line:#d9d9d9;--amber:#E8A33D}\n' +
+':root{--red:#C8202E;--red-dk:#9c1822;--ink:#1d1d1f;--muted:#6b6b6b;--faint:#8a8a8a;--hair:#e5e2dc;--wash:#faf8f4;--amber:#E8A33D}\n' +
 '*{box-sizing:border-box}\n' +
 'html,body{margin:0;padding:0}\n' +
-'body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);font-size:11pt;line-height:1.5;width:8.5in;margin:0 auto;padding:0.75in 0.65in 0.9in;background:#fff}\n' +
+'body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);font-size:10.5pt;line-height:1.55;width:8.5in;margin:0 auto;padding:0.75in 0.65in 0.9in;background:#fff}\n' +
 '@page{size:Letter;margin:0.75in 0.65in 0.9in}\n' +
 '@media print{.no-print{display:none!important}body{width:auto;margin:0;padding:0}}\n' +
-'.est-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:8px}\n' +
+'.est-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:10px}\n' +
 '.est-brand{flex:0 0 auto}\n' +
-'.est-logo{width:2.4in;max-width:100%;display:block}\n' +
-'.est-co{flex:0 0 auto;text-align:right;font-size:9.5pt;line-height:1.45;color:#333}\n' +
-'.est-co .co-name{font-weight:800;font-size:10.5pt;color:var(--ink);margin-bottom:2px}\n' +
-'.est-title{font-size:22pt;font-weight:800;letter-spacing:1px;text-align:right;margin:2px 0}\n' +
-'.rule{height:3px;background:var(--red);border:0;margin:8px 0 14px}\n' +
-'table.meta{border-collapse:collapse;width:100%;margin:6px 0 12px;font-size:10.5pt}\n' +
-'table.meta td{border:1px solid var(--line);padding:7px 10px;vertical-align:top}\n' +
-'table.meta td.k{background:#f6f6f6;font-weight:700;width:24%;color:#333}\n' +
-'h2.sec{font-size:14pt;font-weight:800;margin:22px 0 6px;padding-bottom:4px;border-bottom:2px solid var(--red)}\n' +
-'h2.sec .num{display:inline-block;background:var(--red);color:#fff;border-radius:4px;font-size:11pt;padding:1px 8px;margin-right:8px;vertical-align:2px}\n' +
+'.est-logo{width:2.15in;max-width:100%;display:block}\n' +
+'.est-co{flex:0 0 auto;text-align:right;font-size:8.5pt;line-height:1.6;color:#5a5a5a}\n' +
+'.est-co .co-name{font-weight:700;font-size:9.5pt;color:var(--ink);margin-bottom:3px;letter-spacing:.02em}\n' +
+'.est-title{font-size:24pt;font-weight:400;letter-spacing:.22em;text-align:right;margin:10px 0 2px;color:var(--ink)}\n' +
+'.rule{height:2px;background:var(--red);border:0;margin:10px 0 18px}\n' +
+'table.meta{border-collapse:collapse;width:100%;margin:4px 0 16px;font-size:10pt}\n' +
+'table.meta td{border:0;border-bottom:1px solid var(--hair);padding:7px 12px 7px 0;vertical-align:top}\n' +
+'table.meta td.k{background:none;font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);width:20%;padding-top:9px}\n' +
+'h2.sec{font-size:13pt;font-weight:700;margin:24px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--hair);letter-spacing:.01em}\n' +
+'h2.sec .num{display:inline-block;background:var(--red);color:#fff;border-radius:3px;font-size:9pt;padding:1px 7px;margin-right:9px;vertical-align:2px;font-family:"Segoe UI",Arial,sans-serif;font-weight:700}\n' +
 'p{margin:6px 0}\n' +
-'.note{border:1px solid var(--line);border-left:4px solid var(--amber);background:#fdf9ef;padding:9px 12px;font-size:10.5pt;margin:14px 0}\n' +
-'table.items{border-collapse:collapse;width:100%;margin:8px 0 4px;font-size:10.5pt}\n' +
-'table.items th{background:var(--ink);color:#fff;text-align:left;padding:7px 9px;font-size:9.5pt;letter-spacing:.04em;text-transform:uppercase}\n' +
-'table.items td{border:1px solid var(--line);padding:6px 9px;vertical-align:top}\n' +
-'table.items td.qty,table.items td.rate{text-align:right;white-space:nowrap;width:12%}\n' +
+'.note{border:0;border-left:3px solid var(--amber);background:var(--wash);padding:10px 14px;font-size:9.5pt;margin:14px 0;line-height:1.6}\n' +
+'table.items{border-collapse:collapse;width:100%;margin:10px 0 4px;font-size:10pt}\n' +
+'table.items th{background:none;color:var(--ink);text-align:left;padding:7px 9px;font-family:"Segoe UI",Arial,sans-serif;font-size:7.5pt;letter-spacing:.12em;text-transform:uppercase;border-bottom:2px solid var(--ink)}\n' +
+'table.items td{border:0;border-bottom:1px solid var(--hair);padding:8px 9px;vertical-align:top}\n' +
+'table.items td.qty,table.items td.rate{text-align:right;white-space:nowrap;width:12%;font-variant-numeric:tabular-nums}\n' +
 'table.items td.unit{width:9%;color:var(--muted);text-align:center}\n' +
-'table.items tr.totals td{border:0;padding:4px 9px}\n' +
-'table.items tr.totals td.lbl{text-align:right;font-weight:700}\n' +
+'table.items tr.totals td{border:0;padding:4px 9px;font-variant-numeric:tabular-nums}\n' +
+'table.items tr.totals td.lbl{text-align:right;font-family:"Segoe UI",Arial,sans-serif;font-weight:600;font-size:8.5pt;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}\n' +
 'table.items tr.totals td.val{text-align:right;width:14%;white-space:nowrap}\n' +
-'table.items tr.grand td{border-top:2px solid var(--ink);font-size:12pt;font-weight:800}\n' +
-'.deposit-box{border:2px solid var(--red);border-radius:6px;padding:10px 14px;margin:14px 0;background:#fdf6f6}\n' +
-'table.dep{border-collapse:collapse;width:100%;font-size:11pt}\n' +
+'table.items tr.grand td{border-top:2px solid var(--ink);font-size:13pt;font-weight:700;padding-top:8px}\n' +
+'table.items tr.grand td.lbl{color:var(--ink);font-size:9.5pt}\n' +
+'.deposit-box{border:0;border-left:3px solid var(--red);border-radius:0;padding:10px 16px;margin:14px 0;background:var(--wash)}\n' +
+'table.dep{border-collapse:collapse;width:100%;font-size:10.5pt}\n' +
 'table.dep td{padding:4px 0}\n' +
 'table.dep td.k{font-weight:700}\n' +
-'table.dep td.v{text-align:right;font-weight:800;white-space:nowrap;font-size:12pt}\n' +
-'.coverfig{margin:0 0 16px;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#fafafa}\n' +
-'.coverfig img{width:100%;height:auto;max-height:4.2in;object-fit:contain;display:block;background:#f2f2f2}\n' +
-'.coverfig figcaption{padding:7px 11px;font-size:9.5pt;line-height:1.4;color:#333;background:#fff;border-top:1px solid var(--line)}\n' +
-'.photogrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;align-items:start}\n' +
-'.pfig{margin:0;border:1px solid var(--line);border-radius:5px;overflow:hidden;background:#fafafa}\n' +
-'.pfig img{width:100%;height:auto;max-height:3.2in;object-fit:contain;display:block;background:#f2f2f2}\n' +
-'.pfig figcaption{padding:6px 9px;font-size:9.5pt;line-height:1.4;color:#333;background:#fff;border-top:1px solid var(--line)}\n' +
-'.sign{display:flex;gap:28px;margin-top:34px}\n' +
+'table.dep td.v{text-align:right;font-weight:700;white-space:nowrap;font-size:11.5pt;font-variant-numeric:tabular-nums}\n' +
+'.coverfig{margin:0 0 16px;border:1px solid var(--hair);overflow:hidden;background:#fafafa}\n' +
+'.coverfig img{width:100%;height:auto;max-height:4.2in;object-fit:cover;display:block;background:#eceae5;min-height:2.4in}\n' +
+'.coverfig figcaption{padding:7px 11px;font-size:8.5pt;line-height:1.5;color:#555;background:#fff;border-top:1px solid var(--hair)}\n' +
+'.photogrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:10px 0;align-items:start}\n' +
+'.pfig{margin:0;border:1px solid var(--hair);overflow:hidden;background:#fafafa}\n' +
+'.pfig img{width:100%;height:auto;max-height:3.2in;object-fit:cover;display:block;background:#eceae5;min-height:1.6in}\n' +
+'.pfig figcaption{padding:6px 9px;font-size:8.5pt;line-height:1.5;color:#555;background:#fff;border-top:1px solid var(--hair)}\n' +
+'.sign{display:flex;gap:32px;margin-top:38px}\n' +
 '.sign .col{flex:1}\n' +
-'.sign .line{border-bottom:1.5px solid var(--ink);height:34px}\n' +
-'.sign .lbl{font-size:9.5pt;color:var(--muted);margin-top:5px}\n' +
+'.sign .line{border-bottom:1.25px solid var(--ink);height:36px}\n' +
+'.sign .lbl{font-family:"Segoe UI",Arial,sans-serif;font-size:8pt;letter-spacing:.06em;color:var(--muted);margin-top:6px}\n' +
 '.avoid-break{break-inside:avoid}\n' +
 '.page-break{break-before:page}\n' +
-'.foot{margin-top:26px;padding-top:10px;border-top:1px solid var(--line);font-size:9pt;color:var(--muted);text-align:center}\n' +
+'.foot{margin-top:28px;padding-top:10px;border-top:1px solid var(--hair);font-size:8pt;color:var(--faint);text-align:center;font-family:"Segoe UI",Arial,sans-serif;letter-spacing:.03em}\n' +
+'/* the share-link fix: the document is readable on the phone in the kitchen */\n' +
+'@media screen and (max-width:9in){body{width:auto;max-width:8.5in;padding:28px 22px 40px}}\n' +
+'@media screen and (max-width:560px){\n' +
+'body{font-size:11pt;padding:20px 16px 34px}\n' +
+'.est-head{flex-direction:column;gap:10px}\n' +
+'.est-co{text-align:left}\n' +
+'.est-title{text-align:left;font-size:19pt;margin-top:4px}\n' +
+'table.meta,table.meta tbody,table.meta tr,table.meta td{display:block;width:100%}\n' +
+'table.meta td{border:0;padding:1px 0 7px}\n' +
+'table.meta td.k{padding:8px 0 1px;border-top:1px solid var(--hair)}\n' +
+'table.meta tr:first-child td.k:first-child{border-top:0}\n' +
+'table.items{font-size:9pt}\n' +
+'table.items th{font-size:6.8pt;padding:6px 5px}\n' +
+'table.items td{padding:7px 5px}\n' +
+'.photogrid{grid-template-columns:1fr}\n' +
+'.sign{flex-direction:column;gap:22px}\n' +
+'}\n' +
 '</style>\n' +
 '</head>\n' +
 '<body>\n' +
@@ -48518,7 +48744,7 @@ previewEl.innerHTML =
 '<div class="pv-head">' +
 '<button data-act="pv-close" type="button">Close</button>' +
 '<h3>Preview</h3>' +
-'<button class="primary" data-act="pv-print" type="button">\uD83D\uDDA8 Print / PDF</button>' +
+'<button class="primary" data-act="pv-print" type="button">Print / PDF</button>' +
 '</div>' +
 '<div class="pv-body"><iframe data-slot="pv-frame" title="Estimate preview"></iframe></div>';
 document.body.appendChild(previewEl);
@@ -48597,37 +48823,39 @@ saveBtn.parentNode.insertBefore(btn, saveBtn);
 async function handlePublishClick(){
 var btn = document.getElementById('cr-epub-btn');
 if(!btn) return;
-var saveBtn = document.querySelector('#cr-est-view [data-act="save"]');
-if(!saveBtn){ alert('Editor not ready.'); return; }
+if(!(window.CardinalEstimates && typeof window.CardinalEstimates.save === 'function')){
+alert('Editor not ready.'); return;
+}
 btn.disabled = true; btn.textContent = 'Publishing\u2026';
 var projectBefore = estProjectNow();   /* 970 */
-var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
-try{
-saveBtn.click();
-var closed = await waitForEditorClose(9000);
-if(!closed){
-/* 776: this used to return in SILENCE. The button went "Publishing…" and then
-   back to "Publish", with no document and no explanation — the user has no way
-   to tell a slow save from a broken button. Nothing here is recoverable
-   automatically: the estimate is still open and still unsaved, so say so and
-   let them retry. */
+if(!projectBefore || !projectBefore.id){
 btn.disabled = false; btn.textContent = 'Publish';
-alert('The estimate has not finished saving, so nothing was published.\n\n' +
-'Check your connection, then press Publish again. Your work is still on screen.');
+alert('Open an estimate first.');
 return;
 }
-var rows = await window.CardinalEstimates.loadForProject(projectBefore.id);
-if(!rows.length){
-alert('Could not find the saved estimate to publish.');
+try{
+var est = null;
+try{ est = await window.CardinalEstimates.save(); }
+catch(_e){
+/* 1029: save() already told the user exactly why (validation or network) —
+   776's rule holds, nothing is silent; the message just isn't doubled.
+   The estimate is still on screen; they fix it and press Publish again. */
+btn.disabled = false; btn.textContent = 'Publish';
 return;
 }
-var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
-
-/* 970: pickEstimate returns null when the open estimate is not in these rows —
-   i.e. they belong to a different client. Say so; never publish the other one. */
-if(!est){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
+/* 970's guard, sharpened: we publish the exact row save() returned — no
+   lookup, no picking. The cross-check below is the only ambiguity left. */
+if(!est || String(est.project_id) !== String(projectBefore.id)){
+alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.');
+return;
+}
 var docId = await publish(est, projectBefore);
 if(!docId){ return; }
+try{
+document.dispatchEvent(new CustomEvent('cr-est-published', { detail: {
+id: est.id, docId: docId, prevStatus: est.status || 'draft', project: projectBefore,
+} }));
+}catch(_){ }
 if(!openDoc(docId)){
 alert('Estimate published as ' + (est.estimate_number || 'a document') +
 '.\n\nOpen it from the client\u2019s document list to share, email, or collect a signature.');
@@ -48639,18 +48867,9 @@ var b = document.getElementById('cr-epub-btn');
 if(b){ b.disabled = false; b.textContent = 'Publish'; }
 }
 }
-function waitForEditorClose(timeoutMs){
-return new Promise(function(resolve){
-var view = document.getElementById('cr-est-view');
-if(!view || !view.classList.contains('open')) return resolve(true);
-var elapsed = 0;
-var iv = setInterval(function(){
-elapsed += 150;
-if(!view.classList.contains('open')){ clearInterval(iv); resolve(true); }
-else if(elapsed >= timeoutMs){ clearInterval(iv); resolve(false); }
-}, 150);
-});
-}
+/* 1029: waitForEditorClose retired — save-in-place means the editor no longer
+   closes on Save, so polling for the close would hang 9s and give up on every
+   single publish. The promise IS the signal now. */
 var scheduled = false;
 function scheduleInject(){
 if(scheduled) return;
@@ -48796,23 +49015,16 @@ if(!go) return;
 var project = estProjectNow();   /* 970 */
 if(!project || !project.id){ alert('Open an estimate first.'); return; }
 btn.disabled = true; btn.textContent = 'Working\u2026';
-var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 try{
-saveBtn.click();
-var closed = await waitForEditorClose(9000);
-if(!closed){
-/* 776: silent give-up, same class as the Publish button above. */
-alert('The estimate has not finished saving, so no contract was generated.\n\n' +
-'Check your connection, then press \u2192 Contract again.');
+var est = null;
+try{ est = await window.CardinalEstimates.save(); }
+catch(_e){
+/* 1029: save() already told the user why; don't double the message. The
+   estimate is still on screen for them to fix and retry. */
 return;
 }
-var rows = await window.CardinalEstimates.loadForProject(project.id);
-if(!rows.length){ alert('Could not find the saved estimate.'); return; }
-var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
-
-/* 970: pickEstimate returns null when the open estimate is not in these rows —
-   i.e. they belong to a different client. Say so; never contract the other one. */
-if(!est){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
+/* 970's guard, sharpened: this is the exact row save() returned. */
+if(!est || String(est.project_id) !== String(project.id)){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
 var docId = await generate(est, project);
 if(!docId) return;
 if(typeof window.reload === 'function'){
@@ -48831,18 +49043,7 @@ var b = document.getElementById('cr-e2c-btn');
 if(b){ b.disabled = false; b.textContent = '\u2192 Contract'; }
 }
 }
-function waitForEditorClose(timeoutMs){
-return new Promise(function(resolve){
-var view = document.getElementById('cr-est-view');
-if(!view || !view.classList.contains('open')) return resolve(true);
-var elapsed = 0;
-var iv = setInterval(function(){
-elapsed += 150;
-if(!view.classList.contains('open')){ clearInterval(iv); resolve(true); }
-else if(elapsed >= timeoutMs){ clearInterval(iv); resolve(false); }
-}, 150);
-});
-}
+/* 1029: waitForEditorClose retired here too — see cr-epub's note. */
 var scheduled = false;
 function scheduleInject(){
 if(scheduled) return;
@@ -48962,69 +49163,27 @@ toast('Pipeline moved to ' + displayStage(target));
 console.warn('[ess] setStage failed:', e);
 }
 }
-function hookEditor(){
-var view = document.getElementById('cr-est-view');
-if(!view) return false;
-var saveBtn = view.querySelector('[data-act="save"]');
-if(!saveBtn) return false;
-if(saveBtn.dataset.crEssHooked === '1') return true;
-saveBtn.dataset.crEssHooked = '1';
-saveBtn.addEventListener('click', function(){
-var statusSel = view.querySelector('[data-f="status"]');
-var status = statusSel ? statusSel.value : null;
-var project = estProjectNow();   /* 970: the plain Save path moved the WRONG client's stage */
-if(!status || !project) return;
-var elapsed = 0;
-var iv = setInterval(function(){
-elapsed += 150;
-if(!view.classList.contains('open')){
-clearInterval(iv);
-setTimeout(function(){ syncStageFor(project, status); }, 250);
-}else if(elapsed > 9000){
-clearInterval(iv);
-}
-}, 150);
-}, true);
-return true;
-}
-function hookPublish(){
-var btn = document.getElementById('cr-epub-btn');
-if(!btn || btn.dataset.crEssHooked === '1') return false;
-btn.dataset.crEssHooked = '1';
-btn.addEventListener('click', function(){
-var view = document.getElementById('cr-est-view');
-if(!view) return;
-var statusSel = view.querySelector('[data-f="status"]');
-if(!statusSel || statusSel.value !== 'draft') return;
-var project = estProjectNow();   /* 970 */
-var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
-var elapsed = 0;
-var iv = setInterval(function(){
-elapsed += 200;
-if(!view.classList.contains('open')){
-clearInterval(iv);
-setTimeout(async function(){
-/* 776: this announced "Estimate published." on the strength of the EDITOR
-   CLOSING, which says nothing about whether a document was made. When publish
-   aborted, the user was told it had published anyway. Confirm a document
-   exists first — and poll for it, because cr-epub writes doc_id a moment after
-   the editor closes and demanding it immediately would lose this prompt on a
-   slow connection, trading a false yes for a false no. */
-var est = null;
-for(var _try = 0; _try < 8; _try++){
-try{
-var _rows = (await window.CardinalEstimates.loadForProject(project.id)) || [];
-if(_rows.length){
-est = (typeof pickEstimate === 'function') ? pickEstimate(_rows, openId) : _rows[0];
-if(est && est.doc_id) break;
-}
-}catch(_e){}
-await new Promise(function(r){ setTimeout(r, 750); });
-}
-if(!est || !est.doc_id) return;   /* no document: cr-epub has already spoken */
-/* 780: the old prompt promised to "move the pipeline forward" and then, on a
-   job already at or past Prospect, correctly did nothing — silently. Say what
-   will actually happen to THIS job before asking. */
+/* 1029: the editor's Save no longer closes the view, so the two close-polls
+   this block ran (one hooked to Save, one to Publish) would have spun their
+   9\u201312s intervals and silently given up on every save. The editor and the
+   Publish flow ANNOUNCE now — these listeners are the whole choreography, and
+   the body MutationObserver that re-hooked the buttons is retired with them
+   (one fewer body observer, not one more). */
+document.addEventListener('cr-est-saved', function(ev){
+var d = ev.detail || {};
+if(!d.status || !d.project || !d.project.id) return;
+setTimeout(function(){ try{ syncStageFor(d.project, d.status); }catch(_){ } }, 250);
+});
+document.addEventListener('cr-est-published', function(ev){
+var d = ev.detail || {};
+if(!d.project || !d.project.id || !d.id) return;
+/* same gate the old publish hook had: only a draft gets the Sent offer */
+if(d.prevStatus !== 'draft') return;
+setTimeout(function(){ markSentAfterPublish(d); }, 900);
+});
+async function markSentAfterPublish(d){
+var project = d.project;
+/* 941-era honesty: say what will actually happen to THIS job before asking. */
 var _cur = project.stage;
 try{ if(typeof window.normStage === 'function') _cur = window.normStage(_cur); }catch(_){}
 var _willMove = !!(STATUS_STAGE.sent && _cur !== 'Lost' && _cur !== STATUS_STAGE.sent &&
@@ -49039,7 +49198,7 @@ if(window.supa){
   /* .select() so a refused UPDATE is an error rather than a silent no-op —
      RLS or a missing row must not read as success. */
   var _r = await window.supa.from('estimates').update({ status:'sent' })
-                   .eq('id', est.id).select('id,status');
+                   .eq('id', d.id).select('id,status');
   if(_r.error) throw _r.error;
   _wrote = !!(_r.data && _r.data.length);
 }
@@ -49049,10 +49208,10 @@ alert('Could not mark it Sent \u2014 ' + ((e && e.message) || e) +
       '\n\nThe document was still created. Open the estimate and set the status by hand.');
 return;
 }
-/* 780: the write landed and NOTHING said so — the list still read draft, which
-   is exactly what "it does not go out of draft" looked like from his side. */
 if(_wrote){
 toast('Estimate marked Sent');
+/* the open editor mirrors the write (cr-est-script listens) */
+try{ document.dispatchEvent(new CustomEvent('cr-est-status', { detail: { id: d.id, status: 'sent' } })); }catch(_){ }
 try{
   if(window.CardinalEstimates && typeof window.CardinalEstimates.refreshSavedList === 'function'){
     window.CardinalEstimates.refreshSavedList(project.id);
@@ -49061,31 +49220,7 @@ try{
 try{ if(typeof window.renderOverview === 'function') window.renderOverview(); }catch(_){}
 }
 syncStageFor(project, 'sent');
-}, 900);
-}else if(elapsed > 12000){
-clearInterval(iv);
 }
-}, 200);
-}, true);
-return true;
-}
-var scheduled = false;
-function scan(){
-if(scheduled) return;
-scheduled = true;
-requestAnimationFrame(function(){
-scheduled = false;
-try{ hookEditor(); hookPublish(); }catch(_){}
-});
-}
-function start(){
-scan();
-new MutationObserver(scan).observe(document.body, {
-childList:true, subtree:true,
-});
-}
-if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
-else start();
 window.CardinalEstimateStageSync = {
 sync         : syncStageFor,
 statusStage  : STATUS_STAGE,
@@ -59530,7 +59665,7 @@ body[data-crm-head="community"] .site{--hbg:#047857;--hln:#0a9268;--hin:#fff;--h
    the other 23 now carry the same property. Without it a strip that reaches
    its left end passes the rest of the swipe to the page, and the browser
    reads that as a back navigation \u2014 Theo hit it on the leads chips and the
-   whole screen exited. Any new overflow-x:auto row needs this. */#projectView .subnote{color:#fff}#listView #listTitle{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#listView #listTitle .chipbtn{-webkit-text-fill-color:#2c2c2c}#listView #listNote{color:var(--rbe-mute,#9aa0a8);/* 942: was #fff — a dark-era
+   whole screen exited. Any new overflow-x:auto row needs this. */#projectView .subnote{color:#fff}:root[data-theme="rb-light"] #projectView .subnote{color:#5c5c5c}#listView #listTitle{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#listView #listTitle .chipbtn{-webkit-text-fill-color:#2c2c2c}#listView #listNote{color:var(--rbe-mute,#9aa0a8);/* 942: was #fff — a dark-era
    ink that survived into light and painted white on #f7f7f7 at 1.07:1,
    literally invisible. The rbe pair flips by itself: #9aa0a8 on the dark page
    is 7.55:1, light's #6b6b6b on #f7f7f7 is 4.92:1. Adjudicated from rendered
@@ -59540,7 +59675,7 @@ body[data-crm-head="community"] .site{--hbg:#047857;--hln:#0a9268;--hin:#fff;--h
    so on the dark page these two view headers sat at 2.97:1. Same flipping
    pair; both themes measured. */
 #activityView .subnote,#companyDocsView .subnote{color:var(--rbe-mute,#9aa0a8)}#listView label,#listView .listlbl{color:#c8202e}#listView #listBody,#listView .cards,#listView .doclist{background:transparent}#listView .card{margin-bottom:12px;border-radius:12px}#listView .listctl{color:#e35c63/* 943: #c8202e was 3.21:1 on the dark page; the lighter cardinal is 5.18–5.66 */}
-:root[data-theme="rb-light"] #listView .listctl{color:#c8202e}/* and light keeps the original, which passes at 5.67 on white — changing the base alone would have been the dark-fix-breaks-light class */#galleryView .subnote{color:#fff}#listView table.reports,#listView .reports thead,#listView .reports tbody{background:transparent;border:none;box-shadow:none}#listView .reports tr{border-radius:12px;overflow:hidden;margin-bottom:12px}/*cr-lv-readable-487: 44310 made this table transparent over --bg:#09090C but left the cells on their paper-theme colours - #333 read 1.57:1 and var(--muted) 2.97:1 at >700px. Retail token pair, so rb-light flips with it. .projrow sets its own light band and is excluded.*/#listView table.reports tr:not(.projrow) td{color:var(--rbe-ink)}#listView table.reports tr:not(.projrow) td small,#listView table.reports tr:not(.projrow) td .ref{color:var(--rbe-mute)}#listView table.reports tr:not(.projrow):hover td{background:rgba(255,255,255,.06)}.projhead{align-items:stretch}.projinfo{padding:11px 13px 12px}#projName{line-height:1.2;margin:2px 0 4px;overflow-wrap:anywhere}.cr-est-saved-list{background:#202329;border-radius:12px;padding:8px 8px 2px}.ljpo{color:#B57EDC;font-weight:800}#projectView .projsec{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#projectView .projsec a{-webkit-text-fill-color:#e35c63;color:#e35c63}.hero-hi,.hero-hi *,.acthead{color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}#mainView{background:transparent}#pwaNav #cr-ahc-badge{margin-right:0}body[data-crm-head="insurance"] #cr-hd2-ribbon{--racc:var(--ct-red);--rb1:var(--ct-bg);--rb2:var(--ct-surface-2);--rb3:var(--ct-surface);--rh1:var(--ct-red);--rh2:var(--ct-red-deep)}body[data-crm-head="community"] #cr-hd2-ribbon{--racc:#047857;--rb1:#04150f;--rb2:#061c14;--rb3:#08211a;--rh1:#047857;--rh2:#34D399}body[data-crm-head="production"] #cr-hd2-ribbon{--racc:#f5a623;--rb1:#14171b;--rb2:#181b20;--rb3:#1b1710;--rh1:#f5a623;--rh2:#ffd27a}body[data-crm-head="sales"] #cr-hd2-ribbon{--racc:#C8202E;--rb1:#1a1310;--rb2:#17120f;--rb3:#221407;--rh1:#e8544f;--rh2:#e35c63}#cr-hd2-mid #brandTitle{display:block !important}#cr-hd2-mid #brandCtx{display:none !important}#mainView .dashcard{display:none}</style>
+:root[data-theme="rb-light"] #listView .listctl{color:#c8202e}/* and light keeps the original, which passes at 5.67 on white — changing the base alone would have been the dark-fix-breaks-light class */#galleryView .subnote{color:#fff}#listView table.reports,#listView .reports thead,#listView .reports tbody{background:transparent;border:none;box-shadow:none}#listView .reports tr{border-radius:12px;overflow:hidden;margin-bottom:12px}/*cr-lv-readable-487: 44310 made this table transparent over --bg:#09090C but left the cells on their paper-theme colours - #333 read 1.57:1 and var(--muted) 2.97:1 at >700px. Retail token pair, so rb-light flips with it. .projrow sets its own light band and is excluded.*/#listView table.reports tr:not(.projrow) td{color:var(--rbe-ink)}#listView table.reports tr:not(.projrow) td small,#listView table.reports tr:not(.projrow) td .ref{color:var(--rbe-mute)}#listView table.reports tr:not(.projrow):hover td{background:rgba(255,255,255,.06)}.projhead{align-items:stretch}.projinfo{padding:11px 13px 12px}#projName{line-height:1.2;margin:2px 0 4px;overflow-wrap:anywhere}.cr-est-saved-list{background:#202329;border-radius:12px;padding:8px 8px 2px}.cr-est-saved-list .head{color:#9aa0a8}.ljpo{color:#B57EDC;font-weight:800}#projectView .projsec{color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}#projectView .projsec a{-webkit-text-fill-color:#e35c63;color:#e35c63}.hero-hi,.hero-hi *,.acthead{color:var(--rbe-head,#ffffff);/* 685: was a two-identical-stop gradient on text — same colour, no clip */}#mainView{background:transparent}#pwaNav #cr-ahc-badge{margin-right:0}body[data-crm-head="insurance"] #cr-hd2-ribbon{--racc:var(--ct-red);--rb1:var(--ct-bg);--rb2:var(--ct-surface-2);--rb3:var(--ct-surface);--rh1:var(--ct-red);--rh2:var(--ct-red-deep)}body[data-crm-head="community"] #cr-hd2-ribbon{--racc:#047857;--rb1:#04150f;--rb2:#061c14;--rb3:#08211a;--rh1:#047857;--rh2:#34D399}body[data-crm-head="production"] #cr-hd2-ribbon{--racc:#f5a623;--rb1:#14171b;--rb2:#181b20;--rb3:#1b1710;--rh1:#f5a623;--rh2:#ffd27a}body[data-crm-head="sales"] #cr-hd2-ribbon{--racc:#C8202E;--rb1:#1a1310;--rb2:#17120f;--rb3:#221407;--rh1:#e8544f;--rh2:#e35c63}#cr-hd2-mid #brandTitle{display:block !important}#cr-hd2-mid #brandCtx{display:none !important}#mainView .dashcard{display:none}</style>
 <script id="cr-hd2-script">
 (function(){
 'use strict';
@@ -67525,6 +67660,11 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #cr-est-view .cr-est-lineitem .pricing{border-top:1px dashed var(--obs-hair,#2f3038);}
 #cr-est-view .cr-est-totals .rule{border-top:1px solid var(--obs-hair,#2f3038);}
 #cr-est-view .cr-est-totals .deposit{background:rgba(200,32,46,.09);border:1px solid rgba(200,32,46,.55);}
+/* 1025: the three inks the 546 obsidian pass missed — the Total measured 1.98:1
+   and the deposit 1.89:1 (CR_MANUAL_ESTIMATES_AUDIT_2026-08). White money is
+   Theo's pick 1, the .actbox obsidian convention: white numbers on black. */
+#cr-est-view .cr-est-totals .grand-val{color:#ffffff;}
+#cr-est-view .cr-est-totals .deposit .amt{color:#ffffff;}
 
 /* the small controls */
 #cr-est-view .cr-est-itemchk{background:var(--obs-well,#0d0e12);border:1px solid var(--obs-hair,#2f3038);color:#f0a3a9;}
@@ -67597,7 +67737,7 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 }
 #cr-est-view .cr-est-nav .navhead{
   font:800 10.5px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
-  color:#6b7688;padding:0 6px 8px;
+  color:#8a95a9;padding:0 6px 8px;
 }
 #cr-est-view .cr-est-nav .navsec{
   display:flex;align-items:center;gap:7px;width:100%;
@@ -75366,6 +75506,9 @@ select{min-height:44px;}
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbrow:active{
   background:var(--rbe-panel,#16161B);
 }
+/* 1025: the Balance Due figure rode an INLINE #C8202E, which beat this block's
+   ink and measured 2.54:1 on the dark band. Now a class; rose on dark only. */
+:root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbmoney b.db-due{color:#f08a90;}
 
 /* the inks inside, one for one with the insurance list */
 :root:not([data-theme="rb-light"]) body:not(.claim-insurance):not(.claim-community) #projectView .dbmoney b,

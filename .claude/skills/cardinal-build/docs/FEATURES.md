@@ -6555,3 +6555,35 @@ now commits the first move, and the target is captured + committed via setStage(
 (4) closing the app in the Undo window lost the move — a pagehide/visibilitychange flush commits it.
 gate_1006 rewritten (14 assertions) + gate_1008 (6); controls on 1007 red. The audit's other confirmed
 findings (incl. the critical api/abc.js open proxy) are logged in OPEN_ITEMS "Audit 2026-08-23".
+
+### 1025–1030 — the manual-estimates arc (audit builds A–F; Theo: "1, A, own lane, button, drop it, hide")
+
+Six builds from `CR_MANUAL_ESTIMATES_AUDIT_2026-08.md`, one per audit item, each with its own
+Chromium gate (`gate_1025.mjs`–`gate_1030.mjs`, every one seen RED on its control):
+
+- **1025 — the obsidian estimates screens, finished (pick 1: white money).** Total/deposit white on
+  the black builder (were 1.98:1 dark red); gold hover states retired to zero; template menus dark
+  (`#pEstMenu` + `#pContractMenu`); Balance Due de-inlined to `.db-due`; light-mode ink repairs;
+  emoji out.
+- **1026 — the lanes tell the truth (pick: own thin lane).** The walls knew draft/sent/viewed/
+  approved/converted; the editor writes accepted/declined — Accepted lane claims `accepted`, new
+  full-width THIN Declined lane (`--rbe-dec-*`), `creLane` fallback → null + a labelled
+  UNRECOGNIZED STATUS safety net, discards filtered at load, footer sums honest (open =
+  Unsent+Sent; declined prints when non-zero), editor Delete passes the real project id.
+- **1027 — the client document, Option A + the phone fix.** `buildDocHtml` wears the serif
+  letterhead (red = brand rule / section chips / grand total, no summary strip) + viewport meta +
+  two screen media queries; content byte-identical, print untouched; share-wrapper hooks preserved.
+- **1028 — AI assists inside the estimate (picks: button; hide the doors).** `api/caption.js`
+  estimate-assist mode: ALL photos one request, schema-enforced `{overview, captions[],
+  cover_index}`. Ghost button in the Photos head; captions fill ONLY empty boxes, overview APPENDS
+  to Scope Notes, cover moves only when unstarred. Both ⚡ AI Estimate doors hidden (code +
+  `ai_estimates` dormant); "+ New estimate" is the primary; the admin App Walk re-taught.
+- **1029 — save-in-place + the satellite choreography.** Exported `CardinalEstimates.save()`
+  promise; `cr-est-saved`/`cr-est-published`/`cr-est-status` events replace all four editor-close
+  polls (cr-epub, cr-e2c, cr-ess ×2); cr-ess's body observer retired (45 → 44); Cancel → Close
+  with dirty guard; "auto №" hint; phone bottom action bar (theme FAB lifts clear via :has).
+- **1030 — classification by link; the dead table gone.** `isEstimateDoc()` classifies published
+  estimates by the `doc_id` link first (Documents buckets, both approvals legs, job card);
+  placeholder stops teaching the dodging title; cr-eaf's dead `wireStats`/`wireManualRows` out;
+  **`manual_estimates` dropped in production** (`drop_manual_estimates.sql`, schema recorded for
+  revert, refuses a non-empty table).
