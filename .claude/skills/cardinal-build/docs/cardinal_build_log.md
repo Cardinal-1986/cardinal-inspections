@@ -24241,3 +24241,26 @@ wire below it); `+ New estimate` is the primary door now; **Theo's admin App Wal
 (it tapped `new-ai` by name — four references — and would have gone red). Gate: `gate_1028.mjs`,
 mocked route — fill-not-overwrite proven in BOTH sweeps, append vs alone, cover honored vs ignored,
 request wire shape, doors, walk, api branch. GREEN; **control RED ×6**. Renders eyeballed.
+
+## Build 1029 — save stays in the room; the satellites stop guessing (audit Build C)
+
+The editor's Save used to CLOSE the editor — and the close was the SIGNAL three satellites polled
+for: cr-epub (Publish) and cr-e2c (→ Contract) clicked Save and ran `waitForEditorClose(9000)`,
+then re-fetched the project's rows and *picked* the one they hoped was it (970's guard); cr-ess
+(status→stage sync) hooked the Save and Publish **clicks** and ran two more close-polls of its own.
+Save-in-place would have silently broken all four polls — so the choreography moved to
+announcements. Now: **`CardinalEstimates.save()` is an exported promise resolving the saved DB
+row**; the editor **stays open** (toast, number appears, `auto №` until first save, Delete button
+materialises); `cr-est-saved` / `cr-est-published` / `cr-est-status` CustomEvents carry the rest —
+cr-ess listens instead of observing (**its body MutationObserver is retired: 45 → 44 body
+observers**, the healthy direction; the census note in CLAUDE.md is now one lighter), the walls
+reload on save, the open editor mirrors the stage-sync's `sent` write. Publish and → Contract
+consume the returned row directly — **970's guard sharpened**: no lookup, no picking, a
+project-id cross-check is all that remains; on a failed save they stand down silently because
+save() already told the user why (776: never silent, never doubled). Cancel is now **Close** with
+a dirty guard (delegated input/change listener; save clears it). **Phone bottom action bar** —
+Save + Publish fixed under the thumb, obsidian like the editor; the floating theme toggle (which
+deliberately rides above full-screen views, 694) lifts to bottom:96px on phones via `:has` so it
+clears the bar. Gate: `gate_1029.mjs` — in-place save through the mock + event detail, dirty guard
+both directions, clean-close after save, auto №, phonebar both widths, polls retired, observer
+census −1. GREEN; **control RED ×12**.

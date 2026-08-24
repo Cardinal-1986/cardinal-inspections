@@ -3705,7 +3705,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-23 build 1028 &#8212; the AI helps from inside the estimate, and the separate AI door is gone. One button in the estimate’s Photos section reads every attached photo at once: it writes captions for photos that have none (never over yours), adds a short overview to Scope Notes (never replacing what you wrote), and picks a cover only if you haven’t starred one. The two “AI Estimate” buttons (the estimates screen and the client profile) are hidden — estimates are just estimates now. Build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1029 &#8212; saving an estimate no longer throws you out of it. Save keeps the editor open — a toast confirms, the estimate number appears on first save, and you keep working; the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar under your thumb. Publish and → Contract are faster and surer: they used to press Save for you and wait up to nine seconds watching for the editor to close, then go find the saved row and guess which one it was — they now receive the exact saved estimate directly. Build 1028 &#8212; the AI helps from inside the estimate, and the separate AI door is gone. One button in the estimate’s Photos section reads every attached photo at once: it writes captions for photos that have none (never over yours), adds a short overview to Scope Notes (never replacing what you wrote), and picks a cover only if you haven’t starred one. The two “AI Estimate” buttons (the estimates screen and the client profile) are hidden — estimates are just estimates now. Build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -29141,6 +29141,16 @@ function showList() {
     renderEst();
   }
 
+  /* 1029: an in-place save or publish in the editor refreshes the walls —
+     before, the reload rode on the editor closing, which no longer happens. */
+  ['cr-est-saved', 'cr-est-published'].forEach(function(t){
+    document.addEventListener(t, function(){
+      try{
+        if (state.view === 'list' && MOUNT.querySelector('[data-cre-lanes]')) loadEstRows();
+      }catch(_){ }
+    });
+  });
+
   // ── Status Lanes engine (retail-B step 3) ────────────────────
   const CRE_LANES = [
     { key: 'Unsent',   title: 'UNSENT \u2014 DRAFTS', statuses: ['draft'],                 col: 'var(--rbe-uns-col)', lg: 'var(--rbe-uns-lg)', neon: 'var(--rbe-uns-neon)' },
@@ -42018,6 +42028,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1029, d:'2026-08-24', t:'Save stays in the estimate', s:'Saving an estimate used to close the editor \u2014 mid-thought, every time. Save now keeps you in the estimate: a toast confirms it saved, the estimate number appears the first time (the header reads \u201cauto \u2116\u201d until then), and the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar at the bottom of the screen. Under the hood, Publish, \u2192 Contract and the pipeline-stage sync used to press Save for you and then watch for up to nine seconds for the editor to close before hunting down the saved row; all three now receive the saved estimate directly, so publishing is faster and can never grab the wrong row. The estimates board also refreshes itself after a save instead of waiting for you to reopen it.' },
 { b:1028, d:'2026-08-23', t:'AI assists inside the estimate', s:'Instead of a separate \u201cAI Estimate\u201d door that built a different kind of estimate, the AI now helps from inside the one estimate editor. A new button in the Photos section reads every attached photo in a single pass: photos without a caption get one written (a caption you typed is never touched), a short overview of what the photos show is added to the end of Scope Notes (never replacing what you wrote), and if no photo is starred as the cover the AI nominates the best establishing shot \u2014 your starred pick is never moved. The two old \u26a1 AI Estimate buttons are hidden; the code and its table stay dormant underneath. The \u201c+ New estimate\u201d button is now the main way in, and Theo\u2019s admin App Walk was taught the new path.' },
 { b:1027, d:'2026-08-23', t:'The client\u2019s copy is readable on a phone', s:'The estimate document a homeowner opens from the share link (and the printed copy) was locked to an 8.5-inch page width with no phone handling at all, so on a phone it painted at about a fifth of readable size and clients pinch-zoomed their way through their own quote. The document now reflows on small screens \u2014 the header stacks, the details table goes one field per line, photos go single-column, tables fit the width \u2014 and prints exactly as it always has. It also got a cleaner dress: serif letterhead, hairline rules, and red held back for the brand line, the section numbers and the grand total, so the money reads first. Already-sent estimates keep the copy they were sent with; everything published from now on uses the new look.' },
 { b:1026, d:'2026-08-23', t:'The estimate lanes tell the truth', s:'The Estimates walls only knew draft, sent and approved, so an estimate you marked Accepted or Declined in the editor quietly fell into the UNSENT \u2014 DRAFTS column \u2014 at the time of this build, $27,310 of accepted work was parading as drafts and being counted as open pipeline. Accepted estimates now land in ACCEPTED, Declined gets its own thin strip at the bottom of the board, and anything with a status the walls have never heard of shows up under UNRECOGNIZED STATUS instead of hiding. The footer sums are honest now too: open pipeline is only what can still close (drafts + sent), accepted money is counted as accepted, and declined money prints separately when there is any. A discarded AI draft no longer sneaks back into the board after a reload, and deleting a saved estimate from the editor refreshes the right job\u2019s list again.' },
@@ -47095,7 +47106,7 @@ body.standalone #cr-est-picker .box-list{padding-bottom:calc(88px + env(safe-are
   padding:2px 7px;border-radius:9px;background:rgba(0,0,0,.07);color:#6b6b6b}
 #cr-est-picker .cat-header .chev{flex:none;display:flex;align-items:center;transition:transform .12s ease}
 #cr-est-picker .cat.closed .cat-header .chev{transform:rotate(-90deg)}
-#cr-est-picker .cat.closed .cat-body{display:none}#cr-est-picker .p-item{padding:12px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}#cr-est-picker .p-item:hover{background:#f4f2f1}#cr-est-picker .p-item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}#cr-est-picker .p-item .name{flex:1;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .p-item .price{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker .p-item .desc{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;max-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#cr-est-picker .empty{padding:32px 20px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}/* 1028: the AI assist is the quiet button beside the red attach */#cr-est-view .add-lib.ai-assist{background:none;border:1px solid rgba(200,32,46,.5);color:inherit}#cr-est-view .add-lib.ai-assist[disabled]{opacity:.55;cursor:default}</style>
+#cr-est-picker .cat.closed .cat-body{display:none}#cr-est-picker .p-item{padding:12px 16px;border-bottom:1px solid #f0e8d0;cursor:pointer;transition:background .1s}#cr-est-picker .p-item:hover{background:#f4f2f1}#cr-est-picker .p-item .top{display:flex;align-items:baseline;gap:10px;margin-bottom:3px}#cr-est-picker .p-item .name{flex:1;font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .p-item .price{font:800 12.5px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker .p-item .desc{font:400 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;max-height:2.6em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}#cr-est-picker .empty{padding:32px 20px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}/* 1028: the AI assist is the quiet button beside the red attach */#cr-est-view .add-lib.ai-assist{background:none;border:1px solid rgba(200,32,46,.5);color:inherit}#cr-est-view .add-lib.ai-assist[disabled]{opacity:.55;cursor:default}/* 1029: the phone action bar — Save and Publish under the thumb */.cr-est-phonebar{display:none}@media (max-width:700px){#cr-est-view .cr-est-phonebar{display:flex;gap:10px;position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:rgba(10,11,14,.93);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid #23262d;z-index:6}#cr-est-view .cr-est-phonebar button{flex:1;padding:13px 10px;border-radius:11px;border:1px solid rgba(200,32,46,.55);background:none;color:#e8e6e1;font:700 15px 'Segoe UI',Arial,sans-serif;cursor:pointer}#cr-est-view .cr-est-phonebar button.primary{background:#c8202e;border-color:#c8202e;color:#fff}#cr-est-view .cr-est-body{padding-bottom:88px}body:has(#cr-est-view.open) #cr-dark-toggle{bottom:96px}}</style>
 <script id="cr-est-script">
 (function(){
 'use strict';
@@ -47229,6 +47240,11 @@ if(view) return view;
 view = document.createElement('div');
 view.id = 'cr-est-view';
 document.body.appendChild(view);
+/* 1029: one delegated listener marks the draft dirty; the Close button asks
+   before discarding, and save() clears it. Wired once — render() replaces
+   innerHTML, not this element, so it never stacks. */
+view.addEventListener('input', function(){ if(state) state._dirty = true; }, true);
+view.addEventListener('change', function(){ if(state) state._dirty = true; }, true);
 return view;
 }
 function openEditor(project, existing){
@@ -47275,6 +47291,7 @@ notes          : '',
 payment_instructions: defaultPayInstr(),
 };
 }
+state._dirty = false;
 render();
 view.classList.add('open');
 document.body.style.overflow = 'hidden';
@@ -47284,6 +47301,15 @@ if(view) view.classList.remove('open');
 document.body.style.overflow = '';
 state = null;
 }
+/* 1029: after Publish, the stage sync (cr-ess) writes status:'sent' to the DB
+   and announces it — the open editor keeps its screen honest without a poll. */
+document.addEventListener('cr-est-status', function(ev){
+var d = ev.detail || {};
+if(!state || !d.id || String(state.id) !== String(d.id) || !d.status) return;
+state.status = d.status;
+var sel = view && view.querySelector('[data-f="status"]');
+if(sel) sel.value = d.status;
+});
 function buildDefaultTitle(project){
 var who = (project && (project.name || project.client_name || '')) || 'Client';
 return 'Estimate — ' + who;
@@ -47297,13 +47323,18 @@ var s = state;
 var t = computeTotals(s);
 view.innerHTML =
 '<div class="cr-est-head">' +
-'<button data-act="close" type="button">Cancel</button>' +
+'<button data-act="close" type="button">Close</button>' +
 /* 524: only on a SAVED estimate - there is nothing to delete before the first
    save, and an enabled Delete on a blank draft is a trap. */
 (s.id ? '<button class="danger" data-act="del" type="button">Delete</button>' : '') +
-'<span class="estnum">' + esc(s.estimate_number || (s.id ? '' : 'new')) + '</span>' +
+'<span class="estnum" title="The estimate number is assigned on first save">' + esc(s.estimate_number || (s.id ? '' : 'auto \u2116')) + '</span>' +
 '<h2>' + esc(s.id ? 'Edit Estimate' : 'New Estimate') + '</h2>' +
 '<button class="primary" data-act="save" type="button">' + (s.id ? 'Save' : 'Save Draft') + '</button>' +
+'</div>' +
+/* 1029: fixed under the thumb on a phone; display:none on desktop */
+'<div class="cr-est-phonebar">' +
+'<button data-act="bar-save" type="button">' + (s.id ? 'Save' : 'Save Draft') + '</button>' +
+'<button class="primary" data-act="bar-publish" type="button">Publish</button>' +
 '</div>' +
 '<div class="cr-est-body">' +
 estNavHtml(s) +
@@ -47724,9 +47755,20 @@ cell.textContent = money(amt);
 function wire(){
 if(!view) return;
 view.querySelector('[data-act="close"]').onclick = function(){
+/* 1029: Save no longer closes the editor, so this is the one exit — it asks
+   before discarding unsaved work. */
+if(state && state._dirty && !confirm('You have unsaved changes.\n\nClose without saving?')) return;
 close();
 };
 view.querySelector('[data-act="save"]').onclick = handleSave;
+var barSave = view.querySelector('[data-act="bar-save"]');
+if(barSave) barSave.onclick = handleSave;
+var barPub = view.querySelector('[data-act="bar-publish"]');
+if(barPub) barPub.onclick = function(){
+var pb = document.getElementById('cr-epub-btn');
+if(pb) pb.click();
+else alert('Publish is still loading \u2014 give it a second and tap again.');
+};
 /* guarded, unlike its neighbours: the Delete button only exists on a saved
    estimate, and wire() otherwise dereferences querySelector() straight away. */
 var delBtn = view.querySelector('[data-act="del"]');
@@ -47886,15 +47928,23 @@ estNavWire();
 autoGrowAll();
 }
 async function handleSave(){
+save().catch(function(_){ });
+}
+/* 1029: the save is a promise the satellites (Publish, \u2192 Contract, the
+   stage sync) consume directly. The old choreography clicked Save and POLLED
+   for the editor to close — which save-in-place would have silently broken.
+   Resolves with the saved DB row; rejects AFTER telling the user why, so a
+   caller must not alert again (776: never silent, never doubled). */
+async function save(){
 var s = state;
-if(!s) return;
+if(!s) throw new Error('No estimate open');
 if(!s.project || !s.project.id){
 alert('Estimate is not attached to a project.');
-return;
+throw new Error('no project');
 }
 if(!s.title.trim()){
 alert('Give the estimate a title.');
-return;
+throw new Error('no title');
 }
 var totals = computeTotals(s);
 var linesForDb = s.lines.map(function(l){
@@ -47919,21 +47969,45 @@ valid_through        : s.valid_through || null,
 notes                : s.notes || null,
 payment_instructions : s.payment_instructions || null,
 };
-var saveBtn = view.querySelector('[data-act="save"]');
-if(saveBtn){ saveBtn.disabled = true; saveBtn.textContent = 'Saving\u2026'; }
+['[data-act="save"]', '[data-act="bar-save"]'].forEach(function(sel){
+var b = view.querySelector(sel);
+if(b){ b.disabled = true; b.textContent = 'Saving\u2026'; }
+});
 try{
 var saved = await saveEstimate(payload, s.id);
+var wasNew = !s.id;
+s.id = saved.id;
+s.estimate_number = saved.estimate_number || s.estimate_number;
+s._dirty = false;
 if(typeof window.auditLog === 'function'){
 try{ window.auditLog('estimate_save',
-(s.id ? 'Updated ' : 'Created ') + 'estimate ' + (saved.estimate_number || '') + ': ' + payload.title,
+(wasNew ? 'Created ' : 'Updated ') + 'estimate ' + (saved.estimate_number || '') + ': ' + payload.title,
 s.project.id); }catch(_){ }
 }
-close();
-refreshSavedList(s.project.id);
-alert((s.id ? 'Estimate updated. ' : 'Estimate saved as ' + saved.estimate_number + '. ') + 'Total: ' + money(totals.total));
+/* stay OPEN — re-render so the number, Delete button and totals reflect it
+   (the satellite-injected header buttons re-inject via their own observers) */
+if(state === s) render();
+try{ refreshSavedList(s.project.id); }catch(_){ }
+var msg = (wasNew ? 'Saved as ' + (saved.estimate_number || 'a new estimate') : 'Saved')
++ ' \u00b7 ' + money(totals.total);
+if(typeof window.toast === 'function'){ try{ window.toast(msg); }catch(_){ alert(msg); } }
+else{ alert(msg); }
+try{
+document.dispatchEvent(new CustomEvent('cr-est-saved', { detail: {
+id: saved.id, row: saved, status: saved.status || s.status, project: s.project,
+} }));
+}catch(_){ }
+return saved;
 }catch(e){
 alert('Save failed: ' + (e.message || e));
-if(saveBtn){ saveBtn.disabled = false; saveBtn.textContent = s.id ? 'Save' : 'Save Draft'; }
+throw e;
+}finally{
+if(state === s && view){
+['[data-act="save"]', '[data-act="bar-save"]'].forEach(function(sel){
+var b = view.querySelector(sel);
+if(b){ b.disabled = false; b.textContent = s.id ? 'Save' : 'Save Draft'; }
+});
+}
 }
 }
 var pickerQuery = '';
@@ -48307,6 +48381,7 @@ window.CardinalEstimates = Object.assign(window.CardinalEstimates || {}, {
 openEditor       : openEditor,
 deleteEstimate   : deleteEstimate,
 close            : close,
+save             : save,
 loadForProject   : loadForProject,
 refreshSavedList : refreshSavedList,
 currentState     : function(){
@@ -48777,37 +48852,39 @@ saveBtn.parentNode.insertBefore(btn, saveBtn);
 async function handlePublishClick(){
 var btn = document.getElementById('cr-epub-btn');
 if(!btn) return;
-var saveBtn = document.querySelector('#cr-est-view [data-act="save"]');
-if(!saveBtn){ alert('Editor not ready.'); return; }
+if(!(window.CardinalEstimates && typeof window.CardinalEstimates.save === 'function')){
+alert('Editor not ready.'); return;
+}
 btn.disabled = true; btn.textContent = 'Publishing\u2026';
 var projectBefore = estProjectNow();   /* 970 */
-var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
-try{
-saveBtn.click();
-var closed = await waitForEditorClose(9000);
-if(!closed){
-/* 776: this used to return in SILENCE. The button went "Publishing…" and then
-   back to "Publish", with no document and no explanation — the user has no way
-   to tell a slow save from a broken button. Nothing here is recoverable
-   automatically: the estimate is still open and still unsaved, so say so and
-   let them retry. */
+if(!projectBefore || !projectBefore.id){
 btn.disabled = false; btn.textContent = 'Publish';
-alert('The estimate has not finished saving, so nothing was published.\n\n' +
-'Check your connection, then press Publish again. Your work is still on screen.');
+alert('Open an estimate first.');
 return;
 }
-var rows = await window.CardinalEstimates.loadForProject(projectBefore.id);
-if(!rows.length){
-alert('Could not find the saved estimate to publish.');
+try{
+var est = null;
+try{ est = await window.CardinalEstimates.save(); }
+catch(_e){
+/* 1029: save() already told the user exactly why (validation or network) —
+   776's rule holds, nothing is silent; the message just isn't doubled.
+   The estimate is still on screen; they fix it and press Publish again. */
+btn.disabled = false; btn.textContent = 'Publish';
 return;
 }
-var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
-
-/* 970: pickEstimate returns null when the open estimate is not in these rows —
-   i.e. they belong to a different client. Say so; never publish the other one. */
-if(!est){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
+/* 970's guard, sharpened: we publish the exact row save() returned — no
+   lookup, no picking. The cross-check below is the only ambiguity left. */
+if(!est || String(est.project_id) !== String(projectBefore.id)){
+alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.');
+return;
+}
 var docId = await publish(est, projectBefore);
 if(!docId){ return; }
+try{
+document.dispatchEvent(new CustomEvent('cr-est-published', { detail: {
+id: est.id, docId: docId, prevStatus: est.status || 'draft', project: projectBefore,
+} }));
+}catch(_){ }
 if(!openDoc(docId)){
 alert('Estimate published as ' + (est.estimate_number || 'a document') +
 '.\n\nOpen it from the client\u2019s document list to share, email, or collect a signature.');
@@ -48819,18 +48896,9 @@ var b = document.getElementById('cr-epub-btn');
 if(b){ b.disabled = false; b.textContent = 'Publish'; }
 }
 }
-function waitForEditorClose(timeoutMs){
-return new Promise(function(resolve){
-var view = document.getElementById('cr-est-view');
-if(!view || !view.classList.contains('open')) return resolve(true);
-var elapsed = 0;
-var iv = setInterval(function(){
-elapsed += 150;
-if(!view.classList.contains('open')){ clearInterval(iv); resolve(true); }
-else if(elapsed >= timeoutMs){ clearInterval(iv); resolve(false); }
-}, 150);
-});
-}
+/* 1029: waitForEditorClose retired — save-in-place means the editor no longer
+   closes on Save, so polling for the close would hang 9s and give up on every
+   single publish. The promise IS the signal now. */
 var scheduled = false;
 function scheduleInject(){
 if(scheduled) return;
@@ -48976,23 +49044,16 @@ if(!go) return;
 var project = estProjectNow();   /* 970 */
 if(!project || !project.id){ alert('Open an estimate first.'); return; }
 btn.disabled = true; btn.textContent = 'Working\u2026';
-var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
 try{
-saveBtn.click();
-var closed = await waitForEditorClose(9000);
-if(!closed){
-/* 776: silent give-up, same class as the Publish button above. */
-alert('The estimate has not finished saving, so no contract was generated.\n\n' +
-'Check your connection, then press \u2192 Contract again.');
+var est = null;
+try{ est = await window.CardinalEstimates.save(); }
+catch(_e){
+/* 1029: save() already told the user why; don't double the message. The
+   estimate is still on screen for them to fix and retry. */
 return;
 }
-var rows = await window.CardinalEstimates.loadForProject(project.id);
-if(!rows.length){ alert('Could not find the saved estimate.'); return; }
-var est = (typeof pickEstimate === 'function') ? pickEstimate(rows, openId) : rows[0];
-
-/* 970: pickEstimate returns null when the open estimate is not in these rows —
-   i.e. they belong to a different client. Say so; never contract the other one. */
-if(!est){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
+/* 970's guard, sharpened: this is the exact row save() returned. */
+if(!est || String(est.project_id) !== String(project.id)){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
 var docId = await generate(est, project);
 if(!docId) return;
 if(typeof window.reload === 'function'){
@@ -49011,18 +49072,7 @@ var b = document.getElementById('cr-e2c-btn');
 if(b){ b.disabled = false; b.textContent = '\u2192 Contract'; }
 }
 }
-function waitForEditorClose(timeoutMs){
-return new Promise(function(resolve){
-var view = document.getElementById('cr-est-view');
-if(!view || !view.classList.contains('open')) return resolve(true);
-var elapsed = 0;
-var iv = setInterval(function(){
-elapsed += 150;
-if(!view.classList.contains('open')){ clearInterval(iv); resolve(true); }
-else if(elapsed >= timeoutMs){ clearInterval(iv); resolve(false); }
-}, 150);
-});
-}
+/* 1029: waitForEditorClose retired here too — see cr-epub's note. */
 var scheduled = false;
 function scheduleInject(){
 if(scheduled) return;
@@ -49142,69 +49192,27 @@ toast('Pipeline moved to ' + displayStage(target));
 console.warn('[ess] setStage failed:', e);
 }
 }
-function hookEditor(){
-var view = document.getElementById('cr-est-view');
-if(!view) return false;
-var saveBtn = view.querySelector('[data-act="save"]');
-if(!saveBtn) return false;
-if(saveBtn.dataset.crEssHooked === '1') return true;
-saveBtn.dataset.crEssHooked = '1';
-saveBtn.addEventListener('click', function(){
-var statusSel = view.querySelector('[data-f="status"]');
-var status = statusSel ? statusSel.value : null;
-var project = estProjectNow();   /* 970: the plain Save path moved the WRONG client's stage */
-if(!status || !project) return;
-var elapsed = 0;
-var iv = setInterval(function(){
-elapsed += 150;
-if(!view.classList.contains('open')){
-clearInterval(iv);
-setTimeout(function(){ syncStageFor(project, status); }, 250);
-}else if(elapsed > 9000){
-clearInterval(iv);
-}
-}, 150);
-}, true);
-return true;
-}
-function hookPublish(){
-var btn = document.getElementById('cr-epub-btn');
-if(!btn || btn.dataset.crEssHooked === '1') return false;
-btn.dataset.crEssHooked = '1';
-btn.addEventListener('click', function(){
-var view = document.getElementById('cr-est-view');
-if(!view) return;
-var statusSel = view.querySelector('[data-f="status"]');
-if(!statusSel || statusSel.value !== 'draft') return;
-var project = estProjectNow();   /* 970 */
-var openId = (typeof openEstimateId === 'function') ? openEstimateId() : null;
-var elapsed = 0;
-var iv = setInterval(function(){
-elapsed += 200;
-if(!view.classList.contains('open')){
-clearInterval(iv);
-setTimeout(async function(){
-/* 776: this announced "Estimate published." on the strength of the EDITOR
-   CLOSING, which says nothing about whether a document was made. When publish
-   aborted, the user was told it had published anyway. Confirm a document
-   exists first — and poll for it, because cr-epub writes doc_id a moment after
-   the editor closes and demanding it immediately would lose this prompt on a
-   slow connection, trading a false yes for a false no. */
-var est = null;
-for(var _try = 0; _try < 8; _try++){
-try{
-var _rows = (await window.CardinalEstimates.loadForProject(project.id)) || [];
-if(_rows.length){
-est = (typeof pickEstimate === 'function') ? pickEstimate(_rows, openId) : _rows[0];
-if(est && est.doc_id) break;
-}
-}catch(_e){}
-await new Promise(function(r){ setTimeout(r, 750); });
-}
-if(!est || !est.doc_id) return;   /* no document: cr-epub has already spoken */
-/* 780: the old prompt promised to "move the pipeline forward" and then, on a
-   job already at or past Prospect, correctly did nothing — silently. Say what
-   will actually happen to THIS job before asking. */
+/* 1029: the editor's Save no longer closes the view, so the two close-polls
+   this block ran (one hooked to Save, one to Publish) would have spun their
+   9\u201312s intervals and silently given up on every save. The editor and the
+   Publish flow ANNOUNCE now — these listeners are the whole choreography, and
+   the body MutationObserver that re-hooked the buttons is retired with them
+   (one fewer body observer, not one more). */
+document.addEventListener('cr-est-saved', function(ev){
+var d = ev.detail || {};
+if(!d.status || !d.project || !d.project.id) return;
+setTimeout(function(){ try{ syncStageFor(d.project, d.status); }catch(_){ } }, 250);
+});
+document.addEventListener('cr-est-published', function(ev){
+var d = ev.detail || {};
+if(!d.project || !d.project.id || !d.id) return;
+/* same gate the old publish hook had: only a draft gets the Sent offer */
+if(d.prevStatus !== 'draft') return;
+setTimeout(function(){ markSentAfterPublish(d); }, 900);
+});
+async function markSentAfterPublish(d){
+var project = d.project;
+/* 941-era honesty: say what will actually happen to THIS job before asking. */
 var _cur = project.stage;
 try{ if(typeof window.normStage === 'function') _cur = window.normStage(_cur); }catch(_){}
 var _willMove = !!(STATUS_STAGE.sent && _cur !== 'Lost' && _cur !== STATUS_STAGE.sent &&
@@ -49219,7 +49227,7 @@ if(window.supa){
   /* .select() so a refused UPDATE is an error rather than a silent no-op —
      RLS or a missing row must not read as success. */
   var _r = await window.supa.from('estimates').update({ status:'sent' })
-                   .eq('id', est.id).select('id,status');
+                   .eq('id', d.id).select('id,status');
   if(_r.error) throw _r.error;
   _wrote = !!(_r.data && _r.data.length);
 }
@@ -49229,10 +49237,10 @@ alert('Could not mark it Sent \u2014 ' + ((e && e.message) || e) +
       '\n\nThe document was still created. Open the estimate and set the status by hand.');
 return;
 }
-/* 780: the write landed and NOTHING said so — the list still read draft, which
-   is exactly what "it does not go out of draft" looked like from his side. */
 if(_wrote){
 toast('Estimate marked Sent');
+/* the open editor mirrors the write (cr-est-script listens) */
+try{ document.dispatchEvent(new CustomEvent('cr-est-status', { detail: { id: d.id, status: 'sent' } })); }catch(_){ }
 try{
   if(window.CardinalEstimates && typeof window.CardinalEstimates.refreshSavedList === 'function'){
     window.CardinalEstimates.refreshSavedList(project.id);
@@ -49241,31 +49249,7 @@ try{
 try{ if(typeof window.renderOverview === 'function') window.renderOverview(); }catch(_){}
 }
 syncStageFor(project, 'sent');
-}, 900);
-}else if(elapsed > 12000){
-clearInterval(iv);
 }
-}, 200);
-}, true);
-return true;
-}
-var scheduled = false;
-function scan(){
-if(scheduled) return;
-scheduled = true;
-requestAnimationFrame(function(){
-scheduled = false;
-try{ hookEditor(); hookPublish(); }catch(_){}
-});
-}
-function start(){
-scan();
-new MutationObserver(scan).observe(document.body, {
-childList:true, subtree:true,
-});
-}
-if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
-else start();
 window.CardinalEstimateStageSync = {
 sync         : syncStageFor,
 statusStage  : STATUS_STAGE,
