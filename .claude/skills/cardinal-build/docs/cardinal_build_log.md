@@ -24282,3 +24282,71 @@ tick. Gate: `gate_1030.mjs` — a renamed published estimate injected gate-side 
 Estimates bucket (control: misfiled under Inspections, live), helper truth-table, approvals legs
 ×2, placeholder, cruft. GREEN; **control RED ×7. All six arc gates (1025–1030) re-run GREEN
 against this final artifact.**
+
+## Build 1032 — the delete-client caption reads in light mode (audit appendix; Theo: "do 5")
+
+*(1031 is claimed by branch `claude/claude-md-docs-9qyu0f` — `next_build.py` said 1032; gaps are
+normal.)* The Delete Client caption carried inline `color:#a89f9a` — dark-era ink, **2.42:1** on
+the light profile. Same class as 1025's Balance Due (inline beats every stylesheet): de-inlined to
+`.danger-note`, dark keeps `#a89f9a` (7.7/6.8:1 computed), light reuses 1025's caption ink
+`#6c655e` (5.1/5.7:1). **The OTHER half of audit item 5 — the lnav Landing yellow — is deliberately
+NOT touched:** build 539's comment records Theo choosing `#f0c651` with the 1.47:1 measurement in
+front of him ("Do not 'fix' this back to amber without asking him"); the ask goes on his reminder
+list. Gate: `gate_1032.mjs` computed inks both themes on the profile; GREEN, control RED ×3.
+
+## Build 1033 — the AI-estimate arm deleted, whole (item 6; Theo: "truly deleted")
+
+1028 hid the doors; this removes the machinery, per the 807 checklist (every wiring mapped first).
+**Gone (−36.9 KB):** the AI Create + Output views, the photo-session/downscale/upload sections,
+`api()`/`generateEstimate`/`convertToContract`/`normalizeAI`, the ai leg of `loadList`, the lanes'
+ai click branch + ⚡ badge, `creDiscard`'s ai branch, the `openAI`/`openOne` exports, both
+`cr-tmpl-ai-*` templates, `.cre-ai`; cr-shim's `openAI` route (its only project-passing caller was
+the door removed at 1028); the dead `#pAiEstimateBtn` wiring; cr-claims' linked-AI-estimate load +
+card + click; cr-xlinks' `forEstimate`/`linkClaimToEstimate` (**their only "callers" were the
+banner's own install prose** — comment pollution, both directions); cr-ahc's `checkAI()` + its env
+row + table row; cr-inv's `check_4`/`check_5` + registry rows; cr-eaf's `wireSave`/`wireSend`.
+**`api/estimate.js` deleted** + its `vercel.json` entry (an unmatched functions pattern fails the
+deploy); `api/estimate-to-contract.js` refuses `ai_estimate_id` and keeps only the project path.
+⚠️ **`drop_ai_estimates.sql` ships but is NOT yet applied** — the automated apply was declined
+(it drops two FK constraints by name on the live `contracts`/`insurance_claims` tables); Theo runs
+it by hand per convention; 0 rows + 0 FK references verified; the app stopped reading the table
+this build either way. Two lessons banked: **only the runtime gate caught the first xlinks cut
+taking `forContract` and every renderer with it** (it parsed clean — five-state pageerror sweep is
+now the pattern for deletions), and my own tombstone comments tripped my own leftover-reference
+asserts FIVE times (context-checked asserts now). Gate: `gate_1033.mjs` GREEN (five states, zero
+pageerrors, zero live refs, api checks); **control RED ×9**; arc gates 1026/28/29/30/32 all re-run
+GREEN on this artifact.
+
+## Build 1034 — the dropped LOWs, verified then fixed (item 7; Theo: "do 7")
+
+The 23 Aug audit's nine unverified LOWs, each re-verified against the CURRENT tree and live DB
+before touching anything. **Fixed in index.html:** (1) the Google-review confirm fired on a
+BACKWARD Invoiced→Completed correction — `_crStageReviewMaybe` now takes the pending move's true
+`from` and celebrates only a forward arrival (the control probe shows the old 2×-ask live);
+(4) the New Bid property picker tried `forPartner`/`byPartner` — **names that have never
+existed** — and fell through to `list()`, a read of a never-loaded cache, so it usually showed no
+properties; it calls `load()` now; (5) the guarded never-defined `CardinalCommunityBid.logSubmitted`
+call removed; (6) `.pu-tag.supp` (947's SUPPLEMENT chip) got its light twin — same computed
+`#8a5500` its sibling `.pu-st.warn` already used. **Fixed in sw.js:** (7) offline, only the ROOT
+gets the cached app shell — the AI-Field-Manual iframe gets the honest offline card instead of a
+second copy of the CRM. **Shipped for Theo's SQL-editor visit** (automated writes declined by the
+permission classifier): `fix_onhold_stage_since.sql` (8 — the one Maker Space row) and two orphaned
+trigger-function drops appended to `drop_ai_estimates.sql`. **Already fixed, no work:** (2)
+`manual_estimates` dropped at 1030; (9) void readers fixed at 1015. **Operator-only:** (3)
+leaked-password protection confirmed still OFF by the live security advisor — on Theo's reminder
+list beside the signup toggle. Gate: `gate_1034.mjs` — the review truth-table (stub must OUTLIVE
+the 300ms timer — the first probe restored confirm too early and read 0/0 on both trees; the
+control's identical failure was the tell), computed chip inks both themes, picker/dead-call/sw
+statics. GREEN; **control RED ×5**.
+
+## Build 1035 — the Landing label reads in light mode (Theo's delegated call: "I trust you would do it best")
+
+539 chose literal yellow `#f0c651` in BOTH themes with the 1.47:1 measurement in front of him; the
+block's comment said not to change it without asking. 1032 put the ask on his list; the answer
+delegated the call. **Best = the 545/557 obsidian-tiles precedent: the same hue DEEPENED, never
+swapped** — dark keeps the true yellow untouched; light gets `#8a6100`, the amber 538 originally
+computed for this exact rail — and the patch's own arithmetic reproduces 538's recorded numbers to
+the digit (4.99 / 5.54 / 4.55 on rail / active card / hover). Both comment records updated so the
+next reader sees 539 AND its 1035 resolution. Gate: `gate_1035.mjs` computed inks both themes
+(probe lesson: the rail mounts only after a sentinel state runs — the control's identical MISSING
+was the tell, again); GREEN, control RED on exactly the light leg.

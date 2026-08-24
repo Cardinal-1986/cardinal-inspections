@@ -1,7 +1,7 @@
 // api/estimate-to-contract.js
 // ─────────────────────────────────────────────────────────────
 // Convert-to-Contract handoff.
-//   Input:  { ai_estimate_id? } OR { project_id }  (exactly one)
+//   Input:  { project_id }   (the ai_estimate_id mode was retired at build 1033)
 //   Output: full contract JSON + persisted row in `contracts`
 //
 // Effects:
@@ -160,39 +160,16 @@ export default async function handler(req, res) {
   if (!userEmail.endsWith(ROSTER_DOMAIN)) return res.status(403).json({ error: 'Not on the roster' });
 
   // 2. Validate input
+  /* 1033: the ai_estimate_id mode is retired — the AI-estimate arm and its
+     table were deleted at build 1033. project_id (the real estimates path,
+     the one cr-e2c has used since 568) is the only mode. */
   const { ai_estimate_id, project_id, homeowner, property_address, overrides } = req.body || {};
-  if (!ai_estimate_id && !project_id) return res.status(400).json({ error: 'ai_estimate_id or project_id required' });
-  if (ai_estimate_id && project_id)   return res.status(400).json({ error: 'Provide exactly one of ai_estimate_id / project_id' });
+  if (ai_estimate_id) return res.status(400).json({ error: 'AI estimates were retired at build 1033 — convert with project_id' });
+  if (!project_id) return res.status(400).json({ error: 'project_id required' });
 
   // 3. Load the source estimate
   let estimate, template, sourceProjectId, sourceRow, contractNumberSeed;
-  if (ai_estimate_id) {
-    const { data, error } = await supa
-      .from('ai_estimates')
-      .select('id, template, estimate, status, project_id, contract_id, created_by')
-      .eq('id', ai_estimate_id)
-      .single();
-    if (error || !data) return res.status(404).json({ error: 'AI estimate not found' });
-
-    // Idempotency check
-    if (data.contract_id) {
-      const { data: existing } = await supa
-        .from('contracts')
-        .select('id, contract, contract_number')
-        .eq('id', data.contract_id)
-        .single();
-      return res.status(200).json({ id: existing?.id, contract: existing?.contract, existed: true });
-    }
-    // Ownership: allow if creator, project-assigned rep, or full-access
-    const canConvert = data.created_by === userEmail || await canUserAccessProject(supa, userEmail, data.project_id);
-    if (!canConvert) return res.status(403).json({ error: 'Not authorized on this estimate' });
-
-    estimate = data.estimate;
-    template = data.template;
-    sourceProjectId = data.project_id;
-    sourceRow = data;
-    contractNumberSeed = data.id;
-  } else {
+  {
     const { data: proj, error } = await supa
       .from('projects')
       .select('id, created_by, client_name, address, estimate, contract_id')
@@ -260,22 +237,12 @@ export default async function handler(req, res) {
 
   if (insErr) return res.status(500).json({ error: 'Contract insert failed', detail: insErr.message });
 
-  // 6. Flip source status → converted, link contract_id
-  if (ai_estimate_id) {
-    await supa
-      .from('ai_estimates')
-      .update({
-        status:       'converted',
-        contract_id:  inserted.id,
-        converted_at: new Date().toISOString(),
-      })
-      .eq('id', ai_estimate_id);
-  } else {
-    await supa
-      .from('projects')
-      .update({ contract_id: inserted.id })
-      .eq('id', project_id);
-  }
+  // 6. Link the contract onto the source project (1033: the ai_estimates flip
+  // lived here — retired with the AI arm)
+  await supa
+    .from('projects')
+    .update({ contract_id: inserted.id })
+    .eq('id', project_id);
 
   // 7. Audit row (best-effort)
   supa.from('audit_events').insert({

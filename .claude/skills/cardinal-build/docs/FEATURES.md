@@ -6587,3 +6587,20 @@ Chromium gate (`gate_1025.mjs`–`gate_1030.mjs`, every one seen RED on its cont
   placeholder stops teaching the dodging title; cr-eaf's dead `wireStats`/`wireManualRows` out;
   **`manual_estimates` dropped in production** (`drop_manual_estimates.sql`, schema recorded for
   revert, refuses a non-empty table).
+
+### 1032–1034 — the post-merge batch (Theo: "Merge then do 5-7")
+
+- **1032 — the delete-client caption reads in light mode.** Inline dark-era `#a89f9a` (2.42:1 on
+  paper) de-inlined to `.danger-note`; light reuses 1025's computed `#6c655e`. The lnav Landing
+  yellow — the other audit-appendix ink — is deliberately untouched: 539 records Theo choosing it
+  with the measurement in front of him; re-asking is on his reminder list.
+- **1033 — the AI-estimate arm deleted, whole.** Both AI views + photo session + transport
+  (−36.9 KB), the ai leg of loadList, claims/xlinks/ahc/inv/eaf legs, `api/estimate.js` + its
+  vercel.json entry, e2c's ai mode. `drop_ai_estimates.sql` ships (with orphaned trigger-function
+  drops) for Theo to run by hand. `gate_1033.mjs`: five sentinel states, zero pageerrors.
+- **1034 — the audit's dropped LOWs, verified then fixed.** Forward-only review prompt; the New Bid
+  property picker loads for real (`forPartner`/`byPartner` never existed); dead `logSubmitted`
+  removed; SUPPLEMENT chip light twin; sw.js shells only the root offline (the manual iframe gets
+  the honest offline card). `fix_onhold_stage_since.sql` ships for the one Maker Space row.
+  Already fixed elsewhere: manual_estimates (1030), void readers (1015). Operator-only: leaked-
+  password protection (advisor-confirmed off).
