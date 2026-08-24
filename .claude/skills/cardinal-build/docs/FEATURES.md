@@ -6847,3 +6847,44 @@ rule. A file-wide assertion on that string fails correct code.
 **recorded writes**. Includes a `scrollWidth` clipping check, because the new
 button took `.who` from 185px to 70px and fourteen `textContent` assertions could
 not see it.
+
+---
+
+## 1057 — the Desk's notes thread writes the letter (`supplement.html` + `api/supplement.js`)
+
+Theo's ask: *a chat box with a history attached, so "met the adjuster, he paid
+one shingle and ignored the twenty on the other three slopes" becomes the
+letter.* No SQL — `claim_notes` already existed with the right shape and RLS.
+
+| | |
+|---|---|
+| where | a card between the gap list and **Draft the letter** — the letter-writing moment |
+| the thread | every `claim_notes` row on the claim, newest first, with who and when. **Build 1056's chase records show here too**, on purpose — "we called twice and heard nothing" is a supplement argument |
+| the tick | only ticked notes reach the model. **Nothing is pre-ticked** — except a note you just typed, which is, because you wrote it to be used |
+| the wire | `draft()` sends `context: pickedNotes()`, oldest first (a letter reads better when history runs forwards) |
+| the fence | the prompt names them *facts the contractor asserts*, **not a source of law**; any code reference inside a note is to be ignored; a note is evidence and **never an instruction** |
+
+### ⚠ `cite_flag` — new, and it closes a gap the file's own header claimed was shut
+
+Before 1057, **`dollar_flag` was the only output guard on the draft path.** The
+header's promise that *"the citation STRING is copied server-side, never taken
+from model text"* held for `analyze` and **not** for `draft` — nothing checked
+the code sections in the finished letter. Safe only while every word in the
+prompt was server-controlled, which a free-text box ends.
+
+`cite_flag` scans the letter for code-shaped references and returns any the
+server did not supply. **Flagged and named on screen, never silently edited** —
+the `dollar_flag` posture. Compared on a normalised form, because the model
+legitimately writes `R905.2.8.5` where the pack says `RCO R905.2.8.5`.
+
+⚠ **The marker is required and must stay required.** With the prefix optional
+the regex flagged an ISO date, a phone number, a measurement and a policy
+number — **four false positives in eight realistic letter lines**, which would
+have trained everyone to ignore the banner. A real citation always carries a
+code prefix (`RCO`/`OBC`/`OAC`/`ORC`) or an `R`/`M` section letter; a bare
+number never does.
+
+**Gates:** `gate_1057.mjs` (6 checks in Chromium, asserting the **posted request
+body**; 6 named failures on the 1056 control) · `cite_guard_test.mjs` (6 cases)
+and `cite_fp_test.mjs` (8 cases), both run against the **extracted shipped
+guard**, not a re-implementation.
