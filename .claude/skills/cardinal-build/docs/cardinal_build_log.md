@@ -24282,3 +24282,14 @@ tick. Gate: `gate_1030.mjs` — a renamed published estimate injected gate-side 
 Estimates bucket (control: misfiled under Inspections, live), helper truth-table, approvals legs
 ×2, placeholder, cruft. GREEN; **control RED ×7. All six arc gates (1025–1030) re-run GREEN
 against this final artifact.**
+
+## Build 1032 — the delete-client caption reads in light mode (audit appendix; Theo: "do 5")
+
+*(1031 is claimed by branch `claude/claude-md-docs-9qyu0f` — `next_build.py` said 1032; gaps are
+normal.)* The Delete Client caption carried inline `color:#a89f9a` — dark-era ink, **2.42:1** on
+the light profile. Same class as 1025's Balance Due (inline beats every stylesheet): de-inlined to
+`.danger-note`, dark keeps `#a89f9a` (7.7/6.8:1 computed), light reuses 1025's caption ink
+`#6c655e` (5.1/5.7:1). **The OTHER half of audit item 5 — the lnav Landing yellow — is deliberately
+NOT touched:** build 539's comment records Theo choosing `#f0c651` with the 1.47:1 measurement in
+front of him ("Do not 'fix' this back to amber without asking him"); the ask goes on his reminder
+list. Gate: `gate_1032.mjs` computed inks both themes on the profile; GREEN, control RED ×3.
