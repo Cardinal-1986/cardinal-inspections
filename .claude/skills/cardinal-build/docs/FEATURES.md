@@ -6665,3 +6665,16 @@ Chromium-gated with a red control (gate_1036 … gate_1040), sentinel production
 - **1047 — notification matrix.** Build day booked → production crew; materials ordered → the
   job's rep; unassigned punch-out → production. All at chokepoints (adb.create/update,
   both materials writers, saveAdd), all fire-and-forget, actor never self-pinged.
+
+## Workflow efficiency — features 5–6 (builds 1048–1049, 24 Aug 2026)
+
+- **1048 — "Where things stand."** Admin-home chip row: approvals · needs-a-build-date · urgent
+  punch · carriers to chase · today. Each chip is a door to an existing screen; every count comes
+  from that screen's own resolver (`window.crApprovalsPending`, `CardinalProduction.schedFor`,
+  `CardinalPunch.rows`, new `CardinalTruthHome.chase`). Hides at zero. **Not** the Owner Console
+  (895) — that is owner-level (Top 10, tax/BWC calendar, expirations); this is job flow.
+- **1049 — punch work survives no signal.** `punch_items` joins the 865 write outbox: networkish
+  failures queue the full-value patch and keep the change, `reload()` overlays pending patches,
+  the card says "saved on this phone". Real refusals still fail loudly. ⚠ Both the RETURNED and
+  THROWN error shapes are handled — iOS throws (861), and the returned-only first cut would not
+  have worked offline at all.
