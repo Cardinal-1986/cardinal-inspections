@@ -24350,3 +24350,93 @@ the digit (4.99 / 5.54 / 4.55 on rail / active card / hover). Both comment recor
 next reader sees 539 AND its 1035 resolution. Gate: `gate_1035.mjs` computed inks both themes
 (probe lesson: the rail mounts only after a sentinel state runs — the control's identical MISSING
 was the tell, again); GREEN, control RED on exactly the light leg.
+
+## Production hub E2E audit (24 Aug 2026 — docs + scripts only, no build number; index.html untouched at 1035)
+
+Theo asked for a full end-to-end audit of the Production hub — every page, workflow, button,
+readability, accessibility, organization — with one question above the rest: does the back button
+keep Curtis and Scottie in Production, or dump them into the retail CRM? The full report is
+`docs/CR_PRODUCTION_AUDIT_2026-08.md`: a ten-row containment truth table measured on the rig as
+both personas (dark + light, 1194/390), a sentinel ink sweep (24 renders), a button census, and a
+nine-item plan awaiting picks. Nothing shipped to the app.
+
+The headline: **the happy paths hold** (job → profile → back, punch card → back, dispatch → back
+all return to the board; login lands production users on the board per 854; 0 pageerrors anywhere)
+— but **two history-machinery breaks do exactly what Theo feared**: (F1) board pane changes push no
+history entry, so browser/gesture back from the calendar or a box list exits Production onto the
+retail home; (F2) after flipping profile tabs, back wedges at `{v:'project'}` — five presses never
+return to the board (three history writers interleave on that screen: the legacy wrapper's push,
+`wrapNav`'s replace-or-push at 26848, and the profile-open `replaceState` at 25651). Also measured:
+the exit room is the retail home with pipeline counts and an AR money card and `renderHome()` has
+no role gate; the punch list keeps the retail nav row (it is shell-shown, not an overlay); the
+punch-list chip family is missing light twins (`.pu-tag.prio-normal` at **1.91:1**); dispatch's
+"Move this job" handle is **15×15 px**; the `data-cr-footer` stamp has been PREPENDING summaries
+since ~1015 and now carries 21 builds / 9,785 chars into the burger menu.
+
+**What DID ship: `scripts/sentinel_setup_production.js`** — the permanent production walk
+(prodhome / prodcal / prodbox / punchcard / punchlist / dispatch) with a seed that exercises every
+box: materials-ordered, Approved-bare, a `kind:'job'` install two days out, a Completed job, and
+SOP steps on i1 using the card's real `{t, d, req, note}` shape (first draft wrote `done:` and the
+rendered card's unchecked box + "3 steps left" close gate was the tell — read the shape, not the
+guess). Rig lesson for the next drive: cold boots parse the 5.1 MB file slower than any fixed
+pause — wait on `window.CardinalProduction && __sentinelStates`, not a clock.
+
+## Builds 1036–1040 — the production audit's plan, items 1–5 (Theo: "lets do 1-5 in a batch first")
+
+One build per item, each Chromium-gated with a RED control, all five gates re-run green on the
+final artifact, sentinel (production walk, both widths) CLEAN vs 1035 with none of the fixed
+selectors left in the carried set.
+
+**1036 — Back matches the chevron (F1).** The board's cal/list pane switches now push
+`{view:'production', data:{pane, box}}` via navSetView; the chevron POPS the pane entry when it
+is on top (stack stays in sync); new `CardinalProduction.restore(data)` re-panes an open board
+with no hideAllViews/showHome round-trip and no refetch, and navRestore's production case uses
+it. Bonus: back from a profile opened out of a box list returns to THAT LIST. gate_1036: T7/T8
+flip to board-home, chevron+back exits clean, T1' restores the list pane; control red on all
+three audit failures.
+
+**1037 — The profile tab back-trap (F2).** showTab's wrapper now replaceState's the
+`{v:'project', id, tab}` entry instead of stacking one per flip — one back leaves the profile
+from any tab, and the entry still remembers the tab. The wedge's other half: navRestore now
+holds `__histLock` for its restore window, so a modern restore can never __histPush legacy
+entries (the re-push that re-created every entry the back button popped — the class, not just
+this case). gate_1037: profile + 2 flips + ONE back lands the board with state view:production;
+control shows the measured wedge (5 backs, never out).
+
+**1038 — The exit room (F3, option a).** `close(goHome)` forks: `isProductionUser()` exits to
+`goToLanding()` (the portal picker — no pipeline counts, no A/R dollar), everyone else keeps the
+retail home. Every other caller passes close(false), so only the board's own exit control hits
+the fork. gate_1038: Curtis lands #landingView with mainView hidden; admin unchanged; control
+red (Curtis in the money room). Rig fix ridden along: `?as=curtis` persona added to
+sentinel_setup_cardinal.js (base setup mapped only scottie/nick — the audit drove Curtis via
+__AS__ directly, and gates 1036/1037 silently ran as admin until this; both re-run green as the
+real Curtis).
+
+**1039 — The ink pass.** Grounds pinned by reproducing the audit's ratios exactly (#262a31 punch
+row, #101216 dispatch panel, the chip washes composited). Punch list: crm-retail + prio-low
+brighten to #ec7076 in dark (were 4.10); the WHOLE chip family gets computed light twins —
+ambers #8a5500, reds #8f1620, hot reds #a8221a, insurance #a4140d, community #047857, st.on
+#23744a (the audit's seed only rendered retail chips; 527's partial-pass lesson says fix the
+family). Check-in button rides --pk-accd (white 5.67 dark / 9.12 light; was 3.51 on --pk-acc).
+Dispatch gains a --disp-wkend token pair (#838c99/#656c77, still dimmer than --disp-dim).
+Board chips: build #e86d73 + punch #e5866d dark literals (≥4.83 on the WORST cell composite,
+light keeps the tokens), done light #276b49. gate_1039: 8 computed-rgb probes on the live
+screens, both themes; control red ×10.
+
+**1040 — The tap-target pass.** Invisible ::after pads (the 418/944/947 pattern), zero visual
+change: dispatch grip -15px (its old -9px pad made 33px effective), week arrows
+(21px wide on the phone) top/bottom -10 left/right -13, dispatch+board chevrons -6, +Add /
+Full-calendar chips ±8 vertical, month arrows -7, Mark-ordered/Open-job ±7 vertical. ⚠ Insets
+anchor to the PADDING box — every 1px border costs a pixel per side, which the first cut missed
+(claims measured exactly 2px short). ⚠ TWO AUDIT ROWS WERE FALSE POSITIVES, verified and left
+alone: the punch list's "Close this item" tick (.pu-box) has carried a 44×44 pad since 418, and
+.pkback got real 44 minimums at 947 — a rect census cannot see either, exactly as their comments
+predicted. gate_1040: per-control tap CLAIM ≥44 (element + used pseudo insets) plus a live
+elementFromPoint outside the visual box (offset chosen past the PREVIOUS pad so the control run
+goes red); a ±21 four-way probe was tried first and rejected — adjacent controls legitimately
+split contested edges.
+
+Instrument lesson banked: the first gate demanded ±21px in all four directions and failed
+correct pads (the two week arrows are 34px apart; a chevron's downward claim is contested by the
+padded list below). The app's own standard — claim measured on the pseudo box + one real hit
+probe — is the right instrument shape for tap targets.

@@ -56,6 +56,7 @@
   try {
     var who = (location.search.match(/[?&]as=([\w.]+)/) || [])[1];
     if (who === 'scottie') window.__AS__ = { email:'scottie@cardinalrenovations.net', name:'Scottie' };
+    else if (who === 'curtis') window.__AS__ = { email:'curtis@cardinalrenovations.net', name:'Curtis' };
     else if (who === 'nick') window.__AS__ = { email:'nick@cardinalrenovations.net', name:'Nick' };
   } catch (e) {}
 

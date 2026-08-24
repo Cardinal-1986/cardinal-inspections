@@ -6604,3 +6604,32 @@ Chromium gate (`gate_1025.mjs`–`gate_1030.mjs`, every one seen RED on its cont
   the honest offline card). `fix_onhold_stage_since.sql` ships for the one Maker Space row.
   Already fixed elsewhere: manual_estimates (1030), void readers (1015). Operator-only: leaked-
   password protection (advisor-confirmed off).
+
+## Production hub — the audit's batch, items 1–5 (builds 1036–1040, 24 Aug 2026)
+
+The CR_PRODUCTION_AUDIT_2026-08.md plan's first five picks, one build each, every one
+Chromium-gated with a red control (gate_1036 … gate_1040), sentinel production-walk clean.
+
+- **1036 — board panes are history states.** `[data-go="cal"]` and the box lists push
+  `{view:'production', data:{pane, box}}`; the chevron pops the entry when it is on top;
+  `CardinalProduction.restore(data)` (new export) re-panes an open board without the
+  hideAllViews/showHome round-trip, and navRestore's production case calls it. Back from a
+  profile opened out of a box list returns to that list.
+- **1037 — profile tab flips replaceState** (one back leaves the profile from any tab, the entry
+  remembers the tab), and `navRestore` holds `__histLock` for its restore window so modern
+  restores can never `__histPush` legacy entries — the re-push that wedged the back button on
+  the profile (audit T6) and silently shadowed every modern restore path.
+- **1038 — production accounts exit to the Landing.** The board's own exit forks on
+  `isProductionUser()`: Curtis/Scottie land on the portal picker (no pipeline counts, no A/R
+  figure), admin/sales keep the retail home. Only the board's exit control reaches the fork —
+  every other close() caller passes `false`.
+- **1039 — the ink pass.** Punch-list chip family: full computed light twins (ambers #8a5500,
+  reds #8f1620, hot reds #a8221a, insurance #a4140d, community #047857, st.on #23744a) and the
+  two dark reds brighten to #ec7076; Check-in rides `--pk-accd`; dispatch gains the
+  `--disp-wkend` token pair; board calendar chips build/punch/done clear the floor against
+  their composited washes. Grounds pinned by reproducing the audit's ratios first.
+- **1040 — the tap-target pass.** Invisible ::after pads to the 44px floor (418/944/947
+  pattern, zero visual change): dispatch grip/week arrows/chevron, board chevron, month
+  arrows, +Add and Full-calendar chips, Mark-ordered/Open-job. Two audit rows were false
+  positives (`.pu-box` padded since 418, `.pkback` 44 since 947) — verified live, left alone.
+  ⚠ pads anchor to the padding box: a 1px border costs a pixel per side.
