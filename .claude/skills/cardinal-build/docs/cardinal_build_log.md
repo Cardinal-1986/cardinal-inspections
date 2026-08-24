@@ -24338,3 +24338,15 @@ list beside the signup toggle. Gate: `gate_1034.mjs` — the review truth-table 
 the 300ms timer — the first probe restored confirm too early and read 0/0 on both trees; the
 control's identical failure was the tell), computed chip inks both themes, picker/dead-call/sw
 statics. GREEN; **control RED ×5**.
+
+## Build 1035 — the Landing label reads in light mode (Theo's delegated call: "I trust you would do it best")
+
+539 chose literal yellow `#f0c651` in BOTH themes with the 1.47:1 measurement in front of him; the
+block's comment said not to change it without asking. 1032 put the ask on his list; the answer
+delegated the call. **Best = the 545/557 obsidian-tiles precedent: the same hue DEEPENED, never
+swapped** — dark keeps the true yellow untouched; light gets `#8a6100`, the amber 538 originally
+computed for this exact rail — and the patch's own arithmetic reproduces 538's recorded numbers to
+the digit (4.99 / 5.54 / 4.55 on rail / active card / hover). Both comment records updated so the
+next reader sees 539 AND its 1035 resolution. Gate: `gate_1035.mjs` computed inks both themes
+(probe lesson: the rail mounts only after a sentinel state runs — the control's identical MISSING
+was the tell, again); GREEN, control RED on exactly the light leg.
