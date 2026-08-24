@@ -6708,3 +6708,33 @@ Chromium-gated with a red control (gate_1036 … gate_1040), sentinel production
   base rules untouched, **because the insurance and community Payments pages paint their own cream
   ground and keep these cards light on purpose**. All six new inks 5.47–9.83:1. Light mode
   byte-identical.
+
+## Insurance CRM audit — builds 1052–1054 (24 Aug 2026)
+
+- **1052 — the insurance ink pass.** The client profile is one screen shared by
+  three CRMs; its identity block paints `--rbe-*` (retail) while
+  `body.claim-insurance` re-grounds the page from `--ct-*`. The retail inks do
+  not flip with `--ct-bg`, so on the default insurance theme the **client's own
+  name was `#ffffff` on `#FAF8F7` — 1.00:1, invisible**. Nine elements moved onto
+  `--ct-*` tokens so they follow the insurance theme by themselves. Two app-wide:
+  the **stage banner** grounds on `STAGE_INK` instead of `STAGE_COLORS` (white on
+  it was 1.96–4.37:1 on EVERY stage; `STAGE_COLORS` itself is unchanged), and
+  `.wsempty`'s base ink. Plus the claims primary button (2.78 → 6.85) and two
+  claims pills, light-scoped.
+  ⚠ `.dbmdir` is a fixed value ON PURPOSE — its bar never flips. `.db-paid` is a
+  declared pair because no single green clears 4.5 on both grounds.
+- **1053 — the reach pass.** The header title overlapped the home button by 28px
+  at 360 and 13px at 390 (`left:50%` centres on the bar, but the button groups
+  are asymmetric); below 430 it joins normal flow. "DEDUCTIBLE" stopped breaking
+  mid-word. Eighteen controls raised to the 44px floor in `cr-touch44-styles`,
+  worst of them the **17px-tall back links** out of the claim detail and the
+  adjuster directory.
+- **1054 — the hub and the client list agree.** The Truth rail could filter the
+  Insurance Clients list to Lead / Prospect / OnHold, which had **no chips**, so
+  the list showed a filtered set with nothing lit. Nine chips now, in pipeline
+  order. "Supplement Filed" applies `__supplements__` instead of clearing the
+  filter. The chips read `insStageLabel(s, true)` — the short twin build 656
+  added for this very strip and which nothing was using (one chip measured 242px
+  on a 390px phone).
+  **The WORDS were already one vocabulary (655) and were not touched** — both
+  `window.INS_STAGE_LABEL || {…}` fallbacks verified byte-consistent.

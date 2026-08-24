@@ -755,6 +755,41 @@ body.claim-insurance #leadCard #leadCardBody.ldbox{
 body.claim-insurance #leadCard .llrow{color:var(--ct-ink);}
 body.claim-insurance #leadCard .llrow b{color:var(--ct-ink);}
 
+/* 1052: the identity block the 'extend insurance theme' pass never reached.
+   These elements paint from --rbe-* (RETAIL) while this screen is grounded on
+   --ct-bg, so on the default insurance theme they were dark-theme inks on a
+   cream page — the client's own NAME measured 1.00:1. Every value below is a
+   --ct-* token, so it flips with the insurance theme instead of being a second
+   thing to remember. Computed both ways: worst case 5.08:1, floor 4.5. */
+body.claim-insurance #projectView .heroNm{color:var(--ct-ink,#17181B);}
+body.claim-insurance #projectView .hph{color:var(--ct-red-deep,#7E1410);}
+body.claim-insurance #projectView .hem{color:var(--ct-ink-2,#6E6663);}
+body.claim-insurance #projectView .hph::before,
+body.claim-insurance #projectView .hem::before,
+body.claim-insurance #projectView .projmeta .mlbl{color:var(--ct-ink-2,#6E6663);}
+/* the PO chip carries its own wash, which does NOT flip — so the chip takes a
+   token ground too, or siren's brighter red lands on a permanently pale pink
+   at 3.28:1. */
+body.claim-insurance #projectView .poPfx{
+  background:var(--ct-surface,#FFFFFF);color:var(--ct-red-deep,#7E1410);}
+body.claim-insurance #dangerZone .danger-note{color:var(--ct-ink-2,#6E6663);}
+body.claim-insurance #paymentsView .payadd{color:var(--ct-red-deep,#7E1410);}
+/* The map tab bar paints rgba(16,18,24,.85) and is therefore ALWAYS dark,
+   whichever insurance theme is on — so its link must NOT use --ct-red-deep,
+   which is a DARK red on the light theme (1.18:1 over that bar). A fixed light
+   red is correct here precisely because the bar does not flip. */
+body.claim-insurance #projectView .dbmtabs .dbmdir{color:#FF8A80;}
+/* 1053: MEASURED at 390px — the label column is 66px and "DEDUCTIBLE" needs
+   more, so it rendered as DEDUCTIB / LE. The other three fit (ADDRESS 56,
+   CARRIER 52, CLAIM # 46). CARRIER / CLAIM # / DEDUCTIBLE are insurance-only
+   fields, so the column grows for insurance only and retail keeps its 66. */
+body.claim-insurance #projectView .projmeta .mrow{grid-template-columns:84px minmax(0,1fr);}
+body.claim-insurance #projectView .projmeta .mlbl{white-space:nowrap;}
+/* one green cannot clear 4.5 on both a cream and a near-black ground, so this
+   is a declared pair rather than a token: 5.51 on docket, 7.94 on siren. */
+body.claim-insurance #projectView .dbmoney b.db-paid{color:#46701E;}
+body[data-rltheme="siren"].claim-insurance #projectView .dbmoney b.db-paid{color:#7CB342;}
+
 .brand{display:flex;align-items:center;gap:14px;}
 #brandLogo{height:52px;width:auto;}
 .logincard .loginlogo{display:block;margin:0 auto 16px;max-width:250px;height:auto;}
@@ -1412,7 +1447,10 @@ html, body{overflow-x:hidden;max-width:100%;}
 .wsgrid b{font:800 15.5px 'Segoe UI',Arial,sans-serif;color:#1b1b1b;}
 .wsgrid input{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid #c9c2bf;border-radius:7px;
   font:700 14px 'Segoe UI',Arial,sans-serif;}
-.wsempty{font:12.5px 'Segoe UI',Arial,sans-serif;color:#a89f9a;background:#fbfaf9;
+/* 1052: 2.49:1 on its own pale box. Since 1051 gave retail-dark its own
+   rule, this base ink is read only by insurance, community and rb-light —
+   all LIGHT grounds — so one darkening fixes all three. 5.50:1. */
+.wsempty{font:12.5px 'Segoe UI',Arial,sans-serif;color:#6c655e;background:#fbfaf9;
   border:1px dashed var(--line);border-radius:10px;padding:12px 14px;}
 
 /* ---- header refinements ---- */
@@ -3304,6 +3342,27 @@ body.rl-at-book #rlAskBtn{display:none !important;}
 #cr-hd2-mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
   flex:0 0 auto;width:auto;max-width:calc(100% - 190px);text-align:center;
   pointer-events:none;z-index:1}
+/* 1053: left:50% centres on the BAR, but the button groups are not symmetric —
+   two icons left, three right — so `100% - 190px` reserves 95px a side where
+   the right side needs ~164px. MEASURED overlap of #cr-hd2-home: 28px at 360,
+   13px at 390 (iPhone), clean at 430. Worse on retail, whose title is longer.
+   Below 430 the title joins normal flow between the two groups, where it
+   cannot reach them; .titlecard h1 already ellipsises, so a long title
+   shortens instead of colliding. Above 430 the absolute centring is kept. */
+@media (max-width:430px){
+  #cr-hd2-bar #cr-hd2-mid{position:static;transform:none;
+    flex:1 1 auto;min-width:0;max-width:none;width:auto;}
+  /* ⚠ #cr-hd2-home carries margin-left:auto, and a main-axis auto margin
+     absorbs ALL remaining free space BEFORE flex-grow gets any — so without
+     this the title never expands and ends up parked against the left group
+     instead of centred. Measured: 96px wide starting at x=66 with 64px of
+     empty bar to its right. Dropping the auto margin lets #cr-hd2-mid take
+     the gap and text-align:center do its job. */
+  #cr-hd2-bar #cr-hd2-home{margin-left:0;}
+  #cr-hd2-bar #cr-hd2-mid #brandTitle{min-width:0;}
+  #cr-hd2-bar #cr-hd2-mid #brandTitle h1{
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+}
 #cr-hd2-bar .cr-ib,#cr-hd2-bar #cr-hd2-home{position:relative;z-index:2}
 #cr-hd2-bar #brandTitle h1{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Arial,sans-serif;
   font-weight:800;font-size:21px;letter-spacing:-.015em;line-height:1.1;
@@ -3723,7 +3782,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1051 &#8212; two things from your phone. The trade-type checkboxes on Job Details no longer break words in half (&#8220;Roo fing&#8221;) &#8212; they use the full width of the card, and Lead Source lines up with its own box again. And the Contract Worksheet on the Payments page is no longer white cards on a black screen: it reads like the payment rows beside it. Light mode is unchanged.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1054 &#8212; the insurance home and the client list now agree. Tapping &#8220;Claim Filed&#8221;, &#8220;Adjuster Pending&#8221; or &#8220;On Hold&#8221; on the hub used to open a filtered list with nothing on screen saying what it was filtered to; those three now have their own buttons. &#8220;Supplement Filed&#8221; used to clear the filter instead of applying it. And the stage buttons use the short wording, so the strip fits a phone.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11718,7 +11777,13 @@ function renderAcxOverview(){
   /* ---- stage bar: centered stage, back/forward arrows with confirmation ---- */
   var ORD = ['Lead','Prospect','Approved','Scheduled','Completed','Invoiced','Closed'];
   var pvStage = ORD.indexOf(stg) > 0 ? ORD[ORD.indexOf(stg) - 1] : null;
-  html += '<div class="dbstage" style="background:' + (STAGE_COLORS[stg] || '#607D8B') + ';">' +
+  /* 1052: STAGE_COLORS is the semantic set and is NOT changed — but white on
+     it measures 1.96:1 (Lead) to 4.37:1 (Closed), i.e. EVERY stage banner in
+     the app was under the floor for its 11.5px sub-line. STAGE_INK is the
+     twin this file already ships for exactly this ("the same stages, darkened
+     for a light ground"), so the banner grounds on it: worst case 5.27:1, and
+     no colour is invented. The chips, dots and spines keep STAGE_COLORS. */
+  html += '<div class="dbstage" style="background:' + (stageInk(stg) || '#455A64') + ';">' +
     (pvStage ? '<button class="dbstgarr" id="dbStgBack" title="Back to ' + esc(pvStage) + '">&#8249;</button>' : '<span class="dbstgarr ghost"></span>') +
     '<span class="dbstgmid"><b>' + esc(stg.toUpperCase()) + '</b><small>' + esc(stageAgo(ck.stage_since || pr.updated_at || pr.created_at) || '') + '</small></span>' +
     (nx ? '<button class="dbstgarr" id="dbStgFwd" title="Advance to ' + esc(nx) + '">&#8250;</button>' : '<span class="dbstgarr ghost"></span>') +
@@ -30822,7 +30887,10 @@ function showList() {
   #cr-claims-mount .cr-c-actions { display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; }
   #cr-claims-mount .cr-c-btn { flex: 1; padding: 12px 8px; border-radius: 4px; font-size: 12px; font-weight: 700; cursor: pointer; background: var(--cr-bg); border: 1px solid var(--cr-border); color: var(--cr-text); font-family: inherit; letter-spacing: 1.2px; text-transform: uppercase; min-width: 130px; }
   #cr-claims-mount .cr-c-btn:hover { border-color: var(--cr-muted-2); background: var(--cr-bg-subtle); }
-  #cr-claims-mount .cr-c-btn.primary { background: var(--cr-red); color: white; border: 1px solid var(--cr-red); flex: 1.5; }
+  /* 1052: --cr-red is #ff6b6b in the dark half of this family — a light coral,
+     right as INK on dark and wrong as a BUTTON GROUND under white text
+     (2.78:1). --cr-red-dark's light value grounds it at 6.85:1. */
+  #cr-claims-mount .cr-c-btn.primary { background: #B01F21; color: white; border: 1px solid #B01F21; flex: 1.5; }
   #cr-claims-mount .cr-c-btn.primary:hover { background: var(--cr-red-dark); }
 
   /* Filter tabs */
@@ -30870,6 +30938,13 @@ function showList() {
   #cr-claims-mount .cr-c-pill.adjuster_pending{ background: var(--cr-amber-tint); color: var(--cr-amber); }
   #cr-claims-mount .cr-c-pill.adjuster_met   { background: var(--cr-purple-tint); color: var(--cr-purple); }
   #cr-claims-mount .cr-c-pill.approved       { background: var(--cr-green-tint); color: var(--cr-green); }
+  /* 1052: in LIGHT mode only, these two use their token as ink on its own tint
+     and land at 4.46 and 3.97 against a 4.5 floor. --cr-green/--cr-blue are
+     also BACKGROUNDS across 44 sites in five copies of this palette, so the
+     tokens are not retuned here; the two failing pairs are. Dark is untouched
+     and still reads 8.7:1 and 7.4:1 on its own tints. */
+  :root[data-theme="rb-light"] #cr-claims-mount .cr-c-pill.approved{ color:#2A732E; }
+  :root[data-theme="rb-light"] #cr-claims-mount .cr-c-table .kind-pill.acv{ color:#175FA8; }
   #cr-claims-mount .cr-c-pill.in_progress    { background: var(--cr-blue-tint); color: var(--cr-blue); }
   #cr-claims-mount .cr-c-pill.completed      { background: var(--cr-green-tint); color: var(--cr-green); }
   #cr-claims-mount .cr-c-pill.awaiting_rcv   { background: var(--cr-amber-tint); color: var(--cr-amber); }
@@ -41323,6 +41398,9 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1054, d:'2026-08-24', t:'The insurance hub and the client list agree', s:'The pipeline on the insurance home has nine rows and every one of them is tappable, but the client list it opens only had buttons for six. Tapping \u201cClaim Filed\u201d, \u201cAdjuster Pending\u201d or \u201cOn Hold\u201d gave you a correctly filtered list with nothing lit up to say so \u2014 not even \u201cAll\u201d \u2014 so there was no way to tell what you were looking at or how to get back. Those three now have buttons of their own, in pipeline order. \u201cSupplement Filed\u201d, the row that carries the money you are chasing, did the opposite: tapping it cleared the filter and showed every claim. It now opens the supplements you have filed. And the stage buttons use the short wording (\u201cAwaiting Depreciation\u201d rather than the full phrase), which the app has had for months but was not using here \u2014 the long one alone was a 242-pixel button on a phone.' },
+{ b:1053, d:'2026-08-24', t:'The insurance screens fit a phone', s:'Three things, all measured on an iPhone-width screen. The title at the top of the page was centred on the whole bar rather than on the gap between the buttons, so on a narrow phone the last letters ran underneath the home button \u2014 13 pixels of overlap at iPhone width and 28 on a smaller Android. It now sits in the space between them and shortens with a \u2026 if it has to. \u201cDEDUCTIBLE\u201d on a claim was breaking across two lines mid-word, the same thing the trade checkboxes were doing; its column is wider now. And eighteen buttons were under the size a finger can reliably hit \u2014 worst of all the two \u201cBack\u201d links out of a claim and the adjuster list, which were seventeen pixels tall and are the only way off those screens. All eighteen are now at least 44 pixels. Nothing moved on the retail or community side.' },
+{ b:1052, d:'2026-08-24', t:'The insurance CRM can be read', s:'Open a claim and the client\u2019s name was white on a cream card \u2014 not faint, invisible. The phone number, email, the ADDRESS / CARRIER / CLAIM # / DEDUCTIBLE labels, the PO chip, the money figure and the three buttons on the Payments page were all drawn in the dark app\u2019s colours while the insurance pages are cream, so they ranged from hard to impossible to read. They now take their colour from the insurance theme itself, which means they follow it whichever way you switch it. Two more, both app-wide: the coloured stage banner across the top of a job had white text on light green, yellow or teal \u2014 under the readable limit on every single stage \u2014 and now uses the darker shade of the same colour; and the \u201cno contract yet\u201d box on Payments got a darker caption. Nothing on the retail or community side changed.' },
 { b:1051, d:'2026-08-24', t:'Two phone fixes: trade checkboxes and the payments worksheet', s:'Job Details squeezed the six trade-type checkboxes into the narrow label column, so the words broke in half \u2014 \u201cRoo fing\u201d, \u201cGutt ers\u201d \u2014 and Lead Source drifted away from its own dropdown. The checkbox panel now spans the full width of the card. On the Payments page, the Contract Worksheet was still drawn in the old light colours: white cards and a white \u201cno data\u201d box sitting on the black page, right beside payment rows that were themed properly years ago. The worksheet now matches them. Light mode looks exactly as it did.' },
   { b:1050, d:'2026-08-24', t:'The printed contract shows all of its own words',
     s:'The grey line along the top of every printed page \u2014 Cardinal Roofing & Renovations \u00b7 ROOFING CONSTRUCTION AGREEMENT \u2014 was sitting in the same strip as the contract text and painting its white background straight over it. On a five-page roof agreement that hid four separate pieces of wording; across the four contracts it hid twelve, including the sentence that names the Terms and Conditions form, the Payment Structure heading, and the right-to-cancel line. The words were in the file the whole time \u2014 you could select them \u2014 they just could not be read. The header now prints up in the page margin instead. Nothing else about the contract changed; a gutter agreement gains one page because the reclaimed strip pushes the acceptance block over. Applies to contracts already saved, and to the copy a client is emailed.' },
@@ -55516,7 +55594,11 @@ b.onclick = function(){
 var k = b.dataset.stage;
 if(typeof window.showInsuranceClients === 'function'){
 try{
-window.icStageFilter = (k === 'supplement') ? '' : k;
+/* 1054: was `? '' : k` — the ONE rail row carrying a chased count and an
+   amount cleared the filter and showed every claim. '__supplements__' is the
+   list's existing predicate for it (claimOf(pr).supplement_status === 'filed')
+   and is what the hub's own Supplements tab already sends. */
+window.icStageFilter = (k === 'supplement') ? '__supplements__' : k;
 window.showInsuranceClients();
 return;
 }catch(_){}
@@ -55687,7 +55769,19 @@ var LABEL = window.INS_STAGE_LABEL || {
 'Completed':'Build Complete', 'Invoiced':'Awaiting Depreciation / Supplements',
 'Closed':'Closed', 'Lost':'Denied',
 };
-var CHIPS = ['Approved','Scheduled','Completed','Invoiced','Closed','Lost'];
+/* 1054: was ['Approved','Scheduled','Completed','Invoiced','Closed','Lost'].
+   The Cardinal Truth rail's [data-stage] rows set icStageFilter to ANY of the
+   nine stages, so tapping "Claim Filed", "Adjuster Pending" or "On Hold" —
+   three of the nine rows, and the two most chased — opened a correctly
+   filtered list with NO chip lit, not even All, and no way to tell what you
+   were looking at. Pipeline order, matching RAIL, so the two screens describe
+   the same nine things. */
+var CHIPS = ['Lead','Prospect','Approved','OnHold','Scheduled','Completed','Invoiced','Closed','Lost'];
+function stgLabel(s){
+  return (typeof window.insStageLabel === 'function')
+    ? window.insStageLabel(s, true)
+    : (LABEL[s] || s);
+}
 function clients(){
 return (window.cacheProjects || []).filter(function(pr){
 if(typeof window.projClaimType !== 'function') return false;
@@ -55799,7 +55893,11 @@ host.innerHTML =
 CHIPS.map(function(s){
 var n = all.filter(function(pr){ return normStage(pr.stage) === s; }).length;
 return '<button data-stg="' + s + '" class="' + (stage === s ? 'on' : '') +
-'" type="button">' + esc(LABEL[s] || s) + '<b>' + n + '</b></button>';
+/* 1054: was esc(LABEL[s] || s). insStageLabel(s, true) is the short twin
+   build 656 added FOR THIS STRIP — the long Invoiced label measured a 242px
+   chip on a 390px phone. It lives in another block, so it is read off window
+   with this block's own LABEL as the fallback. */
+'" type="button">' + esc(stgLabel(s)) + '<b>' + n + '</b></button>';
 }).join('') +
 '</div>' +
 '<div class="cr-ic-sort">' +
@@ -74950,6 +75048,49 @@ select{min-height:44px;}
    The recon predicted its own 9px padding saved it; the render measured 35.
    A render outranks a prediction. */
 .ljtop input[type=search]{min-height:44px;}
+
+/* ---- the INSURANCE CRM · build 1053 -------------------------------------
+   Every size below was rendered at 390px on a seeded insurance claim. The
+   two BACK links are the worst in the app after the 752 pass and they are
+   the only way off their screens.
+   min-height alone does nothing to an inline box — the inline ones take
+   display:inline-flex too, the same shape a.hem/a.hph uses above. */
+/* was 138×17 (claim detail) and 208×17 (adjuster directory) — both are the
+   primary exit from a full-screen view */
+#cr-claims-mount .cr-c-back,#cr-adjusters-mount .cr-a-back{
+  display:inline-flex;align-items:center;min-height:44px;}
+/* was 122×25 (+ Add Payment) and 143×36 (+ Add Supplement) */
+#cr-claims-mount .cr-c-h-btn{min-height:44px;}
+/* was 138×40 (Back) and 198×40 (+ New Claim) — the claims list footer */
+#cr-claims-mount .cr-c-btn{min-height:44px;}
+/* was 24×16 (Owed / Name) and 42×16 (Waiting) — the Insurance Clients sort
+   row, the shortest controls left in the app */
+#cr-ic-wrap .cr-ic-sort button{min-height:44px;min-width:44px;}
+/* was 30 tall ×7 — the Insurance Clients stage chips */
+#cr-ic-wrap .cr-ic-chips button{min-height:44px;}
+/* was 38×38 — the Insurance Clients back arrow */
+#cr-ic-bar .nav{min-width:44px;min-height:44px;}
+/* client profile, insurance cards: was 24×20 (claim panel ▾), 61×24 (✎ Edit),
+   84×26 (▾ More details), 31×26 (the trade-type ▾), 126×31 (📤 Upload SOL),
+   77×23 and 98×23 (📤 Upload / File a copy, ×5 down the Documents card) */
+#insToggleBtn,#insEditBtn,#insMoreBtn,#acxTrBtn,#solBtn,.insdocupload{min-height:44px;}
+#insToggleBtn,#acxTrBtn{min-width:44px;}
+/* was 141×32 (+ Create Claim), 102×39 (or link to existing…), 176×29
+   (+ Start Claim Record) — the three doors from a job to a claim record */
+.cr-xl-btn,.newbtn{min-height:44px;}
+.cr-xl-link-existing{display:inline-flex;align-items:center;min-height:44px;}
+/* was 86×25 — Directions, beside the Map/Satellite tabs which took the floor
+   at 752 while the link beside them did not */
+.dbmtabs .dbmdir{display:inline-flex;align-items:center;min-height:44px;}
+/* was 316×40 ×3 — the Payments composer's add-a-row buttons */
+#paymentsView .payadd{min-height:44px;}
+/* was 358×42 — the Insurance Clients search field */
+#cr-ic-search{min-height:44px;}
+/* was 34×44 — the stage bar's back/forward arrows are tall enough and two
+   pixels too NARROW; they sit either side of the stage name on every job */
+.dbstgarr{min-width:44px;}
+/* was 138×42 ×2 (Text request / Copy message) and 155×42 (Delete Client) */
+.rvbtn,#delClientBtn{min-height:44px;}
 </style>
 <style id="cr-clientcard-styles">
 /* ==========================================================================

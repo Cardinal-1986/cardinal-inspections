@@ -24741,3 +24741,154 @@ opened by JS always produces. **I did not get the same-artifact determinism chec
 cannot claim these are noise; I can only say they do not intersect the change.** The INK finding
 (1.07:1, "Waiting on the carrier to assign an adjuster" on `rgb(196,24,15)`) is real and is picked
 up as a finding in the insurance audit that follows.
+
+---
+
+## Builds 1052–1054 — the insurance CRM audit (Theo: "an extreme audit of the insurance crm. End to end… Fix as you go.")
+
+Same shape as the production audit: drive every screen in Chromium at phone and
+tablet, in every theme, measure rather than look, then fix what the measurements
+find. **44 contrast failures and 116 sub-44px controls across 21 renders, down to
+0 and 2** (the 2 are 43.99px boxes rounding to 44 — not defects).
+
+### ⚠ The instrument was wrong FOUR times before it was right, and that is the story
+
+The first run reported **24 ink failures on the Cardinal Truth home** — a screen
+that renders perfectly. Every "fix" made it quieter, which is exactly the
+direction that should make you suspicious. The four faults, in order:
+
+1. **Every gradient stop of every ancestor treated as a candidate ground.**
+   The insurance cards use the two-layer gradient-BORDER idiom —
+   `linear-gradient(#faf8f7,#fff), linear-gradient(125deg,#c4180f,#7e1410)` with
+   `background-clip:padding-box,border-box`. Reading all the stops scored cream
+   text against the red **border**. Fixed: only layer 1, and skip it when it
+   clips to border-box. 24 → 0 on that screen.
+2. **The page ground appended even after an opaque ancestor was found.** The
+   Claims screen is a fixed, opaque, DARK overlay; the insurance theme leaves
+   `body` cream behind it. So the white title scored **1.04:1** against a body
+   nobody can see. Fixed: an opaque layer ends the stack.
+3. **An element's OWN opaque background walked past.** The red Upload button's
+   white label scored against the white card behind it — a 5.9:1 button reported
+   as 1:1. This one is written down in `CLAUDE.md` already: *within one element
+   the background composites over that element's own colour, not the ancestor's.*
+4. **A translucent bar's backdrop kept as a rival candidate.** The map tab bar
+   paints `rgba(16,18,24,.85)` over cream; the text sits on the composite
+   (`#333439`), not on bare cream. A 5.44:1 link was reported as 2.16:1.
+
+**Every one of those was caught by RENDERING the screen and looking**, not by
+reasoning. And after four quieting fixes the probe was worth nothing until it had
+been seen to speak, so `probe_selftest.mjs` injects three deliberate defects —
+including one *inside* a gradient-border card — and requires the probe to name
+all three. It does; the clean screen still reports zero.
+
+### 1052 — the insurance CRM ink pass
+
+**The client's own name was invisible on their own profile: `#ffffff` on
+`#FAF8F7`, 1.00:1.**
+
+The client profile is ONE screen shared by three CRMs. Its identity block paints
+from `--rbe-*` (RETAIL) while `body.claim-insurance #projectView` re-grounds the
+screen from `--ct-*`. `--ct-bg` is cream on the default insurance theme (docket)
+and near-black on the other (siren) — and the `--rbe-*` inks **do not flip with
+it**, measured byte-identical under both. So on the theme Cardinal actually ships,
+dark-theme inks sat on a cream page.
+
+This is the *partial theming pass* trap: a `body.claim-insurance` block already
+exists and already themes `.dbmoney`, `.dbrow`, `.jabox`, `.projsec`, `#leadCard`.
+It simply never reached the header. Twelve of fourteen elements read correctly, so
+the two that did not looked like a design choice.
+
+| element | was | now | docket | siren |
+|---|---|---|---|---:|---:|
+| `.heroNm` the client's NAME | `#ffffff` | `var(--ct-ink)` | 16.77 | 17.71 |
+| `.hph` phone | `#b9d3ec` | `var(--ct-red-deep)` | 9.94 | 5.61 |
+| `.hem` email | `#9aa0a8` | `var(--ct-ink-2)` | 5.30 | 7.75 |
+| `.mlbl` ×4 + the `::before` labels | `#9aa0a8` | `var(--ct-ink-2)` | 5.30 | 7.75 |
+| `.poPfx` PO chip | `#d8a94f` on a fixed wash | `--ct-red-deep` on `--ct-surface` | 10.53 | 5.08 |
+| `.payadd` ×3 (Payments) | `#b9d3ec` | `var(--ct-red-deep)` | 9.94 | 5.61 |
+| `.danger-note` | `#a89f9a` | `var(--ct-ink-2)` | 5.30 | 7.75 |
+| `.dbmdir` Directions | `--ct-red-deep` | `#FF8A80` | 5.44 | 8.27 |
+| `.db-paid` | `#7CB342` | declared pair | 5.51 | 7.94 |
+
+⚠ **`.dbmdir` is deliberately NOT a token.** Its bar paints `rgba(16,18,24,.85)`
+and is therefore always dark whichever way the theme goes — a token that flips
+would put the light theme's dark red on it at 1.18:1. A fixed value is correct
+precisely *because* the thing behind it does not flip. `.db-paid` is the opposite
+case: no single green clears 4.5 on both cream and near-black, so it is a declared
+pair scoped by `[data-rltheme="siren"]`.
+
+**Two app-wide findings came out of this and both are real everywhere:**
+
+- **EVERY stage banner in the app was under the floor.** `.dbstage` grounds on
+  `STAGE_COLORS` via an inline style, and white on it measures **1.96:1 (Lead)**
+  to 4.37:1 (Closed) — nine of nine under 4.5 for the 11.5px sub-line, seven of
+  nine under 3.0 for the 19px title. `STAGE_COLORS` is a settled semantic set and
+  is **not** changed; the app already ships `STAGE_INK`, *"the same stages,
+  darkened for a light ground"*, so the banner grounds on `stageInk(stg)`. Worst
+  case **1.96 → 5.27**, no colour invented, chips/dots/spines untouched.
+- **`.wsempty`** was 2.49:1 on its own box in every theme. Since 1051 gave
+  retail-dark its own rule, that base ink is now read only by light grounds — one
+  darkening fixes insurance, community and rb-light at once. 5.50:1.
+
+Plus `#cr-claims-mount .cr-c-btn.primary`, which grounded on `--cr-red` = `#ff6b6b`
+— the *dark* half of the `--cr-*` family, right as ink on dark and wrong as a
+button ground under white text (2.78:1). Now `#B01F21`, 6.85:1.
+
+⚠ **My first cut at the two claims PILLS wrote the computed light values into the
+BASE rules, and the audit re-run caught it in the same session I quoted the rule
+about it.** Those pills also render on a dark tint in dark mode, where
+`--cr-green` is the light `#5ec97f`; an unconditional `#2A732E` scored **2.32:1**.
+A light fix that broke dark — build 527's exact failure. Now scoped under
+`:root[data-theme="rb-light"]`, base untouched.
+
+### 1053 — the reach pass
+
+- **The header title ran under the home button on a phone.** `#cr-hd2-mid` is
+  `position:absolute; left:50%` with `max-width:calc(100% - 190px)` — but the
+  button groups are **not symmetric** (two icons left, three right), so 95px a
+  side is reserved where the right needs ~164. Measured overlap of
+  `#cr-hd2-home`: **28px at 360, 13px at 390 (iPhone), clean at 430.** Worse on
+  retail, whose title is longer. Below 430 the title now joins normal flow
+  between the groups, where it cannot reach them.
+  ⚠ **`margin-left:auto` on `#cr-hd2-home` had to go with it** — a main-axis auto
+  margin absorbs *all* free space before flex-grow gets any, so without that the
+  title never expanded.
+- **"DEDUCTIBLE" broke mid-word** — the same defect Theo photographed on the
+  trade checkboxes, in a 66px label column. Insurance-only field, so the column
+  grows for insurance only. ⚠ **`getClientRects()` on a BLOCK returns 1 however
+  its text wraps** — it is the element's box, not the text's. That is how this
+  hid; the gate measures the text node with a `Range`.
+- **Eighteen controls under 44px**, extending `cr-touch44-styles`, which says in
+  its own header that this is where they belong. The two worst were the **back
+  links out of the claim detail and the adjuster directory — 17px tall, and the
+  only way off those screens.**
+
+### 1054 — the hub and the client list stop disagreeing
+
+Theo asked specifically about *"the vocabulary at the insurance home vs the
+pipeline terminology"*. **The WORDS are already one set** — build 655 unified four
+competing maps into `INS_STAGE_LABEL`, and the rail, the chips and the profile
+stage bar all read it. Both `window.INS_STAGE_LABEL || {…}` fallbacks were checked
+and are byte-consistent with the canonical map. That part is sound and was left
+alone. What was NOT sound is that the two screens disagreed about which stages
+*exist*:
+
+- **The home could filter the list into a state the list could not display.** The
+  rail's nine `[data-stage]` rows set `icStageFilter` to any stage, but
+  `CHIPS = ['Approved','Scheduled','Completed','Invoiced','Closed','Lost']` — no
+  Lead, Prospect or OnHold. Tapping **"Claim Filed"** or **"Adjuster Pending"** —
+  the two most-chased rows on the hub — opened a correctly filtered list with **no
+  chip lit, not even "All"**. Now nine chips in pipeline order.
+- **"Supplement Filed" cleared the filter instead of applying it.**
+  `(k === 'supplement') ? '' : k` — the one row carrying a chased count and an
+  amount showed you every claim. `__supplements__` already existed and is what the
+  hub's own Supplements tab sends.
+- **The short stage label existed for this exact strip and was not used on it.**
+  Build 656 added `INS_STAGE_LABEL_SHORT` and wrote down why: the full Invoiced
+  label *"pushed the stage-filter strip from 3 rows to 4 at 375-390px"*.
+  `insStageLabel(s, short)` is called at **exactly one site in the file**, and it
+  was not this strip — measured **242px** for one chip on a 390px phone.
+
+**Gates.** `check_build` green on all three. `gate_1052` (18 named control
+failures), `gate_1053` (13), `gate_1054` (9) — every one seen RED on its
+predecessor. All ten arc gates 1044–1053 re-run green on the 1054 tree.
