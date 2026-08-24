@@ -24293,3 +24293,26 @@ the light profile. Same class as 1025's Balance Due (inline beats every styleshe
 NOT touched:** build 539's comment records Theo choosing `#f0c651` with the 1.47:1 measurement in
 front of him ("Do not 'fix' this back to amber without asking him"); the ask goes on his reminder
 list. Gate: `gate_1032.mjs` computed inks both themes on the profile; GREEN, control RED ×3.
+
+## Build 1033 — the AI-estimate arm deleted, whole (item 6; Theo: "truly deleted")
+
+1028 hid the doors; this removes the machinery, per the 807 checklist (every wiring mapped first).
+**Gone (−36.9 KB):** the AI Create + Output views, the photo-session/downscale/upload sections,
+`api()`/`generateEstimate`/`convertToContract`/`normalizeAI`, the ai leg of `loadList`, the lanes'
+ai click branch + ⚡ badge, `creDiscard`'s ai branch, the `openAI`/`openOne` exports, both
+`cr-tmpl-ai-*` templates, `.cre-ai`; cr-shim's `openAI` route (its only project-passing caller was
+the door removed at 1028); the dead `#pAiEstimateBtn` wiring; cr-claims' linked-AI-estimate load +
+card + click; cr-xlinks' `forEstimate`/`linkClaimToEstimate` (**their only "callers" were the
+banner's own install prose** — comment pollution, both directions); cr-ahc's `checkAI()` + its env
+row + table row; cr-inv's `check_4`/`check_5` + registry rows; cr-eaf's `wireSave`/`wireSend`.
+**`api/estimate.js` deleted** + its `vercel.json` entry (an unmatched functions pattern fails the
+deploy); `api/estimate-to-contract.js` refuses `ai_estimate_id` and keeps only the project path.
+⚠️ **`drop_ai_estimates.sql` ships but is NOT yet applied** — the automated apply was declined
+(it drops two FK constraints by name on the live `contracts`/`insurance_claims` tables); Theo runs
+it by hand per convention; 0 rows + 0 FK references verified; the app stopped reading the table
+this build either way. Two lessons banked: **only the runtime gate caught the first xlinks cut
+taking `forContract` and every renderer with it** (it parsed clean — five-state pageerror sweep is
+now the pattern for deletions), and my own tombstone comments tripped my own leftover-reference
+asserts FIVE times (context-checked asserts now). Gate: `gate_1033.mjs` GREEN (five states, zero
+pageerrors, zero live refs, api checks); **control RED ×9**; arc gates 1026/28/29/30/32 all re-run
+GREEN on this artifact.

@@ -54,9 +54,6 @@
     "api/detect.js": {
       "maxDuration": 60
     },
-    "api/estimate.js": {
-      "maxDuration": 60
-    },
     "api/hover.js": {
       "maxDuration": 60
     },

@@ -3708,7 +3708,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 
           <button class="navopt" id="signOutBtn" style="display:none;border-top:2px solid #eee;color:#9c1822;">&#128682; Sign out</button>
           <div class="cr-ts" role="group" aria-label="Text size"><span class="lb">Text size</span><button type="button" data-cr-text-set="md" aria-pressed="true" title="Normal">A</button><button type="button" data-cr-text-set="lg" aria-pressed="false" title="Large">A</button><button type="button" data-cr-text-set="xl" aria-pressed="false" title="Larger">A</button></div>
-          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1032 &#8212; the delete-client warning is readable in light mode. The small caption under the Delete Client button (“Permanently removes this client…”) was a grey chosen for the dark theme and nearly vanished on the light one; it now switches with the theme. Build 1030 &#8212; estimate documents are filed by what they are, not what they&#8217;re called. A published estimate is linked to its estimate record, and the app now files it by that link — rename the title and it stays under Estimates, still reaches the approvals list and the &#8220;needs approval&#8221; alert when signed, and still counts on the job card. The title box&#8217;s example text no longer suggests a name that would have misfiled the document. The retired manual_estimates database table (empty, unused since build 568) is dropped, and some dead wiring left over from the old estimates screen was removed. Build 1029 &#8212; saving an estimate no longer throws you out of it. Save keeps the editor open — a toast confirms, the estimate number appears on first save, and you keep working; the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar under your thumb. Publish and → Contract are faster and surer: they used to press Save for you and wait up to nine seconds watching for the editor to close, then go find the saved row and guess which one it was — they now receive the exact saved estimate directly. Build 1028 &#8212; the AI helps from inside the estimate, and the separate AI door is gone. One button in the estimate’s Photos section reads every attached photo at once: it writes captions for photos that have none (never over yours), adds a short overview to Scope Notes (never replacing what you wrote), and picks a cover only if you haven’t starred one. The two “AI Estimate” buttons (the estimates screen and the client profile) are hidden — estimates are just estimates now. Build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
+          <div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-24 build 1033 &#8212; the old AI-Estimate machinery is gone for good. Build 1028 hid its buttons; this build deletes the code behind them, and its empty database table is ready to drop (Theo runs drop_ai_estimates.sql) — the separate AI estimate builder, its photo-upload flow, its review screen, and every link into it from claims and the health checks. Estimates are just estimates: one editor, with the AI helping from inside it. Nothing you can see changes. Build 1032 &#8212; the delete-client warning is readable in light mode. The small caption under the Delete Client button (“Permanently removes this client…”) was a grey chosen for the dark theme and nearly vanished on the light one; it now switches with the theme. Build 1030 &#8212; estimate documents are filed by what they are, not what they&#8217;re called. A published estimate is linked to its estimate record, and the app now files it by that link — rename the title and it stays under Estimates, still reaches the approvals list and the &#8220;needs approval&#8221; alert when signed, and still counts on the job card. The title box&#8217;s example text no longer suggests a name that would have misfiled the document. The retired manual_estimates database table (empty, unused since build 568) is dropped, and some dead wiring left over from the old estimates screen was removed. Build 1029 &#8212; saving an estimate no longer throws you out of it. Save keeps the editor open — a toast confirms, the estimate number appears on first save, and you keep working; the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar under your thumb. Publish and → Contract are faster and surer: they used to press Save for you and wait up to nine seconds watching for the editor to close, then go find the saved row and guess which one it was — they now receive the exact saved estimate directly. Build 1028 &#8212; the AI helps from inside the estimate, and the separate AI door is gone. One button in the estimate’s Photos section reads every attached photo at once: it writes captions for photos that have none (never over yours), adds a short overview to Scope Notes (never replacing what you wrote), and picks a cover only if you haven’t starred one. The two “AI Estimate” buttons (the estimates screen and the client profile) are hidden — estimates are just estimates now. Build 1027 &#8212; the estimate a client receives is readable on their phone. The shared estimate document was a fixed 8.5-inch page, so on a phone it rendered postage-stamp small and the homeowner pinch-zoomed through their own quote; it now reflows to the screen — stacked header, single-column photos, full-width tables — while printing exactly as before. The document itself was also redressed as a clean letterhead: serif body, hairline rules, red kept to the brand line, section numbers and the total. Build 1026 &#8212; the estimate walls stop hiding your wins and losses. The Estimates screen&#8217;s columns only knew draft, sent and approved &#8212; an estimate marked Accepted or Declined in the editor quietly fell into UNSENT &#8212; DRAFTS ($27,310 of accepted work was parading as drafts when this shipped). Accepted now lands in ACCEPTED, Declined gets its own thin strip at the bottom, anything with a status the walls don&#8217;t recognize shows up plainly labelled instead of hiding, and the open-pipeline number stops counting dead or already-won deals as money still in play. Build 1025 &#8212; the estimate builder&#8217;s money is readable again. The Total and deposit on the black estimate screen were painting in a dark red left over from the old cream design &#8212; nearly invisible &#8212; and are now white. Six red buttons that flashed yellow when hovered now deepen to dark red like everywhere else, the last two red-to-gold gradient buttons are flat red, the template menus on a client&#8217;s Estimates and Contracts tabs match the dark app instead of popping up white, Balance Due is readable on the dark money band, and several light-mode inks (lane titles, saved-estimates heading, profile notes, money captions) now clear their contrast floors. Leftover emoji in the estimates screens were replaced or removed. Build 1023 &#8212; the &#8220;N to fill&#8221; chip on a contract is readable again. The little grey chip that counts the blanks left on a document was painting its number in a red or green too dark to read on its own grey background; both are now the lighter shades the app already uses elsewhere, so the count reads clearly in either state. Build 1022 &#8212; three full-screen screens no longer get stuck on top of the app. Community Analytics, the Line Item Library, and the contract viewer each open over the whole screen, but none of them was on the list the app clears when you go somewhere else &#8212; so opening one and then tapping another destination (or the back arrow) left it stuck covering the new screen with no way out but its own Close. All three are now closed when you navigate away, and the back button returns you to where you were instead of walking past them. Build 1021 &#8212; moving a job to Approved or Completed with no signal no longer drops the email to the team. When you change a stage offline, the job itself is saved on the phone and synced when you are back &#8212; but the &#8220;Approved &#8212; order materials&#8221; note to Curtis (and the &#8220;job complete &#8212; walk-around + invoice&#8221; note) was being sent right then and, with no signal, silently thrown away, so the crew never heard. Those emails now wait in the same outbox as your edits and go out the moment you reconnect. Online, nothing changes. Build 1020 &#8212; tapping a job&#8217;s stage arrow forward and then back within a few seconds no longer sends production a phantom &#8220;Approved &#8212; order materials&#8221; email. The five-second undo window kept only one pending move, and a second tap on the same job used to lock in the first move before starting the new one &#8212; so a quick forward-then-back (or the phone locking mid-window) fired the crew email for a stage the job never really reached. A second tap on the SAME job now replaces the pending move from its true starting point, so a round-trip settles as no change and only your final stage is saved. A move on a DIFFERENT job still commits the first one (unchanged), and closing the app still saves a move in progress. Build 1019 &#8212; two money displays now agree with Balance Due. On the Payment Information page, &#8220;Received&#8221; and &#8220;Job Net&#8221; were adding up the old payment rows and ignoring Money In &amp; Commissions, so they could disagree with the Balance Due shown right above them &#8212; they now use the same Money In total. And a job with more than one signed contract now adds them up for Job Value instead of showing only the largest (no job has two yet &#8212; this prevents a future wrong number). Build 1018 &#8212; the &#8220;where did this lead come from&#8221; report now sees every lead. Some leads (from manual estimates and community bids) saved their source in a spot the source report never looked, so knocking and referrals were being under-counted; those are now read correctly, with no change to how you enter them. Build 1017 &#8212; editing a job while offline no longer wipes the edit you just made. When there is no signal, the app was re-reading a stale cached copy of the job and merging your change onto THAT, so your edit vanished when the connection came back. Offline, it now keeps your change and syncs it when you are back online; online, the two-device safety merge is unchanged. Build 1016 &#8212; security (backend only, nothing changes on screen): the AI features and the &#8220;email this document&#8221; button now check that you are Cardinal staff, not just that you are signed in &#8212; so a stranger who made an account can no longer spend Cardinal&#8217;s AI budget or send mail as Cardinal. &#9888; Theo still needs to turn OFF public sign-up in Supabase to fully close it. Build 1015 &#8212; contract signing works end to end again (from tonight&#8217;s audit). (1) A Service Contract made from an estimate now carries a signature line again &#8212; it had none, so the pad had nowhere to sign. (2) Signing a contract from the secure link now records the signature on the job, so it shows as Signed, reaches the approvals list, and unlocks the money worksheet &#8212; before, it only told production to order materials. (3) Construction Agreements can now be signed from the secure link too. (4) A signed estimate with a number now reaches the approvals queue and the &#8220;needs approval&#8221; alert. (5) A voided contract now reads Voided and stops offering Void.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -23160,20 +23160,8 @@ document.getElementById('pNewExteriorBtn').addEventListener('click', function(){
   createReportFrom(EXTERIOR_TEMPLATE, 'Exterior report', false);
 });
 
-/* 715: AI Estimate, for the client whose profile this is. Goes through
-   crOpenEstimates() rather than CardinalEstimates.openAI() directly, because the
-   global opener is what runs styleMounts() and hides the sibling mounts — calling
-   the module method alone leaves the mount unstyled and the profile underneath
-   it (the same lesson 571 recorded for history restore). */
-var pAiEstimateBtn = document.getElementById('pAiEstimateBtn');
-if(pAiEstimateBtn){
-  pAiEstimateBtn.addEventListener('click', function(e){
-    e.stopPropagation();
-    if(!currentProject) return;
-    if(typeof window.crOpenEstimates === 'function') window.crOpenEstimates(currentProject);
-    else showError('Estimates are not loaded yet — give it a moment and try again.');
-  });
-}
+/* 1033: the #pAiEstimateBtn wiring lived here — its button was removed at
+   1028 and the AI arm behind it is deleted with this build. */
 var pEstMenu = document.getElementById('pEstMenu');
 document.getElementById('pNewEstimateBtn').addEventListener('click', function(e){
   e.stopPropagation();
@@ -28028,19 +28016,14 @@ body.claim-insurance #brandLogo{
   };
 
   // ── Public entry points that also close the main app views ──
-  /* 715: an optional project opens the AI builder bound to that client.
-     wrapNav forwards arguments (orig.apply(this, arguments)), so the history
-     restore case still calls this with none and lands on the list. */
+  /* 715 routed an optional project into the AI builder; 1033 deleted that
+     arm, so every path lands on the estimates walls. */
   window.crOpenEstimates = function (project) {
     styleMounts();
     try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (e) {}
     window.crHideOtherMounts('cr-estimates-mount');
     if (!window.CardinalEstimates) { alert('Estimates module not loaded'); return; }
-    if (project && project.id && typeof window.CardinalEstimates.openAI === 'function') {
-      window.CardinalEstimates.openAI(project);
-    } else {
-      window.CardinalEstimates.open();
-    }
+    window.CardinalEstimates.open();
   };
 
   window.crOpenClaims = function () {
@@ -28089,7 +28072,7 @@ body.claim-insurance #brandLogo{
 
  1. Prep once (server-side):
       • supabase: run photos_bucket_setup.sql (if not already)
-      • supabase: run ai_estimates_setup.sql
+      • supabase: ai_estimates_setup.sql (table dropped at build 1033)
       • supabase: run contracts_setup.sql
       • Add api/estimate.js to your repo
       • Add api/estimate-to-contract.js to your repo
@@ -28425,7 +28408,7 @@ body.claim-insurance #brandLogo{
 .cre-card::before{content:'';position:absolute;left:0;top:8%;height:84%;width:3px;border-radius:3px;background:var(--rcn,#dbe7f7);box-shadow:var(--rbe-spineglow);}
 .cre-card .mid{flex:1;min-width:0;}
 .cre-card .dt{font-weight:800;font-size:13.5px;color:var(--rbe-head,#ffffff);/* 685: was gradient-clipped text */}
-.cre-ai{font:800 8.5px ui-monospace,Menlo,monospace;background:var(--rbe-panel);color:var(--rbe-ai);-webkit-text-fill-color:var(--rbe-ai);border-radius:999px;padding:1px 6px;vertical-align:middle;}
+
 .cre-card .cl{font-size:11.5px;color:var(--rbe-mute);}
 .cre-card .cl .po{font-weight:800;opacity:.9;color:var(--rbe-po2,#d8a94f);/* 685: was gradient-clipped text */}
 .cre-card .cl .rp{font-weight:800;color:var(--rbe-rep);}
@@ -28502,9 +28485,9 @@ body.claim-insurance #brandLogo{
     <p class="cre-sub" data-cre-sub></p>
 
     <div class="cr-actions">
-      <!-- 1028: the AI door is CLOSED, not deleted. showAICreate and the
-           ai_estimates table stay dormant; the AI now assists INSIDE the editor
-           (the button in its Photos section). -->
+      <!-- 1028 closed the AI door; 1033 deleted the arm behind it, on Theo's
+           call. The AI assists INSIDE the editor (the button in its Photos
+           section). -->
       <button class="cr-btn primary" data-act="new-manual">+ New estimate</button>
       <button class="cr-btn" data-act="templates">Templates</button>
     </div>
@@ -28552,134 +28535,18 @@ body.claim-insurance #brandLogo{
 </template>
 
 <!-- ═══ Template: AI Estimate creation ═══════════════════════════ -->
-<template id="cr-tmpl-ai-create">
-  <div class="cr-app">
-    <div class="cr-back" data-act="back">← Back to Estimates</div>
-    <div class="cr-eyebrow">CARDINAL ROOFING &amp; RENOVATIONS · NEW ESTIMATE</div>
-    <h1 class="cr-title"><span class="zap">⚡</span>AI Estimate</h1>
-    <div class="cr-title-rule"></div>
-    <div class="cr-forclient" data-cr-forclient></div>
-
-    <div class="cr-help">
-      <strong>Describe the job. Add 4–8 photos.</strong> The AI drafts a fresh estimate from your chosen template — never modifies an existing one.
-    </div>
-
-    <div class="cr-section">
-      <div class="cr-section-h"><span class="num">1</span><span>Template</span><span class="req">Required</span></div>
-      <div class="cr-section-rule"></div>
-      <div class="cr-templates" data-tmpl-picker>
-        <div class="cr-tmpl selected" data-tmpl="roofing"><div class="cr-tmpl-lbl">Roofing</div><div class="cr-tmpl-name">Full Replacement</div><div class="cr-tmpl-desc">Tear-off · OSB overlay · kick-outs · ridge vent</div></div>
-        <div class="cr-tmpl" data-tmpl="siding"><div class="cr-tmpl-lbl">Siding</div><div class="cr-tmpl-name">Repair or Full</div><div class="cr-tmpl-desc">Per elevation or whole-house</div></div>
-        <div class="cr-tmpl" data-tmpl="windows"><div class="cr-tmpl-lbl">Windows</div><div class="cr-tmpl-name">Per-Opening</div><div class="cr-tmpl-desc">Full-frame or insert · Low-E</div></div>
-      </div>
-    </div>
-
-    <div class="cr-section">
-      <div class="cr-section-h"><span class="num">2</span><span>Photos</span><span class="req">4 min · 8 max</span></div>
-      <div class="cr-section-rule"></div>
-      <div class="cr-photos" data-photos></div>
-      <div class="cr-photo-status" data-photo-status></div>
-    </div>
-
-    <div class="cr-section">
-      <div class="cr-section-h"><span class="num">3</span><span>Describe the Job</span><span class="req">Required</span></div>
-      <div class="cr-section-rule"></div>
-      <textarea class="cr-chat" data-desc placeholder="e.g., Full roof replacement — TruDefinition Duration, Estate Gray, ~26 sq. Include OSB overlay, kick-out flashings, ridge vent. Storm claim (State Farm)."></textarea>
-      <div class="cr-chips-label">Add to scope</div>
-      <div class="cr-chips" data-chips>
-        <div class="cr-chip" data-chip="OSB overlay">OSB overlay</div>
-        <div class="cr-chip" data-chip="Ridge vent">Ridge vent</div>
-        <div class="cr-chip" data-chip="Kick-out flashings">Kick-outs</div>
-        <div class="cr-chip" data-chip="Storm claim">Storm claim</div>
-        <div class="cr-chip" data-chip="Include gutters">Include gutters</div>
-        <div class="cr-chip" data-chip="Chimney re-flash">Chimney re-flash</div>
-        <div class="cr-chip" data-chip="Ice & water shield">Ice &amp; water shield</div>
-        <div class="cr-chip" data-chip="Multiple layers">Multiple layers</div>
-      </div>
-    </div>
-
-    <div class="cr-section">
-      <div class="cr-section-h"><span class="num">4</span><span>Generate</span></div>
-      <div class="cr-section-rule"></div>
-      <button class="cr-generate" data-act="generate" disabled>Pick a template…</button>
-      <div class="cr-fineprint">Fresh template · never modifies existing · Gemini 3.5 → 2.5 → OpenAI fallback</div>
-    </div>
-  </div>
-</template>
-
 <!-- ═══ Template: AI Estimate output/review ═════════════════════ -->
-<template id="cr-tmpl-ai-output">
-  <div class="cr-chrome-top">
-    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
-      <div class="cr-chrome-badge"><span class="dot"></span> AI Draft · Review Before Sending</div>
-      <div class="cr-chrome-meta" data-meta></div>
-    </div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap;">
-      <button class="cr-chrome-btn" data-act="back">← Back</button>
-      <button class="cr-chrome-btn" data-act="regenerate">↻ Regenerate</button>
-      <button class="cr-chrome-btn" data-act="save">Save Draft</button>
-    </div>
-  </div>
-
-  <div class="cr-doc">
-    <div class="cr-eyebrow">CARDINAL ROOFING &amp; RENOVATIONS</div>
-    <h1 class="cr-title">Estimate</h1>
-    <div class="cr-title-rule"></div>
-
-    <div class="cr-facts" data-facts></div>
-
-    <div class="cr-section">
-      <div class="cr-section-h"><span class="num">1</span><span>Scope Summary</span></div>
-      <div class="cr-section-rule"></div>
-      <div class="cr-ai-note" data-ai-note></div>
-      <div class="cr-scope" data-scope></div>
-    </div>
-
-    <div class="cr-section">
-      <div class="cr-section-h"><span class="num">2</span><span>Line Items</span></div>
-      <div class="cr-section-rule"></div>
-      <table class="cr-items" data-items></table>
-      <div class="cr-totals" data-totals></div>
-    </div>
-
-    <div class="cr-section">
-      <div class="cr-section-h"><span class="num">3</span><span>Deposit &amp; Payment Schedule</span></div>
-      <div class="cr-section-rule"></div>
-      <div class="cr-deposit" data-deposit></div>
-    </div>
-
-    <div class="cr-section">
-      <div class="cr-section-h"><span class="num">4</span><span>Notes &amp; Terms</span></div>
-      <div class="cr-section-rule"></div>
-      <div class="cr-terms" data-terms></div>
-    </div>
-  </div>
-
-  <div class="cr-chrome-bottom">
-    <button class="cr-chrome-btn danger" data-act="discard">× Discard</button>
-    <button class="cr-chrome-btn primary" data-act="send">Send to Client →</button>
-    <button class="cr-chrome-btn success" data-act="convert">→ Convert to Contract</button>
-  </div>
-</template>
-
 <!-- ═══ Module script ═══════════════════════════════════════════ -->
 <script id="cr-estimates-script">
 (function () {
   'use strict';
 
   // ── Config ────────────────────────────────────────────────
+  /* 1033: the AI-arm constants (photo session, upload prefix, retry) left
+     with the machinery they served. */
   const NS = 'cr-estimates';
-  const BUCKET = 'photos';
-  const PATH_PREFIX = 'ai-estimates';
-  const MIN_PHOTOS = 4;
-  const MAX_PHOTOS = 8;
-  const MAX_DIM = 1600;
-  const JPEG_Q = 0.85;
-  const LS_KEY = (id) => `cardinal.ai_estimate.${id}`;
-  const RETRY_MS = 1500;
-
   const MOUNT = document.getElementById('cr-estimates-mount');
-  let state = { view: null, sessionId: null, session: null, estimate: null, filter: 'all' };
+  let state = { view: null, filter: 'all' };
 
   // ── Toast ─────────────────────────────────────────────────
   function toast(msg, type = 'info', ms = 3200) {
@@ -28691,198 +28558,42 @@ body.claim-insurance #brandLogo{
     setTimeout(() => el.remove(), ms);
   }
 
-  // ── Photo session ─────────────────────────────────────────
-  /* 715: `project` is set when the builder is opened from a client profile.
-     /api/estimate has always accepted project_id + client and stores project_id
-     on the row; nothing ever sent them, so every AI estimate was orphaned. */
-  function createSession(project) {
-    const id = (crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`);
-    const s = { id, createdAt: new Date().toISOString(), template: 'roofing', description: '', photos: [] };
-    if (project && project.id) {
-      s.project_id = project.id;
-      s.client = {
-        name:    project.name    || '',
-        address: project.address || '',
-        phone:   project.phone   || '',
-        email:   project.email   || '',
-      };
-    }
-    saveSession(s);
-    return s;
-  }
-  function loadSessionFromLS(id) {
-    try { const raw = localStorage.getItem(LS_KEY(id)); return raw ? JSON.parse(raw) : null; } catch { return null; }
-  }
-  function saveSession(s) {
-    try { localStorage.setItem(LS_KEY(s.id), JSON.stringify(s)); } catch {}
-  }
-  function clearSessionFromLS(id) {
-    try { localStorage.removeItem(LS_KEY(id)); } catch {}
-  }
-
-  // ── Downscale + upload ────────────────────────────────────
-  async function downscale(file) {
-    let bitmap;
-    try { bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' }); }
-    catch { bitmap = await createImageBitmap(file); }
-    const scale = Math.min(1, MAX_DIM / Math.max(bitmap.width, bitmap.height));
-    const w = Math.round(bitmap.width * scale), h = Math.round(bitmap.height * scale);
-    const canvas = document.createElement('canvas');
-    canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
-    bitmap.close?.();
-    return await new Promise((res) => canvas.toBlob(res, 'image/jpeg', JPEG_Q));
-  }
-
-  async function uploadOne(sessionId, slot, file) {
-    let blob;
-    try { blob = await downscale(file); } catch { blob = file; }
-    const path = `${PATH_PREFIX}/${sessionId}/${String(slot).padStart(2,'0')}-${Date.now()}.jpg`;
-    const { error } = await window.supa.storage.from(BUCKET).upload(path, blob, {
-      contentType: 'image/jpeg', cacheControl: '3600', upsert: false,
-    });
-    if (error) throw error;
-    const { data } = window.supa.storage.from(BUCKET).getPublicUrl(path);
-    return { path, url: data.publicUrl, size: blob.size };
-  }
-
-  async function addPhoto(file) {
-    if (state.session.photos.length >= MAX_PHOTOS) { toast('Max 8 photos', 'error'); return; }
-    if (!file?.type?.startsWith('image/')) { toast('Not an image', 'error'); return; }
-    const slot = state.session.photos.length;
-    const p = { slot, name: file.name || `p-${slot}.jpg`, size: file.size, status: 'uploading' };
-    state.session.photos.push(p);
-    saveSession(state.session);
-    renderPhotos();
-    try {
-      let up;
-      try { up = await uploadOne(state.session.id, slot, file); }
-      catch { await new Promise(r => setTimeout(r, RETRY_MS)); up = await uploadOne(state.session.id, slot, file); }
-      Object.assign(p, up, { status: 'uploaded' });
-    } catch (e) {
-      p.status = 'error'; p.error = e.message || String(e);
-      toast('Upload failed — tap to retry', 'error');
-    }
-    saveSession(state.session);
-    renderPhotos();
-    updateGenerateButton();
-  }
-
-  async function removePhoto(slot) {
-    const p = state.session.photos.find(x => x.slot === slot);
-    if (!p) return;
-    if (p.path) window.supa.storage.from(BUCKET).remove([p.path]).catch(() => {});
-    state.session.photos = state.session.photos.filter(x => x.slot !== slot).map((x, i) => ({ ...x, slot: i }));
-    saveSession(state.session);
-    renderPhotos(); updateGenerateButton();
-  }
-
+  /* 1033: the Photo-session and Downscale/upload sections lived here —
+     they served only the deleted AI Create view. */
   // ── API calls ─────────────────────────────────────────────
-  async function api(path, body) {
-    const { data: { session } } = await window.supa.auth.getSession();
-    if (!session) throw new Error('Not signed in');
-    const r = await fetch(path, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
-      body: JSON.stringify(body),
-    });
-    if (!r.ok) { const err = await r.json().catch(() => ({})); throw new Error(err.error || `HTTP ${r.status}`); }
-    return r.json();
-  }
+  /* 1033: api(), generateEstimate() and convertToContract() were the AI
+     arm's transport — deleted with it. The editor's own save and the
+     satellites talk to Supabase and /api directly. */
+    async function loadList(filter) {
+    /* 1033: this was a Promise.all over ai_estimates + estimates. The AI arm
+       is deleted and its table dropped; `estimates` (the real table, 568's
+       find) is the only source now.
 
-  async function generateEstimate() {
-    const uploaded = state.session.photos.filter(p => p.status === 'uploaded');
-    if (uploaded.length < MIN_PHOTOS) throw new Error(`Need ${MIN_PHOTOS - uploaded.length} more photos`);
-    if (!state.session.description?.trim() || state.session.description.trim().length < 20) throw new Error('Describe the job (min 20 chars)');
-    const result = await api('/api/estimate', {
-      template: state.session.template,
-      photo_urls: uploaded.map(p => p.url),
-      description: state.session.description.trim(),
-      /* 715: the API has always stored these; nothing ever sent them. */
-      project_id: state.session.project_id || null,
-      client:     state.session.client     || null,
-    });
-    clearSessionFromLS(state.session.id);
-    return result;
-  }
-
-  async function convertToContract(estimateId, homeowner, propertyAddress) {
-    return api('/api/estimate-to-contract', {
-      ai_estimate_id: estimateId,
-      homeowner,
-      property_address: propertyAddress,
-    });
-  }
-
-  async function loadList(filter) {
-    const [aiRes, estRes] = await Promise.all([
-      window.supa.from('ai_estimates')
-        .select('id, created_at, updated_at, created_by, project_id, template, estimate, status, model_used')
-        .order('created_at', { ascending: false })
-        .limit(200),
-      /* 568: the real source, which 566 identified and left for a decision.
-         `estimates` holds 12 real rows; `manual_estimates` (what this used to
-         reach for) and `ai_estimates` are both EMPTY, which is why this screen
-         has always looked broken — it queried the two empty tables and never the
-         full one.
-
-         Joined to `projects` for the client name via estimates_project_id_fkey,
-         so PostgREST resolves the embed.
-
-         line_items / photos / notes / payment_instructions are deliberately NOT
-         selected: one line item's description in this data is a 3 KB essay, and
-         the card renders none of it. creOpenSaved() re-reads the full row when
-         the editor opens, which also means the editor gets the CURRENT version
-         rather than whatever the list cached. */
-      window.supa.from('estimates')
-        .select('id, estimate_number, title, status, total, created_at, updated_at, created_by, project_id, projects(name, address)')
-        .eq('archived', false)
-        .order('updated_at', { ascending: false })
-        .limit(200),
-    ]);
+       line_items / photos / notes / payment_instructions are deliberately NOT
+       selected: one line item's description in this data is a 3 KB essay, and
+       the card renders none of it. creOpenSaved() re-reads the full row when
+       the editor opens, which also means the editor gets the CURRENT version
+       rather than whatever the list cached. */
+    const estRes = await window.supa.from('estimates')
+      .select('id, estimate_number, title, status, total, created_at, updated_at, created_by, project_id, projects(name, address)')
+      .eq('archived', false)
+      .order('updated_at', { ascending: false })
+      .limit(200);
 
     const me = window.my_email?.() || '';
-    const ai = (aiRes.data || []).map(r => normalizeAI(r));
-    const saved = (estRes.data || []).map(r => normalizeEst(r));
-    let all = [...ai, ...saved].sort((a, b) => new Date(b.date) - new Date(a.date));
+    let all = (estRes.data || []).map(r => normalizeEst(r))
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
 
     switch (filter) {
       case 'pending':   all = all.filter(r => ['draft','sent','viewed'].includes(r.status)); break;
       case 'approved':  all = all.filter(r => r.status === 'approved'); break;
       case 'converted': all = all.filter(r => r.status === 'converted'); break;
-      case 'ai':        all = all.filter(r => r.source === 'ai'); break;
       case 'mine':      all = all.filter(r => r._createdBy === me); break;
     }
     return all;
   }
 
-  function normalizeAI(r) {
-    const e = r.estimate || {};
-    return {
-      id: r.id, source: 'ai',
-      number: fallbackNum('EST', r.id),
-      date: r.created_at,
-      date_label: fmtDate(r.created_at),
-      client: e.client?.name || e.homeowner?.name || 'Unknown client',
-      address: e.client?.address || '',
-      scope: truncate(e.scope_summary, 140),
-      amount: e.total || 0,
-      status: r.status,
-      priority: inferPriority(e),
-      rep: (r.created_by || '').split('@')[0],
-      _createdBy: r.created_by,
-      _raw: r,
-    };
-  }
-
-  /* 568: replaces normalizeManual(), which read a `manual_estimates` shape that
-     has never had a row in it and no writer anywhere. Deleted rather than left
-     beside this one — a second normalizer for the same concept is how this file
-     grew two of everything.
-     `total` arrives from PostgREST as a STRING ('11920.99'), so it is coerced;
-     `${fmt(r.amount)}` on a string would render but sorting by amount would
-     compare lexically and put $9,000 above $36,654. */
-  function normalizeEst(r) {
+    function normalizeEst(r) {
     /* PostgREST returns a many-to-one embed as an OBJECT and a one-to-many as an
        ARRAY. estimates->projects is many-to-one so this should be an object, but
        that is the one thing about this query that could not be verified against
@@ -29061,11 +28772,6 @@ function newClientForm(){
 function showList() {
     state.view = 'list';
     mount('cr-tmpl-list');
-    /* 1028: the AI door is hidden and this element no longer renders. Left
-       unguarded, this line would throw and kill every wire below it, taking
-       the whole list screen down with the door. */
-    var _newAiBtn = MOUNT.querySelector('[data-act="new-ai"]');
-    if (_newAiBtn) _newAiBtn.onclick = showAICreate;
     MOUNT.querySelector('[data-act="new-manual"]').onclick = showManualPick;
 
     const q = s => MOUNT.querySelector(s);
@@ -29121,13 +28827,10 @@ function showList() {
     q('[data-cre-lanes]').onclick = e => {
       const el = e.target.closest('.cre-card');
       if (!el) return;
-      const id = el.dataset.id, source = el.dataset.source;
-      if (source === 'ai') showOutput(id);
-      /* 568: was `window.openManualEstimate(id)` — a function DEFINED NOWHERE in
-         this file. One reference, no definition, so every non-AI card has always
-         been inert. Wiring the query without this would have shipped twelve cards
-         that do nothing. */
-      else if (source === 'est') creOpenSaved(id);
+      /* 568: was `window.openManualEstimate(id)` — defined nowhere, every card
+         inert. 1033: the ai branch left with the AI arm; every card is a saved
+         estimate. */
+      creOpenSaved(el.dataset.id);
     };
     function paintCreSub(){
       const g = creGroups().find(x => x.key === cre.cat);
@@ -29277,7 +28980,7 @@ function showList() {
     if(!r || !r.data){ alert('That estimate is no longer there.'); return; }
     est.openEditor(r.data.project_id, r.data);
   }
-  async function creDiscard(id, source){
+  async function creDiscard(id){
     if(!creCanDiscard() || !id) return;
     if(!confirm('Discard this estimate?\n\nIt leaves the list but is kept on the record.')) return;
     /* Both tables carry a status column — verified against the live database — so one
@@ -29288,9 +28991,8 @@ function showList() {
        Reusing that beats inventing a status:'discarded' the table has never held.
        Hard delete stays where it is: deleteEstimate() is still the only thing
        that destroys an estimate. */
-    var r = source === 'est'
-      ? await window.supa.from('estimates').update({ archived:true }).eq('id', id)
-      : await window.supa.from('ai_estimates').update({ status:'discarded' }).eq('id', id);
+    /* 1033: one table. The ai_estimates branch left with the AI arm. */
+    var r = await window.supa.from('estimates').update({ archived:true }).eq('id', id);
     if(r && r.error){ alert('Could not discard: ' + r.error.message); return; }
     try{ toast('Discarded'); }catch(_){}
     cre.rows = cre.rows.filter(function(x){ return String(x.id) !== String(id); });
@@ -29300,15 +29002,14 @@ function showList() {
     const lane = CRE_LANES.find(l => l.key === creLane(r)) || { neon: 'var(--rbe-uns-neon)' };
     const w = creWhen(r);
     const trades = creTrades(r).join(', ');
-    const aiBadge = r.source === 'ai' ? ' <span class="cre-ai">\u26a1 AI</span>' : '';
-    return `<div class="cre-card" data-id="${r.id}" data-source="${r.source}" style="--rcn:${lane.neon}">` +
-      `<div class="mid"><div class="dt">${escape(r.client)}${aiBadge}</div>` +
+    return `<div class="cre-card" data-id="${r.id}" style="--rcn:${lane.neon}">` +
+      `<div class="mid"><div class="dt">${escape(r.client)}</div>` +
       `<div class="cl"><span class="po">${escape(r.number)}</span>${trades ? ' \u00b7 ' + escape(trades) : ''} \u00b7 <span class="rp">${escape(creRep(r))}</span></div></div>` +
       `<div class="end"><span class="money">$${fmt(r.amount)}</span><span class="when${w.flag ? ' flag' : ''}">${escape(w.t)}</span>` +
       /* 565: Discard. Admin-only, and it reuses the SAME soft delete the AI review
          screen has always used — status:'discarded' — which no lane matches, so the
          row leaves the list without anything being destroyed. */
-      (creCanDiscard() ? `<button class="cre-del" data-cre-discard="${r.id}" data-cre-src="${r.source}" title="Discard this estimate">&times;</button>` : '') +
+      (creCanDiscard() ? `<button class="cre-del" data-cre-discard="${r.id}" title="Discard this estimate">&times;</button>` : '') +
       `</div></div>`;
   }
   function renderEst(){
@@ -29323,7 +29024,7 @@ function showList() {
         if(!b) return;
         e.stopPropagation();   /* the card itself opens the estimate */
         e.preventDefault();
-        creDiscard(b.getAttribute('data-cre-discard'), b.getAttribute('data-cre-src'));
+        creDiscard(b.getAttribute('data-cre-discard'));
       });
     }
     const vis = creSorted(cre.rows.filter(creMatch));
@@ -29385,372 +29086,8 @@ function showList() {
     }).join('');
   }
 
-  // ── AI Create view ────────────────────────────────────────
-  function showAICreate(sessionId, project) {
-    state.view = 'ai-create';
-    /* 715: showList assigns this straight to .onclick, so argument 1 can
-       arrive as a MouseEvent. Only a real string is a session id — the old
-       code fell through to a fresh session by luck, via a lookup on the key
-       "[object MouseEvent]". */
-    const sid = (typeof sessionId === 'string' && sessionId) ? sessionId : null;
-    state.session = sid ? loadSessionFromLS(sid) : createSession(project);
-    if (!state.session) state.session = createSession(project);
-
-    mount('cr-tmpl-ai-create');
-
-    MOUNT.querySelector('[data-act="back"]').onclick = showList;
-
-    /* 715: name the client this estimate is being built for, so a rep can
-       see at a glance that it is bound to the job they came from. */
-    const forClient = MOUNT.querySelector('[data-cr-forclient]');
-    if (forClient) {
-      const c = state.session.client;
-      forClient.textContent = '';
-      if (c && (c.name || c.address)) {
-        /* textContent, not innerHTML: this module has no esc() of its own,
-           and a client name out of the database is the last string that
-           should be pasted into markup. */
-        const who = document.createElement('span');
-        who.className = 'who';
-        who.textContent = 'For ' + (c.name || 'this client');
-        forClient.appendChild(who);
-        if (c.address) {
-          const where = document.createElement('small');
-          where.textContent = c.address;
-          forClient.appendChild(where);
-        }
-        forClient.classList.add('on');
-      } else {
-        forClient.classList.remove('on');
-      }
-    }
-
-    MOUNT.querySelectorAll('[data-tmpl]').forEach(tile => {
-      tile.classList.toggle('selected', tile.dataset.tmpl === state.session.template);
-      tile.onclick = () => {
-        MOUNT.querySelectorAll('[data-tmpl]').forEach(t => t.classList.remove('selected'));
-        tile.classList.add('selected');
-        state.session.template = tile.dataset.tmpl;
-        saveSession(state.session);
-        updateGenerateButton();
-      };
-    });
-
-    const desc = MOUNT.querySelector('[data-desc]');
-    desc.value = state.session.description;
-    desc.oninput = () => {
-      state.session.description = desc.value;
-      saveSession(state.session);
-      updateGenerateButton();
-    };
-
-    MOUNT.querySelectorAll('[data-chip]').forEach(chip => {
-      chip.onclick = () => {
-        const add = ` ${chip.dataset.chip}`;
-        if (!desc.value.toLowerCase().includes(chip.dataset.chip.toLowerCase())) {
-          desc.value = (desc.value.trim() + add).trim();
-          chip.classList.add('active');
-          state.session.description = desc.value;
-          saveSession(state.session);
-          updateGenerateButton();
-        } else {
-          chip.classList.toggle('active');
-        }
-      };
-    });
-
-    // Photo picker
-    const fileInput = Object.assign(document.createElement('input'), {
-      type: 'file', accept: 'image/*', capture: 'environment', style: 'display:none;'
-    });
-    document.body.appendChild(fileInput);
-    MOUNT.querySelector('[data-photos]').onclick = (e) => {
-      const empty = e.target.closest('.cr-photo.empty');
-      const remove = e.target.closest('.cr-photo-remove');
-      if (remove) {
-        const slot = +remove.dataset.slot;
-        removePhoto(slot);
-        return;
-      }
-      if (empty) {
-        fileInput.onchange = () => {
-          const f = fileInput.files?.[0];
-          fileInput.value = '';
-          if (f) addPhoto(f);
-        };
-        fileInput.click();
-      }
-    };
-
-    MOUNT.querySelector('[data-act="generate"]').onclick = async () => {
-      const btn = MOUNT.querySelector('[data-act="generate"]');
-      btn.disabled = true; btn.textContent = 'Generating…';
-      try {
-        const { id, estimate } = await generateEstimate();
-        showOutput(id, estimate);
-      } catch (e) {
-        toast(e.message, 'error');
-        btn.disabled = false;
-        updateGenerateButton();
-      }
-    };
-
-    renderPhotos();
-    updateGenerateButton();
-  }
-
-  function renderPhotos() {
-    const grid = MOUNT.querySelector('[data-photos]');
-    if (!grid) return;
-    const cells = [];
-    for (const p of state.session.photos) {
-      if (p.status === 'uploaded') {
-        cells.push(`<div class="cr-photo filled" style="background:linear-gradient(135deg,#3a4a5c,#1e2836); background-image:url('${escape(p.url)}');">
-          <button class="cr-photo-remove" data-slot="${p.slot}" title="Remove">✕</button>
-          <div class="cr-photo-status-icon ok">✓</div>
-        </div>`);
-      } else if (p.status === 'uploading') {
-        cells.push(`<div class="cr-photo filled" style="background:#eee;">
-          <div class="cr-photo-status-icon wait">⏳</div>
-        </div>`);
-      } else if (p.status === 'error') {
-        cells.push(`<div class="cr-photo filled" style="background:#eee;">
-          <button class="cr-photo-remove" data-slot="${p.slot}" title="Remove">✕</button>
-          <div class="cr-photo-status-icon err">!</div>
-        </div>`);
-      }
-    }
-    const emptyN = Math.max(0, MAX_PHOTOS - state.session.photos.length);
-    for (let i = 0; i < emptyN; i++) {
-      cells.push(`<div class="cr-photo empty"><div class="cr-photo-add-icon">+</div><div class="cr-photo-add-lbl">Add Photo</div></div>`);
-    }
-    grid.innerHTML = cells.join('');
-
-    const uploaded = state.session.photos.filter(p => p.status === 'uploaded').length;
-    const cls = uploaded >= MIN_PHOTOS ? 'count' : 'count short';
-    MOUNT.querySelector('[data-photo-status]').innerHTML = `
-      <span><span class="${cls}">${uploaded}</span> / ${MAX_PHOTOS} uploaded · ${MIN_PHOTOS} min</span>
-      <span>${state.session.photos.some(p => p.status === 'uploading') ? 'Uploading…' : 'Ready'}</span>
-    `;
-  }
-
-  function updateGenerateButton() {
-    const btn = MOUNT.querySelector('[data-act="generate"]');
-    if (!btn) return;
-    const s = state.session;
-    const uploaded = s.photos.filter(p => p.status === 'uploaded').length;
-    const uploading = s.photos.filter(p => p.status === 'uploading').length;
-    const descOK = (s.description?.trim().length || 0) >= 20;
-
-    if (uploading > 0) { btn.disabled = true; btn.textContent = `${uploading} uploading…`; return; }
-    if (uploaded < MIN_PHOTOS) { btn.disabled = true; btn.textContent = `Need ${MIN_PHOTOS - uploaded} more photo${MIN_PHOTOS - uploaded > 1 ? 's' : ''}`; return; }
-    if (!descOK) { btn.disabled = true; btn.textContent = 'Describe the job (20+ chars)'; return; }
-    btn.disabled = false; btn.textContent = 'Generate Estimate →';
-  }
-
-  // ── Output view ───────────────────────────────────────────
-  async function showOutput(id, prefetched = null) {
-    state.view = 'ai-output';
-    mount('cr-tmpl-ai-output');
-
-    let estimate = prefetched;
-    if (!estimate) {
-      MOUNT.querySelector('.cr-doc').innerHTML = '<div class="cr-loading">Loading…</div>';
-      const { data, error } = await window.supa
-        .from('ai_estimates')
-        .select('id, created_at, template, estimate, status, project_id')
-        .eq('id', id)
-        .single();
-      if (error || !data) { toast('Estimate not found', 'error'); showList(); return; }
-      /* 653: project_id lives on the ROW, not inside the estimate JSON blob —
-         carry it along so Send can resolve a recipient from the linked
-         project. Was silently dropped here, which is why Send never had
-         anywhere to default a "to" address from. */
-      estimate = { ...data.estimate, project_id: data.project_id };
-      /* 653: the loading line above replaces .cr-doc's ENTIRE innerHTML —
-         which is also where data-facts/data-items/data-totals/data-deposit/
-         data-terms/data-ai-note/data-scope live. Every one of those was
-         being destroyed and never rebuilt, so opening a saved estimate
-         (openOne → showOutput(id), no prefetched — the normal path) always
-         crashed here on a null .innerHTML before Send's handler ever got
-         wired. Pre-existing, reproduces identically on 652; re-mounting the
-         fresh template restores the structure this function assumes below. */
-      mount('cr-tmpl-ai-output');
-    }
-    state.estimate = { id, ...estimate };
-
-    // View may have been closed while the query was in flight
-    if (!MOUNT.querySelector('[data-meta]')) return;
-
-    // Meta
-    MOUNT.querySelector('[data-meta]').innerHTML = `
-      Generated in <strong>${((estimate.latency_ms || 0) / 1000).toFixed(1)}s</strong> · 
-      <strong>${estimate.photo_urls?.length || 0} photos</strong> · ${escape(estimate.model_used || 'Gemini')}
-    `;
-
-    // Facts
-    MOUNT.querySelector('[data-facts]').innerHTML = `
-      <div class="cr-fact"><div class="lbl">Property</div><div class="val"><strong>${escape(estimate.client?.address || 'TBD')}</strong></div></div>
-      <div class="cr-fact"><div class="lbl">Prepared For</div><div class="val"><strong>${escape(estimate.client?.name || 'TBD')}</strong></div></div>
-      <div class="cr-fact"><div class="lbl">Estimate Date</div><div class="val">${fmtDateLong(estimate.generated_at)}</div></div>
-      <div class="cr-fact"><div class="lbl">Valid Through</div><div class="val">${fmtDateLong(estimate.valid_through)} · ${estimate.valid_days} days</div></div>
-    `;
-
-    // AI note
-    MOUNT.querySelector('[data-ai-note]').innerHTML = `
-      <div class="tag">AI Analysis · ${estimate.ai_analysis?.length || 0} photos</div>
-      ${(estimate.ai_analysis || []).map(a => `<strong>Photo ${a.photo_index + 1}:</strong> ${escape(a.observation)}`).join('<br>')}
-    `;
-
-    // Scope prose
-    MOUNT.querySelector('[data-scope]').innerHTML = (estimate.scope_summary || '')
-      .split('\n\n').map(p => `<p>${escape(p)}</p>`).join('');
-
-    // Line items grouped by category
-    const grouped = {};
-    (estimate.line_items || []).forEach(li => {
-      (grouped[li.category] = grouped[li.category] || []).push(li);
-    });
-    const rows = Object.entries(grouped).flatMap(([cat, items]) => [
-      `<tr class="group"><td colspan="3">${escape(cat)}</td></tr>`,
-      ...items.map(li => `
-        <tr class="item">
-          <td class="desc">
-            <div class="name">${escape(li.name)}</div>
-            ${li.sub ? `<div class="sub">${escape(li.sub)}</div>` : ''}
-          </td>
-          <td class="qty">${li.qty} ${escape(li.unit)} @ $${li.rate}</td>
-          <td class="amt">$${fmt(li.amount)}</td>
-        </tr>
-      `),
-    ]);
-    MOUNT.querySelector('[data-items]').innerHTML = rows.join('');
-
-    // Totals
-    MOUNT.querySelector('[data-totals]').innerHTML = `
-      <table>
-        <tr><td>Subtotal</td><td>$${fmt(estimate.subtotal)}</td></tr>
-        <tr><td>Sales Tax (${(estimate.tax_rate * 100).toFixed(1)}%)</td><td>$${fmt(estimate.tax)}</td></tr>
-        <tr class="grand"><td>Total</td><td>$${fmt(estimate.total)}</td></tr>
-      </table>
-    `;
-
-    // Deposit
-    MOUNT.querySelector('[data-deposit]').innerHTML = `
-      <div class="cr-deposit-row">
-        <div class="lbl">Deposit on Signing (${estimate.deposit.percentage}%)</div>
-        <div class="val">$${fmt(estimate.deposit.amount)}</div>
-        <div class="sub">Due at contract execution</div>
-      </div>
-      <div class="cr-deposit-row">
-        <div class="lbl">Balance on Completion</div>
-        <div class="val">$${fmt(estimate.deposit.balance)}</div>
-        <div class="sub">Due on substantial completion</div>
-      </div>
-    `;
-
-    // Terms
-    MOUNT.querySelector('[data-terms]').innerHTML = `
-      <p>This estimate is valid for <strong>${estimate.valid_days} days</strong> from the estimate date.</p>
-      ${estimate.insurance_contingency ? `<p><strong>Insurance:</strong> ${escape(estimate.insurance_contingency)}</p>` : ''}
-      <p><strong>Concealed conditions:</strong> ${escape(estimate.concealed_conditions_note)}</p>
-      <p><strong>3-Day Rescission (ORC §1345.23(B)(2)):</strong> Homeowner has the right to cancel this transaction within three business days of signing.</p>
-    `;
-
-    // Wire chrome actions
-    MOUNT.querySelector('[data-act="back"]').onclick = showList;
-    MOUNT.querySelector('[data-act="regenerate"]').onclick = () => {
-      // Regen creates a fresh session with the same inputs → new AI draft
-      const fresh = createSession();
-      fresh.template = estimate.template;
-      fresh.description = estimate.description || '';
-      saveSession(fresh);
-      toast('Fresh draft started — add photos and generate');
-      showAICreate(fresh.id);
-    };
-    MOUNT.querySelector('[data-act="save"]').onclick = () => toast('Saved as draft', 'success');
-    MOUNT.querySelector('[data-act="discard"]').onclick = async () => {
-      if (!confirm('Discard this AI draft?')) return;
-      const r = await window.supa.from('ai_estimates').update({ status: 'discarded' }).eq('id', id);
-      if (r.error) { toast('Could not discard: ' + r.error.message, 'error'); return; }
-      toast('Discarded');
-      showList();
-    };
-    MOUNT.querySelector('[data-act="send"]').onclick = async () => {
-      /* 653: this used to update status and toast success with no sender
-         behind it — CR-AUD-002. Real send: resolve a recipient (the linked
-         project's email, editable), build a standalone HTML document from
-         what's on screen (its own module styles inlined, since the
-         attachment opens outside this page), and hand it to the same
-         mailer /api/senddoc every other document-send in this app uses. */
-      const sendBtn = MOUNT.querySelector('[data-act="send"]');
-      const pr = estimate.project_id
-        ? (window.cacheProjects || []).find(p => p.id === estimate.project_id)
-        : null;
-      const toDefault = (pr && pr.email) || '';
-      const to = prompt('Send to email address:', toDefault);
-      if (to === null) return;
-      const toTrim = to.trim();
-      if (!toTrim || toTrim.indexOf('@') === -1) {
-        toast('Enter a valid email address.', 'error');
-        return;
-      }
-      sendBtn.disabled = true;
-      const origLabel = sendBtn.textContent;
-      sendBtn.textContent = 'Sending…';
-      try {
-        const docEl = MOUNT.querySelector('.cr-doc');
-        const styleEl = document.getElementById('cr-estimates-styles');
-        const css = styleEl ? styleEl.textContent : '';
-        const docHtml = '<!doctype html><html><head><meta charset="utf-8">' +
-          '<title>' + escape(estimate.client?.name ? 'Estimate for ' + estimate.client.name : 'Estimate') +
-          '</title><style>body{margin:0;padding:24px;background:#fdfcf7;}' + css +
-          '</style></head><body>' + (docEl ? docEl.outerHTML : '') + '</body></html>';
-
-        const session = window.supa ? (await window.supa.auth.getSession()).data.session : null;
-        const res = await fetch('/api/senddoc', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + (session ? session.access_token : '')
-          },
-          body: JSON.stringify({
-            to: toTrim,
-            clientName: estimate.client?.name || '',
-            propertyLine: estimate.client?.address ? ('This covers work at ' + estimate.client.address + '.') : '',
-            title: 'Estimate',
-            html: docHtml
-          })
-        });
-        let data = null; try { data = await res.json(); } catch (e) {}
-        if (!res.ok) throw new Error((data && (data.detail || data.error)) || ('HTTP ' + res.status));
-
-        const { error } = await window.supa.from('ai_estimates')
-          .update({ status: 'sent', sent_at: new Date().toISOString() }).eq('id', id);
-        if (error) throw error;
-
-        toast('Sent to ' + toTrim, 'success');
-        showList();
-      } catch (e) {
-        sendBtn.disabled = false;
-        sendBtn.textContent = origLabel;
-        toast('Could not send: ' + (e.message || e), 'error');
-      }
-    };
-    MOUNT.querySelector('[data-act="convert"]').onclick = async () => {
-      try {
-        const resp = await convertToContract(id, estimate.client, estimate.client?.address);
-        const _cn = resp.contract_number || (resp.contract && resp.contract.contract_number) || '';
-        toast(resp.existed ? `Contract ${_cn} already exists` : `Created contract ${_cn}`, 'success');
-        // Hand off to the contracts-table editor; it re-fetches the row for authoritative status.
-        if (typeof window.openContractEditor === 'function') window.openContractEditor(resp);
-        else showList();
-      } catch (e) {
-        toast(e.message, 'error');
-      }
-    };
-  }
-
+  /* 1033: the AI Create and Output views lived here (~24 KB) — deleted
+     whole with the AI arm. The estimates walls and the editor remain. */
   // ── Small helpers ─────────────────────────────────────────
   function fmt(n) { return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
   function fmtDate(iso) { var d = window.crDate ? window.crDate(iso) : new Date(iso); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase(); }
@@ -29773,8 +29110,6 @@ function showList() {
   // ── Public API ────────────────────────────────────────────
   window.CardinalEstimates = Object.assign(window.CardinalEstimates || {}, {
     open:     showList,
-    openAI:   (project) => showAICreate(null, project),
-    openOne:  (id) => showOutput(id),
     close:    () => { MOUNT.style.display = 'none'; MOUNT.innerHTML = ''; state = { view: null, sessionId: null, session: null, estimate: null, filter: 'all' }; },
   });
 })();
@@ -31691,15 +31026,9 @@ function showList() {
   async function loadLinkedRecords(claim) {
     const linked = { estimate: null, contract: null, project: null };
     const tasks = [];
-    if (claim.ai_estimate_id) {
-      tasks.push(
-        window.supa.from('ai_estimates')
-          .select('id, created_at, template, status, estimate')
-          .eq('id', claim.ai_estimate_id).single()
-          .then(r => { linked.estimate = r.data; })
-          .catch(() => {})
-      );
-    }
+    /* 1033: the linked AI-estimate load lived here — the arm and its
+       table are gone; claims.ai_estimate_id (0 non-null) stays orphaned
+       on purpose. */
     if (claim.contract_id) {
       tasks.push(
         window.supa.from('contracts')
@@ -32163,9 +31492,7 @@ function showList() {
     qa('[data-link]').forEach(el => {
       el.onclick = () => {
         const { link, id } = el.dataset;
-        if (link === 'estimate' && window.CardinalEstimates?.openOne) {
-          window.CardinalEstimates.openOne(id);
-        } else if (link === 'contract' && typeof window.openContractEditor === 'function') {
+        if (link === 'contract' && typeof window.openContractEditor === 'function') {
           window.openContractEditor({ id });
         } else if (link === 'project' && typeof window.openProject === 'function') {
           window.openProject(id);
@@ -32183,20 +31510,6 @@ function showList() {
     const L = state.linked || {};
     const want = k => !only || only.indexOf(k) !== -1;
     const cards = [];
-
-    if (want('estimate') && L.estimate) {
-      const e = L.estimate;
-      const num = `EST-${(e.id || '').replace(/-/g, '').slice(0, 4).toUpperCase()}`;
-      const total = e.estimate?.total;
-      cards.push(`
-        <div class="cr-c-link-card est" data-link="estimate" data-id="${e.id}">
-          <div class="cr-c-link-eyebrow">⚡ Cardinal Estimate</div>
-          <div class="cr-c-link-title">${num}${total ? ` · $${fmt(total)}` : ''}</div>
-          <div class="cr-c-link-sub">${cap(e.template || 'roofing')} · ${statusLabel(e.status || 'draft')}</div>
-          <span class="cr-c-link-cta">Open Estimate →</span>
-        </div>
-      `);
-    }
 
     if (want('contract') && L.contract) {
       const c = L.contract;
@@ -32740,10 +32053,7 @@ function showList() {
     Then after render:
       CardinalCrossLinks.forProject(projectId, document.getElementById('claim-slot-...'));
 
- 3. In your AI estimate output render, add:
-      <div id="estimate-claim-slot"></div>
-    Then after render:
-      CardinalCrossLinks.forEstimate(estimateId, document.getElementById('estimate-claim-slot'));
+ 3. (The AI-estimate step lived here — that arm was deleted at build 1033.)
 
  4. In your contract render, similarly:
       <div id="contract-claim-slot"></div>
@@ -32987,54 +32297,9 @@ function showList() {
     }
   }
 
-  // ═══ ESTIMATE → CLAIM ════════════════════════════════════
-  async function forEstimate(estimateId, mountEl) {
-    if (!estimateId || !mountEl) return;
-
-    const { data: est, error } = await window.supa
-      .from('ai_estimates')
-      .select('id, project_id, estimate')
-      .eq('id', estimateId)
-      .single();
-    if (error || !est) return;
-
-    // Only render if AI flagged insurance OR project already has a claim
-    const hasInsuranceFlag = !!est.estimate?.insurance_contingency;
-
-    // Check for existing claim linked to this estimate OR its project
-    let existingClaim = null;
-    const conditions = [`ai_estimate_id.eq.${est.id}`];
-    if (est.project_id) conditions.push(`project_id.eq.${est.project_id}`);
-    const { data: existing } = await window.supa
-      .from('insurance_claims')
-      .select('id, carrier, claim_number, status, approved_rcv')
-      .or(conditions.join(','))
-      .order('created_at', { ascending: false })
-      .limit(1);
-    if (existing?.length) existingClaim = existing[0];
-
-    if (existingClaim) {
-      await renderLinkedClaimCard(mountEl, existingClaim.id);
-    } else if (hasInsuranceFlag) {
-      renderCreateOrLinkCard(mountEl, {
-        seedFor: 'estimate',
-        aiSuggested: true,
-        aiText: est.estimate?.insurance_contingency,
-        seed: {
-          ai_estimate_id:     est.id,
-          project_id:         est.project_id,
-          homeowner_name:     est.estimate?.client?.name,
-          property_address:   est.estimate?.client?.address,
-          our_estimate_total: est.estimate?.total,
-          carrier:            detectCarrier(est.estimate?.insurance_contingency),
-        },
-        possibleMatches: [],
-        linkFn: (claimId) => linkClaimToEstimate(est.id, claimId, mountEl),
-      });
-    }
-    // If no insurance flag and no existing claim, render nothing.
-  }
-
+  /* 1033: the ESTIMATE → CLAIM leg (forEstimate) lived here. It read
+     ai_estimates — dropped with the AI arm — and its only callers were
+     this banner's own install instructions. */
   // ═══ CONTRACT → CLAIM ════════════════════════════════════
   async function forContract(contractId, mountEl) {
     if (!contractId || !mountEl) return;
@@ -33297,18 +32562,7 @@ function showList() {
     await renderLinkedClaimCard(mountEl, claimId);
 }
 
-  async function linkClaimToEstimate(estimateId, claimId, mountEl) {
-    // Link claim → estimate; also link project ↔ claim if estimate has a project
-    const { data: est } = await window.supa.from('ai_estimates').select('project_id').eq('id', estimateId).single();
-    const patch = { ai_estimate_id: estimateId };
-    if (est?.project_id) patch.project_id = est.project_id;
-    await window.supa.from('insurance_claims').update(patch).eq('id', claimId);
-    if (est?.project_id) {
-      await window.supa.from('projects').update({ insurance_claim_id: claimId }).eq('id', est.project_id);
-    }
-    await renderLinkedClaimCard(mountEl, claimId);
-  }
-
+  /* 1033: linkClaimToEstimate lived here — same retirement. */
   // ═══ Small helpers ═══════════════════════════════════════
   function statusLabel(s) {
     const map = {
@@ -33323,7 +32577,6 @@ function showList() {
   // ═══ Public API ══════════════════════════════════════════
   window.CardinalCrossLinks = {
     forProject,
-    forEstimate,
     forContract,
   };
 })();
@@ -38812,40 +38065,10 @@ if(tries < 40) setTimeout(go, 75);
 /* 1030: wireStats() and wireManualRows() deleted — their selectors
    (.cr-stat[data-status], .cr-row) stopped rendering with the lanes
    rebuild, and both dead queries ran on every body-observer tick. */
-function wireSave(){
-if(!mountVisible()) return;
-var btn = mount().querySelector('[data-act="save"]');
-if(!btn || btn.dataset.crEafFixed === '1') return;
-btn.dataset.crEafFixed = '1';
-btn.onclick = function(e){
-e.stopPropagation();
-var toastFn = window.toast || function(msg){ alert(msg); };
-try{ toastFn('Already saved \u2014 AI estimates save on generation', 'success'); }
-catch(err){ alert('Already saved.'); }
-};
-}
-function wireSend(){
-if(!mountVisible()) return;
-var btn = mount().querySelector('[data-act="send"]');
-if(!btn || btn.dataset.crEafFixed === '1') return;
-btn.dataset.crEafFixed = '1';
-var orig = btn.onclick;
-btn.onclick = function(e){
-e.stopPropagation();
-var ok = confirm(
-'Mark this estimate as sent?\n\n' +
-'Heads up: Email / SMS delivery isn\'t integrated yet. ' +
-'This will only change the status in the database — you\'ll ' +
-'still need to email or text the client separately for now.'
-);
-if(!ok) return;
-if(typeof orig === 'function'){ orig.call(this, e); }
-};
-}
+/* 1033: wireSave()/wireSend() targeted the AI output view, deleted with
+   the AI arm. */
 function tick(){
 try{ wireTemplates();  }catch(e){}
-try{ wireSave();       }catch(e){}
-try{ wireSend();       }catch(e){}
 }
 var ticking = false;
 function schedule(){
@@ -39625,7 +38848,6 @@ var REQUIREMENTS = [
 { key:'audit_events',        group:'Core',      purpose:'Audit log for every state change' },
 { key:'audit_sessions',      group:'Core',      purpose:'Sign-in / device tracking' },
 { key:'push_subscriptions',  group:'Core',      purpose:'Web-push notifications' },
-{ key:'ai_estimates',        group:'Estimates', purpose:'AI-generated estimates' },
 { key:'contracts',           group:'Estimates', purpose:'Contracts (converted from estimates)' },
 { key:'insurance_claims',    group:'Claims',    purpose:'Insurance claim records' },
 { key:'payments',            group:'Claims',    purpose:'Payments logged on claims' },
@@ -39701,44 +38923,8 @@ return { status:'ok', message:'Digest sent within 3 days' };
 return { status:'warn', message:e.message, fix:'' };
 }
 }
-async function checkAI(){
-if(!window.supa) return { status:'warn', message:'Cannot verify', fix:'' };
-try{
-var r = await window.supa.from('ai_estimates')
-.select('id, status, estimate, created_at')
-.order('created_at', { ascending:false })
-.limit(5);
-if(r.error){
-return { status:'warn', message:'Cannot verify (see ai_estimates row)', fix:'' };
-}
-var rows = r.data || [];
-if(!rows.length){
-return { status:'ok', message:'No estimates yet — nothing to verify' };
-}
-var failed = rows.filter(function(x){
-return x.status === 'error' || !x.estimate;
-}).length;
-if(failed === rows.length){
-return {
-status:'crit',
-message:'The last ' + rows.length + ' AI estimate(s) all failed to produce output',
-fix:'Likely cause: Gemini API key missing or throttled. ' +
-'Verify GEMINI_API_KEY is set in Vercel env, ' +
-'and attach billing to unlock the free-tier ceiling.',
-};
-}
-if(failed > 0){
-return {
-status:'warn',
-message:failed + ' of the last ' + rows.length + ' AI estimates failed',
-fix:'Check Gemini quota / billing status.',
-};
-}
-return { status:'ok', message:'Recent AI estimates producing output' };
-}catch(e){
-return { status:'warn', message:e.message, fix:'' };
-}
-}
+/* 1033: checkAI() read the dropped ai_estimates table — a check whose
+   evidence source is gone must not keep reporting. */
 async function runAll(){
 var results = { requirements:[], env:[] };
 for(var i = 0; i < REQUIREMENTS.length; i++){
@@ -39750,8 +38936,6 @@ fix: (res.fix && !req.fix) ? res.fix : (req.fix || res.fix || ''),
 }
 var digest = await checkDigestEmail();
 results.env.push(Object.assign({ key:'RESEND_SENDER_DOMAIN', purpose:'Daily digest emails' }, digest));
-var ai = await checkAI();
-results.env.push(Object.assign({ key:'GEMINI_API_KEY', purpose:'AI Estimate generation, photo analysis' }, ai));
 LAST_RESULTS = results;
 return results;
 }
@@ -40343,41 +39527,8 @@ fix    : 'Use the Convert Client Type modal on each project to normalize.',
 return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
 }
 }
-async function check_4_sentNoSentAt(){
-var c = await countWhere('ai_estimates', function(q){
-return q.eq('status', 'sent').is('sent_at', null);
-});
-if(c == null) return { status:'warn', message:'Supabase unavailable', fix:'' };
-if(isErr(c)) return skipIfErr(c, 'ai_estimates');
-return warn(c,
-'AI estimate(s) at status="sent" with no sent_at timestamp',
-'Send flow set status without stamping the time \u2014 patch the Send handler ' +
-'in the Estimates plugin to set both, or clear the status back to draft.');
-}
-async function check_5_convertedNoContract(){
-if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
-try{
-var e = await window.supa.from('ai_estimates')
-.select('id')
-.eq('status', 'converted');
-if(e.error) return skipIfErr({error:e.error.message}, 'ai_estimates');
-var ids = (e.data || []).map(function(x){ return x.id; });
-if(!ids.length) return { status:'ok', count:0, message:'None found', fix:'' };
-var c = await window.supa.from('contracts')
-.select('source_ai_estimate_id')
-.in('source_ai_estimate_id', ids);
-if(c.error) return skipIfErr({error:c.error.message}, 'contracts');
-var linked = {};
-(c.data || []).forEach(function(x){ if(x.source_ai_estimate_id) linked[x.source_ai_estimate_id] = true; });
-var missing = ids.length - Object.keys(linked).length;
-return warn(missing,
-'AI estimate(s) marked converted but no contract row references them',
-'The Convert-to-Contract flow half-ran. Re-run Convert on each, ' +
-'or manually create the contract and set source_ai_estimate_id.');
-}catch(e){
-return { status:'warn', message:'Check failed: ' + e.message, fix:'' };
-}
-}
+/* 1033: check_4_sentNoSentAt read the dropped ai_estimates table. */
+/* 1033: check_5_convertedNoContract read the dropped ai_estimates table. */
 async function check_6_claimsMissingCore(){
 if(!window.supa) return { status:'warn', message:'Supabase unavailable', fix:'' };
 try{
@@ -40491,8 +39642,6 @@ var CHECKS = [
 { key:'advanced-no-contract',    label:'Advanced stage without signed contract',      run: check_1_advancedNoSignedContract },
 { key:'signed-no-sig',           label:'Signed contracts with no signature',           run: check_2_signedNoSignature },
 { key:'invalid-claim-type',      label:'Invalid claim_type values',                    run: check_3_invalidClaimType },
-{ key:'sent-no-sent-at',         label:'AI estimates sent with no timestamp',          run: check_4_sentNoSentAt },
-{ key:'converted-no-contract',   label:'Converted AI estimates with no contract',      run: check_5_convertedNoContract },
 { key:'claims-missing-core',     label:'Claims missing carrier or claim number',       run: check_6_claimsMissingCore },
 { key:'ins-type-no-claim',       label:'Insurance projects with no claim record',      run: check_7_insTypeNoClaim },
 { key:'past-appts-scheduled',    label:'Past appointments still marked scheduled',     run: check_8_pastAppointmentsScheduled },
@@ -42001,6 +41150,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1033, d:'2026-08-24', t:'The old AI estimate machinery is deleted', s:'Build 1028 hid the two \u26a1 AI Estimate buttons; on Theo\u2019s call this build removes the machinery behind them entirely \u2014 the separate AI builder screen, its photo upload flow, its review screen, the API route that generated them, and the empty ai_estimates database table is retired (its drop ships as drop_ai_estimates.sql to run by hand, schema recorded for revert). Claims, the health check and the consistency check no longer look for AI estimates, and converting an estimate to a contract now has exactly one path \u2014 the real estimates table. Nothing visible changes: estimates are just estimates, with the AI helping from inside the editor since 1028.' },
 { b:1032, d:'2026-08-24', t:'The delete warning reads in light mode', s:'The caption under the Delete Client button \u2014 the one line explaining that deleting is permanent and admin-only \u2014 was a grey picked for the dark theme and measured close to invisible on the light one. It now uses a dark-readable grey in dark mode and a light-readable one in light mode, the same ink the profile\u2019s money captions already use.' },
 { b:1030, d:'2026-08-24', t:'Documents filed by what they are', s:'A published estimate document is linked to the estimate record it came from, but the Documents tab, the approvals queue and the job card were classifying it by its TITLE \u2014 rename it and it filed itself under Inspections, and a signed one silently skipped the approvals list and the \u201cneeds approval\u201d email. All of them now recognize the link first and the title second. The estimate title\u2019s example text no longer suggests a wording that would have misfiled the document. Housekeeping underneath: the manual_estimates database table \u2014 empty and unused since build 568, but still writable by any signed-in account \u2014 is dropped, and dead wiring from the old estimates screen was removed.' },
 { b:1029, d:'2026-08-24', t:'Save stays in the estimate', s:'Saving an estimate used to close the editor \u2014 mid-thought, every time. Save now keeps you in the estimate: a toast confirms it saved, the estimate number appears the first time (the header reads \u201cauto \u2116\u201d until then), and the Close button asks before discarding unsaved changes. On a phone, Save and Publish sit in a fixed bar at the bottom of the screen. Under the hood, Publish, \u2192 Contract and the pipeline-stage sync used to press Save for you and then watch for up to nine seconds for the editor to close before hunting down the saved row; all three now receive the saved estimate directly, so publishing is faster and can never grab the wrong row. The estimates board also refreshes itself after a save instead of waiting for you to reopen it.' },
