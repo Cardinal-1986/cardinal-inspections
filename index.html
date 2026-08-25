@@ -3782,7 +3782,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-25 build 1060 &#8212; A full-page screenshot of the landing, taken in light mode, used to end in a tall black slab. The landing is a fixed pane one screen high, so everything past the first screen fell through to the app&#8217;s dark background. The page itself is now light too, so the capture stays light all the way down. Dark mode is untouched.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-25 build 1064 &#8212; The photo editor&#8217;s tool bar was painting its labels in a grey too dark to read against the black bar behind them &#8212; the rotate buttons, the size hint and the loading line. Same colour, lifted until it reads in daylight.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4615,7 +4615,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 </div>
 
 <!-- ============ POST-LOGIN LANDING ============ -->
-<div id="landingView" style="display:none;position:fixed;inset:0;z-index:150;overflow-y:auto;
+<div id="landingView" style="display:none;position:relative;z-index:150;min-height:100vh;
   background:radial-gradient(1200px 600px at 50% -10%, #2a1b16 0%, #17100e 55%, #0d0908 100%);">
   <div style="max-width:520px;margin:0 auto;padding:6vh 22px 40px;text-align:center;">
     <img src="/cardinal-transparent.png" alt="" style="width:min(78vw,340px);height:auto;
@@ -26109,19 +26109,19 @@ function showLanding(userEmail){
 var _rvL = document.getElementById('restoreVeil'); if(_rvL) _rvL.style.display = 'none';
 }
 document.getElementById('landDash').addEventListener('click', function(){
-  document.getElementById('landingView').style.display = 'none';
+  document.getElementById('landingView').style.display = 'none';try{ document.body.classList.remove('cr-landing-on'); }catch(_e){}
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   /* Explicitly render the dashboard — don't rely on mainView already being visible.
      Earlier navigation (Cardinal Truth, a client profile, etc.) may have hidden it. */
   if(typeof showHome === 'function') showHome();
 });
 document.getElementById('landSkip').addEventListener('click', function(){
-  document.getElementById('landingView').style.display = 'none';
+  document.getElementById('landingView').style.display = 'none';try{ document.body.classList.remove('cr-landing-on'); }catch(_e){}
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   if(typeof showHome === 'function') showHome();
 });
 document.getElementById('landQuick').addEventListener('click', function(){
-  document.getElementById('landingView').style.display = 'none';
+  document.getElementById('landingView').style.display = 'none';try{ document.body.classList.remove('cr-landing-on'); }catch(_e){}
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   openQuickInsp(true);
 });
@@ -26300,15 +26300,17 @@ function renderInsuranceClientsList(){
   }
 }
 function backToLanding(){
-  document.getElementById('cardinalTruthView').style.display = 'none';
-  document.getElementById('resourceLibraryView').style.display = 'none';
-  var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
-  document.getElementById('landingView').style.display = 'block';
-      /* a modal elsewhere may have left body scroll locked; the landing is
-         reached by a direct display toggle that never runs hideAllViews(),
-         so nothing else clears it. */
-      try{ document.body.style.overflow = ''; }catch(_e){}
-  window.scrollTo(0, 0);
+  /* 1063 — this WAS goToLanding() minus one line, and that line was the bug.
+     goToLanding() calls hideAllViews(); this did not, so #mainView stayed in
+     flow behind the fixed landing pane. Measured at 390px: the document was
+     2664px, of which 2456px was CRM home sitting under the landing — which is
+     exactly the "tall black slab" Theo photographed. It is not an empty
+     canvas and never was.
+
+     Delegating rather than copying the missing call: two functions that
+     differed by one statement is how the difference survived in the first
+     place. */
+  goToLanding();
 }
 /* Same as backToLanding, but called from the app menu — also clears main-app views
    so the transition is clean. */
@@ -26318,6 +26320,7 @@ function goToLanding(){
   document.getElementById('resourceLibraryView').style.display = 'none';
   var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
   document.getElementById('landingView').style.display = 'block';
+  try{ document.body.classList.add('cr-landing-on'); }catch(_e){}
       /* a modal elsewhere may have left body scroll locked; the landing is
          reached by a direct display toggle that never runs hideAllViews(),
          so nothing else clears it. */
@@ -41398,6 +41401,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:1064, d:'2026-08-25', t:'The photo editor\u2019s buttons are readable outdoors', s:'Open a job photograph, tap the pencil, and the tool bar along the bottom was labelling itself in a grey barely separable from the black bar behind it \u2014 the rotate buttons, the aspect hint and the loading line. Measured at 3.3 to 3.7 to one against a floor of 4.5. It is the same colour the rest of that bar already uses, simply not dimmed so far, so nothing looks different in kind \u2014 it just reads on a roof at midday.' },
+  { b:1063, d:'2026-08-25', t:'The landing screenshot is the whole landing', s:'A full-page screenshot of the landing came back as the top of the page and then a tall black slab. The slab was never an empty background \u2014 it was the app\u2019s own home screen, still sitting behind the landing, because one of the two ways of getting to the landing put the app away first and the other did not. Both do now. And the landing has stopped being a panel pinned over the page: it is the page, so a screenshot captures all of it rather than the first screen \u2014 every row down to the Pop-Up Roof.' },
   { b:1060, d:'2026-08-25', t:'Landing screenshots stop ending in a black slab', s:'A full-page screenshot of the landing screen, taken in light mode, came back as the top of the page followed by a tall black slab. The landing is a pinned pane exactly one screen high, so a full-page capture photographs the page behind it -- and that page was still carrying the app\u2019s dark background. The page is now light in light mode, so the shot stays light the whole way down. Dark mode and the retail light theme are unchanged.' },
 { b:1056, d:'2026-08-24', t:'The chase list counts to something', s:'The insurance home\u2019s chase list used to show a bare number of days and turn red at thirty \u2014 a colour with nothing behind it, counting to no particular date. Every row now says what it is counting to: \u201C10 days \u00b7 due in 4\u201D, \u201C18 days \u00b7 4 overdue\u201D, or \u201Cchased 3d ago \u00b7 next in 4\u201D. The deadlines are Cardinal\u2019s own follow-up policy, written in one place \u2014 fourteen days on a filed supplement then every seven, twenty-one on money awaiting release then every ten \u2014 and they are deliberately NOT a per-carrier average, because there is not enough claim history yet to compute one that would mean anything (two carriers, one settled date). Each row also gets an \u201CI chased them\u201D button: it asks how you chased them, writes it into the claim\u2019s notes, and resets that claim\u2019s clock to the follow-up interval so the list stops nagging about a call you already made. The list now sorts by how overdue a claim is rather than by raw age, so a thirty-day claim you rang yesterday drops below an eighteen-day one nobody has touched.' },
 { b:1054, d:'2026-08-24', t:'The insurance hub and the client list agree', s:'The pipeline on the insurance home has nine rows and every one of them is tappable, but the client list it opens only had buttons for six. Tapping \u201cClaim Filed\u201d, \u201cAdjuster Pending\u201d or \u201cOn Hold\u201d gave you a correctly filtered list with nothing lit up to say so \u2014 not even \u201cAll\u201d \u2014 so there was no way to tell what you were looking at or how to get back. Those three now have buttons of their own, in pipeline order. \u201cSupplement Filed\u201d, the row that carries the money you are chasing, did the opposite: tapping it cleared the filter and showed every claim. It now opens the supplements you have filed. And the stage buttons use the short wording (\u201cAwaiting Depreciation\u201d rather than the full phrase), which the app has had for months but was not using here \u2014 the long one alone was a 242-pixel button on a phone.' },
@@ -46019,12 +46024,12 @@ photosFor    : function(){ return (window.currentPhotos || []).slice(); },
 })();
 </script>
 
-<style id="cr-ped-styles">#cr-ped{display:none;position:fixed;inset:0;background:#101010;z-index:9600;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;touch-action:none}#cr-ped.open{display:flex}.cr-ped-head{padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:#1a1a1a;color:#f5efe0;display:flex;align-items:center;gap:8px;flex:0 0 auto;border-bottom:1px solid #2c2c2c}.cr-ped-head h3{margin:0;flex:1;font:800 13px Georgia,serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ped-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;padding:6px 12px;border-radius:6px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}.cr-ped-head button.alt{padding:6px 9px;letter-spacing:.06em}.cr-ped-head button.alt:disabled{opacity:.5;cursor:wait}.cr-ped-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}.cr-ped-head button.primary:disabled{opacity:.5;cursor:wait}.cr-ped-stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0a0a0a;padding:10px}#cr-ped-canvas{max-width:100%;max-height:100%;display:block;touch-action:none;cursor:crosshair;box-shadow:0 4px 24px rgba(0,0,0,.6)}.cr-ped-loading{color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-ped-tools{background:#1a1a1a;border-top:1px solid #2c2c2c;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));flex:0 0 auto;display:flex;flex-direction:column;gap:9px}
+<style id="cr-ped-styles">#cr-ped{display:none;position:fixed;inset:0;background:#101010;z-index:9600;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;touch-action:none}#cr-ped.open{display:flex}.cr-ped-head{padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));background:#1a1a1a;color:#f5efe0;display:flex;align-items:center;gap:8px;flex:0 0 auto;border-bottom:1px solid #2c2c2c}.cr-ped-head h3{margin:0;flex:1;font:800 13px Georgia,serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ped-head button{background:transparent;border:1px solid rgba(200,32,46,.5);color:#e35c63;padding:6px 12px;border-radius:6px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;flex:0 0 auto}.cr-ped-head button.alt{padding:6px 9px;letter-spacing:.06em}.cr-ped-head button.alt:disabled{opacity:.5;cursor:wait}.cr-ped-head button.primary{background:#c8202e;color:#fff;border-color:#c8202e}.cr-ped-head button.primary:disabled{opacity:.5;cursor:wait}.cr-ped-stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0a0a0a;padding:10px}#cr-ped-canvas{max-width:100%;max-height:100%;display:block;touch-action:none;cursor:crosshair;box-shadow:0 4px 24px rgba(0,0,0,.6)}.cr-ped-loading{color:#a89e8c;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-ped-tools{background:#1a1a1a;border-top:1px solid #2c2c2c;padding:10px 12px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px));flex:0 0 auto;display:flex;flex-direction:column;gap:9px}
 /* 963: the photo editor's tool row is not a scroller \u2014 its 30px swatches sat
    IN the bar's band, so in the installed app the bar took the taps. Same shape
    as 935's \u201cCan't barely hit save button\u201d, same constant. The toolbar's own
    background carries on behind the bar; only the controls move up. */
-body.standalone .cr-ped-tools{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}.cr-ped-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-ped-row::-webkit-scrollbar{display:none}.cr-ped-tool{background:#2c2c2c;color:#c9bfa8;border:1px solid #3c3c3c;padding:9px 13px;border-radius:8px;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;font-family:inherit;white-space:nowrap;flex:0 0 auto;display:flex;align-items:center;gap:5px}.cr-ped-tool:hover{background:#3c3c3c}.cr-ped-tool.active{background:#c8202e;color:#fff;border-color:#c8202e}.cr-ped-tool.ghost{background:transparent;border-color:#3c3c3c;color:#6b6b6b}.cr-ped-tool.ghost:hover{background:#2c2c2c;color:#c9bfa8}.cr-ped-tool:disabled{opacity:.4;cursor:default}.cr-ped-swatch{width:30px;height:30px;border-radius:50%;border:2px solid #3c3c3c;cursor:pointer;flex:0 0 auto;padding:0}.cr-ped-swatch.active{border-color:#fdfcf7;box-shadow:0 0 0 2px #c8202e}.cr-ped-sep{width:1px;height:26px;background:#3c3c3c;flex:0 0 auto;margin:0 3px}.cr-ped-hint{color:#6b6b6b;font:600 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.04em;flex:1;text-align:right;white-space:nowrap}</style>
+body.standalone .cr-ped-tools{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}.cr-ped-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-ped-row::-webkit-scrollbar{display:none}.cr-ped-tool{background:#2c2c2c;color:#c9bfa8;border:1px solid #3c3c3c;padding:9px 13px;border-radius:8px;font:700 12px 'Segoe UI',Arial,sans-serif;cursor:pointer;font-family:inherit;white-space:nowrap;flex:0 0 auto;display:flex;align-items:center;gap:5px}.cr-ped-tool:hover{background:#3c3c3c}.cr-ped-tool.active{background:#c8202e;color:#fff;border-color:#c8202e}.cr-ped-tool.ghost{background:transparent;border-color:#3c3c3c;color:#a89e8c}.cr-ped-tool.ghost:hover{background:#2c2c2c;color:#c9bfa8}.cr-ped-tool:disabled{opacity:.4;cursor:default}.cr-ped-swatch{width:30px;height:30px;border-radius:50%;border:2px solid #3c3c3c;cursor:pointer;flex:0 0 auto;padding:0}.cr-ped-swatch.active{border-color:#fdfcf7;box-shadow:0 0 0 2px #c8202e}.cr-ped-sep{width:1px;height:26px;background:#3c3c3c;flex:0 0 auto;margin:0 3px}.cr-ped-hint{color:#a89e8c;font:600 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.04em;flex:1;text-align:right;white-space:nowrap}</style>
 <script id="cr-ped-script">
 (function(){
 'use strict';
@@ -80150,5 +80155,25 @@ document.addEventListener('click', function(e){
 });
 })();
 </script>
+<style id="cr-landing-flow">
+/* ── 1063 · the landing is a PAGE now, not a pane ────────────────────────
+   #landingView was position:fixed;inset:0, so its box was one viewport and a
+   full-page screenshot photographed the document behind it rather than the
+   landing. In flow, the document is as tall as the landing's own content —
+   1189px at 390px wide against the 844px it used to be.
+
+   Two things are in flow behind it, and both painted a dark strip under the
+   landing the moment it stopped covering them. Measured, not assumed: without
+   these two rules the document is 1371px and the bottom probe reads
+   rgb(9,9,12) — a smaller slab in place of a big one.
+     · footer.site — 76px. Invisible under the old pane; visible under the new
+       page. Hiding it changes nothing anyone could see before.
+     · body's padding-top — fixHeadPad() sets it INLINE from the fixed header's
+       height (106px). Beating an inline style with !important is sanctioned
+       here and this is the case for it: the header is covered by the landing's
+       z-index:150, so that reserved space is a gap and nothing else. */
+body.cr-landing-on{padding-top:0 !important;}
+body.cr-landing-on footer.site{display:none !important;}
+</style>
 </body>
 </html>

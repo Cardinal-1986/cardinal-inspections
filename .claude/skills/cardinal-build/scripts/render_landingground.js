@@ -11,8 +11,19 @@
    the box, with body's var(--bg) showing through the difference. jsdom resolves
    neither the fixed box nor the paint, so it cannot see this bug or its fix.
 
+   ⚠ WHAT THIS PROVES, AND WHAT IT DOES NOT. Corrected at 1063.
+   It goes RED on 1056 (6/6) and GREEN from 1060 on, so it is a real guard for
+   the canvas ground. It does NOT discriminate 1060 from 1063, and it never
+   did: it walks the goToLanding() path, and on that path 1060 was already
+   correct because hideAllViews() had put #mainView away. The defect 1063
+   fixed lived on the OTHER path, backToLanding(), which this file never
+   visits. gate_1063.mjs walks both and compares them.
+
+   Do not read a green run here as "the landing screenshot is fine". Read it
+   as "the canvas still has a light ground in light mode".
+
    Usage:  node render_landingground.js [path/to/index.html]
-   Point it at the previous build as a negative control -- it must go RED there.
+   Point it at build 1056 for a control that actually goes RED.
 */
 const { chromium } = require('playwright');
 
@@ -42,10 +53,20 @@ async function landingCapture(browser, { mode, width }) {
     try { localStorage.setItem('cr-mode', m); } catch (_) {}
     document.documentElement.setAttribute('data-mode', m);
   }, mode);
+  /* ⚠ 1063 — THIS SETUP USED TO HIDE EVERY SIBLING OF THE LANDING, AND THAT IS
+     WHY BUILD 1060 SHIPPED INERT. Hiding them manufactures a short document.
+     On a real page #mainView is 2456px in flow behind the landing, so body
+     covered the whole capture and 1060's canvas ground never showed — the
+     gate agreed with a build that changed nothing anyone could see.
+
+     It also set display directly, which is not a path the app has, so the
+     body class goToLanding() sets was never applied and the footer it hides
+     stayed in the capture: 1371px with a dark strip at the bottom, failing a
+     correct build.
+
+     Navigate the way the app navigates and read what you find. */
   await page.evaluate(() => {
-    document.querySelectorAll('body > div, body > section, body > header, body > nav').forEach(el => {
-      if (el.id !== 'landingView') el.style.display = 'none';
-    });
+    if (typeof goToLanding === 'function') { goToLanding(); return; }
     const lv = document.getElementById('landingView');
     if (lv) { lv.style.display = 'block'; lv.removeAttribute('hidden'); }
   });

@@ -5,7 +5,24 @@ Cardinal Exterior Visualizer — sweep unreferenced images out of storage.
 Runs ON the Spark, beside visualizer_worker.py, and reads the same spark/.env.
 Deleting a design_jobs row does not delete the pictures it made: the app's own
 Delete button removes both, but a row deleted straight from SQL leaves its
-render, preview and masks behind. Tonight's cleanup left ~60 files, ~20 MB.
+render, preview and masks behind.
+
+⚠ THE FIGURE IN THIS DOCSTRING WAS WRONG BY 3x AND IS NOW MEASURED.
+It said "tonight's cleanup left ~60 files, ~20 MB" — written 16 Aug, while the
+Visualizer went on running until the 19th. Counted against the live bucket on
+25 Aug 2026, joining storage.objects to every referencing column:
+
+    referenced   83 files    36 MB
+    ORPHAN      136 files    60 MB      <- what this script would remove
+    total       219 files    97 MB
+
+Two of those orphan groups are worth knowing before you run it:
+  * visualizer/src/  — 23 files, 30 MB. Source photographs that were uploaded
+    and never rendered. Half the orphaned bytes are here, not in renders.
+  * visualizer/probe/ — 4 files, 8.8 MB. Test images from 15 Aug; no row has
+    ever referenced them.
+Nothing under visualizer/ is younger than 24 hours, so on this run the age
+floor protects nothing — it is still the guard that matters on any later one.
 
     python3 sweep_visualizer.py            # DRY RUN — lists, deletes nothing
     python3 sweep_visualizer.py --apply    # actually delete

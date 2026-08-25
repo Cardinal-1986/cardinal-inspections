@@ -25489,3 +25489,236 @@ with itself. Every expectation is asserted against ABC's published values.
   block is 812 characters long, so it **failed the correct tree**. Bounded on the
   case's own end now. *A fixed window over a variable region is the trap this
   document names, and it fired inside the gate written to avoid a different one.*
+
+## Build 1062 — the stale-job recovery gets its first caller (25 Aug 2026)
+
+**`api/` and `vercel.json` only. `index.html` is untouched and stays at 1060**, so
+`check_build.py` has nothing to say about this build — its inline scripts, tag balance
+and stamp are all unchanged. The mechanical gate for an API-only build is `node --check`,
+the no-`module.exports` rule, valid JSON, and CI's own filename check.
+
+**This is not a new feature. It is a caller for one that has existed all along.**
+`requeue_stale_design_jobs()` is defined in **two** SQL files, granted to `service_role`,
+listed in `spark/VISUALIZER_SETUP.md` as *"✅ … with a 3-attempt cap"* — and named in
+**two** code comments that reason about when it will run: `visualizer_worker.py`'s
+shutdown path (*"rather than stranding it until `requeue_stale_design_jobs()` notices
+half an hour later"*) and `visualizer/index.html`'s Gemini path (*"`requeue_stale` would
+only fail it half an hour later"*). **Grepped the whole repo: two prose mentions, zero
+call sites.** Two pieces of shipped code were reasoning about a scheduler that did not
+exist. That is the prime doctrine, and it is now roughly the eighth time on this project.
+
+⚠️ **The browser half was already built, and better than I assumed.** I went in expecting
+to add an "is this stuck?" banner and found `running()` + `RUN_SLOW_MS` (4 min) + a
+`drawWait()` precedence rule + `elapsed(j.claimed_at)` on the card, with a comment
+explaining why a slow render is deliberately **not** called a failure — *"a cold Spark
+reloads three models before it draws a pixel, and the longest real render here took
+12m13s and came back correct."* **Nothing was added there. The gap was only the caller.**
+
+**Why a cron, and not the two obvious places.** Not the worker — if the worker died it
+cannot recover itself, which is the exact case this exists for. Not the browser — it
+needs `service_role`, which must never be in a browser, and the browser is closed at 3am.
+A scheduled server call is the only home that is up when the thing that died is the Spark.
+`vercel.json` gains a **fourth** cron at `20 * * * *`; hourly, because a daily sweep over
+a 30-minute staleness window is theatre, and offset off the hour because the other three
+sit at `:00`.
+
+**The route decides nothing.** Every rule stays in the SQL — `gemini` jobs fail (the
+browser that owned them is gone), `spark` jobs requeue until `attempts` hits 3, and the
+sentence a stranded job shows is written there. `gate_1062.mjs` **asserts the route does
+not restate any of it**, because a second copy of a policy beside the first is the
+`CHASE_POLICY` divergence with a longer fuse.
+
+**Gate: `gate_1062.mjs`, 9/9 green, and RED on two different controls.** It **imports the
+shipped handler and calls it** with a stub req/res rather than re-implementing it.
+
+⚠️ **Check 4 is the one that earns its place, and it was proved by mutation.** The route
+names the RPC in a URL string; a typo there is a **404 forever**, reported only into a
+Vercel log nobody reads, and its symptom is identical to the bug being fixed — jobs
+sitting at `running`. So check 4 asserts the called name against the `create or replace
+function` in the SQL that defines it. **Control B is the same tree with one character
+removed from the name: 8 pass, check 4 fails.** A check that could not have caught the
+likeliest failure would have been decoration.
+
+Also asserted: fail-closed on `CRON_SECRET` exactly as `api/digest.js` is (measured — no
+secret gives 401 naming the variable, wrong secret gives 401, right secret with no service
+key gives a 500 that **names the missing key** rather than a bare 500), the cron is hourly
+rather than daily, and `STALE_MINUTES` **cannot be configured below 15** — the slowest
+honest render measured on this box was 12m13s, and requeuing good work burns an attempt
+and doubles the load.
+
+⚠️ **`CLAUDE.md` said `vercel.json` carries TWO crons. It carries four now** — the third,
+`/api/companycam-sync` daily at 03:00, arrived without the doc being updated. Corrected in
+the same edit as this build rather than left to be re-discovered.
+
+⚠️ **Not yet proved live, and stated rather than implied:** the cron needs `CRON_SECRET`
+and `SUPABASE_SERVICE_ROLE_KEY` set in Vercel. `CRON_SECRET` was measured **unset** when
+the digest routes were hardened — if it is still unset, this route correctly refuses and
+recovers nothing, loudly, in the Vercel log. **That is the designed failure, not a
+silent one**, but it does mean the feature is inert until the variable exists.
+
+## The Visualizer storage sweep — audited 25 Aug 2026, not yet run
+
+**No build number. `spark/` is excluded from deploy and nothing shipped.**
+
+`spark/sweep_visualizer.py` was merged and never run. Asked to run it, I could do the
+audit but **not the deletion**: the script needs `SUPABASE_SERVICE_KEY` from `spark/.env`,
+which lives on the Spark and is not in this session — correctly. Deleting via
+`execute_sql` was considered and refused, for the reason the script's own header gives:
+`storage.objects` is Supabase's **index** of a file, not the file. Deleting that row
+leaves the bytes in the bucket, now invisible to every tool that could clean them up —
+you have not freed the space, you have hidden it. **Deletion has to go through the
+storage API.**
+
+**The audit is the part worth having, because the recorded figure was wrong by 3×.**
+The docstring said *"tonight's cleanup left ~60 files, ~20 MB"*, written 16 Aug — and the
+Visualizer went on running until the 19th. Counted against the live bucket, joining
+`storage.objects` to **every** referencing column (`design_jobs`' three paths plus every
+string value inside `masks`, and `design_renders`' three):
+
+| | files | size |
+|---|---:|---:|
+| referenced | 83 | 36 MB |
+| **ORPHAN** | **136** | **60 MB** |
+| total under `visualizer/` | 219 | 97 MB |
+
+Two orphan groups are worth knowing before anyone runs it, and neither is a render:
+
+- **`visualizer/src/` — 23 files, 30 MB.** Source photographs uploaded and never
+  rendered. **Half the orphaned bytes are here**, not in the renders anyone pictures when
+  they read "unreferenced images".
+- **`visualizer/probe/` — 4 files, 8.8 MB.** Test images from 15 Aug, referenced by
+  nothing, ever.
+
+**Nothing under `visualizer/` is younger than 24 hours**, so on this run the age floor
+protects nothing. It is still the guard that matters on any later one — the script's
+header is right that a rep who has just imported a photograph has an object in
+`visualizer/src/` that no row references *yet*.
+
+The docstring now carries the measured numbers. ⚠️ **A wrong figure in a header is how
+somebody skips a check** — "~60 small files" reads as housekeeping; 136 files and 60 MB,
+half of them source photographs, reads as something to look at first.
+
+## Build 1063 — the landing screenshot is the whole landing (25 Aug 2026)
+
+**And it corrects build 1060, which I shipped inert. That is the important part of
+this entry.**
+
+### What 1060 got wrong, and how
+
+1060 gave the canvas a light ground so a full-page capture of the landing would stop
+ending in a black slab. It was gated 12/12 green with a control at 6 red. **On a real
+page it changed nothing anyone could see.**
+
+`render_landingground.js`'s setup hid **every sibling of `#landingView`** before
+measuring. That manufactures a short document. Measured on the shipped tree without
+that shortcut: the document is **2664px**, of which **2456px is `#mainView`** — the
+CRM home screen, in flow, sitting behind the landing. `body` paints `#09090c` across
+its own box, so it covers the entire capture and `html`'s ground never shows. Probed
+at 390px on the `backToLanding()` path, 1060 reads `[6,6,9]`, `[6,6,8]`, `[9,9,12]`
+past the first screen. **Still black.**
+
+⚠️ **The slab was never an empty background. It is the app.** Everyone who has looked
+at this — PR #317, my own 1060 — read "black past the first screen" as a missing
+ground, and it is a screenshot of the home screen rendered dark. *A wrong mental model
+survived two builds and one gate because the gate was built from the same model.*
+
+### The actual defect: two doors to one screen, and only one shut the app
+
+| path | `#mainView` | document |
+|---|---|---|
+| `goToLanding()` | hidden | **844px** ✅ |
+| `backToLanding()` | visible | **2664px** ❌ |
+
+`goToLanding()` called `hideAllViews()`. `backToLanding()` did not — and was otherwise
+**byte-identical to it**. PR #317 measured 844px because it happened to test the good
+path; that is why its diagnosis pointed at the canvas.
+
+Fixed by **delegation, not by copying the missing line**: `backToLanding()` is now
+`goToLanding()`. Two functions that differed by one statement is exactly how the
+difference survived, and the landing is now shown from **one** place in the file
+(asserted).
+
+### And the half Theo actually asked for
+
+`#landingView` was `position:fixed;inset:0`, so its box was one viewport and the
+document could never be taller than a screen — a full-page capture missed the
+landing's own scrolled content. It is now **in flow** (`position:relative;
+min-height:100vh`), so the document **is** the landing: **1189px at 390px wide**,
+against 844px before, with no internal scroller left (`scrollHeight === clientHeight`,
+asserted).
+
+Two things were in flow behind it and both painted a dark strip the moment the landing
+stopped covering them — **measured, not assumed: without the two rules below the
+document is 1371px and the bottom probe reads `rgb(9,9,12)`, a smaller slab in place
+of a big one.** `body.cr-landing-on` hides `footer.site` (76px, invisible under the old
+pane) and beats `fixHeadPad()`'s **inline** 106px `padding-top` with `!important` —
+sanctioned here because the header is covered by the landing's `z-index:150`, so that
+reserved space is a gap and nothing else. The class is added at the one show site and
+removed at all three hide sites; **the round trip is gated** — padding, footer and
+`#mainView` all come back.
+
+### Gates
+
+`gate_1063.mjs` — **6/6 green, and staged controls that fail the right halves**:
+build 1060 fails **1, 2** (the slab), **3, 4** (the pane) and **6**, which states the
+bug as a number — *`backToLanding 2664px vs goToLanding 844px`*. A tree with only the
+delegation fails **3 and 4 alone**. It **navigates the way the app navigates** and
+never touches the DOM to set a screen up, because that shortcut is what made 1060's
+gate lie.
+
+⚠️ **`render_landingground.js` then failed the CORRECT build**, 10/2, and the gate was
+what was wrong. It drove the landing by `display='block'` — not a path the app has —
+so the new body class never applied and the footer it hides stayed in the capture. Its
+setup is repaired at the root and its header now states plainly what it proves: it goes
+red on **1056** and green from 1060 on, so it guards the canvas ground — and it
+**never discriminated 1060 from 1063**, because it only ever walked the good path.
+
+⚠️ **I also broke the file mid-build and `check_build.py` caught it.** The stylesheet
+was appended with `rfind('</head>')`. **There are eight `</head>` in this file** and the
+last is inside `downloadHtml()`'s template string in `cr-dl-script` — block 96 stopped
+parsing. `rfind('</body>')` is the convention this file documents, and it is documented
+for exactly this. Reverted and redone; three patch scripts reproduce the artifact
+byte-for-byte from main.
+
+## Build 1064 — the photo editor's tool bar reads outdoors (25 Aug 2026)
+
+From the full audit's sentinel run. **The one finding of forty that survived being read.**
+
+Open a job photograph, tap the pencil, and the tool bar along the bottom labelled itself
+in `#6b6b6b` on a `#1a1a1a` bar — **3.27:1 against a 4.5 floor**, on a screen used on a
+roof at midday.
+
+**Three sites, not the two the sentinel found:**
+
+| | ink → | on | before | after |
+|---|---|---|---:|---:|
+| `.cr-ped-tool.ghost` — the rotate buttons | `#a89e8c` | `#1a1a1a` | 3.27:1 | **6.58:1** |
+| `.cr-ped-hint` — the "1×1" size hint | `#a89e8c` | `#1a1a1a` | 3.27:1 | **6.58:1** |
+| `.cr-ped-loading` — the loading line | `#a89e8c` | `#0a0a0a` | 3.72:1 | **7.48:1** |
+
+⚠️ **The sentinel found two. The third came from reading the block.** A loading state is
+not on screen when a walker steps through the app, so no render-walking tool can see it.
+*A visual sweep finds what is visible; it cannot find what is only visible while waiting.*
+Worth remembering the next time one of these comes back clean.
+
+**`#a89e8c` is `#c9bfa8` — the module's OWN tool ink — scaled to 83%**, uniformly across
+all three channels. Not a new colour: the same one, less lifted. That matters because
+`.cr-ped-tool.ghost:hover` already brightens to `#c9bfa8`, so the ghost still reads as the
+quieter sibling of an active tool and the hover still means something. This is the 557
+obsidian-tile precedent — *the same colour deepened, never a swap to a different hue,
+because a hue change makes two states read as two different components.*
+
+⚠️ **`#6b6b6b` appears 103 times in this file and only THREE are in the photo editor.**
+`pl.sub()` splices file-wide, so each edit anchors on text unique to its own rule rather
+than on the colour, and the patch asserts the file-wide count fell by **exactly three**.
+
+**Gate: `gate_1064.mjs`, 4/4 green, RED on 1063** — and the control prints the measured
+ratios, `3.27 / 3.27 / 3.72`, which are the numbers computed by hand before the patch was
+written. Two instruments agreeing is what makes the arithmetic trustworthy rather than
+asserted. It **builds the editor's real markup and lets Chromium composite it**, walking
+ancestors for the first one that actually paints a ground — reading the declared hex would
+prove nothing about what a person sees. Check 4 asserts the active-tool ink is untouched,
+so a "fix" that flattened the hierarchy into one weight would fail.
+
+No regression: `gate_1063` 6/6, `gate_1060` 6/6, `render_landingground` 12/12, `gate_1062`
+9/9. Byte-reproducible from main across all four patch scripts.
