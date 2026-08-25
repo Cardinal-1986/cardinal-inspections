@@ -39,16 +39,61 @@ globalThis.__sentinelProbe = () => {
      which are background-IMAGES, so an ancestor walk reading only
      backgroundColor sails straight past the card and reports the page behind
      it. Every gradient stop is a ground too. */
+  /* ⚠ A BORDER-BOX LAYER IS NOT A GROUND FOR TEXT — the gradient-BORDER idiom.
+     Found 25 Aug 2026 producing ten false INK failures on Cardinal Truth, a
+     screen the build log already records as rendering perfectly.
+
+     The idiom, straight off .cr-cth-owed:
+        background-image: linear-gradient(160deg, #faf8f7, #fff),   <- the FILL
+                          linear-gradient(125deg, #c4180f, #7e1410) <- the BORDER
+        background-clip:  padding-box, border-box
+
+     Layer 1 clips to padding-box and is the card's fill. Layer 2 clips to
+     border-box and paints ONLY the ring outside the padding edge. Text lives
+     inside padding-box, so it never sits on layer 2 — but this function
+     harvested every stop from every layer and the ink was scored against the
+     red border. Measured: it reported 1.15:1 where the true value against the
+     fill is 8.61:1.
+
+     ⚠ The build log records this exact fault being fixed once already
+     ("only layer 1, and skip it when it clips to border-box, 24 -> 0 on that
+     screen"). No backgroundClip handling exists anywhere in this probe, so
+     that fix is not here — it lived in a different rig and never made it into
+     the standing one. Prose does not survive; a check does.
+
+     Only skipped when some OTHER layer clips tighter. A lone border-box layer
+     is an ordinary background (border-box is the CSS default) and must still
+     count, or this would blind the probe to almost every card in the app. */
+  function splitLayers(s) {
+    /* top-level comma split — gradients contain commas of their own */
+    const out = []; let depth = 0, cur = '';
+    for (const ch of s) {
+      if (ch === '(') depth++;
+      else if (ch === ')') depth--;
+      if (ch === ',' && depth === 0) { out.push(cur); cur = ''; continue; }
+      cur += ch;
+    }
+    if (cur.trim()) out.push(cur);
+    return out;
+  }
   function paints(cs) {
     const list = [];
     const bc = parse(cs.backgroundColor);
     if (bc && bc.a > 0.01) list.push(bc);
     const bi = cs.backgroundImage || '';
-    if (bi && bi !== 'none')
-      for (const stop of (bi.match(/rgba?\([^)]+\)/g) || [])) {
-        const p = parse(stop);
-        if (p && p.a > 0.01) list.push(p);
-      }
+    if (bi && bi !== 'none') {
+      const layers = splitLayers(bi);
+      const clips = splitLayers(cs.backgroundClip || '').map(c => c.trim());
+      const someTighter = clips.some(c => c === 'padding-box' || c === 'content-box');
+      layers.forEach((layer, i) => {
+        const clip = (clips[i] !== undefined ? clips[i] : clips[clips.length - 1]) || 'border-box';
+        if (someTighter && clip === 'border-box') return;   /* a border ring, not a ground */
+        for (const stop of (layer.match(/rgba?\([^)]+\)/g) || [])) {
+          const p = parse(stop);
+          if (p && p.a > 0.01) list.push(p);
+        }
+      });
+    }
     return list;
   }
 

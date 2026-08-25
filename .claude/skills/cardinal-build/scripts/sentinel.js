@@ -540,6 +540,23 @@ if (SELFTEST) {
   }
   /* And the discrimination that matters: a rule beaten by something MORE
      specific is the cascade working and must not be called DEAD. */
+  /* ⚠ THE GRADIENT-BORDER PAIR — added 25 Aug 2026 after this probe reported
+     TEN false INK failures on Cardinal Truth, a screen the build log already
+     records as rendering perfectly. paints() harvested every stop of every
+     background layer, so a red ring clipped to border-box was scored as the
+     ground for text that actually sits on the near-white padding-box fill:
+     1.15:1 reported where the true value is 8.61:1.
+     Both directions: a plain red gradient with no tighter layer must STILL be
+     caught, or the fix would blind the probe to every ordinary gradient card. */
+  const gbWrong = all.some(r => /st-gradborder-ink/.test(r.detail));
+  console.log((gbWrong ? '  FAIL  ' : '  PASS  ') +
+    'a border-box RING is NOT scored as the ground');
+  if (gbWrong) bad++;
+  const pgFired = all.some(r => /st-plaingrad-ink/.test(r.detail));
+  console.log((pgFired ? '  PASS  ' : '  FAIL  ') +
+    'but a PLAIN gradient with the same ink STILL is');
+  if (!pgFired) bad++;
+
   /* ⚠ THE OFF-CANVAS PAIR — added 25 Aug 2026 after this probe spent a sweep
      scoring a SHUT nav drawer. #navMenu hides by transform:translateX(-320px),
      not by display, so visible() returned true for it and eight INK failures
