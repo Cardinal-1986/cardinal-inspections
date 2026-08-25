@@ -6,11 +6,21 @@
 -- and every reader (claims linked-card, cross-links, health check, consistency
 -- check). The table has been empty throughout.
 --
--- STATUS: NOT YET APPLIED — run this file by hand in the Supabase SQL editor
--- (the repo convention). The automated apply was declined because it alters
--- constraints on the live contracts and insurance_claims tables; the guard
--- below still refuses a non-empty table whenever it runs. 0 rows verified
--- 2026-08-24. The app stopped reading the table at build 1033 either way. Related columns deliberately KEPT because their
+-- STATUS: ✅ APPLIED 25 Aug 2026, on Theo's explicit yes. Do not run again —
+-- it is NOT idempotent (the two ALTER TABLE ... DROP CONSTRAINT lines have no
+-- IF EXISTS and will error on a second run; that is deliberate, so a repeat
+-- fails loudly rather than pretending). The guard refused a non-empty table
+-- every time it ran; 0 rows verified 2026-08-24 and again immediately before
+-- applying.
+--
+-- VERIFIED AFTER APPLYING, not assumed from a success flag: table gone, both
+-- FKs gone, both trigger functions gone — AND the live tables unharmed, which
+-- was the whole reason the automated apply was declined the first time.
+-- contracts.source_ai_estimate_id and insurance_claims.ai_estimate_id both
+-- still exist as columns; insurance_claims still holds its 5 rows and
+-- estimates its 18. The security advisor's two orphan-trigger warnings
+-- cleared (function_search_path_mutable went 21 -> 19); still zero
+-- ERROR-level findings. The app stopped reading the table at build 1033 either way. Related columns deliberately KEPT because their
 -- tables are live: insurance_claims.ai_estimate_id (0 non-null) and
 -- contracts.source_ai_estimate_id (historical provenance).
 --
