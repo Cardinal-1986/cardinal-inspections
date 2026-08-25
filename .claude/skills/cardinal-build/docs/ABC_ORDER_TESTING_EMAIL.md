@@ -1,6 +1,16 @@
 # Email to ABC API Support — sandbox order testing
 
-*Drafted 13 Aug 2026. Copy the block below into an email and send it.*
+*Drafted 13 Aug 2026. **Sitting in Theo's Gmail drafts since 25 Aug 2026** —
+verified first that no correspondence with `apisupport@abcsupply.com` has ever
+existed in that mailbox, so this is a first contact, not a follow-up.
+**Do not re-draft it; check his drafts.***
+
+⚠️ **Two corrections made when the draft was created, both deliberate.** It goes
+from **`theodorion1986@gmail.com`**, not `theo@cardinalrenovations.net` — the gmail
+address is the one ABC already corresponds with him on (branch 106's Mark Braden
+replies to it), and it is the address their support will see. **Both** addresses
+are in the signature, because which one the myABCsupply account sits under is not
+known here and guessing it is how an account lookup fails.
 
 **To:** apisupport@abcsupply.com
 **Subject:** Sandbox order placement testing — Cardinal Roofing & Renovations (Source System ID 649)
