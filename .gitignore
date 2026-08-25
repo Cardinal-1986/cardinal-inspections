@@ -17,3 +17,10 @@ spark/.env
 visualizer/.next/
 visualizer/out/
 visualizer/node_modules/
+
+# The Chromium gates (gate_*.mjs, render_*.js) import 'playwright', and ESM
+# ignores NODE_PATH. A symlink here resolves it:
+#     ln -sfn /opt/node22/lib/node_modules .claude/skills/cardinal-build/scripts/node_modules
+# It is a local convenience, never a dependency of the app. Committed once by
+# accident at 1063 and removed in the same session.
+.claude/skills/cardinal-build/scripts/node_modules
