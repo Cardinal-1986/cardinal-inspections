@@ -25555,3 +25555,45 @@ and `SUPABASE_SERVICE_ROLE_KEY` set in Vercel. `CRON_SECRET` was measured **unse
 the digest routes were hardened — if it is still unset, this route correctly refuses and
 recovers nothing, loudly, in the Vercel log. **That is the designed failure, not a
 silent one**, but it does mean the feature is inert until the variable exists.
+
+## The Visualizer storage sweep — audited 25 Aug 2026, not yet run
+
+**No build number. `spark/` is excluded from deploy and nothing shipped.**
+
+`spark/sweep_visualizer.py` was merged and never run. Asked to run it, I could do the
+audit but **not the deletion**: the script needs `SUPABASE_SERVICE_KEY` from `spark/.env`,
+which lives on the Spark and is not in this session — correctly. Deleting via
+`execute_sql` was considered and refused, for the reason the script's own header gives:
+`storage.objects` is Supabase's **index** of a file, not the file. Deleting that row
+leaves the bytes in the bucket, now invisible to every tool that could clean them up —
+you have not freed the space, you have hidden it. **Deletion has to go through the
+storage API.**
+
+**The audit is the part worth having, because the recorded figure was wrong by 3×.**
+The docstring said *"tonight's cleanup left ~60 files, ~20 MB"*, written 16 Aug — and the
+Visualizer went on running until the 19th. Counted against the live bucket, joining
+`storage.objects` to **every** referencing column (`design_jobs`' three paths plus every
+string value inside `masks`, and `design_renders`' three):
+
+| | files | size |
+|---|---:|---:|
+| referenced | 83 | 36 MB |
+| **ORPHAN** | **136** | **60 MB** |
+| total under `visualizer/` | 219 | 97 MB |
+
+Two orphan groups are worth knowing before anyone runs it, and neither is a render:
+
+- **`visualizer/src/` — 23 files, 30 MB.** Source photographs uploaded and never
+  rendered. **Half the orphaned bytes are here**, not in the renders anyone pictures when
+  they read "unreferenced images".
+- **`visualizer/probe/` — 4 files, 8.8 MB.** Test images from 15 Aug, referenced by
+  nothing, ever.
+
+**Nothing under `visualizer/` is younger than 24 hours**, so on this run the age floor
+protects nothing. It is still the guard that matters on any later one — the script's
+header is right that a rep who has just imported a photograph has an object in
+`visualizer/src/` that no row references *yet*.
+
+The docstring now carries the measured numbers. ⚠️ **A wrong figure in a header is how
+somebody skips a check** — "~60 small files" reads as housekeeping; 136 files and 60 MB,
+half of them source photographs, reads as something to look at first.
