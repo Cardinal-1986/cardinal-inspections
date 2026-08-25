@@ -4344,3 +4344,84 @@ Only Evergreen Mist used the roof method, because only it had no swatch.
 **Still true, still the rule:** pair swatches to names by GEOMETRY, never by eye,
 and LOOK at the crop before sampling it. The Style Board crops first caught the
 board's door panel and paint chip — plausible numbers, polluted at both ends.
+
+---
+
+# Layer: 25 Aug 2026, evening — the standing sweep, triaged. NOT started.
+
+The first full sentinel sweep on the repaired walker. `--all`, so this is
+**total standing debt, not a regression list**: `14 INK · 46 DEAD · 157
+OVERRIDDEN · 1 FLOOR` across 100 renders (25 screens × 2 themes × 2 widths).
+Build 1066's fix held — `#galClient` and `.galempty` are gone from it.
+
+**The 157 OVERRIDDEN are overwhelmingly the cascade working** — dark rules
+losing to `rb-light` overrides, which is what a theme is. They are collected so
+`--since` can flag a *new* rule that never wins (build 481's shape), not because
+157 things are wrong.
+
+**One was already excluded as a rig fault:** `span.cvic "🛡"` at 1.02:1 was the
+emoji-as-ink class, now BUG_CLASSES 64 and fixed in the probe. *The app-side
+residue is real but cosmetic — that shield is the last emoji left after the
+686–699 drawn-icon sweep. One occurrence.*
+
+## The 13 real under-floor inks, grouped by ROOT CAUSE
+
+Grouping matters more than the list: three of these are one mistake made three
+times, and fixing them as a group is one decision rather than thirteen.
+
+### A · Themed by CRM instead of by theme — 3 sites, and the worst of them
+
+CLAUDE.md's build-527 lesson, live: *scoping by CRM is not scoping by theme.*
+Someone authored a readable ink, scoped it to `body.claim-insurance`, and in
+**retail light mode** the unscoped fallback wins.
+
+| element | measured | the authored fix that never applies |
+|---|---|---|
+| `b.db-paid` "$0.00" | **2.4:1** on white | `body.claim-insurance …{color:#46701E}` exists and is dark enough |
+| `a.dbmdir` "Directions ↗" | **2.45:1** | `body.claim-insurance …{color:#FF8A80}` — retail gets a default link blue on a dark card |
+| `h3` "Job Summary" | **3.51:1** on white | `.ljsummary h3{color:#1c1416}` is authored and **loses** — it is also in the OVERRIDDEN list |
+
+**This is the group worth doing first.** The correct ink already exists in the
+file in all three cases; it is scoped to the wrong axis. No colour needs
+inventing, which is exactly the condition CLAUDE.md wants before a colour build.
+
+### B · A single fixed ink with no light twin — 7 sites
+
+| element | measured | ink |
+|---|---|---|
+| `span.count` "14" | **1.56:1** dark / **2.14:1** light | `#1a1a1a` on both a dark chip and cardinal red |
+| `span` "(from client profile)" | **3.18:1** both themes | `#8a8a8a` |
+| `div#rvLeftSwitch` | **1.56:1** | `#cfcfcf` on white |
+| `span` "no description" | **2.65:1** | `#a89e88` on white |
+| `small` "Add carrier, claim #…" | **3.82:1** | `#6b7a90` on `#fdecec` |
+| `div.phnote` | **4.24:1** | `#767676` on `#f7f7f7` |
+| `div.navempty` | **4.2:1** | `#6b7688`, 1194px only |
+
+`span.count` is the serious one — **1.56:1 is not faint, it is invisible**, and
+it is a number the user is meant to read.
+
+### C · Marginal, and arguably fine — 1 site
+
+`button "Inspection"` at **4.35:1** against a 4.5 floor. Under by 0.15. Worth
+fixing in the same pass, not worth a pass of its own.
+
+## What I recommend, and why it is one build not three
+
+**Do group A alone as the next build.** Three sites, the replacement ink already
+written in the file, one root cause, and it lands on the **client profile** —
+the screen Theo is on most and the one rebuilt at 788–804. Group B is a bigger
+call because several of those inks are shared and need the blast-radius check
+(`.viewhead` was one class with 15 users), and C is noise on its own.
+
+⚠️ **Not started.** Theo has not asked for a colour build, and CLAUDE.md is
+explicit that scope creep reads as not listening. This is written down so the
+measurements are not lost, not as work in progress.
+
+## Still Theo's, unchanged
+
+- **`CRON_SECRET` in Vercel** — verified unset live; the daily digest has never
+  sent and CompanyCam last synced 31 July. Highest value of anything on this page.
+- Two Supabase Auth toggles: public signup **off**, leaked-password protection **on**.
+- The font-stack unification and the half-pixel type scale both want his pick and
+  a preview deploy — **neither is verifiable in this container**, which has
+  neither Segoe UI nor San Francisco installed.

@@ -6,9 +6,13 @@ their own instruments and were run this morning.*
 
 **Method.** `scripts/audit_design.mjs` walks the same 25 screens the sentinel walks, in both
 themes, at 390 / 1194 / 1440px, and records the **computed** style of every visible element —
-**27,032 records**. `scripts/audit_design_report.py` reads that harvest.
+**18,896 records**. `scripts/audit_design_report.py` reads that harvest.
 `scripts/audit_design_shots.mjs` captures the same walk as PNGs, because counting cannot tell
 you whether a screen looks like the app next door.
+
+That instrument answers "what PAINTS". The other half — "what did somebody AUTHOR" — is
+`scripts/audit_design_css.py`, added when the figures below turned out to be unreproducible
+(see the correction under §0). It carries its own scoping and a `--prev` control.
 
 The stylesheet was deliberately **not** parsed. Several of the 147 `<style>` blocks are print
 templates inside template strings that set `:root{--ink:#1b1b1b}` for an 11pt document; glued
@@ -64,8 +68,54 @@ which is this app's convention for a class-shown overlay and covers the next one
 
 ⚠️ **This means the first pass of the numbers in this document was itself contaminated** — most
 visibly `cr-est-picker` topping the "modules by spread" table with 7,956 records, which is not a
-dense module but one that was on screen for fifteen screens. Every figure below is from the
-re-run on the clean walker.
+dense module but one that was on screen for fifteen screens.
+
+### ⚠ §0 · The correction, and the ONE thing the contamination actually broke
+
+**The sentence that stood here was "Every figure below is from the re-run on the clean walker."
+It was written before that re-run existed.** The figures were from the 18:02 harvest, taken
+after the first two leaks were fixed and roughly eighty minutes before the third was found. It
+was a claim about work I intended to do, phrased as a measurement. Corrected by actually doing
+it — `design_v4`, the clean walk, **18,896 app records against the contaminated 27,032**.
+
+**What the contamination did and did not corrupt is worth more than the numbers themselves:**
+
+| | contaminated | clean | |
+|---|---:|---:|---|
+| distinct type sizes | 36 | **36** | unchanged |
+| distinct weights / families | 7 / 8 | **7 / 8** | unchanged |
+| distinct radii / gaps | 25 / 13 | **25 / 13** | unchanged |
+| distinct grounds, dark | 113 | **113** | unchanged |
+| distinct box-shadows | 51 | **50** | −1 |
+| distinct padding combos | 98 | **96** | −2 |
+| `800` weight, **uses** | 7,500 | **3,228** | −57% |
+| `Segoe UI`, **uses** | 9,610 | **4,654** | −52% |
+| radius `0`, **uses** | 2,051 | **995** | −51% |
+| painted `<button>`s | 3,018 | **2,220** | −26% |
+
+**Cardinality survived almost untouched; frequency was distorted by up to 57%.** An overlay
+leak re-counts the same handful of elements on every screen it covers, so it adds very few new
+*values* and enormous numbers of *uses*. That is why the top-6 "modules by spread" table was
+right all along — the leak added a fourteenth row, it did not change the other thirteen — and
+why the one flatly false sentence in this document was a frequency claim: *"`800` is the
+most-used weight in the app."* It is not. `700` is, and always was.
+
+**The rule this earns:** after an overlay leak, re-check every claim of the form "N uses" and
+leave the "N distinct" ones alone. The leak inflates the first and is nearly invisible in the
+second.
+
+### ⚠ And the stylesheet-side numbers had a different problem: no instrument at all
+
+The counts in this document that do **not** come from the browser walk — font-size sites, font
+stacks, breakpoints, `!important`, token declarations — were ad-hoc greps typed at a shell.
+Re-deriving them by hand the next day disagreed with five of eight, **and the hand re-derivation
+was itself wrong**: it "corrected" 704 whole-px sites to 706, when 704 was right and the new
+grep had simply forgotten to strip comments — which are **21% of this file's CSS**.
+
+They are now `scripts/audit_design_css.py`, which states its scoping (markup `<style>` only,
+comments stripped, media queries scanned per prelude) and takes `--prev` as a control. Three of
+those numbers moved in this revision because the instrument disagreed with the grep, and each
+is footnoted where it appears.
 
 **The gate no longer needs a list of what may legitimately be up.** It keys on FIRST
 APPEARANCE: an element on screen now that was already on screen under an earlier state's name is
@@ -104,21 +154,23 @@ doing the work of about five steps with fourteen values.
 A further **7 values** come and go with the viewport — 16 `clamp()` sites. One decision, many
 numbers; correctly *not* counted as scale steps.
 
-**Weights are lopsided:** `800` is the most-used weight in the app at **7,500** uses, against
-**2,136** for `400`. Regular text is the minority. That is a legitimate house style, but it is
-worth naming: when most things are bold, bold has stopped meaning "important".
+**Weights are lopsided:** `700` is the most-used weight at **4,412** uses, then `800` (3,228)
+and `600` (2,362), against **1,242** for `400`. Seven weights in all. Regular text is the
+minority — bold and semibold together outnumber it more than seven to one. That is a legitimate
+house style, but it is worth naming: when most things are bold, bold has stopped meaning
+"important".
 
 ### Families — four spellings of one intent
 
 | first family in the stack | uses | modules |
 |---|---:|---:|
-| `Segoe UI` | 9,610 | 93 |
+| `Segoe UI` | 4,654 | 92 |
 | `ui-monospace` | 3,212 | 25 |
-| `Arial` | 2,088 | 13 |
+| `Arial` | 1,866 | 12 |
 | `-apple-system` | 1,248 | 13 |
-| `American Typewriter` | 432 | **1** |
-| `Georgia` | 334 | 23 |
+| `American Typewriter` | 288 | **1** |
 | `system-ui` | 252 | **1** |
+| `Georgia` | 238 | 23 |
 | `SF Mono` | 8 | 2 |
 
 `Segoe UI`, `Arial`, `-apple-system` and `system-ui` are four different ways of asking for
@@ -130,12 +182,17 @@ because it changes which device shows the problem:
 
 | declared stack | sites | on iPadOS | on Windows |
 |---|---:|---|---|
-| `'Segoe UI',Arial,sans-serif` | **759** | Segoe UI is not installed → falls to **Arial** | **Segoe UI** |
-| `-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif` | 35 | **San Francisco** | falls through to Segoe UI |
+| `'Segoe UI',Arial,sans-serif` | **747** in app CSS (**793** counting inline `style=` too) | Segoe UI is not installed → falls to **Arial** | **Segoe UI** |
+| `-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif` | **36** | **San Francisco** | falls through to Segoe UI |
 
-So on the iPad — the primary device — **759 sites render Arial and 35 render San Francisco, on
+So on the iPad — the primary device — **747 sites render Arial and 36 render San Francisco, on
 the same screen.** On Windows they converge. The inconsistency is visible on the device it was
 claimed to be invisible on.
+
+*(An earlier revision said 759 / 35 from a hand grep whose scoping was never recorded and does
+not reproduce. `audit_design_css.py` now prints both the app-CSS figure and the whole-file one,
+because the 46-site gap is inline `style=` attributes, which reach the user exactly as a
+stylesheet rule does.)*
 
 *Stated as font-stack resolution, not as a render: this container has neither Segoe UI nor San
 Francisco installed, so iPadOS fallback cannot be reproduced here. Theo's device is the check.*
@@ -157,9 +214,9 @@ It is the first text on every screen in the app.
 
 | | dark | light |
 |---|---:|---:|
-| distinct painted grounds | **113** | 97 |
+| distinct painted grounds | **113** | 96 |
 | used exactly once | 7 | 6 |
-| distinct text colours | **131** | 132 |
+| distinct text colours | **130** | 130 |
 | used exactly once | 1 | 1 |
 
 **The long tail is healthy** — almost nothing is used once. This is not chaos; it is a large app
@@ -173,31 +230,50 @@ on which module drew it.
 
 Read from a real render at `:root`, both themes:
 
-| token | dark | light | used for |
-|---|---|---|---|
-| `--bg` | `#09090C` | `#f7f7f7` | ✅ flips correctly |
-| `--muted` | `#5c5c5c` | `#5c5c5c` | **38 `color:` references** |
-| `--line` | `#d9d9d9` | `#d9d9d9` | **105 `border` references** |
+| token | declarations in app CSS | used for |
+|---|---|---|
+| `--bg` | `#09090C` · `#f7f7f7` · `#fff` | ✅ flips correctly |
+| `--muted` | **one**, `:root{#5c5c5c}` | **11 `color:` references** |
+| `--line` | four — `:root{#d9d9d9}`, `body.viewing-community-hub{#ded3bf}`, `var(--ccm-line)` ×2 | **90 `border*` references** |
 
-`--muted` and `--line` are named like theme tokens and are single-valued. Today they mostly land
-on translucent washes whose composited ground I did not score — **so this is a latent risk, not
-a proven failure**, and the sentinel's INK check is the instrument that would prove it either
-way. The risk is that the next surface to use them on the other ground fails silently, which is
-the exact shape of the light-ink-on-dark class that has cost this project seven builds.
+⚠️ **CORRECTED, and the correction sharpens the finding.** An earlier revision said 38 and 105.
+Those counts included the **generated print documents** — six `<style>` blocks that live inside
+`<script>` and build an 11pt paper document as a JS string. Twenty-seven of the 38 `--muted`
+references and 21 of the 111 `--line` ones are in there, and those documents **declare their own
+`--muted` in their own `:root`**. They are a different token with the same name, in a different
+document, on white paper. Counting them here was measuring the wrong thing.
+
+The app-CSS figures are **11** and **90**, and the finding survives at that size:
+
+- `--muted` has **exactly one declaration in the whole app** — no theme twin, no scope variant.
+- `--line` **does** vary — but by **CRM** (Community gets `#ded3bf`), never by **theme**.
+  That is CLAUDE.md's own build-527 lesson recurring one layer down: *scoping by CRM is not
+  scoping by theme.* A token that has learned to tell Community from Retail, and has never
+  learned to tell light from dark, is more likely to be a real gap than one nobody has touched.
+
+Today these mostly land on translucent washes whose composited ground I did not score — **so
+this is a latent risk, not a proven failure**, and the sentinel's INK check is the instrument
+that would prove it either way. The risk is that the next surface to use them on the other
+ground fails silently, which is the exact shape of the light-ink-on-dark class that has cost
+this project seven builds.
 
 ---
 
 ## 4 · Geometry
 
-- **25 corner radii**, none used only once. `0` (2,051), `9` (1,446), `8` (723), `50` (626),
-  `12/12/0/0` (600), `10`, `7`, `6`, `11`, `18`, `999`…
-- **`<button>` alone uses 14 different radii** across 3,018 painted buttons, with **32 padding
-  combinations** and **13 type sizes**. A button's shape depends on which module drew it.
-- **51 distinct box-shadows.**
+- **25 corner radii**, none used only once. `0` (995), `9` (774), `8` (723), `50` (626),
+  `12/12/0/0` (600), `7`, `6`, `10`, `0/0/12/12`, `11`, `18`, `999`…
+- **`<button>` alone uses 14 different radii** across 2,220 painted buttons, with **31 padding
+  combinations** and **12 type sizes**. A button's shape depends on which module drew it.
+- **50 distinct box-shadows.**
 - **13 gap values** — but 10px, 8px, 9px, 5px, 6px, 4px, 7px, 11px is a 4–12px range with every
   integer in it. There is no 4- or 8-point rhythm; there is a continuum.
-- **22 media breakpoints**: 480, 520, 560, 620, 640, 700, 760, 820, 900, 901, 1100, 1600 and
-  ten more. Four of them (520/560/620/640) are all "small phone" and differ by 20–40px.
+- **23 media breakpoints** at the time of the audit, **24 now** (build 1065 added 437): 380,
+  390, 420, 430, 437, 480, 520, 560, 620, 640, 680, 700, 720, 760, 820, 900, 901, 1100, 1240,
+  1300, 1400, 1599, 1600, 1900. Four of them (520/560/620/640) are all "small phone" and differ
+  by 20–40px. *(An earlier revision said 22: the counting regex used one lazy
+  `(?:max|min)-width` alternation per `@media`, which returns only the FIRST width and so lost
+  the `1599` in `(min-width:1100px) and (max-width:1599px)`.)*
 - **63 z-index values**, 0 → 100001, with clusters at 9500/9600/9700, 10000/10500/10600/10700,
   and 99998/99999/100000/100001.
 
@@ -226,12 +302,13 @@ rather than an inversion. Nothing in this audit applies to it.
 
 Also healthy, and worth saying because audits only ever list problems:
 
-- **`!important` is 1.6% of ~26,851 declarations** (427 uses). For a 2.6 MB no-framework file
-  patched in place for a thousand builds, that is a low override debt.
+- **`!important` is 1.4% of 28,751 declarations** (413 uses, comments stripped). For a 4.4 MB
+  no-framework file patched in place for a thousand builds, that is a low override debt.
 - **No radius and no shadow is used exactly once** — there is no single-use decoration.
-- The token namespaces are real: 23 prefixes, 439 declared custom properties, and the
-  module-scoped ones (`--lc0…5` in two modules, `--crw-*` declared nowhere with literal
-  fallbacks) are **deliberate and correct**, not collisions.
+- The token namespaces are real: **21 prefixes, 417 declared custom properties** — the biggest
+  being `--rbe-*` (79), `--ct-*` (53), `--ccm-*` (37) — and the module-scoped ones (`--lc0…5` in
+  two modules, `--crw-*` declared nowhere with literal fallbacks) are **deliberate and correct**,
+  not collisions.
 
 ---
 

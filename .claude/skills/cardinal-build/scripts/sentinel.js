@@ -333,18 +333,35 @@ async function sweep(HTML, findings) {
        the number ticks, and worse, a genuinely new defect on that element
        becomes impossible to distinguish from the ticking. Key on what
        identifies the DEFECT — element, colours, floor — never on content. */
+    /* ⚠ EVERY CAP BELOW USED TO BE SILENT — the instrument breaking the
+       project's own no-silent-caps rule. A render with 30 INK failures
+       printed 25 and dropped five with no trace, and because the number that
+       vanished made the sweep SMALLER it read as progress rather than as an
+       incomplete run. The bound stays (one broken screen must not flood a
+       sweep); losing findings to it is now itself a finding.
+       Not gated on on() — every caller is already gated, and a truncation
+       notice you can filter away is the bug again. */
+    const capped = (list, n, id) => {
+      const arr = list || [];
+      if (arr.length > n)
+        add({ id: 'TRUNCATED', where: at, key: `${id}|${at}`,
+              detail: `${id}: ${arr.length} findings on this render, only ${n} listed`
+                    + ` \u2014 ${arr.length - n} NOT shown` });
+      return arr.slice(0, n);
+    };
+
     if (on('INK'))
-      for (const f of res.ink.slice(0, 25))
+      for (const f of capped(res.ink, 25, 'INK'))
         add({ id: 'INK', where: at,
               key: `${f.el}|${f.fg}|${f.bg}|${f.floor}`,
               detail: `${f.ratio}:1 (floor ${f.floor}) ${f.el} "${f.text}" ${f.fg} on ${f.bg}` });
 
     if (on('COLLAPSE'))
-      for (const f of res.collapse.slice(0, 15))
+      for (const f of capped(res.collapse, 15, 'COLLAPSE'))
         add({ id: 'COLLAPSE', where: at, detail: `${f.el} is ${f.box} but holds ${f.child} at ${f.childBox}` });
 
     if (on('OVERLAP'))
-      for (const f of res.overlap.slice(0, 15))
+      for (const f of capped(res.overlap, 15, 'OVERLAP'))
         add({ id: 'OVERLAP', where: at, detail: `${f.a} and ${f.b} overlap ${f.pct}% inside ${f.container}` });
 
     if (on('OVERFLOW') && res.overflow > 1)
@@ -358,7 +375,7 @@ async function sweep(HTML, findings) {
                     THIS build that never once wins is build 481, so it is
                     still collected and --since decides whether it matters. */
     if (on('DEAD'))
-      for (const f of res.dead.slice(0, 20))
+      for (const f of capped(res.dead, 20, 'DEAD'))
         add({ id: f.outranked ? 'OVERRIDDEN' : 'DEAD', where: at,
               detail: `${f.selector} { ${f.prop}: ${f.declared} } never wins on any of the ${f.matched} element(s) it matches` });
 
@@ -367,13 +384,13 @@ async function sweep(HTML, findings) {
        its own id: the cr-touch44-styles sheet is the one place where losing
        to higher specificity IS the defect (the #payView shape, build 944). */
     if (on('FLOOR'))
-      for (const f of (res.floor || []).slice(0, 20))
+      for (const f of capped(res.floor, 20, 'FLOOR'))
         add({ id: 'FLOOR', where: at,
               key: `${f.selector}|${f.prop}|${f.el}`,
               detail: `${f.selector} floors ${f.prop}:44px but ${f.el} computes ${f.computed}px${f.winner ? ' — beaten by ' + f.winner : ''}` });
 
     if (on('CONTAIN') && (res.contain || []).length)
-      for (const f of res.contain.slice(0, 20))
+      for (const f of capped(res.contain, 20, 'CONTAIN'))
         add({ id: 'CONTAIN', where: at,
               key: `${f.el}|${f.behavior}`,
               detail: `${f.el} sets overscroll-behavior ${f.behavior} but has no scrollport (overflow ${f.overflow}) — on iOS this can swallow the swipe` });
@@ -384,7 +401,7 @@ async function sweep(HTML, findings) {
        OVERFLOW cannot see it. .cr-cth-tabs (984) was the first of 30 such
        scrollers anyone measured, and it was hiding a tab. */
     if (on('CLIPPED') && (res.clipped || []).length)
-      for (const f of res.clipped.slice(0, 20))
+      for (const f of capped(res.clipped, 20, 'CLIPPED'))
         add({ id: 'CLIPPED', where: at,
               key: `${f.el}`,
               detail: `${f.el} hides ${f.over}px with no scrollbar (${f.bar})` +
@@ -393,7 +410,7 @@ async function sweep(HTML, findings) {
     /* UNWIRED needs CDP — the page cannot list its own listeners. */
     if (on('UNWIRED') && res.unwired.length) {
       const cdp = await ctx.newCDPSession(page);
-      for (const cand of res.unwired.slice(0, 120)) {
+      for (const cand of capped(res.unwired, 120, 'UNWIRED')) {
         try {
           const { result } = await cdp.send('Runtime.evaluate', {
             expression: `document.querySelector('[data-sentinel-id="${cand.id}"]')`,
@@ -563,6 +580,38 @@ if (SELFTEST) {
      were reported on four screens that render correctly.
      Asserted in BOTH directions: the negative half alone would pass for a
      check that had simply stopped looking at every position:fixed element. */
+  /* ⚠ THE EMOJI TRIO — added 25 Aug 2026. A colour emoji's glyph is painted by
+     the emoji font, not by `color`, so scoring `color` against the ground
+     measures a value that never paints. This rig makes it worse: headless
+     Chromium has no emoji font, falls back to a monochrome glyph that DOES
+     take `color`, and invents a failure impossible on any device Theo owns.
+     Three checks, not two: the over-broad fix ("skip text containing an
+     emoji") would silently stop scoring every label that carries one, so a
+     mixed string must STILL be reported. */
+  const emWrong = all.some(r => /st-em-only/.test(r.el || '') || /st-em-only/.test(r.detail));
+  console.log((emWrong ? '  FAIL  ' : '  PASS  ') +
+    'an EMOJI-ONLY string is NOT scored as ink');
+  if (emWrong) bad++;
+  const emWord = all.some(r => /st-emojiword-ink/.test(r.detail));
+  console.log((emWord ? '  PASS  ' : '  FAIL  ') +
+    'but plain text with the same ink STILL is');
+  if (!emWord) bad++;
+  const emMixed = all.some(r => /st-emojimix-ink/.test(r.detail));
+  console.log((emMixed ? '  PASS  ' : '  FAIL  ') +
+    'and so is a sentence that merely CONTAINS an emoji');
+  if (!emMixed) bad++;
+
+  /* ⚠ THE TRUNCATION CHECK — added 25 Aug 2026, after eight silent caps were
+     found in this reporter. The bound is correct; losing findings to it in
+     silence is not. 30 fixtures against a cap of 25 must produce a TRUNCATED
+     finding naming the bucket and the number dropped.
+     This is the one selftest that proves a check about the CHECKER. */
+  const trunc = all.find(r => r.id === 'TRUNCATED' && /INK/.test(r.detail));
+  console.log((trunc ? '  PASS  ' : '  FAIL  ') +
+    'a cap that drops findings REPORTS the drop' +
+    (trunc ? '  \u2014 ' + trunc.detail : ''));
+  if (!trunc) bad++;
+
   const ocWrong = all.some(r => /st-offcanvas-ink/.test(r.detail));
   console.log((ocWrong ? '  FAIL  ' : '  PASS  ') +
     'a SHUT off-canvas fixed panel is NOT scored');

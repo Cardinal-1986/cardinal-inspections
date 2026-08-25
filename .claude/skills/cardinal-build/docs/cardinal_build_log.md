@@ -25834,3 +25834,94 @@ broken.
 byte-reproducible · `gate_1066.mjs` **6/6 across both themes**, and on 1065 it
 is **red on all three light checks and green on all three dark ones** — the
 cleanest discrimination of the session · light-mode render confirmed by eye.
+
+---
+
+## No build number — instrument round, 25 Aug 2026 evening
+
+**Nothing in `index.html` changed.** Stamp stays at **1066**. This is the
+follow-up the 25 Aug design audit earned: the audit's own numbers were checked,
+and checking them found two more faults in the standing instrument.
+
+### 1 · The design audit's figures, actually re-run this time
+
+The audit said *"Every figure below is from the re-run on the clean walker."*
+**It was written before that re-run existed** — the figures came from the 18:02
+harvest, taken after two of the three walker leaks were fixed and ~80 minutes
+before the third was found. A claim about intended work, phrased as a
+measurement. Now done: `design_v4`, **18,896 app records against 27,032**.
+
+**What the contamination broke is the useful part:**
+
+| | contaminated | clean |
+|---|---:|---:|
+| distinct sizes / weights / families / radii / gaps / dark grounds | 36 / 7 / 8 / 25 / 13 / 113 | **all unchanged** |
+| distinct box-shadows · padding combos | 51 · 98 | **50 · 96** |
+| `800` weight **uses** | 7,500 | **3,228** |
+| `Segoe UI` **uses** | 9,610 | **4,654** |
+| radius `0` **uses** | 2,051 | **995** |
+| painted `<button>`s | 3,018 | **2,220** |
+
+**Cardinality was nearly immune; frequency was off by up to 57%.** An overlay
+leak re-counts the same elements on every screen it covers — few new *values*,
+enormous numbers of *uses*. So the "modules by spread" table was right all along
+(the leak added a row, it did not change the others), and the one flatly false
+sentence in the audit was a frequency claim: *"`800` is the most-used weight in
+the app."* It is not. **`700` is, and always was.**
+
+**Rule:** after an overlay leak, re-check every "N uses" claim and leave every
+"N distinct" one alone.
+
+### 2 · `scripts/audit_design_css.py` — the authorship half, with a method
+
+The audit's non-browser numbers were ad-hoc greps. Re-deriving them by hand
+disagreed with five of eight — **and the hand re-derivation was itself wrong**:
+it "corrected" 704 whole-px font-size sites to 706 when **704 was right** and
+the new grep had forgotten to strip comments, which are **21% of this file's
+CSS**. A second hand count is not a check on the first; it is a second claim.
+
+The scoping is now written down and runnable: markup `<style>` blocks only
+(**six `<style>` blocks live inside `<script>`** and build 11pt paper documents
+as JS strings — CLAUDE.md's rig trap, and they carry 123 font-size declarations
+and their own `:root{--ink:#1b1b1b}`), comments stripped, media queries scanned
+**per prelude** (one lazy `(?:max|min)-width` alternation returns only the first
+width and lost the `1599` in `(min-width:1100px) and (max-width:1599px)`).
+`--prev` is the control; it proved 1065's new `437` breakpoint was a real +1
+rather than a regex difference.
+
+**The `--muted` / `--line` finding got sharper, not weaker.** 27 of the 38
+`--muted` references were in the generated print documents, **which declare
+their own `--muted`** — a different token, same name, on paper. App CSS: `--muted`
+has **exactly one declaration** and 11 references; `--line` has **four**, and
+they vary by **CRM** (Community `#ded3bf`) and never by **theme**. That is
+build 527's lesson one layer down: *scoping by CRM is not scoping by theme.*
+
+### 3 · Two faults in the sentinel — BUG_CLASSES 63 and 64
+
+**Class 63 — eight silent caps in the reporter.** `res.ink.slice(0, 25)` and
+seven siblings truncate per render and said nothing. Findings vanish and the
+total comes out *smaller*, which reads as progress. ⚠️ **The identical fault had
+been found and fixed in `audit_design.mjs` eight hours earlier the same day** —
+fixing an instance is not fixing the class. `capped()` keeps the bound and emits
+a `TRUNCATED` finding naming the bucket and the count dropped.
+
+**Class 64 — emoji scored as ink.** A colour emoji's glyph is painted by the
+emoji font; `color` never reaches it. Headless Chromium has no emoji font, falls
+back to a monochrome glyph that *does* take `color`, and invented `span.cvic
+"🛡"` at **1.02:1** on the client screen — four false findings. Only
+entirely-pictographic text is skipped, so a label that merely contains an emoji
+is still scored.
+
+**Selftest: 4 new fixtures, GREEN, and the control is RED on both.** The
+truncation fixture is 30 ink failures against a cap of 25, placed **last** in
+the page because `res.ink` is built in document order and the earlier fixtures
+must not be evicted by the block that tests the cap. Both "must still fire"
+halves stay green on the control, so neither passes by exclusion — the dedup
+collision I shipped twice in one day.
+
+### Standing sweep — 218 findings, `--all`, for the record
+
+`14 INK · 46 DEAD · 157 OVERRIDDEN · 1 FLOOR` across 100 renders. **This is
+total debt, not a regression list** (no `--since`). Build 1066's fix held:
+`#galClient` and `.galempty` are absent. The 14 INK are triaged in
+`OPEN_ITEMS.md` and are **not** started — they are a build, and Theo picks.

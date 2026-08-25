@@ -215,6 +215,20 @@ globalThis.__sentinelProbe = () => {
     /* Transparent ink is clip-to-text, a deliberate technique and a DIFFERENT
        class with its own script. Not a contrast failure. */
     if (fg.a < 0.05) continue;
+    /* ⚠ AN EMOJI IS NOT INK. Its glyph is painted by the emoji font in the
+       font's own colours; `color` does not reach it, so scoring `color`
+       against the ground measures a value that never paints.
+       This rig makes it worse than a no-op: headless Chromium ships no emoji
+       font, falls back to a MONOCHROME glyph that does take `color`, and
+       manufactures a failure that cannot occur on any device Theo owns. It
+       reported span.cvic "\u{1F6E1}" at 1.02:1 on the client screen, both themes,
+       both widths, on the 25 Aug sweep.
+       Skipped only when the text is ENTIRELY pictographic — an emoji sitting
+       inside a sentence leaves that sentence scored, which is right, because
+       the sentence really is painted with `color`. Both directions are
+       fixtured in sentinel_selftest.html; a skip nobody has watched fail is
+       a blind spot wearing a comment. */
+    if (/^[\s\u200d\ufe0e\ufe0f\p{Extended_Pictographic}]+$/u.test(txt)) continue;
     const size = parseFloat(cs.fontSize) || 16;
     const bold = (parseInt(cs.fontWeight, 10) || 400) >= 700;
     const large = size >= 24 || (size >= 18.66 && bold);

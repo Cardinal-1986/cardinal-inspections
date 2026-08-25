@@ -3400,3 +3400,65 @@ applied to geometry rather than to ink.
 **Related, and worth stating once:** a `fullPage` screenshot's **width** is free
 overflow detection. A 390px viewport that captures 570px wide is telling you the
 body scrolls sideways. Build 1055's whole overflow finding started there.
+
+---
+
+## Class 63 — a cap in the *instrument* that truncates in silence
+
+**The shape.** A gate bounds its own output per run — `slice(0, 25)` — so one
+broken screen cannot flood a sweep. The bound is right. Reporting nothing when
+it bites is not: findings vanish, the total comes out **smaller**, and a smaller
+number reads as progress rather than as an incomplete run.
+
+**Found 25 Aug 2026 in `sentinel.js`, eight times in one reporter** — INK 25,
+COLLAPSE 15, OVERLAP 15, DEAD 20, FLOOR 20, CONTAIN 20, CLIPPED 20, UNWIRED 120.
+None said a word when it truncated. This is the standing instrument breaking the
+rule it exists to enforce, and it is CLAUDE.md's assertion-fault #2 wearing a
+different hat: *"a test that silently LOSES a check and stays green … a smaller
+number nobody reads."*
+
+⚠️ **The same fault had been found and fixed in `audit_design.mjs` eight hours
+earlier, in the same session** (`if (scanned > 6000) break;` with nothing
+recording it). Fixing an instance is not fixing the class. The second one was
+found only because someone went looking for `slice(` on purpose.
+
+**The fix.** `capped(list, n, id)` keeps the bound and emits a `TRUNCATED`
+finding naming the bucket and the number dropped. Deliberately **not** gated on
+`--only`: every caller is already gated, and a truncation notice you can filter
+away is the bug again.
+
+**Fixtured:** 30 ink failures against a cap of 25, placed **last** in
+`sentinel_selftest.html` — `res.ink` is built in document order, so the earlier
+fixtures are already inside the cap and cannot be evicted by the block that
+tests it. Control: restore the silent caps and the check goes RED.
+
+## Class 64 — scoring a value the renderer never paints (emoji as ink)
+
+**The shape.** A contrast check reads `color` and scores it against the ground.
+For a **colour emoji** that is the wrong property: the glyph is painted by the
+emoji font in the font's own colours, and `color` never reaches it.
+
+**Worse in a headless rig, which is where it bit.** Headless Chromium ships no
+emoji font, falls back to a **monochrome** glyph that *does* take `color`, and
+manufactures a failure that cannot occur on any device Theo owns. The 25 Aug
+sweep reported `span.cvic "🛡"` at **1.02:1** on the client screen, in both
+themes, at both widths — four findings, all false.
+
+**The fix.** Skip text that is **entirely** pictographic. Three fixtures, not
+two, because the tempting over-broad fix — *skip any text containing an emoji* —
+would silently stop scoring every label that happens to carry one:
+
+| fixture | must |
+|---|---|
+| `st-em-only` — emoji alone | **NOT** fire |
+| `st-em-word` — plain text, same ink | fire |
+| `st-em-mixed` — emoji inside a sentence | fire |
+
+**The app-side residue is a separate, real item:** that `.cvic` shield is the
+last emoji left after the 686–699 drawn-icon sweep. One occurrence. The
+instrument fix is correct regardless of whether it is replaced.
+
+⚠️ **This is the general class, not an emoji rule.** Any check that reads a CSS
+property must first ask whether that property is what paints the thing. The
+gradient-border fault three hours earlier (Class 47's neighbour) was the same
+question about `background`; this one is about `color`.
