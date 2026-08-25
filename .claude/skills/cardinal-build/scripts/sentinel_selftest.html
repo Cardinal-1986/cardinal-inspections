@@ -177,6 +177,20 @@
   <button type="button" id="data-delegated" data-st-act="go">wired only through a document-level data hook</button>
 </div>
 
+<h2>OFF-CANVAS — a shut drawer must not be scored, but an OPEN one must</h2>
+<!-- Both carry the SAME unreadable ink on the same ground. The only difference
+     is where they sit. Asserted in both directions on purpose: a check that had
+     simply gone silent for every position:fixed element would pass the negative
+     half alone, and that is the shape of a check that cannot fail. -->
+<div id="offcanvas-drawer" style="position:fixed;top:0;left:0;width:320px;height:400px;
+     transform:translateX(-320px);pointer-events:none;background:#1e1113;z-index:5">
+  <span class="st-oc-hidden" style="color:#232326">st-offcanvas-ink must NOT be reported</span>
+</div>
+<div id="onscreen-panel" style="position:fixed;top:0;right:0;width:200px;height:60px;
+     background:#1e1113;z-index:5">
+  <span class="st-oc-shown" style="color:#232326">st-onscreen-ink MUST still be reported</span>
+</div>
+
 <script>
   /* Only the first button gets a handler. The second is BUG_CLASSES 16:
      drawn, enabled, and inert — the Studio Archive button, 614 to 632. */

@@ -105,12 +105,44 @@ globalThis.__sentinelProbe = () => {
     for (const n of el.childNodes) if (n.nodeType === 3) t += n.nodeValue;
     return t.trim();
   }
+  /* ⚠ A CLOSED DRAWER IS NOT display:none — IT IS PARKED OFF-CANVAS.
+     Found 25 Aug 2026, and it had been manufacturing INK findings for a while.
+
+     #navMenu hides by transform:translateX(-320px) with pointer-events:none.
+     Measured on the states that reported findings (truth, insclients,
+     showcase, at 390px): rect.x = -320, width 320, #signOutBtn at x = -320 —
+     genuinely off screen, and the drawer's own background is DARK. Yet this
+     function returned true for all of it, so the walk scored the drawer's
+     light-era inks against a ground it does not paint on and reported eight
+     failures on four screens that render correctly.
+
+     This file's own setup already records the sibling trap ("clicking navBtn
+     on desktop opens a #navMenu that renders WHITE and that no desktop user
+     can ever reach, and scoring its light-era inks manufactures findings").
+     Same class, reached a different way — the menu did not have to be opened
+     at all.
+
+     ── WHY THE TEST IS SCOPED TO position:fixed ──
+     Off-canvas alone is not unreachable. A horizontal chip strip legitimately
+     parks items past the right edge and a user scrolls to them; dropping those
+     would blind FLOOR and INK to half a scroller. But a FIXED element is
+     positioned against the viewport, so if its box lies wholly outside, no
+     amount of scrolling brings it in. That is exactly a shut drawer, sheet or
+     off-canvas panel, and nothing else. */
+  function offCanvasFixed(el, r) {
+    if (r.right > 0 && r.left < window.innerWidth) return false;   /* on screen */
+    for (let n = el, hops = 0; n && hops++ < 40; n = n.parentElement) {
+      if (getComputedStyle(n).position === 'fixed') return true;
+    }
+    return false;
+  }
   function visible(el, r) {
     if (!r) r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) return false;
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || cs.display === 'none') return false;
     if (parseFloat(cs.opacity) < 0.05) return false;
+    if (offCanvasFixed(el, r)) return false;
     return true;
   }
   function where(el) {

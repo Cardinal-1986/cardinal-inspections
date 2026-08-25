@@ -540,6 +540,21 @@ if (SELFTEST) {
   }
   /* And the discrimination that matters: a rule beaten by something MORE
      specific is the cascade working and must not be called DEAD. */
+  /* ⚠ THE OFF-CANVAS PAIR — added 25 Aug 2026 after this probe spent a sweep
+     scoring a SHUT nav drawer. #navMenu hides by transform:translateX(-320px),
+     not by display, so visible() returned true for it and eight INK failures
+     were reported on four screens that render correctly.
+     Asserted in BOTH directions: the negative half alone would pass for a
+     check that had simply stopped looking at every position:fixed element. */
+  const ocWrong = all.some(r => /st-offcanvas-ink/.test(r.detail));
+  console.log((ocWrong ? '  FAIL  ' : '  PASS  ') +
+    'a SHUT off-canvas fixed panel is NOT scored');
+  if (ocWrong) bad++;
+  const onFired = all.some(r => /st-onscreen-ink/.test(r.detail));
+  console.log((onFired ? '  PASS  ' : '  FAIL  ') +
+    'but an ON-SCREEN fixed panel with the same ink STILL is');
+  if (!onFired) bad++;
+
   const wrongly = all.some(r => r.id === 'DEAD' && /over-base/.test(r.detail));
   console.log((wrongly ? '  FAIL  ' : '  PASS  ') +
     'a deliberately overridden rule is NOT reported as DEAD');
