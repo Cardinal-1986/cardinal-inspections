@@ -25347,3 +25347,145 @@ nothing downstream is testable without it). Plus **`enforce_test.mjs`, nine
 adversarial cases against the extracted shipped `enforceGaps`**, including an
 invented citation and a string `photo_index`. Both artifacts byte-reproducible;
 `api/supplement.js` parses, no `module.exports`.
+
+## Build 1060 — landing screenshots stop ending in a black slab (25 Aug 2026)
+
+**Theo photographed the landing on his iPhone in light mode and got the top of the
+page followed by a tall black slab.** PR #317 diagnosed this correctly on 14 Aug and
+never landed; it sat as a draft stamped **build 809** while main went to 1056, so it
+could not merge. The fix is re-derived, re-measured on today's tree, **scoped**, and
+shipped here. #317 is closed as superseded.
+
+**The mechanism, measured in Chromium rather than reasoned about.** `#landingView`
+carries `position:fixed;inset:0;overflow-y:auto` as an inline style, so it is a
+viewport-locked pane with its own scroller. An iPhone Full Page capture photographs
+the **document**, and the document behind the pane is one screen tall. Everything past
+that first screen fell through to `body{background:var(--bg)}` — and `body` follows the
+**app** theme (`data-theme`) while the landing follows the **landing** theme
+(`data-mode`). In dark mode both grounds are `#09090c` so the bug is invisible; it only
+bites in light. Two theme mechanisms on one surface, the same collision recorded at 647.
+
+**The fix is the canvas, which is the only box that always covers the capture:**
+
+```css
+html[data-mode="light"]:not(:has(#landingView[style*="display: none"])){background:#f7f5f2}
+```
+
+⚠️ **The `:not(:has(…))` is the whole build, and the unscoped version is a regression I
+nearly shipped.** `data-mode` is the LANDING theme and it **outlives the landing** — it
+stays on `documentElement` through every CRM screen. Unscoped, `html` paints light
+app-wide; `body`'s `#09090c` still covers the content (measured: `bodyH == docH == 2556`
+on an app screen, so normal scrolling is unaffected) but the **rubber-band overscroll
+goes light over a dark app**. That is build **429 in reverse** — 429 exists because light
+mode was showing a dark overscroll. Caught by a four-combination probe written *because*
+the change touched `html`, not because anything asked for it; the probe's first run
+printed `html:rgb(247,245,242) body:rgb(9,9,12)` and that mismatch is the whole finding.
+
+**Light only, deliberately.** With no dark twin, `body`'s `var(--bg)` propagates to the
+canvas exactly as before, so dark and `rb-light` are untouched — asserted, not assumed:
+all four `(data-mode × data-theme)` combinations are byte-identical to 1056's.
+`body{background:var(--bg)}` is not touched; that is 429's fix.
+
+**Gates.** `render_landingground.js` (from #317, header corrected — it was written for a
+build that never shipped): **12/12 green on 1060, 6 RED on 1056**, probing the left
+gutter at four heights × two widths × both modes. New **`gate_1060.mjs`: 6/6 green**, and
+**RED on two different controls** — build 1056 fails check 1 (the slab), and a
+deliberately *unscoped* tree fails check 2 (the overscroll leak). A control that only
+ever fails one way would not have proved the scoping does anything. `check_build.py`
+green, 1056 → 1060, marker + negative control. Byte-reproducible from main on a fresh
+apply.
+
+**Still not fixed, and not claimed to be:** the capture ends where the pane's content
+ends, because the *page* does not scroll — the pane does. Production, Sales Floor, the
+Resource Library, the Schedule Board and The Pop-Up Roof are still absent from a
+full-page shot. Getting them in means taking the landing out of the fixed overlay, which
+is not a CSS change — `backToLanding()` and `goToLanding()` never hide `header.site`, so
+the CRM header is covered today *purely* by the landing's `z-index:150`. Offered to Theo
+as option 2 on 14 Aug and deferred by him; the trigger stays recorded in `OPEN_ITEMS.md`.
+
+### `next_build.py` answered 1057, which was three builds into the past
+
+Not part of the fix, found by it. **The tool this project uses to prevent collisions was
+about to cause three.** 1057 and 1059 shipped in `supplement.html`, 1058 in
+`api/digest.js`; `index.html` legitimately stayed at 1056, and the script reads
+`index.html` (plus `visualizer/index.html`). Two distinct faults:
+
+- **`supplement.html` was not in `STAMPED` — and adding it alone fixes nothing**, because
+  its stamp is `SD_BUILD = 1059`, not the `v2026-… build N` form the `STAMP` regex reads.
+  *A file listed but written in a dialect the pattern cannot read is exactly as invisible
+  as a file not listed.* Hence `STAMP_ALT`.
+- **`api/digest.js` carries no stamp and never will** — a serverless function has nowhere
+  to put one, so no amount of file-scanning reaches build 1058. Worse, it contains the
+  string `build 1056` as a *reference* to the chase clock, so a naive scan of `api/`
+  answers with somebody else's number.
+
+So the **build log** is now read too — the one record CLAUDE.md says has never fallen
+behind, and the only place an artifact-less build is visible at all. Matched
+case-insensitively and number-first, because the log's heading levels and the word
+"build" are both inconsistent. Stamps still win where they exist; the log only raises the
+floor. It now answers **1060**, which is what this build was numbered by hand.
+
+⚠️ **Both new `--self-test` cases were mutation-tested** — neutering `STAMP_ALT` and
+`log_high` turns each red, so neither is inert. And the first version of them **broke a
+correct existing check**: they added keys to the `FAKE` fixture that the absent-artifact
+case inherits, so it read 1059 and failed. The fixture is restored explicitly. *Half the
+reds on this project are the test's fault, and that one was mine.*
+
+## Build 1061 — the ABC order body is the shape ABC documents (25 Aug 2026)
+
+**`api/abc.js` only. `index.html` is untouched and stays at 1060** — this is one of
+the builds that carries no artifact stamp, which is exactly the case `next_build.py`
+was taught to see one build earlier.
+
+`placeOrder` forwarded `b.payload || {}` — **a bare object, straight through**. ABC's
+published example is an **array of orders**, and the order needs far more than was
+being sent. Recorded as a known defect in `ABC_ORDER_TESTING_EMAIL.md` since 13 Aug;
+this is it fixed. **Same defect class as the pricing body at 763**: a shape invented
+in this file rather than read from ABC's own words. This file has now made that
+mistake twice and it is worth naming as a pattern, not an incident.
+
+**Every field name is from ABC's verbatim example request**
+(`apidocs.abcsupply.com/place-orders/`, fetched and read for this build, not
+recalled): the body is `[{ requestId, branchNumber, deliveryService, typeCode,
+currency, shipTo, lines }]`; the ship-to is **`shipTo.number`**, not a top-level
+`shipToNumber` as the pricing call uses; lines carry `orderedQty:{value,uom}` and
+`unitPrice:{value,uom,instructions?}`, with `dimensions.length:{uom,value}` for
+dimensional stock. Enums: `deliveryService` ∈ COM|CPU|EXP|OTR|OTG|OTW|TPC,
+`typeCode` = SO, currency ISO 4217. **99 lines maximum, stated verbatim in their docs.**
+
+⚠️ **This route spends money, so it REFUSES instead of defaulting.** A malformed
+order does not fail cleanly — it puts the wrong materials on a truck to a customer's
+house. `orderProblem()` is the single place that decides whether an order may be
+sent, and it reads the **built** order, so a hand-supplied `payload` and a built one
+are held to the identical standard. **`deliveryService` is never defaulted** — it
+decides delivery versus pickup, and guessing it is how a truck turns up at a house
+nobody asked about. Only `typeCode` (ABC documents exactly one value) and `currency`
+default. **A `unitPrice` is sent only when we actually have one**: a zero there is not
+"free", it is a price we failed to read, and 763 shipped precisely that class of
+plausible wrong number on a money surface.
+
+⚠️ **Over 99 lines it refuses and says to SPLIT — it does not trim.** Silently
+dropping line 100 is a missing pallet nobody discovers until the crew is on the roof.
+Asserted, including that the wording says split rather than trimmed.
+
+**Still unreachable from the UI, deliberately.** Nothing calls `placeOrder`; it stays
+behind `FULL_ONLY` (admin/production). This build makes the shape correct and the
+refusals real so that the day ABC answers, the wiring is the only thing left — it
+does not open the door. **Ordering still needs a screen that shows the whole order
+back to a human and takes an explicit confirm**, and that is not built.
+
+**Gate: `gate_abcorder.mjs` — 13/13 green, 11 RED on the pre-fix file.** It
+**extracts `orderPayload` and `orderProblem` from the shipped source and executes
+them** rather than re-implementing them; a gate that re-implements its subject agrees
+with itself. Every expectation is asserted against ABC's published values.
+
+⚠️ **Two faults in the gate, both mine, both caught before shipping.**
+- The control has no `orderPayload` at all, so the first version would have **thrown**
+  on a missing symbol — BUG_CLASSES 37, a control that crashes instead of reporting
+  red. It now names the absence and continues.
+- Check 11 reads the dispatch line, so the control fails on **the real defect**
+  (`b.payload` going straight to ABC) rather than merely on the builder's absence.
+  Its first version used a **fixed 400-character window** over a region whose comment
+  block is 812 characters long, so it **failed the correct tree**. Bounded on the
+  case's own end now. *A fixed window over a variable region is the trap this
+  document names, and it fired inside the gate written to avoid a different one.*

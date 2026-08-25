@@ -84,7 +84,50 @@ def git(*args):
 # Adding a new stamped artifact means adding it here. A file that carries a
 # stamp and is not listed is invisible to this check, which is the failure
 # above, exactly.
-STAMPED = ("index.html", "visualizer/index.html")
+# ⚠ AND IT HAPPENED AGAIN AT 1060, ONE STEP FURTHER OUT.
+#
+# 1057 and 1059 shipped in supplement.html; 1058 shipped in api/digest.js.
+# index.html legitimately stayed at 1056, so this script answered "next safe:
+# 1057" — three builds into the past, and three collisions in one answer.
+#
+# Two things were wrong, and the second is the general one:
+#
+#   1. supplement.html was not in STAMPED. Adding it is not enough on its own,
+#      because it does NOT carry the `v2026-… build N` form — its stamp is
+#      `SD_BUILD = 1059`. A file listed here but written in a dialect STAMP
+#      cannot read is still invisible. Hence STAMP_ALT.
+#
+#   2. api/digest.js carries no stamp at all, and never will — a serverless
+#      function has nowhere to put one. No amount of file-scanning reaches a
+#      build like 1058. (Worse: api/digest.js contains the string "build 1056"
+#      as a REFERENCE to the chase clock, so a naive scan of api/ answers with
+#      somebody else's build number.)
+#
+# So the build LOG is now read as well. It is the one record that has never
+# fallen behind — CLAUDE.md says so — and it is the only place a build with no
+# artifact stamp can be seen at all. Stamps still win where they exist; the log
+# only ever raises the floor.
+STAMPED = ("index.html", "visualizer/index.html", "supplement.html")
+
+# supplement.html stamps itself as `var SD_BUILD = 1059;` rather than in the
+# app's `v2026-08-24 build 1056` form. Any artifact with its own dialect needs
+# an entry here or it is silently skipped.
+STAMP_ALT = re.compile(r"SD_BUILD\s*=\s*(\d+)")
+
+# `## Build 1059 — …`, `## build 1059`, `### 1059 —` and `**1059**` are all
+# used in the log; the heading level and the word are both inconsistent, which
+# CLAUDE.md warns about explicitly. Matched case-insensitively, number first.
+LOG_PATH = ".claude/skills/cardinal-build/docs/cardinal_build_log.md"
+LOG_HEAD = re.compile(r"^#{2,4}\s*(?:build\s*)?(\d{3,4})\b", re.I | re.M)
+
+
+def log_high(ref):
+    """Highest build the build log names. 0 if the log is unreadable."""
+    code, out, _ = git("show", ref + ":" + LOG_PATH)
+    if code != 0:
+        return 0
+    seen = [int(n) for n in LOG_HEAD.findall(out)]
+    return max(seen) if seen else 0
 
 
 def index_at(ref):
@@ -102,9 +145,15 @@ def index_at(ref):
         if c2 != 0:            # absent on this ref — normal for old branches
             continue
         s2 = [int(n) for n in STAMP.findall(o2)]
+        s2 += [int(n) for n in STAMP_ALT.findall(o2)]
         if s2:
             per_file[path] = max(s2)
             stamps.extend(s2)
+
+    lg = log_high(ref)
+    if lg:
+        per_file[LOG_PATH] = lg
+        stamps.append(lg)
 
     return {
         "stamp": max(stamps) if stamps else None,
@@ -234,6 +283,54 @@ def self_test():
         ok = False
     else:
         print("ok: every artifact in STAMPED is reported separately")
+
+    # THE REGRESSION THAT MADE THIS SCRIPT ANSWER 1057 ON 25 AUG 2026, when
+    # 1057 and 1059 had shipped in supplement.html and 1058 in api/digest.js.
+    # Two separate faults, so two separate cases — and each fails on its own
+    # against the pre-fix version.
+    FAKE["supplement.html"] = "<script>\n  var SD_BUILD = 1059;\n</script>\n"
+    git = fake_git
+    try:
+        got2 = index_at("origin/main")
+    finally:
+        git = real_git
+
+    if not got2 or got2["stamp"] != 1059:
+        print("FAIL: an artifact stamped in its OWN dialect must still be read — "
+              "got %s, expected 1059" % (got2 and got2["stamp"]))
+        print("      (supplement.html says `SD_BUILD = 1059`, not `v2026-… build 1059`;")
+        print("       listing a file in STAMPED does nothing if STAMP cannot read it)")
+        ok = False
+    else:
+        print("ok: an artifact with its own stamp dialect is read, not skipped")
+
+    # A build that touched NO stamped artifact — 1058 was api/digest.js alone,
+    # and a serverless function has nowhere to carry a stamp. Only the log sees
+    # it. Without the log fold this returns 1059 and the next build collides.
+    FAKE[LOG_PATH] = ("## Build 1057 — a\n\n## Build 1058 — b\n\n"
+                      "## build 1059 — c\n\nsome prose mentioning 1080p and form 1099\n")
+    git = fake_git
+    try:
+        got3 = index_at("origin/main")
+    finally:
+        git = real_git
+
+    if not got3 or got3["stamp"] != 1059:
+        print("FAIL: the build log must raise the floor for artifact-less builds — "
+              "got %s, expected 1059" % (got3 and got3["stamp"]))
+        ok = False
+    elif got3["per_file"].get(LOG_PATH) != 1059:
+        print("FAIL: the log's own highest must be reported separately — got %s"
+              % got3["per_file"].get(LOG_PATH))
+        print("      (1080p and form 1099 are prose and must NOT be read as builds)")
+        ok = False
+    else:
+        print("ok: the build log is read, and its prose numbers are not mistaken for builds")
+
+    # FAKE is shared with the checks below — put it back exactly as it was, or
+    # the absent-artifact case inherits these two and fails a correct script.
+    FAKE.pop("supplement.html", None)
+    FAKE.pop(LOG_PATH, None)
 
     # A file absent on a ref must be skipped, not fatal — old branches predate
     # the Visualizer entirely, and treating that as an error would make this

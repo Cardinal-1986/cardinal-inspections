@@ -199,6 +199,112 @@ async function abc(method, path, payload) {
   return j;
 }
 
+/* ---- order body ---------------------------------------------------------
+   ABC's documented enums. deliveryService decides whether materials are
+   DELIVERED or picked up, so it is never defaulted -- guessing it is how a
+   truck turns up at a customer's house nobody asked for.               */
+const DELIVERY_SERVICE = new Set(['COM', 'CPU', 'EXP', 'OTR', 'OTG', 'OTW', 'TPC']);
+const TYPE_CODE = new Set(['SO']);          // ABC documents exactly one
+const MAX_LINES = 99;                       // stated verbatim in their docs
+
+/* Returns { body } to send, or { error } to refuse with. Never both, and
+   never a partially-built order -- an order that is 90% right is worse than
+   no order, because it ships. */
+function orderPayload(b) {
+  // A caller may hand us a finished body. Accept it, but ABC takes an ARRAY,
+  // so wrap a lone object rather than letting it through as-is.
+  if (b.payload) {
+    const p = Array.isArray(b.payload) ? b.payload : [b.payload];
+    if (!p.length) return { error: 'payload is empty' };
+    for (const o of p) {
+      const why = orderProblem(o);
+      if (why) return { error: 'payload: ' + why };
+    }
+    return { body: p };
+  }
+
+  const lines = Array.isArray(b.items) ? b.items : [];
+  const order = {
+    requestId: String(b.requestId || ('cr-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8))),
+    branchNumber: String(b.branchNumber || ''),
+    deliveryService: String(b.deliveryService || ''),
+    typeCode: String(b.typeCode || 'SO'),
+    currency: String(b.currency || 'USD'),
+    shipTo: b.shipTo || null,
+    lines: lines.map((it, i) => {
+      const line = {
+        id: String(it.id != null ? it.id : i + 1),
+        itemNumber: String(it.itemNumber == null ? '' : it.itemNumber),
+        orderedQty: { value: Number(it.quantity), uom: String(it.uom || '') },
+      };
+      if (it.description) line.itemDescription = String(it.description);
+      // unitPrice is what ABC quoted us. Send it only when we actually have
+      // one -- a zero here is not "free", it is a price we failed to read,
+      // and 763 shipped exactly that kind of plausible wrong number.
+      if (it.unitPrice != null && it.unitPrice !== '') {
+        line.unitPrice = { value: Number(it.unitPrice), uom: String(it.priceUom || it.uom || '') };
+        if (it.priceInstructions) line.unitPrice.instructions = String(it.priceInstructions);
+      }
+      if (it.length != null && it.length !== '') {
+        line.dimensions = { length: { uom: String(it.lengthUom || 'ft'), value: Number(it.length) } };
+      }
+      if (it.comment) line.comments = { code: 'D', description: String(it.comment) };
+      return line;
+    }),
+  };
+  if (b.purchaseOrder) order.purchaseOrder = String(b.purchaseOrder);
+  if (b.deliveryRequestedFor) order.dates = { deliveryRequestedFor: String(b.deliveryRequestedFor) };
+
+  const why = orderProblem(order);
+  if (why) return { error: why };
+  return { body: [order] };
+}
+
+/* One place that decides whether an order may be sent. Returns a sentence
+   naming what is wrong, or '' when the order is complete. Reads the built
+   order rather than the caller's arguments, so a hand-supplied payload and a
+   built one are held to the identical standard. */
+function orderProblem(o) {
+  if (!o || typeof o !== 'object') return 'not an order object';
+  if (!o.branchNumber) return 'branchNumber is required';
+  if (!DELIVERY_SERVICE.has(o.deliveryService)) {
+    return 'deliveryService must be one of ' + Array.from(DELIVERY_SERVICE).join(', ') +
+           ' — it decides delivery vs pickup, so there is no safe default';
+  }
+  if (!TYPE_CODE.has(o.typeCode)) return 'typeCode must be SO';
+  if (!o.currency) return 'currency is required';
+
+  const s = o.shipTo;
+  if (!s || typeof s !== 'object') return 'shipTo is required';
+  if (!s.number) return 'shipTo.number is required (the ship-to account, e.g. 2153354-2)';
+  const a = s.address;
+  if (!a || typeof a !== 'object') return 'shipTo.address is required';
+  for (const f of ['line1', 'city', 'state', 'postal']) {
+    if (!a[f]) return 'shipTo.address.' + f + ' is required';
+  }
+
+  const lines = o.lines;
+  if (!Array.isArray(lines) || !lines.length) return 'at least one line is required';
+  // Refuse, never truncate. Silently dropping line 100 of an order is a
+  // missing pallet nobody finds out about until the crew is on the roof.
+  if (lines.length > MAX_LINES) {
+    return lines.length + ' lines — ABC accepts at most ' + MAX_LINES +
+           ' per order, so this must be split rather than trimmed';
+  }
+  for (const ln of lines) {
+    if (!ln.itemNumber) return 'line ' + (ln.id || '?') + ' has no itemNumber';
+    const q = ln.orderedQty;
+    if (!q || !isFinite(q.value) || Number(q.value) <= 0) {
+      return 'line ' + (ln.id || '?') + ' needs a quantity above zero';
+    }
+    if (!q.uom) return 'line ' + (ln.id || '?') + ' needs a unit of measure';
+    if (ln.unitPrice && !isFinite(Number(ln.unitPrice.value))) {
+      return 'line ' + (ln.id || '?') + ' has a unit price that is not a number';
+    }
+  }
+  return '';
+}
+
 export default async function handler(req, res) {
   /* No CORS header: this is a same-origin route called only by index.html /
      the estimate editor, which the wildcard turned into a proxy any site could
@@ -304,7 +410,23 @@ export default async function handler(req, res) {
       case 'templates': return res.status(200).json(await abc('GET', '/api/order/v2/orders/templates' + (b.query ? '?' + String(b.query) : '')));
       case 'branches': return res.status(200).json(await abc('GET', '/api/location/v1/branches' + (b.query ? '?' + String(b.query) : '')));
       case 'itemAvailability': return res.status(200).json(await abc('GET', '/api/product/v1/availability/items/' + encodeURIComponent(String(b.itemNumber || '')) + '/branches'));
-      case 'placeOrder': return res.status(200).json(await abc('POST', '/api/order/v2/orders', b.payload || {}));
+      case 'placeOrder': {
+        // POST /api/order/v2/orders — https://apidocs.abcsupply.com/place-orders/
+        //
+        // ⚠ THE BODY IS AN ARRAY OF ORDERS. This forwarded a bare object for
+        // months. Same defect class as priceItems at 763: a shape invented here
+        // rather than read from ABC's own example. Every field name below is
+        // from their published example request, not inferred.
+        //
+        // ⚠ AND THIS ROUTE SPENDS MONEY. A malformed order does not fail
+        // cleanly — it puts the wrong materials on a truck to a customer's
+        // house. So it REFUSES on anything missing rather than defaulting, and
+        // the only defaults are the two that cannot pick wrong: typeCode (ABC
+        // documents exactly one value) and currency.
+        const orders = orderPayload(b);
+        if (orders.error) return res.status(400).json({ error: orders.error });
+        return res.status(200).json(await abc('POST', '/api/order/v2/orders', orders.body));
+      }
       case 'getOrder': return res.status(200).json(await abc('GET', '/api/order/v2/orders' + (b.query ? '?' + String(b.query) : '')));
       default: return res.status(400).json({ error: 'Unknown action: ' + a });
     }

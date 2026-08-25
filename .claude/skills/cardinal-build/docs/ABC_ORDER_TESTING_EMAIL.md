@@ -1,6 +1,18 @@
 # Email to ABC API Support — sandbox order testing
 
-*Drafted 13 Aug 2026. Copy the block below into an email and send it.*
+*Drafted 13 Aug 2026. ✅ **SENT 25 Aug 2026** from `theodorion1986@gmail.com`,
+on Theo's instruction — Gmail thread `1a03920383332f6f`, message
+`1a03922523b9c1f3`. Verified first that no correspondence with
+`apisupport@abcsupply.com` had ever existed in that mailbox, so this was a first
+contact, not a follow-up. **Do not send it again.** The text below is the record
+of what went; ABC's reply is what the ordering phase now waits on.*
+
+⚠️ **Two corrections made when the draft was created, both deliberate.** It goes
+from **`theodorion1986@gmail.com`**, not `theo@cardinalrenovations.net` — the gmail
+address is the one ABC already corresponds with him on (branch 106's Mark Braden
+replies to it), and it is the address their support will see. **Both** addresses
+are in the signature, because which one the myABCsupply account sits under is not
+known here and guessing it is how an account lookup fails.
 
 **To:** apisupport@abcsupply.com
 **Subject:** Sandbox order placement testing — Cardinal Roofing & Renovations (Source System ID 649)
@@ -63,13 +75,16 @@ theo@cardinalrenovations.net
   pair (e.g. `ABC_SB_CLIENT_ID` / `ABC_SB_CLIENT_SECRET`) rather than swapping
   the production values out — swapping would break live pricing, which now
   works and is in daily reach.
-- **`placeOrder`'s body shape is wrong today.** ABC expects an **array** of
+- ✅ **`placeOrder`'s body shape was FIXED at build 1061 (25 Aug).** The paragraph
+  below is the diagnosis as written on 13 Aug and is kept as the record; every
+  item in it is now done, read from ABC's own published example rather than
+  inferred, and covered by `gate_abcorder.mjs`. **Do not re-fix it.** ~~ ABC expects an **array** of
   orders (`[{...}]`); `api/abc.js` currently forwards a bare object. It also
   needs far more than we send: `deliveryService`, `typeCode`, `currency`,
   `shipTo` with full address and contacts, and lines carrying
   `orderedQty{value,uom}` and `unitPrice{value,uom}`. Same defect class as the
   pricing body fixed at 763 — verify against
-  `apidocs.abcsupply.com/place-orders/` before writing the builder.
+  `apidocs.abcsupply.com/place-orders/` before writing the builder.~~
 - **Ordering is the highest-risk surface in this integration.** A wrong request
   costs money and puts materials on a truck. Whatever gets built should show the
   full order back to a human and require an explicit confirm before sending.
