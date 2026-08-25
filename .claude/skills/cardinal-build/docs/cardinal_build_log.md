@@ -25597,3 +25597,85 @@ header is right that a rep who has just imported a photograph has an object in
 The docstring now carries the measured numbers. ⚠️ **A wrong figure in a header is how
 somebody skips a check** — "~60 small files" reads as housekeeping; 136 files and 60 MB,
 half of them source photographs, reads as something to look at first.
+
+## Build 1063 — the landing screenshot is the whole landing (25 Aug 2026)
+
+**And it corrects build 1060, which I shipped inert. That is the important part of
+this entry.**
+
+### What 1060 got wrong, and how
+
+1060 gave the canvas a light ground so a full-page capture of the landing would stop
+ending in a black slab. It was gated 12/12 green with a control at 6 red. **On a real
+page it changed nothing anyone could see.**
+
+`render_landingground.js`'s setup hid **every sibling of `#landingView`** before
+measuring. That manufactures a short document. Measured on the shipped tree without
+that shortcut: the document is **2664px**, of which **2456px is `#mainView`** — the
+CRM home screen, in flow, sitting behind the landing. `body` paints `#09090c` across
+its own box, so it covers the entire capture and `html`'s ground never shows. Probed
+at 390px on the `backToLanding()` path, 1060 reads `[6,6,9]`, `[6,6,8]`, `[9,9,12]`
+past the first screen. **Still black.**
+
+⚠️ **The slab was never an empty background. It is the app.** Everyone who has looked
+at this — PR #317, my own 1060 — read "black past the first screen" as a missing
+ground, and it is a screenshot of the home screen rendered dark. *A wrong mental model
+survived two builds and one gate because the gate was built from the same model.*
+
+### The actual defect: two doors to one screen, and only one shut the app
+
+| path | `#mainView` | document |
+|---|---|---|
+| `goToLanding()` | hidden | **844px** ✅ |
+| `backToLanding()` | visible | **2664px** ❌ |
+
+`goToLanding()` called `hideAllViews()`. `backToLanding()` did not — and was otherwise
+**byte-identical to it**. PR #317 measured 844px because it happened to test the good
+path; that is why its diagnosis pointed at the canvas.
+
+Fixed by **delegation, not by copying the missing line**: `backToLanding()` is now
+`goToLanding()`. Two functions that differed by one statement is exactly how the
+difference survived, and the landing is now shown from **one** place in the file
+(asserted).
+
+### And the half Theo actually asked for
+
+`#landingView` was `position:fixed;inset:0`, so its box was one viewport and the
+document could never be taller than a screen — a full-page capture missed the
+landing's own scrolled content. It is now **in flow** (`position:relative;
+min-height:100vh`), so the document **is** the landing: **1189px at 390px wide**,
+against 844px before, with no internal scroller left (`scrollHeight === clientHeight`,
+asserted).
+
+Two things were in flow behind it and both painted a dark strip the moment the landing
+stopped covering them — **measured, not assumed: without the two rules below the
+document is 1371px and the bottom probe reads `rgb(9,9,12)`, a smaller slab in place
+of a big one.** `body.cr-landing-on` hides `footer.site` (76px, invisible under the old
+pane) and beats `fixHeadPad()`'s **inline** 106px `padding-top` with `!important` —
+sanctioned here because the header is covered by the landing's `z-index:150`, so that
+reserved space is a gap and nothing else. The class is added at the one show site and
+removed at all three hide sites; **the round trip is gated** — padding, footer and
+`#mainView` all come back.
+
+### Gates
+
+`gate_1063.mjs` — **6/6 green, and staged controls that fail the right halves**:
+build 1060 fails **1, 2** (the slab), **3, 4** (the pane) and **6**, which states the
+bug as a number — *`backToLanding 2664px vs goToLanding 844px`*. A tree with only the
+delegation fails **3 and 4 alone**. It **navigates the way the app navigates** and
+never touches the DOM to set a screen up, because that shortcut is what made 1060's
+gate lie.
+
+⚠️ **`render_landingground.js` then failed the CORRECT build**, 10/2, and the gate was
+what was wrong. It drove the landing by `display='block'` — not a path the app has —
+so the new body class never applied and the footer it hides stayed in the capture. Its
+setup is repaired at the root and its header now states plainly what it proves: it goes
+red on **1056** and green from 1060 on, so it guards the canvas ground — and it
+**never discriminated 1060 from 1063**, because it only ever walked the good path.
+
+⚠️ **I also broke the file mid-build and `check_build.py` caught it.** The stylesheet
+was appended with `rfind('</head>')`. **There are eight `</head>` in this file** and the
+last is inside `downloadHtml()`'s template string in `cr-dl-script` — block 96 stopped
+parsing. `rfind('</body>')` is the convention this file documents, and it is documented
+for exactly this. Reverted and redone; three patch scripts reproduce the artifact
+byte-for-byte from main.

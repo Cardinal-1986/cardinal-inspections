@@ -3782,7 +3782,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-25 build 1060 &#8212; A full-page screenshot of the landing, taken in light mode, used to end in a tall black slab. The landing is a fixed pane one screen high, so everything past the first screen fell through to the app&#8217;s dark background. The page itself is now light too, so the capture stays light all the way down. Dark mode is untouched.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-25 build 1063 &#8212; A full-page screenshot of the landing was the top of the page followed by a tall black slab. The slab was the app itself, still sitting behind the landing: one of the two ways in did not put it away first. Both do now, and the landing is a normal page rather than a pinned panel, so a screenshot captures the whole of it &#8212; every row, down to the Pop-Up Roof.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4615,7 +4615,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
 </div>
 
 <!-- ============ POST-LOGIN LANDING ============ -->
-<div id="landingView" style="display:none;position:fixed;inset:0;z-index:150;overflow-y:auto;
+<div id="landingView" style="display:none;position:relative;z-index:150;min-height:100vh;
   background:radial-gradient(1200px 600px at 50% -10%, #2a1b16 0%, #17100e 55%, #0d0908 100%);">
   <div style="max-width:520px;margin:0 auto;padding:6vh 22px 40px;text-align:center;">
     <img src="/cardinal-transparent.png" alt="" style="width:min(78vw,340px);height:auto;
@@ -26109,19 +26109,19 @@ function showLanding(userEmail){
 var _rvL = document.getElementById('restoreVeil'); if(_rvL) _rvL.style.display = 'none';
 }
 document.getElementById('landDash').addEventListener('click', function(){
-  document.getElementById('landingView').style.display = 'none';
+  document.getElementById('landingView').style.display = 'none';try{ document.body.classList.remove('cr-landing-on'); }catch(_e){}
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   /* Explicitly render the dashboard — don't rely on mainView already being visible.
      Earlier navigation (Cardinal Truth, a client profile, etc.) may have hidden it. */
   if(typeof showHome === 'function') showHome();
 });
 document.getElementById('landSkip').addEventListener('click', function(){
-  document.getElementById('landingView').style.display = 'none';
+  document.getElementById('landingView').style.display = 'none';try{ document.body.classList.remove('cr-landing-on'); }catch(_e){}
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   if(typeof showHome === 'function') showHome();
 });
 document.getElementById('landQuick').addEventListener('click', function(){
-  document.getElementById('landingView').style.display = 'none';
+  document.getElementById('landingView').style.display = 'none';try{ document.body.classList.remove('cr-landing-on'); }catch(_e){}
   var hd = document.querySelector('header.site'); if(hd && hd.style.display === 'none') hd.style.display = '';
   openQuickInsp(true);
 });
@@ -26300,15 +26300,17 @@ function renderInsuranceClientsList(){
   }
 }
 function backToLanding(){
-  document.getElementById('cardinalTruthView').style.display = 'none';
-  document.getElementById('resourceLibraryView').style.display = 'none';
-  var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
-  document.getElementById('landingView').style.display = 'block';
-      /* a modal elsewhere may have left body scroll locked; the landing is
-         reached by a direct display toggle that never runs hideAllViews(),
-         so nothing else clears it. */
-      try{ document.body.style.overflow = ''; }catch(_e){}
-  window.scrollTo(0, 0);
+  /* 1063 — this WAS goToLanding() minus one line, and that line was the bug.
+     goToLanding() calls hideAllViews(); this did not, so #mainView stayed in
+     flow behind the fixed landing pane. Measured at 390px: the document was
+     2664px, of which 2456px was CRM home sitting under the landing — which is
+     exactly the "tall black slab" Theo photographed. It is not an empty
+     canvas and never was.
+
+     Delegating rather than copying the missing call: two functions that
+     differed by one statement is how the difference survived in the first
+     place. */
+  goToLanding();
 }
 /* Same as backToLanding, but called from the app menu — also clears main-app views
    so the transition is clean. */
@@ -26318,6 +26320,7 @@ function goToLanding(){
   document.getElementById('resourceLibraryView').style.display = 'none';
   var ic = document.getElementById('insClientsView'); if(ic) ic.style.display = 'none';
   document.getElementById('landingView').style.display = 'block';
+  try{ document.body.classList.add('cr-landing-on'); }catch(_e){}
       /* a modal elsewhere may have left body scroll locked; the landing is
          reached by a direct display toggle that never runs hideAllViews(),
          so nothing else clears it. */
@@ -41398,6 +41401,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:1063, d:'2026-08-25', t:'The landing screenshot is the whole landing', s:'A full-page screenshot of the landing came back as the top of the page and then a tall black slab. The slab was never an empty background \u2014 it was the app\u2019s own home screen, still sitting behind the landing, because one of the two ways of getting to the landing put the app away first and the other did not. Both do now. And the landing has stopped being a panel pinned over the page: it is the page, so a screenshot captures all of it rather than the first screen \u2014 every row down to the Pop-Up Roof.' },
   { b:1060, d:'2026-08-25', t:'Landing screenshots stop ending in a black slab', s:'A full-page screenshot of the landing screen, taken in light mode, came back as the top of the page followed by a tall black slab. The landing is a pinned pane exactly one screen high, so a full-page capture photographs the page behind it -- and that page was still carrying the app\u2019s dark background. The page is now light in light mode, so the shot stays light the whole way down. Dark mode and the retail light theme are unchanged.' },
 { b:1056, d:'2026-08-24', t:'The chase list counts to something', s:'The insurance home\u2019s chase list used to show a bare number of days and turn red at thirty \u2014 a colour with nothing behind it, counting to no particular date. Every row now says what it is counting to: \u201C10 days \u00b7 due in 4\u201D, \u201C18 days \u00b7 4 overdue\u201D, or \u201Cchased 3d ago \u00b7 next in 4\u201D. The deadlines are Cardinal\u2019s own follow-up policy, written in one place \u2014 fourteen days on a filed supplement then every seven, twenty-one on money awaiting release then every ten \u2014 and they are deliberately NOT a per-carrier average, because there is not enough claim history yet to compute one that would mean anything (two carriers, one settled date). Each row also gets an \u201CI chased them\u201D button: it asks how you chased them, writes it into the claim\u2019s notes, and resets that claim\u2019s clock to the follow-up interval so the list stops nagging about a call you already made. The list now sorts by how overdue a claim is rather than by raw age, so a thirty-day claim you rang yesterday drops below an eighteen-day one nobody has touched.' },
 { b:1054, d:'2026-08-24', t:'The insurance hub and the client list agree', s:'The pipeline on the insurance home has nine rows and every one of them is tappable, but the client list it opens only had buttons for six. Tapping \u201cClaim Filed\u201d, \u201cAdjuster Pending\u201d or \u201cOn Hold\u201d gave you a correctly filtered list with nothing lit up to say so \u2014 not even \u201cAll\u201d \u2014 so there was no way to tell what you were looking at or how to get back. Those three now have buttons of their own, in pipeline order. \u201cSupplement Filed\u201d, the row that carries the money you are chasing, did the opposite: tapping it cleared the filter and showed every claim. It now opens the supplements you have filed. And the stage buttons use the short wording (\u201cAwaiting Depreciation\u201d rather than the full phrase), which the app has had for months but was not using here \u2014 the long one alone was a 242-pixel button on a phone.' },
@@ -80150,5 +80154,25 @@ document.addEventListener('click', function(e){
 });
 })();
 </script>
+<style id="cr-landing-flow">
+/* ── 1063 · the landing is a PAGE now, not a pane ────────────────────────
+   #landingView was position:fixed;inset:0, so its box was one viewport and a
+   full-page screenshot photographed the document behind it rather than the
+   landing. In flow, the document is as tall as the landing's own content —
+   1189px at 390px wide against the 844px it used to be.
+
+   Two things are in flow behind it, and both painted a dark strip under the
+   landing the moment it stopped covering them. Measured, not assumed: without
+   these two rules the document is 1371px and the bottom probe reads
+   rgb(9,9,12) — a smaller slab in place of a big one.
+     · footer.site — 76px. Invisible under the old pane; visible under the new
+       page. Hiding it changes nothing anyone could see before.
+     · body's padding-top — fixHeadPad() sets it INLINE from the fixed header's
+       height (106px). Beating an inline style with !important is sanctioned
+       here and this is the case for it: the header is covered by the landing's
+       z-index:150, so that reserved space is a gap and nothing else. */
+body.cr-landing-on{padding-top:0 !important;}
+body.cr-landing-on footer.site{display:none !important;}
+</style>
 </body>
 </html>

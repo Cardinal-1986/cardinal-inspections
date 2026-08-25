@@ -35,13 +35,16 @@
   over a dark app screen, because `data-mode` outlives the landing. That is 429 in
   reverse. `gate_1060.mjs` goes red on an unscoped tree specifically.
 
-- ⏳ **Still deferred, unchanged, Theo's call from 14 Aug:** a full-page capture still
-  ends where the landing pane's content ends, so Production, Sales Floor, the Resource
-  Library, the Schedule Board and The Pop-Up Roof never appear in one. Fixing that means
-  taking the landing out of its fixed overlay — **not a CSS change**: `backToLanding()`
-  and `goToLanding()` never hide `header.site`, which is covered today purely by the
-  landing's `z-index:150`. 15 sites touch `header.site`. Trigger: Theo asking for a
-  screenshot that shows the whole landing.
+- ✅ **DONE at 1063, and it corrected 1060.** The full-page capture is now the whole
+  landing — the document IS `#landingView` (1189px at 390px wide, no internal
+  scroller). ⚠️ **1060 shipped inert and this is the correction**: its gate hid every
+  sibling of the landing, which manufactures a short document; on a real page
+  `#mainView` is 2456px in flow behind it and `body` covers the whole capture. **The
+  "black slab" was never a missing background — it is the app's home screen rendered
+  dark.** The real defect was that `backToLanding()` did not call `hideAllViews()`
+  while `goToLanding()` did, and the two were otherwise byte-identical.
+  `backToLanding()` now delegates. Do not re-derive this from PR #317's diagnosis —
+  #317 measured the good path.
 
 - ✅ **`next_build.py` answered 1057 when the true next was 1060 — FIXED at 1060.**
   It read `index.html` and `visualizer/index.html` only; 1057/1059 were `supplement.html`
