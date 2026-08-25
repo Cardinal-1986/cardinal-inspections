@@ -25679,3 +25679,46 @@ last is inside `downloadHtml()`'s template string in `cr-dl-script` — block 96
 parsing. `rfind('</body>')` is the convention this file documents, and it is documented
 for exactly this. Reverted and redone; three patch scripts reproduce the artifact
 byte-for-byte from main.
+
+## Build 1064 — the photo editor's tool bar reads outdoors (25 Aug 2026)
+
+From the full audit's sentinel run. **The one finding of forty that survived being read.**
+
+Open a job photograph, tap the pencil, and the tool bar along the bottom labelled itself
+in `#6b6b6b` on a `#1a1a1a` bar — **3.27:1 against a 4.5 floor**, on a screen used on a
+roof at midday.
+
+**Three sites, not the two the sentinel found:**
+
+| | ink → | on | before | after |
+|---|---|---|---:|---:|
+| `.cr-ped-tool.ghost` — the rotate buttons | `#a89e8c` | `#1a1a1a` | 3.27:1 | **6.58:1** |
+| `.cr-ped-hint` — the "1×1" size hint | `#a89e8c` | `#1a1a1a` | 3.27:1 | **6.58:1** |
+| `.cr-ped-loading` — the loading line | `#a89e8c` | `#0a0a0a` | 3.72:1 | **7.48:1** |
+
+⚠️ **The sentinel found two. The third came from reading the block.** A loading state is
+not on screen when a walker steps through the app, so no render-walking tool can see it.
+*A visual sweep finds what is visible; it cannot find what is only visible while waiting.*
+Worth remembering the next time one of these comes back clean.
+
+**`#a89e8c` is `#c9bfa8` — the module's OWN tool ink — scaled to 83%**, uniformly across
+all three channels. Not a new colour: the same one, less lifted. That matters because
+`.cr-ped-tool.ghost:hover` already brightens to `#c9bfa8`, so the ghost still reads as the
+quieter sibling of an active tool and the hover still means something. This is the 557
+obsidian-tile precedent — *the same colour deepened, never a swap to a different hue,
+because a hue change makes two states read as two different components.*
+
+⚠️ **`#6b6b6b` appears 103 times in this file and only THREE are in the photo editor.**
+`pl.sub()` splices file-wide, so each edit anchors on text unique to its own rule rather
+than on the colour, and the patch asserts the file-wide count fell by **exactly three**.
+
+**Gate: `gate_1064.mjs`, 4/4 green, RED on 1063** — and the control prints the measured
+ratios, `3.27 / 3.27 / 3.72`, which are the numbers computed by hand before the patch was
+written. Two instruments agreeing is what makes the arithmetic trustworthy rather than
+asserted. It **builds the editor's real markup and lets Chromium composite it**, walking
+ancestors for the first one that actually paints a ground — reading the declared hex would
+prove nothing about what a person sees. Check 4 asserts the active-tool ink is untouched,
+so a "fix" that flattened the hierarchy into one weight would fail.
+
+No regression: `gate_1063` 6/6, `gate_1060` 6/6, `render_landingground` 12/12, `gate_1062`
+9/9. Byte-reproducible from main across all four patch scripts.
