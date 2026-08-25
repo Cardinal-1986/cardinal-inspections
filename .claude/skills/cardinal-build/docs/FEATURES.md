@@ -6888,3 +6888,30 @@ number never does.
 body**; 6 named failures on the 1056 control) · `cite_guard_test.mjs` (6 cases)
 and `cite_fp_test.mjs` (8 cases), both run against the **extracted shipped
 guard**, not a re-implementation.
+
+---
+
+## 1058 — the daily digest names the carriers to chase (`api/digest.js`)
+
+The notification half of Desk direction C. Build 1056's chase clock knew what was
+overdue; nothing told anyone.
+
+- **A third section on the existing daily digest** — no new cron, no new route.
+  `vercel.json` is untouched, asserted at the git level.
+- **Admin only** (Theo + Joan), stated as a decision: chasing a carrier is office
+  work, the same shape as the settled crew-rates rule. The per-rep half exists
+  and was deliberately not used.
+- Only claims **past the mark** appear, worst-overdue first, each saying whether
+  it has ever been chased and how long ago.
+
+⚠ **`chases.length` must stay in the admin send guard.** That email only sends
+when there are appointments or reminders, so without it a quiet day computes and
+renders the section and then throws it away.
+
+⚠ **`CHASE_POLICY` exists in TWO files** — here and `index.html`'s
+`cr-cth-script` — because a serverless function cannot import from the app.
+**`gate_1058.mjs` fails if they disagree.** Change one, change the other.
+
+**Gate:** `gate_1058.mjs`, six checks against the **extracted shipped
+functions** and production-shaped fixtures (orphan claims included). Proven RED
+on a drifted tree, which is the run that matters.

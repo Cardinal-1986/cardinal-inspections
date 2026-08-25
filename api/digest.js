@@ -1,5 +1,8 @@
 // /api/digest.js
 // Daily appointment digest for Cardinal Client Resources.
+// 1058: also names the insurance claims that are past Cardinal's follow-up
+// mark — admin email only, and its CHASE_POLICY is a MIRROR of the one in
+// index.html's cr-cth-script. gate_1058.mjs fails if the two disagree.
 // Triggered by Vercel Cron (see vercel.json) every morning; can also be
 // opened manually at /api/digest to test.
 //
@@ -65,6 +68,79 @@ function daysSince(iso) {
   const t = Date.parse(iso);
   if (!isFinite(t)) return 0;
   return Math.floor((Date.now() - t) / 86400000);
+}
+/* ── 1058: the chase clock, MIRRORED from index.html ──────────────────────
+   ⚠ THIS IS A SECOND COPY OF CARDINAL'S FOLLOW-UP POLICY. The first lives in
+   index.html's cr-cth-script as CHASE_POLICY, and a serverless function cannot
+   import from a 5 MB single-page app, so two copies is the only shape
+   available. Two copies of one rule is exactly the drift this project keeps
+   paying for — so `gate_1058.mjs` parses BOTH files and fails if the numbers
+   disagree. Change one, change the other, or the gate goes red.
+
+   The numbers are Cardinal's own follow-up policy and deliberately NOT a
+   per-carrier average: production holds two carriers and one approved_at that
+   falls on the same day as its first_scope_at, so an average would be fiction.
+   See build 1056. */
+const CHASE_POLICY = {
+  'supplement filed': { first: 14, again: 7 },
+  'awaiting release': { first: 21, again: 10 }
+};
+const CHASE_FALLBACK = { first: 21, again: 10 };
+/* Returns null when there is no date to reason about — a made-up zero would
+   read as "chased today" and silence a claim nobody has touched. */
+function chaseDue(x) {
+  if (x.days == null) return null;
+  const p = CHASE_POLICY[x.why] || CHASE_FALLBACK;
+  const chased = x.chasedAt ? daysSince(x.chasedAt) : null;
+  const limit  = chased == null ? p.first : p.again;
+  const age    = chased == null ? x.days  : chased;
+  return { chased, limit, age, over: age - limit };
+}
+/* The same two reasons cr-cth-script's chaseList() collects, read off the
+   claim rows with their project embedded. */
+function chaseList(claims) {
+  const out = [];
+  for (const c of claims || []) {
+    const pr = c.projects || null;
+    if (!pr) continue;                       /* an orphan claim chases nobody */
+    let ck = {};
+    try { ck = typeof pr.checklist === 'string' ? JSON.parse(pr.checklist) : (pr.checklist || {}); } catch (e) {}
+    const base = { name: pr.name || 'Unnamed', carrier: c.carrier || 'carrier not recorded',
+                   chasedAt: c.last_chased_at || null };
+    if (c.supplement_status === 'filed') {
+      out.push({ ...base, why: 'supplement filed',
+                 days: c.supplement_filed_at ? daysSince(c.supplement_filed_at) : null,
+                 amt: Number(c.supplement_filed) || 0 });
+    }
+    if (pr.stage === 'Invoiced') {
+      out.push({ ...base, why: 'awaiting release',
+                 days: daysSince(ck.stage_since || pr.updated_at),
+                 amt: (Number(c.approved_depreciation) || 0) + (Number(c.supplement_approved) || 0) });
+    }
+  }
+  /* only the ones actually past the policy — the digest is a nudge, not the
+     hub. A claim that is merely open is not news. */
+  return out
+    .map(x => ({ ...x, due: chaseDue(x) }))
+    .filter(x => x.due && x.due.over > 0)
+    .sort((a, b) => b.due.over - a.due.over);
+}
+function chaseHtml(list) {
+  if (!list.length) return '';
+  const total = list.reduce((s, x) => s + (Number(x.amt) || 0), 0);
+  const rows = list.map(x => `<tr>
+      <td style="padding:6px 10px;white-space:nowrap;font-weight:700;color:#9c1822;">${x.due.over}d</td>
+      <td style="padding:6px 10px;">
+        <b>${esc(x.name)}</b>
+        <span style="color:#666;"> &middot; ${esc(x.carrier)}</span>
+        <br><span style="color:#666;">${esc(x.why)}${x.due.chased == null
+          ? ', never chased'
+          : `, last chased ${x.due.chased}d ago`}${x.amt > 0 ? ' &middot; ' + esc(money(x.amt)) : ''}</span>
+      </td></tr>`).join('');
+  return `<p style="font-size:15px;margin:22px 0 6px;"><b>Carriers to chase</b>
+      <span style="color:#666;font-size:13px;">&mdash; ${list.length} claim${list.length === 1 ? '' : 's'}
+      past the follow-up mark${total > 0 ? ', ' + esc(money(total)) + ' waiting' : ''}</span></p>
+    <table style="border-collapse:collapse;width:100%;font-size:14px;border:1px solid #ddd;">${rows}</table>`;
 }
 // 784: the estimates that went out and have heard nothing back. `updated_at` is
 // the honest clock available — the table has no sent_at column, so this is
@@ -194,6 +270,19 @@ export default async function handler(req, res) {
 
     // 898: Owner Console reminders the owner opted to be pinged about. Due today
     // (any repeat) or an overdue one-time; undated/standing reminders never ping.
+    /* 1058: claims with their project embedded — the FK
+       insurance_claims_project_id_fkey is what makes the embed legal. */
+    let chases = [];
+    try {
+      const cRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/insurance_claims` +
+        `?select=id,carrier,supplement_status,supplement_filed,supplement_filed_at,` +
+        `last_chased_at,approved_depreciation,supplement_approved,` +
+        `projects(id,name,stage,checklist,updated_at)`,
+        { headers: sbHeaders });
+      if (cRes.ok) chases = chaseList(await cRes.json());
+    } catch (e) { /* the digest still sends without this section */ }
+
     let reminders = [];
     try {
       const remRes = await fetch(
@@ -252,9 +341,13 @@ export default async function handler(req, res) {
     const allRows = appts.map(a => apptHtml(a, names[a.project_id], true)).join('');
     const remHtml = remindersHtml(reminders);
     for (const adm of ADMINS) {
-      if (!byRep[adm] || Object.keys(byRep).length > 1 || reminders.length) {
+      /* 1058: `chases.length` joins this guard. Without it, a day with no
+         appointments and no reminders sends no admin email at all — and an
+         overdue chase would be computed, rendered and dropped in silence. */
+      if (!byRep[adm] || Object.keys(byRep).length > 1 || reminders.length || chases.length) {
         sends.push({ to: adm, subject: subjectFor(appts.length, stale.length, true, reminders.length),
-                     html: emailBody(`Team schedule for ${niceDate(today)}`, allRows, remHtml + staleHtml(stale, names)) });
+                     html: emailBody(`Team schedule for ${niceDate(today)}`, allRows,
+                                     remHtml + chaseHtml(chases) + staleHtml(stale, names)) });
       }
     }
 

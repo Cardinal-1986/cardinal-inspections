@@ -25207,3 +25207,74 @@ asserting on the **posted request body** rather than on UI state: GREEN, with
 and `cite_fp_test.mjs` (8 cases) against the extracted guard. Both artifacts
 byte-reproducible; 141/141 CSS braces; 108/108 `<div>`; `api/supplement.js`
 parses and carries no `module.exports` (the CI rule).
+
+## Build 1058 — the daily digest names the carriers to chase
+
+*`api/digest.js` only. `index.html` untouched, still 1056. No SQL, **and no new
+cron** — `vercel.json` is byte-untouched, asserted.*
+
+Theo picked items 1–3; this is item 2, the notification half of Desk direction
+C. Build 1056 gave the insurance hub a clock that knows exactly which claims are
+past the follow-up mark — **and nothing told anyone.** It was visible only to
+someone who opened the hub and looked.
+
+**⚠ NO NEW PIPELINE.** `api/digest.js` is already the daily "what needs your
+attention" email to Theo and Joan, and it has already grown a section twice —
+stale estimates (784), Owner Console reminders (898). A third section is the
+extend-don't-add move; a second cron beside the existing one would be the "new
+mechanism beside an existing one" bug with a delay on it.
+
+**Admin-only, and stated rather than defaulted.** Chasing a carrier is office
+work — the same shape as Theo's settled *"Crew rates is not needed by
+productions, I write the checks"*. The digest's per-rep half exists and was
+deliberately not used: with two real claims in the database, routing by rep is
+machinery with nothing to carry.
+
+Only claims **past the mark** are named — a claim that is merely open is not
+news — and the section says whether it has ever been chased and how long ago.
+
+### ⚠ The guard that would have thrown the whole section away
+
+The admin email sends only
+`if (!byRep[adm] || Object.keys(byRep).length > 1 || reminders.length)`. On a day
+with no appointments and no reminders **the admin email does not send at all** —
+so an overdue chase would have been queried, computed, rendered and dropped on
+the floor in silence. `chases.length` joins that guard, and `gate_1058` asserts
+it.
+
+### ⚠ Two copies of one rule, and the gate that exists because of it
+
+`CHASE_POLICY` now lives in **two** places — `index.html`'s `cr-cth-script` and
+`api/digest.js` — because a serverless function cannot import from a 5 MB
+single-page app. Two copies of one rule is precisely the drift this project
+keeps paying for, so **`gate_1058.mjs` parses both files and fails if the
+numbers disagree.** Change one, change the other, or the gate goes red. That is
+the doctrine applied: a recurring class gets a check, not a paragraph.
+
+### Three faults in this build, all mine, all caught
+
+1. **`JSON.stringify(p, Object.keys(p).sort())` — a check that could NEVER
+   fire, inside the gate whose only job was that check.** The second argument to
+   `stringify` is a **replacer**, and an array replacer is a property
+   **allowlist applied at every level** — so the nested `{first, again}` were
+   stripped from both sides and every comparison read
+   `{"awaiting release":{},"supplement filed":{}}` against itself. A === B,
+   always. Caught only by feeding the gate a deliberately drifted tree; it now
+   names both numbers when they diverge.
+2. **My own header comment broke my own extractor.** `indexOf('CHASE_POLICY')`
+   found the sentence *"its CHASE_POLICY is a MIRROR of the one in
+   index.html"* and started parsing from prose, landing in `todayLocal()`.
+   Anchored on the declaration. The comment-pollution trap — **fourth time this
+   session**, and this one was inside the drift gate itself.
+3. **An assertion pinned to a pre-existing comment.** `'vercel.json' not in src`
+   failed correct code: the file's header has said *"Triggered by Vercel Cron
+   (see vercel.json)"* since it was written. Replaced with an unchanged-count
+   assert, and the real claim — that `vercel.json` is untouched — is verified at
+   the git level where it actually lives.
+
+**Gates:** `gate_1058.mjs` — six checks, extracting and running the **shipped**
+`chaseList`/`chaseHtml`/`chaseDue` against fixtures in the **real production row
+shape** (including the three orphan claims that really exist, which must be
+skipped rather than crash). GREEN; **2 named failures on the 1057 control**; and
+**RED on a drifted tree**, which is the run that makes it worth having.
+Byte-reproducible; parses; no `module.exports` (the CI rule).
