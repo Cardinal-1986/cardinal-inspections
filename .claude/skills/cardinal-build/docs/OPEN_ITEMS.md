@@ -50,10 +50,13 @@ is a bug; it measures dispersion, not correctness.
 
 Each is a real finding whose every fix is an aesthetic or layout decision:
 
-1. **The header tagline truncates on every phone screen** (`"Single sourc…"`).
-   **Measured:** it needs **247px**; the header's middle gets **150px** at 390px. It fits
-   only at **10px**, and below 360px at no readable size at all. Shrinking is not
-   available — the options are hide-it-narrow, wrap it, shorten it, or give it a row.
+1. ✅ **SHIPPED at build 1065 — Theo said "do what you recommend".** The header tagline
+   truncated on every phone screen (`"Single sourc…"`). **Measured:** it needs **247px**;
+   the header's middle gets **150px** at 390px, and it fits only at **10px** — below 360px
+   at no readable size at all. Shrinking was therefore not an option and wrapping would
+   have added a second line to a fixed-height bar. It is now hidden below **438px** (the
+   measured threshold), **retail only** — the other CRMs carry a short CRM name there and
+   the 416 comment requires it never disappear. `gate_1065.mjs` 5/5, red on 1064.
 2. **Four spellings of the system font.** ⚠️ *An earlier revision of the audit had this
    backwards.* On **iPadOS** `'Segoe UI',Arial,sans-serif` (759 sites) falls to **Arial**
    while `-apple-system,…` (35 sites) renders **San Francisco** — two typefaces on the
