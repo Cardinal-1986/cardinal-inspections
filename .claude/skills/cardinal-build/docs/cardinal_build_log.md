@@ -26069,3 +26069,14 @@ meaningless by construction.
 widths, with a **coverage floor** asserting all nine targets were located — on
 1067 it is **26 failures** and the floor still passes, so nothing dropped out
 silently.
+
+### Build 1067's regression sweep — read after the fact
+
+`--since` against 1066, 100 renders: **1 new finding, 267 carried.** The one new
+finding is 1067's own theme pair — `.ljsummary h3{color:#e35c63}` losing to its
+`rb-light` twin in the light render, which is the pair working. Recorded as
+**BUG_CLASSES 65**, with the reporter-side suppression written up but not built.
+
+**And the sweep produced the measured proof for Class 63.** The same 1066 tree
+scored 218 findings before `capped()` and ≥267 after: **at least 49 findings a
+sweep were being truncated in silence.**
