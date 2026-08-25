@@ -4369,7 +4369,7 @@ residue is real but cosmetic — that shield is the last emoji left after the
 Grouping matters more than the list: three of these are one mistake made three
 times, and fixing them as a group is one decision rather than thirteen.
 
-### A · Themed by CRM instead of by theme — 3 sites, and the worst of them
+### ✅ A · DONE at build 1067 — themed by CRM instead of by theme, 3 sites
 
 CLAUDE.md's build-527 lesson, live: *scoping by CRM is not scoping by theme.*
 Someone authored a readable ink, scoped it to `body.claim-insurance`, and in
@@ -4381,9 +4381,18 @@ Someone authored a readable ink, scoped it to `body.claim-insurance`, and in
 | `a.dbmdir` "Directions ↗" | **2.45:1** | `body.claim-insurance …{color:#FF8A80}` — retail gets a default link blue on a dark card |
 | `h3` "Job Summary" | **3.51:1** on white | `.ljsummary h3{color:#1c1416}` is authored and **loses** — it is also in the OVERRIDDEN list |
 
-**This is the group worth doing first.** The correct ink already exists in the
-file in all three cases; it is scoped to the wrong axis. No colour needs
-inventing, which is exactly the condition CLAUDE.md wants before a colour build.
+**✅ SHIPPED at 1067**, and it was the right group to take first — the correct
+ink already existed in the file in all three cases, so no colour was invented.
+Measured after: **5.84 · 7.87 · 5.67**, dark unchanged at **12.71 · 11.61 ·
+5.48**. `gate_1067.mjs` is 15/15 and goes red on all six light checks against
+1066.
+
+⚠️ **Two numbers on this page were wrong and the build log carries the
+correction.** `a.dbmdir` is **2.45:1**, not the 3.77 a throwaway rig printed —
+the map tab bar is `rgba(16,18,24,.85)` and must be composited, not read raw.
+And `b.db-paid` reads 2.50 at desktop width / 2.40 at phone width, because the
+figure is `clamp(14px,4.4vw,19px)` and the *floor* changes with it (19px bold is
+large text, floor 3.0). The sentinel's original numbers were the right ones.
 
 ### B · A single fixed ink with no light twin — 7 sites
 

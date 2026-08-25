@@ -1833,7 +1833,16 @@ html, body{overflow-x:hidden;max-width:100%;}
   letter-spacing:.02em;color:#1c1416;
 }
 .projsec{font-weight:800;color:#1c1416;}
-.ljsummary h3{font:800 16px Georgia,'Times New Roman',serif;color:#1c1416;margin:0 0 8px;}
+/* 1067: a PAIR, because no single value clears both grounds — #e35c63 is
+   5.48 dark / 3.51 light, #c8202e is 5.67 light / 3.40 dark. Build 527 is the
+   precedent: one computed literal applied unconditionally fixes one theme and
+   breaks the other. Dark keeps exactly what shipped.
+   This rule was DEAD until now (the sentinel reports it under OVERRIDDEN):
+   the renderer wrote color:#e35c63 as an INLINE style, which beats any
+   stylesheet rule at any specificity. That inline is removed in the same
+   edit — the dead rule and the failing contrast were one defect. */
+.ljsummary h3{font:800 16px Georgia,'Times New Roman',serif;color:#e35c63;margin:0 0 8px;}
+:root[data-theme="rb-light"] .ljsummary h3{color:#c8202e;}
 
 /* ---- icons: native colors everywhere; quick inspection keeps the gradient ---- */
 /* 682: .mic removed with metallicize — nothing sets the class any more. */
@@ -2089,7 +2098,16 @@ body.restoring #restoreVeil{display:flex;}
   border-radius:8px;padding:14px 14px;margin-bottom:12px;}
 .dbmoney > span{min-width:0;}
 .dbmoney small{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;color:#8a8078;letter-spacing:.04em;}
-.dbmoney b{font:800 clamp(14px,4.4vw,19px) 'Segoe UI',Arial,sans-serif;overflow-wrap:anywhere;}#projectView .dbmoney b.db-due{color:#C8202E}#projectView .dbmoney b.db-paid{color:#7CB342}/* 1032: the Delete Client caption was inline #a89f9a — dark-era, 2.42:1 on the light
+.dbmoney b{font:800 clamp(14px,4.4vw,19px) 'Segoe UI',Arial,sans-serif;overflow-wrap:anywhere;}#projectView .dbmoney b.db-due{color:#C8202E}#projectView .dbmoney b.db-paid{color:#7CB342}
+/* 1067: the missing LIGHT twin. Retail dark restyles this card under
+   :root:not([data-theme="rb-light"]) and no light counterpart was ever
+   written, so light fell through to #7CB342 — a green picked for a dark
+   ground, 2.40:1 on white. .db-due survives the same fall-through only
+   because its base #C8202E happens to read 5.67:1 on white.
+   #46701E is already in this file as the light-ground green (the insurance
+   docket rule below); here it is 5.84:1, matching .db-due's weight. Dark is
+   untouched: the retail dark rule paints this white and still wins. */
+:root[data-theme="rb-light"] body:not(.claim-insurance):not(.claim-community) #projectView .dbmoney b.db-paid{color:#46701E}/* 1032: the Delete Client caption was inline #a89f9a — dark-era, 2.42:1 on the light
    profile. De-inlined; light reuses 1025's computed caption ink. */
 #dangerZone .danger-note{color:#a89f9a}
 :root[data-theme="rb-light"] #dangerZone .danger-note{color:#6c655e}
@@ -3798,7 +3816,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-25 build 1066 &#8212; The photo editor&#8217;s tool bar was painting its labels in a grey too dark to read against the black bar behind them &#8212; the rotate buttons, the size hint and the loading line. Same colour, lifted until it reads in daylight.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-25 build 1067 &#8212; The photo editor&#8217;s tool bar was painting its labels in a grey too dark to read against the black bar behind them &#8212; the rotate buttons, the size hint and the loading line. Same colour, lifted until it reads in daylight.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -12967,7 +12985,7 @@ function renderLjPane(){
   var pane = document.getElementById('ljPane');
   var p = cacheProjects.find(function(x){ return x.id === ljState.sel; });
   if(!p){
-    pane.innerHTML = '<div class="ljsummary"><h3 style="margin:0 0 6px;color:#e35c63;">Job Summary</h3>' +
+    pane.innerHTML = '<div class="ljsummary"><h3 style="margin:0 0 6px;">Job Summary</h3>' +
       '<p>Select a job from the list to preview its contact info, stage, and location \u2014 or open the full profile.</p></div>';
     return;
   }
@@ -41417,7 +41435,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b:1066, d:'2026-08-25', t:'The Photo Album reads in light mode',
+  { b:1067, d:'2026-08-25', t:'Three unreadable bits of the client profile in light mode',
+  s:'In light mode the paid figure on the money card, the Directions link beside the map, and the Job Summary heading on the leads pane were all painted in colours chosen for the dark theme \u2014 the paid amount worst of all, pale green on white at 2.4 to 1. Each already had the right colour written somewhere in the app; it had just been attached to the insurance CRM rather than to the light theme, so retail never got it. Dark mode looks exactly as it did before.' },  { b:1066, d:'2026-08-25', t:'The Photo Album reads in light mode',
   s:'In light mode the Photo Album lost the client\u2019s name and the whole paragraph explaining what the screen does \u2014 both were white on a near-white page, 1.07:1, invisible rather than merely faint. The empty-state line was under the floor too. All three now use the app\u2019s existing light/dark token pairs, so they flip with the theme instead of being one fixed colour. Dark mode is unchanged or slightly better. This screen had never actually been checked: the sweep that checks contrast was being blocked by a modal left open earlier in its own walk.' },  { b:1065, d:'2026-08-25', t:'The header slogan stops being cut off on a phone',
   s:'The retail header read \u201CSingle sourc\u2026\u201D on every screen, because \u201CSingle source of truth\u201D needs 247px and a phone header gives it 150px. It could not be shrunk to fit \u2014 at phone width it would have to drop to 10px, and on a small phone no readable size fits at all. It now shows at full size on anything 438px and wider, and shows nothing below that, where a cut-off slogan looked like a broken app. The other CRMs are untouched: their header carries a short name, not a slogan.' },  { b:1064, d:'2026-08-25', t:'The photo editor\u2019s buttons are readable outdoors', s:'Open a job photograph, tap the pencil, and the tool bar along the bottom was labelling itself in a grey barely separable from the black bar behind it \u2014 the rotate buttons, the aspect hint and the loading line. Measured at 3.3 to 3.7 to one against a floor of 4.5. It is the same colour the rest of that bar already uses, simply not dimmed so far, so nothing looks different in kind \u2014 it just reads on a roof at midday.' },
   { b:1063, d:'2026-08-25', t:'The landing screenshot is the whole landing', s:'A full-page screenshot of the landing came back as the top of the page and then a tall black slab. The slab was never an empty background \u2014 it was the app\u2019s own home screen, still sitting behind the landing, because one of the two ways of getting to the landing put the app away first and the other did not. Both do now. And the landing has stopped being a panel pinned over the page: it is the page, so a screenshot captures all of it rather than the first screen \u2014 every row down to the Pop-Up Roof.' },
@@ -61516,8 +61535,16 @@ document.getElementById('phGrid').addEventListener('click', function(e){
 .dbmtabs button{background:none;border:0;color:#aab1ba;font:700 10.5px 'Segoe UI',Arial,sans-serif;
   padding:6px 12px;cursor:pointer;}
 .dbmtabs button.on{background:var(--rbe-acc);color:var(--rbe-checkfg);}
+/* 1067: PINNED, not tokenised, and that is the point. This link sits on the
+   map tab bar, which paints rgba(16,18,24,.85) and stays dark in BOTH themes —
+   over the light page it composites to #34363b. var(--rbe-acclt) flips to
+   #4f7396 there, a dark blue on a dark bar: 2.45:1. The insurance rule below
+   already carries this exact reasoning in its own comment ("a fixed light red
+   is correct here precisely because the bar does not flip"); it was simply
+   never applied to retail. #b9d3ec is --rbe-acclt's own dark value, so dark is
+   unchanged (12.22:1) and light is repaired (7.83:1). */
 .dbmtabs .dbmdir{margin-left:6px;padding:6px 11px;font:700 10.5px 'Segoe UI',Arial,sans-serif;
-  color:var(--rbe-acclt);text-decoration:none;border-left:1px solid var(--rbe-line);}
+  color:#b9d3ec;text-decoration:none;border-left:1px solid var(--rbe-line);}
 .hmanage{flex-basis:100%;font:700 10.5px 'Segoe UI',Arial,sans-serif;margin-top:2px;}
 .hmanage a{color:var(--rbe-mute);text-decoration:none;}
 .hmanage a:hover{color:var(--rbe-acclt);}
