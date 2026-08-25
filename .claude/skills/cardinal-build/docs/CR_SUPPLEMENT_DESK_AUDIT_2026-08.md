@@ -90,6 +90,13 @@ leaves an amber marker naming what it went without. See `FEATURES.md` and the bu
 log for what else the build repaired on the way (no light twin for three state tokens,
 a phone header that had overflowed since 668, and no build stamp at all).
 
+**B · Start from the photographs, not the PDF. ✅ SHIPPED at build 1059.**
+Theo gave the explicit yes the photo fence required (24 Aug 2026, Gemini chosen over
+human-tags-only and the Spark). The Desk now works on day one instead of week three; the
+model proposes, a person confirms, and the scope still subtracts when it lands. It never
+truncates in silence — it reads the newest 20 of a job's photographs and says how many it
+skipped. Original scoping below.
+
 **B · Start from the photographs, not the PDF.** Theo's own earlier note: *"box for ai
 and use pictures to supplement the estimate with captions and an overview."* Today the
 Desk is dead until a scope arrives — week three of a claim. Flip it: open on the job's
@@ -142,6 +149,6 @@ if the two disagree.
 **then C** (the market gap, and it reuses the chase/notification work already scoped),
 **then B** (biggest change; better built on A's evidence model than beside it).
 
-**Status, 24 Aug 2026:** **A is shipped (build 1055).** **C is shipped (builds 1056 + 1058)** — the chase clock and the daily nudge. **B is not started** and is Theo's call.
+**Status, 24 Aug 2026:** **A is shipped (build 1055).** **C is shipped (builds 1056 + 1058)** — the chase clock and the daily nudge. **B is shipped (build 1059)**, on the explicit photo-fence yes of 24 Aug.
 
 ⚠ Of the six smaller pieces above, **item 6 is shipped (1057)**; the other five are unstarted.

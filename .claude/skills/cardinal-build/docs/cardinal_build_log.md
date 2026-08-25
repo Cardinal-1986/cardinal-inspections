@@ -25278,3 +25278,72 @@ shape** (including the three orphan claims that really exist, which must be
 skipped rather than crash). GREEN; **2 named failures on the 1057 control**; and
 **RED on a drifted tree**, which is the run that makes it worth having.
 Byte-reproducible; parses; no `module.exports` (the CI rule).
+
+## Build 1059 — the Desk reads the photographs (Desk direction B)
+
+*`supplement.html` + `api/supplement.js`. `index.html` untouched, still 1056.
+No SQL.*
+
+### ⚠ THIS BUILD REVERSES A SETTLED DECISION, ON THEO'S EXPLICIT INSTRUCTION
+
+`CONTRACTOR_VISION_SUITE.md` records, as a decision belonging to Theo:
+**"customer photos never sent to third-party AI without an explicit yes."**
+Asked directly on **24 Aug 2026** — offered (a) human tags only, nothing leaves,
+(b) send to Gemini, (c) the Spark does the looking in-house — **Theo chose (b),
+Gemini.** The fence named that yes as its own condition, so this satisfies it
+rather than ignoring it. Dated in the API header, in the vision-suite doc and
+here. **If the answer ever changes, `photos` mode is the thing to remove.**
+
+**What it is for.** The Desk was DEAD until a carrier's scope arrived — week
+three of a claim. Now it works on day one: the model looks at the job's own
+photographs and proposes gap items in the **same shape `analyze` returns**, so
+the evidence table (1055), the photo picker, the notes thread (1057) and the
+letter writer all consume them unchanged. When the scope lands, `analyze` runs
+as it always has and subtracts what is funded.
+
+**Every rule it keeps.** The Walk's order — the model proposes, a person
+confirms, nothing arrives ticked. The honesty core — `enforceGaps()` still
+rebuilds every item from a whitelist and copies the citation from the pack. No
+dollar amounts. And **the model returns TEXT only** — it never alters,
+annotates or returns an image, the altered-evidence rule that governs The Walk.
+
+**⚠ It never truncates in silence.** Measured first: 217 photos over 13
+projects, **avg 27.4 per job, max 45**. A quiet cap would drop half a job and
+read as "I looked at everything". The route reads the newest 20 and returns
+`photos_read` / `photos_skipped`; the Desk prints *"Read 20 photographs, skipped
+7"*. The gate asserts that sentence.
+
+### Three faults, all caught, and one of them was subtle
+
+1. **`enforceGaps()` dropped `photo_index`, so the Desk mapping was dead code.**
+   The enforcement rebuilds each item from a **whitelist** — exactly right, and
+   a whitelist drops what it does not name. So the model's pointer to *which
+   photograph it was looking at* was discarded on the way out, and the item
+   would have shown **"no photo"** for a photograph the model had just
+   described. The check-that-cannot-fire class. `photo_index` is now carried as
+   a **bounded number** (a string, a negative or a fraction is refused) and
+   `enforce_test.mjs` proves all of it against the shipped function.
+2. **I mis-diagnosed that one first.** I said `photos` mode "bypasses
+   `enforceGaps` entirely" — it does not: the call is keyed on `wantShape`,
+   which this mode sets to `'gaps'`, so enforcement always ran. The real fault
+   was narrower and worse-hidden. Corrected in the same breath, and worth
+   recording because a confident wrong root cause is how a session goes in
+   circles.
+3. **The gate's own mock was fiction.** It returned the model's RAW answer,
+   which has no `id` — so the Desk threw `Cannot read properties of undefined`
+   instead of rendering, and the gate blamed the artifact. The route replies
+   **post-`enforceGaps`**, and the mock now mirrors that. *Test against
+   production data shapes, not convenient fixtures* — the fixture was mine.
+
+Plus the door measured **39px** in the driven page; the `min-height:44px` in
+that file belongs to other rules. Pinned on the button itself — the 1053 rule
+that a new control starts compliant.
+
+**Gates:** `gate_1059.mjs` — six checks driving the real Desk in Chromium,
+asserting on the **posted request body** (mode, signed URLs, newest-first
+order) and on the rendered evidence: GREEN, **1 named failure on the 1058
+control** (the gate early-returns once the door is missing, deliberately —
+nothing downstream is testable without it). Plus **`enforce_test.mjs`, nine
+adversarial cases against the extracted shipped `enforceGaps`**, including an
+invented citation and a string `photo_index`. Both artifacts byte-reproducible;
+`api/supplement.js` parses, no `module.exports`.

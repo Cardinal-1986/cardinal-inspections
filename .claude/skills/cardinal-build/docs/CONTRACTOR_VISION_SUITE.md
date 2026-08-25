@@ -22,7 +22,11 @@ print-to-PDF and client sign-off — all shipped, builds 211–557. The genuinel
 (slider, presentation mode, privacy toggle, Hall of Shame, phase tagging, auto defect detection,
 super-resolution) is fenced less by engineering than by **settled decisions that belong to Theo**:
 coordinates deliberately excluded from the mirror at three written sites, customer photos never
-sent to third-party AI without an explicit yes, AI-altered photos as an insurance
+sent to third-party AI without an explicit yes **— ⚠ GIVEN 24 Aug 2026: asked directly,
+offered human-tags-only / Gemini / the Spark, Theo chose Gemini. Build 1059's `photos` mode
+on the Supplement Desk is what uses it. The fence named that yes as its own condition, so it
+is satisfied rather than ignored — and if the answer ever changes, that mode is the thing to
+remove.** — AI-altered photos as an insurance
 altered-evidence problem, and the DGX Spark never wired into the app as a live dependency
 (`DGX_SPARK_ILLUSTRATIONS.md`). The suite does **not** need a new Tauri desktop app — the
 app-side remainder fits the existing PWA, and the heavy-pixel work belongs on the Spark as an

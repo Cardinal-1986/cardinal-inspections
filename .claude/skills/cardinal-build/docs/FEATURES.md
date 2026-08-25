@@ -6915,3 +6915,40 @@ renders the section and then throws it away.
 **Gate:** `gate_1058.mjs`, six checks against the **extracted shipped
 functions** and production-shaped fixtures (orphan claims included). Proven RED
 on a drifted tree, which is the run that matters.
+
+---
+
+## 1059 — the Desk reads the photographs (`supplement.html` + `api/supplement.js`)
+
+Desk direction **B**. The Desk used to be dead until a carrier's scope arrived —
+week three of a claim. **Read the photographs** builds the same gap list from the
+job's own photos on day one.
+
+⚠ **This crosses a fence, with a dated yes.** `CONTRACTOR_VISION_SUITE.md` said
+*"customer photos never sent to third-party AI without an explicit yes."* Theo
+gave that yes on **24 Aug 2026**, choosing Gemini over human-tags-only and the
+Spark. **If it is ever withdrawn, `photos` mode is the thing to remove.**
+
+| | |
+|---|---|
+| new mode | `photos` — the job's signed photo URLs, fetched server-side through the **same SSRF bound the scope already uses** |
+| output | the **same `gaps` shape** `analyze` returns, so the evidence table, photo picker, notes thread and letter writer are all untouched |
+| the cap | newest **20**, and it **says so**: *"Read 20 photographs, skipped 7"*. Measured first — 27.4 photos per job on average, max 45, so a silent cap would drop half a job |
+| The Walk's rule | the model proposes, a person confirms. **Nothing arrives ticked** |
+| altered evidence | the model is shown photographs and returns **text only**. It never alters, annotates or returns an image |
+
+⚠ **`enforceGaps()` must keep carrying `photo_index`.** It rebuilds every item
+from a **whitelist**, which is exactly right — and a whitelist drops what it does
+not name. When `photo_index` was dropped, the Desk's mapping of it to a real
+photograph was dead code and an item showed *"no photo"* for a photograph the
+model had just described. It is carried as a **bounded number**: a string, a
+negative or a fraction is refused.
+
+⚠ **A gap arrives from the route POST-enforcement** — with an `id`, the pack's
+citation, `photos:[]` and `included:false`. Any test fixture must mirror that,
+not the model's raw answer; a raw-shape mock has no `id` and the renderer throws.
+
+**Gates:** `gate_1059.mjs` (6 checks in Chromium, asserting the posted request
+body and the rendered evidence) · **`enforce_test.mjs`** — nine adversarial cases
+against the **extracted shipped `enforceGaps`**, including an invented citation
+and a string `photo_index`.

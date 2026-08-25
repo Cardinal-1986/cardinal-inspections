@@ -1,6 +1,6 @@
 <!--
   ═══════════════════════════════════════════════════════════════════════════
-  THE SUPPLEMENT DESK · supplement.html · build 1057 (24 Aug 2026)
+  THE SUPPLEMENT DESK · supplement.html · build 1059 (24 Aug 2026)
   (the Desk shipped at build 668 · 10 Aug 2026; the evidence table landed at 1055)
   ═══════════════════════════════════════════════════════════════════════════
 
@@ -191,6 +191,7 @@
   .gap .phbtn{ background:none; border:1px dashed var(--sd-line); color:var(--sd-ink2); border-radius:6px; padding:5px 10px; font-size:12px; }
 .notes{ margin:16px 0 4px; padding:14px; border:1px solid var(--sd-line); border-radius:10px;
     background:var(--sd-panel2); }
+  #photoBtn{ min-height:44px; }
   .notes h3{ margin:0 0 4px; font-size:13.5px; }
   .notes .sub{ margin:0 0 10px; }
   #noteList{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
@@ -306,7 +307,7 @@
   <header class="sd-hd">
     <span class="wordmark">Cardinal</span>
     <span class="ttl">Supplement Desk</span>
-    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1057</span>
+    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1059</span>
     <span class="sp"></span>
     <a class="sd-back" id="homeLink" href="/" title="Back to the Cardinal app">&larr; Cardinal</a>
     <button id="themeBtn" type="button">Theme</button>
@@ -348,8 +349,13 @@
             <option value="pwi_coc" disabled>PWI / COC — depreciation release (needs its own build)</option>
           </select>
           <button class="btn" id="analyzeBtn" disabled>Analyze the scope</button>
+          <button class="btn ghost" id="photoBtn">Read the photographs</button>
         </div>
         <div class="note" id="analyzeNote"></div>
+        <p class="sub" id="photoHint" style="margin:8px 0 0;">No scope yet? <b>Read the
+          photographs</b> builds the same list from this job&rsquo;s own photos, so you are not
+          waiting on the carrier to start. Everything still arrives un-ticked for you to check,
+          and the scope subtracts what it funds when it turns up.</p>
       </div>
 
       <div class="sd-card" id="codeCard">
@@ -461,7 +467,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
-var SD_BUILD = 1057; window.SD_BUILD = SD_BUILD;
+var SD_BUILD = 1059; window.SD_BUILD = SD_BUILD;
 /* Same publishable anon key api/*.js falls back to — public by design. */
 var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -598,6 +604,7 @@ async function explainEmpty(){
 
 /* ── the desk ─────────────────────────────────────────────────────────────── */
 el('noteAdd').addEventListener('click', addNote);
+el('photoBtn').addEventListener('click', readPhotos);
 el('backBtn').addEventListener('click', function(){
   el('deskView').style.display = 'none'; el('claimsView').style.display = 'block';
   el('backBtn').style.display = 'none';
@@ -1005,6 +1012,62 @@ async function analyze(){
     el('analyzeNote').textContent = 'Could not analyze: ' + (err.message || err);
   }
   el('analyzeBtn').disabled = false;
+}
+
+/* 1059 — direction B. The photographs, newest first, through the route's own
+   SSRF bound. loadPhotos() has already signed every one of them into p._src,
+   so there is no second signing path here. */
+async function readPhotos(){
+  if(!S.claim) return;
+  var have = (S.photos || []).filter(function(p){ return p._src && p.storage_path; });
+  if(!have.length){
+    el('analyzeNote').textContent = 'This job has no photographs stored yet.';
+    return;
+  }
+  var newestFirst = have.slice().reverse();   /* loadPhotos orders oldest first */
+  var btn = el('photoBtn');
+  btn.disabled = true; el('analyzeBtn').disabled = true;
+  el('analyzeNote').textContent = 'Looking at ' + newestFirst.length +
+    ' photograph' + (newestFirst.length === 1 ? '' : 's') + '… usually 20–40 seconds.';
+  try{
+    var r = await fetch('/api/supplement', {
+      method: 'POST', headers: await authHeader(),
+      body: JSON.stringify({
+        mode: 'photos',
+        photos: newestFirst.map(function(p){ return { url: p._src, path: p.storage_path }; }),
+        meas: S.meas || {},
+        code_letters: clSelected(),
+        claim: { carrier: S.claim.carrier, claim_number: S.claim.claim_number },
+        filing_type: el('filingType').value
+      })
+    });
+    var j = null; try{ j = await r.json(); }catch(_){}
+    if(!r.ok) throw new Error((j && j.error) || ('HTTP ' + r.status));
+    S.gaps = j.gaps || [];
+    /* Attach the photograph the model actually pointed at, so 1055's PHOTO leg
+       is satisfied by the thing it looked at. An item with no photo_index stays
+       blocked — the model gets no shortcut past the gate a human would face. */
+    S.gaps.forEach(function(g){
+      if(!g.photos || !g.photos.length){
+        var idx = (typeof g.photo_index === 'number') ? g.photo_index : -1;
+        var ph = (idx >= 0 && idx < newestFirst.length) ? newestFirst[idx] : null;
+        g.photos = ph ? [{ path: ph.storage_path, caption: '' }] : [];
+      }
+      if(g.qty != null && !g.qty_src) g.qty_src = 'model';
+    });
+    renderGaps(j.scope_summary || '');
+    /* ⚠ never a silent cap — say what was read and what was not. */
+    var read = j.photos_read, skip = j.photos_skipped;
+    el('analyzeNote').textContent = (read != null)
+      ? ('Read ' + read + ' photograph' + (read === 1 ? '' : 's') +
+         (skip ? ', skipped ' + skip + ' (only the newest ' + read + ' are sent)' : '') +
+         ' — nothing is ticked; check each line.')
+      : '';
+    step(2);
+  }catch(err){
+    el('analyzeNote').textContent = 'Could not read the photographs: ' + (err.message || err);
+  }
+  btn.disabled = false; el('analyzeBtn').disabled = false;
 }
 
 /* 1055 — the three evidence legs, one place.
