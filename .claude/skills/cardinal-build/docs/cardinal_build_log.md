@@ -25489,3 +25489,69 @@ with itself. Every expectation is asserted against ABC's published values.
   block is 812 characters long, so it **failed the correct tree**. Bounded on the
   case's own end now. *A fixed window over a variable region is the trap this
   document names, and it fired inside the gate written to avoid a different one.*
+
+## Build 1062 — the stale-job recovery gets its first caller (25 Aug 2026)
+
+**`api/` and `vercel.json` only. `index.html` is untouched and stays at 1060**, so
+`check_build.py` has nothing to say about this build — its inline scripts, tag balance
+and stamp are all unchanged. The mechanical gate for an API-only build is `node --check`,
+the no-`module.exports` rule, valid JSON, and CI's own filename check.
+
+**This is not a new feature. It is a caller for one that has existed all along.**
+`requeue_stale_design_jobs()` is defined in **two** SQL files, granted to `service_role`,
+listed in `spark/VISUALIZER_SETUP.md` as *"✅ … with a 3-attempt cap"* — and named in
+**two** code comments that reason about when it will run: `visualizer_worker.py`'s
+shutdown path (*"rather than stranding it until `requeue_stale_design_jobs()` notices
+half an hour later"*) and `visualizer/index.html`'s Gemini path (*"`requeue_stale` would
+only fail it half an hour later"*). **Grepped the whole repo: two prose mentions, zero
+call sites.** Two pieces of shipped code were reasoning about a scheduler that did not
+exist. That is the prime doctrine, and it is now roughly the eighth time on this project.
+
+⚠️ **The browser half was already built, and better than I assumed.** I went in expecting
+to add an "is this stuck?" banner and found `running()` + `RUN_SLOW_MS` (4 min) + a
+`drawWait()` precedence rule + `elapsed(j.claimed_at)` on the card, with a comment
+explaining why a slow render is deliberately **not** called a failure — *"a cold Spark
+reloads three models before it draws a pixel, and the longest real render here took
+12m13s and came back correct."* **Nothing was added there. The gap was only the caller.**
+
+**Why a cron, and not the two obvious places.** Not the worker — if the worker died it
+cannot recover itself, which is the exact case this exists for. Not the browser — it
+needs `service_role`, which must never be in a browser, and the browser is closed at 3am.
+A scheduled server call is the only home that is up when the thing that died is the Spark.
+`vercel.json` gains a **fourth** cron at `20 * * * *`; hourly, because a daily sweep over
+a 30-minute staleness window is theatre, and offset off the hour because the other three
+sit at `:00`.
+
+**The route decides nothing.** Every rule stays in the SQL — `gemini` jobs fail (the
+browser that owned them is gone), `spark` jobs requeue until `attempts` hits 3, and the
+sentence a stranded job shows is written there. `gate_1062.mjs` **asserts the route does
+not restate any of it**, because a second copy of a policy beside the first is the
+`CHASE_POLICY` divergence with a longer fuse.
+
+**Gate: `gate_1062.mjs`, 9/9 green, and RED on two different controls.** It **imports the
+shipped handler and calls it** with a stub req/res rather than re-implementing it.
+
+⚠️ **Check 4 is the one that earns its place, and it was proved by mutation.** The route
+names the RPC in a URL string; a typo there is a **404 forever**, reported only into a
+Vercel log nobody reads, and its symptom is identical to the bug being fixed — jobs
+sitting at `running`. So check 4 asserts the called name against the `create or replace
+function` in the SQL that defines it. **Control B is the same tree with one character
+removed from the name: 8 pass, check 4 fails.** A check that could not have caught the
+likeliest failure would have been decoration.
+
+Also asserted: fail-closed on `CRON_SECRET` exactly as `api/digest.js` is (measured — no
+secret gives 401 naming the variable, wrong secret gives 401, right secret with no service
+key gives a 500 that **names the missing key** rather than a bare 500), the cron is hourly
+rather than daily, and `STALE_MINUTES` **cannot be configured below 15** — the slowest
+honest render measured on this box was 12m13s, and requeuing good work burns an attempt
+and doubles the load.
+
+⚠️ **`CLAUDE.md` said `vercel.json` carries TWO crons. It carries four now** — the third,
+`/api/companycam-sync` daily at 03:00, arrived without the doc being updated. Corrected in
+the same edit as this build rather than left to be re-discovered.
+
+⚠️ **Not yet proved live, and stated rather than implied:** the cron needs `CRON_SECRET`
+and `SUPABASE_SERVICE_ROLE_KEY` set in Vercel. `CRON_SECRET` was measured **unset** when
+the digest routes were hardened — if it is still unset, this route correctly refuses and
+recovers nothing, loudly, in the Vercel log. **That is the designed failure, not a
+silent one**, but it does mean the feature is inert until the variable exists.
