@@ -75,13 +75,16 @@ theo@cardinalrenovations.net
   pair (e.g. `ABC_SB_CLIENT_ID` / `ABC_SB_CLIENT_SECRET`) rather than swapping
   the production values out — swapping would break live pricing, which now
   works and is in daily reach.
-- **`placeOrder`'s body shape is wrong today.** ABC expects an **array** of
+- ✅ **`placeOrder`'s body shape was FIXED at build 1061 (25 Aug).** The paragraph
+  below is the diagnosis as written on 13 Aug and is kept as the record; every
+  item in it is now done, read from ABC's own published example rather than
+  inferred, and covered by `gate_abcorder.mjs`. **Do not re-fix it.** ~~ ABC expects an **array** of
   orders (`[{...}]`); `api/abc.js` currently forwards a bare object. It also
   needs far more than we send: `deliveryService`, `typeCode`, `currency`,
   `shipTo` with full address and contacts, and lines carrying
   `orderedQty{value,uom}` and `unitPrice{value,uom}`. Same defect class as the
   pricing body fixed at 763 — verify against
-  `apidocs.abcsupply.com/place-orders/` before writing the builder.
+  `apidocs.abcsupply.com/place-orders/` before writing the builder.~~
 - **Ordering is the highest-risk surface in this integration.** A wrong request
   costs money and puts materials on a truck. Whatever gets built should show the
   full order back to a human and require an explicit confirm before sending.

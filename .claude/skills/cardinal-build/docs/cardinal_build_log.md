@@ -25430,3 +25430,62 @@ floor. It now answers **1060**, which is what this build was numbered by hand.
 correct existing check**: they added keys to the `FAKE` fixture that the absent-artifact
 case inherits, so it read 1059 and failed. The fixture is restored explicitly. *Half the
 reds on this project are the test's fault, and that one was mine.*
+
+## Build 1061 — the ABC order body is the shape ABC documents (25 Aug 2026)
+
+**`api/abc.js` only. `index.html` is untouched and stays at 1060** — this is one of
+the builds that carries no artifact stamp, which is exactly the case `next_build.py`
+was taught to see one build earlier.
+
+`placeOrder` forwarded `b.payload || {}` — **a bare object, straight through**. ABC's
+published example is an **array of orders**, and the order needs far more than was
+being sent. Recorded as a known defect in `ABC_ORDER_TESTING_EMAIL.md` since 13 Aug;
+this is it fixed. **Same defect class as the pricing body at 763**: a shape invented
+in this file rather than read from ABC's own words. This file has now made that
+mistake twice and it is worth naming as a pattern, not an incident.
+
+**Every field name is from ABC's verbatim example request**
+(`apidocs.abcsupply.com/place-orders/`, fetched and read for this build, not
+recalled): the body is `[{ requestId, branchNumber, deliveryService, typeCode,
+currency, shipTo, lines }]`; the ship-to is **`shipTo.number`**, not a top-level
+`shipToNumber` as the pricing call uses; lines carry `orderedQty:{value,uom}` and
+`unitPrice:{value,uom,instructions?}`, with `dimensions.length:{uom,value}` for
+dimensional stock. Enums: `deliveryService` ∈ COM|CPU|EXP|OTR|OTG|OTW|TPC,
+`typeCode` = SO, currency ISO 4217. **99 lines maximum, stated verbatim in their docs.**
+
+⚠️ **This route spends money, so it REFUSES instead of defaulting.** A malformed
+order does not fail cleanly — it puts the wrong materials on a truck to a customer's
+house. `orderProblem()` is the single place that decides whether an order may be
+sent, and it reads the **built** order, so a hand-supplied `payload` and a built one
+are held to the identical standard. **`deliveryService` is never defaulted** — it
+decides delivery versus pickup, and guessing it is how a truck turns up at a house
+nobody asked about. Only `typeCode` (ABC documents exactly one value) and `currency`
+default. **A `unitPrice` is sent only when we actually have one**: a zero there is not
+"free", it is a price we failed to read, and 763 shipped precisely that class of
+plausible wrong number on a money surface.
+
+⚠️ **Over 99 lines it refuses and says to SPLIT — it does not trim.** Silently
+dropping line 100 is a missing pallet nobody discovers until the crew is on the roof.
+Asserted, including that the wording says split rather than trimmed.
+
+**Still unreachable from the UI, deliberately.** Nothing calls `placeOrder`; it stays
+behind `FULL_ONLY` (admin/production). This build makes the shape correct and the
+refusals real so that the day ABC answers, the wiring is the only thing left — it
+does not open the door. **Ordering still needs a screen that shows the whole order
+back to a human and takes an explicit confirm**, and that is not built.
+
+**Gate: `gate_abcorder.mjs` — 13/13 green, 11 RED on the pre-fix file.** It
+**extracts `orderPayload` and `orderProblem` from the shipped source and executes
+them** rather than re-implementing them; a gate that re-implements its subject agrees
+with itself. Every expectation is asserted against ABC's published values.
+
+⚠️ **Two faults in the gate, both mine, both caught before shipping.**
+- The control has no `orderPayload` at all, so the first version would have **thrown**
+  on a missing symbol — BUG_CLASSES 37, a control that crashes instead of reporting
+  red. It now names the absence and continues.
+- Check 11 reads the dispatch line, so the control fails on **the real defect**
+  (`b.payload` going straight to ABC) rather than merely on the builder's absence.
+  Its first version used a **fixed 400-character window** over a region whose comment
+  block is 812 characters long, so it **failed the correct tree**. Bounded on the
+  case's own end now. *A fixed window over a variable region is the trap this
+  document names, and it fired inside the gate written to avoid a different one.*

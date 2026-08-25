@@ -3,7 +3,14 @@
 
 ---
 
-## Layer: 25 Aug 2026 — build 1060
+## Layer: 25 Aug 2026 — builds 1060 and 1061
+
+- ✅ **`placeOrder`'s body shape is FIXED at 1061** — it was a bare object, ABC
+  documents an array. Field names taken from ABC's verbatim example, refusals rather
+  than defaults on everything that costs money, and it **still is not reachable from
+  the UI**. What remains for ordering: ABC's reply with sandbox credentials (email
+  sent 25 Aug), a separate `ABC_SB_*` env pair, then a screen that shows the whole
+  order back to a human and takes an explicit confirm. `gate_abcorder.mjs`, 13 checks.
 
 - ✅ **The landing screenshot's black slab is FIXED at 1060.** PR **#317** diagnosed it
   correctly on 14 Aug, never landed, and is now **closed as superseded** — it was
