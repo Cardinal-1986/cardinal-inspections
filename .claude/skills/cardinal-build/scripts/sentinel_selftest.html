@@ -209,6 +209,71 @@
   <span class="st-oc-shown" style="color:#232326">st-onscreen-ink MUST still be reported</span>
 </div>
 
+<h2>EMOJI ARE NOT INK — the font paints the glyph, not `color`</h2>
+<!-- All three carry the SAME failing ink on the SAME ground (1.02:1). The only
+     difference is what the text IS.
+     A colour emoji is painted by the emoji font in its own colours; `color`
+     never reaches it, so scoring `color` measures a value that does not paint.
+     Headless Chromium ships no emoji font, falls back to a MONOCHROME glyph
+     that does take `color`, and manufactures a failure that cannot happen on
+     any device Theo owns — it reported span.cvic at 1.02:1 on the client
+     screen, both themes, both widths, on the 25 Aug sweep.
+     THREE fixtures, not two, because the tempting over-broad fix is "skip any
+     text containing an emoji", which would silently stop scoring every label
+     that happens to carry one. Only ENTIRELY-pictographic text is skipped.
+     ⚠ Distinct classes on purpose: where() keys on tag+id+class, so identical
+     bare spans collapse to ONE finding and the half that must fire would pass
+     only because the other half had been deduped away. I have shipped that
+     exact collision twice in one day. -->
+<div style="background:rgb(36,26,26);padding:14px;margin:10px 0">
+  <span class="st-em-only"  style="color:rgb(27,27,27)">&#128737;&#65039;</span>
+  <span class="st-em-word"  style="color:rgb(27,27,27)">st-emojiword-ink MUST still be reported</span>
+  <span class="st-em-mixed" style="color:rgb(27,27,27)">&#128737;&#65039; st-emojimix-ink MUST still be reported</span>
+</div>
+
+<h2>A CAP THAT TRUNCATES MUST SAY SO</h2>
+<!-- The reporter bounds each bucket per render (INK at 25) so one broken
+     screen cannot flood a sweep. Until 25 Aug every one of those eight caps
+     was SILENT: a render with 30 ink failures printed 25 and lost five with
+     no trace, and because the total came out SMALLER it read as progress
+     rather than as an incomplete run. CLAUDE.md's assertion-fault #2.
+     30 failures, all identical in shape and each with its own class so none
+     is deduped, placed LAST in the document on purpose: res.ink is built in
+     document order, so the fixtures above are already inside the cap and
+     cannot be evicted by this block. -->
+<div style="background:rgb(36,26,26);padding:8px;margin:10px 0">
+  <span class="st-cap00" style="color:rgb(30,30,30)">st-cap-ink 0</span>
+  <span class="st-cap01" style="color:rgb(30,30,30)">st-cap-ink 1</span>
+  <span class="st-cap02" style="color:rgb(30,30,30)">st-cap-ink 2</span>
+  <span class="st-cap03" style="color:rgb(30,30,30)">st-cap-ink 3</span>
+  <span class="st-cap04" style="color:rgb(30,30,30)">st-cap-ink 4</span>
+  <span class="st-cap05" style="color:rgb(30,30,30)">st-cap-ink 5</span>
+  <span class="st-cap06" style="color:rgb(30,30,30)">st-cap-ink 6</span>
+  <span class="st-cap07" style="color:rgb(30,30,30)">st-cap-ink 7</span>
+  <span class="st-cap08" style="color:rgb(30,30,30)">st-cap-ink 8</span>
+  <span class="st-cap09" style="color:rgb(30,30,30)">st-cap-ink 9</span>
+  <span class="st-cap10" style="color:rgb(30,30,30)">st-cap-ink 10</span>
+  <span class="st-cap11" style="color:rgb(30,30,30)">st-cap-ink 11</span>
+  <span class="st-cap12" style="color:rgb(30,30,30)">st-cap-ink 12</span>
+  <span class="st-cap13" style="color:rgb(30,30,30)">st-cap-ink 13</span>
+  <span class="st-cap14" style="color:rgb(30,30,30)">st-cap-ink 14</span>
+  <span class="st-cap15" style="color:rgb(30,30,30)">st-cap-ink 15</span>
+  <span class="st-cap16" style="color:rgb(30,30,30)">st-cap-ink 16</span>
+  <span class="st-cap17" style="color:rgb(30,30,30)">st-cap-ink 17</span>
+  <span class="st-cap18" style="color:rgb(30,30,30)">st-cap-ink 18</span>
+  <span class="st-cap19" style="color:rgb(30,30,30)">st-cap-ink 19</span>
+  <span class="st-cap20" style="color:rgb(30,30,30)">st-cap-ink 20</span>
+  <span class="st-cap21" style="color:rgb(30,30,30)">st-cap-ink 21</span>
+  <span class="st-cap22" style="color:rgb(30,30,30)">st-cap-ink 22</span>
+  <span class="st-cap23" style="color:rgb(30,30,30)">st-cap-ink 23</span>
+  <span class="st-cap24" style="color:rgb(30,30,30)">st-cap-ink 24</span>
+  <span class="st-cap25" style="color:rgb(30,30,30)">st-cap-ink 25</span>
+  <span class="st-cap26" style="color:rgb(30,30,30)">st-cap-ink 26</span>
+  <span class="st-cap27" style="color:rgb(30,30,30)">st-cap-ink 27</span>
+  <span class="st-cap28" style="color:rgb(30,30,30)">st-cap-ink 28</span>
+  <span class="st-cap29" style="color:rgb(30,30,30)">st-cap-ink 29</span>
+</div>
+
 <script>
   /* Only the first button gets a handler. The second is BUG_CLASSES 16:
      drawn, enabled, and inert — the Studio Archive button, 614 to 632. */
