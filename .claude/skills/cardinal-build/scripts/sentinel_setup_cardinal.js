@@ -247,9 +247,40 @@
      first run reported four contrast failures that were really one screen
      bleeding into three others. A state must hand back the screen it names. */
   function closeDrawer() {
-    document.body.classList.remove('cr-drawer-open', 'cr-drawer-lift');
+    /* ⚠ THIS USED TO REMOVE CLASSES, AND THAT NEVER WORKED — found 25 Aug 2026.
+       The drawer module does not keep an `open` flag; sync() DERIVES it, every
+       time, straight from the DOM:
+
+           function sync(){
+             var open = menu.style.display === 'block' && isDrawer();
+             menu.classList.toggle('cr-drawer-open', open);
+             bd.classList.toggle('on', open);
+           }
+
+       and sync() is re-run by a MutationObserver on #navMenu behind a
+       requestAnimationFrame. So stripping the classes was undone on the very
+       next frame, with `display` still 'block'. The classes came back, the
+       backdrop came back, and closeDrawer() returned cleanly having done
+       nothing that survived a frame.
+
+       That is why gate_setupleak still found navBackdrop over five states
+       AFTER the modal fix: nav (state 10) opens the drawer and nothing since
+       has genuinely shut it.
+
+       ⚠ It also means the drawer-bleed this file's own banner records as fixed
+       was only HALF fixed. The banner is right that the bleed was real and
+       right about what it cost; the remedy it describes could not have worked.
+
+       The lever must match the mechanism (CLAUDE.md, hideAllViews()): this
+       screen is shown by `display`, so it is closed by `display` — and by
+       exactly the line the app's own backdrop-click handler uses:
+           bd.addEventListener('click', function(){ menu.style.display='none'; });
+       Setting display lets sync() recompute open=false and retract the
+       classes and the backdrop ITSELF, which is why nothing here needs to
+       touch either one. */
     var m = document.getElementById('navMenu');
-    if (m) m.classList.remove('open', 'show');
+    if (m) m.style.display = 'none';
+    document.body.classList.remove('cr-drawer-open', 'cr-drawer-lift');
   }
   /* ⚠ 992: hideAllViews() does NOT know about these two. Both were brace-match
      checked against the shipped function and neither name occurs in it, and
@@ -268,9 +299,87 @@
   function closeStragglers() {
     try { if (window.CardinalLineItems  && window.CardinalLineItems.close)  window.CardinalLineItems.close();  } catch (e) {}
     try { if (window.CardinalPhotoEditor && window.CardinalPhotoEditor.close) window.CardinalPhotoEditor.close(); } catch (e) {}
+    closeRestOverlays();
+  }
+
+  /* ⚠ THE SAME BUG AS THE DRAWER ABOVE, AND IT SURVIVED THE DRAWER'S FIX.
+     Found 25 Aug 2026 by the design audit, measured not guessed:
+
+       screen        ckModal projModal  white-bg elements visible
+       newproject    false   TRUE                8
+       checklist     TRUE    TRUE               40
+       signature     TRUE    TRUE               42
+       … and TRUE/TRUE for all ten states after it, to showcase (25th)
+
+     `hideAllViews()` does not know about the nine `display:none;position:fixed`
+     overlays in static markup (#projModal #ckModal #gcModal #leadModal
+     #leadFormModal #apptModal #sigModal #tskModal #qiWhoModal), and neither
+     did this file. So from state 13 onward EVERY screen was probed with the
+     checklist modal — a white card, 40+ light-era elements — sitting over it.
+     Twelve of twenty-five states were not swept at all; they were the
+     checklist wearing another screen's name.
+
+     That is almost certainly what produced the "Cardinal Truth compositing
+     artifacts" in the 25 Aug sentinel run: `truth` is state 23, deep inside
+     the contaminated range, and the white ground being scored was never on
+     that screen.
+
+     ── WHY THIS IS A SNAPSHOT AND NOT A LIST OF IDS ──
+     A hardcoded list of nine rots silently the moment a tenth modal ships —
+     the sweep keeps passing and quietly stops covering it, which is this
+     project's most expensive failure shape (a check that cannot fail).
+     So: before any state runs, record every position:fixed element that the
+     app itself leaves display:none AT REST. Those are exactly its dismissable
+     overlays, by the app's own definition. Restoring them is a revert to the
+     rest state, never a new opinion about what should be hidden.
+
+     ⚠ It must be display, not a class. CLAUDE.md: writing display:none onto a
+     CLASS-shown element is permanent damage — its own open path never clears
+     the inline style, so the screen is dead on the second visit. Every element
+     in this snapshot was inline-display:none to begin with, so setting it back
+     is the one safe lever, and it is the same one the app's own Cancel buttons
+     pull (`ckModal.style.display = 'none'`). */
+  var REST_HIDDEN = null;
+  function snapshotRestOverlays() {
+    REST_HIDDEN = [];
+    var all = document.body ? document.body.querySelectorAll('*') : [];
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i], cs = getComputedStyle(el);
+      if (cs.position === 'fixed' && cs.display === 'none') REST_HIDDEN.push(el);
+    }
+    return REST_HIDDEN.length;
+  }
+  function closeRestOverlays() {
+    if (!REST_HIDDEN) return;
+    for (var i = 0; i < REST_HIDDEN.length; i++) {
+      try { if (getComputedStyle(REST_HIDDEN[i]).display !== 'none') REST_HIDDEN[i].style.display = 'none'; } catch (e) {}
+    }
+  }
+  /* The backdrop is not display-toggled — it is opacity + pointer-events via
+     .on, so it never enters the snapshot and never left with the drawer. */
+  function closeBackdrop() {
+    var bd = document.getElementById('navBackdrop');
+    if (bd && bd.classList) bd.classList.remove('on');
   }
   function closeAll() {
+    /* Taken on the FIRST closeAll — i.e. at the top of state 1 ('home'),
+       where the app is provably at rest (the leak probe that found this bug
+       reports ckModal false, projModal false, 0 white elements there). Any
+       later snapshot would bake an already-open modal in as "hidden at rest"
+       and the mechanism would silently exclude the one thing it exists for. */
+    if (REST_HIDDEN === null) {
+      var n = snapshotRestOverlays();
+      /* ⚠ A snapshot of zero disables this silently and every later sweep
+         still reports a tidy CLEAN. The app ships nine such overlays in static
+         markup; a handful is the floor, and being wrong loudly is the point. */
+      if (n < 5) throw new Error(
+        'overlay snapshot found only ' + n + ' fixed+hidden elements (expected ~9: ' +
+        'projModal, ckModal, gcModal, leadModal, leadFormModal, apptModal, sigModal, ' +
+        'tskModal, qiWhoModal). Either the walk started somewhere other than rest, ' +
+        'or the modal family changed shape — do not sweep until this is understood.');
+    }
     closeDrawer();
+    closeBackdrop();
     closeStragglers();
     try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (e) {}
   }
