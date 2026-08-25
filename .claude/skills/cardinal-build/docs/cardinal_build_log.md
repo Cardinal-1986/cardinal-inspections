@@ -25347,3 +25347,86 @@ nothing downstream is testable without it). Plus **`enforce_test.mjs`, nine
 adversarial cases against the extracted shipped `enforceGaps`**, including an
 invented citation and a string `photo_index`. Both artifacts byte-reproducible;
 `api/supplement.js` parses, no `module.exports`.
+
+## Build 1060 — landing screenshots stop ending in a black slab (25 Aug 2026)
+
+**Theo photographed the landing on his iPhone in light mode and got the top of the
+page followed by a tall black slab.** PR #317 diagnosed this correctly on 14 Aug and
+never landed; it sat as a draft stamped **build 809** while main went to 1056, so it
+could not merge. The fix is re-derived, re-measured on today's tree, **scoped**, and
+shipped here. #317 is closed as superseded.
+
+**The mechanism, measured in Chromium rather than reasoned about.** `#landingView`
+carries `position:fixed;inset:0;overflow-y:auto` as an inline style, so it is a
+viewport-locked pane with its own scroller. An iPhone Full Page capture photographs
+the **document**, and the document behind the pane is one screen tall. Everything past
+that first screen fell through to `body{background:var(--bg)}` — and `body` follows the
+**app** theme (`data-theme`) while the landing follows the **landing** theme
+(`data-mode`). In dark mode both grounds are `#09090c` so the bug is invisible; it only
+bites in light. Two theme mechanisms on one surface, the same collision recorded at 647.
+
+**The fix is the canvas, which is the only box that always covers the capture:**
+
+```css
+html[data-mode="light"]:not(:has(#landingView[style*="display: none"])){background:#f7f5f2}
+```
+
+⚠️ **The `:not(:has(…))` is the whole build, and the unscoped version is a regression I
+nearly shipped.** `data-mode` is the LANDING theme and it **outlives the landing** — it
+stays on `documentElement` through every CRM screen. Unscoped, `html` paints light
+app-wide; `body`'s `#09090c` still covers the content (measured: `bodyH == docH == 2556`
+on an app screen, so normal scrolling is unaffected) but the **rubber-band overscroll
+goes light over a dark app**. That is build **429 in reverse** — 429 exists because light
+mode was showing a dark overscroll. Caught by a four-combination probe written *because*
+the change touched `html`, not because anything asked for it; the probe's first run
+printed `html:rgb(247,245,242) body:rgb(9,9,12)` and that mismatch is the whole finding.
+
+**Light only, deliberately.** With no dark twin, `body`'s `var(--bg)` propagates to the
+canvas exactly as before, so dark and `rb-light` are untouched — asserted, not assumed:
+all four `(data-mode × data-theme)` combinations are byte-identical to 1056's.
+`body{background:var(--bg)}` is not touched; that is 429's fix.
+
+**Gates.** `render_landingground.js` (from #317, header corrected — it was written for a
+build that never shipped): **12/12 green on 1060, 6 RED on 1056**, probing the left
+gutter at four heights × two widths × both modes. New **`gate_1060.mjs`: 6/6 green**, and
+**RED on two different controls** — build 1056 fails check 1 (the slab), and a
+deliberately *unscoped* tree fails check 2 (the overscroll leak). A control that only
+ever fails one way would not have proved the scoping does anything. `check_build.py`
+green, 1056 → 1060, marker + negative control. Byte-reproducible from main on a fresh
+apply.
+
+**Still not fixed, and not claimed to be:** the capture ends where the pane's content
+ends, because the *page* does not scroll — the pane does. Production, Sales Floor, the
+Resource Library, the Schedule Board and The Pop-Up Roof are still absent from a
+full-page shot. Getting them in means taking the landing out of the fixed overlay, which
+is not a CSS change — `backToLanding()` and `goToLanding()` never hide `header.site`, so
+the CRM header is covered today *purely* by the landing's `z-index:150`. Offered to Theo
+as option 2 on 14 Aug and deferred by him; the trigger stays recorded in `OPEN_ITEMS.md`.
+
+### `next_build.py` answered 1057, which was three builds into the past
+
+Not part of the fix, found by it. **The tool this project uses to prevent collisions was
+about to cause three.** 1057 and 1059 shipped in `supplement.html`, 1058 in
+`api/digest.js`; `index.html` legitimately stayed at 1056, and the script reads
+`index.html` (plus `visualizer/index.html`). Two distinct faults:
+
+- **`supplement.html` was not in `STAMPED` — and adding it alone fixes nothing**, because
+  its stamp is `SD_BUILD = 1059`, not the `v2026-… build N` form the `STAMP` regex reads.
+  *A file listed but written in a dialect the pattern cannot read is exactly as invisible
+  as a file not listed.* Hence `STAMP_ALT`.
+- **`api/digest.js` carries no stamp and never will** — a serverless function has nowhere
+  to put one, so no amount of file-scanning reaches build 1058. Worse, it contains the
+  string `build 1056` as a *reference* to the chase clock, so a naive scan of `api/`
+  answers with somebody else's number.
+
+So the **build log** is now read too — the one record CLAUDE.md says has never fallen
+behind, and the only place an artifact-less build is visible at all. Matched
+case-insensitively and number-first, because the log's heading levels and the word
+"build" are both inconsistent. Stamps still win where they exist; the log only raises the
+floor. It now answers **1060**, which is what this build was numbered by hand.
+
+⚠️ **Both new `--self-test` cases were mutation-tested** — neutering `STAMP_ALT` and
+`log_high` turns each red, so neither is inert. And the first version of them **broke a
+correct existing check**: they added keys to the `FAKE` fixture that the absent-artifact
+case inherits, so it read 1059 and failed. The fixture is restored explicitly. *Half the
+reds on this project are the test's fault, and that one was mine.*

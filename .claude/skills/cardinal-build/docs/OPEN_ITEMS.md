@@ -3,6 +3,32 @@
 
 ---
 
+## Layer: 25 Aug 2026 — build 1060
+
+- ✅ **The landing screenshot's black slab is FIXED at 1060.** PR **#317** diagnosed it
+  correctly on 14 Aug, never landed, and is now **closed as superseded** — it was
+  stamped build 809 against a main at 1056, so it could not merge. Do not reopen it.
+  The rule is `html[data-mode="light"]:not(:has(#landingView[style*="display: none"]))`,
+  and ⚠️ **the scoping is load-bearing**: unscoped it rubber-bands a light overscroll
+  over a dark app screen, because `data-mode` outlives the landing. That is 429 in
+  reverse. `gate_1060.mjs` goes red on an unscoped tree specifically.
+
+- ⏳ **Still deferred, unchanged, Theo's call from 14 Aug:** a full-page capture still
+  ends where the landing pane's content ends, so Production, Sales Floor, the Resource
+  Library, the Schedule Board and The Pop-Up Roof never appear in one. Fixing that means
+  taking the landing out of its fixed overlay — **not a CSS change**: `backToLanding()`
+  and `goToLanding()` never hide `header.site`, which is covered today purely by the
+  landing's `z-index:150`. 15 sites touch `header.site`. Trigger: Theo asking for a
+  screenshot that shows the whole landing.
+
+- ✅ **`next_build.py` answered 1057 when the true next was 1060 — FIXED at 1060.**
+  It read `index.html` and `visualizer/index.html` only; 1057/1059 were `supplement.html`
+  and 1058 was `api/digest.js`. It now also reads `supplement.html` (via `STAMP_ALT`,
+  because that file says `SD_BUILD = 1059`, not `v2026-… build N`) **and the build log**,
+  which is the only place a build with no artifact stamp is visible at all. Two new
+  `--self-test` cases, both mutation-tested. **Run it before numbering — but if it ever
+  disagrees with the build log's newest heading, trust the log.**
+
 ## ✅ Manual-estimates audit — PICKED AND BUILT, 23–24 Aug 2026, builds 1025–1030 (PR #482)
 
 Theo's picks, 23 Aug, verbatim: **"1, A, own lane, button, drop it, hide."** All six builds
