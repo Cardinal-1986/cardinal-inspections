@@ -25997,3 +25997,75 @@ green on all nine dark-and-fence checks** — the discrimination is total ·
 three source fences assert insurance's own pins (`#46701E`, `#FF8A80`) and
 `.db-due` are untouched, because this build reuses those *values* in retail and
 must not disturb their *rules*.
+
+---
+
+## Build 1068 — the remaining eight under-floor inks
+
+Theo: *"Fix the other 10 inks."* Ten findings across **eight** elements (three
+fail in both themes, so they count twice). 1067 took the three that shared one
+root cause; these do not share one, so each is justified separately.
+
+| # | element | dark | light | now | why |
+|---|---|---:|---:|---|---|
+| 1 | `.rvflip` review switch | 11.51 | **1.56** | 18.10 | `var(--rbe-ink,#cfcfcf)` — an existing pair |
+| 2 | `(from client profile)` ×2 | **3.18** | **3.18** | 6.16 | `#5c5c5c` — cream card, one ground |
+| 3 | `#cr-pae-tabs button` | **4.35** | **4.35** | 5.46 | `#5c5c5c` — cream card, one ground |
+| 4 | `.cr-lil-tabs button.active .count` | **1.56** | **2.14** | 11.14 / 8.15 | `#ffffff` |
+| 4b | `#cr-pae-tabs button.active .count` | **1.56** | **2.14** | 8.15 | the same rule, second module |
+| 5 | `"no description"` | 7.40 | **2.65** | 5.33 | `var(--rbe-mute,#a89e88)` — inline |
+| 6 | `.convertins .cvtxt small` | 6.44 | **3.82** | 5.85 | the light twin the dark rule never got |
+| 7 | `.phnote` | 7.55 | **4.24** | 5.36 | `--rbe-empty-fg` light `#767676` → `#666666` |
+| 8 | `.cr-est-nav .navempty` | **4.20** | **4.20** | 6.40 | `#8b95a8` — the rail is dark in both |
+
+### Three of them were never light-mode bugs
+
+2, 3 and 8 sit on surfaces that **do not flip** — two cream light-era cards
+(`#f8f5f4`, `#f0e8d0`) and the estimate nav rail (`#0a0e16`). One ground means
+one right ink; a theme pair would be the wrong instrument. 4 fails in both for
+the opposite reason: near-black on a chip that is dark in one theme and cardinal
+red in the other, so a single light ink serves both.
+
+⚠️ **Do not "finish the job" by tokenising 2, 3 or 8.** A single declaration on
+a single-theme surface is the tell that it is deliberate — the rule CLAUDE.md
+states for OC Colors and the Showcase applies here too.
+
+### 7 was fixed at the token, and the blast radius was checked FIRST
+
+`--rbe-empty-fg`'s light value is used by **five** empty-state rules —
+`.ljempty`, `.cre-empty`, `.phnote`, `.kpempty`, `.pu-empty` — all muted notes
+on light cards. Overriding `.phnote` alone would have left the other four at
+4.24 and stacked a rule where a value was wrong. Its dark value is untouched.
+
+### ⚠ The gate found a defect the sweep could not
+
+`#cr-pae-tabs button.active .count` carries a **byte-identical** rule to
+`.cr-lil-tabs button.active .count`. The sweep never flagged it, because the
+photo editor's tab strip shows no count in the walked state. Same defect, same
+module shape, invisible to the same instrument. Fixed in the same build; the
+scope proof now asserts `.count{...color:#1a1a1a}` is at **zero**, so neither
+can be fixed alone again.
+
+### ⚠ And the gate's first version gave that target a false PASS
+
+It selected `#cr-pae-tabs button` and matched the **active** tab — white on
+cardinal red, 5.67:1 — a comfortable pass for a target whose cream sibling was
+the thing under test. `:not(.active)` is load-bearing. This is the
+wrong-element fault the gate's own header warns about, committed inside the
+gate written to prevent it.
+
+### ⚠ Three scope proofs were fooled by comments this session
+
+1067's `--rbe-acclt`, then `#a89e88`, then `#cfcfcf` — the last one counting
+*higher* after the patch because the comment added above the rule quotes the
+colour. **A hex is not an anchor.** Every colour assertion in `patch_1068.py`
+is anchored on the declaration text. Two colours are also retained deliberately
+as `var(--token,#literal)` fallbacks, so a deletion-count assertion on them is
+meaningless by construction.
+
+**Gates:** `check_build.py` GREEN 1067 → 1068 (⚠ pass the marker as
+`--marker=…`; a marker beginning with `--` is eaten by argparse) ·
+**byte-reproducible** · `gate_1068.mjs` **35/35** across both themes and both
+widths, with a **coverage floor** asserting all nine targets were located — on
+1067 it is **26 failures** and the floor still passes, so nothing dropped out
+silently.
