@@ -1,9 +1,11 @@
 # Email to ABC API Support — sandbox order testing
 
-*Drafted 13 Aug 2026. **Sitting in Theo's Gmail drafts since 25 Aug 2026** —
-verified first that no correspondence with `apisupport@abcsupply.com` has ever
-existed in that mailbox, so this is a first contact, not a follow-up.
-**Do not re-draft it; check his drafts.***
+*Drafted 13 Aug 2026. ✅ **SENT 25 Aug 2026** from `theodorion1986@gmail.com`,
+on Theo's instruction — Gmail thread `1a03920383332f6f`, message
+`1a03922523b9c1f3`. Verified first that no correspondence with
+`apisupport@abcsupply.com` had ever existed in that mailbox, so this was a first
+contact, not a follow-up. **Do not send it again.** The text below is the record
+of what went; ABC's reply is what the ordering phase now waits on.*
 
 ⚠️ **Two corrections made when the draft was created, both deliberate.** It goes
 from **`theodorion1986@gmail.com`**, not `theo@cardinalrenovations.net` — the gmail
