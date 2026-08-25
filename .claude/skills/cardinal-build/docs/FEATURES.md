@@ -6888,3 +6888,67 @@ number never does.
 body**; 6 named failures on the 1056 control) · `cite_guard_test.mjs` (6 cases)
 and `cite_fp_test.mjs` (8 cases), both run against the **extracted shipped
 guard**, not a re-implementation.
+
+---
+
+## 1058 — the daily digest names the carriers to chase (`api/digest.js`)
+
+The notification half of Desk direction C. Build 1056's chase clock knew what was
+overdue; nothing told anyone.
+
+- **A third section on the existing daily digest** — no new cron, no new route.
+  `vercel.json` is untouched, asserted at the git level.
+- **Admin only** (Theo + Joan), stated as a decision: chasing a carrier is office
+  work, the same shape as the settled crew-rates rule. The per-rep half exists
+  and was deliberately not used.
+- Only claims **past the mark** appear, worst-overdue first, each saying whether
+  it has ever been chased and how long ago.
+
+⚠ **`chases.length` must stay in the admin send guard.** That email only sends
+when there are appointments or reminders, so without it a quiet day computes and
+renders the section and then throws it away.
+
+⚠ **`CHASE_POLICY` exists in TWO files** — here and `index.html`'s
+`cr-cth-script` — because a serverless function cannot import from the app.
+**`gate_1058.mjs` fails if they disagree.** Change one, change the other.
+
+**Gate:** `gate_1058.mjs`, six checks against the **extracted shipped
+functions** and production-shaped fixtures (orphan claims included). Proven RED
+on a drifted tree, which is the run that matters.
+
+---
+
+## 1059 — the Desk reads the photographs (`supplement.html` + `api/supplement.js`)
+
+Desk direction **B**. The Desk used to be dead until a carrier's scope arrived —
+week three of a claim. **Read the photographs** builds the same gap list from the
+job's own photos on day one.
+
+⚠ **This crosses a fence, with a dated yes.** `CONTRACTOR_VISION_SUITE.md` said
+*"customer photos never sent to third-party AI without an explicit yes."* Theo
+gave that yes on **24 Aug 2026**, choosing Gemini over human-tags-only and the
+Spark. **If it is ever withdrawn, `photos` mode is the thing to remove.**
+
+| | |
+|---|---|
+| new mode | `photos` — the job's signed photo URLs, fetched server-side through the **same SSRF bound the scope already uses** |
+| output | the **same `gaps` shape** `analyze` returns, so the evidence table, photo picker, notes thread and letter writer are all untouched |
+| the cap | newest **20**, and it **says so**: *"Read 20 photographs, skipped 7"*. Measured first — 27.4 photos per job on average, max 45, so a silent cap would drop half a job |
+| The Walk's rule | the model proposes, a person confirms. **Nothing arrives ticked** |
+| altered evidence | the model is shown photographs and returns **text only**. It never alters, annotates or returns an image |
+
+⚠ **`enforceGaps()` must keep carrying `photo_index`.** It rebuilds every item
+from a **whitelist**, which is exactly right — and a whitelist drops what it does
+not name. When `photo_index` was dropped, the Desk's mapping of it to a real
+photograph was dead code and an item showed *"no photo"* for a photograph the
+model had just described. It is carried as a **bounded number**: a string, a
+negative or a fraction is refused.
+
+⚠ **A gap arrives from the route POST-enforcement** — with an `id`, the pack's
+citation, `photos:[]` and `included:false`. Any test fixture must mirror that,
+not the model's raw answer; a raw-shape mock has no `id` and the renderer throws.
+
+**Gates:** `gate_1059.mjs` (6 checks in Chromium, asserting the posted request
+body and the rendered evidence) · **`enforce_test.mjs`** — nine adversarial cases
+against the **extracted shipped `enforceGaps`**, including an invented citation
+and a string `photo_index`.

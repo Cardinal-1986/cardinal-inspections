@@ -25207,3 +25207,143 @@ asserting on the **posted request body** rather than on UI state: GREEN, with
 and `cite_fp_test.mjs` (8 cases) against the extracted guard. Both artifacts
 byte-reproducible; 141/141 CSS braces; 108/108 `<div>`; `api/supplement.js`
 parses and carries no `module.exports` (the CI rule).
+
+## Build 1058 — the daily digest names the carriers to chase
+
+*`api/digest.js` only. `index.html` untouched, still 1056. No SQL, **and no new
+cron** — `vercel.json` is byte-untouched, asserted.*
+
+Theo picked items 1–3; this is item 2, the notification half of Desk direction
+C. Build 1056 gave the insurance hub a clock that knows exactly which claims are
+past the follow-up mark — **and nothing told anyone.** It was visible only to
+someone who opened the hub and looked.
+
+**⚠ NO NEW PIPELINE.** `api/digest.js` is already the daily "what needs your
+attention" email to Theo and Joan, and it has already grown a section twice —
+stale estimates (784), Owner Console reminders (898). A third section is the
+extend-don't-add move; a second cron beside the existing one would be the "new
+mechanism beside an existing one" bug with a delay on it.
+
+**Admin-only, and stated rather than defaulted.** Chasing a carrier is office
+work — the same shape as Theo's settled *"Crew rates is not needed by
+productions, I write the checks"*. The digest's per-rep half exists and was
+deliberately not used: with two real claims in the database, routing by rep is
+machinery with nothing to carry.
+
+Only claims **past the mark** are named — a claim that is merely open is not
+news — and the section says whether it has ever been chased and how long ago.
+
+### ⚠ The guard that would have thrown the whole section away
+
+The admin email sends only
+`if (!byRep[adm] || Object.keys(byRep).length > 1 || reminders.length)`. On a day
+with no appointments and no reminders **the admin email does not send at all** —
+so an overdue chase would have been queried, computed, rendered and dropped on
+the floor in silence. `chases.length` joins that guard, and `gate_1058` asserts
+it.
+
+### ⚠ Two copies of one rule, and the gate that exists because of it
+
+`CHASE_POLICY` now lives in **two** places — `index.html`'s `cr-cth-script` and
+`api/digest.js` — because a serverless function cannot import from a 5 MB
+single-page app. Two copies of one rule is precisely the drift this project
+keeps paying for, so **`gate_1058.mjs` parses both files and fails if the
+numbers disagree.** Change one, change the other, or the gate goes red. That is
+the doctrine applied: a recurring class gets a check, not a paragraph.
+
+### Three faults in this build, all mine, all caught
+
+1. **`JSON.stringify(p, Object.keys(p).sort())` — a check that could NEVER
+   fire, inside the gate whose only job was that check.** The second argument to
+   `stringify` is a **replacer**, and an array replacer is a property
+   **allowlist applied at every level** — so the nested `{first, again}` were
+   stripped from both sides and every comparison read
+   `{"awaiting release":{},"supplement filed":{}}` against itself. A === B,
+   always. Caught only by feeding the gate a deliberately drifted tree; it now
+   names both numbers when they diverge.
+2. **My own header comment broke my own extractor.** `indexOf('CHASE_POLICY')`
+   found the sentence *"its CHASE_POLICY is a MIRROR of the one in
+   index.html"* and started parsing from prose, landing in `todayLocal()`.
+   Anchored on the declaration. The comment-pollution trap — **fourth time this
+   session**, and this one was inside the drift gate itself.
+3. **An assertion pinned to a pre-existing comment.** `'vercel.json' not in src`
+   failed correct code: the file's header has said *"Triggered by Vercel Cron
+   (see vercel.json)"* since it was written. Replaced with an unchanged-count
+   assert, and the real claim — that `vercel.json` is untouched — is verified at
+   the git level where it actually lives.
+
+**Gates:** `gate_1058.mjs` — six checks, extracting and running the **shipped**
+`chaseList`/`chaseHtml`/`chaseDue` against fixtures in the **real production row
+shape** (including the three orphan claims that really exist, which must be
+skipped rather than crash). GREEN; **2 named failures on the 1057 control**; and
+**RED on a drifted tree**, which is the run that makes it worth having.
+Byte-reproducible; parses; no `module.exports` (the CI rule).
+
+## Build 1059 — the Desk reads the photographs (Desk direction B)
+
+*`supplement.html` + `api/supplement.js`. `index.html` untouched, still 1056.
+No SQL.*
+
+### ⚠ THIS BUILD REVERSES A SETTLED DECISION, ON THEO'S EXPLICIT INSTRUCTION
+
+`CONTRACTOR_VISION_SUITE.md` records, as a decision belonging to Theo:
+**"customer photos never sent to third-party AI without an explicit yes."**
+Asked directly on **24 Aug 2026** — offered (a) human tags only, nothing leaves,
+(b) send to Gemini, (c) the Spark does the looking in-house — **Theo chose (b),
+Gemini.** The fence named that yes as its own condition, so this satisfies it
+rather than ignoring it. Dated in the API header, in the vision-suite doc and
+here. **If the answer ever changes, `photos` mode is the thing to remove.**
+
+**What it is for.** The Desk was DEAD until a carrier's scope arrived — week
+three of a claim. Now it works on day one: the model looks at the job's own
+photographs and proposes gap items in the **same shape `analyze` returns**, so
+the evidence table (1055), the photo picker, the notes thread (1057) and the
+letter writer all consume them unchanged. When the scope lands, `analyze` runs
+as it always has and subtracts what is funded.
+
+**Every rule it keeps.** The Walk's order — the model proposes, a person
+confirms, nothing arrives ticked. The honesty core — `enforceGaps()` still
+rebuilds every item from a whitelist and copies the citation from the pack. No
+dollar amounts. And **the model returns TEXT only** — it never alters,
+annotates or returns an image, the altered-evidence rule that governs The Walk.
+
+**⚠ It never truncates in silence.** Measured first: 217 photos over 13
+projects, **avg 27.4 per job, max 45**. A quiet cap would drop half a job and
+read as "I looked at everything". The route reads the newest 20 and returns
+`photos_read` / `photos_skipped`; the Desk prints *"Read 20 photographs, skipped
+7"*. The gate asserts that sentence.
+
+### Three faults, all caught, and one of them was subtle
+
+1. **`enforceGaps()` dropped `photo_index`, so the Desk mapping was dead code.**
+   The enforcement rebuilds each item from a **whitelist** — exactly right, and
+   a whitelist drops what it does not name. So the model's pointer to *which
+   photograph it was looking at* was discarded on the way out, and the item
+   would have shown **"no photo"** for a photograph the model had just
+   described. The check-that-cannot-fire class. `photo_index` is now carried as
+   a **bounded number** (a string, a negative or a fraction is refused) and
+   `enforce_test.mjs` proves all of it against the shipped function.
+2. **I mis-diagnosed that one first.** I said `photos` mode "bypasses
+   `enforceGaps` entirely" — it does not: the call is keyed on `wantShape`,
+   which this mode sets to `'gaps'`, so enforcement always ran. The real fault
+   was narrower and worse-hidden. Corrected in the same breath, and worth
+   recording because a confident wrong root cause is how a session goes in
+   circles.
+3. **The gate's own mock was fiction.** It returned the model's RAW answer,
+   which has no `id` — so the Desk threw `Cannot read properties of undefined`
+   instead of rendering, and the gate blamed the artifact. The route replies
+   **post-`enforceGaps`**, and the mock now mirrors that. *Test against
+   production data shapes, not convenient fixtures* — the fixture was mine.
+
+Plus the door measured **39px** in the driven page; the `min-height:44px` in
+that file belongs to other rules. Pinned on the button itself — the 1053 rule
+that a new control starts compliant.
+
+**Gates:** `gate_1059.mjs` — six checks driving the real Desk in Chromium,
+asserting on the **posted request body** (mode, signed URLs, newest-first
+order) and on the rendered evidence: GREEN, **1 named failure on the 1058
+control** (the gate early-returns once the door is missing, deliberately —
+nothing downstream is testable without it). Plus **`enforce_test.mjs`, nine
+adversarial cases against the extracted shipped `enforceGaps`**, including an
+invented citation and a string `photo_index`. Both artifacts byte-reproducible;
+`api/supplement.js` parses, no `module.exports`.

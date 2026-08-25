@@ -30,7 +30,21 @@
 // server did not itself supply come back as `cite_flag`. Flagged for the
 // human, never silently edited — the dollar_flag posture.
 //
-// Modes: analyze (scope PDF + measurements -> gap items) · draft (ticked
+// 1059 — PHOTOS MODE, and the fence it crosses. CONTRACTOR_VISION_SUITE.md
+// recorded "customer photos never sent to third-party AI without an explicit
+// yes" as a settled decision belonging to Theo. Asked directly on 24 Aug 2026,
+// offered human-tags-only / Gemini / the Spark, he chose Gemini. The fence
+// named that yes as its own condition, so this satisfies it rather than
+// ignoring it — but it IS a reversal and it is dated here on purpose. If the
+// answer ever changes, this mode is the thing to remove.
+//
+// The model is shown photographs and returns TEXT ONLY. It never alters,
+// annotates or returns an image — the altered-evidence rule that governs The
+// Walk governs this too. It proposes; a person confirms; only then is anything
+// used. Photo bytes still never reach the DRAFT prompt.
+//
+// Modes: analyze (scope PDF + measurements -> gap items) · photos (the job's
+// photographs -> the same gap items, before any scope exists) · draft (ticked
 // items -> letter with [[PHOTOS:id]] tokens; the model NEVER sees photo bytes
 // or URLs — the Desk substitutes signed <img> at send time) · read_response
 // (501 until the response build).
@@ -41,6 +55,11 @@ const SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
 const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash'];
 const MAX_BYTES = 12 * 1024 * 1024;
+/* 1059: measured on production — 217 photos over 13 projects, avg 27.4 per
+   job, max 45. Reading all of them is slow and dear, so the route reads the
+   newest MAX_PHOTOS and REPORTS what it skipped. It never caps in silence. */
+const MAX_PHOTOS = 20;
+const MAX_PHOTO_BYTES = 6 * 1024 * 1024;
 const TIME_BUDGET_MS = 45000;   /* 60s maxDuration, 15s headroom (the 662 rule) */
 
 /* Same SSRF bound as api/sol.js: a caller-supplied URL may point ONLY at this
@@ -188,6 +207,10 @@ function enforceGaps(raw, meas) {
       qty_src: null,
       confidence: entry ? (['high', 'medium', 'low'].indexOf(g.confidence) >= 0 ? g.confidence : 'medium') : 'low',
       wants_photo: g.wants_photo !== false,
+      /* 1059: which photograph the model was looking at, if it said. A number
+         or null — the Desk maps it back to a storage_path. */
+      photo_index: (typeof g.photo_index === 'number' && isFinite(g.photo_index)
+                    && g.photo_index >= 0) ? Math.floor(g.photo_index) : null,
       photos: [], included: false,
       carrier: { decision: null, note: '', decided_at: null }, rebuttal: null
     };
@@ -287,8 +310,8 @@ export default async function handler(req, res) {
       res.status(501).json({ error: 'Carrier-response reading arrives with the next build of the Desk.' });
       return;
     }
-    if (mode !== 'analyze' && mode !== 'draft') {
-      res.status(400).json({ error: 'Unknown mode — analyze or draft.' });
+    if (mode !== 'analyze' && mode !== 'photos' && mode !== 'draft') {
+      res.status(400).json({ error: 'Unknown mode — analyze, photos or draft.' });
       return;
     }
 
@@ -373,8 +396,70 @@ export default async function handler(req, res) {
       'reported with pack_id null when the scope itself is internally ' +
       'inconsistent (an item priced but its obvious counterpart absent).';
 
+    /* 1059: the photographs. Each URL is bounded by storageUrlOrNull — the
+       same guard the scope already goes through, so a caller cannot point this
+       at anything but this project's own storage. Newest first; the caller
+       sends them in order. */
+    const photoParts = [];
+    let photosRead = 0, photosSkipped = 0, photoBytes = 0;
+    if (mode === 'photos') {
+      const want = Array.isArray(body.photos) ? body.photos : [];
+      photosSkipped = Math.max(0, want.length - MAX_PHOTOS);
+      for (const p of want.slice(0, MAX_PHOTOS)) {
+        const safe = storageUrlOrNull(p && p.url);
+        if (!safe) { photosSkipped++; continue; }
+        try {
+          const r0 = await fetch(safe);
+          if (!r0.ok) { photosSkipped++; continue; }
+          const buf = Buffer.from(await r0.arrayBuffer());
+          if (!buf.length || photoBytes + buf.length > MAX_PHOTO_BYTES) { photosSkipped++; continue; }
+          photoBytes += buf.length;
+          photoParts.push({ inline_data: {
+            mime_type: /\.png(\?|$)/i.test(safe) ? 'image/png' : 'image/jpeg',
+            data: buf.toString('base64') } });
+          photosRead++;
+        } catch (e) { photosSkipped++; }
+      }
+      if (!photosRead) {
+        res.status(400).json({ error: 'None of those photographs could be read from storage.' });
+        return;
+      }
+    }
+
     let parts, wantShape;
-    if (mode === 'analyze') {
+    if (mode === 'photos') {
+      const measLine = ['sq', 'pitch', 'ridge', 'hip', 'valley', 'eave', 'rake']
+        .map(k => k + '=' + (meas[k] == null || meas[k] === '' ? '?' : meas[k])).join(', ');
+      parts = [
+        ...photoParts,
+        { text:
+          'You are looking at ' + photosRead + ' photograph(s) of a roofing/exterior loss in ' +
+          'OHIO, taken by the contractor. There is NO carrier scope yet — this is the ' +
+          'contractor building his own list before one arrives.\n\n' +
+          'Name what these photographs show that a supplement would have to ask for. ' +
+          'Work ONLY from what is visible. If you cannot see it, do not list it.\n\n' +
+          'Measurements on file: ' + measLine + '\n\n' +
+          'Recognized items, and the ONLY things you may cite:\n' + packLines + '\n\n' +
+          'HARD RULES:\n' +
+          '- pack_id must be an id from the list above or null. NEVER write a code section, ' +
+          'a statute or a standard of your own — the citation is attached server-side from ' +
+          'that list, and anything you invent is discarded.\n' +
+          '- "why" must describe WHAT YOU SEE in the photographs, plainly, as the reason. ' +
+          'Say which photograph if you can. Do not describe a scope; there is not one.\n' +
+          '- qty only where the photographs or the measurements actually support a number. ' +
+          'Otherwise null. Never guess a count to look complete.\n' +
+          '- NO dollar amounts anywhere.\n' +
+          '- confidence "low" is a real and useful answer. A person reviews every line ' +
+          'before any of it reaches a carrier, so an honest maybe is worth more than a ' +
+          'confident invention.\n\n' +
+          'Respond with ONLY raw JSON: {"gaps":[{"pack_id": string or null, "item": string, ' +
+          '"why": string (what is visible), "qty": number or null, "unit": string or null, ' +
+          '"confidence": "high"|"medium"|"low", "photo_index": number or null (which ' +
+          'photograph, 0-based)}], "scope_summary": string (one line: what these ' +
+          'photographs show overall)}' }
+      ];
+      wantShape = 'gaps';
+    } else if (mode === 'analyze') {
       const measLine = ['sq', 'pitch', 'ridge', 'hip', 'valley', 'eave', 'rake']
         .map(k => k + '=' + (meas[k] == null || meas[k] === '' ? '?' : meas[k])).join(', ');
       parts = [
@@ -525,7 +610,10 @@ export default async function handler(req, res) {
       res.status(200).json({
         ok: true, gaps,
         scope_summary: String(ans.scope_summary || '').slice(0, 600),
-        diag: { via, docBytes, ms: elapsed() }
+        /* 1059: never a silent cap. The Desk prints these. */
+        photos_read: photosRead,
+        photos_skipped: photosSkipped,
+        diag: { via, docBytes, photoBytes, ms: elapsed() }
       });
     } else {
       const letter = String(ans.letter_html || '');

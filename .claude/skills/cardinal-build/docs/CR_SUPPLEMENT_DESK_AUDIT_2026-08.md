@@ -90,6 +90,13 @@ leaves an amber marker naming what it went without. See `FEATURES.md` and the bu
 log for what else the build repaired on the way (no light twin for three state tokens,
 a phone header that had overflowed since 668, and no build stamp at all).
 
+**B · Start from the photographs, not the PDF. ✅ SHIPPED at build 1059.**
+Theo gave the explicit yes the photo fence required (24 Aug 2026, Gemini chosen over
+human-tags-only and the Spark). The Desk now works on day one instead of week three; the
+model proposes, a person confirms, and the scope still subtracts when it lands. It never
+truncates in silence — it reads the newest 20 of a job's photographs and says how many it
+skipped. Original scoping below.
+
 **B · Start from the photographs, not the PDF.** Theo's own earlier note: *"box for ai
 and use pictures to supplement the estimate with captions and an overview."* Today the
 Desk is dead until a scope arrives — week three of a claim. Flip it: open on the job's
@@ -109,9 +116,11 @@ two real claims; two carriers; ONE `approved_at`, falling on the same day as its
 uses a stated Cardinal follow-up policy instead, in one named constant
 (`CHASE_POLICY`), which is the single thing to replace later.
 
-**Still open from C:** the notifications. All notify sites in the app remain
-production/retail — **zero on insurance** — so an overdue claim is visible only to
-someone who opens the hub and looks. That is the next piece.
+**✅ C IS NOW COMPLETE (build 1058).** The notification half shipped as a third
+section on the existing daily digest — no new cron. Admin-only, only claims past
+the follow-up mark, worst first. ⚠ It carries a SECOND copy of `CHASE_POLICY`,
+because a serverless function cannot import from the app; `gate_1058.mjs` fails
+if the two disagree.
 
 ## Smaller pieces — all already in the repo
 
@@ -140,8 +149,6 @@ someone who opens the hub and looks. That is the next piece.
 **then C** (the market gap, and it reuses the chase/notification work already scoped),
 **then B** (biggest change; better built on A's evidence model than beside it).
 
-**Status, 24 Aug 2026:** **A is shipped (build 1055).** **C is half shipped (build
-1056)** — the chase clock is in; its notification half is not, and is the next
-piece. **B is not started** and is Theo's call.
+**Status, 24 Aug 2026:** **A is shipped (build 1055).** **C is shipped (builds 1056 + 1058)** — the chase clock and the daily nudge. **B is shipped (build 1059)**, on the explicit photo-fence yes of 24 Aug.
 
 ⚠ Of the six smaller pieces above, **item 6 is shipped (1057)**; the other five are unstarted.
