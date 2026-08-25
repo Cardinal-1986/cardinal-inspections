@@ -51,6 +51,26 @@
     if (window.__sentinelTheme === 'rb-light') localStorage.setItem('cardinal.theme.rb', '1');
   } catch (e) {}
 
+  /* ⚠ THE PUSH NUDGE IS TIME-BASED, NOT STATE-BASED, AND IT POISONS A LONG WALK.
+     Build 1014's bar (#crPushNudge) shows ONCE per device to a signed-in user
+     who has never been asked. It is position:fixed near the bottom and it
+     arrives on a retry timer roughly five seconds after boot — so in a walk of
+     twenty-five screens it appears partway through and then sits over EVERY
+     screen after that. Measured: it first showed at state 6 and was on screen
+     for the remaining nineteen.
+
+     That is not a leak in the walk and it is not a defect in the app — it is a
+     dismissible bar doing exactly what it was built to do. But a sweep should
+     represent the ordinary case, and the ordinary case is a user who has
+     already answered it once. Setting the app's OWN dismissal key is how a
+     returning device looks, so this stages a real configuration rather than
+     suppressing an inconvenient one.
+
+     Deliberately NOT done by hiding the element: the key is the app's own
+     mechanism, and a rig that reaches past a feature's state into its DOM is
+     the staged-impossible-configuration trap this file already warns about. */
+  try { localStorage.setItem('cr-push-nudge-dismissed', '1'); } catch (e) {}
+
   /* SENTINEL_AS=scottie sweeps as Curtis/Scottie's production role instead of
      admin. Read from the page URL so it can be driven without editing a file. */
   try {
@@ -353,6 +373,44 @@
     if (!REST_HIDDEN) return;
     for (var i = 0; i < REST_HIDDEN.length; i++) {
       try { if (getComputedStyle(REST_HIDDEN[i]).display !== 'none') REST_HIDDEN[i].style.display = 'none'; } catch (e) {}
+    }
+    closeClassShownOverlays();
+  }
+
+  /* ⚠ THE REST SNAPSHOT CANNOT SEE AN OVERLAY THAT DOES NOT EXIST YET, and the
+     worst leak in the walk was exactly that one. Found 25 Aug 2026, AFTER the
+     modal fix, by the gate written for the modal fix:
+
+       #cr-est-picker — absent from the DOM at rest, built when the estimates
+       Add-from-Library sheet is first opened. position:fixed, inset:0,
+       z-index:9510, 390x844. Opened by the 'estlibrary' state and then ON
+       SCREEN for all fifteen states after it, COVERING the centre of the
+       screen on thirteen of them (elementFromPoint at the centre lands inside
+       it). Measured, not inferred.
+
+     So twelve states were being measured through the checklist modal and then
+     thirteen more through the estimate library picker. Between them that is
+     most of the walk.
+
+     ⚠ IT MUST BE CLOSED BY ITS CLASS, NEVER BY display. The rule is
+     `#cr-est-picker.open{display:flex}` over a base `display:none`, and
+     CLAUDE.md is explicit that writing display:none onto a CLASS-shown element
+     is permanent damage — its own open path only adds the class back and never
+     clears an inline style, so the screen is dead on the second visit.
+     `closePicker()` itself is `picker.classList.remove('open')`; this does the
+     same thing, generically.
+
+     `.open` on a position:fixed element is this app's convention for a
+     class-shown overlay (cr-sf, cr-pb, cr-est-view all use it), so keying on
+     the convention rather than on a list of ids means a new one is covered the
+     day it ships. Removing a class is always reversible; that is why this is
+     safe to apply broadly. */
+  function closeClassShownOverlays() {
+    var open = document.querySelectorAll('.open');
+    for (var i = 0; i < open.length; i++) {
+      try {
+        if (getComputedStyle(open[i]).position === 'fixed') open[i].classList.remove('open');
+      } catch (e) {}
     }
   }
   /* The backdrop is not display-toggled — it is opacity + pointer-events via

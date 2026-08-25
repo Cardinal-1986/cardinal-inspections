@@ -60,19 +60,20 @@ const HTML = readFileSync(FILE, 'utf8');
 const SETUP = ['sentinel_setup_cardinal.js', 'e2e_mock_supa.js']
   .map(f => readFileSync(join(HERE, f), 'utf8')).join('\n;\n');
 
-/* The states that legitimately have an overlay up: the two whose entire
-   subject IS that overlay. Anything else showing one has inherited it. */
-const EXPECTED = {
-  newproject: ['projModal'],
-  checklist:  ['ckModal'],
-  signature:  ['sigModal'],
-  /* 'nav' IS the drawer — the backdrop is its subject, not something it
-     inherited. Listing it here is not a fudge to get to green: the test is
-     "did this state hand back the screen it NAMES", and the screen this one
-     names is the open menu. Every other state showing navBackdrop is a
-     genuine bleed, which is exactly what caught the closeDrawer() defect. */
-  nav:        ['navBackdrop'],
-};
+/* ⚠ NO EXPECTED LIST, AND THAT IS THE POINT.
+   Earlier shapes of this gate needed a hand-maintained map of which state may
+   legitimately have which overlay up — and a hand-maintained list is the thing
+   that rots. FIRST APPEARANCE settles it without one: a state's own view or
+   modal first appears at that state, so it is never a leak there. An element
+   on screen NOW that was already on screen at an EARLIER state is one nobody
+   cleaned up, whatever it is called and however it hides.
+
+   This is also what makes the check mechanism-agnostic, which matters because
+   the three real leaks used three different mechanisms:
+     display   #ckModal / #projModal / #sigModal (the nine static modals)
+     transform #navMenu (translateX(-320px))
+     class     #cr-est-picker (.open{display:flex}, built at runtime)
+   A rule keyed on any one of those would have missed the other two. */
 const MIN_STATES = 25;   /* the floor — see the banner. Raise it when states are added. */
 
 const browser = await chromium.launch({
@@ -93,8 +94,45 @@ await page.addInitScript(SETUP);
 await page.goto('https://leak.test/', { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(800);
 
-const names = await page.evaluate(`(window.__sentinelStates || []).map(s => s.name)`).catch(() => []);
 const fails = [];
+const firstSeen = new Map();   /* id -> the state that first put it on screen */
+
+/* ⚠ THE BASELINE IS WHAT IS VISIBLE AT REST, NOT WHAT IS display:none AT REST.
+   Two earlier shapes of this check were each blind to half the bug:
+
+     - matching /modal|sheet|overlay|drawer|backdrop/ against the element id
+       missed any overlay named something else, silently, while still printing
+       PASS — a check that cannot fail for part of what it checks;
+     - keying on "position:fixed AND display:none at rest" caught the nine
+       static modals but would have missed BOTH originals: #navMenu is
+       display:block at rest (it hides by transform:translateX(-320px)) and
+       #navBackdrop is display:block too (it hides by opacity + pointer-events).
+       The drawer bleed this gate is named for would have walked straight past.
+
+   So: record the ids of every position:fixed element that is genuinely ON
+   SCREEN at rest — the app's own chrome, header and bottom bar. Anything
+   position:fixed and on screen DURING a state that was not on screen at rest
+   arrived with that state. It is either the state's own subject (EXPECTED) or
+   a leak, and the mechanism it used to appear does not matter. */
+const onScreenFixed = `(() => {
+  const ids = [];
+  for (const el of document.body.querySelectorAll('[id]')) {
+    const cs = getComputedStyle(el);
+    if (cs.position !== 'fixed') continue;
+    if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+    if (parseFloat(cs.opacity) === 0) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) continue;
+    if (r.right <= 0 || r.left >= window.innerWidth) continue;
+    ids.push(el.id);
+  }
+  return ids;
+})()`;
+
+const BASE = await page.evaluate(onScreenFixed);
+console.log(`chrome visible at rest (position:fixed, on screen): ${BASE.length ? BASE.join(', ') : '(none)'}`);
+
+const names = await page.evaluate(`(window.__sentinelStates || []).map(s => s.name)`).catch(() => []);
 if (names.length < MIN_STATES)
   fails.push(`WALK SHRANK: ${names.length} states, floor is ${MIN_STATES}. ` +
              `A state that throws contributes nothing and stays silent — find out which.`);
@@ -112,31 +150,18 @@ for (let i = 0; i < names.length; i++) {
   }
   await page.waitForTimeout(300);
 
-  const open = await page.evaluate(() => {
-    /* Every position:fixed overlay currently on screen, by id. The same
-       definition the setup snapshot uses, so the two cannot disagree. */
-    const out = [];
-    for (const el of document.body.querySelectorAll('[id]')) {
-      const cs = getComputedStyle(el);
-      if (cs.position !== 'fixed') continue;
-      if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-      if (parseFloat(cs.opacity) === 0) continue;
-      const r = el.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) continue;
-      /* off-canvas (a shut drawer) is not on screen — #navMenu lives at
-         translateX(-320px) with a full-size rect, and reading that as "open"
-         is the mirror-image false positive of the one this gate catches. */
-      if (r.right <= 0 || r.left >= window.innerWidth) continue;
-      if (/modal|sheet|overlay|drawer|backdrop/i.test(el.id)) out.push(el.id);
-    }
-    return out;
-  });
+  const nowFixed = await page.evaluate(onScreenFixed);
+  const arrived = nowFixed.filter(id => !BASE.includes(id));
+  /* leaked = on screen now, and first seen under an EARLIER state's name */
+  const open = arrived.filter(id => firstSeen.has(id) && firstSeen.get(id) !== names[i]);
+  for (const id of arrived) if (!firstSeen.has(id)) firstSeen.set(id, names[i]);
 
-  const allowed = EXPECTED[names[i]] || [];
-  const stray = open.filter(id => !allowed.includes(id));
-  console.log(`  ${names[i].padEnd(15)} ${stray.length ? '❌ ' + stray.join(', ') : (open.length ? '· ' + open.join(', ') + ' (its own)' : 'clean')}`);
-  if (stray.length)
-    fails.push(`state "${names[i]}" inherited: ${stray.join(', ')} — it is measuring another screen`);
+  const ownNow = arrived.filter(id => !open.includes(id));
+  console.log(`  ${names[i].padEnd(15)} ${open.length ? '❌ ' + open.map(id => id + ' (from ' + firstSeen.get(id) + ')').join(', ')
+                                                      : (ownNow.length ? '· ' + ownNow.join(', ') + ' (its own)' : 'clean')}`);
+  if (open.length)
+    fails.push(`state "${names[i]}" inherited ${open.map(id => id + ' from "' + firstSeen.get(id) + '"').join(', ')}`
+             + ` — it is measuring another screen`);
 }
 
 await browser.close();

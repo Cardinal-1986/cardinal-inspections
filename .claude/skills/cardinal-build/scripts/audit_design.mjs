@@ -113,10 +113,18 @@ const PROBE = `(() => {
 
   const out = [];
   const all = document.body ? document.body.querySelectorAll('*') : [];
-  let scanned = 0;
+  let scanned = 0, capped = 0;
 
+  /* ⚠ A CAP THAT DOES NOT SAY SO IS A LIE. This was a bare 6000-element break
+     with nothing recording that it fired — silent truncation reads as "covered
+     everything" when it did not, which is the project's own no-silent-caps rule
+     (and the shape of the coverage check that shrank 15 → 14 and stayed green).
+     Now it counts what it skipped and the harness prints it. Measured on the
+     25-screen walk: the largest single run kept 343 records, so this has never
+     bitten — but "implausible" is not "measured", and now it cannot bite quietly. */
+  const CAP = 12000;
   for (const el of all) {
-    if (scanned > 6000) break;
+    if (scanned > CAP) { capped++; continue; }
     const tag = el.tagName;
     if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'HEAD' || tag === 'TEMPLATE') continue;
     /* An iframe's contents are a different document (contracts, the field
@@ -194,7 +202,7 @@ const PROBE = `(() => {
 
     if (rec.text || rec.bg || rec.bw || rec.gap != null) out.push(rec);
   }
-  return { scanned, records: out };
+  return { scanned, capped, records: out };
 })()`;
 
 const browser = await chromium.launch({
@@ -256,6 +264,9 @@ for (const vp of VIEWPORTS) {
     let res;
     try { res = await page.evaluate(PROBE); }
     catch (e) { runNotes.push(`probe threw @${states[si]} ${theme} ${vp.w}px: ${e.message}`); continue; }
+    if (res.capped)
+      runNotes.push(`⚠ CAP HIT on "${states[si]}" @${theme} ${vp.w}px — ${res.capped} elements skipped. `
+                  + `The counts below UNDERSTATE this screen. Raise CAP in the probe and re-run.`);
     for (const rec of res.records)
       harvest.push({ ...rec, screen: states[si] || 'login', theme, vw: vp.w });
   }

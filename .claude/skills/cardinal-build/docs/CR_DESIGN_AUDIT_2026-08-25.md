@@ -43,8 +43,39 @@ Both fixed at the root. The overlay close is a **snapshot**, not a list of ids: 
 starts it records every `position:fixed` element the app leaves `display:none` at rest, and
 restores exactly those. A list of nine rots the moment a tenth modal ships; a snapshot cannot.
 
+### ⚠ And there was a THIRD leak, found by the gate written for the first two
+
+After the modal fix the gate went green — and then a broader version of it found
+**`#cr-est-picker`**, the estimates Add-from-Library sheet:
+
+- absent from the DOM at rest (built on first open), so the rest-snapshot could never see it
+- `position:fixed; inset:0; z-index:9510`, 390×844
+- opened by the `estlibrary` state and **still on screen for all fifteen states after it**,
+  **covering the centre of the screen on thirteen** (`elementFromPoint` at the centre lands
+  inside it)
+
+So the walk was measuring twelve states through the checklist modal and then thirteen more
+through the estimate picker. **Between them, most of the walk.**
+
+It is CLASS-shown (`.open{display:flex}`), so it must be closed by its class — writing
+`display:none` onto a class-shown element is permanent damage, and its own `closePicker()` is
+`classList.remove('open')`. The setup now clears `.open` from any `position:fixed` element,
+which is this app's convention for a class-shown overlay and covers the next one for free.
+
+⚠️ **This means the first pass of the numbers in this document was itself contaminated** — most
+visibly `cr-est-picker` topping the "modules by spread" table with 7,956 records, which is not a
+dense module but one that was on screen for fifteen screens. Every figure below is from the
+re-run on the clean walker.
+
+**The gate no longer needs a list of what may legitimately be up.** It keys on FIRST
+APPEARANCE: an element on screen now that was already on screen under an earlier state's name is
+one nobody cleaned up. That is mechanism-agnostic, which matters because the three real leaks
+used three different mechanisms — `display` (the static modals), `transform` (`#navMenu` at
+`translateX(-320px)`), and `class` (`#cr-est-picker`). A rule keyed on any one would have missed
+the other two.
+
 **`scripts/gate_setupleak.mjs` is the new standing check** — every state must hand back the
-screen it names. Seen RED at 16 failures on the pre-fix tree, GREEN at 25/25 after. This is the
+screen it names. Seen RED on the pre-fix tree, GREEN at 25/25 after. This is the
 project's own rule: a class that recurs gets a check, not another paragraph. This one had bitten
 twice.
 
@@ -91,9 +122,23 @@ worth naming: when most things are bold, bold has stopped meaning "important".
 | `SF Mono` | 8 | 2 |
 
 `Segoe UI`, `Arial`, `-apple-system` and `system-ui` are four different ways of asking for
-"the system font". On the iPad they all resolve to San Francisco and the inconsistency is
-invisible; on a Windows desktop they diverge. **This is the kind of thing that only shows up on
-the machine you don't test on** — and Theo uses both.
+"the system font".
+
+⚠️ **CORRECTION — an earlier revision of this section had this exactly backwards.** It said the
+four resolve alike on the iPad and diverge on Windows. The opposite is true, and it matters
+because it changes which device shows the problem:
+
+| declared stack | sites | on iPadOS | on Windows |
+|---|---:|---|---|
+| `'Segoe UI',Arial,sans-serif` | **759** | Segoe UI is not installed → falls to **Arial** | **Segoe UI** |
+| `-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif` | 35 | **San Francisco** | falls through to Segoe UI |
+
+So on the iPad — the primary device — **759 sites render Arial and 35 render San Francisco, on
+the same screen.** On Windows they converge. The inconsistency is visible on the device it was
+claimed to be invisible on.
+
+*Stated as font-stack resolution, not as a render: this container has neither Segoe UI nor San
+Francisco installed, so iPadOS fallback cannot be reproduced here. Theo's device is the check.*
 
 `American Typewriter` is one module: the header tagline.
 
