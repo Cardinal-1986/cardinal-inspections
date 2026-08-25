@@ -177,6 +177,38 @@
   <button type="button" id="data-delegated" data-st-act="go">wired only through a document-level data hook</button>
 </div>
 
+<h2>GRADIENT BORDER — the ring must not be scored, but a plain gradient must</h2>
+<!-- Both cards carry dark-red text. The first uses the gradient-BORDER idiom:
+     a near-white fill clipped to padding-box under a red ring clipped to
+     border-box. Its text sits on the FILL and reads fine. The second is an
+     ordinary red gradient with no tighter layer, where the same ink genuinely
+     is unreadable and MUST still be caught — otherwise this fix would blind
+     the probe to every card in the app that paints a plain gradient. -->
+<div style="background-image:linear-gradient(160deg,rgb(250,248,247),rgb(255,255,255)),
+            linear-gradient(125deg,rgb(196,24,15),rgb(126,20,16));
+            background-clip:padding-box,border-box;border:2px solid transparent;
+            padding:14px;margin:10px 0">
+  <span class="st-gb-ring" style="color:rgb(143,22,32)">st-gradborder-ink must NOT be reported</span>
+</div>
+<div style="background-image:linear-gradient(125deg,rgb(196,24,15),rgb(126,20,16));
+            padding:14px;margin:10px 0">
+  <span class="st-gb-plain" style="color:rgb(143,22,32)">st-plaingrad-ink MUST still be reported</span>
+</div>
+
+<h2>OFF-CANVAS — a shut drawer must not be scored, but an OPEN one must</h2>
+<!-- Both carry the SAME unreadable ink on the same ground. The only difference
+     is where they sit. Asserted in both directions on purpose: a check that had
+     simply gone silent for every position:fixed element would pass the negative
+     half alone, and that is the shape of a check that cannot fail. -->
+<div id="offcanvas-drawer" style="position:fixed;top:0;left:0;width:320px;height:400px;
+     transform:translateX(-320px);pointer-events:none;background:#1e1113;z-index:5">
+  <span class="st-oc-hidden" style="color:#232326">st-offcanvas-ink must NOT be reported</span>
+</div>
+<div id="onscreen-panel" style="position:fixed;top:0;right:0;width:200px;height:60px;
+     background:#1e1113;z-index:5">
+  <span class="st-oc-shown" style="color:#232326">st-onscreen-ink MUST still be reported</span>
+</div>
+
 <script>
   /* Only the first button gets a handler. The second is BUG_CLASSES 16:
      drawn, enabled, and inert — the Studio Archive button, 614 to 632. */

@@ -39,16 +39,61 @@ globalThis.__sentinelProbe = () => {
      which are background-IMAGES, so an ancestor walk reading only
      backgroundColor sails straight past the card and reports the page behind
      it. Every gradient stop is a ground too. */
+  /* ⚠ A BORDER-BOX LAYER IS NOT A GROUND FOR TEXT — the gradient-BORDER idiom.
+     Found 25 Aug 2026 producing ten false INK failures on Cardinal Truth, a
+     screen the build log already records as rendering perfectly.
+
+     The idiom, straight off .cr-cth-owed:
+        background-image: linear-gradient(160deg, #faf8f7, #fff),   <- the FILL
+                          linear-gradient(125deg, #c4180f, #7e1410) <- the BORDER
+        background-clip:  padding-box, border-box
+
+     Layer 1 clips to padding-box and is the card's fill. Layer 2 clips to
+     border-box and paints ONLY the ring outside the padding edge. Text lives
+     inside padding-box, so it never sits on layer 2 — but this function
+     harvested every stop from every layer and the ink was scored against the
+     red border. Measured: it reported 1.15:1 where the true value against the
+     fill is 8.61:1.
+
+     ⚠ The build log records this exact fault being fixed once already
+     ("only layer 1, and skip it when it clips to border-box, 24 -> 0 on that
+     screen"). No backgroundClip handling exists anywhere in this probe, so
+     that fix is not here — it lived in a different rig and never made it into
+     the standing one. Prose does not survive; a check does.
+
+     Only skipped when some OTHER layer clips tighter. A lone border-box layer
+     is an ordinary background (border-box is the CSS default) and must still
+     count, or this would blind the probe to almost every card in the app. */
+  function splitLayers(s) {
+    /* top-level comma split — gradients contain commas of their own */
+    const out = []; let depth = 0, cur = '';
+    for (const ch of s) {
+      if (ch === '(') depth++;
+      else if (ch === ')') depth--;
+      if (ch === ',' && depth === 0) { out.push(cur); cur = ''; continue; }
+      cur += ch;
+    }
+    if (cur.trim()) out.push(cur);
+    return out;
+  }
   function paints(cs) {
     const list = [];
     const bc = parse(cs.backgroundColor);
     if (bc && bc.a > 0.01) list.push(bc);
     const bi = cs.backgroundImage || '';
-    if (bi && bi !== 'none')
-      for (const stop of (bi.match(/rgba?\([^)]+\)/g) || [])) {
-        const p = parse(stop);
-        if (p && p.a > 0.01) list.push(p);
-      }
+    if (bi && bi !== 'none') {
+      const layers = splitLayers(bi);
+      const clips = splitLayers(cs.backgroundClip || '').map(c => c.trim());
+      const someTighter = clips.some(c => c === 'padding-box' || c === 'content-box');
+      layers.forEach((layer, i) => {
+        const clip = (clips[i] !== undefined ? clips[i] : clips[clips.length - 1]) || 'border-box';
+        if (someTighter && clip === 'border-box') return;   /* a border ring, not a ground */
+        for (const stop of (layer.match(/rgba?\([^)]+\)/g) || [])) {
+          const p = parse(stop);
+          if (p && p.a > 0.01) list.push(p);
+        }
+      });
+    }
     return list;
   }
 
@@ -105,12 +150,44 @@ globalThis.__sentinelProbe = () => {
     for (const n of el.childNodes) if (n.nodeType === 3) t += n.nodeValue;
     return t.trim();
   }
+  /* ⚠ A CLOSED DRAWER IS NOT display:none — IT IS PARKED OFF-CANVAS.
+     Found 25 Aug 2026, and it had been manufacturing INK findings for a while.
+
+     #navMenu hides by transform:translateX(-320px) with pointer-events:none.
+     Measured on the states that reported findings (truth, insclients,
+     showcase, at 390px): rect.x = -320, width 320, #signOutBtn at x = -320 —
+     genuinely off screen, and the drawer's own background is DARK. Yet this
+     function returned true for all of it, so the walk scored the drawer's
+     light-era inks against a ground it does not paint on and reported eight
+     failures on four screens that render correctly.
+
+     This file's own setup already records the sibling trap ("clicking navBtn
+     on desktop opens a #navMenu that renders WHITE and that no desktop user
+     can ever reach, and scoring its light-era inks manufactures findings").
+     Same class, reached a different way — the menu did not have to be opened
+     at all.
+
+     ── WHY THE TEST IS SCOPED TO position:fixed ──
+     Off-canvas alone is not unreachable. A horizontal chip strip legitimately
+     parks items past the right edge and a user scrolls to them; dropping those
+     would blind FLOOR and INK to half a scroller. But a FIXED element is
+     positioned against the viewport, so if its box lies wholly outside, no
+     amount of scrolling brings it in. That is exactly a shut drawer, sheet or
+     off-canvas panel, and nothing else. */
+  function offCanvasFixed(el, r) {
+    if (r.right > 0 && r.left < window.innerWidth) return false;   /* on screen */
+    for (let n = el, hops = 0; n && hops++ < 40; n = n.parentElement) {
+      if (getComputedStyle(n).position === 'fixed') return true;
+    }
+    return false;
+  }
   function visible(el, r) {
     if (!r) r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) return false;
     const cs = getComputedStyle(el);
     if (cs.visibility === 'hidden' || cs.display === 'none') return false;
     if (parseFloat(cs.opacity) < 0.05) return false;
+    if (offCanvasFixed(el, r)) return false;
     return true;
   }
   function where(el) {

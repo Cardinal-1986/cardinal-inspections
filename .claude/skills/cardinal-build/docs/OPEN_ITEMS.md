@@ -3,6 +3,84 @@
 
 ---
 
+## Layer: 25 Aug 2026 (evening) — the design audit, and three walker leaks
+
+*Tooling and docs only. No `index.html` change, so no build number.*
+
+### ⚠ THE SENTINEL HAD BEEN MEASURING THE WRONG SCREENS — three leaks, three mechanisms
+
+`sentinel_setup_cardinal.js`'s `closeAll()` let overlays from one state sit over every
+state after it. Found by the design audit, then compounded: **the gate written for the
+first two leaks found the third.**
+
+| leak | how it hides | states it covered |
+|---|---|---|
+| `#projModal` / `#ckModal` / `#sigModal` (the nine static modals) | `display` | 12 of 25, from `newproject` on |
+| `#navMenu` + `#navBackdrop` | `transform` / `opacity` | every state after `nav` |
+| **`#cr-est-picker`** (Add-from-Library sheet) | **`class`** (`.open{display:flex}`) | **15 after `estlibrary`, covering the centre on 13** |
+
+Between them, **most of the walk**. ⚠️ **`closeDrawer()` had never worked**: it removed
+CSS classes, but the drawer module derives `open` from `menu.style.display === 'block'`
+inside a `sync()` that a MutationObserver re-runs every frame, so the classes returned on
+the next frame. This file's own banner recorded the drawer bleed as fixed — the bleed was
+real, the remedy could not have worked.
+
+**Fixed at the root**, each with the lever that matches its mechanism (`display` for the
+snapshot, `display` for the drawer as its own backdrop-click handler does, `class` for the
+picker — writing `display:none` onto a class-shown element is permanent damage). The
+build-1014 push nudge is staged out via the app's **own** dismissal key, not by hiding the
+element.
+
+**`scripts/gate_setupleak.mjs` is the new standing check.** It keys on **first
+appearance** — on screen now, first seen under an earlier state's name — so it needs no
+list of ids and no map of what may legitimately be up, and it is mechanism-agnostic.
+Seen RED on the pre-fix tree, GREEN at 25/25 after.
+
+⚠️ **Consequence for anything that cites a sentinel run before 25 Aug evening:** findings
+on the last twelve-to-fifteen states were measured through an overlay. The *"Cardinal
+Truth compositing artifacts"* from the morning run of 25 Aug are the likely example —
+`truth` is state 23.
+
+### The design audit — `CR_DESIGN_AUDIT_2026-08-25.md`
+
+New: `audit_design.mjs`, `audit_design_report.py`, `audit_design_shots.mjs`. Nothing in it
+is a bug; it measures dispersion, not correctness.
+
+### ⛔ THREE PICKS THEO OWES — do NOT build any of these blind
+
+Each is a real finding whose every fix is an aesthetic or layout decision:
+
+1. ✅ **SHIPPED at build 1065 — Theo said "do what you recommend".** The header tagline
+   truncated on every phone screen (`"Single sourc…"`). **Measured:** it needs **247px**;
+   the header's middle gets **150px** at 390px, and it fits only at **10px** — below 360px
+   at no readable size at all. Shrinking was therefore not an option and wrapping would
+   have added a second line to a fixed-height bar. It is now hidden below **438px** (the
+   measured threshold), **retail only** — the other CRMs carry a short CRM name there and
+   the 416 comment requires it never disappear. `gate_1065.mjs` 5/5, red on 1064.
+2. **Four spellings of the system font.** ⚠️ *An earlier revision of the audit had this
+   backwards.* On **iPadOS** `'Segoe UI',Arial,sans-serif` (759 sites) falls to **Arial**
+   while `-apple-system,…` (35 sites) renders **San Francisco** — two typefaces on the
+   same screen, on the primary device. On Windows they converge. Unifying is a
+   whole-app font change and wants his eye.
+3. **The half-pixel type scale.** 252 sites declare a decimal `font-size`; `12.5px` alone
+   is 66 sites and 2,760 rendered elements. Rounding changes rendered sizes app-wide, and
+   the direction (up or down) is a choice.
+
+### Fixed in my own instruments, recorded so they are not re-found
+
+- `audit_design.mjs` had a **silent cap** (`break` at 6000 elements, nothing recording it
+  fired). Never actually bit — largest single run kept 343 records — but it now reports.
+- The comment written for that fix contained **backticks** inside the PROBE template
+  literal and broke the file; `node --check` caught it, an `&& echo` had masked it.
+- A **closed drawer still has a full-size rect** (`#navMenu` at `translateX(-320px)`), so
+  the probe was harvesting an off-canvas menu as visible design. Filtered horizontally
+  only — vertically would discard every long page.
+- `page.screenshot()` **hangs on this app blaming fonts**; there is no `@font-face` and
+  `document.fonts` reports `loaded`/size 0. Playwright's stability wait never settles on a
+  continuously repainting page. CDP `Page.captureScreenshot` returns in ~91ms.
+
+---
+
 ## Layer: 25 Aug 2026 — builds 1060 and 1061, and the last pending migration
 
 - ✅ **`drop_ai_estimates.sql` is APPLIED (25 Aug, Theo's explicit yes).** It had been

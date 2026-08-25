@@ -25722,3 +25722,115 @@ so a "fix" that flattened the hierarchy into one weight would fail.
 
 No regression: `gate_1063` 6/6, `gate_1060` 6/6, `render_landingground` 12/12, `gate_1062`
 9/9. Byte-reproducible from main across all four patch scripts.
+
+## Build 1065 — the header slogan stops being cut off on a phone (25 Aug 2026)
+
+The first design-audit item Theo picked. The retail header's title is not a name — it is
+the slogan **"Single source of truth"**, American Typewriter 17px, `white-space:nowrap`
+over `#brandTitle h1{overflow:hidden;text-overflow:ellipsis}`. On a phone it rendered as
+**`"Single sourc…`** — the first text on every screen in the app, visibly cut off, and it
+appeared in all ten phone captures taken for the audit.
+
+### Shrinking it was not available, and that is measured
+
+| viewport | space it gets | it needs | largest size that fits |
+|---:|---:|---:|---|
+| 320 | 80px | 247px | **none ≥ 9px** |
+| 360 | 120px | 247px | **none ≥ 9px** |
+| 390 | 150px | 247px | 10px |
+| 414 | 174px | 247px | 12px |
+| 430 | 190px | 247px | 13px |
+| **438** | **247px** | 247px | **17px — it fits from here up** |
+
+10px American Typewriter bold at arm's length is worse than nothing, and below 360 there is
+no readable size at all. Wrapping was the other candidate and was rejected: two lines of
+17px adds ~22px to a fixed-height bar, spending vertical room on the screen that has least.
+
+So: shown where it fits, absent where it does not. A truncated slogan reads as a broken
+app; an empty middle reads as a clean toolbar, and the burger, +, home and search still
+fill the bar.
+
+### The breakpoint is 437, chosen AGAINST the tidier option
+
+The exact threshold, measured at 1px resolution, is **438**. Reusing the existing 480
+breakpoint family was tempting — the audit had just criticised the app's 22 scattered
+breakpoints — but 479 would hide the slogan across 438–479, and **an iPhone 16 Pro Max is
+440pt wide**, where it fits. Hiding something that fits, on a real device, to avoid adding
+a breakpoint is the wrong trade.
+
+### ⚠ Scoped to retail, and that is load-bearing
+
+`#brandTitle` carries the **CRM name** in the other CRMs — short words that fit — and the
+416-era comment in the same stylesheet forces the title visible because *"it must never
+disappear."* A fix that hid `#brandTitle` globally would have looked perfect on every
+retail screen and quietly removed the title from Insurance and Community. **`gate_1065.mjs`
+checks exactly that**, and asserts `data-crm-head` actually changed first, so the check
+cannot pass vacuously.
+
+The rule also has to BEAT `#cr-hd2-mid #brandTitle{display:block !important}` in a **later**
+stylesheet. Later source order wins at equal specificity; this wins on specificity (3 ids +
+attribute + type against 2 ids). **Only a real engine settles that** — build 481 is the
+class where a rule parsed, balanced and never won with every mechanical gate green.
+
+**Gates:** `check_build.py` green, 1064 → 1065, marker + negative control · byte-reproducible
+from a clean tree · `gate_1065.mjs` **5/5**, and **red on 1064** at exactly the
+discriminating check (`display is "block"`).
+
+⚠️ **One gate fault caught and fixed in the gate, not the app:** the two CRM checks printed
+the h1's text, which is still *"Single source of truth"* because `skin()` only re-renders it
+on a real CRM change. Printing it implied the CRM name had rendered when it had not — an
+honest-labels failure in a passing gate.
+
+## Build 1066 — the Photo Album reads in light mode (25 Aug 2026)
+
+**The first real app defect the design-audit work surfaced**, and it had been
+invisible to the instrument rather than to the eye.
+
+In light mode the Photo Album lost the **client's name** and its **entire
+explanatory paragraph** — both `#fff` on `#f7f7f7`, **1.07:1**. Not faint.
+Invisible. The screen keeps its buttons and chips, so it reads as a screen that
+simply carries less text.
+
+### ⚠ Why nobody had seen it: the sentinel had never scored this screen
+
+`album` is state **19** of the 25-state walk, and states 13 onward were being
+probed through the checklist modal and then the estimate-library picker — both
+fixed earlier the same day. Twelve-to-fifteen screens were being measured
+through an overlay. This is what was underneath one of them.
+
+### Measured, both themes, against the composited ground
+
+| | dark `#09090C` | light `#f7f7f7` |
+|---|---|---|
+| `#galClient` now | 19.89:1 ok | **1.07:1 FAIL** |
+| → `--rbe-head` | 19.89:1 ok | **16.89:1 ok** |
+| `.subnote` now | 19.89:1 ok | **1.07:1 FAIL** |
+| → `--rbe-ink` | 13.58:1 ok | **16.89:1 ok** |
+| `.galempty` now | 5.76:1 ok | **3.22:1 FAIL** |
+| → `--rbe-mute` | 7.55:1 ok | **4.97:1 ok** |
+
+**Every replacement is an existing token PAIR** (`--rbe-head` `#ffffff`/`#161616`,
+`--rbe-ink` `#cfd6df`/`#161616`, `--rbe-mute` `#9aa0a8`/`#6b6b6b`). No colour
+was invented. Build 527 is the precedent against a computed literal: correct for
+dark, applied unconditionally, broke light at 2.30:1. A pair cannot drift. Each
+carries a literal fallback per the 448–449 rule.
+
+⚠️ **One of the three is an INLINE style** — `#galClient` is
+`style="color:#fff"` in static markup, so no theme block could ever have reached
+it. That is the `styleMounts()` class: tokens read correctly, screen paints the
+old colour.
+
+### ⚠ I nearly dismissed this finding by checking the wrong theme
+
+The sentinel tagged it `rb-light`. I compared it against a **dark** screenshot,
+saw white-on-dark rendering perfectly, and started writing it up as a false
+positive. The ancestor walk is what caught me: `body` is `rgb(9,9,12)` in dark
+and `#f7f7f7` in light, and `rgb(247,247,247)` only exists in the theme I had
+not looked at. **`gate_1066.mjs` checks both themes for exactly this reason** —
+a one-theme gate would have "confirmed" the fix on the theme that was never
+broken.
+
+**Gates:** `check_build.py` green, 1065 → 1066, marker + negative control ·
+byte-reproducible · `gate_1066.mjs` **6/6 across both themes**, and on 1065 it
+is **red on all three light checks and green on all three dark ones** — the
+cleanest discrimination of the session · light-mode render confirmed by eye.

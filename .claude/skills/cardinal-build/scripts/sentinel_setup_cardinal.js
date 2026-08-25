@@ -51,6 +51,26 @@
     if (window.__sentinelTheme === 'rb-light') localStorage.setItem('cardinal.theme.rb', '1');
   } catch (e) {}
 
+  /* ⚠ THE PUSH NUDGE IS TIME-BASED, NOT STATE-BASED, AND IT POISONS A LONG WALK.
+     Build 1014's bar (#crPushNudge) shows ONCE per device to a signed-in user
+     who has never been asked. It is position:fixed near the bottom and it
+     arrives on a retry timer roughly five seconds after boot — so in a walk of
+     twenty-five screens it appears partway through and then sits over EVERY
+     screen after that. Measured: it first showed at state 6 and was on screen
+     for the remaining nineteen.
+
+     That is not a leak in the walk and it is not a defect in the app — it is a
+     dismissible bar doing exactly what it was built to do. But a sweep should
+     represent the ordinary case, and the ordinary case is a user who has
+     already answered it once. Setting the app's OWN dismissal key is how a
+     returning device looks, so this stages a real configuration rather than
+     suppressing an inconvenient one.
+
+     Deliberately NOT done by hiding the element: the key is the app's own
+     mechanism, and a rig that reaches past a feature's state into its DOM is
+     the staged-impossible-configuration trap this file already warns about. */
+  try { localStorage.setItem('cr-push-nudge-dismissed', '1'); } catch (e) {}
+
   /* SENTINEL_AS=scottie sweeps as Curtis/Scottie's production role instead of
      admin. Read from the page URL so it can be driven without editing a file. */
   try {
@@ -247,9 +267,40 @@
      first run reported four contrast failures that were really one screen
      bleeding into three others. A state must hand back the screen it names. */
   function closeDrawer() {
-    document.body.classList.remove('cr-drawer-open', 'cr-drawer-lift');
+    /* ⚠ THIS USED TO REMOVE CLASSES, AND THAT NEVER WORKED — found 25 Aug 2026.
+       The drawer module does not keep an `open` flag; sync() DERIVES it, every
+       time, straight from the DOM:
+
+           function sync(){
+             var open = menu.style.display === 'block' && isDrawer();
+             menu.classList.toggle('cr-drawer-open', open);
+             bd.classList.toggle('on', open);
+           }
+
+       and sync() is re-run by a MutationObserver on #navMenu behind a
+       requestAnimationFrame. So stripping the classes was undone on the very
+       next frame, with `display` still 'block'. The classes came back, the
+       backdrop came back, and closeDrawer() returned cleanly having done
+       nothing that survived a frame.
+
+       That is why gate_setupleak still found navBackdrop over five states
+       AFTER the modal fix: nav (state 10) opens the drawer and nothing since
+       has genuinely shut it.
+
+       ⚠ It also means the drawer-bleed this file's own banner records as fixed
+       was only HALF fixed. The banner is right that the bleed was real and
+       right about what it cost; the remedy it describes could not have worked.
+
+       The lever must match the mechanism (CLAUDE.md, hideAllViews()): this
+       screen is shown by `display`, so it is closed by `display` — and by
+       exactly the line the app's own backdrop-click handler uses:
+           bd.addEventListener('click', function(){ menu.style.display='none'; });
+       Setting display lets sync() recompute open=false and retract the
+       classes and the backdrop ITSELF, which is why nothing here needs to
+       touch either one. */
     var m = document.getElementById('navMenu');
-    if (m) m.classList.remove('open', 'show');
+    if (m) m.style.display = 'none';
+    document.body.classList.remove('cr-drawer-open', 'cr-drawer-lift');
   }
   /* ⚠ 992: hideAllViews() does NOT know about these two. Both were brace-match
      checked against the shipped function and neither name occurs in it, and
@@ -268,9 +319,125 @@
   function closeStragglers() {
     try { if (window.CardinalLineItems  && window.CardinalLineItems.close)  window.CardinalLineItems.close();  } catch (e) {}
     try { if (window.CardinalPhotoEditor && window.CardinalPhotoEditor.close) window.CardinalPhotoEditor.close(); } catch (e) {}
+    closeRestOverlays();
+  }
+
+  /* ⚠ THE SAME BUG AS THE DRAWER ABOVE, AND IT SURVIVED THE DRAWER'S FIX.
+     Found 25 Aug 2026 by the design audit, measured not guessed:
+
+       screen        ckModal projModal  white-bg elements visible
+       newproject    false   TRUE                8
+       checklist     TRUE    TRUE               40
+       signature     TRUE    TRUE               42
+       … and TRUE/TRUE for all ten states after it, to showcase (25th)
+
+     `hideAllViews()` does not know about the nine `display:none;position:fixed`
+     overlays in static markup (#projModal #ckModal #gcModal #leadModal
+     #leadFormModal #apptModal #sigModal #tskModal #qiWhoModal), and neither
+     did this file. So from state 13 onward EVERY screen was probed with the
+     checklist modal — a white card, 40+ light-era elements — sitting over it.
+     Twelve of twenty-five states were not swept at all; they were the
+     checklist wearing another screen's name.
+
+     That is almost certainly what produced the "Cardinal Truth compositing
+     artifacts" in the 25 Aug sentinel run: `truth` is state 23, deep inside
+     the contaminated range, and the white ground being scored was never on
+     that screen.
+
+     ── WHY THIS IS A SNAPSHOT AND NOT A LIST OF IDS ──
+     A hardcoded list of nine rots silently the moment a tenth modal ships —
+     the sweep keeps passing and quietly stops covering it, which is this
+     project's most expensive failure shape (a check that cannot fail).
+     So: before any state runs, record every position:fixed element that the
+     app itself leaves display:none AT REST. Those are exactly its dismissable
+     overlays, by the app's own definition. Restoring them is a revert to the
+     rest state, never a new opinion about what should be hidden.
+
+     ⚠ It must be display, not a class. CLAUDE.md: writing display:none onto a
+     CLASS-shown element is permanent damage — its own open path never clears
+     the inline style, so the screen is dead on the second visit. Every element
+     in this snapshot was inline-display:none to begin with, so setting it back
+     is the one safe lever, and it is the same one the app's own Cancel buttons
+     pull (`ckModal.style.display = 'none'`). */
+  var REST_HIDDEN = null;
+  function snapshotRestOverlays() {
+    REST_HIDDEN = [];
+    var all = document.body ? document.body.querySelectorAll('*') : [];
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i], cs = getComputedStyle(el);
+      if (cs.position === 'fixed' && cs.display === 'none') REST_HIDDEN.push(el);
+    }
+    return REST_HIDDEN.length;
+  }
+  function closeRestOverlays() {
+    if (!REST_HIDDEN) return;
+    for (var i = 0; i < REST_HIDDEN.length; i++) {
+      try { if (getComputedStyle(REST_HIDDEN[i]).display !== 'none') REST_HIDDEN[i].style.display = 'none'; } catch (e) {}
+    }
+    closeClassShownOverlays();
+  }
+
+  /* ⚠ THE REST SNAPSHOT CANNOT SEE AN OVERLAY THAT DOES NOT EXIST YET, and the
+     worst leak in the walk was exactly that one. Found 25 Aug 2026, AFTER the
+     modal fix, by the gate written for the modal fix:
+
+       #cr-est-picker — absent from the DOM at rest, built when the estimates
+       Add-from-Library sheet is first opened. position:fixed, inset:0,
+       z-index:9510, 390x844. Opened by the 'estlibrary' state and then ON
+       SCREEN for all fifteen states after it, COVERING the centre of the
+       screen on thirteen of them (elementFromPoint at the centre lands inside
+       it). Measured, not inferred.
+
+     So twelve states were being measured through the checklist modal and then
+     thirteen more through the estimate library picker. Between them that is
+     most of the walk.
+
+     ⚠ IT MUST BE CLOSED BY ITS CLASS, NEVER BY display. The rule is
+     `#cr-est-picker.open{display:flex}` over a base `display:none`, and
+     CLAUDE.md is explicit that writing display:none onto a CLASS-shown element
+     is permanent damage — its own open path only adds the class back and never
+     clears an inline style, so the screen is dead on the second visit.
+     `closePicker()` itself is `picker.classList.remove('open')`; this does the
+     same thing, generically.
+
+     `.open` on a position:fixed element is this app's convention for a
+     class-shown overlay (cr-sf, cr-pb, cr-est-view all use it), so keying on
+     the convention rather than on a list of ids means a new one is covered the
+     day it ships. Removing a class is always reversible; that is why this is
+     safe to apply broadly. */
+  function closeClassShownOverlays() {
+    var open = document.querySelectorAll('.open');
+    for (var i = 0; i < open.length; i++) {
+      try {
+        if (getComputedStyle(open[i]).position === 'fixed') open[i].classList.remove('open');
+      } catch (e) {}
+    }
+  }
+  /* The backdrop is not display-toggled — it is opacity + pointer-events via
+     .on, so it never enters the snapshot and never left with the drawer. */
+  function closeBackdrop() {
+    var bd = document.getElementById('navBackdrop');
+    if (bd && bd.classList) bd.classList.remove('on');
   }
   function closeAll() {
+    /* Taken on the FIRST closeAll — i.e. at the top of state 1 ('home'),
+       where the app is provably at rest (the leak probe that found this bug
+       reports ckModal false, projModal false, 0 white elements there). Any
+       later snapshot would bake an already-open modal in as "hidden at rest"
+       and the mechanism would silently exclude the one thing it exists for. */
+    if (REST_HIDDEN === null) {
+      var n = snapshotRestOverlays();
+      /* ⚠ A snapshot of zero disables this silently and every later sweep
+         still reports a tidy CLEAN. The app ships nine such overlays in static
+         markup; a handful is the floor, and being wrong loudly is the point. */
+      if (n < 5) throw new Error(
+        'overlay snapshot found only ' + n + ' fixed+hidden elements (expected ~9: ' +
+        'projModal, ckModal, gcModal, leadModal, leadFormModal, apptModal, sigModal, ' +
+        'tskModal, qiWhoModal). Either the walk started somewhere other than rest, ' +
+        'or the modal family changed shape — do not sweep until this is understood.');
+    }
     closeDrawer();
+    closeBackdrop();
     closeStragglers();
     try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (e) {}
   }
