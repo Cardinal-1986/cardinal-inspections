@@ -3,7 +3,22 @@
 
 ---
 
-## Layer: 25 Aug 2026 — builds 1060 and 1061
+## Layer: 25 Aug 2026 — builds 1060 and 1061, and the last pending migration
+
+- ✅ **`drop_ai_estimates.sql` is APPLIED (25 Aug, Theo's explicit yes).** It had been
+  the ONLY pending migration of the 83 at the repo root — everything else was already
+  applied, re-verified against the live database rather than read off a doc. The
+  automated apply was declined on 24 Aug because it drops FK constraints on the live
+  `contracts` and `insurance_claims` tables; that caution was right, and the check
+  after applying is what discharges it: **both columns still exist, `insurance_claims`
+  still holds its 5 rows, `estimates` its 18.** A `DROP CONSTRAINT` cannot remove rows,
+  so `contracts` reading 0 is its pre-existing state, not damage.
+  ⚠️ **Do not run it again — it is deliberately not idempotent**, so a repeat fails
+  loudly. The advisor's two orphan-trigger warnings cleared with it.
+
+- ⚠️ **Still open, and only Theo can do them:** public signup OFF and leaked-password
+  protection ON, both Supabase Auth dashboard toggles. The advisor confirms
+  `auth_leaked_password_protection` is **still disabled** as of 25 Aug.
 
 - ✅ **`placeOrder`'s body shape is FIXED at 1061** — it was a bare object, ABC
   documents an array. Field names taken from ABC's verbatim example, refusals rather
