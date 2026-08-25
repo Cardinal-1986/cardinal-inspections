@@ -25925,3 +25925,75 @@ collision I shipped twice in one day.
 total debt, not a regression list** (no `--since`). Build 1066's fix held:
 `#galClient` and `.galempty` are absent. The 14 INK are triaged in
 `OPEN_ITEMS.md` and are **not** started — they are a build, and Theo picks.
+
+---
+
+## Build 1067 — three inks themed by CRM instead of by theme
+
+Theo, 25 Aug: *"Fix the three CRM-scoped inks."* Client profile and leads pane,
+light mode only. **Dark is unchanged — 12.71 / 11.61 / 5.48 before and after.**
+
+| site | dark | light before | light after | the colour used |
+|---|---:|---:|---:|---|
+| `b.db-paid` "$0.00" | 12.71 | **2.50** | **5.84** | `#46701E` — insurance's docket green |
+| `a.dbmdir` "Directions ↗" | 11.61 | **2.45** | **7.87** | `#b9d3ec` — `--rbe-acclt`'s own dark value |
+| `.ljsummary h3` "Job Summary" | 5.48 | **3.51** | **5.67** | `#c8202e` — the app's `--red` |
+
+**No colour was invented.** Every replacement already existed in the file. That
+was the condition for doing this as one build rather than a design round.
+
+### The root cause is one mistake made three times
+
+In all three the correct colour was written and attached to the wrong axis —
+`body.claim-insurance`, or `:root:not([data-theme="rb-light"])` with no light
+twin. CLAUDE.md names it: *scoping by CRM is not scoping by theme*, build 527.
+
+- **`.dbmdir`** — the fix was already spelled out in a comment three lines
+  above, for insurance: *"the map tab bar paints rgba(16,18,24,.85) and is
+  therefore ALWAYS dark … a fixed light red is correct here precisely because
+  the bar does not flip."* That reasoning is CRM-independent. Retail's base rule
+  used `var(--rbe-acclt)`, which flips to `#4f7396` — a dark blue on a bar that
+  stayed dark. Pinned to the token's own dark value.
+- **`.db-paid`** — retail dark restyles the whole money card under
+  `:root:not([data-theme="rb-light"])` and **no light twin was ever written**.
+  `.db-due` survives the same fall-through only by luck: its base `#C8202E`
+  reads 5.67 on white. `.db-paid`'s base was chosen for a dark ground.
+- **`.ljsummary h3`** — needed a **pair**: `#e35c63` is 5.48 dark / 3.51 light,
+  `#c8202e` is 5.67 light / 3.40 dark. Build 527 exactly — either one applied
+  unconditionally fixes one theme by breaking the other.
+  ⚠ Its ink was **inline**, so `.ljsummary h3{color:#1c1416}` had been sitting
+  there **DEAD** (the sentinel reports it under OVERRIDDEN). Removing the inline
+  colour fixed the contrast *and* retired the dead rule — one defect, not two.
+  Only `color:` left the attribute; `margin:0 0 6px` stays, so nothing moved.
+
+### ⚠ My first measuring rig reported all three as PASSING, in both themes
+
+It set `data-theme` but not `window.__sentinelTheme`, so
+`cr-rbtheme-toggle-script` stripped the attribute at boot and the "light" run
+was **a second dark run wearing a light name**. `sentinel_setup_cardinal.js`
+warns about this in a comment I had not read.
+
+**The tell was in the output the whole time:** a rule scoped
+`:root:not([data-theme="rb-light"])` — dark ONLY — was listed as the winner in
+the supposedly-light run. I nearly wrote all three up as false positives.
+
+`gate_1067.mjs` therefore treats a run whose `data-theme` is not what was asked
+for as a **FAILURE**, not a pass. A gate that cannot say which theme it measured
+is worse than no gate.
+
+### ⚠ And it read `.dbmdir` 1.3 points too generously
+
+The map tab bar is `rgba(16,18,24,.85)` — **not opaque**. Over the light page it
+composites to `#34363b`. Scoring against the raw rgba gives 3.77:1; the true
+value is **2.45:1**. The sentinel composited correctly; my throwaway rig did
+not. `gate_1067.mjs` now walks every painted layer and composites back-to-front,
+and reproduces the sentinel's ground exactly (`rgb(52,54,59)`).
+
+**Gates:** `check_build.py` GREEN, 1066 → 1067, marker + negative control ·
+**byte-reproducible** (re-applied to a clean 1066 tree, `cmp` identical) ·
+33 insertions / 6 deletions, every removal accounted for ·
+`gate_1067.mjs` **15/15**, and on 1066 it is **red on all six light checks and
+green on all nine dark-and-fence checks** — the discrimination is total ·
+three source fences assert insurance's own pins (`#46701E`, `#FF8A80`) and
+`.db-due` are untouched, because this build reuses those *values* in retail and
+must not disturb their *rules*.
