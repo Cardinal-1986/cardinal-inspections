@@ -26083,6 +26083,84 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1072 — every AI answer records which model wrote it
+
+Theo, after the audit: *"1, 2, then 3."* This is 2.
+
+### The problem, measured across the routes
+
+Twelve routes send photographs to a model. Every one ladders gemini →
+`gpt-4o-mini`, and the historical measurement (500–501) is that Gemini **503'd
+about one call in four**. So a quarter of the time the answer on Theo's screen
+was written by the smallest model in the stack — and **nothing said so.**
+
+| route | reported before |
+|---|---|
+| `detect.js` | `via` = the model NAME ✅ **already right — this is the shape** |
+| `sortphotos.js` | `viaGemini`/`viaOpenAI` counts ✅ per placement, left alone |
+| `supplement.js` | `via` = `'gemini'` \| `'openai'` ⚠ loses WHICH gemini |
+| `caption.js` | `via` only when OpenAI answered ⚠ silence is ambiguous |
+| `analyze.js` | ⚠ same |
+| `summarize.js` | ❌ nothing — and 1070 had just wired the checklist into it |
+
+⚠️ **And none of it reached a screen.** Measured: `via` was returned by four
+routes and read by **zero** call sites in `index.html` or `supplement.html`.
+The single grep hit is a CSS class. It was computed, serialised and discarded.
+
+This is the Visualizer's lesson (829, `achieved._worker`) applied to the AI
+routes: *"which code produced this?"* cost three rounds in one night until it
+became a field. **Provenance is a query, never an argument.**
+
+### Two fields, and the second is what makes it usable
+
+`via` — the model that answered. `via_primary` — the model asked first.
+
+A client can then tell the intended path from a fallback **without hardcoding
+any ladder**, which matters because the ladders are **not uniform** (detect,
+sortphotos and supplement lead with 3.6; caption, analyze and summarize are
+pinned to 3.5) and **this build changes none of them.** Which model should lead
+is exactly what the bake-off is for; reporting must not pre-empt it. Asserted in
+both directions — check C proves every ladder is byte-identical.
+
+### ⚠ The screen says nothing when nothing is wrong
+
+Build 808 exists because a perfectly accurate grey chip told nobody anything,
+and its rule is explicit: say *why*, and say nothing at all when there is
+nothing wrong — crying wolf trains people to ignore the banner. So the note
+appears **only when `via !== via_primary`**. On the intended path both screens
+are byte-identical to 1071. `viaNote()` is executed by the gate on three inputs
+(match, mismatch, and an older route sending neither) precisely to prove the
+silence, not just the speech.
+
+### ⚠ TWO GATE BUGS, AND ONE NEARLY BECAME A FALSE BUG REPORT
+
+- **`analyze.js` answered 500 on the fallback path** and I was one step from
+  filing it. **The rig was wrong.** A real Gemini 503 carries a JSON body and
+  `analyze.js` reads `j.error.message` from it; my stub had `text()` but no
+  `json()`, so the route threw and the catch answered 500. Probed the shipped
+  handler directly with a realistic stub: **200, `via: gpt-4o-mini`,
+  `via_primary: gemini-3.5-flash`** — correct all along.
+- **`B2`'s regex was nonsense** — `/o.*gpt-4o-mini/` needs an `o` before the
+  match and *"read by gpt-4o-mini"* has none. The output was right; the
+  assertion was not.
+
+CLAUDE.md: about half of all reds on this project were the test's fault, and
+the rule is fix the test, never bend the artifact. Both were the test.
+
+⚠️ **The control tree needed `api/_staff.js` and `api/package.json` beside the
+routes** — BUG_CLASSES 37, the same crash that ate six checks in 1070. Built
+properly this time, the three routes **import** on the control and report
+`via=undefined`, which is a real red rather than a dead one.
+
+**Gates:** `check_build.py` green (stamp **1070 → 1072**, correctly skipping
+1071 which never touched `index.html`; **summary rewritten**, the check 1070
+added) · `check_artifact.py` green (`SD_BUILD` 1071 → 1072) · `node --check` on
+all five routes · **all seven files byte-reproducible** · `gate_1072.mjs`
+**14/14**, with three routes **executed as shipped on both the Gemini and the
+503 path**, and **9 red on a pre-1072 control** · sentinel `--since 1071`.
+
+---
+
 ## Build 1071 — the Desk sends every photograph, and the right one
 
 Theo asked which AI is best at spotting issues in photographs. The honest

@@ -577,7 +577,10 @@ export default async function handler(req, res) {
     }
 
     /* ── the ladder: models x json-mode, 503/429 pause, budget-guarded ────── */
-    let ans = null, via = 'gemini', lastBody = null, lastText = '';
+    /* 1072: the model NAME, not the vendor. 'gemini' cannot tell 3.6 from
+       3.5, and those are different model tiers — exactly the distinction
+       somebody asking "why did it miss that" needs. */
+    let ans = null, via = GEMINI_MODELS[0], lastBody = null, lastText = '';
     outer:
     for (const model of GEMINI_MODELS) {
       for (const jsonMode of [true, false]) {
@@ -600,7 +603,7 @@ export default async function handler(req, res) {
         const j = await r.json();
         lastBody = j;
         if (!r.ok) continue;
-        via = r._via === 'openai' ? 'openai' : 'gemini';
+        via = r._via === 'openai' ? 'gpt-4o-mini' : model;
         const cand = (j.candidates || [])[0] || {};
         lastText = ((cand.content || {}).parts || []).map(p => p.text || '').join('')
           .replace(/```json|```/g, '').trim();
@@ -637,7 +640,7 @@ export default async function handler(req, res) {
         photos_used: photosUsedOut,
         photo_bytes: photoBytes,
         photos_capped_by: photoCap,
-        diag: { via, docBytes, photoBytes, ms: elapsed() }
+        diag: { via, via_primary: GEMINI_MODELS[0], docBytes, photoBytes, ms: elapsed() }
       });
     } else {
       const letter = String(ans.letter_html || '');
@@ -677,7 +680,7 @@ export default async function handler(req, res) {
         letter_html: letter,
         dollar_flag,
         cite_flag,
-        diag: { via, ms: elapsed() }
+        diag: { via, via_primary: GEMINI_MODELS[0], ms: elapsed() }
       });
     }
   } catch (err) {

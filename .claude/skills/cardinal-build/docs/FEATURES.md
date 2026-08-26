@@ -7057,3 +7057,36 @@ nothing.
 **Gates:** `check_artifact.py` (the mechanical ladder for the five artifacts
 `check_build.py` does not see) · `gate_1071.mjs` — 13 checks, three of which
 execute the shipped loop and the shipped mapping rather than a copy.
+
+### Model provenance on every AI route (1072)
+
+Every AI route returns two fields on its success path:
+
+| field | what |
+|---|---|
+| `via` | the model that actually answered — `gemini-3.6-flash`, `gemini-3.5-flash` or `gpt-4o-mini` |
+| `via_primary` | the model the route asked **first** |
+
+**The pair is the point.** A client compares them and knows whether it got the
+intended path or a fallback, **without hardcoding any ladder** — and the ladders
+are deliberately not uniform: `detect`, `sortphotos` and `supplement` lead with
+**3.6**; `caption`, `analyze` and `summarize` are pinned to **3.5**.
+
+⚠️ **1072 changed no ladder, and nothing should until the accuracy bake-off
+decides.** Reporting must not pre-empt the measurement. `gate_1072.mjs` check C
+asserts every ladder is byte-identical.
+
+⚠️ **The screens say it ONLY when `via !== via_primary`.** Build 808's rule: a
+correct banner nobody needs trains people to ignore the ones they do. On the
+intended path the Desk note and the report drafter's flash are unchanged.
+`viaNote()` in `supplement.html` is the one place that comparison lives; the
+gate executes it on match, mismatch **and** a partial diag from an older route
+(which must stay silent rather than print "undefined").
+
+**Where it shows:** the Supplement Desk's analyze note, and the inspection
+report drafter's `savedFlash`. Everywhere else the field is in the response and
+unread — deliberately, so the answer exists when someone asks.
+
+**Historical reason this matters:** builds 500–501 measured Gemini 503ing about
+**one call in four**. A quarter of all answers were written by the smallest
+model in the stack, and nothing said so.

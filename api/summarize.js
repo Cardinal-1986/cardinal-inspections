@@ -156,6 +156,7 @@ export default async function handler(req, res) {
          'are given. Do not invent details not supported by what you were given. ' +
          'No preamble, just the paragraph.\n\n' + evidence);
 
+    let via = 'gemini-3.5-flash';
     let geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
       {
@@ -171,7 +172,10 @@ export default async function handler(req, res) {
     );
 
     /* 502: Google refusing is no longer the end of the road. */
-    if (!geminiRes.ok) geminiRes = await aiFallback([{ text: prompt }], geminiRes);
+    if (!geminiRes.ok) {
+      geminiRes = await aiFallback([{ text: prompt }], geminiRes);
+      if (geminiRes && geminiRes._via === 'openai') via = 'gpt-4o-mini';
+    }
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
@@ -187,7 +191,12 @@ export default async function handler(req, res) {
       return;
     }
 
-    res.status(200).json({ summary });
+    /* 1072: which model actually answered, and which one was asked first.
+       The pair is the point — a client can tell the intended path from a
+       fallback without knowing this route's ladder, and the ladders are not
+       uniform. Copied from api/detect.js, which has reported the model NAME
+       since it shipped and is the shape the others should have had. */
+    res.status(200).json({ summary, via, via_primary: 'gemini-3.5-flash' });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }

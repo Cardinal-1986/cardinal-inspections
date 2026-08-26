@@ -431,6 +431,7 @@ export default async function handler(req, res) {
       dropped_by: dropped_by,           // which path took them — 0 everywhere is a real answer
       collect: collect || undefined,    // so a collected record says how it was gathered
       via: via,
+      via_primary: GEMINI_MODELS[0],   /* 1072: so a fallback is visible */
       /* Echoed so the client can detect deploy skew against its own copy of the
          vocabulary, the way cr-sortvocab-script does with sortphotos. */
       vocab: { severities: SEVERITIES, defects: DEFECT_KEYS }

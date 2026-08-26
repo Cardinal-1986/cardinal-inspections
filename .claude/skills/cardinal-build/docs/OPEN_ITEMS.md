@@ -38,6 +38,25 @@
 - **`photo_index` maps through `photos_used`.** See BUG_CLASSES 67. Do not
   "simplify" it back to a direct index.
 
+### Settled — model provenance (1072)
+
+- **Every AI route returns `via` + `via_primary`.** The pair, not just `via`, so
+  no client hardcodes a ladder.
+- **The screens speak only on a fallback.** Build 808's rule. Do not "improve"
+  this into an always-visible chip.
+- **No ladder changes until the bake-off says so.** 1072 reports; it does not
+  decide. `gate_1072.mjs` check C enforces this.
+
+### Open — the accuracy bake-off (item 3, not started)
+
+The question Theo actually asked — *which AI is best at spotting issues from
+photos* — is still unanswered, and **no measurement of accuracy exists on this
+project**. Every model decision (500–505, 806, and 1072) was made on latency,
+uptime or reporting. The plan: 20–30 photographs where Theo already knows the
+damage, each model scored against his answers. 1071 and 1072 are the
+prerequisites — the right photographs now reach the model, and the answer
+records which model wrote it.
+
 ### Open, with the measurement attached
 
 | | |

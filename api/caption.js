@@ -134,7 +134,8 @@ export default async function handler(req, res) {
       diag.openai = o.status;
       if (o.ok) {
         const cap = oj?.choices?.[0]?.message?.content?.trim();
-        if (cap) { res.status(200).json({ caption: cap, via: 'openai' }); return; }
+        if (cap) { res.status(200).json({ caption: cap, via: 'gpt-4o-mini',
+                                          via_primary: 'gemini-3.5-flash' }); return; }
       } else {
         diag.openai_error = (oj?.error?.message || '').slice(0, 160);
       }
@@ -151,7 +152,12 @@ export default async function handler(req, res) {
       data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
       '[Caption — describe what this photo shows.]';
 
-    res.status(200).json({ caption });
+    /* 1072: name the model on the SUCCESS path too. Reporting only the
+       fallback made silence ambiguous — Gemini answered, or an older
+       deploy is running? A field that appears only on failure cannot
+       distinguish those, which is most of what it was needed for. */
+    res.status(200).json({ caption, via: 'gemini-3.5-flash',
+                           via_primary: 'gemini-3.5-flash' });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }

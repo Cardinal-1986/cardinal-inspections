@@ -1,6 +1,6 @@
 <!--
   ═══════════════════════════════════════════════════════════════════════════
-  THE SUPPLEMENT DESK · supplement.html · build 1071 (26 Aug 2026)
+  THE SUPPLEMENT DESK · supplement.html · build 1072 (26 Aug 2026)
   (the Desk shipped at build 668 · 10 Aug 2026; the evidence table landed at 1055)
   ═══════════════════════════════════════════════════════════════════════════
 
@@ -307,7 +307,7 @@
   <header class="sd-hd">
     <span class="wordmark">Cardinal</span>
     <span class="ttl">Supplement Desk</span>
-    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1071</span>
+    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1072</span>
     <span class="sp"></span>
     <a class="sd-back" id="homeLink" href="/" title="Back to the Cardinal app">&larr; Cardinal</a>
     <button id="themeBtn" type="button">Theme</button>
@@ -467,7 +467,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
-var SD_BUILD = 1071; window.SD_BUILD = SD_BUILD;
+var SD_BUILD = 1072; window.SD_BUILD = SD_BUILD;
 /* Same publishable anon key api/*.js falls back to — public by design. */
 var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -1014,6 +1014,16 @@ async function analyze(){
   el('analyzeBtn').disabled = false;
 }
 
+/* 1072: which model wrote this answer, said ONLY when it is not the model the
+   route asked for first. `via` and `via_primary` come back on every AI route
+   now; comparing them here means this file hardcodes no ladder of its own, so
+   a route that changes which model leads needs no change here. */
+function viaNote(diag){
+  if(!diag || !diag.via || !diag.via_primary) return '';
+  if(diag.via === diag.via_primary) return '';
+  return ' — read by ' + diag.via + ', not ' + diag.via_primary;
+}
+
 /* 1071: what the MODEL gets — 1600px, quality 85, the same rendition The Walk
    has always sent, whose own comment records that it still resolves a nail
    head. An original is not more evidence to a vision model (it is tiled and
@@ -1114,12 +1124,17 @@ async function readPhotos(){
     var why = j.photos_capped_by === 'bytes'
       ? ' (the rest were too large to send together)'
       : (j.photos_capped_by === 'count' ? ' (only the newest 20 are sent)' : '');
+    /* ⚠ 1072: name the model ONLY when it was not the one we asked for. Build
+       808 is the reason: a correct chip that is always there tells nobody
+       anything and trains people to stop reading it. On the intended path this
+       adds nothing at all. */
+    var vNote = viaNote(j.diag);
     el('analyzeNote').textContent = (read != null)
       ? ('Read ' + read + ' photograph' + (read === 1 ? '' : 's') +
          (skip ? ', skipped ' + skip + why : '') +
          (nSmall < aiUrls.length
             ? ' — ' + (aiUrls.length - nSmall) + ' sent full size'
-            : '') +
+            : '') + vNote +
          ' — nothing is ticked; check each line.')
       : '';
     step(2);

@@ -3852,7 +3852,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1070 &#8212; The AI that drafts an inspection narrative can now see the site checklist &#8212; the roof&#8217;s age, pitch, layers, decking and attic access &#8212; so it writes about the actual roof instead of only the photo captions, and it can draft before a single photo has been captioned. Only the property facts go; no name, address or location. And &#8220;Draft narrative&#8221; is now a button in the editor&#8217;s toolbar, and a row in the More menu on a phone, instead of a small button buried in section 7 of the document.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1072 &#8212; Every AI answer now records which model wrote it. When Google&#8217;s model is busy the app quietly falls back to a smaller one, which it has always done and never mentioned &#8212; so &#8220;the AI missed that&#8221; was impossible to answer. The Supplement Desk and the report drafter now say so, and only when it happens: on the normal path nothing changes on screen. The Desk also sends the right photographs now &#8212; nearly half of all jobs were quietly over the size limit, and every finding after a dropped photograph was pointing at the wrong one.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -23843,6 +23843,13 @@ function wireSummaryDraftButton(doc){
           tgt.classList.remove('ph');
           tgt.classList.add('fill');
           tgt.setAttribute('data-ai-summary','1');
+          /* 1072: which model wrote it, said ONLY when it was not the one the
+             route asked for first. On the intended path this writes nothing —
+             build 808's rule, that a correct banner nobody needs is its own
+             defect. The field is in the response either way, so the answer
+             exists even when the screen stays quiet. */
+          if(savedFlash && data.via && data.via_primary && data.via !== data.via_primary)
+            savedFlash.textContent = 'drafted by ' + data.via + ', not ' + data.via_primary;
         }else{
           alert('Could not find the summary paragraph to write into.');
         }
@@ -41663,7 +41670,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b:1070, d:'2026-08-26', t:'The AI inspection drafter reads the checklist \u2014 and is one tap away',
+  { b:1072, d:'2026-08-26', t:'Every AI answer records which model wrote it',
+  s:'When Google\u2019s model is busy the app falls back to a smaller one. It has always done that and never once mentioned it \u2014 measured historically at about one call in four \u2014 so \u201cwhy did the AI miss that\u201d could not be answered. Every AI route now returns the model that actually answered and the one it asked for first, and the Supplement Desk and the inspection-report drafter say so \u2014 but only when they differ. On the normal path nothing changes on screen.' },
+  { b:1071, d:'2026-08-26', t:'The Supplement Desk sends every photograph, and the right one',
+  s:'Two problems, both measured on the real database. The Desk was sending full-size originals to the AI against a fixed size budget, and 46% of jobs were over it \u2014 so nearly half of every analysis was quietly running on only some of the job\u2019s photographs. It now sends the same resized copy the roof walk has always used, which fits far more in. Second, and worse: when a photograph was dropped, every finding after it pointed at the wrong photograph. On a typical job that was 2 findings in 6. Both fixed, and the Desk now says which limit it actually hit instead of always blaming the count.' },  { b:1070, d:'2026-08-26', t:'The AI inspection drafter reads the checklist \u2014 and is one tap away',
   s:'The AI that drafts an inspection narrative could only ever see the photo captions. It never knew the roof\u2019s age, its pitch, how many layers were on it, what the decking was, or whether there was attic access \u2014 the nine things already typed into the site checklist. It now gets all nine, so it writes \u201ca 22-year-old three-tab field over a single layer of plank decking\u201d instead of just \u201cthe shingles\u201d, and it can draft from the checklist alone before a single photo has been captioned (it used to refuse outright). Only the property facts go \u2014 no name, no address, no location. And the drafter is now reachable: a Draft narrative button sits in the toolbar, which means it is in the More menu on a phone, instead of only as a small button buried in section 7 of the document.' },  { b:1069, d:'2026-08-26', t:'The inspection report fills itself in and stops hiding behind buttons',
   s:'Three things at once on the report editor. The report now pulls the roof checklist through every time you open it, not just the moment you create it \u2014 so finishing the checklist afterwards, or changing it, finally reaches the report, and it tells you how many fields it filled. It only ever fills blanks, so anything you typed is left alone. The toolbar\u2019s eleven buttons are now three plus a More drawer, which gives the document back about half the phone screen. And the long bracketed examples like \u201C[e.g. 1\u00d78 nominal plank (board) decking, gapped]\u201D are short labels now, with the example kept as a tooltip.' },  { b:1068, d:'2026-08-25', t:'Eight more bits of faint text, on eight screens',
   s:'The rest of the readability sweep: the review switch on a client, the \u201Cfrom client profile\u201D byline on a checklist, the photo editor\u2019s tab strip, the count badge on the open line-item tab, the \u201Cno description\u201D placeholder, the Convert to Insurance caption, every empty-state note in the app, and the estimate side rail\u2019s empty line. Three of them were faint in BOTH light and dark, not just one \u2014 they sit on cards that keep the same colour whichever theme is on. The count badge was the worst at 1.6 to 1: near-black on a dark chip.' },  { b:1067, d:'2026-08-25', t:'Three unreadable bits of the client profile in light mode',
