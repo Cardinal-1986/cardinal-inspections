@@ -7272,3 +7272,147 @@ on a signed estimate; it simply stops being invisible.
 
 ⚠️ **Drafts are not versioned** — enforced inside the function, so the browser does not
 carry the rule twice.
+
+---
+
+## The app stopped using browser dialogs (1080, 1083) — `cr-tell-*` + `cr-ask-*`
+
+Theo's polish item 1, in two builds. `alert()` and `confirm()` are the browser's own
+grey boxes: system font, no theme, no brand, and on an installed PWA they carry the
+**origin** across the top of the screen. They were the last surface in the app that
+looked like a web page.
+
+| Build | Replaced | Count | Module | API |
+|---|---|---:|---|---|
+| **1080** | `alert()` | **289** | `cr-tell-styles` + `cr-tell-script` | `window.crTell(message, opts)` — a toast |
+| **1083** | `confirm()` | **88** | `cr-ask-styles` + `cr-ask-script` | `window.crAsk(message, opts) → Promise<boolean>` — a bottom sheet |
+
+⚠️ **The counts are 289 and 88, not the 291 and 92 a bare regex reports.** The extra
+hits are prose in comments. Both numbers came from `jslex_count.py`; this is the same
+trap as 1081's `font:` shorthand and 1082's `.dbic1`, three times in one session.
+
+### `crAsk` — how it decides what to say
+
+**The verb is derived from the message, not passed at 88 call sites.** `leadVerb()`
+reads the message's own leading word — `Delete this photo?` → the button says
+**Delete**. One place decides what a message means, the `normStage()` shape. `opts.verb`
+overrides it where a message doesn't lead with its verb.
+
+**Tone is derived the same way.** A `DANGER` regex on the leading word paints the
+confirm button cardinal red and puts it **above** the safe answer; `opts.tone:'plain'`
+and `'danger'` force it either way.
+
+**All four exits mean the same thing except one.** Yes resolves `true`; **Cancel,
+Escape and a tap on the scrim all resolve `false`** — proved in Chromium by
+`gate_1083.mjs`, because a confirm replacement that can strand somebody mid-answer is
+the one failure that must not ship.
+
+### Three things about these modules that are not obvious
+
+⚠️ **They copy the app's existing sheet convention rather than inventing one.** The
+scrim *is* the container, `display:none` → `.open{display:flex}` — the `.pu-sheet`
+shape from 768. Ten module-local sheets already existed; `crAsk` is the first
+**shared** one, and it looks like its neighbours on purpose.
+
+⚠️ **Neither writes the global scroll lock.** The no-14th-writer rule, asserted by
+`gate_1083.mjs`. `#crAsk` sits at **z-index 99990** — above every sheet (the highest
+was 10700), below the toast stack at 99999, so a toast can still speak over a question.
+
+⚠️ **Each falls back to the browser dialog it replaced** if its own surface cannot be
+shown. That fallback is the **only executable `confirm(` left in the file**, asserted
+at exactly 1 — and it is why a grep for `confirm(` does not come back clean.
+
+### The bug the conversion nearly shipped, which no syntax check could see
+
+`crAsk` returns a Promise, so 88 call sites became `await` and **46 functions became
+`async`**. An `async` function returns a Promise, and **a Promise is always truthy**:
+
+```js
+if(confirmPay(em, true)) payRep(em, true);   // would pay the rep REGARDLESS of the answer
+if(!priceOkToSend(title)) return;            // would never block again
+```
+
+Both parse perfectly. One of them moves money. Found by asking, of every function that
+gained `async`, whether any caller *consumes* its return value — then propagating
+`await` to those **4** sites. **Adding `async` to a function is never a local change**
+— it is the same class as this file's "adding `await` to a synchronous function"
+invariant, seen from the callee's side.
+
+**The compiler was the oracle for the rest of it.** `await` outside an `async` function
+is a SyntaxError, so `node --check` on all 126 inline blocks mechanically found every
+site still needing conversion. Static analysis only ever *proposed* a spot — and it
+proposed a wrong one: an auto-fixer matching `name(args){` as a method shorthand also
+matches `if(del){`, and wrote `async if(del){` into the file. **A tool that edits code
+needs its own negative control.**
+
+---
+
+## The Job Menu, readable and told apart (1082) — `DB_ICONS`, `.dbic1`, `.dbic2`
+
+Theo's polish item 4. His picks, verbatim: **"B, 1, 1,1,1"**.
+
+**15 tiles now carry 15 distinct glyphs**, asserted by comparing rendered path data.
+Four new `DB_ICONS` keys — `punch` (hammer), `checklist` (ticks beside lines), `walk`
+(house under a lens), `contract` (page with a pen) — retired the three collisions
+(`tasks` ×3, `camera` ×2, `docs` ×2).
+
+⚠️ **The Checklists collision was DELIBERATE and build 981 said so in a comment**
+(*"DB_ICONS has no checklist key; dbIc('tasks') is the clipboard Punch Outs already
+reuses"*). **That comment is now false, and was rewritten in the same edit.** A stale
+comment sends the next reader hunting for a key that exists.
+
+⚠️ **The bigger defect was the ink, and Theo hadn't asked about it.** Both glyph classes
+carried `color:#23507e` — a steel blue picked for a **white** tile, where it scores
+7.98:1. The tile went dark and the ink never followed. **THE RECURRING ONE, an eighth
+time.** Now `var(--rbe-ink,#cfd6df)` — an existing token pair, so it flips by itself and
+cannot drift.
+
+⚠️ **TWO classes, two different floors, and a sweep of one misses the other.**
+
+| class | what | floor | was | now |
+|---|---|---:|---:|---:|
+| `.dbic2` | the 15 drawn SVG icons | 3.0:1 (graphical) | 1.52:1 | **8.67:1** |
+| `.dbic1` | the `$` and `%` on the money rows | **4.5:1 — it is TEXT** | 1.52:1 | **8.67:1** |
+
+A probe written as `.jabox svg` sees only the first row and would have shipped a
+half-fix; adding `.dbic1` took 16 findings to 18. It clears on every ground the glyph
+can land on, including Community's `--ccm-card` (#161918 → 12.09:1).
+
+⚠️ **`.dbic1` has TWO live rules and the 8.67:1 above is the RETAIL/COMMUNITY one.**
+`body.claim-insurance .dbrow .dbic1` is more specific and owns every insurance render.
+It was left alone deliberately — `--ct-red-deep` is already a declared theme pair
+(`#7E1410` docket / `#FF3B30` siren) and **measures 10.53:1 on docket and 5.08:1 on
+siren**, clearing the text floor on both. `.dbic1` is emitted **only** inside `.dbrow`,
+at exactly two sites (`$` Payment Information, `%` Money In & Commissions), so the two
+rules never contend on the same screen. *`selector_audit.py` names the insurance rule
+"the winner" — that verdict ranks specificity globally and does not know the selector
+is body-scoped. Read the scope, not the verdict.*
+
+⚠️ **Twelve candidates were drawn and four were dropped**, each killed by the only test
+that matters — rendered at 21px *beside the glyph it must differ from*. A big tick read
+as Tasks; a camera-with-ring read as Photos; a signature squiggle vanished and read as
+Estimates; a clipboard-with-`!` kept the collision it was meant to fix. *"Is it a nice
+icon" is the wrong question.*
+
+---
+
+## Nothing is set below 11px (1081) — an app-wide floor, not a feature
+
+**519 declarations** were lifted. 11px is the smallest size Apple's own interface uses
+for a caption, and Theo works off a phone, on roofs, in daylight. The full invariant —
+including the two deliberate exceptions — is in `CLAUDE.md`; the short version:
+
+⚠️ **Sizes live in TWO declaration forms and the shorthand is the bigger half.**
+`font-size:` carried 158 of the sub-floor sites; **`font:600 10.5px …` carried 361.**
+The file holds 1,364 `font:` declarations against ~1,015 `font-size:` ones, so **a sweep
+of the longhand alone reads the minority** — which is exactly what "315 under 12px"
+was, and it was wrong. (BUG_CLASSES 70.)
+
+Two things stay outside the floor on purpose: **`font-size:0`**, which means *there is
+no text here* (a control collapsed to a pure `::after` icon), pinned at exactly two
+sites; and **every `pt` size**, which is a print document (168 of them, smallest
+6.8pt) and has nothing to do with a phone.
+
+`gate_1081.mjs` holds the floor by walking **Chromium's own parsed CSSOM** rather than
+the file, so neither a comment nor a shorthand nor an ungenerated print stylesheet can
+move the number.
