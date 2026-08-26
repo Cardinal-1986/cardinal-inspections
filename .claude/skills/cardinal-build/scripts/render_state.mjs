@@ -13,7 +13,7 @@
    frame as-is and waits for nothing.
 
    usage:
-     node render_state.mjs <file.html> <state> <out.png> [390x844] [light|dark] [patch.js]
+     node render_state.mjs <file.html> <state> <out.png> [390x844] [light|dark|docket|siren] [patch.js]
 */
 import { chromium } from 'playwright';
 import { readFileSync, existsSync, writeFileSync } from 'fs';
@@ -31,11 +31,35 @@ for (const f of ['sentinel_setup_cardinal.js', 'e2e_mock_supa.js'])
   await p.addInitScript(readFileSync(S + f, 'utf8'));
 await p.goto('file://' + process.cwd() + '/' + FILE, { waitUntil: 'domcontentloaded' });
 await p.waitForTimeout(2500);
-if (THEME === 'light') {
-  await p.evaluate(() => {
-    document.documentElement.setAttribute('data-theme', 'rb-light');
-    document.documentElement.setAttribute('data-mode', 'light');
-  });
+/* ⚠ THIS APP HAS TWO INDEPENDENT THEME SWITCHES AND THEY COVER DIFFERENT
+   SURFACES. Passing 'light' to a --ct-* screen (Insurance Clients, Cardinal
+   Truth, the Resource Library) silently renders DOCKET TWICE and reports two
+   identical pictures as "both themes checked" — the same class CLAUDE.md
+   records for the Supplement Desk's cr-desk-theme key.
+
+     rb-light / dark   <html data-theme>       the retail app, --rbe-* tokens
+     docket / siren    <body data-rltheme>     every --ct-* surface (key cardinalRLTheme)
+
+   So: light|dark drive the CRM theme; docket|siren drive the --ct-* one.
+   Name the one your surface actually reads, or you have tested nothing. */
+if (THEME === 'light' || THEME === 'dark') {
+  await p.evaluate((t) => {
+    if (t === 'light') {
+      document.documentElement.setAttribute('data-theme', 'rb-light');
+      document.documentElement.setAttribute('data-mode', 'light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+      document.documentElement.setAttribute('data-mode', 'dark');
+    }
+  }, THEME);
+  await p.waitForTimeout(400);
+} else if (THEME === 'docket' || THEME === 'siren') {
+  await p.evaluate((t) => {
+    try { localStorage.setItem('cardinalRLTheme', t); } catch (e) {}
+    document.body.setAttribute('data-rltheme', t);
+    const v = document.getElementById('resourceLibraryView');
+    if (v) v.setAttribute('data-rltheme', t);
+  }, THEME);
   await p.waitForTimeout(400);
 }
 const names = await p.evaluate('(window.__sentinelStates||[]).map(s=>s.name)');

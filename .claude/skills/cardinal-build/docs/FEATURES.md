@@ -6501,6 +6501,7 @@ like a clean one.*
 | `.cr-cth-tabs` | Cardinal Truth | `showCardinalTruth()` |
 | `.cr-sh-tabs` | the Showcase | `window.CardinalShowcase.open()` — **no argument**; `{showroom:true}` drops a button |
 | `.ljchips` ×1 | **Photo Activity (CRM) only since 1085** — the two Leads strips were removed | `window.openPhotosView()` |
+| `.cr-ic-chips` ×1 | Insurance Clients — **clamped to one row at 1086** with a `+N` expander. ⚠ It has no funnel and no rail, so these chips ARE the filter: fold it, never delete it | `showInsuranceClients()` |
 | `.cd-crmbar` | Client Directory | `openClientsDirectory()` — **absent ≥1100px by design** (`body.cr-lnav-on`) |
 | `.pu-tabs` | Punch & Repairs | `await window.openPunchView()` |
 

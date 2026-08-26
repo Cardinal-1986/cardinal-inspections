@@ -2,15 +2,16 @@
 
 ---
 
-## OPEN — Insurance Clients has the SAME crowding, and needs a DIFFERENT fix (26 Aug 2026)
+## ✅ CLOSED — Insurance Clients crowding (build 1086, 26 Aug 2026)
 
 `.cr-ic-chips` measures **10 chips · 4 rows · 194px** at 390px, above the client list —
 the same shape build 1085 fixed on All Leads & Jobs.
 
-⚠️ **Do not apply 1085's patch here.** That screen has **no funnel and no rail**: those
-chips are its only filter, so removing them removes filtering outright. It wants the
-clamp-plus-`+N` shape instead (option 1 from the 26 Aug options page): keep row one, put
-the remainder behind a `+6` chip that expands.
+**Fixed at 1086 with the clamp, NOT 1085's removal.** That screen has **no funnel and no
+rail**: those chips are its only filter, so removing them would have removed filtering
+outright. It keeps row one and ends with a dashed `+7` that expands to all ten and reads
+`Fewer`. **194px → 44px.** Same symptom as Leads, opposite remedy — which is the reason a
+sweep reports screens rather than prescribing one patch for all of them.
 
 Two other strips the same sweep flagged are **false alarms, checked, not fixed**:
 - **Add project** `#pfSourceChips` — 8 chips / 3 rows. A required radio group; every lead
