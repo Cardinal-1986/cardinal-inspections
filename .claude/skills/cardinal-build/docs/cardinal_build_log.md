@@ -26080,3 +26080,601 @@ finding is 1067's own theme pair — `.ljsummary h3{color:#e35c63}` losing to it
 **And the sweep produced the measured proof for Class 63.** The same 1066 tree
 scored 218 findings before `capped()` and ≥267 after: **at least 49 findings a
 sweep were being truncated in silence.**
+
+---
+
+## Build 1074 — 3.7 into the bake-off, and honest slots for Claude and Kimi
+
+Theo: *"yes, add 3.7 to the bake-off, what about Claud and/or kimi k3?"*
+
+### 1 · `gemini-3.7-flash` — added, and **verified before it was written in**
+
+Probed live against his key through `/api/ai-status?model=gemini-3.7-flash`: it
+answers. Not taken on faith from a release note. ⚠️ One cold call measured
+**8607 ms against 914 ms for 3.6** — that is a cold start, not a latency
+finding, and it is deliberately **not** quoted as one. The bake-off records
+per-call wall time; that is the number that will mean something.
+
+Listed **ahead of 3.6**, so it is the first thing a run compares.
+
+### 2 · Claude was already a candidate — the real question was the key
+
+`claude-opus-5` has been in `CANDIDATES` since 1073. Whether it can be *called*
+depends on `ANTHROPIC_API_KEY` in Vercel, which `api/librarian.js` has needed
+since 806. I cannot read Vercel env from here, and guessing is exactly how
+*"we never tested Claude"* becomes *"Claude did badly"* — the ambiguity 1073's
+probe exists to prevent.
+
+So **`/api/ai-status` now reports key presence** for anthropic and moonshot.
+⚠️ **Presence only, and the field is named `configured`, not `ok`.** Gemini and
+OpenAI get real test calls because those keys were already there to spend;
+billing a live Anthropic call on every load of a *public* diagnostic is a
+different trade. **Build 504 is the precedent** — a diagnostic that overstates
+what it tested is worse than none.
+
+### 3 · Kimi K3 — wired, and the honest part is what it says
+
+K3 is real, and this repo already knew: `AI_CHEATSHEET.md` has it at **2.8T
+parameters, 17 July 2026**, weights published 28 July. Moonshot's API is
+OpenAI-compatible, so `askKimi` is `askOpenAI` with a different base URL — not
+a fourth request shape to keep in step.
+
+⚠️ **But the bake-off is a VISION test, and nothing says K3 reads images.** The
+cheatsheet calls it *"the agent one — built to keep its footing across long,
+many-step runs"*. Not one word about photographs. I will not assert it has
+vision, and I will not quietly leave it out either.
+
+It goes in as a candidate that **reports the truth**: no `MOONSHOT_API_KEY`
+means `available:false` with the reason, and if a key is set and the model
+refuses an image, 1073's contract already covers it — an unreachable model is a
+**named failure**, never a silent omission. The caveat is carried as `note` and
+**rendered** beside the checkbox, so a refusal reads as *"we knew this might
+happen"* rather than as a verdict on the model.
+
+### ⚠ The nested ternary that would have lied about Kimi
+
+1073 decided each vendor's env var with a chain whose final `else` was
+Anthropic. With three vendors that is accidentally correct; **the moment a
+fourth exists it reports the wrong variable** — Kimi's missing key would have
+come back as *"ANTHROPIC_API_KEY not set"*. Replaced with a `KEY_ENV` map,
+which cannot make that mistake.
+
+**Stated precisely, because it matters:** this was **latent, not live** — the
+defect could not manifest until a fourth vendor existed, and `gate_1074`'s B1
+passes on the pre-1074 control for exactly that reason. It is a regression
+guard, not a fix for something that was hurting.
+
+### ⚠ gate_1073's A4 was pinned to a number the design says will grow
+
+`a.length === 4` went red the instant two candidates were added — while the
+route's own comment reads *"adding one is a line here and nothing else."* A gate
+pinned to a count contradicts the design it guards; CLAUDE.md names this fault
+directly. **A4 now parses `CANDIDATES` out of the route** and asserts the
+contract: one answer per candidate, all distinct, unreachable ones named. It
+reports **6/6** and will not need touching for the seventh.
+
+### ⚠ BUG_CLASSES 37, third time this session
+
+The first negative control **crashed** at C2 — `result.keys = {` does not exist
+on the control tree, so `.split(...)[1]` was undefined and threw. The gate died
+there and **C2, D1 and the floor never ran**. Guarded; the control now reports
+**6 red with all 7 checks executed**.
+
+**Gates:** `node --check` on both routes · `check_artifact.py` green
+(`BK_BUILD` 1073 → 1074, marker + negative control) · all three files
+byte-reproducible · **`gate_1073` still 13/13** with A4 naming all six
+candidates · `gate_1074` **8/8**, and **6 red on a pre-1074 control** ·
+`index.html` untouched, stamp stays 1072.
+
+**Theo's move, unchanged:** `/bakeoff.html`, sign in, run 20. If Claude shows as
+unavailable, `ANTHROPIC_API_KEY` is not set in Vercel — `/api/ai-status` now
+says so directly. Kimi needs `MOONSHOT_API_KEY`, and may still refuse a
+photograph.
+
+---
+
+## Build 1073 — the accuracy bake-off
+
+Theo: *"1, 2, then 3."* This is 3, and it is the one that answers the question
+he actually asked — **which AI is best at spotting issues in photographs.**
+
+`/api/ai-status` answers *"is the AI up."* Nothing answered *"is it right."*
+Every model decision on this project — 500–505, 806, and 1072 last night — was
+made on latency, uptime or reporting.
+
+### ⚠ There is no labelled set, and that changed the design
+
+Measured before building anything, because the obvious plan was to score
+precision against known damage:
+
+| source | rows | usable as truth |
+|---|---:|---|
+| `walk_shots` (AI proposes, **a human confirms**) | **0** | The Walk has never been used |
+| `project_photos.caption` | 217 rows, **0 captions** | nothing to score against |
+| `inspection_reports` with `data-ai-summary` | **3** of 23 | too few, and the marker is recent |
+
+So precision/recall is not available at any price short of Theo labelling by
+hand — and asking him to tag 30 photographs against a 31-defect taxonomy is a
+real cost to a man who works from a phone, late.
+
+**The design that survives that:** same photograph, same question, every model
+at once, answers **blind and shuffled**, one tap for the best. That is how
+open-ended output is actually evaluated, and it costs him a tap instead of a
+taxonomy.
+
+### What ships
+
+- **`api/bakeoff.js`** — admin-only server-side (the Desk's gate, copied), same
+  SSRF bound as `supplement.js`, four candidates fanned out **concurrently**
+  (the 499 mistake was doing vision calls in series). `mode:'probe'` reports
+  which models this deployment can actually call, **from the env**, so *"we
+  never tested Claude"* cannot quietly become *"Claude did badly."*
+- **`bakeoff.html`** — its own sign-in (`cr-bake-auth`, the 807 lesson), photos
+  drawn from the archive, answers lettered A/B/C/D, tap to pick, reveal and
+  tally. Votes in `localStorage`; **no table on purpose** — a measurement you
+  run and act on is not a record the business depends on, and no migration
+  means it works the moment it deploys.
+- ⚠️ **It sends 1071's rendition** (1600px/q85/contain). The route caps at 5 MB
+  and the largest stored photograph is 7.26 MB, so originals would fail on
+  exactly the detailed ones worth testing. 1071 and 1072 were the prerequisites
+  and this is where they pay.
+
+### ⚠ Blinding is load-bearing, and the shuffle is PER PHOTOGRAPH
+
+One shuffle held across a run makes position a tell after two photographs — the
+blinding would be theatre. `gate_1073` extracts `shuffled()`, proves it permutes
+60/60, **and** proves `step()` calls it per shot. The model name is in the
+response (the browser needs it to tally) and is never rendered until Reveal;
+the gate asserts `render()` never mentions `a.model`.
+
+### ⚠ The results screen says what it does NOT prove
+
+*"This is your preference, blind, on 10 of your own photographs. It is not a
+measurement against known ground truth — nothing on this project has one. A gap
+under about 2 picks is noise at this sample size."* Under ten judged it calls
+itself a hint. A tally with no error bar invites more confidence than it earns,
+and this project has been burned by three green results that all sat on the easy
+side of the distribution (the Visualizer colour path, 827–836).
+
+### ⚠ A top-level SDK import would have taken the whole route down
+
+`import Anthropic from '@anthropic-ai/sdk'` at module scope means the SDK
+failing to resolve kills **every** column, including Google's and OpenAI's,
+which need nothing from it. One missing dependency would read as *"the bake-off
+is broken"* instead of *"one model could not be reached"* — and not sinking the
+comparison when one model fails is the route's own contract (check A6). Now
+`await import(...)` inside the Anthropic call only. Found because the gate could
+not import the route locally; kept because it is right on the merits.
+
+### ⚠ A4 failed and THE ROUTE WAS RIGHT
+
+I asserted three answers when Anthropic has no key in the rig; it returned four.
+A model that was asked for and could not be reached comes back as a **named
+failure**, not a silent omission — otherwise *"we could not call Claude"* is
+indistinguishable from *"Claude was not in this run"*, which is the exact
+ambiguity check A5 exists to prevent. **Fixed the assertion.**
+
+⚠️ **Comment pollution, fifth time this session** — the patch asserted the
+top-level import was gone, and its own comment quotes the line it removed. The
+lexer says 0 in code, a bare regex says 1.
+
+### Two phone fixes found by rendering, not by reading
+
+`gemini-3.6-flash` wrapped **mid-word into three lines** in the results table
+(the Job Details trade-checkbox class), and the header spent ~110px on a second
+row for the signed-in address — the report-toolbar mistake in miniature. Both
+fixed before shipping.
+
+**Gates:** `check_artifact.py` green (`BK_BUILD` 1073, marker) · `node --check
+api/bakeoff.js`, no `module.exports` · **zero secrets in the shipped page**,
+only the publishable anon key · `gate_1073.mjs` **13/13**, the route
+**executed** for auth, SSRF and fan-out · **negative-controlled against a
+deliberately sabotaged variant** (admin gate removed, shuffle removed, model
+name rendered): 5 red, exit 1, every check seen to fail on the defect it exists
+to catch · `vercel.json` gains `maxDuration: 60` · `.vercelignore` carries the
+written ship decision · `index.html` untouched, stamp stays 1072.
+
+**Theo's move:** open `/bakeoff.html`, sign in, run 20. Then we know.
+
+---
+
+## Build 1072 — every AI answer records which model wrote it
+
+Theo, after the audit: *"1, 2, then 3."* This is 2.
+
+### The problem, measured across the routes
+
+Twelve routes send photographs to a model. Every one ladders gemini →
+`gpt-4o-mini`, and the historical measurement (500–501) is that Gemini **503'd
+about one call in four**. So a quarter of the time the answer on Theo's screen
+was written by the smallest model in the stack — and **nothing said so.**
+
+| route | reported before |
+|---|---|
+| `detect.js` | `via` = the model NAME ✅ **already right — this is the shape** |
+| `sortphotos.js` | `viaGemini`/`viaOpenAI` counts ✅ per placement, left alone |
+| `supplement.js` | `via` = `'gemini'` \| `'openai'` ⚠ loses WHICH gemini |
+| `caption.js` | `via` only when OpenAI answered ⚠ silence is ambiguous |
+| `analyze.js` | ⚠ same |
+| `summarize.js` | ❌ nothing — and 1070 had just wired the checklist into it |
+
+⚠️ **And none of it reached a screen.** Measured: `via` was returned by four
+routes and read by **zero** call sites in `index.html` or `supplement.html`.
+The single grep hit is a CSS class. It was computed, serialised and discarded.
+
+This is the Visualizer's lesson (829, `achieved._worker`) applied to the AI
+routes: *"which code produced this?"* cost three rounds in one night until it
+became a field. **Provenance is a query, never an argument.**
+
+### Two fields, and the second is what makes it usable
+
+`via` — the model that answered. `via_primary` — the model asked first.
+
+A client can then tell the intended path from a fallback **without hardcoding
+any ladder**, which matters because the ladders are **not uniform** (detect,
+sortphotos and supplement lead with 3.6; caption, analyze and summarize are
+pinned to 3.5) and **this build changes none of them.** Which model should lead
+is exactly what the bake-off is for; reporting must not pre-empt it. Asserted in
+both directions — check C proves every ladder is byte-identical.
+
+### ⚠ The screen says nothing when nothing is wrong
+
+Build 808 exists because a perfectly accurate grey chip told nobody anything,
+and its rule is explicit: say *why*, and say nothing at all when there is
+nothing wrong — crying wolf trains people to ignore the banner. So the note
+appears **only when `via !== via_primary`**. On the intended path both screens
+are byte-identical to 1071. `viaNote()` is executed by the gate on three inputs
+(match, mismatch, and an older route sending neither) precisely to prove the
+silence, not just the speech.
+
+### ⚠ TWO GATE BUGS, AND ONE NEARLY BECAME A FALSE BUG REPORT
+
+- **`analyze.js` answered 500 on the fallback path** and I was one step from
+  filing it. **The rig was wrong.** A real Gemini 503 carries a JSON body and
+  `analyze.js` reads `j.error.message` from it; my stub had `text()` but no
+  `json()`, so the route threw and the catch answered 500. Probed the shipped
+  handler directly with a realistic stub: **200, `via: gpt-4o-mini`,
+  `via_primary: gemini-3.5-flash`** — correct all along.
+- **`B2`'s regex was nonsense** — `/o.*gpt-4o-mini/` needs an `o` before the
+  match and *"read by gpt-4o-mini"* has none. The output was right; the
+  assertion was not.
+
+CLAUDE.md: about half of all reds on this project were the test's fault, and
+the rule is fix the test, never bend the artifact. Both were the test.
+
+⚠️ **The control tree needed `api/_staff.js` and `api/package.json` beside the
+routes** — BUG_CLASSES 37, the same crash that ate six checks in 1070. Built
+properly this time, the three routes **import** on the control and report
+`via=undefined`, which is a real red rather than a dead one.
+
+**Gates:** `check_build.py` green (stamp **1070 → 1072**, correctly skipping
+1071 which never touched `index.html`; **summary rewritten**, the check 1070
+added) · `check_artifact.py` green (`SD_BUILD` 1071 → 1072) · `node --check` on
+all five routes · **all seven files byte-reproducible** · `gate_1072.mjs`
+**14/14**, with three routes **executed as shipped on both the Gemini and the
+503 path**, and **9 red on a pre-1072 control** · sentinel `--since 1071`.
+
+---
+
+## Build 1071 — the Desk sends every photograph, and the right one
+
+Theo asked which AI is best at spotting issues in photographs. The honest
+answer was that nobody here had ever measured accuracy — every model decision
+(500–505, 806) was made on latency and uptime. But the audit that produced that
+answer found something bigger than the model choice, and this is it.
+
+### Measured first, on the real database
+
+    1,104 stored photographs · median 312 KB · average 651 KB · 12% over 1 MB
+    Per job, newest 20: 12.3 photographs averaging 5.95 MB
+    → 46% OF JOBS WITH PHOTOGRAPHS EXCEED THE 6 MB BUDGET
+
+**Nearly half of every Desk analysis has been running on a subset of the job.**
+
+### 1 · The route was being fed originals
+
+`readPhotos()` sent `p._src` — the display signed URL, the original bytes. A
+4,000px photograph is not four thousand pixels of evidence to a vision model;
+it is tiled and resized on arrival. The size buys nothing and spends the whole
+budget. **The app already knew this**: The Walk sends `AI = {max:1600, q:0.85}`
+with a comment saying that still resolves a nail head. The Desk never used it.
+
+⚠️ **The transform must be SIGNED, not appended, and reading the shipped
+supabase-js is what settled it.** I was going to rewrite the URL server-side
+(`/object/sign/` → `/render/image/sign/` plus `?width=`). That cannot work:
+`createSignedUrl` POSTs `{expiresIn, transform}` and the **server** returns the
+URL, so the transform lives inside the token. And **`createSignedUrls` (plural)
+has no `transform` option at all** — only `download` and `cacheNonce`.
+
+That is why this build adds the second signing path 1059 deliberately avoided.
+The reason is structural, not a change of mind: the batch call the display uses
+is *incapable* of asking for a resize. Scoped to the ≤20 being sent; the
+200-photograph display call is untouched, asserted.
+
+⚠️ **`resize:'contain'`, not the Supabase default.** The default is `cover`,
+which **crops**. Cropping damage out of an insurance photograph to save bytes
+would be far worse than the bug being fixed. The gate checks this specifically.
+
+### 2 · ⚠ EVERY FINDING AFTER A SKIPPED PHOTOGRAPH POINTED AT THE WRONG ONE
+
+Found while fixing the budget, caused by the budget, and worse than it.
+
+The model is told `photo_index` is *"which photograph, 0-based"* — into what it
+**was shown**. The Desk maps that into what it **sent**. Every skip in the route
+is a `continue`, so one photograph dropped **mid-list** shifts every later index
+by one and the two orderings diverge in silence.
+
+**Proven by executing the shipped loop, not by reading it:**
+
+    submitted     A B C D E F G
+    model sees    A B C D F G       (C skipped — 4.2 MB)
+    photo_index 4 → model means F, Desk showed E   ❌
+    photo_index 5 → model means G, Desk showed F   ❌
+
+**2 of 6 findings attached the wrong photograph** on a realistic job — and the
+Desk's entire point is that a human checks the evidence against the claim.
+1059's own note says this mapping is load-bearing.
+
+**Fixed by returning the truth, not by renumbering:** the route reports
+`photos_used`, the submitted indices it actually read, and the Desk maps
+through it. An older route that does not send it falls back to identity — the
+exact old behaviour — because a stale deploy showing *no* photographs would be
+a worse failure than the one being fixed.
+
+### 3 · The message named the wrong cause
+
+*"skipped 7 (only the newest N are sent)"* blamed the **count** cap. On 46% of
+jobs the cap that bit was **bytes**. A fluent, plausible, wrong explanation —
+**the same class as 1070's stale app stamp, one build apart.** The route now
+reports `photos_capped_by: 'count' | 'bytes' | null` and the Desk says which.
+
+### `scripts/check_artifact.py` — new, and overdue
+
+`check_build.py` gates `index.html` and there are six artifacts. CLAUDE.md calls
+parsing the others separately *"the convention, not a courtesy"* — and until now
+that convention was a heredoc retyped from memory each time. Three times in one
+session is a tool. It runs `node --check` on every inline script, tag balance,
+CSS braces and duplicate `<style id=>`, plus `--stamp NAME` (must increase) and
+`--marker` with its negative control. Deliberately **not** a copy of
+`check_build.py`: no app-stamp rule, because each of these artifacts stamps
+itself differently. **Seen red** (exit 1) before it was trusted.
+
+### ⚠ Four assertion faults in one build, every one failing CORRECT code
+
+The same family each time, and the fix is always the assertion:
+
+- `photos_used` — my own comment names it, so the bare count said 2.
+- `j.photos_used` — **the ternary names it twice on one line.**
+- `createSignedUrl(` — **a substring of `createSignedUrls(`**, so it matched the
+  display batch call too.
+- `photos_capped_by` — the message branches on it twice.
+
+Stopped guessing and **computed all the counts in one pass** instead of
+iterating. That is the file's own advice and I took it four failures late.
+
+⚠️ **And an em-dash trap in the opposite direction from 1070's.**
+`supplement.html` writes a **literal** `—`; `index.html`'s inline JS writes
+`\u2014`. Per-file convention, and the anchor failed until I printed it.
+
+### ⚠ The gate's first C2 could not fail
+
+It computed the corrected mapping itself and **passed on the 1059 control** —
+which is to say it proved nothing about the artifact. It now extracts the
+shipped `S.gaps.forEach` and executes it, and goes red on 1059 with *"2 of 6
+still attach the wrong photograph"*. Same class as build 816's burst test
+passing at zero jobs.
+
+**Gates:** `check_artifact.py` green (2 inline scripts, tags, braces,
+`SD_BUILD` 1059→1071, marker + negative control) · `node --check
+api/supplement.js` · byte-reproducible on both files · `gate_1071.mjs`
+**13/13**, and **6 red on a 1059 control** with the floor naming the 3 that
+could not run · `index.html` untouched, stamp stays 1070.
+
+---
+
+## Build 1070 — the drafter reads the checklist, and is one tap away
+
+Theo, after 1069: *"yes do both."* Two halves of one complaint — the AI
+inspection drafter is not worth reaching for, for two independent reasons, and
+fixing either alone leaves it exactly as unused.
+
+### 1 · It was blind to everything except photo captions
+
+`/api/summarize` took `{captions, section}` and nothing else. It never knew the
+roof's age, its pitch, how many layers were on it, what the decking was, or
+whether there was attic access — **the nine facts the rep had already typed into
+the checklist before opening the editor**. So it drafted "the shingles show
+granule loss" where it could have drafted "a 22-year-old three-tab field over a
+single layer of 1×8 plank decking shows granule loss consistent with its age."
+
+Worse: with no captions yet it returned a flat **400**. A rep who had finished
+the checklist and not yet captioned a photo got a refusal instead of a draft.
+It now refuses only when **both** sources are empty.
+
+### 2 · It was only reachable from inside the document
+
+The single entry point was the small button `wireSummaryDraftButton()` injects
+after the summary heading — **~1,900px down, in section 7**. Theo's screenshot
+showed the toolbar; it never showed this. 1069 built the More drawer precisely
+so a control could be one tap away. `#draftBtn` ("Draft narrative") sits in
+`#edSecondary`, so it is a drawer row on a phone and a toolbar button on
+desktop, gated exactly like `#sortBtn`.
+
+### The fact list is built from `CK_REPORT_MAP`, and that IS the fence
+
+Not a fourth hand-written copy of the nine field names — 1069's own note says
+there must never be a third consumer that reinvents the list. It is also the
+**privacy fence**, and the cheaper of the two: `CK_REPORT_MAP` holds exactly
+nine PROPERTY facts and no identity at all — no client name, no address, no
+phone, no coordinates. **A checklist field with no entry in that map has no
+`get()`**, so it cannot start being sent to a third-party model by accident.
+`ckFactsFor()` reads the map; the gate's fixture checklist deliberately carries
+a name, a street address and lat/lon, and asserts none of them reach the body.
+
+The server whitelists and caps **independently** — at most 12 entries, key ≤40
+chars, value ≤200 — because a request body is not a trust boundary.
+
+### The button DELEGATES; it does not re-implement
+
+`#draftBtn` calls the in-document button's own handler. That handler owns the
+"never clobber a paragraph a person typed" rule, the `data-ai-summary` marker,
+the label choreography and the error alert. A second copy in the toolbar is the
+duplicate-pipeline bug this project keeps paying for — and delegation is what
+every other 1069 drawer row already does.
+
+### ⚠ `draftGate()` gates on the DOCUMENT, not on the button
+
+`wireSummaryDraftButton(doc)` runs **later** in `frame.onload` than the gate's
+call site, so "has the button been created yet" would answer no on every open
+and the control would never appear. `rccIsReport()` asks about
+`[data-cardinal-summary-heading]` — the very element that button needs — so
+gating on the document is the same question asked earlier, not a weaker one.
+The button is looked up at **click** time, when it certainly exists.
+
+### ⚠ Two assertion faults, both of which failed CORRECT code
+
+- `assert src.count('window.draftGate') == 2`. It is **3**: the definition plus
+  the `typeof`-guarded call, which names it twice. Replaced with
+  `== src.count('window.sortGate')` — parallel to its neighbour, not a magic
+  number.
+- `assert src.count("data-ai-summary") == orig.count(...)`. **The patch's own
+  comment quotes the marker's name**, so the bare count went 3 → 4 and failed.
+  This project's comment-pollution trap, in the direction that flatters nobody.
+  Anchored on the write — `setAttribute('data-ai-summary'` — which is the real
+  invariant: exactly one site sets it, before and after.
+
+### ⚠ The gate's first negative control was a BUG_CLASSES 37 crash
+
+`api/summarize.js` was copied to a bare directory, so `import { isStaff } from
+'./_staff.js'` failed, **A1–A6 never executed**, and the only trace was a
+smaller number nobody reads — CLAUDE.md's "a test that silently loses a check".
+Fixed twice over: a control tree with `api/_staff.js` beside the route, and a
+**FLOOR** in the gate asserting all 19 checks ran. Re-run against a proper 1069
+control it goes red on 12 checks and the floor names the 4 that could not run.
+
+### ⚠ MY OWN REGRESSION, SHIPPED TWICE — the stamp's SENTENCE had gone stale
+
+The app stamp is the only version string in rendered markup, and CLAUDE.md is
+explicit that it is *"the only one followed by `&#8212;` plus a plain-English
+summary of the build."* **That summary still described a photo-editor ink fix.**
+1068 (an ink pass) and 1069 (the drawer and the checklist re-sync) each bumped
+the NUMBER and left the SENTENCE, so for three builds the one description a
+person actually reads was about a different build entirely. Every gate was
+green each time — the label gate checks that the number strictly increases, and
+it did.
+
+**Bumping the number is not bumping the stamp.** Per the standing rule — a class
+that recurs gets a check, not another paragraph — `check_build.py` now compares
+the prose after the em-dash against the previous build's and goes RED when they
+are identical. **Negative-controlled on the real failure**, not a synthetic one:
+run 1069 against 1068 it reports *"IDENTICAL to build 1068's — the number moved,
+the sentence did not"* and exits 1.
+
+### ✅ One false alarm, recorded so nobody "fixes" it
+
+The new comments write `\u2014` as a literal escape rather than an em-dash,
+which reads as a slip. **It is the file's own convention** — 114 such comment
+escapes already existed at 1069, and this build adds 4. Left alone.
+
+### Cost, measured
+
+`index.html` +4,212 chars; `api/summarize.js` +1,915. **The twelfth toolbar
+button pushes the desktop single-row threshold from 1440px to 1512px** —
+measured at seven widths on both builds. It already wrapped at 1194 (the iPad),
+1280 and 1366 on 1069, so this adds one width to a set of three; nothing is
+hidden, the bar goes 39px → 86px there. Shortening the label to "Draft" is the
+only variant that buys 1440 back, and "Draft" beside "Save" reads as a document
+state rather than an action. Kept "Draft narrative"; Theo's call.
+
+**Gates:** `check_build.py` green (125 inline scripts, stamp 1069→1070, marker +
+negative control) · `node --check api/summarize.js` · byte-reproducible on both
+files · `gate_1070.mjs` **20/20**, red 12/20 on a 1069 control · sentinel with
+`--since 1069`.
+
+---
+
+## Build 1069 — the report fills itself in, and stops hiding behind buttons
+
+Theo, 26 Aug, after rendered previews: *"1A, drawer dark like the toolbar."*
+Options 2, 1 and 6 from the report audit, in one build because they land on one
+screen.
+
+### 1 · The report tracks the checklist instead of snapshotting it
+
+`prefillChecklist()` has always filled nine Property Facts — but only at
+creation, as a string transform, and it **baked the result in**. Complete the
+checklist afterwards and the report never learned. That is most of what
+"51 to fill" was.
+
+`resyncChecklist(doc, cl)` is the same nine fields applied to the **live**
+document every time the editor opens. **Blanks only** — an element whose text is
+still `/^\[[^\]]*\]$/`. That is the property that makes it safe to run unasked,
+and the gate asserts it by typing a value and checking re-sync leaves it alone.
+It reports the count into `savedFlash` rather than changing the document in
+silence (808's lesson).
+
+### ⚠ `CK_FIELDS` was already taken, and shadowing it would have broken saving
+
+I wrote `var CK_FIELDS` for the new map. **The app already has one** —
+`['structure','method','attic','age','condition','layers','decking','pitch','rooftype']`,
+the checklist's own required-field list, read by `openChecklist()` to populate
+the form and by `ckSave()` to validate it. A second declaration in that scope
+would have silently broken checklist saving.
+
+Caught by a **count assertion**, not by reading — `assert count == 1` failed at
+2. Renamed `CK_REPORT_MAP` and **keyed by the checklist field name**, so the
+relationship between the two lists is visible in the source rather than being a
+coincidence of ordering; the patch asserts every key exists in `CK_FIELDS`.
+
+*They are the same nine fields. That is not a coincidence worth hiding — it is
+the point.*
+
+### 2 · The toolbar: three primaries plus a dark drawer
+
+Eleven buttons at `grid-template-columns:1fr 1fr` was six rows — **440px of an
+844px phone before the document started**. Now Save, Print/PDF and the fill chip
+stay; the other eight are behind **More**.
+
+- **Desktop is untouched.** The secondaries sit in `#edSecondary`, which is
+  `display:contents` — above 760px the wrapper is not in layout at all and all
+  eleven lay out exactly as before. Gated at 1194px: 11 visible, no More.
+- **Hiding the WRAPPER, not each button**, is why no `!important` was needed:
+  JS sets `style.display` per button, and a rule fighting that would have had to
+  out-shout an inline style.
+- **The drawer is a VIEW of the real buttons.** Rows delegate to `b.click()` and
+  are rebuilt on each open from the buttons currently visible, so a control JS
+  has hidden never appears. Gated: clicking the Share row fires `shareBtn` once.
+- **No fourteenth scroll-lock writer.** It follows `#navMenu`'s idiom exactly and
+  writes `document.body.style.overflow` zero times. Gated by reading
+  `body.style.overflow` either side of opening it.
+
+### 3 · Short labels, brackets kept
+
+`[e.g. 1×8 nominal plank (board) decking, gapped]` → `[Decking]`, example moved
+to `title=`.
+
+⚠️ **The square brackets are load-bearing.** `fillBlanks()` decides a field is
+empty with `/^\[[^\]]*\]$/` and `compactForPrint()` strips unfilled placeholders
+from print with `charAt(0)==='['`. A bare word would have broken the counter
+**and** put a naked hint on a client's PDF. Only the contents shrank.
+
+⚠️ **Two templates carry that table** — `REPORT_TEMPLATE` (roof) and
+`EXTERIOR_TEMPLATE` (596–598). Every placeholder edit is `count=2`. Patching one
+would have left the exterior report on the old text and out of step with
+`CK_REPORT_MAP`.
+
+⚠️ **`CK_REPORT_MAP` carries the legacy spelling in `was`.** Every report already
+in the database holds the long placeholders; drop `was` and re-sync silently
+stops for every existing document.
+
+### ⚠ Four anchors in this build failed on guessed whitespace
+
+Six-space indent read as eight, a column-0 line read as two-space, and a `"`
+immediately before a closing `"""`. Each cost a run. **`pl.context()` exists for
+exactly this** and I did not reach for it until the fourth.
+
+**Gates:** `check_build.py` GREEN 1068 → 1069 · byte-reproducible ·
+`gate_1069.mjs` **16/16**, and on 1068 **13 failures with no crash** — it is
+hardened per BUG_CLASSES 37 so a control tree missing every 1069 symbol reports
+red instead of dying (`getComputedStyle(null)` throws, and the first version
+did exactly that).

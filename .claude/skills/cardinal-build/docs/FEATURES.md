@@ -6952,3 +6952,206 @@ not the model's raw answer; a raw-shape mock has no `id` and the renderer throws
 body and the rendered evidence) · **`enforce_test.mjs`** — nine adversarial cases
 against the **extracted shipped `enforceGaps`**, including an invented citation
 and a string `photo_index`.
+
+---
+
+## The inspection-report editor — the drawer, the re-sync, the drafter (1069–1070)
+
+`index.html`, main block. Three things Theo asked for after a screenshot of the
+editor: *"Can we find a way to make these inspection reports better? Maybe a
+side drawer like the menus in the CRM? Anything else that would actually prompt
+me to WANT to use these AI inspections?"*
+
+### The More drawer (1069)
+
+`#edSecondary` wraps the eight secondary toolbar buttons; `#edMoreBtn` opens
+`#edDrawer`. **`#edSecondary` is `display:contents`**, so above 760px the
+wrapper vanishes from layout and the desktop toolbar is byte-identical to what
+it was — the drawer is a phone affordance only.
+
+⚠ **Deliberately modelled on `#navMenu`** — class toggle, document-level click
+closer, `stopPropagation` on the opener, and **zero writes to
+`document.body.style.overflow`**. CLAUDE.md counts 13 scroll-lock writers with
+no reconciler; a menu does not need to lock scroll. Asserted every build.
+
+⚠ **The rows are a VIEW of the real buttons.** Each row delegates to `b.click()`
+and they are rebuilt on every open from the buttons currently **visible**, so a
+control JS has hidden (`sigBtn` on an unsignable report, `rccBtn` for a
+non-admin, `sortBtn`/`draftBtn` on a non-report) never appears. Re-implementing
+those handlers would be a second pipeline per concept.
+
+### The checklist re-sync (1069)
+
+`prefillChecklist()` filled nine Property Facts **at creation only**, as a
+string transform, baking the result in. `resyncChecklist(doc, cl)` applies the
+same nine to the **live document every time the editor opens** — **blanks
+only**, an element still matching `/^\[[^\]]*\]$/`. That is what makes it safe
+to run unasked. It reports the count into `savedFlash` rather than changing the
+document silently.
+
+⚠ **`CK_REPORT_MAP`, not `CK_FIELDS`.** `CK_FIELDS` is the *checklist's* own
+required-field list, read by `openChecklist()` and `ckSave()`; shadowing it
+would have broken checklist saving. Three consumers read the map and there must
+never be a fourth: `prefillChecklist` (string, at creation), `resyncChecklist`
+(DOM, every open) and **`ckFactsFor` (1070, the AI payload)**.
+
+### The drafter reads the checklist, and is reachable (1070)
+
+| | |
+|---|---|
+| what it sends | `{captions, section, **checklist**}` — the nine property facts, from `ckFactsFor()` |
+| when it refuses | only when **both** captions and checklist are empty. Before 1070, whenever captions were empty |
+| where it lives | `#draftBtn` "Draft narrative" in `#edSecondary` → a drawer row on a phone, a toolbar button on desktop |
+| gated by | `window.draftGate()`, same predicate as `sortGate()` — shown only for an inspection report |
+
+⚠ **`CK_REPORT_MAP` IS THE PRIVACY FENCE.** It holds nine PROPERTY facts and no
+identity — no client name, no address, no phone, no coordinates. **A checklist
+field with no entry in that map has no `get()`**, so it cannot reach a
+third-party model by accident. Do not "complete" `ckFactsFor()` by spreading the
+checklist object. The server whitelists and caps independently (12 entries, key
+≤40, value ≤200) because a request body is not a trust boundary.
+
+⚠ **`#draftBtn` DELEGATES to the in-document `#aiDraftBtn`.** That handler owns
+the never-clobber-typed-text rule, the `data-ai-summary` marker and the error
+path. Exactly **two** `/api/summarize` call sites exist, before and after 1070.
+
+⚠ **`draftGate()` gates on the DOCUMENT, not the button.**
+`wireSummaryDraftButton(doc)` runs later in `frame.onload` than the gate call,
+so asking "does the button exist yet" answers no on every open.
+
+⚠ **Adding a toolbar button has a desktop cost.** The twelfth pushes the
+single-row threshold 1440px → 1512px (measured at seven widths). It already
+wrapped at 1194/1280/1366. Measure before adding a thirteenth.
+
+**Gates:** `gate_1069.mjs` (16 checks) · `gate_1070.mjs` (**20**, half of them
+executing the shipped `api/summarize.js` against a stubbed transport so the
+assertions are about the real prompt) · `render_report_editor.mjs` and
+`render_1070.mjs` for the pictures.
+
+### The Desk's photographs, sized and mapped (1071)
+
+| | |
+|---|---|
+| what the model gets | **1600px, quality 85, `resize:'contain'`** — a Supabase Storage transform, signed per photograph |
+| why not the original | measured: median 312 KB, avg 651 KB, and **46% of jobs exceeded the 6 MB budget**, so nearly half of every analysis ran on a subset |
+| where it's signed | `signSmall()` in `supplement.html`, ≤20 photographs, **per photograph** |
+| the fallback | a refused transform falls back to the display URL **and is counted** — a silent fallback would make the build inert and look identical to a working one |
+| `photos_used` | the submitted indices the route actually read — see below |
+| `photos_capped_by` | `'count'` \| `'bytes'` \| `null`, so the Desk names the real cause |
+
+⚠️ **`createSignedUrls` (plural) has NO `transform` option** — only `download`
+and `cacheNonce` — and the transform is signed **into** the token by the server,
+so it cannot be appended to a URL afterwards. That is why 1071 adds a second
+signing path after 1059 explicitly avoided one. **The 200-photograph display
+call is untouched**, asserted.
+
+⚠️ **`resize` must stay `'contain'`.** Supabase's default is `'cover'`, which
+crops. `gate_1071.mjs` check B2 exists only for this.
+
+⚠️ **`photo_index` maps through `photos_used`, and must keep doing so.** The
+model numbers what it was shown; the Desk numbers what it sent. A mid-list skip
+made those diverge — 2 of 6 findings attached the wrong photograph. **BUG_CLASSES
+67.** An absent `photos_used` degrades to identity (the old behaviour), never to
+nothing.
+
+**Gates:** `check_artifact.py` (the mechanical ladder for the five artifacts
+`check_build.py` does not see) · `gate_1071.mjs` — 13 checks, three of which
+execute the shipped loop and the shipped mapping rather than a copy.
+
+### Model provenance on every AI route (1072)
+
+Every AI route returns two fields on its success path:
+
+| field | what |
+|---|---|
+| `via` | the model that actually answered — `gemini-3.6-flash`, `gemini-3.5-flash` or `gpt-4o-mini` |
+| `via_primary` | the model the route asked **first** |
+
+**The pair is the point.** A client compares them and knows whether it got the
+intended path or a fallback, **without hardcoding any ladder** — and the ladders
+are deliberately not uniform: `detect`, `sortphotos` and `supplement` lead with
+**3.6**; `caption`, `analyze` and `summarize` are pinned to **3.5**.
+
+⚠️ **1072 changed no ladder, and nothing should until the accuracy bake-off
+decides.** Reporting must not pre-empt the measurement. `gate_1072.mjs` check C
+asserts every ladder is byte-identical.
+
+⚠️ **The screens say it ONLY when `via !== via_primary`.** Build 808's rule: a
+correct banner nobody needs trains people to ignore the ones they do. On the
+intended path the Desk note and the report drafter's flash are unchanged.
+`viaNote()` in `supplement.html` is the one place that comparison lives; the
+gate executes it on match, mismatch **and** a partial diag from an older route
+(which must stay silent rather than print "undefined").
+
+**Where it shows:** the Supplement Desk's analyze note, and the inspection
+report drafter's `savedFlash`. Everywhere else the field is in the response and
+unread — deliberately, so the answer exists when someone asks.
+
+**Historical reason this matters:** builds 500–501 measured Gemini 503ing about
+**one call in four**. A quarter of all answers were written by the smallest
+model in the stack, and nothing said so.
+
+## The accuracy bake-off — `bakeoff.html` + `api/bakeoff.js` (1073)
+
+**The seventh shipped artifact.** `/api/ai-status` answers *"is the AI up"*;
+this answers *"is it right"*, on Cardinal's own roofs, because roofing is narrow
+enough that a public benchmark would not transfer.
+
+| | |
+|---|---|
+| who can use it | **admin only, enforced server-side** (`is_cardinal_admin()`), because it spends the AI keys once per model per photograph |
+| candidates (@1074) | **`gemini-3.7-flash`**, `gemini-3.6-flash`, `gemini-3.5-flash`, `gpt-4o-mini`, `claude-opus-5`, **`kimi-k3`** — adding one is a line in `CANDIDATES` and nothing else |
+| vendors | google · openai · anthropic · **moonshot** (OpenAI-compatible, so `askKimi` is `askOpenAI` with another base URL) |
+| which env var | one `KEY_ENV` map. ⚠️ 1073 used a nested ternary whose final `else` was Anthropic — correct with three vendors, **wrong the moment a fourth exists** |
+| what it sends | 1071's rendition (1600px/q85/**contain**) — the route caps at 5 MB and the largest stored photograph is 7.26 MB |
+| the method | same photograph, same question, all models **concurrently**; answers **blind, shuffled, lettered**; one tap picks the best |
+| where votes live | `localStorage`. **No table on purpose** — a measurement is not a business record, and no migration means it works the moment it deploys |
+| its own stamp | `BK_BUILD`, and a header chip |
+
+⚠️ **`gemini-3.1-pro` is deliberately absent from `CANDIDATES`** — probed live
+26 Aug, it answers 404 *"not found for API version v1beta"* for this key.
+Listing a model the key cannot call produces a column of errors that reads like
+a model being bad at roofs.
+
+⚠️ **The shuffle is PER PHOTOGRAPH.** One shuffle held across a run makes
+position a tell after two photographs and the blinding becomes theatre.
+`gate_1073` proves both that `shuffled()` permutes and that `step()` calls it
+per shot.
+
+⚠️ **The model name is in the response and never rendered until Reveal.** The
+browser needs it to tally. The gate asserts `render()` never mentions `a.model`.
+
+⚠️ **An unavailable model is shown, disabled, with its reason** — never hidden.
+Otherwise *"we never tested Claude"* quietly becomes *"Claude did badly."*
+
+⚠️ **The Anthropic SDK import is LAZY, and that is a correctness choice.** At
+module scope, the SDK failing to resolve takes down the Google and OpenAI
+columns too — turning one missing dependency into "the bake-off is broken"
+instead of "one model could not be reached".
+
+⚠️ **The results screen states what it does not prove.** Under ten judged it
+calls itself a hint; above that it names the noise floor. There is no ground
+truth on this project — `walk_shots` is **empty**, `project_photos` has **217
+rows and 0 captions** — so this is a blind preference test, and it says so.
+
+⚠️ **`kimi-k3` carries a `note` and the picker RENDERS it.** This repo's own
+`AI_CHEATSHEET` has K3 at 2.8T parameters (17 July 2026) and calls it *"the
+agent one"* — **no vision claim anywhere**. It is listed rather than assumed or
+dropped, so a refused photograph reads as the caveat coming true, not as a
+verdict on the model.
+
+⚠️ **`/api/ai-status` reports `keys.anthropic.configured` and
+`keys.moonshot.configured`** — **presence only**, named `configured` rather
+than `ok`, because it makes no call. That is how "can we even test Claude" is
+answered without guessing. Build 504's lesson: a diagnostic that overstates
+what it tested is worse than none.
+
+⚠️ **Do not pin a gate to the number of candidates.** `gate_1073`'s A4 asserted
+`length === 4` and went red when 1074 added two — against the route's own
+"adding one is a line and nothing else". It now parses `CANDIDATES` out of the
+route and asserts the contract instead.
+
+**Gates:** `gate_1073.mjs` — 13 checks, the route executed for auth, SSRF and
+fan-out, negative-controlled against a sabotaged variant. `gate_1074.mjs` — 8
+checks on the candidate list, the env-var map and the caveat rendering.
+`render_1073.mjs` for the pictures.

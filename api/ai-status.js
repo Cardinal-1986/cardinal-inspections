@@ -34,6 +34,20 @@ export default async function handler(req, res) {
 
   const result = { gemini: {}, openai: {}, supabase: {} };
 
+  /* 1074: "is Claude even testable" was a question nobody could answer without
+     Vercel access, and guessing is how "we never tested it" becomes "it did
+     badly". ⚠ PRESENCE ONLY — the field is `configured`, NOT `ok`, because
+     that is all it checks. Gemini and OpenAI get real test calls above; billing
+     a live Anthropic or Moonshot call on every load of a public diagnostic is
+     a different trade, and a status page that quietly spends money is its own
+     defect. */
+  result.keys = {
+    anthropic: { configured: !!(process.env.ANTHROPIC_API_KEY || '').trim(),
+                 used_by: 'api/librarian.js, api/bakeoff.js' },
+    moonshot:  { configured: !!(process.env.MOONSHOT_API_KEY || '').trim(),
+                 used_by: 'api/bakeoff.js' }
+  };
+
   // ── Gemini check ─────────────────────────────────────────
   if (!GEMINI_KEY) {
     result.gemini = { ok: false, why: 'GEMINI_API_KEY env var is empty' };

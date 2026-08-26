@@ -402,24 +402,42 @@ export default async function handler(req, res) {
        sends them in order. */
     const photoParts = [];
     let photosRead = 0, photosSkipped = 0, photoBytes = 0;
+    let photosUsedOut = [], cappedByBytes = false, photoCap = null;
     if (mode === 'photos') {
       const want = Array.isArray(body.photos) ? body.photos : [];
       photosSkipped = Math.max(0, want.length - MAX_PHOTOS);
-      for (const p of want.slice(0, MAX_PHOTOS)) {
+      const cappedByCount = want.length > MAX_PHOTOS;
+      /* ⚠ 1071: photosUsed records WHICH SUBMITTED INDEX each attached
+         photograph came from, and it is the fix for a live mis-attribution.
+         The model is told photo_index is 0-based into what it was SHOWN; the
+         Desk maps that into what it SENT. Every skip below is a `continue`, so
+         one photograph dropped MID-LIST shifted every later index by one and
+         the two orderings diverged in silence. Returning the truth is the fix;
+         renumbering would only move the lie. */
+      const photosUsed = [];
+      for (let pi = 0; pi < Math.min(want.length, MAX_PHOTOS); pi++) {
+        const p = want[pi];
         const safe = storageUrlOrNull(p && p.url);
         if (!safe) { photosSkipped++; continue; }
         try {
           const r0 = await fetch(safe);
           if (!r0.ok) { photosSkipped++; continue; }
           const buf = Buffer.from(await r0.arrayBuffer());
-          if (!buf.length || photoBytes + buf.length > MAX_PHOTO_BYTES) { photosSkipped++; continue; }
+          if (!buf.length) { photosSkipped++; continue; }
+          if (photoBytes + buf.length > MAX_PHOTO_BYTES) {
+            photosSkipped++; cappedByBytes = true; continue;   /* named, not guessed at */
+          }
           photoBytes += buf.length;
           photoParts.push({ inline_data: {
             mime_type: /\.png(\?|$)/i.test(safe) ? 'image/png' : 'image/jpeg',
             data: buf.toString('base64') } });
+          photosUsed.push(pi);
           photosRead++;
         } catch (e) { photosSkipped++; }
       }
+      photosUsedOut = photosUsed;
+      cappedByBytes = cappedByBytes || false;
+      photoCap = cappedByBytes ? 'bytes' : (cappedByCount ? 'count' : null);
       if (!photosRead) {
         res.status(400).json({ error: 'None of those photographs could be read from storage.' });
         return;
@@ -559,7 +577,10 @@ export default async function handler(req, res) {
     }
 
     /* ── the ladder: models x json-mode, 503/429 pause, budget-guarded ────── */
-    let ans = null, via = 'gemini', lastBody = null, lastText = '';
+    /* 1072: the model NAME, not the vendor. 'gemini' cannot tell 3.6 from
+       3.5, and those are different model tiers — exactly the distinction
+       somebody asking "why did it miss that" needs. */
+    let ans = null, via = GEMINI_MODELS[0], lastBody = null, lastText = '';
     outer:
     for (const model of GEMINI_MODELS) {
       for (const jsonMode of [true, false]) {
@@ -582,7 +603,7 @@ export default async function handler(req, res) {
         const j = await r.json();
         lastBody = j;
         if (!r.ok) continue;
-        via = r._via === 'openai' ? 'openai' : 'gemini';
+        via = r._via === 'openai' ? 'gpt-4o-mini' : model;
         const cand = (j.candidates || [])[0] || {};
         lastText = ((cand.content || {}).parts || []).map(p => p.text || '').join('')
           .replace(/```json|```/g, '').trim();
@@ -613,7 +634,13 @@ export default async function handler(req, res) {
         /* 1059: never a silent cap. The Desk prints these. */
         photos_read: photosRead,
         photos_skipped: photosSkipped,
-        diag: { via, docBytes, photoBytes, ms: elapsed() }
+        /* 1071: the submitted indices actually attached, in order. The Desk
+           maps photo_index through this; without it a mid-list skip points
+           every later finding at the wrong photograph. */
+        photos_used: photosUsedOut,
+        photo_bytes: photoBytes,
+        photos_capped_by: photoCap,
+        diag: { via, via_primary: GEMINI_MODELS[0], docBytes, photoBytes, ms: elapsed() }
       });
     } else {
       const letter = String(ans.letter_html || '');
@@ -653,7 +680,7 @@ export default async function handler(req, res) {
         letter_html: letter,
         dollar_flag,
         cite_flag,
-        diag: { via, ms: elapsed() }
+        diag: { via, via_primary: GEMINI_MODELS[0], ms: elapsed() }
       });
     }
   } catch (err) {

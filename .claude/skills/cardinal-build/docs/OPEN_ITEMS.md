@@ -1,5 +1,87 @@
 # Cardinal Resource App — Open Items
 
+---
+
+## Layer: 26 Aug 2026 — the report editor (builds 1069, 1070)
+
+### Settled — do NOT re-litigate
+
+- **The drawer is `#navMenu`'s shape, and writes no scroll lock.** Theo picked
+  1A ("drawer dark like the toolbar") from rendered options. It must stay the
+  14th-writer-free pattern: class toggle, document-click closer,
+  `stopPropagation` on the opener.
+- **Re-sync fills BLANKS ONLY.** A `.ph` that no longer matches
+  `/^\[[^\]]*\]$/` was answered by a person, and a person outranks the
+  checklist. This is the property that makes running it unasked safe.
+- **Short placeholder labels keep their square brackets.** `fillBlanks()`
+  matches `/^\[[^\]]*\]$/` and `compactForPrint()` strips on
+  `charAt(0)==='['`. Shorten the contents, never drop the brackets.
+- **Only the nine PROPERTY facts leave the browser for the drafter.**
+  `CK_REPORT_MAP` is the fence: no name, no address, no phone, no coordinates.
+  Do not "complete" `ckFactsFor()` by spreading the checklist object.
+- **`#draftBtn` delegates to the in-document button.** One `/api/summarize`
+  pipeline per concept; there are exactly two call sites and both send the
+  checklist.
+
+### Settled — the Desk's photographs (1071)
+
+- **The model gets 1600px/q85, not the original.** Same rendition The Walk has
+  always sent. An original is not more evidence to a vision model; it is the
+  same evidence at 10× the bytes.
+- **`resize:'contain'` — never `cover`.** Supabase defaults to `cover`, which
+  crops. Cropping damage out of an insurance photograph is not a size
+  optimisation.
+- **The second signing path is structural, not drift.** `createSignedUrls`
+  (plural, what the display uses for 200 photographs) has **no** `transform`
+  option, and the transform is signed *into* the token — so it cannot be
+  appended to a URL. Scoped to the ≤20 being analysed.
+- **`photo_index` maps through `photos_used`.** See BUG_CLASSES 67. Do not
+  "simplify" it back to a direct index.
+
+### Settled — model provenance (1072)
+
+- **Every AI route returns `via` + `via_primary`.** The pair, not just `via`, so
+  no client hardcodes a ladder.
+- **The screens speak only on a fallback.** Build 808's rule. Do not "improve"
+  this into an always-visible chip.
+- **No ladder changes until the bake-off says so.** 1072 reports; it does not
+  decide. `gate_1072.mjs` check C enforces this.
+
+### ✅ The accuracy bake-off is BUILT (1073) — and the answer is Theo's to produce
+
+`bakeoff.html` + `api/bakeoff.js` ship. **The instrument exists; the
+measurement does not yet.** Theo opens `/bakeoff.html`, signs in, runs 20, and
+then we know.
+
+⚠️ **It is a blind PREFERENCE test, not an accuracy measurement, and that was
+forced by the data**: `walk_shots` is empty (The Walk has never been used),
+`project_photos` has 217 rows and **zero** captions, and only 3 of 23
+inspection reports carry the `data-ai-summary` marker. There is no ground truth
+to score against short of Theo labelling by hand. Do not describe the output as
+accuracy — the results screen deliberately does not.
+
+**Theo's, before a run means anything (1074):**
+- **`ANTHROPIC_API_KEY` in Vercel** — `api/librarian.js` has needed it since
+  806, so it is probably already set; `/api/ai-status` now says so directly
+  under `keys.anthropic.configured`. If it is false, Claude cannot be judged.
+- **`MOONSHOT_API_KEY`** if he wants Kimi K3 judged at all. ⚠️ And K3 may still
+  refuse a photograph — the repo's own notes give it no vision claim, which is
+  why the picker shows that caveat before he starts.
+
+**Still open after it runs:** whichever model wins, changing a ladder is a
+separate build. 1072 deliberately changed none, and the ladders are not uniform
+(`detect`/`sortphotos`/`supplement` lead with 3.6; `caption`/`analyze`/
+`summarize` are pinned to 3.5).
+
+### Open, with the measurement attached
+
+| | |
+|---|---|
+| **The twelfth toolbar button costs a desktop row.** | Single-row threshold moved 1440px → 1512px (seven widths measured, both builds). It already wrapped at 1194/1280/1366, so this adds one width to a set of three; nothing is hidden, the bar goes 39px → 86px. Only shortening the label to "Draft" buys 1440 back, and "Draft" beside "Save" reads as a document *state*. **Theo's call** — say the word and it becomes "Draft" or "AI draft" in a one-line build. A thirteenth button needs this measured again. |
+| **Options 3 and 5 from the report audit are unbuilt.** | 3 = guided fill (walk the rep through the blanks); 5 = photos placing themselves into the right section. Not started, not asked for. |
+| **`gate_1069.mjs`'s desktop assertion says "eleven buttons".** | Still passes — it checks that `#edMoreBtn` does not appear on desktop, not the count — but the comment is now off by one. Cosmetic; left alone rather than touched in a build that is not about it. |
+
+
 
 ---
 

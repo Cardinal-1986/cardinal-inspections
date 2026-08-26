@@ -43,6 +43,7 @@
     "api/analyze.js": {
       "maxDuration": 60
     },
+    "api/bakeoff.js": { "maxDuration": 60 },
     "api/caption.js": {
       "maxDuration": 60
     },

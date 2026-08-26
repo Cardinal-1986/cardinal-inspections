@@ -71,6 +71,18 @@ spark/
 # admin server-side. supplement_desk.sql and code_letters.sql (670) are both
 # covered by the *.sql blanket — neither is ever served.
 
+# bakeoff.html DELIBERATELY SHIPS (build 1073) — the accuracy bake-off, the
+# supplement.html pattern once more: served publicly, gated by its own Supabase
+# sign-in (own storageKey cr-bake-auth so it cannot fight the CRM, Studio or the
+# Desk over one session), and api/bakeoff.js enforces is_cardinal_admin()
+# SERVER-side before it will spend a single AI call. It has to ship rather than
+# stay a local script for one reason: the model keys live in Vercel env and
+# nowhere else, so the comparison can only run where they are.
+# It carries the publishable anon key, which is designed to be public, and no
+# other secret. A signed-out visitor sees an email box and can do nothing.
+# Votes live in localStorage — no table, so there is no migration to run and
+# nothing of the business depends on it.
+
 # --- visualizer/ DELIBERATELY SHIPS (build 807). The Exterior Visualizer is a
 #     SEPARATE APPLICATION — its own file, no CRM code in it at all — served
 #     from this project at /visualizer/ so it is reachable today. It is laid

@@ -214,6 +214,20 @@ def app_stamp(src):
     return (m.group(1), int(m.group(2))) if m else None
 
 
+# The app stamp is the ONLY version string in rendered markup, and the only one
+# followed by an em-dash plus a plain-English summary of the build. That
+# sentence is the single build description a person actually reads.
+APP_SUMMARY_RE = re.compile(
+    r"data-cr-footer[^>]*>\s*v2026-\d\d-\d\d\s+build\s+\d+\s*&#8212;\s*([^<]*)"
+)
+
+
+def app_summary(src):
+    """The prose after the app stamp's em-dash, or None."""
+    m = APP_SUMMARY_RE.search(src)
+    return m.group(1).strip() if m else None
+
+
 def gate_label(src, prev_src):
     hits = ALL_LABEL_RE.findall(src)
     builds = sorted({int(b) for _, b in hits})
@@ -246,6 +260,31 @@ def gate_label(src, prev_src):
             "" if ok else "   (a plugin footer changing is NOT an app bump)",
         ),
     )
+
+    # ── 1070: BUMPING THE NUMBER IS NOT BUMPING THE STAMP ──────────────────
+    # The sentence after the em-dash is the one build description anybody
+    # reads, and it went stale for three builds without a single gate noticing:
+    # 1068 (an ink pass) and 1069 (a drawer and a checklist re-sync) each moved
+    # the NUMBER and left a SENTENCE about a photo-editor ink fix. Both shipped.
+    # A wrong description is worse than none — it is the number's own evidence,
+    # and it lies with the same confidence whether it is right or not.
+    now, before = app_summary(src), app_summary(prev_src)
+    if now is None:
+        report(True, "app stamp summary: none present to check")
+    elif before is None:
+        report(True, "app stamp summary written (previous build had none)")
+    else:
+        same = now == before
+        report(
+            not same,
+            "app stamp summary rewritten%s"
+            % (
+                ""
+                if not same
+                else "   (IDENTICAL to build %d's - the number moved, the sentence did not)"
+                % prev[1]
+            ),
+        )
 
 
 def main():

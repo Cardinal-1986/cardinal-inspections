@@ -65,7 +65,8 @@ export default async function handler(req, res) {
 
     if (!key) {                          // Gemini not configured: go straight to backup
       const text = await askOpenAI();
-      res.status(200).json({ text: text.trim() || 'No analysis returned.', via: 'openai' });
+      res.status(200).json({ text: text.trim() || 'No analysis returned.',
+                             via: 'gpt-4o-mini', via_primary: MODEL });
       return;
     }
 
@@ -90,7 +91,8 @@ export default async function handler(req, res) {
       if (oaKey) {                       // Gemini failed: fall back to OpenAI
         try {
           const text = await askOpenAI();
-          res.status(200).json({ text: text.trim() || 'No analysis returned.', via: 'openai-fallback' });
+          res.status(200).json({ text: text.trim() || 'No analysis returned.',
+                                 via: 'gpt-4o-mini', via_primary: MODEL });
           return;
         } catch (e2) { /* fall through to the Gemini error */ }
       }
@@ -98,7 +100,9 @@ export default async function handler(req, res) {
       return;
     }
     const text = (((j.candidates || [])[0] || {}).content || {}).parts?.map(p => p.text).join('') || '';
-    res.status(200).json({ text: text.trim() || 'No analysis returned.' });
+    /* 1072: the success path names the model too — see caption.js. */
+    res.status(200).json({ text: text.trim() || 'No analysis returned.',
+                           via: MODEL, via_primary: MODEL });
   } catch (err) {
     res.status(500).json({ error: String((err && err.message) || err) });
   }

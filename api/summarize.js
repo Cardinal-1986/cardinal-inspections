@@ -97,35 +97,66 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { captions, section } = req.body || {};
+    const { captions, section, checklist } = req.body || {};
     const list = Array.isArray(captions) ? captions.filter(Boolean) : [];
 
-    if (list.length === 0) {
+    /* 1070: the nine property facts the rep already recorded on the checklist.
+       The browser builds this from CK_REPORT_MAP, which holds property facts
+       only — no client name, no address, no coordinates. This function
+       re-imposes that independently, because a request body is not a trust
+       boundary: at most 12 entries, and both halves length-capped. A caller
+       that sends something else gets it truncated, not forwarded. */
+    const facts = [];
+    if (checklist && typeof checklist === 'object' && !Array.isArray(checklist)) {
+      for (const k of Object.keys(checklist).slice(0, 12)) {
+        const v = checklist[k];
+        if (v == null || v === '') continue;
+        facts.push(String(k).slice(0, 40).trim() + ': ' + String(v).slice(0, 200).trim());
+      }
+    }
+
+    /* Either source alone is enough to draft from. Before 1070 this refused
+       whenever captions were empty, which meant a rep who had finished the
+       checklist and not yet captioned a photo got a 400 instead of a draft. */
+    if (list.length === 0 && facts.length === 0) {
       res.status(400).json({
-        error: 'No photo captions yet — add at least one photo with a caption first, then draft the summary.'
+        error: 'Nothing to draft from yet — fill in the site checklist, or add at least one photo with a caption.'
       });
       return;
     }
 
     const secName = section ? String(section).slice(0, 100) : '';
+
+    /* 1070: name the grounding honestly. A prompt that says "based only on the
+       photo observations below" when there are none, and then supplies a fact
+       table instead, is inviting the model to fill the gap by invention —
+       which is the one thing a report narrative must never do. */
+    const sources = list.length && facts.length
+      ? 'the photo observations and the property facts below'
+      : (list.length ? 'the photo observations below' : 'the property facts below');
+    const evidence =
+      (facts.length ? 'Property facts recorded on site:\n' + facts.map(f => '- ' + f).join('\n') + '\n\n' : '') +
+      (list.length ? 'Photo observations:\n' + list.map((c, i) => `${i + 1}. ${c}`).join('\n') : '');
+
     const prompt = secName
       ? ('You are a professional roof inspector writing the body narrative for the "' + secName + '" ' +
-         'section of an inspection report, based only on the photo observations below. ' +
+         'section of an inspection report, based only on ' + sources + '. ' +
          'Write 2-4 factual, specific sentences in precise roofing terms describing what was ' +
-         'observed in this section. Do not invent details not supported by the observations, ' +
+         'observed in this section. Use the property facts for context where they are relevant to ' +
+         'this section and leave them out where they are not. ' +
+         'Do not invent details not supported by what you were given, ' +
          'do not repeat the section title, and do not make repair-vs-replacement calls here. ' +
-         'No preamble, just the sentences.\n\n' +
-         'Photo observations:\n' +
-         list.map((c, i) => `${i + 1}. ${c}`).join('\n'))
+         'No preamble, just the sentences.\n\n' + evidence)
       : ('You are a professional roof inspector drafting the "Overall Condition Assessment" ' +
-         'paragraph of an inspection report, based only on the photo observations below. ' +
+         'paragraph of an inspection report, based only on ' + sources + '. ' +
          'Write one factual, specific paragraph (4-6 sentences) covering: general wear, ' +
          'granule loss (if relevant), fastener condition, brittleness, remaining serviceable ' +
-         'life, and whether repair or full replacement is recommended. Do not invent details ' +
-         'not supported by the observations. No preamble, just the paragraph.\n\n' +
-         'Photo observations:\n' +
-         list.map((c, i) => `${i + 1}. ${c}`).join('\n'));
+         'life, and whether repair or full replacement is recommended. Ground the wear and the ' +
+         'remaining-life estimate in the recorded age, layer count, pitch and decking where those ' +
+         'are given. Do not invent details not supported by what you were given. ' +
+         'No preamble, just the paragraph.\n\n' + evidence);
 
+    let via = 'gemini-3.5-flash';
     let geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
       {
@@ -141,7 +172,10 @@ export default async function handler(req, res) {
     );
 
     /* 502: Google refusing is no longer the end of the road. */
-    if (!geminiRes.ok) geminiRes = await aiFallback([{ text: prompt }], geminiRes);
+    if (!geminiRes.ok) {
+      geminiRes = await aiFallback([{ text: prompt }], geminiRes);
+      if (geminiRes && geminiRes._via === 'openai') via = 'gpt-4o-mini';
+    }
 
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
@@ -157,7 +191,12 @@ export default async function handler(req, res) {
       return;
     }
 
-    res.status(200).json({ summary });
+    /* 1072: which model actually answered, and which one was asked first.
+       The pair is the point — a client can tell the intended path from a
+       fallback without knowing this route's ladder, and the ladders are not
+       uniform. Copied from api/detect.js, which has reported the model NAME
+       since it shipped and is the shape the others should have had. */
+    res.status(200).json({ summary, via, via_primary: 'gemini-3.5-flash' });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }

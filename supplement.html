@@ -1,6 +1,6 @@
 <!--
   ═══════════════════════════════════════════════════════════════════════════
-  THE SUPPLEMENT DESK · supplement.html · build 1059 (24 Aug 2026)
+  THE SUPPLEMENT DESK · supplement.html · build 1072 (26 Aug 2026)
   (the Desk shipped at build 668 · 10 Aug 2026; the evidence table landed at 1055)
   ═══════════════════════════════════════════════════════════════════════════
 
@@ -307,7 +307,7 @@
   <header class="sd-hd">
     <span class="wordmark">Cardinal</span>
     <span class="ttl">Supplement Desk</span>
-    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1059</span>
+    <span class="sdbuild" id="sdBuild" title="Which Desk code you are looking at">build 1072</span>
     <span class="sp"></span>
     <a class="sd-back" id="homeLink" href="/" title="Back to the Cardinal app">&larr; Cardinal</a>
     <button id="themeBtn" type="button">Theme</button>
@@ -467,7 +467,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 'use strict';
-var SD_BUILD = 1059; window.SD_BUILD = SD_BUILD;
+var SD_BUILD = 1072; window.SD_BUILD = SD_BUILD;
 /* Same publishable anon key api/*.js falls back to — public by design. */
 var SUPABASE_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 var SUPABASE_ANON_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -1014,9 +1014,55 @@ async function analyze(){
   el('analyzeBtn').disabled = false;
 }
 
+/* 1072: which model wrote this answer, said ONLY when it is not the model the
+   route asked for first. `via` and `via_primary` come back on every AI route
+   now; comparing them here means this file hardcodes no ladder of its own, so
+   a route that changes which model leads needs no change here. */
+function viaNote(diag){
+  if(!diag || !diag.via || !diag.via_primary) return '';
+  if(diag.via === diag.via_primary) return '';
+  return ' — read by ' + diag.via + ', not ' + diag.via_primary;
+}
+
+/* 1071: what the MODEL gets — 1600px, quality 85, the same rendition The Walk
+   has always sent, whose own comment records that it still resolves a nail
+   head. An original is not more evidence to a vision model (it is tiled and
+   resized on arrival); it is the same evidence at 10x the bytes, and the bytes
+   are the budget. Measured: 46% of jobs with photographs exceeded that budget,
+   so nearly half of every analysis ran on a subset of the job.
+
+   ⚠ resize:'contain', NOT the Supabase default. The default is 'cover', which
+     CROPS. Cropping damage out of an insurance photograph to save bytes would
+     be worse than the bug this fixes. */
+var AI_TRANSFORM = { width: 1600, height: 1600, resize: 'contain', quality: 85 };
+
+/* ⚠ A SECOND SIGNING PATH, which 1059 deliberately avoided — and the reason is
+   structural, not a change of mind. loadPhotos() signs all 200 in ONE
+   createSignedUrls() call, and that batch endpoint HAS NO transform option
+   (only download and cacheNonce). Only the singular createSignedUrl carries
+   one, and it must: the transform is POSTed and comes back INSIDE the signed
+   token, so it cannot be appended to a URL afterwards. Read out of the shipped
+   supabase-js, not assumed.
+
+   Scoped to the <=20 photographs actually being sent. The display path is
+   untouched. Falls back per photograph to the display URL it already holds, so
+   a job still analyses if the transform is refused — and the caller counts the
+   fallbacks, because a silent fallback would make this build inert and look
+   exactly like a working one. */
+async function signSmall(list){
+  var out = await Promise.all(list.map(async function(p){
+    try{
+      var r = await sb.storage.from('photos')
+                .createSignedUrl(p.storage_path, 3600, { transform: AI_TRANSFORM });
+      if(r && r.data && r.data.signedUrl) return { url: r.data.signedUrl, small: true };
+    }catch(_e){}
+    return { url: p._src, small: false };
+  }));
+  return out;
+}
+
 /* 1059 — direction B. The photographs, newest first, through the route's own
-   SSRF bound. loadPhotos() has already signed every one of them into p._src,
-   so there is no second signing path here. */
+   SSRF bound. */
 async function readPhotos(){
   if(!S.claim) return;
   var have = (S.photos || []).filter(function(p){ return p._src && p.storage_path; });
@@ -1030,11 +1076,15 @@ async function readPhotos(){
   el('analyzeNote').textContent = 'Looking at ' + newestFirst.length +
     ' photograph' + (newestFirst.length === 1 ? '' : 's') + '… usually 20–40 seconds.';
   try{
+    var aiUrls = await signSmall(newestFirst);
+    var nSmall = aiUrls.filter(function(u){ return u.small; }).length;
     var r = await fetch('/api/supplement', {
       method: 'POST', headers: await authHeader(),
       body: JSON.stringify({
         mode: 'photos',
-        photos: newestFirst.map(function(p){ return { url: p._src, path: p.storage_path }; }),
+        photos: aiUrls.map(function(u, i){
+          return { url: u.url, path: newestFirst[i].storage_path };
+        }),
         meas: S.meas || {},
         code_letters: clSelected(),
         claim: { carrier: S.claim.carrier, claim_number: S.claim.claim_number },
@@ -1049,7 +1099,16 @@ async function readPhotos(){
        blocked — the model gets no shortcut past the gate a human would face. */
     S.gaps.forEach(function(g){
       if(!g.photos || !g.photos.length){
+        /* ⚠ 1071: photo_index is 0-based into what the MODEL SAW, not into
+           what we sent. The route skips a photograph it cannot read or cannot
+           afford, so before 1071 one mid-list skip pointed every later finding
+           at the wrong photograph — measured at 2 of 6 on a realistic job.
+           photos_used maps the model's position back to ours. An older route
+           that does not send it falls back to identity, which is exactly what
+           the old behaviour was. */
+        var used = Array.isArray(j.photos_used) ? j.photos_used : null;
         var idx = (typeof g.photo_index === 'number') ? g.photo_index : -1;
+        if(used && idx >= 0) idx = (idx < used.length) ? used[idx] : -1;
         var ph = (idx >= 0 && idx < newestFirst.length) ? newestFirst[idx] : null;
         g.photos = ph ? [{ path: ph.storage_path, caption: '' }] : [];
       }
@@ -1057,10 +1116,25 @@ async function readPhotos(){
     });
     renderGaps(j.scope_summary || '');
     /* ⚠ never a silent cap — say what was read and what was not. */
+    /* ⚠ 1071: name the REAL cause. This line used to say "only the newest N
+       are sent" whatever happened, which blamed the count cap — and on 46% of
+       jobs the cap that actually bit was the byte budget. A fluent, plausible,
+       wrong explanation is worse than none. */
     var read = j.photos_read, skip = j.photos_skipped;
+    var why = j.photos_capped_by === 'bytes'
+      ? ' (the rest were too large to send together)'
+      : (j.photos_capped_by === 'count' ? ' (only the newest 20 are sent)' : '');
+    /* ⚠ 1072: name the model ONLY when it was not the one we asked for. Build
+       808 is the reason: a correct chip that is always there tells nobody
+       anything and trains people to stop reading it. On the intended path this
+       adds nothing at all. */
+    var vNote = viaNote(j.diag);
     el('analyzeNote').textContent = (read != null)
       ? ('Read ' + read + ' photograph' + (read === 1 ? '' : 's') +
-         (skip ? ', skipped ' + skip + ' (only the newest ' + read + ' are sent)' : '') +
+         (skip ? ', skipped ' + skip + why : '') +
+         (nSmall < aiUrls.length
+            ? ' — ' + (aiUrls.length - nSmall) + ' sent full size'
+            : '') + vNote +
          ' — nothing is ticked; check each line.')
       : '';
     step(2);
