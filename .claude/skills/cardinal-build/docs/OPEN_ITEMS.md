@@ -169,7 +169,28 @@ His list, in his order. **ALL FIVE CLOSED: 1, 2 and 4 shipped; 3 and 5 were fals
 | 4 | distinct icons in the Job Menu | ✅ **build 1082** — plus the ink, which was the bigger defect |
 | 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ⚠️ **HALF right — corrected 26 Aug.** It renders **183 × 44** and is tappable, so what Theo saw is closed. But its **44px min-width floor really is dead**, and that is latent, not false. See below |
 
-### ⚠️ Item 5 — CORRECTED. The button is fine; its floor is not.
+### ❌ Item 5 — DECIDED 26 Aug 2026: LEAVE THE CSS ALONE
+
+**The button is fine; only a promise about it is false.** `#acxTrBtn` renders **183 × 44**,
+`min-height` computes 44px, it is fully tappable. The *width* floor is dead, beaten by
+`cr-jobdetails-styles`'s `… .acxjd .acxsel { min-width:0px }` — the deliberate flex
+truncation fix that stops labels overflowing.
+
+**Forcing the floor back is the riskier move.** `.acxsel` is a **class** with more than one
+user, and `min-width:0` exists for a reason. That trades a hypothetical (some future
+shorter label) for a real regression risk on a screen that works. This is the standing
+sediment verdict applied to itself: *manage the debt, do not repay it.*
+
+**The one real defect is honesty, not layout:** `cr-touch44-styles` declares
+`min-width:44px` for `#acxTrBtn` and it is inert. It reads as enforced. **A comment saying
+so is the whole fix** — folded into the next build that touches `index.html` rather than
+spending a build number on a comment.
+
+**If the label ever shortens, the sentinel's `FLOOR` check is still pointing at this.**
+
+### ⚠️ How it was originally mis-called — worth keeping
+
+
 
 *I closed this flatly as a false positive. The sentinel disagreed, and it was half right.*
 
@@ -4521,7 +4542,8 @@ prompt leads with colour and takes the first sentence only.
    the model more freedom and weaker colour; higher tint strength pushes harder toward the swatch.
 3. **No render has used a CompanyCam import at full resolution.** 815 fixed the rendition order
    (it had been taking the annotated web copy); the fix is merged and unproven on a real render.
-4. **Run the sweep.** ~60 unreferenced files, ~20 MB, under `photos/visualizer/`.
+4. **~~Run the sweep.~~ ❌ DECIDED 26 Aug 2026: DO NOT.** Measured, not estimated: **184 unreferenced files, 60 MB** (219 files / 97 MB total under `visualizer/`, 35 referenced, 53 `design_jobs` rows). The "~60 files / ~20 MB" carried here for months was **wrong by 3x**.
+   **Still not worth doing.** 60 MB is pennies of Supabase storage against 184 irreversible deletes, and `sweep_visualizer.py` has never been run or validated — an unvalidated instrument pointed at a delete is the worst combination this project has. The orphans are genuinely dead (newest is 19 Aug, nothing in flight); they are just harmlessly dead. **Revisit if visualizer storage passes ~500 MB or storage cost appears on a bill.** ⚠️ The orphan count above came from fuzzy `LIKE` matching of storage paths against `design_jobs.source_path/render_path/preview_path` — good enough to SIZE the problem, **not good enough to delete on**.
    `python3 spark/sweep_visualizer.py` on the Spark is a dry run and prints what it would remove;
    `--apply` removes it. The 24-hour age floor is what protects an import that has not been
    rendered yet — do not lower it to be tidy.

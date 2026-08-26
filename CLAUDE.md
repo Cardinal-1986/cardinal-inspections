@@ -1000,8 +1000,11 @@ unconditionally**, and announced in the startup line. `achieved._prompt` (835) r
 shape actually ran. **Provenance is a query now, never an argument.**
 
 **Known-open, stated plainly:** no stale-claim recovery (a job claimed by a worker that dies stays
-`running` forever); ~60 unreferenced files (~20 MB) under `photos/visualizer/` with
-`spark/sweep_visualizer.py` merged but never run; the gutter mask still wants a
+`running` forever); **184 unreferenced files (60 MB)** under `photos/visualizer/` with
+`spark/sweep_visualizer.py` merged but never run — ⚠️ **the figure carried here for months was
+"~60 files (~20 MB)" and is wrong by 3x**, measured 26 Aug against `storage.objects` joined to
+`design_jobs`; **DECIDED 26 Aug: do not sweep**, 60 MB is not worth 184 irreversible deletes on a
+never-validated script — revisit past ~500 MB; the gutter mask still wants a
 `CARDINAL_MASK_GUTTERS` chain built by eye on the Spark; **830's `"rain gutter . downspout"` prompt
 is REVERTED as triage at 836**, not overruled.
 
