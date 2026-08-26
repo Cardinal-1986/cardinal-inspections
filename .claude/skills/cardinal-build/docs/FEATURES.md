@@ -7230,3 +7230,45 @@ the start form splits street and city off the commas into editable fields.
 **No new full-screen view, so no `hideAllViews()` or `navRestore()` entry** —
 `open()` already registers `showcase`. This is a different TAB of a view that is
 already wired.
+
+
+---
+
+## Document history — record it, keep it (1078–1079)
+
+`inspection_reports` is the document pipeline for **everything**: inspection reports,
+estimates, contracts and crew work orders. Until 1078 a document was one `html` column
+overwritten in place, with no history, no trigger and nothing that recorded a change
+after delivery.
+
+| build | what |
+|---|---|
+| **1078** | a change to a **sent or signed** document writes a `doc` row into `audit_events` — who, when, which fields, and whether the content itself moved |
+| **1079** | `document_versions` + `snapshot_document()` keep the copy: one at send, one at signature, and one of the old wording the first time a delivered document is edited |
+
+**Where:** `docChangeNote`, `docSnapReason`, `docSnapshot` sit beside `db.update` in the
+report-editor block. `db.update(id, fields)` is the **single chokepoint** — every write
+to the table goes through it.
+
+⚠️ **The send and the signature are `db.update` calls too.** Both builds explicitly
+exclude them: without that, sending a document logs itself as tampering with what it
+just sent. `gate_1078.mjs` B1/B2 and `gate_1079.mjs` B2/B3 exist for this.
+
+⚠️ **The ORDER of the snapshot is the design.** `before_edit` is **awaited before** the
+write (the copy must be what was delivered); `sent`/`signed` come **after** (the copy
+carries the stamp). Firing it alongside the update races it and can copy the new html
+while looking perfectly correct.
+
+⚠️ **The browser never uploads the html.** `snapshot_document` is `security definer` and
+copies the row the server already has — the documents average 628 KB and run to 6.4 MB.
+
+⚠️ **`document_versions` has no `insert` and no `update` policy, on purpose.** Writes
+happen only through the function, which does its own permission check (the same
+expression as `reports_select`) before bypassing RLS. A version the browser could write
+directly, or edit afterwards, would not be evidence of anything.
+
+**Not built:** refusing the edit. Theo picked "1 and 3", not 2 — he can still fix a typo
+on a signed estimate; it simply stops being invisible.
+
+⚠️ **Drafts are not versioned** — enforced inside the function, so the browser does not
+carry the rule twice.

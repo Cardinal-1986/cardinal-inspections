@@ -2,9 +2,32 @@
 
 ---
 
-## Layer: 26 Aug 2026 — the document pipeline (recon for item 3)
+## Layer: 26 Aug 2026 — the document pipeline (SETTLED, builds 1078–1079)
 
-### ⏳ NEEDS THEO — how far to take document versioning
+### ✅ SETTLED — Theo picked "1 and 3", verbatim. Do NOT re-litigate.
+
+**Built:** 1078 records a change to a delivered document in `audit_events`; 1079 keeps
+the delivered copy in `document_versions`.
+
+**Deliberately NOT built: option 2, refusing the edit.** He did not pick it. It would
+stop him fixing a typo on a signed estimate, which is a real thing he does. Do not add
+an RLS lock on `html` without a fresh decision from him.
+
+### ⏳ Still needs Theo — two smaller calls that came out of it
+
+- **`on delete cascade` on `document_versions`.** Deleting a document deletes its
+  history. `restrict` would break `db.remove()`, which works today. If document deletion
+  should become soft instead, that is a separate decision.
+- ✅ **`document_versions.sql` is APPLIED** (26 Aug 2026), and verified rather than
+  assumed — schema, RLS, both policies, no insert/update policy, security definer, anon
+  revoked, and the write path exercised on the real signed estimate (versions 1 and 2,
+  158,297 chars each). The two test rows were deleted afterwards: no edit had happened,
+  `created_by` was null because the admin connection carries no JWT, and a fabricated row
+  in an audit trail is worse than an empty table. **Do not re-run it as pending work.**
+
+### The original recon (kept — the numbers are what justified the shape)
+
+#### how far to take document versioning
 
 **Measured on production, 26 Aug 2026.** This is recon, not a bug report; read the numbers
 before deciding how much to build.

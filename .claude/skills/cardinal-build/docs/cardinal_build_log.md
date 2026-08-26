@@ -26083,6 +26083,114 @@ sweep were being truncated in silence.**
 
 ---
 
+## Builds 1078–1079 — the document history: record it, and keep the copy
+
+Theo's pick after the outside audit, verbatim: **"Merge then 1 and 3."** Option 1
+records that a delivered document changed; option 3 keeps what it looked like before.
+Option 2 (refuse the edit) was deliberately **not** built — he did not pick it, and it
+would stop him fixing a typo on a signed estimate.
+
+**1078 is `index.html` only. 1079 ships `document_versions.sql`, which must be applied
+FIRST.**
+
+### What the recon found, and why the audit's framing was wrong
+
+Measured on production before either build:
+
+| | |
+|---|---:|
+| `inspection_reports` | **23** |
+| …sent / signed / shareable by link | **2 / 1 / 0** |
+| …written to after being sent or signed | **2** |
+| version, history or snapshot tables | **none** |
+| triggers on the table | **none** |
+| `html` average / largest | **628 KB / 6.4 MB** |
+
+⚠️ **`inspection_reports` is the document pipeline for EVERYTHING** — inspection
+reports, estimates, contracts and crew work orders, sorted by `isEstimateTitle` /
+`isContractTitle` / `isWorkOrderTitle`. All three delivered rows are **estimates**. The
+audit framed this as an inspection-report problem; it is a money-document problem.
+
+⚠️ **What is proven and what is not.** One `html` column overwritten in place, no
+history, no trigger — structural and certain. `updated_at > signed_at` proves the ROW
+was written to after signing; it does **not** prove the html changed, because the app
+writes `updated_at` itself and `status` / `doc_id` move too. **This was never reported
+as "a signed estimate was altered."** The honest statement is the one that justified the
+build: *nothing prevented it and nothing would have recorded it.*
+
+### 1078 — record it
+
+⚠️ **The mechanism already existed.** `auditLog(type, detail, projectId)` is defined
+exactly once, already carries a `doc` type (172 rows across 13 types, including
+`estimate_publish` and `estimate_save`), and already satisfies the RLS rule that
+`audit_events.email` equals the JWT email or is NULL. Grep for the convention before
+inventing a mechanism — the `IC_SKIP` / `PIPE_SKIP` lesson.
+
+⚠️ **ONE hook site, not eight.** `db.update(id, fields)` is the single chokepoint: every
+write to the table in that module goes through it — the send, the signature and every
+editor save. Verified all four symbols (`db.update`, `current`, `cacheRows`, `auditLog`)
+live in the **same `<script>` block**, 8457–28244, before touching anything; a hoisted
+declaration in that block is callable, so no `window.` guard and no timing question.
+
+**The discriminating rule, and it is what a naive version gets wrong:** the send and the
+signature ARE `db.update` calls. Without excluding them, the act of sending logs itself
+as tampering with what it just sent. Gate checks B1/B2 exist for exactly that.
+
+`prev` comes from `cacheRows`, falling back to the editor's `current` — both already in
+memory, so no extra round trip, and between them they cover every real path.
+
+### 1079 — keep the copy
+
+**The browser never uploads the html.** `snapshot_document(p_doc, p_reason)` is
+`security definer` and copies the row the server already holds. At 628 KB average and
+6.4 MB worst case, sending the document back up to make a version would be absurd.
+
+⚠️ **The ORDER is the whole design**, and a gate that only counted calls would pass on a
+version that copies the wrong bytes:
+
+| | |
+|---|---|
+| `before_edit` | **awaited BEFORE the write** — the copy must be what was delivered |
+| `sent` / `signed` | **after the write** — the copy carries the delivery stamp |
+
+Firing the snapshot alongside the update races it and can copy the NEW html, keeping a
+"before" version identical to the after and looking perfectly fine.
+
+**Drafts are not versioned** — enforced server-side in the function, so the browser does
+not have to know the rule twice.
+
+**Security, all asserted by `gate_1079.mjs`:** no `insert` and no `update` policy on
+`document_versions` (a version the browser could write or edit afterwards is not
+evidence); `security definer` with the same permission expression as `reports_select`
+inside it; `revoke ... from anon` then `grant execute to authenticated`; RLS enabled.
+
+⚠️ **`on delete cascade` is a deliberate cost**, stated rather than hidden: deleting a
+document deletes its history. `restrict` would break `db.remove()`, which works today.
+If document deletion should become soft, that is Theo's separate decision.
+
+### ⚠ A gate of mine went red on a build that had regressed nothing
+
+`gate_1078.mjs` slices `db.update` out of the artifact and runs it. 1079 added two
+helpers that `db.update` calls, so the slice threw a `ReferenceError` before reaching the
+audit and **six checks went red**. The app was fine. The rig now takes those helpers from
+the artifact when present and stubs them when not — **a gate must not break because a
+later build extended the function it tests.** Verified green on 1078 *and* 1079, red on
+1077.
+
+⚠️ **Two of my own assertions failed correct code, both the same family.** `E2` counted
+`audit_events` inserts file-wide and asserted `<= 2`; there are **three**, all
+pre-existing, the same three on the control. And `E3` compared two `indexOf` results
+directly, so on a control where the first is `-1` it read `-1 < 4000` and **passed** — a
+check that cannot fail. Both re-anchored: E2 scoped to the two functions the build
+touched, E3 requiring both offsets to be found first.
+
+**Gates:** `check_build.py` GREEN 1077 → 1078 → 1079 · both byte-reproducible ·
+`gate_1078.mjs` **17/17** (15 failures on 1077) · `gate_1079.mjs` **15/15** (10 failures
+on 1078) · `migration_manifest.py` regenerated for the new `.sql`, and CI gates it.
+
+⚠️ **No sentinel run.** Neither build changes markup, CSS or an element — 1078 adds a log
+line, 1079 adds a server call. There is nothing for INK, COLLAPSE or OVERLAP to find.
+
 ## Build 1077 — the work order's colour prefill asked for a column that does not exist
 
 `index.html` only. **No SQL.** One word, wrong since build 889.
