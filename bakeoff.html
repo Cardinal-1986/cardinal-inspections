@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Cardinal — AI Bake-Off</title>
+<!--
+  THE BAKE-OFF · bakeoff.html · build 1073 (26 Aug 2026)
+  ─────────────────────────────────────────────────────────────────────────
+  /api/ai-status answers "is the AI up". This answers "is it RIGHT", on
+  Cardinal's own roofs, because roofing is narrow enough that a public
+  benchmark would not transfer.
+
+  ⚠ BLIND BY CONSTRUCTION. The answers are shuffled per photograph and shown
+    as A/B/C/D. The model names are in the response — the browser needs them
+    to tally — but they are not rendered until Reveal. Seeing "gemini" or
+    "claude" beside an answer would measure Theo's priors, not the answer.
+
+  ⚠ THE SHUFFLE IS PER PHOTOGRAPH, NOT PER RUN. A single shuffle held for the
+    whole run means position becomes a tell after two photographs.
+
+  ⚠ IT SENDS A RESIZED COPY (build 1071's rendition, 1600px/q85, contain).
+    The route caps at 5 MB and 12% of stored photographs are over 1 MB with a
+    7.26 MB maximum — an original would fail on the biggest ones, which are
+    exactly the detailed ones worth testing.
+
+  Own sign-in key (cr-bake-auth) so it cannot fight the CRM, Studio or the
+  Desk over one session on a shared origin — the 807 lesson.
+  Votes live in localStorage. Deliberately no table: this is a measurement you
+  run, read and act on, not a record the business depends on. Export copies it
+  out as text.
+-->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#09090C; --card:#141419; --card2:#1b1b22; --line:#2a2a33;
+  --ink:#e9e9ee; --mute:#9a9aa8; --dim:#6f6f7d;
+  --red:#c8202e; --good:#3fa34d; --warn:#d99a2b; --pick:#4a8fe0;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font:15px/1.5 'Segoe UI',-apple-system,BlinkMacSystemFont,Arial,sans-serif;}
+body{padding:0 0 64px;-webkit-text-size-adjust:100%}
+.wrap{max-width:860px;margin:0 auto;padding:0 14px}
+header{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,#0d0d12,#0d0d12ee);
+  border-bottom:1px solid var(--line);padding:12px 14px;backdrop-filter:blur(8px)}
+header .in{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1{margin:0;font:800 16px/1.2 'Segoe UI',Arial,sans-serif;letter-spacing:.01em}
+h1 b{color:var(--red)}
+.chip{font:700 10px/1 'Segoe UI',Arial,sans-serif;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--mute);border:1px solid var(--line);border-radius:999px;padding:6px 10px;white-space:nowrap}
+.spacer{flex:1}
+/* the run is the whole point of the screen; the signed-in address is
+   orientation, not a control. On a phone it cost ~110px above the
+   photograph, which is the report-toolbar mistake in miniature. */
+@media(max-width:560px){#whoChip{display:none !important}header{padding:9px 12px}}
+.btn{font:700 14px 'Segoe UI',Arial,sans-serif;color:var(--ink);background:var(--card2);
+  border:1px solid var(--line);border-radius:9px;padding:11px 16px;cursor:pointer;min-height:44px}
+.btn:hover{background:#23232c}
+.btn.red{background:var(--red);border-color:var(--red);color:#fff}
+.btn.ghost{background:none}
+.btn[disabled]{opacity:.45;cursor:default}
+.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;margin:14px 0}
+label{display:block;font:700 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 7px}
+input,select{width:100%;font:15px 'Segoe UI',Arial,sans-serif;color:var(--ink);
+  background:#0f0f14;border:1px solid var(--line);border-radius:9px;padding:12px;min-height:44px}
+p.note{color:var(--mute);font-size:13.5px;margin:8px 0 0}
+p.note b{color:var(--ink)}
+.err{color:#ff8b93;font-size:13.5px;margin:10px 0 0}
+.hide{display:none !important}
+
+/* setup */
+.mods{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.mod{display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid var(--line);
+  border-radius:10px;background:#0f0f14;cursor:pointer;min-height:44px}
+.mod input{width:auto;min-height:0;margin:0;accent-color:var(--red);transform:scale(1.25)}
+.mod .nm{font-weight:700}
+.mod .st{margin-left:auto;font:700 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--dim)}
+.mod.off{opacity:.5}
+.mod.off .st{color:var(--warn)}
+
+/* the run */
+.shot{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#000;margin:14px 0}
+.shot img{display:block;width:100%;height:auto;max-height:56vh;object-fit:contain;background:#000}
+.shot .cap{padding:9px 13px;font-size:12.5px;color:var(--dim);border-top:1px solid var(--line);
+  background:var(--card)}
+.answers{display:grid;gap:12px}
+@media(min-width:760px){.answers{grid-template-columns:1fr 1fr}}
+.ans{border:1px solid var(--line);border-radius:12px;background:var(--card);overflow:hidden;
+  cursor:pointer;transition:border-color .12s,background .12s;display:flex;flex-direction:column}
+.ans:hover{border-color:#41414f}
+.ans.sel{border-color:var(--pick);background:#141a24;box-shadow:0 0 0 1px var(--pick) inset}
+.ans .hd{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--line);
+  background:var(--card2)}
+.ans .ltr{width:26px;height:26px;border-radius:7px;background:#000;border:1px solid var(--line);
+  display:grid;place-items:center;font:800 13px 'Segoe UI',Arial,sans-serif;color:var(--ink);flex:0 0 auto}
+.ans.sel .ltr{background:var(--pick);border-color:var(--pick);color:#fff}
+.ans .ms{margin-left:auto;font:700 10.5px 'Segoe UI',Arial,sans-serif;color:var(--dim);
+  letter-spacing:.06em}
+.ans .who{font:700 11px 'Segoe UI',Arial,sans-serif;color:var(--good);letter-spacing:.04em}
+.ans .bd{padding:12px 13px;font-size:14px;white-space:pre-wrap;color:#dcdce4;flex:1;
+  max-height:340px;overflow:auto}
+.ans.bad .bd{color:#ff8b93}
+.runbar{display:flex;gap:9px;align-items:center;margin:14px 0;flex-wrap:wrap}
+.prog{height:5px;background:#1c1c24;border-radius:99px;overflow:hidden;margin:2px 0 0}
+.prog i{display:block;height:100%;background:var(--red);width:0;transition:width .2s}
+
+/* results */
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+/* ⚠ model ids are hyphenated, and a phone breaks them mid-word into three
+   lines. Same class as the Job Details trade checkboxes. Shrink the type on
+   the narrow screen rather than truncate a name the whole table is about. */
+td b{white-space:nowrap}
+@media(max-width:480px){table{font-size:12.5px}td b{font-size:12px}th,td{padding:8px 5px}}
+th{font:700 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--mute)}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.bar{height:7px;background:var(--red);border-radius:99px;min-width:2px}
+textarea{width:100%;min-height:180px;font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:var(--ink);background:#0f0f14;border:1px solid var(--line);border-radius:9px;padding:12px}
+</style>
+</head>
+<body>
+
+<header><div class="in">
+  <h1>Cardinal <b>Bake-Off</b></h1>
+  <span class="chip" id="bkBuild" title="Which bake-off code you are looking at">build 1073</span>
+  <span class="spacer"></span>
+  <span class="chip hide" id="whoChip"></span>
+  <button class="btn ghost hide" id="outBtn" style="padding:8px 12px;font-size:12.5px">Sign out</button>
+</div></header>
+
+<div class="wrap">
+
+  <!-- ── sign in ─────────────────────────────────────────────────────── -->
+  <section id="authView">
+    <div class="card">
+      <label for="em">Email</label>
+      <input id="em" type="email" autocomplete="username" placeholder="you@cardinalrenovations.net">
+      <div style="height:12px"></div>
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password">
+      <div style="height:14px"></div>
+      <button class="btn red" id="inBtn" style="width:100%">Sign in</button>
+      <p class="note">Admin only. This spends the AI keys once per model per photograph.</p>
+      <p class="err hide" id="authErr"></p>
+    </div>
+  </section>
+
+  <!-- ── setup ───────────────────────────────────────────────────────── -->
+  <section id="setupView" class="hide">
+    <div class="card">
+      <p class="note" style="margin:0 0 14px">
+        The same photograph and the same question go to every model at once. You see the
+        answers <b>blind</b> — shuffled, lettered, no names — and pick the best one.
+        Names are revealed only at the end.
+      </p>
+      <label>Models</label>
+      <div class="mods" id="mods"></div>
+      <div style="height:14px"></div>
+      <label for="nShots">How many photographs</label>
+      <select id="nShots">
+        <option value="5">5 — a quick read</option>
+        <option value="10" selected>10 — enough to see a pattern</option>
+        <option value="20">20 — a real answer</option>
+      </select>
+      <p class="note" id="poolNote">Loading the archive…</p>
+      <div style="height:14px"></div>
+      <button class="btn red" id="startBtn" style="width:100%" disabled>Start</button>
+      <p class="err hide" id="setupErr"></p>
+    </div>
+    <div class="card hide" id="resumeCard">
+      <p class="note" style="margin:0">You have an unfinished run.</p>
+      <div style="height:12px"></div>
+      <button class="btn" id="resumeBtn">Pick it back up</button>
+      <button class="btn ghost" id="dropBtn">Throw it away</button>
+    </div>
+  </section>
+
+  <!-- ── the run ─────────────────────────────────────────────────────── -->
+  <section id="runView" class="hide">
+    <div class="runbar">
+      <span class="chip" id="posChip">—</span>
+      <span class="spacer"></span>
+      <button class="btn ghost" id="skipBtn">Can’t tell — skip</button>
+      <button class="btn red" id="nextBtn" disabled>Next</button>
+    </div>
+    <div class="prog"><i id="progBar"></i></div>
+    <div class="shot" id="shotBox"><img id="shotImg" alt=""><div class="cap" id="shotCap"></div></div>
+    <p class="note hide" id="runNote"></p>
+    <div class="answers" id="answers"></div>
+  </section>
+
+  <!-- ── results ─────────────────────────────────────────────────────── -->
+  <section id="doneView" class="hide">
+    <div class="card">
+      <h2 style="margin:0 0 4px;font-size:17px">The answer</h2>
+      <p class="note" id="doneNote"></p>
+      <div style="height:12px"></div>
+      <table id="tally"></table>
+      <p class="note" id="caveat" style="margin-top:14px"></p>
+      <div style="height:14px"></div>
+      <button class="btn" id="againBtn">Run another</button>
+      <button class="btn ghost" id="expBtn">Copy the numbers</button>
+    </div>
+    <div class="card hide" id="expCard"><textarea id="expTxt" readonly></textarea></div>
+  </section>
+
+</div>
+
+<script>
+/* ═══ build stamp ═════════════════════════════════════════════════════════
+   Its own, like the Desk's SD_BUILD (1055). "Which bake-off code produced
+   this number" must be answerable from the screen, not from a deploy log. */
+var BK_BUILD = 1073; window.BK_BUILD = BK_BUILD;
+
+var SUPA_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
+var SUPA_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
+/* ⚠ its OWN storage key. supabase-js defaults to one name per origin, so the
+   CRM, Studio and the Desk would fight over a single session — the 807
+   lesson, which gave the Visualizer cr-viz-auth for exactly this reason. */
+var sb = supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { storageKey: 'cr-bake-auth' } });
+
+/* 1071's rendition. The route caps at 5 MB; 12% of stored photographs are over
+   1 MB and the largest is 7.26 MB, so an original would fail on precisely the
+   detailed ones worth testing. 'contain' never crops. */
+var AI_TRANSFORM = { width: 1600, height: 1600, resize: 'contain', quality: 85 };
+var LS_KEY = 'cr-bakeoff-run';
+
+var S = { user:null, pool:[], cands:[], run:null };
+function el(id){ return document.getElementById(id); }
+function show(id){ ['authView','setupView','runView','doneView']
+  .forEach(function(v){ el(v).classList.toggle('hide', v !== id); }); }
+function esc(s){ return String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ── auth ──────────────────────────────────────────────────────────────── */
+el('inBtn').addEventListener('click', async function(){
+  var b = el('inBtn'); b.disabled = true; el('authErr').classList.add('hide');
+  var r = await sb.auth.signInWithPassword({ email: el('em').value.trim(), password: el('pw').value });
+  b.disabled = false;
+  if(r.error){ el('authErr').textContent = r.error.message; el('authErr').classList.remove('hide'); return; }
+  boot();
+});
+el('outBtn').addEventListener('click', async function(){ await sb.auth.signOut(); location.reload(); });
+
+async function authHeader(){
+  var s = await sb.auth.getSession();
+  var t = s && s.data && s.data.session && s.data.session.access_token;
+  return { 'Content-Type':'application/json', Authorization: 'Bearer ' + (t || '') };
+}
+
+async function boot(){
+  var s = await sb.auth.getSession();
+  var u = s && s.data && s.data.session && s.data.session.user;
+  if(!u){ show('authView'); return; }
+  S.user = u;
+  el('whoChip').textContent = u.email; el('whoChip').classList.remove('hide');
+  el('outBtn').classList.remove('hide');
+  show('setupView');
+  await Promise.all([loadCandidates(), loadPool()]);
+  var saved = readRun();
+  el('resumeCard').classList.toggle('hide', !saved);
+}
+boot();
+
+/* ── setup ─────────────────────────────────────────────────────────────── */
+async function loadCandidates(){
+  try{
+    var r = await fetch('/api/bakeoff', { method:'POST', headers: await authHeader(),
+      body: JSON.stringify({ mode:'probe' }) });
+    var j = await r.json();
+    if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    S.cands = j.candidates || [];
+  }catch(e){
+    el('setupErr').textContent = 'Could not ask the server which models it can call: ' + (e.message || e);
+    el('setupErr').classList.remove('hide');
+    return;
+  }
+  /* ⚠ an unavailable model is shown, disabled, WITH THE REASON. Hiding it
+     would let "we never tested Claude" quietly become "Claude did badly". */
+  el('mods').innerHTML = S.cands.map(function(c){
+    return '<label class="mod' + (c.available ? '' : ' off') + '">' +
+      '<input type="checkbox" value="' + esc(c.id) + '"' +
+        (c.available ? ' checked' : ' disabled') + '>' +
+      '<span class="nm">' + esc(c.id) + '</span>' +
+      '<span class="st">' + (c.available ? esc(c.vendor) : esc(c.why || 'unavailable')) + '</span></label>';
+  }).join('');
+  refreshStart();
+  el('mods').addEventListener('change', refreshStart);
+}
+
+async function loadPool(){
+  var r = await sb.from('project_photos')
+    .select('id, storage_path, project_id, created_at')
+    .not('storage_path','is',null)
+    .order('created_at', { ascending:false }).limit(400);
+  S.pool = (r.data || []).filter(function(p){ return p.storage_path; });
+  el('poolNote').textContent = S.pool.length
+    ? S.pool.length + ' photographs in the archive to draw from, newest first.'
+    : 'No photographs with a stored file were found.';
+  refreshStart();
+}
+
+function chosenModels(){
+  return [].slice.call(el('mods').querySelectorAll('input:checked')).map(function(i){ return i.value; });
+}
+function refreshStart(){
+  el('startBtn').disabled = !(S.pool.length && chosenModels().length >= 2);
+  el('startBtn').textContent = chosenModels().length < 2
+    ? 'Pick at least two models' : 'Start';
+}
+
+/* ── the run ───────────────────────────────────────────────────────────── */
+function readRun(){ try{ return JSON.parse(localStorage.getItem(LS_KEY) || 'null'); }catch(e){ return null; } }
+function saveRun(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(S.run)); }catch(e){} }
+
+/* Fisher-Yates. ⚠ Called PER PHOTOGRAPH — one shuffle held across the run
+   makes position a tell after two photographs. */
+function shuffled(a){
+  var x = a.slice();
+  for(var i = x.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1));
+    var t = x[i]; x[i] = x[j]; x[j] = t; }
+  return x;
+}
+
+el('startBtn').addEventListener('click', function(){
+  var n = parseInt(el('nShots').value, 10);
+  var picked = shuffled(S.pool).slice(0, n);
+  S.run = { started: new Date().toISOString(), build: BK_BUILD,
+            models: chosenModels(), shots: picked.map(function(p){
+              return { id:p.id, path:p.storage_path, vote:null, order:null, ms:null }; }),
+            at: 0 };
+  saveRun(); show('runView'); step();
+});
+el('resumeBtn').addEventListener('click', function(){ S.run = readRun(); show('runView'); step(); });
+el('dropBtn').addEventListener('click', function(){
+  localStorage.removeItem(LS_KEY); el('resumeCard').classList.add('hide'); });
+el('againBtn').addEventListener('click', function(){
+  localStorage.removeItem(LS_KEY); S.run = null; show('setupView'); el('resumeCard').classList.add('hide'); });
+
+var current = null;   /* { answers:[...], order:[modelId,...] } */
+
+async function step(){
+  var run = S.run;
+  if(run.at >= run.shots.length){ finish(); return; }
+  var shot = run.shots[run.at];
+  current = null;
+  el('nextBtn').disabled = true;
+  el('posChip').textContent = 'Photograph ' + (run.at + 1) + ' of ' + run.shots.length;
+  el('progBar').style.width = Math.round(run.at / run.shots.length * 100) + '%';
+  el('answers').innerHTML = '';
+  el('runNote').textContent = 'Asking ' + run.models.length + ' models…';
+  el('runNote').classList.remove('hide');
+
+  var signed = await sb.storage.from('photos')
+    .createSignedUrl(shot.path, 3600, { transform: AI_TRANSFORM });
+  var small = signed && signed.data && signed.data.signedUrl;
+  if(!small){
+    var plain = await sb.storage.from('photos').createSignedUrl(shot.path, 3600);
+    small = plain && plain.data && plain.data.signedUrl;
+  }
+  el('shotImg').src = small || '';
+  el('shotCap').textContent = shot.path;
+
+  var t0 = Date.now();
+  try{
+    var r = await fetch('/api/bakeoff', { method:'POST', headers: await authHeader(),
+      body: JSON.stringify({ mode:'run', url: small, models: run.models }) });
+    var j = await r.json();
+    if(!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    current = { answers: shuffled(j.answers || []) };
+    shot.ms = Date.now() - t0;
+    render();
+  }catch(e){
+    el('runNote').textContent = 'Could not run this photograph: ' + (e.message || e) +
+      ' — skip it, or try again.';
+  }
+}
+
+function render(){
+  var L = ['A','B','C','D','E','F'];
+  el('runNote').classList.add('hide');
+  el('answers').innerHTML = current.answers.map(function(a, i){
+    return '<div class="ans' + (a.ok ? '' : ' bad') + '" data-i="' + i + '">' +
+      '<div class="hd"><span class="ltr">' + L[i] + '</span>' +
+      '<span class="who hide"></span>' +
+      '<span class="ms">' + (a.ms != null ? (a.ms / 1000).toFixed(1) + 's' : '') + '</span></div>' +
+      '<div class="bd">' + esc(a.ok ? a.text : ('did not answer — ' + a.text)) + '</div></div>';
+  }).join('');
+}
+
+el('answers').addEventListener('click', function(e){
+  var card = e.target.closest ? e.target.closest('.ans') : null;
+  if(!card || !current) return;
+  [].forEach.call(el('answers').querySelectorAll('.ans'), function(c){ c.classList.remove('sel'); });
+  card.classList.add('sel');
+  var a = current.answers[parseInt(card.getAttribute('data-i'), 10)];
+  S.run.shots[S.run.at].vote = a.model;
+  S.run.shots[S.run.at].order = current.answers.map(function(x){ return x.model; });
+  S.run.shots[S.run.at].times = current.answers.map(function(x){ return { m:x.model, ms:x.ms, ok:x.ok }; });
+  saveRun();
+  el('nextBtn').disabled = false;
+});
+
+el('skipBtn').addEventListener('click', function(){
+  if(current){
+    S.run.shots[S.run.at].vote = null;
+    S.run.shots[S.run.at].times = current.answers.map(function(x){ return { m:x.model, ms:x.ms, ok:x.ok }; });
+  }
+  S.run.at++; saveRun(); step();
+});
+el('nextBtn').addEventListener('click', function(){ S.run.at++; saveRun(); step(); });
+
+/* ── results ───────────────────────────────────────────────────────────── */
+function finish(){
+  var run = S.run, tally = {}, times = {}, fails = {};
+  run.models.forEach(function(m){ tally[m] = 0; times[m] = []; fails[m] = 0; });
+  var judged = 0;
+  run.shots.forEach(function(s){
+    if(s.vote != null){ tally[s.vote] = (tally[s.vote] || 0) + 1; judged++; }
+    (s.times || []).forEach(function(t){
+      if(times[t.m]) times[t.m].push(t.ms);
+      if(!t.ok && fails[t.m] != null) fails[t.m]++;
+    });
+  });
+  var rows = run.models.map(function(m){
+    var ts = times[m].slice().sort(function(a,b){ return a-b; });
+    return { m:m, wins:tally[m] || 0,
+             pct: judged ? Math.round((tally[m] || 0) / judged * 100) : 0,
+             med: ts.length ? ts[Math.floor(ts.length/2)] : null,
+             fails: fails[m] || 0 };
+  }).sort(function(a,b){ return b.wins - a.wins; });
+
+  var top = rows[0] ? rows[0].wins : 0;
+  el('tally').innerHTML =
+    '<tr><th>Model</th><th>Picked</th><th></th><th class="n">Median</th><th class="n">Failed</th></tr>' +
+    rows.map(function(r){
+      return '<tr><td><b>' + esc(r.m) + '</b></td>' +
+        '<td class="n">' + r.wins + ' &middot; ' + r.pct + '%</td>' +
+        '<td style="width:36%"><div class="bar" style="width:' +
+          (top ? Math.round(r.wins / top * 100) : 0) + '%"></div></td>' +
+        '<td class="n">' + (r.med != null ? (r.med/1000).toFixed(1) + 's' : '—') + '</td>' +
+        '<td class="n">' + (r.fails || '') + '</td></tr>';
+    }).join('');
+
+  var skipped = run.shots.length - judged;
+  el('doneNote').textContent = judged + ' of ' + run.shots.length + ' photographs judged' +
+    (skipped ? ', ' + skipped + ' skipped' : '') + '.';
+
+  /* ⚠ SAY WHAT THIS DOES NOT PROVE. A tally of ten taps is a preference, not
+     an accuracy measurement, and a number with no error bar invites more
+     confidence than it earns. */
+  el('caveat').innerHTML = judged < 10
+    ? 'Fewer than ten judged — treat this as a <b>hint</b>, not an answer. ' +
+      'A run of twenty is where a gap starts to mean something.'
+    : 'This is <b>your preference</b>, blind, on ' + judged + ' of your own photographs. ' +
+      'It is not a measurement against known ground truth — nothing on this project has one. ' +
+      'A gap under about ' + Math.max(2, Math.round(judged * 0.15)) + ' picks is noise at this sample size.';
+
+  el('expTxt').value = JSON.stringify({ build: run.build, started: run.started,
+    models: run.models, judged: judged, skipped: skipped, rows: rows,
+    shots: run.shots.map(function(s){ return { path:s.path, vote:s.vote, order:s.order }; }) }, null, 2);
+  el('progBar').style.width = '100%';
+  show('doneView');
+}
+el('expBtn').addEventListener('click', function(){
+  el('expCard').classList.remove('hide');
+  el('expTxt').select();
+  try{ document.execCommand('copy'); el('expBtn').textContent = 'Copied'; }catch(e){}
+});
+</script>
+</body>
+</html>

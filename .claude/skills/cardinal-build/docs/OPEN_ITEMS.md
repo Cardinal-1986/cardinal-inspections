@@ -47,15 +47,23 @@
 - **No ladder changes until the bake-off says so.** 1072 reports; it does not
   decide. `gate_1072.mjs` check C enforces this.
 
-### Open — the accuracy bake-off (item 3, not started)
+### ✅ The accuracy bake-off is BUILT (1073) — and the answer is Theo's to produce
 
-The question Theo actually asked — *which AI is best at spotting issues from
-photos* — is still unanswered, and **no measurement of accuracy exists on this
-project**. Every model decision (500–505, 806, and 1072) was made on latency,
-uptime or reporting. The plan: 20–30 photographs where Theo already knows the
-damage, each model scored against his answers. 1071 and 1072 are the
-prerequisites — the right photographs now reach the model, and the answer
-records which model wrote it.
+`bakeoff.html` + `api/bakeoff.js` ship. **The instrument exists; the
+measurement does not yet.** Theo opens `/bakeoff.html`, signs in, runs 20, and
+then we know.
+
+⚠️ **It is a blind PREFERENCE test, not an accuracy measurement, and that was
+forced by the data**: `walk_shots` is empty (The Walk has never been used),
+`project_photos` has 217 rows and **zero** captions, and only 3 of 23
+inspection reports carry the `data-ai-summary` marker. There is no ground truth
+to score against short of Theo labelling by hand. Do not describe the output as
+accuracy — the results screen deliberately does not.
+
+**Still open after it runs:** whichever model wins, changing a ladder is a
+separate build. 1072 deliberately changed none, and the ladders are not uniform
+(`detect`/`sortphotos`/`supplement` lead with 3.6; `caption`/`analyze`/
+`summarize` are pinned to 3.5).
 
 ### Open, with the measurement attached
 

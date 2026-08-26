@@ -7090,3 +7090,48 @@ unread — deliberately, so the answer exists when someone asks.
 **Historical reason this matters:** builds 500–501 measured Gemini 503ing about
 **one call in four**. A quarter of all answers were written by the smallest
 model in the stack, and nothing said so.
+
+## The accuracy bake-off — `bakeoff.html` + `api/bakeoff.js` (1073)
+
+**The seventh shipped artifact.** `/api/ai-status` answers *"is the AI up"*;
+this answers *"is it right"*, on Cardinal's own roofs, because roofing is narrow
+enough that a public benchmark would not transfer.
+
+| | |
+|---|---|
+| who can use it | **admin only, enforced server-side** (`is_cardinal_admin()`), because it spends the AI keys once per model per photograph |
+| candidates | `gemini-3.6-flash`, `gemini-3.5-flash`, `gpt-4o-mini`, `claude-opus-5` — adding one is a line in `CANDIDATES` and nothing else |
+| what it sends | 1071's rendition (1600px/q85/**contain**) — the route caps at 5 MB and the largest stored photograph is 7.26 MB |
+| the method | same photograph, same question, all models **concurrently**; answers **blind, shuffled, lettered**; one tap picks the best |
+| where votes live | `localStorage`. **No table on purpose** — a measurement is not a business record, and no migration means it works the moment it deploys |
+| its own stamp | `BK_BUILD`, and a header chip |
+
+⚠️ **`gemini-3.1-pro` is deliberately absent from `CANDIDATES`** — probed live
+26 Aug, it answers 404 *"not found for API version v1beta"* for this key.
+Listing a model the key cannot call produces a column of errors that reads like
+a model being bad at roofs.
+
+⚠️ **The shuffle is PER PHOTOGRAPH.** One shuffle held across a run makes
+position a tell after two photographs and the blinding becomes theatre.
+`gate_1073` proves both that `shuffled()` permutes and that `step()` calls it
+per shot.
+
+⚠️ **The model name is in the response and never rendered until Reveal.** The
+browser needs it to tally. The gate asserts `render()` never mentions `a.model`.
+
+⚠️ **An unavailable model is shown, disabled, with its reason** — never hidden.
+Otherwise *"we never tested Claude"* quietly becomes *"Claude did badly."*
+
+⚠️ **The Anthropic SDK import is LAZY, and that is a correctness choice.** At
+module scope, the SDK failing to resolve takes down the Google and OpenAI
+columns too — turning one missing dependency into "the bake-off is broken"
+instead of "one model could not be reached".
+
+⚠️ **The results screen states what it does not prove.** Under ten judged it
+calls itself a hint; above that it names the noise floor. There is no ground
+truth on this project — `walk_shots` is **empty**, `project_photos` has **217
+rows and 0 captions** — so this is a blind preference test, and it says so.
+
+**Gates:** `gate_1073.mjs` — 13 checks, the route executed for auth, SSRF and
+fan-out, negative-controlled against a sabotaged variant. `render_1073.mjs` for
+the pictures.

@@ -26083,6 +26083,111 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1073 — the accuracy bake-off
+
+Theo: *"1, 2, then 3."* This is 3, and it is the one that answers the question
+he actually asked — **which AI is best at spotting issues in photographs.**
+
+`/api/ai-status` answers *"is the AI up."* Nothing answered *"is it right."*
+Every model decision on this project — 500–505, 806, and 1072 last night — was
+made on latency, uptime or reporting.
+
+### ⚠ There is no labelled set, and that changed the design
+
+Measured before building anything, because the obvious plan was to score
+precision against known damage:
+
+| source | rows | usable as truth |
+|---|---:|---|
+| `walk_shots` (AI proposes, **a human confirms**) | **0** | The Walk has never been used |
+| `project_photos.caption` | 217 rows, **0 captions** | nothing to score against |
+| `inspection_reports` with `data-ai-summary` | **3** of 23 | too few, and the marker is recent |
+
+So precision/recall is not available at any price short of Theo labelling by
+hand — and asking him to tag 30 photographs against a 31-defect taxonomy is a
+real cost to a man who works from a phone, late.
+
+**The design that survives that:** same photograph, same question, every model
+at once, answers **blind and shuffled**, one tap for the best. That is how
+open-ended output is actually evaluated, and it costs him a tap instead of a
+taxonomy.
+
+### What ships
+
+- **`api/bakeoff.js`** — admin-only server-side (the Desk's gate, copied), same
+  SSRF bound as `supplement.js`, four candidates fanned out **concurrently**
+  (the 499 mistake was doing vision calls in series). `mode:'probe'` reports
+  which models this deployment can actually call, **from the env**, so *"we
+  never tested Claude"* cannot quietly become *"Claude did badly."*
+- **`bakeoff.html`** — its own sign-in (`cr-bake-auth`, the 807 lesson), photos
+  drawn from the archive, answers lettered A/B/C/D, tap to pick, reveal and
+  tally. Votes in `localStorage`; **no table on purpose** — a measurement you
+  run and act on is not a record the business depends on, and no migration
+  means it works the moment it deploys.
+- ⚠️ **It sends 1071's rendition** (1600px/q85/contain). The route caps at 5 MB
+  and the largest stored photograph is 7.26 MB, so originals would fail on
+  exactly the detailed ones worth testing. 1071 and 1072 were the prerequisites
+  and this is where they pay.
+
+### ⚠ Blinding is load-bearing, and the shuffle is PER PHOTOGRAPH
+
+One shuffle held across a run makes position a tell after two photographs — the
+blinding would be theatre. `gate_1073` extracts `shuffled()`, proves it permutes
+60/60, **and** proves `step()` calls it per shot. The model name is in the
+response (the browser needs it to tally) and is never rendered until Reveal;
+the gate asserts `render()` never mentions `a.model`.
+
+### ⚠ The results screen says what it does NOT prove
+
+*"This is your preference, blind, on 10 of your own photographs. It is not a
+measurement against known ground truth — nothing on this project has one. A gap
+under about 2 picks is noise at this sample size."* Under ten judged it calls
+itself a hint. A tally with no error bar invites more confidence than it earns,
+and this project has been burned by three green results that all sat on the easy
+side of the distribution (the Visualizer colour path, 827–836).
+
+### ⚠ A top-level SDK import would have taken the whole route down
+
+`import Anthropic from '@anthropic-ai/sdk'` at module scope means the SDK
+failing to resolve kills **every** column, including Google's and OpenAI's,
+which need nothing from it. One missing dependency would read as *"the bake-off
+is broken"* instead of *"one model could not be reached"* — and not sinking the
+comparison when one model fails is the route's own contract (check A6). Now
+`await import(...)` inside the Anthropic call only. Found because the gate could
+not import the route locally; kept because it is right on the merits.
+
+### ⚠ A4 failed and THE ROUTE WAS RIGHT
+
+I asserted three answers when Anthropic has no key in the rig; it returned four.
+A model that was asked for and could not be reached comes back as a **named
+failure**, not a silent omission — otherwise *"we could not call Claude"* is
+indistinguishable from *"Claude was not in this run"*, which is the exact
+ambiguity check A5 exists to prevent. **Fixed the assertion.**
+
+⚠️ **Comment pollution, fifth time this session** — the patch asserted the
+top-level import was gone, and its own comment quotes the line it removed. The
+lexer says 0 in code, a bare regex says 1.
+
+### Two phone fixes found by rendering, not by reading
+
+`gemini-3.6-flash` wrapped **mid-word into three lines** in the results table
+(the Job Details trade-checkbox class), and the header spent ~110px on a second
+row for the signed-in address — the report-toolbar mistake in miniature. Both
+fixed before shipping.
+
+**Gates:** `check_artifact.py` green (`BK_BUILD` 1073, marker) · `node --check
+api/bakeoff.js`, no `module.exports` · **zero secrets in the shipped page**,
+only the publishable anon key · `gate_1073.mjs` **13/13**, the route
+**executed** for auth, SSRF and fan-out · **negative-controlled against a
+deliberately sabotaged variant** (admin gate removed, shuffle removed, model
+name rendered): 5 red, exit 1, every check seen to fail on the defect it exists
+to catch · `vercel.json` gains `maxDuration: 60` · `.vercelignore` carries the
+written ship decision · `index.html` untouched, stamp stays 1072.
+
+**Theo's move:** open `/bakeoff.html`, sign in, run 20. Then we know.
+
+---
+
 ## Build 1072 — every AI answer records which model wrote it
 
 Theo, after the audit: *"1, 2, then 3."* This is 2.
