@@ -7100,7 +7100,9 @@ enough that a public benchmark would not transfer.
 | | |
 |---|---|
 | who can use it | **admin only, enforced server-side** (`is_cardinal_admin()`), because it spends the AI keys once per model per photograph |
-| candidates | `gemini-3.6-flash`, `gemini-3.5-flash`, `gpt-4o-mini`, `claude-opus-5` — adding one is a line in `CANDIDATES` and nothing else |
+| candidates (@1074) | **`gemini-3.7-flash`**, `gemini-3.6-flash`, `gemini-3.5-flash`, `gpt-4o-mini`, `claude-opus-5`, **`kimi-k3`** — adding one is a line in `CANDIDATES` and nothing else |
+| vendors | google · openai · anthropic · **moonshot** (OpenAI-compatible, so `askKimi` is `askOpenAI` with another base URL) |
+| which env var | one `KEY_ENV` map. ⚠️ 1073 used a nested ternary whose final `else` was Anthropic — correct with three vendors, **wrong the moment a fourth exists** |
 | what it sends | 1071's rendition (1600px/q85/**contain**) — the route caps at 5 MB and the largest stored photograph is 7.26 MB |
 | the method | same photograph, same question, all models **concurrently**; answers **blind, shuffled, lettered**; one tap picks the best |
 | where votes live | `localStorage`. **No table on purpose** — a measurement is not a business record, and no migration means it works the moment it deploys |
@@ -7132,6 +7134,24 @@ calls itself a hint; above that it names the noise floor. There is no ground
 truth on this project — `walk_shots` is **empty**, `project_photos` has **217
 rows and 0 captions** — so this is a blind preference test, and it says so.
 
+⚠️ **`kimi-k3` carries a `note` and the picker RENDERS it.** This repo's own
+`AI_CHEATSHEET` has K3 at 2.8T parameters (17 July 2026) and calls it *"the
+agent one"* — **no vision claim anywhere**. It is listed rather than assumed or
+dropped, so a refused photograph reads as the caveat coming true, not as a
+verdict on the model.
+
+⚠️ **`/api/ai-status` reports `keys.anthropic.configured` and
+`keys.moonshot.configured`** — **presence only**, named `configured` rather
+than `ok`, because it makes no call. That is how "can we even test Claude" is
+answered without guessing. Build 504's lesson: a diagnostic that overstates
+what it tested is worse than none.
+
+⚠️ **Do not pin a gate to the number of candidates.** `gate_1073`'s A4 asserted
+`length === 4` and went red when 1074 added two — against the route's own
+"adding one is a line and nothing else". It now parses `CANDIDATES` out of the
+route and asserts the contract instead.
+
 **Gates:** `gate_1073.mjs` — 13 checks, the route executed for auth, SSRF and
-fan-out, negative-controlled against a sabotaged variant. `render_1073.mjs` for
-the pictures.
+fan-out, negative-controlled against a sabotaged variant. `gate_1074.mjs` — 8
+checks on the candidate list, the env-var map and the caveat rendering.
+`render_1073.mjs` for the pictures.

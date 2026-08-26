@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex,nofollow">
 <title>Cardinal — AI Bake-Off</title>
 <!--
-  THE BAKE-OFF · bakeoff.html · build 1073 (26 Aug 2026)
+  THE BAKE-OFF · bakeoff.html · build 1074 (26 Aug 2026)
   ─────────────────────────────────────────────────────────────────────────
   /api/ai-status answers "is the AI up". This answers "is it RIGHT", on
   Cardinal's own roofs, because roofing is narrow enough that a public
@@ -81,6 +81,7 @@ p.note b{color:var(--ink)}
   text-transform:uppercase;color:var(--dim)}
 .mod.off{opacity:.5}
 .mod.off .st{color:var(--warn)}
+.cav{margin:-4px 0 2px 12px;font-size:12px;color:var(--warn);line-height:1.35}
 
 /* the run */
 .shot{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#000;margin:14px 0}
@@ -127,7 +128,7 @@ textarea{width:100%;min-height:180px;font:12.5px/1.5 ui-monospace,SFMono-Regular
 
 <header><div class="in">
   <h1>Cardinal <b>Bake-Off</b></h1>
-  <span class="chip" id="bkBuild" title="Which bake-off code you are looking at">build 1073</span>
+  <span class="chip" id="bkBuild" title="Which bake-off code you are looking at">build 1074</span>
   <span class="spacer"></span>
   <span class="chip hide" id="whoChip"></span>
   <button class="btn ghost hide" id="outBtn" style="padding:8px 12px;font-size:12.5px">Sign out</button>
@@ -215,7 +216,7 @@ textarea{width:100%;min-height:180px;font:12.5px/1.5 ui-monospace,SFMono-Regular
 /* ═══ build stamp ═════════════════════════════════════════════════════════
    Its own, like the Desk's SD_BUILD (1055). "Which bake-off code produced
    this number" must be answerable from the screen, not from a deploy log. */
-var BK_BUILD = 1073; window.BK_BUILD = BK_BUILD;
+var BK_BUILD = 1074; window.BK_BUILD = BK_BUILD;
 
 var SUPA_URL = 'https://yipslubcptjoarblzbpl.supabase.co';
 var SUPA_KEY = 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ';
@@ -287,7 +288,13 @@ async function loadCandidates(){
       '<input type="checkbox" value="' + esc(c.id) + '"' +
         (c.available ? ' checked' : ' disabled') + '>' +
       '<span class="nm">' + esc(c.id) + '</span>' +
-      '<span class="st">' + (c.available ? esc(c.vendor) : esc(c.why || 'unavailable')) + '</span></label>';
+      /* 1074: a candidate may carry a caveat — kimi-k3 is an agent model with
+         no vision claim. Showing it here means a refused photograph reads as
+         "we knew this might happen", not as a verdict on the model. */
+      '<span class="st" title="' + esc(c.note || '') + '">' +
+        (c.available ? (c.note ? '⚠ ' + esc(c.vendor) : esc(c.vendor))
+                     : esc(c.why || 'unavailable')) + '</span></label>' +
+      (c.note ? '<div class="cav">' + esc(c.note) + '</div>' : '');
   }).join('');
   refreshStart();
   el('mods').addEventListener('change', refreshStart);

@@ -26083,6 +26083,96 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1074 — 3.7 into the bake-off, and honest slots for Claude and Kimi
+
+Theo: *"yes, add 3.7 to the bake-off, what about Claud and/or kimi k3?"*
+
+### 1 · `gemini-3.7-flash` — added, and **verified before it was written in**
+
+Probed live against his key through `/api/ai-status?model=gemini-3.7-flash`: it
+answers. Not taken on faith from a release note. ⚠️ One cold call measured
+**8607 ms against 914 ms for 3.6** — that is a cold start, not a latency
+finding, and it is deliberately **not** quoted as one. The bake-off records
+per-call wall time; that is the number that will mean something.
+
+Listed **ahead of 3.6**, so it is the first thing a run compares.
+
+### 2 · Claude was already a candidate — the real question was the key
+
+`claude-opus-5` has been in `CANDIDATES` since 1073. Whether it can be *called*
+depends on `ANTHROPIC_API_KEY` in Vercel, which `api/librarian.js` has needed
+since 806. I cannot read Vercel env from here, and guessing is exactly how
+*"we never tested Claude"* becomes *"Claude did badly"* — the ambiguity 1073's
+probe exists to prevent.
+
+So **`/api/ai-status` now reports key presence** for anthropic and moonshot.
+⚠️ **Presence only, and the field is named `configured`, not `ok`.** Gemini and
+OpenAI get real test calls because those keys were already there to spend;
+billing a live Anthropic call on every load of a *public* diagnostic is a
+different trade. **Build 504 is the precedent** — a diagnostic that overstates
+what it tested is worse than none.
+
+### 3 · Kimi K3 — wired, and the honest part is what it says
+
+K3 is real, and this repo already knew: `AI_CHEATSHEET.md` has it at **2.8T
+parameters, 17 July 2026**, weights published 28 July. Moonshot's API is
+OpenAI-compatible, so `askKimi` is `askOpenAI` with a different base URL — not
+a fourth request shape to keep in step.
+
+⚠️ **But the bake-off is a VISION test, and nothing says K3 reads images.** The
+cheatsheet calls it *"the agent one — built to keep its footing across long,
+many-step runs"*. Not one word about photographs. I will not assert it has
+vision, and I will not quietly leave it out either.
+
+It goes in as a candidate that **reports the truth**: no `MOONSHOT_API_KEY`
+means `available:false` with the reason, and if a key is set and the model
+refuses an image, 1073's contract already covers it — an unreachable model is a
+**named failure**, never a silent omission. The caveat is carried as `note` and
+**rendered** beside the checkbox, so a refusal reads as *"we knew this might
+happen"* rather than as a verdict on the model.
+
+### ⚠ The nested ternary that would have lied about Kimi
+
+1073 decided each vendor's env var with a chain whose final `else` was
+Anthropic. With three vendors that is accidentally correct; **the moment a
+fourth exists it reports the wrong variable** — Kimi's missing key would have
+come back as *"ANTHROPIC_API_KEY not set"*. Replaced with a `KEY_ENV` map,
+which cannot make that mistake.
+
+**Stated precisely, because it matters:** this was **latent, not live** — the
+defect could not manifest until a fourth vendor existed, and `gate_1074`'s B1
+passes on the pre-1074 control for exactly that reason. It is a regression
+guard, not a fix for something that was hurting.
+
+### ⚠ gate_1073's A4 was pinned to a number the design says will grow
+
+`a.length === 4` went red the instant two candidates were added — while the
+route's own comment reads *"adding one is a line here and nothing else."* A gate
+pinned to a count contradicts the design it guards; CLAUDE.md names this fault
+directly. **A4 now parses `CANDIDATES` out of the route** and asserts the
+contract: one answer per candidate, all distinct, unreachable ones named. It
+reports **6/6** and will not need touching for the seventh.
+
+### ⚠ BUG_CLASSES 37, third time this session
+
+The first negative control **crashed** at C2 — `result.keys = {` does not exist
+on the control tree, so `.split(...)[1]` was undefined and threw. The gate died
+there and **C2, D1 and the floor never ran**. Guarded; the control now reports
+**6 red with all 7 checks executed**.
+
+**Gates:** `node --check` on both routes · `check_artifact.py` green
+(`BK_BUILD` 1073 → 1074, marker + negative control) · all three files
+byte-reproducible · **`gate_1073` still 13/13** with A4 naming all six
+candidates · `gate_1074` **8/8**, and **6 red on a pre-1074 control** ·
+`index.html` untouched, stamp stays 1072.
+
+**Theo's move, unchanged:** `/bakeoff.html`, sign in, run 20. If Claude shows as
+unavailable, `ANTHROPIC_API_KEY` is not set in Vercel — `/api/ai-status` now
+says so directly. Kimi needs `MOONSHOT_API_KEY`, and may still refuse a
+photograph.
+
+---
+
 ## Build 1073 — the accuracy bake-off
 
 Theo: *"1, 2, then 3."* This is 3, and it is the one that answers the question

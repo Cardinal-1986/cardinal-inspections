@@ -38,16 +38,32 @@ const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.
 const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
 const STORAGE_PREFIX = SUPABASE_URL + '/storage/v1/';
 
-/* The candidates. Adding one is a line here and nothing else.
+/* The candidates. Adding one is a line here and nothing else — which 1074
+   promptly proved by adding two.
+
    ⚠ gemini-3.1-pro is deliberately ABSENT: probed live on 26 Aug it answers
      404 "not found for API version v1beta" for this key. Listing a model the
      key cannot call would produce a column of errors that reads like a model
-     being bad at roofs. */
+     being bad at roofs.
+   ⚠ gemini-3.7-flash was PROBED BEFORE IT WAS ADDED (26 Aug, through
+     /api/ai-status?model=gemini-3.7-flash) — it answers. Not taken on faith
+     from a release note.
+   ⚠ kimi-k3 is here WITHOUT a vision claim, and that is deliberate. This
+     repo's own AI_CHEATSHEET has K3 at 2.8T parameters (17 July 2026) and
+     describes it as "the agent one — built to keep its footing across long,
+     many-step runs". Not one word about photographs. Rather than assert it
+     can see, or quietly drop it, it is listed and left to report the truth:
+     no key means `available:false` with the reason, and a model that refuses
+     an image comes back as a NAMED failure. `note` is surfaced by the picker
+     so nobody reads a refusal as a verdict on the model's eyesight. */
 const CANDIDATES = [
+  { id: 'gemini-3.7-flash', vendor: 'google' },
   { id: 'gemini-3.6-flash', vendor: 'google' },
   { id: 'gemini-3.5-flash', vendor: 'google' },
   { id: 'gpt-4o-mini',      vendor: 'openai' },
   { id: 'claude-opus-5',    vendor: 'anthropic' },
+  { id: 'kimi-k3',          vendor: 'moonshot',
+    note: 'agent model — vision unconfirmed; it may refuse a photograph' },
 ];
 
 /* ONE question, asked of every model identically. It is the app's real job —
@@ -65,6 +81,13 @@ const PROMPT =
   'useful answer and is worth more than an invention.\n\n' +
   'No preamble. No dollar amounts. Six findings at most, the most significant ' +
   'first.';
+
+/* One place that knows which env var each vendor needs. The 1073 version
+   spelled this out as a nested ternary per field, which silently treats every
+   unknown vendor as Anthropic — it would have reported Kimi's missing key as
+   ANTHROPIC_API_KEY. A map cannot make that mistake. */
+const KEY_ENV = { google: 'GEMINI_API_KEY', openai: 'OPENAI_API_KEY',
+                  anthropic: 'ANTHROPIC_API_KEY', moonshot: 'MOONSHOT_API_KEY' };
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const TIME_BUDGET_MS = 50000;      /* 60s maxDuration, 10s headroom (the 662 rule) */
@@ -133,6 +156,23 @@ async function askOpenAI(model, b64, mime) {
   return t.trim() ? { ok: true, text: t.trim() } : { ok: false, text: 'returned no text' };
 }
 
+/* Moonshot's API is OpenAI-compatible, so this is askOpenAI with a different
+   base URL — deliberately NOT a fourth request shape to keep in step. */
+async function askKimi(model, b64, mime) {
+  const key = (process.env.MOONSHOT_API_KEY || '').trim();
+  if (!key) return { ok: false, text: 'MOONSHOT_API_KEY is not configured' };
+  const r = await fetch('https://api.moonshot.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+    body: JSON.stringify({ model, max_tokens: 1200, messages: [{ role: 'user', content: [
+      { type: 'text', text: PROMPT },
+      { type: 'image_url', image_url: { url: 'data:' + mime + ';base64,' + b64 } }] }] }) });
+  if (!r.ok) return { ok: false, text: 'HTTP ' + r.status + ': ' + (await r.text()).slice(0, 300) };
+  const j = await r.json();
+  const t = j?.choices?.[0]?.message?.content || '';
+  return t.trim() ? { ok: true, text: t.trim() } : { ok: false, text: 'returned no text' };
+}
+
 async function askAnthropic(model, b64, mime) {
   const key = (process.env.ANTHROPIC_API_KEY || '').trim();
   if (!key) return { ok: false, text: 'ANTHROPIC_API_KEY is not configured' };
@@ -158,7 +198,8 @@ async function askAnthropic(model, b64, mime) {
   }
 }
 
-const ASK = { google: askGoogle, openai: askOpenAI, anthropic: askAnthropic };
+const ASK = { google: askGoogle, openai: askOpenAI, anthropic: askAnthropic,
+              moonshot: askKimi };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return; }
@@ -179,12 +220,9 @@ export default async function handler(req, res) {
       res.status(200).json({
         candidates: CANDIDATES.map(c => ({
           ...c,
-          available: c.vendor === 'google'    ? !!(process.env.GEMINI_API_KEY || '').trim()
-                   : c.vendor === 'openai'    ? !!(process.env.OPENAI_API_KEY || '').trim()
-                   : !!(process.env.ANTHROPIC_API_KEY || '').trim(),
-          why: c.vendor === 'google'    ? (process.env.GEMINI_API_KEY ? '' : 'GEMINI_API_KEY not set')
-             : c.vendor === 'openai'    ? (process.env.OPENAI_API_KEY ? '' : 'OPENAI_API_KEY not set')
-             : (process.env.ANTHROPIC_API_KEY ? '' : 'ANTHROPIC_API_KEY not set')
+          available: !!(process.env[KEY_ENV[c.vendor]] || '').trim(),
+          why: (process.env[KEY_ENV[c.vendor]] || '').trim()
+                 ? '' : KEY_ENV[c.vendor] + ' not set'
         })),
         prompt: PROMPT
       });

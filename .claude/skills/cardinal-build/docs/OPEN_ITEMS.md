@@ -60,6 +60,14 @@ inspection reports carry the `data-ai-summary` marker. There is no ground truth
 to score against short of Theo labelling by hand. Do not describe the output as
 accuracy — the results screen deliberately does not.
 
+**Theo's, before a run means anything (1074):**
+- **`ANTHROPIC_API_KEY` in Vercel** — `api/librarian.js` has needed it since
+  806, so it is probably already set; `/api/ai-status` now says so directly
+  under `keys.anthropic.configured`. If it is false, Claude cannot be judged.
+- **`MOONSHOT_API_KEY`** if he wants Kimi K3 judged at all. ⚠️ And K3 may still
+  refuse a photograph — the repo's own notes give it no vision claim, which is
+  why the picker shows that caveat before he starts.
+
 **Still open after it runs:** whichever model wins, changing a ladder is a
 separate build. 1072 deliberately changed none, and the ladders are not uniform
 (`detect`/`sortphotos`/`supplement` lead with 3.6; `caption`/`analyze`/

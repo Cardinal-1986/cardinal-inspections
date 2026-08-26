@@ -96,16 +96,26 @@ console.log('A · api/bakeoff.js (executed)');
      silent omission. Dropping it would make "we could not call Claude"
      indistinguishable from "Claude was not in this run", which is the exact
      ambiguity A5 exists to prevent. Asserting the real contract. */
+  /* ⚠ SELF-COMPUTING, and 1074 is why. This asserted `a.length === 4` and
+     went red the moment two candidates were added — but the route's own
+     comment says "adding one is a line here and nothing else", so a gate
+     pinned to the count contradicts the design it is guarding. That is the
+     assertion-pinned-to-a-changing-value fault CLAUDE.md names. It now reads
+     CANDIDATES out of the route and asserts the CONTRACT: one answer per
+     candidate, all distinct, and an unreachable one named rather than
+     dropped. */
+  const want = [...rd('api/bakeoff.js').matchAll(/\{ id: '([^']+)',/g)].map(m => m[1]);
   const run = await call({ mode: 'run', url: GOOD_URL });
   const a = (run.payload && run.payload.answers) || [];
   const named = a.map(x => x.model);
   const dud = a.find(x => x.model === 'claude-opus-5');
-  run.status === 200 && a.length === 4 && new Set(named).size === 4 &&
-  dud && dud.ok === false && /ANTHROPIC_API_KEY/.test(dud.text)
-    ? ok('A4 — answers for every model asked; an unreachable one is a NAMED failure',
-         named.join(', '))
-    : bad('A4 — answers for every model asked, unreachable ones named',
-          `status ${run.status}, ${a.length} answer(s): ` + JSON.stringify(a.map(x => [x.model, x.ok])));
+  const covered = want.length > 0 && want.every(id => named.includes(id));
+  run.status === 200 && a.length === want.length && new Set(named).size === want.length &&
+  covered && dud && dud.ok === false && /ANTHROPIC_API_KEY/.test(dud.text)
+    ? ok('A4 — one answer per candidate; an unreachable one is a NAMED failure',
+         `${a.length}/${want.length}: ` + named.join(', '))
+    : bad('A4 — one answer per candidate, unreachable ones named',
+          `status ${run.status}, ${a.length} of ${want.length}: ` + JSON.stringify(a.map(x => [x.model, x.ok])));
 
   /* ⚠ a model whose key is missing must be reported unavailable WITH a reason */
   const probe = await call({ mode: 'probe' });
