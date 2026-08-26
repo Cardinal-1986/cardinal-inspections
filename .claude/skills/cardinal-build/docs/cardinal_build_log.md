@@ -27576,6 +27576,100 @@ rejected (the danger is deleting a base rule whose replacement is conditional).
 
 ---
 
+
+## Build 1085 — the filter chips come off All Leads & Jobs
+
+Theo, with a screenshot: *"This screen is a mess, please make it nice and neat, check all
+screens that might have this clustered issue."* Then, after seeing four rendered options:
+*"Get rid of the chips for pipeline and just use the filters?"*
+
+**Measured before, against HIS book and not the fixture** — 57 projects, 7 stages, 6 reps,
+read from production 26 Aug:
+
+| | |
+|---|---|
+| Milestone strip | 8 chips, **4 rows**, 206px |
+| Assigned To strip | 8 chips, **3 rows**, 155px |
+| first job card | **y=716 on an 844px phone — 85% chrome**, one card, cut off |
+
+⚠️ **`e2e_mock_supa.js` seeds a handful of rows, so the same probe against the mock says
+7 chips / 2 rows and the screen reads as merely tight.** Measuring the fixture would have
+closed this report as "2 rows, fine". `render_leads.mjs` exists to seed the production
+marginals; the gap between 2 rows and 7 is the whole finding.
+
+**After: 716 → 309 on the phone (five cards where one was), 712 → 254 at 1194px.**
+
+### ⚠ This does NOT walk back build 690, and that was checked before cutting
+
+690's comment is the reason the strips existed: *"add somewhere where you can click on the
+different pipeline stages"*. **That somewhere still exists and is better placed.** `#pipeRow`
+on the home dashboard renders one `.pipebtn` per stage carrying `data-stg`, and its handler
+calls `openLeadsView(stage)` — tapping LEADS or APPROVED there opens this screen already
+filtered. What went is the **duplicate**, not the affordance. The funnel (`#ljShFilter`) still
+holds all seven groups on a phone; the desktop rail still lists every one as a checkbox.
+
+⚠️ **On the desktop the strips were pure duplication and the render proves it** — the rail
+lists Lead 37 / Prospect 10 / OnHold 1 / Approved 5 / Completed 2 / Invoiced 1 / Closed 1 as
+checkboxes and the chip strip repeated the identical seven values 14px to its right.
+
+### Deleted at source, after checking who else uses each
+
+`ljChipStrip`, `ljChipClick`, both listeners, both `.ljgrp` mounts, `.ljglbl`, and the five
+`.ljchip-unassigned` rules. Every one verified to have exactly one consumer, this screen.
+
+⚠️ **`.ljchips` / `.ljchip` / `.ljchip i` / `.ljchip b` and the `rb-light` twin STAY** —
+Photo Activity's CRM strip (`#phCrmChips`) builds `.ljchip` buttons and each carries an `<i>`
+dot. Deleting the strip and its stylesheet would have taken a different screen with it.
+`ljGroupCounts` / `ljGroupKeys` stay too: the rail and the funnel sheet both call them,
+including 931's "Unassigned sorts first".
+
+**Lost, and worth saying plainly:** 931's amber emphasis on the Unassigned bucket. The
+*ordering* survives (`ljGroupKeys` still unshifts it) in both the rail and the sheet, but
+nothing on this screen now says "18 leads nobody owns" at a glance. Named, not swept.
+
+### What replaced them: `#ljActive`
+
+The strips' one irreplaceable job was saying **which** filter was on — `.ljsub` counts them
+("3 filters active") but has never named them. `ljActiveLine()` renders one line of the applied
+filters, each removable, plus Clear all (the same two statements `ljClearAll` uses, not a
+second idiom). Hidden entirely when nothing is filtered, which is the ordinary case.
+
+**Zero new colour, deliberately.** The chips are `.ljchip.on`, which already carries a light
+twin; the label reuses `--rbe-mute`, which 691 established flips by itself. Rendered in both
+themes before shipping. Inventing an ink here is how this project's most repeated defect gets
+made, and the cheapest way not to make it is to not introduce one.
+
+### Two reds, both the instrument's fault, both recorded
+
+- **My own self-verification failed a correct patch.** It asserted
+  `out.count('ljChipStrip') == 0`, and the comments this build *adds* name the functions it
+  deleted. The file's own rule — comments lie in both directions — biting the script that
+  quotes it. Now asserts on code forms (`function ljChipStrip`, `ljChipStrip('`) and
+  cross-checks with `jslex_count.py`, which reports **0 CODE hits, 2 in comments**.
+- **`sentinel_setup_cardinal.js`'s `leads` state threw** — it asserted the Milestone strip was
+  on screen, and it correctly no longer is. The harness was stale, not the app. Re-pointed at
+  what the screen must have now: rows in `#ljList`, and `#ljFunnelBtn` present.
+  ⚠️ **Existence, not `onScreen()`, for the funnel** — `.ljctl` is `display:none` above 901px
+  where the rail is the picker; asserting it visible at every viewport would stage a
+  configuration the app never has. And **`#ljActive` is deliberately not asserted on screen**,
+  because it is hidden whenever nothing is filtered.
+
+### Swept, because Theo asked for "all screens" — and two of four are false alarms
+
+`probe_crowding.mjs` walks all 25 sentinel states at 390px asking how many *rows* each pill
+strip really occupies. Four came back over two.
+
+| screen | measured | verdict |
+|---|---|---|
+| All Leads & Jobs | 16 chips · 7 rows · 361px | this build |
+| **Insurance Clients** | 10 chips · 4 rows · 194px | **same shape, DIFFERENT fix required** |
+| Add project | 8 chips · 3 rows · 128px | **false alarm** — eight lead sources, one required answer; every option must be visible |
+| Photo editor | 10 chips · 4 rows · 75px | **false alarm** — bottom toolbar over the photo; nothing is pushed |
+
+⚠️ **Insurance Clients must NOT get this same patch.** `.cr-ic-chips` has **no funnel and no
+rail** — those chips are the only filter on that screen, so removing them removes filtering
+entirely. It wants the clamp-plus-`+N` shape instead. Left open on purpose.
+
 ## Build 1084 — push gets a new key, and the old one leaves the source
 
 **A VAPID private key was committed in `api/notify.js` as a fallback.** Not dormant: with

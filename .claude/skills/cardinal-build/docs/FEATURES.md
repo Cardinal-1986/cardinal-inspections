@@ -3669,7 +3669,36 @@ stage palette is on the semantic frozen list.
 Gate: `scripts/render_stagechips.js` — seeds real project shapes, calls the
 shipped render, then clicks the chips and counts cards. RED on 689.
 
-### 691 — Assigned To beside Milestone on All Leads & Jobs
+### ⚠ RETIRED AT 1085 — the two chip strips came off All Leads & Jobs
+
+Theo: *"Get rid of the chips for pipeline and just use the filters?"* Measured against his
+own book (57 jobs, 7 stages, 6 reps) the two strips were **16 chips in seven wrapped rows,
+361px**, putting the first job card at **y=716 on an 844px phone**. After: **y=309**.
+
+`ljChipStrip`, `ljChipClick`, both listeners, `.ljglbl` and the five `.ljchip-unassigned`
+rules are **deleted**, not hidden. The section below is kept as the record of what they did
+and why, because two of its warnings still govern live code.
+
+**Still true and still load-bearing:**
+- **The filters themselves are untouched.** The funnel (`#ljShFilter`) holds all seven
+  groups on a phone; the desktop rail lists every one as a checkbox. `ljMatches()`'s
+  AND-across / OR-within behaviour is unchanged.
+- **Clicking a pipeline stage still works.** `#pipeRow` on the home dashboard is a
+  `.pipebtn` per stage carrying `data-stg`, and its handler calls `openLeadsView(stage)` —
+  which is what 690 was actually asked for.
+- ⚠️ **`.ljchips` / `.ljchip` / `.ljchip i` / `.ljchip b` are NOT dead.** Photo Activity's
+  CRM strip (`#phCrmChips`) builds `.ljchip` buttons, each with an `<i>` dot.
+- ⚠️ **`ljGroupCounts` / `ljGroupKeys` are NOT dead** — the rail and the sheet both call
+  them, including 931's "Unassigned sorts first".
+
+**Replaced by `#ljActive`** (`ljActiveLine()`): one line naming each applied filter, each
+removable, plus Clear all. Hidden entirely when nothing is filtered. No new colour — the
+chips are `.ljchip.on` and the label is `--rbe-mute`, both already themed both ways.
+
+**Lost, and named rather than swept:** 931's amber emphasis on the Unassigned bucket. The
+ordering survives; the at-a-glance "18 leads nobody owns" does not.
+
+#### 691 — Assigned To beside Milestone on All Leads & Jobs (historical)
 
 Two labelled chip strips. `ljChipStrip(gkey, mountId, wrapId)` renders either;
 one `ljChipClick` serves both and reads its group from the container's `data-g`.
@@ -6471,7 +6500,7 @@ like a clean one.*
 | `.cr-c-tabs.detail` | Claim Detail | `window.CardinalClaims.openOne(id)` — needs a claim row |
 | `.cr-cth-tabs` | Cardinal Truth | `showCardinalTruth()` |
 | `.cr-sh-tabs` | the Showcase | `window.CardinalShowcase.open()` — **no argument**; `{showroom:true}` drops a button |
-| `.ljchips` ×3 | Leads (Milestone, Assigned To) + Photo Activity (CRM) | `openLeadsView()` · `window.openPhotosView()` |
+| `.ljchips` ×1 | **Photo Activity (CRM) only since 1085** — the two Leads strips were removed | `window.openPhotosView()` |
 | `.cd-crmbar` | Client Directory | `openClientsDirectory()` — **absent ≥1100px by design** (`body.cr-lnav-on`) |
 | `.pu-tabs` | Punch & Repairs | `await window.openPunchView()` |
 

@@ -2,6 +2,52 @@
 
 ---
 
+## OPEN — Insurance Clients has the SAME crowding, and needs a DIFFERENT fix (26 Aug 2026)
+
+`.cr-ic-chips` measures **10 chips · 4 rows · 194px** at 390px, above the client list —
+the same shape build 1085 fixed on All Leads & Jobs.
+
+⚠️ **Do not apply 1085's patch here.** That screen has **no funnel and no rail**: those
+chips are its only filter, so removing them removes filtering outright. It wants the
+clamp-plus-`+N` shape instead (option 1 from the 26 Aug options page): keep row one, put
+the remainder behind a `+6` chip that expands.
+
+Two other strips the same sweep flagged are **false alarms, checked, not fixed**:
+- **Add project** `#pfSourceChips` — 8 chips / 3 rows. A required radio group; every lead
+  source has to be visible. Hiding five behind a tap makes it worse.
+- **Photo editor** `.cr-ped-row` — 10 chips / 4 rows / 75px. A toolbar pinned to the bottom
+  over the photograph. Nothing is pushed anywhere.
+
+Instrument: `scripts/probe_crowding.mjs` (all 25 sentinel states, any width).
+
+---
+
+## OPEN — the Insurance header is the only CRM chrome that isn't chrome (26 Aug 2026)
+
+Theo sent a screenshot captioned *"Logged in to insurance header"*. Measured before
+theorising: it **passes every contrast floor** — white title 5.68:1, the "+" glyph 4.85:1
+on `#FFE8E8`. Not a readability defect.
+
+What the five-header comparison render shows instead: retail is a steel gradient, community
+`#047857`, production `#181b20`, sales `#1a1310` — **every other CRM head is a dark chrome
+surface. Insurance alone pulls `--ct-*`**, which is the Resource Library's *document*
+palette, so it is either solid `#CE0E18` or solid `#FFFFFF` depending on `cardinalRLTheme`.
+Two identities, and the switch lives in another feature. Wired deliberately at 407.
+
+⚠️ **A designed dark insurance palette already exists in the file and the header does not
+use it**: `body[data-crm-head="insurance"]{--bnbg:#1a0e0d;--bnbd:#3d1512;--bnac:#ff8a7a}`
+— currently the **bottom nav only**.
+
+Also observed in the same screenshot and unresolved: the header/nav read Insurance
+(Clients · Claims) while the page underneath is the **retail** home dashboard — the
+pipeline counts 37/10/5/2/1 are the all-CRM retail figures. `crmHead()` falls through to
+`stickyCrm()` on a shared screen; the routing's own intent (`if(crm === 'insurance')
+showCardinalTruth()`) says insurance home is Cardinal Truth.
+
+**Four options were put to Theo; no pick yet.** Renders: `heads_strip.png`.
+
+---
+
 ## ✅ CLOSED — the committed VAPID private key (build 1084, 26 Aug 2026)
 
 `api/notify.js` carried a VAPID private key as a literal fallback. **Not dormant** — with
