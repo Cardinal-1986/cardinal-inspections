@@ -3852,7 +3852,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1079 &#8212; The copy of a document you actually sent or signed is now kept. Estimates, contracts and reports were a single copy that got overwritten every time you edited it &#8212; so if you changed a signed estimate, the version the homeowner agreed to was simply gone. From now on the app quietly keeps a copy at the moment it goes out, and another copy of the old wording the first time you change it afterwards. Nothing is blocked and nothing is slower: the copy is made on the server, so your phone never has to send the document back up.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1080 &#8212; The app has stopped talking to you through browser pop-ups. Two hundred and eighty-nine messages &#8212; every &#8220;pick a client first&#8221;, every &#8220;could not save&#8221; &#8212; used to arrive as the grey box headed &#8220;app.cardinalroster.com says&#8221;, which is the one thing that made this look like a website instead of an app. They now come up as the same slim card the rest of the app already used. Warnings stay on screen until you dismiss them, exactly like the old boxes did. Nothing else changed.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11717,7 +11717,7 @@ async function sendReviewRequest(pr, via){
       '?subject=' + encodeURIComponent('How did we do? \u2014 Cardinal Roofing & Renovations') +
       '&body=' + encodeURIComponent(msg);
   }else{
-    try{ await navigator.clipboard.writeText(msg); alert('Review message copied \u2014 paste it anywhere.'); }
+    try{ await navigator.clipboard.writeText(msg); crTell('Review message copied \u2014 paste it anywhere.', 'ok'); }
     catch(e){ prompt('Copy this message:', msg); }
   }
   try{ await patchProjectCk(pr, { review_requested_at: new Date().toISOString(), review_via: via }); auditLog('review', 'Review requested via ' + via + ' \u2014 ' + (pr.name || ''), pr.id); }catch(e){}
@@ -12278,7 +12278,7 @@ async function acxEnterTotalNow(){
   var v = prompt('Job total for this client ($):\n(Creates the worksheet \u2014 use for transferred clients or jobs without a signed contract.)', cur);
   if(v === null) return;
   var n = Number(String(v).replace(/[^\d.]/g,''));
-  if(!(n > 0)){ alert('Enter a dollar amount greater than 0.'); return; }
+  if(!(n > 0)){ crTell('Enter a dollar amount greater than 0.'); return; }
   try{ await patchProjectCk(c.pr, { manual_value: n }); auditLog('money', 'Manual job total set ' + fmtMoney(n, true) + ' \u2014 ' + (c.pr.name || ''), c.pr.id); renderOverview(); renderPipeline(); }
   catch(err){ showError('Could not save: ' + (err.message || err)); }
 }
@@ -12333,7 +12333,7 @@ function acxBindOnce(mount){
       var v = prompt('Payment amount received ($):', '');
       if(v === null) return;
       var n = Number(String(v).replace(/[^\d.]/g,''));
-      if(!(n > 0)){ alert('Enter a dollar amount greater than 0.'); return; }
+      if(!(n > 0)){ crTell('Enter a dollar amount greater than 0.'); return; }
       var all2 = parseCkAll(pr);
       var ws2 = all2.ws || {};
       var key = 'manual';
@@ -12341,7 +12341,7 @@ function acxBindOnce(mount){
         var sc = cacheRows.filter(function(r){
           return r.project_id === pr.id && /^contract/i.test((r.title || '').trim()) && r.signed_at && Number(r.total) > 0;
         })[0];
-        if(sc) key = sc.id; else { alert('No contract or manual total to apply this payment to.'); return; }
+        if(sc) key = sc.id; else { crTell('No contract or manual total to apply this payment to.'); return; }
       }
       ws2[key] = ws2[key] || {};
       ws2[key].paid = (Number(ws2[key].paid) || 0) + n;
@@ -12670,7 +12670,7 @@ function openTaskModal(pr, idx){
     var es = document.getElementById('tskExtSave');
     if(es) es.addEventListener('click', async function(){
       var nd = document.getElementById('tskExtDate').value;
-      if(!nd){ alert('Pick a new due date.'); return; }
+      if(!nd){ crTell('Pick a new due date.'); return; }
       await patchTask(function(tk){
         tk.due = nd;
         tk.notes = (tk.notes || []).concat([{ n: 'Due date extended to ' + acxDate(nd), by: myEmail, at: new Date().toISOString() }]);
@@ -12711,7 +12711,7 @@ function openTaskModal(pr, idx){
     document.getElementById('tskCancelBtn').addEventListener('click', function(){ m.style.display = 'none'; });
     document.getElementById('tskSaveBtn').addEventListener('click', async function(){
       var d = document.getElementById('tskDesc').value.trim();
-      if(!d){ alert('Enter a task description.'); return; }
+      if(!d){ crTell('Enter a task description.'); return; }
       var list = (parseCkAll(pr).tasks || []).slice();
       list.push({
         t: d,
@@ -12743,7 +12743,7 @@ document.getElementById('tab-measure').addEventListener('click', function(e){
     var addr = (pr.address || '').trim();
     if(addr && navigator.clipboard){ navigator.clipboard.writeText(addr).catch(function(){}); }
     window.open(ob.getAttribute('data-src') === 'Hover' ? 'https://hover.com' : 'https://app.roofr.com', '_blank');
-    if(addr) setTimeout(function(){ alert('Client address copied \u2014 paste it into the order form:\n' + addr); }, 300);
+    if(addr) setTimeout(function(){ crTell('Client address copied \u2014 paste it into the order form:\n' + addr, 'ok'); }, 300);
     return;
   }
   var ub = e.target.closest('.msUp');
@@ -12778,7 +12778,7 @@ document.getElementById('msFileInput').addEventListener('change', function(){
   var f = this.files && this.files[0];
   this.value = '';
   if(!f || !pr) return;
-  if(f.size > 8*1024*1024){ alert('File is over 8MB \u2014 export a smaller PDF.'); return; }
+  if(f.size > 8*1024*1024){ crTell('File is over 8MB \u2014 export a smaller PDF.'); return; }
   var src = __msUpSrc;
   var fr = new FileReader();
   fr.onload = async function(){
@@ -13780,7 +13780,7 @@ function openProject(id){
       openProject.__retrying = null;
       var _m = 'That client could not be opened. It may have been deleted, or you may not have access to it.';
       if(typeof showError === 'function'){ try{ showError(_m); return; }catch(_e){} }
-      alert(_m);
+      crTell(_m);
       return;
     }
     openProject.__retrying = id;
@@ -14648,12 +14648,12 @@ async function dbAddContact(pr){
 }
 async function dbSwitchPrimary(pr){
   var list = (parseCkAll(pr).contacts || []).slice();
-  if(!list.length){ alert('Add another contact first (Contacts \u2192 Add), then switch.'); return; }
+  if(!list.length){ crTell('Add another contact first (Contacts \u2192 Add), then switch.'); return; }
   var menu = list.map(function(c, i){ return (i + 1) + '. ' + (c.name || '\u2014') + (c.phone ? ' \u00b7 ' + c.phone : ''); }).join('\n');
   var pick = prompt('Make which contact primary?\n' + menu + '\n\nEnter a number:');
   if(pick === null) return;
   var ix = parseInt(pick, 10) - 1;
-  if(isNaN(ix) || !list[ix]){ alert('No contact #' + pick); return; }
+  if(isNaN(ix) || !list[ix]){ crTell('No contact #' + pick); return; }
   var chosen = list.splice(ix, 1)[0];
   list.push({ name: pr.name || null, phone: pr.phone || null, email: pr.email || null });
   try{
@@ -15062,12 +15062,12 @@ async function payMigrateLegacyIn(){
     };
   });
   var r = await sb.from('collections').insert(rows).select('id');
-  if(r.error){ alert('Could not move them: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not move them: ' + r.error.message); return; }
   /* Only now drop the originals — if the insert failed the money is still
      recorded in exactly one place, which is the state we started in. */
   var keep = (parseCkAll(currentProject).payments || []).filter(function(p){ return p.dir !== 'in'; });
   try{ await patchProjectCk(currentProject, { payments: keep }); }
-  catch(e){ alert('Moved into Money In, but the old rows could not be cleared: ' +
+  catch(e){ crTell('Moved into Money In, but the old rows could not be cleared: ' +
                   ((e && e.message) || e) + '\nRemove them by hand so the total is not counted twice.'); }
   try{ renderPayments(); }catch(_){ }
   payGoLogCollection();
@@ -15713,7 +15713,7 @@ newMenu.addEventListener('click', function(e){
   if(kind === 'contact'){ openProjModal(null); }
   else if(kind === 'lead'){
     if(isProductionUser()){
-      alert('Lead creation is for sales and admins \u2014 production accounts can add Contacts, Tasks, and Reminders.');
+      crTell('Lead creation is for sales and admins \u2014 production accounts can add Contacts, Tasks, and Reminders.');
       return;
     }
     openLeadForm();
@@ -15732,7 +15732,7 @@ newMenu.addEventListener('click', function(e){
   else if(kind === 'punch'){
     var _pb = window.CardinalProduction;
     if(_pb && typeof _pb.newPunch === 'function'){ _pb.newPunch(null); }
-    else { alert('The punch-out composer is still loading \u2014 try again in a moment.'); }
+    else { crTell('The punch-out composer is still loading \u2014 try again in a moment.'); }
   }
   else if(kind === 'reminder'){
     var title = prompt('Remind me about:');
@@ -15746,7 +15746,7 @@ newMenu.addEventListener('click', function(e){
       appt_time: '09:00', project_id: null, notes: null
     }).then(function(){ return adb.list().catch(function(){ return cacheAppts; }); })
       .then(function(l){ cacheAppts = l; renderCalendar();
-        alert('Reminder set for ' + d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}) + '.'); })
+        crTell('Reminder set for ' + d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}) + '.'); })
       .catch(function(err){ showError('Could not set reminder: ' + (err.message || err)); });
   }
 });
@@ -15911,7 +15911,7 @@ function openClaimTypeMenu(pr){
   if(!choice) return;
   choice = choice.trim().toLowerCase();
   if(['insurance','retail','unknown'].indexOf(choice) === -1){
-    alert('Not a valid claim type. Choose insurance, retail, or unknown.');
+    crTell('Not a valid claim type. Choose insurance, retail, or unknown.');
     return;
   }
   if(choice === current) return;
@@ -16472,7 +16472,7 @@ function renderWorksheet(pr, fin){
 }
 async function createInvoiceFor(pr){
   var fin = jobFinance(pr);
-  if(!fin.value || fin.source === 'estimate'){ alert('Create an invoice after a contract is signed \u2014 the totals come from the signed contract.'); return; }
+  if(!fin.value || fin.source === 'estimate'){ crTell('Create an invoice after a contract is signed \u2014 the totals come from the signed contract.'); return; }
   var invCount = cacheRows.filter(function(r){
     return r.project_id === pr.id && /^invoice/i.test((r.title || '').trim());
   }).length;
@@ -16490,7 +16490,7 @@ async function createInvoiceFor(pr){
     var id = await db.create('Invoice \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
     await reload();
     await openEditor(id);
-    alert('Invoice ' + num + ' created from the signed contract and payments logged in the Worksheet. Email it to the client \u2014 the job moves to INVOICED automatically when sent.');
+    crTell('Invoice ' + num + ' created from the signed contract and payments logged in the Worksheet. Email it to the client \u2014 the job moves to INVOICED automatically when sent.');
   }catch(err){ showError('Could not create invoice: ' + (err.message || err)); }
 }
 document.getElementById('wsMount').addEventListener('click', function(e){
@@ -17097,7 +17097,7 @@ function renderInsuranceDocsCard(){
       db.remove(id)
         .then(function(){ return reload(); })
         .then(function(){ renderInsuranceDocsCard(); })
-        .catch(function(err){ alert('Could not delete: ' + (err.message || err)); });
+        .catch(function(err){ crTell('Could not delete: ' + (err.message || err)); });
     });
   });
 }
@@ -17376,7 +17376,7 @@ async function itelAdd(){
     itelState.adding = false;
     paintInsuranceItelCard();
   }catch(e){
-    alert('Could not add the iTel: ' + (e.message || e));
+    crTell('Could not add the iTel: ' + (e.message || e));
   }finally{
     itelState.busy = false;
   }
@@ -17411,7 +17411,7 @@ async function itelPatch(id, patch){
     }
     paintInsuranceItelCard();
   }catch(e){
-    alert('Could not update the iTel: ' + (e.message || e));
+    crTell('Could not update the iTel: ' + (e.message || e));
   }
 }
 
@@ -17425,7 +17425,7 @@ async function itelRemove(id){
     itelState.rows = itelState.rows.filter(function(x){ return x.id !== id; });
     paintInsuranceItelCard();
   }catch(e){
-    alert('Could not delete: ' + (e.message || e));
+    crTell('Could not delete: ' + (e.message || e));
   }finally{
     itelState.busy = false;
   }
@@ -17452,7 +17452,7 @@ function pickAndUploadInsDoc(typeKey){
         }
       }
     }catch(err){
-      alert('Upload failed: ' + (err.message || err));
+      crTell('Upload failed: ' + (err.message || err));
     }
   };
   input.click();
@@ -17736,7 +17736,7 @@ async function sendScopeToReader(b64, mime, name, btn){
     openSolReviewModal(await solRead({ file: b64, mime: mime || 'application/pdf' }), name);
     if(currentProject) auditLog('doc', 'SOL read (' + name + ')', currentProject.id);
   }catch(err){
-    alert('Could not read the Scope of Loss: ' + (err.message || err) +
+    crTell('Could not read the Scope of Loss: ' + (err.message || err) +
       '\n\nTry a different file, or add insurance info by hand.');
   }
   /* restore whatever the button said, because two different buttons call this */
@@ -17769,7 +17769,7 @@ async function routeScopeToReader(file, btn){
         openSolReviewModal(await SU.extractFromUrl(ready.url), file.name);
         if(currentProject) auditLog('doc', 'SOL read via storage (' + file.name + ')', currentProject.id);
       }catch(err){
-        alert('Could not read that scope: ' + (err.message || err));
+        crTell('Could not read that scope: ' + (err.message || err));
       }finally{
         if(card) card.classList.remove('solLoading');
         if(btn){ btn.disabled = false; btn.textContent = label; }
@@ -17786,7 +17786,7 @@ async function routeScopeToReader(file, btn){
       fr.onerror = function(){ reject(new Error('Could not read file')); };
       fr.readAsDataURL(file);
     });
-  }catch(e){ alert('Could not read that file.'); return; }
+  }catch(e){ crTell('Could not read that file.'); return; }
   await sendScopeToReader(String(dataUrl || '').split(',')[1] || '',
                           file.type || 'application/pdf',
                           file.name,
@@ -17815,11 +17815,11 @@ async function readFiledScope(docId){
   var row = null;
   try{ row = await db.get(docId); }catch(e){ console.warn('[sol] filed scope:', e); }
   if(btn){ btn.disabled = false; btn.textContent = lbl; }
-  if(!row){ alert('That document is no longer on file.'); return; }
+  if(!row){ crTell('That document is no longer on file.'); return; }
   var pay = null;
   try{ pay = JSON.parse(row.html || '{}'); }catch(e){}
   if(!pay || !pay.file || !pay.data){
-    alert('That document has no stored file to read.');
+    crTell('That document has no stored file to read.');
     return;
   }
   /* 657: the stored payload is a dataURL, and the size router takes a File.
@@ -17833,7 +17833,7 @@ async function readFiledScope(docId){
     var blob = await (await fetch(pay.data)).blob();
     f = new File([blob], nm, { type: pay.mime || blob.type || 'application/pdf' });
   }catch(e){
-    alert('Could not open that stored file: ' + (e.message || e));
+    crTell('Could not open that stored file: ' + (e.message || e));
     return;
   }
   await routeScopeToReader(f, document.getElementById('solReadBtn'));
@@ -18156,7 +18156,7 @@ async function bridgeSolToClaim(pr, applied){
     /* Deliberately NOT swallowed. The checklist half has already succeeded and
        this half has not, and that split is precisely the state that looks saved
        on the profile and then reads $0 on the claim screen. */
-    alert('Saved to the client profile, but the insurance claim record could not be updated:\n\n' +
+    crTell('Saved to the client profile, but the insurance claim record could not be updated:\n\n' +
       (err && err.message ? err.message : err) +
       '\n\nThe claim screen may still show the previous figures.');
   }
@@ -19143,7 +19143,7 @@ function matListText(trade){
     if(ord){
       btn.disabled = true;
       try{ await setMaterialsOrdered(ord === 'set'); }
-      catch(err){ alert('Could not save: ' + (err && err.message || err)); }
+      catch(err){ crTell('Could not save: ' + (err && err.message || err)); }
       btn.disabled = false;
       return;
     }
@@ -19174,7 +19174,7 @@ function matListText(trade){
       var all = parseCkAll(currentProject);
       var items = MAT_TRADES[trade].gen(all);
       if(!items.length){
-        alert(trade === 'roofing' ? 'Import a Roofr PDF first.'
+        crTell(trade === 'roofing' ? 'Import a Roofr PDF first.'
             : trade === 'siding' ? 'Import a Hover PDF first.'
             : trade === 'gutters' ? 'Set gutter footage (or import Roofr for eave length) first.'
             : 'Set the window count first.');
@@ -19681,7 +19681,7 @@ async function openFollowUp(){
     });
     cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
     renderCalendar();
-    alert('Follow-up scheduled for ' + d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' }) + ' at 9:00 AM.');
+    crTell('Follow-up scheduled for ' + d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' }) + ' at 9:00 AM.');
   }catch(err){ showError('Could not schedule: ' + (err.message || err)); }
 }
 
@@ -20201,7 +20201,7 @@ navMenu.addEventListener('click', function(e){
   else if(nav === 'leads'){ openLeadsView(); }
   else if(nav === 'audit'){ openAuditLog(); }
   else if(nav === 'notify'){ enableNotifications(); }
-  else if(nav === 'team'){ try{ openTeamView(); }catch(err){ alert('Team: ' + (err.message || err)); } }
+  else if(nav === 'team'){ try{ openTeamView(); }catch(err){ crTell('Team: ' + (err.message || err)); } }
   else if(nav === 'settings'){ openSettingsView(); }
   else if(nav === 'board'){ openScheduleBoard(); }
   else if(nav === 'companydocs'){ openCompanyDocs(); }
@@ -20541,7 +20541,7 @@ document.getElementById('qiCliList').addEventListener('click', function(e){
 document.getElementById('qiNpCreate').addEventListener('click', async function(){
   var nm = (document.getElementById('qiNpName').value || '').trim();
   if(!nm){ window.crValid.require(document.getElementById('qiNpName'), 'Name is required.');
-    alert('Name is required.'); return; }
+    crTell('Name is required.'); return; }
   var st = document.getElementById('qiFinStatus');
   st.textContent = 'Creating prospect\u2026';
   try{
@@ -20749,7 +20749,7 @@ document.getElementById('qiFinishBtn').addEventListener('click', async function(
     await reload();
     openProject(pid);
     setTimeout(function(){
-      alert('Photos are in this client\u2019s Photo Gallery.\n\nSame rules as a regular inspection: complete the Roofing Inspection Checklist, then transfer the gallery photos into a new inspection report.');
+      crTell('Photos are in this client\u2019s Photo Gallery.\n\nSame rules as a regular inspection: complete the Roofing Inspection Checklist, then transfer the gallery photos into a new inspection report.');
     }, 600);
   }catch(err){ qiBubble('ai', 'Upload failed: ' + esc(err.message || err) + ' \u2014 your photos are still here; try Finish again.'); }
 });
@@ -21266,12 +21266,12 @@ function renderApprovals(){
   }).join('');
 }
 async function runTotalsBackfill(){
-  if(!isAdminUser()){ alert('Admins only.'); return; }
+  if(!isAdminUser()){ crTell('Admins only.'); return; }
   var targets = cacheRows.filter(function(r){
     var t = (r.title || '').trim();
     return (isEstimateTitle(t) || /^(contract|invoice)/i.test(t)) && !(Number(r.total) > 0);
   });
-  if(!targets.length){ alert('Nothing to backfill \u2014 every estimate, contract, and invoice already has a total.'); return; }
+  if(!targets.length){ crTell('Nothing to backfill \u2014 every estimate, contract, and invoice already has a total.'); return; }
   if(!confirm('Scan ' + targets.length + ' document(s) missing a dollar total and fill them in from the document contents?')) return;
   var fixed = 0, skipped = 0;
   for(var i = 0; i < targets.length; i++){
@@ -21284,7 +21284,7 @@ async function runTotalsBackfill(){
     }catch(e){ skipped++; }
   }
   await reload();
-  alert('Backfill complete: ' + fixed + ' total(s) filled in' + (skipped ? ', ' + skipped + ' had no readable total (open and re-save those to set one)' : '') + '. Pipeline dollars are now up to date.');
+  crTell('Backfill complete: ' + fixed + ' total(s) filled in' + (skipped ? ', ' + skipped + ' had no readable total (open and re-save those to set one)' : '') + '. Pipeline dollars are now up to date.');
 }
 /* ══ 555: the crew Work Order ═══════════════════════════════════════════════
    Cardinal's own document, issued TO a crew before the job goes on the
@@ -21655,7 +21655,7 @@ async function miChangeRep(email){
     renderCommissions(); return;
   }
   var r = await sb.from('projects').update({ sales_rep: email }).eq('id', currentProject.id).select('id,sales_rep').single();
-  if(r.error){ alert('Could not change the rep: ' + r.error.message); renderCommissions(); return; }
+  if(r.error){ crTell('Could not change the rep: ' + r.error.message); renderCommissions(); return; }
   currentProject.sales_rep = email;
   var cp = cacheProjects.find(function(x){ return x.id === currentProject.id; });
   if(cp) cp.sales_rep = email;
@@ -21758,7 +21758,7 @@ async function miDelColl(id){
   if(!confirm('Remove the ' + (_c ? fmtMoney(Number(_c.amount) || 0, true) + ' ' : '') +
               'collection? Its unpaid commission goes with it.')) return;
   var r = await sb.from('collections').delete().eq('id', id);
-  if(r.error){ alert('Could not remove: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not remove: ' + r.error.message); return; }
   await renderCommissions();
 }
 async function miSaveDraw(){
@@ -21793,7 +21793,7 @@ async function miRepayDraw(id){
   if(!commAdmin()) return;
   if(!confirm('Mark this draw repaid?')) return;
   var r = await sb.from('draws').update({ status:'repaid', repaid_at: commToday() }).eq('id', id);
-  if(r.error){ alert('Could not update: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not update: ' + r.error.message); return; }
   await renderCommissions();
 }
 async function addCommission(){
@@ -21831,7 +21831,7 @@ async function delCommission(id){
   if(!commAdmin()) return;
   if(!confirm('Remove this commission from the record?')) return;
   var r = await sb.from('commissions').delete().eq('id', id);
-  if(r.error){ alert('Could not remove: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not remove: ' + r.error.message); return; }
   await renderCommissions();
 }
 
@@ -22423,7 +22423,7 @@ async function createContractForCurrent(tradeKey){
      was made". Silent refusal on a legal document is the one class worth a line. */
   if(!pr){
     if(window.crToastErr) window.crToastErr('Open a client first — a contract needs a job to belong to.');
-    else alert('Open a client first — a contract needs a job to belong to.');
+    else crTell('Open a client first — a contract needs a job to belong to.');
     return;
   }
   var kind = CONTRACT_TYPES[tradeKey] || CONTRACT_TYPES.roof;
@@ -22485,7 +22485,7 @@ async function approveAndContract(prId){
     var id = await db.create('Contract \u2014 Roofing \u2014 ' + (pr.name || 'Client'), tpl, pr.name, pr.id);
     await reload();
     await openEditor(id);
-    alert('Contract created and prefilled. Review the scope, then have the client sign \u2014 in person (\u270D\uFE0F) or by \uD83D\uDD17 share link. The project moves to APPROVED when the contract is signed.');
+    crTell('Contract created and prefilled. Review the scope, then have the client sign \u2014 in person (\u270D\uFE0F) or by \uD83D\uDD17 share link. The project moves to APPROVED when the contract is signed.');
   }catch(err){ showError('Could not create contract: ' + (err.message || err)); }
 }
 document.addEventListener('click', function(e){
@@ -23100,19 +23100,19 @@ async function apptAttachJob(id){
   var opts = (cacheProjects || []).slice().sort(function(x, y){
     return String(x.name || '').localeCompare(String(y.name || ''));
   });
-  if(!opts.length){ alert('No jobs to attach to yet.'); return; }
+  if(!opts.length){ crTell('No jobs to attach to yet.'); return; }
   var pick = prompt('Which job is "' + a.title + '" for?\n\n' +
     opts.map(function(p, i){ return (i + 1) + '. ' + (p.name || '(no name)') +
       (p.address ? ' \u2014 ' + p.address : ''); }).join('\n') +
     '\n\nType the number:');
   if(pick === null) return;
   var n = parseInt(String(pick).trim(), 10);
-  if(!(n >= 1 && n <= opts.length)){ alert('That is not one of the numbers listed.'); return; }
+  if(!(n >= 1 && n <= opts.length)){ crTell('That is not one of the numbers listed.'); return; }
   try{
     await adb.update(a.id, { project_id: opts[n - 1].id });
     cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
     renderApptList(); renderCalendar();
-  }catch(e){ alert('Could not attach it: ' + ((e && e.message) || e)); }
+  }catch(e){ crTell('Could not attach it: ' + ((e && e.message) || e)); }
 }
 document.getElementById('apptList').addEventListener('click', async function(e){
   var att = e.target.closest('[data-apptattach]');
@@ -23306,14 +23306,14 @@ async function cardinalDeleteClient(pr, opts){
   var typed = prompt('Type the client\u2019s name exactly to confirm deletion:', '');
   if(typed === null) return false;
   if(typed.trim().toLowerCase() !== String(pr.name || '').trim().toLowerCase()){
-    alert('Name did not match \u2014 nothing was deleted.');
+    crTell('Name did not match \u2014 nothing was deleted.');
     return false;
   }
   try{
     await cardinalDeepDelete(pr);
     await reload();
     if(typeof opts.after === 'function'){ opts.after(); } else { showHome(); }
-    alert('Client deleted.');
+    crTell('Client deleted.', 'ok');
     return true;
   }catch(err){
     showError('Delete failed: ' + (err.message || err));
@@ -23339,14 +23339,14 @@ async function cardinalDeleteMany(list, opts){
   var typed = prompt('Type DELETE to confirm removing ' + list.length + ' client' + (list.length > 1 ? 's' : '') + ':', '');
   if(typed === null) return false;
   if(typed.trim().toUpperCase() !== 'DELETE'){
-    alert('Confirmation did not match \u2014 nothing was deleted.');
+    crTell('Confirmation did not match \u2014 nothing was deleted.');
     return false;
   }
   try{
     for(var i = 0; i < list.length; i++){ await cardinalDeepDelete(list[i]); }
     await reload();
     if(typeof opts.after === 'function'){ opts.after(); }
-    alert(list.length + ' client' + (list.length > 1 ? 's' : '') + ' deleted.');
+    crTell(list.length + ' client' + (list.length > 1 ? 's' : '') + ' deleted.');
     return true;
   }catch(err){
     showError('Delete failed: ' + (err.message || err));
@@ -23786,7 +23786,7 @@ function wirePhotoFrames(doc){
       }).catch(function(err){
         btn.textContent = origLabel;
         btn.disabled = false;
-        alert('Could not process that photo: ' + (err.message || err));
+        crTell('Could not process that photo: ' + (err.message || err));
       });
     });
   });
@@ -23868,7 +23868,7 @@ function wireReanalyzeButtons(doc){
         var cap = f.parentElement ? f.parentElement.querySelector('.cap .ph') : null;
         return img && img.src && cap ? { src: img.src, cap: cap } : null;
       }).filter(Boolean);
-      if(!shots.length){ alert('No photos in this section yet.'); return; }
+      if(!shots.length){ crTell('No photos in this section yet.'); return; }
       btn.disabled = true;
       for(var i = 0; i < shots.length; i++){
         btn.textContent = 'Analyzing ' + (i + 1) + ' / ' + shots.length + '\u2026';
@@ -23971,7 +23971,7 @@ function wireSummaryDraftButton(doc){
         var tgt = summaryTarget();
         if(tgt && !tgt.hasAttribute('data-ai-summary') &&
            (tgt.textContent || '').trim().charAt(0) !== '['){
-          alert('The summary paragraph already has hand-written text \u2014 edit it directly, or clear it back to blank to re-draft.');
+          crTell('The summary paragraph already has hand-written text \u2014 edit it directly, or clear it back to blank to re-draft.');
         }else if(tgt){
           tgt.textContent = data.summary;
           tgt.classList.remove('ph');
@@ -23985,11 +23985,11 @@ function wireSummaryDraftButton(doc){
           if(savedFlash && data.via && data.via_primary && data.via !== data.via_primary)
             savedFlash.textContent = 'drafted by ' + data.via + ', not ' + data.via_primary;
         }else{
-          alert('Could not find the summary paragraph to write into.');
+          crTell('Could not find the summary paragraph to write into.');
         }
       }
     }catch(e){
-      alert('Could not draft the summary: ' + (e.message || e));
+      crTell('Could not draft the summary: ' + (e.message || e));
     }
     btn.disabled = false;
     btn.textContent = oldLabel;
@@ -24021,7 +24021,7 @@ window.draftGate = function(){
        is the duplicate-pipeline bug this project keeps paying for. */
     var doc = rccDoc();
     var inDoc = doc && doc.getElementById('aiDraftBtn');
-    if(!inDoc){ alert('Open an inspection report first \u2014 the drafter writes the Overall Condition Assessment.'); return; }
+    if(!inDoc){ crTell('Open an inspection report first \u2014 the drafter writes the Overall Condition Assessment.'); return; }
     inDoc.scrollIntoView({ block: 'center' });
     inDoc.click();
   });
@@ -24074,7 +24074,7 @@ function wireCoverPhoto(doc){
     }).catch(function(err){
       btn.textContent = origLabel;
       btn.disabled = false;
-      alert('Could not process that photo: ' + (err.message || err));
+      crTell('Could not process that photo: ' + (err.message || err));
     });
   });
 }
@@ -24220,7 +24220,7 @@ function rccSubject(){
 function rccOpen(){
   var doc = rccDoc();
   if(!rccIsReport(doc)){
-    alert('The CompanyCam picker is for inspection reports. This document is a different kind.');
+    crTell('The CompanyCam picker is for inspection reports. This document is a different kind.');
     return;
   }
   var panel = rccEl('rccPanel');
@@ -25488,7 +25488,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
                     typeof window.CardinalCommunityPartners.isOwner === 'function' &&
                     window.CardinalCommunityPartners.isOwner(); }catch(_o){}
         if(_pid && !_own){
-          alert('Bids to ' + _pnm + ' are sent by Theo \u2014 their address is not shared.\n\n' +
+          crTell('Bids to ' + _pnm + ' are sent by Theo \u2014 their address is not shared.\n\n' +
                 'Save the bid and let him know it is ready.');
           return;
         }
@@ -25512,7 +25512,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
       try{
         if(pr && typeof projClaimType === 'function' && projClaimType(pr) === 'community' &&
            ((parseCkAll(pr).lead || {}).partner_id)){
-          alert('Could not look up who this bid goes to \u2014 nothing was sent.\n\n' +
+          crTell('Could not look up who this bid goes to \u2014 nothing was sent.\n\n' +
                 'Try again in a moment.');
           return;
         }
@@ -25798,13 +25798,13 @@ async function insertField(kind, listKind){
     var t0 = fieldTarget(doc);
     var from = t0.ok ? t0.host : null;
     var el = from && (from.closest('[data-added="1"]') || from.querySelector('[data-added="1"]'));
-    if(!el){ alert('Tap the field you added, then try again. Only fields added by hand can be removed \u2014 the printed ones stay.'); return; }
+    if(!el){ crTell('Tap the field you added, then try again. Only fields added by hand can be removed \u2014 the printed ones stay.'); return; }
     el.remove();
     refreshSigBtn();
     return;
   }
   var t = fieldTarget(doc);
-  if(!t.ok){ alert(t.why); return; }
+  if(!t.ok){ crTell(t.why); return; }
   var frag = doc.createRange().createContextualFragment(' ' + fieldHTML(doc, kind, listKind) + ' ');
   t.range.deleteContents();
   t.range.insertNode(frag);
@@ -25910,7 +25910,7 @@ document.getElementById('fillChipBtn').addEventListener('click', jumpNextBlank);
 document.getElementById('sigClear').addEventListener('click', sigReset);
 document.getElementById('sigCancel').addEventListener('click', function(){ window.__ceSigner = null; sigModal.style.display = 'none'; });
 document.getElementById('sigApply').addEventListener('click', async function(){
-  if(!sigDrawn){ alert('Have the client sign first.'); return; }
+  if(!sigDrawn){ crTell('Have the client sign first.'); return; }
   /* 722: the contracts-table editor borrows this ONE pad via window.openSigner().
      When a contract callback is armed, hand it the signature PNG and return —
      the inspection_reports path below never runs. A no-op when nobody armed it
@@ -25982,11 +25982,11 @@ document.getElementById('sigApply').addEventListener('click', async function(){
     var t = (titleInput.value || '').trim();
     if(/^contract/i.test(t) && current.project_id){
       await setStage(current.project_id, 'Approved');
-      alert('Contract signed \u2014 project moved to APPROVED. Curtis has been notified to schedule and order materials.');
+      crTell('Contract signed \u2014 project moved to APPROVED. Curtis has been notified to schedule and order materials.');
     }else if(isEstimateTitle(t)){
       notifyTeam(ADMIN_EMAILS, 'Estimate signed \u2014 needs approval: ' + t,
         '<p><b>' + esc(t) + '</b> was signed in person.</p><p>Review it in the <b>Approvals</b> card on the app home page, then approve &amp; generate the contract.</p>');
-      alert('Estimate signed. It now appears in the admin Approvals queue \u2014 a contract will be generated on approval.');
+      crTell('Estimate signed. It now appears in the admin Approvals queue \u2014 a contract will be generated on approval.');
     }
     await reload();
   }catch(e){}
@@ -26747,7 +26747,7 @@ function goToLanding(){
   if(icAdd) icAdd.addEventListener('click', function(){
     /* Sales/admin only — production accounts can't create leads */
     if(typeof isProductionUser === 'function' && isProductionUser()){
-      alert('Lead creation is for sales and admins \u2014 production accounts can add Contacts, Tasks, and Reminders.');
+      crTell('Lead creation is for sales and admins \u2014 production accounts can add Contacts, Tasks, and Reminders.');
       return;
     }
     openLeadForm();
@@ -27306,8 +27306,8 @@ try{
           try{
             var u = await sb.auth.updateUser({ password: np });
             if(u.error) throw u.error;
-            alert('Password updated \u2014 you\u2019re signed in.');
-          }catch(e){ alert('Could not update password: ' + (e.message || e)); }
+            crTell('Password updated \u2014 you\u2019re signed in.', 'ok');
+          }catch(e){ crTell('Could not update password: ' + (e.message || e)); }
         }
         try{ history.replaceState(null, '', location.pathname); }catch(e){}
       }
@@ -27824,14 +27824,14 @@ document.getElementById('tmSearch').addEventListener('input', function(){
 });
 document.getElementById('tmAddBtn').addEventListener('click', async function(){
   if(!(currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1)){
-    alert('Only Theo or Joan can add teammates.');
+    crTell('Only Theo or Joan can add teammates.');
     return;
   }
   var em = (prompt('Work email for the new teammate:', '@cardinalrenovations.net') || '').trim().toLowerCase();
   if(!em) return;
-  if(em.indexOf('@') === -1){ alert('That does not look like an email address.'); return; }
+  if(em.indexOf('@') === -1){ crTell('That does not look like an email address.'); return; }
   if(cacheTeam[em] || TEAM_ROSTER.some(function(m){ return m.email === em; })){
-    alert('That person is already in the directory.'); return;
+    crTell('That person is already in the directory.'); return;
   }
   var nm = (prompt('Full name:', '') || '').trim();
   var ph = (prompt('Phone number (optional):', '') || '').trim();
@@ -27852,18 +27852,18 @@ document.getElementById('tmInviteBtn').addEventListener('click', async function(
      action rather than changing what Add does, since a directory-only entry
      (someone whose login already exists another way) is still a real case. */
   if(!(currentUser && ADMIN_EMAILS.indexOf(currentUser.email) !== -1)){
-    alert('Only Theo or Joan can invite teammates.');
+    crTell('Only Theo or Joan can invite teammates.');
     return;
   }
   var em = (prompt('Work email for the new teammate:', '@cardinalrenovations.net') || '').trim().toLowerCase();
   if(!em) return;
-  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ alert('Enter a full email address.'); return; }
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){ crTell('Enter a full email address.'); return; }
   var nm = (prompt('Full name:', '') || '').trim();
   var roleAsk = prompt('Role — sales, production, or admin:', 'sales');
   if(roleAsk === null) return;
   var rl = roleAsk.trim().toLowerCase();
   if(['sales','production','admin'].indexOf(rl) === -1){
-    alert('Role must be sales, production, or admin.'); return;
+    crTell('Role must be sales, production, or admin.'); return;
   }
   /* a one-time password generated here, never typed by the admin — relayed
      by text or call, matching how this app already hands off draws etc. */
@@ -27883,7 +27883,7 @@ document.getElementById('tmInviteBtn').addEventListener('click', async function(
     if(!res.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
     await loadTeamProfiles();
     renderTeamView();
-    alert((data.existed ? 'Account already existed — role set to ' + rl + '.\n\n'
+    crTell((data.existed ? 'Account already existed — role set to ' + rl + '.\n\n'
                          : 'Account created.\n\n') +
           'Email: ' + em + '\nTemporary password: ' + pw +
           '\n\nRelay this to them directly — nothing was emailed automatically.');
@@ -28092,11 +28092,11 @@ if('serviceWorker' in navigator){
 async function enableNotifications(){
   try{
     if(!('serviceWorker' in navigator) || !('PushManager' in window)){
-      alert('Push is not supported here. On iPhone: install the app first (Share \u2192 Add to Home Screen), then enable from inside the installed app.');
+      crTell('Push is not supported here. On iPhone: install the app first (Share \u2192 Add to Home Screen), then enable from inside the installed app.');
       return;
     }
     var perm = await Notification.requestPermission();
-    if(perm !== 'granted'){ alert('Notifications were not allowed.'); return; }
+    if(perm !== 'granted'){ crTell('Notifications were not allowed.'); return; }
     var reg = await navigator.serviceWorker.ready;
     /* 611: a subscription made with a DIFFERENT applicationServerKey makes
        subscribe() throw InvalidStateError, and every device that subscribed
@@ -28110,13 +28110,13 @@ async function enableNotifications(){
       applicationServerKey: __b64ToU8(VAPID_PUBLIC)
     });
     var em = (currentUser && currentUser.email) || '';
-    if(!em){ alert('Sign in first.'); return; }
+    if(!em){ crTell('Sign in first.'); return; }
     var j = sub.toJSON();
     var r = await sb.from('push_subs').upsert({ email: em, endpoint: sub.endpoint, sub: j }, { onConflict: 'endpoint' });
     if(r.error) throw r.error;
-    alert('\uD83D\uDD14 Notifications enabled on this device.');
+    crTell('\uD83D\uDD14 Notifications enabled on this device.');
   }catch(err){
-    alert('Could not enable notifications: ' + (err.message || err) +
+    crTell('Could not enable notifications: ' + (err.message || err) +
       '\n\nIf this mentions a missing table, run the push_subs SQL in Supabase first.');
   }
 }
@@ -28620,7 +28620,7 @@ body.claim-insurance #brandLogo{
     styleMounts();
     try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (e) {}
     window.crHideOtherMounts('cr-estimates-mount');
-    if (!window.CardinalEstimates) { alert('Estimates module not loaded'); return; }
+    if (!window.CardinalEstimates) { crTell('Estimates module not loaded'); return; }
     window.CardinalEstimates.open();
   };
 
@@ -28629,7 +28629,7 @@ body.claim-insurance #brandLogo{
     try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (e) {}
     window.crHideOtherMounts('cr-claims-mount');
     if (window.CardinalClaims) window.CardinalClaims.open();
-    else alert('Claims module not loaded');
+    else crTell('Claims module not loaded');
   };
 
   window.crOpenPricing = function (template) {
@@ -28637,7 +28637,7 @@ body.claim-insurance #brandLogo{
     try { if (typeof hideAllViews === 'function') hideAllViews(); } catch (e) {}
     window.crHideOtherMounts('cr-pricing-mount');
     if (window.CardinalPricing) window.CardinalPricing.open(template);
-    else alert('Pricing module not loaded');
+    else crTell('Pricing module not loaded');
   };
 
   // ── Returning to the main app from a module ─────────────
@@ -29568,14 +29568,14 @@ function showList() {
   async function creOpenSaved(id){
     const est = window.CardinalEstimates;
     if(!est || typeof est.openEditor !== 'function'){
-      alert('The estimate editor has not loaded yet — try again in a moment.');
+      crTell('The estimate editor has not loaded yet — try again in a moment.');
       return;
     }
     let r;
     try{ r = await window.supa.from('estimates').select('*').eq('id', id).maybeSingle(); }
-    catch(e){ alert('Could not open: ' + (e && e.message ? e.message : e)); return; }
-    if(r && r.error){ alert('Could not open: ' + r.error.message); return; }
-    if(!r || !r.data){ alert('That estimate is no longer there.'); return; }
+    catch(e){ crTell('Could not open: ' + (e && e.message ? e.message : e)); return; }
+    if(r && r.error){ crTell('Could not open: ' + r.error.message); return; }
+    if(!r || !r.data){ crTell('That estimate is no longer there.'); return; }
     est.openEditor(r.data.project_id, r.data);
   }
   async function creDiscard(id){
@@ -29591,7 +29591,7 @@ function showList() {
        that destroys an estimate. */
     /* 1033: one table. The ai_estimates branch left with the AI arm. */
     var r = await window.supa.from('estimates').update({ archived:true }).eq('id', id);
-    if(r && r.error){ alert('Could not discard: ' + r.error.message); return; }
+    if(r && r.error){ crTell('Could not discard: ' + r.error.message); return; }
     try{ toast('Discarded'); }catch(_){}
     cre.rows = cre.rows.filter(function(x){ return String(x.id) !== String(id); });
     renderEst();
@@ -30852,7 +30852,7 @@ function showList() {
         try {
           await ensureXLSX();
         } catch (e) {
-          alert('Could not load Excel reader: ' + e.message);
+          crTell('Could not load Excel reader: ' + e.message);
           renderStep1({ modal, template, existing, existingBySku, existingCats });
           return;
         }
@@ -30879,20 +30879,20 @@ function showList() {
           const validated = validateRows(results.data, existingBySku, template);
           renderStep2({ modal, template, existing, existingBySku, existingCats, rows: validated, filename: file.name });
         },
-        error: (err) => alert('CSV parse failed: ' + err.message),
+        error: (err) => crTell('CSV parse failed: ' + err.message),
       });
     }
 
     async function parseExcel(file) {
       let buf;
       try { buf = await file.arrayBuffer(); }
-      catch (e) { alert('File read failed: ' + e.message); return; }
+      catch (e) { crTell('File read failed: ' + e.message); return; }
 
       let wb;
       try { wb = window.XLSX.read(buf, { type: 'array' }); }
-      catch (e) { alert('Excel parse failed: ' + e.message); return; }
+      catch (e) { crTell('Excel parse failed: ' + e.message); return; }
 
-      if (!wb.SheetNames.length) { alert('No sheets found in workbook'); return; }
+      if (!wb.SheetNames.length) { crTell('No sheets found in workbook'); return; }
 
       // If single sheet, go straight to preview.
       // If multiple, show a picker.
@@ -31174,7 +31174,7 @@ function showList() {
 
   async function downloadXLSX(items, filename, template, blank = false) {
     try { await ensureXLSX(); }
-    catch (e) { alert('Could not load XLSX writer: ' + e.message); return; }
+    catch (e) { crTell('Could not load XLSX writer: ' + e.message); return; }
 
     const rows = csvRowsFor(items, blank);
     const ws = window.XLSX.utils.aoa_to_sheet(rows);
@@ -33078,7 +33078,7 @@ function showList() {
       };
       const { data, error } = await window.supa
         .from('insurance_claims').insert(payload).select('id').single();
-      if (error) { alert('Create failed: ' + error.message); return; }
+      if (error) { crTell('Create failed: ' + error.message); return; }
       modal.remove();
       if (linkFn) await linkFn(data.id);
       if (window.CardinalClaims?.openOne) window.CardinalClaims.openOne(data.id);
@@ -35942,7 +35942,7 @@ function openEditor(partner){
 if(partner && partner.id){
 var raw = getRaw(partner.id);
 if(raw && raw.confidential && !isPrivileged()){
-alert('That partner is confidential \u2014 ask Theo or Joan to make the change.');
+crTell('That partner is confidential \u2014 ask Theo or Joan to make the change.');
 return;
 }
 /* 712: this line is why the read mask was not enough — getRaw() is the
@@ -36558,7 +36558,7 @@ bg.querySelector('[data-act="save"]').onclick = async function(){
 var saveBtn = bg.querySelector('[data-act="save"]');
 var partnerId = partnerSel.value;
 if(!partnerId){
-alert('Please select a partner.');
+crTell('Please select a partner.');
 partnerSel.focus();
 return;
 }
@@ -36679,7 +36679,7 @@ setTimeout(function(){ window.openProject(r.data.id); }, 80);
 setTimeout(function(){ window.CardinalCommunityHub.show(); }, 80);
 }
 }catch(e){
-alert('Could not create bid: ' + (e.message || e));
+crTell('Could not create bid: ' + (e.message || e));
 saveBtn.disabled = false;
 saveBtn.textContent = 'Save Bid';
 }
@@ -36894,7 +36894,7 @@ if(!f) return;
 uploadBtn.disabled = true;
 uploadBtn.textContent = 'Uploading\u2026';
 try{ await uploadFile(f); }
-catch(e){ alert('Upload failed: ' + (e.message || e)); }
+catch(e){ crTell('Upload failed: ' + (e.message || e)); }
 finally{
 fileInput.value = '';
 uploadBtn.disabled = false;
@@ -36951,13 +36951,13 @@ if(url){ window.open(url, '_blank', 'noopener,noreferrer'); return; }
    the tab may need a second tap on iOS. */
 window.supa.storage.from('photos').createSignedUrl(wo.path, 3600).then(function(sig){
 var u = (!sig.error && sig.data && sig.data.signedUrl) || null;
-if(!u){ alert('Could not generate URL for ' + wo.name); return; }
+if(!u){ crTell('Could not generate URL for ' + wo.name); return; }
 woUrls[wo.path] = u;
 var w = window.open(u, '_blank', 'noopener,noreferrer');
-if(!w) alert('Tap Open again to view ' + wo.name + '.');
-}).catch(function(e){ alert('Could not open: ' + (e.message || e)); });
+if(!w) crTell('Tap Open again to view ' + wo.name + '.');
+}).catch(function(e){ crTell('Could not open: ' + (e.message || e)); });
 }catch(e){
-alert('Could not open: ' + (e.message || e));
+crTell('Could not open: ' + (e.message || e));
 }
 }
 async function deleteFile(wo, idx){
@@ -36986,7 +36986,7 @@ try{ window.auditLog('work_order_delete',
 }
 renderSection();
 }catch(e){
-alert('Delete failed: ' + (e.message || e));
+crTell('Delete failed: ' + (e.message || e));
 }
 }
 function hook(){
@@ -37086,7 +37086,7 @@ closeShell();
 if(typeof window.openInsuranceEditor === 'function'){
 window.openInsuranceEditor(pr, true /* changing type */);
 }else{
-alert('Insurance editor is unavailable in this build.');
+crTell('Insurance editor is unavailable in this build.');
 }
 return;
 }
@@ -37244,7 +37244,7 @@ subEl.parentNode.insertBefore(wrap, subEl.nextSibling);
 }
 async function handleSolUpload(file, inner, btn){
 if(file.size > 12 * 1024 * 1024){
-alert('That file is bigger than 12 MB. Try compressing the PDF or splitting it.');
+crTell('That file is bigger than 12 MB. Try compressing the PDF or splitting it.');
 return;
 }
 btn.disabled = true;
@@ -38012,7 +38012,7 @@ if(s) s.parentNode.removeChild(s);
 }
 async function openDirectory(partnerId){
 if(!partnerId){
-alert('Open a partner first to see its properties.');
+crTell('Open a partner first to see its properties.');
 return;
 }
 await load(partnerId);
@@ -38130,7 +38130,7 @@ openDirectory(partnerId);
 };
 }
 async function pickProperty(partnerId, cb){
-if(!partnerId){ alert('Attach a partner first.'); return; }
+if(!partnerId){ crTell('Attach a partner first.'); return; }
 await load(partnerId);
 var props = list(partnerId).slice();
 var partner = (window.CardinalCommunityPartners && window.CardinalCommunityPartners.get)
@@ -38407,7 +38407,7 @@ pr.id);
 }
 removeBanner();
 }catch(e){
-alert('Could not change stage: ' + (e.message || e));
+crTell('Could not change stage: ' + (e.message || e));
 btn.disabled = false;
 btn.textContent = rule.action;
 }
@@ -39099,7 +39099,7 @@ CURRENT = null;
 }
 function doPrint(){
 try{ window.print(); }
-catch(e){ alert('Could not open print dialog: ' + (e.message || e)); }
+catch(e){ crTell('Could not open print dialog: ' + (e.message || e)); }
 }
 function doDownload(){
 if(!window.CardinalDownload) return;
@@ -39115,7 +39115,7 @@ return location.origin + '/?share=' + encodeURIComponent(CURRENT.share_token);
 }
 function doCopy(){
 var url = shareUrl();
-if(!url){ alert('This contract has no share link yet.'); return; }
+if(!url){ crTell('This contract has no share link yet.'); return; }
 try{
 if(navigator.clipboard && navigator.clipboard.writeText){
 navigator.clipboard.writeText(url).then(function(){
@@ -39128,7 +39128,7 @@ prompt('Copy this link:', url);
 }
 function doMail(){
 var url = shareUrl();
-if(!url){ alert('This contract has no share link yet.'); return; }
+if(!url){ crTell('This contract has no share link yet.'); return; }
 var hw = CURRENT.homeowner || CURRENT.client || {};
 var to = hw.email || '';
 var num = CURRENT.contract_number || CURRENT.number || CURRENT.id || '';
@@ -39159,11 +39159,11 @@ return '<div class="ce-eyebrow">Sent ' + esc(ceFmtDay(contract.sent_at)) + '</di
 return '';
 }
 async function doSend(){
-if(!CURRENT || !CURRENT.id || !window.supa){ alert('This contract is not saved yet.'); return; }
+if(!CURRENT || !CURRENT.id || !window.supa){ crTell('This contract is not saved yet.'); return; }
 var now = new Date().toISOString();
 var r = await window.supa.from('contracts')
 .update({ status:'sent', sent_at: now }).eq('id', CURRENT.id).select('status,sent_at').single();
-if(r.error){ alert('Could not mark sent: ' + (r.error.message || r.error)); return; }
+if(r.error){ crTell('Could not mark sent: ' + (r.error.message || r.error)); return; }
 CURRENT.status = 'sent'; CURRENT.sent_at = now;
 render(CURRENT); flash('Marked sent');
 }
@@ -39182,14 +39182,14 @@ var now = new Date().toISOString();
 var r = await window.supa.from('contracts')
 .update({ status:'void', voided_at: now, void_reason: reason || null })
 .eq('id', CURRENT.id).select('status').single();
-if(r.error){ alert('Could not void: ' + (r.error.message || r.error)); return; }
+if(r.error){ crTell('Could not void: ' + (r.error.message || r.error)); return; }
 CURRENT.status = 'void'; CURRENT.voided_at = now; CURRENT.void_reason = reason || null;
 render(CURRENT); flash('Contract voided');
 }
 function doSign(){
-if(!CURRENT || !CURRENT.id){ alert('This contract is not saved yet.'); return; }
+if(!CURRENT || !CURRENT.id){ crTell('This contract is not saved yet.'); return; }
 if(typeof window.openSigner === 'function'){ window.openSigner(CURRENT, onContractSigned); return; }
-alert('Signature workflow is not available in this build.');
+crTell('Signature workflow is not available in this build.');
 }
 /* 722 (Theo's hybrid): the client signs on the ONE proven pad (openSigner reuses
    the inspection_reports canvas); here we mirror it onto the contracts ROW —
@@ -39211,7 +39211,7 @@ homeowner_signed_at: now,
 contractor_signed_at: now,
 contract: newBlob
 }).eq('id', CURRENT.id).select('status').single();
-if(r.error){ alert('Could not record signature: ' + (r.error.message || r.error)); return; }
+if(r.error){ crTell('Could not record signature: ' + (r.error.message || r.error)); return; }
 CURRENT_BLOB = newBlob;
 CURRENT.status = 'signed'; CURRENT.homeowner_signed_at = now; CURRENT.contractor_signed_at = now;
 render(CURRENT); flash('Contract signed');
@@ -39235,7 +39235,7 @@ document.body.appendChild(t);
 setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); }, 1600);
 }
 window.openContractEditor = async function(input){
-if(!input){ alert('No contract data to display.'); return; }
+if(!input){ crTell('No contract data to display.'); return; }
 /* 722: callers pass a DB row, the convert API response, or a bare {id}. Re-fetch
    the row by id so status/sent_at/*_signed_at/voided_at are authoritative — the
    jsonb blob alone does not carry the lifecycle columns. Falls back to whatever
@@ -39353,7 +39353,7 @@ var msg = 'This action isn\'t connected yet';
 if(typeof window.toast === 'function'){
 try{ window.toast(msg, 'error'); return; }catch(_){ }
 }
-alert(msg);
+crTell(msg);
 }, true);
 }
 }
@@ -39653,7 +39653,7 @@ return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
 }
 function iconFor(status){ return status === 'ok' ? '\u2713' : status === 'warn' ? '!' : '\u00d7'; }
 function showModal(){
-if(!LAST_RESULTS){ alert('Health check not yet complete.'); return; }
+if(!LAST_RESULTS){ crTell('Health check not yet complete.'); return; }
 var bg = document.createElement('div');
 bg.className = 'cr-ahc-bg';
 var byGroup = {};
@@ -41288,7 +41288,7 @@ return stepHtml(step, i);
 bg.querySelector('.cr-walk-steps').innerHTML = stepsHtml;
 }
 function showRunner(){
-if(!isAdmin()){ alert('Admin only.'); return; }
+if(!isAdmin()){ crTell('Admin only.'); return; }
 var bg = document.createElement('div');
 bg.className = 'cr-walk-bg';
 bg.innerHTML =
@@ -41572,7 +41572,7 @@ URL.revokeObjectURL(url);
 }
 function exportClients(){
 if(!Array.isArray(window.cacheProjects) || !window.cacheProjects.length){
-alert('No clients loaded yet.');
+crTell('No clients loaded yet.');
 return;
 }
 /* 742: `projects.checklist` is a TEXT column, so it arrives as a STRING and
@@ -41804,6 +41804,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:1080, d:'2026-08-26', t:'No more browser pop-ups',
+  s:'Two hundred and eighty-nine messages in this app arrived as a native browser dialog \u2014 the grey box headed \u201capp.cardinalroster.com says\u201d with an OK button. It is the single thing that most made this look like a web page rather than an app, and it was spread across forty-eight different parts of the code. They now use the same slim card the app already had for its own messages. Warnings stay up until you dismiss them, the way the old boxes did; the few that are good news are styled as good news. If the message card is ever unavailable it falls back to the old box, so nothing can go missing.' },
   { b:1079, d:'2026-08-26', t:'The version you sent, and the version they signed, are kept',
   s:'Every estimate, contract, inspection report and crew work order lived as ONE copy that was overwritten in place. Edit a signed estimate and the document the homeowner agreed to stopped existing \u2014 there was no history table, no trigger, and nothing anywhere that could tell you what it used to say. The app now keeps a copy at the moment a document is sent and at the moment it is signed, and one more copy of the old wording the first time it is changed after that. Drafts are not versioned, because nobody has a copy of a draft. The copy is made by the database itself, so nothing is uploaded and nothing is slower \u2014 these documents average about 600 KB and the biggest is over six megabytes.' },
   { b:1078, d:'2026-08-26', t:'Editing a sent or signed document is written down',
@@ -43030,7 +43032,7 @@ email = email.trim().toLowerCase();
 /* 740: was /@/, which accepted "nick@". `assigned` is matched against this
    exact string by the sales RLS policy, so a half-typed address hands the
    selected clients to nobody and says it worked. */
-if(!window.crValid.email(email).ok){ alert('That doesn\'t look like an email.'); return; }
+if(!window.crValid.email(email).ok){ crTell('That doesn\'t look like an email.'); return; }
 if(!confirm('Reassign ' + selected.size + ' client(s) to ' + email + '?')) return;
 var ids = Array.from(selected);
 var btns = bar.querySelectorAll('button');
@@ -43047,7 +43049,7 @@ var r = await window.supa.from('projects').update({ checklist: ck }).eq('id', id
 if(r.error) fail++; else ok++;
 }catch(e){ fail++; }
 }
-alert('Reassigned ' + ok + '. ' + (fail ? 'Failed: ' + fail + '.' : ''));
+crTell('Reassigned ' + ok + '. ' + (fail ? 'Failed: ' + fail + '.' : ''));
 exitMode();
 if(typeof window.reload === 'function') window.reload();
 };
@@ -43063,13 +43065,13 @@ var r = await window.supa.from('projects').update({ archived: true }).eq('id', i
 if(r.error) fail++; else ok++;
 }catch(e){ fail++; }
 }
-alert('Archived ' + ok + '. ' + (fail ? 'Failed: ' + fail + '.' : ''));
+crTell('Archived ' + ok + '. ' + (fail ? 'Failed: ' + fail + '.' : ''));
 exitMode();
 if(typeof window.reload === 'function') window.reload();
 };
 var delBtn = bar.querySelector('[data-act="delete"]');
 if(delBtn) delBtn.onclick = async function(){
-if(!isAdmin()){ alert('Deleting clients is admin-only.'); return; }
+if(!isAdmin()){ crTell('Deleting clients is admin-only.'); return; }
 var ids = Array.from(selected);
 if(!ids.length) return;
 var names = ids.map(function(id){
@@ -43088,7 +43090,7 @@ if(!confirm(
 var typed = prompt('Type DELETE to confirm removing ' + ids.length + ' client' +
 (ids.length === 1 ? '' : 's') + ' permanently:');
 if(!typed || typed.trim().toUpperCase() !== 'DELETE'){
-alert('Cancelled \u2014 nothing was deleted.');
+crTell('Cancelled \u2014 nothing was deleted.', 'ok');
 return;
 }
 var dbtns = bar.querySelectorAll('button');
@@ -43108,8 +43110,8 @@ try{ window.auditLog('client_delete', 'Bulk deleted client: ' + names[k], ids[k]
 }
 }catch(e){ dfail++; }
 }
-alert('Deleted ' + dok + ' client' + (dok === 1 ? '' : 's') + '.' +
-(dfail ? '\n\n' + dfail + ' could not be deleted \u2014 check the console.' : ''));
+crTell('Deleted ' + dok + ' client' + (dok === 1 ? '' : 's') + '.' +
+(dfail ? '\n\n' + dfail + ' could not be deleted \u2014 check the console.' : ''), 'ok');
 exitMode();
 if(typeof window.reload === 'function') window.reload();
 };
@@ -44529,7 +44531,7 @@ input.accept = 'image/*';
 input.onchange = async function(){
 var file = input.files && input.files[0];
 if(!file) return;
-if(!window.supa){ alert('No connection.'); return; }
+if(!window.supa){ crTell('No connection.'); return; }
 var ts = Date.now();
 var safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 60);
 var path = 'nachi/' + ts + '_' + safe;
@@ -44537,14 +44539,14 @@ try{
 var up = await window.supa.storage.from('photos').upload(path, file, {
 cacheControl:'3600', upsert:false, contentType:file.type || undefined
 });
-if(up.error){ alert('Upload failed: ' + up.error.message); return; }
+if(up.error){ crTell('Upload failed: ' + up.error.message); return; }
 /* This URL is baked into stored resource HTML, so it needs the document TTL -
    a public URL would 403 the moment the bucket goes private, and the markup
    is already saved by then. */
 var urlRes = await window.supa.storage.from('photos')
 .createSignedUrl(path, (typeof PHOTO_DOC_URL_TTL === 'number' ? PHOTO_DOC_URL_TTL : 315360000));
 var url = urlRes && !urlRes.error && urlRes.data && urlRes.data.signedUrl;
-if(!url){ alert('Could not get URL.'); return; }
+if(!url){ crTell('Could not get URL.'); return; }
 var caption = prompt('Caption for this image (optional):', '') || '';
 var markup = (window.CardinalResourceImages &&
 typeof window.CardinalResourceImages.figureHtml === 'function')
@@ -44558,7 +44560,7 @@ var pos = html.selectionStart || html.value.length;
 html.value = html.value.slice(0, pos) + markup + html.value.slice(pos);
 }
 fire();
-}catch(e){ alert('Upload error: ' + e.message); }
+}catch(e){ crTell('Upload error: ' + e.message); }
 };
 input.click();
 }
@@ -44573,7 +44575,7 @@ fire();
 }
 async function migrateBaseline(){
 var baseline = (window.CardinalNachi && window.CardinalNachi.baseline);
-if(!baseline){ alert('Baseline data not available.'); return; }
+if(!baseline){ crTell('Baseline data not available.'); return; }
 var seriesCount = baseline.series.length;
 var articleCount = baseline.articles.length;
 if(!confirm(
@@ -44620,7 +44622,7 @@ newArticles++;
 }
 await loadFromDb();
 render();
-alert('Imported ' + newSeries + ' new series and ' + newArticles + ' new articles.\n' +
+crTell('Imported ' + newSeries + ' new series and ' + newArticles + ' new articles.\n' +
 'The hardcoded copies are now hidden — DB versions take over.');
 }
 var modal = null;
@@ -44630,7 +44632,7 @@ var editingArticle = null;
 var currentEditor = null;
 function open(){
 if(modal) return;
-if(!isAdmin()){ alert('Admin only.'); return; }
+if(!isAdmin()){ crTell('Admin only.'); return; }
 modal = document.createElement('div');
 modal.className = 'cr-cm-bg';
 document.body.appendChild(modal);
@@ -44720,14 +44722,14 @@ if(!isNew){
 modal.querySelector('[data-act="archive"]').onclick = async function(){
 if(!confirm('Archive "' + s.title + '"?')) return;
 var r = await window.supa.from('nachi_series').update({ archived:true }).eq('id', s.id);
-if(r.error){ alert('Archive failed: ' + r.error.message); return; }
+if(r.error){ crTell('Archive failed: ' + r.error.message); return; }
 await loadFromDb();
 editingSeries = null; view = 'series-list'; render();
 };
 }
 modal.querySelector('[data-act="save"]').onclick = async function(){
 var title = form.querySelector('[name="title"]').value.trim();
-if(!title){ alert('Title required.'); return; }
+if(!title){ crTell('Title required.'); return; }
 var slug = form.querySelector('[name="slug"]').value.trim() || slugify(title);
 var payload = {
 title:title, slug:slug,
@@ -44741,7 +44743,7 @@ r = await window.supa.from('nachi_series').insert(payload).select().single();
 }else{
 r = await window.supa.from('nachi_series').update(payload).eq('id', s.id).select().single();
 }
-if(r.error){ alert('Save failed: ' + r.error.message); return; }
+if(r.error){ crTell('Save failed: ' + r.error.message); return; }
 await loadFromDb();
 editingSeries = r.data;
 view = 'series-detail'; render();
@@ -44820,7 +44822,7 @@ if(!isNew){
 modal.querySelector('[data-act="archive"]').onclick = async function(){
 if(!confirm('Archive "' + a.title + '"?')) return;
 var r = await window.supa.from('nachi_articles').update({ archived:true }).eq('id', a.id);
-if(r.error){ alert('Archive failed: ' + r.error.message); return; }
+if(r.error){ crTell('Archive failed: ' + r.error.message); return; }
 await loadFromDb();
 view = 'series-detail'; editingArticle=null; currentEditor=null; render();
 };
@@ -44828,8 +44830,8 @@ view = 'series-detail'; editingArticle=null; currentEditor=null; render();
 modal.querySelector('[data-act="save"]').onclick = async function(){
 var title = form.querySelector('[name="title"]').value.trim();
 var html = currentEditor ? currentEditor.getHtml() : '';
-if(!title){ alert('Title required.'); return; }
-if(!html.trim()){ alert('Content required.'); return; }
+if(!title){ crTell('Title required.'); return; }
+if(!html.trim()){ crTell('Content required.'); return; }
 var payload = {
 series_id: s.id, title: title,
 sort_key: parseInt(form.querySelector('[name="sort_key"]').value, 10) || 0,
@@ -44844,7 +44846,7 @@ r = await window.supa.from('nachi_articles').insert(payload).select().single();
 }else{
 r = await window.supa.from('nachi_articles').update(payload).eq('id', a.id).select().single();
 }
-if(r.error){ alert('Save failed: ' + r.error.message); return; }
+if(r.error){ crTell('Save failed: ' + r.error.message); return; }
 await loadFromDb();
 view = 'series-detail'; editingArticle=null; currentEditor=null; render();
 };
@@ -45593,7 +45595,7 @@ var desc  = editor.querySelector('[data-f="description"]').value.trim();
 var price = Number(editor.querySelector('[data-f="default_price"]').value) || 0;
 var unit  = editor.querySelector('[data-f="unit"]').value.trim();
 var cat   = editor.querySelector('[data-f="category"]').value;
-if(!name){ alert('Give the item a name.'); return; }
+if(!name){ crTell('Give the item a name.'); return; }
 var saveBtn = editor.querySelector('[data-act="save"]');
 saveBtn.disabled = true; saveBtn.textContent = 'Saving\u2026';
 try{
@@ -45608,7 +45610,7 @@ await saveItem(payload, currentEditingId);
 closeEditor();
 await loadItems();
 }catch(e){
-alert('Save failed: ' + (e.message || e));
+crTell('Save failed: ' + (e.message || e));
 saveBtn.disabled = false; saveBtn.textContent = 'Save';
 }
 }
@@ -45621,7 +45623,7 @@ await deleteItem(currentEditingId);
 closeEditor();
 await loadItems();
 }catch(e){
-alert('Delete failed: ' + (e.message || e));
+crTell('Delete failed: ' + (e.message || e));
 }
 }
 function ensureView(){
@@ -45662,7 +45664,7 @@ return view;
 }
 function open(){
 if(!isAdmin()){
-alert('The Line Item Library is admin-only. Ask Theo or Joan to add items you need.');
+crTell('The Line Item Library is admin-only. Ask Theo or Joan to add items you need.');
 return;
 }
 ensureView();
@@ -46090,7 +46092,7 @@ console.warn('[pae] fetch failed for photo', photos[i].id, e);
 }
 if(!files.length){
 setStat('');
-alert('Could not fetch the photos. Try opening one and using your browser\u2019s save option.');
+crTell('Could not fetch the photos. Try opening one and using your browser\u2019s save option.');
 return;
 }
 if(navigator.canShare && navigator.share){
@@ -46123,7 +46125,7 @@ setStat('Saved ' + files.length);
 setTimeout(function(){ setStat(''); }, 3000);
 }catch(e){
 setStat('');
-alert('Save failed: ' + (e.message || e));
+crTell('Save failed: ' + (e.message || e));
 }finally{
 var b = actionBar.querySelector('[data-act="bulk-download"]');
 if(b){ b.disabled = false; b.innerHTML = '\u2B07 Save'; }
@@ -46132,7 +46134,7 @@ if(b){ b.disabled = false; b.innerHTML = '\u2B07 Save'; }
 async function onBulkMove(e){
 var to = e.target.value;
 if(!to) return;
-if(!window.supa){ alert('No connection.'); return; }
+if(!window.supa){ crTell('No connection.'); return; }
 var galChecked = window.galChecked || {};
 var ids = Object.keys(galChecked).filter(function(id){ return galChecked[id]; });
 if(!ids.length) return;
@@ -46194,7 +46196,7 @@ capModal.classList.add('open');
 capModal.querySelector('[data-act="close"]').onclick = closeCapModal;
 capModal.querySelector('[data-act="edit"]').onclick = function(){
 if(!window.CardinalPhotoEditor){
-alert('Photo editor not loaded \u2014 reload the app.');
+crTell('Photo editor not loaded \u2014 reload the app.');
 return;
 }
 closeCapModal();
@@ -46217,7 +46219,7 @@ document.body.appendChild(a); a.click(); document.body.removeChild(a);
 setTimeout(function(){ URL.revokeObjectURL(url); }, 20000);
 }
 }catch(e){
-if(!(e && e.name === 'AbortError')) alert('Save failed: ' + (e.message || e));
+if(!(e && e.name === 'AbortError')) crTell('Save failed: ' + (e.message || e));
 }finally{
 dlBtn.disabled = false; dlBtn.innerHTML = '\u2B07 Save';
 }
@@ -46234,7 +46236,7 @@ if(r.error) throw r.error;
 photo.caption = cap;
 photo.section = sec;
 }catch(e){
-alert('Save failed: ' + (e.message || e));
+crTell('Save failed: ' + (e.message || e));
 return;
 }
 closeCapModal();
@@ -46283,7 +46285,7 @@ body: JSON.stringify({ image: await paeImageDataUrl(photo) }),
 var body = null;
 try{ body = await res.json(); }catch(_){}
 if(!res.ok){
-alert('The AI caption service refused: ' +
+crTell('The AI caption service refused: ' +
   ((body && (body.detail || body.error)) || ('HTTP ' + res.status)) +
   '\n\nNothing was changed. You can still type a caption yourself: double-tap the photo.');
 return;
@@ -46297,7 +46299,7 @@ if(typeof window.renderGallery === 'function') window.renderGallery();
 /* 778: "AI caption error: Failed to fetch" named nothing. Three different
    steps can fail here — reading the photo, the API, and the save — and the
    message must say which, or the next report is unactionable again. */
-alert('The AI caption did not run — ' + ((e && e.message) || e) +
+crTell('The AI caption did not run — ' + ((e && e.message) || e) +
   '\n\nNothing was changed. You can still type a caption yourself: ' +
   'double-tap the photo.');
 }finally{
@@ -46591,7 +46593,7 @@ var blob = await canvasBlob(0.9);
 if(!blob) throw new Error('Could not encode the image');
 await opts.extra.run(blob, { rotated: rotation !== 0, strokes: strokes.length });
 }catch(e){
-alert('Failed: ' + (e.message || e));
+crTell('Failed: ' + (e.message || e));
 }finally{
 var bb = el && el.querySelector('[data-act="extra"]');
 if(bb){ bb.disabled = false; bb.textContent = was; }
@@ -46780,7 +46782,7 @@ canvas.toBlob(function(b){ resolve(b); }, 'image/jpeg', quality || 0.9);
 }
 async function save(){
 if(!photo || !baseImg) return;
-if(!window.supa){ alert('No connection.'); return; }
+if(!window.supa){ crTell('No connection.'); return; }
 var rotatedOnly = rotation !== 0 && strokes.length === 0;
 var nothing     = rotation === 0 && strokes.length === 0;
 if(nothing){ close(); return; }
@@ -46844,7 +46846,7 @@ photo.project_id); }catch(_){}
 close();
 if(typeof window.renderGallery === 'function') window.renderGallery();
 }catch(e){
-alert('Save failed: ' + (e.message || e));
+crTell('Save failed: ' + (e.message || e));
 }finally{
 var b = el && el.querySelector('[data-act="save"]');
 if(b){ b.disabled = false; b.textContent = saveLabel(); }
@@ -46996,7 +46998,7 @@ return [];
 async function deleteEstimate(id, opts){
 if(!id) return false;
 opts = opts || {};
-if(!window.supa){ alert('No connection \u2014 try again when you are back online.'); return false; }
+if(!window.supa){ crTell('No connection \u2014 try again when you are back online.'); return false; }
 if(!opts.skipConfirm){
 var what = opts.label ? '\u201C' + opts.label + '\u201D' : 'this estimate';
 if(!confirm('Delete ' + what + '?\n\n' +
@@ -47007,15 +47009,15 @@ var res;
 try{
 res = await window.supa.from('estimates').delete().eq('id', id).select('id');
 }catch(e){
-alert('Could not delete: ' + (e && e.message ? e.message : e));
+crTell('Could not delete: ' + (e && e.message ? e.message : e));
 return false;
 }
 if(res && res.error){
-alert('Could not delete: ' + res.error.message);
+crTell('Could not delete: ' + res.error.message);
 return false;
 }
 if(!res || !res.data || !res.data.length){
-alert('That estimate was not deleted.\n\nYou can delete estimates you created; ' +
+crTell('That estimate was not deleted.\n\nYou can delete estimates you created; ' +
 'ask Theo or Joan for anyone else\u2019s.');
 return false;
 }
@@ -47440,7 +47442,7 @@ if(!u) continue;
 try{ images.push(await estAiShrink(u)); kept.push(photos[i]); }catch(_){ }
 }
 if(!images.length){
-alert('No photo could be read back from storage. If they were just attached, give it a moment and retry.');
+crTell('No photo could be read back from storage. If they were just attached, give it a moment and retry.');
 return;
 }
 var res = await fetch('/api/caption', {
@@ -47458,7 +47460,7 @@ items: state.lines.map(function(l){ return l.name || ''; }).filter(Boolean),
 });
 var j = null;
 try{ j = await res.json(); }catch(_){ j = {}; }
-if(!res.ok){ alert('AI could not read the photos: ' + ((j && j.error) || ('HTTP ' + res.status))); return; }
+if(!res.ok){ crTell('AI could not read the photos: ' + ((j && j.error) || ('HTTP ' + res.status))); return; }
 var filled = 0;
 kept.forEach(function(p, ki){
 if(!String(p.caption || '').trim() && j.captions && j.captions[ki]){
@@ -47484,10 +47486,10 @@ if(overviewAdded) bits.push('overview added to Scope Notes');
 if(coverSet) bits.push('cover photo set');
 if(state.photos.length > 14) bits.push('first 14 photos read');
 var msg = 'AI: ' + bits.join(' \u00b7 ');
-if(typeof window.toast === 'function'){ try{ window.toast(msg); }catch(_){ alert(msg); } }
-else{ alert(msg); }
+if(typeof window.toast === 'function'){ try{ window.toast(msg); }catch(_){ crTell(msg); } }
+else{ crTell(msg); }
 }catch(e){
-alert('AI assist failed: ' + (e && e.message ? e.message : e));
+crTell('AI assist failed: ' + (e && e.message ? e.message : e));
 }finally{
 /* render() replaced the button; this reference may be detached, which is fine */
 if(btn){ btn.disabled = false; btn.textContent = oldLabel; }
@@ -47592,7 +47594,7 @@ var barPub = view.querySelector('[data-act="bar-publish"]');
 if(barPub) barPub.onclick = function(){
 var pb = document.getElementById('cr-epub-btn');
 if(pb) pb.click();
-else alert('Publish is still loading \u2014 give it a second and tap again.');
+else crTell('Publish is still loading \u2014 give it a second and tap again.');
 };
 /* guarded, unlike its neighbours: the Delete button only exists on a saved
    estimate, and wire() otherwise dereferences querySelector() straight away. */
@@ -47649,7 +47651,7 @@ if(pickPhotosBtn) pickPhotosBtn.onclick = function(){
 var picker = (window.CardinalPhotoAlbum && window.CardinalPhotoAlbum.openAsPicker) ||
 (window.CardinalPhotos && window.CardinalPhotos.openPicker);
 if(!picker){
-alert('Photo Album not available. Reload the app and retry.');
+crTell('Photo Album not available. Reload the app and retry.');
 return;
 }
 var existingIds = state.photos
@@ -47764,11 +47766,11 @@ async function save(){
 var s = state;
 if(!s) throw new Error('No estimate open');
 if(!s.project || !s.project.id){
-alert('Estimate is not attached to a project.');
+crTell('Estimate is not attached to a project.');
 throw new Error('no project');
 }
 if(!s.title.trim()){
-alert('Give the estimate a title.');
+crTell('Give the estimate a title.');
 throw new Error('no title');
 }
 var totals = computeTotals(s);
@@ -47815,8 +47817,8 @@ if(state === s) render();
 try{ refreshSavedList(s.project.id); }catch(_){ }
 var msg = (wasNew ? 'Saved as ' + (saved.estimate_number || 'a new estimate') : 'Saved')
 + ' \u00b7 ' + money(totals.total);
-if(typeof window.toast === 'function'){ try{ window.toast(msg); }catch(_){ alert(msg); } }
-else{ alert(msg); }
+if(typeof window.toast === 'function'){ try{ window.toast(msg); }catch(_){ crTell(msg); } }
+else{ crTell(msg); }
 try{
 document.dispatchEvent(new CustomEvent('cr-est-saved', { detail: {
 id: saved.id, row: saved, status: saved.status || s.status, project: s.project,
@@ -47824,7 +47826,7 @@ id: saved.id, row: saved, status: saved.status || s.status, project: s.project,
 }catch(_){ }
 return saved;
 }catch(e){
-alert('Save failed: ' + (e.message || e));
+crTell('Save failed: ' + (e.message || e));
 throw e;
 }finally{
 if(state === s && view){
@@ -48097,7 +48099,7 @@ amount     : price,
 });
 closePicker();
 render();
-if(why){ try{ alert(nm + '\n\nAdded at $0 \u2014 enter the price by hand.\n\n' + why); }catch(_){} }
+if(why){ try{ crTell(nm + '\n\nAdded at $0 \u2014 enter the price by hand.\n\n' + why); }catch(_){} }
 }
 function currentProjectId(){
 var p = window.currentProject;
@@ -48542,7 +48544,7 @@ photoSection +
 async function publish(est, project, opts){
 opts = opts || {};
 if(!window.db || typeof window.db.create !== 'function'){
-alert('Document system not available. Reload the app and retry.');
+crTell('Document system not available. Reload the app and retry.');
 return null;
 }
 /* Resolved BEFORE the synchronous builder runs - it cannot await. */
@@ -48610,7 +48612,7 @@ try{
 f.contentWindow.focus();
 f.contentWindow.print();
 }catch(e){
-alert('Print failed: ' + (e.message || e));
+crTell('Print failed: ' + (e.message || e));
 }
 };
 return previewEl;
@@ -48618,12 +48620,12 @@ return previewEl;
 async function openPreview(){
 if(!window.CardinalEstimates ||
 typeof window.CardinalEstimates.currentState !== 'function'){
-alert('Open an estimate first.');
+crTell('Open an estimate first.');
 return;
 }
 var est = window.CardinalEstimates.currentState();
 var project = window.CardinalEstimates.currentProject() || window.currentProject;
-if(!est || !project){ alert('Open an estimate first.'); return; }
+if(!est || !project){ crTell('Open an estimate first.'); return; }
 ensurePreview();
 var docUrls = (typeof signedPhotoMap === 'function')
 ? await signedPhotoMap(estimatePhotoPaths(est), PHOTO_DOC_URL_TTL) : null;
@@ -48678,13 +48680,13 @@ async function handlePublishClick(){
 var btn = document.getElementById('cr-epub-btn');
 if(!btn) return;
 if(!(window.CardinalEstimates && typeof window.CardinalEstimates.save === 'function')){
-alert('Editor not ready.'); return;
+crTell('Editor not ready.'); return;
 }
 btn.disabled = true; btn.textContent = 'Publishing\u2026';
 var projectBefore = estProjectNow();   /* 970 */
 if(!projectBefore || !projectBefore.id){
 btn.disabled = false; btn.textContent = 'Publish';
-alert('Open an estimate first.');
+crTell('Open an estimate first.');
 return;
 }
 try{
@@ -48700,7 +48702,7 @@ return;
 /* 970's guard, sharpened: we publish the exact row save() returned — no
    lookup, no picking. The cross-check below is the only ambiguity left. */
 if(!est || String(est.project_id) !== String(projectBefore.id)){
-alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.');
+crTell('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.');
 return;
 }
 var docId = await publish(est, projectBefore);
@@ -48711,11 +48713,11 @@ id: est.id, docId: docId, prevStatus: est.status || 'draft', project: projectBef
 } }));
 }catch(_){ }
 if(!openDoc(docId)){
-alert('Estimate published as ' + (est.estimate_number || 'a document') +
+crTell('Estimate published as ' + (est.estimate_number || 'a document') +
 '.\n\nOpen it from the client\u2019s document list to share, email, or collect a signature.');
 }
 }catch(e){
-alert('Publish failed: ' + (e.message || e));
+crTell('Publish failed: ' + (e.message || e));
 }finally{
 var b = document.getElementById('cr-epub-btn');
 if(b){ b.disabled = false; b.textContent = 'Publish'; }
@@ -48800,7 +48802,7 @@ if(typeof window.prefillUserInfo   !== 'function') missing.push('prefillUserInfo
 if(typeof window.fillContractMoney !== 'function') missing.push('fillContractMoney');
 if(!window.db || typeof window.db.create !== 'function') missing.push('db.create');
 if(missing.length){
-alert('Cannot generate contract \u2014 missing: ' + missing.join(', ') +
+crTell('Cannot generate contract \u2014 missing: ' + missing.join(', ') +
 '.\n\nUse "+ New contract" on the client profile instead.');
 return null;
 }
@@ -48867,7 +48869,7 @@ var go = confirm(
 if(!go) return;
 }
 var project = estProjectNow();   /* 970 */
-if(!project || !project.id){ alert('Open an estimate first.'); return; }
+if(!project || !project.id){ crTell('Open an estimate first.'); return; }
 btn.disabled = true; btn.textContent = 'Working\u2026';
 try{
 var est = null;
@@ -48878,7 +48880,7 @@ catch(_e){
 return;
 }
 /* 970's guard, sharpened: this is the exact row save() returned. */
-if(!est || String(est.project_id) !== String(project.id)){ alert('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
+if(!est || String(est.project_id) !== String(project.id)){ crTell('Could not tell which estimate this is.\n\nOpen it from the client\u2019s Estimates tab and try again.'); return; }
 var docId = await generate(est, project);
 if(!docId) return;
 if(typeof window.reload === 'function'){
@@ -48887,11 +48889,11 @@ try{ await window.reload(); }catch(_){}
 if(typeof window.openEditor === 'function'){
 try{ await window.openEditor(docId); }catch(_){}
 }
-alert('Contract created from ' + (est.estimate_number || 'the estimate') + '.\n\n' +
+crTell('Contract created from ' + (est.estimate_number || 'the estimate') + '.\n\n' +
 'Scope and payment schedule are prefilled. Review the terms, then have the ' +
 'client sign \u2014 in person or by share link. The 3-Day Notice is included.');
 }catch(e){
-alert('Could not generate contract: ' + (e.message || e));
+crTell('Could not generate contract: ' + (e.message || e));
 }finally{
 var b = document.getElementById('cr-e2c-btn');
 if(b){ b.disabled = false; b.textContent = '\u2192 Contract'; }
@@ -49058,7 +49060,7 @@ if(window.supa){
 }
 }catch(e){
 console.warn('[ess] status bump failed:', e);
-alert('Could not mark it Sent \u2014 ' + ((e && e.message) || e) +
+crTell('Could not mark it Sent \u2014 ' + ((e && e.message) || e) +
       '\n\nThe document was still created. Open the estimate and set the status by hand.');
 return;
 }
@@ -50670,7 +50672,7 @@ if(d === 'pricing' && typeof window.crOpenPricing === 'function'){
 close(false); window.crOpenPricing(); return;
 }
 if(d === 'popup'){ window.open('/popup.html', '_blank', 'noopener'); return; }
-alert('That isn\u2019t available yet.');
+crTell('That isn\u2019t available yet.');
 };
 });
 el.querySelectorAll('[data-rl]').forEach(function(b){
@@ -51919,7 +51921,7 @@ function wire(){
       ev.stopPropagation();
       b.disabled = true;
       try{ await markOrdered(b.getAttribute('data-ord')); }
-      catch(e){ alert('Could not save: ' + (e.message || e)); b.disabled = false; }
+      catch(e){ crTell('Could not save: ' + (e.message || e)); b.disabled = false; }
     };
   });
   el.querySelectorAll('[data-tick]').forEach(function(b){
@@ -51999,7 +52001,7 @@ async function toggle(it){
       var fresh = punchRows().find(function(x){ return String(x.id) === String(it.id); });
       if(fresh) it = fresh;
     }catch(e){
-      alert('Could not save: ' + (e.message || e));
+      crTell('Could not save: ' + (e.message || e));
       await load();
     }
     lastSig = ''; render();
@@ -52026,7 +52028,7 @@ async function toggle(it){
       try{ window.CardinalPunchProfile.refresh(); }catch(_){}
     }
   }catch(e){
-    alert('Could not save: ' + (e.message || e));
+    crTell('Could not save: ' + (e.message || e));
     await load(); lastSig = ''; render();
   }
 }
@@ -52125,8 +52127,8 @@ async function saveAdd(){
     return i ? i.value.trim() : '';
   };
   var title = g('title'), pid = g('project');
-  if(!title){ alert('What needs doing?'); return; }
-  if(!pid){ alert('Pick a job.'); return; }
+  if(!title){ crTell('What needs doing?'); return; }
+  if(!pid){ crTell('Pick a job.'); return; }
   var btn = modal.querySelector('[data-act="save"]');
   btn.disabled = true; btn.textContent = 'Adding…';
   try{
@@ -52188,7 +52190,7 @@ async function saveAdd(){
       try{ window.renderPunchView(); }catch(_){}
     }
   }catch(e){
-    alert('Could not add: ' + (e.message || e));
+    crTell('Could not add: ' + (e.message || e));
     btn.disabled = false; btn.textContent = 'Add it';
   }
 }
@@ -53374,7 +53376,7 @@ async function save(patch){
     if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(e)){
       try{ await window.CardinalOutbox.queue({ table:'punch_items', match:{ col:'id', val:it.id }, patch: patch }); }catch(_oq2){}
     }else{
-      alert('Could not save: ' + (e.message || e));
+      crTell('Could not save: ' + (e.message || e));
       var fresh = rowFor(it.id);
       if(fresh) it = fresh;
       lastSig = ''; render();
@@ -53402,7 +53404,7 @@ async function tickStep(i){
        remembered at the truck. */
     var note = prompt('This step needs a note before it can be ticked:\n\n' + s.t);
     if(note === null) return;
-    if(!String(note).trim()){ alert('A note is required to tick this step.'); return; }
+    if(!String(note).trim()){ crTell('A note is required to tick this step.'); return; }
     s = Object.assign({}, s, { note: String(note).trim() });
   }
   st[i] = Object.assign({}, s, {
@@ -53473,7 +53475,7 @@ async function flagSupplement(){
     lastSig = ''; render();
     refreshOthers();
   }catch(e){
-    alert('Could not flag it: ' + (e.message || e));
+    crTell('Could not flag it: ' + (e.message || e));
   }
 }
 function officeEmails(){
@@ -53533,7 +53535,7 @@ async function doClose(){
   if(it.status === 'done') return;
   if(!readyToClose()){
     var ph = photos().length, left = steps().length - stepsDone();
-    alert('Not ready to close.\n\n' +
+    crTell('Not ready to close.\n\n' +
       (ph < PHOTO_MIN ? (PHOTO_MIN - ph) + ' more photo(s) needed.\n' : '') +
       (left > 0 ? left + ' checklist step(s) still open.' : ''));
     return;
@@ -53577,7 +53579,7 @@ async function doToggle(){
     if(it.status === 'done') await notifyClosed();
     lastSig = ''; render();
     refreshOthers();
-  }catch(e){ alert('Could not save: ' + (e.message || e)); }
+  }catch(e){ crTell('Could not save: ' + (e.message || e)); }
 }
 /* 769: the person it was just handed to hears about it. */
 async function notifyAssigned(email){
@@ -53751,7 +53753,7 @@ function pickPhoto(i){
       await save({ photos: list.filter(function(x){ return !!pUrl(x); }) });
     }catch(e){
       if(_pNet(e)){ try{ await queuePhoto(it.id, f); }catch(_){} flushPhotos(); return; }
-      alert('Could not attach the photo: ' + (e.message || e));
+      crTell('Could not attach the photo: ' + (e.message || e));
     }
   };
   inp.click();
@@ -53838,7 +53840,7 @@ function wire(){
       try{ if(window.CardinalPunch && window.CardinalPunch.reload) await window.CardinalPunch.reload(); }catch(_){}
       close(true);
       refreshOthers();
-    }catch(e){ alert('Could not delete: ' + (e.message || e)); }
+    }catch(e){ crTell('Could not delete: ' + (e.message || e)); }
   }; });
   var msg = el.querySelector('[data-f="msg"]');
   if(msg) msg.onkeydown = function(e){ if(e.key === 'Enter'){ e.preventDefault(); send(); } };
@@ -53882,7 +53884,7 @@ async function open(itemId, opts){
     try{ await window.CardinalPunch.reload(); row = rowFor(itemId); }catch(_){}
   }
   if(!row){
-    alert('That punch-out could not be loaded.');
+    crTell('That punch-out could not be loaded.');
     return;
   }
   it = row;
@@ -54206,7 +54208,7 @@ if(!pr) return;
 if(window.CardinalProduction && window.CardinalProduction.addFor){
 window.CardinalProduction.addFor(pr.id);
 }else{
-alert('Production board not loaded \u2014 reload the app.');
+crTell('Production board not loaded \u2014 reload the app.');
 }
 };
 var fold = host.querySelector('[data-act="fold"]');
@@ -54244,7 +54246,7 @@ if(window.CardinalProduction && window.CardinalProduction.refresh){
 try{ window.CardinalProduction.refresh(); }catch(_){}
 }
 }catch(e){
-alert('Could not save: ' + (e.message || e));
+crTell('Could not save: ' + (e.message || e));
 await load(it.project_id); render();
 }
 }
@@ -54412,7 +54414,7 @@ if(!pr) return;
 if(window.CardinalProduction && window.CardinalProduction.addFor){
 window.CardinalProduction.addFor(pr.id);
 }else{
-alert('Production board not loaded — reload the app.');
+crTell('Production board not loaded — reload the app.');
 }
 };
 var tg = host.querySelector('[data-act="toggle"]');
@@ -54442,7 +54444,7 @@ var text = inp.value.trim();
 if(!text) return;
 send.disabled = true;
 postComment(it, text).catch(function(e){
-alert('Could not post: ' + (e.message || e));
+crTell('Could not post: ' + (e.message || e));
 }).then(function(){ send.disabled = false; });
 };
 }
@@ -54654,14 +54656,14 @@ var out = file.size > MAX_INLINE ? await compressImage(file) : file;
 if(out.size > MAX_INLINE) out = await compressAt(file, 1600, 0.72);
 if(out.size <= MAX_INLINE) return { file: out };
 if(out.size > MAX_STORED){
-alert('That image is ' + mb(out.size) + ' MB even after compressing. ' +
+crTell('That image is ' + mb(out.size) + ' MB even after compressing. ' +
 'Try photographing one page at a time.');
 return null;
 }
 return await toStorageUrl(out);
 }
 if(file.size > MAX_STORED){
-alert('That PDF is ' + mb(file.size) + ' MB. The reader accepts up to ' +
+crTell('That PDF is ' + mb(file.size) + ' MB. The reader accepts up to ' +
 mb(MAX_STORED) + ' MB.\n\n' +
 'Split it and upload the scope pages only.');
 return null;
@@ -54718,7 +54720,7 @@ try{ window.auditLog('doc',
 window.currentProject.id); }catch(_){}
 }
 }catch(e){
-alert('Could not read the Scope of Loss: ' + (e.message || e));
+crTell('Could not read the Scope of Loss: ' + (e.message || e));
 }finally{
 if(card) card.classList.remove('solLoading');
 if(btn){ btn.disabled = false; btn.textContent = '\uD83D\uDCE4 Upload SOL'; }
@@ -54855,7 +54857,7 @@ if(!ready) return;
 if(ready.file) file = ready.file;
 else viaUrl = ready.url;
 }else if(file.size > 3.1 * 1024 * 1024){
-alert('That file is too big for the reader. Photograph the pages instead \u2014 ' +
+crTell('That file is too big for the reader. Photograph the pages instead \u2014 ' +
 'photos get compressed automatically.');
 return;
 }
@@ -54950,7 +54952,7 @@ var i = el.querySelector('[data-f="' + f + '"]');
 return i ? i.value.trim() : '';
 };
 var name = g('name'), addr = g('address');
-if(!name){ alert('The claim needs a client name.'); return; }
+if(!name){ crTell('The claim needs a client name.'); return; }
 var btn = el.querySelector('[data-act="create"]');
 btn.disabled = true; btn.textContent = 'Creating\u2026';
 var e   = extracted || {};
@@ -55031,11 +55033,11 @@ setTimeout(function(){ try{ window.reload(); }catch(_){} }, 300);
 if(typeof window.openProject === 'function'){
 try{ window.openProject(project.id); }catch(_){}
 }
-alert('Claim created for ' + name + '.' +
+crTell('Claim created for ' + name + '.' +
 (e.carrier ? '\n\nCarrier: ' + e.carrier : '') +
 (e.claim_number ? '\nClaim #: ' + e.claim_number : ''));
 }catch(err){
-alert('Could not create the claim: ' + (err.message || err));
+crTell('Could not create the claim: ' + (err.message || err));
 if(btn){ btn.disabled = false; btn.textContent = 'Create claim'; }
 }
 }
@@ -55258,7 +55260,7 @@ var i = el.querySelector('[data-f="' + f + '"]');
 return i ? i.value.trim() : '';
 };
 var name = g('name');
-if(!name){ alert('The client needs a name.'); return; }
+if(!name){ crTell('The client needs a name.'); return; }
 var btn = el.querySelector('[data-act="save"]');
 btn.disabled = true; btn.textContent = 'Saving\u2026';
 var e = extracted || {};
@@ -55321,7 +55323,7 @@ imported++;
 open();
 setTimeout(function(){ camInput.click(); }, 220);
 }catch(err){
-alert('Could not save: ' + (err.message || err));
+crTell('Could not save: ' + (err.message || err));
 btn.disabled = false; btn.textContent = 'Save & next';
 }
 }
@@ -55538,7 +55540,7 @@ return i ? i.value : '';
 var patch = {};
 if(mode === 'file'){
 var amt = num(g('filed'));
-if(!amt || amt <= 0){ alert('Enter the amount you\u2019re filing for.'); return; }
+if(!amt || amt <= 0){ crTell('Enter the amount you\u2019re filing for.'); return; }
 patch.supplement_filed    = amt;
 patch.supplement_status   = 'filed';
 patch.supplement_notes    = g('notes').trim() || null;
@@ -55547,7 +55549,7 @@ patch.supplement_filed_at = new Date().toISOString();
 var status = g('status') || 'approved';
 var got = status === 'denied' ? 0 : num(g('approved'));
 if(status !== 'denied' && (got == null || got < 0)){
-alert('Enter the amount the carrier approved.'); return;
+crTell('Enter the amount the carrier approved.'); return;
 }
 patch.supplement_status     = status;
 patch.supplement_approved   = got || 0;
@@ -55584,7 +55586,7 @@ pr.id);
 closeModal();
 render();
 }catch(e){
-alert('Could not save: ' + (e.message || e) +
+crTell('Could not save: ' + (e.message || e) +
 (String(e.message || '').indexOf('supplement_') !== -1
 ? '\n\nRun supplement_setup.sql if you haven\u2019t yet.' : ''));
 btn.disabled = false;
@@ -57911,7 +57913,7 @@ if(k === 'props'){
 if(window.CardinalCommunityProperties && window.CardinalCommunityProperties.openDirectory){
 window.CardinalCommunityProperties.openDirectory();
 }else{
-alert('Properties live under each partner \u2014 open All Partners, then a partner.');
+crTell('Properties live under each partner \u2014 open All Partners, then a partner.');
 }
 return;
 }
@@ -57920,14 +57922,14 @@ return;
    renderSection() removes itself unless window.currentProject is an open
    community job. Calling render() from here would silently do nothing. */
 if(k === 'wo'){
-alert('Open a community client \u2014 Work Orders is on the client card (Admin + Production).');
+crTell('Open a community client \u2014 Work Orders is on the client card (Admin + Production).');
 return;
 }
 if(k === 'partners' && window.CardinalCommunityPartners &&
 window.CardinalCommunityPartners.openDirectory){
 window.CardinalCommunityPartners.openDirectory(); return;
 }
-alert('Not available yet.');
+crTell('Not available yet.');
 };
 });
 }
@@ -58590,7 +58592,7 @@ var kind = oc.kind, pid = pr.id, lp = {}, bp = null, stage = null;
 lp.tarped_at = oc.tarped_at || '';
 if(kind === 'awarded'){
 var n = ocMoney(oc.amount);
-if(n === null){ alert('That doesn\'t look like a dollar amount.'); return; }
+if(n === null){ crTell('That doesn\'t look like a dollar amount.'); return; }
 bp = { awarded_amount: n, awarded_at: (n === '' ? '' : (oc.decided || todayIso())) };
 lp.funded_by = String(oc.funded_by || '').trim();
 /* 974 (CR-COM-009): recording who funded the award never moved the BILL-TO,
@@ -58603,13 +58605,13 @@ if(oc.funded_id) lp.partner_id = oc.funded_id;
 }
 stage = 'Approved';
 }else if(kind === 'waiting'){
-if(!oc.check_back_at){ alert('Pick a date to check back — that is what parks it.'); return; }
+if(!oc.check_back_at){ crTell('Pick a date to check back — that is what parks it.'); return; }
 lp.check_back_at = oc.check_back_at;
 lp.award_cycle   = String(oc.award_cycle || '').trim();
 stage = 'OnHold';
 }else if(kind === 'referred'){
 var to = String(oc.referred_to || '').trim();
-if(!to){ alert('Say who it went to.'); return; }
+if(!to){ crTell('Say who it went to.'); return; }
 lp.referred_to  = to;
 lp.referred_at  = oc.referred_at || todayIso();
 lp.check_back_at = oc.check_back_at || '';
@@ -58639,7 +58641,7 @@ if(typeof window.auditLog === 'function') window.auditLog('lead', OC_AUDIT[kind]
 }catch(e){
 if(oc) oc.busy = false;
 console.error('[community outcome] save failed:', e);
-alert('That did not save — ' + (e.message || e));
+crTell('That did not save — ' + (e.message || e));
 render();
 return;
 }
@@ -58729,7 +58731,7 @@ if(a === 'outcome'){ ocOpen(pr); return; }
    choose would be worse than no day at all. */
 if(a === 'schedule'){
   if(typeof window.openApptDay !== 'function'){
-    alert('The calendar is not loaded \u2014 reload the app and try again.');
+    crTell('The calendar is not loaded \u2014 reload the app and try again.');
     return;
   }
   try{
@@ -58744,7 +58746,7 @@ if(a === 'schedule'){
    swaps #projectView wholesale and dbCloseTo() restores the black card. */
 if(a === 'pay'){
   if(typeof window.openPaymentsPage === 'function') window.openPaymentsPage();
-  else alert('Payments are not loaded \u2014 reload the app and try again.');
+  else crTell('Payments are not loaded \u2014 reload the app and try again.');
   return;
 }
 /* 438: the bid form already edits homeowner / renter / no_homeowner, and
@@ -58754,7 +58756,7 @@ if(a === 'edithome'){
   if(window.CardinalNewBid && window.CardinalNewBid.edit){
     window.CardinalNewBid.edit(pr.id);
   }else{
-    alert('Bid editor not loaded \u2014 reload the app and retry.');
+    crTell('Bid editor not loaded \u2014 reload the app and retry.');
   }
   return;
 }
@@ -58769,12 +58771,12 @@ var eOpen = (a === 'open') ? liveEstimate() : null;
 if(eOpen) window.CardinalEstimates.openEditor(pr.id, eOpen);
 else window.CardinalEstimates.openEditor(pr.id);
 }else{
-alert('Estimate builder not loaded \u2014 reload the app and retry.');
+crTell('Estimate builder not loaded \u2014 reload the app and retry.');
 }
 return;
 }
 if(typeof window.setStage !== 'function'){
-alert('Cannot change the stage right now \u2014 reload the app and retry.');
+crTell('Cannot change the stage right now \u2014 reload the app and retry.');
 return;
 }
 /* setStage() stamps stage_since and t_<stage>, and for 'Lost' it prompts for
@@ -58811,7 +58813,7 @@ if(a === 'waitlist'){
 var t977 = prompt('Tarped for free on which date?\n(YYYY-MM-DD, or leave as-is)', todayIso());
 if(t977 === null) return;
 t977 = String(t977).trim();
-if(t977 && !/^\d{4}-\d{2}-\d{2}$/.test(t977)){ alert('Use YYYY-MM-DD.'); return; }
+if(t977 && !/^\d{4}-\d{2}-\d{2}$/.test(t977)){ crTell('Use YYYY-MM-DD.'); return; }
 var w977 = mergeCk(pr, 'lead', { waitlist_at: todayIso(), tarped_at: t977 || todayIso() });
 if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { lead: w977 });
 if(typeof window.auditLog === 'function'){
@@ -58843,7 +58845,7 @@ if(v0 === ''){
 patch0 = mergeCk(pr, 'bid', { submitted_amount: '', submitted_at: '' });
 }else{
 var n0 = Math.round(parseFloat(v0) * 100) / 100;
-if(!isFinite(n0)){ alert('Enter a dollar amount.'); return; }
+if(!isFinite(n0)){ crTell('Enter a dollar amount.'); return; }
 patch0 = mergeCk(pr, 'bid', { submitted_amount: n0, submitted_at: b0.submitted_at || todayIso() });
 }
 if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { bid: patch0 });
@@ -58885,7 +58887,7 @@ return;
 render();
 }catch(e){
 console.error('[community client] action failed:', e);
-alert('That did not save \u2014 ' + (e.message || e));
+crTell('That did not save \u2014 ' + (e.message || e));
 }
 }
 function threadHtml(pr){
@@ -59383,7 +59385,7 @@ var capId = (window.currentProject || {}).id;
 return function(x){
 var cur = window.currentProject;
 if(!cur || cur.id !== capId){
-try{ alert('That job is no longer open \u2014 nothing was changed.'); }catch(_){}
+try{ crTell('That job is no longer open \u2014 nothing was changed.'); }catch(_){}
 return;
 }
 fn(cur, x);
@@ -60960,7 +60962,7 @@ return '<div class="item" data-i="' + i + '"><span class="pr" data-pr></span><b>
 box.querySelectorAll('[data-price]').forEach(function(b){
 b.onclick = async function(){
 var c = cfg();
-if(!c.shipTo || !c.branch){ alert('Enter your Ship-To and Branch numbers first.'); return; }
+if(!c.shipTo || !c.branch){ crTell('Enter your Ship-To and Branch numbers first.'); return; }
 var host = b.closest('.item'); var pr = host.querySelector('[data-pr]');
 var pmsg0 = host.querySelector('[data-prmsg]'); if(pmsg0) pmsg0.textContent = '';
 pr.className = 'pr';
@@ -61025,7 +61027,7 @@ rows(j.items || j.results || (Array.isArray(j) ? j : []));
 }
 async function doFrequents(){
 var c = cfg();
-if(!c.billTo){ alert('Enter your Bill-To number first.'); return; }
+if(!c.billTo){ crTell('Enter your Bill-To number first.'); return; }
 ensure().querySelector('[data-results]').innerHTML = '<div class="quiet">Loading frequent items\u2026</div>';
 try{
 var j = await api({ action:'frequents', billTo:c.billTo, branchNumber:c.branch || undefined });
@@ -62497,7 +62499,7 @@ async function toggle(id){
       return { ok:true, queued:true };
     }
     Object.assign(it, done ? { status:'open', done_at:null, done_by:null } : { status:'done' });
-    alert('Could not save: ' + (e.message || e));
+    crTell('Could not save: ' + (e.message || e));
   }
 }
 /* 1049: punch_items joins the write outbox that has existed since 865. A
@@ -63015,7 +63017,7 @@ document.getElementById('puShAssign').addEventListener('click', async function(e
       render();
     } else {
       go.disabled = false; paintAssign();
-      alert('Could not save the assignment \u2014 check the connection and try again.');
+      crTell('Could not save the assignment \u2014 check the connection and try again.');
     }
   }
 });
@@ -63087,7 +63089,7 @@ document.addEventListener('click', function(e){
     /* 418: the database refuses this write for anyone outside the production
        crew (punch_close_guard). Say so here rather than let it fail silently. */
     if(!mayClose()){
-      alert('Only the production team can close or reopen a punch item.\\n\\n' +
+      crTell('Only the production team can close or reopen a punch item.\\n\\n' +
             'You can still edit it, add photos, or change who it is assigned to \\u2014 ' +
             'tap the item itself.');
       return;
@@ -63120,7 +63122,7 @@ document.getElementById('puBackBtn').addEventListener('click', function(){ histo
 document.getElementById('puNewBtn').addEventListener('click', function(){
   var P = window.CardinalProduction;
   if(P && typeof P.newPunch === 'function'){ P.newPunch(null); }
-  else { alert('The punch-out composer is still loading \u2014 try again in a moment.'); }
+  else { crTell('The punch-out composer is still loading \u2014 try again in a moment.'); }
 });
 document.getElementById('puSearch').addEventListener('input', function(){
   PU.q = this.value.trim().toLowerCase();
@@ -63225,7 +63227,7 @@ function downloadHtml(html, title){
     setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1500);
     return true;
   }catch(e){
-    alert('Could not download: ' + (e.message || e));
+    crTell('Could not download: ' + (e.message || e));
     return false;
   }
 }
@@ -63234,7 +63236,7 @@ function downloadFrame(frame, title){
     var d = frame && (frame.contentDocument || (frame.contentWindow && frame.contentWindow.document));
     if(!d) return false;
     return downloadHtml(d.documentElement ? d.documentElement.outerHTML : d.body.innerHTML, title);
-  }catch(e){ alert('Could not download: ' + (e.message || e)); return false; }
+  }catch(e){ crTell('Could not download: ' + (e.message || e)); return false; }
 }
 function downloadUrl(url, title){
   var a = document.createElement('a');
@@ -66119,16 +66121,16 @@ function sortRun(){
   if(_sortBusy) return;
   var doc = rccDoc();
   if(!rccIsReport(doc)){
-    alert('Sorting is for inspection reports. This document is a different kind.');
+    crTell('Sorting is for inspection reports. This document is a different kind.');
     return;
   }
   var V = window.CardinalSortVocab;
-  if(!V){ alert('The sorting vocabulary did not load. Reload the app and try again.'); return; }
+  if(!V){ crTell('The sorting vocabulary did not load. Reload the app and try again.'); return; }
 
   var photos = sortCollect(doc);
-  if(!photos.length){ alert('There are no photographs in this report yet.'); return; }
+  if(!photos.length){ crTell('There are no photographs in this report yet.'); return; }
   if(photos.length > V.maxPhotos){
-    alert('This report has ' + photos.length + ' photographs and one sort handles up to ' +
+    crTell('This report has ' + photos.length + ' photographs and one sort handles up to ' +
           V.maxPhotos + '.\n\nRemove some, or sort the report in batches.');
     return;
   }
@@ -66186,7 +66188,7 @@ function sortRun(){
     if(!rccIsReport(live)) return;
 
     if(!V.agrees(d && d.vocabulary)){
-      alert('This copy of the app and the sorting service are out of step.\n\n' +
+      crTell('This copy of the app and the sorting service are out of step.\n\n' +
             'Close the app completely, reopen it twice, and try again.');
       return;
     }
@@ -66201,12 +66203,12 @@ function sortRun(){
     if(r.vanished) bits.push(r.vanished + ' could not be matched back');
     if(r.concerns) bits.push(r.concerns + ' added to Areas of Concern');
 
-    alert(bits.length ? ('Sorted.\n\n' + bits.join('\n')) : 'Nothing needed moving.');
+    crTell(bits.length ? ('Sorted.\n\n' + bits.join('\n')) : 'Nothing needed moving.');
     if(typeof scheduleSave === 'function') scheduleSave();
   })
   .catch(function(e){
     if(g !== _rccGen) return;
-    alert('Could not sort the photographs \u2014 ' + String((e && e.message) || e).slice(0, 160));
+    crTell('Could not sort the photographs \u2014 ' + String((e && e.message) || e).slice(0, 160));
   })
   .then(function(){
     _sortBusy = false;
@@ -68897,7 +68899,7 @@ async function delPayment(id){
   if(!cl || !canSeeRates()) return;
   if(!confirm('Remove this payment from the record?')) return;
   var r = await cl.from('crew_payments').delete().eq('id', id);
-  if(r.error){ alert('Could not remove: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not remove: ' + r.error.message); return; }
   await load(); render();
 }
 
@@ -69090,7 +69092,7 @@ async function openDoc(path){
     var r = await cl.storage.from('crew-docs').createSignedUrl(path, 300);
     if(r.error) throw r.error;
     window.open(r.data.signedUrl, '_blank', 'noopener');
-  }catch(e){ alert('Could not open that document: ' + (e.message || e)); }
+  }catch(e){ crTell('Could not open that document: ' + (e.message || e)); }
 }
 
 async function save(){
@@ -69103,7 +69105,7 @@ async function save(){
   });
   patch.updated_at = new Date().toISOString();
   var r = await cl.from('crews').update(patch).eq('id', c.id);
-  if(r.error){ alert('Could not save: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not save: ' + r.error.message); return; }
   await load(); render();
 }
 
@@ -69114,7 +69116,7 @@ async function addCrew(){
   if(!name) return;
   var r = await cl.from('crews').insert({ name:name, trade:'Roofing', created_by:me() })
     .select('id').single();
-  if(r.error){ alert('Could not add: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not add: ' + r.error.message); return; }
   selId = r.data ? r.data.id : null; tab = 'profile';
   await load(); render();
 }
@@ -69126,7 +69128,7 @@ async function addNote(){
   var body = el && el.value.trim();
   if(!body) return;
   var r = await cl.from('crew_notes').insert({ crew_id:c.id, body:body, by:me() });
-  if(r.error){ alert('Could not add the note: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not add the note: ' + r.error.message); return; }
   await load(); render();
 }
 
@@ -69144,24 +69146,24 @@ async function addCatRate(){
   var c = sel(), cl = db();
   if(!c || !cl) return;
   var id = rv('pick'), r = num(rv('pickrate'));
-  if(!id){ alert('Pick a catalog item first.'); return; }
-  if(r === null){ alert('Enter their rate as a number.'); return; }
+  if(!id){ crTell('Pick a catalog item first.'); return; }
+  if(r === null){ crTell('Enter their rate as a number.'); return; }
   var res = await cl.from('crew_rates').insert({
     crew_id:c.id, pricing_item_id:id, rate:r, updated_by:me()
   });
-  if(res.error){ alert('Could not add that rate: ' + res.error.message); return; }
+  if(res.error){ crTell('Could not add that rate: ' + res.error.message); return; }
   await load(); render();
 }
 async function addCustomRate(){
   var c = sel(), cl = db();
   if(!c || !cl) return;
   var name = rv('cname'), unit = rv('cunit'), r = num(rv('crate'));
-  if(!name){ alert('Give the line item a name.'); return; }
-  if(r === null){ alert('Enter their rate as a number.'); return; }
+  if(!name){ crTell('Give the line item a name.'); return; }
+  if(r === null){ crTell('Enter their rate as a number.'); return; }
   var res = await cl.from('crew_rates').insert({
     crew_id:c.id, custom_name:name, custom_unit:unit || null, rate:r, updated_by:me()
   });
-  if(res.error){ alert('Could not add that row: ' + res.error.message); return; }
+  if(res.error){ crTell('Could not add that row: ' + res.error.message); return; }
   await load(); render();
 }
 async function saveRates(){
@@ -69189,7 +69191,7 @@ async function delRate(id){
   var cl = db();
   if(!cl || !id) return;
   var r = await cl.from('crew_rates').delete().eq('id', id);
-  if(r.error){ alert('Could not remove that row: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not remove that row: ' + r.error.message); return; }
   await load(); render();
 }
 async function archive(){
@@ -69197,7 +69199,7 @@ async function archive(){
   if(!c || !cl) return;
   if(!confirm('Archive ' + c.name + '? They stop showing in the list. Nothing is deleted.')) return;
   var r = await cl.from('crews').update({ archived:true }).eq('id', c.id);
-  if(r.error){ alert('Could not archive: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not archive: ' + r.error.message); return; }
   selId = null; await load(); render();
 }
 
@@ -71412,7 +71414,7 @@ async function addShots(items){
     }
     await loadShots(curWalk.id);
   }catch(e){
-    try{ window.alert(String(e && e.message ? e.message : e)); }catch(_){}
+    try{ window.crTell(String(e && e.message ? e.message : e)); }catch(_){}
   }
   busy = false;
   repaint();
@@ -74176,7 +74178,7 @@ async function removeOurs(id, btn){
     if(btn) btn.disabled = false;
     try{ if(window.report) window.report(e, 'Colors', 'delete'); }catch(_){}
     try{ if(window.toast) window.toast('Could not delete \u2014 ' + (e && e.message ? e.message : 'try again'));
-         else alert('Could not delete'); }catch(_){}
+         else crTell('Could not delete'); }catch(_){}
   }
 }
 
@@ -74243,7 +74245,7 @@ async function optimiseOurs(){
          mb(after) + ' instead of ' + mb(before))
       : 'Nothing needed optimising';
     if(failed) msg += ' \u00b7 ' + failed + ' failed';
-    if(window.toast) window.toast(msg); else alert(msg);
+    if(window.toast) window.toast(msg); else crTell(msg);
   }catch(_){}
 }
 
@@ -74398,7 +74400,7 @@ async function upload(files){
   try{
     if(failed && window.toast) window.toast(
       failed + ' of ' + list.length + ' could not be added' + (done ? ' \u2014 the other ' + done + ' went up' : ''));
-    else if(failed) alert(failed + ' of ' + list.length + ' could not be added');
+    else if(failed) crTell(failed + ' of ' + list.length + ' could not be added');
   }catch(_){}
   if(btn){ btn.disabled = false; btn.textContent = 'Add our roofs'; }
 }
@@ -74804,12 +74806,12 @@ async function payRep(em, deductDraws){
   var r = await d.from('commissions')
     .update({ status:'paid', paid_on: date, paid_by: me() || null, method: method })
     .in('id', g.ids);
-  if(r.error){ alert('Could not mark paid: ' + r.error.message); return; }
+  if(r.error){ crTell('Could not mark paid: ' + r.error.message); return; }
   if(deductDraws && g.drawIds.length){
     var r2 = await d.from('draws')
       .update({ status:'repaid', repaid_at: date })
       .in('id', g.drawIds);
-    if(r2.error) alert('Commissions are paid, but the draws did not update: ' + r2.error.message);
+    if(r2.error) crTell('Commissions are paid, but the draws did not update: ' + r2.error.message);
   }
   S.choice = null;
   await reload();
@@ -74821,7 +74823,7 @@ async function reload(){
 }
 
 function exportCsv(){
-  if(!(window.CardinalCsv && window.CardinalCsv.download)){ alert('CSV export is unavailable.'); return; }
+  if(!(window.CardinalCsv && window.CardinalCsv.download)){ crTell('CSV export is unavailable.'); return; }
   var rows = S.comm.map(function(r){
     return {
       rep: r.rep_email, rep_name: repName(r.rep_email), job: r.project_name || '',
@@ -74830,7 +74832,7 @@ function exportCsv(){
       reference: r.reference || '', created: String(r.created_at || '').slice(0, 10)
     };
   });
-  if(!rows.length){ alert('Nothing to export yet.'); return; }
+  if(!rows.length){ crTell('Nothing to export yet.'); return; }
   window.CardinalCsv.download(rows, 'cardinal-commissions-' + dToday() + '.csv');
 }
 
@@ -74910,7 +74912,7 @@ function wire(v){
       (async function(){
         var d = db();
         var r = await d.from('draws').update({ status:'repaid', repaid_at: dToday() }).eq('id', did);
-        if(r.error){ alert('Could not update: ' + r.error.message); return; }
+        if(r.error){ crTell('Could not update: ' + r.error.message); return; }
         await reload();
       })();
     }
@@ -75012,7 +75014,7 @@ async function migrateCovers(box){
   return { ok: ok, fail: fail };
 }
 function showRunner(){
-  if(!isAdmin()){ alert('Admin only.'); return; }
+  if(!isAdmin()){ crTell('Admin only.'); return; }
   var bg = document.createElement('div');
   bg.className = 'cr-medmig-bg';
   bg.innerHTML =
@@ -75113,7 +75115,7 @@ function rowHtml(r){
   '</div>';
 }
 async function open(){
-  if(!isAdmin()){ alert('Admin only.'); return; }
+  if(!isAdmin()){ crTell('Admin only.'); return; }
   var v = view();
   if(!v) return;
   try{ if(typeof hideAllViews === 'function') hideAllViews(); }catch(_){}
@@ -75159,7 +75161,7 @@ async function itelAttachJob(id){
   var opts = (window.cacheProjects || []).slice().sort(function(a, b){
     return String(a.name || '').localeCompare(String(b.name || ''));
   });
-  if(!opts.length){ alert('No jobs to attach to yet.'); return; }
+  if(!opts.length){ crTell('No jobs to attach to yet.'); return; }
   var who = [rep.insured_name, rep.loss_location].filter(Boolean).join(' — ') ||
             (rep.control_number || 'this report');
   var pick = prompt('Attach the lab result for "' + who + '" to which job?\n\n' +
@@ -75167,12 +75169,12 @@ async function itelAttachJob(id){
       (p.address ? ' — ' + p.address : ''); }).join('\n') + '\n\nType the number:');
   if(pick === null) return;
   var n = parseInt(String(pick).trim(), 10);
-  if(!(n >= 1 && n <= opts.length)){ alert('That is not one of the numbers listed.'); return; }
+  if(!(n >= 1 && n <= opts.length)){ crTell('That is not one of the numbers listed.'); return; }
   try{
     var r = await sb.from('itel_lab_reports').update({ project_id: opts[n - 1].id }).eq('id', id);
     if(r.error) throw r.error;
     open();   /* re-fetch and re-render */
-  }catch(e){ alert('Could not attach it: ' + ((e && e.message) || e)); }
+  }catch(e){ crTell('Could not attach it: ' + ((e && e.message) || e)); }
 }
 document.addEventListener('DOMContentLoaded', function(){
   var v = view();
@@ -75341,6 +75343,33 @@ body.standalone #crToasts{bottom:calc(76px + env(safe-area-inset-bottom));}
   window.crToast = crToast;
   window.crToastOk = function(m){ return crToast(m, 'ok'); };
   window.crToastErr = function(m){ return crToast(m, 'err'); };
+  /* 1080: ONE router, not a seventh toast.
+
+     289 alert() calls across 48 script blocks became crTell(). Each of those
+     blocks is a different scope, so without this every one of them would carry
+     its own `typeof window.crToastErr === 'function'` guard — 289 chances to
+     get it slightly different. This is the normStage() shape: one real
+     implementation, a delegate in front of it.
+
+     ⚠ It falls back to alert(). A message that used to be impossible to miss
+     must not become a message that silently vanishes because a module failed
+     to load. That fallback is the ONLY alert( left in the file, and the gate
+     asserts the count is exactly 1.
+
+     Default kind is 'err' because that is the faithful translation: alert()
+     was a message that WAITED for you, and crToast's 'err' is the kind that
+     does not auto-dismiss. 64% of these were already refusals; the genuine
+     success messages pass 'ok' explicitly. */
+  window.crTell = function(msg, kind){
+    var text = String(msg == null ? '' : msg).trim();
+    if(!text) return null;
+    try{
+      var f = (kind === 'ok') ? window.crToastOk : window.crToastErr;
+      if(typeof f === 'function') return f(text);
+    }catch(_e){}
+    try{ alert(text); }catch(_a){}
+    return null;
+  };
   /* 735: NINE sites across cr-eaf, cr-health and cr-occ already call window.toast,
      and it was assigned NOWHERE in the file — verified in Chromium on the real
      document, typeof window.toast === 'undefined'. Every one of them fell through
@@ -78899,8 +78928,8 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
       } else if(act === 'vault-add'){
         if(vaultBusy) return;
         var fin = view.querySelector('#ow-vault-file'), f = fin && fin.files && fin.files[0];
-        if(!f){ alert('Choose a file first.'); return; }
-        if(f.size > 26214400){ alert('That file is over 25 MB — too large for the vault.'); return; }
+        if(!f){ crTell('Choose a file first.'); return; }
+        if(f.size > 26214400){ crTell('That file is over 25 MB — too large for the vault.'); return; }
         var lin = view.querySelector('#ow-vault-label'), lbl = (lin && lin.value || '').trim() || f.name.replace(/\.[^.]+$/, '');
         var cat = (view.querySelector('#ow-vault-cat') || {}).value || 'other';
         var exp = (view.querySelector('#ow-vault-exp') || {}).value || null;
@@ -78917,7 +78946,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
         }catch(err){
           vaultBusy = false; render();
           try{ await c.storage.from('photos').remove([path]); }catch(_){ }
-          alert('Upload failed — ' + (err && err.message ? err.message : 'try again'));
+          crTell('Upload failed — ' + (err && err.message ? err.message : 'try again'));
         }
       } else if(act === 'vault-open'){
         var dv = VAULT.find(function(x){ return String(x.id) === String(id); });
@@ -78926,7 +78955,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
         var sig = await c.storage.from('photos').createSignedUrl(dv.storage_path, 3600);
         var u = (sig && !sig.error && sig.data && sig.data.signedUrl) || null;
         if(u){ if(w) w.location = u; else window.location = u; }
-        else { if(w) w.close(); alert('Could not open ' + (dv.label || 'the document')); }
+        else { if(w) w.close(); crTell('Could not open ' + (dv.label || 'the document')); }
       } else if(act === 'vault-del'){
         var dd = VAULT.find(function(x){ return String(x.id) === String(id); });
         await c.from('owner_docs').delete().eq('id', id);
@@ -79013,7 +79042,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
         }
         editing = null; render();
       }
-    }catch(err){ console.warn('owner-console', err); alert('Could not save — ' + (err && err.message ? err.message : 'try again')); }
+    }catch(err){ console.warn('owner-console', err); crTell('Could not save — ' + (err && err.message ? err.message : 'try again')); }
   }
 
   function focusEdit(){ try{ var el = view.querySelector('#ow-edit-title') || view.querySelector('#ow-edit-rtext'); if(el){ el.focus(); el.select && el.select(); } }catch(_){ } }
@@ -79046,7 +79075,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
   }
 
   async function open(){
-    if(!amAdmin()){ try{ alert('Owner Console is admin only.'); }catch(_){ } return; }
+    if(!amAdmin()){ try{ crTell('Owner Console is admin only.'); }catch(_){ } return; }
     ensureView();
     if(typeof hideAllViews === 'function') try{ hideAllViews(); }catch(_){ }
     var hdr = document.querySelector('header.site'); if(hdr) hdr.style.display = 'none';
@@ -79217,7 +79246,7 @@ body.standalone #cr-owner{padding-bottom:calc(88px + env(safe-area-inset-bottom,
       if(map && map.closePopup) map.closePopup();
       if(typeof window.renderPunchView==='function'){ try{ window.renderPunchView(); }catch(e){} }
       setTimeout(function(){ if(built) sync(); }, 80);
-    } else { try{ alert('Could not reassign: '+((r&&r.error)||'write refused')); }catch(_){} }
+    } else { try{ crTell('Could not reassign: '+((r&&r.error)||'write refused')); }catch(_){} }
   }
 
   /* 911: geocode Google-first (the rest of the app moved to Google at 840 —

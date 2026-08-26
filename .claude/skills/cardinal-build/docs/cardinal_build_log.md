@@ -26083,6 +26083,75 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1080 — the app stops talking through browser dialogs
+
+`index.html` only. **No SQL.** The first of Theo's "1-3 then 4-5" polish list.
+
+**289 `alert()` calls across 48 script blocks**, every one the native grey box headed
+*"app.cardinalroster.com says"*. It is the single thing that most made this read as a web
+page rather than an app.
+
+⚠️ **289, not 291.** A bare regex says 291; `jslex_count.py` says **289 in CODE, 2 in
+comments**. The lexer exists for exactly this and the swap was driven off its positions,
+not off a regex — a comment must not be rewritten.
+
+### It is a ROUTER, not a seventh toast
+
+The app already had **six** functions named `toast`/`crToast` — five module-local ones
+with five different signatures (`(msg,type,ms)`, `(msg,cls)`, `(msg,cls)`, `(html,ms)`,
+`(m,err)`) and `crToast`, the good one: a stack, ARIA roles, dismissible, errors that do
+not auto-dismiss. **`crToast` is already exported as `crToastOk`/`crToastErr` and already
+used ~35 times.** That is the `function money(` shape from this file's own warnings.
+
+`window.crTell(msg, kind)` is one delegate in front of it — the `normStage()` pattern, one
+implementation with delegates. Without it, 48 separate scopes would each carry their own
+`typeof window.crToastErr === 'function'` guard: 48 chances to get it subtly different.
+
+⚠️ **It falls back to `alert()`, and that is the point.** A message you could not miss must
+not become a message that silently vanishes because a module failed to load. **That
+fallback is the only `alert(` left in the file and the gate asserts the count is exactly
+1** — 289 → 1, not 289 → 0.
+
+**Default kind is `err`, which is the faithful translation.** `alert()` was a message that
+*waited* for you, and `crToast`'s `err` is the kind that does not auto-dismiss. Measured:
+64% were already refusals and most of the rest were validation ("Enter a dollar amount
+greater than 0"). Six genuine successes pass `'ok'`.
+
+**Non-blocking is safe here, and that was checked, not assumed:** only **4 of 289** are
+followed by any navigation, and three of those call `window.reload` — an in-app re-render,
+not a page load.
+
+### ⚠ My success classifier promoted four REFUSALS, and printing it caught them
+
+The first pass matched `\bdeleted\.` and `\bcopied\b`, so it promoted *"That estimate was
+**not** deleted"*, *"Confirmation did **not** match — nothing was deleted"*, *"Name did
+**not** match"* and *"Saved … **but** the insurance claim record could **not**"* to success
+styling. **The rule that caught it is this file's own: print what your extractor captured
+before asserting on it.** A `NOPE` veto (`not|couldn|didn|but|fail`) now runs first.
+
+⚠️ **Then I over-corrected and lost two real ones**, and the second miss is this file's
+other documented trap: `"\bcopied \u2014"` did not match because the SOURCE contains the
+six literal characters `\u2014`, not an em-dash. With the veto running first the broad
+match is safe again. Six successes, all read and confirmed.
+
+**Gates:** `check_build.py` GREEN 1079 → 1080 — **all 125 inline scripts still parse after
+289 replacements**, which is the real safety net for a mechanical edit this size ·
+byte-reproducible · `gate_1080.mjs` **13/13**, **10 failures on 1079**, and the control
+states the defect as data: `C1 exactly one alert( left in CODE → in CODE: 289`.
+
+The gate runs `crTell` in three worlds — toast present, toast **absent**, toast
+**throwing** — because the fallback is the property that matters.
+
+⚠️ **No sentinel run.** No markup, no CSS and no element changed; the toast component is
+untouched and pre-existing. Only which function displays a message moved.
+
+### Still open from item 1
+
+**92 `confirm()` calls are NOT in this build.** `confirm()` returns a boolean and blocks,
+so replacing it needs an in-app sheet (a new component, which wants rendered options for
+Theo) *and* an async restructure at every site. That is a separate build and a separate
+decision.
+
 ## Builds 1078–1079 — the document history: record it, and keep the copy
 
 Theo's pick after the outside audit, verbatim: **"Merge then 1 and 3."** Option 1
