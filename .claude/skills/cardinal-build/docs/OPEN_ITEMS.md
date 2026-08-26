@@ -18,8 +18,12 @@ an RLS lock on `html` without a fresh decision from him.
 - **`on delete cascade` on `document_versions`.** Deleting a document deletes its
   history. `restrict` would break `db.remove()`, which works today. If document deletion
   should become soft instead, that is a separate decision.
-- **Apply `document_versions.sql`.** Until it runs, the snapshot call no-ops silently —
-  which is the exact failure the build is about.
+- ✅ **`document_versions.sql` is APPLIED** (26 Aug 2026), and verified rather than
+  assumed — schema, RLS, both policies, no insert/update policy, security definer, anon
+  revoked, and the write path exercised on the real signed estimate (versions 1 and 2,
+  158,297 chars each). The two test rows were deleted afterwards: no edit had happened,
+  `created_by` was null because the admin connection carries no JWT, and a fabricated row
+  in an audit trail is worse than an empty table. **Do not re-run it as pending work.**
 
 ### The original recon (kept — the numbers are what justified the shape)
 

@@ -21,6 +21,19 @@
 --   it just silently keeps no versions, which is the failure this whole build
 --   is about. Run the SQL first.
 --
+-- ✅ APPLIED to production 26 Aug 2026, and VERIFIED rather than assumed:
+--      12 columns · RLS enabled · exactly two policies (docver_select,
+--      docver_delete) and NO insert/update policy · snapshot_document() is
+--      security definer · anon cannot execute it, authenticated can · 3 indexes.
+--    Exercised end to end against the real signed estimate: the bad-reason guard
+--    raised, an unknown document returned null, a DRAFT returned null and wrote
+--    nothing, and two real snapshots came back as versions 1 and 2 carrying
+--    158,297 characters of html each. Both test rows were then DELETED — no edit
+--    had happened and created_by was null (the admin connection carries no JWT),
+--    and a fabricated row in an audit trail is worse than an empty table.
+--    The table is empty; the first real version arrives the next time somebody
+--    changes a delivered document.
+--
 -- Idempotent. Safe to re-run.
 
 create table if not exists document_versions (
