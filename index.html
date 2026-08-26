@@ -3852,7 +3852,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1076 &#8212; The Walk finally has a door where the work is. It has been in the app since February and had exactly one way in &#8212; the Showcase tile on Sales Floor, then a tab you had to know was there &#8212; and the database says nobody has ever once reached it: zero walks, zero photographs. It is now a tile in the Job Menu on the client itself, next to Inspections, and it opens straight onto that job’s walk. The walk it creates is attached to the job, which the old form never did &#8212; it wrote every walk with no job at all. Admin only for now, because the database refuses a walk from anyone else; say the word and that changes. Nothing else moves.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1077 &#8212; The crew work order fills in the shingle and drip edge from the signed contract &#8212; which is what it was built to do in February and has never once done. It was looking up the contract by a field name that does not exist, so the lookup failed every time and failed quietly, and both boxes came up blank. One word. If you have been typing the colour in by hand on every work order, you should not have to any more.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22083,17 +22083,25 @@ async function woNextNumber(){
    and drip-edge colour selections. Colours persist as an <option selected>
    ATTRIBUTE in the saved contract HTML (see wireColorSelects). Everything is
    guarded \u2014 a miss just leaves the picker fields blank to fill in. */
+/* 1077: this read `content`. The column is `html` — inspection_reports has no
+   `content` at all, verified against the database (42703). PostgREST answered
+   400, the guard below caught it, and this returned blank colours on every call
+   since 889, so the work order's Shingle and Drip edge NEVER prefilled from the
+   signed contract. Nothing mechanical could see it: the JS is valid, the guard
+   is right, and the defect is a column name.
+   ⚠ Do not "tidy" this back to `content`. And note `.content` appears twice
+   more in this file — both are `<template>.content` and both are correct. */
 async function woReadContractColors(pr){
   var res = { shingle:'', drip:'' };
   try{
-    var r = await sb.from('inspection_reports').select('title,content,created_at')
+    var r = await sb.from('inspection_reports').select('title,html,created_at')
       .eq('project_id', pr.id).order('created_at', { ascending:false });
     if(r.error || !r.data) return res;
     var isC = (typeof isContractTitle === 'function') ? isContractTitle : function(t){ return /^contract/i.test((t||'').trim()); };
     var doc = r.data.find(function(x){ return isC(x.title) && /roof/i.test(x.title || ''); })
            || r.data.find(function(x){ return isC(x.title); });
-    if(!doc || !doc.content) return res;
-    var d = new DOMParser().parseFromString(doc.content, 'text/html');
+    if(!doc || !doc.html) return res;
+    var d = new DOMParser().parseFromString(doc.html, 'text/html');
     var occ = d.querySelector('select[data-crsel="occ"] option[selected]');
     if(occ) res.shingle = (occ.getAttribute('value') || occ.textContent || '').trim();
     /* the first trim select in the roofing agreement is the drip edge (section 3A) */
@@ -41696,6 +41704,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:1077, d:'2026-08-26', t:'The work order fills in the colours off the signed contract',
+  s:'When Production sends a work order to a crew it is supposed to carry the shingle and the drip edge across from the signed roofing contract, so nobody retypes them and nobody gets them wrong. It has never done it. The lookup asked the documents table for a field called \u201ccontent\u201d and the field is called \u201chtml\u201d, so the database refused the question every single time \u2014 and because the code politely handled the refusal, both boxes just came up empty and looked like there was simply no contract on file. One word. It has been wrong since the day the feature shipped.' },
   { b:1076, d:'2026-08-26', t:'The Walk is on the job now, and the walk knows which job',
   s:'The Walk \u2014 photograph a roof, let the AI mark what it thinks is damage, check every mark yourself, then show the homeowner \u2014 has been in the app since it was built and had one way in: the Showcase tile on the Sales Floor, and then a tab inside it you had to know was there. The database is the proof that was too far: zero walks, zero photographs, not one in two hundred and fifty builds. It is now a tile in the Job Menu on the client, beside Inspections, and it opens on that job\u2019s walk \u2014 finding it if there is one, offering to start it prefilled from the address if there is not. Second thing, and the reason the first was worth doing: the start form never wrote down which job a walk belonged to, though the database has had a column and an index for it the whole time. Every walk it made was floating free. It does now. Admin only at the moment, because the database itself refuses a walk from anybody else \u2014 that is one line of SQL to change if reps should be doing them.' },
   { b:1072, d:'2026-08-26', t:'Every AI answer records which model wrote it',
