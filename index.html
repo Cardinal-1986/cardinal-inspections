@@ -3834,7 +3834,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1086 &#8212; Insurance Clients gets its screen back. The row of claim-stage buttons above the client list had grown to ten and was wrapping onto four lines, taking nearly 200 pixels before the first client. It now keeps one line and ends with a small &#43;N &#8212; tap it and the rest drop down, tap again and they fold away. Nothing was removed: every stage is still there and still filters the same way. Unlike the Leads screen, these buttons ARE the only filter this page has, which is why they were folded rather than taken off.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1087 &#8212; The front door stops wearing the last portal you used. Signing in put you on the portal picker with the header still coloured for whichever portal you were in last &#8212; a red Insurance header sitting over the retail app, or a green Community one. The picker is where you CHOOSE a portal, so it no longer claims to be inside one. Everything else is unchanged on purpose: once you are in a portal, the shared screens like Leads and Photos still carry that portal&#8217;s header, which is what makes the Home button take you back to the right place.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41791,6 +41791,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1087, d:'2026-08-27', t:'The sign-in screen stops wearing the last portal', s:'Reported from a screenshot: signing in gave the retail app with an Insurance header on it. Reproduced at the sign-in call itself &mdash; with the Insurance portal remembered, the portal picker came up titled &ldquo;Insurance&rdquo; in insurance red; with Community remembered it said &ldquo;Community&rdquo;. The picker is where you choose a portal, so it can no longer claim to be in one and comes up in the ordinary app header. Deliberately narrow: once you are inside a portal, Leads, Photos and Reports still carry that portal&rsquo;s colours, which is what makes Home take you back to the right place.' },
 { b:1086, d:'2026-08-26', t:'Insurance Clients: the stage row folds to one line', s:'Ten claim-stage buttons were wrapping onto four lines above the client list &mdash; 194 pixels of filter before the first client on a phone. The row now keeps a single line and ends with a small &#43;N; tapping it drops the rest down and tapping again folds them back. Every stage is still there and still filters exactly as before. This is a fold rather than the removal the Leads screen got, because Insurance Clients has no funnel button and no side rail &mdash; these buttons are the only filter it has.' },
 { b:1085, d:'2026-08-26', t:'Leads: the filter chips come off the top', s:'The All Leads &amp; Jobs screen spent 361 pixels and seven wrapped lines on two rows of filter chips before showing a single job — measured against the real book, 85% of a phone screen. Both strips are gone. The filters themselves are untouched: the funnel button still holds all seven groups, the desktop rail still lists every one as a checkbox, and the Cardinal Pipeline card on the home screen still opens this list filtered to whichever stage you tap. When something is filtered, a line above the list says which filter it is and one tap removes it.' },
   { b:1084, d:'2026-08-26', t:'Push notifications got a new key',
@@ -60113,6 +60114,31 @@ var pv979 = document.getElementById('punchView');
 if(pv979 && pv979.style.display !== 'none') return 'production';
 var tv979 = document.getElementById('teamView');
 if(tv979 && tv979.style.display !== 'none') return 'production';
+/* 1087: THE LANDING IS THE PORTAL PICKER, so it cannot be inside a portal.
+   Theo, with a screenshot: "It was the retail crm with insurance header after I
+   signed in." Reproduced at the entry point he named — showMain(email), the
+   function sign-in calls — with the portal set to insurance:
+
+       crmNow()              retail
+       body.dataset.crmHead  insurance      <- the header
+       #brandTitle           "Insurance"
+       #landingView          shown
+
+   Set the portal to community and it reads "Community" instead, so the header
+   was naming whichever portal you last used while you stood at the picker.
+
+   ⚠ This is deliberately the LAST guard and the narrowest one. 754 made shared
+   screens follow the sticky portal on purpose — Leads, Photos and Reports still
+   do, and that is the design working, not a bug. Only the picker is named here,
+   for the same reason projopen and the two 979 screens are named above: a screen
+   that knows what it is outranks the sticky portal.
+
+   Retail rather than a neutral fourth value: the landing's chrome has always
+   been the steel header, and inventing a fifth head to mean "no portal" would
+   be a new mechanism beside an existing one — the thing this project's own
+   doctrine warns about. */
+var lv1087 = document.getElementById('landingView');
+if(lv1087 && lv1087.style.display !== 'none') return 'retail';
 return stickyCrm();
 }
 function skin(){

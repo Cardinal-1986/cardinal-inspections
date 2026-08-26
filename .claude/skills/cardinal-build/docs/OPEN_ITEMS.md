@@ -23,7 +23,7 @@ Instrument: `scripts/probe_crowding.mjs` (all 25 sentinel states, any width).
 
 ---
 
-## OPEN — the Insurance header is the only CRM chrome that isn't chrome (26 Aug 2026)
+## OPEN (narrowed at 1087) — the Insurance header is the only CRM chrome that isn't chrome
 
 Theo sent a screenshot captioned *"Logged in to insurance header"*. Measured before
 theorising: it **passes every contrast floor** — white title 5.68:1, the "+" glyph 4.85:1
@@ -39,13 +39,15 @@ Two identities, and the switch lives in another feature. Wired deliberately at 4
 use it**: `body[data-crm-head="insurance"]{--bnbg:#1a0e0d;--bnbd:#3d1512;--bnac:#ff8a7a}`
 — currently the **bottom nav only**.
 
-Also observed in the same screenshot and unresolved: the header/nav read Insurance
-(Clients · Claims) while the page underneath is the **retail** home dashboard — the
-pipeline counts 37/10/5/2/1 are the all-CRM retail figures. `crmHead()` falls through to
-`stickyCrm()` on a shared screen; the routing's own intent (`if(crm === 'insurance')
-showCardinalTruth()`) says insurance home is Cardinal Truth.
+✅ **The mismatch half is FIXED at 1087** — that was what Theo was actually reporting
+(*"It was the retail crm with insurance header after I signed in"*), and I had inferred a
+colour question from the same screenshot. The Landing no longer claims to be in a portal.
 
-**Four options were put to Theo; no pick yet.** Renders: `heads_strip.png`.
+**What is still open here is only the COLOUR**, and it is a design call rather than a defect:
+Insurance is the one CRM head that pulls `--ct-*` (the Resource Library's *document* palette),
+so it is either solid `#CE0E18` or solid `#FFFFFF` depending on `cardinalRLTheme`, while every
+other portal has one designed dark chrome. Options 1/2 from 26 Aug still stand; renders in
+`heads_strip.png`. **No pick yet, and nothing is broken while it waits.**
 
 ---
 

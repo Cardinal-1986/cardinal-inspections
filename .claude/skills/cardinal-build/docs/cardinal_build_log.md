@@ -27578,6 +27578,67 @@ rejected (the danger is deleting a base rule whose replacement is conditional).
 
 
 
+
+## Build 1087 — the Landing stops wearing the last portal you used
+
+Theo, with a screenshot: *"Logged in to insurance header"*, then, when I had gone after the
+wrong thing: **"It was the retail crm with insurance header after I signed in."**
+
+### ⚠ I chased the COLOUR for two turns; the report was the MISMATCH
+
+The screenshot showed a fire-engine red Insurance header, so I audited the header's palette,
+built a five-CRM comparison render, computed its contrast, and offered four colour options.
+**All of that was inference.** Theo's second message named the actual defect in one line. The
+colour audit was not wasted — it is recorded in `OPEN_ITEMS.md` and the header IS the only CRM
+chrome that borrows a document palette — but it was not what he reported, and I should have
+asked at the four-word message rather than after.
+
+**The colour is not a defect either way, and that was worth measuring:** white title
+**5.68:1** on `#CE0E18`, the "+" glyph **4.85:1** on `#FFE8E8`. Nothing there is unreadable.
+
+### Reproduced at the entry point he named, before anything was changed
+
+`probe_crmhead.mjs` (new) calls `showMain(email)` — the function sign-in itself calls — with
+the portal preset, and reads what the header ends up wearing:
+
+| portal | `crmNow()` | `body.dataset.crmHead` | title |
+|---|---|---|---|
+| insurance | retail | **insurance** | "Insurance" |
+| community | retail | **community** | "Community" |
+
+⚠ **My first two repro attempts came back CLEAN and I nearly reported it unreproducible.**
+`showHome()` and `showLanding()` both stamp retail correctly. Only `showMain()` — the real
+sign-in call — fails, because the landing is up at that moment. *Testing the neighbours of the
+reported entry point is not testing the reported entry point.*
+
+### The fix: one guard, deliberately the narrowest of three offered
+
+`crmHead()` asks `crmNow()`, then `projopen`, then punchView/teamView, then falls through to
+`stickyCrm()`. **754 made shared screens follow the sticky portal ON PURPOSE** — that is what
+makes Home go back to the right place — so the fall-through is correct and stays.
+
+The Landing is simply not one of those screens: **it is the portal PICKER, so it cannot be
+inside a portal.** Naming it is the same shape as the `projopen` guard and the two 979 guards
+it sits beside. Theo picked this scope out of three; option 3 would have reversed 754 outright.
+
+**Retail rather than a neutral fifth value** — the landing's chrome has always been the steel
+header, and a fifth head meaning "no portal" would be a new mechanism beside an existing one.
+
+### The regression check is the point of this build, not a formality
+
+| screen | before | after |
+|---|---|---|
+| after sign-in, insurance portal | **insurance** | **retail** ✅ |
+| after sign-in, community portal | **community** | **retail** ✅ |
+| Leads · Client Directory · Photos · Estimates | insurance | **insurance** — 754 intact |
+| Cardinal Truth · Insurance Clients | insurance | insurance |
+| Punch · Production | production | production — the 979 guards |
+
+Every shared screen still follows the portal. The guard fires only where `#landingView` is on
+screen, which is nowhere else.
+
+**No SQL. No API change. No colour changed.**
+
 ## Build 1086 — the Insurance Clients stage row folds to one line
 
 The screen 1085's sweep flagged and 1085 deliberately did **not** touch. Measured at 390px:
