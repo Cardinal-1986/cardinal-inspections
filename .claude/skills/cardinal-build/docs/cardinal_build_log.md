@@ -26083,6 +26083,60 @@ sweep were being truncated in silence.**
 
 ---
 
+## Docs — the README and the migration manifest (26 Aug 2026, no build number)
+
+**No artifact changed. `index.html` is byte-identical to `main`, and no stamp moved** — this is
+`README.md`, `MIGRATIONS.md`, `.vercelignore` and `check.yml` only. Recording it here because the
+ship discipline says every change gets a line, not because a build was consumed.
+
+Theo's pick after an outside audit: *"4 then 3"* — documentation and migration order first, the
+report-approval gate second.
+
+### What the audit got right, and what it got wrong
+
+It reported **"no visible automated test suite."** That is false: `check.yml` runs on every push
+and PR, and the repo carries **450** gate/harness files — 222 `gate_*`, 56 `harness_*`, 101
+`render_*` — plus 13 Python gates in `spark/`. It did not look inside `.claude/`. Its three
+citations all point at **Gemini and OpenAI documentation pages**, not at this repo, so nothing it
+claims to have "found in the repository" has a receipt.
+
+What it got right: **no root README** (true), **`index.html` at 5.2 MB** (true — 5,232,847 bytes),
+and **migration sprawl** (true — 84 `.sql` at root, hand-applied, no recorded order).
+
+### `MIGRATIONS.md` — generated, not written
+
+`scripts/migration_manifest.py` derives it. Every column is measured:
+
+- **shipped at** — the lowest build number in this log that names the file. **Git cannot answer
+  this**: PRs here are squash-merged, so dozens of early migrations share one commit date that has
+  nothing to do with when they ran.
+- **replayable** — does every statement guard itself.
+- **destructive** — **12 files** drop, delete or truncate. Replaying one on live data destroys
+  current rows. A bootstrap must skip every one.
+- **documented in** — **21 files are named by no document at all.**
+
+⚠️ **28 files are named by no build-log heading, and that is NOT a grep artifact.** CLAUDE.md
+warns that heading levels are inconsistent, so I widened the pattern (422 → 496 headings) and
+then checked: only **one** of the 28 appears anywhere in the log's text. The other 27 genuinely
+are not in it. *The file's own rule — when a count contradicts you, suspect the regex — was
+applied and the regex was mostly right.*
+
+⚠️ **The generator's first run wrote a manifest with ZERO rows into `.claude/`** — three `..` in
+the repo-root path instead of four. An empty result reads as a legitimate "no files found". It
+now asserts `index.html` exists at the path it computed.
+
+**CI gates it.** `migration_manifest.py --check` fails if a `.sql` is added without regenerating.
+Proved by adding a throwaway `.sql` and watching it go red.
+
+### One security item found while collecting environment-variable NAMES
+
+`api/notify.js` carries a **hardcoded VAPID private key** as a last-resort fallback (build 612,
+deliberate and commented). A sweep for the pattern `process.env.X || '<20+ chars>'` across `api/`
+finds **no others**. It should be deleted and the keypair rotated — but deleting it *before*
+`VAPID_PRIVATE_KEY` is confirmed set in Vercel kills push entirely, and the route already reports
+`vapid_from_env` as a boolean so which one is live can be checked first. **Theo's call; not
+changed here.** Recorded in the README's known-gaps list.
+
 ## Build 1076 — The Walk gets a door where the work is, and the row that names the job
 
 Two defects and one wiring change, `index.html` only. **No SQL.**

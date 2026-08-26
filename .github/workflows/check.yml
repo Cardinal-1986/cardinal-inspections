@@ -162,6 +162,21 @@ jobs:
             echo "api/ not present - skipping"
           fi
 
+      # ─────────────────────────────────────────────────────
+      # NEW — MIGRATIONS.md is generated from the .sql files at
+      # the repo root and from the build log. Add a migration and
+      # forget to regenerate it and the manifest silently stops
+      # describing the database, which is exactly the failure it
+      # exists to prevent. Cheap to check, so check it.
+      # ─────────────────────────────────────────────────────
+      - name: Migration manifest is up to date
+        run: |
+          if [ -f .claude/skills/cardinal-build/scripts/migration_manifest.py ]; then
+            python3 .claude/skills/cardinal-build/scripts/migration_manifest.py --check
+          else
+            echo "manifest generator not present - skipped"
+          fi
+
       - name: JSON files valid (if present)
         run: |
           for f in manifest.json package.json vercel.json api/package.json; do

@@ -15,6 +15,17 @@
 # apply", STOP/HELP). They must load for anyone (no login), like drivewaytest.html.
 # Served at app.cardinalroster.com/sms-privacy.html and /sms-terms.html; noindex.
 
+# --- Developer documentation. Written for whoever picks this repo up, not for
+#     a customer. README.md names every environment VARIABLE (never a value),
+#     the permission tiers, the deploy shape and the known gaps; MIGRATIONS.md
+#     lists all 84 hand-applied migrations and marks the twelve that are
+#     destructive. Neither is referenced by any shipped code and nothing
+#     fetches them. GitHub still renders README.md on the repo page, which is
+#     where a new developer actually looks — excluding them from the DEPLOY
+#     costs nothing and keeps an internal map off a public domain. ---
+README.md
+MIGRATIONS.md
+
 # --- Development context. Not referenced by any shipped code. ---
 # .claude/ contains the build skill: BUG_CLASSES.md, OPEN_ITEMS.md, HANDOFF.md,
 # cardinal_build_log.md, gates.md. Known bugs and unfinished work should not be
