@@ -2355,14 +2355,14 @@ body.restoring #restoreVeil{display:flex;}
 .ljcols{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-items:start;}
 .ljresults{min-width:0;}
 .ljrail{display:none;}
-/* 690: the stage strip. One scrolling row, so it costs a single line of height;
-   the dot carries the stage's own settled colour (LJ_SOLID) rather than tinting the
-   whole chip, which would have put nine saturated blocks across the top. */
-/* 691: the strip heading. --rbe-mute is the app's own label grey and flips
-   with the theme, so this does not need a light twin of its own. */
-.ljglbl{font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--rbe-mute,#9aa0a8);margin:8px 0 5px;}
-.ljgrp:first-of-type .ljglbl{margin-top:0;}
+/* 1085: .ljglbl, .ljgrp and the five .ljchip-unassigned rules were here and are
+   gone with the strips they styled — every one had no other user, checked.
+
+   ⚠ .ljchips / .ljchip / .ljchip i / .ljchip b BELOW ARE NOT DEAD and must not
+   follow them out. Photo Activity's CRM strip (#phCrmChips, cr-ph-script) builds
+   .ljchip buttons and each one carries an <i> dot, so all four rules still have a
+   live consumer on a different screen. A sweep of "who else uses this" is the
+   difference between deleting a strip and deleting a strip plus somebody's page. */
 .ljchips{display:flex;min-width:0;max-width:100%;gap:7px;flex-wrap:wrap;overflow-x:auto;overscroll-behavior-x:contain;padding:0 0 9px;margin-bottom:2px;
   -webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .ljchips::-webkit-scrollbar{display:none;}
@@ -2371,32 +2371,14 @@ body.restoring #restoreVeil{display:flex;}
   font:700 12.5px 'Segoe UI',Arial,sans-serif;white-space:nowrap;}
 .ljchip i{width:8px;height:8px;border-radius:50%;display:block;flex:0 0 auto;}
 .ljchip b{font-weight:800;opacity:.75;}
-/* 931: the unassigned bucket reads as a job to do, not as a person. Amber is
-   this app's settled 'needs attention' (punch urgency, wind damage on Storm
-   Data), and it is NOT the red that means an objection or a lost lead. Ink
-   computed against the ground it sits on, both themes. */
-.ljchip-unassigned{border-color:#c8862b !important;color:#e0973a !important;
-  background:color-mix(in srgb,#c8862b 12%,transparent) !important;font-weight:800;}
-.ljchip-unassigned.on{background:#c8862b !important;color:#15171b !important;border-color:#c8862b !important;}
-.ljchip-unassigned b{opacity:.9;}
-/* ⚠ THE LIGHT TWIN, and it is not optional. #e0973a is 7.22:1 on the dark chip
-   and 2.43:1 on the light one — the single most repeated defect on this
-   project, a dark fix that breaks light.
-
-   ⚠ AND THE HAND ARITHMETIC WAS WRONG, which is the more useful half. #96610a
-   is 5.24:1 against #ffffff on paper, so it looked fine — but the chip paints
-   its OWN 10% wash, so the real ground is a pale amber, and Chromium measured
-   4.29:1. Under the floor. "background-color is not the background": composite
-   the element's own wash over the first opaque ancestor and score against THAT.
-   #7d5200 on an 8% wash measures 5.91:1, checked in the browser, not by hand.
-
-   Same amber deepened rather than a switch to another hue, so the two themes
-   read as one component (the 557 obsidian-tile rule). Base rule dark, twin
-   scoped under rb-light — exactly the shape .ljchip above already uses. */
-:root[data-theme="rb-light"] .ljchip-unassigned{border-color:#8f5f12 !important;color:#7d5200 !important;
-  background:color-mix(in srgb,#c8862b 8%,transparent) !important;}
-:root[data-theme="rb-light"] .ljchip-unassigned.on{background:#7d5200 !important;color:#ffffff !important;
-  border-color:#7d5200 !important;}
+/* 1085: what is filtered, said plainly, each one removable. .ljsub already
+   counts them ("2 filters active") but has never said WHICH two — the lit chip
+   used to, and it is gone. Deliberately built from .ljchip.on and --rbe-mute,
+   both of which already flip with the theme: this build introduces no new ink. */
+.ljactive{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0 0 11px;}
+.ljactk{font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--rbe-mute,#9aa0a8);}
+.ljactx .x{margin-left:6px;font-weight:800;opacity:.7;}
 .ljchip.on{background:#233043;border-color:#4d7fb8;color:#ffffff;}
 .ljchip.on b{opacity:.95;}
 :root[data-theme="rb-light"] .ljchip{background:#ffffff;border-color:#d5d8dd;color:#3c4652;}
@@ -3852,7 +3834,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1084 &#8212; Push notifications have a new key, and the old one is out of the code. The key that signs every notification was replaced &#8212; and the previous one had been sitting in the source, where anyone with the code could read it. It is gone, and there is no longer a spare kept in the file for the next one to leak the same way. &#8220;Notifications are off&#8221; on your phone after this update is expected, not a fault: a subscription made with the old key cannot be reached by the new one. Open Menu, then Notifications, and switch them on once per device. Nothing else changed.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1085 &#8212; All Leads &amp; Jobs stops burying the jobs. The two rows of filter chips — Milestone and Assigned To — came off the top of the screen. On a phone they had grown to sixteen chips across seven lines and pushed the first job card to 85% of the way down; now the list starts near the top and four jobs fit where one used to. Nothing became harder to reach: the funnel button holds all seven filters as it always has, the desktop side rail still lists every one, and tapping a stage on the Cardinal Pipeline card at home still opens this screen already filtered to it. When a filter is on, a line above the list names it and one tap takes it back off.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -4115,10 +4097,16 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
              on a phone and the rail on a desktop. This surfaces it; it does not add
              a second filter. All three write the same array and re-render through
              renderLeadsView(), so they cannot disagree. -->
-        <div class="ljgrp" id="ljGrpStage"><div class="ljglbl">Milestone</div>
-          <div class="ljchips" id="ljStageChips" data-g="stage"></div></div>
-        <div class="ljgrp" id="ljGrpRep"><div class="ljglbl">Assigned To</div>
-          <div class="ljchips" id="ljRepChips" data-g="rep"></div></div>
+        <!-- 1085: the Milestone and Assigned To chip strips were here. Theo:
+             "Get rid of the chips for pipeline and just use the filters?" They
+             cost 361px in seven wrapped rows on a 390px phone and put the first
+             job card at y=716. The funnel (#ljFunnelBtn -> #ljShFilter) already
+             holds all SEVEN groups, and the desktop rail lists every one of them
+             as a checkbox, so nothing became unreachable. Clicking a pipeline
+             stage still works and always did: #pipeRow on the home dashboard is
+             a .pipebtn per stage with data-stg, and it opens this screen filtered.
+             This line reports what is filtered and takes a filter back off. -->
+        <div class="ljactive" id="ljActive"></div>
         <div class="ljrhead">Results (<span id="ljCount">0</span>)</div>
         <div id="ljList"></div>
       </section>
@@ -13102,13 +13090,8 @@ function renderLeadsView(){
   badge.classList.toggle('show', n > 0);
   document.getElementById('ljFTitle').textContent = 'Filters (' + n + ')';
   document.getElementById('ljSortChip').textContent = ljSortLabel();
-  /* 691: ONE strip renderer, two mounts. Theo asked for Assigned To beside
-     Milestone and said the other five can stay behind the funnel. Generalised
-     rather than copied: a second copy of this would be the second source of
-     truth 690's comment warns about. A group with fewer than two values is
-     hidden outright — a lone "All" chip under a heading is furniture. */
-  ljChipStrip('stage', 'ljStageChips', 'ljGrpStage');
-  ljChipStrip('rep', 'ljRepChips', 'ljGrpRep');
+  /* 1085: was two ljChipStrip() calls. See the markup comment in #leadsView. */
+  ljActiveLine();
 
   /* desktop rail */
   var sel = document.getElementById('ljSortSel');
@@ -13300,46 +13283,46 @@ document.getElementById('ljRailMount').addEventListener('change', function(e){
   if(!set.length) delete ljState.sets[g];
   renderLeadsView();
 });
-function ljChipStrip(gkey, mountId, wrapId){
-  var g = LJ_GROUPS.filter(function(x){ return x.key === gkey; })[0];
-  var wrap = document.getElementById(wrapId), mount = document.getElementById(mountId);
-  if(!g || !wrap || !mount) return;
-  var counts = ljGroupCounts(g), keys = ljGroupKeys(g, counts);
-  /* nothing to choose between: one value, or none */
-  if(keys.length < 2){ wrap.style.display = 'none'; mount.innerHTML = ''; return; }
-  wrap.style.display = '';
-  var set = ljState.sets[gkey] || [];
-  /* the dot is the stage's own settled colour; no other group has a palette,
-     and inventing one for reps would put five new semantic colours on screen. */
-  var dots = gkey === 'stage';
-  mount.innerHTML =
-    '<button type="button" class="ljchip' + (set.length ? '' : ' on') + '" data-all="1">All <b>' +
-      cacheProjects.length + '</b></button>' +
-    keys.map(function(k){
-      return '<button type="button" class="ljchip' + (set.indexOf(k) !== -1 ? ' on' : '') +
-        (gkey === 'rep' && k === LJ_UNASSIGNED ? ' ljchip-unassigned' : '') +
-        '" data-v="' + esc(k) + '">' +
-        (dots ? '<i style="background:' + (LJ_SOLID[k] || '#8a93a1') + '"></i>' : '') +
-        esc(k) + ' <b>' + counts[k] + '</b></button>';
-    }).join('');
+/* 1085: ljChipStrip() and ljChipClick() lived here and are deleted, not hidden
+   — deletion at source beats a display:none nobody can find later. Both were
+   verified to have exactly one caller each, both on this screen.
+
+   ljActiveLine() replaces them and does strictly less: it never offers a filter,
+   it only reports the ones that are on and lets you take one off. The picker is
+   the funnel on a phone (#ljShFilter, all seven groups) and the rail on a desktop.
+
+   No new colour. The removable chips are .ljchip.on, which already carries a
+   light twin; the label reuses --rbe-mute, which 691 established flips by itself.
+   Inventing an ink here is how this project's most repeated bug gets made. */
+function ljActiveLine(){
+  var host = document.getElementById('ljActive');
+  if(!host) return;
+  var out = [];
+  LJ_GROUPS.forEach(function(g){
+    (ljState.sets[g.key] || []).forEach(function(v){
+      out.push('<button type="button" class="ljchip on ljactx" data-g="' + esc(g.key) +
+        '" data-v="' + esc(v) + '" aria-label="Remove filter, ' + esc(g.label) + ': ' + esc(v) + '">' +
+        esc(v) + '<span class="x" aria-hidden="true">\u00d7</span></button>');
+    });
+  });
+  if(!out.length){ host.innerHTML = ''; host.style.display = 'none'; return; }
+  host.style.display = '';
+  host.innerHTML = '<span class="ljactk">Filtering</span>' + out.join('') +
+    '<button type="button" class="ljchip ljactclr" data-clr="1">Clear all</button>';
 }
-function ljChipClick(e){
-  /* 691: the group comes off the CONTAINER, so this one handler serves both
-     strips and any future one. Same push/splice as the rail checkbox. */
-  var b = e.target.closest('.ljchip');
+document.getElementById('ljActive').addEventListener('click', function(e){
+  var b = e.target.closest('button');
   if(!b) return;
-  var gkey = e.currentTarget.getAttribute('data-g');
+  /* same two lines the rail's Clear all uses (ljClearAll), not a second idiom */
+  if(b.getAttribute('data-clr')){ ljState.sets = {}; renderLeadsView(); return; }
+  var gkey = b.getAttribute('data-g'), v = b.getAttribute('data-v');
   if(!gkey) return;
-  if(b.getAttribute('data-all')){ delete ljState.sets[gkey]; renderLeadsView(); return; }
-  var v = b.getAttribute('data-v');
-  var set = ljState.sets[gkey] = ljState.sets[gkey] || [];
+  var set = ljState.sets[gkey] || [];
   var i = set.indexOf(v);
-  if(i === -1) set.push(v); else set.splice(i, 1);
+  if(i !== -1) set.splice(i, 1);
   if(!set.length) delete ljState.sets[gkey];
   renderLeadsView();
-}
-document.getElementById('ljStageChips').addEventListener('click', ljChipClick);
-document.getElementById('ljRepChips').addEventListener('click', ljChipClick);
+});
 document.getElementById('ljList').addEventListener('click', function(e){
   if(e.target.closest('.ljcta')){ e.stopPropagation(); return; }
   var card = e.target.closest('.ljcard');
@@ -41808,6 +41791,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1085, d:'2026-08-26', t:'Leads: the filter chips come off the top', s:'The All Leads &amp; Jobs screen spent 361 pixels and seven wrapped lines on two rows of filter chips before showing a single job — measured against the real book, 85% of a phone screen. Both strips are gone. The filters themselves are untouched: the funnel button still holds all seven groups, the desktop rail still lists every one as a checkbox, and the Cardinal Pipeline card on the home screen still opens this list filtered to whichever stage you tap. When something is filtered, a line above the list says which filter it is and one tap removes it.' },
   { b:1084, d:'2026-08-26', t:'Push notifications got a new key',
   s:'The key that signs push notifications was replaced, and the old one deleted from the code. Notifications will be off on every device until you switch them back on once — that is expected, not a fault: a new key cannot talk to a subscription made with the old one. Menu then Notifications to re-enable.' },
   { b:1083, d:'2026-08-26', t:'The app asks its own questions now',

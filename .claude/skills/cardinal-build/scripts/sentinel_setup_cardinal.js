@@ -602,18 +602,31 @@
        the sentinel reports a throwing state, and a state that opened nothing
        would otherwise hand back the previous screen dressed as a feature. */
 
-    /* .ljchips x2 — the Milestone and Assigned To filter strips.
-       ⚠ ljChipStrip() HIDES its whole group when fewer than two values exist
-       (`if(keys.length < 2){ wrap.style.display='none'; ... }`), so this strip
-       is only measurable because the seed spans three stages and two reps. */
+    /* All Leads & Jobs.
+       ⚠ 1085 REMOVED the two filter strips this state used to assert on, and the
+       old assertion ("the Milestone strip is not on screen") went red against a
+       CORRECT build. Recorded because it is the good half of BUG_CLASSES' rule:
+       roughly half the reds on this project are the harness being stale, and the
+       named error is what made that legible in one run instead of three.
+
+       Assert what the screen must have NOW: rows in the list, and the funnel
+       that became the only phone-side filter picker.
+       ⚠ Existence, not onScreen(), for the funnel — .ljctl is display:none above
+       901px, where the rail is the picker instead. Asserting it visible at every
+       viewport would stage a configuration the app never has.
+       ⚠ And do NOT assert #ljActive is on screen: it is deliberately hidden when
+       nothing is filtered, which is the ordinary case. */
     { name:'leads',        run: async function () {
         leaveLanding(); closeAll();
         if (typeof openLeadsView !== 'function') throw new Error('openLeadsView missing');
         openLeadsView(); await pause(700);
-        var st = document.getElementById('ljStageChips');
-        if (!onScreen(st)) throw new Error(
-          'the Milestone strip is not on screen — ljChipStrip() hides its group ' +
-          'below two values, so the seed has stopped spanning stages');
+        var list = document.getElementById('ljList');
+        if (!onScreen(list) || !list.children.length)
+          throw new Error('the Leads list did not render — ' +
+            (list ? list.children.length + ' rows' : 'no #ljList'));
+        if (!document.getElementById('ljFunnelBtn'))
+          throw new Error('#ljFunnelBtn is gone — since 1085 it is the only filter ' +
+            'picker on a phone, so losing it loses filtering entirely');
         await pause(150); } },
 
     /* .cd-crmbar — the Client Directory's fixed CRM bar.
