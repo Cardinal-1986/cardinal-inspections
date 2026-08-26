@@ -1,4 +1,4 @@
-// /api/summarize.js
+// /api/summarize.js  [1075]
 // Vercel serverless function — takes the photo captions already entered in a
 // report and drafts the "Overall Condition Assessment" paragraph.
 //
@@ -8,6 +8,21 @@
 // This is a DRAFT only. It's meant to be reviewed and edited by the inspector
 // before the report is sent — especially the repair-vs-replacement call,
 // which carries real liability and should reflect the inspector's judgment.
+
+/* 1075: the SAME array detect.js, sortphotos.js and supplement.js have used
+   since build 503 — copied, not invented, so the four routes cannot drift.
+
+   ⚠ It replaces THREE IDENTICAL CALLS to gemini-3.5-flash. The comment above
+     them claimed "then older model" and the third call's diag key was named
+     `gemini25`: this was a real 3.5 -> 2.5 ladder that got flattened when the
+     models were renumbered, leaving a retry wearing a ladder's clothes. On the
+     ~1-in-4 Gemini outage measured at 500-501 an inspection caption made three
+     doomed calls to one model and then fell to the smallest model in the stack.
+
+   ⚠ 3.7 is NOT at the front on purpose. Which model should LEAD is what
+     /bakeoff.html exists to answer; putting it there on my own judgement would
+     pre-empt the measurement while sounding like it. One line, once measured. */
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash'];
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
 const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
@@ -156,20 +171,35 @@ export default async function handler(req, res) {
          'are given. Do not invent details not supported by what you were given. ' +
          'No preamble, just the paragraph.\n\n' + evidence);
 
-    let via = 'gemini-3.5-flash';
-    let geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
+    /* 1075: a ladder where there was a single call. This route drafts the
+       narrative a rep sends to a homeowner; one busy model should not drop it
+       straight to the smallest model in the stack. */
+    async function askGemini(model) {
+      return fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        }
+      );
+    }
+
+    let via = GEMINI_MODELS[0];
+    let geminiRes = null;
+    for (const model of GEMINI_MODELS) {
+      geminiRes = await askGemini(model);
+      if (geminiRes.status === 503 || geminiRes.status === 429) {
+        await new Promise(r => setTimeout(r, 1200));
+        geminiRes = await askGemini(model);
       }
-    );
+      if (geminiRes.ok) { via = model; break; }
+    }
 
     /* 502: Google refusing is no longer the end of the road. */
     if (!geminiRes.ok) {
@@ -196,7 +226,7 @@ export default async function handler(req, res) {
        fallback without knowing this route's ladder, and the ladders are not
        uniform. Copied from api/detect.js, which has reported the model NAME
        since it shipped and is the shape the others should have had. */
-    res.status(200).json({ summary, via, via_primary: 'gemini-3.5-flash' });
+    res.status(200).json({ summary, via, via_primary: GEMINI_MODELS[0] });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }

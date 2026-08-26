@@ -2,6 +2,53 @@
 
 ---
 
+## Layer: 26 Aug 2026 — The Walk (build 1076)
+
+### ⏳ NEEDS THEO — should reps be able to run a walk?
+
+`walks_schema.sql` makes **insert, update, delete and every `walk_shots` and
+storage write** `is_cardinal_admin()`. So The Walk is Theo and Joan only, at the
+database, not just in the UI. Build 1076's Job Menu tile is gated to match —
+a tile a rep can tap, landing on a screen with no Start button, backed by a
+table that would refuse the row, is BUG_CLASSES 16 with extra steps.
+
+**This is a permission decision and it is Theo's**, the same family as *"Crew
+rates is not needed by productions, I write the checks."* Nick, Joey and Jacob
+are the ones on roofs.
+
+If the answer is yes, it is small and it is two halves, in this order:
+
+1. **SQL first.** Relax `walks_admin_insert`, `walks_admin_update`,
+   `walk_shots_admin_*` and `walk_objects_admin_write` from
+   `is_cardinal_admin()` to the ownership rule the rest of the app uses
+   (`is_full_access() or created_by = my_email()` is the `estimates` shape).
+   Leave **delete** admin-only unless he says otherwise.
+2. **Then `amAdmin()`**, in `cr-show-script`, ~11 sites. Not before — a UI that
+   can write to a table that refuses is worse than no UI.
+
+**Do not relax the browser gate on its own initiative.** A hidden button is not
+a permission and an exposed one is not access.
+
+### Settled — do NOT re-litigate
+
+- **The carried job is module state (`pendingProject`), never a parameter.**
+  628's comment on `openJobPicker` is the reason: arg 0 is a MouseEvent where
+  this module wires handlers bare.
+- **The tile routes on an explicit `act === 'walk'` branch, not the else
+  branch.** The Walk is a tab inside `CardinalShowcase`, not a pane on the
+  client page; `showTab('walk')` finds nothing.
+- **No `hideAllViews()` / `navRestore()` entry.** `open()` already registers
+  `showcase`; this is a different tab of a wired view, not a fifteenth view.
+
+### Measured, so nobody re-derives it
+
+- `walks` **0 rows** · `walk_shots` **0 rows** · `walks.project_id` non-null
+  **0** — measured 26 Aug 2026, before 1076. If these are still zero a month
+  from now, the door was not the problem and the *feature* is the question.
+- `projects` has **no `city` column** — `address` is one string.
+
+---
+
 ## Layer: 26 Aug 2026 — the report editor (builds 1069, 1070)
 
 ### Settled — do NOT re-litigate

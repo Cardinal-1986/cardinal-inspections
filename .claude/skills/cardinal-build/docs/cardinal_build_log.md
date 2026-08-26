@@ -26083,6 +26083,206 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1076 — The Walk gets a door where the work is, and the row that names the job
+
+Two defects and one wiring change, `index.html` only. **No SQL.**
+
+### ⚠ The finding that reframed the build: `walks` has ZERO rows
+
+Measured on production before a line was written:
+
+| table | rows |
+|---|---:|
+| `walks` | **0** |
+| `walk_shots` | **0** |
+| `walks` with a `project_id` | **0** |
+
+The Walk is not a feature that needed moving. It is a feature **nobody has ever
+reached**, in the ~250 builds since it shipped. Its only door was the *Showcase*
+tile on the Sales Floor — labelled "Before and after, for the kitchen table" —
+and then a third tab inside a module whose `open()` lands on `showcase`. Two
+correct guesses, from a screen nobody visits mid-job.
+
+That is the whole justification for the tile, and it is also why nothing needs
+backfilling.
+
+### ⚠ `saveWalk()` has never written `project_id`
+
+`walks_schema.sql` has had the column since the day it shipped — nullable on
+purpose, `on delete set null` on purpose, **and its own index** at line 131.
+`saveWalk()`'s insert names eight fields and that is not one of them. Every walk
+made through the form was orphaned from its job, silently, and the index has
+never had a row to hold.
+
+**This is BUG_CLASSES 68** — a column defined, indexed, commented and never
+written. Nothing in the gate ladder can see it: the SQL is valid, the insert is
+valid, `node --check` passes, and the feature "works".
+
+### The build
+
+| | |
+|---|---|
+| **the tile** | `jt(dbIc('camera'), 'The Walk', '', 'walk')`, in the Job Menu **beside Checklists** — that row already wrapped one tile alone into a two-column grid, so the admin tile fills a hole that is there today rather than opening a new one, and a rep sees exactly what they saw before. Rendered at 390px to check that; the first version put it in a full-width row of its own and left the hole |
+| **the route** | an explicit `act === 'walk'` branch, **not** the else branch — The Walk is a tab inside `CardinalShowcase`, not a pane on this page, so `showTab('walk')` would have found nothing and done nothing |
+| **the entry** | `CardinalShowcase.openForProject(pr)` — opens on the walk tab, **finds** this job's walk by `project_id`, or offers to start one prefilled from the address |
+| **the write** | `project_id: (pendingProject && pendingProject.id) \|\| null` |
+
+**Extend, don't add.** No second walk screen, no second list, no second picker —
+the walk tab, `loadWalks()`, `loadShots()` and the start form all already
+existed and none of them was reachable from where the work happens.
+
+⚠️ **The carried project is module state, NOT a parameter.** This module wires
+`b.onclick = openWalkForm` in one place and `b.onclick = openJobPicker` in
+another, and 628's comment on the second records what a parameter costs here:
+arg 0 is a **MouseEvent**. A project that is really a MouseEvent would write a
+null `project_id` while looking perfectly correct — which is the exact bug this
+build exists to fix, reintroduced by the fix. `closeForm()` clears it, and the
+Showcase's own *Start a walk* clears it explicitly, so a walk started from the
+Showcase can never inherit a job opened an hour ago (gate check B3).
+
+⚠️ **The TILE is admin-gated, not the handler, and that is deliberate.**
+`walks_schema.sql` makes insert, update, delete and **every** `walk_shots` and
+storage write `is_cardinal_admin()`. A tile a rep can tap, landing on a screen
+with no Start button, backed by a table that would refuse the row anyway, is
+BUG_CLASSES 16 with extra steps. **Whether a rep should be able to run a walk is
+an RLS decision and Theo's** — until he makes it, the door matches the fence.
+It is one policy change plus one `amAdmin()` relaxation if he says yes.
+
+⚠️ **`projects` has no `city` column** — one `address` string holds the lot — so
+the form splits street and city off the commas. Both land in editable fields: a
+wrong guess costs a tap, and blank fields cost Theo typing an address the job
+already knows.
+
+### ⚠ My own rig ran the sweep against the LOGIN SCREEN and I nearly reported it
+
+`sentinel.js` needs **two** `--setup` files —
+`sentinel_setup_cardinal.js,e2e_mock_supa.js`, seed first, mock second. I passed
+one. `TEAM` stayed `false`, `currentUser` stayed `null`, `openProject('p1')`
+bailed, `#acxMount` rendered **0 characters**, and the sweep walked 25 states
+that were all the same signed-out screen. **The setup file's own banner warns
+about exactly this** — *"a sweep of a login form reports CLEAN and means nothing
+by it"* — and I read past it. Killed and re-run with both files.
+
+### ⚠ And the sweep's first report blamed this build for five old findings
+
+With the rig fixed, the sentinel came back with **5 new findings, all on
+`.jabox`, all on the client screen** — exactly where the tile landed. They were
+not new. `sentinel.js`'s DEAD/OVERRIDDEN findings carried **no explicit `key`**,
+so `--since` compared the printed detail, which ends *"…never wins on any of the
+**N** element(s) it matches"*. Adding a fifteenth `.jabox` re-keyed every
+standing finding on that class. **BUG_CLASSES 69.**
+
+Both instrument defects are fixed in this PR, and both were proved by running
+them: the missing-mock guard now fails **25 states out of 25** (the first version
+latched and reported one), and the re-keyed sweep reads
+
+    SENTINEL CLEAN — 25 render(s), nothing new · 140 carried
+
+which is simultaneously the fix's proof and the proof that the five `.jabox`
+findings were carried debt.
+
+**Gates:** `check_build.py` GREEN 1072 → 1076 · byte-reproducible from
+`patch_1076.py` · `gate_1076.mjs` **34/34 in Chromium**, and **27 failures on
+1072 with no crash** · sentinel **CLEAN** (25 renders, 390px, seed + mock,
+`--since` 1072) · `sentinel --selftest` green after the key change ·
+`render_walkdoor.mjs` for the pictures. The control's F1 line is the defect stated as data:
+`[["showTab","walk"]]` — on 1072 the tile would have fallen to the else branch
+and done nothing at all. The FLOOR caught the ten A-checks the BUG_CLASSES 37
+guard short-circuits, so a control that cannot run a section fails rather than
+falling silent.
+
+## Build 1075 — the inspection routes get a real model ladder
+
+Theo: *"Now do the inspection routes — caption.js and summarize.js."*
+
+### ⚠ What I found first, and it is worse than "pinned to an old model"
+
+**`caption.js`'s ladder was dead code that called ONE model three times.**
+
+```js
+let geminiRes = await askGemini('gemini-3.5-flash');   // try 1
+if (503 || 429) { sleep(1200);
+  geminiRes = await askGemini('gemini-3.5-flash'); }   // try 2, SAME model
+if (!geminiRes.ok) {
+  const alt = await askGemini('gemini-3.5-flash');     // "alt" — SAME model
+  diag.gemini25 = alt.status;                          // named for 2.5
+```
+
+The comment above it read *"primary model, retry once on overload, **then older
+model**, then OpenAI backup"*, and the third call's diag key was **`gemini25`**.
+So this **was** a real 3.5 → 2.5 ladder, and when the models were renumbered all
+three call sites were replaced with the same literal. What survived is a comment
+that lies, a diagnostic field named after a model it never calls, and a third
+request byte-identical to the second.
+
+**The cost is not style.** On the ~1-in-4 Gemini outage measured at 500–501, an
+inspection caption made **three doomed calls to one model** and then dropped
+straight to `gpt-4o-mini`, the smallest model in the stack — while
+`detect.js`, `sortphotos.js` and `supplement.js` have all had a real ladder
+since 503. **Inspections never touched 3.6 at all.** `summarize.js` had no
+ladder whatsoever: one call, then OpenAI.
+
+### The ladder is 3.6 → 3.5, and NOT leading with 3.7 is the point
+
+I told Theo twice that which model **leads** is the bake-off's call. Shipping
+3.7 here on my own judgement would contradict that while wearing the language of
+evidence. What this build does is bring inspections level with the three routes
+that already ladder — **the same array, byte-identical**:
+
+```js
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash'];
+```
+
+CLAUDE.md's *"grep for the convention before inventing a mechanism"*. Inspections
+go from never-touching-3.6 to leading with it, and the **reliability** fix lands
+now rather than waiting on a measurement it does not depend on. Putting 3.7 at
+the front is one line in each file once `/bakeoff.html` says so.
+
+### ⚠ The gate DRIVES the ladder — a grep would have passed the old code
+
+A source check for `GEMINI_MODELS` would go green on code that still called 3.5
+three times. `gate_1075.mjs` executes both routes against a transport that
+**counts calls per model**, which is the only way to see a ladder actually
+ladder:
+
+| scenario | expected | measured |
+|---|---|---|
+| 3.6 answers | one call, 3.5 untouched, OpenAI untouched | `{3.6:1}` ✅ |
+| **3.6 503s** | retry 3.6 once, then **3.5**, not OpenAI | `{3.6:2, 3.5:1}` ✅ |
+| 3.6 **400s** | move on **without** retrying | `{3.6:1, 3.5:1}` ✅ |
+| both down | OpenAI, and `via` says so | `via:gpt-4o-mini` ✅ |
+
+The 400 case is `detect.js`'s rule since 503 and is the opposite of what the old
+code did: it retried a model that could never succeed, twice.
+
+**11/11 green, 8 red on a pre-1075 control.** ⚠️ Two checks (B2, C2) pass on the
+control **vacuously** — with no ladder there, "3.6 is down" never happens and the
+route simply calls 3.5. They do not discriminate and are not counted as evidence;
+A1, A2, A3, B1, B3, C1 and C3 are the ones that do.
+
+### ⚠ No artifact stamp moves, and that is correct
+
+This build is `api/` only. `index.html` stays at **1072**, `supplement.html` at
+**1072**, `bakeoff.html` at **1074** — `check_build.py` and `check_artifact.py`
+have nothing to say about it, and the sentinel has no changed screen to walk.
+The record is this entry plus each route's own header stamp (`[1075]`), which is
+the `ai-status.js` / `bakeoff.js` convention.
+
+### ⚠ Comment pollution, seventh time this session
+
+Three assertions failed correct code because **this patch's own banner quotes
+what it removed** — `gemini25`, *"then older model"*, and `3.7`. Anchored on the
+code forms (`diag.gemini25 =`, the full comment line, `'gemini-3.7`). I said
+after the fourth that the habit which works is computing every count in one pass
+before asserting; I did that here only after being bitten again.
+
+**Gates:** `node --check` on both routes · both **byte-reproducible** ·
+`gate_1075.mjs` **11/11**, **8 red on a pre-1075 control** with the floor
+confirming all 10 ran · 1070's checklist path re-verified untouched (check C3) ·
+1072's `via`/`via_primary` contract preserved on every success path.
+
+---
+
 ## Build 1074 — 3.7 into the bake-off, and honest slots for Claude and Kimi
 
 Theo: *"yes, add 3.7 to the bake-off, what about Claud and/or kimi k3?"*

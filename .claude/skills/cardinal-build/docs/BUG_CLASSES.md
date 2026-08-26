@@ -3582,3 +3582,104 @@ instrument fix is correct regardless of whether it is replaced.
 property must first ask whether that property is what paints the thing. The
 gradient-border fault three hours earlier (Class 47's neighbour) was the same
 question about `background`; this one is about `color`.
+
+
+---
+
+## Class 68 — a column defined, indexed, commented, and never written (26 Aug 2026, build 1076)
+
+**The shape.** The migration declares the column. It gives it a foreign key, a
+sensible `on delete`, a paragraph of comment explaining the design, and **its own
+index**. The writer never names it. Everything downstream reads `null` forever.
+
+`walks.project_id` had all four of those since The Walk shipped at 579.
+`saveWalk()`'s insert names eight fields and that is not one of them, so every
+walk made through the form was orphaned from its job — for ~250 builds.
+
+**Why no gate sees it.** The SQL is valid. The insert is valid. `node --check`
+passes. The feature *works* — the walk saves, loads, renders, presents. Nothing
+is red anywhere, because nothing is wrong with any single artifact; the defect
+is the gap **between** two of them.
+
+**The instrument is a row count, and it is one query.**
+
+```sql
+select count(*) total, count(project_id) with_fk from walks;
+```
+
+`total > 0 and with_fk = 0` on a column that is supposed to be usually-present is
+the tell. In this case the answer was `0, 0`, which surfaced the *bigger* defect
+below.
+
+**The habit:** when a build touches a table, count its columns' fill rates before
+touching the code. A column at 0% that the schema comment describes as load-
+bearing has never been written, whatever the code appears to say.
+
+### The bigger sibling: a feature nobody can reach, and the table that proves it
+
+`walks` = **0 rows**. `walk_shots` = **0 rows**. Not "under-used" — *never once
+used*, across the whole life of the feature.
+
+The prime doctrine says things that look missing are usually buried. **The
+corollary is that things that look built are sometimes unreachable**, and the
+difference is not visible in the code at all: the module was complete, the gates
+were green, the RLS was right, the harness had 152 assertions. The only
+instrument that could tell the two apart was the row count.
+
+**Before building anything onto a feature, ask its table how often it is used.**
+A zero means the next build is a door, not a feature.
+
+
+---
+
+## Class 69 — a `--since` key that carries a COUNT, so growing a list re-reports its standing debt (26 Aug 2026, build 1076)
+
+**The shape.** A differential gate subtracts the previous build's findings by
+*key*. If the key contains anything that legitimately changes when you add a
+row — a match count, a total, an index — then adding one element re-keys every
+standing finding on that collection, and they all come back as **regressions of
+your build**.
+
+`sentinel.js`'s DEAD/OVERRIDDEN findings had **no explicit `key`**, so they fell
+back to `detail`, and the detail ends *"…never wins on any of the N element(s)
+it matches"*. Build 1076 added a fifteenth `.jabox` to the Job Menu. Five
+findings that had been true since the tile set was written came back as five
+brand-new failures attributed to the tile:
+
+```
+DEAD       .jabox { background-color: rgb(255,255,255) } … 15 element(s)   [390px client]
+OVERRIDDEN .jabox { color: rgb(43,43,43) } … 15 element(s)                 [390px client]
+… three more
+```
+
+**Fixed** by keying on `selector|prop|declared` — what identifies the defect —
+and leaving the count in the printed detail only. The same sweep then read
+`SENTINEL CLEAN — 25 renders, nothing new`, which is both the fix's proof and
+the proof the five were carried debt.
+
+⚠️ **The file already carried the rule and the rule was not applied.** Twenty
+lines above the DEAD branch, `sentinel.js` says: *"Key on what identifies the
+DEFECT — element, colours, floor — never on content."* INK got an explicit key
+for exactly this reason (a live clock's text ticking). DEAD never did.
+
+**The habit:** for every differential finding, ask *what in this string changes
+when the app grows but the defect does not?* If anything does, it belongs in
+`detail`, never in `key`. And a finding that appears the same build you touched
+that collection is the case to check first — the coincidence is the tell.
+
+### The sibling this session also cost: a sweep of the login screen
+
+`sentinel.js` needs **two** `--setup` files for the CRM —
+`sentinel_setup_cardinal.js,e2e_mock_supa.js`, seed first, mock second. Passing
+only the first left `TEAM` false, `currentUser` null, `#acxMount` at **zero
+characters**, and twenty-five states all sweeping the same signed-out screen —
+with a full, confident report at the end. The setup file's banner warns about
+the wrong ORDER (which `seedLanded()` makes loud) and said nothing about the
+missing file, which fails in the quieter direction.
+
+**Fixed in the instrument:** `leaveLanding()` — which every state calls first —
+now throws a named error if `window.__WRITES__` / `window.supabase` are absent,
+and it is **deliberately not latched on the first call**. The first version
+latched before throwing, so exactly one state of twenty-five reported it and the
+other twenty-four produced the confident wrong report anyway. It now fails
+**25/25**, which is what a broken rig should look like.

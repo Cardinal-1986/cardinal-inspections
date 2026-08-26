@@ -7155,3 +7155,78 @@ route and asserts the contract instead.
 fan-out, negative-controlled against a sabotaged variant. `gate_1074.mjs` — 8
 checks on the candidate list, the env-var map and the caveat rendering.
 `render_1073.mjs` for the pictures.
+
+
+### The inspection routes ladder (1075)
+
+`caption.js` and `summarize.js` now use the **same** `GEMINI_MODELS` array as
+`detect.js`, `sortphotos.js` and `supplement.js`:
+
+```js
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash'];
+```
+
+⚠️ **What it replaced was not a ladder.** `caption.js` called
+`gemini-3.5-flash` **three times** — a comment claiming *"then older model"* and
+a diag key named `gemini25` show it was a real 3.5 → 2.5 ladder flattened when
+the models were renumbered. `summarize.js` had no ladder at all. On a Gemini
+outage inspections made three doomed calls and fell to the smallest model in the
+stack, while the other three routes tried a second Gemini first.
+
+⚠️ **A 503/429 retries the SAME model once; anything else moves on
+immediately.** Retrying a 400 is retrying something that cannot succeed —
+`detect.js`'s rule since 503.
+
+⚠️ **3.7 is deliberately NOT at the front.** Which model leads is what
+`/bakeoff.html` exists to answer. One line in each file once measured.
+
+⚠️ **Test the ladder by DRIVING it, never by grepping for `GEMINI_MODELS`** —
+that grep passes on code that still calls one model three times. `gate_1075.mjs`
+counts calls per model against a stubbed transport.
+
+
+---
+
+## The Walk's job door (1076) — `cr-show-script` + the Job Menu
+
+**Where it lives:** the tile is `index.html`'s Job Menu (`jt(dbIc('camera'),
+'The Walk', '', 'walk')`, full-width, under the Inspections row). The entry
+point is `window.CardinalShowcase.openForProject(pr)` in `cr-show-script`.
+
+**Why it exists.** Measured on production the day it shipped: `walks` **0 rows**,
+`walk_shots` **0 rows**. The Walk had one door — the *Showcase* tile on the
+Sales Floor, then a third tab inside a module that opens on `showcase` — and in
+~250 builds nobody had ever found it.
+
+| | |
+|---|---|
+| **tile** | admin only — `(isAdminUser() ? jt(…) : '')`, **beside Checklists**, which already wrapped alone into the two-column grid. So the tile fills an existing hole and a rep's menu is byte-for-byte what it was |
+| **route** | an explicit `act === 'walk'` branch in the `[data-jm]` router. **Not** the else branch — The Walk is a tab inside a full-screen view, not a pane on the client page |
+| **behaviour** | opens on the walk tab · **finds** this job's walk by `project_id` · otherwise offers to start one, prefilled from the job |
+| **write** | `saveWalk()` now sets `project_id` |
+
+⚠️ **`saveWalk()` had never written `project_id`**, though the column and its
+index have been in `walks_schema.sql` since 579. Every walk made through the
+form was orphaned from its job. Nothing needed backfilling only because nothing
+had ever been made.
+
+⚠️ **The carried job is MODULE STATE (`pendingProject`), never a parameter.**
+This module wires `b.onclick = openWalkForm` and `b.onclick = openJobPicker`
+bare, and 628's comment records why: arg 0 is a **MouseEvent**. A project that
+is really a MouseEvent writes a null `project_id` and looks perfectly correct.
+`closeForm()` clears it; the Showcase's own *Start a walk* clears it explicitly.
+
+⚠️ **The TILE is gated, not the handler.** `walks_schema.sql` makes insert,
+update, delete and every `walk_shots`/storage write `is_cardinal_admin()`, so a
+tile a rep can tap would land them on a screen the database refuses to serve —
+BUG_CLASSES 16 with extra steps. `openForProject()` still degrades correctly for
+a rep (the walk list, no form), as the belt to that brace. **Whether reps should
+run walks is an RLS decision and Theo's**; it is one policy change plus one
+`amAdmin()` relaxation.
+
+⚠️ **`projects` has no `city` column.** One `address` string holds the lot, so
+the start form splits street and city off the commas into editable fields.
+
+**No new full-screen view, so no `hideAllViews()` or `navRestore()` entry** —
+`open()` already registers `showcase`. This is a different TAB of a view that is
+already wired.

@@ -1,4 +1,4 @@
-// /api/caption.js
+// /api/caption.js  [1075]
 // Vercel serverless function — receives a base64 photo from the report editor
 // and returns a one-sentence caption suitable for a roof inspection report.
 //
@@ -10,6 +10,21 @@
 //    Add it for Production (and Preview, if you use preview deploys), then redeploy.
 //
 // The key is only ever used here, on the server — it is never sent to the browser.
+
+/* 1075: the SAME array detect.js, sortphotos.js and supplement.js have used
+   since build 503 — copied, not invented, so the four routes cannot drift.
+
+   ⚠ It replaces THREE IDENTICAL CALLS to gemini-3.5-flash. The comment above
+     them claimed "then older model" and the third call's diag key was named
+     `gemini25`: this was a real 3.5 -> 2.5 ladder that got flattened when the
+     models were renumbered, leaving a retry wearing a ladder's clothes. On the
+     ~1-in-4 Gemini outage measured at 500-501 an inspection caption made three
+     doomed calls to one model and then fell to the smallest model in the stack.
+
+   ⚠ 3.7 is NOT at the front on purpose. Which model should LEAD is what
+     /bakeoff.html exists to answer; putting it there on my own judgement would
+     pre-empt the measurement while sounding like it. One line, once measured. */
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash'];
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://yipslubcptjoarblzbpl.supabase.co').trim();
 const SUPABASE_ANON_KEY = (process.env.SUPABASE_ANON_KEY || 'sb_publishable_aGsug3EBJjHX90BLKd5bLQ_zryUMqNZ').trim();
@@ -102,20 +117,23 @@ export default async function handler(req, res) {
       );
     }
 
-    // primary model, retry once on overload, then older model, then OpenAI backup
+    // the ladder: each model in turn, one pause on an overload, then OpenAI
     const oaKey = (process.env.OPENAI_API_KEY || '').trim();
     const diag = { openai_key_present: !!oaKey };
-    let geminiRes = await askGemini('gemini-3.5-flash');
-    diag.gemini35_try1 = geminiRes.status;
-    if (geminiRes.status === 503 || geminiRes.status === 429) {
-      await new Promise(r => setTimeout(r, 1200));
-      geminiRes = await askGemini('gemini-3.5-flash');
-      diag.gemini35_try2 = geminiRes.status;
-    }
-    if (!geminiRes.ok) {
-      const alt = await askGemini('gemini-3.5-flash');
-      diag.gemini25 = alt.status;
-      if (alt.ok) geminiRes = alt;
+    let geminiRes = null, viaModel = '';
+    for (const model of GEMINI_MODELS) {
+      geminiRes = await askGemini(model);
+      diag[model] = geminiRes.status;
+      /* 503/429 is overload: pause and give the SAME model one more go, which
+         is what the free tier actually needs. Any other failure means this
+         model will not work — move on rather than retry something that cannot
+         succeed (detect.js's rule since 503). */
+      if (geminiRes.status === 503 || geminiRes.status === 429) {
+        await new Promise(r => setTimeout(r, 1200));
+        geminiRes = await askGemini(model);
+        diag[model + '_retry'] = geminiRes.status;
+      }
+      if (geminiRes.ok) { viaModel = model; break; }
     }
 
     if (!geminiRes.ok && oaKey) {
@@ -135,7 +153,7 @@ export default async function handler(req, res) {
       if (o.ok) {
         const cap = oj?.choices?.[0]?.message?.content?.trim();
         if (cap) { res.status(200).json({ caption: cap, via: 'gpt-4o-mini',
-                                          via_primary: 'gemini-3.5-flash' }); return; }
+                                          via_primary: GEMINI_MODELS[0] }); return; }
       } else {
         diag.openai_error = (oj?.error?.message || '').slice(0, 160);
       }
@@ -156,8 +174,8 @@ export default async function handler(req, res) {
        fallback made silence ambiguous — Gemini answered, or an older
        deploy is running? A field that appears only on failure cannot
        distinguish those, which is most of what it was needed for. */
-    res.status(200).json({ caption, via: 'gemini-3.5-flash',
-                           via_primary: 'gemini-3.5-flash' });
+    res.status(200).json({ caption, via: viaModel || GEMINI_MODELS[0],
+                           via_primary: GEMINI_MODELS[0] });
   } catch (err) {
     res.status(500).json({ error: err.message || String(err) });
   }
@@ -235,12 +253,16 @@ async function estimateAssist(req, res, apiKey) {
 
     const oaKey = (process.env.OPENAI_API_KEY || '').trim();
     const diag = { openai_key_present: !!oaKey, photos: parsed.length };
-    let r = await askGemini('gemini-3.5-flash');
-    diag.gemini_try1 = r.status;
-    if (r.status === 503 || r.status === 429) {
-      await new Promise(x => setTimeout(x, 1200));
-      r = await askGemini('gemini-3.5-flash');
-      diag.gemini_try2 = r.status;
+    let r = null, viaModel = '';
+    for (const model of GEMINI_MODELS) {
+      r = await askGemini(model);
+      diag[model] = r.status;
+      if (r.status === 503 || r.status === 429) {
+        await new Promise(x => setTimeout(x, 1200));
+        r = await askGemini(model);
+        diag[model + '_retry'] = r.status;
+      }
+      if (r.ok) { viaModel = model; break; }
     }
 
     let out = null, via = 'gemini';

@@ -3852,7 +3852,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1072 &#8212; Every AI answer now records which model wrote it. When Google&#8217;s model is busy the app quietly falls back to a smaller one, which it has always done and never mentioned &#8212; so &#8220;the AI missed that&#8221; was impossible to answer. The Supplement Desk and the report drafter now say so, and only when it happens: on the normal path nothing changes on screen. The Desk also sends the right photographs now &#8212; nearly half of all jobs were quietly over the size limit, and every finding after a dropped photograph was pointing at the wrong one.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1076 &#8212; The Walk finally has a door where the work is. It has been in the app since February and had exactly one way in &#8212; the Showcase tile on Sales Floor, then a tab you had to know was there &#8212; and the database says nobody has ever once reached it: zero walks, zero photographs. It is now a tile in the Job Menu on the client itself, next to Inspections, and it opens straight onto that job’s walk. The walk it creates is attached to the job, which the old form never did &#8212; it wrote every walk with no job at all. Admin only for now, because the database refuses a walk from anyone else; say the word and that changes. Nothing else moves.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11939,6 +11939,24 @@ function renderAcxOverview(){
          checklist key; dbIc('tasks') is the clipboard Punch Outs already
          reuses. */
       jt(dbIc('tasks'), 'Checklists', '', 'checklists') +
+      /* 1076: The Walk.  It goes in THIS row rather than a row of its own
+         because Checklists already wraps alone into a two-column grid, so the
+         admin tile fills a hole that is there today rather than opening a new
+         one — and a rep, who does not get the tile, sees exactly what they saw
+         before.  Rendered at 390px to check that, not reasoned about.
+
+         The TILE is gated rather than the handler, because walks_schema.sql
+         makes insert, update, delete and every walk_shots and storage write
+         is_cardinal_admin().  A tile a rep can tap, landing on a screen with no
+         Start button, backed by a table that would refuse the row anyway, is
+         BUG_CLASSES 16 with extra steps.  Whether a rep should be able to run a
+         walk is an RLS decision and Theo's to make; until he makes it, the door
+         matches the fence.
+
+         dbIc('camera') is reused, not added — 981's Checklists tile set the
+         precedent for that in this same menu, and Tasks/Punch/Checklists
+         already share one glyph. */
+      (isAdminUser() ? jt(dbIc('camera'), 'The Walk', '', 'walk') : '') +
     '</div>' +
     /* 849: Work Orders — the crew document. Full-width so the grid above stays
        in pairs; data-jm="workorders" rides the router's else branch to
@@ -12088,6 +12106,14 @@ function renderAcxOverview(){
       else if(act === 'tasks'){ openTasksPage(); }
       else if(act === 'docs'){ openDocsPage(); }
       else if(act === 'appts'){ openApptsPage(); }
+      /* 1076: NOT the else branch.  The Walk is not a tab on this page - it is
+         a tab inside CardinalShowcase, a full-screen view of its own.  A
+         showTab('walk') would find no pane and do nothing at all. */
+      else if(act === 'walk'){
+        if(window.CardinalShowcase && window.CardinalShowcase.openForProject){
+          window.CardinalShowcase.openForProject(pr);
+        }
+      }
       else{ showTab(act); }
     });
   });
@@ -41670,6 +41696,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:1076, d:'2026-08-26', t:'The Walk is on the job now, and the walk knows which job',
+  s:'The Walk \u2014 photograph a roof, let the AI mark what it thinks is damage, check every mark yourself, then show the homeowner \u2014 has been in the app since it was built and had one way in: the Showcase tile on the Sales Floor, and then a tab inside it you had to know was there. The database is the proof that was too far: zero walks, zero photographs, not one in two hundred and fifty builds. It is now a tile in the Job Menu on the client, beside Inspections, and it opens on that job\u2019s walk \u2014 finding it if there is one, offering to start it prefilled from the address if there is not. Second thing, and the reason the first was worth doing: the start form never wrote down which job a walk belonged to, though the database has had a column and an index for it the whole time. Every walk it made was floating free. It does now. Admin only at the moment, because the database itself refuses a walk from anybody else \u2014 that is one line of SQL to change if reps should be doing them.' },
   { b:1072, d:'2026-08-26', t:'Every AI answer records which model wrote it',
   s:'When Google\u2019s model is busy the app falls back to a smaller one. It has always done that and never once mentioned it \u2014 measured historically at about one call in four \u2014 so \u201cwhy did the AI miss that\u201d could not be answered. Every AI route now returns the model that actually answered and the one it asked for first, and the Supplement Desk and the inspection-report drafter say so \u2014 but only when they differ. On the normal path nothing changes on screen.' },
   { b:1071, d:'2026-08-26', t:'The Supplement Desk sends every photograph, and the right one',
@@ -70436,6 +70464,11 @@ function closeForm(){
   /* Belt and braces for the cancel/escape paths. Safe: savePair has already read
      pending by the time it calls this. */
   pending = null;
+  /* 1076: cleared here and NOT in saveWalk's finally, deliberately.  saveWalk
+     reaches closeForm() only on success, so a FAILED save keeps the job link
+     for the retry - and cancel, the backdrop and Escape all land here, so the
+     Showcase's own Start a walk can never inherit a job opened an hour ago. */
+  pendingProject = null;
   if(formEl) formEl.classList.remove('open');
 }
 
@@ -70734,6 +70767,23 @@ function defLabel(k){ return DEF_LABEL[k] || String(k || 'other').replace(/_/g, 
 var AI = { max: 1600, q: 0.85 };
 
 var walks = [], walksLoaded = false, curWalk = null;
+/* 1076: the job a walk is being started FOR.
+
+   The Walk's only door was the Showcase tile on Sales Floor, then a tab inside
+   a module that opens on 'showcase' - so in the ~250 builds since it shipped,
+   `walks` has 0 rows and `walk_shots` has 0 rows.  Nobody has ever reached it.
+   The job menu is where fingers already are, so that is where the door goes.
+
+   Held in module state rather than passed as an argument, deliberately: this
+   module wires `b.onclick = openWalkForm` in one place and `openJobPicker` in
+   another, and 628's comment on the second one records exactly what a
+   parameter costs here - arg 0 is a MouseEvent.  A project that is really a
+   MouseEvent would write a null project_id while looking perfectly correct,
+   which is the failure this build exists to fix.
+
+   Set by openForProject(), read by openWalkForm() and saveWalk(), cleared by
+   closeForm() and by the Showcase's own Start a walk. */
+var pendingProject = null;
 var shots = [], shotsLoaded = false;
 var review = null;      // { shot, list:[...], sel:int, note:string } while reviewing
 var jobPick = null;     // { mode, projectId, photos:[], chosen:{}, roles:{} } while picking
@@ -71761,13 +71811,27 @@ async function takeJobPhotos(){
 function openWalkForm(){
   if(!amAdmin()) return;
   ensureForm();
+  /* 1076: prefilled from the job when the job door opened this.
+     `projects` has no city column - one `address` string holds the lot -
+     so street and city are split off the commas the same way qiAddr builds one
+     back up.  Both land in EDITABLE fields: a wrong guess costs one tap, and
+     leaving them blank costs Theo typing an address the job already knows. */
+  var pp = pendingProject;
+  var _bits = String((pp && pp.address) || '').split(',')
+                .map(function(s){ return s.trim(); })
+                .filter(Boolean);
+  var pStreet = _bits.length ? _bits[0] : '';
+  var pCity   = _bits.length > 2 ? _bits[1] : '';
+  var pTitle  = pp ? [(pp.name || ''), pStreet].filter(Boolean).join(' — ') : '';
   formEl.innerHTML =
     '<div class="bx">' +
       '<h3>Start a walk</h3>' +
+      (pp ? '<p class="note">On <b>' + esc(pp.name || pStreet || 'this job') +
+            '</b>. It stays attached to that job.</p>' : '') +
       '<label>What to call it</label>' +
-      '<input type="text" data-f="title" placeholder="4212 Wilmington Pike — hail">' +
-      '<label>Address</label><input type="text" data-f="address" placeholder="4212 Wilmington Pike">' +
-      '<div class="r2"><div><label>City</label><input type="text" data-f="city" placeholder="Dayton"></div>' +
+      '<input type="text" data-f="title" value="' + esc(pTitle) + '" placeholder="4212 Wilmington Pike — hail">' +
+      '<label>Address</label><input type="text" data-f="address" value="' + esc(pStreet) + '" placeholder="4212 Wilmington Pike">' +
+      '<div class="r2"><div><label>City</label><input type="text" data-f="city" value="' + esc(pCity) + '" placeholder="Dayton"></div>' +
         '<div><label>Trade</label><select data-f="trade">' +
           TRADES.map(function(t){ return '<option value="' + t + '">' + esc(TRADE_LABEL[t]) + '</option>'; }).join('') +
         '</select></div></div>' +
@@ -71804,6 +71868,11 @@ async function saveWalk(){
     var ins = await cl.from('walks').insert({
       id:id, title:title, address:get('address') || null, city:get('city') || null,
       trade:get('trade') || null, notes:get('notes') || null,
+      /* 1076: the column has been on `walks` - with its own index - since the
+         schema shipped, and nothing has ever written it, so every walk made
+         through this form was orphaned from its job.  Measured before this
+         landed: 0 rows in `walks`, so there is nothing to backfill. */
+      project_id: (pendingProject && pendingProject.id) || null,
       created_by: who || null, published:true
     }).select('id');
     if(ins && ins.error) throw new Error(ins.error.message || 'could not save');
@@ -71868,7 +71937,13 @@ function wireWalk(){
   el.querySelectorAll('[data-act="wback"]').forEach(function(b){
     b.onclick = function(){ curWalk = null; shots = []; review = null; repaint(); };
   });
-  el.querySelectorAll('[data-act="waddwalk"]').forEach(function(b){ b.onclick = openWalkForm; });
+  /* 1076: a wrapper for the same reason 628 wrote one on waddjob, plus one
+     more.  Arg 0 is harmless here, but this button must also CLEAR any job
+     carried in from the job door - otherwise Start a walk on the Showcase
+     silently attaches the next walk to whatever job was opened an hour ago. */
+  el.querySelectorAll('[data-act="waddwalk"]').forEach(function(b){
+    b.onclick = function(){ pendingProject = null; openWalkForm(); };
+  });
   el.querySelectorAll('[data-act="wjob"]').forEach(function(b){ b.onclick = openJobPicker; });
   el.querySelectorAll('[data-act="wpub"]').forEach(function(b){ b.onclick = toggleWalkPublish; });
   el.querySelectorAll('[data-act="wdelwalk"]').forEach(function(b){ b.onclick = removeWalk; });
@@ -72421,6 +72496,44 @@ function open(opts){
   }
 }
 
+/* 1076: the door from a job.  Everything it needs already existed - the walk
+   tab, loadWalks(), loadShots(), the start form - and none of it was reachable
+   from where the work actually happens.  Extend, don't add: no second walk
+   screen, no second list, one new entry point.
+
+   No history case and no hideAllViews() entry: open() already registers
+   'showcase' with navSetView and calls hideAllViews itself.  This is a
+   different TAB of a view that is already wired, not a fifteenth view. */
+async function openForProject(pr){
+  if(!pr || !pr.id) return;
+  tab = 'walk';
+  curWalk = null; shots = []; review = null; pendingProject = null;
+  open();
+  if(!walksLoaded){
+    try{ await loadWalks(); }catch(_){ walksLoaded = true; }
+  }
+  var w = null;
+  for(var i = 0; i < walks.length; i++){
+    if(String(walks[i].project_id || '') === String(pr.id)){ w = walks[i]; break; }
+  }
+  if(w){
+    curWalk = w;
+    repaint();
+    try{ await loadShots(w.id); }catch(_){}
+    repaint();
+    return;
+  }
+  repaint();
+  /* A rep lands on the walk list, which is exactly what walks_schema.sql lets
+     them have: read published walks, write nothing.  The job-menu tile is
+     admin-gated too, so this is the belt to that brace rather than the only
+     check - and it means a rep who reaches this any other way still gets a
+     working screen rather than a form the database would refuse. */
+  if(!amAdmin()) return;
+  pendingProject = pr;
+  openWalkForm();
+}
+
 function close(goHome){
   closeForm();
   exitPresent();
@@ -72435,6 +72548,8 @@ function close(goHome){
 window.CardinalShowcase = Object.assign(window.CardinalShowcase || {}, {
   open  : open,
   close : close,
+  /* 1076: called by the job menu's The Walk tile. */
+  openForProject : openForProject,
   /* 630: OC Colors uploaded RAW camera files and the photos bucket refuses
      anything over 10 MB, so big shots failed outright and the ones that fitted
      made a 40 MB grid. This module already had the answer. Exported rather

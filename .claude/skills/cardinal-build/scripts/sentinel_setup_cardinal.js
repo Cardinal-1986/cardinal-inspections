@@ -254,7 +254,38 @@
      did nothing would hand back the landing page dressed as a feature. */
   function pause(ms) { return new Promise(function (r) { setTimeout(r, ms || 420); }); }
 
+  /* ⚠ 26 Aug 2026 (build 1076) — THE MISSING-MOCK CASE WAS SILENT, and it
+     cost a whole sweep. This file's banner warns loudly about loading the two
+     setup files in the WRONG ORDER, and seedLanded() makes that loud. It says
+     nothing about loading only ONE, which is the easier mistake to make and
+     fails in the quieter direction: without e2e_mock_supa.js the app never
+     signs in, TEAM stays false, openProject() bails, #acxMount renders zero
+     characters, and every state walks the same signed-out screen. Twenty-five
+     states, no error, a report that reads like a sweep of the app.
+
+     Every state calls leaveLanding() first, so this is the one place that
+     catches it before a single render is scored. The mock's own
+     `window.__WRITES__ = []` is the marker — it is the first thing it sets. */
+  var _mockOk = false;
+  function requireMock() {
+    if (_mockOk) return;
+    /* ⚠ Deliberately NOT latched on the first CALL, only on the first PASS.
+       The first version latched before throwing, so exactly ONE state of
+       twenty-five reported it and the other twenty-four went on to produce a
+       full, confident report of the signed-out screen. Every state must fail,
+       or the one line that told the truth is lost in the noise it caused. */
+    if (!window.__WRITES__ || typeof window.supabase === 'undefined') {
+      throw new Error(
+        'sentinel_setup_cardinal: the supabase mock did not run. --setup needs ' +
+        'BOTH files, seed first: ' +
+        'sentinel_setup_cardinal.js,e2e_mock_supa.js — without the mock every ' +
+        'state sweeps the signed-out screen and the report means nothing.');
+    }
+    _mockOk = true;
+  }
+
   function leaveLanding() {
+    requireMock();
     ['landingView', 'loginView'].forEach(function (id) {
       var e = document.getElementById(id);
       if (e) { e.style.display = 'none'; if (e.classList) e.classList.remove('open'); }
