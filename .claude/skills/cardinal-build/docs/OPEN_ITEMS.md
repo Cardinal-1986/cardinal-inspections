@@ -4,14 +4,14 @@
 
 ## Layer: 26 Aug 2026 — the app-wide polish pass (Theo: "1-3 then 4-5")
 
-His list, in his order. **1 and 2 are shipped; 3 is next.**
+His list, in his order. **1 (half), 2 and 4 shipped; 3 and 5 closed as false positives.**
 
 | # | item | state |
 |---|---|---|
 | 1 | replace `alert()` / `confirm()` with in-app feedback | ⚠️ **half done — build 1080.** 289 `alert()` calls routed to the app's own toast. **The 92 `confirm()` calls are NOT done** — see below |
 | 2 | lift every font size under 11px | ✅ **build 1081.** 519 declarations, both forms |
 | 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ❌ **CLOSED — all three parts are FALSE POSITIVES. Do not build it.** See below |
-| 4 | distinct icons in the Job Menu | ⏳ Tasks/Punch Outs/Checklists share one glyph; Documents/Contracts share a folder; Photos/The Walk share a camera |
+| 4 | distinct icons in the Job Menu | ✅ **build 1082** — plus the ink, which was the bigger defect |
 | 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ❌ **CLOSED — FALSE POSITIVE, measured.** Renders **183 × 44**. See below |
 
 ### ❌ Item 3 is a FALSE POSITIVE in all three parts — audited 26 Aug, do NOT build it
@@ -93,6 +93,23 @@ hidden-element reading. *This is why the item said "NOT confirmed": a flag is no
 half of the rule does not win. **Zero user impact** — the button is 183px wide on its own —
 and chasing it would be a fourth false positive in one session. Recorded here so the next
 person measuring it knows it was seen and judged, not missed.
+
+### ✅ Item 4 shipped as build 1082 — and the ink was the real defect
+
+Theo picked **B** for the ink and **1 / 1 / 1 / 1** for the glyphs.
+
+⚠️ **The collision he asked about was the smaller half.** Every glyph in the menu computed at
+**1.52:1**: `.dbic2` (the 15 drawn icons, 3.0:1 floor) *and* `.dbic1` (the `$` and `%` on the
+money rows, which is **TEXT** and held to 4.5:1). Both carried `color:#23507e`, a steel blue
+picked for a **white** tile. Now `var(--rbe-ink,#cfd6df)` — an existing pair that flips by
+itself. **8.67:1 worst, both floors.**
+
+**Do not re-flag:** `body.claim-insurance .dbrow .dbic1` and `body.claim-insurance .jabox svg`
+keep their own red — more specific, deliberately untouched, asserted by `gate_1082`.
+
+**Four new DB_ICONS keys:** `punch`, `checklist`, `walk`, `contract`. **15 distinct glyphs
+across 15 tiles.** Build 981's comment saying *"DB_ICONS has no checklist key"* was rewritten
+in the same edit — it is no longer true.
 
 ### ⏳ Needs Theo — the `confirm()` sheet wants a look before it is built
 

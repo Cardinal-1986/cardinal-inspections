@@ -27266,3 +27266,67 @@ Nothing got smaller. Nothing at or above 11px moved — asserted per size, not i
   as BUG_CLASSES 69 (a `--since` key carrying something that legitimately moves). The key
   is deliberately left alone: it was changed once already this session to close a
   different false positive, and one observation is not enough to justify churning it back.
+
+## Build 1082 — the Job Menu, readable and told apart
+
+Theo's polish item 4, and it turned up a bigger defect than the one he asked about.
+His picks, verbatim: **"B, 1, 1,1,1"**. `index.html` only. No SQL.
+
+### 1 · Every glyph in the Job Menu computed at 1.52:1
+
+⚠️ **THE RECURRING ONE, an eighth time.** Both glyph classes carried
+`color:#23507e` — a steel blue chosen for a **white** tile, where it scores 7.98:1.
+The tile went dark and the ink never followed. Insurance sets its own icon colour, so
+retail dark quietly inherited the light-era one.
+
+⚠️ **TWO classes, two different floors, and a sweep of one misses the other.**
+
+| class | what | floor | was |
+|---|---|---:|---|
+| `.dbic2` | the 15 drawn SVG icons | 3.0:1 (graphical) | **1.52:1** |
+| `.dbic1` | the `$` and `%` on the money rows | **4.5:1 (it is TEXT)** | **1.52:1** |
+
+**`.dbic1` is the worse half and `.jabox svg` does not see it.** The first probe measured
+only the SVGs and would have shipped a half-fix; extending it to `.dbic1` turned 16 findings
+into 18. *Ask what the other form looks like — the same rule that cost build 1081.*
+
+**Theo picked B: `--rbe-ink`** (`#cfd6df` dark / `#161616` light) — an existing token pair,
+so it flips by itself and cannot drift, and the icons now match the label beside them.
+Measured after: **8.67:1 worst on both floors**, and it clears on every ground the glyph can
+land on including Community's `--ccm-card` (#161918 → 12.09:1).
+
+### 2 · Seven tiles shared three glyphs
+
+15 tiles, 11 glyphs: `tasks` ×3, `camera` ×2, `docs` ×2. ⚠️ **The Checklists one was
+deliberate** — build 981 recorded it in a comment (*"DB_ICONS has no checklist key; dbIc('tasks')
+is the clipboard Punch Outs already reuses"*). **That comment is now false and was rewritten in
+the same edit** — a stale comment sends the next reader hunting for a key that exists.
+
+Four new keys: `punch` (hammer), `checklist` (ticks beside lines), `walk` (house under a lens),
+`contract` (page with a pen). **15 distinct glyphs across 15 tiles**, asserted by comparing
+rendered path data.
+
+⚠️ **Twelve candidates were drawn and four were dropped**, each killed by the only test that
+matters — rendered at 21px *beside the glyph it must differ from*. A big tick read as Tasks;
+a camera-with-ring read as Photos; a signature squiggle vanished and read as Estimates; a
+clipboard-with-! kept the collision it was meant to fix. *"Is it a nice icon" is the wrong
+question.*
+
+### Gates
+
+- `check_build.py` **GREEN** 1081 → 1082, byte-reproducible.
+- `gate_1082.mjs` **10/10**, and **RED on 1081 with five defect statements**, including
+  `C2 → 4 pair(s): Tasks = Punch Outs · Documents = Contracts · Tasks = Checklists ·
+  Photos = The Walk` — the control enumerates exactly the four collisions.
+- ⚠️ **Three of my own assertions failed CORRECT code, all the same fault: scope.**
+  - `src.count("punch:'") == 1` — `punch:'Punch-outs'` already exists in a stage-label map,
+    and `walk:'` sits inside a `console.warn` string. Re-scoped to the brace-matched
+    `DB_ICONS` block.
+  - `'body.claim-insurance .dbic1{…}'` — the real selector carries `.dbrow`. Typed from
+    memory instead of read.
+  - `document.querySelectorAll('.jabox')` — `#inspGalBox` in `#tab-inspections` is also a
+    `.jabox` with a `.dbic2` camera: a **0×0** gallery box on an inactive tab where sharing
+    the camera is *correct*. It reported a 16th tile and a false duplicate. Scoped to
+    `.jabox[data-jm]`, the attribute `jt()` stamps on every real menu tile.
+- ⚠️ **A1's failure message echoed its success text**, so a red line read like a pass. Fixed
+  to name which class still hardcodes the steel.

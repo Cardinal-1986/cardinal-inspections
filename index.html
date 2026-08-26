@@ -2120,8 +2120,8 @@ body.restoring #restoreVeil{display:flex;}
   font:800 30px/1 'Segoe UI',Arial,sans-serif;cursor:pointer;opacity:.92;padding:0;}
 .dbstgarr:active{opacity:.6;}
 .dbstgarr.ghost{visibility:hidden;}
-.dbic2{width:21px;height:21px;flex:0 0 auto;color:#23507e;}
-.dbic1{flex:0 0 auto;width:22px;text-align:center;color:#23507e;font:800 21px 'Segoe UI',Arial,sans-serif;}
+.dbic2{width:21px;height:21px;flex:0 0 auto;color:var(--rbe-ink,#cfd6df);}
+.dbic1{flex:0 0 auto;width:22px;text-align:center;color:var(--rbe-ink,#cfd6df);font:800 21px 'Segoe UI',Arial,sans-serif;}
 .dbmoney{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;border:1px solid #ddd6cf;
   border-radius:8px;padding:14px 14px;margin-bottom:12px;}
 .dbmoney > span{min-width:0;}
@@ -3852,7 +3852,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1081 &#8212; Nothing in the app is set smaller than 11px any more. Two hundred and eighty-nine messages &#8212; every &#8220;pick a client first&#8221;, every &#8220;could not save&#8221; &#8212; used to arrive as the grey box headed &#8220;app.cardinalroster.com says&#8221;, which is the one thing that made this look like a website instead of an app. They now come up as the same slim card the rest of the app already used. Warnings stay on screen until you dismiss them, exactly like the old boxes did. Nothing else changed.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1082 &#8212; The Job Menu icons can be seen, and no two of them are the same. Two hundred and eighty-nine messages &#8212; every &#8220;pick a client first&#8221;, every &#8220;could not save&#8221; &#8212; used to arrive as the grey box headed &#8220;app.cardinalroster.com says&#8221;, which is the one thing that made this look like a website instead of an app. They now come up as the same slim card the rest of the app already used. Warnings stay on screen until you dismiss them, exactly like the old boxes did. Nothing else changed.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11882,7 +11882,11 @@ var DB_ICONS = {
   phone:'M6.6 10.8a15 15 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25c1.1.37 2.3.57 3.6.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.3.2 2.5.57 3.6a1 1 0 0 1-.25 1l-2.22 2.2z',
   text:'M3 4.5A1.5 1.5 0 0 1 4.5 3h15A1.5 1.5 0 0 1 21 4.5v10a1.5 1.5 0 0 1-1.5 1.5H9.4L3 21V4.5zm4.5 4.2a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm4.5 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6zm4.5 0a1.3 1.3 0 1 0 0 2.6 1.3 1.3 0 0 0 0-2.6z',
   mail:'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 7L4 6v2l8 5 8-5V6l-8 5z',
-  workorder:'M6 13a6 6 0 0 1 12 0v.6H6V13z M3.4 14.6h17.2a1 1 0 0 1 0 2H3.4a1 1 0 0 1 0-2z'
+  workorder:'M6 13a6 6 0 0 1 12 0v.6H6V13z M3.4 14.6h17.2a1 1 0 0 1 0 2H3.4a1 1 0 0 1 0-2z',
+  punch:'M13.1 2.6l2.6 2.6-1.7 1.7 1.3 1.3 1.7-1.7 2.6 2.6-1.7 1.7 1.3 1.3-2.2 2.2-8.6-8.6L10.6 3.4l1.3 1.3 1.2-2.1zM9.1 10.9l4 4-6.3 6.3a1.9 1.9 0 0 1-2.7-2.7l5-7.6z',
+  checklist:'M3.2 5.6l1.5 1.5 3-3 1.3 1.3-4.3 4.3L2 7 3.2 5.6zM11.5 6.2h9.6v2h-9.6V6.2zM3.2 12.1l1.5 1.5 3-3 1.3 1.3-4.3 4.3L2 13.5l1.2-1.4zM11.5 12.7h9.6v2h-9.6v-2zM3.2 18.6l1.5 1.5 3-3 1.3 1.3-4.3 4.3L2 20l1.2-1.4zM11.5 19.2h9.6v2h-9.6v-2z',
+  walk:'M12 2.5L2.6 10.1l1.3 1.6L5 10.8v8.4A1.8 1.8 0 0 0 6.8 21h10.4a1.8 1.8 0 0 0 1.8-1.8v-8.4l1.1.9 1.3-1.6L12 2.5zm-.3 6.1a3.9 3.9 0 0 1 3 6.4l2.4 2.4-1.4 1.4-2.4-2.4a3.9 3.9 0 1 1-1.6-7.8zm0 2a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8z',
+  contract:'M6 2h7.2L19 7.8v3.4l-2 2V9h-5V4H7v16h5.6l-.4 2H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM8.5 10.4h5v1.7h-5v-1.7zm0 3.4h4v1.7h-4v-1.7zm12.2-.7l1.6 1.6a.8.8 0 0 1 0 1.1l-1.2 1.2-2.7-2.7 1.2-1.2a.8.8 0 0 1 1.1 0zm-2.4 2.4l2.7 2.7-5.4 5.4H13v-2.7l5.3-5.4z'
 };
 function dbIc(n){
   return '<svg class="dbic2" viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" ' +
@@ -12021,10 +12025,10 @@ function renderAcxOverview(){
          the exact trap 604 was about. 607 also removed the overview card, so
          punch had no reachable entry point at all. data-jm="punch" falls through
          the router's else branch to showTab('punch'), which 607 already wired. */
-      jt(dbIc('tasks'), 'Punch Outs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
+      jt(dbIc('punch'), 'Punch Outs', (function(){ var c = punchOpenCount(pr); return c === '' ? '\u2026' : c; })(), 'punch', 'dbPunchN') +
       /* 652: the tab always existed; the menu is where fingers go.
          'contracts' rides the router's else-branch to showTab, like punch. */
-      jt(dbIc('docs'), 'Contracts', '', 'contracts') +
+      jt(dbIc('contract'), 'Contracts', '', 'contracts') +
     '</div><div class="jaboxrow">' +
       jt(dbIc('insp'), 'Inspections', inspN, 'inspections') +
       jt(dbIc('orders'), 'Orders', '', 'materials') +
@@ -12035,10 +12039,10 @@ function renderAcxOverview(){
          the card alone — retail gains a tile it did not have, and the two
          menus stay one list, which is the whole point of this build.
          'checklists' rides the router's else-branch to showTab('checklists'),
-         a tab that already exists, so nothing else moves. DB_ICONS has no
-         checklist key; dbIc('tasks') is the clipboard Punch Outs already
-         reuses. */
-      jt(dbIc('tasks'), 'Checklists', '', 'checklists') +
+         a tab that already exists, so nothing else moves. 1082 gave it its own key: DB_ICONS.checklist,
+         ticks beside lines. Until then it borrowed dbIc('tasks'), the
+         clipboard Punch Outs also reused — a known compromise, now closed. */
+      jt(dbIc('checklist'), 'Checklists', '', 'checklists') +
       /* 1076: The Walk.  It goes in THIS row rather than a row of its own
          because Checklists already wraps alone into a two-column grid, so the
          admin tile fills a hole that is there today rather than opening a new
@@ -12056,7 +12060,7 @@ function renderAcxOverview(){
          dbIc('camera') is reused, not added — 981's Checklists tile set the
          precedent for that in this same menu, and Tasks/Punch/Checklists
          already share one glyph. */
-      (isAdminUser() ? jt(dbIc('camera'), 'The Walk', '', 'walk') : '') +
+      (isAdminUser() ? jt(dbIc('walk'), 'The Walk', '', 'walk') : '') +
     '</div>' +
     /* 849: Work Orders — the crew document. Full-width so the grid above stays
        in pairs; data-jm="workorders" rides the router's else branch to
@@ -41804,6 +41808,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:1082, d:'2026-08-26', t:'The Job Menu, readable and told apart',
+  s:'Every icon on the job menu was painted a steel blue that had been chosen years ago for a white tile. The tile is black now. Against it those icons scored 1.52 to 1, where anything below 3 to 1 counts as unreadable \u2014 and the little $ and % marks on the money rows are text, which is held to an even higher bar. They are now the same colour as the words beside them, in both the dark and the light theme. Separately, seven of the fifteen tiles were sharing three icons: Tasks, Punch Outs and Checklists were one clipboard; Photos and The Walk were one camera; Documents and Contracts were one folder. Punch Outs is a hammer, Checklists is a ticked list, The Walk is a house under a lens, and Contracts is a page with a pen.' },
   { b:1081, d:'2026-08-26', t:'Nothing is smaller than 11px',
   s:'Five hundred and nineteen places in this app set type below 11px \u2014 some of it as small as 6.5px. Labels, chips, table headings, timestamps, the little counts on tabs, the money captions. It read fine on a desk monitor and it did not read at all on a phone, on a roof, in daylight. Every one of them is now 11px, which is the smallest size Apple\u2019s own interface uses for a caption. Nothing got smaller and nothing above 11px moved. Printed documents are unaffected \u2014 they size in points, not pixels, and this pass never looked at them.' },
   { b:1080, d:'2026-08-26', t:'No more browser pop-ups',
