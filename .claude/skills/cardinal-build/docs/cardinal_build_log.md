@@ -26185,6 +26185,31 @@ now asserts `index.html` exists at the path it computed.
 **CI gates it.** `migration_manifest.py --check` fails if a `.sql` is added without regenerating.
 Proved by adding a throwaway `.sql` and watching it go red.
 
+### ⚠ …and that gate then went red on CI, on a tree nobody had touched
+
+**The manifest sorted by a git date, and CI clones SHALLOW.** `actions/checkout`
+defaults to depth 1, so every file looks like it was added by the single commit that
+exists and they all share its date — a date-keyed sort then reorders 26 rows against the
+committed file. Red on `de4db1d` and `0c50c55`, both docs-only.
+
+**Reproduced before fixing, and the first hypothesis was WRONG.** I assumed a shallow
+clone would see *no* adds; `git clone --depth 1` locally showed it sees **all 84**, with
+the wrong date. Assuming would have produced a wrong fix.
+
+Two changes:
+
+- **The sort key drops the date** — build number, then filename. Both come from the
+  working tree, so every clone sorts identically.
+- **The "first commit that added this file" table is GONE, deliberately.** It was
+  fiction. *This dev container's own clone is shallow too* — 72 commits, `.git/shallow`
+  present — so those dates never agreed with anything, and because they looked precise
+  they were worse than a gap. Squash-merging would have made them useless even with
+  full history. The build-log column, which is what the ordering actually rests on, is
+  derived entirely from the working tree.
+
+**Proved both directions after the fix**: still RED on a throwaway `.sql`, and GREEN in
+a real `--depth 1` clone — the exact CI condition.
+
 ### One security item found while collecting environment-variable NAMES
 
 `api/notify.js` carries a **hardcoded VAPID private key** as a last-resort fallback (build 612,

@@ -6,7 +6,6 @@ Writes MIGRATIONS.md at the repo root.  Every column below is MEASURED:
   · shipped at    — the LOWEST build number that names this file in
                     cardinal_build_log.md.  That is the honest ordering signal;
                     see the caveat the generated file carries about git dates.
-  · git added     — first commit that added the file, and its subject.
   · replayable    — does every statement guard itself (if not exists /
                     if exists / or replace / on conflict)?
   · destructive   — does it drop, delete, truncate or alter-drop anything?
@@ -75,20 +74,6 @@ if os.path.isdir(DOCDIR):
 def docs_naming(fname):
     return [n for n, body in DOCS.items() if fname in body]
 
-# ── git: first commit that added each file ──────────────────────────────────
-raw = sh('git', 'log', '--reverse', '--diff-filter=A',
-         '--format=\x01%H|%aI|%s', '--name-only', '--', '*.sql')
-added = {}
-for chunk in raw.split('\x01'):
-    if not chunk.strip():
-        continue
-    head, *rest = chunk.split('\n')
-    sha, date, subj = head.split('|', 2)
-    for f in rest:
-        f = f.strip()
-        if f.endswith('.sql') and '/' not in f and f not in added:
-            added[f] = (date[:10], sha[:8], subj)
-
 GUARDED = re.compile(r'if\s+not\s+exists|if\s+exists|or\s+replace|on\s+conflict', re.I)
 DESTRUCT = re.compile(r'\bdrop\s+(table|column|schema)\b|\bdelete\s+from\b|\btruncate\b|'
                       r'\balter\s+table\s+\S+\s+drop\b', re.I)
@@ -104,12 +89,23 @@ for f in files:
     dest = bool(DESTRUCT.search(body))
     guarded = bool(GUARDED.search(body))
     bs = builds_naming(f)
-    d, sha, subj = added.get(f, ('?', '?', '(not in git log)'))
-    rows.append(dict(file=f, builds=bs, date=d, sha=sha, subj=subj,
-                     stmts=len(stmts), destructive=dest, guarded=guarded,
-                     docs=docs_naming(f)))
+    rows.append(dict(file=f, builds=bs, stmts=len(stmts),
+                     destructive=dest, guarded=guarded, docs=docs_naming(f)))
 
-rows.sort(key=lambda r: (r['builds'][0] if r['builds'] else 10**9, r['date'], r['file']))
+# ⚠ The sort key deliberately does NOT include the git date, and that cost a red
+# CI run. actions/checkout does a DEPTH-1 clone: every file then looks like it
+# was added by the one commit that exists, so they all share ITS date, and a
+# date-keyed sort reorders 26 rows against the committed file. The check failed
+# on a tree nobody had touched.
+#
+# Reproduced before it was fixed — my first guess (that a shallow clone sees no
+# adds at all) was WRONG; it sees all 84, with the wrong date. Assuming would
+# have produced a wrong fix.
+#
+# It was also inconsistent with this file's own warning that the git date means
+# nothing here. Build number, then filename: both are in the working tree, so
+# every clone sorts identically.
+rows.sort(key=lambda r: (r['builds'][0] if r['builds'] else 10**9, r['file']))
 
 n_dest = sum(1 for r in rows if r['destructive'])
 n_unlogged = sum(1 for r in rows if not r['builds'])
@@ -165,13 +161,16 @@ md.append('There is no verified fresh-database bootstrap, and this file does not
           'non-destructive files in the order above, skip every **DESTRUCTIVE** row, then diff the '
           'result against production’s schema. Until that has actually been done once and the '
           'result recorded here, treat a rebuild as untested.\n')
-md.append('## Git, for what it is worth\n')
-md.append('| file | first commit | date | commit subject |')
-md.append('|---|---|---|---|')
-for r in rows:
-    md.append('| `%s` | `%s` | %s | %s |'
-              % (esc(r['file']), r['sha'], r['date'], esc(r['subj'][:80])))
-md.append('')
+# ⚠ THERE IS NO "first commit that added this file" TABLE, and its absence is
+# deliberate. An earlier revision had one. It was fiction: this repo is cloned
+# SHALLOW in CI (actions/checkout defaults to depth 1) and shallow in the dev
+# container too (72 commits), so `git log --diff-filter=A` reports every file as
+# added by whichever commit the clone happens to start at. The dates agreed with
+# nothing, and because they LOOKED precise they were more misleading than a gap.
+# Squash-merging would have made them useless even with full history.
+#
+# The build-log column above is derived entirely from the working tree, so every
+# clone computes it identically and --check is a real gate everywhere.
 text = '\n'.join(md)
 
 if '--check' in sys.argv:

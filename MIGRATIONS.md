@@ -80,122 +80,33 @@ python3 .claude/skills/cardinal-build/scripts/migration_manifest.py
 | 56 | 1056 | `claim_chase.sql` | 4 | ✅ | — | FEATURES.md |
 | 57 | — | `companycam_caption_sample.sql` | 8 | ✅ | — | **NOTHING** |
 | 58 | — | `companycam_projects.sql` | 10 | ✅ | — | FEATURES.md, HANDOFF.md |
-| 59 | — | `design_jobs_achieved.sql` | 2 | ✅ | — | **NOTHING** |
-| 60 | — | `is_staff_policies.sql` | 18 | ✅ | **⚠ YES** | **NOTHING** |
-| 61 | — | `library_counties_entry.sql` | 1 | — | — | **NOTHING** |
-| 62 | — | `materials_cardinal_brands.sql` | 1 | ✅ | — | **NOTHING** |
-| 63 | — | `materials_carvedwood_from_matrix.sql` | 5 | ✅ | **⚠ YES** | **NOTHING** |
-| 64 | — | `materials_mastic_carvedwood.sql` | 1 | — | — | **NOTHING** |
-| 65 | — | `materials_pgpm_trim_coil_gutters.sql` | 3 | ✅ | — | **NOTHING** |
-| 66 | — | `oc_color_wall_fix.sql` | 3 | ✅ | — | **NOTHING** |
-| 67 | — | `oc_colors.sql` | 24 | ✅ | — | **NOTHING** |
-| 68 | — | `oc_colors_from_designer_datasheet.sql` | 2 | — | — | **NOTHING** |
-| 69 | — | `oc_colors_from_duration_datasheet.sql` | 2 | — | — | **NOTHING** |
-| 70 | — | `oc_colors_from_style_board_guide.sql` | 1 | — | — | **NOTHING** |
-| 71 | — | `oc_colors_last_three_from_style_boards.sql` | 1 | — | — | **NOTHING** |
-| 72 | — | `oc_colors_swatch_path.sql` | 3 | ✅ | — | **NOTHING** |
-| 73 | — | `oc_evergreen_mist_from_coty_sheet.sql` | 1 | — | — | **NOTHING** |
-| 74 | — | `showcase_pairs.sql` | 21 | ✅ | — | CLAUDE.md |
-| 75 | — | `studio_findings.sql` | 14 | ✅ | — | BUG_CLASSES.md, OPEN_ITEMS.md |
-| 76 | — | `studio_media.sql` | 42 | ✅ | **⚠ YES** | **NOTHING** |
-| 77 | — | `studio_photos.sql` | 5 | ✅ | — | CLAUDE.md, OPEN_ITEMS.md |
-| 78 | — | `studio_private_objects_rls.sql` | 20 | ✅ | — | CLAUDE.md |
-| 79 | — | `visualizer_materials_seed.sql` | 1 | ✅ | — | **NOTHING** |
-| 80 | — | `visualizer_schema.sql` | 49 | ✅ | **⚠ YES** | **NOTHING** |
-| 81 | — | `workmanship_pairs.sql` | 20 | ✅ | — | CLAUDE.md |
-| 82 | — | `dhrn_partner_name.sql` | 1 | — | — | OPEN_ITEMS.md |
-| 83 | — | `delete_empty_test_claims.sql` | 2 | — | **⚠ YES** | **NOTHING** |
-| 84 | — | `revoke_anon_objection_rpcs.sql` | 4 | — | — | **NOTHING** |
+| 59 | — | `delete_empty_test_claims.sql` | 2 | — | **⚠ YES** | **NOTHING** |
+| 60 | — | `design_jobs_achieved.sql` | 2 | ✅ | — | **NOTHING** |
+| 61 | — | `dhrn_partner_name.sql` | 1 | — | — | OPEN_ITEMS.md |
+| 62 | — | `is_staff_policies.sql` | 18 | ✅ | **⚠ YES** | **NOTHING** |
+| 63 | — | `library_counties_entry.sql` | 1 | — | — | **NOTHING** |
+| 64 | — | `materials_cardinal_brands.sql` | 1 | ✅ | — | **NOTHING** |
+| 65 | — | `materials_carvedwood_from_matrix.sql` | 5 | ✅ | **⚠ YES** | **NOTHING** |
+| 66 | — | `materials_mastic_carvedwood.sql` | 1 | — | — | **NOTHING** |
+| 67 | — | `materials_pgpm_trim_coil_gutters.sql` | 3 | ✅ | — | **NOTHING** |
+| 68 | — | `oc_color_wall_fix.sql` | 3 | ✅ | — | **NOTHING** |
+| 69 | — | `oc_colors.sql` | 24 | ✅ | — | **NOTHING** |
+| 70 | — | `oc_colors_from_designer_datasheet.sql` | 2 | — | — | **NOTHING** |
+| 71 | — | `oc_colors_from_duration_datasheet.sql` | 2 | — | — | **NOTHING** |
+| 72 | — | `oc_colors_from_style_board_guide.sql` | 1 | — | — | **NOTHING** |
+| 73 | — | `oc_colors_last_three_from_style_boards.sql` | 1 | — | — | **NOTHING** |
+| 74 | — | `oc_colors_swatch_path.sql` | 3 | ✅ | — | **NOTHING** |
+| 75 | — | `oc_evergreen_mist_from_coty_sheet.sql` | 1 | — | — | **NOTHING** |
+| 76 | — | `revoke_anon_objection_rpcs.sql` | 4 | — | — | **NOTHING** |
+| 77 | — | `showcase_pairs.sql` | 21 | ✅ | — | CLAUDE.md |
+| 78 | — | `studio_findings.sql` | 14 | ✅ | — | BUG_CLASSES.md, OPEN_ITEMS.md |
+| 79 | — | `studio_media.sql` | 42 | ✅ | **⚠ YES** | **NOTHING** |
+| 80 | — | `studio_photos.sql` | 5 | ✅ | — | CLAUDE.md, OPEN_ITEMS.md |
+| 81 | — | `studio_private_objects_rls.sql` | 20 | ✅ | — | CLAUDE.md |
+| 82 | — | `visualizer_materials_seed.sql` | 1 | ✅ | — | **NOTHING** |
+| 83 | — | `visualizer_schema.sql` | 49 | ✅ | **⚠ YES** | **NOTHING** |
+| 84 | — | `workmanship_pairs.sql` | 20 | ✅ | — | CLAUDE.md |
 
 ## Rebuilding from empty
 
 There is no verified fresh-database bootstrap, and this file does not claim one. What it gives you is the order to work in and the list to skip. To build one: run the non-destructive files in the order above, skip every **DESTRUCTIVE** row, then diff the result against production’s schema. Until that has actually been done once and the result recorded here, treat a rebuild as untested.
-
-## Git, for what it is worth
-
-| file | first commit | date | commit subject |
-|---|---|---|---|
-| `companycam_index.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `companycam_search.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `estimates_delete_policy.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `estimates_update_policy.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `walks_schema.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_objects_rls.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `punch_comments.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `itel_register.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_color_covers.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_colors_hidden.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_coty_year.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_discontinued_fix.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_peppercorn.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_williamsburg_gray.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_archive.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_site_facets.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_tag_repair.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_color_covers_set.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_tray.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_tray_bucket.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_tray_bins.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `photos_bucket_pdf.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `insurance_claim_backfill.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `commission_system.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `crews_schema.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `commission_finance_source.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `insurance_claims_coverage_cols.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `insurance_claims_ord_law_basis.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `insurance_claims_ord_law_bc_totals.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `scope_reads.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `supplement_desk.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `code_letters.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `supplement_mirror_tiebreak.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `contracts_lifecycle_policy.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `design_renders.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `punch_steps.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `design_jobs_engine.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `crew_work_orders_add_superseded_status.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `punch_scheduled_time.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `owner_console_schema.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `owner_reminders_schema.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `owner_ledger_schema.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `owner_vault_schema.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `owner_vault_storage.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `sales_floor_objections_928.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `project_po_sequence_934.sql` | `b0b37439` | 2026-08-19 | Build 934 — Job numbers move to the database; the last created_by-as-rep site (# |
-| `punch_visits_940.sql` | `4d80678f` | 2026-08-20 | Build 940 — check in and check out on a repair (#437) |
-| `itel_project_link.sql` | `2a59b28e` | 2026-08-22 | Builds 995–1003 — the audit follow-up batch (#473) |
-| `appointments_shared_calendar.sql` | `2a59b28e` | 2026-08-22 | Builds 995–1003 — the audit follow-up batch (#473) |
-| `estimates_dangling_docids.sql` | `ec9e2d6a` | 2026-08-23 | Build 1014 — six fixes closing out the 23 Aug audit (#480) |
-| `drop_manual_estimates.sql` | `c119087b` | 2026-08-23 | Builds 1025–1030 — the manual-estimates arc: audit findings built (A–F, Theo's p |
-| `drop_ai_estimates.sql` | `e4638a2b` | 2026-08-23 | Builds 1032–1035 — post-merge batch: light inks, the AI arm deleted, the dropped |
-| `fix_onhold_stage_since.sql` | `e4638a2b` | 2026-08-23 | Builds 1032–1035 — post-merge batch: light inks, the AI arm deleted, the dropped |
-| `photos_upload_prefix_exclusions.sql` | `e03195c6` | 2026-08-23 | Audit 2026-08-23 — all 17 findings closed (builds 1015–1023 + 2 RLS migrations a |
-| `team_profiles_self_edit.sql` | `e03195c6` | 2026-08-23 | Audit 2026-08-23 — all 17 findings closed (builds 1015–1023 + 2 RLS migrations a |
-| `claim_chase.sql` | `aeca770e` | 2026-08-24 | Builds 1055–1056 — the Desk's evidence table, then the chase clock (#489) |
-| `companycam_caption_sample.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `companycam_projects.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `design_jobs_achieved.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `is_staff_policies.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `library_counties_entry.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `materials_cardinal_brands.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `materials_carvedwood_from_matrix.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `materials_mastic_carvedwood.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `materials_pgpm_trim_coil_gutters.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_color_wall_fix.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_colors.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_colors_from_designer_datasheet.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_colors_from_duration_datasheet.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_colors_from_style_board_guide.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_colors_last_three_from_style_boards.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_colors_swatch_path.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `oc_evergreen_mist_from_coty_sheet.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `showcase_pairs.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_findings.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_media.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_photos.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `studio_private_objects_rls.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `visualizer_materials_seed.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `visualizer_schema.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `workmanship_pairs.sql` | `15d452e8` | 2026-08-19 | Build 933 — CompanyCam keeps itself up to date (#431) |
-| `dhrn_partner_name.sql` | `2e586101` | 2026-08-21 | Builds 976–978 — tarps, the waitlist, and two more doors onto the punch composer |
-| `delete_empty_test_claims.sql` | `2cd473a6` | 2026-08-25 | Builds 1062–1064 — the stale-job caller, the landing screenshot, the audit, and  |
-| `revoke_anon_objection_rpcs.sql` | `171610ba` | 2026-08-25 | Items 1–3 — the anon RPCs closed, the chase nudge, and the Desk reads photograph |
