@@ -91,6 +91,31 @@ The build workflow lives in `.claude/skills/cardinal-build/SKILL.md`. It trigger
 
 **The span with no narrative record anywhere in the doc set is still roughly 468–542, and that is now the ONLY gap.** Everything from 543 to 836 is in `cardinal_build_log.md`.
 
+⚠️ **CORRECTION 26 Aug 2026 — that span is NOT lost, and the branch holding it was one
+`git push --delete` from gone.** `main` carries **74** commits, because every PR is
+squash-merged. The branch **`claude/ai-can-build-584` carries 787**, and 468–542 is among
+them — 536 the left-nav rebuild, 539 literal-yellow Landing, 540 the money circle, 541 the
+contracts tab, 542 the roofing Construction Agreement, 544–545 the obsidian tiles, 547–554
+the Crews arc. **It is the commit-by-commit lineage of builds ~1–584 and it exists nowhere
+else.**
+
+**Every signal about that branch points the wrong way.** `git merge-base origin/main
+7a1d904` returns **empty** — no common ancestor, because main's history was rewritten
+beneath it — so it is unmergeable by construction, and its name reads like abandoned
+feature work. Both readings say "delete me". **It exists to be read, not landed.** I
+recommended deleting it, was wrong, and found out only by checking what was on it first.
+
+⚠️ **`aeac5e5` lives on that branch and is NOT reachable from `main`** — verified with
+`git merge-base --is-ancestor aeac5e5 origin/main`, which returns false. That is the tree
+this file cites four times and `scripts/measure_counts.py` names in its own header as its
+negative control. **A sweep of every SHA cited in the doc set found ~75 that are not
+ancestors of main.** Most survive through GitHub's permanent `refs/pull/N/head` refs — but
+that is GitHub's retention policy doing the work, not anything in this repo.
+
+**The fix needs Theo: a session token can push branches but not tags (HTTP 403, retried).**
+The two tags are authored and the commands are in `OPEN_ITEMS.md`. Until they exist on the
+remote, **the branch is the preservation mechanism — do not delete it.**
+
 ⚠️ **The build log's heading levels are inconsistent and a header grep will lie to you.** 543–684 and 827–836 use `## Build NNN`; **685–826 mostly use `## build NNN` (lowercase), a `### NNN —` sub-head, or a bold `**NNN**` bullet inside a span write-up** (766–772, 809–818 and the Community port are all written as spans). A grep for `^## Build` finds 684 then jumps to 827 and reads like 142 missing builds. They are all there. **Grep case-insensitively, and for the number rather than the word.**
 
 **Every doc states the build it was worked forward to.** That stamp stays true forever; the table above says whether it is still current. This file has twice been found making a *stale claim about staleness* — asserting `START_HERE.md` said 427 when it said 467, then calling the whole set two sessions behind after most of it had been updated. **Re-check the table before repeating any claim in it, including this one.**

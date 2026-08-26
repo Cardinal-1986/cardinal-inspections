@@ -3793,3 +3793,95 @@ narrative, not prescriptive, and was read as prescriptive.
 **The general rule:** when a harness subtracts a baseline, decide per finding-type
 whether the baseline can legitimately excuse it. *Did-not-run* can never be excused
 by *did-not-run last time either*.
+
+---
+
+## Class 72 — `pgrep -f` matches the WATCHER'S OWN command line, so a wait-loop can never succeed (26 Aug 2026, build 1083)
+
+The mirror image of class 37 and of this file's standing "a check that cannot fail":
+**a check that cannot SUCCEED.** Same root — an assertion nobody ever watched fire.
+
+The sentinel for 1083 finished, wrote `SENTINEL CLEAN — 75 render(s)`, and nobody found
+out for ~20 minutes, because the background waiter armed to report it was this:
+
+```bash
+until [ -s "$LOG" ] && ! pgrep -f "sentinel.js .*index_v1083"; do sleep 5; done
+```
+
+**`pgrep -f` matches full command lines, and the pattern is sitting inside the very bash
+process running the grep.** So `pgrep` always found at least one match — itself — `! pgrep`
+was permanently false, and the loop ran until it was killed by hand.
+
+⚠️ **The second-order damage is worse than the wasted wait: it produced a confident WRONG
+STATUS REPORT.** A plain `pgrep -f "sentinel.js"` used to answer *"is it still going?"* kept
+printing the waiter, so the answer came back **STILL RUNNING** long after the sentinel had
+exited and written its result. The process table said "working"; the log file said "done".
+**Two instruments disagreed and the noisier one was believed.** It also produced a
+bogus `ps` reading — elapsed time and CPU time for the *wrapper*, not the work, which is why
+`00:00:00` CPU appeared beside a supposedly busy process and was not questioned.
+
+**The tells, in order of how early they could have caught it:**
+1. A wait-loop whose pattern is a literal that also appears in the loop's own text.
+2. `ps -o time` showing `00:00:00` CPU on a process claimed to be busy — that is a wrapper
+   or a shell, never the work.
+3. The artifact the loop is waiting FOR already existing while the loop still runs. **The
+   file is the ground truth; the process table is an inference.**
+
+**The fixes, cheapest first:**
+- **Wait on the launcher's own exit** rather than re-deriving liveness from the process
+  table. If the work was started by a tracked background job, its completion is already
+  reported — do not build a second, weaker detector beside it.
+- If you must poll: match on something the watcher cannot contain — the interpreter plus
+  script (`pgrep -f '^node .*sentinel\.js'` with an anchor), or exclude self
+  (`pgrep -f pat | grep -v "^$$\$"`).
+- **Condition on the artifact, not the process.** `[ -s "$LOG" ]` alone was already correct
+  here; the process check that was added to make it *more* rigorous is what broke it.
+
+*The general rule: any liveness check that greps a shared namespace must be proved able to
+return the "finished" answer at least once. Arm it against something already finished and
+watch it succeed — the same negative-control discipline this project applies to every gate,
+applied to the thing doing the watching.*
+
+---
+
+## Class 73 — a DISPLAY-CAPPED count read as a measurement, then trended (26 Aug 2026, after build 1083)
+
+`SENTINEL CLEAN — 75 render(s), nothing new · 196 carried` was reported to Theo twice as
+the standing debt, and once as a **trend**: *"it was 185 against the 991 baseline, so it has
+grown ~11 across ~90 builds."*
+
+**196 is not the debt. It is what fit on screen.** Running the same probe with `--all` and
+reading the output rather than the summary line:
+
+| id | count in the 196 | what it actually is |
+|---|---:|---|
+| `OVERRIDDEN` | **125** | the cascade working. The probe's own source says it *"only means something when the rule is NEW, so without `--since` it is suppressed unless `--all`"* — with no baseline **every** rule looks new, so all 125 are noise in that run |
+| `DEAD` | **44** | real — but this is the **displayed subset** |
+| `TRUNCATED` | **26** | **not defects at all** — the instrument reporting its own 20-per-render cap |
+| `FLOOR` | 1 | real, latent |
+
+**The `TRUNCATED` rows carry the true numbers, and they are an order of magnitude larger.**
+Summing what they name: **374 findings suppressed by the cap**, and **894 DEAD across the
+truncated renders alone** — against 44 listed. The standing debt is ~900+, not 196.
+
+### The two errors, and they compound
+
+1. **Reading a capped number as a total.** The cap is stated *in the output*, on 26 separate
+   lines, each naming exactly how many it withheld. It was right there and went unread —
+   the summary line got quoted instead of the report under it.
+2. **Trending two capped numbers against each other.** 185-then-196 reads like slow growth.
+   Both are ceilings, not measurements. **A capped number cannot be trended**: the
+   difference between two ceilings measures nothing, and it flatters — "grew by 11" sounds
+   like control, while the truth was "grew by an unknown amount, from an unknown base".
+
+### The rule
+
+**When a report says it truncated, the count in its summary is a floor and must be labelled
+one.** Print `196 shown, 374 withheld` or refuse to print a total. And never compute a
+delta between two numbers that could each be a cap — check that both are complete first,
+or say plainly that the trend is unknown.
+
+*Sibling of class 71, which was the same instrument hiding a coverage failure inside carried
+debt. Same root: a summary line that reads as authoritative while the detail under it says
+otherwise. The fix there was making a short sweep say so; the fix here is making a capped
+count say so.*

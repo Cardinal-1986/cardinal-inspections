@@ -2,6 +2,58 @@
 
 ---
 
+## 🛑 DO NOT DELETE `claude/ai-can-build-584` — it is the project's only pre-squash history
+
+*Established 26 Aug 2026, after I recommended deleting it and was wrong.*
+
+**It holds 787 commits. `main` holds 74.** Every PR here is squash-merged, so `main`'s
+history is one commit per PR and the commit-by-commit lineage of builds ~1–584 survives
+**on that branch and nowhere else**.
+
+**It contains the span `CLAUDE.md` calls "the ONLY gap".** That file states there is no
+narrative record anywhere in the doc set for roughly **468–542**. Those commits are on
+this branch — 533–554 alone carries the left-nav rebuild (536), dark retail home (535),
+literal-yellow Landing (539), the money circle reading the right table (540), the
+contracts tab (541), the roofing Construction Agreement (542), the obsidian Activity
+Count tiles (544–545) and the whole Crews arc (547–554).
+
+**It also carries `aeac5e5`**, the build-573 tree that `scripts/measure_counts.py` names
+in its own header as its negative control and that `CLAUDE.md` cites **four times**. That
+commit is **not reachable from `main`** — checked, not assumed
+(`git merge-base --is-ancestor aeac5e5 origin/main` → false).
+
+### Why it looks deletable, and why that reading is wrong
+
+It is **unmergeable by construction** — `git merge-base origin/main 7a1d904` returns
+**empty**: no common ancestor at all, because main's history was rewritten beneath it. So
+every check for "is this branch worth keeping?" that asks *can it merge* answers no, and
+the branch's name reads like abandoned feature work. **Both signals point the wrong way.**
+It exists to be *read*, not landed.
+
+⚠️ **A sweep of every SHA cited in the doc set found ~75 of them are NOT ancestors of
+`main`.** Most stay alive through GitHub's permanent `refs/pull/N/head` refs, but that is
+a property of GitHub's retention policy, not of this repo — and it is not something to
+bet the measurement baseline on.
+
+### The fix, which needs Theo — the session token cannot push tags
+
+Two annotated tags were authored locally; **pushing them returns HTTP 403** (this
+session's credentials allow branch pushes, not tag creation — retried, consistent).
+Run these from a shell that has your own credentials, and the branch then becomes
+genuinely disposable because the tags keep everything reachable:
+
+```bash
+git tag -a build-573-baseline aeac5e5 -m "The last build-573 tree - measure_counts.py's negative control"
+git tag -a history/pre-squash-584 7a1d904 -m "787 commits, builds ~1-584: the pre-squash lineage. Unmergeable by design."
+git push origin build-573-baseline history/pre-squash-584
+```
+
+**Until those tags exist on the remote, the branch IS the preservation mechanism.**
+Recorded tips, so nothing is lost even if the ref goes: `7a1d904` (branch tip),
+`aeac5e5` (build-573 tree).
+
+---
+
 ## Layer: 26 Aug 2026 — the app-wide polish pass (Theo: "1-3 then 4-5")
 
 His list, in his order. **ALL FIVE CLOSED: 1, 2 and 4 shipped; 3 and 5 were false positives.**
@@ -12,7 +64,47 @@ His list, in his order. **ALL FIVE CLOSED: 1, 2 and 4 shipped; 3 and 5 were fals
 | 2 | lift every font size under 11px | ✅ **build 1081.** 519 declarations, both forms |
 | 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ❌ **CLOSED — all three parts are FALSE POSITIVES. Do not build it.** See below |
 | 4 | distinct icons in the Job Menu | ✅ **build 1082** — plus the ink, which was the bigger defect |
-| 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ❌ **CLOSED — FALSE POSITIVE, measured.** Renders **183 × 44**. See below |
+| 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ⚠️ **HALF right — corrected 26 Aug.** It renders **183 × 44** and is tappable, so what Theo saw is closed. But its **44px min-width floor really is dead**, and that is latent, not false. See below |
+
+### ⚠️ Item 5 — CORRECTED. The button is fine; its floor is not.
+
+*I closed this flatly as a false positive. The sentinel disagreed, and it was half right.*
+
+**What I said, and it holds:** `#acxTrBtn` renders **183 × 44** on the client screen, at
+390/1194/1440. Confirmed twice in Chromium. `min-height` computes **44px**. Nothing Theo
+can tap is 0px, so the thing he reported is genuinely closed.
+
+**What I missed:** the sentinel's `FLOOR` check reports `button#acxTrBtn computes 0px`,
+and it is **measuring the computed `min-width` property, not the rendered box.** Those are
+different claims and I answered the wrong one. Measured:
+
+```
+computedMinW: 0px      ← the floor is DEAD
+computedMinH: 44px     ← the height floor holds
+rect:         183x44   ← what actually paints
+```
+
+**What kills it**, from walking Chromium's own matched rules:
+
+| sheet | selector | sets |
+|---|---|---|
+| `cr-touch44-styles` | `#insToggleBtn, #acxTrBtn` | `min-width:44px` |
+| `cr-jobdetails-styles` | `:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxsel` | **`min-width:0px`** |
+
+The second is far more specific and wins on **retail only** (both `:not()`s exclude the
+other two CRMs). `selector_audit.py` finds **only the two touch-44 rules** for `#acxTrBtn`
+— it searches by the selector you name, and this rule reaches the button through its
+**class**, `.acxsel`. *A selector audit answers "who else writes this selector", not "what
+wins on this element". Only a render answers the second.*
+
+⚠️ **`min-width:0` on a flex child is the standard truncation fix** — it is what lets a
+label ellipsis instead of overflowing, and it is almost certainly deliberate. So this is
+**not** a one-line fix: forcing 44px back could reintroduce the overflow that rule exists
+to prevent.
+
+**Verdict: latent, not live. Recorded, not built.** The button is 183px because its own
+content is; nothing holds it there if the label shortens or the row squeezes. Wants a
+decision from Theo — options, not a patch.
 
 ### ❌ Item 3 is a FALSE POSITIVE in all three parts — audited 26 Aug, do NOT build it
 

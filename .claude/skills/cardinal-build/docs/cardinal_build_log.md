@@ -27398,3 +27398,116 @@ unawaited. Also checked: of the 41 newly-async **anonymous** handlers, **zero** 
   cruder than `jslex_count.py` (no regex-literal or nested-template handling) so the number it
   prints on the *control* is ~62 where the truth is 88 — the assertion is sound either way,
   but do not quote the control's figure as a measurement.
+- ✅ **The visual sweep: `SENTINEL CLEAN — 75 render(s), nothing new · 196 carried` from 1082.**
+  Nothing new on the `#crAsk` overlay across 390/1194/1440.
+
+⚠️ **75 is the number that makes that CLEAN mean anything, and it has to be read, not assumed.**
+The budget is 75, so this was a complete walk. Build 1081's run 1 said `CLEAN — 63 render(s)`
+and was WRONG: four states had thrown and been silently subtracted as carried debt. BUG_CLASSES
+71 added an `INCOMPLETE` verdict for that case — **but that branch is unreachable**, which was
+corrected at 1081 and is still true. So the render count against the budget is the ONLY evidence
+the sweep finished. **Read it every time.**
+
+⚠️ **196 carried is real debt and is not this build's** — and **the paragraph that stood here was
+wrong, twice over.** It said the count had "grown ~11 across ~90 builds" from 185 at the 991
+baseline. Corrected after running `--all` and reading the report instead of the summary line:
+
+| id | of the 196 | what it is |
+|---|---:|---|
+| `OVERRIDDEN` | **125** | the cascade working — the probe's own source says it only means anything when the rule is NEW, and with no `--since` every rule looks new. Noise in that run |
+| `DEAD` | **44** | real, but this is the **displayed subset** |
+| `TRUNCATED` | **26** | **not defects** — the instrument reporting its own 20-per-render cap |
+| `FLOOR` | 1 | real, latent — the `#acxTrBtn` min-width floor |
+
+**The `TRUNCATED` rows carry the true numbers: 374 findings suppressed by the cap, and 894 DEAD
+across the truncated renders alone.** The standing debt is **~900+, not 196**, and the "grew ~11"
+trend was two ceilings compared against each other, which measures nothing. **A capped number
+cannot be trended.** BUG_CLASSES 73.
+
+**The `FLOOR` finding resolved to a half-correction of my own false-positive call**, and is worth
+reading as a method note: item 5 of Theo's polish list was closed as "renders 183 × 44", which is
+true and still true. But the sentinel was measuring the **computed `min-width` property**, not the
+rendered box — a different claim, which I answered with the wrong measurement. The floor really is
+dead: `cr-jobdetails-styles`'s `… #projectView .acxjd .acxsel { min-width:0px }` out-specifies
+`cr-touch44-styles`'s `#insToggleBtn,#acxTrBtn { min-width:44px }` on retail. ⚠️ **`selector_audit.py`
+finds only the two touch-44 rules**, because it searches by the selector you name and this one
+reaches the button through its **class**. *A selector audit answers "who else writes this selector";
+only a render answers "what wins on this element".* Latent, not live — recorded in `OPEN_ITEMS.md`,
+not built, because `min-width:0` on a flex child is the deliberate truncation fix.
+
+### ⚠️ An instrument bug that was MINE, in the wait-loop, not in the sentinel
+
+The sentinel finished and I did not find out, because the background waiter I armed to tell me
+could never fire:
+
+```bash
+until [ -s "$LOG" ] && ! pgrep -f "sentinel.js .*index_v1083"; do sleep 5; done
+```
+
+**`pgrep -f` matches against full command lines — including the waiter's own.** The pattern is
+sitting inside the very bash process doing the grep, so `pgrep` always found at least one match,
+`! pgrep` was always false, and the loop ran until it was killed by hand. Meanwhile a plain
+`pgrep -f sentinel.js` printed the waiter and read as "STILL RUNNING" ~20 minutes after the
+sentinel had actually exited and written its result.
+
+**This is the file's own "a check that cannot fail" class, in its mirror image — a check that
+cannot succeed.** Same root: an assertion nobody watched fail on purpose. The fix is
+`pgrep -f pattern | grep -v $$`, matching on the node binary rather than the script argument, or
+simply waiting on the launcher's own exit rather than re-deriving liveness from the process table.
+
+### ⚠️ Shipped with `gate_ship.py` RED, on Theo's instruction — and CI later agreed
+
+**GitHub Actions stopped creating workflow runs for ~25 minutes and this build merged inside that
+window.** Recorded because the gate was red at merge and that must never be silent.
+
+| run | sha | state |
+|---|---|---|
+| 32985874913 | `ee527d4` | `queued` 15:41, never started |
+| 32986024059 | `ee527d4` | **`startup_failure`** 15:44 — `created_at == updated_at`, died before step one |
+| — | `afefa19` | **nothing**, at merge time |
+| 32986920608 | `afefa19` | ✅ **success, created 16:08** — ~21 min after the push, ~10 min AFTER the merge |
+
+**Three explanations were ruled out before calling it an Actions fault**, and the order matters
+because this file's standing note points at the first one:
+
+1. **Not a conflict.** *"No CI run at all is usually a CONFLICT, not an Actions outage"* — a
+   `pull_request` run builds against a merge ref that cannot exist while the PR is `dirty`.
+   Here `main` was an **ancestor** of the branch: clean fast-forward, `mergeable_state: clean`.
+2. **Not the workflow.** `git diff origin/main...HEAD -- .github/workflows/check.yml` was empty,
+   the YAML parsed, and it had run green on main 50 minutes earlier.
+3. **Not a concurrency lock.** No `concurrency:` block, so the stuck `queued` run was not gating.
+
+**What was done instead, and why the obvious moves were wrong.** Re-running the
+`startup_failure` would only produce green on `ee527d4`, no longer the head — worthless to a gate
+that requires a run on *this* sha. `check.yml` has no `workflow_dispatch`, so nothing could be
+dispatched at `afefa19`. An empty commit to kick CI is an explicit never. So **all 11 `check.yml`
+steps were executed locally against the branch head**, in the workflow's own order: 126/126 inline
+scripts, 148 style blocks / 4,071 divs / 129 scripts balanced, `studio.html`, `sw.js`, 33 API
+functions, manifest current at 85 files, 4/4 JSON, VAPID matched. **11/11.**
+
+✅ **The substitution held: CI's own later run on the same sha came back green.**
+
+⚠️ **But do not promote this to a general practice.** The local run used **Node 22; CI pins
+Node 20** — syntax v22 accepts and v20 rejects would be a false green. This build added only
+`async`/`await`, so the risk was nil *here*. A build touching newer syntax has no such argument.
+
+✅ **RESOLVED at 16:20 — the merge commit got its own run and it passed.** When the paragraph above
+was written, `9f034ba` had no push-to-main run and main was genuinely unguarded; the tree-identity
+argument (`afefa19^{tree}` and `origin/main^{tree}` both `d78a152`, verified rather than assumed)
+was the only cover. **GitHub then created the run on its own at 16:19:59 and it completed success.**
+Actions had fully recovered by ~16:08 and every sha since has gone green on its own:
+
+| sha | event | result |
+|---|---|---|
+| `ee527d4` | pull_request | `queued` forever · `startup_failure` |
+| `afefa19` | pull_request | ✅ success 16:08 |
+| **`9f034ba`** | **push (main)** | ✅ **success 16:20 — build 1083 is CI-verified on main** |
+| `6de2ccd` | pull_request | ✅ success 16:35 |
+
+**So the outage was a ~25-minute window of delayed run creation plus one startup failure, and it
+self-healed.** The local 11-step substitution was correct and CI independently agreed twice.
+
+⚠️ **Keep the tree-identity habit anyway.** It was the right argument at the time and it is the
+only thing that would have held if Actions had stayed down. **A green on one sha covers another
+only when the trees are provably identical** — check it, do not assume a squash preserved the tree.
+
