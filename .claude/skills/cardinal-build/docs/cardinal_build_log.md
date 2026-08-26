@@ -27491,8 +27491,23 @@ functions, manifest current at 85 files, 4/4 JSON, VAPID matched. **11/11.**
 Node 20** — syntax v22 accepts and v20 rejects would be a false green. This build added only
 `async`/`await`, so the risk was nil *here*. A build touching newer syntax has no such argument.
 
-⚠️ **The merge commit `9f034ba` itself never got a push-to-main run either**, and had not by the
-time this was written. It is covered in content terms only because the squash preserved the tree
-exactly — `afefa19^{tree}` and `origin/main^{tree}` are both `d78a152`, verified rather than
-assumed. **A green on a sha covers a different sha only when the trees are provably identical.**
+✅ **RESOLVED at 16:20 — the merge commit got its own run and it passed.** When the paragraph above
+was written, `9f034ba` had no push-to-main run and main was genuinely unguarded; the tree-identity
+argument (`afefa19^{tree}` and `origin/main^{tree}` both `d78a152`, verified rather than assumed)
+was the only cover. **GitHub then created the run on its own at 16:19:59 and it completed success.**
+Actions had fully recovered by ~16:08 and every sha since has gone green on its own:
+
+| sha | event | result |
+|---|---|---|
+| `ee527d4` | pull_request | `queued` forever · `startup_failure` |
+| `afefa19` | pull_request | ✅ success 16:08 |
+| **`9f034ba`** | **push (main)** | ✅ **success 16:20 — build 1083 is CI-verified on main** |
+| `6de2ccd` | pull_request | ✅ success 16:35 |
+
+**So the outage was a ~25-minute window of delayed run creation plus one startup failure, and it
+self-healed.** The local 11-step substitution was correct and CI independently agreed twice.
+
+⚠️ **Keep the tree-identity habit anyway.** It was the right argument at the time and it is the
+only thing that would have held if Actions had stayed down. **A green on one sha covers another
+only when the trees are provably identical** — check it, do not assume a squash preserved the tree.
 
