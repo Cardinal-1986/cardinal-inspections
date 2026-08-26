@@ -2,6 +2,72 @@
 
 ---
 
+## Layer: 26 Aug 2026 — the document pipeline (recon for item 3)
+
+### ⏳ NEEDS THEO — how far to take document versioning
+
+**Measured on production, 26 Aug 2026.** This is recon, not a bug report; read the numbers
+before deciding how much to build.
+
+| | |
+|---|---:|
+| rows in `inspection_reports` | **23** |
+| …sent | **2** |
+| …signed | **1** |
+| …with a `share_token` (externally shareable) | **0** |
+| …written to AFTER being sent | **1** |
+| …written to AFTER being signed | **1** |
+| version / history / snapshot tables for documents | **none** |
+| triggers on `inspection_reports` | **none** |
+| average `html` size / largest | **628 KB / 6.4 MB** |
+
+**`inspection_reports` is the document pipeline for EVERYTHING** — inspection reports, estimates,
+contracts and crew work orders all live in it, sorted by `isEstimateTitle` / `isContractTitle` /
+`isWorkOrderTitle`. All three sent-or-signed rows are estimates. So this is a money-document
+question, not only an inspection-report question.
+
+⚠️ **What is proven and what is not.** There is **one `html` column, overwritten in place**, no
+version history and no trigger — that is structural and certain. `updated_at > signed_at` proves
+**the row was written to** after signing; it does **not** prove the `html` changed, because the app
+writes `updated_at` itself and other columns move too (`status`, `doc_id`, `contract_doc_id`).
+**Do not report this as "a signed estimate was altered."** The honest statement is: *nothing
+prevents it and nothing would record it.*
+
+**The mechanism to extend already exists — do not invent a second one.** `audit_events`
+(`id, at, email, type, detail, project_id`, **172 rows**) already records `estimate_publish` (7),
+`estimate_save` (13), `doc` (6) and `review` (3). This is the `IC_SKIP` / `PIPE_SKIP` lesson: grep
+for the convention before building a mechanism.
+
+**Three sizes, smallest first:**
+
+1. **Record it.** On a save to a document that carries `sent_at` or `signed_at`, write an
+   `audit_events` row naming which fields changed. **No schema change, no migration**, uses the
+   table that is already there. Gives you a record; does not prevent anything.
+2. **Refuse it.** RLS blocks `update` to `html` when `signed_at is not null`, with an explicit
+   "revise" path that clears the signature. Needs SQL. **This is a policy decision about how Theo
+   works, not a technical one** — if he legitimately fixes a typo on a signed estimate today, this
+   stops him.
+3. **Version it.** A snapshot row per publish (`document_versions`: doc id, version, html, who,
+   when), and regenerate writes a NEW version rather than overwriting. Needs SQL **and** a home for
+   6.4 MB blobs — at that size the html belongs in storage with a path in the row, not in the
+   column. The largest build of the three.
+
+**My recommendation: 1 now, 3 when a document is actually shared externally.** `share_token` is
+null on all 23 rows, so nothing has ever been handed to a homeowner by link; the exposure today is
+internal, and 1 costs a fraction of 3.
+
+### Settled by measurement — do NOT re-litigate
+
+- **The AI never writes a customer document unattended.** `walk_shots` carries `reviewed_by` /
+  `reviewed_at` and The Walk's rule is model-proposes-person-confirms. 3 of 23 documents carry a
+  `data-ai-summary`, and every one is a draft a person edits in the report editor. The outside
+  audit's *"cannot confirm only human-approved findings enter PDFs"* is answered: today there is
+  **no unattended path at all.**
+- **`studio_findings` already carries provenance** — `source`, `model`, `run_at`, `confidence`. It
+  has no approval column, and does not need one until something reads it into a document.
+
+---
+
 ## Layer: 26 Aug 2026 — The Walk (build 1076)
 
 ### ⏳ NEEDS THEO — should reps be able to run a walk?

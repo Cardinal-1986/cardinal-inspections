@@ -26083,6 +26083,142 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1077 — the work order's colour prefill asked for a column that does not exist
+
+`index.html` only. **No SQL.** One word, wrong since build 889.
+
+### The defect
+
+`woReadContractColors()` selects **`content`** from `inspection_reports`. The column is **`html`**.
+Verified against production, not inferred:
+
+```
+select title, content, created_at from inspection_reports limit 1;
+ERROR:  42703: column "content" does not exist
+```
+
+PostgREST answers 400, the function's own guard (`if(r.error || !r.data) return res;`) catches it,
+and it returns `{shingle:'', drip:''}`. So the crew work order's **Shingle** and **Drip edge**
+fields have never once prefilled from the signed roofing contract — the entire point of 889.
+
+**Nothing mechanical could see this.** The JS is valid, `node --check` passes, the guard is
+*correct*, and the failure is a column name. It is the 448–449 shape one layer down: a right-looking
+piece of code that silently does nothing.
+
+⚠️ **It was found by reading the SCHEMA, not the code** — pulled `information_schema.columns` for
+`inspection_reports` while doing recon for the report-versioning work, and `content` was not in the
+list. Reading the function alone would never have flagged it.
+
+### ⚠ Comment pollution, an EIGHTH time, inside my own assertion
+
+The banner this patch adds explains what it removed, so it says `content` four times. A
+`\bcontent\b` count therefore went **up**. The assertion now names the three **code forms** —
+`select('title,content,created_at')`, `if(!doc || !doc.content)`, `parseFromString(doc.content,` —
+and separately asserts the **two `<template>.content` survivors** (`getElementById(...).content`)
+are untouched, since those are correct and must not be collateral.
+
+### Gates
+
+`check_build.py` GREEN 1076 → 1077 · byte-reproducible from `patch_1077.py` ·
+`gate_1077.mjs` **7/7**, **3 failures on 1076**.
+
+The gate executes the shipped function against a mock that **refuses an unknown column the way
+PostgREST does** (400 / 42703) — a mock that returned rows whatever you asked for would go green on
+the broken build. The control states the defect as data:
+
+```
+FAIL  A2 it asks for columns the table actually has
+      → select("title,content,created_at") — no such column: content
+FAIL  A3 it reads the contract and returns both colours → {"shingle":"","drip":""}
+```
+
+⚠️ **A4 and A5 pass on the control vacuously** — blank is not `"WRONG"`, and a refused query
+returns blank either way. They do not discriminate and are not counted as evidence; A2, A3 and C2
+are.
+
+⚠️ **No sentinel run, deliberately.** This changes no markup, no CSS and no element — it changes
+which two strings land in two existing inputs. There is nothing for INK, COLLAPSE or OVERLAP to
+find, and a 25-minute sweep for a one-word data fix is the kind of ceremony that gets a gate muted.
+
+## Docs — the README and the migration manifest (26 Aug 2026, no build number)
+
+**No artifact changed. `index.html` is byte-identical to `main`, and no stamp moved** — this is
+`README.md`, `MIGRATIONS.md`, `.vercelignore` and `check.yml` only. Recording it here because the
+ship discipline says every change gets a line, not because a build was consumed.
+
+Theo's pick after an outside audit: *"4 then 3"* — documentation and migration order first, the
+report-approval gate second.
+
+### What the audit got right, and what it got wrong
+
+It reported **"no visible automated test suite."** That is false: `check.yml` runs on every push
+and PR, and the repo carries **450** gate/harness files — 222 `gate_*`, 56 `harness_*`, 101
+`render_*` — plus 13 Python gates in `spark/`. It did not look inside `.claude/`. Its three
+citations all point at **Gemini and OpenAI documentation pages**, not at this repo, so nothing it
+claims to have "found in the repository" has a receipt.
+
+What it got right: **no root README** (true), **`index.html` at 5.2 MB** (true — 5,232,847 bytes),
+and **migration sprawl** (true — 84 `.sql` at root, hand-applied, no recorded order).
+
+### `MIGRATIONS.md` — generated, not written
+
+`scripts/migration_manifest.py` derives it. Every column is measured:
+
+- **shipped at** — the lowest build number in this log that names the file. **Git cannot answer
+  this**: PRs here are squash-merged, so dozens of early migrations share one commit date that has
+  nothing to do with when they ran.
+- **replayable** — does every statement guard itself.
+- **destructive** — **12 files** drop, delete or truncate. Replaying one on live data destroys
+  current rows. A bootstrap must skip every one.
+- **documented in** — **21 files are named by no document at all.**
+
+⚠️ **28 files are named by no build-log heading, and that is NOT a grep artifact.** CLAUDE.md
+warns that heading levels are inconsistent, so I widened the pattern (422 → 496 headings) and
+then checked: only **one** of the 28 appears anywhere in the log's text. The other 27 genuinely
+are not in it. *The file's own rule — when a count contradicts you, suspect the regex — was
+applied and the regex was mostly right.*
+
+⚠️ **The generator's first run wrote a manifest with ZERO rows into `.claude/`** — three `..` in
+the repo-root path instead of four. An empty result reads as a legitimate "no files found". It
+now asserts `index.html` exists at the path it computed.
+
+**CI gates it.** `migration_manifest.py --check` fails if a `.sql` is added without regenerating.
+Proved by adding a throwaway `.sql` and watching it go red.
+
+### ⚠ …and that gate then went red on CI, on a tree nobody had touched
+
+**The manifest sorted by a git date, and CI clones SHALLOW.** `actions/checkout`
+defaults to depth 1, so every file looks like it was added by the single commit that
+exists and they all share its date — a date-keyed sort then reorders 26 rows against the
+committed file. Red on `de4db1d` and `0c50c55`, both docs-only.
+
+**Reproduced before fixing, and the first hypothesis was WRONG.** I assumed a shallow
+clone would see *no* adds; `git clone --depth 1` locally showed it sees **all 84**, with
+the wrong date. Assuming would have produced a wrong fix.
+
+Two changes:
+
+- **The sort key drops the date** — build number, then filename. Both come from the
+  working tree, so every clone sorts identically.
+- **The "first commit that added this file" table is GONE, deliberately.** It was
+  fiction. *This dev container's own clone is shallow too* — 72 commits, `.git/shallow`
+  present — so those dates never agreed with anything, and because they looked precise
+  they were worse than a gap. Squash-merging would have made them useless even with
+  full history. The build-log column, which is what the ordering actually rests on, is
+  derived entirely from the working tree.
+
+**Proved both directions after the fix**: still RED on a throwaway `.sql`, and GREEN in
+a real `--depth 1` clone — the exact CI condition.
+
+### One security item found while collecting environment-variable NAMES
+
+`api/notify.js` carries a **hardcoded VAPID private key** as a last-resort fallback (build 612,
+deliberate and commented). A sweep for the pattern `process.env.X || '<20+ chars>'` across `api/`
+finds **no others**. It should be deleted and the keypair rotated — but deleting it *before*
+`VAPID_PRIVATE_KEY` is confirmed set in Vercel kills push entirely, and the route already reports
+`vapid_from_env` as a boolean so which one is live can be checked first. **Theo's call; not
+changed here.** Recorded in the README's known-gaps list.
+
 ## Build 1076 — The Walk gets a door where the work is, and the row that names the job
 
 Two defects and one wiring change, `index.html` only. **No SQL.**
