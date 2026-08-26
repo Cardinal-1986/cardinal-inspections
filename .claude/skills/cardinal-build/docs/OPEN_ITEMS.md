@@ -4,11 +4,11 @@
 
 ## Layer: 26 Aug 2026 — the app-wide polish pass (Theo: "1-3 then 4-5")
 
-His list, in his order. **1 (half), 2 and 4 shipped; 3 and 5 closed as false positives.**
+His list, in his order. **ALL FIVE CLOSED: 1, 2 and 4 shipped; 3 and 5 were false positives.**
 
 | # | item | state |
 |---|---|---|
-| 1 | replace `alert()` / `confirm()` with in-app feedback | ⚠️ **half done — build 1080.** 289 `alert()` calls routed to the app's own toast. **The 92 `confirm()` calls are NOT done** — see below |
+| 1 | replace `alert()` / `confirm()` with in-app feedback | ✅ **DONE — 1080 + 1083.** 289 alerts to the toast, 88 confirms to the ask sheet |
 | 2 | lift every font size under 11px | ✅ **build 1081.** 519 declarations, both forms |
 | 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ❌ **CLOSED — all three parts are FALSE POSITIVES. Do not build it.** See below |
 | 4 | distinct icons in the Job Menu | ✅ **build 1082** — plus the ink, which was the bigger defect |
@@ -111,7 +111,18 @@ keep their own red — more specific, deliberately untouched, asserted by `gate_
 across 15 tiles.** Build 981's comment saying *"DB_ICONS has no checklist key"* was rewritten
 in the same edit — it is no longer true.
 
-### ⏳ Needs Theo — the `confirm()` sheet wants a look before it is built
+### ✅ The confirm sheet shipped as build 1083 — Theo picked option 1
+
+`window.crAsk(msg, opts) -> Promise<boolean>`, a bottom sheet. **88 calls, not 92** (lexer).
+
+**Settled, do not re-litigate:** the buttons say what happens (*Delete photo* / *Keep it*, never
+OK/Cancel); destructive is red and sits **above** the safe answer; Escape and a scrim tap always
+mean **no**; and it **falls back to `confirm()`** if the sheet cannot be shown — the only
+executable `confirm(` left in the file, asserted at exactly 1.
+
+⚠️ **If you ever touch the async conversion, read the build log first.** Two guards nearly
+stopped guarding because an async function returns a Promise and a Promise is always truthy —
+one of them (`confirmPay`) would have paid a rep regardless of the answer.
 
 `confirm()` returns a boolean and **blocks**, so it cannot be routed the way `alert()`
 was. Replacing 92 of them needs a new in-app sheet *and* an async restructure at every

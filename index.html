@@ -3852,7 +3852,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1082 &#8212; The Job Menu icons can be seen, and no two of them are the same. Two hundred and eighty-nine messages &#8212; every &#8220;pick a client first&#8221;, every &#8220;could not save&#8221; &#8212; used to arrive as the grey box headed &#8220;app.cardinalroster.com says&#8221;, which is the one thing that made this look like a website instead of an app. They now come up as the same slim card the rest of the app already used. Warnings stay on screen until you dismiss them, exactly like the old boxes did. Nothing else changed.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1083 &#8212; The last browser pop-up is gone: questions are asked in the app now. Two hundred and eighty-nine messages &#8212; every &#8220;pick a client first&#8221;, every &#8220;could not save&#8221; &#8212; used to arrive as the grey box headed &#8220;app.cardinalroster.com says&#8221;, which is the one thing that made this look like a website instead of an app. They now come up as the same slim card the rest of the app already used. Warnings stay on screen until you dismiss them, exactly like the old boxes did. Nothing else changed.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -11765,8 +11765,8 @@ async function acxAdvance(pr){
     await setStage(pr.id, nx);
     renderOverview(); renderPipeline();
     if(nx === 'Completed' && !parseCkAll(pr).review_requested_at && (pr.phone || pr.email)){
-      setTimeout(function(){
-        if(confirm('\uD83C\uDF89 Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?')){
+      setTimeout(async function(){
+        if(await crAsk('\uD83C\uDF89 Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?')){
           sendReviewRequest(pr, pr.phone ? 'sms' : 'email');
         }
       }, 300);
@@ -11796,8 +11796,8 @@ function _crStageReviewMaybe(pr, from){
        Callers without a `from` (none today) keep the old behaviour. */
     if(from != null && STAGES.indexOf(normStage(from)) >= STAGES.indexOf('Completed')) return;
     if(normStage(pr.stage) === 'Completed' && !parseCkAll(pr).review_requested_at && (pr.phone || pr.email)){
-      setTimeout(function(){
-        if(confirm('\uD83C\uDF89 Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?')){
+      setTimeout(async function(){
+        if(await crAsk('\uD83C\uDF89 Job completed! Send ' + (pr.name || 'the client') + ' a Google review request now?')){
           sendReviewRequest(pr, pr.phone ? 'sms' : 'email');
         }
       }, 300);
@@ -12328,7 +12328,7 @@ function acxBindOnce(mount){
     if(hit('#acxSkipEst') || hit('#acxNewWs')){ acxEnterTotalNow(); return; }
     if((el = hit('#acxClearManual'))){
       e.preventDefault();
-      if(!confirm('Clear the manual total? The job value will fall back to estimates/contracts.')) return;
+      if(!await crAsk('Clear the manual total? The job value will fall back to estimates/contracts.')) return;
       try{ await patchProjectCk(pr, { manual_value: null }); auditLog('money', 'Manual total cleared \u2014 ' + (pr.name || ''), pr.id); renderOverview(); renderPipeline(); }
       catch(err){ showError('Could not clear: ' + (err.message || err)); }
       return;
@@ -12739,7 +12739,7 @@ function openTaskModal(pr, idx){
   }
 }
 var __msUpSrc = 'Field';
-document.getElementById('tab-measure').addEventListener('click', function(e){
+document.getElementById('tab-measure').addEventListener('click', async function(e){
   var pr = currentProject;
   if(!pr) return;
   var ob = e.target.closest('.msOrder');
@@ -12757,7 +12757,7 @@ document.getElementById('tab-measure').addEventListener('click', function(e){
   var del = e.target.closest('[data-msdel]');
   if(del){
     e.preventDefault(); e.stopPropagation();
-    if(!confirm('Remove this measurement report?')) return;
+    if(!await crAsk('Remove this measurement report?')) return;
     measDb.remove(del.getAttribute('data-msdel')).then(function(){ renderMeasureTab(); refreshMeasSummary(pr); })
       .catch(function(err){ showError('Could not remove: ' + (err.message || err)); });
     return;
@@ -14044,7 +14044,7 @@ async function handleDocAction(e){
     if(act === 'dup'){ await db.duplicate(id); await reload(); return; }
     if(act === 'del'){
       var r2 = cacheRows.find(function(x){ return String(x.id) === String(id); });
-      if(confirm('Delete "' + ((r2 && r2.title) || 'Untitled inspection') + '"? This removes it for the whole team and cannot be undone.')){
+      if(await crAsk('Delete "' + ((r2 && r2.title) || 'Untitled inspection') + '"? This removes it for the whole team and cannot be undone.')){
         await db.remove(id); await reload();
       }
       return;
@@ -14124,7 +14124,7 @@ document.getElementById('galGrid').addEventListener('click', async function(e){
       }catch(err){ showError('Could not remove from Inspection Photos: ' + (err.message || err)); }
       return;
     }
-    if(!confirm('Delete this photo from the gallery?')) return;
+    if(!await crAsk('Delete this photo from the gallery?')) return;
     try{
       await photoDb.remove(id);
       currentPhotos = currentPhotos.filter(function(x){ return x.id !== id; });
@@ -14424,7 +14424,7 @@ async function galCcAdd(){
   var status = document.getElementById('galStatus');
   if(!picked.length){ galCcStatus('Tick the photographs you want first.', true); return; }
   var foreign = [].slice.call(document.querySelectorAll('#galCcGrid .gcc-p.foreign input:checked')).length;
-  if(foreign && !confirm(foreign + ' of the photographs you ticked look like a different job than this ' +
+  if(foreign && !await crAsk(foreign + ' of the photographs you ticked look like a different job than this ' +
       'client\u2019s property. They will be copied into this album anyway. Continue?')) return;
   var room = GAL_MAX - currentPhotos.length;
   if(room <= 0){
@@ -14844,7 +14844,7 @@ function openPayRow(dir, index){
     var a = act.getAttribute('data-pm');
     if(a === 'cancel'){ close(); return; }
     if(a === 'delete'){
-      if(!confirm('Delete this row?')) return;
+      if(!await crAsk('Delete this row?')) return;
       log.splice(index, 1);
       try{
         await patchProjectCk(currentProject, { payments: log });
@@ -15035,7 +15035,7 @@ async function payMigrateLegacyIn(){
   var sum = legacy.reduce(function(a, x){ return a + (Number(x.p.amt) || 0); }, 0);
   var rep = currentProject.sales_rep || null;
   var pays = rep && rep !== 'theo@cardinalrenovations.net';
-  if(!confirm('Move ' + legacy.length + ' payment' + (legacy.length === 1 ? '' : 's') +
+  if(!await crAsk('Move ' + legacy.length + ' payment' + (legacy.length === 1 ? '' : 's') +
       ' totalling ' + fmtMoney(sum, true) + ' into Money In?\n\n' +
       legacy.map(function(x){
         return '  ' + fmtMoney(Number(x.p.amt) || 0, true) + (x.p.date ? '  ' + x.p.date : '') +
@@ -15134,7 +15134,7 @@ document.getElementById('payAddBtn').addEventListener('click', async function(){
 document.getElementById('payLog').addEventListener('click', async function(e){
   var b = e.target.closest('.paydel');
   if(!b || !currentProject) return;
-  if(!confirm('Delete this payment entry?')) return;
+  if(!await crAsk('Delete this payment entry?')) return;
   var log = (parseCkAll(currentProject).payments || []).slice();
   log.splice(parseInt(b.getAttribute('data-pi'), 10), 1);
   try{
@@ -15195,7 +15195,7 @@ document.getElementById('tskMount').addEventListener('change', async function(e)
 document.getElementById('tskMount').addEventListener('click', async function(e){
   var del = e.target.closest('[data-tkd]');
   if(del && currentProject){
-    if(!confirm('Delete this task?')) return;
+    if(!await crAsk('Delete this task?')) return;
     var list = (parseCkAll(currentProject).tasks || []).slice();
     list.splice(parseInt(del.getAttribute('data-tkd'), 10), 1);
     try{ await patchProjectCk(currentProject, { tasks: list }); renderTasksPage(); }
@@ -15399,14 +15399,14 @@ document.getElementById('jdScanInput').addEventListener('change', function(){
 document.getElementById('jdFileInput').addEventListener('change', function(){
   addJobFiles(this.files); this.value = '';
 });
-document.getElementById('jdMount').addEventListener('click', function(e){
+document.getElementById('jdMount').addEventListener('click', async function(e){
   var op = e.target.closest('[data-jdopen]');
   if(op){ openJobFile(op.getAttribute('data-jdopen')); return; }
   var ren = e.target.closest('[data-jdren]');
   if(ren){ renameJobDoc(ren.getAttribute('data-jdren')); return; }
   var del = e.target.closest('[data-jddel]');
   if(del){
-    if(!confirm('Delete this file for everyone?')) return;
+    if(!await crAsk('Delete this file for everyone?')) return;
     db.remove(del.getAttribute('data-jddel'))
       .then(function(){ return reload(); })
       .then(renderDocsPage)
@@ -15479,7 +15479,7 @@ document.getElementById('apMount').addEventListener('click', async function(e){
      crafted click still cannot reach adb.remove for a row this user can't edit. */
   var _apa = (cacheAppts || []).find(function(x){ return String(x.id) === String(del.getAttribute('data-apdel')); });
   if(_apa && !apptCanEdit(_apa)) return;
-  if(!confirm('Delete this appointment?')) return;
+  if(!await crAsk('Delete this appointment?')) return;
   try{
     await adb.remove(del.getAttribute('data-apdel'));
     cacheAppts = await adb.list().catch(function(){ return cacheAppts; });
@@ -15551,7 +15551,7 @@ galXferMenu.addEventListener('click', async function(e){
     if(docId === '__new__'){
       var cl2 = getChecklist(currentProject);
       if(!cl2){
-        if(!confirm('No Roofing Inspection Checklist on file \u2014 its baseline specs normally feed the report.\n\n' +
+        if(!await crAsk('No Roofing Inspection Checklist on file \u2014 its baseline specs normally feed the report.\n\n' +
                     'OK = create the report anyway (blank specs, fill by hand)\nCancel = go complete the checklist first')){
           galleryView.style.display = 'none';
           projectView.style.display = 'block';
@@ -15927,7 +15927,7 @@ async function changeClaimType(pr, newType){
   var hasInsData = !!projInsurance(pr);
   /* Insurance -> Retail/Unknown: DELETE insurance data, per spec */
   if(current === 'insurance' && newType !== 'insurance' && hasInsData){
-    var ok = confirm(
+    var ok = await crAsk(
       'Switching to ' + newType.toUpperCase() + ' will PERMANENTLY DELETE ' +
       'the insurance data on file:\n\n' +
       '\u2022 Carrier, policy #, claim #\n' +
@@ -16535,7 +16535,7 @@ document.getElementById('stageBanner').addEventListener('click', async function(
   var ni = si + dir;
   if(ni < 0 || ni >= STAGES.length) return;
   var next = STAGES[ni];
-  if(!confirm((dir > 0 ? 'Advance' : 'Move back') + ' to ' + next.toUpperCase() + '?')) return;
+  if(!await crAsk((dir > 0 ? 'Advance' : 'Move back') + ' to ' + next.toUpperCase() + '?')) return;
   try{
     await setStage(currentProject.id, next);
     renderOverview();
@@ -16588,7 +16588,7 @@ document.addEventListener('visibilitychange', async function(){
   if(document.visibilityState !== 'visible' || !pendingCall) return;
   var call = pendingCall; pendingCall = null;
   if(Date.now() - call.at > 45 * 60000) return; /* stale */
-  if(!confirm('Log this call with ' + (currentProject && currentProject.id === call.pr ? currentProject.name : 'the client') + '?')) return;
+  if(!await crAsk('Log this call with ' + (currentProject && currentProject.id === call.pr ? currentProject.name : 'the client') + '?')) return;
   var note = prompt('Call result / note:', '');
   if(note === null) return;
   var pr = cacheProjects.find(function(x){ return x.id === call.pr; });
@@ -17095,8 +17095,8 @@ function renderInsuranceDocsCard(){
     b.addEventListener('click', function(){ openJobFile(b.getAttribute('data-insdocview')); });
   });
   mount.querySelectorAll('[data-insdocdel]').forEach(function(b){
-    b.addEventListener('click', function(){
-      if(!confirm('Delete this insurance document?')) return;
+    b.addEventListener('click', async function(){
+      if(!await crAsk('Delete this insurance document?')) return;
       var id = b.getAttribute('data-insdocdel');
       db.remove(id)
         .then(function(){ return reload(); })
@@ -17421,7 +17421,7 @@ async function itelPatch(id, patch){
 
 async function itelRemove(id){
   if(itelState.busy) return;
-  if(!confirm('Delete this iTel report?')) return;
+  if(!await crAsk('Delete this iTel report?')) return;
   itelState.busy = true;
   try{
     var r = await window.supa.from('itel_reports').delete().eq('id', id);
@@ -17450,8 +17450,8 @@ function pickAndUploadInsDoc(typeKey){
          money sat unextracted for a day. Two controls on one page mention
          the scope; only the Scope of Loss card reads one. Offer the read
          right here rather than leaving the wrong button silently wrong. */
-      if(typeKey === 'scope_of_loss' && typeof routeScopeToReader === 'function'){
-        if(confirm('Filed.\n\nRead it now and fill in the carrier, claim number and the RCV/ACV figures?\n\nFiling alone does not update the claim.')){
+      if(typeKey === 'scope_of_loss' && typeof routeScopeToReader === 'async function'){
+        if(await crAsk('Filed.\n\nRead it now and fill in the carrier, claim number and the RCV/ACV figures?\n\nFiling alone does not update the claim.')){
           await routeScopeToReader(f, null);
         }
       }
@@ -19293,7 +19293,7 @@ function matListText(trade){
 
 /* ---------- full data backup (admin) ---------- */
 async function exportBackup(){
-  if(!confirm('Download a full backup of all clients, documents, photos, and appointments? This can take a minute.')) return;
+  if(!await crAsk('Download a full backup of all clients, documents, photos, and appointments? This can take a minute.')) return;
   try{
     var docsFull = [];
     for(var i = 0; i < cacheRows.length; i++){
@@ -20718,7 +20718,7 @@ document.getElementById('qiFinishBtn').addEventListener('click', async function(
   var shots = qi.photos.filter(function(p){ return p.data; });
   var total = shots.length + (qi._restoredUp || 0);
   if(!total){ qiBubble('ai', 'No photos yet \u2014 grab at least one before finishing.'); return; }
-  if(!confirm('Finish the inspection for ' + qi.projectName + '? (' + total + ' photo(s))')) return;
+  if(!await crAsk('Finish the inspection for ' + qi.projectName + '? (' + total + ' photo(s))')) return;
   var pid = qi.projectId;
   try{
     /* wait for any in-flight per-shot uploads to settle before we retry --
@@ -21276,7 +21276,7 @@ async function runTotalsBackfill(){
     return (isEstimateTitle(t) || /^(contract|invoice)/i.test(t)) && !(Number(r.total) > 0);
   });
   if(!targets.length){ crTell('Nothing to backfill \u2014 every estimate, contract, and invoice already has a total.'); return; }
-  if(!confirm('Scan ' + targets.length + ' document(s) missing a dollar total and fill them in from the document contents?')) return;
+  if(!await crAsk('Scan ' + targets.length + ' document(s) missing a dollar total and fill them in from the document contents?')) return;
   var fixed = 0, skipped = 0;
   for(var i = 0; i < targets.length; i++){
     try{
@@ -21655,7 +21655,7 @@ async function renderCommissions(){
 }
 async function miChangeRep(email){
   if(!currentProject || !commAdmin()) return;
-  if(commUi.hasColls && !confirm('This job already has money logged. Move the sales rep anyway?\nExisting commissions keep their rep; only future collections follow the new one.')){
+  if(commUi.hasColls && !await crAsk('This job already has money logged. Move the sales rep anyway?\nExisting commissions keep their rep; only future collections follow the new one.')){
     renderCommissions(); return;
   }
   var r = await sb.from('projects').update({ sales_rep: email }).eq('id', currentProject.id).select('id,sales_rep').single();
@@ -21759,7 +21759,7 @@ async function miDelColl(id){
   /* 737: name the cheque being removed. commUi.lastColls is stashed by
      renderCommissions the same way 734 stashed lastComms, so this costs no query. */
   var _c = (commUi.lastColls || []).filter(function(x){ return String(x.id) === String(id); })[0];
-  if(!confirm('Remove the ' + (_c ? fmtMoney(Number(_c.amount) || 0, true) + ' ' : '') +
+  if(!await crAsk('Remove the ' + (_c ? fmtMoney(Number(_c.amount) || 0, true) + ' ' : '') +
               'collection? Its unpaid commission goes with it.')) return;
   var r = await sb.from('collections').delete().eq('id', id);
   if(r.error){ crTell('Could not remove: ' + r.error.message); return; }
@@ -21795,7 +21795,7 @@ async function miSaveDraw(){
 }
 async function miRepayDraw(id){
   if(!commAdmin()) return;
-  if(!confirm('Mark this draw repaid?')) return;
+  if(!await crAsk('Mark this draw repaid?')) return;
   var r = await sb.from('draws').update({ status:'repaid', repaid_at: commToday() }).eq('id', id);
   if(r.error){ crTell('Could not update: ' + r.error.message); return; }
   await renderCommissions();
@@ -21833,7 +21833,7 @@ async function addCommission(){
 }
 async function delCommission(id){
   if(!commAdmin()) return;
-  if(!confirm('Remove this commission from the record?')) return;
+  if(!await crAsk('Remove this commission from the record?')) return;
   var r = await sb.from('commissions').delete().eq('id', id);
   if(r.error){ crTell('Could not remove: ' + r.error.message); return; }
   await renderCommissions();
@@ -23125,7 +23125,7 @@ document.getElementById('apptList').addEventListener('click', async function(e){
   if(!del) return;
   var row = del.closest('.apptrow');
   var id = row.getAttribute('data-aid');
-  if(!confirm('Delete this appointment?')) return;
+  if(!await crAsk('Delete this appointment?')) return;
   try{
     await adb.remove(id);
     cacheAppts = cacheAppts.filter(function(x){ return String(x.id) !== String(id); });
@@ -23306,7 +23306,7 @@ document.getElementById('teamAddBtn').addEventListener('click', function(){
 async function cardinalDeleteClient(pr, opts){
   opts = opts || {};
   if(!pr || !isAdminUser()) return false;
-  if(!confirm('Delete ' + (pr.name || 'this client') + '?\n\nThis permanently removes their profile, ALL documents (estimates, contracts, reports), photos, and appointments. This cannot be undone.')) return false;
+  if(!await crAsk('Delete ' + (pr.name || 'this client') + '?\n\nThis permanently removes their profile, ALL documents (estimates, contracts, reports), photos, and appointments. This cannot be undone.')) return false;
   var typed = prompt('Type the client\u2019s name exactly to confirm deletion:', '');
   if(typed === null) return false;
   if(typed.trim().toLowerCase() !== String(pr.name || '').trim().toLowerCase()){
@@ -23339,7 +23339,7 @@ async function cardinalDeepDelete(pr){
 async function cardinalDeleteMany(list, opts){
   opts = opts || {};
   if(!list || !list.length || !isAdminUser()) return false;
-  if(!confirm('Delete ' + list.length + ' client' + (list.length > 1 ? 's' : '') + '?\n\nThis permanently removes their profiles, ALL documents, photos, and appointments. This cannot be undone.')) return false;
+  if(!await crAsk('Delete ' + list.length + ' client' + (list.length > 1 ? 's' : '') + '?\n\nThis permanently removes their profiles, ALL documents, photos, and appointments. This cannot be undone.')) return false;
   var typed = prompt('Type DELETE to confirm removing ' + list.length + ' client' + (list.length > 1 ? 's' : '') + ':', '');
   if(typed === null) return false;
   if(typed.trim().toUpperCase() !== 'DELETE'){
@@ -23580,7 +23580,7 @@ async function createReportFrom(tpl, kindLabel, roofy){
   if(!currentProject) return;
   var cl = roofy ? getChecklist(currentProject) : null;
   if(roofy && !cl){
-    if(!confirm('No Roofing Inspection Checklist on file \u2014 its baseline specs normally feed the report.\n\n' +
+    if(!await crAsk('No Roofing Inspection Checklist on file \u2014 its baseline specs normally feed the report.\n\n' +
                 'OK = create the report anyway (blank specs, fill by hand)\nCancel = go complete the checklist first')){
       showTab('checklists');
       openChecklist();
@@ -23744,10 +23744,10 @@ function wirePhotoFrames(doc){
     frame._crSyncRmv = syncRmv;
     syncRmv();
 
-    rmv.addEventListener('click', function(e){
+    rmv.addEventListener('click', async function(e){
       e.stopPropagation();
       if(!frame.querySelector('img')) return;
-      if(!confirm('Remove this photograph from the report?\n\nThe caption is cleared too. Nothing is deleted from CompanyCam or the client photo album.')) return;
+      if(!await crAsk('Remove this photograph from the report?\n\nThe caption is cleared too. Nothing is deleted from CompanyCam or the client photo album.')) return;
       Array.prototype.slice.call(frame.childNodes).forEach(function(node){
         if(node === btn || node === input || node === rmv) return;
         if(node.nodeType === 1 && node.classList && node.classList.contains('tag')) return;
@@ -24296,7 +24296,7 @@ function rccPicked(){
     .filter(Boolean);
 }
 
-function rccFile(){
+async function rccFile(){
   if(rccBusy) return;
   var doc = rccDoc();
   if(!rccIsReport(doc)){ rccStat('The report is no longer open.', true); return; }
@@ -24310,7 +24310,7 @@ function rccFile(){
   var picked = rccPicked();
   if(!picked.length){ rccStat('Tick the photographs you want first.', true); return; }
   var foreign = [].slice.call(document.querySelectorAll('#rccGrid .rcc-p.foreign input:checked')).length;
-  if(foreign && !confirm(foreign + ' of the photographs you ticked are from a different job than this ' +
+  if(foreign && !await crAsk(foreign + ' of the photographs you ticked are from a different job than this ' +
       'report. They will be added anyway. Continue?')) return;
 
   rccBusy = true;
@@ -25402,12 +25402,12 @@ document.getElementById('saveBtn').addEventListener('click', saveCurrent);
 
    It asks rather than refuses. A no-charge warranty estimate is a real thing,
    and a guard that blocks legitimate work is worse than the bug it fixes. */
-function priceOkToSend(what){
+async function priceOkToSend(what){
   var t;
   try{ t = readEstimateTotal(); }catch(_){ return true; }
   if(t === null) return true;              /* no total field — not a priced document */
   if(Number(t) > 0) return true;
-  return confirm('\u201C' + (what || 'This document') + '\u201D has no total \u2014 it reads $0.00.\n\n' +
+  return await crAsk('\u201C' + (what || 'This document') + '\u201D has no total \u2014 it reads $0.00.\n\n' +
                  'Enter a total first, or send it anyway?');
 }
 function currentDocRow(){
@@ -25460,7 +25460,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
   try{
     await saveCurrent();
     /* 738: emailing is the path that reaches the client, so it is guarded first. */
-    if(!priceOkToSend((titleInput.value || '').trim() || 'document')) return;
+    if(!await priceOkToSend((titleInput.value || '').trim() || 'document')) return;
     var row = currentDocRow();
     var pr = currentDocProject();
     /* Community jobs are funded by a partner (Habitat, Rebuilding Together, the
@@ -25572,7 +25572,7 @@ document.getElementById('emailDocBtn').addEventListener('click', async function(
     }
     _bl.textContent = '\u2713 Sent';
     setTimeout(function(){ _bl.textContent = (btn.dataset.lbl || 'Email to client'); btn.disabled = false; }, 2500);
-    if(pr && confirm('Sent. Schedule a follow-up reminder in 3 days?')){
+    if(pr && await crAsk('Sent. Schedule a follow-up reminder in 3 days?')){
       var d = new Date(Date.now() + 3 * 86400000);
       await adb.create({
         title: 'Follow up \u2014 ' + (pr.name || 'client'),
@@ -26183,7 +26183,7 @@ toggleBtn.addEventListener('click', async function(){
   /* 738: marking sent by hand is the same claim as emailing it — the pipeline,
      jobFinance and the approvals queue all read `sent`. Unmarking is never
      guarded: that direction is a correction, not a claim. */
-  if(toSent && !priceOkToSend((titleInput.value || '').trim() || 'document')) return;
+  if(toSent && !await priceOkToSend((titleInput.value || '').trim() || 'document')) return;
   var sentAt = toSent ? new Date().toISOString() : null;
   try{
     await db.update(current.id, { status: toSent ? 'sent' : 'unsent', sent_at: sentAt });
@@ -26200,7 +26200,7 @@ toggleBtn.addEventListener('click', async function(){
   }catch(err){ showError('Could not update status: ' + (err.message || err)); }
 });
 async function closeEditor(){
-  /* 486: this function sets NOTHING synchronously - srcdoc='', current=null and
+  /* 486: this async function sets NOTHING synchronously - srcdoc='', current=null and
      the class removal all run after `await saveCurrent()`. So a background task
      cannot tell the editor is closing by re-reading frame.contentDocument. This
      bump is the first synchronous statement precisely so it can. */
@@ -26472,8 +26472,8 @@ async function renderAuditLog(){
     });
     var rz = mount.querySelector('[data-audreset]');
     if(rz) rz.addEventListener('click', async function(){
-      if(!confirm('Reset the ENTIRE audit log?\n\nThis permanently clears all recorded events and sign-in sessions for the whole team.')) return;
-      if(!confirm('Last check \u2014 this cannot be undone. Reset now?')) return;
+      if(!await crAsk('Reset the ENTIRE audit log?\n\nThis permanently clears all recorded events and sign-in sessions for the whole team.')) return;
+      if(!await crAsk('Last check \u2014 this cannot be undone. Reset now?')) return;
       try{
         await sb.from('audit_events').delete().not('id', 'is', null);
         await sb.from('audit_sessions').delete().not('id', 'is', null);
@@ -27230,7 +27230,7 @@ signOutBtn.addEventListener('click', async function(){
     }
     if((_pw + _pp) > 0){
       var _n = _pw + _pp;
-      if(!confirm(_n + ' change' + (_n === 1 ? '' : 's') + ' on this device ' + (_n === 1 ? 'has' : 'have') + ' not synced yet and will be lost if you sign out now.\n\nSign out anyway?')) return;
+      if(!await crAsk(_n + ' change' + (_n === 1 ? '' : 's') + ' on this device ' + (_n === 1 ? 'has' : 'have') + ' not synced yet and will be lost if you sign out now.\n\nSign out anyway?')) return;
     }
   }catch(_){}
   try{ await sb.auth.signOut(); }catch(e){}
@@ -29584,7 +29584,7 @@ function showList() {
   }
   async function creDiscard(id){
     if(!creCanDiscard() || !id) return;
-    if(!confirm('Discard this estimate?\n\nIt leaves the list but is kept on the record.')) return;
+    if(!await crAsk('Discard this estimate?\n\nIt leaves the list but is kept on the record.')) return;
     /* Both tables carry a status column — verified against the live database — so one
        handler serves an AI draft and a manual one. */
     /* 568: was routed to `manual_estimates`, which is empty and has no writer.
@@ -29941,7 +29941,7 @@ function showList() {
 </template>
 
 <script id="cr-pricing-script">
-(function () {
+(async function () {
   'use strict';
 
   const MOUNT = document.getElementById('cr-pricing-mount');
@@ -30095,7 +30095,7 @@ function showList() {
   function wireRows() {
     MOUNT.querySelectorAll('.cr-p-row').forEach(row => {
       const id = row.dataset.id;
-      const item = state.items.find(i => i.id === id);
+      const item = state.items.find(async i => i.id === id);
       if (!item) return;
 
       const toggle = row.querySelector('[data-act="toggle"]');
@@ -30109,14 +30109,14 @@ function showList() {
       };
 
       row.querySelectorAll('[data-field]').forEach(input => {
-        input.onchange = () => scheduleSave(item, input);
+        input.onchange = async () => scheduleSave(item, input);
         input.oninput = () => scheduleSave(item, input);
         input.onblur = () => flushSave(item);
       });
 
       const del = row.querySelector('[data-act="delete"]');
       if (del) del.onclick = async () => {
-        if (!confirm(`Delete "${item.name}"?\n\nTip: to hide instead, toggle Enabled off.`)) return;
+        if (!await crAsk(`Delete "${item.name}"?\n\nTip: to hide instead, toggle Enabled off.`)) return;
         const { error } = await window.supa.from('pricing_items').delete().eq('id', item.id);
         if (error) return saveStatus('Delete failed', 'error');
         state.items = state.items.filter(i => i.id !== item.id);
@@ -30295,7 +30295,7 @@ function showList() {
     function wireCatRows() {
       listEl.querySelectorAll('.cr-cat-row').forEach(row => {
         const id = row.dataset.catId;
-        const cat = state.categories.find(c => c.id === id);
+        const cat = state.categories.find(async c => c.id === id);
         if (!cat) return;
 
         // Rename on blur
@@ -30322,13 +30322,13 @@ function showList() {
         // Up/down reorder
         const up = row.querySelector('[data-act="up"]');
         const dn = row.querySelector('[data-act="down"]');
-        if (up) up.onclick = () => moveCat(cat, -1, renderCatList);
+        if (up) up.onclick = async () => moveCat(cat, -1, renderCatList);
         if (dn) dn.onclick = () => moveCat(cat, 1, renderCatList);
 
         // Delete
         const del = row.querySelector('[data-act="del-cat"]');
         if (del && !del.disabled) del.onclick = async () => {
-          if (!confirm(`Delete category "${cat.name}"?`)) return;
+          if (!await crAsk(`Delete category "${cat.name}"?`)) return;
           const { error } = await window.supa.from('pricing_categories').delete().eq('id', cat.id);
           if (error) return saveStatus('Delete failed', 'error');
           state.categories = state.categories.filter(x => x.id !== cat.id);
@@ -31608,7 +31608,7 @@ function showList() {
         .in('claim_id', ids);
       const byClaim = {};
       (pays || []).forEach(p => { byClaim[p.claim_id] = (byClaim[p.claim_id] || 0) + Number(p.amount); });
-      data.forEach(c => c._paid = byClaim[c.id] || 0);
+      data.forEach(async c => c._paid = byClaim[c.id] || 0);
     }
     return data;
   }
@@ -31693,7 +31693,7 @@ function showList() {
     MOUNT.querySelector('[data-act="close"]').onclick = () => close();
     MOUNT.querySelectorAll('[data-filter]').forEach(t => {
       t.onclick = () => {
-        MOUNT.querySelectorAll('.cr-c-tab').forEach(x => x.classList.remove('active'));
+        MOUNT.querySelectorAll('.cr-c-tab').forEach(async x => x.classList.remove('active'));
         t.classList.add('active');
         state.filter = t.dataset.filter;
         renderRows();
@@ -32368,7 +32368,7 @@ function showList() {
     `;
     MOUNT.appendChild(modal);   // must live inside #cr-claims-mount or its CSS never matches
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    modal.querySelector('[data-act="cancel"]').onclick = () => modal.remove();
+    modal.querySelector('[data-act="cancel"]').onclick = async () => modal.remove();
 
     modal.querySelector('[data-act="save"]').onclick = async () => {
       const get = (f) => modal.querySelector(`[data-f="${f}"]`).value.trim() || null;
@@ -32503,7 +32503,7 @@ function showList() {
 
     if (isEdit) {
       modal.querySelector('[data-act="delete"]').onclick = async () => {
-        if (!confirm('Delete this payment?')) return;
+        if (!await crAsk('Delete this payment?')) return;
         const r = await window.supa.from('insurance_payments').delete().eq('id', p.id);
         if (r.error) { toast('Could not delete: ' + r.error.message, 'error'); return; }
         modal.remove(); toast('Deleted');
@@ -32595,7 +32595,7 @@ function showList() {
 
     if (isEdit) {
       modal.querySelector('[data-act="delete"]').onclick = async () => {
-        if (!confirm('Delete this supplement?')) return;
+        if (!await crAsk('Delete this supplement?')) return;
         const r = await window.supa.from('insurance_supplements').delete().eq('id', s.id);
         if (r.error) { toast('Could not delete: ' + r.error.message, 'error'); return; }
         modal.remove(); toast('Deleted');
@@ -32904,7 +32904,7 @@ function showList() {
           property_address: proj.address,
         },
         possibleMatches: possibles || [],
-        linkFn: (claimId) => linkClaimToProject(proj.id, claimId, mountEl),
+        linkFn: async (claimId) => linkClaimToProject(proj.id, claimId, mountEl),
       });
     }
   }
@@ -33067,7 +33067,7 @@ function showList() {
     `;
     document.body.appendChild(modal);
     modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    modal.querySelector('[data-act="cancel"]').onclick = () => modal.remove();
+    modal.querySelector('[data-act="cancel"]').onclick = async () => modal.remove();
     modal.querySelector('[data-act="create"]').onclick = async () => {
       const get = (f) => modal.querySelector(`[data-f="${f}"]`).value.trim() || null;
       const payload = {
@@ -33145,7 +33145,7 @@ function showList() {
     }
 
     render('');
-    modal.querySelector('[data-search]').oninput = (e) => render(e.target.value);
+    modal.querySelector('[data-search]').oninput = async (e) => render(e.target.value);
   }
 
   // ═══ Link operations ═════════════════════════════════════
@@ -35927,7 +35927,7 @@ var eBtn = row.querySelector('[data-act="edit"]');
 if(eBtn) eBtn.onclick = function(){ openEditor(get(id)); };
 var aBtn = row.querySelector('[data-act="archive"]');
 if(aBtn) aBtn.onclick = async function(){
-if(!confirm('Archive this partner? They will no longer appear in pickers.')) return;
+if(!await crAsk('Archive this partner? They will no longer appear in pickers.')) return;
 await archive(id);
 openDirectory();
 };
@@ -36966,7 +36966,7 @@ crTell('Could not open: ' + (e.message || e));
 }
 async function deleteFile(wo, idx){
 if(!wo) return;
-if(!confirm('Delete "' + wo.name + '"? This can\'t be undone.')) return;
+if(!await crAsk('Delete "' + wo.name + '"? This can\'t be undone.')) return;
 var pr = window.currentProject;
 if(!pr) return;
 try{
@@ -37075,7 +37075,7 @@ var hasIns   = !!(window.projInsurance && window.projInsurance(pr));
 var goingIns = newType === 'insurance';
 var leavingIns = current === 'insurance';
 if(leavingIns && !goingIns && hasIns){
-var ok = confirm(
+var ok = await crAsk(
 'Switching from Insurance to ' + newType.toUpperCase() + ' will PERMANENTLY DELETE ' +
 'the insurance data on file:\n\n' +
 '  • Carrier, policy #, claim #\n' +
@@ -37104,12 +37104,12 @@ if(typeof window.auditLog === 'function'){
 window.auditLog('lead', 'Claim type changed ' + current + ' \u2192 community', pr.id);
 }
 closeShell();
-setTimeout(function(){
+setTimeout(async function(){
 if(!window.CardinalCommunityPartners) return;
 var fresh = (window.cacheProjects || []).filter(function(x){ return x.id === pr.id; })[0] || pr;
 var already = window.CardinalCommunityPartners.partnerIdForProject(fresh);
 if(already) return;
-var wantAttach = confirm(
+var wantAttach = await crAsk(
 'Client set to Community. Attach a partner now?\n\n' +
 'Non-profits: Habitat, ReBuild, DHRN\n' +
 'Property managers: Kitty Hawk Realty'
@@ -38059,7 +38059,7 @@ bd.querySelectorAll('.cr-cp-row').forEach(function(row){
 var id = row.dataset.id;
 row.querySelector('[data-act="edit"]').onclick = function(){ openEditor(partnerId, get(id)); };
 row.querySelector('[data-act="archive"]').onclick = async function(){
-if(!confirm('Archive this property? It will no longer appear in pickers.')) return;
+if(!await crAsk('Archive this property? It will no longer appear in pickers.')) return;
 await archive(id);
 openDirectory(partnerId);
 };
@@ -40619,7 +40619,7 @@ return LAST;
 };
 function integrate(){
 var A = window.CardinalAdminHealth;
-if(!A || typeof A.check !== 'function') return false;
+if(!A || typeof A.check !== 'async function') return false;
 if(A.__crRosterHooked) return true;
 A.__crRosterHooked = true;
 var origCheck = A.check;
@@ -40882,7 +40882,7 @@ window.CardinalDupeLeads = { run: runDupeLeads, results: function(){ return DUPE
 print: printer('Dupe Leads', function(){ return DUPES_LAST; }) };
 function integrate(){
 var A = window.CardinalAdminHealth;
-if(!A || typeof A.check !== 'function') return false;
+if(!A || typeof A.check !== 'async function') return false;
 if(A.__crExtraHooked) return true;
 A.__crExtraHooked = true;
 var origCheck = A.check;
@@ -41808,6 +41808,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:1083, d:'2026-08-26', t:'The app asks its own questions now',
+  s:'Eighty-eight times, this app stopped you with the browser’s own grey box — the one headed “app.cardinalroster.com says” with OK and Cancel. Those are gone. A sheet now slides up from the bottom of the screen, where your thumb already is, and its buttons say what will actually happen: “Delete photo” and “Keep it”, not OK and Cancel. You can answer without re-reading the question, which is the whole point on a roof in the sun. The dangerous answer is red and sits above the safe one. Tapping the dark area behind the sheet, or pressing Escape, always means no — never yes.' },
   { b:1082, d:'2026-08-26', t:'The Job Menu, readable and told apart',
   s:'Every icon on the job menu was painted a steel blue that had been chosen years ago for a white tile. The tile is black now. Against it those icons scored 1.52 to 1, where anything below 3 to 1 counts as unreadable \u2014 and the little $ and % marks on the money rows are text, which is held to an even higher bar. They are now the same colour as the words beside them, in both the dark and the light theme. Separately, seven of the fifteen tiles were sharing three icons: Tasks, Punch Outs and Checklists were one clipboard; Photos and The Walk were one camera; Documents and Contracts were one folder. Punch Outs is a hammer, Checklists is a ticked list, The Walk is a house under a lens, and Contracts is a page with a pen.' },
   { b:1081, d:'2026-08-26', t:'Nothing is smaller than 11px',
@@ -43041,7 +43043,7 @@ email = email.trim().toLowerCase();
    exact string by the sales RLS policy, so a half-typed address hands the
    selected clients to nobody and says it worked. */
 if(!window.crValid.email(email).ok){ crTell('That doesn\'t look like an email.'); return; }
-if(!confirm('Reassign ' + selected.size + ' client(s) to ' + email + '?')) return;
+if(!await crAsk('Reassign ' + selected.size + ' client(s) to ' + email + '?')) return;
 var ids = Array.from(selected);
 var btns = bar.querySelectorAll('button');
 btns.forEach(function(b){ b.disabled = true; });
@@ -43059,10 +43061,10 @@ if(r.error) fail++; else ok++;
 }
 crTell('Reassigned ' + ok + '. ' + (fail ? 'Failed: ' + fail + '.' : ''));
 exitMode();
-if(typeof window.reload === 'function') window.reload();
+if(typeof window.reload === 'async function') window.reload();
 };
 bar.querySelector('[data-act="archive"]').onclick = async function(){
-if(!confirm('Archive ' + selected.size + ' client(s)? They\'ll be hidden from the main list.')) return;
+if(!await crAsk('Archive ' + selected.size + ' client(s)? They\'ll be hidden from the main list.')) return;
 var ids = Array.from(selected);
 var btns = bar.querySelectorAll('button');
 btns.forEach(function(b){ b.disabled = true; });
@@ -43075,7 +43077,7 @@ if(r.error) fail++; else ok++;
 }
 crTell('Archived ' + ok + '. ' + (fail ? 'Failed: ' + fail + '.' : ''));
 exitMode();
-if(typeof window.reload === 'function') window.reload();
+if(typeof window.reload === 'async function') window.reload();
 };
 var delBtn = bar.querySelector('[data-act="delete"]');
 if(delBtn) delBtn.onclick = async function(){
@@ -43088,7 +43090,7 @@ return pr ? (pr.name || '(unnamed)') : '(unknown)';
 });
 var preview = names.slice(0, 12).join('\n  \u2022 ');
 if(names.length > 12) preview += '\n  \u2026and ' + (names.length - 12) + ' more';
-if(!confirm(
+if(!await crAsk(
 'Permanently delete ' + ids.length + ' client' + (ids.length === 1 ? '' : 's') + '?\n\n' +
 '  \u2022 ' + preview + '\n\n' +
 'This also removes their photos, estimates, documents and appointments. ' +
@@ -44586,7 +44588,7 @@ var baseline = (window.CardinalNachi && window.CardinalNachi.baseline);
 if(!baseline){ crTell('Baseline data not available.'); return; }
 var seriesCount = baseline.series.length;
 var articleCount = baseline.articles.length;
-if(!confirm(
+if(!await crAsk(
 'Import ' + seriesCount + ' baseline series and ' + articleCount +
 ' articles into the database?\n\n' +
 'Duplicates (matching slug for series, matching title for articles) will be skipped, so it\'s safe to run.'
@@ -44728,7 +44730,7 @@ var form = modal.querySelector('form');
 modal.querySelector('[data-act="cancel"]').onclick = back;
 if(!isNew){
 modal.querySelector('[data-act="archive"]').onclick = async function(){
-if(!confirm('Archive "' + s.title + '"?')) return;
+if(!await crAsk('Archive "' + s.title + '"?')) return;
 var r = await window.supa.from('nachi_series').update({ archived:true }).eq('id', s.id);
 if(r.error){ crTell('Archive failed: ' + r.error.message); return; }
 await loadFromDb();
@@ -44828,7 +44830,7 @@ preview.innerHTML = a.html_content || '<i style="color:#8a9bb0;">Preview updates
 modal.querySelector('[data-act="cancel"]').onclick = back;
 if(!isNew){
 modal.querySelector('[data-act="archive"]').onclick = async function(){
-if(!confirm('Archive "' + a.title + '"?')) return;
+if(!await crAsk('Archive "' + a.title + '"?')) return;
 var r = await window.supa.from('nachi_articles').update({ archived:true }).eq('id', a.id);
 if(r.error){ crTell('Archive failed: ' + r.error.message); return; }
 await loadFromDb();
@@ -45625,7 +45627,7 @@ saveBtn.disabled = false; saveBtn.textContent = 'Save';
 async function handleDelete(){
 if(!currentEditingId) return;
 var item = items.find(function(i){ return i.id === currentEditingId; });
-if(!confirm('Remove "' + (item ? item.name : 'this item') + '" from the library?')) return;
+if(!await crAsk('Remove "' + (item ? item.name : 'this item') + '" from the library?')) return;
 try{
 await deleteItem(currentEditingId);
 closeEditor();
@@ -45860,7 +45862,7 @@ window.galChecked[p.id] = true;
 added = true;
 }
 });
-if(added && typeof window.renderGallery === 'function') window.renderGallery();
+if(added && typeof window.renderGallery === 'async function') window.renderGallery();
 }
 /* 708: api/caption REJECTS anything that is not a base64 data: URL — so for
    storage-backed photos the AI caption has answered 400 since the bucket went
@@ -46248,7 +46250,7 @@ crTell('Save failed: ' + (e.message || e));
 return;
 }
 closeCapModal();
-if(typeof window.renderGallery === 'function') window.renderGallery();
+if(typeof window.renderGallery === 'async function') window.renderGallery();
 };
 capModal.querySelector('[data-act="ai"]').onclick = async function(){
 var aiBtn = capModal.querySelector('[data-act="ai"]');
@@ -46544,8 +46546,8 @@ x.classList.toggle('active', x === b);
 tr.querySelector('[data-act="undo"]').onclick = function(){
 strokes.pop(); redraw();
 };
-tr.querySelector('[data-act="clear"]').onclick = function(){
-if(strokes.length && !confirm('Remove all markup?')) return;
+tr.querySelector('[data-act="clear"]').onclick = async function(){
+if(strokes.length && !await crAsk('Remove all markup?')) return;
 strokes = []; redraw();
 };
 var cr = el.querySelector('[data-slot="colorrow"]');
@@ -46592,7 +46594,7 @@ function saveLabel(){ return opts.saveLabel || 'Save'; }
    closing after the first would make it two trips. */
 async function extra(){
 if(!photo || !baseImg) return;
-if(!opts.extra || typeof opts.extra.run !== 'function') return;
+if(!opts.extra || typeof opts.extra.run !== 'async function') return;
 var b = el.querySelector('[data-act="extra"]');
 var was = b.textContent;
 b.disabled = true; b.textContent = 'Working\u2026';
@@ -47009,7 +47011,7 @@ opts = opts || {};
 if(!window.supa){ crTell('No connection \u2014 try again when you are back online.'); return false; }
 if(!opts.skipConfirm){
 var what = opts.label ? '\u201C' + opts.label + '\u201D' : 'this estimate';
-if(!confirm('Delete ' + what + '?\n\n' +
+if(!await crAsk('Delete ' + what + '?\n\n' +
 'It goes for everyone, and it cannot be undone. Anything already published from ' +
 'it stays in the client\u2019s documents.')) return false;
 }
@@ -47416,7 +47418,7 @@ var r = await fetch(url);
 if(!r.ok) throw new Error('photo read failed (' + r.status + ')');
 var blob = await r.blob();
 var bmp, objUrl = null;
-if(typeof createImageBitmap === 'function'){
+if(typeof createImageBitmap === 'async function'){
 bmp = await createImageBitmap(blob);
 }else{
 objUrl = URL.createObjectURL(blob);
@@ -47589,10 +47591,10 @@ cell.textContent = money(amt);
 }
 function wire(){
 if(!view) return;
-view.querySelector('[data-act="close"]').onclick = function(){
+view.querySelector('[data-act="close"]').onclick = async function(){
 /* 1029: Save no longer closes the editor, so this is the one exit — it asks
    before discarding unsaved work. */
-if(state && state._dirty && !confirm('You have unsaved changes.\n\nClose without saving?')) return;
+if(state && state._dirty && !await crAsk('You have unsaved changes.\n\nClose without saving?')) return;
 close();
 };
 view.querySelector('[data-act="save"]').onclick = handleSave;
@@ -48870,7 +48872,7 @@ if(!btn || !saveBtn) return;
 var statusSel = document.querySelector('#cr-est-view [data-f="status"]');
 var status = statusSel ? statusSel.value : 'draft';
 if(status !== 'accepted'){
-var go = confirm(
+var go = await crAsk(
 'This estimate is marked "' + status + '", not Accepted.\n\n' +
 'Generate a contract from it anyway?'
 );
@@ -49001,7 +49003,7 @@ try{ current = window.normStage(current); }catch(_){}
 }
 if(status === 'declined'){
 if(current === 'Lost') return;
-var ok = confirm(
+var ok = await crAsk(
 'This estimate is marked Declined.\n\n' +
 'Move ' + (project.name || 'this client') + ' to ' +
 displayStage('Lost') + '?'
@@ -49052,7 +49054,7 @@ var _cur = project.stage;
 try{ if(typeof window.normStage === 'function') _cur = window.normStage(_cur); }catch(_){}
 var _willMove = !!(STATUS_STAGE.sent && _cur !== 'Lost' && _cur !== STATUS_STAGE.sent &&
                    rank(_cur) < rank(STATUS_STAGE.sent));
-if(!confirm('Estimate published.\n\nMark it as Sent?' +
+if(!await crAsk('Estimate published.\n\nMark it as Sent?' +
     (_willMove ? '\n\n' + (project.name || 'This client') + ' moves to ' +
                  displayStage(STATUS_STAGE.sent) + '.'
                : '\n\nThe pipeline stays at ' + displayStage(_cur) + '.'))) return;
@@ -52002,7 +52004,7 @@ async function toggle(it){
      losing who actually finished the work.
      The shared layer owns the flip. Do not pre-mutate before delegating. */
   var P = window.CardinalPunch;
-  if(P && typeof P.toggle === 'function'){
+  if(P && typeof P.toggle === 'async function'){
     try{
       var res = await P.toggle(it.id);
       if(res && res.ok === false) throw new Error(res.error || 'write refused');
@@ -52995,7 +52997,7 @@ function checkIn(){
   }]) });
 }
 
-function checkOut(){
+async function checkOut(){
   var o = openVisit();
   if(!o) return;
   var now = new Date();
@@ -53006,7 +53008,7 @@ function checkOut(){
      may be checking out because he is waiting on a part, and then tomorrow is
      the wrong date and nobody was consulted. */
   if(it.status !== 'done'){
-    var back = window.confirm('Not finished yet.\n\nBack on this tomorrow?');
+    var back = await crAsk('Not finished yet.\n\nBack on this tomorrow?');
     if(back) patch.scheduled_at = nextWorkDay(now);
   }
   save(patch);
@@ -53425,7 +53427,7 @@ async function tickStep(i){
 async function addStep(){
   var t = prompt('What is the step?');
   if(!t || !String(t).trim()) return;
-  var req = confirm('Require a written note before this step can be ticked?\n\nOK = note required, Cancel = no note needed.');
+  var req = await crAsk('Require a written note before this step can be ticked?\n\nOK = note required, Cancel = no note needed.');
   var st = steps().slice();
   st.push({ t:String(t).trim(), d:false, req:!!req, note:'' });
   await save({ steps: st });
@@ -53433,7 +53435,7 @@ async function addStep(){
 async function delStep(i){
   var st = steps().slice();
   if(!st[i]) return;
-  if(!confirm('Remove this step?\n\n' + (st[i].t || ''))) return;
+  if(!await crAsk('Remove this step?\n\n' + (st[i].t || ''))) return;
   st.splice(i, 1);
   await save({ steps: st });
 }
@@ -53826,17 +53828,17 @@ function wire(){
     if(v === null) return;
     save({ detail: String(v).trim() || null });
   }; });
-  q('[data-rmphoto]', function(b){ b.onclick = function(ev){
+  q('[data-rmphoto]', function(b){ b.onclick = async function(ev){
     ev.stopPropagation();
     var i = Number(b.getAttribute('data-rmphoto'));
     var list = photos().slice();
     if(!list[i]) return;
-    if(!confirm('Remove this photo from the punch-out?')) return;
+    if(!await crAsk('Remove this photo from the punch-out?')) return;
     list.splice(i, 1);
     save({ photos: list });
   }; });
   q('[data-act="del"]', function(b){ b.onclick = async function(){
-    if(!confirm('Delete this punch-out for everyone?\n\n' + (it.title || '') +
+    if(!await crAsk('Delete this punch-out for everyone?\n\n' + (it.title || '') +
       '\n\nIf the work is finished, close it instead — closed work stays in the client history.')) return;
     var id = it.id;
     try{
@@ -54494,7 +54496,7 @@ if(th){
 var d = document.createElement('div');
 d.className = 'pp-none';
 /* 612: the same outcome sentence the Communications thread uses. */
-d.textContent = (typeof window.notifyOutcomeText === 'function')
+d.textContent = (typeof window.notifyOutcomeText === 'async function')
   ? window.notifyOutcomeText(_r, to)
   : ('\uD83D\uDD14 Notified ' + to.join(', '));
 if(!(_r && (_r.sent > 0 || _r.mailed > 0))) d.style.color = '#C8202E';
@@ -54706,7 +54708,7 @@ img.src = url;
 });
 }
 function wrap(){
-if(typeof window.readScopeOfLoss !== 'function') return false;
+if(typeof window.readScopeOfLoss !== 'async function') return false;
 if(window.readScopeOfLoss.__crFixed) return true;
 var orig = window.readScopeOfLoss;
 var wrapped = async function(file){
@@ -58795,7 +58797,7 @@ if(a === 'submitted'){
    setStage stamps stage_since + t_Prospect, so the hub's chase clock
    starts by itself. */
 var l710 = lead(pr);
-if(!confirm('Mark this bid SUBMITTED to ' + (l710.partner_name || 'the partner') + '?')) return;
+if(!await crAsk('Mark this bid SUBMITTED to ' + (l710.partner_name || 'the partner') + '?')) return;
 var b710 = bidOf(pr), p971b = priceOf(pr);
 /* 971: was `e710 && e710.total` — a builder total only, so marking a hand-priced
    bid submitted recorded an empty amount. priceOf() is the one resolver. */
@@ -58831,7 +58833,7 @@ render();
 return;
 }
 if(a === 'unwait'){
-if(!confirm('Take this job OFF the waitlist? The tarp date stays on the record.')) return;
+if(!await crAsk('Take this job OFF the waitlist? The tarp date stays on the record.')) return;
 var u977 = mergeCk(pr, 'lead', { waitlist_at: '' });
 if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { lead: u977 });
 if(typeof window.auditLog === 'function'){
@@ -58869,7 +58871,7 @@ try{ window.auditLog('lead', 'Bid info updated', pr.id); }catch(_){ }
    uses — no second stage-move path. The bid patch is awaited FIRST because
    setStage's own checklist patch is fire-and-forget. */
 if(v0 !== '' && normStage(pr.stage) === 'Lead' &&
-confirm('Amount saved. Also move this job to ' + (LABEL['Prospect'] || 'Bid Submitted') + '?')){
+await crAsk('Amount saved. Also move this job to ' + (LABEL['Prospect'] || 'Bid Submitted') + '?')){
 await window.setStage(pr.id, 'Prospect');
 if(typeof window.auditLog === 'function'){
 try{ window.auditLog('lead', 'Bid marked submitted', pr.id); }catch(_){ }
@@ -58879,15 +58881,15 @@ render();
 return;
 }
 if(a === 'won'){
-if(!confirm('Mark this bid AWARDED by ' + (lead(pr).partner_name || 'the partner') + '?')) return;
+if(!await crAsk('Mark this bid AWARDED by ' + (lead(pr).partner_name || 'the partner') + '?')) return;
 await window.setStage(pr.id, 'Approved');
 }else if(a === 'lost'){
 await window.setStage(pr.id, 'Lost');
 }else if(a === 'complete'){
-if(!confirm('Mark this build COMPLETE?')) return;
+if(!await crAsk('Mark this build COMPLETE?')) return;
 await window.setStage(pr.id, 'Completed');
 }else if(a === 'invoice'){
-if(!confirm('Mark this job INVOICED to ' + (lead(pr).partner_name || 'the partner') + '?')) return;
+if(!await crAsk('Mark this job INVOICED to ' + (lead(pr).partner_name || 'the partner') + '?')) return;
 await window.setStage(pr.id, 'Invoiced');
 }else{
 return;
@@ -59414,9 +59416,9 @@ Promise.resolve(CP.setPartnerForProject(cur, chosen.id)).then(afterWrite);
 }));
 };
 var bc = box.querySelector('[data-pp="clearp"]');
-if(bc) bc.onclick = function(){
+if(bc) bc.onclick = async function(){
 if(!(CP && CP.setPartnerForProject)) return;
-if(!confirm('Remove the partner link from this client?')) return;
+if(!await crAsk('Remove the partner link from this client?')) return;
 guarded(function(cur){
 Promise.resolve(CP.setPartnerForProject(cur, null)).then(afterWrite);
 })();
@@ -60773,7 +60775,7 @@ placeChip  : placeChip,
   async function assign(portal){
     var ids=Object.keys(S.sel);
     if(!ids.length) return;
-    if(!confirm('Assign '+ids.length+' client'+(ids.length===1?'':'s')+' to the '+portal+' portal?')) return;
+    if(!await crAsk('Assign '+ids.length+' client'+(ids.length===1?'':'s')+' to the '+portal+' portal?')) return;
 
     var ok=0, fail=0;
     for(var i=0;i<ids.length;i++){
@@ -63721,7 +63723,7 @@ function openAdj(existing, carrier){
     var err = bg.querySelector('[data-aerr]');
     if(what === 'cancel'){ close(); return; }
     if(what === 'delete'){
-      if(!confirm('Delete ' + (a.name || 'this adjuster') + '?\n\nTheir difficulty rating and notes go with them.')) return;
+      if(!await crAsk('Delete ' + (a.name || 'this adjuster') + '?\n\nTheir difficulty rating and notes go with them.')) return;
       try{
         var dr = await window.supa.from('carrier_adjusters').delete().eq('id', a.id);
         if(dr && dr.error) throw dr.error;
@@ -66125,7 +66127,7 @@ function sortApply(doc, sent, placements){
            concerns: concerns };
 }
 
-function sortRun(){
+async function sortRun(){
   if(_sortBusy) return;
   var doc = rccDoc();
   if(!rccIsReport(doc)){
@@ -66142,7 +66144,7 @@ function sortRun(){
           V.maxPhotos + '.\n\nRemove some, or sort the report in batches.');
     return;
   }
-  if(!confirm('Sort ' + photos.length + ' photograph' + (photos.length === 1 ? '' : 's') +
+  if(!await crAsk('Sort ' + photos.length + ' photograph' + (photos.length === 1 ? '' : 's') +
               ' into sections and write captions?\n\n' +
               'This only rearranges the report you are editing. Nothing is sent to the client.')) return;
 
@@ -68905,7 +68907,7 @@ async function addPayment(){
 async function delPayment(id){
   var cl = db();
   if(!cl || !canSeeRates()) return;
-  if(!confirm('Remove this payment from the record?')) return;
+  if(!await crAsk('Remove this payment from the record?')) return;
   var r = await cl.from('crew_payments').delete().eq('id', id);
   if(r.error){ crTell('Could not remove: ' + r.error.message); return; }
   await load(); render();
@@ -69205,7 +69207,7 @@ async function delRate(id){
 async function archive(){
   var c = sel(), cl = db();
   if(!c || !cl) return;
-  if(!confirm('Archive ' + c.name + '? They stop showing in the list. Nothing is deleted.')) return;
+  if(!await crAsk('Archive ' + c.name + '? They stop showing in the list. Nothing is deleted.')) return;
   var r = await cl.from('crews').update({ archived:true }).eq('id', c.id);
   if(r.error){ crTell('Could not archive: ' + r.error.message); return; }
   selId = null; await load(); render();
@@ -70799,7 +70801,7 @@ async function saveWork(){
 async function removeWork(id){
   var cl = sb();
   if(!cl || busy) return;
-  if(!window.confirm('Remove this comparison?')) return;
+  if(!await crAsk('Remove this comparison?')) return;
   busy = true;
   try{
     /* .select('id') is load-bearing: a delete refused by RLS is a silent 204. */
@@ -70828,7 +70830,7 @@ async function togglePublish(){
 async function removePair(){
   var cl = sb(), p = pairs[cur];
   if(!cl || !p || busy) return;
-  if(!window.confirm('Remove this transformation from the showcase?')) return;
+  if(!await crAsk('Remove this transformation from the showcase?')) return;
   busy = true;
   try{
     /* .select('id') is load-bearing: a delete refused by RLS returns a silent
@@ -72031,7 +72033,7 @@ async function toggleWalkPublish(){
 async function removeWalk(){
   var cl = sb();
   if(!cl || !curWalk || busy) return;
-  if(!window.confirm('Remove this walk and every photograph in it?')) return;
+  if(!await crAsk('Remove this walk and every photograph in it?')) return;
   busy = true;
   try{
     /* .select('id') is load-bearing: a delete refused by RLS is a silent 204.
@@ -72096,8 +72098,8 @@ function wireWalk(){
   });
 
   el.querySelectorAll('[data-act="rback"]').forEach(function(b){
-    b.onclick = function(){
-      if(review.dirty && !window.confirm('Discard the changes you have not saved?')) return;
+    b.onclick = async function(){
+      if(review.dirty && !await crAsk('Discard the changes you have not saved?')) return;
       review = null; repaint();
     };
   });
@@ -72106,8 +72108,8 @@ function wireWalk(){
   });
   wireClassify();
   el.querySelectorAll('[data-act="rdetect"]').forEach(function(b){
-    b.onclick = function(){
-      if(review.dirty && !window.confirm('Asking again replaces the AI\u2019s marks — your hand-drawn marks stay — ' +
+    b.onclick = async function(){
+      if(review.dirty && !await crAsk('Asking again replaces the AI\u2019s marks — your hand-drawn marks stay — ' +
         'discard the changes you have not saved?')) return;
       runDetect();
     };
@@ -74346,7 +74348,7 @@ function closeShot(){
    caller treats null as "fail loudly rather than upload raw". */
 async function shrinkOne(file, name){
   var S = window.CardinalShowcase;
-  if(!S || typeof S.shrink !== 'function' || !S.renditions || !S.renditions[name]) return null;
+  if(!S || typeof S.shrink !== 'async function' || !S.renditions || !S.renditions[name]) return null;
   return await S.shrink(file, S.renditions[name].max, S.renditions[name].q);
 }
 async function shrinkFor(file){
@@ -74791,7 +74793,7 @@ function renderRep(){
 /* 737: names the amount and the person, which is the whole point — "Mark paid?"
    is not a question anyone can answer. Returns false when there is nothing owed
    so the caller stays a no-op rather than popping an empty dialog. */
-function confirmPay(em, deductDraws){
+async function confirmPay(em, deductDraws){
   var g = groupOwed()[em];
   if(!g || !g.ids.length) return false;
   var who = repName(em);
@@ -74802,7 +74804,7 @@ function confirmPay(em, deductDraws){
   }else if(g.drawSum > 0){
     msg += '\n\nTheir ' + payMoney(g.drawSum) + ' in draws stays outstanding.';
   }
-  return confirm(msg);
+  return await crAsk(msg);
 }
 async function payRep(em, deductDraws){
   var by = groupOwed();
@@ -74847,7 +74849,7 @@ function exportCsv(){
 function wire(v){
   if(v.__payWired) return;
   v.__payWired = true;
-  v.addEventListener('click', function(e){
+  v.addEventListener('click', async function(e){
     var t = e.target.closest('[data-act],[data-pay],[data-paynet],[data-payfull],[data-repay]');
     if(!t) return;
     var act = t.getAttribute('data-act');
@@ -74862,7 +74864,7 @@ function wire(v){
       if(!reps.length) return;
       /* 737: this counted the reps and never said the money. */
       var _tot = reps.reduce(function(t, e2){ return t + (Number(by[e2].owed) || 0); }, 0);
-      if(!confirm('Mark ' + payMoney(_tot) + ' in commissions paid across ' +
+      if(!await crAsk('Mark ' + payMoney(_tot) + ' in commissions paid across ' +
                   reps.length + ' rep' + (reps.length > 1 ? 's' : '') + '?\n' +
                   'Draws stay outstanding — use Pay net per rep to deduct them.')) return;
       (async function(){
@@ -74908,14 +74910,14 @@ function wire(v){
        The amounts come from groupOwed(), which the buttons were already drawn
        from, so this asks no new question of the database. */
     em = t.getAttribute('data-paynet');
-    if(em){ if(confirmPay(em, true)) payRep(em, true); return; }
+    if(em){ if(await confirmPay(em, true)) payRep(em, true); return; }
     em = t.getAttribute('data-payfull');
-    if(em){ if(confirmPay(em, false)) payRep(em, false); return; }
+    if(em){ if(await confirmPay(em, false)) payRep(em, false); return; }
     var did = t.getAttribute('data-repay');
     if(did){
       /* 737: "this draw" is not enough to check against a cheque stub. */
       var _d = (S.draws || []).filter(function(x){ return String(x.id) === String(did); })[0];
-      if(!confirm(_d ? ('Mark ' + payMoney(_d.amount) + ' draw to ' + repName(_d.rep_email) + ' repaid?')
+      if(!await crAsk(_d ? ('Mark ' + payMoney(_d.amount) + ' draw to ' + repName(_d.rep_email) + ' repaid?')
                      : 'Mark this draw repaid?')) return;
       (async function(){
         var d = db();
@@ -78250,8 +78252,8 @@ function rowCard(r){
     put(r).then(function(){ return flush(); }).then(badge, badge);
   });
   var drop = stuckBtn('Discard', '#ffb3ad');
-  drop.addEventListener('click', function(){
-    if(!window.confirm('Discard this change? It will not be saved anywhere.')) return;
+  drop.addEventListener('click', async function(){
+    if(!await crAsk('Discard this change? It will not be saved anywhere.')) return;
     del(r.id).then(function(){ badge(); drawPanel(); });
   });
   acts.appendChild(retry); acts.appendChild(drop);
@@ -78273,8 +78275,8 @@ function photoCard(p){
     try{ window.CardinalPunchCard._retryPhoto(p.id).then(function(){ badge(); drawPanel(); }); }catch(_){}
   });
   var drop = stuckBtn('Discard', '#ffb3ad');
-  drop.addEventListener('click', function(){
-    if(!window.confirm('Discard this photo? It will not be uploaded.')) return;
+  drop.addEventListener('click', async function(){
+    if(!await crAsk('Discard this photo? It will not be uploaded.')) return;
     try{ window.CardinalPunchCard._discardPhoto(p.id).then(function(){ badge(); drawPanel(); }); }catch(_){}
   });
   acts.appendChild(retry); acts.appendChild(drop);
@@ -80730,5 +80732,165 @@ document.addEventListener('click', function(e){
 body.cr-landing-on{padding-top:0 !important;}
 body.cr-landing-on footer.site{display:none !important;}
 </style>
+
+<style id="cr-ask-styles">
+/* ============================================================================
+   THE ASK SHEET · v2026-08-26 build 1083 · Cardinal
+   ----------------------------------------------------------------------------
+   Theo's pick, option 1: a bottom sheet. The buttons sit under the thumb,
+   because he works one-handed off a phone on a ladder.
+
+   ⚠ It COPIES the app's existing sheet convention rather than inventing one —
+     the scrim IS the container, display:none -> .open{display:flex}, exactly
+     like .pu-sheet (768) and .cre-sheet. There are already ten module-local
+     sheets; this is the first SHARED one, and it looks like its neighbours.
+
+   ⚠ z-index 99990: above every sheet (the highest is 10700) and BELOW the
+     toast stack at 99999, so a toast can still speak over the question.
+
+   ⚠ IT DOES NOT TOUCH document.body.style.overflow. Thirteen modules write the
+     global scroll lock with no reconciler, and the no-14th-writer rule has held
+     since build 574. The sheet is fixed and short; it does not need one.
+   ========================================================================== */
+#crAsk{position:fixed;inset:0;background:rgba(8,9,11,.72);display:none;z-index:99990;}
+#crAsk.open{display:flex;align-items:flex-end;justify-content:center;}
+#crAsk .askcard{
+  width:100%;max-width:520px;background:#161918;border-top:1px solid #2b2b33;
+  border-radius:14px 14px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom,0px));
+  font-family:'Segoe UI',Arial,sans-serif;
+}
+#crAsk .askgrip{width:34px;height:4px;border-radius:99px;background:#3a4049;margin:0 auto 12px;}
+#crAsk .askq{font:700 15px 'Segoe UI',Arial,sans-serif;color:#f2f4f7;margin:0 0 5px;line-height:1.28;}
+#crAsk .askwhy{font-size:12px;color:#9aa1ac;margin:0 0 14px;line-height:1.4;}
+#crAsk .askbtns{display:flex;flex-direction:column;gap:8px;}
+#crAsk button{
+  border:0;border-radius:8px;padding:13px 12px;font:700 14px 'Segoe UI',Arial,sans-serif;
+  cursor:pointer;min-height:44px;width:100%;
+}
+#crAsk .askgo{background:#c8202e;color:#fff;}
+#crAsk .askgo.plain{background:#2d5578;color:#fff;}
+#crAsk .askno{background:#22262b;color:#cfd6df;border:1px solid #343a41;}
+:root[data-theme="rb-light"] #crAsk .askcard{background:#ffffff;border-top-color:#e2e2e2;}
+:root[data-theme="rb-light"] #crAsk .askq{color:#161616;}
+:root[data-theme="rb-light"] #crAsk .askwhy{color:#5f6670;}
+:root[data-theme="rb-light"] #crAsk .askno{background:#f2f2f2;color:#161616;border-color:#d8d8d8;}
+@media (prefers-reduced-motion:no-preference){
+  #crAsk.open .askcard{animation:crAskUp .16s ease-out;}
+  @keyframes crAskUp{from{transform:translateY(14px);opacity:.6}to{transform:none;opacity:1}}
+}
+</style>
+<script id="cr-ask-script">
+(function(){
+  'use strict';
+  /* ==========================================================================
+     crAsk(message, opts) -> Promise<boolean>
+     --------------------------------------------------------------------------
+     The in-app replacement for confirm(). 88 calls in CODE across 24 blocks
+     (the lexer's count; a bare regex says 92 and counts four comments).
+
+     ⚠ IT FALLS BACK TO confirm(), and that is the point — the same reasoning
+       as crTell's alert() fallback at 1080. A question the user must answer
+       must never become one they cannot see. If anything here throws, the
+       browser box asks it instead.
+
+     ⚠ THE BUTTONS SAY WHAT HAPPENS. Not OK/Cancel: "Delete photo" / "Keep it".
+       The verb is derived from the message's own leading word so 88 call sites
+       did not each have to be hand-written — ONE place decides what a message
+       means, which is the normStage() shape this app already uses.
+     ======================================================================== */
+  var DANGER = /^(delete|remove|discard|clear|archive|reset|overwrite|replace)\b/i;
+  var VERBS  = ['delete','remove','discard','clear','archive','reset','overwrite',
+                'replace','send','switch','move','close','mark','log','download','finish'];
+
+  function leadVerb(msg){
+    var m = /^\s*[^\w]*([A-Za-z]+)/.exec(String(msg || ''));
+    if(!m) return null;
+    var w = m[1].toLowerCase().replace(/ing$/, '');
+    return VERBS.indexOf(w) !== -1 ? w.charAt(0).toUpperCase() + w.slice(1) : null;
+  }
+
+  var node = null, busy = false;
+  function build(){
+    if(node) return node;
+    node = document.createElement('div');
+    node.id = 'crAsk';
+    node.innerHTML =
+      '<div class="askcard" role="alertdialog" aria-modal="true" aria-labelledby="crAskQ">' +
+        '<div class="askgrip"></div>' +
+        '<p class="askq" id="crAskQ"></p>' +
+        '<p class="askwhy"></p>' +
+        '<div class="askbtns">' +
+          '<button type="button" class="askgo"></button>' +
+          '<button type="button" class="askno"></button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(node);
+    return node;
+  }
+
+  window.crAsk = function(message, opts){
+    var o = opts || {};
+    var text = String(message == null ? '' : message);
+    try{
+      /* One question at a time. A second ask while one is open would orphan the
+         first promise and leave the app waiting on an answer nobody can give. */
+      if(busy) return Promise.resolve(false);
+      if(!document.body) throw new Error('no body');
+      var n = build();
+      var card = n.querySelector('.askcard');
+      var q    = n.querySelector('.askq');
+      var why  = n.querySelector('.askwhy');
+      var go   = n.querySelector('.askgo');
+      var no   = n.querySelector('.askno');
+
+      /* The message may carry its own consequence line after a blank line —
+         several of the originals already do ("...\n\nIt leaves the list but is
+         kept on the record."). Keep that split rather than losing it. */
+      var parts = text.split(/\n\s*\n/);
+      q.textContent   = parts[0].trim();
+      why.textContent = o.why || (parts.length > 1 ? parts.slice(1).join(' ').trim() : '');
+      why.style.display = why.textContent ? '' : 'none';
+
+      var verb = o.verb || leadVerb(parts[0]) || 'Continue';
+      var danger = (o.tone === 'plain') ? false
+                 : (o.tone === 'danger' ? true : DANGER.test(parts[0].replace(/^\s*[^\w]*/, '')));
+      go.textContent = verb;
+      go.className = 'askgo' + (danger ? '' : ' plain');
+      no.textContent = o.cancel || 'Cancel';
+
+      busy = true;
+      n.classList.add('open');
+      try{ no.focus(); }catch(_f){}
+
+      return new Promise(function(resolve){
+        var done = false;
+        function finish(v){
+          if(done) return;            /* resolve exactly once */
+          done = true; busy = false;
+          n.classList.remove('open');
+          go.onclick = no.onclick = n.onclick = null;
+          document.removeEventListener('keydown', onKey, true);
+          resolve(!!v);
+        }
+        function onKey(e){
+          if(e.key === 'Escape'){ e.preventDefault(); finish(false); }
+        }
+        go.onclick = function(){ finish(true); };
+        no.onclick = function(){ finish(false); };
+        /* tapping the scrim is the same as saying no — never the same as yes */
+        n.onclick = function(e){ if(e.target === n) finish(false); };
+        document.addEventListener('keydown', onKey, true);
+      });
+    }catch(_e){
+      busy = false;
+      /* the sheet could not be shown — ask the old way rather than not at all */
+      var ok = false;
+      try{ ok = window.confirm(text); }catch(_c){}
+      return Promise.resolve(ok);
+    }
+  };
+})();
+</script>
+
 </body>
 </html>

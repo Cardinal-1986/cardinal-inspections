@@ -27330,3 +27330,71 @@ question.*
     `.jabox[data-jm]`, the attribute `jt()` stamps on every real menu tile.
 - ⚠️ **A1's failure message echoed its success text**, so a red line read like a pass. Fixed
   to name which class still hardcodes the steel.
+
+## Build 1083 — the ask sheet: the last browser dialog is gone
+
+Theo's polish item 1, finished. His pick from three rendered options: **1, the bottom
+sheet** — buttons under the thumb, because he works one-handed off a phone on a ladder.
+`index.html` only. No SQL. 1080 took the 289 `alert()` boxes; this takes the 88 `confirm()`
+ones.
+
+⚠️ **88, not 92 — the third time this session a bare count flattered a number.** The lexer
+says 88 in CODE, 4 in comments. Same shape as 1081's `font:` shorthand and 1082's `.dbic1`.
+
+**`window.crAsk(message, opts) -> Promise<boolean>`**, `<style id="cr-ask-styles">` +
+`<script id="cr-ask-script">`. It **copies** the app's existing sheet convention rather than
+inventing one — the scrim IS the container, `display:none → .open{display:flex}`, exactly like
+`.pu-sheet` (768). Ten module-local sheets already existed; this is the first shared one and
+it looks like its neighbours. **z-index 99990**: above every sheet (highest was 10700), below
+the toast stack at 99999. **It does not write the global scroll lock** — the no-14th-writer
+rule, asserted by the gate.
+
+**The buttons say what happens.** The verb is derived from the message's own leading word
+(`Delete this photo…` → **Delete**), so 88 sites did not each need hand-writing — one place
+decides what a message means, the `normStage()` shape. Destructive is red and sits above the
+safe answer. Escape, and a tap on the scrim, always mean **no**.
+
+### ⚠ The compiler was the oracle, not the regex
+
+`await` outside an `async` function is a **SyntaxError**, so `node --check` on all 126 blocks
+mechanically caught every site where the enclosing function still needed `async`. Static
+analysis only ever *proposed* a spot. **This mattered twice:**
+
+- The first auto-fixer matched `name(args){` as an object-method shorthand — which also
+  matches **`if(del){`** — and wrote `async if(del){` into the file. `node --check` caught it.
+  *A tool that edits code needs its own negative control.*
+- An arrow-function case in `cr-pricing-script` hit an assertion rather than being silently
+  mangled; `async` belongs before the parameters, not before the `=>`.
+
+Final: **88 conversions · 46 `async` added · 0 of 126 blocks failing.**
+
+### ⚠ THE REAL BUG THIS BUILD NEARLY SHIPPED, and syntax could not see it
+
+Making a function `async` makes it return a **Promise**, and a Promise is **always truthy**.
+Two guards would have silently stopped guarding — both parse perfectly:
+
+```
+if(confirmPay(em, true)) payRep(em, true);   // pays the rep REGARDLESS of the answer
+if(!priceOkToSend(title)) return;            // never blocks again
+```
+
+**One of them moves money.** It is the "a guard that can never fail" class. Found by asking,
+of every function that gained `async`, whether any caller *consumes* its return value — then
+propagating `await` to those 4 call sites and re-running until nothing consumes a Promise
+unawaited. Also checked: of the 41 newly-async **anonymous** handlers, **zero** rely on
+`return false` to prevent a default.
+
+### Gates
+
+- `check_build.py` **GREEN** 1082 → 1083; **126 inline blocks parse**; byte-reproducible.
+- `gate_1083.mjs` **17/17**, **RED on 1082**. It drives the real sheet in Chromium and proves
+  **all four exits** — yes, cancel, Escape, scrim — because *a confirm replacement that can
+  strand somebody mid-answer is the one failure that must not ship.*
+- ⚠️ **The gate's own first version was wrong, not the app.** `A2` counted `confirm(` with a
+  bare regex over the whole file and reported 7; six are **prose** — four pre-existing
+  comments and **two in this module's own banner**. Comment pollution, ninth time, and I did
+  it to myself. It now strips comments and strings before counting, and cross-checks against
+  the Python lexer, which independently agrees on **1 in CODE**. ⚠️ That JS stripper is
+  cruder than `jslex_count.py` (no regex-literal or nested-template handling) so the number it
+  prints on the *control* is ~62 where the truth is 88 — the assertion is sound either way,
+  but do not quote the control's figure as a measurement.
