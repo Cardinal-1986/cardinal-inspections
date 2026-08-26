@@ -27594,6 +27594,26 @@ the probe went red" would have been wrong.*
 **After: 194px → 44px clamped, 244px expanded.** One row — All · Claim Filed · Adjuster
 Pending — then a dashed **`+7`**. Tap it, all ten drop down and it reads **Fewer**.
 
+### ⚠ The first version folded chips that FIT, at a width Theo works at
+
+Measured across three widths before shipping, which is the only reason this was caught:
+
+| width | rows the strip needs | first version | shipped |
+|---|---:|---|---|
+| 390px | 5 | 44px, `+7` | 44px, `+7` |
+| **1194px** | **2** | **44px, `+2` — hid two chips that fit** | **94px, no expander** |
+| 1440px | 1 | 44px, no expander | 44px, no expander |
+
+The clamp is now scoped to `@media (max-width:899px)` — **the exact complement of the
+breakpoint this module already uses** for its two-column list, rather than a new one; and
+written as a max-width rule rather than a min-width override, so it adds no second layer.
+
+**And `fitChips()` stopped inferring.** It counted chips whose top sat below row one, which
+answers a *different question* and is wrong the moment the clamp is not in force: at 1194px it
+would have offered `+2` for chips that are on screen. It now asks
+`scrollHeight > clientHeight` — the element answering "is anything actually cut off"
+directly, which is false by construction wherever the clamp does not apply.
+
 ### Four things it had to survive, each checked rather than assumed
 
 1. **`render()` rebuilds `host.innerHTML` wholesale** on every search keystroke, chip tap and
