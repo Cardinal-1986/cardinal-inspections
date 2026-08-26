@@ -2,6 +2,42 @@
 
 ---
 
+## The CSS sediment — measured, and the growth is now gated (26 Aug 2026)
+
+**74 distinct DEAD rules.** Measured with the per-render display cap lifted, zero
+truncation. My earlier figures were both wrong: **196** was a capped summary line, **~900**
+was a render-multiplied sum I mistook for a defect count. 74 is the real one.
+
+**They are overwhelmingly superseded rules from migrations that SUCCEEDED**, not defects.
+Walking Chromium's matched rules: `#cr-hd2-bar #cr-hd2-home{width:34px}` → computes **44px**
+(build 1040's tap-target pass); `.jabox{background:#fff}` → computes transparent (the
+obsidian rebuild); `.cbx{display:inline-grid}` → computes `grid`. The dead rule is the
+*pre-fix* value in each case. **Not one of the 74 corresponds to a bug Theo has reported.**
+
+### ❌ Do NOT run a mass cleanup
+
+Costed and rejected. The risk is not deleting a dead rule — it is that **some overriders are
+conditional**. Delete a base rule whose replacement sits behind a media query, a theme or a
+CRM gate and the other branch is left with nothing. Per-rule, per-screen verification, with
+bytes as the payoff. **20 of the first 44 matched zero elements on the home screen** — they
+live on other screens, so any sweep multiplies again.
+
+### ✅ What was done instead: gate the growth
+
+`scripts/gate_stack.mjs` — see the gate inventory in `CLAUDE.md`. It does not touch the
+existing sediment; it stops the pile growing, which is the half that compounds.
+
+```bash
+node .claude/skills/cardinal-build/scripts/gate_stack.mjs --selftest
+node .claude/skills/cardinal-build/scripts/gate_stack.mjs <new.html> --prev <old.html> [--debug]
+```
+
+**Standing verdict: manage this debt, do not repay it.** Reach for `@layer` only if a build
+ever becomes genuinely hard because of the cascade; never a bundler, which would trade a
+slow-growing problem for a new class of failure and break the phone-deploy workflow.
+
+---
+
 ## 🛑 DO NOT DELETE `claude/ai-can-build-584` — it is the project's only pre-squash history
 
 *Established 26 Aug 2026, after I recommended deleting it and was wrong.*

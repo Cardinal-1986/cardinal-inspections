@@ -457,6 +457,7 @@ Covers per-block `node --check` on all inline scripts, tag balance, CSS brace ba
 | `harness_NNN.js` / `harness_<name>.js` | functional assertions on a surface | jsdom |
 | `render_<name>.js` | **a real Chromium render** — the only thing that settles a colour, an `!important`, or whether a control is wired | Chromium |
 | `gate_tint.py`, `gate_graphs.py`, `spark/test_*.py` | **the Spark worker's gates** — pure Python, no browser | Python |
+| **`gate_stack.mjs`** | **the ACCUMULATION gate — standing, not per-build.** Flags a rule this build ADDED that wins a property on a real element while the PRE-EXISTING rule it beat is still in the file. That is the moment a build out-specified instead of editing, and it is why 148 style blocks only ever grow. `--selftest` proves it fires and stays quiet; exempt a deliberate override with `--cr-stack:"reason"` on the winner (**two** dashes — one is dropped at parse time) | Chromium |
 | `drive_lifecycle.mjs`, `e2e_drive.mjs` | the full E2E lifecycle drive (773) against a recording mock | Chromium |
 
 **Do not read the whole folder.** Find the newest `gate_*` touching your surface, run it, and copy its shape. **Every one takes an optional path argument so it can be pointed at the previous build as a negative control** — a harness that has never been run red proves nothing.
