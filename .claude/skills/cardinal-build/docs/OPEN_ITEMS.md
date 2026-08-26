@@ -10,11 +10,11 @@ His list, in his order. **1 and 2 are shipped; 3 is next.**
 |---|---|---|
 | 1 | replace `alert()` / `confirm()` with in-app feedback | ⚠️ **half done — build 1080.** 289 `alert()` calls routed to the app's own toast. **The 92 `confirm()` calls are NOT done** — see below |
 | 2 | lift every font size under 11px | ✅ **build 1081.** 519 declarations, both forms |
-| 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ⚠️ **the item SHRANK on investigation — read below before building it** |
+| 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ❌ **CLOSED — all three parts are FALSE POSITIVES. Do not build it.** See below |
 | 4 | distinct icons in the Job Menu | ⏳ Tasks/Punch Outs/Checklists share one glyph; Documents/Contracts share a folder; Photos/The Walk share a camera |
 | 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ⏳ **flagged, NOT confirmed** — may be a hidden-element false positive. Confirm before building |
 
-### ⚠ Item 3 is mostly a FALSE POSITIVE — audited 26 Aug, do not build it as written
+### ❌ Item 3 is a FALSE POSITIVE in all three parts — audited 26 Aug, do NOT build it
 
 **"The dead white background layer" does not exist.** The real inline-white bug — an inline
 `background:'#fff'` beating every theme rule regardless of specificity — was **fixed at build
@@ -52,6 +52,30 @@ exactly the 448–449 shape. Pin the **docket** values, because docket is the do
 | `--ct-red-deep` | 12 | `#7E1410` |
 
 That is a ~150-site targeted fix with a real failure mode, not a 633-site blanket sweep.
+
+#### ⚠️ ...and then that third part turned out to be ALREADY FIXED, at build 448 itself
+
+**Stand down. Do not add `--ct-*` fallbacks.** The contingency is real in structure and
+**already defended twice**, by the very build this document keeps citing as the reason to add
+fallbacks. `cr-lib-script`'s `tick()` carries the record verbatim:
+
+> *448: NEVER remove `data-rltheme` from `<body>`. `cr-instheme` (407) stamps it there
+> deliberately so the `--ct-*` tokens resolve app-wide — the insurance shells read
+> `var(--ct-bg)` on it. Removing it turned Cardinal Truth and the client list transparent,
+> and the retail home ghosted through the fixed overlay. **Re-stamp the stored theme
+> instead: same key instheme uses, self-healing if its delayed mount ever loses the boot
+> race.**"
+
+So: `cr-instheme` (407) stamps the attribute app-wide, and `tick()` re-stamps it continuously
+and is **explicitly self-healing against the boot race** — exactly the window a literal
+fallback would have covered. A fallback would be redundant with a live, self-repairing guard,
+and would additionally freeze one of the two named themes (`docket`/`siren`) into 150 sites.
+
+**This is the prime doctrine, paid for again:** *things that look missing are usually buried.*
+The chain went — "add fallbacks everywhere" → "no, only `--ct-*`, `--cr-*` is per-mount" →
+"no, `--ct-*` is already guarded at the source of the bug that motivated the whole idea."
+**Three rounds of narrowing, ending at zero.** Grep for the mitigation before writing one.
+
 
 ### ⏳ Needs Theo — the `confirm()` sheet wants a look before it is built
 
