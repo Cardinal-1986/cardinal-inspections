@@ -27511,3 +27511,65 @@ self-healed.** The local 11-step substitution was correct and CI independently a
 only thing that would have held if Actions had stayed down. **A green on one sha covers another
 only when the trees are provably identical** — check it, do not assume a squash preserved the tree.
 
+
+---
+
+## `gate_stack.mjs` — the accumulation gate (26 Aug 2026, no build number: no artifact changed)
+
+Theo asked what the long-term solution to the CSS sediment is, and picked the answer:
+**stop the pile growing rather than try to repay it.**
+
+**What it flags — one event, called a STACK:** a rule this build ADDED wins a property on a
+real element, and the PRE-EXISTING rule it beat is **still in the file**. That is the moment
+a build chose to out-specify instead of edit or delete, and it is why `index.html` carries
+148 style blocks that only ever grow.
+
+**What it deliberately does NOT flag:** a new rule on an element nothing styled before
+(growth, fine); a new rule that loses (the cascade working); a new rule replacing one the
+same build deleted (exactly right — silent).
+
+**Escape hatch, explicit by design:** `--cr-stack:"reason"` on the winning rule. Some
+overrides are correct and the loser must stay — a theme twin, a media query, a CRM gate.
+Silence is not an option: delete the loser, or say why it stays.
+
+### Validated four ways, and two of them failed first
+
+| direction | result |
+|---|---|
+| `--selftest` fires on a planted stack | ✅ |
+| `--selftest` silent when the old rule was deleted | ✅ |
+| real build pair 1082 → 1083 | ✅ **CLEAN** (7,395-rule baseline; 1083 added an isolated module) |
+| real planted stack on the shipped file | ✅ **RED**, naming the displaced rule |
+| escape hatch honoured | ✅ CLEAN |
+
+⚠️ **The first negative control on the REAL artifact said CLEAN and the gate was inert.**
+Toy fixtures were already green. Both faults are BUG_CLASSES 74:
+
+1. **It walked `@media print`.** A planted stack on `body` looked like a loss because
+   `body{color:#000 !important}` sits in a print block — dead on screen, counted as live.
+   **This file already records the sentinel's `DEAD` check making the identical mistake**;
+   the new gate's header quoted the *sibling* trap and committed this one three lines later.
+   Now guarded by `matchMedia(conditionText).matches` / `CSS.supports`. Cost: the gate
+   judges only what applies at the viewport it runs at — **7,423 → 7,086 rules at 390px** —
+   and that limit is deliberate, so run other viewports for their media.
+2. **The escape-hatch marker was `-cr-stack`, one dash.** That is a vendor-prefix-shaped
+   name, not a custom property; browsers **drop it at parse time**, so the exemption could
+   never fire. It fails in the *safe* direction — the gate keeps firing — which is exactly
+   why it would have survived. **Two** dashes. Test the hatch, not just the trigger.
+
+Both were found only by a `--debug` funnel: `cands2: 2 → won: 0` contradicted
+`getComputedStyle`. "Zero findings" and "never looked" are the same output otherwise.
+
+### The measurement that motivated it
+
+**74 distinct DEAD rules**, cap lifted, zero truncation. ⚠️ **Two earlier figures in this
+log were wrong and are corrected here:** *196* was a capped summary line, *~900* was a
+render-multiplied sum mistaken for a defect count.
+
+**They are superseded rules from migrations that SUCCEEDED, not defects.**
+`#cr-hd2-bar #cr-hd2-home{width:34px}` computes **44px** (build 1040's tap-target pass);
+`.jabox{background:#fff}` computes transparent (the obsidian rebuild);
+`.cbx{display:inline-grid}` computes `grid`. The dead rule is the pre-fix value each time.
+**None of the 74 corresponds to a bug Theo has reported** — which is why the standing
+verdict is *manage this debt, do not repay it*, and why a mass cleanup was costed and
+rejected (the danger is deleting a base rule whose replacement is conditional).

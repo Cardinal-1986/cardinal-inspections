@@ -112,9 +112,20 @@ negative control. **A sweep of every SHA cited in the doc set found ~75 that are
 ancestors of main.** Most survive through GitHub's permanent `refs/pull/N/head` refs — but
 that is GitHub's retention policy doing the work, not anything in this repo.
 
-**The fix needs Theo: a session token can push branches but not tags (HTTP 403, retried).**
-The two tags are authored and the commands are in `OPEN_ITEMS.md`. Until they exist on the
-remote, **the branch is the preservation mechanism — do not delete it.**
+✅ **FIXED 26 Aug — two preservation branches exist on the remote**, so the objects no
+longer hang off a single ref: **`history/pre-squash-584`** (`7a1d904`, the 787-commit
+lineage) and **`history/build-573-baseline`** (`aeac5e5`, `measure_counts.py`'s control,
+readable with `git show history/build-573-baseline:index.html`). `claude/ai-can-build-584`
+is now redundant and safe to delete.
+
+⚠️ **Tags were the obvious answer and are BLOCKED — and the shape of the block matters.**
+Established with a control, not assumed: an annotated tag push is 403, a lightweight tag
+push is 403, **a branch push at the identical sha succeeds**, and deleting any ref is 403.
+So the restriction is `refs/tags/*` plus deletion — not the objects, not write access. *The
+two tag failures alone read as "no write permission"; only the branch control showed
+otherwise.* ⚠️ **Git prints `Everything up-to-date` after the 403 on both refused
+operations** — a phrase that reads like success. Use `--verbose` and check the exit code.
+The tag commands, for a shell with Theo's own credentials, are in `OPEN_ITEMS.md`.
 
 ⚠️ **The build log's heading levels are inconsistent and a header grep will lie to you.** 543–684 and 827–836 use `## Build NNN`; **685–826 mostly use `## build NNN` (lowercase), a `### NNN —` sub-head, or a bold `**NNN**` bullet inside a span write-up** (766–772, 809–818 and the Community port are all written as spans). A grep for `^## Build` finds 684 then jumps to 827 and reads like 142 missing builds. They are all there. **Grep case-insensitively, and for the number rather than the word.**
 
@@ -446,6 +457,7 @@ Covers per-block `node --check` on all inline scripts, tag balance, CSS brace ba
 | `harness_NNN.js` / `harness_<name>.js` | functional assertions on a surface | jsdom |
 | `render_<name>.js` | **a real Chromium render** — the only thing that settles a colour, an `!important`, or whether a control is wired | Chromium |
 | `gate_tint.py`, `gate_graphs.py`, `spark/test_*.py` | **the Spark worker's gates** — pure Python, no browser | Python |
+| **`gate_stack.mjs`** | **the ACCUMULATION gate — standing, not per-build.** Flags a rule this build ADDED that wins a property on a real element while the PRE-EXISTING rule it beat is still in the file. That is the moment a build out-specified instead of editing, and it is why 148 style blocks only ever grow. `--selftest` proves it fires and stays quiet; exempt a deliberate override with `--cr-stack:"reason"` on the winner (**two** dashes — one is dropped at parse time) | Chromium |
 | `drive_lifecycle.mjs`, `e2e_drive.mjs` | the full E2E lifecycle drive (773) against a recording mock | Chromium |
 
 **Do not read the whole folder.** Find the newest `gate_*` touching your surface, run it, and copy its shape. **Every one takes an optional path argument so it can be pointed at the previous build as a negative control** — a harness that has never been run red proves nothing.

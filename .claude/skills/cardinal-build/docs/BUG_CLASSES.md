@@ -3885,3 +3885,78 @@ or say plainly that the trend is unknown.
 debt. Same root: a summary line that reads as authoritative while the detail under it says
 otherwise. The fix there was making a short sweep say so; the fix here is making a capped
 count say so.*
+
+---
+
+## Class 74 — the guard that silently does nothing: a non-matching `@media` walked, and a marker the browser drops (26 Aug 2026, `gate_stack.mjs`)
+
+Two faults in one new gate, both of which made it **report CLEAN while completely
+inert**, and both found only because the negative control was run on the REAL artifact
+rather than on the toy fixtures that were already passing.
+
+### 1 · Descending into a `@media` block that does not apply — a trap this file already records
+
+`gate_stack.mjs` walked every grouping rule regardless of whether it currently matched:
+
+```js
+if (r.selectorText) rules.push(r);
+else if (r.cssRules) walk(r.cssRules);      // ← walks @media print on a screen render
+```
+
+A deliberate stack was planted on `body` and the gate said CLEAN. Cause:
+`body { color: rgb(0,0,0) !important }` lives inside **`@media print`**. It is dead on
+screen — Chromium ignores it and the planted rule wins — but the gate counted it as a
+live candidate, concluded the new rule *lost* the cascade, and skipped it.
+
+⚠️ **This file already documents the sentinel's `DEAD` check making the identical
+mistake** (it walked non-matching `@media` and reported build 817's *fix* as the defect).
+The new gate's own header comment quoted the **sibling** trap — modern Chromium exposing
+an empty `.cssRules` on every `CSSStyleRule`, so descending on truthiness skips every
+style rule — and then committed this one three lines later. *Knowing a trap's sibling is
+not knowing the trap.*
+
+**The guard:**
+
+```js
+const applies = (r) => {
+  const c = r.conditionText;
+  if (c == null) return true;                       // @layer, @scope …
+  if (/Supports/.test(r.constructor.name)) { try { return CSS.supports(c); } catch { return false; } }
+  try { return matchMedia(c).matches; } catch { return false; }
+};
+```
+
+**Consequence, stated so nobody widens it by accident:** the gate now judges only what
+applies at the viewport it runs at. Print rules and non-matching media are **out of scope
+by design** — cover their media by running other viewports. On this file the guard drops
+**7,423 → 7,086** rules at 390px; those ~337 are real rules that simply are not live here.
+
+### 2 · A marker the browser throws away before anything can read it
+
+The escape hatch was specified as `-cr-stack:"reason"` on the winning rule. **A
+single-dash name is a vendor-prefix-shaped property, not a custom property — browsers drop
+it at parse time**, so `getPropertyValue` always returned `''` and the exemption could
+never apply. It needs **two** dashes:
+
+```css
+#thing { color:#fff; --cr-stack:"rb-light twin, base must stay"; }
+```
+
+⚠️ **The failure is silent in the safe direction, which is why it survives.** A dropped
+marker means the gate keeps firing — annoying, not dangerous — so it reads as "the gate is
+strict" rather than "the hatch is broken", and nobody investigates. **Test the escape
+hatch, not just the trigger.**
+
+### 3 · The counters are the reason either was found
+
+Neither fault was visible from the output — CLEAN and CLEAN. A `--debug` funnel made it
+obvious in one line:
+
+```
+funnel: {"total":7423,"isNew":2,"hasEls":2,"props":2,"cands2":2,"won":0,"displaced":0}
+```
+
+`cands2: 2 → won: 0` says precisely: *both candidates were examined and the new rule was
+judged to lose*, which contradicted `getComputedStyle`. **Any gate with a funnel should
+print it on demand** — "zero findings" and "never actually looked" are the same output
+otherwise, and this file has now paid for that three times (classes 37, 71, 74).
