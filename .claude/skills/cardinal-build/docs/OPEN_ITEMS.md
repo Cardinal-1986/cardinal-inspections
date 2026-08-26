@@ -2,6 +2,132 @@
 
 ---
 
+## Layer: 26 Aug 2026 — the app-wide polish pass (Theo: "1-3 then 4-5")
+
+His list, in his order. **1 (half), 2 and 4 shipped; 3 and 5 closed as false positives.**
+
+| # | item | state |
+|---|---|---|
+| 1 | replace `alert()` / `confirm()` with in-app feedback | ⚠️ **half done — build 1080.** 289 `alert()` calls routed to the app's own toast. **The 92 `confirm()` calls are NOT done** — see below |
+| 2 | lift every font size under 11px | ✅ **build 1081.** 519 declarations, both forms |
+| 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ❌ **CLOSED — all three parts are FALSE POSITIVES. Do not build it.** See below |
+| 4 | distinct icons in the Job Menu | ✅ **build 1082** — plus the ink, which was the bigger defect |
+| 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ❌ **CLOSED — FALSE POSITIVE, measured.** Renders **183 × 44**. See below |
+
+### ❌ Item 3 is a FALSE POSITIVE in all three parts — audited 26 Aug, do NOT build it
+
+**"The dead white background layer" does not exist.** The real inline-white bug — an inline
+`background:'#fff'` beating every theme rule regardless of specificity — was **fixed at build
+573**, in `styleMounts()` and two other sites, each carrying a comment saying so. Of the three
+surviving `style.background='#fff'` writes:
+
+| site | verdict |
+|---|---|
+| `cr-bpa-script` | **deliberate and fenced.** It has no dark palette to fall back on, so stripping the inline white leaves it with no background at all. CLAUDE.md already says this. **Do not touch.** |
+| two checklist "Not completed" pills (main block) | **not a defect** — `#8a6f66` on `#ffffff` computes **4.62:1**, above the 4.5:1 body floor |
+
+**The blanket `var()` fallback sweep is also wrong, and in one family actively harmful.**
+2,684 of 4,572 refs (59%) are bare, 633 of them feeding a `background`. But:
+
+- ⚠️ **`--cr-*` must NOT get literal fallbacks.** `--cr-bg` and friends are *deliberately
+  re-declared per mount* — `#cr-pricing-mount`, `#cr-claims-mount`, `#cr-adjusters-mount`,
+  `#cr-coach-mount`, `#cr-estimates-mount`, each with a `rb-light` twin. A bare reference
+  inside one of those mounts resolves correctly by inheritance. Pinning one literal would
+  freeze all five modules to one module's colour in one theme. This is the five-modules-one-
+  palette structure CLAUDE.md documents.
+
+**What IS real: the `--ct-*` family has no `:root` declaration at all.** Those tokens exist
+only under `[data-rltheme="docket"]` and `[data-rltheme="siren"]` — an attribute set by
+**JavaScript** on `document.body` at init from `localStorage['cardinalRLTheme'] || 'docket'`.
+So ~150 Cardinal Truth backgrounds are contingent on another module's script having run:
+exactly the 448–449 shape. Pin the **docket** values, because docket is the documented default:
+
+| token | bare bg refs | fallback (docket) |
+|---|---:|---|
+| `--ct-surface` | 52 | `#FFFFFF` |
+| `--ct-surface-2` | 32 | `#FAF8F7` |
+| `--ct-bg` | 22 | `#FAF8F7` |
+| `--ct-surface-3` | 19 | `#F3EFEE` |
+| `--ct-red-wash` | 16 | `#FDF4F3` |
+| `--ct-red-deep` | 12 | `#7E1410` |
+
+That is a ~150-site targeted fix with a real failure mode, not a 633-site blanket sweep.
+
+#### ⚠️ ...and then that third part turned out to be ALREADY FIXED, at build 448 itself
+
+**Stand down. Do not add `--ct-*` fallbacks.** The contingency is real in structure and
+**already defended twice**, by the very build this document keeps citing as the reason to add
+fallbacks. `cr-lib-script`'s `tick()` carries the record verbatim:
+
+> *448: NEVER remove `data-rltheme` from `<body>`. `cr-instheme` (407) stamps it there
+> deliberately so the `--ct-*` tokens resolve app-wide — the insurance shells read
+> `var(--ct-bg)` on it. Removing it turned Cardinal Truth and the client list transparent,
+> and the retail home ghosted through the fixed overlay. **Re-stamp the stored theme
+> instead: same key instheme uses, self-healing if its delayed mount ever loses the boot
+> race.**"
+
+So: `cr-instheme` (407) stamps the attribute app-wide, and `tick()` re-stamps it continuously
+and is **explicitly self-healing against the boot race** — exactly the window a literal
+fallback would have covered. A fallback would be redundant with a live, self-repairing guard,
+and would additionally freeze one of the two named themes (`docket`/`siren`) into 150 sites.
+
+**This is the prime doctrine, paid for again:** *things that look missing are usually buried.*
+The chain went — "add fallbacks everywhere" → "no, only `--ct-*`, `--cr-*` is per-mount" →
+"no, `--ct-*` is already guarded at the source of the bug that motivated the whole idea."
+**Three rounds of narrowing, ending at zero.** Grep for the mitigation before writing one.
+
+
+### ❌ Item 5 is a FALSE POSITIVE — measured in Chromium 26 Aug
+
+`#acxTrBtn` (Trade Type) was flagged at **0px**. Driven to the client profile in a real
+Chromium render it measures **183 × 44**, `display:flex`, a real `offsetParent`, no hidden
+ancestor, and the `\u2014` placeholder it is designed to show when no trade is picked. It is
+also **already wired** (build 795: `acxTrOpen = !acxTrOpen; renderAcxOverview();`) and
+**already carries `min-height:44px`** from the earlier tap-target pass.
+
+**The 0px came from measuring it in a state where it was not laid out** — the classic
+hidden-element reading. *This is why the item said "NOT confirmed": a flag is not a finding.*
+
+⚠️ One true oddity, deliberately NOT chased: the rule
+`#insToggleBtn,#acxTrBtn{min-width:44px;}` computes to `min-width:0px` on the button, so that
+half of the rule does not win. **Zero user impact** — the button is 183px wide on its own —
+and chasing it would be a fourth false positive in one session. Recorded here so the next
+person measuring it knows it was seen and judged, not missed.
+
+### ✅ Item 4 shipped as build 1082 — and the ink was the real defect
+
+Theo picked **B** for the ink and **1 / 1 / 1 / 1** for the glyphs.
+
+⚠️ **The collision he asked about was the smaller half.** Every glyph in the menu computed at
+**1.52:1**: `.dbic2` (the 15 drawn icons, 3.0:1 floor) *and* `.dbic1` (the `$` and `%` on the
+money rows, which is **TEXT** and held to 4.5:1). Both carried `color:#23507e`, a steel blue
+picked for a **white** tile. Now `var(--rbe-ink,#cfd6df)` — an existing pair that flips by
+itself. **8.67:1 worst, both floors.**
+
+**Do not re-flag:** `body.claim-insurance .dbrow .dbic1` and `body.claim-insurance .jabox svg`
+keep their own red — more specific, deliberately untouched, asserted by `gate_1082`.
+
+**Four new DB_ICONS keys:** `punch`, `checklist`, `walk`, `contract`. **15 distinct glyphs
+across 15 tiles.** Build 981's comment saying *"DB_ICONS has no checklist key"* was rewritten
+in the same edit — it is no longer true.
+
+### ⏳ Needs Theo — the `confirm()` sheet wants a look before it is built
+
+`confirm()` returns a boolean and **blocks**, so it cannot be routed the way `alert()`
+was. Replacing 92 of them needs a new in-app sheet *and* an async restructure at every
+call site. **A new component wants rendered options first** — do not pick a look
+unilaterally.
+
+### Settled by the type floor (1081) — do not re-litigate
+
+- **11px is the floor.** Established across 519 declarations. Two deliberate exceptions,
+  both pinned by `gate_1081.mjs`: `font-size:0` (the *there is no text here* idiom, exactly
+  two sites) and every `pt` size (print documents, 168 of them).
+- ⚠️ **Sizes live in TWO declaration forms** and the shorthand is the bigger half —
+  `font:600 10.5px …` carried 361 of the 519, `font-size:` only 158. BUG_CLASSES 70.
+
+---
+
 ## Layer: 26 Aug 2026 — the document pipeline (SETTLED, builds 1078–1079)
 
 ### ✅ SETTLED — Theo picked "1 and 3", verbatim. Do NOT re-litigate.

@@ -3683,3 +3683,113 @@ and it is **deliberately not latched on the first call**. The first version
 latched before throwing, so exactly one state of twenty-five reported it and the
 other twenty-four produced the confident wrong report anyway. It now fails
 **25/25**, which is what a broken rig should look like.
+
+---
+
+## Class 70 — a measurement that knows only ONE of two declaration forms
+
+**Cost: a wrong number reported to Theo, and it was wrong by more than half.**
+
+Build 1081 set out to lift every font under 11px. The figure quoted beforehand was
+**"315 under 12px"**, measured with `font-size:\s*([0-9.]+)px`. The real count under 11px
+was **519**:
+
+| form | sub-floor sites | seen by a `font-size:` sweep? |
+|---|---:|---|
+| `font-size: 10px` | 158 | ✅ |
+| `font: 600 10.5px 'Segoe UI',Arial` | **361** | ❌ |
+
+**The shorthand was the bigger half.** `index.html` carries **1,364** `font:` declarations
+against ~1,015 `font-size:` ones — the shorthand is the *dominant* form in this file, and it
+is the one the obvious pattern misses. The app's own build stamp is written in it
+(`font:600 10.5px …`), so the defect was sitting inside the very element the label gate reads.
+
+**This is the `v… build N` separator trap wearing different clothes** (two forms, middot and
+space; every single-form regex undercounted, and build 148 was invisible to every audit until
+someone asked what the *other* form looked like). Same shape, different property.
+
+**The rule, restated because prose has lost to this project seventy times now:**
+
+> Before counting a CSS property, ask which **shorthands** can also set it — and count those
+> too. `font` sets `font-size`. `background` sets `background-color`. `border` sets
+> `border-color`. `flex` sets `flex-basis`. `grid-area` sets four things. A sweep of the
+> longhand alone is a sweep of the minority in a file written mostly in shorthand.
+
+**The countermeasure that actually held: don't parse — ask the browser.** `gate_1081.mjs`
+walks `document.styleSheets` and reads `rule.style.fontSize`, which the CSSOM has already
+normalised from *both* forms. It cannot miss a shorthand, cannot be fooled by a comment, and
+cannot see a print stylesheet that lives in an ungenerated template string. Where a real
+engine can answer the question, a regex is the wrong instrument — not merely a riskier one.
+
+⚠️ **Two look-alikes the CSSOM walk must NOT report, both found live in this build:**
+- **`font-size:0` is not small type.** It is the idiom for *there is no text here*: a control
+  collapsing to a pure `::after` icon, a sphere flattened to a bar with `color:transparent`.
+  Exclude it — but **pin the count** (there are exactly two) so it cannot grow silently, and
+  so `0.5px` still trips.
+- **`pt` is a print document.** 168 of them here, smallest 6.8pt. A phone-readability floor
+  has no business inside an 11pt Letter page. Assert them **unchanged**; do not sweep them.
+
+---
+
+## Class 71 — a COVERAGE failure laundered into "carried debt" by `--since`
+
+**Cost: a sweep that never rendered four screens reported `SENTINEL CLEAN`.**
+
+Found at build 1081. The sentinel walks 25 states; four of them threw, so their
+renders were skipped. Each throw correctly added a `RUN` finding — the instrument
+was working. Then `--since` compared against the previous build, **found the same
+four `RUN` findings there**, classified them as pre-existing debt, and subtracted
+them. Output:
+
+```
+SENTINEL CLEAN — 63 render(s), nothing new · 114 carried
+```
+
+**63, when the budget was 75.** Nothing in that line says twelve renders never
+happened, and the four screens it says nothing about included `home` — the most
+used screen in the app.
+
+**Why this is worse than an ordinary missed finding.** `--since` exists to stop
+standing debt drowning new findings, and it is right to subtract an INK or a DEAD
+that was already there. But a `RUN` finding is **not a statement about the page** —
+it is a statement that *the sweep learned nothing about that page*. Subtracting it
+asserts "this screen was fine before", when the truth is "this screen was never
+looked at, before or now". The two builds agreeing on an absence of evidence is
+not evidence.
+
+**Three fixes, all now in `sentinel.js`:**
+1. **`RUN` is never carried.** `r.carried = r.id !== 'RUN' && priorKeys.has(...)`.
+   A coverage failure is always fresh.
+2. **The summary states coverage, not just completions.** `attempted` is counted
+   beside `ran`, and a shortfall prints as
+   `63 of 75 render(s) — 12 SKIPPED, see RUN above`.
+3. **The verdict word changes.** A short sweep must never say `CLEAN` —
+   *clean and incomplete are different claims and must not share a word.*
+
+⚠️ **Proven on a deliberately broken run, and the proof corrected the claim.** Re-running
+with the wrong `--setup` order under the fixed instrument prints all four `RUN` findings
+(each naming its own state and reason) and the line
+`SENTINEL — 4 NEW finding(s) across 21 of 25 render(s) — 4 SKIPPED, see RUN above`.
+The same run before the fix said `SENTINEL CLEAN — 63 render(s), nothing new`.
+
+**But the literal word `INCOMPLETE` never printed, and cannot.** It lives in the
+no-findings branch, and every skip path raises a `RUN` finding that is now never carried —
+so a short sweep always has a fresh finding and takes the other branch. It is a **backstop
+for a future skip path that forgets to raise `RUN`**, which is exactly how this hole opened
+the first time. It is commented as unreachable in the source so nobody "tests" it and
+concludes the gate is broken. *Reporting a fix as working when only two of its three parts
+can fire is the same error class this file exists to stop.*
+
+⚠️ **The root cause was operator error, and it is worth naming separately:** the
+`--setup` list was passed as `e2e_mock_supa.js,sentinel_setup_cardinal.js`. The
+**seed must come FIRST** — `sentinel_setup_cardinal.js,e2e_mock_supa.js` — and the
+setup file's own guard says so in its thrown message (*"the store is EMPTY at
+render time — put sentinel_setup_cardinal.js BEFORE e2e_mock_supa"*). An empty
+store then cascades: no milestone groups, no album sections, and claim detail
+falling back to the list, so **one wrong argument killed four states.** The comment
+in `sentinel.js` describing the two files listed them in the other order; it was
+narrative, not prescriptive, and was read as prescriptive.
+
+**The general rule:** when a harness subtracts a baseline, decide per finding-type
+whether the baseline can legitimately excuse it. *Did-not-run* can never be excused
+by *did-not-run last time either*.

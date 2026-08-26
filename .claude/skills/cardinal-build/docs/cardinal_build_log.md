@@ -26083,6 +26083,75 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1080 — the app stops talking through browser dialogs
+
+`index.html` only. **No SQL.** The first of Theo's "1-3 then 4-5" polish list.
+
+**289 `alert()` calls across 48 script blocks**, every one the native grey box headed
+*"app.cardinalroster.com says"*. It is the single thing that most made this read as a web
+page rather than an app.
+
+⚠️ **289, not 291.** A bare regex says 291; `jslex_count.py` says **289 in CODE, 2 in
+comments**. The lexer exists for exactly this and the swap was driven off its positions,
+not off a regex — a comment must not be rewritten.
+
+### It is a ROUTER, not a seventh toast
+
+The app already had **six** functions named `toast`/`crToast` — five module-local ones
+with five different signatures (`(msg,type,ms)`, `(msg,cls)`, `(msg,cls)`, `(html,ms)`,
+`(m,err)`) and `crToast`, the good one: a stack, ARIA roles, dismissible, errors that do
+not auto-dismiss. **`crToast` is already exported as `crToastOk`/`crToastErr` and already
+used ~35 times.** That is the `function money(` shape from this file's own warnings.
+
+`window.crTell(msg, kind)` is one delegate in front of it — the `normStage()` pattern, one
+implementation with delegates. Without it, 48 separate scopes would each carry their own
+`typeof window.crToastErr === 'function'` guard: 48 chances to get it subtly different.
+
+⚠️ **It falls back to `alert()`, and that is the point.** A message you could not miss must
+not become a message that silently vanishes because a module failed to load. **That
+fallback is the only `alert(` left in the file and the gate asserts the count is exactly
+1** — 289 → 1, not 289 → 0.
+
+**Default kind is `err`, which is the faithful translation.** `alert()` was a message that
+*waited* for you, and `crToast`'s `err` is the kind that does not auto-dismiss. Measured:
+64% were already refusals and most of the rest were validation ("Enter a dollar amount
+greater than 0"). Six genuine successes pass `'ok'`.
+
+**Non-blocking is safe here, and that was checked, not assumed:** only **4 of 289** are
+followed by any navigation, and three of those call `window.reload` — an in-app re-render,
+not a page load.
+
+### ⚠ My success classifier promoted four REFUSALS, and printing it caught them
+
+The first pass matched `\bdeleted\.` and `\bcopied\b`, so it promoted *"That estimate was
+**not** deleted"*, *"Confirmation did **not** match — nothing was deleted"*, *"Name did
+**not** match"* and *"Saved … **but** the insurance claim record could **not**"* to success
+styling. **The rule that caught it is this file's own: print what your extractor captured
+before asserting on it.** A `NOPE` veto (`not|couldn|didn|but|fail`) now runs first.
+
+⚠️ **Then I over-corrected and lost two real ones**, and the second miss is this file's
+other documented trap: `"\bcopied \u2014"` did not match because the SOURCE contains the
+six literal characters `\u2014`, not an em-dash. With the veto running first the broad
+match is safe again. Six successes, all read and confirmed.
+
+**Gates:** `check_build.py` GREEN 1079 → 1080 — **all 125 inline scripts still parse after
+289 replacements**, which is the real safety net for a mechanical edit this size ·
+byte-reproducible · `gate_1080.mjs` **13/13**, **10 failures on 1079**, and the control
+states the defect as data: `C1 exactly one alert( left in CODE → in CODE: 289`.
+
+The gate runs `crTell` in three worlds — toast present, toast **absent**, toast
+**throwing** — because the fallback is the property that matters.
+
+⚠️ **No sentinel run.** No markup, no CSS and no element changed; the toast component is
+untouched and pre-existing. Only which function displays a message moved.
+
+### Still open from item 1
+
+**92 `confirm()` calls are NOT in this build.** `confirm()` returns a boolean and blocks,
+so replacing it needs an in-app sheet (a new component, which wants rendered options for
+Theo) *and* an async restructure at every site. That is a separate build and a separate
+decision.
+
 ## Builds 1078–1079 — the document history: record it, and keep the copy
 
 Theo's pick after the outside audit, verbatim: **"Merge then 1 and 3."** Option 1
@@ -27122,3 +27191,142 @@ exactly this** and I did not reach for it until the fourth.
 hardened per BUG_CLASSES 37 so a control tree missing every 1069 symbol reports
 red instead of dying (`getComputedStyle(null)` throws, and the first version
 did exactly that).
+
+## Build 1081 — the type floor
+
+**519 declarations below 11px, lifted to 11px.** `index.html` only. No SQL.
+
+Theo's polish item 2, and the last thing anyone would call a feature: the app set type as
+small as **6.5px**. Labels, chips, table headings, timestamps, the little counts on tab
+strips, money captions. Fine on a desk monitor; not readable on a phone, on a roof, in
+daylight. 11px is the floor Apple's own interface uses for its smallest caption, which is
+why that number and not a rounder one.
+
+⚠️ **The count I first gave Theo — "315 under 12px" — was wrong, and wrong in the way this
+document keeps warning about.** It was measured with `font-size:` alone. This file carries
+sizes in **two declaration forms**, and the shorthand is the bigger half:
+
+| form | sub-floor sites |
+|---|---:|
+| `font-size: 10px` | 158 |
+| `font: 600 10.5px Arial…` | **361** |
+| | **519** |
+
+A sweep that knows one form undercounts by more than half. *Ask what the other form looks
+like before you count* — the same rule that hid build 148 from every earlier version audit.
+
+**Print documents are untouched, and that was verified rather than assumed.** Every print
+stylesheet sizes in `pt` (168 of them, smallest 6.8pt); this pass only ever read `px`, and
+`@media print` / `@page` context contains **zero** px hits. An 8.5pt line in a contract is a
+typographic decision about a Letter page, not a phone.
+
+Nothing got smaller. Nothing at or above 11px moved — asserted per size, not in aggregate.
+
+**Gates**
+- `check_build.py` GREEN 1080 → 1081; all 125 inline scripts parse; byte-reproducible.
+- `gate_1081.mjs` **14/14**, and **RED on 1080 with four defect statements** — including
+  `A1 → 519 under, smallest 6.5px` and `E2 → calgrid-dow=10px`.
+- ⚠️ **The instrument is Chromium's own parsed CSSOM, not a regex.** `document.styleSheets`
+  holds exactly the rules the browser applies: comments are gone by construction, and a
+  contract's print CSS is absent because no contract has been generated. Both of this
+  project's standing counting traps are closed by the choice of instrument rather than by
+  a cleverer pattern.
+- ⚠️ **The gate went red on its first run and the GATE was wrong, not the app.** Two rules
+  compute to `0px` — a plus button that collapses to a pure `::after` icon when docked, and
+  a pipeline sphere flattened to a 3px bar with `color:transparent`. `font-size:0` is the
+  idiom for *there is no text here*, not for small type. Now excluded, but **pinned at
+  exactly two** (`D5`) so it cannot grow silently, and `0.5px` would still trip.
+- ⚠️ **A coverage floor computed from the wrong population.** `A3` counted only
+  at-or-above-floor declarations, so on the negative control it shrank by exactly the number
+  of findings and failed for a reason that had nothing to do with coverage — a gate that
+  reads as broken when it is working. Coverage now counts every sized declaration (2312 on
+  both builds).
+
+**The visual sweep, and it took two runs to get an honest one.**
+
+- ⚠️ **Run 1 reported `SENTINEL CLEAN — 63 render(s)` and was WRONG** — the budget was 75.
+  Four states threw, so four screens were never rendered, `home` among them. Cause was
+  operator error: `--setup` was passed as `e2e_mock_supa.js,sentinel_setup_cardinal.js`
+  when **the seed must come first**. An empty store then cascaded into the milestone
+  strip, the album sections and claim detail each failing their own guards — **one wrong
+  argument killed four states.** The instrument raised a `RUN` finding for each, and
+  `--since` then subtracted them as carried debt, because 1080 failed identically.
+  Fixed in `sentinel.js` and recorded as **BUG_CLASSES 71**: `RUN` is never carried, the
+  summary prints `63 of 75 — 12 SKIPPED`, and a short sweep says **INCOMPLETE**, never
+  CLEAN.
+- ✅ **Run 2, correct order: 75 of 75 renders.** Two NEW findings, both `OVERRIDDEN`, both
+  investigated and both **false positives**:
+
+  `#cr-disp .job .a` and `#cr-disp .rep .a` are each declared twice — a base rule (lifted
+  10.5px → 11px by this build) and `@media (min-width:1100px){ … font-size:11.5px }`. The
+  media rule already beat the base one at desktop widths, long before this build. So at
+  390px the base rule wins at **11px** and at 1194/1440px the media rule wins at
+  **11.5px** — both above the floor, nothing regressed. ⚠️ **They re-reported as NEW only
+  because `OVERRIDDEN` keys on the DECLARED VALUE**, which this build changed. Same family
+  as BUG_CLASSES 69 (a `--since` key carrying something that legitimately moves). The key
+  is deliberately left alone: it was changed once already this session to close a
+  different false positive, and one observation is not enough to justify churning it back.
+
+## Build 1082 — the Job Menu, readable and told apart
+
+Theo's polish item 4, and it turned up a bigger defect than the one he asked about.
+His picks, verbatim: **"B, 1, 1,1,1"**. `index.html` only. No SQL.
+
+### 1 · Every glyph in the Job Menu computed at 1.52:1
+
+⚠️ **THE RECURRING ONE, an eighth time.** Both glyph classes carried
+`color:#23507e` — a steel blue chosen for a **white** tile, where it scores 7.98:1.
+The tile went dark and the ink never followed. Insurance sets its own icon colour, so
+retail dark quietly inherited the light-era one.
+
+⚠️ **TWO classes, two different floors, and a sweep of one misses the other.**
+
+| class | what | floor | was |
+|---|---|---:|---|
+| `.dbic2` | the 15 drawn SVG icons | 3.0:1 (graphical) | **1.52:1** |
+| `.dbic1` | the `$` and `%` on the money rows | **4.5:1 (it is TEXT)** | **1.52:1** |
+
+**`.dbic1` is the worse half and `.jabox svg` does not see it.** The first probe measured
+only the SVGs and would have shipped a half-fix; extending it to `.dbic1` turned 16 findings
+into 18. *Ask what the other form looks like — the same rule that cost build 1081.*
+
+**Theo picked B: `--rbe-ink`** (`#cfd6df` dark / `#161616` light) — an existing token pair,
+so it flips by itself and cannot drift, and the icons now match the label beside them.
+Measured after: **8.67:1 worst on both floors**, and it clears on every ground the glyph can
+land on including Community's `--ccm-card` (#161918 → 12.09:1).
+
+### 2 · Seven tiles shared three glyphs
+
+15 tiles, 11 glyphs: `tasks` ×3, `camera` ×2, `docs` ×2. ⚠️ **The Checklists one was
+deliberate** — build 981 recorded it in a comment (*"DB_ICONS has no checklist key; dbIc('tasks')
+is the clipboard Punch Outs already reuses"*). **That comment is now false and was rewritten in
+the same edit** — a stale comment sends the next reader hunting for a key that exists.
+
+Four new keys: `punch` (hammer), `checklist` (ticks beside lines), `walk` (house under a lens),
+`contract` (page with a pen). **15 distinct glyphs across 15 tiles**, asserted by comparing
+rendered path data.
+
+⚠️ **Twelve candidates were drawn and four were dropped**, each killed by the only test that
+matters — rendered at 21px *beside the glyph it must differ from*. A big tick read as Tasks;
+a camera-with-ring read as Photos; a signature squiggle vanished and read as Estimates; a
+clipboard-with-! kept the collision it was meant to fix. *"Is it a nice icon" is the wrong
+question.*
+
+### Gates
+
+- `check_build.py` **GREEN** 1081 → 1082, byte-reproducible.
+- `gate_1082.mjs` **10/10**, and **RED on 1081 with five defect statements**, including
+  `C2 → 4 pair(s): Tasks = Punch Outs · Documents = Contracts · Tasks = Checklists ·
+  Photos = The Walk` — the control enumerates exactly the four collisions.
+- ⚠️ **Three of my own assertions failed CORRECT code, all the same fault: scope.**
+  - `src.count("punch:'") == 1` — `punch:'Punch-outs'` already exists in a stage-label map,
+    and `walk:'` sits inside a `console.warn` string. Re-scoped to the brace-matched
+    `DB_ICONS` block.
+  - `'body.claim-insurance .dbic1{…}'` — the real selector carries `.dbrow`. Typed from
+    memory instead of read.
+  - `document.querySelectorAll('.jabox')` — `#inspGalBox` in `#tab-inspections` is also a
+    `.jabox` with a `.dbic2` camera: a **0×0** gallery box on an inactive tab where sharing
+    the camera is *correct*. It reported a 16th tile and a false duplicate. Scoped to
+    `.jabox[data-jm]`, the attribute `jt()` stamps on every real menu tile.
+- ⚠️ **A1's failure message echoed its success text**, so a red line read like a pass. Fixed
+  to name which class still hardcodes the steel.
