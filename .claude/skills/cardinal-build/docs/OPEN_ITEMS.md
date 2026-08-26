@@ -12,7 +12,7 @@ His list, in his order. **1 and 2 are shipped; 3 is next.**
 | 2 | lift every font size under 11px | ✅ **build 1081.** 519 declarations, both forms |
 | 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ❌ **CLOSED — all three parts are FALSE POSITIVES. Do not build it.** See below |
 | 4 | distinct icons in the Job Menu | ⏳ Tasks/Punch Outs/Checklists share one glyph; Documents/Contracts share a folder; Photos/The Walk share a camera |
-| 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ⏳ **flagged, NOT confirmed** — may be a hidden-element false positive. Confirm before building |
+| 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ❌ **CLOSED — FALSE POSITIVE, measured.** Renders **183 × 44**. See below |
 
 ### ❌ Item 3 is a FALSE POSITIVE in all three parts — audited 26 Aug, do NOT build it
 
@@ -76,6 +76,23 @@ The chain went — "add fallbacks everywhere" → "no, only `--ct-*`, `--cr-*` i
 "no, `--ct-*` is already guarded at the source of the bug that motivated the whole idea."
 **Three rounds of narrowing, ending at zero.** Grep for the mitigation before writing one.
 
+
+### ❌ Item 5 is a FALSE POSITIVE — measured in Chromium 26 Aug
+
+`#acxTrBtn` (Trade Type) was flagged at **0px**. Driven to the client profile in a real
+Chromium render it measures **183 × 44**, `display:flex`, a real `offsetParent`, no hidden
+ancestor, and the `\u2014` placeholder it is designed to show when no trade is picked. It is
+also **already wired** (build 795: `acxTrOpen = !acxTrOpen; renderAcxOverview();`) and
+**already carries `min-height:44px`** from the earlier tap-target pass.
+
+**The 0px came from measuring it in a state where it was not laid out** — the classic
+hidden-element reading. *This is why the item said "NOT confirmed": a flag is not a finding.*
+
+⚠️ One true oddity, deliberately NOT chased: the rule
+`#insToggleBtn,#acxTrBtn{min-width:44px;}` computes to `min-width:0px` on the button, so that
+half of the rule does not win. **Zero user impact** — the button is 183px wide on its own —
+and chasing it would be a fourth false positive in one session. Recorded here so the next
+person measuring it knows it was seen and judged, not missed.
 
 ### ⏳ Needs Theo — the `confirm()` sheet wants a look before it is built
 
