@@ -3852,7 +3852,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1069 &#8212; The photo editor&#8217;s tool bar was painting its labels in a grey too dark to read against the black bar behind them &#8212; the rotate buttons, the size hint and the loading line. Same colour, lifted until it reads in daylight.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1070 &#8212; The AI that drafts an inspection narrative can now see the site checklist &#8212; the roof&#8217;s age, pitch, layers, decking and attic access &#8212; so it writes about the actual roof instead of only the photo captions, and it can draft before a single photo has been captioned. Only the property facts go; no name, address or location. And &#8220;Draft narrative&#8221; is now a button in the editor&#8217;s toolbar, and a row in the More menu on a phone, instead of a small button buried in section 7 of the document.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -8406,7 +8406,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
       <button class="btn dark" id="shareBtn" data-cri="paperclip"><span class="bl">Share link</span></button>
       <button class="btn dark" id="assistantBtn" data-cri="sparkle"><span class="bl">Assistant</span></button>
       <button class="btn dark" id="rccBtn" style="display:none;" data-cri="camera"><span class="bl">CompanyCam</span></button>
-      <button class="btn dark" id="sortBtn" style="display:none;" data-cri="funnel"><span class="bl">Sort photos</span></button></span>
+      <button class="btn dark" id="sortBtn" style="display:none;" data-cri="funnel"><span class="bl">Sort photos</span></button><button class="btn dark" id="draftBtn" style="display:none;" data-cri="sparkle"><span class="bl">Draft narrative</span></button></span>
       <div id="edDrawer" role="menu" aria-hidden="true"></div>
     </div>
     <span id="savedFlash"></span>
@@ -18530,6 +18530,37 @@ function resyncChecklist(doc, cl){
   return n;
 }
 
+/* 1070: the same nine facts, as a plain label -> value object for
+   /api/summarize. Built from CK_REPORT_MAP so there is never a fourth copy of
+   the field list \u2014 the label IS the placeholder with its brackets stripped,
+   which is what the report prints beside the value in Property Facts, so the
+   model is handed the report's own vocabulary.
+
+   ⚠ THIS IS ALSO THE PRIVACY FENCE, and it is the cheap one. CK_REPORT_MAP
+   holds nine PROPERTY facts and no identity: no client name, no address, no
+   phone number, no coordinates. A checklist field with no entry in that map has
+   no get() and therefore cannot reach a third-party model by accident. Do not
+   "complete" this by spreading the checklist object. */
+function ckFactsFor(cl){
+  var out = {};
+  if(!cl) return out;
+  Object.keys(CK_REPORT_MAP).forEach(function(k){
+    var f = CK_REPORT_MAP[k], v = '';
+    try{ v = f.get(cl) || ''; }catch(_e){ v = ''; }
+    if(!v) return;
+    out[f.ph.replace(/^\[|\]$/g, '')] = String(v);
+  });
+  return out;
+}
+/* The open project's facts, or {} \u2014 never throws, so a call site can pass
+   it inline without a guard of its own. */
+function ckFactsNow(){
+  try{
+    if(typeof getChecklist !== 'function' || !window.currentProject) return {};
+    return ckFactsFor(getChecklist(window.currentProject));
+  }catch(_e){ return {}; }
+}
+
 /* checklist values -> inspection report Property Facts */
 function prefillChecklist(tpl, cl){
   if(!cl) return tpl;
@@ -23732,7 +23763,8 @@ function wireReanalyzeButtons(doc){
           var r2 = await fetch('/api/summarize', {
             method: 'POST',
             headers: await window.aiHeaders(),
-            body: JSON.stringify({ captions: caps, section: hc2.textContent.trim() })
+            body: JSON.stringify({ captions: caps, section: hc2.textContent.trim(),
+                                   checklist: ckFactsNow() })
           });
           var j2 = null;
           try{ j2 = await r2.json(); }catch(e2){}
@@ -23773,6 +23805,7 @@ function wireSummaryDraftButton(doc){
 
   var btn = doc.createElement('button');
   btn.type = 'button';
+  btn.id = 'aiDraftBtn';          /* 1070: the toolbar's Draft narrative delegates here */
   btn.className = 'no-print';
   btn.textContent = '\u2728 Draft with AI';
   btn.style.cssText = 'margin:4px 0 10px;font:13px "Segoe UI",Arial,sans-serif;padding:7px 14px;'+
@@ -23792,7 +23825,7 @@ function wireSummaryDraftButton(doc){
       var res = await fetch('/api/summarize', {
         method: 'POST',
         headers: await window.aiHeaders(),
-        body: JSON.stringify({ captions: captions })
+        body: JSON.stringify({ captions: captions, checklist: ckFactsNow() })
       });
       var data = null;
       try{ data = await res.json(); }catch(pe){}
@@ -23821,6 +23854,37 @@ function wireSummaryDraftButton(doc){
     btn.textContent = oldLabel;
   });
 }
+
+/* 1070: put the drafter in the toolbar, where 1069's More drawer will pick it
+   up on a phone. Shown only for an inspection report \u2014 the same editor opens
+   estimates, contracts and invoices, whose sections mean something else and
+   which carry no summary heading at all. Same predicate as sortGate().
+
+   ⚠ GATES ON THE DOCUMENT, NOT ON THE BUTTON. wireSummaryDraftButton(doc) runs
+   later in frame.onload than this gate's call site, so "has the button been
+   created yet" would answer no on every open. rccIsReport() asks about
+   [data-cardinal-summary-heading], which is the very element that button needs
+   \u2014 the same question, asked earlier. */
+window.draftGate = function(){
+  var b = document.getElementById('draftBtn');
+  if(!b) return;
+  b.style.display = (typeof rccIsReport === 'function' && rccIsReport(rccDoc())) ? '' : 'none';
+};
+(function(){
+  var b = document.getElementById('draftBtn');
+  if(!b) return;
+  b.addEventListener('click', function(){
+    /* DELEGATE, never re-implement. The in-document button owns the rule that
+       a paragraph a person typed is never clobbered, the data-ai-summary
+       marker, the label choreography and the error alert. A second copy here
+       is the duplicate-pipeline bug this project keeps paying for. */
+    var doc = rccDoc();
+    var inDoc = doc && doc.getElementById('aiDraftBtn');
+    if(!inDoc){ alert('Open an inspection report first \u2014 the drafter writes the Overall Condition Assessment.'); return; }
+    inDoc.scrollIntoView({ block: 'center' });
+    inDoc.click();
+  });
+})();
 
 function wireCoverPhoto(doc){
   var box = doc.querySelector('.cover-photo');
@@ -25041,6 +25105,7 @@ async function openEditor(id){
          asks isAdminUser(); this one reads the loaded document, so it belongs
          here with the rest of the post-load wiring. */
       if(typeof window.sortGate === 'function') window.sortGate();
+      if(typeof window.draftGate === 'function') window.draftGate();
       if(!doc.getElementById('screenFix')){
         var sfx = doc.createElement('style');
         sfx.id = 'screenFix';
@@ -41598,7 +41663,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
-  { b:1069, d:'2026-08-26', t:'The inspection report fills itself in and stops hiding behind buttons',
+  { b:1070, d:'2026-08-26', t:'The AI inspection drafter reads the checklist \u2014 and is one tap away',
+  s:'The AI that drafts an inspection narrative could only ever see the photo captions. It never knew the roof\u2019s age, its pitch, how many layers were on it, what the decking was, or whether there was attic access \u2014 the nine things already typed into the site checklist. It now gets all nine, so it writes \u201ca 22-year-old three-tab field over a single layer of plank decking\u201d instead of just \u201cthe shingles\u201d, and it can draft from the checklist alone before a single photo has been captioned (it used to refuse outright). Only the property facts go \u2014 no name, no address, no location. And the drafter is now reachable: a Draft narrative button sits in the toolbar, which means it is in the More menu on a phone, instead of only as a small button buried in section 7 of the document.' },  { b:1069, d:'2026-08-26', t:'The inspection report fills itself in and stops hiding behind buttons',
   s:'Three things at once on the report editor. The report now pulls the roof checklist through every time you open it, not just the moment you create it \u2014 so finishing the checklist afterwards, or changing it, finally reaches the report, and it tells you how many fields it filled. It only ever fills blanks, so anything you typed is left alone. The toolbar\u2019s eleven buttons are now three plus a More drawer, which gives the document back about half the phone screen. And the long bracketed examples like \u201C[e.g. 1\u00d78 nominal plank (board) decking, gapped]\u201D are short labels now, with the example kept as a tooltip.' },  { b:1068, d:'2026-08-25', t:'Eight more bits of faint text, on eight screens',
   s:'The rest of the readability sweep: the review switch on a client, the \u201Cfrom client profile\u201D byline on a checklist, the photo editor\u2019s tab strip, the count badge on the open line-item tab, the \u201Cno description\u201D placeholder, the Convert to Insurance caption, every empty-state note in the app, and the estimate side rail\u2019s empty line. Three of them were faint in BOTH light and dark, not just one \u2014 they sit on cards that keep the same colour whichever theme is on. The count badge was the worst at 1.6 to 1: near-black on a dark chip.' },  { b:1067, d:'2026-08-25', t:'Three unreadable bits of the client profile in light mode',
   s:'In light mode the paid figure on the money card, the Directions link beside the map, and the Job Summary heading on the leads pane were all painted in colours chosen for the dark theme \u2014 the paid amount worst of all, pale green on white at 2.4 to 1. Each already had the right colour written somewhere in the app; it had just been attached to the insurance CRM rather than to the light theme, so retail never got it. Dark mode looks exactly as it did before.' },  { b:1066, d:'2026-08-25', t:'The Photo Album reads in light mode',

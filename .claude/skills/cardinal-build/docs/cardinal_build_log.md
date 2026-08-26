@@ -26083,6 +26083,127 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1070 — the drafter reads the checklist, and is one tap away
+
+Theo, after 1069: *"yes do both."* Two halves of one complaint — the AI
+inspection drafter is not worth reaching for, for two independent reasons, and
+fixing either alone leaves it exactly as unused.
+
+### 1 · It was blind to everything except photo captions
+
+`/api/summarize` took `{captions, section}` and nothing else. It never knew the
+roof's age, its pitch, how many layers were on it, what the decking was, or
+whether there was attic access — **the nine facts the rep had already typed into
+the checklist before opening the editor**. So it drafted "the shingles show
+granule loss" where it could have drafted "a 22-year-old three-tab field over a
+single layer of 1×8 plank decking shows granule loss consistent with its age."
+
+Worse: with no captions yet it returned a flat **400**. A rep who had finished
+the checklist and not yet captioned a photo got a refusal instead of a draft.
+It now refuses only when **both** sources are empty.
+
+### 2 · It was only reachable from inside the document
+
+The single entry point was the small button `wireSummaryDraftButton()` injects
+after the summary heading — **~1,900px down, in section 7**. Theo's screenshot
+showed the toolbar; it never showed this. 1069 built the More drawer precisely
+so a control could be one tap away. `#draftBtn` ("Draft narrative") sits in
+`#edSecondary`, so it is a drawer row on a phone and a toolbar button on
+desktop, gated exactly like `#sortBtn`.
+
+### The fact list is built from `CK_REPORT_MAP`, and that IS the fence
+
+Not a fourth hand-written copy of the nine field names — 1069's own note says
+there must never be a third consumer that reinvents the list. It is also the
+**privacy fence**, and the cheaper of the two: `CK_REPORT_MAP` holds exactly
+nine PROPERTY facts and no identity at all — no client name, no address, no
+phone, no coordinates. **A checklist field with no entry in that map has no
+`get()`**, so it cannot start being sent to a third-party model by accident.
+`ckFactsFor()` reads the map; the gate's fixture checklist deliberately carries
+a name, a street address and lat/lon, and asserts none of them reach the body.
+
+The server whitelists and caps **independently** — at most 12 entries, key ≤40
+chars, value ≤200 — because a request body is not a trust boundary.
+
+### The button DELEGATES; it does not re-implement
+
+`#draftBtn` calls the in-document button's own handler. That handler owns the
+"never clobber a paragraph a person typed" rule, the `data-ai-summary` marker,
+the label choreography and the error alert. A second copy in the toolbar is the
+duplicate-pipeline bug this project keeps paying for — and delegation is what
+every other 1069 drawer row already does.
+
+### ⚠ `draftGate()` gates on the DOCUMENT, not on the button
+
+`wireSummaryDraftButton(doc)` runs **later** in `frame.onload` than the gate's
+call site, so "has the button been created yet" would answer no on every open
+and the control would never appear. `rccIsReport()` asks about
+`[data-cardinal-summary-heading]` — the very element that button needs — so
+gating on the document is the same question asked earlier, not a weaker one.
+The button is looked up at **click** time, when it certainly exists.
+
+### ⚠ Two assertion faults, both of which failed CORRECT code
+
+- `assert src.count('window.draftGate') == 2`. It is **3**: the definition plus
+  the `typeof`-guarded call, which names it twice. Replaced with
+  `== src.count('window.sortGate')` — parallel to its neighbour, not a magic
+  number.
+- `assert src.count("data-ai-summary") == orig.count(...)`. **The patch's own
+  comment quotes the marker's name**, so the bare count went 3 → 4 and failed.
+  This project's comment-pollution trap, in the direction that flatters nobody.
+  Anchored on the write — `setAttribute('data-ai-summary'` — which is the real
+  invariant: exactly one site sets it, before and after.
+
+### ⚠ The gate's first negative control was a BUG_CLASSES 37 crash
+
+`api/summarize.js` was copied to a bare directory, so `import { isStaff } from
+'./_staff.js'` failed, **A1–A6 never executed**, and the only trace was a
+smaller number nobody reads — CLAUDE.md's "a test that silently loses a check".
+Fixed twice over: a control tree with `api/_staff.js` beside the route, and a
+**FLOOR** in the gate asserting all 19 checks ran. Re-run against a proper 1069
+control it goes red on 12 checks and the floor names the 4 that could not run.
+
+### ⚠ MY OWN REGRESSION, SHIPPED TWICE — the stamp's SENTENCE had gone stale
+
+The app stamp is the only version string in rendered markup, and CLAUDE.md is
+explicit that it is *"the only one followed by `&#8212;` plus a plain-English
+summary of the build."* **That summary still described a photo-editor ink fix.**
+1068 (an ink pass) and 1069 (the drawer and the checklist re-sync) each bumped
+the NUMBER and left the SENTENCE, so for three builds the one description a
+person actually reads was about a different build entirely. Every gate was
+green each time — the label gate checks that the number strictly increases, and
+it did.
+
+**Bumping the number is not bumping the stamp.** Per the standing rule — a class
+that recurs gets a check, not another paragraph — `check_build.py` now compares
+the prose after the em-dash against the previous build's and goes RED when they
+are identical. **Negative-controlled on the real failure**, not a synthetic one:
+run 1069 against 1068 it reports *"IDENTICAL to build 1068's — the number moved,
+the sentence did not"* and exits 1.
+
+### ✅ One false alarm, recorded so nobody "fixes" it
+
+The new comments write `\u2014` as a literal escape rather than an em-dash,
+which reads as a slip. **It is the file's own convention** — 114 such comment
+escapes already existed at 1069, and this build adds 4. Left alone.
+
+### Cost, measured
+
+`index.html` +4,212 chars; `api/summarize.js` +1,915. **The twelfth toolbar
+button pushes the desktop single-row threshold from 1440px to 1512px** —
+measured at seven widths on both builds. It already wrapped at 1194 (the iPad),
+1280 and 1366 on 1069, so this adds one width to a set of three; nothing is
+hidden, the bar goes 39px → 86px there. Shortening the label to "Draft" is the
+only variant that buys 1440 back, and "Draft" beside "Save" reads as a document
+state rather than an action. Kept "Draft narrative"; Theo's call.
+
+**Gates:** `check_build.py` green (125 inline scripts, stamp 1069→1070, marker +
+negative control) · `node --check api/summarize.js` · byte-reproducible on both
+files · `gate_1070.mjs` **20/20**, red 12/20 on a 1069 control · sentinel with
+`--since 1069`.
+
+---
+
 ## Build 1069 — the report fills itself in, and stops hiding behind buttons
 
 Theo, 26 Aug, after rendered previews: *"1A, drawer dark like the toolbar."*

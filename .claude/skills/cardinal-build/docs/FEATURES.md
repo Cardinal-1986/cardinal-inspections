@@ -6952,3 +6952,78 @@ not the model's raw answer; a raw-shape mock has no `id` and the renderer throws
 body and the rendered evidence) · **`enforce_test.mjs`** — nine adversarial cases
 against the **extracted shipped `enforceGaps`**, including an invented citation
 and a string `photo_index`.
+
+---
+
+## The inspection-report editor — the drawer, the re-sync, the drafter (1069–1070)
+
+`index.html`, main block. Three things Theo asked for after a screenshot of the
+editor: *"Can we find a way to make these inspection reports better? Maybe a
+side drawer like the menus in the CRM? Anything else that would actually prompt
+me to WANT to use these AI inspections?"*
+
+### The More drawer (1069)
+
+`#edSecondary` wraps the eight secondary toolbar buttons; `#edMoreBtn` opens
+`#edDrawer`. **`#edSecondary` is `display:contents`**, so above 760px the
+wrapper vanishes from layout and the desktop toolbar is byte-identical to what
+it was — the drawer is a phone affordance only.
+
+⚠ **Deliberately modelled on `#navMenu`** — class toggle, document-level click
+closer, `stopPropagation` on the opener, and **zero writes to
+`document.body.style.overflow`**. CLAUDE.md counts 13 scroll-lock writers with
+no reconciler; a menu does not need to lock scroll. Asserted every build.
+
+⚠ **The rows are a VIEW of the real buttons.** Each row delegates to `b.click()`
+and they are rebuilt on every open from the buttons currently **visible**, so a
+control JS has hidden (`sigBtn` on an unsignable report, `rccBtn` for a
+non-admin, `sortBtn`/`draftBtn` on a non-report) never appears. Re-implementing
+those handlers would be a second pipeline per concept.
+
+### The checklist re-sync (1069)
+
+`prefillChecklist()` filled nine Property Facts **at creation only**, as a
+string transform, baking the result in. `resyncChecklist(doc, cl)` applies the
+same nine to the **live document every time the editor opens** — **blanks
+only**, an element still matching `/^\[[^\]]*\]$/`. That is what makes it safe
+to run unasked. It reports the count into `savedFlash` rather than changing the
+document silently.
+
+⚠ **`CK_REPORT_MAP`, not `CK_FIELDS`.** `CK_FIELDS` is the *checklist's* own
+required-field list, read by `openChecklist()` and `ckSave()`; shadowing it
+would have broken checklist saving. Three consumers read the map and there must
+never be a fourth: `prefillChecklist` (string, at creation), `resyncChecklist`
+(DOM, every open) and **`ckFactsFor` (1070, the AI payload)**.
+
+### The drafter reads the checklist, and is reachable (1070)
+
+| | |
+|---|---|
+| what it sends | `{captions, section, **checklist**}` — the nine property facts, from `ckFactsFor()` |
+| when it refuses | only when **both** captions and checklist are empty. Before 1070, whenever captions were empty |
+| where it lives | `#draftBtn` "Draft narrative" in `#edSecondary` → a drawer row on a phone, a toolbar button on desktop |
+| gated by | `window.draftGate()`, same predicate as `sortGate()` — shown only for an inspection report |
+
+⚠ **`CK_REPORT_MAP` IS THE PRIVACY FENCE.** It holds nine PROPERTY facts and no
+identity — no client name, no address, no phone, no coordinates. **A checklist
+field with no entry in that map has no `get()`**, so it cannot reach a
+third-party model by accident. Do not "complete" `ckFactsFor()` by spreading the
+checklist object. The server whitelists and caps independently (12 entries, key
+≤40, value ≤200) because a request body is not a trust boundary.
+
+⚠ **`#draftBtn` DELEGATES to the in-document `#aiDraftBtn`.** That handler owns
+the never-clobber-typed-text rule, the `data-ai-summary` marker and the error
+path. Exactly **two** `/api/summarize` call sites exist, before and after 1070.
+
+⚠ **`draftGate()` gates on the DOCUMENT, not the button.**
+`wireSummaryDraftButton(doc)` runs later in `frame.onload` than the gate call,
+so asking "does the button exist yet" answers no on every open.
+
+⚠ **Adding a toolbar button has a desktop cost.** The twelfth pushes the
+single-row threshold 1440px → 1512px (measured at seven widths). It already
+wrapped at 1194/1280/1366. Measure before adding a thirteenth.
+
+**Gates:** `gate_1069.mjs` (16 checks) · `gate_1070.mjs` (**20**, half of them
+executing the shipped `api/summarize.js` against a stubbed transport so the
+assertions are about the real prompt) · `render_report_editor.mjs` and
+`render_1070.mjs` for the pictures.

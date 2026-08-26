@@ -3450,6 +3450,43 @@ from the code.
 *(≥ rather than = because "carried" counts only findings present in BOTH trees,
 so anything 1067 fixed is excluded from the 267.)*
 
+## Class 66 — the version bumped, the DESCRIPTION did not
+
+**The shape.** The app stamp is one string carrying two things: a build number
+and, after an `&#8212;`, the plain-English sentence describing that build. It is
+the only version string in rendered markup and the only build description a
+person ever reads. A patch script bumps the number, because that is what the
+label gate checks; the sentence is left describing an older build. **Every gate
+stays green** — the number strictly increased, which is all the gate ever asked.
+
+**Found 26 Aug 2026, in my own two most recent builds.** The stamp described a
+photo-editor ink fix. **1068** (an ink pass) and **1069** (a toolbar drawer and
+a checklist re-sync) each shipped carrying it, so for three builds the sentence
+was about a different build entirely.
+
+**Why it survives.** A wrong description is worse than a missing one and harder
+to notice: it is fluent, plausible, and sits in the position where a right
+answer would sit. Nobody diffs a sentence they have already read. And the two
+halves live in one string, which makes "I edited the stamp" feel complete.
+
+**The check, not a paragraph.** `check_build.py` now extracts the prose after
+the em-dash from both artifacts and goes RED when they are identical:
+
+```
+✗ app stamp summary rewritten   (IDENTICAL to build 1068's - the number
+                                 moved, the sentence did not)
+```
+
+⚠️ **Negative-controlled on the REAL failure, not a synthetic one** — run
+`check_build.py index_1069.html --prev index_1068.html` and it goes red and
+exits 1. A gate whose only red has been staged by its own author has not been
+seen to fail.
+
+**The general lesson, which is bigger than the stamp.** When one artifact
+carries a machine-checkable field beside a human-written one, the gate on the
+machine-checkable half is a *licence* to leave the other stale. Ask what the
+number is standing in for, and check that too.
+
 ## Class 65 — a theme PAIR reads as OVERRIDDEN in the off-theme render
 
 **The shape.** The app's convention for a light/dark ink (build 573) is a base
