@@ -214,6 +214,7 @@ const DEADLINE = setTimeout(() => {
 }, DEADLINE_MS);
 
 const findings = [];
+let attempted = 0;          /* renders the sweep TRIED — see the coverage note in sweep() */
 const add = f => findings.push(f);
 
 /* What --since compares, and what the report PRINTS, are deliberately not the
@@ -302,6 +303,14 @@ async function sweep(HTML, findings) {
     const stateNames = await page.evaluate(
       `(window.__sentinelStates || []).map(s => s.name)`).catch(() => []);
     const states = stateNames.length ? stateNames : [null];
+    /* ⚠ COVERAGE. `ran` counts renders that COMPLETED; a state whose run()
+       throws is skipped without incrementing it. Reporting only `ran` means a
+       sweep that silently lost four screens prints the same shape as one that
+       walked them all — "63 render(s)" reads as success, not as 63 of 75.
+       Count what was ATTEMPTED too, and print both. (Found the hard way at
+       1081: a mis-ordered --setup emptied the store, four states threw, and
+       the run reported CLEAN.) */
+    attempted += states.length;
 
     for (let si = 0; si < states.length; si++) {
     if (states[si] !== null) {
@@ -475,6 +484,7 @@ async function sweep(HTML, findings) {
 }
 
 const ran = await sweep(APP, findings);
+const attemptedHere = attempted;   /* freeze before the --since sweep adds its own */
 
 /* The previous build, through the same probe. A finding present in BOTH is
    carried debt, not something this build did. */
@@ -519,7 +529,12 @@ for (const f of findings) {
   else seen.set(key, { id: f.id, key: f.key, detail: f.detail, at: [f.where] });
 }
 const all = [...seen.values()];
-for (const r of all) r.carried = priorKeys.has(keyOf(r));
+/* ⚠ A RUN finding is NOT a page defect — it says a screen never opened, so
+   the sweep learned nothing about it. Subtracting it as "carried" is the
+   worst possible behaviour: the same four states fail on both builds, cancel
+   out, and the run reports CLEAN about screens it never rendered. Coverage
+   failures are always fresh. (BUG_CLASSES 37, wearing --since as a disguise.) */
+for (const r of all) r.carried = r.id !== 'RUN' && priorKeys.has(keyOf(r));
 const fresh   = all.filter(r => !r.carried);
 const carried = all.filter(r => r.carried);
 
@@ -551,9 +566,12 @@ if (JSON_OUT) {
   /* The carried count is stated even when clean. A silent zero and a silent
      forty look identical, and only one of them is fine. */
   const debt = SINCE ? ` · ${carried.length} carried from ${SINCE}${carried.length && !ALL ? ' (--all to see)' : ''}` : '';
+  const cov = attemptedHere && ran < attemptedHere
+    ? `${ran} of ${attemptedHere} render(s) — ${attemptedHere - ran} SKIPPED, see RUN above`
+    : `${ran} render(s)`;
   console.log(rows.length
-    ? `SENTINEL — ${rows.length} NEW finding(s) across ${ran} render(s): ${summary}${debt}`
-    : `SENTINEL CLEAN — ${ran} render(s), nothing new${debt}`);
+    ? `SENTINEL — ${rows.length} NEW finding(s) across ${cov}: ${summary}${debt}`
+    : `SENTINEL ${ran < attemptedHere ? 'INCOMPLETE' : 'CLEAN'} — ${cov}, nothing new${debt}`);
 }
 if (SELFTEST) {
   /* An expected id missing means that check cannot fire at all, and every

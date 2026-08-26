@@ -3728,3 +3728,54 @@ engine can answer the question, a regex is the wrong instrument — not merely a
   so `0.5px` still trips.
 - **`pt` is a print document.** 168 of them here, smallest 6.8pt. A phone-readability floor
   has no business inside an 11pt Letter page. Assert them **unchanged**; do not sweep them.
+
+---
+
+## Class 71 — a COVERAGE failure laundered into "carried debt" by `--since`
+
+**Cost: a sweep that never rendered four screens reported `SENTINEL CLEAN`.**
+
+Found at build 1081. The sentinel walks 25 states; four of them threw, so their
+renders were skipped. Each throw correctly added a `RUN` finding — the instrument
+was working. Then `--since` compared against the previous build, **found the same
+four `RUN` findings there**, classified them as pre-existing debt, and subtracted
+them. Output:
+
+```
+SENTINEL CLEAN — 63 render(s), nothing new · 114 carried
+```
+
+**63, when the budget was 75.** Nothing in that line says twelve renders never
+happened, and the four screens it says nothing about included `home` — the most
+used screen in the app.
+
+**Why this is worse than an ordinary missed finding.** `--since` exists to stop
+standing debt drowning new findings, and it is right to subtract an INK or a DEAD
+that was already there. But a `RUN` finding is **not a statement about the page** —
+it is a statement that *the sweep learned nothing about that page*. Subtracting it
+asserts "this screen was fine before", when the truth is "this screen was never
+looked at, before or now". The two builds agreeing on an absence of evidence is
+not evidence.
+
+**Three fixes, all now in `sentinel.js`:**
+1. **`RUN` is never carried.** `r.carried = r.id !== 'RUN' && priorKeys.has(...)`.
+   A coverage failure is always fresh.
+2. **The summary states coverage, not just completions.** `attempted` is counted
+   beside `ran`, and a shortfall prints as
+   `63 of 75 render(s) — 12 SKIPPED, see RUN above`.
+3. **The verdict word changes.** A short sweep says `SENTINEL INCOMPLETE`, never
+   `CLEAN`. *Clean and incomplete are different claims and must not share a word.*
+
+⚠️ **The root cause was operator error, and it is worth naming separately:** the
+`--setup` list was passed as `e2e_mock_supa.js,sentinel_setup_cardinal.js`. The
+**seed must come FIRST** — `sentinel_setup_cardinal.js,e2e_mock_supa.js` — and the
+setup file's own guard says so in its thrown message (*"the store is EMPTY at
+render time — put sentinel_setup_cardinal.js BEFORE e2e_mock_supa"*). An empty
+store then cascades: no milestone groups, no album sections, and claim detail
+falling back to the list, so **one wrong argument killed four states.** The comment
+in `sentinel.js` describing the two files listed them in the other order; it was
+narrative, not prescriptive, and was read as prescriptive.
+
+**The general rule:** when a harness subtracts a baseline, decide per finding-type
+whether the baseline can legitimately excuse it. *Did-not-run* can never be excused
+by *did-not-run last time either*.
