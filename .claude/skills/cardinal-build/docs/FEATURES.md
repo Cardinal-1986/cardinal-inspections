@@ -7183,3 +7183,50 @@ immediately.** Retrying a 400 is retrying something that cannot succeed —
 ⚠️ **Test the ladder by DRIVING it, never by grepping for `GEMINI_MODELS`** —
 that grep passes on code that still calls one model three times. `gate_1075.mjs`
 counts calls per model against a stubbed transport.
+
+
+---
+
+## The Walk's job door (1076) — `cr-show-script` + the Job Menu
+
+**Where it lives:** the tile is `index.html`'s Job Menu (`jt(dbIc('camera'),
+'The Walk', '', 'walk')`, full-width, under the Inspections row). The entry
+point is `window.CardinalShowcase.openForProject(pr)` in `cr-show-script`.
+
+**Why it exists.** Measured on production the day it shipped: `walks` **0 rows**,
+`walk_shots` **0 rows**. The Walk had one door — the *Showcase* tile on the
+Sales Floor, then a third tab inside a module that opens on `showcase` — and in
+~250 builds nobody had ever found it.
+
+| | |
+|---|---|
+| **tile** | admin only — `(isAdminUser() ? jt(…) : '')`, **beside Checklists**, which already wrapped alone into the two-column grid. So the tile fills an existing hole and a rep's menu is byte-for-byte what it was |
+| **route** | an explicit `act === 'walk'` branch in the `[data-jm]` router. **Not** the else branch — The Walk is a tab inside a full-screen view, not a pane on the client page |
+| **behaviour** | opens on the walk tab · **finds** this job's walk by `project_id` · otherwise offers to start one, prefilled from the job |
+| **write** | `saveWalk()` now sets `project_id` |
+
+⚠️ **`saveWalk()` had never written `project_id`**, though the column and its
+index have been in `walks_schema.sql` since 579. Every walk made through the
+form was orphaned from its job. Nothing needed backfilling only because nothing
+had ever been made.
+
+⚠️ **The carried job is MODULE STATE (`pendingProject`), never a parameter.**
+This module wires `b.onclick = openWalkForm` and `b.onclick = openJobPicker`
+bare, and 628's comment records why: arg 0 is a **MouseEvent**. A project that
+is really a MouseEvent writes a null `project_id` and looks perfectly correct.
+`closeForm()` clears it; the Showcase's own *Start a walk* clears it explicitly.
+
+⚠️ **The TILE is gated, not the handler.** `walks_schema.sql` makes insert,
+update, delete and every `walk_shots`/storage write `is_cardinal_admin()`, so a
+tile a rep can tap would land them on a screen the database refuses to serve —
+BUG_CLASSES 16 with extra steps. `openForProject()` still degrades correctly for
+a rep (the walk list, no form), as the belt to that brace. **Whether reps should
+run walks is an RLS decision and Theo's**; it is one policy change plus one
+`amAdmin()` relaxation.
+
+⚠️ **`projects` has no `city` column.** One `address` string holds the lot, so
+the start form splits street and city off the commas into editable fields.
+
+**No new full-screen view, so no `hideAllViews()` or `navRestore()` entry** —
+`open()` already registers `showcase`. This is a different TAB of a view that is
+already wired.

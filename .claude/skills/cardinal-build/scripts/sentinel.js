@@ -376,7 +376,19 @@ async function sweep(HTML, findings) {
                     still collected and --since decides whether it matters. */
     if (on('DEAD'))
       for (const f of capped(res.dead, 20, 'DEAD'))
+        /* ⚠ 26 Aug 2026 (build 1076) — THIS HAD NO KEY, so it fell back to the
+           detail string, and the detail carries `f.matched`. Add one element to
+           a class and every standing finding on that class is re-keyed and
+           reported as NEW: build 1076 added a fifteenth .jabox to the Job Menu
+           and five findings that have been true since the tile set was written
+           came back as five regressions of that build.
+
+           That is the trap the note twenty lines above already names — "key on
+           what identifies the DEFECT, never on content" — and the count IS
+           content. The selector, property and declared value identify it; how
+           many elements happen to match today does not. */
         add({ id: f.outranked ? 'OVERRIDDEN' : 'DEAD', where: at,
+              key: `${f.selector}|${f.prop}|${f.declared}`,
               detail: `${f.selector} { ${f.prop}: ${f.declared} } never wins on any of the ${f.matched} element(s) it matches` });
 
     /* FLOOR — the touch-target floor beaten by a module's own min-*. To

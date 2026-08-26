@@ -26083,6 +26083,114 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1076 — The Walk gets a door where the work is, and the row that names the job
+
+Two defects and one wiring change, `index.html` only. **No SQL.**
+
+### ⚠ The finding that reframed the build: `walks` has ZERO rows
+
+Measured on production before a line was written:
+
+| table | rows |
+|---|---:|
+| `walks` | **0** |
+| `walk_shots` | **0** |
+| `walks` with a `project_id` | **0** |
+
+The Walk is not a feature that needed moving. It is a feature **nobody has ever
+reached**, in the ~250 builds since it shipped. Its only door was the *Showcase*
+tile on the Sales Floor — labelled "Before and after, for the kitchen table" —
+and then a third tab inside a module whose `open()` lands on `showcase`. Two
+correct guesses, from a screen nobody visits mid-job.
+
+That is the whole justification for the tile, and it is also why nothing needs
+backfilling.
+
+### ⚠ `saveWalk()` has never written `project_id`
+
+`walks_schema.sql` has had the column since the day it shipped — nullable on
+purpose, `on delete set null` on purpose, **and its own index** at line 131.
+`saveWalk()`'s insert names eight fields and that is not one of them. Every walk
+made through the form was orphaned from its job, silently, and the index has
+never had a row to hold.
+
+**This is BUG_CLASSES 68** — a column defined, indexed, commented and never
+written. Nothing in the gate ladder can see it: the SQL is valid, the insert is
+valid, `node --check` passes, and the feature "works".
+
+### The build
+
+| | |
+|---|---|
+| **the tile** | `jt(dbIc('camera'), 'The Walk', '', 'walk')`, in the Job Menu **beside Checklists** — that row already wrapped one tile alone into a two-column grid, so the admin tile fills a hole that is there today rather than opening a new one, and a rep sees exactly what they saw before. Rendered at 390px to check that; the first version put it in a full-width row of its own and left the hole |
+| **the route** | an explicit `act === 'walk'` branch, **not** the else branch — The Walk is a tab inside `CardinalShowcase`, not a pane on this page, so `showTab('walk')` would have found nothing and done nothing |
+| **the entry** | `CardinalShowcase.openForProject(pr)` — opens on the walk tab, **finds** this job's walk by `project_id`, or offers to start one prefilled from the address |
+| **the write** | `project_id: (pendingProject && pendingProject.id) \|\| null` |
+
+**Extend, don't add.** No second walk screen, no second list, no second picker —
+the walk tab, `loadWalks()`, `loadShots()` and the start form all already
+existed and none of them was reachable from where the work happens.
+
+⚠️ **The carried project is module state, NOT a parameter.** This module wires
+`b.onclick = openWalkForm` in one place and `b.onclick = openJobPicker` in
+another, and 628's comment on the second records what a parameter costs here:
+arg 0 is a **MouseEvent**. A project that is really a MouseEvent would write a
+null `project_id` while looking perfectly correct — which is the exact bug this
+build exists to fix, reintroduced by the fix. `closeForm()` clears it, and the
+Showcase's own *Start a walk* clears it explicitly, so a walk started from the
+Showcase can never inherit a job opened an hour ago (gate check B3).
+
+⚠️ **The TILE is admin-gated, not the handler, and that is deliberate.**
+`walks_schema.sql` makes insert, update, delete and **every** `walk_shots` and
+storage write `is_cardinal_admin()`. A tile a rep can tap, landing on a screen
+with no Start button, backed by a table that would refuse the row anyway, is
+BUG_CLASSES 16 with extra steps. **Whether a rep should be able to run a walk is
+an RLS decision and Theo's** — until he makes it, the door matches the fence.
+It is one policy change plus one `amAdmin()` relaxation if he says yes.
+
+⚠️ **`projects` has no `city` column** — one `address` string holds the lot — so
+the form splits street and city off the commas. Both land in editable fields: a
+wrong guess costs a tap, and blank fields cost Theo typing an address the job
+already knows.
+
+### ⚠ My own rig ran the sweep against the LOGIN SCREEN and I nearly reported it
+
+`sentinel.js` needs **two** `--setup` files —
+`sentinel_setup_cardinal.js,e2e_mock_supa.js`, seed first, mock second. I passed
+one. `TEAM` stayed `false`, `currentUser` stayed `null`, `openProject('p1')`
+bailed, `#acxMount` rendered **0 characters**, and the sweep walked 25 states
+that were all the same signed-out screen. **The setup file's own banner warns
+about exactly this** — *"a sweep of a login form reports CLEAN and means nothing
+by it"* — and I read past it. Killed and re-run with both files.
+
+### ⚠ And the sweep's first report blamed this build for five old findings
+
+With the rig fixed, the sentinel came back with **5 new findings, all on
+`.jabox`, all on the client screen** — exactly where the tile landed. They were
+not new. `sentinel.js`'s DEAD/OVERRIDDEN findings carried **no explicit `key`**,
+so `--since` compared the printed detail, which ends *"…never wins on any of the
+**N** element(s) it matches"*. Adding a fifteenth `.jabox` re-keyed every
+standing finding on that class. **BUG_CLASSES 69.**
+
+Both instrument defects are fixed in this PR, and both were proved by running
+them: the missing-mock guard now fails **25 states out of 25** (the first version
+latched and reported one), and the re-keyed sweep reads
+
+    SENTINEL CLEAN — 25 render(s), nothing new · 140 carried
+
+which is simultaneously the fix's proof and the proof that the five `.jabox`
+findings were carried debt.
+
+**Gates:** `check_build.py` GREEN 1072 → 1076 · byte-reproducible from
+`patch_1076.py` · `gate_1076.mjs` **34/34 in Chromium**, and **27 failures on
+1072 with no crash** · sentinel **CLEAN** (25 renders, 390px, seed + mock,
+`--since` 1072) · `sentinel --selftest` green after the key change ·
+`render_walkdoor.mjs` for the pictures. The control's F1 line is the defect stated as data:
+`[["showTab","walk"]]` — on 1072 the tile would have fallen to the else branch
+and done nothing at all. The FLOOR caught the ten A-checks the BUG_CLASSES 37
+guard short-circuits, so a control that cannot run a section fails rather than
+falling silent.
+
 ## Build 1075 — the inspection routes get a real model ladder
 
 Theo: *"Now do the inspection routes — caption.js and summarize.js."*
