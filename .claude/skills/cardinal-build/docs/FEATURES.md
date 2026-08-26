@@ -7155,3 +7155,31 @@ route and asserts the contract instead.
 fan-out, negative-controlled against a sabotaged variant. `gate_1074.mjs` — 8
 checks on the candidate list, the env-var map and the caveat rendering.
 `render_1073.mjs` for the pictures.
+
+
+### The inspection routes ladder (1075)
+
+`caption.js` and `summarize.js` now use the **same** `GEMINI_MODELS` array as
+`detect.js`, `sortphotos.js` and `supplement.js`:
+
+```js
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash'];
+```
+
+⚠️ **What it replaced was not a ladder.** `caption.js` called
+`gemini-3.5-flash` **three times** — a comment claiming *"then older model"* and
+a diag key named `gemini25` show it was a real 3.5 → 2.5 ladder flattened when
+the models were renumbered. `summarize.js` had no ladder at all. On a Gemini
+outage inspections made three doomed calls and fell to the smallest model in the
+stack, while the other three routes tried a second Gemini first.
+
+⚠️ **A 503/429 retries the SAME model once; anything else moves on
+immediately.** Retrying a 400 is retrying something that cannot succeed —
+`detect.js`'s rule since 503.
+
+⚠️ **3.7 is deliberately NOT at the front.** Which model leads is what
+`/bakeoff.html` exists to answer. One line in each file once measured.
+
+⚠️ **Test the ladder by DRIVING it, never by grepping for `GEMINI_MODELS`** —
+that grep passes on code that still calls one model three times. `gate_1075.mjs`
+counts calls per model against a stubbed transport.

@@ -26083,6 +26083,98 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1075 — the inspection routes get a real model ladder
+
+Theo: *"Now do the inspection routes — caption.js and summarize.js."*
+
+### ⚠ What I found first, and it is worse than "pinned to an old model"
+
+**`caption.js`'s ladder was dead code that called ONE model three times.**
+
+```js
+let geminiRes = await askGemini('gemini-3.5-flash');   // try 1
+if (503 || 429) { sleep(1200);
+  geminiRes = await askGemini('gemini-3.5-flash'); }   // try 2, SAME model
+if (!geminiRes.ok) {
+  const alt = await askGemini('gemini-3.5-flash');     // "alt" — SAME model
+  diag.gemini25 = alt.status;                          // named for 2.5
+```
+
+The comment above it read *"primary model, retry once on overload, **then older
+model**, then OpenAI backup"*, and the third call's diag key was **`gemini25`**.
+So this **was** a real 3.5 → 2.5 ladder, and when the models were renumbered all
+three call sites were replaced with the same literal. What survived is a comment
+that lies, a diagnostic field named after a model it never calls, and a third
+request byte-identical to the second.
+
+**The cost is not style.** On the ~1-in-4 Gemini outage measured at 500–501, an
+inspection caption made **three doomed calls to one model** and then dropped
+straight to `gpt-4o-mini`, the smallest model in the stack — while
+`detect.js`, `sortphotos.js` and `supplement.js` have all had a real ladder
+since 503. **Inspections never touched 3.6 at all.** `summarize.js` had no
+ladder whatsoever: one call, then OpenAI.
+
+### The ladder is 3.6 → 3.5, and NOT leading with 3.7 is the point
+
+I told Theo twice that which model **leads** is the bake-off's call. Shipping
+3.7 here on my own judgement would contradict that while wearing the language of
+evidence. What this build does is bring inspections level with the three routes
+that already ladder — **the same array, byte-identical**:
+
+```js
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash'];
+```
+
+CLAUDE.md's *"grep for the convention before inventing a mechanism"*. Inspections
+go from never-touching-3.6 to leading with it, and the **reliability** fix lands
+now rather than waiting on a measurement it does not depend on. Putting 3.7 at
+the front is one line in each file once `/bakeoff.html` says so.
+
+### ⚠ The gate DRIVES the ladder — a grep would have passed the old code
+
+A source check for `GEMINI_MODELS` would go green on code that still called 3.5
+three times. `gate_1075.mjs` executes both routes against a transport that
+**counts calls per model**, which is the only way to see a ladder actually
+ladder:
+
+| scenario | expected | measured |
+|---|---|---|
+| 3.6 answers | one call, 3.5 untouched, OpenAI untouched | `{3.6:1}` ✅ |
+| **3.6 503s** | retry 3.6 once, then **3.5**, not OpenAI | `{3.6:2, 3.5:1}` ✅ |
+| 3.6 **400s** | move on **without** retrying | `{3.6:1, 3.5:1}` ✅ |
+| both down | OpenAI, and `via` says so | `via:gpt-4o-mini` ✅ |
+
+The 400 case is `detect.js`'s rule since 503 and is the opposite of what the old
+code did: it retried a model that could never succeed, twice.
+
+**11/11 green, 8 red on a pre-1075 control.** ⚠️ Two checks (B2, C2) pass on the
+control **vacuously** — with no ladder there, "3.6 is down" never happens and the
+route simply calls 3.5. They do not discriminate and are not counted as evidence;
+A1, A2, A3, B1, B3, C1 and C3 are the ones that do.
+
+### ⚠ No artifact stamp moves, and that is correct
+
+This build is `api/` only. `index.html` stays at **1072**, `supplement.html` at
+**1072**, `bakeoff.html` at **1074** — `check_build.py` and `check_artifact.py`
+have nothing to say about it, and the sentinel has no changed screen to walk.
+The record is this entry plus each route's own header stamp (`[1075]`), which is
+the `ai-status.js` / `bakeoff.js` convention.
+
+### ⚠ Comment pollution, seventh time this session
+
+Three assertions failed correct code because **this patch's own banner quotes
+what it removed** — `gemini25`, *"then older model"*, and `3.7`. Anchored on the
+code forms (`diag.gemini25 =`, the full comment line, `'gemini-3.7`). I said
+after the fourth that the habit which works is computing every count in one pass
+before asserting; I did that here only after being bitten again.
+
+**Gates:** `node --check` on both routes · both **byte-reproducible** ·
+`gate_1075.mjs` **11/11**, **8 red on a pre-1075 control** with the floor
+confirming all 10 ran · 1070's checklist path re-verified untouched (check C3) ·
+1072's `via`/`via_primary` contract preserved on every success path.
+
+---
+
 ## Build 1074 — 3.7 into the bake-off, and honest slots for Claude and Kimi
 
 Theo: *"yes, add 3.7 to the bake-off, what about Claud and/or kimi k3?"*
