@@ -3763,8 +3763,22 @@ not evidence.
 2. **The summary states coverage, not just completions.** `attempted` is counted
    beside `ran`, and a shortfall prints as
    `63 of 75 render(s) — 12 SKIPPED, see RUN above`.
-3. **The verdict word changes.** A short sweep says `SENTINEL INCOMPLETE`, never
-   `CLEAN`. *Clean and incomplete are different claims and must not share a word.*
+3. **The verdict word changes.** A short sweep must never say `CLEAN` —
+   *clean and incomplete are different claims and must not share a word.*
+
+⚠️ **Proven on a deliberately broken run, and the proof corrected the claim.** Re-running
+with the wrong `--setup` order under the fixed instrument prints all four `RUN` findings
+(each naming its own state and reason) and the line
+`SENTINEL — 4 NEW finding(s) across 21 of 25 render(s) — 4 SKIPPED, see RUN above`.
+The same run before the fix said `SENTINEL CLEAN — 63 render(s), nothing new`.
+
+**But the literal word `INCOMPLETE` never printed, and cannot.** It lives in the
+no-findings branch, and every skip path raises a `RUN` finding that is now never carried —
+so a short sweep always has a fresh finding and takes the other branch. It is a **backstop
+for a future skip path that forgets to raise `RUN`**, which is exactly how this hole opened
+the first time. It is commented as unreachable in the source so nobody "tests" it and
+concludes the gate is broken. *Reporting a fix as working when only two of its three parts
+can fire is the same error class this file exists to stop.*
 
 ⚠️ **The root cause was operator error, and it is worth naming separately:** the
 `--setup` list was passed as `e2e_mock_supa.js,sentinel_setup_cardinal.js`. The

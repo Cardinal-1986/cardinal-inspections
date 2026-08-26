@@ -566,6 +566,14 @@ if (JSON_OUT) {
   /* The carried count is stated even when clean. A silent zero and a silent
      forty look identical, and only one of them is fine. */
   const debt = SINCE ? ` · ${carried.length} carried from ${SINCE}${carried.length && !ALL ? ' (--all to see)' : ''}` : '';
+  /* ⚠ The word INCOMPLETE below is a BACKSTOP and is currently UNREACHABLE —
+     say so rather than let someone "test" it and conclude the gate is broken.
+     Every path that skips a render (a state that throws, a probe that throws)
+     raises a RUN finding first, and RUN is never carried, so a short sweep
+     always has at least one fresh finding and takes the other branch. It reads
+     "N NEW finding(s) across 21 of 25 render(s) — 4 SKIPPED" instead, which is
+     strictly better. Keep the branch: it catches a FUTURE skip path that
+     forgets to raise RUN, which is exactly how this hole opened the first time. */
   const cov = attemptedHere && ran < attemptedHere
     ? `${ran} of ${attemptedHere} render(s) — ${attemptedHere - ran} SKIPPED, see RUN above`
     : `${ran} render(s)`;
