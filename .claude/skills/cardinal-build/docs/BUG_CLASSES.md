@@ -3793,3 +3793,51 @@ narrative, not prescriptive, and was read as prescriptive.
 **The general rule:** when a harness subtracts a baseline, decide per finding-type
 whether the baseline can legitimately excuse it. *Did-not-run* can never be excused
 by *did-not-run last time either*.
+
+---
+
+## Class 72 — `pgrep -f` matches the WATCHER'S OWN command line, so a wait-loop can never succeed (26 Aug 2026, build 1083)
+
+The mirror image of class 37 and of this file's standing "a check that cannot fail":
+**a check that cannot SUCCEED.** Same root — an assertion nobody ever watched fire.
+
+The sentinel for 1083 finished, wrote `SENTINEL CLEAN — 75 render(s)`, and nobody found
+out for ~20 minutes, because the background waiter armed to report it was this:
+
+```bash
+until [ -s "$LOG" ] && ! pgrep -f "sentinel.js .*index_v1083"; do sleep 5; done
+```
+
+**`pgrep -f` matches full command lines, and the pattern is sitting inside the very bash
+process running the grep.** So `pgrep` always found at least one match — itself — `! pgrep`
+was permanently false, and the loop ran until it was killed by hand.
+
+⚠️ **The second-order damage is worse than the wasted wait: it produced a confident WRONG
+STATUS REPORT.** A plain `pgrep -f "sentinel.js"` used to answer *"is it still going?"* kept
+printing the waiter, so the answer came back **STILL RUNNING** long after the sentinel had
+exited and written its result. The process table said "working"; the log file said "done".
+**Two instruments disagreed and the noisier one was believed.** It also produced a
+bogus `ps` reading — elapsed time and CPU time for the *wrapper*, not the work, which is why
+`00:00:00` CPU appeared beside a supposedly busy process and was not questioned.
+
+**The tells, in order of how early they could have caught it:**
+1. A wait-loop whose pattern is a literal that also appears in the loop's own text.
+2. `ps -o time` showing `00:00:00` CPU on a process claimed to be busy — that is a wrapper
+   or a shell, never the work.
+3. The artifact the loop is waiting FOR already existing while the loop still runs. **The
+   file is the ground truth; the process table is an inference.**
+
+**The fixes, cheapest first:**
+- **Wait on the launcher's own exit** rather than re-deriving liveness from the process
+  table. If the work was started by a tracked background job, its completion is already
+  reported — do not build a second, weaker detector beside it.
+- If you must poll: match on something the watcher cannot contain — the interpreter plus
+  script (`pgrep -f '^node .*sentinel\.js'` with an anchor), or exclude self
+  (`pgrep -f pat | grep -v "^$$\$"`).
+- **Condition on the artifact, not the process.** `[ -s "$LOG" ]` alone was already correct
+  here; the process check that was added to make it *more* rigorous is what broke it.
+
+*The general rule: any liveness check that greps a shared namespace must be proved able to
+return the "finished" answer at least once. Arm it against something already finished and
+watch it succeed — the same negative-control discipline this project applies to every gate,
+applied to the thing doing the watching.*
