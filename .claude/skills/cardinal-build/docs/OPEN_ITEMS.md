@@ -4394,7 +4394,7 @@ And `b.db-paid` reads 2.50 at desktop width / 2.40 at phone width, because the
 figure is `clamp(14px,4.4vw,19px)` and the *floor* changes with it (19px bold is
 large text, floor 3.0). The sentinel's original numbers were the right ones.
 
-### B · A single fixed ink with no light twin — 7 sites
+### ✅ B · DONE at build 1068 — a single fixed ink with no light twin
 
 | element | measured | ink |
 |---|---|---|
@@ -4409,7 +4409,7 @@ large text, floor 3.0). The sentinel's original numbers were the right ones.
 `span.count` is the serious one — **1.56:1 is not faint, it is invisible**, and
 it is a number the user is meant to read.
 
-### C · Marginal, and arguably fine — 1 site
+### ✅ C · DONE at build 1068 — marginal, done in the same pass
 
 `button "Inspection"` at **4.35:1** against a 4.5 floor. Under by 0.15. Worth
 fixing in the same pass, not worth a pass of its own.
@@ -4422,9 +4422,16 @@ the screen Theo is on most and the one rebuilt at 788–804. Group B is a bigger
 call because several of those inks are shared and need the blast-radius check
 (`.viewhead` was one class with 15 users), and C is noise on its own.
 
-⚠️ **Not started.** Theo has not asked for a colour build, and CLAUDE.md is
-explicit that scope creep reads as not listening. This is written down so the
-measurements are not lost, not as work in progress.
+✅ **ALL SHIPPED.** Group A at **1067**, groups B and C at **1068**, both on
+Theo's explicit instruction. Every under-floor ink the 25 Aug sweep found is
+now above its floor in both themes at both widths.
+
+⚠️ **Two corrections this produced, recorded so they are not re-learned:**
+three of group B were never light-mode bugs at all — they sit on cream cards and
+a dark rail that do not flip, so they took a fixed ink rather than a pair. And
+`#cr-pae-tabs button.active .count` was a **ninth** site the sweep never saw,
+found by the gate: byte-identical to `.cr-lil-tabs button.active .count`, but
+its strip shows no count in the walked state.
 
 ## Still Theo's, unchanged
 

@@ -3432,6 +3432,56 @@ away is the bug again.
 fixtures are already inside the cap and cannot be evicted by the block that
 tests it. Control: restore the silent caps and the check goes RED.
 
+### ✅ Class 63, measured — the silent caps were costing ~50 findings a sweep
+
+Two sweeps of the **same artifact** (the 1066 tree), same themes, same
+viewports, different instrument versions:
+
+| instrument | findings on the 1066 tree |
+|---|---:|
+| before `capped()` | **218** |
+| after `capped()` | **≥267** (reported as "carried" by a `--since` run) |
+
+At least **49 findings per sweep** were being truncated away in silence, and
+because the number that vanished was the larger one it read as a cleaner app.
+This is the apples-to-apples proof the class was real; it is not an inference
+from the code.
+
+*(≥ rather than = because "carried" counts only findings present in BOTH trees,
+so anything 1067 fixed is excluded from the 267.)*
+
+## Class 65 — a theme PAIR reads as OVERRIDDEN in the off-theme render
+
+**The shape.** The app's convention for a light/dark ink (build 573) is a base
+rule carrying the dark value plus `:root[data-theme="rb-light"]` carrying the
+light one. In the **light** render the base rule correctly loses on every
+element it matches — which is exactly what `OVERRIDDEN` reports.
+
+**Found 25 Aug 2026** on build 1067's own fix. A `--since` sweep across 100
+renders returned exactly one new finding:
+
+```
+OVERRIDDEN .ljsummary h3 { color: rgb(227, 92, 99) } never wins on any of
+the 1 element(s) it matches   [rb-light 1194px leads]
+```
+
+That is the pair working. **Not a defect, and not to be "fixed".**
+
+⚠️ **But it is not harmless either.** Every correctly-authored theme pair will
+produce one of these forever, so the OVERRIDDEN bucket accumulates noise
+proportional to how much theming work gets done — and a check whose output is
+mostly benign is a check people stop reading. `OVERRIDDEN` already exists only
+so `--since` can flag a rule written in THIS build that never wins (build 481);
+a rule that wins in the OTHER theme plainly does win.
+
+**The fix, not yet built:** the reporter sees every render, so it can suppress
+an `OVERRIDDEN` whose `(selector, property)` wins in at least one other render
+of the same sweep. That needs a two-theme selftest fixture — a pair that must
+NOT be reported, beside a genuinely dead rule that still MUST be — because a
+suppression nobody has watched fail is a blind spot wearing a comment.
+Recorded here rather than done, so the next theming build does not re-diagnose
+it from scratch.
+
 ## Class 64 — scoring a value the renderer never paints (emoji as ink)
 
 **The shape.** A contrast check reads `color` and scores it against the ground.
