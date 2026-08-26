@@ -35,12 +35,44 @@ It exists to be *read*, not landed.
 a property of GitHub's retention policy, not of this repo — and it is not something to
 bet the measurement baseline on.
 
-### The fix, which needs Theo — the session token cannot push tags
+### ✅ FIXED 26 Aug — two preservation branches now exist on the remote
 
-Two annotated tags were authored locally; **pushing them returns HTTP 403** (this
-session's credentials allow branch pushes, not tag creation — retried, consistent).
-Run these from a shell that has your own credentials, and the branch then becomes
-genuinely disposable because the tags keep everything reachable:
+**The objects are no longer hanging off a single ref.** Both were pushed and verified:
+
+| ref | sha | what it holds |
+|---|---|---|
+| `history/pre-squash-584` | `7a1d904` | the full 787-commit lineage, builds ~1–584 |
+| `history/build-573-baseline` | `aeac5e5` | the build-573 tree, `measure_counts.py`'s negative control |
+
+```bash
+git fetch origin history/build-573-baseline
+git show history/build-573-baseline:index.html > /tmp/573.html   # the control tree
+```
+
+**`claude/ai-can-build-584` is now redundant** — a second ref covers everything it did.
+It can be deleted whenever Theo wants; nothing depends on it any more. Leaving it costs
+one confusing name in the branch list, which both this file and `CLAUDE.md` now explain.
+
+### ⚠ The permission matrix, established by control rather than assumed
+
+Tags were the obvious answer and are **blocked**. Diagnosed properly, with a control that
+proves what *is* allowed rather than only what isn't:
+
+| operation | result |
+|---|---|
+| push an **annotated tag** | ❌ HTTP 403 |
+| push a **lightweight tag** | ❌ HTTP 403 |
+| push a **branch at the identical sha** | ✅ succeeded |
+| **delete** any ref | ❌ HTTP 403 |
+
+So the restriction is on `refs/tags/*` and on deletion — **not** on the objects and **not**
+on write access generally. *The first two failures alone would have read as "no write
+permission"; only the branch control showed the real shape.* ⚠️ **Git reports both
+refusals as `Everything up-to-date` after the 403 line** — a phrase that reads like
+success. Use `--verbose` and check the exit code; the summary line lies.
+
+⚠️ **Tags remain the better artifact** — immutable, and they do not clutter the branch
+list. If Theo wants them, from a shell with his own credentials:
 
 ```bash
 git tag -a build-573-baseline aeac5e5 -m "The last build-573 tree - measure_counts.py's negative control"
@@ -48,9 +80,18 @@ git tag -a history/pre-squash-584 7a1d904 -m "787 commits, builds ~1-584: the pr
 git push origin build-573-baseline history/pre-squash-584
 ```
 
-**Until those tags exist on the remote, the branch IS the preservation mechanism.**
-Recorded tips, so nothing is lost even if the ref goes: `7a1d904` (branch tip),
-`aeac5e5` (build-573 tree).
+### 🧹 One piece of litter I made and cannot clear
+
+Diagnosing the above required pushing a throwaway branch, **`zz-perm-test`** (at
+`aeac5e5`). Ref deletion is 403, so **I cannot remove it.** One line from a shell with
+full credentials, or one click in the GitHub branch list:
+
+```bash
+git push origin --delete zz-perm-test
+```
+
+It is harmless — it points at a commit two other refs already hold — but it is untidy and
+it is mine.
 
 ---
 
