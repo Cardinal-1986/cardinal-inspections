@@ -3852,7 +3852,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1077 &#8212; The crew work order fills in the shingle and drip edge from the signed contract &#8212; which is what it was built to do in February and has never once done. It was looking up the contract by a field name that does not exist, so the lookup failed every time and failed quietly, and both boxes came up blank. One word. If you have been typing the colour in by hand on every work order, you should not have to any more.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 10.5px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1079 &#8212; The copy of a document you actually sent or signed is now kept. Estimates, contracts and reports were a single copy that got overwritten every time you edited it &#8212; so if you changed a signed estimate, the version the homeowner agreed to was simply gone. From now on the app quietly keeps a copy at the moment it goes out, and another copy of the old wording the first time you change it afterwards. Nothing is blocked and nothing is slower: the copy is made on the server, so your phone never has to send the document back up.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -10669,6 +10669,90 @@ function dbQueueOffline(id, fields){
   dbApplyLocal(id, fields);
   try{ if(window.CardinalOutbox) window.CardinalOutbox.queue({ table:'inspection_reports', match:{ col:'id', val:id }, patch: fields }); }catch(_dq){}
 }
+/* 1078: what to write down when a DELIVERED document changes.
+
+   Returns the audit line, or null when there is nothing to say. Computed
+   BEFORE the write, deliberately: `prev` must be the row as it stood when the
+   save started, and emitting only after the write succeeds keeps a refused
+   update out of the log.
+
+   `auditLog` is not re-implemented here. It is declared once in this same
+   script block, already carries a `doc` type, and already satisfies the RLS
+   rule that audit_events.email equals the JWT email or is NULL. */
+function docChangeNote(id, fields){
+  try{
+    /* Both sources are already in memory, so this costs no round trip. Between
+       them they cover every real path: cacheRows whenever the document list has
+       loaded, `current` whenever the editor is open on this document. */
+    var prev = null;
+    try{ prev = (cacheRows || []).find(function(x){ return String(x.id) === String(id); }) || null; }catch(_c){}
+    if(!prev && current && String(current.id) === String(id)) prev = current;
+    if(!prev) return null;
+
+    var was = prev.signed_at ? 'SIGNED' : (prev.sent_at ? 'SENT' : '');
+    if(!was) return null;              /* not delivered yet - an ordinary edit */
+
+    /* The send and the signature are the DELIVERY, not a change after it.
+       db.update is how both of those happen, so without this the act of
+       sending would log itself as tampering with what it just sent. */
+    if(('sent_at' in fields) || ('signed_at' in fields)) return null;
+
+    var changed = Object.keys(fields).filter(function(k){ return k !== 'updated_at'; });
+    if(!changed.length) return null;
+
+    var when = prev.signed_at ? ('signed ' + String(prev.signed_at).slice(0, 10))
+                              : ('sent '   + String(prev.sent_at   || '').slice(0, 10));
+    return {
+      /* auditLog caps detail at 300 characters; keep well inside it. */
+      detail: (changed.indexOf('html') !== -1 ? 'CONTENT changed' : 'Changed') +
+              ' on a ' + was + ' document — ' + changed.join(', ') +
+              ' · "' + String(prev.title || 'untitled').slice(0, 60) + '"' +
+              ' · ' + when,
+      project_id: prev.project_id || null
+    };
+  }catch(_){ return null; }
+}
+
+/* 1079: keep the delivered copy before it is overwritten.
+
+   `snapshot_document(p_doc, p_reason)` is a security-definer function in
+   document_versions.sql. It copies the row the SERVER already has, so nothing
+   is uploaded — the html averages 628 KB and runs to 6.4 MB, and sending that
+   back up on every save to make a version would be absurd.
+
+   Fire-and-forget by design, and the guard matters: until the migration is
+   applied the RPC 404s, and a missing version must never fail somebody's save.
+   It also no-ops server-side on an undelivered draft, so this does not have to
+   know that rule twice. */
+function docSnapshot(id, reason){
+  try{
+    if(!TEAM || !sb || typeof sb.rpc !== 'function') return Promise.resolve();
+    return Promise.resolve(sb.rpc('snapshot_document', { p_doc: id, p_reason: reason }))
+      .then(function(){}, function(){});
+  }catch(_){ return Promise.resolve(); }
+}
+
+/* Which snapshot, if any, this particular patch calls for. Reuses the prior
+   row exactly as docChangeNote finds it — one lookup rule, not two. */
+function docSnapReason(id, fields){
+  try{
+    var prev = null;
+    try{ prev = (cacheRows || []).find(function(x){ return String(x.id) === String(id); }) || null; }catch(_c){}
+    if(!prev && current && String(current.id) === String(id)) prev = current;
+
+    /* The delivery itself: snapshot AFTER the write, so the copy carries the
+       stamp. Signed outranks sent when a patch somehow sets both. */
+    if('signed_at' in fields && fields.signed_at) return { when:'after',  reason:'signed' };
+    if('sent_at'   in fields && fields.sent_at)   return { when:'after',  reason:'sent'   };
+
+    /* An edit to something already delivered: snapshot BEFORE the write, so the
+       copy is what they actually got rather than what it is about to become. */
+    if(prev && (prev.sent_at || prev.signed_at) && ('html' in fields))
+      return { when:'before', reason:'before_edit' };
+  }catch(_){}
+  return null;
+}
+
 var db = {
   list: async function(){
     if(TEAM){
@@ -10732,6 +10816,13 @@ var db = {
       if(typeof navigator !== 'undefined' && navigator.onLine === false && window.CardinalOutbox){
         dbQueueOffline(id, fields); return;
       }
+      /* 1078: computed here, emitted only after the write lands. */
+      var _note = docChangeNote(id, fields);
+      /* 1079: awaited, not fired alongside. A snapshot taken in parallel with
+         the update races it and can copy the NEW html — which would keep a
+         "before" version identical to the after, and look perfectly fine. */
+      var _snap = docSnapReason(id, fields);
+      if(_snap && _snap.when === 'before'){ try{ await docSnapshot(id, _snap.reason); }catch(_s){} }
       var r;
       try{ r = await sb.from(TABLE).update(fields).eq('id', id); }
       catch(e){
@@ -10742,6 +10833,15 @@ var db = {
         if(window.CardinalOutbox && window.CardinalOutbox.networkish && window.CardinalOutbox.networkish(r.error)){ dbQueueOffline(id, fields); return; }
         throw r.error;
       }
+      /* 1078: the write landed, so say what changed. Fire-and-forget, like
+         every other auditLog call - a failed audit must never fail a save.
+         ⚠ The offline branches above return before this on purpose: the write
+         has not happened yet, and auditLog could not reach the database anyway.
+         The change is logged when the outbox replays it through here. */
+      if(_note){ try{ auditLog('doc', _note.detail, _note.project_id); }catch(_a){} }
+      /* 1079: the send and the signature are snapshotted AFTER, so the kept
+         copy is stamped delivered rather than about-to-be. */
+      if(_snap && _snap.when === 'after'){ try{ await docSnapshot(id, _snap.reason); }catch(_s2){} }
       return;
     }
     var list = lsLoad();
@@ -41704,6 +41804,10 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:1079, d:'2026-08-26', t:'The version you sent, and the version they signed, are kept',
+  s:'Every estimate, contract, inspection report and crew work order lived as ONE copy that was overwritten in place. Edit a signed estimate and the document the homeowner agreed to stopped existing \u2014 there was no history table, no trigger, and nothing anywhere that could tell you what it used to say. The app now keeps a copy at the moment a document is sent and at the moment it is signed, and one more copy of the old wording the first time it is changed after that. Drafts are not versioned, because nobody has a copy of a draft. The copy is made by the database itself, so nothing is uploaded and nothing is slower \u2014 these documents average about 600 KB and the biggest is over six megabytes.' },
+  { b:1078, d:'2026-08-26', t:'Editing a sent or signed document is written down',
+  s:'Estimates, contracts, inspection reports and crew work orders are all the same kind of record underneath, and every one of them was a single copy that could be edited after it had gone out \u2014 with nothing anywhere saying so. On the real database two documents had already been written to after being sent or signed, and there was no way to find out what changed. Now any change to a delivered document writes a line into the audit log: who, when, which fields, and whether the wording itself moved. It does not stop you \u2014 you can still fix a typo on a signed estimate \u2014 it just stops being invisible. Sending and signing are not counted as edits, because they are the delivery.' },
   { b:1077, d:'2026-08-26', t:'The work order fills in the colours off the signed contract',
   s:'When Production sends a work order to a crew it is supposed to carry the shingle and the drip edge across from the signed roofing contract, so nobody retypes them and nobody gets them wrong. It has never done it. The lookup asked the documents table for a field called \u201ccontent\u201d and the field is called \u201chtml\u201d, so the database refused the question every single time \u2014 and because the code politely handled the refusal, both boxes just came up empty and looked like there was simply no contract on file. One word. It has been wrong since the day the feature shipped.' },
   { b:1076, d:'2026-08-26', t:'The Walk is on the job now, and the walk knows which job',
