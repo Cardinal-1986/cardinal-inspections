@@ -371,7 +371,16 @@ def main():
 
     # every pushed branch, so a number claimed but unmerged is still visible
     code, out, _ = git("for-each-ref", "--format=%(refname:short)", "refs/remotes/origin")
-    branches = [b for b in out.split("\n") if b.strip() and b != "origin/HEAD" and b != "origin/main"]
+    # ⚠ history/* is EXCLUDED and must stay excluded. Those refs are archives —
+    #   history/pre-squash-584 pins a 787-commit lineage whose stamp reads
+    #   "build 584", and history/build-573-baseline pins the 573 tree. They are
+    #   unmergeable by construction (no common ancestor with main), so a number
+    #   they "claim" can never collide with anything. Without this they trip the
+    #   collision report on EVERY run, and a warning that always fires is a
+    #   warning nobody reads. Added the same day those refs were created.
+    branches = [b for b in out.split("\n")
+                if b.strip() and b not in ("origin/HEAD", "origin/main")
+                and not b.startswith("origin/history/")]
 
     claimed = {}      # build number -> [branch, ...]  (not on main at all)
     collisions = []   # (branch, number, main_note, branch_note)

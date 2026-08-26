@@ -2,6 +2,32 @@
 
 ---
 
+## ✅ CLOSED — the committed VAPID private key (build 1084, 26 Aug 2026)
+
+`api/notify.js` carried a VAPID private key as a literal fallback. **Not dormant** — with
+`VAPID_PRIVATE_KEY` unset in Vercel, that literal is what signed production pushes.
+
+**Rotated and removed.** Theo generated a new pair, private half into Vercel
+(`cardinal-inspections`, Production), public half committed to `index.html` ×2 and
+`api/notify.js` ×1. The fallback is **deleted**; an absent key now returns
+`reason:'no_vapid_private'` instead of signing with `''`.
+
+⚠️ **Blast radius was measured, not assumed: 4 subscriptions, 1 person — all Theo's own
+devices.** I had warned that "the whole crew re-subscribes"; nobody else had ever
+subscribed. Query before costing a decision.
+
+⚠️ **Standing rule, now in `CLAUDE.md`: never reintroduce a secret fallback.** It is not
+resilience — it guarantees the value is in the repo AND hides its own absence, so nobody
+learns the env var was never set.
+
+⚠️ **A public key cannot come from an env var on this app.** No build step, so
+`NEXT_PUBLIC_*` does nothing and `index.html` ships as committed. Private → env, public →
+committed. Vercel's own agent suggested otherwise; it was aimed at a Next.js app.
+
+**Left for Theo:** re-enable notifications once per device (Menu → Notifications).
+
+---
+
 ## The CSS sediment — measured, and the growth is now gated (26 Aug 2026)
 
 **74 distinct DEAD rules.** Measured with the per-render display cap lifted, zero

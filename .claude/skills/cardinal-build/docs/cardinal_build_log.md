@@ -27573,3 +27573,69 @@ render-multiplied sum mistaken for a defect count.
 **None of the 74 corresponds to a bug Theo has reported** — which is why the standing
 verdict is *manage this debt, do not repay it*, and why a mass cleanup was costed and
 rejected (the danger is deleting a base rule whose replacement is conditional).
+
+---
+
+## Build 1084 — push gets a new key, and the old one leaves the source
+
+**A VAPID private key was committed in `api/notify.js` as a fallback.** Not dormant: with
+`VAPID_PRIVATE_KEY` unset in Vercel, that literal is what actually signed production pushes.
+Anyone who could read the repo could send push notifications as Cardinal.
+
+Theo generated a new pair, put the private half in Vercel (`cardinal-inspections`,
+Production) and the public half here. `index.html` only. No SQL.
+
+### What changed
+
+| where | change |
+|---|---|
+| `index.html` ×2 | new `VAPID_PUBLIC` |
+| `api/notify.js` ×1 | new `VAPID_PUBLIC` |
+| `api/notify.js` | **the hardcoded private fallback DELETED** — `process.env… \|\| ''` |
+| `api/notify.js` | absent key now returns `reason:'no_vapid_private'` instead of signing with `''` |
+
+⚠️ **Deleting the fallback is the half that matters.** Rotating alone would have re-leaked
+the next key by exactly the same route. Asserted: **zero 43-char base64url literals remain
+in `api/notify.js`**, and neither the old public nor the old private value survives anywhere
+in either artifact.
+
+⚠️ **Every existing subscription dies, by design.** A push subscription is bound to the
+`applicationServerKey` it was created with, so the new pair cannot reach an old
+subscription. Measured first rather than guessed: **4 subscriptions, 1 person** — all
+Theo's own devices. The "whole crew re-subscribes" cost I originally warned about did not
+exist; I had assumed it without querying. The stamp summary and CHANGELOG both say plainly
+that notifications being off is expected and how to switch them back on.
+
+### ⚠ Why the public key could NOT go in an env var, though it was set as one
+
+Theo set `VAPID_PUBLIC_KEY` in Vercel, and Vercel's own agent suggested
+`NEXT_PUBLIC_VAPID_PUBLIC_KEY` "if browser code reads it". **Neither can work here.**
+Verified, not assumed: no Next.js/React/Vite/webpack in either `package.json`,
+**`scripts` is empty**, and `vercel.json` has **no `buildCommand`**. `NEXT_PUBLIC_*` is a
+Next.js *build-time* substitution and **this app has no build step** — `index.html` ships
+byte-for-byte as committed. The browser can only get that key if it is literally in the
+file. Reasonable generic advice, aimed at an app this isn't.
+
+### Gates
+
+- `check_build.py` **GREEN** 1083 → 1084; 126 inline blocks parse; byte-reproducible on
+  both artifacts (`index.html` and `api/notify.js` re-applied to a clean tree, `cmp` equal).
+- `node --check` on the new `api/notify.js`.
+- **CI's own VAPID-matching step run locally against the new pair** — 2 declarations,
+  1 distinct, matching `api/notify.js`.
+- The public key was validated before use: **87 chars, decodes to 65 bytes, `0x04` prefix,
+  base64url charset** — a real uncompressed P-256 point, not a typo'd paste.
+
+⚠️ **`check_build.py` caught a real omission and earned its keep:** the first run was RED on
+*"app stamp summary rewritten — IDENTICAL to build 1083's, the number moved, the sentence
+did not"*. The stamp carries a plain-English summary and bumping the number is not enough.
+
+### Also in this build: `next_build.py` stops crying wolf
+
+Creating `history/pre-squash-584` and `history/build-573-baseline` earlier the same day gave
+`next_build.py` two permanent false collisions — those refs carry a build-584 stamp, so every
+run reported a clash. **`origin/history/*` is now excluded**, because an archive with no
+common ancestor can never collide with anything. *A warning that always fires is a warning
+nobody reads.* `--self-test` still passes 6/6. The one collision still reported is
+`claude/ai-can-build-584` itself, which is genuine — and goes quiet when that now-redundant
+branch is deleted.

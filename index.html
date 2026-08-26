@@ -3852,7 +3852,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1083 &#8212; The last browser pop-up is gone: questions are asked in the app now. Two hundred and eighty-nine messages &#8212; every &#8220;pick a client first&#8221;, every &#8220;could not save&#8221; &#8212; used to arrive as the grey box headed &#8220;app.cardinalroster.com says&#8221;, which is the one thing that made this look like a website instead of an app. They now come up as the same slim card the rest of the app already used. Warnings stay on screen until you dismiss them, exactly like the old boxes did. Nothing else changed.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1084 &#8212; Push notifications have a new key, and the old one is out of the code. The key that signs every notification was replaced &#8212; and the previous one had been sitting in the source, where anyone with the code could read it. It is gone, and there is no longer a spare kept in the file for the next one to leak the same way. &#8220;Notifications are off&#8221; on your phone after this update is expected, not a fault: a subscription made with the old key cannot be reached by the new one. Open Menu, then Notifications, and switch them on once per device. Nothing else changed.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -22784,7 +22784,7 @@ document.getElementById('boardMount').addEventListener('click', function(e){
   if(day){ openApptDay(day.getAttribute('data-day')); }
 });
 /* ---------- phone push notifications ---------- */
-var VAPID_PUBLIC = 'BI-nCdPXgT_WzKQA34jhHsX3dYQephRPLDKy7xr__Jyl1WergJWPlliAvbIldjztrds65MPkT5xI0TvDTg-Q_2k';
+var VAPID_PUBLIC = 'BMSHf0GA9pwE6xzqOYb4vlLE4pMs9sdP9ZuxXzgZXLR2UaXYVD-9-4o6zDjr5XHOa5runSWlKSNDaEWPfmo07uU';
 function urlB64ToUint8(s){
   var pad = '='.repeat((4 - s.length % 4) % 4);
   var raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
@@ -27998,7 +27998,7 @@ document.getElementById('tmMount').addEventListener('change', async function(e){
    ⚠ There must be ONE VAPID public key in this file. If you add another
    subscribe path, reuse this value — check.yml now fails on any copy that
    differs, which it could not do before (it only ever read the first one). */
-var VAPID_PUBLIC = 'BI-nCdPXgT_WzKQA34jhHsX3dYQephRPLDKy7xr__Jyl1WergJWPlliAvbIldjztrds65MPkT5xI0TvDTg-Q_2k';
+var VAPID_PUBLIC = 'BMSHf0GA9pwE6xzqOYb4vlLE4pMs9sdP9ZuxXzgZXLR2UaXYVD-9-4o6zDjr5XHOa5runSWlKSNDaEWPfmo07uU';
 function __b64ToU8(s){
   var pad = '='.repeat((4 - s.length % 4) % 4);
   var b = (s + pad).replace(/-/g,'+').replace(/_/g,'/');
@@ -41808,6 +41808,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+  { b:1084, d:'2026-08-26', t:'Push notifications got a new key',
+  s:'The key that signs push notifications was replaced, and the old one deleted from the code. Notifications will be off on every device until you switch them back on once — that is expected, not a fault: a new key cannot talk to a subscription made with the old one. Menu then Notifications to re-enable.' },
   { b:1083, d:'2026-08-26', t:'The app asks its own questions now',
   s:'Eighty-eight times, this app stopped you with the browser’s own grey box — the one headed “app.cardinalroster.com says” with OK and Cancel. Those are gone. A sheet now slides up from the bottom of the screen, where your thumb already is, and its buttons say what will actually happen: “Delete photo” and “Keep it”, not OK and Cancel. You can answer without re-reading the question, which is the whole point on a roof in the sun. The dangerous answer is red and sits above the safe one. Tapping the dark area behind the sheet, or pressing Escape, always means no — never yes.' },
   { b:1082, d:'2026-08-26', t:'The Job Menu, readable and told apart',
