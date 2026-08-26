@@ -27241,3 +27241,28 @@ Nothing got smaller. Nothing at or above 11px moved — asserted per size, not i
   of findings and failed for a reason that had nothing to do with coverage — a gate that
   reads as broken when it is working. Coverage now counts every sized declaration (2312 on
   both builds).
+
+**The visual sweep, and it took two runs to get an honest one.**
+
+- ⚠️ **Run 1 reported `SENTINEL CLEAN — 63 render(s)` and was WRONG** — the budget was 75.
+  Four states threw, so four screens were never rendered, `home` among them. Cause was
+  operator error: `--setup` was passed as `e2e_mock_supa.js,sentinel_setup_cardinal.js`
+  when **the seed must come first**. An empty store then cascaded into the milestone
+  strip, the album sections and claim detail each failing their own guards — **one wrong
+  argument killed four states.** The instrument raised a `RUN` finding for each, and
+  `--since` then subtracted them as carried debt, because 1080 failed identically.
+  Fixed in `sentinel.js` and recorded as **BUG_CLASSES 71**: `RUN` is never carried, the
+  summary prints `63 of 75 — 12 SKIPPED`, and a short sweep says **INCOMPLETE**, never
+  CLEAN.
+- ✅ **Run 2, correct order: 75 of 75 renders.** Two NEW findings, both `OVERRIDDEN`, both
+  investigated and both **false positives**:
+
+  `#cr-disp .job .a` and `#cr-disp .rep .a` are each declared twice — a base rule (lifted
+  10.5px → 11px by this build) and `@media (min-width:1100px){ … font-size:11.5px }`. The
+  media rule already beat the base one at desktop widths, long before this build. So at
+  390px the base rule wins at **11px** and at 1194/1440px the media rule wins at
+  **11.5px** — both above the floor, nothing regressed. ⚠️ **They re-reported as NEW only
+  because `OVERRIDDEN` keys on the DECLARED VALUE**, which this build changed. Same family
+  as BUG_CLASSES 69 (a `--since` key carrying something that legitimately moves). The key
+  is deliberately left alone: it was changed once already this session to close a
+  different false positive, and one observation is not enough to justify churning it back.

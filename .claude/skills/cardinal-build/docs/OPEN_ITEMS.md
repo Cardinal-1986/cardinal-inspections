@@ -10,9 +10,48 @@ His list, in his order. **1 and 2 are shipped; 3 is next.**
 |---|---|---|
 | 1 | replace `alert()` / `confirm()` with in-app feedback | ⚠️ **half done — build 1080.** 289 `alert()` calls routed to the app's own toast. **The 92 `confirm()` calls are NOT done** — see below |
 | 2 | lift every font size under 11px | ✅ **build 1081.** 519 declarations, both forms |
-| 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ⏳ next. Measured: 59% of 4,575 `var()` refs are bare |
+| 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ⚠️ **the item SHRANK on investigation — read below before building it** |
 | 4 | distinct icons in the Job Menu | ⏳ Tasks/Punch Outs/Checklists share one glyph; Documents/Contracts share a folder; Photos/The Walk share a camera |
 | 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ⏳ **flagged, NOT confirmed** — may be a hidden-element false positive. Confirm before building |
+
+### ⚠ Item 3 is mostly a FALSE POSITIVE — audited 26 Aug, do not build it as written
+
+**"The dead white background layer" does not exist.** The real inline-white bug — an inline
+`background:'#fff'` beating every theme rule regardless of specificity — was **fixed at build
+573**, in `styleMounts()` and two other sites, each carrying a comment saying so. Of the three
+surviving `style.background='#fff'` writes:
+
+| site | verdict |
+|---|---|
+| `cr-bpa-script` | **deliberate and fenced.** It has no dark palette to fall back on, so stripping the inline white leaves it with no background at all. CLAUDE.md already says this. **Do not touch.** |
+| two checklist "Not completed" pills (main block) | **not a defect** — `#8a6f66` on `#ffffff` computes **4.62:1**, above the 4.5:1 body floor |
+
+**The blanket `var()` fallback sweep is also wrong, and in one family actively harmful.**
+2,684 of 4,572 refs (59%) are bare, 633 of them feeding a `background`. But:
+
+- ⚠️ **`--cr-*` must NOT get literal fallbacks.** `--cr-bg` and friends are *deliberately
+  re-declared per mount* — `#cr-pricing-mount`, `#cr-claims-mount`, `#cr-adjusters-mount`,
+  `#cr-coach-mount`, `#cr-estimates-mount`, each with a `rb-light` twin. A bare reference
+  inside one of those mounts resolves correctly by inheritance. Pinning one literal would
+  freeze all five modules to one module's colour in one theme. This is the five-modules-one-
+  palette structure CLAUDE.md documents.
+
+**What IS real: the `--ct-*` family has no `:root` declaration at all.** Those tokens exist
+only under `[data-rltheme="docket"]` and `[data-rltheme="siren"]` — an attribute set by
+**JavaScript** on `document.body` at init from `localStorage['cardinalRLTheme'] || 'docket'`.
+So ~150 Cardinal Truth backgrounds are contingent on another module's script having run:
+exactly the 448–449 shape. Pin the **docket** values, because docket is the documented default:
+
+| token | bare bg refs | fallback (docket) |
+|---|---:|---|
+| `--ct-surface` | 52 | `#FFFFFF` |
+| `--ct-surface-2` | 32 | `#FAF8F7` |
+| `--ct-bg` | 22 | `#FAF8F7` |
+| `--ct-surface-3` | 19 | `#F3EFEE` |
+| `--ct-red-wash` | 16 | `#FDF4F3` |
+| `--ct-red-deep` | 12 | `#7E1410` |
+
+That is a ~150-site targeted fix with a real failure mode, not a 633-site blanket sweep.
 
 ### ⏳ Needs Theo — the `confirm()` sheet wants a look before it is built
 
