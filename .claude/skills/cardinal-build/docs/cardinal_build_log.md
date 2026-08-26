@@ -26080,3 +26080,91 @@ finding is 1067's own theme pair — `.ljsummary h3{color:#e35c63}` losing to it
 **And the sweep produced the measured proof for Class 63.** The same 1066 tree
 scored 218 findings before `capped()` and ≥267 after: **at least 49 findings a
 sweep were being truncated in silence.**
+
+---
+
+## Build 1069 — the report fills itself in, and stops hiding behind buttons
+
+Theo, 26 Aug, after rendered previews: *"1A, drawer dark like the toolbar."*
+Options 2, 1 and 6 from the report audit, in one build because they land on one
+screen.
+
+### 1 · The report tracks the checklist instead of snapshotting it
+
+`prefillChecklist()` has always filled nine Property Facts — but only at
+creation, as a string transform, and it **baked the result in**. Complete the
+checklist afterwards and the report never learned. That is most of what
+"51 to fill" was.
+
+`resyncChecklist(doc, cl)` is the same nine fields applied to the **live**
+document every time the editor opens. **Blanks only** — an element whose text is
+still `/^\[[^\]]*\]$/`. That is the property that makes it safe to run unasked,
+and the gate asserts it by typing a value and checking re-sync leaves it alone.
+It reports the count into `savedFlash` rather than changing the document in
+silence (808's lesson).
+
+### ⚠ `CK_FIELDS` was already taken, and shadowing it would have broken saving
+
+I wrote `var CK_FIELDS` for the new map. **The app already has one** —
+`['structure','method','attic','age','condition','layers','decking','pitch','rooftype']`,
+the checklist's own required-field list, read by `openChecklist()` to populate
+the form and by `ckSave()` to validate it. A second declaration in that scope
+would have silently broken checklist saving.
+
+Caught by a **count assertion**, not by reading — `assert count == 1` failed at
+2. Renamed `CK_REPORT_MAP` and **keyed by the checklist field name**, so the
+relationship between the two lists is visible in the source rather than being a
+coincidence of ordering; the patch asserts every key exists in `CK_FIELDS`.
+
+*They are the same nine fields. That is not a coincidence worth hiding — it is
+the point.*
+
+### 2 · The toolbar: three primaries plus a dark drawer
+
+Eleven buttons at `grid-template-columns:1fr 1fr` was six rows — **440px of an
+844px phone before the document started**. Now Save, Print/PDF and the fill chip
+stay; the other eight are behind **More**.
+
+- **Desktop is untouched.** The secondaries sit in `#edSecondary`, which is
+  `display:contents` — above 760px the wrapper is not in layout at all and all
+  eleven lay out exactly as before. Gated at 1194px: 11 visible, no More.
+- **Hiding the WRAPPER, not each button**, is why no `!important` was needed:
+  JS sets `style.display` per button, and a rule fighting that would have had to
+  out-shout an inline style.
+- **The drawer is a VIEW of the real buttons.** Rows delegate to `b.click()` and
+  are rebuilt on each open from the buttons currently visible, so a control JS
+  has hidden never appears. Gated: clicking the Share row fires `shareBtn` once.
+- **No fourteenth scroll-lock writer.** It follows `#navMenu`'s idiom exactly and
+  writes `document.body.style.overflow` zero times. Gated by reading
+  `body.style.overflow` either side of opening it.
+
+### 3 · Short labels, brackets kept
+
+`[e.g. 1×8 nominal plank (board) decking, gapped]` → `[Decking]`, example moved
+to `title=`.
+
+⚠️ **The square brackets are load-bearing.** `fillBlanks()` decides a field is
+empty with `/^\[[^\]]*\]$/` and `compactForPrint()` strips unfilled placeholders
+from print with `charAt(0)==='['`. A bare word would have broken the counter
+**and** put a naked hint on a client's PDF. Only the contents shrank.
+
+⚠️ **Two templates carry that table** — `REPORT_TEMPLATE` (roof) and
+`EXTERIOR_TEMPLATE` (596–598). Every placeholder edit is `count=2`. Patching one
+would have left the exterior report on the old text and out of step with
+`CK_REPORT_MAP`.
+
+⚠️ **`CK_REPORT_MAP` carries the legacy spelling in `was`.** Every report already
+in the database holds the long placeholders; drop `was` and re-sync silently
+stops for every existing document.
+
+### ⚠ Four anchors in this build failed on guessed whitespace
+
+Six-space indent read as eight, a column-0 line read as two-space, and a `"`
+immediately before a closing `"""`. Each cost a run. **`pl.context()` exists for
+exactly this** and I did not reach for it until the fourth.
+
+**Gates:** `check_build.py` GREEN 1068 → 1069 · byte-reproducible ·
+`gate_1069.mjs` **16/16**, and on 1068 **13 failures with no crash** — it is
+hardened per BUG_CLASSES 37 so a control tree missing every 1069 symbol reports
+red instead of dying (`getComputedStyle(null)` throws, and the first version
+did exactly that).
