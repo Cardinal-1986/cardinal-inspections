@@ -27191,3 +27191,53 @@ exactly this** and I did not reach for it until the fourth.
 hardened per BUG_CLASSES 37 so a control tree missing every 1069 symbol reports
 red instead of dying (`getComputedStyle(null)` throws, and the first version
 did exactly that).
+
+## Build 1081 — the type floor
+
+**519 declarations below 11px, lifted to 11px.** `index.html` only. No SQL.
+
+Theo's polish item 2, and the last thing anyone would call a feature: the app set type as
+small as **6.5px**. Labels, chips, table headings, timestamps, the little counts on tab
+strips, money captions. Fine on a desk monitor; not readable on a phone, on a roof, in
+daylight. 11px is the floor Apple's own interface uses for its smallest caption, which is
+why that number and not a rounder one.
+
+⚠️ **The count I first gave Theo — "315 under 12px" — was wrong, and wrong in the way this
+document keeps warning about.** It was measured with `font-size:` alone. This file carries
+sizes in **two declaration forms**, and the shorthand is the bigger half:
+
+| form | sub-floor sites |
+|---|---:|
+| `font-size: 10px` | 158 |
+| `font: 600 10.5px Arial…` | **361** |
+| | **519** |
+
+A sweep that knows one form undercounts by more than half. *Ask what the other form looks
+like before you count* — the same rule that hid build 148 from every earlier version audit.
+
+**Print documents are untouched, and that was verified rather than assumed.** Every print
+stylesheet sizes in `pt` (168 of them, smallest 6.8pt); this pass only ever read `px`, and
+`@media print` / `@page` context contains **zero** px hits. An 8.5pt line in a contract is a
+typographic decision about a Letter page, not a phone.
+
+Nothing got smaller. Nothing at or above 11px moved — asserted per size, not in aggregate.
+
+**Gates**
+- `check_build.py` GREEN 1080 → 1081; all 125 inline scripts parse; byte-reproducible.
+- `gate_1081.mjs` **14/14**, and **RED on 1080 with four defect statements** — including
+  `A1 → 519 under, smallest 6.5px` and `E2 → calgrid-dow=10px`.
+- ⚠️ **The instrument is Chromium's own parsed CSSOM, not a regex.** `document.styleSheets`
+  holds exactly the rules the browser applies: comments are gone by construction, and a
+  contract's print CSS is absent because no contract has been generated. Both of this
+  project's standing counting traps are closed by the choice of instrument rather than by
+  a cleverer pattern.
+- ⚠️ **The gate went red on its first run and the GATE was wrong, not the app.** Two rules
+  compute to `0px` — a plus button that collapses to a pure `::after` icon when docked, and
+  a pipeline sphere flattened to a 3px bar with `color:transparent`. `font-size:0` is the
+  idiom for *there is no text here*, not for small type. Now excluded, but **pinned at
+  exactly two** (`D5`) so it cannot grow silently, and `0.5px` would still trip.
+- ⚠️ **A coverage floor computed from the wrong population.** `A3` counted only
+  at-or-above-floor declarations, so on the negative control it shrank by exactly the number
+  of findings and failed for a reason that had nothing to do with coverage — a gate that
+  reads as broken when it is working. Coverage now counts every sized declaration (2312 on
+  both builds).

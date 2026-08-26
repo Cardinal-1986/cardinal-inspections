@@ -584,6 +584,20 @@ Current whitelist, verified in the file:
 
 **One global scroll lock, 13 modules, no reconciler.** `document.body.style.overflow` is written by 13 independent modules (**13 modules / 35 CODE sites re-verified with the lexer @808**, 0 in strings, 0 in comments; a bare regex says 37). It leaks on any early return or throw between lock and release. This class has recurred three times. Do not add a 14th writer without checking `BUG_CLASSES.md` — **the no-14th-writer rule has now held across 234 builds, 574 → 808**: the 108 KB Showcase (574), OC Colors (615), the Studio tray (627), the Supplement Desk (667–673), the Production rebuild (766–772) and the whole client-profile rebuild (788–804) each added **zero**. One extra CODE site appeared without a new module, which is the healthy direction. Block 1 carries a deliberate self-heal (`if(... === 'hidden') ... = ''`) — that comparison is a non-assignment hit in the count, and it is not a bug.
 
+**Nothing is set below 11px — a floor, established at build 1081 across 519 declarations.**
+The app had type as small as **6.5px**; 11px is the smallest size Apple's own interface uses
+for a caption, and Theo works off a phone, on roofs, in daylight. ⚠️ **Sizes live in TWO
+declaration forms and the shorthand is the bigger half** — `font-size:` carried 158 of the
+sub-floor sites, **`font:600 10.5px …` carried 361**, and this file holds 1,364 `font:`
+declarations against ~1,015 `font-size:` ones. **A sweep of the longhand alone reads the
+minority.** (BUG_CLASSES 70.) Two things are deliberately outside the floor and must stay
+outside it: **`font-size:0`**, which means *there is no text here* — a control collapsed to a
+pure `::after` icon, a pipeline sphere flattened to a bar — pinned at exactly two sites; and
+**every `pt` size**, which is a print document (168 of them, smallest 6.8pt) and has nothing
+to do with a phone. `gate_1081.mjs` holds the floor, and it holds it by walking **Chromium's
+own parsed CSSOM** rather than the file, so neither a comment nor a shorthand nor an
+ungenerated print stylesheet can move the number.
+
 ---
 
 ## The build label — there are 38 of them, and only one is the app version

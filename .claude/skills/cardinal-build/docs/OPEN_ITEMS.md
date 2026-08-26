@@ -2,6 +2,35 @@
 
 ---
 
+## Layer: 26 Aug 2026 — the app-wide polish pass (Theo: "1-3 then 4-5")
+
+His list, in his order. **1 and 2 are shipped; 3 is next.**
+
+| # | item | state |
+|---|---|---|
+| 1 | replace `alert()` / `confirm()` with in-app feedback | ⚠️ **half done — build 1080.** 289 `alert()` calls routed to the app's own toast. **The 92 `confirm()` calls are NOT done** — see below |
+| 2 | lift every font size under 11px | ✅ **build 1081.** 519 declarations, both forms |
+| 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ⏳ next. Measured: 59% of 4,575 `var()` refs are bare |
+| 4 | distinct icons in the Job Menu | ⏳ Tasks/Punch Outs/Checklists share one glyph; Documents/Contracts share a folder; Photos/The Walk share a camera |
+| 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ⏳ **flagged, NOT confirmed** — may be a hidden-element false positive. Confirm before building |
+
+### ⏳ Needs Theo — the `confirm()` sheet wants a look before it is built
+
+`confirm()` returns a boolean and **blocks**, so it cannot be routed the way `alert()`
+was. Replacing 92 of them needs a new in-app sheet *and* an async restructure at every
+call site. **A new component wants rendered options first** — do not pick a look
+unilaterally.
+
+### Settled by the type floor (1081) — do not re-litigate
+
+- **11px is the floor.** Established across 519 declarations. Two deliberate exceptions,
+  both pinned by `gate_1081.mjs`: `font-size:0` (the *there is no text here* idiom, exactly
+  two sites) and every `pt` size (print documents, 168 of them).
+- ⚠️ **Sizes live in TWO declaration forms** and the shorthand is the bigger half —
+  `font:600 10.5px …` carried 361 of the 519, `font-size:` only 158. BUG_CLASSES 70.
+
+---
+
 ## Layer: 26 Aug 2026 — the document pipeline (SETTLED, builds 1078–1079)
 
 ### ✅ SETTLED — Theo picked "1 and 3", verbatim. Do NOT re-litigate.

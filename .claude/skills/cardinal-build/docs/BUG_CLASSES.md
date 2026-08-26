@@ -3683,3 +3683,48 @@ and it is **deliberately not latched on the first call**. The first version
 latched before throwing, so exactly one state of twenty-five reported it and the
 other twenty-four produced the confident wrong report anyway. It now fails
 **25/25**, which is what a broken rig should look like.
+
+---
+
+## Class 70 — a measurement that knows only ONE of two declaration forms
+
+**Cost: a wrong number reported to Theo, and it was wrong by more than half.**
+
+Build 1081 set out to lift every font under 11px. The figure quoted beforehand was
+**"315 under 12px"**, measured with `font-size:\s*([0-9.]+)px`. The real count under 11px
+was **519**:
+
+| form | sub-floor sites | seen by a `font-size:` sweep? |
+|---|---:|---|
+| `font-size: 10px` | 158 | ✅ |
+| `font: 600 10.5px 'Segoe UI',Arial` | **361** | ❌ |
+
+**The shorthand was the bigger half.** `index.html` carries **1,364** `font:` declarations
+against ~1,015 `font-size:` ones — the shorthand is the *dominant* form in this file, and it
+is the one the obvious pattern misses. The app's own build stamp is written in it
+(`font:600 10.5px …`), so the defect was sitting inside the very element the label gate reads.
+
+**This is the `v… build N` separator trap wearing different clothes** (two forms, middot and
+space; every single-form regex undercounted, and build 148 was invisible to every audit until
+someone asked what the *other* form looked like). Same shape, different property.
+
+**The rule, restated because prose has lost to this project seventy times now:**
+
+> Before counting a CSS property, ask which **shorthands** can also set it — and count those
+> too. `font` sets `font-size`. `background` sets `background-color`. `border` sets
+> `border-color`. `flex` sets `flex-basis`. `grid-area` sets four things. A sweep of the
+> longhand alone is a sweep of the minority in a file written mostly in shorthand.
+
+**The countermeasure that actually held: don't parse — ask the browser.** `gate_1081.mjs`
+walks `document.styleSheets` and reads `rule.style.fontSize`, which the CSSOM has already
+normalised from *both* forms. It cannot miss a shorthand, cannot be fooled by a comment, and
+cannot see a print stylesheet that lives in an ungenerated template string. Where a real
+engine can answer the question, a regex is the wrong instrument — not merely a riskier one.
+
+⚠️ **Two look-alikes the CSSOM walk must NOT report, both found live in this build:**
+- **`font-size:0` is not small type.** It is the idiom for *there is no text here*: a control
+  collapsing to a pure `::after` icon, a sphere flattened to a bar with `color:transparent`.
+  Exclude it — but **pin the count** (there are exactly two) so it cannot grow silently, and
+  so `0.5px` still trips.
+- **`pt` is a print document.** 168 of them here, smallest 6.8pt. A phone-readability floor
+  has no business inside an 11pt Letter page. Assert them **unchanged**; do not sweep them.
