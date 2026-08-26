@@ -23,6 +23,21 @@
   pipeline per concept; there are exactly two call sites and both send the
   checklist.
 
+### Settled — the Desk's photographs (1071)
+
+- **The model gets 1600px/q85, not the original.** Same rendition The Walk has
+  always sent. An original is not more evidence to a vision model; it is the
+  same evidence at 10× the bytes.
+- **`resize:'contain'` — never `cover`.** Supabase defaults to `cover`, which
+  crops. Cropping damage out of an insurance photograph is not a size
+  optimisation.
+- **The second signing path is structural, not drift.** `createSignedUrls`
+  (plural, what the display uses for 200 photographs) has **no** `transform`
+  option, and the transform is signed *into* the token — so it cannot be
+  appended to a URL. Scoped to the ≤20 being analysed.
+- **`photo_index` maps through `photos_used`.** See BUG_CLASSES 67. Do not
+  "simplify" it back to a direct index.
+
 ### Open, with the measurement attached
 
 | | |

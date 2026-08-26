@@ -7027,3 +7027,33 @@ wrapped at 1194/1280/1366. Measure before adding a thirteenth.
 executing the shipped `api/summarize.js` against a stubbed transport so the
 assertions are about the real prompt) · `render_report_editor.mjs` and
 `render_1070.mjs` for the pictures.
+
+### The Desk's photographs, sized and mapped (1071)
+
+| | |
+|---|---|
+| what the model gets | **1600px, quality 85, `resize:'contain'`** — a Supabase Storage transform, signed per photograph |
+| why not the original | measured: median 312 KB, avg 651 KB, and **46% of jobs exceeded the 6 MB budget**, so nearly half of every analysis ran on a subset |
+| where it's signed | `signSmall()` in `supplement.html`, ≤20 photographs, **per photograph** |
+| the fallback | a refused transform falls back to the display URL **and is counted** — a silent fallback would make the build inert and look identical to a working one |
+| `photos_used` | the submitted indices the route actually read — see below |
+| `photos_capped_by` | `'count'` \| `'bytes'` \| `null`, so the Desk names the real cause |
+
+⚠️ **`createSignedUrls` (plural) has NO `transform` option** — only `download`
+and `cacheNonce` — and the transform is signed **into** the token by the server,
+so it cannot be appended to a URL afterwards. That is why 1071 adds a second
+signing path after 1059 explicitly avoided one. **The 200-photograph display
+call is untouched**, asserted.
+
+⚠️ **`resize` must stay `'contain'`.** Supabase's default is `'cover'`, which
+crops. `gate_1071.mjs` check B2 exists only for this.
+
+⚠️ **`photo_index` maps through `photos_used`, and must keep doing so.** The
+model numbers what it was shown; the Desk numbers what it sent. A mid-list skip
+made those diverge — 2 of 6 findings attached the wrong photograph. **BUG_CLASSES
+67.** An absent `photos_used` degrades to identity (the old behaviour), never to
+nothing.
+
+**Gates:** `check_artifact.py` (the mechanical ladder for the five artifacts
+`check_build.py` does not see) · `gate_1071.mjs` — 13 checks, three of which
+execute the shipped loop and the shipped mapping rather than a copy.

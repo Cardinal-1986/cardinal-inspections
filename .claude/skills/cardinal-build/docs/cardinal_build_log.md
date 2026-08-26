@@ -26083,6 +26083,122 @@ sweep were being truncated in silence.**
 
 ---
 
+## Build 1071 — the Desk sends every photograph, and the right one
+
+Theo asked which AI is best at spotting issues in photographs. The honest
+answer was that nobody here had ever measured accuracy — every model decision
+(500–505, 806) was made on latency and uptime. But the audit that produced that
+answer found something bigger than the model choice, and this is it.
+
+### Measured first, on the real database
+
+    1,104 stored photographs · median 312 KB · average 651 KB · 12% over 1 MB
+    Per job, newest 20: 12.3 photographs averaging 5.95 MB
+    → 46% OF JOBS WITH PHOTOGRAPHS EXCEED THE 6 MB BUDGET
+
+**Nearly half of every Desk analysis has been running on a subset of the job.**
+
+### 1 · The route was being fed originals
+
+`readPhotos()` sent `p._src` — the display signed URL, the original bytes. A
+4,000px photograph is not four thousand pixels of evidence to a vision model;
+it is tiled and resized on arrival. The size buys nothing and spends the whole
+budget. **The app already knew this**: The Walk sends `AI = {max:1600, q:0.85}`
+with a comment saying that still resolves a nail head. The Desk never used it.
+
+⚠️ **The transform must be SIGNED, not appended, and reading the shipped
+supabase-js is what settled it.** I was going to rewrite the URL server-side
+(`/object/sign/` → `/render/image/sign/` plus `?width=`). That cannot work:
+`createSignedUrl` POSTs `{expiresIn, transform}` and the **server** returns the
+URL, so the transform lives inside the token. And **`createSignedUrls` (plural)
+has no `transform` option at all** — only `download` and `cacheNonce`.
+
+That is why this build adds the second signing path 1059 deliberately avoided.
+The reason is structural, not a change of mind: the batch call the display uses
+is *incapable* of asking for a resize. Scoped to the ≤20 being sent; the
+200-photograph display call is untouched, asserted.
+
+⚠️ **`resize:'contain'`, not the Supabase default.** The default is `cover`,
+which **crops**. Cropping damage out of an insurance photograph to save bytes
+would be far worse than the bug being fixed. The gate checks this specifically.
+
+### 2 · ⚠ EVERY FINDING AFTER A SKIPPED PHOTOGRAPH POINTED AT THE WRONG ONE
+
+Found while fixing the budget, caused by the budget, and worse than it.
+
+The model is told `photo_index` is *"which photograph, 0-based"* — into what it
+**was shown**. The Desk maps that into what it **sent**. Every skip in the route
+is a `continue`, so one photograph dropped **mid-list** shifts every later index
+by one and the two orderings diverge in silence.
+
+**Proven by executing the shipped loop, not by reading it:**
+
+    submitted     A B C D E F G
+    model sees    A B C D F G       (C skipped — 4.2 MB)
+    photo_index 4 → model means F, Desk showed E   ❌
+    photo_index 5 → model means G, Desk showed F   ❌
+
+**2 of 6 findings attached the wrong photograph** on a realistic job — and the
+Desk's entire point is that a human checks the evidence against the claim.
+1059's own note says this mapping is load-bearing.
+
+**Fixed by returning the truth, not by renumbering:** the route reports
+`photos_used`, the submitted indices it actually read, and the Desk maps
+through it. An older route that does not send it falls back to identity — the
+exact old behaviour — because a stale deploy showing *no* photographs would be
+a worse failure than the one being fixed.
+
+### 3 · The message named the wrong cause
+
+*"skipped 7 (only the newest N are sent)"* blamed the **count** cap. On 46% of
+jobs the cap that bit was **bytes**. A fluent, plausible, wrong explanation —
+**the same class as 1070's stale app stamp, one build apart.** The route now
+reports `photos_capped_by: 'count' | 'bytes' | null` and the Desk says which.
+
+### `scripts/check_artifact.py` — new, and overdue
+
+`check_build.py` gates `index.html` and there are six artifacts. CLAUDE.md calls
+parsing the others separately *"the convention, not a courtesy"* — and until now
+that convention was a heredoc retyped from memory each time. Three times in one
+session is a tool. It runs `node --check` on every inline script, tag balance,
+CSS braces and duplicate `<style id=>`, plus `--stamp NAME` (must increase) and
+`--marker` with its negative control. Deliberately **not** a copy of
+`check_build.py`: no app-stamp rule, because each of these artifacts stamps
+itself differently. **Seen red** (exit 1) before it was trusted.
+
+### ⚠ Four assertion faults in one build, every one failing CORRECT code
+
+The same family each time, and the fix is always the assertion:
+
+- `photos_used` — my own comment names it, so the bare count said 2.
+- `j.photos_used` — **the ternary names it twice on one line.**
+- `createSignedUrl(` — **a substring of `createSignedUrls(`**, so it matched the
+  display batch call too.
+- `photos_capped_by` — the message branches on it twice.
+
+Stopped guessing and **computed all the counts in one pass** instead of
+iterating. That is the file's own advice and I took it four failures late.
+
+⚠️ **And an em-dash trap in the opposite direction from 1070's.**
+`supplement.html` writes a **literal** `—`; `index.html`'s inline JS writes
+`\u2014`. Per-file convention, and the anchor failed until I printed it.
+
+### ⚠ The gate's first C2 could not fail
+
+It computed the corrected mapping itself and **passed on the 1059 control** —
+which is to say it proved nothing about the artifact. It now extracts the
+shipped `S.gaps.forEach` and executes it, and goes red on 1059 with *"2 of 6
+still attach the wrong photograph"*. Same class as build 816's burst test
+passing at zero jobs.
+
+**Gates:** `check_artifact.py` green (2 inline scripts, tags, braces,
+`SD_BUILD` 1059→1071, marker + negative control) · `node --check
+api/supplement.js` · byte-reproducible on both files · `gate_1071.mjs`
+**13/13**, and **6 red on a 1059 control** with the floor naming the 3 that
+could not run · `index.html` untouched, stamp stays 1070.
+
+---
+
 ## Build 1070 — the drafter reads the checklist, and is one tap away
 
 Theo, after 1069: *"yes do both."* Two halves of one complaint — the AI

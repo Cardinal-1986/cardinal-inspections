@@ -3450,6 +3450,39 @@ from the code.
 *(≥ rather than = because "carried" counts only findings present in BOTH trees,
 so anything 1067 fixed is excluded from the 267.)*
 
+## Class 67 — an index into what the model SAW, read as an index into what we SENT
+
+**The shape.** A route sends N items to a model and asks it to point at one by
+position. The route then **drops** some of them — too large, unreadable, over a
+budget — with a `continue`. The model numbers what it was **shown**; the caller
+numbers what it **sent**. One drop **mid-list** shifts every later index by one,
+and the two orderings diverge with no error anywhere.
+
+**It is silent by construction.** Both sides hold a valid index into a real
+array. Nothing is null, nothing throws, no count is wrong. The caller renders a
+photograph; it is simply the wrong photograph — and it is *adjacent* to the
+right one, so it looks plausible.
+
+**Found 26 Aug 2026 in the Supplement Desk** (`photo_index`, live since 1059).
+The byte budget is what triggered it, and **46% of jobs with photographs hit
+that budget**, so this was firing constantly. Measured on a realistic job:
+**2 of 6 findings attached the wrong photograph.**
+
+**The fix is to return the truth, never to renumber.** The route reports the
+submitted indices it actually used (`photos_used`) and the caller maps through
+it. Renumbering the model's view to match the caller's only moves the lie into
+the route. Degrade to identity when the field is absent, so an older route
+falls back to the old behaviour rather than to nothing.
+
+**Where else to look.** Any route that drops items and asks a model to index
+what remains. On this project: `api/sortphotos.js` (`sortOne` never throws, so
+nothing is dropped — safe by a different mechanism), `api/detect.js` (one photo
+per call — no index space), `api/analyze.js`. Check before assuming.
+
+⚠️ **Proving it needs the SHIPPED loop, executed.** The first gate for this
+computed the corrected mapping itself and passed on the broken control — a
+check that could not fail. Extract the artifact's own block and run it.
+
 ## Class 66 — the version bumped, the DESCRIPTION did not
 
 **The shape.** The app stamp is one string carrying two things: a build number
