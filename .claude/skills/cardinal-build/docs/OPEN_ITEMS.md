@@ -64,7 +64,47 @@ His list, in his order. **ALL FIVE CLOSED: 1, 2 and 4 shipped; 3 and 5 were fals
 | 2 | lift every font size under 11px | ✅ **build 1081.** 519 declarations, both forms |
 | 3 | kill the dead white background layer + literal fallbacks on bare `var()` | ❌ **CLOSED — all three parts are FALSE POSITIVES. Do not build it.** See below |
 | 4 | distinct icons in the Job Menu | ✅ **build 1082** — plus the ink, which was the bigger defect |
-| 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ❌ **CLOSED — FALSE POSITIVE, measured.** Renders **183 × 44**. See below |
+| 5 | chase the 0px `#acxTrBtn` (Trade Type) button | ⚠️ **HALF right — corrected 26 Aug.** It renders **183 × 44** and is tappable, so what Theo saw is closed. But its **44px min-width floor really is dead**, and that is latent, not false. See below |
+
+### ⚠️ Item 5 — CORRECTED. The button is fine; its floor is not.
+
+*I closed this flatly as a false positive. The sentinel disagreed, and it was half right.*
+
+**What I said, and it holds:** `#acxTrBtn` renders **183 × 44** on the client screen, at
+390/1194/1440. Confirmed twice in Chromium. `min-height` computes **44px**. Nothing Theo
+can tap is 0px, so the thing he reported is genuinely closed.
+
+**What I missed:** the sentinel's `FLOOR` check reports `button#acxTrBtn computes 0px`,
+and it is **measuring the computed `min-width` property, not the rendered box.** Those are
+different claims and I answered the wrong one. Measured:
+
+```
+computedMinW: 0px      ← the floor is DEAD
+computedMinH: 44px     ← the height floor holds
+rect:         183x44   ← what actually paints
+```
+
+**What kills it**, from walking Chromium's own matched rules:
+
+| sheet | selector | sets |
+|---|---|---|
+| `cr-touch44-styles` | `#insToggleBtn, #acxTrBtn` | `min-width:44px` |
+| `cr-jobdetails-styles` | `:root body:not(.claim-insurance):not(.claim-community) #projectView .acxjd .acxsel` | **`min-width:0px`** |
+
+The second is far more specific and wins on **retail only** (both `:not()`s exclude the
+other two CRMs). `selector_audit.py` finds **only the two touch-44 rules** for `#acxTrBtn`
+— it searches by the selector you name, and this rule reaches the button through its
+**class**, `.acxsel`. *A selector audit answers "who else writes this selector", not "what
+wins on this element". Only a render answers the second.*
+
+⚠️ **`min-width:0` on a flex child is the standard truncation fix** — it is what lets a
+label ellipsis instead of overflowing, and it is almost certainly deliberate. So this is
+**not** a one-line fix: forcing 44px back could reintroduce the overflow that rule exists
+to prevent.
+
+**Verdict: latent, not live. Recorded, not built.** The button is 183px because its own
+content is; nothing holds it there if the label shortens or the row squeezes. Wants a
+decision from Theo — options, not a patch.
 
 ### ❌ Item 3 is a FALSE POSITIVE in all three parts — audited 26 Aug, do NOT build it
 

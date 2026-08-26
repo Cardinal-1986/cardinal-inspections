@@ -27408,11 +27408,32 @@ and was WRONG: four states had thrown and been silently subtracted as carried de
 corrected at 1081 and is still true. So the render count against the budget is the ONLY evidence
 the sweep finished. **Read it every time.**
 
-⚠️ **196 carried is real debt and is not this build's.** It was 185 against the 991 baseline, so
-the standing count has grown ~11 across ~90 builds. Different baselines, so the two figures are
-the same order of magnitude rather than strictly comparable — but nobody has ever worked it down,
-and `--all` is the only way to see what is in it. Stated here so the number is on the record
-instead of living in a summary line nobody re-reads.
+⚠️ **196 carried is real debt and is not this build's** — and **the paragraph that stood here was
+wrong, twice over.** It said the count had "grown ~11 across ~90 builds" from 185 at the 991
+baseline. Corrected after running `--all` and reading the report instead of the summary line:
+
+| id | of the 196 | what it is |
+|---|---:|---|
+| `OVERRIDDEN` | **125** | the cascade working — the probe's own source says it only means anything when the rule is NEW, and with no `--since` every rule looks new. Noise in that run |
+| `DEAD` | **44** | real, but this is the **displayed subset** |
+| `TRUNCATED` | **26** | **not defects** — the instrument reporting its own 20-per-render cap |
+| `FLOOR` | 1 | real, latent — the `#acxTrBtn` min-width floor |
+
+**The `TRUNCATED` rows carry the true numbers: 374 findings suppressed by the cap, and 894 DEAD
+across the truncated renders alone.** The standing debt is **~900+, not 196**, and the "grew ~11"
+trend was two ceilings compared against each other, which measures nothing. **A capped number
+cannot be trended.** BUG_CLASSES 73.
+
+**The `FLOOR` finding resolved to a half-correction of my own false-positive call**, and is worth
+reading as a method note: item 5 of Theo's polish list was closed as "renders 183 × 44", which is
+true and still true. But the sentinel was measuring the **computed `min-width` property**, not the
+rendered box — a different claim, which I answered with the wrong measurement. The floor really is
+dead: `cr-jobdetails-styles`'s `… #projectView .acxjd .acxsel { min-width:0px }` out-specifies
+`cr-touch44-styles`'s `#insToggleBtn,#acxTrBtn { min-width:44px }` on retail. ⚠️ **`selector_audit.py`
+finds only the two touch-44 rules**, because it searches by the selector you name and this one
+reaches the button through its **class**. *A selector audit answers "who else writes this selector";
+only a render answers "what wins on this element".* Latent, not live — recorded in `OPEN_ITEMS.md`,
+not built, because `min-width:0` on a flex child is the deliberate truncation fix.
 
 ### ⚠️ An instrument bug that was MINE, in the wait-loop, not in the sentinel
 

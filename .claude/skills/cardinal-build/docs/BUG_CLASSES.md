@@ -3841,3 +3841,47 @@ bogus `ps` reading — elapsed time and CPU time for the *wrapper*, not the work
 return the "finished" answer at least once. Arm it against something already finished and
 watch it succeed — the same negative-control discipline this project applies to every gate,
 applied to the thing doing the watching.*
+
+---
+
+## Class 73 — a DISPLAY-CAPPED count read as a measurement, then trended (26 Aug 2026, after build 1083)
+
+`SENTINEL CLEAN — 75 render(s), nothing new · 196 carried` was reported to Theo twice as
+the standing debt, and once as a **trend**: *"it was 185 against the 991 baseline, so it has
+grown ~11 across ~90 builds."*
+
+**196 is not the debt. It is what fit on screen.** Running the same probe with `--all` and
+reading the output rather than the summary line:
+
+| id | count in the 196 | what it actually is |
+|---|---:|---|
+| `OVERRIDDEN` | **125** | the cascade working. The probe's own source says it *"only means something when the rule is NEW, so without `--since` it is suppressed unless `--all`"* — with no baseline **every** rule looks new, so all 125 are noise in that run |
+| `DEAD` | **44** | real — but this is the **displayed subset** |
+| `TRUNCATED` | **26** | **not defects at all** — the instrument reporting its own 20-per-render cap |
+| `FLOOR` | 1 | real, latent |
+
+**The `TRUNCATED` rows carry the true numbers, and they are an order of magnitude larger.**
+Summing what they name: **374 findings suppressed by the cap**, and **894 DEAD across the
+truncated renders alone** — against 44 listed. The standing debt is ~900+, not 196.
+
+### The two errors, and they compound
+
+1. **Reading a capped number as a total.** The cap is stated *in the output*, on 26 separate
+   lines, each naming exactly how many it withheld. It was right there and went unread —
+   the summary line got quoted instead of the report under it.
+2. **Trending two capped numbers against each other.** 185-then-196 reads like slow growth.
+   Both are ceilings, not measurements. **A capped number cannot be trended**: the
+   difference between two ceilings measures nothing, and it flatters — "grew by 11" sounds
+   like control, while the truth was "grew by an unknown amount, from an unknown base".
+
+### The rule
+
+**When a report says it truncated, the count in its summary is a floor and must be labelled
+one.** Print `196 shown, 374 withheld` or refuse to print a total. And never compute a
+delta between two numbers that could each be a cap — check that both are complete first,
+or say plainly that the trend is unknown.
+
+*Sibling of class 71, which was the same instrument hiding a coverage failure inside carried
+debt. Same root: a summary line that reads as authoritative while the detail under it says
+otherwise. The fix there was making a short sweep say so; the fix here is making a capped
+count say so.*
