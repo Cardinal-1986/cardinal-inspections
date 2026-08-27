@@ -27580,6 +27580,91 @@ rejected (the danger is deleting a base rule whose replacement is conditional).
 
 
 
+## Build 1090 — tap a day in Production and that day opens
+
+Theo, from the Production hub: *"when tapping on a date in productions, it silently shows the
+events on the bottom. Is there a way we could maybe have a pop up page or maybe something else
+that shows that days events?"*
+
+**Reproduced before theorising, and the report was exact.** The tap was never broken — `data-day`
+sets `selDay` and re-renders. The day's work simply lands **~1000px below the thumb**, under four
+tiles, the closed-repairs bar and the two crew cards, and the only feedback anywhere near the tap
+is a faint grey fill on the cell. Five options were offered with costs; he picked **1 and 5**:
+
+| | |
+|---|---|
+| **1** | a sheet over the hub showing that day |
+| **5** | and on dismiss, land on that day rather than back at the top |
+
+They reinforce rather than overlap — the sheet answers the tap, the scroll means dismissing it
+leaves him looking at the day he chose. *(Option 2, moving the agenda under the calendar, was
+offered by name and NOT chosen — it would have reversed his own layout pick from 853.)*
+
+### Three things already existed and were reused
+
+- **`#cr-pb-modal` WAS ALREADY A BOTTOM SHEET** — `align-items:flex-end`, a `.sheet` child at
+  `max-height:88vh` with a rounded top and `overscroll-behavior:contain`. It houses "+ Add". This
+  build gives that ONE element a second mode (`data-mode`), not a second modal.
+- **NO NEW SCROLL-LOCK WRITER, and not by luck.** cr-pb's three `body.style.overflow` writes all
+  belong to the BOARD; `closeAdd()` is one line and locks nothing. The sheet inherits a pattern
+  that never locked, so the app stays at **13 writers**.
+- **`agendaHtml()` / `evHtml()` already render a day.** The sheet calls them.
+
+**`wire()` walks TWO ROOTS instead of gaining a second copy.** Its eleven `el.querySelectorAll(…)`
+calls became `qAll(…)`, which returns the board's matches plus the sheet's while the sheet is open.
+Copying the job/item/tick handlers would have worked today and drifted the third time anyone edited
+one. **The sheet opens from the HOME pane only** — the full-calendar pane has shown the selected day
+beside the grid since 853, and a modal there would be two answers to one question.
+
+### ⚠ A REAL DEFECT THAT 16 GREEN ASSERTIONS MISSED AND ONE RENDER CAUGHT
+
+**Every production class is scoped `#cr-pb .x`. The sheet lives on `document.body` — outside
+`#cr-pb`.** So the first working version put the day's rows in a sheet where **none of the module's
+CSS applied**. Chromium computed `.pbev` at **`background: rgb(239,239,239)`** — a light-grey UA
+button — on a near-black sheet, and the empty state ran together unstyled and left-aligned.
+
+**Structure was perfect. Every element existed, every row was wired, all sixteen assertions passed.**
+This is CLAUDE.md's *"a CSS rule can parse, balance, and never apply"* and the light-ink-on-dark-
+ground class in one, and **only a real engine could see it**.
+
+Fixed by **extending the existing selectors, not copying them** — 23 rules across the `.pbev`,
+`.pbempty`, `.pbchip` and `.pbpip` families became `:is(#cr-pb,#cr-pb-modal) .pbX`. `:is()` takes
+the highest specificity among its arguments and both are ids, so **the hub's cascade is unchanged
+and nothing is out-specified**. `gate_1090.mjs` now compares the sheet's computed row against the
+hub's: `display:flex` / `rgb(21,23,26)` / `11px 12px`, identical on both.
+
+### ⚠ SEVEN self-verification assertions failed CORRECT code in this one build
+
+Recorded in full because the pattern, not any single one, is the lesson:
+
+| # | the assertion | why it was wrong |
+|---:|---|---|
+| 1 | `count('function wire(){') == 1` | **EIGHT modules declare a no-arg `wire()`** — the scope trap, on a signature |
+| 2 | `OLD_DAY` on `el.querySelectorAll('[data-day]')` | edit 1 had already rewritten that line — **anchor B invalidated by edit A** |
+| 3 | `count(QALL + wire_body) == 1` | edit 3 rewrites a block *inside* wire(), so the pre-edit body is gone by design |
+| 4 | `el.querySelectorAll(` down by 11 | **the helper this build adds contains one itself** |
+| 5 | `qAll(` count | **two of the build's own comments write `qAll()`** — BUG_CLASSES 75 |
+| 6 | `body.style.overflow` unchanged | **the comment swearing the lock didn't move contains the token** — 75 again |
+| 7 | `… == orig.count(…) == 3` | `3` is cr-pb's count; **file-wide it is ~35 across 13 modules** — scope trap |
+
+**The remedy is one rule and it now has seven witnesses: assert on a form that carries punctuation
+prose cannot.** `qAll('` not `qAll(`; `body.style.overflow =` not the bare name; the spliced
+`NEW_*` string, not a retyped copy — and **scope it to the region you mean before comparing**.
+
+### Gates
+
+- `check_build.py` **GREEN** 1089 → 1090, marker `@keyframes pbflashkf`, negative control clean;
+  byte-reproducible against a clean 1089 tree.
+- **`gate_1090.mjs` (new) 18/18**, and **RED with 10 named failures on the 1089 control, no crash** —
+  written through guarded lookups and a `tap()` that records and carries on, because BUG_CLASSES 37
+  (a control that crashes instead of reporting) struck five times in one recent session.
+  ⚠ It also **prefers a day that HAS work** when choosing a cell: an empty day renders the empty
+  state and the row-styling assertions would pass vacuously. *A check that cannot fail is worse
+  than no check.*
+- Sentinel: this is a layout build, so under the rule settled the same night it **holds the merge**.
+
+---
+
 ## Build 1089 — the Insurance header goes dark, and matches its own bottom bar
 
 Theo was shown four rendered headers at 440px through the real app — the header as it is

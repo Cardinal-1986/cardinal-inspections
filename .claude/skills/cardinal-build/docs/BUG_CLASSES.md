@@ -75,7 +75,16 @@ retail's ground is a gradient"* — the sentence warning about the counting trap
 `--hbg:` and sprang it. So the answer is not "be careful"; being careful is exactly what
 produced it.
 
-**THE RULE: assert on a form that prose cannot imitate.**
+⚠️ **1090 failed SEVEN self-verification assertions on correct code in a single build**, and only
+two were this class — the other five were its neighbours, which is why they belong together:
+a signature (`function wire(){`) that is **not unique** (eight modules declare one); an anchor
+**invalidated by an earlier edit in the same script**; an assertion on a **pre-edit body a later
+edit legitimately rewrites**; a count thrown off by **the helper the build itself adds**; and
+`== orig.count(…) == 3`, which compared **one module's number against the whole file**. Every one
+failed a patch that was right. The through-line is that an assertion is a claim about *a region*
+and *a form*, and getting either wrong reads as a broken build.
+
+**THE RULE: assert on a form that prose cannot imitate — and scope it before you compare.**
 
 | instead of | assert |
 |---|---|
@@ -83,6 +92,9 @@ produced it.
 | `--hbg:` | `;--hbg:` (or `{--htint:`) |
 | `ljChipStrip` | `function ljChipStrip` and `ljChipStrip('` |
 | a retyped copy of the edit | **the `NEW_*` variable the script actually spliced in** |
+| `qAll(` | `qAll('` — every real call passes a quoted selector; no sentence does |
+| `body.style.overflow` | `body.style.overflow =` — a write has an `=`, a sentence about one does not |
+| `function wire(){` | the **brace-matched body**; that signature appears eight times |
 
 An HTML attribute and a CSS declaration both carry punctuation a sentence does not. Better
 still, assert on the inserted string itself — `out.count(NEW_CSS) == 1` cannot drift from the

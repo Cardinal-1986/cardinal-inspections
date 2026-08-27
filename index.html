@@ -3873,7 +3873,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1089 &#8212; The Insurance header stops shouting. In dark mode the bright red band across the top of every Insurance screen is now the same near-black as the bar along the bottom, the title stays white, and the colour sits on the + button as a soft coral instead of flooding the whole strip. Nothing new was invented &#8212; those are the colours the bottom bar has always used, so the top and bottom of the screen finally match. Light mode is deliberately unchanged.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1090 &#8212; Tap a day in Production and that day opens. Tapping a date used to change the list at the very bottom of the page &#8212; below the tiles, the repairs bar and the crew cards &#8212; so from the calendar it looked like nothing had happened. Now a panel slides up over the screen with that day&#8217;s work on it, with Add and Full calendar on the bottom. Close it and the page is already sitting on the day you picked, with the date briefly lit so you can see where you landed.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41830,6 +41830,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1090, d:'2026-08-27', t:'Tap a day in Production and that day opens', s:'Reported from the Production hub: tapping a date on the month calendar appeared to do nothing. It was working &mdash; the day&rsquo;s work simply swapped in at the very bottom of the page, about a thousand pixels below the calendar, past the tiles and the crew cards. Tapping a date now slides a panel up over the screen showing that day: its weather, everything booked on it, and Add and Full calendar along the bottom. Dismiss it and the page is already scrolled to that day with the date lit for a moment, so you can see where you ended up. The full calendar screen is unchanged &mdash; it already shows the day beside the grid, so tapping a date there still works the way it did.' },
 { b:1089, d:'2026-08-27', t:'The Insurance header goes dark, and matches its own bottom bar', s:'Picked from two rendered options. In dark mode the Insurance header was a solid bright red band, while the navigation bar at the bottom of the very same screen was near-black with a soft coral accent &mdash; the two ends of the screen did not agree. The header now uses the bottom bar&rsquo;s own colours: near-black, a white title, and a soft coral on the + button instead of red across the whole strip. The coloured strip behind the phone&rsquo;s clock follows it. No new colour was chosen; every value already existed in the app. Light mode is deliberately untouched, and so is the header on a Resource Library book, which shares the old palette on purpose.' },
 { b:1088, d:'2026-08-27', t:'The strip behind the clock follows the screen', s:'Reported from three screenshots: the retail app with a red Insurance band across the top of the phone, Community with a green one that matched, and retail correct again after switching portals and back. The band had never been told which portal you are in &mdash; it now takes its colour straight from the header, so the two cannot disagree. The page settings behind it were duplicated as well, with the two copies naming different colours and different icon files; one copy now. ⚠ Whether this is what paints that band on an iPhone can only be confirmed on a real phone &mdash; if the strip still lags, the cause is something else and this rules one suspect out.' },
 { b:1087, d:'2026-08-27', t:'The sign-in screen stops wearing the last portal', s:'Reported from a screenshot: signing in gave the retail app with an Insurance header on it. Reproduced at the sign-in call itself &mdash; with the Insurance portal remembered, the portal picker came up titled &ldquo;Insurance&rdquo; in insurance red; with Community remembered it said &ldquo;Community&rdquo;. The picker is where you choose a portal, so it can no longer claim to be in one and comes up in the ordinary app header. Deliberately narrow: once you are inside a portal, Leads, Photos and Reports still carry that portal&rsquo;s colours, which is what makes Home take you back to the right place.' },
@@ -50905,8 +50906,8 @@ objections : OBJECTIONS,
    418/944/947 pattern; nothing about the look moves. */
 #cr-pb .pbback{ position:relative; }
 #cr-pb .pbback::after{ content:""; position:absolute; inset:-6px; }
-#cr-pb .pbchip{ position:relative; }
-#cr-pb .pbchip::after{ content:""; position:absolute; left:0; right:0; top:-8px; bottom:-8px; }
+:is(#cr-pb,#cr-pb-modal) .pbchip{ position:relative; }
+:is(#cr-pb,#cr-pb-modal) .pbchip::after{ content:""; position:absolute; left:0; right:0; top:-8px; bottom:-8px; }
 #cr-pb .pbmon button{ position:relative; }
 #cr-pb .pbmon button::after{ content:""; position:absolute; inset:-7px; }
 #cr-pb .pbact{ position:relative; }
@@ -50983,12 +50984,12 @@ objections : OBJECTIONS,
 #cr-pb .pbwd.on{ background:var(--pb-c2,#1b1e22); border-color:var(--pb-acc,#e35c63); }
 #cr-pb .pbwd.on .dn{ color:var(--pb-acc,#e35c63); }
 :root[data-theme="rb-light"] #cr-pb .pbwd.on{ background:var(--pb-c,#fff); box-shadow:0 1px 6px rgba(25,28,40,.1); }
-#cr-pb .pbpips{ display:flex; gap:2px; justify-content:center; margin-top:3px; height:4px; }
-#cr-pb .pbpip{ width:4px; height:4px; border-radius:50%; }
-#cr-pb .pbpip.build{ background:var(--pb-accd,#c8202e); }
-#cr-pb .pbpip.punch{ background:var(--pb-hot,#e07a5f); }
-#cr-pb .pbpip.drop{ background:var(--pb-dim,#848c94); }
-#cr-pb .pbpip.done{ background:var(--pb-ok,#6cb98f); }
+:is(#cr-pb,#cr-pb-modal) .pbpips{ display:flex; gap:2px; justify-content:center; margin-top:3px; height:4px; }
+:is(#cr-pb,#cr-pb-modal) .pbpip{ width:4px; height:4px; border-radius:50%; }
+:is(#cr-pb,#cr-pb-modal) .pbpip.build{ background:var(--pb-accd,#c8202e); }
+:is(#cr-pb,#cr-pb-modal) .pbpip.punch{ background:var(--pb-hot,#e07a5f); }
+:is(#cr-pb,#cr-pb-modal) .pbpip.drop{ background:var(--pb-dim,#848c94); }
+:is(#cr-pb,#cr-pb-modal) .pbpip.done{ background:var(--pb-ok,#6cb98f); }
 /* 853: the home hub leads with a COMPACT month calendar (concept 2), then the
    command tiles, then the day's agenda. Same cells and pips as the full
    calendar, just tighter and pip-marked for the home. */
@@ -51008,45 +51009,45 @@ objections : OBJECTIONS,
   text-transform:uppercase;
 }
 #cr-pb .pbrule .sp{ margin-left:auto; display:flex; gap:6px; }
-#cr-pb .pbchip{
+:is(#cr-pb,#cr-pb-modal) .pbchip{
   cursor:pointer; background:transparent; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em;
   color:var(--pb-acc,#e35c63); border:1px solid var(--pb-acc,#e35c63); border-radius:7px;
   padding:5px 9px; text-transform:uppercase; min-height:30px;
 }
-#cr-pb .pbev{
+:is(#cr-pb,#cr-pb-modal) .pbev{
   display:flex; gap:11px; align-items:center; width:100%; text-align:left; cursor:pointer;
   background:var(--pb-c,#15171a); border:1px solid var(--pb-line2,rgba(230,235,240,.06));
   border-radius:12px; padding:11px 12px; margin-bottom:8px; color:var(--pb-ink,#eceef0);
 }
-:root[data-theme="rb-light"] #cr-pb .pbev{ box-shadow:0 1px 6px rgba(25,28,40,.06); }
-#cr-pb .pbev .eic{ flex:none; width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; }
-#cr-pb .pbev .eic svg{ width:15px; height:15px; }
-#cr-pb .pbev.build .eic{ background:rgba(200,32,46,.16); color:var(--pb-acc,#e35c63); }
-#cr-pb .pbev.punch .eic{ background:rgba(224,122,95,.14); color:var(--pb-hot,#e07a5f); }
-#cr-pb .pbev.drop  .eic{ background:rgba(154,163,171,.14); color:var(--pb-mut,#9aa3ab); }
-#cr-pb .pbev.done  .eic{ background:rgba(108,185,143,.13); color:var(--pb-ok,#6cb98f); }
-#cr-pb .pbev .tx{ min-width:0; }
+:root[data-theme="rb-light"] :is(#cr-pb,#cr-pb-modal) .pbev{ box-shadow:0 1px 6px rgba(25,28,40,.06); }
+:is(#cr-pb,#cr-pb-modal) .pbev .eic{ flex:none; width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; }
+:is(#cr-pb,#cr-pb-modal) .pbev .eic svg{ width:15px; height:15px; }
+:is(#cr-pb,#cr-pb-modal) .pbev.build .eic{ background:rgba(200,32,46,.16); color:var(--pb-acc,#e35c63); }
+:is(#cr-pb,#cr-pb-modal) .pbev.punch .eic{ background:rgba(224,122,95,.14); color:var(--pb-hot,#e07a5f); }
+:is(#cr-pb,#cr-pb-modal) .pbev.drop  .eic{ background:rgba(154,163,171,.14); color:var(--pb-mut,#9aa3ab); }
+:is(#cr-pb,#cr-pb-modal) .pbev.done  .eic{ background:rgba(108,185,143,.13); color:var(--pb-ok,#6cb98f); }
+:is(#cr-pb,#cr-pb-modal) .pbev .tx{ min-width:0; }
 /* 758: a <span> cannot ellipsis — text-overflow is inert on an inline box and
    the span measures 0. Every truncating element in this module is block. */
-#cr-pb .pbev .tx b{
+:is(#cr-pb,#cr-pb-modal) .pbev .tx b{
   display:block; font:600 13.5px -apple-system,'Segoe UI',Roboto,sans-serif;
   color:var(--pb-ink,#eceef0); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-#cr-pb .pbev .tx small{
+:is(#cr-pb,#cr-pb-modal) .pbev .tx small{
   display:block; font:400 11px -apple-system,'Segoe UI',Roboto,sans-serif;
   color:var(--pb-dim,#848c94); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-#cr-pb .pbev .tg{
+:is(#cr-pb,#cr-pb-modal) .pbev .tg{
   margin-left:auto; flex:none; font:700 11px var(--pb-mono,ui-monospace,Menlo,monospace); letter-spacing:.08em;
   color:var(--pb-dim,#848c94); border:1px solid var(--pb-line,rgba(230,235,240,.11));
   border-radius:5px; padding:3px 6px; text-transform:uppercase;
 }
-#cr-pb .pbempty{
+:is(#cr-pb,#cr-pb-modal) .pbempty{
   color:var(--pb-dim,#848c94); font-size:13px; background:var(--pb-c,#15171a);
   border:1px dashed var(--pb-line,rgba(230,235,240,.11)); border-radius:12px;
   padding:16px 14px; text-align:center;
 }
-#cr-pb .pbempty b{ display:block; color:var(--pb-mut,#9aa3ab); margin-bottom:3px; font-size:13.5px; }
+:is(#cr-pb,#cr-pb-modal) .pbempty b{ display:block; color:var(--pb-mut,#9aa3ab); margin-bottom:3px; font-size:13.5px; }
 
 /* ---- month grid --------------------------------------------------------- */
 #cr-pb .pbcal{ margin-top:6px; }
@@ -51196,6 +51197,46 @@ objections : OBJECTIONS,
   align-items:flex-end; justify-content:center; overscroll-behavior:contain;
 }
 #cr-pb-modal.open{ display:flex; }
+/* 1090 · the day sheet. It rides the SAME .sheet surface the Add form uses, so
+   no ground and no ink is introduced here and nothing needs a contrast call —
+   the rows are .pbev and the chips are .pbchip, both already themed. */
+#cr-pb-modal .pbdaysheet{ padding:0 0 calc(14px + env(safe-area-inset-bottom,0px)); }
+#cr-pb-modal .pbdgrab{
+  width:38px; height:4px; border-radius:2px; margin:10px auto 4px;
+  background:rgba(230,235,240,.24);
+}
+#cr-pb-modal .pbdhead{
+  display:flex; align-items:center; gap:10px; padding:6px 16px 10px;
+  border-bottom:1px solid rgba(230,235,240,.10);
+  position:sticky; top:0; background:#15171a; z-index:2;
+}
+#cr-pb-modal .pbdwhen{ flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:8px;
+  font:800 15px 'Segoe UI',Arial,sans-serif; letter-spacing:.01em; }
+#cr-pb-modal .pbdwhen b{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#cr-pb-modal .pbdnow{
+  font:800 11px 'Segoe UI',Arial,sans-serif; letter-spacing:.12em; text-transform:uppercase;
+  padding:3px 8px; border-radius:999px; background:rgba(230,90,70,.16); color:#ff8a7a;
+}
+/* 44px, per the 1040 tap-target pass — a close button under the floor on a
+   sheet you dismiss constantly is the complaint that pass existed to end. */
+#cr-pb-modal .pbdx{
+  flex:0 0 auto; width:44px; height:44px; border-radius:12px; cursor:pointer;
+  background:transparent; border:1px solid rgba(230,235,240,.14); color:#e6ebf0;
+  font:600 15px 'Segoe UI',Arial,sans-serif; display:flex; align-items:center; justify-content:center;
+}
+#cr-pb-modal .pbdbody{ padding:12px 16px 4px; display:flex; flex-direction:column; gap:8px; }
+#cr-pb-modal .pbdfoot{
+  display:flex; gap:8px; flex-wrap:wrap; padding:12px 16px 4px;
+  border-top:1px solid rgba(230,235,240,.10); margin-top:8px;
+}
+/* Theo's option 5: dismissing the sheet lands on the day, and says so once. */
+@keyframes pbflashkf{
+  0%   { background:rgba(230,90,70,.00); }
+  22%  { background:rgba(230,90,70,.20); }
+  100% { background:rgba(230,90,70,.00); }
+}
+.pbflash{ animation:pbflashkf 1.15s ease-out 1; border-radius:10px; }
+@media (prefers-reduced-motion:reduce){ .pbflash{ animation:none; } }
 #cr-pb-modal .sheet{
   width:100%; max-width:520px; max-height:88vh; overflow-y:auto; overflow-x:hidden;
   overscroll-behavior:contain;
@@ -51735,7 +51776,7 @@ function homeHtml(){
     homeMonthHtml() +
     tilesHtml() +
     crewNavHtml() +
-    '<div class="pbrule">' + esc(keyOf(d) === keyOf(today()) ? 'Today' : pbFull(d)) + wxc(keyOf(d)) +
+    '<div class="pbrule" id="pbDayRule">' + esc(keyOf(d) === keyOf(today()) ? 'Today' : pbFull(d)) + wxc(keyOf(d)) +
       '<span class="sp">' +
       '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
       '<button class="pbchip" data-go="cal" type="button">Full calendar ›</button>' +
@@ -51875,8 +51916,21 @@ function listPaneHtml(){
 }
 
 /* -------------------------------------------------------------------- wire */
+/* 1090: the day sheet reuses these handlers instead of copying them.
+   qAll() returns the board's matches PLUS the sheet's whenever the sheet is
+   open, so a row inside the sheet behaves exactly like the same row on the
+   board — by construction, not by two lists being kept in step. wire() is
+   re-run after the sheet is filled; every handler here is an onclick
+   ASSIGNMENT, never addEventListener, so running it twice is idempotent. */
+function qAll(sel){
+  var out = [].slice.call(el ? el.querySelectorAll(sel) : []);
+  if(modal && modal.classList.contains('open') && modal.getAttribute('data-mode') === 'day'){
+    out = out.concat([].slice.call(modal.querySelectorAll(sel)));
+  }
+  return out;
+}
 function wire(){
-  el.querySelectorAll('[data-back]').forEach(function(b){
+  qAll('[data-back]').forEach(function(b){
     b.onclick = function(){
       if(pane === 'home'){ close(); return; }   /* one level up from home is Home */
       /* 1036 (audit F1): the pane switch pushed a history entry, so going up a
@@ -51890,7 +51944,7 @@ function wire(){
       pane = 'home'; render(); scrollTop();
     };
   });
-  el.querySelectorAll('[data-box]').forEach(function(b){
+  qAll('[data-box]').forEach(function(b){
     b.onclick = function(){
       var k = b.getAttribute('data-box');
       /* 856: Punch-outs and Closed repairs open the FULL Punch & Repairs page
@@ -51910,7 +51964,7 @@ function wire(){
       if(typeof window.navSetView === 'function'){ try{ window.navSetView('production', { pane:'list', box:k }); }catch(_){} }
     };
   });
-  el.querySelectorAll('[data-hub]').forEach(function(b){
+  qAll('[data-hub]').forEach(function(b){
     b.onclick = function(){
       var h = b.getAttribute('data-hub');
       /* 857: same as the punch route — Dispatch and Crews call hideAllViews in
@@ -51920,7 +51974,7 @@ function wire(){
       else if(h === 'crews' && window.CardinalCrews && window.CardinalCrews.open){ close(false); window.CardinalCrews.open(); }
     };
   });
-  el.querySelectorAll('[data-go="cal"]').forEach(function(b){
+  qAll('[data-go="cal"]').forEach(function(b){
     b.onclick = function(){
       calMonth = calMonth || monthOf(selDay || today());
       pane = 'cal'; render(); scrollTop();
@@ -51929,24 +51983,31 @@ function wire(){
       if(typeof window.navSetView === 'function'){ try{ window.navSetView('production', { pane:'cal' }); }catch(_){} }
     };
   });
-  el.querySelectorAll('[data-mon]').forEach(function(b){
+  qAll('[data-mon]').forEach(function(b){
     b.onclick = function(){
       var step = Number(b.getAttribute('data-mon')) || 0;
       calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + step, 1);
       render();
     };
   });
-  el.querySelectorAll('[data-day]').forEach(function(b){
+  qAll('[data-day]').forEach(function(b){
     b.onclick = function(){
       var parts = b.getAttribute('data-day').split('-');
       selDay = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
       render();
+      /* 1090: HOME ONLY. The full-calendar pane already puts the selected day
+         in a sheet beside the grid (pbsplit -> .pbsheet) and has since 853, so
+         a modal there would be a second answer to the same question. Both
+         panes emit data-day, which is exactly why the gate lives here and not
+         in the markup. render() runs first either way, so the agenda at the
+         bottom of the hub is already correct when the sheet is dismissed. */
+      if(pane === 'home') openDay(selDay);
     };
   });
-  el.querySelectorAll('[data-add]').forEach(function(b){
+  qAll('[data-add]').forEach(function(b){
     b.onclick = function(){ openAdd(null); };
   });
-  el.querySelectorAll('[data-job]').forEach(function(b){
+  qAll('[data-job]').forEach(function(b){
     b.onclick = function(ev){
       ev.stopPropagation();
       var id = b.getAttribute('data-job');
@@ -51955,7 +52016,7 @@ function wire(){
       if(typeof window.openProject === 'function') window.openProject(id);
     };
   });
-  el.querySelectorAll('[data-ord]').forEach(function(b){
+  qAll('[data-ord]').forEach(function(b){
     b.onclick = async function(ev){
       ev.stopPropagation();
       b.disabled = true;
@@ -51963,7 +52024,7 @@ function wire(){
       catch(e){ crTell('Could not save: ' + (e.message || e)); b.disabled = false; }
     };
   });
-  el.querySelectorAll('[data-tick]').forEach(function(b){
+  qAll('[data-tick]').forEach(function(b){
     b.onclick = function(ev){
       ev.stopPropagation();
       var it = punchRows().find(function(x){ return String(x.id) === b.getAttribute('data-tick'); });
@@ -51973,7 +52034,7 @@ function wire(){
   /* An item row opens the client's punch screen with THAT item showing — the
      610 contract. Build 768 replaces the destination with the new card; the
      handoff shape stays the same. */
-  el.querySelectorAll('[data-item]').forEach(function(b){
+  qAll('[data-item]').forEach(function(b){
     if(b.hasAttribute('data-tick')) return;
     b.onclick = function(ev){
       if(ev.target.closest('[data-tick]')) return;
@@ -52077,12 +52138,7 @@ async function toggle(it){
    places and alerts if it is missing. Rebuilding a second add form beside this
    is the named most-expensive bug class on this project. */
 function openAdd(presetProjectId){
-  if(!modal){
-    modal = document.createElement('div');
-    modal.id = 'cr-pb-modal';
-    modal.onclick = function(e){ if(e.target === modal) closeAdd(); };
-    document.body.appendChild(modal);
-  }
+  ensurePbModal('add');
   /* 605: the job list is boardJobs() PLUS the preset job whatever its stage —
      with nothing in an active stage that list is empty, and every "+ Add"
      opened a modal that refused to save. */
@@ -52160,6 +52216,84 @@ function openAdd(presetProjectId){
   }, 80);
 }
 function closeAdd(){ if(modal) modal.classList.remove('open'); }
+/* ── 1090 · the day sheet ────────────────────────────────────────────────
+   Theo: tapping a date "silently shows the events on the bottom". The tap
+   was never broken — the day's work sits ~1000px below the thumb, past the
+   tiles, the repairs bar and the crew cards, and the only feedback near the
+   tap is a faint grey cell.
+
+   ⚠ ONE MODAL ELEMENT, TWO MODES. #cr-pb-modal was already a bottom sheet
+   (flex-end, .sheet at 88vh, rounded top) built for "+ Add". A second modal
+   would have been a second thing to style, to close, and to forget. data-mode
+   says which content is in it, and the backdrop closes whichever is showing.
+
+   ⚠ NO SCROLL LOCK, matching the Add sheet exactly. cr-pb's three
+   body.style.overflow writes all belong to the BOARD, not to this element —
+   so the app's 13-writer count is untouched by this build. */
+function ensurePbModal(mode){
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'cr-pb-modal';
+    modal.onclick = function(e){
+      if(e.target !== modal) return;
+      if(modal.getAttribute('data-mode') === 'day') closeDay(); else closeAdd();
+    };
+    document.body.appendChild(modal);
+  }
+  modal.setAttribute('data-mode', mode);
+  return modal;
+}
+function daySheetHtml(d){
+  var isToday = keyOf(d) === keyOf(today());
+  return '<div class="sheet pbdaysheet">' +
+    '<div class="pbdgrab"></div>' +
+    '<div class="pbdhead">' +
+      '<span class="pbdwhen"><b>' + esc(pbFull(d)) + '</b>' + wxc(keyOf(d)) +
+        (isToday ? '<span class="pbdnow">Today</span>' : '') + '</span>' +
+      '<button class="pbdx" data-dayclose="1" type="button" aria-label="Close">\u2715</button>' +
+    '</div>' +
+    '<div class="pbdbody">' + agendaHtml(d) + '</div>' +
+    '<div class="pbdfoot">' +
+      '<button class="pbchip" data-add="1" type="button">+ Add</button>' +
+      '<button class="pbchip" data-daygo="cal" type="button">Full calendar \u203a</button>' +
+    '</div></div>';
+}
+function openDay(d){
+  ensurePbModal('day');
+  modal.innerHTML = daySheetHtml(d);
+  modal.classList.add('open');
+  /* AFTER .open and AFTER the content — qAll() looks for both, so the sheet's
+     job/item/tick rows only get handlers once it is really in the DOM and
+     really open. Reversing these two lines wires nothing and reports nothing. */
+  wire();
+  /* The three controls that are the SHEET'S OWN and must dismiss it first:
+     leaving the sheet up over a pane switch would hide the screen it just
+     opened, which is the 570-572 trap in miniature. */
+  modal.querySelectorAll('[data-dayclose]').forEach(function(b){
+    b.onclick = function(ev){ ev.stopPropagation(); closeDay(); };
+  });
+  modal.querySelectorAll('[data-daygo]').forEach(function(b){
+    b.onclick = function(ev){
+      ev.stopPropagation();
+      closeDay();
+      pane = 'cal'; calMonth = monthOf(selDay || today()); lastSig = ''; render();
+    };
+  });
+}
+function closeDay(){
+  if(modal) modal.classList.remove('open');
+  /* Theo's option 5, and the reason he asked for both: dismissing the sheet
+     should leave him looking at the day he picked, not back at the top of a
+     page that appears unchanged. Home pane only — #pbDayRule does not exist
+     on the others, which is why this is a lookup and not an assumption. */
+  var rule = el && el.querySelector('#pbDayRule');
+  if(!rule) return;
+  try{ rule.scrollIntoView({ behavior:'smooth', block:'center' }); }
+  catch(_sv){ try{ rule.scrollIntoView(); }catch(_sv2){} }
+  rule.classList.remove('pbflash');
+  void rule.offsetWidth;   /* forces a reflow so the animation restarts on a repeat tap */
+  rule.classList.add('pbflash');
+}
 async function saveAdd(){
   var g = function(f){
     var i = modal.querySelector('[data-f="' + f + '"]');
