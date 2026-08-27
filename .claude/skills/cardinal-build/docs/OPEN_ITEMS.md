@@ -15,12 +15,12 @@ tab** (aging tarps over the existing `tarped_at`, bidder or not), and **B** on n
 (estimate, not bid — award-side kept).
 
 Sequence, one build each:
-- ✅ **1091 — the estimate rename** (this build). SHIPPED.
-- ⏭ **#1 — partner-card stats page.** Mockup approved-in-shape (a card per partner:
-  open estimates, out-for-pricing, awarded-YTD, win rate, oldest-open age, tarps up;
-  a 4-number summary strip on top; real door in the Community header, out of Tools).
-  Wire `cr-can` to real data in that layout; replace the metric-by-metric page.
-  ⚠ AWAITING Theo's final "go" + any number swaps on the mockup.
+- ✅ **1091 — the estimate rename.** SHIPPED (merged).
+- ✅ **#1 — partner-card stats page (1092).** SHIPPED. cr-can is now a card per
+  partner (Habitat first) with open/out-for-pricing/awarded/win-rate + oldest aging
+  + tarps-up; summary strip Out-for-pricing/Awarded/Win-rate/Tarps-up; a chart door in
+  the tab strip, Analytics removed from Tools. ⚠ Card tap-through to a partner's
+  estimates is a deliberate follow-up, not in 1092.
 - ⏭ **#2 (1b) — strip the home** to one attention list; Bids/Partners → doors.
   PREVIEW before shipping (his rule; and it reverses the 853 "calendar/tiles/day"
   ordering only for Community, so show it).
