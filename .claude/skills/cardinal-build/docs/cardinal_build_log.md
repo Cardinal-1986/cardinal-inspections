@@ -835,6 +835,60 @@ not a silent edit.
 
 ---
 
+## Build 1098 — 27 Aug 2026 — One-tap saved assemblies (Batch 3, part 1)
+
+Theo's Batch 3, first half. An **assembly** is a named bundle of lines that drops into an
+estimate as ONE titled section (build 1097's model), so a rep builds a roof in seconds.
+
+**Storage — hybrid, Theo's pick.** **Six default templates ship in-code** (`EST_ASSEMBLIES` —
+Theo's curated cross-trade set: **Full Roof Replacement (OC Duration)** and **Metal / Standing
+Seam** under Roofing, **Composite / Vinyl Siding**, **Aluminum Fascia & Vented Soffit**, **Seamless
+6" K-Style Gutters**, **Full-Frame Window Replacement**), always present, no seeding. Custom
+**"Save as Assembly"** ones live in a new
+**`estimate_assemblies`** table (shared read for any signed-in staff; author or admin writes),
+so they sync across Theo's phone and desktop. **`created_by` DEFAULTs to `my_email()`** — the
+client never handles the email, and the insert RLS `with check (created_by = my_email())` passes.
+Everything **degrades to defaults-only** if the table/connection is absent (defaults still
+insert; custom load/save/delete no-op with a toast). ⚠️ **`estimate_assemblies.sql` ships and
+must be applied before/with the deploy** — the estimate itself needs no schema change.
+
+**Prices ship at $0 by design** — an assembly carries the scope + quantities, the rep sets the
+money per job, so a stale price can never ride into a sent proposal (Theo's pick).
+
+**Scaling, no modal, two axes.** Each picker card carries an optional numeric input; `expandAssembly`
+scales the field-driven lines on insert — **per_sq lines by squares**, **per_unit lines by count**
+(the window package: enter the number of openings) — leaves LF/EA base lines at their starting qty,
+preserves `flat`, and drops `per_sq`/`per_unit` from the estimate line. The card labels the input
+**Squares** or **Windows** by which axis the package uses; blank = template quantities.
+
+**UI, all reused.** A **+ Assembly** button (beside 1097's *+ Section*) opens the existing
+`#cr-est-picker` in a new **`'assembly'` mode** (`openPicker`/`renderPicker` branch +
+`renderAssemblyPicker`) — defaults grouped by trade, custom under "Saved", search-as-you-type
+free from the existing input. **Save as Assembly** sits on each named 1097 section header and
+names the assembly by the **section's own title** (toast + focus if untitled — no name modal,
+since `crAsk` is confirm-only). Custom cards get a delete (confirm → row delete; a built-in
+default can't be deleted).
+
+### Gates
+- `check_build.py` **GREEN** 1097 → 1098 (marker `renderAssemblyPicker`; negative control clean);
+  patch **byte-reproducible**.
+- **`harness_estasm1098.js`** — executes the SHIPPED `expandAssembly` (SQ→32, per_sq 1.1→35.2,
+  **per_unit→5 windows**, LF base kept, flat preserved, per_sq/per_unit dropped, fresh `_lid`) and
+  evals the SHIPPED `EST_ASSEMBLIES` (**6 presets across 5 trades**, every line $0, OC roof has
+  per_sq 1.1 + LF bases + flat, window package all per_unit), plus
+  structural proofs of injection, the save/load/delete DB paths (shared read, graceful degrade,
+  title-named, editor-only keys stripped, default-undeletable), the picker mode and wiring.
+  **GREEN on 1098, RED (no crash) on the 1097 tree.**
+- **`render_estasm1098.mjs`** — Chromium, both viewports: the assembly cards + both buttons clear
+  4.5:1 on porcelain, Insert / + Assembly are Cardinal red. **It caught a real dip pre-ship** —
+  the custom-delete "×" inherited the line-delete's `#767066`, fine on a white card but **4.46:1**
+  on the picker's `#F4F4F5` ground; darkened to `#5a5a5a` (6.27:1). **GREEN on 1098, RED on 1097.**
+- **No regression:** the 1095 / 1096 / 1097 renders + the 1097 harness all stay GREEN against 1098.
+
+**SQL:** `estimate_assemblies.sql` (idempotent; `MIGRATIONS.md` regenerated). Apply before deploy.
+
+---
+
 ## Build 1097 — 27 Aug 2026 — Line items organize into named sections
 
 Theo's Batch 2, second half. Line items now group into titled sections so a big roof

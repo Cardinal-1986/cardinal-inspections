@@ -3873,7 +3873,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1097 &#8212; Estimate line items can now be organized into named sections &#8212; Tear-Off &amp; Decking, Ventilation &amp; Flashing, and so on. Each section has an editable title, a live subtotal, a collapse arrow, up / down to move the whole block, and its own &#8220;+ Line&#8221; so you add to the top group without scrolling. A drop-down on each line moves it to another section. The client proposal and the Community bid sheet print each section as a clean banner with its subtotal before the grand total. Estimates without sections look exactly as before &#8212; a simple quote never grows a banner.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1098 &#8212; Estimates get one-tap assemblies across every trade. Tap &#8220;+ Assembly&#8221; and pick a ready-made package &#8212; Full Roof Replacement (OC Duration), Standing Seam metal, Siding, Soffit &amp; Fascia, Seamless Gutters, or Window Replacement &#8212; and it drops in as a complete section with every line ready. On the card, enter the total squares (or window count) and the field-based lines scale to the job automatically; the LF and EA lines come pre-filled with sensible starting quantities. Built your own section? Tap &#8220;Save as Assembly&#8221; on its header and it joins your library, on every device. Assemblies ship with no prices &#8212; you set the money per job.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41839,6 +41839,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1098, d:'2026-08-27', t:'One-tap assemblies for estimates', s:'You can now build an estimate in seconds from ready-made packages that span every trade you run. Tap the new <b>+ Assembly</b> button and pick a template &mdash; Full Roof Replacement (OC Duration), Metal / Standing Seam, Composite &amp; Vinyl Siding, Aluminum Fascia &amp; Vented Soffit, Seamless 6&#34; K-Style Gutters, or Full-Frame Window Replacement &mdash; and it drops straight in as a complete, titled section with all its lines (detailed and flat) ready to price. On the card you can type the total squares (or, for windows, the number of openings) and the field-based lines scale to the job at once; the running-foot and each-count lines (drip edge, gutters, hangers, boots) come pre-filled with sensible starting quantities you adjust. Made a section you want to reuse? Tap <b>Save as Assembly</b> on its header and it is saved to your library, shared across your phone and desktop; delete your own any time. Every built-in package ships with no prices on purpose &mdash; the assembly carries the scope and quantities, and you set the dollars per job so a stale number never rides in. Nothing changes for a plain estimate; this is all opt-in from the two new buttons.' },
 { b:1097, d:'2026-08-27', t:'Organize an estimate into named sections', s:'Big estimates now group into sections so the estimate &mdash; and the client&#8217;s proposal &mdash; read like a real scope of work. Tap <b>+ Section</b> to start one; each section header has an editable title (with quick names like Tear-Off &amp; Decking, Ventilation &amp; Flashing, Labor &amp; Disposal), a live subtotal that adds up as you type, a collapse arrow to fold it away, up / down arrows to move the whole block, and its own <b>+ Line</b> button so you can add to a group up top without scrolling to the bottom. Every line has a small drop-down to move it into another section. Your printed proposal and the Community bid sheet now show each section as a clean banner with its own subtotal before the grand total, so a big roof reads clearly instead of as one long list. Nothing changes for a simple quote &mdash; an estimate with no sections looks exactly like it did, no banners added. Sections save with the estimate; no setup needed.' },
 { b:1096, d:'2026-08-27', t:'Every estimate line gets its own Detailed / Flat switch', s:'You can now price each line the way it wants to be priced, without flipping the whole estimate. Every line has a small Detailed / Flat switch. Detailed keeps Quantity, Unit and Unit Price and multiplies them. Flat collapses those away and shows one description with a single lump-sum price &mdash; no empty Qty or Unit columns to leave blank. The keyboard keeps up: press Enter in a line&#8217;s last price box to drop a fresh line below it, and Tab jumps from the price straight to the next line&#8217;s first field, so you can build an estimate without lifting your hand to the mouse. New lines take the same mode as the line above. The client proposal and the Community bid sheet both print detailed and flat lines together, each one clean and correct. Old lump-sum estimates open as all-flat automatically. The old single &ldquo;Qty / unit&rdquo; checkbox is gone &mdash; the per-line switch replaces it.' },
 { b:1095, d:'2026-08-27', t:'The estimate builder gets the light Cardinal theme', s:'You asked to keep the estimate builder light only &mdash; no dark option &mdash; with a tokenized Cardinal theme and the number boxes drawn like the soft, pressed-in style you sent. It is now a porcelain page: white cards, deep charcoal text, neutral borders and Cardinal red for the Save button, the active line and accents. The number cells (quantity, unit price, flat price, discount, deposit) are neumorphic &mdash; pressed into the card with crisp black text so they read in sunlight &mdash; and the cell you are typing in shows a red focus ring. The header and the phone Save bar stay dark on purpose, framing the light workspace and keeping the status bar matched. Only the estimate builder changed; Reports, Community cards and everything else keep their look.' },
@@ -46950,7 +46951,7 @@ window.CardinalPhotoEditor = { open: open, close: close };
 .cr-est-head button.danger{color:#d8cfc4;border-color:rgba(216,207,196,.4)}
 .cr-est-head button.danger:hover{background:#c8202e;color:#fff;border-color:#c8202e}
 .cr-est-saved-row .rowdel{flex:0 0 auto;background:transparent;border:0;cursor:pointer;color:#8f1620;font-size:15px;line-height:1;padding:3px 5px;border-radius:5px;font-family:inherit}
-.cr-est-saved-row .rowdel:hover{background:#c8202e;color:#fff}.cr-est-head button.primary:hover{background:#B01F21}.cr-est-head button.primary:disabled{opacity:.55;cursor:wait}.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px}.cr-est-clientcard .name{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:7px 12px;border-radius:6px;border:0;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#B01F21}.cr-est-items-head .add-custom{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-est-items-head .add-abc{background:transparent;color:#2a6b3c;border:1px solid #2a6b3c;margin-left:6px}.cr-est-items-head .add-abc:hover{background:rgba(42,107,60,.1)}.cr-est-items-head .add-custom:hover{background:rgba(200,32,46,.1)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 14px 'Segoe UI',Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .cr-est-rowmode{display:inline-flex;margin-top:10px;border:1px solid var(--est-line,#e2e8f0);border-radius:8px;overflow:hidden;background:var(--est-well,#f8fafc)}.cr-est-lineitem .cr-est-rowmode button{-webkit-appearance:none;appearance:none;border:0;background:transparent;padding:7px 15px;min-height:38px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--est-dim,#475569);cursor:pointer;font-family:inherit}.cr-est-lineitem .cr-est-rowmode button+button{border-left:1px solid var(--est-line,#e2e8f0)}.cr-est-lineitem .cr-est-rowmode button.on{background:var(--est-red,#c8202e);color:#fff}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:10px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-est-section{margin-bottom:6px}.cr-est-sechead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 8px;padding:8px 10px;background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-left:3px solid var(--est-red,#c8202e);border-radius:8px}.cr-est-sechead .sec-chev{-webkit-appearance:none;appearance:none;border:0;background:transparent;color:var(--est-dim,#475569);font-size:13px;line-height:1;cursor:pointer;padding:0 4px;min-height:32px}.cr-est-sechead .sec-title{flex:1 1 120px;min-width:80px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-ink,#0f172a);background:#fff;border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:7px 9px}.cr-est-sechead .sec-title-static{flex:1 1 120px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-dim,#475569)}.cr-est-sechead .sec-subtotal{font:800 13px 'Segoe UI',Arial,sans-serif;color:var(--est-ink,#0f172a);font-variant-numeric:tabular-nums;white-space:nowrap}.cr-est-sechead .sec-move{display:flex;gap:2px}.cr-est-sechead .sec-move button{width:30px;height:30px;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-red,#c8202e);border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-sechead .sec-move button:disabled{opacity:.3;cursor:default}.cr-est-sechead .sec-addline{-webkit-appearance:none;appearance:none;border:1px solid var(--est-red,#c8202e);background:transparent;color:var(--est-red,#c8202e);border-radius:6px;padding:7px 11px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-secmove{margin-left:8px;font:700 11px 'Segoe UI',Arial,sans-serif;color:var(--est-dim,#475569);background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:6px 8px;min-height:34px;vertical-align:middle}.cr-est-items-head .add-section{background:transparent;color:var(--est-dim,#475569);border:1px solid var(--est-line,#e2e8f0)}.cr-est-items-head .add-section:hover{background:var(--est-well,#f8fafc)}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:14px 16px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline}.cr-est-totals .lbl{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-est-totals .grand-val{font:800 20px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
+.cr-est-saved-row .rowdel:hover{background:#c8202e;color:#fff}.cr-est-head button.primary:hover{background:#B01F21}.cr-est-head button.primary:disabled{opacity:.55;cursor:wait}.cr-est-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:14px 16px 40px;padding-bottom:calc(150px + env(safe-area-inset-bottom,0px));background:#fdfcf7}.cr-est-clientcard{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:14px}.cr-est-clientcard .name{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-clientcard .addr{font:600 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;margin-top:2px}.cr-est-body label{display:block;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin:12px 0 4px}.cr-est-body input[type=text],.cr-est-body input[type=number],.cr-est-body input[type=date],.cr-est-body select,.cr-est-body textarea{width:100%;box-sizing:border-box;padding:9px 12px;border:1px solid #d9cfaf;border-radius:8px;font-family:inherit;font-size:14px;background:#fff;color:#2c2c2c;outline:none}.cr-est-body input:focus,.cr-est-body select:focus,.cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.22)}.cr-est-body textarea{min-height:70px;resize:vertical;line-height:1.5}.cr-est-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px}@media (max-width:520px){.cr-est-row3{grid-template-columns:1fr}}.cr-est-items-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:22px 0 8px}.cr-est-items-head h3{margin:0;flex:1 1 100%;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}@media (min-width:560px){.cr-est-items-head h3{flex:1 1 auto}}.cr-est-items-head button{padding:7px 12px;border-radius:6px;border:0;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;font-family:inherit}.cr-est-items-head .add-lib{background:#c8202e;color:#fff;margin-right:6px}.cr-est-items-head .add-lib:hover{background:#B01F21}.cr-est-items-head .add-custom{background:transparent;color:#8f1620;border:1px solid #c8202e}.cr-est-items-head .add-abc{background:transparent;color:#2a6b3c;border:1px solid #2a6b3c;margin-left:6px}.cr-est-items-head .add-abc:hover{background:rgba(42,107,60,.1)}.cr-est-items-head .add-custom:hover{background:rgba(200,32,46,.1)}.cr-est-lineitem{background:#fff;border:1px solid #e8d9a8;border-radius:10px;padding:12px 14px;margin-bottom:10px;position:relative}.cr-est-lineitem .name-input{font:800 14px 'Segoe UI',Arial,sans-serif;padding:6px 8px;border:1px solid transparent;border-radius:6px;background:transparent}.cr-est-lineitem .name-input:focus,.cr-est-lineitem .name-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .desc-input{font:400 12.5px 'Segoe UI',Arial,sans-serif;line-height:1.45;color:#4a4a4a;padding:6px 8px;margin-top:4px;border:1px solid transparent;border-radius:6px;background:transparent;min-height:38px;overflow:hidden;resize:vertical;width:100%;box-sizing:border-box;font-family:inherit}.cr-est-lineitem .desc-input:focus,.cr-est-lineitem .desc-input:hover{border-color:#d9cfaf;background:#fdfcf7}.cr-est-lineitem .cr-est-rowmode{display:inline-flex;margin-top:10px;border:1px solid var(--est-line,#e2e8f0);border-radius:8px;overflow:hidden;background:var(--est-well,#f8fafc)}.cr-est-lineitem .cr-est-rowmode button{-webkit-appearance:none;appearance:none;border:0;background:transparent;padding:7px 15px;min-height:38px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--est-dim,#475569);cursor:pointer;font-family:inherit}.cr-est-lineitem .cr-est-rowmode button+button{border-left:1px solid var(--est-line,#e2e8f0)}.cr-est-lineitem .cr-est-rowmode button.on{background:var(--est-red,#c8202e);color:#fff}.cr-est-lineitem .pricing.lump{grid-template-columns:auto 1fr;gap:10px}.cr-est-lineitem .pricing.lump .lump-lbl{font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b}.cr-est-lineitem .pricing.lump input{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}.cr-est-lineitem .pricing{display:grid;grid-template-columns:80px 60px 110px 1fr;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed #e8d9a8}.cr-est-lineitem .pricing .lbl{grid-column:1 / -1;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b;display:none}.cr-est-lineitem .pricing input,.cr-est-lineitem .pricing select{padding:6px 8px;font-size:13px;text-align:right}.cr-est-lineitem .pricing .unit-sel{text-align:left}.cr-est-lineitem .pricing .amount{text-align:right;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;padding:6px 8px}.cr-est-lineitem .del{position:absolute;top:8px;right:8px;background:transparent;border:0;cursor:pointer;color:#767066;font-size:18px;line-height:1;padding:4px 8px}.cr-est-lineitem .del:hover{color:var(--red-dk)}.cr-est-move{position:absolute;top:8px;right:38px;display:flex;gap:2px}.cr-est-move button{width:26px;height:26px;border:1px solid #e8d9a8;background:#f4f2f1;color:#8f1620;border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-move button:hover:not(:disabled){background:#c8202e;color:#fff;border-color:#c8202e}.cr-est-move button:disabled{opacity:.3;cursor:default}.cr-est-move.photo{top:auto;bottom:44px;right:5px}.cr-est-move.photo button{width:24px;height:24px;background:rgba(0,0,0,.55);border-color:transparent;color:#e35c63}.cr-est-move.photo button:hover:not(:disabled){background:#c8202e;color:#fff}.cr-est-empty-items{background:#f4f2f1;border:1px dashed #d9cfaf;border-radius:10px;padding:24px;text-align:center;color:#6b6b6b;font:600 13px 'Segoe UI',Arial,sans-serif}.cr-est-section{margin-bottom:6px}.cr-est-sechead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 8px;padding:8px 10px;background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-left:3px solid var(--est-red,#c8202e);border-radius:8px}.cr-est-sechead .sec-chev{-webkit-appearance:none;appearance:none;border:0;background:transparent;color:var(--est-dim,#475569);font-size:13px;line-height:1;cursor:pointer;padding:0 4px;min-height:32px}.cr-est-sechead .sec-title{flex:1 1 120px;min-width:80px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-ink,#0f172a);background:#fff;border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:7px 9px}.cr-est-sechead .sec-title-static{flex:1 1 120px;font:800 12px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:var(--est-dim,#475569)}.cr-est-sechead .sec-subtotal{font:800 13px 'Segoe UI',Arial,sans-serif;color:var(--est-ink,#0f172a);font-variant-numeric:tabular-nums;white-space:nowrap}.cr-est-sechead .sec-move{display:flex;gap:2px}.cr-est-sechead .sec-move button{width:30px;height:30px;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-red,#c8202e);border-radius:5px;cursor:pointer;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center}.cr-est-sechead .sec-move button:disabled{opacity:.3;cursor:default}.cr-est-sechead .sec-addline{-webkit-appearance:none;appearance:none;border:1px solid var(--est-red,#c8202e);background:transparent;color:var(--est-red,#c8202e);border-radius:6px;padding:7px 11px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.06em;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-secmove{margin-left:8px;font:700 11px 'Segoe UI',Arial,sans-serif;color:var(--est-dim,#475569);background:var(--est-well,#f8fafc);border:1px solid var(--est-line,#e2e8f0);border-radius:6px;padding:6px 8px;min-height:34px;vertical-align:middle}.cr-est-items-head .add-section{background:transparent;color:var(--est-dim,#475569);border:1px solid var(--est-line,#e2e8f0)}.cr-est-items-head .add-section:hover{background:var(--est-well,#f8fafc)}.cr-est-items-head .add-assembly{background:var(--est-red,#c8202e);color:#fff;border:1px solid var(--est-red,#c8202e)}.cr-est-items-head .add-assembly:hover{background:#B01F21}.cr-est-sechead .sec-saveasm{-webkit-appearance:none;appearance:none;border:1px solid var(--est-line,#e2e8f0);background:#fff;color:var(--est-dim,#475569);border-radius:6px;padding:7px 10px;font:800 10px 'Segoe UI',Arial,sans-serif;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;min-height:34px}.cr-est-sechead .sec-saveasm:hover{background:var(--est-well,#f8fafc);border-color:var(--est-red,#c8202e);color:var(--est-red,#c8202e)}#cr-est-picker .asm-group{border-bottom:1px solid #eee2c8}#cr-est-picker .asm-grouphd{padding:12px 16px 4px;font:800 10.5px 'Segoe UI',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8f1620}#cr-est-picker .asm-grouphd .asm-groupn{color:#a07f2f}#cr-est-picker .asm-card{padding:10px 16px 14px;border-top:1px solid #f0e8d0}#cr-est-picker .asm-card .top{display:flex;align-items:center;gap:8px}#cr-est-picker .asm-card .name{flex:1;font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c}#cr-est-picker .asm-card .asm-del{flex:0 0 auto;background:transparent;border:0;color:#5a5a5a;font-size:16px;line-height:1;cursor:pointer;padding:2px 6px}#cr-est-picker .asm-card .asm-del:hover{color:#c8202e}#cr-est-picker .asm-card .asm-meta{font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#5a5a5a;margin-top:2px}#cr-est-picker .asm-card .asm-act{display:flex;gap:8px;align-items:center;margin-top:9px}#cr-est-picker .asm-card .asm-sq{flex:1;min-width:0;box-sizing:border-box;padding:9px 11px;border:1px solid #d9cfaf;border-radius:8px;font-size:13px;background:#fff;color:#2c2c2c;font-family:inherit}#cr-est-picker .asm-card .asm-insert{flex:0 0 auto;background:#c8202e;color:#fff;border:0;border-radius:8px;padding:0 18px;min-height:40px;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;font-family:inherit}#cr-est-picker .asm-card .asm-insert:hover{background:#B01F21}.cr-est-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.cr-est-photo{background:#fff;border:1px solid #e8d9a8;border-radius:10px;overflow:hidden;position:relative}.cr-est-photo .thumb{background:#f0e8d0;aspect-ratio:1/1;overflow:hidden;display:block}.cr-est-photo .thumb img{width:100%;height:100%;object-fit:cover;display:block}.cr-est-photo .caption{padding:6px 8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#4a4a4a;line-height:1.4;border:0;outline:none;resize:none;width:100%;box-sizing:border-box;background:#fff;font-family:inherit;min-height:38px}.cr-est-photo .caption:focus{background:#f4f2f1}.cr-est-photo .del{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.55);color:#fdfcf7;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;padding:0}.cr-est-photo .del:hover{background:rgba(156,24,34,.85)}.cr-est-photo.is-cover{border-color:#c8202e;box-shadow:0 0 0 2px rgba(200,32,46,.35)}.cr-est-photo .cover-btn{position:absolute;top:5px;left:5px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#e35c63;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;padding:0}.cr-est-photo .cover-btn:hover{background:rgba(200,32,46,.85);color:#fff}.cr-est-photo.is-cover .cover-btn{background:#c8202e;color:#fff}.cr-est-photo .cover-tag{position:absolute;top:36px;left:5px;background:#c8202e;color:#fff;font:800 11px 'Segoe UI',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:2px 6px;border-radius:4px}.cr-est-photohint{margin-top:8px;font:600 11.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b;line-height:1.4}.cr-est-totals{background:#f4f2f1;border:1px solid #e8d9a8;border-radius:10px;padding:14px 16px;margin:20px 0 4px;display:grid;grid-template-columns:1fr auto;gap:8px 20px;align-items:baseline}.cr-est-totals .lbl{font:700 12.5px 'Segoe UI',Arial,sans-serif;color:#6b6b6b}.cr-est-totals .val{font:800 14px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;text-align:right;font-variant-numeric:tabular-nums}.cr-est-totals .val input{text-align:right;padding:4px 8px;width:110px;font-size:13px}.cr-est-totals .grand-lbl{font:800 13.5px 'Segoe UI',Arial,sans-serif;color:#2c2c2c;letter-spacing:.02em}.cr-est-totals .grand-val{font:800 20px Georgia,'Times New Roman',serif;color:#8f1620}.cr-est-totals .rule{grid-column:1 / -1;border-top:1px solid #e8d9a8;margin:2px 0}.cr-est-totals .deposit{grid-column:1 / -1;background:#fff;border:1px solid #c8202e;border-radius:6px;padding:9px 12px;display:grid;grid-template-columns:auto 60px 1fr;gap:6px 10px;align-items:baseline;margin-top:6px}.cr-est-totals .deposit .pct{padding:4px 8px;width:60px;text-align:center;font:800 13px 'Segoe UI',Arial,sans-serif}.cr-est-totals .deposit .amt{text-align:right;font:800 15px 'Segoe UI',Arial,sans-serif;color:#8f1620}#cr-est-picker{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9510;justify-content:center;align-items:flex-end}#cr-est-picker.open{display:flex}#cr-est-picker .box{background:#fdfcf7;width:100%;max-width:640px;max-height:85vh;max-height:85dvh;border-radius:14px 14px 0 0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -8px 40px rgba(0,0,0,.35)}#cr-est-picker .box-head{padding:14px 18px 10px;background:#f4f2f1;border-bottom:1px solid #e8d9a8;display:flex;align-items:center;gap:10px;flex:0 0 auto}#cr-est-picker .box-head h3{margin:0;flex:1;font:800 13px Georgia,serif;color:#2c2c2c}#cr-est-picker .box-head button{background:transparent;border:0;cursor:pointer;color:#6b6b6b;font-size:22px;line-height:1;padding:2px 8px}#cr-est-picker .box-search{padding:10px 14px;background:#fdfcf7;flex:0 0 auto}#cr-est-picker .box-search input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #d9cfaf;border-radius:22px;font-size:14px;outline:none;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none' stroke='%23888' stroke-width='2'><circle cx='7' cy='7' r='5'/><path d='M11 11l3 3'/></svg>") no-repeat 10px center}#cr-est-picker .box-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;padding-bottom:env(safe-area-inset-bottom,0px)}
 /* 962 \u2014 THE APP ALREADY HAD AN ANSWER FOR THIS AND I MISSED IT.
    Build 595 (#projModal), then 935 (#cr-pb-modal .sheet), both solved the
    installed bottom bar the same way and 935 wrote down why: \u201cClearance, NOT a
@@ -47056,6 +47057,206 @@ return (gl || []).reduce(function(sum, l){
 return sum + (l.flat === true ? (Number(l.amount) || 0) : (Number(l.qty) || 0) * (Number(l.unit_price) || 0));
 }, 0);
 }
+
+/* ---- 1098: Saved Assemblies -----------------------------------------------
+   An assembly is a named bundle of lines that drops in as ONE titled section
+   (build 1097's model). Defaults ship here; custom ones live in the
+   estimate_assemblies table and sync across devices. Everything degrades to
+   defaults-only if the table or connection is absent. Prices ship at 0 by
+   design — an assembly carries the scope and quantities; the rep sets the
+   money per job, so a stale price can never ride in. */
+var EST_ASSEMBLIES = [
+{ id:'def-roof-oc', name:'Full Roof Replacement — OC Duration', trade:'Roofing', _default:true, lines:[
+{ name:'Tear-off existing roofing layers & haul away', description:'', qty:1, unit:'SQ', unit_price:0, per_sq:1 },
+{ name:'Synthetic underlayment', description:'ProArmor / Deck Defense', qty:1, unit:'SQ', unit_price:0, per_sq:1 },
+{ name:'Ice & Water Shield', description:'Eaves, valleys and penetrations', qty:66, unit:'LF', unit_price:0 },
+{ name:'Drip edge flashing', description:'Perimeter', qty:150, unit:'LF', unit_price:0 },
+{ name:'Starter strip shingles', description:'Eaves & rakes', qty:150, unit:'LF', unit_price:0 },
+{ name:'OC Duration architectural shingles', description:'SureNail — includes 10% waste', qty:1, unit:'SQ', unit_price:0, per_sq:1.1 },
+{ name:'Shingle-over ridge vent', description:'SkyRunner', qty:30, unit:'LF', unit_price:0 },
+{ name:'Hip & ridge cap shingles', description:'ProEdge / RIZERidge', qty:40, unit:'LF', unit_price:0 },
+{ name:'Pipe flashing boots', description:'Neoprene / silicone', qty:2, unit:'EA', unit_price:0 },
+{ name:'Dump trailer, magnetic sweep & site cleanup', description:'', qty:0, unit:'', unit_price:0, flat:true }
+]},
+{ id:'def-roof-metal', name:'Metal Accent / Standing Seam — Porch & Bay', trade:'Roofing', _default:true, lines:[
+{ name:'Tear-off to bare deck & inspect substrate', description:'', qty:1, unit:'SQ', unit_price:0, per_sq:1 },
+{ name:'High-temp Ice & Water underlayment', description:'Full deck', qty:1, unit:'SQ', unit_price:0, per_sq:1 },
+{ name:'Custom rake, drip edge & headwall transition flashing', description:'', qty:40, unit:'LF', unit_price:0 },
+{ name:'Standing seam / premium rib metal panels', description:'', qty:1, unit:'SQ', unit_price:0, per_sq:1.15 },
+{ name:'Concealed color-matched fasteners & closures', description:'', qty:0, unit:'', unit_price:0, flat:true }
+]},
+{ id:'def-siding', name:'Composite / Vinyl Siding Replacement', trade:'Siding', _default:true, lines:[
+{ name:'Strip existing siding to sheathing & dispose', description:'', qty:1, unit:'SQ', unit_price:0, per_sq:1 },
+{ name:'Housewrap weather-resistant barrier', description:'Taped seams', qty:1, unit:'SQ', unit_price:0, per_sq:1 },
+{ name:'Starter strips, utility trim & J-channels', description:'', qty:100, unit:'LF', unit_price:0 },
+{ name:'Outside & inside corner post assemblies', description:'', qty:4, unit:'EA', unit_price:0 },
+{ name:'Premium lap siding', description:'Everlast composite / heavy-gauge vinyl', qty:1, unit:'SQ', unit_price:0, per_sq:1.1 },
+{ name:'Light & electrical mounting blocks / trim rings', description:'', qty:3, unit:'EA', unit_price:0 },
+{ name:'Siding installation labor & scaffolding', description:'', qty:0, unit:'', unit_price:0, flat:true }
+]},
+{ id:'def-soffit', name:'Aluminum Fascia Wrap & Vented Soffit', trade:'Soffit & Fascia', _default:true, lines:[
+{ name:'Inspect sub-fascia & repair minor rotted backing', description:'', qty:20, unit:'LF', unit_price:0 },
+{ name:'Custom-bent heavy-gauge aluminum fascia wrap', description:'', qty:100, unit:'LF', unit_price:0 },
+{ name:'Aluminum / vinyl vented soffit panels', description:'', qty:100, unit:'LF', unit_price:0 },
+{ name:'Continuous F-channel / J-channel receiver trim', description:'', qty:100, unit:'LF', unit_price:0 },
+{ name:'Color-matched trim nails & fasteners', description:'', qty:0, unit:'', unit_price:0, flat:true }
+]},
+{ id:'def-gutter', name:'Seamless 6\" K-Style Gutter & 3x4 Downspout', trade:'Gutters', _default:true, lines:[
+{ name:'Remove & dispose of existing gutter system', description:'', qty:120, unit:'LF', unit_price:0 },
+{ name:'Seamless .032 aluminum 6\" K-style gutters', description:'', qty:120, unit:'LF', unit_price:0 },
+{ name:'Heavy-duty hidden screw hangers', description:'24\" on center', qty:60, unit:'EA', unit_price:0 },
+{ name:'Miters, end caps & silicone sealant', description:'Box / strip', qty:4, unit:'EA', unit_price:0 },
+{ name:'3x4 oversized aluminum downspouts & elbows', description:'', qty:60, unit:'LF', unit_price:0 },
+{ name:'Downspout clean-out extensions', description:'Hinged / zip', qty:4, unit:'EA', unit_price:0 },
+{ name:'Micro-mesh leaf gutter guards', description:'Optional', qty:120, unit:'LF', unit_price:0 }
+]},
+{ id:'def-window', name:'Full-Frame / Pocket Window Replacement', trade:'Windows', _default:true, lines:[
+{ name:'Extract existing window sash/frame & haul away', description:'', qty:1, unit:'EA', unit_price:0, per_unit:1 },
+{ name:'Inspect rough opening, sill pan flashing & prep buck', description:'', qty:1, unit:'EA', unit_price:0, per_unit:1 },
+{ name:'High-performance replacement window unit', description:'Andersen / ProVia', qty:1, unit:'EA', unit_price:0, per_unit:1 },
+{ name:'Low-expansion closed-cell foam perimeter seal', description:'', qty:1, unit:'EA', unit_price:0, per_unit:1 },
+{ name:'Exterior aluminum trim coil / brickmold capping', description:'', qty:1, unit:'EA', unit_price:0, per_unit:1 },
+{ name:'Interior stop trim reinstall / touch-up caulk', description:'', qty:1, unit:'EA', unit_price:0, per_unit:1 }
+]}
+];
+var CUSTOM_ASSEMBLIES = [];
+function findAssembly(id){
+var all = EST_ASSEMBLIES.concat(CUSTOM_ASSEMBLIES);
+for(var i=0;i<all.length;i++){ if(String(all[i].id) === String(id)) return all[i]; }
+return null;
+}
+/* expand template lines into fresh estimate lines. A positive `n` scales the
+   field-driven lines: per_sq lines by squares, per_unit lines (e.g. windows) by
+   the unit count. per_sq / per_unit are assembly-only keys, not carried onto the
+   estimate line. */
+function expandAssembly(a, n){
+return (a.lines || []).map(function(ln){
+var q = Number(ln.qty) || 0;
+if(n > 0){
+if(ln.unit === 'SQ' || ln.per_sq != null) q = (Number(ln.per_sq) || 1) * n;
+else if(ln.per_unit != null) q = (Number(ln.per_unit) || 1) * n;
+}
+var o = { _lid: newLineId(), name: ln.name || '', description: ln.description || '', qty: q, unit: ln.unit || '', unit_price: Number(ln.unit_price) || 0, amount: 0 };
+if(ln.flat === true) o.flat = true;
+return o;
+});
+}
+/* drop an assembly in as one new titled section */
+function injectAssembly(a, squares){
+if(!state || !a) return;
+var sid = newSecId();
+var name = a.name || 'Section';
+var lines = expandAssembly(a, squares).map(function(o){ o.section_id = sid; o.sec = name; return o; });
+if(!lines.length) return;
+state.lines = state.lines.concat(lines);
+state._dirty = true;
+secCollapsed[sid] = false;
+render();
+setTimeout(function(){
+var el = view && view.querySelector('.cr-est-section[data-sid="' + sid + '"]');
+if(el) el.scrollIntoView({ block:'start', behavior:'smooth' });
+}, 30);
+}
+/* pull the custom library; keeps working (defaults only) if the table or the
+   connection is absent. Re-renders the picker if it is open on assemblies. */
+async function loadAssemblies(){
+try{
+if(!window.supa) return;
+var r = await window.supa.from('estimate_assemblies').select('id,name,trade,lines').order('created_at', { ascending:true });
+if(r.error || !Array.isArray(r.data)) return;
+CUSTOM_ASSEMBLIES = r.data.map(function(row){
+return { id: row.id, name: row.name || 'Assembly', trade: row.trade || null, _default:false,
+lines: Array.isArray(row.lines) ? row.lines : [] };
+});
+if(picker && picker.classList.contains('open') && pickerMode === 'assembly') renderAssemblyPicker();
+}catch(_e){ /* defaults still work */ }
+}
+/* capture a section as a reusable assembly, named by the section's own title */
+async function saveSectionAsAssembly(sid){
+if(!state) return;
+var lines = state.lines.filter(function(l){ return (l.section_id || '') === sid; });
+if(!lines.length){ crTell('That section has no lines to save.'); return; }
+var title = '';
+lines.forEach(function(l){ if(l.sec) title = l.sec; });
+if(!title.trim()){
+crTell('Name the section first — that becomes the assembly’s name.');
+var ti = view && view.querySelector('.cr-est-sechead[data-sid="' + sid + '"] .sec-title');
+if(ti) try{ ti.focus(); }catch(_f){}
+return;
+}
+var payload = { name: title.trim(), trade: null, lines: lines.map(function(l){
+var o = { name: l.name || '', description: l.description || '', qty: Number(l.qty) || 0, unit: l.unit || '', unit_price: Number(l.unit_price) || 0 };
+if(l.flat === true) o.flat = true;
+return o;
+}) };
+try{
+if(!window.supa){ crTell('No connection — cannot save the assembly right now.'); return; }
+var r = await window.supa.from('estimate_assemblies').insert(payload).select('id,name,trade,lines').single();
+if(r.error || !r.data){ crTell('Could not save the assembly. ' + ((r.error && r.error.message) || '')); return; }
+CUSTOM_ASSEMBLIES.push({ id: r.data.id, name: r.data.name, trade: r.data.trade || null, _default:false,
+lines: Array.isArray(r.data.lines) ? r.data.lines : payload.lines });
+crTell('“' + title.trim() + '” saved to your assemblies.');
+}catch(_e){ crTell('Could not save the assembly.'); }
+}
+async function deleteAssembly(id){
+var a = findAssembly(id);
+if(!a || a._default) return;
+if(!await crAsk('Delete the assembly “' + (a.name || '') + '”?\n\nIt leaves your library but any estimate already using it is untouched.')) return;
+try{
+if(window.supa){ var r = await window.supa.from('estimate_assemblies').delete().eq('id', id);
+if(r.error){ crTell('Could not delete: ' + r.error.message); return; } }
+CUSTOM_ASSEMBLIES = CUSTOM_ASSEMBLIES.filter(function(x){ return String(x.id) !== String(id); });
+if(picker && pickerMode === 'assembly') renderAssemblyPicker();
+}catch(_e){ crTell('Could not delete the assembly.'); }
+}
+/* the assembly picker: defaults grouped by trade, custom under "Saved". Each
+   card carries an optional Squares input that scales its SQ lines on insert. */
+function renderAssemblyPicker(){
+if(!picker) return;
+var list = picker.querySelector('.box-list');
+if(!list) return;
+var all = EST_ASSEMBLIES.concat(CUSTOM_ASSEMBLIES);
+var q = (pickerQuery || '').toLowerCase();
+if(q) all = all.filter(function(a){ return (a.name || '').toLowerCase().indexOf(q) !== -1 || (a.trade || '').toLowerCase().indexOf(q) !== -1; });
+if(!all.length){ list.innerHTML = '<div class="empty">No assemblies match — or none saved yet. Build a section and tap “Save as Assembly.”</div>'; return; }
+var groups = {};
+all.forEach(function(a){ var t = a._default ? (a.trade || 'General') : 'Saved'; (groups[t] = groups[t] || []).push(a); });
+var order = Object.keys(groups).sort(function(x, y){ return x === 'Saved' ? 1 : (y === 'Saved' ? -1 : x.localeCompare(y)); });
+list.innerHTML = order.map(function(t){
+return '<div class="asm-group"><div class="asm-grouphd">' + esc(t) + ' <span class="asm-groupn">' + groups[t].length + '</span></div>' +
+groups[t].map(function(a){
+var hasSq = (a.lines || []).some(function(l){ return l.unit === 'SQ' || l.per_sq != null; });
+var hasUnit = !hasSq && (a.lines || []).some(function(l){ return l.per_unit != null; });
+var scaleLbl = hasSq ? 'Squares (optional)' : (hasUnit ? 'Windows (optional)' : '');
+var scaleNote = hasSq ? ' · scales by squares' : (hasUnit ? ' · scales by count' : '');
+return '<div class="asm-card" data-aid="' + esc(a.id) + '">' +
+'<div class="top"><div class="name">' + esc(a.name) + '</div>' +
+(a._default ? '' : '<button class="asm-del" data-adel="' + esc(a.id) + '" type="button" title="Delete">✕</button>') +
+'</div>' +
+'<div class="asm-meta">' + (a.lines || []).length + ' line' + ((a.lines || []).length === 1 ? '' : 's') + scaleNote + '</div>' +
+'<div class="asm-act">' +
+((hasSq || hasUnit) ? '<input type="number" class="asm-sq" min="0" step="0.1" inputmode="decimal" placeholder="' + scaleLbl + '" />' : '') +
+'<button class="asm-insert" data-ains="' + esc(a.id) + '" type="button">Insert</button>' +
+'</div>' +
+'</div>';
+}).join('') + '</div>';
+}).join('');
+list.querySelectorAll('[data-ains]').forEach(function(b){
+b.onclick = function(){
+var a = findAssembly(b.dataset.ains); if(!a) return;
+var card = b.closest('.asm-card');
+var sqEl = card && card.querySelector('.asm-sq');
+var sq = sqEl ? (Number(sqEl.value) || 0) : 0;
+injectAssembly(a, sq);
+closePicker();
+crTell('“' + (a.name || 'Assembly') + '” added as a section.');
+};
+});
+list.querySelectorAll('[data-adel]').forEach(function(b){
+b.onclick = function(e){ e.stopPropagation(); deleteAssembly(b.dataset.adel); };
+});
+}
+
 async function loadForProject(projectId){
 if(!window.supa || !projectId) return [];
 try{
@@ -47283,6 +47484,7 @@ return '<option value="' + o.v + '"' + (o.v === s.status ? ' selected' : '') + '
 '<button class="add-custom" data-act="add-custom" type="button">+ Custom</button>' +
 '<button class="add-abc"    data-act="add-abc"    type="button">+ ABC Supply</button>' +
 '<button class="add-section" data-act="add-section" type="button">+ Section</button>' +
+'<button class="add-assembly" data-act="add-assembly" type="button">+ Assembly</button>' +
 '</div>' +
 '<datalist id="cr-est-secnames">' + SECTION_PRESETS.map(function(n){ return '<option value="' + esc(n) + '"></option>'; }).join('') + '</datalist>' +
 '<div data-slot="lines">' +
@@ -47426,6 +47628,7 @@ return '<div class="cr-est-sechead" data-sid="' + esc(group.id) + '">' +
 '<button type="button" data-act="sec-up" title="Move section up"' + (gi === 0 ? ' disabled' : '') + '>\u25B2</button>' +
 '<button type="button" data-act="sec-down" title="Move section down"' + (gi === gcount - 1 ? ' disabled' : '') + '>\u25BC</button>' +
 '</div>' +
+(isGeneral ? '' : '<button type="button" class="sec-saveasm" data-act="sec-saveasm" title="Save this section to your assemblies">Save as Assembly</button>') +
 '<button type="button" class="sec-addline" data-act="sec-addline" title="Add a line to this section">+ Line</button>' +
 '</div>';
 }
@@ -47867,6 +48070,8 @@ render();
 };
 var addSecBtn = view.querySelector('[data-act="add-section"]');
 if(addSecBtn) addSecBtn.onclick = function(){ addSection(); };
+var addAsmBtn = view.querySelector('[data-act="add-assembly"]');
+if(addAsmBtn) addAsmBtn.onclick = function(){ openPicker('assembly'); };
 view.querySelectorAll('.cr-est-sechead').forEach(function(head){
 var sid = head.dataset.sid;
 var tgl = head.querySelector('[data-act="sec-toggle"]');
@@ -47879,6 +48084,8 @@ var sAdd = head.querySelector('[data-act="sec-addline"]');
 if(sAdd) sAdd.onclick = function(){ addLineToSection(sid); };
 var sTi = head.querySelector('[data-sf="title"]');
 if(sTi) sTi.oninput = function(e){ renameSection(sid, e.target.value); };
+var sSave = head.querySelector('[data-act="sec-saveasm"]');
+if(sSave) sSave.onclick = function(){ saveSectionAsAssembly(sid); };
 });
 var aiAssistBtn = view.querySelector('[data-act="ai-assist"]');
 if(aiAssistBtn) aiAssistBtn.onclick = function(){ runAiAssist(aiAssistBtn); };
@@ -48161,15 +48368,16 @@ return picker;
    a paid round trip to ABC). Everything else about the sheet is shared. */
 var pickerMode = 'library';
 function openPicker(mode){
-pickerMode = (mode === 'abc') ? 'abc' : 'library';
+pickerMode = (mode === 'abc') ? 'abc' : (mode === 'assembly' ? 'assembly' : 'library');
 ensurePicker();
 picker.dataset.pick = pickerMode;
 var h3 = picker.querySelector('.box-head h3');
-if(h3) h3.textContent = pickerMode === 'abc' ? 'Add from ABC Supply' : 'Add from Library';
+if(h3) h3.textContent = pickerMode === 'abc' ? 'Add from ABC Supply' : (pickerMode === 'assembly' ? 'Insert an Assembly' : 'Add from Library');
 var si = picker.querySelector('.box-search input');
 if(si) si.placeholder = pickerMode === 'abc'
 ? 'Search ABC catalog\u2026 e.g. Duration shingles'
-: 'Search library\u2026';
+: (pickerMode === 'assembly' ? 'Search assemblies\u2026' : 'Search library\u2026');
+if(pickerMode === 'assembly') loadAssemblies();
 abcRows = [];
 pickerQuery = '';
 var input = picker.querySelector('.box-search input');
@@ -48186,6 +48394,7 @@ if(picker) picker.classList.remove('open');
 }
 function renderPicker(){
 if(!picker) return;
+if(pickerMode === 'assembly'){ renderAssemblyPicker(); return; }
 if(pickerMode === 'abc'){
 var l0 = picker.querySelector('.box-list');
 if(l0 && !abcRows.length) l0.innerHTML = '<div class="empty">Search ABC\u2019s catalog and tap an item \u2014 it comes in priced at your branch.</div>';
