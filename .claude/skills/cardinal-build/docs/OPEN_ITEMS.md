@@ -1,5 +1,35 @@
 # Cardinal Resource App — Open Items
 
+## 🟢 IN PROGRESS — the Community CRM simplification arc (27 Aug 2026, Theo's 3rd pass)
+
+Theo, third time saying the Community CRM feels like "a lot going on," steered the fix
+himself: pull the community/partner STATS out of the working CRM onto their own page,
+and cut the home to just the work. Renders confirmed the diagnosis — the Clients tab
+alone stacks three slices of the same people (Community clients / By partner / By
+stage), and the calm stats page he was picturing ALREADY EXISTS (`CardinalCommunity
+Analytics`, `cr-can`) but is buried in the Tools menu.
+
+His picks: **1b** (strip the home to one attention list; Bids/Partners become doors),
+**2 = yes** (stats page organized as a card PER PARTNER — Habitat first), a **Tarps
+tab** (aging tarps over the existing `tarped_at`, bidder or not), and **B** on naming
+(estimate, not bid — award-side kept).
+
+Sequence, one build each:
+- ✅ **1091 — the estimate rename** (this build). SHIPPED.
+- ⏭ **#1 — partner-card stats page.** Mockup approved-in-shape (a card per partner:
+  open estimates, out-for-pricing, awarded-YTD, win rate, oldest-open age, tarps up;
+  a 4-number summary strip on top; real door in the Community header, out of Tools).
+  Wire `cr-can` to real data in that layout; replace the metric-by-metric page.
+  ⚠ AWAITING Theo's final "go" + any number swaps on the mockup.
+- ⏭ **#2 (1b) — strip the home** to one attention list; Bids/Partners → doors.
+  PREVIEW before shipping (his rule; and it reverses the 853 "calendar/tiles/day"
+  ordering only for Community, so show it).
+- ⏭ **#3 — the Tarps tab.** Aging list over `tarped_at` (already a real field, build
+  977). Scope: community tarped clients; non-community tarps are a separate question.
+
+---
+
+
 ---
 
 ## ✅ CLOSED — Insurance Clients crowding (build 1086, 26 Aug 2026)
