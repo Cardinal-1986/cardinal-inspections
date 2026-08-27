@@ -12,11 +12,13 @@ cells). His batch plan:
   change): collapse Qty/Unit on Flat, adaptive keyboard (Enter → new line, Tab → next entry),
   mixed-mode proposal + Community sheet, mobile-compact insets. Retired the global "Qty / unit"
   checkbox. Gated: `harness_estflat1096.js` + `render_estflat1096.mjs` (both green/red controlled).
-- **Batch 2b — NEXT (Build 1097): line-item sections.** Titled sections with an editable title, a
-  live auto-calc subtotal badge, quick controls (Add Line to Section, Reorder ▲/▼, Collapse/Expand
-  accordion). `computeTotals` sums across sections; `buildDocHtml` groups by titled section. Built
-  on top of 1096's per-line model.
-- **Batch 3 — queued.** Saved assemblies (a pick-list of pre-built line groups) + proposal polish.
+- **Batch 2b — ✅ Build 1097.** Line-item sections: `section_id`+`sec` per line (jsonb, no
+  migration), one shared `window.crEstGroups`, editable title + autocomplete, live subtotal badge,
+  ▲/▼ block reorder, collapse, per-section + Line, + Section, per-line move-to-section select;
+  proposal + Community sheet print banners + per-section subtotals; single-ungrouped stays flat
+  (back-compat). Gated: `harness_estsec1097.js` + `render_estsec1097.mjs` (green/red controlled).
+- **Batch 3 — NEXT.** Saved assemblies (a pick-list of pre-built line groups — now that sections
+  exist, an assembly is naturally a pre-filled section) + proposal polish.
 
 Settled and not to re-litigate: **no dark option** for the builder; **no money/cost/markup** layer
 (quote tool); Cardinal red is `#c8202e`, never Tailwind `#DC2626`; the toggle's inactive label uses
