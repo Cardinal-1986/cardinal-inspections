@@ -99,7 +99,7 @@ environment variables and GitHub secrets, nowhere else. Below are **names only**
 | `SUPABASE_SERVICE_ROLE_KEY` | 13 routes. **Never reaches a browser** |
 | `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `MOONSHOT_API_KEY` | the AI routes |
 | `RESEND_API_KEY`, `DIGEST_FROM`, `ADMIN_EMAIL`, `DIGEST_STALE_DAYS` | email + the digests |
-| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_MESSAGING_SERVICE_SID` (preferred) or `TWILIO_FROM` | SMS. `notify.js` sends via the Messaging Service SID when set (rides the approved A2P 10DLC campaign), else the bare `TWILIO_FROM` number |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_MESSAGING_SERVICE_SID` (preferred) or `TWILIO_FROM` | SMS. `notify.js` sends via the Messaging Service SID when set (rides the approved A2P 10DLC campaign), else the bare `TWILIO_FROM` number. All four are **trimmed** on read (1106) — an env var pasted with a trailing newline used to produce a `20003` indistinguishable from a wrong key |
 | `VAPID_PRIVATE_KEY` (or `VAPID_PRIVATE`) | web push. Must pair with the `VAPID_PUBLIC` in `api/notify.js` **and** the copy in `index.html` — CI fails if the two public keys disagree, because push otherwise fails silently |
 | `COMPANYCAM_API_KEY` | the CompanyCam index and sync |
 | `ABC_CLIENT_ID`, `ABC_CLIENT_SECRET`, `ABC_API_BASE`, `ABC_ENV` | ABC Supply |

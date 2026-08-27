@@ -835,6 +835,69 @@ not a silent edit.
 
 ---
 
+## Build 1106 — 27 Aug 2026 — The Twilio config is trimmed, and 20003 says WHICH key looks wrong
+
+`index.html` (stamp + CHANGELOG only) + `api/notify.js`. Stamp 1105 → **1106**.
+
+**The round-trip this ends.** 1105 made the failure readable; Theo read it, re-copied both
+credentials off the Twilio console, redeployed twice, and got the identical
+`20003 / HTTP 401`. Two redeploys with no change in the message is the signal that
+"check the keys" was not a diagnosis — it is the same sentence whether the value is
+wrong, is the wrong *kind* of value, or is byte-perfect and carrying a newline.
+
+**The defect, found by reading rather than by guessing.** Nothing in `api/notify.js` ever
+trimmed the `TWILIO_*` values. Line 185 read them raw and line 217 put them straight into
+`Buffer.from(twSid + ':' + twTok)`. **Vercel stores exactly what was pasted**, so a trailing
+newline from a phone copy rides into the Basic auth header, and Twilio answers 20003 —
+byte-identical to a genuinely wrong key. Re-copying carefully cannot fix it if the newline
+comes along every time, which is precisely the symptom: two careful re-copies, same error.
+
+**Two changes.**
+
+1. **One source, trimmed.** All four values are read once at the top of the handler into
+   `*Raw`, trimmed into `twSid` / `twTok` / `twMsgSvc` / `twFrom`, and reduced to a single
+   `twReady`. Every consumer — the send gate and all **three** `sms:` capability reports —
+   now reads that one answer. This deletes the class that caused the 1100 regression rather
+   than policing it: 1100 widened two of the four `process.env` readers and missed the
+   third, so the app said "not set up yet" while it was sending. Four readers → **two lines,
+   one answer**.
+2. **`twShape()` — describe the value without revealing it.** On a 20003 the message now
+   names, for each credential: whether it arrived with stray whitespace, its two-letter type
+   prefix (`AC` / `MG` / `SK` are public type markers, not secrets) and its length against
+   what Twilio uses. So an `MG` pasted into `TWILIO_ACCOUNT_SID`, a half-paste, and an
+   invisible newline are three different sentences instead of one.
+   **The auth token's characters are never printed** — only whitespace and length.
+
+**⚠ The stamp moved even though the fix is server-side.** Precedent (1100, 1103, the whole
+809–836 arc) is that an api-only build leaves `index.html` alone — but Theo had redeployed
+twice with nothing on screen changing, so there was no way to tell *which code was running*.
+That is the `WORKER_BUILD` lesson from 829 in a different costume: provenance is a query,
+never an argument. `index.html` carries the stamp and one CHANGELOG entry; no behaviour.
+
+**Gates.**
+- `check_build` GREEN — 126 inline scripts parse, stamp 1105 → 1106, marker `b:1106` present,
+  negative control clean.
+- `harness_notify_sms1100.mjs` GREEN (39 assertions), **RED(10) on 1105** with no crash — the
+  `guard()` wrapper reports the missing `twShape` as a failure instead of dying, which is
+  BUG_CLASSES 37 avoided by construction.
+- **Two mutation tests, because a new contract that has never been seen to fail is not a
+  contract.** (a) Reintroduce the exact 1100 regression — one `sms:` site quietly recomputing
+  `twSid && twTok && twFrom` — and the harness goes RED on it. (b) Point the auth header back
+  at the untrimmed pair and it goes RED naming the line. Both fired.
+- `twShape()` is **extracted from the shipped file and executed**, not regex-matched: a good
+  SID, a good token, unset, empty, a trailing newline, wrapping spaces, an `MG` in the SID
+  slot, an `SK` in the SID slot, a half-paste. Plus a **leak assertion** — no 4-character run
+  of a 32-char token appears anywhere in the three messages it can produce.
+- `render_smserr1105.mjs` extended to measure **both** worst cases at 390px and GREEN on both
+  (1105's JSON blob wraps to 4 lines, 1106's shape report to 7, neither overflows 268px).
+  **RED(5) on 1104.** ⚠ Worth noting: on 1104 the *1106* string does not overflow — it is
+  prose with spaces, so it breaks naturally without the wrap rule. Measuring only the new
+  string would have been the weaker test; keeping the old one is what keeps the gate honest.
+- No SQL. `MIGRATIONS.md` unchanged.
+
+**Still Theo's, and now answerable in one screenshot:** if the next test still says 20003,
+the message itself names which credential is malformed and how.
+
 ## Build 1105 — 27 Aug 2026 — A failed test text says what went wrong, readably
 
 Theo, with a screenshot and two words: **"Can't read also"**. App stamp 1104 → **1105**;
