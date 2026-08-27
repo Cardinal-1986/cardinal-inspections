@@ -3873,7 +3873,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1094 &#8212; In Community, a job priced on the bid form now counts as one estimate instead of zero, and tapping the Estimates tile opens that priced estimate on the Estimate tab instead of an empty builder. The number and the tap now agree with the quote shown at the top of the card. Retail and insurance are unchanged.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1095 &#8212; The estimate builder now uses a clean, light &#8220;Cardinal&#8221; theme &#8212; a porcelain page with white cards and deep black text, easy to read on a phone or iPad in daylight. The number boxes (quantity, price, discount, deposit) are drawn as soft pressed-in cells, and the box you&#8217;re typing in gets a red outline so you never lose your place. The dark header and bottom bar stay dark on purpose. Only the estimate builder changed.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41839,6 +41839,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1095, d:'2026-08-27', t:'The estimate builder gets the light Cardinal theme', s:'You asked to keep the estimate builder light only &mdash; no dark option &mdash; with a tokenized Cardinal theme and the number boxes drawn like the soft, pressed-in style you sent. It is now a porcelain page: white cards, deep charcoal text, neutral borders and Cardinal red for the Save button, the active line and accents. The number cells (quantity, unit price, flat price, discount, deposit) are neumorphic &mdash; pressed into the card with crisp black text so they read in sunlight &mdash; and the cell you are typing in shows a red focus ring. The header and the phone Save bar stay dark on purpose, framing the light workspace and keeping the status bar matched. Only the estimate builder changed; Reports, Community cards and everything else keep their look.' },
 { b:1094, d:'2026-08-27', t:'Community estimates count, and its tap, match the quote', s:'You asked why a Community job showed a bid amount but the Estimates tile read 0. That tile counted estimates built in the estimate builder, and a job priced on the bid form has none &mdash; the price is typed straight onto the form. Now, in Community, a job with a priced estimate (typed, submitted or awarded) counts as one, and tapping the Estimates tile opens that estimate on the Estimate tab instead of dropping you into an empty builder. The count and the tap now agree with the amount shown at the top of the card. Retail and insurance are untouched.' },
 { b:1093, d:'2026-08-27', t:'Community: the address under the map is readable again', s:'Reported from a screenshot &mdash; on a Community client&rsquo;s Location card the street address printed under the map was a dark green, a colour picked back when that card was cream. Community moved to the black card a while ago and this one ink never followed, so it sat at about 1.2:1 and was effectively invisible. It now takes Community&rsquo;s own light text colour (about 15:1). One stale rule was removed rather than a stronger one piled on top, so the correct colour that was already defined a line above now wins.' },
 { b:1092, d:'2026-08-27', t:'Community stats become a card per partner, with a real button', s:'First of the Community clean-up you steered: the stats live on their own page, one card per community with Habitat first &mdash; open estimates, money out for pricing, awarded, win rate, the oldest estimate still waiting, and tarps up (the aging-tarp count you asked for, on any tarped job that is not finished). A chart button in the Community tab strip opens it; it is no longer buried in the Tools list. Nothing new was computed &mdash; the same figures, grouped by partner &mdash; and every colour is the community theme&rsquo;s own.' },
@@ -47609,7 +47610,7 @@ return '<div class="cr-est-totals" data-slot="totals">' +
 '<span class="grand-lbl">Total</span>' +
 '<span class="grand-val" data-t="total">' + money(t.total) + '</span>' +
 '<div class="deposit">' +
-'<span style="font:800 11px \'Segoe UI\',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#f0a3a9;">Deposit</span>' +
+'<span style="font:800 11px \'Segoe UI\',Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#c8202e;">Deposit</span>' +
 '<input type="number" class="pct" data-f="deposit_pct" value="' + t.deposit_pct + '" min="0" max="100" step="0.5" />' +
 '<span class="amt" data-t="deposit">' + money(t.deposit) + '</span>' +
 '</div>' +
@@ -68167,34 +68168,46 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
    theme to key on. Specificity: #cr-est-view .x is (1,1,0) against the
    originals' (0,1,0) / (0,2,0), and every (0,2,0) neighbour lives inside this
    same view, so nothing outside it is reachable.                            */
-#cr-est-view{background:#0b0b0e;color:var(--obs-ink,#e6e8ec);}
-#cr-est-view .cr-est-body{background:#0b0b0e;}
+#cr-est-view,
+#cr-est-picker{
+  /* Build 1095 — the Cardinal porcelain theme, declared once (light-only).
+     Defined on BOTH the editor and the picker: the picker (#cr-est-picker) is
+     a bottom sheet appended to <body>, NOT a descendant of #cr-est-view, so
+     the tokens must be declared on it directly or every var(--est-*) inside it
+     falls back to nothing (a render caught this). */
+  --est-bg:#F4F4F5; --est-panel:#FFFFFF; --est-ink:#0F172A; --est-dim:#475569;
+  --est-line:#E2E8F0; --est-well:#F8FAFC; --est-red:#c8202e; --est-focus:rgba(200,32,46,.22);
+  --est-numbg:#EAEEF3; --est-inset:inset 4px 4px 9px #D1D9E6, inset -4px -4px 9px #FFFFFF;
+  --est-lift:0 1px 2px rgba(15,23,42,.06),0 6px 16px rgba(15,23,42,.09);
+  --est-hover:0 2px 4px rgba(15,23,42,.08),0 12px 26px rgba(15,23,42,.12);
+}
+#cr-est-view{background:var(--est-bg);color:var(--est-ink);}
+#cr-est-view .cr-est-body{background:var(--est-bg);}
 
+/* cards — flat porcelain, a soft lift, no obsidian bevel */
 #cr-est-view .cr-est-lineitem,
 #cr-est-view .cr-est-clientcard,
 #cr-est-view .cr-est-totals,
 #cr-est-view .cr-est-saved-row,
 #cr-est-view .cr-est-photo,
 #cr-est-view .cr-est-empty-items{
-  background:var(--obs-face);
-  border:1px solid var(--obs-bd,#24242c);
-  border-top:1px solid #34353f;
-  border-bottom:1px solid #050507;
-  box-shadow:var(--obs-lift);
-  color:var(--obs-ink,#e6e8ec);
+  background:var(--est-panel);
+  border:1px solid var(--est-line);
+  box-shadow:var(--est-lift);
+  color:var(--est-ink);
 }
 @media (hover:hover){
   #cr-est-view .cr-est-lineitem:hover,
   #cr-est-view .cr-est-clientcard:hover,
   #cr-est-view .cr-est-totals:hover,
   #cr-est-view .cr-est-saved-row:hover,
-  #cr-est-view .cr-est-photo:hover{box-shadow:var(--obs-hover);}
+  #cr-est-view .cr-est-photo:hover{box-shadow:var(--est-hover);}
 }
-#cr-est-view .cr-est-saved-row:hover{background:var(--obs-face);}
-#cr-est-view .cr-est-empty-items{border-style:dashed;box-shadow:none;color:var(--obs-mute,#9aa0a8);}
+#cr-est-view .cr-est-saved-row:hover{background:var(--est-panel);}
+#cr-est-view .cr-est-empty-items{border-style:dashed;box-shadow:none;color:var(--est-dim);}
 
-/* inks */
-#cr-est-view .cr-est-clientcard .name{color:#ffffff;}
+/* inks — charcoal money, slate labels */
+#cr-est-view .cr-est-clientcard .name{color:var(--est-ink);}
 #cr-est-view .cr-est-clientcard .addr,
 #cr-est-view .cr-est-body label,
 #cr-est-view .cr-est-items-head h3,
@@ -68202,98 +68215,98 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #cr-est-view .cr-est-lineitem .pricing .lbl,
 #cr-est-view .cr-est-totals .lbl,
 #cr-est-view .cr-est-photohint,
-#cr-est-view .cr-est-saved-list .head{color:var(--obs-mute,#9aa0a8);}
+#cr-est-view .cr-est-saved-list .head{color:var(--est-dim);}
 #cr-est-view .cr-est-lineitem .pricing .amount,
-#cr-est-view .cr-est-lineitem .pricing.lump input,
 #cr-est-view .cr-est-totals .val,
 #cr-est-view .cr-est-totals .grand-lbl,
 #cr-est-view .cr-est-saved-row .title,
-#cr-est-view .cr-est-saved-row .amount{color:#ffffff;}
-#cr-est-view .cr-est-saved-row .num{color:#f08a90;}
-#cr-est-view .cr-est-lineitem .desc-input{color:#c3c7ce;}
+#cr-est-view .cr-est-saved-row .amount{color:var(--est-ink);}
+#cr-est-view .cr-est-saved-row .num{color:var(--est-red);}
+#cr-est-view .cr-est-lineitem .desc-input{color:#475569;}
 
-/* the fields — sunk cells in the card, the inverse of the raised card */
+/* the generic fields — light well */
 #cr-est-view .cr-est-body input[type=text],
 #cr-est-view .cr-est-body input[type=number],
 #cr-est-view .cr-est-body input[type=date],
 #cr-est-view .cr-est-body select,
 #cr-est-view .cr-est-body textarea{
-  background:var(--obs-well,#0d0e12);
-  border:1px solid var(--obs-hair,#2f3038);
-  color:#e6e8ec;
-  box-shadow:inset 0 1px 2px rgba(0,0,0,.55);
+  background:var(--est-well);
+  border:1px solid var(--est-line);
+  color:var(--est-ink);
+  box-shadow:none;
 }
 #cr-est-view .cr-est-body input::placeholder,
-#cr-est-view .cr-est-body textarea::placeholder{color:#6d747e;}
+#cr-est-view .cr-est-body textarea::placeholder{color:#94A3B8;}
 #cr-est-view .cr-est-body input:focus,
 #cr-est-view .cr-est-body select:focus,
-#cr-est-view .cr-est-body textarea:focus{border-color:#c8202e;box-shadow:0 0 0 3px rgba(200,32,46,.28);}
-/* the two in-card inputs are transparent at rest by design — keep that, and
-   give them the sunk cell only once they are in use */
+#cr-est-view .cr-est-body textarea:focus{border-color:var(--est-red);box-shadow:0 0 0 3px var(--est-focus);}
+
+/* THE NEUMORPHIC NUMBER CELLS — Qty / Unit $ / Price / Discount / Deposit.
+   Crisp charcoal text (var(--est-ink), ~15:1 on #EAEEF3) so it reads in sun;
+   a Cardinal-red ring layered OVER the inset on focus so you never lose your
+   place. More specific + later than the generic field rule above, so it wins. */
+#cr-est-view .cr-est-lineitem .pricing input[type=number],
+#cr-est-view .cr-est-lineitem .pricing.lump input,
+#cr-est-view .cr-est-totals .val input,
+#cr-est-view .cr-est-totals .deposit input{
+  background:var(--est-numbg);
+  border:1px solid transparent;
+  color:var(--est-ink);
+  box-shadow:var(--est-inset);
+}
+#cr-est-view .cr-est-lineitem .pricing input[type=number]:focus,
+#cr-est-view .cr-est-lineitem .pricing.lump input:focus,
+#cr-est-view .cr-est-totals .val input:focus,
+#cr-est-view .cr-est-totals .deposit input:focus{
+  border-color:var(--est-red);
+  box-shadow:var(--est-inset),0 0 0 3px var(--est-focus);
+}
+
+/* the two in-card inputs — transparent at rest, well on focus (unchanged behaviour) */
 #cr-est-view .cr-est-lineitem .name-input,
 #cr-est-view .cr-est-lineitem .desc-input{background:transparent;box-shadow:none;border-color:transparent;}
-#cr-est-view .cr-est-lineitem .name-input{color:#ffffff;}
+#cr-est-view .cr-est-lineitem .name-input{color:var(--est-ink);}
 #cr-est-view .cr-est-lineitem .name-input:hover,
-#cr-est-view .cr-est-lineitem .desc-input:hover{background:rgba(255,255,255,.045);border-color:var(--obs-hair,#2f3038);}
+#cr-est-view .cr-est-lineitem .desc-input:hover{background:rgba(15,23,42,.03);border-color:var(--est-line);}
 #cr-est-view .cr-est-lineitem .name-input:focus,
-#cr-est-view .cr-est-lineitem .desc-input:focus{background:var(--obs-well,#0d0e12);border-color:#c8202e;}
-#cr-est-view .cr-est-lineitem .pricing{border-top:1px dashed var(--obs-hair,#2f3038);}
-#cr-est-view .cr-est-totals .rule{border-top:1px solid var(--obs-hair,#2f3038);}
-#cr-est-view .cr-est-totals .deposit{background:rgba(200,32,46,.09);border:1px solid rgba(200,32,46,.55);}
-/* 1025: the three inks the 546 obsidian pass missed — the Total measured 1.98:1
-   and the deposit 1.89:1 (CR_MANUAL_ESTIMATES_AUDIT_2026-08). White money is
-   Theo's pick 1, the .actbox obsidian convention: white numbers on black. */
-#cr-est-view .cr-est-totals .grand-val{color:#ffffff;}
-#cr-est-view .cr-est-totals .deposit .amt{color:#ffffff;}
+#cr-est-view .cr-est-lineitem .desc-input:focus{background:var(--est-well);border-color:var(--est-red);}
+#cr-est-view .cr-est-lineitem .pricing{border-top:1px dashed var(--est-line);}
+#cr-est-view .cr-est-totals .rule{border-top:1px solid var(--est-line);}
+#cr-est-view .cr-est-totals .deposit{background:rgba(200,32,46,.06);border:1px solid rgba(200,32,46,.35);}
+#cr-est-view .cr-est-totals .grand-val{color:var(--est-ink);}
+#cr-est-view .cr-est-totals .deposit .amt{color:var(--est-ink);}
 
 /* the small controls */
-#cr-est-view .cr-est-itemchk{background:var(--obs-well,#0d0e12);border:1px solid var(--obs-hair,#2f3038);color:#f0a3a9;}
-#cr-est-view .cr-est-itemchk:hover{background:#16171d;border-color:#c8202e;}
-#cr-est-view .cr-est-items-head .add-custom{color:#f0a3a9;border:1px solid #c8202e;}
-/* 774: the same lift .add-custom gets above. #2a6b3c is 3.06:1 on this
-   ground — under the floor — and #78c98e is 9.87:1, matching its
-   neighbour's 9.84:1 so the two buttons carry equal weight. */
-#cr-est-view .cr-est-items-head .add-abc{color:#78c98e;border:1px solid #3f9457;}
-#cr-est-view .cr-est-move button{background:var(--obs-well,#0d0e12);border:1px solid var(--obs-hair,#2f3038);color:#f0a3a9;}
+#cr-est-view .cr-est-itemchk{background:var(--est-well);border:1px solid var(--est-line);color:var(--est-red);}
+#cr-est-view .cr-est-itemchk:hover{background:#FDECEE;border-color:var(--est-red);}
+#cr-est-view .cr-est-items-head .add-custom{color:var(--est-red);border:1px solid var(--est-red);}
+#cr-est-view .cr-est-items-head .add-abc{color:#2F7D4A;border:1px solid #3F9457;}
+#cr-est-view .cr-est-move button{background:var(--est-well);border:1px solid var(--est-line);color:var(--est-red);}
 #cr-est-view .cr-est-move button:disabled{opacity:.35;}
-#cr-est-view .cr-est-photo .thumb{background:#15161c;}
-#cr-est-view .cr-est-photo .caption{background:transparent;color:#c3c7ce;}
-#cr-est-view .cr-est-photo .caption:focus{background:var(--obs-well,#0d0e12);}
+#cr-est-view .cr-est-photo .thumb{background:#EEF1F4;}
+#cr-est-view .cr-est-photo .caption{background:transparent;color:#475569;}
+#cr-est-view .cr-est-photo .caption:focus{background:var(--est-well);}
 
-/* the library picker rides the same shell */
-#cr-est-picker .box{background:#0b0b0e;box-shadow:0 -8px 40px rgba(0,0,0,.7);}
-#cr-est-picker .box-head{background:#141419;border-bottom:1px solid var(--obs-hair,#2f3038);}
-#cr-est-picker .box-head h3{color:#ffffff;}
-#cr-est-picker .box-head button{color:#9aa0a8;}
-#cr-est-picker .box-search{background:#0b0b0e;}
-#cr-est-picker .box-search input{background-color:#0d0e12;border:1px solid #2f3038;color:#e6e8ec;}
-#cr-est-picker .box-list{background:#0b0b0e;}
-#cr-est-picker .cat-header{background:#141419;color:#9aa0a8;border-top:1px solid #2f3038;border-bottom:1px solid #1c1d23;}
-/* 960: the dark twins of the category palette. Measured on #141419, the header
-   ground: 8.48 / 8.32 / 9.85 / 8.73 / 7.29 / 8.38 : 1. */
-#cr-est-picker{--lc0:#e8a24a;--lc1:#7ab4e8;--lc2:#5ecfcb;--lc3:#d3a0ea;--lc4:#f0857a;--lc5:#a8b0ba;}
-#cr-est-picker .cat-header .cc{background:#1c1d23;color:#9aa0a8;}
-/* 960 \u2014 A LIGHT-ERA INK FOUND WHILE HERE, not part of the ask. The price
-   rode #8f1620, chosen for the cream sheet this picker used to be. On the dark
-   sheet that is 2.16:1 \u2014 the most repeated defect on this project, and this
-   override themed the name, the description and the empty state but not the
-   price. #e35c63 is the app's own accent red: 5.59:1, and 5.09:1 on hover. */
-#cr-est-picker .p-item .price{color:#e35c63;}
-#cr-est-picker .p-item{border-bottom:1px solid #1c1d23;}
-#cr-est-picker .p-item:hover{background:#16171d;}
-#cr-est-picker .p-item .name{color:#ffffff;}
+/* the library picker rides the same porcelain shell */
+#cr-est-picker .box{background:var(--est-bg);box-shadow:0 -8px 40px rgba(15,23,42,.25);}
+#cr-est-picker .box-head{background:#FFFFFF;border-bottom:1px solid var(--est-line);}
+#cr-est-picker .box-head h3{color:var(--est-ink);}
+#cr-est-picker .box-head button{color:var(--est-dim);}
+#cr-est-picker .box-search{background:var(--est-bg);}
+#cr-est-picker .box-search input{background-color:#FFFFFF;border:1px solid var(--est-line);color:var(--est-ink);}
+#cr-est-picker .box-list{background:var(--est-bg);}
+#cr-est-picker .cat-header{background:#EEF1F4;color:var(--est-dim);border-top:1px solid var(--est-line);border-bottom:1px solid var(--est-line);}
+/* dark twins of the category palette, for the light header #EEF1F4 */
+#cr-est-picker{--lc0:#B06A10;--lc1:#2F6DA8;--lc2:#1F8A86;--lc3:#8A4FB0;--lc4:#C0392B;--lc5:#5A6472;}
+#cr-est-picker .cat-header .cc{background:#E2E8F0;color:var(--est-dim);}
+#cr-est-picker .p-item .price{color:var(--est-red);}
+#cr-est-picker .p-item{border-bottom:1px solid var(--est-line);}
+#cr-est-picker .p-item:hover{background:#F1F5F9;}
+#cr-est-picker .p-item .name{color:var(--est-ink);}
 #cr-est-picker .p-item .desc,
-#cr-est-picker .empty{color:#9aa0a8;}
+#cr-est-picker .empty{color:var(--est-dim);}
 
-/* ══ 5 · NAVIGATOR B — the estimate jump list ══════════════════════════════
-   The only genuinely new component in this build. A long estimate is one
-   unbroken scroll of line items; this is the table of contents for it. Desktop
-   only (≥901px), the same breakpoint the leads rail uses — on a phone a rail
-   would eat the column the form needs.
-
-   The sticky works because a grid ITEM's containing block is its grid AREA: the
-   area is the full row height while align-items:start keeps the box at content
-   height, which is exactly the travel sticky needs.                          */
+/* ══ Navigator B — the desktop jump list, in porcelain ══ */
 #cr-est-view .cr-est-nav{display:none;}
 @media (min-width:901px){
   #cr-est-view .cr-est-body{
@@ -68307,23 +68320,22 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
     display:block;
     position:sticky;top:14px;
     max-height:calc(100vh - 140px);overflow-y:auto;
-    background:#0A0E16;
-    border:1px solid #223047;
+    background:#FFFFFF;
+    border:1px solid var(--est-line);
     border-radius:12px;
-    box-shadow:inset 3px 0 7px -3px rgba(0,0,0,.85), inset -1px 0 0 rgba(255,255,255,.055);
+    box-shadow:var(--est-lift);
     padding:11px 9px 13px;
   }
   #cr-est-view .cr-est-main{min-width:0;}
 }
 #cr-est-view .cr-est-nav .navhead{
   font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
-  color:#8a95a9;padding:0 6px 8px;
+  color:var(--est-dim);padding:0 6px 8px;
 }
 #cr-est-view .cr-est-nav .navsec{
   display:flex;align-items:center;gap:7px;width:100%;
-  background:linear-gradient(180deg,#141C29,#0F1521);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.055), inset 0 -1px 0 #060910;
-  color:#8d97a6;border:0;border-radius:7px;
+  background:#F1F5F9;box-shadow:none;
+  color:#475569;border:1px solid var(--est-line);border-radius:7px;
   font:800 11px ui-monospace,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;
   padding:8px 10px 7px;margin:8px 0 2px;cursor:pointer;text-align:left;
 }
@@ -68332,31 +68344,31 @@ box-shadow:var(--rbe-ridge-sh),inset 0 1px 0 var(--rbe-ridge-hl);
 #cr-est-view .cr-est-nav .navsec[aria-expanded="false"] .chev{transform:rotate(-90deg);}
 #cr-est-view .cr-est-nav .navsec .lbl{flex:1;}
 #cr-est-view .cr-est-nav .navsec .cnt{
-  font:700 11px ui-monospace,Menlo,monospace;color:#6b7688;
-  background:rgba(255,255,255,.06);border-radius:999px;padding:1px 7px;
+  font:700 11px ui-monospace,Menlo,monospace;color:var(--est-dim);
+  background:#E2E8F0;border-radius:999px;padding:1px 7px;
 }
 #cr-est-view .cr-est-nav .navbody[hidden]{display:none;}
 #cr-est-view .cr-est-nav .navitem{
   display:flex;align-items:baseline;gap:8px;width:100%;
   background:transparent;border:0;border-radius:6px;
-  color:#c2cbd8;font:600 12px 'Segoe UI',Arial,sans-serif;
+  color:#475569;font:600 12px 'Segoe UI',Arial,sans-serif;
   padding:6px 10px;margin:1px 0;cursor:pointer;text-align:left;
   transition:background .12s ease, color .12s ease;
 }
-#cr-est-view .cr-est-nav .navitem:hover{background:#111927;color:#ffffff;}
+#cr-est-view .cr-est-nav .navitem:hover{background:#F1F5F9;color:var(--est-ink);}
 #cr-est-view .cr-est-nav .navitem.on{
-  background:linear-gradient(180deg,#1A2434,#141C29);color:#ffffff;font-weight:700;
-  box-shadow:inset 3px 0 0 var(--lnav-crmc,#c8202e), 0 1px 2px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07);
+  background:#FDECEE;color:var(--est-ink);font-weight:700;
+  box-shadow:inset 3px 0 0 var(--est-red), 0 1px 2px rgba(15,23,42,.06);
 }
 #cr-est-view .cr-est-nav .navitem .ix{
-  flex:0 0 auto;font:700 11px ui-monospace,Menlo,monospace;color:#6b7688;min-width:14px;
+  flex:0 0 auto;font:700 11px ui-monospace,Menlo,monospace;color:#94A3B8;min-width:14px;
 }
-#cr-est-view .cr-est-nav .navitem.on .ix{color:#f08a90;}
+#cr-est-view .cr-est-nav .navitem.on .ix{color:var(--est-red);}
 #cr-est-view .cr-est-nav .navitem .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-#cr-est-view .cr-est-nav .navempty{color:#8b95a8;font:600 11px 'Segoe UI',Arial,sans-serif;padding:6px 10px;line-height:1.4;}
-/* the body is the scroller, so scroll-margin keeps a jumped-to row off its lip */
+#cr-est-view .cr-est-nav .navempty{color:var(--est-dim);font:600 11px 'Segoe UI',Arial,sans-serif;padding:6px 10px;line-height:1.4;}
 #cr-est-view .cr-est-lineitem,
 #cr-est-view [data-navsec]{scroll-margin-top:14px;}
+
 
 /* ══ 6 · REPORTS — obsidian pipe cards, hairline neon red ══════════════════
    #reportsView ONLY. The 8 .pipecards in #mainView keep 535's navy — "leave the

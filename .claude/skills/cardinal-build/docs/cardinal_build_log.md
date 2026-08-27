@@ -835,6 +835,58 @@ not a silent edit.
 
 ---
 
+## Build 1095 — 27 Aug 2026 — The estimate builder gets the light "Cardinal" theme
+
+Theo, through a run of previews (three polish directions, then a tokenized light/dark, then
+neumorphic number cells): **keep the estimate builder LIGHT ONLY** — no dark option —
+tokenized, Cardinal red, with the number cells drawn as the soft **pressed-in** style from
+a reference he sent. Settled first: it stays a **client-price quote tool** (no cost/markup/
+margin layer). This build is the theme; the per-line Detailed/Flat toggle is the next one.
+
+**What it is.** `#cr-est-view` is re-tokenized to a porcelain palette declared once (`--est-*`):
+canvas `#F4F4F5`, white cards, deep ink `#0F172A`, neutral `#E2E8F0` borders, and Cardinal
+red `#c8202e` (NOT the spec's Tailwind `#DC2626` — the app's real red is `#c8202e`, 236×).
+The number cells (Qty / Unit $ / flat Price / Discount / Deposit) are **neumorphic** —
+`--est-numbg #EAEEF3` with `--est-inset` (`inset 4px 4px 9px #D1D9E6, inset -4px -4px 9px
+#FFFFFF`, scaled from his 18/30 reference to fit a ~40px field) — with **crisp charcoal text**
+and a **Cardinal-red focus ring layered over the inset** (his two explicit asks). The head
+bar and phone Save bar stay **dark on purpose**: dark chrome framing the porcelain workspace,
+and the dark head keeps the PWA status bar matched at the top.
+
+**The scoping that made it safe.** The estimator's dark theme lived in `cr-nvl-styles`, whose
+one obsidian recipe is **shared** by `#cr-est-view`, `#reportsView .pipecard/.rptkpi` and
+`.pcard` — its own comment says *"OBSIDIAN IS BLACK IN BOTH MODES … leave the home screen
+alone."* So only the `#cr-est-view` / `#cr-est-picker` rules (68170 → the Reports section)
+were rewritten; the shared `--obs-*` token block, the Reports rules and the community `.pcard`
+rules are **asserted untouched** — Reports and community stay obsidian. Single-theme by design,
+a sanctioned pattern here (OC Colors, the Showcase). One inline dark-era ink came with it — the
+Deposit label `#f0a3a9` in `renderTotals` — fixed to `#c8202e`.
+
+### Gates
+- `check_build.py` **GREEN** 1094 → 1095 (marker = the `--est-inset` token; negative control
+  clean); patch **byte-reproducible** (re-applied to a clean 1094 tree, `cmp` equal).
+- **`render_estlight1095.mjs`** — real CSS, real editor DOM (incl. the `#cr-est-picker` drawer),
+  Chromium, **both viewports** (390 / 1200). Measures 19 inks + the focus ring: **number cells
+  15.32:1 crisp charcoal**, money 17.85:1, labels 7.58:1, add-ABC green 4.60:1, nav item 15.65:1,
+  deposit label 5.17:1, picker 5.16–17.85:1, and the **focus ring reads Cardinal red** — all ≥
+  floor, both viewports. **It caught TWO real bugs before ship, which is the whole point:**
+  (1) the picker's `var(--est-*)` all resolved to nothing — `#cr-est-picker` is a bottom sheet
+  appended to `<body>`, NOT a child of `#cr-est-view`, so the tokens never reached it; fixed by
+  declaring the tokens on `#cr-est-picker` too. (2) `--est-dim #64748B` failed on the picker's
+  grey grounds (3.86 / 4.33:1); darkened to slate-600 `#475569`, which also lifts every field
+  label to 7.58:1 — better in sunlight, exactly Theo's ask. It was **also seen to fail on a
+  harness bug** (the deposit label at 1.00:1 — `composite()` not blending the deposit box's
+  `rgba(200,32,46,.06)` over white, the "background-color is not the background" trap; fixed to
+  alpha-composite, then 5.17:1), and the base run reads the *dark* obsidian inks, so the harness
+  measures reality, not constants.
+- **Sentinel** (colour build): selftest green (9/9). The full-app sweep is the same slow boot
+  that timed out at 1092; the authoritative colour proof here is the targeted render above,
+  which measures the exact surfaces Theo asked about. Theo's eyes are the final gate on feel.
+
+No SQL. `index.html` + build-log entry.
+
+---
+
 ## Build 1094 — 27 Aug 2026 — Community estimates count, and its tap, match the quote
 
 Theo, on Bonita Wilburn's Community card: *"Where is the bid number coming from?? I don't
