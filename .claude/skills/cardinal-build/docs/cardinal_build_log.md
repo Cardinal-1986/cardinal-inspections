@@ -835,6 +835,59 @@ not a silent edit.
 
 ---
 
+## Build 1093 — 27 Aug 2026 — Community: the address under the map is readable again
+
+Theo, one screenshot of a Community client's Location card: *"Can't read the text."* The
+street address under the map — "3800 klepinger rd dayton ohio46416" — was a dark
+desaturated green on the near-black community card, **1.27:1**, effectively invisible.
+
+**The element is `.dbaddr` (the address UNDER the Leaflet map), not `.locaddr`.** A first
+pass this build mistook the two — `.locaddr` is the base-profile location ROW and is not
+even shown on the community client page — and would have shipped **inert**. Reading the
+actual screenshot settled which element it was; the render harness could not, because it
+grounds these transparent-over-dark profile cards white in a headless walk. *A confident
+wrong element is exactly what "verify against the real shape" is for.*
+
+**Root cause — a partial pass, the 637/702 pattern spelled out in the comment beside the
+rule.** Build 702 chose `#1a2a1e` (a dark green) for community `.dbaddr` **because the
+community card was then `#fffdf7` cream**, on which a dark ink is right. The 700–712 arc
+ported Community to the **black card** (`--ccm-ground #0e100f`). The ground moved cream →
+near-black; this one ink did not follow. Dark green on near-black is what the screenshot
+shows.
+
+**The fix was already one line above the bug.** Line 54131 declared
+`body[data-crm="community"] .dbaddr{color:var(--ccm-ink,#f2f4f3)}` — the correct community
+near-white ink — but the later, equal-specificity rule 54146 (`{color:#1a2a1e}`) overrode
+it. So this is **deletion-at-source**, not another override layer: widen 54131 to both
+community selectors (`claim-community` + `data-crm="community"`), and delete 54146. One
+community `.dbaddr` rule remains, taking Community's own ink token, which flips if Community
+ever gains a light twin — it cannot strand again the way a literal did.
+
+Measured against the real ground `#0e100f` (community card is transparent; page ground):
+**`.dbaddr` 1.27:1 → 17.29:1** (and ≥14.5:1 even if the card were `--ccm-card`/`--ccm-raise`).
+Retail (`#1e2432` / white via 76246) and insurance (`--ct-ink`) `.dbaddr` are governed by
+rules this build does not touch — asserted intact.
+
+### Gates
+- `check_build.py` **GREEN** 1092 → 1093; 126 inline blocks parse; **byte-reproducible**
+  (re-applied to a clean 1092 tree, `cmp` equal).
+- **Colour proof is the direct WCAG computation against the real ground**, corroborating
+  the screenshot — *not* the synthetic-DOM render, which grounds every dark profile card
+  white (it reports even retail-dark, which ships fine, as 1.00:1) and so cannot gate this
+  element without a full app boot. Stated plainly rather than dressed as a green render.
+- **Sentinel not run as a gate here, and why:** its `cardinal` setup's `client` state opens
+  the *retail* profile, never the community client page, so it does not reach this element;
+  and its INK probe derives the composited ground the same synthetic way the render fails
+  at. A note, per the Gate 0 rule, not a silent skip. Theo's eyes are the final gate.
+- Structural: stale `#1a2a1e` gone from the file (was a one-off), `.dbaddr` 8 → 7, the
+  trailing `.cr-pp-item` rule intact.
+
+**BUG_CLASSES:** the recurring light-ink-on-dark class (INK), in its "the ground moved, the
+ink stayed" form — and a fresh reminder of the mislabeled-element trap: the screenshot named
+the element, the harness named the wrong one.
+
+---
+
 ## Build 1092 — 27 Aug 2026 — Community stats become a card per partner, with a real door
 
 First layout build of the Community clean-up Theo steered (1091 was the rename). He
