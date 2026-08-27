@@ -3834,7 +3834,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-26 build 1085 &#8212; All Leads &amp; Jobs stops burying the jobs. The two rows of filter chips — Milestone and Assigned To — came off the top of the screen. On a phone they had grown to sixteen chips across seven lines and pushed the first job card to 85% of the way down; now the list starts near the top and four jobs fit where one used to. Nothing became harder to reach: the funnel button holds all seven filters as it always has, the desktop side rail still lists every one, and tapping a stage on the Cardinal Pipeline card at home still opens this screen already filtered to it. When a filter is on, a line above the list names it and one tap takes it back off.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1087 &#8212; The front door stops wearing the last portal you used. Signing in put you on the portal picker with the header still coloured for whichever portal you were in last &#8212; a red Insurance header sitting over the retail app, or a green Community one. The picker is where you CHOOSE a portal, so it no longer claims to be inside one. Everything else is unchanged on purpose: once you are in a portal, the shared screens like Leads and Photos still carry that portal&#8217;s header, which is what makes the Home button take you back to the right place.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -41791,6 +41791,8 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1087, d:'2026-08-27', t:'The sign-in screen stops wearing the last portal', s:'Reported from a screenshot: signing in gave the retail app with an Insurance header on it. Reproduced at the sign-in call itself &mdash; with the Insurance portal remembered, the portal picker came up titled &ldquo;Insurance&rdquo; in insurance red; with Community remembered it said &ldquo;Community&rdquo;. The picker is where you choose a portal, so it can no longer claim to be in one and comes up in the ordinary app header. Deliberately narrow: once you are inside a portal, Leads, Photos and Reports still carry that portal&rsquo;s colours, which is what makes Home take you back to the right place.' },
+{ b:1086, d:'2026-08-26', t:'Insurance Clients: the stage row folds to one line', s:'Ten claim-stage buttons were wrapping onto four lines above the client list &mdash; 194 pixels of filter before the first client on a phone. The row now keeps a single line and ends with a small &#43;N; tapping it drops the rest down and tapping again folds them back. Every stage is still there and still filters exactly as before. This is a fold rather than the removal the Leads screen got, because Insurance Clients has no funnel button and no side rail &mdash; these buttons are the only filter it has.' },
 { b:1085, d:'2026-08-26', t:'Leads: the filter chips come off the top', s:'The All Leads &amp; Jobs screen spent 361 pixels and seven wrapped lines on two rows of filter chips before showing a single job — measured against the real book, 85% of a phone screen. Both strips are gone. The filters themselves are untouched: the funnel button still holds all seven groups, the desktop rail still lists every one as a checkbox, and the Cardinal Pipeline card on the home screen still opens this list filtered to whichever stage you tap. When something is filtered, a line above the list says which filter it is and one tap removes it.' },
   { b:1084, d:'2026-08-26', t:'Push notifications got a new key',
   s:'The key that signs push notifications was replaced, and the old one deleted from the code. Notifications will be off on every device until you switch them back on once — that is expected, not a fault: a new key cannot talk to a subscription made with the old one. Menu then Notifications to re-enable.' },
@@ -56268,7 +56270,7 @@ chase   : chaseList,
 (function(){'use strict';/* retired in build 301 - the unified header owns insurance chrome */window.CardinalInsHeader=window.CardinalInsHeader||{show:function(){},hide:function(){},build:function(){}};})();
 </script>
 
-<style id="cr-ic-styles">#insClientsView>.ins-header{display:none !important}#insClientsView .ins-body{display:none !important}#insClientsView.cr-ic-live{background:var(--ct-bg) !important;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}#cr-ic-bar{position:sticky;top:0;z-index:12;display:flex;align-items:center;gap:8px;padding:12px 16px;background:linear-gradient(180deg,var(--ct-surface-2),var(--ct-bg));border-bottom:1px solid transparent;border-image:linear-gradient(90deg,var(--ct-red),var(--ct-red-deep)) 1;box-shadow:0 2px 16px var(--ct-focus)}#cr-ic-bar button.nav{flex:0 0 auto;width:38px;height:38px;border-radius:9px;background:transparent;border:1px solid var(--ct-line-strong);color:var(--ct-ink-2);cursor:pointer;font-size:17px;line-height:1}#cr-ic-bar button.nav:hover{border-color:var(--ct-red);color:var(--ct-ink)}#cr-ic-bar h2{flex:1;min-width:0;margin:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(15px,4.4vw,20px);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ct-red-deep,#FF3B30);/* 685: was gradient-clipped text */}#cr-ic-bar .count{flex:0 0 auto;font:700 12px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);min-width:34px;text-align:right}.cr-ic-wrap{max-width:1180px;margin:0 auto;padding:14px 16px calc(72px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}#cr-ic-search{width:100%;box-sizing:border-box;padding:11px 14px;background:var(--ct-surface);color:var(--ct-ink);border:1px solid var(--ct-line);border-radius:10px;font-weight:400;font-size:14.5px;font-family:inherit;outline:none}#cr-ic-search:focus{border-color:var(--ct-red);box-shadow:0 0 0 3px var(--ct-focus)}#cr-ic-search::placeholder{color:var(--ct-ink-2)}.cr-ic-chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-ic-chips::-webkit-scrollbar{display:none}.cr-ic-chips button{flex:0 0 auto;padding:8px 13px;border-radius:18px;cursor:pointer;background:var(--ct-surface);border:1px solid var(--ct-line);color:var(--ct-ink-2);font-weight:700;font-size:11.5px;font-family:inherit;white-space:nowrap}.cr-ic-chips button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink-2)}.cr-ic-chips button.on{background:var(--ct-red);border-color:var(--ct-red);color:var(--ct-red-ink)}.cr-ic-chips button b{margin-left:5px;opacity:.75}.cr-ic-sort{display:flex;align-items:center;gap:8px;margin-top:10px;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-ic-sort button{background:transparent;border:0;cursor:pointer;padding:2px 0;font:inherit;font-family:inherit;color:var(--ct-ink-2);border-bottom:1px solid transparent}.cr-ic-sort button.on{color:var(--ct-red-deep);border-bottom-color:var(--ct-red)}.cr-ic-list{margin-top:14px;display:grid;/* 758: minmax(0,1fr), NOT 1fr. A grid item is min-width:auto, so with a nowrap address inside, a 1fr track cannot shrink below the longest address and every card in the column overflows the phone. Measured: 405.5px track in a 358px container. */grid-template-columns:minmax(0,1fr);gap:8px}@media (min-width:900px){.cr-ic-list{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}.cr-ic-row{display:block;width:100%;min-width:0;text-align:left;cursor:pointer;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:12px;padding:14px 15px;font-family:inherit;color:var(--ct-ink);transition:background .15s}.cr-ic-row:hover{background:linear-gradient(var(--ct-surface-2),var(--ct-surface-2)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box}.cr-ic-row .top{display:flex;align-items:baseline;gap:10px}.cr-ic-row .nm{flex:1;min-width:0;font-weight:700;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .owed{flex:0 0 auto;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-ic-row .owed.none{color:var(--ct-ink-2)}.cr-ic-row .ad{/* 758: display:block, same fix and same reason as .cr-pb-job .ad. This is a <span> from the renderer, and text-overflow:ellipsis is INERT on an inline box - so a long address overflowed the card by 32px and was cut off by the page's overflow-x:hidden with no ellipsis to show for it. An inline box also reports scrollWidth/clientWidth as 0, which made the first version of gate_759's truncation check pass VACUOUSLY (0 <= 0+1) on a broken build - the gate now asserts display and the element's own right edge. */display:block;font-size:12px;color:var(--ct-ink-2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}.cr-ic-row .carrier{font-size:11.5px;color:var(--ct-ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .stg{flex:0 0 auto;padding:3px 8px;border-radius:5px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.11em;text-transform:uppercase;background:var(--ct-surface-3);color:var(--ct-red-deep)}.cr-ic-row .stg.warn{background:var(--ct-warn-bg);color:var(--ct-warn)}.cr-ic-row .stg.bad{background:var(--ct-red-wash);color:var(--ct-red-deep)}.cr-ic-row .age{flex:0 0 auto;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2)}.cr-ic-row .age.stale{color:var(--ct-red-deep)}.cr-ic-empty{padding:44px 20px;text-align:center;font-size:13.5px;line-height:1.6;color:var(--ct-ink-2)}</style>
+<style id="cr-ic-styles">#insClientsView>.ins-header{display:none !important}#insClientsView .ins-body{display:none !important}#insClientsView.cr-ic-live{background:var(--ct-bg) !important;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}#cr-ic-bar{position:sticky;top:0;z-index:12;display:flex;align-items:center;gap:8px;padding:12px 16px;background:linear-gradient(180deg,var(--ct-surface-2),var(--ct-bg));border-bottom:1px solid transparent;border-image:linear-gradient(90deg,var(--ct-red),var(--ct-red-deep)) 1;box-shadow:0 2px 16px var(--ct-focus)}#cr-ic-bar button.nav{flex:0 0 auto;width:38px;height:38px;border-radius:9px;background:transparent;border:1px solid var(--ct-line-strong);color:var(--ct-ink-2);cursor:pointer;font-size:17px;line-height:1}#cr-ic-bar button.nav:hover{border-color:var(--ct-red);color:var(--ct-ink)}#cr-ic-bar h2{flex:1;min-width:0;margin:0;text-align:center;font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:clamp(15px,4.4vw,20px);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ct-red-deep,#FF3B30);/* 685: was gradient-clipped text */}#cr-ic-bar .count{flex:0 0 auto;font:700 12px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2);min-width:34px;text-align:right}.cr-ic-wrap{max-width:1180px;margin:0 auto;padding:14px 16px calc(72px + env(safe-area-inset-bottom,0px));font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:var(--ct-ink)}#cr-ic-search{width:100%;box-sizing:border-box;padding:11px 14px;background:var(--ct-surface);color:var(--ct-ink);border:1px solid var(--ct-line);border-radius:10px;font-weight:400;font-size:14.5px;font-family:inherit;outline:none}#cr-ic-search:focus{border-color:var(--ct-red);box-shadow:0 0 0 3px var(--ct-focus)}#cr-ic-search::placeholder{color:var(--ct-ink-2)}/* 1086: the strip clamps to ONE row with a +N expander. Ten chips wrapped to four rows (194px) between the search box and the client list. ⚠ It could not be DELETED the way 1085 deleted the Leads strips: this screen has no funnel and no rail, so these chips are its only filter. */.cr-ic-chipwrap{display:flex;align-items:flex-start;gap:6px;margin-top:10px;}/* ⚠ margin-top MOVED off .cr-ic-chips onto the wrapper above rather than being overridden here — .cr-ic-chips has exactly one consumer, so the base rule is the right place to edit. An override would be one more layer for gate_stack to flag. */.cr-ic-chipwrap .cr-ic-chips{flex:1 1 auto;min-width:0;}/* 44px is ONE row: #cr-ic-wrap .cr-ic-chips button{min-height:44px} from build 752, and #cr-ic-wrap really is on the host (host.id is set in render). Checked, not assumed. *//* ⚠ Scoped to the phone/tablet, the exact complement of the breakpoint this module already uses for its two-column list (@media min-width:900px) — grep for the convention before inventing one. Measured at 1194px the strip needs TWO rows, and folding one of them away there hides a filter that fits, on a width Theo works at. At 1440px all ten fit on one line and the expander correctly never appears. Written as a max-width rule rather than a min-width override, so there is no second layer for gate_stack to flag. */@media (max-width:899px){.cr-ic-chipwrap.clamped .cr-ic-chips{max-height:44px;overflow:hidden;}}.cr-ic-more{flex:0 0 auto;min-height:44px;padding:8px 12px;border-radius:18px;cursor:pointer;background:transparent;border:1px dashed var(--ct-line-strong);color:var(--ct-ink-2);font-weight:700;font-size:11.5px;font-family:inherit;white-space:nowrap;}.cr-ic-more:hover{border-color:var(--ct-red);color:var(--ct-ink)}.cr-ic-chips{display:flex;gap:6px;flex-wrap:wrap;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}.cr-ic-chips::-webkit-scrollbar{display:none}.cr-ic-chips button{flex:0 0 auto;padding:8px 13px;border-radius:18px;cursor:pointer;background:var(--ct-surface);border:1px solid var(--ct-line);color:var(--ct-ink-2);font-weight:700;font-size:11.5px;font-family:inherit;white-space:nowrap}.cr-ic-chips button:hover{border-color:var(--ct-line-strong);color:var(--ct-ink-2)}.cr-ic-chips button.on{background:var(--ct-red);border-color:var(--ct-red);color:var(--ct-red-ink)}.cr-ic-chips button b{margin-left:5px;opacity:.75}.cr-ic-sort{display:flex;align-items:center;gap:8px;margin-top:10px;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--ct-ink-2)}.cr-ic-sort button{background:transparent;border:0;cursor:pointer;padding:2px 0;font:inherit;font-family:inherit;color:var(--ct-ink-2);border-bottom:1px solid transparent}.cr-ic-sort button.on{color:var(--ct-red-deep);border-bottom-color:var(--ct-red)}.cr-ic-list{margin-top:14px;display:grid;/* 758: minmax(0,1fr), NOT 1fr. A grid item is min-width:auto, so with a nowrap address inside, a 1fr track cannot shrink below the longest address and every card in the column overflows the phone. Measured: 405.5px track in a 358px container. */grid-template-columns:minmax(0,1fr);gap:8px}@media (min-width:900px){.cr-ic-list{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}.cr-ic-row{display:block;width:100%;min-width:0;text-align:left;cursor:pointer;background:linear-gradient(var(--ct-surface),var(--ct-surface)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box;border:1px solid transparent;border-radius:12px;padding:14px 15px;font-family:inherit;color:var(--ct-ink);transition:background .15s}.cr-ic-row:hover{background:linear-gradient(var(--ct-surface-2),var(--ct-surface-2)) padding-box,linear-gradient(125deg,var(--ct-red),var(--ct-red-deep)) border-box}.cr-ic-row .top{display:flex;align-items:baseline;gap:10px}.cr-ic-row .nm{flex:1;min-width:0;font-weight:700;font-size:15px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .owed{flex:0 0 auto;font:700 14px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-red-deep)}.cr-ic-row .owed.none{color:var(--ct-ink-2)}.cr-ic-row .ad{/* 758: display:block, same fix and same reason as .cr-pb-job .ad. This is a <span> from the renderer, and text-overflow:ellipsis is INERT on an inline box - so a long address overflowed the card by 32px and was cut off by the page's overflow-x:hidden with no ellipsis to show for it. An inline box also reports scrollWidth/clientWidth as 0, which made the first version of gate_759's truncation check pass VACUOUSLY (0 <= 0+1) on a broken build - the gate now asserts display and the element's own right edge. */display:block;font-size:12px;color:var(--ct-ink-2);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .meta{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}.cr-ic-row .carrier{font-size:11.5px;color:var(--ct-ink-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cr-ic-row .stg{flex:0 0 auto;padding:3px 8px;border-radius:5px;font:800 11px ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.11em;text-transform:uppercase;background:var(--ct-surface-3);color:var(--ct-red-deep)}.cr-ic-row .stg.warn{background:var(--ct-warn-bg);color:var(--ct-warn)}.cr-ic-row .stg.bad{background:var(--ct-red-wash);color:var(--ct-red-deep)}.cr-ic-row .age{flex:0 0 auto;font:700 11px ui-monospace,'SF Mono',Menlo,monospace;color:var(--ct-ink-2)}.cr-ic-row .age.stale{color:var(--ct-red-deep)}.cr-ic-empty{padding:44px 20px;text-align:center;font-size:13.5px;line-height:1.6;color:var(--ct-ink-2)}</style>
 <script id="cr-ic-script">
 (function(){
 'use strict';
@@ -56321,6 +56323,11 @@ var LABEL = window.INS_STAGE_LABEL || {
    were looking at. Pipeline order, matching RAIL, so the two screens describe
    the same nine things. */
 var CHIPS = ['Lead','Prospect','Approved','OnHold','Scheduled','Completed','Invoiced','Closed','Lost'];
+/* 1086: is the stage strip expanded? Lives HERE, in the closure, and not on the
+   DOM, because render() rebuilds host.innerHTML wholesale on every keystroke,
+   chip tap and sort change — a flag written onto the element would be erased by
+   the next character typed into the search box. */
+var chipsOpen = false;
 function stgLabel(s){
   return (typeof window.insStageLabel === 'function')
     ? window.insStageLabel(s, true)
@@ -56431,6 +56438,7 @@ if(cnt) cnt.textContent = list.length;
 host.innerHTML =
 '<input type="search" id="cr-ic-search" placeholder="Name, address, carrier, claim #, adjuster\u2026" ' +
 'value="' + esc(query) + '">' +
+'<div class="cr-ic-chipwrap' + (chipsOpen ? '' : ' clamped') + '">' +
 '<div class="cr-ic-chips">' +
 '<button data-stg="" class="' + (stage === '' ? 'on' : '') + '" type="button">' +
 'All<b>' + all.length + '</b></button>' +
@@ -56444,6 +56452,11 @@ return '<button data-stg="' + s + '" class="' + (stage === s ? 'on' : '') +
 '" type="button">' + esc(stgLabel(s)) + '<b>' + n + '</b></button>';
 }).join('') +
 '</div>' +
+/* 1086: the expander. Its LABEL is written by fitChips() after layout, because
+   how many chips fall past row one depends on the rendered widths of ten stage
+   labels and their counts — not on anything countable here. */
+'<button class="cr-ic-more" data-chips="1" type="button"></button>' +
+'</div>' +
 '<div class="cr-ic-sort">' +
 '<span>Sort</span>' +
 '<button data-sort="owed" class="' + (sortBy==='owed'?'on':'') + '" type="button">Owed</button>' +
@@ -56456,6 +56469,34 @@ return '<button data-stg="' + s + '" class="' + (stage === s ? 'on' : '') +
 (q || stage ? 'Nothing matches that.' : 'No insurance clients yet.') +
 '</div>');
 wire(host);
+}
+/* 1086: how many stage chips fall past the first row, MEASURED.
+   ⚠ Measured, not computed: the strip is ten chips whose widths come from the
+   stage labels (short twins, build 656) and their count digits, so the number
+   that fits changes with the data and the viewport.
+   ⚠ Measuring WHILE CLAMPED is correct — overflow:hidden clips paint, it does
+   not move layout, so a hidden chip still reports its true row.
+   ⚠ A zero-width strip means the view is display:none (scan() can fire then).
+   Every rect is 0, every chip looks like row one, and the honest answer is
+   "don't know" — leave the button alone rather than claim nothing is hidden. */
+function fitChips(host, more){
+var strip = host.querySelector('.cr-ic-chips');
+if(!strip || !strip.getBoundingClientRect().width) return;
+var kids = [].slice.call(strip.children);
+if(!kids.length){ more.style.display = 'none'; return; }
+if(chipsOpen){ more.style.display = ''; more.textContent = 'Fewer'; return; }
+/* ⚠ ASK WHETHER ANYTHING IS ACTUALLY CUT OFF. Counting rows answers a
+   different question and gets it wrong the moment the clamp does not apply:
+   at 1194px the media query above is off, the strip legitimately shows two
+   rows, and a row count would offer "+2" for chips that are on screen.
+   scrollHeight vs clientHeight is the element answering directly, and it is
+   false by construction wherever the clamp is not in force. */
+if(strip.scrollHeight <= strip.clientHeight + 1){ more.style.display = 'none'; return; }
+var top0 = kids[0].getBoundingClientRect().top, hidden = 0;
+kids.forEach(function(k){ if(k.getBoundingClientRect().top > top0 + 2) hidden++; });
+if(!hidden){ more.style.display = 'none'; return; }
+more.style.display = '';
+more.textContent = '+' + hidden;
 }
 function wire(host){
 var s = host.querySelector('#cr-ic-search');
@@ -56471,6 +56512,11 @@ if(s2){ s2.focus(); try{ s2.setSelectionRange(pos, pos); }catch(_){} }
 host.querySelectorAll('[data-stg]').forEach(function(b){
 b.onclick = function(){ window.icStageFilter = b.dataset.stg || ''; render(); };
 });
+var _more = host.querySelector('[data-chips]');
+if(_more){
+_more.onclick = function(){ chipsOpen = !chipsOpen; render(); };
+fitChips(host, _more);
+}
 host.querySelectorAll('[data-sort]').forEach(function(b){
 b.onclick = function(){ sortBy = b.dataset.sort; render(); };
 });
@@ -60068,6 +60114,31 @@ var pv979 = document.getElementById('punchView');
 if(pv979 && pv979.style.display !== 'none') return 'production';
 var tv979 = document.getElementById('teamView');
 if(tv979 && tv979.style.display !== 'none') return 'production';
+/* 1087: THE LANDING IS THE PORTAL PICKER, so it cannot be inside a portal.
+   Theo, with a screenshot: "It was the retail crm with insurance header after I
+   signed in." Reproduced at the entry point he named — showMain(email), the
+   function sign-in calls — with the portal set to insurance:
+
+       crmNow()              retail
+       body.dataset.crmHead  insurance      <- the header
+       #brandTitle           "Insurance"
+       #landingView          shown
+
+   Set the portal to community and it reads "Community" instead, so the header
+   was naming whichever portal you last used while you stood at the picker.
+
+   ⚠ This is deliberately the LAST guard and the narrowest one. 754 made shared
+   screens follow the sticky portal on purpose — Leads, Photos and Reports still
+   do, and that is the design working, not a bug. Only the picker is named here,
+   for the same reason projopen and the two 979 screens are named above: a screen
+   that knows what it is outranks the sticky portal.
+
+   Retail rather than a neutral fourth value: the landing's chrome has always
+   been the steel header, and inventing a fifth head to mean "no portal" would
+   be a new mechanism beside an existing one — the thing this project's own
+   doctrine warns about. */
+var lv1087 = document.getElementById('landingView');
+if(lv1087 && lv1087.style.display !== 'none') return 'retail';
 return stickyCrm();
 }
 function skin(){

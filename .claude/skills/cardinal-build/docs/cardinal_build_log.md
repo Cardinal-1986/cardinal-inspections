@@ -27577,6 +27577,164 @@ rejected (the danger is deleting a base rule whose replacement is conditional).
 ---
 
 
+
+
+## Build 1087 — the Landing stops wearing the last portal you used
+
+Theo, with a screenshot: *"Logged in to insurance header"*, then, when I had gone after the
+wrong thing: **"It was the retail crm with insurance header after I signed in."**
+
+### ⚠ I chased the COLOUR for two turns; the report was the MISMATCH
+
+The screenshot showed a fire-engine red Insurance header, so I audited the header's palette,
+built a five-CRM comparison render, computed its contrast, and offered four colour options.
+**All of that was inference.** Theo's second message named the actual defect in one line. The
+colour audit was not wasted — it is recorded in `OPEN_ITEMS.md` and the header IS the only CRM
+chrome that borrows a document palette — but it was not what he reported, and I should have
+asked at the four-word message rather than after.
+
+**The colour is not a defect either way, and that was worth measuring:** white title
+**5.68:1** on `#CE0E18`, the "+" glyph **4.85:1** on `#FFE8E8`. Nothing there is unreadable.
+
+### Reproduced at the entry point he named, before anything was changed
+
+`probe_crmhead.mjs` (new) calls `showMain(email)` — the function sign-in itself calls — with
+the portal preset, and reads what the header ends up wearing:
+
+| portal | `crmNow()` | `body.dataset.crmHead` | title |
+|---|---|---|---|
+| insurance | retail | **insurance** | "Insurance" |
+| community | retail | **community** | "Community" |
+
+⚠ **My first two repro attempts came back CLEAN and I nearly reported it unreproducible.**
+`showHome()` and `showLanding()` both stamp retail correctly. Only `showMain()` — the real
+sign-in call — fails, because the landing is up at that moment. *Testing the neighbours of the
+reported entry point is not testing the reported entry point.*
+
+### The fix: one guard, deliberately the narrowest of three offered
+
+`crmHead()` asks `crmNow()`, then `projopen`, then punchView/teamView, then falls through to
+`stickyCrm()`. **754 made shared screens follow the sticky portal ON PURPOSE** — that is what
+makes Home go back to the right place — so the fall-through is correct and stays.
+
+The Landing is simply not one of those screens: **it is the portal PICKER, so it cannot be
+inside a portal.** Naming it is the same shape as the `projopen` guard and the two 979 guards
+it sits beside. Theo picked this scope out of three; option 3 would have reversed 754 outright.
+
+**Retail rather than a neutral fifth value** — the landing's chrome has always been the steel
+header, and a fifth head meaning "no portal" would be a new mechanism beside an existing one.
+
+### The regression check is the point of this build, not a formality
+
+| screen | before | after |
+|---|---|---|
+| after sign-in, insurance portal | **insurance** | **retail** ✅ |
+| after sign-in, community portal | **community** | **retail** ✅ |
+| Leads · Client Directory · Photos · Estimates | insurance | **insurance** — 754 intact |
+| Cardinal Truth · Insurance Clients | insurance | insurance |
+| Punch · Production | production | production — the 979 guards |
+
+Every shared screen still follows the portal. The guard fires only where `#landingView` is on
+screen, which is nowhere else.
+
+**No SQL. No API change. No colour changed.**
+
+## Build 1086 — the Insurance Clients stage row folds to one line
+
+The screen 1085's sweep flagged and 1085 deliberately did **not** touch. Measured at 390px:
+**10 chips, 4 rows, 194px** between the search box and the client list.
+
+### ⚠ It needed the OPPOSITE fix to 1085, and that is the whole point of sweeping
+
+1085 could **delete** the Leads strips because that screen has two other pickers — the funnel
+sheet on a phone, the rail on a desktop. **Insurance Clients has neither.** `.cr-ic-chips` is
+the only filter it has, so the same patch would have removed filtering outright. Clamp, don't
+cut. *Same symptom, same measurement, opposite remedy — which is why "apply the fix everywhere
+the probe went red" would have been wrong.*
+
+**After: 194px → 44px clamped, 244px expanded.** One row — All · Claim Filed · Adjuster
+Pending — then a dashed **`+7`**. Tap it, all ten drop down and it reads **Fewer**.
+
+### ⚠ The first version folded chips that FIT, at a width Theo works at
+
+Measured across three widths before shipping, which is the only reason this was caught:
+
+| width | rows the strip needs | first version | shipped |
+|---|---:|---|---|
+| 390px | 5 | 44px, `+7` | 44px, `+7` |
+| **1194px** | **2** | **44px, `+2` — hid two chips that fit** | **94px, no expander** |
+| 1440px | 1 | 44px, no expander | 44px, no expander |
+
+The clamp is now scoped to `@media (max-width:899px)` — **the exact complement of the
+breakpoint this module already uses** for its two-column list, rather than a new one; and
+written as a max-width rule rather than a min-width override, so it adds no second layer.
+
+**And `fitChips()` stopped inferring.** It counted chips whose top sat below row one, which
+answers a *different question* and is wrong the moment the clamp is not in force: at 1194px it
+would have offered `+2` for chips that are on screen. It now asks
+`scrollHeight > clientHeight` — the element answering "is anything actually cut off"
+directly, which is false by construction wherever the clamp does not apply.
+
+### Four things it had to survive, each checked rather than assumed
+
+1. **`render()` rebuilds `host.innerHTML` wholesale** on every search keystroke, chip tap and
+   sort change. So `chipsOpen` lives in the module closure and is re-applied as a class each
+   render — a flag written onto the element would be erased by the next character typed.
+2. **The hidden count is layout-dependent** — ten chips whose widths come from the 656 short
+   stage labels and their count digits — so `fitChips()` **measures** it after render. A
+   number computed from `CHIPS.length` would be fiction.
+3. **A clipped chip still reports its true rect.** `overflow:hidden` clips paint, not layout,
+   which is what makes measuring *while clamped* correct.
+4. **`scan()` can fire while the view is `display:none`**, when every rect is 0 and every chip
+   looks like row one. Guarded on the strip's width: the honest answer there is "don't know",
+   so it leaves the button alone rather than claiming nothing is hidden.
+
+### ⚠ No override — the margin MOVED
+
+`.cr-ic-chips{margin-top:10px}` was **edited** to drop the margin, which now sits on the new
+`.cr-ic-chipwrap`. The lazy version — `.cr-ic-chipwrap .cr-ic-chips{margin-top:0}` — is exactly
+what `gate_stack.mjs` exists to flag and why 148 style blocks only ever grow. `.cr-ic-chips` has
+exactly one consumer, checked before editing the base rule.
+
+**Zero new colour.** The expander reuses `--ct-line-strong` / `--ct-ink-2` / `--ct-red`, the
+tokens the chips beside it already use. Computed, both themes: **docket 5.30:1, siren 7.75:1**.
+
+### ⚠ THE RIG DROVE ONE THEME TWICE AND CALLED IT TWO — caught, then fixed in the instrument
+
+`render_state.mjs` took `light|dark` and set `<html data-theme="rb-light">`. **Insurance
+surfaces do not read that switch.** Every `--ct-*` screen reads `<body data-rltheme>`
+(docket/siren, key `cardinalRLTheme`), so passing `light` rendered **docket twice** and handed
+back two identical pictures as "both themes checked". Theo's own screenshot is **siren** — the
+theme I had not tested at all.
+
+**This is CLAUDE.md's Supplement-Desk warning (`cr-desk-theme`, not the CRM's) recurring on a
+different screen**, so it went into the instrument rather than into prose: `render_state.mjs`
+now accepts `docket|siren` and drives the right attribute, with the two-switch table in its
+header. Siren re-rendered and verified after the fix.
+
+### ⚠ And a patch-script anchor that would have hit three other modules
+
+`function wire(host){` occurs **four** times — `cr-pp`, `cr-cth`, `cr-ic`, `cr-ch2`. A file-wide
+count on it is meaningless (the `function money(` trap) and `pl.sub()` splices file-wide even
+when the assertion is scoped (the 634 lesson). Anchored on the first line of *this* one, which
+names `#cr-ic-search` — an id unique in the file. Asserted after: still four `wire(host)`.
+
+### The self-verification is now self-computing, after failing correct patches twice
+
+1085 asserted identifiers its own new comments contained. 1086's first run asserted
+`class=\"cr-ic-chipwrap` with a JS-style escape that never appears in the file. **Both failed a
+correct patch, and both were hand-retyped copies of the edit.** The block now asserts on the
+`NEW_*` variables the script actually spliced in, which cannot drift from the edit, plus code
+forms for what must be gone. That is the file's own "prefer self-computing assertions" rule,
+learned the hard way twice in two builds.
+
+### ✅ A false alarm, checked before building on it
+
+`#cr-ic-wrap .cr-ic-chips button{min-height:44px}` is written with an **ID** while the
+stylesheet uses the **class** `.cr-ic-wrap` — which reads like a dead tap-target floor. It is
+live: `host.id = 'cr-ic-wrap'` is set in `render()`. The 44px is real and is what the one-row
+clamp is pinned to. Asserted in the patch so a future rename cannot quietly unpin it.
+
 ## Build 1085 — the filter chips come off All Leads & Jobs
 
 Theo, with a screenshot: *"This screen is a mess, please make it nice and neat, check all
