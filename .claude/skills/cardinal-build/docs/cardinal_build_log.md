@@ -27579,6 +27579,99 @@ rejected (the danger is deleting a base rule whose replacement is conditional).
 
 
 
+
+## Build 1088 — one PWA head, and a status bar that follows the header
+
+Theo, with three screenshots: the retail dashboard wearing its correct **steel** header with an
+**insurance-red band** across the status bar above it; Community with a **green** band matching
+its green header; retail again after a portal round trip, band correct. *"Then when I go to
+retail the red strip is at top then community back to retail it's normal."*
+
+### The head block was DUPLICATED, and the two copies disagreed
+
+| | copy A | copy B |
+|---|---|---|
+| manifest | `/manifest.json` | `manifest.json` |
+| **theme-color** | **`#1b1b1b`** | **`#170f11`** |
+| apple-touch-icon | `/icon-192.png` | `apple-touch-icon.png` |
+
+Plus duplicate `apple-mobile-web-app-capable`, `-status-bar-style` and `-title`.
+
+**Two `<link rel="manifest">` is invalid and the first wins**, so the live manifest was
+`/manifest.json` and the live theme-color was **`#1b1b1b`** — which does not match
+`manifest.json`'s own pinned `theme_color` of `#170f11`.
+
+⚠️ **And `crFlip()` was editing the tag it was not written for.** It rewrites
+`querySelector('meta[name=theme-color]')` — the FIRST tag — while its own comment says it exists
+because *"manifest pins theme_color #170f11"*. One tag now, so the selector has one thing to find
+and the two can never disagree again.
+
+⚠️ **BOTH `apple-touch-icon` links are kept deliberately.** Two is legal, they are different
+files, and picking one could silently change the icon on an already-installed phone.
+
+### `skin()` now writes the tint, and it is derived rather than duplicated
+
+`skin()` had never touched `theme-color`, so the band had no per-CRM knowledge at all — it could
+only lag the portal or match it by luck.
+
+**`--htint` is declared on the same line as each head's `--hbg`.** Reading `--hbg` back is not
+safe: four heads declare a flat colour, but **retail declares a GRADIENT and insurance declares
+`var(--ct-head-bg)`**, and neither is something to hand to a meta tag.
+
+⚠️ **The write happens AFTER the `dataset.crmHead` line, never before** — the tint is selected by
+that very attribute, so reading first returns the OUTGOING portal's colour and reproduces the
+exact bug being fixed.
+
+**Measured by driving real navigation:**
+
+| step | head | theme-color |
+|---|---|---|
+| boot | retail | `#243342` |
+| → Cardinal Truth | insurance | **`#CE0E18`** |
+| → retail home | retail | `#243342` |
+| → Community hub | community | **`#047857`** |
+| → retail home again | retail | `#243342` |
+
+One `theme-color` meta in the DOM, one manifest link.
+
+⚠️ **THE FIRST TWO VERSIONS OF THAT PROBE BOTH LIED, in opposite ways.** The first poked
+`body.dataset.crmHead` directly and called `skin()` — which recomputes `crmHead()`, finds it
+unchanged, and **early-returns**, so the meta never moved and it read as "the fix does nothing".
+The second drove real navigation but read immediately: `skin()` is driven by an **observer, not
+called inline**, so every row came back `head=retail`. *A probe that drives the app wrongly
+produces a confident, wrong verdict — and both wrong verdicts here were the pessimistic one,
+which is the kind you believe.*
+
+### ⚠ NOT PROVEN, and stated in the code as well as here
+
+**That the red band IS theme-color.** Neither `#1b1b1b` nor `#170f11` is red, so something else
+may paint it. Headless Chromium cannot render an iOS standalone status bar; **Theo's eyes are the
+gate.** If the strip still lags after this, theme-color is ruled OUT and the next look starts with
+one fewer suspect — worth having either way. Said plainly in the app's own changelog entry too,
+rather than shipped as a confident fix.
+
+### ⚠ THE COUNTING TRAP, FOUR TIMES IN FOUR BUILDS — and the fourth is the teaching one
+
+Every one failed a **correct** patch, and every one was my own new comment being counted:
+
+| build | the assertion | what it actually counted |
+|---|---|---|
+| 1085 | `count('ljChipStrip') == 0` | the comment naming the function it deleted |
+| 1086 | `count('class=\"cr-ic-chipwrap')` | a JS-style escape that never appears in HTML |
+| 1088 | `count('<link rel="manifest"') == 1` | the comment saying *"Two `<link rel="manifest">` is invalid"* |
+| 1088 | `count('--hbg:') == 6` | **the comment explaining this very trap** — *"--htint, not --hbg: retail's ground is a gradient"* |
+
+**The fourth is the one to remember: the sentence warning about the trap sprang the trap.** The
+fix is not vigilance, it is form — assert on something prose cannot imitate. `<link rel="manifest"
+href=`, not `<link rel="manifest"`. `{--htint:` and `;--hbg:`, not the bare token. A CSS
+declaration and an HTML attribute both have punctuation a sentence does not.
+
+⚠️ Also: **`--marker '--htint'` is unusable** — argparse reads a leading `--` as a flag and dies
+with *"expected one argument"*. `--marker='{--htint:'` is the form that works, and it is the
+better marker anyway for the reason above.
+
+**No SQL. No API change.**
+
 ## Build 1087 — the Landing stops wearing the last portal you used
 
 Theo, with a screenshot: *"Logged in to insurance header"*, then, when I had gone after the
