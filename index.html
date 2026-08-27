@@ -3846,7 +3846,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
           <button class="navopt" data-nav="punch" data-cri="ladder lg">Punch &amp; Repairs</button>
 
           <div class="navsec">Community</div>
-          <button class="navopt" data-nav="newbid" data-cri="money lg">New Bid</button>
+          <button class="navopt" data-nav="newbid" data-cri="money lg">New Estimate</button>
 
           <div class="navsec">Insurance</div>
           <button class="navopt" data-nav="cardinaltruth" data-cri="shield lg">Cardinal Truth</button>
@@ -3873,7 +3873,7 @@ body:not(.claim-insurance):not(.claim-community) #projectView .projinfo .hxtras{
      never prepend. The prepend convention grew this div to 11.6 KB / 26
      builds of prose that every user scrolled past; the full history lives
      in the CHANGELOG (What’s New reads it), not here. -->
-<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1090 &#8212; Tap a day in Production and that day opens. Tapping a date used to change the list at the very bottom of the page &#8212; below the tiles, the repairs bar and the crew cards &#8212; so from the calendar it looked like nothing had happened. Now a panel slides up over the screen with that day&#8217;s work on it, with Add and Full calendar on the bottom. Close it and the page is already sitting on the day you picked, with the date briefly lit so you can see where you landed.</div>
+<div data-cr-footer style="padding:7px 14px;font:600 11px 'Segoe UI',Arial,sans-serif;color:#b6a89f;border-top:1px solid #f0e8e2;">v2026-08-27 build 1091 &#8212; Community now says &#8220;estimate&#8221; instead of &#8220;bid.&#8221; The Bids tab is now Estimates, New Bid is New Estimate, and the pipeline reads Estimate Requested then Estimate Submitted. The words for what the funder decides &#8212; Awaiting Funding, Awarded, Not Awarded &#8212; are unchanged, because they still read right after an estimate. Nothing under the hood moved; this is only the words on the screen.</div>
         </div>
       </span>
       <input type="search" id="headSearch" placeholder="Search clients, PO #, address&#8230;">
@@ -19758,7 +19758,7 @@ var CD_STAGE_LABEL = {
      "Awaiting Funding" on the hub and card and raw "OnHold" in the Client
      Directory and the pipeline toast. Four copies of this map exist; making
      them one is its own item (recorded in OPEN_ITEMS). */
-  community: { 'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'OnHold':'Awaiting Funding',
+  community: { 'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
                'Approved':'Awarded',
                'Scheduled':'Scheduled', 'Completed':'Build Complete', 'Invoiced':'Invoiced',
                'Closed':'Closed', 'Lost':'Not Awarded' }
@@ -36218,8 +36218,8 @@ onChange: function(fn){ if(typeof fn === 'function') LISTENERS.push(fn); },
 (function () {
 'use strict';
 var COM_LABEL = {
-'Lead':      'Bid Requested',
-'Prospect':  'Bid Submitted',
+'Lead':      'Estimate Requested',
+'Prospect':  'Estimate Submitted',
 'OnHold':    'Awaiting Funding',   /* 710: was missing — the pipeline toast
                                       and Client Directory said raw OnHold */
 'Approved':  'Awarded',
@@ -36264,7 +36264,7 @@ var t = b.textContent || '';
 var a = t.match(/^Advance to (.+)$/);
 if(a && COM_LABEL[a[1]]){ b.textContent = 'Advance to ' + COM_LABEL[a[1]]; return; }
 if(t === 'Mark Lost')      b.textContent = 'Mark Not Awarded';
-if(t === 'Reopen as Lead') b.textContent = 'Reopen as Bid Request';
+if(t === 'Reopen as Lead') b.textContent = 'Reopen as Estimate Request';
 });
 var sel = document.getElementById('stageSel');
 if(sel && !sel.dataset.crComLabelled){
@@ -36378,9 +36378,9 @@ var bg = document.createElement('div');
 bg.className = 'cr-nbid-bg';
 bg.innerHTML =
 '<div class="cr-nbid-box">' +
-'<h3>' + (editPr ? '\u270F\uFE0F Edit Bid' : '\uD83D\uDEA9 New Bid') + '</h3>' +
+'<h3>' + (editPr ? '\u270F\uFE0F Edit Estimate' : '\uD83D\uDEA9 New Estimate') + '</h3>' +
 '<p class="subline">Create a community bid opportunity. ' +
-'It\'ll appear as <b>Bid Requested</b> on the Hub pipeline.</p>' +
+'It\'ll appear as <b>Estimate Requested</b> on the Hub pipeline.</p>' +
 '<div class="rule"></div>' +
 '<label>Partner <span class="req">*</span></label>' +
 '<select data-field="partner_id" required>' +
@@ -36451,14 +36451,14 @@ esc(p.name) +
 '</select>' +
 '</div>' +
 '<div>' +
-'<label>Bid Amount</label>' +
+'<label>Estimate Amount</label>' +
 '<input type="number" data-field="bid_amount" ' +
 'placeholder="0.00" step="0.01" min="0" inputmode="decimal" />' +
 '</div>' +
 '</div>' +
 '<div class="cr-nbid-row">' +
 '<div>' +
-'<label>Bid Due Date</label>' +
+'<label>Estimate Due Date</label>' +
 '<input type="date" data-field="bid_due_at" />' +
 '</div>' +
 '<div>' +
@@ -36478,13 +36478,13 @@ esc(p.name) +
 '</div>' +
 '<label>Scope of Work</label>' +
 '<textarea data-field="scope" ' +
-'placeholder="What are we bidding on? (spec, quantities, timeline)"></textarea>' +
+'placeholder="What are we estimating? (spec, quantities, timeline)"></textarea>' +
 '<label>Notes</label>' +
 '<textarea data-field="notes" ' +
 'placeholder="Optional \u2014 partner preferences, contact context, etc."></textarea>' +
 '<div class="cr-nbid-acts">' +
 '<button class="ghost" data-act="cancel">Cancel</button>' +
-'<button class="primary" data-act="save">Save Bid</button>' +
+'<button class="primary" data-act="save">Save Estimate</button>' +
 '</div>' +
 '</div>';
 document.body.appendChild(bg);
@@ -36707,7 +36707,7 @@ setTimeout(function(){ window.CardinalCommunityHub.show(); }, 80);
 }catch(e){
 crTell('Could not create bid: ' + (e.message || e));
 saveBtn.disabled = false;
-saveBtn.textContent = 'Save Bid';
+saveBtn.textContent = 'Save Estimate';
 }
 };
 }
@@ -41830,6 +41830,7 @@ window.CardinalRBTheme = { toggle:toggle, isLight:isLight, setLight:setLight };
 'use strict';
 var KEY = 'cardinal.changelog.lastSeen';
 var CHANGELOG = [
+{ b:1091, d:'2026-08-27', t:'Community says &ldquo;estimate&rdquo; now, not &ldquo;bid&rdquo;', s:'You said the Community CRM was confusing and that the word &ldquo;bid&rdquo; might be part of it, so it now says &ldquo;estimate&rdquo; throughout: the Bids tab is Estimates, New Bid is New Estimate, the client page&rsquo;s Bid tab is Estimate, and the pipeline reads Estimate Requested then Estimate Submitted. The award side is deliberately unchanged &mdash; Awaiting Funding, Awarded and Not Awarded still describe what the funder decides, which reads right after an estimate. This is purely the words on screen; nothing in the data or the workflow changed, so every existing job keeps its place.' },
 { b:1090, d:'2026-08-27', t:'Tap a day in Production and that day opens', s:'Reported from the Production hub: tapping a date on the month calendar appeared to do nothing. It was working &mdash; the day&rsquo;s work simply swapped in at the very bottom of the page, about a thousand pixels below the calendar, past the tiles and the crew cards. Tapping a date now slides a panel up over the screen showing that day: its weather, everything booked on it, and Add and Full calendar along the bottom. Dismiss it and the page is already scrolled to that day with the date lit for a moment, so you can see where you ended up. The full calendar screen is unchanged &mdash; it already shows the day beside the grid, so tapping a date there still works the way it did.' },
 { b:1089, d:'2026-08-27', t:'The Insurance header goes dark, and matches its own bottom bar', s:'Picked from two rendered options. In dark mode the Insurance header was a solid bright red band, while the navigation bar at the bottom of the very same screen was near-black with a soft coral accent &mdash; the two ends of the screen did not agree. The header now uses the bottom bar&rsquo;s own colours: near-black, a white title, and a soft coral on the + button instead of red across the whole strip. The coloured strip behind the phone&rsquo;s clock follows it. No new colour was chosen; every value already existed in the app. Light mode is deliberately untouched, and so is the header on a Resource Library book, which shares the old palette on purpose.' },
 { b:1088, d:'2026-08-27', t:'The strip behind the clock follows the screen', s:'Reported from three screenshots: the retail app with a red Insurance band across the top of the phone, Community with a green one that matched, and retail correct again after switching portals and back. The band had never been told which portal you are in &mdash; it now takes its colour straight from the header, so the two cannot disagree. The page settings behind it were duplicated as well, with the two copies naming different colours and different icon files; one copy now. ⚠ Whether this is what paints that band on an iPhone can only be confirmed on a real phone &mdash; if the strip still lags, the cause is something else and this rules one suspect out.' },
@@ -57104,7 +57105,7 @@ if(isNaN(d)) return null;
 return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
 }
 var LABEL = {
-'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'OnHold':'Awaiting Funding',
+'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
 'Approved':'Awarded',
 'Scheduled':'Scheduled', 'Completed':'Build Complete',
 'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not Awarded',
@@ -57199,7 +57200,7 @@ var CH_SORTS = [
 { key:'due',       label:'Due / check back' },
 { key:'homeowner', label:'Homeowner' },
 { key:'partner',   label:'Bill to' },
-{ key:'amount',    label:'Bid amount' },
+{ key:'amount',    label:'Estimate amount' },
 { key:'stage',     label:'Stage' },
 { key:'age',       label:'Age in stage' },
 { key:'address',   label:'Address' }
@@ -57306,7 +57307,7 @@ return list.slice().sort(function(x, y){ return chState.dir * chCmp(x, y); });
 }
 function chSortLabel(){
 var f = CH_SORTS.filter(function(x){ return x.key === chState.sort; })[0];
-return f ? f.label : 'Bid deadline';
+return f ? f.label : 'Estimate deadline';
 }
 function chGroupCounts(g){
 var c = {};
@@ -57901,7 +57902,7 @@ fold('due', 'Due soon', d.due.length, dueBody) +
 fold('partners', 'Partners', ps.length, partnersBody) +
 fold('week', 'Waiting on you', null, weekBody) +
 '</div>' +
-fold('allbids', 'All bids', d.all.length, allBidsBody, false) +
+fold('allbids', 'All estimates', d.all.length, allBidsBody, false) +
 '<div data-cc-punch></div>' +
 '</div>';
 
@@ -57987,7 +57988,7 @@ host.innerHTML =
 '<div class="cc-tabs"><div class="tabbar">' +
 '<button data-pane="clients" class="' + (pane==='clients'?'on':'') + '" type="button">Clients</button>' +
 '<span class="cc-sep">|</span>' +
-'<button data-pane="bids" class="' + (pane==='bids'?'on':'') + '" type="button">Bids</button>' +
+'<button data-pane="bids" class="' + (pane==='bids'?'on':'') + '" type="button">Estimates</button>' +
 '<span class="cc-sep">|</span>' +
 '<button data-pane="partners" class="' + (pane==='partners'?'on':'') + '" type="button">Partners</button>' +
 '</div></div>' +
@@ -57995,7 +57996,7 @@ clientsPane + bidsPane + partnersPane +
 '<div class="cc-rule">Tools</div>' +
 '<div class="tools">' +
 '<button class="primary" data-go="newbid" type="button"><span class="i">' + ICO('pencil') + '</span>' +
-'<span class="x"><b>New Bid</b><small>Price a request</small></span></button>' +
+'<span class="x"><b>New Estimate</b><small>Price a request</small></span></button>' +
 '</div>' +
 /* 802 (Fix C): the other six were a full site map rendered on every pane,
    every time - Theo's word for it was "dumped." Same buttons, same
@@ -58691,7 +58692,7 @@ esc(oc.amount) + '" placeholder="$0"></div>' +
 '</div>' +
 ocPartnerField('Funded by', 'funded_by', 'funded_id') +
 ((submitted && typeof appr === 'number' && appr && appr !== submitted)
-? '<div class="gap">Bid <b>' + usd(submitted) + '</b> → approved <b>' + usd(appr) +
+? '<div class="gap">Estimate <b>' + usd(submitted) + '</b> → approved <b>' + usd(appr) +
 '</b>. A <b>' + usd(Math.abs(submitted - appr)) + '</b> ' +
 (appr < submitted ? 'gap' : 'increase') +
 ' gets recorded, so win rate and pipeline value stay true.</div>'
@@ -58870,7 +58871,7 @@ await load(pid);
 if(window.currentProject && String(window.currentProject.id) === String(pid)) render();
 }
 var LABEL = {
-'Lead':'Bid Requested', 'Prospect':'Bid Submitted', 'OnHold':'Awaiting Funding',
+'Lead':'Estimate Requested', 'Prospect':'Estimate Submitted', 'OnHold':'Awaiting Funding',
 'Approved':'Awarded',
 'Scheduled':'Scheduled', 'Completed':'Build Complete',
 'Invoiced':'Invoiced', 'Closed':'Closed', 'Lost':'Not Awarded',
@@ -58973,7 +58974,7 @@ if(a === 'edithome'){
   if(window.CardinalNewBid && window.CardinalNewBid.edit){
     window.CardinalNewBid.edit(pr.id);
   }else{
-    crTell('Bid editor not loaded \u2014 reload the app and retry.');
+    crTell('Estimate editor not loaded \u2014 reload the app and retry.');
   }
   return;
 }
@@ -59018,7 +59019,7 @@ submitted_amount : amt710,
 if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { bid: patch710 });
 await window.setStage(pr.id, 'Prospect');
 if(typeof window.auditLog === 'function'){
-try{ window.auditLog('lead', 'Bid marked submitted', pr.id); }catch(_){ }
+try{ window.auditLog('lead', 'Estimate marked submitted', pr.id); }catch(_){ }
 }
 render();
 return;
@@ -59053,7 +59054,7 @@ if(a === 'logsub'){
 /* 709: ported from the deleted cream bid strip — blank clears both fields
    (the strip's semantics, and mergeCk deletes empty keys by design). */
 var b0 = bidOf(pr);
-var v0 = prompt('Bid submitted to the partner — dollar amount.\nLeave empty to clear.',
+var v0 = prompt('Estimate submitted to the partner — dollar amount.\nLeave empty to clear.',
 b0.submitted_amount != null ? String(b0.submitted_amount) : '');
 if(v0 === null) return;
 v0 = String(v0).replace(/[^0-9.]/g, '');
@@ -59067,7 +59068,7 @@ patch0 = mergeCk(pr, 'bid', { submitted_amount: n0, submitted_at: b0.submitted_a
 }
 if(typeof window.patchProjectCk === 'function') await window.patchProjectCk(pr, { bid: patch0 });
 if(typeof window.auditLog === 'function'){
-try{ window.auditLog('lead', 'Bid info updated', pr.id); }catch(_){ }
+try{ window.auditLog('lead', 'Estimate info updated', pr.id); }catch(_){ }
 }
 /* 971: this act already stamps submitted_at — the date the bid went to the partner
    — and then left the job reading Bid Requested, which is a large part of why 15 of
@@ -59078,10 +59079,10 @@ try{ window.auditLog('lead', 'Bid info updated', pr.id); }catch(_){ }
    uses — no second stage-move path. The bid patch is awaited FIRST because
    setStage's own checklist patch is fire-and-forget. */
 if(v0 !== '' && normStage(pr.stage) === 'Lead' &&
-await crAsk('Amount saved. Also move this job to ' + (LABEL['Prospect'] || 'Bid Submitted') + '?')){
+await crAsk('Amount saved. Also move this job to ' + (LABEL['Prospect'] || 'Estimate Submitted') + '?')){
 await window.setStage(pr.id, 'Prospect');
 if(typeof window.auditLog === 'function'){
-try{ window.auditLog('lead', 'Bid marked submitted', pr.id); }catch(_){ }
+try{ window.auditLog('lead', 'Estimate marked submitted', pr.id); }catch(_){ }
 }
 }
 render();
@@ -59154,11 +59155,11 @@ var due971 = due == null ? ''
 if(p971.src === 'logged'){
 out.push({ now:true, title:'Submitted \u2014 stage not moved', when:'now',
 txt:'Logged at ' + usd(p971.amt) + (p971.at ? ' on ' + fmtDay(p971.at) : '') +
-', but this job still reads ' + (LABEL['Lead'] || 'Bid Requested') + '.' + due971,
+', but this job still reads ' + (LABEL['Lead'] || 'Estimate Requested') + '.' + due971,
 acts:[{ label:'Mark it submitted', how:'submitted' },
 { label:'Edit the amount', how:'logsub', alt:true }] });
 }else if(p971.amt > 0){
-out.push({ now:true, title:'Bid ready to submit', when:'now',
+out.push({ now:true, title:'Estimate ready to submit', when:'now',
 txt:'Priced at ' + usd(p971.amt) +
 (p971.src === 'builder'
 ? ' across ' + p971.lines + ' line items.'
@@ -59168,7 +59169,7 @@ acts:[{ label:'Mark it submitted', how:'submitted' },
 ? { label:'Open the bid', how:'open', alt:true }
 : { label:'Price it in the builder', how:'estimate', alt:true })] });
 }else{
-out.push({ now:true, title:'Bid needs pricing', when:'now',
+out.push({ now:true, title:'Estimate needs pricing', when:'now',
 txt:'Invited to bid.' + due971 + ' Nothing priced yet.',
 acts:[{ label:'Price it', how:'estimate' },
 { label:'Log a submitted amount', how:'logsub', alt:true },
@@ -59246,7 +59247,7 @@ who: e.email ? String(e.email).split('@')[0] : '',
 });
 });
 if(out.length <= 1){
-out.push({ title:'Bid requested', when: ago(pr.created_at),
+out.push({ title:'Estimate requested', when: ago(pr.created_at),
 txt:'Invited by ' + (l.partner_name || 'the partner') + '.' +
 (l.scope ? ' ' + l.scope : ''),
 who: l.partner_name || '' });
@@ -59287,7 +59288,7 @@ rec = '<div class="recline">Recorded · ' +
 rec = '<div class="recline">No amounts recorded with the partner yet' +
 '<button data-act="logsub" type="button">Log submitted</button></div>';
 }
-/* 974: this said "No bid priced yet" to every job priced on the bid form —
+/* 974: this said "No estimate priced yet" to every job priced on the bid form —
    7 of the 15 live community jobs — because it tested the estimate OBJECT.
    The estimate still decides whether there is a LINES TABLE to draw; the
    resolver decides what the sheet says when there isn't one. Same wording as
@@ -59300,7 +59301,7 @@ return '<div class="sheet"><div class="nobid">' +
 'This came off the bid form, not the estimate builder, so there are no ' +
 'line items behind it.</p>' +
 '<button data-act="newbid" type="button">Price it in the builder</button>'
-: '<p>No bid priced yet.<br>Bids use the estimate builder \u2014 same ' +
+: '<p>No estimate priced yet.<br>Estimates use the estimate builder \u2014 same ' +
 'line-item catalog as everything else, so your numbers stay consistent.</p>' +
 '<button data-act="newbid" type="button">Build the bid</button>') +
 '</div>' + rec + '</div>';
@@ -59315,7 +59316,7 @@ var items = est.line_items || [];
 var itm974 = est.itemized !== false;
 return '<div class="sheet">' +
 '<div class="lh">' +
-'<div class="for">Bid goes to \u00b7 for approval</div>' +
+'<div class="for">Estimate goes to \u00b7 for approval</div>' +
 '<h4>' + esc(l.partner_name || pr.name || 'Unnamed') + '</h4>' +
 (hoNm
 ? '<div class="via">Work for ' + esc(hoNm) + (addr ? ' \u00b7 ' + esc(addr) : '') + '</div>'
@@ -59336,7 +59337,7 @@ return '<div class="ln">' +
 '</div>';
 }).join('') + '</div>'
 : '') +
-'<div class="tot"><span class="k">Bid total' +
+'<div class="tot"><span class="k">Estimate total' +
 (commBidSource(pq.src) ? ' \u00b7 ' + commBidSource(pq.src) : '') + '</span>' +
 '<span class="v">' + usd(pq.amt || est.total) + '</span></div>' +
 rec +
@@ -59840,7 +59841,7 @@ esc(shortOrg(l.partner_name)) + '</div></div>' +
 '<button data-t="thread" class="' + (tab==='thread'?'on':'') +
 '" type="button">Thread</button>' +
 '<button data-t="bid" class="' + (tab==='bid'?'on':'') +
-'" type="button">Bid</button>' +
+'" type="button">Estimate</button>' +
 '</div>' +
 '<div data-cpane="thread" class="' + (tab==='thread'?'on':'') + '">' +
 threadHtml(pr) + contactsHtml(pr) +
@@ -61491,7 +61492,7 @@ host.innerHTML = '<div class="wrapx">' +
 '<div class="stat"><div class="k">Win rate</div><div class="v ' + (d.winRate == null ? '' : (d.winRate >= 50 ? 'good' : 'warn')) + '">' + (d.winRate == null ? '\u2014' : d.winRate + '%') + '</div></div>' +
 '<div class="stat"><div class="k">Awarded</div><div class="v good">' + usd(d.wonAmt) + '</div></div>' +
 '<div class="stat"><div class="k">Out for pricing</div><div class="v">' + usd(d.openAmt) + '</div></div>' +
-'<div class="stat"><div class="k">Avg bid</div><div class="v">' + usd(d.avgBid) + '</div></div>' +
+'<div class="stat"><div class="k">Avg estimate</div><div class="v">' + usd(d.avgBid) + '</div></div>' +
 '</div>' +
 '<div class="sect">By partner</div>' +
 (pk.length ? pk.map(function(k){
@@ -61928,7 +61929,7 @@ var CRM_GO = {
    would wake every body observer each frame (the 567/569 class). */
 var PILL_SETS = {
   insurance: [ { go:'insclients', label:'Clients'  }, { go:'claims', label:'Claims' } ],
-  community: [ { go:'partners',   label:'Partners' }, { go:'bids',   label:'Bids'   } ]
+  community: [ { go:'partners',   label:'Partners' }, { go:'bids',   label:'Estimates' } ]
 };
 var PILL_HOME = [ { go:'contacts', label:'Contacts' }, { go:'leads', label:'Leads' } ];
 /* 803: is this pill's destination ALREADY reachable from a tab strip that is

@@ -453,10 +453,21 @@ var STAGES = ['Lead','Prospect','OnHold','Approved','Scheduled',
 Community renders its own vocabulary via `LABEL`. **Community never shows the
 words "Lead" or "Prospect" to a user.**
 
+⚠️ **1091 — Community says "estimate", not "bid" (Theo's call, his third time on
+the CRM feeling confusing).** DISPLAY TEXT ONLY: the Bids tab → **Estimates**, New
+Bid → **New Estimate**, the client page's Bid tab → **Estimate**, and the two "bid"
+rungs of the ladder below. **Award-side labels are deliberately unchanged** — Theo,
+verbatim: *"bid awarded is still good"* — so **Awaiting Funding / Awarded / Not
+Awarded / Build Complete** stay, as does `OC_AUDIT`'s "Bid awarded" / "Bid not
+awarded". **Nothing under the hood moved**: `CardinalNewBid`, `commBidAmount`,
+`showBidModal`, `go:'bids'`, `'allbids'`, `tab==='bid'`, `data-cpane="bid"` and
+every `crBid*` are untouched — this is the LABEL on the one pipeline, not a fork.
+The changelog's historical "bid" mentions were left as-is (history).
+
 | Stage value | Community label |
 |---|---|
-| `Lead` | Bid Requested |
-| `Prospect` | Bid Submitted |
+| `Lead` | Estimate Requested |
+| `Prospect` | Estimate Submitted |
 | `OnHold` | **Awaiting Funding** |
 | `Approved` | Awarded |
 | `Scheduled` | Scheduled |

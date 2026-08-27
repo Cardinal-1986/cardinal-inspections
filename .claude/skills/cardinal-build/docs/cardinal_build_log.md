@@ -835,6 +835,37 @@ not a silent edit.
 
 ---
 
+## Build 1091 — 27 Aug 2026 — Community speaks "estimate", not "bid"
+
+Theo, third time the Community CRM has felt confusing to him, asked whether "bids
+instead of estimate" was part of it. It was — the community CLIENT page mixed both
+words (94 "bid" / 28 "estimate" on one screen). He chose option B: rename to
+"estimate" everywhere it shows, keeping the award-side wording verbatim — *"bid
+awarded is still good."*
+
+DISPLAY TEXT ONLY, across 7 modules (cr-ch2, cr-cc, cr-nbid, cr-comstage, cr-can,
+cr-banner, cr-splash + the main-block stage map). Bids tab → Estimates; New/Edit/Save
+Bid → Estimate; the client-page Bid tab → Estimate; ladder rungs Bid Requested →
+Estimate Requested and Bid Submitted → Estimate Submitted; the fold "All bids" → "All
+estimates"; the New-Estimate form's Amount/Due labels, placeholder and help; the
+Analytics "Avg bid" → "Avg estimate"; and cr-cc's prompts, toasts, audit labels and
+priced-sheet headings. **Kept:** Awaiting Funding / Awarded / Not Awarded / Build
+Complete, and `OC_AUDIT`'s "Bid awarded" / "Bid not awarded".
+
+⚠ **Not one identifier, DB value, stage key, class or data-attribute changed** —
+asserted (`CardinalNewBid`, `commBidAmount`, `showBidModal`, `go:'bids'`, `'allbids'`,
+`tab==='bid'` all unchanged in count). ⚠ **The changelog (`cr-cl-script`) was sliced
+to a sentinel before any edit and restored byte-for-byte** — its historical "bid"
+prose is untouched; the only changelog change is the added 1091 entry. Comments that
+quote old labels were left alone (one `'Bid Requested'` survives in a cr-ch2 comment,
+correctly).
+
+Gates: `check_build.py` green (marker `Estimate Requested`, negative control clean);
+patch byte-reproducible; Chromium render of the community home shows **Clients |
+Estimates | Partners** and **New Estimate**, no overflow (the wider word fits), zero
+live "bid" display strings. Sentinel: text/vocabulary build, but a rename can reflow —
+run against 1090 for the OVERFLOW check.
+
 ## Build 455 — the search box the stylesheet had been waiting for
 
 `#resourceLibraryView .rl-search` shipped as **five complete CSS rules and zero elements**
