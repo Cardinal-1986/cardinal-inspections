@@ -104,7 +104,7 @@ export default async function handler(req, res){
       res.status(200).json({ ok:true, sent:0, failed:0, mailed:0, texted:0, subs:0,
         reason:'no_recipients', env:{ vapid_from_env:VAPID_FROM_ENV,
         resend:!!process.env.RESEND_API_KEY,
-        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) } });
+        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && (process.env.TWILIO_MESSAGING_SERVICE_SID || process.env.TWILIO_FROM)) } });
       return;
     }
 
@@ -120,7 +120,7 @@ export default async function handler(req, res){
         reason:'subs_query_failed',
         detail:String((subs && (subs.message || subs.error)) || 'non-array response').slice(0,140),
         env:{ vapid_from_env:VAPID_FROM_ENV, resend:!!process.env.RESEND_API_KEY,
-        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM) } });
+        sms:!!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && (process.env.TWILIO_MESSAGING_SERVICE_SID || process.env.TWILIO_FROM)) } });
       return;
     }
 
@@ -177,7 +177,12 @@ export default async function handler(req, res){
        alert; each channel is independent, so a dead one never blocks the others. */
     var texted = 0, smsErr = null;
     var twSid = process.env.TWILIO_ACCOUNT_SID, twTok = process.env.TWILIO_AUTH_TOKEN, twFrom = process.env.TWILIO_FROM;
-    if(twSid && twTok && twFrom && text){
+    /* 1100: prefer a Messaging Service (TWILIO_MESSAGING_SERVICE_SID) so every text
+       rides the approved A2P 10DLC campaign and Twilio picks the registered sender;
+       fall back to the bare From number when the service isn't configured, so the
+       gate and behaviour are unchanged wherever only TWILIO_FROM is set. */
+    var twMsgSvc = process.env.TWILIO_MESSAGING_SERVICE_SID;
+    if(twSid && twTok && (twMsgSvc || twFrom) && text){
       try{
         var pq = SUPA_URL + '/rest/v1/team_profiles?select=email,phone&email=in.(' +
           emails.map(function(e){ return '"' + e.replace(/"/g, '') + '"'; }).join(',') + ')';
@@ -193,7 +198,9 @@ export default async function handler(req, res){
           var twAuth = 'Basic ' + Buffer.from(twSid + ':' + twTok).toString('base64');
           await Promise.all(phones.map(async function(to){
             try{
-              var form = new URLSearchParams({ To: to, From: twFrom, Body: smsBody }).toString();
+              var params = { To: to, Body: smsBody };
+              if(twMsgSvc) params.MessagingServiceSid = twMsgSvc; else params.From = twFrom;
+              var form = new URLSearchParams(params).toString();
               var sr = await fetch(twUrl, { method: 'POST',
                 headers: { Authorization: twAuth, 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: form });
